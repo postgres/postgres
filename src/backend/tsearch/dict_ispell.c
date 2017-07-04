@@ -3,7 +3,7 @@
  * dict_ispell.c
  *		Ispell dictionary interface
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
@@ -17,6 +17,7 @@
 #include "tsearch/dicts/spell.h"
 #include "tsearch/ts_locale.h"
 #include "tsearch/ts_utils.h"
+#include "utils/builtins.h"
 
 
 typedef struct
@@ -50,8 +51,8 @@ dispell_init(PG_FUNCTION_ARGS)
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("multiple DictFile parameters")));
 			NIImportDictionary(&(d->obj),
-							 get_tsearch_config_filename(defGetString(defel),
-														 "dict"));
+							   get_tsearch_config_filename(defGetString(defel),
+														   "dict"));
 			dictloaded = true;
 		}
 		else if (pg_strcasecmp(defel->defname, "AffFile") == 0)

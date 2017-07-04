@@ -4,7 +4,7 @@
  *	  POSTGRES buffer manager definitions.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/storage/bufmgr.h
@@ -14,7 +14,6 @@
 #ifndef BUFMGR_H
 #define BUFMGR_H
 
-#include "catalog/catalog.h"
 #include "storage/block.h"
 #include "storage/buf.h"
 #include "storage/bufpage.h"
@@ -55,17 +54,6 @@ struct WritebackContext;
 extern PGDLLIMPORT int NBuffers;
 
 /* in bufmgr.c */
-#define WRITEBACK_MAX_PENDING_FLUSHES 256
-
-/* FIXME: Also default to on for mmap && msync(MS_ASYNC)? */
-#ifdef HAVE_SYNC_FILE_RANGE
-#define DEFAULT_CHECKPOINT_FLUSH_AFTER 32
-#define DEFAULT_BGWRITER_FLUSH_AFTER 64
-#else
-#define DEFAULT_CHECKPOINT_FLUSH_AFTER 0
-#define DEFAULT_BGWRITER_FLUSH_AFTER 0
-#endif   /* HAVE_SYNC_FILE_RANGE */
-
 extern bool zero_damaged_pages;
 extern int	bgwriter_lru_maxpages;
 extern double bgwriter_lru_multiplier;
@@ -91,7 +79,7 @@ extern PGDLLIMPORT int32 *LocalRefCount;
 #define MAX_IO_CONCURRENCY 1000
 
 /* special block number for ReadBuffer() */
-#define P_NEW	InvalidBlockNumber		/* grow the file to get a new page */
+#define P_NEW	InvalidBlockNumber	/* grow the file to get a new page */
 
 /*
  * Buffer content lock modes (mode argument for LockBuffer())
@@ -228,6 +216,7 @@ extern void LockBuffer(Buffer buffer, int mode);
 extern bool ConditionalLockBuffer(Buffer buffer);
 extern void LockBufferForCleanup(Buffer buffer);
 extern bool ConditionalLockBufferForCleanup(Buffer buffer);
+extern bool IsBufferCleanupOK(Buffer buffer);
 extern bool HoldingBufferPinThatDelaysRecovery(void);
 
 extern void AbortBufferIO(void);
@@ -248,7 +237,7 @@ extern void FreeAccessStrategy(BufferAccessStrategy strategy);
 
 /*
  * Although this header file is nominally backend-only, certain frontend
- * programs like pg_xlogdump include it.  For compilers that emit static
+ * programs like pg_waldump include it.  For compilers that emit static
  * inline functions even when they're unused, that leads to unsatisfied
  * external references; hence hide these with #ifndef FRONTEND.
  */
@@ -286,6 +275,6 @@ TestForOldSnapshot(Snapshot snapshot, Relation relation, Page page)
 		TestForOldSnapshot_impl(snapshot, relation);
 }
 
-#endif   /* FRONTEND */
+#endif							/* FRONTEND */
 
-#endif   /* BUFMGR_H */
+#endif							/* BUFMGR_H */

@@ -29,6 +29,7 @@
 
 #include "access/gin_private.h"
 #include "access/heapam.h"
+#include "access/hash.h"
 #include "access/htup_details.h"
 #include "access/nbtree.h"
 #include "catalog/namespace.h"
@@ -36,8 +37,10 @@
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
+#include "storage/lmgr.h"
 #include "utils/builtins.h"
 #include "utils/rel.h"
+#include "utils/varlena.h"
 
 
 /*
@@ -53,10 +56,20 @@ PG_FUNCTION_INFO_V1(pgstatindexbyid);
 PG_FUNCTION_INFO_V1(pg_relpages);
 PG_FUNCTION_INFO_V1(pg_relpagesbyid);
 PG_FUNCTION_INFO_V1(pgstatginindex);
+PG_FUNCTION_INFO_V1(pgstathashindex);
+
+PG_FUNCTION_INFO_V1(pgstatindex_v1_5);
+PG_FUNCTION_INFO_V1(pgstatindexbyid_v1_5);
+PG_FUNCTION_INFO_V1(pg_relpages_v1_5);
+PG_FUNCTION_INFO_V1(pg_relpagesbyid_v1_5);
+PG_FUNCTION_INFO_V1(pgstatginindex_v1_5);
+
+Datum		pgstatginindex_internal(Oid relid, FunctionCallInfo fcinfo);
 
 #define IS_INDEX(r) ((r)->rd_rel->relkind == RELKIND_INDEX)
 #define IS_BTREE(r) ((r)->rd_rel->relam == BTREE_AM_OID)
 #define IS_GIN(r) ((r)->rd_rel->relam == GIN_AM_OID)
+#define IS_HASH(r) ((r)->rd_rel->relam == HASH_AM_OID)
 
 /* ------------------------------------------------
  * A structure for a whole btree index statistics
@@ -93,18 +106,44 @@ typedef struct GinIndexStat
 	int64		pending_tuples;
 } GinIndexStat;
 
+/* ------------------------------------------------
+ * A structure for a whole HASH index statistics
+ * used by pgstathashindex().
+ * ------------------------------------------------
+ */
+typedef struct HashIndexStat
+{
+	int32		version;
+	int32		space_per_page;
+
+	BlockNumber bucket_pages;
+	BlockNumber overflow_pages;
+	BlockNumber bitmap_pages;
+	BlockNumber unused_pages;
+
+	int64		live_items;
+	int64		dead_items;
+	uint64		free_space;
+} HashIndexStat;
+
 static Datum pgstatindex_impl(Relation rel, FunctionCallInfo fcinfo);
+static void GetHashPageStats(Page page, HashIndexStat *stats);
+static void check_relation_relkind(Relation rel);
 
 /* ------------------------------------------------------
  * pgstatindex()
  *
  * Usage: SELECT * FROM pgstatindex('t1_pkey');
+ *
+ * The superuser() check here must be kept as the library might be upgraded
+ * without the extension being upgraded, meaning that in pre-1.5 installations
+ * these functions could be called by any user.
  * ------------------------------------------------------
  */
 Datum
 pgstatindex(PG_FUNCTION_ARGS)
 {
-	text	   *relname = PG_GETARG_TEXT_P(0);
+	text	   *relname = PG_GETARG_TEXT_PP(0);
 	Relation	rel;
 	RangeVar   *relrv;
 
@@ -119,6 +158,31 @@ pgstatindex(PG_FUNCTION_ARGS)
 	PG_RETURN_DATUM(pgstatindex_impl(rel, fcinfo));
 }
 
+/*
+ * As of pgstattuple version 1.5, we no longer need to check if the user
+ * is a superuser because we REVOKE EXECUTE on the function from PUBLIC.
+ * Users can then grant access to it based on their policies.
+ *
+ * Otherwise identical to pgstatindex (above).
+ */
+Datum
+pgstatindex_v1_5(PG_FUNCTION_ARGS)
+{
+	text	   *relname = PG_GETARG_TEXT_PP(0);
+	Relation	rel;
+	RangeVar   *relrv;
+
+	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
+	rel = relation_openrv(relrv, AccessShareLock);
+
+	PG_RETURN_DATUM(pgstatindex_impl(rel, fcinfo));
+}
+
+/*
+ * The superuser() check here must be kept as the library might be upgraded
+ * without the extension being upgraded, meaning that in pre-1.5 installations
+ * these functions could be called by any user.
+ */
 Datum
 pgstatindexbyid(PG_FUNCTION_ARGS)
 {
@@ -135,6 +199,18 @@ pgstatindexbyid(PG_FUNCTION_ARGS)
 	PG_RETURN_DATUM(pgstatindex_impl(rel, fcinfo));
 }
 
+/* No need for superuser checks in v1.5, see above */
+Datum
+pgstatindexbyid_v1_5(PG_FUNCTION_ARGS)
+{
+	Oid			relid = PG_GETARG_OID(0);
+	Relation	rel;
+
+	rel = relation_open(relid, AccessShareLock);
+
+	PG_RETURN_DATUM(pgstatindex_impl(rel, fcinfo));
+}
+
 static Datum
 pgstatindex_impl(Relation rel, FunctionCallInfo fcinfo)
 {
@@ -145,8 +221,10 @@ pgstatindex_impl(Relation rel, FunctionCallInfo fcinfo)
 	BufferAccessStrategy bstrategy = GetAccessStrategy(BAS_BULKREAD);
 
 	if (!IS_INDEX(rel) || !IS_BTREE(rel))
-		elog(ERROR, "relation \"%s\" is not a btree index",
-			 RelationGetRelationName(rel));
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("relation \"%s\" is not a btree index",
+						RelationGetRelationName(rel))));
 
 	/*
 	 * Reject attempts to read non-local temporary relations; we would be
@@ -255,7 +333,7 @@ pgstatindex_impl(Relation rel, FunctionCallInfo fcinfo)
 		values[j++] = psprintf("%d", indexStat.version);
 		values[j++] = psprintf("%d", indexStat.level);
 		values[j++] = psprintf(INT64_FORMAT,
-							   (1 +		/* include the metapage in index_size */
+							   (1 + /* include the metapage in index_size */
 								indexStat.leaf_pages +
 								indexStat.internal_pages +
 								indexStat.deleted_pages +
@@ -292,12 +370,14 @@ pgstatindex_impl(Relation rel, FunctionCallInfo fcinfo)
  *
  * Usage: SELECT pg_relpages('t1');
  *		  SELECT pg_relpages('t1_pkey');
+ *
+ * Must keep superuser() check, see above.
  * --------------------------------------------------------
  */
 Datum
 pg_relpages(PG_FUNCTION_ARGS)
 {
-	text	   *relname = PG_GETARG_TEXT_P(0);
+	text	   *relname = PG_GETARG_TEXT_PP(0);
 	int64		relpages;
 	Relation	rel;
 	RangeVar   *relrv;
@@ -310,6 +390,9 @@ pg_relpages(PG_FUNCTION_ARGS)
 	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
 	rel = relation_openrv(relrv, AccessShareLock);
 
+	/* only some relkinds have storage */
+	check_relation_relkind(rel);
+
 	/* note: this will work OK on non-local temp tables */
 
 	relpages = RelationGetNumberOfBlocks(rel);
@@ -319,6 +402,31 @@ pg_relpages(PG_FUNCTION_ARGS)
 	PG_RETURN_INT64(relpages);
 }
 
+/* No need for superuser checks in v1.5, see above */
+Datum
+pg_relpages_v1_5(PG_FUNCTION_ARGS)
+{
+	text	   *relname = PG_GETARG_TEXT_PP(0);
+	int64		relpages;
+	Relation	rel;
+	RangeVar   *relrv;
+
+	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
+	rel = relation_openrv(relrv, AccessShareLock);
+
+	/* only some relkinds have storage */
+	check_relation_relkind(rel);
+
+	/* note: this will work OK on non-local temp tables */
+
+	relpages = RelationGetNumberOfBlocks(rel);
+
+	relation_close(rel, AccessShareLock);
+
+	PG_RETURN_INT64(relpages);
+}
+
+/* Must keep superuser() check, see above. */
 Datum
 pg_relpagesbyid(PG_FUNCTION_ARGS)
 {
@@ -333,6 +441,31 @@ pg_relpagesbyid(PG_FUNCTION_ARGS)
 
 	rel = relation_open(relid, AccessShareLock);
 
+	/* only some relkinds have storage */
+	check_relation_relkind(rel);
+
+	/* note: this will work OK on non-local temp tables */
+
+	relpages = RelationGetNumberOfBlocks(rel);
+
+	relation_close(rel, AccessShareLock);
+
+	PG_RETURN_INT64(relpages);
+}
+
+/* No need for superuser checks in v1.5, see above */
+Datum
+pg_relpagesbyid_v1_5(PG_FUNCTION_ARGS)
+{
+	Oid			relid = PG_GETARG_OID(0);
+	int64		relpages;
+	Relation	rel;
+
+	rel = relation_open(relid, AccessShareLock);
+
+	/* only some relkinds have storage */
+	check_relation_relkind(rel);
+
 	/* note: this will work OK on non-local temp tables */
 
 	relpages = RelationGetNumberOfBlocks(rel);
@@ -346,12 +479,35 @@ pg_relpagesbyid(PG_FUNCTION_ARGS)
  * pgstatginindex()
  *
  * Usage: SELECT * FROM pgstatginindex('ginindex');
+ *
+ * Must keep superuser() check, see above.
  * ------------------------------------------------------
  */
 Datum
 pgstatginindex(PG_FUNCTION_ARGS)
 {
 	Oid			relid = PG_GETARG_OID(0);
+
+	if (!superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 (errmsg("must be superuser to use pgstattuple functions"))));
+
+	PG_RETURN_DATUM(pgstatginindex_internal(relid, fcinfo));
+}
+
+/* No need for superuser checks in v1.5, see above */
+Datum
+pgstatginindex_v1_5(PG_FUNCTION_ARGS)
+{
+	Oid			relid = PG_GETARG_OID(0);
+
+	PG_RETURN_DATUM(pgstatginindex_internal(relid, fcinfo));
+}
+
+Datum
+pgstatginindex_internal(Oid relid, FunctionCallInfo fcinfo)
+{
 	Relation	rel;
 	Buffer		buffer;
 	Page		page;
@@ -363,16 +519,13 @@ pgstatginindex(PG_FUNCTION_ARGS)
 	bool		nulls[3] = {false, false, false};
 	Datum		result;
 
-	if (!superuser())
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be superuser to use pgstattuple functions"))));
-
 	rel = relation_open(relid, AccessShareLock);
 
 	if (!IS_INDEX(rel) || !IS_GIN(rel))
-		elog(ERROR, "relation \"%s\" is not a GIN index",
-			 RelationGetRelationName(rel));
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("relation \"%s\" is not a GIN index",
+						RelationGetRelationName(rel))));
 
 	/*
 	 * Reject attempts to read non-local temporary relations; we would be
@@ -382,7 +535,7 @@ pgstatginindex(PG_FUNCTION_ARGS)
 	if (RELATION_IS_OTHER_TEMP(rel))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			   errmsg("cannot access temporary indexes of other sessions")));
+				 errmsg("cannot access temporary indexes of other sessions")));
 
 	/*
 	 * Read metapage
@@ -415,5 +568,202 @@ pgstatginindex(PG_FUNCTION_ARGS)
 	tuple = heap_form_tuple(tupleDesc, values, nulls);
 	result = HeapTupleGetDatum(tuple);
 
-	PG_RETURN_DATUM(result);
+	return (result);
+}
+
+/* ------------------------------------------------------
+ * pgstathashindex()
+ *
+ * Usage: SELECT * FROM pgstathashindex('hashindex');
+ * ------------------------------------------------------
+ */
+Datum
+pgstathashindex(PG_FUNCTION_ARGS)
+{
+	Oid			relid = PG_GETARG_OID(0);
+	BlockNumber nblocks;
+	BlockNumber blkno;
+	Relation	rel;
+	HashIndexStat stats;
+	BufferAccessStrategy bstrategy;
+	HeapTuple	tuple;
+	TupleDesc	tupleDesc;
+	Datum		values[8];
+	bool		nulls[8];
+	Buffer		metabuf;
+	HashMetaPage metap;
+	float8		free_percent;
+	uint64		total_space;
+
+	rel = index_open(relid, AccessShareLock);
+
+	/* index_open() checks that it's an index */
+	if (!IS_HASH(rel))
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("relation \"%s\" is not a HASH index",
+						RelationGetRelationName(rel))));
+
+
+	/*
+	 * Reject attempts to read non-local temporary relations; we would be
+	 * likely to get wrong data since we have no visibility into the owning
+	 * session's local buffers.
+	 */
+	if (RELATION_IS_OTHER_TEMP(rel))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot access temporary indexes of other sessions")));
+
+	/* Get the information we need from the metapage. */
+	memset(&stats, 0, sizeof(stats));
+	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_READ, LH_META_PAGE);
+	metap = HashPageGetMeta(BufferGetPage(metabuf));
+	stats.version = metap->hashm_version;
+	stats.space_per_page = metap->hashm_bsize;
+	_hash_relbuf(rel, metabuf);
+
+	/* Get the current relation length */
+	nblocks = RelationGetNumberOfBlocks(rel);
+
+	/* prepare access strategy for this index */
+	bstrategy = GetAccessStrategy(BAS_BULKREAD);
+
+	/* Start from blkno 1 as 0th block is metapage */
+	for (blkno = 1; blkno < nblocks; blkno++)
+	{
+		Buffer		buf;
+		Page		page;
+
+		CHECK_FOR_INTERRUPTS();
+
+		buf = ReadBufferExtended(rel, MAIN_FORKNUM, blkno, RBM_NORMAL,
+								 bstrategy);
+		LockBuffer(buf, BUFFER_LOCK_SHARE);
+		page = (Page) BufferGetPage(buf);
+
+		if (PageIsNew(page))
+			stats.unused_pages++;
+		else if (PageGetSpecialSize(page) !=
+				 MAXALIGN(sizeof(HashPageOpaqueData)))
+			ereport(ERROR,
+					(errcode(ERRCODE_INDEX_CORRUPTED),
+					 errmsg("index \"%s\" contains corrupted page at block %u",
+							RelationGetRelationName(rel),
+							BufferGetBlockNumber(buf))));
+		else
+		{
+			HashPageOpaque opaque;
+			int			pagetype;
+
+			opaque = (HashPageOpaque) PageGetSpecialPointer(page);
+			pagetype = opaque->hasho_flag & LH_PAGE_TYPE;
+
+			if (pagetype == LH_BUCKET_PAGE)
+			{
+				stats.bucket_pages++;
+				GetHashPageStats(page, &stats);
+			}
+			else if (pagetype == LH_OVERFLOW_PAGE)
+			{
+				stats.overflow_pages++;
+				GetHashPageStats(page, &stats);
+			}
+			else if (pagetype == LH_BITMAP_PAGE)
+				stats.bitmap_pages++;
+			else if (pagetype == LH_UNUSED_PAGE)
+				stats.unused_pages++;
+			else
+				ereport(ERROR,
+						(errcode(ERRCODE_INDEX_CORRUPTED),
+						 errmsg("unexpected page type 0x%04X in HASH index \"%s\" block %u",
+								opaque->hasho_flag, RelationGetRelationName(rel),
+								BufferGetBlockNumber(buf))));
+		}
+		UnlockReleaseBuffer(buf);
+	}
+
+	/* Done accessing the index */
+	index_close(rel, AccessShareLock);
+
+	/* Count unused pages as free space. */
+	stats.free_space += stats.unused_pages * stats.space_per_page;
+
+	/*
+	 * Total space available for tuples excludes the metapage and the bitmap
+	 * pages.
+	 */
+	total_space = (nblocks - (stats.bitmap_pages + 1)) * stats.space_per_page;
+
+	if (total_space == 0)
+		free_percent = 0.0;
+	else
+		free_percent = 100.0 * stats.free_space / total_space;
+
+	/*
+	 * Build a tuple descriptor for our result type
+	 */
+	if (get_call_result_type(fcinfo, NULL, &tupleDesc) != TYPEFUNC_COMPOSITE)
+		elog(ERROR, "return type must be a row type");
+
+	tupleDesc = BlessTupleDesc(tupleDesc);
+
+	/*
+	 * Build and return the tuple
+	 */
+	MemSet(nulls, 0, sizeof(nulls));
+	values[0] = Int32GetDatum(stats.version);
+	values[1] = Int64GetDatum((int64) stats.bucket_pages);
+	values[2] = Int64GetDatum((int64) stats.overflow_pages);
+	values[3] = Int64GetDatum((int64) stats.bitmap_pages);
+	values[4] = Int64GetDatum((int64) stats.unused_pages);
+	values[5] = Int64GetDatum(stats.live_items);
+	values[6] = Int64GetDatum(stats.dead_items);
+	values[7] = Float8GetDatum(free_percent);
+	tuple = heap_form_tuple(tupleDesc, values, nulls);
+
+	PG_RETURN_DATUM(HeapTupleGetDatum(tuple));
+}
+
+/* -------------------------------------------------
+ * GetHashPageStatis()
+ *
+ * Collect statistics of single hash page
+ * -------------------------------------------------
+ */
+static void
+GetHashPageStats(Page page, HashIndexStat *stats)
+{
+	OffsetNumber maxoff = PageGetMaxOffsetNumber(page);
+	int			off;
+
+	/* count live and dead tuples, and free space */
+	for (off = FirstOffsetNumber; off <= maxoff; off++)
+	{
+		ItemId		id = PageGetItemId(page, off);
+
+		if (!ItemIdIsDead(id))
+			stats->live_items++;
+		else
+			stats->dead_items++;
+	}
+	stats->free_space += PageGetExactFreeSpace(page);
+}
+
+/*
+ * check_relation_relkind - convenience routine to check that relation
+ * is of the relkind supported by the callers
+ */
+static void
+check_relation_relkind(Relation rel)
+{
+	if (rel->rd_rel->relkind != RELKIND_RELATION &&
+		rel->rd_rel->relkind != RELKIND_INDEX &&
+		rel->rd_rel->relkind != RELKIND_MATVIEW &&
+		rel->rd_rel->relkind != RELKIND_SEQUENCE &&
+		rel->rd_rel->relkind != RELKIND_TOASTVALUE)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is not a table, index, materialized view, sequence, or TOAST table",
+						RelationGetRelationName(rel))));
 }

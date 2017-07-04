@@ -3,7 +3,7 @@
  * win32setlocale.c
  *		Wrapper to work around bugs in Windows setlocale() implementation
  *
- * Copyright (c) 2011-2016, PostgreSQL Global Development Group
+ * Copyright (c) 2011-2017, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/port/win32setlocale.c
@@ -104,7 +104,7 @@ static const struct locale_map locale_map_result[] = {
 #define MAX_LOCALE_NAME_LEN		100
 
 static const char *
-map_locale(const struct locale_map * map, const char *locale)
+map_locale(const struct locale_map *map, const char *locale)
 {
 	static char aliasbuf[MAX_LOCALE_NAME_LEN];
 	int			i;

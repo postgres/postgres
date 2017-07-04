@@ -6,7 +6,7 @@
  *	  All file system operations in POSTGRES dispatch through these
  *	  routines.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -38,30 +38,30 @@
 typedef struct f_smgr
 {
 	void		(*smgr_init) (void);	/* may be NULL */
-	void		(*smgr_shutdown) (void);		/* may be NULL */
+	void		(*smgr_shutdown) (void);	/* may be NULL */
 	void		(*smgr_close) (SMgrRelation reln, ForkNumber forknum);
 	void		(*smgr_create) (SMgrRelation reln, ForkNumber forknum,
-											bool isRedo);
+								bool isRedo);
 	bool		(*smgr_exists) (SMgrRelation reln, ForkNumber forknum);
 	void		(*smgr_unlink) (RelFileNodeBackend rnode, ForkNumber forknum,
-											bool isRedo);
+								bool isRedo);
 	void		(*smgr_extend) (SMgrRelation reln, ForkNumber forknum,
-						 BlockNumber blocknum, char *buffer, bool skipFsync);
+								BlockNumber blocknum, char *buffer, bool skipFsync);
 	void		(*smgr_prefetch) (SMgrRelation reln, ForkNumber forknum,
-											  BlockNumber blocknum);
+								  BlockNumber blocknum);
 	void		(*smgr_read) (SMgrRelation reln, ForkNumber forknum,
-										  BlockNumber blocknum, char *buffer);
+							  BlockNumber blocknum, char *buffer);
 	void		(*smgr_write) (SMgrRelation reln, ForkNumber forknum,
-						 BlockNumber blocknum, char *buffer, bool skipFsync);
+							   BlockNumber blocknum, char *buffer, bool skipFsync);
 	void		(*smgr_writeback) (SMgrRelation reln, ForkNumber forknum,
-								  BlockNumber blocknum, BlockNumber nblocks);
+								   BlockNumber blocknum, BlockNumber nblocks);
 	BlockNumber (*smgr_nblocks) (SMgrRelation reln, ForkNumber forknum);
 	void		(*smgr_truncate) (SMgrRelation reln, ForkNumber forknum,
-											  BlockNumber nblocks);
+								  BlockNumber nblocks);
 	void		(*smgr_immedsync) (SMgrRelation reln, ForkNumber forknum);
-	void		(*smgr_pre_ckpt) (void);		/* may be NULL */
+	void		(*smgr_pre_ckpt) (void);	/* may be NULL */
 	void		(*smgr_sync) (void);	/* may be NULL */
-	void		(*smgr_post_ckpt) (void);		/* may be NULL */
+	void		(*smgr_post_ckpt) (void);	/* may be NULL */
 } f_smgr;
 
 
@@ -174,7 +174,7 @@ smgropen(RelFileNode rnode, BackendId backend)
 
 		/* mark it not open */
 		for (forknum = 0; forknum <= MAX_FORKNUM; forknum++)
-			reln->md_fd[forknum] = NULL;
+			reln->md_num_open_segs[forknum] = 0;
 
 		/* it has no owner yet */
 		add_to_unowned_list(reln);
@@ -379,7 +379,7 @@ smgrcreate(SMgrRelation reln, ForkNumber forknum, bool isRedo)
 	 * Exit quickly in WAL replay mode if we've already opened the file. If
 	 * it's open, it surely must exist.
 	 */
-	if (isRedo && reln->md_fd[forknum] != NULL)
+	if (isRedo && reln->md_num_open_segs[forknum] > 0)
 		return;
 
 	/*

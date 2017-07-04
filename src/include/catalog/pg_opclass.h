@@ -25,7 +25,7 @@
  * AMs support this.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_opclass.h
@@ -127,6 +127,8 @@ DATA(insert (	403		interval_ops		PGNSP PGUID 1982 1186 t 0 ));
 DATA(insert (	405		interval_ops		PGNSP PGUID 1983 1186 t 0 ));
 DATA(insert (	403		macaddr_ops			PGNSP PGUID 1984  829 t 0 ));
 DATA(insert (	405		macaddr_ops			PGNSP PGUID 1985  829 t 0 ));
+DATA(insert (	403		macaddr8_ops		PGNSP PGUID 3371  774 t 0 ));
+DATA(insert (	405		macaddr8_ops		PGNSP PGUID 3372  774 t 0 ));
 /*
  * Here's an ugly little hack to save space in the system catalog indexes.
  * btree doesn't ordinarily allow a storage type different from input type;
@@ -168,7 +170,6 @@ DATA(insert (	403		bpchar_pattern_ops	PGNSP PGUID 2097 1042 f 0 ));
 DATA(insert (	403		money_ops			PGNSP PGUID 2099  790 t 0 ));
 DATA(insert (	405		bool_ops			PGNSP PGUID 2222   16 t 0 ));
 DATA(insert (	405		bytea_ops			PGNSP PGUID 2223   17 t 0 ));
-DATA(insert (	405		int2vector_ops		PGNSP PGUID 2224   22 t 0 ));
 DATA(insert (	403		tid_ops				PGNSP PGUID 2789   27 t 0 ));
 DATA(insert (	405		xid_ops				PGNSP PGUID 2225   28 t 0 ));
 DATA(insert (	405		cid_ops				PGNSP PGUID 2226   29 t 0 ));
@@ -184,36 +185,7 @@ DATA(insert (	783		box_ops				PGNSP PGUID 2593  603 t 0 ));
 DATA(insert (	783		point_ops			PGNSP PGUID 1029  600 t 603 ));
 DATA(insert (	783		poly_ops			PGNSP PGUID 2594  604 t 603 ));
 DATA(insert (	783		circle_ops			PGNSP PGUID 2595  718 t 603 ));
-DATA(insert (	2742	_int4_ops			PGNSP PGUID 2745  1007 t 23 ));
-DATA(insert (	2742	_text_ops			PGNSP PGUID 2745  1009 t 25 ));
-DATA(insert (	2742	_abstime_ops		PGNSP PGUID 2745  1023 t 702 ));
-DATA(insert (	2742	_bit_ops			PGNSP PGUID 2745  1561 t 1560 ));
-DATA(insert (	2742	_bool_ops			PGNSP PGUID 2745  1000 t 16 ));
-DATA(insert (	2742	_bpchar_ops			PGNSP PGUID 2745  1014 t 1042 ));
-DATA(insert (	2742	_bytea_ops			PGNSP PGUID 2745  1001 t 17 ));
-DATA(insert (	2742	_char_ops			PGNSP PGUID 2745  1002 t 18 ));
-DATA(insert (	2742	_cidr_ops			PGNSP PGUID 2745  651 t 650 ));
-DATA(insert (	2742	_date_ops			PGNSP PGUID 2745  1182 t 1082 ));
-DATA(insert (	2742	_float4_ops			PGNSP PGUID 2745  1021 t 700 ));
-DATA(insert (	2742	_float8_ops			PGNSP PGUID 2745  1022 t 701 ));
-DATA(insert (	2742	_inet_ops			PGNSP PGUID 2745  1041 t 869 ));
-DATA(insert (	2742	_int2_ops			PGNSP PGUID 2745  1005 t 21 ));
-DATA(insert (	2742	_int8_ops			PGNSP PGUID 2745  1016 t 20 ));
-DATA(insert (	2742	_interval_ops		PGNSP PGUID 2745  1187 t 1186 ));
-DATA(insert (	2742	_macaddr_ops		PGNSP PGUID 2745  1040 t 829 ));
-DATA(insert (	2742	_name_ops			PGNSP PGUID 2745  1003 t 19 ));
-DATA(insert (	2742	_numeric_ops		PGNSP PGUID 2745  1231 t 1700 ));
-DATA(insert (	2742	_oid_ops			PGNSP PGUID 2745  1028 t 26 ));
-DATA(insert (	2742	_oidvector_ops		PGNSP PGUID 2745  1013 t 30 ));
-DATA(insert (	2742	_time_ops			PGNSP PGUID 2745  1183 t 1083 ));
-DATA(insert (	2742	_timestamptz_ops	PGNSP PGUID 2745  1185 t 1184 ));
-DATA(insert (	2742	_timetz_ops			PGNSP PGUID 2745  1270 t 1266 ));
-DATA(insert (	2742	_varbit_ops			PGNSP PGUID 2745  1563 t 1562 ));
-DATA(insert (	2742	_varchar_ops		PGNSP PGUID 2745  1015 t 1043 ));
-DATA(insert (	2742	_timestamp_ops		PGNSP PGUID 2745  1115 t 1114 ));
-DATA(insert (	2742	_money_ops			PGNSP PGUID 2745  791 t 790 ));
-DATA(insert (	2742	_reltime_ops		PGNSP PGUID 2745  1024 t 703 ));
-DATA(insert (	2742	_tinterval_ops		PGNSP PGUID 2745  1025 t 704 ));
+DATA(insert (	2742	array_ops			PGNSP PGUID 2745  2277 t 2283 ));
 DATA(insert (	403		uuid_ops			PGNSP PGUID 2968  2950 t 0 ));
 DATA(insert (	405		uuid_ops			PGNSP PGUID 2969  2950 t 0 ));
 DATA(insert (	403		pg_lsn_ops			PGNSP PGUID 3253  3220 t 0 ));
@@ -254,6 +226,7 @@ DATA(insert (	3580	float8_minmax_ops		PGNSP PGUID 4070   701 t 701 ));
 DATA(insert (	3580	abstime_minmax_ops		PGNSP PGUID 4072   702 t 702 ));
 DATA(insert (	3580	reltime_minmax_ops		PGNSP PGUID 4073   703 t 703 ));
 DATA(insert (	3580	macaddr_minmax_ops		PGNSP PGUID 4074   829 t 829 ));
+DATA(insert (	3580	macaddr8_minmax_ops		PGNSP PGUID 4109   774 t 774 ));
 DATA(insert (	3580	inet_minmax_ops			PGNSP PGUID 4075   869 f 869 ));
 DATA(insert (	3580	inet_inclusion_ops		PGNSP PGUID 4102   869 t 869 ));
 DATA(insert (	3580	bpchar_minmax_ops		PGNSP PGUID 4076  1042 t 1042 ));
@@ -274,4 +247,4 @@ DATA(insert (	3580	pg_lsn_minmax_ops		PGNSP PGUID 4082  3220 t 3220 ));
 DATA(insert (	3580	box_inclusion_ops		PGNSP PGUID 4104   603 t 603 ));
 /* no brin opclass for the geometric types except box */
 
-#endif   /* PG_OPCLASS_H */
+#endif							/* PG_OPCLASS_H */

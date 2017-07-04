@@ -23,9 +23,9 @@
 #define LONG_LONG_MIN LLONG_MIN
 #else
 #define LONG_LONG_MIN LONGLONG_MIN
-#endif   /* LLONG_MIN */
-#endif   /* LONG_LONG_MIN */
-#endif   /* HAVE_LONG_LONG_INT */
+#endif							/* LLONG_MIN */
+#endif							/* LONG_LONG_MIN */
+#endif							/* HAVE_LONG_LONG_INT */
 
 bool		ecpg_internal_regression_mode = false;
 
@@ -96,13 +96,13 @@ static int	simple_debug = 0;
 static FILE *debugstream = NULL;
 
 void
-ecpg_init_sqlca(struct sqlca_t * sqlca)
+ecpg_init_sqlca(struct sqlca_t *sqlca)
 {
 	memcpy((char *) sqlca, (char *) &sqlca_init, sizeof(struct sqlca_t));
 }
 
 bool
-ecpg_init(const struct connection * con, const char *connection_name, const int lineno)
+ecpg_init(const struct connection *con, const char *connection_name, const int lineno)
 {
 	struct sqlca_t *sqlca = ECPGget_sqlca();
 
@@ -213,9 +213,15 @@ ECPGtrans(int lineno, const char *connection_name, const char *transaction)
 		 * If we got a transaction command but have no open transaction, we
 		 * have to start one, unless we are in autocommit, where the
 		 * developers have to take care themselves. However, if the command is
-		 * a begin statement, we just execute it once.
+		 * a begin statement, we just execute it once. And if the command is
+		 * commit or rollback prepared, we don't execute it.
 		 */
-		if (PQtransactionStatus(con->connection) == PQTRANS_IDLE && !con->autocommit && strncmp(transaction, "begin", 5) != 0 && strncmp(transaction, "start", 5) != 0)
+		if (PQtransactionStatus(con->connection) == PQTRANS_IDLE &&
+			!con->autocommit &&
+			strncmp(transaction, "begin", 5) != 0 &&
+			strncmp(transaction, "start", 5) != 0 &&
+			strncmp(transaction, "commit prepared", 15) != 0 &&
+			strncmp(transaction, "rollback prepared", 17) != 0)
 		{
 			res = PQexec(con->connection, "begin transaction");
 			if (!ecpg_check_PQresult(res, lineno, con->connection, ECPG_COMPAT_PGSQL))
@@ -338,7 +344,7 @@ ECPGset_noind_null(enum ECPGttype type, void *ptr)
 		case ECPGt_unsigned_long_long:
 			*((long long *) ptr) = LONG_LONG_MIN;
 			break;
-#endif   /* HAVE_LONG_LONG_INT */
+#endif							/* HAVE_LONG_LONG_INT */
 		case ECPGt_float:
 			memset((char *) ptr, 0xff, sizeof(float));
 			break;
@@ -411,7 +417,7 @@ ECPGis_noind_null(enum ECPGttype type, void *ptr)
 			if (*((long long *) ptr) == LONG_LONG_MIN)
 				return true;
 			break;
-#endif   /* HAVE_LONG_LONG_INT */
+#endif							/* HAVE_LONG_LONG_INT */
 		case ECPGt_float:
 			return (_check(ptr, sizeof(float)));
 			break;
@@ -475,8 +481,8 @@ win32_pthread_once(volatile pthread_once_t *once, void (*fn) (void))
 		pthread_mutex_unlock(&win32_pthread_once_lock);
 	}
 }
-#endif   /* ENABLE_THREAD_SAFETY */
-#endif   /* WIN32 */
+#endif							/* ENABLE_THREAD_SAFETY */
+#endif							/* WIN32 */
 
 #ifdef ENABLE_NLS
 
@@ -510,7 +516,7 @@ ecpg_gettext(const char *msgid)
 
 	return dgettext(PG_TEXTDOMAIN("ecpglib"), msgid);
 }
-#endif   /* ENABLE_NLS */
+#endif							/* ENABLE_NLS */
 
 struct var_list *ivlist = NULL;
 

@@ -5,7 +5,7 @@
  *	  along with the relation's initial contents.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_tablespace.h
@@ -63,4 +63,4 @@ DATA(insert OID = 1664 ( pg_global	PGUID _null_ _null_ ));
 #define DEFAULTTABLESPACE_OID 1663
 #define GLOBALTABLESPACE_OID 1664
 
-#endif   /* PG_TABLESPACE_H */
+#endif							/* PG_TABLESPACE_H */

@@ -5,7 +5,7 @@
  *	  along with the relation's initial contents.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_language.h
@@ -79,4 +79,4 @@ DATA(insert OID = 14 ( "sql"		PGUID f t 0 0 2248 _null_ ));
 DESCR("SQL-language functions");
 #define SQLlanguageId 14
 
-#endif   /* PG_LANGUAGE_H */
+#endif							/* PG_LANGUAGE_H */

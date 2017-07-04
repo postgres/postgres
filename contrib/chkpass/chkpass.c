@@ -17,6 +17,7 @@
 #endif
 
 #include "fmgr.h"
+#include "utils/backend_random.h"
 #include "utils/builtins.h"
 
 PG_MODULE_MAGIC;
@@ -77,8 +78,12 @@ chkpass_in(PG_FUNCTION_ARGS)
 
 	result = (chkpass *) palloc0(sizeof(chkpass));
 
-	mysalt[0] = salt_chars[random() & 0x3f];
-	mysalt[1] = salt_chars[random() & 0x3f];
+	if (!pg_backend_random(mysalt, 2))
+		ereport(ERROR,
+				(errmsg("could not generate random salt")));
+
+	mysalt[0] = salt_chars[mysalt[0] & 0x3f];
+	mysalt[1] = salt_chars[mysalt[1] & 0x3f];
 	mysalt[2] = 0;				/* technically the terminator is not necessary
 								 * but I like to play safe */
 

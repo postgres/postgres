@@ -98,6 +98,28 @@ select
   (select max((select i.unique2 from tenk1 i where i.unique1 = o.unique1)))
 from tenk1 o;
 
+-- Test handling of Params within aggregate arguments in hashed aggregation.
+-- Per bug report from Jeevan Chalke.
+explain (verbose, costs off)
+select s1, s2, sm
+from generate_series(1, 3) s1,
+     lateral (select s2, sum(s1 + s2) sm
+              from generate_series(1, 3) s2 group by s2) ss
+order by 1, 2;
+select s1, s2, sm
+from generate_series(1, 3) s1,
+     lateral (select s2, sum(s1 + s2) sm
+              from generate_series(1, 3) s2 group by s2) ss
+order by 1, 2;
+
+explain (verbose, costs off)
+select array(select sum(x+y) s
+            from generate_series(1,3) y group by y order by s)
+  from generate_series(1,3) x;
+select array(select sum(x+y) s
+            from generate_series(1,3) y group by y order by s)
+  from generate_series(1,3) x;
+
 --
 -- test for bitwise integer aggregates
 --
@@ -704,6 +726,9 @@ select my_avg(one),my_avg(one) from (values(1),(3)) t(one);
 
 -- aggregate state should be shared as transfn is the same for both aggs.
 select my_avg(one),my_sum(one) from (values(1),(3)) t(one);
+
+-- same as previous one, but with DISTINCT, which requires sorting the input.
+select my_avg(distinct one),my_sum(distinct one) from (values(1),(3),(1)) t(one);
 
 -- shouldn't share states due to the distinctness not matching.
 select my_avg(distinct one),my_sum(one) from (values(1),(3)) t(one);

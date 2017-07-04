@@ -1,0 +1,58 @@
+CREATE TABLE test1 (a int8, b text);
+INSERT INTO test1 VALUES (72057594037927937, 'text');
+CREATE INDEX test1_a_idx ON test1 USING btree (a);
+\x
+SELECT * FROM bt_metap('test1_a_idx');
+-[ RECORD 1 ]-----
+magic     | 340322
+version   | 2
+root      | 1
+level     | 0
+fastroot  | 1
+fastlevel | 0
+
+SELECT * FROM bt_page_stats('test1_a_idx', 0);
+ERROR:  block 0 is a meta page
+SELECT * FROM bt_page_stats('test1_a_idx', 1);
+-[ RECORD 1 ]-+-----
+blkno         | 1
+type          | l
+live_items    | 1
+dead_items    | 0
+avg_item_size | 16
+page_size     | 8192
+free_size     | 8128
+btpo_prev     | 0
+btpo_next     | 0
+btpo          | 0
+btpo_flags    | 3
+
+SELECT * FROM bt_page_stats('test1_a_idx', 2);
+ERROR:  block number out of range
+SELECT * FROM bt_page_items('test1_a_idx', 0);
+ERROR:  block 0 is a meta page
+SELECT * FROM bt_page_items('test1_a_idx', 1);
+-[ RECORD 1 ]-----------------------
+itemoffset | 1
+ctid       | (0,1)
+itemlen    | 16
+nulls      | f
+vars       | f
+data       | 01 00 00 00 00 00 00 01
+
+SELECT * FROM bt_page_items('test1_a_idx', 2);
+ERROR:  block number out of range
+SELECT * FROM bt_page_items(get_raw_page('test1_a_idx', 0));
+ERROR:  block is a meta page
+SELECT * FROM bt_page_items(get_raw_page('test1_a_idx', 1));
+-[ RECORD 1 ]-----------------------
+itemoffset | 1
+ctid       | (0,1)
+itemlen    | 16
+nulls      | f
+vars       | f
+data       | 01 00 00 00 00 00 00 01
+
+SELECT * FROM bt_page_items(get_raw_page('test1_a_idx', 2));
+ERROR:  block number 2 is out of range for relation "test1_a_idx"
+DROP TABLE test1;

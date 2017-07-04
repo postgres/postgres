@@ -3,7 +3,7 @@
 # GNUmakefile--
 #    Makefile for src/test/regress (the regression tests)
 #
-# Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+# Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
 # src/test/regress/GNUmakefile
@@ -36,7 +36,7 @@ EXTRADEFS = '-DHOST_TUPLE="$(host_tuple)"' \
 
 all: pg_regress$(X)
 
-pg_regress$(X): pg_regress.o pg_regress_main.o $(WIN32RES) | submake-libpgport submake-generated-headers
+pg_regress$(X): pg_regress.o pg_regress_main.o $(WIN32RES) | submake-libpgport
 	$(CC) $(CFLAGS) $^ $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@
 
 # dependencies ensure that path changes propagate
@@ -64,6 +64,8 @@ OBJS = $(WIN32RES) regress.o
 include $(top_srcdir)/src/Makefile.shlib
 
 all: all-lib
+
+$(OBJS): | submake-generated-headers
 
 # Test input and expected files.  These are created by pg_regress itself, so we
 # don't have a rule to create them.  We do need rules to clean them however.

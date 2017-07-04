@@ -4,7 +4,7 @@
  *	  build algorithm for GiST indexes implementation.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -18,6 +18,7 @@
 
 #include "access/genam.h"
 #include "access/gist_private.h"
+#include "access/gistxlog.h"
 #include "access/xloginsert.h"
 #include "catalog/index.h"
 #include "miscadmin.h"
@@ -247,7 +248,7 @@ gistValidateBufferingOption(char *value)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("invalid value for \"buffering\" option"),
-			  errdetail("Valid values are \"on\", \"off\", and \"auto\".")));
+				 errdetail("Valid values are \"on\", \"off\", and \"auto\".")));
 	}
 }
 
@@ -813,7 +814,7 @@ gistbufferinginserttuples(GISTBuildState *buildstate, Buffer buffer, int level,
 								  downlinks, ndownlinks, downlinkoffnum,
 								  InvalidBlockNumber, InvalidOffsetNumber);
 
-		list_free_deep(splitinfo);		/* we don't need this anymore */
+		list_free_deep(splitinfo);	/* we don't need this anymore */
 	}
 	else
 		UnlockReleaseBuffer(buffer);
@@ -1082,7 +1083,7 @@ gistGetMaxLevel(Relation index)
 		 * everywhere, so we just pick the first one.
 		 */
 		itup = (IndexTuple) PageGetItem(page,
-									 PageGetItemId(page, FirstOffsetNumber));
+										PageGetItemId(page, FirstOffsetNumber));
 		blkno = ItemPointerGetBlockNumber(&(itup->t_tid));
 		UnlockReleaseBuffer(buffer);
 
@@ -1142,7 +1143,7 @@ gistInitParentMap(GISTBuildState *buildstate)
 	buildstate->parentMap = hash_create("gistbuild parent map",
 										1024,
 										&hashCtl,
-									  HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
+										HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 }
 
 static void

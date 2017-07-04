@@ -90,21 +90,6 @@ int SPI_connect(void)
    function if you want to execute commands through SPI.  Some utility
    SPI functions can be called from unconnected procedures.
   </para>
-
-  <para>
-   If your procedure is already connected,
-   <function>SPI_connect</function> will return the error code
-   <returnvalue>SPI_ERROR_CONNECT</returnvalue>.  This could happen if
-   a procedure that has called <function>SPI_connect</function>
-   directly calls another procedure that calls
-   <function>SPI_connect</function>.  While recursive calls to the
-   <acronym>SPI</acronym> manager are permitted when an SQL command
-   called through SPI invokes another function that uses
-   <acronym>SPI</acronym>, directly nested calls to
-   <function>SPI_connect</function> and
-   <function>SPI_finish</function> are forbidden.
-   (But see <function>SPI_push</function> and <function>SPI_pop</function>.)
-  </para>
  </refsect1>
 
  <refsect1>
@@ -164,13 +149,6 @@ int SPI_finish(void)
    abort the transaction via <literal>elog(ERROR)</literal>.  In that
    case SPI will clean itself up automatically.
   </para>
-
-  <para>
-   If <function>SPI_finish</function> is called without having a valid
-   connection, it will return <symbol>SPI_ERROR_UNCONNECTED</symbol>.
-   There is no fundamental problem with this; it means that the SPI
-   manager has nothing to do.
-  </para>
  </refsect1>
 
  <refsect1>
@@ -196,86 +174,6 @@ int SPI_finish(void)
    </varlistentry>
   </variablelist>
  </refsect1>
-</refentry>
-
-<!-- *********************************************** -->
-
-<refentry id="spi-spi-push">
- <indexterm><primary>SPI_push</primary></indexterm>
-
- <refmeta>
-  <refentrytitle>SPI_push</refentrytitle>
-  <manvolnum>3</manvolnum>
- </refmeta>
-
- <refnamediv>
-  <refname>SPI_push</refname>
-  <refpurpose>push SPI stack to allow recursive SPI usage</refpurpose>
- </refnamediv>
-
- <refsynopsisdiv>
-<synopsis>
-void SPI_push(void)
-</synopsis>
- </refsynopsisdiv>
-
- <refsect1>
-  <title>Description</title>
-
-  <para>
-   <function>SPI_push</function> should be called before executing another
-   procedure that might itself wish to use SPI.
-   After <function>SPI_push</function>, SPI is no longer in a
-   <quote>connected</> state, and SPI function calls will be rejected unless
-   a fresh <function>SPI_connect</function> is done.  This ensures a clean
-   separation between your procedure's SPI state and that of another procedure
-   you call.  After the other procedure returns, call
-   <function>SPI_pop</function> to restore access to your own SPI state.
-  </para>
-
-  <para>
-   Note that <function>SPI_execute</function> and related functions
-   automatically do the equivalent of <function>SPI_push</function> before
-   passing control back to the SQL execution engine, so it is not necessary
-   for you to worry about this when using those functions.
-   Only when you are directly calling arbitrary code that might contain
-   <function>SPI_connect</function> calls do you need to issue
-   <function>SPI_push</function> and <function>SPI_pop</function>.
-  </para>
- </refsect1>
-
-</refentry>
-
-<!-- *********************************************** -->
-
-<refentry id="spi-spi-pop">
- <indexterm><primary>SPI_pop</primary></indexterm>
-
- <refmeta>
-  <refentrytitle>SPI_pop</refentrytitle>
-  <manvolnum>3</manvolnum>
- </refmeta>
-
- <refnamediv>
-  <refname>SPI_pop</refname>
-  <refpurpose>pop SPI stack to return from recursive SPI usage</refpurpose>
- </refnamediv>
-
- <refsynopsisdiv>
-<synopsis>
-void SPI_pop(void)
-</synopsis>
- </refsynopsisdiv>
-
- <refsect1>
-  <title>Description</title>
-
-  <para>
-   <function>SPI_pop</function> pops the previous environment from the
-   SPI call stack.  See <function>SPI_push</function>.
-  </para>
- </refsect1>
-
 </refentry>
 
 <!-- *********************************************** -->
@@ -2741,6 +2639,335 @@ SPIPlanPtr SPI_saveplan(SPIPlanPtr <parameter>plan</parameter>)
  </refsect1>
 </refentry>
 
+<!-- *********************************************** -->
+
+<refentry id="spi-spi-register-relation">
+ <indexterm><primary>SPI_register_relation</primary></indexterm>
+
+ <indexterm>
+  <primary>ephemeral named relation</primary>
+  <secondary>registering with SPI</secondary>
+ </indexterm>
+
+ <refmeta>
+  <refentrytitle>SPI_register_relation</refentrytitle>
+  <manvolnum>3</manvolnum>
+ </refmeta>
+
+ <refnamediv>
+  <refname>SPI_register_relation</refname>
+  <refpurpose>make a ephemeral named relation available by name in SPI queries</refpurpose>
+ </refnamediv>
+
+ <refsynopsisdiv>
+<synopsis>
+int SPI_register_relation(EphemeralNamedRelation <parameter>enr</parameter>)
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <function>SPI_register_relation</function> makes an ephemeral named
+   relation, with associated information, available to queries planned and
+   executed through the current SPI connection.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Arguments</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><literal>EphemeralNamedRelation <parameter>enr</parameter></literal></term>
+    <listitem>
+     <para>
+      the ephemeral named relation registry entry
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Return Value</title>
+
+  <para>
+   If the execution of the command was successful then the following
+   (nonnegative) value will be returned:
+
+   <variablelist>
+    <varlistentry>
+     <term><symbol>SPI_OK_REL_REGISTER</symbol></term>
+     <listitem>
+      <para>
+       if the relation has been successfully registered by name
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+
+  <para>
+   On error, one of the following negative values is returned:
+
+   <variablelist>
+    <varlistentry>
+     <term><symbol>SPI_ERROR_ARGUMENT</symbol></term>
+     <listitem>
+      <para>
+       if <parameter>enr</parameter> is <symbol>NULL</symbol> or its
+       <varname>name</varname> field is <symbol>NULL</symbol>
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><symbol>SPI_ERROR_UNCONNECTED</symbol></term>
+     <listitem>
+      <para>
+       if called from an unconnected procedure
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><symbol>SPI_ERROR_REL_DUPLICATE</symbol></term>
+     <listitem>
+      <para>
+       if the name specified in the <varname>name</varname> field of
+       <parameter>enr</parameter> is already registered for this connection
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+ </refsect1>
+</refentry>
+
+<!-- *********************************************** -->
+
+<refentry id="spi-spi-unregister-relation">
+ <indexterm><primary>SPI_unregister_relation</primary></indexterm>
+
+ <indexterm>
+  <primary>ephemeral named relation</primary>
+  <secondary>unregistering from SPI</secondary>
+ </indexterm>
+
+ <refmeta>
+  <refentrytitle>SPI_unregister_relation</refentrytitle>
+  <manvolnum>3</manvolnum>
+ </refmeta>
+
+ <refnamediv>
+  <refname>SPI_unregister_relation</refname>
+  <refpurpose>remove an ephemeral named relation from the registry</refpurpose>
+ </refnamediv>
+
+ <refsynopsisdiv>
+<synopsis>
+int SPI_unregister_relation(const char * <parameter>name</parameter>)
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <function>SPI_unregister_relation</function> removes an ephemeral named
+   relation from the registry for the current connection.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Arguments</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><literal>const char * <parameter>name</parameter></literal></term>
+    <listitem>
+     <para>
+      the relation registry entry name
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Return Value</title>
+
+  <para>
+   If the execution of the command was successful then the following
+   (nonnegative) value will be returned:
+
+   <variablelist>
+    <varlistentry>
+     <term><symbol>SPI_OK_REL_UNREGISTER</symbol></term>
+     <listitem>
+      <para>
+       if the tuplestore has been successfully removed from the registry
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+
+  <para>
+   On error, one of the following negative values is returned:
+
+   <variablelist>
+    <varlistentry>
+     <term><symbol>SPI_ERROR_ARGUMENT</symbol></term>
+     <listitem>
+      <para>
+       if <parameter>name</parameter> is <symbol>NULL</symbol>
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><symbol>SPI_ERROR_UNCONNECTED</symbol></term>
+     <listitem>
+      <para>
+       if called from an unconnected procedure
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><symbol>SPI_ERROR_REL_NOT_FOUND</symbol></term>
+     <listitem>
+      <para>
+       if <parameter>name</parameter> is not found in the registry for the
+       current connection
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+ </refsect1>
+</refentry>
+
+<!-- *********************************************** -->
+
+<refentry id="spi-spi-register-trigger-data">
+ <indexterm><primary>SPI_register_trigger_data</primary></indexterm>
+
+ <indexterm>
+  <primary>ephemeral named relation</primary>
+  <secondary>registering with SPI</secondary>
+ </indexterm>
+
+ <indexterm>
+  <primary>transition tables</primary>
+  <secondary>implementation in PLs</secondary>
+ </indexterm>
+
+ <refmeta>
+  <refentrytitle>SPI_register_trigger_data</refentrytitle>
+  <manvolnum>3</manvolnum>
+ </refmeta>
+
+ <refnamediv>
+  <refname>SPI_register_trigger_data</refname>
+  <refpurpose>make ephemeral trigger data available in SPI queries</refpurpose>
+ </refnamediv>
+
+ <refsynopsisdiv>
+<synopsis>
+int SPI_register_trigger_data(TriggerData *<parameter>tdata</parameter>)
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <function>SPI_register_trigger_data</function> makes any ephemeral
+   relations captured by a trigger available to queries planned and executed
+   through the current SPI connection.  Currently, this means the transition
+   tables captured by an <literal>AFTER</literal> trigger defined with a
+   <literal>REFERENCING OLD/NEW TABLE AS</literal> ... clause.  This function
+   should be called by a PL trigger handler function after connecting.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Arguments</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><literal>TriggerData *<parameter>tdata</parameter></literal></term>
+    <listitem>
+     <para>
+       the <structname>TriggerData</structname> object passed to a trigger
+       handler function as <literal>fcinfo->context</literal>
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Return Value</title>
+
+  <para>
+   If the execution of the command was successful then the following
+   (nonnegative) value will be returned:
+
+   <variablelist>
+    <varlistentry>
+     <term><symbol>SPI_OK_TD_REGISTER</symbol></term>
+     <listitem>
+      <para>
+       if the captured trigger data (if any) has been successfully registered
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+
+  <para>
+   On error, one of the following negative values is returned:
+
+   <variablelist>
+    <varlistentry>
+     <term><symbol>SPI_ERROR_ARGUMENT</symbol></term>
+     <listitem>
+      <para>
+       if <parameter>tdata</parameter> is <symbol>NULL</symbol>
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><symbol>SPI_ERROR_UNCONNECTED</symbol></term>
+     <listitem>
+      <para>
+       if called from an unconnected procedure
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><symbol>SPI_ERROR_REL_DUPLICATE</symbol></term>
+     <listitem>
+      <para>
+       if the name of any trigger data transient relation is already
+       registered for this connection
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+ </refsect1>
+</refentry>
+
+<!-- *********************************************** -->
+
 </sect1>
 
 <sect1 id="spi-interface-support">
@@ -2891,7 +3118,7 @@ int SPI_fnumber(TupleDesc <parameter>rowdesc</parameter>, const char * <paramete
   <title>Return Value</title>
 
   <para>
-   Column number (count starts at 1), or
+   Column number (count starts at 1 for user-defined columns), or
    <symbol>SPI_ERROR_NOATTRIBUTE</symbol> if the named column was not
    found.
   </para>
@@ -3361,17 +3588,8 @@ char * SPI_getnspname(Relation <parameter>rel</parameter>)
    <quote>upper executor context</quote>, that is, the memory context
    that was current when <function>SPI_connect</function> was called,
    which is precisely the right context for a value returned from your
-   procedure.
-  </para>
-
-  <para>
-   If <function>SPI_palloc</function> is called while the procedure is
-   not connected to SPI, then it acts the same as a normal
-   <function>palloc</function>.  Before a procedure connects to the
-   SPI manager, the current memory context is the upper executor
-   context, so all allocations made by the procedure via
-   <function>palloc</function> or by SPI utility functions are made in
-   this context.
+   procedure.  Several of the other utility procedures described in
+   this section also return objects created in the upper executor context.
   </para>
 
   <para>
@@ -3379,22 +3597,12 @@ char * SPI_getnspname(Relation <parameter>rel</parameter>)
    context of the procedure, which is created by
    <function>SPI_connect</function>, is made the current context.  All
    allocations made by <function>palloc</function>,
-   <function>repalloc</function>, or SPI utility functions (except for
-   <function>SPI_copytuple</function>,
-   <function>SPI_returntuple</function>,
-   <function>SPI_modifytuple</function>, and
-   <function>SPI_palloc</function>) are made in this context.  When a
+   <function>repalloc</function>, or SPI utility functions (except as
+   described in this section) are made in this context.  When a
    procedure disconnects from the SPI manager (via
    <function>SPI_finish</function>) the current context is restored to
    the upper executor context, and all allocations made in the
    procedure memory context are freed and cannot be used any more.
-  </para>
-
-  <para>
-   All functions described in this section can be used by both
-   connected and unconnected procedures.  In an unconnected procedure,
-   they act the same as the underlying ordinary server functions
-   (<function>palloc</>, etc.).
   </para>
 
 <!-- *********************************************** -->
@@ -3424,6 +3632,11 @@ void * SPI_palloc(Size <parameter>size</parameter>)
   <para>
    <function>SPI_palloc</function> allocates memory in the upper
    executor context.
+  </para>
+
+  <para>
+   This function can only be used while connected to SPI.
+   Otherwise, it throws an error.
   </para>
  </refsect1>
 
@@ -3604,6 +3817,12 @@ HeapTuple SPI_copytuple(HeapTuple <parameter>row</parameter>)
    row from a trigger.  In a function declared to return a composite
    type, use <function>SPI_returntuple</function> instead.
   </para>
+
+  <para>
+   This function can only be used while connected to SPI.
+   Otherwise, it returns NULL and sets <varname>SPI_result</varname> to
+   <symbol>SPI_ERROR_UNCONNECTED</symbol>.
+  </para>
  </refsect1>
 
  <refsect1>
@@ -3625,8 +3844,8 @@ HeapTuple SPI_copytuple(HeapTuple <parameter>row</parameter>)
   <title>Return Value</title>
 
   <para>
-   the copied row; <symbol>NULL</symbol> only if
-   <parameter>tuple</parameter> is <symbol>NULL</symbol>
+   the copied row, or <symbol>NULL</symbol> on error
+   (see <varname>SPI_result</varname> for an error indication)
   </para>
  </refsect1>
 </refentry>
@@ -3660,6 +3879,12 @@ HeapTupleHeader SPI_returntuple(HeapTuple <parameter>row</parameter>, TupleDesc 
    the upper executor context, returning it in the form of a row type <type>Datum</type>.
    The returned pointer need only be converted to <type>Datum</type> via <function>PointerGetDatum</function>
    before returning.
+  </para>
+
+  <para>
+   This function can only be used while connected to SPI.
+   Otherwise, it returns NULL and sets <varname>SPI_result</varname> to
+   <symbol>SPI_ERROR_UNCONNECTED</symbol>.
   </para>
 
   <para>
@@ -3698,10 +3923,9 @@ HeapTupleHeader SPI_returntuple(HeapTuple <parameter>row</parameter>, TupleDesc 
   <title>Return Value</title>
 
   <para>
-   <type>HeapTupleHeader</type> pointing to copied row;
-   <symbol>NULL</symbol> only if
-   <parameter>row</parameter> or <parameter>rowdesc</parameter> is
-   <symbol>NULL</symbol>
+   <type>HeapTupleHeader</type> pointing to copied row,
+   or <symbol>NULL</symbol> on error
+   (see <varname>SPI_result</varname> for an error indication)
   </para>
  </refsect1>
 </refentry>
@@ -3735,6 +3959,13 @@ HeapTuple SPI_modifytuple(Relation <parameter>rel</parameter>, HeapTuple <parame
    <function>SPI_modifytuple</function> creates a new row by
    substituting new values for selected columns, copying the original
    row's columns at other positions.  The input row is not modified.
+   The new row is returned in the upper executor context.
+  </para>
+
+  <para>
+   This function can only be used while connected to SPI.
+   Otherwise, it returns NULL and sets <varname>SPI_result</varname> to
+   <symbol>SPI_ERROR_UNCONNECTED</symbol>.
   </para>
  </refsect1>
 
@@ -3820,8 +4051,8 @@ HeapTuple SPI_modifytuple(Relation <parameter>rel</parameter>, HeapTuple <parame
 
   <para>
    new row with modifications, allocated in the upper executor
-   context; <symbol>NULL</symbol> only if <parameter>row</parameter>
-   is <symbol>NULL</symbol>
+   context, or <symbol>NULL</symbol> on error
+   (see <varname>SPI_result</varname> for an error indication)
   </para>
 
   <para>
@@ -3844,8 +4075,17 @@ HeapTuple SPI_modifytuple(Relation <parameter>rel</parameter>, HeapTuple <parame
      <listitem>
       <para>
        if <parameter>colnum</> contains an invalid column number (less
-       than or equal to 0 or greater than the number of column in
+       than or equal to 0 or greater than the number of columns in
        <parameter>row</>)
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><symbol>SPI_ERROR_UNCONNECTED</symbol></term>
+     <listitem>
+      <para>
+       if SPI is not active
       </para>
      </listitem>
     </varlistentry>

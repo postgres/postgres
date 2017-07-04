@@ -3,7 +3,7 @@
  * storage.c
  *	  code to create and destroy physical storage for relations
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -58,7 +58,7 @@ typedef struct PendingRelDelete
 	BackendId	backend;		/* InvalidBackendId if not a temp rel */
 	bool		atCommit;		/* T=delete at commit; F=delete at abort */
 	int			nestLevel;		/* xact nesting level of request */
-	struct PendingRelDelete *next;		/* linked-list link */
+	struct PendingRelDelete *next;	/* linked-list link */
 } PendingRelDelete;
 
 static PendingRelDelete *pendingDeletes = NULL; /* head of linked list */

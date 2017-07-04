@@ -224,6 +224,27 @@ SELECT relname, relkind, reloptions FROM pg_class
                      'mysecview3'::regclass, 'mysecview4'::regclass)
        ORDER BY relname;
 
+-- Check that unknown literals are converted to "text" in CREATE VIEW,
+-- so that we don't end up with unknown-type columns.
+
+CREATE VIEW unspecified_types AS
+  SELECT 42 as i, 42.5 as num, 'foo' as u, 'foo'::unknown as u2, null as n;
+\d+ unspecified_types
+SELECT * FROM unspecified_types;
+
+-- This test checks that proper typmods are assigned in a multi-row VALUES
+
+CREATE VIEW tt1 AS
+  SELECT * FROM (
+    VALUES
+       ('abc'::varchar(3), '0123456789', 42, 'abcd'::varchar(4)),
+       ('0123456789', 'abc'::varchar(3), 42.12, 'abc'::varchar(4))
+  ) vv(a,b,c,d);
+\d+ tt1
+SELECT * FROM tt1;
+SELECT a::varchar(3) FROM tt1;
+DROP VIEW tt1;
+
 -- Test view decompilation in the face of relation renaming conflicts
 
 CREATE TABLE tt1 (f1 int, f2 int, f3 text);
@@ -436,11 +457,11 @@ alter table tt11 add column z int;
 select pg_get_viewdef('vv6', true);
 
 --
--- Check some cases involving dropped columns in a function's rowtype result
+-- Check cases involving dropped/altered columns in a function's rowtype result
 --
 
 create table tt14t (f1 text, f2 text, f3 text, f4 text);
-insert into tt14t values('foo', 'bar', 'baz', 'quux');
+insert into tt14t values('foo', 'bar', 'baz', '42');
 
 alter table tt14t drop column f2;
 
@@ -462,12 +483,31 @@ create view tt14v as select t.* from tt14f() t;
 select pg_get_viewdef('tt14v', true);
 select * from tt14v;
 
+begin;
+
 -- this perhaps should be rejected, but it isn't:
 alter table tt14t drop column f3;
 
--- f3 is still in the view but will read as nulls
+-- f3 is still in the view ...
 select pg_get_viewdef('tt14v', true);
+-- but will fail at execution
+select f1, f4 from tt14v;
 select * from tt14v;
+
+rollback;
+
+begin;
+
+-- this perhaps should be rejected, but it isn't:
+alter table tt14t alter column f4 type integer using f4::integer;
+
+-- f4 is still in the view ...
+select pg_get_viewdef('tt14v', true);
+-- but will fail at execution
+select f1, f3 from tt14v;
+select * from tt14v;
+
+rollback;
 
 -- check display of whole-row variables in some corner cases
 

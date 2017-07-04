@@ -3,7 +3,7 @@
  * arch-ppc.h
  *	  Atomic operations considerations specific to PowerPC
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * NOTES:
@@ -24,3 +24,6 @@
 #define pg_read_barrier_impl()		__asm__ __volatile__ ("lwsync" : : : "memory")
 #define pg_write_barrier_impl()		__asm__ __volatile__ ("lwsync" : : : "memory")
 #endif
+
+/* per architecture manual doubleword accesses have single copy atomicity */
+#define PG_HAVE_8BYTE_SINGLE_COPY_ATOMICITY

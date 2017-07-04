@@ -4,7 +4,7 @@
  *	  PREPARE, EXECUTE and DEALLOCATE commands, and prepared-stmt storage
  *
  *
- * Copyright (c) 2002-2016, PostgreSQL Global Development Group
+ * Copyright (c) 2002-2017, PostgreSQL Global Development Group
  *
  * src/include/commands/prepare.h
  *
@@ -28,21 +28,22 @@ typedef struct
 {
 	/* dynahash.c requires key to be first field */
 	char		stmt_name[NAMEDATALEN];
-	CachedPlanSource *plansource;		/* the actual cached plan */
+	CachedPlanSource *plansource;	/* the actual cached plan */
 	bool		from_sql;		/* prepared via SQL, not FE/BE protocol? */
 	TimestampTz prepare_time;	/* the time when the stmt was prepared */
 } PreparedStatement;
 
 
 /* Utility statements PREPARE, EXECUTE, DEALLOCATE, EXPLAIN EXECUTE */
-extern void PrepareQuery(PrepareStmt *stmt, const char *queryString);
+extern void PrepareQuery(PrepareStmt *stmt, const char *queryString,
+			 int stmt_location, int stmt_len);
 extern void ExecuteQuery(ExecuteStmt *stmt, IntoClause *intoClause,
 			 const char *queryString, ParamListInfo params,
 			 DestReceiver *dest, char *completionTag);
 extern void DeallocateQuery(DeallocateStmt *stmt);
 extern void ExplainExecuteQuery(ExecuteStmt *execstmt, IntoClause *into,
-					ExplainState *es,
-					const char *queryString, ParamListInfo params);
+					ExplainState *es, const char *queryString,
+					ParamListInfo params, QueryEnvironment *queryEnv);
 
 /* Low-level access to stored prepared statements */
 extern void StorePreparedStatement(const char *stmt_name,
@@ -56,4 +57,4 @@ extern List *FetchPreparedStatementTargetList(PreparedStatement *stmt);
 
 extern void DropAllPreparedStatements(void);
 
-#endif   /* PREPARE_H */
+#endif							/* PREPARE_H */

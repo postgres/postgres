@@ -3,7 +3,7 @@
  * fork_process.h
  *	  Exports from postmaster/fork_process.c.
  *
- * Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Copyright (c) 1996-2017, PostgreSQL Global Development Group
  *
  * src/include/postmaster/fork_process.h
  *
@@ -14,4 +14,4 @@
 
 extern pid_t fork_process(void);
 
-#endif   /* FORK_PROCESS_H */
+#endif							/* FORK_PROCESS_H */

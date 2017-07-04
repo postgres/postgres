@@ -5,7 +5,7 @@
  *	  along with the relation's initial contents.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_foreign_data_wrapper.h
@@ -61,4 +61,4 @@ typedef FormData_pg_foreign_data_wrapper *Form_pg_foreign_data_wrapper;
 #define Anum_pg_foreign_data_wrapper_fdwacl			5
 #define Anum_pg_foreign_data_wrapper_fdwoptions		6
 
-#endif   /* PG_FOREIGN_DATA_WRAPPER_H */
+#endif							/* PG_FOREIGN_DATA_WRAPPER_H */

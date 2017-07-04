@@ -4,7 +4,7 @@
  *	definition of dictionaries for tsearch
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_ts_dict.h
@@ -63,4 +63,4 @@ typedef FormData_pg_ts_dict *Form_pg_ts_dict;
 DATA(insert OID = 3765 ( "simple" PGNSP PGUID 3727 _null_));
 DESCR("simple dictionary: just lower case and check for stopword");
 
-#endif   /* PG_TS_DICT_H */
+#endif							/* PG_TS_DICT_H */

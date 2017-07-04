@@ -2,7 +2,7 @@
  * pg_db_role_setting.c
  *		Routines to support manipulation of the pg_db_role_setting relation
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -88,13 +88,10 @@ AlterSetting(Oid databaseid, Oid roleid, VariableSetStmt *setstmt)
 
 				newtuple = heap_modify_tuple(tuple, RelationGetDescr(rel),
 											 repl_val, repl_null, repl_repl);
-				simple_heap_update(rel, &tuple->t_self, newtuple);
-
-				/* Update indexes */
-				CatalogUpdateIndexes(rel, newtuple);
+				CatalogTupleUpdate(rel, &tuple->t_self, newtuple);
 			}
 			else
-				simple_heap_delete(rel, &tuple->t_self);
+				CatalogTupleDelete(rel, &tuple->t_self);
 		}
 	}
 	else if (HeapTupleIsValid(tuple))
@@ -129,13 +126,10 @@ AlterSetting(Oid databaseid, Oid roleid, VariableSetStmt *setstmt)
 
 			newtuple = heap_modify_tuple(tuple, RelationGetDescr(rel),
 										 repl_val, repl_null, repl_repl);
-			simple_heap_update(rel, &tuple->t_self, newtuple);
-
-			/* Update indexes */
-			CatalogUpdateIndexes(rel, newtuple);
+			CatalogTupleUpdate(rel, &tuple->t_self, newtuple);
 		}
 		else
-			simple_heap_delete(rel, &tuple->t_self);
+			CatalogTupleDelete(rel, &tuple->t_self);
 	}
 	else if (valuestr)
 	{
@@ -155,10 +149,7 @@ AlterSetting(Oid databaseid, Oid roleid, VariableSetStmt *setstmt)
 		values[Anum_pg_db_role_setting_setconfig - 1] = PointerGetDatum(a);
 		newtuple = heap_form_tuple(RelationGetDescr(rel), values, nulls);
 
-		simple_heap_insert(rel, newtuple);
-
-		/* Update indexes */
-		CatalogUpdateIndexes(rel, newtuple);
+		CatalogTupleInsert(rel, newtuple);
 	}
 
 	InvokeObjectPostAlterHookArg(DbRoleSettingRelationId,
@@ -208,7 +199,7 @@ DropSetting(Oid databaseid, Oid roleid)
 	scan = heap_beginscan_catalog(relsetting, numkeys, keys);
 	while (HeapTupleIsValid(tup = heap_getnext(scan, ForwardScanDirection)))
 	{
-		simple_heap_delete(relsetting, &tup->t_self);
+		CatalogTupleDelete(relsetting, &tup->t_self);
 	}
 	heap_endscan(scan);
 

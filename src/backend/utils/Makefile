@@ -16,11 +16,12 @@ catalogdir  = $(top_srcdir)/src/backend/catalog
 
 include $(top_srcdir)/src/backend/common.mk
 
-all: errcodes.h fmgroids.h probes.h
+all: errcodes.h fmgroids.h fmgrprotos.h probes.h
 
-$(SUBDIRS:%=%-recursive): fmgroids.h
+$(SUBDIRS:%=%-recursive): fmgroids.h fmgrprotos.h
 
 # see explanation in ../parser/Makefile
+fmgrprotos.h: fmgroids.h ;
 fmgroids.h: fmgrtab.c ;
 
 fmgrtab.c: Gen_fmgrtab.pl $(catalogdir)/Catalog.pm $(top_srcdir)/src/include/catalog/pg_proc.h
@@ -43,10 +44,10 @@ else
 endif
 
 
-# fmgroids.h, fmgrtab.c and errcodes.h are in the distribution tarball, so they
-# are not cleaned here.
+# fmgroids.h, fmgrprotos.h, fmgrtab.c and errcodes.h are in the
+# distribution tarball, so they are not cleaned here.
 clean:
 	rm -f probes.h
 
 maintainer-clean: clean
-	rm -f fmgroids.h fmgrtab.c errcodes.h
+	rm -f fmgroids.h fmgrprotos.h fmgrtab.c errcodes.h

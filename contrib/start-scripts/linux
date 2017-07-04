@@ -60,8 +60,7 @@ PGLOG="$PGDATA/serverlog"
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 
 # What to use to start up the postmaster.  (If you want the script to wait
-# until the server has started, you could use "pg_ctl start -w" here.
-# But without -w, pg_ctl adds no value.)
+# until the server has started, you could use "pg_ctl start" here.)
 DAEMON="$prefix/bin/postmaster"
 
 # What to use to shut down the postmaster
@@ -97,21 +96,21 @@ case $1 in
 	;;
   stop)
 	echo -n "Stopping PostgreSQL: "
-	su - $PGUSER -c "$PGCTL stop -D '$PGDATA' -s -m fast"
+	su - $PGUSER -c "$PGCTL stop -D '$PGDATA' -s"
 	echo "ok"
 	;;
   restart)
 	echo -n "Restarting PostgreSQL: "
-	su - $PGUSER -c "$PGCTL stop -D '$PGDATA' -s -m fast -w"
+	su - $PGUSER -c "$PGCTL stop -D '$PGDATA' -s"
 	test -e "$PG_OOM_ADJUST_FILE" && echo "$PG_MASTER_OOM_SCORE_ADJ" > "$PG_OOM_ADJUST_FILE"
 	su - $PGUSER -c "$DAEMON_ENV $DAEMON -D '$PGDATA' &" >>$PGLOG 2>&1
 	echo "ok"
 	;;
   reload)
-        echo -n "Reload PostgreSQL: "
-        su - $PGUSER -c "$PGCTL reload -D '$PGDATA' -s"
-        echo "ok"
-        ;;
+	echo -n "Reload PostgreSQL: "
+	su - $PGUSER -c "$PGCTL reload -D '$PGDATA' -s"
+	echo "ok"
+	;;
   status)
 	su - $PGUSER -c "$PGCTL status -D '$PGDATA'"
 	;;

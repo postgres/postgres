@@ -20,6 +20,7 @@ del /s /q src\bin\win32ver.rc 2> NUL
 del /s /q src\interfaces\win32ver.rc 2> NUL
 if exist src\backend\win32ver.rc del /q src\backend\win32ver.rc
 if exist src\backend\replication\libpqwalreceiver\win32ver.rc del /q src\backend\replication\libpqwalreceiver\win32ver.rc
+if exist src\backend\replication\pgoutput\win32ver.rc del /q src\backend\replication\pgoutput\win32ver.rc
 if exist src\backend\snowball\win32ver.rc del /q src\backend\snowball\win32ver.rc
 if exist src\interfaces\ecpg\test\win32ver.rc del /q src\interfaces\ecpg\test\win32ver.rc
 if exist src\pl\plperl\win32ver.rc del /q src\pl\plperl\win32ver.rc
@@ -42,9 +43,11 @@ if exist src\include\dynloader.h del /q src\include\dynloader.h
 if %DIST%==1 if exist src\backend\parser\gram.h del /q src\backend\parser\gram.h
 if exist src\include\utils\errcodes.h del /q src\include\utils\errcodes.h
 if exist src\include\utils\fmgroids.h del /q src\include\utils\fmgroids.h
+if exist src\include\utils\fmgrprotos.h del /q src\include\utils\fmgrprotos.h
 if exist src\include\utils\probes.h del /q src\include\utils\probes.h
 
 if %DIST%==1 if exist src\backend\utils\fmgroids.h del /q src\backend\utils\fmgroids.h
+if %DIST%==1 if exist src\backend\utils\fmgrprotos.h del /q src\backend\utils\fmgrprotos.h
 if %DIST%==1 if exist src\backend\utils\fmgrtab.c del /q src\backend\utils\fmgrtab.c
 if %DIST%==1 if exist src\backend\catalog\postgres.bki del /q src\backend\catalog\postgres.bki
 if %DIST%==1 if exist src\backend\catalog\postgres.description del /q src\backend\catalog\postgres.description
@@ -107,6 +110,6 @@ REM for /r %%f in (*.sql) do if exist %%f.in del %%f
 cd %D%
 
 REM Clean up ecpg regression test files
-msbuild /NoLogo ecpg_regression.proj /t:clean /v:q
+msbuild ecpg_regression.proj /NoLogo /v:q %MSBFLAGS% /t:clean
 
 goto :eof

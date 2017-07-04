@@ -27,13 +27,14 @@ and similarly additional source files rege_*.c that are #include'd in
 regexec.  This was done to avoid exposing internal symbols globally;
 all functions not meant to be part of the library API are static.
 
-(Actually the above is a lie in one respect: there is one more global
-symbol, pg_set_regex_collation in regcomp.  It is not meant to be part of
-the API, but it has to be global because both regcomp and regexec call it.
-It'd be better to get rid of that, as well as the static variables it
-sets, in favor of keeping the needed locale state in the regex structs.
-We have not done this yet for lack of a design for how to add
-application-specific state to the structs.)
+(Actually the above is a lie in one respect: there are two more global
+symbols, pg_set_regex_collation and pg_reg_getcolor in regcomp.  These are
+not meant to be part of the API, but they have to be global because both
+regcomp and regexec call them.  It'd be better to get rid of
+pg_set_regex_collation, as well as the static variables it sets, in favor of
+keeping the needed locale state in the regex structs.  We have not done this
+yet for lack of a design for how to add application-specific state to the
+structs.)
 
 What's where in src/backend/regex/:
 
@@ -274,28 +275,65 @@ colors:
   an existing color has to be subdivided.
 
 The last two of these are handled with the "struct colordesc" array and
-the "colorchain" links in NFA arc structs.  The color map proper (that
-is, the per-character lookup array) is handled as a multi-level tree,
-with each tree level indexed by one byte of a character's value.  The
-code arranges to not have more than one copy of bottom-level tree pages
-that are all-the-same-color.
+the "colorchain" links in NFA arc structs.
 
-Unfortunately, this design does not seem terribly efficient for common
-cases such as a tree in which all Unicode letters are colored the same,
-because there aren't that many places where we get a whole page all the
-same color, except at the end of the map.  (It also strikes me that given
-PG's current restrictions on the range of Unicode values, we could use a
-3-level rather than 4-level tree; but there's not provision for that in
-regguts.h at the moment.)
+Ideally, we'd do the first two operations using a simple linear array
+storing the current color assignment for each character code.
+Unfortunately, that's not terribly workable for large charsets such as
+Unicode.  Our solution is to divide the color map into two parts.  A simple
+linear array is used for character codes up to MAX_SIMPLE_CHR, which can be
+chosen large enough to include all popular characters (so that the
+significantly-slower code paths about to be described are seldom invoked).
+Characters above that need be considered at compile time only if they
+appear explicitly in the regex pattern.  We store each such mentioned
+character or character range as an entry in the "colormaprange" array in
+the colormap.  (Overlapping ranges are split into unique subranges, so that
+each range in the finished list needs only a single color that describes
+all its characters.)  When mapping a character above MAX_SIMPLE_CHR to a
+color at runtime, we search this list of ranges explicitly.
 
-A bigger problem is that it just doesn't seem very reasonable to have to
-consider each Unicode letter separately at regex parse time for a regex
-such as "\w"; more than likely, a huge percentage of those codes will
-never be seen at runtime.  We need to fix things so that locale-based
-character classes are somehow processed "symbolically" without making a
-full expansion of their contents at parse time.  This would mean that we'd
-have to be ready to call iswalpha() at runtime, but if that only happens
-for high-code-value characters, it shouldn't be a big performance hit.
+That's still not quite enough, though, because of locale-dependent
+character classes such as [[:alpha:]].  In Unicode locales these classes
+may have thousands of entries that are above MAX_SIMPLE_CHR, and we
+certainly don't want to be searching large colormaprange arrays at runtime.
+Nor do we even want to spend the time to initialize cvec structures that
+exhaustively describe all of those characters.  Our solution is to compute
+exact per-character colors at regex compile time only up to MAX_SIMPLE_CHR.
+For characters above that, we apply the <ctype.h> or <wctype.h> lookup
+functions at runtime for each locale-dependent character class used in the
+regex pattern, constructing a bitmap that describes which classes the
+runtime character belongs to.  The per-character-range data structure
+mentioned above actually holds, for each range, a separate color entry
+for each possible combination of character class properties.  That is,
+the color map for characters above MAX_SIMPLE_CHR is really a 2-D array,
+whose rows correspond to high characters or character ranges that are
+explicitly mentioned in the regex pattern, and whose columns correspond
+to sets of the locale-dependent character classes that are used in the
+regex.
+
+As an example, given the pattern '\w\u1234[\U0001D100-\U0001D1FF]'
+(and supposing that MAX_SIMPLE_CHR is less than 0x1234), we will need
+a high color map with three rows.  One row is for the single character
+U+1234 (represented as a single-element range), one is for the range
+U+1D100..U+1D1FF, and the other row represents all remaining high
+characters.  The color map has two columns, one for characters that
+satisfy iswalnum() and one for those that don't.
+
+We build this color map in parallel with scanning the regex.  Each time
+we detect a new explicit high character (or range) or a locale-dependent
+character class, we split existing entry(s) in the high color map so that
+characters we need to be able to distinguish will have distinct entries
+that can be given separate colors.  Often, though, single entries in the
+high color map will represent very large sets of characters.
+
+If there are both explicit high characters/ranges and locale-dependent
+character classes, we may have entries in the high color map array that
+have non-WHITE colors but don't actually represent any real characters.
+(For example, in a row representing a singleton range, only one of the
+columns could possibly be a live entry; it's the one matching the actual
+locale properties for that single character.)  We don't currently make
+any effort to reclaim such colors.  In principle it could be done, but
+it's not clear that it's worth the trouble.
 
 
 Detailed semantics of an NFA

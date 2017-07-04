@@ -86,16 +86,19 @@ int
 main(int argc, char *argv[])
 {
 	ControlFileData *ControlFile;
+	bool		crc_ok;
 	char	   *DataDir = NULL;
 	time_t		time_tmp;
 	char		pgctime_str[128];
 	char		ckpttime_str[128];
 	char		sysident_str[32];
+	char		mock_auth_nonce_str[MOCK_AUTH_NONCE_LEN * 2 + 1];
 	const char *strftime_fmt = "%c";
 	const char *progname;
 	XLogSegNo	segno;
 	char		xlogfilename[MAXFNAMELEN];
 	int			c;
+	int			i;
 
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pg_controldata"));
 
@@ -155,7 +158,11 @@ main(int argc, char *argv[])
 	}
 
 	/* get a copy of the control file */
-	ControlFile = get_controlfile(DataDir, progname);
+	ControlFile = get_controlfile(DataDir, progname, &crc_ok);
+	if (!crc_ok)
+		printf(_("WARNING: Calculated CRC checksum does not match value stored in file.\n"
+				 "Either the file is corrupt, or it has a different layout than this program\n"
+				 "is expecting.  The results below are untrustworthy.\n\n"));
 
 	/*
 	 * This slightly-chintzy coding will work as long as the control file
@@ -181,11 +188,15 @@ main(int argc, char *argv[])
 	XLogFileName(xlogfilename, ControlFile->checkPointCopy.ThisTimeLineID, segno);
 
 	/*
-	 * Format system_identifier separately to keep platform-dependent format
-	 * code out of the translatable message string.
+	 * Format system_identifier and mock_authentication_nonce separately to
+	 * keep platform-dependent format code out of the translatable message
+	 * string.
 	 */
 	snprintf(sysident_str, sizeof(sysident_str), UINT64_FORMAT,
 			 ControlFile->system_identifier);
+	for (i = 0; i < MOCK_AUTH_NONCE_LEN; i++)
+		snprintf(&mock_auth_nonce_str[i * 2], 3, "%02x",
+				 (unsigned char) ControlFile->mock_authentication_nonce[i]);
 
 	printf(_("pg_control version number:            %u\n"),
 		   ControlFile->pg_control_version);
@@ -288,13 +299,16 @@ main(int argc, char *argv[])
 		   ControlFile->toast_max_chunk_size);
 	printf(_("Size of a large-object chunk:         %u\n"),
 		   ControlFile->loblksize);
+	/* This is no longer configurable, but users may still expect to see it: */
 	printf(_("Date/time type storage:               %s\n"),
-		   (ControlFile->enableIntTimes ? _("64-bit integers") : _("floating-point numbers")));
+		   _("64-bit integers"));
 	printf(_("Float4 argument passing:              %s\n"),
 		   (ControlFile->float4ByVal ? _("by value") : _("by reference")));
 	printf(_("Float8 argument passing:              %s\n"),
 		   (ControlFile->float8ByVal ? _("by value") : _("by reference")));
 	printf(_("Data page checksum version:           %u\n"),
 		   ControlFile->data_checksum_version);
+	printf(_("Mock authentication nonce:            %s\n"),
+		   mock_auth_nonce_str);
 	return 0;
 }

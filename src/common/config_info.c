@@ -4,7 +4,7 @@
  *		Common code for pg_config output
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -21,7 +21,6 @@
 #endif
 
 #include "common/config_info.h"
-#include "miscadmin.h"
 
 
 /*

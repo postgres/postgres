@@ -3,7 +3,7 @@
  * arch-ia64.h
  *	  Atomic operations considerations specific to intel itanium
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * NOTES:
@@ -24,3 +24,6 @@
 #elif defined(__hpux)
 #	define pg_memory_barrier_impl()		_Asm_mf()
 #endif
+
+/* per architecture manual doubleword accesses have single copy atomicity */
+#define PG_HAVE_8BYTE_SINGLE_COPY_ATOMICITY

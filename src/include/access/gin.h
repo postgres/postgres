@@ -2,7 +2,7 @@
  * gin.h
  *	  Public header file for Generalized Inverted Index access method.
  *
- *	Copyright (c) 2006-2016, PostgreSQL Global Development Group
+ *	Copyright (c) 2006-2017, PostgreSQL Global Development Group
  *
  *	src/include/access/gin.h
  *--------------------------------------------------------------------------
@@ -33,7 +33,7 @@
 #define GIN_SEARCH_MODE_DEFAULT			0
 #define GIN_SEARCH_MODE_INCLUDE_EMPTY	1
 #define GIN_SEARCH_MODE_ALL				2
-#define GIN_SEARCH_MODE_EVERYTHING		3		/* for internal use only */
+#define GIN_SEARCH_MODE_EVERYTHING		3	/* for internal use only */
 
 /*
  * GinStatsData represents stats data for planner use
@@ -73,11 +73,4 @@ extern int	gin_pending_list_limit;
 extern void ginGetStats(Relation index, GinStatsData *stats);
 extern void ginUpdateStats(Relation index, const GinStatsData *stats);
 
-/* ginxlog.c */
-extern void gin_redo(XLogReaderState *record);
-extern void gin_desc(StringInfo buf, XLogReaderState *record);
-extern const char *gin_identify(uint8 info);
-extern void gin_xlog_startup(void);
-extern void gin_xlog_cleanup(void);
-
-#endif   /* GIN_H */
+#endif							/* GIN_H */

@@ -26,10 +26,10 @@ COPY hs1 TO '/tmp/copy_test';
 \! cat /tmp/copy_test
 1
 -- Access sequence directly
-select min_value as sequence_min_value from hsseq;
- sequence_min_value 
---------------------
-                  1
+select is_called from hsseq;
+ is_called 
+-----------
+ f
 (1 row)
 
 -- Transactions

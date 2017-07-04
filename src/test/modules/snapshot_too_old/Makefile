@@ -1,8 +1,10 @@
 # src/test/modules/snapshot_too_old/Makefile
 
-EXTRA_CLEAN = ./isolation_output
+# Note: because we don't tell the Makefile there are any regression tests,
+# we have to clean those result files explicitly
+EXTRA_CLEAN = $(pg_regress_clean_files)
 
-ISOLATIONCHECKS=sto_using_cursor sto_using_select
+ISOLATIONCHECKS=sto_using_cursor sto_using_select sto_using_hash_index
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config
@@ -32,10 +34,8 @@ submake-test_snapshot_too_old:
 	$(MAKE) -C $(top_builddir)/src/test/modules/snapshot_too_old
 
 isolationcheck: | submake-isolation submake-test_snapshot_too_old temp-install
-	$(MKDIR_P) isolation_output
 	$(pg_isolation_regress_check) \
 	    --temp-config $(top_srcdir)/src/test/modules/snapshot_too_old/sto.conf \
-	    --outputdir=./isolation_output \
 	    $(ISOLATIONCHECKS)
 
 isolationcheck-install-force: all | submake-isolation submake-test_snapshot_too_old temp-install

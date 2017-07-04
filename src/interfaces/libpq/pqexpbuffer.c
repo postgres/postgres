@@ -15,7 +15,7 @@
  * a usable vsnprintf(), then a copy of our own implementation of it will
  * be linked into libpq.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/interfaces/libpq/pqexpbuffer.c
@@ -91,7 +91,7 @@ initPQExpBuffer(PQExpBuffer str)
 	str->data = (char *) malloc(INITIAL_EXPBUFFER_SIZE);
 	if (str->data == NULL)
 	{
-		str->data = (char *) oom_buffer;		/* see comment above */
+		str->data = (char *) oom_buffer;	/* see comment above */
 		str->maxlen = 0;
 		str->len = 0;
 	}

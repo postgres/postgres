@@ -3,7 +3,7 @@
  * jsonapi.h
  *	  Declarations for JSON API support.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/jsonapi.h
@@ -14,6 +14,7 @@
 #ifndef JSONAPI_H
 #define JSONAPI_H
 
+#include "jsonb.h"
 #include "lib/stringinfo.h"
 
 typedef enum
@@ -127,8 +128,23 @@ extern JsonLexContext *makeJsonLexContextCstringLen(char *json,
 /*
  * Utility function to check if a string is a valid JSON number.
  *
- * str agrument does not need to be nul-terminated.
+ * str argument does not need to be nul-terminated.
  */
 extern bool IsValidJsonNumber(const char *str, int len);
 
-#endif   /* JSONAPI_H */
+/* an action that will be applied to each value in iterate_json(b)_string_vaues functions */
+typedef void (*JsonIterateStringValuesAction) (void *state, char *elem_value, int elem_len);
+
+/* an action that will be applied to each value in transform_json(b)_string_values functions */
+typedef text *(*JsonTransformStringValuesAction) (void *state, char *elem_value, int elem_len);
+
+extern void iterate_jsonb_string_values(Jsonb *jb, void *state,
+							JsonIterateStringValuesAction action);
+extern void iterate_json_string_values(text *json, void *action_state,
+						   JsonIterateStringValuesAction action);
+extern Jsonb *transform_jsonb_string_values(Jsonb *jsonb, void *action_state,
+							  JsonTransformStringValuesAction transform_action);
+extern text *transform_json_string_values(text *json, void *action_state,
+							 JsonTransformStringValuesAction transform_action);
+
+#endif							/* JSONAPI_H */

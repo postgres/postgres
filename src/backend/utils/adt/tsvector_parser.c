@@ -3,7 +3,7 @@
  * tsvector_parser.c
  *	  Parser for tsvector
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
@@ -363,7 +363,7 @@ gettoken_tsvector(TSVectorParseState state,
 			else if (!t_isdigit(state->prsbuf))
 				PRSSYNTAXERROR;
 		}
-		else	/* internal error */
+		else					/* internal error */
 			elog(ERROR, "unrecognized state in gettoken_tsvector: %d",
 				 statecode);
 

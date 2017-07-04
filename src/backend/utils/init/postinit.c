@@ -3,7 +3,7 @@
  * postinit.c
  *	  postgres initialization utilities
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -201,9 +201,7 @@ PerformAuthentication(Port *port)
 	if (PostmasterContext == NULL)
 		PostmasterContext = AllocSetContextCreate(TopMemoryContext,
 												  "Postmaster",
-												  ALLOCSET_DEFAULT_MINSIZE,
-												  ALLOCSET_DEFAULT_INITSIZE,
-												  ALLOCSET_DEFAULT_MAXSIZE);
+												  ALLOCSET_DEFAULT_SIZES);
 
 	if (!load_hba())
 	{
@@ -277,7 +275,7 @@ PerformAuthentication(Port *port)
 
 	set_ps_display("startup", false);
 
-	ClientAuthInProgress = false;		/* client_min_messages is active now */
+	ClientAuthInProgress = false;	/* client_min_messages is active now */
 }
 
 
@@ -324,8 +322,8 @@ CheckMyDatabase(const char *name, bool am_superuser)
 		if (!dbform->datallowconn)
 			ereport(FATAL,
 					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-			 errmsg("database \"%s\" is not currently accepting connections",
-					name)));
+					 errmsg("database \"%s\" is not currently accepting connections",
+							name)));
 
 		/*
 		 * Check privilege to connect to the database.  (The am_superuser test
@@ -352,7 +350,7 @@ CheckMyDatabase(const char *name, bool am_superuser)
 		 */
 		if (dbform->datconnlimit >= 0 &&
 			!am_superuser &&
-			CountDBBackends(MyDatabaseId) > dbform->datconnlimit)
+			CountDBConnections(MyDatabaseId) > dbform->datconnlimit)
 			ereport(FATAL,
 					(errcode(ERRCODE_TOO_MANY_CONNECTIONS),
 					 errmsg("too many connections for database \"%s\"",
@@ -377,17 +375,17 @@ CheckMyDatabase(const char *name, bool am_superuser)
 
 	if (pg_perm_setlocale(LC_COLLATE, collate) == NULL)
 		ereport(FATAL,
-			(errmsg("database locale is incompatible with operating system"),
-			 errdetail("The database was initialized with LC_COLLATE \"%s\", "
-					   " which is not recognized by setlocale().", collate),
-			 errhint("Recreate the database with another locale or install the missing locale.")));
+				(errmsg("database locale is incompatible with operating system"),
+				 errdetail("The database was initialized with LC_COLLATE \"%s\", "
+						   " which is not recognized by setlocale().", collate),
+				 errhint("Recreate the database with another locale or install the missing locale.")));
 
 	if (pg_perm_setlocale(LC_CTYPE, ctype) == NULL)
 		ereport(FATAL,
-			(errmsg("database locale is incompatible with operating system"),
-			 errdetail("The database was initialized with LC_CTYPE \"%s\", "
-					   " which is not recognized by setlocale().", ctype),
-			 errhint("Recreate the database with another locale or install the missing locale.")));
+				(errmsg("database locale is incompatible with operating system"),
+				 errdetail("The database was initialized with LC_CTYPE \"%s\", "
+						   " which is not recognized by setlocale().", ctype),
+				 errhint("Recreate the database with another locale or install the missing locale.")));
 
 	/* Make the locale settings visible as GUC variables, too */
 	SetConfigOption("lc_collate", collate, PGC_INTERNAL, PGC_S_OVERRIDE);
@@ -667,7 +665,12 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 
 	/* The autovacuum launcher is done here */
 	if (IsAutoVacuumLauncherProcess())
+	{
+		/* report this backend in the PgBackendStatus array */
+		pgstat_bestart();
+
 		return;
+	}
 
 	/*
 	 * Start a new transaction here before first access to db, and get a
@@ -754,7 +757,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 		else
 			ereport(FATAL,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-			errmsg("must be superuser to connect during database shutdown")));
+					 errmsg("must be superuser to connect during database shutdown")));
 	}
 
 	/*
@@ -764,7 +767,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	{
 		ereport(FATAL,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-			 errmsg("must be superuser to connect in binary upgrade mode")));
+				 errmsg("must be superuser to connect in binary upgrade mode")));
 	}
 
 	/*
@@ -876,7 +879,10 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 		 * transaction we started before returning.
 		 */
 		if (!bootstrap)
+		{
+			pgstat_bestart();
 			CommitTransactionCommand();
+		}
 		return;
 	}
 
@@ -943,7 +949,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 			ereport(FATAL,
 					(errcode(ERRCODE_UNDEFINED_DATABASE),
 					 errmsg("database \"%s\" does not exist", dbname),
-			   errdetail("It seems to have just been dropped or renamed.")));
+					 errdetail("It seems to have just been dropped or renamed.")));
 	}
 
 	/*
@@ -961,8 +967,8 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 						(errcode(ERRCODE_UNDEFINED_DATABASE),
 						 errmsg("database \"%s\" does not exist",
 								dbname),
-					errdetail("The database subdirectory \"%s\" is missing.",
-							  fullpath)));
+						 errdetail("The database subdirectory \"%s\" is missing.",
+								   fullpath)));
 			else
 				ereport(FATAL,
 						(errcode_for_file_access(),
@@ -1110,7 +1116,7 @@ process_settings(Oid databaseid, Oid roleid)
 
 	relsetting = heap_open(DbRoleSettingRelationId, AccessShareLock);
 
-	/* read all the settings under the same snapsot for efficiency */
+	/* read all the settings under the same snapshot for efficiency */
 	snapshot = RegisterSnapshot(GetCatalogSnapshot(DbRoleSettingRelationId));
 
 	/* Later settings are ignored if set earlier. */

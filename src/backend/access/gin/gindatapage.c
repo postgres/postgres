@@ -4,7 +4,7 @@
  *	  routines for handling GIN posting tree pages.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -15,6 +15,7 @@
 #include "postgres.h"
 
 #include "access/gin_private.h"
+#include "access/ginxlog.h"
 #include "access/xloginsert.h"
 #include "lib/ilist.h"
 #include "miscadmin.h"
@@ -86,7 +87,7 @@ typedef struct
 	char		action;
 
 	ItemPointerData *modifieditems;
-	int			nmodifieditems;
+	uint16		nmodifieditems;
 
 	/*
 	 * The following fields represent the items in this segment. If 'items' is
@@ -390,7 +391,7 @@ GinDataPageAddPostingItem(Page page, PostingItem *data, OffsetNumber offset)
 		if (offset != maxoff + 1)
 			memmove(ptr + sizeof(PostingItem),
 					ptr,
-					(maxoff - offset + 1) *sizeof(PostingItem));
+					(maxoff - offset + 1) * sizeof(PostingItem));
 	}
 	memcpy(ptr, data, sizeof(PostingItem));
 
@@ -684,7 +685,7 @@ dataBeginPlaceToPageLeaf(GinBtree btree, Buffer buf, GinBtreeStack *stack,
 
 		Assert(GinPageRightMost(page) ||
 			   ginCompareItemPointers(GinDataPageGetRightBound(*newlpage),
-								   GinDataPageGetRightBound(*newrpage)) < 0);
+									  GinDataPageGetRightBound(*newrpage)) < 0);
 
 		if (append)
 			elog(DEBUG2, "appended %d items to block %u; split %d/%d (%d to go)",
@@ -1467,7 +1468,7 @@ addItemsToLeaf(disassembledLeaf *leaf, ItemPointer newItems, int nNewItems)
 			ItemPointerData next_first;
 
 			next = (leafSegmentInfo *) dlist_container(leafSegmentInfo, node,
-								 dlist_next_node(&leaf->segments, iter.cur));
+													   dlist_next_node(&leaf->segments, iter.cur));
 			if (next->items)
 				next_first = next->items[0];
 			else
@@ -1594,7 +1595,7 @@ leafRepackItems(disassembledLeaf *leaf, ItemPointer remaining)
 				{
 					seginfo->seg = ginCompressPostingList(seginfo->items,
 														  seginfo->nitems,
-												GinPostingListSegmentMaxSize,
+														  GinPostingListSegmentMaxSize,
 														  &npacked);
 				}
 				if (npacked != seginfo->nitems)
@@ -1609,7 +1610,7 @@ leafRepackItems(disassembledLeaf *leaf, ItemPointer remaining)
 						pfree(seginfo->seg);
 					seginfo->seg = ginCompressPostingList(seginfo->items,
 														  seginfo->nitems,
-											 GinPostingListSegmentTargetSize,
+														  GinPostingListSegmentTargetSize,
 														  &npacked);
 					if (seginfo->action != GIN_SEGMENT_INSERT)
 						seginfo->action = GIN_SEGMENT_REPLACE;

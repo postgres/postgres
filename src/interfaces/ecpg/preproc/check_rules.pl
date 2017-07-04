@@ -3,7 +3,7 @@
 # test parser generater for ecpg
 # call with backend parser as stdin
 #
-# Copyright (c) 2009-2016, PostgreSQL Global Development Group
+# Copyright (c) 2009-2017, PostgreSQL Global Development Group
 #
 # Written by Michael Meskes <meskes@postgresql.org>
 #            Andy Colson <andy@squeakycode.net>
@@ -53,8 +53,8 @@ my $comment     = 0;
 my $non_term_id = '';
 my $cc          = 0;
 
-open GRAM, $parser or die $!;
-while (<GRAM>)
+open my $parser_fh, '<', $parser or die $!;
+while (<$parser_fh>)
 {
 	if (/^%%/)
 	{
@@ -145,7 +145,7 @@ while (<GRAM>)
 	}
 }
 
-close GRAM;
+close $parser_fh;
 if ($verbose)
 {
 	print "$cc rules loaded\n";
@@ -154,8 +154,8 @@ if ($verbose)
 my $ret = 0;
 $cc = 0;
 
-open ECPG, $filename or die $!;
-while (<ECPG>)
+open my $ecpg_fh, '<', $filename or die $!;
+while (<$ecpg_fh>)
 {
 	if (!/^ECPG:/)
 	{
@@ -170,7 +170,7 @@ while (<ECPG>)
 		$ret = 1;
 	}
 }
-close ECPG;
+close $ecpg_fh;
 
 if ($verbose)
 {

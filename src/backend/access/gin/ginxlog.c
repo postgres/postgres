@@ -4,7 +4,7 @@
  *	  WAL replay logic for inverted index.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -13,7 +13,9 @@
  */
 #include "postgres.h"
 
+#include "access/bufmask.h"
 #include "access/gin_private.h"
+#include "access/ginxlog.h"
 #include "access/xlogutils.h"
 #include "utils/memutils.h"
 
@@ -749,13 +751,43 @@ gin_xlog_startup(void)
 {
 	opCtx = AllocSetContextCreate(CurrentMemoryContext,
 								  "GIN recovery temporary context",
-								  ALLOCSET_DEFAULT_MINSIZE,
-								  ALLOCSET_DEFAULT_INITSIZE,
-								  ALLOCSET_DEFAULT_MAXSIZE);
+								  ALLOCSET_DEFAULT_SIZES);
 }
 
 void
 gin_xlog_cleanup(void)
 {
 	MemoryContextDelete(opCtx);
+	opCtx = NULL;
+}
+
+/*
+ * Mask a GIN page before running consistency checks on it.
+ */
+void
+gin_mask(char *pagedata, BlockNumber blkno)
+{
+	Page		page = (Page) pagedata;
+	GinPageOpaque opaque;
+
+	mask_page_lsn(page);
+	opaque = GinPageGetOpaque(page);
+
+	mask_page_hint_bits(page);
+
+	/*
+	 * GIN metapage doesn't use pd_lower/pd_upper. Other page types do. Hence,
+	 * we need to apply masking for those pages.
+	 */
+	if (opaque->flags != GIN_META)
+	{
+		/*
+		 * For GIN_DELETED page, the page is initialized to empty. Hence, mask
+		 * the page content.
+		 */
+		if (opaque->flags & GIN_DELETED)
+			mask_page_content(page);
+		else
+			mask_unused_space(page);
+	}
 }

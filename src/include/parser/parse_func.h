@@ -4,7 +4,7 @@
  *
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/parser/parse_func.h
@@ -31,7 +31,7 @@ typedef enum
 
 
 extern Node *ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
-				  FuncCall *fn, int location);
+				  Node *last_srf, FuncCall *fn, int location);
 
 extern FuncDetailCode func_get_detail(List *funcname,
 				List *fargs, List *fargnames,
@@ -62,9 +62,12 @@ extern const char *func_signature_string(List *funcname, int nargs,
 
 extern Oid LookupFuncName(List *funcname, int nargs, const Oid *argtypes,
 			   bool noError);
-extern Oid LookupFuncNameTypeNames(List *funcname, List *argtypes,
-						bool noError);
-extern Oid LookupAggNameTypeNames(List *aggname, List *argtypes,
-					   bool noError);
+extern Oid LookupFuncWithArgs(ObjectWithArgs *func,
+				   bool noError);
+extern Oid LookupAggWithArgs(ObjectWithArgs *agg,
+				  bool noError);
 
-#endif   /* PARSE_FUNC_H */
+extern void check_srf_call_placement(ParseState *pstate, Node *last_srf,
+						 int location);
+
+#endif							/* PARSE_FUNC_H */

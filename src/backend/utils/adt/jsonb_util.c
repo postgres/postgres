@@ -3,7 +3,7 @@
  * jsonb_util.c
  *	  converting between Jsonb and JsonbValues, and iterating.
  *
- * Copyright (c) 2014-2016, PostgreSQL Global Development Group
+ * Copyright (c) 2014-2017, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
@@ -19,6 +19,7 @@
 #include "utils/builtins.h"
 #include "utils/jsonb.h"
 #include "utils/memutils.h"
+#include "utils/varlena.h"
 
 /*
  * Maximum number of elements in an array (or key/value pairs in an object).
@@ -327,7 +328,7 @@ findJsonbValueFromContainer(JsonbContainer *container, uint32 flags,
 							JsonbValue *key)
 {
 	JEntry	   *children = container->children;
-	int			count = (container->header & JB_CMASK);
+	int			count = JsonContainerSize(container);
 	JsonbValue *result;
 
 	Assert((flags & ~(JB_FARRAY | JB_FOBJECT)) == 0);
@@ -338,7 +339,7 @@ findJsonbValueFromContainer(JsonbContainer *container, uint32 flags,
 
 	result = palloc(sizeof(JsonbValue));
 
-	if (flags & JB_FARRAY & container->header)
+	if ((flags & JB_FARRAY) && JsonContainerIsArray(container))
 	{
 		char	   *base_addr = (char *) (children + count);
 		uint32		offset = 0;
@@ -357,7 +358,7 @@ findJsonbValueFromContainer(JsonbContainer *container, uint32 flags,
 			JBE_ADVANCE_OFFSET(offset, children[i]);
 		}
 	}
-	else if (flags & JB_FOBJECT & container->header)
+	else if ((flags & JB_FOBJECT) && JsonContainerIsObject(container))
 	{
 		/* Since this is an object, account for *Pairs* of Jentrys */
 		char	   *base_addr = (char *) (children + count * 2);
@@ -421,10 +422,10 @@ getIthJsonbValueFromContainer(JsonbContainer *container, uint32 i)
 	char	   *base_addr;
 	uint32		nelements;
 
-	if ((container->header & JB_FARRAY) == 0)
+	if (!JsonContainerIsArray(container))
 		elog(ERROR, "not a jsonb array");
 
-	nelements = container->header & JB_CMASK;
+	nelements = JsonContainerSize(container);
 	base_addr = (char *) &container->children[nelements];
 
 	if (i >= nelements)
@@ -556,7 +557,7 @@ pushJsonbValueScalar(JsonbParseState **pstate, JsonbIteratorToken seq,
 			(*pstate)->contVal.type = jbvArray;
 			(*pstate)->contVal.val.array.nElems = 0;
 			(*pstate)->contVal.val.array.rawScalar = (scalarVal &&
-											 scalarVal->val.array.rawScalar);
+													  scalarVal->val.array.rawScalar);
 			if (scalarVal && scalarVal->val.array.nElems > 0)
 			{
 				/* Assume that this array is still really a scalar */
@@ -871,7 +872,7 @@ recurse:
 			JBE_ADVANCE_OFFSET((*it)->curDataOffset,
 							   (*it)->children[(*it)->curIndex]);
 			JBE_ADVANCE_OFFSET((*it)->curValueOffset,
-						   (*it)->children[(*it)->curIndex + (*it)->nElems]);
+							   (*it)->children[(*it)->curIndex + (*it)->nElems]);
 			(*it)->curIndex++;
 
 			/*
@@ -903,7 +904,7 @@ iteratorFromContainer(JsonbContainer *container, JsonbIterator *parent)
 	it = palloc(sizeof(JsonbIterator));
 	it->container = container;
 	it->parent = parent;
-	it->nElems = container->header & JB_CMASK;
+	it->nElems = JsonContainerSize(container);
 
 	/* Array starts just after header */
 	it->children = container->children;
@@ -913,7 +914,7 @@ iteratorFromContainer(JsonbContainer *container, JsonbIterator *parent)
 		case JB_FARRAY:
 			it->dataProper =
 				(char *) it->children + it->nElems * sizeof(JEntry);
-			it->isScalar = (container->header & JB_FSCALAR) != 0;
+			it->isScalar = JsonContainerIsScalar(container);
 			/* This is either a "raw scalar", or an array */
 			Assert(!it->isScalar || it->nElems == 1);
 
@@ -1227,7 +1228,7 @@ JsonbHashScalarValue(const JsonbValue *scalarVal, uint32 *hash)
 		case jbvNumeric:
 			/* Must hash equal numerics to equal hash codes */
 			tmp = DatumGetUInt32(DirectFunctionCall1(hash_numeric,
-								   NumericGetDatum(scalarVal->val.numeric)));
+													 NumericGetDatum(scalarVal->val.numeric)));
 			break;
 		case jbvBool:
 			tmp = scalarVal->val.boolean ? 0x02 : 0x04;
@@ -1264,8 +1265,8 @@ equalsJsonbScalarValue(JsonbValue *aScalar, JsonbValue *bScalar)
 				return lengthCompareJsonbStringValue(aScalar, bScalar) == 0;
 			case jbvNumeric:
 				return DatumGetBool(DirectFunctionCall2(numeric_eq,
-									   PointerGetDatum(aScalar->val.numeric),
-									 PointerGetDatum(bScalar->val.numeric)));
+														PointerGetDatum(aScalar->val.numeric),
+														PointerGetDatum(bScalar->val.numeric)));
 			case jbvBool:
 				return aScalar->val.boolean == bScalar->val.boolean;
 
@@ -1300,8 +1301,8 @@ compareJsonbScalarValue(JsonbValue *aScalar, JsonbValue *bScalar)
 								  DEFAULT_COLLATION_OID);
 			case jbvNumeric:
 				return DatumGetInt32(DirectFunctionCall2(numeric_cmp,
-									   PointerGetDatum(aScalar->val.numeric),
-									 PointerGetDatum(bScalar->val.numeric)));
+														 PointerGetDatum(aScalar->val.numeric),
+														 PointerGetDatum(bScalar->val.numeric)));
 			case jbvBool:
 				if (aScalar->val.boolean == bScalar->val.boolean)
 					return 0;

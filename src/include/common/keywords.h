@@ -4,7 +4,7 @@
  *	  lexical token lookup for key words in PostgreSQL
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/common/keywords.h
@@ -41,4 +41,4 @@ extern const ScanKeyword *ScanKeywordLookup(const char *text,
 				  const ScanKeyword *keywords,
 				  int num_keywords);
 
-#endif   /* KEYWORDS_H */
+#endif							/* KEYWORDS_H */

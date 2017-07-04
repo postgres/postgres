@@ -56,14 +56,7 @@
     For the languages supplied with the standard distribution, it is
     only necessary to execute <command>CREATE EXTENSION</>
     <replaceable>language_name</> to install the language into the
-    current database.  Alternatively, the program <xref
-    linkend="app-createlang"> can be used to do this from the shell
-    command line.  For example, to install the language
-    <application>PL/Perl</application> into the database
-    <literal>template1</>, use:
-<programlisting>
-createlang plperl template1
-</programlisting>
+    current database.
     The manual procedure described below is only recommended for
     installing languages that have not been packaged as extensions.
    </para>

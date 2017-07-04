@@ -3,7 +3,7 @@
  * copydir.c
  *	  copies a directory
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *	While "xcopy /e /i /q" works fine for copying directories, on Windows XP
@@ -25,7 +25,7 @@
 #include "storage/copydir.h"
 #include "storage/fd.h"
 #include "miscadmin.h"
-
+#include "pgstat.h"
 
 /*
  * copydir: copy a directory
@@ -38,8 +38,8 @@ copydir(char *fromdir, char *todir, bool recurse)
 {
 	DIR		   *xldir;
 	struct dirent *xlde;
-	char		fromfile[MAXPGPATH];
-	char		tofile[MAXPGPATH];
+	char		fromfile[MAXPGPATH * 2];
+	char		tofile[MAXPGPATH * 2];
 
 	if (mkdir(todir, S_IRWXU) != 0)
 		ereport(ERROR,
@@ -63,8 +63,8 @@ copydir(char *fromdir, char *todir, bool recurse)
 			strcmp(xlde->d_name, "..") == 0)
 			continue;
 
-		snprintf(fromfile, MAXPGPATH, "%s/%s", fromdir, xlde->d_name);
-		snprintf(tofile, MAXPGPATH, "%s/%s", todir, xlde->d_name);
+		snprintf(fromfile, sizeof(fromfile), "%s/%s", fromdir, xlde->d_name);
+		snprintf(tofile, sizeof(tofile), "%s/%s", todir, xlde->d_name);
 
 		if (lstat(fromfile, &fst) < 0)
 			ereport(ERROR,
@@ -103,7 +103,7 @@ copydir(char *fromdir, char *todir, bool recurse)
 			strcmp(xlde->d_name, "..") == 0)
 			continue;
 
-		snprintf(tofile, MAXPGPATH, "%s/%s", todir, xlde->d_name);
+		snprintf(tofile, sizeof(tofile), "%s/%s", todir, xlde->d_name);
 
 		/*
 		 * We don't need to sync subdirectories here since the recursive
@@ -169,7 +169,9 @@ copy_file(char *fromfile, char *tofile)
 		/* If we got a cancel signal during the copy of the file, quit */
 		CHECK_FOR_INTERRUPTS();
 
+		pgstat_report_wait_start(WAIT_EVENT_COPY_FILE_READ);
 		nbytes = read(srcfd, buffer, COPY_BUF_SIZE);
+		pgstat_report_wait_end();
 		if (nbytes < 0)
 			ereport(ERROR,
 					(errcode_for_file_access(),
@@ -177,8 +179,10 @@ copy_file(char *fromfile, char *tofile)
 		if (nbytes == 0)
 			break;
 		errno = 0;
+		pgstat_report_wait_start(WAIT_EVENT_COPY_FILE_WRITE);
 		if ((int) write(dstfd, buffer, nbytes) != nbytes)
 		{
+			pgstat_report_wait_end();
 			/* if write didn't set errno, assume problem is no disk space */
 			if (errno == 0)
 				errno = ENOSPC;
@@ -186,6 +190,7 @@ copy_file(char *fromfile, char *tofile)
 					(errcode_for_file_access(),
 					 errmsg("could not write to file \"%s\": %m", tofile)));
 		}
+		pgstat_report_wait_end();
 
 		/*
 		 * We fsync the files later but first flush them to avoid spamming the

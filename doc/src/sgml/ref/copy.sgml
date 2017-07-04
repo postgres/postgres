@@ -395,9 +395,15 @@ COPY <replaceable class="parameter">count</replaceable>
   <title>Notes</title>
 
    <para>
-    <command>COPY</command> can only be used with plain tables, not
+    <command>COPY TO</command> can only be used with plain tables, not
     with views.  However, you can write <literal>COPY (SELECT * FROM
-    <replaceable class="parameter">viewname</replaceable>) TO ...</literal>.
+    <replaceable class="parameter">viewname</replaceable>) TO ...</literal>
+    to copy the current contents of a view.
+   </para>
+
+   <para>
+    <command>COPY FROM</command> can be used with plain tables and with views
+    that have <literal>INSTEAD OF INSERT</> triggers.
    </para>
 
    <para>
@@ -416,6 +422,15 @@ COPY <replaceable class="parameter">count</replaceable>
     insert privilege on the table into which values
     are inserted by <command>COPY FROM</command>.  It is sufficient
     to have column privileges on the column(s) listed in the command.
+   </para>
+
+   <para>
+    If row-level security is enabled for the table, the relevant
+    <command>SELECT</command> policies will apply to <literal>COPY
+    <replaceable class="parameter">table</> TO</literal> statements.
+    Currently, <command>COPY FROM</command> is not supported for tables
+    with row-level security. Use equivalent <command>INSERT</command>
+    statements instead.
    </para>
 
    <para>
@@ -462,6 +477,13 @@ COPY <replaceable class="parameter">count</replaceable>
    <para>
     <command>COPY FROM</command> will invoke any triggers and check
     constraints on the destination table. However, it will not invoke rules.
+   </para>
+
+   <para>
+    For identity columns, the <command>COPY FROM</command> command will always
+    write the column values provided in the input data, like
+    the <command>INPUT</command> option <literal>OVERRIDING SYSTEM
+    VALUE</literal>.
    </para>
 
    <para>

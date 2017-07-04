@@ -1,0 +1,34 @@
+[NO_PID]: ECPGdebug: set to 1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGconnect: opening database ecpg1_regression on <DEFAULT> port <DEFAULT>  
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGsetcommit on line 17: action "off"; connection "ecpg1_regression"
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_execute on line 20: query: create table t1 ( c int ); with 0 parameter(s) on connection ecpg1_regression
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_execute on line 20: using PQexec
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_process_output on line 20: OK: CREATE TABLE
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGtrans on line 23: action "commit"; connection "ecpg1_regression"
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGtrans on line 26: action "begin"; connection "ecpg1_regression"
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_execute on line 29: query: insert into t1 values ( 1 ); with 0 parameter(s) on connection ecpg1_regression
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_execute on line 29: using PQexec
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_process_output on line 29: OK: INSERT 0 1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGtrans on line 32: action "prepare transaction 'gxid'"; connection "ecpg1_regression"
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGtrans on line 35: action "commit prepared 'gxid'"; connection "ecpg1_regression"
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_execute on line 38: query: drop table t1; with 0 parameter(s) on connection ecpg1_regression
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_execute on line 38: using PQexec
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_process_output on line 38: OK: DROP TABLE
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_finish: connection ecpg1_regression closed
+[NO_PID]: sqlca: code: 0, state: 00000

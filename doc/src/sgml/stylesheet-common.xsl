@@ -32,11 +32,14 @@
 <xsl:param name="linenumbering.extension" select="'0'"></xsl:param>
 <xsl:param name="section.autolabel" select="1"></xsl:param>
 <xsl:param name="section.label.includes.component.label" select="1"></xsl:param>
+<xsl:param name="refentry.generate.name" select="0"></xsl:param>
+<xsl:param name="refentry.generate.title" select="1"></xsl:param>
 <xsl:param name="refentry.xref.manvolnum" select="0"/>
 <xsl:param name="formal.procedures" select="0"></xsl:param>
 <xsl:param name="punct.honorific" select="''"></xsl:param>
 <xsl:param name="variablelist.term.break.after">1</xsl:param>
 <xsl:param name="variablelist.term.separator"></xsl:param>
+<xsl:param name="xref.with.number.and.title" select="0"></xsl:param>
 
 
 <!-- Change display of some elements -->
@@ -77,7 +80,9 @@
 <!-- Special support for Tcl synopses -->
 
 <xsl:template match="optional[@role='tcl']">
-  ?<xsl:call-template name="inline.charseq"/>?
+  <xsl:text>?</xsl:text>
+  <xsl:call-template name="inline.charseq"/>
+  <xsl:text>?</xsl:text>
 </xsl:template>
 
 </xsl:stylesheet>

@@ -101,8 +101,8 @@ hstoreArrayToPairs(ArrayType *a, int *npairs)
 	if (key_count > MaxAllocSize / sizeof(Pairs))
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-			  errmsg("number of pairs (%d) exceeds the maximum allowed (%d)",
-					 key_count, (int) (MaxAllocSize / sizeof(Pairs)))));
+				 errmsg("number of pairs (%d) exceeds the maximum allowed (%d)",
+						key_count, (int) (MaxAllocSize / sizeof(Pairs)))));
 
 	key_pairs = palloc(sizeof(Pairs) * key_count);
 
@@ -181,7 +181,7 @@ hstore_exists_any(PG_FUNCTION_ARGS)
 	for (i = 0; i < nkeys; i++)
 	{
 		int			idx = hstoreFindKey(hs, &lowbound,
-									  key_pairs[i].key, key_pairs[i].keylen);
+										key_pairs[i].key, key_pairs[i].keylen);
 
 		if (idx >= 0)
 		{
@@ -215,7 +215,7 @@ hstore_exists_all(PG_FUNCTION_ARGS)
 	for (i = 0; i < nkeys; i++)
 	{
 		int			idx = hstoreFindKey(hs, &lowbound,
-									  key_pairs[i].key, key_pairs[i].keylen);
+										key_pairs[i].key, key_pairs[i].keylen);
 
 		if (idx < 0)
 		{
@@ -546,8 +546,8 @@ hstore_concat(PG_FUNCTION_ARGS)
 		if (difference >= 0)
 		{
 			HS_COPYITEM(ed, bufd, pd,
-					  HSTORE_KEY(es2, ps2, s2idx), HSTORE_KEYLEN(es2, s2idx),
-					HSTORE_VALLEN(es2, s2idx), HSTORE_VALISNULL(es2, s2idx));
+						HSTORE_KEY(es2, ps2, s2idx), HSTORE_KEYLEN(es2, s2idx),
+						HSTORE_VALLEN(es2, s2idx), HSTORE_VALISNULL(es2, s2idx));
 			++s2idx;
 			if (difference == 0)
 				++s1idx;
@@ -555,8 +555,8 @@ hstore_concat(PG_FUNCTION_ARGS)
 		else
 		{
 			HS_COPYITEM(ed, bufd, pd,
-					  HSTORE_KEY(es1, ps1, s1idx), HSTORE_KEYLEN(es1, s1idx),
-					HSTORE_VALLEN(es1, s1idx), HSTORE_VALISNULL(es1, s1idx));
+						HSTORE_KEY(es1, ps1, s1idx), HSTORE_KEYLEN(es1, s1idx),
+						HSTORE_VALLEN(es1, s1idx), HSTORE_VALISNULL(es1, s1idx));
 			++s1idx;
 		}
 	}
@@ -614,8 +614,8 @@ hstore_slice_to_array(PG_FUNCTION_ARGS)
 		else
 		{
 			out_datums[i] = PointerGetDatum(
-					  cstring_to_text_with_len(HSTORE_VAL(entries, ptr, idx),
-											   HSTORE_VALLEN(entries, idx)));
+											cstring_to_text_with_len(HSTORE_VAL(entries, ptr, idx),
+																	 HSTORE_VALLEN(entries, idx)));
 			out_nulls[i] = false;
 		}
 	}
@@ -667,7 +667,7 @@ hstore_slice_to_hstore(PG_FUNCTION_ARGS)
 	for (i = 0; i < nkeys; ++i)
 	{
 		int			idx = hstoreFindKey(hs, &lastidx,
-									  key_pairs[i].key, key_pairs[i].keylen);
+										key_pairs[i].key, key_pairs[i].keylen);
 
 		if (idx >= 0)
 		{
@@ -760,7 +760,7 @@ hstore_avals(PG_FUNCTION_ARGS)
 		else
 		{
 			text	   *item = cstring_to_text_with_len(HSTORE_VAL(entries, base, i),
-												  HSTORE_VALLEN(entries, i));
+														HSTORE_VALLEN(entries, i));
 
 			d[i] = PointerGetDatum(item);
 			nulls[i] = false;
@@ -811,7 +811,7 @@ hstore_to_array_internal(HStore *hs, int ndims)
 		else
 		{
 			text	   *item = cstring_to_text_with_len(HSTORE_VAL(entries, base, i),
-												  HSTORE_VALLEN(entries, i));
+														HSTORE_VALLEN(entries, i));
 
 			out_datums[i * 2 + 1] = PointerGetDatum(item);
 			out_nulls[i * 2 + 1] = false;

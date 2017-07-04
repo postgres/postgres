@@ -3,7 +3,7 @@
  * postgres_fdw.h
  *		  Foreign-data wrapper for remote PostgreSQL servers
  *
- * Portions Copyright (c) 2012-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2012-2017, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		  contrib/postgres_fdw/postgres_fdw.h
@@ -22,7 +22,10 @@
 
 /*
  * FDW-specific planner information kept in RelOptInfo.fdw_private for a
- * foreign table.  This information is collected by postgresGetForeignRelSize.
+ * postgres_fdw foreign table.  For a baserel, this struct is created by
+ * postgresGetForeignRelSize, although some fields are not filled till later.
+ * postgresGetForeignJoinPaths creates it for a joinrel, and
+ * postgresGetForeignUpperPaths creates it for an upperrel.
  */
 typedef struct PgFdwRelationInfo
 {
@@ -34,19 +37,14 @@ typedef struct PgFdwRelationInfo
 
 	/*
 	 * Restriction clauses, divided into safe and unsafe to pushdown subsets.
-	 *
-	 * For a base foreign relation this is a list of clauses along-with
-	 * RestrictInfo wrapper. Keeping RestrictInfo wrapper helps while dividing
-	 * scan_clauses in postgresGetForeignPlan into safe and unsafe subsets.
-	 * Also it helps in estimating costs since RestrictInfo caches the
-	 * selectivity and qual cost for the clause in it.
-	 *
-	 * For a join relation, however, they are part of otherclause list
-	 * obtained from extract_actual_join_clauses, which strips RestrictInfo
-	 * construct. So, for a join relation they are list of bare clauses.
+	 * All entries in these lists should have RestrictInfo wrappers; that
+	 * improves efficiency of selectivity and cost estimation.
 	 */
 	List	   *remote_conds;
 	List	   *local_conds;
+
+	/* Actual remote restriction clauses for scan (sans RestrictInfos) */
+	List	   *final_remote_exprs;
 
 	/* Bitmap of attr numbers we need to fetch from the remote server. */
 	Bitmapset  *attrs_used;
@@ -91,7 +89,25 @@ typedef struct PgFdwRelationInfo
 	RelOptInfo *outerrel;
 	RelOptInfo *innerrel;
 	JoinType	jointype;
-	List	   *joinclauses;
+	/* joinclauses contains only JOIN/ON conditions for an outer join */
+	List	   *joinclauses;	/* List of RestrictInfo */
+
+	/* Grouping information */
+	List	   *grouped_tlist;
+
+	/* Subquery information */
+	bool		make_outerrel_subquery; /* do we deparse outerrel as a
+										 * subquery? */
+	bool		make_innerrel_subquery; /* do we deparse innerrel as a
+										 * subquery? */
+	Relids		lower_subquery_rels;	/* all relids appearing in lower
+										 * subqueries */
+
+	/*
+	 * Index of the relation.  It is used to create an alias to a subquery
+	 * representing the relation.
+	 */
+	int			relation_index;
 } PgFdwRelationInfo;
 
 /* in postgres_fdw.c */
@@ -155,15 +171,15 @@ extern void deparseAnalyzeSql(StringInfo buf, Relation rel,
 				  List **retrieved_attrs);
 extern void deparseStringLiteral(StringInfo buf, const char *val);
 extern Expr *find_em_expr_for_rel(EquivalenceClass *ec, RelOptInfo *rel);
-extern List *build_tlist_to_deparse(RelOptInfo *foreign_rel);
+extern List *build_tlist_to_deparse(RelOptInfo *foreignrel);
 extern void deparseSelectStmtForRel(StringInfo buf, PlannerInfo *root,
 						RelOptInfo *foreignrel, List *tlist,
-						List *remote_conds, List *pathkeys,
+						List *remote_conds, List *pathkeys, bool is_subquery,
 						List **retrieved_attrs, List **params_list);
+extern const char *get_jointype_name(JoinType jointype);
 
 /* in shippable.c */
 extern bool is_builtin(Oid objectId);
 extern bool is_shippable(Oid objectId, Oid classId, PgFdwRelationInfo *fpinfo);
-extern const char *get_jointype_name(JoinType jointype);
 
-#endif   /* POSTGRES_FDW_H */
+#endif							/* POSTGRES_FDW_H */

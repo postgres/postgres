@@ -8,7 +8,7 @@
  * doesn't actually run the executor for them.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -108,9 +108,7 @@ EnablePortalManager(void)
 
 	PortalMemory = AllocSetContextCreate(TopMemoryContext,
 										 "PortalMemory",
-										 ALLOCSET_DEFAULT_MINSIZE,
-										 ALLOCSET_DEFAULT_INITSIZE,
-										 ALLOCSET_DEFAULT_MAXSIZE);
+										 ALLOCSET_DEFAULT_SIZES);
 
 	ctl.keysize = MAX_PORTALNAME_LEN;
 	ctl.entrysize = sizeof(PortalHashEnt);
@@ -141,45 +139,24 @@ GetPortalByName(const char *name)
 }
 
 /*
- * PortalListGetPrimaryStmt
+ * PortalGetPrimaryStmt
  *		Get the "primary" stmt within a portal, ie, the one marked canSetTag.
  *
  * Returns NULL if no such stmt.  If multiple PlannedStmt structs within the
  * portal are marked canSetTag, returns the first one.  Neither of these
  * cases should occur in present usages of this function.
- *
- * Copes if given a list of Querys --- can't happen in a portal, but this
- * code also supports plancache.c, which needs both cases.
- *
- * Note: the reason this is just handed a List is so that plancache.c
- * can share the code.  For use with a portal, use PortalGetPrimaryStmt
- * rather than calling this directly.
  */
-Node *
-PortalListGetPrimaryStmt(List *stmts)
+PlannedStmt *
+PortalGetPrimaryStmt(Portal portal)
 {
 	ListCell   *lc;
 
-	foreach(lc, stmts)
+	foreach(lc, portal->stmts)
 	{
-		Node	   *stmt = (Node *) lfirst(lc);
+		PlannedStmt *stmt = lfirst_node(PlannedStmt, lc);
 
-		if (IsA(stmt, PlannedStmt))
-		{
-			if (((PlannedStmt *) stmt)->canSetTag)
-				return stmt;
-		}
-		else if (IsA(stmt, Query))
-		{
-			if (((Query *) stmt)->canSetTag)
-				return stmt;
-		}
-		else
-		{
-			/* Utility stmts are assumed canSetTag if they're the only stmt */
-			if (list_length(stmts) == 1)
-				return stmt;
-		}
+		if (stmt->canSetTag)
+			return stmt;
 	}
 	return NULL;
 }
@@ -221,9 +198,7 @@ CreatePortal(const char *name, bool allowDup, bool dupSilent)
 	/* initialize portal heap context; typically it won't store much */
 	portal->heap = AllocSetContextCreate(PortalMemory,
 										 "PortalHeapMemory",
-										 ALLOCSET_SMALL_MINSIZE,
-										 ALLOCSET_SMALL_INITSIZE,
-										 ALLOCSET_SMALL_MAXSIZE);
+										 ALLOCSET_SMALL_SIZES);
 
 	/* create a resource owner for the portal */
 	portal->resowner = ResourceOwnerCreate(CurTransactionResourceOwner,
@@ -361,9 +336,7 @@ PortalCreateHoldStore(Portal portal)
 	portal->holdContext =
 		AllocSetContextCreate(PortalMemory,
 							  "PortalHoldContext",
-							  ALLOCSET_DEFAULT_MINSIZE,
-							  ALLOCSET_DEFAULT_INITSIZE,
-							  ALLOCSET_DEFAULT_MAXSIZE);
+							  ALLOCSET_DEFAULT_SIZES);
 
 	/*
 	 * Create the tuple store, selecting cross-transaction temp files, and

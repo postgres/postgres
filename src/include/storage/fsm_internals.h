@@ -4,7 +4,7 @@
  *	  internal functions for free space map
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/storage/fsm_internals.h
@@ -69,4 +69,4 @@ extern bool fsm_set_avail(Page page, int slot, uint8 value);
 extern bool fsm_truncate_avail(Page page, int nslots);
 extern bool fsm_rebuild_page(Page page);
 
-#endif   /* FSM_INTERNALS_H */
+#endif							/* FSM_INTERNALS_H */

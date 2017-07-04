@@ -34,6 +34,11 @@ in the same commit.  Usually, if a known abbreviation has changed meaning,
 the appropriate fix is to make it refer to a long-form zone name instead
 of a fixed GMT offset.
 
+The core regression test suite does some simple validation of the zone
+data and abbreviations data (notably by checking that the pg_timezone_names
+and pg_timezone_abbrevs views don't throw errors).  It's worth running it
+as a cross-check on proposed updates.
+
 When there has been a new release of Windows (probably including Service
 Packs), the list of matching timezones need to be updated. Run the
 script in src/tools/win32tzlist.pl on a Windows machine running this new
@@ -45,7 +50,7 @@ match properly on the old version.
 Time Zone code
 ==============
 
-The code in this directory is currently synced with tzcode release 2016c.
+The code in this directory is currently synced with tzcode release 2017b.
 There are many cosmetic (and not so cosmetic) differences from the
 original tzcode library, but diffs in the upstream version should usually
 be propagated to our version.  Here are some notes about that.
@@ -73,6 +78,9 @@ other exposed names.
 * We have exposed the tzload() and tzparse() internal functions, and
 slightly modified the API of the former, in part because it now relies
 on our own pg_open_tzfile() rather than opening files for itself.
+
+* tzparse() is adjusted to cache the result of loading the TZDEFRULES
+zone, so that that's not repeated more than once per process.
 
 * There's a fair amount of code we don't need and have removed,
 including all the nonstandard optional APIs.  We have also added

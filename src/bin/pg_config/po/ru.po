@@ -1,41 +1,26 @@
-# PG_CONFIG Translated Messages into the Russian Language (UTF-8)
+# Russian message translation file for pg_config
+# Copyright (C) 2004-2016 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+# Oleg Bartunov <oleg@sai.msu.su>, 2004.
+# Serguei A. Mokhov <mokhov@cs.concordia.ca>, 2004-2005.
+# Sergey Burladyan <eshkinkot@gmail.com>, 2009, 2012.
+# Andrey Sudnik <sudnikand@gmail.com>, 2010.
+# Alexander Lakhin <exclusion@gmail.com>, 2012-2016.
 #
-# Copyright (c) 2004-2005 Serguei A. Mokhov, mokhov@cs.concordia.ca
-# Copyright (c) 2012-2013 Alexander Lakhin <exclusion@gmail.com>
-# Distributed under the same licensing terms as PostgreSQL itself.
-#
-# pgtranslation Id: pg_config.po,v 1.4 2010/12/07 21:22:21 petere Exp $
-#
-# translation of subject-specific terminology, see:
-# перевод некоторых специфичных терминов:
-# http://wiki.postgresql.org/wiki/NLS/ru/dict
-#
-# ChangeLog:
-#   - March 14, 2013: Updates for 9.3. Alexander Lakhin <exclusion@gmail.com>.
-#   - June 27, 2012: Updates for 9.2. Alexander Lakhin <exclusion@gmail.com>.
-#   - April 2, 2012: Bug fixes. Alexander Lakhin <exclusion@gmail.com>.
-#   - February 17, 2012: Minor fixes. Alexander Lakhin <exclusion@gmail.com>.
-#   - December 1, 2010: translation for 9.1, Andrey Sudnik <sudnikand@gmail.com>.
-#   - March 26, 2009: complete translation for 8.3, Sergey Burladyan <eshkinkot@gmail.com>.
-#   - January 17, 2005: Complete translation for 8.0, Serguei A. Mokhov <mokhov@cs.concordia.ca>.
-#   - December, 2004: Corrections and improvements by Oleg Bartunov <oleg@sai.msu.su>.
-#   - October 13 - November 24, 2004: Initial Translation, Serguei A. Mokhov <mokhov@cs.concordia.ca>.
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 9 current\n"
+"Project-Id-Version: pg_config (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2016-05-27 16:13+0000\n"
-"PO-Revision-Date: 2014-08-14 22:47+0400\n"
-"Last-Translator: Dmitriy Olshevskiy <olshevskiy87@bk.ru>\n"
-"Language-Team: Russian <pgtranslation-translators@pgfoundry.org>\n"
+"POT-Creation-Date: 2016-09-20 18:13+0000\n"
+"PO-Revision-Date: 2016-09-20 12:00+0300\n"
+"Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
+"Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Poedit-SourceCharset: utf-8\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
-"X-Generator: Poedit 1.6.7\n"
 
 #: ../../common/config_info.c:131 ../../common/config_info.c:139
 #: ../../common/config_info.c:147 ../../common/config_info.c:155

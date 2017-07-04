@@ -4,7 +4,7 @@
  *	  Definitions for network authentication routines
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/libpq/auth.h
@@ -26,4 +26,4 @@ extern void ClientAuthentication(Port *port);
 typedef void (*ClientAuthentication_hook_type) (Port *, int);
 extern PGDLLIMPORT ClientAuthentication_hook_type ClientAuthentication_hook;
 
-#endif   /* AUTH_H */
+#endif							/* AUTH_H */

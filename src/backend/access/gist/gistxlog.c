@@ -4,7 +4,7 @@
  *	  WAL replay logic for GiST.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -13,7 +13,9 @@
  */
 #include "postgres.h"
 
+#include "access/bufmask.h"
 #include "access/gist_private.h"
+#include "access/gistxlog.h"
 #include "access/xloginsert.h"
 #include "access/xlogutils.h"
 #include "utils/memutils.h"
@@ -80,9 +82,31 @@ gistRedoPageUpdateRecord(XLogReaderState *record)
 
 		page = (Page) BufferGetPage(buffer);
 
-		/* Delete old tuples */
-		if (xldata->ntodelete > 0)
+		if (xldata->ntodelete == 1 && xldata->ntoinsert == 1)
 		{
+			/*
+			 * When replacing one tuple with one other tuple, we must use
+			 * PageIndexTupleOverwrite for consistency with gistplacetopage.
+			 */
+			OffsetNumber offnum = *((OffsetNumber *) data);
+			IndexTuple	itup;
+			Size		itupsize;
+
+			data += sizeof(OffsetNumber);
+			itup = (IndexTuple) data;
+			itupsize = IndexTupleSize(itup);
+			if (!PageIndexTupleOverwrite(page, offnum, (Item) itup, itupsize))
+				elog(ERROR, "failed to add item to GiST index page, size %d bytes",
+					 (int) itupsize);
+			data += itupsize;
+			/* should be nothing left after consuming 1 tuple */
+			Assert(data - begin == datalen);
+			/* update insertion count for assert check below */
+			ninserted++;
+		}
+		else if (xldata->ntodelete > 0)
+		{
+			/* Otherwise, delete old tuples if any */
 			OffsetNumber *todelete = (OffsetNumber *) data;
 
 			data += sizeof(OffsetNumber) * xldata->ntodelete;
@@ -92,7 +116,7 @@ gistRedoPageUpdateRecord(XLogReaderState *record)
 				GistMarkTuplesDeleted(page);
 		}
 
-		/* add tuples */
+		/* Add new tuples if any */
 		if (data - begin < datalen)
 		{
 			OffsetNumber off = (PageIsEmpty(page)) ? FirstOffsetNumber :
@@ -115,6 +139,7 @@ gistRedoPageUpdateRecord(XLogReaderState *record)
 			}
 		}
 
+		/* Check that XLOG record contained expected number of tuples */
 		Assert(ninserted == xldata->ntoinsert);
 
 		PageSetLSN(page, lsn);
@@ -317,6 +342,48 @@ void
 gist_xlog_cleanup(void)
 {
 	MemoryContextDelete(opCtx);
+}
+
+/*
+ * Mask a Gist page before running consistency checks on it.
+ */
+void
+gist_mask(char *pagedata, BlockNumber blkno)
+{
+	Page		page = (Page) pagedata;
+
+	mask_page_lsn(page);
+
+	mask_page_hint_bits(page);
+	mask_unused_space(page);
+
+	/*
+	 * NSN is nothing but a special purpose LSN. Hence, mask it for the same
+	 * reason as mask_page_lsn.
+	 */
+	GistPageSetNSN(page, (uint64) MASK_MARKER);
+
+	/*
+	 * We update F_FOLLOW_RIGHT flag on the left child after writing WAL
+	 * record. Hence, mask this flag. See gistplacetopage() for details.
+	 */
+	GistMarkFollowRight(page);
+
+	if (GistPageIsLeaf(page))
+	{
+		/*
+		 * In gist leaf pages, it is possible to modify the LP_FLAGS without
+		 * emitting any WAL record. Hence, mask the line pointer flags. See
+		 * gistkillitems() for details.
+		 */
+		mask_lp_flags(page);
+	}
+
+	/*
+	 * During gist redo, we never mark a page as garbage. Hence, mask it to
+	 * ignore any differences.
+	 */
+	GistClearPageHasGarbage(page);
 }
 
 /*

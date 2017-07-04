@@ -19,7 +19,7 @@
  * routines.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -45,9 +45,6 @@
 
 #ifdef HAVE_POLL_H
 #include <poll.h>
-#endif
-#ifdef HAVE_SYS_POLL_H
-#include <sys/poll.h>
 #endif
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
@@ -809,15 +806,15 @@ retry4:
 definitelyEOF:
 	printfPQExpBuffer(&conn->errorMessage,
 					  libpq_gettext(
-								"server closed the connection unexpectedly\n"
-				   "\tThis probably means the server terminated abnormally\n"
-							 "\tbefore or while processing the request.\n"));
+									"server closed the connection unexpectedly\n"
+									"\tThis probably means the server terminated abnormally\n"
+									"\tbefore or while processing the request.\n"));
 
 	/* Come here if lower-level code already set a suitable errorMessage */
 definitelyFailed:
 	/* Do *not* drop any already-read data; caller still wants it */
 	pqDropConnection(conn, false);
-	conn->status = CONNECTION_BAD;		/* No more connection to backend */
+	conn->status = CONNECTION_BAD;	/* No more connection to backend */
 	return -1;
 }
 
@@ -994,11 +991,9 @@ pqWait(int forRead, int forWrite, PGconn *conn)
 /*
  * pqWaitTimed: wait, but not past finish_time.
  *
- * If finish_time is exceeded then we return failure (EOF).  This is like
- * the response for a kernel exception because we don't want the caller
- * to try to read/write in that case.
- *
  * finish_time = ((time_t) -1) disables the wait limit.
+ *
+ * Returns -1 on failure, 0 if the socket is readable/writable, 1 if it timed out.
  */
 int
 pqWaitTimed(int forRead, int forWrite, PGconn *conn, time_t finish_time)
@@ -1008,13 +1003,13 @@ pqWaitTimed(int forRead, int forWrite, PGconn *conn, time_t finish_time)
 	result = pqSocketCheck(conn, forRead, forWrite, finish_time);
 
 	if (result < 0)
-		return EOF;				/* errorMessage is already set */
+		return -1;				/* errorMessage is already set */
 
 	if (result == 0)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("timeout expired\n"));
-		return EOF;
+		return 1;
 	}
 
 	return 0;
@@ -1170,7 +1165,7 @@ pqSocketPoll(int sock, int forRead, int forWrite, time_t end_time)
 
 	return select(sock + 1, &input_mask, &output_mask,
 				  &except_mask, ptr_timeout);
-#endif   /* HAVE_POLL */
+#endif							/* HAVE_POLL */
 }
 
 
@@ -1264,4 +1259,4 @@ libpq_ngettext(const char *msgid, const char *msgid_plural, unsigned long n)
 	return dngettext(PG_TEXTDOMAIN("libpq"), msgid, msgid_plural, n);
 }
 
-#endif   /* ENABLE_NLS */
+#endif							/* ENABLE_NLS */

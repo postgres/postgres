@@ -15,8 +15,8 @@ create table message_section_map (
 
 EOT
 
-open(MSG, ">message.tmp")             || die;
-open(MAP, ">message_section_map.tmp") || die;
+open(my $msg, '>', "message.tmp")             || die;
+open(my $map, '>', "message_section_map.tmp") || die;
 
 srand(1);
 
@@ -42,16 +42,16 @@ foreach my $i (1 .. 200000)
 	}
 	if ($#sect < 0 || rand() < 0.1)
 	{
-		print MSG "$i\t\\N\n";
+		print $msg "$i\t\\N\n";
 	}
 	else
 	{
-		print MSG "$i\t{" . join(',', @sect) . "}\n";
-		map { print MAP "$i\t$_\n" } @sect;
+		print $msg "$i\t{" . join(',', @sect) . "}\n";
+		map { print $map "$i\t$_\n" } @sect;
 	}
 }
-close MAP;
-close MSG;
+close $map;
+close $msg;
 
 copytable('message');
 copytable('message_section_map');
@@ -79,8 +79,8 @@ sub copytable
 	my $t = shift;
 
 	print "COPY $t from stdin;\n";
-	open(FFF, "$t.tmp") || die;
-	while (<FFF>) { print; }
-	close FFF;
+	open(my $fff, '<', "$t.tmp") || die;
+	while (<$fff>) { print; }
+	close $fff;
 	print "\\.\n";
 }

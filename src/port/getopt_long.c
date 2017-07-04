@@ -56,7 +56,7 @@
 int
 getopt_long(int argc, char *const argv[],
 			const char *optstring,
-			const struct option * longopts, int *longindex)
+			const struct option *longopts, int *longindex)
 {
 	static char *place = EMSG;	/* option letter processing */
 	char	   *oli;			/* option letter list index */
@@ -119,7 +119,7 @@ getopt_long(int argc, char *const argv[],
 
 							if (opterr && has_arg == required_argument)
 								fprintf(stderr,
-								   "%s: option requires an argument -- %s\n",
+										"%s: option requires an argument -- %s\n",
 										argv[0], place);
 
 							place = EMSG;

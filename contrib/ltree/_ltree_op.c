@@ -53,7 +53,7 @@ array_iterator(ArrayType *la, PGCALL2 callback, void *param, ltree **found)
 	while (num > 0)
 	{
 		if (DatumGetBool(DirectFunctionCall2(callback,
-							 PointerGetDatum(item), PointerGetDatum(param))))
+											 PointerGetDatum(item), PointerGetDatum(param))))
 		{
 
 			if (found)

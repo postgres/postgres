@@ -95,35 +95,21 @@ CREATE EXTENSION [ IF NOT EXISTS ] <replaceable class="parameter">extension_name
         If not specified, and the extension's control file does not specify a
         schema either, the current default object creation schema is used.
        </para>
+
        <para>
-        If the extension specifies <literal>schema</> in its control file,
-        the schema cannot be overridden with <literal>SCHEMA</> clause.
-        The <literal>SCHEMA</> clause in this case works as follows:
-        <itemizedlist>
-         <listitem>
-          <para>
-           If <replaceable class="parameter">schema_name</replaceable> matches
-           the schema in control file, it will be used normally as there is no
-           conflict.
-          </para>
-         </listitem>
-         <listitem>
-          <para>
-           If the <literal>CASCADE</> clause is given, the
-           <replaceable class="parameter">schema_name</replaceable> will only
-           be used for the missing required extensions which do not specify
-           <literal>schema</> in their control files.
-          </para>
-         </listitem>
-         <listitem>
-          <para>
-           If <replaceable class="parameter">schema_name</replaceable> is not
-           the same as the one in extension's control file and the
-           <literal>CASCADE</> clause is not given, error will be thrown.
-          </para>
-         </listitem>
-        </itemizedlist>
+        If the extension specifies a <literal>schema</> parameter in its
+        control file, then that schema cannot be overridden with
+        a <literal>SCHEMA</> clause.  Normally, an error will be raised if
+        a <literal>SCHEMA</> clause is given and it conflicts with the
+        extension's <literal>schema</> parameter.  However, if
+        the <literal>CASCADE</> clause is also given,
+        then <replaceable class="parameter">schema_name</replaceable> is
+        ignored when it conflicts.  The
+        given <replaceable class="parameter">schema_name</replaceable> will be
+        used for installation of any needed extensions that do not
+        specify <literal>schema</> in their control files.
        </para>
+
        <para>
         Remember that the extension itself is not considered to be within any
         schema: extensions have unqualified names that must be unique
@@ -147,7 +133,8 @@ CREATE EXTENSION [ IF NOT EXISTS ] <replaceable class="parameter">extension_name
      <varlistentry>
       <term><replaceable class="parameter">old_version</replaceable></term>
       <listitem>
-       <para><literal>FROM</> <replaceable class="parameter">old_version</>
+       <para>
+        <literal>FROM</> <replaceable class="parameter">old_version</>
         must be specified when, and only when, you are attempting to install
         an extension that replaces an <quote>old style</> module that is just
         a collection of objects not packaged into an extension.  This option
@@ -174,10 +161,13 @@ CREATE EXTENSION [ IF NOT EXISTS ] <replaceable class="parameter">extension_name
       <term><literal>CASCADE</></term>
       <listitem>
        <para>
-        Try to install extension including the required dependencies
-        recursively. The <literal>SCHEMA</> option will be propagated
-        to the required extensions.  Other options are not recursively
-        applied when using this clause.
+        Automatically install any extensions that this extension depends on
+        that are not already installed.  Their dependencies are likewise
+        automatically installed, recursively.  The <literal>SCHEMA</> clause,
+        if given, applies to all extensions that get installed this way.
+        Other options of the statement are not applied to
+        automatically-installed extensions; in particular, their default
+        versions are always selected.
        </para>
       </listitem>
      </varlistentry>

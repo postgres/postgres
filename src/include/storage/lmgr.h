@@ -4,7 +4,7 @@
  *	  POSTGRES lock manager definitions.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/storage/lmgr.h
@@ -106,4 +106,4 @@ extern void DescribeLockTag(StringInfo buf, const LOCKTAG *tag);
 
 extern const char *GetLockNameFromTagType(uint16 locktag_type);
 
-#endif   /* LMGR_H */
+#endif							/* LMGR_H */

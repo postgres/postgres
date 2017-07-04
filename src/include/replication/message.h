@@ -2,7 +2,7 @@
  * message.h
  *	   Exports from replication/logical/message.c
  *
- * Copyright (c) 2013-2016, PostgreSQL Global Development Group
+ * Copyright (c) 2013-2017, PostgreSQL Global Development Group
  *
  * src/include/replication/message.h
  *-------------------------------------------------------------------------
@@ -39,4 +39,4 @@ void		logicalmsg_redo(XLogReaderState *record);
 void		logicalmsg_desc(StringInfo buf, XLogReaderState *record);
 const char *logicalmsg_identify(uint8 info);
 
-#endif   /* PG_LOGICAL_MESSAGE_H */
+#endif							/* PG_LOGICAL_MESSAGE_H */

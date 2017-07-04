@@ -11,7 +11,7 @@
  * (It's debatable whether the savings justifies carrying two plan node
  * types, though.)
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -133,9 +133,7 @@ ExecInitUnique(Unique *node, EState *estate, int eflags)
 	uniquestate->tempContext =
 		AllocSetContextCreate(CurrentMemoryContext,
 							  "Unique",
-							  ALLOCSET_DEFAULT_MINSIZE,
-							  ALLOCSET_DEFAULT_INITSIZE,
-							  ALLOCSET_DEFAULT_MAXSIZE);
+							  ALLOCSET_DEFAULT_SIZES);
 
 	/*
 	 * Tuple table initialization

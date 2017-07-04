@@ -30,7 +30,7 @@
  * destroyed at the end of each transaction.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -129,7 +129,7 @@ HeapTupleHeaderGetCmax(HeapTupleHeader tup)
 	 * things too much.
 	 */
 	Assert(CritSectionCount > 0 ||
-	  TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetUpdateXid(tup)));
+		   TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetUpdateXid(tup)));
 
 	if (tup->t_infomask & HEAP_COMBOCID)
 		return GetRealCmax(cid);

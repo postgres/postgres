@@ -9,7 +9,7 @@
  * data even if the underlying table is dropped.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -135,7 +135,7 @@ tstoreReceiveSlot_detoast(TupleTableSlot *slot, DestReceiver *self)
 			if (VARATT_IS_EXTERNAL(DatumGetPointer(val)))
 			{
 				val = PointerGetDatum(heap_tuple_fetch_attr((struct varlena *)
-													  DatumGetPointer(val)));
+															DatumGetPointer(val)));
 				myState->tofree[nfree++] = val;
 			}
 		}

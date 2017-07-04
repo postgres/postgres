@@ -3,7 +3,7 @@
  * array_typanalyze.c
  *	  Functions for gathering statistics from array columns
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -18,6 +18,7 @@
 #include "catalog/pg_collation.h"
 #include "commands/vacuum.h"
 #include "utils/array.h"
+#include "utils/builtins.h"
 #include "utils/datum.h"
 #include "utils/lsyscache.h"
 #include "utils/typcache.h"
@@ -80,7 +81,7 @@ typedef struct
 } DECountItem;
 
 static void compute_array_stats(VacAttrStats *stats,
-		   AnalyzeAttrFetchFunc fetchfunc, int samplerows, double totalrows);
+					AnalyzeAttrFetchFunc fetchfunc, int samplerows, double totalrows);
 static void prune_element_hashtable(HTAB *elements_tab, int b_current);
 static uint32 element_hash(const void *key, Size keysize);
 static int	element_match(const void *key1, const void *key2, Size keysize);
@@ -284,7 +285,7 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 	elements_tab = hash_create("Analyzed elements table",
 							   num_mcelem,
 							   &elem_hash_ctl,
-					HASH_ELEM | HASH_FUNCTION | HASH_COMPARE | HASH_CONTEXT);
+							   HASH_ELEM | HASH_FUNCTION | HASH_COMPARE | HASH_CONTEXT);
 
 	/* hashtable for array distinct elements counts */
 	MemSet(&count_hash_ctl, 0, sizeof(count_hash_ctl));
@@ -750,8 +751,8 @@ element_compare(const void *key1, const void *key2)
 static int
 trackitem_compare_frequencies_desc(const void *e1, const void *e2)
 {
-	const TrackItem *const * t1 = (const TrackItem *const *) e1;
-	const TrackItem *const * t2 = (const TrackItem *const *) e2;
+	const TrackItem *const *t1 = (const TrackItem *const *) e1;
+	const TrackItem *const *t2 = (const TrackItem *const *) e2;
 
 	return (*t2)->frequency - (*t1)->frequency;
 }
@@ -762,8 +763,8 @@ trackitem_compare_frequencies_desc(const void *e1, const void *e2)
 static int
 trackitem_compare_element(const void *e1, const void *e2)
 {
-	const TrackItem *const * t1 = (const TrackItem *const *) e1;
-	const TrackItem *const * t2 = (const TrackItem *const *) e2;
+	const TrackItem *const *t1 = (const TrackItem *const *) e1;
+	const TrackItem *const *t2 = (const TrackItem *const *) e2;
 
 	return element_compare(&(*t1)->key, &(*t2)->key);
 }
@@ -774,8 +775,8 @@ trackitem_compare_element(const void *e1, const void *e2)
 static int
 countitem_compare_count(const void *e1, const void *e2)
 {
-	const DECountItem *const * t1 = (const DECountItem *const *) e1;
-	const DECountItem *const * t2 = (const DECountItem *const *) e2;
+	const DECountItem *const *t1 = (const DECountItem *const *) e1;
+	const DECountItem *const *t2 = (const DECountItem *const *) e2;
 
 	if ((*t1)->count < (*t2)->count)
 		return -1;

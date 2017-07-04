@@ -3,7 +3,7 @@
  *
  *	utility functions
  *
- *	Copyright (c) 2010-2016, PostgreSQL Global Development Group
+ *	Copyright (c) 2010-2017, PostgreSQL Global Development Group
  *	src/bin/pg_upgrade/util.c
  */
 
@@ -89,7 +89,7 @@ pg_log_v(eLogType type, const char *fmt, va_list ap)
 {
 	char		message[QUERY_ALLOC];
 
-	vsnprintf(message, sizeof(message), fmt, ap);
+	vsnprintf(message, sizeof(message), _(fmt), ap);
 
 	/* PG_VERBOSE and PG_STATUS are only output in verbose mode */
 	/* fopen() on log_opts.internal might have failed, so check it */
@@ -108,7 +108,7 @@ pg_log_v(eLogType type, const char *fmt, va_list ap)
 	{
 		case PG_VERBOSE:
 			if (log_opts.verbose)
-				printf("%s", _(message));
+				printf("%s", message);
 			break;
 
 		case PG_STATUS:
@@ -123,17 +123,17 @@ pg_log_v(eLogType type, const char *fmt, va_list ap)
 					   strlen(message) <= MESSAGE_WIDTH - 2 ? message :
 					   message + strlen(message) - MESSAGE_WIDTH + 3 + 2);
 			else
-				printf("  %s\n", _(message));
+				printf("  %s\n", message);
 			break;
 
 		case PG_REPORT:
 		case PG_WARNING:
-			printf("%s", _(message));
+			printf("%s", message);
 			break;
 
 		case PG_FATAL:
-			printf("\n%s", _(message));
-			printf("Failure, exiting\n");
+			printf("\n%s", message);
+			printf(_("Failure, exiting\n"));
 			exit(1);
 			break;
 
@@ -163,7 +163,7 @@ pg_fatal(const char *fmt,...)
 	va_start(args, fmt);
 	pg_log_v(PG_FATAL, fmt, args);
 	va_end(args);
-	printf("Failure, exiting\n");
+	printf(_("Failure, exiting\n"));
 	exit(1);
 }
 
@@ -229,21 +229,6 @@ get_user_info(char **user_name_p)
 	*user_name_p = pg_strdup(user_name);
 
 	return user_id;
-}
-
-
-/*
- * getErrorText()
- *
- *	Returns the text of the most recent error
- */
-const char *
-getErrorText(void)
-{
-#ifdef WIN32
-	_dosmaperr(GetLastError());
-#endif
-	return pg_strdup(strerror(errno));
 }
 
 

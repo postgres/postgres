@@ -90,7 +90,7 @@
  * efficient than using WaitLatch or WaitLatchOrSocket.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/storage/latch.h
@@ -133,6 +133,9 @@ typedef struct WaitEvent
 	uint32		events;			/* triggered events */
 	pgsocket	fd;				/* socket fd associated with event */
 	void	   *user_data;		/* pointer provided in AddWaitEventToSet */
+#ifdef WIN32
+	bool		reset;			/* Is reset of the event required? */
+#endif
 } WaitEvent;
 
 /* forward declaration to avoid exposing latch.c implementation details */
@@ -155,10 +158,13 @@ extern int AddWaitEventToSet(WaitEventSet *set, uint32 events, pgsocket fd,
 				  Latch *latch, void *user_data);
 extern void ModifyWaitEvent(WaitEventSet *set, int pos, uint32 events, Latch *latch);
 
-extern int	WaitEventSetWait(WaitEventSet *set, long timeout, WaitEvent *occurred_events, int nevents);
-extern int	WaitLatch(volatile Latch *latch, int wakeEvents, long timeout);
+extern int WaitEventSetWait(WaitEventSet *set, long timeout,
+				 WaitEvent *occurred_events, int nevents,
+				 uint32 wait_event_info);
+extern int WaitLatch(volatile Latch *latch, int wakeEvents, long timeout,
+		  uint32 wait_event_info);
 extern int WaitLatchOrSocket(volatile Latch *latch, int wakeEvents,
-				  pgsocket sock, long timeout);
+				  pgsocket sock, long timeout, uint32 wait_event_info);
 
 /*
  * Unix implementation uses SIGUSR1 for inter-process signaling.
@@ -170,4 +176,4 @@ extern void latch_sigusr1_handler(void);
 #define latch_sigusr1_handler()  ((void) 0)
 #endif
 
-#endif   /* LATCH_H */
+#endif							/* LATCH_H */

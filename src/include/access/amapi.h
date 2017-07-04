@@ -3,7 +3,7 @@
  * amapi.h
  *	  API for Postgres index access methods.
  *
- * Copyright (c) 2015-2016, PostgreSQL Global Development Group
+ * Copyright (c) 2015-2017, PostgreSQL Global Development Group
  *
  * src/include/access/amapi.h
  *
@@ -60,73 +60,75 @@ typedef enum IndexAMProperty
 
 /* build new index */
 typedef IndexBuildResult *(*ambuild_function) (Relation heapRelation,
-													  Relation indexRelation,
-												struct IndexInfo *indexInfo);
+											   Relation indexRelation,
+											   struct IndexInfo *indexInfo);
 
 /* build empty index */
 typedef void (*ambuildempty_function) (Relation indexRelation);
 
 /* insert this tuple */
 typedef bool (*aminsert_function) (Relation indexRelation,
-											   Datum *values,
-											   bool *isnull,
-											   ItemPointer heap_tid,
-											   Relation heapRelation,
-											   IndexUniqueCheck checkUnique);
+								   Datum *values,
+								   bool *isnull,
+								   ItemPointer heap_tid,
+								   Relation heapRelation,
+								   IndexUniqueCheck checkUnique,
+								   struct IndexInfo *indexInfo);
 
 /* bulk delete */
 typedef IndexBulkDeleteResult *(*ambulkdelete_function) (IndexVacuumInfo *info,
-												IndexBulkDeleteResult *stats,
-											IndexBulkDeleteCallback callback,
-													   void *callback_state);
+														 IndexBulkDeleteResult *stats,
+														 IndexBulkDeleteCallback callback,
+														 void *callback_state);
 
 /* post-VACUUM cleanup */
 typedef IndexBulkDeleteResult *(*amvacuumcleanup_function) (IndexVacuumInfo *info,
-											   IndexBulkDeleteResult *stats);
+															IndexBulkDeleteResult *stats);
 
 /* can indexscan return IndexTuples? */
 typedef bool (*amcanreturn_function) (Relation indexRelation, int attno);
 
 /* estimate cost of an indexscan */
 typedef void (*amcostestimate_function) (struct PlannerInfo *root,
-													 struct IndexPath *path,
-													 double loop_count,
-													 Cost *indexStartupCost,
-													 Cost *indexTotalCost,
-											   Selectivity *indexSelectivity,
-												   double *indexCorrelation);
+										 struct IndexPath *path,
+										 double loop_count,
+										 Cost *indexStartupCost,
+										 Cost *indexTotalCost,
+										 Selectivity *indexSelectivity,
+										 double *indexCorrelation,
+										 double *indexPages);
 
 /* parse index reloptions */
 typedef bytea *(*amoptions_function) (Datum reloptions,
-												  bool validate);
+									  bool validate);
 
 /* report AM, index, or index column property */
 typedef bool (*amproperty_function) (Oid index_oid, int attno,
-								  IndexAMProperty prop, const char *propname,
-												 bool *res, bool *isnull);
+									 IndexAMProperty prop, const char *propname,
+									 bool *res, bool *isnull);
 
 /* validate definition of an opclass for this AM */
 typedef bool (*amvalidate_function) (Oid opclassoid);
 
 /* prepare for index scan */
 typedef IndexScanDesc (*ambeginscan_function) (Relation indexRelation,
-														   int nkeys,
-														   int norderbys);
+											   int nkeys,
+											   int norderbys);
 
 /* (re)start index scan */
 typedef void (*amrescan_function) (IndexScanDesc scan,
-											   ScanKey keys,
-											   int nkeys,
-											   ScanKey orderbys,
-											   int norderbys);
+								   ScanKey keys,
+								   int nkeys,
+								   ScanKey orderbys,
+								   int norderbys);
 
 /* next valid tuple */
 typedef bool (*amgettuple_function) (IndexScanDesc scan,
-												 ScanDirection direction);
+									 ScanDirection direction);
 
 /* fetch all valid tuples */
 typedef int64 (*amgetbitmap_function) (IndexScanDesc scan,
-												   TIDBitmap *tbm);
+									   TIDBitmap *tbm);
 
 /* end index scan */
 typedef void (*amendscan_function) (IndexScanDesc scan);
@@ -137,6 +139,18 @@ typedef void (*ammarkpos_function) (IndexScanDesc scan);
 /* restore marked scan position */
 typedef void (*amrestrpos_function) (IndexScanDesc scan);
 
+/*
+ * Callback function signatures - for parallel index scans.
+ */
+
+/* estimate size of parallel scan descriptor */
+typedef Size (*amestimateparallelscan_function) (void);
+
+/* prepare for parallel index scan */
+typedef void (*aminitparallelscan_function) (void *target);
+
+/* (re)start parallel index scan */
+typedef void (*amparallelrescan_function) (IndexScanDesc scan);
 
 /*
  * API struct for an index AM.  Note this must be stored in a single palloc'd
@@ -175,6 +189,8 @@ typedef struct IndexAmRoutine
 	bool		amclusterable;
 	/* does AM handle predicate locks? */
 	bool		ampredlocks;
+	/* does AM support parallel scan? */
+	bool		amcanparallel;
 	/* type of data stored in index, or InvalidOid if variable */
 	Oid			amkeytype;
 
@@ -187,15 +203,20 @@ typedef struct IndexAmRoutine
 	amcanreturn_function amcanreturn;	/* can be NULL */
 	amcostestimate_function amcostestimate;
 	amoptions_function amoptions;
-	amproperty_function amproperty;		/* can be NULL */
+	amproperty_function amproperty; /* can be NULL */
 	amvalidate_function amvalidate;
 	ambeginscan_function ambeginscan;
 	amrescan_function amrescan;
-	amgettuple_function amgettuple;		/* can be NULL */
+	amgettuple_function amgettuple; /* can be NULL */
 	amgetbitmap_function amgetbitmap;	/* can be NULL */
 	amendscan_function amendscan;
-	ammarkpos_function ammarkpos;		/* can be NULL */
-	amrestrpos_function amrestrpos;		/* can be NULL */
+	ammarkpos_function ammarkpos;	/* can be NULL */
+	amrestrpos_function amrestrpos; /* can be NULL */
+
+	/* interface functions to support parallel index scans */
+	amestimateparallelscan_function amestimateparallelscan; /* can be NULL */
+	aminitparallelscan_function aminitparallelscan; /* can be NULL */
+	amparallelrescan_function amparallelrescan; /* can be NULL */
 } IndexAmRoutine;
 
 
@@ -203,6 +224,4 @@ typedef struct IndexAmRoutine
 extern IndexAmRoutine *GetIndexAmRoutine(Oid amhandler);
 extern IndexAmRoutine *GetIndexAmRoutineByAmId(Oid amoid, bool noerror);
 
-extern Datum amvalidate(PG_FUNCTION_ARGS);
-
-#endif   /* AMAPI_H */
+#endif							/* AMAPI_H */

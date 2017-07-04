@@ -217,6 +217,30 @@ WHERE	attcollation != 0 AND
 ------+--------------
 (0 rows)
 
+SELECT	ctid, roleid
+FROM	pg_catalog.pg_auth_members fk
+WHERE	roleid != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_authid pk WHERE pk.oid = fk.roleid);
+ ctid | roleid 
+------+--------
+(0 rows)
+
+SELECT	ctid, member
+FROM	pg_catalog.pg_auth_members fk
+WHERE	member != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_authid pk WHERE pk.oid = fk.member);
+ ctid | member 
+------+--------
+(0 rows)
+
+SELECT	ctid, grantor
+FROM	pg_catalog.pg_auth_members fk
+WHERE	grantor != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_authid pk WHERE pk.oid = fk.grantor);
+ ctid | grantor 
+------+---------
+(0 rows)
+
 SELECT	ctid, castsource
 FROM	pg_catalog.pg_cast fk
 WHERE	castsource != 0 AND
@@ -721,6 +745,14 @@ WHERE	opfowner != 0 AND
 ------+----------
 (0 rows)
 
+SELECT	ctid, partrelid
+FROM	pg_catalog.pg_partitioned_table fk
+WHERE	partrelid != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_class pk WHERE pk.oid = fk.partrelid);
+ ctid | partrelid 
+------+-----------
+(0 rows)
+
 SELECT	ctid, polrelid
 FROM	pg_catalog.pg_policy fk
 WHERE	polrelid != 0 AND
@@ -833,6 +865,22 @@ WHERE	ev_class != 0 AND
 ------+----------
 (0 rows)
 
+SELECT	ctid, seqrelid
+FROM	pg_catalog.pg_sequence fk
+WHERE	seqrelid != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_class pk WHERE pk.oid = fk.seqrelid);
+ ctid | seqrelid 
+------+----------
+(0 rows)
+
+SELECT	ctid, seqtypid
+FROM	pg_catalog.pg_sequence fk
+WHERE	seqtypid != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_type pk WHERE pk.oid = fk.seqtypid);
+ ctid | seqtypid 
+------+----------
+(0 rows)
+
 SELECT	ctid, refclassid
 FROM	pg_catalog.pg_shdepend fk
 WHERE	refclassid != 0 AND
@@ -895,6 +943,30 @@ WHERE	staop5 != 0 AND
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator pk WHERE pk.oid = fk.staop5);
  ctid | staop5 
 ------+--------
+(0 rows)
+
+SELECT	ctid, stxrelid
+FROM	pg_catalog.pg_statistic_ext fk
+WHERE	stxrelid != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_class pk WHERE pk.oid = fk.stxrelid);
+ ctid | stxrelid 
+------+----------
+(0 rows)
+
+SELECT	ctid, stxnamespace
+FROM	pg_catalog.pg_statistic_ext fk
+WHERE	stxnamespace != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_namespace pk WHERE pk.oid = fk.stxnamespace);
+ ctid | stxnamespace 
+------+--------------
+(0 rows)
+
+SELECT	ctid, stxowner
+FROM	pg_catalog.pg_statistic_ext fk
+WHERE	stxowner != 0 AND
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_authid pk WHERE pk.oid = fk.stxowner);
+ ctid | stxowner 
+------+----------
 (0 rows)
 
 SELECT	ctid, spcowner

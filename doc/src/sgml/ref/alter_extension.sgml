@@ -30,6 +30,7 @@ ALTER EXTENSION <replaceable class="PARAMETER">name</replaceable> DROP <replacea
 
 <phrase>where <replaceable class="PARAMETER">member_object</replaceable> is:</phrase>
 
+  ACCESS METHOD <replaceable class="PARAMETER">object_name</replaceable> |
   AGGREGATE <replaceable class="PARAMETER">aggregate_name</replaceable> ( <replaceable>aggregate_signature</replaceable> ) |
   CAST (<replaceable>source_type</replaceable> AS <replaceable>target_type</replaceable>) |
   COLLATION <replaceable class="PARAMETER">object_name</replaceable> |
@@ -38,7 +39,7 @@ ALTER EXTENSION <replaceable class="PARAMETER">name</replaceable> DROP <replacea
   EVENT TRIGGER <replaceable class="PARAMETER">object_name</replaceable> |
   FOREIGN DATA WRAPPER <replaceable class="PARAMETER">object_name</replaceable> |
   FOREIGN TABLE <replaceable class="PARAMETER">object_name</replaceable> |
-  FUNCTION <replaceable class="PARAMETER">function_name</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) |
+  FUNCTION <replaceable class="PARAMETER">function_name</replaceable> [ ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) ] |
   MATERIALIZED VIEW <replaceable class="PARAMETER">object_name</replaceable> |
   OPERATOR <replaceable class="PARAMETER">operator_name</replaceable> (<replaceable class="PARAMETER">left_type</replaceable>, <replaceable class="PARAMETER">right_type</replaceable>) |
   OPERATOR CLASS <replaceable class="PARAMETER">object_name</replaceable> USING <replaceable class="parameter">index_method</replaceable> |

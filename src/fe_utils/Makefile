@@ -5,7 +5,7 @@
 # This makefile generates a static library, libpgfeutils.a,
 # for use by client applications
 #
-# Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+# Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
 # IDENTIFICATION
@@ -29,11 +29,7 @@ libpgfeutils.a: $(OBJS)
 
 psqlscan.c: FLEXFLAGS = -Cfe -p -p
 psqlscan.c: FLEX_NO_BACKUP=yes
-
-# Latest flex causes warnings in this file.
-ifeq ($(GCC),yes)
-psqlscan.o: CFLAGS += -Wno-error
-endif
+psqlscan.c: FLEX_FIX_WARNING=yes
 
 distprep: psqlscan.c
 

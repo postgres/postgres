@@ -2,7 +2,7 @@
  * brin_minmax.c
  *		Implementation of Min/Max opclass for BRIN
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -16,6 +16,7 @@
 #include "access/stratnum.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_amop.h"
+#include "utils/builtins.h"
 #include "utils/datum.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
@@ -28,10 +29,6 @@ typedef struct MinmaxOpaque
 	FmgrInfo	strategy_procinfos[BTMaxStrategyNumber];
 } MinmaxOpaque;
 
-Datum		brin_minmax_opcinfo(PG_FUNCTION_ARGS);
-Datum		brin_minmax_add_value(PG_FUNCTION_ARGS);
-Datum		brin_minmax_consistent(PG_FUNCTION_ARGS);
-Datum		brin_minmax_union(PG_FUNCTION_ARGS);
 static FmgrInfo *minmax_get_strategy_procinfo(BrinDesc *bdesc, uint16 attno,
 							 Oid subtype, uint16 strategynum);
 
@@ -215,7 +212,7 @@ brin_minmax_consistent(PG_FUNCTION_ARGS)
 				break;
 			/* max() >= scankey */
 			finfo = minmax_get_strategy_procinfo(bdesc, attno, subtype,
-											   BTGreaterEqualStrategyNumber);
+												 BTGreaterEqualStrategyNumber);
 			matches = FunctionCall2Coll(finfo, colloid, column->bv_values[1],
 										value);
 			break;
@@ -361,7 +358,7 @@ minmax_get_strategy_procinfo(BrinDesc *bdesc, uint16 attno, Oid subtype,
 				 strategynum, attr->atttypid, subtype, opfamily);
 
 		oprid = DatumGetObjectId(SysCacheGetAttr(AMOPSTRATEGY, tuple,
-											 Anum_pg_amop_amopopr, &isNull));
+												 Anum_pg_amop_amopopr, &isNull));
 		ReleaseSysCache(tuple);
 		Assert(!isNull && RegProcedureIsValid(oprid));
 

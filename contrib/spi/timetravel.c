@@ -11,6 +11,7 @@
 
 #include <ctype.h>
 
+#include "access/htup_details.h"
 #include "catalog/pg_type.h"
 #include "commands/trigger.h"
 #include "executor/spi.h"
@@ -50,7 +51,7 @@ static EPlan *find_plan(char *ident, EPlan **eplan, int *nplans);
  *			and stop_date eq INFINITY [ and update_user eq current user ]
  *			and all other column values as in new tuple, and insert tuple
  *			with old data and stop_date eq current date
- *			ELSE - skip updation of tuple.
+ *			ELSE - skip updating of tuple.
  *		2.  IF a delete affects tuple with stop_date eq INFINITY
  *			then insert the same tuple with stop_date eq current date
  *			[ and delete_user eq current user ]
@@ -84,7 +85,7 @@ timetravel(PG_FUNCTION_ARGS)
 	Trigger    *trigger;		/* to get trigger name */
 	int			argc;
 	char	  **args;			/* arguments */
-	int			attnum[MaxAttrNum];		/* fnumbers of start/stop columns */
+	int			attnum[MaxAttrNum]; /* fnumbers of start/stop columns */
 	Datum		oldtimeon,
 				oldtimeoff;
 	Datum		newtimeon,
@@ -157,7 +158,7 @@ timetravel(PG_FUNCTION_ARGS)
 	for (i = 0; i < MinAttrNum; i++)
 	{
 		attnum[i] = SPI_fnumber(tupdesc, args[i]);
-		if (attnum[i] < 0)
+		if (attnum[i] <= 0)
 			elog(ERROR, "timetravel (%s): there is no attribute %s", relname, args[i]);
 		if (SPI_gettypeid(tupdesc, attnum[i]) != ABSTIMEOID)
 			elog(ERROR, "timetravel (%s): attribute %s must be of abstime type",
@@ -166,7 +167,7 @@ timetravel(PG_FUNCTION_ARGS)
 	for (; i < argc; i++)
 	{
 		attnum[i] = SPI_fnumber(tupdesc, args[i]);
-		if (attnum[i] < 0)
+		if (attnum[i] <= 0)
 			elog(ERROR, "timetravel (%s): there is no attribute %s", relname, args[i]);
 		if (SPI_gettypeid(tupdesc, attnum[i]) != TEXTOID)
 			elog(ERROR, "timetravel (%s): attribute %s must be of text type",
@@ -183,13 +184,13 @@ timetravel(PG_FUNCTION_ARGS)
 		int			chnattrs = 0;
 		int			chattrs[MaxAttrNum];
 		Datum		newvals[MaxAttrNum];
-		char		newnulls[MaxAttrNum];
+		bool		newnulls[MaxAttrNum];
 
 		oldtimeon = SPI_getbinval(trigtuple, tupdesc, attnum[a_time_on], &isnull);
 		if (isnull)
 		{
 			newvals[chnattrs] = GetCurrentAbsoluteTime();
-			newnulls[chnattrs] = ' ';
+			newnulls[chnattrs] = false;
 			chattrs[chnattrs] = attnum[a_time_on];
 			chnattrs++;
 		}
@@ -201,7 +202,7 @@ timetravel(PG_FUNCTION_ARGS)
 				(chnattrs > 0 && DatumGetInt32(newvals[a_time_on]) >= NOEND_ABSTIME))
 				elog(ERROR, "timetravel (%s): %s is infinity", relname, args[a_time_on]);
 			newvals[chnattrs] = NOEND_ABSTIME;
-			newnulls[chnattrs] = ' ';
+			newnulls[chnattrs] = false;
 			chattrs[chnattrs] = attnum[a_time_off];
 			chnattrs++;
 		}
@@ -220,21 +221,23 @@ timetravel(PG_FUNCTION_ARGS)
 		{
 			/* clear update_user value */
 			newvals[chnattrs] = nulltext;
-			newnulls[chnattrs] = 'n';
+			newnulls[chnattrs] = true;
 			chattrs[chnattrs] = attnum[a_upd_user];
 			chnattrs++;
 			/* clear delete_user value */
 			newvals[chnattrs] = nulltext;
-			newnulls[chnattrs] = 'n';
+			newnulls[chnattrs] = true;
 			chattrs[chnattrs] = attnum[a_del_user];
 			chnattrs++;
 			/* set insert_user value */
 			newvals[chnattrs] = newuser;
-			newnulls[chnattrs] = ' ';
+			newnulls[chnattrs] = false;
 			chattrs[chnattrs] = attnum[a_ins_user];
 			chnattrs++;
 		}
-		rettuple = SPI_modifytuple(rel, trigtuple, chnattrs, chattrs, newvals, newnulls);
+		rettuple = heap_modify_tuple_by_cols(trigtuple, tupdesc,
+											 chnattrs, chattrs,
+											 newvals, newnulls);
 		return PointerGetDatum(rettuple);
 		/* end of INSERT */
 	}
@@ -395,13 +398,11 @@ timetravel(PG_FUNCTION_ARGS)
 			chnattrs++;
 		}
 
-		rettuple = SPI_modifytuple(rel, newtuple, chnattrs, chattrs, newvals, newnulls);
-
 		/*
-		 * SPI_copytuple allocates tmptuple in upper executor context - have
-		 * to free allocation using SPI_pfree
+		 * Use SPI_modifytuple() here because we are inside SPI environment
+		 * but rettuple must be allocated in caller's context.
 		 */
-		/* SPI_pfree(tmptuple); */
+		rettuple = SPI_modifytuple(rel, newtuple, chnattrs, chattrs, newvals, newnulls);
 	}
 	else
 		/* DELETE case */
@@ -460,7 +461,7 @@ set_timetravel(PG_FUNCTION_ARGS)
 			s = rname = DatumGetCString(DirectFunctionCall1(nameout, NameGetDatum(relname)));
 			if (s)
 			{
-				pp = malloc(offsetof(TTOffList, name) +strlen(rname) + 1);
+				pp = malloc(offsetof(TTOffList, name) + strlen(rname) + 1);
 				if (pp)
 				{
 					pp->next = NULL;

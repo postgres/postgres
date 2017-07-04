@@ -3,7 +3,7 @@
  * windowfuncs.c
  *	  Standard window functions defined in SQL spec.
  *
- * Portions Copyright (c) 2000-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2000-2017, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
@@ -342,7 +342,7 @@ window_lag(PG_FUNCTION_ARGS)
 
 /*
  * lag_with_offset
- * returns the value of VE evelulated on a row that is OFFSET
+ * returns the value of VE evaluated on a row that is OFFSET
  * rows before the current row within a partition,
  * per spec.
  */

@@ -4,7 +4,7 @@
  *	  POSTGRES heap access method definitions.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/access/heapam.h
@@ -19,7 +19,7 @@
 #include "nodes/lockoptions.h"
 #include "nodes/primnodes.h"
 #include "storage/bufpage.h"
-#include "storage/lock.h"
+#include "storage/lockdefs.h"
 #include "utils/relcache.h"
 #include "utils/snapshot.h"
 
@@ -117,13 +117,13 @@ extern HeapScanDesc heap_beginscan_bm(Relation relation, Snapshot snapshot,
 				  int nkeys, ScanKey key);
 extern HeapScanDesc heap_beginscan_sampling(Relation relation,
 						Snapshot snapshot, int nkeys, ScanKey key,
-					 bool allow_strat, bool allow_sync, bool allow_pagemode);
+						bool allow_strat, bool allow_sync, bool allow_pagemode);
 extern void heap_setscanlimits(HeapScanDesc scan, BlockNumber startBlk,
 				   BlockNumber endBlk);
 extern void heapgetpage(HeapScanDesc scan, BlockNumber page);
 extern void heap_rescan(HeapScanDesc scan, ScanKey key);
 extern void heap_rescan_set_params(HeapScanDesc scan, ScanKey key,
-					 bool allow_strat, bool allow_sync, bool allow_pagemode);
+					   bool allow_strat, bool allow_sync, bool allow_pagemode);
 extern void heap_endscan(HeapScanDesc scan);
 extern HeapTuple heap_getnext(HeapScanDesc scan, ScanDirection direction);
 
@@ -147,6 +147,7 @@ extern void setLastTid(const ItemPointer tid);
 
 extern BulkInsertState GetBulkInsertState(void);
 extern void FreeBulkInsertState(BulkInsertState);
+extern void ReleaseBulkInsertStatePin(BulkInsertState bistate);
 
 extern Oid heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 			int options, BulkInsertState bistate);
@@ -178,6 +179,7 @@ extern void simple_heap_update(Relation relation, ItemPointer otid,
 				   HeapTuple tup);
 
 extern void heap_sync(Relation relation);
+extern void heap_update_snapshot(HeapScanDesc scan, Snapshot snapshot);
 
 /* in heap/pruneheap.c */
 extern void heap_page_prune_opt(Relation relation, Buffer buffer);
@@ -196,4 +198,4 @@ extern BlockNumber ss_get_location(Relation rel, BlockNumber relnblocks);
 extern void SyncScanShmemInit(void);
 extern Size SyncScanShmemSize(void);
 
-#endif   /* HEAPAM_H */
+#endif							/* HEAPAM_H */

@@ -3,7 +3,7 @@
  * socket.c
  *	  Microsoft Windows Win32 Socket Functions
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/port/win32/socket.c
@@ -298,7 +298,7 @@ pgwin32_socket(int af, int type, int protocol)
 }
 
 int
-pgwin32_bind(SOCKET s, struct sockaddr * addr, int addrlen)
+pgwin32_bind(SOCKET s, struct sockaddr *addr, int addrlen)
 {
 	int			res;
 
@@ -320,7 +320,7 @@ pgwin32_listen(SOCKET s, int backlog)
 }
 
 SOCKET
-pgwin32_accept(SOCKET s, struct sockaddr * addr, int *addrlen)
+pgwin32_accept(SOCKET s, struct sockaddr *addr, int *addrlen)
 {
 	SOCKET		rs;
 
@@ -342,7 +342,7 @@ pgwin32_accept(SOCKET s, struct sockaddr * addr, int *addrlen)
 
 /* No signal delivery during connect. */
 int
-pgwin32_connect(SOCKET s, const struct sockaddr * addr, int addrlen)
+pgwin32_connect(SOCKET s, const struct sockaddr *addr, int addrlen)
 {
 	int			r;
 
@@ -426,7 +426,7 @@ pgwin32_recv(SOCKET s, char *buf, int len, int f)
 		pg_usleep(10000);
 	}
 	ereport(NOTICE,
-	  (errmsg_internal("could not read from ready socket (after retries)")));
+			(errmsg_internal("could not read from ready socket (after retries)")));
 	errno = EWOULDBLOCK;
 	return -1;
 }
@@ -500,7 +500,7 @@ pgwin32_send(SOCKET s, const void *buf, int len, int flags)
  * since it is not used in postgresql!
  */
 int
-pgwin32_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, const struct timeval * timeout)
+pgwin32_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, const struct timeval *timeout)
 {
 	WSAEVENT	events[FD_SETSIZE * 2]; /* worst case is readfds totally
 										 * different from writefds, so
@@ -523,11 +523,16 @@ pgwin32_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, c
 	FD_ZERO(&outwritefds);
 
 	/*
-	 * Write FDs are different in the way that it is only flagged by
-	 * WSASelectEvent() if we have tried to write to them first. So try an
-	 * empty write
+	 * Windows does not guarantee to log an FD_WRITE network event indicating
+	 * that more data can be sent unless the previous send() failed with
+	 * WSAEWOULDBLOCK.  While our caller might well have made such a call, we
+	 * cannot assume that here.  Therefore, if waiting for write-ready, force
+	 * the issue by doing a dummy send().  If the dummy send() succeeds,
+	 * assume that the socket is in fact write-ready, and return immediately.
+	 * Also, if it fails with something other than WSAEWOULDBLOCK, return a
+	 * write-ready indication to let our caller deal with the error condition.
 	 */
-	if (writefds)
+	if (writefds != NULL)
 	{
 		for (i = 0; i < writefds->fd_count; i++)
 		{
@@ -539,20 +544,11 @@ pgwin32_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, c
 			buf.len = 0;
 
 			r = WSASend(writefds->fd_array[i], &buf, 1, &sent, 0, NULL, NULL);
-			if (r == 0)			/* Completed - means things are fine! */
+			if (r == 0 || WSAGetLastError() != WSAEWOULDBLOCK)
 				FD_SET(writefds->fd_array[i], &outwritefds);
-
-			else
-			{					/* Not completed */
-				if (WSAGetLastError() != WSAEWOULDBLOCK)
-
-					/*
-					 * Not completed, and not just "would block", so an error
-					 * occurred
-					 */
-					FD_SET(writefds->fd_array[i], &outwritefds);
-			}
 		}
+
+		/* If we found any write-ready sockets, just return them immediately */
 		if (outwritefds.fd_count > 0)
 		{
 			memcpy(writefds, &outwritefds, sizeof(fd_set));

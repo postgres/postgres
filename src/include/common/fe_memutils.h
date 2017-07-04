@@ -2,7 +2,7 @@
  *	fe_memutils.h
  *		memory management support for frontend code
  *
- *	Copyright (c) 2003-2016, PostgreSQL Global Development Group
+ *	Copyright (c) 2003-2017, PostgreSQL Global Development Group
  *
  *	src/include/common/fe_memutils.h
  */
@@ -41,4 +41,4 @@ extern void pfree(void *pointer);
 extern char *psprintf(const char *fmt,...) pg_attribute_printf(1, 2);
 extern size_t pvsnprintf(char *buf, size_t len, const char *fmt, va_list args) pg_attribute_printf(3, 0);
 
-#endif   /* FE_MEMUTILS_H */
+#endif							/* FE_MEMUTILS_H */

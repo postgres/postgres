@@ -5,7 +5,7 @@
  *	  along with the relation's initial contents.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_shdepend.h
@@ -87,4 +87,4 @@ typedef FormData_pg_shdepend *Form_pg_shdepend;
  * are explicitly stored in pg_shdepend.
  */
 
-#endif   /* PG_SHDEPEND_H */
+#endif							/* PG_SHDEPEND_H */

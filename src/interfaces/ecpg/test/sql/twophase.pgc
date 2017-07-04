@@ -1,0 +1,44 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+exec sql include ../regression;
+
+exec sql whenever sqlerror sqlprint;
+
+int main(void)
+{
+	char msg[128];
+
+	ECPGdebug(1, stderr);
+
+	strcpy(msg, "connect");
+	exec sql connect to REGRESSDB1;
+	exec sql set autocommit to off;
+
+	strcpy(msg, "create");
+	exec sql create table t1(c int);
+
+	strcpy(msg, "commit");
+	exec sql commit;
+
+	strcpy(msg, "begin");
+	exec sql begin;
+
+	strcpy(msg, "insert");
+	exec sql insert into t1 values(1);
+
+	strcpy(msg, "prepare transaction");
+	exec sql prepare transaction 'gxid';
+
+	strcpy(msg, "commit prepared");
+	exec sql commit prepared 'gxid';
+
+	strcpy(msg, "drop");
+	exec sql drop table t1;
+
+	strcpy(msg, "disconnect");
+	exec sql disconnect current;
+
+	return (0);
+}

@@ -1,0 +1,290 @@
+<!--
+doc/src/sgml/ref/create_subscription.sgml
+PostgreSQL documentation
+-->
+
+<refentry id="SQL-CREATESUBSCRIPTION">
+ <indexterm zone="sql-createsubscription">
+  <primary>CREATE SUBSCRIPTION</primary>
+ </indexterm>
+
+ <refmeta>
+  <refentrytitle>CREATE SUBSCRIPTION</refentrytitle>
+  <manvolnum>7</manvolnum>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>CREATE SUBSCRIPTION</refname>
+  <refpurpose>define a new subscription</refpurpose>
+ </refnamediv>
+
+ <refsynopsisdiv>
+<synopsis>
+CREATE SUBSCRIPTION <replaceable class="PARAMETER">subscription_name</replaceable>
+    CONNECTION '<replaceable class="PARAMETER">conninfo</replaceable>'
+    PUBLICATION <replaceable class="PARAMETER">publication_name</replaceable> [, ...]
+    [ WITH ( <replaceable class="parameter">subscription_parameter</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] ) ]
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>CREATE SUBSCRIPTION</command> adds a new subscription for the
+   current database.  The subscription name must be distinct from the name of
+   any existing subscription in the database.
+  </para>
+
+  <para>
+   The subscription represents a replication connection to the publisher.  As
+   such this command does not only add definitions in the local catalogs but
+   also creates a replication slot on the publisher.
+  </para>
+
+  <para>
+   A logical replication worker will be started to replicate data for the new
+   subscription at the commit of the transaction where this command is run.
+  </para>
+
+  <para>
+   <command>CREATE SUBSCRIPTION</command> cannot be executed inside a
+   transaction block when the parameter <literal>create_slot</literal> is specified.
+  </para>
+
+  <para>
+   Additional info about subscriptions and logical replication as a whole
+   can is available at <xref linkend="logical-replication-subscription"> and
+   <xref linkend="logical-replication">.
+  </para>
+
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="parameter">subscription_name</replaceable></term>
+    <listitem>
+     <para>
+      The name of the new subscription.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>CONNECTION '<replaceable class="parameter">conninfo</replaceable>'</literal></term>
+    <listitem>
+     <para>
+      The connection string to the publisher.  For details
+      see <xref linkend="libpq-connstring">.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>PUBLICATION <replaceable class="parameter">publication_name</replaceable></literal></term>
+    <listitem>
+     <para>
+      Names of the publications on the publisher to subscribe to.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>WITH ( <replaceable class="parameter">subscription_parameter</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] )</literal></term>
+    <listitem>
+     <para>
+      This clause specifies optional parameters for a subscription.  The
+      following parameters are supported:
+
+      <variablelist>
+       <varlistentry>
+        <term><literal>copy_data</literal> (<type>boolean</type>)</term>
+        <listitem>
+         <para>
+          Specifies whether the existing data in the publications that are
+          being subscribed to should be copied once the replication starts.
+          The default is <literal>true</literal>.
+         </para>
+        </listitem>
+       </varlistentry>
+
+       <varlistentry>
+        <term><literal>create_slot</literal> (<type>boolean</type>)</term>
+        <listitem>
+         <para>
+          Specifies whether the command should create the replication slot on
+          the publisher.  The default is <literal>true</literal>.
+         </para>
+        </listitem>
+       </varlistentry>
+
+       <varlistentry>
+        <term><literal>enabled</literal> (<type>boolean</type>)</term>
+        <listitem>
+         <para>
+          Specifies whether the subscription should be actively replicating,
+          or whether it should be just setup but not started yet.  The default
+          is <literal>true</literal>.
+         </para>
+        </listitem>
+       </varlistentry>
+
+       <varlistentry>
+        <term><literal>slot_name</literal> (<type>string</type>)</term>
+        <listitem>
+         <para>
+          Name of the replication slot to use.  The default behavior is to
+          use the name of the subscription for the slot name.
+         </para>
+
+         <para>
+          When <literal>slot_name</literal> is set to
+          <literal>NONE</literal>, there will be no replication slot
+          associated with the subscription.  This can be used if the
+          replication slot will be created later manually.  Such
+          subscriptions must also have both <literal>enabled</literal> and
+          <literal>create_slot</literal> set to <literal>false</literal>.
+         </para>
+        </listitem>
+       </varlistentry>
+
+       <varlistentry>
+        <term><literal>synchronous_commit</literal> (<type>enum</type>)</term>
+        <listitem>
+         <para>
+          The value of this parameter overrides the
+          <xref linkend="guc-synchronous-commit"> setting.  The default
+          value is <literal>off</literal>.
+         </para>
+
+         <para>
+          It is safe to use <literal>off</literal> for logical replication:
+          If the subscriber loses transactions because of missing
+          synchronization, the data will be resent from the publisher.
+         </para>
+
+         <para>
+          A different setting might be appropriate when doing synchronous
+          logical replication.  The logical replication workers report the
+          positions of writes and flushes to the publisher, and when using
+          synchronous replication, the publisher will wait for the actual
+          flush.  This means that setting
+          <literal>synchronous_commit</literal> for the subscriber to
+          <literal>off</literal> when the subscription is used for
+          synchronous replication might increase the latency for
+          <command>COMMIT</command> on the publisher.  In this scenario, it
+          can be advantageous to set <literal>synchronous_commit</literal>
+          to <literal>local</literal> or higher.
+         </para>
+        </listitem>
+       </varlistentry>
+
+       <varlistentry>
+        <term><literal>connect</literal> (<type>boolean</type>)</term>
+        <listitem>
+         <para>
+          Specifies whether the <command>CREATE SUBSCRIPTION</command>
+          should connect to the publisher at all.  Setting this to
+          <literal>false</literal> will change default values of
+          <literal>enabled</literal>, <literal>create_slot</literal> and
+          <literal>copy_data</literal> to <literal>false</literal>.
+         </para>
+
+         <para>
+          It is not allowed to combine <literal>connect</literal> set to
+          <literal>false</literal> and <literal>enabled</literal>,
+          <literal>create_slot</literal>, or <literal>copy_data</literal>
+          set to <literal>true</literal>.
+         </para>
+
+         <para>
+          Since no connection is made when this option is set
+          to <literal>false</literal>, the tables are not subscribed, and so
+          after you enable the subscription nothing will be replicated.
+          It is required to run
+          <literal>ALTER SUBSCRIPTION ... REFRESH PUBLICATION</> in order
+          for tables to be subscribed.
+         </para>
+        </listitem>
+       </varlistentry>
+      </variablelist>
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   See <xref linkend="logical-replication-security"> for details on
+   how to configure access control between the subscription and the
+   publication instance.
+  </para>
+
+  <para>
+   Creating a subscription that connects to the same database cluster (for
+   example, to replicate between databases in the same cluster or to replicate
+   within the same database) will only succeed if the replication slot is not
+   created as part of the same command.  Otherwise, the <command>CREATE
+   SUBSCRIPTION</command> call will hang.  To make this work, create the
+   replication slot separately (using the
+   function <function>pg_create_logical_replication_slot</function> with the
+   plugin name <literal>pgoutput</literal>) and create the subscription using
+   the parameter <literal>create_slot = false</literal>.  This is an
+   implementation restriction that might be lifted in a future release.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
+  <para>
+   Create a subscription to a remote server that replicates tables in
+   the publications <literal>mypublication</literal> and
+   <literal>insert_only</literal> and starts replicating immediately on
+   commit:
+<programlisting>
+CREATE SUBSCRIPTION mysub
+         CONNECTION 'host=192.168.1.50 port=5432 user=foo dbname=foodb'
+        PUBLICATION mypublication, insert_only;
+</programlisting>
+  </para>
+
+  <para>
+   Create a subscription to a remote server that replicates tables in
+   the <literal>insert_only</literal> publication and does not start replicating
+   until enabled at a later time.
+<programlisting>
+CREATE SUBSCRIPTION mysub
+         CONNECTION 'host=192.168.1.50 port=5432 user=foo dbname=foodb'
+        PUBLICATION insert_only
+               WITH (enabled = false);
+</programlisting></para>
+ </refsect1>
+
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   <command>CREATE SUBSCRIPTION</command> is a <productname>PostgreSQL</>
+   extension.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-altersubscription"></member>
+   <member><xref linkend="sql-dropsubscription"></member>
+   <member><xref linkend="sql-createpublication"></member>
+   <member><xref linkend="sql-alterpublication"></member>
+  </simplelist>
+ </refsect1>
+</refentry>

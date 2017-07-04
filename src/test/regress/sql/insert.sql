@@ -84,3 +84,261 @@ create rule irule3 as on insert to inserttest2 do also
 drop table inserttest2;
 drop table inserttest;
 drop type insert_test_type;
+
+-- direct partition inserts should check partition bound constraint
+create table range_parted (
+	a text,
+	b int
+) partition by range (a, (b+0));
+create table part1 partition of range_parted for values from ('a', 1) to ('a', 10);
+create table part2 partition of range_parted for values from ('a', 10) to ('a', 20);
+create table part3 partition of range_parted for values from ('b', 1) to ('b', 10);
+create table part4 partition of range_parted for values from ('b', 10) to ('b', 20);
+
+-- fail
+insert into part1 values ('a', 11);
+insert into part1 values ('b', 1);
+-- ok
+insert into part1 values ('a', 1);
+-- fail
+insert into part4 values ('b', 21);
+insert into part4 values ('a', 10);
+-- ok
+insert into part4 values ('b', 10);
+
+-- fail (partition key a has a NOT NULL constraint)
+insert into part1 values (null);
+-- fail (expression key (b+0) cannot be null either)
+insert into part1 values (1);
+
+create table list_parted (
+	a text,
+	b int
+) partition by list (lower(a));
+create table part_aa_bb partition of list_parted FOR VALUES IN ('aa', 'bb');
+create table part_cc_dd partition of list_parted FOR VALUES IN ('cc', 'dd');
+create table part_null partition of list_parted FOR VALUES IN (null);
+
+-- fail
+insert into part_aa_bb values ('cc', 1);
+insert into part_aa_bb values ('AAa', 1);
+insert into part_aa_bb values (null);
+-- ok
+insert into part_cc_dd values ('cC', 1);
+insert into part_null values (null, 0);
+
+-- check in case of multi-level partitioned table
+create table part_ee_ff partition of list_parted for values in ('ee', 'ff') partition by range (b);
+create table part_ee_ff1 partition of part_ee_ff for values from (1) to (10);
+create table part_ee_ff2 partition of part_ee_ff for values from (10) to (20);
+
+-- fail
+insert into part_ee_ff1 values ('EE', 11);
+-- fail (even the parent's, ie, part_ee_ff's partition constraint applies)
+insert into part_ee_ff1 values ('cc', 1);
+-- ok
+insert into part_ee_ff1 values ('ff', 1);
+insert into part_ee_ff2 values ('ff', 11);
+
+-- Check tuple routing for partitioned tables
+
+-- fail
+insert into range_parted values ('a', 0);
+-- ok
+insert into range_parted values ('a', 1);
+insert into range_parted values ('a', 10);
+-- fail
+insert into range_parted values ('a', 20);
+-- ok
+insert into range_parted values ('b', 1);
+insert into range_parted values ('b', 10);
+-- fail (partition key (b+0) is null)
+insert into range_parted values ('a');
+select tableoid::regclass, * from range_parted;
+
+-- ok
+insert into list_parted values (null, 1);
+insert into list_parted (a) values ('aA');
+-- fail (partition of part_ee_ff not found in both cases)
+insert into list_parted values ('EE', 0);
+insert into part_ee_ff values ('EE', 0);
+-- ok
+insert into list_parted values ('EE', 1);
+insert into part_ee_ff values ('EE', 10);
+select tableoid::regclass, * from list_parted;
+
+-- some more tests to exercise tuple-routing with multi-level partitioning
+create table part_gg partition of list_parted for values in ('gg') partition by range (b);
+create table part_gg1 partition of part_gg for values from (unbounded) to (1);
+create table part_gg2 partition of part_gg for values from (1) to (10) partition by range (b);
+create table part_gg2_1 partition of part_gg2 for values from (1) to (5);
+create table part_gg2_2 partition of part_gg2 for values from (5) to (10);
+
+create table part_ee_ff3 partition of part_ee_ff for values from (20) to (30) partition by range (b);
+create table part_ee_ff3_1 partition of part_ee_ff3 for values from (20) to (25);
+create table part_ee_ff3_2 partition of part_ee_ff3 for values from (25) to (30);
+
+truncate list_parted;
+insert into list_parted values ('aa'), ('cc');
+insert into list_parted select 'Ff', s.a from generate_series(1, 29) s(a);
+insert into list_parted select 'gg', s.a from generate_series(1, 9) s(a);
+insert into list_parted (b) values (1);
+select tableoid::regclass::text, a, min(b) as min_b, max(b) as max_b from list_parted group by 1, 2 order by 1;
+
+-- cleanup
+drop table range_parted, list_parted;
+
+-- more tests for certain multi-level partitioning scenarios
+create table mlparted (a int, b int) partition by range (a, b);
+create table mlparted1 (b int not null, a int not null) partition by range ((b+0));
+create table mlparted11 (like mlparted1);
+alter table mlparted11 drop a;
+alter table mlparted11 add a int;
+alter table mlparted11 drop a;
+alter table mlparted11 add a int not null;
+-- attnum for key attribute 'a' is different in mlparted, mlparted1, and mlparted11
+select attrelid::regclass, attname, attnum
+from pg_attribute
+where attname = 'a'
+ and (attrelid = 'mlparted'::regclass
+   or attrelid = 'mlparted1'::regclass
+   or attrelid = 'mlparted11'::regclass)
+order by attrelid::regclass::text;
+
+alter table mlparted1 attach partition mlparted11 for values from (2) to (5);
+alter table mlparted attach partition mlparted1 for values from (1, 2) to (1, 10);
+
+-- check that "(1, 2)" is correctly routed to mlparted11.
+insert into mlparted values (1, 2);
+select tableoid::regclass, * from mlparted;
+
+-- check that proper message is shown after failure to route through mlparted1
+insert into mlparted (a, b) values (1, 5);
+
+truncate mlparted;
+alter table mlparted add constraint check_b check (b = 3);
+
+-- have a BR trigger modify the row such that the check_b is violated
+create function mlparted11_trig_fn()
+returns trigger AS
+$$
+begin
+  NEW.b := 4;
+  return NEW;
+end;
+$$
+language plpgsql;
+create trigger mlparted11_trig before insert ON mlparted11
+  for each row execute procedure mlparted11_trig_fn();
+
+-- check that the correct row is shown when constraint check_b fails after
+-- "(1, 2)" is routed to mlparted11 (actually "(1, 4)" would be shown due
+-- to the BR trigger mlparted11_trig_fn)
+insert into mlparted values (1, 2);
+drop trigger mlparted11_trig on mlparted11;
+drop function mlparted11_trig_fn();
+
+-- check that inserting into an internal partition successfully results in
+-- checking its partition constraint before inserting into the leaf partition
+-- selected by tuple-routing
+insert into mlparted1 (a, b) values (2, 3);
+
+-- check routing error through a list partitioned table when the key is null
+create table lparted_nonullpart (a int, b char) partition by list (b);
+create table lparted_nonullpart_a partition of lparted_nonullpart for values in ('a');
+insert into lparted_nonullpart values (1);
+drop table lparted_nonullpart;
+
+-- check that RETURNING works correctly with tuple-routing
+alter table mlparted drop constraint check_b;
+create table mlparted12 partition of mlparted1 for values from (5) to (10);
+create table mlparted2 (b int not null, a int not null);
+alter table mlparted attach partition mlparted2 for values from (1, 10) to (1, 20);
+create table mlparted3 partition of mlparted for values from (1, 20) to (1, 30);
+create table mlparted4 (like mlparted);
+alter table mlparted4 drop a;
+alter table mlparted4 add a int not null;
+alter table mlparted attach partition mlparted4 for values from (1, 30) to (1, 40);
+with ins (a, b, c) as
+  (insert into mlparted (b, a) select s.a, 1 from generate_series(2, 39) s(a) returning tableoid::regclass, *)
+  select a, b, min(c), max(c) from ins group by a, b order by 1;
+
+-- check that message shown after failure to find a partition shows the
+-- appropriate key description (or none) in various situations
+create table key_desc (a int, b int) partition by list ((a+0));
+create table key_desc_1 partition of key_desc for values in (1) partition by range (b);
+
+create user someone_else;
+grant select (a) on key_desc_1 to someone_else;
+grant insert on key_desc to someone_else;
+
+set role someone_else;
+-- no key description is shown
+insert into key_desc values (1, 1);
+
+reset role;
+grant select (b) on key_desc_1 to someone_else;
+set role someone_else;
+-- key description (b)=(1) is now shown
+insert into key_desc values (1, 1);
+
+-- key description is not shown if key contains expression
+insert into key_desc values (2, 1);
+reset role;
+revoke all on key_desc from someone_else;
+revoke all on key_desc_1 from someone_else;
+drop role someone_else;
+drop table key_desc, key_desc_1;
+
+-- check multi-column range partitioning expression enforces the same
+-- constraint as what tuple-routing would determine it to be
+create table mcrparted (a int, b int, c int) partition by range (a, abs(b), c);
+create table mcrparted0 partition of mcrparted for values from (unbounded, unbounded, unbounded) to (1, unbounded, unbounded);
+create table mcrparted1 partition of mcrparted for values from (2, 1, unbounded) to (10, 5, 10);
+create table mcrparted2 partition of mcrparted for values from (10, 6, unbounded) to (10, unbounded, unbounded);
+create table mcrparted3 partition of mcrparted for values from (11, 1, 1) to (20, 10, 10);
+create table mcrparted4 partition of mcrparted for values from (21, unbounded, unbounded) to (30, 20, unbounded);
+create table mcrparted5 partition of mcrparted for values from (30, 21, 20) to (unbounded, unbounded, unbounded);
+
+-- routed to mcrparted0
+insert into mcrparted values (0, 1, 1);
+insert into mcrparted0 values (0, 1, 1);
+
+-- routed to mcparted1
+insert into mcrparted values (9, 1000, 1);
+insert into mcrparted1 values (9, 1000, 1);
+insert into mcrparted values (10, 5, -1);
+insert into mcrparted1 values (10, 5, -1);
+insert into mcrparted values (2, 1, 0);
+insert into mcrparted1 values (2, 1, 0);
+
+-- routed to mcparted2
+insert into mcrparted values (10, 6, 1000);
+insert into mcrparted2 values (10, 6, 1000);
+insert into mcrparted values (10, 1000, 1000);
+insert into mcrparted2 values (10, 1000, 1000);
+
+-- no partition exists, nor does mcrparted3 accept it
+insert into mcrparted values (11, 1, -1);
+insert into mcrparted3 values (11, 1, -1);
+
+-- routed to mcrparted5
+insert into mcrparted values (30, 21, 20);
+insert into mcrparted5 values (30, 21, 20);
+insert into mcrparted4 values (30, 21, 20);	-- error
+
+-- check rows
+select tableoid::regclass::text, * from mcrparted order by 1;
+
+-- cleanup
+drop table mcrparted;
+
+-- check that a BR constraint can't make partition contain violating rows
+create table brtrigpartcon (a int, b text) partition by list (a);
+create table brtrigpartcon1 partition of brtrigpartcon for values in (1);
+create or replace function brtrigpartcon1trigf() returns trigger as $$begin new.a := 2; return new; end$$ language plpgsql;
+create trigger brtrigpartcon1trig before insert on brtrigpartcon1 for each row execute procedure brtrigpartcon1trigf();
+insert into brtrigpartcon values (1, 'hi there');
+insert into brtrigpartcon1 values (1, 'hi there');
+drop table brtrigpartcon;
+drop function brtrigpartcon1trigf();

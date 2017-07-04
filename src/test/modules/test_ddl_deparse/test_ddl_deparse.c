@@ -2,7 +2,7 @@
  * test_ddl_deparse.c
  *		Support functions for the test_ddl_deparse module
  *
- * Copyright (c) 2014-2016, PostgreSQL Global Development Group
+ * Copyright (c) 2014-2017, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/test/modules/test_ddl_deparse/test_ddl_deparse.c
@@ -94,10 +94,8 @@ get_altertable_subcmdtypes(PG_FUNCTION_ARGS)
 	foreach(cell, cmd->d.alterTable.subcmds)
 	{
 		CollectedATSubcmd *sub = lfirst(cell);
-		AlterTableCmd *subcmd = (AlterTableCmd *) sub->parsetree;
+		AlterTableCmd *subcmd = castNode(AlterTableCmd, sub->parsetree);
 		const char *strtype;
-
-		Assert(IsA(subcmd, AlterTableCmd));
 
 		switch (subcmd->subtype)
 		{

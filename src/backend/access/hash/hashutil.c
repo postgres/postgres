@@ -3,7 +3,7 @@
  * hashutil.c
  *	  Utility code for Postgres hash implementation.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -19,7 +19,10 @@
 #include "access/relscan.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
+#include "storage/buf_internals.h"
 
+#define CALC_NEW_BUCKET(old_bucket, lowmask) \
+			old_bucket | (lowmask + 1)
 
 /*
  * _hash_checkqual -- does the index tuple satisfy the scan conditions?
@@ -147,10 +150,76 @@ _hash_log2(uint32 num)
 }
 
 /*
+ * _hash_spareindex -- returns spare index / global splitpoint phase of the
+ *					   bucket
+ */
+uint32
+_hash_spareindex(uint32 num_bucket)
+{
+	uint32		splitpoint_group;
+	uint32		splitpoint_phases;
+
+	splitpoint_group = _hash_log2(num_bucket);
+
+	if (splitpoint_group < HASH_SPLITPOINT_GROUPS_WITH_ONE_PHASE)
+		return splitpoint_group;
+
+	/* account for single-phase groups */
+	splitpoint_phases = HASH_SPLITPOINT_GROUPS_WITH_ONE_PHASE;
+
+	/* account for multi-phase groups before splitpoint_group */
+	splitpoint_phases +=
+		((splitpoint_group - HASH_SPLITPOINT_GROUPS_WITH_ONE_PHASE) <<
+		 HASH_SPLITPOINT_PHASE_BITS);
+
+	/* account for phases within current group */
+	splitpoint_phases +=
+		(((num_bucket - 1) >>
+		  (splitpoint_group - (HASH_SPLITPOINT_PHASE_BITS + 1))) &
+		 HASH_SPLITPOINT_PHASE_MASK);	/* to 0-based value. */
+
+	return splitpoint_phases;
+}
+
+/*
+ *	_hash_get_totalbuckets -- returns total number of buckets allocated till
+ *							the given splitpoint phase.
+ */
+uint32
+_hash_get_totalbuckets(uint32 splitpoint_phase)
+{
+	uint32		splitpoint_group;
+	uint32		total_buckets;
+	uint32		phases_within_splitpoint_group;
+
+	if (splitpoint_phase < HASH_SPLITPOINT_GROUPS_WITH_ONE_PHASE)
+		return (1 << splitpoint_phase);
+
+	/* get splitpoint's group */
+	splitpoint_group = HASH_SPLITPOINT_GROUPS_WITH_ONE_PHASE;
+	splitpoint_group +=
+		((splitpoint_phase - HASH_SPLITPOINT_GROUPS_WITH_ONE_PHASE) >>
+		 HASH_SPLITPOINT_PHASE_BITS);
+
+	/* account for buckets before splitpoint_group */
+	total_buckets = (1 << (splitpoint_group - 1));
+
+	/* account for buckets within splitpoint_group */
+	phases_within_splitpoint_group =
+		(((splitpoint_phase - HASH_SPLITPOINT_GROUPS_WITH_ONE_PHASE) &
+		  HASH_SPLITPOINT_PHASE_MASK) + 1); /* from 0-based to 1-based */
+	total_buckets +=
+		(((1 << (splitpoint_group - 1)) >> HASH_SPLITPOINT_PHASE_BITS) *
+		 phases_within_splitpoint_group);
+
+	return total_buckets;
+}
+
+/*
  * _hash_checkpage -- sanity checks on the format of all hash pages
  *
- * If flags is not zero, it is a bitwise OR of the acceptable values of
- * hasho_flag.
+ * If flags is not zero, it is a bitwise OR of the acceptable page types
+ * (values of hasho_flag & LH_PAGE_TYPE).
  */
 void
 _hash_checkpage(Relation rel, Buffer buf, int flags)
@@ -166,9 +235,9 @@ _hash_checkpage(Relation rel, Buffer buf, int flags)
 	if (PageIsNew(page))
 		ereport(ERROR,
 				(errcode(ERRCODE_INDEX_CORRUPTED),
-			 errmsg("index \"%s\" contains unexpected zero page at block %u",
-					RelationGetRelationName(rel),
-					BufferGetBlockNumber(buf)),
+				 errmsg("index \"%s\" contains unexpected zero page at block %u",
+						RelationGetRelationName(rel),
+						BufferGetBlockNumber(buf)),
 				 errhint("Please REINDEX it.")));
 
 	/*
@@ -189,9 +258,9 @@ _hash_checkpage(Relation rel, Buffer buf, int flags)
 		if ((opaque->hasho_flag & flags) == 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_INDEX_CORRUPTED),
-				   errmsg("index \"%s\" contains corrupted page at block %u",
-						  RelationGetRelationName(rel),
-						  BufferGetBlockNumber(buf)),
+					 errmsg("index \"%s\" contains corrupted page at block %u",
+							RelationGetRelationName(rel),
+							BufferGetBlockNumber(buf)),
 					 errhint("Please REINDEX it.")));
 	}
 
@@ -351,4 +420,164 @@ _hash_binsearch_last(Page page, uint32 hash_value)
 	}
 
 	return lower;
+}
+
+/*
+ *	_hash_get_oldblock_from_newbucket() -- get the block number of a bucket
+ *			from which current (new) bucket is being split.
+ */
+BlockNumber
+_hash_get_oldblock_from_newbucket(Relation rel, Bucket new_bucket)
+{
+	Bucket		old_bucket;
+	uint32		mask;
+	Buffer		metabuf;
+	HashMetaPage metap;
+	BlockNumber blkno;
+
+	/*
+	 * To get the old bucket from the current bucket, we need a mask to modulo
+	 * into lower half of table.  This mask is stored in meta page as
+	 * hashm_lowmask, but here we can't rely on the same, because we need a
+	 * value of lowmask that was prevalent at the time when bucket split was
+	 * started.  Masking the most significant bit of new bucket would give us
+	 * old bucket.
+	 */
+	mask = (((uint32) 1) << (fls(new_bucket) - 1)) - 1;
+	old_bucket = new_bucket & mask;
+
+	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_READ, LH_META_PAGE);
+	metap = HashPageGetMeta(BufferGetPage(metabuf));
+
+	blkno = BUCKET_TO_BLKNO(metap, old_bucket);
+
+	_hash_relbuf(rel, metabuf);
+
+	return blkno;
+}
+
+/*
+ *	_hash_get_newblock_from_oldbucket() -- get the block number of a bucket
+ *			that will be generated after split from old bucket.
+ *
+ * This is used to find the new bucket from old bucket based on current table
+ * half.  It is mainly required to finish the incomplete splits where we are
+ * sure that not more than one bucket could have split in progress from old
+ * bucket.
+ */
+BlockNumber
+_hash_get_newblock_from_oldbucket(Relation rel, Bucket old_bucket)
+{
+	Bucket		new_bucket;
+	Buffer		metabuf;
+	HashMetaPage metap;
+	BlockNumber blkno;
+
+	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_READ, LH_META_PAGE);
+	metap = HashPageGetMeta(BufferGetPage(metabuf));
+
+	new_bucket = _hash_get_newbucket_from_oldbucket(rel, old_bucket,
+													metap->hashm_lowmask,
+													metap->hashm_maxbucket);
+	blkno = BUCKET_TO_BLKNO(metap, new_bucket);
+
+	_hash_relbuf(rel, metabuf);
+
+	return blkno;
+}
+
+/*
+ *	_hash_get_newbucket_from_oldbucket() -- get the new bucket that will be
+ *			generated after split from current (old) bucket.
+ *
+ * This is used to find the new bucket from old bucket.  New bucket can be
+ * obtained by OR'ing old bucket with most significant bit of current table
+ * half (lowmask passed in this function can be used to identify msb of
+ * current table half).  There could be multiple buckets that could have
+ * been split from current bucket.  We need the first such bucket that exists.
+ * Caller must ensure that no more than one split has happened from old
+ * bucket.
+ */
+Bucket
+_hash_get_newbucket_from_oldbucket(Relation rel, Bucket old_bucket,
+								   uint32 lowmask, uint32 maxbucket)
+{
+	Bucket		new_bucket;
+
+	new_bucket = CALC_NEW_BUCKET(old_bucket, lowmask);
+	if (new_bucket > maxbucket)
+	{
+		lowmask = lowmask >> 1;
+		new_bucket = CALC_NEW_BUCKET(old_bucket, lowmask);
+	}
+
+	return new_bucket;
+}
+
+/*
+ * _hash_kill_items - set LP_DEAD state for items an indexscan caller has
+ * told us were killed.
+ *
+ * scan->opaque, referenced locally through so, contains information about the
+ * current page and killed tuples thereon (generally, this should only be
+ * called if so->numKilled > 0).
+ *
+ * We match items by heap TID before assuming they are the right ones to
+ * delete.
+ */
+void
+_hash_kill_items(IndexScanDesc scan)
+{
+	HashScanOpaque so = (HashScanOpaque) scan->opaque;
+	Page		page;
+	HashPageOpaque opaque;
+	OffsetNumber offnum,
+				maxoff;
+	int			numKilled = so->numKilled;
+	int			i;
+	bool		killedsomething = false;
+
+	Assert(so->numKilled > 0);
+	Assert(so->killedItems != NULL);
+
+	/*
+	 * Always reset the scan state, so we don't look for same items on other
+	 * pages.
+	 */
+	so->numKilled = 0;
+
+	page = BufferGetPage(so->hashso_curbuf);
+	opaque = (HashPageOpaque) PageGetSpecialPointer(page);
+	maxoff = PageGetMaxOffsetNumber(page);
+
+	for (i = 0; i < numKilled; i++)
+	{
+		offnum = so->killedItems[i].indexOffset;
+
+		while (offnum <= maxoff)
+		{
+			ItemId		iid = PageGetItemId(page, offnum);
+			IndexTuple	ituple = (IndexTuple) PageGetItem(page, iid);
+
+			if (ItemPointerEquals(&ituple->t_tid, &so->killedItems[i].heapTid))
+			{
+				/* found the item */
+				ItemIdMarkDead(iid);
+				killedsomething = true;
+				break;			/* out of inner search loop */
+			}
+			offnum = OffsetNumberNext(offnum);
+		}
+	}
+
+	/*
+	 * Since this can be redone later if needed, mark as dirty hint. Whenever
+	 * we mark anything LP_DEAD, we also set the page's
+	 * LH_PAGE_HAS_DEAD_TUPLES flag, which is likewise just a hint.
+	 */
+	if (killedsomething)
+	{
+		opaque->hasho_flag |= LH_PAGE_HAS_DEAD_TUPLES;
+		MarkBufferDirtyHint(so->hashso_curbuf, true);
+	}
 }

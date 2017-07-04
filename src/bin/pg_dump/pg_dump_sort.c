@@ -4,7 +4,7 @@
  *	  Sort the items of a dump into a safe order for dumping
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -19,75 +19,24 @@
 #include "pg_backup_utils.h"
 #include "pg_dump.h"
 
+#include "catalog/pg_class.h"
+
 /* translator: this is a module name */
 static const char *modulename = gettext_noop("sorter");
 
 /*
- * Sort priority for object types when dumping a pre-7.3 database.
- * Objects are sorted by priority levels, and within an equal priority level
- * by OID.  (This is a relatively crude hack to provide semi-reasonable
- * behavior for old databases without full dependency info.)  Note: collations,
- * extensions, text search, foreign-data, materialized view, event trigger,
- * policies, transforms, access methods and default ACL objects can't really
- * happen here, so the rather bogus priorities for them don't matter.
- *
- * NOTE: object-type priorities must match the section assignments made in
- * pg_dump.c; that is, PRE_DATA objects must sort before DO_PRE_DATA_BOUNDARY,
- * POST_DATA objects must sort after DO_POST_DATA_BOUNDARY, and DATA objects
- * must sort between them.
- */
-static const int oldObjectTypePriority[] =
-{
-	1,							/* DO_NAMESPACE */
-	1,							/* DO_EXTENSION */
-	2,							/* DO_TYPE */
-	2,							/* DO_SHELL_TYPE */
-	2,							/* DO_FUNC */
-	3,							/* DO_AGG */
-	3,							/* DO_OPERATOR */
-	3,							/* DO_ACCESS_METHOD */
-	4,							/* DO_OPCLASS */
-	4,							/* DO_OPFAMILY */
-	4,							/* DO_COLLATION */
-	5,							/* DO_CONVERSION */
-	6,							/* DO_TABLE */
-	8,							/* DO_ATTRDEF */
-	15,							/* DO_INDEX */
-	16,							/* DO_RULE */
-	17,							/* DO_TRIGGER */
-	14,							/* DO_CONSTRAINT */
-	18,							/* DO_FK_CONSTRAINT */
-	2,							/* DO_PROCLANG */
-	2,							/* DO_CAST */
-	11,							/* DO_TABLE_DATA */
-	7,							/* DO_DUMMY_TYPE */
-	4,							/* DO_TSPARSER */
-	4,							/* DO_TSDICT */
-	4,							/* DO_TSTEMPLATE */
-	4,							/* DO_TSCONFIG */
-	4,							/* DO_FDW */
-	4,							/* DO_FOREIGN_SERVER */
-	19,							/* DO_DEFAULT_ACL */
-	4,							/* DO_TRANSFORM */
-	9,							/* DO_BLOB */
-	12,							/* DO_BLOB_DATA */
-	10,							/* DO_PRE_DATA_BOUNDARY */
-	13,							/* DO_POST_DATA_BOUNDARY */
-	20,							/* DO_EVENT_TRIGGER */
-	15,							/* DO_REFRESH_MATVIEW */
-	21							/* DO_POLICY */
-};
-
-/*
- * Sort priority for object types when dumping newer databases.
+ * Sort priority for database object types.
  * Objects are sorted by type, and within a type by name.
  *
+ * Because materialized views can potentially reference system views,
+ * DO_REFRESH_MATVIEW should always be the last thing on the list.
+ *
  * NOTE: object-type priorities must match the section assignments made in
  * pg_dump.c; that is, PRE_DATA objects must sort before DO_PRE_DATA_BOUNDARY,
  * POST_DATA objects must sort after DO_POST_DATA_BOUNDARY, and DATA objects
  * must sort between them.
  */
-static const int newObjectTypePriority[] =
+static const int dbObjectTypePriority[] =
 {
 	1,							/* DO_NAMESPACE */
 	4,							/* DO_EXTENSION */
@@ -103,14 +52,16 @@ static const int newObjectTypePriority[] =
 	11,							/* DO_CONVERSION */
 	18,							/* DO_TABLE */
 	20,							/* DO_ATTRDEF */
-	27,							/* DO_INDEX */
-	28,							/* DO_RULE */
-	29,							/* DO_TRIGGER */
-	26,							/* DO_CONSTRAINT */
-	30,							/* DO_FK_CONSTRAINT */
+	28,							/* DO_INDEX */
+	29,							/* DO_STATSEXT */
+	30,							/* DO_RULE */
+	31,							/* DO_TRIGGER */
+	27,							/* DO_CONSTRAINT */
+	32,							/* DO_FK_CONSTRAINT */
 	2,							/* DO_PROCLANG */
 	10,							/* DO_CAST */
 	23,							/* DO_TABLE_DATA */
+	24,							/* DO_SEQUENCE_SET */
 	19,							/* DO_DUMMY_TYPE */
 	12,							/* DO_TSPARSER */
 	14,							/* DO_TSDICT */
@@ -118,15 +69,18 @@ static const int newObjectTypePriority[] =
 	15,							/* DO_TSCONFIG */
 	16,							/* DO_FDW */
 	17,							/* DO_FOREIGN_SERVER */
-	31,							/* DO_DEFAULT_ACL */
+	32,							/* DO_DEFAULT_ACL */
 	3,							/* DO_TRANSFORM */
 	21,							/* DO_BLOB */
-	24,							/* DO_BLOB_DATA */
+	25,							/* DO_BLOB_DATA */
 	22,							/* DO_PRE_DATA_BOUNDARY */
-	25,							/* DO_POST_DATA_BOUNDARY */
-	32,							/* DO_EVENT_TRIGGER */
-	33,							/* DO_REFRESH_MATVIEW */
-	34							/* DO_POLICY */
+	26,							/* DO_POST_DATA_BOUNDARY */
+	33,							/* DO_EVENT_TRIGGER */
+	38,							/* DO_REFRESH_MATVIEW */
+	34,							/* DO_POLICY */
+	35,							/* DO_PUBLICATION */
+	36,							/* DO_PUBLICATION_REL */
+	37							/* DO_SUBSCRIPTION */
 };
 
 static DumpId preDataBoundId;
@@ -134,7 +88,6 @@ static DumpId postDataBoundId;
 
 
 static int	DOTypeNameCompare(const void *p1, const void *p2);
-static int	DOTypeOidCompare(const void *p1, const void *p2);
 static bool TopoSort(DumpableObject **objs,
 		 int numObjs,
 		 DumpableObject **ordering,
@@ -266,8 +219,8 @@ DOTypeNameCompare(const void *p1, const void *p2)
 	int			cmpval;
 
 	/* Sort by type */
-	cmpval = newObjectTypePriority[obj1->objType] -
-		newObjectTypePriority[obj2->objType];
+	cmpval = dbObjectTypePriority[obj1->objType] -
+		dbObjectTypePriority[obj2->objType];
 
 	if (cmpval != 0)
 		return cmpval;
@@ -346,37 +299,6 @@ DOTypeNameCompare(const void *p1, const void *p2)
 
 
 /*
- * Sort the given objects into a type/OID-based ordering
- *
- * This is used with pre-7.3 source databases as a crude substitute for the
- * lack of dependency information.
- */
-void
-sortDumpableObjectsByTypeOid(DumpableObject **objs, int numObjs)
-{
-	if (numObjs > 1)
-		qsort((void *) objs, numObjs, sizeof(DumpableObject *),
-			  DOTypeOidCompare);
-}
-
-static int
-DOTypeOidCompare(const void *p1, const void *p2)
-{
-	DumpableObject *obj1 = *(DumpableObject *const *) p1;
-	DumpableObject *obj2 = *(DumpableObject *const *) p2;
-	int			cmpval;
-
-	cmpval = oldObjectTypePriority[obj1->objType] -
-		oldObjectTypePriority[obj2->objType];
-
-	if (cmpval != 0)
-		return cmpval;
-
-	return oidcmp(obj1->catId.oid, obj2->catId.oid);
-}
-
-
-/*
  * Sort the given objects into a safe dump order using dependency
  * information (to the extent we have it available).
  *
@@ -438,7 +360,7 @@ sortDumpableObjects(DumpableObject **objs, int numObjs,
 static bool
 TopoSort(DumpableObject **objs,
 		 int numObjs,
-		 DumpableObject **ordering,		/* output argument */
+		 DumpableObject **ordering, /* output argument */
 		 int *nOrdering)		/* output argument */
 {
 	DumpId		maxDumpId = getMaxDumpId();
@@ -873,6 +795,7 @@ repairViewRuleLoop(DumpableObject *viewobj,
 {
 	/* remove rule's dependency on view */
 	removeObjectDependency(ruleobj, viewobj->dumpId);
+	/* flags on the two objects are already set correctly for this case */
 }
 
 /*
@@ -892,27 +815,17 @@ repairViewRuleMultiLoop(DumpableObject *viewobj,
 {
 	TableInfo  *viewinfo = (TableInfo *) viewobj;
 	RuleInfo   *ruleinfo = (RuleInfo *) ruleobj;
-	int			i;
 
 	/* remove view's dependency on rule */
 	removeObjectDependency(viewobj, ruleobj->dumpId);
-	/* pretend view is a plain table and dump it that way */
-	viewinfo->relkind = 'r';	/* RELKIND_RELATION */
+	/* mark view to be printed with a dummy definition */
+	viewinfo->dummy_view = true;
 	/* mark rule as needing its own dump */
 	ruleinfo->separate = true;
-	/* move any reloptions from view to rule */
-	if (viewinfo->reloptions)
-	{
-		ruleinfo->reloptions = viewinfo->reloptions;
-		viewinfo->reloptions = NULL;
-	}
 	/* put back rule's dependency on view */
 	addObjectDependency(ruleobj, viewobj->dumpId);
 	/* now that rule is separate, it must be post-data */
 	addObjectDependency(ruleobj, postDataBoundId);
-	/* also, any triggers on the view must be dumped after the rule */
-	for (i = 0; i < viewinfo->numTriggers; i++)
-		addObjectDependency(&(viewinfo->triggers[i].dobj), ruleobj->dumpId);
 }
 
 /*
@@ -1058,8 +971,8 @@ repairDependencyLoop(DumpableObject **loop,
 	if (nLoop == 2 &&
 		loop[0]->objType == DO_TABLE &&
 		loop[1]->objType == DO_RULE &&
-		(((TableInfo *) loop[0])->relkind == 'v' ||		/* RELKIND_VIEW */
-		 ((TableInfo *) loop[0])->relkind == 'm') &&	/* RELKIND_MATVIEW */
+		(((TableInfo *) loop[0])->relkind == RELKIND_VIEW ||
+		 ((TableInfo *) loop[0])->relkind == RELKIND_MATVIEW) &&
 		((RuleInfo *) loop[1])->ev_type == '1' &&
 		((RuleInfo *) loop[1])->is_instead &&
 		((RuleInfo *) loop[1])->ruletable == (TableInfo *) loop[0])
@@ -1070,8 +983,8 @@ repairDependencyLoop(DumpableObject **loop,
 	if (nLoop == 2 &&
 		loop[1]->objType == DO_TABLE &&
 		loop[0]->objType == DO_RULE &&
-		(((TableInfo *) loop[1])->relkind == 'v' ||		/* RELKIND_VIEW */
-		 ((TableInfo *) loop[1])->relkind == 'm') &&	/* RELKIND_MATVIEW */
+		(((TableInfo *) loop[1])->relkind == RELKIND_VIEW ||
+		 ((TableInfo *) loop[1])->relkind == RELKIND_MATVIEW) &&
 		((RuleInfo *) loop[0])->ev_type == '1' &&
 		((RuleInfo *) loop[0])->is_instead &&
 		((RuleInfo *) loop[0])->ruletable == (TableInfo *) loop[1])
@@ -1086,7 +999,7 @@ repairDependencyLoop(DumpableObject **loop,
 		for (i = 0; i < nLoop; i++)
 		{
 			if (loop[i]->objType == DO_TABLE &&
-				((TableInfo *) loop[i])->relkind == 'v')		/* RELKIND_VIEW */
+				((TableInfo *) loop[i])->relkind == RELKIND_VIEW)
 			{
 				for (j = 0; j < nLoop; j++)
 				{
@@ -1109,7 +1022,7 @@ repairDependencyLoop(DumpableObject **loop,
 		for (i = 0; i < nLoop; i++)
 		{
 			if (loop[i]->objType == DO_TABLE &&
-				((TableInfo *) loop[i])->relkind == 'm')		/* RELKIND_MATVIEW */
+				((TableInfo *) loop[i])->relkind == RELKIND_MATVIEW)
 			{
 				for (j = 0; j < nLoop; j++)
 				{
@@ -1268,7 +1181,7 @@ repairDependencyLoop(DumpableObject **loop,
 		write_msg(NULL, "Consider using a full dump instead of a --data-only dump to avoid this problem.\n");
 		if (nLoop > 1)
 			removeObjectDependency(loop[0], loop[1]->dumpId);
-		else	/* must be a self-dependency */
+		else					/* must be a self-dependency */
 			removeObjectDependency(loop[0], loop[0]->dumpId);
 		return;
 	}
@@ -1288,7 +1201,7 @@ repairDependencyLoop(DumpableObject **loop,
 
 	if (nLoop > 1)
 		removeObjectDependency(loop[0], loop[1]->dumpId);
-	else	/* must be a self-dependency */
+	else						/* must be a self-dependency */
 		removeObjectDependency(loop[0], loop[0]->dumpId);
 }
 
@@ -1379,6 +1292,11 @@ describeDumpableObject(DumpableObject *obj, char *buf, int bufsize)
 					 "INDEX %s  (ID %d OID %u)",
 					 obj->name, obj->dumpId, obj->catId.oid);
 			return;
+		case DO_STATSEXT:
+			snprintf(buf, bufsize,
+					 "STATISTICS %s  (ID %d OID %u)",
+					 obj->name, obj->dumpId, obj->catId.oid);
+			return;
 		case DO_REFRESH_MATVIEW:
 			snprintf(buf, bufsize,
 					 "REFRESH MATERIALIZED VIEW %s  (ID %d OID %u)",
@@ -1431,6 +1349,11 @@ describeDumpableObject(DumpableObject *obj, char *buf, int bufsize)
 		case DO_TABLE_DATA:
 			snprintf(buf, bufsize,
 					 "TABLE DATA %s  (ID %d OID %u)",
+					 obj->name, obj->dumpId, obj->catId.oid);
+			return;
+		case DO_SEQUENCE_SET:
+			snprintf(buf, bufsize,
+					 "SEQUENCE SET %s  (ID %d OID %u)",
 					 obj->name, obj->dumpId, obj->catId.oid);
 			return;
 		case DO_DUMMY_TYPE:
@@ -1486,6 +1409,21 @@ describeDumpableObject(DumpableObject *obj, char *buf, int bufsize)
 		case DO_POLICY:
 			snprintf(buf, bufsize,
 					 "POLICY (ID %d OID %u)",
+					 obj->dumpId, obj->catId.oid);
+			return;
+		case DO_PUBLICATION:
+			snprintf(buf, bufsize,
+					 "PUBLICATION (ID %d OID %u)",
+					 obj->dumpId, obj->catId.oid);
+			return;
+		case DO_PUBLICATION_REL:
+			snprintf(buf, bufsize,
+					 "PUBLICATION TABLE (ID %d OID %u)",
+					 obj->dumpId, obj->catId.oid);
+			return;
+		case DO_SUBSCRIPTION:
+			snprintf(buf, bufsize,
+					 "SUBSCRIPTION (ID %d OID %u)",
 					 obj->dumpId, obj->catId.oid);
 			return;
 		case DO_PRE_DATA_BOUNDARY:

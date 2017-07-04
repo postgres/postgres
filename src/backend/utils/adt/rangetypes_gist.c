@@ -3,7 +3,7 @@
  * rangetypes_gist.c
  *	  GiST support for range types.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -70,7 +70,7 @@ typedef enum
 typedef struct
 {
 	TypeCacheEntry *typcache;	/* typcache for range type */
-	bool		has_subtype_diff;		/* does it have subtype_diff? */
+	bool		has_subtype_diff;	/* does it have subtype_diff? */
 	int			entries_count;	/* total number of entries being split */
 
 	/* Information about currently selected split follows */

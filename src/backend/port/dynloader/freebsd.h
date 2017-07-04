@@ -3,7 +3,7 @@
  * freebsd.h
  *	  port-specific prototypes for FreeBSD
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/backend/port/dynloader/freebsd.h
@@ -13,12 +13,11 @@
 #ifndef PORT_PROTOS_H
 #define PORT_PROTOS_H
 
-#include <sys/types.h>
 #include <nlist.h>
 #include <link.h>
 #include <dlfcn.h>
 
-#include "utils/dynamic_loader.h"		/* pgrminclude ignore */
+#include "utils/dynamic_loader.h"	/* pgrminclude ignore */
 
 /*
  * Dynamic Loader on NetBSD 1.0.
@@ -56,4 +55,4 @@ void	   *BSD44_derived_dlopen(const char *filename, int num);
 void	   *BSD44_derived_dlsym(void *handle, const char *name);
 void		BSD44_derived_dlclose(void *handle);
 
-#endif   /* PORT_PROTOS_H */
+#endif							/* PORT_PROTOS_H */

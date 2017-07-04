@@ -76,4 +76,4 @@ do {				\
 	md5_result((x), (y));	\
 } while (0)
 
-#endif   /* ! _NETINET6_MD5_H_ */
+#endif							/* ! _NETINET6_MD5_H_ */

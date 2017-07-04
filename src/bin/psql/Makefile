@@ -2,7 +2,7 @@
 #
 # Makefile for src/bin/psql
 #
-# Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+# Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
 # src/bin/psql/Makefile
@@ -21,10 +21,10 @@ REFDOCDIR= $(top_srcdir)/doc/src/sgml/ref
 override CPPFLAGS := -I. -I$(srcdir) -I$(libpq_srcdir) $(CPPFLAGS)
 LDFLAGS += -L$(top_builddir)/src/fe_utils -lpgfeutils -lpq
 
-OBJS=	command.o common.o help.o input.o stringutils.o mainloop.o copy.o \
-	startup.o prompt.o variables.o large_obj.o describe.o \
-	crosstabview.o tab-complete.o \
-	sql_help.o psqlscanslash.o \
+OBJS=	command.o common.o conditional.o copy.o crosstabview.o \
+	describe.o help.o input.o large_obj.o mainloop.o \
+	prompt.o psqlscanslash.o sql_help.o startup.o stringutils.o \
+	tab-complete.o variables.o \
 	$(WIN32RES)
 
 
@@ -41,11 +41,7 @@ sql_help.h: create_help.pl $(wildcard $(REFDOCDIR)/*.sgml)
 
 psqlscanslash.c: FLEXFLAGS = -Cfe -p -p
 psqlscanslash.c: FLEX_NO_BACKUP=yes
-
-# Latest flex causes warnings in this file.
-ifeq ($(GCC),yes)
-psqlscanslash.o: CFLAGS += -Wno-error
-endif
+psqlscanslash.c: FLEX_FIX_WARNING=yes
 
 distprep: sql_help.h psqlscanslash.c
 

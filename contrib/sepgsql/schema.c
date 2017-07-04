@@ -4,7 +4,7 @@
  *
  * Routines corresponding to schema objects
  *
- * Copyright (c) 2010-2016, PostgreSQL Global Development Group
+ * Copyright (c) 2010-2017, PostgreSQL Global Development Group
  *
  * -------------------------------------------------------------------------
  */
@@ -67,7 +67,7 @@ sepgsql_schema_post_create(Oid namespaceId)
 							   SnapshotSelf, 1, &skey);
 	tuple = systable_getnext(sscan);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "catalog lookup failed for namespace %u", namespaceId);
+		elog(ERROR, "could not find tuple for namespace %u", namespaceId);
 
 	nspForm = (Form_pg_namespace) GETSTRUCT(tuple);
 	nsp_name = NameStr(nspForm->nspname);

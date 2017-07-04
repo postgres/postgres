@@ -364,7 +364,7 @@ nextch1:
 				goto nextch1;
 			case '*':
 				if (afterstar)
-					have_non_dollar = true;		/* multiple stars */
+					have_non_dollar = true; /* multiple stars */
 				afterstar = true;
 				accum = 0;
 				goto nextch1;

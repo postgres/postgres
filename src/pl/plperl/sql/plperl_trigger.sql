@@ -170,6 +170,38 @@ $$ LANGUAGE plperl;
 
 SELECT direct_trigger();
 
+-- check that SQL run in trigger code can see transition tables
+
+CREATE TABLE transition_table_test (id int, name text);
+INSERT INTO transition_table_test VALUES (1, 'a');
+
+CREATE FUNCTION transition_table_test_f() RETURNS trigger LANGUAGE plperl AS
+$$
+    my $cursor = spi_query("SELECT * FROM old_table");
+    my $row = spi_fetchrow($cursor);
+    defined($row) || die "expected a row";
+    elog(INFO, "old: " . $row->{id} . " -> " . $row->{name});
+    my $row = spi_fetchrow($cursor);
+    !defined($row) || die "expected no more rows";
+
+    my $cursor = spi_query("SELECT * FROM new_table");
+    my $row = spi_fetchrow($cursor);
+    defined($row) || die "expected a row";
+    elog(INFO, "new: " . $row->{id} . " -> " . $row->{name});
+    my $row = spi_fetchrow($cursor);
+    !defined($row) || die "expected no more rows";
+
+    return undef;
+$$;
+
+CREATE TRIGGER a_t AFTER UPDATE ON transition_table_test
+  REFERENCING OLD TABLE AS old_table NEW TABLE AS new_table
+  FOR EACH STATEMENT EXECUTE PROCEDURE transition_table_test_f();
+UPDATE transition_table_test SET name = 'b';
+
+DROP TABLE transition_table_test;
+DROP FUNCTION transition_table_test_f();
+
 -- test plperl command triggers
 create or replace function perlsnitch() returns event_trigger language plperl as $$
   elog(NOTICE, "perlsnitch: " . $_TD->{event} . " " . $_TD->{tag} . " ");

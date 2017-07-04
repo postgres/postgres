@@ -4,7 +4,7 @@
  *	  routines defined in access/gist/gistscan.c
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/access/gistscan.h
@@ -21,4 +21,4 @@ extern void gistrescan(IndexScanDesc scan, ScanKey key, int nkeys,
 		   ScanKey orderbys, int norderbys);
 extern void gistendscan(IndexScanDesc scan);
 
-#endif   /* GISTSCAN_H */
+#endif							/* GISTSCAN_H */

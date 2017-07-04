@@ -3,7 +3,7 @@
  * option.c
  *		  FDW option handling for postgres_fdw
  *
- * Portions Copyright (c) 2012-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2012-2017, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		  contrib/postgres_fdw/option.c
@@ -21,6 +21,7 @@
 #include "commands/defrem.h"
 #include "commands/extension.h"
 #include "utils/builtins.h"
+#include "utils/varlena.h"
 
 
 /*
@@ -195,7 +196,7 @@ InitPgFdwOptions(void)
 		ereport(ERROR,
 				(errcode(ERRCODE_FDW_OUT_OF_MEMORY),
 				 errmsg("out of memory"),
-			 errdetail("could not get libpq's default connection options")));
+				 errdetail("could not get libpq's default connection options")));
 
 	/* Count how many libpq options are available. */
 	num_libpq_opts = 0;
@@ -257,7 +258,7 @@ is_valid_option(const char *keyword, Oid context)
 {
 	PgFdwOption *opt;
 
-	Assert(postgres_fdw_options);		/* must be initialized already */
+	Assert(postgres_fdw_options);	/* must be initialized already */
 
 	for (opt = postgres_fdw_options; opt->keyword; opt++)
 	{
@@ -276,7 +277,7 @@ is_libpq_option(const char *keyword)
 {
 	PgFdwOption *opt;
 
-	Assert(postgres_fdw_options);		/* must be initialized already */
+	Assert(postgres_fdw_options);	/* must be initialized already */
 
 	for (opt = postgres_fdw_options; opt->keyword; opt++)
 	{

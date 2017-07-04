@@ -30,7 +30,7 @@
  * intentional denormalization of the catalogs to buy lookup speed.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_amop.h
@@ -373,6 +373,16 @@ DATA(insert (	1984   829 829 4 s 1225 403 0 ));
 DATA(insert (	1984   829 829 5 s 1224 403 0 ));
 
 /*
+ *	btree macaddr8
+ */
+
+DATA(insert (	3371   774 774 1 s 3364 403 0 ));
+DATA(insert (	3371   774 774 2 s 3365 403 0 ));
+DATA(insert (	3371   774 774 3 s 3362 403 0 ));
+DATA(insert (	3371   774 774 4 s 3367 403 0 ));
+DATA(insert (	3371   774 774 5 s 3366 403 0 ));
+
+/*
  *	btree network
  */
 
@@ -553,6 +563,8 @@ DATA(insert (	1977   20 23 1 s	416  405 0 ));
 DATA(insert (	1983   1186 1186 1 s 1330 405 0 ));
 /* macaddr_ops */
 DATA(insert (	1985   829 829 1 s 1220 405 0 ));
+/* macaddr8_ops */
+DATA(insert (	3372   774 774 1 s 3362 405 0 ));
 /* name_ops */
 DATA(insert (	1987   19 19 1 s	93	405 0 ));
 /* oid_ops */
@@ -573,8 +585,6 @@ DATA(insert (	2040   1114 1114 1 s 2060 405 0 ));
 DATA(insert (	2222   16 16 1 s   91 405 0 ));
 /* bytea_ops */
 DATA(insert (	2223   17 17 1 s 1955 405 0 ));
-/* int2vector_ops */
-DATA(insert (	2224   22 22 1 s	386 405 0 ));
 /* xid_ops */
 DATA(insert (	2225   28 28 1 s	352 405 0 ));
 /* cid_ops */
@@ -673,8 +683,7 @@ DATA(insert (	2595   718 718 14 s 2864 783 0 ));
 DATA(insert (	2595   718 600 15 o 3291 783 1970 ));
 
 /*
- * gin array_ops (these anyarray operators are used with all the opclasses
- * of the family)
+ * gin array_ops
  */
 DATA(insert (	2745   2277 2277 1 s 2750 2742 0 ));
 DATA(insert (	2745   2277 2277 2 s 2751 2742 0 ));
@@ -1002,6 +1011,12 @@ DATA(insert (	4074	829  829 2 s	  1223	  3580 0 ));
 DATA(insert (	4074	829  829 3 s	  1220	  3580 0 ));
 DATA(insert (	4074	829  829 4 s	  1225	  3580 0 ));
 DATA(insert (	4074	829  829 5 s	  1224	  3580 0 ));
+/* minmax macaddr8 */
+DATA(insert (	4109	774  774 1 s	  3364	  3580 0 ));
+DATA(insert (	4109	774  774 2 s	  3365	  3580 0 ));
+DATA(insert (	4109	774  774 3 s	  3362	  3580 0 ));
+DATA(insert (	4109	774  774 4 s	  3367	  3580 0 ));
+DATA(insert (	4109	774  774 5 s	  3366	  3580 0 ));
 /* minmax inet */
 DATA(insert (	4075	869  869 1 s	  1203	  3580 0 ));
 DATA(insert (	4075	869  869 2 s	  1204	  3580 0 ));
@@ -1147,4 +1162,4 @@ DATA(insert (	4104	603  603 12 s	  2572	  3580 0 ));
 /* we could, but choose not to, supply entries for strategies 13 and 14 */
 DATA(insert (	4104	603  600  7 s	   433	  3580 0 ));
 
-#endif   /* PG_AMOP_H */
+#endif							/* PG_AMOP_H */

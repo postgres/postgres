@@ -4,7 +4,7 @@
  *	  Tuple macros used by both index tuples and heap tuples.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/access/tupmacs.h
@@ -88,7 +88,7 @@
 	: \
 	PointerGetDatum((char *) (T)) \
 )
-#endif   /* SIZEOF_DATUM == 8 */
+#endif							/* SIZEOF_DATUM == 8 */
 
 /*
  * att_align_datum aligns the given offset as needed for a datum of alignment
@@ -238,6 +238,6 @@
 				break; \
 		} \
 	} while (0)
-#endif   /* SIZEOF_DATUM == 8 */
+#endif							/* SIZEOF_DATUM == 8 */
 
 #endif

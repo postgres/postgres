@@ -4,7 +4,7 @@
  *	  prototypes for lockcmds.c.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/commands/lockcmds.h
@@ -21,4 +21,4 @@
  */
 extern void LockTableCommand(LockStmt *lockstmt);
 
-#endif   /* LOCKCMDS_H */
+#endif							/* LOCKCMDS_H */

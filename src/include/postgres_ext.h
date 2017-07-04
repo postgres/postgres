@@ -39,6 +39,10 @@ typedef unsigned int Oid;
 #define OID_MAX  UINT_MAX
 /* you will need to include <limits.h> to use the above #define */
 
+#define atooid(x) ((Oid) strtoul((x), NULL, 10))
+/* the above needs <stdlib.h> */
+
+
 /* Define a signed 64-bit integer type for use in client API declarations. */
 typedef PG_INT64_TYPE pg_int64;
 
@@ -49,6 +53,7 @@ typedef PG_INT64_TYPE pg_int64;
  * applications.
  */
 #define PG_DIAG_SEVERITY		'S'
+#define PG_DIAG_SEVERITY_NONLOCALIZED 'V'
 #define PG_DIAG_SQLSTATE		'C'
 #define PG_DIAG_MESSAGE_PRIMARY 'M'
 #define PG_DIAG_MESSAGE_DETAIL	'D'
@@ -66,4 +71,4 @@ typedef PG_INT64_TYPE pg_int64;
 #define PG_DIAG_SOURCE_LINE		'L'
 #define PG_DIAG_SOURCE_FUNCTION 'R'
 
-#endif   /* POSTGRES_EXT_H */
+#endif							/* POSTGRES_EXT_H */

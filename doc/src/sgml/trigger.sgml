@@ -33,7 +33,8 @@
    <para>
     A trigger is a specification that the database should automatically
     execute a particular function whenever a certain type of operation is
-    performed.  Triggers can be attached to tables, views, and foreign tables.
+    performed.  Triggers can be attached to tables (partitioned or not),
+    views, and foreign tables.
   </para>
 
   <para>
@@ -111,14 +112,22 @@
     Statement-level <literal>BEFORE</> triggers naturally fire before the
     statement starts to do anything, while statement-level <literal>AFTER</>
     triggers fire at the very end of the statement.  These types of
-    triggers may be defined on tables or views.  Row-level <literal>BEFORE</>
-    triggers fire immediately before a particular row is operated on,
-    while row-level <literal>AFTER</> triggers fire at the end of the
-    statement (but before any statement-level <literal>AFTER</> triggers).
-    These types of triggers may only be defined on tables and foreign tables.
-    Row-level <literal>INSTEAD OF</> triggers may only be defined on views,
-    and fire immediately as each row in the view is identified as needing to
-    be operated on.
+    triggers may be defined on tables, views, or foreign tables.  Row-level
+    <literal>BEFORE</> triggers fire immediately before a particular row is
+    operated on, while row-level <literal>AFTER</> triggers fire at the end of
+    the statement (but before any statement-level <literal>AFTER</> triggers).
+    These types of triggers may only be defined on non-partitioned tables and
+    foreign tables.  Row-level <literal>INSTEAD OF</> triggers may only be
+    defined on views, and fire immediately as each row in the view is
+    identified as needing to be operated on.
+   </para>
+
+   <para>
+    A statement that targets a parent table in an inheritance or partitioning
+    hierarchy does not cause the statement-level triggers of affected child
+    tables to be fired; only the parent table's statement-level triggers are
+    fired.  However, row-level triggers of any affected child tables will be
+    fired.
    </para>
 
    <para>
@@ -395,6 +404,11 @@
     <secondary>in C</secondary>
    </indexterm>
 
+   <indexterm>
+    <primary>transition tables</primary>
+    <secondary>referencing from C trigger</secondary>
+   </indexterm>
+
    <para>
     This section describes the low-level details of the interface to a
     trigger function.  This information is only needed when writing
@@ -438,14 +452,16 @@ CALLED_AS_TRIGGER(fcinfo)
 <programlisting>
 typedef struct TriggerData
 {
-    NodeTag       type;
-    TriggerEvent  tg_event;
-    Relation      tg_relation;
-    HeapTuple     tg_trigtuple;
-    HeapTuple     tg_newtuple;
-    Trigger      *tg_trigger;
-    Buffer        tg_trigtuplebuf;
-    Buffer        tg_newtuplebuf;
+    NodeTag          type;
+    TriggerEvent     tg_event;
+    Relation         tg_relation;
+    HeapTuple        tg_trigtuple;
+    HeapTuple        tg_newtuple;
+    Trigger         *tg_trigger;
+    Buffer           tg_trigtuplebuf;
+    Buffer           tg_newtuplebuf;
+    Tuplestorestate *tg_oldtable;
+    Tuplestorestate *tg_newtable;
 } TriggerData;
 </programlisting>
 
@@ -629,6 +645,8 @@ typedef struct Trigger
     int16      *tgattr;
     char      **tgargs;
     char       *tgqual;
+    char       *tgoldtable;
+    char       *tgnewtable;
 } Trigger;
 </programlisting>
 
@@ -662,7 +680,36 @@ typedef struct Trigger
       </listitem>
      </varlistentry>
 
+     <varlistentry>
+      <term><structfield>tg_oldtable</></term>
+      <listitem>
+       <para>
+        A pointer to a structure of type <structname>Tuplestorestate</structname>
+        containing zero or more rows in the format specified by
+        <structfield>tg_relation</structfield>, or a <symbol>NULL</> pointer
+        if there is no <literal>OLD TABLE</literal> transition relation.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><structfield>tg_newtable</></term>
+      <listitem>
+       <para>
+        A pointer to a structure of type <structname>Tuplestorestate</structname>
+        containing zero or more rows in the format specified by
+        <structfield>tg_relation</structfield>, or a <symbol>NULL</> pointer
+        if there is no <literal>NEW TABLE</literal> transition relation.
+       </para>
+      </listitem>
+     </varlistentry>
+
     </variablelist>
+   </para>
+
+   <para>
+    To allow queries issued through SPI to reference transition tables, see
+    <xref linkend="spi-spi-register-trigger-data">.
    </para>
 
    <para>
@@ -705,6 +752,7 @@ CREATE TABLE ttest (
     This is the source code of the trigger function:
 <programlisting><![CDATA[
 #include "postgres.h"
+#include "fmgr.h"
 #include "executor/spi.h"       /* this is what you need to work with SPI */
 #include "commands/trigger.h"   /* ... triggers ... */
 #include "utils/rel.h"          /* ... and relations */

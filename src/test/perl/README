@@ -6,6 +6,12 @@ across the source tree, particularly tests in src/bin and src/test. It's used
 to drive tests for backup and restore, replication, etc - anything that can't
 really be expressed using pg_regress or the isolation test framework.
 
+The tests are invoked via perl's 'prove' command, wrapped in PostgreSQL
+makefiles to handle instance setup etc. See the $(prove_check) and
+$(prove_installcheck) targets in Makefile.global. By default every test in the
+t/ subdirectory is run. Individual test(s) can be run instead by passing
+something like PROVE_TESTS="t/001_testname.pl t/002_othertestname.pl" to make.
+
 You should prefer to write tests using pg_regress in src/test/regress, or
 isolation tester specs in src/test/isolation, if possible. If not, check to
 see if your new tests make sense under an existing tree in src/test, like
@@ -13,6 +19,11 @@ src/test/ssl, or should be added to one of the suites for an existing utility.
 
 Note that all tests and test tools should have perltidy run on them before
 patches are submitted, using perltidy --profile=src/tools/pgindent/perltidyrc
+
+By default, to keep the noise low during runs, we do not set any flags via
+PROVE_FLAGS, but this can be done on the 'make' command line if desired, eg:
+
+make check-world PROVE_FLAGS='--verbose'
 
 Writing tests
 -------------
@@ -46,6 +57,10 @@ against them and evaluate the results. For example:
 
     $node->stop('fast');
 
+Test::More::like entails use of the qr// operator.  Avoid Perl 5.8.8 bug
+#39185 by not using the "$" regular expression metacharacter in qr// when also
+using the "/m" modifier.  Instead of "$", use "\n" or "(?=\n|\z)".
+
 Read the Test::More documentation for more on how to write tests:
 
     perldoc Test::More
@@ -54,3 +69,21 @@ For available PostgreSQL-specific test methods and some example tests read the
 perldoc for the test modules, e.g.:
 
     perldoc src/test/perl/PostgresNode.pm
+
+Required Perl
+-------------
+
+Tests must run on perl 5.8.0 and newer. perlbrew is a good way to obtain such
+a Perl; see http://perlbrew.pl .
+
+Just install and
+
+    perlbrew --force install 5.8.0
+    perlbrew use 5.8.0
+    perlbrew install-cpanm
+    cpanm install IPC::Run
+
+then re-run configure to ensure the correct Perl is used when running
+tests. To verify that the right Perl was found:
+
+    grep ^PERL= config.log

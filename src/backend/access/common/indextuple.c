@@ -4,7 +4,7 @@
  *	   This file contains index tuple accessor and mutator routines,
  *	   as well as various tuple utilities.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -80,7 +80,7 @@ index_form_tuple(TupleDesc tupleDescriptor,
 		{
 			untoasted_values[i] =
 				PointerGetDatum(heap_tuple_fetch_attr((struct varlena *)
-												DatumGetPointer(values[i])));
+													  DatumGetPointer(values[i])));
 			untoasted_free[i] = true;
 		}
 
@@ -89,7 +89,7 @@ index_form_tuple(TupleDesc tupleDescriptor,
 		 * try to compress it in-line.
 		 */
 		if (!VARATT_IS_EXTENDED(DatumGetPointer(untoasted_values[i])) &&
-		VARSIZE(DatumGetPointer(untoasted_values[i])) > TOAST_INDEX_TARGET &&
+			VARSIZE(DatumGetPointer(untoasted_values[i])) > TOAST_INDEX_TARGET &&
 			(att->attstorage == 'x' || att->attstorage == 'm'))
 		{
 			Datum		cvalue = toast_compress_datum(untoasted_values[i]);

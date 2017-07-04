@@ -1,0 +1,273 @@
+<!-- doc/src/sgml/amcheck.sgml -->
+
+<sect1 id="amcheck" xreflabel="amcheck">
+ <title>amcheck</title>
+
+ <indexterm zone="amcheck">
+  <primary>amcheck</primary>
+ </indexterm>
+
+ <para>
+  The <filename>amcheck</> module provides functions that allow you to
+  verify the logical consistency of the structure of indexes.  If the
+  structure appears to be valid, no error is raised.
+ </para>
+
+ <para>
+  The functions verify various <emphasis>invariants</> in the
+  structure of the representation of particular indexes.  The
+  correctness of the access method functions behind index scans and
+  other important operations relies on these invariants always
+  holding.  For example, certain functions verify, among other things,
+  that all B-Tree pages have items in <quote>logical</> order (e.g.,
+  for B-Tree indexes on <type>text</>, index tuples should be in
+  collated lexical order).  If that particular invariant somehow fails
+  to hold, we can expect binary searches on the affected page to
+  incorrectly guide index scans, resulting in wrong answers to SQL
+  queries.
+ </para>
+ <para>
+  Verification is performed using the same procedures as those used by
+  index scans themselves, which may be user-defined operator class
+  code.  For example, B-Tree index verification relies on comparisons
+  made with one or more B-Tree support function 1 routines.  See <xref
+  linkend="xindex-support"> for details of operator class support
+  functions.
+ </para>
+ <para>
+  <filename>amcheck</> functions may be used only by superusers.
+ </para>
+
+ <sect2>
+  <title>Functions</title>
+
+  <variablelist>
+   <varlistentry>
+    <term>
+     <function>bt_index_check(index regclass) returns void</function>
+     <indexterm>
+      <primary>bt_index_check</primary>
+     </indexterm>
+    </term>
+
+    <listitem>
+     <para>
+      <function>bt_index_check</function> tests that its target, a
+      B-Tree index, respects a variety of invariants.  Example usage:
+<screen>
+test=# SELECT bt_index_check(c.oid), c.relname, c.relpages
+FROM pg_index i
+JOIN pg_opclass op ON i.indclass[0] = op.oid
+JOIN pg_am am ON op.opcmethod = am.oid
+JOIN pg_class c ON i.indexrelid = c.oid
+JOIN pg_namespace n ON c.relnamespace = n.oid
+WHERE am.amname = 'btree' AND n.nspname = 'pg_catalog'
+-- Don't check temp tables, which may be from another session:
+AND c.relpersistence != 't'
+-- Function may throw an error when this is omitted:
+AND i.indisready AND i.indisvalid
+ORDER BY c.relpages DESC LIMIT 10;
+ bt_index_check |             relname             | relpages 
+----------------+---------------------------------+----------
+                | pg_depend_reference_index       |       43
+                | pg_depend_depender_index        |       40
+                | pg_proc_proname_args_nsp_index  |       31
+                | pg_description_o_c_o_index      |       21
+                | pg_attribute_relid_attnam_index |       14
+                | pg_proc_oid_index               |       10
+                | pg_attribute_relid_attnum_index |        9
+                | pg_amproc_fam_proc_index        |        5
+                | pg_amop_opr_fam_index           |        5
+                | pg_amop_fam_strat_index         |        5
+(10 rows)
+</screen>
+      This example shows a session that performs verification of every
+      catalog index in the database <quote>test</>.  Details of just
+      the 10 largest indexes verified are displayed.  Since no error
+      is raised, all indexes tested appear to be logically consistent.
+      Naturally, this query could easily be changed to call
+      <function>bt_index_check</function> for every index in the
+      database where verification is supported.
+     </para>
+     <para>
+      <function>bt_index_check</function> acquires an <literal>AccessShareLock</>
+      on the target index and the heap relation it belongs to. This lock mode
+      is the same lock mode acquired on relations by simple
+      <literal>SELECT</> statements.
+      <function>bt_index_check</function> does not verify invariants
+      that span child/parent relationships, nor does it verify that
+      the target index is consistent with its heap relation.  When a
+      routine, lightweight test for corruption is required in a live
+      production environment, using
+      <function>bt_index_check</function> often provides the best
+      trade-off between thoroughness of verification and limiting the
+      impact on application performance and availability.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
+     <function>bt_index_parent_check(index regclass) returns void</function>
+     <indexterm>
+      <primary>bt_index_parent_check</primary>
+     </indexterm>
+    </term>
+
+    <listitem>
+     <para>
+      <function>bt_index_parent_check</function> tests that its
+      target, a B-Tree index, respects a variety of invariants.  The
+      checks performed by <function>bt_index_parent_check</function>
+      are a superset of the checks performed by
+      <function>bt_index_check</function>.
+      <function>bt_index_parent_check</function> can be thought of as
+      a more thorough variant of <function>bt_index_check</function>:
+      unlike <function>bt_index_check</function>,
+      <function>bt_index_parent_check</function> also checks
+      invariants that span parent/child relationships.  However, it
+      does not verify that the target index is consistent with its
+      heap relation.  <function>bt_index_parent_check</function>
+      follows the general convention of raising an error if it finds a
+      logical inconsistency or other problem.
+     </para>
+     <para>
+      A <literal>ShareLock</> is required on the target index by
+      <function>bt_index_parent_check</function> (a
+      <literal>ShareLock</> is also acquired on the heap relation).
+      These locks prevent concurrent data modification from
+      <command>INSERT</>, <command>UPDATE</>, and <command>DELETE</>
+      commands.  The locks also prevent the underlying relation from
+      being concurrently processed by <command>VACUUM</>, as well as
+      all other utility commands.  Note that the function holds locks
+      only while running, not for the entire transaction.
+     </para>
+     <para>
+      <function>bt_index_parent_check</function>'s additional
+      verification is more likely to detect various pathological
+      cases.  These cases may involve an incorrectly implemented
+      B-Tree operator class used by the index that is checked, or,
+      hypothetically, undiscovered bugs in the underlying B-Tree index
+      access method code.  Note that
+      <function>bt_index_parent_check</function> cannot be used when
+      Hot Standby mode is enabled (i.e., on read-only physical
+      replicas), unlike <function>bt_index_check</function>.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </sect2>
+
+ <sect2>
+  <title>Using <filename>amcheck</> effectively</title>
+
+ <para>
+  <filename>amcheck</> can be effective at detecting various types of
+  failure modes that <link
+  linkend="app-initdb-data-checksums"><application>data page
+  checksums</></link> will always fail to catch.  These include:
+
+  <itemizedlist>
+   <listitem>
+    <para>
+     Structural inconsistencies caused by incorrect operator class
+     implementations.
+    </para>
+    <para>
+     This includes issues caused by the comparison rules of operating
+     system collations changing. Comparisons of datums of a collatable
+     type like <type>text</> must be immutable (just as all
+     comparisons used for B-Tree index scans must be immutable), which
+     implies that operating system collation rules must never change.
+     Though rare, updates to operating system collation rules can
+     cause these issues. More commonly, an inconsistency in the
+     collation order between a master server and a standby server is
+     implicated, possibly because the <emphasis>major</> operating
+     system version in use is inconsistent.  Such inconsistencies will
+     generally only arise on standby servers, and so can generally
+     only be detected on standby servers.
+    </para>
+    <para>
+     If a problem like this arises, it may not affect each individual
+     index that is ordered using an affected collation, simply because
+     <emphasis>indexed</> values might happen to have the same
+     absolute ordering regardless of the behavioral inconsistency. See
+     <xref linkend="locale"> and <xref linkend="collation"> for
+     further details about how <productname>PostgreSQL</> uses
+     operating system locales and collations.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Corruption caused by hypothetical undiscovered bugs in the
+     underlying <productname>PostgreSQL</> access method code or sort
+     code.
+    </para>
+    <para>
+     Automatic verification of the structural integrity of indexes
+     plays a role in the general testing of new or proposed
+     <productname>PostgreSQL</> features that could plausibly allow a
+     logical inconsistency to be introduced.  One obvious testing
+     strategy is to call <filename>amcheck</> functions continuously
+     when running the standard regression tests.  See <xref
+     linkend="regress-run"> for details on running the tests.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     File system or storage subsystem faults where checksums happen to
+     simply not be enabled.
+    </para>
+    <para>
+     Note that <filename>amcheck</> examines a page as represented in some
+     shared memory buffer at the time of verification if there is only a
+     shared buffer hit when accessing the block. Consequently,
+     <filename>amcheck</> does not necessarily examine data read from the
+     file system at the time of verification. Note that when checksums are
+     enabled, <filename>amcheck</> may raise an error due to a checksum
+     failure when a corrupt block is read into a buffer.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Corruption caused by faulty RAM, and the broader memory subsystem
+     and operating system.
+    </para>
+    <para>
+     <productname>PostgreSQL</> does not protect against correctable
+     memory errors and it is assumed you will operate using RAM that
+     uses industry standard Error Correcting Codes (ECC) or better
+     protection.  However, ECC memory is typically only immune to
+     single-bit errors, and should not be assumed to provide
+     <emphasis>absolute</emphasis> protection against failures that
+     result in memory corruption.
+    </para>
+   </listitem>
+  </itemizedlist>
+  In general, <filename>amcheck</> can only prove the presence of
+  corruption; it cannot prove its absence.
+ </para>
+
+ </sect2>
+ <sect2>
+  <title>Repairing corruption</title>
+ <para>
+  No error concerning corruption raised by <filename>amcheck</> should
+  ever be a false positive.  In practice, <filename>amcheck</> is more
+  likely to find software bugs than problems with hardware.
+  <filename>amcheck</> raises errors in the event of conditions that,
+  by definition, should never happen, and so careful analysis of
+  <filename>amcheck</> errors is often required.
+ </para>
+ <para>
+  There is no general method of repairing problems that
+  <filename>amcheck</> detects.  An explanation for the root cause of
+  an invariant violation should be sought.  <xref
+  linkend="pageinspect"> may play a useful role in diagnosing
+  corruption that <filename>amcheck</> detects.  A <command>REINDEX</>
+  may not be effective in repairing corruption.
+ </para>
+
+ </sect2>
+
+</sect1>

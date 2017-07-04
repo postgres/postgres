@@ -3,7 +3,7 @@
  * dict_snowball.c
  *		Snowball dictionary
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/snowball/dict_snowball.c
@@ -126,7 +126,7 @@ typedef struct DictSnowball
 	struct SN_env *z;
 	StopList	stoplist;
 	bool		needrecode;		/* needs recoding before/after call stem */
-	int			(*stem) (struct SN_env * z);
+	int			(*stem) (struct SN_env *z);
 
 	/*
 	 * snowball saves alloced memory between calls, so we should run it in our

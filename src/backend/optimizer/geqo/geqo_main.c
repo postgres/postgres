@@ -4,7 +4,7 @@
  *	  solution to the query optimization problem
  *	  by means of a Genetic Algorithm (GA)
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/backend/optimizer/geqo/geqo_main.c
@@ -46,14 +46,14 @@ double		Geqo_seed;
 static int	gimme_pool_size(int nr_rel);
 static int	gimme_number_generations(int pool_size);
 
-/* define edge recombination crossover [ERX] per default */
+/* complain if no recombination mechanism is #define'd */
 #if !defined(ERX) && \
 	!defined(PMX) && \
 	!defined(CX)  && \
 	!defined(PX)  && \
 	!defined(OX1) && \
 	!defined(OX2)
-#define ERX
+#error "must choose one GEQO recombination mechanism in geqo.h"
 #endif
 
 

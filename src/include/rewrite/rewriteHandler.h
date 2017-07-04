@@ -4,7 +4,7 @@
  *		External interface to query rewriter.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/rewrite/rewriteHandler.h
@@ -30,4 +30,4 @@ extern int relation_is_updatable(Oid reloid,
 					  bool include_triggers,
 					  Bitmapset *include_cols);
 
-#endif   /* REWRITEHANDLER_H */
+#endif							/* REWRITEHANDLER_H */

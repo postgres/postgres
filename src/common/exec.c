@@ -4,7 +4,7 @@
  *		Functions for finding and validating executable files
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -35,7 +35,7 @@
 #define log_error4(str, param, arg1)	(fprintf(stderr, str, param, arg1), fputc('\n', stderr))
 #endif
 
-#ifdef WIN32_ONLY_COMPILER
+#ifdef _MSC_VER
 #define getcwd(cwd,len)  GetCurrentDirectory(len, cwd)
 #endif
 
@@ -187,7 +187,7 @@ find_my_exec(const char *argv0, char *retpath)
 
 			switch (validate_exec(retpath))
 			{
-				case 0: /* found ok */
+				case 0:			/* found ok */
 					return resolve_symlinks(retpath);
 				case -1:		/* wasn't even a candidate, keep looking */
 					break;
@@ -293,7 +293,7 @@ resolve_symlinks(char *path)
 		log_error4(_("could not change directory to \"%s\": %s"), orig_wd, strerror(errno));
 		return -1;
 	}
-#endif   /* HAVE_READLINK */
+#endif							/* HAVE_READLINK */
 
 	return 0;
 }
@@ -499,7 +499,7 @@ pipe_read_line(char *cmd, char *line, int maxsize)
 	CloseHandle(childstdoutrddup);
 
 	return retval;
-#endif   /* WIN32 */
+#endif							/* WIN32 */
 }
 
 
@@ -553,6 +553,7 @@ set_pglocale_pgservice(const char *argv0, const char *app)
 	char		my_exec_path[MAXPGPATH];
 	char		env_path[MAXPGPATH + sizeof("PGSYSCONFDIR=")];	/* longer than
 																 * PGLOCALEDIR */
+	char	   *dup_path;
 
 	/* don't set LC_ALL in the backend */
 	if (strcmp(app, PG_TEXTDOMAIN("postgres")) != 0)
@@ -583,7 +584,9 @@ set_pglocale_pgservice(const char *argv0, const char *app)
 		/* set for libpq to use */
 		snprintf(env_path, sizeof(env_path), "PGLOCALEDIR=%s", path);
 		canonicalize_path(env_path + 12);
-		putenv(strdup(env_path));
+		dup_path = strdup(env_path);
+		if (dup_path)
+			putenv(dup_path);
 	}
 #endif
 
@@ -594,7 +597,9 @@ set_pglocale_pgservice(const char *argv0, const char *app)
 		/* set for libpq to use */
 		snprintf(env_path, sizeof(env_path), "PGSYSCONFDIR=%s", path);
 		canonicalize_path(env_path + 13);
-		putenv(strdup(env_path));
+		dup_path = strdup(env_path);
+		if (dup_path)
+			putenv(dup_path);
 	}
 }
 
@@ -678,7 +683,7 @@ AddUserToTokenDacl(HANDLE hToken)
 
 	/* Figure out the size of the new ACL */
 	dwNewAclSize = asi.AclBytesInUse + sizeof(ACCESS_ALLOWED_ACE) +
-		GetLengthSid(pTokenUser->User.Sid) -sizeof(DWORD);
+		GetLengthSid(pTokenUser->User.Sid) - sizeof(DWORD);
 
 	/* Allocate the ACL buffer & initialize it */
 	pacl = (PACL) LocalAlloc(LPTR, dwNewAclSize);

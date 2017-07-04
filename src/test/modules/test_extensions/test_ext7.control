@@ -1,0 +1,4 @@
+comment = 'Test extension 7'
+default_version = '1.0'
+schema = 'public'
+relocatable = false

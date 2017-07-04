@@ -5,7 +5,7 @@
  *	  that invoke the libpq "events" API, but are not interesting to
  *	  ordinary users of libpq.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/interfaces/libpq/libpq-events.h
@@ -19,7 +19,7 @@
 #include "libpq-fe.h"
 
 #ifdef __cplusplus
-extern		"C"
+extern "C"
 {
 #endif
 
@@ -91,4 +91,4 @@ extern int	PQfireResultCreateEvents(PGconn *conn, PGresult *res);
 }
 #endif
 
-#endif   /* LIBPQ_EVENTS_H */
+#endif							/* LIBPQ_EVENTS_H */

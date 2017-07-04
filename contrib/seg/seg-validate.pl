@@ -1,20 +1,23 @@
 #!/usr/bin/perl
-$integer = '[+-]?[0-9]+';
-$real    = '[+-]?[0-9]+\.[0-9]+';
 
-$RANGE     = '(\.\.)(\.)?';
-$PLUMIN    = q(\'\+\-\');
-$FLOAT     = "(($integer)|($real))([eE]($integer))?";
-$EXTENSION = '<|>|~';
+use strict;
 
-$boundary  = "($EXTENSION)?$FLOAT";
-$deviation = $FLOAT;
+my $integer = '[+-]?[0-9]+';
+my $real    = '[+-]?[0-9]+\.[0-9]+';
 
-$rule_1 = $boundary . $PLUMIN . $deviation;
-$rule_2 = $boundary . $RANGE . $boundary;
-$rule_3 = $boundary . $RANGE;
-$rule_4 = $RANGE . $boundary;
-$rule_5 = $boundary;
+my $RANGE     = '(\.\.)(\.)?';
+my $PLUMIN    = q(\'\+\-\');
+my $FLOAT     = "(($integer)|($real))([eE]($integer))?";
+my $EXTENSION = '<|>|~';
+
+my $boundary  = "($EXTENSION)?$FLOAT";
+my $deviation = $FLOAT;
+
+my $rule_1 = $boundary . $PLUMIN . $deviation;
+my $rule_2 = $boundary . $RANGE . $boundary;
+my $rule_3 = $boundary . $RANGE;
+my $rule_4 = $RANGE . $boundary;
+my $rule_5 = $boundary;
 
 
 print "$rule_5\n";

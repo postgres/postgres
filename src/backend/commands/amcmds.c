@@ -3,7 +3,7 @@
  * amcmds.c
  *	  Routines for SQL commands that manipulate access methods.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -34,7 +34,7 @@ static const char *get_am_type_string(char amtype);
 
 
 /*
- * CreateAcessMethod
+ * CreateAccessMethod
  *		Registers a new access method.
  */
 ObjectAddress
@@ -87,8 +87,7 @@ CreateAccessMethod(CreateAmStmt *stmt)
 
 	tup = heap_form_tuple(RelationGetDescr(rel), values, nulls);
 
-	amoid = simple_heap_insert(rel, tup);
-	CatalogUpdateIndexes(rel, tup);
+	amoid = CatalogTupleInsert(rel, tup);
 	heap_freetuple(tup);
 
 	myself.classId = AccessMethodRelationId;
@@ -129,7 +128,7 @@ RemoveAccessMethodById(Oid amOid)
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "cache lookup failed for access method %u", amOid);
 
-	simple_heap_delete(relation, &tup->t_self);
+	CatalogTupleDelete(relation, &tup->t_self);
 
 	ReleaseSysCache(tup);
 

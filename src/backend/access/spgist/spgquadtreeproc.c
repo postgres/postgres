@@ -4,7 +4,7 @@
  *	  implementation of quad tree over points for SP-GiST
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -253,8 +253,8 @@ spg_quad_inner_consistent(PG_FUNCTION_ARGS)
 				boxQuery = DatumGetBoxP(in->scankeys[i].sk_argument);
 
 				if (DatumGetBool(DirectFunctionCall2(box_contain_pt,
-												   PointerGetDatum(boxQuery),
-												 PointerGetDatum(centroid))))
+													 PointerGetDatum(boxQuery),
+													 PointerGetDatum(centroid))))
 				{
 					/* centroid is in box, so all quadrants are OK */
 				}

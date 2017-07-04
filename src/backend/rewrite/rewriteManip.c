@@ -2,7 +2,7 @@
  *
  * rewriteManip.c
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -1000,7 +1000,7 @@ AddQual(Query *parsetree, Node *qual)
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			  errmsg("conditional utility statements are not implemented")));
+					 errmsg("conditional utility statements are not implemented")));
 	}
 
 	if (parsetree->setOperations != NULL)
@@ -1166,7 +1166,7 @@ replace_rte_variables_mutator(Node *node,
 			 */
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				   errmsg("WHERE CURRENT OF on a view is not implemented")));
+					 errmsg("WHERE CURRENT OF on a view is not implemented")));
 		}
 		/* otherwise fall through to copy the expr normally */
 	}
@@ -1397,7 +1397,7 @@ ReplaceVarsFromTargetList_callback(Var *var,
 				 */
 				return coerce_to_domain((Node *) makeNullConst(var->vartype,
 															   var->vartypmod,
-															 var->varcollid),
+															   var->varcollid),
 										InvalidOid, -1,
 										var->vartype,
 										COERCE_IMPLICIT_CAST,
@@ -1412,11 +1412,11 @@ ReplaceVarsFromTargetList_callback(Var *var,
 	else
 	{
 		/* Make a copy of the tlist item to return */
-		Node	   *newnode = copyObject(tle->expr);
+		Expr	   *newnode = copyObject(tle->expr);
 
 		/* Must adjust varlevelsup if tlist item is from higher query */
 		if (var->varlevelsup > 0)
-			IncrementVarSublevelsUp(newnode, var->varlevelsup, 0);
+			IncrementVarSublevelsUp((Node *) newnode, var->varlevelsup, 0);
 
 		/*
 		 * Check to see if the tlist item contains a PARAM_MULTIEXPR Param,
@@ -1428,12 +1428,12 @@ ReplaceVarsFromTargetList_callback(Var *var,
 		 * create semantic oddities that users of rules would probably prefer
 		 * not to cope with.  So treat it as an unimplemented feature.
 		 */
-		if (contains_multiexpr_param(newnode, NULL))
+		if (contains_multiexpr_param((Node *) newnode, NULL))
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("NEW variables in ON UPDATE rules cannot reference columns that are part of a multiple assignment in the subject UPDATE command")));
 
-		return newnode;
+		return (Node *) newnode;
 	}
 }
 

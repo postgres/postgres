@@ -2,7 +2,7 @@
  *
  * streamutil.h
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		  src/bin/pg_basebackup/streamutil.h
@@ -15,6 +15,7 @@
 #include "libpq-fe.h"
 
 #include "access/xlogdefs.h"
+#include "datatype/timestamp.h"
 
 extern const char *progname;
 extern char *connection_string;
@@ -23,7 +24,6 @@ extern char *dbuser;
 extern char *dbport;
 extern char *dbname;
 extern int	dbgetpassword;
-extern char *replication_slot;
 
 /* Connection kept global so we can disconnect easily */
 extern PGconn *conn;
@@ -39,13 +39,13 @@ extern bool RunIdentifySystem(PGconn *conn, char **sysid,
 				  TimeLineID *starttli,
 				  XLogRecPtr *startpos,
 				  char **db_name);
-extern int64 feGetCurrentTimestamp(void);
-extern void feTimestampDifference(int64 start_time, int64 stop_time,
+extern TimestampTz feGetCurrentTimestamp(void);
+extern void feTimestampDifference(TimestampTz start_time, TimestampTz stop_time,
 					  long *secs, int *microsecs);
 
-extern bool feTimestampDifferenceExceeds(int64 start_time, int64 stop_time,
+extern bool feTimestampDifferenceExceeds(TimestampTz start_time, TimestampTz stop_time,
 							 int msec);
 extern void fe_sendint64(int64 i, char *buf);
 extern int64 fe_recvint64(char *buf);
 
-#endif   /* STREAMUTIL_H */
+#endif							/* STREAMUTIL_H */

@@ -34,7 +34,7 @@
  *		plan normally and pass back the results.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -67,10 +67,8 @@ TupleTableSlot *
 ExecResult(ResultState *node)
 {
 	TupleTableSlot *outerTupleSlot;
-	TupleTableSlot *resultSlot;
 	PlanState  *outerPlan;
 	ExprContext *econtext;
-	ExprDoneCond isDone;
 
 	econtext = node->ps.ps_ExprContext;
 
@@ -79,9 +77,7 @@ ExecResult(ResultState *node)
 	 */
 	if (node->rs_checkqual)
 	{
-		bool		qualResult = ExecQual((List *) node->resconstantqual,
-										  econtext,
-										  false);
+		bool		qualResult = ExecQual(node->resconstantqual, econtext);
 
 		node->rs_checkqual = false;
 		if (!qualResult)
@@ -92,23 +88,8 @@ ExecResult(ResultState *node)
 	}
 
 	/*
-	 * Check to see if we're still projecting out tuples from a previous scan
-	 * tuple (because there is a function-returning-set in the projection
-	 * expressions).  If so, try to project another one.
-	 */
-	if (node->ps.ps_TupFromTlist)
-	{
-		resultSlot = ExecProject(node->ps.ps_ProjInfo, &isDone);
-		if (isDone == ExprMultipleResult)
-			return resultSlot;
-		/* Done with that source tuple... */
-		node->ps.ps_TupFromTlist = false;
-	}
-
-	/*
 	 * Reset per-tuple memory context to free any expression evaluation
-	 * storage allocated in the previous tuple cycle.  Note this can't happen
-	 * until we're done projecting out tuples from a scan tuple.
+	 * storage allocated in the previous tuple cycle.
 	 */
 	ResetExprContext(econtext);
 
@@ -147,18 +128,8 @@ ExecResult(ResultState *node)
 			node->rs_done = true;
 		}
 
-		/*
-		 * form the result tuple using ExecProject(), and return it --- unless
-		 * the projection produces an empty set, in which case we must loop
-		 * back to see if there are more outerPlan tuples.
-		 */
-		resultSlot = ExecProject(node->ps.ps_ProjInfo, &isDone);
-
-		if (isDone != ExprEndResult)
-		{
-			node->ps.ps_TupFromTlist = (isDone == ExprMultipleResult);
-			return resultSlot;
-		}
+		/* form the result tuple using ExecProject(), and return it */
+		return ExecProject(node->ps.ps_ProjInfo);
 	}
 
 	return NULL;
@@ -228,8 +199,6 @@ ExecInitResult(Result *node, EState *estate, int eflags)
 	 */
 	ExecAssignExprContext(estate, &resstate->ps);
 
-	resstate->ps.ps_TupFromTlist = false;
-
 	/*
 	 * tuple table initialization
 	 */
@@ -238,14 +207,10 @@ ExecInitResult(Result *node, EState *estate, int eflags)
 	/*
 	 * initialize child expressions
 	 */
-	resstate->ps.targetlist = (List *)
-		ExecInitExpr((Expr *) node->plan.targetlist,
-					 (PlanState *) resstate);
-	resstate->ps.qual = (List *)
-		ExecInitExpr((Expr *) node->plan.qual,
-					 (PlanState *) resstate);
-	resstate->resconstantqual = ExecInitExpr((Expr *) node->resconstantqual,
-											 (PlanState *) resstate);
+	resstate->ps.qual =
+		ExecInitQual(node->plan.qual, (PlanState *) resstate);
+	resstate->resconstantqual =
+		ExecInitQual((List *) node->resconstantqual, (PlanState *) resstate);
 
 	/*
 	 * initialize child nodes
@@ -295,7 +260,6 @@ void
 ExecReScanResult(ResultState *node)
 {
 	node->rs_done = false;
-	node->ps.ps_TupFromTlist = false;
 	node->rs_checkqual = (node->resconstantqual == NULL) ? false : true;
 
 	/*

@@ -4,6 +4,11 @@
 
 CREATE EXTENSION cube;
 
+-- Check whether any of our opclasses fail amvalidate
+SELECT amname, opcname
+FROM pg_opclass opc LEFT JOIN pg_am am ON am.oid = opcmethod
+WHERE opc.oid >= 16384 AND NOT amvalidate(opc.oid);
+
 --
 -- testing the input and output functions
 --
@@ -29,8 +34,11 @@ SELECT '1e-7'::cube AS cube;
 SELECT '-1e-7'::cube AS cube;
 SELECT '1.0e-7'::cube AS cube;
 SELECT '-1.0e-7'::cube AS cube;
-SELECT '1e-700'::cube AS cube;
-SELECT '-1e-700'::cube AS cube;
+SELECT '1e-300'::cube AS cube;
+SELECT '-1e-300'::cube AS cube;
+SELECT 'infinity'::cube AS cube;
+SELECT '-infinity'::cube AS cube;
+SELECT 'NaN'::cube AS cube;
 SELECT '1234567890123456'::cube AS cube;
 SELECT '+1234567890123456'::cube AS cube;
 SELECT '-1234567890123456'::cube AS cube;
@@ -39,12 +47,14 @@ SELECT '+.1234567890123456'::cube AS cube;
 SELECT '-.1234567890123456'::cube AS cube;
 
 -- simple lists (points)
+SELECT '()'::cube AS cube;
 SELECT '1,2'::cube AS cube;
 SELECT '(1,2)'::cube AS cube;
 SELECT '1,2,3,4,5'::cube AS cube;
 SELECT '(1,2,3,4,5)'::cube AS cube;
 
 -- double lists (cubes)
+SELECT '(),()'::cube AS cube;
 SELECT '(0),(0)'::cube AS cube;
 SELECT '(0),(1)'::cube AS cube;
 SELECT '[(0),(0)]'::cube AS cube;
@@ -57,7 +67,6 @@ SELECT '[(0,0,0,0),(1,0,0,0)]'::cube AS cube;
 -- invalid input: parse errors
 SELECT ''::cube AS cube;
 SELECT 'ABC'::cube AS cube;
-SELECT '()'::cube AS cube;
 SELECT '[]'::cube AS cube;
 SELECT '[()]'::cube AS cube;
 SELECT '[(1)]'::cube AS cube;
@@ -85,6 +94,7 @@ SELECT '1,2ab'::cube AS cube; -- 6
 SELECT '1 e7'::cube AS cube; -- 6
 SELECT '1,2a'::cube AS cube; -- 7
 SELECT '1..2'::cube AS cube; -- 7
+SELECT '-1e-700'::cube AS cube; -- out of range
 
 --
 -- Testing building cubes from float8 values
@@ -246,7 +256,7 @@ SELECT cube_dim('(0,0,0)'::cube);
 SELECT cube_dim('(42,42,42),(42,42,42)'::cube);
 SELECT cube_dim('(4,8,15,16,23),(4,8,15,16,23)'::cube);
 
--- Test of cube_ll_coord function (retrieves LL coodinate values)
+-- Test of cube_ll_coord function (retrieves LL coordinate values)
 --
 SELECT cube_ll_coord('(-1,1),(2,-2)'::cube, 1);
 SELECT cube_ll_coord('(-1,1),(2,-2)'::cube, 2);
@@ -258,7 +268,7 @@ SELECT cube_ll_coord('(42,137)'::cube, 1);
 SELECT cube_ll_coord('(42,137)'::cube, 2);
 SELECT cube_ll_coord('(42,137)'::cube, 3);
 
--- Test of cube_ur_coord function (retrieves UR coodinate values)
+-- Test of cube_ur_coord function (retrieves UR coordinate values)
 --
 SELECT cube_ur_coord('(-1,1),(2,-2)'::cube, 1);
 SELECT cube_ur_coord('(-1,1),(2,-2)'::cube, 2);

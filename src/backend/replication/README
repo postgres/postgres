@@ -54,7 +54,7 @@ and WalRcvData->slotname, and initializes the starting point in
 WalRcvData->receiveStart.
 
 As walreceiver receives WAL from the master server, and writes and flushes
-it to disk (in pg_xlog), it updates WalRcvData->receivedUpto and signals
+it to disk (in pg_wal), it updates WalRcvData->receivedUpto and signals
 the startup process to know how far WAL replay can advance.
 
 Walreceiver sends information about replication progress to the master server

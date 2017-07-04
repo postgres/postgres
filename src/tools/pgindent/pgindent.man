@@ -11,17 +11,13 @@ it without any parameters at the top of the source tree you want to process.
 If you don't have all the requirements installed, pgindent will fetch and build
 them for you, if you're in a PostgreSQL source tree:
 
-
 	pgindent --build
 
-If your indent program is not installed in your path, you can specify it
-by setting the environment variable INDENT, or PGINDENT, or by giving the
+If your pg_bsd_indent program is not installed in your path, you can specify
+it by setting the environment variable INDENT, or PGINDENT, or by giving the
 command line option --indent:
 
 	pgindent --indent=/opt/extras/bsdindent
-
-Similarly, the entab program can be specified using the PGENTAB environment
-variable, or using the --entab command line option.
 
 pgindent also needs a file containing a list of typedefs. This can be
 specified using the PGTYPEDEFS environment variable, or via the command line

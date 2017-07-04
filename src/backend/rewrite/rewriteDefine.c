@@ -3,7 +3,7 @@
  * rewriteDefine.c
  *	  routines for defining a rewrite rule
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -124,7 +124,7 @@ InsertRule(char *rulname,
 		tup = heap_modify_tuple(oldtup, RelationGetDescr(pg_rewrite_desc),
 								values, nulls, replaces);
 
-		simple_heap_update(pg_rewrite_desc, &tup->t_self, tup);
+		CatalogTupleUpdate(pg_rewrite_desc, &tup->t_self, tup);
 
 		ReleaseSysCache(oldtup);
 
@@ -135,11 +135,9 @@ InsertRule(char *rulname,
 	{
 		tup = heap_form_tuple(pg_rewrite_desc->rd_att, values, nulls);
 
-		rewriteObjectId = simple_heap_insert(pg_rewrite_desc, tup);
+		rewriteObjectId = CatalogTupleInsert(pg_rewrite_desc, tup);
 	}
 
-	/* Need to update indexes in either case */
-	CatalogUpdateIndexes(pg_rewrite_desc, tup);
 
 	heap_freetuple(tup);
 
@@ -162,7 +160,7 @@ InsertRule(char *rulname,
 	referenced.objectSubId = 0;
 
 	recordDependencyOn(&myself, &referenced,
-			 (evtype == CMD_SELECT) ? DEPENDENCY_INTERNAL : DEPENDENCY_AUTO);
+					   (evtype == CMD_SELECT) ? DEPENDENCY_INTERNAL : DEPENDENCY_AUTO);
 
 	/*
 	 * Also install dependencies on objects referenced in action and qual.
@@ -173,7 +171,7 @@ InsertRule(char *rulname,
 	if (event_qual != NULL)
 	{
 		/* Find query containing OLD/NEW rtable entries */
-		Query	   *qry = (Query *) linitial(action);
+		Query	   *qry = linitial_node(Query, action);
 
 		qry = getInsertSelectQuery(qry, NULL);
 		recordDependencyOnExpr(&myself, event_qual, qry->rtable,
@@ -261,7 +259,8 @@ DefineQueryRewrite(char *rulename,
 	 */
 	if (event_relation->rd_rel->relkind != RELKIND_RELATION &&
 		event_relation->rd_rel->relkind != RELKIND_MATVIEW &&
-		event_relation->rd_rel->relkind != RELKIND_VIEW)
+		event_relation->rd_rel->relkind != RELKIND_VIEW &&
+		event_relation->rd_rel->relkind != RELKIND_PARTITIONED_TABLE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("\"%s\" is not a table or view",
@@ -285,7 +284,7 @@ DefineQueryRewrite(char *rulename,
 	 */
 	foreach(l, action)
 	{
-		query = (Query *) lfirst(l);
+		query = lfirst_node(Query, l);
 		if (query->resultRelation == 0)
 			continue;
 		/* Don't be fooled by INSERT/SELECT */
@@ -313,7 +312,7 @@ DefineQueryRewrite(char *rulename,
 		if (list_length(action) == 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			   errmsg("INSTEAD NOTHING rules on SELECT are not implemented"),
+					 errmsg("INSTEAD NOTHING rules on SELECT are not implemented"),
 					 errhint("Use views instead.")));
 
 		/*
@@ -327,13 +326,12 @@ DefineQueryRewrite(char *rulename,
 		/*
 		 * ... the one action must be a SELECT, ...
 		 */
-		query = (Query *) linitial(action);
+		query = linitial_node(Query, action);
 		if (!is_instead ||
-			query->commandType != CMD_SELECT ||
-			query->utilityStmt != NULL)
+			query->commandType != CMD_SELECT)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("rules on SELECT must have action INSTEAD SELECT")));
+					 errmsg("rules on SELECT must have action INSTEAD SELECT")));
 
 		/*
 		 * ... it cannot contain data-modifying WITH ...
@@ -375,9 +373,9 @@ DefineQueryRewrite(char *rulename,
 				rule = event_relation->rd_rules->rules[i];
 				if (rule->event == CMD_SELECT)
 					ereport(ERROR,
-						  (errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-						   errmsg("\"%s\" is already a view",
-								  RelationGetRelationName(event_relation))));
+							(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+							 errmsg("\"%s\" is already a view",
+									RelationGetRelationName(event_relation))));
 			}
 		}
 
@@ -423,6 +421,18 @@ DefineQueryRewrite(char *rulename,
 		{
 			HeapScanDesc scanDesc;
 			Snapshot	snapshot;
+
+			if (event_relation->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("could not convert partitioned table \"%s\" to a view",
+								RelationGetRelationName(event_relation))));
+
+			if (event_relation->rd_rel->relispartition)
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("could not convert partition \"%s\" to a view",
+								RelationGetRelationName(event_relation))));
 
 			snapshot = RegisterSnapshot(GetLatestSnapshot());
 			scanDesc = heap_beginscan(event_relation, snapshot, 0, NULL);
@@ -482,14 +492,14 @@ DefineQueryRewrite(char *rulename,
 
 		foreach(l, action)
 		{
-			query = (Query *) lfirst(l);
+			query = lfirst_node(Query, l);
 
 			if (!query->returningList)
 				continue;
 			if (haveReturning)
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				  errmsg("cannot have multiple RETURNING lists in a rule")));
+						 errmsg("cannot have multiple RETURNING lists in a rule")));
 			haveReturning = true;
 			if (event_qual != NULL)
 				ereport(ERROR,
@@ -613,8 +623,7 @@ DefineQueryRewrite(char *rulename,
 		classForm->relminmxid = InvalidMultiXactId;
 		classForm->relreplident = REPLICA_IDENTITY_NOTHING;
 
-		simple_heap_update(relationRelation, &classTup->t_self, classTup);
-		CatalogUpdateIndexes(relationRelation, classTup);
+		CatalogTupleUpdate(relationRelation, &classTup->t_self, classTup);
 
 		heap_freetuple(classTup);
 		heap_close(relationRelation, RowExclusiveLock);
@@ -664,7 +673,7 @@ checkRuleResultList(List *targetList, TupleDesc resultDesc, bool isSelect,
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 					 isSelect ?
-				   errmsg("SELECT rule's target list has too many entries") :
+					 errmsg("SELECT rule's target list has too many entries") :
 					 errmsg("RETURNING list has too many entries")));
 
 		attr = resultDesc->attrs[i - 1];
@@ -813,7 +822,7 @@ setRuleCheckAsUser_Query(Query *qry, Oid userid)
 	{
 		CommonTableExpr *cte = (CommonTableExpr *) lfirst(l);
 
-		setRuleCheckAsUser_Query((Query *) cte->ctequery, userid);
+		setRuleCheckAsUser_Query(castNode(Query, cte->ctequery), userid);
 	}
 
 	/* If there are sublinks, search for them and process their RTEs */
@@ -866,10 +875,7 @@ EnableDisableRule(Relation rel, const char *rulename,
 	{
 		((Form_pg_rewrite) GETSTRUCT(ruletup))->ev_enabled =
 			CharGetDatum(fires_when);
-		simple_heap_update(pg_rewrite_desc, &ruletup->t_self, ruletup);
-
-		/* keep system catalog indexes current */
-		CatalogUpdateIndexes(pg_rewrite_desc, ruletup);
+		CatalogTupleUpdate(pg_rewrite_desc, &ruletup->t_self, ruletup);
 
 		changed = true;
 	}
@@ -906,7 +912,9 @@ RangeVarCallbackForRenameRule(const RangeVar *rv, Oid relid, Oid oldrelid,
 	form = (Form_pg_class) GETSTRUCT(tuple);
 
 	/* only tables and views can have rules */
-	if (form->relkind != RELKIND_RELATION && form->relkind != RELKIND_VIEW)
+	if (form->relkind != RELKIND_RELATION &&
+		form->relkind != RELKIND_VIEW &&
+		form->relkind != RELKIND_PARTITIONED_TABLE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("\"%s\" is not a table or view", rv->relname)));
@@ -985,10 +993,7 @@ RenameRewriteRule(RangeVar *relation, const char *oldName,
 	/* OK, do the update */
 	namestrcpy(&(ruleform->rulename), newName);
 
-	simple_heap_update(pg_rewrite_desc, &ruletup->t_self, ruletup);
-
-	/* keep system catalog indexes current */
-	CatalogUpdateIndexes(pg_rewrite_desc, ruletup);
+	CatalogTupleUpdate(pg_rewrite_desc, &ruletup->t_self, ruletup);
 
 	heap_freetuple(ruletup);
 	heap_close(pg_rewrite_desc, RowExclusiveLock);

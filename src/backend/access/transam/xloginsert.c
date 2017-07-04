@@ -9,7 +9,7 @@
  * of XLogRecData structs by a call to XLogRecordAssemble(). See
  * access/transam/README for details.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/backend/access/transam/xloginsert.c
@@ -61,9 +61,9 @@ typedef struct
 } registered_buffer;
 
 static registered_buffer *registered_buffers;
-static int	max_registered_buffers;		/* allocated size */
-static int	max_registered_block_id = 0;		/* highest block_id + 1
-												 * currently registered */
+static int	max_registered_buffers; /* allocated size */
+static int	max_registered_block_id = 0;	/* highest block_id + 1 currently
+											 * registered */
 
 /*
  * A chain of XLogRecDatas to hold the "main data" of a WAL record, registered
@@ -73,8 +73,8 @@ static XLogRecData *mainrdata_head;
 static XLogRecData *mainrdata_last = (XLogRecData *) &mainrdata_head;
 static uint32 mainrdata_len;	/* total # of bytes in chain */
 
-/* Should the in-progress insertion log the origin? */
-static bool include_origin = false;
+/* flags for the in-progress insertion */
+static uint8 curinsert_flags = 0;
 
 /*
  * These are used to hold the record header while constructing a record.
@@ -175,7 +175,7 @@ XLogEnsureRecordSpace(int max_block_id, int ndatas)
 		 * they are included in WAL data, but initialize it all for tidiness.
 		 */
 		MemSet(&registered_buffers[max_registered_buffers], 0,
-			(nbuffers - max_registered_buffers) * sizeof(registered_buffer));
+			   (nbuffers - max_registered_buffers) * sizeof(registered_buffer));
 		max_registered_buffers = nbuffers;
 	}
 
@@ -201,7 +201,7 @@ XLogResetInsertion(void)
 	max_registered_block_id = 0;
 	mainrdata_len = 0;
 	mainrdata_last = (XLogRecData *) &mainrdata_head;
-	include_origin = false;
+	curinsert_flags = 0;
 	begininsert_called = false;
 }
 
@@ -384,13 +384,20 @@ XLogRegisterBufData(uint8 block_id, char *data, int len)
 }
 
 /*
- * Should this record include the replication origin if one is set up?
+ * Set insert status flags for the upcoming WAL record.
+ *
+ * The flags that can be used here are:
+ * - XLOG_INCLUDE_ORIGIN, to determine if the replication origin should be
+ *	 included in the record.
+ * - XLOG_MARK_UNIMPORTANT, to signal that the record is not important for
+ *	 durability, which allows to avoid triggering WAL archiving and other
+ *	 background activity.
  */
 void
-XLogIncludeOrigin(void)
+XLogSetRecordFlags(uint8 flags)
 {
 	Assert(begininsert_called);
-	include_origin = true;
+	curinsert_flags = flags;
 }
 
 /*
@@ -414,13 +421,15 @@ XLogInsert(RmgrId rmid, uint8 info)
 		elog(ERROR, "XLogBeginInsert was not called");
 
 	/*
-	 * The caller can set rmgr bits and XLR_SPECIAL_REL_UPDATE; the rest are
-	 * reserved for use by me.
+	 * The caller can set rmgr bits, XLR_SPECIAL_REL_UPDATE and
+	 * XLR_CHECK_CONSISTENCY; the rest are reserved for use by me.
 	 */
-	if ((info & ~(XLR_RMGR_INFO_MASK | XLR_SPECIAL_REL_UPDATE)) != 0)
+	if ((info & ~(XLR_RMGR_INFO_MASK |
+				  XLR_SPECIAL_REL_UPDATE |
+				  XLR_CHECK_CONSISTENCY)) != 0)
 		elog(PANIC, "invalid xlog info mask %02X", info);
 
-	TRACE_POSTGRESQL_XLOG_INSERT(rmid, info);
+	TRACE_POSTGRESQL_WAL_INSERT(rmid, info);
 
 	/*
 	 * In bootstrap mode, we don't actually log anything but XLOG resources;
@@ -429,7 +438,7 @@ XLogInsert(RmgrId rmid, uint8 info)
 	if (IsBootstrapProcessingMode() && rmid != RM_XLOG_ID)
 	{
 		XLogResetInsertion();
-		EndPos = SizeOfXLogLongPHD;		/* start of 1st chkpt record */
+		EndPos = SizeOfXLogLongPHD; /* start of 1st chkpt record */
 		return EndPos;
 	}
 
@@ -450,7 +459,7 @@ XLogInsert(RmgrId rmid, uint8 info)
 		rdt = XLogRecordAssemble(rmid, info, RedoRecPtr, doPageWrites,
 								 &fpw_lsn);
 
-		EndPos = XLogInsertRecord(rdt, fpw_lsn);
+		EndPos = XLogInsertRecord(rdt, fpw_lsn, curinsert_flags);
 	} while (EndPos == InvalidXLogRecPtr);
 
 	XLogResetInsertion();
@@ -498,6 +507,15 @@ XLogRecordAssemble(RmgrId rmid, uint8 info,
 	hdr_rdt.data = hdr_scratch;
 
 	/*
+	 * Enforce consistency checks for this record if user is looking for it.
+	 * Do this before at the beginning of this routine to give the possibility
+	 * for callers of XLogInsert() to pass XLR_CHECK_CONSISTENCY directly for
+	 * a record.
+	 */
+	if (wal_consistency_checking[rmid])
+		info |= XLR_CHECK_CONSISTENCY;
+
+	/*
 	 * Make an rdata chain containing all the data portions of all block
 	 * references. This includes the data for full-page images. Also append
 	 * the headers for the block references in the scratch buffer.
@@ -513,6 +531,7 @@ XLogRecordAssemble(RmgrId rmid, uint8 info,
 		XLogRecordBlockCompressHeader cbimg = {0};
 		bool		samerel;
 		bool		is_compressed = false;
+		bool		include_image;
 
 		if (!regbuf->in_use)
 			continue;
@@ -556,7 +575,13 @@ XLogRecordAssemble(RmgrId rmid, uint8 info,
 		if ((regbuf->flags & REGBUF_WILL_INIT) == REGBUF_WILL_INIT)
 			bkpb.fork_flags |= BKPBLOCK_WILL_INIT;
 
-		if (needs_backup)
+		/*
+		 * If needs_backup is true or WAL checking is enabled for current
+		 * resource manager, log a full-page write for the current block.
+		 */
+		include_image = needs_backup || (info & XLR_CHECK_CONSISTENCY) != 0;
+
+		if (include_image)
 		{
 			Page		page = regbuf->page;
 			uint16		compressed_len;
@@ -617,6 +642,15 @@ XLogRecordAssemble(RmgrId rmid, uint8 info,
 			rdt_datas_last = rdt_datas_last->next;
 
 			bimg.bimg_info = (cbimg.hole_length == 0) ? 0 : BKPIMAGE_HAS_HOLE;
+
+			/*
+			 * If WAL consistency checking is enabled for the resource manager
+			 * of this WAL record, a full-page image is included in the record
+			 * for the block modified. During redo, the full-page is replayed
+			 * only if BKPIMAGE_APPLY is set.
+			 */
+			if (needs_backup)
+				bimg.bimg_info |= BKPIMAGE_APPLY;
 
 			if (is_compressed)
 			{
@@ -680,7 +714,7 @@ XLogRecordAssemble(RmgrId rmid, uint8 info,
 		/* Ok, copy the header to the scratch buffer */
 		memcpy(scratch, &bkpb, SizeOfXLogRecordBlockHeader);
 		scratch += SizeOfXLogRecordBlockHeader;
-		if (needs_backup)
+		if (include_image)
 		{
 			memcpy(scratch, &bimg, SizeOfXLogRecordBlockImageHeader);
 			scratch += SizeOfXLogRecordBlockImageHeader;
@@ -701,9 +735,10 @@ XLogRecordAssemble(RmgrId rmid, uint8 info,
 	}
 
 	/* followed by the record's origin, if any */
-	if (include_origin && replorigin_session_origin != InvalidRepOriginId)
+	if ((curinsert_flags & XLOG_INCLUDE_ORIGIN) &&
+		replorigin_session_origin != InvalidRepOriginId)
 	{
-		*(scratch++) = XLR_BLOCK_ID_ORIGIN;
+		*(scratch++) = (char) XLR_BLOCK_ID_ORIGIN;
 		memcpy(scratch, &replorigin_session_origin, sizeof(replorigin_session_origin));
 		scratch += sizeof(replorigin_session_origin);
 	}
@@ -713,13 +748,13 @@ XLogRecordAssemble(RmgrId rmid, uint8 info,
 	{
 		if (mainrdata_len > 255)
 		{
-			*(scratch++) = XLR_BLOCK_ID_DATA_LONG;
+			*(scratch++) = (char) XLR_BLOCK_ID_DATA_LONG;
 			memcpy(scratch, &mainrdata_len, sizeof(uint32));
 			scratch += sizeof(uint32);
 		}
 		else
 		{
-			*(scratch++) = XLR_BLOCK_ID_DATA_SHORT;
+			*(scratch++) = (char) XLR_BLOCK_ID_DATA_SHORT;
 			*(scratch++) = (uint8) mainrdata_len;
 		}
 		rdt_datas_last->next = mainrdata_head;
@@ -997,16 +1032,14 @@ InitXLogInsert(void)
 	{
 		xloginsert_cxt = AllocSetContextCreate(TopMemoryContext,
 											   "WAL record construction",
-											   ALLOCSET_DEFAULT_MINSIZE,
-											   ALLOCSET_DEFAULT_INITSIZE,
-											   ALLOCSET_DEFAULT_MAXSIZE);
+											   ALLOCSET_DEFAULT_SIZES);
 	}
 
 	if (registered_buffers == NULL)
 	{
 		registered_buffers = (registered_buffer *)
 			MemoryContextAllocZero(xloginsert_cxt,
-				  sizeof(registered_buffer) * (XLR_NORMAL_MAX_BLOCK_ID + 1));
+								   sizeof(registered_buffer) * (XLR_NORMAL_MAX_BLOCK_ID + 1));
 		max_registered_buffers = XLR_NORMAL_MAX_BLOCK_ID + 1;
 	}
 	if (rdatas == NULL)

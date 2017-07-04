@@ -27,7 +27,6 @@ static const char rcsid[] = "Id: inet_net_ntop.c,v 1.1.2.2 2004/03/09 09:17:27 m
 #include "postgres_fe.h"
 #endif
 
-#include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -259,8 +258,8 @@ inet_net_ntop_ipv6(const u_char *src, int bits, char *dst, size_t size)
 			*tp++ = ':';
 		/* Is this address an encapsulated IPv4? */
 		if (i == 6 && best.base == 0 && (best.len == 6 ||
-									 (best.len == 7 && words[7] != 0x0001) ||
-									  (best.len == 5 && words[5] == 0xffff)))
+										 (best.len == 7 && words[7] != 0x0001) ||
+										 (best.len == 5 && words[5] == 0xffff)))
 		{
 			int			n;
 

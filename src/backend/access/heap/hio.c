@@ -3,7 +3,7 @@
  * hio.c
  *	  POSTGRES heap access method input/output code.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -329,7 +329,7 @@ RelationGetBufferForTuple(Relation relation, Size len,
 	if (otherBuffer != InvalidBuffer)
 		otherBlock = BufferGetBlockNumber(otherBuffer);
 	else
-		otherBlock = InvalidBlockNumber;		/* just to keep compiler quiet */
+		otherBlock = InvalidBlockNumber;	/* just to keep compiler quiet */
 
 	/*
 	 * We first try to put the tuple on the same page we last inserted a tuple

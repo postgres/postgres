@@ -61,6 +61,12 @@ Item
 </row>
 
 <row>
+ <entry><filename>current_logfiles</></entry>
+ <entry>File recording the log file(s) currently written to by the logging
+  collector</entry>
+</row>
+
+<row>
  <entry><filename>global</></entry>
  <entry>Subdirectory containing cluster-wide tables, such as
  <structname>pg_database</></entry>
@@ -69,11 +75,6 @@ Item
 <row>
  <entry><filename>pg_commit_ts</></entry>
  <entry>Subdirectory containing transaction commit timestamp data</entry>
-</row>
-
-<row>
- <entry><filename>pg_clog</></entry>
- <entry>Subdirectory containing transaction commit status data</entry>
 </row>
 
 <row>
@@ -141,8 +142,13 @@ Item
 </row>
 
 <row>
- <entry><filename>pg_xlog</></entry>
+ <entry><filename>pg_wal</></entry>
  <entry>Subdirectory containing WAL (Write Ahead Log) files</entry>
+</row>
+
+<row>
+ <entry><filename>pg_xact</></entry>
+ <entry>Subdirectory containing transaction commit status data</entry>
 </row>
 
 <row>
@@ -474,7 +480,7 @@ for storing <acronym>TOAST</>-able columns on disk:
 
 Each <acronym>TOAST</>-able data type specifies a default strategy for columns
 of that data type, but the strategy for a given table column can be altered
-with <command>ALTER TABLE SET STORAGE</>.
+with <link linkend="sql-altertable"><command>ALTER TABLE ... SET STORAGE</></link>.
 </para>
 
 <para>
@@ -810,7 +816,7 @@ data. Empty in ordinary tables.</entry>
    <entry>pd_lsn</entry>
    <entry>PageXLogRecPtr</entry>
    <entry>8 bytes</entry>
-   <entry>LSN: next byte after last byte of xlog record for last change
+   <entry>LSN: next byte after last byte of WAL record for last change
    to this page</entry>
   </row>
   <row>

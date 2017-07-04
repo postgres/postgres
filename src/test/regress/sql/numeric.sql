@@ -997,3 +997,11 @@ select scale(1.12345);
 select scale(110123.12475871856128);
 select scale(-1123.12471856128);
 select scale(-13.000000000000000);
+
+--
+-- Tests for SUM()
+--
+
+-- cases that need carry propagation
+SELECT SUM(9999::numeric) FROM generate_series(1, 100000);
+SELECT SUM((-9999)::numeric) FROM generate_series(1, 100000);

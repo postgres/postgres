@@ -3,7 +3,7 @@
  * regexp.c
  *	  Postgres' interface to the regular expression package.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -35,6 +35,7 @@
 #include "regex/regex.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
+#include "utils/varlena.h"
 
 #define PG_GETARG_TEXT_PP_IF_EXISTS(_n) \
 	(PG_NARGS() > (_n) ? PG_GETARG_TEXT_PP(_n) : NULL)
@@ -695,7 +696,7 @@ similar_escape(PG_FUNCTION_ARGS)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_ESCAPE_SEQUENCE),
 						 errmsg("invalid escape string"),
-				  errhint("Escape string must be empty or one character.")));
+						 errhint("Escape string must be empty or one character.")));
 		}
 	}
 
@@ -1027,7 +1028,7 @@ setup_regexp_matches(text *orig_str, text *pattern, pg_re_flags *re_flags,
 			{
 				array_len *= 2;
 				matchctx->match_locs = (int *) repalloc(matchctx->match_locs,
-													sizeof(int) * array_len);
+														sizeof(int) * array_len);
 			}
 
 			/* save this match's locations */
@@ -1117,7 +1118,7 @@ build_regexp_match_result(regexp_matches_ctx *matchctx)
 		else
 		{
 			elems[i] = DirectFunctionCall3(text_substr,
-										 PointerGetDatum(matchctx->orig_str),
+										   PointerGetDatum(matchctx->orig_str),
 										   Int32GetDatum(so + 1),
 										   Int32GetDatum(eo - so));
 			nulls[i] = false;
@@ -1215,7 +1216,7 @@ regexp_split_to_array(PG_FUNCTION_ARGS)
 	if (re_flags.glob)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-		errmsg("regexp_split_to_array does not support the global option")));
+				 errmsg("regexp_split_to_array does not support the global option")));
 	/* But we find all the matches anyway */
 	re_flags.glob = true;
 

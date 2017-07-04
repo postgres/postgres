@@ -3,7 +3,7 @@
  *
  * Functions for generating WAL records
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/access/xloginsert.h
@@ -29,18 +29,17 @@
 /* flags for XLogRegisterBuffer */
 #define REGBUF_FORCE_IMAGE	0x01	/* force a full-page image */
 #define REGBUF_NO_IMAGE		0x02	/* don't take a full-page image */
-#define REGBUF_WILL_INIT	(0x04 | 0x02)		/* page will be re-initialized
-												 * at replay (implies
-												 * NO_IMAGE) */
-#define REGBUF_STANDARD		0x08/* page follows "standard" page layout, (data
-								 * between pd_lower and pd_upper will be
-								 * skipped) */
-#define REGBUF_KEEP_DATA	0x10/* include data even if a full-page image is
-								 * taken */
+#define REGBUF_WILL_INIT	(0x04 | 0x02)	/* page will be re-initialized at
+											 * replay (implies NO_IMAGE) */
+#define REGBUF_STANDARD		0x08	/* page follows "standard" page layout,
+									 * (data between pd_lower and pd_upper
+									 * will be skipped) */
+#define REGBUF_KEEP_DATA	0x10	/* include data even if a full-page image
+									 * is taken */
 
 /* prototypes for public functions in xloginsert.c: */
 extern void XLogBeginInsert(void);
-extern void XLogIncludeOrigin(void);
+extern void XLogSetRecordFlags(uint8 flags);
 extern XLogRecPtr XLogInsert(RmgrId rmid, uint8 info);
 extern void XLogEnsureRecordSpace(int nbuffers, int ndatas);
 extern void XLogRegisterData(char *data, int len);
@@ -59,4 +58,4 @@ extern XLogRecPtr XLogSaveBufferForHint(Buffer buffer, bool buffer_std);
 
 extern void InitXLogInsert(void);
 
-#endif   /* XLOGINSERT_H */
+#endif							/* XLOGINSERT_H */

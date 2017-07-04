@@ -16,7 +16,7 @@
  * writing is the INET type, where IPv6 values cannot be merged with IPv4
  * values.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -30,6 +30,7 @@
 #include "access/skey.h"
 #include "catalog/pg_amop.h"
 #include "catalog/pg_type.h"
+#include "utils/builtins.h"
 #include "utils/datum.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
@@ -76,10 +77,6 @@ typedef struct InclusionOpaque
 	FmgrInfo	strategy_procinfos[RTMaxStrategyNumber];
 } InclusionOpaque;
 
-Datum		brin_inclusion_opcinfo(PG_FUNCTION_ARGS);
-Datum		brin_inclusion_add_value(PG_FUNCTION_ARGS);
-Datum		brin_inclusion_consistent(PG_FUNCTION_ARGS);
-Datum		brin_inclusion_union(PG_FUNCTION_ARGS);
 static FmgrInfo *inclusion_get_procinfo(BrinDesc *bdesc, uint16 attno,
 					   uint16 procnum);
 static FmgrInfo *inclusion_get_strategy_procinfo(BrinDesc *bdesc, uint16 attno,
@@ -315,7 +312,7 @@ brin_inclusion_consistent(PG_FUNCTION_ARGS)
 
 		case RTLeftStrategyNumber:
 			finfo = inclusion_get_strategy_procinfo(bdesc, attno, subtype,
-												  RTOverRightStrategyNumber);
+													RTOverRightStrategyNumber);
 			result = FunctionCall2Coll(finfo, colloid, unionval, query);
 			PG_RETURN_BOOL(!DatumGetBool(result));
 
@@ -339,7 +336,7 @@ brin_inclusion_consistent(PG_FUNCTION_ARGS)
 
 		case RTBelowStrategyNumber:
 			finfo = inclusion_get_strategy_procinfo(bdesc, attno, subtype,
-												  RTOverAboveStrategyNumber);
+													RTOverAboveStrategyNumber);
 			result = FunctionCall2Coll(finfo, colloid, unionval, query);
 			PG_RETURN_BOOL(!DatumGetBool(result));
 
@@ -357,7 +354,7 @@ brin_inclusion_consistent(PG_FUNCTION_ARGS)
 
 		case RTAboveStrategyNumber:
 			finfo = inclusion_get_strategy_procinfo(bdesc, attno, subtype,
-												  RTOverBelowStrategyNumber);
+													RTOverBelowStrategyNumber);
 			result = FunctionCall2Coll(finfo, colloid, unionval, query);
 			PG_RETURN_BOOL(!DatumGetBool(result));
 
@@ -431,7 +428,7 @@ brin_inclusion_consistent(PG_FUNCTION_ARGS)
 			 * It is straightforward to support the equality strategies with
 			 * the contains operator.  Generally, inequality strategies do not
 			 * make much sense for the types which will be used with the
-			 * inclusion BRIN family of opclasses, but is is possible to
+			 * inclusion BRIN family of opclasses, but is possible to
 			 * implement them with logical negation of the left-of and
 			 * right-of operators.
 			 *
@@ -689,7 +686,7 @@ inclusion_get_strategy_procinfo(BrinDesc *bdesc, uint16 attno, Oid subtype,
 				 strategynum, attr->atttypid, subtype, opfamily);
 
 		oprid = DatumGetObjectId(SysCacheGetAttr(AMOPSTRATEGY, tuple,
-											 Anum_pg_amop_amopopr, &isNull));
+												 Anum_pg_amop_amopopr, &isNull));
 		ReleaseSysCache(tuple);
 		Assert(!isNull && RegProcedureIsValid(oprid));
 

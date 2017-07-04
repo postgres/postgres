@@ -3,7 +3,7 @@
  * message.c
  *	  Generic logical messages.
  *
- * Copyright (c) 2013-2016, PostgreSQL Global Development Group
+ * Copyright (c) 2013-2017, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/replication/logical/message.c
@@ -20,7 +20,7 @@
  * Non-transactional messages are sent to the plugin at the time when the
  * logical decoding reads them from XLOG. This also means that transactional
  * messages won't be delivered if the transaction was rolled back but the
- * non-transactional one will be delivered always.
+ * non-transactional one will always be delivered.
  *
  * Every message carries prefix to avoid conflicts between different decoding
  * plugins. The plugin authors must take extra care to use unique prefix,
@@ -73,7 +73,7 @@ LogLogicalMessage(const char *prefix, const char *message, size_t size,
 	XLogRegisterData((char *) message, size);
 
 	/* allow origin filtering */
-	XLogIncludeOrigin();
+	XLogSetRecordFlags(XLOG_INCLUDE_ORIGIN);
 
 	return XLogInsert(RM_LOGICALMSG_ID, XLOG_LOGICAL_MESSAGE);
 }

@@ -19,7 +19,7 @@
  * value; we must detoast it first.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -331,13 +331,13 @@ get_range_io_data(FunctionCallInfo fcinfo, Oid rngtypid, IOFuncSelector func)
 			if (func == IOFunc_receive)
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_FUNCTION),
-					 errmsg("no binary input function available for type %s",
-					format_type_be(cache->typcache->rngelemtype->type_id))));
+						 errmsg("no binary input function available for type %s",
+								format_type_be(cache->typcache->rngelemtype->type_id))));
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_FUNCTION),
-					errmsg("no binary output function available for type %s",
-					format_type_be(cache->typcache->rngelemtype->type_id))));
+						 errmsg("no binary output function available for type %s",
+								format_type_be(cache->typcache->rngelemtype->type_id))));
 		}
 		fmgr_info_cxt(cache->typiofunc, &cache->proc,
 					  fcinfo->flinfo->fn_mcxt);
@@ -402,9 +402,9 @@ range_constructor3(PG_FUNCTION_ARGS)
 	if (PG_ARGISNULL(2))
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_EXCEPTION),
-			   errmsg("range constructor flags argument must not be null")));
+				 errmsg("range constructor flags argument must not be null")));
 
-	flags = range_parse_flags(text_to_cstring(PG_GETARG_TEXT_P(2)));
+	flags = range_parse_flags(text_to_cstring(PG_GETARG_TEXT_PP(2)));
 
 	lower.val = PG_ARGISNULL(0) ? (Datum) 0 : arg1;
 	lower.infinite = PG_ARGISNULL(0);
@@ -989,7 +989,7 @@ range_minus(PG_FUNCTION_ARGS)
 	if (cmp_l1l2 < 0 && cmp_u1u2 > 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_EXCEPTION),
-			  errmsg("result of range difference would not be contiguous")));
+				 errmsg("result of range difference would not be contiguous")));
 
 	if (cmp_l1u2 > 0 || cmp_u1l2 < 0)
 		PG_RETURN_RANGE(r1);
@@ -1443,12 +1443,7 @@ tsrange_subdiff(PG_FUNCTION_ARGS)
 	Timestamp	v2 = PG_GETARG_TIMESTAMP(1);
 	float8		result;
 
-#ifdef HAVE_INT64_TIMESTAMP
 	result = ((float8) v1 - (float8) v2) / USECS_PER_SEC;
-#else
-	result = v1 - v2;
-#endif
-
 	PG_RETURN_FLOAT8(result);
 }
 
@@ -1459,12 +1454,7 @@ tstzrange_subdiff(PG_FUNCTION_ARGS)
 	Timestamp	v2 = PG_GETARG_TIMESTAMP(1);
 	float8		result;
 
-#ifdef HAVE_INT64_TIMESTAMP
 	result = ((float8) v1 - (float8) v2) / USECS_PER_SEC;
-#else
-	result = v1 - v2;
-#endif
-
 	PG_RETURN_FLOAT8(result);
 }
 
@@ -1924,7 +1914,7 @@ range_parse_flags(const char *flags_str)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("invalid range bound flags"),
-		   errhint("Valid values are \"[]\", \"[)\", \"(]\", and \"()\".")));
+				 errhint("Valid values are \"[]\", \"[)\", \"(]\", and \"()\".")));
 
 	switch (flags_str[0])
 	{
@@ -1937,7 +1927,7 @@ range_parse_flags(const char *flags_str)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("invalid range bound flags"),
-			errhint("Valid values are \"[]\", \"[)\", \"(]\", and \"()\".")));
+					 errhint("Valid values are \"[]\", \"[)\", \"(]\", and \"()\".")));
 	}
 
 	switch (flags_str[1])
@@ -1951,7 +1941,7 @@ range_parse_flags(const char *flags_str)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("invalid range bound flags"),
-			errhint("Valid values are \"[]\", \"[)\", \"(]\", and \"()\".")));
+					 errhint("Valid values are \"[]\", \"[)\", \"(]\", and \"()\".")));
 	}
 
 	return flags;
@@ -2061,7 +2051,7 @@ range_parse(const char *string, char *flags, char **lbound_str,
 	}
 	else if (*ptr == ')')
 		ptr++;
-	else	/* must be a comma */
+	else						/* must be a comma */
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("malformed range literal: \"%s\"",

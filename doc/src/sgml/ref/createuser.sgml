@@ -124,8 +124,8 @@ PostgreSQL documentation
       <term><option>--encrypted</></term>
       <listitem>
        <para>
-        Encrypts the user's password stored in the database. If not
-        specified, the default password behavior is used.
+        This option is obsolete but still accepted for backward
+        compatibility.
        </para>
       </listitem>
      </varlistentry>
@@ -200,17 +200,6 @@ PostgreSQL documentation
         The new user will not be allowed to log in.
         (A role without login privilege is still useful as a means of
         managing database permissions.)
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-N</></term>
-      <term><option>--unencrypted</></term>
-      <listitem>
-       <para>
-        Does not encrypt the user's password stored in the database. If
-        not specified, the default password behavior is used.
        </para>
       </listitem>
      </varlistentry>
@@ -481,11 +470,7 @@ PostgreSQL documentation
 </screen>
     In the above example, the new password isn't actually echoed when typed,
     but we show what was typed for clarity.  As you see, the password is
-    encrypted before it is sent to the client.  If the option <option>--unencrypted</option>
-    is used, the password <emphasis>will</> appear in the echoed command
-    (and possibly also in the server log and elsewhere),
-    so you don't want to use <option>-e</> in that case, if
-    anyone else can see your screen.
+    encrypted before it is sent to the client.
    </para>
  </refsect1>
 

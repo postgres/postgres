@@ -25,10 +25,9 @@ struct ECPGtype
 								 * string */
 	union
 	{
-		struct ECPGtype *element;		/* For an array this is the type of
-										 * the element */
-		struct ECPGstruct_member *members;		/* A pointer to a list of
-												 * members. */
+		struct ECPGtype *element;	/* For an array this is the type of the
+									 * element */
+		struct ECPGstruct_member *members;	/* A pointer to a list of members. */
 	}			u;
 	int			counter;
 };
@@ -195,4 +194,4 @@ struct fetch_desc
 	char	   *name;
 };
 
-#endif   /* _ECPG_PREPROC_TYPE_H */
+#endif							/* _ECPG_PREPROC_TYPE_H */

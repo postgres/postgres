@@ -7,7 +7,6 @@
 #include "postgres.h"
 
 #include "access/xact.h"
-#include "executor/spi.h"
 #include "utils/memutils.h"
 
 #include "plpython.h"
@@ -212,12 +211,6 @@ PLy_subtransaction_exit(PyObject *self, PyObject *args)
 	MemoryContextSwitchTo(subxactdata->oldcontext);
 	CurrentResourceOwner = subxactdata->oldowner;
 	pfree(subxactdata);
-
-	/*
-	 * AtEOSubXact_SPI() should not have popped any SPI context, but just in
-	 * case it did, make sure we remain connected.
-	 */
-	SPI_restore_connection();
 
 	Py_INCREF(Py_None);
 	return Py_None;

@@ -257,31 +257,58 @@ CREATE TYPE bogus AS ENUM('good', 'bad', 'ugly');
 CREATE TABLE enumtest_bogus_child(parent bogus REFERENCES enumtest_parent);
 DROP TYPE bogus;
 
+-- check renaming a value
+ALTER TYPE rainbow RENAME VALUE 'red' TO 'crimson';
+SELECT enumlabel, enumsortorder
+FROM pg_enum
+WHERE enumtypid = 'rainbow'::regtype
+ORDER BY 2;
+-- check that renaming a non-existent value fails
+ALTER TYPE rainbow RENAME VALUE 'red' TO 'crimson';
+-- check that renaming to an existent value fails
+ALTER TYPE rainbow RENAME VALUE 'blue' TO 'green';
+
 --
 -- check transactional behaviour of ALTER TYPE ... ADD VALUE
 --
 CREATE TYPE bogus AS ENUM('good');
 
--- check that we can't add new values to existing enums in a transaction
+-- check that we can add new values to existing enums in a transaction
+-- but we can't use them
 BEGIN;
-ALTER TYPE bogus ADD VALUE 'bad';
+ALTER TYPE bogus ADD VALUE 'new';
+SAVEPOINT x;
+SELECT 'new'::bogus;  -- unsafe
+ROLLBACK TO x;
+SELECT enum_first(null::bogus);  -- safe
+SELECT enum_last(null::bogus);  -- unsafe
+ROLLBACK TO x;
+SELECT enum_range(null::bogus);  -- unsafe
+ROLLBACK TO x;
 COMMIT;
+SELECT 'new'::bogus;  -- now safe
+SELECT enumlabel, enumsortorder
+FROM pg_enum
+WHERE enumtypid = 'bogus'::regtype
+ORDER BY 2;
 
 -- check that we recognize the case where the enum already existed but was
--- modified in the current txn
+-- modified in the current txn; this should not be considered safe
 BEGIN;
 ALTER TYPE bogus RENAME TO bogon;
 ALTER TYPE bogon ADD VALUE 'bad';
+SELECT 'bad'::bogon;
 ROLLBACK;
 
 DROP TYPE bogus;
 
--- check that we *can* add new values to existing enums in a transaction,
--- if the type is new as well
+-- check that we can add new values to existing enums in a transaction
+-- and use them, if the type is new as well
 BEGIN;
-CREATE TYPE bogus AS ENUM();
-ALTER TYPE bogus ADD VALUE 'good';
+CREATE TYPE bogus AS ENUM('good');
+ALTER TYPE bogus ADD VALUE 'bad';
 ALTER TYPE bogus ADD VALUE 'ugly';
+SELECT enum_range(null::bogus);
 ROLLBACK;
 
 --

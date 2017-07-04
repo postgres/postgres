@@ -70,4 +70,4 @@ SELECT count(*) > 257 FROM pg_locks;
 COMMIT;
 SELECT hs_locks_drop(257);
 
-SELECT pg_switch_xlog();
+SELECT pg_switch_wal();

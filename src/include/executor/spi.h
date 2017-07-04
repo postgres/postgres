@@ -3,7 +3,7 @@
  * spi.h
  *				Server Programming Interface public declarations
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/executor/spi.h
@@ -13,6 +13,7 @@
 #ifndef SPI_H
 #define SPI_H
 
+#include "commands/trigger.h"
 #include "lib/ilist.h"
 #include "nodes/parsenodes.h"
 #include "utils/portal.h"
@@ -43,6 +44,8 @@ typedef struct _SPI_plan *SPIPlanPtr;
 #define SPI_ERROR_NOATTRIBUTE	(-9)
 #define SPI_ERROR_NOOUTFUNC		(-10)
 #define SPI_ERROR_TYPUNKNOWN	(-11)
+#define SPI_ERROR_REL_DUPLICATE (-12)
+#define SPI_ERROR_REL_NOT_FOUND (-13)
 
 #define SPI_OK_CONNECT			1
 #define SPI_OK_FINISH			2
@@ -58,6 +61,16 @@ typedef struct _SPI_plan *SPIPlanPtr;
 #define SPI_OK_DELETE_RETURNING 12
 #define SPI_OK_UPDATE_RETURNING 13
 #define SPI_OK_REWRITTEN		14
+#define SPI_OK_REL_REGISTER		15
+#define SPI_OK_REL_UNREGISTER	16
+#define SPI_OK_TD_REGISTER		17
+
+/* These used to be functions, now just no-ops for backwards compatibility */
+#define SPI_push()	((void) 0)
+#define SPI_pop()	((void) 0)
+#define SPI_push_conditional()	false
+#define SPI_pop_conditional(pushed) ((void) 0)
+#define SPI_restore_connection()	((void) 0)
 
 extern PGDLLIMPORT uint64 SPI_processed;
 extern PGDLLIMPORT Oid SPI_lastoid;
@@ -66,11 +79,6 @@ extern PGDLLIMPORT int SPI_result;
 
 extern int	SPI_connect(void);
 extern int	SPI_finish(void);
-extern void SPI_push(void);
-extern void SPI_pop(void);
-extern bool SPI_push_conditional(void);
-extern void SPI_pop_conditional(bool pushed);
-extern void SPI_restore_connection(void);
 extern int	SPI_execute(const char *src, bool read_only, long tcount);
 extern int SPI_execute_plan(SPIPlanPtr plan, Datum *Values, const char *Nulls,
 				 bool read_only, long tcount);
@@ -144,7 +152,11 @@ extern void SPI_scroll_cursor_fetch(Portal, FetchDirection direction, long count
 extern void SPI_scroll_cursor_move(Portal, FetchDirection direction, long count);
 extern void SPI_cursor_close(Portal portal);
 
+extern int	SPI_register_relation(EphemeralNamedRelation enr);
+extern int	SPI_unregister_relation(const char *name);
+extern int	SPI_register_trigger_data(TriggerData *tdata);
+
 extern void AtEOXact_SPI(bool isCommit);
 extern void AtEOSubXact_SPI(bool isCommit, SubTransactionId mySubid);
 
-#endif   /* SPI_H */
+#endif							/* SPI_H */

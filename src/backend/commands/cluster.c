@@ -6,7 +6,7 @@
  * There is hardly anything left of Paul Brown's original implementation...
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  *
@@ -126,7 +126,7 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 		if (RELATION_IS_OTHER_TEMP(rel))
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			   errmsg("cannot cluster temporary tables of other sessions")));
+					 errmsg("cannot cluster temporary tables of other sessions")));
 
 		if (stmt->indexname == NULL)
 		{
@@ -170,8 +170,8 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 			if (!OidIsValid(indexOid))
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_OBJECT),
-					   errmsg("index \"%s\" for table \"%s\" does not exist",
-							  stmt->indexname, stmt->relation->relname)));
+						 errmsg("index \"%s\" for table \"%s\" does not exist",
+								stmt->indexname, stmt->relation->relname)));
 		}
 
 		/* close relation, keep lock till commit */
@@ -204,9 +204,7 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 		 */
 		cluster_context = AllocSetContextCreate(PortalContext,
 												"Cluster",
-												ALLOCSET_DEFAULT_MINSIZE,
-												ALLOCSET_DEFAULT_INITSIZE,
-												ALLOCSET_DEFAULT_MAXSIZE);
+												ALLOCSET_DEFAULT_SIZES);
 
 		/*
 		 * Build the list of relations to cluster.  Note that this lives in
@@ -327,7 +325,7 @@ cluster_rel(Oid tableOid, Oid indexOid, bool recheck, bool verbose)
 			 * Check that the index is still the one with indisclustered set.
 			 */
 			tuple = SearchSysCache1(INDEXRELID, ObjectIdGetDatum(indexOid));
-			if (!HeapTupleIsValid(tuple))		/* probably can't happen */
+			if (!HeapTupleIsValid(tuple))	/* probably can't happen */
 			{
 				relation_close(OldHeap, AccessExclusiveLock);
 				return;
@@ -363,11 +361,11 @@ cluster_rel(Oid tableOid, Oid indexOid, bool recheck, bool verbose)
 		if (OidIsValid(indexOid))
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			   errmsg("cannot cluster temporary tables of other sessions")));
+					 errmsg("cannot cluster temporary tables of other sessions")));
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				errmsg("cannot vacuum temporary tables of other sessions")));
+					 errmsg("cannot vacuum temporary tables of other sessions")));
 	}
 
 	/*
@@ -525,8 +523,7 @@ mark_index_clustered(Relation rel, Oid indexOid, bool is_internal)
 		if (indexForm->indisclustered)
 		{
 			indexForm->indisclustered = false;
-			simple_heap_update(pg_index, &indexTuple->t_self, indexTuple);
-			CatalogUpdateIndexes(pg_index, indexTuple);
+			CatalogTupleUpdate(pg_index, &indexTuple->t_self, indexTuple);
 		}
 		else if (thisIndexOid == indexOid)
 		{
@@ -534,8 +531,7 @@ mark_index_clustered(Relation rel, Oid indexOid, bool is_internal)
 			if (!IndexIsValid(indexForm))
 				elog(ERROR, "cannot cluster on invalid index %u", indexOid);
 			indexForm->indisclustered = true;
-			simple_heap_update(pg_index, &indexTuple->t_self, indexTuple);
-			CatalogUpdateIndexes(pg_index, indexTuple);
+			CatalogTupleUpdate(pg_index, &indexTuple->t_self, indexTuple);
 		}
 
 		InvokeObjectPostAlterHookArg(IndexRelationId, thisIndexOid, 0,
@@ -561,6 +557,7 @@ rebuild_relation(Relation OldHeap, Oid indexOid, bool verbose)
 	Oid			tableOid = RelationGetRelid(OldHeap);
 	Oid			tableSpace = OldHeap->rd_rel->reltablespace;
 	Oid			OIDNewHeap;
+	char		relpersistence;
 	bool		is_system_catalog;
 	bool		swap_toast_by_content;
 	TransactionId frozenXid;
@@ -570,7 +567,8 @@ rebuild_relation(Relation OldHeap, Oid indexOid, bool verbose)
 	if (OidIsValid(indexOid))
 		mark_index_clustered(OldHeap, indexOid, true);
 
-	/* Remember if it's a system catalog */
+	/* Remember info about rel before closing OldHeap */
+	relpersistence = OldHeap->rd_rel->relpersistence;
 	is_system_catalog = IsSystemRelation(OldHeap);
 
 	/* Close relcache entry, but keep lock until transaction commit */
@@ -578,7 +576,7 @@ rebuild_relation(Relation OldHeap, Oid indexOid, bool verbose)
 
 	/* Create the transient table that will receive the re-ordered data */
 	OIDNewHeap = make_new_heap(tableOid, tableSpace,
-							   OldHeap->rd_rel->relpersistence,
+							   relpersistence,
 							   AccessExclusiveLock);
 
 	/* Copy the heap data into the new table in the desired order */
@@ -592,7 +590,7 @@ rebuild_relation(Relation OldHeap, Oid indexOid, bool verbose)
 	finish_heap_swap(tableOid, OIDNewHeap, is_system_catalog,
 					 swap_toast_by_content, false, true,
 					 frozenXid, cutoffMulti,
-					 OldHeap->rd_rel->relpersistence);
+					 relpersistence);
 }
 
 
@@ -1059,11 +1057,10 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex, bool verbose,
 		for (;;)
 		{
 			HeapTuple	tuple;
-			bool		shouldfree;
 
 			CHECK_FOR_INTERRUPTS();
 
-			tuple = tuplesort_getheaptuple(tuplesort, true, &shouldfree);
+			tuple = tuplesort_getheaptuple(tuplesort, true);
 			if (tuple == NULL)
 				break;
 
@@ -1071,9 +1068,6 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex, bool verbose,
 									 oldTupDesc, newTupDesc,
 									 values, isnull,
 									 NewHeap->rd_rel->relhasoids, rwstate);
-
-			if (shouldfree)
-				heap_freetuple(tuple);
 		}
 
 		tuplesort_end(tuplesort);
@@ -1149,7 +1143,6 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 				relfilenode2;
 	Oid			swaptemp;
 	char		swptmpchr;
-	CatalogIndexState indstate;
 
 	/* We need writable copies of both pg_class tuples. */
 	relRelation = heap_open(RelationRelationId, RowExclusiveLock);
@@ -1293,13 +1286,13 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 	 */
 	if (!target_is_pg_class)
 	{
-		simple_heap_update(relRelation, &reltup1->t_self, reltup1);
-		simple_heap_update(relRelation, &reltup2->t_self, reltup2);
+		CatalogIndexState indstate;
 
-		/* Keep system catalogs current */
 		indstate = CatalogOpenIndexes(relRelation);
-		CatalogIndexInsert(indstate, reltup1);
-		CatalogIndexInsert(indstate, reltup2);
+		CatalogTupleUpdateWithInfo(relRelation, &reltup1->t_self, reltup1,
+								   indstate);
+		CatalogTupleUpdateWithInfo(relRelation, &reltup2->t_self, reltup2,
+								   indstate);
 		CatalogCloseIndexes(indstate);
 	}
 	else
@@ -1564,8 +1557,7 @@ finish_heap_swap(Oid OIDOldHeap, Oid OIDNewHeap,
 		relform->relfrozenxid = frozenXid;
 		relform->relminmxid = cutoffMulti;
 
-		simple_heap_update(relRelation, &reltup->t_self, reltup);
-		CatalogUpdateIndexes(relRelation, reltup);
+		CatalogTupleUpdate(relRelation, &reltup->t_self, reltup);
 
 		heap_close(relRelation, RowExclusiveLock);
 	}

@@ -4,7 +4,7 @@
  *	 prototypes for functions in catalog/pg_constraint.c
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_constraint_fn.h
@@ -67,7 +67,7 @@ extern char *ChooseConstraintName(const char *name1, const char *name2,
 					 List *others);
 
 extern void AlterConstraintNamespaces(Oid ownerId, Oid oldNspId,
-					  Oid newNspId, bool isType, ObjectAddresses *objsMoved);
+						  Oid newNspId, bool isType, ObjectAddresses *objsMoved);
 extern Oid	get_relation_constraint_oid(Oid relid, const char *conname, bool missing_ok);
 extern Oid	get_domain_constraint_oid(Oid typid, const char *conname, bool missing_ok);
 
@@ -79,4 +79,4 @@ extern bool check_functional_grouping(Oid relid,
 						  List *grouping_columns,
 						  List **constraintDeps);
 
-#endif   /* PG_CONSTRAINT_FN_H */
+#endif							/* PG_CONSTRAINT_FN_H */

@@ -2,7 +2,7 @@
  * brin_internal.h
  *		internal declarations for BRIN indexes
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -89,7 +89,8 @@ extern IndexBuildResult *brinbuild(Relation heap, Relation index,
 extern void brinbuildempty(Relation index);
 extern bool brininsert(Relation idxRel, Datum *values, bool *nulls,
 		   ItemPointer heaptid, Relation heapRel,
-		   IndexUniqueCheck checkUnique);
+		   IndexUniqueCheck checkUnique,
+		   struct IndexInfo *indexInfo);
 extern IndexScanDesc brinbeginscan(Relation r, int nkeys, int norderbys);
 extern int64 bringetbitmap(IndexScanDesc scan, TIDBitmap *tbm);
 extern void brinrescan(IndexScanDesc scan, ScanKey scankey, int nscankeys,
@@ -106,4 +107,4 @@ extern bytea *brinoptions(Datum reloptions, bool validate);
 /* brin_validate.c */
 extern bool brinvalidate(Oid opclassoid);
 
-#endif   /* BRIN_INTERNAL_H */
+#endif							/* BRIN_INTERNAL_H */

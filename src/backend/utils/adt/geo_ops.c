@@ -3,7 +3,7 @@
  * geo_ops.c
  *	  2D geometric operations
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -126,7 +126,7 @@ single_decode(char *num, char **endptr_p,
 			  const char *type_name, const char *orig_string)
 {
 	return float8in_internal(num, endptr_p, type_name, orig_string);
-}	/* single_decode() */
+}								/* single_decode() */
 
 static void
 single_encode(float8 x, StringInfo str)
@@ -135,7 +135,7 @@ single_encode(float8 x, StringInfo str)
 
 	appendStringInfoString(str, xstr);
 	pfree(xstr);
-}	/* single_encode() */
+}								/* single_encode() */
 
 static void
 pair_decode(char *str, double *x, double *y, char **endptr_p,
@@ -264,7 +264,7 @@ path_decode(char *str, bool opentype, int npts, Point *p,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for type %s: \"%s\"",
 						type_name, orig_string)));
-}	/* path_decode() */
+}								/* path_decode() */
 
 static char *
 path_encode(enum path_delim path_delim, int npts, Point *pt)
@@ -309,7 +309,7 @@ path_encode(enum path_delim path_delim, int npts, Point *pt)
 	}
 
 	return str.data;
-}	/* path_encode() */
+}								/* path_encode() */
 
 /*-------------------------------------------------------------
  * pair_count - count the number of points
@@ -1333,7 +1333,7 @@ path_in(PG_FUNCTION_ARGS)
 	}
 
 	base_size = sizeof(path->p[0]) * npts;
-	size = offsetof(PATH, p) +base_size;
+	size = offsetof(PATH, p) + base_size;
 
 	/* Check for integer overflow */
 	if (base_size / npts != sizeof(path->p[0]) || size <= base_size)
@@ -1401,9 +1401,9 @@ path_recv(PG_FUNCTION_ARGS)
 	if (npts <= 0 || npts >= (int32) ((INT_MAX - offsetof(PATH, p)) / sizeof(Point)))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
-			 errmsg("invalid number of points in external \"path\" value")));
+				 errmsg("invalid number of points in external \"path\" value")));
 
-	size = offsetof(PATH, p) +sizeof(path->p[0]) * npts;
+	size = offsetof(PATH, p) + sizeof(path->p[0]) * npts;
 	path = (PATH *) palloc(size);
 
 	SET_VARSIZE(path, size);
@@ -1598,7 +1598,7 @@ path_inter(PG_FUNCTION_ARGS)
 		{
 			if (!p1->closed)
 				continue;
-			iprev = p1->npts - 1;		/* include the closure segment */
+			iprev = p1->npts - 1;	/* include the closure segment */
 		}
 
 		for (j = 0; j < p2->npts; j++)
@@ -1652,7 +1652,7 @@ path_distance(PG_FUNCTION_ARGS)
 		{
 			if (!p1->closed)
 				continue;
-			iprev = p1->npts - 1;		/* include the closure segment */
+			iprev = p1->npts - 1;	/* include the closure segment */
 		}
 
 		for (j = 0; j < p2->npts; j++)
@@ -1710,7 +1710,7 @@ path_length(PG_FUNCTION_ARGS)
 		{
 			if (!path->closed)
 				continue;
-			iprev = path->npts - 1;		/* include the closure segment */
+			iprev = path->npts - 1; /* include the closure segment */
 		}
 
 		result += point_dt(&path->p[iprev], &path->p[i]);
@@ -1907,7 +1907,7 @@ point_dt(Point *pt1, Point *pt2)
 {
 #ifdef GEODEBUG
 	printf("point_dt- segment (%f,%f),(%f,%f) length is %f\n",
-	pt1->x, pt1->y, pt2->x, pt2->y, HYPOT(pt1->x - pt2->x, pt1->y - pt2->y));
+		   pt1->x, pt1->y, pt2->x, pt2->y, HYPOT(pt1->x - pt2->x, pt1->y - pt2->y));
 #endif
 	return HYPOT(pt1->x - pt2->x, pt1->y - pt2->y);
 }
@@ -2457,7 +2457,7 @@ dist_ppath(PG_FUNCTION_ARGS)
 				{
 					if (!path->closed)
 						continue;
-					iprev = path->npts - 1;		/* include the closure segment */
+					iprev = path->npts - 1; /* include the closure segment */
 				}
 
 				statlseg_construct(&lseg, &path->p[iprev], &path->p[i]);
@@ -2776,7 +2776,7 @@ close_ps(PG_FUNCTION_ARGS)
 	xh = lseg->p[0].x < lseg->p[1].x;
 	yh = lseg->p[0].y < lseg->p[1].y;
 
-	if (FPeq(lseg->p[0].x, lseg->p[1].x))		/* vertical? */
+	if (FPeq(lseg->p[0].x, lseg->p[1].x))	/* vertical? */
 	{
 #ifdef GEODEBUG
 		printf("close_ps- segment is vertical\n");
@@ -2822,24 +2822,24 @@ close_ps(PG_FUNCTION_ARGS)
 	 */
 
 	invm = -1.0 / point_sl(&(lseg->p[0]), &(lseg->p[1]));
-	tmp = line_construct_pm(&lseg->p[!yh], invm);		/* lower edge of the
-														 * "band" */
+	tmp = line_construct_pm(&lseg->p[!yh], invm);	/* lower edge of the
+													 * "band" */
 	if (pt->y < (tmp->A * pt->x + tmp->C))
 	{							/* we are below the lower edge */
-		result = point_copy(&lseg->p[!yh]);		/* below the lseg, take lower
-												 * end pt */
+		result = point_copy(&lseg->p[!yh]); /* below the lseg, take lower end
+											 * pt */
 #ifdef GEODEBUG
 		printf("close_ps below: tmp A %f  B %f   C %f\n",
 			   tmp->A, tmp->B, tmp->C);
 #endif
 		PG_RETURN_POINT_P(result);
 	}
-	tmp = line_construct_pm(&lseg->p[yh], invm);		/* upper edge of the
-														 * "band" */
+	tmp = line_construct_pm(&lseg->p[yh], invm);	/* upper edge of the
+													 * "band" */
 	if (pt->y > (tmp->A * pt->x + tmp->C))
 	{							/* we are below the lower edge */
-		result = point_copy(&lseg->p[yh]);		/* above the lseg, take higher
-												 * end pt */
+		result = point_copy(&lseg->p[yh]);	/* above the lseg, take higher end
+											 * pt */
 #ifdef GEODEBUG
 		printf("close_ps above: tmp A %f  B %f   C %f\n",
 			   tmp->A, tmp->B, tmp->C);
@@ -3225,10 +3225,10 @@ on_sl(PG_FUNCTION_ARGS)
 	LINE	   *line = PG_GETARG_LINE_P(1);
 
 	PG_RETURN_BOOL(DatumGetBool(DirectFunctionCall2(on_pl,
-												 PointPGetDatum(&lseg->p[0]),
+													PointPGetDatum(&lseg->p[0]),
 													LinePGetDatum(line))) &&
 				   DatumGetBool(DirectFunctionCall2(on_pl,
-												 PointPGetDatum(&lseg->p[1]),
+													PointPGetDatum(&lseg->p[1]),
 													LinePGetDatum(line))));
 }
 
@@ -3239,10 +3239,10 @@ on_sb(PG_FUNCTION_ARGS)
 	BOX		   *box = PG_GETARG_BOX_P(1);
 
 	PG_RETURN_BOOL(DatumGetBool(DirectFunctionCall2(on_pb,
-												 PointPGetDatum(&lseg->p[0]),
+													PointPGetDatum(&lseg->p[0]),
 													BoxPGetDatum(box))) &&
 				   DatumGetBool(DirectFunctionCall2(on_pb,
-												 PointPGetDatum(&lseg->p[1]),
+													PointPGetDatum(&lseg->p[1]),
 													BoxPGetDatum(box))));
 }
 
@@ -3431,7 +3431,7 @@ poly_in(PG_FUNCTION_ARGS)
 						"polygon", str)));
 
 	base_size = sizeof(poly->p[0]) * npts;
-	size = offsetof(POLYGON, p) +base_size;
+	size = offsetof(POLYGON, p) + base_size;
 
 	/* Check for integer overflow */
 	if (base_size / npts != sizeof(poly->p[0]) || size <= base_size)
@@ -3484,9 +3484,9 @@ poly_recv(PG_FUNCTION_ARGS)
 	if (npts <= 0 || npts >= (int32) ((INT_MAX - offsetof(POLYGON, p)) / sizeof(Point)))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
-		  errmsg("invalid number of points in external \"polygon\" value")));
+				 errmsg("invalid number of points in external \"polygon\" value")));
 
-	size = offsetof(POLYGON, p) +sizeof(poly->p[0]) * npts;
+	size = offsetof(POLYGON, p) + sizeof(poly->p[0]) * npts;
 	poly = (POLYGON *) palloc0(size);	/* zero any holes */
 
 	SET_VARSIZE(poly, size);
@@ -4243,7 +4243,7 @@ path_add(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	base_size = sizeof(p1->p[0]) * (p1->npts + p2->npts);
-	size = offsetof(PATH, p) +base_size;
+	size = offsetof(PATH, p) + base_size;
 
 	/* Check for integer overflow */
 	if (base_size / sizeof(p1->p[0]) != (p1->npts + p2->npts) ||
@@ -4385,7 +4385,7 @@ path_poly(PG_FUNCTION_ARGS)
 	 * Never overflows: the old size fit in MaxAllocSize, and the new size is
 	 * just a small constant larger.
 	 */
-	size = offsetof(POLYGON, p) +sizeof(poly->p[0]) * path->npts;
+	size = offsetof(POLYGON, p) + sizeof(poly->p[0]) * path->npts;
 	poly = (POLYGON *) palloc(size);
 
 	SET_VARSIZE(poly, size);
@@ -4460,7 +4460,7 @@ box_poly(PG_FUNCTION_ARGS)
 	int			size;
 
 	/* map four corners of the box to a polygon */
-	size = offsetof(POLYGON, p) +sizeof(poly->p[0]) * 4;
+	size = offsetof(POLYGON, p) + sizeof(poly->p[0]) * 4;
 	poly = (POLYGON *) palloc(size);
 
 	SET_VARSIZE(poly, size);
@@ -4494,7 +4494,7 @@ poly_path(PG_FUNCTION_ARGS)
 	 * Never overflows: the old size fit in MaxAllocSize, and the new size is
 	 * smaller by a small constant.
 	 */
-	size = offsetof(PATH, p) +sizeof(path->p[0]) * poly->npts;
+	size = offsetof(PATH, p) + sizeof(path->p[0]) * poly->npts;
 	path = (PATH *) palloc(size);
 
 	SET_VARSIZE(path, size);
@@ -5164,7 +5164,7 @@ circle_poly(PG_FUNCTION_ARGS)
 	if (FPzero(circle->radius))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			   errmsg("cannot convert circle with radius zero to polygon")));
+				 errmsg("cannot convert circle with radius zero to polygon")));
 
 	if (npts < 2)
 		ereport(ERROR,
@@ -5172,7 +5172,7 @@ circle_poly(PG_FUNCTION_ARGS)
 				 errmsg("must request at least 2 points")));
 
 	base_size = sizeof(poly->p[0]) * npts;
-	size = offsetof(POLYGON, p) +base_size;
+	size = offsetof(POLYGON, p) + base_size;
 
 	/* Check for integer overflow */
 	if (base_size / npts != sizeof(poly->p[0]) || size <= base_size)

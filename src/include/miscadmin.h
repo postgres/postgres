@@ -10,7 +10,7 @@
  *	  Over time, this has also become the preferred place for widely known
  *	  resource-limitation stuff, such as work_mem and check_stack_depth().
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/miscadmin.h
@@ -23,10 +23,10 @@
 #ifndef MISCADMIN_H
 #define MISCADMIN_H
 
+#include <signal.h>
+
 #include "pgtime.h"				/* for pg_time_t */
 
-
-#define PG_BACKEND_VERSIONSTR "postgres (PostgreSQL) " PG_VERSION "\n"
 
 #define InvalidPid				(-1)
 
@@ -81,6 +81,7 @@ extern PGDLLIMPORT volatile bool InterruptPending;
 extern PGDLLIMPORT volatile bool QueryCancelPending;
 extern PGDLLIMPORT volatile bool ProcDiePending;
 extern PGDLLIMPORT volatile bool IdleInTransactionSessionTimeoutPending;
+extern PGDLLIMPORT volatile sig_atomic_t ConfigReloadPending;
 
 extern volatile bool ClientConnectionLost;
 
@@ -108,7 +109,7 @@ do { \
 	if (InterruptPending) \
 		ProcessInterrupts(); \
 } while(0)
-#endif   /* WIN32 */
+#endif							/* WIN32 */
 
 
 #define HOLD_INTERRUPTS()  (InterruptHoldoffCount++)
@@ -144,9 +145,9 @@ do { \
  * from utils/init/globals.c
  */
 extern PGDLLIMPORT pid_t PostmasterPid;
-extern bool IsPostmasterEnvironment;
+extern PGDLLIMPORT bool IsPostmasterEnvironment;
 extern PGDLLIMPORT bool IsUnderPostmaster;
-extern bool IsBackgroundWorker;
+extern PGDLLIMPORT bool IsBackgroundWorker;
 extern PGDLLIMPORT bool IsBinaryUpgrade;
 
 extern bool ExitOnAnyError;
@@ -157,12 +158,13 @@ extern PGDLLIMPORT int NBuffers;
 extern int	MaxBackends;
 extern int	MaxConnections;
 extern int	max_worker_processes;
+extern int	max_parallel_workers;
 
 extern PGDLLIMPORT int MyProcPid;
 extern PGDLLIMPORT pg_time_t MyStartTime;
 extern PGDLLIMPORT struct Port *MyProcPort;
 extern PGDLLIMPORT struct Latch *MyLatch;
-extern long MyCancelKey;
+extern int32 MyCancelKey;
 extern int	MyPMChildSlot;
 
 extern char OutputFileName[];
@@ -271,6 +273,8 @@ extern pg_stack_base_t set_stack_base(void);
 extern void restore_stack_base(pg_stack_base_t base);
 extern void check_stack_depth(void);
 extern bool stack_is_too_deep(void);
+
+extern void PostgresSigHupHandler(SIGNAL_ARGS);
 
 /* in tcop/utility.c */
 extern void PreventCommandIfReadOnly(const char *cmdname);
@@ -425,31 +429,6 @@ extern char *session_preload_libraries_string;
 extern char *shared_preload_libraries_string;
 extern char *local_preload_libraries_string;
 
-/*
- * As of 9.1, the contents of the data-directory lock file are:
- *
- * line #
- *		1	postmaster PID (or negative of a standalone backend's PID)
- *		2	data directory path
- *		3	postmaster start timestamp (time_t representation)
- *		4	port number
- *		5	first Unix socket directory path (empty if none)
- *		6	first listen_address (IP address or "*"; empty if no TCP port)
- *		7	shared memory key (not present on Windows)
- *
- * Lines 6 and up are added via AddToDataDirLockFile() after initial file
- * creation.
- *
- * The socket lock file, if used, has the same contents as lines 1-5.
- */
-#define LOCK_FILE_LINE_PID			1
-#define LOCK_FILE_LINE_DATA_DIR		2
-#define LOCK_FILE_LINE_START_TIME	3
-#define LOCK_FILE_LINE_PORT			4
-#define LOCK_FILE_LINE_SOCKET_DIR	5
-#define LOCK_FILE_LINE_LISTEN_ADDR	6
-#define LOCK_FILE_LINE_SHMEM_KEY	7
-
 extern void CreateDataDirLockFile(bool amPostmaster);
 extern void CreateSocketLockFile(const char *socketfile, bool amPostmaster,
 					 const char *socketDir);
@@ -466,4 +445,4 @@ extern bool has_rolreplication(Oid roleid);
 extern bool BackupInProgress(void);
 extern void CancelBackup(void);
 
-#endif   /* MISCADMIN_H */
+#endif							/* MISCADMIN_H */

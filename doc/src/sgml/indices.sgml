@@ -193,18 +193,6 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
 </synopsis>
   </para>
 
-  <caution>
-   <para>
-    Hash index operations are not presently WAL-logged,
-    so hash indexes might need to be rebuilt with <command>REINDEX</>
-    after a database crash if there were unwritten changes.
-    Also, changes to hash indexes are not replicated over streaming or
-    file-based replication after the initial base backup, so they
-    give wrong answers to queries that subsequently use them.
-    For these reasons, hash index use is presently discouraged.
-   </para>
-  </caution>
-
   <para>
    <indexterm>
     <primary>index</primary>
@@ -315,9 +303,8 @@ SELECT * FROM places ORDER BY location <-> point '(101,456)' LIMIT 10;
    operators with which a GIN index can be used vary depending on the
    indexing strategy.
    As an example, the standard distribution of
-   <productname>PostgreSQL</productname> includes GIN operator classes
-   for one-dimensional arrays, which support indexed
-   queries using these operators:
+   <productname>PostgreSQL</productname> includes a GIN operator class
+   for arrays, which supports indexed queries using these operators:
 
    <simplelist>
     <member><literal>&lt;@</literal></member>

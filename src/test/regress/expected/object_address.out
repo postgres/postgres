@@ -36,6 +36,10 @@ ALTER DEFAULT PRIVILEGES FOR ROLE regress_addr_user REVOKE DELETE ON TABLES FROM
 CREATE TRANSFORM FOR int LANGUAGE SQL (
 	FROM SQL WITH FUNCTION varchar_transform(internal),
 	TO SQL WITH FUNCTION int4recv(internal));
+CREATE PUBLICATION addr_pub FOR TABLE addr_nsp.gentable;
+CREATE SUBSCRIPTION addr_sub CONNECTION '' PUBLICATION bar WITH (connect = false, slot_name = NONE);
+WARNING:  tables were not subscribed, you will have to run ALTER SUBSCRIPTION ... REFRESH PUBLICATION to subscribe the tables
+CREATE STATISTICS addr_nsp.gentable_stat ON a, b FROM addr_nsp.gentable;
 -- test some error cases
 SELECT pg_get_object_address('stone', '{}', '{}');
 ERROR:  unrecognized object type "stone"
@@ -65,6 +69,15 @@ WARNING:  error for sequence column: unsupported object type "sequence column"
 WARNING:  error for toast table column: unsupported object type "toast table column"
 WARNING:  error for view column: unsupported object type "view column"
 WARNING:  error for materialized view column: unsupported object type "materialized view column"
+-- miscellaneous other errors
+select * from pg_get_object_address('operator of access method', '{btree,integer_ops,1}', '{int4,bool}');
+ERROR:  operator 1 (int4, bool) of operator family integer_ops for access method btree does not exist
+select * from pg_get_object_address('operator of access method', '{btree,integer_ops,99}', '{int4,int4}');
+ERROR:  operator 99 (int4, int4) of operator family integer_ops for access method btree does not exist
+select * from pg_get_object_address('function of access method', '{btree,integer_ops,1}', '{int4,bool}');
+ERROR:  function 1 (int4, bool) of operator family integer_ops for access method btree does not exist
+select * from pg_get_object_address('function of access method', '{btree,integer_ops,99}', '{int4,int4}');
+ERROR:  function 99 (int4, int4) of operator family integer_ops for access method btree does not exist
 DO $$
 DECLARE
 	objtype text;
@@ -81,7 +94,8 @@ BEGIN
 		('text search parser'), ('text search dictionary'),
 		('text search template'), ('text search configuration'),
 		('policy'), ('user mapping'), ('default acl'), ('transform'),
-		('operator of access method'), ('function of access method')
+		('operator of access method'), ('function of access method'),
+		('publication relation')
 	LOOP
 		FOR names IN VALUES ('{eins}'), ('{addr_nsp, zwei}'), ('{eins, zwei, drei}')
 		LOOP
@@ -211,8 +225,8 @@ WARNING:  error for operator family,{addr_nsp,zwei},{}: access method "addr_nsp"
 WARNING:  error for operator family,{addr_nsp,zwei},{integer}: access method "addr_nsp" does not exist
 WARNING:  error for operator family,{eins,zwei,drei},{}: access method "eins" does not exist
 WARNING:  error for operator family,{eins,zwei,drei},{integer}: access method "eins" does not exist
-WARNING:  error for rule,{eins},{}: rule "eins" does not exist
-WARNING:  error for rule,{eins},{integer}: rule "eins" does not exist
+WARNING:  error for rule,{eins},{}: must specify relation and object name
+WARNING:  error for rule,{eins},{integer}: must specify relation and object name
 WARNING:  error for rule,{addr_nsp,zwei},{}: relation "addr_nsp" does not exist
 WARNING:  error for rule,{addr_nsp,zwei},{integer}: relation "addr_nsp" does not exist
 WARNING:  error for rule,{eins,zwei,drei},{}: schema "eins" does not exist
@@ -260,11 +274,11 @@ WARNING:  error for user mapping,{addr_nsp,zwei},{integer}: user mapping for use
 WARNING:  error for user mapping,{eins,zwei,drei},{}: argument list length must be exactly 1
 WARNING:  error for user mapping,{eins,zwei,drei},{integer}: user mapping for user "eins" on server "integer" does not exist
 WARNING:  error for default acl,{eins},{}: argument list length must be exactly 1
-WARNING:  error for default acl,{eins},{integer}: unrecognized default ACL object type i
+WARNING:  error for default acl,{eins},{integer}: unrecognized default ACL object type "i"
 WARNING:  error for default acl,{addr_nsp,zwei},{}: argument list length must be exactly 1
-WARNING:  error for default acl,{addr_nsp,zwei},{integer}: unrecognized default ACL object type i
+WARNING:  error for default acl,{addr_nsp,zwei},{integer}: unrecognized default ACL object type "i"
 WARNING:  error for default acl,{eins,zwei,drei},{}: argument list length must be exactly 1
-WARNING:  error for default acl,{eins,zwei,drei},{integer}: unrecognized default ACL object type i
+WARNING:  error for default acl,{eins,zwei,drei},{integer}: unrecognized default ACL object type "i"
 WARNING:  error for transform,{eins},{}: argument list length must be exactly 1
 WARNING:  error for transform,{eins},{integer}: type "eins" does not exist
 WARNING:  error for transform,{addr_nsp,zwei},{}: name list length must be exactly 1
@@ -283,11 +297,17 @@ WARNING:  error for function of access method,{addr_nsp,zwei},{}: name list leng
 WARNING:  error for function of access method,{addr_nsp,zwei},{integer}: name list length must be at least 3
 WARNING:  error for function of access method,{eins,zwei,drei},{}: argument list length must be exactly 2
 WARNING:  error for function of access method,{eins,zwei,drei},{integer}: argument list length must be exactly 2
+WARNING:  error for publication relation,{eins},{}: argument list length must be exactly 1
+WARNING:  error for publication relation,{eins},{integer}: relation "eins" does not exist
+WARNING:  error for publication relation,{addr_nsp,zwei},{}: argument list length must be exactly 1
+WARNING:  error for publication relation,{addr_nsp,zwei},{integer}: relation "addr_nsp.zwei" does not exist
+WARNING:  error for publication relation,{eins,zwei,drei},{}: argument list length must be exactly 1
+WARNING:  error for publication relation,{eins,zwei,drei},{integer}: cross-database references are not implemented: "eins.zwei.drei"
 -- these object types cannot be qualified names
 SELECT pg_get_object_address('language', '{one}', '{}');
 ERROR:  language "one" does not exist
 SELECT pg_get_object_address('language', '{one,two}', '{}');
-ERROR:  language name cannot be qualified
+ERROR:  name list length must be exactly 1
 SELECT pg_get_object_address('large object', '{123}', '{}');
 ERROR:  large object 123 does not exist
 SELECT pg_get_object_address('large object', '{123,456}', '{}');
@@ -297,39 +317,47 @@ ERROR:  invalid input syntax for type oid: "blargh"
 SELECT pg_get_object_address('schema', '{one}', '{}');
 ERROR:  schema "one" does not exist
 SELECT pg_get_object_address('schema', '{one,two}', '{}');
-ERROR:  schema name cannot be qualified
+ERROR:  name list length must be exactly 1
 SELECT pg_get_object_address('role', '{one}', '{}');
 ERROR:  role "one" does not exist
 SELECT pg_get_object_address('role', '{one,two}', '{}');
-ERROR:  role name cannot be qualified
+ERROR:  name list length must be exactly 1
 SELECT pg_get_object_address('database', '{one}', '{}');
 ERROR:  database "one" does not exist
 SELECT pg_get_object_address('database', '{one,two}', '{}');
-ERROR:  database name cannot be qualified
+ERROR:  name list length must be exactly 1
 SELECT pg_get_object_address('tablespace', '{one}', '{}');
 ERROR:  tablespace "one" does not exist
 SELECT pg_get_object_address('tablespace', '{one,two}', '{}');
-ERROR:  tablespace name cannot be qualified
+ERROR:  name list length must be exactly 1
 SELECT pg_get_object_address('foreign-data wrapper', '{one}', '{}');
 ERROR:  foreign-data wrapper "one" does not exist
 SELECT pg_get_object_address('foreign-data wrapper', '{one,two}', '{}');
-ERROR:  foreign-data wrapper name cannot be qualified
+ERROR:  name list length must be exactly 1
 SELECT pg_get_object_address('server', '{one}', '{}');
 ERROR:  server "one" does not exist
 SELECT pg_get_object_address('server', '{one,two}', '{}');
-ERROR:  server name cannot be qualified
+ERROR:  name list length must be exactly 1
 SELECT pg_get_object_address('extension', '{one}', '{}');
 ERROR:  extension "one" does not exist
 SELECT pg_get_object_address('extension', '{one,two}', '{}');
-ERROR:  extension name cannot be qualified
+ERROR:  name list length must be exactly 1
 SELECT pg_get_object_address('event trigger', '{one}', '{}');
 ERROR:  event trigger "one" does not exist
 SELECT pg_get_object_address('event trigger', '{one,two}', '{}');
-ERROR:  event trigger name cannot be qualified
+ERROR:  name list length must be exactly 1
 SELECT pg_get_object_address('access method', '{one}', '{}');
 ERROR:  access method "one" does not exist
 SELECT pg_get_object_address('access method', '{one,two}', '{}');
-ERROR:  access method name cannot be qualified
+ERROR:  name list length must be exactly 1
+SELECT pg_get_object_address('publication', '{one}', '{}');
+ERROR:  publication "one" does not exist
+SELECT pg_get_object_address('publication', '{one,two}', '{}');
+ERROR:  name list length must be exactly 1
+SELECT pg_get_object_address('subscription', '{one}', '{}');
+ERROR:  subscription "one" does not exist
+SELECT pg_get_object_address('subscription', '{one,two}', '{}');
+ERROR:  name list length must be exactly 1
 -- test successful cases
 WITH objects (type, name, args) AS (VALUES
 				('table', '{addr_nsp, gentable}'::text[], '{}'::text[]),
@@ -379,16 +407,20 @@ WITH objects (type, name, args) AS (VALUES
 				-- event trigger
 				('policy', '{addr_nsp, gentable, genpol}', '{}'),
 				('transform', '{int}', '{sql}'),
-				('access method', '{btree}', '{}')
+				('access method', '{btree}', '{}'),
+				('publication', '{addr_pub}', '{}'),
+				('publication relation', '{addr_nsp, gentable}', '{addr_pub}'),
+				('subscription', '{addr_sub}', '{}'),
+				('statistics object', '{addr_nsp, gentable_stat}', '{}')
         )
-SELECT (pg_identify_object(addr1.classid, addr1.objid, addr1.subobjid)).*,
+SELECT (pg_identify_object(addr1.classid, addr1.objid, addr1.objsubid)).*,
 	-- test roundtrip through pg_identify_object_as_address
-	ROW(pg_identify_object(addr1.classid, addr1.objid, addr1.subobjid)) =
-	ROW(pg_identify_object(addr2.classid, addr2.objid, addr2.subobjid))
+	ROW(pg_identify_object(addr1.classid, addr1.objid, addr1.objsubid)) =
+	ROW(pg_identify_object(addr2.classid, addr2.objid, addr2.objsubid))
 	  FROM objects, pg_get_object_address(type, name, args) addr1,
-			pg_identify_object_as_address(classid, objid, subobjid) ioa(typ,nms,args),
+			pg_identify_object_as_address(classid, objid, objsubid) ioa(typ,nms,args),
 			pg_get_object_address(typ, nms, ioa.args) as addr2
-	ORDER BY addr1.classid, addr1.objid, addr1.subobjid;
+	ORDER BY addr1.classid, addr1.objid, addr1.objsubid;
            type            |   schema   |       name        |                               identity                               | ?column? 
 ---------------------------+------------+-------------------+----------------------------------------------------------------------+----------
  default acl               |            |                   | for role regress_addr_user in schema public on tables                | t
@@ -427,19 +459,25 @@ SELECT (pg_identify_object(addr1.classid, addr1.objid, addr1.subobjid)).*,
  trigger                   |            |                   | t on addr_nsp.gentable                                               | t
  operator family           | pg_catalog | integer_ops       | pg_catalog.integer_ops USING btree                                   | t
  policy                    |            |                   | genpol on addr_nsp.gentable                                          | t
+ statistics object         | addr_nsp   | gentable_stat     | addr_nsp.gentable_stat                                               | t
  collation                 | pg_catalog | "default"         | pg_catalog."default"                                                 | t
  transform                 |            |                   | for integer on language sql                                          | t
  text search dictionary    | addr_nsp   | addr_ts_dict      | addr_nsp.addr_ts_dict                                                | t
  text search parser        | addr_nsp   | addr_ts_prs       | addr_nsp.addr_ts_prs                                                 | t
  text search configuration | addr_nsp   | addr_ts_conf      | addr_nsp.addr_ts_conf                                                | t
  text search template      | addr_nsp   | addr_ts_temp      | addr_nsp.addr_ts_temp                                                | t
-(42 rows)
+ subscription              |            | addr_sub          | addr_sub                                                             | t
+ publication               |            | addr_pub          | addr_pub                                                             | t
+ publication relation      |            |                   | gentable in publication addr_pub                                     | t
+(46 rows)
 
 ---
 --- Cleanup resources
 ---
 SET client_min_messages TO 'warning';
 DROP FOREIGN DATA WRAPPER addr_fdw CASCADE;
+DROP PUBLICATION addr_pub;
+DROP SUBSCRIPTION addr_sub;
 DROP SCHEMA addr_nsp CASCADE;
 DROP OWNED BY regress_addr_user;
 DROP USER regress_addr_user;

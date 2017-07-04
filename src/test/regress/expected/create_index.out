@@ -2335,13 +2335,9 @@ Options: fastupdate=on, gin_pending_list_limit=128
 -- HASH
 --
 CREATE INDEX hash_i4_index ON hash_i4_heap USING hash (random int4_ops);
-WARNING:  hash indexes are not WAL-logged and their use is discouraged
 CREATE INDEX hash_name_index ON hash_name_heap USING hash (random name_ops);
-WARNING:  hash indexes are not WAL-logged and their use is discouraged
 CREATE INDEX hash_txt_index ON hash_txt_heap USING hash (random text_ops);
-WARNING:  hash indexes are not WAL-logged and their use is discouraged
 CREATE INDEX hash_f8_index ON hash_f8_heap USING hash (random float8_ops);
-WARNING:  hash indexes are not WAL-logged and their use is discouraged
 CREATE UNLOGGED TABLE unlogged_hash_table (id int4);
 CREATE INDEX unlogged_hash_index ON unlogged_hash_table USING hash (id int4_ops);
 DROP TABLE unlogged_hash_table;
@@ -2350,7 +2346,6 @@ DROP TABLE unlogged_hash_table;
 -- maintenance_work_mem setting and fillfactor:
 SET maintenance_work_mem = '1MB';
 CREATE INDEX hash_tuplesort_idx ON tenk1 USING hash (stringu1 name_ops) WITH (fillfactor = 10);
-WARNING:  hash indexes are not WAL-logged and their use is discouraged
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM tenk1 WHERE stringu1 = 'TVAAAA';
                       QUERY PLAN                       
@@ -2452,11 +2447,11 @@ DETAIL:  Key (f2)=(b) is duplicated.
 DELETE FROM concur_heap WHERE f1 = 'b';
 VACUUM FULL concur_heap;
 \d concur_heap
-Table "public.concur_heap"
- Column | Type | Modifiers 
---------+------+-----------
- f1     | text | 
- f2     | text | 
+           Table "public.concur_heap"
+ Column | Type | Collation | Nullable | Default 
+--------+------+-----------+----------+---------
+ f1     | text |           |          | 
+ f2     | text |           |          | 
 Indexes:
     "concur_index2" UNIQUE, btree (f1)
     "concur_index3" UNIQUE, btree (f2) INVALID
@@ -2468,11 +2463,11 @@ Indexes:
 
 REINDEX TABLE concur_heap;
 \d concur_heap
-Table "public.concur_heap"
- Column | Type | Modifiers 
---------+------+-----------
- f1     | text | 
- f2     | text | 
+           Table "public.concur_heap"
+ Column | Type | Collation | Nullable | Default 
+--------+------+-----------+----------+---------
+ f1     | text |           |          | 
+ f2     | text |           |          | 
 Indexes:
     "concur_index2" UNIQUE, btree (f1)
     "concur_index3" UNIQUE, btree (f2)
@@ -2502,11 +2497,11 @@ DROP INDEX CONCURRENTLY "concur_index5";
 DROP INDEX CONCURRENTLY "concur_index1";
 DROP INDEX CONCURRENTLY "concur_heap_expr_idx";
 \d concur_heap
-Table "public.concur_heap"
- Column | Type | Modifiers 
---------+------+-----------
- f1     | text | 
- f2     | text | 
+           Table "public.concur_heap"
+ Column | Type | Collation | Nullable | Default 
+--------+------+-----------+----------+---------
+ f1     | text |           |          | 
+ f2     | text |           |          | 
 Indexes:
     "std_index" btree (f2)
 
@@ -2520,12 +2515,12 @@ INSERT INTO cwi_test VALUES(1, 2), (3, 4), (5, 6);
 CREATE UNIQUE INDEX cwi_uniq_idx ON cwi_test(a , b);
 ALTER TABLE cwi_test ADD primary key USING INDEX cwi_uniq_idx;
 \d cwi_test
-          Table "public.cwi_test"
- Column |         Type          | Modifiers 
---------+-----------------------+-----------
- a      | integer               | not null
- b      | character varying(10) | not null
- c      | character(1)          | 
+                     Table "public.cwi_test"
+ Column |         Type          | Collation | Nullable | Default 
+--------+-----------------------+-----------+----------+---------
+ a      | integer               |           | not null | 
+ b      | character varying(10) |           | not null | 
+ c      | character(1)          |           |          | 
 Indexes:
     "cwi_uniq_idx" PRIMARY KEY, btree (a, b)
 
@@ -2543,12 +2538,12 @@ ALTER TABLE cwi_test DROP CONSTRAINT cwi_uniq_idx,
 		USING INDEX cwi_uniq2_idx;
 NOTICE:  ALTER TABLE / ADD CONSTRAINT USING INDEX will rename index "cwi_uniq2_idx" to "cwi_replaced_pkey"
 \d cwi_test
-          Table "public.cwi_test"
- Column |         Type          | Modifiers 
---------+-----------------------+-----------
- a      | integer               | not null
- b      | character varying(10) | not null
- c      | character(1)          | 
+                     Table "public.cwi_test"
+ Column |         Type          | Collation | Nullable | Default 
+--------+-----------------------+-----------+----------+---------
+ a      | integer               |           | not null | 
+ b      | character varying(10) |           | not null | 
+ c      | character(1)          |           |          | 
 Indexes:
     "cwi_replaced_pkey" PRIMARY KEY, btree (b, a)
 
@@ -2940,7 +2935,7 @@ ORDER BY thousand;
         1 |     1001
 (2 rows)
 
-RESET enable_indexscan;
+RESET enable_indexonlyscan;
 --
 -- Check elimination of constant-NULL subexpressions
 --
@@ -2951,6 +2946,48 @@ explain (costs off)
  Index Scan using tenk1_thous_tenthous on tenk1
    Index Cond: ((thousand = 1) AND (tenthous = 1001))
 (2 rows)
+
+--
+-- Check matching of boolean index columns to WHERE conditions and sort keys
+--
+create temp table boolindex (b bool, i int, unique(b, i), junk float);
+explain (costs off)
+  select * from boolindex order by b, i limit 10;
+                      QUERY PLAN                       
+-------------------------------------------------------
+ Limit
+   ->  Index Scan using boolindex_b_i_key on boolindex
+(2 rows)
+
+explain (costs off)
+  select * from boolindex where b order by i limit 10;
+                      QUERY PLAN                       
+-------------------------------------------------------
+ Limit
+   ->  Index Scan using boolindex_b_i_key on boolindex
+         Index Cond: (b = true)
+         Filter: b
+(4 rows)
+
+explain (costs off)
+  select * from boolindex where b = true order by i desc limit 10;
+                           QUERY PLAN                           
+----------------------------------------------------------------
+ Limit
+   ->  Index Scan Backward using boolindex_b_i_key on boolindex
+         Index Cond: (b = true)
+         Filter: b
+(4 rows)
+
+explain (costs off)
+  select * from boolindex where not b order by i limit 10;
+                      QUERY PLAN                       
+-------------------------------------------------------
+ Limit
+   ->  Index Scan using boolindex_b_i_key on boolindex
+         Index Cond: (b = false)
+         Filter: (NOT b)
+(4 rows)
 
 --
 -- REINDEX (VERBOSE)

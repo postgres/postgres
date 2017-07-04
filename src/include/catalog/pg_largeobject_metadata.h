@@ -5,7 +5,7 @@
  *	  along with the relation's initial contents.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_largeobject_metadata.h
@@ -52,4 +52,4 @@ typedef FormData_pg_largeobject_metadata *Form_pg_largeobject_metadata;
 #define Anum_pg_largeobject_metadata_lomowner	1
 #define Anum_pg_largeobject_metadata_lomacl		2
 
-#endif   /* PG_LARGEOBJECT_METADATA_H */
+#endif							/* PG_LARGEOBJECT_METADATA_H */

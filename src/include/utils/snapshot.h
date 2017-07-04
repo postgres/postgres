@@ -3,7 +3,7 @@
  * snapshot.h
  *	  POSTGRES snapshot definition
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/snapshot.h
@@ -15,6 +15,7 @@
 
 #include "access/htup.h"
 #include "access/xlogdefs.h"
+#include "datatype/timestamp.h"
 #include "lib/pairingheap.h"
 #include "storage/buf.h"
 
@@ -30,7 +31,7 @@ typedef struct SnapshotData *Snapshot;
  * function.
  */
 typedef bool (*SnapshotSatisfiesFunc) (HeapTuple htup,
-										   Snapshot snapshot, Buffer buffer);
+									   Snapshot snapshot, Buffer buffer);
 
 /*
  * Struct representing all kind of possible snapshots.
@@ -107,7 +108,7 @@ typedef struct SnapshotData
 	uint32		regd_count;		/* refcount on RegisteredSnapshots */
 	pairingheap_node ph_node;	/* link in the RegisteredSnapshots heap */
 
-	int64		whenTaken;		/* timestamp when snapshot was taken */
+	TimestampTz whenTaken;		/* timestamp when snapshot was taken */
 	XLogRecPtr	lsn;			/* position in the WAL stream when taken */
 } SnapshotData;
 
@@ -125,4 +126,4 @@ typedef enum
 	HeapTupleWouldBlock			/* can be returned by heap_tuple_lock */
 } HTSU_Result;
 
-#endif   /* SNAPSHOT_H */
+#endif							/* SNAPSHOT_H */

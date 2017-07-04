@@ -3,7 +3,7 @@
  * constraint.c
  *	  PostgreSQL CONSTRAINT support code.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -37,7 +37,7 @@
 Datum
 unique_key_recheck(PG_FUNCTION_ARGS)
 {
-	TriggerData *trigdata = (TriggerData *) fcinfo->context;
+	TriggerData *trigdata = castNode(TriggerData, fcinfo->context);
 	const char *funcname = "unique_key_recheck";
 	HeapTuple	new_row;
 	ItemPointerData tmptid;
@@ -165,7 +165,8 @@ unique_key_recheck(PG_FUNCTION_ARGS)
 		 * index will know about.
 		 */
 		index_insert(indexRel, values, isnull, &(new_row->t_self),
-					 trigdata->tg_relation, UNIQUE_CHECK_EXISTING);
+					 trigdata->tg_relation, UNIQUE_CHECK_EXISTING,
+					 indexInfo);
 	}
 	else
 	{

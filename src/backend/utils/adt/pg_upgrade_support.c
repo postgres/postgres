@@ -5,7 +5,7 @@
  *	to control oid and relfilenode assignment, and do other special
  *	hacks needed for pg_upgrade.
  *
- *	Copyright (c) 2010-2016, PostgreSQL Global Development Group
+ *	Copyright (c) 2010-2017, PostgreSQL Global Development Group
  *	src/backend/utils/adt/pg_upgrade_support.c
  */
 
@@ -18,18 +18,6 @@
 #include "miscadmin.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
-
-
-Datum		binary_upgrade_set_next_pg_type_oid(PG_FUNCTION_ARGS);
-Datum		binary_upgrade_set_next_array_pg_type_oid(PG_FUNCTION_ARGS);
-Datum		binary_upgrade_set_next_toast_pg_type_oid(PG_FUNCTION_ARGS);
-Datum		binary_upgrade_set_next_heap_pg_class_oid(PG_FUNCTION_ARGS);
-Datum		binary_upgrade_set_next_index_pg_class_oid(PG_FUNCTION_ARGS);
-Datum		binary_upgrade_set_next_toast_pg_class_oid(PG_FUNCTION_ARGS);
-Datum		binary_upgrade_set_next_pg_enum_oid(PG_FUNCTION_ARGS);
-Datum		binary_upgrade_set_next_pg_authid_oid(PG_FUNCTION_ARGS);
-Datum		binary_upgrade_create_empty_extension(PG_FUNCTION_ARGS);
-Datum		binary_upgrade_set_record_init_privs(PG_FUNCTION_ARGS);
 
 
 #define CHECK_IS_BINARY_UPGRADE									\
@@ -175,8 +163,7 @@ binary_upgrade_create_empty_extension(PG_FUNCTION_ARGS)
 						  &textDatums, NULL, &ndatums);
 		for (i = 0; i < ndatums; i++)
 		{
-			text	   *txtname = DatumGetTextPP(textDatums[i]);
-			char	   *extName = text_to_cstring(txtname);
+			char	   *extName = TextDatumGetCString(textDatums[i]);
 			Oid			extOid = get_extension_oid(extName, false);
 
 			requiredExtensions = lappend_oid(requiredExtensions, extOid);
@@ -185,7 +172,7 @@ binary_upgrade_create_empty_extension(PG_FUNCTION_ARGS)
 
 	InsertExtensionTuple(text_to_cstring(extName),
 						 GetUserId(),
-					   get_namespace_oid(text_to_cstring(schemaName), false),
+						 get_namespace_oid(text_to_cstring(schemaName), false),
 						 relocatable,
 						 text_to_cstring(extVersion),
 						 extConfig,

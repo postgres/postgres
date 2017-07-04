@@ -51,7 +51,6 @@ static const struct error_desc px_err_list[] = {
 	{PXE_CIPHER_INIT, "Cipher cannot be initialized ?"},
 	{PXE_HASH_UNUSABLE_FOR_HMAC, "This hash algorithm is unusable for HMAC"},
 	{PXE_DEV_READ_ERROR, "Error reading from random device"},
-	{PXE_OSSL_RAND_ERROR, "OpenSSL PRNG error"},
 	{PXE_BUG, "pgcrypto bug"},
 	{PXE_ARGUMENT_ERROR, "Illegal argument to function"},
 	{PXE_UNKNOWN_SALT_ALGO, "Unknown salt algorithm"},
@@ -67,12 +66,8 @@ static const struct error_desc px_err_list[] = {
 	{PXE_PGP_COMPRESSION_ERROR, "Compression error"},
 	{PXE_PGP_NOT_TEXT, "Not text data"},
 	{PXE_PGP_UNEXPECTED_PKT, "Unexpected packet in key data"},
-	{PXE_PGP_NO_BIGNUM,
-		"public-key functions disabled - "
-	"pgcrypto needs OpenSSL for bignums"},
 	{PXE_PGP_MATH_FAILED, "Math operation failed"},
 	{PXE_PGP_SHORT_ELGAMAL_KEY, "Elgamal keys must be at least 1024 bits long"},
-	{PXE_PGP_RSA_UNSUPPORTED, "pgcrypto does not support RSA keys"},
 	{PXE_PGP_UNKNOWN_PUBALGO, "Unknown public-key encryption algorithm"},
 	{PXE_PGP_WRONG_KEY, "Wrong key"},
 	{PXE_PGP_MULTIPLE_KEYS,
@@ -89,6 +84,39 @@ static const struct error_desc px_err_list[] = {
 
 	{0, NULL},
 };
+
+/*
+ * Call ereport(ERROR, ...), with an error code and message corresponding to
+ * the PXE_* error code given as argument.
+ *
+ * This is similar to px_strerror(err), but for some errors, we fill in the
+ * error code and detail fields more appropriately.
+ */
+void
+px_THROW_ERROR(int err)
+{
+	if (err == PXE_NO_RANDOM)
+	{
+#ifdef HAVE_STRONG_RANDOM
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("could not generate a random number")));
+#else
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("generating random data is not supported by this build"),
+				 errdetail("This functionality requires a source of strong random numbers"),
+				 errhint("You need to rebuild PostgreSQL using --enable-strong-random")));
+#endif
+	}
+	else
+	{
+		/* For other errors, use the message from the above list. */
+		ereport(ERROR,
+				(errcode(ERRCODE_EXTERNAL_ROUTINE_INVOCATION_EXCEPTION),
+				 errmsg("%s", px_strerror(err))));
+	}
+}
 
 const char *
 px_strerror(int err)

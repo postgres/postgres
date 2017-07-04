@@ -16,7 +16,7 @@
  *		contents of records in here except turning them into a more usable
  *		format.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -333,7 +333,7 @@ DecodeStandbyOp(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 				(xl_invalidations *) XLogRecGetData(r);
 
 				ReorderBufferImmediateInvalidation(
-					ctx->reorder, invalidations->nmsgs, invalidations->msgs);
+												   ctx->reorder, invalidations->nmsgs, invalidations->msgs);
 			}
 			break;
 		default:
@@ -621,9 +621,6 @@ DecodeAbort(LogicalDecodingContext *ctx, XLogRecordBuffer *buf,
 			xl_xact_parsed_abort *parsed, TransactionId xid)
 {
 	int			i;
-
-	SnapBuildAbortTxn(ctx->snapshot_builder, buf->record->EndRecPtr, xid,
-					  parsed->nsubxacts, parsed->subxacts);
 
 	for (i = 0; i < parsed->nsubxacts; i++)
 	{

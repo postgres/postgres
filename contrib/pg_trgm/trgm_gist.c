@@ -100,9 +100,9 @@ gtrgm_compress(PG_FUNCTION_ARGS)
 	if (entry->leafkey)
 	{							/* trgm */
 		TRGM	   *res;
-		text	   *val = DatumGetTextP(entry->key);
+		text	   *val = DatumGetTextPP(entry->key);
 
-		res = generate_trgm(VARDATA(val), VARSIZE(val) - VARHDRSZ);
+		res = generate_trgm(VARDATA_ANY(val), VARSIZE_ANY_EXHDR(val));
 		retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
 		gistentryinit(*retval, PointerGetDatum(res),
 					  entry->rel, entry->page,
@@ -142,7 +142,7 @@ gtrgm_decompress(PG_FUNCTION_ARGS)
 	GISTENTRY  *retval;
 	text	   *key;
 
-	key = DatumGetTextP(entry->key);
+	key = DatumGetTextPP(entry->key);
 
 	if (key != (text *) DatumGetPointer(entry->key))
 	{
@@ -200,11 +200,12 @@ gtrgm_consistent(PG_FUNCTION_ARGS)
 	 * depends on strategy.
 	 *
 	 * The cached structure is a single palloc chunk containing the
-	 * gtrgm_consistent_cache header, then the input query (starting at a
-	 * MAXALIGN boundary), then the TRGM value (also starting at a MAXALIGN
-	 * boundary).  However we don't try to include the regex graph (if any) in
-	 * that struct.  (XXX currently, this approach can leak regex graphs
-	 * across index rescans.  Not clear if that's worth fixing.)
+	 * gtrgm_consistent_cache header, then the input query (4-byte length
+	 * word, uncompressed, starting at a MAXALIGN boundary), then the TRGM
+	 * value (also starting at a MAXALIGN boundary).  However we don't try to
+	 * include the regex graph (if any) in that struct.  (XXX currently, this
+	 * approach can leak regex graphs across index rescans.  Not clear if
+	 * that's worth fixing.)
 	 */
 	cache = (gtrgm_consistent_cache *) fcinfo->flinfo->fn_extra;
 	if (cache == NULL ||

@@ -1,0 +1,85 @@
+Parsed test spec with 2 sessions
+
+starting permutation: s1alter s1commit s2nv
+step s1alter: ALTER SEQUENCE seq1 MAXVALUE 10;
+step s1commit: COMMIT;
+step s2nv: SELECT nextval('seq1') FROM generate_series(1, 15);
+ERROR:  nextval: reached maximum value of sequence "seq1" (10)
+
+starting permutation: s1alter s2nv s1commit
+step s1alter: ALTER SEQUENCE seq1 MAXVALUE 10;
+step s2nv: SELECT nextval('seq1') FROM generate_series(1, 15); <waiting ...>
+step s1commit: COMMIT;
+step s2nv: <... completed>
+error in steps s1commit s2nv: ERROR:  nextval: reached maximum value of sequence "seq1" (10)
+
+starting permutation: s1restart s2nv s1commit
+step s1restart: ALTER SEQUENCE seq1 RESTART WITH 5;
+step s2nv: SELECT nextval('seq1') FROM generate_series(1, 15); <waiting ...>
+step s1commit: COMMIT;
+step s2nv: <... completed>
+nextval        
+
+5              
+6              
+7              
+8              
+9              
+10             
+11             
+12             
+13             
+14             
+15             
+16             
+17             
+18             
+19             
+
+starting permutation: s1restart s2nv s1commit
+step s1restart: ALTER SEQUENCE seq1 RESTART WITH 5;
+step s2nv: SELECT nextval('seq1') FROM generate_series(1, 15); <waiting ...>
+step s1commit: COMMIT;
+step s2nv: <... completed>
+nextval        
+
+5              
+6              
+7              
+8              
+9              
+10             
+11             
+12             
+13             
+14             
+15             
+16             
+17             
+18             
+19             
+
+starting permutation: s2begin s2nv s1alter2 s2commit s1commit
+step s2begin: BEGIN;
+step s2nv: SELECT nextval('seq1') FROM generate_series(1, 15);
+nextval        
+
+1              
+2              
+3              
+4              
+5              
+6              
+7              
+8              
+9              
+10             
+11             
+12             
+13             
+14             
+15             
+step s1alter2: ALTER SEQUENCE seq1 MAXVALUE 20; <waiting ...>
+step s2commit: COMMIT;
+step s1alter2: <... completed>
+step s1commit: COMMIT;

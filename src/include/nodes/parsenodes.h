@@ -7,10 +7,12 @@
  * This is a byte (not character) offset in the original source text, to be
  * used for positioning an error cursor when there is an error related to
  * the node.  Access to the original source text is needed to make use of
- * the location.
+ * the location.  At the topmost (statement) level, we also provide a
+ * statement length, likewise measured in bytes, for convenience in
+ * identifying statement boundaries in multi-statement source strings.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/nodes/parsenodes.h
@@ -24,6 +26,13 @@
 #include "nodes/lockoptions.h"
 #include "nodes/primnodes.h"
 #include "nodes/value.h"
+
+typedef enum OverridingKind
+{
+	OVERRIDING_NOT_SET = 0,
+	OVERRIDING_USER_VALUE,
+	OVERRIDING_SYSTEM_VALUE
+} OverridingKind;
 
 /* Possible sources of a Query */
 typedef enum QuerySource
@@ -89,9 +98,7 @@ typedef uint32 AclMode;			/* a bitmask of privilege bits */
  *	  for further processing by the rewriter and planner.
  *
  *	  Utility statements (i.e. non-optimizable statements) have the
- *	  utilityStmt field set, and the Query itself is mostly dummy.
- *	  DECLARE CURSOR is a special case: it is represented like a SELECT,
- *	  but the original DeclareCursorStmt is stored in utilityStmt.
+ *	  utilityStmt field set, and the rest of the Query is mostly dummy.
  *
  *	  Planning converts a Query tree into a Plan tree headed by a PlannedStmt
  *	  node --- the Query structure is not used by the executor.
@@ -108,14 +115,14 @@ typedef struct Query
 
 	bool		canSetTag;		/* do I set the command result tag? */
 
-	Node	   *utilityStmt;	/* non-null if this is DECLARE CURSOR or a
-								 * non-optimizable statement */
+	Node	   *utilityStmt;	/* non-null if commandType == CMD_UTILITY */
 
 	int			resultRelation; /* rtable index of target relation for
 								 * INSERT/UPDATE/DELETE; 0 for SELECT */
 
 	bool		hasAggs;		/* has aggregates in tlist or havingQual */
 	bool		hasWindowFuncs; /* has window functions in tlist */
+	bool		hasTargetSRFs;	/* has set-returning functions in tlist */
 	bool		hasSubLinks;	/* has subquery SubLink */
 	bool		hasDistinctOn;	/* distinctClause is from DISTINCT ON */
 	bool		hasRecursive;	/* WITH RECURSIVE was specified */
@@ -129,6 +136,8 @@ typedef struct Query
 	FromExpr   *jointree;		/* table join tree (FROM and WHERE clauses) */
 
 	List	   *targetList;		/* target list (of TargetEntry) */
+
+	OverridingKind override;	/* OVERRIDING clause */
 
 	OnConflictExpr *onConflict; /* ON CONFLICT DO [NOTHING | UPDATE] */
 
@@ -157,10 +166,18 @@ typedef struct Query
 	List	   *constraintDeps; /* a list of pg_constraint OIDs that the query
 								 * depends on to be semantically valid */
 
-	List	   *withCheckOptions;		/* a list of WithCheckOption's, which
-										 * are only added during rewrite and
-										 * therefore are not written out as
-										 * part of Query. */
+	List	   *withCheckOptions;	/* a list of WithCheckOption's, which are
+									 * only added during rewrite and therefore
+									 * are not written out as part of Query. */
+
+	/*
+	 * The following two fields identify the portion of the source text string
+	 * containing this query.  They are typically only populated in top-level
+	 * Queries, not in sub-queries.  When not set, they might both be zero, or
+	 * both be -1 meaning "unknown".
+	 */
+	int			stmt_location;	/* start location, or -1 if unknown */
+	int			stmt_len;		/* length in bytes; 0 means "rest of string" */
 } Query;
 
 
@@ -333,7 +350,7 @@ typedef struct FuncCall
 	List	   *args;			/* the arguments (list of exprs) */
 	List	   *agg_order;		/* ORDER BY (list of SortBy) */
 	Node	   *agg_filter;		/* FILTER clause, if any */
-	bool		agg_within_group;		/* ORDER BY appeared in WITHIN GROUP */
+	bool		agg_within_group;	/* ORDER BY appeared in WITHIN GROUP */
 	bool		agg_star;		/* argument was really '*' */
 	bool		agg_distinct;	/* arguments were labeled DISTINCT */
 	bool		func_variadic;	/* last argument was labeled VARIADIC */
@@ -546,6 +563,39 @@ typedef struct RangeFunction
 } RangeFunction;
 
 /*
+ * RangeTableFunc - raw form of "table functions" such as XMLTABLE
+ */
+typedef struct RangeTableFunc
+{
+	NodeTag		type;
+	bool		lateral;		/* does it have LATERAL prefix? */
+	Node	   *docexpr;		/* document expression */
+	Node	   *rowexpr;		/* row generator expression */
+	List	   *namespaces;		/* list of namespaces as ResTarget */
+	List	   *columns;		/* list of RangeTableFuncCol */
+	Alias	   *alias;			/* table alias & optional column aliases */
+	int			location;		/* token location, or -1 if unknown */
+} RangeTableFunc;
+
+/*
+ * RangeTableFuncCol - one column in a RangeTableFunc->columns
+ *
+ * If for_ordinality is true (FOR ORDINALITY), then the column is an int4
+ * column and the rest of the fields are ignored.
+ */
+typedef struct RangeTableFuncCol
+{
+	NodeTag		type;
+	char	   *colname;		/* name of generated column */
+	TypeName   *typeName;		/* type of generated column */
+	bool		for_ordinality; /* does it have FOR ORDINALITY? */
+	bool		is_not_null;	/* does it have NOT NULL? */
+	Node	   *colexpr;		/* column filter expression */
+	Node	   *coldefexpr;		/* column default value expression */
+	int			location;		/* token location, or -1 if unknown */
+} RangeTableFuncCol;
+
+/*
  * RangeTableSample - TABLESAMPLE appearing in a raw FROM clause
  *
  * This node, appearing only in raw parse trees, represents
@@ -592,9 +642,11 @@ typedef struct ColumnDef
 	bool		is_local;		/* column has local (non-inherited) def'n */
 	bool		is_not_null;	/* NOT NULL constraint specified? */
 	bool		is_from_type;	/* column definition came from table type */
+	bool		is_from_parent; /* column def came from partition parent */
 	char		storage;		/* attstorage setting, or 0 for default */
 	Node	   *raw_default;	/* default value (untransformed parse tree) */
 	Node	   *cooked_default; /* default value (transformed expr tree) */
+	char		identity;		/* attidentity setting */
 	CollateClause *collClause;	/* untransformed COLLATE spec, if any */
 	Oid			collOid;		/* collation OID (InvalidOid if not set) */
 	List	   *constraints;	/* other constraints on column */
@@ -616,9 +668,10 @@ typedef enum TableLikeOption
 {
 	CREATE_TABLE_LIKE_DEFAULTS = 1 << 0,
 	CREATE_TABLE_LIKE_CONSTRAINTS = 1 << 1,
-	CREATE_TABLE_LIKE_INDEXES = 1 << 2,
-	CREATE_TABLE_LIKE_STORAGE = 1 << 3,
-	CREATE_TABLE_LIKE_COMMENTS = 1 << 4,
+	CREATE_TABLE_LIKE_IDENTITY = 1 << 2,
+	CREATE_TABLE_LIKE_INDEXES = 1 << 3,
+	CREATE_TABLE_LIKE_STORAGE = 1 << 4,
+	CREATE_TABLE_LIKE_COMMENTS = 1 << 5,
 	CREATE_TABLE_LIKE_ALL = PG_INT32_MAX
 } TableLikeOption;
 
@@ -666,6 +719,7 @@ typedef struct DefElem
 	char	   *defname;
 	Node	   *arg;			/* a (Value *) or a (TypeName *) */
 	DefElemAction defaction;	/* unspecified action, or SET/ADD/DROP */
+	int			location;		/* token location, or -1 if unknown */
 } DefElem;
 
 /*
@@ -697,6 +751,87 @@ typedef struct XmlSerialize
 	int			location;		/* token location, or -1 if unknown */
 } XmlSerialize;
 
+/* Partitioning related definitions */
+
+/*
+ * PartitionElem - parse-time representation of a single partition key
+ *
+ * expr can be either a raw expression tree or a parse-analyzed expression.
+ * We don't store these on-disk, though.
+ */
+typedef struct PartitionElem
+{
+	NodeTag		type;
+	char	   *name;			/* name of column to partition on, or NULL */
+	Node	   *expr;			/* expression to partition on, or NULL */
+	List	   *collation;		/* name of collation; NIL = default */
+	List	   *opclass;		/* name of desired opclass; NIL = default */
+	int			location;		/* token location, or -1 if unknown */
+} PartitionElem;
+
+/*
+ * PartitionSpec - parse-time representation of a partition key specification
+ *
+ * This represents the key space we will be partitioning on.
+ */
+typedef struct PartitionSpec
+{
+	NodeTag		type;
+	char	   *strategy;		/* partitioning strategy ('list' or 'range') */
+	List	   *partParams;		/* List of PartitionElems */
+	int			location;		/* token location, or -1 if unknown */
+} PartitionSpec;
+
+/* Internal codes for partitioning strategies */
+#define PARTITION_STRATEGY_LIST		'l'
+#define PARTITION_STRATEGY_RANGE	'r'
+
+/*
+ * PartitionBoundSpec - a partition bound specification
+ *
+ * This represents the portion of the partition key space assigned to a
+ * particular partition.  These are stored on disk in pg_class.relpartbound.
+ */
+typedef struct PartitionBoundSpec
+{
+	NodeTag		type;
+
+	char		strategy;		/* see PARTITION_STRATEGY codes above */
+
+	/* Partitioning info for LIST strategy: */
+	List	   *listdatums;		/* List of Consts (or A_Consts in raw tree) */
+
+	/* Partitioning info for RANGE strategy: */
+	List	   *lowerdatums;	/* List of PartitionRangeDatums */
+	List	   *upperdatums;	/* List of PartitionRangeDatums */
+
+	int			location;		/* token location, or -1 if unknown */
+} PartitionBoundSpec;
+
+/*
+ * PartitionRangeDatum - can be either a value or UNBOUNDED
+ *
+ * "value" is an A_Const in raw grammar output, a Const after analysis
+ */
+typedef struct PartitionRangeDatum
+{
+	NodeTag		type;
+
+	bool		infinite;		/* true if UNBOUNDED */
+	Node	   *value;			/* null if UNBOUNDED */
+
+	int			location;		/* token location, or -1 if unknown */
+} PartitionRangeDatum;
+
+/*
+ * PartitionCmd - info for ALTER TABLE ATTACH/DETACH PARTITION commands
+ */
+typedef struct PartitionCmd
+{
+	NodeTag		type;
+	RangeVar   *name;			/* name of partition to attach/detach */
+	PartitionBoundSpec *bound;	/* FOR VALUES, if attaching */
+} PartitionCmd;
 
 /****************************************************************************
  *	Nodes for a Query tree
@@ -773,6 +908,13 @@ typedef struct XmlSerialize
  *	  FirstLowInvalidHeapAttributeNumber from column numbers before storing
  *	  them in these fields.  A whole-row Var reference is represented by
  *	  setting the bit for InvalidAttrNumber.
+ *
+ *	  securityQuals is a list of security barrier quals (boolean expressions),
+ *	  to be tested in the listed order before returning a row from the
+ *	  relation.  It is always NIL in parser output.  Entries are added by the
+ *	  rewriter to implement security-barrier views and/or row-level security.
+ *	  Note that the planner turns each boolean expression into an implicitly
+ *	  AND'ed sublist, as is its usual habit with qualification expressions.
  *--------------------
  */
 typedef enum RTEKind
@@ -781,8 +923,10 @@ typedef enum RTEKind
 	RTE_SUBQUERY,				/* subquery in FROM */
 	RTE_JOIN,					/* join */
 	RTE_FUNCTION,				/* function in FROM */
+	RTE_TABLEFUNC,				/* TableFunc(.., column list) */
 	RTE_VALUES,					/* VALUES (<exprlist>), (<exprlist>), ... */
-	RTE_CTE						/* common table expr (WITH list element) */
+	RTE_CTE,					/* common table expr (WITH list element) */
+	RTE_NAMEDTUPLESTORE			/* tuplestore, e.g. for AFTER triggers */
 } RTEKind;
 
 typedef struct RangeTblEntry
@@ -799,16 +943,21 @@ typedef struct RangeTblEntry
 
 	/*
 	 * Fields valid for a plain relation RTE (else zero):
+	 *
+	 * As a special case, RTE_NAMEDTUPLESTORE can also set relid to indicate
+	 * that the tuple format of the tuplestore is the same as the referenced
+	 * relation.  This allows plans referencing AFTER trigger transition
+	 * tables to be invalidated if the underlying table is altered.
 	 */
 	Oid			relid;			/* OID of the relation */
 	char		relkind;		/* relation kind (see pg_class.relkind) */
-	struct TableSampleClause *tablesample;		/* sampling info, or NULL */
+	struct TableSampleClause *tablesample;	/* sampling info, or NULL */
 
 	/*
 	 * Fields valid for a subquery RTE (else NULL):
 	 */
 	Query	   *subquery;		/* the sub-query */
-	bool		security_barrier;		/* is from security_barrier view? */
+	bool		security_barrier;	/* is from security_barrier view? */
 
 	/*
 	 * Fields valid for a join RTE (else NULL/zero):
@@ -842,10 +991,14 @@ typedef struct RangeTblEntry
 	bool		funcordinality; /* is this called WITH ORDINALITY? */
 
 	/*
+	 * Fields valid for a TableFunc RTE (else NULL):
+	 */
+	TableFunc  *tablefunc;
+
+	/*
 	 * Fields valid for a values RTE (else NIL):
 	 */
 	List	   *values_lists;	/* list of expression lists */
-	List	   *values_collations;		/* OID list of column collation OIDs */
 
 	/*
 	 * Fields valid for a CTE RTE (else NULL/zero):
@@ -853,9 +1006,27 @@ typedef struct RangeTblEntry
 	char	   *ctename;		/* name of the WITH list item */
 	Index		ctelevelsup;	/* number of query levels up */
 	bool		self_reference; /* is this a recursive self-reference? */
-	List	   *ctecoltypes;	/* OID list of column type OIDs */
-	List	   *ctecoltypmods;	/* integer list of column typmods */
-	List	   *ctecolcollations;		/* OID list of column collation OIDs */
+
+	/*
+	 * Fields valid for table functions, values, CTE and ENR RTEs (else NIL):
+	 *
+	 * We need these for CTE RTEs so that the types of self-referential
+	 * columns are well-defined.  For VALUES RTEs, storing these explicitly
+	 * saves having to re-determine the info by scanning the values_lists. For
+	 * ENRs, we store the types explicitly here (we could get the information
+	 * from the catalogs if 'relid' was supplied, but we'd still need these
+	 * for TupleDesc-based ENRs, so we might as well always store the type
+	 * info here).
+	 */
+	List	   *coltypes;		/* OID list of column type OIDs */
+	List	   *coltypmods;		/* integer list of column typmods */
+	List	   *colcollations;	/* OID list of column collation OIDs */
+
+	/*
+	 * Fields valid for ENR RTEs (else NULL/zero):
+	 */
+	char	   *enrname;		/* name of ephemeral named relation */
+	double		enrtuples;		/* estimated or actual from caller */
 
 	/*
 	 * Fields valid in all RTEs:
@@ -870,7 +1041,7 @@ typedef struct RangeTblEntry
 	Bitmapset  *selectedCols;	/* columns needing SELECT permission */
 	Bitmapset  *insertedCols;	/* columns needing INSERT permission */
 	Bitmapset  *updatedCols;	/* columns needing UPDATE permission */
-	List	   *securityQuals;	/* any security barrier quals to apply */
+	List	   *securityQuals;	/* security barrier quals to apply, if any */
 } RangeTblEntry;
 
 /*
@@ -899,7 +1070,7 @@ typedef struct RangeTblFunction
 	List	   *funccolnames;	/* column names (list of String) */
 	List	   *funccoltypes;	/* OID list of column type OIDs */
 	List	   *funccoltypmods; /* integer list of column typmods */
-	List	   *funccolcollations;		/* OID list of column collation OIDs */
+	List	   *funccolcollations;	/* OID list of column collation OIDs */
 	/* This is set during planning for use by the executor: */
 	Bitmapset  *funcparams;		/* PARAM_EXEC Param IDs affecting this func */
 } RangeTblFunction;
@@ -1192,7 +1363,7 @@ typedef struct CommonTableExpr
 	List	   *ctecolnames;	/* list of output column names */
 	List	   *ctecoltypes;	/* OID list of output column type OIDs */
 	List	   *ctecoltypmods;	/* integer list of output column typmods */
-	List	   *ctecolcollations;		/* OID list of column collation OIDs */
+	List	   *ctecolcollations;	/* OID list of column collation OIDs */
 } CommonTableExpr;
 
 /* Convenience macro to get the output tlist of a CTE's query */
@@ -1202,6 +1373,45 @@ typedef struct CommonTableExpr
 	 ((Query *) (cte)->ctequery)->targetList : \
 	 ((Query *) (cte)->ctequery)->returningList)
 
+/*
+ * TriggerTransition -
+ *	   representation of transition row or table naming clause
+ *
+ * Only transition tables are initially supported in the syntax, and only for
+ * AFTER triggers, but other permutations are accepted by the parser so we can
+ * give a meaningful message from C code.
+ */
+typedef struct TriggerTransition
+{
+	NodeTag		type;
+	char	   *name;
+	bool		isNew;
+	bool		isTable;
+} TriggerTransition;
+
+/*****************************************************************************
+ *		Raw Grammar Output Statements
+ *****************************************************************************/
+
+/*
+ *		RawStmt --- container for any one statement's raw parse tree
+ *
+ * Parse analysis converts a raw parse tree headed by a RawStmt node into
+ * an analyzed statement headed by a Query node.  For optimizable statements,
+ * the conversion is complex.  For utility statements, the parser usually just
+ * transfers the raw parse tree (sans RawStmt) into the utilityStmt field of
+ * the Query node, and all the useful work happens at execution time.
+ *
+ * stmt_location/stmt_len identify the portion of the source text string
+ * containing this raw statement (useful for multi-statement strings).
+ */
+typedef struct RawStmt
+{
+	NodeTag		type;
+	Node	   *stmt;			/* raw parse tree */
+	int			stmt_location;	/* start location, or -1 if unknown */
+	int			stmt_len;		/* length in bytes; 0 means "rest of string" */
+} RawStmt;
 
 /*****************************************************************************
  *		Optimizable Statements
@@ -1224,6 +1434,7 @@ typedef struct InsertStmt
 	OnConflictClause *onConflictClause; /* ON CONFLICT clause */
 	List	   *returningList;	/* list of expressions to return */
 	WithClause *withClause;		/* WITH clause */
+	OverridingKind override;	/* OVERRIDING clause */
 } InsertStmt;
 
 /* ----------------------
@@ -1370,6 +1581,9 @@ typedef struct SetOperationStmt
  *		statements do need attention from parse analysis, and this is
  *		done by routines in parser/parse_utilcmd.c after ProcessUtility
  *		receives the command for execution.
+ *		DECLARE CURSOR, EXPLAIN, and CREATE TABLE AS are special cases:
+ *		they contain optimizable statements, which get processed normally
+ *		by parser/analyze.c.
  *****************************************************************************/
 
 /*
@@ -1408,10 +1622,14 @@ typedef enum ObjectType
 	OBJECT_OPERATOR,
 	OBJECT_OPFAMILY,
 	OBJECT_POLICY,
+	OBJECT_PUBLICATION,
+	OBJECT_PUBLICATION_REL,
 	OBJECT_ROLE,
 	OBJECT_RULE,
 	OBJECT_SCHEMA,
 	OBJECT_SEQUENCE,
+	OBJECT_SUBSCRIPTION,
+	OBJECT_STATISTIC_EXT,
 	OBJECT_TABCONSTRAINT,
 	OBJECT_TABLE,
 	OBJECT_TABLESPACE,
@@ -1438,7 +1656,7 @@ typedef struct CreateSchemaStmt
 {
 	NodeTag		type;
 	char	   *schemaname;		/* the name of the schema to create */
-	Node	   *authrole;		/* the owner of the created schema */
+	RoleSpec   *authrole;		/* the owner of the created schema */
 	List	   *schemaElts;		/* schema components (list of parsenodes) */
 	bool		if_not_exists;	/* just do nothing if schema already exists? */
 } CreateSchemaStmt;
@@ -1483,7 +1701,7 @@ typedef enum AlterTableType
 	AT_ReAddConstraint,			/* internal to commands/tablecmds.c */
 	AT_AlterConstraint,			/* alter constraint */
 	AT_ValidateConstraint,		/* validate constraint */
-	AT_ValidateConstraintRecurse,		/* internal to commands/tablecmds.c */
+	AT_ValidateConstraintRecurse,	/* internal to commands/tablecmds.c */
 	AT_ProcessedConstraint,		/* pre-processed add constraint (local in
 								 * parser/parse_utilcmd.c) */
 	AT_AddIndexConstraint,		/* add constraint using existing index */
@@ -1491,7 +1709,7 @@ typedef enum AlterTableType
 	AT_DropConstraintRecurse,	/* internal to commands/tablecmds.c */
 	AT_ReAddComment,			/* internal to commands/tablecmds.c */
 	AT_AlterColumnType,			/* alter column type */
-	AT_AlterColumnGenericOptions,		/* alter column OPTIONS (...) */
+	AT_AlterColumnGenericOptions,	/* alter column OPTIONS (...) */
 	AT_ChangeOwner,				/* change owner */
 	AT_ClusterOn,				/* CLUSTER ON */
 	AT_DropCluster,				/* SET WITHOUT CLUSTER */
@@ -1525,7 +1743,12 @@ typedef enum AlterTableType
 	AT_DisableRowSecurity,		/* DISABLE ROW SECURITY */
 	AT_ForceRowSecurity,		/* FORCE ROW SECURITY */
 	AT_NoForceRowSecurity,		/* NO FORCE ROW SECURITY */
-	AT_GenericOptions			/* OPTIONS (...) */
+	AT_GenericOptions,			/* OPTIONS (...) */
+	AT_AttachPartition,			/* ATTACH PARTITION */
+	AT_DetachPartition,			/* DETACH PARTITION */
+	AT_AddIdentity,				/* ADD IDENTITY */
+	AT_SetIdentity,				/* SET identity column options */
+	AT_DropIdentity				/* DROP IDENTITY */
 } AlterTableType;
 
 typedef struct ReplicaIdentityStmt
@@ -1541,12 +1764,23 @@ typedef struct AlterTableCmd	/* one subcommand of an ALTER TABLE */
 	AlterTableType subtype;		/* Type of table alteration to apply */
 	char	   *name;			/* column, constraint, or trigger to act on,
 								 * or tablespace */
-	Node	   *newowner;		/* RoleSpec */
+	RoleSpec   *newowner;
 	Node	   *def;			/* definition of new column, index,
 								 * constraint, or parent table */
 	DropBehavior behavior;		/* RESTRICT or CASCADE for DROP cases */
 	bool		missing_ok;		/* skip error if missing? */
 } AlterTableCmd;
+
+
+/* ----------------------
+ * Alter Collation
+ * ----------------------
+ */
+typedef struct AlterCollationStmt
+{
+	NodeTag		type;
+	List	   *collname;
+} AlterCollationStmt;
 
 
 /* ----------------------
@@ -1609,8 +1843,8 @@ typedef struct GrantStmt
 	bool		is_grant;		/* true = GRANT, false = REVOKE */
 	GrantTargetType targtype;	/* type of the grant target */
 	GrantObjectType objtype;	/* kind of object being operated on */
-	List	   *objects;		/* list of RangeVar nodes, FuncWithArgs nodes,
-								 * or plain names (as Value strings) */
+	List	   *objects;		/* list of RangeVar nodes, ObjectWithArgs
+								 * nodes, or plain names (as Value strings) */
 	List	   *privileges;		/* list of AccessPriv nodes */
 	/* privileges == NIL denotes ALL PRIVILEGES */
 	List	   *grantees;		/* list of RoleSpec nodes */
@@ -1619,16 +1853,19 @@ typedef struct GrantStmt
 } GrantStmt;
 
 /*
- * Note: FuncWithArgs carries only the types of the input parameters of the
+ * Note: ObjectWithArgs carries only the types of the input parameters of the
  * function.  So it is sufficient to identify an existing function, but it
  * is not enough info to define a function nor to call it.
  */
-typedef struct FuncWithArgs
+typedef struct ObjectWithArgs
 {
 	NodeTag		type;
-	List	   *funcname;		/* qualified name of function */
-	List	   *funcargs;		/* list of Typename nodes */
-} FuncWithArgs;
+	List	   *objname;		/* qualified name of function/operator */
+	List	   *objargs;		/* list of Typename nodes */
+	bool		args_unspecified;	/* argument list was omitted, so name must
+									 * be unique (note that objargs == NIL
+									 * means zero args) */
+} ObjectWithArgs;
 
 /*
  * An access privilege, with optional list of column names
@@ -1660,7 +1897,7 @@ typedef struct GrantRoleStmt
 	List	   *grantee_roles;	/* list of member roles to add/delete */
 	bool		is_grant;		/* true = GRANT, false = REVOKE */
 	bool		admin_opt;		/* with admin option */
-	Node	   *grantor;		/* set grantor to other than current role */
+	RoleSpec   *grantor;		/* set grantor to other than current role */
 	DropBehavior behavior;		/* drop behavior (for REVOKE) */
 } GrantRoleStmt;
 
@@ -1688,7 +1925,7 @@ typedef struct CopyStmt
 	NodeTag		type;
 	RangeVar   *relation;		/* the relation to copy */
 	Node	   *query;			/* the query (SELECT or DML statement with
-								 * RETURNING) to copy */
+								 * RETURNING) to copy, as a raw parse tree */
 	List	   *attlist;		/* List of column names (as Strings), or NIL
 								 * for all columns */
 	bool		is_from;		/* TO or FROM */
@@ -1751,6 +1988,8 @@ typedef struct CreateStmt
 	List	   *tableElts;		/* column definitions (list of ColumnDef) */
 	List	   *inhRelations;	/* relations to inherit from (list of
 								 * inhRelation) */
+	PartitionBoundSpec *partbound;	/* FOR VALUES clause */
+	PartitionSpec *partspec;	/* PARTITION BY clause */
 	TypeName   *ofTypename;		/* OF typename */
 	List	   *constraints;	/* constraints (list of Constraint nodes) */
 	List	   *options;		/* options from WITH clause */
@@ -1796,6 +2035,7 @@ typedef enum ConstrType			/* types of constraints */
 								 * expect it */
 	CONSTR_NOTNULL,
 	CONSTR_DEFAULT,
+	CONSTR_IDENTITY,
 	CONSTR_CHECK,
 	CONSTR_PRIMARY,
 	CONSTR_UNIQUE,
@@ -1834,6 +2074,7 @@ typedef struct Constraint
 	bool		is_no_inherit;	/* is constraint non-inheritable? */
 	Node	   *raw_expr;		/* expr, as untransformed parse tree */
 	char	   *cooked_expr;	/* expr, as nodeToString representation */
+	char		generated_when;
 
 	/* Fields used for unique constraints (UNIQUE and PRIMARY KEY): */
 	List	   *keys;			/* String nodes naming referenced column(s) */
@@ -1857,7 +2098,8 @@ typedef struct Constraint
 	char		fk_upd_action;	/* ON UPDATE action */
 	char		fk_del_action;	/* ON DELETE action */
 	List	   *old_conpfeqop;	/* pg_constraint.conpfeqop of my former self */
-	Oid			old_pktable_oid;	/* pg_constraint.confrelid of my former self */
+	Oid			old_pktable_oid;	/* pg_constraint.confrelid of my former
+									 * self */
 
 	/* Fields used for constraints that allow a NOT VALID specification */
 	bool		skip_validation;	/* skip validation of existing rows? */
@@ -1873,7 +2115,7 @@ typedef struct CreateTableSpaceStmt
 {
 	NodeTag		type;
 	char	   *tablespacename;
-	Node	   *owner;
+	RoleSpec   *owner;
 	char	   *location;
 	List	   *options;
 } CreateTableSpaceStmt;
@@ -1930,8 +2172,7 @@ typedef struct AlterExtensionContentsStmt
 	char	   *extname;		/* Extension's name */
 	int			action;			/* +1 = add object, -1 = drop object */
 	ObjectType	objtype;		/* Object's type */
-	List	   *objname;		/* Qualified name of the object */
-	List	   *objargs;		/* Arguments if needed (eg, for functions) */
+	Node	   *object;			/* Qualified name of the object */
 } AlterExtensionContentsStmt;
 
 /* ----------------------
@@ -1967,6 +2208,7 @@ typedef struct CreateForeignServerStmt
 	char	   *servertype;		/* optional server type */
 	char	   *version;		/* optional server version */
 	char	   *fdwname;		/* FDW name */
+	bool		if_not_exists;	/* just do nothing if it already exists? */
 	List	   *options;		/* generic options to server */
 } CreateForeignServerStmt;
 
@@ -1999,15 +2241,16 @@ typedef struct CreateForeignTableStmt
 typedef struct CreateUserMappingStmt
 {
 	NodeTag		type;
-	Node	   *user;			/* user role */
+	RoleSpec   *user;			/* user role */
 	char	   *servername;		/* server name */
+	bool		if_not_exists;	/* just do nothing if it already exists? */
 	List	   *options;		/* generic options to server */
 } CreateUserMappingStmt;
 
 typedef struct AlterUserMappingStmt
 {
 	NodeTag		type;
-	Node	   *user;			/* user role */
+	RoleSpec   *user;			/* user role */
 	char	   *servername;		/* server name */
 	List	   *options;		/* generic options to server */
 } AlterUserMappingStmt;
@@ -2015,7 +2258,7 @@ typedef struct AlterUserMappingStmt
 typedef struct DropUserMappingStmt
 {
 	NodeTag		type;
-	Node	   *user;			/* user role */
+	RoleSpec   *user;			/* user role */
 	char	   *servername;		/* server name */
 	bool		missing_ok;		/* ignore missing mappings */
 } DropUserMappingStmt;
@@ -2053,6 +2296,7 @@ typedef struct CreatePolicyStmt
 	char	   *policy_name;	/* Policy's name */
 	RangeVar   *table;			/* the table name the policy applies to */
 	char	   *cmd_name;		/* the command name the policy applies to */
+	bool		permissive;		/* restrictive or permissive policy */
 	List	   *roles;			/* the roles associated with the policy */
 	Node	   *qual;			/* the policy's condition */
 	Node	   *with_check;		/* the policy's WITH CHECK condition. */
@@ -2103,6 +2347,8 @@ typedef struct CreateTrigStmt
 	List	   *columns;		/* column names, or NIL for all columns */
 	Node	   *whenClause;		/* qual expression, or NULL if none */
 	bool		isconstraint;	/* This is a constraint trigger */
+	/* explicitly named transition data */
+	List	   *transitionRels; /* TriggerTransition nodes, or NIL if none */
 	/* The remaining fields are only used for constraint triggers */
 	bool		deferrable;		/* [NOT] DEFERRABLE */
 	bool		initdeferred;	/* INITIALLY {DEFERRED|IMMEDIATE} */
@@ -2177,7 +2423,7 @@ typedef struct CreateRoleStmt
 typedef struct AlterRoleStmt
 {
 	NodeTag		type;
-	Node	   *role;			/* role */
+	RoleSpec   *role;			/* role */
 	List	   *options;		/* List of DefElem nodes */
 	int			action;			/* +1 = add members, -1 = drop members */
 } AlterRoleStmt;
@@ -2185,7 +2431,7 @@ typedef struct AlterRoleStmt
 typedef struct AlterRoleSetStmt
 {
 	NodeTag		type;
-	Node	   *role;			/* role */
+	RoleSpec   *role;			/* role */
 	char	   *database;		/* database name, or NULL */
 	VariableSetStmt *setstmt;	/* SET or RESET subcommand */
 } AlterRoleSetStmt;
@@ -2208,6 +2454,7 @@ typedef struct CreateSeqStmt
 	RangeVar   *sequence;		/* the sequence to create */
 	List	   *options;
 	Oid			ownerId;		/* ID of owner, or InvalidOid for default */
+	bool		for_identity;
 	bool		if_not_exists;	/* just do nothing if it already exists? */
 } CreateSeqStmt;
 
@@ -2216,6 +2463,7 @@ typedef struct AlterSeqStmt
 	NodeTag		type;
 	RangeVar   *sequence;		/* the sequence to alter */
 	List	   *options;
+	bool		for_identity;
 	bool		missing_ok;		/* skip error if a role is missing? */
 } AlterSeqStmt;
 
@@ -2231,6 +2479,7 @@ typedef struct DefineStmt
 	List	   *defnames;		/* qualified name (list of Value strings) */
 	List	   *args;			/* a list of TypeName (if needed) */
 	List	   *definition;		/* a list of DefElem */
+	bool		if_not_exists;	/* just do nothing if it already exists? */
 } DefineStmt;
 
 /* ----------------------
@@ -2269,12 +2518,11 @@ typedef struct CreateOpClassItem
 {
 	NodeTag		type;
 	int			itemtype;		/* see codes above */
-	/* fields used for an operator or function item: */
-	List	   *name;			/* operator or function name */
-	List	   *args;			/* argument types */
+	ObjectWithArgs *name;		/* operator or function name and args */
 	int			number;			/* strategy num or support proc num */
 	List	   *order_family;	/* only used for ordering operators */
-	List	   *class_args;		/* only used for functions */
+	List	   *class_args;		/* amproclefttype/amprocrighttype or
+								 * amoplefttype/amoprighttype */
 	/* fields used for a storagetype item: */
 	TypeName   *storedtype;		/* datatype stored in index */
 } CreateOpClassItem;
@@ -2311,8 +2559,7 @@ typedef struct AlterOpFamilyStmt
 typedef struct DropStmt
 {
 	NodeTag		type;
-	List	   *objects;		/* list of sublists of names (as Values) */
-	List	   *arguments;		/* list of sublists of arguments (as Values) */
+	List	   *objects;		/* list of names */
 	ObjectType	removeType;		/* object type */
 	DropBehavior behavior;		/* RESTRICT or CASCADE behavior */
 	bool		missing_ok;		/* skip error if object is missing? */
@@ -2339,8 +2586,7 @@ typedef struct CommentStmt
 {
 	NodeTag		type;
 	ObjectType	objtype;		/* Object's type */
-	List	   *objname;		/* Qualified name of the object */
-	List	   *objargs;		/* Arguments if needed (eg, for functions) */
+	Node	   *object;			/* Qualified name of the object */
 	char	   *comment;		/* Comment to insert, or NULL to remove */
 } CommentStmt;
 
@@ -2352,8 +2598,7 @@ typedef struct SecLabelStmt
 {
 	NodeTag		type;
 	ObjectType	objtype;		/* Object's type */
-	List	   *objname;		/* Qualified name of the object */
-	List	   *objargs;		/* Arguments if needed (eg, for functions) */
+	Node	   *object;			/* Qualified name of the object */
 	char	   *provider;		/* Label provider (or NULL) */
 	char	   *label;			/* New security label to be assigned */
 } SecLabelStmt;
@@ -2361,9 +2606,9 @@ typedef struct SecLabelStmt
 /* ----------------------
  *		Declare Cursor Statement
  *
- * Note: the "query" field of DeclareCursorStmt is only used in the raw grammar
- * output.  After parse analysis it's set to null, and the Query points to the
- * DeclareCursorStmt, not vice versa.
+ * The "query" field is initially a raw parse tree, and is converted to a
+ * Query node during parse analysis.  Note that rewriting and planning
+ * of the query are always postponed until execution.
  * ----------------------
  */
 #define CURSOR_OPT_BINARY		0x0001	/* BINARY */
@@ -2382,7 +2627,7 @@ typedef struct DeclareCursorStmt
 	NodeTag		type;
 	char	   *portalname;		/* name of the portal (cursor) */
 	int			options;		/* bitmask of options (see above) */
-	Node	   *query;			/* the raw SELECT query */
+	Node	   *query;			/* the query (see comments above) */
 } DeclareCursorStmt;
 
 /* ----------------------
@@ -2457,6 +2702,20 @@ typedef struct IndexStmt
 } IndexStmt;
 
 /* ----------------------
+ *		Create Statistics Statement
+ * ----------------------
+ */
+typedef struct CreateStatsStmt
+{
+	NodeTag		type;
+	List	   *defnames;		/* qualified name (list of Value strings) */
+	List	   *stat_types;		/* stat types (list of Value strings) */
+	List	   *exprs;			/* expressions to build statistics on */
+	List	   *relations;		/* rels to build stats on (list of RangeVar) */
+	bool		if_not_exists;	/* do nothing if stats name already exists */
+} CreateStatsStmt;
+
+/* ----------------------
  *		Create Function Statement
  * ----------------------
  */
@@ -2493,7 +2752,7 @@ typedef struct FunctionParameter
 typedef struct AlterFunctionStmt
 {
 	NodeTag		type;
-	FuncWithArgs *func;			/* name and args of function */
+	ObjectWithArgs *func;		/* name and args of function */
 	List	   *actions;		/* list of DefElem */
 } AlterFunctionStmt;
 
@@ -2527,8 +2786,7 @@ typedef struct RenameStmt
 	ObjectType	renameType;		/* OBJECT_TABLE, OBJECT_COLUMN, etc */
 	ObjectType	relationType;	/* if column name, associated relation type */
 	RangeVar   *relation;		/* in case it's a table */
-	List	   *object;			/* in case it's some other object */
-	List	   *objarg;			/* argument types, if applicable */
+	Node	   *object;			/* in case it's some other object */
 	char	   *subname;		/* name of contained object (column, rule,
 								 * trigger, etc) */
 	char	   *newname;		/* the new name */
@@ -2545,8 +2803,7 @@ typedef struct AlterObjectDependsStmt
 	NodeTag		type;
 	ObjectType	objectType;		/* OBJECT_FUNCTION, OBJECT_TRIGGER, etc */
 	RangeVar   *relation;		/* in case a table is involved */
-	List	   *objname;		/* name of the object */
-	List	   *objargs;		/* argument types, if applicable */
+	Node	   *object;			/* name of the object */
 	Value	   *extname;		/* extension name */
 } AlterObjectDependsStmt;
 
@@ -2559,8 +2816,7 @@ typedef struct AlterObjectSchemaStmt
 	NodeTag		type;
 	ObjectType	objectType;		/* OBJECT_TABLE, OBJECT_TYPE, etc */
 	RangeVar   *relation;		/* in case it's a table */
-	List	   *object;			/* in case it's some other object */
-	List	   *objarg;			/* argument types, if applicable */
+	Node	   *object;			/* in case it's some other object */
 	char	   *newschema;		/* the new schema */
 	bool		missing_ok;		/* skip error if missing? */
 } AlterObjectSchemaStmt;
@@ -2574,9 +2830,8 @@ typedef struct AlterOwnerStmt
 	NodeTag		type;
 	ObjectType	objectType;		/* OBJECT_TABLE, OBJECT_TYPE, etc */
 	RangeVar   *relation;		/* in case it's a table */
-	List	   *object;			/* in case it's some other object */
-	List	   *objarg;			/* argument types, if applicable */
-	Node	   *newowner;		/* the new owner */
+	Node	   *object;			/* in case it's some other object */
+	RoleSpec   *newowner;		/* the new owner */
 } AlterOwnerStmt;
 
 
@@ -2587,8 +2842,7 @@ typedef struct AlterOwnerStmt
 typedef struct AlterOperatorStmt
 {
 	NodeTag		type;
-	List	   *opername;		/* operator name */
-	List	   *operargs;		/* operator's argument TypeNames */
+	ObjectWithArgs *opername;	/* operator name and argument types */
 	List	   *options;		/* List of DefElem nodes */
 } AlterOperatorStmt;
 
@@ -2707,10 +2961,11 @@ typedef struct AlterEnumStmt
 {
 	NodeTag		type;
 	List	   *typeName;		/* qualified name (list of Value strings) */
+	char	   *oldVal;			/* old enum value's name, if renaming */
 	char	   *newVal;			/* new enum value's name */
 	char	   *newValNeighbor; /* neighboring enum value, if specified */
 	bool		newValIsAfter;	/* place new enum value after neighbor? */
-	bool		skipIfExists;	/* no error if label already exists */
+	bool		skipIfNewValExists; /* no error if new already exists? */
 } AlterEnumStmt;
 
 /* ----------------------
@@ -2729,7 +2984,7 @@ typedef struct ViewStmt
 	NodeTag		type;
 	RangeVar   *view;			/* the view to be created */
 	List	   *aliases;		/* target column names */
-	Node	   *query;			/* the SELECT query */
+	Node	   *query;			/* the SELECT query (as a raw parse tree) */
 	bool		replace;		/* replace an existing view? */
 	List	   *options;		/* options from WITH clause */
 	ViewCheckOption withCheckOption;	/* WITH CHECK OPTION */
@@ -2824,7 +3079,7 @@ typedef enum VacuumOption
 	VACOPT_FULL = 1 << 4,		/* FULL (non-concurrent) vacuum */
 	VACOPT_NOWAIT = 1 << 5,		/* don't wait to get lock (autovacuum only) */
 	VACOPT_SKIPTOAST = 1 << 6,	/* don't process the TOAST table, if any */
-	VACOPT_DISABLE_PAGE_SKIPPING = 1 << 7		/* don't skip any pages */
+	VACOPT_DISABLE_PAGE_SKIPPING = 1 << 7	/* don't skip any pages */
 } VacuumOption;
 
 typedef struct VacuumStmt
@@ -2838,9 +3093,9 @@ typedef struct VacuumStmt
 /* ----------------------
  *		Explain Statement
  *
- * The "query" field is either a raw parse tree (SelectStmt, InsertStmt, etc)
- * or a Query node if parse analysis has been done.  Note that rewriting and
- * planning of the query are always postponed until execution of EXPLAIN.
+ * The "query" field is initially a raw parse tree, and is converted to a
+ * Query node during parse analysis.  Note that rewriting and planning
+ * of the query are always postponed until execution.
  * ----------------------
  */
 typedef struct ExplainStmt
@@ -2942,7 +3197,7 @@ typedef struct ConstraintsSetStmt
  */
 
 /* Reindex options */
-#define REINDEXOPT_VERBOSE 1 << 0		/* print progress info */
+#define REINDEXOPT_VERBOSE 1 << 0	/* print progress info */
 
 typedef enum ReindexObjectType
 {
@@ -2971,8 +3226,8 @@ typedef struct CreateConversionStmt
 {
 	NodeTag		type;
 	List	   *conversion_name;	/* Name of the conversion */
-	char	   *for_encoding_name;		/* source encoding name */
-	char	   *to_encoding_name;		/* destination encoding name */
+	char	   *for_encoding_name;	/* source encoding name */
+	char	   *to_encoding_name;	/* destination encoding name */
 	List	   *func_name;		/* qualified conversion function name */
 	bool		def;			/* is this a default conversion? */
 } CreateConversionStmt;
@@ -2986,7 +3241,7 @@ typedef struct CreateCastStmt
 	NodeTag		type;
 	TypeName   *sourcetype;
 	TypeName   *targettype;
-	FuncWithArgs *func;
+	ObjectWithArgs *func;
 	CoercionContext context;
 	bool		inout;
 } CreateCastStmt;
@@ -3001,8 +3256,8 @@ typedef struct CreateTransformStmt
 	bool		replace;
 	TypeName   *type_name;
 	char	   *lang;
-	FuncWithArgs *fromsql;
-	FuncWithArgs *tosql;
+	ObjectWithArgs *fromsql;
+	ObjectWithArgs *tosql;
 } CreateTransformStmt;
 
 /* ----------------------
@@ -3059,7 +3314,7 @@ typedef struct ReassignOwnedStmt
 {
 	NodeTag		type;
 	List	   *roles;
-	Node	   *newrole;
+	RoleSpec   *newrole;
 } ReassignOwnedStmt;
 
 /*
@@ -3101,4 +3356,64 @@ typedef struct AlterTSConfigurationStmt
 	bool		missing_ok;		/* for DROP - skip error if missing? */
 } AlterTSConfigurationStmt;
 
-#endif   /* PARSENODES_H */
+
+typedef struct CreatePublicationStmt
+{
+	NodeTag		type;
+	char	   *pubname;		/* Name of of the publication */
+	List	   *options;		/* List of DefElem nodes */
+	List	   *tables;			/* Optional list of tables to add */
+	bool		for_all_tables; /* Special publication for all tables in db */
+} CreatePublicationStmt;
+
+typedef struct AlterPublicationStmt
+{
+	NodeTag		type;
+	char	   *pubname;		/* Name of of the publication */
+
+	/* parameters used for ALTER PUBLICATION ... WITH */
+	List	   *options;		/* List of DefElem nodes */
+
+	/* parameters used for ALTER PUBLICATION ... ADD/DROP TABLE */
+	List	   *tables;			/* List of tables to add/drop */
+	bool		for_all_tables; /* Special publication for all tables in db */
+	DefElemAction tableAction;	/* What action to perform with the tables */
+} AlterPublicationStmt;
+
+typedef struct CreateSubscriptionStmt
+{
+	NodeTag		type;
+	char	   *subname;		/* Name of of the subscription */
+	char	   *conninfo;		/* Connection string to publisher */
+	List	   *publication;	/* One or more publication to subscribe to */
+	List	   *options;		/* List of DefElem nodes */
+} CreateSubscriptionStmt;
+
+typedef enum AlterSubscriptionType
+{
+	ALTER_SUBSCRIPTION_OPTIONS,
+	ALTER_SUBSCRIPTION_CONNECTION,
+	ALTER_SUBSCRIPTION_PUBLICATION,
+	ALTER_SUBSCRIPTION_REFRESH,
+	ALTER_SUBSCRIPTION_ENABLED
+} AlterSubscriptionType;
+
+typedef struct AlterSubscriptionStmt
+{
+	NodeTag		type;
+	AlterSubscriptionType kind; /* ALTER_SUBSCRIPTION_OPTIONS, etc */
+	char	   *subname;		/* Name of of the subscription */
+	char	   *conninfo;		/* Connection string to publisher */
+	List	   *publication;	/* One or more publication to subscribe to */
+	List	   *options;		/* List of DefElem nodes */
+} AlterSubscriptionStmt;
+
+typedef struct DropSubscriptionStmt
+{
+	NodeTag		type;
+	char	   *subname;		/* Name of of the subscription */
+	bool		missing_ok;		/* Skip error if missing? */
+	DropBehavior behavior;		/* RESTRICT or CASCADE behavior */
+} DropSubscriptionStmt;
+
+#endif							/* PARSENODES_H */

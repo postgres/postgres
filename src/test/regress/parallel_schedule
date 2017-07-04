@@ -23,14 +23,14 @@ test: numerology
 # ----------
 # The second group of parallel tests
 # ----------
-test: point lseg line box path polygon circle date time timetz timestamp timestamptz interval abstime reltime tinterval inet macaddr tstypes comments
+test: point lseg line box path polygon circle date time timetz timestamp timestamptz interval abstime reltime tinterval inet macaddr macaddr8 tstypes
 
 # ----------
 # Another group of parallel tests
 # geometry depends on point, lseg, box, path, polygon and circle
 # horology depends on interval, timetz, timestamp, timestamptz, reltime and abstime
 # ----------
-test: geometry horology regex oidjoins type_sanity opr_sanity
+test: geometry horology regex oidjoins type_sanity opr_sanity misc_sanity comments expressions
 
 # ----------
 # These four each depend on the previous one
@@ -84,18 +84,21 @@ test: select_into select_distinct select_distinct_on select_implicit select_havi
 # ----------
 # Another group of parallel tests
 # ----------
-test: brin gin gist spgist privileges init_privs security_label collate matview lock replica_identity rowsecurity object_address tablesample groupingsets drop_operator
+test: brin gin gist spgist privileges init_privs security_label collate matview lock replica_identity rowsecurity object_address tablesample groupingsets drop_operator large_object password
 
 # ----------
 # Another group of parallel tests
 # ----------
-test: alter_generic alter_operator misc psql async dbsize misc_functions
+test: alter_generic alter_operator misc psql async dbsize misc_functions sysviews tsrf tidscan stats_ext
 
 # rules cannot run concurrently with any test that creates a view
 test: rules psql_crosstab amutils
 
 # run by itself so it can run parallel workers
 test: select_parallel
+
+# no relation related tests can be put in this group
+test: publication subscription
 
 # ----------
 # Another group of parallel tests
@@ -107,6 +110,11 @@ test: select_views portals_p2 foreign_key cluster dependency guc bitmapops combo
 # so keep this parallel group to at most 19 tests
 # ----------
 test: plancache limit plpgsql copy2 temp domain rangefuncs prepare without_oid conversion truncate alter_table sequence polymorphism rowtypes returning largeobject with xml
+
+# ----------
+# Another group of parallel tests
+# ----------
+test: identity
 
 # event triggers cannot run concurrently with any test that runs DDL
 test: event_trigger

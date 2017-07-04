@@ -4,7 +4,7 @@
  *
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/executor/nodeLockRows.h
@@ -21,4 +21,4 @@ extern TupleTableSlot *ExecLockRows(LockRowsState *node);
 extern void ExecEndLockRows(LockRowsState *node);
 extern void ExecReScanLockRows(LockRowsState *node);
 
-#endif   /* NODELOCKROWS_H */
+#endif							/* NODELOCKROWS_H */

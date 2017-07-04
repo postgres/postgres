@@ -3,7 +3,7 @@
  * pg_user_mapping.h
  *	  definition of the system "user mapping" relation (pg_user_mapping)
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_user_mapping.h
@@ -54,4 +54,4 @@ typedef FormData_pg_user_mapping *Form_pg_user_mapping;
 #define Anum_pg_user_mapping_umserver		2
 #define Anum_pg_user_mapping_umoptions		3
 
-#endif   /* PG_USER_MAPPING_H */
+#endif							/* PG_USER_MAPPING_H */

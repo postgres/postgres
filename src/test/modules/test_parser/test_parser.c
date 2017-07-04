@@ -3,7 +3,7 @@
  * test_parser.c
  *	  Simple example of a text search parser
  *
- * Copyright (c) 2007-2016, PostgreSQL Global Development Group
+ * Copyright (c) 2007-2017, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/test/modules/test_parser/test_parser.c
@@ -28,7 +28,6 @@ typedef struct
 	int			pos;			/* position of the parser */
 } ParserState;
 
-/* copy-paste from wparser.h of tsearch2 */
 typedef struct
 {
 	int			lexid;

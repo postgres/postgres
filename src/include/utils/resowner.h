@@ -9,7 +9,7 @@
  * See utils/resowner/README for more info.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/resowner.h
@@ -54,9 +54,9 @@ typedef enum
  *	by providing a callback of this form.
  */
 typedef void (*ResourceReleaseCallback) (ResourceReleasePhase phase,
-													 bool isCommit,
-													 bool isTopLevel,
-													 void *arg);
+										 bool isCommit,
+										 bool isTopLevel,
+										 void *arg);
 
 
 /*
@@ -79,4 +79,4 @@ extern void RegisterResourceReleaseCallback(ResourceReleaseCallback callback,
 extern void UnregisterResourceReleaseCallback(ResourceReleaseCallback callback,
 								  void *arg);
 
-#endif   /* RESOWNER_H */
+#endif							/* RESOWNER_H */

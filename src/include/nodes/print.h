@@ -4,7 +4,7 @@
  *	  definitions for nodes/print.c
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/nodes/print.h
@@ -31,4 +31,4 @@ extern void print_pathkeys(const List *pathkeys, const List *rtable);
 extern void print_tl(const List *tlist, const List *rtable);
 extern void print_slot(TupleTableSlot *slot);
 
-#endif   /* PRINT_H */
+#endif							/* PRINT_H */

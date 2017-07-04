@@ -9,7 +9,7 @@
  * executor's "junkfilter" routines, but these functions work on bare
  * HeapTuples rather than TupleTableSlots.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -138,12 +138,14 @@ convert_tuples_by_position(TupleDesc indesc,
 						   nincols, noutcols)));
 
 	/*
-	 * Check to see if the map is one-to-one and the tuple types are the same.
-	 * (We check the latter because if they're not, we want to do conversion
-	 * to inject the right OID into the tuple datum.)
+	 * Check to see if the map is one-to-one, in which case we need not do a
+	 * tuple conversion.  We must also insist that both tupdescs either
+	 * specify or don't specify an OID column, else we need a conversion to
+	 * add/remove space for that.  (For some callers, presence or absence of
+	 * an OID column perhaps would not really matter, but let's be safe.)
 	 */
 	if (indesc->natts == outdesc->natts &&
-		indesc->tdtypeid == outdesc->tdtypeid)
+		indesc->tdhasoid == outdesc->tdhasoid)
 	{
 		for (i = 0; i < n; i++)
 		{
@@ -186,7 +188,7 @@ convert_tuples_by_position(TupleDesc indesc,
 	n = indesc->natts + 1;		/* +1 for NULL */
 	map->invalues = (Datum *) palloc(n * sizeof(Datum));
 	map->inisnull = (bool *) palloc(n * sizeof(bool));
-	map->invalues[0] = (Datum) 0;		/* set up the NULL entry */
+	map->invalues[0] = (Datum) 0;	/* set up the NULL entry */
 	map->inisnull[0] = true;
 
 	return map;
@@ -206,11 +208,86 @@ convert_tuples_by_name(TupleDesc indesc,
 {
 	TupleConversionMap *map;
 	AttrNumber *attrMap;
-	int			n;
+	int			n = outdesc->natts;
 	int			i;
 	bool		same;
 
 	/* Verify compatibility and prepare attribute-number map */
+	attrMap = convert_tuples_by_name_map(indesc, outdesc, msg);
+
+	/*
+	 * Check to see if the map is one-to-one, in which case we need not do a
+	 * tuple conversion.  We must also insist that both tupdescs either
+	 * specify or don't specify an OID column, else we need a conversion to
+	 * add/remove space for that.  (For some callers, presence or absence of
+	 * an OID column perhaps would not really matter, but let's be safe.)
+	 */
+	if (indesc->natts == outdesc->natts &&
+		indesc->tdhasoid == outdesc->tdhasoid)
+	{
+		same = true;
+		for (i = 0; i < n; i++)
+		{
+			if (attrMap[i] == (i + 1))
+				continue;
+
+			/*
+			 * If it's a dropped column and the corresponding input column is
+			 * also dropped, we needn't convert.  However, attlen and attalign
+			 * must agree.
+			 */
+			if (attrMap[i] == 0 &&
+				indesc->attrs[i]->attisdropped &&
+				indesc->attrs[i]->attlen == outdesc->attrs[i]->attlen &&
+				indesc->attrs[i]->attalign == outdesc->attrs[i]->attalign)
+				continue;
+
+			same = false;
+			break;
+		}
+	}
+	else
+		same = false;
+
+	if (same)
+	{
+		/* Runtime conversion is not needed */
+		pfree(attrMap);
+		return NULL;
+	}
+
+	/* Prepare the map structure */
+	map = (TupleConversionMap *) palloc(sizeof(TupleConversionMap));
+	map->indesc = indesc;
+	map->outdesc = outdesc;
+	map->attrMap = attrMap;
+	/* preallocate workspace for Datum arrays */
+	map->outvalues = (Datum *) palloc(n * sizeof(Datum));
+	map->outisnull = (bool *) palloc(n * sizeof(bool));
+	n = indesc->natts + 1;		/* +1 for NULL */
+	map->invalues = (Datum *) palloc(n * sizeof(Datum));
+	map->inisnull = (bool *) palloc(n * sizeof(bool));
+	map->invalues[0] = (Datum) 0;	/* set up the NULL entry */
+	map->inisnull[0] = true;
+
+	return map;
+}
+
+/*
+ * Return a palloc'd bare attribute map for tuple conversion, matching input
+ * and output columns by name.  (Dropped columns are ignored in both input and
+ * output.)  This is normally a subroutine for convert_tuples_by_name, but can
+ * be used standalone.
+ */
+AttrNumber *
+convert_tuples_by_name_map(TupleDesc indesc,
+						   TupleDesc outdesc,
+						   const char *msg)
+{
+	AttrNumber *attrMap;
+	int			n;
+	int			i;
+
 	n = outdesc->natts;
 	attrMap = (AttrNumber *) palloc0(n * sizeof(AttrNumber));
 	for (i = 0; i < n; i++)
@@ -256,60 +333,7 @@ convert_tuples_by_name(TupleDesc indesc,
 							   format_type_be(indesc->tdtypeid))));
 	}
 
-	/*
-	 * Check to see if the map is one-to-one and the tuple types are the same.
-	 * (We check the latter because if they're not, we want to do conversion
-	 * to inject the right OID into the tuple datum.)
-	 */
-	if (indesc->natts == outdesc->natts &&
-		indesc->tdtypeid == outdesc->tdtypeid)
-	{
-		same = true;
-		for (i = 0; i < n; i++)
-		{
-			if (attrMap[i] == (i + 1))
-				continue;
-
-			/*
-			 * If it's a dropped column and the corresponding input column is
-			 * also dropped, we needn't convert.  However, attlen and attalign
-			 * must agree.
-			 */
-			if (attrMap[i] == 0 &&
-				indesc->attrs[i]->attisdropped &&
-				indesc->attrs[i]->attlen == outdesc->attrs[i]->attlen &&
-				indesc->attrs[i]->attalign == outdesc->attrs[i]->attalign)
-				continue;
-
-			same = false;
-			break;
-		}
-	}
-	else
-		same = false;
-
-	if (same)
-	{
-		/* Runtime conversion is not needed */
-		pfree(attrMap);
-		return NULL;
-	}
-
-	/* Prepare the map structure */
-	map = (TupleConversionMap *) palloc(sizeof(TupleConversionMap));
-	map->indesc = indesc;
-	map->outdesc = outdesc;
-	map->attrMap = attrMap;
-	/* preallocate workspace for Datum arrays */
-	map->outvalues = (Datum *) palloc(n * sizeof(Datum));
-	map->outisnull = (bool *) palloc(n * sizeof(bool));
-	n = indesc->natts + 1;		/* +1 for NULL */
-	map->invalues = (Datum *) palloc(n * sizeof(Datum));
-	map->inisnull = (bool *) palloc(n * sizeof(bool));
-	map->invalues[0] = (Datum) 0;		/* set up the NULL entry */
-	map->inisnull[0] = true;
-
-	return map;
+	return attrMap;
 }
 
 /*

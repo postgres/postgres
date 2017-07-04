@@ -240,8 +240,7 @@ EXEC SQL AT <replaceable>connection-name</replaceable> SELECT ...;
   <para>
    If your application uses multiple threads of execution, they cannot share a
    connection concurrently. You must either explicitly control access to the connection
-   (using mutexes) or use a connection for each thread. If each thread uses its own connection,
-   you will need to use the AT clause to specify which connection the thread will use.
+   (using mutexes) or use a connection for each thread.
   </para>
 
   <para>
@@ -251,7 +250,7 @@ EXEC SQL AT <replaceable>connection-name</replaceable> SELECT ...;
 EXEC SQL SET CONNECTION <replaceable>connection-name</replaceable>;
 </programlisting>
    This option is particularly convenient if many statements are to be
-   executed on the same connection.  It is not thread-aware.
+   executed on the same connection.
   </para>
 
   <para>
@@ -508,6 +507,33 @@ EXEC SQL COMMIT;
      </varlistentry>
 
      <varlistentry>
+      <term><literal>EXEC SQL PREPARE TRANSACTION </literal><replaceable class="PARAMETER">transaction_id</></term>
+      <listitem>
+       <para>
+        Prepare the current transaction for two-phase commit.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>EXEC SQL COMMIT PREPARED </literal><replaceable class="PARAMETER">transaction_id</></term>
+      <listitem>
+       <para>
+        Commit a transaction that is in prepared state.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>EXEC SQL ROLLBACK PREPARED </literal><replaceable class="PARAMETER">transaction_id</></term>
+      <listitem>
+       <para>
+        Roll back a transaction that is in prepared state.
+       </para>
+      </listitem>
+     </varlistentry>
+     
+     <varlistentry>
       <term><literal>EXEC SQL SET AUTOCOMMIT TO ON</literal></term>
       <listitem>
        <para>
@@ -517,7 +543,7 @@ EXEC SQL COMMIT;
      </varlistentry>
 
      <varlistentry>
-      <term><literal>SET AUTOCOMMIT TO OFF</literal></term>
+      <term><literal>EXEC SQL SET AUTOCOMMIT TO OFF</literal></term>
       <listitem>
        <para>
         Disable autocommit mode.  This is the default.
@@ -892,6 +918,11 @@ do
        <entry><type>boolean</type></entry>
        <entry><type>bool</type><footnote><para>declared in <filename>ecpglib.h</filename> if not native</para></footnote></entry>
       </row>
+
+      <row>
+       <entry><type>bytea</type></entry>
+       <entry><type>char *</type></entry>
+      </row>
      </tbody>
     </tgroup>
    </table>
@@ -1162,7 +1193,7 @@ EXEC SQL END DECLARE SECTION;
       There are two use cases for arrays as host variables.  The first
       is a way to store some text string in <type>char[]</type>
       or <type>VARCHAR[]</type>, as
-      explained <xref linkend="ecpg-char">.  The second use case is to
+      explained in <xref linkend="ecpg-char">.  The second use case is to
       retrieve multiple rows from a query result without using a
       cursor.  Without an array, to process a query result consisting
       of multiple rows, it is required to use a cursor and
@@ -3565,7 +3596,7 @@ void PGTYPESdecimal_free(decimal *var);
 EXEC SQL ALLOCATE DESCRIPTOR <replaceable>identifier</replaceable>;
 </programlisting>
     The identifier serves as the <quote>variable name</quote> of the
-    descriptor area.  <remark>The scope of the allocated descriptor is WHAT?.</remark>
+    descriptor area.  <!-- The scope of the allocated descriptor is WHAT?. -->
     When you don't need the descriptor anymore, you should deallocate
     it:
 <programlisting>

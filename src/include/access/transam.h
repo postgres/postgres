@@ -4,7 +4,7 @@
  *	  postgres transaction access method support code
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/access/transam.h
@@ -134,6 +134,12 @@ typedef struct VariableCacheData
 	 */
 	TransactionId latestCompletedXid;	/* newest XID that has committed or
 										 * aborted */
+
+	/*
+	 * These fields are protected by CLogTruncationLock
+	 */
+	TransactionId oldestClogXid;	/* oldest it's safe to look up in clog */
+
 } VariableCacheData;
 
 typedef VariableCacheData *VariableCache;
@@ -173,7 +179,8 @@ extern TransactionId GetNewTransactionId(bool isSubXact);
 extern TransactionId ReadNewTransactionId(void);
 extern void SetTransactionIdLimit(TransactionId oldest_datfrozenxid,
 					  Oid oldest_datoid);
+extern void AdvanceOldestClogXid(TransactionId oldest_datfrozenxid);
 extern bool ForceTransactionIdLimitUpdate(void);
 extern Oid	GetNewObjectId(void);
 
-#endif   /* TRAMSAM_H */
+#endif							/* TRAMSAM_H */

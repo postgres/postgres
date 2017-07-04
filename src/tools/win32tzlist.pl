@@ -2,7 +2,7 @@
 #
 # win32tzlist.pl -- compare Windows timezone information
 #
-# Copyright (c) 2008-2016, PostgreSQL Global Development Group
+# Copyright (c) 2008-2017, PostgreSQL Global Development Group
 #
 # src/tools/win32tzlist.pl
 #################################################################
@@ -58,11 +58,11 @@ $basekey->Close();
 # Fetch all timezones currently in the file
 #
 my @file_zones;
-open(TZFILE, "<$tzfile") or die "Could not open $tzfile!\n";
+open(my $tzfh, '<', $tzfile) or die "Could not open $tzfile!\n";
 my $t = $/;
 undef $/;
-my $pgtz = <TZFILE>;
-close(TZFILE);
+my $pgtz = <$tzfh>;
+close($tzfh);
 $/ = $t;
 
 # Attempt to locate and extract the complete win32_tzmap struct

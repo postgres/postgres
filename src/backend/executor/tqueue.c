@@ -23,7 +23,7 @@
  * and rewrites the typmods sent by the remote side to the corresponding
  * local record typmods.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -95,7 +95,7 @@ typedef struct ArrayRemapInfo
 	int16		typlen;			/* array element type's storage properties */
 	bool		typbyval;
 	char		typalign;
-	TupleRemapInfo *element_remap;		/* array element type's remap info */
+	TupleRemapInfo *element_remap;	/* array element type's remap info */
 } ArrayRemapInfo;
 
 typedef struct RangeRemapInfo
@@ -113,7 +113,7 @@ typedef struct RecordRemapInfo
 	int32		localtypmod;
 	/* If no fields of the record require remapping, these are NULL: */
 	TupleDesc	tupledesc;		/* copy of record's tupdesc */
-	TupleRemapInfo **field_remap;		/* each field's remap info */
+	TupleRemapInfo **field_remap;	/* each field's remap info */
 } RecordRemapInfo;
 
 struct TupleRemapInfo
@@ -281,9 +281,7 @@ tqueueReceiveSlot(TupleTableSlot *slot, DestReceiver *self)
 					tqueue->tmpcontext =
 						AllocSetContextCreate(tqueue->mycontext,
 											  "tqueue sender temp context",
-											  ALLOCSET_DEFAULT_MINSIZE,
-											  ALLOCSET_DEFAULT_INITSIZE,
-											  ALLOCSET_DEFAULT_MAXSIZE);
+											  ALLOCSET_DEFAULT_SIZES);
 				oldcontext = MemoryContextSwitchTo(tqueue->tmpcontext);
 			}
 
@@ -529,7 +527,7 @@ TQSendRecordInfo(TQueueDestReceiver *tqueue, int32 typmod, TupleDesc tupledesc)
 		ctl.hcxt = tqueue->mycontext;
 		tqueue->recordhtab = hash_create("tqueue sender record type hashtable",
 										 100, &ctl,
-									  HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
+										 HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 	}
 
 	/* Have we already seen this record type?  If not, must report it. */
@@ -867,7 +865,7 @@ TQRemapArray(TupleQueueReader *reader, ArrayRemapInfo *remapinfo,
 		/* Reconstruct and return the array.  */
 		*changed = true;
 		arr = construct_md_array(elem_values, elem_nulls,
-							   ARR_NDIM(arr), ARR_DIMS(arr), ARR_LBOUND(arr),
+								 ARR_NDIM(arr), ARR_DIMS(arr), ARR_LBOUND(arr),
 								 typid, remapinfo->typlen,
 								 remapinfo->typbyval, remapinfo->typalign);
 		return PointerGetDatum(arr);
@@ -1101,7 +1099,7 @@ TupleQueueHandleControlMessage(TupleQueueReader *reader, Size nbytes,
 		ctl.hcxt = reader->mycontext;
 		reader->typmodmap = hash_create("tqueue receiver record type hashtable",
 										100, &ctl,
-									  HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
+										HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 	}
 
 	/* Create map entry. */

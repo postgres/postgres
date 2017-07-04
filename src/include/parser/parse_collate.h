@@ -4,7 +4,7 @@
  *	Routines for assigning collation information.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/parser/parse_collate.h
@@ -24,4 +24,4 @@ extern void assign_expr_collations(ParseState *pstate, Node *expr);
 
 extern Oid	select_common_collation(ParseState *pstate, List *exprs, bool none_ok);
 
-#endif   /* PARSE_COLLATE_H */
+#endif							/* PARSE_COLLATE_H */

@@ -3,7 +3,7 @@
  * tupdesc.c
  *	  POSTGRES tuple descriptor support code
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -20,6 +20,7 @@
 #include "postgres.h"
 
 #include "access/htup_details.h"
+#include "catalog/pg_collation.h"
 #include "catalog/pg_type.h"
 #include "miscadmin.h"
 #include "parser/parse_type.h"
@@ -149,6 +150,7 @@ CreateTupleDescCopy(TupleDesc tupdesc)
 		memcpy(desc->attrs[i], tupdesc->attrs[i], ATTRIBUTE_FIXED_PART_SIZE);
 		desc->attrs[i]->attnotnull = false;
 		desc->attrs[i]->atthasdef = false;
+		desc->attrs[i]->attidentity = '\0';
 	}
 
 	desc->tdtypeid = tupdesc->tdtypeid;
@@ -256,6 +258,7 @@ TupleDescCopyEntry(TupleDesc dst, AttrNumber dstAttno,
 	/* since we're not copying constraints or defaults, clear these */
 	dst->attrs[dstAttno - 1]->attnotnull = false;
 	dst->attrs[dstAttno - 1]->atthasdef = false;
+	dst->attrs[dstAttno - 1]->attidentity = '\0';
 }
 
 /*
@@ -400,6 +403,8 @@ equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)
 			return false;
 		if (attr1->atthasdef != attr2->atthasdef)
 			return false;
+		if (attr1->attidentity != attr2->attidentity)
+			return false;
 		if (attr1->attisdropped != attr2->attisdropped)
 			return false;
 		if (attr1->attislocal != attr2->attislocal)
@@ -533,6 +538,7 @@ TupleDescInitEntry(TupleDesc desc,
 
 	att->attnotnull = false;
 	att->atthasdef = false;
+	att->attidentity = '\0';
 	att->attisdropped = false;
 	att->attislocal = true;
 	att->attinhcount = 0;
@@ -551,6 +557,93 @@ TupleDescInitEntry(TupleDesc desc,
 	att->attcollation = typeForm->typcollation;
 
 	ReleaseSysCache(tuple);
+}
+
+/*
+ * TupleDescInitBuiltinEntry
+ *		Initialize a tuple descriptor without catalog access.  Only
+ *		a limited range of builtin types are supported.
+ */
+void
+TupleDescInitBuiltinEntry(TupleDesc desc,
+						  AttrNumber attributeNumber,
+						  const char *attributeName,
+						  Oid oidtypeid,
+						  int32 typmod,
+						  int attdim)
+{
+	Form_pg_attribute att;
+
+	/* sanity checks */
+	AssertArg(PointerIsValid(desc));
+	AssertArg(attributeNumber >= 1);
+	AssertArg(attributeNumber <= desc->natts);
+
+	/* initialize the attribute fields */
+	att = desc->attrs[attributeNumber - 1];
+	att->attrelid = 0;			/* dummy value */
+
+	/* unlike TupleDescInitEntry, we require an attribute name */
+	Assert(attributeName != NULL);
+	namestrcpy(&(att->attname), attributeName);
+
+	att->attstattarget = -1;
+	att->attcacheoff = -1;
+	att->atttypmod = typmod;
+
+	att->attnum = attributeNumber;
+	att->attndims = attdim;
+
+	att->attnotnull = false;
+	att->atthasdef = false;
+	att->attidentity = '\0';
+	att->attisdropped = false;
+	att->attislocal = true;
+	att->attinhcount = 0;
+	/* attacl, attoptions and attfdwoptions are not present in tupledescs */
+
+	att->atttypid = oidtypeid;
+
+	/*
+	 * Our goal here is to support just enough types to let basic builtin
+	 * commands work without catalog access - e.g. so that we can do certain
+	 * things even in processes that are not connected to a database.
+	 */
+	switch (oidtypeid)
+	{
+		case TEXTOID:
+		case TEXTARRAYOID:
+			att->attlen = -1;
+			att->attbyval = false;
+			att->attalign = 'i';
+			att->attstorage = 'x';
+			att->attcollation = DEFAULT_COLLATION_OID;
+			break;
+
+		case BOOLOID:
+			att->attlen = 1;
+			att->attbyval = true;
+			att->attalign = 'c';
+			att->attstorage = 'p';
+			att->attcollation = InvalidOid;
+			break;
+
+		case INT4OID:
+			att->attlen = 4;
+			att->attbyval = true;
+			att->attalign = 'i';
+			att->attstorage = 'p';
+			att->attcollation = InvalidOid;
+			break;
+
+		case INT8OID:
+			att->attlen = 8;
+			att->attbyval = FLOAT8PASSBYVAL;
+			att->attalign = 'd';
+			att->attstorage = 'p';
+			att->attcollation = InvalidOid;
+			break;
+	}
 }
 
 /*

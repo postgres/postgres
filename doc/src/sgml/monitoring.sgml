@@ -309,10 +309,26 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </row>
 
      <row>
+      <entry><structname>pg_stat_subscription</><indexterm><primary>pg_stat_subscription</primary></indexterm></entry>
+      <entry>At least one row per subscription, showing information about
+       the subscription workers.
+       See <xref linkend="pg-stat-subscription"> for details.
+      </entry>
+     </row>
+
+     <row>
       <entry><structname>pg_stat_ssl</><indexterm><primary>pg_stat_ssl</primary></indexterm></entry>
       <entry>One row per connection (regular and replication), showing information about
        SSL used on this connection.
        See <xref linkend="pg-stat-ssl-view"> for details.
+      </entry>
+     </row>
+
+     <row>
+      <entry><structname>pg_stat_progress_vacuum</><indexterm><primary>pg_stat_progress_vacuum</primary></indexterm></entry>
+      <entry>One row for each backend (including autovacuum worker processes) running
+       <command>VACUUM</>, showing current progress.
+       See <xref linkend='vacuum-progress-reporting'>.
       </entry>
      </row>
 
@@ -507,12 +523,6 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       yet included in <structname>pg_stat_user_functions</>).</entry>
      </row>
 
-     <row>
-      <entry><structname>pg_stat_progress_vacuum</><indexterm><primary>pg_stat_progress_vacuum</primary></indexterm></entry>
-      <entry>One row for each backend (including autovacuum worker processes) running
-      <command>VACUUM</>, showing current progress.
-      See <xref linkend='vacuum-progress-reporting'>.</entry>
-     </row>
     </tbody>
    </tgroup>
   </table>
@@ -612,8 +622,8 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
     <row>
      <entry><structfield>backend_start</></entry>
      <entry><type>timestamp with time zone</></entry>
-     <entry>Time when this process was started, i.e., when the
-      client connected to the server
+     <entry>Time when this process was started.  For client backends,
+      this is the time the client connected to the server.
      </entry>
     </row>
     <row>
@@ -646,18 +656,11 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
        <itemizedlist>
         <listitem>
          <para>
-          <literal>LWLockNamed</>: The backend is waiting for a specific named
-          lightweight lock.  Each such lock protects a particular data
-          structure in shared memory.  <literal>wait_event</> will contain
-          the name of the lightweight lock.
-         </para>
-        </listitem>
-        <listitem>
-         <para>
-          <literal>LWLockTranche</>: The backend is waiting for one of a
-          group of related lightweight locks.  All locks in the group perform
-          a similar function; <literal>wait_event</> will identify the general
-          purpose of locks in that group.
+          <literal>LWLock</>: The backend is waiting for a lightweight lock.
+          Each such lock protects a particular data structure in shared memory.
+          <literal>wait_event</> will contain a name identifying the purpose
+          of the lightweight lock.  (Some locks have specific names; others
+          are part of a group of locks each with a similar purpose.)
          </para>
         </listitem>
         <listitem>
@@ -677,6 +680,48 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
           examining that buffer.  Buffer pin waits can be protracted if
           another process holds an open cursor which last read data from the
           buffer in question.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>Activity</>: The server process is idle.  This is used by
+          system processes waiting for activity in their main processing loop.
+          <literal>wait_event</> will identify the specific wait point.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>Extension</>: The server process is waiting for activity
+          in an extension module.  This category is useful for modules to
+          track custom waiting points.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>Client</>: The server process is waiting for some activity
+          on a socket from user applications, and that the server expects
+          something to happen that is independent from its internal processes.
+          <literal>wait_event</> will identify the specific wait point.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>IPC</>: The server process is waiting for some activity
+          from another process in the server.  <literal>wait_event</> will
+          identify the specific wait point.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>Timeout</>: The server process is waiting for a timeout
+          to expire.  <literal>wait_event</> will identify the specific wait
+          point.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          <literal>IO</>: The server process is waiting for a IO to complete.
+          <literal>wait_event</> will identify the specific wait point.
          </para>
         </listitem>
        </itemizedlist>
@@ -749,7 +794,20 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      <entry>Text of this backend's most recent query. If
       <structfield>state</> is <literal>active</> this field shows the
       currently executing query. In all other states, it shows the last query
-      that was executed.
+      that was executed. By default the query text is truncated at 1024
+      characters; this value can be changed via the parameter
+      <xref linkend="guc-track-activity-query-size">.
+     </entry>
+    </row>
+    <row>
+     <entry><structfield>backend_type</structfield></entry>
+     <entry><type>text</type></entry>
+     <entry>Type of current backend. Possible types are
+      <literal>autovacuum launcher</>, <literal>autovacuum worker</>,
+      <literal>background worker</>, <literal>background writer</>,
+      <literal>client backend</>, <literal>checkpointer</>,
+      <literal>startup</>, <literal>walreceiver</>,
+      <literal>walsender</> and <literal>walwriter</>.
      </entry>
     </row>
    </tbody>
@@ -787,7 +845,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
 
       <tbody>
        <row>
-        <entry morerows="41"><literal>LWLockNamed</></entry>
+        <entry morerows="59"><literal>LWLock</></entry>
         <entry><literal>ShmemIndexLock</></entry>
         <entry>Waiting to find or allocate space in shared memory.</entry>
        </row>
@@ -973,7 +1031,10 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
          <entry>Waiting to read or update old snapshot control information.</entry>
         </row>
         <row>
-         <entry morerows="15"><literal>LWLockTranche</></entry>
+         <entry><literal>CLogTruncationLock</></entry>
+         <entry>Waiting to truncate the write-ahead log or waiting for write-ahead log truncation to finish.</entry>
+        </row>
+        <row>
          <entry><literal>clog</></entry>
          <entry>Waiting for I/O on a clog (transaction status) buffer.</entry>
         </row>
@@ -1040,6 +1101,14 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
          <entry>Waiting to add or examine predicate lock information.</entry>
         </row>
         <row>
+         <entry><literal>parallel_query_dsa</></entry>
+         <entry>Waiting for parallel query dynamic shared memory allocation lock.</entry>
+        </row>
+        <row>
+         <entry><literal>tbm</></entry>
+         <entry>Waiting for TBM shared iterator lock.</entry>
+        </row>
+        <row>
          <entry morerows="9"><literal>Lock</></entry>
          <entry><literal>relation</></entry>
          <entry>Waiting to acquire a lock on a relation.</entry>
@@ -1074,7 +1143,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
         </row>
         <row>
          <entry><literal>userlock</></entry>
-         <entry>Waiting to acquire a userlock.</entry>
+         <entry>Waiting to acquire a user lock.</entry>
         </row>
         <row>
          <entry><literal>advisory</></entry>
@@ -1084,6 +1153,416 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
          <entry><literal>BufferPin</></entry>
          <entry><literal>BufferPin</></entry>
          <entry>Waiting to acquire a pin on a buffer.</entry>
+        </row>
+        <row>
+         <entry morerows="11"><literal>Activity</></entry>
+         <entry><literal>ArchiverMain</></entry>
+         <entry>Waiting in main loop of the archiver process.</entry>
+        </row>
+        <row>
+         <entry><literal>AutoVacuumMain</></entry>
+         <entry>Waiting in main loop of autovacuum launcher process.</entry>
+        </row>
+        <row>
+         <entry><literal>BgWriterHibernate</></entry>
+         <entry>Waiting in background writer process, hibernating.</entry>
+        </row>
+        <row>
+         <entry><literal>BgWriterMain</></entry>
+         <entry>Waiting in main loop of background writer process background worker.</entry>
+        </row>
+        <row>
+         <entry><literal>CheckpointerMain</></entry>
+         <entry>Waiting in main loop of checkpointer process.</entry>
+        </row>
+        <row>
+         <entry><literal>PgStatMain</></entry>
+         <entry>Waiting in main loop of the statistics collector process.</entry>
+        </row>
+        <row>
+         <entry><literal>RecoveryWalAll</></entry>
+         <entry>Waiting for WAL from any kind of source (local, archive or stream) at recovery.</entry>
+        </row>
+        <row>
+         <entry><literal>RecoveryWalStream</></entry>
+         <entry>Waiting for WAL from a stream at recovery.</entry>
+        </row>
+        <row>
+         <entry><literal>SysLoggerMain</></entry>
+         <entry>Waiting in main loop of syslogger process.</entry>
+        </row>
+        <row>
+         <entry><literal>WalReceiverMain</></entry>
+         <entry>Waiting in main loop of WAL receiver process.</entry>
+        </row>
+        <row>
+         <entry><literal>WalSenderMain</></entry>
+         <entry>Waiting in main loop of WAL sender process.</entry>
+        </row>
+        <row>
+         <entry><literal>WalWriterMain</></entry>
+         <entry>Waiting in main loop of WAL writer process.</entry>
+        </row>
+        <row>
+         <entry morerows="5"><literal>Client</></entry>
+         <entry><literal>ClientRead</></entry>
+         <entry>Waiting to read data from the client.</entry>
+        </row>
+        <row>
+         <entry><literal>ClientWrite</></entry>
+         <entry>Waiting to write data from the client.</entry>
+        </row>
+        <row>
+         <entry><literal>SSLOpenServer</></entry>
+         <entry>Waiting for SSL while attempting connection.</entry>
+        </row>
+        <row>
+         <entry><literal>WalReceiverWaitStart</></entry>
+         <entry>Waiting for startup process to send initial data for streaming replication.</entry>
+        </row>
+        <row>
+         <entry><literal>WalSenderWaitForWAL</></entry>
+         <entry>Waiting for WAL to be flushed in WAL sender process.</entry>
+        </row>
+        <row>
+         <entry><literal>WalSenderWriteData</></entry>
+         <entry>Waiting for any activity when processing replies from WAL receiver in WAL sender process.</entry>
+        </row>
+        <row>
+         <entry><literal>Extension</></entry>
+         <entry><literal>Extension</></entry>
+         <entry>Waiting in an extension.</entry>
+        </row>
+        <row>
+         <entry morerows="12"><literal>IPC</></entry>
+         <entry><literal>BgWorkerShutdown</></entry>
+         <entry>Waiting for background worker to shut down.</entry>
+        </row>
+        <row>
+         <entry><literal>BgWorkerStartup</></entry>
+         <entry>Waiting for background worker to start up.</entry>
+        </row>
+        <row>
+         <entry><literal>BtreePage</></entry>
+         <entry>Waiting for the page number needed to continue a parallel B-tree scan to become available.</entry>
+        </row>
+        <row>
+         <entry><literal>ExecuteGather</></entry>
+         <entry>Waiting for activity from child process when executing <literal>Gather</> node.</entry>
+        </row>
+        <row>
+         <entry><literal>MessageQueueInternal</></entry>
+         <entry>Waiting for other process to be attached in shared message queue.</entry>
+        </row>
+        <row>
+         <entry><literal>MessageQueuePutMessage</></entry>
+         <entry>Waiting to write a protocol message to a shared message queue.</entry>
+        </row>
+        <row>
+         <entry><literal>MessageQueueReceive</></entry>
+         <entry>Waiting to receive bytes from a shared message queue.</entry>
+        </row>
+        <row>
+         <entry><literal>MessageQueueSend</></entry>
+         <entry>Waiting to send bytes to a shared message queue.</entry>
+        </row>
+        <row>
+         <entry><literal>ParallelFinish</></entry>
+         <entry>Waiting for parallel workers to finish computing.</entry>
+        </row>
+        <row>
+         <entry><literal>ParallelBitmapPopulate</></entry>
+         <entry>Waiting for the leader to populate the TidBitmap.</entry>
+        </row>
+        <row>
+         <entry><literal>ProcArrayGroupUpdate</></entry>
+         <entry>Waiting for group leader to clear transaction id at transaction end.</entry>
+        </row>
+        <row>
+         <entry><literal>SafeSnapshot</></entry>
+         <entry>Waiting for a snapshot for a <literal>READ ONLY DEFERRABLE</> transaction.</entry>
+        </row>
+        <row>
+         <entry><literal>SyncRep</></entry>
+         <entry>Waiting for confirmation from remote server during synchronous replication.</entry>
+        </row>
+        <row>
+         <entry morerows="2"><literal>Timeout</></entry>
+         <entry><literal>BaseBackupThrottle</></entry>
+         <entry>Waiting during base backup when throttling activity.</entry>
+        </row>
+        <row>
+         <entry><literal>PgSleep</></entry>
+         <entry>Waiting in process that called <function>pg_sleep</>.</entry>
+        </row>
+        <row>
+         <entry><literal>RecoveryApplyDelay</></entry>
+         <entry>Waiting to apply WAL at recovery because it is delayed.</entry>
+        </row>
+        <row>
+         <entry morerows="65"><literal>IO</></entry>
+         <entry><literal>BufFileRead</></entry>
+         <entry>Waiting for a read from a buffered file.</entry>
+        </row>
+        <row>
+         <entry><literal>BufFileWrite</></entry>
+         <entry>Waiting for a write to a buffered file.</entry>
+        </row>
+        <row>
+         <entry><literal>ControlFileRead</></entry>
+         <entry>Waiting for a read from the control file.</entry>
+        </row>
+        <row>
+         <entry><literal>ControlFileSync</></entry>
+         <entry>Waiting for the control file to reach stable storage.</entry>
+        </row>
+        <row>
+         <entry><literal>ControlFileSyncUpdate</></entry>
+         <entry>Waiting for an update to the control file to reach stable storage.</entry>
+        </row>
+        <row>
+         <entry><literal>ControlFileWrite</></entry>
+         <entry>Waiting for a write to the control file.</entry>
+        </row>
+        <row>
+         <entry><literal>ControlFileWriteUpdate</></entry>
+         <entry>Waiting for a write to update the control file.</entry>
+        </row>
+        <row>
+         <entry><literal>CopyFileRead</></entry>
+         <entry>Waiting for a read during a file copy operation.</entry>
+        </row>
+        <row>
+         <entry><literal>CopyFileWrite</></entry>
+         <entry>Waiting for a write during a file copy operation.</entry>
+        </row>
+        <row>
+         <entry><literal>DataFileExtend</></entry>
+         <entry>Waiting for a relation data file to be extended.</entry>
+        </row>
+        <row>
+         <entry><literal>DataFileFlush</></entry>
+         <entry>Waiting for a relation data file to reach stable storage.</entry>
+        </row>
+        <row>
+         <entry><literal>DataFileImmediateSync</></entry>
+         <entry>Waiting for an immediate synchronization of a relation data file to stable storage.</entry>
+        </row>
+        <row>
+         <entry><literal>DataFilePrefetch</></entry>
+         <entry>Waiting for an asynchronous prefetch from a relation data file.</entry>
+        </row>
+        <row>
+         <entry><literal>DataFileRead</></entry>
+         <entry>Waiting for a read from a relation data file.</entry>
+        </row>
+        <row>
+         <entry><literal>DataFileSync</></entry>
+         <entry>Waiting for changes to a relation data file to reach stable storage.</entry>
+        </row>
+        <row>
+         <entry><literal>DataFileTruncate</></entry>
+         <entry>Waiting for a relation data file to be truncated.</entry>
+        </row>
+        <row>
+         <entry><literal>DataFileWrite</></entry>
+         <entry>Waiting for a write to a relation data file.</entry>
+        </row>
+        <row>
+         <entry><literal>DSMFillZeroWrite</></entry>
+         <entry>Waiting to write zero bytes to a dynamic shared memory backing file.</entry>
+        </row>
+        <row>
+         <entry><literal>LockFileAddToDataDirRead</></entry>
+         <entry>Waiting for a read while adding a line to the data directory lock file.</entry>
+        </row>
+        <row>
+         <entry><literal>LockFileAddToDataDirSync</></entry>
+         <entry>Waiting for data to reach stable storage while adding a line to the data directory lock file.</entry>
+        </row>
+        <row>
+         <entry><literal>LockFileAddToDataDirWrite</></entry>
+         <entry>Waiting for a write while adding a line to the data directory lock file.</entry>
+        </row>
+        <row>
+         <entry><literal>LockFileCreateRead</></entry>
+         <entry>Waiting to read while creating the data directory lock file.</entry>
+        </row>
+        <row>
+         <entry><literal>LockFileCreateSync</></entry>
+         <entry>Waiting for data to reach stable storage while creating the data directory lock file.</entry>
+        </row>
+        <row>
+         <entry><literal>LockFileCreateWrite</></entry>
+         <entry>Waiting for a write while creating the data directory lock file.</entry>
+        </row>
+        <row>
+         <entry><literal>LockFileReCheckDataDirRead</></entry>
+         <entry>Waiting for a read during recheck of the data directory lock file.</entry>
+        </row>
+        <row>
+         <entry><literal>LogicalRewriteCheckpointSync</></entry>
+         <entry>Waiting for logical rewrite mappings to reach stable storage during a checkpoint.</entry>
+        </row>
+        <row>
+         <entry><literal>LogicalRewriteMappingSync</></entry>
+         <entry>Waiting for mapping data to reach stable storage during a logical rewrite.</entry>
+        </row>
+        <row>
+         <entry><literal>LogicalRewriteMappingWrite</></entry>
+         <entry>Waiting for a write of mapping data during a logical rewrite.</entry>
+        </row>
+        <row>
+         <entry><literal>LogicalRewriteSync</></entry>
+         <entry>Waiting for logical rewrite mappings to reach stable storage.</entry>
+        </row>
+        <row>
+         <entry><literal>LogicalRewriteWrite</></entry>
+         <entry>Waiting for a write of logical rewrite mappings.</entry>
+        </row>
+        <row>
+         <entry><literal>RelationMapRead</></entry>
+         <entry>Waiting for a read of the relation map file.</entry>
+        </row>
+        <row>
+         <entry><literal>RelationMapSync</></entry>
+         <entry>Waiting for the relation map file to reach stable storage.</entry>
+        </row>
+        <row>
+         <entry><literal>RelationMapWrite</></entry>
+         <entry>Waiting for a write to the relation map file.</entry>
+        </row>
+        <row>
+         <entry><literal>ReorderBufferRead</></entry>
+         <entry>Waiting for a read during reorder buffer management.</entry>
+        </row>
+        <row>
+         <entry><literal>ReorderBufferWrite</></entry>
+         <entry>Waiting for a write during reorder buffer management.</entry>
+        </row>
+        <row>
+         <entry><literal>ReorderLogicalMappingRead</></entry>
+         <entry>Waiting for a read of a logical mapping during reorder buffer management.</entry>
+        </row>
+        <row>
+         <entry><literal>ReplicationSlotRead</></entry>
+         <entry>Waiting for a read from a replication slot control file.</entry>
+        </row>
+        <row>
+         <entry><literal>ReplicationSlotRestoreSync</></entry>
+         <entry>Waiting for a replication slot control file to reach stable storage while restoring it to memory.</entry>
+        </row>
+        <row>
+         <entry><literal>ReplicationSlotSync</></entry>
+         <entry>Waiting for a replication slot control file to reach stable storage.</entry>
+        </row>
+        <row>
+         <entry><literal>ReplicationSlotWrite</></entry>
+         <entry>Waiting for a write to a replication slot control file.</entry>
+        </row>
+        <row>
+         <entry><literal>SLRUFlushSync</></entry>
+         <entry>Waiting for SLRU data to reach stable storage during a checkpoint or database shutdown.</entry>
+        </row>
+        <row>
+         <entry><literal>SLRURead</></entry>
+         <entry>Waiting for a read of an SLRU page.</entry>
+        </row>
+        <row>
+         <entry><literal>SLRUSync</></entry>
+         <entry>Waiting for SLRU data to reach stable storage following a page write.</entry>
+        </row>
+        <row>
+         <entry><literal>SLRUWrite</></entry>
+         <entry>Waiting for a write of an SLRU page.</entry>
+        </row>
+        <row>
+         <entry><literal>SnapbuildRead</></entry>
+         <entry>Waiting for a read of a serialized historical catalog snapshot.</entry>
+        </row>
+        <row>
+         <entry><literal>SnapbuildSync</></entry>
+         <entry>Waiting for a serialized historical catalog snapshot to reach stable storage.</entry>
+        </row>
+        <row>
+         <entry><literal>SnapbuildWrite</></entry>
+         <entry>Waiting for a write of a serialized historical catalog snapshot.</entry>
+        </row>
+        <row>
+         <entry><literal>TimelineHistoryFileSync</></entry>
+         <entry>Waiting for a timeline history file received via streaming replication to reach stable storage.</entry>
+        </row>
+        <row>
+         <entry><literal>TimelineHistoryFileWrite</></entry>
+         <entry>Waiting for a write of a timeline history file received via streaming replication.</entry>
+        </row>
+        <row>
+         <entry><literal>TimelineHistoryRead</></entry>
+         <entry>Waiting for a read of a timeline history file.</entry>
+        </row>
+        <row>
+         <entry><literal>TimelineHistorySync</></entry>
+         <entry>Waiting for a newly created timeline history file to reach stable storage.</entry>
+        </row>
+        <row>
+         <entry><literal>TimelineHistoryWrite</></entry>
+         <entry>Waiting for a write of a newly created timeline history file.</entry>
+        </row>
+        <row>
+         <entry><literal>TwophaseFileRead</></entry>
+         <entry>Waiting for a read of a two phase state file.</entry>
+        </row>
+        <row>
+         <entry><literal>TwophaseFileSync</></entry>
+         <entry>Waiting for a two phase state file to reach stable storage.</entry>
+        </row>
+        <row>
+         <entry><literal>TwophaseFileWrite</></entry>
+         <entry>Waiting for a write of a two phase state file.</entry>
+        </row>
+        <row>
+         <entry><literal>WALBootstrapSync</></entry>
+         <entry>Waiting for WAL to reach stable storage during bootstrapping.</entry>
+        </row>
+        <row>
+         <entry><literal>WALBootstrapWrite</></entry>
+         <entry>Waiting for a write of a WAL page during bootstrapping.</entry>
+        </row>
+        <row>
+         <entry><literal>WALCopyRead</></entry>
+         <entry>Waiting for a read when creating a new WAL segment by copying an existing one.</entry>
+        </row>
+        <row>
+         <entry><literal>WALCopySync</></entry>
+         <entry>Waiting a new WAL segment created by copying an existing one to reach stable storage.</entry>
+        </row>
+        <row>
+         <entry><literal>WALCopyWrite</></entry>
+         <entry>Waiting for a write when creating a new WAL segment by copying an existing one.</entry>
+        </row>
+        <row>
+         <entry><literal>WALInitSync</></entry>
+         <entry>Waiting for a newly initialized WAL file to reach stable storage.</entry>
+        </row>
+        <row>
+         <entry><literal>WALInitWrite</></entry>
+         <entry>Waiting for a write while initializing a new WAL file.</entry>
+        </row>
+        <row>
+         <entry><literal>WALRead</></entry>
+         <entry>Waiting for a read from a WAL file.</entry>
+        </row>
+        <row>
+         <entry><literal>WALSenderTimelineHistoryRead</></entry>
+         <entry>Waiting for a read from a timeline history file during walsender timeline command.</entry>
+        </row>
+        <row>
+         <entry><literal>WALSyncMethodAssign</></entry>
+         <entry>Waiting for data to reach stable storage while assigning WAL sync method.</entry>
+        </row>
+        <row>
+         <entry><literal>WALWrite</></entry>
+         <entry>Waiting for a write to a WAL file.</entry>
         </row>
       </tbody>
      </tgroup>
@@ -1108,7 +1587,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
  pid  | wait_event_type |  wait_event
 ------+-----------------+---------------
  2540 | Lock            | relation
- 6644 | LWLockNamed     | ProcArrayLock
+ 6644 | LWLock          | ProcArrayLock
 (2 rows)
 </programlisting>
    </para>
@@ -1186,41 +1665,130 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
     <row>
      <entry><structfield>state</></entry>
      <entry><type>text</></entry>
-     <entry>Current WAL sender state</entry>
+     <entry>Current WAL sender state.
+       Possible values are:
+       <itemizedlist>
+         <listitem>
+          <para>
+           <literal>startup</>: This WAL sender is starting up.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           <literal>catchup</>: This WAL sender's connected standby is
+           catching up with the primary.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           <literal>streaming</>: This WAL sender is streaming changes
+           after its connected standby server has caught up with the primary.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           <literal>backup</>: This WAL sender is sending a backup.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           <literal>stopping</>: This WAL sender is stopping.
+          </para>
+         </listitem>
+       </itemizedlist>
+     </entry>
     </row>
     <row>
-     <entry><structfield>sent_location</></entry>
+     <entry><structfield>sent_lsn</></entry>
      <entry><type>pg_lsn</></entry>
-     <entry>Last transaction log position sent on this connection</entry>
+     <entry>Last write-ahead log location sent on this connection</entry>
     </row>
     <row>
-     <entry><structfield>write_location</></entry>
+     <entry><structfield>write_lsn</></entry>
      <entry><type>pg_lsn</></entry>
-     <entry>Last transaction log position written to disk by this standby
+     <entry>Last write-ahead log location written to disk by this standby
       server</entry>
     </row>
     <row>
-     <entry><structfield>flush_location</></entry>
+     <entry><structfield>flush_lsn</></entry>
      <entry><type>pg_lsn</></entry>
-     <entry>Last transaction log position flushed to disk by this standby
+     <entry>Last write-ahead log location flushed to disk by this standby
       server</entry>
     </row>
     <row>
-     <entry><structfield>replay_location</></entry>
+     <entry><structfield>replay_lsn</></entry>
      <entry><type>pg_lsn</></entry>
-     <entry>Last transaction log position replayed into the database on this
+     <entry>Last write-ahead log location replayed into the database on this
       standby server</entry>
+    </row>
+    <row>
+     <entry><structfield>write_lag</></entry>
+     <entry><type>interval</></entry>
+     <entry>Time elapsed between flushing recent WAL locally and receiving
+      notification that this standby server has written it (but not yet
+      flushed it or applied it).  This can be used to gauge the delay that
+      <literal>synchronous_commit</literal> level
+      <literal>remote_write</literal> incurred while committing if this
+      server was configured as a synchronous standby.</entry>
+    </row>
+    <row>
+     <entry><structfield>flush_lag</></entry>
+     <entry><type>interval</></entry>
+     <entry>Time elapsed between flushing recent WAL locally and receiving
+      notification that this standby server has written and flushed it
+      (but not yet applied it).  This can be used to gauge the delay that
+      <literal>synchronous_commit</literal> level
+      <literal>remote_flush</literal> incurred while committing if this
+      server was configured as a synchronous standby.</entry>
+    </row>
+    <row>
+     <entry><structfield>replay_lag</></entry>
+     <entry><type>interval</></entry>
+     <entry>Time elapsed between flushing recent WAL locally and receiving
+      notification that this standby server has written, flushed and
+      applied it.  This can be used to gauge the delay that
+      <literal>synchronous_commit</literal> level
+      <literal>remote_apply</literal> incurred while committing if this
+      server was configured as a synchronous standby.</entry>
     </row>
     <row>
      <entry><structfield>sync_priority</></entry>
      <entry><type>integer</></entry>
      <entry>Priority of this standby server for being chosen as the
-      synchronous standby</entry>
+      synchronous standby in a priority-based synchronous replication.
+      This has no effect in a quorum-based synchronous replication.</entry>
     </row>
     <row>
      <entry><structfield>sync_state</></entry>
      <entry><type>text</></entry>
-     <entry>Synchronous state of this standby server</entry>
+     <entry>Synchronous state of this standby server.
+       Possible values are:
+       <itemizedlist>
+         <listitem>
+          <para>
+           <literal>async</>: This standby server is asynchronous.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           <literal>potential</>: This standby server is now asynchronous,
+           but can potentially become synchronous if one of current
+           synchronous ones fails.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           <literal>sync</>: This standby server is synchronous.
+          </para>
+         </listitem>
+         <listitem>
+          <para>
+           <literal>quorum</>: This standby server is considered as a candidate
+           for quorum standbys.
+          </para>
+         </listitem>
+       </itemizedlist>
+     </entry>
     </row>
    </tbody>
    </tgroup>
@@ -1232,6 +1800,45 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
    sender's connected standby server.  Only directly connected standbys are
    listed; no information is available about downstream standby servers.
   </para>
+
+  <para>
+   The lag times reported in the <structname>pg_stat_replication</structname>
+   view are measurements of the time taken for recent WAL to be written,
+   flushed and replayed and for the sender to know about it.  These times
+   represent the commit delay that was (or would have been) introduced by each
+   synchronous commit level, if the remote server was configured as a
+   synchronous standby.  For an asynchronous standby, the
+   <structfield>replay_lag</structfield> column approximates the delay
+   before recent transactions became visible to queries.  If the standby
+   server has entirely caught up with the sending server and there is no more
+   WAL activity, the most recently measured lag times will continue to be
+   displayed for a short time and then show NULL.
+  </para>
+
+  <para>
+   Lag times work automatically for physical replication. Logical decoding
+   plugins may optionally emit tracking messages; if they do not, the tracking
+   mechanism will simply display NULL lag.
+  </para>
+
+  <note>
+   <para>
+    The reported lag times are not predictions of how long it will take for
+    the standby to catch up with the sending server assuming the current
+    rate of replay.  Such a system would show similar times while new WAL is
+    being generated, but would differ when the sender becomes idle.  In
+    particular, when the standby has caught up completely,
+    <structname>pg_stat_replication</structname> shows the time taken to
+    write, flush and replay the most recent reported WAL location rather than
+    zero as some users might expect.  This is consistent with the goal of
+    measuring synchronous commit and transaction visibility delays for
+    recent write transactions.
+    To reduce confusion for users expecting a different model of lag, the
+    lag columns revert to NULL after a short time on a fully replayed idle
+    system. Monitoring systems should choose whether to represent this
+    as missing data, zero or continue to display the last known value.
+   </para>
+  </note>
 
   <table id="pg-stat-wal-receiver-view" xreflabel="pg_stat_wal_receiver">
    <title><structname>pg_stat_wal_receiver</structname> View</title>
@@ -1258,7 +1865,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
     <row>
      <entry><structfield>receive_start_lsn</></entry>
      <entry><type>pg_lsn</></entry>
-     <entry>First transaction log position used when WAL receiver is
+     <entry>First write-ahead log location used when WAL receiver is
       started</entry>
     </row>
     <row>
@@ -1269,16 +1876,16 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
     <row>
      <entry><structfield>received_lsn</></entry>
      <entry><type>pg_lsn</></entry>
-     <entry>Last transaction log position already received and flushed to
-      disk, the initial value of this field being the first log position used
+     <entry>Last write-ahead log location already received and flushed to
+      disk, the initial value of this field being the first log location used
       when WAL receiver is started</entry>
     </row>
     <row>
      <entry><structfield>received_tli</></entry>
      <entry><type>integer</></entry>
-     <entry>Timeline number of last transaction log position received and
+     <entry>Timeline number of last write-ahead log location received and
       flushed to disk, the initial value of this field being the timeline
-      number of the first log position used when WAL receiver is started
+      number of the first log location used when WAL receiver is started
      </entry>
     </row>
     <row>
@@ -1294,12 +1901,12 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
     <row>
      <entry><structfield>latest_end_lsn</></entry>
      <entry><type>pg_lsn</></entry>
-     <entry>Last transaction log position reported to origin WAL sender</entry>
+     <entry>Last write-ahead log location reported to origin WAL sender</entry>
     </row>
     <row>
      <entry><structfield>latest_end_time</></entry>
      <entry><type>timestamp with time zone</></entry>
-     <entry>Time of last transaction log position reported to origin WAL sender</entry>
+     <entry>Time of last write-ahead log location reported to origin WAL sender</entry>
     </row>
     <row>
      <entry><structfield>slot_name</></entry>
@@ -1322,6 +1929,79 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
    The <structname>pg_stat_wal_receiver</structname> view will contain only
    one row, showing statistics about the WAL receiver from that receiver's
    connected server.
+  </para>
+
+  <table id="pg-stat-subscription" xreflabel="pg_stat_subscription">
+   <title><structname>pg_stat_subscription</structname> View</title>
+   <tgroup cols="3">
+    <thead>
+    <row>
+      <entry>Column</entry>
+      <entry>Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+   <tbody>
+    <row>
+     <entry><structfield>subid</></entry>
+     <entry><type>oid</></entry>
+     <entry>OID of the subscription</entry>
+    </row>
+    <row>
+     <entry><structfield>subname</></entry>
+     <entry><type>text</></entry>
+     <entry>Name of the subscription</entry>
+    </row>
+    <row>
+     <entry><structfield>pid</></entry>
+     <entry><type>integer</></entry>
+     <entry>Process ID of the subscription worker process</entry>
+    </row>
+    <row>
+     <entry><structfield>relid</></entry>
+     <entry><type>Oid</></entry>
+     <entry>OID of the relation that the worker is synchronizing; null for the
+     main apply worker</entry>
+    </row>
+    <row>
+     <entry><structfield>received_lsn</></entry>
+     <entry><type>pg_lsn</></entry>
+     <entry>Last write-ahead log location received, the initial value of
+      this field being 0</entry>
+    </row>
+    <row>
+     <entry><structfield>last_msg_send_time</></entry>
+     <entry><type>timestamp with time zone</></entry>
+     <entry>Send time of last message received from origin WAL sender</entry>
+    </row>
+    <row>
+     <entry><structfield>last_msg_receipt_time</></entry>
+     <entry><type>timestamp with time zone</></entry>
+     <entry>Receipt time of last message received from origin WAL sender
+     </entry>
+    </row>
+    <row>
+     <entry><structfield>latest_end_lsn</></entry>
+     <entry><type>pg_lsn</></entry>
+     <entry>Last write-ahead log location reported to origin WAL sender
+     </entry>
+    </row>
+    <row>
+     <entry><structfield>latest_end_time</></entry>
+     <entry><type>timestamp with time zone</></entry>
+     <entry>Time of last write-ahead log location reported to origin WAL
+      sender</entry>
+    </row>
+   </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   The <structname>pg_stat_subscription</structname> view will contain one
+   row per subscription for main worker (with null PID if the worker is
+   not running), and additional rows for workers handling the initial data
+   copy of the subscribed tables.
   </para>
 
   <table id="pg-stat-ssl-view" xreflabel="pg_stat_ssl">
@@ -2739,7 +3419,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
    Currently, the
    <ulink url="https://en.wikipedia.org/wiki/DTrace">DTrace</ulink>
    utility is supported, which, at the time of this writing, is available
-   on Solaris, OS X, FreeBSD, NetBSD, and Oracle Linux.  The
+   on Solaris, macOS, FreeBSD, NetBSD, and Oracle Linux.  The
    <ulink url="http://sourceware.org/systemtap/">SystemTap</ulink> project
    for Linux provides a DTrace equivalent and can also be used.  Supporting other dynamic
    tracing utilities is theoretically possible by changing the definitions for
@@ -3054,14 +3734,14 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
      <entry>Probe that fires when a dirty WAL buffer write is complete.</entry>
     </row>
     <row>
-     <entry><literal>xlog-insert</literal></entry>
+     <entry><literal>wal-insert</literal></entry>
      <entry><literal>(unsigned char, unsigned char)</literal></entry>
      <entry>Probe that fires when a WAL record is inserted.
       arg0 is the resource manager (rmid) for the record.
       arg1 contains the info flags.</entry>
     </row>
     <row>
-     <entry><literal>xlog-switch</literal></entry>
+     <entry><literal>wal-switch</literal></entry>
      <entry><literal>()</literal></entry>
      <entry>Probe that fires when a WAL segment switch is requested.</entry>
     </row>
@@ -3129,55 +3809,49 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
     </row>
     <row>
      <entry><literal>lwlock-acquire</literal></entry>
-     <entry><literal>(char *, int, LWLockMode)</literal></entry>
+     <entry><literal>(char *, LWLockMode)</literal></entry>
      <entry>Probe that fires when an LWLock has been acquired.
       arg0 is the LWLock's tranche.
-      arg1 is the LWLock's offset within its tranche.
-      arg2 is the requested lock mode, either exclusive or shared.</entry>
+      arg1 is the requested lock mode, either exclusive or shared.</entry>
     </row>
     <row>
      <entry><literal>lwlock-release</literal></entry>
-     <entry><literal>(char *, int)</literal></entry>
+     <entry><literal>(char *)</literal></entry>
      <entry>Probe that fires when an LWLock has been released (but note
       that any released waiters have not yet been awakened).
-      arg0 is the LWLock's tranche.
-      arg1 is the LWLock's offset within its tranche.</entry>
+      arg0 is the LWLock's tranche.</entry>
     </row>
     <row>
      <entry><literal>lwlock-wait-start</literal></entry>
-     <entry><literal>(char *, int, LWLockMode)</literal></entry>
+     <entry><literal>(char *, LWLockMode)</literal></entry>
      <entry>Probe that fires when an LWLock was not immediately available and
       a server process has begun to wait for the lock to become available.
       arg0 is the LWLock's tranche.
-      arg1 is the LWLock's offset within its tranche.
-      arg2 is the requested lock mode, either exclusive or shared.</entry>
+      arg1 is the requested lock mode, either exclusive or shared.</entry>
     </row>
     <row>
      <entry><literal>lwlock-wait-done</literal></entry>
-     <entry><literal>(char *, int, LWLockMode)</literal></entry>
+     <entry><literal>(char *, LWLockMode)</literal></entry>
      <entry>Probe that fires when a server process has been released from its
       wait for an LWLock (it does not actually have the lock yet).
       arg0 is the LWLock's tranche.
-      arg1 is the LWLock's offset within its tranche.
-      arg2 is the requested lock mode, either exclusive or shared.</entry>
+      arg1 is the requested lock mode, either exclusive or shared.</entry>
     </row>
     <row>
      <entry><literal>lwlock-condacquire</literal></entry>
-     <entry><literal>(char *, int, LWLockMode)</literal></entry>
+     <entry><literal>(char *, LWLockMode)</literal></entry>
      <entry>Probe that fires when an LWLock was successfully acquired when the
       caller specified no waiting.
       arg0 is the LWLock's tranche.
-      arg1 is the LWLock's offset within its tranche.
-      arg2 is the requested lock mode, either exclusive or shared.</entry>
+      arg1 is the requested lock mode, either exclusive or shared.</entry>
     </row>
     <row>
      <entry><literal>lwlock-condacquire-fail</literal></entry>
-     <entry><literal>(char *, int, LWLockMode)</literal></entry>
+     <entry><literal>(char *, LWLockMode)</literal></entry>
      <entry>Probe that fires when an LWLock was not successfully acquired when
       the caller specified no waiting.
       arg0 is the LWLock's tranche.
-      arg1 is the LWLock's offset within its tranche.
-      arg2 is the requested lock mode, either exclusive or shared.</entry>
+      arg1 is the requested lock mode, either exclusive or shared.</entry>
     </row>
     <row>
      <entry><literal>lock-wait-start</literal></entry>

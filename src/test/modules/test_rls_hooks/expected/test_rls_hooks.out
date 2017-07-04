@@ -145,13 +145,11 @@ ERROR:  new row violates row-level security policy for table "rls_test_permissiv
 SET ROLE regress_s1;
 -- With both internal and hook policies, restrictive
 EXPLAIN (costs off) SELECT * FROM rls_test_restrictive;
-                          QUERY PLAN                           
----------------------------------------------------------------
- Subquery Scan on rls_test_restrictive
-   Filter: ((rls_test_restrictive.data % 2) = 0)
-   ->  Seq Scan on rls_test_restrictive rls_test_restrictive_1
-         Filter: ("current_user"() = supervisor)
-(4 rows)
+                            QUERY PLAN                            
+------------------------------------------------------------------
+ Seq Scan on rls_test_restrictive
+   Filter: (("current_user"() = supervisor) AND ((data % 2) = 0))
+(2 rows)
 
 SELECT * FROM rls_test_restrictive;
   username  | supervisor | data 
@@ -173,13 +171,11 @@ ERROR:  new row violates row-level security policy for table "rls_test_restricti
 -- With both internal and hook policies, both permissive
 -- and restrictive hook policies
 EXPLAIN (costs off) SELECT * FROM rls_test_both;
-                                        QUERY PLAN                                         
--------------------------------------------------------------------------------------------
- Subquery Scan on rls_test_both
-   Filter: (((rls_test_both.data % 2) = 0) OR ("current_user"() = rls_test_both.username))
-   ->  Seq Scan on rls_test_both rls_test_both_1
-         Filter: ("current_user"() = supervisor)
-(4 rows)
+                                             QUERY PLAN                                              
+-----------------------------------------------------------------------------------------------------
+ Seq Scan on rls_test_both
+   Filter: (("current_user"() = supervisor) AND (((data % 2) = 0) OR ("current_user"() = username)))
+(2 rows)
 
 SELECT * FROM rls_test_both;
  username | supervisor | data 

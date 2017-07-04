@@ -51,9 +51,9 @@
  *	PrepareToInvalidateCacheTuple() routine provides the knowledge of which
  *	catcaches may need invalidation for a given tuple.
  *
- *	Also, whenever we see an operation on a pg_class or pg_attribute tuple,
- *	we register a relcache flush operation for the relation described by that
- *	tuple.
+ *	Also, whenever we see an operation on a pg_class, pg_attribute, or
+ *	pg_index tuple, we register a relcache flush operation for the relation
+ *	described by that tuple (as specified in CacheInvalidateHeapTuple()).
  *
  *	We keep the relcache flush requests in lists separate from the catcache
  *	tuple flush requests.  This allows us to issue all the pending catcache
@@ -85,7 +85,7 @@
  *	problems can be overcome cheaply.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -94,6 +94,8 @@
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
+
+#include <limits.h>
 
 #include "access/htup_details.h"
 #include "access/xact.h"
@@ -119,7 +121,7 @@
  */
 typedef struct InvalidationChunk
 {
-	struct InvalidationChunk *next;		/* list link */
+	struct InvalidationChunk *next; /* list link */
 	int			nitems;			/* # items currently stored in chunk */
 	int			maxitems;		/* size of allocated array in this chunk */
 	SharedInvalidationMessage msgs[FLEXIBLE_ARRAY_MEMBER];
@@ -175,18 +177,26 @@ static int	maxSharedInvalidMessagesArray;
 
 /*
  * Dynamically-registered callback functions.  Current implementation
- * assumes there won't be very many of these at once; could improve if needed.
+ * assumes there won't be enough of these to justify a dynamically resizable
+ * array; it'd be easy to improve that if needed.
+ *
+ * To avoid searching in CallSyscacheCallbacks, all callbacks for a given
+ * syscache are linked into a list pointed to by syscache_callback_links[id].
+ * The link values are syscache_callback_list[] index plus 1, or 0 for none.
  */
 
-#define MAX_SYSCACHE_CALLBACKS 32
+#define MAX_SYSCACHE_CALLBACKS 64
 #define MAX_RELCACHE_CALLBACKS 10
 
 static struct SYSCACHECALLBACK
 {
 	int16		id;				/* cache number */
+	int16		link;			/* next callback index+1 for same cache */
 	SyscacheCallbackFunction function;
 	Datum		arg;
-}	syscache_callback_list[MAX_SYSCACHE_CALLBACKS];
+}			syscache_callback_list[MAX_SYSCACHE_CALLBACKS];
+
+static int16 syscache_callback_links[SysCacheSize];
 
 static int	syscache_callback_count = 0;
 
@@ -194,7 +204,7 @@ static struct RELCACHECALLBACK
 {
 	RelcacheCallbackFunction function;
 	Datum		arg;
-}	relcache_callback_list[MAX_RELCACHE_CALLBACKS];
+}			relcache_callback_list[MAX_RELCACHE_CALLBACKS];
 
 static int	relcache_callback_count = 0;
 
@@ -226,7 +236,7 @@ AddInvalidationMessage(InvalidationChunk **listHdr,
 		chunk = (InvalidationChunk *)
 			MemoryContextAlloc(CurTransactionContext,
 							   offsetof(InvalidationChunk, msgs) +
-						 FIRSTCHUNKSIZE * sizeof(SharedInvalidationMessage));
+							   FIRSTCHUNKSIZE * sizeof(SharedInvalidationMessage));
 		chunk->nitems = 0;
 		chunk->maxitems = FIRSTCHUNKSIZE;
 		chunk->next = *listHdr;
@@ -375,11 +385,15 @@ AddRelcacheInvalidationMessage(InvalidationListHeader *hdr,
 {
 	SharedInvalidationMessage msg;
 
-	/* Don't add a duplicate item */
-	/* We assume dbId need not be checked because it will never change */
+	/*
+	 * Don't add a duplicate item. We assume dbId need not be checked because
+	 * it will never change. InvalidOid for relId means all relations so we
+	 * don't need to add individual ones when it is present.
+	 */
 	ProcessMessageList(hdr->rclist,
 					   if (msg->rc.id == SHAREDINVALRELCACHE_ID &&
-						   msg->rc.relId == relId)
+						   (msg->rc.relId == relId ||
+							msg->rc.relId == InvalidOid))
 					   return);
 
 	/* OK, add the item */
@@ -450,7 +464,7 @@ ProcessInvalidationMessages(InvalidationListHeader *hdr,
  */
 static void
 ProcessInvalidationMessagesMulti(InvalidationListHeader *hdr,
-				 void (*func) (const SharedInvalidationMessage *msgs, int n))
+								 void (*func) (const SharedInvalidationMessage *msgs, int n))
 {
 	ProcessMessageListMulti(hdr->cclist, func(msgs, n));
 	ProcessMessageListMulti(hdr->rclist, func(msgs, n));
@@ -508,9 +522,11 @@ RegisterRelcacheInvalidation(Oid dbId, Oid relId)
 
 	/*
 	 * If the relation being invalidated is one of those cached in the local
-	 * relcache init file, mark that we need to zap that file at commit.
+	 * relcache init file, mark that we need to zap that file at commit. Same
+	 * is true when we are invalidating whole relcache.
 	 */
-	if (OidIsValid(dbId) && RelationIdIsInInitFile(relId))
+	if (OidIsValid(dbId) &&
+		(RelationIdIsInInitFile(relId) || relId == InvalidOid))
 		transInvalInfo->RelcacheInitFileInval = true;
 }
 
@@ -543,7 +559,7 @@ LocalExecuteInvalidationMessage(SharedInvalidationMessage *msg)
 		{
 			InvalidateCatalogSnapshot();
 
-			CatalogCacheIdInvalidate(msg->cc.id, msg->cc.hashValue);
+			SysCacheInvalidate(msg->cc.id, msg->cc.hashValue);
 
 			CallSyscacheCallbacks(msg->cc.id, msg->cc.hashValue);
 		}
@@ -565,7 +581,10 @@ LocalExecuteInvalidationMessage(SharedInvalidationMessage *msg)
 		{
 			int			i;
 
-			RelationCacheInvalidateEntry(msg->rc.relId);
+			if (msg->rc.relId == InvalidOid)
+				RelationCacheInvalidate();
+			else
+				RelationCacheInvalidateEntry(msg->rc.relId);
 
 			for (i = 0; i < relcache_callback_count; i++)
 			{
@@ -759,7 +778,7 @@ MakeSharedInvalidMessagesArray(const SharedInvalidationMessage *msgs, int n)
 		 * We're so close to EOXact that we now we're going to lose it anyhow.
 		 */
 		SharedInvalidMessagesArray = palloc(maxSharedInvalidMessagesArray
-										* sizeof(SharedInvalidationMessage));
+											* sizeof(SharedInvalidationMessage));
 	}
 
 	if ((numSharedInvalidMessagesArray + n) > maxSharedInvalidMessagesArray)
@@ -769,7 +788,7 @@ MakeSharedInvalidMessagesArray(const SharedInvalidationMessage *msgs, int n)
 
 		SharedInvalidMessagesArray = repalloc(SharedInvalidMessagesArray,
 											  maxSharedInvalidMessagesArray
-										* sizeof(SharedInvalidationMessage));
+											  * sizeof(SharedInvalidationMessage));
 	}
 
 	/*
@@ -1119,7 +1138,8 @@ CacheInvalidateHeapTuple(Relation relation,
 									  RegisterCatcacheInvalidation);
 
 	/*
-	 * Now, is this tuple one of the primary definers of a relcache entry?
+	 * Now, is this tuple one of the primary definers of a relcache entry? See
+	 * comments in file header for deeper explanation.
 	 *
 	 * Note we ignore newtuple here; we assume an update cannot move a tuple
 	 * from being part of one relcache entry to being part of another.
@@ -1224,6 +1244,21 @@ CacheInvalidateRelcache(Relation relation)
 		databaseId = MyDatabaseId;
 
 	RegisterRelcacheInvalidation(databaseId, relationId);
+}
+
+/*
+ * CacheInvalidateRelcacheAll
+ *		Register invalidation of the whole relcache at the end of command.
+ *
+ * This is used by alter publication as changes in publications may affect
+ * large number of tables.
+ */
+void
+CacheInvalidateRelcacheAll(void)
+{
+	PrepareInvalidationState();
+
+	RegisterRelcacheInvalidation(InvalidOid, InvalidOid);
 }
 
 /*
@@ -1355,10 +1390,28 @@ CacheRegisterSyscacheCallback(int cacheid,
 							  SyscacheCallbackFunction func,
 							  Datum arg)
 {
+	if (cacheid < 0 || cacheid >= SysCacheSize)
+		elog(FATAL, "invalid cache ID: %d", cacheid);
 	if (syscache_callback_count >= MAX_SYSCACHE_CALLBACKS)
 		elog(FATAL, "out of syscache_callback_list slots");
 
+	if (syscache_callback_links[cacheid] == 0)
+	{
+		/* first callback for this cache */
+		syscache_callback_links[cacheid] = syscache_callback_count + 1;
+	}
+	else
+	{
+		/* add to end of chain, so that older callbacks are called first */
+		int			i = syscache_callback_links[cacheid] - 1;
+
+		while (syscache_callback_list[i].link > 0)
+			i = syscache_callback_list[i].link - 1;
+		syscache_callback_list[i].link = syscache_callback_count + 1;
+	}
+
 	syscache_callback_list[syscache_callback_count].id = cacheid;
+	syscache_callback_list[syscache_callback_count].link = 0;
 	syscache_callback_list[syscache_callback_count].function = func;
 	syscache_callback_list[syscache_callback_count].arg = arg;
 
@@ -1398,11 +1451,16 @@ CallSyscacheCallbacks(int cacheid, uint32 hashvalue)
 {
 	int			i;
 
-	for (i = 0; i < syscache_callback_count; i++)
+	if (cacheid < 0 || cacheid >= SysCacheSize)
+		elog(ERROR, "invalid cache ID: %d", cacheid);
+
+	i = syscache_callback_links[cacheid] - 1;
+	while (i >= 0)
 	{
 		struct SYSCACHECALLBACK *ccitem = syscache_callback_list + i;
 
-		if (ccitem->id == cacheid)
-			(*ccitem->function) (ccitem->arg, cacheid, hashvalue);
+		Assert(ccitem->id == cacheid);
+		(*ccitem->function) (ccitem->arg, cacheid, hashvalue);
+		i = ccitem->link - 1;
 	}
 }

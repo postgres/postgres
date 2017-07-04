@@ -3,7 +3,7 @@
  * nodeTidscan.c
  *	  Routines to support direct tid scans of relations
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -38,10 +38,84 @@
 	 ((Var *) (node))->varattno == SelfItemPointerAttributeNumber && \
 	 ((Var *) (node))->varlevelsup == 0)
 
-static void TidListCreate(TidScanState *tidstate);
+/* one element in tss_tidexprs */
+typedef struct TidExpr
+{
+	ExprState  *exprstate;		/* ExprState for a TID-yielding subexpr */
+	bool		isarray;		/* if true, it yields tid[] not just tid */
+	CurrentOfExpr *cexpr;		/* alternatively, we can have CURRENT OF */
+} TidExpr;
+
+static void TidExprListCreate(TidScanState *tidstate);
+static void TidListEval(TidScanState *tidstate);
 static int	itemptr_comparator(const void *a, const void *b);
 static TupleTableSlot *TidNext(TidScanState *node);
 
+
+/*
+ * Extract the qual subexpressions that yield TIDs to search for,
+ * and compile them into ExprStates if they're ordinary expressions.
+ *
+ * CURRENT OF is a special case that we can't compile usefully;
+ * just drop it into the TidExpr list as-is.
+ */
+static void
+TidExprListCreate(TidScanState *tidstate)
+{
+	TidScan    *node = (TidScan *) tidstate->ss.ps.plan;
+	ListCell   *l;
+
+	tidstate->tss_tidexprs = NIL;
+	tidstate->tss_isCurrentOf = false;
+
+	foreach(l, node->tidquals)
+	{
+		Expr	   *expr = (Expr *) lfirst(l);
+		TidExpr    *tidexpr = (TidExpr *) palloc0(sizeof(TidExpr));
+
+		if (is_opclause(expr))
+		{
+			Node	   *arg1;
+			Node	   *arg2;
+
+			arg1 = get_leftop(expr);
+			arg2 = get_rightop(expr);
+			if (IsCTIDVar(arg1))
+				tidexpr->exprstate = ExecInitExpr((Expr *) arg2,
+												  &tidstate->ss.ps);
+			else if (IsCTIDVar(arg2))
+				tidexpr->exprstate = ExecInitExpr((Expr *) arg1,
+												  &tidstate->ss.ps);
+			else
+				elog(ERROR, "could not identify CTID variable");
+			tidexpr->isarray = false;
+		}
+		else if (expr && IsA(expr, ScalarArrayOpExpr))
+		{
+			ScalarArrayOpExpr *saex = (ScalarArrayOpExpr *) expr;
+
+			Assert(IsCTIDVar(linitial(saex->args)));
+			tidexpr->exprstate = ExecInitExpr(lsecond(saex->args),
+											  &tidstate->ss.ps);
+			tidexpr->isarray = true;
+		}
+		else if (expr && IsA(expr, CurrentOfExpr))
+		{
+			CurrentOfExpr *cexpr = (CurrentOfExpr *) expr;
+
+			tidexpr->cexpr = cexpr;
+			tidstate->tss_isCurrentOf = true;
+		}
+		else
+			elog(ERROR, "could not identify CTID expression");
+
+		tidstate->tss_tidexprs = lappend(tidstate->tss_tidexprs, tidexpr);
+	}
+
+	/* CurrentOfExpr could never appear OR'd with something else */
+	Assert(list_length(tidstate->tss_tidexprs) == 1 ||
+		   !tidstate->tss_isCurrentOf);
+}
 
 /*
  * Compute the list of TIDs to be visited, by evaluating the expressions
@@ -50,9 +124,8 @@ static TupleTableSlot *TidNext(TidScanState *node);
  * (The result is actually an array, not a list.)
  */
 static void
-TidListCreate(TidScanState *tidstate)
+TidListEval(TidScanState *tidstate)
 {
-	List	   *evalList = tidstate->tss_tidquals;
 	ExprContext *econtext = tidstate->ss.ps.ps_ExprContext;
 	BlockNumber nblocks;
 	ItemPointerData *tidList;
@@ -73,39 +146,23 @@ TidListCreate(TidScanState *tidstate)
 	 * are simple OpExprs or CurrentOfExprs.  If there are any
 	 * ScalarArrayOpExprs, we may have to enlarge the array.
 	 */
-	numAllocTids = list_length(evalList);
+	numAllocTids = list_length(tidstate->tss_tidexprs);
 	tidList = (ItemPointerData *)
 		palloc(numAllocTids * sizeof(ItemPointerData));
 	numTids = 0;
-	tidstate->tss_isCurrentOf = false;
 
-	foreach(l, evalList)
+	foreach(l, tidstate->tss_tidexprs)
 	{
-		ExprState  *exstate = (ExprState *) lfirst(l);
-		Expr	   *expr = exstate->expr;
+		TidExpr    *tidexpr = (TidExpr *) lfirst(l);
 		ItemPointer itemptr;
 		bool		isNull;
 
-		if (is_opclause(expr))
+		if (tidexpr->exprstate && !tidexpr->isarray)
 		{
-			FuncExprState *fexstate = (FuncExprState *) exstate;
-			Node	   *arg1;
-			Node	   *arg2;
-
-			arg1 = get_leftop(expr);
-			arg2 = get_rightop(expr);
-			if (IsCTIDVar(arg1))
-				exstate = (ExprState *) lsecond(fexstate->args);
-			else if (IsCTIDVar(arg2))
-				exstate = (ExprState *) linitial(fexstate->args);
-			else
-				elog(ERROR, "could not identify CTID variable");
-
 			itemptr = (ItemPointer)
-				DatumGetPointer(ExecEvalExprSwitchContext(exstate,
+				DatumGetPointer(ExecEvalExprSwitchContext(tidexpr->exprstate,
 														  econtext,
-														  &isNull,
-														  NULL));
+														  &isNull));
 			if (!isNull &&
 				ItemPointerIsValid(itemptr) &&
 				ItemPointerGetBlockNumber(itemptr) < nblocks)
@@ -120,9 +177,8 @@ TidListCreate(TidScanState *tidstate)
 				tidList[numTids++] = *itemptr;
 			}
 		}
-		else if (expr && IsA(expr, ScalarArrayOpExpr))
+		else if (tidexpr->exprstate && tidexpr->isarray)
 		{
-			ScalarArrayOpExprState *saexstate = (ScalarArrayOpExprState *) exstate;
 			Datum		arraydatum;
 			ArrayType  *itemarray;
 			Datum	   *ipdatums;
@@ -130,16 +186,14 @@ TidListCreate(TidScanState *tidstate)
 			int			ndatums;
 			int			i;
 
-			exstate = (ExprState *) lsecond(saexstate->fxprstate.args);
-			arraydatum = ExecEvalExprSwitchContext(exstate,
+			arraydatum = ExecEvalExprSwitchContext(tidexpr->exprstate,
 												   econtext,
-												   &isNull,
-												   NULL);
+												   &isNull);
 			if (isNull)
 				continue;
 			itemarray = DatumGetArrayTypeP(arraydatum);
 			deconstruct_array(itemarray,
-							  TIDOID, SizeOfIptrData, false, 's',
+							  TIDOID, sizeof(ItemPointerData), false, 's',
 							  &ipdatums, &ipnulls, &ndatums);
 			if (numTids + ndatums > numAllocTids)
 			{
@@ -161,13 +215,13 @@ TidListCreate(TidScanState *tidstate)
 			pfree(ipdatums);
 			pfree(ipnulls);
 		}
-		else if (expr && IsA(expr, CurrentOfExpr))
+		else
 		{
-			CurrentOfExpr *cexpr = (CurrentOfExpr *) expr;
 			ItemPointerData cursor_tid;
 
-			if (execCurrentOf(cexpr, econtext,
-						   RelationGetRelid(tidstate->ss.ss_currentRelation),
+			Assert(tidexpr->cexpr);
+			if (execCurrentOf(tidexpr->cexpr, econtext,
+							  RelationGetRelid(tidstate->ss.ss_currentRelation),
 							  &cursor_tid))
 			{
 				if (numTids >= numAllocTids)
@@ -178,11 +232,8 @@ TidListCreate(TidScanState *tidstate)
 								 numAllocTids * sizeof(ItemPointerData));
 				}
 				tidList[numTids++] = cursor_tid;
-				tidstate->tss_isCurrentOf = true;
 			}
 		}
-		else
-			elog(ERROR, "could not identify CTID expression");
 	}
 
 	/*
@@ -274,11 +325,15 @@ TidNext(TidScanState *node)
 	 * First time through, compute the list of TIDs to be visited
 	 */
 	if (node->tss_TidList == NULL)
-		TidListCreate(node);
+		TidListEval(node);
 
 	tidList = node->tss_TidList;
 	numTids = node->tss_NumTids;
 
+	/*
+	 * We use node->tss_htup as the tuple pointer; note this can't just be a
+	 * local variable here, as the scan tuple slot will keep a pointer to it.
+	 */
 	tuple = &(node->tss_htup);
 
 	/*
@@ -327,10 +382,10 @@ TidNext(TidScanState *node)
 			 * pointers onto disk pages and were not created with palloc() and
 			 * so should not be pfree()'d.
 			 */
-			ExecStoreTuple(tuple,		/* tuple to store */
+			ExecStoreTuple(tuple,	/* tuple to store */
 						   slot,	/* slot to store in */
-						   buffer,		/* buffer associated with tuple  */
-						   false);		/* don't pfree */
+						   buffer,	/* buffer associated with tuple  */
+						   false);	/* don't pfree */
 
 			/*
 			 * At this point we have an extra pin on the buffer, because
@@ -469,21 +524,13 @@ ExecInitTidScan(TidScan *node, EState *estate, int eflags)
 	 */
 	ExecAssignExprContext(estate, &tidstate->ss.ps);
 
-	tidstate->ss.ps.ps_TupFromTlist = false;
-
 	/*
 	 * initialize child expressions
 	 */
-	tidstate->ss.ps.targetlist = (List *)
-		ExecInitExpr((Expr *) node->scan.plan.targetlist,
-					 (PlanState *) tidstate);
-	tidstate->ss.ps.qual = (List *)
-		ExecInitExpr((Expr *) node->scan.plan.qual,
-					 (PlanState *) tidstate);
+	tidstate->ss.ps.qual =
+		ExecInitQual(node->scan.plan.qual, (PlanState *) tidstate);
 
-	tidstate->tss_tidquals = (List *)
-		ExecInitExpr((Expr *) node->tidquals,
-					 (PlanState *) tidstate);
+	TidExprListCreate(tidstate);
 
 	/*
 	 * tuple table initialization
@@ -504,7 +551,7 @@ ExecInitTidScan(TidScan *node, EState *estate, int eflags)
 	currentRelation = ExecOpenScanRelation(estate, node->scan.scanrelid, eflags);
 
 	tidstate->ss.ss_currentRelation = currentRelation;
-	tidstate->ss.ss_currentScanDesc = NULL;		/* no heap scan here */
+	tidstate->ss.ss_currentScanDesc = NULL; /* no heap scan here */
 
 	/*
 	 * get the scan type from the relation descriptor.

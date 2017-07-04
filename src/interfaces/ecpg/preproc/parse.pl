@@ -3,7 +3,7 @@
 # parser generater for ecpg version 2
 # call with backend parser as stdin
 #
-# Copyright (c) 2007-2016, PostgreSQL Global Development Group
+# Copyright (c) 2007-2017, PostgreSQL Global Development Group
 #
 # Written by Mike Aubury <mike.aubury@aubit.com>
 #            Michael Meskes <meskes@postgresql.org>
@@ -550,7 +550,7 @@ sub dump_fields
 			if ($len == 1)
 			{
 
-				# Straight assignement
+				# Straight assignment
 				$str = ' $$ = ' . $flds_new[0] . ';';
 				add_to_buffer('rules', $str);
 			}

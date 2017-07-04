@@ -1,3 +1,10 @@
+-- Clean up in case a prior regression run failed
+SET client_min_messages TO 'warning';
+
+DROP TYPE IF EXISTS person_type CASCADE;
+
+RESET client_min_messages;
+
 CREATE TABLE ttable1 OF nothing;
 
 CREATE TYPE person_type AS (id int, name text);
@@ -60,4 +67,16 @@ INSERT INTO persons VALUES (1, 'test');
 CREATE FUNCTION namelen(person_type) RETURNS int LANGUAGE SQL AS $$ SELECT length($1.name) $$;
 SELECT id, namelen(persons) FROM persons;
 
-DROP TYPE person_type CASCADE;
+CREATE TABLE persons2 OF person_type (
+    id WITH OPTIONS PRIMARY KEY,
+    UNIQUE (name)
+);
+
+\d persons2
+
+CREATE TABLE persons3 OF person_type (
+    PRIMARY KEY (id),
+    name NOT NULL DEFAULT ''
+);
+
+\d persons3

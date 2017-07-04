@@ -9,8 +9,22 @@ SELECT * FROM money_data;
 SELECT m + '123' FROM money_data;
 SELECT m + '123.45' FROM money_data;
 SELECT m - '123.45' FROM money_data;
+SELECT m / '2'::money FROM money_data;
 SELECT m * 2 FROM money_data;
+SELECT 2 * m FROM money_data;
 SELECT m / 2 FROM money_data;
+SELECT m * 2::int2 FROM money_data;
+SELECT 2::int2 * m FROM money_data;
+SELECT m / 2::int2 FROM money_data;
+SELECT m * 2::int8 FROM money_data;
+SELECT 2::int8 * m FROM money_data;
+SELECT m / 2::int8 FROM money_data;
+SELECT m * 2::float8 FROM money_data;
+SELECT 2::float8 * m FROM money_data;
+SELECT m / 2::float8 FROM money_data;
+SELECT m * 2::float4 FROM money_data;
+SELECT 2::float4 * m FROM money_data;
+SELECT m / 2::float4 FROM money_data;
 
 -- All true
 SELECT m = '$123.00' FROM money_data;
@@ -57,17 +71,57 @@ DELETE FROM money_data;
 INSERT INTO money_data VALUES ('$123.459');
 SELECT * FROM money_data;
 
--- Cast int4/int8 to money
+-- input checks
+SELECT '1234567890'::money;
+SELECT '12345678901234567'::money;
+SELECT '123456789012345678'::money;
+SELECT '9223372036854775807'::money;
+SELECT '-12345'::money;
+SELECT '-1234567890'::money;
+SELECT '-12345678901234567'::money;
+SELECT '-123456789012345678'::money;
+SELECT '-9223372036854775808'::money;
+
+-- special characters
+SELECT '(1)'::money;
+SELECT '($123,456.78)'::money;
+
+-- documented minimums and maximums
+SELECT '-92233720368547758.08'::money;
+SELECT '92233720368547758.07'::money;
+
+SELECT '-92233720368547758.09'::money;
+SELECT '92233720368547758.08'::money;
+
+-- rounding
+SELECT '-92233720368547758.085'::money;
+SELECT '92233720368547758.075'::money;
+
+-- rounding vs. truncation in division
+SELECT '878.08'::money / 11::float8;
+SELECT '878.08'::money / 11::float4;
+SELECT '878.08'::money / 11::bigint;
+SELECT '878.08'::money / 11::int;
+SELECT '878.08'::money / 11::smallint;
+
+-- check for precision loss in division
+SELECT '90000000000000099.00'::money / 10::bigint;
+SELECT '90000000000000099.00'::money / 10::int;
+SELECT '90000000000000099.00'::money / 10::smallint;
+
+-- Cast int4/int8/numeric to money
 SELECT 1234567890::money;
 SELECT 12345678901234567::money;
-SELECT 123456789012345678::money;
-SELECT 9223372036854775807::money;
 SELECT (-12345)::money;
 SELECT (-1234567890)::money;
 SELECT (-12345678901234567)::money;
-SELECT (-123456789012345678)::money;
-SELECT (-9223372036854775808)::money;
 SELECT 1234567890::int4::money;
 SELECT 12345678901234567::int8::money;
+SELECT 12345678901234567::numeric::money;
 SELECT (-1234567890)::int4::money;
 SELECT (-12345678901234567)::int8::money;
+SELECT (-12345678901234567)::numeric::money;
+
+-- Cast from money
+SELECT '12345678901234567'::money::numeric;
+SELECT '-12345678901234567'::money::numeric;

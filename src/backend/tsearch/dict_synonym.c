@@ -3,7 +3,7 @@
  * dict_synonym.c
  *		Synonym dictionary: replace word by its synonym
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
@@ -16,6 +16,7 @@
 #include "commands/defrem.h"
 #include "tsearch/ts_locale.h"
 #include "tsearch/ts_utils.h"
+#include "utils/builtins.h"
 
 typedef struct
 {

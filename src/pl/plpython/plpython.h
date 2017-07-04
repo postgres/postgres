@@ -2,7 +2,7 @@
  *
  * plpython.h - Python as a procedural language for PostgreSQL
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/pl/plpython/plpython.h
@@ -138,8 +138,8 @@ typedef int Py_ssize_t;
 #else
 #define vsnprintf				pg_vsnprintf
 #define snprintf				pg_snprintf
-#endif   /* __GNUC__ */
-#endif   /* USE_REPL_SNPRINTF */
+#endif							/* __GNUC__ */
+#endif							/* USE_REPL_SNPRINTF */
 
 /*
  * Used throughout, and also by the Python 2/3 porting layer, so it's easier to
@@ -147,4 +147,4 @@ typedef int Py_ssize_t;
  */
 #include "plpy_util.h"
 
-#endif   /* PLPYTHON_H */
+#endif							/* PLPYTHON_H */

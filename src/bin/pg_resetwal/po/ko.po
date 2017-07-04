@@ -1,0 +1,615 @@
+# Korean message translation file for PostgreSQL pg_resetxlog
+# Ioseph Kim <ioseph@uri.sarang.net>, 2004.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 9.6\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2016-09-26 14:02+0900\n"
+"PO-Revision-Date: 2016-09-26 18:37+0900\n"
+"Last-Translator: Ioseph Kim <ioseph@uri.sarang.net>\n"
+"Language-Team: Korean Team <pgsql-kr@postgresql.kr>\n"
+"Language: ko\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: ../../common/restricted_token.c:68
+#, c-format
+msgid "%s: WARNING: cannot create restricted tokens on this platform\n"
+msgstr "%s: 경고: 이 운영체제에서 restricted token을 만들 수 없음\n"
+
+#: ../../common/restricted_token.c:77
+#, c-format
+msgid "%s: could not open process token: error code %lu\n"
+msgstr "%s: 프로세스 토큰을 열 수 없음: 오류 코드 %lu\n"
+
+#: ../../common/restricted_token.c:90
+#, c-format
+msgid "%s: could not allocate SIDs: error code %lu\n"
+msgstr "%s: SID를 할당할 수 없음: 오류 코드 %lu\n"
+
+#: ../../common/restricted_token.c:110
+#, c-format
+msgid "%s: could not create restricted token: error code %lu\n"
+msgstr "%s: 상속된 토큰을 만들 수 없음: 오류 코드 %lu\n"
+
+#: ../../common/restricted_token.c:132
+#, c-format
+msgid "%s: could not start process for command \"%s\": error code %lu\n"
+msgstr "%s: \"%s\" 명령용 프로세스를 시작할 수 없음: 오류 코드 %lu\n"
+
+#: ../../common/restricted_token.c:170
+#, c-format
+msgid "%s: could not re-execute with restricted token: error code %lu\n"
+msgstr "%s: 상속된 토큰으로 재실행할 수 없음: 오류 코드 %lu\n"
+
+#: ../../common/restricted_token.c:186
+#, c-format
+msgid "%s: could not get exit code from subprocess: error code %lu\n"
+msgstr "%s: 하위 프로세스의 종료 코드를 구할 수 없음: 오류 코드 %lu\n"
+
+#. translator: the second %s is a command line argument (-e, etc)
+#: pg_resetxlog.c:140 pg_resetxlog.c:155 pg_resetxlog.c:170 pg_resetxlog.c:177
+#: pg_resetxlog.c:201 pg_resetxlog.c:216 pg_resetxlog.c:224 pg_resetxlog.c:250
+#: pg_resetxlog.c:264
+#, c-format
+msgid "%s: invalid argument for option %s\n"
+msgstr "%s: %s 옵션의 잘못된 인자\n"
+
+#: pg_resetxlog.c:141 pg_resetxlog.c:156 pg_resetxlog.c:171 pg_resetxlog.c:178
+#: pg_resetxlog.c:202 pg_resetxlog.c:217 pg_resetxlog.c:225 pg_resetxlog.c:251
+#: pg_resetxlog.c:265 pg_resetxlog.c:272 pg_resetxlog.c:285 pg_resetxlog.c:293
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "자세한 사용법은 \"%s --help\"\n"
+
+#: pg_resetxlog.c:146
+#, c-format
+msgid "%s: transaction ID epoch (-e) must not be -1\n"
+msgstr "%s: 트랜잭션 ID epoch (-e) 값은 -1이 아니여야함\n"
+
+#: pg_resetxlog.c:161
+#, c-format
+msgid "%s: transaction ID (-x) must not be 0\n"
+msgstr "%s: 트랜잭션 ID (-x) 값은 0이 아니여야함\n"
+
+#: pg_resetxlog.c:185 pg_resetxlog.c:192
+#, c-format
+msgid ""
+"%s: transaction ID (-c) must be either 0 or greater than or equal to 2\n"
+msgstr "%s: -c 옵션으로 지정한 트랜잭션 ID는 0이거나 2이상이어야 함\n"
+
+#: pg_resetxlog.c:207
+#, c-format
+msgid "%s: OID (-o) must not be 0\n"
+msgstr "%s: OID (-o) 값은 0이 아니여야함\n"
+
+#: pg_resetxlog.c:230
+#, c-format
+msgid "%s: multitransaction ID (-m) must not be 0\n"
+msgstr "%s: 멀티트랜잭션 ID (-m) 값은 0이 아니여야함\n"
+
+#: pg_resetxlog.c:240
+#, c-format
+msgid "%s: oldest multitransaction ID (-m) must not be 0\n"
+msgstr "%s: 제일 오래된 멀티트랜잭션 ID (-m) 값은 0이 아니여야함\n"
+
+#: pg_resetxlog.c:256
+#, c-format
+msgid "%s: multitransaction offset (-O) must not be -1\n"
+msgstr "%s: 멀티트랜잭션 옵셋 (-O) 값은 -1이 아니여야함\n"
+
+#: pg_resetxlog.c:283
+#, c-format
+msgid "%s: too many command-line arguments (first is \"%s\")\n"
+msgstr "%s: 너무 많은 명령행 인수를 지정했습니다. (처음 \"%s\")\n"
+
+#: pg_resetxlog.c:292
+#, c-format
+msgid "%s: no data directory specified\n"
+msgstr "%s: 데이터 디렉터리를 지정하지 않았음\n"
+
+#: pg_resetxlog.c:306
+#, c-format
+msgid "%s: cannot be executed by \"root\"\n"
+msgstr "%s: 이 프로그램은 \"root\"로 실행될 수 없음\n"
+
+#: pg_resetxlog.c:308
+#, c-format
+msgid "You must run %s as the PostgreSQL superuser.\n"
+msgstr "PostgreSQL superuser로 %s 프로그램을 실행하십시오.\n"
+
+#: pg_resetxlog.c:318
+#, c-format
+msgid "%s: could not change directory to \"%s\": %s\n"
+msgstr "%s: \"%s\" 디렉터리로 바꿀 수 없음: %s\n"
+
+#: pg_resetxlog.c:331 pg_resetxlog.c:477
+#, c-format
+msgid "%s: could not open file \"%s\" for reading: %s\n"
+msgstr "%s: \"%s\" 파일을 읽기 모드로 열 수 없음: %s\n"
+
+#: pg_resetxlog.c:338
+#, c-format
+msgid ""
+"%s: lock file \"%s\" exists\n"
+"Is a server running?  If not, delete the lock file and try again.\n"
+msgstr ""
+"%s: \"%s\" 잠금 파일이 있습니다.\n"
+"서버가 가동중인가요? 그렇지 않다면, 이 파일을 지우고 다시 시도하십시오.\n"
+
+#: pg_resetxlog.c:425
+#, c-format
+msgid ""
+"\n"
+"If these values seem acceptable, use -f to force reset.\n"
+msgstr ""
+"\n"
+"이 설정값들이 타당하다고 판단되면, 강제로 갱신하려면, -f 옵션을 쓰세요.\n"
+
+#: pg_resetxlog.c:437
+#, c-format
+msgid ""
+"The database server was not shut down cleanly.\n"
+"Resetting the transaction log might cause data to be lost.\n"
+"If you want to proceed anyway, use -f to force reset.\n"
+msgstr ""
+"이 데이터베이스 서버는 정상적으로 중지되지 못했습니다.\n"
+"트랜잭션 로그를 다시 설정하는 것은 자료 손실을 야기할 수 있습니다.\n"
+"그럼에도 불구하고 진행하려면, -f 옵션을 사용해서 강제 설정을 하십시오.\n"
+
+#: pg_resetxlog.c:451
+#, c-format
+msgid "Transaction log reset\n"
+msgstr "트랜잭션 로그 재설정\n"
+
+#: pg_resetxlog.c:480
+#, c-format
+msgid ""
+"If you are sure the data directory path is correct, execute\n"
+"  touch %s\n"
+"and try again.\n"
+msgstr ""
+"지정한 데이터 디렉터리가 맞다면, 다음 명령을 실행하고, 다시 시도해\n"
+"보십시오.\n"
+"  touch %s\n"
+"(win32에서 어떻게 하나?)\n"
+
+#: pg_resetxlog.c:493
+#, c-format
+msgid "%s: could not read file \"%s\": %s\n"
+msgstr "%s: \"%s\" 파일을 읽을 수 없음: %s\n"
+
+#: pg_resetxlog.c:516
+#, c-format
+msgid "%s: pg_control exists but has invalid CRC; proceed with caution\n"
+msgstr ""
+"%s: pg_control파일이 있지만, CRC값이 잘못되었습니다; 경고과 함께 진행함\n"
+
+#: pg_resetxlog.c:525
+#, c-format
+msgid "%s: pg_control exists but is broken or unknown version; ignoring it\n"
+msgstr "%s: pg_control파일이 있지만, 손상되었거나 버전을 알 수 없음; 무시함\n"
+
+#: pg_resetxlog.c:628
+#, c-format
+msgid ""
+"Guessed pg_control values:\n"
+"\n"
+msgstr ""
+"추측된 pg_control 설정값들:\n"
+"\n"
+
+#: pg_resetxlog.c:630
+#, c-format
+msgid ""
+"Current pg_control values:\n"
+"\n"
+msgstr ""
+"현재 pg_control 설정값들:\n"
+"\n"
+
+#: pg_resetxlog.c:639
+#, c-format
+msgid "pg_control version number:            %u\n"
+msgstr "pg_control 버전 번호:                 %u\n"
+
+#: pg_resetxlog.c:641
+#, c-format
+msgid "Catalog version number:               %u\n"
+msgstr "카탈로그 버전 번호:                   %u\n"
+
+#: pg_resetxlog.c:643
+#, c-format
+msgid "Database system identifier:           %s\n"
+msgstr "데이터베이스 시스템 식별자:           %s\n"
+
+#: pg_resetxlog.c:645
+#, c-format
+msgid "Latest checkpoint's TimeLineID:       %u\n"
+msgstr "마지막 체크포인트 TimeLineID:         %u\n"
+
+#: pg_resetxlog.c:647
+#, c-format
+msgid "Latest checkpoint's full_page_writes: %s\n"
+msgstr "마지막 체크포인트 full_page_writes:   %s\n"
+
+#: pg_resetxlog.c:648
+msgid "off"
+msgstr "off"
+
+#: pg_resetxlog.c:648
+msgid "on"
+msgstr "on"
+
+#: pg_resetxlog.c:649
+#, c-format
+msgid "Latest checkpoint's NextXID:          %u:%u\n"
+msgstr "마지막 체크포인트 NextXID:            %u:%u\n"
+
+#: pg_resetxlog.c:652
+#, c-format
+msgid "Latest checkpoint's NextOID:          %u\n"
+msgstr "마지막 체크포인트 NextOID:            %u\n"
+
+#: pg_resetxlog.c:654
+#, c-format
+msgid "Latest checkpoint's NextMultiXactId:  %u\n"
+msgstr "마지막 체크포인트 NextMultiXactId:    %u\n"
+
+#: pg_resetxlog.c:656
+#, c-format
+msgid "Latest checkpoint's NextMultiOffset:  %u\n"
+msgstr "마지막 체크포인트 NextMultiOffset:    %u\n"
+
+#: pg_resetxlog.c:658
+#, c-format
+msgid "Latest checkpoint's oldestXID:        %u\n"
+msgstr "마지막 체크포인트 제일 오래된 XID:    %u\n"
+
+#: pg_resetxlog.c:660
+#, c-format
+msgid "Latest checkpoint's oldestXID's DB:   %u\n"
+msgstr "마지막 체크포인트 제일 오래된 XID의 DB:%u\n"
+
+#: pg_resetxlog.c:662
+#, c-format
+msgid "Latest checkpoint's oldestActiveXID:  %u\n"
+msgstr "마지막 체크포인트 제일 오래된 ActiveXID:%u\n"
+
+#: pg_resetxlog.c:664
+#, c-format
+msgid "Latest checkpoint's oldestMultiXid:   %u\n"
+msgstr "마지막 체크포인트 제일 오래된 MultiXid:%u\n"
+
+#: pg_resetxlog.c:666
+#, c-format
+msgid "Latest checkpoint's oldestMulti's DB: %u\n"
+msgstr "마지막 체크포인트 제일 오래된 MultiXid의 DB:%u\n"
+
+#: pg_resetxlog.c:668
+#, c-format
+msgid "Latest checkpoint's oldestCommitTsXid:%u\n"
+msgstr "마지막 체크포인트 제일 오래된 CommitTsXid:%u\n"
+
+#: pg_resetxlog.c:670
+#, c-format
+msgid "Latest checkpoint's newestCommitTsXid:%u\n"
+msgstr "마지막 체크포인트 최신 CommitTsXid:   %u\n"
+
+#: pg_resetxlog.c:672
+#, c-format
+msgid "Maximum data alignment:               %u\n"
+msgstr "최대 자료 정렬:                       %u\n"
+
+#: pg_resetxlog.c:675
+#, c-format
+msgid "Database block size:                  %u\n"
+msgstr "데이터베이스 블록 크기:               %u\n"
+
+#: pg_resetxlog.c:677
+#, c-format
+msgid "Blocks per segment of large relation: %u\n"
+msgstr "대형 릴레이션의 세그먼트당 블럭 갯수: %u\n"
+
+#: pg_resetxlog.c:679
+#, c-format
+msgid "WAL block size:                       %u\n"
+msgstr "WAL 블록 크기:                        %u\n"
+
+#: pg_resetxlog.c:681
+#, c-format
+msgid "Bytes per WAL segment:                %u\n"
+msgstr "WAL 세그먼트의 크기(byte):            %u\n"
+
+#: pg_resetxlog.c:683
+#, c-format
+msgid "Maximum length of identifiers:        %u\n"
+msgstr "식별자 최대 길이:                     %u\n"
+
+#: pg_resetxlog.c:685
+#, c-format
+msgid "Maximum columns in an index:          %u\n"
+msgstr "인덱스에서 사용하는 최대 열 수:      %u\n"
+
+#: pg_resetxlog.c:687
+#, c-format
+msgid "Maximum size of a TOAST chunk:        %u\n"
+msgstr "TOAST 청크의 최대 크기:        %u\n"
+
+#: pg_resetxlog.c:689
+#, c-format
+msgid "Size of a large-object chunk:         %u\n"
+msgstr "대형객체 청크의 최대 크기:            %u\n"
+
+#: pg_resetxlog.c:691
+#, c-format
+msgid "Date/time type storage:               %s\n"
+msgstr "날짜/시간형 자료의 저장방식:          %s\n"
+
+#: pg_resetxlog.c:692
+msgid "64-bit integers"
+msgstr "64-비트 정수"
+
+#: pg_resetxlog.c:692
+msgid "floating-point numbers"
+msgstr "부동소수"
+
+#: pg_resetxlog.c:693
+#, c-format
+msgid "Float4 argument passing:              %s\n"
+msgstr "Float4 인수 전달:                     %s\n"
+
+#: pg_resetxlog.c:694 pg_resetxlog.c:696
+msgid "by reference"
+msgstr "참조별"
+
+#: pg_resetxlog.c:694 pg_resetxlog.c:696
+msgid "by value"
+msgstr "값별"
+
+#: pg_resetxlog.c:695
+#, c-format
+msgid "Float8 argument passing:              %s\n"
+msgstr "Float8 인수 전달:                     %s\n"
+
+#: pg_resetxlog.c:697
+#, c-format
+msgid "Data page checksum version:           %u\n"
+msgstr "데이터 페이지 체크섬 버전:            %u\n"
+
+#: pg_resetxlog.c:711
+#, c-format
+msgid ""
+"\n"
+"\n"
+"Values to be changed:\n"
+"\n"
+msgstr ""
+"\n"
+"\n"
+"변경될 값:\n"
+"\n"
+
+#: pg_resetxlog.c:714
+#, c-format
+msgid "First log segment after reset:        %s\n"
+msgstr "리셋 뒤 첫 로그 세그먼트:             %s\n"
+
+#: pg_resetxlog.c:718
+#, c-format
+msgid "NextMultiXactId:                      %u\n"
+msgstr "NextMultiXactId:                      %u\n"
+
+#: pg_resetxlog.c:720
+#, c-format
+msgid "OldestMultiXid:                       %u\n"
+msgstr "OldestMultiXid:                       %u\n"
+
+#: pg_resetxlog.c:722
+#, c-format
+msgid "OldestMulti's DB:                     %u\n"
+msgstr "OldestMultiXid의 DB:                  %u\n"
+
+#: pg_resetxlog.c:728
+#, c-format
+msgid "NextMultiOffset:                      %u\n"
+msgstr "NextMultiOffset:                      %u\n"
+
+#: pg_resetxlog.c:734
+#, c-format
+msgid "NextOID:                              %u\n"
+msgstr "NextOID:                              %u\n"
+
+#: pg_resetxlog.c:740
+#, c-format
+msgid "NextXID:                              %u\n"
+msgstr "NextXID:                              %u\n"
+
+#: pg_resetxlog.c:742
+#, c-format
+msgid "OldestXID:                            %u\n"
+msgstr "OldestXID:                            %u\n"
+
+#: pg_resetxlog.c:744
+#, c-format
+msgid "OldestXID's DB:                       %u\n"
+msgstr "OldestXID의 DB:                       %u\n"
+
+#: pg_resetxlog.c:750
+#, c-format
+msgid "NextXID epoch:                        %u\n"
+msgstr "NextXID epoch:                        %u\n"
+
+#: pg_resetxlog.c:756
+#, c-format
+msgid "oldestCommitTsXid:                    %u\n"
+msgstr "제일 오래된 CommitTsXid:              %u\n"
+
+#: pg_resetxlog.c:761
+#, c-format
+msgid "newestCommitTsXid:                    %u\n"
+msgstr "최근 CommitTsXid:                     %u\n"
+
+#: pg_resetxlog.c:827
+#, c-format
+msgid ""
+"%s: internal error -- sizeof(ControlFileData) is too large ... fix "
+"PG_CONTROL_SIZE\n"
+msgstr ""
+"%s: 내부 오류 -- sizeof(ControlFileData) 값이 너무 큼 ... PG_CONTROL_SIZE 고"
+"쳐야함\n"
+
+#: pg_resetxlog.c:842
+#, c-format
+msgid "%s: could not create pg_control file: %s\n"
+msgstr "%s: pg_control 파일 만들 수 없음: %s\n"
+
+#: pg_resetxlog.c:853
+#, c-format
+msgid "%s: could not write pg_control file: %s\n"
+msgstr "%s: pg_control 파일 쓸 수 없음: %s\n"
+
+#: pg_resetxlog.c:860 pg_resetxlog.c:1156
+#, c-format
+msgid "%s: fsync error: %s\n"
+msgstr "%s: fsync 오류: %s\n"
+
+#: pg_resetxlog.c:900 pg_resetxlog.c:971 pg_resetxlog.c:1022
+#, c-format
+msgid "%s: could not open directory \"%s\": %s\n"
+msgstr "%s: \"%s\" 디렉터리 열 수 없음: %s\n"
+
+#: pg_resetxlog.c:936 pg_resetxlog.c:993 pg_resetxlog.c:1047
+#, c-format
+msgid "%s: could not read directory \"%s\": %s\n"
+msgstr "%s: \"%s\" 디렉터리를 읽을 수 없음: %s\n"
+
+#: pg_resetxlog.c:943 pg_resetxlog.c:1000 pg_resetxlog.c:1054
+#, c-format
+msgid "%s: could not close directory \"%s\": %s\n"
+msgstr "%s: \"%s\" 디렉터리를 닫을 수 없음: %s\n"
+
+#: pg_resetxlog.c:984 pg_resetxlog.c:1038
+#, c-format
+msgid "%s: could not delete file \"%s\": %s\n"
+msgstr "%s: \"%s\" 파일 삭제 할 수 없음: %s\n"
+
+#: pg_resetxlog.c:1123
+#, c-format
+msgid "%s: could not open file \"%s\": %s\n"
+msgstr "%s: \"%s\" 파일 열 수 없음: %s\n"
+
+#: pg_resetxlog.c:1134 pg_resetxlog.c:1148
+#, c-format
+msgid "%s: could not write file \"%s\": %s\n"
+msgstr "%s: \"%s\" 파일 쓸 수 없음: %s\n"
+
+#: pg_resetxlog.c:1167
+#, c-format
+msgid ""
+"%s resets the PostgreSQL transaction log.\n"
+"\n"
+msgstr ""
+"%s 프로그램은 PostgreSQL 트랜잭션 로그를 다시 설정합니다.\n"
+"\n"
+
+#: pg_resetxlog.c:1168
+#, c-format
+msgid ""
+"Usage:\n"
+"  %s [OPTION]... DATADIR\n"
+"\n"
+msgstr ""
+"사용법:\n"
+"  %s [옵션]... DATADIR\n"
+"\n"
+
+#: pg_resetxlog.c:1169
+#, c-format
+msgid "Options:\n"
+msgstr "옵션들:\n"
+
+#: pg_resetxlog.c:1170
+#, c-format
+msgid ""
+"  -c XID,XID       set oldest and newest transactions bearing commit "
+"timestamp\n"
+msgstr ""
+"  -c XID,XID       커밋 시간을 도출하는 제일 오래된, 최신의 트랜잭션 지정\n"
+
+#: pg_resetxlog.c:1171
+#, c-format
+msgid "                   (zero in either value means no change)\n"
+msgstr "                   (0으로 지정하면 바꾸지 않음)\n"
+
+#: pg_resetxlog.c:1172
+#, c-format
+msgid " [-D] DATADIR      data directory\n"
+msgstr " [-D] DATADIR      데이터 디렉터리\n"
+
+#: pg_resetxlog.c:1173
+#, c-format
+msgid "  -e XIDEPOCH      set next transaction ID epoch\n"
+msgstr "  -e XIDEPOCH      다음 트랙잭션 ID epoch 지정\n"
+
+#: pg_resetxlog.c:1174
+#, c-format
+msgid "  -f               force update to be done\n"
+msgstr "  -f               강제로 갱신함\n"
+
+#: pg_resetxlog.c:1175
+#, c-format
+msgid ""
+"  -l XLOGFILE      force minimum WAL starting location for new transaction "
+"log\n"
+msgstr ""
+"  -l XLOGFILE      새 트랜잭션 로그를 위한 WAL 최소 시작 위치를 강제로 지정\n"
+
+#: pg_resetxlog.c:1176
+#, c-format
+msgid "  -m MXID,MXID     set next and oldest multitransaction ID\n"
+msgstr "  -m MXID,MXID     다음 제일 오래된 멀티트랜잭션 ID 지정\n"
+
+#: pg_resetxlog.c:1177
+#, c-format
+msgid ""
+"  -n               no update, just show what would be done (for testing)\n"
+msgstr ""
+"  -n               갱신하지 않음, 컨트롤 값들을 보여주기만 함(테스트용)\n"
+
+#: pg_resetxlog.c:1178
+#, c-format
+msgid "  -o OID           set next OID\n"
+msgstr "  -o OID           다음 OID 지정\n"
+
+#: pg_resetxlog.c:1179
+#, c-format
+msgid "  -O OFFSET        set next multitransaction offset\n"
+msgstr "  -O OFFSET        다음 멀티트랜잭션 옵셋 지정\n"
+
+#: pg_resetxlog.c:1180
+#, c-format
+msgid "  -V, --version    output version information, then exit\n"
+msgstr "  -V, --version    버전 정보 보여주고 마침\n"
+
+#: pg_resetxlog.c:1181
+#, c-format
+msgid "  -x XID           set next transaction ID\n"
+msgstr "  -x XID           다음 XID(트랜잭션 ID) 지정\n"
+
+#: pg_resetxlog.c:1182
+#, c-format
+msgid "  -?, --help       show this help, then exit\n"
+msgstr "  -?, --help       이 도움말을 보여주고 마침\n"
+
+#: pg_resetxlog.c:1183
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr ""
+"\n"
+"오류보고: <pgsql-bugs@postgresql.org>.\n"

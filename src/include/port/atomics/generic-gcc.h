@@ -3,7 +3,7 @@
  * generic-gcc.h
  *	  Atomic operations, implemented using gcc (or compatible) intrinsics.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * NOTES:
@@ -62,12 +62,15 @@
 #define PG_HAVE_ATOMIC_FLAG_SUPPORT
 typedef struct pg_atomic_flag
 {
-	/* some platforms only have a 8 bit wide TAS */
-#ifdef HAVE_GCC__SYNC_CHAR_TAS
-	volatile char value;
-#else
-	/* but an int works on more platforms */
+	/*
+	 * If we have a choice, use int-width TAS, because that is more efficient
+	 * and/or more reliably implemented on most non-Intel platforms.  (Note
+	 * that this code isn't used on x86[_64]; see arch-x86.h for that.)
+	 */
+#ifdef HAVE_GCC__SYNC_INT32_TAS
 	volatile int value;
+#else
+	volatile char value;
 #endif
 } pg_atomic_flag;
 

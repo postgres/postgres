@@ -41,8 +41,7 @@ DELETE FROM [ ONLY ] <replaceable class="PARAMETER">table_name</replaceable> [ *
 
    <tip>
     <para>
-     <xref linkend="sql-truncate"> is a
-     <productname>PostgreSQL</productname> extension that provides a
+     <xref linkend="sql-truncate"> provides a
      faster mechanism to remove all rows from a table.
     </para>
    </tip>
@@ -278,5 +277,13 @@ DELETE FROM tasks WHERE CURRENT OF c_tasks;
    are <productname>PostgreSQL</productname> extensions, as is the ability
    to use <literal>WITH</> with <command>DELETE</>.
   </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-truncate"></member>
+  </simplelist>
  </refsect1>
 </refentry>

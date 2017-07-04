@@ -4,7 +4,7 @@
  *	   Portable delay handling.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  *
  * src/port/pgsleep.c
  *
@@ -14,6 +14,9 @@
 
 #include <unistd.h>
 #include <sys/time.h>
+#ifdef HAVE_SYS_SELECT_H
+#include <sys/select.h>
+#endif
 
 /*
  * In a Windows backend, we don't use this implementation, but rather
@@ -57,4 +60,4 @@ pg_usleep(long microsec)
 	}
 }
 
-#endif   /* defined(FRONTEND) || !defined(WIN32) */
+#endif							/* defined(FRONTEND) || !defined(WIN32) */

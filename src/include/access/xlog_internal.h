@@ -1,7 +1,7 @@
 /*
  * xlog_internal.h
  *
- * PostgreSQL transaction log internal declarations
+ * PostgreSQL write-ahead log internal declarations
  *
  * NOTE: this file is intended to contain declarations useful for
  * manipulating the XLOG files directly, but it is not supposed to be
@@ -9,9 +9,9 @@
  * So the XLogRecord typedef and associated stuff appear in xlogrecord.h.
  *
  * Note: This file must be includable in both frontend and backend contexts,
- * to allow stand-alone tools like pg_receivexlog to deal with WAL files.
+ * to allow stand-alone tools like pg_receivewal to deal with WAL files.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/access/xlog_internal.h
@@ -31,7 +31,7 @@
 /*
  * Each page of XLOG file has a header like this:
  */
-#define XLOG_PAGE_MAGIC 0xD093	/* can be used as WAL version indicator */
+#define XLOG_PAGE_MAGIC 0xD097	/* can be used as WAL version indicator */
 
 typedef struct XLogPageHeaderData
 {
@@ -128,7 +128,7 @@ typedef XLogLongPageHeaderData *XLogLongPageHeader;
 /*
  * The XLog directory and control file (relative to $PGDATA)
  */
-#define XLOGDIR				"pg_xlog"
+#define XLOGDIR				"pg_wal"
 #define XLOG_CONTROL_FILE	"global/pg_control"
 
 /*
@@ -153,7 +153,7 @@ typedef XLogLongPageHeaderData *XLogLongPageHeader;
 	 strspn(fname, "0123456789ABCDEF") == XLOG_FNAME_LEN)
 
 /*
- * XLOG segment with .partial suffix.  Used by pg_receivexlog and at end of
+ * XLOG segment with .partial suffix.  Used by pg_receivewal and at end of
  * archive recovery, when we want to archive a WAL segment but it might not
  * be complete yet.
  */
@@ -266,6 +266,9 @@ typedef enum
  * "VACUUM". rm_desc can then be called to obtain additional detail for the
  * record, if available (e.g. the last block).
  *
+ * rm_mask takes as input a page modified by the resource manager and masks
+ * out bits that shouldn't be flagged by wal_consistency_checking.
+ *
  * RmgrTable[] is indexed by RmgrId values (see rmgrlist.h).
  */
 typedef struct RmgrData
@@ -276,6 +279,7 @@ typedef struct RmgrData
 	const char *(*rm_identify) (uint8 info);
 	void		(*rm_startup) (void);
 	void		(*rm_cleanup) (void);
+	void		(*rm_mask) (char *pagedata, BlockNumber blkno);
 } RmgrData;
 
 extern const RmgrData RmgrTable[];
@@ -283,8 +287,8 @@ extern const RmgrData RmgrTable[];
 /*
  * Exported to support xlog switching from checkpointer
  */
-extern pg_time_t GetLastSegSwitchTime(void);
-extern XLogRecPtr RequestXLogSwitch(void);
+extern pg_time_t GetLastSegSwitchData(XLogRecPtr *lastSwitchLSN);
+extern XLogRecPtr RequestXLogSwitch(bool mark_unimportant);
 
 extern void GetOldestRestartPoint(XLogRecPtr *oldrecptr, TimeLineID *oldtli);
 
@@ -315,4 +319,4 @@ extern bool XLogArchiveIsReady(const char *xlog);
 extern bool XLogArchiveIsReadyOrDone(const char *xlog);
 extern void XLogArchiveCleanup(const char *xlog);
 
-#endif   /* XLOG_INTERNAL_H */
+#endif							/* XLOG_INTERNAL_H */

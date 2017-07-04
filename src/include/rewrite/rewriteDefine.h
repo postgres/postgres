@@ -4,7 +4,7 @@
  *
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/rewrite/rewriteDefine.h
@@ -41,4 +41,4 @@ extern void setRuleCheckAsUser(Node *node, Oid userid);
 extern void EnableDisableRule(Relation rel, const char *rulename,
 				  char fires_when);
 
-#endif   /* REWRITEDEFINE_H */
+#endif							/* REWRITEDEFINE_H */

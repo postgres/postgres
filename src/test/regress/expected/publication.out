@@ -1,0 +1,249 @@
+--
+-- PUBLICATION
+--
+CREATE ROLE regress_publication_user LOGIN SUPERUSER;
+CREATE ROLE regress_publication_user2;
+CREATE ROLE regress_publication_user_dummy LOGIN NOSUPERUSER;
+SET SESSION AUTHORIZATION 'regress_publication_user';
+CREATE PUBLICATION testpub_default;
+COMMENT ON PUBLICATION testpub_default IS 'test publication';
+SELECT obj_description(p.oid, 'pg_publication') FROM pg_publication p;
+ obj_description  
+------------------
+ test publication
+(1 row)
+
+CREATE PUBLICATION testpib_ins_trunct WITH (publish = insert);
+ALTER PUBLICATION testpub_default SET (publish = update);
+-- error cases
+CREATE PUBLICATION testpub_xxx WITH (foo);
+ERROR:  unrecognized publication parameter: foo
+CREATE PUBLICATION testpub_xxx WITH (publish = 'cluster, vacuum');
+ERROR:  unrecognized "publish" value: "cluster"
+\dRp
+                                   List of publications
+        Name        |          Owner           | All tables | Inserts | Updates | Deletes 
+--------------------+--------------------------+------------+---------+---------+---------
+ testpib_ins_trunct | regress_publication_user | f          | t       | f       | f
+ testpub_default    | regress_publication_user | f          | f       | t       | f
+(2 rows)
+
+ALTER PUBLICATION testpub_default SET (publish = 'insert, update, delete');
+\dRp
+                                   List of publications
+        Name        |          Owner           | All tables | Inserts | Updates | Deletes 
+--------------------+--------------------------+------------+---------+---------+---------
+ testpib_ins_trunct | regress_publication_user | f          | t       | f       | f
+ testpub_default    | regress_publication_user | f          | t       | t       | t
+(2 rows)
+
+--- adding tables
+CREATE SCHEMA pub_test;
+CREATE TABLE testpub_tbl1 (id serial primary key, data text);
+CREATE TABLE pub_test.testpub_nopk (foo int, bar int);
+CREATE VIEW testpub_view AS SELECT 1;
+CREATE TABLE testpub_parted (a int) PARTITION BY LIST (a);
+CREATE PUBLICATION testpub_foralltables FOR ALL TABLES WITH (publish = 'insert');
+ALTER PUBLICATION testpub_foralltables SET (publish = 'insert, update');
+CREATE TABLE testpub_tbl2 (id serial primary key, data text);
+-- fail - can't add to for all tables publication
+ALTER PUBLICATION testpub_foralltables ADD TABLE testpub_tbl2;
+ERROR:  publication "testpub_foralltables" is defined as FOR ALL TABLES
+DETAIL:  Tables cannot be added to or dropped from FOR ALL TABLES publications.
+-- fail - can't drop from all tables publication
+ALTER PUBLICATION testpub_foralltables DROP TABLE testpub_tbl2;
+ERROR:  publication "testpub_foralltables" is defined as FOR ALL TABLES
+DETAIL:  Tables cannot be added to or dropped from FOR ALL TABLES publications.
+-- fail - can't add to for all tables publication
+ALTER PUBLICATION testpub_foralltables SET TABLE pub_test.testpub_nopk;
+ERROR:  publication "testpub_foralltables" is defined as FOR ALL TABLES
+DETAIL:  Tables cannot be added to or dropped from FOR ALL TABLES publications.
+SELECT pubname, puballtables FROM pg_publication WHERE pubname = 'testpub_foralltables';
+       pubname        | puballtables 
+----------------------+--------------
+ testpub_foralltables | t
+(1 row)
+
+\d+ testpub_tbl2
+                                                Table "public.testpub_tbl2"
+ Column |  Type   | Collation | Nullable |                 Default                  | Storage  | Stats target | Description 
+--------+---------+-----------+----------+------------------------------------------+----------+--------------+-------------
+ id     | integer |           | not null | nextval('testpub_tbl2_id_seq'::regclass) | plain    |              | 
+ data   | text    |           |          |                                          | extended |              | 
+Indexes:
+    "testpub_tbl2_pkey" PRIMARY KEY, btree (id)
+Publications:
+    "testpub_foralltables"
+
+\dRp+ testpub_foralltables
+     Publication testpub_foralltables
+ All tables | Inserts | Updates | Deletes 
+------------+---------+---------+---------
+ t          | t       | t       | f
+(1 row)
+
+DROP TABLE testpub_tbl2;
+DROP PUBLICATION testpub_foralltables;
+CREATE TABLE testpub_tbl3 (a int);
+CREATE TABLE testpub_tbl3a (b text) INHERITS (testpub_tbl3);
+CREATE PUBLICATION testpub3 FOR TABLE testpub_tbl3;
+CREATE PUBLICATION testpub4 FOR TABLE ONLY testpub_tbl3;
+\dRp+ testpub3
+           Publication testpub3
+ All tables | Inserts | Updates | Deletes 
+------------+---------+---------+---------
+ f          | t       | t       | t
+Tables:
+    "public.testpub_tbl3"
+    "public.testpub_tbl3a"
+
+\dRp+ testpub4
+           Publication testpub4
+ All tables | Inserts | Updates | Deletes 
+------------+---------+---------+---------
+ f          | t       | t       | t
+Tables:
+    "public.testpub_tbl3"
+
+DROP TABLE testpub_tbl3, testpub_tbl3a;
+DROP PUBLICATION testpub3, testpub4;
+-- fail - view
+CREATE PUBLICATION testpub_fortbl FOR TABLE testpub_view;
+ERROR:  "testpub_view" is not a table
+DETAIL:  Only tables can be added to publications.
+CREATE PUBLICATION testpub_fortbl FOR TABLE testpub_tbl1, pub_test.testpub_nopk;
+-- fail - already added
+ALTER PUBLICATION testpub_fortbl ADD TABLE testpub_tbl1;
+ERROR:  relation "testpub_tbl1" is already member of publication "testpub_fortbl"
+-- fail - already added
+CREATE PUBLICATION testpub_fortbl FOR TABLE testpub_tbl1;
+ERROR:  publication "testpub_fortbl" already exists
+\dRp+ testpub_fortbl
+        Publication testpub_fortbl
+ All tables | Inserts | Updates | Deletes 
+------------+---------+---------+---------
+ f          | t       | t       | t
+Tables:
+    "pub_test.testpub_nopk"
+    "public.testpub_tbl1"
+
+-- fail - view
+ALTER PUBLICATION testpub_default ADD TABLE testpub_view;
+ERROR:  "testpub_view" is not a table
+DETAIL:  Only tables can be added to publications.
+-- fail - partitioned table
+ALTER PUBLICATION testpub_fortbl ADD TABLE testpub_parted;
+ERROR:  "testpub_parted" is a partitioned table
+DETAIL:  Adding partitioned tables to publications is not supported.
+HINT:  You can add the table partitions individually.
+ALTER PUBLICATION testpub_default ADD TABLE testpub_tbl1;
+ALTER PUBLICATION testpub_default SET TABLE testpub_tbl1;
+ALTER PUBLICATION testpub_default ADD TABLE pub_test.testpub_nopk;
+ALTER PUBLICATION testpib_ins_trunct ADD TABLE pub_test.testpub_nopk, testpub_tbl1;
+\d+ pub_test.testpub_nopk
+                              Table "pub_test.testpub_nopk"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ foo    | integer |           |          |         | plain   |              | 
+ bar    | integer |           |          |         | plain   |              | 
+Publications:
+    "testpib_ins_trunct"
+    "testpub_default"
+    "testpub_fortbl"
+
+\d+ testpub_tbl1
+                                                Table "public.testpub_tbl1"
+ Column |  Type   | Collation | Nullable |                 Default                  | Storage  | Stats target | Description 
+--------+---------+-----------+----------+------------------------------------------+----------+--------------+-------------
+ id     | integer |           | not null | nextval('testpub_tbl1_id_seq'::regclass) | plain    |              | 
+ data   | text    |           |          |                                          | extended |              | 
+Indexes:
+    "testpub_tbl1_pkey" PRIMARY KEY, btree (id)
+Publications:
+    "testpib_ins_trunct"
+    "testpub_default"
+    "testpub_fortbl"
+
+\dRp+ testpub_default
+       Publication testpub_default
+ All tables | Inserts | Updates | Deletes 
+------------+---------+---------+---------
+ f          | t       | t       | t
+Tables:
+    "pub_test.testpub_nopk"
+    "public.testpub_tbl1"
+
+ALTER PUBLICATION testpub_default DROP TABLE testpub_tbl1, pub_test.testpub_nopk;
+-- fail - nonexistent
+ALTER PUBLICATION testpub_default DROP TABLE pub_test.testpub_nopk;
+ERROR:  relation "testpub_nopk" is not part of the publication
+\d+ testpub_tbl1
+                                                Table "public.testpub_tbl1"
+ Column |  Type   | Collation | Nullable |                 Default                  | Storage  | Stats target | Description 
+--------+---------+-----------+----------+------------------------------------------+----------+--------------+-------------
+ id     | integer |           | not null | nextval('testpub_tbl1_id_seq'::regclass) | plain    |              | 
+ data   | text    |           |          |                                          | extended |              | 
+Indexes:
+    "testpub_tbl1_pkey" PRIMARY KEY, btree (id)
+Publications:
+    "testpib_ins_trunct"
+    "testpub_fortbl"
+
+-- permissions
+SET ROLE regress_publication_user2;
+CREATE PUBLICATION testpub2;  -- fail
+ERROR:  permission denied for database regression
+SET ROLE regress_publication_user;
+GRANT CREATE ON DATABASE regression TO regress_publication_user2;
+SET ROLE regress_publication_user2;
+CREATE PUBLICATION testpub2;  -- ok
+ALTER PUBLICATION testpub2 ADD TABLE testpub_tbl1;  -- fail
+ERROR:  must be owner of relation testpub_tbl1
+SET ROLE regress_publication_user;
+GRANT regress_publication_user TO regress_publication_user2;
+SET ROLE regress_publication_user2;
+ALTER PUBLICATION testpub2 ADD TABLE testpub_tbl1;  -- ok
+DROP PUBLICATION testpub2;
+SET ROLE regress_publication_user;
+REVOKE CREATE ON DATABASE regression FROM regress_publication_user2;
+DROP TABLE testpub_parted;
+DROP VIEW testpub_view;
+DROP TABLE testpub_tbl1;
+\dRp+ testpub_default
+       Publication testpub_default
+ All tables | Inserts | Updates | Deletes 
+------------+---------+---------+---------
+ f          | t       | t       | t
+(1 row)
+
+-- fail - must be owner of publication
+SET ROLE regress_publication_user_dummy;
+ALTER PUBLICATION testpub_default RENAME TO testpub_dummy;
+ERROR:  must be owner of publication testpub_default
+RESET ROLE;
+ALTER PUBLICATION testpub_default RENAME TO testpub_foo;
+\dRp testpub_foo
+                               List of publications
+    Name     |          Owner           | All tables | Inserts | Updates | Deletes 
+-------------+--------------------------+------------+---------+---------+---------
+ testpub_foo | regress_publication_user | f          | t       | t       | t
+(1 row)
+
+-- rename back to keep the rest simple
+ALTER PUBLICATION testpub_foo RENAME TO testpub_default;
+ALTER PUBLICATION testpub_default OWNER TO regress_publication_user2;
+\dRp testpub_default
+                                  List of publications
+      Name       |           Owner           | All tables | Inserts | Updates | Deletes 
+-----------------+---------------------------+------------+---------+---------+---------
+ testpub_default | regress_publication_user2 | f          | t       | t       | t
+(1 row)
+
+DROP PUBLICATION testpub_default;
+DROP PUBLICATION testpib_ins_trunct;
+DROP PUBLICATION testpub_fortbl;
+DROP SCHEMA pub_test CASCADE;
+NOTICE:  drop cascades to table pub_test.testpub_nopk
+RESET SESSION AUTHORIZATION;
+DROP ROLE regress_publication_user, regress_publication_user2;
+DROP ROLE regress_publication_user_dummy;

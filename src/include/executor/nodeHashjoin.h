@@ -4,7 +4,7 @@
  *	  prototypes for nodeHashjoin.c
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/executor/nodeHashjoin.h
@@ -25,4 +25,4 @@ extern void ExecReScanHashJoin(HashJoinState *node);
 extern void ExecHashJoinSaveTuple(MinimalTuple tuple, uint32 hashvalue,
 					  BufFile **fileptr);
 
-#endif   /* NODEHASHJOIN_H */
+#endif							/* NODEHASHJOIN_H */

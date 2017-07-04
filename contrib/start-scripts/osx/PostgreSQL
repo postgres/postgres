@@ -29,7 +29,7 @@
 # modified by Ray Aspeitia 12-03-2003 :
 # added log rotation script to db startup
 # modified StartupParameters.plist "Provides" parameter to make it easier to
-# start and stop with the SystemStarter utitlity
+# start and stop with the SystemStarter utility
 
 # use the below command in order to correctly start/stop/restart PG with log rotation script:
 # SystemStarter [start|stop|restart] PostgreSQL
@@ -65,8 +65,7 @@ ROTATESEC="604800"
 PATH="$prefix/bin:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin"
 
 # What to use to start up the postmaster.  (If you want the script to wait
-# until the server has started, you could use "pg_ctl start -w" here.
-# But without -w, pg_ctl adds no value.)
+# until the server has started, you could use "pg_ctl start" here.)
 DAEMON="$prefix/bin/postmaster"
 
 # What to use to shut down the postmaster
@@ -90,15 +89,15 @@ StartService () {
 
 StopService () {
     ConsoleMessage "Stopping PostgreSQL database server"
-    sudo -u $PGUSER sh -c "$PGCTL stop -D '${PGDATA}' -s -m fast"
+    sudo -u $PGUSER sh -c "$PGCTL stop -D '${PGDATA}' -s"
 }
 
 RestartService () {
     if [ "${POSTGRESQL:=-NO-}" = "-YES-" ]; then
         ConsoleMessage "Restarting PostgreSQL database server"
-	# should match StopService:
-	sudo -u $PGUSER sh -c "$PGCTL stop -D '${PGDATA}' -s -m fast"
-	# should match StartService:
+        # should match StopService:
+        sudo -u $PGUSER sh -c "$PGCTL stop -D '${PGDATA}' -s"
+        # should match StartService:
         if [ "${ROTATELOGS}" = "1" ]; then
             sudo -u $PGUSER sh -c "${DAEMON} -D '${PGDATA}' &" 2>&1 | ${LOGUTIL} "${PGLOG}" ${ROTATESEC} &
         else

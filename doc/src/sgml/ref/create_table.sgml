@@ -28,16 +28,29 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
     [, ... ]
 ] )
 [ INHERITS ( <replaceable>parent_table</replaceable> [, ... ] ) ]
+[ PARTITION BY { RANGE | LIST } ( { <replaceable class="parameter">column_name</replaceable> | ( <replaceable class="parameter">expression</replaceable> ) } [ COLLATE <replaceable class="parameter">collation</replaceable> ] [ <replaceable class="parameter">opclass</replaceable> ] [, ... ] ) ]
 [ WITH ( <replaceable class="PARAMETER">storage_parameter</replaceable> [= <replaceable class="PARAMETER">value</replaceable>] [, ... ] ) | WITH OIDS | WITHOUT OIDS ]
 [ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]
 [ TABLESPACE <replaceable class="PARAMETER">tablespace_name</replaceable> ]
 
 CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXISTS ] <replaceable class="PARAMETER">table_name</replaceable>
     OF <replaceable class="PARAMETER">type_name</replaceable> [ (
-  { <replaceable class="PARAMETER">column_name</replaceable> WITH OPTIONS [ <replaceable class="PARAMETER">column_constraint</replaceable> [ ... ] ]
+  { <replaceable class="PARAMETER">column_name</replaceable> [ WITH OPTIONS ] [ <replaceable class="PARAMETER">column_constraint</replaceable> [ ... ] ]
     | <replaceable>table_constraint</replaceable> }
     [, ... ]
 ) ]
+[ PARTITION BY { RANGE | LIST } ( { <replaceable class="parameter">column_name</replaceable> | ( <replaceable class="parameter">expression</replaceable> ) } [ COLLATE <replaceable class="parameter">collation</replaceable> ] [ <replaceable class="parameter">opclass</replaceable> ] [, ... ] ) ]
+[ WITH ( <replaceable class="PARAMETER">storage_parameter</replaceable> [= <replaceable class="PARAMETER">value</replaceable>] [, ... ] ) | WITH OIDS | WITHOUT OIDS ]
+[ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]
+[ TABLESPACE <replaceable class="PARAMETER">tablespace_name</replaceable> ]
+
+CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXISTS ] <replaceable class="PARAMETER">table_name</replaceable>
+    PARTITION OF <replaceable class="PARAMETER">parent_table</replaceable> [ (
+  { <replaceable class="PARAMETER">column_name</replaceable> [ WITH OPTIONS ] [ <replaceable class="PARAMETER">column_constraint</replaceable> [ ... ] ]
+    | <replaceable>table_constraint</replaceable> }
+    [, ... ]
+) ] FOR VALUES <replaceable class="PARAMETER">partition_bound_spec</replaceable>
+[ PARTITION BY { RANGE | LIST } ( { <replaceable class="parameter">column_name</replaceable> | ( <replaceable class="parameter">expression</replaceable> ) } [ COLLATE <replaceable class="parameter">collation</replaceable> ] [ <replaceable class="parameter">opclass</replaceable> ] [, ... ] ) ]
 [ WITH ( <replaceable class="PARAMETER">storage_parameter</replaceable> [= <replaceable class="PARAMETER">value</replaceable>] [, ... ] ) | WITH OIDS | WITHOUT OIDS ]
 [ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]
 [ TABLESPACE <replaceable class="PARAMETER">tablespace_name</replaceable> ]
@@ -49,6 +62,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
   NULL |
   CHECK ( <replaceable class="PARAMETER">expression</replaceable> ) [ NO INHERIT ] |
   DEFAULT <replaceable>default_expr</replaceable> |
+  GENERATED { ALWAYS | BY DEFAULT } AS IDENTITY [ ( <replaceable>sequence_options</replaceable> ) ] |
   UNIQUE <replaceable class="PARAMETER">index_parameters</replaceable> |
   PRIMARY KEY <replaceable class="PARAMETER">index_parameters</replaceable> |
   REFERENCES <replaceable class="PARAMETER">reftable</replaceable> [ ( <replaceable class="PARAMETER">refcolumn</replaceable> ) ] [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ]
@@ -68,7 +82,13 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
 
 <phrase>and <replaceable class="PARAMETER">like_option</replaceable> is:</phrase>
 
-{ INCLUDING | EXCLUDING } { DEFAULTS | CONSTRAINTS | INDEXES | STORAGE | COMMENTS | ALL }
+{ INCLUDING | EXCLUDING } { DEFAULTS | CONSTRAINTS | IDENTITY | INDEXES | STORAGE | COMMENTS | ALL }
+
+<phrase>and <replaceable class="PARAMETER">partition_bound_spec</replaceable> is:</phrase>
+
+IN ( { <replaceable class="PARAMETER">numeric_literal</replaceable> | <replaceable class="PARAMETER">string_literal</replaceable> | NULL } [, ...] ) |
+FROM ( { <replaceable class="PARAMETER">numeric_literal</replaceable> | <replaceable class="PARAMETER">string_literal</replaceable> | UNBOUNDED } [, ...] )
+  TO ( { <replaceable class="PARAMETER">numeric_literal</replaceable> | <replaceable class="PARAMETER">string_literal</replaceable> | UNBOUNDED } [, ...] )
 
 <phrase><replaceable class="PARAMETER">index_parameters</replaceable> in <literal>UNIQUE</literal>, <literal>PRIMARY KEY</literal>, and <literal>EXCLUDE</literal> constraints are:</phrase>
 
@@ -229,6 +249,99 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
     </listitem>
    </varlistentry>
 
+   <varlistentry id="SQL-CREATETABLE-PARTITION">
+    <term><literal>PARTITION OF <replaceable class="PARAMETER">parent_table</replaceable> FOR VALUES <replaceable class="PARAMETER">partition_bound_spec</replaceable></literal></term>
+    <listitem>
+     <para>
+      Creates the table as a <firstterm>partition</firstterm> of the specified
+      parent table.
+     </para>
+
+     <para>
+      The <replaceable class="PARAMETER">partition_bound_spec</replaceable>
+      must correspond to the partitioning method and partition key of the
+      parent table, and must not overlap with any existing partition of that
+      parent.  The form with <literal>IN</> is used for list partitioning,
+      while the form with <literal>FROM</> and <literal>TO</> is used for
+      range partitioning.
+     </para>
+
+     <para>
+      Each of the values specified in
+      the <replaceable class="PARAMETER">partition_bound_spec</> is
+      a literal, <literal>NULL</literal>, or <literal>UNBOUNDED</literal>.
+      Each literal value must be either a numeric constant that is coercible
+      to the corresponding partition key column's type, or a string literal
+      that is valid input for that type.
+     </para>
+
+     <para>
+      When creating a list partition, <literal>NULL</literal> can be
+      specified to signify that the partition allows the partition key
+      column to be null.  However, there cannot be more than one such
+      list partition for a given parent table.  <literal>NULL</literal>
+      cannot be specified for range partitions.
+     </para>
+
+     <para>
+      When creating a range partition, the lower bound specified with
+      <literal>FROM</literal> is an inclusive bound, whereas the upper
+      bound specified with <literal>TO</literal> is an exclusive bound.
+      That is, the values specified in the <literal>FROM</literal> list
+      are valid values of the corresponding partition key columns for this
+      partition, whereas those in the <literal>TO</literal> list are
+      not.  Note that this statement must be understood according to the
+      rules of row-wise comparison (<xref linkend="row-wise-comparison">).
+      For example, given <literal>PARTITION BY RANGE (x,y)</>, a partition
+      bound <literal>FROM (1, 2) TO (3, 4)</literal>
+      allows <literal>x=1</> with any <literal>y&gt;=2</>,
+      <literal>x=2</> with any non-null <literal>y</>,
+      and <literal>x=3</> with any <literal>y&lt;4</>.
+     </para>
+
+     <para>
+      Writing <literal>UNBOUNDED</literal> in <literal>FROM</literal>
+      signifies <literal>-infinity</literal> as the lower bound of the
+      corresponding column, whereas when written in <literal>TO</literal>,
+      it signifies <literal>+infinity</literal> as the upper bound.
+      All items following an <literal>UNBOUNDED</literal> item within
+      a <literal>FROM</literal> or <literal>TO</literal> list must also
+      be <literal>UNBOUNDED</literal>.
+     </para>
+
+     <para>
+      A partition must have the same column names and types as the partitioned
+      table to which it belongs.  If the parent is specified <literal>WITH
+      OIDS</literal> then all partitions must have OIDs; the parent's OID
+      column will be inherited by all partitions just like any other column.
+      Modifications to the column names or types of a partitioned table, or
+      the addition or removal of an OID column, will automatically propagate
+      to all partitions.  <literal>CHECK</> constraints will be inherited
+      automatically by every partition, but an individual partition may specify
+      additional <literal>CHECK</> constraints; additional constraints with
+      the same name and condition as in the parent will be merged with the
+      parent constraint.  Defaults may be specified separately for each
+      partition.
+     </para>
+
+     <para>
+      Rows inserted into a partitioned table will be automatically routed to
+      the correct partition.  If no suitable partition exists, an error will
+      occur.  Also, if updating a row in a given partition would require it
+      to move to another partition due to new partition key values, an error
+      will occur.
+     </para>
+
+     <para>
+      Operations such as TRUNCATE which normally affect a table and all of its
+      inheritance children will cascade to all partitions, but may also be
+      performed on an individual partition.  Note that dropping a partition
+      with <literal>DROP TABLE</literal> requires taking an <literal>ACCESS
+      EXCLUSIVE</literal> lock on the parent table.
+     </para>
+    </listitem>
+   </varlistentry>
+
    <varlistentry>
     <term><replaceable class="PARAMETER">column_name</replaceable></term>
     <listitem>
@@ -310,6 +423,47 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
       Column <literal>STORAGE</> settings are also copied from parent tables.
      </para>
 
+     <para>
+      If a column in the parent table is an identity column, that property is
+      not inherited.  A column in the child table can be declared identity
+      column if desired.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>PARTITION BY { RANGE | LIST } ( { <replaceable class="parameter">column_name</replaceable> | ( <replaceable class="parameter">expression</replaceable> ) } [ <replaceable class="parameter">opclass</replaceable> ] [, ...] ) </literal></term>
+    <listitem>
+     <para>
+      The optional <literal>PARTITION BY</literal> clause specifies a strategy
+      of partitioning the table.  The table thus created is called a
+      <firstterm>partitioned</firstterm> table.  The parenthesized list of
+      columns or expressions forms the <firstterm>partition key</firstterm>
+      for the table.  When using range partitioning, the partition key can
+      include multiple columns or expressions (up to 32, but this limit can
+      altered when building <productname>PostgreSQL</productname>.), but for
+      list partitioning, the partition key must consist of a single column or
+      expression.  If no B-tree operator class is specified when creating a
+      partitioned table, the default B-tree operator class for the datatype will
+      be used.  If there is none, an error will be reported.
+     </para>
+
+     <para>
+      A partitioned table is divided into sub-tables (called partitions),
+      which are created using separate <literal>CREATE TABLE</> commands.
+      The partitioned table is itself empty.  A data row inserted into the
+      table is routed to a partition based on the value of columns or
+      expressions in the partition key.  If no existing partition matches
+      the values in the new row, an error will be reported.
+     </para>
+
+     <para>
+      Partitioned tables do not support <literal>UNIQUE</literal>,
+      <literal>PRIMARY KEY</literal>, <literal>EXCLUDE</literal>, or
+      <literal>FOREIGN KEY</literal> constraints; however, you can define
+      these constraints on individual partitions.
+     </para>
+
     </listitem>
    </varlistentry>
 
@@ -336,6 +490,12 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
       Note that copying defaults that call database-modification functions,
       such as <function>nextval</>, may create a functional linkage between
       the original and new tables.
+     </para>
+     <para>
+      Any identity specifications of copied column definitions will only be
+      copied if <literal>INCLUDING IDENTITY</literal> is specified.  A new
+      sequence is created for each identity column of the new table, separate
+      from the sequences associated with the old table.
      </para>
      <para>
       Not-null constraints are always copied to the new table.
@@ -369,7 +529,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
      </para>
      <para>
       <literal>INCLUDING ALL</literal> is an abbreviated form of
-      <literal>INCLUDING DEFAULTS INCLUDING CONSTRAINTS INCLUDING INDEXES INCLUDING STORAGE INCLUDING COMMENTS</literal>.
+      <literal>INCLUDING DEFAULTS INCLUDING IDENTITY INCLUDING CONSTRAINTS INCLUDING INDEXES INCLUDING STORAGE INCLUDING COMMENTS</literal>.
      </para>
      <para>
       Note that unlike <literal>INHERITS</literal>, columns and
@@ -479,6 +639,37 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
       The default expression will be used in any insert operation that
       does not specify a value for the column.  If there is no default
       for a column, then the default is null.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>GENERATED { ALWAYS | BY DEFAULT } AS IDENTITY [ ( <replaceable>sequence_options</replaceable> ) ]</literal></term>
+    <listitem>
+     <para>
+      This clause creates the column as an <firstterm>identity
+      column</firstterm>.  It will have an implicit sequence attached to it
+      and the column in new rows will automatically have values from the
+      sequence assigned to it.
+     </para>
+
+     <para>
+      The clauses <literal>ALWAYS</literal> and <literal>BY DEFAULT</literal>
+      determine how the sequence value is given precedence over a
+      user-specified value in an <command>INSERT</command> statement.
+      If <literal>ALWAYS</literal> is specified, a user-specified value is
+      only accepted if the <command>INSERT</command> statement
+      specifies <literal>OVERRIDING SYSTEM VALUE</literal>.  If <literal>BY
+      DEFAULT</literal> is specified, then the user-specified value takes
+      precedence.  See <xref linkend="sql-insert"> for details.  (In
+      the <command>COPY</command> command, user-specified values are always
+      used regardless of this setting.)
+     </para>
+
+     <para>
+      The optional <replaceable>sequence_options</replaceable> clause can be
+      used to override the options of the sequence.
+      See <xref linkend="sql-createsequence"> for details.
      </para>
     </listitem>
    </varlistentry>
@@ -607,9 +798,11 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
       class="parameter">refcolumn</replaceable> list is omitted, the
       primary key of the <replaceable class="parameter">reftable</replaceable>
       is used.  The referenced columns must be the columns of a non-deferrable
-      unique or primary key constraint in the referenced table.  Note that
-      foreign key constraints cannot be defined between temporary tables and
-      permanent tables.
+      unique or primary key constraint in the referenced table.  The user
+      must have <literal>REFERENCES</> permission on the referenced table
+      (either the whole table, or the specific referenced columns).
+      Note that foreign key constraints cannot be defined between temporary
+      tables and permanent tables.
      </para>
 
      <para>
@@ -895,6 +1088,8 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
     If a table parameter value is set and the
     equivalent <literal>toast.</literal> parameter is not, the TOAST table
     will use the table's parameter value.
+    Specifying these parameters for partitioned tables is not supported,
+    but you may specify them for individual leaf partitions.
    </para>
 
    <variablelist>
@@ -1116,7 +1311,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
 
     <para>
      Using OIDs in new applications is not recommended: where
-     possible, using a <literal>SERIAL</literal> or other sequence
+     possible, using an identity column or other sequence
      generator as the table's primary key is preferred. However, if
      your application does make use of OIDs to identify specific
      rows of a table, it is recommended to create a unique constraint
@@ -1176,7 +1371,7 @@ CREATE TABLE films (
 );
 
 CREATE TABLE distributors (
-     did    integer PRIMARY KEY DEFAULT nextval('serial'),
+     did    integer PRIMARY KEY GENERATED BY DEFAULT AS IDENTITY,
      name   varchar(40) NOT NULL CHECK (name &lt;&gt; '')
 );
 </programlisting>
@@ -1369,6 +1564,88 @@ CREATE TABLE employees OF employee_type (
     salary WITH OPTIONS DEFAULT 1000
 );
 </programlisting></para>
+
+  <para>
+   Create a range partitioned table:
+<programlisting>
+CREATE TABLE measurement (
+    logdate         date not null,
+    peaktemp        int,
+    unitsales       int
+) PARTITION BY RANGE (logdate);
+</programlisting></para>
+
+  <para>
+   Create a range partitioned table with multiple columns in the partition key:
+<programlisting>
+CREATE TABLE measurement_year_month (
+    logdate         date not null,
+    peaktemp        int,
+    unitsales       int
+) PARTITION BY RANGE (EXTRACT(YEAR FROM logdate), EXTRACT(MONTH FROM logdate));
+</programlisting></para>
+
+  <para>
+   Create a list partitioned table:
+<programlisting>
+CREATE TABLE cities (
+    city_id      bigserial not null,
+    name         text not null,
+    population   bigint
+) PARTITION BY LIST (left(lower(name), 1));
+</programlisting></para>
+
+  <para>
+   Create partition of a range partitioned table:
+<programlisting>
+CREATE TABLE measurement_y2016m07
+    PARTITION OF measurement (
+    unitsales DEFAULT 0
+) FOR VALUES FROM ('2016-07-01') TO ('2016-08-01');
+</programlisting></para>
+
+  <para>
+   Create a few partitions of a range partitioned table with multiple
+   columns in the partition key:
+<programlisting>
+CREATE TABLE measurement_ym_older
+    PARTITION OF measurement_year_month
+    FOR VALUES FROM (unbounded, unbounded) TO (2016, 11);
+
+CREATE TABLE measurement_ym_y2016m11
+    PARTITION OF measurement_year_month
+    FOR VALUES FROM (2016, 11) TO (2016, 12);
+
+CREATE TABLE measurement_ym_y2016m12
+    PARTITION OF measurement_year_month
+    FOR VALUES FROM (2016, 12) TO (2017, 01);
+
+CREATE TABLE measurement_ym_y2017m01
+    PARTITION OF measurement_year_month
+    FOR VALUES FROM (2017, 01) TO (2017, 02);
+</programlisting></para>
+
+  <para>
+   Create partition of a list partitioned table:
+<programlisting>
+CREATE TABLE cities_ab
+    PARTITION OF cities (
+    CONSTRAINT city_id_nonzero CHECK (city_id != 0)
+) FOR VALUES IN ('a', 'b');
+</programlisting></para>
+
+  <para>
+   Create partition of a list partitioned table that is itself further
+   partitioned and then add a partition to it:
+<programlisting>
+CREATE TABLE cities_ab
+    PARTITION OF cities (
+    CONSTRAINT city_id_nonzero CHECK (city_id != 0)
+) FOR VALUES IN ('a', 'b') PARTITION BY RANGE (population);
+
+CREATE TABLE cities_ab_10000_to_100000
+    PARTITION OF cities_ab FOR VALUES FROM (10000) TO (100000);
+</programlisting></para>
  </refsect1>
 
  <refsect1 id="SQL-CREATETABLE-compatibility">
@@ -1509,6 +1786,20 @@ CREATE TABLE employees OF employee_type (
   </refsect2>
 
   <refsect2>
+   <title>Multiple Identity Columns</title>
+
+   <para>
+    <productname>PostgreSQL</productname> allows a table to have more than one
+    identity column.  The standard specifies that a table can have at most one
+    identity column.  This is relaxed mainly to give more flexibility for
+    doing schema changes or migrations.  Note that
+    the <command>INSERT</command> command supports only one override clause
+    that applies to the entire statement, so having multiple identity columns
+    with different behaviors is not well supported.
+   </para>
+  </refsect2>
+
+  <refsect2>
    <title><literal>LIKE</> Clause</title>
 
    <para>
@@ -1550,6 +1841,25 @@ CREATE TABLE employees OF employee_type (
     effect can be had using the OID feature.
    </para>
   </refsect2>
+
+  <refsect2>
+   <title><literal>PARTITION BY</> Clause</title>
+
+   <para>
+    The <literal>PARTITION BY</> clause is a
+    <productname>PostgreSQL</productname> extension.
+   </para>
+  </refsect2>
+
+  <refsect2>
+   <title><literal>PARTITION OF</> Clause</title>
+
+   <para>
+    The <literal>PARTITION OF</> clause is a
+    <productname>PostgreSQL</productname> extension.
+   </para>
+  </refsect2>
+
  </refsect1>
 
 

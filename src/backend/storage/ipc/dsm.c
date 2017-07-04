@@ -14,7 +14,7 @@
  * hard postmaster crash, remaining segments will be removed, if they
  * still exist, at the next postmaster startup.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -27,7 +27,6 @@
 #include "postgres.h"
 
 #include <fcntl.h>
-#include <string.h>
 #include <unistd.h>
 #ifndef WIN32
 #include <sys/mman.h>
@@ -182,7 +181,7 @@ dsm_postmaster_startup(PGShmemHeader *shim)
 		Assert(dsm_control_address == NULL);
 		Assert(dsm_control_mapped_size == 0);
 		dsm_control_handle = random();
-		if (dsm_control_handle == 0)
+		if (dsm_control_handle == DSM_HANDLE_INVALID)
 			continue;
 		if (dsm_impl_op(DSM_OP_CREATE, dsm_control_handle, segsize,
 						&dsm_control_impl_private, &dsm_control_address,
@@ -308,9 +307,9 @@ dsm_cleanup_for_mmap(void)
 		if (strncmp(dent->d_name, PG_DYNSHMEM_MMAP_FILE_PREFIX,
 					strlen(PG_DYNSHMEM_MMAP_FILE_PREFIX)) == 0)
 		{
-			char		buf[MAXPGPATH];
+			char		buf[MAXPGPATH + sizeof(PG_DYNSHMEM_DIR)];
 
-			snprintf(buf, MAXPGPATH, PG_DYNSHMEM_DIR "/%s", dent->d_name);
+			snprintf(buf, sizeof(buf), PG_DYNSHMEM_DIR "/%s", dent->d_name);
 
 			elog(DEBUG2, "removing file \"%s\"", buf);
 
@@ -430,7 +429,7 @@ dsm_backend_startup(void)
 						&dsm_control_mapped_size, WARNING);
 			ereport(FATAL,
 					(errcode(ERRCODE_INTERNAL_ERROR),
-			  errmsg("dynamic shared memory control segment is not valid")));
+					 errmsg("dynamic shared memory control segment is not valid")));
 		}
 	}
 #endif
@@ -454,6 +453,13 @@ dsm_set_control_handle(dsm_handle h)
 
 /*
  * Create a new dynamic shared memory segment.
+ *
+ * If there is a non-NULL CurrentResourceOwner, the new segment is associated
+ * with it and must be detached before the resource owner releases, or a
+ * warning will be logged.  If CurrentResourceOwner is NULL, the segment
+ * remains attached until explicitely detached or the session ends.
+ * Creating with a NULL CurrentResourceOwner is equivalent to creating
+ * with a non-NULL CurrentResourceOwner and then calling dsm_pin_mapping.
  */
 dsm_segment *
 dsm_create(Size size, int flags)
@@ -476,6 +482,8 @@ dsm_create(Size size, int flags)
 	{
 		Assert(seg->mapped_address == NULL && seg->mapped_size == 0);
 		seg->handle = random();
+		if (seg->handle == DSM_HANDLE_INVALID)	/* Reserve sentinel */
+			continue;
 		if (dsm_impl_op(DSM_OP_CREATE, seg->handle, size, &seg->impl_private,
 						&seg->mapped_address, &seg->mapped_size, ERROR))
 			break;
@@ -543,6 +551,11 @@ dsm_create(Size size, int flags)
  * This can happen if we're asked to attach the segment, but then everyone
  * else detaches it (causing it to be destroyed) before we get around to
  * attaching it.
+ *
+ * If there is a non-NULL CurrentResourceOwner, the attached segment is
+ * associated with it and must be detached before the resource owner releases,
+ * or a warning will be logged.  Otherwise the segment remains attached until
+ * explicitely detached or the session ends.  See the note atop dsm_create().
  */
 dsm_segment *
 dsm_attach(dsm_handle h)
@@ -922,7 +935,7 @@ dsm_unpin_segment(dsm_handle handle)
 	 * dsm_impl_unpin_segment.
 	 */
 	dsm_impl_unpin_segment(handle,
-					&dsm_control->item[control_slot].impl_private_pm_handle);
+						   &dsm_control->item[control_slot].impl_private_pm_handle);
 
 	/* Note that 1 means no references (0 means unused slot). */
 	if (--dsm_control->item[control_slot].refcnt == 1)
@@ -1094,7 +1107,8 @@ dsm_create_descriptor(void)
 {
 	dsm_segment *seg;
 
-	ResourceOwnerEnlargeDSMs(CurrentResourceOwner);
+	if (CurrentResourceOwner)
+		ResourceOwnerEnlargeDSMs(CurrentResourceOwner);
 
 	seg = MemoryContextAlloc(TopMemoryContext, sizeof(dsm_segment));
 	dlist_push_head(&dsm_segment_list, &seg->node);
@@ -1106,7 +1120,8 @@ dsm_create_descriptor(void)
 	seg->mapped_size = 0;
 
 	seg->resowner = CurrentResourceOwner;
-	ResourceOwnerRememberDSM(CurrentResourceOwner, seg);
+	if (CurrentResourceOwner)
+		ResourceOwnerRememberDSM(CurrentResourceOwner, seg);
 
 	slist_init(&seg->on_detach);
 
@@ -1145,5 +1160,5 @@ static uint64
 dsm_control_bytes_needed(uint32 nitems)
 {
 	return offsetof(dsm_control_header, item)
-		+sizeof(dsm_control_item) * (uint64) nitems;
+		+ sizeof(dsm_control_item) * (uint64) nitems;
 }

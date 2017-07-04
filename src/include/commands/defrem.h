@@ -4,7 +4,7 @@
  *	  POSTGRES define and remove utility definitions.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/commands/defrem.h
@@ -27,6 +27,7 @@ extern ObjectAddress DefineIndex(Oid relationId,
 			Oid indexRelationId,
 			bool is_alter_table,
 			bool check_rights,
+			bool check_not_in_use,
 			bool skip_build,
 			bool quiet);
 extern Oid	ReindexIndex(RangeVar *indexRelation, int options);
@@ -42,13 +43,15 @@ extern bool CheckIndexCompatible(Oid oldId,
 					 List *attributeList,
 					 List *exclusionOpNames);
 extern Oid	GetDefaultOpClass(Oid type_id, Oid am_id);
+extern Oid ResolveOpClass(List *opclass, Oid attrType,
+			   char *accessMethodName, Oid accessMethodId);
 
 /* commands/functioncmds.c */
-extern ObjectAddress CreateFunction(CreateFunctionStmt *stmt, const char *queryString);
+extern ObjectAddress CreateFunction(ParseState *pstate, CreateFunctionStmt *stmt);
 extern void RemoveFunctionById(Oid funcOid);
 extern void SetFunctionReturnType(Oid funcOid, Oid newRetType);
 extern void SetFunctionArgType(Oid funcOid, int argIndex, Oid newArgType);
-extern ObjectAddress AlterFunction(AlterFunctionStmt *stmt);
+extern ObjectAddress AlterFunction(ParseState *pstate, AlterFunctionStmt *stmt);
 extern ObjectAddress CreateCast(CreateCastStmt *stmt);
 extern void DropCastById(Oid castOid);
 extern ObjectAddress CreateTransform(CreateTransformStmt *stmt);
@@ -58,10 +61,10 @@ extern void IsThereFunctionInNamespace(const char *proname, int pronargs,
 extern void ExecuteDoStmt(DoStmt *stmt);
 extern Oid	get_cast_oid(Oid sourcetypeid, Oid targettypeid, bool missing_ok);
 extern Oid	get_transform_oid(Oid type_id, Oid lang_id, bool missing_ok);
-extern void interpret_function_parameter_list(List *parameters,
+extern void interpret_function_parameter_list(ParseState *pstate,
+								  List *parameters,
 								  Oid languageOid,
 								  bool is_aggregate,
-								  const char *queryString,
 								  oidvector **parameterTypes,
 								  ArrayType **allParameterTypes,
 								  ArrayType **parameterModes,
@@ -75,9 +78,16 @@ extern ObjectAddress DefineOperator(List *names, List *parameters);
 extern void RemoveOperatorById(Oid operOid);
 extern ObjectAddress AlterOperator(AlterOperatorStmt *stmt);
 
+/* commands/statscmds.c */
+extern ObjectAddress CreateStatistics(CreateStatsStmt *stmt);
+extern void RemoveStatisticsById(Oid statsOid);
+extern void UpdateStatisticsForTypeChange(Oid statsOid,
+							  Oid relationOid, int attnum,
+							  Oid oldColumnType, Oid newColumnType);
+
 /* commands/aggregatecmds.c */
-extern ObjectAddress DefineAggregate(List *name, List *args, bool oldstyle,
-				List *parameters, const char *queryString);
+extern ObjectAddress DefineAggregate(ParseState *pstate, List *name, List *args, bool oldstyle,
+				List *parameters);
 
 /* commands/opclasscmds.c */
 extern ObjectAddress DefineOpClass(CreateOpClassStmt *stmt);
@@ -152,6 +162,6 @@ extern int64 defGetInt64(DefElem *def);
 extern List *defGetQualifiedName(DefElem *def);
 extern TypeName *defGetTypeName(DefElem *def);
 extern int	defGetTypeLength(DefElem *def);
-extern DefElem *defWithOids(bool value);
+extern List *defGetStringList(DefElem *def);
 
-#endif   /* DEFREM_H */
+#endif							/* DEFREM_H */

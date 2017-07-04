@@ -340,6 +340,19 @@ void (*InitializeWorkerCustomScan) (CustomScanState *node,
 
    <para>
 <programlisting>
+void (*ShutdownCustomScan) (CustomScanState *node);
+</programlisting>
+    Release resources when it is anticipated the node will not be executed
+    to completion.  This is not called in all cases; sometimes,
+    <literal>EndCustomScan</> may be called without this function having
+    been called first.  Since the DSM segment used by parallel query is
+    destroyed just after this callback is invoked, custom scan providers that
+    wish to take some action before the DSM segment goes away should implement
+    this method.
+   </para>
+
+   <para>
+<programlisting>
 void (*ExplainCustomScan) (CustomScanState *node,
                            List *ancestors,
                            ExplainState *es);

@@ -6,7 +6,7 @@
  * See utils/resowner/README for more info.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/resowner_private.h
@@ -88,4 +88,4 @@ extern void ResourceOwnerRememberDSM(ResourceOwner owner,
 extern void ResourceOwnerForgetDSM(ResourceOwner owner,
 					   dsm_segment *);
 
-#endif   /* RESOWNER_PRIVATE_H */
+#endif							/* RESOWNER_PRIVATE_H */

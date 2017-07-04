@@ -27,7 +27,7 @@ PG_FUNCTION_INFO_V1(gbt_numeric_same);
 /* define for comparison */
 
 static bool
-gbt_numeric_gt(const void *a, const void *b, Oid collation)
+gbt_numeric_gt(const void *a, const void *b, Oid collation, FmgrInfo *flinfo)
 {
 	return DatumGetBool(DirectFunctionCall2(numeric_gt,
 											PointerGetDatum(a),
@@ -35,7 +35,7 @@ gbt_numeric_gt(const void *a, const void *b, Oid collation)
 }
 
 static bool
-gbt_numeric_ge(const void *a, const void *b, Oid collation)
+gbt_numeric_ge(const void *a, const void *b, Oid collation, FmgrInfo *flinfo)
 {
 	return DatumGetBool(DirectFunctionCall2(numeric_ge,
 											PointerGetDatum(a),
@@ -43,7 +43,7 @@ gbt_numeric_ge(const void *a, const void *b, Oid collation)
 }
 
 static bool
-gbt_numeric_eq(const void *a, const void *b, Oid collation)
+gbt_numeric_eq(const void *a, const void *b, Oid collation, FmgrInfo *flinfo)
 {
 	return DatumGetBool(DirectFunctionCall2(numeric_eq,
 											PointerGetDatum(a),
@@ -51,7 +51,7 @@ gbt_numeric_eq(const void *a, const void *b, Oid collation)
 }
 
 static bool
-gbt_numeric_le(const void *a, const void *b, Oid collation)
+gbt_numeric_le(const void *a, const void *b, Oid collation, FmgrInfo *flinfo)
 {
 	return DatumGetBool(DirectFunctionCall2(numeric_le,
 											PointerGetDatum(a),
@@ -59,7 +59,7 @@ gbt_numeric_le(const void *a, const void *b, Oid collation)
 }
 
 static bool
-gbt_numeric_lt(const void *a, const void *b, Oid collation)
+gbt_numeric_lt(const void *a, const void *b, Oid collation, FmgrInfo *flinfo)
 {
 	return DatumGetBool(DirectFunctionCall2(numeric_lt,
 											PointerGetDatum(a),
@@ -67,7 +67,7 @@ gbt_numeric_lt(const void *a, const void *b, Oid collation)
 }
 
 static int32
-gbt_numeric_cmp(const void *a, const void *b, Oid collation)
+gbt_numeric_cmp(const void *a, const void *b, Oid collation, FmgrInfo *flinfo)
 {
 	return DatumGetInt32(DirectFunctionCall2(numeric_cmp,
 											 PointerGetDatum(a),
@@ -122,7 +122,7 @@ gbt_numeric_consistent(PG_FUNCTION_ARGS)
 	*recheck = false;
 
 	retval = gbt_var_consistent(&r, query, strategy, PG_GET_COLLATION(),
-								GIST_LEAF(entry), &tinfo);
+								GIST_LEAF(entry), &tinfo, fcinfo->flinfo);
 	PG_RETURN_BOOL(retval);
 }
 
@@ -135,7 +135,7 @@ gbt_numeric_union(PG_FUNCTION_ARGS)
 	int32	   *size = (int *) PG_GETARG_POINTER(1);
 
 	PG_RETURN_POINTER(gbt_var_union(entryvec, size, PG_GET_COLLATION(),
-									&tinfo));
+									&tinfo, fcinfo->flinfo));
 }
 
 
@@ -146,7 +146,7 @@ gbt_numeric_same(PG_FUNCTION_ARGS)
 	Datum		d2 = PG_GETARG_DATUM(1);
 	bool	   *result = (bool *) PG_GETARG_POINTER(2);
 
-	*result = gbt_var_same(d1, d2, PG_GET_COLLATION(), &tinfo);
+	*result = gbt_var_same(d1, d2, PG_GET_COLLATION(), &tinfo, fcinfo->flinfo);
 	PG_RETURN_POINTER(result);
 }
 
@@ -171,7 +171,7 @@ gbt_numeric_penalty(PG_FUNCTION_ARGS)
 
 	rk = gbt_var_key_readable(org);
 	uni = PointerGetDatum(gbt_var_key_copy(&rk));
-	gbt_var_bin_union(&uni, newe, PG_GET_COLLATION(), &tinfo);
+	gbt_var_bin_union(&uni, newe, PG_GET_COLLATION(), &tinfo, fcinfo->flinfo);
 	ok = gbt_var_key_readable(org);
 	uk = gbt_var_key_readable((GBT_VARKEY *) DatumGetPointer(uni));
 
@@ -233,6 +233,6 @@ gbt_numeric_picksplit(PG_FUNCTION_ARGS)
 	GIST_SPLITVEC *v = (GIST_SPLITVEC *) PG_GETARG_POINTER(1);
 
 	gbt_var_picksplit(entryvec, v, PG_GET_COLLATION(),
-					  &tinfo);
+					  &tinfo, fcinfo->flinfo);
 	PG_RETURN_POINTER(v);
 }

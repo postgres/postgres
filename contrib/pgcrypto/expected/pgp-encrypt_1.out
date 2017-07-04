@@ -1,0 +1,161 @@
+--
+-- PGP encrypt
+--
+-- ensure consistent test output regardless of the default bytea format
+SET bytea_output TO escape;
+select pgp_sym_decrypt(pgp_sym_encrypt('Secret.', 'key'), 'key');
+ERROR:  generating random data is not supported by this build
+DETAIL:  This functionality requires a source of strong random numbers
+HINT:  You need to rebuild PostgreSQL using --enable-strong-random
+-- check whether the defaults are ok
+select pgp_sym_decrypt(pgp_sym_encrypt('Secret.', 'key'),
+	'key', 'expect-cipher-algo=aes128,
+		expect-disable-mdc=0,
+		expect-sess-key=0,
+		expect-s2k-mode=3,
+		expect-s2k-digest-algo=sha1,
+		expect-compress-algo=0
+		');
+ERROR:  generating random data is not supported by this build
+DETAIL:  This functionality requires a source of strong random numbers
+HINT:  You need to rebuild PostgreSQL using --enable-strong-random
+-- maybe the expect- stuff simply does not work
+select pgp_sym_decrypt(pgp_sym_encrypt('Secret.', 'key'),
+	'key', 'expect-cipher-algo=bf,
+		expect-disable-mdc=1,
+		expect-sess-key=1,
+		expect-s2k-mode=0,
+		expect-s2k-digest-algo=md5,
+		expect-compress-algo=1
+		');
+ERROR:  generating random data is not supported by this build
+DETAIL:  This functionality requires a source of strong random numbers
+HINT:  You need to rebuild PostgreSQL using --enable-strong-random
+-- bytea as text
+select pgp_sym_decrypt(pgp_sym_encrypt_bytea('Binary', 'baz'), 'baz');
+ERROR:  generating random data is not supported by this build
+DETAIL:  This functionality requires a source of strong random numbers
+HINT:  You need to rebuild PostgreSQL using --enable-strong-random
+-- text as bytea
+select pgp_sym_decrypt_bytea(pgp_sym_encrypt('Text', 'baz'), 'baz');
+ERROR:  generating random data is not supported by this build
+DETAIL:  This functionality requires a source of strong random numbers
+HINT:  You need to rebuild PostgreSQL using --enable-strong-random
+-- algorithm change
+select pgp_sym_decrypt(
+	pgp_sym_encrypt('Secret.', 'key', 'cipher-algo=bf'),
+	'key', 'expect-cipher-algo=bf');
+ERROR:  generating random data is not supported by this build
+DETAIL:  This functionality requires a source of strong random numbers
+HINT:  You need to rebuild PostgreSQL using --enable-strong-random
+select pgp_sym_decrypt(
+	pgp_sym_encrypt('Secret.', 'key', 'cipher-algo=aes'),
+	'key', 'expect-cipher-algo=aes128');
+ERROR:  generating random data is not supported by this build
+DETAIL:  This functionality requires a source of strong random numbers
+HINT:  You need to rebuild PostgreSQL using --enable-strong-random
+select pgp_sym_decrypt(
+	pgp_sym_encrypt('Secret.', 'key', 'cipher-algo=aes192'),
+	'key', 'expect-cipher-algo=aes192');
+ERROR:  generating random data is not supported by this build
+DETAIL:  This functionality requires a source of strong random numbers
+HINT:  You need to rebuild PostgreSQL using --enable-strong-random
+-- s2k change
+select pgp_sym_decrypt(
+	pgp_sym_encrypt('Secret.', 'key', 's2k-mode=0'),
+	'key', 'expect-s2k-mode=0');
+ERROR:  generating random data is not supported by this build
+DETAIL:  This functionality requires a source of strong random numbers
+HINT:  You need to rebuild PostgreSQL using --enable-strong-random
+select pgp_sym_decrypt(
+	pgp_sym_encrypt('Secret.', 'key', 's2k-mode=1'),
+	'key', 'expect-s2k-mode=1');
+ERROR:  generating random data is not supported by this build
+DETAIL:  This functionality requires a source of strong random numbers
+HINT:  You need to rebuild PostgreSQL using --enable-strong-random
+select pgp_sym_decrypt(
+	pgp_sym_encrypt('Secret.', 'key', 's2k-mode=3'),
+	'key', 'expect-s2k-mode=3');
+ERROR:  generating random data is not supported by this build
+DETAIL:  This functionality requires a source of strong random numbers
+HINT:  You need to rebuild PostgreSQL using --enable-strong-random
+-- s2k count change
+select pgp_sym_decrypt(
+	pgp_sym_encrypt('Secret.', 'key', 's2k-count=1024'),
+	'key', 'expect-s2k-count=1024');
+ERROR:  generating random data is not supported by this build
+DETAIL:  This functionality requires a source of strong random numbers
+HINT:  You need to rebuild PostgreSQL using --enable-strong-random
+-- s2k_count rounds up
+select pgp_sym_decrypt(
+	pgp_sym_encrypt('Secret.', 'key', 's2k-count=65000000'),
+	'key', 'expect-s2k-count=65000000');
+ERROR:  generating random data is not supported by this build
+DETAIL:  This functionality requires a source of strong random numbers
+HINT:  You need to rebuild PostgreSQL using --enable-strong-random
+-- s2k digest change
+select pgp_sym_decrypt(
+	pgp_sym_encrypt('Secret.', 'key', 's2k-digest-algo=md5'),
+	'key', 'expect-s2k-digest-algo=md5');
+ERROR:  generating random data is not supported by this build
+DETAIL:  This functionality requires a source of strong random numbers
+HINT:  You need to rebuild PostgreSQL using --enable-strong-random
+select pgp_sym_decrypt(
+		pgp_sym_encrypt('Secret.', 'key', 's2k-digest-algo=sha1'),
+	'key', 'expect-s2k-digest-algo=sha1');
+ERROR:  generating random data is not supported by this build
+DETAIL:  This functionality requires a source of strong random numbers
+HINT:  You need to rebuild PostgreSQL using --enable-strong-random
+-- sess key
+select pgp_sym_decrypt(
+	pgp_sym_encrypt('Secret.', 'key', 'sess-key=0'),
+	'key', 'expect-sess-key=0');
+ERROR:  generating random data is not supported by this build
+DETAIL:  This functionality requires a source of strong random numbers
+HINT:  You need to rebuild PostgreSQL using --enable-strong-random
+select pgp_sym_decrypt(
+	pgp_sym_encrypt('Secret.', 'key', 'sess-key=1'),
+	'key', 'expect-sess-key=1');
+ERROR:  generating random data is not supported by this build
+DETAIL:  This functionality requires a source of strong random numbers
+HINT:  You need to rebuild PostgreSQL using --enable-strong-random
+select pgp_sym_decrypt(
+	pgp_sym_encrypt('Secret.', 'key', 'sess-key=1, cipher-algo=bf'),
+	'key', 'expect-sess-key=1, expect-cipher-algo=bf');
+ERROR:  generating random data is not supported by this build
+DETAIL:  This functionality requires a source of strong random numbers
+HINT:  You need to rebuild PostgreSQL using --enable-strong-random
+select pgp_sym_decrypt(
+	pgp_sym_encrypt('Secret.', 'key', 'sess-key=1, cipher-algo=aes192'),
+	'key', 'expect-sess-key=1, expect-cipher-algo=aes192');
+ERROR:  generating random data is not supported by this build
+DETAIL:  This functionality requires a source of strong random numbers
+HINT:  You need to rebuild PostgreSQL using --enable-strong-random
+select pgp_sym_decrypt(
+	pgp_sym_encrypt('Secret.', 'key', 'sess-key=1, cipher-algo=aes256'),
+	'key', 'expect-sess-key=1, expect-cipher-algo=aes256');
+ERROR:  generating random data is not supported by this build
+DETAIL:  This functionality requires a source of strong random numbers
+HINT:  You need to rebuild PostgreSQL using --enable-strong-random
+-- no mdc
+select pgp_sym_decrypt(
+		pgp_sym_encrypt('Secret.', 'key', 'disable-mdc=1'),
+	'key', 'expect-disable-mdc=1');
+ERROR:  generating random data is not supported by this build
+DETAIL:  This functionality requires a source of strong random numbers
+HINT:  You need to rebuild PostgreSQL using --enable-strong-random
+-- crlf
+select encode(pgp_sym_decrypt_bytea(
+	pgp_sym_encrypt(E'1\n2\n3\r\n', 'key', 'convert-crlf=1'),
+	'key'), 'hex');
+ERROR:  generating random data is not supported by this build
+DETAIL:  This functionality requires a source of strong random numbers
+HINT:  You need to rebuild PostgreSQL using --enable-strong-random
+-- conversion should be lossless
+select encode(digest(pgp_sym_decrypt(
+  pgp_sym_encrypt(E'\r\n0\n1\r\r\n\n2\r', 'key', 'convert-crlf=1'),
+	'key', 'convert-crlf=1'), 'sha1'), 'hex') as result,
+  encode(digest(E'\r\n0\n1\r\r\n\n2\r', 'sha1'), 'hex') as expect;
+ERROR:  generating random data is not supported by this build
+DETAIL:  This functionality requires a source of strong random numbers
+HINT:  You need to rebuild PostgreSQL using --enable-strong-random

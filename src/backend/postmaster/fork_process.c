@@ -4,7 +4,7 @@
  *	 EXEC_BACKEND case; it might be extended to do so, but it would be
  *	 considerably more complex.
  *
- * Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Copyright (c) 1996-2017, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/postmaster/fork_process.c
@@ -118,4 +118,4 @@ fork_process(void)
 	return result;
 }
 
-#endif   /* ! WIN32 */
+#endif							/* ! WIN32 */

@@ -157,9 +157,10 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
       By default, recovery will recover to the end of the WAL log. The
       following parameters can be used to specify an earlier stopping point.
       At most one of <varname>recovery_target</>,
-      <varname>recovery_target_name</>, <varname>recovery_target_time</>, or
-      <varname>recovery_target_xid</> can be used; if more than one of these
-      is specified in the configuration file, the last entry will be used.
+      <varname>recovery_target_lsn</>, <varname>recovery_target_name</>,
+      <varname>recovery_target_time</>, or <varname>recovery_target_xid</>
+      can be used; if more than one of these is specified in the configuration
+      file, the last entry will be used.
      </para>
 
      <variablelist>
@@ -229,6 +230,23 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
         before (and optionally including) the specified one.
         The precise stopping point is also influenced by
         <xref linkend="recovery-target-inclusive">.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="recovery-target-lsn" xreflabel="recovery_target_lsn">
+      <term><varname>recovery_target_lsn</varname> (<type>pg_lsn</type>)
+      <indexterm>
+        <primary><varname>recovery_target_lsn</> recovery parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        This parameter specifies the LSN of the write-ahead log location up
+        to which recovery will proceed. The precise stopping point is also
+        influenced by <xref linkend="recovery-target-inclusive">. This
+        parameter is parsed using the system data type
+        <link linkend="datatype-pg-lsn"><type>pg_lsn</></link>.
        </para>
       </listitem>
      </varlistentry>
@@ -303,7 +321,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
         to be executed against the database to check if this recovery target
         is the most desirable point for recovery.
         The paused state can be resumed by
-        using <function>pg_xlog_replay_resume()</> (see
+        using <function>pg_wal_replay_resume()</> (see
         <xref linkend="functions-recovery-control-table">), which then
         causes recovery to end. If this recovery target is not the
         desired stopping point, then shut down the server, change the
@@ -469,10 +487,17 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
        <para>
         This parameter is intended for use with streaming replication deployments;
         however, if the parameter is specified it will be honored in all cases.
-        Synchronous replication is not affected by this setting because there is
-        not yet any setting to request synchronous apply of transaction commits.
+
         <varname>hot_standby_feedback</> will be delayed by use of this feature
         which could lead to bloat on the master; use both together with care.
+
+        <warning>
+         <para>
+          Synchronous replication is affected by this setting when <varname>synchronous_commit</varname>
+          is set to <literal>remote_apply</literal>; every <literal>COMMIT</literal>
+          will need to wait to be applied.
+         </para>
+        </warning>
        </para>
       </listitem>
      </varlistentry>

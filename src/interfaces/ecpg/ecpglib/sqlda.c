@@ -249,7 +249,7 @@ static int16 value_is_null = -1;
 static int16 value_is_not_null = 0;
 
 void
-ecpg_set_compat_sqlda(int lineno, struct sqlda_compat ** _sqlda, const PGresult *res, int row, enum COMPAT_MODE compat)
+ecpg_set_compat_sqlda(int lineno, struct sqlda_compat **_sqlda, const PGresult *res, int row, enum COMPAT_MODE compat)
 {
 	struct sqlda_compat *sqlda = (*_sqlda);
 	int			i;
@@ -438,7 +438,7 @@ ecpg_build_native_sqlda(int line, PGresult *res, int row, enum COMPAT_MODE compa
 }
 
 void
-ecpg_set_native_sqlda(int lineno, struct sqlda_struct ** _sqlda, const PGresult *res, int row, enum COMPAT_MODE compat)
+ecpg_set_native_sqlda(int lineno, struct sqlda_struct **_sqlda, const PGresult *res, int row, enum COMPAT_MODE compat)
 {
 	struct sqlda_struct *sqlda = (*_sqlda);
 	int			i;

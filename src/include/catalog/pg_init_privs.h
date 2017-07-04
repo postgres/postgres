@@ -15,7 +15,7 @@
  * for a table itself, so that it is distinct from any column privilege.
  * Currently, objsubid is unused and zero for all other kinds of objects.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_init_privs.h
@@ -49,8 +49,7 @@ CATALOG(pg_init_privs,3394) BKI_WITHOUT_OIDS
 	char		privtype;		/* from initdb or extension? */
 
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
-	aclitem		initprivs[1] BKI_FORCE_NOT_NULL;		/* initial privs on
-														 * object */
+	aclitem		initprivs[1] BKI_FORCE_NOT_NULL;	/* initial privs on object */
 #endif
 } FormData_pg_init_privs;
 
@@ -59,7 +58,7 @@ CATALOG(pg_init_privs,3394) BKI_WITHOUT_OIDS
  *		the format of pg_init_privs relation.
  * ----------------
  */
-typedef FormData_pg_init_privs *Form_pg_init_privs;
+typedef FormData_pg_init_privs * Form_pg_init_privs;
 
 /* ----------------
  *		compiler constants for pg_init_privs
@@ -98,4 +97,4 @@ typedef enum InitPrivsType
  *	The initial contents are loaded near the end of initdb.
  */
 
-#endif   /* PG_INIT_PRIVS_H */
+#endif							/* PG_INIT_PRIVS_H */

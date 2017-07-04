@@ -3,7 +3,7 @@
  * multixact.c
  *		PostgreSQL multi-transaction-log manager
  *
- * The pg_multixact manager is a pg_clog-like manager that stores an array of
+ * The pg_multixact manager is a pg_xact-like manager that stores an array of
  * MultiXactMember for each MultiXactId.  It is a fundamental part of the
  * shared-row-lock implementation.  Each MultiXactMember is comprised of a
  * TransactionId and a set of flag bits.  The name is a bit historical:
@@ -59,7 +59,7 @@
  * counter does not fall within the wraparound horizon considering the global
  * minimum value.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/backend/access/transam/multixact.c
@@ -363,7 +363,7 @@ static void ExtendMultiXactOffset(MultiXactId multi);
 static void ExtendMultiXactMember(MultiXactOffset offset, int nmembers);
 static bool MultiXactOffsetWouldWrap(MultiXactOffset boundary,
 						 MultiXactOffset start, uint32 distance);
-static bool SetOffsetVacuumLimit(void);
+static bool SetOffsetVacuumLimit(bool is_startup);
 static bool find_multixact_start(MultiXactId multi, MultiXactOffset *result);
 static void WriteMZeroPageXlogRec(int pageno, uint8 info);
 static void WriteMTruncateXlogRec(Oid oldestMultiDB,
@@ -999,15 +999,15 @@ GetNewMultiXactId(int nmembers, MultiXactOffset *offset)
 						(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 						 errmsg("database is not accepting commands that generate new MultiXactIds to avoid wraparound data loss in database \"%s\"",
 								oldest_datname),
-				 errhint("Execute a database-wide VACUUM in that database.\n"
-						 "You might also need to commit or roll back old prepared transactions.")));
+						 errhint("Execute a database-wide VACUUM in that database.\n"
+								 "You might also need to commit or roll back old prepared transactions.")));
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 						 errmsg("database is not accepting commands that generate new MultiXactIds to avoid wraparound data loss in database with OID %u",
 								oldest_datoid),
-				 errhint("Execute a database-wide VACUUM in that database.\n"
-						 "You might also need to commit or roll back old prepared transactions.")));
+						 errhint("Execute a database-wide VACUUM in that database.\n"
+								 "You might also need to commit or roll back old prepared transactions.")));
 		}
 
 		/*
@@ -1030,8 +1030,8 @@ GetNewMultiXactId(int nmembers, MultiXactOffset *offset)
 									   multiWrapLimit - result,
 									   oldest_datname,
 									   multiWrapLimit - result),
-				 errhint("Execute a database-wide VACUUM in that database.\n"
-						 "You might also need to commit or roll back old prepared transactions.")));
+						 errhint("Execute a database-wide VACUUM in that database.\n"
+								 "You might also need to commit or roll back old prepared transactions.")));
 			else
 				ereport(WARNING,
 						(errmsg_plural("database with OID %u must be vacuumed before %u more MultiXactId is used",
@@ -1039,8 +1039,8 @@ GetNewMultiXactId(int nmembers, MultiXactOffset *offset)
 									   multiWrapLimit - result,
 									   oldest_datoid,
 									   multiWrapLimit - result),
-				 errhint("Execute a database-wide VACUUM in that database.\n"
-						 "You might also need to commit or roll back old prepared transactions.")));
+						 errhint("Execute a database-wide VACUUM in that database.\n"
+								 "You might also need to commit or roll back old prepared transactions.")));
 		}
 
 		/* Re-acquire lock and start over */
@@ -1098,9 +1098,9 @@ GetNewMultiXactId(int nmembers, MultiXactOffset *offset)
 				 errmsg("multixact \"members\" limit exceeded"),
 				 errdetail_plural("This command would create a multixact with %u members, but the remaining space is only enough for %u member.",
 								  "This command would create a multixact with %u members, but the remaining space is only enough for %u members.",
-							MultiXactState->offsetStopLimit - nextOffset - 1,
+								  MultiXactState->offsetStopLimit - nextOffset - 1,
 								  nmembers,
-						   MultiXactState->offsetStopLimit - nextOffset - 1),
+								  MultiXactState->offsetStopLimit - nextOffset - 1),
 				 errhint("Execute a database-wide VACUUM in database with OID %u with reduced vacuum_multixact_freeze_min_age and vacuum_multixact_freeze_table_age settings.",
 						 MultiXactState->oldestMultiXactDB)));
 	}
@@ -1134,9 +1134,9 @@ GetNewMultiXactId(int nmembers, MultiXactOffset *offset)
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg_plural("database with OID %u must be vacuumed before %d more multixact member is used",
 							   "database with OID %u must be vacuumed before %d more multixact members are used",
-					 MultiXactState->offsetStopLimit - nextOffset + nmembers,
+							   MultiXactState->offsetStopLimit - nextOffset + nmembers,
 							   MultiXactState->oldestMultiXactDB,
-					MultiXactState->offsetStopLimit - nextOffset + nmembers),
+							   MultiXactState->offsetStopLimit - nextOffset + nmembers),
 				 errhint("Execute a database-wide VACUUM in that database with reduced vacuum_multixact_freeze_min_age and vacuum_multixact_freeze_table_age settings.")));
 
 	ExtendMultiXactMember(nextOffset, nmembers);
@@ -1274,8 +1274,8 @@ GetMultiXactIdMembers(MultiXactId multi, MultiXactMember **members,
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
-		 errmsg("MultiXactId %u does no longer exist -- apparent wraparound",
-				multi)));
+				 errmsg("MultiXactId %u does no longer exist -- apparent wraparound",
+						multi)));
 		return -1;
 	}
 
@@ -1570,10 +1570,8 @@ mXactCachePut(MultiXactId multi, int nmembers, MultiXactMember *members)
 		/* The cache only lives as long as the current transaction */
 		debug_elog2(DEBUG2, "CachePut: initializing memory context");
 		MXactContext = AllocSetContextCreate(TopTransactionContext,
-											 "MultiXact Cache Context",
-											 ALLOCSET_SMALL_MINSIZE,
-											 ALLOCSET_SMALL_INITSIZE,
-											 ALLOCSET_SMALL_MAXSIZE);
+											 "MultiXact cache context",
+											 ALLOCSET_SMALL_SIZES);
 	}
 
 	entry = (mXactCacheEnt *)
@@ -2097,7 +2095,7 @@ TrimMultiXact(void)
 	LWLockRelease(MultiXactGenLock);
 
 	/* Now compute how far away the next members wraparound is. */
-	SetMultiXactIdLimit(oldestMXact, oldestMXactDB);
+	SetMultiXactIdLimit(oldestMXact, oldestMXactDB, true);
 }
 
 /*
@@ -2188,9 +2186,13 @@ MultiXactSetNextMXact(MultiXactId nextMulti,
  * Determine the last safe MultiXactId to allocate given the currently oldest
  * datminmxid (ie, the oldest MultiXactId that might exist in any database
  * of our cluster), and the OID of the (or a) database with that value.
+ *
+ * is_startup is true when we are just starting the cluster, false when we
+ * are updating state in a running cluster.  This only affects log messages.
  */
 void
-SetMultiXactIdLimit(MultiXactId oldest_datminmxid, Oid oldest_datoid)
+SetMultiXactIdLimit(MultiXactId oldest_datminmxid, Oid oldest_datoid,
+					bool is_startup)
 {
 	MultiXactId multiVacLimit;
 	MultiXactId multiWarnLimit;
@@ -2263,8 +2265,8 @@ SetMultiXactIdLimit(MultiXactId oldest_datminmxid, Oid oldest_datoid)
 
 	/* Log the info */
 	ereport(DEBUG1,
-	 (errmsg("MultiXactId wrap limit is %u, limited by database with OID %u",
-			 multiWrapLimit, oldest_datoid)));
+			(errmsg("MultiXactId wrap limit is %u, limited by database with OID %u",
+					multiWrapLimit, oldest_datoid)));
 
 	/*
 	 * Computing the actual limits is only possible once the data directory is
@@ -2279,7 +2281,7 @@ SetMultiXactIdLimit(MultiXactId oldest_datminmxid, Oid oldest_datoid)
 	Assert(!InRecovery);
 
 	/* Set limits for offset vacuum. */
-	needs_offset_vacuum = SetOffsetVacuumLimit();
+	needs_offset_vacuum = SetOffsetVacuumLimit(is_startup);
 
 	/*
 	 * If past the autovacuum force point, immediately signal an autovac
@@ -2372,7 +2374,7 @@ MultiXactAdvanceOldest(MultiXactId oldestMulti, Oid oldestMultiDB)
 	Assert(InRecovery);
 
 	if (MultiXactIdPrecedes(MultiXactState->oldestMultiXactId, oldestMulti))
-		SetMultiXactIdLimit(oldestMulti, oldestMultiDB);
+		SetMultiXactIdLimit(oldestMulti, oldestMultiDB, false);
 }
 
 /*
@@ -2539,7 +2541,7 @@ GetOldestMultiXactId(void)
  * otherwise.
  */
 static bool
-SetOffsetVacuumLimit(void)
+SetOffsetVacuumLimit(bool is_startup)
 {
 	MultiXactId oldestMultiXactId;
 	MultiXactId nextMXact;
@@ -2616,17 +2618,18 @@ SetOffsetVacuumLimit(void)
 	{
 		/* move back to start of the corresponding segment */
 		offsetStopLimit = oldestOffset - (oldestOffset %
-					  (MULTIXACT_MEMBERS_PER_PAGE * SLRU_PAGES_PER_SEGMENT));
+										  (MULTIXACT_MEMBERS_PER_PAGE * SLRU_PAGES_PER_SEGMENT));
 
 		/* always leave one segment before the wraparound point */
 		offsetStopLimit -= (MULTIXACT_MEMBERS_PER_PAGE * SLRU_PAGES_PER_SEGMENT);
 
-		if (!prevOldestOffsetKnown && IsUnderPostmaster)
+		if (!prevOldestOffsetKnown && !is_startup)
 			ereport(LOG,
 					(errmsg("MultiXact member wraparound protections are now enabled")));
+
 		ereport(DEBUG1,
-		(errmsg("MultiXact member stop limit is now %u based on MultiXact %u",
-				offsetStopLimit, oldestMultiXactId)));
+				(errmsg("MultiXact member stop limit is now %u based on MultiXact %u",
+						offsetStopLimit, oldestMultiXactId)));
 	}
 	else if (prevOldestOffsetKnown)
 	{
@@ -2912,7 +2915,7 @@ PerformOffsetsTruncation(MultiXactId oldestMulti, MultiXactId newOldestMulti)
 	 * detection.
 	 */
 	SimpleLruTruncate(MultiXactOffsetCtl,
-			   MultiXactIdToOffsetPage(PreviousMultiXactId(newOldestMulti)));
+					  MultiXactIdToOffsetPage(PreviousMultiXactId(newOldestMulti)));
 }
 
 /*
@@ -3188,7 +3191,7 @@ WriteMZeroPageXlogRec(int pageno, uint8 info)
 static void
 WriteMTruncateXlogRec(Oid oldestMultiDB,
 					  MultiXactId startTruncOff, MultiXactId endTruncOff,
-				MultiXactOffset startTruncMemb, MultiXactOffset endTruncMemb)
+					  MultiXactOffset startTruncMemb, MultiXactOffset endTruncMemb)
 {
 	XLogRecPtr	recptr;
 	xl_multixact_truncate xlrec;
@@ -3314,7 +3317,7 @@ multixact_redo(XLogReaderState *record)
 		 * Advance the horizon values, so they're current at the end of
 		 * recovery.
 		 */
-		SetMultiXactIdLimit(xlrec.endTruncOff, xlrec.oldestMultiDB);
+		SetMultiXactIdLimit(xlrec.endTruncOff, xlrec.oldestMultiDB, false);
 
 		PerformMembersTruncation(xlrec.startTruncMemb, xlrec.endTruncMemb);
 

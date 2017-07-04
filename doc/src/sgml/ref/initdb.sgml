@@ -120,11 +120,17 @@ PostgreSQL documentation
       <term><option>--auth=<replaceable class="parameter">authmethod</replaceable></option></term>
       <listitem>
        <para>
-        This option specifies the authentication method for local users used
-        in <filename>pg_hba.conf</> (<literal>host</literal>
-        and <literal>local</literal> lines).  Do not use <literal>trust</>
-        unless you trust all local users on your system.  <literal>trust</> is
-        the default for ease of installation.
+        This option specifies the default authentication method for local
+        users used in <filename>pg_hba.conf</> (<literal>host</literal>
+        and <literal>local</literal> lines).  <command>initdb</command> will
+        prepopulate <filename>pg_hba.conf</filename> entries using the
+        specified authentication method for non-replication as well as
+        replication connections.
+       </para>
+
+       <para>
+        Do not use <literal>trust</> unless you trust all local users on your
+        system.  <literal>trust</> is the default for ease of installation.
        </para>
       </listitem>
      </varlistentry>
@@ -235,7 +241,7 @@ PostgreSQL documentation
 
      <varlistentry>
       <term><option>-N</option></term>
-      <term><option>--nosync</option></term>
+      <term><option>--no-sync</option></term>
       <listitem>
        <para>
         By default, <command>initdb</command> will wait for all files to be
@@ -270,8 +276,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-T <replaceable>CFG</></option></term>
-      <term><option>--text-search-config=<replaceable>CFG</></option></term>
+      <term><option>-T <replaceable>config</></option></term>
+      <term><option>--text-search-config=<replaceable>config</></option></term>
       <listitem>
        <para>
         Sets the default text search configuration.
@@ -311,10 +317,10 @@ PostgreSQL documentation
 
      <varlistentry>
       <term><option>-X <replaceable class="parameter">directory</replaceable></option></term>
-      <term><option>--xlogdir=<replaceable class="parameter">directory</replaceable></option></term>
+      <term><option>--waldir=<replaceable class="parameter">directory</replaceable></option></term>
       <listitem>
        <para>
-        This option specifies the directory where the transaction log
+        This option specifies the directory where the write-ahead log
         should be stored.
        </para>
       </listitem>
@@ -355,7 +361,7 @@ PostgreSQL documentation
 
      <varlistentry>
       <term><option>-n</option></term>
-      <term><option>--noclean</option></term>
+      <term><option>--no-clean</option></term>
       <listitem>
        <para>
         By default, when <command>initdb</command>

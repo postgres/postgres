@@ -3,7 +3,7 @@
  * jsonb.h
  *	  Declarations for jsonb data type support.
  *
- * Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Copyright (c) 1996-2017, PostgreSQL Global Development Group
  *
  * src/include/utils/jsonb.h
  *
@@ -148,7 +148,7 @@ typedef uint32 JEntry;
 #define JENTRY_ISBOOL_FALSE		0x20000000
 #define JENTRY_ISBOOL_TRUE		0x30000000
 #define JENTRY_ISNULL			0x40000000
-#define JENTRY_ISCONTAINER		0x50000000		/* array or object */
+#define JENTRY_ISCONTAINER		0x50000000	/* array or object */
 
 /* Access macros.  Note possible multiple evaluations */
 #define JBE_OFFLENFLD(je_)		((je_) & JENTRY_OFFLENMASK)
@@ -200,10 +200,16 @@ typedef struct JsonbContainer
 } JsonbContainer;
 
 /* flags for the header-field in JsonbContainer */
-#define JB_CMASK				0x0FFFFFFF		/* mask for count field */
-#define JB_FSCALAR				0x10000000		/* flag bits */
+#define JB_CMASK				0x0FFFFFFF	/* mask for count field */
+#define JB_FSCALAR				0x10000000	/* flag bits */
 #define JB_FOBJECT				0x20000000
 #define JB_FARRAY				0x40000000
+
+/* convenience macros for accessing a JsonbContainer struct */
+#define JsonContainerSize(jc)		((jc)->header & JB_CMASK)
+#define JsonContainerIsScalar(jc)	(((jc)->header & JB_FSCALAR) != 0)
+#define JsonContainerIsObject(jc)	(((jc)->header & JB_FOBJECT) != 0)
+#define JsonContainerIsArray(jc)	(((jc)->header & JB_FARRAY) != 0)
 
 /* The top-level on-disk format for a jsonb datum. */
 typedef struct
@@ -213,11 +219,25 @@ typedef struct
 } Jsonb;
 
 /* convenience macros for accessing the root container in a Jsonb datum */
-#define JB_ROOT_COUNT(jbp_)		( *(uint32*) VARDATA(jbp_) & JB_CMASK)
-#define JB_ROOT_IS_SCALAR(jbp_) ( *(uint32*) VARDATA(jbp_) & JB_FSCALAR)
-#define JB_ROOT_IS_OBJECT(jbp_) ( *(uint32*) VARDATA(jbp_) & JB_FOBJECT)
-#define JB_ROOT_IS_ARRAY(jbp_)	( *(uint32*) VARDATA(jbp_) & JB_FARRAY)
+#define JB_ROOT_COUNT(jbp_)		(*(uint32 *) VARDATA(jbp_) & JB_CMASK)
+#define JB_ROOT_IS_SCALAR(jbp_) ((*(uint32 *) VARDATA(jbp_) & JB_FSCALAR) != 0)
+#define JB_ROOT_IS_OBJECT(jbp_) ((*(uint32 *) VARDATA(jbp_) & JB_FOBJECT) != 0)
+#define JB_ROOT_IS_ARRAY(jbp_)	((*(uint32 *) VARDATA(jbp_) & JB_FARRAY) != 0)
 
+
+enum jbvType
+{
+	/* Scalar types */
+	jbvNull = 0x0,
+	jbvString,
+	jbvNumeric,
+	jbvBool,
+	/* Composite types */
+	jbvArray = 0x10,
+	jbvObject,
+	/* Binary (i.e. struct Jsonb) jbvArray/jbvObject */
+	jbvBinary
+};
 
 /*
  * JsonbValue:	In-memory representation of Jsonb.  This is a convenient
@@ -227,19 +247,7 @@ typedef struct
  */
 struct JsonbValue
 {
-	enum
-	{
-		/* Scalar types */
-		jbvNull = 0x0,
-		jbvString,
-		jbvNumeric,
-		jbvBool,
-		/* Composite types */
-		jbvArray = 0x10,
-		jbvObject,
-		/* Binary (i.e. struct Jsonb) jbvArray/jbvObject */
-		jbvBinary
-	}			type;			/* Influences sort order */
+	enum jbvType type;			/* Influences sort order */
 
 	union
 	{
@@ -255,7 +263,7 @@ struct JsonbValue
 		{
 			int			nElems;
 			JsonbValue *elems;
-			bool		rawScalar;		/* Top-level "raw scalar" array? */
+			bool		rawScalar;	/* Top-level "raw scalar" array? */
 		}			array;		/* Array container type */
 
 		struct
@@ -343,73 +351,6 @@ typedef struct JsonbIterator
 	struct JsonbIterator *parent;
 } JsonbIterator;
 
-/* I/O routines */
-extern Datum jsonb_in(PG_FUNCTION_ARGS);
-extern Datum jsonb_out(PG_FUNCTION_ARGS);
-extern Datum jsonb_recv(PG_FUNCTION_ARGS);
-extern Datum jsonb_send(PG_FUNCTION_ARGS);
-extern Datum jsonb_typeof(PG_FUNCTION_ARGS);
-
-/* generator routines */
-extern Datum to_jsonb(PG_FUNCTION_ARGS);
-
-extern Datum jsonb_build_object(PG_FUNCTION_ARGS);
-extern Datum jsonb_build_object_noargs(PG_FUNCTION_ARGS);
-extern Datum jsonb_build_array(PG_FUNCTION_ARGS);
-extern Datum jsonb_build_array_noargs(PG_FUNCTION_ARGS);
-extern Datum jsonb_object(PG_FUNCTION_ARGS);
-extern Datum jsonb_object_two_arg(PG_FUNCTION_ARGS);
-
-/* jsonb_agg, json_object_agg functions */
-extern Datum jsonb_agg_transfn(PG_FUNCTION_ARGS);
-extern Datum jsonb_agg_finalfn(PG_FUNCTION_ARGS);
-extern Datum jsonb_object_agg_transfn(PG_FUNCTION_ARGS);
-extern Datum jsonb_object_agg_finalfn(PG_FUNCTION_ARGS);
-
-/* Indexing-related ops */
-extern Datum jsonb_exists(PG_FUNCTION_ARGS);
-extern Datum jsonb_exists_any(PG_FUNCTION_ARGS);
-extern Datum jsonb_exists_all(PG_FUNCTION_ARGS);
-extern Datum jsonb_contains(PG_FUNCTION_ARGS);
-extern Datum jsonb_contained(PG_FUNCTION_ARGS);
-extern Datum jsonb_ne(PG_FUNCTION_ARGS);
-extern Datum jsonb_lt(PG_FUNCTION_ARGS);
-extern Datum jsonb_gt(PG_FUNCTION_ARGS);
-extern Datum jsonb_le(PG_FUNCTION_ARGS);
-extern Datum jsonb_ge(PG_FUNCTION_ARGS);
-extern Datum jsonb_eq(PG_FUNCTION_ARGS);
-extern Datum jsonb_cmp(PG_FUNCTION_ARGS);
-extern Datum jsonb_hash(PG_FUNCTION_ARGS);
-
-/* GIN support functions for jsonb_ops */
-extern Datum gin_compare_jsonb(PG_FUNCTION_ARGS);
-extern Datum gin_extract_jsonb(PG_FUNCTION_ARGS);
-extern Datum gin_extract_jsonb_query(PG_FUNCTION_ARGS);
-extern Datum gin_consistent_jsonb(PG_FUNCTION_ARGS);
-extern Datum gin_triconsistent_jsonb(PG_FUNCTION_ARGS);
-
-/* GIN support functions for jsonb_path_ops */
-extern Datum gin_extract_jsonb_path(PG_FUNCTION_ARGS);
-extern Datum gin_extract_jsonb_query_path(PG_FUNCTION_ARGS);
-extern Datum gin_consistent_jsonb_path(PG_FUNCTION_ARGS);
-extern Datum gin_triconsistent_jsonb_path(PG_FUNCTION_ARGS);
-
-/* pretty printer, returns text */
-extern Datum jsonb_pretty(PG_FUNCTION_ARGS);
-
-/* concatenation */
-extern Datum jsonb_concat(PG_FUNCTION_ARGS);
-
-/* deletion */
-extern Datum jsonb_delete(PG_FUNCTION_ARGS);
-extern Datum jsonb_delete_idx(PG_FUNCTION_ARGS);
-extern Datum jsonb_delete_path(PG_FUNCTION_ARGS);
-
-/* replacement */
-extern Datum jsonb_set(PG_FUNCTION_ARGS);
-
-/* insert after or before (for arrays) */
-extern Datum jsonb_insert(PG_FUNCTION_ARGS);
 
 /* Support functions */
 extern uint32 getJsonbOffset(const JsonbContainer *jc, int index);
@@ -437,4 +378,4 @@ extern char *JsonbToCStringIndent(StringInfo out, JsonbContainer *in,
 					 int estimated_len);
 
 
-#endif   /* __JSONB_H__ */
+#endif							/* __JSONB_H__ */

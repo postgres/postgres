@@ -114,7 +114,7 @@ If a show_hook is provided, it points to a function of the signature
 This hook allows variable-specific computation of the value displayed
 by SHOW (and other SQL features for showing GUC variable values).
 The return value can point to a static buffer, since show functions are
-not used re-entrantly.
+not used reentrantly.
 
 
 Saving/Restoring GUC Variable Values

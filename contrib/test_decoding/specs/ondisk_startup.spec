@@ -24,7 +24,8 @@ step "s1alter" { ALTER TABLE do_write ADD COLUMN addedbys1 int; }
 session "s2"
 setup { SET synchronous_commit=on; }
 
-step "s2txid" { BEGIN ISOLATION LEVEL REPEATABLE READ; SELECT txid_current() IS NULL; }
+step "s2b" { BEGIN; }
+step "s2txid" { SELECT txid_current() IS NULL; }
 step "s2alter" { ALTER TABLE do_write ADD COLUMN addedbys2 int; }
 step "s2c" { COMMIT; }
 
@@ -32,7 +33,8 @@ step "s2c" { COMMIT; }
 session "s3"
 setup { SET synchronous_commit=on; }
 
-step "s3txid" { BEGIN ISOLATION LEVEL REPEATABLE READ; SELECT txid_current() IS NULL; }
+step "s3b" { BEGIN; }
+step "s3txid" { SELECT txid_current() IS NULL; }
 step "s3c" { COMMIT; }
 
 # Force usage of ondisk snapshot by starting and not finishing a
@@ -40,4 +42,4 @@ step "s3c" { COMMIT; }
 # reached. In combination with a checkpoint forcing a snapshot to be
 # written and a new restart point computed that'll lead to the usage
 # of the snapshot.
-permutation "s2txid" "s1init" "s3txid" "s2alter" "s2c" "s1insert" "s1checkpoint" "s1start" "s1insert" "s1alter" "s1insert" "s1start"
+permutation "s2b" "s2txid" "s1init" "s3b" "s3txid" "s2alter" "s2c" "s2b" "s2txid" "s3c" "s2c" "s1insert" "s1checkpoint" "s1start" "s1insert" "s1alter" "s1insert" "s1start"

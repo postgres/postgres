@@ -282,7 +282,7 @@ internal_size(int *a, int len)
 
 	for (i = 0; i < len; i += 2)
 	{
-		if (!i || a[i] != a[i - 1])		/* do not count repeated range */
+		if (!i || a[i] != a[i - 1]) /* do not count repeated range */
 			size += a[i + 1] - a[i] + 1;
 	}
 

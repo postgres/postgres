@@ -3,7 +3,7 @@
 #################################################################
 # version_stamp.pl -- update version stamps throughout the source tree
 #
-# Copyright (c) 2008-2016, PostgreSQL Global Development Group
+# Copyright (c) 2008-2017, PostgreSQL Global Development Group
 #
 # src/tools/version_stamp.pl
 #################################################################
@@ -20,13 +20,17 @@
 # "devel", "alphaN", "betaN", "rcN".
 #
 
+use strict;
+
 # Major version is hard-wired into the script.  We update it when we branch
 # a new development version.
-$majorversion = 10;
+my $majorversion = 10;
 
 # Validate argument and compute derived variables
-$minor = shift;
+my $minor = shift;
 defined($minor) || die "$0: missing required argument: minor-version\n";
+
+my ($dotneeded, $numericminor);
 
 if ($minor =~ m/^\d+$/)
 {
@@ -58,6 +62,8 @@ else
 	die "$0: minor-version must be N, devel, alphaN, betaN, or rcN\n";
 }
 
+my $fullversion;
+
 # Create various required forms of the version number
 if ($dotneeded)
 {
@@ -67,15 +73,15 @@ else
 {
 	$fullversion = $majorversion . $minor;
 }
-$numericversion = $majorversion . "." . $numericminor;
-$padnumericversion = sprintf("%d%04d", $majorversion, $numericminor);
+my $numericversion = $majorversion . "." . $numericminor;
+my $padnumericversion = sprintf("%d%04d", $majorversion, $numericminor);
 
 # Get the autoconf version number for eventual nag message
 # (this also ensures we're in the right directory)
 
-$aconfver = "";
-open(FILE, "configure.in") || die "could not read configure.in: $!\n";
-while (<FILE>)
+my $aconfver = "";
+open(my $fh, '<', "configure.in") || die "could not read configure.in: $!\n";
+while (<$fh>)
 {
 	if (
 m/^m4_if\(m4_defn\(\[m4_PACKAGE_VERSION\]\), \[(.*)\], \[\], \[m4_fatal/)
@@ -84,13 +90,13 @@ m/^m4_if\(m4_defn\(\[m4_PACKAGE_VERSION\]\), \[(.*)\], \[\], \[m4_fatal/)
 		last;
 	}
 }
-close(FILE);
+close($fh);
 $aconfver ne ""
   || die "could not find autoconf version number in configure.in\n";
 
 # Update configure.in and other files that contain version numbers
 
-$fixedfiles = "";
+my $fixedfiles = "";
 
 sed_file("configure.in",
 "-e 's/AC_INIT(\\[PostgreSQL\\], \\[[0-9a-z.]*\\]/AC_INIT([PostgreSQL], [$fullversion]/'"

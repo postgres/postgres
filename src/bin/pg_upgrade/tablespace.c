@@ -3,15 +3,13 @@
  *
  *	tablespace functions
  *
- *	Copyright (c) 2010-2016, PostgreSQL Global Development Group
+ *	Copyright (c) 2010-2017, PostgreSQL Global Development Group
  *	src/bin/pg_upgrade/tablespace.c
  */
 
 #include "postgres_fe.h"
 
 #include "pg_upgrade.h"
-
-#include <sys/types.h>
 
 static void get_tablespace_paths(void);
 static void set_tablespace_directory_suffix(ClusterInfo *cluster);
@@ -26,7 +24,7 @@ init_tablespaces(void)
 	set_tablespace_directory_suffix(&new_cluster);
 
 	if (os_info.num_old_tablespaces > 0 &&
-	strcmp(old_cluster.tablespace_suffix, new_cluster.tablespace_suffix) == 0)
+		strcmp(old_cluster.tablespace_suffix, new_cluster.tablespace_suffix) == 0)
 		pg_fatal("Cannot upgrade to/from the same system catalog version when\n"
 				 "using tablespaces.\n");
 }
@@ -54,13 +52,13 @@ get_tablespace_paths(void)
 			 "		spcname != 'pg_global'",
 	/* 9.2 removed the spclocation column */
 			 (GET_MAJOR_VERSION(old_cluster.major_version) <= 901) ?
-	"spclocation" : "pg_catalog.pg_tablespace_location(oid) AS spclocation");
+			 "spclocation" : "pg_catalog.pg_tablespace_location(oid) AS spclocation");
 
 	res = executeQueryOrDie(conn, "%s", query);
 
 	if ((os_info.num_old_tablespaces = PQntuples(res)) != 0)
 		os_info.old_tablespaces = (char **) pg_malloc(
-							   os_info.num_old_tablespaces * sizeof(char *));
+													  os_info.num_old_tablespaces * sizeof(char *));
 	else
 		os_info.old_tablespaces = NULL;
 
@@ -71,7 +69,7 @@ get_tablespace_paths(void)
 		struct stat statBuf;
 
 		os_info.old_tablespaces[tblnum] = pg_strdup(
-									 PQgetvalue(res, tblnum, i_spclocation));
+													PQgetvalue(res, tblnum, i_spclocation));
 
 		/*
 		 * Check that the tablespace path exists and is a directory.
@@ -90,8 +88,8 @@ get_tablespace_paths(void)
 							  os_info.old_tablespaces[tblnum]);
 			else
 				report_status(PG_FATAL,
-						   "cannot stat() tablespace directory \"%s\": %s\n",
-							os_info.old_tablespaces[tblnum], getErrorText());
+							  "could not stat tablespace directory \"%s\": %s\n",
+							  os_info.old_tablespaces[tblnum], strerror(errno));
 		}
 		if (!S_ISDIR(statBuf.st_mode))
 			report_status(PG_FATAL,

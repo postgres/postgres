@@ -5,7 +5,7 @@
  *	  along with the relation's initial contents.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_depend.h
@@ -87,4 +87,4 @@ typedef FormData_pg_depend *Form_pg_depend;
  * convenient to find from the contents of other catalogs.
  */
 
-#endif   /* PG_DEPEND_H */
+#endif							/* PG_DEPEND_H */

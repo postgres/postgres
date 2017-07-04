@@ -15,7 +15,7 @@
  * there's hardly any use case for using these without superuser-rights
  * anyway.
  *
- * Copyright (c) 2007-2016, PostgreSQL Global Development Group
+ * Copyright (c) 2007-2017, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  contrib/pageinspect/heapfuncs.c
@@ -24,6 +24,8 @@
  */
 
 #include "postgres.h"
+
+#include "pageinspect.h"
 
 #include "access/htup_details.h"
 #include "funcapi.h"
@@ -82,7 +84,7 @@ text_to_bits(char *str, int len)
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_DATA_CORRUPTED),
-			   errmsg("illegal character '%c' in t_bits string", str[off])));
+					 errmsg("illegal character '%c' in t_bits string", str[off])));
 
 		if (off % 8 == 7)
 			bits[off / 8] = byte;
@@ -130,7 +132,7 @@ heap_page_items(PG_FUNCTION_ARGS)
 		if (raw_page_size < SizeOfPageHeaderData)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				  errmsg("input page too small (%d bytes)", raw_page_size)));
+					 errmsg("input page too small (%d bytes)", raw_page_size)));
 
 		fctx = SRF_FIRSTCALL_INIT();
 		mctx = MemoryContextSwitchTo(fctx->multi_call_memory_ctx);
@@ -234,7 +236,7 @@ heap_page_items(PG_FUNCTION_ARGS)
 					bits_len =
 						((tuphdr->t_infomask2 & HEAP_NATTS_MASK) / 8 + 1) * 8;
 					values[11] = CStringGetTextDatum(
-									 bits_to_text(tuphdr->t_bits, bits_len));
+													 bits_to_text(tuphdr->t_bits, bits_len));
 				}
 				else
 					nulls[11] = true;
@@ -279,7 +281,7 @@ heap_page_items(PG_FUNCTION_ARGS)
  *
  * Split raw tuple data taken directly from a page into an array of bytea
  * elements. This routine does a lookup on NULL values and creates array
- * elements accordindly. This is a reimplementation of nocachegetattr()
+ * elements accordingly. This is a reimplementation of nocachegetattr()
  * in heaptuple.c simplified for educational purposes.
  */
 static Datum
@@ -382,7 +384,7 @@ tuple_data_split_internal(Oid relid, char *tupdata,
 	if (tupdata_len != off)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATA_CORRUPTED),
-			errmsg("end of tuple reached without looking at all its data")));
+				 errmsg("end of tuple reached without looking at all its data")));
 
 	return makeArrayResult(raw_attrs, CurrentMemoryContext);
 }

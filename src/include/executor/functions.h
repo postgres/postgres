@@ -4,7 +4,7 @@
  *		Declarations for execution of SQL-language functions.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/executor/functions.h
@@ -36,4 +36,4 @@ extern bool check_sql_fn_retval(Oid func_id, Oid rettype,
 
 extern DestReceiver *CreateSQLFunctionDestReceiver(void);
 
-#endif   /* FUNCTIONS_H */
+#endif							/* FUNCTIONS_H */

@@ -3,7 +3,7 @@
  * orderedsetaggs.c
  *		Ordered-set aggregate functions.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -14,6 +14,7 @@
  */
 #include "postgres.h"
 
+#include <float.h>
 #include <math.h>
 
 #include "catalog/pg_aggregate.h"
@@ -1189,7 +1190,7 @@ hypothetical_rank_common(FunctionCallInfo fcinfo, int flag,
 	tuplesort_performsort(osastate->sortstate);
 
 	/* iterate till we find the hypothetical row */
-	while (tuplesort_gettupleslot(osastate->sortstate, true, slot, NULL))
+	while (tuplesort_gettupleslot(osastate->sortstate, true, true, slot, NULL))
 	{
 		bool		isnull;
 		Datum		d = slot_getattr(slot, nargs + 1, &isnull);
@@ -1352,7 +1353,8 @@ hypothetical_dense_rank_final(PG_FUNCTION_ARGS)
 	slot2 = extraslot;
 
 	/* iterate till we find the hypothetical row */
-	while (tuplesort_gettupleslot(osastate->sortstate, true, slot, &abbrevVal))
+	while (tuplesort_gettupleslot(osastate->sortstate, true, true, slot,
+								  &abbrevVal))
 	{
 		bool		isnull;
 		Datum		d = slot_getattr(slot, nargs + 1, &isnull);

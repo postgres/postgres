@@ -23,32 +23,48 @@
 
 -- This should match IsBinaryCoercible() in parse_coerce.c.
 create function binary_coercible(oid, oid) returns bool as $$
-SELECT ($1 = $2) OR
- EXISTS(select 1 from pg_catalog.pg_cast where
-        castsource = $1 and casttarget = $2 and
-        castmethod = 'b' and castcontext = 'i') OR
- ($2 = 'pg_catalog.any'::pg_catalog.regtype) OR
- ($2 = 'pg_catalog.anyarray'::pg_catalog.regtype AND
-  EXISTS(select 1 from pg_catalog.pg_type where
-         oid = $1 and typelem != 0 and typlen = -1)) OR
- ($2 = 'pg_catalog.anyrange'::pg_catalog.regtype AND
-  (select typtype from pg_catalog.pg_type where oid = $1) = 'r')
-$$ language sql strict stable;
+begin
+  if $1 = $2 then return true; end if;
+  if EXISTS(select 1 from pg_catalog.pg_cast where
+            castsource = $1 and casttarget = $2 and
+            castmethod = 'b' and castcontext = 'i')
+  then return true; end if;
+  if $2 = 'pg_catalog.any'::pg_catalog.regtype then return true; end if;
+  if $2 = 'pg_catalog.anyarray'::pg_catalog.regtype then
+    if EXISTS(select 1 from pg_catalog.pg_type where
+              oid = $1 and typelem != 0 and typlen = -1)
+    then return true; end if;
+  end if;
+  if $2 = 'pg_catalog.anyrange'::pg_catalog.regtype then
+    if (select typtype from pg_catalog.pg_type where oid = $1) = 'r'
+    then return true; end if;
+  end if;
+  return false;
+end
+$$ language plpgsql strict stable;
 
 -- This one ignores castcontext, so it considers only physical equivalence
 -- and not whether the coercion can be invoked implicitly.
 create function physically_coercible(oid, oid) returns bool as $$
-SELECT ($1 = $2) OR
- EXISTS(select 1 from pg_catalog.pg_cast where
-        castsource = $1 and casttarget = $2 and
-        castmethod = 'b') OR
- ($2 = 'pg_catalog.any'::pg_catalog.regtype) OR
- ($2 = 'pg_catalog.anyarray'::pg_catalog.regtype AND
-  EXISTS(select 1 from pg_catalog.pg_type where
-         oid = $1 and typelem != 0 and typlen = -1)) OR
- ($2 = 'pg_catalog.anyrange'::pg_catalog.regtype AND
-  (select typtype from pg_catalog.pg_type where oid = $1) = 'r')
-$$ language sql strict stable;
+begin
+  if $1 = $2 then return true; end if;
+  if EXISTS(select 1 from pg_catalog.pg_cast where
+            castsource = $1 and casttarget = $2 and
+            castmethod = 'b')
+  then return true; end if;
+  if $2 = 'pg_catalog.any'::pg_catalog.regtype then return true; end if;
+  if $2 = 'pg_catalog.anyarray'::pg_catalog.regtype then
+    if EXISTS(select 1 from pg_catalog.pg_type where
+              oid = $1 and typelem != 0 and typlen = -1)
+    then return true; end if;
+  end if;
+  if $2 = 'pg_catalog.anyrange'::pg_catalog.regtype then
+    if (select typtype from pg_catalog.pg_type where oid = $1) = 'r'
+    then return true; end if;
+  end if;
+  return false;
+end
+$$ language plpgsql strict stable;
 
 
 -- **************** pg_proc ****************
@@ -78,6 +94,13 @@ WHERE prosrc IS NULL OR prosrc = '' OR prosrc = '-';
 SELECT p1.oid, p1.proname
 FROM pg_proc AS p1
 WHERE proiswindow AND (proisagg OR proretset);
+
+-- currently, no built-in functions should be SECURITY DEFINER;
+-- this might change in future, but there will probably never be many.
+SELECT p1.oid, p1.proname
+FROM pg_proc AS p1
+WHERE prosecdef
+ORDER BY 1;
 
 -- pronargdefaults should be 0 iff proargdefaults is null
 SELECT p1.oid, p1.proname
@@ -380,6 +403,11 @@ where proname in (
 and pronamespace = (select oid from pg_catalog.pg_namespace
                     where nspname = 'pg_catalog')
 order by 1;
+
+-- Check that all immutable functions are marked parallel safe
+SELECT p1.oid, p1.proname
+FROM pg_proc AS p1
+WHERE provolatile = 'i' AND proparallel = 'u';
 
 
 -- **************** pg_cast ****************
@@ -720,10 +748,14 @@ WHERE d.classoid IS NULL AND p1.oid <= 9999;
 -- be called directly; those should have comments matching their operator.
 WITH funcdescs AS (
   SELECT p.oid as p_oid, proname, o.oid as o_oid,
-    obj_description(p.oid, 'pg_proc') as prodesc,
+    pd.description as prodesc,
     'implementation of ' || oprname || ' operator' as expecteddesc,
-    obj_description(o.oid, 'pg_operator') as oprdesc
+    od.description as oprdesc
   FROM pg_proc p JOIN pg_operator o ON oprcode = p.oid
+       LEFT JOIN pg_description pd ON
+         (pd.objoid = p.oid and pd.classoid = p.tableoid and pd.objsubid = 0)
+       LEFT JOIN pg_description od ON
+         (od.objoid = o.oid and od.classoid = o.tableoid and od.objsubid = 0)
   WHERE o.oid <= 9999
 )
 SELECT * FROM funcdescs
@@ -737,10 +769,14 @@ SELECT * FROM funcdescs
 -- This should be a pretty short list; it's mostly legacy cases.
 WITH funcdescs AS (
   SELECT p.oid as p_oid, proname, o.oid as o_oid,
-    obj_description(p.oid, 'pg_proc') as prodesc,
+    pd.description as prodesc,
     'implementation of ' || oprname || ' operator' as expecteddesc,
-    obj_description(o.oid, 'pg_operator') as oprdesc
+    od.description as oprdesc
   FROM pg_proc p JOIN pg_operator o ON oprcode = p.oid
+       LEFT JOIN pg_description pd ON
+         (pd.objoid = p.oid and pd.classoid = p.tableoid and pd.objsubid = 0)
+       LEFT JOIN pg_description od ON
+         (od.objoid = o.oid and od.classoid = o.tableoid and od.objsubid = 0)
   WHERE o.oid <= 9999
 )
 SELECT p_oid, proname, prodesc FROM funcdescs

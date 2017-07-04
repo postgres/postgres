@@ -4,6 +4,15 @@
 
 CREATE EXTENSION isn;
 
+-- Check whether any of our opclasses fail amvalidate
+-- ... they will, because of missing cross-type operators
+SELECT amname, opcname
+FROM (SELECT amname, opcname, opc.oid
+      FROM pg_opclass opc LEFT JOIN pg_am am ON am.oid = opcmethod
+      WHERE opc.oid >= 16384
+      ORDER BY 1, 2 OFFSET 0) ss
+WHERE NOT amvalidate(oid);
+
 --
 -- test valid conversions
 --

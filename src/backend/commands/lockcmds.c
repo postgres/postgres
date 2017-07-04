@@ -3,7 +3,7 @@
  * lockcmds.c
  *	  LOCK command support code
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -14,7 +14,6 @@
  */
 #include "postgres.h"
 
-#include "access/heapam.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_inherits_fn.h"
 #include "commands/lockcmds.h"
@@ -55,7 +54,7 @@ LockTableCommand(LockStmt *lockstmt)
 	foreach(p, lockstmt->relations)
 	{
 		RangeVar   *rv = (RangeVar *) lfirst(p);
-		bool		recurse = interpretInhOption(rv->inhOpt);
+		bool		recurse = rv->inh;
 		Oid			reloid;
 
 		reloid = RangeVarGetRelidExtended(rv, lockstmt->mode, false,
@@ -88,7 +87,7 @@ RangeVarCallbackForLockTable(const RangeVar *rv, Oid relid, Oid oldrelid,
 								 * check */
 
 	/* Currently, we only allow plain tables to be locked */
-	if (relkind != RELKIND_RELATION)
+	if (relkind != RELKIND_RELATION && relkind != RELKIND_PARTITIONED_TABLE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("\"%s\" is not a table",

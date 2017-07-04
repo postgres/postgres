@@ -218,9 +218,6 @@ SELECT (p.hobbies).equipment.name, name(p.hobbies), p.name FROM ONLY person p;
 
 SELECT name(equipment(p.hobbies)), name(p.hobbies), p.name FROM person* p;
 
-SELECT user_relns() AS user_relns
-   ORDER BY user_relns;
-
 SELECT name(equipment(hobby_construct(text 'skywalking', text 'mer')));
 
 SELECT name(equipment(hobby_construct_named(text 'skywalking', text 'mer')));
@@ -251,19 +248,6 @@ SELECT name(equipment(ROW('skywalking', 'mer')));
 SELECT *, name(equipment(h.*)) FROM hobbies_r h;
 
 SELECT *, (equipment(CAST((h.*) AS hobbies_r))).name FROM hobbies_r h;
-
---
--- check that old-style C functions work properly with TOASTed values
---
-create table oldstyle_test(i int4, t text);
-insert into oldstyle_test values(null,null);
-insert into oldstyle_test values(0,'12');
-insert into oldstyle_test values(1000,'12');
-insert into oldstyle_test values(0, repeat('x', 50000));
-
-select i, length(t), octet_length(t), oldstyle_length(i,t) from oldstyle_test;
-
-drop table oldstyle_test;
 
 --
 -- functional joins

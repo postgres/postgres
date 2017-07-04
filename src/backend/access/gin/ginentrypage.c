@@ -4,7 +4,7 @@
  *	  routines for handling GIN entry tree pages.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -15,6 +15,7 @@
 #include "postgres.h"
 
 #include "access/gin_private.h"
+#include "access/ginxlog.h"
 #include "access/xloginsert.h"
 #include "miscadmin.h"
 #include "utils/rel.h"
@@ -106,9 +107,9 @@ GinFormTuple(GinState *ginstate,
 		if (errorTooBig)
 			ereport(ERROR,
 					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-			errmsg("index row size %zu exceeds maximum %zu for index \"%s\"",
-				   (Size) newsize, (Size) GinMaxItemSize,
-				   RelationGetRelationName(ginstate->index))));
+					 errmsg("index row size %zu exceeds maximum %zu for index \"%s\"",
+							(Size) newsize, (Size) GinMaxItemSize,
+							RelationGetRelationName(ginstate->index))));
 		pfree(itup);
 		return NULL;
 	}
@@ -255,7 +256,7 @@ entryIsMoveRight(GinBtree btree, Page page)
 	key = gintuple_get_key(btree->ginstate, itup, &category);
 
 	if (ginCompareAttEntries(btree->ginstate,
-				   btree->entryAttnum, btree->entryKey, btree->entryCategory,
+							 btree->entryAttnum, btree->entryKey, btree->entryCategory,
 							 attnum, key, category) > 0)
 		return TRUE;
 

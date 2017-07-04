@@ -3,7 +3,7 @@
  * relpath.h
  *		Declarations for GetRelationPath() and friends
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/common/relpath.h
@@ -71,4 +71,4 @@ extern char *GetRelationPath(Oid dbNode, Oid spcNode, Oid relNode,
 #define relpath(rnode, forknum) \
 	relpathbackend((rnode).node, (rnode).backend, forknum)
 
-#endif   /* RELPATH_H */
+#endif							/* RELPATH_H */

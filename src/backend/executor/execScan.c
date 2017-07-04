@@ -7,7 +7,7 @@
  *	  stuff - checking the qualification and projecting the tuple
  *	  appropriately.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -123,10 +123,8 @@ ExecScan(ScanState *node,
 		 ExecScanRecheckMtd recheckMtd)
 {
 	ExprContext *econtext;
-	List	   *qual;
+	ExprState  *qual;
 	ProjectionInfo *projInfo;
-	ExprDoneCond isDone;
-	TupleTableSlot *resultSlot;
 
 	/*
 	 * Fetch data from node
@@ -146,24 +144,8 @@ ExecScan(ScanState *node,
 	}
 
 	/*
-	 * Check to see if we're still projecting out tuples from a previous scan
-	 * tuple (because there is a function-returning-set in the projection
-	 * expressions).  If so, try to project another one.
-	 */
-	if (node->ps.ps_TupFromTlist)
-	{
-		Assert(projInfo);		/* can't get here if not projecting */
-		resultSlot = ExecProject(projInfo, &isDone);
-		if (isDone == ExprMultipleResult)
-			return resultSlot;
-		/* Done with that source tuple... */
-		node->ps.ps_TupFromTlist = false;
-	}
-
-	/*
 	 * Reset per-tuple memory context to free any expression evaluation
-	 * storage allocated in the previous tuple cycle.  Note this can't happen
-	 * until we're done projecting out tuples from a scan tuple.
+	 * storage allocated in the previous tuple cycle.
 	 */
 	ResetExprContext(econtext);
 
@@ -188,7 +170,7 @@ ExecScan(ScanState *node,
 		if (TupIsNull(slot))
 		{
 			if (projInfo)
-				return ExecClearTuple(projInfo->pi_slot);
+				return ExecClearTuple(projInfo->pi_state.resultslot);
 			else
 				return slot;
 		}
@@ -201,11 +183,11 @@ ExecScan(ScanState *node,
 		/*
 		 * check that the current tuple satisfies the qual-clause
 		 *
-		 * check for non-nil qual here to avoid a function call to ExecQual()
-		 * when the qual is nil ... saves only a few cycles, but they add up
+		 * check for non-null qual here to avoid a function call to ExecQual()
+		 * when the qual is null ... saves only a few cycles, but they add up
 		 * ...
 		 */
-		if (!qual || ExecQual(qual, econtext, false))
+		if (qual == NULL || ExecQual(qual, econtext))
 		{
 			/*
 			 * Found a satisfactory scan tuple.
@@ -214,15 +196,9 @@ ExecScan(ScanState *node,
 			{
 				/*
 				 * Form a projection tuple, store it in the result tuple slot
-				 * and return it --- unless we find we can project no tuples
-				 * from this scan tuple, in which case continue scan.
+				 * and return it.
 				 */
-				resultSlot = ExecProject(projInfo, &isDone);
-				if (isDone != ExprEndResult)
-				{
-					node->ps.ps_TupFromTlist = (isDone == ExprMultipleResult);
-					return resultSlot;
-				}
+				return ExecProject(projInfo);
 			}
 			else
 			{
@@ -351,9 +327,6 @@ void
 ExecScanReScan(ScanState *node)
 {
 	EState	   *estate = node->ps.state;
-
-	/* Stop projecting any tuples from SRFs in the targetlist */
-	node->ps.ps_TupFromTlist = false;
 
 	/* Rescan EvalPlanQual tuple if we're inside an EvalPlanQual recheck */
 	if (estate->es_epqScanDone != NULL)

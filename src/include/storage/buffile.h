@@ -15,7 +15,7 @@
  * but currently we have no need for oversize temp files without buffered
  * access.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/storage/buffile.h
@@ -42,4 +42,4 @@ extern int	BufFileSeek(BufFile *file, int fileno, off_t offset, int whence);
 extern void BufFileTell(BufFile *file, int *fileno, off_t *offset);
 extern int	BufFileSeekBlock(BufFile *file, long blknum);
 
-#endif   /* BUFFILE_H */
+#endif							/* BUFFILE_H */

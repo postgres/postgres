@@ -3,7 +3,7 @@
  *
  * A simple binary heap implementation
  *
- * Portions Copyright (c) 2012-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2012-2017, PostgreSQL Global Development Group
  *
  * src/include/lib/binaryheap.h
  */
@@ -51,4 +51,4 @@ extern void binaryheap_replace_first(binaryheap *heap, Datum d);
 
 #define binaryheap_empty(h)			((h)->bh_size == 0)
 
-#endif   /* BINARYHEAP_H */
+#endif							/* BINARYHEAP_H */

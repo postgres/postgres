@@ -3,7 +3,7 @@
  *
  *	information support functions
  *
- *	Copyright (c) 2010-2016, PostgreSQL Global Development Group
+ *	Copyright (c) 2010-2017, PostgreSQL Global Development Group
  *	src/bin/pg_upgrade/info.c
  */
 
@@ -12,6 +12,7 @@
 #include "pg_upgrade.h"
 
 #include "access/transam.h"
+#include "catalog/pg_class.h"
 
 
 static void create_rel_filename_map(const char *old_data, const char *new_data,
@@ -238,7 +239,7 @@ report_unmatched_relation(const RelInfo *rel, const DbInfo *db, bool is_new_db)
 			{
 				snprintf(reldesc + strlen(reldesc),
 						 sizeof(reldesc) - strlen(reldesc),
-						 " which is an index on \"%s.%s\"",
+						 _(" which is an index on \"%s.%s\""),
 						 hrel->nspname, hrel->relname);
 				/* Shift attention to index's table for toast check */
 				rel = hrel;
@@ -248,7 +249,7 @@ report_unmatched_relation(const RelInfo *rel, const DbInfo *db, bool is_new_db)
 		if (i >= db->rel_arr.nrels)
 			snprintf(reldesc + strlen(reldesc),
 					 sizeof(reldesc) - strlen(reldesc),
-					 " which is an index on OID %u", rel->indtable);
+					 _(" which is an index on OID %u"), rel->indtable);
 	}
 	if (rel->toastheap)
 	{
@@ -260,7 +261,7 @@ report_unmatched_relation(const RelInfo *rel, const DbInfo *db, bool is_new_db)
 			{
 				snprintf(reldesc + strlen(reldesc),
 						 sizeof(reldesc) - strlen(reldesc),
-						 " which is the TOAST table for \"%s.%s\"",
+						 _(" which is the TOAST table for \"%s.%s\""),
 						 brel->nspname, brel->relname);
 				break;
 			}
@@ -268,7 +269,7 @@ report_unmatched_relation(const RelInfo *rel, const DbInfo *db, bool is_new_db)
 		if (i >= db->rel_arr.nrels)
 			snprintf(reldesc + strlen(reldesc),
 					 sizeof(reldesc) - strlen(reldesc),
-					 " which is the TOAST table for OID %u", rel->toastheap);
+					 _(" which is the TOAST table for OID %u"), rel->toastheap);
 	}
 
 	if (is_new_db)
@@ -444,7 +445,8 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 			 "  SELECT c.oid, 0::oid, 0::oid "
 			 "  FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n "
 			 "         ON c.relnamespace = n.oid "
-			 "  WHERE relkind IN ('r', 'm', 'S') AND "
+			 "  WHERE relkind IN (" CppAsString2(RELKIND_RELATION) ", "
+			 CppAsString2(RELKIND_MATVIEW) ") AND "
 	/* exclude possible orphaned temp tables */
 			 "    ((n.nspname !~ '^pg_temp_' AND "
 			 "      n.nspname !~ '^pg_toast_temp_' AND "

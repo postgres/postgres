@@ -3,7 +3,7 @@
  * nodeSamplescan.c
  *	  Support routines for sample scans of relations (table sampling).
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -22,6 +22,7 @@
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "storage/predicate.h"
+#include "utils/builtins.h"
 #include "utils/rel.h"
 #include "utils/tqual.h"
 
@@ -119,7 +120,7 @@ InitScanRelation(SampleScanState *node, EState *estate, int eflags)
 	 * open that relation and acquire appropriate lock on it.
 	 */
 	currentRelation = ExecOpenScanRelation(estate,
-						   ((SampleScan *) node->ss.ps.plan)->scan.scanrelid,
+										   ((SampleScan *) node->ss.ps.plan)->scan.scanrelid,
 										   eflags);
 
 	node->ss.ss_currentRelation = currentRelation;
@@ -163,19 +164,12 @@ ExecInitSampleScan(SampleScan *node, EState *estate, int eflags)
 	/*
 	 * initialize child expressions
 	 */
-	scanstate->ss.ps.targetlist = (List *)
-		ExecInitExpr((Expr *) node->scan.plan.targetlist,
-					 (PlanState *) scanstate);
-	scanstate->ss.ps.qual = (List *)
-		ExecInitExpr((Expr *) node->scan.plan.qual,
-					 (PlanState *) scanstate);
+	scanstate->ss.ps.qual =
+		ExecInitQual(node->scan.plan.qual, (PlanState *) scanstate);
 
-	scanstate->args = (List *)
-		ExecInitExpr((Expr *) tsc->args,
-					 (PlanState *) scanstate);
+	scanstate->args = ExecInitExprList(tsc->args, (PlanState *) scanstate);
 	scanstate->repeatable =
-		ExecInitExpr(tsc->repeatable,
-					 (PlanState *) scanstate);
+		ExecInitExpr(tsc->repeatable, (PlanState *) scanstate);
 
 	/*
 	 * tuple table initialization
@@ -187,8 +181,6 @@ ExecInitSampleScan(SampleScan *node, EState *estate, int eflags)
 	 * initialize scan relation
 	 */
 	InitScanRelation(scanstate, estate, eflags);
-
-	scanstate->ss.ps.ps_TupFromTlist = false;
 
 	/*
 	 * Initialize result tuple type and projection info.
@@ -299,8 +291,7 @@ tablesample_init(SampleScanState *scanstate)
 
 		params[i] = ExecEvalExprSwitchContext(argstate,
 											  econtext,
-											  &isnull,
-											  NULL);
+											  &isnull);
 		if (isnull)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TABLESAMPLE_ARGUMENT),
@@ -312,12 +303,11 @@ tablesample_init(SampleScanState *scanstate)
 	{
 		datum = ExecEvalExprSwitchContext(scanstate->repeatable,
 										  econtext,
-										  &isnull,
-										  NULL);
+										  &isnull);
 		if (isnull)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TABLESAMPLE_REPEAT),
-				 errmsg("TABLESAMPLE REPEATABLE parameter cannot be null")));
+					 errmsg("TABLESAMPLE REPEATABLE parameter cannot be null")));
 
 		/*
 		 * The REPEATABLE parameter has been coerced to float8 by the parser.
@@ -425,7 +415,7 @@ tablesample_getnext(SampleScanState *scanstate)
 	else
 	{
 		/* continue from previously returned page/tuple */
-		blockno = scan->rs_cblock;		/* current page */
+		blockno = scan->rs_cblock;	/* current page */
 	}
 
 	/*

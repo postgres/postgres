@@ -235,6 +235,11 @@ CREATE OPERATOR CLASS <replaceable class="parameter">name</replaceable> [ DEFAUL
       (currently GiST, GIN and BRIN) allow it to be different.  The
       <literal>STORAGE</> clause must be omitted unless the index
       method allows a different type to be used.
+      If the column <replaceable class="parameter">data_type</> is specified
+      as <type>anyarray</>, the <replaceable class="parameter">storage_type</>
+      can be declared as <type>anyelement</> to indicate that the index
+      entries are members of the element type belonging to the actual array
+      type that each particular index is created for.
      </para>
     </listitem>
    </varlistentry>

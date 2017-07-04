@@ -443,6 +443,28 @@ create aggregate build_group(int8, integer) (
   STYPE = int8[]
 );
 
+-- check proper resolution of data types for polymorphic transfn/finalfn
+
+create function first_el(anyarray) returns anyelement as
+'select $1[1]' language sql strict immutable;
+
+create aggregate first_el_agg_f8(float8) (
+  SFUNC = array_append,
+  STYPE = float8[],
+  FINALFUNC = first_el
+);
+
+create aggregate first_el_agg_any(anyelement) (
+  SFUNC = array_append,
+  STYPE = anyarray,
+  FINALFUNC = first_el
+);
+
+select first_el_agg_f8(x::float8) from generate_series(1,10) x;
+select first_el_agg_any(x) from generate_series(1,10) x;
+select first_el_agg_f8(x::float8) over(order by x) from generate_series(1,10) x;
+select first_el_agg_any(x) over(order by x) from generate_series(1,10) x;
+
 -- check that we can apply functions taking ANYARRAY to pg_stats
 select distinct array_ndims(histogram_bounds) from pg_stats
 where histogram_bounds is not null;

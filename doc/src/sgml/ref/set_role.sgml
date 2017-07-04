@@ -127,7 +127,7 @@ SELECT SESSION_USER, CURRENT_USER;
 
   <para>
    <productname>PostgreSQL</productname>
-   allows identifier syntax (<literal>"rolename"</literal>), while
+   allows identifier syntax (<literal>"<replaceable>rolename</>"</literal>), while
    the SQL standard requires the role name to be written as a string
    literal.  SQL does not allow this command during a transaction;
    <productname>PostgreSQL</productname> does not make this

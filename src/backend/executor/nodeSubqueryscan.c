@@ -7,7 +7,7 @@
  * we need two sets of code.  Ought to look at trying to unify the cases.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -120,12 +120,8 @@ ExecInitSubqueryScan(SubqueryScan *node, EState *estate, int eflags)
 	/*
 	 * initialize child expressions
 	 */
-	subquerystate->ss.ps.targetlist = (List *)
-		ExecInitExpr((Expr *) node->scan.plan.targetlist,
-					 (PlanState *) subquerystate);
-	subquerystate->ss.ps.qual = (List *)
-		ExecInitExpr((Expr *) node->scan.plan.qual,
-					 (PlanState *) subquerystate);
+	subquerystate->ss.ps.qual =
+		ExecInitQual(node->scan.plan.qual, (PlanState *) subquerystate);
 
 	/*
 	 * tuple table initialization
@@ -137,8 +133,6 @@ ExecInitSubqueryScan(SubqueryScan *node, EState *estate, int eflags)
 	 * initialize subquery
 	 */
 	subquerystate->subplan = ExecInitNode(node->subplan, estate, eflags);
-
-	subquerystate->ss.ps.ps_TupFromTlist = false;
 
 	/*
 	 * Initialize scan tuple type (needed by ExecAssignScanProjectionInfo)

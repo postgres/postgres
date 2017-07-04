@@ -44,8 +44,8 @@ int			maxwaittime = 0;	/* how long are we prepared to wait for? */
 int			keepfiles = 0;		/* number of WAL files to keep, 0 keep all */
 int			maxretries = 3;		/* number of retries on restore command */
 bool		debug = false;		/* are we debugging? */
-bool		need_cleanup = false;		/* do we need to remove files from
-										 * archive? */
+bool		need_cleanup = false;	/* do we need to remove files from
+									 * archive? */
 
 #ifndef WIN32
 static volatile sig_atomic_t signaled = false;
@@ -57,10 +57,10 @@ char	   *xlogFilePath;		/* where we are going to restore to */
 char	   *nextWALFileName;	/* the file we need to get from archive */
 char	   *restartWALFileName; /* the file from which we can restart restore */
 char	   *priorWALFileName;	/* the file we need to get from archive */
-char		WALFilePath[MAXPGPATH];		/* the file path including archive */
+char		WALFilePath[MAXPGPATH * 2]; /* the file path including archive */
 char		restoreCommand[MAXPGPATH];	/* run this to restore */
-char		exclusiveCleanupFileName[MAXFNAMELEN];		/* the file we need to
-														 * get from archive */
+char		exclusiveCleanupFileName[MAXFNAMELEN];	/* the file we need to get
+													 * from archive */
 
 /*
  * Two types of failover are supported (smart and fast failover).
@@ -256,12 +256,12 @@ CustomizableCleanupPriorWALFiles(void)
 				 * in case this worries you.
 				 */
 				if (IsXLogFileName(xlde->d_name) &&
-				  strcmp(xlde->d_name + 8, exclusiveCleanupFileName + 8) < 0)
+					strcmp(xlde->d_name + 8, exclusiveCleanupFileName + 8) < 0)
 				{
 #ifdef WIN32
-					snprintf(WALFilePath, MAXPGPATH, "%s\\%s", archiveLocation, xlde->d_name);
+					snprintf(WALFilePath, sizeof(WALFilePath), "%s\\%s", archiveLocation, xlde->d_name);
 #else
-					snprintf(WALFilePath, MAXPGPATH, "%s/%s", archiveLocation, xlde->d_name);
+					snprintf(WALFilePath, sizeof(WALFilePath), "%s/%s", archiveLocation, xlde->d_name);
 #endif
 
 					if (debug)
@@ -523,7 +523,7 @@ usage(void)
 		   "Main intended use as restore_command in recovery.conf:\n"
 		   "  restore_command = 'pg_standby [OPTION]... ARCHIVELOCATION %%f %%p %%r'\n"
 		   "e.g.\n"
-	"  restore_command = 'pg_standby /mnt/server/archiverdir %%f %%p %%r'\n");
+		   "  restore_command = 'pg_standby /mnt/server/archiverdir %%f %%p %%r'\n");
 	printf("\nReport bugs to <pgsql-bugs@postgresql.org>.\n");
 }
 
@@ -582,7 +582,7 @@ main(int argc, char **argv)
 	 * There's no way to trigger failover via signal on Windows.
 	 */
 	(void) pqsignal(SIGUSR1, sighandler);
-	(void) pqsignal(SIGINT, sighandler);		/* deprecated, use SIGUSR1 */
+	(void) pqsignal(SIGINT, sighandler);	/* deprecated, use SIGUSR1 */
 	(void) pqsignal(SIGQUIT, sigquit_handler);
 #endif
 
@@ -632,7 +632,7 @@ main(int argc, char **argv)
 				}
 				break;
 			case 't':			/* Trigger file */
-				triggerPath = strdup(optarg);
+				triggerPath = pg_strdup(optarg);
 				break;
 			case 'w':			/* Max wait time */
 				maxwaittime = atoi(optarg);
@@ -779,7 +779,7 @@ main(int argc, char **argv)
 		{
 			/*
 			 * Once we have restored this file successfully we can remove some
-			 * prior WAL files. If this restore fails we musn't remove any
+			 * prior WAL files. If this restore fails we mustn't remove any
 			 * file because some of them will be requested again immediately
 			 * after the failed restore, or when we restart recovery.
 			 */

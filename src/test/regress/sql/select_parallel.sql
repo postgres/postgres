@@ -12,7 +12,7 @@ begin isolation level repeatable read;
 -- encourage use of parallel plans
 set parallel_setup_cost=0;
 set parallel_tuple_cost=0;
-set min_parallel_relation_size=0;
+set min_parallel_table_scan_size=0;
 set max_parallel_workers_per_gather=4;
 
 explain (costs off)
@@ -39,10 +39,94 @@ explain (costs off)
 	select  sum(parallel_restricted(unique1)) from tenk1
 	group by(parallel_restricted(unique1));
 
+-- test parallel plans for queries containing un-correlated subplans.
+alter table tenk2 set (parallel_workers = 0);
+explain (costs off)
+	select count(*) from tenk1 where (two, four) not in
+	(select hundred, thousand from tenk2 where thousand > 100);
+select count(*) from tenk1 where (two, four) not in
+	(select hundred, thousand from tenk2 where thousand > 100);
+-- this is not parallel-safe due to use of random() within SubLink's testexpr:
+explain (costs off)
+	select * from tenk1 where (unique1 + random())::integer not in
+	(select ten from tenk2);
+alter table tenk2 reset (parallel_workers);
+
+-- test parallel index scans.
+set enable_seqscan to off;
+set enable_bitmapscan to off;
+
+explain (costs off)
+	select  count((unique1)) from tenk1 where hundred > 1;
+select  count((unique1)) from tenk1 where hundred > 1;
+
+-- test parallel index-only scans.
+explain (costs off)
+	select  count(*) from tenk1 where thousand > 95;
+select  count(*) from tenk1 where thousand > 95;
+
+reset enable_seqscan;
+reset enable_bitmapscan;
+
+-- test parallel bitmap heap scan.
+set enable_seqscan to off;
+set enable_indexscan to off;
+set enable_hashjoin to off;
+set enable_mergejoin to off;
+set enable_material to off;
+-- test prefetching, if the platform allows it
+DO $$
+BEGIN
+ SET effective_io_concurrency = 50;
+EXCEPTION WHEN invalid_parameter_value THEN
+END $$;
+set work_mem='64kB';  --set small work mem to force lossy pages
+explain (costs off)
+	select count(*) from tenk1, tenk2 where tenk1.hundred > 1 and tenk2.thousand=0;
+select count(*) from tenk1, tenk2 where tenk1.hundred > 1 and tenk2.thousand=0;
+
+create table bmscantest (a int, t text);
+insert into bmscantest select r, 'fooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo' FROM generate_series(1,100000) r;
+create index i_bmtest ON bmscantest(a);
+select count(*) from bmscantest where a>1;
+
+reset enable_seqscan;
+reset enable_indexscan;
+reset enable_hashjoin;
+reset enable_mergejoin;
+reset enable_material;
+reset effective_io_concurrency;
+reset work_mem;
+drop table bmscantest;
+
+-- test parallel merge join path.
+set enable_hashjoin to off;
+set enable_nestloop to off;
+
+explain (costs off)
+	select  count(*) from tenk1, tenk2 where tenk1.unique1 = tenk2.unique1;
+select  count(*) from tenk1, tenk2 where tenk1.unique1 = tenk2.unique1;
+
+reset enable_hashjoin;
+reset enable_nestloop;
+
+--test gather merge
+set enable_hashagg to off;
+
+explain (costs off)
+   select  string4, count((unique2)) from tenk1 group by string4 order by string4;
+
+select  string4, count((unique2)) from tenk1 group by string4 order by string4;
+
+reset enable_hashagg;
+
 set force_parallel_mode=1;
 
 explain (costs off)
   select stringu1::int2 from tenk1 where unique1 = 1;
+
+-- to increase the parallel query test coverage
+EXPLAIN (analyze, timing off, summary off, costs off) SELECT * FROM tenk1;
 
 -- provoke error in worker
 select stringu1::int2 from tenk1 where unique1 = 1;

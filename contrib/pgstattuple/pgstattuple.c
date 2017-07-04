@@ -36,11 +36,14 @@
 #include "storage/lmgr.h"
 #include "utils/builtins.h"
 #include "utils/tqual.h"
+#include "utils/varlena.h"
 
 PG_MODULE_MAGIC;
 
 PG_FUNCTION_INFO_V1(pgstattuple);
+PG_FUNCTION_INFO_V1(pgstattuple_v1_5);
 PG_FUNCTION_INFO_V1(pgstattuplebyid);
+PG_FUNCTION_INFO_V1(pgstattuplebyid_v1_5);
 
 /*
  * struct pgstattuple_type
@@ -59,7 +62,7 @@ typedef struct pgstattuple_type
 } pgstattuple_type;
 
 typedef void (*pgstat_page) (pgstattuple_type *, Relation, BlockNumber,
-										 BufferAccessStrategy);
+							 BufferAccessStrategy);
 
 static Datum build_pgstattuple_type(pgstattuple_type *stat,
 					   FunctionCallInfo fcinfo);
@@ -152,13 +155,17 @@ build_pgstattuple_type(pgstattuple_type *stat, FunctionCallInfo fcinfo)
  *
  * C FUNCTION definition
  * pgstattuple(text) returns pgstattuple_type
+ *
+ * The superuser() check here must be kept as the library might be upgraded
+ * without the extension being upgraded, meaning that in pre-1.5 installations
+ * these functions could be called by any user.
  * ----------
  */
 
 Datum
 pgstattuple(PG_FUNCTION_ARGS)
 {
-	text	   *relname = PG_GETARG_TEXT_P(0);
+	text	   *relname = PG_GETARG_TEXT_PP(0);
 	RangeVar   *relrv;
 	Relation	rel;
 
@@ -174,6 +181,28 @@ pgstattuple(PG_FUNCTION_ARGS)
 	PG_RETURN_DATUM(pgstat_relation(rel, fcinfo));
 }
 
+/*
+ * As of pgstattuple version 1.5, we no longer need to check if the user
+ * is a superuser because we REVOKE EXECUTE on the function from PUBLIC.
+ * Users can then grant access to it based on their policies.
+ *
+ * Otherwise identical to pgstattuple (above).
+ */
+Datum
+pgstattuple_v1_5(PG_FUNCTION_ARGS)
+{
+	text	   *relname = PG_GETARG_TEXT_PP(0);
+	RangeVar   *relrv;
+	Relation	rel;
+
+	/* open relation */
+	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
+	rel = relation_openrv(relrv, AccessShareLock);
+
+	PG_RETURN_DATUM(pgstat_relation(rel, fcinfo));
+}
+
+/* Must keep superuser() check, see above. */
 Datum
 pgstattuplebyid(PG_FUNCTION_ARGS)
 {
@@ -184,6 +213,19 @@ pgstattuplebyid(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 (errmsg("must be superuser to use pgstattuple functions"))));
+
+	/* open relation */
+	rel = relation_open(relid, AccessShareLock);
+
+	PG_RETURN_DATUM(pgstat_relation(rel, fcinfo));
+}
+
+/* Remove superuser() check for 1.5 version, see above */
+Datum
+pgstattuplebyid_v1_5(PG_FUNCTION_ARGS)
+{
+	Oid			relid = PG_GETARG_OID(0);
+	Relation	rel;
 
 	/* open relation */
 	rel = relation_open(relid, AccessShareLock);
@@ -251,6 +293,9 @@ pgstat_relation(Relation rel, FunctionCallInfo fcinfo)
 		case RELKIND_FOREIGN_TABLE:
 			err = "foreign table";
 			break;
+		case RELKIND_PARTITIONED_TABLE:
+			err = "partitioned table";
+			break;
 		default:
 			err = "unknown";
 			break;
@@ -311,7 +356,7 @@ pgstat_heap(Relation rel, FunctionCallInfo fcinfo)
 		 * heap_getnext may find no tuples on a given page, so we cannot
 		 * simply examine the pages returned by the heap scan.
 		 */
-		tupblock = BlockIdGetBlockNumber(&tuple->t_self.ip_blkid);
+		tupblock = ItemPointerGetBlockNumber(&tuple->t_self);
 
 		while (block <= tupblock)
 		{
@@ -341,7 +386,7 @@ pgstat_heap(Relation rel, FunctionCallInfo fcinfo)
 	heap_endscan(scan);
 	relation_close(rel, AccessShareLock);
 
-	stat.table_len = (uint64) nblocks *BLCKSZ;
+	stat.table_len = (uint64) nblocks * BLCKSZ;
 
 	return build_pgstattuple_type(&stat, fcinfo);
 }
@@ -400,7 +445,6 @@ pgstat_hash_page(pgstattuple_type *stat, Relation rel, BlockNumber blkno,
 	Buffer		buf;
 	Page		page;
 
-	_hash_getlock(rel, blkno, HASH_SHARE);
 	buf = _hash_getbuf_with_strategy(rel, blkno, HASH_READ, 0, bstrategy);
 	page = BufferGetPage(buf);
 
@@ -409,7 +453,7 @@ pgstat_hash_page(pgstattuple_type *stat, Relation rel, BlockNumber blkno,
 		HashPageOpaque opaque;
 
 		opaque = (HashPageOpaque) PageGetSpecialPointer(page);
-		switch (opaque->hasho_flag)
+		switch (opaque->hasho_flag & LH_PAGE_TYPE)
 		{
 			case LH_UNUSED_PAGE:
 				stat->free_space += BLCKSZ;
@@ -431,7 +475,6 @@ pgstat_hash_page(pgstattuple_type *stat, Relation rel, BlockNumber blkno,
 	}
 
 	_hash_relbuf(rel, buf);
-	_hash_droplock(rel, blkno, HASH_SHARE);
 }
 
 /*
@@ -488,7 +531,7 @@ pgstat_index(Relation rel, BlockNumber start, pgstat_page pagefn,
 		/* Quit if we've scanned the whole relation */
 		if (blkno >= nblocks)
 		{
-			stat.table_len = (uint64) nblocks *BLCKSZ;
+			stat.table_len = (uint64) nblocks * BLCKSZ;
 
 			break;
 		}

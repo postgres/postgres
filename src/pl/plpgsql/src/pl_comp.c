@@ -3,7 +3,7 @@
  * pl_comp.c		- Compiler part of the PL/pgSQL
  *			  procedural language
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -13,7 +13,7 @@
  *-------------------------------------------------------------------------
  */
 
-#include "plpgsql.h"
+#include "postgres.h"
 
 #include <ctype.h>
 
@@ -29,8 +29,11 @@
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
+#include "utils/regproc.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
+
+#include "plpgsql.h"
 
 
 /* ----------
@@ -93,7 +96,7 @@ static PLpgSQL_function *do_compile(FunctionCallInfo fcinfo,
 		   PLpgSQL_func_hashkey *hashkey,
 		   bool forValidator);
 static void plpgsql_compile_error_callback(void *arg);
-static void add_parameter_name(int itemtype, int itemno, const char *name);
+static void add_parameter_name(PLpgSQL_nsitem_type itemtype, int itemno, const char *name);
 static void add_dummy_return(PLpgSQL_function *function);
 static Node *plpgsql_pre_column_ref(ParseState *pstate, ColumnRef *cref);
 static Node *plpgsql_post_column_ref(ParseState *pstate, ColumnRef *cref, Node *var);
@@ -340,9 +343,7 @@ do_compile(FunctionCallInfo fcinfo,
 	 */
 	func_cxt = AllocSetContextCreate(TopMemoryContext,
 									 "PL/pgSQL function context",
-									 ALLOCSET_DEFAULT_MINSIZE,
-									 ALLOCSET_DEFAULT_INITSIZE,
-									 ALLOCSET_DEFAULT_MAXSIZE);
+									 ALLOCSET_DEFAULT_SIZES);
 	plpgsql_compile_tmp_cxt = MemoryContextSwitchTo(func_cxt);
 
 	function->fn_signature = format_procedure(fcinfo->flinfo->fn_oid);
@@ -351,7 +352,7 @@ do_compile(FunctionCallInfo fcinfo,
 	function->fn_tid = procTup->t_self;
 	function->fn_input_collation = fcinfo->fncollation;
 	function->fn_cxt = func_cxt;
-	function->out_param_varno = -1;		/* set up for no OUT param */
+	function->out_param_varno = -1; /* set up for no OUT param */
 	function->resolve_option = plpgsql_variable_conflict;
 	function->print_strict_params = plpgsql_print_strict_params;
 	/* only promote extra warnings and errors at CREATE FUNCTION time */
@@ -412,7 +413,7 @@ do_compile(FunctionCallInfo fcinfo,
 				char		argmode = argmodes ? argmodes[i] : PROARGMODE_IN;
 				PLpgSQL_type *argdtype;
 				PLpgSQL_variable *argvariable;
-				int			argitemtype;
+				PLpgSQL_nsitem_type argitemtype;
 
 				/* Create $n name for variable */
 				snprintf(buf, sizeof(buf), "$%d", i + 1);
@@ -420,7 +421,7 @@ do_compile(FunctionCallInfo fcinfo,
 				/* Create datatype info */
 				argdtype = plpgsql_build_datatype(argtypeid,
 												  -1,
-											   function->fn_input_collation);
+												  function->fn_input_collation);
 
 				/* Disallow pseudotype argument */
 				/* (note we already replaced polymorphic types) */
@@ -429,8 +430,8 @@ do_compile(FunctionCallInfo fcinfo,
 					argdtype->ttype != PLPGSQL_TTYPE_ROW)
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						   errmsg("PL/pgSQL functions cannot accept type %s",
-								  format_type_be(argtypeid))));
+							 errmsg("PL/pgSQL functions cannot accept type %s",
+									format_type_be(argtypeid))));
 
 				/* Build variable and add to datum list */
 				argvariable = plpgsql_build_variable(buf, 0,
@@ -500,7 +501,7 @@ do_compile(FunctionCallInfo fcinfo,
 						rettypeid = INT4ARRAYOID;
 					else if (rettypeid == ANYRANGEOID)
 						rettypeid = INT4RANGEOID;
-					else	/* ANYELEMENT or ANYNONARRAY */
+					else		/* ANYELEMENT or ANYNONARRAY */
 						rettypeid = INT4OID;
 					/* XXX what could we use for ANYENUM? */
 				}
@@ -510,9 +511,9 @@ do_compile(FunctionCallInfo fcinfo,
 					if (!OidIsValid(rettypeid))
 						ereport(ERROR,
 								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("could not determine actual return type "
-									"for polymorphic function \"%s\"",
-									plpgsql_error_funcname)));
+								 errmsg("could not determine actual return type "
+										"for polymorphic function \"%s\"",
+										plpgsql_error_funcname)));
 				}
 			}
 
@@ -544,8 +545,8 @@ do_compile(FunctionCallInfo fcinfo,
 				else
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						   errmsg("PL/pgSQL functions cannot return type %s",
-								  format_type_be(rettypeid))));
+							 errmsg("PL/pgSQL functions cannot return type %s",
+									format_type_be(rettypeid))));
 			}
 
 			if (typeStruct->typrelid != InvalidOid ||
@@ -567,7 +568,7 @@ do_compile(FunctionCallInfo fcinfo,
 					(void) plpgsql_build_variable("$0", 0,
 												  build_datatype(typeTup,
 																 -1,
-											   function->fn_input_collation),
+																 function->fn_input_collation),
 												  true);
 				}
 			}
@@ -585,14 +586,14 @@ do_compile(FunctionCallInfo fcinfo,
 			if (procStruct->pronargs != 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-				  errmsg("trigger functions cannot have declared arguments"),
+						 errmsg("trigger functions cannot have declared arguments"),
 						 errhint("The arguments of the trigger can be accessed through TG_NARGS and TG_ARGV instead.")));
 
-			/* Add the record for referencing NEW */
+			/* Add the record for referencing NEW ROW */
 			rec = plpgsql_build_record("new", 0, true);
 			function->new_varno = rec->dno;
 
-			/* Add the record for referencing OLD */
+			/* Add the record for referencing OLD ROW */
 			rec = plpgsql_build_record("old", 0, true);
 			function->old_varno = rec->dno;
 
@@ -608,7 +609,7 @@ do_compile(FunctionCallInfo fcinfo,
 			var = plpgsql_build_variable("tg_when", 0,
 										 plpgsql_build_datatype(TEXTOID,
 																-1,
-											   function->fn_input_collation),
+																function->fn_input_collation),
 										 true);
 			function->tg_when_varno = var->dno;
 
@@ -616,7 +617,7 @@ do_compile(FunctionCallInfo fcinfo,
 			var = plpgsql_build_variable("tg_level", 0,
 										 plpgsql_build_datatype(TEXTOID,
 																-1,
-											   function->fn_input_collation),
+																function->fn_input_collation),
 										 true);
 			function->tg_level_varno = var->dno;
 
@@ -624,7 +625,7 @@ do_compile(FunctionCallInfo fcinfo,
 			var = plpgsql_build_variable("tg_op", 0,
 										 plpgsql_build_datatype(TEXTOID,
 																-1,
-											   function->fn_input_collation),
+																function->fn_input_collation),
 										 true);
 			function->tg_op_varno = var->dno;
 
@@ -672,7 +673,7 @@ do_compile(FunctionCallInfo fcinfo,
 			var = plpgsql_build_variable("tg_argv", 0,
 										 plpgsql_build_datatype(TEXTARRAYOID,
 																-1,
-											   function->fn_input_collation),
+																function->fn_input_collation),
 										 true);
 			function->tg_argv_varno = var->dno;
 
@@ -694,7 +695,7 @@ do_compile(FunctionCallInfo fcinfo,
 			var = plpgsql_build_variable("tg_event", 0,
 										 plpgsql_build_datatype(TEXTOID,
 																-1,
-											   function->fn_input_collation),
+																function->fn_input_collation),
 										 true);
 			function->tg_event_varno = var->dno;
 
@@ -702,7 +703,7 @@ do_compile(FunctionCallInfo fcinfo,
 			var = plpgsql_build_variable("tg_tag", 0,
 										 plpgsql_build_datatype(TEXTOID,
 																-1,
-											   function->fn_input_collation),
+																function->fn_input_collation),
 										 true);
 			function->tg_tag_varno = var->dno;
 
@@ -829,17 +830,15 @@ plpgsql_compile_inline(char *proc_source)
 	 * its own memory context, so it can be reclaimed easily.
 	 */
 	func_cxt = AllocSetContextCreate(CurrentMemoryContext,
-									 "PL/pgSQL function context",
-									 ALLOCSET_DEFAULT_MINSIZE,
-									 ALLOCSET_DEFAULT_INITSIZE,
-									 ALLOCSET_DEFAULT_MAXSIZE);
+									 "PL/pgSQL inline code context",
+									 ALLOCSET_DEFAULT_SIZES);
 	plpgsql_compile_tmp_cxt = MemoryContextSwitchTo(func_cxt);
 
 	function->fn_signature = pstrdup(func_name);
 	function->fn_is_trigger = PLPGSQL_NOT_TRIGGER;
 	function->fn_input_collation = InvalidOid;
 	function->fn_cxt = func_cxt;
-	function->out_param_varno = -1;		/* set up for no OUT param */
+	function->out_param_varno = -1; /* set up for no OUT param */
 	function->resolve_option = plpgsql_variable_conflict;
 	function->print_strict_params = plpgsql_print_strict_params;
 
@@ -950,7 +949,7 @@ plpgsql_compile_error_callback(void *arg)
  * Add a name for a function parameter to the function's namespace
  */
 static void
-add_parameter_name(int itemtype, int itemno, const char *name)
+add_parameter_name(PLpgSQL_nsitem_type itemtype, int itemno, const char *name)
 {
 	/*
 	 * Before adding the name, check for duplicates.  We need this even though
@@ -1440,7 +1439,7 @@ plpgsql_parse_dblword(char *word1, char *word2,
 					/* Block-qualified reference to scalar variable. */
 					wdatum->datum = plpgsql_Datums[ns->itemno];
 					wdatum->ident = NULL;
-					wdatum->quoted = false;		/* not used */
+					wdatum->quoted = false; /* not used */
 					wdatum->idents = idents;
 					return true;
 
@@ -1470,7 +1469,7 @@ plpgsql_parse_dblword(char *word1, char *word2,
 						wdatum->datum = plpgsql_Datums[ns->itemno];
 					}
 					wdatum->ident = NULL;
-					wdatum->quoted = false;		/* not used */
+					wdatum->quoted = false; /* not used */
 					wdatum->idents = idents;
 					return true;
 
@@ -1762,7 +1761,8 @@ plpgsql_parse_cwordtype(List *idents)
 		classStruct->relkind != RELKIND_VIEW &&
 		classStruct->relkind != RELKIND_MATVIEW &&
 		classStruct->relkind != RELKIND_COMPOSITE_TYPE &&
-		classStruct->relkind != RELKIND_FOREIGN_TABLE)
+		classStruct->relkind != RELKIND_FOREIGN_TABLE &&
+		classStruct->relkind != RELKIND_PARTITIONED_TABLE)
 		goto done;
 
 	/*
@@ -1988,7 +1988,8 @@ build_row_from_class(Oid classOid)
 		classStruct->relkind != RELKIND_VIEW &&
 		classStruct->relkind != RELKIND_MATVIEW &&
 		classStruct->relkind != RELKIND_COMPOSITE_TYPE &&
-		classStruct->relkind != RELKIND_FOREIGN_TABLE)
+		classStruct->relkind != RELKIND_FOREIGN_TABLE &&
+		classStruct->relkind != RELKIND_PARTITIONED_TABLE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("relation \"%s\" is not a table", relname)));
@@ -2033,9 +2034,9 @@ build_row_from_class(Oid classOid)
 			 * we ignore this information for now.
 			 */
 			var = plpgsql_build_variable(refname, 0,
-								 plpgsql_build_datatype(attrStruct->atttypid,
-														attrStruct->atttypmod,
-												   attrStruct->attcollation),
+										 plpgsql_build_datatype(attrStruct->atttypid,
+																attrStruct->atttypmod,
+																attrStruct->attcollation),
 										 false);
 
 			/* Add the variable to the row */
@@ -2205,7 +2206,7 @@ build_datatype(HeapTuple typeTup, int32 typmod, Oid collation)
 		/* we can short-circuit looking up base types if it's not varlena */
 		typ->typisarray = (typeStruct->typlen == -1 &&
 						   typeStruct->typstorage != 'p' &&
-				 OidIsValid(get_base_element_type(typeStruct->typbasetype)));
+						   OidIsValid(get_base_element_type(typeStruct->typbasetype)));
 	}
 	else
 		typ->typisarray = false;
@@ -2315,7 +2316,7 @@ plpgsql_start_datums(void)
 	plpgsql_nDatums = 0;
 	/* This is short-lived, so needn't allocate in function's cxt */
 	plpgsql_Datums = MemoryContextAlloc(plpgsql_compile_tmp_cxt,
-									 sizeof(PLpgSQL_datum *) * datums_alloc);
+										sizeof(PLpgSQL_datum *) * datums_alloc);
 	/* datums_last tracks what's been seen by plpgsql_add_initdatums() */
 	datums_last = 0;
 }
@@ -2454,15 +2455,16 @@ compute_function_hashkey(FunctionCallInfo fcinfo,
 	hashkey->isTrigger = CALLED_AS_TRIGGER(fcinfo);
 
 	/*
-	 * if trigger, get relation OID.  In validation mode we do not know what
-	 * relation is intended to be used, so we leave trigrelOid zero; the hash
-	 * entry built in this case will never really be used.
+	 * if trigger, get its OID.  In validation mode we do not know what
+	 * relation or transition table names are intended to be used, so we leave
+	 * trigOid zero; the hash entry built in this case will never really be
+	 * used.
 	 */
 	if (hashkey->isTrigger && !forValidator)
 	{
 		TriggerData *trigdata = (TriggerData *) fcinfo->context;
 
-		hashkey->trigrelOid = RelationGetRelid(trigdata->tg_relation);
+		hashkey->trigOid = trigdata->tg_trigger->tgoid;
 	}
 
 	/* get input collation, if known */
@@ -2518,7 +2520,7 @@ plpgsql_resolve_polymorphic_argtypes(int numargs,
 			{
 				case ANYELEMENTOID:
 				case ANYNONARRAYOID:
-				case ANYENUMOID:		/* XXX dubious */
+				case ANYENUMOID:	/* XXX dubious */
 					argtypes[i] = INT4OID;
 					break;
 				case ANYARRAYOID:

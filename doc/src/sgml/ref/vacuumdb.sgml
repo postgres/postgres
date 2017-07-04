@@ -430,7 +430,7 @@ PostgreSQL documentation
     <literal>xyzzy</literal>, and analyze a single column
     <literal>bar</literal> of the table for the optimizer:
 <screen>
-<prompt>$ </prompt><userinput>vacuumdb --analyze --verbose --table 'foo(bar)' xyzzy</userinput>
+<prompt>$ </prompt><userinput>vacuumdb --analyze --verbose --table='foo(bar)' xyzzy</userinput>
 </screen></para>
 
  </refsect1>

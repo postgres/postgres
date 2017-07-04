@@ -3,7 +3,7 @@
  * nodeGather.c
  *	  Support routines for scanning a plan via multiple workers.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * A Gather executor launches parallel workers to run multiple copies of a
@@ -38,6 +38,7 @@
 #include "executor/nodeSubplan.h"
 #include "executor/tqueue.h"
 #include "miscadmin.h"
+#include "pgstat.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
 
@@ -80,12 +81,8 @@ ExecInitGather(Gather *node, EState *estate, int eflags)
 	/*
 	 * initialize child expressions
 	 */
-	gatherstate->ps.targetlist = (List *)
-		ExecInitExpr((Expr *) node->plan.targetlist,
-					 (PlanState *) gatherstate);
-	gatherstate->ps.qual = (List *)
-		ExecInitExpr((Expr *) node->plan.qual,
-					 (PlanState *) gatherstate);
+	gatherstate->ps.qual =
+		ExecInitQual(node->plan.qual, (PlanState *) gatherstate);
 
 	/*
 	 * tuple table initialization
@@ -98,8 +95,6 @@ ExecInitGather(Gather *node, EState *estate, int eflags)
 	 */
 	outerNode = outerPlan(node);
 	outerPlanState(gatherstate) = ExecInitNode(outerNode, estate, eflags);
-
-	gatherstate->ps.ps_TupFromTlist = false;
 
 	/*
 	 * Initialize result tuple type and projection info.
@@ -131,15 +126,13 @@ ExecGather(GatherState *node)
 	TupleTableSlot *fslot = node->funnel_slot;
 	int			i;
 	TupleTableSlot *slot;
-	TupleTableSlot *resultSlot;
-	ExprDoneCond isDone;
 	ExprContext *econtext;
 
 	/*
 	 * Initialize the parallel context and workers on first execution. We do
 	 * this on first execution rather than during node initialization, as it
-	 * needs to allocate large dynamic segment, so it is better to do if it is
-	 * really needed.
+	 * needs to allocate a large dynamic segment, so it is better to do it
+	 * only if it is really needed.
 	 */
 	if (!node->initialized)
 	{
@@ -172,6 +165,7 @@ ExecGather(GatherState *node)
 			if (pcxt->nworkers_launched > 0)
 			{
 				node->nreaders = 0;
+				node->nextreader = 0;
 				node->reader =
 					palloc(pcxt->nworkers_launched * sizeof(TupleQueueReader *));
 
@@ -198,57 +192,28 @@ ExecGather(GatherState *node)
 	}
 
 	/*
-	 * Check to see if we're still projecting out tuples from a previous scan
-	 * tuple (because there is a function-returning-set in the projection
-	 * expressions).  If so, try to project another one.
-	 */
-	if (node->ps.ps_TupFromTlist)
-	{
-		resultSlot = ExecProject(node->ps.ps_ProjInfo, &isDone);
-		if (isDone == ExprMultipleResult)
-			return resultSlot;
-		/* Done with that source tuple... */
-		node->ps.ps_TupFromTlist = false;
-	}
-
-	/*
 	 * Reset per-tuple memory context to free any expression evaluation
-	 * storage allocated in the previous tuple cycle.  Note we can't do this
-	 * until we're done projecting.  This will also clear any previous tuple
-	 * returned by a TupleQueueReader; to make sure we don't leave a dangling
-	 * pointer around, clear the working slot first.
+	 * storage allocated in the previous tuple cycle.  This will also clear
+	 * any previous tuple returned by a TupleQueueReader; to make sure we
+	 * don't leave a dangling pointer around, clear the working slot first.
 	 */
-	ExecClearTuple(node->funnel_slot);
+	ExecClearTuple(fslot);
 	econtext = node->ps.ps_ExprContext;
 	ResetExprContext(econtext);
 
-	/* Get and return the next tuple, projecting if necessary. */
-	for (;;)
-	{
-		/*
-		 * Get next tuple, either from one of our workers, or by running the
-		 * plan ourselves.
-		 */
-		slot = gather_getnext(node);
-		if (TupIsNull(slot))
-			return NULL;
+	/*
+	 * Get next tuple, either from one of our workers, or by running the plan
+	 * ourselves.
+	 */
+	slot = gather_getnext(node);
+	if (TupIsNull(slot))
+		return NULL;
 
-		/*
-		 * form the result tuple using ExecProject(), and return it --- unless
-		 * the projection produces an empty set, in which case we must loop
-		 * back around for another tuple
-		 */
-		econtext->ecxt_outertuple = slot;
-		resultSlot = ExecProject(node->ps.ps_ProjInfo, &isDone);
-
-		if (isDone != ExprEndResult)
-		{
-			node->ps.ps_TupFromTlist = (isDone == ExprMultipleResult);
-			return resultSlot;
-		}
-	}
-
-	return slot;
+	/*
+	 * Form the result tuple using ExecProject(), and return it.
+	 */
+	econtext->ecxt_outertuple = slot;
+	return ExecProject(node->ps.ps_ProjInfo);
 }
 
 /* ----------------------------------------------------------------
@@ -260,10 +225,10 @@ ExecGather(GatherState *node)
 void
 ExecEndGather(GatherState *node)
 {
+	ExecEndNode(outerPlanState(node));	/* let children clean up first */
 	ExecShutdownGather(node);
 	ExecFreeExprContext(&node->ps);
 	ExecClearTuple(node->ps.ps_ResultTupleSlot);
-	ExecEndNode(outerPlanState(node));
 }
 
 /*
@@ -293,7 +258,7 @@ gather_getnext(GatherState *gatherstate)
 
 			if (HeapTupleIsValid(tup))
 			{
-				ExecStoreTuple(tup,		/* tuple to store */
+				ExecStoreTuple(tup, /* tuple to store */
 							   fslot,	/* slot in which to store the tuple */
 							   InvalidBuffer,	/* buffer associated with this
 												 * tuple */
@@ -334,6 +299,7 @@ gather_readnext(GatherState *gatherstate)
 		CHECK_FOR_INTERRUPTS();
 
 		/* Attempt to read a tuple, but don't block if none is available. */
+		Assert(gatherstate->nextreader < gatherstate->nreaders);
 		reader = gatherstate->reader[gatherstate->nextreader];
 		tup = TupleQueueReaderNext(reader, true, &readerdone);
 
@@ -387,7 +353,7 @@ gather_readnext(GatherState *gatherstate)
 				return NULL;
 
 			/* Nothing to do except wait for developments. */
-			WaitLatch(MyLatch, WL_LATCH_SET, 0);
+			WaitLatch(MyLatch, WL_LATCH_SET, 0, WAIT_EVENT_EXECUTE_GATHER);
 			ResetLatch(MyLatch);
 			nvisited = 0;
 		}

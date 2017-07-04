@@ -193,11 +193,7 @@ su - postgres
       language, you need a <productname>Python</productname>
       installation with the header files and
       the <application>distutils</application> module.  The minimum
-      required version is <productname>Python</productname> 2.3.
-      (To work with function arguments of type <type>numeric</>, a 2.3.x
-      installation must include the separately-available <filename>cdecimal</>
-      module; note the <application>PL/Python</> regression tests
-      will not pass if that is missing.)
+      required version is <productname>Python</productname> 2.4.
       <productname>Python 3</productname> is supported if it's
       version 3.1 or later; but see
       <![%standalone-include[the <application>PL/Python</> documentation]]>
@@ -252,10 +248,17 @@ su - postgres
 
     <listitem>
      <para>
-      You need <application>Kerberos</>, <productname>OpenSSL</>,
-      <productname>OpenLDAP</>, and/or
-      <application>PAM</>, if you want to support authentication or
-      encryption using those services.
+      You need <productname>OpenSSL</>, if you want to support
+      encrypted client connections. The minimum required version is
+      0.9.8.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      You need <application>Kerberos</>, <productname>OpenLDAP</>,
+      and/or <application>PAM</>, if you want to support authentication
+      using those services.
      </para>
     </listitem>
 
@@ -343,7 +346,7 @@ su - postgres
   <para>
    The <productname>PostgreSQL</> &version; sources can be obtained from the
    download section of our
-   website: <ulink url="http://www.postgresql.org/download/"></ulink>.  You
+   website: <ulink url="https://www.postgresql.org/download/"></ulink>.  You
    should get a file named <filename>postgresql-&version;.tar.gz</filename>
    or <filename>postgresql-&version;.tar.bz2</filename>. After
    you have obtained the file, unpack it:
@@ -764,6 +767,21 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
+       <term><option>--with-icu</option></term>
+       <listitem>
+        <para>
+         Build with support for
+         the <productname>ICU</productname><indexterm><primary>ICU</></>
+         library.  This requires the <productname>ICU4C</productname> package
+         as well
+         as <productname>pkg-config</productname><indexterm><primary>pkg-config</></>
+         to be installed.  The minimum required version
+         of <productname>ICU4C</productname> is currently 4.6.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
        <term><option>--with-openssl</option>
        <indexterm>
         <primary>OpenSSL</primary>
@@ -867,7 +885,7 @@ su - postgres
        <listitem>
         <para>
          Build with Bonjour support.  This requires Bonjour support
-         in your operating system.  Recommended on OS X.
+         in your operating system.  Recommended on macOS.
         </para>
        </listitem>
       </varlistentry>
@@ -893,7 +911,7 @@ su - postgres
           <para>
            <option>e2fs</> to use the UUID library created by
            the <literal>e2fsprogs</> project; this library is present in most
-           Linux systems and in OS X, and can be obtained for other
+           Linux systems and in macOS, and can be obtained for other
            platforms as well
           </para>
          </listitem>
@@ -948,28 +966,6 @@ su - postgres
          <![%standalone-ignore[<xref linkend="xml2">]]>
          module.  <application>xml2</> relies on this library
          to perform XSL transformations of XML.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-       <term><option>--disable-integer-datetimes</option></term>
-       <listitem>
-        <para>
-         Disable support for 64-bit integer storage for timestamps and
-         intervals, and store datetime values as floating-point
-         numbers instead. Floating-point datetime storage was the
-         default in <productname>PostgreSQL</productname> releases
-         prior to 8.4, but it is now deprecated, because it does not
-         support microsecond precision for the full range of
-         <type>timestamp</type> values. However, integer-based
-         datetime storage requires a 64-bit integer type. Therefore,
-         this option can be used when no such type is available, or
-         for compatibility with applications written for prior
-         versions of <productname>PostgreSQL</productname>. See
-         <![%standalone-include[the documentation about datetime datatypes]]>
-         <![%standalone-ignore[<xref linkend="datatype-datetime">]]>
-         for more information.
         </para>
        </listitem>
       </varlistentry>
@@ -1053,7 +1049,7 @@ su - postgres
          the size of each individual file in the WAL log.  It may be useful
          to adjust this size to control the granularity of WAL log shipping.
          The default size is 16 megabytes.
-         The value must be a power of 2 between 1 and 64 (megabytes).
+         The value must be a power of 2 between 1 and 1024 (megabytes).
          Note that changing this value requires an initdb.
         </para>
        </listitem>
@@ -1085,6 +1081,25 @@ su - postgres
          option is required to build <productname>PostgreSQL</> on
          your platform, please report the problem to the
          <productname>PostgreSQL</> developers.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><option>--disable-strong-random</option></term>
+       <listitem>
+        <para>
+         Allow the build to succeed even if <productname>PostgreSQL</>
+         has no support for strong random numbers on the platform.
+         A source of random numbers is needed for some authentication
+         protocols, as well as some routines in the
+         <![%standalone-include[pgcrypto]]>
+         <![%standalone-ignore[<xref linkend="pgcrypto">]]>
+         module. <option>--disable-strong-random</option> disables functionality that
+         requires cryptographically strong random numbers, and substitutes
+         a weak pseudo-random-number-generator for the generation of
+         authentication salt values and query cancel keys. It may make
+         authentication less secure.
         </para>
        </listitem>
       </varlistentry>
@@ -1422,7 +1437,7 @@ su - postgres
        <term><envar>PERL</envar></term>
        <listitem>
         <para>
-         Full path to the Perl interpreter.  This will be used to
+         Full path name of the Perl interpreter.  This will be used to
          determine the dependencies for building PL/Perl.
         </para>
        </listitem>
@@ -1432,7 +1447,7 @@ su - postgres
        <term><envar>PYTHON</envar></term>
        <listitem>
         <para>
-         Full path to the Python interpreter.  This will be used to
+         Full path name of the Python interpreter.  This will be used to
          determine the dependencies for building PL/Python.  Also,
          whether Python 2 or 3 is specified here (or otherwise
          implicitly chosen) determines which variant of the PL/Python
@@ -1449,7 +1464,7 @@ su - postgres
        <term><envar>TCLSH</envar></term>
        <listitem>
         <para>
-         Full path to the Tcl interpreter.  This will be used to
+         Full path name of the Tcl interpreter.  This will be used to
          determine the dependencies for building PL/Tcl, and it will
          be substituted into Tcl scripts.
         </para>
@@ -1466,6 +1481,26 @@ su - postgres
        </listitem>
       </varlistentry>
      </variablelist>
+    </para>
+
+    <para>
+     Sometimes it is useful to add compiler flags after-the-fact to the set
+     that were chosen by <filename>configure</>.  An important example is
+     that <application>gcc</>'s <option>-Werror</> option cannot be included
+     in the <envar>CFLAGS</envar> passed to <filename>configure</>, because
+     it will break many of <filename>configure</>'s built-in tests.  To add
+     such flags, include them in the <envar>COPT</envar> environment variable
+     while running <filename>make</>.  The contents of <envar>COPT</envar>
+     are added to both the <envar>CFLAGS</envar> and <envar>LDFLAGS</envar>
+     options set up by <filename>configure</>.  For example, you could do
+<screen>
+<userinput>make COPT='-Werror'</>
+</screen>
+     or
+<screen>
+<userinput>export COPT='-Werror'</>
+<userinput>make</>
+</screen>
     </para>
 
     <note>
@@ -1488,6 +1523,14 @@ su - postgres
       <option>-O0</>.  An easy way to do this is by passing an option
       to <application>make</>: <command>make PROFILE=-O0 file.o</>.
      </para>
+
+     <para>
+      The <envar>COPT</> and <envar>PROFILE</> environment variables are
+      actually handled identically by the <productname>PostgreSQL</>
+      makefiles.  Which to use is a matter of preference, but a common habit
+      among developers is to use <envar>PROFILE</> for one-time flag
+      adjustments, while <envar>COPT</> might be kept set all the time.
+     </para>
     </note>
    </step>
 
@@ -1503,7 +1546,7 @@ su - postgres
     will take a few minutes depending on your
     hardware. The last line displayed should be:
 <screen>
-All of PostgreSQL is successfully made. Ready to install.
+All of PostgreSQL successfully made. Ready to install.
 </screen>
    </para>
 
@@ -1516,7 +1559,7 @@ All of PostgreSQL is successfully made. Ready to install.
 </screen>
    The last line displayed should be:
 <screen>
-PostgreSQL, contrib and HTML documentation successfully made. Ready to install.
+PostgreSQL, contrib, and documentation successfully made. Ready to install.
 </screen>
    </para>
   </step>
@@ -1983,7 +2026,7 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
    it has recently been verified to build and pass its regression tests
    on that platform.  Currently, most testing of platform compatibility
    is done automatically by test machines in the
-   <ulink url="http://buildfarm.postgresql.org/">PostgreSQL Build Farm</ulink>.
+   <ulink url="https://buildfarm.postgresql.org/">PostgreSQL Build Farm</ulink>.
    If you are interested in using <productname>PostgreSQL</> on a platform
    that is not represented in the build farm, but on which the code works
    or can be made to work, you are strongly encouraged to set up a build
@@ -1993,8 +2036,8 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
   <para>
    In general, <productname>PostgreSQL</> can be expected to work on
    these CPU architectures: x86, x86_64, IA64, PowerPC,
-   PowerPC 64, S/390, S/390x, Sparc, Sparc 64, ARM, MIPS, MIPSEL, M68K,
-   and PA-RISC.  Code support exists for M32R and VAX, but these
+   PowerPC 64, S/390, S/390x, Sparc, Sparc 64, ARM, MIPS, MIPSEL,
+   and PA-RISC.  Code support exists for M68K, M32R, and VAX, but these
    architectures are not known to have been tested recently.  It is often
    possible to build on an unsupported CPU type by configuring with
    <option>--disable-spinlocks</option>, but performance will be poor.
@@ -2003,11 +2046,11 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
   <para>
    <productname>PostgreSQL</> can be expected to work on these operating
    systems: Linux (all recent distributions), Windows (Win2000 SP4 and later),
-   FreeBSD, OpenBSD, NetBSD, OS X, AIX, HP/UX, Solaris,
-   and UnixWare.  Other Unix-like systems may also work but are not currently
+   FreeBSD, OpenBSD, NetBSD, macOS, AIX, HP/UX, and Solaris.
+   Other Unix-like systems may also work but are not currently
    being tested.  In most cases, all CPU architectures supported by
    a given operating system will work.  Look in
-   the <xref linkend="installation-platform-notes"> below to see if
+   <xref linkend="installation-platform-notes"> below to see if
    there is information
    specific to your operating system, particularly if using an older system.
   </para>
@@ -2159,7 +2202,7 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
      should take care of it.
     </para>
 
-    <!-- http://archives.postgresql.org/message-id/6064jt6cfm.fsf_-_@dba2.int.libertyrms.com -->
+    <!-- https://archives.postgresql.org/message-id/6064jt6cfm.fsf_-_@dba2.int.libertyrms.com -->
 
     <para>
      One user reports:
@@ -2221,24 +2264,24 @@ hosts=local4,bind4
 
    <sect3>
     <title>Memory Management</title>
-    <!-- http://archives.postgresql.org/message-id/603bgqmpl9.fsf@dba2.int.libertyrms.com -->
+    <!-- https://archives.postgresql.org/message-id/603bgqmpl9.fsf@dba2.int.libertyrms.com -->
 
     <para>
      AIX can be somewhat peculiar with regards to the way it does
      memory management.  You can have a server with many multiples of
      gigabytes of RAM free, but still get out of memory or address
      space errors when running applications.  One example
-     is <command>createlang</command> failing with unusual errors.
+     is loading of extensions failing with unusual errors.
      For example, running as the owner of the PostgreSQL installation:
 <screen>
--bash-3.00$ createlang plperl template1
-createlang: language installation failed: ERROR:  could not load library "/opt/dbs/pgsql748/lib/plperl.so": A memory address is not in the address space for the process.
+=# CREATE EXTENSION plperl;
+ERROR:  could not load library "/opt/dbs/pgsql/lib/plperl.so": A memory address is not in the address space for the process.
 </screen>
     Running as a non-owner in the group possessing the PostgreSQL
     installation:
 <screen>
--bash-3.00$ createlang plperl template1
-createlang: language installation failed: ERROR:  could not load library "/opt/dbs/pgsql748/lib/plperl.so": Bad address
+=# CREATE EXTENSION plperl;
+ERROR:  could not load library "/opt/dbs/pgsql/lib/plperl.so": Bad address
 </screen>
      Another example is out of memory errors in the PostgreSQL server
      logs, with every memory allocation near or greater than 256 MB
@@ -2256,7 +2299,7 @@ createlang: language installation failed: ERROR:  could not load library "/opt/d
     </para>
 
     <para>
-     In the case of the <command>createlang</command> example, above,
+     In the case of the <literal>plperl</literal> example, above,
      check your umask and the permissions of the binaries in your
      PostgreSQL installation.  The binaries involved in that example
      were 32-bit and installed as mode 750 instead of 755.  Due to the
@@ -2632,160 +2675,6 @@ PHSS_30849  s700_800 u2comp/be/plugin library Patch
    </sect3>
   </sect2>
 
-  <sect2 id="installation-notes-sco">
-   <title>SCO OpenServer and SCO UnixWare</title>
-
-   <indexterm zone="installation-notes-sco">
-    <primary>SCO</primary>
-    <secondary>installation on</secondary>
-   </indexterm>
-
-   <indexterm zone="installation-notes-sco">
-    <primary>UnixWare</primary>
-    <secondary>installation on</secondary>
-   </indexterm>
-
-   <para>
-    PostgreSQL can be built on SCO UnixWare 7 and SCO OpenServer 5.
-    On OpenServer, you can use either the OpenServer Development Kit
-    or the Universal Development Kit.  However, some tweaking may be
-    needed, as described below.
-   </para>
-
-   <sect3>
-    <title>Skunkware</title>
-
-    <para>
-     You should locate your copy of the SCO Skunkware CD.  The
-     Skunkware CD is included with UnixWare 7 and current versions of
-     OpenServer 5.  Skunkware includes ready-to-install versions of
-     many popular programs that are available on the Internet.  For
-     example, gzip, gunzip, GNU Make, Flex, and Bison are all
-     included.  For UnixWare 7.1, this CD is now labeled "Open License
-     Software Supplement".  If you do not have this CD, the software
-     on it is available
-     from <ulink url="http://www.sco.com/skunkware/"></ulink>.
-    </para>
-
-    <para>
-     Skunkware has different versions for UnixWare and OpenServer.
-     Make sure you install the correct version for your operating
-     system, except as noted below.
-    </para>
-
-    <para>
-     On UnixWare 7.1.3 and beyond, the GCC compiler is included on the
-     UDK CD as is GNU Make.
-    </para>
-   </sect3>
-
-   <sect3>
-    <title>GNU Make</title>
-
-    <para>
-     You need to use the GNU Make program, which is on the Skunkware
-     CD.  By default, it installs
-     as <filename>/usr/local/bin/make</filename>.
-    </para>
-
-    <para>
-     As of UnixWare 7.1.3 and above, the GNU Make program is the
-     OSTK portion of the UDK CD, and is
-     in <filename>/usr/gnu/bin/gmake</filename>.
-    </para>
-   </sect3>
-
-   <sect3>
-    <title>Readline</title>
-
-    <para>
-     The Readline library is on the Skunkware CD.  But it is not
-     included on the UnixWare 7.1 Skunkware CD.  If you have the
-     UnixWare 7.0.0 or 7.0.1 Skunkware CDs, you can install it from
-     there.  Otherwise,
-     try <ulink url="http://www.sco.com/skunkware/"></ulink>.
-    </para>
-
-    <para>
-     By default, Readline installs into <filename>/usr/local/lib</> and
-     <filename>/usr/local/include</>.  However, the
-     PostgreSQL <command>configure</command> program will not find it
-     there without help.  If you installed Readline, then use the
-     following options to <command>configure</command>:
-<programlisting>
-./configure --with-libraries=/usr/local/lib --with-includes=/usr/local/include
-</programlisting>
-    </para>
-   </sect3>
-
-   <sect3>
-    <title>Using the UDK on OpenServer</title>
-
-    <para>
-     If you are using the new Universal Development Kit (UDK) compiler
-     on OpenServer, you need to specify the locations of the UDK
-     libraries:
-<programlisting>
-./configure --with-libraries=/udk/usr/lib --with-includes=/udk/usr/include
-</programlisting>
-     Putting these together with the Readline options from above:
-<programlisting>
-./configure --with-libraries="/udk/usr/lib /usr/local/lib" --with-includes="/udk/usr/include /usr/local/include"
-</programlisting>
-    </para>
-   </sect3>
-
-   <sect3>
-    <title>Reading the PostgreSQL Man Pages</title>
-
-    <para>
-     By default, the PostgreSQL man pages are installed into
-     <filename>/usr/local/pgsql/share/man</filename>.  By default, UnixWare
-     does not look there for man pages.  To be able to read them you
-     need to modify the
-     <varname>MANPATH</varname> variable
-     in <filename>/etc/default/man</filename>, for example:
-<programlisting>
-MANPATH=/usr/lib/scohelp/%L/man:/usr/dt/man:/usr/man:/usr/share/man:scohelp:/usr/local/man:/usr/local/pgsql/share/man
-</programlisting>
-    </para>
-
-    <para>
-     On OpenServer, some extra research needs to be invested to make
-     the man pages usable, because the man system is a bit different
-     from other platforms.  Currently, PostgreSQL will not install
-     them at all.
-    </para>
-   </sect3>
-
-   <sect3>
-    <title>C99 Issues with the 7.1.1b Feature Supplement</title>
-
-    <para>
-     For compilers earlier than the one released with OpenUNIX 8.0.0
-     (UnixWare 7.1.2), including the 7.1.1b Feature Supplement, you
-     may need to specify <option>-Xb</option>
-     in <varname>CFLAGS</varname> or the <varname>CC</varname>
-     environment variable.  The indication of this is an error in
-     compiling <filename>tuplesort.c</filename> referencing inline
-     functions.  Apparently there was a change in the 7.1.2(8.0.0)
-     compiler and beyond.
-    </para>
-   </sect3>
-
-   <sect3>
-    <title>Threading on UnixWare</title>
-
-    <para>
-     For threading, you<emphasis>must</emphasis> use <option>-Kpthread</option>
-     on <emphasis>all</emphasis> libpq-using programs.  libpq
-     uses <function>pthread_*</function> calls, which are only
-     available with the
-     <option>-Kpthread</>/<option>-Kthread</> flag.
-    </para>
-   </sect3>
-  </sect2>
-
   <sect2 id="installation-notes-solaris">
    <title>Solaris</title>
 
@@ -2823,30 +2712,6 @@ MANPATH=/usr/lib/scohelp/%L/man:/usr/dt/man:/usr/man:/usr/share/man:scohelp:/usr
      If you prefer
      sources, look
      at <ulink url="http://www.gnu.org/order/ftp.html"></ulink>.
-    </para>
-   </sect3>
-
-   <sect3>
-    <title>Problems with OpenSSL</title>
-
-    <para>
-     When you build PostgreSQL with OpenSSL support you might get
-     compilation errors in the following files:
-     <itemizedlist>
-      <listitem><para><filename>src/backend/libpq/crypt.c</filename></para></listitem>
-      <listitem><para><filename>src/backend/libpq/password.c</filename></para></listitem>
-      <listitem><para><filename>src/interfaces/libpq/fe-auth.c</filename></para></listitem>
-      <listitem><para><filename>src/interfaces/libpq/fe-connect.c</filename></para></listitem>
-     </itemizedlist>
-
-     This is because of a namespace conflict between the standard
-     <filename>/usr/include/crypt.h</filename> header and the header
-     files provided by OpenSSL.
-    </para>
-
-    <para>
-     Upgrading your OpenSSL installation to version 0.9.6a fixes this
-     problem.  Solaris 9 and above has a newer version of OpenSSL.
     </para>
    </sect3>
 

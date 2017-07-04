@@ -33,7 +33,7 @@ CREATE USER <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replac
     | REPLICATION | NOREPLICATION
     | BYPASSRLS | NOBYPASSRLS
     | CONNECTION LIMIT <replaceable class="PARAMETER">connlimit</replaceable>
-    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD '<replaceable class="PARAMETER">password</replaceable>'
+    | [ ENCRYPTED ] PASSWORD '<replaceable class="PARAMETER">password</replaceable>'
     | VALID UNTIL '<replaceable class="PARAMETER">timestamp</replaceable>'
     | IN ROLE <replaceable class="PARAMETER">role_name</replaceable> [, ...]
     | IN GROUP <replaceable class="PARAMETER">role_name</replaceable> [, ...]

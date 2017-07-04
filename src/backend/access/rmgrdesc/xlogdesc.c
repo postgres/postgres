@@ -3,7 +3,7 @@
  * xlogdesc.c
  *	  rmgr descriptor routines for access/transam/xlog.c
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -26,7 +26,7 @@
 const struct config_enum_entry wal_level_options[] = {
 	{"minimal", WAL_LEVEL_MINIMAL, false},
 	{"replica", WAL_LEVEL_REPLICA, false},
-	{"archive", WAL_LEVEL_REPLICA, true},		/* deprecated */
+	{"archive", WAL_LEVEL_REPLICA, true},	/* deprecated */
 	{"hot_standby", WAL_LEVEL_REPLICA, true},	/* deprecated */
 	{"logical", WAL_LEVEL_LOGICAL, false},
 	{NULL, 0, false}
@@ -48,7 +48,7 @@ xlog_desc(StringInfo buf, XLogReaderState *record)
 						 "oldest xid %u in DB %u; oldest multi %u in DB %u; "
 						 "oldest/newest commit timestamp xid: %u/%u; "
 						 "oldest running xid %u; %s",
-				(uint32) (checkpoint->redo >> 32), (uint32) checkpoint->redo,
+						 (uint32) (checkpoint->redo >> 32), (uint32) checkpoint->redo,
 						 checkpoint->ThisTimeLineID,
 						 checkpoint->PrevTimeLineID,
 						 checkpoint->fullPageWrites ? "true" : "false",
@@ -63,7 +63,7 @@ xlog_desc(StringInfo buf, XLogReaderState *record)
 						 checkpoint->oldestCommitTsXid,
 						 checkpoint->newestCommitTsXid,
 						 checkpoint->oldestActiveXid,
-				 (info == XLOG_CHECKPOINT_SHUTDOWN) ? "shutdown" : "online");
+						 (info == XLOG_CHECKPOINT_SHUTDOWN) ? "shutdown" : "online");
 	}
 	else if (info == XLOG_NEXTOID)
 	{

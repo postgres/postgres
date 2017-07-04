@@ -4,7 +4,7 @@
  *	  various support functions for SP-GiST
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -22,6 +22,7 @@
 #include "storage/bufmgr.h"
 #include "storage/indexfsm.h"
 #include "storage/lmgr.h"
+#include "utils/builtins.h"
 #include "utils/index_selfuncs.h"
 #include "utils/lsyscache.h"
 
@@ -48,6 +49,7 @@ spghandler(PG_FUNCTION_ARGS)
 	amroutine->amstorage = false;
 	amroutine->amclusterable = false;
 	amroutine->ampredlocks = false;
+	amroutine->amcanparallel = false;
 	amroutine->amkeytype = InvalidOid;
 
 	amroutine->ambuild = spgbuild;
@@ -67,6 +69,9 @@ spghandler(PG_FUNCTION_ARGS)
 	amroutine->amendscan = spgendscan;
 	amroutine->ammarkpos = NULL;
 	amroutine->amrestrpos = NULL;
+	amroutine->amestimateparallelscan = NULL;
+	amroutine->aminitparallelscan = NULL;
+	amroutine->amparallelrescan = NULL;
 
 	PG_RETURN_POINTER(amroutine);
 }
@@ -700,7 +705,7 @@ spgFormInnerTuple(SpGistState *state, bool hasPrefix, Datum prefix,
 				 errmsg("SP-GiST inner tuple size %zu exceeds maximum %zu",
 						(Size) size,
 						SPGIST_PAGE_CAPACITY - sizeof(ItemIdData)),
-			errhint("Values larger than a buffer page cannot be indexed.")));
+				 errhint("Values larger than a buffer page cannot be indexed.")));
 
 	/*
 	 * Check for overflow of header fields --- probably can't fail if the
@@ -843,7 +848,7 @@ SpGistPageAddNewItem(SpGistState *state, Page page, Item item, Size size,
 			for (; i <= maxoff; i++)
 			{
 				SpGistDeadTuple it = (SpGistDeadTuple) PageGetItem(page,
-													 PageGetItemId(page, i));
+																   PageGetItemId(page, i));
 
 				if (it->tupstate == SPGIST_PLACEHOLDER)
 				{

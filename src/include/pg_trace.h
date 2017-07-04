@@ -3,7 +3,7 @@
  *
  *	Definitions for the PostgreSQL tracing framework
  *
- *	Copyright (c) 2006-2016, PostgreSQL Global Development Group
+ *	Copyright (c) 2006-2017, PostgreSQL Global Development Group
  *
  *	src/include/pg_trace.h
  * ----------
@@ -14,4 +14,4 @@
 
 #include "utils/probes.h"		/* pgrminclude ignore */
 
-#endif   /* PG_TRACE_H */
+#endif							/* PG_TRACE_H */

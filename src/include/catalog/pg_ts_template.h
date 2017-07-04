@@ -4,7 +4,7 @@
  *	definition of dictionary templates for tsearch
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_ts_template.h
@@ -64,4 +64,4 @@ DESCR("ispell dictionary");
 DATA(insert OID = 3742 ( "thesaurus" PGNSP thesaurus_init thesaurus_lexize ));
 DESCR("thesaurus dictionary: phrase by phrase substitution");
 
-#endif   /* PG_TS_TEMPLATE_H */
+#endif							/* PG_TS_TEMPLATE_H */

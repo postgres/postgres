@@ -4,7 +4,7 @@
  * bootparse.y
  *	  yacc grammar for the "bootstrap" mode (BKI file format)
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -22,7 +22,6 @@
 #include "access/htup.h"
 #include "access/itup.h"
 #include "access/tupdesc.h"
-#include "access/xact.h"
 #include "bootstrap/bootstrap.h"
 #include "catalog/catalog.h"
 #include "catalog/heap.h"
@@ -49,9 +48,8 @@
 #include "storage/off.h"
 #include "storage/smgr.h"
 #include "tcop/dest.h"
+#include "utils/memutils.h"
 #include "utils/rel.h"
-
-#define atooid(x)	((Oid) strtoul((x), NULL, 10))
 
 
 /*
@@ -65,19 +63,27 @@
 #define YYMALLOC palloc
 #define YYFREE   pfree
 
+static MemoryContext per_line_ctx = NULL;
+
 static void
 do_start(void)
 {
-	StartTransactionCommand();
-	elog(DEBUG4, "start transaction");
+	Assert(CurrentMemoryContext == CurTransactionContext);
+	/* First time through, create the per-line working context */
+	if (per_line_ctx == NULL)
+		per_line_ctx = AllocSetContextCreate(CurTransactionContext,
+											 "bootstrap per-line processing",
+											 ALLOCSET_DEFAULT_SIZES);
+	MemoryContextSwitchTo(per_line_ctx);
 }
 
 
 static void
 do_end(void)
 {
-	CommitTransactionCommand();
-	elog(DEBUG4, "commit transaction");
+	/* Reclaim memory allocated while processing this line */
+	MemoryContextSwitchTo(CurTransactionContext);
+	MemoryContextReset(per_line_ctx);
 	CHECK_FOR_INTERRUPTS();		/* allow SIGINT to kill bootstrap run */
 	if (isatty(0))
 	{
@@ -105,11 +111,11 @@ static int num_columns_read = 0;
 
 %type <list>  boot_index_params
 %type <ielem> boot_index_param
-%type <str>   boot_const boot_ident
+%type <str>   boot_ident
 %type <ival>  optbootstrap optsharedrelation optwithoutoids boot_column_nullness
 %type <oidval> oidspec optoideq optrowtypeoid
 
-%token <str> CONST_P ID
+%token <str> ID
 %token OPEN XCLOSE XCREATE INSERT_TUPLE
 %token XDECLARE INDEX ON USING XBUILD INDICES UNIQUE XTOAST
 %token COMMA EQUALS LPAREN RPAREN
@@ -317,6 +323,7 @@ Boot_DeclareIndexStmt:
 								$4,
 								false,
 								false,
+								false,
 								true, /* skip_build */
 								false);
 					do_end();
@@ -358,6 +365,7 @@ Boot_DeclareUniqueIndexStmt:
 					DefineIndex(relationId,
 								stmt,
 								$5,
+								false,
 								false,
 								false,
 								true, /* skip_build */
@@ -464,14 +472,8 @@ boot_column_val_list:
 boot_column_val:
 		  boot_ident
 			{ InsertOneValue($1, num_columns_read++); }
-		| boot_const
-			{ InsertOneValue($1, num_columns_read++); }
 		| NULLVAL
 			{ InsertOneNull(num_columns_read++); }
-		;
-
-boot_const :
-		  CONST_P { $$ = yylval.str; }
 		;
 
 boot_ident :

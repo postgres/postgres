@@ -7,9 +7,7 @@ LANGUAGE plpythonu
 TRANSFORM FOR TYPE hstore
 AS $$
 assert isinstance(val, dict)
-i = list(val.items())
-i.sort()
-plpy.info(i)
+plpy.info(sorted(val.items()))
 return len(val)
 $$;
 
@@ -22,9 +20,7 @@ LANGUAGE plpython2u
 TRANSFORM FOR TYPE hstore
 AS $$
 assert isinstance(val, dict)
-i = list(val.items())
-i.sort()
-plpy.info(i)
+plpy.info(sorted(val.items()))
 return len(val)
 $$;
 

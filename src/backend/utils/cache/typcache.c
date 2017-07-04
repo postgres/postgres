@@ -30,7 +30,7 @@
  * Domain constraint changes are also tracked properly.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -96,11 +96,11 @@ static TypeCacheEntry *firstDomainTypeEntry = NULL;
  * this struct for the common case of a constraint-less domain; we just set
  * domainData to NULL to indicate that.
  *
- * Within a DomainConstraintCache, we abuse the DomainConstraintState node
- * type a bit: check_expr fields point to expression plan trees, not plan
- * state trees.  When needed, expression state trees are built by flat-copying
- * the DomainConstraintState nodes and applying ExecInitExpr to check_expr.
- * Such a state tree is not part of the DomainConstraintCache, but is
+ * Within a DomainConstraintCache, we store expression plan trees, but the
+ * check_exprstate fields of the DomainConstraintState nodes are just NULL.
+ * When needed, expression evaluation nodes are built by flat-copying the
+ * DomainConstraintState nodes and applying ExecInitExpr to check_expr.
+ * Such a node tree is not part of the DomainConstraintCache, but is
  * considered to belong to a DomainConstraintRef.
  */
 struct DomainConstraintCache
@@ -152,7 +152,7 @@ static HTAB *RecordCacheHash = NULL;
 
 static TupleDesc *RecordCacheArray = NULL;
 static int32 RecordCacheArrayLen = 0;	/* allocated length of array */
-static int32 NextRecordTypmod = 0;		/* number of entries used */
+static int32 NextRecordTypmod = 0;	/* number of entries used */
 
 static void load_typcache_tupdesc(TypeCacheEntry *typentry);
 static void load_rangetype_info(TypeCacheEntry *typentry);
@@ -182,10 +182,10 @@ static int	enum_oid_cmp(const void *left, const void *right);
  * Fetch the type cache entry for the specified datatype, and make sure that
  * all the fields requested by bits in 'flags' are valid.
  *
- * The result is never NULL --- we will elog() if the passed type OID is
+ * The result is never NULL --- we will ereport() if the passed type OID is
  * invalid.  Note however that we may fail to find one or more of the
- * requested opclass-dependent fields; the caller needs to check whether
- * the fields are InvalidOid or not.
+ * values requested by 'flags'; the caller needs to check whether the fields
+ * are InvalidOid or not.
  */
 TypeCacheEntry *
 lookup_type_cache(Oid type_id, int flags)
@@ -224,14 +224,18 @@ lookup_type_cache(Oid type_id, int flags)
 		/*
 		 * If we didn't find one, we want to make one.  But first look up the
 		 * pg_type row, just to make sure we don't make a cache entry for an
-		 * invalid type OID.
+		 * invalid type OID.  If the type OID is not valid, present a
+		 * user-facing error, since some code paths such as domain_in() allow
+		 * this function to be reached with a user-supplied OID.
 		 */
 		HeapTuple	tp;
 		Form_pg_type typtup;
 
 		tp = SearchSysCache1(TYPEOID, ObjectIdGetDatum(type_id));
 		if (!HeapTupleIsValid(tp))
-			elog(ERROR, "cache lookup failed for type %u", type_id);
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("type with OID %u does not exist", type_id)));
 		typtup = (Form_pg_type) GETSTRUCT(tp);
 		if (!typtup->typisdefined)
 			ereport(ERROR,
@@ -568,7 +572,7 @@ load_typcache_tupdesc(TypeCacheEntry *typentry)
 {
 	Relation	rel;
 
-	if (!OidIsValid(typentry->typrelid))		/* should not happen */
+	if (!OidIsValid(typentry->typrelid))	/* should not happen */
 		elog(ERROR, "invalid typrelid for composite type %u",
 			 typentry->type_id);
 	rel = relation_open(typentry->typrelid, AccessShareLock);
@@ -756,9 +760,7 @@ load_domaintype_info(TypeCacheEntry *typentry)
 
 				cxt = AllocSetContextCreate(CurrentMemoryContext,
 											"Domain constraints",
-											ALLOCSET_SMALL_INITSIZE,
-											ALLOCSET_SMALL_MINSIZE,
-											ALLOCSET_SMALL_MAXSIZE);
+											ALLOCSET_SMALL_SIZES);
 				dcc = (DomainConstraintCache *)
 					MemoryContextAlloc(cxt, sizeof(DomainConstraintCache));
 				dcc->constraints = NIL;
@@ -777,8 +779,8 @@ load_domaintype_info(TypeCacheEntry *typentry)
 			r = makeNode(DomainConstraintState);
 			r->constrainttype = DOM_CONSTRAINT_CHECK;
 			r->name = pstrdup(NameStr(c->conname));
-			/* Must cast here because we're not storing an expr state node */
-			r->check_expr = (ExprState *) check_expr;
+			r->check_expr = check_expr;
+			r->check_exprstate = NULL;
 
 			MemoryContextSwitchTo(oldcxt);
 
@@ -841,9 +843,7 @@ load_domaintype_info(TypeCacheEntry *typentry)
 
 			cxt = AllocSetContextCreate(CurrentMemoryContext,
 										"Domain constraints",
-										ALLOCSET_SMALL_INITSIZE,
-										ALLOCSET_SMALL_MINSIZE,
-										ALLOCSET_SMALL_MAXSIZE);
+										ALLOCSET_SMALL_SIZES);
 			dcc = (DomainConstraintCache *)
 				MemoryContextAlloc(cxt, sizeof(DomainConstraintCache));
 			dcc->constraints = NIL;
@@ -859,6 +859,7 @@ load_domaintype_info(TypeCacheEntry *typentry)
 		r->constrainttype = DOM_CONSTRAINT_NOTNULL;
 		r->name = pstrdup("NOT NULL");
 		r->check_expr = NULL;
+		r->check_exprstate = NULL;
 
 		/* lcons to apply the nullness check FIRST */
 		dcc->constraints = lcons(r, dcc->constraints);
@@ -887,8 +888,8 @@ load_domaintype_info(TypeCacheEntry *typentry)
 static int
 dcs_cmp(const void *a, const void *b)
 {
-	const DomainConstraintState *const * ca = (const DomainConstraintState *const *) a;
-	const DomainConstraintState *const * cb = (const DomainConstraintState *const *) b;
+	const DomainConstraintState *const *ca = (const DomainConstraintState *const *) a;
+	const DomainConstraintState *const *cb = (const DomainConstraintState *const *) b;
 
 	return strcmp((*ca)->name, (*cb)->name);
 }
@@ -946,8 +947,8 @@ prep_domain_constraints(List *constraints, MemoryContext execctx)
 		newr = makeNode(DomainConstraintState);
 		newr->constrainttype = r->constrainttype;
 		newr->name = r->name;
-		/* Must cast here because cache items contain expr plan trees */
-		newr->check_expr = ExecInitExpr((Expr *) r->check_expr, NULL);
+		newr->check_expr = r->check_expr;
+		newr->check_exprstate = ExecInitExpr(r->check_expr, NULL);
 
 		result = lappend(result, newr);
 	}
@@ -962,13 +963,18 @@ prep_domain_constraints(List *constraints, MemoryContext execctx)
  *
  * Caller must tell us the MemoryContext in which the DomainConstraintRef
  * lives.  The ref will be cleaned up when that context is reset/deleted.
+ *
+ * Caller must also tell us whether it wants check_exprstate fields to be
+ * computed in the DomainConstraintState nodes attached to this ref.
+ * If it doesn't, we need not make a copy of the DomainConstraintState list.
  */
 void
 InitDomainConstraintRef(Oid type_id, DomainConstraintRef *ref,
-						MemoryContext refctx)
+						MemoryContext refctx, bool need_exprstate)
 {
 	/* Look up the typcache entry --- we assume it survives indefinitely */
 	ref->tcache = lookup_type_cache(type_id, TYPECACHE_DOMAIN_INFO);
+	ref->need_exprstate = need_exprstate;
 	/* For safety, establish the callback before acquiring a refcount */
 	ref->refctx = refctx;
 	ref->dcc = NULL;
@@ -980,8 +986,11 @@ InitDomainConstraintRef(Oid type_id, DomainConstraintRef *ref,
 	{
 		ref->dcc = ref->tcache->domainData;
 		ref->dcc->dccRefCount++;
-		ref->constraints = prep_domain_constraints(ref->dcc->constraints,
-												   ref->refctx);
+		if (ref->need_exprstate)
+			ref->constraints = prep_domain_constraints(ref->dcc->constraints,
+													   ref->refctx);
+		else
+			ref->constraints = ref->dcc->constraints;
 	}
 	else
 		ref->constraints = NIL;
@@ -1032,8 +1041,11 @@ UpdateDomainConstraintRef(DomainConstraintRef *ref)
 		{
 			ref->dcc = dcc;
 			dcc->dccRefCount++;
-			ref->constraints = prep_domain_constraints(dcc->constraints,
-													   ref->refctx);
+			if (ref->need_exprstate)
+				ref->constraints = prep_domain_constraints(dcc->constraints,
+														   ref->refctx);
+			else
+				ref->constraints = dcc->constraints;
 		}
 	}
 }
@@ -1234,6 +1246,8 @@ lookup_rowtype_tupdesc_internal(Oid type_id, int32 typmod, bool noError)
  *
  * Given a typeid/typmod that should describe a known composite type,
  * return the tuple descriptor for the type.  Will ereport on failure.
+ * (Use ereport because this is reachable with user-specified OIDs,
+ * for example from record_in().)
  *
  * Note: on success, we increment the refcount of the returned TupleDesc,
  * and log the reference in CurrentResourceOwner.  Caller should call

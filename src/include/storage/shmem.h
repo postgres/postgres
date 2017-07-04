@@ -11,7 +11,7 @@
  * at the same address.  This means shared memory pointers can be passed
  * around directly between different processes.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/storage/shmem.h
@@ -35,6 +35,8 @@ typedef struct SHM_QUEUE
 extern void InitShmemAccess(void *seghdr);
 extern void InitShmemAllocation(void);
 extern void *ShmemAlloc(Size size);
+extern void *ShmemAllocNoError(Size size);
+extern void *ShmemAllocUnlocked(Size size);
 extern bool ShmemAddrIsValid(const void *addr);
 extern void InitShmemIndex(void);
 extern HTAB *ShmemInitHash(const char *name, long init_size, long max_size,
@@ -55,7 +57,7 @@ extern void RequestAddinShmemSpace(Size size);
 /* this is a hash bucket in the shmem index table */
 typedef struct
 {
-	char		key[SHMEM_INDEX_KEYSIZE];		/* string name */
+	char		key[SHMEM_INDEX_KEYSIZE];	/* string name */
 	void	   *location;		/* location in shared mem */
 	Size		size;			/* # bytes allocated for the structure */
 } ShmemIndexEnt;
@@ -75,4 +77,4 @@ extern Pointer SHMQueuePrev(const SHM_QUEUE *queue, const SHM_QUEUE *curElem,
 extern bool SHMQueueEmpty(const SHM_QUEUE *queue);
 extern bool SHMQueueIsDetached(const SHM_QUEUE *queue);
 
-#endif   /* SHMEM_H */
+#endif							/* SHMEM_H */

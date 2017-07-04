@@ -141,9 +141,7 @@ IMPORT FOREIGN SCHEMA foreign_films
 <programlisting>
 IMPORT FOREIGN SCHEMA foreign_films LIMIT TO (actors, directors)
     FROM SERVER film_server INTO films;
-</programlisting>
-   </para>
-
+</programlisting></para>
  </refsect1>
 
  <refsect1 id="SQL-IMPORTFOREIGNSCHEMA-compatibility">

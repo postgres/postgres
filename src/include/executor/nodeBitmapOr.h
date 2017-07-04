@@ -4,7 +4,7 @@
  *
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/executor/nodeBitmapOr.h
@@ -21,4 +21,4 @@ extern Node *MultiExecBitmapOr(BitmapOrState *node);
 extern void ExecEndBitmapOr(BitmapOrState *node);
 extern void ExecReScanBitmapOr(BitmapOrState *node);
 
-#endif   /* NODEBITMAPOR_H */
+#endif							/* NODEBITMAPOR_H */

@@ -76,7 +76,7 @@ CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'csv', null '
 ');       -- ERROR
 ERROR:  COPY null representation cannot use newline or carriage return
 CREATE FOREIGN TABLE tbl () SERVER file_server;  -- ERROR
-ERROR:  filename is required for file_fdw foreign tables
+ERROR:  either filename or program is required for file_fdw foreign tables
 CREATE FOREIGN TABLE agg_text (
 	a	int2 CHECK (a >= 0),
 	b	float4
@@ -132,7 +132,7 @@ ERROR:  invalid option "force_not_null"
 HINT:  There are no valid options in this context.
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (force_not_null '*'); -- ERROR
 ERROR:  invalid option "force_not_null"
-HINT:  Valid options in this context are: filename, format, header, delimiter, quote, escape, null, encoding
+HINT:  Valid options in this context are: filename, program, format, header, delimiter, quote, escape, null, encoding
 -- force_null is not allowed to be specified at any foreign object level:
 ALTER FOREIGN DATA WRAPPER file_fdw OPTIONS (ADD force_null '*'); -- ERROR
 ERROR:  invalid option "force_null"
@@ -145,7 +145,7 @@ ERROR:  invalid option "force_null"
 HINT:  There are no valid options in this context.
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (force_null '*'); -- ERROR
 ERROR:  invalid option "force_null"
-HINT:  Valid options in this context are: filename, format, header, delimiter, quote, escape, null, encoding
+HINT:  Valid options in this context are: filename, program, format, header, delimiter, quote, escape, null, encoding
 -- basic query tests
 SELECT * FROM agg_text WHERE b > 10.0 ORDER BY a;
   a  |   b    

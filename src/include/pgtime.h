@@ -3,7 +3,7 @@
  * pgtime.h
  *	  PostgreSQL internal timezone library
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/include/pgtime.h
@@ -28,7 +28,7 @@ struct pg_tm
 	int			tm_min;
 	int			tm_hour;
 	int			tm_mday;
-	int			tm_mon;			/* origin 0, not 1 */
+	int			tm_mon;			/* origin 1, not 0! */
 	int			tm_year;		/* relative to 1900 */
 	int			tm_wday;
 	int			tm_yday;
@@ -66,7 +66,7 @@ extern bool pg_tz_acceptable(pg_tz *tz);
 /* these functions are in strftime.c */
 
 extern size_t pg_strftime(char *s, size_t max, const char *format,
-			const struct pg_tm * tm);
+			const struct pg_tm *tm);
 
 /* these functions and variables are in pgtz.c */
 
@@ -81,4 +81,4 @@ extern pg_tzenum *pg_tzenumerate_start(void);
 extern pg_tz *pg_tzenumerate_next(pg_tzenum *dir);
 extern void pg_tzenumerate_end(pg_tzenum *dir);
 
-#endif   /* _PGTIME_H */
+#endif							/* _PGTIME_H */

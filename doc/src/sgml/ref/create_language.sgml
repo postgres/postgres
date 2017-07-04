@@ -230,21 +230,14 @@ CREATE [ OR REPLACE ] [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="pa
   <title>Notes</title>
 
   <para>
-   The <xref linkend="app-createlang"> program is a simple wrapper around
-   the <command>CREATE LANGUAGE</> command.  It eases
-   installation of procedural languages from the shell command line.
-  </para>
-
-  <para>
-   Use <xref linkend="sql-droplanguage">, or better yet the <xref
-   linkend="app-droplang"> program, to drop procedural languages.
+   Use <xref linkend="sql-droplanguage"> to drop procedural languages.
   </para>
 
   <para>
    The system catalog <classname>pg_language</classname> (see <xref
    linkend="catalog-pg-language">) records information about the
-   currently installed languages.  Also, <command>createlang</command>
-   has an option to list the installed languages.
+   currently installed languages.  Also, the <application>psql</application>
+   command <command>\dL</command> lists the installed languages.
   </para>
 
   <para>
@@ -325,8 +318,6 @@ CREATE LANGUAGE plsample
    <member><xref linkend="sql-droplanguage"></member>
    <member><xref linkend="sql-grant"></member>
    <member><xref linkend="sql-revoke"></member>
-   <member><xref linkend="app-createlang"></member>
-   <member><xref linkend="app-droplang"></member>
   </simplelist>
  </refsect1>
 </refentry>

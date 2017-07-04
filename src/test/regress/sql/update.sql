@@ -40,6 +40,10 @@ UPDATE update_test SET a=v.i FROM (VALUES(100, 20)) AS v(i, j)
 
 SELECT * FROM update_test;
 
+-- fail, wrong data type:
+UPDATE update_test SET a = v.* FROM (VALUES(100, 20)) AS v(i, j)
+  WHERE update_test.b = v.j;
+
 --
 -- Test multiple-set-clause syntax
 --
@@ -70,6 +74,12 @@ UPDATE update_test SET (b,a) = (select a+1,b from update_test);
 UPDATE update_test SET (b,a) = (select a+1,b from update_test where a = 1000)
   WHERE a = 11;
 SELECT * FROM update_test;
+-- *-expansion should work in this context:
+UPDATE update_test SET (a,b) = ROW(v.*) FROM (VALUES(21, 100)) AS v(i, j)
+  WHERE update_test.a = v.i;
+-- you might expect this to work, but syntactically it's not a RowExpr:
+UPDATE update_test SET (a,b) = (v.*) FROM (VALUES(21, 101)) AS v(i, j)
+  WHERE update_test.a = v.i;
 
 -- if an alias for the target table is specified, don't allow references
 -- to the original table name
@@ -96,3 +106,24 @@ INSERT INTO upsert_test VALUES (1, 'Bat') ON CONFLICT(a)
 
 DROP TABLE update_test;
 DROP TABLE upsert_test;
+
+-- update to a partition should check partition bound constraint for the new tuple
+create table range_parted (
+	a text,
+	b int
+) partition by range (a, b);
+create table part_a_1_a_10 partition of range_parted for values from ('a', 1) to ('a', 10);
+create table part_a_10_a_20 partition of range_parted for values from ('a', 10) to ('a', 20);
+create table part_b_1_b_10 partition of range_parted for values from ('b', 1) to ('b', 10);
+create table part_b_10_b_20 partition of range_parted for values from ('b', 10) to ('b', 20);
+insert into part_a_1_a_10 values ('a', 1);
+insert into part_b_10_b_20 values ('b', 10);
+
+-- fail
+update part_a_1_a_10 set a = 'b' where a = 'a';
+update range_parted set b = b - 1 where b = 10;
+-- ok
+update range_parted set b = b + 1 where b = 10;
+
+-- cleanup
+drop table range_parted;

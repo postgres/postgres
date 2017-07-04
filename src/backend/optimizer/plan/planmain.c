@@ -9,7 +9,7 @@
  * shorn of features like subselects, inheritance, aggregates, grouping,
  * and so on.  (Those are the things planner.c deals with.)
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -193,9 +193,15 @@ query_planner(PlannerInfo *root, List *tlist,
 	joinlist = remove_useless_joins(root, joinlist);
 
 	/*
+	 * Also, reduce any semijoins with unique inner rels to plain inner joins.
+	 * Likewise, this can't be done until now for lack of needed info.
+	 */
+	reduce_unique_semijoins(root);
+
+	/*
 	 * Now distribute "placeholders" to base rels as needed.  This has to be
 	 * done after join removal because removal could change whether a
-	 * placeholder is evaluatable at a base rel.
+	 * placeholder is evaluable at a base rel.
 	 */
 	add_placeholders_to_base_rels(root);
 
@@ -240,10 +246,9 @@ query_planner(PlannerInfo *root, List *tlist,
 		if (brel == NULL)
 			continue;
 
-		Assert(brel->relid == rti);		/* sanity check on array */
+		Assert(brel->relid == rti); /* sanity check on array */
 
-		if (brel->reloptkind == RELOPT_BASEREL ||
-			brel->reloptkind == RELOPT_OTHER_MEMBER_REL)
+		if (IS_SIMPLE_REL(brel))
 			total_pages += (double) brel->pages;
 	}
 	root->total_table_pages = total_pages;

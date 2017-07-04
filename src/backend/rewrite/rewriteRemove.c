@@ -3,7 +3,7 @@
  * rewriteRemove.c
  *	  routines for removing rewrite rules
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -76,7 +76,7 @@ RemoveRewriteRuleById(Oid ruleOid)
 	/*
 	 * Now delete the pg_rewrite tuple for the rule
 	 */
-	simple_heap_delete(RewriteRelation, &tuple->t_self);
+	CatalogTupleDelete(RewriteRelation, &tuple->t_self);
 
 	systable_endscan(rcscan);
 

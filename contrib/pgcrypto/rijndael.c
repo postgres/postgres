@@ -97,7 +97,7 @@ static u4byte il_tab[4][256];
 #endif
 
 static u4byte tab_gen = 0;
-#endif   /* !PRE_CALC_TABLES */
+#endif							/* !PRE_CALC_TABLES */
 
 #define ff_mult(a,b)	((a) && (b) ? pow_tab[(log_tab[a] + log_tab[b]) % 255] : 0)
 
@@ -250,7 +250,7 @@ gen_tabs(void)
 	}
 
 	tab_gen = 1;
-#endif   /* !PRE_CALC_TABLES */
+#endif							/* !PRE_CALC_TABLES */
 }
 
 

@@ -4,7 +4,7 @@
  *		Internal definitions for parser
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/parser/parse_node.h
@@ -15,6 +15,7 @@
 #define PARSE_NODE_H
 
 #include "nodes/parsenodes.h"
+#include "utils/queryenvironment.h"
 #include "utils/relcache.h"
 
 
@@ -27,7 +28,7 @@
  * by extension code that might need to call transformExpr().  The core code
  * will not enforce any context-driven restrictions on EXPR_KIND_OTHER
  * expressions, so the caller would have to check for sub-selects, aggregates,
- * and window functions if those need to be disallowed.
+ * window functions, SRFs, etc if those need to be disallowed.
  */
 typedef enum ParseExprKind
 {
@@ -42,7 +43,7 @@ typedef enum ParseExprKind
 	EXPR_KIND_FILTER,			/* FILTER */
 	EXPR_KIND_WINDOW_PARTITION, /* window definition PARTITION BY */
 	EXPR_KIND_WINDOW_ORDER,		/* window definition ORDER BY */
-	EXPR_KIND_WINDOW_FRAME_RANGE,		/* window frame clause with RANGE */
+	EXPR_KIND_WINDOW_FRAME_RANGE,	/* window frame clause with RANGE */
 	EXPR_KIND_WINDOW_FRAME_ROWS,	/* window frame clause with ROWS */
 	EXPR_KIND_SELECT_TARGET,	/* SELECT target list item */
 	EXPR_KIND_INSERT_TARGET,	/* INSERT target list item */
@@ -55,16 +56,18 @@ typedef enum ParseExprKind
 	EXPR_KIND_OFFSET,			/* OFFSET */
 	EXPR_KIND_RETURNING,		/* RETURNING */
 	EXPR_KIND_VALUES,			/* VALUES */
+	EXPR_KIND_VALUES_SINGLE,	/* single-row VALUES (in INSERT only) */
 	EXPR_KIND_CHECK_CONSTRAINT, /* CHECK constraint for a table */
 	EXPR_KIND_DOMAIN_CHECK,		/* CHECK constraint for a domain */
 	EXPR_KIND_COLUMN_DEFAULT,	/* default value for a table column */
 	EXPR_KIND_FUNCTION_DEFAULT, /* default parameter value for function */
 	EXPR_KIND_INDEX_EXPRESSION, /* index expression */
 	EXPR_KIND_INDEX_PREDICATE,	/* index predicate */
-	EXPR_KIND_ALTER_COL_TRANSFORM,		/* transform expr in ALTER COLUMN TYPE */
+	EXPR_KIND_ALTER_COL_TRANSFORM,	/* transform expr in ALTER COLUMN TYPE */
 	EXPR_KIND_EXECUTE_PARAMETER,	/* parameter value in EXECUTE */
 	EXPR_KIND_TRIGGER_WHEN,		/* WHEN condition in CREATE TRIGGER */
-	EXPR_KIND_POLICY			/* USING or WITH CHECK expr in policy */
+	EXPR_KIND_POLICY,			/* USING or WITH CHECK expr in policy */
+	EXPR_KIND_PARTITION_EXPRESSION	/* PARTITION BY expression */
 } ParseExprKind;
 
 
@@ -77,8 +80,8 @@ typedef Node *(*PreParseColumnRefHook) (ParseState *pstate, ColumnRef *cref);
 typedef Node *(*PostParseColumnRefHook) (ParseState *pstate, ColumnRef *cref, Node *var);
 typedef Node *(*ParseParamRefHook) (ParseState *pstate, ParamRef *pref);
 typedef Node *(*CoerceParamHook) (ParseState *pstate, Param *param,
-									   Oid targetTypeId, int32 targetTypeMod,
-											  int location);
+								  Oid targetTypeId, int32 targetTypeMod,
+								  int location);
 
 
 /*
@@ -122,15 +125,49 @@ typedef Node *(*CoerceParamHook) (ParseState *pstate, Param *param,
  * p_parent_cte: CommonTableExpr that immediately contains the current query,
  * if any.
  *
+ * p_target_relation: target relation, if query is INSERT, UPDATE, or DELETE.
+ *
+ * p_target_rangetblentry: target relation's entry in the rtable list.
+ *
+ * p_is_insert: true to process assignment expressions like INSERT, false
+ * to process them like UPDATE.  (Note this can change intra-statement, for
+ * cases like INSERT ON CONFLICT UPDATE.)
+ *
  * p_windowdefs: list of WindowDefs representing WINDOW and OVER clauses.
  * We collect these while transforming expressions and then transform them
  * afterwards (so that any resjunk tlist items needed for the sort/group
  * clauses end up at the end of the query tlist).  A WindowDef's location in
  * this list, counting from 1, is the winref number to use to reference it.
+ *
+ * p_expr_kind: kind of expression we're currently parsing, as per enum above;
+ * EXPR_KIND_NONE when not in an expression.
+ *
+ * p_next_resno: next TargetEntry.resno to assign, starting from 1.
+ *
+ * p_multiassign_exprs: partially-processed MultiAssignRef source expressions.
+ *
+ * p_locking_clause: query's FOR UPDATE/FOR SHARE clause, if any.
+ *
+ * p_locked_from_parent: true if parent query level applies FOR UPDATE/SHARE
+ * to this subquery as a whole.
+ *
+ * p_resolve_unknowns: resolve unknown-type SELECT output columns as type TEXT
+ * (this is true by default).
+ *
+ * p_hasAggs, p_hasWindowFuncs, etc: true if we've found any of the indicated
+ * constructs in the query.
+ *
+ * p_last_srf: the set-returning FuncExpr or OpExpr most recently found in
+ * the query, or NULL if none.
+ *
+ * p_pre_columnref_hook, etc: optional parser hook functions for modifying the
+ * interpretation of ColumnRefs and ParamRefs.
+ *
+ * p_ref_hook_state: passthrough state for the parser hook functions.
  */
 struct ParseState
 {
-	struct ParseState *parentParseState;		/* stack link */
+	struct ParseState *parentParseState;	/* stack link */
 	const char *p_sourcetext;	/* source text, or NULL if not available */
 	List	   *p_rtable;		/* range table so far */
 	List	   *p_joinexprs;	/* JoinExprs for RTE_JOIN p_rtable entries */
@@ -138,24 +175,33 @@ struct ParseState
 								 * node's fromlist) */
 	List	   *p_namespace;	/* currently-referenceable RTEs (List of
 								 * ParseNamespaceItem) */
-	bool		p_lateral_active;		/* p_lateral_only items visible? */
+	bool		p_lateral_active;	/* p_lateral_only items visible? */
 	List	   *p_ctenamespace; /* current namespace for common table exprs */
 	List	   *p_future_ctes;	/* common table exprs not yet in namespace */
-	CommonTableExpr *p_parent_cte;		/* this query's containing CTE */
+	CommonTableExpr *p_parent_cte;	/* this query's containing CTE */
+	Relation	p_target_relation;	/* INSERT/UPDATE/DELETE target rel */
+	RangeTblEntry *p_target_rangetblentry;	/* target rel's RTE */
+	bool		p_is_insert;	/* process assignment like INSERT not UPDATE */
 	List	   *p_windowdefs;	/* raw representations of window clauses */
 	ParseExprKind p_expr_kind;	/* what kind of expression we're parsing */
 	int			p_next_resno;	/* next targetlist resno to assign */
 	List	   *p_multiassign_exprs;	/* junk tlist entries for multiassign */
-	List	   *p_locking_clause;		/* raw FOR UPDATE/FOR SHARE info */
-	Node	   *p_value_substitute;		/* what to replace VALUE with, if any */
+	List	   *p_locking_clause;	/* raw FOR UPDATE/FOR SHARE info */
+	bool		p_locked_from_parent;	/* parent has marked this subquery
+										 * with FOR UPDATE/FOR SHARE */
+	bool		p_resolve_unknowns; /* resolve unknown-type SELECT outputs as
+									 * type text */
+
+	QueryEnvironment *p_queryEnv;	/* curr env, incl refs to enclosing env */
+
+	/* Flags telling about things found in the query: */
 	bool		p_hasAggs;
 	bool		p_hasWindowFuncs;
+	bool		p_hasTargetSRFs;
 	bool		p_hasSubLinks;
 	bool		p_hasModifyingCTE;
-	bool		p_is_insert;
-	bool		p_locked_from_parent;
-	Relation	p_target_relation;
-	RangeTblEntry *p_target_rangetblentry;
+
+	Node	   *p_last_srf;		/* most recent set-returning func/op found */
 
 	/*
 	 * Optional hook functions for parser callbacks.  These are null unless
@@ -165,7 +211,7 @@ struct ParseState
 	PostParseColumnRefHook p_post_columnref_hook;
 	ParseParamRefHook p_paramref_hook;
 	CoerceParamHook p_coerce_param_hook;
-	void	   *p_ref_hook_state;		/* common passthrough link for above */
+	void	   *p_ref_hook_state;	/* common passthrough link for above */
 };
 
 /*
@@ -233,4 +279,4 @@ extern ArrayRef *transformArraySubscripts(ParseState *pstate,
 						 Node *assignFrom);
 extern Const *make_const(ParseState *pstate, Value *value, int location);
 
-#endif   /* PARSE_NODE_H */
+#endif							/* PARSE_NODE_H */

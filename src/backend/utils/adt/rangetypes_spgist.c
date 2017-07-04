@@ -25,7 +25,7 @@
  * This implementation only uses the comparison function of the range element
  * datatype, therefore it works for any range type.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -42,13 +42,6 @@
 #include "utils/builtins.h"
 #include "utils/datum.h"
 #include "utils/rangetypes.h"
-
-/* SP-GiST API functions */
-Datum		spg_range_quad_config(PG_FUNCTION_ARGS);
-Datum		spg_range_quad_choose(PG_FUNCTION_ARGS);
-Datum		spg_range_quad_picksplit(PG_FUNCTION_ARGS);
-Datum		spg_range_quad_inner_consistent(PG_FUNCTION_ARGS);
-Datum		spg_range_quad_leaf_consistent(PG_FUNCTION_ARGS);
 
 static int16 getQuadrant(TypeCacheEntry *typcache, RangeType *centroid,
 			RangeType *tst);
@@ -220,7 +213,7 @@ spg_range_quad_picksplit(PG_FUNCTION_ARGS)
 			   *upperBounds;
 
 	typcache = range_get_typcache(fcinfo,
-						  RangeTypeGetOid(DatumGetRangeType(in->datums[0])));
+								  RangeTypeGetOid(DatumGetRangeType(in->datums[0])));
 
 	/* Allocate memory for bounds */
 	lowerBounds = palloc(sizeof(RangeBound) * in->nTuples);
@@ -354,7 +347,7 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 			 */
 			if (strategy != RANGESTRAT_CONTAINS_ELEM)
 				empty = RangeIsEmpty(
-							 DatumGetRangeType(in->scankeys[i].sk_argument));
+									 DatumGetRangeType(in->scankeys[i].sk_argument));
 			else
 				empty = false;
 
@@ -424,7 +417,7 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 		/* This node has a centroid. Fetch it. */
 		centroid = DatumGetRangeType(in->prefixDatum);
 		typcache = range_get_typcache(fcinfo,
-							   RangeTypeGetOid(DatumGetRangeType(centroid)));
+									  RangeTypeGetOid(DatumGetRangeType(centroid)));
 		range_deserialize(typcache, centroid, &centroidLower, &centroidUpper,
 						  &centroidEmpty);
 
@@ -581,7 +574,7 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 					 */
 					cmp = adjacent_inner_consistent(typcache, &lower,
 													&centroidUpper,
-										   prevCentroid ? &prevUpper : NULL);
+													prevCentroid ? &prevUpper : NULL);
 					if (cmp > 0)
 						which1 = (1 << 1) | (1 << 4);
 					else if (cmp < 0)
@@ -597,7 +590,7 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 					 */
 					cmp = adjacent_inner_consistent(typcache, &upper,
 													&centroidLower,
-										   prevCentroid ? &prevLower : NULL);
+													prevCentroid ? &prevLower : NULL);
 					if (cmp > 0)
 						which2 = (1 << 1) | (1 << 2);
 					else if (cmp < 0)
@@ -980,7 +973,7 @@ spg_range_quad_leaf_consistent(PG_FUNCTION_ARGS)
 				break;
 			case RANGESTRAT_CONTAINED_BY:
 				res = range_contained_by_internal(typcache, leafRange,
-												DatumGetRangeType(keyDatum));
+												  DatumGetRangeType(keyDatum));
 				break;
 			case RANGESTRAT_CONTAINS_ELEM:
 				res = range_contains_elem_internal(typcache, leafRange,

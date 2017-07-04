@@ -1,1 +1,6 @@
 # src/template/freebsd
+
+# Prefer unnamed POSIX semaphores if available, unless user overrides choice
+if test x"$PREFERRED_SEMAPHORES" = x"" ; then
+  PREFERRED_SEMAPHORES=UNNAMED_POSIX
+fi

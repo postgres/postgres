@@ -3,7 +3,7 @@
  * foreign.c
  *		  support for foreign-data wrappers, servers and user mappings.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		  src/backend/foreign/foreign.c
@@ -26,10 +26,6 @@
 #include "utils/memutils.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
-
-
-extern Datum pg_options_to_table(PG_FUNCTION_ARGS);
-extern Datum postgresql_fdw_validator(PG_FUNCTION_ARGS);
 
 
 /*
@@ -721,14 +717,14 @@ GetExistingLocalJoinPath(RelOptInfo *joinrel)
 {
 	ListCell   *lc;
 
-	Assert(joinrel->reloptkind == RELOPT_JOINREL);
+	Assert(IS_JOIN_REL(joinrel));
 
 	foreach(lc, joinrel->pathlist)
 	{
 		Path	   *path = (Path *) lfirst(lc);
 		JoinPath   *joinpath = NULL;
 
-		/* Skip parameterised paths. */
+		/* Skip parameterized paths. */
 		if (path->param_info != NULL)
 			continue;
 
@@ -786,7 +782,7 @@ GetExistingLocalJoinPath(RelOptInfo *joinrel)
 			ForeignPath *foreign_path;
 
 			foreign_path = (ForeignPath *) joinpath->outerjoinpath;
-			if (foreign_path->path.parent->reloptkind == RELOPT_JOINREL)
+			if (IS_JOIN_REL(foreign_path->path.parent))
 				joinpath->outerjoinpath = foreign_path->fdw_outerpath;
 		}
 
@@ -795,7 +791,7 @@ GetExistingLocalJoinPath(RelOptInfo *joinrel)
 			ForeignPath *foreign_path;
 
 			foreign_path = (ForeignPath *) joinpath->innerjoinpath;
-			if (foreign_path->path.parent->reloptkind == RELOPT_JOINREL)
+			if (IS_JOIN_REL(foreign_path->path.parent))
 				joinpath->innerjoinpath = foreign_path->fdw_outerpath;
 		}
 

@@ -5,7 +5,7 @@ findoidjoins
 
 This program scans a database and prints oid fields (also reg* fields)
 and the tables they join to.  It is normally used to check the system
-catalog join relationships (shown below for 9.6devel as of 2016-01-16).
+catalog join relationships (shown below for 10devel as of 2017-05-15).
 
 Historically this has been run against an empty database such as template1,
 but there's a problem with that approach: some of the catalogs are empty
@@ -16,7 +16,7 @@ catalogs in interesting ways.
 Note that unexpected matches may indicate bogus entries in system tables;
 don't accept a peculiar match without question.  In particular, a field
 shown as joining to more than one target table is probably messed up.
-In 9.6, the *only* fields that should join to more than one target
+In v10, the *only* fields that should join to more than one target
 table are:
 pg_description.objoid, pg_depend.objid, pg_depend.refobjid,
 pg_shdescription.objoid, pg_shdepend.objid, pg_shdepend.refobjid,
@@ -35,12 +35,28 @@ regression test.  The oidjoins test should be updated after any
 revision in the patterns of cross-links between system tables.
 (Typically we update it at the end of each development cycle.)
 
-NOTE: as of 9.6, make_oidjoins_check produces two bogus join checks:
+NOTE: as of v10, make_oidjoins_check produces two bogus join checks:
 Join pg_catalog.pg_class.relfilenode => pg_catalog.pg_class.oid
 Join pg_catalog.pg_database.datlastsysoid => pg_catalog.pg_database.oid
 These are artifacts and should not be added to the oidjoins regression test.
 You might also get output for pg_shdepend.refobjid and pg_shdescription.objoid,
 neither of which should be added to the regression test.
+
+In short, the procedure is:
+
+1. make installcheck in src/test/regress
+2. cd here, make
+3. ./findoidjoins regression >foj.out
+4. ./make_oidjoins_check foj.out >oidjoins.sql
+5. paste foj.out below, removing the entries reported as duplicative
+   by make_oidjoins_check or described as bogus above
+6. remove bogus tests in oidjoins.sql as per above
+7. copy oidjoins.sql to src/test/regress/sql/,
+   and update oidjoins.out to match.
+8. Review diffs to ensure they correspond to new catalog relationships,
+   then commit.  (Sometimes, a pre-existing catalog relationship might
+   become newly visible here as a result of the regression tests populating
+   a catalog they didn't before.  That's OK too.)
 
 ---------------------------------------------------------------------------
 
@@ -71,6 +87,9 @@ Join pg_catalog.pg_attrdef.adrelid => pg_catalog.pg_class.oid
 Join pg_catalog.pg_attribute.attrelid => pg_catalog.pg_class.oid
 Join pg_catalog.pg_attribute.atttypid => pg_catalog.pg_type.oid
 Join pg_catalog.pg_attribute.attcollation => pg_catalog.pg_collation.oid
+Join pg_catalog.pg_auth_members.roleid => pg_catalog.pg_authid.oid
+Join pg_catalog.pg_auth_members.member => pg_catalog.pg_authid.oid
+Join pg_catalog.pg_auth_members.grantor => pg_catalog.pg_authid.oid
 Join pg_catalog.pg_cast.castsource => pg_catalog.pg_type.oid
 Join pg_catalog.pg_cast.casttarget => pg_catalog.pg_type.oid
 Join pg_catalog.pg_cast.castfunc => pg_catalog.pg_proc.oid
@@ -134,6 +153,7 @@ Join pg_catalog.pg_operator.oprjoin => pg_catalog.pg_proc.oid
 Join pg_catalog.pg_opfamily.opfmethod => pg_catalog.pg_am.oid
 Join pg_catalog.pg_opfamily.opfnamespace => pg_catalog.pg_namespace.oid
 Join pg_catalog.pg_opfamily.opfowner => pg_catalog.pg_authid.oid
+Join pg_catalog.pg_partitioned_table.partrelid => pg_catalog.pg_class.oid
 Join pg_catalog.pg_policy.polrelid => pg_catalog.pg_class.oid
 Join pg_catalog.pg_proc.pronamespace => pg_catalog.pg_namespace.oid
 Join pg_catalog.pg_proc.proowner => pg_catalog.pg_authid.oid
@@ -148,6 +168,8 @@ Join pg_catalog.pg_range.rngsubopc => pg_catalog.pg_opclass.oid
 Join pg_catalog.pg_range.rngcanonical => pg_catalog.pg_proc.oid
 Join pg_catalog.pg_range.rngsubdiff => pg_catalog.pg_proc.oid
 Join pg_catalog.pg_rewrite.ev_class => pg_catalog.pg_class.oid
+Join pg_catalog.pg_sequence.seqrelid => pg_catalog.pg_class.oid
+Join pg_catalog.pg_sequence.seqtypid => pg_catalog.pg_type.oid
 Join pg_catalog.pg_shdepend.refclassid => pg_catalog.pg_class.oid
 Join pg_catalog.pg_shdescription.classoid => pg_catalog.pg_class.oid
 Join pg_catalog.pg_statistic.starelid => pg_catalog.pg_class.oid
@@ -156,6 +178,9 @@ Join pg_catalog.pg_statistic.staop2 => pg_catalog.pg_operator.oid
 Join pg_catalog.pg_statistic.staop3 => pg_catalog.pg_operator.oid
 Join pg_catalog.pg_statistic.staop4 => pg_catalog.pg_operator.oid
 Join pg_catalog.pg_statistic.staop5 => pg_catalog.pg_operator.oid
+Join pg_catalog.pg_statistic_ext.stxrelid => pg_catalog.pg_class.oid
+Join pg_catalog.pg_statistic_ext.stxnamespace => pg_catalog.pg_namespace.oid
+Join pg_catalog.pg_statistic_ext.stxowner => pg_catalog.pg_authid.oid
 Join pg_catalog.pg_tablespace.spcowner => pg_catalog.pg_authid.oid
 Join pg_catalog.pg_transform.trftype => pg_catalog.pg_type.oid
 Join pg_catalog.pg_transform.trflang => pg_catalog.pg_language.oid

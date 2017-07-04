@@ -44,6 +44,49 @@ CREATE INDEX foo_idx on testschema.foo(i) TABLESPACE regress_tblspace;
 SELECT relname, spcname FROM pg_catalog.pg_tablespace t, pg_catalog.pg_class c
     where c.reltablespace = t.oid AND c.relname = 'foo_idx';
 
+-- check that default_tablespace doesn't affect ALTER TABLE index rebuilds
+CREATE TABLE testschema.test_default_tab(id bigint) TABLESPACE regress_tblspace;
+INSERT INTO testschema.test_default_tab VALUES (1);
+CREATE INDEX test_index1 on testschema.test_default_tab (id);
+CREATE INDEX test_index2 on testschema.test_default_tab (id) TABLESPACE regress_tblspace;
+\d testschema.test_index1
+\d testschema.test_index2
+-- use a custom tablespace for default_tablespace
+SET default_tablespace TO regress_tblspace;
+-- tablespace should not change if no rewrite
+ALTER TABLE testschema.test_default_tab ALTER id TYPE bigint;
+\d testschema.test_index1
+\d testschema.test_index2
+SELECT * FROM testschema.test_default_tab;
+-- tablespace should not change even if there is an index rewrite
+ALTER TABLE testschema.test_default_tab ALTER id TYPE int;
+\d testschema.test_index1
+\d testschema.test_index2
+SELECT * FROM testschema.test_default_tab;
+-- now use the default tablespace for default_tablespace
+SET default_tablespace TO '';
+-- tablespace should not change if no rewrite
+ALTER TABLE testschema.test_default_tab ALTER id TYPE int;
+\d testschema.test_index1
+\d testschema.test_index2
+-- tablespace should not change even if there is an index rewrite
+ALTER TABLE testschema.test_default_tab ALTER id TYPE bigint;
+\d testschema.test_index1
+\d testschema.test_index2
+DROP TABLE testschema.test_default_tab;
+
+-- check that default_tablespace affects index additions in ALTER TABLE
+CREATE TABLE testschema.test_tab(id int) TABLESPACE regress_tblspace;
+INSERT INTO testschema.test_tab VALUES (1);
+SET default_tablespace TO regress_tblspace;
+ALTER TABLE testschema.test_tab ADD CONSTRAINT test_tab_unique UNIQUE (id);
+SET default_tablespace TO '';
+ALTER TABLE testschema.test_tab ADD CONSTRAINT test_tab_pkey PRIMARY KEY (id);
+\d testschema.test_tab_unique
+\d testschema.test_tab_pkey
+SELECT * FROM testschema.test_tab;
+DROP TABLE testschema.test_tab;
+
 -- let's try moving a table from one place to another
 CREATE TABLE testschema.atable AS VALUES (1), (2);
 CREATE UNIQUE INDEX anindex ON testschema.atable(column1);
@@ -66,11 +109,18 @@ DROP TABLESPACE regress_tblspace;
 
 CREATE ROLE regress_tablespace_user1 login;
 CREATE ROLE regress_tablespace_user2 login;
+GRANT USAGE ON SCHEMA testschema TO regress_tablespace_user2;
 
 ALTER TABLESPACE regress_tblspace OWNER TO regress_tablespace_user1;
 
+CREATE TABLE testschema.tablespace_acl (c int);
+-- new owner lacks permission to create this index from scratch
+CREATE INDEX k ON testschema.tablespace_acl (c) TABLESPACE regress_tblspace;
+ALTER TABLE testschema.tablespace_acl OWNER TO regress_tablespace_user2;
+
 SET SESSION ROLE regress_tablespace_user2;
 CREATE TABLE tablespace_table (i int) TABLESPACE regress_tblspace; -- fail
+ALTER TABLE testschema.tablespace_acl ALTER c TYPE bigint;
 RESET ROLE;
 
 ALTER TABLESPACE regress_tblspace RENAME TO regress_tblspace_renamed;

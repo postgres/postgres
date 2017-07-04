@@ -4,7 +4,7 @@
  *		Tablespace management commands (create/drop tablespace).
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/commands/tablespace.h
@@ -63,4 +63,4 @@ extern void tblspc_redo(XLogReaderState *rptr);
 extern void tblspc_desc(StringInfo buf, XLogReaderState *rptr);
 extern const char *tblspc_identify(uint8 info);
 
-#endif   /* TABLESPACE_H */
+#endif							/* TABLESPACE_H */

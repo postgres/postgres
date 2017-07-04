@@ -4,7 +4,7 @@
  *	  internal structures for hash joins
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/executor/hashjoin.h
@@ -63,10 +63,10 @@
 
 typedef struct HashJoinTupleData
 {
-	struct HashJoinTupleData *next;		/* link to next tuple in same bucket */
+	struct HashJoinTupleData *next; /* link to next tuple in same bucket */
 	uint32		hashvalue;		/* tuple's hash code */
 	/* Tuple data, in MinimalTuple format, follows on a MAXALIGN boundary */
-}	HashJoinTupleData;
+}			HashJoinTupleData;
 
 #define HJTUPLE_OVERHEAD  MAXALIGN(sizeof(HashJoinTupleData))
 #define HJTUPLE_MINTUPLE(hjtup)  \
@@ -116,7 +116,7 @@ typedef struct HashMemoryChunkData
 										 * list) */
 
 	char		data[FLEXIBLE_ARRAY_MEMBER];	/* buffer allocated at the end */
-}	HashMemoryChunkData;
+}			HashMemoryChunkData;
 
 typedef struct HashMemoryChunkData *HashMemoryChunk;
 
@@ -128,9 +128,8 @@ typedef struct HashJoinTableData
 	int			nbuckets;		/* # buckets in the in-memory hash table */
 	int			log2_nbuckets;	/* its log2 (nbuckets must be a power of 2) */
 
-	int			nbuckets_original;		/* # buckets when starting the first
-										 * hash */
-	int			nbuckets_optimal;		/* optimal # buckets (per batch) */
+	int			nbuckets_original;	/* # buckets when starting the first hash */
+	int			nbuckets_optimal;	/* optimal # buckets (per batch) */
 	int			log2_nbuckets_optimal;	/* log2(nbuckets_optimal) */
 
 	/* buckets[i] is head of list of tuples in i'th in-memory bucket */
@@ -179,13 +178,13 @@ typedef struct HashJoinTableData
 	Size		spaceAllowed;	/* upper limit for space used */
 	Size		spacePeak;		/* peak space used */
 	Size		spaceUsedSkew;	/* skew hash table's current space usage */
-	Size		spaceAllowedSkew;		/* upper limit for skew hashtable */
+	Size		spaceAllowedSkew;	/* upper limit for skew hashtable */
 
 	MemoryContext hashCxt;		/* context for whole-hash-join storage */
 	MemoryContext batchCxt;		/* context for this-batch-only storage */
 
 	/* used for dense allocation of tuples (into linked chunks) */
 	HashMemoryChunk chunks;		/* one list for the whole batch */
-}	HashJoinTableData;
+}			HashJoinTableData;
 
-#endif   /* HASHJOIN_H */
+#endif							/* HASHJOIN_H */

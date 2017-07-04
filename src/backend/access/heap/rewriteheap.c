@@ -92,7 +92,7 @@
  * heap's TOAST table will go through the normal bufmgr.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
@@ -119,6 +119,8 @@
 
 #include "lib/ilist.h"
 
+#include "pgstat.h"
+
 #include "replication/logical.h"
 #include "replication/slot.h"
 
@@ -144,23 +146,23 @@ typedef struct RewriteStateData
 	BlockNumber rs_blockno;		/* block where page will go */
 	bool		rs_buffer_valid;	/* T if any tuples in buffer */
 	bool		rs_use_wal;		/* must we WAL-log inserts? */
-	bool		rs_logical_rewrite;		/* do we need to do logical rewriting */
-	TransactionId rs_oldest_xmin;		/* oldest xmin used by caller to
-										 * determine tuple visibility */
-	TransactionId rs_freeze_xid;/* Xid that will be used as freeze cutoff
-								 * point */
-	TransactionId rs_logical_xmin;		/* Xid that will be used as cutoff
-										 * point for logical rewrites */
-	MultiXactId rs_cutoff_multi;/* MultiXactId that will be used as cutoff
-								 * point for multixacts */
+	bool		rs_logical_rewrite; /* do we need to do logical rewriting */
+	TransactionId rs_oldest_xmin;	/* oldest xmin used by caller to determine
+									 * tuple visibility */
+	TransactionId rs_freeze_xid;	/* Xid that will be used as freeze cutoff
+									 * point */
+	TransactionId rs_logical_xmin;	/* Xid that will be used as cutoff point
+									 * for logical rewrites */
+	MultiXactId rs_cutoff_multi;	/* MultiXactId that will be used as cutoff
+									 * point for multixacts */
 	MemoryContext rs_cxt;		/* for hash tables and entries and tuples in
 								 * them */
 	XLogRecPtr	rs_begin_lsn;	/* XLogInsertLsn when starting the rewrite */
-	HTAB	   *rs_unresolved_tups;		/* unmatched A tuples */
-	HTAB	   *rs_old_new_tid_map;		/* unmatched B tuples */
+	HTAB	   *rs_unresolved_tups; /* unmatched A tuples */
+	HTAB	   *rs_old_new_tid_map; /* unmatched B tuples */
 	HTAB	   *rs_logical_mappings;	/* logical remapping files */
-	uint32		rs_num_rewrite_mappings;		/* # in memory mappings */
-}	RewriteStateData;
+	uint32		rs_num_rewrite_mappings;	/* # in memory mappings */
+}			RewriteStateData;
 
 /*
  * The lookup keys for the hash tables are tuple TID and xmin (we must check
@@ -209,13 +211,13 @@ typedef struct RewriteMappingFile
 } RewriteMappingFile;
 
 /*
- * A single In-Memeory logical rewrite mapping, hanging of
+ * A single In-Memory logical rewrite mapping, hanging off
  * RewriteMappingFile->mappings.
  */
 typedef struct RewriteMappingDataEntry
 {
-	LogicalRewriteMappingData map;		/* map between old and new location of
-										 * the tuple */
+	LogicalRewriteMappingData map;	/* map between old and new location of the
+									 * tuple */
 	dlist_node	node;
 } RewriteMappingDataEntry;
 
@@ -258,9 +260,7 @@ begin_heap_rewrite(Relation old_heap, Relation new_heap, TransactionId oldest_xm
 	 */
 	rw_cxt = AllocSetContextCreate(CurrentMemoryContext,
 								   "Table rewrite",
-								   ALLOCSET_DEFAULT_MINSIZE,
-								   ALLOCSET_DEFAULT_INITSIZE,
-								   ALLOCSET_DEFAULT_MAXSIZE);
+								   ALLOCSET_DEFAULT_SIZES);
 	old_cxt = MemoryContextSwitchTo(rw_cxt);
 
 	/* Create and fill in the state struct */
@@ -655,7 +655,7 @@ raw_heap_insert(RewriteState state, HeapTuple tup)
 	else
 		heaptup = tup;
 
-	len = MAXALIGN(heaptup->t_len);		/* be conservative */
+	len = MAXALIGN(heaptup->t_len); /* be conservative */
 
 	/*
 	 * If we're gonna fail for oversize tuple, do it right away
@@ -918,7 +918,8 @@ logical_heap_rewrite_flush_mappings(RewriteState state)
 		 * Note that we deviate from the usual WAL coding practices here,
 		 * check the above "Logical rewrite support" comment for reasoning.
 		 */
-		written = FileWrite(src->vfd, waldata_start, len);
+		written = FileWrite(src->vfd, waldata_start, len,
+							WAIT_EVENT_LOGICAL_REWRITE_WRITE);
 		if (written != len)
 			ereport(ERROR,
 					(errcode_for_file_access(),
@@ -959,7 +960,7 @@ logical_end_heap_rewrite(RewriteState state)
 	hash_seq_init(&seq_status, state->rs_logical_mappings);
 	while ((src = (RewriteMappingFile *) hash_seq_search(&seq_status)) != NULL)
 	{
-		if (FileSync(src->vfd) != 0)
+		if (FileSync(src->vfd, WAIT_EVENT_LOGICAL_REWRITE_SYNC) != 0)
 			ereport(ERROR,
 					(errcode_for_file_access(),
 					 errmsg("could not fsync file \"%s\": %m", src->path)));
@@ -1143,11 +1144,13 @@ heap_xlog_logical_rewrite(XLogReaderState *r)
 	 * Truncate all data that's not guaranteed to have been safely fsynced (by
 	 * previous record or by the last checkpoint).
 	 */
+	pgstat_report_wait_start(WAIT_EVENT_LOGICAL_REWRITE_TRUNCATE);
 	if (ftruncate(fd, xlrec->offset) != 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not truncate file \"%s\" to %u: %m",
 						path, (uint32) xlrec->offset)));
+	pgstat_report_wait_end();
 
 	/* now seek to the position we want to write our data to */
 	if (lseek(fd, xlrec->offset, SEEK_SET) != xlrec->offset)
@@ -1161,20 +1164,24 @@ heap_xlog_logical_rewrite(XLogReaderState *r)
 	len = xlrec->num_mappings * sizeof(LogicalRewriteMappingData);
 
 	/* write out tail end of mapping file (again) */
+	pgstat_report_wait_start(WAIT_EVENT_LOGICAL_REWRITE_MAPPING_WRITE);
 	if (write(fd, data, len) != len)
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not write to file \"%s\": %m", path)));
+	pgstat_report_wait_end();
 
 	/*
 	 * Now fsync all previously written data. We could improve things and only
 	 * do this for the last write to a file, but the required bookkeeping
 	 * doesn't seem worth the trouble.
 	 */
+	pgstat_report_wait_start(WAIT_EVENT_LOGICAL_REWRITE_MAPPING_SYNC);
 	if (pg_fsync(fd) != 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not fsync file \"%s\": %m", path)));
+	pgstat_report_wait_end();
 
 	CloseTransientFile(fd);
 }
@@ -1196,7 +1203,7 @@ CheckPointLogicalRewriteHeap(void)
 	XLogRecPtr	redo;
 	DIR		   *mappings_dir;
 	struct dirent *mapping_de;
-	char		path[MAXPGPATH];
+	char		path[MAXPGPATH + 20];
 
 	/*
 	 * We start of with a minimum of the last redo pointer. No new decoding
@@ -1227,7 +1234,7 @@ CheckPointLogicalRewriteHeap(void)
 			strcmp(mapping_de->d_name, "..") == 0)
 			continue;
 
-		snprintf(path, MAXPGPATH, "pg_logical/mappings/%s", mapping_de->d_name);
+		snprintf(path, sizeof(path), "pg_logical/mappings/%s", mapping_de->d_name);
 		if (lstat(path, &statbuf) == 0 && !S_ISREG(statbuf.st_mode))
 			continue;
 
@@ -1268,10 +1275,12 @@ CheckPointLogicalRewriteHeap(void)
 			 * changed or have only been created since the checkpoint's start,
 			 * but it's currently not deemed worth the effort.
 			 */
-			else if (pg_fsync(fd) != 0)
+			pgstat_report_wait_start(WAIT_EVENT_LOGICAL_REWRITE_CHECKPOINT_SYNC);
+			if (pg_fsync(fd) != 0)
 				ereport(ERROR,
 						(errcode_for_file_access(),
 						 errmsg("could not fsync file \"%s\": %m", path)));
+			pgstat_report_wait_end();
 			CloseTransientFile(fd);
 		}
 	}

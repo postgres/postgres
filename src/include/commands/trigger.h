@@ -3,7 +3,7 @@
  * trigger.h
  *	  Declarations for trigger handling.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/commands/trigger.h
@@ -37,7 +37,54 @@ typedef struct TriggerData
 	Trigger    *tg_trigger;
 	Buffer		tg_trigtuplebuf;
 	Buffer		tg_newtuplebuf;
+	Tuplestorestate *tg_oldtable;
+	Tuplestorestate *tg_newtable;
 } TriggerData;
+
+/*
+ * The state for capturing old and new tuples into transition tables for a
+ * single ModifyTable node.
+ */
+typedef struct TransitionCaptureState
+{
+	/*
+	 * Is there at least one trigger specifying each transition relation on
+	 * the relation explicitly named in the DML statement or COPY command?
+	 */
+	bool		tcs_delete_old_table;
+	bool		tcs_update_old_table;
+	bool		tcs_update_new_table;
+	bool		tcs_insert_new_table;
+
+	/*
+	 * For UPDATE and DELETE, AfterTriggerSaveEvent may need to convert the
+	 * new and old tuples from a child table's format to the format of the
+	 * relation named in a query so that it is compatible with the transition
+	 * tuplestores.
+	 */
+	TupleConversionMap *tcs_map;
+
+	/*
+	 * For INSERT and COPY, it would be wasteful to convert tuples from child
+	 * format to parent format after they have already been converted in the
+	 * opposite direction during routing.  In that case we bypass conversion
+	 * and allow the inserting code (copy.c and nodeModifyTable.c) to provide
+	 * the original tuple directly.
+	 */
+	HeapTuple	tcs_original_insert_tuple;
+
+	/*
+	 * The tuplestores backing the transition tables.  We use separate
+	 * tuplestores for INSERT and UPDATE, because INSERT ... ON CONFLICT
+	 * ... DO UPDATE causes INSERT and UPDATE triggers to fire and needs a way
+	 * to keep track of the new tuple images resulting from the two cases
+	 * separately.  We only need a single old image tuplestore, because there
+	 * is no statement that can both update and delete at the same time.
+	 */
+	Tuplestorestate *tcs_old_tuplestore; /* for DELETE and UPDATE old images */
+	Tuplestorestate *tcs_insert_tuplestore; /* for INSERT new images */
+	Tuplestorestate *tcs_update_tuplestore; /* for UPDATE new images */
+} TransitionCaptureState;
 
 /*
  * TriggerEvent bit flags
@@ -125,26 +172,33 @@ extern void RelationBuildTriggers(Relation relation);
 
 extern TriggerDesc *CopyTriggerDesc(TriggerDesc *trigdesc);
 
+extern const char *FindTriggerIncompatibleWithInheritance(TriggerDesc *trigdesc);
+extern TransitionCaptureState *MakeTransitionCaptureState(TriggerDesc *trigdesc);
+extern void DestroyTransitionCaptureState(TransitionCaptureState *tcs);
+
 extern void FreeTriggerDesc(TriggerDesc *trigdesc);
 
 extern void ExecBSInsertTriggers(EState *estate,
 					 ResultRelInfo *relinfo);
 extern void ExecASInsertTriggers(EState *estate,
-					 ResultRelInfo *relinfo);
+					 ResultRelInfo *relinfo,
+					 TransitionCaptureState *transition_capture);
 extern TupleTableSlot *ExecBRInsertTriggers(EState *estate,
 					 ResultRelInfo *relinfo,
 					 TupleTableSlot *slot);
 extern void ExecARInsertTriggers(EState *estate,
 					 ResultRelInfo *relinfo,
 					 HeapTuple trigtuple,
-					 List *recheckIndexes);
+					 List *recheckIndexes,
+					 TransitionCaptureState *transition_capture);
 extern TupleTableSlot *ExecIRInsertTriggers(EState *estate,
 					 ResultRelInfo *relinfo,
 					 TupleTableSlot *slot);
 extern void ExecBSDeleteTriggers(EState *estate,
 					 ResultRelInfo *relinfo);
 extern void ExecASDeleteTriggers(EState *estate,
-					 ResultRelInfo *relinfo);
+					 ResultRelInfo *relinfo,
+					 TransitionCaptureState *transition_capture);
 extern bool ExecBRDeleteTriggers(EState *estate,
 					 EPQState *epqstate,
 					 ResultRelInfo *relinfo,
@@ -153,14 +207,16 @@ extern bool ExecBRDeleteTriggers(EState *estate,
 extern void ExecARDeleteTriggers(EState *estate,
 					 ResultRelInfo *relinfo,
 					 ItemPointer tupleid,
-					 HeapTuple fdw_trigtuple);
+					 HeapTuple fdw_trigtuple,
+					 TransitionCaptureState *transition_capture);
 extern bool ExecIRDeleteTriggers(EState *estate,
 					 ResultRelInfo *relinfo,
 					 HeapTuple trigtuple);
 extern void ExecBSUpdateTriggers(EState *estate,
 					 ResultRelInfo *relinfo);
 extern void ExecASUpdateTriggers(EState *estate,
-					 ResultRelInfo *relinfo);
+					 ResultRelInfo *relinfo,
+					 TransitionCaptureState *transition_capture);
 extern TupleTableSlot *ExecBRUpdateTriggers(EState *estate,
 					 EPQState *epqstate,
 					 ResultRelInfo *relinfo,
@@ -172,7 +228,8 @@ extern void ExecARUpdateTriggers(EState *estate,
 					 ItemPointer tupleid,
 					 HeapTuple fdw_trigtuple,
 					 HeapTuple newtuple,
-					 List *recheckIndexes);
+					 List *recheckIndexes,
+					 TransitionCaptureState *transition_capture);
 extern TupleTableSlot *ExecIRUpdateTriggers(EState *estate,
 					 ResultRelInfo *relinfo,
 					 HeapTuple trigtuple,
@@ -210,6 +267,4 @@ extern bool RI_Initial_Check(Trigger *trigger,
 
 extern int	RI_FKey_trigger_type(Oid tgfoid);
 
-extern Datum pg_trigger_depth(PG_FUNCTION_ARGS);
-
-#endif   /* TRIGGER_H */
+#endif							/* TRIGGER_H */

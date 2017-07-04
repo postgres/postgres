@@ -1,9 +1,9 @@
 /*-------------------------------------------------------------------------
  *
  * transam.c
- *	  postgres transaction log interface routines
+ *	  postgres transaction (commit) log interface routines
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -119,7 +119,7 @@ TransactionLogFetch(TransactionId transactionId)
  *		True iff transaction associated with the identifier did commit.
  *
  * Note:
- *		Assumes transaction identifier is valid.
+ *		Assumes transaction identifier is valid and exists in clog.
  */
 bool							/* true if given transaction committed */
 TransactionIdDidCommit(TransactionId transactionId)
@@ -175,7 +175,7 @@ TransactionIdDidCommit(TransactionId transactionId)
  *		True iff transaction associated with the identifier did abort.
  *
  * Note:
- *		Assumes transaction identifier is valid.
+ *		Assumes transaction identifier is valid and exists in clog.
  */
 bool							/* true if given transaction aborted */
 TransactionIdDidAbort(TransactionId transactionId)
@@ -224,7 +224,7 @@ TransactionIdDidAbort(TransactionId transactionId)
  *		True iff transaction associated with the identifier is currently
  *		known to have either committed or aborted.
  *
- * This does NOT look into pg_clog but merely probes our local cache
+ * This does NOT look into pg_xact but merely probes our local cache
  * (and so it's not named TransactionIdDidComplete, which would be the
  * appropriate name for a function that worked that way).  The intended
  * use is just to short-circuit TransactionIdIsInProgress calls when doing

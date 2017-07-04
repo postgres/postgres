@@ -14,19 +14,19 @@ my $expected_out = "$srcdir/$subdir/expected.out";
 my $regress_out = "regress.out";
 
 # open input file first, so possible error isn't sent to redirected STDERR
-open(REGRESS_IN, "<", $regress_in)
+open(my $regress_in_fh, "<", $regress_in)
   or die "can't open $regress_in for reading: $!";
 
 # save STDOUT/ERR and redirect both to regress.out
-open(OLDOUT, ">&", \*STDOUT) or die "can't dup STDOUT: $!";
-open(OLDERR, ">&", \*STDERR) or die "can't dup STDERR: $!";
+open(my $oldout_fh, ">&", \*STDOUT) or die "can't dup STDOUT: $!";
+open(my $olderr_fh, ">&", \*STDERR) or die "can't dup STDERR: $!";
 
 open(STDOUT, ">", $regress_out)
   or die "can't open $regress_out for writing: $!";
 open(STDERR, ">&", \*STDOUT) or die "can't dup STDOUT: $!";
 
 # read lines from regress.in and run uri-regress on them
-while (<REGRESS_IN>)
+while (<$regress_in_fh>)
 {
 	chomp;
 	print "trying $_\n";
@@ -35,11 +35,12 @@ while (<REGRESS_IN>)
 }
 
 # restore STDOUT/ERR so we can print the outcome to the user
-open(STDERR, ">&", \*OLDERR) or die; # can't complain as STDERR is still duped
-open(STDOUT, ">&", \*OLDOUT) or die "can't restore STDOUT: $!";
+open(STDERR, ">&", $olderr_fh)
+  or die;    # can't complain as STDERR is still duped
+open(STDOUT, ">&", $oldout_fh) or die "can't restore STDOUT: $!";
 
 # just in case
-close REGRESS_IN;
+close $regress_in_fh;
 
 my $diff_status = system(
 	"diff -c \"$srcdir/$subdir/expected.out\" regress.out >regress.diff");

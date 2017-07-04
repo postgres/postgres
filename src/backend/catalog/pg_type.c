@@ -3,7 +3,7 @@
  * pg_type.c
  *	  routines to support manipulation of the pg_type relation
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -79,7 +79,7 @@ TypeShellMake(const char *typeName, Oid typeNamespace, Oid ownerId)
 	for (i = 0; i < Natts_pg_type; ++i)
 	{
 		nulls[i] = false;
-		values[i] = (Datum) NULL;		/* redundant, but safe */
+		values[i] = (Datum) NULL;	/* redundant, but safe */
 	}
 
 	/*
@@ -133,7 +133,7 @@ TypeShellMake(const char *typeName, Oid typeNamespace, Oid ownerId)
 		if (!OidIsValid(binary_upgrade_next_pg_type_oid))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			errmsg("pg_type OID value not set when in binary upgrade mode")));
+					 errmsg("pg_type OID value not set when in binary upgrade mode")));
 
 		HeapTupleSetOid(tup, binary_upgrade_next_pg_type_oid);
 		binary_upgrade_next_pg_type_oid = InvalidOid;
@@ -142,9 +142,7 @@ TypeShellMake(const char *typeName, Oid typeNamespace, Oid ownerId)
 	/*
 	 * insert the tuple in the relation and get the tuple's oid.
 	 */
-	typoid = simple_heap_insert(pg_type_desc, tup);
-
-	CatalogUpdateIndexes(pg_type_desc, tup);
+	typoid = CatalogTupleInsert(pg_type_desc, tup);
 
 	/*
 	 * Create dependencies.  We can/must skip this in bootstrap mode.
@@ -216,7 +214,7 @@ TypeCreate(Oid newTypeOid,
 		   bool isImplicitArray,
 		   Oid arrayType,
 		   Oid baseType,
-		   const char *defaultTypeValue,		/* human readable rep */
+		   const char *defaultTypeValue,	/* human readable rep */
 		   char *defaultTypeBin,	/* cooked rep */
 		   bool passedByValue,
 		   char alignment,
@@ -298,8 +296,8 @@ TypeCreate(Oid newTypeOid,
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-			   errmsg("internal size %d is invalid for passed-by-value type",
-					  internalSize)));
+					 errmsg("internal size %d is invalid for passed-by-value type",
+							internalSize)));
 	}
 	else
 	{
@@ -307,14 +305,14 @@ TypeCreate(Oid newTypeOid,
 		if (internalSize == -1 && !(alignment == 'i' || alignment == 'd'))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-			   errmsg("alignment \"%c\" is invalid for variable-length type",
-					  alignment)));
+					 errmsg("alignment \"%c\" is invalid for variable-length type",
+							alignment)));
 		/* cstring must have char alignment */
 		if (internalSize == -2 && !(alignment == 'c'))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-			   errmsg("alignment \"%c\" is invalid for variable-length type",
-					  alignment)));
+					 errmsg("alignment \"%c\" is invalid for variable-length type",
+							alignment)));
 	}
 
 	/* Only varlena types can be toasted */
@@ -430,7 +428,7 @@ TypeCreate(Oid newTypeOid,
 								nulls,
 								replaces);
 
-		simple_heap_update(pg_type_desc, &tup->t_self, tup);
+		CatalogTupleUpdate(pg_type_desc, &tup->t_self, tup);
 
 		typeObjectId = HeapTupleGetOid(tup);
 
@@ -458,11 +456,8 @@ TypeCreate(Oid newTypeOid,
 		}
 		/* else allow system to assign oid */
 
-		typeObjectId = simple_heap_insert(pg_type_desc, tup);
+		typeObjectId = CatalogTupleInsert(pg_type_desc, tup);
 	}
-
-	/* Update indexes */
-	CatalogUpdateIndexes(pg_type_desc, tup);
 
 	/*
 	 * Create dependencies.  We can/must skip this in bootstrap mode.
@@ -516,8 +511,8 @@ TypeCreate(Oid newTypeOid,
 void
 GenerateTypeDependencies(Oid typeNamespace,
 						 Oid typeObjectId,
-						 Oid relationOid,		/* only for relation rowtypes */
-						 char relationKind,		/* ditto */
+						 Oid relationOid,	/* only for relation rowtypes */
+						 char relationKind, /* ditto */
 						 Oid owner,
 						 Oid inputProcedure,
 						 Oid outputProcedure,
@@ -657,7 +652,7 @@ GenerateTypeDependencies(Oid typeNamespace,
 		referenced.objectId = elementType;
 		referenced.objectSubId = 0;
 		recordDependencyOn(&myself, &referenced,
-				  isImplicitArray ? DEPENDENCY_INTERNAL : DEPENDENCY_NORMAL);
+						   isImplicitArray ? DEPENDENCY_INTERNAL : DEPENDENCY_NORMAL);
 	}
 
 	/* Normal dependency from a domain to its base type. */
@@ -700,6 +695,7 @@ RenameTypeInternal(Oid typeOid, const char *newTypeName, Oid typeNamespace)
 	HeapTuple	tuple;
 	Form_pg_type typ;
 	Oid			arrayOid;
+	Oid			oldTypeOid;
 
 	pg_type_desc = heap_open(TypeRelationId, RowExclusiveLock);
 
@@ -713,29 +709,45 @@ RenameTypeInternal(Oid typeOid, const char *newTypeName, Oid typeNamespace)
 
 	arrayOid = typ->typarray;
 
-	/* Just to give a more friendly error than unique-index violation */
-	if (SearchSysCacheExists2(TYPENAMENSP,
-							  CStringGetDatum(newTypeName),
-							  ObjectIdGetDatum(typeNamespace)))
-		ereport(ERROR,
-				(errcode(ERRCODE_DUPLICATE_OBJECT),
-				 errmsg("type \"%s\" already exists", newTypeName)));
+	/* Check for a conflicting type name. */
+	oldTypeOid = GetSysCacheOid2(TYPENAMENSP,
+								 CStringGetDatum(newTypeName),
+								 ObjectIdGetDatum(typeNamespace));
+
+	/*
+	 * If there is one, see if it's an autogenerated array type, and if so
+	 * rename it out of the way.  (But we must skip that for a shell type
+	 * because moveArrayTypeName will do the wrong thing in that case.)
+	 * Otherwise, we can at least give a more friendly error than unique-index
+	 * violation.
+	 */
+	if (OidIsValid(oldTypeOid))
+	{
+		if (get_typisdefined(oldTypeOid) &&
+			moveArrayTypeName(oldTypeOid, newTypeName, typeNamespace))
+			 /* successfully dodged the problem */ ;
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_DUPLICATE_OBJECT),
+					 errmsg("type \"%s\" already exists", newTypeName)));
+	}
 
 	/* OK, do the rename --- tuple is a copy, so OK to scribble on it */
 	namestrcpy(&(typ->typname), newTypeName);
 
-	simple_heap_update(pg_type_desc, &tuple->t_self, tuple);
-
-	/* update the system catalog indexes */
-	CatalogUpdateIndexes(pg_type_desc, tuple);
+	CatalogTupleUpdate(pg_type_desc, &tuple->t_self, tuple);
 
 	InvokeObjectPostAlterHook(TypeRelationId, typeOid, 0);
 
 	heap_freetuple(tuple);
 	heap_close(pg_type_desc, RowExclusiveLock);
 
-	/* If the type has an array type, recurse to handle that */
-	if (OidIsValid(arrayOid))
+	/*
+	 * If the type has an array type, recurse to handle that.  But we don't
+	 * need to do anything more if we already renamed that array type above
+	 * (which would happen when, eg, renaming "foo" to "_foo").
+	 */
+	if (OidIsValid(arrayOid) && arrayOid != oldTypeOid)
 	{
 		char	   *arrname = makeArrayTypeName(newTypeName, typeNamespace);
 

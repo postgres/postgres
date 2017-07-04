@@ -28,7 +28,7 @@ The current implementation of GiST supports:
 
 The support for concurrency implemented in PostgreSQL was developed based on
 the paper "Access Methods for Next-Generation Database Systems" by
-Marcel Kornaker:
+Marcel Kornacker:
 
     http://www.sai.msu.su/~megera/postgres/gist/papers/concurrency/access-methods-for-next-generation.pdf.gz
 

@@ -26,7 +26,7 @@
  * restart needs to be forced.)
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
@@ -49,6 +49,7 @@
 #include "postmaster/bgwriter.h"
 #include "replication/syncrep.h"
 #include "storage/bufmgr.h"
+#include "storage/condition_variable.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
 #include "storage/lwlock.h"
@@ -115,7 +116,7 @@ typedef struct
 
 typedef struct
 {
-	pid_t		checkpointer_pid;		/* PID (0 if not started) */
+	pid_t		checkpointer_pid;	/* PID (0 if not started) */
 
 	slock_t		ckpt_lck;		/* protects all the ckpt_* fields */
 
@@ -125,8 +126,8 @@ typedef struct
 
 	int			ckpt_flags;		/* checkpoint flags, as defined in xlog.h */
 
-	uint32		num_backend_writes;		/* counts user backend buffer writes */
-	uint32		num_backend_fsync;		/* counts user backend fsync calls */
+	uint32		num_backend_writes; /* counts user backend buffer writes */
+	uint32		num_backend_fsync;	/* counts user backend fsync calls */
 
 	int			num_requests;	/* current # of requests */
 	int			max_requests;	/* allocated array size */
@@ -204,15 +205,14 @@ CheckpointerMain(void)
 	 * want to wait for the backends to exit, whereupon the postmaster will
 	 * tell us it's okay to shut down (via SIGUSR2).
 	 */
-	pqsignal(SIGHUP, ChkptSigHupHandler);		/* set flag to read config
-												 * file */
-	pqsignal(SIGINT, ReqCheckpointHandler);		/* request checkpoint */
+	pqsignal(SIGHUP, ChkptSigHupHandler);	/* set flag to read config file */
+	pqsignal(SIGINT, ReqCheckpointHandler); /* request checkpoint */
 	pqsignal(SIGTERM, SIG_IGN); /* ignore SIGTERM */
 	pqsignal(SIGQUIT, chkpt_quickdie);	/* hard crash time */
 	pqsignal(SIGALRM, SIG_IGN);
 	pqsignal(SIGPIPE, SIG_IGN);
 	pqsignal(SIGUSR1, chkpt_sigusr1_handler);
-	pqsignal(SIGUSR2, ReqShutdownHandler);		/* request shutdown */
+	pqsignal(SIGUSR2, ReqShutdownHandler);	/* request shutdown */
 
 	/*
 	 * Reset some signals that are accepted by postmaster but not here
@@ -245,9 +245,7 @@ CheckpointerMain(void)
 	 */
 	checkpointer_context = AllocSetContextCreate(TopMemoryContext,
 												 "Checkpointer",
-												 ALLOCSET_DEFAULT_MINSIZE,
-												 ALLOCSET_DEFAULT_INITSIZE,
-												 ALLOCSET_DEFAULT_MAXSIZE);
+												 ALLOCSET_DEFAULT_SIZES);
 	MemoryContextSwitchTo(checkpointer_context);
 
 	/*
@@ -273,6 +271,7 @@ CheckpointerMain(void)
 		 * files.
 		 */
 		LWLockReleaseAll();
+		ConditionVariableCancelSleep();
 		pgstat_report_wait_end();
 		AbortBufferIO();
 		UnlockBuffers();
@@ -463,7 +462,7 @@ CheckpointerMain(void)
 				elapsed_secs < CheckPointWarning)
 				ereport(LOG,
 						(errmsg_plural("checkpoints are occurring too frequently (%d second apart)",
-				"checkpoints are occurring too frequently (%d seconds apart)",
+									   "checkpoints are occurring too frequently (%d seconds apart)",
 									   elapsed_secs,
 									   elapsed_secs),
 						 errhint("Consider increasing the configuration parameter \"max_wal_size\".")));
@@ -558,7 +557,8 @@ CheckpointerMain(void)
 
 		rc = WaitLatch(MyLatch,
 					   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
-					   cur_timeout * 1000L /* convert to ms */ );
+					   cur_timeout * 1000L /* convert to ms */ ,
+					   WAIT_EVENT_CHECKPOINTER_MAIN);
 
 		/*
 		 * Emergency bailout if postmaster has died.  This is to avoid the
@@ -572,15 +572,21 @@ CheckpointerMain(void)
 /*
  * CheckArchiveTimeout -- check for archive_timeout and switch xlog files
  *
- * This will switch to a new WAL file and force an archive file write
- * if any activity is recorded in the current WAL file, including just
- * a single checkpoint record.
+ * This will switch to a new WAL file and force an archive file write if
+ * meaningful activity is recorded in the current WAL file. This includes most
+ * writes, including just a single checkpoint record, but excludes WAL records
+ * that were inserted with the XLOG_MARK_UNIMPORTANT flag being set (like
+ * snapshots of running transactions).  Such records, depending on
+ * configuration, occur on regular intervals and don't contain important
+ * information.  This avoids generating archives with a few unimportant
+ * records.
  */
 static void
 CheckArchiveTimeout(void)
 {
 	pg_time_t	now;
 	pg_time_t	last_time;
+	XLogRecPtr	last_switch_lsn;
 
 	if (XLogArchiveTimeout <= 0 || RecoveryInProgress())
 		return;
@@ -595,26 +601,33 @@ CheckArchiveTimeout(void)
 	 * Update local state ... note that last_xlog_switch_time is the last time
 	 * a switch was performed *or requested*.
 	 */
-	last_time = GetLastSegSwitchTime();
+	last_time = GetLastSegSwitchData(&last_switch_lsn);
 
 	last_xlog_switch_time = Max(last_xlog_switch_time, last_time);
 
-	/* Now we can do the real check */
+	/* Now we can do the real checks */
 	if ((int) (now - last_xlog_switch_time) >= XLogArchiveTimeout)
 	{
-		XLogRecPtr	switchpoint;
-
-		/* OK, it's time to switch */
-		switchpoint = RequestXLogSwitch();
-
 		/*
-		 * If the returned pointer points exactly to a segment boundary,
-		 * assume nothing happened.
+		 * Switch segment only when "important" WAL has been logged since the
+		 * last segment switch (last_switch_lsn points to end of segment
+		 * switch occurred in).
 		 */
-		if ((switchpoint % XLogSegSize) != 0)
-			ereport(DEBUG1,
-				(errmsg("transaction log switch forced (archive_timeout=%d)",
-						XLogArchiveTimeout)));
+		if (GetLastImportantRecPtr() > last_switch_lsn)
+		{
+			XLogRecPtr	switchpoint;
+
+			/* mark switch as unimportant, avoids triggering checkpoints */
+			switchpoint = RequestXLogSwitch(true);
+
+			/*
+			 * If the returned pointer points exactly to a segment boundary,
+			 * assume nothing happened.
+			 */
+			if ((switchpoint % XLogSegSize) != 0)
+				elog(DEBUG1, "write-ahead log switch forced (archive_timeout=%d)",
+					 XLogArchiveTimeout);
+		}
 
 		/*
 		 * Update state in any case, so we don't retry constantly when the
@@ -1267,8 +1280,8 @@ CompactCheckpointerRequestQueue(void)
 		CheckpointerShmem->requests[preserve_count++] = CheckpointerShmem->requests[n];
 	}
 	ereport(DEBUG1,
-	   (errmsg("compacted fsync request queue from %d entries to %d entries",
-			   CheckpointerShmem->num_requests, preserve_count)));
+			(errmsg("compacted fsync request queue from %d entries to %d entries",
+					CheckpointerShmem->num_requests, preserve_count)));
 	CheckpointerShmem->num_requests = preserve_count;
 
 	/* Cleanup. */

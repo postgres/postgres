@@ -39,9 +39,9 @@ install-world:
 # build src/ before contrib/
 install-world-contrib-recurse: install-world-src-recurse
 
-$(call recurse,installdirs uninstall coverage init-po update-po,doc src config)
+$(call recurse,installdirs uninstall init-po update-po,doc src config)
 
-$(call recurse,distprep,doc src config contrib)
+$(call recurse,distprep coverage,doc src config contrib)
 
 # clean, distclean, etc should apply to contrib too, even though
 # it's not built by default

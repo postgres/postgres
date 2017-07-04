@@ -3,7 +3,7 @@
  * parse_type.h
  *		handle type operations for parser
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/parser/parse_type.h
@@ -52,4 +52,4 @@ extern void parseTypeString(const char *str, Oid *typeid_p, int32 *typmod_p, boo
 
 #define ISCOMPLEX(typeid) (typeidTypeRelid(typeid) != InvalidOid)
 
-#endif   /* PARSE_TYPE_H */
+#endif							/* PARSE_TYPE_H */

@@ -47,9 +47,8 @@
 # clean-lib             delete the static and shared libraries from the build dir
 # maintainer-clean-lib  delete .def files built for win32
 #
-# Since `all-lib' is the first rule in this file you probably want to
-# have the `all' target before including this file. In the most simple
-# case it would look like this:
+# Typically you would add `all-lib' to the `all' target so that `make all'
+# builds the libraries.  In the most simple case it would look like this:
 #
 #     all: all-lib
 #
@@ -128,7 +127,7 @@ ifeq ($(PORTNAME), darwin)
   else
     # loadable module
     DLSUFFIX		= .so
-    LINK.shared		= $(COMPILER) -bundle -multiply_defined suppress -Wl,-undefined,dynamic_lookup
+    LINK.shared		= $(COMPILER) -bundle -multiply_defined suppress
   endif
   BUILD.exports		= $(AWK) '/^[^\#]/ {printf "_%s\n",$$1}' $< >$@
   exports_file		= $(SHLIB_EXPORTS:%.txt=%.list)
@@ -194,7 +193,7 @@ ifeq ($(PORTNAME), hpux)
     # can't use the CC-syntax rpath pattern here, so instead:
     rpath =
     ifeq ($(enable_rpath), yes)
-      LINK.shared	+= +b '$(rpathdir)'
+      LINK.shared	+= +s +b '$(rpathdir)'
     endif
     # On HPUX platforms, gcc is usually configured to search for libraries
     # in /usr/local/lib, but ld won't do so.  Add an explicit -L switch so
@@ -234,30 +233,6 @@ ifeq ($(PORTNAME), solaris)
     else
       LINK.shared	+= -h $(soname)
     endif
-  endif
-endif
-
-ifeq ($(PORTNAME), sco)
-  ifeq ($(GCC), yes)
-    LINK.shared		= $(CC) -shared
-  else
-    LINK.shared		= $(CC) -G
-    endif
-  LINK.shared		+= -Wl,-z,text
-  ifdef soname
-    LINK.shared		+= -Wl,-h,$(soname)
-  endif
-endif
-
-ifeq ($(PORTNAME), unixware)
-  ifeq ($(GCC), yes)
-    LINK.shared		= $(CC) -shared
-  else
-    LINK.shared		= $(CC) -G
-  endif
-  LINK.shared		+= -Wl,-z,text
-  ifdef soname
-    LINK.shared		+= -Wl,-h,$(soname)
   endif
 endif
 
@@ -323,7 +298,7 @@ endif
 endif # shlib_major
 
 # Where possible, restrict the symbols exported by the library to just the
-# official list, so as to avoid unintentional ABI changes.  On recent Darwin
+# official list, so as to avoid unintentional ABI changes.  On recent macOS
 # this also quiets multiply-defined-symbol warnings in programs that use
 # libpgport along with libpq.
 ifneq (,$(SHLIB_EXPORTS))
@@ -402,7 +377,7 @@ $(shlib): $(OBJS) $(DLL_DEFFILE) | $(SHLIB_PREREQS)
 	$(CC) $(CFLAGS)  -shared -static-libgcc -o $@  $(OBJS) $(DLL_DEFFILE) $(LDFLAGS) $(LDFLAGS_SL) $(SHLIB_LINK) $(LIBS) -Wl,--out-implib=$(stlib)
 endif
 
-endif # PORTNAME == cgywin
+endif # PORTNAME == cygwin
 endif # PORTNAME == cygwin || PORTNAME == win32
 
 
@@ -430,30 +405,22 @@ endif # PORTNAME == cygwin || PORTNAME == win32
 # tarballs.
 
 ifneq (,$(SHLIB_EXPORTS))
-distprep: lib$(NAME)dll.def lib$(NAME)ddll.def blib$(NAME)dll.def
+distprep: lib$(NAME)dll.def lib$(NAME)ddll.def
 
 UC_NAME = $(shell echo $(NAME) | tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ')
 
 lib$(NAME)dll.def: $(SHLIB_EXPORTS)
-	echo '; DEF file for win32.mak release build and for Makefile.shlib (MinGW)' >$@
+	echo '; DEF file for Makefile.shlib (MinGW)' >$@
 	echo 'LIBRARY LIB$(UC_NAME).dll' >>$@
 	echo 'EXPORTS' >>$@
 	sed -e '/^#/d' -e 's/^\(.*[ 	]\)\([0-9][0-9]*\)/    \1@ \2/' $< >>$@
 
 lib$(NAME)ddll.def: $(SHLIB_EXPORTS)
-	echo '; DEF file for win32.mak debug build' >$@
+	echo '; DEF file for Makefile.shlib (MinGW)' >$@
 	echo 'LIBRARY LIB$(UC_NAME)D.dll' >>$@
 	echo 'EXPORTS' >>$@
 	sed -e '/^#/d' -e 's/^\(.*[ 	]\)\([0-9][0-9]*\)/    \1@ \2/' $< >>$@
 
-blib$(NAME)dll.def: $(SHLIB_EXPORTS)
-	echo '; DEF file for bcc32.mak (Borland C++ Builder)' >$@
-	echo 'LIBRARY BLIB$(UC_NAME)' >>$@
-	echo 'EXPORTS' >>$@
-	sed -e '/^#/d' -e 's/^\(.*[ 	]\)\([0-9][0-9]*\)/    _\1@ \2/' $< >>$@
-	echo >>$@
-	echo '; Aliases for MS compatible names' >> $@
-	sed -e '/^#/d' -e 's/^\(.*[ 	]\)\([0-9][0-9]*\)/    \1= _\1/' $< | sed 's/ *$$//' >>$@
 endif # SHLIB_EXPORTS
 
 
@@ -542,5 +509,5 @@ clean-lib:
 
 ifneq (,$(SHLIB_EXPORTS))
 maintainer-clean-lib:
-	rm -f lib$(NAME)dll.def lib$(NAME)ddll.def blib$(NAME)dll.def
+	rm -f lib$(NAME)dll.def lib$(NAME)ddll.def
 endif

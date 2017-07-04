@@ -4,7 +4,7 @@
  *	  POSTGRES BRIN access XLOG definitions.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/access/brin_xlog.h
@@ -33,7 +33,7 @@
 #define XLOG_BRIN_UPDATE			0x20
 #define XLOG_BRIN_SAMEPAGE_UPDATE	0x30
 #define XLOG_BRIN_REVMAP_EXTEND		0x40
-#define XLOG_BRIN_REVMAP_VACUUM		0x50
+#define XLOG_BRIN_DESUMMARIZE		0x50
 
 #define XLOG_BRIN_OPMASK			0x70
 /*
@@ -124,9 +124,28 @@ typedef struct xl_brin_revmap_extend
 #define SizeOfBrinRevmapExtend	(offsetof(xl_brin_revmap_extend, targetBlk) + \
 								 sizeof(BlockNumber))
 
+/*
+ * This is what we need to know about a range de-summarization
+ *
+ * Backup block 0: revmap page
+ * Backup block 1: regular page
+ */
+typedef struct xl_brin_desummarize
+{
+	BlockNumber pagesPerRange;
+	/* page number location to set to invalid */
+	BlockNumber heapBlk;
+	/* offset of item to delete in regular index page */
+	OffsetNumber regOffset;
+} xl_brin_desummarize;
+
+#define SizeOfBrinDesummarize	(offsetof(xl_brin_desummarize, regOffset) + \
+								 sizeof(OffsetNumber))
+
 
 extern void brin_redo(XLogReaderState *record);
 extern void brin_desc(StringInfo buf, XLogReaderState *record);
 extern const char *brin_identify(uint8 info);
+extern void brin_mask(char *pagedata, BlockNumber blkno);
 
-#endif   /* BRIN_XLOG_H */
+#endif							/* BRIN_XLOG_H */

@@ -5,7 +5,7 @@
  *	  strategy.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/storage/buf_internals.h
@@ -55,17 +55,17 @@
  * Note: TAG_VALID essentially means that there is a buffer hashtable
  * entry associated with the buffer's tag.
  */
-#define BM_LOCKED				(1U << 22)		/* buffer header is locked */
-#define BM_DIRTY				(1U << 23)		/* data needs writing */
-#define BM_VALID				(1U << 24)		/* data is valid */
-#define BM_TAG_VALID			(1U << 25)		/* tag is assigned */
-#define BM_IO_IN_PROGRESS		(1U << 26)		/* read or write in progress */
-#define BM_IO_ERROR				(1U << 27)		/* previous I/O failed */
-#define BM_JUST_DIRTIED			(1U << 28)		/* dirtied since write started */
-#define BM_PIN_COUNT_WAITER		(1U << 29)		/* have waiter for sole pin */
-#define BM_CHECKPOINT_NEEDED	(1U << 30)		/* must write for checkpoint */
-#define BM_PERMANENT			(1U << 31)		/* permanent relation (not
-												 * unlogged) */
+#define BM_LOCKED				(1U << 22)	/* buffer header is locked */
+#define BM_DIRTY				(1U << 23)	/* data needs writing */
+#define BM_VALID				(1U << 24)	/* data is valid */
+#define BM_TAG_VALID			(1U << 25)	/* tag is assigned */
+#define BM_IO_IN_PROGRESS		(1U << 26)	/* read or write in progress */
+#define BM_IO_ERROR				(1U << 27)	/* previous I/O failed */
+#define BM_JUST_DIRTIED			(1U << 28)	/* dirtied since write started */
+#define BM_PIN_COUNT_WAITER		(1U << 29)	/* have waiter for sole pin */
+#define BM_CHECKPOINT_NEEDED	(1U << 30)	/* must write for checkpoint */
+#define BM_PERMANENT			(1U << 31)	/* permanent buffer (not unlogged,
+											 * or init fork) */
 /*
  * The maximum allowed value of usage_count represents a tradeoff between
  * accuracy and speed of the clock-sweep buffer management algorithm.  A
@@ -168,7 +168,8 @@ typedef struct buftag
  * We use this same struct for local buffer headers, but the locks are not
  * used and not all of the flag bits are useful either. To avoid unnecessary
  * overhead, manipulations of the state field should be done without actual
- * atomic operations (i.e. only pg_atomic_read/write).
+ * atomic operations (i.e. only pg_atomic_read_u32() and
+ * pg_atomic_unlocked_write_u32()).
  *
  * Be careful to avoid increasing the size of the struct when adding or
  * reordering members.  Keeping it below 64 bytes (the most common CPU
@@ -182,7 +183,7 @@ typedef struct BufferDesc
 	/* state of the tag, containing flags, refcount and usagecount */
 	pg_atomic_uint32 state;
 
-	int			wait_backend_pid;		/* backend PID of pin-count waiter */
+	int			wait_backend_pid;	/* backend PID of pin-count waiter */
 	int			freeNext;		/* link in freelist chain */
 
 	LWLock		content_lock;	/* to lock access to buffer contents */
@@ -336,4 +337,4 @@ extern void DropRelFileNodeLocalBuffers(RelFileNode rnode, ForkNumber forkNum,
 extern void DropRelFileNodeAllLocalBuffers(RelFileNode rnode);
 extern void AtEOXact_LocalBuffers(bool isCommit);
 
-#endif   /* BUFMGR_INTERNALS_H */
+#endif							/* BUFMGR_INTERNALS_H */

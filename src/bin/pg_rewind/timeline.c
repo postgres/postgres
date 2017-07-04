@@ -3,7 +3,7 @@
  * timeline.c
  *	  timeline-related functions.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  *
  *-------------------------------------------------------------------------
  */
@@ -80,7 +80,7 @@ rewind_parseTimeLineHistory(char *buffer, TimeLineID targetTLI, int *nentries)
 		if (nfields != 3)
 		{
 			fprintf(stderr, _("syntax error in history file: %s\n"), fline);
-			fprintf(stderr, _("Expected a transaction log switchpoint location.\n"));
+			fprintf(stderr, _("Expected a write-ahead log switchpoint location.\n"));
 			exit(1);
 		}
 		if (entries && tli <= lasttli)

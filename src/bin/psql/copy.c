@@ -1,7 +1,7 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
- * Copyright (c) 2000-2016, PostgreSQL Global Development Group
+ * Copyright (c) 2000-2017, PostgreSQL Global Development Group
  *
  * src/bin/psql/copy.c
  */
@@ -63,7 +63,7 @@ struct copy_options
 
 
 static void
-free_copy_options(struct copy_options * ptr)
+free_copy_options(struct copy_options *ptr)
 {
 	if (!ptr)
 		return;
@@ -102,7 +102,7 @@ parse_slash_copy(const char *args)
 
 	result = pg_malloc0(sizeof(struct copy_options));
 
-	result->before_tofrom = pg_strdup("");		/* initialize for appending */
+	result->before_tofrom = pg_strdup("");	/* initialize for appending */
 
 	token = strtokx(args, whitespace, ".,()", "\"",
 					0, false, false, pset.encoding);
@@ -540,7 +540,7 @@ handleCopyIn(PGconn *conn, FILE *copystream, bool isbinary, PGresult **res)
 		showprompt = true;
 		if (!pset.quiet)
 			puts(_("Enter data to be copied followed by a newline.\n"
-				   "End with a backslash and a period on a line by itself."));
+				   "End with a backslash and a period on a line by itself, or an EOF signal."));
 	}
 	else
 		showprompt = false;
@@ -552,7 +552,7 @@ handleCopyIn(PGconn *conn, FILE *copystream, bool isbinary, PGresult **res)
 		/* interactive input probably silly, but give one prompt anyway */
 		if (showprompt)
 		{
-			const char *prompt = get_prompt(PROMPT_COPY);
+			const char *prompt = get_prompt(PROMPT_COPY, NULL);
 
 			fputs(prompt, stdout);
 			fflush(stdout);
@@ -590,7 +590,7 @@ handleCopyIn(PGconn *conn, FILE *copystream, bool isbinary, PGresult **res)
 
 			if (showprompt)
 			{
-				const char *prompt = get_prompt(PROMPT_COPY);
+				const char *prompt = get_prompt(PROMPT_COPY, NULL);
 
 				fputs(prompt, stdout);
 				fflush(stdout);
@@ -629,8 +629,7 @@ handleCopyIn(PGconn *conn, FILE *copystream, bool isbinary, PGresult **res)
 					/*
 					 * This code erroneously assumes '\.' on a line alone
 					 * inside a quoted CSV string terminates the \copy.
-					 * http://www.postgresql.org/message-id/E1TdNVQ-0001ju-GO@w
-					 * rigleys.postgresql.org
+					 * http://www.postgresql.org/message-id/E1TdNVQ-0001ju-GO@wrigleys.postgresql.org
 					 */
 					if (strcmp(buf, "\\.\n") == 0 ||
 						strcmp(buf, "\\.\r\n") == 0)
@@ -672,6 +671,16 @@ handleCopyIn(PGconn *conn, FILE *copystream, bool isbinary, PGresult **res)
 		OK = false;
 
 copyin_cleanup:
+
+	/*
+	 * Clear the EOF flag on the stream, in case copying ended due to an EOF
+	 * signal.  This allows an interactive TTY session to perform another COPY
+	 * FROM STDIN later.  (In non-STDIN cases, we're about to close the file
+	 * anyway, so it doesn't matter.)  Although we don't ever test the flag
+	 * with feof(), some fread() implementations won't read more data if it's
+	 * set.  This also clears the error flag, but we already checked that.
+	 */
+	clearerr(copystream);
 
 	/*
 	 * Check command status and return to normal libpq state.

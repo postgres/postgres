@@ -4,7 +4,7 @@
  *
  *	  Routines for aggregate-manipulation commands
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -22,7 +22,6 @@
  */
 #include "postgres.h"
 
-#include "access/heapam.h"
 #include "access/htup_details.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
@@ -52,8 +51,7 @@
  * "parameters" is a list of DefElem representing the agg's definition clauses.
  */
 ObjectAddress
-DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
-				const char *queryString)
+DefineAggregate(ParseState *pstate, List *name, List *args, bool oldstyle, List *parameters)
 {
 	char	   *aggName;
 	Oid			aggNamespace;
@@ -111,13 +109,13 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 			aggKind = AGGKIND_ORDERED_SET;
 		else
 			numDirectArgs = 0;
-		args = (List *) linitial(args);
+		args = linitial_node(List, args);
 	}
 
 	/* Examine aggregate's definition clauses */
 	foreach(pl, parameters)
 	{
-		DefElem    *defel = (DefElem *) lfirst(pl);
+		DefElem    *defel = lfirst_node(DefElem, pl);
 
 		/*
 		 * sfunc1, stype1, and initcond1 are accepted as obsolete spellings
@@ -218,7 +216,7 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 		if (mtransfuncName != NIL)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-			errmsg("aggregate msfunc must not be specified without mstype")));
+					 errmsg("aggregate msfunc must not be specified without mstype")));
 		if (minvtransfuncName != NIL)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
@@ -287,10 +285,10 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 					 errmsg("basetype is redundant with aggregate input type specification")));
 
 		numArgs = list_length(args);
-		interpret_function_parameter_list(args,
+		interpret_function_parameter_list(pstate,
+										  args,
 										  InvalidOid,
 										  true, /* is an aggregate */
-										  queryString,
 										  &parameterTypes,
 										  &allParameterTypes,
 										  &parameterModes,
@@ -418,8 +416,8 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 	/*
 	 * Most of the argument-checking is done inside of AggregateCreate
 	 */
-	return AggregateCreate(aggName,		/* aggregate name */
-						   aggNamespace,		/* namespace */
+	return AggregateCreate(aggName, /* aggregate name */
+						   aggNamespace,	/* namespace */
 						   aggKind,
 						   numArgs,
 						   numDirectArgs,
@@ -429,22 +427,22 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters,
 						   PointerGetDatum(parameterNames),
 						   parameterDefaults,
 						   variadicArgType,
-						   transfuncName,		/* step function name */
-						   finalfuncName,		/* final function name */
-						   combinefuncName,		/* combine function name */
-						   serialfuncName,		/* serial function name */
+						   transfuncName,	/* step function name */
+						   finalfuncName,	/* final function name */
+						   combinefuncName, /* combine function name */
+						   serialfuncName,	/* serial function name */
 						   deserialfuncName,	/* deserial function name */
-						   mtransfuncName,		/* fwd trans function name */
+						   mtransfuncName,	/* fwd trans function name */
 						   minvtransfuncName,	/* inv trans function name */
-						   mfinalfuncName,		/* final function name */
+						   mfinalfuncName,	/* final function name */
 						   finalfuncExtraArgs,
 						   mfinalfuncExtraArgs,
 						   sortoperatorName,	/* sort operator name */
 						   transTypeId, /* transition data type */
 						   transSpace,	/* transition space */
-						   mtransTypeId,		/* transition data type */
+						   mtransTypeId,	/* transition data type */
 						   mtransSpace, /* transition space */
-						   initval,		/* initial condition */
+						   initval, /* initial condition */
 						   minitval,	/* initial condition */
-						   proparallel);		/* parallel safe? */
+						   proparallel);	/* parallel safe? */
 }

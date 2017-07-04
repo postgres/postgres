@@ -4,7 +4,7 @@
  *	  Public interface to various tsearch modules, such as
  *	  parsers and dictionaries.
  *
- * Copyright (c) 1998-2016, PostgreSQL Global Development Group
+ * Copyright (c) 1998-2017, PostgreSQL Global Development Group
  *
  * src/include/tsearch/ts_public.h
  *
@@ -129,4 +129,4 @@ typedef struct
 								 * getnext == true */
 } DictSubState;
 
-#endif   /* _PG_TS_PUBLIC_H_ */
+#endif							/* _PG_TS_PUBLIC_H_ */

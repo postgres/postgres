@@ -1,0 +1,96 @@
+<!--
+doc/src/sgml/ref/drop_statistics.sgml
+PostgreSQL documentation
+-->
+
+<refentry id="SQL-DROPSTATISTICS">
+ <indexterm zone="sql-dropstatistics">
+  <primary>DROP STATISTICS</primary>
+ </indexterm>
+
+ <refmeta>
+  <refentrytitle>DROP STATISTICS</refentrytitle>
+  <manvolnum>7</manvolnum>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>DROP STATISTICS</refname>
+  <refpurpose>remove extended statistics</refpurpose>
+ </refnamediv>
+
+ <refsynopsisdiv>
+<synopsis>
+DROP STATISTICS [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ...]
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>DROP STATISTICS</command> removes statistics object(s) from the
+   database.  Only the statistics object's owner, the schema owner, or a
+   superuser can drop a statistics object.
+  </para>
+
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><literal>IF EXISTS</literal></term>
+    <listitem>
+     <para>
+      Do not throw an error if the statistics object does not exist. A notice
+      is issued in this case.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">name</replaceable></term>
+    <listitem>
+     <para>
+      The name (optionally schema-qualified) of the statistics object to drop.
+     </para>
+    </listitem>
+   </varlistentry>
+
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
+  <para>
+   To destroy two statistics objects in different schemas, without failing
+   if they don't exist:
+
+<programlisting>
+DROP STATISTICS IF EXISTS
+    accounting.users_uid_creation,
+    public.grants_user_role;
+</programlisting></para>
+ </refsect1>
+
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   There is no <command>DROP STATISTICS</command> command in the SQL standard.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-alterstatistics"></member>
+   <member><xref linkend="sql-createstatistics"></member>
+  </simplelist>
+ </refsect1>
+
+</refentry>

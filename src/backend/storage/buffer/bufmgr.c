@@ -3,7 +3,7 @@
  * bufmgr.c
  *	  buffer manager interface routines
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -541,7 +541,7 @@ PrefetchBuffer(Relation reln, ForkNumber forkNum, BlockNumber blockNum)
 		if (RELATION_IS_OTHER_TEMP(reln))
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				errmsg("cannot access temporary tables of other sessions")));
+					 errmsg("cannot access temporary tables of other sessions")));
 
 		/* pass it off to localbuf.c */
 		LocalPrefetchBuffer(reln->rd_smgr, forkNum, blockNum);
@@ -582,7 +582,7 @@ PrefetchBuffer(Relation reln, ForkNumber forkNum, BlockNumber blockNum)
 		 * not clear that there's enough of a problem to justify that.
 		 */
 	}
-#endif   /* USE_PREFETCH */
+#endif							/* USE_PREFETCH */
 }
 
 
@@ -804,9 +804,9 @@ ReadBuffer_common(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 		bufBlock = isLocalBuf ? LocalBufHdrGetBlock(bufHdr) : BufHdrGetBlock(bufHdr);
 		if (!PageIsNew((Page) bufBlock))
 			ereport(ERROR,
-			 (errmsg("unexpected data beyond EOF in block %u of relation %s",
-					 blockNum, relpath(smgr->smgr_rnode, forkNum)),
-			  errhint("This has been seen to occur with buggy kernels; consider updating your system.")));
+					(errmsg("unexpected data beyond EOF in block %u of relation %s",
+							blockNum, relpath(smgr->smgr_rnode, forkNum)),
+					 errhint("This has been seen to occur with buggy kernels; consider updating your system.")));
 
 		/*
 		 * We *must* do smgrextend before succeeding, else the page will not
@@ -821,7 +821,7 @@ ReadBuffer_common(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 
 			Assert(buf_state & BM_VALID);
 			buf_state &= ~BM_VALID;
-			pg_atomic_write_u32(&bufHdr->state, buf_state);
+			pg_atomic_unlocked_write_u32(&bufHdr->state, buf_state);
 		}
 		else
 		{
@@ -941,7 +941,7 @@ ReadBuffer_common(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 		uint32		buf_state = pg_atomic_read_u32(&bufHdr->state);
 
 		buf_state |= BM_VALID;
-		pg_atomic_write_u32(&bufHdr->state, buf_state);
+		pg_atomic_unlocked_write_u32(&bufHdr->state, buf_state);
 	}
 	else
 	{
@@ -991,10 +991,10 @@ BufferAlloc(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 {
 	BufferTag	newTag;			/* identity of requested block */
 	uint32		newHash;		/* hash value for newTag */
-	LWLock	   *newPartitionLock;		/* buffer partition lock for it */
+	LWLock	   *newPartitionLock;	/* buffer partition lock for it */
 	BufferTag	oldTag;			/* previous identity of selected buffer */
 	uint32		oldHash;		/* hash value for oldTag */
-	LWLock	   *oldPartitionLock;		/* buffer partition lock for it */
+	LWLock	   *oldPartitionLock;	/* buffer partition lock for it */
 	uint32		oldFlags;
 	int			buf_id;
 	BufferDesc *buf;
@@ -1133,9 +1133,9 @@ BufferAlloc(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 
 				/* OK, do the I/O */
 				TRACE_POSTGRESQL_BUFFER_WRITE_DIRTY_START(forkNum, blockNum,
-											   smgr->smgr_rnode.node.spcNode,
-												smgr->smgr_rnode.node.dbNode,
-											  smgr->smgr_rnode.node.relNode);
+														  smgr->smgr_rnode.node.spcNode,
+														  smgr->smgr_rnode.node.dbNode,
+														  smgr->smgr_rnode.node.relNode);
 
 				FlushBuffer(buf, NULL);
 				LWLockRelease(BufferDescriptorGetContentLock(buf));
@@ -1144,9 +1144,9 @@ BufferAlloc(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 											  &buf->tag);
 
 				TRACE_POSTGRESQL_BUFFER_WRITE_DIRTY_DONE(forkNum, blockNum,
-											   smgr->smgr_rnode.node.spcNode,
-												smgr->smgr_rnode.node.dbNode,
-											  smgr->smgr_rnode.node.relNode);
+														 smgr->smgr_rnode.node.spcNode,
+														 smgr->smgr_rnode.node.dbNode,
+														 smgr->smgr_rnode.node.relNode);
 			}
 			else
 			{
@@ -1292,12 +1292,17 @@ BufferAlloc(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 	 * paranoia.  We also reset the usage_count since any recency of use of
 	 * the old content is no longer relevant.  (The usage_count starts out at
 	 * 1 so that the buffer can survive one clock-sweep pass.)
+	 *
+	 * Make sure BM_PERMANENT is set for buffers that must be written at every
+	 * checkpoint.  Unlogged buffers only need to be written at shutdown
+	 * checkpoints, except for their "init" forks, which need to be treated
+	 * just like permanent relations.
 	 */
 	buf->tag = newTag;
 	buf_state &= ~(BM_VALID | BM_DIRTY | BM_JUST_DIRTIED |
 				   BM_CHECKPOINT_NEEDED | BM_IO_ERROR | BM_PERMANENT |
 				   BUF_USAGECOUNT_MASK);
-	if (relpersistence == RELPERSISTENCE_PERMANENT)
+	if (relpersistence == RELPERSISTENCE_PERMANENT || forkNum == INIT_FORKNUM)
 		buf_state |= BM_TAG_VALID | BM_PERMANENT | BUF_USAGECOUNT_ONE;
 	else
 		buf_state |= BM_TAG_VALID | BUF_USAGECOUNT_ONE;
@@ -1348,7 +1353,7 @@ InvalidateBuffer(BufferDesc *buf)
 {
 	BufferTag	oldTag;
 	uint32		oldHash;		/* hash value for oldTag */
-	LWLock	   *oldPartitionLock;		/* buffer partition lock for it */
+	LWLock	   *oldPartitionLock;	/* buffer partition lock for it */
 	uint32		oldFlags;
 	uint32		buf_state;
 
@@ -1460,8 +1465,8 @@ MarkBufferDirty(Buffer buffer)
 	bufHdr = GetBufferDescriptor(buffer - 1);
 
 	Assert(BufferIsPinned(buffer));
-	/* unfortunately we can't check if the lock is held exclusively */
-	Assert(LWLockHeldByMe(BufferDescriptorGetContentLock(bufHdr)));
+	Assert(LWLockHeldByMeInMode(BufferDescriptorGetContentLock(bufHdr),
+								LW_EXCLUSIVE));
 
 	old_buf_state = pg_atomic_read_u32(&bufHdr->state);
 	for (;;)
@@ -1590,9 +1595,21 @@ PinBuffer(BufferDesc *buf, BufferAccessStrategy strategy)
 			/* increase refcount */
 			buf_state += BUF_REFCOUNT_ONE;
 
-			/* increase usagecount unless already max */
-			if (BUF_STATE_GET_USAGECOUNT(buf_state) != BM_MAX_USAGE_COUNT)
-				buf_state += BUF_USAGECOUNT_ONE;
+			if (strategy == NULL)
+			{
+				/* Default case: increase usagecount unless already max. */
+				if (BUF_STATE_GET_USAGECOUNT(buf_state) < BM_MAX_USAGE_COUNT)
+					buf_state += BUF_USAGECOUNT_ONE;
+			}
+			else
+			{
+				/*
+				 * Ring buffers shouldn't evict others from pool.  Thus we
+				 * don't make usagecount more than 1.
+				 */
+				if (BUF_STATE_GET_USAGECOUNT(buf_state) == 0)
+					buf_state += BUF_USAGECOUNT_ONE;
+			}
 
 			if (pg_atomic_compare_exchange_u32(&buf->state, &old_buf_state,
 											   buf_state))
@@ -2101,7 +2118,7 @@ BgBufferSync(WritebackContext *wb_context)
 		int32		passes_delta = strategy_passes - prev_strategy_passes;
 
 		strategy_delta = strategy_buf_id - prev_strategy_buf_id;
-		strategy_delta += (long) passes_delta *NBuffers;
+		strategy_delta += (long) passes_delta * NBuffers;
 
 		Assert(strategy_delta >= 0);
 
@@ -2930,7 +2947,7 @@ DropRelFileNodesAllBuffers(RelFileNodeBackend *rnodes, int nnodes)
 	if (nnodes == 0)
 		return;
 
-	nodes = palloc(sizeof(RelFileNode) * nnodes);		/* non-local relations */
+	nodes = palloc(sizeof(RelFileNode) * nnodes);	/* non-local relations */
 
 	/* If it's a local relation, it's localbuf.c's problem. */
 	for (i = 0; i < nnodes; i++)
@@ -3075,7 +3092,7 @@ PrintBufferDescs(void)
 			 "[%02d] (freeNext=%d, rel=%s, "
 			 "blockNum=%u, flags=0x%x, refcount=%u %d)",
 			 i, buf->freeNext,
-		  relpathbackend(buf->tag.rnode, InvalidBackendId, buf->tag.forkNum),
+			 relpathbackend(buf->tag.rnode, InvalidBackendId, buf->tag.forkNum),
 			 buf->tag.blockNum, buf->flags,
 			 buf->refcount, GetPrivateRefCount(b));
 	}
@@ -3167,7 +3184,7 @@ FlushRelationBuffers(Relation rel)
 						  false);
 
 				buf_state &= ~(BM_DIRTY | BM_JUST_DIRTIED);
-				pg_atomic_write_u32(&bufHdr->state, buf_state);
+				pg_atomic_unlocked_write_u32(&bufHdr->state, buf_state);
 
 				/* Pop the error context stack */
 				error_context_stack = errcallback.previous;
@@ -3635,9 +3652,6 @@ LockBufferForCleanup(Buffer buffer)
 		UnlockBufHdr(bufHdr, buf_state);
 		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 
-		/* Report the wait */
-		pgstat_report_wait_start(WAIT_BUFFER_PIN, 0);
-
 		/* Wait to be signaled by UnpinBuffer() */
 		if (InHotStandby)
 		{
@@ -3649,9 +3663,7 @@ LockBufferForCleanup(Buffer buffer)
 			SetStartupBufferPinWaitBufId(-1);
 		}
 		else
-			ProcWaitForSignal();
-
-		pgstat_report_wait_end();
+			ProcWaitForSignal(PG_WAIT_BUFFER_PIN);
 
 		/*
 		 * Remove flag marking us as waiter. Normally this will not be set
@@ -3747,6 +3759,55 @@ ConditionalLockBufferForCleanup(Buffer buffer)
 	/* Failed, so release the lock */
 	UnlockBufHdr(bufHdr, buf_state);
 	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+	return false;
+}
+
+/*
+ * IsBufferCleanupOK - as above, but we already have the lock
+ *
+ * Check whether it's OK to perform cleanup on a buffer we've already
+ * locked.  If we observe that the pin count is 1, our exclusive lock
+ * happens to be a cleanup lock, and we can proceed with anything that
+ * would have been allowable had we sought a cleanup lock originally.
+ */
+bool
+IsBufferCleanupOK(Buffer buffer)
+{
+	BufferDesc *bufHdr;
+	uint32		buf_state;
+
+	Assert(BufferIsValid(buffer));
+
+	if (BufferIsLocal(buffer))
+	{
+		/* There should be exactly one pin */
+		if (LocalRefCount[-buffer - 1] != 1)
+			return false;
+		/* Nobody else to wait for */
+		return true;
+	}
+
+	/* There should be exactly one local pin */
+	if (GetPrivateRefCount(buffer) != 1)
+		return false;
+
+	bufHdr = GetBufferDescriptor(buffer - 1);
+
+	/* caller must hold exclusive lock on buffer */
+	Assert(LWLockHeldByMeInMode(BufferDescriptorGetContentLock(bufHdr),
+								LW_EXCLUSIVE));
+
+	buf_state = LockBufHdr(bufHdr);
+
+	Assert(BUF_STATE_GET_REFCOUNT(buf_state) > 0);
+	if (BUF_STATE_GET_REFCOUNT(buf_state) == 1)
+	{
+		/* pincount is OK. */
+		UnlockBufHdr(bufHdr, buf_state);
+		return true;
+	}
+
+	UnlockBufHdr(bufHdr, buf_state);
 	return false;
 }
 
@@ -4134,7 +4195,7 @@ ckpt_buforder_comparator(const void *pa, const void *pb)
 	/* compare block number */
 	else if (a->blockNum < b->blockNum)
 		return -1;
-	else	/* should not be the same block ... */
+	else						/* should not be the same block ... */
 		return 1;
 }
 

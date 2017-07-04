@@ -3,7 +3,7 @@
  * jsonb_gin.c
  *	 GIN support functions for jsonb
  *
- * Copyright (c) 2014-2016, PostgreSQL Global Development Group
+ * Copyright (c) 2014-2017, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
@@ -20,6 +20,7 @@
 #include "catalog/pg_type.h"
 #include "utils/builtins.h"
 #include "utils/jsonb.h"
+#include "utils/varlena.h"
 
 typedef struct PathHashStack
 {
@@ -171,8 +172,8 @@ gin_extract_jsonb_query(PG_FUNCTION_ARGS)
 			if (key_nulls[i])
 				continue;
 			entries[j++] = make_text_key(JGINFLAG_KEY,
-										 VARDATA_ANY(key_datums[i]),
-										 VARSIZE_ANY_EXHDR(key_datums[i]));
+										 VARDATA(key_datums[i]),
+										 VARSIZE(key_datums[i]) - VARHDRSZ);
 		}
 
 		*nentries = j;

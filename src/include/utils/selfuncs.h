@@ -5,7 +5,7 @@
  *	  infrastructure for selectivity and cost estimation.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/selfuncs.h
@@ -72,9 +72,10 @@ typedef struct VariableStatData
 	/* NB: if statsTuple!=NULL, it must be freed when caller is done */
 	void		(*freefunc) (HeapTuple tuple);	/* how to free statsTuple */
 	Oid			vartype;		/* exposed type of expression */
-	Oid			atttype;		/* type to pass to get_attstatsslot */
-	int32		atttypmod;		/* typmod to pass to get_attstatsslot */
+	Oid			atttype;		/* actual type (after stripping relabel) */
+	int32		atttypmod;		/* actual typmod (after stripping relabel) */
 	bool		isunique;		/* matches unique index or DISTINCT clause */
+	bool		acl_ok;			/* result of ACL check on table or column */
 } VariableStatData;
 
 #define ReleaseVariableStats(vardata)  \
@@ -125,10 +126,10 @@ typedef struct
 typedef struct
 {
 	/* These are the values the cost estimator must return to the planner */
-	Cost		indexStartupCost;		/* index-related startup cost */
+	Cost		indexStartupCost;	/* index-related startup cost */
 	Cost		indexTotalCost; /* total index-related scan cost */
-	Selectivity indexSelectivity;		/* selectivity of index */
-	double		indexCorrelation;		/* order correlation of index */
+	Selectivity indexSelectivity;	/* selectivity of index */
+	double		indexCorrelation;	/* order correlation of index */
 
 	/* Intermediate values we obtain along the way */
 	double		numIndexPages;	/* number of leaf pages visited */
@@ -139,20 +140,21 @@ typedef struct
 
 /* Hooks for plugins to get control when we ask for stats */
 typedef bool (*get_relation_stats_hook_type) (PlannerInfo *root,
-														  RangeTblEntry *rte,
-														  AttrNumber attnum,
-												  VariableStatData *vardata);
+											  RangeTblEntry *rte,
+											  AttrNumber attnum,
+											  VariableStatData *vardata);
 extern PGDLLIMPORT get_relation_stats_hook_type get_relation_stats_hook;
 typedef bool (*get_index_stats_hook_type) (PlannerInfo *root,
-													   Oid indexOid,
-													   AttrNumber indexattnum,
-												  VariableStatData *vardata);
+										   Oid indexOid,
+										   AttrNumber indexattnum,
+										   VariableStatData *vardata);
 extern PGDLLIMPORT get_index_stats_hook_type get_index_stats_hook;
 
 /* Functions in selfuncs.c */
 
 extern void examine_variable(PlannerInfo *root, Node *node, int varRelid,
 				 VariableStatData *vardata);
+extern bool statistic_proc_security_check(VariableStatData *vardata, Oid func_oid);
 extern bool get_restriction_variable(PlannerInfo *root, List *args,
 						 int varRelid,
 						 VariableStatData *vardata, Node **other,
@@ -179,32 +181,6 @@ extern Pattern_Prefix_Status pattern_fixed_prefix(Const *patt,
 					 Selectivity *rest_selec);
 extern Const *make_greater_string(const Const *str_const, FmgrInfo *ltproc,
 					Oid collation);
-
-extern Datum eqsel(PG_FUNCTION_ARGS);
-extern Datum neqsel(PG_FUNCTION_ARGS);
-extern Datum scalarltsel(PG_FUNCTION_ARGS);
-extern Datum scalargtsel(PG_FUNCTION_ARGS);
-extern Datum regexeqsel(PG_FUNCTION_ARGS);
-extern Datum icregexeqsel(PG_FUNCTION_ARGS);
-extern Datum likesel(PG_FUNCTION_ARGS);
-extern Datum iclikesel(PG_FUNCTION_ARGS);
-extern Datum regexnesel(PG_FUNCTION_ARGS);
-extern Datum icregexnesel(PG_FUNCTION_ARGS);
-extern Datum nlikesel(PG_FUNCTION_ARGS);
-extern Datum icnlikesel(PG_FUNCTION_ARGS);
-
-extern Datum eqjoinsel(PG_FUNCTION_ARGS);
-extern Datum neqjoinsel(PG_FUNCTION_ARGS);
-extern Datum scalarltjoinsel(PG_FUNCTION_ARGS);
-extern Datum scalargtjoinsel(PG_FUNCTION_ARGS);
-extern Datum regexeqjoinsel(PG_FUNCTION_ARGS);
-extern Datum icregexeqjoinsel(PG_FUNCTION_ARGS);
-extern Datum likejoinsel(PG_FUNCTION_ARGS);
-extern Datum iclikejoinsel(PG_FUNCTION_ARGS);
-extern Datum regexnejoinsel(PG_FUNCTION_ARGS);
-extern Datum icregexnejoinsel(PG_FUNCTION_ARGS);
-extern Datum nlikejoinsel(PG_FUNCTION_ARGS);
-extern Datum icnlikejoinsel(PG_FUNCTION_ARGS);
 
 extern Selectivity boolvarsel(PlannerInfo *root, Node *arg, int varRelid);
 extern Selectivity booltestsel(PlannerInfo *root, BoolTestType booltesttype,
@@ -245,7 +221,5 @@ extern Selectivity scalararraysel_containment(PlannerInfo *root,
 						   Node *leftop, Node *rightop,
 						   Oid elemtype, bool isEquality, bool useOr,
 						   int varRelid);
-extern Datum arraycontsel(PG_FUNCTION_ARGS);
-extern Datum arraycontjoinsel(PG_FUNCTION_ARGS);
 
-#endif   /* SELFUNCS_H */
+#endif							/* SELFUNCS_H */

@@ -10,7 +10,7 @@
  * guarantee that there can only be one matching row for a key combination.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/catcache.h
@@ -46,12 +46,18 @@ typedef struct catcache
 	int			cc_ntup;		/* # of tuples currently in this cache */
 	int			cc_nbuckets;	/* # of hash buckets in this cache */
 	int			cc_nkeys;		/* # of keys (1..CATCACHE_MAXKEYS) */
-	int			cc_key[CATCACHE_MAXKEYS];		/* AttrNumber of each key */
+	int			cc_key[CATCACHE_MAXKEYS];	/* AttrNumber of each key */
 	PGFunction	cc_hashfunc[CATCACHE_MAXKEYS];	/* hash function for each key */
-	ScanKeyData cc_skey[CATCACHE_MAXKEYS];		/* precomputed key info for
-												 * heap scans */
+	ScanKeyData cc_skey[CATCACHE_MAXKEYS];	/* precomputed key info for heap
+											 * scans */
 	bool		cc_isname[CATCACHE_MAXKEYS];	/* flag "name" key columns */
 	dlist_head	cc_lists;		/* list of CatCList structs */
+	dlist_head *cc_bucket;		/* hash buckets */
+
+	/*
+	 * Keep these at the end, so that compiling catcache.c with CATCACHE_STATS
+	 * doesn't break ABI for other modules
+	 */
 #ifdef CATCACHE_STATS
 	long		cc_searches;	/* total # searches against this cache */
 	long		cc_hits;		/* # of matches against existing entry */
@@ -66,7 +72,6 @@ typedef struct catcache
 	long		cc_lsearches;	/* total # list-searches */
 	long		cc_lhits;		/* # of matches against existing lists */
 #endif
-	dlist_head *cc_bucket;		/* hash buckets */
 } CatCache;
 
 
@@ -185,7 +190,7 @@ extern void ReleaseCatCacheList(CatCList *list);
 
 extern void ResetCatalogCaches(void);
 extern void CatalogCacheFlushCatalog(Oid catId);
-extern void CatalogCacheIdInvalidate(int cacheId, uint32 hashValue);
+extern void CatCacheInvalidate(CatCache *cache, uint32 hashValue);
 extern void PrepareToInvalidateCacheTuple(Relation relation,
 							  HeapTuple tuple,
 							  HeapTuple newtuple,
@@ -194,4 +199,4 @@ extern void PrepareToInvalidateCacheTuple(Relation relation,
 extern void PrintCatCacheLeakWarning(HeapTuple tuple);
 extern void PrintCatCacheListLeakWarning(CatCList *list);
 
-#endif   /* CATCACHE_H */
+#endif							/* CATCACHE_H */

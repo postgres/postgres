@@ -4,7 +4,7 @@
  *	  Support for finding the values associated with Param nodes.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -120,7 +120,7 @@ EstimateParamListSpace(ParamListInfo paramLI)
 		}
 
 		sz = add_size(sz, sizeof(Oid)); /* space for type OID */
-		sz = add_size(sz, sizeof(uint16));		/* space for pflags */
+		sz = add_size(sz, sizeof(uint16));	/* space for pflags */
 
 		/* space for datum/isnull */
 		if (OidIsValid(typeOid))
@@ -132,7 +132,7 @@ EstimateParamListSpace(ParamListInfo paramLI)
 			typByVal = true;
 		}
 		sz = add_size(sz,
-			  datumEstimateSpace(prm->value, prm->isnull, typByVal, typLen));
+					  datumEstimateSpace(prm->value, prm->isnull, typByVal, typLen));
 	}
 
 	return sz;

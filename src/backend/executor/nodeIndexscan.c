@@ -3,7 +3,7 @@
  * nodeIndexscan.c
  *	  Routines to support indexed scans of relations
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -22,6 +22,9 @@
  *		ExecEndIndexScan		releases all storage.
  *		ExecIndexMarkPos		marks scan position.
  *		ExecIndexRestrPos		restores scan position.
+ *		ExecIndexScanEstimate	estimates DSM space needed for parallel index scan
+ *		ExecIndexScanInitializeDSM initialize DSM for parallel indexscan
+ *		ExecIndexScanInitializeWorker attach to DSM info in parallel worker
  */
 #include "postgres.h"
 
@@ -99,6 +102,30 @@ IndexNext(IndexScanState *node)
 	econtext = node->ss.ps.ps_ExprContext;
 	slot = node->ss.ss_ScanTupleSlot;
 
+	if (scandesc == NULL)
+	{
+		/*
+		 * We reach here if the index scan is not parallel, or if we're
+		 * executing a index scan that was intended to be parallel serially.
+		 */
+		scandesc = index_beginscan(node->ss.ss_currentRelation,
+								   node->iss_RelationDesc,
+								   estate->es_snapshot,
+								   node->iss_NumScanKeys,
+								   node->iss_NumOrderByKeys);
+
+		node->iss_ScanDesc = scandesc;
+
+		/*
+		 * If no run-time keys to calculate or they are ready, go ahead and
+		 * pass the scankeys to the index AM.
+		 */
+		if (node->iss_NumRuntimeKeys == 0 || node->iss_RuntimeKeysReady)
+			index_rescan(scandesc,
+						 node->iss_ScanKeys, node->iss_NumScanKeys,
+						 node->iss_OrderByKeys, node->iss_NumOrderByKeys);
+	}
+
 	/*
 	 * ok, now that we have what we need, fetch the next tuple.
 	 */
@@ -111,7 +138,7 @@ IndexNext(IndexScanState *node)
 		 */
 		ExecStoreTuple(tuple,	/* tuple to store */
 					   slot,	/* slot to store in */
-					   scandesc->xs_cbuf,		/* buffer containing tuple */
+					   scandesc->xs_cbuf,	/* buffer containing tuple */
 					   false);	/* don't pfree */
 
 		/*
@@ -122,7 +149,7 @@ IndexNext(IndexScanState *node)
 		{
 			econtext->ecxt_scantuple = slot;
 			ResetExprContext(econtext);
-			if (!ExecQual(node->indexqualorig, econtext, false))
+			if (!ExecQual(node->indexqualorig, econtext))
 			{
 				/* Fails recheck, so drop it and loop back for another */
 				InstrCountFiltered2(node, 1);
@@ -151,6 +178,7 @@ IndexNext(IndexScanState *node)
 static TupleTableSlot *
 IndexNextWithReorder(IndexScanState *node)
 {
+	EState	   *estate;
 	ExprContext *econtext;
 	IndexScanDesc scandesc;
 	HeapTuple	tuple;
@@ -160,6 +188,8 @@ IndexNextWithReorder(IndexScanState *node)
 	Datum	   *lastfetched_vals;
 	bool	   *lastfetched_nulls;
 	int			cmp;
+
+	estate = node->ss.ps.state;
 
 	/*
 	 * Only forward scan is supported with reordering.  Note: we can get away
@@ -171,11 +201,35 @@ IndexNextWithReorder(IndexScanState *node)
 	 * explicitly.
 	 */
 	Assert(!ScanDirectionIsBackward(((IndexScan *) node->ss.ps.plan)->indexorderdir));
-	Assert(ScanDirectionIsForward(node->ss.ps.state->es_direction));
+	Assert(ScanDirectionIsForward(estate->es_direction));
 
 	scandesc = node->iss_ScanDesc;
 	econtext = node->ss.ps.ps_ExprContext;
 	slot = node->ss.ss_ScanTupleSlot;
+
+	if (scandesc == NULL)
+	{
+		/*
+		 * We reach here if the index scan is not parallel, or if we're
+		 * executing a index scan that was intended to be parallel serially.
+		 */
+		scandesc = index_beginscan(node->ss.ss_currentRelation,
+								   node->iss_RelationDesc,
+								   estate->es_snapshot,
+								   node->iss_NumScanKeys,
+								   node->iss_NumOrderByKeys);
+
+		node->iss_ScanDesc = scandesc;
+
+		/*
+		 * If no run-time keys to calculate or they are ready, go ahead and
+		 * pass the scankeys to the index AM.
+		 */
+		if (node->iss_NumRuntimeKeys == 0 || node->iss_RuntimeKeysReady)
+			index_rescan(scandesc,
+						 node->iss_ScanKeys, node->iss_NumScanKeys,
+						 node->iss_OrderByKeys, node->iss_NumOrderByKeys);
+	}
 
 	for (;;)
 	{
@@ -230,7 +284,7 @@ next_indextuple:
 		 */
 		ExecStoreTuple(tuple,	/* tuple to store */
 					   slot,	/* slot to store in */
-					   scandesc->xs_cbuf,		/* buffer containing tuple */
+					   scandesc->xs_cbuf,	/* buffer containing tuple */
 					   false);	/* don't pfree */
 
 		/*
@@ -241,7 +295,7 @@ next_indextuple:
 		{
 			econtext->ecxt_scantuple = slot;
 			ResetExprContext(econtext);
-			if (!ExecQual(node->indexqualorig, econtext, false))
+			if (!ExecQual(node->indexqualorig, econtext))
 			{
 				/* Fails recheck, so drop it and loop back for another */
 				InstrCountFiltered2(node, 1);
@@ -336,8 +390,7 @@ EvalOrderByExpressions(IndexScanState *node, ExprContext *econtext)
 
 		node->iss_OrderByValues[i] = ExecEvalExpr(orderby,
 												  econtext,
-												  &node->iss_OrderByNulls[i],
-												  NULL);
+												  &node->iss_OrderByNulls[i]);
 		i++;
 	}
 
@@ -362,7 +415,7 @@ IndexRecheck(IndexScanState *node, TupleTableSlot *slot)
 
 	ResetExprContext(econtext);
 
-	return ExecQual(node->indexqualorig, econtext, false);
+	return ExecQual(node->indexqualorig, econtext);
 }
 
 
@@ -515,6 +568,18 @@ ExecIndexScan(IndexScanState *node)
 void
 ExecReScanIndexScan(IndexScanState *node)
 {
+	bool		reset_parallel_scan = true;
+
+	/*
+	 * If we are here to just update the scan keys, then don't reset parallel
+	 * scan.  We don't want each of the participating process in the parallel
+	 * scan to update the shared parallel scan state at the start of the scan.
+	 * It is quite possible that one of the participants has already begun
+	 * scanning the index when another has yet to start it.
+	 */
+	if (node->iss_NumRuntimeKeys != 0 && !node->iss_RuntimeKeysReady)
+		reset_parallel_scan = false;
+
 	/*
 	 * If we are doing runtime key calculations (ie, any of the index key
 	 * values weren't simple Consts), compute the new key values.  But first,
@@ -540,10 +605,21 @@ ExecReScanIndexScan(IndexScanState *node)
 			reorderqueue_pop(node);
 	}
 
-	/* reset index scan */
-	index_rescan(node->iss_ScanDesc,
-				 node->iss_ScanKeys, node->iss_NumScanKeys,
-				 node->iss_OrderByKeys, node->iss_NumOrderByKeys);
+	/*
+	 * Reset (parallel) index scan.  For parallel-aware nodes, the scan
+	 * descriptor is initialized during actual execution of node and we can
+	 * reach here before that (ex. during execution of nest loop join).  So,
+	 * avoid updating the scan descriptor at that time.
+	 */
+	if (node->iss_ScanDesc)
+	{
+		index_rescan(node->iss_ScanDesc,
+					 node->iss_ScanKeys, node->iss_NumScanKeys,
+					 node->iss_OrderByKeys, node->iss_NumOrderByKeys);
+
+		if (reset_parallel_scan && node->iss_ScanDesc->parallel_scan)
+			index_parallelrescan(node->iss_ScanDesc);
+	}
 	node->iss_ReachedEnd = false;
 
 	ExecScanReScan(&node->ss);
@@ -590,8 +666,7 @@ ExecIndexEvalRuntimeKeys(ExprContext *econtext,
 		 */
 		scanvalue = ExecEvalExpr(key_expr,
 								 econtext,
-								 &isNull,
-								 NULL);
+								 &isNull);
 		if (isNull)
 		{
 			scan_key->sk_argument = scanvalue;
@@ -648,8 +723,7 @@ ExecIndexEvalArrayKeys(ExprContext *econtext,
 		 */
 		arraydatum = ExecEvalExpr(array_expr,
 								  econtext,
-								  &isNull,
-								  NULL);
+								  &isNull);
 		if (isNull)
 		{
 			result = false;
@@ -837,8 +911,6 @@ ExecInitIndexScan(IndexScan *node, EState *estate, int eflags)
 	 */
 	ExecAssignExprContext(estate, &indexstate->ss.ps);
 
-	indexstate->ss.ps.ps_TupFromTlist = false;
-
 	/*
 	 * initialize child expressions
 	 *
@@ -849,18 +921,12 @@ ExecInitIndexScan(IndexScan *node, EState *estate, int eflags)
 	 * would be nice to improve that.  (Problem is that any SubPlans present
 	 * in the expression must be found now...)
 	 */
-	indexstate->ss.ps.targetlist = (List *)
-		ExecInitExpr((Expr *) node->scan.plan.targetlist,
-					 (PlanState *) indexstate);
-	indexstate->ss.ps.qual = (List *)
-		ExecInitExpr((Expr *) node->scan.plan.qual,
-					 (PlanState *) indexstate);
-	indexstate->indexqualorig = (List *)
-		ExecInitExpr((Expr *) node->indexqualorig,
-					 (PlanState *) indexstate);
-	indexstate->indexorderbyorig = (List *)
-		ExecInitExpr((Expr *) node->indexorderbyorig,
-					 (PlanState *) indexstate);
+	indexstate->ss.ps.qual =
+		ExecInitQual(node->scan.plan.qual, (PlanState *) indexstate);
+	indexstate->indexqualorig =
+		ExecInitQual(node->indexqualorig, (PlanState *) indexstate);
+	indexstate->indexorderbyorig =
+		ExecInitExprList(node->indexorderbyorig, (PlanState *) indexstate);
 
 	/*
 	 * tuple table initialization
@@ -904,7 +970,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate, int eflags)
 	 */
 	relistarget = ExecRelationIsTargetRelation(estate, node->scan.scanrelid);
 	indexstate->iss_RelationDesc = index_open(node->indexid,
-									 relistarget ? NoLock : AccessShareLock);
+											  relistarget ? NoLock : AccessShareLock);
 
 	/*
 	 * Initialize index-specific scan state
@@ -1016,24 +1082,6 @@ ExecInitIndexScan(IndexScan *node, EState *estate, int eflags)
 	{
 		indexstate->iss_RuntimeContext = NULL;
 	}
-
-	/*
-	 * Initialize scan descriptor.
-	 */
-	indexstate->iss_ScanDesc = index_beginscan(currentRelation,
-											   indexstate->iss_RelationDesc,
-											   estate->es_snapshot,
-											   indexstate->iss_NumScanKeys,
-											 indexstate->iss_NumOrderByKeys);
-
-	/*
-	 * If no run-time keys to calculate, go ahead and pass the scankeys to the
-	 * index AM.
-	 */
-	if (indexstate->iss_NumRuntimeKeys == 0)
-		index_rescan(indexstate->iss_ScanDesc,
-					 indexstate->iss_ScanKeys, indexstate->iss_NumScanKeys,
-				indexstate->iss_OrderByKeys, indexstate->iss_NumOrderByKeys);
 
 	/*
 	 * all done.
@@ -1248,7 +1296,7 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index,
 								   flags,
 								   varattno,	/* attribute number to scan */
 								   op_strategy, /* op's strategy */
-								   op_righttype,		/* strategy subtype */
+								   op_righttype,	/* strategy subtype */
 								   ((OpExpr *) clause)->inputcollid,	/* collation */
 								   opfuncid,	/* reg proc to use */
 								   scanvalue);	/* constant */
@@ -1373,12 +1421,12 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index,
 				 */
 				ScanKeyEntryInitialize(this_sub_key,
 									   flags,
-									   varattno,		/* attribute number */
-									   op_strategy,		/* op's strategy */
+									   varattno,	/* attribute number */
+									   op_strategy, /* op's strategy */
 									   op_righttype,	/* strategy subtype */
 									   inputcollation,	/* collation */
-									   opfuncid,		/* reg proc to use */
-									   scanvalue);		/* constant */
+									   opfuncid,	/* reg proc to use */
+									   scanvalue);	/* constant */
 				n_sub_key++;
 			}
 
@@ -1510,7 +1558,7 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index,
 								   flags,
 								   varattno,	/* attribute number to scan */
 								   op_strategy, /* op's strategy */
-								   op_righttype,		/* strategy subtype */
+								   op_righttype,	/* strategy subtype */
 								   saop->inputcollid,	/* collation */
 								   opfuncid,	/* reg proc to use */
 								   scanvalue);	/* constant */
@@ -1560,7 +1608,7 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index,
 			ScanKeyEntryInitialize(this_scan_key,
 								   flags,
 								   varattno,	/* attribute number to scan */
-								   InvalidStrategy,		/* no strategy */
+								   InvalidStrategy, /* no strategy */
 								   InvalidOid,	/* no strategy subtype */
 								   InvalidOid,	/* no collation */
 								   InvalidOid,	/* no reg proc for this */
@@ -1594,4 +1642,92 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index,
 	}
 	else if (n_array_keys != 0)
 		elog(ERROR, "ScalarArrayOpExpr index qual found where not allowed");
+}
+
+/* ----------------------------------------------------------------
+ *						Parallel Scan Support
+ * ----------------------------------------------------------------
+ */
+
+/* ----------------------------------------------------------------
+ *		ExecIndexScanEstimate
+ *
+ *		estimates the space required to serialize indexscan node.
+ * ----------------------------------------------------------------
+ */
+void
+ExecIndexScanEstimate(IndexScanState *node,
+					  ParallelContext *pcxt)
+{
+	EState	   *estate = node->ss.ps.state;
+
+	node->iss_PscanLen = index_parallelscan_estimate(node->iss_RelationDesc,
+													 estate->es_snapshot);
+	shm_toc_estimate_chunk(&pcxt->estimator, node->iss_PscanLen);
+	shm_toc_estimate_keys(&pcxt->estimator, 1);
+}
+
+/* ----------------------------------------------------------------
+ *		ExecIndexScanInitializeDSM
+ *
+ *		Set up a parallel index scan descriptor.
+ * ----------------------------------------------------------------
+ */
+void
+ExecIndexScanInitializeDSM(IndexScanState *node,
+						   ParallelContext *pcxt)
+{
+	EState	   *estate = node->ss.ps.state;
+	ParallelIndexScanDesc piscan;
+
+	piscan = shm_toc_allocate(pcxt->toc, node->iss_PscanLen);
+	index_parallelscan_initialize(node->ss.ss_currentRelation,
+								  node->iss_RelationDesc,
+								  estate->es_snapshot,
+								  piscan);
+	shm_toc_insert(pcxt->toc, node->ss.ps.plan->plan_node_id, piscan);
+	node->iss_ScanDesc =
+		index_beginscan_parallel(node->ss.ss_currentRelation,
+								 node->iss_RelationDesc,
+								 node->iss_NumScanKeys,
+								 node->iss_NumOrderByKeys,
+								 piscan);
+
+	/*
+	 * If no run-time keys to calculate or they are ready, go ahead and pass
+	 * the scankeys to the index AM.
+	 */
+	if (node->iss_NumRuntimeKeys == 0 || node->iss_RuntimeKeysReady)
+		index_rescan(node->iss_ScanDesc,
+					 node->iss_ScanKeys, node->iss_NumScanKeys,
+					 node->iss_OrderByKeys, node->iss_NumOrderByKeys);
+}
+
+/* ----------------------------------------------------------------
+ *		ExecIndexScanInitializeWorker
+ *
+ *		Copy relevant information from TOC into planstate.
+ * ----------------------------------------------------------------
+ */
+void
+ExecIndexScanInitializeWorker(IndexScanState *node, shm_toc *toc)
+{
+	ParallelIndexScanDesc piscan;
+
+	piscan = shm_toc_lookup(toc, node->ss.ps.plan->plan_node_id, false);
+	node->iss_ScanDesc =
+		index_beginscan_parallel(node->ss.ss_currentRelation,
+								 node->iss_RelationDesc,
+								 node->iss_NumScanKeys,
+								 node->iss_NumOrderByKeys,
+								 piscan);
+
+	/*
+	 * If no run-time keys to calculate or they are ready, go ahead and pass
+	 * the scankeys to the index AM.
+	 */
+	if (node->iss_NumRuntimeKeys == 0 || node->iss_RuntimeKeysReady)
+		index_rescan(node->iss_ScanDesc,
+					 node->iss_ScanKeys, node->iss_NumScanKeys,
+					 node->iss_OrderByKeys, node->iss_NumOrderByKeys);
 }

@@ -4,7 +4,7 @@
  *	  Utility and convenience functions for fmgr functions that return
  *	  sets and/or composite types.
  *
- * Copyright (c) 2002-2016, PostgreSQL Global Development Group
+ * Copyright (c) 2002-2017, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/utils/fmgr/funcapi.c
@@ -24,6 +24,7 @@
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
+#include "utils/regproc.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
 #include "utils/typcache.h"
@@ -73,9 +74,7 @@ init_MultiFuncCall(PG_FUNCTION_ARGS)
 		 */
 		multi_call_ctx = AllocSetContextCreate(fcinfo->flinfo->fn_mcxt,
 											   "SRF multi-call context",
-											   ALLOCSET_SMALL_MINSIZE,
-											   ALLOCSET_SMALL_INITSIZE,
-											   ALLOCSET_SMALL_MAXSIZE);
+											   ALLOCSET_SMALL_SIZES);
 
 		/*
 		 * Allocate suitably long-lived space and zero it
@@ -815,7 +814,7 @@ get_func_arg_info(HeapTuple procTup,
 		 * deconstruct_array() since the array data is just going to look like
 		 * a C array of values.
 		 */
-		arr = DatumGetArrayTypeP(proallargtypes);		/* ensure not toasted */
+		arr = DatumGetArrayTypeP(proallargtypes);	/* ensure not toasted */
 		numargs = ARR_DIMS(arr)[0];
 		if (ARR_NDIM(arr) != 1 ||
 			numargs < 0 ||
@@ -880,7 +879,7 @@ get_func_arg_info(HeapTuple procTup,
 /*
  * get_func_trftypes
  *
- * Returns a number of transformated types used by function.
+ * Returns the number of transformed types used by function.
  */
 int
 get_func_trftypes(HeapTuple procTup,
@@ -954,7 +953,7 @@ get_func_input_arg_names(Datum proargnames, Datum proargmodes,
 	 * For proargmodes, we don't need to use deconstruct_array() since the
 	 * array data is just going to look like a C array of values.
 	 */
-	arr = DatumGetArrayTypeP(proargnames);		/* ensure not toasted */
+	arr = DatumGetArrayTypeP(proargnames);	/* ensure not toasted */
 	if (ARR_NDIM(arr) != 1 ||
 		ARR_HASNULL(arr) ||
 		ARR_ELEMTYPE(arr) != TEXTOID)
@@ -1201,7 +1200,7 @@ build_function_result_tupdesc_d(Datum proallargtypes,
 		ARR_ELEMTYPE(arr) != OIDOID)
 		elog(ERROR, "proallargtypes is not a 1-D Oid array");
 	argtypes = (Oid *) ARR_DATA_PTR(arr);
-	arr = DatumGetArrayTypeP(proargmodes);		/* ensure not toasted */
+	arr = DatumGetArrayTypeP(proargmodes);	/* ensure not toasted */
 	if (ARR_NDIM(arr) != 1 ||
 		ARR_DIMS(arr)[0] != numargs ||
 		ARR_HASNULL(arr) ||
@@ -1370,7 +1369,7 @@ TypeGetTupleDesc(Oid typeoid, List *colaliases)
 		if (list_length(colaliases) != 1)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
-			  errmsg("number of aliases does not match number of columns")));
+					 errmsg("number of aliases does not match number of columns")));
 
 		/* OK, get the column alias */
 		attname = strVal(linitial(colaliases));

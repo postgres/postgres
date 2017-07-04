@@ -12,7 +12,6 @@ CREATE UNIQUE INDEX test_replica_identity_keyab_key ON test_replica_identity (ke
 CREATE UNIQUE INDEX test_replica_identity_oid_idx ON test_replica_identity (oid);
 CREATE UNIQUE INDEX test_replica_identity_nonkey ON test_replica_identity (keya, nonkey);
 CREATE INDEX test_replica_identity_hash ON test_replica_identity USING hash (nonkey);
-WARNING:  hash indexes are not WAL-logged and their use is discouraged
 CREATE UNIQUE INDEX test_replica_identity_expr ON test_replica_identity (keya, keyb, (3));
 CREATE UNIQUE INDEX test_replica_identity_partial ON test_replica_identity (keya, keyb) WHERE keyb != '3';
 -- default is 'd'/DEFAULT for user created tables
@@ -77,13 +76,13 @@ SELECT relreplident FROM pg_class WHERE oid = 'test_replica_identity'::regclass;
 (1 row)
 
 \d test_replica_identity
-                         Table "public.test_replica_identity"
- Column |  Type   |                             Modifiers                              
---------+---------+--------------------------------------------------------------------
- id     | integer | not null default nextval('test_replica_identity_id_seq'::regclass)
- keya   | text    | not null
- keyb   | text    | not null
- nonkey | text    | 
+                            Table "public.test_replica_identity"
+ Column |  Type   | Collation | Nullable |                      Default                      
+--------+---------+-----------+----------+---------------------------------------------------
+ id     | integer |           | not null | nextval('test_replica_identity_id_seq'::regclass)
+ keya   | text    |           | not null | 
+ keyb   | text    |           | not null | 
+ nonkey | text    |           |          | 
 Indexes:
     "test_replica_identity_pkey" PRIMARY KEY, btree (id) REPLICA IDENTITY
     "test_replica_identity_expr" UNIQUE, btree (keya, keyb, (3))
@@ -98,7 +97,7 @@ Indexes:
 
 -- succeed, oid unique index
 ALTER TABLE test_replica_identity REPLICA IDENTITY USING INDEX test_replica_identity_oid_idx;
--- succeed, nondeferrable unique constraint over nonullable cols
+-- succeed, nondeferrable unique constraint over nonnullable cols
 ALTER TABLE test_replica_identity REPLICA IDENTITY USING INDEX test_replica_identity_unique_nondefer;
 -- succeed unique index over nonnullable cols
 ALTER TABLE test_replica_identity REPLICA IDENTITY USING INDEX test_replica_identity_keyab_key;
@@ -110,13 +109,13 @@ SELECT relreplident FROM pg_class WHERE oid = 'test_replica_identity'::regclass;
 (1 row)
 
 \d test_replica_identity
-                         Table "public.test_replica_identity"
- Column |  Type   |                             Modifiers                              
---------+---------+--------------------------------------------------------------------
- id     | integer | not null default nextval('test_replica_identity_id_seq'::regclass)
- keya   | text    | not null
- keyb   | text    | not null
- nonkey | text    | 
+                            Table "public.test_replica_identity"
+ Column |  Type   | Collation | Nullable |                      Default                      
+--------+---------+-----------+----------+---------------------------------------------------
+ id     | integer |           | not null | nextval('test_replica_identity_id_seq'::regclass)
+ keya   | text    |           | not null | 
+ keyb   | text    |           | not null | 
+ nonkey | text    |           |          | 
 Indexes:
     "test_replica_identity_pkey" PRIMARY KEY, btree (id)
     "test_replica_identity_expr" UNIQUE, btree (keya, keyb, (3))
@@ -159,13 +158,13 @@ SELECT relreplident FROM pg_class WHERE oid = 'test_replica_identity'::regclass;
 (1 row)
 
 \d+ test_replica_identity
-                                             Table "public.test_replica_identity"
- Column |  Type   |                             Modifiers                              | Storage  | Stats target | Description 
---------+---------+--------------------------------------------------------------------+----------+--------------+-------------
- id     | integer | not null default nextval('test_replica_identity_id_seq'::regclass) | plain    |              | 
- keya   | text    | not null                                                           | extended |              | 
- keyb   | text    | not null                                                           | extended |              | 
- nonkey | text    |                                                                    | extended |              | 
+                                                Table "public.test_replica_identity"
+ Column |  Type   | Collation | Nullable |                      Default                      | Storage  | Stats target | Description 
+--------+---------+-----------+----------+---------------------------------------------------+----------+--------------+-------------
+ id     | integer |           | not null | nextval('test_replica_identity_id_seq'::regclass) | plain    |              | 
+ keya   | text    |           | not null |                                                   | extended |              | 
+ keyb   | text    |           | not null |                                                   | extended |              | 
+ nonkey | text    |           |          |                                                   | extended |              | 
 Indexes:
     "test_replica_identity_pkey" PRIMARY KEY, btree (id)
     "test_replica_identity_expr" UNIQUE, btree (keya, keyb, (3))

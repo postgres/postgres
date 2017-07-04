@@ -1,14 +1,13 @@
 /*-------------------------------------------------------------------------
  * pg_regress.h --- regression test driver
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/test/regress/pg_regress.h
  *-------------------------------------------------------------------------
  */
 
-#include "postgres_fe.h"
 #include <unistd.h>
 
 #ifndef WIN32
@@ -27,9 +26,9 @@ typedef struct _stringlist
 } _stringlist;
 
 typedef PID_TYPE(*test_function) (const char *,
-						  _stringlist **,
-						  _stringlist **,
-						  _stringlist **);
+								  _stringlist **,
+								  _stringlist **,
+								  _stringlist **);
 typedef void (*init_function) (int argc, char **argv);
 
 extern char *bindir;

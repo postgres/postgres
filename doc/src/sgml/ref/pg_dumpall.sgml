@@ -333,10 +333,58 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>--no-publications</option></term>
+      <listitem>
+       <para>
+        Do not dump publications.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--no-role-passwords</option></term>
+      <listitem>
+       <para>
+        Do not dump passwords for roles.  When restored, roles will have a
+        null password, and password authentication will always fail until the
+        password is set.  Since password values aren't needed when this option
+        is specified, the role information is read from the catalog
+        view <structname>pg_roles</structname> instead
+        of <structname>pg_authid</structname>.  Therefore, this option also
+        helps if access to <structname>pg_authid</structname> is restricted by
+        some security policy.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>--no-security-labels</option></term>
       <listitem>
        <para>
         Do not dump security labels.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--no-subscriptions</option></term>
+      <listitem>
+       <para>
+        Do not dump subscriptions.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--no-sync</option></term>
+      <listitem>
+       <para>
+        By default, <command>pg_dumpall</command> will wait for all files
+        to be written safely to disk.  This option causes
+        <command>pg_dumpall</command> to return without waiting, which is
+        faster, but means that a subsequent operating system crash can leave
+        the dump corrupt.  Generally, this option is useful for testing
+        but should not be used when dumping data from production installation.
        </para>
       </listitem>
      </varlistentry>

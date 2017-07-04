@@ -3,7 +3,7 @@
  * pgstatfuncs.c
  *	  Functions for accessing the statistics collector data
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -15,11 +15,13 @@
 #include "postgres.h"
 
 #include "access/htup_details.h"
+#include "catalog/pg_authid.h"
 #include "catalog/pg_type.h"
+#include "common/ip.h"
 #include "funcapi.h"
-#include "libpq/ip.h"
 #include "miscadmin.h"
 #include "pgstat.h"
+#include "postmaster/postmaster.h"
 #include "storage/proc.h"
 #include "storage/procarray.h"
 #include "utils/acl.h"
@@ -28,106 +30,6 @@
 #include "utils/timestamp.h"
 
 #define UINT32_ACCESS_ONCE(var)		 ((uint32)(*((volatile uint32 *)&(var))))
-
-/* bogus ... these externs should be in a header file */
-extern Datum pg_stat_get_numscans(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_tuples_returned(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_tuples_fetched(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_tuples_inserted(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_tuples_updated(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_tuples_deleted(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_tuples_hot_updated(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_live_tuples(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_dead_tuples(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_mod_since_analyze(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_blocks_fetched(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_blocks_hit(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_last_vacuum_time(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_last_autovacuum_time(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_last_analyze_time(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_last_autoanalyze_time(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_vacuum_count(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_autovacuum_count(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_analyze_count(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_autoanalyze_count(PG_FUNCTION_ARGS);
-
-extern Datum pg_stat_get_function_calls(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_function_total_time(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_function_self_time(PG_FUNCTION_ARGS);
-
-extern Datum pg_stat_get_backend_idset(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_activity(PG_FUNCTION_ARGS);
-extern Datum pg_backend_pid(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_backend_pid(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_backend_dbid(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_backend_userid(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_backend_activity(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_backend_wait_event_type(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_backend_wait_event(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_backend_activity_start(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_backend_xact_start(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_backend_start(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_backend_client_addr(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_backend_client_port(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_progress_info(PG_FUNCTION_ARGS);
-
-extern Datum pg_stat_get_db_numbackends(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_db_xact_commit(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_db_xact_rollback(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_db_blocks_fetched(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_db_blocks_hit(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_db_tuples_returned(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_db_tuples_fetched(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_db_tuples_inserted(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_db_tuples_updated(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_db_tuples_deleted(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_db_conflict_tablespace(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_db_conflict_lock(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_db_conflict_snapshot(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_db_conflict_bufferpin(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_db_conflict_startup_deadlock(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_db_conflict_all(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_db_deadlocks(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_db_stat_reset_time(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_db_temp_files(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_db_temp_bytes(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_db_blk_read_time(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_db_blk_write_time(PG_FUNCTION_ARGS);
-
-extern Datum pg_stat_get_archiver(PG_FUNCTION_ARGS);
-
-extern Datum pg_stat_get_bgwriter_timed_checkpoints(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_bgwriter_requested_checkpoints(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_checkpoint_write_time(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_checkpoint_sync_time(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_bgwriter_buf_written_checkpoints(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_bgwriter_buf_written_clean(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_bgwriter_maxwritten_clean(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_bgwriter_stat_reset_time(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_buf_written_backend(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_buf_fsync_backend(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_buf_alloc(PG_FUNCTION_ARGS);
-
-extern Datum pg_stat_get_xact_numscans(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_xact_tuples_returned(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_xact_tuples_fetched(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_xact_tuples_inserted(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_xact_tuples_updated(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_xact_tuples_deleted(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_xact_tuples_hot_updated(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_xact_blocks_fetched(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_xact_blocks_hit(PG_FUNCTION_ARGS);
-
-extern Datum pg_stat_get_xact_function_calls(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_xact_function_total_time(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_xact_function_self_time(PG_FUNCTION_ARGS);
-
-extern Datum pg_stat_get_snapshot_timestamp(PG_FUNCTION_ARGS);
-extern Datum pg_stat_clear_snapshot(PG_FUNCTION_ARGS);
-extern Datum pg_stat_reset(PG_FUNCTION_ARGS);
-extern Datum pg_stat_reset_shared(PG_FUNCTION_ARGS);
-extern Datum pg_stat_reset_single_table_counters(PG_FUNCTION_ARGS);
-extern Datum pg_stat_reset_single_function_counters(PG_FUNCTION_ARGS);
 
 /* Global bgwriter statistics, from bgwriter.c */
 extern PgStat_MsgBgWriter bgwriterStats;
@@ -638,7 +540,7 @@ pg_stat_get_progress_info(PG_FUNCTION_ARGS)
 Datum
 pg_stat_get_activity(PG_FUNCTION_ARGS)
 {
-#define PG_STAT_GET_ACTIVITY_COLS	23
+#define PG_STAT_GET_ACTIVITY_COLS	24
 	int			num_backends = pgstat_fetch_stat_numbackends();
 	int			curr_backend;
 	int			pid = PG_ARGISNULL(0) ? -1 : PG_GETARG_INT32(0);
@@ -682,33 +584,23 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 		LocalPgBackendStatus *local_beentry;
 		PgBackendStatus *beentry;
 		PGPROC	   *proc;
-		const char *wait_event_type;
-		const char *wait_event;
+		const char *wait_event_type = NULL;
+		const char *wait_event = NULL;
 
 		MemSet(values, 0, sizeof(values));
 		MemSet(nulls, 0, sizeof(nulls));
 
-		if (pid != -1)
-		{
-			/* Skip any which are not the one we're looking for. */
-			PgBackendStatus *be = pgstat_fetch_stat_beentry(curr_backend);
-
-			if (!be || be->st_procpid != pid)
-				continue;
-
-		}
-
 		/* Get the next one in the list */
 		local_beentry = pgstat_fetch_stat_local_beentry(curr_backend);
 		if (!local_beentry)
-			continue;
-
-		beentry = &local_beentry->backendStatus;
-		if (!beentry)
 		{
 			int			i;
 
-			for (i = 0; i < sizeof(nulls) / sizeof(nulls[0]); i++)
+			/* Ignore missing entries if looking for specific PID */
+			if (pid != -1)
+				continue;
+
+			for (i = 0; i < lengthof(nulls); i++)
 				nulls[i] = true;
 
 			nulls[5] = false;
@@ -718,10 +610,25 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 			continue;
 		}
 
+		beentry = &local_beentry->backendStatus;
+
+		/* If looking for specific PID, ignore all the others */
+		if (pid != -1 && beentry->st_procpid != pid)
+			continue;
+
 		/* Values available to all callers */
-		values[0] = ObjectIdGetDatum(beentry->st_databaseid);
+		if (beentry->st_databaseid != InvalidOid)
+			values[0] = ObjectIdGetDatum(beentry->st_databaseid);
+		else
+			nulls[0] = true;
+
 		values[1] = Int32GetDatum(beentry->st_procpid);
-		values[2] = ObjectIdGetDatum(beentry->st_userid);
+
+		if (beentry->st_userid != InvalidOid)
+			values[2] = ObjectIdGetDatum(beentry->st_userid);
+		else
+			nulls[2] = true;
+
 		if (beentry->st_appname)
 			values[3] = CStringGetTextDatum(beentry->st_appname);
 		else
@@ -739,21 +646,22 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 
 		if (beentry->st_ssl)
 		{
-			values[17] = BoolGetDatum(true);	/* ssl */
-			values[18] = CStringGetTextDatum(beentry->st_sslstatus->ssl_version);
-			values[19] = CStringGetTextDatum(beentry->st_sslstatus->ssl_cipher);
-			values[20] = Int32GetDatum(beentry->st_sslstatus->ssl_bits);
-			values[21] = BoolGetDatum(beentry->st_sslstatus->ssl_compression);
-			values[22] = CStringGetTextDatum(beentry->st_sslstatus->ssl_clientdn);
+			values[18] = BoolGetDatum(true);	/* ssl */
+			values[19] = CStringGetTextDatum(beentry->st_sslstatus->ssl_version);
+			values[20] = CStringGetTextDatum(beentry->st_sslstatus->ssl_cipher);
+			values[21] = Int32GetDatum(beentry->st_sslstatus->ssl_bits);
+			values[22] = BoolGetDatum(beentry->st_sslstatus->ssl_compression);
+			values[23] = CStringGetTextDatum(beentry->st_sslstatus->ssl_clientdn);
 		}
 		else
 		{
-			values[17] = BoolGetDatum(false);	/* ssl */
-			nulls[18] = nulls[19] = nulls[20] = nulls[21] = nulls[22] = true;
+			values[18] = BoolGetDatum(false);	/* ssl */
+			nulls[19] = nulls[20] = nulls[21] = nulls[22] = nulls[23] = true;
 		}
 
-		/* Values only available to role member */
-		if (has_privs_of_role(GetUserId(), beentry->st_userid))
+		/* Values only available to role member or pg_read_all_stats */
+		if (has_privs_of_role(GetUserId(), beentry->st_userid) ||
+			is_member_of_role(GetUserId(), DEFAULT_ROLE_READ_ALL_STATS))
 		{
 			SockAddr	zero_clientaddr;
 
@@ -794,10 +702,24 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 				wait_event = pgstat_get_wait_event(raw_wait_event);
 
 			}
-			else
+			else if (beentry->st_backendType != B_BACKEND)
 			{
-				wait_event_type = NULL;
-				wait_event = NULL;
+				/*
+				 * For an auxiliary process, retrieve process info from
+				 * AuxiliaryProcs stored in shared-memory.
+				 */
+				proc = AuxiliaryPidGetProc(beentry->st_procpid);
+
+				if (proc != NULL)
+				{
+					uint32		raw_wait_event;
+
+					raw_wait_event =
+						UINT32_ACCESS_ONCE(proc->wait_event_info);
+					wait_event_type =
+						pgstat_get_wait_event_type(raw_wait_event);
+					wait_event = pgstat_get_wait_event(raw_wait_event);
+				}
 			}
 
 			if (wait_event_type)
@@ -862,7 +784,7 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 					{
 						clean_ipv6_addr(beentry->st_clientaddr.addr.ss_family, remote_host);
 						values[12] = DirectFunctionCall1(inet_in,
-											   CStringGetDatum(remote_host));
+														 CStringGetDatum(remote_host));
 						if (beentry->st_clienthostname &&
 							beentry->st_clienthostname[0])
 							values[13] = CStringGetTextDatum(beentry->st_clienthostname);
@@ -897,6 +819,9 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 					nulls[14] = true;
 				}
 			}
+			/* Add backend type */
+			values[17] =
+				CStringGetTextDatum(pgstat_get_backend_desc(beentry->st_backendType));
 		}
 		else
 		{
@@ -912,6 +837,7 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 			nulls[12] = true;
 			nulls[13] = true;
 			nulls[14] = true;
+			nulls[17] = true;
 		}
 
 		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
@@ -1933,5 +1859,5 @@ pg_stat_get_archiver(PG_FUNCTION_ARGS)
 
 	/* Returns the record as Datum */
 	PG_RETURN_DATUM(HeapTupleGetDatum(
-								   heap_form_tuple(tupdesc, values, nulls)));
+									  heap_form_tuple(tupdesc, values, nulls)));
 }

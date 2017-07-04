@@ -104,6 +104,8 @@ CREATE FOREIGN DATA WRAPPER foo;
 CREATE SERVER s1 FOREIGN DATA WRAPPER foo;
 COMMENT ON SERVER s1 IS 'foreign server';
 CREATE USER MAPPING FOR current_user SERVER s1;
+CREATE USER MAPPING FOR current_user SERVER s1;				-- ERROR
+CREATE USER MAPPING IF NOT EXISTS FOR current_user SERVER s1; -- NOTICE
 \dew+
 \des+
 \deu+
@@ -121,6 +123,7 @@ CREATE SERVER s1 FOREIGN DATA WRAPPER foo;                  -- ERROR
 CREATE FOREIGN DATA WRAPPER foo OPTIONS ("test wrapper" 'true');
 CREATE SERVER s1 FOREIGN DATA WRAPPER foo;
 CREATE SERVER s1 FOREIGN DATA WRAPPER foo;                  -- ERROR
+CREATE SERVER IF NOT EXISTS s1 FOREIGN DATA WRAPPER foo;	-- No ERROR, just NOTICE
 CREATE SERVER s2 FOREIGN DATA WRAPPER foo OPTIONS (host 'a', dbname 'b');
 CREATE SERVER s3 TYPE 'oracle' FOREIGN DATA WRAPPER foo;
 CREATE SERVER s4 TYPE 'oracle' FOREIGN DATA WRAPPER foo OPTIONS (host 'a', dbname 'b');
@@ -490,7 +493,22 @@ ALTER SERVER s9 VERSION '1.2';                                  -- ERROR
 GRANT USAGE ON FOREIGN SERVER s9 TO regress_test_role;          -- WARNING
 CREATE USER MAPPING FOR current_user SERVER s9;
 DROP SERVER s9 CASCADE;                                         -- ERROR
+
+-- Check visibility of user mapping data
+SET ROLE regress_test_role;
+CREATE SERVER s10 FOREIGN DATA WRAPPER foo;
+CREATE USER MAPPING FOR public SERVER s10 OPTIONS (user 'secret');
+GRANT USAGE ON FOREIGN SERVER s10 TO regress_unprivileged_role;
+-- owner of server can see option fields
+\deu+
 RESET ROLE;
+-- superuser can see option fields
+\deu+
+-- unprivileged user cannot see option fields
+SET ROLE regress_unprivileged_role;
+\deu+
+RESET ROLE;
+DROP SERVER s10 CASCADE;
 
 -- Triggers
 CREATE FUNCTION dummy_trigger() RETURNS TRIGGER AS $$
@@ -506,6 +524,12 @@ EXECUTE PROCEDURE dummy_trigger();
 
 CREATE TRIGGER trigtest_after_stmt AFTER INSERT OR UPDATE OR DELETE
 ON foreign_schema.foreign_table_1
+FOR EACH STATEMENT
+EXECUTE PROCEDURE dummy_trigger();
+
+CREATE TRIGGER trigtest_after_stmt_tt AFTER INSERT OR UPDATE OR DELETE -- ERROR
+ON foreign_schema.foreign_table_1
+REFERENCING NEW TABLE AS new_table
 FOR EACH STATEMENT
 EXECUTE PROCEDURE dummy_trigger();
 
@@ -683,6 +707,77 @@ DROP FOREIGN TABLE foreign_schema.foreign_table_1;
 REASSIGN OWNED BY regress_test_role TO regress_test_role2;
 DROP OWNED BY regress_test_role2;
 DROP OWNED BY regress_test_role2 CASCADE;
+
+-- Foreign partition DDL stuff
+CREATE TABLE pt2 (
+	c1 integer NOT NULL,
+	c2 text,
+	c3 date
+) PARTITION BY LIST (c1);
+CREATE FOREIGN TABLE pt2_1 PARTITION OF pt2 FOR VALUES IN (1)
+  SERVER s0 OPTIONS (delimiter ',', quote '"', "be quoted" 'value');
+\d+ pt2
+\d+ pt2_1
+
+-- partition cannot have additional columns
+DROP FOREIGN TABLE pt2_1;
+CREATE FOREIGN TABLE pt2_1 (
+	c1 integer NOT NULL,
+	c2 text,
+	c3 date,
+	c4 char
+) SERVER s0 OPTIONS (delimiter ',', quote '"', "be quoted" 'value');
+\d+ pt2_1
+ALTER TABLE pt2 ATTACH PARTITION pt2_1 FOR VALUES IN (1);       -- ERROR
+
+DROP FOREIGN TABLE pt2_1;
+\d+ pt2
+CREATE FOREIGN TABLE pt2_1 (
+	c1 integer NOT NULL,
+	c2 text,
+	c3 date
+) SERVER s0 OPTIONS (delimiter ',', quote '"', "be quoted" 'value');
+\d+ pt2_1
+-- no attach partition validation occurs for foreign tables
+ALTER TABLE pt2 ATTACH PARTITION pt2_1 FOR VALUES IN (1);
+\d+ pt2
+\d+ pt2_1
+
+-- cannot add column to a partition
+ALTER TABLE pt2_1 ADD c4 char;
+
+-- ok to have a partition's own constraints though
+ALTER TABLE pt2_1 ALTER c3 SET NOT NULL;
+ALTER TABLE pt2_1 ADD CONSTRAINT p21chk CHECK (c2 <> '');
+\d+ pt2
+\d+ pt2_1
+
+-- cannot drop inherited NOT NULL constraint from a partition
+ALTER TABLE pt2_1 ALTER c1 DROP NOT NULL;
+
+-- partition must have parent's constraints
+ALTER TABLE pt2 DETACH PARTITION pt2_1;
+ALTER TABLE pt2 ALTER c2 SET NOT NULL;
+\d+ pt2
+\d+ pt2_1
+ALTER TABLE pt2 ATTACH PARTITION pt2_1 FOR VALUES IN (1);       -- ERROR
+ALTER FOREIGN TABLE pt2_1 ALTER c2 SET NOT NULL;
+ALTER TABLE pt2 ATTACH PARTITION pt2_1 FOR VALUES IN (1);
+
+ALTER TABLE pt2 DETACH PARTITION pt2_1;
+ALTER TABLE pt2 ADD CONSTRAINT pt2chk1 CHECK (c1 > 0);
+\d+ pt2
+\d+ pt2_1
+ALTER TABLE pt2 ATTACH PARTITION pt2_1 FOR VALUES IN (1);       -- ERROR
+ALTER FOREIGN TABLE pt2_1 ADD CONSTRAINT pt2chk1 CHECK (c1 > 0);
+ALTER TABLE pt2 ATTACH PARTITION pt2_1 FOR VALUES IN (1);
+
+-- TRUNCATE doesn't work on foreign tables, either directly or recursively
+TRUNCATE pt2_1;  -- ERROR
+TRUNCATE pt2;  -- ERROR
+
+DROP FOREIGN TABLE pt2_1;
+DROP TABLE pt2;
 
 -- Cleanup
 DROP SCHEMA foreign_schema CASCADE;

@@ -10,7 +10,7 @@
  * be provided by each port.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/storage/pg_sema.h
@@ -21,52 +21,30 @@
 #define PG_SEMA_H
 
 /*
- * PGSemaphoreData and pointer type PGSemaphore are the data structure
- * representing an individual semaphore.  The contents of PGSemaphoreData
- * vary across implementations and must never be touched by platform-
- * independent code.  PGSemaphoreData structures are always allocated
- * in shared memory (to support implementations where the data changes during
- * lock/unlock).
+ * struct PGSemaphoreData and pointer type PGSemaphore are the data structure
+ * representing an individual semaphore.  The contents of PGSemaphoreData vary
+ * across implementations and must never be touched by platform-independent
+ * code; hence, PGSemaphoreData is declared as an opaque struct here.
  *
- * pg_config.h must define exactly one of the USE_xxx_SEMAPHORES symbols.
+ * However, Windows is sufficiently unlike our other ports that it doesn't
+ * seem worth insisting on ABI compatibility for Windows too.  Hence, on
+ * that platform just define PGSemaphore as HANDLE.
  */
-
-#ifdef USE_NAMED_POSIX_SEMAPHORES
-
-#include <semaphore.h>
-
-typedef sem_t *PGSemaphoreData;
+#ifndef USE_WIN32_SEMAPHORES
+typedef struct PGSemaphoreData *PGSemaphore;
+#else
+typedef HANDLE PGSemaphore;
 #endif
 
-#ifdef USE_UNNAMED_POSIX_SEMAPHORES
 
-#include <semaphore.h>
-
-typedef sem_t PGSemaphoreData;
-#endif
-
-#ifdef USE_SYSV_SEMAPHORES
-
-typedef struct PGSemaphoreData
-{
-	int			semId;			/* semaphore set identifier */
-	int			semNum;			/* semaphore number within set */
-} PGSemaphoreData;
-#endif
-
-#ifdef USE_WIN32_SEMAPHORES
-
-typedef HANDLE PGSemaphoreData;
-#endif
-
-typedef PGSemaphoreData *PGSemaphore;
-
+/* Report amount of shared memory needed */
+extern Size PGSemaphoreShmemSize(int maxSemas);
 
 /* Module initialization (called during postmaster start or shmem reinit) */
 extern void PGReserveSemaphores(int maxSemas, int port);
 
-/* Initialize a PGSemaphore structure to represent a sema with count 1 */
-extern void PGSemaphoreCreate(PGSemaphore sema);
+/* Allocate a PGSemaphore structure with initial count 1 */
+extern PGSemaphore PGSemaphoreCreate(void);
 
 /* Reset a previously-initialized PGSemaphore to have count 0 */
 extern void PGSemaphoreReset(PGSemaphore sema);
@@ -80,4 +58,4 @@ extern void PGSemaphoreUnlock(PGSemaphore sema);
 /* Lock a semaphore only if able to do so without blocking */
 extern bool PGSemaphoreTryLock(PGSemaphore sema);
 
-#endif   /* PG_SEMA_H */
+#endif							/* PG_SEMA_H */

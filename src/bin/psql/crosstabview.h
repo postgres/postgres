@@ -1,7 +1,7 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
- * Copyright (c) 2000-2016, PostgreSQL Global Development Group
+ * Copyright (c) 2000-2017, PostgreSQL Global Development Group
  *
  * src/bin/psql/crosstabview.h
  */
@@ -24,4 +24,4 @@
 /* prototypes */
 extern bool PrintResultsInCrosstab(const PGresult *res);
 
-#endif   /* CROSSTABVIEW_H */
+#endif							/* CROSSTABVIEW_H */

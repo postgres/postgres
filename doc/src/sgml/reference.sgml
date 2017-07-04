@@ -54,11 +54,14 @@
    &alterOperatorClass;
    &alterOperatorFamily;
    &alterPolicy;
+   &alterPublication;
    &alterRole;
    &alterRule;
    &alterSchema;
    &alterSequence;
    &alterServer;
+   &alterStatistics;
+   &alterSubscription;
    &alterSystem;
    &alterTable;
    &alterTableSpace;
@@ -100,11 +103,14 @@
    &createOperatorClass;
    &createOperatorFamily;
    &createPolicy;
+   &createPublication;
    &createRole;
    &createRule;
    &createSchema;
    &createSequence;
    &createServer;
+   &createStatistics;
+   &createSubscription;
    &createTable;
    &createTableAs;
    &createTableSpace;
@@ -144,11 +150,14 @@
    &dropOperatorFamily;
    &dropOwned;
    &dropPolicy;
+   &dropPublication;
    &dropRole;
    &dropRule;
    &dropSchema;
    &dropSequence;
    &dropServer;
+   &dropStatistics;
+   &dropSubscription;
    &dropTable;
    &dropTableSpace;
    &dropTSConfig;
@@ -227,10 +236,8 @@
 
    &clusterdb;
    &createdb;
-   &createlang;
    &createuser;
    &dropdb;
-   &droplang;
    &dropuser;
    &ecpgRef;
    &pgBasebackup;
@@ -239,7 +246,7 @@
    &pgDump;
    &pgDumpall;
    &pgIsready;
-   &pgReceivexlog;
+   &pgReceivewal;
    &pgRecvlogical;
    &pgRestore;
    &psqlRef;
@@ -265,12 +272,12 @@
    &pgarchivecleanup;
    &pgControldata;
    &pgCtl;
-   &pgResetxlog;
+   &pgResetwal;
    &pgRewind;
    &pgtestfsync;
    &pgtesttiming;
    &pgupgrade;
-   &pgxlogdump;
+   &pgwaldump;
    &postgres;
    &postmaster;
 

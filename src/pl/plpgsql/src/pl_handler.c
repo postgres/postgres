@@ -3,7 +3,7 @@
  * pl_handler.c		- Handler for the PL/pgSQL
  *			  procedural language
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -13,7 +13,7 @@
  *-------------------------------------------------------------------------
  */
 
-#include "plpgsql.h"
+#include "postgres.h"
 
 #include "access/htup_details.h"
 #include "catalog/pg_proc.h"
@@ -24,6 +24,9 @@
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
+#include "utils/varlena.h"
+
+#include "plpgsql.h"
 
 
 static bool plpgsql_extra_checks_check_hook(char **newvalue, void **extra, GucSource source);
@@ -165,7 +168,7 @@ _PG_init(void)
 							 NULL, NULL, NULL);
 
 	DefineCustomBoolVariable("plpgsql.check_asserts",
-				  gettext_noop("Perform checks given in ASSERT statements."),
+							 gettext_noop("Perform checks given in ASSERT statements."),
 							 NULL,
 							 &plpgsql_check_asserts,
 							 true,
@@ -244,7 +247,7 @@ plpgsql_call_handler(PG_FUNCTION_ARGS)
 		 */
 		if (CALLED_AS_TRIGGER(fcinfo))
 			retval = PointerGetDatum(plpgsql_exec_trigger(func,
-										   (TriggerData *) fcinfo->context));
+														  (TriggerData *) fcinfo->context));
 		else if (CALLED_AS_EVENT_TRIGGER(fcinfo))
 		{
 			plpgsql_exec_event_trigger(func,
@@ -287,15 +290,13 @@ PG_FUNCTION_INFO_V1(plpgsql_inline_handler);
 Datum
 plpgsql_inline_handler(PG_FUNCTION_ARGS)
 {
-	InlineCodeBlock *codeblock = (InlineCodeBlock *) DatumGetPointer(PG_GETARG_DATUM(0));
+	InlineCodeBlock *codeblock = castNode(InlineCodeBlock, DatumGetPointer(PG_GETARG_DATUM(0)));
 	PLpgSQL_function *func;
 	FunctionCallInfoData fake_fcinfo;
 	FmgrInfo	flinfo;
 	EState	   *simple_eval_estate;
 	Datum		retval;
 	int			rc;
-
-	Assert(IsA(codeblock, InlineCodeBlock));
 
 	/*
 	 * Connect to SPI manager

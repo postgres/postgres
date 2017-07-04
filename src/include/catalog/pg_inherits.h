@@ -5,7 +5,7 @@
  *	  along with the relation's initial contents.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_inherits.h
@@ -56,4 +56,4 @@ typedef FormData_pg_inherits *Form_pg_inherits;
  * ----------------
  */
 
-#endif   /* PG_INHERITS_H */
+#endif							/* PG_INHERITS_H */

@@ -7,7 +7,7 @@
  * or GUC_DISALLOW_IN_FILE are not displayed, unless the user specifically
  * requests that variable by name
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/utils/misc/help_config.c
@@ -124,7 +124,7 @@ printMixedStruct(mixedStruct *structToPrint)
 		case PGC_ENUM:
 			printf("ENUM\t%s\t\t\t",
 				   config_enum_lookup_by_value(&structToPrint->_enum,
-											 structToPrint->_enum.boot_val));
+											   structToPrint->_enum.boot_val));
 			break;
 
 		default:

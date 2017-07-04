@@ -4,7 +4,7 @@
  *	  POSTGRES error reporting/logging definitions.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/elog.h
@@ -27,9 +27,9 @@
 								 * server log by default. */
 #define LOG_SERVER_ONLY 16		/* Same as LOG for server reporting, but never
 								 * sent to client. */
-#define COMMERROR	LOG_SERVER_ONLY		/* Client communication problems; same
-										 * as LOG for server reporting, but
-										 * never sent to client. */
+#define COMMERROR	LOG_SERVER_ONLY /* Client communication problems; same as
+									 * LOG for server reporting, but never
+									 * sent to client. */
 #define INFO		17			/* Messages specifically requested by user (eg
 								 * VACUUM VERBOSE output); always sent to
 								 * client regardless of client_min_messages,
@@ -117,7 +117,7 @@
 		if (elevel_ >= ERROR) \
 			pg_unreachable(); \
 	} while(0)
-#endif   /* HAVE__BUILTIN_CONSTANT_P */
+#endif							/* HAVE__BUILTIN_CONSTANT_P */
 
 #define ereport(elevel, rest)	\
 	ereport_domain(elevel, TEXTDOMAIN, rest)
@@ -137,7 +137,7 @@ extern int	errmsg(const char *fmt,...) pg_attribute_printf(1, 2);
 extern int	errmsg_internal(const char *fmt,...) pg_attribute_printf(1, 2);
 
 extern int errmsg_plural(const char *fmt_singular, const char *fmt_plural,
-	unsigned long n,...) pg_attribute_printf(1, 4) pg_attribute_printf(2, 4);
+			  unsigned long n,...) pg_attribute_printf(1, 4) pg_attribute_printf(2, 4);
 
 extern int	errdetail(const char *fmt,...) pg_attribute_printf(1, 2);
 extern int	errdetail_internal(const char *fmt,...) pg_attribute_printf(1, 2);
@@ -146,10 +146,10 @@ extern int	errdetail_log(const char *fmt,...) pg_attribute_printf(1, 2);
 
 extern int errdetail_log_plural(const char *fmt_singular,
 					 const char *fmt_plural,
-	unsigned long n,...) pg_attribute_printf(1, 4) pg_attribute_printf(2, 4);
+					 unsigned long n,...) pg_attribute_printf(1, 4) pg_attribute_printf(2, 4);
 
 extern int errdetail_plural(const char *fmt_singular, const char *fmt_plural,
-	unsigned long n,...) pg_attribute_printf(1, 4) pg_attribute_printf(2, 4);
+				 unsigned long n,...) pg_attribute_printf(1, 4) pg_attribute_printf(2, 4);
 
 extern int	errhint(const char *fmt,...) pg_attribute_printf(1, 2);
 
@@ -206,19 +206,20 @@ extern int	getinternalerrposition(void);
 #else							/* !HAVE__BUILTIN_CONSTANT_P */
 #define elog(elevel, ...)  \
 	do { \
-		int		elevel_; \
 		elog_start(__FILE__, __LINE__, PG_FUNCNAME_MACRO); \
-		elevel_ = (elevel); \
-		elog_finish(elevel_, __VA_ARGS__); \
-		if (elevel_ >= ERROR) \
-			pg_unreachable(); \
+		{ \
+			const int elevel_ = (elevel); \
+			elog_finish(elevel_, __VA_ARGS__); \
+			if (elevel_ >= ERROR) \
+				pg_unreachable(); \
+		} \
 	} while(0)
-#endif   /* HAVE__BUILTIN_CONSTANT_P */
+#endif							/* HAVE__BUILTIN_CONSTANT_P */
 #else							/* !HAVE__VA_ARGS */
 #define elog  \
 	elog_start(__FILE__, __LINE__, PG_FUNCNAME_MACRO), \
 	elog_finish
-#endif   /* HAVE__VA_ARGS */
+#endif							/* HAVE__VA_ARGS */
 
 extern void elog_start(const char *filename, int lineno, const char *funcname);
 extern void elog_finish(int elevel, const char *fmt,...) pg_attribute_printf(2, 3);
@@ -328,8 +329,8 @@ extern PGDLLIMPORT sigjmp_buf *PG_exception_stack;
 typedef struct ErrorData
 {
 	int			elevel;			/* error level */
-	bool		output_to_server;		/* will report to server log? */
-	bool		output_to_client;		/* will report to client? */
+	bool		output_to_server;	/* will report to server log? */
+	bool		output_to_client;	/* will report to client? */
 	bool		show_funcname;	/* true to force funcname inclusion */
 	bool		hide_stmt;		/* true to prevent STATEMENT: inclusion */
 	bool		hide_ctx;		/* true to prevent CONTEXT: inclusion */
@@ -381,7 +382,7 @@ typedef enum
 	PGERROR_TERSE,				/* single-line error messages */
 	PGERROR_DEFAULT,			/* recommended style */
 	PGERROR_VERBOSE				/* all the facts, ma'am */
-}	PGErrorVerbosity;
+}			PGErrorVerbosity;
 
 extern int	Log_error_verbosity;
 extern char *Log_line_prefix;
@@ -412,4 +413,4 @@ extern void set_syslog_parameters(const char *ident, int facility);
  */
 extern void write_stderr(const char *fmt,...) pg_attribute_printf(1, 2);
 
-#endif   /* ELOG_H */
+#endif							/* ELOG_H */

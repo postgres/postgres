@@ -4,7 +4,7 @@
  *	  Definitions for hot standby mode.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/storage/standby.h
@@ -73,7 +73,7 @@ typedef struct RunningTransactionsData
 	int			subxcnt;		/* # of subxact ids in xids[] */
 	bool		subxid_overflow;	/* snapshot overflowed, subxids missing */
 	TransactionId nextXid;		/* copy of ShmemVariableCache->nextXid */
-	TransactionId oldestRunningXid;		/* *not* oldestXmin */
+	TransactionId oldestRunningXid; /* *not* oldestXmin */
 	TransactionId latestCompletedXid;	/* so we can set xmax */
 
 	TransactionId *xids;		/* array of (sub)xids still running */
@@ -88,4 +88,4 @@ extern XLogRecPtr LogStandbySnapshot(void);
 extern void LogStandbyInvalidations(int nmsgs, SharedInvalidationMessage *msgs,
 						bool relcacheInitFileInval);
 
-#endif   /* STANDBY_H */
+#endif							/* STANDBY_H */

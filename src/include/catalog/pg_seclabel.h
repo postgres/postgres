@@ -3,7 +3,7 @@
  * pg_seclabel.h
  *	  definition of the system "security label" relation (pg_seclabel)
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * -------------------------------------------------------------------------
@@ -27,8 +27,8 @@ CATALOG(pg_seclabel,3596) BKI_WITHOUT_OIDS
 	int32		objsubid;		/* column number, or 0 if not used */
 
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
-	text provider BKI_FORCE_NOT_NULL;	/* name of label provider */
-	text label	BKI_FORCE_NOT_NULL;		/* security label of the object */
+	text		provider BKI_FORCE_NOT_NULL;	/* name of label provider */
+	text		label BKI_FORCE_NOT_NULL;	/* security label of the object */
 #endif
 } FormData_pg_seclabel;
 
@@ -43,4 +43,4 @@ CATALOG(pg_seclabel,3596) BKI_WITHOUT_OIDS
 #define Anum_pg_seclabel_provider	4
 #define Anum_pg_seclabel_label		5
 
-#endif   /* PG_SECLABEL_H */
+#endif							/* PG_SECLABEL_H */

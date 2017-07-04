@@ -5,7 +5,7 @@
  *	  along with the relation's initial contents.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_index.h
@@ -108,4 +108,4 @@ typedef FormData_pg_index *Form_pg_index;
 #define IndexIsReady(indexForm) ((indexForm)->indisready)
 #define IndexIsLive(indexForm)	((indexForm)->indislive)
 
-#endif   /* PG_INDEX_H */
+#endif							/* PG_INDEX_H */

@@ -3,7 +3,7 @@
  * pg_depend.c
  *	  routines to support manipulation of the pg_depend relation
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -107,13 +107,11 @@ recordMultipleDependencies(const ObjectAddress *depender,
 
 			tup = heap_form_tuple(dependDesc->rd_att, values, nulls);
 
-			simple_heap_insert(dependDesc, tup);
-
-			/* keep indexes current */
+			/* fetch index info only when we know we need it */
 			if (indstate == NULL)
 				indstate = CatalogOpenIndexes(dependDesc);
 
-			CatalogIndexInsert(indstate, tup);
+			CatalogTupleInsertWithInfo(dependDesc, tup, indstate);
 
 			heap_freetuple(tup);
 		}
@@ -216,10 +214,10 @@ deleteDependencyRecordsFor(Oid classId, Oid objectId,
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))
 	{
 		if (skipExtensionDeps &&
-		  ((Form_pg_depend) GETSTRUCT(tup))->deptype == DEPENDENCY_EXTENSION)
+			((Form_pg_depend) GETSTRUCT(tup))->deptype == DEPENDENCY_EXTENSION)
 			continue;
 
-		simple_heap_delete(depRel, &tup->t_self);
+		CatalogTupleDelete(depRel, &tup->t_self);
 		count++;
 	}
 
@@ -269,7 +267,7 @@ deleteDependencyRecordsForClass(Oid classId, Oid objectId,
 
 		if (depform->refclassid == refclassId && depform->deptype == deptype)
 		{
-			simple_heap_delete(depRel, &tup->t_self);
+			CatalogTupleDelete(depRel, &tup->t_self);
 			count++;
 		}
 	}
@@ -321,8 +319,8 @@ changeDependencyFor(Oid classId, Oid objectId,
 	if (isObjectPinned(&objAddr, depRel))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-		errmsg("cannot remove dependency on %s because it is a system object",
-			   getObjectDescription(&objAddr))));
+				 errmsg("cannot remove dependency on %s because it is a system object",
+						getObjectDescription(&objAddr))));
 
 	/*
 	 * We can handle adding a dependency on something pinned, though, since
@@ -353,7 +351,7 @@ changeDependencyFor(Oid classId, Oid objectId,
 			depform->refobjid == oldRefObjectId)
 		{
 			if (newIsPinned)
-				simple_heap_delete(depRel, &tup->t_self);
+				CatalogTupleDelete(depRel, &tup->t_self);
 			else
 			{
 				/* make a modifiable copy */
@@ -362,8 +360,7 @@ changeDependencyFor(Oid classId, Oid objectId,
 
 				depform->refobjid = newRefObjectId;
 
-				simple_heap_update(depRel, &tup->t_self, tup);
-				CatalogUpdateIndexes(depRel, tup);
+				CatalogTupleUpdate(depRel, &tup->t_self, tup);
 
 				heap_freetuple(tup);
 			}
@@ -491,7 +488,7 @@ getExtensionOfObject(Oid classId, Oid objectId)
 /*
  * Detect whether a sequence is marked as "owned" by a column
  *
- * An ownership marker is an AUTO dependency from the sequence to the
+ * An ownership marker is an AUTO or INTERNAL dependency from the sequence to the
  * column.  If we find one, store the identity of the owning column
  * into *tableId and *colId and return TRUE; else return FALSE.
  *
@@ -500,7 +497,7 @@ getExtensionOfObject(Oid classId, Oid objectId)
  * not happen, though.
  */
 bool
-sequenceIsOwned(Oid seqId, Oid *tableId, int32 *colId)
+sequenceIsOwned(Oid seqId, char deptype, Oid *tableId, int32 *colId)
 {
 	bool		ret = false;
 	Relation	depRel;
@@ -527,7 +524,7 @@ sequenceIsOwned(Oid seqId, Oid *tableId, int32 *colId)
 		Form_pg_depend depform = (Form_pg_depend) GETSTRUCT(tup);
 
 		if (depform->refclassid == RelationRelationId &&
-			depform->deptype == DEPENDENCY_AUTO)
+			depform->deptype == deptype)
 		{
 			*tableId = depform->refobjid;
 			*colId = depform->refobjsubid;
@@ -544,27 +541,15 @@ sequenceIsOwned(Oid seqId, Oid *tableId, int32 *colId)
 }
 
 /*
- * Remove any existing "owned" markers for the specified sequence.
- *
- * Note: we don't provide a special function to install an "owned"
- * marker; just use recordDependencyOn().
- */
-void
-markSequenceUnowned(Oid seqId)
-{
-	deleteDependencyRecordsForClass(RelationRelationId, seqId,
-									RelationRelationId, DEPENDENCY_AUTO);
-}
-
-/*
- * Collect a list of OIDs of all sequences owned by the specified relation.
+ * Collect a list of OIDs of all sequences owned by the specified relation,
+ * and column if specified.
  */
 List *
-getOwnedSequences(Oid relid)
+getOwnedSequences(Oid relid, AttrNumber attnum)
 {
 	List	   *result = NIL;
 	Relation	depRel;
-	ScanKeyData key[2];
+	ScanKeyData key[3];
 	SysScanDesc scan;
 	HeapTuple	tup;
 
@@ -578,23 +563,28 @@ getOwnedSequences(Oid relid)
 				Anum_pg_depend_refobjid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(relid));
+	if (attnum)
+		ScanKeyInit(&key[2],
+					Anum_pg_depend_refobjsubid,
+					BTEqualStrategyNumber, F_INT4EQ,
+					Int32GetDatum(attnum));
 
 	scan = systable_beginscan(depRel, DependReferenceIndexId, true,
-							  NULL, 2, key);
+							  NULL, attnum ? 3 : 2, key);
 
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))
 	{
 		Form_pg_depend deprec = (Form_pg_depend) GETSTRUCT(tup);
 
 		/*
-		 * We assume any auto dependency of a sequence on a column must be
-		 * what we are looking for.  (We need the relkind test because indexes
-		 * can also have auto dependencies on columns.)
+		 * We assume any auto or internal dependency of a sequence on a column
+		 * must be what we are looking for.  (We need the relkind test because
+		 * indexes can also have auto dependencies on columns.)
 		 */
 		if (deprec->classid == RelationRelationId &&
 			deprec->objsubid == 0 &&
 			deprec->refobjsubid != 0 &&
-			deprec->deptype == DEPENDENCY_AUTO &&
+			(deprec->deptype == DEPENDENCY_AUTO || deprec->deptype == DEPENDENCY_INTERNAL) &&
 			get_rel_relkind(deprec->objid) == RELKIND_SEQUENCE)
 		{
 			result = lappend_oid(result, deprec->objid);
@@ -608,6 +598,21 @@ getOwnedSequences(Oid relid)
 	return result;
 }
 
+/*
+ * Get owned sequence, error if not exactly one.
+ */
+Oid
+getOwnedSequence(Oid relid, AttrNumber attnum)
+{
+	List	   *seqlist = getOwnedSequences(relid, attnum);
+
+	if (list_length(seqlist) > 1)
+		elog(ERROR, "more than one owned sequence found");
+	else if (list_length(seqlist) < 1)
+		elog(ERROR, "no owned sequence found");
+
+	return linitial_oid(seqlist);
+}
 
 /*
  * get_constraint_index

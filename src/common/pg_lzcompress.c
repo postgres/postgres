@@ -166,7 +166,7 @@
  *
  *			Jan Wieck
  *
- * Copyright (c) 1999-2016, PostgreSQL Global Development Group
+ * Copyright (c) 1999-2017, PostgreSQL Global Development Group
  *
  * src/common/pg_lzcompress.c
  * ----------
@@ -752,7 +752,7 @@ pglz_decompress(const char *source, int32 slen, char *dest,
 				 * An unset control bit means LITERAL BYTE. So we just copy
 				 * one from INPUT to OUTPUT.
 				 */
-				if (dp >= destend)		/* check for buffer overrun */
+				if (dp >= destend)	/* check for buffer overrun */
 					break;		/* do not clobber memory */
 
 				*dp++ = *sp++;

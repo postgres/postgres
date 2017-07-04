@@ -5,7 +5,7 @@
  *
  * XXX keep this in sync with src/include/catalog/pg_type.h
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/interfaces/ecpg/ecpglib/pg_type.h
@@ -57,5 +57,23 @@
 #define ZPBITOID	 1560
 #define VARBITOID	  1562
 #define NUMERICOID		1700
+#define REFCURSOROID	1790
+#define REGPROCEDUREOID 2202
+#define REGOPEROID		2203
+#define REGOPERATOROID	2204
+#define REGCLASSOID		2205
+#define REGTYPEOID		2206
+#define REGROLEOID		4096
+#define REGNAMESPACEOID		4089
+#define REGTYPEARRAYOID 2211
+#define UUIDOID 2950
+#define LSNOID			3220
+#define TSVECTOROID		3614
+#define GTSVECTOROID	3642
+#define TSQUERYOID		3615
+#define REGCONFIGOID	3734
+#define REGDICTIONARYOID	3769
+#define JSONBOID 3802
+#define INT4RANGEOID		3904
 
-#endif   /* PG_TYPE_H */
+#endif							/* PG_TYPE_H */

@@ -13,7 +13,7 @@
  * use the Windows native routines, but if not, we use our own.
  *
  *
- * Copyright (c) 2003-2016, PostgreSQL Global Development Group
+ * Copyright (c) 2003-2017, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/port/getaddrinfo.c
@@ -40,17 +40,17 @@
  * Here we need to declare what the function pointers look like
  */
 typedef int (__stdcall * getaddrinfo_ptr_t) (const char *nodename,
-														 const char *servname,
-											   const struct addrinfo * hints,
-													 struct addrinfo ** res);
+											 const char *servname,
+											 const struct addrinfo *hints,
+											 struct addrinfo **res);
 
-typedef void (__stdcall * freeaddrinfo_ptr_t) (struct addrinfo * ai);
+typedef void (__stdcall * freeaddrinfo_ptr_t) (struct addrinfo *ai);
 
-typedef int (__stdcall * getnameinfo_ptr_t) (const struct sockaddr * sa,
-														 int salen,
-													 char *host, int hostlen,
-													 char *serv, int servlen,
-														 int flags);
+typedef int (__stdcall * getnameinfo_ptr_t) (const struct sockaddr *sa,
+											 int salen,
+											 char *host, int hostlen,
+											 char *serv, int servlen,
+											 int flags);
 
 /* static pointers to the native routines, so we only do the lookup once. */
 static getaddrinfo_ptr_t getaddrinfo_ptr = NULL;
@@ -99,7 +99,7 @@ haveNativeWindowsIPv6routines(void)
 		getaddrinfo_ptr = (getaddrinfo_ptr_t) GetProcAddress(hLibrary,
 															 "getaddrinfo");
 		freeaddrinfo_ptr = (freeaddrinfo_ptr_t) GetProcAddress(hLibrary,
-															 "freeaddrinfo");
+															   "freeaddrinfo");
 		getnameinfo_ptr = (getnameinfo_ptr_t) GetProcAddress(hLibrary,
 															 "getnameinfo");
 
@@ -135,8 +135,8 @@ haveNativeWindowsIPv6routines(void)
  */
 int
 getaddrinfo(const char *node, const char *service,
-			const struct addrinfo * hintp,
-			struct addrinfo ** res)
+			const struct addrinfo *hintp,
+			struct addrinfo **res)
 {
 	struct addrinfo *ai;
 	struct sockaddr_in sin,
@@ -262,7 +262,7 @@ getaddrinfo(const char *node, const char *service,
 
 
 void
-freeaddrinfo(struct addrinfo * res)
+freeaddrinfo(struct addrinfo *res)
 {
 	if (res)
 	{
@@ -328,7 +328,7 @@ gai_strerror(int errcode)
 		case EAI_MEMORY:
 			return "Not enough memory";
 #endif
-#if defined(EAI_NODATA) && EAI_NODATA != EAI_NONAME		/* MSVC/WIN64 duplicate */
+#if defined(EAI_NODATA) && EAI_NODATA != EAI_NONAME /* MSVC/WIN64 duplicate */
 		case EAI_NODATA:
 			return "No host data of that type was found";
 #endif
@@ -343,7 +343,7 @@ gai_strerror(int errcode)
 		default:
 			return "Unknown server error";
 	}
-#endif   /* HAVE_HSTRERROR */
+#endif							/* HAVE_HSTRERROR */
 }
 
 /*
@@ -354,7 +354,7 @@ gai_strerror(int errcode)
  *		- No IPv6 support.
  */
 int
-getnameinfo(const struct sockaddr * sa, int salen,
+getnameinfo(const struct sockaddr *sa, int salen,
 			char *node, int nodelen,
 			char *service, int servicelen, int flags)
 {

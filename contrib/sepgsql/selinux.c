@@ -5,7 +5,7 @@
  * Interactions between userspace and selinux in kernelspace,
  * using libselinux api.
  *
- * Copyright (c) 2010-2016, PostgreSQL Global Development Group
+ * Copyright (c) 2010-2017, PostgreSQL Global Development Group
  *
  * -------------------------------------------------------------------------
  */
@@ -23,7 +23,7 @@
  * When we ask SELinux whether the required privileges are allowed or not,
  * we use security_compute_av(3). It needs us to represent object classes
  * and access vectors using 'external' codes defined in the security policy.
- * It is determinded in the runtime, not build time. So, it needs an internal
+ * It is determined in the runtime, not build time. So, it needs an internal
  * service to translate object class/access vectors which we want to check
  * into the code which kernel want to be given.
  */
@@ -36,7 +36,7 @@ static struct
 		const char *av_name;
 		uint32		av_code;
 	}			av[32];
-}	selinux_catalog[] =
+}			selinux_catalog[] =
 
 {
 	{
@@ -732,7 +732,7 @@ void
 sepgsql_compute_avd(const char *scontext,
 					const char *tcontext,
 					uint16 tclass,
-					struct av_decision * avd)
+					struct av_decision *avd)
 {
 	const char *tclass_name;
 	security_class_t tclass_ex;

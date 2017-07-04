@@ -5,7 +5,7 @@
  *	  along with the relation's initial contents.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_pltemplate.h
@@ -35,11 +35,11 @@ CATALOG(pg_pltemplate,1136) BKI_SHARED_RELATION BKI_WITHOUT_OIDS
 	bool		tmpldbacreate;	/* PL is installable by db owner? */
 
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
-	text tmplhandler BKI_FORCE_NOT_NULL;		/* name of call handler
+	text		tmplhandler BKI_FORCE_NOT_NULL; /* name of call handler
 												 * function */
 	text		tmplinline;		/* name of anonymous-block handler, or NULL */
 	text		tmplvalidator;	/* name of validator function, or NULL */
-	text tmpllibrary BKI_FORCE_NOT_NULL;		/* path of shared library */
+	text		tmpllibrary BKI_FORCE_NOT_NULL; /* path of shared library */
 	aclitem		tmplacl[1];		/* access privileges for template */
 #endif
 } FormData_pg_pltemplate;
@@ -80,4 +80,4 @@ DATA(insert ( "plpythonu"	f f "plpython_call_handler" "plpython_inline_handler" 
 DATA(insert ( "plpython2u"	f f "plpython2_call_handler" "plpython2_inline_handler" "plpython2_validator" "$libdir/plpython2" _null_ ));
 DATA(insert ( "plpython3u"	f f "plpython3_call_handler" "plpython3_inline_handler" "plpython3_validator" "$libdir/plpython3" _null_ ));
 
-#endif   /* PG_PLTEMPLATE_H */
+#endif							/* PG_PLTEMPLATE_H */

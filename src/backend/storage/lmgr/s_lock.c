@@ -36,7 +36,7 @@
  * the probability of unintended failure) than to fix the total time
  * spent.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -51,7 +51,7 @@
 #include <unistd.h>
 
 #include "storage/s_lock.h"
-#include "storage/barrier.h"
+#include "port/atomics.h"
 
 
 #define MIN_SPINS_PER_DELAY 10
@@ -133,7 +133,7 @@ perform_spin_delay(SpinDelayStatus *status)
 		if (++(status->delays) > NUM_DELAYS)
 			s_lock_stuck(status->file, status->line, status->func);
 
-		if (status->cur_delay == 0)		/* first time to delay? */
+		if (status->cur_delay == 0) /* first time to delay? */
 			status->cur_delay = MIN_DELAY_USEC;
 
 		pg_usleep(status->cur_delay);
@@ -145,7 +145,7 @@ perform_spin_delay(SpinDelayStatus *status)
 
 		/* increase delay by a random fraction between 1X and 2X */
 		status->cur_delay += (int) (status->cur_delay *
-					  ((double) random() / (double) MAX_RANDOM_VALUE) + 0.5);
+									((double) random() / (double) MAX_RANDOM_VALUE) + 0.5);
 		/* wrap back to minimum delay when max is exceeded */
 		if (status->cur_delay > MAX_DELAY_USEC)
 			status->cur_delay = MIN_DELAY_USEC;
@@ -250,10 +250,10 @@ update_spins_per_delay(int shared_spins_per_delay)
 static void
 tas_dummy()
 {
-	__asm__		__volatile__(
+	__asm__ __volatile__(
 #if defined(__NetBSD__) && defined(__ELF__)
 /* no underscore for label and % for registers */
-										 "\
+						 "\
 .global		tas 				\n\
 tas:							\n\
 			movel	%sp@(0x4),%a0	\n\
@@ -265,7 +265,7 @@ _success:						\n\
 			moveq	#0,%d0		\n\
 			rts 				\n"
 #else
-										 "\
+						 "\
 .global		_tas				\n\
 _tas:							\n\
 			movel	sp@(0x4),a0	\n\
@@ -276,12 +276,12 @@ _tas:							\n\
 _success:						\n\
 			moveq 	#0,d0		\n\
 			rts					\n"
-#endif   /* __NetBSD__ && __ELF__ */
-	);
+#endif							/* __NetBSD__ && __ELF__ */
+		);
 }
-#endif   /* __m68k__ && !__linux__ */
-#endif   /* not __GNUC__ */
-#endif   /* HAVE_SPINLOCKS */
+#endif							/* __m68k__ && !__linux__ */
+#endif							/* not __GNUC__ */
+#endif							/* HAVE_SPINLOCKS */
 
 
 
@@ -375,4 +375,4 @@ main()
 	return 1;
 }
 
-#endif   /* S_LOCK_TEST */
+#endif							/* S_LOCK_TEST */

@@ -4,7 +4,7 @@
  *	  Support routines for scanning Values lists
  *	  ("VALUES (...), (...), ..." in rangetable).
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -120,7 +120,7 @@ ValuesNext(ValuesScanState *node)
 		 * is a SubPlan, and there shouldn't be any (any subselects in the
 		 * VALUES list should be InitPlans).
 		 */
-		exprstatelist = (List *) ExecInitExpr((Expr *) exprlist, NULL);
+		exprstatelist = ExecInitExprList(exprlist, NULL);
 
 		/* parser should have checked all sublists are the same length */
 		Assert(list_length(exprstatelist) == slot->tts_tupleDescriptor->natts);
@@ -140,8 +140,7 @@ ValuesNext(ValuesScanState *node)
 
 			values[resind] = ExecEvalExpr(estate,
 										  econtext,
-										  &isnull[resind],
-										  NULL);
+										  &isnull[resind]);
 
 			/*
 			 * We must force any R/W expanded datums to read-only state, in
@@ -243,12 +242,8 @@ ExecInitValuesScan(ValuesScan *node, EState *estate, int eflags)
 	/*
 	 * initialize child expressions
 	 */
-	scanstate->ss.ps.targetlist = (List *)
-		ExecInitExpr((Expr *) node->scan.plan.targetlist,
-					 (PlanState *) scanstate);
-	scanstate->ss.ps.qual = (List *)
-		ExecInitExpr((Expr *) node->scan.plan.qual,
-					 (PlanState *) scanstate);
+	scanstate->ss.ps.qual =
+		ExecInitQual(node->scan.plan.qual, (PlanState *) scanstate);
 
 	/*
 	 * get info about values list
@@ -271,8 +266,6 @@ ExecInitValuesScan(ValuesScan *node, EState *estate, int eflags)
 	{
 		scanstate->exprlists[i++] = (List *) lfirst(vtl);
 	}
-
-	scanstate->ss.ps.ps_TupFromTlist = false;
 
 	/*
 	 * Initialize result tuple type and projection info.

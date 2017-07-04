@@ -1,0 +1,59 @@
+Parsed test spec with 2 sessions
+
+starting permutation: modify vac stats
+step modify: 
+    insert into smalltbl select max(id)+1 from smalltbl;
+
+step vac: 
+    vacuum smalltbl;
+
+step stats: 
+    select relpages, reltuples from pg_class
+     where oid='smalltbl'::regclass;
+
+relpages       reltuples      
+
+1              21             
+
+starting permutation: modify open fetch1 vac close stats
+step modify: 
+    insert into smalltbl select max(id)+1 from smalltbl;
+
+step open: 
+    begin;
+    declare c1 cursor for select 1 as dummy from smalltbl;
+
+step fetch1: 
+    fetch next from c1;
+
+dummy          
+
+1              
+step vac: 
+    vacuum smalltbl;
+
+step close: 
+    commit;
+
+step stats: 
+    select relpages, reltuples from pg_class
+     where oid='smalltbl'::regclass;
+
+relpages       reltuples      
+
+1              20             
+
+starting permutation: modify vac stats
+step modify: 
+    insert into smalltbl select max(id)+1 from smalltbl;
+
+step vac: 
+    vacuum smalltbl;
+
+step stats: 
+    select relpages, reltuples from pg_class
+     where oid='smalltbl'::regclass;
+
+relpages       reltuples      
+
+1              21             

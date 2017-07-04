@@ -3,7 +3,7 @@
  * getrusage.c
  *	  get information about resource utilisation
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -18,7 +18,6 @@
 #include "rusagestub.h"
 
 /* This code works on:
- *		sco
  *		solaris_i386
  *		solaris_sparc
  *		hpux 9.*
@@ -29,7 +28,7 @@
  */
 
 int
-getrusage(int who, struct rusage * rusage)
+getrusage(int who, struct rusage *rusage)
 {
 #ifdef WIN32
 	FILETIME	starttime;
@@ -105,7 +104,7 @@ getrusage(int who, struct rusage * rusage)
 	rusage->ru_utime.tv_usec = TICK_TO_USEC(u, tick_rate);
 	rusage->ru_stime.tv_sec = TICK_TO_SEC(s, tick_rate);
 	rusage->ru_stime.tv_usec = TICK_TO_USEC(u, tick_rate);
-#endif   /* WIN32 */
+#endif							/* WIN32 */
 
 	return 0;
 }

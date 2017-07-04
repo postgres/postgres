@@ -2822,6 +2822,18 @@ SELECT to_timestamp('20000-1116', 'YYYY-MMDD');
  Thu Nov 16 00:00:00 20000 PST
 (1 row)
 
+SELECT to_timestamp('1997 AD 11 16', 'YYYY BC MM DD');
+         to_timestamp         
+------------------------------
+ Sun Nov 16 00:00:00 1997 PST
+(1 row)
+
+SELECT to_timestamp('1997 BC 11 16', 'YYYY BC MM DD');
+          to_timestamp           
+---------------------------------
+ Tue Nov 16 00:00:00 1997 PST BC
+(1 row)
+
 SELECT to_timestamp('9-1116', 'Y-MMDD');
          to_timestamp         
 ------------------------------
@@ -2906,6 +2918,18 @@ SELECT to_timestamp('  20050302', 'YYYYMMDD');
  Wed Mar 02 00:00:00 2005 PST
 (1 row)
 
+SELECT to_timestamp('2011-12-18 11:38 AM', 'YYYY-MM-DD HH12:MI PM');
+         to_timestamp         
+------------------------------
+ Sun Dec 18 11:38:00 2011 PST
+(1 row)
+
+SELECT to_timestamp('2011-12-18 11:38 PM', 'YYYY-MM-DD HH12:MI PM');
+         to_timestamp         
+------------------------------
+ Sun Dec 18 23:38:00 2011 PST
+(1 row)
+
 --
 -- Check handling of multiple spaces in format and/or input
 --
@@ -2982,7 +3006,7 @@ SELECT to_date('2011   12 18', 'YYYY  MM DD');
 (1 row)
 
 --
--- Check errors for some incorrect usages of to_timestamp()
+-- Check errors for some incorrect usages of to_timestamp() and to_date()
 --
 -- Mixture of date conventions (ISO week and Gregorian):
 SELECT to_timestamp('2005527', 'YYYYIWID');
@@ -3010,6 +3034,76 @@ DETAIL:  Value must be an integer.
 SELECT to_timestamp('10000000000', 'FMYYYY');
 ERROR:  value for "YYYY" in source string is out of range
 DETAIL:  Value must be in the range -2147483648 to 2147483647.
+-- Out-of-range and not-quite-out-of-range fields:
+SELECT to_timestamp('2016-06-13 25:00:00', 'YYYY-MM-DD HH24:MI:SS');
+ERROR:  date/time field value out of range: "2016-06-13 25:00:00"
+SELECT to_timestamp('2016-06-13 15:60:00', 'YYYY-MM-DD HH24:MI:SS');
+ERROR:  date/time field value out of range: "2016-06-13 15:60:00"
+SELECT to_timestamp('2016-06-13 15:50:60', 'YYYY-MM-DD HH24:MI:SS');
+ERROR:  date/time field value out of range: "2016-06-13 15:50:60"
+SELECT to_timestamp('2016-06-13 15:50:55', 'YYYY-MM-DD HH24:MI:SS');  -- ok
+         to_timestamp         
+------------------------------
+ Mon Jun 13 15:50:55 2016 PDT
+(1 row)
+
+SELECT to_timestamp('2016-06-13 15:50:55', 'YYYY-MM-DD HH:MI:SS');
+ERROR:  hour "15" is invalid for the 12-hour clock
+HINT:  Use the 24-hour clock, or give an hour between 1 and 12.
+SELECT to_timestamp('2016-13-01 15:50:55', 'YYYY-MM-DD HH24:MI:SS');
+ERROR:  date/time field value out of range: "2016-13-01 15:50:55"
+SELECT to_timestamp('2016-02-30 15:50:55', 'YYYY-MM-DD HH24:MI:SS');
+ERROR:  date/time field value out of range: "2016-02-30 15:50:55"
+SELECT to_timestamp('2016-02-29 15:50:55', 'YYYY-MM-DD HH24:MI:SS');  -- ok
+         to_timestamp         
+------------------------------
+ Mon Feb 29 15:50:55 2016 PST
+(1 row)
+
+SELECT to_timestamp('2015-02-29 15:50:55', 'YYYY-MM-DD HH24:MI:SS');
+ERROR:  date/time field value out of range: "2015-02-29 15:50:55"
+SELECT to_timestamp('2015-02-11 86000', 'YYYY-MM-DD SSSS');  -- ok
+         to_timestamp         
+------------------------------
+ Wed Feb 11 23:53:20 2015 PST
+(1 row)
+
+SELECT to_timestamp('2015-02-11 86400', 'YYYY-MM-DD SSSS');
+ERROR:  date/time field value out of range: "2015-02-11 86400"
+SELECT to_date('2016-13-10', 'YYYY-MM-DD');
+ERROR:  date/time field value out of range: "2016-13-10"
+SELECT to_date('2016-02-30', 'YYYY-MM-DD');
+ERROR:  date/time field value out of range: "2016-02-30"
+SELECT to_date('2016-02-29', 'YYYY-MM-DD');  -- ok
+  to_date   
+------------
+ 02-29-2016
+(1 row)
+
+SELECT to_date('2015-02-29', 'YYYY-MM-DD');
+ERROR:  date/time field value out of range: "2015-02-29"
+SELECT to_date('2015 365', 'YYYY DDD');  -- ok
+  to_date   
+------------
+ 12-31-2015
+(1 row)
+
+SELECT to_date('2015 366', 'YYYY DDD');
+ERROR:  date/time field value out of range: "2015 366"
+SELECT to_date('2016 365', 'YYYY DDD');  -- ok
+  to_date   
+------------
+ 12-30-2016
+(1 row)
+
+SELECT to_date('2016 366', 'YYYY DDD');  -- ok
+  to_date   
+------------
+ 12-31-2016
+(1 row)
+
+SELECT to_date('2016 367', 'YYYY DDD');
+ERROR:  date/time field value out of range: "2016 367"
 --
 -- Check behavior with SQL-style fixed-GMT-offset time zone (cf bug #8572)
 --

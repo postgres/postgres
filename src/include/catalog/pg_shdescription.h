@@ -12,7 +12,7 @@
  * across tables.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_shdescription.h
@@ -44,7 +44,7 @@ CATALOG(pg_shdescription,2396) BKI_SHARED_RELATION BKI_WITHOUT_OIDS
 	Oid			classoid;		/* OID of table containing object */
 
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
-	text description BKI_FORCE_NOT_NULL;		/* description of object */
+	text		description BKI_FORCE_NOT_NULL; /* description of object */
 #endif
 } FormData_pg_shdescription;
 
@@ -53,7 +53,7 @@ CATALOG(pg_shdescription,2396) BKI_SHARED_RELATION BKI_WITHOUT_OIDS
  *		the format of pg_shdescription relation.
  * ----------------
  */
-typedef FormData_pg_shdescription *Form_pg_shdescription;
+typedef FormData_pg_shdescription * Form_pg_shdescription;
 
 /* ----------------
  *		compiler constants for pg_shdescription
@@ -75,4 +75,4 @@ typedef FormData_pg_shdescription *Form_pg_shdescription;
  *	by genbki.pl and loaded during initdb.
  */
 
-#endif   /* PG_SHDESCRIPTION_H */
+#endif							/* PG_SHDESCRIPTION_H */

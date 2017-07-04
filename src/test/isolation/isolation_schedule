@@ -1,3 +1,6 @@
+test: read-only-anomaly
+test: read-only-anomaly-2
+test: read-only-anomaly-3
 test: read-write-unique
 test: read-write-unique-2
 test: read-write-unique-3
@@ -25,6 +28,7 @@ test: eval-plan-qual
 test: lock-update-delete
 test: lock-update-traversal
 test: insert-conflict-do-nothing
+test: insert-conflict-do-nothing-2
 test: insert-conflict-do-update
 test: insert-conflict-do-update-2
 test: insert-conflict-do-update-3
@@ -54,5 +58,7 @@ test: alter-table-1
 test: alter-table-2
 test: alter-table-3
 test: create-trigger
+test: sequence-ddl
 test: async-notify
+test: vacuum-reltuples
 test: timeouts

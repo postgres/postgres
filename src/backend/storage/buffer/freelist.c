@@ -4,7 +4,7 @@
  *	  routines for managing the buffer pool's replacement strategy.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -94,7 +94,7 @@ typedef struct BufferAccessStrategyData
 	 * struct.
 	 */
 	Buffer		buffers[FLEXIBLE_ARRAY_MEMBER];
-}	BufferAccessStrategyData;
+}			BufferAccessStrategyData;
 
 
 /* Prototypes for internal functions */
@@ -406,8 +406,8 @@ StrategySyncStart(uint32 *complete_passes, uint32 *num_buf_alloc)
 /*
  * StrategyNotifyBgWriter -- set or clear allocation notification latch
  *
- * If bgwriterLatch isn't NULL, the next invocation of StrategyGetBuffer will
- * set that latch.  Pass NULL to clear the pending notification before it
+ * If bgwprocno isn't -1, the next invocation of StrategyGetBuffer will
+ * set that latch.  Pass -1 to clear the pending notification before it
  * happens.  This feature is used by the bgwriter process to wake itself up
  * from hibernation, and is not meant for anybody else to use.
  */
@@ -674,7 +674,7 @@ StrategyRejectBuffer(BufferAccessStrategy strategy, BufferDesc *buf)
 
 	/* Don't muck with behavior of normal buffer-replacement strategy */
 	if (!strategy->current_was_in_ring ||
-	  strategy->buffers[strategy->current] != BufferDescriptorGetBuffer(buf))
+		strategy->buffers[strategy->current] != BufferDescriptorGetBuffer(buf))
 		return false;
 
 	/*

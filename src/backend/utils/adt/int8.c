@@ -3,7 +3,7 @@
  * int8.c
  *	  Internal 64-bit integer operations
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -95,8 +95,8 @@ scanint8(const char *str, bool errorOK, int64 *result)
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-					 errmsg("invalid input syntax for integer: \"%s\"",
-							str)));
+					 errmsg("invalid input syntax for %s: \"%s\"",
+							"integer", str)));
 	}
 
 	/* process digits */
@@ -104,15 +104,15 @@ scanint8(const char *str, bool errorOK, int64 *result)
 	{
 		int64		newtmp = tmp * 10 + (*ptr++ - '0');
 
-		if ((newtmp / 10) != tmp)		/* overflow? */
+		if ((newtmp / 10) != tmp)	/* overflow? */
 		{
 			if (errorOK)
 				return false;
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-					   errmsg("value \"%s\" is out of range for type bigint",
-							  str)));
+						 errmsg("value \"%s\" is out of range for type %s",
+								str, "bigint")));
 		}
 		tmp = newtmp;
 	}
@@ -130,8 +130,8 @@ gotdigits:
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-					 errmsg("invalid input syntax for integer: \"%s\"",
-							str)));
+					 errmsg("invalid input syntax for %s: \"%s\"",
+							"integer", str)));
 	}
 
 	*result = (sign < 0) ? -tmp : tmp;

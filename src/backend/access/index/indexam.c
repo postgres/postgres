@@ -3,7 +3,7 @@
  * indexam.c
  *	  general index access method routines
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -20,6 +20,10 @@
  *		index_insert	- insert an index tuple into a relation
  *		index_markpos	- mark a scan position
  *		index_restrpos	- restore a scan position
+ *		index_parallelscan_estimate - estimate shared memory for parallel scan
+ *		index_parallelscan_initialize - initialize parallel scan
+ *		index_parallelrescan  - (re)start a parallel scan of an index
+ *		index_beginscan_parallel - join parallel index scan
  *		index_getnext_tid	- get the next TID from a scan
  *		index_fetch_heap		- get the scan's next heap tuple
  *		index_getnext	- get the next heap tuple from a scan
@@ -120,7 +124,8 @@ do { \
 } while(0)
 
 static IndexScanDesc index_beginscan_internal(Relation indexRelation,
-						 int nkeys, int norderbys, Snapshot snapshot);
+						 int nkeys, int norderbys, Snapshot snapshot,
+						 ParallelIndexScanDesc pscan, bool temp_snap);
 
 
 /* ----------------------------------------------------------------
@@ -191,7 +196,8 @@ index_insert(Relation indexRelation,
 			 bool *isnull,
 			 ItemPointer heap_t_ctid,
 			 Relation heapRelation,
-			 IndexUniqueCheck checkUnique)
+			 IndexUniqueCheck checkUnique,
+			 IndexInfo *indexInfo)
 {
 	RELATION_CHECKS;
 	CHECK_REL_PROCEDURE(aminsert);
@@ -203,7 +209,7 @@ index_insert(Relation indexRelation,
 
 	return indexRelation->rd_amroutine->aminsert(indexRelation, values, isnull,
 												 heap_t_ctid, heapRelation,
-												 checkUnique);
+												 checkUnique, indexInfo);
 }
 
 /*
@@ -219,7 +225,7 @@ index_beginscan(Relation heapRelation,
 {
 	IndexScanDesc scan;
 
-	scan = index_beginscan_internal(indexRelation, nkeys, norderbys, snapshot);
+	scan = index_beginscan_internal(indexRelation, nkeys, norderbys, snapshot, NULL, false);
 
 	/*
 	 * Save additional parameters into the scandesc.  Everything else was set
@@ -244,7 +250,7 @@ index_beginscan_bitmap(Relation indexRelation,
 {
 	IndexScanDesc scan;
 
-	scan = index_beginscan_internal(indexRelation, nkeys, 0, snapshot);
+	scan = index_beginscan_internal(indexRelation, nkeys, 0, snapshot, NULL, false);
 
 	/*
 	 * Save additional parameters into the scandesc.  Everything else was set
@@ -260,8 +266,11 @@ index_beginscan_bitmap(Relation indexRelation,
  */
 static IndexScanDesc
 index_beginscan_internal(Relation indexRelation,
-						 int nkeys, int norderbys, Snapshot snapshot)
+						 int nkeys, int norderbys, Snapshot snapshot,
+						 ParallelIndexScanDesc pscan, bool temp_snap)
 {
+	IndexScanDesc scan;
+
 	RELATION_CHECKS;
 	CHECK_REL_PROCEDURE(ambeginscan);
 
@@ -276,8 +285,13 @@ index_beginscan_internal(Relation indexRelation,
 	/*
 	 * Tell the AM to open a scan.
 	 */
-	return indexRelation->rd_amroutine->ambeginscan(indexRelation, nkeys,
+	scan = indexRelation->rd_amroutine->ambeginscan(indexRelation, nkeys,
 													norderbys);
+	/* Initialize information for parallel scan. */
+	scan->parallel_scan = pscan;
+	scan->xs_temp_snap = temp_snap;
+
+	return scan;
 }
 
 /* ----------------
@@ -312,7 +326,7 @@ index_rescan(IndexScanDesc scan,
 
 	scan->xs_continue_hot = false;
 
-	scan->kill_prior_tuple = false;		/* for safety */
+	scan->kill_prior_tuple = false; /* for safety */
 
 	scan->indexRelation->rd_amroutine->amrescan(scan, keys, nkeys,
 												orderbys, norderbys);
@@ -340,6 +354,9 @@ index_endscan(IndexScanDesc scan)
 
 	/* Release index refcount acquired by index_beginscan */
 	RelationDecrementReferenceCount(scan->indexRelation);
+
+	if (scan->xs_temp_snap)
+		UnregisterSnapshot(scan->xs_snapshot);
 
 	/* Release the scan data structure itself */
 	IndexScanEnd(scan);
@@ -384,9 +401,118 @@ index_restrpos(IndexScanDesc scan)
 
 	scan->xs_continue_hot = false;
 
-	scan->kill_prior_tuple = false;		/* for safety */
+	scan->kill_prior_tuple = false; /* for safety */
 
 	scan->indexRelation->rd_amroutine->amrestrpos(scan);
+}
+
+/*
+ * index_parallelscan_estimate - estimate shared memory for parallel scan
+ *
+ * Currently, we don't pass any information to the AM-specific estimator,
+ * so it can probably only return a constant.  In the future, we might need
+ * to pass more information.
+ */
+Size
+index_parallelscan_estimate(Relation indexRelation, Snapshot snapshot)
+{
+	Size		nbytes;
+
+	RELATION_CHECKS;
+
+	nbytes = offsetof(ParallelIndexScanDescData, ps_snapshot_data);
+	nbytes = add_size(nbytes, EstimateSnapshotSpace(snapshot));
+	nbytes = MAXALIGN(nbytes);
+
+	/*
+	 * If amestimateparallelscan is not provided, assume there is no
+	 * AM-specific data needed.  (It's hard to believe that could work, but
+	 * it's easy enough to cater to it here.)
+	 */
+	if (indexRelation->rd_amroutine->amestimateparallelscan != NULL)
+		nbytes = add_size(nbytes,
+						  indexRelation->rd_amroutine->amestimateparallelscan());
+
+	return nbytes;
+}
+
+/*
+ * index_parallelscan_initialize - initialize parallel scan
+ *
+ * We initialize both the ParallelIndexScanDesc proper and the AM-specific
+ * information which follows it.
+ *
+ * This function calls access method specific initialization routine to
+ * initialize am specific information.  Call this just once in the leader
+ * process; then, individual workers attach via index_beginscan_parallel.
+ */
+void
+index_parallelscan_initialize(Relation heapRelation, Relation indexRelation,
+							  Snapshot snapshot, ParallelIndexScanDesc target)
+{
+	Size		offset;
+
+	RELATION_CHECKS;
+
+	offset = add_size(offsetof(ParallelIndexScanDescData, ps_snapshot_data),
+					  EstimateSnapshotSpace(snapshot));
+	offset = MAXALIGN(offset);
+
+	target->ps_relid = RelationGetRelid(heapRelation);
+	target->ps_indexid = RelationGetRelid(indexRelation);
+	target->ps_offset = offset;
+	SerializeSnapshot(snapshot, target->ps_snapshot_data);
+
+	/* aminitparallelscan is optional; assume no-op if not provided by AM */
+	if (indexRelation->rd_amroutine->aminitparallelscan != NULL)
+	{
+		void	   *amtarget;
+
+		amtarget = OffsetToPointer(target, offset);
+		indexRelation->rd_amroutine->aminitparallelscan(amtarget);
+	}
+}
+
+/* ----------------
+ *		index_parallelrescan  - (re)start a parallel scan of an index
+ * ----------------
+ */
+void
+index_parallelrescan(IndexScanDesc scan)
+{
+	SCAN_CHECKS;
+
+	/* amparallelrescan is optional; assume no-op if not provided by AM */
+	if (scan->indexRelation->rd_amroutine->amparallelrescan != NULL)
+		scan->indexRelation->rd_amroutine->amparallelrescan(scan);
+}
+
+/*
+ * index_beginscan_parallel - join parallel index scan
+ *
+ * Caller must be holding suitable locks on the heap and the index.
+ */
+IndexScanDesc
+index_beginscan_parallel(Relation heaprel, Relation indexrel, int nkeys,
+						 int norderbys, ParallelIndexScanDesc pscan)
+{
+	Snapshot	snapshot;
+	IndexScanDesc scan;
+
+	Assert(RelationGetRelid(heaprel) == pscan->ps_relid);
+	snapshot = RestoreSnapshot(pscan->ps_snapshot_data);
+	RegisterSnapshot(snapshot);
+	scan = index_beginscan_internal(indexrel, nkeys, norderbys, snapshot,
+									pscan, true);
+
+	/*
+	 * Save additional parameters into the scandesc.  Everything else was set
+	 * up by index_beginscan_internal.
+	 */
+	scan->heapRelation = heaprel;
+	scan->xs_snapshot = snapshot;
+
+	return scan;
 }
 
 /* ----------------
@@ -409,8 +535,8 @@ index_getnext_tid(IndexScanDesc scan, ScanDirection direction)
 	/*
 	 * The AM's amgettuple proc finds the next index entry matching the scan
 	 * keys, and puts the TID into scan->xs_ctup.t_self.  It should also set
-	 * scan->xs_recheck and possibly scan->xs_itup, though we pay no attention
-	 * to those fields here.
+	 * scan->xs_recheck and possibly scan->xs_itup/scan->xs_hitup, though we
+	 * pay no attention to those fields here.
 	 */
 	found = scan->indexRelation->rd_amroutine->amgettuple(scan, direction);
 
@@ -625,7 +751,7 @@ index_bulk_delete(IndexVacuumInfo *info,
 	CHECK_REL_PROCEDURE(ambulkdelete);
 
 	return indexRelation->rd_amroutine->ambulkdelete(info, stats,
-												   callback, callback_state);
+													 callback, callback_state);
 }
 
 /* ----------------

@@ -3,7 +3,7 @@
  * ts_typanalyze.c
  *	  functions for gathering statistics from tsvector columns
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
@@ -188,7 +188,7 @@ compute_tsvector_stats(VacAttrStats *stats,
 	lexemes_tab = hash_create("Analyzed lexemes table",
 							  num_mcelem,
 							  &hash_ctl,
-					HASH_ELEM | HASH_FUNCTION | HASH_COMPARE | HASH_CONTEXT);
+							  HASH_ELEM | HASH_FUNCTION | HASH_COMPARE | HASH_CONTEXT);
 
 	/* Initialize counters. */
 	b_current = 1;
@@ -396,7 +396,7 @@ compute_tsvector_stats(VacAttrStats *stats,
 
 				mcelem_values[i] =
 					PointerGetDatum(cstring_to_text_with_len(item->key.lexeme,
-														  item->key.length));
+															 item->key.length));
 				mcelem_freqs[i] = (double) item->frequency / (double) nonnull_cnt;
 			}
 			mcelem_freqs[i++] = (double) minfreq / (double) nonnull_cnt;
@@ -423,7 +423,7 @@ compute_tsvector_stats(VacAttrStats *stats,
 		stats->stats_valid = true;
 		stats->stanullfrac = 1.0;
 		stats->stawidth = 0;	/* "unknown" */
-		stats->stadistinct = 0.0;		/* "unknown" */
+		stats->stadistinct = 0.0;	/* "unknown" */
 	}
 
 	/*
@@ -501,8 +501,8 @@ lexeme_compare(const void *key1, const void *key2)
 static int
 trackitem_compare_frequencies_desc(const void *e1, const void *e2)
 {
-	const TrackItem *const * t1 = (const TrackItem *const *) e1;
-	const TrackItem *const * t2 = (const TrackItem *const *) e2;
+	const TrackItem *const *t1 = (const TrackItem *const *) e1;
+	const TrackItem *const *t2 = (const TrackItem *const *) e2;
 
 	return (*t2)->frequency - (*t1)->frequency;
 }
@@ -513,8 +513,8 @@ trackitem_compare_frequencies_desc(const void *e1, const void *e2)
 static int
 trackitem_compare_lexemes(const void *e1, const void *e2)
 {
-	const TrackItem *const * t1 = (const TrackItem *const *) e1;
-	const TrackItem *const * t2 = (const TrackItem *const *) e2;
+	const TrackItem *const *t1 = (const TrackItem *const *) e1;
+	const TrackItem *const *t2 = (const TrackItem *const *) e2;
 
 	return lexeme_compare(&(*t1)->key, &(*t2)->key);
 }

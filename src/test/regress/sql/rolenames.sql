@@ -176,7 +176,7 @@ ALTER USER PUBLIC SET application_name to 'BOMB'; -- error
 ALTER USER NONE SET application_name to 'BOMB'; -- error
 ALTER USER nonexistent SET application_name to 'BOMB'; -- error
 
--- CREAETE SCHEMA
+-- CREATE SCHEMA
 set client_min_messages to error;
 CREATE SCHEMA newschema1 AUTHORIZATION CURRENT_USER;
 CREATE SCHEMA newschema2 AUTHORIZATION "current_user";

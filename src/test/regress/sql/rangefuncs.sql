@@ -1,5 +1,3 @@
-SELECT name, setting FROM pg_settings WHERE name LIKE 'enable%';
-
 CREATE TABLE foo2(fooid int, f2 int);
 INSERT INTO foo2 VALUES(1, 11);
 INSERT INTO foo2 VALUES(2, 22);
@@ -558,10 +556,12 @@ create temp view usersview as
 SELECT * FROM ROWS FROM(get_users(), generate_series(10,11)) WITH ORDINALITY;
 
 select * from usersview;
-alter table users drop column moredrop;
-select * from usersview;
 alter table users add column junk text;
 select * from usersview;
+begin;
+alter table users drop column moredrop;
+select * from usersview;  -- expect clean failure
+rollback;
 alter table users alter column seq type numeric;
 select * from usersview;  -- expect clean failure
 
@@ -599,15 +599,6 @@ $$ select (1, 2.1, 3) $$ language sql;
 select * from foobar();  -- fail
 
 drop function foobar();
-
--- check behavior when a function's input sometimes returns a set (bug #8228)
-
-SELECT *,
-  lower(CASE WHEN id = 2 THEN (regexp_matches(str, '^0*([1-9]\d+)$'))[1]
-        ELSE str
-        END)
-FROM
-  (VALUES (1,''), (2,'0000000049404'), (3,'FROM 10000000876')) v(id, str);
 
 -- check whole-row-Var handling in nested lateral functions (bug #11703)
 

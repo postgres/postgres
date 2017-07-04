@@ -7,7 +7,7 @@
  * the nature and use of path keys.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -196,7 +196,7 @@ make_pathkey_from_sortinfo(PlannerInfo *root,
 									  opcintype,
 									  opcintype,
 									  BTEqualStrategyNumber);
-	if (!OidIsValid(equality_op))		/* shouldn't happen */
+	if (!OidIsValid(equality_op))	/* shouldn't happen */
 		elog(ERROR, "could not find equality operator for opfamily %u",
 			 opfamily);
 	opfamilies = get_mergejoin_opfamilies(equality_op);
@@ -337,11 +337,13 @@ pathkeys_contained_in(List *keys1, List *keys2)
  * 'pathkeys' represents a required ordering (in canonical form!)
  * 'required_outer' denotes allowable outer relations for parameterized paths
  * 'cost_criterion' is STARTUP_COST or TOTAL_COST
+ * 'require_parallel_safe' causes us to consider only parallel-safe paths
  */
 Path *
 get_cheapest_path_for_pathkeys(List *paths, List *pathkeys,
 							   Relids required_outer,
-							   CostSelector cost_criterion)
+							   CostSelector cost_criterion,
+							   bool require_parallel_safe)
 {
 	Path	   *matched_path = NULL;
 	ListCell   *l;
@@ -356,6 +358,9 @@ get_cheapest_path_for_pathkeys(List *paths, List *pathkeys,
 		 */
 		if (matched_path != NULL &&
 			compare_path_costs(matched_path, path, cost_criterion) <= 0)
+			continue;
+
+		if (require_parallel_safe && !path->parallel_safe)
 			continue;
 
 		if (pathkeys_contained_in(pathkeys, path->pathkeys) &&
@@ -405,6 +410,28 @@ get_cheapest_fractional_path_for_pathkeys(List *paths,
 			matched_path = path;
 	}
 	return matched_path;
+}
+
+
+/*
+ * get_cheapest_parallel_safe_total_inner
+ *	  Find the unparameterized parallel-safe path with the least total cost.
+ */
+Path *
+get_cheapest_parallel_safe_total_inner(List *paths)
+{
+	ListCell   *l;
+
+	foreach(l, paths)
+	{
+		Path	   *innerpath = (Path *) lfirst(l);
+
+		if (innerpath->parallel_safe &&
+			bms_is_empty(PATH_REQ_OUTER(innerpath)))
+			return innerpath;
+	}
+
+	return NULL;
 }
 
 /****************************************************************************
@@ -480,17 +507,30 @@ build_index_pathkeys(PlannerInfo *root,
 											  index->rel->relids,
 											  false);
 
-		/*
-		 * If the sort key isn't already present in any EquivalenceClass, then
-		 * it's not an interesting sort order for this query.  So we can stop
-		 * now --- lower-order sort keys aren't useful either.
-		 */
-		if (!cpathkey)
-			break;
-
-		/* Add to list unless redundant */
-		if (!pathkey_is_redundant(cpathkey, retval))
-			retval = lappend(retval, cpathkey);
+		if (cpathkey)
+		{
+			/*
+			 * We found the sort key in an EquivalenceClass, so it's relevant
+			 * for this query.  Add it to list, unless it's redundant.
+			 */
+			if (!pathkey_is_redundant(cpathkey, retval))
+				retval = lappend(retval, cpathkey);
+		}
+		else
+		{
+			/*
+			 * Boolean index keys might be redundant even if they do not
+			 * appear in an EquivalenceClass, because of our special treatment
+			 * of boolean equality conditions --- see the comment for
+			 * indexcol_is_bool_constant_for_query().  If that applies, we can
+			 * continue to examine lower-order index columns.  Otherwise, the
+			 * sort key is not an interesting sort order for this query, so we
+			 * should stop considering index columns; any lower-order sort
+			 * keys won't be useful either.
+			 */
+			if (!indexcol_is_bool_constant_for_query(index, i))
+				break;
+		}
 
 		i++;
 	}
@@ -535,8 +575,8 @@ build_expression_pathkey(PlannerInfo *root,
 										  opfamily,
 										  opcintype,
 										  exprCollation((Node *) expr),
-									   (strategy == BTGreaterStrategyNumber),
-									   (strategy == BTGreaterStrategyNumber),
+										  (strategy == BTGreaterStrategyNumber),
+										  (strategy == BTGreaterStrategyNumber),
 										  0,
 										  rel,
 										  create_it);
@@ -706,7 +746,7 @@ convert_subquery_pathkeys(PlannerInfo *root, RelOptInfo *rel,
 					outer_ec = get_eclass_for_sort_expr(root,
 														outer_expr,
 														NULL,
-												   sub_eclass->ec_opfamilies,
+														sub_eclass->ec_opfamilies,
 														sub_expr_type,
 														sub_expr_coll,
 														0,
@@ -722,9 +762,9 @@ convert_subquery_pathkeys(PlannerInfo *root, RelOptInfo *rel,
 
 					outer_pk = make_canonical_pathkey(root,
 													  outer_ec,
-													sub_pathkey->pk_opfamily,
-													sub_pathkey->pk_strategy,
-												sub_pathkey->pk_nulls_first);
+													  sub_pathkey->pk_opfamily,
+													  sub_pathkey->pk_strategy,
+													  sub_pathkey->pk_nulls_first);
 					/* score = # of equivalence peers */
 					score = list_length(outer_ec->ec_members) - 1;
 					/* +1 if it matches the proper query_pathkeys item */

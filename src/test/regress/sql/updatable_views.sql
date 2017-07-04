@@ -95,7 +95,7 @@ DELETE FROM rw_view16 WHERE a=-3; -- should be OK
 -- Read-only views
 INSERT INTO ro_view17 VALUES (3, 'ROW 3');
 DELETE FROM ro_view18;
-UPDATE ro_view19 SET max_value=1000;
+UPDATE ro_view19 SET last_value=1000;
 UPDATE ro_view20 SET b=upper(b);
 
 DROP TABLE base_tbl CASCADE;
@@ -1001,8 +1001,8 @@ SELECT * FROM v1 WHERE a=3; -- should not see anything
 SELECT * FROM v1 WHERE a=8;
 
 EXPLAIN (VERBOSE, COSTS OFF)
-UPDATE v1 SET a=100 WHERE snoop(a) AND leakproof(a) AND a = 3;
-UPDATE v1 SET a=100 WHERE snoop(a) AND leakproof(a) AND a = 3;
+UPDATE v1 SET a=100 WHERE snoop(a) AND leakproof(a) AND a < 7 AND a != 6;
+UPDATE v1 SET a=100 WHERE snoop(a) AND leakproof(a) AND a < 7 AND a != 6;
 
 SELECT * FROM v1 WHERE a=100; -- Nothing should have been changed to 100
 SELECT * FROM t1 WHERE a=100; -- Nothing should have been changed to 100
@@ -1098,3 +1098,46 @@ DROP VIEW v2;
 DROP VIEW v1;
 DROP TABLE t2;
 DROP TABLE t1;
+
+--
+-- Test CREATE OR REPLACE VIEW turning a non-updatable view into an
+-- auto-updatable view and adding check options in a single step
+--
+CREATE TABLE t1 (a int, b text);
+CREATE VIEW v1 AS SELECT null::int AS a;
+CREATE OR REPLACE VIEW v1 AS SELECT * FROM t1 WHERE a > 0 WITH CHECK OPTION;
+
+INSERT INTO v1 VALUES (1, 'ok'); -- ok
+INSERT INTO v1 VALUES (-1, 'invalid'); -- should fail
+
+DROP VIEW v1;
+DROP TABLE t1;
+
+-- check that an auto-updatable view on a partitioned table works correctly
+create table pt (a int, b int) partition by range (a, b);
+create table pt1 (b int not null, a int not null) partition by range (b);
+create table pt11 (like pt1);
+alter table pt11 drop a;
+alter table pt11 add a int;
+alter table pt11 drop a;
+alter table pt11 add a int not null;
+alter table pt1 attach partition pt11 for values from (2) to (5);
+alter table pt attach partition pt1 for values from (1, 2) to (1, 10);
+
+create view ptv as select * from pt;
+select events & 4 != 0 AS upd,
+       events & 8 != 0 AS ins,
+       events & 16 != 0 AS del
+  from pg_catalog.pg_relation_is_updatable('pt'::regclass, false) t(events);
+select pg_catalog.pg_column_is_updatable('pt'::regclass, 1::smallint, false);
+select pg_catalog.pg_column_is_updatable('pt'::regclass, 2::smallint, false);
+select table_name, is_updatable, is_insertable_into
+  from information_schema.views where table_name = 'ptv';
+select table_name, column_name, is_updatable
+  from information_schema.columns where table_name = 'ptv' order by column_name;
+insert into ptv values (1, 2);
+select tableoid::regclass, * from pt;
+create view ptv_wco as select * from pt where a = 0 with check option;
+insert into ptv_wco values (1, 2);
+drop view ptv, ptv_wco;
+drop table pt, pt1, pt11;

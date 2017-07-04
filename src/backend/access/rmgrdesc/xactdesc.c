@@ -3,7 +3,7 @@
  * xactdesc.c
  *	  rmgr descriptor routines for access/transam/xact.c
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -26,7 +26,7 @@
  * understand format.
  *
  * This routines are in xactdesc.c because they're accessed in backend (when
- * replaying WAL) and frontend (pg_xlogdump) code. This file is the only xact
+ * replaying WAL) and frontend (pg_waldump) code. This file is the only xact
  * specific one shared between both. They're complicated enough that
  * duplication would be bothersome.
  */
@@ -205,8 +205,8 @@ xact_desc_commit(StringInfo buf, uint8 info, xl_xact_commit *xlrec, RepOriginId 
 	if (parsed.nmsgs > 0)
 	{
 		standby_desc_invalidations(
-					buf, parsed.nmsgs, parsed.msgs, parsed.dbId, parsed.tsId,
-						  XactCompletionRelcacheInitFileInval(parsed.xinfo));
+								   buf, parsed.nmsgs, parsed.msgs, parsed.dbId, parsed.tsId,
+								   XactCompletionRelcacheInitFileInval(parsed.xinfo));
 	}
 
 	if (XactCompletionForceSyncCommit(parsed.xinfo))

@@ -156,6 +156,16 @@ SELECT routine_name, ordinal_position, parameter_name, parameter_default
     WHERE routine_schema = 'temp_func_test' AND routine_name ~ '^functest_is_'
     ORDER BY 1, 2;
 
+DROP FUNCTION functest_IS_1(int, int, text), functest_IS_2(int), functest_IS_3(int);
+
+-- overload
+CREATE FUNCTION functest_B_2(bigint) RETURNS bool LANGUAGE 'sql'
+       IMMUTABLE AS 'SELECT $1 > 0';
+
+DROP FUNCTION functest_b_1;
+DROP FUNCTION functest_b_1;  -- error, not found
+DROP FUNCTION functest_b_2;  -- error, ambiguous
+
 
 -- Cleanups
 DROP SCHEMA temp_func_test CASCADE;

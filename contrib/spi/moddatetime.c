@@ -15,11 +15,12 @@ OH, me, I'm Terry Mackintosh <terry@terrym.com>
 */
 #include "postgres.h"
 
+#include "access/htup_details.h"
 #include "catalog/pg_type.h"
 #include "executor/spi.h"
 #include "commands/trigger.h"
+#include "utils/builtins.h"
 #include "utils/rel.h"
-#include "utils/timestamp.h"
 
 PG_MODULE_MAGIC;
 
@@ -34,6 +35,7 @@ moddatetime(PG_FUNCTION_ARGS)
 	int			attnum;			/* positional number of field to change */
 	Oid			atttypid;		/* type OID of field to change */
 	Datum		newdt;			/* The current datetime. */
+	bool		newdtnull;		/* null flag for it */
 	char	  **args;			/* arguments */
 	char	   *relname;		/* triggered relation name */
 	Relation	rel;			/* triggered relation */
@@ -84,9 +86,9 @@ moddatetime(PG_FUNCTION_ARGS)
 
 	/*
 	 * This is where we check to see if the field we are supposed to update
-	 * even exists. The above function must return -1 if name not found?
+	 * even exists.
 	 */
-	if (attnum < 0)
+	if (attnum <= 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_TRIGGERED_ACTION_EXCEPTION),
 				 errmsg("\"%s\" has no attribute \"%s\"",
@@ -115,22 +117,13 @@ moddatetime(PG_FUNCTION_ARGS)
 						args[0], relname)));
 		newdt = (Datum) 0;		/* keep compiler quiet */
 	}
+	newdtnull = false;
 
-/* 1 is the number of items in the arrays attnum and newdt.
-	attnum is the positional number of the field to be updated.
-	newdt is the new datetime stamp.
-	NOTE that attnum and newdt are not arrays, but then a 1 element array
-	is not an array any more then they are.  Thus, they can be considered a
-	one element array.
-*/
-	rettuple = SPI_modifytuple(rel, rettuple, 1, &attnum, &newdt, NULL);
+	/* Replace the attnum'th column with newdt */
+	rettuple = heap_modify_tuple_by_cols(rettuple, tupdesc,
+										 1, &attnum, &newdt, &newdtnull);
 
-	if (rettuple == NULL)
-		/* internal error */
-		elog(ERROR, "moddatetime (%s): %d returned by SPI_modifytuple",
-			 relname, SPI_result);
-
-/* Clean up */
+	/* Clean up */
 	pfree(relname);
 
 	return PointerGetDatum(rettuple);

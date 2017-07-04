@@ -3,7 +3,7 @@
  * findtimezone.c
  *	  Functions for determining the default timezone to use.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/bin/initdb/findtimezone.c
@@ -151,7 +151,7 @@ struct tztry
 };
 
 static void scan_available_timezones(char *tzdir, char *tzdirsub,
-						 struct tztry * tt,
+						 struct tztry *tt,
 						 int *bestscore, char *bestzonename);
 
 
@@ -159,7 +159,7 @@ static void scan_available_timezones(char *tzdir, char *tzdirsub,
  * Get GMT offset from a system struct tm
  */
 static int
-get_timezone_offset(struct tm * tm)
+get_timezone_offset(struct tm *tm)
 {
 #if defined(HAVE_STRUCT_TM_TM_ZONE)
 	return tm->tm_gmtoff;
@@ -190,7 +190,7 @@ build_time_t(int year, int month, int day)
  * Does a system tm value match one we computed ourselves?
  */
 static bool
-compare_tm(struct tm * s, struct pg_tm * p)
+compare_tm(struct tm *s, struct pg_tm *p)
 {
 	if (s->tm_sec != p->tm_sec ||
 		s->tm_min != p->tm_min ||
@@ -217,7 +217,7 @@ compare_tm(struct tm * s, struct pg_tm * p)
  * test time.
  */
 static int
-score_timezone(const char *tzname, struct tztry * tt)
+score_timezone(const char *tzname, struct tztry *tt)
 {
 	int			i;
 	pg_time_t	pgtt;
@@ -279,7 +279,7 @@ score_timezone(const char *tzname, struct tztry * tt)
 			if (pgtm->tm_zone == NULL)
 				return -1;		/* probably shouldn't happen */
 			memset(cbuf, 0, sizeof(cbuf));
-			strftime(cbuf, sizeof(cbuf) - 1, "%Z", systm);		/* zone abbr */
+			strftime(cbuf, sizeof(cbuf) - 1, "%Z", systm);	/* zone abbr */
 			if (strcmp(cbuf, pgtm->tm_zone) != 0)
 			{
 #ifdef DEBUG_IDENTIFY_TIMEZONE
@@ -506,7 +506,7 @@ identify_system_timezone(void)
  * score.  bestzonename must be a buffer of length TZ_STRLEN_MAX + 1.
  */
 static void
-scan_available_timezones(char *tzdir, char *tzdirsub, struct tztry * tt,
+scan_available_timezones(char *tzdir, char *tzdirsub, struct tztry *tt,
 						 int *bestscore, char *bestzonename)
 {
 	int			tzdir_orig_len = strlen(tzdir);
@@ -578,7 +578,7 @@ static const struct
 	const char *stdname;		/* Windows name of standard timezone */
 	const char *dstname;		/* Windows name of daylight timezone */
 	const char *pgtzname;		/* Name of pgsql timezone to map to */
-}	win32_tzmap[] =
+}			win32_tzmap[] =
 
 {
 	/*
@@ -998,8 +998,7 @@ static const struct
 	{
 		"Russia TZ 9 Standard Time", "Russia TZ 9 Daylight Time",
 		"Asia/Vladivostok"
-	},							/* (UTC+10:00) Vladivostok, Magadan
-								 * (RTZ 9) */
+	},							/* (UTC+10:00) Vladivostok, Magadan (RTZ 9) */
 	{
 		"Russia TZ 10 Standard Time", "Russia TZ 10 Daylight Time",
 		"Asia/Magadan"
@@ -1007,8 +1006,8 @@ static const struct
 	{
 		"Russia TZ 11 Standard Time", "Russia TZ 11 Daylight Time",
 		"Asia/Anadyr"
-	},							/* (UTC+12:00) Anadyr, Petropavlovsk-Kamchatsky
-								 * (RTZ 11) */
+	},							/* (UTC+12:00) Anadyr,
+								 * Petropavlovsk-Kamchatsky (RTZ 11) */
 	{
 		"Russian Standard Time", "Russian Daylight Time",
 		"Europe/Moscow"
@@ -1021,13 +1020,12 @@ static const struct
 	{
 		"SA Pacific Standard Time", "SA Pacific Daylight Time",
 		"America/Bogota"
-	},							/* (UTC-05:00) Bogota, Lima, Quito, Rio
-								 * Branco */
+	},							/* (UTC-05:00) Bogota, Lima, Quito, Rio Branco */
 	{
 		"SA Western Standard Time", "SA Western Daylight Time",
 		"America/Caracas"
-	},							/* (UTC-04:00) Georgetown, La Paz, Manaus,
-								 * San Juan */
+	},							/* (UTC-04:00) Georgetown, La Paz, Manaus, San
+								 * Juan */
 	{
 		"Saint Pierre Standard Time", "Saint Pierre Daylight Time",
 		"America/Miquelon"
@@ -1223,7 +1221,7 @@ identify_system_timezone(void)
 	 */
 	memset(localtzname, 0, sizeof(localtzname));
 	if (RegOpenKeyEx(HKEY_LOCAL_MACHINE,
-			   "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Time Zones",
+					 "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Time Zones",
 					 0,
 					 KEY_READ,
 					 &rootKey) != ERROR_SUCCESS)
@@ -1338,7 +1336,7 @@ identify_system_timezone(void)
 #endif
 	return NULL;				/* go to GMT */
 }
-#endif   /* WIN32 */
+#endif							/* WIN32 */
 
 
 /*

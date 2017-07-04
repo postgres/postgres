@@ -1,0 +1,103 @@
+-- predictability
+SET synchronous_commit = on;
+SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot_p', 'test_decoding');
+ ?column? 
+----------
+ init
+(1 row)
+
+SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot_t', 'test_decoding', true);
+ ?column? 
+----------
+ init
+(1 row)
+
+SELECT pg_drop_replication_slot('regression_slot_p');
+ pg_drop_replication_slot 
+--------------------------
+ 
+(1 row)
+
+SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot_p', 'test_decoding', false);
+ ?column? 
+----------
+ init
+(1 row)
+
+SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot_t2', 'test_decoding', true);
+ ?column? 
+----------
+ init
+(1 row)
+
+-- here we want to start a new session and wait till old one is gone
+select pg_backend_pid() as oldpid \gset
+\c -
+SET synchronous_commit = on;
+do 'declare c int = 0;
+begin
+  while (select count(*) from pg_replication_slots where active_pid = '
+    :'oldpid'
+  ') > 0 loop c := c + 1; perform pg_sleep(0.01); end loop;
+  raise log ''slot test looped % times'', c;
+end';
+-- should fail because the temporary slots were dropped automatically
+SELECT pg_drop_replication_slot('regression_slot_t');
+ERROR:  replication slot "regression_slot_t" does not exist
+SELECT pg_drop_replication_slot('regression_slot_t2');
+ERROR:  replication slot "regression_slot_t2" does not exist
+-- permanent slot has survived
+SELECT pg_drop_replication_slot('regression_slot_p');
+ pg_drop_replication_slot 
+--------------------------
+ 
+(1 row)
+
+-- test switching between slots in a session
+SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot1', 'test_decoding', true);
+ ?column? 
+----------
+ init
+(1 row)
+
+CREATE TABLE replication_example(id SERIAL PRIMARY KEY, somedata int, text varchar(120));
+BEGIN;
+INSERT INTO replication_example(somedata, text) VALUES (1, 1);
+INSERT INTO replication_example(somedata, text) VALUES (1, 2);
+COMMIT;
+SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot2', 'test_decoding', true);
+ ?column? 
+----------
+ init
+(1 row)
+
+INSERT INTO replication_example(somedata, text) VALUES (1, 3);
+SELECT data FROM pg_logical_slot_get_changes('regression_slot1', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
+                                                  data                                                   
+---------------------------------------------------------------------------------------------------------
+ BEGIN
+ table public.replication_example: INSERT: id[integer]:1 somedata[integer]:1 text[character varying]:'1'
+ table public.replication_example: INSERT: id[integer]:2 somedata[integer]:1 text[character varying]:'2'
+ COMMIT
+ BEGIN
+ table public.replication_example: INSERT: id[integer]:3 somedata[integer]:1 text[character varying]:'3'
+ COMMIT
+(7 rows)
+
+SELECT data FROM pg_logical_slot_get_changes('regression_slot2', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
+                                                  data                                                   
+---------------------------------------------------------------------------------------------------------
+ BEGIN
+ table public.replication_example: INSERT: id[integer]:3 somedata[integer]:1 text[character varying]:'3'
+ COMMIT
+(3 rows)
+
+DROP TABLE replication_example;
+-- error
+SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot1', 'test_decoding', true);
+ERROR:  replication slot "regression_slot1" already exists
+-- both should error as they should be dropped on error
+SELECT pg_drop_replication_slot('regression_slot1');
+ERROR:  replication slot "regression_slot1" does not exist
+SELECT pg_drop_replication_slot('regression_slot2');
+ERROR:  replication slot "regression_slot2" does not exist

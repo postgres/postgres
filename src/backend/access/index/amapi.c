@@ -3,7 +3,7 @@
  * amapi.c
  *	  Support routines for API for Postgres index access methods.
  *
- * Copyright (c) 2015-2016, PostgreSQL Global Development Group
+ * Copyright (c) 2015-2017, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
@@ -17,6 +17,7 @@
 #include "access/htup_details.h"
 #include "catalog/pg_am.h"
 #include "catalog/pg_opclass.h"
+#include "utils/builtins.h"
 #include "utils/syscache.h"
 
 

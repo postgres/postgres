@@ -3,7 +3,7 @@
  * hashsearch.c
  *	  search code for postgres hash tables
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -63,47 +63,149 @@ _hash_next(IndexScanDesc scan, ScanDirection dir)
 }
 
 /*
- * Advance to next page in a bucket, if any.
+ * Advance to next page in a bucket, if any.  If we are scanning the bucket
+ * being populated during split operation then this function advances to the
+ * bucket being split after the last bucket page of bucket being populated.
  */
 static void
-_hash_readnext(Relation rel,
+_hash_readnext(IndexScanDesc scan,
 			   Buffer *bufp, Page *pagep, HashPageOpaque *opaquep)
 {
 	BlockNumber blkno;
+	Relation	rel = scan->indexRelation;
+	HashScanOpaque so = (HashScanOpaque) scan->opaque;
+	bool		block_found = false;
 
 	blkno = (*opaquep)->hasho_nextblkno;
-	_hash_relbuf(rel, *bufp);
+
+	/*
+	 * Retain the pin on primary bucket page till the end of scan.  Refer the
+	 * comments in _hash_first to know the reason of retaining pin.
+	 */
+	if (*bufp == so->hashso_bucket_buf || *bufp == so->hashso_split_bucket_buf)
+		LockBuffer(*bufp, BUFFER_LOCK_UNLOCK);
+	else
+		_hash_relbuf(rel, *bufp);
+
 	*bufp = InvalidBuffer;
 	/* check for interrupts while we're not holding any buffer lock */
 	CHECK_FOR_INTERRUPTS();
 	if (BlockNumberIsValid(blkno))
 	{
 		*bufp = _hash_getbuf(rel, blkno, HASH_READ, LH_OVERFLOW_PAGE);
+		block_found = true;
+	}
+	else if (so->hashso_buc_populated && !so->hashso_buc_split)
+	{
+		/*
+		 * end of bucket, scan bucket being split if there was a split in
+		 * progress at the start of scan.
+		 */
+		*bufp = so->hashso_split_bucket_buf;
+
+		/*
+		 * buffer for bucket being split must be valid as we acquire the pin
+		 * on it before the start of scan and retain it till end of scan.
+		 */
+		Assert(BufferIsValid(*bufp));
+
+		LockBuffer(*bufp, BUFFER_LOCK_SHARE);
+
+		/*
+		 * setting hashso_buc_split to true indicates that we are scanning
+		 * bucket being split.
+		 */
+		so->hashso_buc_split = true;
+
+		block_found = true;
+	}
+
+	if (block_found)
+	{
 		*pagep = BufferGetPage(*bufp);
+		TestForOldSnapshot(scan->xs_snapshot, rel, *pagep);
 		*opaquep = (HashPageOpaque) PageGetSpecialPointer(*pagep);
 	}
 }
 
 /*
- * Advance to previous page in a bucket, if any.
+ * Advance to previous page in a bucket, if any.  If the current scan has
+ * started during split operation then this function advances to bucket
+ * being populated after the first bucket page of bucket being split.
  */
 static void
-_hash_readprev(Relation rel,
+_hash_readprev(IndexScanDesc scan,
 			   Buffer *bufp, Page *pagep, HashPageOpaque *opaquep)
 {
 	BlockNumber blkno;
+	Relation	rel = scan->indexRelation;
+	HashScanOpaque so = (HashScanOpaque) scan->opaque;
+	bool		haveprevblk;
 
 	blkno = (*opaquep)->hasho_prevblkno;
-	_hash_relbuf(rel, *bufp);
+
+	/*
+	 * Retain the pin on primary bucket page till the end of scan.  Refer the
+	 * comments in _hash_first to know the reason of retaining pin.
+	 */
+	if (*bufp == so->hashso_bucket_buf || *bufp == so->hashso_split_bucket_buf)
+	{
+		LockBuffer(*bufp, BUFFER_LOCK_UNLOCK);
+		haveprevblk = false;
+	}
+	else
+	{
+		_hash_relbuf(rel, *bufp);
+		haveprevblk = true;
+	}
+
 	*bufp = InvalidBuffer;
 	/* check for interrupts while we're not holding any buffer lock */
 	CHECK_FOR_INTERRUPTS();
-	if (BlockNumberIsValid(blkno))
+
+	if (haveprevblk)
 	{
+		Assert(BlockNumberIsValid(blkno));
 		*bufp = _hash_getbuf(rel, blkno, HASH_READ,
 							 LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
 		*pagep = BufferGetPage(*bufp);
+		TestForOldSnapshot(scan->xs_snapshot, rel, *pagep);
 		*opaquep = (HashPageOpaque) PageGetSpecialPointer(*pagep);
+
+		/*
+		 * We always maintain the pin on bucket page for whole scan operation,
+		 * so releasing the additional pin we have acquired here.
+		 */
+		if (*bufp == so->hashso_bucket_buf || *bufp == so->hashso_split_bucket_buf)
+			_hash_dropbuf(rel, *bufp);
+	}
+	else if (so->hashso_buc_populated && so->hashso_buc_split)
+	{
+		/*
+		 * end of bucket, scan bucket being populated if there was a split in
+		 * progress at the start of scan.
+		 */
+		*bufp = so->hashso_bucket_buf;
+
+		/*
+		 * buffer for bucket being populated must be valid as we acquire the
+		 * pin on it before the start of scan and retain it till end of scan.
+		 */
+		Assert(BufferIsValid(*bufp));
+
+		LockBuffer(*bufp, BUFFER_LOCK_SHARE);
+		*pagep = BufferGetPage(*bufp);
+		*opaquep = (HashPageOpaque) PageGetSpecialPointer(*pagep);
+
+		/* move to the end of bucket chain */
+		while (BlockNumberIsValid((*opaquep)->hasho_nextblkno))
+			_hash_readnext(scan, bufp, pagep, opaquep);
+
+		/*
+		 * setting hashso_buc_split to false indicates that we are scanning
+		 * bucket being populated.
+		 */
+		so->hashso_buc_split = false;
 	}
 }
 
@@ -124,14 +226,9 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 	ScanKey		cur;
 	uint32		hashkey;
 	Bucket		bucket;
-	BlockNumber blkno;
-	BlockNumber oldblkno = InvalidBuffer;
-	bool		retry = false;
 	Buffer		buf;
-	Buffer		metabuf;
 	Page		page;
 	HashPageOpaque opaque;
-	HashMetaPage metap;
 	IndexTuple	itup;
 	ItemPointer current;
 	OffsetNumber offnum;
@@ -186,70 +283,77 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 
 	so->hashso_sk_hash = hashkey;
 
-	/* Read the metapage */
-	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_READ, LH_META_PAGE);
-	page = BufferGetPage(metabuf);
-	metap = HashPageGetMeta(page);
+	buf = _hash_getbucketbuf_from_hashkey(rel, hashkey, HASH_READ, NULL);
+	page = BufferGetPage(buf);
+	TestForOldSnapshot(scan->xs_snapshot, rel, page);
+	opaque = (HashPageOpaque) PageGetSpecialPointer(page);
+	bucket = opaque->hasho_bucket;
+
+	so->hashso_bucket_buf = buf;
 
 	/*
-	 * Loop until we get a lock on the correct target bucket.
+	 * If a bucket split is in progress, then while scanning the bucket being
+	 * populated, we need to skip tuples that were copied from bucket being
+	 * split.  We also need to maintain a pin on the bucket being split to
+	 * ensure that split-cleanup work done by vacuum doesn't remove tuples
+	 * from it till this scan is done.  We need to maintain a pin on the
+	 * bucket being populated to ensure that vacuum doesn't squeeze that
+	 * bucket till this scan is complete; otherwise, the ordering of tuples
+	 * can't be maintained during forward and backward scans.  Here, we have
+	 * to be cautious about locking order: first, acquire the lock on bucket
+	 * being split; then, release the lock on it but not the pin; then,
+	 * acquire a lock on bucket being populated and again re-verify whether
+	 * the bucket split is still in progress.  Acquiring the lock on bucket
+	 * being split first ensures that the vacuum waits for this scan to
+	 * finish.
 	 */
-	for (;;)
+	if (H_BUCKET_BEING_POPULATED(opaque))
 	{
-		/*
-		 * Compute the target bucket number, and convert to block number.
-		 */
-		bucket = _hash_hashkey2bucket(hashkey,
-									  metap->hashm_maxbucket,
-									  metap->hashm_highmask,
-									  metap->hashm_lowmask);
+		BlockNumber old_blkno;
+		Buffer		old_buf;
 
-		blkno = BUCKET_TO_BLKNO(metap, bucket);
-
-		/* Release metapage lock, but keep pin. */
-		_hash_chgbufaccess(rel, metabuf, HASH_READ, HASH_NOLOCK);
+		old_blkno = _hash_get_oldblock_from_newbucket(rel, bucket);
 
 		/*
-		 * If the previous iteration of this loop locked what is still the
-		 * correct target bucket, we are done.  Otherwise, drop any old lock
-		 * and lock what now appears to be the correct bucket.
+		 * release the lock on new bucket and re-acquire it after acquiring
+		 * the lock on old bucket.
 		 */
-		if (retry)
+		LockBuffer(buf, BUFFER_LOCK_UNLOCK);
+
+		old_buf = _hash_getbuf(rel, old_blkno, HASH_READ, LH_BUCKET_PAGE);
+		TestForOldSnapshot(scan->xs_snapshot, rel, BufferGetPage(old_buf));
+
+		/*
+		 * remember the split bucket buffer so as to use it later for
+		 * scanning.
+		 */
+		so->hashso_split_bucket_buf = old_buf;
+		LockBuffer(old_buf, BUFFER_LOCK_UNLOCK);
+
+		LockBuffer(buf, BUFFER_LOCK_SHARE);
+		page = BufferGetPage(buf);
+		opaque = (HashPageOpaque) PageGetSpecialPointer(page);
+		Assert(opaque->hasho_bucket == bucket);
+
+		if (H_BUCKET_BEING_POPULATED(opaque))
+			so->hashso_buc_populated = true;
+		else
 		{
-			if (oldblkno == blkno)
-				break;
-			_hash_droplock(rel, oldblkno, HASH_SHARE);
+			_hash_dropbuf(rel, so->hashso_split_bucket_buf);
+			so->hashso_split_bucket_buf = InvalidBuffer;
 		}
-		_hash_getlock(rel, blkno, HASH_SHARE);
-
-		/*
-		 * Reacquire metapage lock and check that no bucket split has taken
-		 * place while we were awaiting the bucket lock.
-		 */
-		_hash_chgbufaccess(rel, metabuf, HASH_NOLOCK, HASH_READ);
-		oldblkno = blkno;
-		retry = true;
 	}
-
-	/* done with the metapage */
-	_hash_dropbuf(rel, metabuf);
-
-	/* Update scan opaque state to show we have lock on the bucket */
-	so->hashso_bucket = bucket;
-	so->hashso_bucket_valid = true;
-	so->hashso_bucket_blkno = blkno;
-
-	/* Fetch the primary bucket page for the bucket */
-	buf = _hash_getbuf(rel, blkno, HASH_READ, LH_BUCKET_PAGE);
-	page = BufferGetPage(buf);
-	opaque = (HashPageOpaque) PageGetSpecialPointer(page);
-	Assert(opaque->hasho_bucket == bucket);
 
 	/* If a backwards scan is requested, move to the end of the chain */
 	if (ScanDirectionIsBackward(dir))
 	{
-		while (BlockNumberIsValid(opaque->hasho_nextblkno))
-			_hash_readnext(rel, &buf, &page, &opaque);
+		/*
+		 * Backward scans that start during split needs to start from end of
+		 * bucket being split.
+		 */
+		while (BlockNumberIsValid(opaque->hasho_nextblkno) ||
+			   (so->hashso_buc_populated && !so->hashso_buc_split))
+			_hash_readnext(scan, &buf, &page, &opaque);
 	}
 
 	/* Now find the first tuple satisfying the qualification */
@@ -272,6 +376,12 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
  *		If no valid record exists in the requested direction, return
  *		false.  Else, return true and set the hashso_curpos for the
  *		scan to the right thing.
+ *
+ *		Here we need to ensure that if the scan has started during split, then
+ *		skip the tuples that are moved by split while scanning bucket being
+ *		populated and then scan the bucket being split to cover all such
+ *		tuples.  This is done to ensure that we don't miss tuples in the scans
+ *		that are started during split.
  *
  *		'bufP' points to the current buffer, which is pinned and read-locked.
  *		On success exit, we have pin and read-lock on whichever page
@@ -338,14 +448,31 @@ _hash_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 					{
 						Assert(offnum >= FirstOffsetNumber);
 						itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, offnum));
+
+						/*
+						 * skip the tuples that are moved by split operation
+						 * for the scan that has started when split was in
+						 * progress
+						 */
+						if (so->hashso_buc_populated && !so->hashso_buc_split &&
+							(itup->t_info & INDEX_MOVED_BY_SPLIT_MASK))
+						{
+							offnum = OffsetNumberNext(offnum);	/* move forward */
+							continue;
+						}
+
 						if (so->hashso_sk_hash == _hash_get_indextuple_hashkey(itup))
-							break;		/* yes, so exit for-loop */
+							break;	/* yes, so exit for-loop */
 					}
+
+					/* Before leaving current page, deal with any killed items */
+					if (so->numKilled > 0)
+						_hash_kill_items(scan);
 
 					/*
 					 * ran off the end of this page, try the next
 					 */
-					_hash_readnext(rel, &buf, &page, &opaque);
+					_hash_readnext(scan, &buf, &page, &opaque);
 					if (BufferIsValid(buf))
 					{
 						maxoff = PageGetMaxOffsetNumber(page);
@@ -353,7 +480,6 @@ _hash_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 					}
 					else
 					{
-						/* end of bucket */
 						itup = NULL;
 						break;	/* exit for-loop */
 					}
@@ -379,22 +505,39 @@ _hash_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 					{
 						Assert(offnum <= maxoff);
 						itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, offnum));
+
+						/*
+						 * skip the tuples that are moved by split operation
+						 * for the scan that has started when split was in
+						 * progress
+						 */
+						if (so->hashso_buc_populated && !so->hashso_buc_split &&
+							(itup->t_info & INDEX_MOVED_BY_SPLIT_MASK))
+						{
+							offnum = OffsetNumberPrev(offnum);	/* move back */
+							continue;
+						}
+
 						if (so->hashso_sk_hash == _hash_get_indextuple_hashkey(itup))
-							break;		/* yes, so exit for-loop */
+							break;	/* yes, so exit for-loop */
 					}
+
+					/* Before leaving current page, deal with any killed items */
+					if (so->numKilled > 0)
+						_hash_kill_items(scan);
 
 					/*
 					 * ran off the end of this page, try the next
 					 */
-					_hash_readprev(rel, &buf, &page, &opaque);
+					_hash_readprev(scan, &buf, &page, &opaque);
 					if (BufferIsValid(buf))
 					{
+						TestForOldSnapshot(scan->xs_snapshot, rel, page);
 						maxoff = PageGetMaxOffsetNumber(page);
 						offnum = _hash_binsearch_last(page, so->hashso_sk_hash);
 					}
 					else
 					{
-						/* end of bucket */
 						itup = NULL;
 						break;	/* exit for-loop */
 					}
@@ -410,9 +553,16 @@ _hash_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 
 		if (itup == NULL)
 		{
-			/* we ran off the end of the bucket without finding a match */
+			/*
+			 * We ran off the end of the bucket without finding a match.
+			 * Release the pin on bucket buffers.  Normally, such pins are
+			 * released at end of scan, however scrolling cursors can
+			 * reacquire the bucket lock and pin in the same scan multiple
+			 * times.
+			 */
 			*bufP = so->hashso_curbuf = InvalidBuffer;
 			ItemPointerSetInvalid(current);
+			_hash_dropscanbuf(rel, so);
 			return false;
 		}
 

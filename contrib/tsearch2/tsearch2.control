@@ -1,7 +1,0 @@
-# tsearch2 extension
-comment = 'compatibility package for pre-8.3 text search functions'
-default_version = '1.0'
-module_pathname = '$libdir/tsearch2'
-# this is not relocatable because the tsearch2--unpackaged--1.0.sql script
-# has to use @extschema@ to avoid conflict with items in pg_catalog
-relocatable = false

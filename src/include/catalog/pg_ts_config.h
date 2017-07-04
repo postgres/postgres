@@ -4,7 +4,7 @@
  *	definition of configuration of tsearch
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_ts_config.h
@@ -57,4 +57,4 @@ typedef FormData_pg_ts_config *Form_pg_ts_config;
 DATA(insert OID = 3748 ( "simple" PGNSP PGUID 3722 ));
 DESCR("simple configuration");
 
-#endif   /* PG_TS_CONFIG_H */
+#endif							/* PG_TS_CONFIG_H */

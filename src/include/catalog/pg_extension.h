@@ -5,7 +5,7 @@
  *	  along with the relation's initial contents.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_extension.h
@@ -37,7 +37,7 @@ CATALOG(pg_extension,3079)
 
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
 	/* extversion may never be null, but the others can be. */
-	text extversion BKI_FORCE_NOT_NULL; /* extension version name */
+	text		extversion BKI_FORCE_NOT_NULL;	/* extension version name */
 	Oid			extconfig[1];	/* dumpable configuration tables */
 	text		extcondition[1];	/* WHERE clauses for config tables */
 #endif
@@ -69,4 +69,4 @@ typedef FormData_pg_extension *Form_pg_extension;
  * ----------------
  */
 
-#endif   /* PG_EXTENSION_H */
+#endif							/* PG_EXTENSION_H */

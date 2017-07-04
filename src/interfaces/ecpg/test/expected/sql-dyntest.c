@@ -57,7 +57,7 @@ enum
 								 * standard) */
 };
 
-#endif   /* !_ECPG_SQL3TYPES_H */
+#endif							/* !_ECPG_SQL3TYPES_H */
 
 #line 7 "dyntest.pgc"
 
@@ -71,13 +71,13 @@ enum
 #define PGDLLIMPORT __declspec (dllimport)
 #else
 #define PGDLLIMPORT
-#endif   /* __CYGWIN__ */
-#endif   /* PGDLLIMPORT */
+#endif							/* __CYGWIN__ */
+#endif							/* PGDLLIMPORT */
 
 #define SQLERRMC_LEN	150
 
 #ifdef __cplusplus
-extern		"C"
+extern "C"
 {
 #endif
 

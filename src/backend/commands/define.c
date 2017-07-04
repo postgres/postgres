@@ -4,7 +4,7 @@
  *	  Support routines for various kinds of object creation.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -40,7 +40,7 @@
 #include "nodes/makefuncs.h"
 #include "parser/parse_type.h"
 #include "parser/scansup.h"
-#include "utils/int8.h"
+#include "utils/builtins.h"
 
 /*
  * Extract a string value (otherwise uninterpreted) from a DefElem.
@@ -206,7 +206,7 @@ defGetInt64(DefElem *def)
 			 * strings.
 			 */
 			return DatumGetInt64(DirectFunctionCall1(int8in,
-										 CStringGetDatum(strVal(def->arg))));
+													 CStringGetDatum(strVal(def->arg))));
 		default:
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
@@ -321,10 +321,29 @@ defGetTypeLength(DefElem *def)
 }
 
 /*
- * Create a DefElem setting "oids" to the specified value.
+ * Extract a list of string values (otherwise uninterpreted) from a DefElem.
  */
-DefElem *
-defWithOids(bool value)
+List *
+defGetStringList(DefElem *def)
 {
-	return makeDefElem("oids", (Node *) makeInteger(value));
+	ListCell   *cell;
+
+	if (def->arg == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("%s requires a parameter",
+						def->defname)));
+	if (nodeTag(def->arg) != T_List)
+		elog(ERROR, "unrecognized node type: %d", (int) nodeTag(def->arg));
+
+	foreach(cell, (List *) def->arg)
+	{
+		Node	   *str = (Node *) lfirst(cell);
+
+		if (!IsA(str, String))
+			elog(ERROR, "unexpected node type in name list: %d",
+				 (int) nodeTag(str));
+	}
+
+	return (List *) def->arg;
 }

@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CREATE SERVER <replaceable class="parameter">server_name</replaceable> [ TYPE '<replaceable class="parameter">server_type</replaceable>' ] [ VERSION '<replaceable class="parameter">server_version</replaceable>' ]
+CREATE SERVER [IF NOT EXISTS] <replaceable class="parameter">server_name</replaceable> [ TYPE '<replaceable class="parameter">server_type</replaceable>' ] [ VERSION '<replaceable class="parameter">server_version</replaceable>' ]
     FOREIGN DATA WRAPPER <replaceable class="parameter">fdw_name</replaceable>
     [ OPTIONS ( <replaceable class="PARAMETER">option</replaceable> '<replaceable class="PARAMETER">value</replaceable>' [, ... ] ) ]
 </synopsis>
@@ -56,6 +56,18 @@ CREATE SERVER <replaceable class="parameter">server_name</replaceable> [ TYPE '<
   <title>Parameters</title>
 
   <variablelist>
+  <varlistentry>
+    <term><literal>IF NOT EXISTS</></term>
+    <listitem>
+     <para>
+      Do not throw an error if a server with the same name already exists.
+      A notice is issued in this case.  Note that there is no guarantee that
+      the existing server is anything like the one that would have been
+      created.
+     </para>
+    </listitem>
+   </varlistentry>
+
    <varlistentry>
     <term><replaceable class="parameter">server_name</replaceable></term>
     <listitem>

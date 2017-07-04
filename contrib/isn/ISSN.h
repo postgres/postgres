@@ -23,7 +23,7 @@
  * Product		9 + 21 + 7 + 3 + 1 + 12 + 4 + 24 + 7 + 15 + 0 + 0 = 103
  *				103 / 10 = 10 remainder 3
  * Check digit	10 - 3 = 7
- * => 977-1144875-00-7 ??  <- suplemental number (number of the week, month, etc.)
+ * => 977-1144875-00-7 ??  <- supplemental number (number of the week, month, etc.)
  *				  ^^ 00 for non-daily publications (01=Monday, 02=Tuesday, ...)
  *
  * The hyphenation is always in after the four digits of the ISSN code.

@@ -3,7 +3,7 @@
  * Multibyte character printing support for frontend code
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/fe_utils/mbprint.h
@@ -22,8 +22,8 @@ struct lineptr
 extern unsigned char *mbvalidate(unsigned char *pwcs, int encoding);
 extern int	pg_wcswidth(const char *pwcs, size_t len, int encoding);
 extern void pg_wcsformat(const unsigned char *pwcs, size_t len, int encoding,
-			 struct lineptr * lines, int count);
+			 struct lineptr *lines, int count);
 extern void pg_wcssize(const unsigned char *pwcs, size_t len, int encoding,
 		   int *width, int *height, int *format_size);
 
-#endif   /* MBPRINT_H */
+#endif							/* MBPRINT_H */

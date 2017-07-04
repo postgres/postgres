@@ -3,10 +3,13 @@
  * sysv_shmem.c
  *	  Implement shared memory using SysV facilities
  *
- * These routines represent a fairly thin layer on top of SysV shared
- * memory functionality.
+ * These routines used to be a fairly thin layer on top of SysV shared
+ * memory functionality.  With the addition of anonymous-shmem logic,
+ * they're a bit fatter now.  We still require a SysV shmem block to
+ * exist, though, because mmap'd shmem provides no way to find out how
+ * many processes are attached, which we need for interlocking purposes.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -31,9 +34,38 @@
 #include "miscadmin.h"
 #include "portability/mem.h"
 #include "storage/dsm.h"
+#include "storage/fd.h"
 #include "storage/ipc.h"
 #include "storage/pg_shmem.h"
 #include "utils/guc.h"
+#include "utils/pidfile.h"
+
+
+/*
+ * As of PostgreSQL 9.3, we normally allocate only a very small amount of
+ * System V shared memory, and only for the purposes of providing an
+ * interlock to protect the data directory.  The real shared memory block
+ * is allocated using mmap().  This works around the problem that many
+ * systems have very low limits on the amount of System V shared memory
+ * that can be allocated.  Even a limit of a few megabytes will be enough
+ * to run many copies of PostgreSQL without needing to adjust system settings.
+ *
+ * We assume that no one will attempt to run PostgreSQL 9.3 or later on
+ * systems that are ancient enough that anonymous shared memory is not
+ * supported, such as pre-2.4 versions of Linux.  If that turns out to be
+ * false, we might need to add compile and/or run-time tests here and do this
+ * only if the running kernel supports it.
+ *
+ * However, we must always disable this logic in the EXEC_BACKEND case, and
+ * fall back to the old method of allocating the entire segment using System V
+ * shared memory, because there's no way to attach an anonymous mmap'd segment
+ * to a process after exec().  Since EXEC_BACKEND is intended only for
+ * developer use, this shouldn't be a big problem.  Because of this, we do
+ * not worry about supporting anonymous shmem in the EXEC_BACKEND cases below.
+ */
+#ifndef EXEC_BACKEND
+#define USE_ANONYMOUS_SHMEM
+#endif
 
 
 typedef key_t IpcMemoryKey;		/* shared memory key passed to shmget(2) */
@@ -42,8 +74,11 @@ typedef int IpcMemoryId;		/* shared memory ID returned by shmget(2) */
 
 unsigned long UsedShmemSegID = 0;
 void	   *UsedShmemSegAddr = NULL;
+
+#ifdef USE_ANONYMOUS_SHMEM
 static Size AnonymousShmemSize;
 static void *AnonymousShmem = NULL;
+#endif
 
 static void *InternalIpcMemoryCreate(IpcMemoryKey memKey, Size size);
 static void IpcMemoryDetach(int status, Datum shmaddr);
@@ -68,7 +103,27 @@ static void *
 InternalIpcMemoryCreate(IpcMemoryKey memKey, Size size)
 {
 	IpcMemoryId shmid;
+	void	   *requestedAddress = NULL;
 	void	   *memAddress;
+
+	/*
+	 * Normally we just pass requestedAddress = NULL to shmat(), allowing the
+	 * system to choose where the segment gets mapped.  But in an EXEC_BACKEND
+	 * build, it's possible for whatever is chosen in the postmaster to not
+	 * work for backends, due to variations in address space layout.  As a
+	 * rather klugy workaround, allow the user to specify the address to use
+	 * via setting the environment variable PG_SHMEM_ADDR.  (If this were of
+	 * interest for anything except debugging, we'd probably create a cleaner
+	 * and better-documented way to set it, such as a GUC.)
+	 */
+#ifdef EXEC_BACKEND
+	{
+		char	   *pg_shmem_addr = getenv("PG_SHMEM_ADDR");
+
+		if (pg_shmem_addr)
+			requestedAddress = (void *) strtoul(pg_shmem_addr, NULL, 0);
+	}
+#endif
 
 	shmid = shmget(memKey, size, IPC_CREAT | IPC_EXCL | IPCProtection);
 
@@ -139,29 +194,29 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, Size size)
 		errno = shmget_errno;
 		ereport(FATAL,
 				(errmsg("could not create shared memory segment: %m"),
-		  errdetail("Failed system call was shmget(key=%lu, size=%zu, 0%o).",
-					(unsigned long) memKey, size,
-					IPC_CREAT | IPC_EXCL | IPCProtection),
+				 errdetail("Failed system call was shmget(key=%lu, size=%zu, 0%o).",
+						   (unsigned long) memKey, size,
+						   IPC_CREAT | IPC_EXCL | IPCProtection),
 				 (shmget_errno == EINVAL) ?
 				 errhint("This error usually means that PostgreSQL's request for a shared memory "
-		 "segment exceeded your kernel's SHMMAX parameter, or possibly that "
+						 "segment exceeded your kernel's SHMMAX parameter, or possibly that "
 						 "it is less than "
 						 "your kernel's SHMMIN parameter.\n"
-		"The PostgreSQL documentation contains more information about shared "
+						 "The PostgreSQL documentation contains more information about shared "
 						 "memory configuration.") : 0,
 				 (shmget_errno == ENOMEM) ?
 				 errhint("This error usually means that PostgreSQL's request for a shared "
 						 "memory segment exceeded your kernel's SHMALL parameter.  You might need "
 						 "to reconfigure the kernel with larger SHMALL.\n"
-		"The PostgreSQL documentation contains more information about shared "
+						 "The PostgreSQL documentation contains more information about shared "
 						 "memory configuration.") : 0,
 				 (shmget_errno == ENOSPC) ?
 				 errhint("This error does *not* mean that you have run out of disk space.  "
 						 "It occurs either if all available shared memory IDs have been taken, "
 						 "in which case you need to raise the SHMMNI parameter in your kernel, "
-		  "or because the system's overall limit for shared memory has been "
+						 "or because the system's overall limit for shared memory has been "
 						 "reached.\n"
-		"The PostgreSQL documentation contains more information about shared "
+						 "The PostgreSQL documentation contains more information about shared "
 						 "memory configuration.") : 0));
 	}
 
@@ -169,10 +224,11 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, Size size)
 	on_shmem_exit(IpcMemoryDelete, Int32GetDatum(shmid));
 
 	/* OK, should be able to attach to the segment */
-	memAddress = shmat(shmid, NULL, PG_SHMAT_FLAGS);
+	memAddress = shmat(shmid, requestedAddress, PG_SHMAT_FLAGS);
 
 	if (memAddress == (void *) -1)
-		elog(FATAL, "shmat(id=%d) failed: %m", shmid);
+		elog(FATAL, "shmat(id=%d, addr=%p, flags=0x%x) failed: %m",
+			 shmid, requestedAddress, PG_SHMAT_FLAGS);
 
 	/* Register on-exit routine to detach new segment before deleting */
 	on_shmem_exit(IpcMemoryDetach, PointerGetDatum(memAddress));
@@ -204,10 +260,6 @@ IpcMemoryDetach(int status, Datum shmaddr)
 	/* Detach System V shared memory block. */
 	if (shmdt(DatumGetPointer(shmaddr)) < 0)
 		elog(LOG, "shmdt(%p) failed: %m", DatumGetPointer(shmaddr));
-	/* Release anonymous shared memory block, if any. */
-	if (AnonymousShmem != NULL
-		&& munmap(AnonymousShmem, AnonymousShmemSize) < 0)
-		elog(LOG, "munmap(%p) failed: %m", AnonymousShmem);
 }
 
 /****************************************************************************/
@@ -318,6 +370,82 @@ PGSharedMemoryIsInUse(unsigned long id1, unsigned long id2)
 	return true;
 }
 
+#ifdef USE_ANONYMOUS_SHMEM
+
+#ifdef MAP_HUGETLB
+
+/*
+ * Identify the huge page size to use.
+ *
+ * Some Linux kernel versions have a bug causing mmap() to fail on requests
+ * that are not a multiple of the hugepage size.  Versions without that bug
+ * instead silently round the request up to the next hugepage multiple ---
+ * and then munmap() fails when we give it a size different from that.
+ * So we have to round our request up to a multiple of the actual hugepage
+ * size to avoid trouble.
+ *
+ * Doing the round-up ourselves also lets us make use of the extra memory,
+ * rather than just wasting it.  Currently, we just increase the available
+ * space recorded in the shmem header, which will make the extra usable for
+ * purposes such as additional locktable entries.  Someday, for very large
+ * hugepage sizes, we might want to think about more invasive strategies,
+ * such as increasing shared_buffers to absorb the extra space.
+ *
+ * Returns the (real or assumed) page size into *hugepagesize,
+ * and the hugepage-related mmap flags to use into *mmap_flags.
+ *
+ * Currently *mmap_flags is always just MAP_HUGETLB.  Someday, on systems
+ * that support it, we might OR in additional bits to specify a particular
+ * non-default huge page size.
+ */
+static void
+GetHugePageSize(Size *hugepagesize, int *mmap_flags)
+{
+	/*
+	 * If we fail to find out the system's default huge page size, assume it
+	 * is 2MB.  This will work fine when the actual size is less.  If it's
+	 * more, we might get mmap() or munmap() failures due to unaligned
+	 * requests; but at this writing, there are no reports of any non-Linux
+	 * systems being picky about that.
+	 */
+	*hugepagesize = 2 * 1024 * 1024;
+	*mmap_flags = MAP_HUGETLB;
+
+	/*
+	 * System-dependent code to find out the default huge page size.
+	 *
+	 * On Linux, read /proc/meminfo looking for a line like "Hugepagesize:
+	 * nnnn kB".  Ignore any failures, falling back to the preset default.
+	 */
+#ifdef __linux__
+	{
+		FILE	   *fp = AllocateFile("/proc/meminfo", "r");
+		char		buf[128];
+		unsigned int sz;
+		char		ch;
+
+		if (fp)
+		{
+			while (fgets(buf, sizeof(buf), fp))
+			{
+				if (sscanf(buf, "Hugepagesize: %u %c", &sz, &ch) == 2)
+				{
+					if (ch == 'k')
+					{
+						*hugepagesize = sz * (Size) 1024;
+						break;
+					}
+					/* We could accept other units besides kB, if needed */
+				}
+			}
+			FreeFile(fp);
+		}
+	}
+#endif							/* __linux__ */
+}
+
+#endif							/* MAP_HUGETLB */
+
 /*
  * Creates an anonymous mmap()ed shared memory segment.
  *
@@ -325,7 +453,6 @@ PGSharedMemoryIsInUse(unsigned long id1, unsigned long id2)
  * actual size of the allocation, if it ends up allocating a segment that is
  * larger than requested.
  */
-#ifndef EXEC_BACKEND
 static void *
 CreateAnonymousSegment(Size *size)
 {
@@ -334,47 +461,35 @@ CreateAnonymousSegment(Size *size)
 	int			mmap_errno = 0;
 
 #ifndef MAP_HUGETLB
-	if (huge_pages == HUGE_PAGES_ON)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("huge TLB pages not supported on this platform")));
+	/* PGSharedMemoryCreate should have dealt with this case */
+	Assert(huge_pages != HUGE_PAGES_ON);
 #else
 	if (huge_pages == HUGE_PAGES_ON || huge_pages == HUGE_PAGES_TRY)
 	{
 		/*
 		 * Round up the request size to a suitable large value.
-		 *
-		 * Some Linux kernel versions are known to have a bug, which causes
-		 * mmap() with MAP_HUGETLB to fail if the request size is not a
-		 * multiple of any supported huge page size. To work around that, we
-		 * round up the request size to nearest 2MB. 2MB is the most common
-		 * huge page page size on affected systems.
-		 *
-		 * Aside from that bug, even with a kernel that does the allocation
-		 * correctly, rounding it up ourselves avoids wasting memory. Without
-		 * it, if we for example make an allocation of 2MB + 1 bytes, the
-		 * kernel might decide to use two 2MB huge pages for that, and waste 2
-		 * MB - 1 of memory. When we do the rounding ourselves, we can use
-		 * that space for allocations.
 		 */
-		int			hugepagesize = 2 * 1024 * 1024;
+		Size		hugepagesize;
+		int			mmap_flags;
+
+		GetHugePageSize(&hugepagesize, &mmap_flags);
 
 		if (allocsize % hugepagesize != 0)
 			allocsize += hugepagesize - (allocsize % hugepagesize);
 
 		ptr = mmap(NULL, allocsize, PROT_READ | PROT_WRITE,
-				   PG_MMAP_FLAGS | MAP_HUGETLB, -1, 0);
+				   PG_MMAP_FLAGS | mmap_flags, -1, 0);
 		mmap_errno = errno;
 		if (huge_pages == HUGE_PAGES_TRY && ptr == MAP_FAILED)
-			elog(DEBUG1, "mmap with MAP_HUGETLB failed, huge pages disabled: %m");
+			elog(DEBUG1, "mmap(%zu) with MAP_HUGETLB failed, huge pages disabled: %m",
+				 allocsize);
 	}
 #endif
 
-	if (huge_pages == HUGE_PAGES_OFF ||
-		(huge_pages == HUGE_PAGES_TRY && ptr == MAP_FAILED))
+	if (ptr == MAP_FAILED && huge_pages != HUGE_PAGES_ON)
 	{
 		/*
-		 * use the original size, not the rounded up value, when falling back
+		 * Use the original size, not the rounded-up value, when falling back
 		 * to non-huge pages.
 		 */
 		allocsize = *size;
@@ -390,10 +505,10 @@ CreateAnonymousSegment(Size *size)
 				(errmsg("could not map anonymous shared memory: %m"),
 				 (mmap_errno == ENOMEM) ?
 				 errhint("This error usually means that PostgreSQL's request "
-					"for a shared memory segment exceeded available memory, "
-					 "swap space, or huge pages. To reduce the request size "
+						 "for a shared memory segment exceeded available memory, "
+						 "swap space, or huge pages. To reduce the request size "
 						 "(currently %zu bytes), reduce PostgreSQL's shared "
-					   "memory usage, perhaps by reducing shared_buffers or "
+						 "memory usage, perhaps by reducing shared_buffers or "
 						 "max_connections.",
 						 *size) : 0));
 	}
@@ -401,7 +516,25 @@ CreateAnonymousSegment(Size *size)
 	*size = allocsize;
 	return ptr;
 }
-#endif
+
+/*
+ * AnonymousShmemDetach --- detach from an anonymous mmap'd block
+ * (called as an on_shmem_exit callback, hence funny argument list)
+ */
+static void
+AnonymousShmemDetach(int status, Datum arg)
+{
+	/* Release anonymous shared memory block, if any. */
+	if (AnonymousShmem != NULL)
+	{
+		if (munmap(AnonymousShmem, AnonymousShmemSize) < 0)
+			elog(LOG, "munmap(%p, %zu) failed: %m",
+				 AnonymousShmem, AnonymousShmemSize);
+		AnonymousShmem = NULL;
+	}
+}
+
+#endif							/* USE_ANONYMOUS_SHMEM */
 
 /*
  * PGSharedMemoryCreate
@@ -432,7 +565,8 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port,
 	struct stat statbuf;
 	Size		sysvsize;
 
-#if defined(EXEC_BACKEND) || !defined(MAP_HUGETLB)
+	/* Complain if hugepages demanded but we can't possibly support them */
+#if !defined(USE_ANONYMOUS_SHMEM) || !defined(MAP_HUGETLB)
 	if (huge_pages == HUGE_PAGES_ON)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -442,31 +576,12 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port,
 	/* Room for a header? */
 	Assert(size > MAXALIGN(sizeof(PGShmemHeader)));
 
-	/*
-	 * As of PostgreSQL 9.3, we normally allocate only a very small amount of
-	 * System V shared memory, and only for the purposes of providing an
-	 * interlock to protect the data directory.  The real shared memory block
-	 * is allocated using mmap().  This works around the problem that many
-	 * systems have very low limits on the amount of System V shared memory
-	 * that can be allocated.  Even a limit of a few megabytes will be enough
-	 * to run many copies of PostgreSQL without needing to adjust system
-	 * settings.
-	 *
-	 * We assume that no one will attempt to run PostgreSQL 9.3 or later on
-	 * systems that are ancient enough that anonymous shared memory is not
-	 * supported, such as pre-2.4 versions of Linux.  If that turns out to be
-	 * false, we might need to add a run-time test here and do this only if
-	 * the running kernel supports it.
-	 *
-	 * However, we disable this logic in the EXEC_BACKEND case, and fall back
-	 * to the old method of allocating the entire segment using System V
-	 * shared memory, because there's no way to attach an mmap'd segment to a
-	 * process after exec().  Since EXEC_BACKEND is intended only for
-	 * developer use, this shouldn't be a big problem.
-	 */
-#ifndef EXEC_BACKEND
+#ifdef USE_ANONYMOUS_SHMEM
 	AnonymousShmem = CreateAnonymousSegment(&size);
 	AnonymousShmemSize = size;
+
+	/* Register on-exit routine to unmap the anonymous segment */
+	on_shmem_exit(AnonymousShmemDetach, (Datum) 0);
 
 	/* Now we need only allocate a minimal-sized SysV shmem block. */
 	sysvsize = sizeof(PGShmemHeader);
@@ -572,10 +687,14 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port,
 	 * block. Otherwise, the System V shared memory block is only a shim, and
 	 * we must return a pointer to the real block.
 	 */
+#ifdef USE_ANONYMOUS_SHMEM
 	if (AnonymousShmem == NULL)
 		return hdr;
 	memcpy(AnonymousShmem, hdr, sizeof(PGShmemHeader));
 	return (PGShmemHeader *) AnonymousShmem;
+#else
+	return hdr;
+#endif
 }
 
 #ifdef EXEC_BACKEND
@@ -653,19 +772,19 @@ PGSharedMemoryNoReAttach(void)
 	UsedShmemSegID = 0;
 }
 
-#endif   /* EXEC_BACKEND */
+#endif							/* EXEC_BACKEND */
 
 /*
  * PGSharedMemoryDetach
  *
  * Detach from the shared memory segment, if still attached.  This is not
  * intended to be called explicitly by the process that originally created the
- * segment (it will have an on_shmem_exit callback registered to do that).
+ * segment (it will have on_shmem_exit callback(s) registered to do that).
  * Rather, this is for subprocesses that have inherited an attachment and want
  * to get rid of it.
  *
  * UsedShmemSegID and UsedShmemSegAddr are implicit parameters to this
- * routine.
+ * routine, also AnonymousShmem and AnonymousShmemSize.
  */
 void
 PGSharedMemoryDetach(void)
@@ -682,10 +801,15 @@ PGSharedMemoryDetach(void)
 		UsedShmemSegAddr = NULL;
 	}
 
-	/* Release anonymous shared memory block, if any. */
-	if (AnonymousShmem != NULL
-		&& munmap(AnonymousShmem, AnonymousShmemSize) < 0)
-		elog(LOG, "munmap(%p) failed: %m", AnonymousShmem);
+#ifdef USE_ANONYMOUS_SHMEM
+	if (AnonymousShmem != NULL)
+	{
+		if (munmap(AnonymousShmem, AnonymousShmemSize) < 0)
+			elog(LOG, "munmap(%p, %zu) failed: %m",
+				 AnonymousShmem, AnonymousShmemSize);
+		AnonymousShmem = NULL;
+	}
+#endif
 }
 
 

@@ -24,7 +24,7 @@
  * should be killed by SIGQUIT and then a recovery cycle started.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
@@ -46,6 +46,7 @@
 #include "postmaster/bgwriter.h"
 #include "storage/bufmgr.h"
 #include "storage/buf_internals.h"
+#include "storage/condition_variable.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
 #include "storage/lwlock.h"
@@ -121,8 +122,8 @@ BackgroundWriterMain(void)
 	 */
 	pqsignal(SIGHUP, BgSigHupHandler);	/* set flag to read config file */
 	pqsignal(SIGINT, SIG_IGN);
-	pqsignal(SIGTERM, ReqShutdownHandler);		/* shutdown */
-	pqsignal(SIGQUIT, bg_quickdie);		/* hard crash time */
+	pqsignal(SIGTERM, ReqShutdownHandler);	/* shutdown */
+	pqsignal(SIGQUIT, bg_quickdie); /* hard crash time */
 	pqsignal(SIGALRM, SIG_IGN);
 	pqsignal(SIGPIPE, SIG_IGN);
 	pqsignal(SIGUSR1, bgwriter_sigusr1_handler);
@@ -160,9 +161,7 @@ BackgroundWriterMain(void)
 	 */
 	bgwriter_context = AllocSetContextCreate(TopMemoryContext,
 											 "Background Writer",
-											 ALLOCSET_DEFAULT_MINSIZE,
-											 ALLOCSET_DEFAULT_INITSIZE,
-											 ALLOCSET_DEFAULT_MAXSIZE);
+											 ALLOCSET_DEFAULT_SIZES);
 	MemoryContextSwitchTo(bgwriter_context);
 
 	WritebackContextInit(&wb_context, &bgwriter_flush_after);
@@ -189,6 +188,7 @@ BackgroundWriterMain(void)
 		 * about in bgwriter, but we do have LWLocks, buffers, and temp files.
 		 */
 		LWLockReleaseAll();
+		ConditionVariableCancelSleep();
 		AbortBufferIO();
 		UnlockBuffers();
 		/* buffer pins are released here: */
@@ -211,7 +211,7 @@ BackgroundWriterMain(void)
 		/* Flush any leaked data in the top-level context */
 		MemoryContextResetAndDeleteChildren(bgwriter_context);
 
-		/* re-initilialize to avoid repeated errors causing problems */
+		/* re-initialize to avoid repeated errors causing problems */
 		WritebackContextInit(&wb_context, &bgwriter_flush_after);
 
 		/* Now we can allow interrupts again */
@@ -310,8 +310,8 @@ BackgroundWriterMain(void)
 		 * check whether there has been any WAL inserted since the last time
 		 * we've logged a running xacts.
 		 *
-		 * We do this logging in the bgwriter as its the only process that is
-		 * run regularly and returns to its mainloop all the time. E.g.
+		 * We do this logging in the bgwriter as it is the only process that
+		 * is run regularly and returns to its mainloop all the time. E.g.
 		 * Checkpointer, when active, is barely ever in its mainloop and thus
 		 * makes it hard to log regularly.
 		 */
@@ -324,11 +324,14 @@ BackgroundWriterMain(void)
 												  LOG_SNAPSHOT_INTERVAL_MS);
 
 			/*
-			 * only log if enough time has passed and some xlog record has
-			 * been inserted.
+			 * Only log if enough time has passed and interesting records have
+			 * been inserted since the last snapshot.  Have to compare with <=
+			 * instead of < because GetLastImportantRecPtr() points at the
+			 * start of a record, whereas last_snapshot_lsn points just past
+			 * the end of the record.
 			 */
 			if (now >= timeout &&
-				last_snapshot_lsn != GetXLogInsertRecPtr())
+				last_snapshot_lsn <= GetLastImportantRecPtr())
 			{
 				last_snapshot_lsn = LogStandbySnapshot();
 				last_snapshot_ts = now;
@@ -347,7 +350,7 @@ BackgroundWriterMain(void)
 		 */
 		rc = WaitLatch(MyLatch,
 					   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
-					   BgWriterDelay /* ms */ );
+					   BgWriterDelay /* ms */ , WAIT_EVENT_BGWRITER_MAIN);
 
 		/*
 		 * If no latch event and BgBufferSync says nothing's happening, extend
@@ -374,7 +377,8 @@ BackgroundWriterMain(void)
 			/* Sleep ... */
 			rc = WaitLatch(MyLatch,
 						   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
-						   BgWriterDelay * HIBERNATE_FACTOR);
+						   BgWriterDelay * HIBERNATE_FACTOR,
+						   WAIT_EVENT_BGWRITER_HIBERNATE);
 			/* Reset the notification request in case we timed out */
 			StrategyNotifyBgWriter(-1);
 		}

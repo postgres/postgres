@@ -3,7 +3,7 @@
  * standbydesc.c
  *	  rmgr descriptor routines for storage/ipc/standby.c
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -122,12 +122,10 @@ standby_desc_invalidations(StringInfo buf,
 			appendStringInfoString(buf, " smgr");
 		/* not expected, but print something anyway */
 		else if (msg->id == SHAREDINVALRELMAP_ID)
-			appendStringInfoString(buf, " relmap");
-		else if (msg->id == SHAREDINVALRELMAP_ID)
 			appendStringInfo(buf, " relmap db %u", msg->rm.dbId);
 		else if (msg->id == SHAREDINVALSNAPSHOT_ID)
 			appendStringInfo(buf, " snapshot %u", msg->sn.relId);
 		else
-			appendStringInfo(buf, " unknown id %d", msg->id);
+			appendStringInfo(buf, " unrecognized id %d", msg->id);
 	}
 }

@@ -3,7 +3,7 @@
  *
  *		Object access hooks.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  */
 
@@ -118,10 +118,10 @@ typedef struct
 
 /* Plugin provides a hook function matching this signature. */
 typedef void (*object_access_hook_type) (ObjectAccessType access,
-													 Oid classId,
-													 Oid objectId,
-													 int subId,
-													 void *arg);
+										 Oid classId,
+										 Oid objectId,
+										 int subId,
+										 void *arg);
 
 /* Plugin sets this variable to a suitable hook function. */
 extern PGDLLIMPORT object_access_hook_type object_access_hook;
@@ -182,4 +182,4 @@ extern void RunFunctionExecuteHook(Oid objectId);
 			RunFunctionExecuteHook(objectId);	\
 	} while(0)
 
-#endif   /* OBJECTACCESS_H */
+#endif							/* OBJECTACCESS_H */

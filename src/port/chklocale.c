@@ -4,7 +4,7 @@
  *		Functions for handling locale-related info
  *
  *
- * Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Copyright (c) 1996-2017, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
@@ -19,11 +19,6 @@
 #include "postgres_fe.h"
 #endif
 
-#if defined(WIN32) && (_MSC_VER >= 1900)
-#include <windows.h>
-#endif
-
-#include <locale.h>
 #ifdef HAVE_LANGINFO_H
 #include <langinfo.h>
 #endif
@@ -290,13 +285,12 @@ pg_codepage_to_encoding(UINT cp)
 			return encoding_match_list[i].pg_enc_code;
 
 	ereport(WARNING,
-			(errmsg("could not determine encoding for codeset \"%s\"", sys),
-		   errdetail("Please report this to <pgsql-bugs@postgresql.org>.")));
+			(errmsg("could not determine encoding for codeset \"%s\"", sys)));
 
 	return -1;
 }
 #endif
-#endif   /* WIN32 */
+#endif							/* WIN32 */
 
 #if (defined(HAVE_LANGINFO_H) && defined(CODESET)) || defined(WIN32)
 
@@ -395,7 +389,7 @@ pg_get_encoding_from_locale(const char *ctype, bool write_message)
 #ifdef __darwin__
 
 	/*
-	 * Current OS X has many locales that report an empty string for CODESET,
+	 * Current macOS has many locales that report an empty string for CODESET,
 	 * but they all seem to actually use UTF-8.
 	 */
 	if (strlen(sys) == 0)
@@ -419,8 +413,7 @@ pg_get_encoding_from_locale(const char *ctype, bool write_message)
 #else
 		ereport(WARNING,
 				(errmsg("could not determine encoding for locale \"%s\": codeset is \"%s\"",
-						ctype, sys),
-		   errdetail("Please report this to <pgsql-bugs@postgresql.org>.")));
+						ctype, sys)));
 #endif
 	}
 
@@ -442,4 +435,4 @@ pg_get_encoding_from_locale(const char *ctype, bool write_message)
 	return PG_SQL_ASCII;
 }
 
-#endif   /* (HAVE_LANGINFO_H && CODESET) || WIN32 */
+#endif							/* (HAVE_LANGINFO_H && CODESET) || WIN32 */

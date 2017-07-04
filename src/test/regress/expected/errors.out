@@ -1,7 +1,7 @@
 --
 -- ERRORS
 --
--- bad in postquel, but ok in postsql
+-- bad in postquel, but ok in PostgreSQL
 select 1;
  ?column? 
 ----------

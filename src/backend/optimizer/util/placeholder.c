@@ -4,7 +4,7 @@
  *	  PlaceHolderVar and PlaceHolderInfo manipulation routines
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -101,7 +101,7 @@ find_placeholder_info(PlannerInfo *root, PlaceHolderVar *phv,
 	rels_used = pull_varnos((Node *) phv->phexpr);
 	phinfo->ph_lateral = bms_difference(rels_used, phv->phrels);
 	if (bms_is_empty(phinfo->ph_lateral))
-		phinfo->ph_lateral = NULL;		/* make it exactly NULL if empty */
+		phinfo->ph_lateral = NULL;	/* make it exactly NULL if empty */
 	phinfo->ph_eval_at = bms_int_members(rels_used, phv->phrels);
 	/* If no contained vars, force evaluation at syntactic location */
 	if (bms_is_empty(phinfo->ph_eval_at))

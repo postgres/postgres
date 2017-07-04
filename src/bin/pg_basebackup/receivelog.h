@@ -2,7 +2,7 @@
  *
  * receivelog.h
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		  src/bin/pg_basebackup/receivelog.h
@@ -13,6 +13,7 @@
 #define RECEIVELOG_H
 
 #include "libpq-fe.h"
+#include "walmethods.h"
 
 #include "access/xlogdefs.h"
 
@@ -32,15 +33,21 @@ typedef struct StreamCtl
 	TimeLineID	timeline;		/* Timeline to stream data from */
 	char	   *sysidentifier;	/* Validate this system identifier and
 								 * timeline */
-	int			standby_message_timeout;		/* Send status messages this
-												 * often */
-	bool		synchronous;	/* Flush data on write */
+	int			standby_message_timeout;	/* Send status messages this often */
+	bool		synchronous;	/* Flush immediately WAL data on write */
 	bool		mark_done;		/* Mark segment as done in generated archive */
+	bool		do_sync;		/* Flush to disk to ensure consistent state of
+								 * data */
 
 	stream_stop_callback stream_stop;	/* Stop streaming when returns true */
 
-	char	   *basedir;		/* Received segments written to this dir */
+	pgsocket	stop_socket;	/* if valid, watch for input on this socket
+								 * and check stream_stop() when there is any */
+
+	WalWriteMethod *walmethod;	/* How to write the WAL */
 	char	   *partial_suffix; /* Suffix appended to partially received files */
+	char	   *replication_slot;	/* Replication slot to use, or NULL */
+	bool		temp_slot;		/* Create temporary replication slot */
 } StreamCtl;
 
 
@@ -49,4 +56,4 @@ extern bool CheckServerVersionForStreaming(PGconn *conn);
 extern bool ReceiveXlogStream(PGconn *conn,
 				  StreamCtl *stream);
 
-#endif   /* RECEIVELOG_H */
+#endif							/* RECEIVELOG_H */

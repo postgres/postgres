@@ -1,0 +1,77 @@
+--
+-- expression evaluated tests that don't fit into a more specific file
+--
+--
+-- Tests for SQLVAlueFunction
+--
+-- current_date  (always matches because of transactional behaviour)
+SELECT date(now())::text = current_date::text;
+ ?column? 
+----------
+ t
+(1 row)
+
+-- current_time / localtime
+SELECT now()::timetz::text = current_time::text;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT now()::time::text = localtime::text;
+ ?column? 
+----------
+ t
+(1 row)
+
+-- current_timestamp / localtimestamp (always matches because of transactional behaviour)
+SELECT current_timestamp = NOW();
+ ?column? 
+----------
+ t
+(1 row)
+
+-- precision
+SELECT length(current_timestamp::text) >= length(current_timestamp(0)::text);
+ ?column? 
+----------
+ t
+(1 row)
+
+-- localtimestamp
+SELECT now()::timestamp::text = localtimestamp::text;
+ ?column? 
+----------
+ t
+(1 row)
+
+-- current_role/user/user is tested in rolnames.sql
+-- current database / catalog
+SELECT current_catalog = current_database();
+ ?column? 
+----------
+ t
+(1 row)
+
+-- current_schema
+SELECT current_schema;
+ current_schema 
+----------------
+ public
+(1 row)
+
+SET search_path = 'notme';
+SELECT current_schema;
+ current_schema 
+----------------
+ 
+(1 row)
+
+SET search_path = 'pg_catalog';
+SELECT current_schema;
+ current_schema 
+----------------
+ pg_catalog
+(1 row)
+
+RESET search_path;

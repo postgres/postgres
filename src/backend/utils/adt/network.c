@@ -14,7 +14,7 @@
 
 #include "access/hash.h"
 #include "catalog/pg_type.h"
-#include "libpq/ip.h"
+#include "common/ip.h"
 #include "libpq/libpq-be.h"
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
@@ -934,6 +934,16 @@ convert_network_to_scalar(Datum value, Oid typid)
 				res += (mac->d << 16) | (mac->e << 8) | (mac->f);
 				return res;
 			}
+		case MACADDR8OID:
+			{
+				macaddr8   *mac = DatumGetMacaddr8P(value);
+				double		res;
+
+				res = (mac->a << 24) | (mac->b << 16) | (mac->c << 8) | (mac->d);
+				res *= ((double) 256) * 256 * 256 * 256;
+				res += (mac->e << 24) | (mac->f << 16) | (mac->g << 8) | (mac->h);
+				return res;
+			}
 	}
 
 	/*
@@ -1085,7 +1095,7 @@ network_scan_first(Datum in)
 
 /*
  * return "last" IP on a given network. It's the broadcast address,
- * however, masklen has to be set to its max btis, since
+ * however, masklen has to be set to its max bits, since
  * 192.168.0.255/24 is considered less than 192.168.0.255/32
  *
  * inet_set_masklen() hacked to max out the masklength to 128 for IPv6

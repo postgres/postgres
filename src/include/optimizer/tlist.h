@@ -4,7 +4,7 @@
  *	  prototypes for tlist.c.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/optimizer/tlist.h
@@ -17,8 +17,8 @@
 #include "nodes/relation.h"
 
 
-extern TargetEntry *tlist_member(Node *node, List *targetlist);
-extern TargetEntry *tlist_member_ignore_relabel(Node *node, List *targetlist);
+extern TargetEntry *tlist_member(Expr *node, List *targetlist);
+extern TargetEntry *tlist_member_ignore_relabel(Expr *node, List *targetlist);
 
 extern List *add_to_flat_tlist(List *tlist, List *exprs);
 
@@ -61,9 +61,12 @@ extern void add_column_to_pathtarget(PathTarget *target,
 extern void add_new_column_to_pathtarget(PathTarget *target, Expr *expr);
 extern void add_new_columns_to_pathtarget(PathTarget *target, List *exprs);
 extern void apply_pathtarget_labeling_to_tlist(List *tlist, PathTarget *target);
+extern void split_pathtarget_at_srfs(PlannerInfo *root,
+						 PathTarget *target, PathTarget *input_target,
+						 List **targets, List **targets_contain_srfs);
 
 /* Convenience macro to get a PathTarget with valid cost/width fields */
 #define create_pathtarget(root, tlist) \
 	set_pathtarget_cost_width(root, make_pathtarget_from_tlist(tlist))
 
-#endif   /* TLIST_H */
+#endif							/* TLIST_H */

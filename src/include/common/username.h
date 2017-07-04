@@ -2,7 +2,7 @@
  *	username.h
  *		lookup effective username
  *
- *	Copyright (c) 2003-2016, PostgreSQL Global Development Group
+ *	Copyright (c) 2003-2017, PostgreSQL Global Development Group
  *
  *	src/include/common/username.h
  */
@@ -12,4 +12,4 @@
 extern const char *get_user_name(char **errstr);
 extern const char *get_user_name_or_exit(const char *progname);
 
-#endif   /* USERNAME_H */
+#endif							/* USERNAME_H */

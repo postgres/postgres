@@ -3,7 +3,7 @@
  * pg_aggregate.c
  *	  routines to support manipulation of the pg_aggregate relation
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -83,9 +83,9 @@ AggregateCreate(const char *aggName,
 	Oid			finalfn = InvalidOid;	/* can be omitted */
 	Oid			combinefn = InvalidOid; /* can be omitted */
 	Oid			serialfn = InvalidOid;	/* can be omitted */
-	Oid			deserialfn = InvalidOid;		/* can be omitted */
+	Oid			deserialfn = InvalidOid;	/* can be omitted */
 	Oid			mtransfn = InvalidOid;	/* can be omitted */
-	Oid			minvtransfn = InvalidOid;		/* can be omitted */
+	Oid			minvtransfn = InvalidOid;	/* can be omitted */
 	Oid			mfinalfn = InvalidOid;	/* can be omitted */
 	Oid			sortop = InvalidOid;	/* can be omitted */
 	Oid		   *aggArgTypes = parameterTypes->values;
@@ -123,7 +123,7 @@ AggregateCreate(const char *aggName,
 		ereport(ERROR,
 				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
 				 errmsg_plural("aggregates cannot have more than %d argument",
-							 "aggregates cannot have more than %d arguments",
+							   "aggregates cannot have more than %d arguments",
 							   FUNC_MAX_ARGS - 1,
 							   FUNC_MAX_ARGS - 1)));
 
@@ -331,9 +331,9 @@ AggregateCreate(const char *aggName,
 		if (rettype != aggmTransType)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
-			errmsg("return type of inverse transition function %s is not %s",
-				   NameListToString(aggminvtransfnName),
-				   format_type_be(aggmTransType))));
+					 errmsg("return type of inverse transition function %s is not %s",
+							NameListToString(aggminvtransfnName),
+							format_type_be(aggmTransType))));
 
 		tup = SearchSysCache1(PROCOID, ObjectIdGetDatum(minvtransfn));
 		if (!HeapTupleIsValid(tup))
@@ -433,7 +433,7 @@ AggregateCreate(const char *aggName,
 		if (aggTransType == INTERNALOID && func_strict(combinefn))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-					 errmsg("combine function with \"%s\" transition type must not be declared STRICT",
+					 errmsg("combine function with transition type %s must not be declared STRICT",
 							format_type_be(aggTransType))));
 
 	}
@@ -452,9 +452,9 @@ AggregateCreate(const char *aggName,
 		if (rettype != BYTEAOID)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("return type of serialization function %s is not %s",
-						NameListToString(aggserialfnName),
-						format_type_be(BYTEAOID))));
+					 errmsg("return type of serialization function %s is not %s",
+							NameListToString(aggserialfnName),
+							format_type_be(BYTEAOID))));
 	}
 
 	/*
@@ -472,9 +472,9 @@ AggregateCreate(const char *aggName,
 		if (rettype != INTERNALOID)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
-			   errmsg("return type of deserialization function %s is not %s",
-					  NameListToString(aggdeserialfnName),
-					  format_type_be(INTERNALOID))));
+					 errmsg("return type of deserialization function %s is not %s",
+							NameListToString(aggdeserialfnName),
+							format_type_be(INTERNALOID))));
 	}
 
 	/*
@@ -605,30 +605,30 @@ AggregateCreate(const char *aggName,
 
 	myself = ProcedureCreate(aggName,
 							 aggNamespace,
-							 false,		/* no replacement */
-							 false,		/* doesn't return a set */
+							 false, /* no replacement */
+							 false, /* doesn't return a set */
 							 finaltype, /* returnType */
-							 GetUserId(),		/* proowner */
-							 INTERNALlanguageId,		/* languageObjectId */
-							 InvalidOid,		/* no validator */
+							 GetUserId(),	/* proowner */
+							 INTERNALlanguageId,	/* languageObjectId */
+							 InvalidOid,	/* no validator */
 							 "aggregate_dummy", /* placeholder proc */
-							 NULL,		/* probin */
-							 true,		/* isAgg */
-							 false,		/* isWindowFunc */
-							 false,		/* security invoker (currently not
-										 * definable for agg) */
-							 false,		/* isLeakProof */
-							 false,		/* isStrict (not needed for agg) */
-							 PROVOLATILE_IMMUTABLE,		/* volatility (not
-														 * needed for agg) */
+							 NULL,	/* probin */
+							 true,	/* isAgg */
+							 false, /* isWindowFunc */
+							 false, /* security invoker (currently not
+									 * definable for agg) */
+							 false, /* isLeakProof */
+							 false, /* isStrict (not needed for agg) */
+							 PROVOLATILE_IMMUTABLE, /* volatility (not needed
+													 * for agg) */
 							 proparallel,
 							 parameterTypes,	/* paramTypes */
 							 allParameterTypes, /* allParamTypes */
 							 parameterModes,	/* parameterModes */
 							 parameterNames,	/* parameterNames */
 							 parameterDefaults, /* parameterDefaults */
-							 PointerGetDatum(NULL),		/* trftypes */
-							 PointerGetDatum(NULL),		/* proconfig */
+							 PointerGetDatum(NULL), /* trftypes */
+							 PointerGetDatum(NULL), /* proconfig */
 							 1, /* procost */
 							 0);	/* prorows */
 	procOid = myself.objectId;
@@ -674,9 +674,7 @@ AggregateCreate(const char *aggName,
 	tupDesc = aggdesc->rd_att;
 
 	tup = heap_form_tuple(tupDesc, values, nulls);
-	simple_heap_insert(aggdesc, tup);
-
-	CatalogUpdateIndexes(aggdesc, tup);
+	CatalogTupleInsert(aggdesc, tup);
 
 	heap_close(aggdesc, RowExclusiveLock);
 

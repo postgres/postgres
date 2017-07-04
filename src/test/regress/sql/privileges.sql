@@ -17,7 +17,7 @@ DROP ROLE IF EXISTS regress_user4;
 DROP ROLE IF EXISTS regress_user5;
 DROP ROLE IF EXISTS regress_user6;
 
-SELECT lo_unlink(oid) FROM pg_largeobject_metadata;
+SELECT lo_unlink(oid) FROM pg_largeobject_metadata WHERE oid >= 1000 AND oid < 3000 ORDER BY oid;
 
 RESET client_min_messages;
 
@@ -125,6 +125,67 @@ COPY atest2 FROM stdin; -- ok
 bar	true
 \.
 SELECT * FROM atest1; -- ok
+
+
+-- test leaky-function protections in selfuncs
+
+-- regress_user1 will own a table and provide a view for it.
+SET SESSION AUTHORIZATION regress_user1;
+
+CREATE TABLE atest12 as
+  SELECT x AS a, 10001 - x AS b FROM generate_series(1,10000) x;
+CREATE INDEX ON atest12 (a);
+CREATE INDEX ON atest12 (abs(a));
+VACUUM ANALYZE atest12;
+
+CREATE FUNCTION leak(integer,integer) RETURNS boolean
+  AS $$begin return $1 < $2; end$$
+  LANGUAGE plpgsql immutable;
+CREATE OPERATOR <<< (procedure = leak, leftarg = integer, rightarg = integer,
+                     restrict = scalarltsel);
+
+-- view with leaky operator
+CREATE VIEW atest12v AS
+  SELECT * FROM atest12 WHERE b <<< 5;
+GRANT SELECT ON atest12v TO PUBLIC;
+
+-- This plan should use nestloop, knowing that few rows will be selected.
+EXPLAIN (COSTS OFF) SELECT * FROM atest12v x, atest12v y WHERE x.a = y.b;
+
+-- And this one.
+EXPLAIN (COSTS OFF) SELECT * FROM atest12 x, atest12 y
+  WHERE x.a = y.b and abs(y.a) <<< 5;
+
+-- Check if regress_user2 can break security.
+SET SESSION AUTHORIZATION regress_user2;
+
+CREATE FUNCTION leak2(integer,integer) RETURNS boolean
+  AS $$begin raise notice 'leak % %', $1, $2; return $1 > $2; end$$
+  LANGUAGE plpgsql immutable;
+CREATE OPERATOR >>> (procedure = leak2, leftarg = integer, rightarg = integer,
+                     restrict = scalargtsel);
+
+-- This should not show any "leak" notices before failing.
+EXPLAIN (COSTS OFF) SELECT * FROM atest12 WHERE a >>> 0;
+
+-- This plan should use hashjoin, as it will expect many rows to be selected.
+EXPLAIN (COSTS OFF) SELECT * FROM atest12v x, atest12v y WHERE x.a = y.b;
+
+-- Now regress_user1 grants sufficient access to regress_user2.
+SET SESSION AUTHORIZATION regress_user1;
+GRANT SELECT (a, b) ON atest12 TO PUBLIC;
+SET SESSION AUTHORIZATION regress_user2;
+
+-- Now regress_user2 will also get a good row estimate.
+EXPLAIN (COSTS OFF) SELECT * FROM atest12v x, atest12v y WHERE x.a = y.b;
+
+-- But not for this, due to lack of table-wide permissions needed
+-- to make use of the expression index's statistics.
+EXPLAIN (COSTS OFF) SELECT * FROM atest12 x, atest12 y
+  WHERE x.a = y.b and abs(y.a) <<< 5;
+
+-- clean up (regress_user1's objects are all dropped later)
+DROP FUNCTION leak2(integer, integer) CASCADE;
 
 
 -- groups
@@ -397,6 +458,15 @@ DROP FUNCTION testfunc1(int); -- fail
 DROP FUNCTION testfunc1(int); -- ok
 -- restore to sanity
 GRANT ALL PRIVILEGES ON LANGUAGE sql TO PUBLIC;
+
+-- verify privilege checks on array-element coercions
+BEGIN;
+SELECT '{1}'::int4[]::int8[];
+REVOKE ALL ON FUNCTION int8(integer) FROM PUBLIC;
+SELECT '{1}'::int4[]::int8[]; --superuser, suceed
+SET SESSION AUTHORIZATION regress_user4;
+SELECT '{1}'::int4[]::int8[]; --other user, fail
+ROLLBACK;
 
 -- privileges on types
 
@@ -729,7 +799,7 @@ SELECT lo_unlink(2002);
 
 \c -
 -- confirm ACL setting
-SELECT oid, pg_get_userbyid(lomowner) ownername, lomacl FROM pg_largeobject_metadata;
+SELECT oid, pg_get_userbyid(lomowner) ownername, lomacl FROM pg_largeobject_metadata WHERE oid >= 1000 AND oid < 3000 ORDER BY oid;
 
 SET SESSION AUTHORIZATION regress_user3;
 
@@ -807,6 +877,36 @@ SELECT has_table_privilege('regress_user1', 'testns.acltest1', 'INSERT'); -- no
 
 ALTER DEFAULT PRIVILEGES FOR ROLE regress_user1 REVOKE EXECUTE ON FUNCTIONS FROM public;
 
+ALTER DEFAULT PRIVILEGES IN SCHEMA testns GRANT USAGE ON SCHEMAS TO regress_user2; -- error
+
+ALTER DEFAULT PRIVILEGES GRANT USAGE ON SCHEMAS TO regress_user2;
+
+CREATE SCHEMA testns2;
+
+SELECT has_schema_privilege('regress_user2', 'testns2', 'USAGE'); -- yes
+SELECT has_schema_privilege('regress_user2', 'testns2', 'CREATE'); -- no
+
+ALTER DEFAULT PRIVILEGES REVOKE USAGE ON SCHEMAS FROM regress_user2;
+
+CREATE SCHEMA testns3;
+
+SELECT has_schema_privilege('regress_user2', 'testns3', 'USAGE'); -- no
+SELECT has_schema_privilege('regress_user2', 'testns3', 'CREATE'); -- no
+
+ALTER DEFAULT PRIVILEGES GRANT ALL ON SCHEMAS TO regress_user2;
+
+CREATE SCHEMA testns4;
+
+SELECT has_schema_privilege('regress_user2', 'testns4', 'USAGE'); -- yes
+SELECT has_schema_privilege('regress_user2', 'testns4', 'CREATE'); -- yes
+
+ALTER DEFAULT PRIVILEGES REVOKE ALL ON SCHEMAS FROM regress_user2;
+
+CREATE SCHEMA testns5;
+
+SELECT has_schema_privilege('regress_user2', 'testns5', 'USAGE'); -- no
+SELECT has_schema_privilege('regress_user2', 'testns5', 'CREATE'); -- no
+
 SET ROLE regress_user1;
 
 CREATE FUNCTION testns.foo() RETURNS int AS 'select 1' LANGUAGE sql;
@@ -844,6 +944,10 @@ SELECT count(*)
   WHERE nspname = 'testns';
 
 DROP SCHEMA testns CASCADE;
+DROP SCHEMA testns2 CASCADE;
+DROP SCHEMA testns3 CASCADE;
+DROP SCHEMA testns4 CASCADE;
+DROP SCHEMA testns5 CASCADE;
 
 SELECT d.*     -- check that entries went away
   FROM pg_default_acl d LEFT JOIN pg_namespace n ON defaclnamespace = n.oid
@@ -960,7 +1064,7 @@ DROP TABLE atestc;
 DROP TABLE atestp1;
 DROP TABLE atestp2;
 
-SELECT lo_unlink(oid) FROM pg_largeobject_metadata;
+SELECT lo_unlink(oid) FROM pg_largeobject_metadata WHERE oid >= 1000 AND oid < 3000 ORDER BY oid;
 
 DROP GROUP regress_group1;
 DROP GROUP regress_group2;

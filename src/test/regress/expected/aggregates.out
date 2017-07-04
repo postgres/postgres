@@ -366,6 +366,81 @@ from tenk1 o;
  9999
 (1 row)
 
+-- Test handling of Params within aggregate arguments in hashed aggregation.
+-- Per bug report from Jeevan Chalke.
+explain (verbose, costs off)
+select s1, s2, sm
+from generate_series(1, 3) s1,
+     lateral (select s2, sum(s1 + s2) sm
+              from generate_series(1, 3) s2 group by s2) ss
+order by 1, 2;
+                            QUERY PLAN                            
+------------------------------------------------------------------
+ Sort
+   Output: s1.s1, s2.s2, (sum((s1.s1 + s2.s2)))
+   Sort Key: s1.s1, s2.s2
+   ->  Nested Loop
+         Output: s1.s1, s2.s2, (sum((s1.s1 + s2.s2)))
+         ->  Function Scan on pg_catalog.generate_series s1
+               Output: s1.s1
+               Function Call: generate_series(1, 3)
+         ->  HashAggregate
+               Output: s2.s2, sum((s1.s1 + s2.s2))
+               Group Key: s2.s2
+               ->  Function Scan on pg_catalog.generate_series s2
+                     Output: s2.s2
+                     Function Call: generate_series(1, 3)
+(14 rows)
+
+select s1, s2, sm
+from generate_series(1, 3) s1,
+     lateral (select s2, sum(s1 + s2) sm
+              from generate_series(1, 3) s2 group by s2) ss
+order by 1, 2;
+ s1 | s2 | sm 
+----+----+----
+  1 |  1 |  2
+  1 |  2 |  3
+  1 |  3 |  4
+  2 |  1 |  3
+  2 |  2 |  4
+  2 |  3 |  5
+  3 |  1 |  4
+  3 |  2 |  5
+  3 |  3 |  6
+(9 rows)
+
+explain (verbose, costs off)
+select array(select sum(x+y) s
+            from generate_series(1,3) y group by y order by s)
+  from generate_series(1,3) x;
+                            QUERY PLAN                             
+-------------------------------------------------------------------
+ Function Scan on pg_catalog.generate_series x
+   Output: (SubPlan 1)
+   Function Call: generate_series(1, 3)
+   SubPlan 1
+     ->  Sort
+           Output: (sum((x.x + y.y))), y.y
+           Sort Key: (sum((x.x + y.y)))
+           ->  HashAggregate
+                 Output: sum((x.x + y.y)), y.y
+                 Group Key: y.y
+                 ->  Function Scan on pg_catalog.generate_series y
+                       Output: y.y
+                       Function Call: generate_series(1, 3)
+(13 rows)
+
+select array(select sum(x+y) s
+            from generate_series(1,3) y group by y order by s)
+  from generate_series(1,3) x;
+  array  
+---------
+ {2,3,4}
+ {3,4,5}
+ {4,5,6}
+(3 rows)
+
 --
 -- test for bitwise integer aggregates
 --
@@ -747,8 +822,9 @@ explain (costs off)
      ->  Limit
            ->  Index Only Scan Backward using tenk1_unique2 on tenk1
                  Index Cond: (unique2 IS NOT NULL)
-   ->  Result
-(7 rows)
+   ->  ProjectSet
+         ->  Result
+(8 rows)
 
 select max(unique2), generate_series(1,3) as g from tenk1 order by g desc;
  max  | g 
@@ -906,29 +982,31 @@ explain (costs off) select a,c from t1 group by a,c,d;
 explain (costs off) select *
 from t1 inner join t2 on t1.a = t2.x and t1.b = t2.y
 group by t1.a,t1.b,t1.c,t1.d,t2.x,t2.y,t2.z;
-                      QUERY PLAN                       
--------------------------------------------------------
- Group
+                      QUERY PLAN                      
+------------------------------------------------------
+ HashAggregate
    Group Key: t1.a, t1.b, t2.x, t2.y
-   ->  Merge Join
-         Merge Cond: ((t1.a = t2.x) AND (t1.b = t2.y))
-         ->  Index Scan using t1_pkey on t1
-         ->  Index Scan using t2_pkey on t2
-(6 rows)
+   ->  Hash Join
+         Hash Cond: ((t2.x = t1.a) AND (t2.y = t1.b))
+         ->  Seq Scan on t2
+         ->  Hash
+               ->  Seq Scan on t1
+(7 rows)
 
 -- Test case where t1 can be optimized but not t2
 explain (costs off) select t1.*,t2.x,t2.z
 from t1 inner join t2 on t1.a = t2.x and t1.b = t2.y
 group by t1.a,t1.b,t1.c,t1.d,t2.x,t2.z;
-                      QUERY PLAN                       
--------------------------------------------------------
+                      QUERY PLAN                      
+------------------------------------------------------
  HashAggregate
    Group Key: t1.a, t1.b, t2.x, t2.z
-   ->  Merge Join
-         Merge Cond: ((t1.a = t2.x) AND (t1.b = t2.y))
-         ->  Index Scan using t1_pkey on t1
-         ->  Index Scan using t2_pkey on t2
-(6 rows)
+   ->  Hash Join
+         Hash Cond: ((t2.x = t1.a) AND (t2.y = t1.b))
+         ->  Seq Scan on t2
+         ->  Hash
+               ->  Seq Scan on t1
+(7 rows)
 
 -- Cannot optimize when PK is deferrable
 explain (costs off) select * from t3 group by a,b,c;
@@ -1734,6 +1812,15 @@ NOTICE:  avg_transfn called with 3
 
 -- aggregate state should be shared as transfn is the same for both aggs.
 select my_avg(one),my_sum(one) from (values(1),(3)) t(one);
+NOTICE:  avg_transfn called with 1
+NOTICE:  avg_transfn called with 3
+ my_avg | my_sum 
+--------+--------
+      2 |      4
+(1 row)
+
+-- same as previous one, but with DISTINCT, which requires sorting the input.
+select my_avg(distinct one),my_sum(distinct one) from (values(1),(3),(1)) t(one);
 NOTICE:  avg_transfn called with 1
 NOTICE:  avg_transfn called with 3
  my_avg | my_sum 

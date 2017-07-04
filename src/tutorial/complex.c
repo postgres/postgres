@@ -18,7 +18,7 @@ typedef struct Complex
 {
 	double		x;
 	double		y;
-}	Complex;
+}			Complex;
 
 
 /*****************************************************************************

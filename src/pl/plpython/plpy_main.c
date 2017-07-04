@@ -214,7 +214,7 @@ plpython2_validator(PG_FUNCTION_ARGS)
 	/* call plpython validator with our fcinfo so it gets our oid */
 	return plpython_validator(fcinfo);
 }
-#endif   /* PY_MAJOR_VERSION < 3 */
+#endif							/* PY_MAJOR_VERSION < 3 */
 
 Datum
 plpython_call_handler(PG_FUNCTION_ARGS)
@@ -288,7 +288,7 @@ plpython2_call_handler(PG_FUNCTION_ARGS)
 {
 	return plpython_call_handler(fcinfo);
 }
-#endif   /* PY_MAJOR_VERSION < 3 */
+#endif							/* PY_MAJOR_VERSION < 3 */
 
 Datum
 plpython_inline_handler(PG_FUNCTION_ARGS)
@@ -315,9 +315,7 @@ plpython_inline_handler(PG_FUNCTION_ARGS)
 	MemSet(&proc, 0, sizeof(PLyProcedure));
 	proc.mcxt = AllocSetContextCreate(TopMemoryContext,
 									  "__plpython_inline_block",
-									  ALLOCSET_DEFAULT_MINSIZE,
-									  ALLOCSET_DEFAULT_INITSIZE,
-									  ALLOCSET_DEFAULT_MAXSIZE);
+									  ALLOCSET_DEFAULT_SIZES);
 	proc.pyname = MemoryContextStrdup(proc.mcxt, "__plpython_inline_block");
 	proc.langid = codeblock->langOid;
 	proc.result.out.d.typoid = VOIDOID;
@@ -370,7 +368,7 @@ plpython2_inline_handler(PG_FUNCTION_ARGS)
 {
 	return plpython_inline_handler(fcinfo);
 }
-#endif   /* PY_MAJOR_VERSION < 3 */
+#endif							/* PY_MAJOR_VERSION < 3 */
 
 static bool
 PLy_procedure_is_trigger(Form_pg_proc procStruct)
@@ -416,9 +414,7 @@ PLy_get_scratch_context(PLyExecutionContext *context)
 		context->scratch_ctx =
 			AllocSetContextCreate(TopTransactionContext,
 								  "PL/Python scratch context",
-								  ALLOCSET_DEFAULT_MINSIZE,
-								  ALLOCSET_DEFAULT_INITSIZE,
-								  ALLOCSET_DEFAULT_MAXSIZE);
+								  ALLOCSET_DEFAULT_SIZES);
 	return context->scratch_ctx;
 }
 

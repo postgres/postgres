@@ -3,7 +3,7 @@
  * nodeGroup.c
  *	  Routines to handle group nodes (used for queries with GROUP BY clause).
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -50,23 +50,6 @@ ExecGroup(GroupState *node)
 	grpColIdx = ((Group *) node->ss.ps.plan)->grpColIdx;
 
 	/*
-	 * Check to see if we're still projecting out tuples from a previous group
-	 * tuple (because there is a function-returning-set in the projection
-	 * expressions).  If so, try to project another one.
-	 */
-	if (node->ss.ps.ps_TupFromTlist)
-	{
-		TupleTableSlot *result;
-		ExprDoneCond isDone;
-
-		result = ExecProject(node->ss.ps.ps_ProjInfo, &isDone);
-		if (isDone == ExprMultipleResult)
-			return result;
-		/* Done with that source tuple... */
-		node->ss.ps.ps_TupFromTlist = false;
-	}
-
-	/*
 	 * The ScanTupleSlot holds the (copied) first tuple of each group.
 	 */
 	firsttupleslot = node->ss.ss_ScanTupleSlot;
@@ -102,21 +85,12 @@ ExecGroup(GroupState *node)
 		 * Check the qual (HAVING clause); if the group does not match, ignore
 		 * it and fall into scan loop.
 		 */
-		if (ExecQual(node->ss.ps.qual, econtext, false))
+		if (ExecQual(node->ss.ps.qual, econtext))
 		{
 			/*
 			 * Form and return a projection tuple using the first input tuple.
 			 */
-			TupleTableSlot *result;
-			ExprDoneCond isDone;
-
-			result = ExecProject(node->ss.ps.ps_ProjInfo, &isDone);
-
-			if (isDone != ExprEndResult)
-			{
-				node->ss.ps.ps_TupFromTlist = (isDone == ExprMultipleResult);
-				return result;
-			}
+			return ExecProject(node->ss.ps.ps_ProjInfo);
 		}
 		else
 			InstrCountFiltered1(node, 1);
@@ -165,21 +139,12 @@ ExecGroup(GroupState *node)
 		 * Check the qual (HAVING clause); if the group does not match, ignore
 		 * it and loop back to scan the rest of the group.
 		 */
-		if (ExecQual(node->ss.ps.qual, econtext, false))
+		if (ExecQual(node->ss.ps.qual, econtext))
 		{
 			/*
 			 * Form and return a projection tuple using the first input tuple.
 			 */
-			TupleTableSlot *result;
-			ExprDoneCond isDone;
-
-			result = ExecProject(node->ss.ps.ps_ProjInfo, &isDone);
-
-			if (isDone != ExprEndResult)
-			{
-				node->ss.ps.ps_TupFromTlist = (isDone == ExprMultipleResult);
-				return result;
-			}
+			return ExecProject(node->ss.ps.ps_ProjInfo);
 		}
 		else
 			InstrCountFiltered1(node, 1);
@@ -223,12 +188,8 @@ ExecInitGroup(Group *node, EState *estate, int eflags)
 	/*
 	 * initialize child expressions
 	 */
-	grpstate->ss.ps.targetlist = (List *)
-		ExecInitExpr((Expr *) node->plan.targetlist,
-					 (PlanState *) grpstate);
-	grpstate->ss.ps.qual = (List *)
-		ExecInitExpr((Expr *) node->plan.qual,
-					 (PlanState *) grpstate);
+	grpstate->ss.ps.qual =
+		ExecInitQual(node->plan.qual, (PlanState *) grpstate);
 
 	/*
 	 * initialize child nodes
@@ -245,8 +206,6 @@ ExecInitGroup(Group *node, EState *estate, int eflags)
 	 */
 	ExecAssignResultTypeFromTL(&grpstate->ss.ps);
 	ExecAssignProjectionInfo(&grpstate->ss.ps, NULL);
-
-	grpstate->ss.ps.ps_TupFromTlist = false;
 
 	/*
 	 * Precompute fmgr lookup data for inner loop
@@ -283,7 +242,6 @@ ExecReScanGroup(GroupState *node)
 	PlanState  *outerPlan = outerPlanState(node);
 
 	node->grp_done = FALSE;
-	node->ss.ps.ps_TupFromTlist = false;
 	/* must clear first tuple */
 	ExecClearTuple(node->ss.ss_ScanTupleSlot);
 

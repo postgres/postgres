@@ -2,7 +2,7 @@
  *
  *	  EUC_JIS_2004, SHIFT_JIS_2004
  *
- * Copyright (c) 2007-2016, PostgreSQL Global Development Group
+ * Copyright (c) 2007-2017, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/utils/mb/conversion_procs/euc2004_sjis2004/euc2004_sjis2004.c
@@ -261,7 +261,7 @@ shift_jis_20042euc_jis_2004(const unsigned char *sjis, unsigned char *p, int len
 			/*
 			 * JIS X 0213
 			 */
-			if (c1 >= 0x81 && c1 <= 0x9f)		/* plane 1 1ku-62ku */
+			if (c1 >= 0x81 && c1 <= 0x9f)	/* plane 1 1ku-62ku */
 			{
 				ku = (c1 << 1) - 0x100;
 				ten = get_ten(c2, &kubun);

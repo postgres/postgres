@@ -14,7 +14,7 @@
  * only one ID number.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/storage/pg_shmem.h
@@ -50,7 +50,7 @@ typedef enum
 	HUGE_PAGES_OFF,
 	HUGE_PAGES_ON,
 	HUGE_PAGES_TRY
-}	HugePagesType;
+}			HugePagesType;
 
 #ifndef WIN32
 extern unsigned long UsedShmemSegID;
@@ -69,4 +69,4 @@ extern PGShmemHeader *PGSharedMemoryCreate(Size size, bool makePrivate,
 extern bool PGSharedMemoryIsInUse(unsigned long id1, unsigned long id2);
 extern void PGSharedMemoryDetach(void);
 
-#endif   /* PG_SHMEM_H */
+#endif							/* PG_SHMEM_H */

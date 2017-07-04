@@ -4,7 +4,7 @@
  *	  insert routines for the postgres inverted index access method.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -15,6 +15,7 @@
 #include "postgres.h"
 
 #include "access/gin_private.h"
+#include "access/ginxlog.h"
 #include "access/xloginsert.h"
 #include "catalog/index.h"
 #include "miscadmin.h"
@@ -291,7 +292,7 @@ ginBuildCallback(Relation index, HeapTuple htup, Datum *values,
 
 		ginBeginBAScan(&buildstate->accum);
 		while ((list = ginGetBAEntry(&buildstate->accum,
-								  &attnum, &key, &category, &nlist)) != NULL)
+									 &attnum, &key, &category, &nlist)) != NULL)
 		{
 			/* there could be many entries, so be willing to abort here */
 			CHECK_FOR_INTERRUPTS();
@@ -372,19 +373,15 @@ ginbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 	 */
 	buildstate.tmpCtx = AllocSetContextCreate(CurrentMemoryContext,
 											  "Gin build temporary context",
-											  ALLOCSET_DEFAULT_MINSIZE,
-											  ALLOCSET_DEFAULT_INITSIZE,
-											  ALLOCSET_DEFAULT_MAXSIZE);
+											  ALLOCSET_DEFAULT_SIZES);
 
 	/*
 	 * create a temporary memory context that is used for calling
 	 * ginExtractEntries(), and can be reset after each tuple
 	 */
 	buildstate.funcCtx = AllocSetContextCreate(CurrentMemoryContext,
-					 "Gin build temporary context for user-defined function",
-											   ALLOCSET_DEFAULT_MINSIZE,
-											   ALLOCSET_DEFAULT_INITSIZE,
-											   ALLOCSET_DEFAULT_MAXSIZE);
+											   "Gin build temporary context for user-defined function",
+											   ALLOCSET_DEFAULT_SIZES);
 
 	buildstate.accum.ginstate = &buildstate.ginstate;
 	ginInitBA(&buildstate.accum);
@@ -486,22 +483,29 @@ ginHeapTupleInsert(GinState *ginstate, OffsetNumber attnum,
 bool
 gininsert(Relation index, Datum *values, bool *isnull,
 		  ItemPointer ht_ctid, Relation heapRel,
-		  IndexUniqueCheck checkUnique)
+		  IndexUniqueCheck checkUnique,
+		  IndexInfo *indexInfo)
 {
-	GinState	ginstate;
+	GinState   *ginstate = (GinState *) indexInfo->ii_AmCache;
 	MemoryContext oldCtx;
 	MemoryContext insertCtx;
 	int			i;
 
+	/* Initialize GinState cache if first call in this statement */
+	if (ginstate == NULL)
+	{
+		oldCtx = MemoryContextSwitchTo(indexInfo->ii_Context);
+		ginstate = (GinState *) palloc(sizeof(GinState));
+		initGinState(ginstate, index);
+		indexInfo->ii_AmCache = (void *) ginstate;
+		MemoryContextSwitchTo(oldCtx);
+	}
+
 	insertCtx = AllocSetContextCreate(CurrentMemoryContext,
 									  "Gin insert temporary context",
-									  ALLOCSET_DEFAULT_MINSIZE,
-									  ALLOCSET_DEFAULT_INITSIZE,
-									  ALLOCSET_DEFAULT_MAXSIZE);
+									  ALLOCSET_DEFAULT_SIZES);
 
 	oldCtx = MemoryContextSwitchTo(insertCtx);
-
-	initGinState(&ginstate, index);
 
 	if (GinGetUseFastUpdate(index))
 	{
@@ -509,18 +513,18 @@ gininsert(Relation index, Datum *values, bool *isnull,
 
 		memset(&collector, 0, sizeof(GinTupleCollector));
 
-		for (i = 0; i < ginstate.origTupdesc->natts; i++)
-			ginHeapTupleFastCollect(&ginstate, &collector,
+		for (i = 0; i < ginstate->origTupdesc->natts; i++)
+			ginHeapTupleFastCollect(ginstate, &collector,
 									(OffsetNumber) (i + 1),
 									values[i], isnull[i],
 									ht_ctid);
 
-		ginHeapTupleFastInsert(&ginstate, &collector);
+		ginHeapTupleFastInsert(ginstate, &collector);
 	}
 	else
 	{
-		for (i = 0; i < ginstate.origTupdesc->natts; i++)
-			ginHeapTupleInsert(&ginstate, (OffsetNumber) (i + 1),
+		for (i = 0; i < ginstate->origTupdesc->natts; i++)
+			ginHeapTupleInsert(ginstate, (OffsetNumber) (i + 1),
 							   values[i], isnull[i],
 							   ht_ctid);
 	}

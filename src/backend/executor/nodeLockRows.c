@@ -3,7 +3,7 @@
  * nodeLockRows.c
  *	  Routines to handle FOR UPDATE/FOR SHARE row locking
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -172,7 +172,7 @@ lnext:
 				break;
 			default:
 				elog(ERROR, "unsupported rowmark type");
-				lockmode = LockTupleNoKeyExclusive;		/* keep compiler quiet */
+				lockmode = LockTupleNoKeyExclusive; /* keep compiler quiet */
 				break;
 		}
 
@@ -401,11 +401,9 @@ ExecInitLockRows(LockRows *node, EState *estate, int eflags)
 	epq_arowmarks = NIL;
 	foreach(lc, node->rowMarks)
 	{
-		PlanRowMark *rc = (PlanRowMark *) lfirst(lc);
+		PlanRowMark *rc = lfirst_node(PlanRowMark, lc);
 		ExecRowMark *erm;
 		ExecAuxRowMark *aerm;
-
-		Assert(IsA(rc, PlanRowMark));
 
 		/* ignore "parent" rowmarks; they are irrelevant at runtime */
 		if (rc->isParent)

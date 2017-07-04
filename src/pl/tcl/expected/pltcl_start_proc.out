@@ -1,0 +1,31 @@
+--
+-- Test start_proc execution
+--
+SET pltcl.start_proc = 'no_such_function';
+select tcl_int4add(1, 2);
+ERROR:  function no_such_function() does not exist
+CONTEXT:  processing pltcl.start_proc parameter
+select tcl_int4add(1, 2);
+ERROR:  function no_such_function() does not exist
+CONTEXT:  processing pltcl.start_proc parameter
+create function tcl_initialize() returns void as
+$$ elog NOTICE "in tcl_initialize" $$ language pltcl SECURITY DEFINER;
+SET pltcl.start_proc = 'public.tcl_initialize';
+select tcl_int4add(1, 2);  -- fail
+ERROR:  function "public.tcl_initialize" must not be SECURITY DEFINER
+CONTEXT:  processing pltcl.start_proc parameter
+create or replace function tcl_initialize() returns void as
+$$ elog NOTICE "in tcl_initialize" $$ language pltcl;
+select tcl_int4add(1, 2);
+NOTICE:  in tcl_initialize
+ tcl_int4add 
+-------------
+           3
+(1 row)
+
+select tcl_int4add(1, 2);
+ tcl_int4add 
+-------------
+           3
+(1 row)
+

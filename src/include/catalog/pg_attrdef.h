@@ -5,7 +5,7 @@
  *	  along with the relation's initial contents.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_attrdef.h
@@ -56,4 +56,4 @@ typedef FormData_pg_attrdef *Form_pg_attrdef;
 #define Anum_pg_attrdef_adbin			3
 #define Anum_pg_attrdef_adsrc			4
 
-#endif   /* PG_ATTRDEF_H */
+#endif							/* PG_ATTRDEF_H */

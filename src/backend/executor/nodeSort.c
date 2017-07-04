@@ -3,7 +3,7 @@
  * nodeSort.c
  *	  Routines to handle sorting of relations.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -132,12 +132,13 @@ ExecSort(SortState *node)
 
 	/*
 	 * Get the first or next tuple from tuplesort. Returns NULL if no more
-	 * tuples.
+	 * tuples.  Note that we only rely on slot tuple remaining valid until the
+	 * next fetch from the tuplesort.
 	 */
 	slot = node->ss.ps.ps_ResultTupleSlot;
 	(void) tuplesort_gettupleslot(tuplesortstate,
 								  ScanDirectionIsForward(dir),
-								  slot, NULL);
+								  false, slot, NULL);
 	return slot;
 }
 

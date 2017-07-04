@@ -110,7 +110,7 @@ ecpg_get_connection(const char *connection_name)
 }
 
 static void
-ecpg_finish(struct connection * act)
+ecpg_finish(struct connection *act)
 {
 	if (act != NULL)
 	{

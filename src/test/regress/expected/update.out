@@ -56,6 +56,13 @@ SELECT * FROM update_test;
  100 | 20 | 
 (2 rows)
 
+-- fail, wrong data type:
+UPDATE update_test SET a = v.* FROM (VALUES(100, 20)) AS v(i, j)
+  WHERE update_test.b = v.j;
+ERROR:  column "a" is of type integer but expression is of type record
+LINE 1: UPDATE update_test SET a = v.* FROM (VALUES(100, 20)) AS v(i...
+                                   ^
+HINT:  You will need to rewrite or cast the expression.
 --
 -- Test multiple-set-clause syntax
 --
@@ -133,6 +140,15 @@ SELECT * FROM update_test;
     |     | 
 (4 rows)
 
+-- *-expansion should work in this context:
+UPDATE update_test SET (a,b) = ROW(v.*) FROM (VALUES(21, 100)) AS v(i, j)
+  WHERE update_test.a = v.i;
+-- you might expect this to work, but syntactically it's not a RowExpr:
+UPDATE update_test SET (a,b) = (v.*) FROM (VALUES(21, 101)) AS v(i, j)
+  WHERE update_test.a = v.i;
+ERROR:  source for a multiple-column UPDATE item must be a sub-SELECT or ROW() expression
+LINE 1: UPDATE update_test SET (a,b) = (v.*) FROM (VALUES(21, 101)) ...
+                                        ^
 -- if an alias for the target table is specified, don't allow references
 -- to the original table name
 UPDATE update_test AS t SET b = update_test.b + 10 WHERE t.a = 10;
@@ -145,8 +161,8 @@ UPDATE update_test SET c = repeat('x', 10000) WHERE c = 'car';
 SELECT a, b, char_length(c) FROM update_test;
  a  |  b  | char_length 
 ----+-----+-------------
- 21 | 101 |            
     |     |            
+ 21 | 100 |            
  41 |  12 |       10000
  42 |  12 |       10000
 (4 rows)
@@ -182,3 +198,25 @@ INSERT INTO upsert_test VALUES (1, 'Bat') ON CONFLICT(a)
 
 DROP TABLE update_test;
 DROP TABLE upsert_test;
+-- update to a partition should check partition bound constraint for the new tuple
+create table range_parted (
+	a text,
+	b int
+) partition by range (a, b);
+create table part_a_1_a_10 partition of range_parted for values from ('a', 1) to ('a', 10);
+create table part_a_10_a_20 partition of range_parted for values from ('a', 10) to ('a', 20);
+create table part_b_1_b_10 partition of range_parted for values from ('b', 1) to ('b', 10);
+create table part_b_10_b_20 partition of range_parted for values from ('b', 10) to ('b', 20);
+insert into part_a_1_a_10 values ('a', 1);
+insert into part_b_10_b_20 values ('b', 10);
+-- fail
+update part_a_1_a_10 set a = 'b' where a = 'a';
+ERROR:  new row for relation "part_a_1_a_10" violates partition constraint
+DETAIL:  Failing row contains (b, 1).
+update range_parted set b = b - 1 where b = 10;
+ERROR:  new row for relation "part_b_10_b_20" violates partition constraint
+DETAIL:  Failing row contains (b, 9).
+-- ok
+update range_parted set b = b + 1 where b = 10;
+-- cleanup
+drop table range_parted;

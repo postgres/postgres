@@ -32,7 +32,7 @@ strtoint(const char *nptr, char **endptr, int base)
  * and changesd struct pg_tm to struct tm
  */
 static void
-AdjustFractSeconds(double frac, struct /* pg_ */ tm * tm, fsec_t *fsec, int scale)
+AdjustFractSeconds(double frac, struct /* pg_ */ tm *tm, fsec_t *fsec, int scale)
 {
 	int			sec;
 
@@ -42,11 +42,7 @@ AdjustFractSeconds(double frac, struct /* pg_ */ tm * tm, fsec_t *fsec, int scal
 	sec = (int) frac;
 	tm->tm_sec += sec;
 	frac -= sec;
-#ifdef HAVE_INT64_TIMESTAMP
 	*fsec += rint(frac * 1000000);
-#else
-	*fsec += frac;
-#endif
 }
 
 
@@ -54,7 +50,7 @@ AdjustFractSeconds(double frac, struct /* pg_ */ tm * tm, fsec_t *fsec, int scal
  * and changesd struct pg_tm to struct tm
  */
 static void
-AdjustFractDays(double frac, struct /* pg_ */ tm * tm, fsec_t *fsec, int scale)
+AdjustFractDays(double frac, struct /* pg_ */ tm *tm, fsec_t *fsec, int scale)
 {
 	int			extra_days;
 
@@ -107,7 +103,7 @@ ISO8601IntegerWidth(char *fieldstart)
  * and changesd struct pg_tm to struct tm
  */
 static inline void
-ClearPgTm(struct /* pg_ */ tm * tm, fsec_t *fsec)
+ClearPgTm(struct /* pg_ */ tm *tm, fsec_t *fsec)
 {
 	tm->tm_year = 0;
 	tm->tm_mon = 0;
@@ -126,7 +122,7 @@ ClearPgTm(struct /* pg_ */ tm * tm, fsec_t *fsec)
  */
 static int
 DecodeISO8601Interval(char *str,
-					  int *dtype, struct /* pg_ */ tm * tm, fsec_t *fsec)
+					  int *dtype, struct /* pg_ */ tm *tm, fsec_t *fsec)
 {
 	bool		datepart = true;
 	bool		havefield = false;
@@ -339,8 +335,8 @@ DecodeISO8601Interval(char *str,
  *	* Assert wasn't available so removed it.
  */
 int
-DecodeInterval(char **field, int *ftype, int nf,		/* int range, */
-			   int *dtype, struct /* pg_ */ tm * tm, fsec_t *fsec)
+DecodeInterval(char **field, int *ftype, int nf,	/* int range, */
+			   int *dtype, struct /* pg_ */ tm *tm, fsec_t *fsec)
 {
 	int			IntervalStyle = INTSTYLE_POSTGRES_VERBOSE;
 	int			range = INTERVAL_FULL_RANGE;
@@ -488,30 +484,18 @@ DecodeInterval(char **field, int *ftype, int nf,		/* int range, */
 				switch (type)
 				{
 					case DTK_MICROSEC:
-#ifdef HAVE_INT64_TIMESTAMP
 						*fsec += rint(val + fval);
-#else
-						*fsec += (val + fval) * 1e-6;
-#endif
 						tmask = DTK_M(MICROSECOND);
 						break;
 
 					case DTK_MILLISEC:
-#ifdef HAVE_INT64_TIMESTAMP
 						*fsec += rint((val + fval) * 1000);
-#else
-						*fsec += (val + fval) * 1e-3;
-#endif
 						tmask = DTK_M(MILLISECOND);
 						break;
 
 					case DTK_SECOND:
 						tm->tm_sec += val;
-#ifdef HAVE_INT64_TIMESTAMP
 						*fsec += rint(fval * 1000000);
-#else
-						*fsec += fval;
-#endif
 
 						/*
 						 * If any subseconds were specified, consider this
@@ -633,12 +617,8 @@ DecodeInterval(char **field, int *ftype, int nf,		/* int range, */
 	{
 		int			sec;
 
-#ifdef HAVE_INT64_TIMESTAMP
 		sec = *fsec / USECS_PER_SEC;
 		*fsec -= sec * USECS_PER_SEC;
-#else
-		TMODULO(*fsec, sec, 1.0);
-#endif
 		tm->tm_sec += sec;
 	}
 
@@ -777,17 +757,10 @@ AppendSeconds(char *cp, int sec, fsec_t fsec, int precision, bool fillzeros)
 	}
 	else
 	{
-#ifdef HAVE_INT64_TIMESTAMP
 		if (fillzeros)
 			sprintf(cp, "%02d.%0*d", abs(sec), precision, (int) Abs(fsec));
 		else
 			sprintf(cp, "%d.%0*d", abs(sec), precision, (int) Abs(fsec));
-#else
-		if (fillzeros)
-			sprintf(cp, "%0*.*f", precision + 3, precision, fabs(sec + fsec));
-		else
-			sprintf(cp, "%.*f", precision, fabs(sec + fsec));
-#endif
 		TrimTrailingZeros(cp);
 	}
 }
@@ -799,7 +772,7 @@ AppendSeconds(char *cp, int sec, fsec_t fsec, int precision, bool fillzeros)
  */
 
 int
-EncodeInterval(struct /* pg_ */ tm * tm, fsec_t fsec, int style, char *str)
+EncodeInterval(struct /* pg_ */ tm *tm, fsec_t fsec, int style, char *str)
 {
 	char	   *cp = str;
 	int			year = tm->tm_year;
@@ -976,20 +949,16 @@ EncodeInterval(struct /* pg_ */ tm * tm, fsec_t fsec, int style, char *str)
 	}
 
 	return 0;
-}	/* EncodeInterval() */
+}								/* EncodeInterval() */
 
 
 /* interval2tm()
  * Convert an interval data type to a tm structure.
  */
 static int
-interval2tm(interval span, struct tm * tm, fsec_t *fsec)
+interval2tm(interval span, struct tm *tm, fsec_t *fsec)
 {
-#ifdef HAVE_INT64_TIMESTAMP
 	int64		time;
-#else
-	double		time;
-#endif
 
 	if (span.month != 0)
 	{
@@ -1005,7 +974,6 @@ interval2tm(interval span, struct tm * tm, fsec_t *fsec)
 
 	time = span.time;
 
-#ifdef HAVE_INT64_TIMESTAMP
 	tm->tm_mday = time / USECS_PER_DAY;
 	time -= tm->tm_mday * USECS_PER_DAY;
 	tm->tm_hour = time / USECS_PER_HOUR;
@@ -1014,46 +982,24 @@ interval2tm(interval span, struct tm * tm, fsec_t *fsec)
 	time -= tm->tm_min * USECS_PER_MINUTE;
 	tm->tm_sec = time / USECS_PER_SEC;
 	*fsec = time - (tm->tm_sec * USECS_PER_SEC);
-#else
-recalc:
-	TMODULO(time, tm->tm_mday, (double) SECS_PER_DAY);
-	TMODULO(time, tm->tm_hour, (double) SECS_PER_HOUR);
-	TMODULO(time, tm->tm_min, (double) SECS_PER_MINUTE);
-	TMODULO(time, tm->tm_sec, 1.0);
-	time = TSROUND(time);
-	/* roundoff may need to propagate to higher-order fields */
-	if (time >= 1.0)
-	{
-		time = ceil(span.time);
-		goto recalc;
-	}
-	*fsec = time;
-#endif
 
 	return 0;
-}	/* interval2tm() */
+}								/* interval2tm() */
 
 static int
-tm2interval(struct tm * tm, fsec_t fsec, interval * span)
+tm2interval(struct tm *tm, fsec_t fsec, interval * span)
 {
 	if ((double) tm->tm_year * MONTHS_PER_YEAR + tm->tm_mon > INT_MAX ||
 		(double) tm->tm_year * MONTHS_PER_YEAR + tm->tm_mon < INT_MIN)
 		return -1;
 	span->month = tm->tm_year * MONTHS_PER_YEAR + tm->tm_mon;
-#ifdef HAVE_INT64_TIMESTAMP
 	span->time = (((((((tm->tm_mday * INT64CONST(24)) +
 					   tm->tm_hour) * INT64CONST(60)) +
 					 tm->tm_min) * INT64CONST(60)) +
 				   tm->tm_sec) * USECS_PER_SEC) + fsec;
-#else
-	span->time = (((((tm->tm_mday * (double) HOURS_PER_DAY) +
-					 tm->tm_hour) * (double) MINS_PER_HOUR) +
-				   tm->tm_min) * (double) SECS_PER_MINUTE) +
-		tm->tm_sec + fsec;
-#endif
 
 	return 0;
-}	/* tm2interval() */
+}								/* tm2interval() */
 
 interval *
 PGTYPESinterval_new(void)

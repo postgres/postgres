@@ -3,7 +3,7 @@
  * path.c
  *	  portable path handling routines
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -475,7 +475,7 @@ get_progname(const char *argv0)
 #if defined(__CYGWIN__) || defined(WIN32)
 	/* strip ".exe" suffix, regardless of case */
 	if (strlen(progname) > sizeof(EXE) - 1 &&
-	pg_strcasecmp(progname + strlen(progname) - (sizeof(EXE) - 1), EXE) == 0)
+		pg_strcasecmp(progname + strlen(progname) - (sizeof(EXE) - 1), EXE) == 0)
 		progname[strlen(progname) - (sizeof(EXE) - 1)] = '\0';
 #endif
 

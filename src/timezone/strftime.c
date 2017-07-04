@@ -1,4 +1,4 @@
-/* Convert a broken-down time stamp to a string. */
+/* Convert a broken-down timestamp to a string. */
 
 /*
  * Copyright 1989 The Regents of the University of California.
@@ -41,10 +41,8 @@
 #include "postgres.h"
 
 #include <fcntl.h>
-#include <locale.h>
 
 #include "private.h"
-#include "tzfile.h"
 
 
 struct lc_time_T
@@ -122,13 +120,13 @@ static char *_yconv(int, int, bool, bool, char *, const char *);
 
 size_t
 pg_strftime(char *s, size_t maxsize, const char *format,
-			const struct pg_tm * t)
+			const struct pg_tm *t)
 {
 	char	   *p;
 	int			warn;
 
 	warn = IN_NONE;
-	p = _fmt(((format == NULL) ? "%c" : format), t, s, s + maxsize, &warn);
+	p = _fmt(format, t, s, s + maxsize, &warn);
 	if (p == s + maxsize)
 		return 0;
 	*p = '\0';
@@ -136,7 +134,7 @@ pg_strftime(char *s, size_t maxsize, const char *format,
 }
 
 static char *
-_fmt(const char *format, const struct pg_tm * t, char *pt, const char *ptlim,
+_fmt(const char *format, const struct pg_tm *t, char *pt, const char *ptlim,
 	 int *warnp)
 {
 	for (; *format; ++format)
@@ -247,7 +245,7 @@ _fmt(const char *format, const struct pg_tm * t, char *pt, const char *ptlim,
 					 */
 					pt = _add("kitchen sink", pt, ptlim);
 					continue;
-#endif   /* defined KITCHEN_SINK */
+#endif							/* defined KITCHEN_SINK */
 				case 'l':
 
 					/*
@@ -452,11 +450,18 @@ _fmt(const char *format, const struct pg_tm * t, char *pt, const char *ptlim,
 					{
 						long		diff;
 						char const *sign;
+						bool		negative;
 
 						if (t->tm_isdst < 0)
 							continue;
 						diff = t->tm_gmtoff;
-						if (diff < 0)
+						negative = diff < 0;
+						if (diff == 0)
+						{
+							if (t->tm_zone != NULL)
+								negative = t->tm_zone[0] == '-';
+						}
+						if (negative)
 						{
 							sign = "-";
 							diff = -diff;

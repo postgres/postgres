@@ -765,7 +765,9 @@ ERROR:  could not serialize access due to read/write dependencies among transact
        locks into a single relation-level predicate lock because the predicate
        lock table is short of memory, an increase in the rate of serialization
        failures may occur.  You can avoid this by increasing
-       <xref linkend="guc-max-pred-locks-per-transaction">.
+       <xref linkend="guc-max-pred-locks-per-transaction">,
+       <xref linkend="guc-max-pred-locks-per-relation">, and/or
+       <xref linkend="guc-max-pred-locks-per-page">.
       </para>
      </listitem>
      <listitem>
@@ -923,7 +925,8 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
         <para>
          Acquired by <command>VACUUM</command> (without <option>FULL</option>),
-         <command>ANALYZE</>, <command>CREATE INDEX CONCURRENTLY</>, and
+         <command>ANALYZE</>, <command>CREATE INDEX CONCURRENTLY</>,
+         <command>CREATE STATISTICS</> and
          <command>ALTER TABLE VALIDATE</command> and other
          <command>ALTER TABLE</command> variants (for full details see
          <xref linkend="SQL-ALTERTABLE">).
@@ -967,7 +970,8 @@ ERROR:  could not serialize access due to read/write dependencies among transact
         </para>
 
         <para>
-         Acquired by <command>CREATE TRIGGER</command> and many forms of
+         Acquired by <command>CREATE COLLATION</command>,
+         <command>CREATE TRIGGER</command>, and many forms of
          <command>ALTER TABLE</command> (see <xref linkend="SQL-ALTERTABLE">).
         </para>
        </listitem>

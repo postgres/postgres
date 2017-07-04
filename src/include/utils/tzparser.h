@@ -3,7 +3,7 @@
  * tzparser.h
  *	  Timezone offset file parsing definitions.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/tzparser.h
@@ -36,4 +36,4 @@ typedef struct tzEntry
 
 extern TimeZoneAbbrevTable *load_tzoffsets(const char *filename);
 
-#endif   /* TZPARSER_H */
+#endif							/* TZPARSER_H */

@@ -23,13 +23,13 @@
 #define PGDLLIMPORT __declspec (dllimport)
 #else
 #define PGDLLIMPORT
-#endif   /* __CYGWIN__ */
-#endif   /* PGDLLIMPORT */
+#endif							/* __CYGWIN__ */
+#endif							/* PGDLLIMPORT */
 
 #define SQLERRMC_LEN	150
 
 #ifdef __cplusplus
-extern		"C"
+extern "C"
 {
 #endif
 
@@ -281,8 +281,8 @@ if (sqlca.sqlcode < 0) sqlprint();}
 
 /*
                  Table "public.history"
-    Column    |            Type             | Modifiers
---------------+-----------------------------+-----------
+    Column    |            Type             | Nullable
+--------------+-----------------------------+----------
  customerid   | integer                     | not null
  timestamp    | timestamp without time zone | not null
  action_taken | character(5)                | not null

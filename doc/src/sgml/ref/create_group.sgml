@@ -30,7 +30,7 @@ CREATE GROUP <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <repla
     | CREATEROLE | NOCREATEROLE
     | INHERIT | NOINHERIT
     | LOGIN | NOLOGIN
-    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD '<replaceable class="PARAMETER">password</replaceable>'
+    | [ ENCRYPTED ] PASSWORD '<replaceable class="PARAMETER">password</replaceable>'
     | VALID UNTIL '<replaceable class="PARAMETER">timestamp</replaceable>'
     | IN ROLE <replaceable class="PARAMETER">role_name</replaceable> [, ...]
     | IN GROUP <replaceable class="PARAMETER">role_name</replaceable> [, ...]

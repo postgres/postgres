@@ -3,7 +3,7 @@
  * tsvector_op.c
  *	  operations over tsvector
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
@@ -11,8 +11,9 @@
  *
  *-------------------------------------------------------------------------
  */
-
 #include "postgres.h"
+
+#include <limits.h>
 
 #include "access/htup_details.h"
 #include "catalog/namespace.h"
@@ -26,6 +27,7 @@
 #include "tsearch/ts_utils.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
+#include "utils/regproc.h"
 #include "utils/rel.h"
 
 
@@ -321,7 +323,7 @@ tsvector_setweight_by_filter(PG_FUNCTION_ARGS)
 					 errmsg("lexeme array may not contain nulls")));
 
 		lex = VARDATA(dlexemes[i]);
-		lex_len = VARSIZE_ANY_EXHDR(dlexemes[i]);
+		lex_len = VARSIZE(dlexemes[i]) - VARHDRSZ;
 		lex_pos = tsvector_bsearch(tsout, lex, lex_len);
 
 		if (lex_pos >= 0 && (j = POSDATALEN(tsout, entry + lex_pos)) != 0)
@@ -409,7 +411,7 @@ tsvector_bsearch(const TSVector tsv, char *lexeme, int lexeme_len)
 			StopHigh = StopMiddle;
 		else if (cmp > 0)
 			StopLow = StopMiddle + 1;
-		else	/* found it */
+		else					/* found it */
 			return StopMiddle;
 	}
 
@@ -555,8 +557,8 @@ tsvector_delete_str(PG_FUNCTION_ARGS)
 {
 	TSVector	tsin = PG_GETARG_TSVECTOR(0),
 				tsout;
-	text	   *tlexeme = PG_GETARG_TEXT_P(1);
-	char	   *lexeme = VARDATA(tlexeme);
+	text	   *tlexeme = PG_GETARG_TEXT_PP(1);
+	char	   *lexeme = VARDATA_ANY(tlexeme);
 	int			lexeme_len = VARSIZE_ANY_EXHDR(tlexeme),
 				skip_index;
 
@@ -607,8 +609,8 @@ tsvector_delete_arr(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 					 errmsg("lexeme array may not contain nulls")));
 
-		lex = VARDATA_ANY(dlexemes[i]);
-		lex_len = VARSIZE_ANY_EXHDR(dlexemes[i]);
+		lex = VARDATA(dlexemes[i]);
+		lex_len = VARSIZE(dlexemes[i]) - VARHDRSZ;
 		lex_pos = tsvector_bsearch(tsin, lex, lex_len);
 
 		if (lex_pos >= 0)
@@ -672,7 +674,7 @@ tsvector_unnest(PG_FUNCTION_ARGS)
 		Datum		values[3];
 
 		values[0] = PointerGetDatum(
-				  cstring_to_text_with_len(data + arrin[i].pos, arrin[i].len)
+									cstring_to_text_with_len(data + arrin[i].pos, arrin[i].len)
 			);
 
 		if (arrin[i].haspos)
@@ -695,14 +697,14 @@ tsvector_unnest(PG_FUNCTION_ARGS)
 				positions[j] = Int16GetDatum(WEP_GETPOS(posv->pos[j]));
 				weight = 'D' - WEP_GETWEIGHT(posv->pos[j]);
 				weights[j] = PointerGetDatum(
-										 cstring_to_text_with_len(&weight, 1)
+											 cstring_to_text_with_len(&weight, 1)
 					);
 			}
 
 			values[1] = PointerGetDatum(
-			  construct_array(positions, posv->npos, INT2OID, 2, true, 's'));
+										construct_array(positions, posv->npos, INT2OID, 2, true, 's'));
 			values[2] = PointerGetDatum(
-			  construct_array(weights, posv->npos, TEXTOID, -1, false, 'i'));
+										construct_array(weights, posv->npos, TEXTOID, -1, false, 'i'));
 		}
 		else
 		{
@@ -736,7 +738,7 @@ tsvector_to_array(PG_FUNCTION_ARGS)
 	for (i = 0; i < tsin->size; i++)
 	{
 		elements[i] = PointerGetDatum(
-		  cstring_to_text_with_len(STRPTR(tsin) + arrin[i].pos, arrin[i].len)
+									  cstring_to_text_with_len(STRPTR(tsin) + arrin[i].pos, arrin[i].len)
 			);
 	}
 
@@ -791,7 +793,7 @@ array_to_tsvector(PG_FUNCTION_ARGS)
 
 	/* Calculate space needed for surviving lexemes. */
 	for (i = 0; i < nitems; i++)
-		datalen += VARSIZE_ANY_EXHDR(dlexemes[i]);
+		datalen += VARSIZE(dlexemes[i]) - VARHDRSZ;
 	tslen = CALCDATASIZE(nitems, datalen);
 
 	/* Allocate and fill tsvector. */
@@ -803,8 +805,8 @@ array_to_tsvector(PG_FUNCTION_ARGS)
 	cur = STRPTR(tsout);
 	for (i = 0; i < nitems; i++)
 	{
-		char	   *lex = VARDATA_ANY(dlexemes[i]);
-		int			lex_len = VARSIZE_ANY_EXHDR(dlexemes[i]);
+		char	   *lex = VARDATA(dlexemes[i]);
+		int			lex_len = VARSIZE(dlexemes[i]) - VARHDRSZ;
 
 		memcpy(cur, lex, lex_len);
 		arrout[i].haspos = 0;
@@ -1056,7 +1058,7 @@ tsvector_concat(PG_FUNCTION_ARGS)
 					if (ptr2->haspos)
 						dataoff += add_pos(in2, ptr2, out, ptr, maxpos) * sizeof(WordEntryPos);
 				}
-				else	/* must have ptr2->haspos */
+				else			/* must have ptr2->haspos */
 				{
 					int			addlen = add_pos(in2, ptr2, out, ptr, maxpos);
 
@@ -1253,7 +1255,7 @@ checkclass_str(CHKVAL *chkval, WordEntry *entry, QueryOperand *val,
 				posvec_iter++;
 			}
 		}
-		else	/* data != NULL */
+		else					/* data != NULL */
 		{
 			data->npos = posvec->npos;
 			data->pos = posvec->pos;
@@ -1405,140 +1407,394 @@ checkcondition_str(void *checkval, QueryOperand *val, ExecPhraseData *data)
 }
 
 /*
- * Check for phrase condition. Fallback to the AND operation
- * if there is no positional information.
+ * Compute output position list for a tsquery operator in phrase mode.
+ *
+ * Merge the position lists in Ldata and Rdata as specified by "emit",
+ * returning the result list into *data.  The input position lists must be
+ * sorted and unique, and the output will be as well.
+ *
+ * data: pointer to initially-all-zeroes output struct, or NULL
+ * Ldata, Rdata: input position lists
+ * emit: bitmask of TSPO_XXX flags
+ * Loffset: offset to be added to Ldata positions before comparing/outputting
+ * Roffset: offset to be added to Rdata positions before comparing/outputting
+ * max_npos: maximum possible required size of output position array
+ *
+ * Loffset and Roffset should not be negative, else we risk trying to output
+ * negative positions, which won't fit into WordEntryPos.
+ *
+ * Returns true if any positions were emitted to *data; or if data is NULL,
+ * returns true if any positions would have been emitted.
+ */
+#define TSPO_L_ONLY		0x01	/* emit positions appearing only in L */
+#define TSPO_R_ONLY		0x02	/* emit positions appearing only in R */
+#define TSPO_BOTH		0x04	/* emit positions appearing in both L&R */
+
+static bool
+TS_phrase_output(ExecPhraseData *data,
+				 ExecPhraseData *Ldata,
+				 ExecPhraseData *Rdata,
+				 int emit,
+				 int Loffset,
+				 int Roffset,
+				 int max_npos)
+{
+	int			Lindex,
+				Rindex;
+
+	/* Loop until both inputs are exhausted */
+	Lindex = Rindex = 0;
+	while (Lindex < Ldata->npos || Rindex < Rdata->npos)
+	{
+		int			Lpos,
+					Rpos;
+		int			output_pos = 0;
+
+		/*
+		 * Fetch current values to compare.  WEP_GETPOS() is needed because
+		 * ExecPhraseData->data can point to a tsvector's WordEntryPosVector.
+		 */
+		if (Lindex < Ldata->npos)
+			Lpos = WEP_GETPOS(Ldata->pos[Lindex]) + Loffset;
+		else
+		{
+			/* L array exhausted, so we're done if R_ONLY isn't set */
+			if (!(emit & TSPO_R_ONLY))
+				break;
+			Lpos = INT_MAX;
+		}
+		if (Rindex < Rdata->npos)
+			Rpos = WEP_GETPOS(Rdata->pos[Rindex]) + Roffset;
+		else
+		{
+			/* R array exhausted, so we're done if L_ONLY isn't set */
+			if (!(emit & TSPO_L_ONLY))
+				break;
+			Rpos = INT_MAX;
+		}
+
+		/* Merge-join the two input lists */
+		if (Lpos < Rpos)
+		{
+			/* Lpos is not matched in Rdata, should we output it? */
+			if (emit & TSPO_L_ONLY)
+				output_pos = Lpos;
+			Lindex++;
+		}
+		else if (Lpos == Rpos)
+		{
+			/* Lpos and Rpos match ... should we output it? */
+			if (emit & TSPO_BOTH)
+				output_pos = Rpos;
+			Lindex++;
+			Rindex++;
+		}
+		else					/* Lpos > Rpos */
+		{
+			/* Rpos is not matched in Ldata, should we output it? */
+			if (emit & TSPO_R_ONLY)
+				output_pos = Rpos;
+			Rindex++;
+		}
+
+		if (output_pos > 0)
+		{
+			if (data)
+			{
+				/* Store position, first allocating output array if needed */
+				if (data->pos == NULL)
+				{
+					data->pos = (WordEntryPos *)
+						palloc(max_npos * sizeof(WordEntryPos));
+					data->allocated = true;
+				}
+				data->pos[data->npos++] = output_pos;
+			}
+			else
+			{
+				/*
+				 * Exact positions not needed, so return true as soon as we
+				 * know there is at least one.
+				 */
+				return true;
+			}
+		}
+	}
+
+	if (data && data->npos > 0)
+	{
+		/* Let's assert we didn't overrun the array */
+		Assert(data->npos <= max_npos);
+		return true;
+	}
+	return false;
+}
+
+/*
+ * Execute tsquery at or below an OP_PHRASE operator.
+ *
+ * This handles tsquery execution at recursion levels where we need to care
+ * about match locations.
+ *
+ * In addition to the same arguments used for TS_execute, the caller may pass
+ * a preinitialized-to-zeroes ExecPhraseData struct, to be filled with lexeme
+ * match position info on success.  data == NULL if no position data need be
+ * returned.  (In practice, outside callers pass NULL, and only the internal
+ * recursion cases pass a data pointer.)
+ * Note: the function assumes data != NULL for operators other than OP_PHRASE.
+ * This is OK because an outside call always starts from an OP_PHRASE node.
+ *
+ * The detailed semantics of the match data, given that the function returned
+ * "true" (successful match, or possible match), are:
+ *
+ * npos > 0, negate = false:
+ *	 query is matched at specified position(s) (and only those positions)
+ * npos > 0, negate = true:
+ *	 query is matched at all positions *except* specified position(s)
+ * npos = 0, negate = false:
+ *	 query is possibly matched, matching position(s) are unknown
+ *	 (this should only be returned when TS_EXEC_PHRASE_NO_POS flag is set)
+ * npos = 0, negate = true:
+ *	 query is matched at all positions
+ *
+ * Successful matches also return a "width" value which is the match width in
+ * lexemes, less one.  Hence, "width" is zero for simple one-lexeme matches,
+ * and is the sum of the phrase operator distances for phrase matches.  Note
+ * that when width > 0, the listed positions represent the ends of matches not
+ * the starts.  (This unintuitive rule is needed to avoid possibly generating
+ * negative positions, which wouldn't fit into the WordEntryPos arrays.)
+ *
+ * When the function returns "false" (no match), it must return npos = 0,
+ * negate = false (which is the state initialized by the caller); but the
+ * "width" output in such cases is undefined.
  */
 static bool
-TS_phrase_execute(QueryItem *curitem,
-				  void *checkval, uint32 flags, ExecPhraseData *data,
-				  bool (*chkcond) (void *, QueryOperand *, ExecPhraseData *))
+TS_phrase_execute(QueryItem *curitem, void *arg, uint32 flags,
+				  TSExecuteCallback chkcond,
+				  ExecPhraseData *data)
 {
+	ExecPhraseData Ldata,
+				Rdata;
+	bool		lmatch,
+				rmatch;
+	int			Loffset,
+				Roffset,
+				maxwidth;
+
 	/* since this function recurses, it could be driven to stack overflow */
 	check_stack_depth();
 
 	if (curitem->type == QI_VAL)
+		return chkcond(arg, (QueryOperand *) curitem, data);
+
+	switch (curitem->qoperator.oper)
 	{
-		return chkcond(checkval, (QueryOperand *) curitem, data);
-	}
-	else
-	{
-		ExecPhraseData Ldata = {0, false, NULL},
-					Rdata = {0, false, NULL};
-		WordEntryPos *Lpos,
-				   *LposStart,
-				   *Rpos,
-				   *pos_iter = NULL;
+		case OP_NOT:
 
-		Assert(curitem->qoperator.oper == OP_PHRASE);
-
-		if (!TS_phrase_execute(curitem + curitem->qoperator.left,
-							   checkval, flags, &Ldata, chkcond))
-			return false;
-
-		if (!TS_phrase_execute(curitem + 1, checkval, flags, &Rdata, chkcond))
-			return false;
-
-		/*
-		 * if at least one of the operands has no position information, then
-		 * return false. But if TS_EXEC_PHRASE_AS_AND flag is set then we
-		 * return true as it is a AND operation
-		 */
-		if (Ldata.npos == 0 || Rdata.npos == 0)
-			return (flags & TS_EXEC_PHRASE_AS_AND) ? true : false;
-
-		/*
-		 * Result of the operation is a list of the corresponding positions of
-		 * RIGHT operand.
-		 */
-		if (data)
-		{
-			if (!Rdata.allocated)
-
-				/*
-				 * OP_PHRASE is based on the OP_AND, so the number of
-				 * resulting positions could not be greater than the total
-				 * amount of operands.
-				 */
-				data->pos = palloc(sizeof(WordEntryPos) * Min(Ldata.npos, Rdata.npos));
-			else
-				data->pos = Rdata.pos;
-
-			data->allocated = true;
-			data->npos = 0;
-			pos_iter = data->pos;
-		}
-
-		/*
-		 * Find matches by distance, WEP_GETPOS() is needed because
-		 * ExecPhraseData->data can point to the tsvector's WordEntryPosVector
-		 */
-
-		Rpos = Rdata.pos;
-		LposStart = Ldata.pos;
-		while (Rpos < Rdata.pos + Rdata.npos)
-		{
 			/*
-			 * We need to check all possible distances, so reset Lpos to
-			 * guaranteed not yet satisfied position.
+			 * Because a "true" result with no specific positions is taken as
+			 * uncertain, we need no special care here for !TS_EXEC_CALC_NOT.
+			 * If it's a false positive, the right things happen anyway.
+			 *
+			 * Also, we need not touch data->width, since a NOT operation does
+			 * not change the match width.
 			 */
-			Lpos = LposStart;
-			while (Lpos < Ldata.pos + Ldata.npos)
+			if (TS_phrase_execute(curitem + 1, arg, flags, chkcond, data))
 			{
-				if (WEP_GETPOS(*Rpos) - WEP_GETPOS(*Lpos) ==
-					curitem->qoperator.distance)
+				if (data->npos > 0)
 				{
-					/* MATCH! */
-					if (data)
-					{
-						/* Store position for upper phrase operator */
-						*pos_iter = WEP_GETPOS(*Rpos);
-						pos_iter++;
-
-						/*
-						 * Set left start position to next, because current
-						 * one could not satisfy distance for any other right
-						 * position
-						 */
-						LposStart = Lpos + 1;
-						break;
-					}
-					else
-					{
-						/*
-						 * We are in the root of the phrase tree and hence we
-						 * don't have to store the resulting positions
-						 */
-						return true;
-					}
-
+					/* we have some positions, invert negate flag */
+					data->negate = !data->negate;
+					return true;
 				}
-				else if (WEP_GETPOS(*Rpos) <= WEP_GETPOS(*Lpos) ||
-						 WEP_GETPOS(*Rpos) - WEP_GETPOS(*Lpos) <
-						 curitem->qoperator.distance)
+				else if (data->negate)
 				{
-					/*
-					 * Go to the next Rpos, because Lpos is ahead or on less
-					 * distance than required by current operator
-					 */
-					break;
-
+					/* change "match everywhere" to "match nowhere" */
+					data->negate = false;
+					return false;
 				}
-
-				Lpos++;
+				/* match positions are, and remain, uncertain */
+				return true;
+			}
+			else
+			{
+				/* change "match nowhere" to "match everywhere" */
+				Assert(data->npos == 0 && !data->negate);
+				data->negate = true;
+				return true;
 			}
 
-			Rpos++;
-		}
+		case OP_PHRASE:
+		case OP_AND:
+			memset(&Ldata, 0, sizeof(Ldata));
+			memset(&Rdata, 0, sizeof(Rdata));
 
-		if (data)
-		{
-			data->npos = pos_iter - data->pos;
+			if (!TS_phrase_execute(curitem + curitem->qoperator.left,
+								   arg, flags, chkcond, &Ldata))
+				return false;
 
-			if (data->npos > 0)
+			if (!TS_phrase_execute(curitem + 1,
+								   arg, flags, chkcond, &Rdata))
+				return false;
+
+			/*
+			 * If either operand has no position information, then we can't
+			 * return position data, only a "possible match" result. "Possible
+			 * match" answers are only wanted when TS_EXEC_PHRASE_NO_POS flag
+			 * is set, otherwise return false.
+			 */
+			if ((Ldata.npos == 0 && !Ldata.negate) ||
+				(Rdata.npos == 0 && !Rdata.negate))
+				return (flags & TS_EXEC_PHRASE_NO_POS) ? true : false;
+
+			if (curitem->qoperator.oper == OP_PHRASE)
+			{
+				/*
+				 * Compute Loffset and Roffset suitable for phrase match, and
+				 * compute overall width of whole phrase match.
+				 */
+				Loffset = curitem->qoperator.distance + Rdata.width;
+				Roffset = 0;
+				if (data)
+					data->width = curitem->qoperator.distance +
+						Ldata.width + Rdata.width;
+			}
+			else
+			{
+				/*
+				 * For OP_AND, set output width and alignment like OP_OR (see
+				 * comment below)
+				 */
+				maxwidth = Max(Ldata.width, Rdata.width);
+				Loffset = maxwidth - Ldata.width;
+				Roffset = maxwidth - Rdata.width;
+				if (data)
+					data->width = maxwidth;
+			}
+
+			if (Ldata.negate && Rdata.negate)
+			{
+				/* !L & !R: treat as !(L | R) */
+				(void) TS_phrase_output(data, &Ldata, &Rdata,
+										TSPO_BOTH | TSPO_L_ONLY | TSPO_R_ONLY,
+										Loffset, Roffset,
+										Ldata.npos + Rdata.npos);
+				if (data)
+					data->negate = true;
 				return true;
-		}
+			}
+			else if (Ldata.negate)
+			{
+				/* !L & R */
+				return TS_phrase_output(data, &Ldata, &Rdata,
+										TSPO_R_ONLY,
+										Loffset, Roffset,
+										Rdata.npos);
+			}
+			else if (Rdata.negate)
+			{
+				/* L & !R */
+				return TS_phrase_output(data, &Ldata, &Rdata,
+										TSPO_L_ONLY,
+										Loffset, Roffset,
+										Ldata.npos);
+			}
+			else
+			{
+				/* straight AND */
+				return TS_phrase_output(data, &Ldata, &Rdata,
+										TSPO_BOTH,
+										Loffset, Roffset,
+										Min(Ldata.npos, Rdata.npos));
+			}
+
+		case OP_OR:
+			memset(&Ldata, 0, sizeof(Ldata));
+			memset(&Rdata, 0, sizeof(Rdata));
+
+			lmatch = TS_phrase_execute(curitem + curitem->qoperator.left,
+									   arg, flags, chkcond, &Ldata);
+			rmatch = TS_phrase_execute(curitem + 1,
+									   arg, flags, chkcond, &Rdata);
+
+			if (!lmatch && !rmatch)
+				return false;
+
+			/*
+			 * If a valid operand has no position information, then we can't
+			 * return position data, only a "possible match" result. "Possible
+			 * match" answers are only wanted when TS_EXEC_PHRASE_NO_POS flag
+			 * is set, otherwise return false.
+			 */
+			if ((lmatch && Ldata.npos == 0 && !Ldata.negate) ||
+				(rmatch && Rdata.npos == 0 && !Rdata.negate))
+				return (flags & TS_EXEC_PHRASE_NO_POS) ? true : false;
+
+			/*
+			 * Cope with undefined output width from failed submatch.  (This
+			 * takes less code than trying to ensure that all failure returns
+			 * set data->width to zero.)
+			 */
+			if (!lmatch)
+				Ldata.width = 0;
+			if (!rmatch)
+				Rdata.width = 0;
+
+			/*
+			 * For OP_AND and OP_OR, report the width of the wider of the two
+			 * inputs, and align the narrower input's positions to the right
+			 * end of that width.  This rule deals at least somewhat
+			 * reasonably with cases like "x <-> (y | z <-> q)".
+			 */
+			maxwidth = Max(Ldata.width, Rdata.width);
+			Loffset = maxwidth - Ldata.width;
+			Roffset = maxwidth - Rdata.width;
+			data->width = maxwidth;
+
+			if (Ldata.negate && Rdata.negate)
+			{
+				/* !L | !R: treat as !(L & R) */
+				(void) TS_phrase_output(data, &Ldata, &Rdata,
+										TSPO_BOTH,
+										Loffset, Roffset,
+										Min(Ldata.npos, Rdata.npos));
+				data->negate = true;
+				return true;
+			}
+			else if (Ldata.negate)
+			{
+				/* !L | R: treat as !(L & !R) */
+				(void) TS_phrase_output(data, &Ldata, &Rdata,
+										TSPO_L_ONLY,
+										Loffset, Roffset,
+										Ldata.npos);
+				data->negate = true;
+				return true;
+			}
+			else if (Rdata.negate)
+			{
+				/* L | !R: treat as !(!L & R) */
+				(void) TS_phrase_output(data, &Ldata, &Rdata,
+										TSPO_R_ONLY,
+										Loffset, Roffset,
+										Rdata.npos);
+				data->negate = true;
+				return true;
+			}
+			else
+			{
+				/* straight OR */
+				return TS_phrase_output(data, &Ldata, &Rdata,
+										TSPO_BOTH | TSPO_L_ONLY | TSPO_R_ONLY,
+										Loffset, Roffset,
+										Ldata.npos + Rdata.npos);
+			}
+
+		default:
+			elog(ERROR, "unrecognized operator: %d", curitem->qoperator.oper);
 	}
 
+	/* not reachable, but keep compiler quiet */
 	return false;
 }
 
@@ -1546,50 +1802,48 @@ TS_phrase_execute(QueryItem *curitem,
 /*
  * Evaluate tsquery boolean expression.
  *
- * chkcond is a callback function used to evaluate each VAL node in the query.
- * checkval can be used to pass information to the callback. TS_execute doesn't
- * do anything with it.
- * It believes that ordinary operators are always closier to root than phrase
- * operator, so, TS_execute() may not take care of lexeme's position at all.
+ * curitem: current tsquery item (initially, the first one)
+ * arg: opaque value to pass through to callback function
+ * flags: bitmask of flag bits shown in ts_utils.h
+ * chkcond: callback function to check whether a primitive value is present
+ *
+ * The logic here deals only with operators above any phrase operator, for
+ * which we do not need to worry about lexeme positions.  As soon as we hit an
+ * OP_PHRASE operator, we pass it off to TS_phrase_execute which does worry.
  */
 bool
-TS_execute(QueryItem *curitem, void *checkval, uint32 flags,
-   bool (*chkcond) (void *checkval, QueryOperand *val, ExecPhraseData *data))
+TS_execute(QueryItem *curitem, void *arg, uint32 flags,
+		   TSExecuteCallback chkcond)
 {
 	/* since this function recurses, it could be driven to stack overflow */
 	check_stack_depth();
 
 	if (curitem->type == QI_VAL)
-		return chkcond(checkval, (QueryOperand *) curitem,
+		return chkcond(arg, (QueryOperand *) curitem,
 					   NULL /* we don't need position info */ );
 
 	switch (curitem->qoperator.oper)
 	{
 		case OP_NOT:
 			if (flags & TS_EXEC_CALC_NOT)
-				return !TS_execute(curitem + 1, checkval, flags, chkcond);
+				return !TS_execute(curitem + 1, arg, flags, chkcond);
 			else
 				return true;
 
 		case OP_AND:
-			if (TS_execute(curitem + curitem->qoperator.left, checkval, flags, chkcond))
-				return TS_execute(curitem + 1, checkval, flags, chkcond);
+			if (TS_execute(curitem + curitem->qoperator.left, arg, flags, chkcond))
+				return TS_execute(curitem + 1, arg, flags, chkcond);
 			else
 				return false;
 
 		case OP_OR:
-			if (TS_execute(curitem + curitem->qoperator.left, checkval, flags, chkcond))
+			if (TS_execute(curitem + curitem->qoperator.left, arg, flags, chkcond))
 				return true;
 			else
-				return TS_execute(curitem + 1, checkval, flags, chkcond);
+				return TS_execute(curitem + 1, arg, flags, chkcond);
 
 		case OP_PHRASE:
-
-			/*
-			 * do not check TS_EXEC_PHRASE_AS_AND here because chkcond() could
-			 * do something more if it's called from TS_phrase_execute()
-			 */
-			return TS_phrase_execute(curitem, checkval, flags, NULL, chkcond);
+			return TS_phrase_execute(curitem, arg, flags, chkcond, NULL);
 
 		default:
 			elog(ERROR, "unrecognized operator: %d", curitem->qoperator.oper);
@@ -1673,7 +1927,8 @@ ts_match_vq(PG_FUNCTION_ARGS)
 	CHKVAL		chkval;
 	bool		result;
 
-	if (!val->size || !query->size)
+	/* empty query matches nothing */
+	if (!query->size)
 	{
 		PG_FREE_IF_COPY(val, 0);
 		PG_FREE_IF_COPY(query, 1);
@@ -1684,12 +1939,10 @@ ts_match_vq(PG_FUNCTION_ARGS)
 	chkval.arre = chkval.arrb + val->size;
 	chkval.values = STRPTR(val);
 	chkval.operand = GETOPERAND(query);
-	result = TS_execute(
-						GETQUERY(query),
+	result = TS_execute(GETQUERY(query),
 						&chkval,
 						TS_EXEC_CALC_NOT,
-						checkcondition_str
-		);
+						checkcondition_str);
 
 	PG_FREE_IF_COPY(val, 0);
 	PG_FREE_IF_COPY(query, 1);
@@ -2067,8 +2320,8 @@ ts_stat_sql(MemoryContext persistentContext, text *txt, text *ws)
 	{
 		char	   *buf;
 
-		buf = VARDATA(ws);
-		while (buf - VARDATA(ws) < VARSIZE(ws) - VARHDRSZ)
+		buf = VARDATA_ANY(ws);
+		while (buf - VARDATA_ANY(ws) < VARSIZE_ANY_EXHDR(ws))
 		{
 			if (pg_mblen(buf) == 1)
 			{
@@ -2131,7 +2384,7 @@ ts_stat1(PG_FUNCTION_ARGS)
 	if (SRF_IS_FIRSTCALL())
 	{
 		TSVectorStat *stat;
-		text	   *txt = PG_GETARG_TEXT_P(0);
+		text	   *txt = PG_GETARG_TEXT_PP(0);
 
 		funcctx = SRF_FIRSTCALL_INIT();
 		SPI_connect();
@@ -2156,8 +2409,8 @@ ts_stat2(PG_FUNCTION_ARGS)
 	if (SRF_IS_FIRSTCALL())
 	{
 		TSVectorStat *stat;
-		text	   *txt = PG_GETARG_TEXT_P(0);
-		text	   *ws = PG_GETARG_TEXT_P(1);
+		text	   *txt = PG_GETARG_TEXT_PP(0);
+		text	   *ws = PG_GETARG_TEXT_PP(1);
 
 		funcctx = SRF_FIRSTCALL_INIT();
 		SPI_connect();
@@ -2213,7 +2466,7 @@ tsvector_update_trigger(PG_FUNCTION_ARGS, bool config_column)
 	Oid			cfgId;
 
 	/* Check call context */
-	if (!CALLED_AS_TRIGGER(fcinfo))		/* internal error */
+	if (!CALLED_AS_TRIGGER(fcinfo)) /* internal error */
 		elog(ERROR, "tsvector_update_trigger: not fired by trigger manager");
 
 	trigdata = (TriggerData *) fcinfo->context;
@@ -2242,6 +2495,7 @@ tsvector_update_trigger(PG_FUNCTION_ARGS, bool config_column)
 				(errcode(ERRCODE_UNDEFINED_COLUMN),
 				 errmsg("tsvector column \"%s\" does not exist",
 						trigger->tgargs[0])));
+	/* This will effectively reject system columns, so no separate test: */
 	if (!IsBinaryCoercible(SPI_gettypeid(rel->rd_att, tsvector_attr_num),
 						   TSVECTOROID))
 		ereport(ERROR,
@@ -2316,9 +2570,9 @@ tsvector_update_trigger(PG_FUNCTION_ARGS, bool config_column)
 		if (isnull)
 			continue;
 
-		txt = DatumGetTextP(datum);
+		txt = DatumGetTextPP(datum);
 
-		parsetext(cfgId, &prs, VARDATA(txt), VARSIZE(txt) - VARHDRSZ);
+		parsetext(cfgId, &prs, VARDATA_ANY(txt), VARSIZE_ANY_EXHDR(txt));
 
 		if (txt != (text *) DatumGetPointer(datum))
 			pfree(txt);
@@ -2328,8 +2582,10 @@ tsvector_update_trigger(PG_FUNCTION_ARGS, bool config_column)
 	if (prs.curwords)
 	{
 		datum = PointerGetDatum(make_tsvector(&prs));
-		rettuple = SPI_modifytuple(rel, rettuple, 1, &tsvector_attr_num,
-								   &datum, NULL);
+		isnull = false;
+		rettuple = heap_modify_tuple_by_cols(rettuple, rel->rd_att,
+											 1, &tsvector_attr_num,
+											 &datum, &isnull);
 		pfree(DatumGetPointer(datum));
 	}
 	else
@@ -2339,14 +2595,12 @@ tsvector_update_trigger(PG_FUNCTION_ARGS, bool config_column)
 		SET_VARSIZE(out, CALCDATASIZE(0, 0));
 		out->size = 0;
 		datum = PointerGetDatum(out);
-		rettuple = SPI_modifytuple(rel, rettuple, 1, &tsvector_attr_num,
-								   &datum, NULL);
+		isnull = false;
+		rettuple = heap_modify_tuple_by_cols(rettuple, rel->rd_att,
+											 1, &tsvector_attr_num,
+											 &datum, &isnull);
 		pfree(prs.words);
 	}
-
-	if (rettuple == NULL)		/* internal error */
-		elog(ERROR, "tsvector_update_trigger: %d returned by SPI_modifytuple",
-			 SPI_result);
 
 	return PointerGetDatum(rettuple);
 }

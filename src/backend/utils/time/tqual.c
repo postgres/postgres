@@ -13,9 +13,9 @@
  * NOTE: When using a non-MVCC snapshot, we must check
  * TransactionIdIsInProgress (which looks in the PGXACT array)
  * before TransactionIdDidCommit/TransactionIdDidAbort (which look in
- * pg_clog).  Otherwise we have a race condition: we might decide that a
+ * pg_xact).  Otherwise we have a race condition: we might decide that a
  * just-committed transaction crashed, because none of the tests succeed.
- * xact.c is careful to record commit/abort in pg_clog before it unsets
+ * xact.c is careful to record commit/abort in pg_xact before it unsets
  * MyPgXact->xid in the PGXACT array.  That fixes that problem, but it
  * also means there is a window where TransactionIdIsInProgress and
  * TransactionIdDidCommit will both return true.  If we check only
@@ -29,7 +29,7 @@
  *
  * When using an MVCC snapshot, we rely on XidInMVCCSnapshot rather than
  * TransactionIdIsInProgress, but the logic is otherwise the same: do not
- * check pg_clog until after deciding that the xact is no longer in progress.
+ * check pg_xact until after deciding that the xact is no longer in progress.
  *
  *
  * Summary of visibility functions:
@@ -50,7 +50,7 @@
  *	 HeapTupleSatisfiesAny()
  *		  all tuples are visible
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -512,7 +512,7 @@ HeapTupleSatisfiesUpdate(HeapTuple htup, CommandId curcid,
 		else if (TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetRawXmin(tuple)))
 		{
 			if (HeapTupleHeaderGetCmin(tuple) >= curcid)
-				return HeapTupleInvisible;		/* inserted after scan started */
+				return HeapTupleInvisible;	/* inserted after scan started */
 
 			if (tuple->t_infomask & HEAP_XMAX_INVALID)	/* xid invalid */
 				return HeapTupleMayBeUpdated;
@@ -571,8 +571,8 @@ HeapTupleSatisfiesUpdate(HeapTuple htup, CommandId curcid,
 						return HeapTupleSelfUpdated;	/* updated after scan
 														 * started */
 					else
-						return HeapTupleInvisible;		/* updated before scan
-														 * started */
+						return HeapTupleInvisible;	/* updated before scan
+													 * started */
 				}
 			}
 
@@ -587,7 +587,7 @@ HeapTupleSatisfiesUpdate(HeapTuple htup, CommandId curcid,
 			if (HeapTupleHeaderGetCmax(tuple) >= curcid)
 				return HeapTupleSelfUpdated;	/* updated after scan started */
 			else
-				return HeapTupleInvisible;		/* updated before scan started */
+				return HeapTupleInvisible;	/* updated before scan started */
 		}
 		else if (TransactionIdIsInProgress(HeapTupleHeaderGetRawXmin(tuple)))
 			return HeapTupleInvisible;
@@ -646,7 +646,7 @@ HeapTupleSatisfiesUpdate(HeapTuple htup, CommandId curcid,
 			if (HeapTupleHeaderGetCmax(tuple) >= curcid)
 				return HeapTupleSelfUpdated;	/* updated after scan started */
 			else
-				return HeapTupleInvisible;		/* updated before scan started */
+				return HeapTupleInvisible;	/* updated before scan started */
 		}
 
 		if (MultiXactIdIsRunning(HeapTupleHeaderGetRawXmax(tuple), false))
@@ -682,7 +682,7 @@ HeapTupleSatisfiesUpdate(HeapTuple htup, CommandId curcid,
 		if (HEAP_XMAX_IS_LOCKED_ONLY(tuple->t_infomask))
 			return HeapTupleBeingUpdated;
 		if (HeapTupleHeaderGetCmax(tuple) >= curcid)
-			return HeapTupleSelfUpdated;		/* updated after scan started */
+			return HeapTupleSelfUpdated;	/* updated after scan started */
 		else
 			return HeapTupleInvisible;	/* updated before scan started */
 	}
@@ -1038,7 +1038,7 @@ HeapTupleSatisfiesMVCC(HeapTuple htup, Snapshot snapshot,
 				else if (HeapTupleHeaderGetCmax(tuple) >= snapshot->curcid)
 					return true;	/* updated after scan started */
 				else
-					return false;		/* updated before scan started */
+					return false;	/* updated before scan started */
 			}
 
 			if (!TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetRawXmax(tuple)))
@@ -1625,7 +1625,7 @@ HeapTupleHeaderIsOnlyLocked(HeapTupleHeader tuple)
 }
 
 /*
- * check whether the transaciont id 'xid' is in the pre-sorted array 'xip'.
+ * check whether the transaction id 'xid' is in the pre-sorted array 'xip'.
  */
 static bool
 TransactionIdInArray(TransactionId xid, TransactionId *xip, Size num)

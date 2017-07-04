@@ -3,7 +3,7 @@
  *
  * PostgreSQL transaction-commit-log manager
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/access/clog.h
@@ -28,9 +28,15 @@ typedef int XidStatus;
 #define TRANSACTION_STATUS_ABORTED			0x02
 #define TRANSACTION_STATUS_SUB_COMMITTED	0x03
 
+typedef struct xl_clog_truncate
+{
+	int			pageno;
+	TransactionId oldestXact;
+	Oid			oldestXactDb;
+} xl_clog_truncate;
 
 extern void TransactionIdSetTreeStatus(TransactionId xid, int nsubxids,
-				   TransactionId *subxids, XidStatus status, XLogRecPtr lsn);
+						   TransactionId *subxids, XidStatus status, XLogRecPtr lsn);
 extern XidStatus TransactionIdGetStatus(TransactionId xid, XLogRecPtr *lsn);
 
 extern Size CLOGShmemBuffers(void);
@@ -42,7 +48,7 @@ extern void TrimCLOG(void);
 extern void ShutdownCLOG(void);
 extern void CheckPointCLOG(void);
 extern void ExtendCLOG(TransactionId newestXact);
-extern void TruncateCLOG(TransactionId oldestXact);
+extern void TruncateCLOG(TransactionId oldestXact, Oid oldestxid_datoid);
 
 /* XLOG stuff */
 #define CLOG_ZEROPAGE		0x00
@@ -52,4 +58,4 @@ extern void clog_redo(XLogReaderState *record);
 extern void clog_desc(StringInfo buf, XLogReaderState *record);
 extern const char *clog_identify(uint8 info);
 
-#endif   /* CLOG_H */
+#endif							/* CLOG_H */

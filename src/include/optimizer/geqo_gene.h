@@ -3,7 +3,7 @@
  * geqo_gene.h
  *	  genome representation in optimizer/geqo
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/optimizer/geqo_gene.h
@@ -42,4 +42,4 @@ typedef struct Pool
 	int			string_length;
 } Pool;
 
-#endif   /* GEQO_GENE_H */
+#endif							/* GEQO_GENE_H */

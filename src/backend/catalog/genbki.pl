@@ -7,7 +7,7 @@
 #    header files.  The .bki files are used to initialize the postgres
 #    template database.
 #
-# Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+# Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
 # src/backend/catalog/genbki.pl
@@ -66,16 +66,16 @@ if ($output_path ne '' && substr($output_path, -1) ne '/')
 # Open temp files
 my $tmpext  = ".tmp$$";
 my $bkifile = $output_path . 'postgres.bki';
-open BKI, '>', $bkifile . $tmpext
+open my $bki, '>', $bkifile . $tmpext
   or die "can't open $bkifile$tmpext: $!";
 my $schemafile = $output_path . 'schemapg.h';
-open SCHEMAPG, '>', $schemafile . $tmpext
+open my $schemapg, '>', $schemafile . $tmpext
   or die "can't open $schemafile$tmpext: $!";
 my $descrfile = $output_path . 'postgres.description';
-open DESCR, '>', $descrfile . $tmpext
+open my $descr, '>', $descrfile . $tmpext
   or die "can't open $descrfile$tmpext: $!";
 my $shdescrfile = $output_path . 'postgres.shdescription';
-open SHDESCR, '>', $shdescrfile . $tmpext
+open my $shdescr, '>', $shdescrfile . $tmpext
   or die "can't open $shdescrfile$tmpext: $!";
 
 # Fetch some special data that we will substitute into the output file.
@@ -97,11 +97,12 @@ my $catalogs = Catalog::Catalogs(@input_files);
 # Generate postgres.bki, postgres.description, and postgres.shdescription
 
 # version marker for .bki file
-print BKI "# PostgreSQL $major_version\n";
+print $bki "# PostgreSQL $major_version\n";
 
 # vars to hold data needed for schemapg.h
 my %schemapg_entries;
 my @tables_needing_macros;
+my %regprocoids;
 our @types;
 
 # produce output, one catalog at a time
@@ -110,7 +111,7 @@ foreach my $catname (@{ $catalogs->{names} })
 
 	# .bki CREATE command for this catalog
 	my $catalog = $catalogs->{$catname};
-	print BKI "create $catname $catalog->{relation_oid}"
+	print $bki "create $catname $catalog->{relation_oid}"
 	  . $catalog->{shared_relation}
 	  . $catalog->{bootstrap}
 	  . $catalog->{without_oids}
@@ -120,7 +121,7 @@ foreach my $catname (@{ $catalogs->{names} })
 	my @attnames;
 	my $first = 1;
 
-	print BKI " (\n";
+	print $bki " (\n";
 	foreach my $column (@{ $catalog->{columns} })
 	{
 		my $attname = $column->{name};
@@ -130,27 +131,27 @@ foreach my $catname (@{ $catalogs->{names} })
 
 		if (!$first)
 		{
-			print BKI " ,\n";
+			print $bki " ,\n";
 		}
 		$first = 0;
 
-		print BKI " $attname = $atttype";
+		print $bki " $attname = $atttype";
 
 		if (defined $column->{forcenotnull})
 		{
-			print BKI " FORCE NOT NULL";
+			print $bki " FORCE NOT NULL";
 		}
 		elsif (defined $column->{forcenull})
 		{
-			print BKI " FORCE NULL";
+			print $bki " FORCE NULL";
 		}
 	}
-	print BKI "\n )\n";
+	print $bki "\n )\n";
 
    # open it, unless bootstrap case (create bootstrap does this automatically)
 	if ($catalog->{bootstrap} eq '')
 	{
-		print BKI "open $catname\n";
+		print $bki "open $catname\n";
 	}
 
 	if (defined $catalog->{data})
@@ -160,32 +161,67 @@ foreach my $catname (@{ $catalogs->{names} })
 		foreach my $row (@{ $catalog->{data} })
 		{
 
-			# substitute constant values we acquired above
-			$row->{bki_values} =~ s/\bPGUID\b/$BOOTSTRAP_SUPERUSERID/g;
-			$row->{bki_values} =~ s/\bPGNSP\b/$PG_CATALOG_NAMESPACE/g;
+			# Split line into tokens without interpreting their meaning.
+			my %bki_values;
+			@bki_values{@attnames} =
+			  Catalog::SplitDataLine($row->{bki_values});
+
+			# Perform required substitutions on fields
+			foreach my $att (keys %bki_values)
+			{
+
+				# Substitute constant values we acquired above.
+				# (It's intentional that this can apply to parts of a field).
+				$bki_values{$att} =~ s/\bPGUID\b/$BOOTSTRAP_SUPERUSERID/g;
+				$bki_values{$att} =~ s/\bPGNSP\b/$PG_CATALOG_NAMESPACE/g;
+
+				# Replace regproc columns' values with OIDs.
+				# If we don't have a unique value to substitute,
+				# just do nothing (regprocin will complain).
+				if ($bki_attr{$att}->{type} eq 'regproc')
+				{
+					my $procoid = $regprocoids{ $bki_values{$att} };
+					$bki_values{$att} = $procoid
+					  if defined($procoid) && $procoid ne 'MULTIPLE';
+				}
+			}
+
+			# Save pg_proc oids for use in later regproc substitutions.
+			# This relies on the order we process the files in!
+			if ($catname eq 'pg_proc')
+			{
+				if (defined($regprocoids{ $bki_values{proname} }))
+				{
+					$regprocoids{ $bki_values{proname} } = 'MULTIPLE';
+				}
+				else
+				{
+					$regprocoids{ $bki_values{proname} } = $row->{oid};
+				}
+			}
 
 			# Save pg_type info for pg_attribute processing below
 			if ($catname eq 'pg_type')
 			{
-				my %type;
+				my %type = %bki_values;
 				$type{oid} = $row->{oid};
-				@type{@attnames} = split /\s+/, $row->{bki_values};
 				push @types, \%type;
 			}
 
 			# Write to postgres.bki
 			my $oid = $row->{oid} ? "OID = $row->{oid} " : '';
-			printf BKI "insert %s( %s)\n", $oid, $row->{bki_values};
+			printf $bki "insert %s( %s )\n", $oid,
+			  join(' ', @bki_values{@attnames});
 
 		   # Write comments to postgres.description and postgres.shdescription
 			if (defined $row->{descr})
 			{
-				printf DESCR "%s\t%s\t0\t%s\n", $row->{oid}, $catname,
+				printf $descr "%s\t%s\t0\t%s\n", $row->{oid}, $catname,
 				  $row->{descr};
 			}
 			if (defined $row->{shdescr})
 			{
-				printf SHDESCR "%s\t%s\t%s\n", $row->{oid}, $catname,
+				printf $shdescr "%s\t%s\t%s\n", $row->{oid}, $catname,
 				  $row->{shdescr};
 			}
 		}
@@ -267,7 +303,7 @@ foreach my $catname (@{ $catalogs->{names} })
 		}
 	}
 
-	print BKI "close $catname\n";
+	print $bki "close $catname\n";
 }
 
 # Any information needed for the BKI that is not contained in a pg_*.h header
@@ -276,25 +312,25 @@ foreach my $catname (@{ $catalogs->{names} })
 # Write out declare toast/index statements
 foreach my $declaration (@{ $catalogs->{toasting}->{data} })
 {
-	print BKI $declaration;
+	print $bki $declaration;
 }
 
 foreach my $declaration (@{ $catalogs->{indexing}->{data} })
 {
-	print BKI $declaration;
+	print $bki $declaration;
 }
 
 
 # Now generate schemapg.h
 
 # Opening boilerplate for schemapg.h
-print SCHEMAPG <<EOM;
+print $schemapg <<EOM;
 /*-------------------------------------------------------------------------
  *
  * schemapg.h
  *    Schema_pg_xxx macros for use by relcache.c
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * NOTES
@@ -313,19 +349,19 @@ EOM
 # Emit schemapg declarations
 foreach my $table_name (@tables_needing_macros)
 {
-	print SCHEMAPG "\n#define Schema_$table_name \\\n";
-	print SCHEMAPG join ", \\\n", @{ $schemapg_entries{$table_name} };
-	print SCHEMAPG "\n";
+	print $schemapg "\n#define Schema_$table_name \\\n";
+	print $schemapg join ", \\\n", @{ $schemapg_entries{$table_name} };
+	print $schemapg "\n";
 }
 
 # Closing boilerplate for schemapg.h
-print SCHEMAPG "\n#endif /* SCHEMAPG_H */\n";
+print $schemapg "\n#endif /* SCHEMAPG_H */\n";
 
 # We're done emitting data
-close BKI;
-close SCHEMAPG;
-close DESCR;
-close SHDESCR;
+close $bki;
+close $schemapg;
+close $descr;
+close $shdescr;
 
 # Finally, rename the completed files into place.
 Catalog::RenameTempFile($bkifile,     $tmpext);
@@ -409,6 +445,7 @@ sub emit_pgattr_row
 		attcacheoff   => '-1',
 		atttypmod     => '-1',
 		atthasdef     => 'f',
+		attidentity   => '',
 		attisdropped  => 'f',
 		attislocal    => 't',
 		attinhcount   => '0',
@@ -424,8 +461,9 @@ sub bki_insert
 	my $row        = shift;
 	my @attnames   = @_;
 	my $oid        = $row->{oid} ? "OID = $row->{oid} " : '';
-	my $bki_values = join ' ', map $row->{$_}, @attnames;
-	printf BKI "insert %s( %s)\n", $oid, $bki_values;
+	my $bki_values = join ' ', map { $_ eq '' ? '""' : $_ } map $row->{$_},
+	  @attnames;
+	printf $bki "insert %s( %s )\n", $oid, $bki_values;
 }
 
 # The field values of a Schema_pg_xxx declaration are similar, but not
@@ -435,10 +473,14 @@ sub emit_schemapg_row
 	my $row        = shift;
 	my @bool_attrs = @_;
 
+	# Replace empty string by zero char constant
+	$row->{attidentity} ||= '\0';
+
 	# Supply appropriate quoting for these fields.
-	$row->{attname}    = q|{"| . $row->{attname} . q|"}|;
-	$row->{attstorage} = q|'| . $row->{attstorage} . q|'|;
-	$row->{attalign}   = q|'| . $row->{attalign} . q|'|;
+	$row->{attname}     = q|{"| . $row->{attname} . q|"}|;
+	$row->{attstorage}  = q|'| . $row->{attstorage} . q|'|;
+	$row->{attalign}    = q|'| . $row->{attalign} . q|'|;
+	$row->{attidentity} = q|'| . $row->{attidentity} . q|'|;
 
 	# We don't emit initializers for the variable length fields at all.
 	# Only the fixed-size portions of the descriptors are ever used.
@@ -472,15 +514,15 @@ sub find_defined_symbol
 		}
 		my $file = $path . $catalog_header;
 		next if !-f $file;
-		open(FIND_DEFINED_SYMBOL, '<', $file) || die "$file: $!";
-		while (<FIND_DEFINED_SYMBOL>)
+		open(my $find_defined_symbol, '<', $file) || die "$file: $!";
+		while (<$find_defined_symbol>)
 		{
 			if (/^#define\s+\Q$symbol\E\s+(\S+)/)
 			{
 				return $1;
 			}
 		}
-		close FIND_DEFINED_SYMBOL;
+		close $find_defined_symbol;
 		die "$file: no definition found for $symbol\n";
 	}
 	die "$catalog_header: not found in any include directory\n";

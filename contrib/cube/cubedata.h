@@ -1,5 +1,9 @@
 /* contrib/cube/cubedata.h */
 
+/*
+ * This limit is pretty arbitrary, but don't make it so large that you
+ * risk overflow in sizing calculations.
+ */
 #define CUBE_MAX_DIM (100)
 
 typedef struct NDBOX
@@ -29,6 +33,7 @@ typedef struct NDBOX
 	double		x[FLEXIBLE_ARRAY_MEMBER];
 } NDBOX;
 
+/* NDBOX access macros */
 #define POINT_BIT			0x80000000
 #define DIM_MASK			0x7fffffff
 
@@ -43,14 +48,16 @@ typedef struct NDBOX
 #define POINT_SIZE(_dim)	(offsetof(NDBOX, x) + sizeof(double)*(_dim))
 #define CUBE_SIZE(_dim)		(offsetof(NDBOX, x) + sizeof(double)*(_dim)*2)
 
+/* fmgr interface macros */
 #define DatumGetNDBOX(x)	((NDBOX *) PG_DETOAST_DATUM(x))
 #define PG_GETARG_NDBOX(x)	DatumGetNDBOX(PG_GETARG_DATUM(x))
 #define PG_RETURN_NDBOX(x)	PG_RETURN_POINTER(x)
 
-#define CubeKNNDistanceCoord			15		/* ~> */
-#define CubeKNNDistanceTaxicab			16		/* <#> */
-#define CubeKNNDistanceEuclid			17		/* <-> */
-#define CubeKNNDistanceChebyshev		18		/* <=> */
+/* GiST operator strategy numbers */
+#define CubeKNNDistanceCoord			15	/* ~> */
+#define CubeKNNDistanceTaxicab			16	/* <#> */
+#define CubeKNNDistanceEuclid			17	/* <-> */
+#define CubeKNNDistanceChebyshev		18	/* <=> */
 
 /* in cubescan.l */
 extern int	cube_yylex(void);

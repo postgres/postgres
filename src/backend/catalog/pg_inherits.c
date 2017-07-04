@@ -8,7 +8,7 @@
  * Perhaps someday that code should be moved here, but it'd have to be
  * disentangled from other stuff such as pg_depend updates.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -27,12 +27,20 @@
 #include "catalog/pg_inherits_fn.h"
 #include "parser/parse_type.h"
 #include "storage/lmgr.h"
+#include "utils/builtins.h"
 #include "utils/fmgroids.h"
+#include "utils/memutils.h"
 #include "utils/syscache.h"
 #include "utils/tqual.h"
 
-static int	oid_cmp(const void *p1, const void *p2);
-
+/*
+ * Entry of a hash table used in find_all_inheritors. See below.
+ */
+typedef struct SeenRelsEntry
+{
+	Oid			rel_id;			/* relation oid */
+	ListCell   *numparents_cell;	/* corresponding list cell */
+} SeenRelsEntry;
 
 /*
  * find_inheritance_children
@@ -158,9 +166,22 @@ find_inheritance_children(Oid parentrelId, LOCKMODE lockmode)
 List *
 find_all_inheritors(Oid parentrelId, LOCKMODE lockmode, List **numparents)
 {
+	/* hash table for O(1) rel_oid -> rel_numparents cell lookup */
+	HTAB	   *seen_rels;
+	HASHCTL		ctl;
 	List	   *rels_list,
 			   *rel_numparents;
 	ListCell   *l;
+
+	memset(&ctl, 0, sizeof(ctl));
+	ctl.keysize = sizeof(Oid);
+	ctl.entrysize = sizeof(SeenRelsEntry);
+	ctl.hcxt = CurrentMemoryContext;
+
+	seen_rels = hash_create("find_all_inheritors temporary table",
+							32, /* start small and extend */
+							&ctl,
+							HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 
 	/*
 	 * We build a list starting with the given rel and adding all direct and
@@ -191,26 +212,21 @@ find_all_inheritors(Oid parentrelId, LOCKMODE lockmode, List **numparents)
 		foreach(lc, currentchildren)
 		{
 			Oid			child_oid = lfirst_oid(lc);
-			bool		found = false;
-			ListCell   *lo;
-			ListCell   *li;
+			bool		found;
+			SeenRelsEntry *hash_entry;
 
-			/* if the rel is already there, bump number-of-parents counter */
-			forboth(lo, rels_list, li, rel_numparents)
+			hash_entry = hash_search(seen_rels, &child_oid, HASH_ENTER, &found);
+			if (found)
 			{
-				if (lfirst_oid(lo) == child_oid)
-				{
-					lfirst_int(li)++;
-					found = true;
-					break;
-				}
+				/* if the rel is already there, bump number-of-parents counter */
+				lfirst_int(hash_entry->numparents_cell)++;
 			}
-
-			/* if it's not there, add it. expect 1 parent, initially. */
-			if (!found)
+			else
 			{
+				/* if it's not there, add it. expect 1 parent, initially. */
 				rels_list = lappend_oid(rels_list, child_oid);
 				rel_numparents = lappend_int(rel_numparents, 1);
+				hash_entry->numparents_cell = rel_numparents->tail;
 			}
 		}
 	}
@@ -219,6 +235,9 @@ find_all_inheritors(Oid parentrelId, LOCKMODE lockmode, List **numparents)
 		*numparents = rel_numparents;
 	else
 		list_free(rel_numparents);
+
+	hash_destroy(seen_rels);
+
 	return rels_list;
 }
 
@@ -254,6 +273,30 @@ has_subclass(Oid relationId)
 	return result;
 }
 
+/*
+ * has_superclass - does this relation inherit from another?  The caller
+ * should hold a lock on the given relation so that it can't be concurrently
+ * added to or removed from an inheritance hierarchy.
+ */
+bool
+has_superclass(Oid relationId)
+{
+	Relation	catalog;
+	SysScanDesc scan;
+	ScanKeyData skey;
+	bool		result;
+
+	catalog = heap_open(InheritsRelationId, AccessShareLock);
+	ScanKeyInit(&skey, Anum_pg_inherits_inhrelid, BTEqualStrategyNumber,
+				F_OIDEQ, ObjectIdGetDatum(relationId));
+	scan = systable_beginscan(catalog, InheritsRelidSeqnoIndexId, true,
+							  NULL, 1, &skey);
+	result = HeapTupleIsValid(systable_getnext(scan));
+	systable_endscan(scan);
+	heap_close(catalog, AccessShareLock);
+
+	return result;
+}
 
 /*
  * Given two type OIDs, determine whether the first is a complex type
@@ -356,19 +399,4 @@ typeInheritsFrom(Oid subclassTypeId, Oid superclassTypeId)
 	list_free(queue);
 
 	return result;
-}
-
-
-/* qsort comparison function */
-static int
-oid_cmp(const void *p1, const void *p2)
-{
-	Oid			v1 = *((const Oid *) p1);
-	Oid			v2 = *((const Oid *) p2);
-
-	if (v1 < v2)
-		return -1;
-	if (v1 > v2)
-		return 1;
-	return 0;
 }

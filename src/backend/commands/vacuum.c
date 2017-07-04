@@ -9,7 +9,7 @@
  * in cluster.c.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -32,6 +32,7 @@
 #include "access/xact.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_database.h"
+#include "catalog/pg_inherits_fn.h"
 #include "catalog/pg_namespace.h"
 #include "commands/cluster.h"
 #include "commands/vacuum.h"
@@ -209,9 +210,7 @@ vacuum(int options, RangeVar *relation, Oid relid, VacuumParams *params,
 	 */
 	vac_context = AllocSetContextCreate(PortalContext,
 										"Vacuum",
-										ALLOCSET_DEFAULT_MINSIZE,
-										ALLOCSET_DEFAULT_INITSIZE,
-										ALLOCSET_DEFAULT_MAXSIZE);
+										ALLOCSET_DEFAULT_SIZES);
 
 	/*
 	 * If caller didn't give us a buffer strategy object, make one in the
@@ -358,7 +357,7 @@ vacuum(int options, RangeVar *relation, Oid relid, VacuumParams *params,
 	if ((options & VACOPT_VACUUM) && !IsAutoVacuumWorkerProcess())
 	{
 		/*
-		 * Update pg_database.datfrozenxid, and truncate pg_clog if possible.
+		 * Update pg_database.datfrozenxid, and truncate pg_xact if possible.
 		 * (autovacuum.c does this for itself.)
 		 */
 		vac_update_datfrozenxid();
@@ -396,6 +395,9 @@ get_rel_oids(Oid relid, const RangeVar *vacrel)
 	{
 		/* Process a specific relation */
 		Oid			relid;
+		HeapTuple	tuple;
+		Form_pg_class classForm;
+		bool		include_parts;
 
 		/*
 		 * Since we don't take a lock here, the relation might be gone, or the
@@ -408,9 +410,29 @@ get_rel_oids(Oid relid, const RangeVar *vacrel)
 		 */
 		relid = RangeVarGetRelid(vacrel, NoLock, false);
 
-		/* Make a relation list entry for this guy */
+		/*
+		 * To check whether the relation is a partitioned table, fetch its
+		 * syscache entry.
+		 */
+		tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
+		if (!HeapTupleIsValid(tuple))
+			elog(ERROR, "cache lookup failed for relation %u", relid);
+		classForm = (Form_pg_class) GETSTRUCT(tuple);
+		include_parts = (classForm->relkind == RELKIND_PARTITIONED_TABLE);
+		ReleaseSysCache(tuple);
+
+		/*
+		 * Make relation list entries for this guy and its partitions, if any.
+		 * Note that the list returned by find_all_inheritors() include the
+		 * passed-in OID at its head.  Also note that we did not request a
+		 * lock to be taken to match what would be done otherwise.
+		 */
 		oldcontext = MemoryContextSwitchTo(vac_context);
-		oid_list = lappend_oid(oid_list, relid);
+		if (include_parts)
+			oid_list = list_concat(oid_list,
+								   find_all_inheritors(relid, NoLock, NULL));
+		else
+			oid_list = lappend_oid(oid_list, relid);
 		MemoryContextSwitchTo(oldcontext);
 	}
 	else
@@ -431,8 +453,14 @@ get_rel_oids(Oid relid, const RangeVar *vacrel)
 		{
 			Form_pg_class classForm = (Form_pg_class) GETSTRUCT(tuple);
 
+			/*
+			 * We include partitioned tables here; depending on which
+			 * operation is to be performed, caller will decide whether to
+			 * process or ignore them.
+			 */
 			if (classForm->relkind != RELKIND_RELATION &&
-				classForm->relkind != RELKIND_MATVIEW)
+				classForm->relkind != RELKIND_MATVIEW &&
+				classForm->relkind != RELKIND_PARTITIONED_TABLE)
 				continue;
 
 			/* Make a relation list entry for this guy */
@@ -499,7 +527,7 @@ vacuum_set_xid_limits(Relation rel,
 	 * always an independent transaction.
 	 */
 	*oldestXmin =
-		TransactionIdLimitedForOldSnapshots(GetOldestXmin(rel, true), rel);
+		TransactionIdLimitedForOldSnapshots(GetOldestXmin(rel, PROCARRAY_FLAGS_VACUUM), rel);
 
 	Assert(TransactionIdIsNormal(*oldestXmin));
 
@@ -882,7 +910,7 @@ vac_update_relstats(Relation relation,
  *		pg_class.relminmxid values.
  *
  *		If we are able to advance either pg_database value, also try to
- *		truncate pg_clog and pg_multixact.
+ *		truncate pg_xact and pg_multixact.
  *
  *		We violate transaction semantics here by overwriting the database's
  *		existing pg_database tuple with the new values.  This is reasonably
@@ -911,7 +939,7 @@ vac_update_datfrozenxid(void)
 	 * committed pg_class entries for new tables; see AddNewRelationTuple().
 	 * So we cannot produce a wrong minimum by starting with this.
 	 */
-	newFrozenXid = GetOldestXmin(NULL, true);
+	newFrozenXid = GetOldestXmin(NULL, PROCARRAY_FLAGS_VACUUM);
 
 	/*
 	 * Similarly, initialize the MultiXact "min" with the value that would be
@@ -1028,7 +1056,7 @@ vac_update_datfrozenxid(void)
 
 	/*
 	 * If we were able to advance datfrozenxid or datminmxid, see if we can
-	 * truncate pg_clog and/or pg_multixact.  Also do it if the shared
+	 * truncate pg_xact and/or pg_multixact.  Also do it if the shared
 	 * XID-wrap-limit info is stale, since this action will update that too.
 	 */
 	if (dirty || ForceTransactionIdLimitUpdate())
@@ -1041,7 +1069,7 @@ vac_update_datfrozenxid(void)
  *	vac_truncate_clog() -- attempt to truncate the commit log
  *
  *		Scan pg_database to determine the system-wide oldest datfrozenxid,
- *		and use it to truncate the transaction commit log (pg_clog).
+ *		and use it to truncate the transaction commit log (pg_xact).
  *		Also update the XID wrap limit info maintained by varsup.c.
  *		Likewise for datminmxid.
  *
@@ -1088,7 +1116,7 @@ vac_truncate_clog(TransactionId frozenXID,
 	 * of the interlock against copying a DB containing an active backend.
 	 * Hence the new entry will not reduce the minimum.  Also, if two VACUUMs
 	 * concurrently modify the datfrozenxid's of different databases, the
-	 * worst possible outcome is that pg_clog is not truncated as aggressively
+	 * worst possible outcome is that pg_xact is not truncated as aggressively
 	 * as it could be.
 	 */
 	relation = heap_open(DatabaseRelationId, AccessShareLock);
@@ -1155,9 +1183,18 @@ vac_truncate_clog(TransactionId frozenXID,
 		return;
 
 	/*
+	 * Advance the oldest value for commit timestamps before truncating, so
+	 * that if a user requests a timestamp for a transaction we're truncating
+	 * away right after this point, they get NULL instead of an ugly "file not
+	 * found" error from slru.c.  This doesn't matter for xact/multixact
+	 * because they are not subject to arbitrary lookups from users.
+	 */
+	AdvanceOldestCommitTsXid(frozenXID);
+
+	/*
 	 * Truncate CLOG, multixact and CommitTs to the oldest computed value.
 	 */
-	TruncateCLOG(frozenXID);
+	TruncateCLOG(frozenXID, oldestxid_datoid);
 	TruncateCommitTs(frozenXID);
 	TruncateMultiXact(minMulti, minmulti_datoid);
 
@@ -1168,8 +1205,7 @@ vac_truncate_clog(TransactionId frozenXID,
 	 * signalling twice?
 	 */
 	SetTransactionIdLimit(frozenXID, oldestxid_datoid);
-	SetMultiXactIdLimit(minMulti, minmulti_datoid);
-	AdvanceOldestCommitTsXid(frozenXID);
+	SetMultiXactIdLimit(minMulti, minmulti_datoid, false);
 }
 
 
@@ -1267,8 +1303,8 @@ vacuum_rel(Oid relid, RangeVar *relation, int options, VacuumParams *params)
 		if (IsAutoVacuumWorkerProcess() && params->log_min_duration >= 0)
 			ereport(LOG,
 					(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
-				   errmsg("skipping vacuum of \"%s\" --- lock not available",
-						  relation->relname)));
+					 errmsg("skipping vacuum of \"%s\" --- lock not available",
+							relation->relname)));
 	}
 
 	if (!onerel)
@@ -1293,8 +1329,8 @@ vacuum_rel(Oid relid, RangeVar *relation, int options, VacuumParams *params)
 	{
 		if (onerel->rd_rel->relisshared)
 			ereport(WARNING,
-				  (errmsg("skipping \"%s\" --- only superuser can vacuum it",
-						  RelationGetRelationName(onerel))));
+					(errmsg("skipping \"%s\" --- only superuser can vacuum it",
+							RelationGetRelationName(onerel))));
 		else if (onerel->rd_rel->relnamespace == PG_CATALOG_NAMESPACE)
 			ereport(WARNING,
 					(errmsg("skipping \"%s\" --- only superuser or database owner can vacuum it",
@@ -1316,7 +1352,8 @@ vacuum_rel(Oid relid, RangeVar *relation, int options, VacuumParams *params)
 	 */
 	if (onerel->rd_rel->relkind != RELKIND_RELATION &&
 		onerel->rd_rel->relkind != RELKIND_MATVIEW &&
-		onerel->rd_rel->relkind != RELKIND_TOASTVALUE)
+		onerel->rd_rel->relkind != RELKIND_TOASTVALUE &&
+		onerel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE)
 	{
 		ereport(WARNING,
 				(errmsg("skipping \"%s\" --- cannot vacuum non-tables or special system tables",
@@ -1340,6 +1377,21 @@ vacuum_rel(Oid relid, RangeVar *relation, int options, VacuumParams *params)
 		PopActiveSnapshot();
 		CommitTransactionCommand();
 		return false;
+	}
+
+	/*
+	 * Ignore partitioned tables as there is no work to be done.  Since we
+	 * release the lock here, it's possible that any partitions added from
+	 * this point on will not get processed, but that seems harmless.
+	 */
+	if (onerel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
+	{
+		relation_close(onerel, lmode);
+		PopActiveSnapshot();
+		CommitTransactionCommand();
+
+		/* It's OK for other commands to look at this table */
+		return true;
 	}
 
 	/*

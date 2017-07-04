@@ -5,7 +5,7 @@
  *	  along with the relation's initial contents.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_event_trigger.h
@@ -61,4 +61,4 @@ typedef FormData_pg_event_trigger *Form_pg_event_trigger;
 #define Anum_pg_event_trigger_evtenabled		5
 #define Anum_pg_event_trigger_evttags			6
 
-#endif   /* PG_EVENT_TRIGGER_H */
+#endif							/* PG_EVENT_TRIGGER_H */

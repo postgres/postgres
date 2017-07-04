@@ -2,6 +2,10 @@
 
 # this script will sort any table with the segment data type in its last column
 
+use strict;
+
+my @rows;
+
 while (<>)
 {
 	chomp;
@@ -10,11 +14,11 @@ while (<>)
 
 foreach (
 	sort {
-		@ar = split("\t", $a);
-		$valA = pop @ar;
+		my @ar = split("\t", $a);
+		my $valA = pop @ar;
 		$valA =~ s/[~<> ]+//g;
 		@ar = split("\t", $b);
-		$valB = pop @ar;
+		my $valB = pop @ar;
 		$valB =~ s/[~<> ]+//g;
 		$valA <=> $valB
 	} @rows)

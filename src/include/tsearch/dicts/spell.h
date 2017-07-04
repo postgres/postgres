@@ -4,7 +4,7 @@
  *
  * Declarations for ISpell dictionary
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  *
  * src/include/tsearch/dicts/spell.h
  *
@@ -147,7 +147,7 @@ typedef struct
 } CMPDAffix;
 
 /*
- * Type of encoding affix flags in Hunspel dictionaries
+ * Type of encoding affix flags in Hunspell dictionaries
  */
 typedef enum
 {

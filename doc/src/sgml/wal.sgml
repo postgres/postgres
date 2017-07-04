@@ -115,7 +115,7 @@
 
     <listitem>
       <para>
-        On <productname>OS X</productname>, write caching can be prevented by
+        On <productname>macOS</productname>, write caching can be prevented by
         setting <varname>wal_sync_method</> to <literal>fsync_writethrough</>.
       </para>
     </listitem>
@@ -201,7 +201,7 @@
     </listitem>
     <listitem>
      <para>
-      Internal data structures such as <filename>pg_clog</filename>, <filename>pg_subtrans</filename>, <filename>pg_multixact</filename>,
+      Internal data structures such as <filename>pg_xact</filename>, <filename>pg_subtrans</filename>, <filename>pg_multixact</filename>,
       <filename>pg_serial</filename>, <filename>pg_notify</filename>, <filename>pg_stat</filename>, <filename>pg_snapshots</filename> are not directly
       checksummed, nor are pages protected by full page writes. However, where
       such data structures are persistent, WAL records are written that allow
@@ -557,7 +557,7 @@
   </para>
 
   <para>
-   The number of WAL segment files in <filename>pg_xlog</> directory depends on
+   The number of WAL segment files in <filename>pg_wal</> directory depends on
    <varname>min_wal_size</>, <varname>max_wal_size</> and
    the amount of WAL generated in previous checkpoint cycles. When old log
    segment files are no longer needed, they are removed or recycled (that is,
@@ -569,7 +569,7 @@
    removes the rest. The estimate is based on a moving average of the number
    of WAL files used in previous checkpoint cycles. The moving average
    is increased immediately if the actual usage exceeds the estimate, so it
-   accommodates peak usage rather average usage to some extent.
+   accommodates peak usage rather than average usage to some extent.
    <varname>min_wal_size</> puts a minimum on the amount of WAL files
    recycled for future usage; that much WAL is always recycled for future use,
    even if the system is idle and the WAL usage estimate suggests that little
@@ -582,7 +582,7 @@
    kept at all times. Also, if WAL archiving is used, old segments can not be
    removed or recycled until they are archived. If WAL archiving cannot keep up
    with the pace that WAL is generated, or if <varname>archive_command</varname>
-   fails repeatedly, old WAL files will accumulate in <filename>pg_xlog</>
+   fails repeatedly, old WAL files will accumulate in <filename>pg_wal</>
    until the situation is resolved. A slow or failed standby server that
    uses a replication slot will have the same effect (see
    <xref linkend="streaming-replication-slots">).
@@ -594,7 +594,7 @@
    which are similar to checkpoints in normal operation: the server forces
    all its state to disk, updates the <filename>pg_control</> file to
    indicate that the already-processed WAL data need not be scanned again,
-   and then recycles any old log segment files in the <filename>pg_xlog</>
+   and then recycles any old log segment files in the <filename>pg_wal</>
    directory.
    Restartpoints can't be performed more frequently than checkpoints in the
    master because restartpoints can only be performed at checkpoint records.
@@ -724,6 +724,10 @@
  <sect1 id="wal-internals">
   <title>WAL Internals</title>
 
+  <indexterm zone="wal-internals">
+   <primary>LSN</primary>
+  </indexterm>
+
   <para>
    <acronym>WAL</acronym> is automatically enabled; no action is
    required from the administrator except ensuring that the
@@ -733,8 +737,20 @@
   </para>
 
   <para>
+   <acronym>WAL</acronym> records are appended to the <acronym>WAL</acronym>
+   logs as each new record is written. The insert position is described by
+   a Log Sequence Number (<acronym>LSN</acronym>) that is a byte offset into
+   the logs, increasing monotonically with each new record.
+   <acronym>LSN</acronym> values are returned as the datatype
+   <link linkend="datatype-pg-lsn"><type>pg_lsn</></link>. Values can be
+   compared to calculate the volume of <acronym>WAL</acronym> data that
+   separates them, so they are used to measure the progress of replication
+   and recovery.
+  </para>
+
+  <para>
    <acronym>WAL</acronym> logs are stored in the directory
-   <filename>pg_xlog</filename> under the data directory, as a set of
+   <filename>pg_wal</filename> under the data directory, as a set of
    segment files, normally each 16 MB in size (but the size can be changed
    by altering the <option>--with-wal-segsize</> configure option when
    building the server).  Each segment is divided into pages, normally
@@ -751,7 +767,7 @@
   <para>
    It is advantageous if the log is located on a different disk from the
    main database files.  This can be achieved by moving the
-   <filename>pg_xlog</filename> directory to another location (while the server
+   <filename>pg_wal</filename> directory to another location (while the server
    is shut down, of course) and creating a symbolic link from the
    original location in the main data directory to the new location.
   </para>
@@ -775,7 +791,7 @@
    <filename>pg_control</filename>. Therefore, at the start of recovery,
    the server first reads <filename>pg_control</filename> and
    then the checkpoint record; then it performs the REDO operation by
-   scanning forward from the log position indicated in the checkpoint
+   scanning forward from the log location indicated in the checkpoint
    record.  Because the entire content of data pages is saved in the
    log on the first page modification after a checkpoint (assuming
    <xref linkend="guc-full-page-writes"> is not disabled), all pages

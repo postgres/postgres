@@ -3,7 +3,7 @@
  * pg_foreign_server.h
  *	  definition of the system "foreign server" relation (pg_foreign_server)
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_foreign_server.h
@@ -61,4 +61,4 @@ typedef FormData_pg_foreign_server *Form_pg_foreign_server;
 #define Anum_pg_foreign_server_srvacl			6
 #define Anum_pg_foreign_server_srvoptions		7
 
-#endif   /* PG_FOREIGN_SERVER_H */
+#endif							/* PG_FOREIGN_SERVER_H */

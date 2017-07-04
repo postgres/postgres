@@ -36,6 +36,7 @@ Link	Asia/Shanghai		Asia/Harbin
 Link	Asia/Urumqi		Asia/Kashgar
 Link	Asia/Kathmandu		Asia/Katmandu
 Link	Asia/Macau		Asia/Macao
+Link	Asia/Yangon		Asia/Rangoon
 Link	Asia/Ho_Chi_Minh	Asia/Saigon
 Link	Asia/Jerusalem		Asia/Tel_Aviv
 Link	Asia/Thimphu		Asia/Thimbu
@@ -95,6 +96,7 @@ Link	Pacific/Auckland	NZ
 Link	Pacific/Chatham		NZ-CHAT
 Link	America/Denver		Navajo
 Link	Asia/Shanghai		PRC
+Link	Pacific/Honolulu	Pacific/Johnston
 Link	Pacific/Pohnpei		Pacific/Ponape
 Link	Pacific/Pago_Pago	Pacific/Samoa
 Link	Pacific/Chuuk		Pacific/Truk

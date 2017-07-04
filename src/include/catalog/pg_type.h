@@ -5,7 +5,7 @@
  *	  along with the relation's initial contents.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_type.h
@@ -364,6 +364,14 @@ DATA(insert OID = 194 ( pg_node_tree	PGNSP PGUID -1 f b S f t \054 0 0 0 pg_node
 DESCR("string representing an internal node tree");
 #define PGNODETREEOID	194
 
+DATA(insert OID = 3361 ( pg_ndistinct		PGNSP PGUID -1 f b S f t \054 0 0 0 pg_ndistinct_in pg_ndistinct_out pg_ndistinct_recv pg_ndistinct_send - - - i x f 0 -1 0 100 _null_ _null_ _null_ ));
+DESCR("multivariate ndistinct coefficients");
+#define PGNDISTINCTOID	3361
+
+DATA(insert OID = 3402 ( pg_dependencies		PGNSP PGUID -1 f b S f t \054 0 0 0 pg_dependencies_in pg_dependencies_out pg_dependencies_recv pg_dependencies_send - - - i x f 0 -1 0 100 _null_ _null_ _null_ ));
+DESCR("multivariate dependencies");
+#define PGDEPENDENCIESOID	3402
+
 DATA(insert OID = 32 ( pg_ddl_command	PGNSP PGUID SIZEOF_POINTER t p P f t \054 0 0 0 pg_ddl_command_in pg_ddl_command_out pg_ddl_command_recv pg_ddl_command_send - - - ALIGNOF_POINTER p f 0 -1 0 0 _null_ _null_ _null_ ));
 DESCR("internal type for passing CollectedCommand");
 #define PGDDLCOMMANDOID 32
@@ -418,7 +426,7 @@ DESCR("relative, limited-range time interval (Unix delta time)");
 DATA(insert OID = 704 (  tinterval PGNSP PGUID 12 f b T f t \054 0	 0 1025 tintervalin tintervalout tintervalrecv tintervalsend - - - i p f 0 -1 0 0 _null_ _null_ _null_ ));
 DESCR("(abstime,abstime), time interval");
 #define TINTERVALOID	704
-DATA(insert OID = 705 (  unknown   PGNSP PGUID -2 f b X f t \054 0	 0 0 unknownin unknownout unknownrecv unknownsend - - - c p f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 705 (  unknown   PGNSP PGUID -2 f p X f t \054 0	 0 0 unknownin unknownout unknownrecv unknownsend - - - c p f 0 -1 0 0 _null_ _null_ _null_ ));
 DESCR("");
 #define UNKNOWNOID		705
 
@@ -441,6 +449,9 @@ DESCR("IP address/netmask, host address, netmask optional");
 DATA(insert OID = 650 ( cidr	   PGNSP PGUID	-1 f b I f t \054 0 0 651 cidr_in cidr_out cidr_recv cidr_send - - - i m f 0 -1 0 0 _null_ _null_ _null_ ));
 DESCR("network IP address/netmask, network address");
 #define CIDROID 650
+DATA(insert OID = 774 ( macaddr8	PGNSP PGUID 8 f b U f t \054 0 0 775 macaddr8_in macaddr8_out macaddr8_recv macaddr8_send - - - i p f 0 -1 0 0 _null_ _null_ _null_ ));
+DESCR("XX:XX:XX:XX:XX:XX:XX:XX, MAC address");
+#define MACADDR8OID 774
 
 /* OIDS 900 - 999 */
 
@@ -482,6 +493,7 @@ DESCR("access control list");
 #define ACLITEMOID		1033
 DATA(insert OID = 1034 (  _aclitem	 PGNSP PGUID -1 f b A f t \054 0 1033 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
 DATA(insert OID = 1040 (  _macaddr	 PGNSP PGUID -1 f b A f t \054 0  829 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
+DATA(insert OID = 775  (  _macaddr8  PGNSP PGUID -1 f b A f t \054 0  774 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
 DATA(insert OID = 1041 (  _inet		 PGNSP PGUID -1 f b A f t \054 0  869 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
 DATA(insert OID = 651  (  _cidr		 PGNSP PGUID -1 f b A f t \054 0  650 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
 DATA(insert OID = 1263 (  _cstring	 PGNSP PGUID -1 f b A f t \054 0 2275 0 array_in array_out array_recv array_send - - array_typanalyze i x f 0 -1 0 0 _null_ _null_ _null_ ));
@@ -719,14 +731,14 @@ DATA(insert OID = 3831 ( anyrange		PGNSP PGUID  -1 f p P f t \054 0 0 0 anyrange
 #define  TYPCATEGORY_DATETIME	'D'
 #define  TYPCATEGORY_ENUM		'E'
 #define  TYPCATEGORY_GEOMETRIC	'G'
-#define  TYPCATEGORY_NETWORK	'I'		/* think INET */
+#define  TYPCATEGORY_NETWORK	'I' /* think INET */
 #define  TYPCATEGORY_NUMERIC	'N'
 #define  TYPCATEGORY_PSEUDOTYPE 'P'
 #define  TYPCATEGORY_RANGE		'R'
 #define  TYPCATEGORY_STRING		'S'
 #define  TYPCATEGORY_TIMESPAN	'T'
 #define  TYPCATEGORY_USER		'U'
-#define  TYPCATEGORY_BITSTRING	'V'		/* er ... "varbit"? */
+#define  TYPCATEGORY_BITSTRING	'V' /* er ... "varbit"? */
 #define  TYPCATEGORY_UNKNOWN	'X'
 
 /* Is a type OID a polymorphic pseudotype?	(Beware of multiple evaluation) */
@@ -737,4 +749,4 @@ DATA(insert OID = 3831 ( anyrange		PGNSP PGUID  -1 f p P f t \054 0 0 0 anyrange
 	 (typid) == ANYENUMOID || \
 	 (typid) == ANYRANGEOID)
 
-#endif   /* PG_TYPE_H */
+#endif							/* PG_TYPE_H */

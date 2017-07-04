@@ -3,13 +3,13 @@
  * pg_foreign_table.h
  *	  definition of the system "foreign table" relation (pg_foreign_table)
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_foreign_table.h
  *
  * NOTES
- *	  the genbki.sh script reads this file and generates .bki
+ *	  the genbki.pl script reads this file and generates .bki
  *	  information from the DATA() statements.
  *
  *-------------------------------------------------------------------------
@@ -53,4 +53,4 @@ typedef FormData_pg_foreign_table *Form_pg_foreign_table;
 #define Anum_pg_foreign_table_ftserver			2
 #define Anum_pg_foreign_table_ftoptions			3
 
-#endif   /* PG_FOREIGN_TABLE_H */
+#endif							/* PG_FOREIGN_TABLE_H */

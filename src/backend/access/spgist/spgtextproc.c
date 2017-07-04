@@ -29,7 +29,7 @@
  * No new entries ever get pushed into a -2-labeled child, either.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -45,6 +45,7 @@
 #include "utils/builtins.h"
 #include "utils/datum.h"
 #include "utils/pg_locale.h"
+#include "utils/varlena.h"
 
 
 /*
@@ -567,8 +568,9 @@ spg_text_leaf_consistent(PG_FUNCTION_ARGS)
 
 	leafValue = DatumGetTextPP(in->leafDatum);
 
+	/* As above, in->reconstructedValue isn't toasted or short. */
 	if (DatumGetPointer(in->reconstructedValue))
-		reconstrValue = DatumGetTextP(in->reconstructedValue);
+		reconstrValue = (text *) DatumGetPointer(in->reconstructedValue);
 
 	Assert(reconstrValue == NULL ? level == 0 :
 		   VARSIZE_ANY_EXHDR(reconstrValue) == level);

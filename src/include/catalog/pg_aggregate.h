@@ -5,7 +5,7 @@
  *	  along with the relation's initial contents.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_aggregate.h
@@ -348,4 +348,4 @@ extern ObjectAddress AggregateCreate(const char *aggName,
 				const char *aggminitval,
 				char proparallel);
 
-#endif   /* PG_AGGREGATE_H */
+#endif							/* PG_AGGREGATE_H */

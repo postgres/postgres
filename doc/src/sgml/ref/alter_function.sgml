@@ -21,15 +21,15 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ALTER FUNCTION <replaceable>name</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] )
+ALTER FUNCTION <replaceable>name</replaceable> [ ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) ]
     <replaceable class="PARAMETER">action</replaceable> [ ... ] [ RESTRICT ]
-ALTER FUNCTION <replaceable>name</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] )
+ALTER FUNCTION <replaceable>name</replaceable> [ ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) ]
     RENAME TO <replaceable>new_name</replaceable>
-ALTER FUNCTION <replaceable>name</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] )
+ALTER FUNCTION <replaceable>name</replaceable> [ ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) ]
     OWNER TO { <replaceable>new_owner</replaceable> | CURRENT_USER | SESSION_USER }
-ALTER FUNCTION <replaceable>name</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] )
+ALTER FUNCTION <replaceable>name</replaceable> [ ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) ]
     SET SCHEMA <replaceable>new_schema</replaceable>
-ALTER FUNCTION <replaceable>name</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] )
+ALTER FUNCTION <replaceable>name</replaceable> [ ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) ]
     DEPENDS ON EXTENSION <replaceable>extension_name</replaceable>
 
 <phrase>where <replaceable class="PARAMETER">action</replaceable> is one of:</phrase>
@@ -75,7 +75,8 @@ ALTER FUNCTION <replaceable>name</replaceable> ( [ [ <replaceable class="paramet
     <term><replaceable class="parameter">name</replaceable></term>
     <listitem>
      <para>
-      The name (optionally schema-qualified) of an existing function.
+      The name (optionally schema-qualified) of an existing function.  If no
+      argument list is specified, the name must be unique in its schema.
      </para>
     </listitem>
    </varlistentry>

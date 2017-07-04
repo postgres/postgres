@@ -294,13 +294,13 @@ DECLARE
 	r record;
 	r2 record;
 	cond text;
+	idx_ctids tid[];
+	ss_ctids tid[];
 	count int;
-	mismatch bool;
 	plan_ok bool;
 	plan_line text;
 BEGIN
 	FOR r IN SELECT colname, oper, typ, value[ordinality], matches[ordinality] FROM brinopers, unnest(op) WITH ORDINALITY AS oper LOOP
-		mismatch := false;
 
 		-- prepare the condition
 		IF r.value IS NULL THEN
@@ -310,13 +310,12 @@ BEGIN
 		END IF;
 
 		-- run the query using the brin index
-		CREATE TEMP TABLE brin_result (cid tid);
 		SET enable_seqscan = 0;
 		SET enable_bitmapscan = 1;
 
 		plan_ok := false;
-		FOR plan_line IN EXECUTE format($y$EXPLAIN SELECT ctid FROM brintest WHERE %s $y$, cond) LOOP
-			IF plan_line LIKE 'Bitmap Heap Scan on brintest%' THEN
+		FOR plan_line IN EXECUTE format($y$EXPLAIN SELECT array_agg(ctid) FROM brintest WHERE %s $y$, cond) LOOP
+			IF plan_line LIKE '%Bitmap Heap Scan on brintest%' THEN
 				plan_ok := true;
 			END IF;
 		END LOOP;
@@ -324,16 +323,16 @@ BEGIN
 			RAISE WARNING 'did not get bitmap indexscan plan for %', r;
 		END IF;
 
-		EXECUTE format($y$INSERT INTO brin_result SELECT ctid FROM brintest WHERE %s $y$, cond);
+		EXECUTE format($y$SELECT array_agg(ctid) FROM brintest WHERE %s $y$, cond)
+			INTO idx_ctids;
 
 		-- run the query using a seqscan
-		CREATE TEMP TABLE brin_result_ss (cid tid);
 		SET enable_seqscan = 1;
 		SET enable_bitmapscan = 0;
 
 		plan_ok := false;
-		FOR plan_line IN EXECUTE format($y$EXPLAIN SELECT ctid FROM brintest WHERE %s $y$, cond) LOOP
-			IF plan_line LIKE 'Seq Scan on brintest%' THEN
+		FOR plan_line IN EXECUTE format($y$EXPLAIN SELECT array_agg(ctid) FROM brintest WHERE %s $y$, cond) LOOP
+			IF plan_line LIKE '%Seq Scan on brintest%' THEN
 				plan_ok := true;
 			END IF;
 		END LOOP;
@@ -341,22 +340,16 @@ BEGIN
 			RAISE WARNING 'did not get seqscan plan for %', r;
 		END IF;
 
-		EXECUTE format($y$INSERT INTO brin_result_ss SELECT ctid FROM brintest WHERE %s $y$, cond);
+		EXECUTE format($y$SELECT array_agg(ctid) FROM brintest WHERE %s $y$, cond)
+			INTO ss_ctids;
 
 		-- make sure both return the same results
-		PERFORM * FROM brin_result EXCEPT ALL SELECT * FROM brin_result_ss;
-		GET DIAGNOSTICS count = ROW_COUNT;
-		IF count <> 0 THEN
-			mismatch = true;
-		END IF;
-		PERFORM * FROM brin_result_ss EXCEPT ALL SELECT * FROM brin_result;
-		GET DIAGNOSTICS count = ROW_COUNT;
-		IF count <> 0 THEN
-			mismatch = true;
-		END IF;
+		count := array_length(idx_ctids, 1);
 
-		-- report the results of each scan to make the differences obvious
-		IF mismatch THEN
+		IF NOT (count = array_length(ss_ctids, 1) AND
+				idx_ctids @> ss_ctids AND
+				idx_ctids <@ ss_ctids) THEN
+			-- report the results of each scan to make the differences obvious
 			RAISE WARNING 'something not right in %: count %', r, count;
 			SET enable_seqscan = 1;
 			SET enable_bitmapscan = 0;
@@ -372,15 +365,13 @@ BEGIN
 		END IF;
 
 		-- make sure we found expected number of matches
-		SELECT count(*) INTO count FROM brin_result;
 		IF count != r.matches THEN RAISE WARNING 'unexpected number of results % for %', count, r; END IF;
-
-		-- drop the temporary tables
-		DROP TABLE brin_result;
-		DROP TABLE brin_result_ss;
 	END LOOP;
 END;
 $x$;
+
+RESET enable_seqscan;
+RESET enable_bitmapscan;
 
 INSERT INTO brintest SELECT
 	repeat(stringu1, 42)::bytea,
@@ -412,6 +403,7 @@ INSERT INTO brintest SELECT
 	box(point(odd, even), point(thousand, twothousand))
 FROM tenk1 ORDER BY unique2 LIMIT 5 OFFSET 5;
 
+SELECT brin_desummarize_range('brinidx', 0);
 VACUUM brintest;  -- force a summarization cycle in brinidx
 
 UPDATE brintest SET int8col = int8col * int4col;
@@ -421,3 +413,50 @@ UPDATE brintest SET textcol = '' WHERE textcol IS NOT NULL;
 SELECT brin_summarize_new_values('brintest'); -- error, not an index
 SELECT brin_summarize_new_values('tenk1_unique1'); -- error, not a BRIN index
 SELECT brin_summarize_new_values('brinidx'); -- ok, no change expected
+
+-- Tests for brin_desummarize_range
+SELECT brin_desummarize_range('brinidx', -1); -- error, invalid range
+SELECT brin_desummarize_range('brinidx', 0);
+SELECT brin_desummarize_range('brinidx', 0);
+SELECT brin_desummarize_range('brinidx', 100000000);
+
+-- Test brin_summarize_range
+CREATE TABLE brin_summarize (
+    value int
+) WITH (fillfactor=10, autovacuum_enabled=false);
+CREATE INDEX brin_summarize_idx ON brin_summarize USING brin (value) WITH (pages_per_range=2);
+-- Fill a few pages
+DO $$
+DECLARE curtid tid;
+BEGIN
+  LOOP
+    INSERT INTO brin_summarize VALUES (1) RETURNING ctid INTO curtid;
+    EXIT WHEN curtid > tid '(2, 0)';
+  END LOOP;
+END;
+$$;
+
+-- summarize one range
+SELECT brin_summarize_range('brin_summarize_idx', 0);
+-- nothing: already summarized
+SELECT brin_summarize_range('brin_summarize_idx', 1);
+-- summarize one range
+SELECT brin_summarize_range('brin_summarize_idx', 2);
+-- nothing: page doesn't exist in table
+SELECT brin_summarize_range('brin_summarize_idx', 4294967295);
+-- invalid block number values
+SELECT brin_summarize_range('brin_summarize_idx', -1);
+SELECT brin_summarize_range('brin_summarize_idx', 4294967296);
+
+
+-- test brin cost estimates behave sanely based on correlation of values
+CREATE TABLE brin_test (a INT, b INT);
+INSERT INTO brin_test SELECT x/100,x%100 FROM generate_series(1,10000) x(x);
+CREATE INDEX brin_test_a_idx ON brin_test USING brin (a) WITH (pages_per_range = 2);
+CREATE INDEX brin_test_b_idx ON brin_test USING brin (b) WITH (pages_per_range = 2);
+VACUUM ANALYZE brin_test;
+
+-- Ensure brin index is used when columns are perfectly correlated
+EXPLAIN (COSTS OFF) SELECT * FROM brin_test WHERE a = 1;
+-- Ensure brin index is not used when values are not correlated
+EXPLAIN (COSTS OFF) SELECT * FROM brin_test WHERE b = 1;

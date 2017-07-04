@@ -3,7 +3,7 @@
  * parse_target.c
  *	  handle target lists
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -91,7 +91,17 @@ transformTargetEntry(ParseState *pstate,
 {
 	/* Transform the node if caller didn't do it already */
 	if (expr == NULL)
-		expr = transformExpr(pstate, node, exprKind);
+	{
+		/*
+		 * If it's a SetToDefault node and we should allow that, pass it
+		 * through unmodified.  (transformExpr will throw the appropriate
+		 * error if we're disallowing it.)
+		 */
+		if (exprKind == EXPR_KIND_UPDATE_SOURCE && IsA(node, SetToDefault))
+			expr = node;
+		else
+			expr = transformExpr(pstate, node, exprKind);
+	}
 
 	if (colname == NULL && !resjunk)
 	{
@@ -122,10 +132,14 @@ transformTargetList(ParseState *pstate, List *targetlist,
 					ParseExprKind exprKind)
 {
 	List	   *p_target = NIL;
+	bool		expand_star;
 	ListCell   *o_target;
 
 	/* Shouldn't have any leftover multiassign items at start */
 	Assert(pstate->p_multiassign_exprs == NIL);
+
+	/* Expand "something.*" in SELECT and RETURNING, but not UPDATE */
+	expand_star = (exprKind != EXPR_KIND_UPDATE_SOURCE);
 
 	foreach(o_target, targetlist)
 	{
@@ -136,35 +150,42 @@ transformTargetList(ParseState *pstate, List *targetlist,
 		 * "something", the star could appear as the last field in ColumnRef,
 		 * or as the last indirection item in A_Indirection.
 		 */
-		if (IsA(res->val, ColumnRef))
+		if (expand_star)
 		{
-			ColumnRef  *cref = (ColumnRef *) res->val;
-
-			if (IsA(llast(cref->fields), A_Star))
+			if (IsA(res->val, ColumnRef))
 			{
-				/* It is something.*, expand into multiple items */
-				p_target = list_concat(p_target,
-									   ExpandColumnRefStar(pstate, cref,
-														   true));
-				continue;
+				ColumnRef  *cref = (ColumnRef *) res->val;
+
+				if (IsA(llast(cref->fields), A_Star))
+				{
+					/* It is something.*, expand into multiple items */
+					p_target = list_concat(p_target,
+										   ExpandColumnRefStar(pstate,
+															   cref,
+															   true));
+					continue;
+				}
 			}
-		}
-		else if (IsA(res->val, A_Indirection))
-		{
-			A_Indirection *ind = (A_Indirection *) res->val;
-
-			if (IsA(llast(ind->indirection), A_Star))
+			else if (IsA(res->val, A_Indirection))
 			{
-				/* It is something.*, expand into multiple items */
-				p_target = list_concat(p_target,
-									   ExpandIndirectionStar(pstate, ind,
-															 true, exprKind));
-				continue;
+				A_Indirection *ind = (A_Indirection *) res->val;
+
+				if (IsA(llast(ind->indirection), A_Star))
+				{
+					/* It is something.*, expand into multiple items */
+					p_target = list_concat(p_target,
+										   ExpandIndirectionStar(pstate,
+																 ind,
+																 true,
+																 exprKind));
+					continue;
+				}
 			}
 		}
 
 		/*
-		 * Not "something.*", so transform as a single expression
+		 * Not "something.*", or we want to treat that as a plain whole-row
+		 * variable, so transform as a single expression
 		 */
 		p_target = lappend(p_target,
 						   transformTargetEntry(pstate,
@@ -199,10 +220,13 @@ transformTargetList(ParseState *pstate, List *targetlist,
  * the input list elements are bare expressions without ResTarget decoration,
  * and the output elements are likewise just expressions without TargetEntry
  * decoration.  We use this for ROW() and VALUES() constructs.
+ *
+ * exprKind is not enough to tell us whether to allow SetToDefault, so
+ * an additional flag is needed for that.
  */
 List *
 transformExpressionList(ParseState *pstate, List *exprlist,
-						ParseExprKind exprKind)
+						ParseExprKind exprKind, bool allowDefault)
 {
 	List	   *result = NIL;
 	ListCell   *lc;
@@ -244,10 +268,17 @@ transformExpressionList(ParseState *pstate, List *exprlist,
 		}
 
 		/*
-		 * Not "something.*", so transform as a single expression
+		 * Not "something.*", so transform as a single expression.  If it's a
+		 * SetToDefault node and we should allow that, pass it through
+		 * unmodified.  (transformExpr will throw the appropriate error if
+		 * we're disallowing it.)
 		 */
-		result = lappend(result,
-						 transformExpr(pstate, e, exprKind));
+		if (allowDefault && IsA(e, SetToDefault))
+			 /* do nothing */ ;
+		else
+			e = transformExpr(pstate, e, exprKind);
+
+		result = lappend(result, e);
 	}
 
 	/* Shouldn't have any multiassign items here */
@@ -258,12 +289,41 @@ transformExpressionList(ParseState *pstate, List *exprlist,
 
 
 /*
+ * resolveTargetListUnknowns()
+ *		Convert any unknown-type targetlist entries to type TEXT.
+ *
+ * We do this after we've exhausted all other ways of identifying the output
+ * column types of a query.
+ */
+void
+resolveTargetListUnknowns(ParseState *pstate, List *targetlist)
+{
+	ListCell   *l;
+
+	foreach(l, targetlist)
+	{
+		TargetEntry *tle = (TargetEntry *) lfirst(l);
+		Oid			restype = exprType((Node *) tle->expr);
+
+		if (restype == UNKNOWNOID)
+		{
+			tle->expr = (Expr *) coerce_type(pstate, (Node *) tle->expr,
+											 restype, TEXTOID, -1,
+											 COERCION_IMPLICIT,
+											 COERCE_IMPLICIT_CAST,
+											 -1);
+		}
+	}
+}
+
+
+/*
  * markTargetListOrigins()
  *		Mark targetlist columns that are simple Vars with the source
  *		table's OID and column number.
  *
- * Currently, this is done only for SELECT targetlists, since we only
- * need the info if we are going to send it to the frontend.
+ * Currently, this is done only for SELECT targetlists and RETURNING lists,
+ * since we only need the info if we are going to send it to the frontend.
  */
 void
 markTargetListOrigins(ParseState *pstate, List *targetlist)
@@ -336,6 +396,8 @@ markTargetListOrigin(ParseState *pstate, TargetEntry *tle,
 			break;
 		case RTE_FUNCTION:
 		case RTE_VALUES:
+		case RTE_TABLEFUNC:
+		case RTE_NAMEDTUPLESTORE:
 			/* not a simple relation, leave it unmarked */
 			break;
 		case RTE_CTE:
@@ -525,7 +587,7 @@ transformAssignedExpr(ParseState *pstate,
 							colname,
 							format_type_be(attrtype),
 							format_type_be(type_id)),
-				 errhint("You will need to rewrite or cast the expression."),
+					 errhint("You will need to rewrite or cast the expression."),
 					 parser_errposition(pstate, exprLocation(orig_expr))));
 	}
 
@@ -715,7 +777,7 @@ transformAssignmentIndirection(ParseState *pstate,
 						 parser_errposition(pstate, location)));
 
 			get_atttypetypmodcoll(typrelid, attnum,
-								&fieldTypeId, &fieldTypMod, &fieldCollation);
+								  &fieldTypeId, &fieldTypMod, &fieldCollation);
 
 			/* recurse to create appropriate RHS for field assign */
 			rhs = transformAssignmentIndirection(pstate,
@@ -775,7 +837,7 @@ transformAssignmentIndirection(ParseState *pstate,
 							targetName,
 							format_type_be(targetTypeId),
 							format_type_be(exprType(rhs))),
-				 errhint("You will need to rewrite or cast the expression."),
+					 errhint("You will need to rewrite or cast the expression."),
 					 parser_errposition(pstate, location)));
 		else
 			ereport(ERROR,
@@ -785,7 +847,7 @@ transformAssignmentIndirection(ParseState *pstate,
 							targetName,
 							format_type_be(targetTypeId),
 							format_type_be(exprType(rhs))),
-				 errhint("You will need to rewrite or cast the expression."),
+					 errhint("You will need to rewrite or cast the expression."),
 					 parser_errposition(pstate, location)));
 	}
 
@@ -937,9 +999,9 @@ checkInsertTargets(ParseState *pstate, List *cols, List **attrnos)
 			if (attrno == InvalidAttrNumber)
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_COLUMN),
-					errmsg("column \"%s\" of relation \"%s\" does not exist",
-						   name,
-						 RelationGetRelationName(pstate->p_target_relation)),
+						 errmsg("column \"%s\" of relation \"%s\" does not exist",
+								name,
+								RelationGetRelationName(pstate->p_target_relation)),
 						 parser_errposition(pstate, col->location)));
 
 			/*
@@ -1444,6 +1506,7 @@ expandRecordVariable(ParseState *pstate, Var *var, int levelsup)
 	{
 		case RTE_RELATION:
 		case RTE_VALUES:
+		case RTE_NAMEDTUPLESTORE:
 
 			/*
 			 * This case should not occur: a column of a table or values list
@@ -1495,6 +1558,12 @@ expandRecordVariable(ParseState *pstate, Var *var, int levelsup)
 			/*
 			 * We couldn't get here unless a function is declared with one of
 			 * its result columns as RECORD, which is not allowed.
+			 */
+			break;
+		case RTE_TABLEFUNC:
+
+			/*
+			 * Table function cannot have columns with RECORD type.
 			 */
 			break;
 		case RTE_CTE:

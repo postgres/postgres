@@ -4,7 +4,7 @@
  *	  prototypes for portalcmds.c.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/commands/portalcmds.h
@@ -18,7 +18,7 @@
 #include "utils/portal.h"
 
 
-extern void PerformCursorOpen(PlannedStmt *stmt, ParamListInfo params,
+extern void PerformCursorOpen(DeclareCursorStmt *cstmt, ParamListInfo params,
 				  const char *queryString, bool isTopLevel);
 
 extern void PerformPortalFetch(FetchStmt *stmt, DestReceiver *dest,
@@ -30,4 +30,4 @@ extern void PortalCleanup(Portal portal);
 
 extern void PersistHoldablePortal(Portal portal);
 
-#endif   /* PORTALCMDS_H */
+#endif							/* PORTALCMDS_H */

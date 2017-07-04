@@ -522,7 +522,7 @@ CREATE TABLE shoe_data (
 	shoename   char(10),      -- primary key
 	sh_avail   integer,       -- available # of pairs
 	slcolor    char(10),      -- preferred shoelace color
-	slminlen   float,         -- miminum shoelace length
+	slminlen   float,         -- minimum shoelace length
 	slmaxlen   float,         -- maximum shoelace length
 	slunit     char(8)        -- length unit
 );
@@ -898,6 +898,16 @@ select reltoastrelid, relkind, relfrozenxid
 
 drop view fooview;
 
+-- trying to convert a partitioned table to view is not allowed
+create table fooview (x int, y text) partition by list (x);
+create rule "_RETURN" as on select to fooview do instead
+  select 1 as x, 'aaa'::text as y;
+
+-- nor can one convert a partition to view
+create table fooview_part partition of fooview for values in (1);
+create rule "_RETURN" as on select to fooview_part do instead
+  select 1 as x, 'aaa'::text as y;
+
 --
 -- check for planner problems with complex inherited UPDATES
 --
@@ -1150,6 +1160,7 @@ SELECT pg_get_constraintdef(0);
 SELECT pg_get_functiondef(0);
 SELECT pg_get_indexdef(0);
 SELECT pg_get_ruledef(0);
+SELECT pg_get_statisticsobjdef(0);
 SELECT pg_get_triggerdef(0);
 SELECT pg_get_viewdef(0);
 SELECT pg_get_function_arguments(0);
@@ -1157,3 +1168,12 @@ SELECT pg_get_function_identity_arguments(0);
 SELECT pg_get_function_result(0);
 SELECT pg_get_function_arg_default(0, 0);
 SELECT pg_get_function_arg_default('pg_class'::regclass, 0);
+SELECT pg_get_partkeydef(0);
+
+-- test rename for a rule defined on a partitioned table
+CREATE TABLE parted_table (a int) PARTITION BY LIST (a);
+CREATE TABLE parted_table_1 PARTITION OF parted_table FOR VALUES IN (1);
+CREATE RULE parted_table_insert AS ON INSERT to parted_table
+    DO INSTEAD INSERT INTO parted_table_1 VALUES (NEW.*);
+ALTER RULE parted_table_insert ON parted_table RENAME TO parted_table_insert_redirect;
+DROP TABLE parted_table;

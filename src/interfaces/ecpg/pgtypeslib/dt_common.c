@@ -30,7 +30,7 @@ static datetkn datetktbl[] = {
 	{"ahst", TZ, -36000},		/* Alaska-Hawaii Std Time */
 	{"akdt", DTZ, -28800},		/* Alaska Daylight Time */
 	{"akst", DTZ, -32400},		/* Alaska Standard Time */
-	{"allballs", RESERV, DTK_ZULU},		/* 00:00:00 */
+	{"allballs", RESERV, DTK_ZULU}, /* 00:00:00 */
 	{"almst", TZ, 25200},		/* Almaty Savings Time */
 	{"almt", TZ, 21600},		/* Almaty Time */
 	{"am", AMPM, AM},
@@ -201,12 +201,12 @@ static datetkn datetktbl[] = {
 	idt							/* Israeli, Iran, Indian Daylight Time */
 #endif
 	{LATE, RESERV, DTK_LATE},	/* "infinity" reserved for "late time" */
-	{INVALID, RESERV, DTK_INVALID},		/* "invalid" reserved for bad time */
+	{INVALID, RESERV, DTK_INVALID}, /* "invalid" reserved for bad time */
 	{"iot", TZ, 18000},			/* Indian Chagos Time */
 	{"irkst", DTZ, 32400},		/* Irkutsk Summer Time */
 	{"irkt", TZ, 28800},		/* Irkutsk Time */
 	{"irt", TZ, 12600},			/* Iran Time */
-	{"isodow", UNITS, DTK_ISODOW},		/* ISO day of week, Sunday == 7 */
+	{"isodow", UNITS, DTK_ISODOW},	/* ISO day of week, Sunday == 7 */
 #if 0
 	isst
 #endif
@@ -425,33 +425,33 @@ static datetkn deltatktbl[] = {
 	{"@", IGNORE_DTF, 0},		/* postgres relative prefix */
 	{DAGO, AGO, 0},				/* "ago" indicates negative time offset */
 	{"c", UNITS, DTK_CENTURY},	/* "century" relative */
-	{"cent", UNITS, DTK_CENTURY},		/* "century" relative */
+	{"cent", UNITS, DTK_CENTURY},	/* "century" relative */
 	{"centuries", UNITS, DTK_CENTURY},	/* "centuries" relative */
-	{DCENTURY, UNITS, DTK_CENTURY},		/* "century" relative */
+	{DCENTURY, UNITS, DTK_CENTURY}, /* "century" relative */
 	{"d", UNITS, DTK_DAY},		/* "day" relative */
 	{DDAY, UNITS, DTK_DAY},		/* "day" relative */
 	{"days", UNITS, DTK_DAY},	/* "days" relative */
 	{"dec", UNITS, DTK_DECADE}, /* "decade" relative */
-	{DDECADE, UNITS, DTK_DECADE},		/* "decade" relative */
-	{"decades", UNITS, DTK_DECADE},		/* "decades" relative */
+	{DDECADE, UNITS, DTK_DECADE},	/* "decade" relative */
+	{"decades", UNITS, DTK_DECADE}, /* "decades" relative */
 	{"decs", UNITS, DTK_DECADE},	/* "decades" relative */
 	{"h", UNITS, DTK_HOUR},		/* "hour" relative */
 	{DHOUR, UNITS, DTK_HOUR},	/* "hour" relative */
 	{"hours", UNITS, DTK_HOUR}, /* "hours" relative */
 	{"hr", UNITS, DTK_HOUR},	/* "hour" relative */
 	{"hrs", UNITS, DTK_HOUR},	/* "hours" relative */
-	{INVALID, RESERV, DTK_INVALID},		/* reserved for invalid time */
+	{INVALID, RESERV, DTK_INVALID}, /* reserved for invalid time */
 	{"m", UNITS, DTK_MINUTE},	/* "minute" relative */
-	{"microsecon", UNITS, DTK_MICROSEC},		/* "microsecond" relative */
-	{"mil", UNITS, DTK_MILLENNIUM},		/* "millennium" relative */
-	{"millennia", UNITS, DTK_MILLENNIUM},		/* "millennia" relative */
-	{DMILLENNIUM, UNITS, DTK_MILLENNIUM},		/* "millennium" relative */
-	{"millisecon", UNITS, DTK_MILLISEC},		/* relative */
+	{"microsecon", UNITS, DTK_MICROSEC},	/* "microsecond" relative */
+	{"mil", UNITS, DTK_MILLENNIUM}, /* "millennium" relative */
+	{"millennia", UNITS, DTK_MILLENNIUM},	/* "millennia" relative */
+	{DMILLENNIUM, UNITS, DTK_MILLENNIUM},	/* "millennium" relative */
+	{"millisecon", UNITS, DTK_MILLISEC},	/* relative */
 	{"mils", UNITS, DTK_MILLENNIUM},	/* "millennia" relative */
 	{"min", UNITS, DTK_MINUTE}, /* "minute" relative */
 	{"mins", UNITS, DTK_MINUTE},	/* "minutes" relative */
-	{DMINUTE, UNITS, DTK_MINUTE},		/* "minute" relative */
-	{"minutes", UNITS, DTK_MINUTE},		/* "minutes" relative */
+	{DMINUTE, UNITS, DTK_MINUTE},	/* "minute" relative */
+	{"minutes", UNITS, DTK_MINUTE}, /* "minutes" relative */
 	{"mon", UNITS, DTK_MONTH},	/* "months" relative */
 	{"mons", UNITS, DTK_MONTH}, /* "months" relative */
 	{DMONTH, UNITS, DTK_MONTH}, /* "month" relative */
@@ -462,7 +462,7 @@ static datetkn deltatktbl[] = {
 	{"mseconds", UNITS, DTK_MILLISEC},
 	{"msecs", UNITS, DTK_MILLISEC},
 	{"qtr", UNITS, DTK_QUARTER},	/* "quarter" relative */
-	{DQUARTER, UNITS, DTK_QUARTER},		/* "quarter" relative */
+	{DQUARTER, UNITS, DTK_QUARTER}, /* "quarter" relative */
 	{"s", UNITS, DTK_SECOND},
 	{"sec", UNITS, DTK_SECOND},
 	{DSECOND, UNITS, DTK_SECOND},
@@ -470,13 +470,13 @@ static datetkn deltatktbl[] = {
 	{"secs", UNITS, DTK_SECOND},
 	{DTIMEZONE, UNITS, DTK_TZ}, /* "timezone" time offset */
 	{"timezone_h", UNITS, DTK_TZ_HOUR}, /* timezone hour units */
-	{"timezone_m", UNITS, DTK_TZ_MINUTE},		/* timezone minutes units */
+	{"timezone_m", UNITS, DTK_TZ_MINUTE},	/* timezone minutes units */
 	{"undefined", RESERV, DTK_INVALID}, /* pre-v6.1 invalid time */
 	{"us", UNITS, DTK_MICROSEC},	/* "microsecond" relative */
-	{"usec", UNITS, DTK_MICROSEC},		/* "microsecond" relative */
+	{"usec", UNITS, DTK_MICROSEC},	/* "microsecond" relative */
 	{DMICROSEC, UNITS, DTK_MICROSEC},	/* "microsecond" relative */
 	{"useconds", UNITS, DTK_MICROSEC},	/* "microseconds" relative */
-	{"usecs", UNITS, DTK_MICROSEC},		/* "microseconds" relative */
+	{"usecs", UNITS, DTK_MICROSEC}, /* "microseconds" relative */
 	{"w", UNITS, DTK_WEEK},		/* "week" relative */
 	{DWEEK, UNITS, DTK_WEEK},	/* "week" relative */
 	{"weeks", UNITS, DTK_WEEK}, /* "weeks" relative */
@@ -561,7 +561,7 @@ DecodeUnits(int field, char *lowtoken, int *val)
 	}
 
 	return type;
-}	/* DecodeUnits() */
+}								/* DecodeUnits() */
 
 /*
  * Calendar time to Julian date conversions.
@@ -604,7 +604,7 @@ date2j(int y, int m, int d)
 	julian += 7834 * m / 256 + d;
 
 	return julian;
-}	/* date2j() */
+}								/* date2j() */
 
 void
 j2date(int jd, int *year, int *month, int *day)
@@ -630,7 +630,7 @@ j2date(int jd, int *year, int *month, int *day)
 	*month = (quad + 10) % 12 + 1;
 
 	return;
-}	/* j2date() */
+}								/* j2date() */
 
 /* DecodeSpecial()
  * Decode text string using lookup table.
@@ -666,13 +666,13 @@ DecodeSpecial(int field, char *lowtoken, int *val)
 	}
 
 	return type;
-}	/* DecodeSpecial() */
+}								/* DecodeSpecial() */
 
 /* EncodeDateOnly()
  * Encode date as local time.
  */
 int
-EncodeDateOnly(struct tm * tm, int style, char *str, bool EuroDates)
+EncodeDateOnly(struct tm *tm, int style, char *str, bool EuroDates)
 {
 	if (tm->tm_mon < 1 || tm->tm_mon > MONTHS_PER_YEAR)
 		return -1;
@@ -725,7 +725,7 @@ EncodeDateOnly(struct tm * tm, int style, char *str, bool EuroDates)
 	}
 
 	return TRUE;
-}	/* EncodeDateOnly() */
+}								/* EncodeDateOnly() */
 
 void
 TrimTrailingZeros(char *str)
@@ -759,7 +759,7 @@ TrimTrailingZeros(char *str)
  *	European - dd/mm/yyyy
  */
 int
-EncodeDateTime(struct tm * tm, fsec_t fsec, bool print_tz, int tz, const char *tzn, int style, char *str, bool EuroDates)
+EncodeDateTime(struct tm *tm, fsec_t fsec, bool print_tz, int tz, const char *tzn, int style, char *str, bool EuroDates)
 {
 	int			day,
 				hour,
@@ -783,19 +783,10 @@ EncodeDateTime(struct tm * tm, fsec_t fsec, bool print_tz, int tz, const char *t
 			/*
 			 * Print fractional seconds if any.  The field widths here should
 			 * be at least equal to MAX_TIMESTAMP_PRECISION.
-			 *
-			 * In float mode, don't print fractional seconds before 1 AD,
-			 * since it's unlikely there's any precision left ...
 			 */
-#ifdef HAVE_INT64_TIMESTAMP
 			if (fsec != 0)
 			{
 				sprintf(str + strlen(str), ":%02d.%06d", tm->tm_sec, fsec);
-#else
-			if ((fsec != 0) && (tm->tm_year > 0))
-			{
-				sprintf(str + strlen(str), ":%09.6f", tm->tm_sec + fsec);
-#endif
 				TrimTrailingZeros(str);
 			}
 			else
@@ -830,19 +821,10 @@ EncodeDateTime(struct tm * tm, fsec_t fsec, bool print_tz, int tz, const char *t
 			/*
 			 * Print fractional seconds if any.  The field widths here should
 			 * be at least equal to MAX_TIMESTAMP_PRECISION.
-			 *
-			 * In float mode, don't print fractional seconds before 1 AD,
-			 * since it's unlikely there's any precision left ...
 			 */
-#ifdef HAVE_INT64_TIMESTAMP
 			if (fsec != 0)
 			{
 				sprintf(str + strlen(str), ":%02d.%06d", tm->tm_sec, fsec);
-#else
-			if (fsec != 0 && tm->tm_year > 0)
-			{
-				sprintf(str + strlen(str), ":%09.6f", tm->tm_sec + fsec);
-#endif
 				TrimTrailingZeros(str);
 			}
 			else
@@ -885,19 +867,10 @@ EncodeDateTime(struct tm * tm, fsec_t fsec, bool print_tz, int tz, const char *t
 			/*
 			 * Print fractional seconds if any.  The field widths here should
 			 * be at least equal to MAX_TIMESTAMP_PRECISION.
-			 *
-			 * In float mode, don't print fractional seconds before 1 AD,
-			 * since it's unlikely there's any precision left ...
 			 */
-#ifdef HAVE_INT64_TIMESTAMP
 			if (fsec != 0)
 			{
 				sprintf(str + strlen(str), ":%02d.%06d", tm->tm_sec, fsec);
-#else
-			if (fsec != 0 && tm->tm_year > 0)
-			{
-				sprintf(str + strlen(str), ":%09.6f", tm->tm_sec + fsec);
-#endif
 				TrimTrailingZeros(str);
 			}
 			else
@@ -942,19 +915,10 @@ EncodeDateTime(struct tm * tm, fsec_t fsec, bool print_tz, int tz, const char *t
 			/*
 			 * Print fractional seconds if any.  The field widths here should
 			 * be at least equal to MAX_TIMESTAMP_PRECISION.
-			 *
-			 * In float mode, don't print fractional seconds before 1 AD,
-			 * since it's unlikely there's any precision left ...
 			 */
-#ifdef HAVE_INT64_TIMESTAMP
 			if (fsec != 0)
 			{
 				sprintf(str + strlen(str), ":%02d.%06d", tm->tm_sec, fsec);
-#else
-			if (fsec != 0 && tm->tm_year > 0)
-			{
-				sprintf(str + strlen(str), ":%09.6f", tm->tm_sec + fsec);
-#endif
 				TrimTrailingZeros(str);
 			}
 			else
@@ -989,10 +953,10 @@ EncodeDateTime(struct tm * tm, fsec_t fsec, bool print_tz, int tz, const char *t
 	}
 
 	return TRUE;
-}	/* EncodeDateTime() */
+}								/* EncodeDateTime() */
 
 int
-GetEpochTime(struct tm * tm)
+GetEpochTime(struct tm *tm)
 {
 	struct tm  *t0;
 	time_t		epoch = 0;
@@ -1012,10 +976,10 @@ GetEpochTime(struct tm * tm)
 	}
 
 	return -1;
-}	/* GetEpochTime() */
+}								/* GetEpochTime() */
 
 static void
-abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char **tzn)
+abstime2tm(AbsoluteTime _time, int *tzp, struct tm *tm, char **tzn)
 {
 	time_t		time = (time_t) _time;
 	struct tm  *tx;
@@ -1100,7 +1064,7 @@ abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char **tzn)
 }
 
 void
-GetCurrentDateTime(struct tm * tm)
+GetCurrentDateTime(struct tm *tm)
 {
 	int			tz;
 
@@ -1110,29 +1074,16 @@ GetCurrentDateTime(struct tm * tm)
 void
 dt2time(double jd, int *hour, int *min, int *sec, fsec_t *fsec)
 {
-#ifdef HAVE_INT64_TIMESTAMP
 	int64		time;
-#else
-	double		time;
-#endif
 
 	time = jd;
-#ifdef HAVE_INT64_TIMESTAMP
 	*hour = time / USECS_PER_HOUR;
 	time -= (*hour) * USECS_PER_HOUR;
 	*min = time / USECS_PER_MINUTE;
 	time -= (*min) * USECS_PER_MINUTE;
 	*sec = time / USECS_PER_SEC;
 	*fsec = time - (*sec * USECS_PER_SEC);
-#else
-	*hour = time / SECS_PER_HOUR;
-	time -= (*hour) * SECS_PER_HOUR;
-	*min = time / SECS_PER_MINUTE;
-	time -= (*min) * SECS_PER_MINUTE;
-	*sec = time;
-	*fsec = time - *sec;
-#endif
-}	/* dt2time() */
+}								/* dt2time() */
 
 
 
@@ -1143,7 +1094,7 @@ dt2time(double jd, int *hour, int *min, int *sec, fsec_t *fsec)
  */
 static int
 DecodeNumberField(int len, char *str, int fmask,
-				  int *tmask, struct tm * tm, fsec_t *fsec, int *is2digits)
+				  int *tmask, struct tm *tm, fsec_t *fsec, int *is2digits)
 {
 	char	   *cp;
 
@@ -1153,7 +1104,6 @@ DecodeNumberField(int len, char *str, int fmask,
 	 */
 	if ((cp = strchr(str, '.')) != NULL)
 	{
-#ifdef HAVE_INT64_TIMESTAMP
 		char		fstr[7];
 		int			i;
 
@@ -1164,16 +1114,13 @@ DecodeNumberField(int len, char *str, int fmask,
 		 * string with those digits, zero-padded on the right, and then do the
 		 * conversion to an integer.
 		 *
-		 * XXX This truncates the seventh digit, unlike rounding it as do the
-		 * backend and the !HAVE_INT64_TIMESTAMP case.
+		 * XXX This truncates the seventh digit, unlike rounding it as the
+		 * backend does.
 		 */
 		for (i = 0; i < 6; i++)
 			fstr[i] = *cp != '\0' ? *cp++ : '0';
 		fstr[i] = '\0';
 		*fsec = strtol(fstr, NULL, 10);
-#else
-		*fsec = strtod(cp, NULL);
-#endif
 		*cp = '\0';
 		len = strlen(str);
 	}
@@ -1249,7 +1196,7 @@ DecodeNumberField(int len, char *str, int fmask,
 	}
 
 	return -1;
-}	/* DecodeNumberField() */
+}								/* DecodeNumberField() */
 
 
 /* DecodeNumber()
@@ -1257,7 +1204,7 @@ DecodeNumberField(int len, char *str, int fmask,
  */
 static int
 DecodeNumber(int flen, char *str, int fmask,
-	int *tmask, struct tm * tm, fsec_t *fsec, int *is2digits, bool EuroDates)
+			 int *tmask, struct tm *tm, fsec_t *fsec, int *is2digits, bool EuroDates)
 {
 	int			val;
 	char	   *cp;
@@ -1358,14 +1305,14 @@ DecodeNumber(int flen, char *str, int fmask,
 		return -1;
 
 	return 0;
-}	/* DecodeNumber() */
+}								/* DecodeNumber() */
 
 /* DecodeDate()
  * Decode date string which includes delimiters.
  * Insist on a complete set of fields.
  */
 static int
-DecodeDate(char *str, int fmask, int *tmask, struct tm * tm, bool EuroDates)
+DecodeDate(char *str, int fmask, int *tmask, struct tm *tm, bool EuroDates)
 {
 	fsec_t		fsec;
 
@@ -1485,7 +1432,7 @@ DecodeDate(char *str, int fmask, int *tmask, struct tm * tm, bool EuroDates)
 	}
 
 	return 0;
-}	/* DecodeDate() */
+}								/* DecodeDate() */
 
 
 /* DecodeTime()
@@ -1494,7 +1441,7 @@ DecodeDate(char *str, int fmask, int *tmask, struct tm * tm, bool EuroDates)
  *	can be used to represent time spans.
  */
 int
-DecodeTime(char *str, int *tmask, struct tm * tm, fsec_t *fsec)
+DecodeTime(char *str, int *tmask, struct tm *tm, fsec_t *fsec)
 {
 	char	   *cp;
 
@@ -1520,7 +1467,6 @@ DecodeTime(char *str, int *tmask, struct tm * tm, fsec_t *fsec)
 			*fsec = 0;
 		else if (*cp == '.')
 		{
-#ifdef HAVE_INT64_TIMESTAMP
 			char		fstr[7];
 			int			i;
 
@@ -1531,17 +1477,13 @@ DecodeTime(char *str, int *tmask, struct tm * tm, fsec_t *fsec)
 			 * string with those digits, zero-padded on the right, and then do
 			 * the conversion to an integer.
 			 *
-			 * XXX This truncates the seventh digit, unlike rounding it as do
-			 * the backend and the !HAVE_INT64_TIMESTAMP case.
+			 * XXX This truncates the seventh digit, unlike rounding it as the
+			 * backend does.
 			 */
 			for (i = 0; i < 6; i++)
 				fstr[i] = *cp != '\0' ? *cp++ : '0';
 			fstr[i] = '\0';
 			*fsec = strtol(fstr, &cp, 10);
-#else
-			str = cp;
-			*fsec = strtod(str, &cp);
-#endif
 			if (*cp != '\0')
 				return -1;
 		}
@@ -1550,18 +1492,12 @@ DecodeTime(char *str, int *tmask, struct tm * tm, fsec_t *fsec)
 	}
 
 	/* do a sanity check */
-#ifdef HAVE_INT64_TIMESTAMP
 	if (tm->tm_hour < 0 || tm->tm_min < 0 || tm->tm_min > 59 ||
 		tm->tm_sec < 0 || tm->tm_sec > 59 || *fsec >= USECS_PER_SEC)
 		return -1;
-#else
-	if (tm->tm_hour < 0 || tm->tm_min < 0 || tm->tm_min > 59 ||
-		tm->tm_sec < 0 || tm->tm_sec > 59 || *fsec >= 1)
-		return -1;
-#endif
 
 	return 0;
-}	/* DecodeTime() */
+}								/* DecodeTime() */
 
 /* DecodeTimezone()
  * Interpret string as a numeric timezone.
@@ -1605,7 +1541,7 @@ DecodeTimezone(char *str, int *tzp)
 
 	*tzp = -tz;
 	return *cp != '\0';
-}	/* DecodeTimezone() */
+}								/* DecodeTimezone() */
 
 
 /* DecodePosixTimezone()
@@ -1647,7 +1583,7 @@ DecodePosixTimezone(char *str, int *tzp)
 	}
 
 	return 0;
-}	/* DecodePosixTimezone() */
+}								/* DecodePosixTimezone() */
 
 /* ParseDateTime()
  * Break string into tokens based on a date/time context.
@@ -1827,7 +1763,7 @@ ParseDateTime(char *timestr, char *lowstr,
 	*numfields = nf;
 
 	return 0;
-}	/* ParseDateTime() */
+}								/* ParseDateTime() */
 
 
 /* DecodeDateTime()
@@ -1852,7 +1788,7 @@ ParseDateTime(char *timestr, char *lowstr,
  */
 int
 DecodeDateTime(char **field, int *ftype, int nf,
-			   int *dtype, struct tm * tm, fsec_t *fsec, bool EuroDates)
+			   int *dtype, struct tm *tm, fsec_t *fsec, bool EuroDates)
 {
 	int			fmask = 0,
 				tmask,
@@ -1958,7 +1894,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						 * time
 						 */
 						if ((ftype[i] = DecodeNumberField(strlen(field[i]), field[i], fmask,
-										  &tmask, tm, fsec, &is2digits)) < 0)
+														  &tmask, tm, fsec, &is2digits)) < 0)
 							return -1;
 
 						/*
@@ -2105,11 +2041,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 								frac = strtod(cp, &cp);
 								if (*cp != '\0')
 									return -1;
-#ifdef HAVE_INT64_TIMESTAMP
 								*fsec = frac * 1000000;
-#else
-								*fsec = frac;
-#endif
 							}
 							break;
 
@@ -2135,18 +2067,14 @@ DecodeDateTime(char **field, int *ftype, int nf,
 									return -1;
 
 								tmask |= DTK_TIME_M;
-#ifdef HAVE_INT64_TIMESTAMP
 								dt2time((time * USECS_PER_DAY), &tm->tm_hour, &tm->tm_min, &tm->tm_sec, fsec);
-#else
-								dt2time((time * SECS_PER_DAY), &tm->tm_hour, &tm->tm_min, &tm->tm_sec, fsec);
-#endif
 							}
 							break;
 
 						case DTK_TIME:
 							/* previous field was "t" for ISO time */
 							if ((ftype[i] = DecodeNumberField(strlen(field[i]), field[i], (fmask | DTK_DATE_M),
-										  &tmask, tm, fsec, &is2digits)) < 0)
+															  &tmask, tm, fsec, &is2digits)) < 0)
 								return -1;
 
 							if (tmask != DTK_TIME_M)
@@ -2184,18 +2112,18 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						 * Example: 20011223 or 040506
 						 */
 						if ((ftype[i] = DecodeNumberField(flen, field[i], fmask,
-										  &tmask, tm, fsec, &is2digits)) < 0)
+														  &tmask, tm, fsec, &is2digits)) < 0)
 							return -1;
 					}
 					else if (flen > 4)
 					{
 						if ((ftype[i] = DecodeNumberField(flen, field[i], fmask,
-										  &tmask, tm, fsec, &is2digits)) < 0)
+														  &tmask, tm, fsec, &is2digits)) < 0)
 							return -1;
 					}
 					/* otherwise it is a single date/time field... */
 					else if (DecodeNumber(flen, field[i], fmask,
-							   &tmask, tm, fsec, &is2digits, EuroDates) != 0)
+										  &tmask, tm, fsec, &is2digits, EuroDates) != 0)
 						return -1;
 				}
 				break;
@@ -2223,7 +2151,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 								*dtype = DTK_DATE;
 								GetCurrentDateTime(tm);
 								j2date(date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - 1,
-									&tm->tm_year, &tm->tm_mon, &tm->tm_mday);
+									   &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
 								tm->tm_hour = 0;
 								tm->tm_min = 0;
 								tm->tm_sec = 0;
@@ -2243,7 +2171,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 								*dtype = DTK_DATE;
 								GetCurrentDateTime(tm);
 								j2date(date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) + 1,
-									&tm->tm_year, &tm->tm_mon, &tm->tm_mday);
+									   &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
 								tm->tm_hour = 0;
 								tm->tm_min = 0;
 								tm->tm_sec = 0;
@@ -2423,7 +2351,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 	}
 
 	return 0;
-}	/* DecodeDateTime() */
+}								/* DecodeDateTime() */
 
 /* Function works as follows:
  *
@@ -2536,7 +2464,7 @@ find_end_token(char *str, char *fmt)
 }
 
 static int
-pgtypes_defmt_scan(union un_fmt_comb * scan_val, int scan_type, char **pstr, char *pfmt)
+pgtypes_defmt_scan(union un_fmt_comb *scan_val, int scan_type, char **pstr, char *pfmt)
 {
 	/*
 	 * scan everything between pstr and pstr_end. This is not including the

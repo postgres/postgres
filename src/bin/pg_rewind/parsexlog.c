@@ -3,7 +3,7 @@
  * parsexlog.c
  *	  Functions for reading Write-Ahead-Log
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *-------------------------------------------------------------------------
@@ -29,7 +29,7 @@
  * RmgrNames is an array of resource manager names, to make error messages
  * a bit nicer.
  */
-#define PG_RMGR(symname,name,redo,desc,identify,startup,cleanup) \
+#define PG_RMGR(symname,name,redo,desc,identify,startup,cleanup,mask) \
   name,
 
 static const char *RmgrNames[RM_MAX_ID + 1] = {
@@ -54,7 +54,7 @@ static int SimpleXLogPageRead(XLogReaderState *xlogreader,
 				   TimeLineID *pageTLI);
 
 /*
- * Read WAL from the datadir/pg_xlog, starting from 'startpoint' on timeline
+ * Read WAL from the datadir/pg_wal, starting from 'startpoint' on timeline
  * index 'tliIndex' in target timeline history, until 'endpoint'. Make note of
  * the data blocks touched by the WAL records, and return them in a page map.
  */
@@ -149,7 +149,7 @@ readOneRecord(const char *datadir, XLogRecPtr ptr, int tliIndex)
 }
 
 /*
- * Find the previous checkpoint preceding given WAL position.
+ * Find the previous checkpoint preceding given WAL location.
  */
 void
 findLastCheckpoint(const char *datadir, XLogRecPtr forkptr, int tliIndex,
@@ -371,7 +371,7 @@ extractPageInfo(XLogReaderState *record)
 		 */
 		pg_fatal("WAL record modifies a relation, but record type is not recognized\n"
 				 "lsn: %X/%X, rmgr: %s, info: %02X\n",
-		  (uint32) (record->ReadRecPtr >> 32), (uint32) (record->ReadRecPtr),
+				 (uint32) (record->ReadRecPtr >> 32), (uint32) (record->ReadRecPtr),
 				 RmgrNames[rmid], info);
 	}
 

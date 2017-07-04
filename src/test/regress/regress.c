@@ -6,7 +6,7 @@
  *
  * This code is released under the terms of the PostgreSQL License.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/test/regress/regress.c
@@ -45,8 +45,6 @@
 
 extern PATH *poly2path(POLYGON *poly);
 extern void regress_lseg_construct(LSEG *lseg, Point *pt1, Point *pt2);
-extern char *reverse_name(char *string);
-extern int	oldstyle_length(int n, text *t);
 
 #ifdef PG_MODULE_MAGIC
 PG_MODULE_MAGIC;
@@ -87,7 +85,7 @@ regress_dist_ptpath(PG_FUNCTION_ARGS)
 				regress_lseg_construct(&lseg, &path->p[i], &path->p[i + 1]);
 				tmp = DatumGetFloat8(DirectFunctionCall2(dist_ps,
 														 PointPGetDatum(pt),
-													  LsegPGetDatum(&lseg)));
+														 LsegPGetDatum(&lseg)));
 				if (i == 0 || tmp < result)
 					result = tmp;
 			}
@@ -240,14 +238,15 @@ typedef struct
 	double		radius;
 } WIDGET;
 
-WIDGET	   *widget_in(char *str);
-char	   *widget_out(WIDGET *widget);
+PG_FUNCTION_INFO_V1(widget_in);
+PG_FUNCTION_INFO_V1(widget_out);
 
 #define NARGS	3
 
-WIDGET *
-widget_in(char *str)
+Datum
+widget_in(PG_FUNCTION_ARGS)
 {
+	char	   *str = PG_GETARG_CSTRING(0);
 	char	   *p,
 			   *coord[NARGS];
 	int			i;
@@ -270,14 +269,17 @@ widget_in(char *str)
 	result->center.y = atof(coord[1]);
 	result->radius = atof(coord[2]);
 
-	return result;
+	PG_RETURN_POINTER(result);
 }
 
-char *
-widget_out(WIDGET *widget)
+Datum
+widget_out(PG_FUNCTION_ARGS)
 {
-	return psprintf("(%g,%g,%g)",
-					widget->center.x, widget->center.y, widget->radius);
+	WIDGET	   *widget = (WIDGET *) PG_GETARG_POINTER(0);
+	char	   *str = psprintf("(%g,%g,%g)",
+							   widget->center.x, widget->center.y, widget->radius);
+
+	PG_RETURN_CSTRING(str);
 }
 
 PG_FUNCTION_INFO_V1(pt_in_widget);
@@ -305,9 +307,12 @@ boxarea(PG_FUNCTION_ARGS)
 	PG_RETURN_FLOAT8(width * height);
 }
 
-char *
-reverse_name(char *string)
+PG_FUNCTION_INFO_V1(reverse_name);
+
+Datum
+reverse_name(PG_FUNCTION_ARGS)
 {
+	char	   *string = PG_GETARG_CSTRING(0);
 	int			i;
 	int			len;
 	char	   *new_string;
@@ -320,22 +325,7 @@ reverse_name(char *string)
 	len = i;
 	for (; i >= 0; --i)
 		new_string[len - i] = string[i];
-	return new_string;
-}
-
-/*
- * This rather silly function is just to test that oldstyle functions
- * work correctly on toast-able inputs.
- */
-int
-oldstyle_length(int n, text *t)
-{
-	int			len = 0;
-
-	if (t)
-		len = VARSIZE(t) - VARHDRSZ;
-
-	return n + len;
+	PG_RETURN_CSTRING(new_string);
 }
 
 
@@ -436,11 +426,11 @@ funny_dup17(PG_FUNCTION_ARGS)
 	if (SPI_processed > 0)
 	{
 		selected = DatumGetInt32(DirectFunctionCall1(int4in,
-												CStringGetDatum(SPI_getvalue(
-													   SPI_tuptable->vals[0],
-													   SPI_tuptable->tupdesc,
-																			 1
-																		))));
+													 CStringGetDatum(SPI_getvalue(
+																				  SPI_tuptable->vals[0],
+																				  SPI_tuptable->tupdesc,
+																				  1
+																				  ))));
 	}
 
 	elog(DEBUG4, "funny_dup17 (fired %s) on level %3d: " UINT64_FORMAT "/%d tuples inserted/selected",
@@ -523,11 +513,12 @@ ttdummy(PG_FUNCTION_ARGS)
 	for (i = 0; i < 2; i++)
 	{
 		attnum[i] = SPI_fnumber(tupdesc, args[i]);
-		if (attnum[i] < 0)
-			elog(ERROR, "ttdummy (%s): there is no attribute %s", relname, args[i]);
+		if (attnum[i] <= 0)
+			elog(ERROR, "ttdummy (%s): there is no attribute %s",
+				 relname, args[i]);
 		if (SPI_gettypeid(tupdesc, attnum[i]) != INT4OID)
-			elog(ERROR, "ttdummy (%s): attributes %s and %s must be of abstime type",
-				 relname, args[0], args[1]);
+			elog(ERROR, "ttdummy (%s): attribute %s must be of integer type",
+				 relname, args[i]);
 	}
 
 	oldon = SPI_getbinval(trigtuple, tupdesc, attnum[0], &isnull);
@@ -559,7 +550,7 @@ ttdummy(PG_FUNCTION_ARGS)
 			return PointerGetDatum(NULL);
 		}
 	}
-	else if (oldoff != TTDUMMY_INFINITY)		/* DELETE */
+	else if (oldoff != TTDUMMY_INFINITY)	/* DELETE */
 	{
 		pfree(relname);
 		return PointerGetDatum(NULL);
@@ -588,7 +579,7 @@ ttdummy(PG_FUNCTION_ARGS)
 	{
 		cvals[attnum[0] - 1] = newoff;	/* start_date eq current date */
 		cnulls[attnum[0] - 1] = ' ';
-		cvals[attnum[1] - 1] = TTDUMMY_INFINITY;		/* stop_date eq INFINITY */
+		cvals[attnum[1] - 1] = TTDUMMY_INFINITY;	/* stop_date eq INFINITY */
 		cnulls[attnum[1] - 1] = ' ';
 	}
 	else
@@ -638,15 +629,8 @@ ttdummy(PG_FUNCTION_ARGS)
 
 	/* Tuple to return to upper Executor ... */
 	if (newtuple)				/* UPDATE */
-	{
-		HeapTuple	tmptuple;
-
-		tmptuple = SPI_copytuple(trigtuple);
-		rettuple = SPI_modifytuple(rel, tmptuple, 1, &(attnum[1]), &newoff, NULL);
-		SPI_freetuple(tmptuple);
-	}
-	else
-		/* DELETE */
+		rettuple = SPI_modifytuple(rel, trigtuple, 1, &(attnum[1]), &newoff, NULL);
+	else						/* DELETE */
 		rettuple = trigtuple;
 
 	SPI_finish();				/* don't forget say Bye to SPI mgr */
@@ -724,8 +708,7 @@ Datum
 int44out(PG_FUNCTION_ARGS)
 {
 	int32	   *an_array = (int32 *) PG_GETARG_POINTER(0);
-	char	   *result = (char *) palloc(16 * 4);		/* Allow 14 digits +
-														 * sign */
+	char	   *result = (char *) palloc(16 * 4);	/* Allow 14 digits + sign */
 	int			i;
 	char	   *walk;
 
@@ -912,7 +895,7 @@ test_atomic_flag(void)
 
 	pg_atomic_clear_flag(&flag);
 }
-#endif   /* PG_HAVE_ATOMIC_FLAG_SIMULATION */
+#endif							/* PG_HAVE_ATOMIC_FLAG_SIMULATION */
 
 static void
 test_atomic_uint32(void)
@@ -1014,7 +997,6 @@ test_atomic_uint32(void)
 		elog(ERROR, "pg_atomic_fetch_and_u32() #3 wrong");
 }
 
-#ifdef PG_HAVE_ATOMIC_U64_SUPPORT
 static void
 test_atomic_uint64(void)
 {
@@ -1090,7 +1072,6 @@ test_atomic_uint64(void)
 	if (pg_atomic_fetch_and_u64(&var, ~0) != 0)
 		elog(ERROR, "pg_atomic_fetch_and_u64() #3 wrong");
 }
-#endif   /* PG_HAVE_ATOMIC_U64_SUPPORT */
 
 
 PG_FUNCTION_INFO_V1(test_atomic_ops);
@@ -1113,9 +1094,7 @@ test_atomic_ops(PG_FUNCTION_ARGS)
 
 	test_atomic_uint32();
 
-#ifdef PG_HAVE_ATOMIC_U64_SUPPORT
 	test_atomic_uint64();
-#endif
 
 	PG_RETURN_BOOL(true);
 }

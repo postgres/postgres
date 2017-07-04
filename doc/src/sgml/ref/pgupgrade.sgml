@@ -38,9 +38,9 @@
   <application>pg_upgrade</> (formerly called <application>pg_migrator</>) allows data
   stored in <productname>PostgreSQL</> data files to be upgraded to a later <productname>PostgreSQL</>
   major version without the data dump/reload typically required for
-  major version upgrades, e.g. from 8.4.7 to the current major release
+  major version upgrades, e.g. from 9.6.3 to the current major release
   of <productname>PostgreSQL</>.  It is not required for minor version upgrades, e.g. from
-  9.0.1 to 9.0.4.
+  9.6.2 to 9.6.3.
  </para>
 
  <para>
@@ -66,7 +66,7 @@
 
   <para>
    pg_upgrade supports upgrades from 8.4.X and later to the current
-   major release of <productname>PostgreSQL</>, including snapshot and alpha releases.
+   major release of <productname>PostgreSQL</>, including snapshot and beta releases.
   </para>
  </refsect1>
 
@@ -123,7 +123,7 @@
       <term><option>-k</option></term>
       <term><option>--link</option></term>
       <listitem><para>use hard links instead of copying files to the new
-      cluster (use junction points on Windows)</para></listitem>
+      cluster</para></listitem>
      </varlistentry>
 
      <varlistentry>
@@ -207,7 +207,7 @@
 
     <para>
      If you are using a version-specific installation directory, e.g.
-     <filename>/opt/PostgreSQL/9.1</>, you do not need to move the old cluster. The
+     <filename>/opt/PostgreSQL/&majorversion;</>, you do not need to move the old cluster. The
      graphical installers all use version-specific installation directories.
     </para>
 
@@ -273,7 +273,8 @@ make prefix=/usr/local/pgsql.new install
      into the new cluster, e.g. <filename>pgcrypto.so</filename>,
      whether they are from <filename>contrib</filename>
      or some other source. Do not install the schema definitions, e.g.
-     <filename>pgcrypto.sql</>, because these will be upgraded from the old cluster.
+     <command>CREATE EXTENSION pgcrypto</>, because these will be upgraded
+     from the old cluster.
      Also, any custom full text search files (dictionary, synonym,
      thesaurus, stop words) must also be copied to the new cluster.
     </para>
@@ -297,15 +298,15 @@ make prefix=/usr/local/pgsql.new install
      Make sure both database servers are stopped using, on Unix, e.g.:
 
 <programlisting>
-pg_ctl -D /opt/PostgreSQL/8.4 stop
-pg_ctl -D /opt/PostgreSQL/9.0 stop
+pg_ctl -D /opt/PostgreSQL/9.6 stop
+pg_ctl -D /opt/PostgreSQL/&majorversion; stop
 </programlisting>
 
      or on Windows, using the proper service names:
 
 <programlisting>
-NET STOP postgresql-8.4
-NET STOP postgresql-9.0
+NET STOP postgresql-9.6
+NET STOP postgresql-&majorversion;
 </programlisting>
     </para>
 
@@ -316,15 +317,22 @@ NET STOP postgresql-9.0
    </step>
 
    <step>
-    <title>Verify standby servers</title>
+    <title>Prepare for standby server upgrades</title>
 
     <para>
-     If you are upgrading Streaming Replication and Log-Shipping standby
-     servers, verify that the old standby servers are caught up by running
-     <application>pg_controldata</> against the old primary and standby
-     clusters.  Verify that the <quote>Latest checkpoint location</>
-     values match in all clusters.  (There will be a mismatch if old
-     standby servers were shut down before the old primary.)
+     If you are upgrading standby servers (as outlined in section <xref
+     linkend="pgupgrade-step-replicas">), verify that the old standby
+     servers are caught up by running <application>pg_controldata</>
+     against the old primary and standby clusters.  Verify that the
+     <quote>Latest checkpoint location</> values match in all clusters.
+     (There will be a mismatch if old standby servers were shut down
+     before the old primary.)
+    </para>
+
+    <para>
+     Also, if upgrading standby servers, change <varname>wal_level</>
+     to <literal>replica</> in the <filename>postgresql.conf</> file on
+     the new master cluster.
     </para>
    </step>
 
@@ -335,8 +343,8 @@ NET STOP postgresql-9.0
      Always run the <application>pg_upgrade</> binary of the new server, not the old one.
      <application>pg_upgrade</> requires the specification of the old and new cluster's
      data and executable (<filename>bin</>) directories. You can also specify
-     user and port values, and whether you want the data linked instead of
-     copied (the default).
+     user and port values, and whether you want the data files linked
+     instead of the default copy behavior.
     </para>
 
     <para>
@@ -345,7 +353,7 @@ NET STOP postgresql-9.0
      your old cluster
      once you start the new cluster after the upgrade.  Link mode also
      requires that the old and new cluster data directories be in the
-     same file system.  (Tablespaces and <filename>pg_xlog</> can be on
+     same file system.  (Tablespaces and <filename>pg_wal</> can be on
      different file systems.)  See <literal>pg_upgrade --help</> for a full
      list of options.
     </para>
@@ -365,17 +373,17 @@ NET STOP postgresql-9.0
 
 <programlisting>
 RUNAS /USER:postgres "CMD.EXE"
-SET PATH=%PATH%;C:\Program Files\PostgreSQL\9.0\bin;
+SET PATH=%PATH%;C:\Program Files\PostgreSQL\&majorversion;\bin;
 </programlisting>
 
      and then run <application>pg_upgrade</> with quoted directories, e.g.:
 
 <programlisting>
 pg_upgrade.exe
-        --old-datadir "C:/Program Files/PostgreSQL/8.4/data"
-        --new-datadir "C:/Program Files/PostgreSQL/9.0/data"
-        --old-bindir "C:/Program Files/PostgreSQL/8.4/bin"
-        --new-bindir "C:/Program Files/PostgreSQL/9.0/bin"
+        --old-datadir "C:/Program Files/PostgreSQL/9.6/data"
+        --new-datadir "C:/Program Files/PostgreSQL/&majorversion;/data"
+        --old-bindir "C:/Program Files/PostgreSQL/9.6/bin"
+        --new-bindir "C:/Program Files/PostgreSQL/&majorversion;/bin"
 </programlisting>
 
      Once started, <command>pg_upgrade</> will verify the two clusters are compatible
@@ -409,7 +417,7 @@ pg_upgrade.exe
     </para>
    </step>
 
-   <step>
+   <step id="pgupgrade-step-replicas">
     <title>Upgrade Streaming Replication and Log-Shipping standby servers</title>
 
     <para>
@@ -471,16 +479,6 @@ pg_upgrade.exe
      </step>
 
      <step>
-      <title>Start and stop the new master cluster</title>
-
-      <para>
-       In the new master cluster, change <varname>wal_level</> to
-       <literal>replica</> in the <filename>postgresql.conf</> file
-       and then start and stop the cluster.
-      </para>
-     </step>
-
-     <step>
       <title>Run <application>rsync</></title>
 
       <para>
@@ -508,7 +506,7 @@ rsync --archive --delete --hard-links --size-only old_pgdata new_pgdata remote_d
       <para>
        If you have tablespaces, you will need to run a similar
        <application>rsync</> command for each tablespace directory.  If you
-       have relocated <filename>pg_xlog</> outside the data directories,
+       have relocated <filename>pg_wal</> outside the data directories,
        <application>rsync</> must be run on those directories too.
       </para>
      </step>
@@ -558,7 +556,7 @@ rsync --archive --delete --hard-links --size-only old_pgdata new_pgdata remote_d
      run using:
 
 <programlisting>
-psql --username postgres --file script.sql postgres
+psql --username=postgres --file=script.sql postgres
 </programlisting>
 
      The scripts can be run in any order and can be deleted once they have

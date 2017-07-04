@@ -316,7 +316,7 @@ PostgreSQL documentation
     <literal>foo</literal> in a database named
     <literal>xyzzy</literal>:
 <screen>
-<prompt>$ </prompt><userinput>clusterdb --table foo xyzzy</userinput>
+<prompt>$ </prompt><userinput>clusterdb --table=foo xyzzy</userinput>
 </screen></para>
 
  </refsect1>

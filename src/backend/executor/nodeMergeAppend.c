@@ -3,7 +3,7 @@
  * nodeMergeAppend.c
  *	  routines to handle MergeAppend nodes.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -70,6 +70,12 @@ ExecInitMergeAppend(MergeAppend *node, EState *estate, int eflags)
 
 	/* check for unsupported flags */
 	Assert(!(eflags & (EXEC_FLAG_BACKWARD | EXEC_FLAG_MARK)));
+
+	/*
+	 * Lock the non-leaf tables in the partition tree controlled by this node.
+	 * It's a no-op for non-partitioned parent tables.
+	 */
+	ExecLockNonLeafAppendTables(node->partitioned_rels, estate);
 
 	/*
 	 * Set up empty vector of subplan states

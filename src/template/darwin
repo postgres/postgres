@@ -1,9 +1,12 @@
 # src/template/darwin
 
-# Select appropriate semaphore support.  Darwin 6.0 (Mac OS X 10.2) and up
-# support System V semaphores; before that we have to use POSIX semaphores,
-# which are less good for our purposes because they eat a file descriptor
-# per backend per max_connection slot.
+# Note: Darwin is the original code name for macOS, also known as OS X.
+# We still use "darwin" as the port name, partly because config.guess does.
+
+# Select appropriate semaphore support.  Darwin 6.0 (macOS 10.2) and up
+# support System V semaphores; before that we have to use named POSIX
+# semaphores, which are less good for our purposes because they eat a
+# file descriptor per backend per max_connection slot.
 case $host_os in
   darwin[015].*)
     USE_NAMED_POSIX_SEMAPHORES=1

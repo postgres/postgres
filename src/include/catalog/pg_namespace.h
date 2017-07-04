@@ -5,7 +5,7 @@
  *	  along with the relation's initial contents.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_namespace.h
@@ -82,4 +82,4 @@ DESCR("standard public schema");
  */
 extern Oid	NamespaceCreate(const char *nspName, Oid ownerId, bool isTemp);
 
-#endif   /* PG_NAMESPACE_H */
+#endif							/* PG_NAMESPACE_H */

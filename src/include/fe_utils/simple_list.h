@@ -7,7 +7,7 @@
  * it's all we need in, eg, pg_dump.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/fe_utils/simple_list.h
@@ -34,7 +34,7 @@ typedef struct SimpleStringListCell
 	struct SimpleStringListCell *next;
 	bool		touched;		/* true, when this string was searched and
 								 * touched */
-	char		val[FLEXIBLE_ARRAY_MEMBER];		/* null-terminated string here */
+	char		val[FLEXIBLE_ARRAY_MEMBER]; /* null-terminated string here */
 } SimpleStringListCell;
 
 typedef struct SimpleStringList
@@ -52,4 +52,4 @@ extern bool simple_string_list_member(SimpleStringList *list, const char *val);
 
 extern const char *simple_string_list_not_touched(SimpleStringList *list);
 
-#endif   /* SIMPLE_LIST_H */
+#endif							/* SIMPLE_LIST_H */

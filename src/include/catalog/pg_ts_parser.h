@@ -4,7 +4,7 @@
  *	definition of parsers for tsearch
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_ts_parser.h
@@ -64,4 +64,4 @@ typedef FormData_pg_ts_parser *Form_pg_ts_parser;
 DATA(insert OID = 3722 ( "default" PGNSP prsd_start prsd_nexttoken prsd_end prsd_headline prsd_lextype ));
 DESCR("default word parser");
 
-#endif   /* PG_TS_PARSER_H */
+#endif							/* PG_TS_PARSER_H */

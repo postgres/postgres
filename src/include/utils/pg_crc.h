@@ -26,7 +26,7 @@
  *
  * The CRC-32C variant is in port/pg_crc32c.h.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/pg_crc.h
@@ -104,4 +104,4 @@ do {															  \
  */
 extern PGDLLIMPORT const uint32 pg_crc32_table[256];
 
-#endif   /* PG_CRC_H */
+#endif							/* PG_CRC_H */

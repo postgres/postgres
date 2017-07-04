@@ -4,7 +4,7 @@
  *	  local buffer manager. Fast buffer manager for temporary tables,
  *	  which never need to be WAL-logged or checkpointed, etc.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  *
@@ -86,7 +86,7 @@ LocalPrefetchBuffer(SMgrRelation smgr, ForkNumber forkNum,
 
 	/* Not in buffers, so initiate prefetch */
 	smgrprefetch(smgr, forkNum, blockNum);
-#endif   /* USE_PREFETCH */
+#endif							/* USE_PREFETCH */
 }
 
 
@@ -138,7 +138,7 @@ LocalBufferAlloc(SMgrRelation smgr, ForkNumber forkNum, BlockNumber blockNum,
 			if (BUF_STATE_GET_USAGECOUNT(buf_state) < BM_MAX_USAGE_COUNT)
 			{
 				buf_state += BUF_USAGECOUNT_ONE;
-				pg_atomic_write_u32(&bufHdr->state, buf_state);
+				pg_atomic_unlocked_write_u32(&bufHdr->state, buf_state);
 			}
 		}
 		LocalRefCount[b]++;
@@ -181,7 +181,7 @@ LocalBufferAlloc(SMgrRelation smgr, ForkNumber forkNum, BlockNumber blockNum,
 			if (BUF_STATE_GET_USAGECOUNT(buf_state) > 0)
 			{
 				buf_state -= BUF_USAGECOUNT_ONE;
-				pg_atomic_write_u32(&bufHdr->state, buf_state);
+				pg_atomic_unlocked_write_u32(&bufHdr->state, buf_state);
 				trycounter = NLocBuffer;
 			}
 			else
@@ -189,7 +189,7 @@ LocalBufferAlloc(SMgrRelation smgr, ForkNumber forkNum, BlockNumber blockNum,
 				/* Found a usable buffer */
 				LocalRefCount[b]++;
 				ResourceOwnerRememberBuffer(CurrentResourceOwner,
-										  BufferDescriptorGetBuffer(bufHdr));
+											BufferDescriptorGetBuffer(bufHdr));
 				break;
 			}
 		}
@@ -222,7 +222,7 @@ LocalBufferAlloc(SMgrRelation smgr, ForkNumber forkNum, BlockNumber blockNum,
 
 		/* Mark not-dirty now in case we error out below */
 		buf_state &= ~BM_DIRTY;
-		pg_atomic_write_u32(&bufHdr->state, buf_state);
+		pg_atomic_unlocked_write_u32(&bufHdr->state, buf_state);
 
 		pgBufferUsage.local_blks_written++;
 	}
@@ -249,7 +249,7 @@ LocalBufferAlloc(SMgrRelation smgr, ForkNumber forkNum, BlockNumber blockNum,
 		/* mark buffer invalid just in case hash insert fails */
 		CLEAR_BUFFERTAG(bufHdr->tag);
 		buf_state &= ~(BM_VALID | BM_TAG_VALID);
-		pg_atomic_write_u32(&bufHdr->state, buf_state);
+		pg_atomic_unlocked_write_u32(&bufHdr->state, buf_state);
 	}
 
 	hresult = (LocalBufferLookupEnt *)
@@ -266,7 +266,7 @@ LocalBufferAlloc(SMgrRelation smgr, ForkNumber forkNum, BlockNumber blockNum,
 	buf_state |= BM_TAG_VALID;
 	buf_state &= ~BUF_USAGECOUNT_MASK;
 	buf_state += BUF_USAGECOUNT_ONE;
-	pg_atomic_write_u32(&bufHdr->state, buf_state);
+	pg_atomic_unlocked_write_u32(&bufHdr->state, buf_state);
 
 	*foundPtr = FALSE;
 	return bufHdr;
@@ -302,7 +302,7 @@ MarkLocalBufferDirty(Buffer buffer)
 
 	buf_state |= BM_DIRTY;
 
-	pg_atomic_write_u32(&bufHdr->state, buf_state);
+	pg_atomic_unlocked_write_u32(&bufHdr->state, buf_state);
 }
 
 /*
@@ -351,7 +351,7 @@ DropRelFileNodeLocalBuffers(RelFileNode rnode, ForkNumber forkNum,
 			CLEAR_BUFFERTAG(bufHdr->tag);
 			buf_state &= ~BUF_FLAG_MASK;
 			buf_state &= ~BUF_USAGECOUNT_MASK;
-			pg_atomic_write_u32(&bufHdr->state, buf_state);
+			pg_atomic_unlocked_write_u32(&bufHdr->state, buf_state);
 		}
 	}
 }
@@ -395,7 +395,7 @@ DropRelFileNodeAllLocalBuffers(RelFileNode rnode)
 			CLEAR_BUFFERTAG(bufHdr->tag);
 			buf_state &= ~BUF_FLAG_MASK;
 			buf_state &= ~BUF_USAGECOUNT_MASK;
-			pg_atomic_write_u32(&bufHdr->state, buf_state);
+			pg_atomic_unlocked_write_u32(&bufHdr->state, buf_state);
 		}
 	}
 }
@@ -511,9 +511,7 @@ GetLocalBufferStorage(void)
 			LocalBufferContext =
 				AllocSetContextCreate(TopMemoryContext,
 									  "LocalBufferContext",
-									  ALLOCSET_DEFAULT_MINSIZE,
-									  ALLOCSET_DEFAULT_INITSIZE,
-									  ALLOCSET_DEFAULT_MAXSIZE);
+									  ALLOCSET_DEFAULT_SIZES);
 
 		/* Start with a 16-buffer request; subsequent ones double each time */
 		num_bufs = Max(num_bufs_in_block * 2, 16);

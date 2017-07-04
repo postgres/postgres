@@ -16,7 +16,7 @@
  * do_like_escape - name of function if wanted - needs CHAREQ and CopyAdvChar
  * MATCH_LOWER - define for case (4) to specify case folding for 1-byte chars
  *
- * Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Copyright (c) 1996-2017, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	src/backend/utils/adt/like_match.c
@@ -104,7 +104,7 @@ MatchText(char *t, int tlen, char *p, int plen,
 			if (plen <= 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_ESCAPE_SEQUENCE),
-				 errmsg("LIKE pattern must not end with escape character")));
+						 errmsg("LIKE pattern must not end with escape character")));
 			if (GETCHAR(*p) != GETCHAR(*t))
 				return LIKE_FALSE;
 		}
@@ -236,7 +236,7 @@ MatchText(char *t, int tlen, char *p, int plen,
 	 * matching this pattern.
 	 */
 	return LIKE_ABORT;
-}	/* MatchText() */
+}								/* MatchText() */
 
 /*
  * like_escape() --- given a pattern and an ESCAPE string,
@@ -290,7 +290,7 @@ do_like_escape(text *pat, text *esc)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_ESCAPE_SEQUENCE),
 					 errmsg("invalid escape string"),
-				  errhint("Escape string must be empty or one character.")));
+					 errhint("Escape string must be empty or one character.")));
 
 		e = VARDATA_ANY(esc);
 
@@ -337,7 +337,7 @@ do_like_escape(text *pat, text *esc)
 
 	return result;
 }
-#endif   /* do_like_escape */
+#endif							/* do_like_escape */
 
 #ifdef CHAREQ
 #undef CHAREQ

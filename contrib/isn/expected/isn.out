@@ -2,6 +2,50 @@
 -- Test ISN extension
 --
 CREATE EXTENSION isn;
+-- Check whether any of our opclasses fail amvalidate
+-- ... they will, because of missing cross-type operators
+SELECT amname, opcname
+FROM (SELECT amname, opcname, opc.oid
+      FROM pg_opclass opc LEFT JOIN pg_am am ON am.oid = opcmethod
+      WHERE opc.oid >= 16384
+      ORDER BY 1, 2 OFFSET 0) ss
+WHERE NOT amvalidate(oid);
+INFO:  operator family "isn_ops" of access method btree is missing cross-type operator(s)
+INFO:  operator family "isn_ops" of access method btree is missing cross-type operator(s)
+INFO:  operator family "isn_ops" of access method btree is missing cross-type operator(s)
+INFO:  operator family "isn_ops" of access method btree is missing cross-type operator(s)
+INFO:  operator family "isn_ops" of access method btree is missing cross-type operator(s)
+INFO:  operator family "isn_ops" of access method btree is missing cross-type operator(s)
+INFO:  operator family "isn_ops" of access method btree is missing cross-type operator(s)
+INFO:  operator family "isn_ops" of access method btree is missing cross-type operator(s)
+INFO:  operator family "isn_ops" of access method hash is missing cross-type operator(s)
+INFO:  operator family "isn_ops" of access method hash is missing cross-type operator(s)
+INFO:  operator family "isn_ops" of access method hash is missing cross-type operator(s)
+INFO:  operator family "isn_ops" of access method hash is missing cross-type operator(s)
+INFO:  operator family "isn_ops" of access method hash is missing cross-type operator(s)
+INFO:  operator family "isn_ops" of access method hash is missing cross-type operator(s)
+INFO:  operator family "isn_ops" of access method hash is missing cross-type operator(s)
+INFO:  operator family "isn_ops" of access method hash is missing cross-type operator(s)
+ amname |  opcname   
+--------+------------
+ btree  | ean13_ops
+ btree  | isbn13_ops
+ btree  | isbn_ops
+ btree  | ismn13_ops
+ btree  | ismn_ops
+ btree  | issn13_ops
+ btree  | issn_ops
+ btree  | upc_ops
+ hash   | ean13_ops
+ hash   | isbn13_ops
+ hash   | isbn_ops
+ hash   | ismn13_ops
+ hash   | ismn_ops
+ hash   | issn13_ops
+ hash   | issn_ops
+ hash   | upc_ops
+(16 rows)
+
 --
 -- test valid conversions
 --

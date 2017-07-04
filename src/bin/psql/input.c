@@ -1,7 +1,7 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
- * Copyright (c) 2000-2016, PostgreSQL Global Development Group
+ * Copyright (c) 2000-2017, PostgreSQL Global Development Group
  *
  * src/bin/psql/input.c
  */
@@ -333,7 +333,7 @@ decode_history(void)
 	}
 	END_ITERATE_HISTORY();
 }
-#endif   /* USE_READLINE */
+#endif							/* USE_READLINE */
 
 
 /*
@@ -411,7 +411,7 @@ saveHistory(char *fname, int max_lines)
 
 	/*
 	 * Suppressing the write attempt when HISTFILE is set to /dev/null may
-	 * look like a negligible optimization, but it's necessary on e.g. Darwin,
+	 * look like a negligible optimization, but it's necessary on e.g. macOS,
 	 * where write_history will fail because it tries to chmod the target
 	 * file.
 	 */
@@ -539,10 +539,7 @@ finishInput(void)
 #ifdef USE_READLINE
 	if (useHistory && psql_history)
 	{
-		int			hist_size;
-
-		hist_size = GetVariableNum(pset.vars, "HISTSIZE", 500, -1, true);
-		(void) saveHistory(psql_history, hist_size);
+		(void) saveHistory(psql_history, pset.histsize);
 		free(psql_history);
 		psql_history = NULL;
 	}

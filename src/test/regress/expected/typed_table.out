@@ -1,3 +1,7 @@
+-- Clean up in case a prior regression run failed
+SET client_min_messages TO 'warning';
+DROP TYPE IF EXISTS person_type CASCADE;
+RESET client_min_messages;
 CREATE TABLE ttable1 OF nothing;
 ERROR:  type "nothing" does not exist
 CREATE TYPE person_type AS (id int, name text);
@@ -10,11 +14,11 @@ SELECT * FROM persons;
 (0 rows)
 
 \d persons
-    Table "public.persons"
- Column |  Type   | Modifiers 
---------+---------+-----------
- id     | integer | 
- name   | text    | 
+              Table "public.persons"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ id     | integer |           |          | 
+ name   | text    |           |          | 
 Typed table of type: person_type
 
 CREATE FUNCTION get_all_persons() RETURNS SETOF person_type
@@ -46,11 +50,11 @@ CREATE TABLE persons2 OF person_type (
     UNIQUE (name)
 );
 \d persons2
-   Table "public.persons2"
- Column |  Type   | Modifiers 
---------+---------+-----------
- id     | integer | not null
- name   | text    | 
+              Table "public.persons2"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ id     | integer |           | not null | 
+ name   | text    |           |          | 
 Indexes:
     "persons2_pkey" PRIMARY KEY, btree (id)
     "persons2_name_key" UNIQUE CONSTRAINT, btree (name)
@@ -61,11 +65,11 @@ CREATE TABLE persons3 OF person_type (
     name WITH OPTIONS DEFAULT ''
 );
 \d persons3
-       Table "public.persons3"
- Column |  Type   |    Modifiers     
---------+---------+------------------
- id     | integer | not null
- name   | text    | default ''::text
+              Table "public.persons3"
+ Column |  Type   | Collation | Nullable | Default  
+--------+---------+-----------+----------+----------
+ id     | integer |           | not null | 
+ name   | text    |           |          | ''::text
 Indexes:
     "persons3_pkey" PRIMARY KEY, btree (id)
 Typed table of type: person_type
@@ -102,7 +106,32 @@ SELECT id, namelen(persons) FROM persons;
   1 |       4
 (1 row)
 
-DROP TYPE person_type CASCADE;
-NOTICE:  drop cascades to 2 other objects
-DETAIL:  drop cascades to table persons
-drop cascades to function namelen(person_type)
+CREATE TABLE persons2 OF person_type (
+    id WITH OPTIONS PRIMARY KEY,
+    UNIQUE (name)
+);
+\d persons2
+              Table "public.persons2"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ id     | integer |           | not null | 
+ name   | text    |           |          | 
+Indexes:
+    "persons2_pkey" PRIMARY KEY, btree (id)
+    "persons2_name_key" UNIQUE CONSTRAINT, btree (name)
+Typed table of type: person_type
+
+CREATE TABLE persons3 OF person_type (
+    PRIMARY KEY (id),
+    name NOT NULL DEFAULT ''
+);
+\d persons3
+              Table "public.persons3"
+ Column |  Type   | Collation | Nullable | Default  
+--------+---------+-----------+----------+----------
+ id     | integer |           | not null | 
+ name   | text    |           | not null | ''::text
+Indexes:
+    "persons3_pkey" PRIMARY KEY, btree (id)
+Typed table of type: person_type
+

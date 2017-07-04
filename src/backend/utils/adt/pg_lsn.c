@@ -3,7 +3,7 @@
  * pg_lsn.c
  *	  Operations for the pg_lsn datatype.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -41,12 +41,14 @@ pg_lsn_in(PG_FUNCTION_ARGS)
 	if (len1 < 1 || len1 > MAXPG_LSNCOMPONENT || str[len1] != '/')
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-			   errmsg("invalid input syntax for type pg_lsn: \"%s\"", str)));
+				 errmsg("invalid input syntax for type %s: \"%s\"",
+						"pg_lsn", str)));
 	len2 = strspn(str + len1 + 1, "0123456789abcdefABCDEF");
 	if (len2 < 1 || len2 > MAXPG_LSNCOMPONENT || str[len1 + 1 + len2] != '\0')
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-			   errmsg("invalid input syntax for type pg_lsn: \"%s\"", str)));
+				 errmsg("invalid input syntax for type %s: \"%s\"",
+						"pg_lsn", str)));
 
 	/* Decode result. */
 	id = (uint32) strtoul(str, NULL, 16);

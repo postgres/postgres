@@ -1,6 +1,6 @@
 #-------------------------------------------------------------------------
 #
-# Makefile for the pl/tcl procedural language
+# Makefile for the PL/Tcl procedural language
 #
 # src/pl/tcl/Makefile
 #
@@ -28,7 +28,7 @@ DATA = pltcl.control pltcl--1.0.sql pltcl--unpackaged--1.0.sql \
        pltclu.control pltclu--1.0.sql pltclu--unpackaged--1.0.sql
 
 REGRESS_OPTS = --dbname=$(PL_TESTDB) --load-extension=pltcl
-REGRESS = pltcl_setup pltcl_queries pltcl_unicode
+REGRESS = pltcl_setup pltcl_queries pltcl_start_proc pltcl_subxact pltcl_unicode
 
 # Tcl on win32 ships with import libraries only for Microsoft Visual C++,
 # which are not compatible with mingw gcc. Therefore we need to build a
@@ -53,7 +53,6 @@ include $(top_srcdir)/src/Makefile.shlib
 
 
 all: all-lib
-	$(MAKE) -C modules $@
 
 # Force this dependency to be known even without dependency info built:
 pltcl.o: pltclerrcodes.h
@@ -65,14 +64,11 @@ pltclerrcodes.h: $(top_srcdir)/src/backend/utils/errcodes.txt generate-pltclerrc
 distprep: pltclerrcodes.h
 
 install: all install-lib install-data
-	$(MAKE) -C modules $@
 
 installdirs: installdirs-lib
 	$(MKDIR_P) '$(DESTDIR)$(datadir)/extension'
-	$(MAKE) -C modules $@
 
 uninstall: uninstall-lib uninstall-data
-	$(MAKE) -C modules $@
 
 install-data: installdirs
 	$(INSTALL_DATA) $(addprefix $(srcdir)/, $(DATA)) '$(DESTDIR)$(datadir)/extension/'
@@ -100,7 +96,6 @@ clean distclean: clean-lib
 ifeq ($(PORTNAME), win32)
 	rm -f $(tclwithver).def
 endif
-	$(MAKE) -C modules $@
 
 maintainer-clean: distclean
 	rm -f pltclerrcodes.h

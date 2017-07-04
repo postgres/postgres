@@ -222,3 +222,35 @@ explain (costs off)
      union all
      select ff + 4 as x from ec1) as ss1
   where ss1.x = ec1.f1 and ec1.ff = 42::int8;
+
+-- check effects of row-level security
+set enable_nestloop = on;
+set enable_mergejoin = off;
+
+alter table ec1 enable row level security;
+create policy p1 on ec1 using (f1 < '5'::int8alias1);
+
+create user regress_user_ectest;
+grant select on ec0 to regress_user_ectest;
+grant select on ec1 to regress_user_ectest;
+
+-- without any RLS, we'll treat {a.ff, b.ff, 43} as an EquivalenceClass
+explain (costs off)
+  select * from ec0 a, ec1 b
+  where a.ff = b.ff and a.ff = 43::bigint::int8alias1;
+
+set session authorization regress_user_ectest;
+
+-- with RLS active, the non-leakproof a.ff = 43 clause is not treated
+-- as a suitable source for an EquivalenceClass; currently, this is true
+-- even though the RLS clause has nothing to do directly with the EC
+explain (costs off)
+  select * from ec0 a, ec1 b
+  where a.ff = b.ff and a.ff = 43::bigint::int8alias1;
+
+reset session authorization;
+
+revoke select on ec0 from regress_user_ectest;
+revoke select on ec1 from regress_user_ectest;
+
+drop user regress_user_ectest;

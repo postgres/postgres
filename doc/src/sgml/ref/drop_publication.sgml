@@ -1,0 +1,105 @@
+<!--
+doc/src/sgml/ref/drop_publication.sgml
+PostgreSQL documentation
+-->
+
+<refentry id="SQL-DROPPUBLICATION">
+ <indexterm zone="sql-droppublication">
+  <primary>DROP PUBLICATION</primary>
+ </indexterm>
+
+ <refmeta>
+  <refentrytitle>DROP PUBLICATION</refentrytitle>
+  <manvolnum>7</manvolnum>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>DROP PUBLICATION</refname>
+  <refpurpose>remove a publication</refpurpose>
+ </refnamediv>
+
+ <refsynopsisdiv>
+<synopsis>
+DROP PUBLICATION [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ...] [ CASCADE | RESTRICT ]
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>DROP PUBLICATION</command> removes an existing publication from
+   the database.
+  </para>
+
+  <para>
+   A publication can only be dropped by its owner or a superuser.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><literal>IF EXISTS</literal></term>
+    <listitem>
+     <para>
+      Do not throw an error if the publication does not exist. A notice is
+      issued in this case.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">name</replaceable></term>
+    <listitem>
+     <para>
+      The name of an existing publication.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>CASCADE</literal></term>
+    <term><literal>RESTRICT</literal></term>
+
+    <listitem>
+     <para>
+      These key words do not have any effect, since there are no dependencies
+      on publications.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
+  <para>
+   Drop a publication:
+<programlisting>
+DROP PUBLICATION mypublication;
+</programlisting></para>
+ </refsect1>
+
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   <command>DROP PUBLICATION</command> is a <productname>PostgreSQL</>
+   extension.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-createpublication"></member>
+   <member><xref linkend="sql-alterpublication"></member>
+  </simplelist>
+ </refsect1>
+</refentry>

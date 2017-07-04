@@ -27,7 +27,7 @@
  * always be so; try to be careful to maintain the distinction.)
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/nodes/pg_list.h
@@ -106,26 +106,32 @@ list_length(const List *l)
 #define lfirst(lc)				((lc)->data.ptr_value)
 #define lfirst_int(lc)			((lc)->data.int_value)
 #define lfirst_oid(lc)			((lc)->data.oid_value)
+#define lfirst_node(type,lc)	castNode(type, lfirst(lc))
 
 #define linitial(l)				lfirst(list_head(l))
 #define linitial_int(l)			lfirst_int(list_head(l))
 #define linitial_oid(l)			lfirst_oid(list_head(l))
+#define linitial_node(type,l)	castNode(type, linitial(l))
 
 #define lsecond(l)				lfirst(lnext(list_head(l)))
 #define lsecond_int(l)			lfirst_int(lnext(list_head(l)))
 #define lsecond_oid(l)			lfirst_oid(lnext(list_head(l)))
+#define lsecond_node(type,l)	castNode(type, lsecond(l))
 
 #define lthird(l)				lfirst(lnext(lnext(list_head(l))))
 #define lthird_int(l)			lfirst_int(lnext(lnext(list_head(l))))
 #define lthird_oid(l)			lfirst_oid(lnext(lnext(list_head(l))))
+#define lthird_node(type,l)		castNode(type, lthird(l))
 
 #define lfourth(l)				lfirst(lnext(lnext(lnext(list_head(l)))))
 #define lfourth_int(l)			lfirst_int(lnext(lnext(lnext(list_head(l)))))
 #define lfourth_oid(l)			lfirst_oid(lnext(lnext(lnext(list_head(l)))))
+#define lfourth_node(type,l)	castNode(type, lfourth(l))
 
 #define llast(l)				lfirst(list_tail(l))
 #define llast_int(l)			lfirst_int(list_tail(l))
 #define llast_oid(l)			lfirst_oid(list_tail(l))
+#define llast_node(type,l)		castNode(type, llast(l))
 
 /*
  * Convenience macros for building fixed-length lists
@@ -177,6 +183,20 @@ list_length(const List *l)
 		 (cell1) = lnext(cell1), (cell2) = lnext(cell2))
 
 /*
+ * for_both_cell -
+ *	  a convenience macro which loops through two lists starting from the
+ *	  specified cells of each. This macro loops through both lists at the same
+ *	  time, stopping when either list runs out of elements.  Depending on the
+ *	  requirements of the call site, it may also be wise to assert that the
+ *	  lengths of the two lists are equal, and initcell1 and initcell2 are at
+ *	  the same position in the respective lists.
+ */
+#define for_both_cell(cell1, initcell1, cell2, initcell2)	\
+	for ((cell1) = (initcell1), (cell2) = (initcell2);		\
+		 (cell1) != NULL && (cell2) != NULL;				\
+		 (cell1) = lnext(cell1), (cell2) = lnext(cell2))
+
+/*
  * forthree -
  *	  the same for three lists
  */
@@ -204,6 +224,7 @@ extern ListCell *list_nth_cell(const List *list, int n);
 extern void *list_nth(const List *list, int n);
 extern int	list_nth_int(const List *list, int n);
 extern Oid	list_nth_oid(const List *list, int n);
+#define list_nth_node(type,list,n)	castNode(type, list_nth(list, n))
 
 extern bool list_member(const List *list, const void *datum);
 extern bool list_member_ptr(const List *list, const void *datum);
@@ -315,6 +336,6 @@ extern List *list_copy_tail(const List *list, int nskip);
 #define listCopy(list)				list_copy(list)
 
 extern int	length(List *list);
-#endif   /* ENABLE_LIST_COMPAT */
+#endif							/* ENABLE_LIST_COMPAT */
 
-#endif   /* PG_LIST_H */
+#endif							/* PG_LIST_H */

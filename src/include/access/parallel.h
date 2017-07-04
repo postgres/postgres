@@ -3,7 +3,7 @@
  * parallel.h
  *	  Infrastructure for launching parallel workers
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/access/parallel.h
@@ -35,7 +35,6 @@ typedef struct ParallelContext
 	SubTransactionId subid;
 	int			nworkers;
 	int			nworkers_launched;
-	parallel_worker_main_type entrypoint;
 	char	   *library_name;
 	char	   *function_name;
 	ErrorContextCallback *error_context_stack;
@@ -52,8 +51,7 @@ extern bool InitializingParallelWorker;
 
 #define		IsParallelWorker()		(ParallelWorkerNumber >= 0)
 
-extern ParallelContext *CreateParallelContext(parallel_worker_main_type entrypoint, int nworkers);
-extern ParallelContext *CreateParallelContextForExternalFunction(char *library_name, char *function_name, int nworkers);
+extern ParallelContext *CreateParallelContext(const char *library_name, const char *function_name, int nworkers);
 extern void InitializeParallelDSM(ParallelContext *pcxt);
 extern void ReinitializeParallelDSM(ParallelContext *pcxt);
 extern void LaunchParallelWorkers(ParallelContext *pcxt);
@@ -67,4 +65,6 @@ extern void AtEOXact_Parallel(bool isCommit);
 extern void AtEOSubXact_Parallel(bool isCommit, SubTransactionId mySubId);
 extern void ParallelWorkerReportLastRecEnd(XLogRecPtr last_xlog_end);
 
-#endif   /* PARALLEL_H */
+extern void ParallelWorkerMain(Datum main_arg);
+
+#endif							/* PARALLEL_H */

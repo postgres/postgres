@@ -3,7 +3,7 @@
  * _int_selfuncs.c
  *	  Functions for selectivity estimation of intarray operators
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -19,6 +19,7 @@
 #include "catalog/pg_operator.h"
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_type.h"
+#include "utils/builtins.h"
 #include "utils/selfuncs.h"
 #include "utils/syscache.h"
 #include "utils/lsyscache.h"
@@ -31,14 +32,6 @@ PG_FUNCTION_INFO_V1(_int_overlap_joinsel);
 PG_FUNCTION_INFO_V1(_int_contains_joinsel);
 PG_FUNCTION_INFO_V1(_int_contained_joinsel);
 PG_FUNCTION_INFO_V1(_int_matchsel);
-
-Datum		_int_overlap_sel(PG_FUNCTION_ARGS);
-Datum		_int_contains_sel(PG_FUNCTION_ARGS);
-Datum		_int_contained_sel(PG_FUNCTION_ARGS);
-Datum		_int_overlap_joinsel(PG_FUNCTION_ARGS);
-Datum		_int_contains_joinsel(PG_FUNCTION_ARGS);
-Datum		_int_contained_joinsel(PG_FUNCTION_ARGS);
-Datum		_int_matchsel(PG_FUNCTION_ARGS);
 
 
 static Selectivity int_query_opr_selec(ITEM *item, Datum *values, float4 *freqs,
@@ -64,7 +57,7 @@ _int_overlap_sel(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_DATUM(DirectFunctionCall4(arraycontsel,
 										PG_GETARG_DATUM(0),
-									  ObjectIdGetDatum(OID_ARRAY_OVERLAP_OP),
+										ObjectIdGetDatum(OID_ARRAY_OVERLAP_OP),
 										PG_GETARG_DATUM(2),
 										PG_GETARG_DATUM(3)));
 }
@@ -74,7 +67,7 @@ _int_contains_sel(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_DATUM(DirectFunctionCall4(arraycontsel,
 										PG_GETARG_DATUM(0),
-									 ObjectIdGetDatum(OID_ARRAY_CONTAINS_OP),
+										ObjectIdGetDatum(OID_ARRAY_CONTAINS_OP),
 										PG_GETARG_DATUM(2),
 										PG_GETARG_DATUM(3)));
 }
@@ -84,7 +77,7 @@ _int_contained_sel(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_DATUM(DirectFunctionCall4(arraycontsel,
 										PG_GETARG_DATUM(0),
-									ObjectIdGetDatum(OID_ARRAY_CONTAINED_OP),
+										ObjectIdGetDatum(OID_ARRAY_CONTAINED_OP),
 										PG_GETARG_DATUM(2),
 										PG_GETARG_DATUM(3)));
 }
@@ -94,7 +87,7 @@ _int_overlap_joinsel(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_DATUM(DirectFunctionCall5(arraycontjoinsel,
 										PG_GETARG_DATUM(0),
-									  ObjectIdGetDatum(OID_ARRAY_OVERLAP_OP),
+										ObjectIdGetDatum(OID_ARRAY_OVERLAP_OP),
 										PG_GETARG_DATUM(2),
 										PG_GETARG_DATUM(3),
 										PG_GETARG_DATUM(4)));
@@ -105,7 +98,7 @@ _int_contains_joinsel(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_DATUM(DirectFunctionCall5(arraycontjoinsel,
 										PG_GETARG_DATUM(0),
-									 ObjectIdGetDatum(OID_ARRAY_CONTAINS_OP),
+										ObjectIdGetDatum(OID_ARRAY_CONTAINS_OP),
 										PG_GETARG_DATUM(2),
 										PG_GETARG_DATUM(3),
 										PG_GETARG_DATUM(4)));
@@ -116,7 +109,7 @@ _int_contained_joinsel(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_DATUM(DirectFunctionCall5(arraycontjoinsel,
 										PG_GETARG_DATUM(0),
-									ObjectIdGetDatum(OID_ARRAY_CONTAINED_OP),
+										ObjectIdGetDatum(OID_ARRAY_CONTAINED_OP),
 										PG_GETARG_DATUM(2),
 										PG_GETARG_DATUM(3),
 										PG_GETARG_DATUM(4)));
@@ -143,11 +136,7 @@ _int_matchsel(PG_FUNCTION_ARGS)
 	int			nmcelems = 0;
 	float4		minfreq = 0.0;
 	float4		nullfrac = 0.0;
-	Form_pg_statistic stats;
-	Datum	   *values = NULL;
-	int			nvalues = 0;
-	float4	   *numbers = NULL;
-	int			nnumbers = 0;
+	AttStatsSlot sslot;
 
 	/*
 	 * If expression is not "variable @@ something" or "something @@ variable"
@@ -200,6 +189,8 @@ _int_matchsel(PG_FUNCTION_ARGS)
 	 */
 	if (HeapTupleIsValid(vardata.statsTuple))
 	{
+		Form_pg_statistic stats;
+
 		stats = (Form_pg_statistic) GETSTRUCT(vardata.statsTuple);
 		nullfrac = stats->stanullfrac;
 
@@ -207,29 +198,30 @@ _int_matchsel(PG_FUNCTION_ARGS)
 		 * For an int4 array, the default array type analyze function will
 		 * collect a Most Common Elements list, which is an array of int4s.
 		 */
-		if (get_attstatsslot(vardata.statsTuple,
-							 INT4OID, -1,
+		if (get_attstatsslot(&sslot, vardata.statsTuple,
 							 STATISTIC_KIND_MCELEM, InvalidOid,
-							 NULL,
-							 &values, &nvalues,
-							 &numbers, &nnumbers))
+							 ATTSTATSSLOT_VALUES | ATTSTATSSLOT_NUMBERS))
 		{
+			Assert(sslot.valuetype == INT4OID);
+
 			/*
 			 * There should be three more Numbers than Values, because the
 			 * last three (for intarray) cells are taken for minimal, maximal
 			 * and nulls frequency. Punt if not.
 			 */
-			if (nnumbers == nvalues + 3)
+			if (sslot.nnumbers == sslot.nvalues + 3)
 			{
 				/* Grab the lowest frequency. */
-				minfreq = numbers[nnumbers - (nnumbers - nvalues)];
+				minfreq = sslot.numbers[sslot.nnumbers - (sslot.nnumbers - sslot.nvalues)];
 
-				mcelems = values;
-				mcefreqs = numbers;
-				nmcelems = nvalues;
+				mcelems = sslot.values;
+				mcefreqs = sslot.numbers;
+				nmcelems = sslot.nvalues;
 			}
 		}
 	}
+	else
+		memset(&sslot, 0, sizeof(sslot));
 
 	/* Process the logical expression in the query, using the stats */
 	selec = int_query_opr_selec(GETQUERY(query) + query->size - 1,
@@ -238,7 +230,7 @@ _int_matchsel(PG_FUNCTION_ARGS)
 	/* MCE stats count only non-null rows, so adjust for null rows. */
 	selec *= (1.0 - nullfrac);
 
-	free_attstatsslot(INT4OID, values, nvalues, numbers, nnumbers);
+	free_attstatsslot(&sslot);
 	ReleaseVariableStats(vardata);
 
 	CLAMP_PROBABILITY(selec);

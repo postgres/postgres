@@ -4,7 +4,7 @@
  *	  Common header for some locking-related declarations.
  *
  *
- * Copyright (c) 2014-2016, PostgreSQL Global Development Group
+ * Copyright (c) 2014-2017, PostgreSQL Global Development Group
  *
  * src/include/nodes/lockoptions.h
  *
@@ -43,4 +43,4 @@ typedef enum LockWaitPolicy
 	LockWaitError
 } LockWaitPolicy;
 
-#endif   /* LOCKOPTIONS_H */
+#endif							/* LOCKOPTIONS_H */

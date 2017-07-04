@@ -7,7 +7,7 @@
  *	  transfer pending entries into the regular index structure.  This
  *	  wins because bulk insertion is much more efficient than retail.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -19,6 +19,7 @@
 #include "postgres.h"
 
 #include "access/gin_private.h"
+#include "access/ginxlog.h"
 #include "access/xloginsert.h"
 #include "access/xlog.h"
 #include "commands/vacuum.h"
@@ -30,6 +31,7 @@
 #include "postmaster/autovacuum.h"
 #include "storage/indexfsm.h"
 #include "storage/lmgr.h"
+#include "utils/builtins.h"
 
 /* GUC parameter */
 int			gin_pending_list_limit = 0;
@@ -480,7 +482,7 @@ ginHeapTupleFastCollect(GinState *ginstate,
 	{
 		collector->lentuples *= 2;
 		collector->tuples = (IndexTuple *) repalloc(collector->tuples,
-								  sizeof(IndexTuple) * collector->lentuples);
+													sizeof(IndexTuple) * collector->lentuples);
 	}
 
 	/*
@@ -808,9 +810,7 @@ ginInsertCleanup(GinState *ginstate, bool full_clean,
 	 */
 	opCtx = AllocSetContextCreate(CurrentMemoryContext,
 								  "GIN insert cleanup temporary context",
-								  ALLOCSET_DEFAULT_MINSIZE,
-								  ALLOCSET_DEFAULT_INITSIZE,
-								  ALLOCSET_DEFAULT_MAXSIZE);
+								  ALLOCSET_DEFAULT_SIZES);
 
 	oldCtx = MemoryContextSwitchTo(opCtx);
 
@@ -874,7 +874,7 @@ ginInsertCleanup(GinState *ginstate, bool full_clean,
 			 */
 			ginBeginBAScan(&accum);
 			while ((list = ginGetBAEntry(&accum,
-								  &attnum, &key, &category, &nlist)) != NULL)
+										 &attnum, &key, &category, &nlist)) != NULL)
 			{
 				ginEntryInsert(ginstate, attnum, key, category,
 							   list, nlist, NULL);
@@ -904,7 +904,7 @@ ginInsertCleanup(GinState *ginstate, bool full_clean,
 
 				ginBeginBAScan(&accum);
 				while ((list = ginGetBAEntry(&accum,
-								  &attnum, &key, &category, &nlist)) != NULL)
+											 &attnum, &key, &category, &nlist)) != NULL)
 					ginEntryInsert(ginstate, attnum, key, category,
 								   list, nlist, NULL);
 			}
@@ -913,8 +913,8 @@ ginInsertCleanup(GinState *ginstate, bool full_clean,
 			 * Remember next page - it will become the new list head
 			 */
 			blkno = GinPageGetOpaque(page)->rightlink;
-			UnlockReleaseBuffer(buffer);		/* shiftList will do exclusive
-												 * locking */
+			UnlockReleaseBuffer(buffer);	/* shiftList will do exclusive
+											 * locking */
 
 			/*
 			 * remove read pages from pending list, at this point all content
@@ -989,7 +989,7 @@ gin_clean_pending_list(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("recovery is in progress"),
-		 errhint("GIN pending list cannot be cleaned up during recovery.")));
+				 errhint("GIN pending list cannot be cleaned up during recovery.")));
 
 	/* Must be a GIN index */
 	if (indexRel->rd_rel->relkind != RELKIND_INDEX ||
@@ -1007,7 +1007,7 @@ gin_clean_pending_list(PG_FUNCTION_ARGS)
 	if (RELATION_IS_OTHER_TEMP(indexRel))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			   errmsg("cannot access temporary indexes of other sessions")));
+				 errmsg("cannot access temporary indexes of other sessions")));
 
 	/* User must own the index (comparable to privileges needed for VACUUM) */
 	if (!pg_class_ownercheck(indexoid, GetUserId()))

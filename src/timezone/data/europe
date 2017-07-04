@@ -6,15 +6,15 @@
 # tz@iana.org for general use in the future).  For more, please see
 # the file CONTRIBUTING in the tz distribution.
 
-# From Paul Eggert (2014-10-31):
+# From Paul Eggert (2017-02-10):
 #
 # Unless otherwise specified, the source for data through 1990 is:
 # Thomas G. Shanks and Rique Pottenger, The International Atlas (6th edition),
 # San Diego: ACS Publications, Inc. (2003).
 # Unfortunately this book contains many errors and cites no sources.
 #
-# Gwillim Law writes that a good source
-# for recent time zone data is the International Air Transport
+# Many years ago Gwillim Law wrote that a good source
+# for time zone data was the International Air Transport
 # Association's Standard Schedules Information Manual (IATA SSIM),
 # published semiannually.  Law sent in several helpful summaries
 # of the IATA's data after 1990.  Except where otherwise noted,
@@ -56,27 +56,23 @@
 #	History of Summer Time
 #	<http://pcdsh01.on.br/HISTHV.htm>
 #	(1998-09-21, in Portuguese)
-
 #
 # I invented the abbreviations marked '*' in the following table;
-# the rest are from earlier versions of this file, or from other sources.
-# Corrections are welcome!
-#                   std dst  2dst
-#                   LMT           Local Mean Time
-#       -4:00       AST ADT       Atlantic
-#       -3:00       WGT WGST      Western Greenland*
-#       -1:00       EGT EGST      Eastern Greenland*
-#        0:00       GMT BST  BDST Greenwich, British Summer
-#        0:00       GMT IST       Greenwich, Irish Summer
-#        0:00       WET WEST WEMT Western Europe
-#        0:19:32.13 AMT NST       Amsterdam, Netherlands Summer (1835-1937)*
-#        0:20       NET NEST      Netherlands (1937-1940)*
-#        1:00       BST           British Standard (1968-1971)
-#        1:00       CET CEST CEMT Central Europe
-#        1:00:14    SET           Swedish (1879-1899)*
-#        2:00       EET EEST      Eastern Europe
-#        3:00       FET           Further-eastern Europe (2011-2014)*
-#        3:00       MSK MSD  MSM* Minsk, Moscow
+# the rest are variants of the "xMT" pattern for a city's mean time,
+# or are from other sources.  Corrections are welcome!
+#                   std  dst  2dst
+#                   LMT             Local Mean Time
+#       -4:00       AST  ADT        Atlantic
+#        0:00       GMT  BST  BDST  Greenwich, British Summer
+#        0:00       GMT  IST        Greenwich, Irish Summer
+#        0:00       WET  WEST WEMT  Western Europe
+#        0:19:32.13 AMT* NST*       Amsterdam, Netherlands Summer (1835-1937)
+#        1:00       BST             British Standard (1968-1971)
+#        1:00       CET  CEST CEMT  Central Europe
+#        1:00:14    SET             Swedish (1879-1899)
+#        1:36:34    RMT* LST*       Riga, Latvian Summer (1880-1926)*
+#        2:00       EET  EEST       Eastern Europe
+#        3:00       MSK  MSD  MDST* Moscow
 
 # From Peter Ilieve (1994-12-04),
 # The original six [EU members]: Belgium, France, (West) Germany, Italy,
@@ -476,7 +472,7 @@ Link	Europe/London	Europe/Isle_of_Man
 
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	Europe/Dublin	-0:25:00 -	LMT	1880 Aug  2
-			-0:25:21 -	DMT	1916 May 21  2:00
+			-0:25:21 -	DMT	1916 May 21  2:00 # Dublin MT
 			-0:25:21 1:00	IST	1916 Oct  1  2:00s
 			 0:00	GB-Eire	%s	1921 Dec  6 # independence
 			 0:00	GB-Eire	GMT/IST	1940 Feb 25  2:00
@@ -583,16 +579,33 @@ Rule	E-Eur	1979	1995	-	Sep	lastSun	 0:00	0	-
 Rule	E-Eur	1981	max	-	Mar	lastSun	 0:00	1:00	S
 Rule	E-Eur	1996	max	-	Oct	lastSun	 0:00	0	-
 
+
+# Daylight saving time for Russia and the Soviet Union
+#
+# The 1917-1921 decree URLs are from Alexander Belopolsky (2016-08-23).
+
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	Russia	1917	only	-	Jul	 1	23:00	1:00	MST  # Moscow Summer Time
+#
+# Decree No. 142 (1917-12-22) http://istmat.info/node/28137
 Rule	Russia	1917	only	-	Dec	28	 0:00	0	MMT  # Moscow Mean Time
+#
+# Decree No. 497 (1918-05-30) http://istmat.info/node/30001
 Rule	Russia	1918	only	-	May	31	22:00	2:00	MDST # Moscow Double Summer Time
 Rule	Russia	1918	only	-	Sep	16	 1:00	1:00	MST
+#
+# Decree No. 258 (1919-05-29) http://istmat.info/node/37949
 Rule	Russia	1919	only	-	May	31	23:00	2:00	MDST
-Rule	Russia	1919	only	-	Jul	 1	 2:00	1:00	MSD
+#
+Rule	Russia	1919	only	-	Jul	 1	 0:00u	1:00	MSD
 Rule	Russia	1919	only	-	Aug	16	 0:00	0	MSK
+#
+# Decree No. 63 (1921-02-03) http://istmat.info/node/45840
 Rule	Russia	1921	only	-	Feb	14	23:00	1:00	MSD
-Rule	Russia	1921	only	-	Mar	20	23:00	2:00	MSM  # Midsummer
+#
+# Decree No. 121 (1921-03-07) http://istmat.info/node/45949
+Rule	Russia	1921	only	-	Mar	20	23:00	2:00	+05
+#
 Rule	Russia	1921	only	-	Sep	 1	 0:00	1:00	MSD
 Rule	Russia	1921	only	-	Oct	 1	 0:00	0	-
 # Act No. 925 of the Council of Ministers of the USSR (1980-10-24):
@@ -775,8 +788,6 @@ Zone	Europe/Vienna	1:05:21 -	LMT	1893 Apr
 # From Alexander Bokovoy (2014-10-09):
 # Belarussian government decided against changing to winter time....
 # http://eng.belta.by/all_news/society/Belarus-decides-against-adjusting-time-in-Russias-wake_i_76335.html
-# From Paul Eggert (2014-10-08):
-# Hence Belarus can share time zone abbreviations with Moscow again.
 #
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	Europe/Minsk	1:50:16 -	LMT	1880
@@ -787,8 +798,7 @@ Zone	Europe/Minsk	1:50:16 -	LMT	1880
 			3:00	Russia	MSK/MSD	1990
 			3:00	-	MSK	1991 Mar 31  2:00s
 			2:00	Russia	EE%sT	2011 Mar 27  2:00s
-			3:00	-	FET	2014 Oct 26  1:00s
-			3:00	-	MSK
+			3:00	-	+03
 
 # Belgium
 #
@@ -888,7 +898,7 @@ Zone	Europe/Sofia	1:33:16 -	LMT	1880
 # Cyprus
 # Please see the 'asia' file for Asia/Nicosia.
 
-# Czech Republic
+# Czech Republic / Czechia
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	Czech	1945	only	-	Apr	 8	2:00s	1:00	S
 Rule	Czech	1945	only	-	Nov	18	2:00s	0	-
@@ -1051,16 +1061,16 @@ Rule	Thule	2007	max	-	Nov	Sun>=1	2:00	0	S
 #
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone America/Danmarkshavn -1:14:40 -	LMT	1916 Jul 28
-			-3:00	-	WGT	1980 Apr  6  2:00
-			-3:00	EU	WG%sT	1996
+			-3:00	-	-03	1980 Apr  6  2:00
+			-3:00	EU	-03/-02	1996
 			0:00	-	GMT
 Zone America/Scoresbysund -1:27:52 -	LMT	1916 Jul 28 # Ittoqqortoormiit
-			-2:00	-	CGT	1980 Apr  6  2:00
-			-2:00	C-Eur	CG%sT	1981 Mar 29
-			-1:00	EU	EG%sT
+			-2:00	-	-02	1980 Apr  6  2:00
+			-2:00	C-Eur	-02/-01	1981 Mar 29
+			-1:00	EU	-01/+00
 Zone America/Godthab	-3:26:56 -	LMT	1916 Jul 28 # Nuuk
-			-3:00	-	WGT	1980 Apr  6  2:00
-			-3:00	EU	WG%sT
+			-3:00	-	-03	1980 Apr  6  2:00
+			-3:00	EU	-03/-02
 Zone America/Thule	-4:35:08 -	LMT	1916 Jul 28 # Pituffik air base
 			-4:00	Thule	A%sT
 
@@ -1296,7 +1306,7 @@ Zone	Europe/Paris	0:09:21 -	LMT	1891 Mar 15  0:01
 # http://www.parlament-berlin.de/pds-fraktion.nsf/727459127c8b66ee8525662300459099/defc77cb784f180ac1256c2b0030274b/$FILE/bersarint.pdf
 # says that Bersarin issued an order to use Moscow time on May 20.
 # However, Moscow did not observe daylight saving in 1945, so
-# this was equivalent to CEMT (GMT+3), not GMT+4.
+# this was equivalent to UT +03, not +04.
 
 
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
@@ -1475,7 +1485,7 @@ Rule	Iceland	1950	1966	-	Oct	Sun>=22	 1:00s	0	-
 Rule	Iceland	1967	only	-	Oct	29	 1:00s	0	-
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone Atlantic/Reykjavik	-1:28	-	LMT	1908
-			-1:00	Iceland	IS%sT	1968 Apr  7  1:00s
+			-1:00	Iceland	-01/+00	1968 Apr  7  1:00s
 			 0:00	-	GMT
 
 # Italy
@@ -1487,73 +1497,84 @@ Zone Atlantic/Reykjavik	-1:28	-	LMT	1908
 # But these events all occurred before the 1970 cutoff,
 # so record only the time in Rome.
 #
-# From Paul Eggert (2006-03-22):
-# For Italian DST we have three sources: Shanks & Pottenger, Whitman, and
-# F. Pollastri
-# Day-light Saving Time in Italy (2006-02-03)
-# http://toi.iriti.cnr.it/uk/ienitlt.html
-# ('FP' below), taken from an Italian National Electrotechnical Institute
-# publication. When the three sources disagree, guess who's right, as follows:
+# From Michael Deckers (2016-10-24):
+# http://www.ac-ilsestante.it/MERIDIANE/ora_legale quotes a law of 1893-08-10
+# ... [translated as] "The preceding dispositions will enter into
+# force at the instant at which, according to the time specified in
+# the 1st article, the 1st of November 1893 will begin...."
 #
-# year	FP	Shanks&P. (S)	Whitman (W)	Go with:
-# 1916	06-03	06-03 24:00	06-03 00:00	FP & W
-#	09-30	09-30 24:00	09-30 01:00	FP; guess 24:00s
-# 1917	04-01	03-31 24:00	03-31 00:00	FP & S
-#	09-30	09-29 24:00	09-30 01:00	FP & W
-# 1918	03-09	03-09 24:00	03-09 00:00	FP & S
-#	10-06	10-05 24:00	10-06 01:00	FP & W
-# 1919	03-01	03-01 24:00	03-01 00:00	FP & S
-#	10-04	10-04 24:00	10-04 01:00	FP; guess 24:00s
-# 1920	03-20	03-20 24:00	03-20 00:00	FP & S
-#	09-18	09-18 24:00	10-01 01:00	FP; guess 24:00s
-# 1944	04-02	04-03 02:00			S (see C-Eur)
-#	09-16	10-02 03:00			FP; guess 24:00s
-# 1945	09-14	09-16 24:00			FP; guess 24:00s
-# 1970	05-21	05-31 00:00			S
-#	09-20	09-27 00:00			S
+# From Pierpaolo Bernardi (2016-10-20):
+# The authoritative source for time in Italy is the national metrological
+# institute, which has a summary page of historical DST data at
+# http://www.inrim.it/res/tf/ora_legale_i.shtml
+# (2016-10-24):
+# http://www.renzobaldini.it/le-ore-legali-in-italia/
+# has still different data for 1944.  It divides Italy in two, as
+# there were effectively two governments at the time, north of Gothic
+# Line German controlled territory, official government RSI, and south
+# of the Gothic Line, controlled by allied armies.
+#
+# From Brian Inglis (2016-10-23):
+# Viceregal LEGISLATIVE DECREE. 14 September 1944, no. 219.
+# Restoration of Standard Time. (044U0219) (OJ 62 of 30.9.1944) ...
+# Given the R. law decreed on 1944-03-29, no. 92, by which standard time is
+# advanced to sixty minutes later starting at hour two on 1944-04-02; ...
+# Starting at hour three on the date 1944-09-17 standard time will be resumed.
+#
+# From Paul Eggert (2016-10-27):
+# Go with INRiM for DST rules, except as corrected by Inglis for 1944
+# for the Kingdom of Italy.  This is consistent with Renzo Baldini.
+# Model Rome's occupation by using using C-Eur rules from 1943-09-10
+# to 1944-06-04; although Rome was an open city during this period, it
+# was effectively controlled by Germany.
 #
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
-Rule	Italy	1916	only	-	Jun	 3	0:00s	1:00	S
-Rule	Italy	1916	only	-	Oct	 1	0:00s	0	-
-Rule	Italy	1917	only	-	Apr	 1	0:00s	1:00	S
-Rule	Italy	1917	only	-	Sep	30	0:00s	0	-
-Rule	Italy	1918	only	-	Mar	10	0:00s	1:00	S
-Rule	Italy	1918	1919	-	Oct	Sun>=1	0:00s	0	-
-Rule	Italy	1919	only	-	Mar	 2	0:00s	1:00	S
-Rule	Italy	1920	only	-	Mar	21	0:00s	1:00	S
-Rule	Italy	1920	only	-	Sep	19	0:00s	0	-
-Rule	Italy	1940	only	-	Jun	15	0:00s	1:00	S
-Rule	Italy	1944	only	-	Sep	17	0:00s	0	-
-Rule	Italy	1945	only	-	Apr	 2	2:00	1:00	S
-Rule	Italy	1945	only	-	Sep	15	0:00s	0	-
-Rule	Italy	1946	only	-	Mar	17	2:00s	1:00	S
-Rule	Italy	1946	only	-	Oct	 6	2:00s	0	-
-Rule	Italy	1947	only	-	Mar	16	0:00s	1:00	S
-Rule	Italy	1947	only	-	Oct	 5	0:00s	0	-
-Rule	Italy	1948	only	-	Feb	29	2:00s	1:00	S
-Rule	Italy	1948	only	-	Oct	 3	2:00s	0	-
-Rule	Italy	1966	1968	-	May	Sun>=22	0:00	1:00	S
-Rule	Italy	1966	1969	-	Sep	Sun>=22	0:00	0	-
-Rule	Italy	1969	only	-	Jun	 1	0:00	1:00	S
-Rule	Italy	1970	only	-	May	31	0:00	1:00	S
-Rule	Italy	1970	only	-	Sep	lastSun	0:00	0	-
-Rule	Italy	1971	1972	-	May	Sun>=22	0:00	1:00	S
-Rule	Italy	1971	only	-	Sep	lastSun	1:00	0	-
-Rule	Italy	1972	only	-	Oct	 1	0:00	0	-
-Rule	Italy	1973	only	-	Jun	 3	0:00	1:00	S
-Rule	Italy	1973	1974	-	Sep	lastSun	0:00	0	-
-Rule	Italy	1974	only	-	May	26	0:00	1:00	S
-Rule	Italy	1975	only	-	Jun	 1	0:00s	1:00	S
-Rule	Italy	1975	1977	-	Sep	lastSun	0:00s	0	-
-Rule	Italy	1976	only	-	May	30	0:00s	1:00	S
-Rule	Italy	1977	1979	-	May	Sun>=22	0:00s	1:00	S
-Rule	Italy	1978	only	-	Oct	 1	0:00s	0	-
-Rule	Italy	1979	only	-	Sep	30	0:00s	0	-
+Rule	Italy	1916	only	-	Jun	 3	24:00	1:00	S
+Rule	Italy	1916	1917	-	Sep	30	24:00	0	-
+Rule	Italy	1917	only	-	Mar	31	24:00	1:00	S
+Rule	Italy	1918	only	-	Mar	 9	24:00	1:00	S
+Rule	Italy	1918	only	-	Oct	 6	24:00	0	-
+Rule	Italy	1919	only	-	Mar	 1	24:00	1:00	S
+Rule	Italy	1919	only	-	Oct	 4	24:00	0	-
+Rule	Italy	1920	only	-	Mar	20	24:00	1:00	S
+Rule	Italy	1920	only	-	Sep	18	24:00	0	-
+Rule	Italy	1940	only	-	Jun	14	24:00	1:00	S
+Rule	Italy	1942	only	-	Nov	 2	 2:00s	0	-
+Rule	Italy	1943	only	-	Mar	29	 2:00s	1:00	S
+Rule	Italy	1943	only	-	Oct	 4	 2:00s	0	-
+Rule	Italy	1944	only	-	Apr	 2	 2:00s	1:00	S
+Rule	Italy	1944	only	-	Sep	17	 2:00s	0	-
+Rule	Italy	1945	only	-	Apr	 2	 2:00	1:00	S
+Rule	Italy	1945	only	-	Sep	15	 1:00	0	-
+Rule	Italy	1946	only	-	Mar	17	 2:00s	1:00	S
+Rule	Italy	1946	only	-	Oct	 6	 2:00s	0	-
+Rule	Italy	1947	only	-	Mar	16	 0:00s	1:00	S
+Rule	Italy	1947	only	-	Oct	 5	 0:00s	0	-
+Rule	Italy	1948	only	-	Feb	29	 2:00s	1:00	S
+Rule	Italy	1948	only	-	Oct	 3	 2:00s	0	-
+Rule	Italy	1966	1968	-	May	Sun>=22	 0:00s	1:00	S
+Rule	Italy	1966	only	-	Sep	24	24:00	0	-
+Rule	Italy	1967	1969	-	Sep	Sun>=22	 0:00s	0	-
+Rule	Italy	1969	only	-	Jun	 1	 0:00s	1:00	S
+Rule	Italy	1970	only	-	May	31	 0:00s	1:00	S
+Rule	Italy	1970	only	-	Sep	lastSun	 0:00s	0	-
+Rule	Italy	1971	1972	-	May	Sun>=22	 0:00s	1:00	S
+Rule	Italy	1971	only	-	Sep	lastSun	 0:00s	0	-
+Rule	Italy	1972	only	-	Oct	 1	 0:00s	0	-
+Rule	Italy	1973	only	-	Jun	 3	 0:00s	1:00	S
+Rule	Italy	1973	1974	-	Sep	lastSun	 0:00s	0	-
+Rule	Italy	1974	only	-	May	26	 0:00s	1:00	S
+Rule	Italy	1975	only	-	Jun	 1	 0:00s	1:00	S
+Rule	Italy	1975	1977	-	Sep	lastSun	 0:00s	0	-
+Rule	Italy	1976	only	-	May	30	 0:00s	1:00	S
+Rule	Italy	1977	1979	-	May	Sun>=22	 0:00s	1:00	S
+Rule	Italy	1978	only	-	Oct	 1	 0:00s	0	-
+Rule	Italy	1979	only	-	Sep	30	 0:00s	0	-
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	Europe/Rome	0:49:56 -	LMT	1866 Sep 22
-			0:49:56	-	RMT	1893 Nov  1  0:00s # Rome Mean
-			1:00	Italy	CE%sT	1942 Nov  2  2:00s
-			1:00	C-Eur	CE%sT	1944 Jul
+			0:49:56	-	RMT	1893 Oct 31 23:49:56 # Rome Mean
+			1:00	Italy	CE%sT	1943 Sep 10
+			1:00	C-Eur	CE%sT	1944 Jun  4
 			1:00	Italy	CE%sT	1980
 			1:00	EU	CE%sT
 
@@ -1752,6 +1773,10 @@ Zone Europe/Luxembourg	0:24:36 -	LMT	1904 Jun
 # See Europe/Belgrade.
 
 # Malta
+#
+# From Paul Eggert (2016-10-21):
+# Assume 1900-1972 was like Rome, overriding Shanks.
+#
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	Malta	1973	only	-	Mar	31	0:00s	1:00	S
 Rule	Malta	1973	only	-	Sep	29	0:00s	0	-
@@ -1762,8 +1787,6 @@ Rule	Malta	1975	1980	-	Sep	Sun>=15	2:00	0	-
 Rule	Malta	1980	only	-	Mar	31	2:00	1:00	S
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	Europe/Malta	0:58:04 -	LMT	1893 Nov  2  0:00s # Valletta
-			1:00	Italy	CE%sT	1942 Nov  2  2:00s
-			1:00	C-Eur	CE%sT	1945 Apr  2  2:00s
 			1:00	Italy	CE%sT	1973 Mar 31
 			1:00	Malta	CE%sT	1981
 			1:00	EU	CE%sT
@@ -1895,7 +1918,7 @@ Zone	Europe/Monaco	0:29:32 -	LMT	1891 Mar 15
 # Amsterdam mean time.
 
 # The data entries before 1945 are taken from
-# http://www.phys.uu.nl/~vgent/wettijd/wettijd.htm
+# http://www.staff.science.uu.nl/~gent0113/wettijd/wettijd.htm
 
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	Neth	1916	only	-	May	 1	0:00	1:00	NST	# Netherlands Summer Time
@@ -1926,7 +1949,7 @@ Rule	Neth	1945	only	-	Sep	16	2:00s	0	-
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone Europe/Amsterdam	0:19:32 -	LMT	1835
 			0:19:32	Neth	%s	1937 Jul  1
-			0:20	Neth	NE%sT	1940 May 16  0:00 # Dutch Time
+			0:20	Neth +0020/+0120 1940 May 16  0:00
 			1:00	C-Eur	CE%sT	1945 Apr  2  2:00
 			1:00	Neth	CE%sT	1977
 			1:00	EU	CE%sT
@@ -2143,16 +2166,34 @@ Zone	Europe/Lisbon	-0:36:45 -	LMT	1884
 			 0:00	W-Eur	WE%sT	1992 Sep 27  1:00s
 			 1:00	EU	CE%sT	1996 Mar 31  1:00u
 			 0:00	EU	WE%sT
+# This Zone can be simplified once we assume zic %z.
 Zone Atlantic/Azores	-1:42:40 -	LMT	1884        # Ponta Delgada
 			-1:54:32 -	HMT	1912 Jan  1 # Horta Mean Time
-			-2:00	Port	AZO%sT	1966 Apr  3  2:00  # Azores Time
-			-1:00	Port	AZO%sT	1983 Sep 25  1:00s
-			-1:00	W-Eur	AZO%sT	1992 Sep 27  1:00s
+			-2:00	Port	-02/-01	1942 Apr 25 22:00s
+			-2:00	Port	+00	1942 Aug 15 22:00s
+			-2:00	Port	-02/-01	1943 Apr 17 22:00s
+			-2:00	Port	+00	1943 Aug 28 22:00s
+			-2:00	Port	-02/-01	1944 Apr 22 22:00s
+			-2:00	Port	+00	1944 Aug 26 22:00s
+			-2:00	Port	-02/-01	1945 Apr 21 22:00s
+			-2:00	Port	+00	1945 Aug 25 22:00s
+			-2:00	Port	-02/-01	1966 Apr  3  2:00
+			-1:00	Port	-01/+00	1983 Sep 25  1:00s
+			-1:00	W-Eur	-01/+00	1992 Sep 27  1:00s
 			 0:00	EU	WE%sT	1993 Mar 28  1:00u
-			-1:00	EU	AZO%sT
+			-1:00	EU	-01/+00
+# This Zone can be simplified once we assume zic %z.
 Zone Atlantic/Madeira	-1:07:36 -	LMT	1884        # Funchal
 			-1:07:36 -	FMT	1912 Jan  1 # Funchal Mean Time
-			-1:00	Port	MAD%sT	1966 Apr  3  2:00 # Madeira Time
+			-1:00	Port	-01/+00	1942 Apr 25 22:00s
+			-1:00	Port	+01	1942 Aug 15 22:00s
+			-1:00	Port	-01/+00	1943 Apr 17 22:00s
+			-1:00	Port	+01	1943 Aug 28 22:00s
+			-1:00	Port	-01/+00	1944 Apr 22 22:00s
+			-1:00	Port	+01	1944 Aug 26 22:00s
+			-1:00	Port	-01/+00	1945 Apr 21 22:00s
+			-1:00	Port	+01	1945 Aug 25 22:00s
+			-1:00	Port	-01/+00	1966 Apr  3  2:00
 			 0:00	Port	WE%sT	1983 Sep 25  1:00s
 			 0:00	EU	WE%sT
 
@@ -2260,7 +2301,6 @@ Zone Europe/Bucharest	1:44:24 -	LMT	1891 Oct
 # http://www.worldtimezone.com/dst_news/dst_news_russia-map-2014-07.html
 
 # From Paul Eggert (2006-03-22):
-# Except for Moscow after 1919-07-01, I invented the time zone abbreviations.
 # Moscow time zone abbreviations after 1919-07-01, and Moscow rules after 1991,
 # are from Andrey A. Chernov.  The rest is from Shanks & Pottenger,
 # except we follow Chernov's report that 1992 DST transitions were Sat
@@ -2336,7 +2376,7 @@ Zone Europe/Kaliningrad	 1:22:00 -	LMT	1893 Apr
 			 2:00	Poland	CE%sT	1946
 			 3:00	Russia	MSK/MSD	1989 Mar 26  2:00s
 			 2:00	Russia	EE%sT	2011 Mar 27  2:00s
-			 3:00	-	FET	2014 Oct 26  2:00s
+			 3:00	-	+03	2014 Oct 26  2:00s
 			 2:00	-	EET
 
 
@@ -2389,6 +2429,16 @@ Zone Europe/Kaliningrad	 1:22:00 -	LMT	1893 Apr
 # 78	RU-SPE	Saint Petersburg
 # 83	RU-NEN	Nenets Autonomous Okrug
 
+# From Paul Eggert (2016-08-23):
+# The Soviets switched to UT-based time in 1919.  Decree No. 59
+# (1919-02-08) http://istmat.info/node/35567 established UT-based time
+# zones, and Decree No. 147 (1919-03-29) http://istmat.info/node/35854
+# specified a transition date of 1919-07-01, apparently at 00:00 UT.
+# No doubt only the Soviet-controlled regions switched on that date;
+# later transitions to UT-based time in other parts of Russia are
+# taken from what appear to be guesses by Shanks.
+# (Thanks to Alexander Belopolsky for pointers to the decrees.)
+
 # From Stepan Golosunov (2016-03-07):
 # 11. Regions-violators, 1981-1982.
 # Wikipedia refers to
@@ -2430,7 +2480,7 @@ Zone Europe/Kaliningrad	 1:22:00 -	LMT	1893 Apr
 # attributes the 1982 changes to the Act of the Council of Ministers
 # of the USSR No. 126 from 18.02.1982.  1980-925.txt also adds
 # Udmurtia to the list of affected territories and lists Khatangsky
-# district separately from Taymyr Autonomous Okurg.  Probably erroneously.
+# district separately from Taymyr Autonomous Okrug.  Probably erroneously.
 #
 # The affected territories are currently listed under Europe/Moscow,
 # Asia/Yekaterinburg and Asia/Krasnoyarsk.
@@ -2490,7 +2540,7 @@ Zone Europe/Kaliningrad	 1:22:00 -	LMT	1893 Apr
 
 Zone Europe/Moscow	 2:30:17 -	LMT	1880
 			 2:30:17 -	MMT	1916 Jul  3 # Moscow Mean Time
-			 2:31:19 Russia	%s	1919 Jul  1  2:00
+			 2:31:19 Russia	%s	1919 Jul  1  0:00u
 			 3:00	Russia	%s	1921 Oct
 			 3:00	Russia	MSK/MSD	1922 Oct
 			 2:00	-	EET	1930 Jun 21
@@ -2501,10 +2551,8 @@ Zone Europe/Moscow	 2:30:17 -	LMT	1880
 			 3:00	-	MSK
 
 
-# From Tim Parenti (2014-07-03):
-# Europe/Simferopol covers...
-# **	****	Crimea, Republic of
-# **	****	Sevastopol
+# From Paul Eggert (2016-12-06):
+# Europe/Simferopol covers Crimea.
 
 Zone Europe/Simferopol	 2:16:24 -	LMT	1880
 			 2:16	-	SMT	1924 May  2 # Simferopol Mean T
@@ -2566,29 +2614,48 @@ Zone Europe/Astrakhan	 3:12:12 -	LMT	1924 May
 			 3:00	-	+03	2016 Mar 27  2:00s
 			 4:00	-	+04
 
-# From Paul Eggert (2016-03-18):
+# From Paul Eggert (2016-11-11):
 # Europe/Volgograd covers:
 # 34	RU-VGG	Volgograd Oblast
-# 64	RU-SAR	Saratov Oblast
 # The 1988 transition is from USSR act No. 5 (1988-01-04).
 
 Zone Europe/Volgograd	 2:57:40 -	LMT	1920 Jan  3
-			 3:00	-	TSAT	1925 Apr  6 # Tsaritsyn Time
-			 3:00	-	STAT	1930 Jun 21 # Stalingrad Time
-			 4:00	-	STAT	1961 Nov 11
-			 4:00	Russia	VOL%sT	1988 Mar 27  2:00s # Volgograd T
-			 3:00	Russia	VOL%sT	1991 Mar 31  2:00s
-			 4:00	-	VOLT	1992 Mar 29  2:00s
-			 3:00	Russia	MSK/MSD	2011 Mar 27  2:00s
-			 4:00	-	MSK	2014 Oct 26  2:00s
-			 3:00	-	MSK
+			 3:00	-	+03	1930 Jun 21
+			 4:00	-	+04	1961 Nov 11
+			 4:00	Russia	+04/+05	1988 Mar 27  2:00s
+			 3:00	Russia	+03/+04	1991 Mar 31  2:00s
+			 4:00	-	+04	1992 Mar 29  2:00s
+			 3:00	Russia	+03/+04	2011 Mar 27  2:00s
+			 4:00	-	+04	2014 Oct 26  2:00s
+			 3:00	-	+03
+
+# From Paul Eggert (2016-11-11):
+# Europe/Saratov covers:
+# 64	RU-SAR	Saratov Oblast
+
+# From Yuri Konotopov (2016-11-11):
+# Dec 4, 2016 02:00 UTC+3....  Saratov Region's local time will be ... UTC+4.
+# From Stepan Golosunov (2016-11-11):
+# ... Byalokoz listed Saratov on 03:04:18.
+# From Stepan Golosunov (2016-11-22):
+# http://publication.pravo.gov.ru/Document/View/0001201611220031
+
+Zone Europe/Saratov	 3:04:18 -	LMT	1919 Jul  1  0:00u
+			 3:00	-	+03	1930 Jun 21
+			 4:00	Russia	+04/+05	1988 Mar 27  2:00s
+			 3:00	Russia	+03/+04	1991 Mar 31  2:00s
+			 4:00	-	+04	1992 Mar 29  2:00s
+			 3:00	Russia	+03/+04	2011 Mar 27  2:00s
+			 4:00	-	+04	2014 Oct 26  2:00s
+			 3:00	-	+03	2016 Dec  4  2:00s
+			 4:00	-	+04
 
 # From Paul Eggert (2016-03-18):
 # Europe/Kirov covers:
 # 43	RU-KIR	Kirov Oblast
 # The 1989 transition is from USSR act No. 227 (1989-03-14).
 #
-Zone Europe/Kirov	 3:18:48 -	LMT	1919 Jul  1  2:00
+Zone Europe/Kirov	 3:18:48 -	LMT	1919 Jul  1  0:00u
 			 3:00	-	+03	1930 Jun 21
 			 4:00	Russia	+04/+05	1989 Mar 26  2:00s
 			 3:00	Russia	+03/+04	1991 Mar 31  2:00s
@@ -2606,16 +2673,16 @@ Zone Europe/Kirov	 3:18:48 -	LMT	1919 Jul  1  2:00
 # Byalokoz 1919 says Samara was 3:20:20.
 # The 1989 transition is from USSR act No. 227 (1989-03-14).
 
-Zone Europe/Samara	 3:20:20 -	LMT	1919 Jul  1  2:00
-			 3:00	-	SAMT	1930 Jun 21 # Samara Time
-			 4:00	-	SAMT	1935 Jan 27
-			 4:00	Russia	KUY%sT	1989 Mar 26  2:00s # Kuybyshev
-			 3:00	Russia	MSK/MSD	1991 Mar 31  2:00s
-			 2:00	Russia	EE%sT	1991 Sep 29  2:00s
-			 3:00	-	SAMT	1991 Oct 20  3:00
-			 4:00	Russia	SAM%sT	2010 Mar 28  2:00s
-			 3:00	Russia	SAM%sT	2011 Mar 27  2:00s
-			 4:00	-	SAMT
+Zone Europe/Samara	 3:20:20 -	LMT	1919 Jul  1  0:00u
+			 3:00	-	+03	1930 Jun 21
+			 4:00	-	+04	1935 Jan 27
+			 4:00	Russia	+04/+05	1989 Mar 26  2:00s
+			 3:00	Russia	+03/+04	1991 Mar 31  2:00s
+			 2:00	Russia	+02/+03	1991 Sep 29  2:00s
+			 3:00	-	+03	1991 Oct 20  3:00
+			 4:00	Russia	+04/+05	2010 Mar 28  2:00s
+			 3:00	Russia	+03/+04	2011 Mar 27  2:00s
+			 4:00	-	+04
 
 # From Paul Eggert (2016-03-18):
 # Europe/Ulyanovsk covers:
@@ -2630,7 +2697,7 @@ Zone Europe/Samara	 3:20:20 -	LMT	1919 Jul  1  2:00
 # From Matt Johnson (2016-03-09):
 # http://publication.pravo.gov.ru/Document/View/0001201603090051
 
-Zone Europe/Ulyanovsk	 3:13:36 -	LMT	1919 Jul  1  2:00
+Zone Europe/Ulyanovsk	 3:13:36 -	LMT	1919 Jul  1  0:00u
 			 3:00	-	+03	1930 Jun 21
 			 4:00	Russia	+04/+05	1989 Mar 26  2:00s
 			 3:00	Russia	+03/+04	1991 Mar 31  2:00s
@@ -2662,12 +2729,12 @@ Zone Europe/Ulyanovsk	 3:13:36 -	LMT	1919 Jul  1  2:00
 
 Zone Asia/Yekaterinburg	 4:02:33 -	LMT	1916 Jul  3
 			 3:45:05 -	PMT	1919 Jul 15  4:00
-			 4:00	-	SVET	1930 Jun 21 # Sverdlovsk Time
-			 5:00	Russia	SVE%sT	1991 Mar 31  2:00s
-			 4:00	Russia	SVE%sT	1992 Jan 19  2:00s
-			 5:00	Russia	YEK%sT	2011 Mar 27  2:00s
-			 6:00	-	YEKT	2014 Oct 26  2:00s
-			 5:00	-	YEKT
+			 4:00	-	+04	1930 Jun 21
+			 5:00	Russia	+05/+06	1991 Mar 31  2:00s
+			 4:00	Russia	+04/+05	1992 Jan 19  2:00s
+			 5:00	Russia	+05/+06	2011 Mar 27  2:00s
+			 6:00	-	+06	2014 Oct 26  2:00s
+			 5:00	-	+05
 
 
 # From Tim Parenti (2014-07-03), per Oscar van Vlijmen (2001-08-25):
@@ -2677,12 +2744,12 @@ Zone Asia/Yekaterinburg	 4:02:33 -	LMT	1916 Jul  3
 # Byalokoz 1919 says Omsk was 4:53:30.
 
 Zone Asia/Omsk		 4:53:30 -	LMT	1919 Nov 14
-			 5:00	-	OMST	1930 Jun 21 # Omsk Time
-			 6:00	Russia	OMS%sT	1991 Mar 31  2:00s
-			 5:00	Russia	OMS%sT	1992 Jan 19  2:00s
-			 6:00	Russia	OMS%sT	2011 Mar 27  2:00s
-			 7:00	-	OMST	2014 Oct 26  2:00s
-			 6:00	-	OMST
+			 5:00	-	+05	1930 Jun 21
+			 6:00	Russia	+06/+07	1991 Mar 31  2:00s
+			 5:00	Russia	+05/+06	1992 Jan 19  2:00s
+			 6:00	Russia	+06/+07	2011 Mar 27  2:00s
+			 7:00	-	+07	2014 Oct 26  2:00s
+			 6:00	-	+06
 
 # From Paul Eggert (2016-02-22):
 # Asia/Barnaul covers:
@@ -2762,7 +2829,7 @@ Zone Asia/Novosibirsk	 5:31:40 -	LMT	1919 Dec 14  6:00
 # Note that time belts (numbered from 2 (Moscow) to 12 according to their
 # GMT/UTC offset and having too many exceptions like regions formally
 # belonging to one belt but using time from another) were replaced
-# with time zones in 2011 with different numberings (there was a
+# with time zones in 2011 with different numbering (there was a
 # 2-hour gap between second and third zones in 2011-2014).
 
 # From Stepan Golosunov (2016-04-12):
@@ -2845,12 +2912,12 @@ Zone Asia/Novokuznetsk	 5:48:48 -	LMT	1924 May  1
 # Byalokoz 1919 says Krasnoyarsk was 6:11:26.
 
 Zone Asia/Krasnoyarsk	 6:11:26 -	LMT	1920 Jan  6
-			 6:00	-	KRAT	1930 Jun 21 # Krasnoyarsk Time
-			 7:00	Russia	KRA%sT	1991 Mar 31  2:00s
-			 6:00	Russia	KRA%sT	1992 Jan 19  2:00s
-			 7:00	Russia	KRA%sT	2011 Mar 27  2:00s
-			 8:00	-	KRAT	2014 Oct 26  2:00s
-			 7:00	-	KRAT
+			 6:00	-	+06	1930 Jun 21
+			 7:00	Russia	+07/+08	1991 Mar 31  2:00s
+			 6:00	Russia	+06/+07	1992 Jan 19  2:00s
+			 7:00	Russia	+07/+08	2011 Mar 27  2:00s
+			 8:00	-	+08	2014 Oct 26  2:00s
+			 7:00	-	+07
 
 
 # From Tim Parenti (2014-07-03), per Oscar van Vlijmen (2001-08-25):
@@ -2867,12 +2934,12 @@ Zone Asia/Krasnoyarsk	 6:11:26 -	LMT	1920 Jan  6
 
 Zone Asia/Irkutsk	 6:57:05 -	LMT	1880
 			 6:57:05 -	IMT	1920 Jan 25 # Irkutsk Mean Time
-			 7:00	-	IRKT	1930 Jun 21 # Irkutsk Time
-			 8:00	Russia	IRK%sT	1991 Mar 31  2:00s
-			 7:00	Russia	IRK%sT	1992 Jan 19  2:00s
-			 8:00	Russia	IRK%sT	2011 Mar 27  2:00s
-			 9:00	-	IRKT	2014 Oct 26  2:00s
-			 8:00	-	IRKT
+			 7:00	-	+07	1930 Jun 21
+			 8:00	Russia	+08/+09	1991 Mar 31  2:00s
+			 7:00	Russia	+07/+08	1992 Jan 19  2:00s
+			 8:00	Russia	+08/+09	2011 Mar 27  2:00s
+			 9:00	-	+09	2014 Oct 26  2:00s
+			 8:00	-	+08
 
 
 # From Tim Parenti (2014-07-06):
@@ -2889,13 +2956,13 @@ Zone Asia/Irkutsk	 6:57:05 -	LMT	1880
 # http://publication.pravo.gov.ru/Document/View/0001201512300107
 
 Zone Asia/Chita	 7:33:52 -	LMT	1919 Dec 15
-			 8:00	-	YAKT	1930 Jun 21 # Yakutsk Time
-			 9:00	Russia	YAK%sT	1991 Mar 31  2:00s
-			 8:00	Russia	YAK%sT	1992 Jan 19  2:00s
-			 9:00	Russia	YAK%sT	2011 Mar 27  2:00s
-			10:00	-	YAKT	2014 Oct 26  2:00s
-			 8:00	-	IRKT	2016 Mar 27  2:00
-			 9:00	-	YAKT
+			 8:00	-	+08	1930 Jun 21
+			 9:00	Russia	+09/+10	1991 Mar 31  2:00s
+			 8:00	Russia	+08/+09	1992 Jan 19  2:00s
+			 9:00	Russia	+09/+10	2011 Mar 27  2:00s
+			10:00	-	+10	2014 Oct 26  2:00s
+			 8:00	-	+08	2016 Mar 27  2:00
+			 9:00	-	+09
 
 
 # From Tim Parenti (2014-07-03), per Oscar van Vlijmen (2009-11-29):
@@ -2935,12 +3002,12 @@ Zone Asia/Chita	 7:33:52 -	LMT	1919 Dec 15
 # Byalokoz 1919 says Yakutsk was 8:38:58.
 
 Zone Asia/Yakutsk	 8:38:58 -	LMT	1919 Dec 15
-			 8:00	-	YAKT	1930 Jun 21 # Yakutsk Time
-			 9:00	Russia	YAK%sT	1991 Mar 31  2:00s
-			 8:00	Russia	YAK%sT	1992 Jan 19  2:00s
-			 9:00	Russia	YAK%sT	2011 Mar 27  2:00s
-			10:00	-	YAKT	2014 Oct 26  2:00s
-			 9:00	-	YAKT
+			 8:00	-	+08	1930 Jun 21
+			 9:00	Russia	+09/+10	1991 Mar 31  2:00s
+			 8:00	Russia	+08/+09	1992 Jan 19  2:00s
+			 9:00	Russia	+09/+10	2011 Mar 27  2:00s
+			10:00	-	+10	2014 Oct 26  2:00s
+			 9:00	-	+09
 
 
 # From Tim Parenti (2014-07-03), per Oscar van Vlijmen (2009-11-29):
@@ -2958,12 +3025,12 @@ Zone Asia/Yakutsk	 8:38:58 -	LMT	1919 Dec 15
 # Go with Byalokoz.
 
 Zone Asia/Vladivostok	 8:47:31 -	LMT	1922 Nov 15
-			 9:00	-	VLAT	1930 Jun 21 # Vladivostok Time
-			10:00	Russia	VLA%sT	1991 Mar 31  2:00s
-			 9:00	Russia	VLA%sT	1992 Jan 19  2:00s
-			10:00	Russia	VLA%sT	2011 Mar 27  2:00s
-			11:00	-	VLAT	2014 Oct 26  2:00s
-			10:00	-	VLAT
+			 9:00	-	+09	1930 Jun 21
+			10:00	Russia	+10/+11	1991 Mar 31  2:00s
+			 9:00	Russia	+09/+10	1992 Jan 19  2:00s
+			10:00	Russia	+10/+11	2011 Mar 27  2:00s
+			11:00	-	+11	2014 Oct 26  2:00s
+			10:00	-	+10
 
 
 # From Tim Parenti (2014-07-03):
@@ -2981,14 +3048,14 @@ Zone Asia/Vladivostok	 8:47:31 -	LMT	1922 Nov 15
 # This transition is no doubt wrong, but we have no better info.
 
 Zone Asia/Khandyga	 9:02:13 -	LMT	1919 Dec 15
-			 8:00	-	YAKT	1930 Jun 21 # Yakutsk Time
-			 9:00	Russia	YAK%sT	1991 Mar 31  2:00s
-			 8:00	Russia	YAK%sT	1992 Jan 19  2:00s
-			 9:00	Russia	YAK%sT	2004
-			10:00	Russia	VLA%sT	2011 Mar 27  2:00s
-			11:00	-	VLAT	2011 Sep 13  0:00s # Decree 725?
-			10:00	-	YAKT	2014 Oct 26  2:00s
-			 9:00	-	YAKT
+			 8:00	-	+08	1930 Jun 21
+			 9:00	Russia	+09/+10	1991 Mar 31  2:00s
+			 8:00	Russia	+08/+09	1992 Jan 19  2:00s
+			 9:00	Russia	+09/+10	2004
+			10:00	Russia	+10/+11	2011 Mar 27  2:00s
+			11:00	-	+11	2011 Sep 13  0:00s # Decree 725?
+			10:00	-	+10	2014 Oct 26  2:00s
+			 9:00	-	+09
 
 
 # From Tim Parenti (2014-07-03):
@@ -3004,15 +3071,14 @@ Zone Asia/Khandyga	 9:02:13 -	LMT	1919 Dec 15
 
 # The Zone name should be Asia/Yuzhno-Sakhalinsk, but that's too long.
 Zone Asia/Sakhalin	 9:30:48 -	LMT	1905 Aug 23
-			 9:00	-	JCST	1937 Oct  1
-			 9:00	-	JST	1945 Aug 25
-			11:00	Russia	SAK%sT	1991 Mar 31  2:00s # Sakhalin T
-			10:00	Russia	SAK%sT	1992 Jan 19  2:00s
-			11:00	Russia	SAK%sT	1997 Mar lastSun  2:00s
-			10:00	Russia	SAK%sT	2011 Mar 27  2:00s
-			11:00	-	SAKT	2014 Oct 26  2:00s
-			10:00	-	SAKT	2016 Mar 27  2:00s
-			11:00	-	SAKT
+			 9:00	-	+09	1945 Aug 25
+			11:00	Russia	+11/+12	1991 Mar 31  2:00s # Sakhalin T
+			10:00	Russia	+10/+11	1992 Jan 19  2:00s
+			11:00	Russia	+11/+12	1997 Mar lastSun  2:00s
+			10:00	Russia	+10/+11	2011 Mar 27  2:00s
+			11:00	-	+11	2014 Oct 26  2:00s
+			10:00	-	+10	2016 Mar 27  2:00s
+			11:00	-	+11
 
 
 # From Tim Parenti (2014-07-03), per Oscar van Vlijmen (2009-11-29):
@@ -3035,13 +3101,13 @@ Zone Asia/Sakhalin	 9:30:48 -	LMT	1905 Aug 23
 # http://publication.pravo.gov.ru/Document/View/0001201604050038
 
 Zone Asia/Magadan	10:03:12 -	LMT	1924 May  2
-			10:00	-	MAGT	1930 Jun 21 # Magadan Time
-			11:00	Russia	MAG%sT	1991 Mar 31  2:00s
-			10:00	Russia	MAG%sT	1992 Jan 19  2:00s
-			11:00	Russia	MAG%sT	2011 Mar 27  2:00s
-			12:00	-	MAGT	2014 Oct 26  2:00s
-			10:00	-	MAGT	2016 Apr 24  2:00s
-			11:00	-	MAGT
+			10:00	-	+10	1930 Jun 21 # Magadan Time
+			11:00	Russia	+11/+12	1991 Mar 31  2:00s
+			10:00	Russia	+10/+11	1992 Jan 19  2:00s
+			11:00	Russia	+11/+12	2011 Mar 27  2:00s
+			12:00	-	+12	2014 Oct 26  2:00s
+			10:00	-	+10	2016 Apr 24  2:00s
+			11:00	-	+11
 
 
 # From Tim Parenti (2014-07-06):
@@ -3084,17 +3150,14 @@ Zone Asia/Magadan	10:03:12 -	LMT	1924 May  2
 # in Russian.)  In addition, Srednekolymsk appears to be a much older
 # settlement and the population of Zyryanka seems to be declining.
 # Go with Srednekolymsk.
-#
-# Since Magadan Oblast moves to UTC+10 on 2014-10-26, we cannot keep using MAGT
-# as the abbreviation.  Use SRET instead.
 
 Zone Asia/Srednekolymsk	10:14:52 -	LMT	1924 May  2
-			10:00	-	MAGT	1930 Jun 21 # Magadan Time
-			11:00	Russia	MAG%sT	1991 Mar 31  2:00s
-			10:00	Russia	MAG%sT	1992 Jan 19  2:00s
-			11:00	Russia	MAG%sT	2011 Mar 27  2:00s
-			12:00	-	MAGT	2014 Oct 26  2:00s
-			11:00	-	SRET	# Srednekolymsk Time
+			10:00	-	+10	1930 Jun 21
+			11:00	Russia	+11/+12	1991 Mar 31  2:00s
+			10:00	Russia	+10/+11	1992 Jan 19  2:00s
+			11:00	Russia	+11/+12	2011 Mar 27  2:00s
+			12:00	-	+12	2014 Oct 26  2:00s
+			11:00	-	+11
 
 
 # From Tim Parenti (2014-07-03):
@@ -3112,14 +3175,14 @@ Zone Asia/Srednekolymsk	10:14:52 -	LMT	1924 May  2
 # UTC+12 since at least then, too.
 
 Zone Asia/Ust-Nera	 9:32:54 -	LMT	1919 Dec 15
-			 8:00	-	YAKT	1930 Jun 21 # Yakutsk Time
-			 9:00	Russia	YAKT	1981 Apr  1
-			11:00	Russia	MAG%sT	1991 Mar 31  2:00s
-			10:00	Russia	MAG%sT	1992 Jan 19  2:00s
-			11:00	Russia	MAG%sT	2011 Mar 27  2:00s
-			12:00	-	MAGT	2011 Sep 13  0:00s # Decree 725?
-			11:00	-	VLAT	2014 Oct 26  2:00s
-			10:00	-	VLAT
+			 8:00	-	+08	1930 Jun 21
+			 9:00	Russia	+09/+10	1981 Apr  1
+			11:00	Russia	+11/+12	1991 Mar 31  2:00s
+			10:00	Russia	+10/+11	1992 Jan 19  2:00s
+			11:00	Russia	+11/+12	2011 Mar 27  2:00s
+			12:00	-	+12	2011 Sep 13  0:00s # Decree 725?
+			11:00	-	+11	2014 Oct 26  2:00s
+			10:00	-	+10
 
 
 # From Tim Parenti (2014-07-03), per Oscar van Vlijmen (2001-08-25):
@@ -3132,12 +3195,12 @@ Zone Asia/Ust-Nera	 9:32:54 -	LMT	1919 Dec 15
 # The Zone name should be Asia/Petropavlovsk-Kamchatski or perhaps
 # Asia/Petropavlovsk-Kamchatsky, but these are too long.
 Zone Asia/Kamchatka	10:34:36 -	LMT	1922 Nov 10
-			11:00	-	PETT	1930 Jun 21 # P-K Time
-			12:00	Russia	PET%sT	1991 Mar 31  2:00s
-			11:00	Russia	PET%sT	1992 Jan 19  2:00s
-			12:00	Russia	PET%sT	2010 Mar 28  2:00s
-			11:00	Russia	PET%sT	2011 Mar 27  2:00s
-			12:00	-	PETT
+			11:00	-	+11	1930 Jun 21
+			12:00	Russia	+12/+13	1991 Mar 31  2:00s
+			11:00	Russia	+11/+12	1992 Jan 19  2:00s
+			12:00	Russia	+12/+13	2010 Mar 28  2:00s
+			11:00	Russia	+11/+12	2011 Mar 27  2:00s
+			12:00	-	+12
 
 
 # From Tim Parenti (2014-07-03):
@@ -3145,13 +3208,13 @@ Zone Asia/Kamchatka	10:34:36 -	LMT	1922 Nov 10
 # 87	RU-CHU	Chukotka Autonomous Okrug
 
 Zone Asia/Anadyr	11:49:56 -	LMT	1924 May  2
-			12:00	-	ANAT	1930 Jun 21 # Anadyr Time
-			13:00	Russia	ANA%sT	1982 Apr  1  0:00s
-			12:00	Russia	ANA%sT	1991 Mar 31  2:00s
-			11:00	Russia	ANA%sT	1992 Jan 19  2:00s
-			12:00	Russia	ANA%sT	2010 Mar 28  2:00s
-			11:00	Russia	ANA%sT	2011 Mar 27  2:00s
-			12:00	-	ANAT
+			12:00	-	+12	1930 Jun 21
+			13:00	Russia	+13/+14	1982 Apr  1  0:00s
+			12:00	Russia	+12/+13	1991 Mar 31  2:00s
+			11:00	Russia	+11/+12	1992 Jan 19  2:00s
+			12:00	Russia	+12/+13	2010 Mar 28  2:00s
+			11:00	Russia	+11/+12	2011 Mar 27  2:00s
+			12:00	-	+12
 
 
 # San Marino
@@ -3182,46 +3245,77 @@ Link Europe/Prague Europe/Bratislava
 # See Europe/Belgrade.
 
 # Spain
+#
+# From Paul Eggert (2016-12-14):
+#
+# The source for Europe/Madrid before 2013 is:
+# Planesas P. La hora oficial en España y sus cambios.
+# Anuario del Observatorio Astronómico de Madrid (2013, in Spanish).
+# http://astronomia.ign.es/rknowsys-theme/images/webAstro/paginas/documentos/Anuario/lahoraoficialenespana.pdf
+# As this source says that historical time in the Canaries is obscure,
+# and it does not discuss Ceuta, stick with Shanks for now for that data.
+#
+# In the 1918 and 1919 fallback transitions in Spain, the clock for
+# the hour-longer day officially kept going after midnight, so that
+# the repeated instances of that day's 00:00 hour were 24 hours apart,
+# with a fallback transition from the second occurrence of 00:59... to
+# the next day's 00:00.  Our data format cannot represent this
+# directly, and instead repeats the first hour of the next day, with a
+# fallback transition from the next day's 00:59... to 00:00.
+
+# From Michael Deckers (2016-12-15):
+# The Royal Decree of 1900-06-26 quoted by Planesas, online at
+# https://www.boe.es/datos/pdfs/BOE//1900/209/A00383-00384.pdf
+# says in its article 5 (my translation):
+# These dispositions will enter into force beginning with the
+# instant at which, according to the time indicated in article 1,
+# the 1st day of January of 1901 will begin.
+
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
-# For 1917-1919 Whitman gives Apr Sat>=1 - Oct Sat>=1;
-# go with Shanks & Pottenger.
-Rule	Spain	1917	only	-	May	 5	23:00s	1:00	S
-Rule	Spain	1917	1919	-	Oct	 6	23:00s	0	-
-Rule	Spain	1918	only	-	Apr	15	23:00s	1:00	S
-Rule	Spain	1919	only	-	Apr	 5	23:00s	1:00	S
-# Whitman gives 1921 Feb 28 - Oct 14; go with Shanks & Pottenger.
-Rule	Spain	1924	only	-	Apr	16	23:00s	1:00	S
-# Whitman gives 1924 Oct 14; go with Shanks & Pottenger.
-Rule	Spain	1924	only	-	Oct	 4	23:00s	0	-
-Rule	Spain	1926	only	-	Apr	17	23:00s	1:00	S
-# Whitman says no DST in 1929; go with Shanks & Pottenger.
-Rule	Spain	1926	1929	-	Oct	Sat>=1	23:00s	0	-
-Rule	Spain	1927	only	-	Apr	 9	23:00s	1:00	S
-Rule	Spain	1928	only	-	Apr	14	23:00s	1:00	S
-Rule	Spain	1929	only	-	Apr	20	23:00s	1:00	S
-# Whitman gives 1937 Jun 16, 1938 Apr 16, 1940 Apr 13;
-# go with Shanks & Pottenger.
-Rule	Spain	1937	only	-	May	22	23:00s	1:00	S
-Rule	Spain	1937	1939	-	Oct	Sat>=1	23:00s	0	-
-Rule	Spain	1938	only	-	Mar	22	23:00s	1:00	S
-Rule	Spain	1939	only	-	Apr	15	23:00s	1:00	S
-Rule	Spain	1940	only	-	Mar	16	23:00s	1:00	S
-# Whitman says no DST 1942-1945; go with Shanks & Pottenger.
-Rule	Spain	1942	only	-	May	 2	22:00s	2:00	M # Midsummer
-Rule	Spain	1942	only	-	Sep	 1	22:00s	1:00	S
-Rule	Spain	1943	1946	-	Apr	Sat>=13	22:00s	2:00	M
-Rule	Spain	1943	only	-	Oct	 3	22:00s	1:00	S
-Rule	Spain	1944	only	-	Oct	10	22:00s	1:00	S
-Rule	Spain	1945	only	-	Sep	30	 1:00	1:00	S
-Rule	Spain	1946	only	-	Sep	30	 0:00	0	-
+Rule	Spain	1918	only	-	Apr	15	23:00	1:00	S
+Rule	Spain	1918	1919	-	Oct	 6	24:00s	0	-
+Rule	Spain	1919	only	-	Apr	 6	23:00	1:00	S
+Rule	Spain	1924	only	-	Apr	16	23:00	1:00	S
+Rule	Spain	1924	only	-	Oct	 4	24:00s	0	-
+Rule	Spain	1926	only	-	Apr	17	23:00	1:00	S
+Rule	Spain	1926	1929	-	Oct	Sat>=1	24:00s	0	-
+Rule	Spain	1927	only	-	Apr	 9	23:00	1:00	S
+Rule	Spain	1928	only	-	Apr	15	 0:00	1:00	S
+Rule	Spain	1929	only	-	Apr	20	23:00	1:00	S
+# Republican Spain during the civil war; it controlled Madrid until 1939-03-28.
+Rule	Spain	1937	only	-	Jun	16	23:00	1:00	S
+Rule	Spain	1937	only	-	Oct	 2	24:00s	0	-
+Rule	Spain	1938	only	-	Apr	 2	23:00	1:00	S
+Rule	Spain	1938	only	-	Apr	30	23:00	2:00	M
+Rule	Spain	1938	only	-	Oct	 2	24:00	1:00	S
+# The following rules are for unified Spain again.
+#
+# Planesas does not say what happened in Madrid between its fall on
+# 1939-03-28 and the Nationalist spring-forward transition on
+# 1939-04-15.  For lack of better info, assume Madrid's clocks did not
+# change during that period.
+#
+# The first rule is commented out, as it is redundant for Republican Spain.
+#Rule	Spain	1939	only	-	Apr	15	23:00	1:00	S
+Rule	Spain	1939	only	-	Oct	 7	24:00s	0	-
+Rule	Spain	1942	only	-	May	 2	23:00	1:00	S
+Rule	Spain	1942	only	-	Sep	 1	 1:00	0	-
+Rule	Spain	1943	1946	-	Apr	Sat>=13	23:00	1:00	S
+Rule	Spain	1943	1944	-	Oct	Sun>=1	 1:00	0	-
+Rule	Spain	1945	1946	-	Sep	lastSun	 1:00	0	-
 Rule	Spain	1949	only	-	Apr	30	23:00	1:00	S
-Rule	Spain	1949	only	-	Sep	30	 1:00	0	-
-Rule	Spain	1974	1975	-	Apr	Sat>=13	23:00	1:00	S
+Rule	Spain	1949	only	-	Oct	 2	 1:00	0	-
+Rule	Spain	1974	1975	-	Apr	Sat>=12	23:00	1:00	S
 Rule	Spain	1974	1975	-	Oct	Sun>=1	 1:00	0	-
 Rule	Spain	1976	only	-	Mar	27	23:00	1:00	S
 Rule	Spain	1976	1977	-	Sep	lastSun	 1:00	0	-
-Rule	Spain	1977	1978	-	Apr	 2	23:00	1:00	S
-Rule	Spain	1978	only	-	Oct	 1	 1:00	0	-
+Rule	Spain	1977	only	-	Apr	 2	23:00	1:00	S
+Rule	Spain	1978	only	-	Apr	 2	 2:00s	1:00	S
+Rule	Spain	1978	only	-	Oct	 1	 2:00s	0	-
+# Nationalist Spain during the civil war
+#Rule NatSpain	1937	only	-	May	22	23:00	1:00	S
+#Rule NatSpain	1937	1938	-	Oct	Sat>=1	24:00s	0	-
+#Rule NatSpain	1938	only	-	Mar	26	23:00	1:00	S
 # The following rules are copied from Morocco from 1967 through 1978.
 Rule SpainAfrica 1967	only	-	Jun	 3	12:00	1:00	S
 Rule SpainAfrica 1967	only	-	Oct	 1	 0:00	0	-
@@ -3233,11 +3327,11 @@ Rule SpainAfrica 1977	only	-	Sep	28	 0:00	0	-
 Rule SpainAfrica 1978	only	-	Jun	 1	 0:00	1:00	S
 Rule SpainAfrica 1978	only	-	Aug	 4	 0:00	0	-
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
-Zone	Europe/Madrid	-0:14:44 -	LMT	1901 Jan  1  0:00s
-			 0:00	Spain	WE%sT	1946 Sep 30
+Zone	Europe/Madrid	-0:14:44 -	LMT	1900 Dec 31 23:45:16
+			 0:00	Spain	WE%sT	1940 Mar 16 23:00
 			 1:00	Spain	CE%sT	1979
 			 1:00	EU	CE%sT
-Zone	Africa/Ceuta	-0:21:16 -	LMT	1901
+Zone	Africa/Ceuta	-0:21:16 -	LMT	1900 Dec 31 23:38:44
 			 0:00	-	WET	1918 May  6 23:00
 			 0:00	1:00	WEST	1918 Oct  7 23:00
 			 0:00	-	WET	1924
@@ -3246,7 +3340,7 @@ Zone	Africa/Ceuta	-0:21:16 -	LMT	1901
 			 1:00	-	CET	1986
 			 1:00	EU	CE%sT
 Zone	Atlantic/Canary	-1:01:36 -	LMT	1922 Mar # Las Palmas de Gran C.
-			-1:00	-	CANT	1946 Sep 30  1:00 # Canaries T
+			-1:00	-	-01	1946 Sep 30  1:00
 			 0:00	-	WET	1980 Apr  6  0:00s
 			 0:00	1:00	WEST	1980 Sep 28  1:00u
 			 0:00	EU	WE%sT
@@ -3410,22 +3504,24 @@ Zone	Europe/Zurich	0:34:08 -	LMT	1853 Jul 16 # See above comment.
 
 # Turkey
 
-# From Amar Devegowda (2007-01-03):
-# The time zone rules for Istanbul, Turkey have not been changed for years now.
-# ... The latest rules are available at:
-# http://www.timeanddate.com/worldclock/timezone.html?n=107
-# From Steffen Thorsen (2007-01-03):
-# I have been able to find press records back to 1996 which all say that
-# DST started 01:00 local time and end at 02:00 local time.  I am not sure
-# what happened before that.  One example for each year from 1996 to 2001:
-# http://newspot.byegm.gov.tr/arsiv/1996/21/N4.htm
-# http://www.byegm.gov.tr/YAYINLARIMIZ/CHR/ING97/03/97X03X25.TXT
-# http://www.byegm.gov.tr/YAYINLARIMIZ/CHR/ING98/03/98X03X02.HTM
-# http://www.byegm.gov.tr/YAYINLARIMIZ/CHR/ING99/10/99X10X26.HTM#%2016
-# http://www.byegm.gov.tr/YAYINLARIMIZ/CHR/ING2000/03/00X03X06.HTM#%2021
-# http://www.byegm.gov.tr/YAYINLARIMIZ/CHR/ING2001/03/23x03x01.HTM#%2027
-# From Paul Eggert (2007-01-03):
-# Prefer the above source to Shanks & Pottenger for time stamps after 1990.
+# From Kıvanç Yazan (2016-09-25):
+# 1) For 1986-2006, DST started at 01:00 local and ended at 02:00 local, with
+#    no exceptions.
+# 2) 1994's lastSun was overridden with Mar 20 ...
+# Here are official papers:
+# http://www.resmigazete.gov.tr/arsiv/19032.pdf  - page 2 for 1986
+# http://www.resmigazete.gov.tr/arsiv/19400.pdf  - page 4 for 1987
+# http://www.resmigazete.gov.tr/arsiv/19752.pdf  - page 15 for 1988
+# http://www.resmigazete.gov.tr/arsiv/20102.pdf  - page 6 for 1989
+# http://www.resmigazete.gov.tr/arsiv/20464.pdf  - page 1 for 1990 - 1992
+# http://www.resmigazete.gov.tr/arsiv/21531.pdf  - page 15 for 1993 - 1995
+# http://www.resmigazete.gov.tr/arsiv/21879.pdf  - page 1 for overriding 1994
+# http://www.resmigazete.gov.tr/arsiv/22588.pdf  - page 1 for 1996, 1997
+# http://www.resmigazete.gov.tr/arsiv/23286.pdf  - page 10 for 1998 - 2000
+# http://www.resmigazete.gov.tr/eskiler/2001/03/20010324.htm#2  - for 2001
+# http://www.resmigazete.gov.tr/eskiler/2002/03/20020316.htm#2  - for 2002-2006
+# From Paul Eggert (2016-09-25):
+# Prefer the above sources to Shanks & Pottenger for time stamps after 1985.
 
 # From Steffen Thorsen (2007-03-09):
 # Starting 2007 though, it seems that they are adopting EU's 1:00 UTC
@@ -3471,6 +3567,14 @@ Zone	Europe/Zurich	0:34:08 -	LMT	1853 Jul 16 # See above comment.
 # government decision ... "For the next two weeks #Turkey is on EEST... Erdogan
 # Engineered Standard Time," said Twitter user @aysekarahasan.
 # http://www.bbc.com/news/world-europe-34631326
+
+# From Burak AYDIN (2016-09-08):
+# Turkey will stay in Daylight Saving Time even in winter....
+# http://www.resmigazete.gov.tr/eskiler/2016/09/20160908-2.pdf
+#
+# From Paul Eggert (2016-09-07):
+# The change is permanent, so this is the new standard time in Turkey.
+# It takes effect today, which is not much notice.
 
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	Turkey	1916	only	-	May	 1	0:00	1:00	S
@@ -3526,16 +3630,16 @@ Rule	Turkey	1983	only	-	Jul	31	0:00	1:00	S
 Rule	Turkey	1983	only	-	Oct	 2	0:00	0	-
 Rule	Turkey	1985	only	-	Apr	20	0:00	1:00	S
 Rule	Turkey	1985	only	-	Sep	28	0:00	0	-
-Rule	Turkey	1986	1990	-	Mar	lastSun	2:00s	1:00	S
-Rule	Turkey	1986	1990	-	Sep	lastSun	2:00s	0	-
-Rule	Turkey	1991	2006	-	Mar	lastSun	1:00s	1:00	S
-Rule	Turkey	1991	1995	-	Sep	lastSun	1:00s	0	-
+Rule	Turkey	1986	1993	-	Mar	lastSun	1:00s	1:00	S
+Rule	Turkey	1986	1995	-	Sep	lastSun	1:00s	0	-
+Rule	Turkey	1994	only	-	Mar	20	1:00s	1:00	S
+Rule	Turkey	1995	2006	-	Mar	lastSun	1:00s	1:00	S
 Rule	Turkey	1996	2006	-	Oct	lastSun	1:00s	0	-
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	Europe/Istanbul	1:55:52 -	LMT	1880
 			1:56:56	-	IMT	1910 Oct # Istanbul Mean Time?
 			2:00	Turkey	EE%sT	1978 Oct 15
-			3:00	Turkey	TR%sT	1985 Apr 20 # Turkey Time
+			3:00	Turkey	+03/+04	1985 Apr 20
 			2:00	Turkey	EE%sT	2007
 			2:00	EU	EE%sT	2011 Mar 27  1:00u
 			2:00	-	EET	2011 Mar 28  1:00u
@@ -3543,7 +3647,8 @@ Zone	Europe/Istanbul	1:55:52 -	LMT	1880
 			2:00	-	EET	2014 Mar 31  1:00u
 			2:00	EU	EE%sT	2015 Oct 25  1:00u
 			2:00	1:00	EEST	2015 Nov  8  1:00u
-			2:00	EU	EE%sT
+			2:00	EU	EE%sT	2016 Sep  7
+			3:00	-	+03
 Link	Europe/Istanbul	Asia/Istanbul	# Istanbul is in both continents.
 
 # Ukraine
@@ -3648,7 +3753,7 @@ Zone Europe/Uzhgorod	1:29:12 -	LMT	1890 Oct
 # spelling, except omit the apostrophe as it is not allowed in
 # portable Posix file names.
 Zone Europe/Zaporozhye	2:20:40 -	LMT	1880
-			2:20	-	CUT	1924 May  2 # Central Ukraine T
+			2:20	-	+0220	1924 May  2
 			2:00	-	EET	1930 Jun 21
 			3:00	-	MSK	1941 Aug 25
 			1:00	C-Eur	CE%sT	1943 Oct 25

@@ -2,7 +2,7 @@
  * controldata_utils.h
  *		Common code for pg_controldata output
  *
- *	Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ *	Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  *	Portions Copyright (c) 1994, Regents of the University of California
  *
  *	src/include/common/controldata_utils.h
@@ -12,6 +12,6 @@
 
 #include "catalog/pg_control.h"
 
-extern ControlFileData *get_controlfile(char *DataDir, const char *progname);
+extern ControlFileData *get_controlfile(const char *DataDir, const char *progname, bool *crc_ok_p);
 
-#endif   /* COMMON_CONTROLDATA_UTILS_H */
+#endif							/* COMMON_CONTROLDATA_UTILS_H */

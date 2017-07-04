@@ -4,7 +4,7 @@
  *	  definition of default ACLs for new objects.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_default_acl.h
@@ -66,9 +66,10 @@ typedef FormData_pg_default_acl *Form_pg_default_acl;
  * permissions through pg_default_acl.  These codes are used in the
  * defaclobjtype column.
  */
-#define DEFACLOBJ_RELATION		'r'		/* table, view */
-#define DEFACLOBJ_SEQUENCE		'S'		/* sequence */
-#define DEFACLOBJ_FUNCTION		'f'		/* function */
-#define DEFACLOBJ_TYPE			'T'		/* type */
+#define DEFACLOBJ_RELATION		'r' /* table, view */
+#define DEFACLOBJ_SEQUENCE		'S' /* sequence */
+#define DEFACLOBJ_FUNCTION		'f' /* function */
+#define DEFACLOBJ_TYPE			'T' /* type */
+#define DEFACLOBJ_NAMESPACE		'n' /* namespace */
 
-#endif   /* PG_DEFAULT_ACL_H */
+#endif							/* PG_DEFAULT_ACL_H */

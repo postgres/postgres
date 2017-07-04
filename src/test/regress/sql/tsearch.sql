@@ -48,10 +48,17 @@ SELECT count(*) FROM test_tsvector WHERE a @@ 'eq|yt';
 SELECT count(*) FROM test_tsvector WHERE a @@ '(eq&yt)|(wr&qh)';
 SELECT count(*) FROM test_tsvector WHERE a @@ '(eq|yt)&(wr|qh)';
 SELECT count(*) FROM test_tsvector WHERE a @@ 'w:*|q:*';
+SELECT count(*) FROM test_tsvector WHERE a @@ any ('{wr,qh}');
+SELECT count(*) FROM test_tsvector WHERE a @@ 'no_such_lexeme';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!no_such_lexeme';
 
 create index wowidx on test_tsvector using gist (a);
 
 SET enable_seqscan=OFF;
+SET enable_indexscan=ON;
+SET enable_bitmapscan=OFF;
+
+explain (costs off) SELECT count(*) FROM test_tsvector WHERE a @@ 'wr|qh';
 
 SELECT count(*) FROM test_tsvector WHERE a @@ 'wr|qh';
 SELECT count(*) FROM test_tsvector WHERE a @@ 'wr&qh';
@@ -61,14 +68,37 @@ SELECT count(*) FROM test_tsvector WHERE a @@ '(eq&yt)|(wr&qh)';
 SELECT count(*) FROM test_tsvector WHERE a @@ '(eq|yt)&(wr|qh)';
 SELECT count(*) FROM test_tsvector WHERE a @@ 'w:*|q:*';
 SELECT count(*) FROM test_tsvector WHERE a @@ any ('{wr,qh}');
+SELECT count(*) FROM test_tsvector WHERE a @@ 'no_such_lexeme';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!no_such_lexeme';
+
+SET enable_indexscan=OFF;
+SET enable_bitmapscan=ON;
+
+explain (costs off) SELECT count(*) FROM test_tsvector WHERE a @@ 'wr|qh';
+
+SELECT count(*) FROM test_tsvector WHERE a @@ 'wr|qh';
+SELECT count(*) FROM test_tsvector WHERE a @@ 'wr&qh';
+SELECT count(*) FROM test_tsvector WHERE a @@ 'eq&yt';
+SELECT count(*) FROM test_tsvector WHERE a @@ 'eq|yt';
+SELECT count(*) FROM test_tsvector WHERE a @@ '(eq&yt)|(wr&qh)';
+SELECT count(*) FROM test_tsvector WHERE a @@ '(eq|yt)&(wr|qh)';
+SELECT count(*) FROM test_tsvector WHERE a @@ 'w:*|q:*';
+SELECT count(*) FROM test_tsvector WHERE a @@ any ('{wr,qh}');
+SELECT count(*) FROM test_tsvector WHERE a @@ 'no_such_lexeme';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!no_such_lexeme';
 
 RESET enable_seqscan;
+RESET enable_indexscan;
+RESET enable_bitmapscan;
 
 DROP INDEX wowidx;
 
 CREATE INDEX wowidx ON test_tsvector USING gin (a);
 
 SET enable_seqscan=OFF;
+-- GIN only supports bitmapscan, so no need to test plain indexscan
+
+explain (costs off) SELECT count(*) FROM test_tsvector WHERE a @@ 'wr|qh';
 
 SELECT count(*) FROM test_tsvector WHERE a @@ 'wr|qh';
 SELECT count(*) FROM test_tsvector WHERE a @@ 'wr&qh';
@@ -78,8 +108,11 @@ SELECT count(*) FROM test_tsvector WHERE a @@ '(eq&yt)|(wr&qh)';
 SELECT count(*) FROM test_tsvector WHERE a @@ '(eq|yt)&(wr|qh)';
 SELECT count(*) FROM test_tsvector WHERE a @@ 'w:*|q:*';
 SELECT count(*) FROM test_tsvector WHERE a @@ any ('{wr,qh}');
+SELECT count(*) FROM test_tsvector WHERE a @@ 'no_such_lexeme';
+SELECT count(*) FROM test_tsvector WHERE a @@ '!no_such_lexeme';
 
 RESET enable_seqscan;
+
 INSERT INTO test_tsvector VALUES ('???', 'DFG:1A,2B,6C,10 FGH');
 SELECT * FROM ts_stat('SELECT a FROM test_tsvector') ORDER BY ndoc DESC, nentry DESC, word LIMIT 10;
 SELECT * FROM ts_stat('SELECT a FROM test_tsvector', 'AB') ORDER BY ndoc DESC, nentry DESC, word;
@@ -402,6 +435,8 @@ SELECT COUNT(*) FROM test_tsquery WHERE keyword >  'new & york';
 RESET enable_seqscan;
 
 SELECT ts_rewrite('foo & bar & qq & new & york',  'new & york'::tsquery, 'big & apple | nyc | new & york & city');
+SELECT ts_rewrite(ts_rewrite('new & !york ', 'york', '!jersey'),
+                  'jersey', 'mexico');
 
 SELECT ts_rewrite('moscow', 'SELECT keyword, sample FROM test_tsquery'::text );
 SELECT ts_rewrite('moscow & hotel', 'SELECT keyword, sample FROM test_tsquery'::text );
@@ -416,6 +451,9 @@ SELECT ts_rewrite('1 & (2 <2> 3)', 'SELECT keyword, sample FROM test_tsquery'::t
 SELECT ts_rewrite('5 <-> (1 & (2 <-> 3))', 'SELECT keyword, sample FROM test_tsquery'::text );
 SELECT ts_rewrite('5 <-> (6 | 8)', 'SELECT keyword, sample FROM test_tsquery'::text );
 
+-- Check empty substitution
+SELECT ts_rewrite(to_tsquery('5 & (6 | 5)'), to_tsquery('5'), to_tsquery(''));
+SELECT ts_rewrite(to_tsquery('!5'), to_tsquery('5'), to_tsquery(''));
 
 SELECT keyword FROM test_tsquery WHERE keyword @> 'new';
 SELECT keyword FROM test_tsquery WHERE keyword @> 'moscow';
@@ -441,6 +479,12 @@ SELECT ts_rewrite( query, 'SELECT keyword, sample FROM test_tsquery' ) FROM to_t
 SELECT ts_rewrite( query, 'SELECT keyword, sample FROM test_tsquery' ) FROM to_tsquery('english', 'moscow') AS query;
 SELECT ts_rewrite( query, 'SELECT keyword, sample FROM test_tsquery' ) FROM to_tsquery('english', 'moscow & hotel') AS query;
 SELECT ts_rewrite( query, 'SELECT keyword, sample FROM test_tsquery' ) FROM to_tsquery('english', 'bar &  new & qq & foo & york') AS query;
+
+SELECT ts_rewrite(tsquery_phrase('foo', 'foo'), 'foo', 'bar | baz');
+SELECT to_tsvector('foo bar') @@
+  ts_rewrite(tsquery_phrase('foo', 'foo'), 'foo', 'bar | baz');
+SELECT to_tsvector('bar baz') @@
+  ts_rewrite(tsquery_phrase('foo', 'foo'), 'foo', 'bar | baz');
 
 RESET enable_seqscan;
 

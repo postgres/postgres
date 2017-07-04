@@ -4,7 +4,7 @@
  *	 prototypes for functions in catalog/pg_type.c
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_type_fn.h
@@ -81,4 +81,4 @@ extern char *makeArrayTypeName(const char *typeName, Oid typeNamespace);
 extern bool moveArrayTypeName(Oid typeOid, const char *typeName,
 				  Oid typeNamespace);
 
-#endif   /* PG_TYPE_FN_H */
+#endif							/* PG_TYPE_FN_H */

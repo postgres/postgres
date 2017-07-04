@@ -4,7 +4,7 @@
  *	  prototypes for commands/alter.c
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/commands/alter.h
@@ -32,4 +32,4 @@ extern ObjectAddress ExecAlterOwnerStmt(AlterOwnerStmt *stmt);
 extern void AlterObjectOwner_internal(Relation catalog, Oid objectId,
 						  Oid new_ownerId);
 
-#endif   /* ALTER_H */
+#endif							/* ALTER_H */

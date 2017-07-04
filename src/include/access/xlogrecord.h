@@ -3,7 +3,7 @@
  *
  * Definitions for the WAL record format.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/access/xlogrecord.h
@@ -56,8 +56,8 @@ typedef struct XLogRecord
 
 /*
  * The high 4 bits in xl_info may be used freely by rmgr. The
- * XLR_SPECIAL_REL_UPDATE bit can be passed by XLogInsert caller. The rest
- * are set internally by XLogInsert.
+ * XLR_SPECIAL_REL_UPDATE and XLR_CHECK_CONSISTENCY bits can be passed by
+ * XLogInsert caller. The rest are set internally by XLogInsert.
  */
 #define XLR_INFO_MASK			0x0F
 #define XLR_RMGR_INFO_MASK		0xF0
@@ -69,6 +69,15 @@ typedef struct XLogRecord
  * track of modified blocks to recognize such special record types.
  */
 #define XLR_SPECIAL_REL_UPDATE	0x01
+
+/*
+ * Enforces consistency checks of replayed WAL at recovery. If enabled,
+ * each record will log a full-page write for each block modified by the
+ * record and will reuse it afterwards for consistency checks. The caller
+ * of XLogInsert can use this value if necessary, but if
+ * wal_consistency_checking is enabled for a rmgr this is set unconditionally.
+ */
+#define XLR_CHECK_CONSISTENCY	0x02
 
 /*
  * Header info for block data appended to an XLOG record.
@@ -136,7 +145,9 @@ typedef struct XLogRecordBlockImageHeader
 
 /* Information stored in bimg_info */
 #define BKPIMAGE_HAS_HOLE		0x01	/* page image has "hole" */
-#define BKPIMAGE_IS_COMPRESSED		0x02		/* page image is compressed */
+#define BKPIMAGE_IS_COMPRESSED		0x02	/* page image is compressed */
+#define BKPIMAGE_APPLY		0x04	/* page image should be restored during
+									 * replay */
 
 /*
  * Extra header information used when page image has "hole" and
@@ -185,7 +196,7 @@ typedef struct XLogRecordDataHeaderShort
 {
 	uint8		id;				/* XLR_BLOCK_ID_DATA_SHORT */
 	uint8		data_length;	/* number of payload bytes */
-}	XLogRecordDataHeaderShort;
+}			XLogRecordDataHeaderShort;
 
 #define SizeOfXLogRecordDataHeaderShort (sizeof(uint8) * 2)
 
@@ -193,7 +204,7 @@ typedef struct XLogRecordDataHeaderLong
 {
 	uint8		id;				/* XLR_BLOCK_ID_DATA_LONG */
 	/* followed by uint32 data_length, unaligned */
-}	XLogRecordDataHeaderLong;
+}			XLogRecordDataHeaderLong;
 
 #define SizeOfXLogRecordDataHeaderLong (sizeof(uint8) + sizeof(uint32))
 
@@ -214,4 +225,4 @@ typedef struct XLogRecordDataHeaderLong
 #define XLR_BLOCK_ID_DATA_LONG		254
 #define XLR_BLOCK_ID_ORIGIN			253
 
-#endif   /* XLOGRECORD_H */
+#endif							/* XLOGRECORD_H */

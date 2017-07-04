@@ -521,11 +521,12 @@ because it allows running applications to continue while the standby
 changes state into a normally running server.
 
 The interlocking required to avoid returning incorrect results from
-MVCC scans is not required on standby nodes. That is because
+non-MVCC scans is not required on standby nodes. That is because
 HeapTupleSatisfiesUpdate(), HeapTupleSatisfiesSelf(),
 HeapTupleSatisfiesDirty() and HeapTupleSatisfiesVacuum() are only
 ever used during write transactions, which cannot exist on the standby.
-This leaves HeapTupleSatisfiesMVCC() and HeapTupleSatisfiesToast().
+MVCC scans are already protected by definition, so HeapTupleSatisfiesMVCC()
+is not a problem.  That leaves concern only for HeapTupleSatisfiesToast().
 HeapTupleSatisfiesToast() doesn't use MVCC semantics, though that's
 because it doesn't need to - if the main heap row is visible then the
 toast rows will also be visible. So as long as we follow a toast

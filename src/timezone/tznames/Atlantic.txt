@@ -44,14 +44,10 @@ AST    -14400    # Atlantic Standard Time
                  #     (America/Thule)
                  #     (America/Tortola)
                  #     (Atlantic/Bermuda)
-AZOST       0 D  # Azores Summer Time
-                 #     (Atlantic/Azores)
-AZOT    -3600    # Azores Time
-                 #     (Atlantic/Azores)
-CVT     Atlantic/Cape_Verde  # Cape Verde Time
-                 #     (Atlantic/Cape_Verde)
-FKST    Atlantic/Stanley  # Falkland Islands Summer/Standard Time
-                 #     (Atlantic/Stanley)
+AZOST       0 D  # Azores Summer Time (obsolete)
+AZOT    -3600    # Azores Time (obsolete)
+CVT     Atlantic/Cape_Verde  # Cape Verde Time (obsolete)
+FKST    Atlantic/Stanley  # Falkland Islands Summer/Standard Time (obsolete)
 FKT     Atlantic/Stanley  # Falkland Islands Time (obsolete)
 GMT         0    # Greenwich Mean Time
                  #     (Africa/Abidjan)
@@ -74,8 +70,7 @@ GMT         0    # Greenwich Mean Time
 # CONFLICT! GST is not unique
 # Other timezones:
 # - GST: Gulf Standard Time (Asia)
-GST     -7200    # South Georgia Time (Atlantic)
-                 #     (Atlantic/South_Georgia)
+GST     -7200    # South Georgia Time (Atlantic) (obsolete)
 WEST     3600 D  # Western Europe Summer Time
                  #     (Atlantic/Canary)
                  #     (Atlantic/Faeroe)

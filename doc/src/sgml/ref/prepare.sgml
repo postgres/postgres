@@ -73,7 +73,7 @@ PREPARE <replaceable class="PARAMETER">name</replaceable> [ ( <replaceable class
    Prepared statements potentially have the largest performance advantage
    when a single session is being used to execute a large number of similar
    statements. The performance difference will be particularly
-   significant if the statements are complex to plan or rewrite, e.g. 
+   significant if the statements are complex to plan or rewrite, e.g.
    if the query involves a join of many tables or requires
    the application of several rules. If the statement is relatively simple
    to plan and rewrite but relatively expensive to execute, the

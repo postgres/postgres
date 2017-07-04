@@ -1,0 +1,229 @@
+<!--
+doc/src/sgml/ref/alter_subscription.sgml
+PostgreSQL documentation
+-->
+
+<refentry id="SQL-ALTERSUBSCRIPTION">
+ <indexterm zone="sql-altersubscription">
+  <primary>ALTER SUBSCRIPTION</primary>
+ </indexterm>
+
+ <refmeta>
+  <refentrytitle>ALTER SUBSCRIPTION</refentrytitle>
+  <manvolnum>7</manvolnum>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>ALTER SUBSCRIPTION</refname>
+  <refpurpose>change the definition of a subscription</refpurpose>
+ </refnamediv>
+
+ <refsynopsisdiv>
+<synopsis>
+ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> CONNECTION '<replaceable>conninfo</replaceable>'
+ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> SET PUBLICATION <replaceable class="PARAMETER">publication_name</replaceable> [, ...] [ WITH ( <replaceable class="PARAMETER">set_publication_option</replaceable> [= <replaceable class="PARAMETER">value</replaceable>] [, ... ] ) ]
+ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> REFRESH PUBLICATION [ WITH ( <replaceable class="PARAMETER">refresh_option</replaceable> [= <replaceable class="PARAMETER">value</replaceable>] [, ... ] ) ]
+ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> ENABLE
+ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> DISABLE
+ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> SET ( <replaceable class="parameter">subscription_parameter</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] )
+ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> OWNER TO { <replaceable>new_owner</replaceable> | CURRENT_USER | SESSION_USER }
+ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> RENAME TO <replaceable>new_name</replaceable>
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>ALTER SUBSCRIPTION</command> can change most of the subscription
+   properties that can be specified
+   in <xref linkend="sql-createsubscription">.
+  </para>
+
+  <para>
+   You must own the subscription to use <command>ALTER SUBSCRIPTION</>.
+   To alter the owner, you must also be a direct or indirect member of the
+   new owning role. The new owner has to be a superuser.
+   (Currently, all subscription owners must be superusers, so the owner checks
+   will be bypassed in practice.  But this might change in the future.)
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="parameter">name</replaceable></term>
+    <listitem>
+     <para>
+      The name of a subscription whose properties are to be altered.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>CONNECTION '<replaceable class="parameter">conninfo</replaceable>'</literal></term>
+    <listitem>
+     <para>
+      This clause alters the connection property originally set by
+      <xref linkend="SQL-CREATESUBSCRIPTION">.  See there for more
+      information.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>SET PUBLICATION <replaceable class="parameter">publication_name</replaceable></literal></term>
+    <listitem>
+     <para>
+      Changes list of subscribed publications. See
+      <xref linkend="SQL-CREATESUBSCRIPTION"> for more information.
+      By default this command will also act like <literal>REFRESH
+      PUBLICATION</literal>.
+     </para>
+
+     <para>
+      <replaceable>set_publication_option</replaceable> specifies additional
+      options for this operation.  The supported options are:
+
+      <variablelist>
+       <varlistentry>
+        <term><literal>refresh</literal> (<type>boolean</type>)</term>
+        <listitem>
+         <para>
+          When false, the command will not try to refresh table information.
+          <literal>REFRESH PUBLICATION</literal> should then be executed separately.
+          The default is <literal>true</literal>.
+         </para>
+        </listitem>
+       </varlistentry>
+      </variablelist>
+
+      Additionally, refresh options as described
+      under <literal>REFRESH PUBLICATION</literal> may be specified.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>REFRESH PUBLICATION</literal></term>
+    <listitem>
+     <para>
+      Fetch missing table information from publisher.  This will start
+      replication of tables that were added to the subscribed-to publications
+      since the last invocation of <command>REFRESH PUBLICATION</command> or
+      since <command>CREATE SUBSCRIPTION</command>.
+     </para>
+
+     <para>
+      <replaceable>refresh_option</replaceable> specifies additional options for the
+      refresh operation.  The supported options are:
+
+      <variablelist>
+       <varlistentry>
+        <term><literal>copy_data</literal> (<type>boolean</type>)</term>
+        <listitem>
+         <para>
+          Specifies whether the existing data in the publications that are
+          being subscribed to should be copied once the replication starts.
+          The default is <literal>true</literal>.
+         </para>
+        </listitem>
+       </varlistentry>
+      </variablelist>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>ENABLE</literal></term>
+    <listitem>
+     <para>
+      Enables the previously disabled subscription, starting the logical
+      replication worker at the end of transaction.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>DISABLE</literal></term>
+    <listitem>
+     <para>
+      Disables the running subscription, stopping the logical replication
+      worker at the end of transaction.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>SET ( <replaceable class="parameter">subscription_parameter</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] )</literal></term>
+    <listitem>
+     <para>
+      This clause alters parameters originally set by
+      <xref linkend="SQL-CREATESUBSCRIPTION">.  See there for more
+      information.  The allowed options are <literal>slot_name</literal> and
+      <literal>synchronous_commit</literal>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">new_owner</replaceable></term>
+    <listitem>
+     <para>
+      The user name of the new owner of the subscription.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">new_name</replaceable></term>
+    <listitem>
+     <para>
+      The new name for the subscription.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
+  <para>
+   Change the publication subscribed by a subscription to
+   <literal>insert_only</literal>:
+<programlisting>
+ALTER SUBSCRIPTION mysub SET PUBLICATION insert_only;
+</programlisting>
+  </para>
+
+  <para>
+   Disable (stop) the subscription:
+<programlisting>
+ALTER SUBSCRIPTION mysub DISABLE;
+</programlisting></para>
+ </refsect1>
+
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   <command>ALTER SUBSCRIPTION</command> is a <productname>PostgreSQL</>
+   extension.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-createsubscription"></member>
+   <member><xref linkend="sql-dropsubscription"></member>
+   <member><xref linkend="sql-createpublication"></member>
+   <member><xref linkend="sql-alterpublication"></member>
+  </simplelist>
+ </refsect1>
+</refentry>

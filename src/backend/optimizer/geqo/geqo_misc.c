@@ -3,7 +3,7 @@
  * geqo_misc.c
  *	   misc. printout and debug stuff
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/backend/optimizer/geqo/geqo_misc.c
@@ -129,4 +129,4 @@ print_edge_table(FILE *fp, Edge *edge_table, int num_gene)
 	fflush(fp);
 }
 
-#endif   /* GEQO_DEBUG */
+#endif							/* GEQO_DEBUG */

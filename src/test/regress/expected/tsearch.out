@@ -98,8 +98,36 @@ SELECT count(*) FROM test_tsvector WHERE a @@ 'w:*|q:*';
    494
 (1 row)
 
+SELECT count(*) FROM test_tsvector WHERE a @@ any ('{wr,qh}');
+ count 
+-------
+   158
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ 'no_such_lexeme';
+ count 
+-------
+     0
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ '!no_such_lexeme';
+ count 
+-------
+   508
+(1 row)
+
 create index wowidx on test_tsvector using gist (a);
 SET enable_seqscan=OFF;
+SET enable_indexscan=ON;
+SET enable_bitmapscan=OFF;
+explain (costs off) SELECT count(*) FROM test_tsvector WHERE a @@ 'wr|qh';
+                      QUERY PLAN                       
+-------------------------------------------------------
+ Aggregate
+   ->  Index Scan using wowidx on test_tsvector
+         Index Cond: (a @@ '''wr'' | ''qh'''::tsquery)
+(3 rows)
+
 SELECT count(*) FROM test_tsvector WHERE a @@ 'wr|qh';
  count 
 -------
@@ -146,12 +174,109 @@ SELECT count(*) FROM test_tsvector WHERE a @@ any ('{wr,qh}');
  count 
 -------
    158
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ 'no_such_lexeme';
+ count 
+-------
+     0
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ '!no_such_lexeme';
+ count 
+-------
+   508
+(1 row)
+
+SET enable_indexscan=OFF;
+SET enable_bitmapscan=ON;
+explain (costs off) SELECT count(*) FROM test_tsvector WHERE a @@ 'wr|qh';
+                         QUERY PLAN                          
+-------------------------------------------------------------
+ Aggregate
+   ->  Bitmap Heap Scan on test_tsvector
+         Recheck Cond: (a @@ '''wr'' | ''qh'''::tsquery)
+         ->  Bitmap Index Scan on wowidx
+               Index Cond: (a @@ '''wr'' | ''qh'''::tsquery)
+(5 rows)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ 'wr|qh';
+ count 
+-------
+   158
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ 'wr&qh';
+ count 
+-------
+    17
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ 'eq&yt';
+ count 
+-------
+     6
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ 'eq|yt';
+ count 
+-------
+    98
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ '(eq&yt)|(wr&qh)';
+ count 
+-------
+    23
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ '(eq|yt)&(wr|qh)';
+ count 
+-------
+    39
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ 'w:*|q:*';
+ count 
+-------
+   494
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ any ('{wr,qh}');
+ count 
+-------
+   158
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ 'no_such_lexeme';
+ count 
+-------
+     0
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ '!no_such_lexeme';
+ count 
+-------
+   508
 (1 row)
 
 RESET enable_seqscan;
+RESET enable_indexscan;
+RESET enable_bitmapscan;
 DROP INDEX wowidx;
 CREATE INDEX wowidx ON test_tsvector USING gin (a);
 SET enable_seqscan=OFF;
+-- GIN only supports bitmapscan, so no need to test plain indexscan
+explain (costs off) SELECT count(*) FROM test_tsvector WHERE a @@ 'wr|qh';
+                         QUERY PLAN                          
+-------------------------------------------------------------
+ Aggregate
+   ->  Bitmap Heap Scan on test_tsvector
+         Recheck Cond: (a @@ '''wr'' | ''qh'''::tsquery)
+         ->  Bitmap Index Scan on wowidx
+               Index Cond: (a @@ '''wr'' | ''qh'''::tsquery)
+(5 rows)
+
 SELECT count(*) FROM test_tsvector WHERE a @@ 'wr|qh';
  count 
 -------
@@ -198,6 +323,18 @@ SELECT count(*) FROM test_tsvector WHERE a @@ any ('{wr,qh}');
  count 
 -------
    158
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ 'no_such_lexeme';
+ count 
+-------
+     0
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ '!no_such_lexeme';
+ count 
+-------
+   508
 (1 row)
 
 RESET enable_seqscan;
@@ -556,15 +693,15 @@ SELECT plainto_tsquery('english', 'foo bar') && 'asd | fg';
 
 -- Check stop word deletion, a and s are stop-words
 SELECT to_tsquery('english', '!(a & !b) & c');
- to_tsquery 
-------------
- 'b' & 'c'
+ to_tsquery  
+-------------
+ !!'b' & 'c'
 (1 row)
 
 SELECT to_tsquery('english', '!(a & !b)');
  to_tsquery 
 ------------
- 'b'
+ !!'b'
 (1 row)
 
 SELECT to_tsquery('english', '(1 <-> 2) <-> a');
@@ -594,7 +731,7 @@ SELECT to_tsquery('english', 'a <-> (1 <-> 2)');
 SELECT to_tsquery('english', '1 <-> (a <-> 2)');
  to_tsquery  
 -------------
- '1' <-> '2'
+ '1' <2> '2'
 (1 row)
 
 SELECT to_tsquery('english', '1 <-> (2 <-> a)');
@@ -630,7 +767,7 @@ SELECT to_tsquery('english', 'a <3> (1 <-> 2)');
 SELECT to_tsquery('english', '1 <3> (a <-> 2)');
  to_tsquery  
 -------------
- '1' <3> '2'
+ '1' <4> '2'
 (1 row)
 
 SELECT to_tsquery('english', '1 <3> (2 <-> a)');
@@ -666,7 +803,7 @@ SELECT to_tsquery('english', 'a <-> (1 <3> 2)');
 SELECT to_tsquery('english', '1 <-> (a <3> 2)');
  to_tsquery  
 -------------
- '1' <-> '2'
+ '1' <4> '2'
 (1 row)
 
 SELECT to_tsquery('english', '1 <-> (2 <3> a)');
@@ -684,7 +821,7 @@ SELECT to_tsquery('english', '((a <-> 1) <-> 2) <-> s');
 SELECT to_tsquery('english', '(2 <-> (a <-> 1)) <-> s');
  to_tsquery  
 -------------
- '2' <-> '1'
+ '2' <2> '1'
 (1 row)
 
 SELECT to_tsquery('english', '((1 <-> a) <-> 2) <-> s');
@@ -708,7 +845,7 @@ SELECT to_tsquery('english', 's <-> ((a <-> 1) <-> 2)');
 SELECT to_tsquery('english', 's <-> (2 <-> (a <-> 1))');
  to_tsquery  
 -------------
- '2' <-> '1'
+ '2' <2> '1'
 (1 row)
 
 SELECT to_tsquery('english', 's <-> ((1 <-> a) <-> 2)');
@@ -750,13 +887,13 @@ SELECT to_tsquery('english', '(s <-> (1 <-> a)) <-> 2');
 SELECT to_tsquery('english', '2 <-> ((a <-> 1) <-> s)');
  to_tsquery  
 -------------
- '2' <-> '1'
+ '2' <2> '1'
 (1 row)
 
 SELECT to_tsquery('english', '2 <-> (s <-> (a <-> 1))');
  to_tsquery  
 -------------
- '2' <-> '1'
+ '2' <3> '1'
 (1 row)
 
 SELECT to_tsquery('english', '2 <-> ((1 <-> a) <-> s)');
@@ -768,13 +905,13 @@ SELECT to_tsquery('english', '2 <-> ((1 <-> a) <-> s)');
 SELECT to_tsquery('english', '2 <-> (s <-> (1 <-> a))');
  to_tsquery  
 -------------
- '2' <-> '1'
+ '2' <2> '1'
 (1 row)
 
 SELECT to_tsquery('english', 'foo <-> (a <-> (the <-> bar))');
    to_tsquery    
 -----------------
- 'foo' <-> 'bar'
+ 'foo' <3> 'bar'
 (1 row)
 
 SELECT to_tsquery('english', '((foo <-> a) <-> the) <-> bar');
@@ -1184,6 +1321,13 @@ SELECT ts_rewrite('foo & bar & qq & new & york',  'new & york'::tsquery, 'big & 
  'foo' & 'bar' & 'qq' & ( 'city' & 'new' & 'york' | 'nyc' | 'big' & 'apple' )
 (1 row)
 
+SELECT ts_rewrite(ts_rewrite('new & !york ', 'york', '!jersey'),
+                  'jersey', 'mexico');
+     ts_rewrite     
+--------------------
+ 'new' & !!'mexico'
+(1 row)
+
 SELECT ts_rewrite('moscow', 'SELECT keyword, sample FROM test_tsquery'::text );
      ts_rewrite      
 ---------------------
@@ -1233,15 +1377,30 @@ SELECT ts_rewrite('1 & (2 <2> 3)', 'SELECT keyword, sample FROM test_tsquery'::t
 (1 row)
 
 SELECT ts_rewrite('5 <-> (1 & (2 <-> 3))', 'SELECT keyword, sample FROM test_tsquery'::text );
-              ts_rewrite               
----------------------------------------
- '5' <-> '1' & '5' <-> ( '2' <-> '3' )
+       ts_rewrite        
+-------------------------
+ '5' <-> ( '2' <-> '4' )
 (1 row)
 
 SELECT ts_rewrite('5 <-> (6 | 8)', 'SELECT keyword, sample FROM test_tsquery'::text );
-        ts_rewrite         
----------------------------
- '5' <-> '7' | '5' <-> '8'
+      ts_rewrite       
+-----------------------
+ '5' <-> ( '6' | '8' )
+(1 row)
+
+-- Check empty substitution
+SELECT ts_rewrite(to_tsquery('5 & (6 | 5)'), to_tsquery('5'), to_tsquery(''));
+NOTICE:  text-search query doesn't contain lexemes: ""
+ ts_rewrite 
+------------
+ '6'
+(1 row)
+
+SELECT ts_rewrite(to_tsquery('!5'), to_tsquery('5'), to_tsquery(''));
+NOTICE:  text-search query doesn't contain lexemes: ""
+ ts_rewrite 
+------------
+ 
 (1 row)
 
 SELECT keyword FROM test_tsquery WHERE keyword @> 'new';
@@ -1362,6 +1521,26 @@ SELECT ts_rewrite( query, 'SELECT keyword, sample FROM test_tsquery' ) FROM to_t
                                    ts_rewrite                                    
 ---------------------------------------------------------------------------------
  'citi' & 'foo' & ( 'bar' | 'qq' ) & ( 'nyc' | 'big' & 'appl' | 'new' & 'york' )
+(1 row)
+
+SELECT ts_rewrite(tsquery_phrase('foo', 'foo'), 'foo', 'bar | baz');
+               ts_rewrite                
+-----------------------------------------
+ ( 'bar' | 'baz' ) <-> ( 'bar' | 'baz' )
+(1 row)
+
+SELECT to_tsvector('foo bar') @@
+  ts_rewrite(tsquery_phrase('foo', 'foo'), 'foo', 'bar | baz');
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT to_tsvector('bar baz') @@
+  ts_rewrite(tsquery_phrase('foo', 'foo'), 'foo', 'bar | baz');
+ ?column? 
+----------
+ t
 (1 row)
 
 RESET enable_seqscan;

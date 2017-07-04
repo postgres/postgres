@@ -3,7 +3,7 @@
  *
  *	main source file
  *
- *	Copyright (c) 2010-2016, PostgreSQL Global Development Group
+ *	Copyright (c) 2010-2017, PostgreSQL Global Development Group
  *	src/bin/pg_upgrade/pg_upgrade.c
  */
 
@@ -37,6 +37,7 @@
 #include "postgres_fe.h"
 
 #include "pg_upgrade.h"
+#include "catalog/pg_class.h"
 #include "common/restricted_token.h"
 #include "fe_utils/string_utils.h"
 
@@ -47,7 +48,7 @@
 static void prepare_new_cluster(void);
 static void prepare_new_databases(void);
 static void create_new_objects(void);
-static void copy_clog_xlog_xid(void);
+static void copy_xact_xlog_xid(void);
 static void set_frozenxids(bool minmxid_only);
 static void setup(char *argv0, bool *live_check);
 static void cleanup(void);
@@ -75,6 +76,7 @@ main(int argc, char **argv)
 	char	   *deletion_script_file_name = NULL;
 	bool		live_check = false;
 
+	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pg_upgrade"));
 	parseCommandLine(argc, argv);
 
 	get_restricted_token(os_info.progname);
@@ -113,7 +115,7 @@ main(int argc, char **argv)
 	 * Destructive Changes to New Cluster
 	 */
 
-	copy_clog_xlog_xid();
+	copy_xact_xlog_xid();
 
 	/* New now using xids of the old system */
 
@@ -146,7 +148,7 @@ main(int argc, char **argv)
 	 */
 	prep_status("Setting next OID for new cluster");
 	exec_prog(UTILITY_LOG_FILE, NULL, true,
-			  "\"%s/pg_resetxlog\" -o %u \"%s\"",
+			  "\"%s/pg_resetwal\" -o %u \"%s\"",
 			  new_cluster.bindir, old_cluster.controldata.chkpnt_nxtoid,
 			  new_cluster.pgdata);
 	check_ok();
@@ -160,7 +162,7 @@ main(int argc, char **argv)
 	create_script_for_cluster_analyze(&analyze_script_file_name);
 	create_script_for_old_cluster_deletion(&deletion_script_file_name);
 
-	issue_warnings();
+	issue_warnings_and_set_wal_level();
 
 	pg_log(PG_REPORT, "\nUpgrade Complete\n");
 	pg_log(PG_REPORT, "----------------\n");
@@ -225,7 +227,7 @@ setup(char *argv0, bool *live_check)
 
 	/* get path to pg_upgrade executable */
 	if (find_my_exec(argv0, exec_path) < 0)
-		pg_fatal("Could not get path name to pg_upgrade: %s\n", getErrorText());
+		pg_fatal("%s: could not find own program executable\n", argv0);
 
 	/* Trim off program name and keep just path */
 	*last_dir_separator(exec_path) = '\0';
@@ -326,7 +328,7 @@ create_new_objects(void)
 		 */
 		parallel_exec_prog(log_file_name,
 						   NULL,
-		 "\"%s/pg_restore\" %s --exit-on-error --verbose --dbname %s \"%s\"",
+						   "\"%s/pg_restore\" %s --exit-on-error --verbose --dbname %s \"%s\"",
 						   new_cluster.bindir,
 						   cluster_conn_opts(&new_cluster),
 						   escaped_connstr.data,
@@ -374,17 +376,17 @@ remove_new_subdir(char *subdir, bool rmtopdir)
  * Copy the files from the old cluster into it
  */
 static void
-copy_subdir_files(char *subdir)
+copy_subdir_files(char *old_subdir, char *new_subdir)
 {
 	char		old_path[MAXPGPATH];
 	char		new_path[MAXPGPATH];
 
-	remove_new_subdir(subdir, true);
+	remove_new_subdir(new_subdir, true);
 
-	snprintf(old_path, sizeof(old_path), "%s/%s", old_cluster.pgdata, subdir);
-	snprintf(new_path, sizeof(new_path), "%s/%s", new_cluster.pgdata, subdir);
+	snprintf(old_path, sizeof(old_path), "%s/%s", old_cluster.pgdata, old_subdir);
+	snprintf(new_path, sizeof(new_path), "%s/%s", new_cluster.pgdata, new_subdir);
 
-	prep_status("Copying old %s to new server", subdir);
+	prep_status("Copying old %s to new server", old_subdir);
 
 	exec_prog(UTILITY_LOG_FILE, NULL, true,
 #ifndef WIN32
@@ -399,24 +401,30 @@ copy_subdir_files(char *subdir)
 }
 
 static void
-copy_clog_xlog_xid(void)
+copy_xact_xlog_xid(void)
 {
-	/* copy old commit logs to new data dir */
-	copy_subdir_files("pg_clog");
+	/*
+	 * Copy old commit logs to new data dir. pg_clog has been renamed to
+	 * pg_xact in post-10 clusters.
+	 */
+	copy_subdir_files(GET_MAJOR_VERSION(old_cluster.major_version) < 1000 ?
+					  "pg_clog" : "pg_xact",
+					  GET_MAJOR_VERSION(new_cluster.major_version) < 1000 ?
+					  "pg_clog" : "pg_xact");
 
 	/* set the next transaction id and epoch of the new cluster */
 	prep_status("Setting next transaction ID and epoch for new cluster");
 	exec_prog(UTILITY_LOG_FILE, NULL, true,
-			  "\"%s/pg_resetxlog\" -f -x %u \"%s\"",
+			  "\"%s/pg_resetwal\" -f -x %u \"%s\"",
 			  new_cluster.bindir, old_cluster.controldata.chkpnt_nxtxid,
 			  new_cluster.pgdata);
 	exec_prog(UTILITY_LOG_FILE, NULL, true,
-			  "\"%s/pg_resetxlog\" -f -e %u \"%s\"",
+			  "\"%s/pg_resetwal\" -f -e %u \"%s\"",
 			  new_cluster.bindir, old_cluster.controldata.chkpnt_nxtepoch,
 			  new_cluster.pgdata);
 	/* must reset commit timestamp limits also */
 	exec_prog(UTILITY_LOG_FILE, NULL, true,
-			  "\"%s/pg_resetxlog\" -f -c %u,%u \"%s\"",
+			  "\"%s/pg_resetwal\" -f -c %u,%u \"%s\"",
 			  new_cluster.bindir,
 			  old_cluster.controldata.chkpnt_nxtxid,
 			  old_cluster.controldata.chkpnt_nxtxid,
@@ -432,8 +440,8 @@ copy_clog_xlog_xid(void)
 	if (old_cluster.controldata.cat_ver >= MULTIXACT_FORMATCHANGE_CAT_VER &&
 		new_cluster.controldata.cat_ver >= MULTIXACT_FORMATCHANGE_CAT_VER)
 	{
-		copy_subdir_files("pg_multixact/offsets");
-		copy_subdir_files("pg_multixact/members");
+		copy_subdir_files("pg_multixact/offsets", "pg_multixact/offsets");
+		copy_subdir_files("pg_multixact/members", "pg_multixact/members");
 
 		prep_status("Setting next multixact ID and offset for new cluster");
 
@@ -442,7 +450,7 @@ copy_clog_xlog_xid(void)
 		 * counters here and the oldest multi present on system.
 		 */
 		exec_prog(UTILITY_LOG_FILE, NULL, true,
-				  "\"%s/pg_resetxlog\" -O %u -m %u,%u \"%s\"",
+				  "\"%s/pg_resetwal\" -O %u -m %u,%u \"%s\"",
 				  new_cluster.bindir,
 				  old_cluster.controldata.chkpnt_nxtmxoff,
 				  old_cluster.controldata.chkpnt_nxtmulti,
@@ -470,7 +478,7 @@ copy_clog_xlog_xid(void)
 		 * next=MaxMultiXactId, but multixact.c can cope with that just fine.
 		 */
 		exec_prog(UTILITY_LOG_FILE, NULL, true,
-				  "\"%s/pg_resetxlog\" -m %u,%u \"%s\"",
+				  "\"%s/pg_resetwal\" -m %u,%u \"%s\"",
 				  new_cluster.bindir,
 				  old_cluster.controldata.chkpnt_nxtmulti + 1,
 				  old_cluster.controldata.chkpnt_nxtmulti,
@@ -482,7 +490,7 @@ copy_clog_xlog_xid(void)
 	prep_status("Resetting WAL archives");
 	exec_prog(UTILITY_LOG_FILE, NULL, true,
 	/* use timeline 1 to match controldata and no WAL history file */
-			  "\"%s/pg_resetxlog\" -l 00000001%s \"%s\"", new_cluster.bindir,
+			  "\"%s/pg_resetwal\" -l 00000001%s \"%s\"", new_cluster.bindir,
 			  old_cluster.controldata.nextxlogfile + 8,
 			  new_cluster.pgdata);
 	check_ok();
@@ -553,7 +561,7 @@ set_frozenxids(bool minmxid_only)
 		 */
 		if (strcmp(datallowconn, "f") == 0)
 			PQclear(executeQueryOrDie(conn_template1,
-								"ALTER DATABASE %s ALLOW_CONNECTIONS = true",
+									  "ALTER DATABASE %s ALLOW_CONNECTIONS = true",
 									  quote_identifier(datname)));
 
 		conn = connectToServer(&new_cluster, datname);
@@ -564,7 +572,10 @@ set_frozenxids(bool minmxid_only)
 									  "UPDATE	pg_catalog.pg_class "
 									  "SET	relfrozenxid = '%u' "
 			/* only heap, materialized view, and TOAST are vacuumed */
-									  "WHERE	relkind IN ('r', 'm', 't')",
+									  "WHERE	relkind IN ("
+									  CppAsString2(RELKIND_RELATION) ", "
+									  CppAsString2(RELKIND_MATVIEW) ", "
+									  CppAsString2(RELKIND_TOASTVALUE) ")",
 									  old_cluster.controldata.chkpnt_nxtxid));
 
 		/* set pg_class.relminmxid */
@@ -572,14 +583,17 @@ set_frozenxids(bool minmxid_only)
 								  "UPDATE	pg_catalog.pg_class "
 								  "SET	relminmxid = '%u' "
 		/* only heap, materialized view, and TOAST are vacuumed */
-								  "WHERE	relkind IN ('r', 'm', 't')",
+								  "WHERE	relkind IN ("
+								  CppAsString2(RELKIND_RELATION) ", "
+								  CppAsString2(RELKIND_MATVIEW) ", "
+								  CppAsString2(RELKIND_TOASTVALUE) ")",
 								  old_cluster.controldata.chkpnt_nxtmulti));
 		PQfinish(conn);
 
 		/* Reset datallowconn flag */
 		if (strcmp(datallowconn, "f") == 0)
 			PQclear(executeQueryOrDie(conn_template1,
-							   "ALTER DATABASE %s ALLOW_CONNECTIONS = false",
+									  "ALTER DATABASE %s ALLOW_CONNECTIONS = false",
 									  quote_identifier(datname)));
 	}
 

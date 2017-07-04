@@ -416,7 +416,7 @@ des_setkey(const char *key)
 		&& rawkey1 == old_rawkey1)
 	{
 		/*
-		 * Already setup for this key. This optimisation fails on a zero key
+		 * Already setup for this key. This optimization fails on a zero key
 		 * (which is weak and has bad parity anyway) in order to simplify the
 		 * starting conditions.
 		 */
@@ -734,7 +734,7 @@ px_crypt_des(const char *key, const char *setting)
 		p = output + strlen(output);
 	}
 	else
-#endif   /* !DISABLE_XDES */
+#endif							/* !DISABLE_XDES */
 	{
 		/*
 		 * "old"-style: setting - 2 bytes of salt key - only up to the first 8

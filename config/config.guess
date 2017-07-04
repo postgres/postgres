@@ -1,8 +1,8 @@
 #! /bin/sh
 # Attempt to guess a canonical system name.
-#   Copyright 1992-2016 Free Software Foundation, Inc.
+#   Copyright 1992-2017 Free Software Foundation, Inc.
 
-timestamp='2016-04-02'
+timestamp='2017-05-11'
 
 # This file is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -50,7 +50,7 @@ version="\
 GNU config.guess ($timestamp)
 
 Originally written by Per Bothner.
-Copyright 1992-2016 Free Software Foundation, Inc.
+Copyright 1992-2017 Free Software Foundation, Inc.
 
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE."
@@ -186,9 +186,12 @@ case "${UNAME_MACHINE}:${UNAME_SYSTEM}:${UNAME_RELEASE}:${UNAME_VERSION}" in
 	    *) machine=${UNAME_MACHINE_ARCH}-unknown ;;
 	esac
 	# The Operating System including object format, if it has switched
-	# to ELF recently, or will in the future.
+	# to ELF recently (or will in the future) and ABI.
 	case "${UNAME_MACHINE_ARCH}" in
-	    arm*|earm*|i386|m68k|ns32k|sh3*|sparc|vax)
+	    earm*)
+		os=netbsdelf
+		;;
+	    arm*|i386|m68k|ns32k|sh3*|sparc|vax)
 		eval $set_cc_for_build
 		if echo __ELF__ | $CC_FOR_BUILD -E - 2>/dev/null \
 			| grep -q __ELF__
@@ -834,10 +837,11 @@ EOF
 	UNAME_PROCESSOR=`/usr/bin/uname -p`
 	case ${UNAME_PROCESSOR} in
 	    amd64)
-		echo x86_64-unknown-freebsd`echo ${UNAME_RELEASE}|sed -e 's/[-(].*//'` ;;
-	    *)
-		echo ${UNAME_PROCESSOR}-unknown-freebsd`echo ${UNAME_RELEASE}|sed -e 's/[-(].*//'` ;;
+		UNAME_PROCESSOR=x86_64 ;;
+	    i386)
+		UNAME_PROCESSOR=i586 ;;
 	esac
+	echo ${UNAME_PROCESSOR}-unknown-freebsd`echo ${UNAME_RELEASE}|sed -e 's/[-(].*//'`
 	exit ;;
     i*:CYGWIN*:*)
 	echo ${UNAME_MACHINE}-pc-cygwin
@@ -997,6 +1001,9 @@ EOF
 	eval `$CC_FOR_BUILD -E $dummy.c 2>/dev/null | grep '^CPU'`
 	test x"${CPU}" != x && { echo "${CPU}-unknown-linux-${LIBC}"; exit; }
 	;;
+    mips64el:Linux:*:*)
+	echo ${UNAME_MACHINE}-unknown-linux-${LIBC}
+	exit ;;
     openrisc*:Linux:*:*)
 	echo or1k-unknown-linux-${LIBC}
 	exit ;;
@@ -1028,6 +1035,9 @@ EOF
 	exit ;;
     ppcle:Linux:*:*)
 	echo powerpcle-unknown-linux-${LIBC}
+	exit ;;
+    riscv32:Linux:*:* | riscv64:Linux:*:*)
+	echo ${UNAME_MACHINE}-unknown-linux-${LIBC}
 	exit ;;
     s390:Linux:*:* | s390x:Linux:*:*)
 	echo ${UNAME_MACHINE}-ibm-linux-${LIBC}
@@ -1325,14 +1335,17 @@ EOF
     *:QNX:*:4*)
 	echo i386-pc-qnx
 	exit ;;
-    NEO-?:NONSTOP_KERNEL:*:*)
+    NEO-*:NONSTOP_KERNEL:*:*)
 	echo neo-tandem-nsk${UNAME_RELEASE}
 	exit ;;
     NSE-*:NONSTOP_KERNEL:*:*)
 	echo nse-tandem-nsk${UNAME_RELEASE}
 	exit ;;
-    NSR-?:NONSTOP_KERNEL:*:*)
+    NSR-*:NONSTOP_KERNEL:*:*)
 	echo nsr-tandem-nsk${UNAME_RELEASE}
+	exit ;;
+    NSX-*:NONSTOP_KERNEL:*:*)
+	echo nsx-tandem-nsk${UNAME_RELEASE}
 	exit ;;
     *:NonStop-UX:*:*)
 	echo mips-compaq-nonstopux
@@ -1408,18 +1421,17 @@ esac
 cat >&2 <<EOF
 $0: unable to guess system type
 
-This script, last modified $timestamp, has failed to recognize
-the operating system you are using. It is advised that you
-download the most up to date version of the config scripts from
+This script (version $timestamp), has failed to recognize the
+operating system you are using. If your script is old, overwrite
+config.guess and config.sub with the latest versions from:
 
   http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess
 and
   http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub
 
-If the version you run ($0) is already up to date, please
-send the following data and any information you think might be
-pertinent to <config-patches@gnu.org> in order to provide the needed
-information to handle your system.
+If $0 has already been updated, send the following data and any
+information you think might be pertinent to config-patches@gnu.org to
+provide the necessary information to handle your system.
 
 config.guess timestamp = $timestamp
 

@@ -7,9 +7,6 @@
 
 #include "postgres_fe.h"
 
-#ifdef WIN32
-#include <windows.h>
-#endif
 #include <sys/time.h>
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
@@ -119,7 +116,7 @@ main(int argc, char **argv)
 	for (i = 0; i < testspec->nsessions; i++)
 		nallsteps += testspec->sessions[i]->nsteps;
 
-	allsteps = malloc(nallsteps * sizeof(Step *));
+	allsteps = pg_malloc(nallsteps * sizeof(Step *));
 
 	n = 0;
 	for (i = 0; i < testspec->nsessions; i++)
@@ -190,7 +187,7 @@ main(int argc, char **argv)
 		if (PQresultStatus(res) == PGRES_TUPLES_OK)
 		{
 			if (PQntuples(res) == 1 && PQnfields(res) == 1)
-				backend_pids[i] = strdup(PQgetvalue(res, 0, 0));
+				backend_pids[i] = pg_strdup(PQgetvalue(res, 0, 0));
 			else
 			{
 				fprintf(stderr, "backend pid query returned %d rows and %d columns, expected 1 row and 1 column",
@@ -227,12 +224,12 @@ main(int argc, char **argv)
 	 */
 	initPQExpBuffer(&wait_query);
 	appendPQExpBufferStr(&wait_query,
-						 "SELECT pg_catalog.pg_blocking_pids($1) && '{");
+						 "SELECT pg_catalog.pg_isolation_test_session_is_blocked($1, '{");
 	/* The spec syntax requires at least one session; assume that here. */
 	appendPQExpBufferStr(&wait_query, backend_pids[1]);
 	for (i = 2; i < nconns; i++)
 		appendPQExpBuffer(&wait_query, ",%s", backend_pids[i]);
-	appendPQExpBufferStr(&wait_query, "}'::integer[]");
+	appendPQExpBufferStr(&wait_query, "}')");
 
 	res = PQprepare(conns[0], PREP_WAITING, wait_query.data, 0, NULL);
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
@@ -286,7 +283,7 @@ run_all_permutations(TestSpec *testspec)
 	for (i = 0; i < testspec->nsessions; i++)
 		nsteps += testspec->sessions[i]->nsteps;
 
-	steps = malloc(sizeof(Step *) * nsteps);
+	steps = pg_malloc(sizeof(Step *) * nsteps);
 
 	/*
 	 * To generate the permutations, we conceptually put the steps of each
@@ -297,7 +294,7 @@ run_all_permutations(TestSpec *testspec)
 	 * A pile is actually just an integer which tells how many steps we've
 	 * already picked from this pile.
 	 */
-	piles = malloc(sizeof(int) * testspec->nsessions);
+	piles = pg_malloc(sizeof(int) * testspec->nsessions);
 	for (i = 0; i < testspec->nsessions; i++)
 		piles[i] = 0;
 
@@ -345,7 +342,7 @@ run_named_permutations(TestSpec *testspec)
 		Permutation *p = testspec->permutations[i];
 		Step	  **steps;
 
-		steps = malloc(p->nsteps * sizeof(Step *));
+		steps = pg_malloc(p->nsteps * sizeof(Step *));
 
 		/* Find all the named steps using the lookup table */
 		for (j = 0; j < p->nsteps; j++)
@@ -476,8 +473,8 @@ run_permutation(TestSpec *testspec, int nsteps, Step **steps)
 		return;
 	}
 
-	waiting = malloc(sizeof(Step *) * testspec->nsessions);
-	errorstep = malloc(sizeof(Step *) * testspec->nsessions);
+	waiting = pg_malloc(sizeof(Step *) * testspec->nsessions);
+	errorstep = pg_malloc(sizeof(Step *) * testspec->nsessions);
 
 	printf("\nstarting permutation:");
 	for (i = 0; i < nsteps; i++)
@@ -844,7 +841,7 @@ try_complete_step(Step *step, int flags)
 					const char *sev = PQresultErrorField(res,
 														 PG_DIAG_SEVERITY);
 					const char *msg = PQresultErrorField(res,
-													PG_DIAG_MESSAGE_PRIMARY);
+														 PG_DIAG_MESSAGE_PRIMARY);
 
 					if (sev && msg)
 						step->errormsg = psprintf("%s:  %s", sev, msg);

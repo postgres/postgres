@@ -3,7 +3,7 @@
  * vacuumlo.c
  *	  This removes orphaned large objects from a database.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -21,10 +21,10 @@
 #include <termios.h>
 #endif
 
+#include "catalog/pg_class.h"
+
 #include "libpq-fe.h"
 #include "pg_getopt.h"
-
-#define atooid(x)  ((Oid) strtoul((x), NULL, 10))
 
 #define BUFSIZE			1024
 
@@ -47,7 +47,7 @@ struct _param
 	long		transaction_limit;
 };
 
-static int	vacuumlo(const char *database, const struct _param * param);
+static int	vacuumlo(const char *database, const struct _param *param);
 static void usage(const char *progname);
 
 
@@ -56,7 +56,7 @@ static void usage(const char *progname);
  * This vacuums LOs of one database. It returns 0 on success, -1 on failure.
  */
 static int
-vacuumlo(const char *database, const struct _param * param)
+vacuumlo(const char *database, const struct _param *param)
 {
 	PGconn	   *conn;
 	PGresult   *res,
@@ -65,13 +65,17 @@ vacuumlo(const char *database, const struct _param * param)
 	long		matched;
 	long		deleted;
 	int			i;
-	static char *password = NULL;
 	bool		new_pass;
 	bool		success = true;
+	static bool have_password = false;
+	static char password[100];
 
 	/* Note: password can be carried over from a previous call */
-	if (param->pg_prompt == TRI_YES && password == NULL)
-		password = simple_prompt("Password: ", 100, false);
+	if (param->pg_prompt == TRI_YES && !have_password)
+	{
+		simple_prompt("Password: ", password, sizeof(password), false);
+		have_password = true;
+	}
 
 	/*
 	 * Start the connection.  Loop until we have a password if requested by
@@ -91,7 +95,7 @@ vacuumlo(const char *database, const struct _param * param)
 		keywords[2] = "user";
 		values[2] = param->pg_user;
 		keywords[3] = "password";
-		values[3] = password;
+		values[3] = have_password ? password : NULL;
 		keywords[4] = "dbname";
 		values[4] = database;
 		keywords[5] = "fallback_application_name";
@@ -110,11 +114,12 @@ vacuumlo(const char *database, const struct _param * param)
 
 		if (PQstatus(conn) == CONNECTION_BAD &&
 			PQconnectionNeedsPassword(conn) &&
-			password == NULL &&
+			!have_password &&
 			param->pg_prompt != TRI_NO)
 		{
 			PQfinish(conn);
-			password = simple_prompt("Password: ", 100, false);
+			simple_prompt("Password: ", password, sizeof(password), false);
+			have_password = true;
 			new_pass = true;
 		}
 	} while (new_pass);
@@ -206,7 +211,7 @@ vacuumlo(const char *database, const struct _param * param)
 	strcat(buf, "      AND a.atttypid = t.oid ");
 	strcat(buf, "      AND c.relnamespace = s.oid ");
 	strcat(buf, "      AND t.typname in ('oid', 'lo') ");
-	strcat(buf, "      AND c.relkind in ('r', 'm')");
+	strcat(buf, "      AND c.relkind in (" CppAsString2(RELKIND_RELATION) ", " CppAsString2(RELKIND_MATVIEW) ")");
 	strcat(buf, "      AND s.nspname !~ '^pg_'");
 	res = PQexec(conn, buf);
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
@@ -237,7 +242,7 @@ vacuumlo(const char *database, const struct _param * param)
 
 		if (!schema || !table || !field)
 		{
-			fprintf(stderr, "Out of memory\n");
+			fprintf(stderr, "%s", PQerrorMessage(conn));
 			PQclear(res);
 			PQfinish(conn);
 			if (schema != NULL)
@@ -514,7 +519,7 @@ main(int argc, char **argv)
 				}
 				break;
 			case 'U':
-				param.pg_user = strdup(optarg);
+				param.pg_user = pg_strdup(optarg);
 				break;
 			case 'w':
 				param.pg_prompt = TRI_NO;
@@ -529,10 +534,10 @@ main(int argc, char **argv)
 					fprintf(stderr, "%s: invalid port number: %s\n", progname, optarg);
 					exit(1);
 				}
-				param.pg_port = strdup(optarg);
+				param.pg_port = pg_strdup(optarg);
 				break;
 			case 'h':
-				param.pg_host = strdup(optarg);
+				param.pg_host = pg_strdup(optarg);
 				break;
 		}
 	}

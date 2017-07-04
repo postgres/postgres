@@ -3,7 +3,7 @@
  * analyze.c
  *	  the Postgres statistics generator
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -17,6 +17,7 @@
 #include <math.h>
 
 #include "access/multixact.h"
+#include "access/sysattr.h"
 #include "access/transam.h"
 #include "access/tupconvert.h"
 #include "access/tuptoaster.h"
@@ -28,6 +29,7 @@
 #include "catalog/pg_collation.h"
 #include "catalog/pg_inherits_fn.h"
 #include "catalog/pg_namespace.h"
+#include "catalog/pg_statistic_ext.h"
 #include "commands/dbcommands.h"
 #include "commands/tablecmds.h"
 #include "commands/vacuum.h"
@@ -39,13 +41,17 @@
 #include "parser/parse_relation.h"
 #include "pgstat.h"
 #include "postmaster/autovacuum.h"
+#include "statistics/extended_stats_internal.h"
+#include "statistics/statistics.h"
 #include "storage/bufmgr.h"
 #include "storage/lmgr.h"
 #include "storage/proc.h"
 #include "storage/procarray.h"
 #include "utils/acl.h"
 #include "utils/attoptcache.h"
+#include "utils/builtins.h"
 #include "utils/datum.h"
+#include "utils/fmgroids.h"
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
@@ -142,8 +148,8 @@ analyze_rel(Oid relid, RangeVar *relation, int options,
 		if (IsAutoVacuumWorkerProcess() && params->log_min_duration >= 0)
 			ereport(LOG,
 					(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
-				  errmsg("skipping analyze of \"%s\" --- lock not available",
-						 relation->relname)));
+					 errmsg("skipping analyze of \"%s\" --- lock not available",
+							relation->relname)));
 	}
 	if (!onerel)
 		return;
@@ -159,8 +165,8 @@ analyze_rel(Oid relid, RangeVar *relation, int options,
 		{
 			if (onerel->rd_rel->relisshared)
 				ereport(WARNING,
-				 (errmsg("skipping \"%s\" --- only superuser can analyze it",
-						 RelationGetRelationName(onerel))));
+						(errmsg("skipping \"%s\" --- only superuser can analyze it",
+								RelationGetRelationName(onerel))));
 			else if (onerel->rd_rel->relnamespace == PG_CATALOG_NAMESPACE)
 				ereport(WARNING,
 						(errmsg("skipping \"%s\" --- only superuser or database owner can analyze it",
@@ -227,11 +233,17 @@ analyze_rel(Oid relid, RangeVar *relation, int options,
 		if (!ok)
 		{
 			ereport(WARNING,
-			 (errmsg("skipping \"%s\" --- cannot analyze this foreign table",
-					 RelationGetRelationName(onerel))));
+					(errmsg("skipping \"%s\" --- cannot analyze this foreign table",
+							RelationGetRelationName(onerel))));
 			relation_close(onerel, ShareUpdateExclusiveLock);
 			return;
 		}
+	}
+	else if (onerel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
+	{
+		/*
+		 * For partitioned tables, we want to do the recursive ANALYZE below.
+		 */
 	}
 	else
 	{
@@ -252,10 +264,12 @@ analyze_rel(Oid relid, RangeVar *relation, int options,
 	LWLockRelease(ProcArrayLock);
 
 	/*
-	 * Do the normal non-recursive ANALYZE.
+	 * Do the normal non-recursive ANALYZE.  We can skip this for partitioned
+	 * tables, which don't contain any rows.
 	 */
-	do_analyze_rel(onerel, options, params, va_cols, acquirefunc, relpages,
-				   false, in_outer_xact, elevel);
+	if (onerel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE)
+		do_analyze_rel(onerel, options, params, va_cols, acquirefunc,
+					   relpages, false, in_outer_xact, elevel);
 
 	/*
 	 * If there are child tables, do recursive ANALYZE.
@@ -332,9 +346,7 @@ do_analyze_rel(Relation onerel, int options, VacuumParams *params,
 	 */
 	anl_context = AllocSetContextCreate(CurrentMemoryContext,
 										"Analyze",
-										ALLOCSET_DEFAULT_MINSIZE,
-										ALLOCSET_DEFAULT_INITSIZE,
-										ALLOCSET_DEFAULT_MAXSIZE);
+										ALLOCSET_DEFAULT_SIZES);
 	caller_context = MemoryContextSwitchTo(anl_context);
 
 	/*
@@ -375,8 +387,8 @@ do_analyze_rel(Relation onerel, int options, VacuumParams *params,
 			if (i == InvalidAttrNumber)
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_COLUMN),
-					errmsg("column \"%s\" of relation \"%s\" does not exist",
-						   col, RelationGetRelationName(onerel))));
+						 errmsg("column \"%s\" of relation \"%s\" does not exist",
+								col, RelationGetRelationName(onerel))));
 			vacattrstats[tcnt] = examine_attribute(onerel, i, NULL);
 			if (vacattrstats[tcnt] != NULL)
 				tcnt++;
@@ -440,7 +452,7 @@ do_analyze_rel(Relation onerel, int options, VacuumParams *params,
 						/* Found an index expression */
 						Node	   *indexkey;
 
-						if (indexpr_item == NULL)		/* shouldn't happen */
+						if (indexpr_item == NULL)	/* shouldn't happen */
 							elog(ERROR, "too few entries in indexprs list");
 						indexkey = (Node *) lfirst(indexpr_item);
 						indexpr_item = lnext(indexpr_item);
@@ -504,9 +516,7 @@ do_analyze_rel(Relation onerel, int options, VacuumParams *params,
 
 		col_context = AllocSetContextCreate(anl_context,
 											"Analyze Column",
-											ALLOCSET_DEFAULT_MINSIZE,
-											ALLOCSET_DEFAULT_INITSIZE,
-											ALLOCSET_DEFAULT_MAXSIZE);
+											ALLOCSET_DEFAULT_SIZES);
 		old_context = MemoryContextSwitchTo(col_context);
 
 		for (i = 0; i < attr_cnt; i++)
@@ -562,6 +572,10 @@ do_analyze_rel(Relation onerel, int options, VacuumParams *params,
 			update_attstats(RelationGetRelid(Irel[ind]), false,
 							thisdata->attr_cnt, thisdata->vacattrstats);
 		}
+
+		/* Build extended statistics (if there are any). */
+		BuildRelationExtStatistics(onerel, totalrows, numrows, rows, attr_cnt,
+								   vacattrstats);
 	}
 
 	/*
@@ -688,9 +702,7 @@ compute_index_stats(Relation onerel, double totalrows,
 
 	ind_context = AllocSetContextCreate(anl_context,
 										"Analyze Index",
-										ALLOCSET_DEFAULT_MINSIZE,
-										ALLOCSET_DEFAULT_INITSIZE,
-										ALLOCSET_DEFAULT_MAXSIZE);
+										ALLOCSET_DEFAULT_SIZES);
 	old_context = MemoryContextSwitchTo(ind_context);
 
 	for (ind = 0; ind < nindexes; ind++)
@@ -701,7 +713,7 @@ compute_index_stats(Relation onerel, double totalrows,
 		TupleTableSlot *slot;
 		EState	   *estate;
 		ExprContext *econtext;
-		List	   *predicate;
+		ExprState  *predicate;
 		Datum	   *exprvals;
 		bool	   *exprnulls;
 		int			numindexrows,
@@ -727,9 +739,7 @@ compute_index_stats(Relation onerel, double totalrows,
 		econtext->ecxt_scantuple = slot;
 
 		/* Set up execution state for predicate. */
-		predicate = (List *)
-			ExecPrepareExpr((Expr *) indexInfo->ii_Predicate,
-							estate);
+		predicate = ExecPrepareQual(indexInfo->ii_Predicate, estate);
 
 		/* Compute and save index expression values */
 		exprvals = (Datum *) palloc(numrows * attr_cnt * sizeof(Datum));
@@ -752,9 +762,9 @@ compute_index_stats(Relation onerel, double totalrows,
 			ExecStoreTuple(heapTuple, slot, InvalidBuffer, false);
 
 			/* If index is partial, check predicate */
-			if (predicate != NIL)
+			if (predicate != NULL)
 			{
-				if (!ExecQual(predicate, econtext, false))
+				if (!ExecQual(predicate, econtext))
 					continue;
 			}
 			numindexrows++;
@@ -998,7 +1008,7 @@ acquire_sample_rows(Relation onerel, int elevel,
 	totalblocks = RelationGetNumberOfBlocks(onerel);
 
 	/* Need a cutoff xmin for HeapTupleSatisfiesVacuum */
-	OldestXmin = GetOldestXmin(onerel, true);
+	OldestXmin = GetOldestXmin(onerel, PROCARRAY_FLAGS_VACUUM);
 
 	/* Prepare for sampling block numbers */
 	BlockSampler_Init(&bs, totalblocks, targrows, random());
@@ -1265,6 +1275,7 @@ acquire_inherited_sample_rows(Relation onerel, int elevel,
 				nrels,
 				i;
 	ListCell   *lc;
+	bool		has_child;
 
 	/*
 	 * Find all members of inheritance set.  We only need AccessShareLock on
@@ -1302,6 +1313,7 @@ acquire_inherited_sample_rows(Relation onerel, int elevel,
 	relblocks = (double *) palloc(list_length(tableOIDs) * sizeof(double));
 	totalblocks = 0;
 	nrels = 0;
+	has_child = false;
 	foreach(lc, tableOIDs)
 	{
 		Oid			childOID = lfirst_oid(lc);
@@ -1355,13 +1367,20 @@ acquire_inherited_sample_rows(Relation onerel, int elevel,
 		}
 		else
 		{
-			/* ignore, but release the lock on it */
-			Assert(childrel != onerel);
-			heap_close(childrel, AccessShareLock);
+			/*
+			 * ignore, but release the lock on it.  don't try to unlock the
+			 * passed-in relation
+			 */
+			Assert(childrel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE);
+			if (childrel != onerel)
+				heap_close(childrel, AccessShareLock);
+			else
+				heap_close(childrel, NoLock);
 			continue;
 		}
 
 		/* OK, we'll process this child */
+		has_child = true;
 		rels[nrels] = childrel;
 		acquirefuncs[nrels] = acquirefunc;
 		relblocks[nrels] = (double) relpages;
@@ -1370,9 +1389,10 @@ acquire_inherited_sample_rows(Relation onerel, int elevel,
 	}
 
 	/*
-	 * If we don't have at least two tables to consider, fail.
+	 * If we don't have at least one child table to consider, fail.  If the
+	 * relation is a partitioned table, it's not counted as a child table.
 	 */
-	if (nrels < 2)
+	if (!has_child)
 	{
 		ereport(elevel,
 				(errmsg("skipping analyze of \"%s.%s\" inheritance tree --- this inheritance tree contains no analyzable child tables",
@@ -1423,7 +1443,7 @@ acquire_inherited_sample_rows(Relation onerel, int elevel,
 
 					map = convert_tuples_by_name(RelationGetDescr(childrel),
 												 RelationGetDescr(onerel),
-								 gettext_noop("could not convert row type"));
+												 gettext_noop("could not convert row type"));
 					if (map != NULL)
 					{
 						int			j;
@@ -1525,7 +1545,7 @@ update_attstats(Oid relid, bool inh, int natts, VacAttrStats **vacattrstats)
 		i = Anum_pg_statistic_stakind1 - 1;
 		for (k = 0; k < STATISTIC_NUM_SLOTS; k++)
 		{
-			values[i++] = Int16GetDatum(stats->stakind[k]);		/* stakindN */
+			values[i++] = Int16GetDatum(stats->stakind[k]); /* stakindN */
 		}
 		i = Anum_pg_statistic_staop1 - 1;
 		for (k = 0; k < STATISTIC_NUM_SLOTS; k++)
@@ -1593,17 +1613,14 @@ update_attstats(Oid relid, bool inh, int natts, VacAttrStats **vacattrstats)
 									 nulls,
 									 replaces);
 			ReleaseSysCache(oldtup);
-			simple_heap_update(sd, &stup->t_self, stup);
+			CatalogTupleUpdate(sd, &stup->t_self, stup);
 		}
 		else
 		{
 			/* No, insert new tuple */
 			stup = heap_form_tuple(RelationGetDescr(sd), values, nulls);
-			simple_heap_insert(sd, stup);
+			CatalogTupleInsert(sd, stup);
 		}
-
-		/* update indexes too */
-		CatalogUpdateIndexes(sd, stup);
 
 		heap_freetuple(stup);
 	}
@@ -1672,19 +1689,6 @@ ind_fetch_func(VacAttrStatsP stats, int rownum, bool *isNull)
 /*
  * Extra information used by the default analysis routines
  */
-typedef struct
-{
-	Oid			eqopr;			/* '=' operator for datatype, if any */
-	Oid			eqfunc;			/* and associated function */
-	Oid			ltopr;			/* '<' operator for datatype, if any */
-} StdAnalyzeData;
-
-typedef struct
-{
-	Datum		value;			/* a data value */
-	int			tupno;			/* position index for tuple it came from */
-} ScalarItem;
-
 typedef struct
 {
 	int			count;			/* # of duplicates */
@@ -1856,7 +1860,7 @@ compute_trivial_stats(VacAttrStatsP stats,
 			stats->stawidth = total_width / (double) nonnull_cnt;
 		else
 			stats->stawidth = stats->attrtype->typlen;
-		stats->stadistinct = 0.0;		/* "unknown" */
+		stats->stadistinct = 0.0;	/* "unknown" */
 	}
 	else if (null_cnt > 0)
 	{
@@ -1867,7 +1871,7 @@ compute_trivial_stats(VacAttrStatsP stats,
 			stats->stawidth = 0;	/* "unknown" */
 		else
 			stats->stawidth = stats->attrtype->typlen;
-		stats->stadistinct = 0.0;		/* "unknown" */
+		stats->stadistinct = 0.0;	/* "unknown" */
 	}
 }
 
@@ -2220,7 +2224,7 @@ compute_distinct_stats(VacAttrStatsP stats,
 			stats->stawidth = 0;	/* "unknown" */
 		else
 			stats->stawidth = stats->attrtype->typlen;
-		stats->stadistinct = 0.0;		/* "unknown" */
+		stats->stadistinct = 0.0;	/* "unknown" */
 	}
 
 	/* We don't need to bother cleaning up any of our temporary palloc's */
@@ -2770,7 +2774,7 @@ compute_scalar_stats(VacAttrStatsP stats,
 			stats->stawidth = 0;	/* "unknown" */
 		else
 			stats->stawidth = stats->attrtype->typlen;
-		stats->stadistinct = 0.0;		/* "unknown" */
+		stats->stadistinct = 0.0;	/* "unknown" */
 	}
 
 	/* We don't need to bother cleaning up any of our temporary palloc's */

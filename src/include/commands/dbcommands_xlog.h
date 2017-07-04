@@ -4,7 +4,7 @@
  *		Database resource manager XLOG definitions (create/drop database).
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/commands/dbcommands_xlog.h
@@ -41,4 +41,4 @@ extern void dbase_redo(XLogReaderState *rptr);
 extern void dbase_desc(StringInfo buf, XLogReaderState *rptr);
 extern const char *dbase_identify(uint8 info);
 
-#endif   /* DBCOMMANDS_XLOG_H */
+#endif							/* DBCOMMANDS_XLOG_H */

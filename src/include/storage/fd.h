@@ -4,7 +4,7 @@
  *	  Virtual file descriptor definitions.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/storage/fd.h
@@ -68,13 +68,13 @@ extern int	max_safe_fds;
 extern File PathNameOpenFile(FileName fileName, int fileFlags, int fileMode);
 extern File OpenTemporaryFile(bool interXact);
 extern void FileClose(File file);
-extern int	FilePrefetch(File file, off_t offset, int amount);
-extern int	FileRead(File file, char *buffer, int amount);
-extern int	FileWrite(File file, char *buffer, int amount);
-extern int	FileSync(File file);
+extern int	FilePrefetch(File file, off_t offset, int amount, uint32 wait_event_info);
+extern int	FileRead(File file, char *buffer, int amount, uint32 wait_event_info);
+extern int	FileWrite(File file, char *buffer, int amount, uint32 wait_event_info);
+extern int	FileSync(File file, uint32 wait_event_info);
 extern off_t FileSeek(File file, off_t offset, int whence);
-extern int	FileTruncate(File file, off_t offset);
-extern void FileWriteback(File file, off_t offset, off_t nbytes);
+extern int	FileTruncate(File file, off_t offset, uint32 wait_event_info);
+extern void FileWriteback(File file, off_t offset, off_t nbytes, uint32 wait_event_info);
 extern char *FilePathName(File file);
 extern int	FileGetRawDesc(File file);
 extern int	FileGetRawFlags(File file);
@@ -119,6 +119,7 @@ extern int	pg_fdatasync(int fd);
 extern void pg_flush_data(int fd, off_t offset, off_t amount);
 extern void fsync_fname(const char *fname, bool isdir);
 extern int	durable_rename(const char *oldfile, const char *newfile, int loglevel);
+extern int	durable_unlink(const char *fname, int loglevel);
 extern int	durable_link_or_rename(const char *oldfile, const char *newfile, int loglevel);
 extern void SyncDataDirectory(void);
 
@@ -126,4 +127,4 @@ extern void SyncDataDirectory(void);
 #define PG_TEMP_FILES_DIR "pgsql_tmp"
 #define PG_TEMP_FILE_PREFIX "pgsql_tmp"
 
-#endif   /* FD_H */
+#endif							/* FD_H */

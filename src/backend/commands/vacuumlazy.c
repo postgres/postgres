@@ -4,11 +4,10 @@
  *	  Concurrent ("lazy") vacuuming.
  *
  *
- * The major space usage for LAZY VACUUM is storage for the array of dead
- * tuple TIDs, with the next biggest need being storage for per-disk-page
- * free space info.  We want to ensure we can vacuum even the very largest
- * relations with finite memory space usage.  To do that, we set upper bounds
- * on the number of tuples and pages we will keep track of at once.
+ * The major space usage for LAZY VACUUM is storage for the array of dead tuple
+ * TIDs.  We want to ensure we can vacuum even the very largest relations with
+ * finite memory space usage.  To do that, we set upper bounds on the number of
+ * tuples we will keep track of at once.
  *
  * We are willing to use at most maintenance_work_mem (or perhaps
  * autovacuum_work_mem) memory space to keep track of dead tuples.  We
@@ -24,7 +23,7 @@
  * the TID array, just enough to hold as many heap tuples as fit on one page.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -81,8 +80,8 @@
  * that the potential for improvement was great enough to merit the cost of
  * supporting them.
  */
-#define VACUUM_TRUNCATE_LOCK_CHECK_INTERVAL		20		/* ms */
-#define VACUUM_TRUNCATE_LOCK_WAIT_INTERVAL		50		/* ms */
+#define VACUUM_TRUNCATE_LOCK_CHECK_INTERVAL		20	/* ms */
+#define VACUUM_TRUNCATE_LOCK_WAIT_INTERVAL		50	/* ms */
 #define VACUUM_TRUNCATE_LOCK_TIMEOUT			5000	/* ms */
 
 /*
@@ -98,6 +97,12 @@
  */
 #define SKIP_PAGES_THRESHOLD	((BlockNumber) 32)
 
+/*
+ * Size of the prefetch window for lazy vacuum backwards truncation scan.
+ * Needs to be a power of 2.
+ */
+#define PREFETCH_SIZE			((BlockNumber) 32)
+
 typedef struct LVRelStats
 {
 	/* hasindex = true means two-pass strategy; false means one-pass */
@@ -106,9 +111,10 @@ typedef struct LVRelStats
 	BlockNumber old_rel_pages;	/* previous value of pg_class.relpages */
 	BlockNumber rel_pages;		/* total number of pages */
 	BlockNumber scanned_pages;	/* number of pages we examined */
-	BlockNumber pinskipped_pages;		/* # of pages we skipped due to a pin */
+	BlockNumber pinskipped_pages;	/* # of pages we skipped due to a pin */
 	BlockNumber frozenskipped_pages;	/* # of frozen pages we skipped */
-	double		scanned_tuples; /* counts only tuples on scanned pages */
+	BlockNumber tupcount_pages; /* pages whose tuples we counted */
+	double		scanned_tuples; /* counts only tuples on tupcount_pages */
 	double		old_rel_tuples; /* previous value of pg_class.reltuples */
 	double		new_rel_tuples; /* new estimated total # of tuples */
 	double		new_dead_tuples;	/* new estimated total # of dead tuples */
@@ -160,7 +166,7 @@ static void lazy_record_dead_tuple(LVRelStats *vacrelstats,
 static bool lazy_tid_reaped(ItemPointer itemptr, void *state);
 static int	vac_cmp_itemptr(const void *left, const void *right);
 static bool heap_page_is_all_visible(Relation rel, Buffer buf,
-					 TransactionId *visibility_cutoff_xid, bool *all_frozen);
+						 TransactionId *visibility_cutoff_xid, bool *all_frozen);
 
 
 /*
@@ -293,6 +299,10 @@ lazy_vacuum_rel(Relation onerel, int options, VacuumParams *params,
 	 * density") with nonzero relpages and reltuples=0 (which means "zero
 	 * tuple density") unless there's some actual evidence for the latter.
 	 *
+	 * It's important that we use tupcount_pages and not scanned_pages for the
+	 * check described above; scanned_pages counts pages where we could not
+	 * get cleanup lock, and which were processed only for frozenxid purposes.
+	 *
 	 * We do update relallvisible even in the corner case, since if the table
 	 * is all-visible we'd definitely like to know that.  But clamp the value
 	 * to be not more than what we're setting relpages to.
@@ -302,7 +312,7 @@ lazy_vacuum_rel(Relation onerel, int options, VacuumParams *params,
 	 */
 	new_rel_pages = vacrelstats->rel_pages;
 	new_rel_tuples = vacrelstats->new_rel_tuples;
-	if (vacrelstats->scanned_pages == 0 && new_rel_pages > 0)
+	if (vacrelstats->tupcount_pages == 0 && new_rel_pages > 0)
 	{
 		new_rel_pages = vacrelstats->old_rel_pages;
 		new_rel_tuples = vacrelstats->old_rel_tuples;
@@ -352,10 +362,10 @@ lazy_vacuum_rel(Relation onerel, int options, VacuumParams *params,
 			write_rate = 0;
 			if ((secs > 0) || (usecs > 0))
 			{
-				read_rate = (double) BLCKSZ *VacuumPageMiss / (1024 * 1024) /
-							(secs + usecs / 1000000.0);
-				write_rate = (double) BLCKSZ *VacuumPageDirty / (1024 * 1024) /
-							(secs + usecs / 1000000.0);
+				read_rate = (double) BLCKSZ * VacuumPageMiss / (1024 * 1024) /
+					(secs + usecs / 1000000.0);
+				write_rate = (double) BLCKSZ * VacuumPageDirty / (1024 * 1024) /
+					(secs + usecs / 1000000.0);
 			}
 
 			/*
@@ -374,12 +384,13 @@ lazy_vacuum_rel(Relation onerel, int options, VacuumParams *params,
 							 vacrelstats->pinskipped_pages,
 							 vacrelstats->frozenskipped_pages);
 			appendStringInfo(&buf,
-							 _("tuples: %.0f removed, %.0f remain, %.0f are dead but not yet removable\n"),
+							 _("tuples: %.0f removed, %.0f remain, %.0f are dead but not yet removable, oldest xmin: %u\n"),
 							 vacrelstats->tuples_deleted,
 							 vacrelstats->new_rel_tuples,
-							 vacrelstats->new_dead_tuples);
+							 vacrelstats->new_dead_tuples,
+							 OldestXmin);
 			appendStringInfo(&buf,
-						 _("buffer usage: %d hits, %d misses, %d dirtied\n"),
+							 _("buffer usage: %d hits, %d misses, %d dirtied\n"),
 							 VacuumPageHit,
 							 VacuumPageMiss,
 							 VacuumPageDirty);
@@ -489,6 +500,7 @@ lazy_scan_heap(Relation onerel, int options, LVRelStats *vacrelstats,
 	nblocks = RelationGetNumberOfBlocks(onerel);
 	vacrelstats->rel_pages = nblocks;
 	vacrelstats->scanned_pages = 0;
+	vacrelstats->tupcount_pages = 0;
 	vacrelstats->nonempty_pages = 0;
 	vacrelstats->latestRemovedXid = InvalidTransactionId;
 
@@ -608,7 +620,7 @@ lazy_scan_heap(Relation onerel, int options, LVRelStats *vacrelstats,
 					uint8		vmskipflags;
 
 					vmskipflags = visibilitymap_get_status(onerel,
-													  next_unskippable_block,
+														   next_unskippable_block,
 														   &vmbuffer);
 					if (aggressive)
 					{
@@ -811,6 +823,7 @@ lazy_scan_heap(Relation onerel, int options, LVRelStats *vacrelstats,
 		}
 
 		vacrelstats->scanned_pages++;
+		vacrelstats->tupcount_pages++;
 
 		page = BufferGetPage(buf);
 
@@ -843,8 +856,8 @@ lazy_scan_heap(Relation onerel, int options, LVRelStats *vacrelstats,
 			if (PageIsNew(page))
 			{
 				ereport(WARNING,
-				(errmsg("relation \"%s\" page %u is uninitialized --- fixing",
-						relname, blkno)));
+						(errmsg("relation \"%s\" page %u is uninitialized --- fixing",
+								relname, blkno)));
 				PageInit(page, BufferGetPageSize(buf), 0);
 				empty_pages++;
 			}
@@ -886,7 +899,7 @@ lazy_scan_heap(Relation onerel, int options, LVRelStats *vacrelstats,
 				PageSetAllVisible(page);
 				visibilitymap_set(onerel, blkno, buf, InvalidXLogRecPtr,
 								  vmbuffer, InvalidTransactionId,
-					   VISIBILITYMAP_ALL_VISIBLE | VISIBILITYMAP_ALL_FROZEN);
+								  VISIBILITYMAP_ALL_VISIBLE | VISIBILITYMAP_ALL_FROZEN);
 				END_CRIT_SECTION();
 			}
 
@@ -1057,7 +1070,7 @@ lazy_scan_heap(Relation onerel, int options, LVRelStats *vacrelstats,
 			{
 				lazy_record_dead_tuple(vacrelstats, &(tuple.t_self));
 				HeapTupleHeaderAdvanceLatestRemovedXid(tuple.t_data,
-											 &vacrelstats->latestRemovedXid);
+													   &vacrelstats->latestRemovedXid);
 				tups_vacuumed += 1;
 				has_dead_tuples = true;
 			}
@@ -1073,7 +1086,7 @@ lazy_scan_heap(Relation onerel, int options, LVRelStats *vacrelstats,
 				 * freezing.  Note we already have exclusive buffer lock.
 				 */
 				if (heap_prepare_freeze_tuple(tuple.t_data, FreezeLimit,
-										   MultiXactCutoff, &frozen[nfrozen],
+											  MultiXactCutoff, &frozen[nfrozen],
 											  &tuple_totally_frozen))
 					frozen[nfrozen++].offset = offnum;
 
@@ -1254,7 +1267,7 @@ lazy_scan_heap(Relation onerel, int options, LVRelStats *vacrelstats,
 	/* now we can compute the new value for pg_class.reltuples */
 	vacrelstats->new_rel_tuples = vac_estimate_reltuples(onerel, false,
 														 nblocks,
-												  vacrelstats->scanned_pages,
+														 vacrelstats->tupcount_pages,
 														 num_tuples);
 
 	/*
@@ -1323,20 +1336,23 @@ lazy_scan_heap(Relation onerel, int options, LVRelStats *vacrelstats,
 	 */
 	initStringInfo(&buf);
 	appendStringInfo(&buf,
-					 _("%.0f dead row versions cannot be removed yet.\n"),
-					 nkeep);
+					 _("%.0f dead row versions cannot be removed yet, oldest xmin: %u\n"),
+					 nkeep, OldestXmin);
 	appendStringInfo(&buf, _("There were %.0f unused item pointers.\n"),
 					 nunused);
-	appendStringInfo(&buf, ngettext("Skipped %u page due to buffer pins.\n",
-									"Skipped %u pages due to buffer pins.\n",
+	appendStringInfo(&buf, ngettext("Skipped %u page due to buffer pins, ",
+									"Skipped %u pages due to buffer pins, ",
 									vacrelstats->pinskipped_pages),
 					 vacrelstats->pinskipped_pages);
+	appendStringInfo(&buf, ngettext("%u frozen page.\n",
+									"%u frozen pages.\n",
+									vacrelstats->frozenskipped_pages),
+					 vacrelstats->frozenskipped_pages);
 	appendStringInfo(&buf, ngettext("%u page is entirely empty.\n",
 									"%u pages are entirely empty.\n",
 									empty_pages),
 					 empty_pages);
-	appendStringInfo(&buf, _("%s."),
-					 pg_rusage_show(&ru0));
+	appendStringInfo(&buf, "%s.", pg_rusage_show(&ru0));
 
 	ereport(elevel,
 			(errmsg("\"%s\": found %.0f removable, %.0f nonremovable row versions in %u out of %u pages",
@@ -1411,8 +1427,7 @@ lazy_vacuum_heap(Relation onerel, LVRelStats *vacrelstats)
 			(errmsg("\"%s\": removed %d row versions in %d pages",
 					RelationGetRelationName(onerel),
 					tupindex, npages),
-			 errdetail("%s.",
-					   pg_rusage_show(&ru0))));
+			 errdetail_internal("%s", pg_rusage_show(&ru0))));
 }
 
 /*
@@ -1600,7 +1615,7 @@ lazy_vacuum_index(Relation indrel,
 			(errmsg("scanned index \"%s\" to remove %d row versions",
 					RelationGetRelationName(indrel),
 					vacrelstats->num_dead_tuples),
-			 errdetail("%s.", pg_rusage_show(&ru0))));
+			 errdetail_internal("%s", pg_rusage_show(&ru0))));
 }
 
 /*
@@ -1618,7 +1633,7 @@ lazy_cleanup_index(Relation indrel,
 
 	ivinfo.index = indrel;
 	ivinfo.analyze_only = false;
-	ivinfo.estimated_count = (vacrelstats->scanned_pages < vacrelstats->rel_pages);
+	ivinfo.estimated_count = (vacrelstats->tupcount_pages < vacrelstats->rel_pages);
 	ivinfo.message_level = elevel;
 	ivinfo.num_heap_tuples = vacrelstats->new_rel_tuples;
 	ivinfo.strategy = vac_strategy;
@@ -1648,7 +1663,7 @@ lazy_cleanup_index(Relation indrel,
 					stats->num_index_tuples,
 					stats->num_pages),
 			 errdetail("%.0f index row versions were removed.\n"
-			 "%u index pages have been deleted, %u are currently reusable.\n"
+					   "%u index pages have been deleted, %u are currently reusable.\n"
 					   "%s.",
 					   stats->tuples_removed,
 					   stats->pages_deleted, stats->pages_free,
@@ -1684,7 +1699,7 @@ should_attempt_truncation(LVRelStats *vacrelstats)
 	possibly_freeable = vacrelstats->rel_pages - vacrelstats->nonempty_pages;
 	if (possibly_freeable > 0 &&
 		(possibly_freeable >= REL_TRUNCATE_MINIMUM ||
-	  possibly_freeable >= vacrelstats->rel_pages / REL_TRUNCATE_FRACTION) &&
+		 possibly_freeable >= vacrelstats->rel_pages / REL_TRUNCATE_FRACTION) &&
 		old_snapshot_threshold < 0)
 		return true;
 	else
@@ -1747,7 +1762,7 @@ lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats)
 				return;
 			}
 
-			pg_usleep(VACUUM_TRUNCATE_LOCK_WAIT_INTERVAL);
+			pg_usleep(VACUUM_TRUNCATE_LOCK_WAIT_INTERVAL * 1000L);
 		}
 
 		/*
@@ -1810,8 +1825,8 @@ lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats)
 				(errmsg("\"%s\": truncated %u to %u pages",
 						RelationGetRelationName(onerel),
 						old_rel_pages, new_rel_pages),
-				 errdetail("%s.",
-						   pg_rusage_show(&ru0))));
+				 errdetail_internal("%s",
+									pg_rusage_show(&ru0))));
 		old_rel_pages = new_rel_pages;
 	} while (new_rel_pages > vacrelstats->nonempty_pages &&
 			 vacrelstats->lock_waiter_detected);
@@ -1826,13 +1841,22 @@ static BlockNumber
 count_nondeletable_pages(Relation onerel, LVRelStats *vacrelstats)
 {
 	BlockNumber blkno;
+	BlockNumber prefetchedUntil;
 	instr_time	starttime;
 
 	/* Initialize the starttime if we check for conflicting lock requests */
 	INSTR_TIME_SET_CURRENT(starttime);
 
-	/* Strange coding of loop control is needed because blkno is unsigned */
+	/*
+	 * Start checking blocks at what we believe relation end to be and move
+	 * backwards.  (Strange coding of loop control is needed because blkno is
+	 * unsigned.)  To make the scan faster, we prefetch a few blocks at a time
+	 * in forward direction, so that OS-level readahead can kick in.
+	 */
 	blkno = vacrelstats->rel_pages;
+	StaticAssertStmt((PREFETCH_SIZE & (PREFETCH_SIZE - 1)) == 0,
+					 "prefetch size must be power of 2");
+	prefetchedUntil = InvalidBlockNumber;
 	while (blkno > vacrelstats->nonempty_pages)
 	{
 		Buffer		buf;
@@ -1881,6 +1905,21 @@ count_nondeletable_pages(Relation onerel, LVRelStats *vacrelstats)
 		CHECK_FOR_INTERRUPTS();
 
 		blkno--;
+
+		/* If we haven't prefetched this lot yet, do so now. */
+		if (prefetchedUntil > blkno)
+		{
+			BlockNumber prefetchStart;
+			BlockNumber pblkno;
+
+			prefetchStart = blkno & ~(PREFETCH_SIZE - 1);
+			for (pblkno = prefetchStart; pblkno <= blkno; pblkno++)
+			{
+				PrefetchBuffer(onerel, MAIN_FORKNUM, pblkno);
+				CHECK_FOR_INTERRUPTS();
+			}
+			prefetchedUntil = prefetchStart;
+		}
 
 		buf = ReadBufferExtended(onerel, MAIN_FORKNUM, blkno,
 								 RBM_NORMAL, vac_strategy);

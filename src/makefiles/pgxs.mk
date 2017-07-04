@@ -40,6 +40,8 @@
 #     which need to be built first
 #   REGRESS -- list of regression test cases (without suffix)
 #   REGRESS_OPTS -- additional switches to pass to pg_regress
+#   NO_INSTALLCHECK -- don't define an installcheck target, useful e.g. if
+#     tests require special configuration, or don't use pg_regress
 #   EXTRA_CLEAN -- extra files to remove in 'make clean'
 #   PG_CPPFLAGS -- will be added to CPPFLAGS
 #   PG_LIBS -- will be added to PROGRAM link line
@@ -268,8 +270,10 @@ ifndef PGXS
 endif
 
 # against installed postmaster
+ifndef NO_INSTALLCHECK
 installcheck: submake $(REGRESS_PREP)
 	$(pg_regress_installcheck) $(REGRESS_OPTS) $(REGRESS)
+endif
 
 ifdef PGXS
 check:

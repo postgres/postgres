@@ -7,7 +7,7 @@
  *	 ExecProcNode, or ExecEndNode on its subnodes and do the appropriate
  *	 processing.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -88,6 +88,8 @@
 #include "executor/nodeCustom.h"
 #include "executor/nodeForeignscan.h"
 #include "executor/nodeFunctionscan.h"
+#include "executor/nodeGather.h"
+#include "executor/nodeGatherMerge.h"
 #include "executor/nodeGroup.h"
 #include "executor/nodeHash.h"
 #include "executor/nodeHashjoin.h"
@@ -99,8 +101,9 @@
 #include "executor/nodeMergeAppend.h"
 #include "executor/nodeMergejoin.h"
 #include "executor/nodeModifyTable.h"
+#include "executor/nodeNamedtuplestorescan.h"
 #include "executor/nodeNestloop.h"
-#include "executor/nodeGather.h"
+#include "executor/nodeProjectSet.h"
 #include "executor/nodeRecursiveunion.h"
 #include "executor/nodeResult.h"
 #include "executor/nodeSamplescan.h"
@@ -109,6 +112,7 @@
 #include "executor/nodeSort.h"
 #include "executor/nodeSubplan.h"
 #include "executor/nodeSubqueryscan.h"
+#include "executor/nodeTableFuncscan.h"
 #include "executor/nodeTidscan.h"
 #include "executor/nodeUnique.h"
 #include "executor/nodeValuesscan.h"
@@ -153,6 +157,11 @@ ExecInitNode(Plan *node, EState *estate, int eflags)
 		case T_Result:
 			result = (PlanState *) ExecInitResult((Result *) node,
 												  estate, eflags);
+			break;
+
+		case T_ProjectSet:
+			result = (PlanState *) ExecInitProjectSet((ProjectSet *) node,
+													  estate, eflags);
 			break;
 
 		case T_ModifyTable:
@@ -233,6 +242,11 @@ ExecInitNode(Plan *node, EState *estate, int eflags)
 														estate, eflags);
 			break;
 
+		case T_TableFuncScan:
+			result = (PlanState *) ExecInitTableFuncScan((TableFuncScan *) node,
+														 estate, eflags);
+			break;
+
 		case T_ValuesScan:
 			result = (PlanState *) ExecInitValuesScan((ValuesScan *) node,
 													  estate, eflags);
@@ -241,6 +255,11 @@ ExecInitNode(Plan *node, EState *estate, int eflags)
 		case T_CteScan:
 			result = (PlanState *) ExecInitCteScan((CteScan *) node,
 												   estate, eflags);
+			break;
+
+		case T_NamedTuplestoreScan:
+			result = (PlanState *) ExecInitNamedTuplestoreScan((NamedTuplestoreScan *) node,
+															   estate, eflags);
 			break;
 
 		case T_WorkTableScan:
@@ -312,6 +331,11 @@ ExecInitNode(Plan *node, EState *estate, int eflags)
 		case T_Gather:
 			result = (PlanState *) ExecInitGather((Gather *) node,
 												  estate, eflags);
+			break;
+
+		case T_GatherMerge:
+			result = (PlanState *) ExecInitGatherMerge((GatherMerge *) node,
+													   estate, eflags);
 			break;
 
 		case T_Hash:
@@ -392,6 +416,10 @@ ExecProcNode(PlanState *node)
 			result = ExecResult((ResultState *) node);
 			break;
 
+		case T_ProjectSetState:
+			result = ExecProjectSet((ProjectSetState *) node);
+			break;
+
 		case T_ModifyTableState:
 			result = ExecModifyTable((ModifyTableState *) node);
 			break;
@@ -449,12 +477,20 @@ ExecProcNode(PlanState *node)
 			result = ExecFunctionScan((FunctionScanState *) node);
 			break;
 
+		case T_TableFuncScanState:
+			result = ExecTableFuncScan((TableFuncScanState *) node);
+			break;
+
 		case T_ValuesScanState:
 			result = ExecValuesScan((ValuesScanState *) node);
 			break;
 
 		case T_CteScanState:
 			result = ExecCteScan((CteScanState *) node);
+			break;
+
+		case T_NamedTuplestoreScanState:
+			result = ExecNamedTuplestoreScan((NamedTuplestoreScanState *) node);
 			break;
 
 		case T_WorkTableScanState:
@@ -513,6 +549,10 @@ ExecProcNode(PlanState *node)
 
 		case T_GatherState:
 			result = ExecGather((GatherState *) node);
+			break;
+
+		case T_GatherMergeState:
+			result = ExecGatherMerge((GatherMergeState *) node);
 			break;
 
 		case T_HashState:
@@ -634,6 +674,10 @@ ExecEndNode(PlanState *node)
 			ExecEndResult((ResultState *) node);
 			break;
 
+		case T_ProjectSetState:
+			ExecEndProjectSet((ProjectSetState *) node);
+			break;
+
 		case T_ModifyTableState:
 			ExecEndModifyTable((ModifyTableState *) node);
 			break;
@@ -673,6 +717,10 @@ ExecEndNode(PlanState *node)
 			ExecEndGather((GatherState *) node);
 			break;
 
+		case T_GatherMergeState:
+			ExecEndGatherMerge((GatherMergeState *) node);
+			break;
+
 		case T_IndexScanState:
 			ExecEndIndexScan((IndexScanState *) node);
 			break;
@@ -701,12 +749,20 @@ ExecEndNode(PlanState *node)
 			ExecEndFunctionScan((FunctionScanState *) node);
 			break;
 
+		case T_TableFuncScanState:
+			ExecEndTableFuncScan((TableFuncScanState *) node);
+			break;
+
 		case T_ValuesScanState:
 			ExecEndValuesScan((ValuesScanState *) node);
 			break;
 
 		case T_CteScanState:
 			ExecEndCteScan((CteScanState *) node);
+			break;
+
+		case T_NamedTuplestoreScanState:
+			ExecEndNamedTuplestoreScan((NamedTuplestoreScanState *) node);
 			break;
 
 		case T_WorkTableScanState:
@@ -801,14 +857,25 @@ ExecShutdownNode(PlanState *node)
 	if (node == NULL)
 		return false;
 
+	planstate_tree_walker(node, ExecShutdownNode, NULL);
+
 	switch (nodeTag(node))
 	{
 		case T_GatherState:
 			ExecShutdownGather((GatherState *) node);
 			break;
+		case T_ForeignScanState:
+			ExecShutdownForeignScan((ForeignScanState *) node);
+			break;
+		case T_CustomScanState:
+			ExecShutdownCustomScan((CustomScanState *) node);
+			break;
+		case T_GatherMergeState:
+			ExecShutdownGatherMerge((GatherMergeState *) node);
+			break;
 		default:
 			break;
 	}
 
-	return planstate_tree_walker(node, ExecShutdownNode, NULL);
+	return false;
 }

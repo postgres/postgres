@@ -2,7 +2,7 @@
  *
  * filemap.h
  *
- * Copyright (c) 2013-2016, PostgreSQL Global Development Group
+ * Copyright (c) 2013-2017, PostgreSQL Global Development Group
  *-------------------------------------------------------------------------
  */
 #ifndef FILEMAP_H
@@ -102,4 +102,4 @@ extern void process_block_change(ForkNumber forknum, RelFileNode rnode,
 					 BlockNumber blkno);
 extern void filemap_finalize(void);
 
-#endif   /* FILEMAP_H */
+#endif							/* FILEMAP_H */

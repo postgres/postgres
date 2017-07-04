@@ -6,7 +6,7 @@
  *
  *	  You need to install the dld library on your Linux system!
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -124,10 +124,10 @@ char *
 pg_dlerror(void)
 {
 #ifndef HAVE_DLD_H
-	return "dynaloader unspported";
+	return "dynaloader unsupported";
 #else
 	return dld_strerror(dld_errno);
 #endif
 }
 
-#endif   /* !HAVE_DLOPEN */
+#endif							/* !HAVE_DLOPEN */

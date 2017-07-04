@@ -4,7 +4,7 @@
  *
  * src/include/utils/pg_locale.h
  *
- * Copyright (c) 2002-2016, PostgreSQL Global Development Group
+ * Copyright (c) 2002-2017, PostgreSQL Global Development Group
  *
  *-----------------------------------------------------------------------
  */
@@ -12,9 +12,11 @@
 #ifndef _PG_LOCALE_
 #define _PG_LOCALE_
 
-#include <locale.h>
 #if defined(LOCALE_T_IN_XLOCALE) || defined(WCSTOMBS_L_IN_XLOCALE)
 #include <xlocale.h>
+#endif
+#ifdef USE_ICU
+#include <unicode/ucol.h>
 #endif
 
 #include "utils/guc.h"
@@ -62,16 +64,37 @@ extern void cache_locale_time(void);
  * We define our own wrapper around locale_t so we can keep the same
  * function signatures for all builds, while not having to create a
  * fake version of the standard type locale_t in the global namespace.
- * The fake version of pg_locale_t can be checked for truth; that's
- * about all it will be needed for.
+ * pg_locale_t is occasionally checked for truth, so make it a pointer.
  */
+struct pg_locale_struct
+{
+	char		provider;
+	union
+	{
 #ifdef HAVE_LOCALE_T
-typedef locale_t pg_locale_t;
-#else
-typedef int pg_locale_t;
+		locale_t	lt;
 #endif
+#ifdef USE_ICU
+		struct
+		{
+			const char *locale;
+			UCollator  *ucol;
+		}			icu;
+#endif
+		int			dummy;		/* in case we have neither LOCALE_T nor ICU */
+	}			info;
+};
+
+typedef struct pg_locale_struct *pg_locale_t;
 
 extern pg_locale_t pg_newlocale_from_collation(Oid collid);
+
+extern char *get_collation_actual_version(char collprovider, const char *collcollate);
+
+#ifdef USE_ICU
+extern int32_t icu_to_uchar(UChar **buff_uchar, const char *buff, size_t nbytes);
+extern int32_t icu_from_uchar(char **result, const UChar *buff_uchar, int32_t len_uchar);
+#endif
 
 /* These functions convert from/to libc's wchar_t, *not* pg_wchar_t */
 #ifdef USE_WIDE_UPPER_LOWER
@@ -81,4 +104,4 @@ extern size_t char2wchar(wchar_t *to, size_t tolen,
 		   const char *from, size_t fromlen, pg_locale_t locale);
 #endif
 
-#endif   /* _PG_LOCALE_ */
+#endif							/* _PG_LOCALE_ */

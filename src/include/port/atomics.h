@@ -12,13 +12,14 @@
  * * pg_compiler_barrier(), pg_write_barrier(), pg_read_barrier()
  * * pg_atomic_compare_exchange_u32(), pg_atomic_fetch_add_u32()
  * * pg_atomic_test_set_flag(), pg_atomic_init_flag(), pg_atomic_clear_flag()
+ * * PG_HAVE_8BYTE_SINGLE_COPY_ATOMICITY should be defined if appropriate.
  *
  * There exist generic, hardware independent, implementations for several
  * compilers which might be sufficient, although possibly not optimal, for a
  * new platform. If no such generic implementation is available spinlocks (or
  * even OS provided semaphores) will be used to implement the API.
  *
- * Implement the _u64 variants if and only if your platform can use them
+ * Implement _u64 atomics if and only if your platform can use them
  * efficiently (and obviously correctly).
  *
  * Use higher level functionality (lwlocks, spinlocks, heavyweight locks)
@@ -27,7 +28,7 @@
  * For an introduction to using memory barriers within the PostgreSQL backend,
  * see src/backend/storage/lmgr/README.barrier
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/port/atomics.h
@@ -95,7 +96,7 @@
 /* gcc or compatible, including clang and icc */
 #elif defined(__GNUC__) || defined(__INTEL_COMPILER)
 #include "port/atomics/generic-gcc.h"
-#elif defined(WIN32_ONLY_COMPILER)
+#elif defined(_MSC_VER)
 #include "port/atomics/generic-msvc.h"
 #elif defined(__hpux) && defined(__ia64) && !defined(__GNUC__)
 #include "port/atomics/generic-acc.h"
@@ -110,9 +111,9 @@
 
 /*
  * Provide a full fallback of the pg_*_barrier(), pg_atomic**_flag and
- * pg_atomic_*_u32 APIs for platforms without sufficient spinlock and/or
- * atomics support. In the case of spinlock backed atomics the emulation is
- * expected to be efficient, although less so than native atomics support.
+ * pg_atomic_* APIs for platforms without sufficient spinlock and/or atomics
+ * support. In the case of spinlock backed atomics the emulation is expected
+ * to be efficient, although less so than native atomics support.
  */
 #include "port/atomics/fallback.h"
 
@@ -255,10 +256,12 @@ pg_atomic_read_u32(volatile pg_atomic_uint32 *ptr)
 }
 
 /*
- * pg_atomic_write_u32 - unlocked write to atomic variable.
+ * pg_atomic_write_u32 - write to atomic variable.
  *
  * The write is guaranteed to succeed as a whole, i.e. it's not possible to
- * observe a partial write for any reader.
+ * observe a partial write for any reader.  Note that this correctly interacts
+ * with pg_atomic_compare_exchange_u32, in contrast to
+ * pg_atomic_unlocked_write_u32().
  *
  * No barrier semantics.
  */
@@ -268,6 +271,25 @@ pg_atomic_write_u32(volatile pg_atomic_uint32 *ptr, uint32 val)
 	AssertPointerAlignment(ptr, 4);
 
 	pg_atomic_write_u32_impl(ptr, val);
+}
+
+/*
+ * pg_atomic_unlocked_write_u32 - unlocked write to atomic variable.
+ *
+ * The write is guaranteed to succeed as a whole, i.e. it's not possible to
+ * observe a partial write for any reader.  But note that writing this way is
+ * not guaranteed to correctly interact with read-modify-write operations like
+ * pg_atomic_compare_exchange_u32.  This should only be used in cases where
+ * minor performance regressions due to atomics emulation are unacceptable.
+ *
+ * No barrier semantics.
+ */
+static inline void
+pg_atomic_unlocked_write_u32(volatile pg_atomic_uint32 *ptr, uint32 val)
+{
+	AssertPointerAlignment(ptr, 4);
+
+	pg_atomic_unlocked_write_u32_impl(ptr, val);
 }
 
 /*
@@ -400,35 +422,44 @@ pg_atomic_sub_fetch_u32(volatile pg_atomic_uint32 *ptr, int32 sub_)
  * documentation.
  * ----
  */
-#ifdef PG_HAVE_ATOMIC_U64_SUPPORT
-
 static inline void
 pg_atomic_init_u64(volatile pg_atomic_uint64 *ptr, uint64 val)
 {
+	/*
+	 * Can't necessarily enforce alignment - and don't need it - when using
+	 * the spinlock based fallback implementation. Therefore only assert when
+	 * not using it.
+	 */
+#ifndef PG_HAVE_ATOMIC_U64_SIMULATION
 	AssertPointerAlignment(ptr, 8);
-
+#endif
 	pg_atomic_init_u64_impl(ptr, val);
 }
 
 static inline uint64
 pg_atomic_read_u64(volatile pg_atomic_uint64 *ptr)
 {
+#ifndef PG_HAVE_ATOMIC_U64_SIMULATION
 	AssertPointerAlignment(ptr, 8);
+#endif
 	return pg_atomic_read_u64_impl(ptr);
 }
 
 static inline void
 pg_atomic_write_u64(volatile pg_atomic_uint64 *ptr, uint64 val)
 {
+#ifndef PG_HAVE_ATOMIC_U64_SIMULATION
 	AssertPointerAlignment(ptr, 8);
+#endif
 	pg_atomic_write_u64_impl(ptr, val);
 }
 
 static inline uint64
 pg_atomic_exchange_u64(volatile pg_atomic_uint64 *ptr, uint64 newval)
 {
+#ifndef PG_HAVE_ATOMIC_U64_SIMULATION
 	AssertPointerAlignment(ptr, 8);
-
+#endif
 	return pg_atomic_exchange_u64_impl(ptr, newval);
 }
 
@@ -436,22 +467,28 @@ static inline bool
 pg_atomic_compare_exchange_u64(volatile pg_atomic_uint64 *ptr,
 							   uint64 *expected, uint64 newval)
 {
+#ifndef PG_HAVE_ATOMIC_U64_SIMULATION
 	AssertPointerAlignment(ptr, 8);
 	AssertPointerAlignment(expected, 8);
+#endif
 	return pg_atomic_compare_exchange_u64_impl(ptr, expected, newval);
 }
 
 static inline uint64
 pg_atomic_fetch_add_u64(volatile pg_atomic_uint64 *ptr, int64 add_)
 {
+#ifndef PG_HAVE_ATOMIC_U64_SIMULATION
 	AssertPointerAlignment(ptr, 8);
+#endif
 	return pg_atomic_fetch_add_u64_impl(ptr, add_);
 }
 
 static inline uint64
 pg_atomic_fetch_sub_u64(volatile pg_atomic_uint64 *ptr, int64 sub_)
 {
+#ifndef PG_HAVE_ATOMIC_U64_SIMULATION
 	AssertPointerAlignment(ptr, 8);
+#endif
 	Assert(sub_ != PG_INT64_MIN);
 	return pg_atomic_fetch_sub_u64_impl(ptr, sub_);
 }
@@ -459,34 +496,40 @@ pg_atomic_fetch_sub_u64(volatile pg_atomic_uint64 *ptr, int64 sub_)
 static inline uint64
 pg_atomic_fetch_and_u64(volatile pg_atomic_uint64 *ptr, uint64 and_)
 {
+#ifndef PG_HAVE_ATOMIC_U64_SIMULATION
 	AssertPointerAlignment(ptr, 8);
+#endif
 	return pg_atomic_fetch_and_u64_impl(ptr, and_);
 }
 
 static inline uint64
 pg_atomic_fetch_or_u64(volatile pg_atomic_uint64 *ptr, uint64 or_)
 {
+#ifndef PG_HAVE_ATOMIC_U64_SIMULATION
 	AssertPointerAlignment(ptr, 8);
+#endif
 	return pg_atomic_fetch_or_u64_impl(ptr, or_);
 }
 
 static inline uint64
 pg_atomic_add_fetch_u64(volatile pg_atomic_uint64 *ptr, int64 add_)
 {
+#ifndef PG_HAVE_ATOMIC_U64_SIMULATION
 	AssertPointerAlignment(ptr, 8);
+#endif
 	return pg_atomic_add_fetch_u64_impl(ptr, add_);
 }
 
 static inline uint64
 pg_atomic_sub_fetch_u64(volatile pg_atomic_uint64 *ptr, int64 sub_)
 {
+#ifndef PG_HAVE_ATOMIC_U64_SIMULATION
 	AssertPointerAlignment(ptr, 8);
+#endif
 	Assert(sub_ != PG_INT64_MIN);
 	return pg_atomic_sub_fetch_u64_impl(ptr, sub_);
 }
 
-#endif   /* PG_HAVE_64_BIT_ATOMICS */
-
 #undef INSIDE_ATOMICS_H
 
-#endif   /* ATOMICS_H */
+#endif							/* ATOMICS_H */

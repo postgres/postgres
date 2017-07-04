@@ -3,7 +3,7 @@
  * fe-protocol2.c
  *	  functions that are specific to frontend/backend protocol version 2
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -89,7 +89,7 @@ pqSetenvPoll(PGconn *conn)
 			printfPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext(
 											"invalid setenv state %c, "
-								 "probably indicative of memory corruption\n"
+											"probably indicative of memory corruption\n"
 											),
 							  conn->setenv_state);
 			goto error_return;
@@ -158,7 +158,7 @@ pqSetenvPoll(PGconn *conn)
 										conn->next_eo->pgName, val);
 #ifdef CONNECTDEBUG
 							fprintf(stderr,
-								  "Use environment variable %s to send %s\n",
+									"Use environment variable %s to send %s\n",
 									conn->next_eo->envName, setQuery);
 #endif
 							if (!PQsendQuery(conn, setQuery))
@@ -388,7 +388,7 @@ pqSetenvPoll(PGconn *conn)
 			default:
 				printfPQExpBuffer(&conn->errorMessage,
 								  libpq_gettext("invalid state %c, "
-							   "probably indicative of memory corruption\n"),
+												"probably indicative of memory corruption\n"),
 								  conn->setenv_state);
 				goto error_return;
 		}
@@ -476,7 +476,7 @@ pqParseInput2(PGconn *conn)
 			else
 			{
 				pqInternalNotice(&conn->noticeHooks,
-						"message type 0x%02x arrived from server while idle",
+								 "message type 0x%02x arrived from server while idle",
 								 id);
 				/* Discard the unexpected message; good idea?? */
 				conn->inStart = conn->inEnd;
@@ -1099,7 +1099,7 @@ checkXactStatus(PGconn *conn, const char *cmdTag)
 	 * However, if we see one of these tags then we know for sure the server
 	 * is in abort state ...
 	 */
-	else if (strcmp(cmdTag, "*ABORT STATE*") == 0)		/* pre-7.3 only */
+	else if (strcmp(cmdTag, "*ABORT STATE*") == 0)	/* pre-7.3 only */
 		conn->xactStatus = PQTRANS_INERROR;
 }
 
@@ -1404,7 +1404,7 @@ pqEndcopy2(PGconn *conn)
 	 * connection (talk about using a sledgehammer...)
 	 */
 	pqInternalNotice(&conn->noticeHooks,
-				   "lost synchronization with server, resetting connection");
+					 "lost synchronization with server, resetting connection");
 
 	/*
 	 * Users doing non-blocking connections need to handle the reset
@@ -1526,7 +1526,7 @@ pqFunctionCall2(PGconn *conn, Oid fnid,
 									   conn))
 							continue;
 					}
-					if (pqGetc(&id, conn))		/* get the last '0' */
+					if (pqGetc(&id, conn))	/* get the last '0' */
 						continue;
 				}
 				if (id == '0')
@@ -1538,7 +1538,7 @@ pqFunctionCall2(PGconn *conn, Oid fnid,
 				{
 					/* The backend violates the protocol. */
 					printfPQExpBuffer(&conn->errorMessage,
-								  libpq_gettext("protocol error: id=0x%x\n"),
+									  libpq_gettext("protocol error: id=0x%x\n"),
 									  id);
 					pqSaveErrorResult(conn);
 					conn->inStart = conn->inCursor;

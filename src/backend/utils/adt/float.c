@@ -3,7 +3,7 @@
  * float.c
  *	  Functions for the built-in floating-point types.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -65,7 +65,7 @@ do {															\
 
 
 /* Configurable GUC parameter */
-int			extra_float_digits = 0;		/* Added to DBL_DIG or FLT_DIG */
+int			extra_float_digits = 0; /* Added to DBL_DIG or FLT_DIG */
 
 /* Cached constants for degree-based trig functions */
 static bool degree_consts_set = false;
@@ -105,7 +105,7 @@ static void init_degree_constants(void);
  */
 #define cbrt my_cbrt
 static double cbrt(double x);
-#endif   /* HAVE_CBRT */
+#endif							/* HAVE_CBRT */
 
 
 /*
@@ -241,8 +241,8 @@ float4in(PG_FUNCTION_ARGS)
 	if (*num == '\0')
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("invalid input syntax for type real: \"%s\"",
-						orig_num)));
+				 errmsg("invalid input syntax for type %s: \"%s\"",
+						"real", orig_num)));
 
 	errno = 0;
 	val = strtod(num, &endptr);
@@ -315,8 +315,8 @@ float4in(PG_FUNCTION_ARGS)
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-					 errmsg("invalid input syntax for type real: \"%s\"",
-							orig_num)));
+					 errmsg("invalid input syntax for type %s: \"%s\"",
+							"real", orig_num)));
 	}
 #ifdef HAVE_BUGGY_SOLARIS_STRTOD
 	else
@@ -329,7 +329,7 @@ float4in(PG_FUNCTION_ARGS)
 		if (endptr != num && endptr[-1] == '\0')
 			endptr--;
 	}
-#endif   /* HAVE_BUGGY_SOLARIS_STRTOD */
+#endif							/* HAVE_BUGGY_SOLARIS_STRTOD */
 
 	/* skip trailing whitespace */
 	while (*endptr != '\0' && isspace((unsigned char) *endptr))
@@ -339,8 +339,8 @@ float4in(PG_FUNCTION_ARGS)
 	if (*endptr != '\0')
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("invalid input syntax for type real: \"%s\"",
-						orig_num)));
+				 errmsg("invalid input syntax for type %s: \"%s\"",
+						"real", orig_num)));
 
 	/*
 	 * if we get here, we have a legal double, still need to check to see if
@@ -534,8 +534,8 @@ float8in_internal(char *num, char **endptr_p,
 				errnumber[endptr - num] = '\0';
 				ereport(ERROR,
 						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				   errmsg("\"%s\" is out of range for type double precision",
-						  errnumber)));
+						 errmsg("\"%s\" is out of range for type double precision",
+								errnumber)));
 			}
 		}
 		else
@@ -555,7 +555,7 @@ float8in_internal(char *num, char **endptr_p,
 		if (endptr != num && endptr[-1] == '\0')
 			endptr--;
 	}
-#endif   /* HAVE_BUGGY_SOLARIS_STRTOD */
+#endif							/* HAVE_BUGGY_SOLARIS_STRTOD */
 
 	/* skip trailing whitespace */
 	while (*endptr != '\0' && isspace((unsigned char) *endptr))
@@ -3534,7 +3534,7 @@ width_bucket_float8(PG_FUNCTION_ARGS)
 	if (isnan(operand) || isnan(bound1) || isnan(bound2))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_ARGUMENT_FOR_WIDTH_BUCKET_FUNCTION),
-			 errmsg("operand, lower bound, and upper bound cannot be NaN")));
+				 errmsg("operand, lower bound, and upper bound cannot be NaN")));
 
 	/* Note that we allow "operand" to be infinite */
 	if (isinf(bound1) || isinf(bound2))
@@ -3608,4 +3608,4 @@ cbrt(double x)
 	return isneg ? -tmpres : tmpres;
 }
 
-#endif   /* !HAVE_CBRT */
+#endif							/* !HAVE_CBRT */

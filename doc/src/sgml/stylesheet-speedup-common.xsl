@@ -91,4 +91,10 @@
   </xsl:choose>
 </xsl:template>
 
+<!-- from common/l10n.xsl -->
+
+<!-- Just hardcode the language for the whole document, to make it faster. -->
+
+<xsl:template name="l10n.language">en</xsl:template>
+
 </xsl:stylesheet>

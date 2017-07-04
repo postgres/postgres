@@ -4,7 +4,7 @@
  *	  routines to support running postgres in 'bootstrap' mode
  *	bootstrap mode is used to create the initial template database
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -18,6 +18,7 @@
 #include <signal.h>
 
 #include "access/htup_details.h"
+#include "access/xact.h"
 #include "bootstrap/bootstrap.h"
 #include "catalog/index.h"
 #include "catalog/pg_collation.h"
@@ -33,6 +34,7 @@
 #include "replication/walreceiver.h"
 #include "storage/bufmgr.h"
 #include "storage/bufpage.h"
+#include "storage/condition_variable.h"
 #include "storage/ipc.h"
 #include "storage/proc.h"
 #include "tcop/tcopprot.h"
@@ -44,10 +46,11 @@
 #include "utils/relmapper.h"
 #include "utils/tqual.h"
 
-uint32		bootstrap_data_checksum_version = 0;		/* No checksum */
+uint32		bootstrap_data_checksum_version = 0;	/* No checksum */
 
 
-#define ALLOC(t, c)		((t *) calloc((unsigned)(c), sizeof(t)))
+#define ALLOC(t, c) \
+	((t *) MemoryContextAllocZero(TopMemoryContext, (unsigned)(c) * sizeof(t)))
 
 static void CheckerModeMain(void);
 static void BootstrapModeMain(void);
@@ -160,7 +163,7 @@ static struct typmap *Ap = NULL;
 static Datum values[MAXATTR];	/* current row's attribute values */
 static bool Nulls[MAXATTR];
 
-static MemoryContext nogc = NULL;		/* special no-gc mem context */
+static MemoryContext nogc = NULL;	/* special no-gc mem context */
 
 /*
  *	At bootstrap time, we first declare all the indices to be built, and
@@ -227,7 +230,7 @@ AuxiliaryProcessMain(int argc, char *argv[])
 				SetConfigOption("shared_buffers", optarg, PGC_POSTMASTER, PGC_S_ARGV);
 				break;
 			case 'D':
-				userDoption = strdup(optarg);
+				userDoption = pstrdup(optarg);
 				break;
 			case 'd':
 				{
@@ -385,6 +388,10 @@ AuxiliaryProcessMain(int argc, char *argv[])
 		/* finish setting up bufmgr.c */
 		InitBufferPoolBackend();
 
+		/* Initialize backend status information */
+		pgstat_initialize();
+		pgstat_bestart();
+
 		/* register a before-shutdown callback for LWLock cleanup */
 		before_shmem_exit(ShutdownAuxiliaryProcess, 0);
 	}
@@ -490,7 +497,9 @@ BootstrapModeMain(void)
 	/*
 	 * Process bootstrap input.
 	 */
+	StartTransactionCommand();
 	boot_yyparse();
+	CommitTransactionCommand();
 
 	/*
 	 * We should now know about all mapped relations, so it's okay to write
@@ -535,6 +544,7 @@ static void
 ShutdownAuxiliaryProcess(int code, Datum arg)
 {
 	LWLockReleaseAll();
+	ConditionVariableCancelSleep();
 	pgstat_report_wait_end();
 }
 
@@ -670,7 +680,7 @@ DefineAttr(char *name, char *type, int attnum, int nullness)
 
 	namestrcpy(&attrtypes[attnum]->attname, name);
 	elog(DEBUG4, "column %s %s", NameStr(attrtypes[attnum]->attname), type);
-	attrtypes[attnum]->attnum = attnum + 1;		/* fillatt */
+	attrtypes[attnum]->attnum = attnum + 1; /* fillatt */
 
 	typeoid = gettype(type);
 
@@ -833,6 +843,11 @@ InsertOneNull(int i)
 {
 	elog(DEBUG4, "inserting column %d NULL", i);
 	Assert(i >= 0 && i < MAXATTR);
+	if (boot_reldesc->rd_att->attrs[i]->attnotnull)
+		elog(ERROR,
+			 "NULL value specified for not-null column \"%s\" of relation \"%s\"",
+			 NameStr(boot_reldesc->rd_att->attrs[i]->attname),
+			 RelationGetRelationName(boot_reldesc));
 	values[i] = PointerGetDatum(NULL);
 	Nulls[i] = true;
 }
@@ -1002,13 +1017,8 @@ boot_get_type_io_data(Oid typid,
 static Form_pg_attribute
 AllocateAttribute(void)
 {
-	Form_pg_attribute attribute = (Form_pg_attribute) malloc(ATTRIBUTE_FIXED_PART_SIZE);
-
-	if (!PointerIsValid(attribute))
-		elog(FATAL, "out of memory");
-	MemSet(attribute, 0, ATTRIBUTE_FIXED_PART_SIZE);
-
-	return attribute;
+	return (Form_pg_attribute)
+		MemoryContextAllocZero(TopMemoryContext, ATTRIBUTE_FIXED_PART_SIZE);
 }
 
 /*
@@ -1069,9 +1079,7 @@ index_register(Oid heap,
 	if (nogc == NULL)
 		nogc = AllocSetContextCreate(NULL,
 									 "BootstrapNoGC",
-									 ALLOCSET_DEFAULT_MINSIZE,
-									 ALLOCSET_DEFAULT_INITSIZE,
-									 ALLOCSET_DEFAULT_MAXSIZE);
+									 ALLOCSET_DEFAULT_SIZES);
 
 	oldcxt = MemoryContextSwitchTo(nogc);
 
@@ -1082,13 +1090,13 @@ index_register(Oid heap,
 
 	memcpy(newind->il_info, indexInfo, sizeof(IndexInfo));
 	/* expressions will likely be null, but may as well copy it */
-	newind->il_info->ii_Expressions = (List *)
+	newind->il_info->ii_Expressions =
 		copyObject(indexInfo->ii_Expressions);
 	newind->il_info->ii_ExpressionsState = NIL;
 	/* predicate will likely be null, but may as well copy it */
-	newind->il_info->ii_Predicate = (List *)
+	newind->il_info->ii_Predicate =
 		copyObject(indexInfo->ii_Predicate);
-	newind->il_info->ii_PredicateState = NIL;
+	newind->il_info->ii_PredicateState = NULL;
 	/* no exclusion constraints at bootstrap time, so no need to copy */
 	Assert(indexInfo->ii_ExclusionOps == NULL);
 	Assert(indexInfo->ii_ExclusionProcs == NULL);

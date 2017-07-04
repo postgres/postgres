@@ -2,7 +2,7 @@
  * brin_pageops.h
  *		Prototypes for operating on BRIN pages.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -35,4 +35,4 @@ extern void brin_evacuate_page(Relation idxRel, BlockNumber pagesPerRange,
 
 extern bool brin_page_cleanup(Relation idxrel, Buffer buf);
 
-#endif   /* BRIN_PAGEOPS_H */
+#endif							/* BRIN_PAGEOPS_H */

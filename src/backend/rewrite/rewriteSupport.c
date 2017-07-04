@@ -3,7 +3,7 @@
  * rewriteSupport.c
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -72,10 +72,7 @@ SetRelationRuleStatus(Oid relationId, bool relHasRules)
 		/* Do the update */
 		classForm->relhasrules = relHasRules;
 
-		simple_heap_update(relationRelation, &tuple->t_self, tuple);
-
-		/* Keep the catalog indexes up to date */
-		CatalogUpdateIndexes(relationRelation, tuple);
+		CatalogTupleUpdate(relationRelation, &tuple->t_self, tuple);
 	}
 	else
 	{
@@ -115,60 +112,5 @@ get_rewrite_oid(Oid relid, const char *rulename, bool missing_ok)
 	Assert(relid == ((Form_pg_rewrite) GETSTRUCT(tuple))->ev_class);
 	ruleoid = HeapTupleGetOid(tuple);
 	ReleaseSysCache(tuple);
-	return ruleoid;
-}
-
-/*
- * Find rule oid, given only a rule name but no rel OID.
- *
- * If there's more than one, it's an error.  If there aren't any, that's an
- * error, too.  In general, this should be avoided - it is provided to support
- * syntax that is compatible with pre-7.3 versions of PG, where rule names
- * were unique across the entire database.
- */
-Oid
-get_rewrite_oid_without_relid(const char *rulename,
-							  Oid *reloid, bool missing_ok)
-{
-	Relation	RewriteRelation;
-	HeapScanDesc scanDesc;
-	ScanKeyData scanKeyData;
-	HeapTuple	htup;
-	Oid			ruleoid;
-
-	/* Search pg_rewrite for such a rule */
-	ScanKeyInit(&scanKeyData,
-				Anum_pg_rewrite_rulename,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				CStringGetDatum(rulename));
-
-	RewriteRelation = heap_open(RewriteRelationId, AccessShareLock);
-	scanDesc = heap_beginscan_catalog(RewriteRelation, 1, &scanKeyData);
-
-	htup = heap_getnext(scanDesc, ForwardScanDirection);
-	if (!HeapTupleIsValid(htup))
-	{
-		if (!missing_ok)
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("rule \"%s\" does not exist", rulename)));
-		ruleoid = InvalidOid;
-	}
-	else
-	{
-		ruleoid = HeapTupleGetOid(htup);
-		if (reloid != NULL)
-			*reloid = ((Form_pg_rewrite) GETSTRUCT(htup))->ev_class;
-
-		htup = heap_getnext(scanDesc, ForwardScanDirection);
-		if (HeapTupleIsValid(htup))
-			ereport(ERROR,
-					(errcode(ERRCODE_DUPLICATE_OBJECT),
-				   errmsg("there are multiple rules named \"%s\"", rulename),
-				errhint("Specify a relation name as well as a rule name.")));
-	}
-	heap_endscan(scanDesc);
-	heap_close(RewriteRelation, AccessShareLock);
-
 	return ruleoid;
 }

@@ -4,7 +4,7 @@
  *		Functions for direct access to files
  *
  *
- * Copyright (c) 2004-2016, PostgreSQL Global Development Group
+ * Copyright (c) 2004-2017, PostgreSQL Global Development Group
  *
  * Author: Andreas Pflug <pgadmin@pse-consulting.de>
  *
@@ -21,6 +21,7 @@
 #include <dirent.h>
 
 #include "access/htup_details.h"
+#include "access/xlog_internal.h"
 #include "catalog/pg_type.h"
 #include "funcapi.h"
 #include "mb/pg_wchar.h"
@@ -59,7 +60,7 @@ convert_and_check_filename(text *arg)
 		if (path_contains_parent_reference(filename))
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-			(errmsg("reference to parent directory (\"..\") not allowed"))));
+					 (errmsg("reference to parent directory (\"..\") not allowed"))));
 
 		/*
 		 * Allow absolute paths if within DataDir or Log_directory, even
@@ -111,7 +112,7 @@ read_binary_file(const char *filename, int64 seek_offset, int64 bytes_to_read,
 				else
 					ereport(ERROR,
 							(errcode_for_file_access(),
-						errmsg("could not stat file \"%s\": %m", filename)));
+							 errmsg("could not stat file \"%s\": %m", filename)));
 			}
 
 			bytes_to_read = fst.st_size - seek_offset;
@@ -187,7 +188,7 @@ read_text_file(const char *filename, int64 seek_offset, int64 bytes_to_read,
 Datum
 pg_read_file(PG_FUNCTION_ARGS)
 {
-	text	   *filename_t = PG_GETARG_TEXT_P(0);
+	text	   *filename_t = PG_GETARG_TEXT_PP(0);
 	int64		seek_offset = 0;
 	int64		bytes_to_read = -1;
 	bool		missing_ok = false;
@@ -228,7 +229,7 @@ pg_read_file(PG_FUNCTION_ARGS)
 Datum
 pg_read_binary_file(PG_FUNCTION_ARGS)
 {
-	text	   *filename_t = PG_GETARG_TEXT_P(0);
+	text	   *filename_t = PG_GETARG_TEXT_PP(0);
 	int64		seek_offset = 0;
 	int64		bytes_to_read = -1;
 	bool		missing_ok = false;
@@ -303,7 +304,7 @@ pg_read_binary_file_all(PG_FUNCTION_ARGS)
 Datum
 pg_stat_file(PG_FUNCTION_ARGS)
 {
-	text	   *filename_t = PG_GETARG_TEXT_P(0);
+	text	   *filename_t = PG_GETARG_TEXT_PP(0);
 	char	   *filename;
 	struct stat fst;
 	Datum		values[6];
@@ -421,7 +422,7 @@ pg_ls_dir(PG_FUNCTION_ARGS)
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		fctx = palloc(sizeof(directory_fctx));
-		fctx->location = convert_and_check_filename(PG_GETARG_TEXT_P(0));
+		fctx->location = convert_and_check_filename(PG_GETARG_TEXT_PP(0));
 
 		fctx->include_dot_dirs = include_dot_dirs;
 		fctx->dirdesc = AllocateDir(fctx->location);
@@ -472,4 +473,97 @@ Datum
 pg_ls_dir_1arg(PG_FUNCTION_ARGS)
 {
 	return pg_ls_dir(fcinfo);
+}
+
+/* Generic function to return a directory listing of files */
+static Datum
+pg_ls_dir_files(FunctionCallInfo fcinfo, char *dir)
+{
+	FuncCallContext *funcctx;
+	struct dirent *de;
+	directory_fctx *fctx;
+
+	if (SRF_IS_FIRSTCALL())
+	{
+		MemoryContext oldcontext;
+		TupleDesc	tupdesc;
+
+		funcctx = SRF_FIRSTCALL_INIT();
+		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+
+		fctx = palloc(sizeof(directory_fctx));
+
+		tupdesc = CreateTemplateTupleDesc(3, false);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "name",
+						   TEXTOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "size",
+						   INT8OID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 3, "modification",
+						   TIMESTAMPTZOID, -1, 0);
+		funcctx->tuple_desc = BlessTupleDesc(tupdesc);
+
+		fctx->location = pstrdup(dir);
+		fctx->dirdesc = AllocateDir(fctx->location);
+
+		if (!fctx->dirdesc)
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not read directory \"%s\": %m",
+							fctx->location)));
+
+		funcctx->user_fctx = fctx;
+		MemoryContextSwitchTo(oldcontext);
+	}
+
+	funcctx = SRF_PERCALL_SETUP();
+	fctx = (directory_fctx *) funcctx->user_fctx;
+
+	while ((de = ReadDir(fctx->dirdesc, fctx->location)) != NULL)
+	{
+		Datum		values[3];
+		bool		nulls[3];
+		char		path[MAXPGPATH * 2];
+		struct stat attrib;
+		HeapTuple	tuple;
+
+		/* Skip hidden files */
+		if (de->d_name[0] == '.')
+			continue;
+
+		/* Get the file info */
+		snprintf(path, sizeof(path), "%s/%s", fctx->location, de->d_name);
+		if (stat(path, &attrib) < 0)
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not stat directory \"%s\": %m", dir)));
+
+		/* Ignore anything but regular files */
+		if (!S_ISREG(attrib.st_mode))
+			continue;
+
+		values[0] = CStringGetTextDatum(de->d_name);
+		values[1] = Int64GetDatum((int64) attrib.st_size);
+		values[2] = TimestampTzGetDatum(time_t_to_timestamptz(attrib.st_mtime));
+		memset(nulls, 0, sizeof(nulls));
+
+		tuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
+		SRF_RETURN_NEXT(funcctx, HeapTupleGetDatum(tuple));
+	}
+
+	FreeDir(fctx->dirdesc);
+	SRF_RETURN_DONE(funcctx);
+}
+
+/* Function to return the list of files in the log directory */
+Datum
+pg_ls_logdir(PG_FUNCTION_ARGS)
+{
+	return pg_ls_dir_files(fcinfo, Log_directory);
+}
+
+/* Function to return the list of files in the WAL directory */
+Datum
+pg_ls_waldir(PG_FUNCTION_ARGS)
+{
+	return pg_ls_dir_files(fcinfo, XLOGDIR);
 }

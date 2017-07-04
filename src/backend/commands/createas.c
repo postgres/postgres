@@ -13,7 +13,7 @@
  * we must return a tuples-processed count in the completionTag.  (We no
  * longer do that for CTAS ... WITH NO DATA, however.)
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -112,7 +112,7 @@ create_ctas_internal(List *attrList, IntoClause *into)
 	 * Create the relation.  (This will error out if there's an existing view,
 	 * so we don't need more code to complain if "replace" is false.)
 	 */
-	intoRelationAddr = DefineRelation(create, relkind, InvalidOid, NULL);
+	intoRelationAddr = DefineRelation(create, relkind, InvalidOid, NULL, NULL);
 
 	/*
 	 * If necessary, create a TOAST table for the target table.  Note that
@@ -222,9 +222,10 @@ create_ctas_nodata(List *tlist, IntoClause *into)
  */
 ObjectAddress
 ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
-				  ParamListInfo params, char *completionTag)
+				  ParamListInfo params, QueryEnvironment *queryEnv,
+				  char *completionTag)
 {
-	Query	   *query = (Query *) stmt->query;
+	Query	   *query = castNode(Query, stmt->query);
 	IntoClause *into = stmt->into;
 	bool		is_matview = (into->viewQuery != NULL);
 	DestReceiver *dest;
@@ -261,11 +262,10 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 	 * The contained Query could be a SELECT, or an EXECUTE utility command.
 	 * If the latter, we just pass it off to ExecuteQuery.
 	 */
-	Assert(IsA(query, Query));
 	if (query->commandType == CMD_UTILITY &&
 		IsA(query->utilityStmt, ExecuteStmt))
 	{
-		ExecuteStmt *estmt = (ExecuteStmt *) query->utilityStmt;
+		ExecuteStmt *estmt = castNode(ExecuteStmt, query->utilityStmt);
 
 		Assert(!is_matview);	/* excluded by syntax */
 		ExecuteQuery(estmt, into, queryString, params, dest, completionTag);
@@ -288,7 +288,7 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 	{
 		GetUserIdAndSecContext(&save_userid, &save_sec_context);
 		SetUserIdAndSecContext(save_userid,
-						   save_sec_context | SECURITY_RESTRICTED_OPERATION);
+							   save_sec_context | SECURITY_RESTRICTED_OPERATION);
 		save_nestlevel = NewGUCNestLevel();
 	}
 
@@ -316,17 +316,17 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 		 * and is executed repeatedly.  (See also the same hack in EXPLAIN and
 		 * PREPARE.)
 		 */
-		rewritten = QueryRewrite((Query *) copyObject(query));
+		rewritten = QueryRewrite(copyObject(query));
 
 		/* SELECT should never rewrite to more or less than one SELECT query */
 		if (list_length(rewritten) != 1)
 			elog(ERROR, "unexpected rewrite result for %s",
 				 is_matview ? "CREATE MATERIALIZED VIEW" :
 				 "CREATE TABLE AS SELECT");
-		query = (Query *) linitial(rewritten);
+		query = linitial_node(Query, rewritten);
 		Assert(query->commandType == CMD_SELECT);
 
-		/* plan the query */
+		/* plan the query --- note we disallow parallelism */
 		plan = pg_plan_query(query, 0, params);
 
 		/*
@@ -342,13 +342,13 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 		/* Create a QueryDesc, redirecting output to our tuple receiver */
 		queryDesc = CreateQueryDesc(plan, queryString,
 									GetActiveSnapshot(), InvalidSnapshot,
-									dest, params, 0);
+									dest, params, queryEnv, 0);
 
 		/* call ExecutorStart to prepare the plan for execution */
 		ExecutorStart(queryDesc, GetIntoRelEFlags(into));
 
 		/* run the plan to completion */
-		ExecutorRun(queryDesc, ForwardScanDirection, 0L);
+		ExecutorRun(queryDesc, ForwardScanDirection, 0L, true);
 
 		/* save the rowcount if we're given a completionTag to fill */
 		if (completionTag)
@@ -532,7 +532,7 @@ intorel_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 
 	for (attnum = 1; attnum <= intoRelationDesc->rd_att->natts; attnum++)
 		rte->insertedCols = bms_add_member(rte->insertedCols,
-								attnum - FirstLowInvalidHeapAttributeNumber);
+										   attnum - FirstLowInvalidHeapAttributeNumber);
 
 	ExecCheckRTPerms(list_make1(rte), true);
 

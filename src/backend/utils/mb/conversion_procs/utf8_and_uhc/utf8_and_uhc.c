@@ -2,7 +2,7 @@
  *
  *	  UHC <--> UTF8
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -42,7 +42,7 @@ uhc_to_utf8(PG_FUNCTION_ARGS)
 	CHECK_ENCODING_CONVERSION_ARGS(PG_UHC, PG_UTF8);
 
 	LocalToUtf(src, len, dest,
-			   LUmapUHC, lengthof(LUmapUHC),
+			   &uhc_to_unicode_tree,
 			   NULL, 0,
 			   NULL,
 			   PG_UHC);
@@ -60,7 +60,7 @@ utf8_to_uhc(PG_FUNCTION_ARGS)
 	CHECK_ENCODING_CONVERSION_ARGS(PG_UTF8, PG_UHC);
 
 	UtfToLocal(src, len, dest,
-			   ULmapUHC, lengthof(ULmapUHC),
+			   &uhc_from_unicode_tree,
 			   NULL, 0,
 			   NULL,
 			   PG_UHC);

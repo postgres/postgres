@@ -71,6 +71,13 @@ SECURITY LABEL ON DOMAIN dummy_seclabel_domain IS 'classified';		-- OK
 CREATE SCHEMA dummy_seclabel_test;
 SECURITY LABEL ON SCHEMA dummy_seclabel_test IS 'unclassified';		-- OK
 
+SET client_min_messages = error;
+CREATE PUBLICATION dummy_pub;
+CREATE SUBSCRIPTION dummy_sub CONNECTION '' PUBLICATION foo WITH (connect = false, slot_name = NONE);
+RESET client_min_messages;
+SECURITY LABEL ON PUBLICATION dummy_pub IS 'classified';
+SECURITY LABEL ON SUBSCRIPTION dummy_sub IS 'classified';
+
 SELECT objtype, objname, provider, label FROM pg_seclabels
 	ORDER BY objtype, objname;
 
@@ -100,6 +107,9 @@ DROP EVENT TRIGGER always_start, always_end, always_drop, always_rewrite;
 
 DROP VIEW dummy_seclabel_view1;
 DROP TABLE dummy_seclabel_tbl1, dummy_seclabel_tbl2;
+
+DROP SUBSCRIPTION dummy_sub;
+DROP PUBLICATION dummy_pub;
 
 DROP ROLE regress_dummy_seclabel_user1;
 DROP ROLE regress_dummy_seclabel_user2;

@@ -3,7 +3,7 @@
  * win32_sema.c
  *	  Microsoft Windows Win32 Semaphores Emulation
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/port/win32_sema.c
@@ -22,6 +22,17 @@ static int	numSems;			/* number of sema sets acquired so far */
 static int	maxSems;			/* allocated size of mySemaSet array */
 
 static void ReleaseSemaphores(int code, Datum arg);
+
+
+/*
+ * Report amount of shared memory needed for semaphores
+ */
+Size
+PGSemaphoreShmemSize(int maxSemas)
+{
+	/* No shared memory needed on Windows */
+	return 0;
+}
 
 /*
  * PGReserveSemaphores --- initialize semaphore support
@@ -62,10 +73,10 @@ ReleaseSemaphores(int code, Datum arg)
 /*
  * PGSemaphoreCreate
  *
- * Initialize a PGSemaphore structure to represent a sema with count 1
+ * Allocate a PGSemaphore structure with initial count 1
  */
-void
-PGSemaphoreCreate(PGSemaphore sema)
+PGSemaphore
+PGSemaphoreCreate(void)
 {
 	HANDLE		cur_handle;
 	SECURITY_ATTRIBUTES sec_attrs;
@@ -86,12 +97,14 @@ PGSemaphoreCreate(PGSemaphore sema)
 	if (cur_handle)
 	{
 		/* Successfully done */
-		*sema = cur_handle;
 		mySemSet[numSems++] = cur_handle;
 	}
 	else
 		ereport(PANIC,
-				(errmsg("could not create semaphore: error code %lu", GetLastError())));
+				(errmsg("could not create semaphore: error code %lu",
+						GetLastError())));
+
+	return (PGSemaphore) cur_handle;
 }
 
 /*
@@ -106,7 +119,8 @@ PGSemaphoreReset(PGSemaphore sema)
 	 * There's no direct API for this in Win32, so we have to ratchet the
 	 * semaphore down to 0 with repeated trylock's.
 	 */
-	while (PGSemaphoreTryLock(sema));
+	while (PGSemaphoreTryLock(sema))
+		 /* loop */ ;
 }
 
 /*
@@ -127,7 +141,7 @@ PGSemaphoreLock(PGSemaphore sema)
 	 * pending signals are serviced.
 	 */
 	wh[0] = pgwin32_signal_event;
-	wh[1] = *sema;
+	wh[1] = sema;
 
 	/*
 	 * As in other implementations of PGSemaphoreLock, we need to check for
@@ -182,9 +196,10 @@ PGSemaphoreLock(PGSemaphore sema)
 void
 PGSemaphoreUnlock(PGSemaphore sema)
 {
-	if (!ReleaseSemaphore(*sema, 1, NULL))
+	if (!ReleaseSemaphore(sema, 1, NULL))
 		ereport(FATAL,
-				(errmsg("could not unlock semaphore: error code %lu", GetLastError())));
+				(errmsg("could not unlock semaphore: error code %lu",
+						GetLastError())));
 }
 
 /*
@@ -197,7 +212,7 @@ PGSemaphoreTryLock(PGSemaphore sema)
 {
 	DWORD		ret;
 
-	ret = WaitForSingleObject(*sema, 0);
+	ret = WaitForSingleObject(sema, 0);
 
 	if (ret == WAIT_OBJECT_0)
 	{
@@ -213,7 +228,8 @@ PGSemaphoreTryLock(PGSemaphore sema)
 
 	/* Otherwise we are in trouble */
 	ereport(FATAL,
-	(errmsg("could not try-lock semaphore: error code %lu", GetLastError())));
+			(errmsg("could not try-lock semaphore: error code %lu",
+					GetLastError())));
 
 	/* keep compiler quiet */
 	return false;

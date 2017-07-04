@@ -3,7 +3,7 @@
  *
  * repl_gram.y				- Parser for the replication commands
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -24,6 +24,8 @@
 
 /* Result of the parsing is returned here */
 Node *replication_parse_result;
+
+static SQLCmd *make_sqlcmd(void);
 
 
 /*
@@ -57,10 +59,12 @@ Node *replication_parse_result;
 %token <str> SCONST IDENT
 %token <uintval> UCONST
 %token <recptr> RECPTR
+%token T_WORD
 
 /* Keyword tokens. */
 %token K_BASE_BACKUP
 %token K_IDENTIFY_SYSTEM
+%token K_SHOW
 %token K_START_REPLICATION
 %token K_CREATE_REPLICATION_SLOT
 %token K_DROP_REPLICATION_SLOT
@@ -77,19 +81,25 @@ Node *replication_parse_result;
 %token K_LOGICAL
 %token K_SLOT
 %token K_RESERVE_WAL
+%token K_TEMPORARY
+%token K_EXPORT_SNAPSHOT
+%token K_NOEXPORT_SNAPSHOT
+%token K_USE_SNAPSHOT
 
 %type <node>	command
 %type <node>	base_backup start_replication start_logical_replication
 				create_replication_slot drop_replication_slot identify_system
-				timeline_history
+				timeline_history show sql_cmd
 %type <list>	base_backup_opt_list
 %type <defelt>	base_backup_opt
 %type <uintval>	opt_timeline
 %type <list>	plugin_options plugin_opt_list
 %type <defelt>	plugin_opt_elem
 %type <node>	plugin_opt_arg
-%type <str>		opt_slot
-%type <boolval>	opt_reserve_wal
+%type <str>		opt_slot var_name
+%type <boolval>	opt_temporary
+%type <list>	create_slot_opt_list
+%type <defelt>	create_slot_opt
 
 %%
 
@@ -111,6 +121,8 @@ command:
 			| create_replication_slot
 			| drop_replication_slot
 			| timeline_history
+			| show
+			| sql_cmd
 			;
 
 /*
@@ -124,14 +136,29 @@ identify_system:
 			;
 
 /*
+ * SHOW setting
+ */
+show:
+			K_SHOW var_name
+				{
+					VariableShowStmt *n = makeNode(VariableShowStmt);
+					n->name = $2;
+					$$ = (Node *) n;
+				}
+
+var_name:	IDENT	{ $$ = $1; }
+			| var_name '.' IDENT
+				{ $$ = psprintf("%s.%s", $1, $3); }
+		;
+
+/*
  * BASE_BACKUP [LABEL '<label>'] [PROGRESS] [FAST] [WAL] [NOWAIT]
  * [MAX_RATE %d] [TABLESPACE_MAP]
  */
 base_backup:
 			K_BASE_BACKUP base_backup_opt_list
 				{
-					BaseBackupCmd *cmd =
-						(BaseBackupCmd *) makeNode(BaseBackupCmd);
+					BaseBackupCmd *cmd = makeNode(BaseBackupCmd);
 					cmd->options = $2;
 					$$ = (Node *) cmd;
 				}
@@ -148,60 +175,93 @@ base_backup_opt:
 			K_LABEL SCONST
 				{
 				  $$ = makeDefElem("label",
-								   (Node *)makeString($2));
+								   (Node *)makeString($2), -1);
 				}
 			| K_PROGRESS
 				{
 				  $$ = makeDefElem("progress",
-								   (Node *)makeInteger(TRUE));
+								   (Node *)makeInteger(TRUE), -1);
 				}
 			| K_FAST
 				{
 				  $$ = makeDefElem("fast",
-								   (Node *)makeInteger(TRUE));
+								   (Node *)makeInteger(TRUE), -1);
 				}
 			| K_WAL
 				{
 				  $$ = makeDefElem("wal",
-								   (Node *)makeInteger(TRUE));
+								   (Node *)makeInteger(TRUE), -1);
 				}
 			| K_NOWAIT
 				{
 				  $$ = makeDefElem("nowait",
-								   (Node *)makeInteger(TRUE));
+								   (Node *)makeInteger(TRUE), -1);
 				}
 			| K_MAX_RATE UCONST
 				{
 				  $$ = makeDefElem("max_rate",
-								   (Node *)makeInteger($2));
+								   (Node *)makeInteger($2), -1);
 				}
 			| K_TABLESPACE_MAP
 				{
 				  $$ = makeDefElem("tablespace_map",
-								   (Node *)makeInteger(TRUE));
+								   (Node *)makeInteger(TRUE), -1);
 				}
 			;
 
 create_replication_slot:
-			/* CREATE_REPLICATION_SLOT slot PHYSICAL RESERVE_WAL */
-			K_CREATE_REPLICATION_SLOT IDENT K_PHYSICAL opt_reserve_wal
+			/* CREATE_REPLICATION_SLOT slot TEMPORARY PHYSICAL RESERVE_WAL */
+			K_CREATE_REPLICATION_SLOT IDENT opt_temporary K_PHYSICAL create_slot_opt_list
 				{
 					CreateReplicationSlotCmd *cmd;
 					cmd = makeNode(CreateReplicationSlotCmd);
 					cmd->kind = REPLICATION_KIND_PHYSICAL;
 					cmd->slotname = $2;
-					cmd->reserve_wal = $4;
+					cmd->temporary = $3;
+					cmd->options = $5;
 					$$ = (Node *) cmd;
 				}
-			/* CREATE_REPLICATION_SLOT slot LOGICAL plugin */
-			| K_CREATE_REPLICATION_SLOT IDENT K_LOGICAL IDENT
+			/* CREATE_REPLICATION_SLOT slot TEMPORARY LOGICAL plugin */
+			| K_CREATE_REPLICATION_SLOT IDENT opt_temporary K_LOGICAL IDENT create_slot_opt_list
 				{
 					CreateReplicationSlotCmd *cmd;
 					cmd = makeNode(CreateReplicationSlotCmd);
 					cmd->kind = REPLICATION_KIND_LOGICAL;
 					cmd->slotname = $2;
-					cmd->plugin = $4;
+					cmd->temporary = $3;
+					cmd->plugin = $5;
+					cmd->options = $6;
 					$$ = (Node *) cmd;
+				}
+			;
+
+create_slot_opt_list:
+			create_slot_opt_list create_slot_opt
+				{ $$ = lappend($1, $2); }
+			| /* EMPTY */
+				{ $$ = NIL; }
+			;
+
+create_slot_opt:
+			K_EXPORT_SNAPSHOT
+				{
+				  $$ = makeDefElem("export_snapshot",
+								   (Node *)makeInteger(TRUE), -1);
+				}
+			| K_NOEXPORT_SNAPSHOT
+				{
+				  $$ = makeDefElem("export_snapshot",
+								   (Node *)makeInteger(FALSE), -1);
+				}
+			| K_USE_SNAPSHOT
+				{
+				  $$ = makeDefElem("use_snapshot",
+								   (Node *)makeInteger(TRUE), -1);
+				}
+			| K_RESERVE_WAL
+				{
+				  $$ = makeDefElem("reserve_wal",
+								   (Node *)makeInteger(TRUE), -1);
 				}
 			;
 
@@ -271,8 +331,8 @@ opt_physical:
 			| /* EMPTY */
 			;
 
-opt_reserve_wal:
-			K_RESERVE_WAL					{ $$ = true; }
+opt_temporary:
+			K_TEMPORARY						{ $$ = true; }
 			| /* EMPTY */					{ $$ = false; }
 			;
 
@@ -315,7 +375,7 @@ plugin_opt_list:
 plugin_opt_elem:
 			IDENT plugin_opt_arg
 				{
-					$$ = makeDefElem($1, $2);
+					$$ = makeDefElem($1, $2, -1);
 				}
 		;
 
@@ -323,6 +383,26 @@ plugin_opt_arg:
 			SCONST							{ $$ = (Node *) makeString($1); }
 			| /* EMPTY */					{ $$ = NULL; }
 		;
+
+sql_cmd:
+			IDENT							{ $$ = (Node *) make_sqlcmd(); }
+		;
 %%
+
+static SQLCmd *
+make_sqlcmd(void)
+{
+	SQLCmd *cmd = makeNode(SQLCmd);
+	int tok;
+
+	/* Just move lexer to the end of command. */
+	for (;;)
+	{
+		tok = yylex();
+		if (tok == ';' || tok == 0)
+			break;
+	}
+	return cmd;
+}
 
 #include "repl_scanner.c"

@@ -3,7 +3,7 @@
  * dict.c
  *		Standard interface to dictionary
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
@@ -26,7 +26,7 @@ Datum
 ts_lexize(PG_FUNCTION_ARGS)
 {
 	Oid			dictId = PG_GETARG_OID(0);
-	text	   *in = PG_GETARG_TEXT_P(1);
+	text	   *in = PG_GETARG_TEXT_PP(1);
 	ArrayType  *a;
 	TSDictionaryCacheEntry *dict;
 	TSLexeme   *res,
@@ -37,19 +37,19 @@ ts_lexize(PG_FUNCTION_ARGS)
 	dict = lookup_ts_dictionary_cache(dictId);
 
 	res = (TSLexeme *) DatumGetPointer(FunctionCall4(&dict->lexize,
-											 PointerGetDatum(dict->dictData),
-												PointerGetDatum(VARDATA(in)),
-									   Int32GetDatum(VARSIZE(in) - VARHDRSZ),
-												  PointerGetDatum(&dstate)));
+													 PointerGetDatum(dict->dictData),
+													 PointerGetDatum(VARDATA_ANY(in)),
+													 Int32GetDatum(VARSIZE_ANY_EXHDR(in)),
+													 PointerGetDatum(&dstate)));
 
 	if (dstate.getnext)
 	{
 		dstate.isend = true;
 		ptr = (TSLexeme *) DatumGetPointer(FunctionCall4(&dict->lexize,
-											 PointerGetDatum(dict->dictData),
-												PointerGetDatum(VARDATA(in)),
-									   Int32GetDatum(VARSIZE(in) - VARHDRSZ),
-												  PointerGetDatum(&dstate)));
+														 PointerGetDatum(dict->dictData),
+														 PointerGetDatum(VARDATA_ANY(in)),
+														 Int32GetDatum(VARSIZE_ANY_EXHDR(in)),
+														 PointerGetDatum(&dstate)));
 		if (ptr != NULL)
 			res = ptr;
 	}

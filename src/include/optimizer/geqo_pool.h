@@ -3,7 +3,7 @@
  * geqo_pool.h
  *	  pool representation in optimizer/geqo
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/optimizer/geqo_pool.h
@@ -37,4 +37,4 @@ extern void spread_chromo(PlannerInfo *root, Chromosome *chromo, Pool *pool);
 
 extern void sort_pool(PlannerInfo *root, Pool *pool);
 
-#endif   /* GEQO_POOL_H */
+#endif							/* GEQO_POOL_H */

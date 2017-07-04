@@ -6,7 +6,7 @@
  *	  message integrity and endpoint authentication.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -115,14 +115,14 @@ struct sigpipe_info
 		if (!SIGPIPE_MASKED(conn)) \
 			pqsignal(SIGPIPE, spinfo); \
 	} while (0)
-#endif   /* ENABLE_THREAD_SAFETY */
+#endif							/* ENABLE_THREAD_SAFETY */
 #else							/* WIN32 */
 
 #define DECLARE_SIGPIPE_INFO(spinfo)
 #define DISABLE_SIGPIPE(conn, spinfo, failaction)
 #define REMEMBER_EPIPE(spinfo, cond)
 #define RESTORE_SIGPIPE(conn, spinfo)
-#endif   /* WIN32 */
+#endif							/* WIN32 */
 
 /* ------------------------------------------------------------ */
 /*			 Procedures common to all secure sessions			*/
@@ -250,15 +250,15 @@ pqsecure_raw_read(PGconn *conn, void *ptr, size_t len)
 			case ECONNRESET:
 				printfPQExpBuffer(&conn->errorMessage,
 								  libpq_gettext(
-								"server closed the connection unexpectedly\n"
-				   "\tThis probably means the server terminated abnormally\n"
-							 "\tbefore or while processing the request.\n"));
+												"server closed the connection unexpectedly\n"
+												"\tThis probably means the server terminated abnormally\n"
+												"\tbefore or while processing the request.\n"));
 				break;
 #endif
 
 			default:
 				printfPQExpBuffer(&conn->errorMessage,
-				   libpq_gettext("could not receive data from server: %s\n"),
+								  libpq_gettext("could not receive data from server: %s\n"),
 								  SOCK_STRERROR(result_errno,
 												sebuf, sizeof(sebuf)));
 				break;
@@ -312,7 +312,7 @@ pqsecure_raw_write(PGconn *conn, const void *ptr, size_t len)
 		flags |= MSG_NOSIGNAL;
 
 retry_masked:
-#endif   /* MSG_NOSIGNAL */
+#endif							/* MSG_NOSIGNAL */
 
 	DISABLE_SIGPIPE(conn, spinfo, return -1);
 
@@ -334,7 +334,7 @@ retry_masked:
 			flags = 0;
 			goto retry_masked;
 		}
-#endif   /* MSG_NOSIGNAL */
+#endif							/* MSG_NOSIGNAL */
 
 		/* Set error message if appropriate */
 		switch (result_errno)
@@ -359,14 +359,14 @@ retry_masked:
 #endif
 				printfPQExpBuffer(&conn->errorMessage,
 								  libpq_gettext(
-								"server closed the connection unexpectedly\n"
-				   "\tThis probably means the server terminated abnormally\n"
-							 "\tbefore or while processing the request.\n"));
+												"server closed the connection unexpectedly\n"
+												"\tThis probably means the server terminated abnormally\n"
+												"\tbefore or while processing the request.\n"));
 				break;
 
 			default:
 				printfPQExpBuffer(&conn->errorMessage,
-						libpq_gettext("could not send data to server: %s\n"),
+								  libpq_gettext("could not send data to server: %s\n"),
 								  SOCK_STRERROR(result_errno,
 												sebuf, sizeof(sebuf)));
 				break;
@@ -415,7 +415,7 @@ PQsslAttributeNames(PGconn *conn)
 
 	return result;
 }
-#endif   /* USE_SSL */
+#endif							/* USE_SSL */
 
 
 #if defined(ENABLE_THREAD_SAFETY) && !defined(WIN32)
@@ -502,4 +502,4 @@ pq_reset_sigpipe(sigset_t *osigset, bool sigpipe_pending, bool got_epipe)
 	SOCK_ERRNO_SET(save_errno);
 }
 
-#endif   /* ENABLE_THREAD_SAFETY && !WIN32 */
+#endif							/* ENABLE_THREAD_SAFETY && !WIN32 */

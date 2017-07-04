@@ -16,7 +16,7 @@
  * PHP 4.0.6 distribution for inspiration.  Configurable penalty costs
  * extension is introduced by Volkan YAZICI <volkan.yazici@gmail.com.
  *
- * Copyright (c) 2001-2016, PostgreSQL Global Development Group
+ * Copyright (c) 2001-2017, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	src/backend/utils/adt/levenshtein.c
@@ -130,8 +130,8 @@ varstr_levenshtein(const char *source, int slen,
 		 n > MAX_LEVENSHTEIN_STRLEN))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-		errmsg("levenshtein argument exceeds maximum length of %d characters",
-			   MAX_LEVENSHTEIN_STRLEN)));
+				 errmsg("levenshtein argument exceeds maximum length of %d characters",
+						MAX_LEVENSHTEIN_STRLEN)));
 
 #ifdef LEVENSHTEIN_LESS_EQUAL
 	/* Initialize start and stop columns. */

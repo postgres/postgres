@@ -7,7 +7,7 @@
  * for debug printouts, because that's more flexible than printf().
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/executor/execdebug.h
@@ -35,13 +35,6 @@
  *		nest loop node by NL_printf() and ENL_printf() in nodeNestloop.c
  * ----------------
 #undef EXEC_NESTLOOPDEBUG
- */
-
-/* ----------------
- *		EXEC_EVALDEBUG is a flag which turns on debugging of
- *		ExecEval and ExecTargetList() stuff by EV_printf() in execQual.c
- * ----------------
-#undef EXEC_EVALDEBUG
  */
 
 /* ----------------
@@ -83,21 +76,7 @@
 #define NL_printf(s)
 #define NL1_printf(s, a)
 #define ENL1_printf(message)
-#endif   /* EXEC_NESTLOOPDEBUG */
-
-/* ----------------
- *		exec eval / target list debugging defines
- * ----------------
- */
-#ifdef EXEC_EVALDEBUG
-#define EV_nodeDisplay(l)				nodeDisplay(l)
-#define EV_printf(s)					printf(s)
-#define EV1_printf(s, a)				printf(s, a)
-#else
-#define EV_nodeDisplay(l)
-#define EV_printf(s)
-#define EV1_printf(s, a)
-#endif   /* EXEC_EVALDEBUG */
+#endif							/* EXEC_NESTLOOPDEBUG */
 
 /* ----------------
  *		sort node debugging defines
@@ -111,7 +90,7 @@
 #define SO_nodeDisplay(l)
 #define SO_printf(s)
 #define SO1_printf(s, p)
-#endif   /* EXEC_SORTDEBUG */
+#endif							/* EXEC_SORTDEBUG */
 
 /* ----------------
  *		merge join debugging defines
@@ -144,6 +123,6 @@
 #define MJ_DEBUG_COMPARE(res)
 #define MJ_DEBUG_QUAL(clause, res)
 #define MJ_DEBUG_PROC_NODE(slot)
-#endif   /* EXEC_MERGEJOINDEBUG */
+#endif							/* EXEC_MERGEJOINDEBUG */
 
-#endif   /* ExecDebugIncluded */
+#endif							/* EXECDEBUG_H */

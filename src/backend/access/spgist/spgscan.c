@@ -4,7 +4,7 @@
  *	  routines for scanning SP-GiST indexes
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -25,11 +25,11 @@
 
 
 typedef void (*storeRes_func) (SpGistScanOpaque so, ItemPointer heapPtr,
-								 Datum leafValue, bool isnull, bool recheck);
+							   Datum leafValue, bool isnull, bool recheck);
 
 typedef struct ScanStackEntry
 {
-	Datum		reconstructedValue;		/* value reconstructed from parent */
+	Datum		reconstructedValue; /* value reconstructed from parent */
 	void	   *traversalValue; /* opclass-specific traverse value */
 	int			level;			/* level of items on this page */
 	ItemPointerData ptr;		/* block and offset to scan from */
@@ -92,11 +92,11 @@ resetSpGistScanOpaque(SpGistScanOpaque so)
 
 	if (so->want_itup)
 	{
-		/* Must pfree IndexTuples to avoid memory leak */
+		/* Must pfree reconstructed tuples to avoid memory leak */
 		int			i;
 
 		for (i = 0; i < so->nPtrs; i++)
-			pfree(so->indexTups[i]);
+			pfree(so->reconTups[i]);
 	}
 	so->iPtr = so->nPtrs = 0;
 }
@@ -193,12 +193,10 @@ spgbeginscan(Relation rel, int keysz, int orderbysz)
 	initSpGistState(&so->state, scan->indexRelation);
 	so->tempCxt = AllocSetContextCreate(CurrentMemoryContext,
 										"SP-GiST search temporary context",
-										ALLOCSET_DEFAULT_MINSIZE,
-										ALLOCSET_DEFAULT_INITSIZE,
-										ALLOCSET_DEFAULT_MAXSIZE);
+										ALLOCSET_DEFAULT_SIZES);
 
-	/* Set up indexTupDesc and xs_itupdesc in case it's an index-only scan */
-	so->indexTupDesc = scan->xs_itupdesc = RelationGetDescr(rel);
+	/* Set up indexTupDesc and xs_hitupdesc in case it's an index-only scan */
+	so->indexTupDesc = scan->xs_hitupdesc = RelationGetDescr(rel);
 
 	scan->opaque = so;
 
@@ -432,7 +430,7 @@ redirect:
 				}
 			}
 		}
-		else	/* page is inner */
+		else					/* page is inner */
 		{
 			SpGistInnerTuple innerTuple;
 			spgInnerConsistentIn in;
@@ -444,7 +442,7 @@ redirect:
 			MemoryContext oldCtx;
 
 			innerTuple = (SpGistInnerTuple) PageGetItem(page,
-												PageGetItemId(page, offset));
+														PageGetItemId(page, offset));
 
 			if (innerTuple->tupstate != SPGIST_LIVE)
 			{
@@ -593,12 +591,12 @@ storeGettuple(SpGistScanOpaque so, ItemPointer heapPtr,
 	if (so->want_itup)
 	{
 		/*
-		 * Reconstruct desired IndexTuple.  We have to copy the datum out of
-		 * the temp context anyway, so we may as well create the tuple here.
+		 * Reconstruct index data.  We have to copy the datum out of the temp
+		 * context anyway, so we may as well create the tuple here.
 		 */
-		so->indexTups[so->nPtrs] = index_form_tuple(so->indexTupDesc,
-													&leafValue,
-													&isnull);
+		so->reconTups[so->nPtrs] = heap_form_tuple(so->indexTupDesc,
+												   &leafValue,
+												   &isnull);
 	}
 	so->nPtrs++;
 }
@@ -621,18 +619,18 @@ spggettuple(IndexScanDesc scan, ScanDirection dir)
 			/* continuing to return tuples from a leaf page */
 			scan->xs_ctup.t_self = so->heapPtrs[so->iPtr];
 			scan->xs_recheck = so->recheck[so->iPtr];
-			scan->xs_itup = so->indexTups[so->iPtr];
+			scan->xs_hitup = so->reconTups[so->iPtr];
 			so->iPtr++;
 			return true;
 		}
 
 		if (so->want_itup)
 		{
-			/* Must pfree IndexTuples to avoid memory leak */
+			/* Must pfree reconstructed tuples to avoid memory leak */
 			int			i;
 
 			for (i = 0; i < so->nPtrs; i++)
-				pfree(so->indexTups[i]);
+				pfree(so->reconTups[i]);
 		}
 		so->iPtr = so->nPtrs = 0;
 

@@ -3,7 +3,7 @@
  * async.h
  *	  Asynchronous notification: NOTIFY, LISTEN, UNLISTEN
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/commands/async.h
@@ -38,11 +38,6 @@ extern void Async_Listen(const char *channel);
 extern void Async_Unlisten(const char *channel);
 extern void Async_UnlistenAll(void);
 
-/* notify-related SQL functions */
-extern Datum pg_listening_channels(PG_FUNCTION_ARGS);
-extern Datum pg_notify(PG_FUNCTION_ARGS);
-extern Datum pg_notification_queue_usage(PG_FUNCTION_ARGS);
-
 /* perform (or cancel) outbound notify processing at transaction commit */
 extern void PreCommit_Notify(void);
 extern void AtCommit_Notify(void);
@@ -59,4 +54,4 @@ extern void HandleNotifyInterrupt(void);
 /* process interrupts */
 extern void ProcessNotifyInterrupt(void);
 
-#endif   /* ASYNC_H */
+#endif							/* ASYNC_H */

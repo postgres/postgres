@@ -57,13 +57,13 @@ int			px_gen_salt(const char *salt_type, char *dst, int rounds);
 
 /* crypt-gensalt.c */
 char *_crypt_gensalt_traditional_rn(unsigned long count,
-				 const char *input, int size, char *output, int output_size);
+							  const char *input, int size, char *output, int output_size);
 char *_crypt_gensalt_extended_rn(unsigned long count,
-				 const char *input, int size, char *output, int output_size);
+						   const char *input, int size, char *output, int output_size);
 char *_crypt_gensalt_md5_rn(unsigned long count,
-				 const char *input, int size, char *output, int output_size);
+					  const char *input, int size, char *output, int output_size);
 char *_crypt_gensalt_blowfish_rn(unsigned long count,
-				 const char *input, int size, char *output, int output_size);
+						   const char *input, int size, char *output, int output_size);
 
 /* disable 'extended DES crypt' */
 /* #define DISABLE_XDES */
@@ -79,4 +79,4 @@ char	   *px_crypt_des(const char *key, const char *setting);
 char *px_crypt_md5(const char *pw, const char *salt,
 			 char *dst, unsigned dstlen);
 
-#endif   /* _PX_CRYPT_H */
+#endif							/* _PX_CRYPT_H */

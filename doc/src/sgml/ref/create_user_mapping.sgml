@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CREATE USER MAPPING FOR { <replaceable class="parameter">user_name</replaceable> | USER | CURRENT_USER | PUBLIC }
+CREATE USER MAPPING [IF NOT EXISTS] FOR { <replaceable class="parameter">user_name</replaceable> | USER | CURRENT_USER | PUBLIC }
     SERVER <replaceable class="parameter">server_name</replaceable>
     [ OPTIONS ( <replaceable class="PARAMETER">option</replaceable> '<replaceable class="PARAMETER">value</replaceable>' [ , ... ] ) ]
 </synopsis>
@@ -50,6 +50,18 @@ CREATE USER MAPPING FOR { <replaceable class="parameter">user_name</replaceable>
   <title>Parameters</title>
 
   <variablelist>
+  <varlistentry>
+    <term><literal>IF NOT EXISTS</></term>
+    <listitem>
+     <para>
+      Do not throw an error if a mapping of the given user to the given foreign
+      server already exists. A notice is issued in this case.  Note that there
+      is no guarantee that the existing user mapping is anything like the one
+      that would have been created.
+     </para>
+    </listitem>
+   </varlistentry>
+
    <varlistentry>
     <term><replaceable class="parameter">user_name</replaceable></term>
     <listitem>

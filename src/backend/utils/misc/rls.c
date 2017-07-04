@@ -3,7 +3,7 @@
  * rls.c
  *		  RLS-related utility functions.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -26,6 +26,7 @@
 #include "utils/lsyscache.h"
 #include "utils/rls.h"
 #include "utils/syscache.h"
+#include "utils/varlena.h"
 
 
 /*
@@ -153,7 +154,7 @@ Datum
 row_security_active_name(PG_FUNCTION_ARGS)
 {
 	/* By qualified name */
-	text	   *tablename = PG_GETARG_TEXT_P(0);
+	text	   *tablename = PG_GETARG_TEXT_PP(0);
 	RangeVar   *tablerel;
 	Oid			tableoid;
 	int			rls_status;

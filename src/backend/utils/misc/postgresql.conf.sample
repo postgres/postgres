@@ -16,9 +16,9 @@
 #
 # This file is read on server startup and when the server receives a SIGHUP
 # signal.  If you edit the file on a running system, you have to SIGHUP the
-# server for the changes to take effect, or use "pg_ctl reload".  Some
-# parameters, which are marked below, require a server shutdown and restart to
-# take effect.
+# server for the changes to take effect, run "pg_ctl reload", or execute
+# "SELECT pg_reload_conf()".  Some parameters, which are marked below,
+# require a server shutdown and restart to take effect.
 #
 # Any parameter can also be given as a command-line option to the server, e.g.,
 # "postgres -c log_connections=on".  Some parameters can be changed at run time
@@ -76,16 +76,15 @@
 # - Security and Authentication -
 
 #authentication_timeout = 1min		# 1s-600s
-#ssl = off				# (change requires restart)
+#ssl = off
 #ssl_ciphers = 'HIGH:MEDIUM:+3DES:!aNULL' # allowed SSL ciphers
-					# (change requires restart)
-#ssl_prefer_server_ciphers = on		# (change requires restart)
-#ssl_ecdh_curve = 'prime256v1'		# (change requires restart)
-#ssl_cert_file = 'server.crt'		# (change requires restart)
-#ssl_key_file = 'server.key'		# (change requires restart)
-#ssl_ca_file = ''			# (change requires restart)
-#ssl_crl_file = ''			# (change requires restart)
-#password_encryption = on
+#ssl_prefer_server_ciphers = on
+#ssl_ecdh_curve = 'prime256v1'
+#ssl_cert_file = 'server.crt'
+#ssl_key_file = 'server.key'
+#ssl_ca_file = ''
+#ssl_crl_file = ''
+#password_encryption = md5		# md5, scram-sha-256, or plain
 #db_user_namespace = off
 #row_security = on
 
@@ -156,17 +155,18 @@
 #bgwriter_delay = 200ms			# 10-10000ms between rounds
 #bgwriter_lru_maxpages = 100		# 0-1000 max buffers written/round
 #bgwriter_lru_multiplier = 2.0		# 0-10.0 multiplier on buffers scanned/round
-#bgwriter_flush_after = 0		# 0 disables,
-					# default is 512kB on linux, 0 otherwise
+#bgwriter_flush_after = 0		# measured in pages, 0 disables
 
 # - Asynchronous Behavior -
 
 #effective_io_concurrency = 1		# 1-1000; 0 disables prefetching
 #max_worker_processes = 8		# (change requires restart)
-#max_parallel_workers_per_gather = 2	# taken from max_worker_processes
+#max_parallel_workers_per_gather = 2	# taken from max_parallel_workers
+#max_parallel_workers = 8		# maximum number of max_worker_processes that
+					# can be used in parallel queries
 #old_snapshot_threshold = -1		# 1min-60d; -1 disables; 0 is immediate
-									# (change requires restart)
-#backend_flush_after = 0		# 0 disables, default is 0
+					# (change requires restart)
+#backend_flush_after = 0		# measured in pages, 0 disables
 
 
 #------------------------------------------------------------------------------
@@ -175,11 +175,11 @@
 
 # - Settings -
 
-#wal_level = minimal			# minimal, replica, or logical
+#wal_level = replica			# minimal, replica, or logical
 					# (change requires restart)
 #fsync = on				# flush data to disk for crash safety
-						# (turning this off can cause
-						# unrecoverable data corruption)
+					# (turning this off can cause
+					# unrecoverable data corruption)
 #synchronous_commit = on		# synchronization level;
 					# off, local, remote_write, remote_apply, or on
 #wal_sync_method = fsync		# the default is the first option
@@ -196,19 +196,18 @@
 #wal_buffers = -1			# min 32kB, -1 sets based on shared_buffers
 					# (change requires restart)
 #wal_writer_delay = 200ms		# 1-10000 milliseconds
-#wal_writer_flush_after = 1MB		# 0 disables
+#wal_writer_flush_after = 1MB		# measured in pages, 0 disables
 
 #commit_delay = 0			# range 0-100000, in microseconds
 #commit_siblings = 5			# range 1-1000
 
 # - Checkpoints -
 
-#checkpoint_timeout = 5min		# range 30s-1h
+#checkpoint_timeout = 5min		# range 30s-1d
 #max_wal_size = 1GB
 #min_wal_size = 80MB
 #checkpoint_completion_target = 0.5	# checkpoint target duration, 0.0 - 1.0
-#checkpoint_flush_after = 0		# 0 disables,
-					# default is 256kB on linux, 0 otherwise
+#checkpoint_flush_after = 0		# measured in pages, 0 disables
 #checkpoint_warning = 30s		# 0 disables
 
 # - Archiving -
@@ -231,12 +230,12 @@
 
 # Set these on the master and on any standby that will send replication data.
 
-#max_wal_senders = 0		# max number of walsender processes
+#max_wal_senders = 10		# max number of walsender processes
 				# (change requires restart)
 #wal_keep_segments = 0		# in logfile segments, 16MB each; 0 disables
 #wal_sender_timeout = 60s	# in milliseconds; 0 disables
 
-#max_replication_slots = 0	# max number of replication slots
+#max_replication_slots = 10	# max number of replication slots
 				# (change requires restart)
 #track_commit_timestamp = off	# collect timestamp of transaction commit
 				# (change requires restart)
@@ -246,7 +245,8 @@
 # These settings are ignored on a standby server.
 
 #synchronous_standby_names = ''	# standby servers that provide sync rep
-				# number of sync standbys and comma-separated list of application_name
+				# method to choose sync standbys, number of sync standbys,
+				# and comma-separated list of application_name
 				# from standby(s); '*' = all
 #vacuum_defer_cleanup_age = 0	# number of xacts by which cleanup is delayed
 
@@ -254,7 +254,7 @@
 
 # These settings are ignored on a master server.
 
-#hot_standby = off			# "on" allows queries during recovery
+#hot_standby = on			# "off" disallows queries during recovery
 					# (change requires restart)
 #max_standby_archive_delay = 30s	# max delay before canceling queries
 					# when reading WAL from archive;
@@ -271,6 +271,13 @@
 					# in milliseconds; 0 disables
 #wal_retrieve_retry_interval = 5s	# time to wait before retrying to
 					# retrieve WAL after a failed attempt
+
+# - Subscribers -
+
+# These settings are ignored on a publisher.
+
+#max_logical_replication_workers = 4	# taken from max_worker_processes
+#max_sync_workers_per_subscription = 2	# taken from max_logical_replication_workers
 
 
 #------------------------------------------------------------------------------
@@ -300,7 +307,8 @@
 #cpu_operator_cost = 0.0025		# same scale as above
 #parallel_tuple_cost = 0.1		# same scale as above
 #parallel_setup_cost = 1000.0	# same scale as above
-#min_parallel_relation_size = 8MB
+#min_parallel_table_scan_size = 8MB
+#min_parallel_index_scan_size = 512kB
 #effective_cache_size = 4GB
 
 # - Genetic Query Optimizer -
@@ -342,7 +350,7 @@
 					# (change requires restart)
 
 # These are only used if logging_collector is on:
-#log_directory = 'pg_log'		# directory where log files are written,
+#log_directory = 'log'			# directory where log files are written,
 					# can be absolute or relative to PGDATA
 #log_filename = 'postgresql-%Y-%m-%d_%H%M%S.log'	# log file name pattern,
 					# can include strftime() escapes
@@ -430,7 +438,7 @@
 #log_duration = off
 #log_error_verbosity = default		# terse, default, or verbose messages
 #log_hostname = off
-#log_line_prefix = ''			# special values:
+#log_line_prefix = '%m [%p] '		# special values:
 					#   %a = application name
 					#   %u = user name
 					#   %d = database name
@@ -538,7 +546,7 @@
 #session_replication_role = 'origin'
 #statement_timeout = 0			# in milliseconds, 0 is disabled
 #lock_timeout = 0			# in milliseconds, 0 is disabled
-#idle_in_transaction_session_timeout = 0		# in milliseconds, 0 is disabled
+#idle_in_transaction_session_timeout = 0	# in milliseconds, 0 is disabled
 #vacuum_freeze_min_age = 50000000
 #vacuum_freeze_table_age = 150000000
 #vacuum_multixact_freeze_min_age = 5000000
@@ -591,6 +599,10 @@
 					# (change requires restart)
 #max_pred_locks_per_transaction = 64	# min 10
 					# (change requires restart)
+#max_pred_locks_per_relation = -2	# negative values mean
+					# (max_pred_locks_per_transaction
+					#  / -max_pred_locks_per_relation) - 1
+#max_pred_locks_per_page = 2            # min 0
 
 
 #------------------------------------------------------------------------------
@@ -606,7 +618,6 @@
 #lo_compat_privileges = off
 #operator_precedence_warning = off
 #quote_all_identifiers = off
-#sql_inheritance = on
 #standard_conforming_strings = on
 #synchronize_seqscans = on
 

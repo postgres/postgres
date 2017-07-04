@@ -9,7 +9,7 @@
  * bootstrap file from these header files.)
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/genbki.h
@@ -47,4 +47,4 @@
 #define DESCR(x)  extern int no_such_variable
 #define SHDESCR(x) extern int no_such_variable
 
-#endif   /* GENBKI_H */
+#endif							/* GENBKI_H */

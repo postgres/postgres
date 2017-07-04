@@ -4,7 +4,7 @@
  *	  postgres transaction system definitions
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/access/xact.h
@@ -57,22 +57,40 @@ extern bool XactDeferrable;
 typedef enum
 {
 	SYNCHRONOUS_COMMIT_OFF,		/* asynchronous commit */
-	SYNCHRONOUS_COMMIT_LOCAL_FLUSH,		/* wait for local flush only */
+	SYNCHRONOUS_COMMIT_LOCAL_FLUSH, /* wait for local flush only */
 	SYNCHRONOUS_COMMIT_REMOTE_WRITE,	/* wait for local flush and remote
 										 * write */
 	SYNCHRONOUS_COMMIT_REMOTE_FLUSH,	/* wait for local and remote flush */
-	SYNCHRONOUS_COMMIT_REMOTE_APPLY		/* wait for local flush and remote
-										 * apply */
-}	SyncCommitLevel;
+	SYNCHRONOUS_COMMIT_REMOTE_APPLY /* wait for local flush and remote apply */
+}			SyncCommitLevel;
 
-/* Define the default setting for synchonous_commit */
+/* Define the default setting for synchronous_commit */
 #define SYNCHRONOUS_COMMIT_ON	SYNCHRONOUS_COMMIT_REMOTE_FLUSH
 
 /* Synchronous commit level */
 extern int	synchronous_commit;
 
-/* Kluge for 2PC support */
-extern bool MyXactAccessedTempRel;
+/*
+ * Miscellaneous flag bits to record events which occur on the top level
+ * transaction. These flags are only persisted in MyXactFlags and are intended
+ * so we remember to do certain things later in the transaction. This is
+ * globally accessible, so can be set from anywhere in the code which requires
+ * recording flags.
+ */
+extern int	MyXactFlags;
+
+/*
+ * XACT_FLAGS_ACCESSEDTEMPREL - set when a temporary relation is accessed. We
+ * don't allow PREPARE TRANSACTION in that case.
+ */
+#define XACT_FLAGS_ACCESSEDTEMPREL				(1U << 0)
+
+/*
+ * XACT_FLAGS_ACQUIREDACCESSEXCLUSIVELOCK - records whether the top level xact
+ * logged any Access Exclusive Locks.
+ */
+#define XACT_FLAGS_ACQUIREDACCESSEXCLUSIVELOCK	(1U << 1)
+
 
 /*
  *	start- and end-of-transaction callbacks for dynamically loaded modules
@@ -100,7 +118,7 @@ typedef enum
 } SubXactEvent;
 
 typedef void (*SubXactCallback) (SubXactEvent event, SubTransactionId mySubid,
-									SubTransactionId parentSubid, void *arg);
+								 SubTransactionId parentSubid, void *arg);
 
 
 /* ----------------
@@ -137,6 +155,7 @@ typedef void (*SubXactCallback) (SubXactEvent event, SubTransactionId mySubid,
 #define XACT_XINFO_HAS_INVALS			(1U << 3)
 #define XACT_XINFO_HAS_TWOPHASE			(1U << 4)
 #define XACT_XINFO_HAS_ORIGIN			(1U << 5)
+#define XACT_XINFO_HAS_AE_LOCKS			(1U << 6)
 
 /*
  * Also stored in xinfo, these indicating a variety of additional actions that
@@ -225,7 +244,6 @@ typedef struct xl_xact_twophase
 {
 	TransactionId xid;
 } xl_xact_twophase;
-#define MinSizeOfXactInvals offsetof(xl_xact_invals, msgs)
 
 typedef struct xl_xact_origin
 {
@@ -365,12 +383,13 @@ extern XLogRecPtr XactLogCommitRecord(TimestampTz commit_time,
 					int nrels, RelFileNode *rels,
 					int nmsgs, SharedInvalidationMessage *msgs,
 					bool relcacheInval, bool forceSync,
+					int xactflags,
 					TransactionId twophase_xid);
 
 extern XLogRecPtr XactLogAbortRecord(TimestampTz abort_time,
 				   int nsubxacts, TransactionId *subxacts,
 				   int nrels, RelFileNode *rels,
-				   TransactionId twophase_xid);
+				   int xactflags, TransactionId twophase_xid);
 extern void xact_redo(XLogReaderState *record);
 
 /* xactdesc.c */
@@ -385,4 +404,4 @@ extern void EnterParallelMode(void);
 extern void ExitParallelMode(void);
 extern bool IsInParallelMode(void);
 
-#endif   /* XACT_H */
+#endif							/* XACT_H */

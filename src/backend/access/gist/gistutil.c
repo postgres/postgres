@@ -4,7 +4,7 @@
  *	  utilities routines for the postgres GiST index access method.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -13,6 +13,7 @@
  */
 #include "postgres.h"
 
+#include <float.h>
 #include <math.h>
 
 #include "access/gist_private.h"
@@ -551,7 +552,7 @@ gistdentryinit(GISTSTATE *giststate, int nkey, GISTENTRY *e,
 		gistentryinit(*e, k, r, pg, o, l);
 		dep = (GISTENTRY *)
 			DatumGetPointer(FunctionCall1Coll(&giststate->decompressFn[nkey],
-										   giststate->supportCollation[nkey],
+											  giststate->supportCollation[nkey],
 											  PointerGetDatum(e)));
 		/* decompressFn may just return the given pointer */
 		if (dep != e)
@@ -586,7 +587,7 @@ gistFormTuple(GISTSTATE *giststate, Relation r,
 						  isleaf);
 			cep = (GISTENTRY *)
 				DatumGetPointer(FunctionCall1Coll(&giststate->compressFn[i],
-											  giststate->supportCollation[i],
+												  giststate->supportCollation[i],
 												  PointerGetDatum(&centry)));
 			compatt[i] = cep->key;
 		}
@@ -624,9 +625,9 @@ gistFetchAtt(GISTSTATE *giststate, int nkey, Datum k, Relation r)
 
 /*
  * Fetch all keys in tuple.
- * returns new IndexTuple that contains GISTENTRY with fetched data
+ * Returns a new HeapTuple containing the originally-indexed data.
  */
-IndexTuple
+HeapTuple
 gistFetchTuple(GISTSTATE *giststate, Relation r, IndexTuple tuple)
 {
 	MemoryContext oldcxt = MemoryContextSwitchTo(giststate->tempCxt);
@@ -660,7 +661,7 @@ gistFetchTuple(GISTSTATE *giststate, Relation r, IndexTuple tuple)
 	}
 	MemoryContextSwitchTo(oldcxt);
 
-	return index_form_tuple(giststate->fetchTupdesc, fetchatt, isnull);
+	return heap_form_tuple(giststate->fetchTupdesc, fetchatt, isnull);
 }
 
 float
@@ -732,9 +733,9 @@ gistcheckpage(Relation rel, Buffer buf)
 	if (PageIsNew(page))
 		ereport(ERROR,
 				(errcode(ERRCODE_INDEX_CORRUPTED),
-			 errmsg("index \"%s\" contains unexpected zero page at block %u",
-					RelationGetRelationName(rel),
-					BufferGetBlockNumber(buf)),
+				 errmsg("index \"%s\" contains unexpected zero page at block %u",
+						RelationGetRelationName(rel),
+						BufferGetBlockNumber(buf)),
 				 errhint("Please REINDEX it.")));
 
 	/*

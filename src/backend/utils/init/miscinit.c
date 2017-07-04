@@ -3,7 +3,7 @@
  * miscinit.c
  *	  miscellaneous initialization support stuff
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -20,7 +20,6 @@
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/time.h>
-#include <sys/types.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <grp.h>
@@ -36,6 +35,7 @@
 #include "libpq/libpq.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
+#include "pgstat.h"
 #include "postmaster/autovacuum.h"
 #include "postmaster/postmaster.h"
 #include "storage/fd.h"
@@ -47,7 +47,9 @@
 #include "utils/builtins.h"
 #include "utils/guc.h"
 #include "utils/memutils.h"
+#include "utils/pidfile.h"
 #include "utils/syscache.h"
+#include "utils/varlena.h"
 
 
 #define DIRECTORY_LOCK_FILE		"postmaster.pid"
@@ -856,11 +858,13 @@ CreateLockFile(const char *filename, bool amPostmaster,
 					 errmsg("could not open lock file \"%s\": %m",
 							filename)));
 		}
+		pgstat_report_wait_start(WAIT_EVENT_LOCK_FILE_CREATE_READ);
 		if ((len = read(fd, buffer, sizeof(buffer) - 1)) < 0)
 			ereport(FATAL,
 					(errcode_for_file_access(),
 					 errmsg("could not read lock file \"%s\": %m",
 							filename)));
+		pgstat_report_wait_end();
 		close(fd);
 
 		if (len == 0)
@@ -984,7 +988,7 @@ CreateLockFile(const char *filename, bool amPostmaster,
 					 errmsg("could not remove old lock file \"%s\": %m",
 							filename),
 					 errhint("The file seems accidentally left over, but "
-						   "it could not be removed. Please remove the file "
+							 "it could not be removed. Please remove the file "
 							 "by hand and try again.")));
 	}
 
@@ -1009,6 +1013,7 @@ CreateLockFile(const char *filename, bool amPostmaster,
 		strlcat(buffer, "\n", sizeof(buffer));
 
 	errno = 0;
+	pgstat_report_wait_start(WAIT_EVENT_LOCK_FILE_CREATE_WRITE);
 	if (write(fd, buffer, strlen(buffer)) != strlen(buffer))
 	{
 		int			save_errno = errno;
@@ -1021,6 +1026,9 @@ CreateLockFile(const char *filename, bool amPostmaster,
 				(errcode_for_file_access(),
 				 errmsg("could not write lock file \"%s\": %m", filename)));
 	}
+	pgstat_report_wait_end();
+
+	pgstat_report_wait_start(WAIT_EVENT_LOCK_FILE_CREATE_SYNC);
 	if (pg_fsync(fd) != 0)
 	{
 		int			save_errno = errno;
@@ -1032,6 +1040,7 @@ CreateLockFile(const char *filename, bool amPostmaster,
 				(errcode_for_file_access(),
 				 errmsg("could not write lock file \"%s\": %m", filename)));
 	}
+	pgstat_report_wait_end();
 	if (close(fd) != 0)
 	{
 		int			save_errno = errno;
@@ -1129,8 +1138,8 @@ TouchSocketLockFiles(void)
 			read(fd, buffer, sizeof(buffer));
 			close(fd);
 		}
-#endif   /* HAVE_UTIMES */
-#endif   /* HAVE_UTIME */
+#endif							/* HAVE_UTIMES */
+#endif							/* HAVE_UTIME */
 	}
 }
 
@@ -1141,8 +1150,9 @@ TouchSocketLockFiles(void)
  *
  * Note: because we don't truncate the file, if we were to rewrite a line
  * with less data than it had before, there would be garbage after the last
- * line.  We don't ever actually do that, so not worth adding another kernel
- * call to cover the possibility.
+ * line.  While we could fix that by adding a truncate call, that would make
+ * the file update non-atomic, which we'd rather avoid.  Therefore, callers
+ * should endeavor never to shorten a line once it's been written.
  */
 void
 AddToDataDirLockFile(int target_line, const char *str)
@@ -1164,7 +1174,9 @@ AddToDataDirLockFile(int target_line, const char *str)
 						DIRECTORY_LOCK_FILE)));
 		return;
 	}
+	pgstat_report_wait_start(WAIT_EVENT_LOCK_FILE_ADDTODATADIR_READ);
 	len = read(fd, srcbuffer, sizeof(srcbuffer) - 1);
+	pgstat_report_wait_end();
 	if (len < 0)
 	{
 		ereport(LOG,
@@ -1183,17 +1195,24 @@ AddToDataDirLockFile(int target_line, const char *str)
 	srcptr = srcbuffer;
 	for (lineno = 1; lineno < target_line; lineno++)
 	{
-		if ((srcptr = strchr(srcptr, '\n')) == NULL)
-		{
-			elog(LOG, "incomplete data in \"%s\": found only %d newlines while trying to add line %d",
-				 DIRECTORY_LOCK_FILE, lineno - 1, target_line);
-			close(fd);
-			return;
-		}
-		srcptr++;
+		char	   *eol = strchr(srcptr, '\n');
+
+		if (eol == NULL)
+			break;				/* not enough lines in file yet */
+		srcptr = eol + 1;
 	}
 	memcpy(destbuffer, srcbuffer, srcptr - srcbuffer);
 	destptr = destbuffer + (srcptr - srcbuffer);
+
+	/*
+	 * Fill in any missing lines before the target line, in case lines are
+	 * added to the file out of order.
+	 */
+	for (; lineno < target_line; lineno++)
+	{
+		if (destptr < destbuffer + sizeof(destbuffer))
+			*destptr++ = '\n';
+	}
 
 	/*
 	 * Write or rewrite the target line.
@@ -1217,9 +1236,11 @@ AddToDataDirLockFile(int target_line, const char *str)
 	 */
 	len = strlen(destbuffer);
 	errno = 0;
+	pgstat_report_wait_start(WAIT_EVENT_LOCK_FILE_ADDTODATADIR_WRITE);
 	if (lseek(fd, (off_t) 0, SEEK_SET) != 0 ||
 		(int) write(fd, destbuffer, len) != len)
 	{
+		pgstat_report_wait_end();
 		/* if write didn't set errno, assume problem is no disk space */
 		if (errno == 0)
 			errno = ENOSPC;
@@ -1230,6 +1251,8 @@ AddToDataDirLockFile(int target_line, const char *str)
 		close(fd);
 		return;
 	}
+	pgstat_report_wait_end();
+	pgstat_report_wait_start(WAIT_EVENT_LOCK_FILE_ADDTODATADIR_SYNC);
 	if (pg_fsync(fd) != 0)
 	{
 		ereport(LOG,
@@ -1237,6 +1260,7 @@ AddToDataDirLockFile(int target_line, const char *str)
 				 errmsg("could not write to file \"%s\": %m",
 						DIRECTORY_LOCK_FILE)));
 	}
+	pgstat_report_wait_end();
 	if (close(fd) != 0)
 	{
 		ereport(LOG,
@@ -1288,12 +1312,14 @@ RecheckDataDirLockFile(void)
 				/* non-fatal, at least for now */
 				ereport(LOG,
 						(errcode_for_file_access(),
-				  errmsg("could not open file \"%s\": %m; continuing anyway",
-						 DIRECTORY_LOCK_FILE)));
+						 errmsg("could not open file \"%s\": %m; continuing anyway",
+								DIRECTORY_LOCK_FILE)));
 				return true;
 		}
 	}
+	pgstat_report_wait_start(WAIT_EVENT_LOCK_FILE_RECHECKDATADIR_READ);
 	len = read(fd, buffer, sizeof(buffer) - 1);
+	pgstat_report_wait_end();
 	if (len < 0)
 	{
 		ereport(LOG,
@@ -1418,12 +1444,12 @@ load_libraries(const char *libraries, const char *gucname, bool restricted)
 	/* Need a modifiable copy of string */
 	rawstring = pstrdup(libraries);
 
-	/* Parse string into list of identifiers */
-	if (!SplitIdentifierString(rawstring, ',', &elemlist))
+	/* Parse string into list of filename paths */
+	if (!SplitDirectoriesString(rawstring, ',', &elemlist))
 	{
 		/* syntax error in list */
+		list_free_deep(elemlist);
 		pfree(rawstring);
-		list_free(elemlist);
 		ereport(LOG,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("invalid list syntax in parameter \"%s\"",
@@ -1433,28 +1459,25 @@ load_libraries(const char *libraries, const char *gucname, bool restricted)
 
 	foreach(l, elemlist)
 	{
-		char	   *tok = (char *) lfirst(l);
-		char	   *filename;
+		/* Note that filename was already canonicalized */
+		char	   *filename = (char *) lfirst(l);
+		char	   *expanded = NULL;
 
-		filename = pstrdup(tok);
-		canonicalize_path(filename);
 		/* If restricting, insert $libdir/plugins if not mentioned already */
 		if (restricted && first_dir_separator(filename) == NULL)
 		{
-			char	   *expanded;
-
 			expanded = psprintf("$libdir/plugins/%s", filename);
-			pfree(filename);
 			filename = expanded;
 		}
 		load_file(filename, restricted);
 		ereport(DEBUG1,
 				(errmsg("loaded library \"%s\"", filename)));
-		pfree(filename);
+		if (expanded)
+			pfree(expanded);
 	}
 
+	list_free_deep(elemlist);
 	pfree(rawstring);
-	list_free(elemlist);
 }
 
 /*

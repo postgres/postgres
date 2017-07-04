@@ -169,13 +169,13 @@ SELECT * FROM changing_test();
 -- tables of composite types
 
 CREATE FUNCTION composite_types_table(OUT tab table_record[], OUT typ type_record[] ) RETURNS SETOF record AS $$
-yield {'tab': [['first', 1], ['second', 2]],
+yield {'tab': [('first', 1), ('second', 2)],
       'typ': [{'first': 'third', 'second': 3},
               {'first': 'fourth', 'second': 4}]}
-yield {'tab': [['first', 1], ['second', 2]],
+yield {'tab': [('first', 1), ('second', 2)],
       'typ': [{'first': 'third', 'second': 3},
               {'first': 'fourth', 'second': 4}]}
-yield {'tab': [['first', 1], ['second', 2]],
+yield {'tab': [('first', 1), ('second', 2)],
       'typ': [{'first': 'third', 'second': 3},
               {'first': 'fourth', 'second': 4}]}
 $$ LANGUAGE plpythonu;
@@ -207,3 +207,18 @@ SELECT * FROM return_record_2('v4') AS (v1 int, v3 int, v2 int);
 -- works
 SELECT * FROM return_record_2('v3') AS (v1 int, v3 int, v2 int);
 SELECT * FROM return_record_2('v3') AS (v1 int, v2 int, v3 int);
+
+-- multi-dimensional array of composite types.
+CREATE FUNCTION composite_type_as_list()  RETURNS type_record[] AS $$
+  return [[('first', 1), ('second', 1)], [('first', 2), ('second', 2)], [('first', 3), ('second', 3)]];
+$$ LANGUAGE plpythonu;
+SELECT * FROM composite_type_as_list();
+
+-- Starting with PostgreSQL 10, a composite type in an array cannot be
+-- represented as a Python list, because it's ambiguous with multi-dimensional
+-- arrays. So this throws an error now. The error should contain a useful hint
+-- on the issue.
+CREATE FUNCTION composite_type_as_list_broken()  RETURNS type_record[] AS $$
+  return [['first', 1]];
+$$ LANGUAGE plpythonu;
+SELECT * FROM composite_type_as_list_broken();

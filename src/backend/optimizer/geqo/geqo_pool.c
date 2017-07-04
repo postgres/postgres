@@ -3,7 +3,7 @@
  * geqo_pool.c
  *	  Genetic Algorithm (GA) pool stuff
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/backend/optimizer/geqo/geqo_pool.c
@@ -54,7 +54,7 @@ alloc_pool(PlannerInfo *root, int pool_size, int string_length)
 	new_pool->data = (Chromosome *) palloc(pool_size * sizeof(Chromosome));
 
 	/* all gene */
-	chromo = (Chromosome *) new_pool->data;		/* vector of all chromos */
+	chromo = (Chromosome *) new_pool->data; /* vector of all chromos */
 	for (i = 0; i < pool_size; i++)
 		chromo[i].string = palloc((string_length + 1) * sizeof(Gene));
 

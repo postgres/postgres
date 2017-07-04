@@ -103,6 +103,26 @@ select ('{{1,2,3},{4,5,6},{7,8,9}}'::int[])[1:2][2];
 select '[0:2][0:2]={{1,2,3},{4,5,6},{7,8,9}}'::int[];
 select ('[0:2][0:2]={{1,2,3},{4,5,6},{7,8,9}}'::int[])[1:2][2];
 
+--
+-- check subscription corner cases
+--
+-- More subscripts than MAXDIMS(6)
+SELECT ('{}'::int[])[1][2][3][4][5][6][7];
+-- NULL index yields NULL when selecting
+SELECT ('{{{1},{2},{3}},{{4},{5},{6}}}'::int[])[1][NULL][1];
+SELECT ('{{{1},{2},{3}},{{4},{5},{6}}}'::int[])[1][NULL:1][1];
+SELECT ('{{{1},{2},{3}},{{4},{5},{6}}}'::int[])[1][1:NULL][1];
+-- NULL index in assignment is an error
+UPDATE arrtest
+  SET c[NULL] = '{"can''t assign"}'
+  WHERE array_dims(c) is not null;
+UPDATE arrtest
+  SET c[NULL:1] = '{"can''t assign"}'
+  WHERE array_dims(c) is not null;
+UPDATE arrtest
+  SET c[1:NULL] = '{"can''t assign"}'
+  WHERE array_dims(c) is not null;
+
 -- test slices with empty lower and/or upper index
 CREATE TEMP TABLE arrtest_s (
   a       int2[],
@@ -133,6 +153,16 @@ SELECT f1[0:1] FROM POINT_TBL;
 SELECT f1[0:] FROM POINT_TBL;
 SELECT f1[:1] FROM POINT_TBL;
 SELECT f1[:] FROM POINT_TBL;
+
+-- subscript assignments to fixed-width result in NULL if previous value is NULL
+UPDATE point_tbl SET f1[0] = 10 WHERE f1 IS NULL RETURNING *;
+INSERT INTO point_tbl(f1[0]) VALUES(0) RETURNING *;
+-- NULL assignments get ignored
+UPDATE point_tbl SET f1[0] = NULL WHERE f1::text = '(10,10)'::point::text RETURNING *;
+-- but non-NULL subscript assignments work
+UPDATE point_tbl SET f1[0] = -10, f1[1] = -10 WHERE f1::text = '(10,10)'::point::text RETURNING *;
+-- but not to expand the range
+UPDATE point_tbl SET f1[3] = 10 WHERE f1::text = '(-10,-10)'::point::text RETURNING *;
 
 --
 -- test array extension
@@ -262,6 +292,15 @@ $$ LANGUAGE plpgsql;
 SELECT array_position('[2:4]={1,2,3}'::int[], 1);
 SELECT array_positions('[2:4]={1,2,3}'::int[], 1);
 
+SELECT
+    array_position(ids, (1, 1)),
+    array_positions(ids, (1, 1))
+        FROM
+(VALUES
+    (ARRAY[(0, 0), (1, 1)]),
+    (ARRAY[(1, 1)])
+) AS f (ids);
+
 -- operators
 SELECT a FROM arrtest WHERE b = ARRAY[[[113,142],[1,147]]];
 SELECT NOT ARRAY[1.1,1.2,1.3] = ARRAY[1.1,1.2,1.3] AS "FALSE";
@@ -307,6 +346,7 @@ SELECT ARRAY[1,2,3]::text[]::int[]::float8[] is of (float8[]) as "TRUE";
 SELECT ARRAY[['a','bc'],['def','hijk']]::text[]::varchar[] AS "{{a,bc},{def,hijk}}";
 SELECT ARRAY[['a','bc'],['def','hijk']]::text[]::varchar[] is of (varchar[]) as "TRUE";
 SELECT CAST(ARRAY[[[[[['a','bb','ccc']]]]]] as text[]) as "{{{{{{a,bb,ccc}}}}}}";
+SELECT NULL::text[]::int[] AS "NULL";
 
 -- scalar op any/all (array)
 select 33 = any ('{1,2,3}');
@@ -332,6 +372,8 @@ select 33 = all (null::int[]);
 select null::int = all ('{1,2,3}');
 select 33 = all ('{1,null,3}');
 select 33 = all ('{33,null,33}');
+-- nulls later in the bitmap
+SELECT -1 != ALL(ARRAY(SELECT NULLIF(g.i, 900) FROM generate_series(1,1000) g(i)));
 
 -- test indexes on arrays
 create temp table arr_tbl (f1 int[] unique);
@@ -473,11 +515,19 @@ select array_fill(7, array[3,3],array[2,2]);
 select array_fill(7, array[3,3]);
 select array_fill('juhu'::text, array[3,3],array[2,2]);
 select array_fill('juhu'::text, array[3,3]);
+select a, a = '{}' as is_eq, array_dims(a)
+  from (select array_fill(42, array[0]) as a) ss;
+select a, a = '{}' as is_eq, array_dims(a)
+  from (select array_fill(42, '{}') as a) ss;
+select a, a = '{}' as is_eq, array_dims(a)
+  from (select array_fill(42, '{}', '{}') as a) ss;
 -- raise exception
 select array_fill(1, null, array[2,2]);
 select array_fill(1, array[2,2], null);
+select array_fill(1, array[2,2], '{}');
 select array_fill(1, array[3,3], array[1,1,1]);
 select array_fill(1, array[1,2,null]);
+select array_fill(1, array[[1,2],[3,4]]);
 
 select string_to_array('1|2|3', '|');
 select string_to_array('1|2|3|', '|');

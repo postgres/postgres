@@ -3,7 +3,7 @@
  * arch-arm.h
  *	  Atomic operations considerations specific to ARM
  *
- * Portions Copyright (c) 2013-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2013-2017, PostgreSQL Global Development Group
  *
  * NOTES:
  *
@@ -18,8 +18,9 @@
 #endif
 
 /*
- * 64 bit atomics on arm are implemented using kernel fallbacks and might be
- * slow, so disable entirely for now.
- * XXX: We might want to change that at some point for AARCH64
+ * 64 bit atomics on ARM32 are implemented using kernel fallbacks and thus
+ * might be slow, so disable entirely. On ARM64 that problem doesn't exist.
  */
+#if !defined(__aarch64__) && !defined(__aarch64)
 #define PG_DISABLE_64_BIT_ATOMICS
+#endif  /* __aarch64__ || __aarch64 */

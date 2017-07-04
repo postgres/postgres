@@ -1,0 +1,256 @@
+-- predictability
+SET synchronous_commit = on;
+SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot', 'test_decoding');
+ ?column? 
+----------
+ init
+(1 row)
+
+CREATE TABLE spill_test(data text);
+-- consume DDL
+SELECT data FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');
+ data 
+------
+(0 rows)
+
+-- spilling main xact
+BEGIN;
+INSERT INTO spill_test SELECT 'serialize-topbig--1:'||g.i FROM generate_series(1, 5000) g(i);
+COMMIT;
+SELECT (regexp_split_to_array(data, ':'))[4], COUNT(*), (array_agg(data))[1], (array_agg(data))[count(*)]
+FROM pg_logical_slot_get_changes('regression_slot', NULL,NULL) WHERE data ~ 'INSERT'
+GROUP BY 1 ORDER BY 1;
+ regexp_split_to_array | count |                              array_agg                              |                               array_agg                                
+-----------------------+-------+---------------------------------------------------------------------+------------------------------------------------------------------------
+ 'serialize-topbig--1  |  5000 | table public.spill_test: INSERT: data[text]:'serialize-topbig--1:1' | table public.spill_test: INSERT: data[text]:'serialize-topbig--1:5000'
+(1 row)
+
+-- spilling subxact, nothing in main
+BEGIN;
+SAVEPOINT s;
+INSERT INTO spill_test SELECT 'serialize-subbig--1:'||g.i FROM generate_series(1, 5000) g(i);
+RELEASE SAVEPOINT s;
+COMMIT;
+SELECT (regexp_split_to_array(data, ':'))[4], COUNT(*), (array_agg(data))[1], (array_agg(data))[count(*)]
+FROM pg_logical_slot_get_changes('regression_slot', NULL,NULL) WHERE data ~ 'INSERT'
+GROUP BY 1 ORDER BY 1;
+ regexp_split_to_array | count |                              array_agg                              |                               array_agg                                
+-----------------------+-------+---------------------------------------------------------------------+------------------------------------------------------------------------
+ 'serialize-subbig--1  |  5000 | table public.spill_test: INSERT: data[text]:'serialize-subbig--1:1' | table public.spill_test: INSERT: data[text]:'serialize-subbig--1:5000'
+(1 row)
+
+-- spilling subxact, spilling main xact
+BEGIN;
+SAVEPOINT s;
+INSERT INTO spill_test SELECT 'serialize-subbig-topbig--1:'||g.i FROM generate_series(1, 5000) g(i);
+RELEASE SAVEPOINT s;
+INSERT INTO spill_test SELECT 'serialize-subbig-topbig--2:'||g.i FROM generate_series(5001, 10000) g(i);
+COMMIT;
+SELECT (regexp_split_to_array(data, ':'))[4], COUNT(*), (array_agg(data))[1], (array_agg(data))[count(*)]
+FROM pg_logical_slot_get_changes('regression_slot', NULL,NULL) WHERE data ~ 'INSERT'
+GROUP BY 1 ORDER BY 1;
+    regexp_split_to_array    | count |                                   array_agg                                   |                                   array_agg                                    
+-----------------------------+-------+-------------------------------------------------------------------------------+--------------------------------------------------------------------------------
+ 'serialize-subbig-topbig--1 |  5000 | table public.spill_test: INSERT: data[text]:'serialize-subbig-topbig--1:1'    | table public.spill_test: INSERT: data[text]:'serialize-subbig-topbig--1:5000'
+ 'serialize-subbig-topbig--2 |  5000 | table public.spill_test: INSERT: data[text]:'serialize-subbig-topbig--2:5001' | table public.spill_test: INSERT: data[text]:'serialize-subbig-topbig--2:10000'
+(2 rows)
+
+-- spilling subxact, non-spilling main xact
+BEGIN;
+SAVEPOINT s;
+INSERT INTO spill_test SELECT 'serialize-subbig-topsmall--1:'||g.i FROM generate_series(1, 5000) g(i);
+RELEASE SAVEPOINT s;
+INSERT INTO spill_test SELECT 'serialize-subbig-topsmall--2:'||g.i FROM generate_series(5001, 5001) g(i);
+COMMIT;
+SELECT (regexp_split_to_array(data, ':'))[4], COUNT(*), (array_agg(data))[1], (array_agg(data))[count(*)]
+FROM pg_logical_slot_get_changes('regression_slot', NULL,NULL) WHERE data ~ 'INSERT'
+GROUP BY 1 ORDER BY 1;
+     regexp_split_to_array     | count |                                    array_agg                                    |                                    array_agg                                    
+-------------------------------+-------+---------------------------------------------------------------------------------+---------------------------------------------------------------------------------
+ 'serialize-subbig-topsmall--1 |  5000 | table public.spill_test: INSERT: data[text]:'serialize-subbig-topsmall--1:1'    | table public.spill_test: INSERT: data[text]:'serialize-subbig-topsmall--1:5000'
+ 'serialize-subbig-topsmall--2 |     1 | table public.spill_test: INSERT: data[text]:'serialize-subbig-topsmall--2:5001' | table public.spill_test: INSERT: data[text]:'serialize-subbig-topsmall--2:5001'
+(2 rows)
+
+-- not-spilling subxact, spilling main xact
+BEGIN;
+SAVEPOINT s;
+INSERT INTO spill_test SELECT 'serialize-subbig-topbig--1:'||g.i FROM generate_series(1, 5000) g(i);
+RELEASE SAVEPOINT s;
+INSERT INTO spill_test SELECT 'serialize-subbig-topbig--2:'||g.i FROM generate_series(5001, 10000) g(i);
+COMMIT;
+SELECT (regexp_split_to_array(data, ':'))[4], COUNT(*), (array_agg(data))[1], (array_agg(data))[count(*)]
+FROM pg_logical_slot_get_changes('regression_slot', NULL,NULL) WHERE data ~ 'INSERT'
+GROUP BY 1 ORDER BY 1;
+    regexp_split_to_array    | count |                                   array_agg                                   |                                   array_agg                                    
+-----------------------------+-------+-------------------------------------------------------------------------------+--------------------------------------------------------------------------------
+ 'serialize-subbig-topbig--1 |  5000 | table public.spill_test: INSERT: data[text]:'serialize-subbig-topbig--1:1'    | table public.spill_test: INSERT: data[text]:'serialize-subbig-topbig--1:5000'
+ 'serialize-subbig-topbig--2 |  5000 | table public.spill_test: INSERT: data[text]:'serialize-subbig-topbig--2:5001' | table public.spill_test: INSERT: data[text]:'serialize-subbig-topbig--2:10000'
+(2 rows)
+
+-- spilling main xact, spilling subxact
+BEGIN;
+INSERT INTO spill_test SELECT 'serialize-topbig-subbig--1:'||g.i FROM generate_series(1, 5000) g(i);
+SAVEPOINT s;
+INSERT INTO spill_test SELECT 'serialize-topbig-subbig--2:'||g.i FROM generate_series(5001, 10000) g(i);
+RELEASE SAVEPOINT s;
+COMMIT;
+SELECT (regexp_split_to_array(data, ':'))[4], COUNT(*), (array_agg(data))[1], (array_agg(data))[count(*)]
+FROM pg_logical_slot_get_changes('regression_slot', NULL,NULL) WHERE data ~ 'INSERT'
+GROUP BY 1 ORDER BY 1;
+    regexp_split_to_array    | count |                                   array_agg                                   |                                   array_agg                                    
+-----------------------------+-------+-------------------------------------------------------------------------------+--------------------------------------------------------------------------------
+ 'serialize-topbig-subbig--1 |  5000 | table public.spill_test: INSERT: data[text]:'serialize-topbig-subbig--1:1'    | table public.spill_test: INSERT: data[text]:'serialize-topbig-subbig--1:5000'
+ 'serialize-topbig-subbig--2 |  5000 | table public.spill_test: INSERT: data[text]:'serialize-topbig-subbig--2:5001' | table public.spill_test: INSERT: data[text]:'serialize-topbig-subbig--2:10000'
+(2 rows)
+
+-- spilling main xact, not spilling subxact
+BEGIN;
+INSERT INTO spill_test SELECT 'serialize-topbig-subsmall--1:'||g.i FROM generate_series(1, 5000) g(i);
+SAVEPOINT s;
+INSERT INTO spill_test SELECT 'serialize-topbig-subsmall--2:'||g.i FROM generate_series(5001, 5001) g(i);
+RELEASE SAVEPOINT s;
+COMMIT;
+SELECT (regexp_split_to_array(data, ':'))[4], COUNT(*), (array_agg(data))[1], (array_agg(data))[count(*)]
+FROM pg_logical_slot_get_changes('regression_slot', NULL,NULL) WHERE data ~ 'INSERT'
+GROUP BY 1 ORDER BY 1;
+     regexp_split_to_array     | count |                                    array_agg                                    |                                    array_agg                                    
+-------------------------------+-------+---------------------------------------------------------------------------------+---------------------------------------------------------------------------------
+ 'serialize-topbig-subsmall--1 |  5000 | table public.spill_test: INSERT: data[text]:'serialize-topbig-subsmall--1:1'    | table public.spill_test: INSERT: data[text]:'serialize-topbig-subsmall--1:5000'
+ 'serialize-topbig-subsmall--2 |     1 | table public.spill_test: INSERT: data[text]:'serialize-topbig-subsmall--2:5001' | table public.spill_test: INSERT: data[text]:'serialize-topbig-subsmall--2:5001'
+(2 rows)
+
+-- spilling subxact, followed by another spilling subxact
+BEGIN;
+SAVEPOINT s1;
+INSERT INTO spill_test SELECT 'serialize-subbig-subbig--1:'||g.i FROM generate_series(1, 5000) g(i);
+RELEASE SAVEPOINT s1;
+SAVEPOINT s2;
+INSERT INTO spill_test SELECT 'serialize-subbig-subbig--2:'||g.i FROM generate_series(5001, 10000) g(i);
+RELEASE SAVEPOINT s2;
+COMMIT;
+SELECT (regexp_split_to_array(data, ':'))[4], COUNT(*), (array_agg(data))[1], (array_agg(data))[count(*)]
+FROM pg_logical_slot_get_changes('regression_slot', NULL,NULL) WHERE data ~ 'INSERT'
+GROUP BY 1 ORDER BY 1;
+    regexp_split_to_array    | count |                                   array_agg                                   |                                   array_agg                                    
+-----------------------------+-------+-------------------------------------------------------------------------------+--------------------------------------------------------------------------------
+ 'serialize-subbig-subbig--1 |  5000 | table public.spill_test: INSERT: data[text]:'serialize-subbig-subbig--1:1'    | table public.spill_test: INSERT: data[text]:'serialize-subbig-subbig--1:5000'
+ 'serialize-subbig-subbig--2 |  5000 | table public.spill_test: INSERT: data[text]:'serialize-subbig-subbig--2:5001' | table public.spill_test: INSERT: data[text]:'serialize-subbig-subbig--2:10000'
+(2 rows)
+
+-- spilling subxact, followed by not spilling subxact
+BEGIN;
+SAVEPOINT s1;
+INSERT INTO spill_test SELECT 'serialize-subbig-subsmall--1:'||g.i FROM generate_series(1, 5000) g(i);
+RELEASE SAVEPOINT s1;
+SAVEPOINT s2;
+INSERT INTO spill_test SELECT 'serialize-subbig-subsmall--2:'||g.i FROM generate_series(5001, 5001) g(i);
+RELEASE SAVEPOINT s2;
+COMMIT;
+SELECT (regexp_split_to_array(data, ':'))[4], COUNT(*), (array_agg(data))[1], (array_agg(data))[count(*)]
+FROM pg_logical_slot_get_changes('regression_slot', NULL,NULL) WHERE data ~ 'INSERT'
+GROUP BY 1 ORDER BY 1;
+     regexp_split_to_array     | count |                                    array_agg                                    |                                    array_agg                                    
+-------------------------------+-------+---------------------------------------------------------------------------------+---------------------------------------------------------------------------------
+ 'serialize-subbig-subsmall--1 |  5000 | table public.spill_test: INSERT: data[text]:'serialize-subbig-subsmall--1:1'    | table public.spill_test: INSERT: data[text]:'serialize-subbig-subsmall--1:5000'
+ 'serialize-subbig-subsmall--2 |     1 | table public.spill_test: INSERT: data[text]:'serialize-subbig-subsmall--2:5001' | table public.spill_test: INSERT: data[text]:'serialize-subbig-subsmall--2:5001'
+(2 rows)
+
+-- not spilling subxact, followed by spilling subxact
+BEGIN;
+SAVEPOINT s1;
+INSERT INTO spill_test SELECT 'serialize-subsmall-subbig--1:'||g.i FROM generate_series(1, 1) g(i);
+RELEASE SAVEPOINT s1;
+SAVEPOINT s2;
+INSERT INTO spill_test SELECT 'serialize-subsmall-subbig--2:'||g.i FROM generate_series(2, 5001) g(i);
+RELEASE SAVEPOINT s2;
+COMMIT;
+SELECT (regexp_split_to_array(data, ':'))[4] COLLATE "C", COUNT(*), (array_agg(data))[1], (array_agg(data))[count(*)]
+FROM pg_logical_slot_get_changes('regression_slot', NULL,NULL) WHERE data ~ 'INSERT'
+GROUP BY 1 ORDER BY 1;
+     regexp_split_to_array     | count |                                  array_agg                                   |                                    array_agg                                    
+-------------------------------+-------+------------------------------------------------------------------------------+---------------------------------------------------------------------------------
+ 'serialize-subsmall-subbig--1 |     1 | table public.spill_test: INSERT: data[text]:'serialize-subsmall-subbig--1:1' | table public.spill_test: INSERT: data[text]:'serialize-subsmall-subbig--1:1'
+ 'serialize-subsmall-subbig--2 |  5000 | table public.spill_test: INSERT: data[text]:'serialize-subsmall-subbig--2:2' | table public.spill_test: INSERT: data[text]:'serialize-subsmall-subbig--2:5001'
+(2 rows)
+
+-- spilling subxact, containing another spilling subxact
+BEGIN;
+SAVEPOINT s1;
+INSERT INTO spill_test SELECT 'serialize-nested-subbig-subbig--1:'||g.i FROM generate_series(1, 5000) g(i);
+SAVEPOINT s2;
+INSERT INTO spill_test SELECT 'serialize-nested-subbig-subbig--2:'||g.i FROM generate_series(5001, 10000) g(i);
+RELEASE SAVEPOINT s2;
+RELEASE SAVEPOINT s1;
+COMMIT;
+SELECT (regexp_split_to_array(data, ':'))[4] COLLATE "C", COUNT(*), (array_agg(data))[1], (array_agg(data))[count(*)]
+FROM pg_logical_slot_get_changes('regression_slot', NULL,NULL) WHERE data ~ 'INSERT'
+GROUP BY 1 ORDER BY 1;
+       regexp_split_to_array        | count |                                      array_agg                                       |                                       array_agg                                       
+------------------------------------+-------+--------------------------------------------------------------------------------------+---------------------------------------------------------------------------------------
+ 'serialize-nested-subbig-subbig--1 |  5000 | table public.spill_test: INSERT: data[text]:'serialize-nested-subbig-subbig--1:1'    | table public.spill_test: INSERT: data[text]:'serialize-nested-subbig-subbig--1:5000'
+ 'serialize-nested-subbig-subbig--2 |  5000 | table public.spill_test: INSERT: data[text]:'serialize-nested-subbig-subbig--2:5001' | table public.spill_test: INSERT: data[text]:'serialize-nested-subbig-subbig--2:10000'
+(2 rows)
+
+-- spilling subxact, containing a not spilling subxact
+BEGIN;
+SAVEPOINT s1;
+INSERT INTO spill_test SELECT 'serialize-nested-subbig-subsmall--1:'||g.i FROM generate_series(1, 5000) g(i);
+SAVEPOINT s2;
+INSERT INTO spill_test SELECT 'serialize-nested-subbig-subsmall--2:'||g.i FROM generate_series(5001, 5001) g(i);
+RELEASE SAVEPOINT s2;
+RELEASE SAVEPOINT s1;
+COMMIT;
+SELECT (regexp_split_to_array(data, ':'))[4] COLLATE "C", COUNT(*), (array_agg(data))[1], (array_agg(data))[count(*)]
+FROM pg_logical_slot_get_changes('regression_slot', NULL,NULL) WHERE data ~ 'INSERT'
+GROUP BY 1 ORDER BY 1;
+        regexp_split_to_array         | count |                                       array_agg                                        |                                       array_agg                                        
+--------------------------------------+-------+----------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------
+ 'serialize-nested-subbig-subsmall--1 |  5000 | table public.spill_test: INSERT: data[text]:'serialize-nested-subbig-subsmall--1:1'    | table public.spill_test: INSERT: data[text]:'serialize-nested-subbig-subsmall--1:5000'
+ 'serialize-nested-subbig-subsmall--2 |     1 | table public.spill_test: INSERT: data[text]:'serialize-nested-subbig-subsmall--2:5001' | table public.spill_test: INSERT: data[text]:'serialize-nested-subbig-subsmall--2:5001'
+(2 rows)
+
+-- not spilling subxact, containing a spilling subxact
+BEGIN;
+SAVEPOINT s1;
+INSERT INTO spill_test SELECT 'serialize-nested-subsmall-subbig--1:'||g.i FROM generate_series(1, 1) g(i);
+SAVEPOINT s2;
+INSERT INTO spill_test SELECT 'serialize-nested-subsmall-subbig--2:'||g.i FROM generate_series(2, 5001) g(i);
+RELEASE SAVEPOINT s2;
+RELEASE SAVEPOINT s1;
+COMMIT;
+SELECT (regexp_split_to_array(data, ':'))[4] COLLATE "C", COUNT(*), (array_agg(data))[1], (array_agg(data))[count(*)]
+FROM pg_logical_slot_get_changes('regression_slot', NULL,NULL) WHERE data ~ 'INSERT'
+GROUP BY 1 ORDER BY 1;
+        regexp_split_to_array         | count |                                      array_agg                                      |                                       array_agg                                        
+--------------------------------------+-------+-------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------
+ 'serialize-nested-subsmall-subbig--1 |     1 | table public.spill_test: INSERT: data[text]:'serialize-nested-subsmall-subbig--1:1' | table public.spill_test: INSERT: data[text]:'serialize-nested-subsmall-subbig--1:1'
+ 'serialize-nested-subsmall-subbig--2 |  5000 | table public.spill_test: INSERT: data[text]:'serialize-nested-subsmall-subbig--2:2' | table public.spill_test: INSERT: data[text]:'serialize-nested-subsmall-subbig--2:5001'
+(2 rows)
+
+-- not spilling subxact, containing a spilling subxact that aborts and one that commits
+BEGIN;
+SAVEPOINT s1;
+INSERT INTO spill_test SELECT 'serialize-nested-subbig-subbigabort--1:'||g.i FROM generate_series(1, 5000) g(i);
+SAVEPOINT s2;
+INSERT INTO spill_test SELECT 'serialize-nested-subbig-subbigabort--2:'||g.i FROM generate_series(5001, 10000) g(i);
+ROLLBACK TO SAVEPOINT s2;
+SAVEPOINT s3;
+INSERT INTO spill_test SELECT 'serialize-nested-subbig-subbigabort-subbig-3:'||g.i FROM generate_series(5001, 10000) g(i);
+RELEASE SAVEPOINT s1;
+COMMIT;
+SELECT (regexp_split_to_array(data, ':'))[4] COLLATE "C", COUNT(*), (array_agg(data))[1], (array_agg(data))[count(*)]
+FROM pg_logical_slot_get_changes('regression_slot', NULL,NULL) WHERE data ~ 'INSERT'
+GROUP BY 1 ORDER BY 1;
+             regexp_split_to_array             | count |                                            array_agg                                            |                                            array_agg                                             
+-----------------------------------------------+-------+-------------------------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------------
+ 'serialize-nested-subbig-subbigabort--1       |  5000 | table public.spill_test: INSERT: data[text]:'serialize-nested-subbig-subbigabort--1:1'          | table public.spill_test: INSERT: data[text]:'serialize-nested-subbig-subbigabort--1:5000'
+ 'serialize-nested-subbig-subbigabort-subbig-3 |  5000 | table public.spill_test: INSERT: data[text]:'serialize-nested-subbig-subbigabort-subbig-3:5001' | table public.spill_test: INSERT: data[text]:'serialize-nested-subbig-subbigabort-subbig-3:10000'
+(2 rows)
+
+DROP TABLE spill_test;
+SELECT pg_drop_replication_slot('regression_slot');
+ pg_drop_replication_slot 
+--------------------------
+ 
+(1 row)
+

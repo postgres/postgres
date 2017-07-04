@@ -3,7 +3,7 @@
  * nodeWorktablescan.c
  *	  routines to handle WorkTableScan nodes.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -95,8 +95,8 @@ ExecWorkTableScan(WorkTableScanState *node)
 		param = &(estate->es_param_exec_vals[plan->wtParam]);
 		Assert(param->execPlan == NULL);
 		Assert(!param->isnull);
-		node->rustate = (RecursiveUnionState *) DatumGetPointer(param->value);
-		Assert(node->rustate && IsA(node->rustate, RecursiveUnionState));
+		node->rustate = castNode(RecursiveUnionState, DatumGetPointer(param->value));
+		Assert(node->rustate);
 
 		/*
 		 * The scan tuple type (ie, the rowtype we expect to find in the work
@@ -156,12 +156,8 @@ ExecInitWorkTableScan(WorkTableScan *node, EState *estate, int eflags)
 	/*
 	 * initialize child expressions
 	 */
-	scanstate->ss.ps.targetlist = (List *)
-		ExecInitExpr((Expr *) node->scan.plan.targetlist,
-					 (PlanState *) scanstate);
-	scanstate->ss.ps.qual = (List *)
-		ExecInitExpr((Expr *) node->scan.plan.qual,
-					 (PlanState *) scanstate);
+	scanstate->ss.ps.qual =
+		ExecInitQual(node->scan.plan.qual, (PlanState *) scanstate);
 
 	/*
 	 * tuple table initialization
@@ -173,8 +169,6 @@ ExecInitWorkTableScan(WorkTableScan *node, EState *estate, int eflags)
 	 * Initialize result tuple type, but not yet projection info.
 	 */
 	ExecAssignResultTypeFromTL(&scanstate->ss.ps);
-
-	scanstate->ss.ps.ps_TupFromTlist = false;
 
 	return scanstate;
 }

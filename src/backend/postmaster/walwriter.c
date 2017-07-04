@@ -31,7 +31,7 @@
  * should be killed by SIGQUIT and then a recovery cycle started.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
@@ -50,6 +50,7 @@
 #include "pgstat.h"
 #include "postmaster/walwriter.h"
 #include "storage/bufmgr.h"
+#include "storage/condition_variable.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
 #include "storage/lwlock.h"
@@ -108,8 +109,8 @@ WalWriterMain(void)
 	 * reasonable to treat like SIGTERM.
 	 */
 	pqsignal(SIGHUP, WalSigHupHandler); /* set flag to read config file */
-	pqsignal(SIGINT, WalShutdownHandler);		/* request shutdown */
-	pqsignal(SIGTERM, WalShutdownHandler);		/* request shutdown */
+	pqsignal(SIGINT, WalShutdownHandler);	/* request shutdown */
+	pqsignal(SIGTERM, WalShutdownHandler);	/* request shutdown */
 	pqsignal(SIGQUIT, wal_quickdie);	/* hard crash time */
 	pqsignal(SIGALRM, SIG_IGN);
 	pqsignal(SIGPIPE, SIG_IGN);
@@ -142,9 +143,7 @@ WalWriterMain(void)
 	 */
 	walwriter_context = AllocSetContextCreate(TopMemoryContext,
 											  "Wal Writer",
-											  ALLOCSET_DEFAULT_MINSIZE,
-											  ALLOCSET_DEFAULT_INITSIZE,
-											  ALLOCSET_DEFAULT_MAXSIZE);
+											  ALLOCSET_DEFAULT_SIZES);
 	MemoryContextSwitchTo(walwriter_context);
 
 	/*
@@ -169,6 +168,7 @@ WalWriterMain(void)
 		 * about in walwriter, but we do have LWLocks, and perhaps buffers?
 		 */
 		LWLockReleaseAll();
+		ConditionVariableCancelSleep();
 		pgstat_report_wait_end();
 		AbortBufferIO();
 		UnlockBuffers();
@@ -286,13 +286,14 @@ WalWriterMain(void)
 		 * sleep time so as to reduce the server's idle power consumption.
 		 */
 		if (left_till_hibernate > 0)
-			cur_timeout = WalWriterDelay;		/* in ms */
+			cur_timeout = WalWriterDelay;	/* in ms */
 		else
 			cur_timeout = WalWriterDelay * HIBERNATE_FACTOR;
 
 		rc = WaitLatch(MyLatch,
 					   WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
-					   cur_timeout);
+					   cur_timeout,
+					   WAIT_EVENT_WAL_WRITER_MAIN);
 
 		/*
 		 * Emergency bailout if postmaster has died.  This is to avoid the

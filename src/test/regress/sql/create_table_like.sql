@@ -37,6 +37,20 @@ INSERT INTO inhg VALUES ('x', 'foo',  'y');  /* fails due to constraint */
 SELECT * FROM inhg; /* Two records with three columns in order x=x, xx=text, y=y */
 DROP TABLE inhg;
 
+CREATE TABLE test_like_id_1 (a int GENERATED ALWAYS AS IDENTITY, b text);
+\d test_like_id_1
+INSERT INTO test_like_id_1 (b) VALUES ('b1');
+SELECT * FROM test_like_id_1;
+CREATE TABLE test_like_id_2 (LIKE test_like_id_1);
+\d test_like_id_2
+INSERT INTO test_like_id_2 (b) VALUES ('b2');
+SELECT * FROM test_like_id_2;  -- identity was not copied
+CREATE TABLE test_like_id_3 (LIKE test_like_id_1 INCLUDING IDENTITY);
+\d test_like_id_3
+INSERT INTO test_like_id_3 (b) VALUES ('b3');
+SELECT * FROM test_like_id_3;  -- identity was copied and applied
+DROP TABLE test_like_id_1, test_like_id_2, test_like_id_3;
+
 CREATE TABLE inhg (x text, LIKE inhx INCLUDING INDEXES, y text); /* copies indexes */
 INSERT INTO inhg VALUES (5, 10);
 INSERT INTO inhg VALUES (20, 10); -- should fail
@@ -131,4 +145,7 @@ CREATE TABLE like_test3 (z INTEGER, LIKE has_oid, LIKE no_oid);
 SELECT oid FROM like_test3;
 CREATE TABLE like_test4 (z INTEGER, PRIMARY KEY(oid), LIKE has_oid);
 SELECT oid FROM like_test4;
-DROP TABLE has_oid, no_oid, like_test, like_test2, like_test3, like_test4;
+CREATE TABLE like_test5 (z INTEGER, LIKE no_oid) WITH OIDS;
+SELECT oid FROM like_test5;
+DROP TABLE has_oid, no_oid, like_test, like_test2, like_test3,
+  like_test4, like_test5;

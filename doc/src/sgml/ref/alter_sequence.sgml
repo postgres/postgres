@@ -23,7 +23,9 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ALTER SEQUENCE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [ INCREMENT [ BY ] <replaceable class="parameter">increment</replaceable> ]
+ALTER SEQUENCE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
+    [ AS <replaceable class="parameter">data_type</replaceable> ]
+    [ INCREMENT [ BY ] <replaceable class="parameter">increment</replaceable> ]
     [ MINVALUE <replaceable class="parameter">minvalue</replaceable> | NO MINVALUE ] [ MAXVALUE <replaceable class="parameter">maxvalue</replaceable> | NO MAXVALUE ]
     [ START [ WITH ] <replaceable class="parameter">start</replaceable> ]
     [ RESTART [ [ WITH ] <replaceable class="parameter">restart</replaceable> ] ]
@@ -81,6 +83,31 @@ ALTER SEQUENCE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> S
      </varlistentry>
 
      <varlistentry>
+      <term><replaceable class="parameter">data_type</replaceable></term>
+      <listitem>
+       <para>
+        The optional
+        clause <literal>AS <replaceable class="parameter">data_type</replaceable></literal>
+        changes the data type of the sequence.  Valid types are
+        are <literal>smallint</literal>, <literal>integer</literal>,
+        and <literal>bigint</literal>.
+       </para>
+
+       <para>
+        Changing the data type automatically changes the minimum and maximum
+        values of the sequence if and only if the previous minimum and maximum
+        values were the minimum or maximum value of the old data type (in
+        other words, if the sequence had been created using <literal>NO
+        MINVALUE</literal> or <literal>NO MAXVALUE</literal>, implicitly or
+        explicitly).  Otherwise, the minimum and maximum values are preserved,
+        unless new values are given as part of the same command.  If the
+        minimum and maximum values do not fit into the new data type, an error
+        will be generated.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><replaceable class="parameter">increment</replaceable></term>
       <listitem>
        <para>
@@ -102,7 +129,7 @@ ALTER SEQUENCE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> S
         class="parameter">minvalue</replaceable></literal> determines
         the minimum value a sequence can generate. If <literal>NO
         MINVALUE</literal> is specified, the defaults of 1 and
-        -2<superscript>63</>-1 for ascending and descending sequences,
+        the minimum value of the data type for ascending and descending sequences,
         respectively, will be used.  If neither option is specified,
         the current minimum value will be maintained.
        </para>
@@ -117,8 +144,8 @@ ALTER SEQUENCE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> S
         The optional clause <literal>MAXVALUE <replaceable
         class="parameter">maxvalue</replaceable></literal> determines
         the maximum value for the sequence. If <literal>NO
-        MAXVALUE</literal> is specified, the defaults are
-        2<superscript>63</>-1 and -1 for ascending and descending
+        MAXVALUE</literal> is specified, the defaults of
+        the maximum value of the data type and -1 for ascending and descending
         sequences, respectively, will be used.  If neither option is
         specified, the current maximum value will be maintained.
        </para>
@@ -144,7 +171,7 @@ ALTER SEQUENCE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> S
        <para>
         The optional clause <literal>RESTART [ WITH <replaceable
         class="parameter">restart</replaceable> ]</literal> changes the
-        current value of the sequence.  This is equivalent to calling the
+        current value of the sequence.  This is similar to calling the
         <function>setval</> function with <literal>is_called</literal> =
         <literal>false</>: the specified value will be returned by the
         <emphasis>next</> call of <function>nextval</>.
@@ -152,6 +179,14 @@ ALTER SEQUENCE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> S
         class="parameter">restart</> value is equivalent to supplying
         the start value that was recorded by <command>CREATE SEQUENCE</>
         or last set by <command>ALTER SEQUENCE START WITH</>.
+       </para>
+
+       <para>
+        In contrast to a <function>setval</function> call,
+        a <literal>RESTART</literal> operation on a sequence is transactional
+        and blocks concurrent transactions from obtaining numbers from the
+        same sequence. If that's not the desired mode of
+        operation, <function>setval</> should be used.
        </para>
       </listitem>
      </varlistentry>
@@ -255,15 +290,6 @@ ALTER SEQUENCE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> S
   <title>Notes</title>
 
   <para>
-   To avoid blocking of concurrent transactions that obtain numbers from the
-   same sequence, <command>ALTER SEQUENCE</command>'s effects on the sequence
-   generation parameters are never rolled back; those changes take effect
-   immediately and are not reversible.  However, the <literal>OWNED BY</>,
-   <literal>OWNER TO</>, <literal>RENAME TO</>, and <literal>SET SCHEMA</>
-   clauses cause ordinary catalog updates that can be rolled back.
-  </para>
-
-  <para>
    <command>ALTER SEQUENCE</command> will not immediately affect
    <function>nextval</> results in backends,
    other than the current one, that have preallocated (cached) sequence
@@ -276,6 +302,12 @@ ALTER SEQUENCE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> S
    <command>ALTER SEQUENCE</command> does not affect the <function>currval</>
    status for the sequence.  (Before <productname>PostgreSQL</productname>
    8.3, it sometimes did.)
+  </para>
+
+  <para>
+   <command>ALTER SEQUENCE</command> blocks
+   concurrent <function>nextval</function>, <function>currval</function>,
+   <function>lastval</function>, and <command>setval</command> calls.
   </para>
 
   <para>
@@ -300,7 +332,7 @@ ALTER SEQUENCE serial RESTART WITH 105;
 
   <para>
    <command>ALTER SEQUENCE</command> conforms to the <acronym>SQL</acronym>
-   standard, except for the <literal>START WITH</>,
+   standard, except for the <literal>AS</literal>, <literal>START WITH</>,
    <literal>OWNED BY</>, <literal>OWNER TO</>, <literal>RENAME TO</>, and
    <literal>SET SCHEMA</literal> clauses, which are
    <productname>PostgreSQL</productname> extensions.

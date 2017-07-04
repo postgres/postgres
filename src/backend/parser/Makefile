@@ -14,16 +14,11 @@ override CPPFLAGS := -I. -I$(srcdir) $(CPPFLAGS)
 
 OBJS= analyze.o gram.o scan.o parser.o \
       parse_agg.o parse_clause.o parse_coerce.o parse_collate.o parse_cte.o \
-      parse_expr.o parse_func.o parse_node.o parse_oper.o parse_param.o \
-      parse_relation.o parse_target.o parse_type.o parse_utilcmd.o scansup.o
+      parse_enr.o parse_expr.o parse_func.o parse_node.o parse_oper.o \
+      parse_param.o parse_relation.o parse_target.o parse_type.o \
+      parse_utilcmd.o scansup.o
 
 include $(top_srcdir)/src/backend/common.mk
-
-
-# Latest flex causes warnings in this file.
-ifeq ($(GCC),yes)
-scan.o: CFLAGS += -Wno-error
-endif
 
 
 # There is no correct way to write a rule that generates two files.
@@ -41,6 +36,7 @@ gram.c: BISON_CHECK_CMD = $(PERL) $(srcdir)/check_keywords.pl $< $(top_srcdir)/s
 
 scan.c: FLEXFLAGS = -CF -p -p
 scan.c: FLEX_NO_BACKUP=yes
+scan.c: FLEX_FIX_WARNING=yes
 
 
 # Force these dependencies to be known even without dependency info built:

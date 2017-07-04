@@ -42,26 +42,11 @@ $node_master->safe_psql('postgres',
 # Now wait for replay to complete on standby. We're done waiting when the
 # slave has replayed up to the previously saved master LSN.
 my $until_lsn =
-  $node_master->safe_psql('postgres', "SELECT pg_current_xlog_location()");
+  $node_master->safe_psql('postgres', "SELECT pg_current_wal_lsn()");
 
-my $remaining = 90;
-while ($remaining-- > 0)
-{
-
-	# Done waiting?
-	my $replay_status = $node_standby->safe_psql('postgres',
-		"SELECT (pg_last_xlog_replay_location() - '$until_lsn'::pg_lsn) >= 0"
-	);
-	last if $replay_status eq 't';
-
-	# No, sleep some more.
-	my $sleep = $master_insert_time + $delay - time();
-	$sleep = 1 if $sleep < 1;
-	sleep $sleep;
-}
-
-die "Maximum number of attempts reached ($remaining remain)"
-  if $remaining < 0;
+$node_standby->poll_query_until('postgres',
+	"SELECT (pg_last_wal_replay_lsn() - '$until_lsn'::pg_lsn) >= 0")
+  or die "standby never caught up";
 
 # This test is successful if and only if the LSN has been applied with at least
 # the configured apply delay.

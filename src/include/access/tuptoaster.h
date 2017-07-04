@@ -4,7 +4,7 @@
  *	  POSTGRES definitions for external and compressed storage
  *	  of variable size attributes.
  *
- * Copyright (c) 2000-2016, PostgreSQL Global Development Group
+ * Copyright (c) 2000-2017, PostgreSQL Global Development Group
  *
  * src/include/access/tuptoaster.h
  *
@@ -84,7 +84,7 @@
  *
  * NB: Changing TOAST_MAX_CHUNK_SIZE requires an initdb.
  */
-#define EXTERN_TUPLES_PER_PAGE	4		/* tweak only this */
+#define EXTERN_TUPLES_PER_PAGE	4	/* tweak only this */
 
 #define EXTERN_TUPLE_MAX_SIZE	MaximumBytesPerTuple(EXTERN_TUPLES_PER_PAGE)
 
@@ -152,7 +152,7 @@ extern void toast_delete(Relation rel, HeapTuple oldtup, bool is_speculative);
  *		in compressed format.
  * ----------
  */
-extern struct varlena *heap_tuple_fetch_attr(struct varlena * attr);
+extern struct varlena *heap_tuple_fetch_attr(struct varlena *attr);
 
 /* ----------
  * heap_tuple_untoast_attr() -
@@ -161,7 +161,7 @@ extern struct varlena *heap_tuple_fetch_attr(struct varlena * attr);
  *		it as needed.
  * ----------
  */
-extern struct varlena *heap_tuple_untoast_attr(struct varlena * attr);
+extern struct varlena *heap_tuple_untoast_attr(struct varlena *attr);
 
 /* ----------
  * heap_tuple_untoast_attr_slice() -
@@ -170,7 +170,7 @@ extern struct varlena *heap_tuple_untoast_attr(struct varlena * attr);
  *		(Handles all cases for attribute storage)
  * ----------
  */
-extern struct varlena *heap_tuple_untoast_attr_slice(struct varlena * attr,
+extern struct varlena *heap_tuple_untoast_attr_slice(struct varlena *attr,
 							  int32 sliceoffset,
 							  int32 slicelength);
 
@@ -192,6 +192,17 @@ extern HeapTuple toast_flatten_tuple(HeapTuple tup, TupleDesc tupleDesc);
 extern Datum toast_flatten_tuple_to_datum(HeapTupleHeader tup,
 							 uint32 tup_len,
 							 TupleDesc tupleDesc);
+
+/* ----------
+ * toast_build_flattened_tuple -
+ *
+ *	Build a tuple containing no out-of-line toasted fields.
+ *	(This does not eliminate compressed or short-header datums.)
+ * ----------
+ */
+extern HeapTuple toast_build_flattened_tuple(TupleDesc tupleDesc,
+							Datum *values,
+							bool *isnull);
 
 /* ----------
  * toast_compress_datum -
@@ -225,4 +236,4 @@ extern Size toast_datum_size(Datum value);
  */
 extern Oid	toast_get_valid_index(Oid toastoid, LOCKMODE lock);
 
-#endif   /* TUPTOASTER_H */
+#endif							/* TUPTOASTER_H */

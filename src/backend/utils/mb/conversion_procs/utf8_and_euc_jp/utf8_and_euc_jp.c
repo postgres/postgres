@@ -2,7 +2,7 @@
  *
  *	  EUC_JP <--> UTF8
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -42,7 +42,7 @@ euc_jp_to_utf8(PG_FUNCTION_ARGS)
 	CHECK_ENCODING_CONVERSION_ARGS(PG_EUC_JP, PG_UTF8);
 
 	LocalToUtf(src, len, dest,
-			   LUmapEUC_JP, lengthof(LUmapEUC_JP),
+			   &euc_jp_to_unicode_tree,
 			   NULL, 0,
 			   NULL,
 			   PG_EUC_JP);
@@ -60,7 +60,7 @@ utf8_to_euc_jp(PG_FUNCTION_ARGS)
 	CHECK_ENCODING_CONVERSION_ARGS(PG_UTF8, PG_EUC_JP);
 
 	UtfToLocal(src, len, dest,
-			   ULmapEUC_JP, lengthof(ULmapEUC_JP),
+			   &euc_jp_from_unicode_tree,
 			   NULL, 0,
 			   NULL,
 			   PG_EUC_JP);

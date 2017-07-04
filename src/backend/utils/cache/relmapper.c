@@ -28,7 +28,7 @@
  * all these files commit in a single map file update rather than being tied
  * to transaction commit.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -50,6 +50,7 @@
 #include "catalog/pg_tablespace.h"
 #include "catalog/storage.h"
 #include "miscadmin.h"
+#include "pgstat.h"
 #include "storage/fd.h"
 #include "storage/lwlock.h"
 #include "utils/inval.h"
@@ -71,9 +72,9 @@
  */
 #define RELMAPPER_FILENAME		"pg_filenode.map"
 
-#define RELMAPPER_FILEMAGIC		0x592717		/* version ID value */
+#define RELMAPPER_FILEMAGIC		0x592717	/* version ID value */
 
-#define MAX_MAPPINGS			62		/* 62 * 8 + 16 = 512 */
+#define MAX_MAPPINGS			62	/* 62 * 8 + 16 = 512 */
 
 typedef struct RelMapping
 {
@@ -658,11 +659,13 @@ load_relmap_file(bool shared)
 	 * look, the sinval signaling mechanism will make us re-read it before we
 	 * are able to access any relation that's affected by the change.
 	 */
+	pgstat_report_wait_start(WAIT_EVENT_RELATION_MAP_READ);
 	if (read(fd, map, sizeof(RelMapFile)) != sizeof(RelMapFile))
 		ereport(FATAL,
 				(errcode_for_file_access(),
 				 errmsg("could not read relation mapping file \"%s\": %m",
 						mapfilename)));
+	pgstat_report_wait_end();
 
 	CloseTransientFile(fd);
 
@@ -681,8 +684,8 @@ load_relmap_file(bool shared)
 
 	if (!EQ_CRC32C(crc, map->crc))
 		ereport(FATAL,
-		  (errmsg("relation mapping file \"%s\" contains incorrect checksum",
-				  mapfilename)));
+				(errmsg("relation mapping file \"%s\" contains incorrect checksum",
+						mapfilename)));
 }
 
 /*
@@ -774,6 +777,7 @@ write_relmap_file(bool shared, RelMapFile *newmap,
 	}
 
 	errno = 0;
+	pgstat_report_wait_start(WAIT_EVENT_RELATION_MAP_WRITE);
 	if (write(fd, newmap, sizeof(RelMapFile)) != sizeof(RelMapFile))
 	{
 		/* if write didn't set errno, assume problem is no disk space */
@@ -784,6 +788,7 @@ write_relmap_file(bool shared, RelMapFile *newmap,
 				 errmsg("could not write to relation mapping file \"%s\": %m",
 						mapfilename)));
 	}
+	pgstat_report_wait_end();
 
 	/*
 	 * We choose to fsync the data to disk before considering the task done.
@@ -791,11 +796,13 @@ write_relmap_file(bool shared, RelMapFile *newmap,
 	 * issue, but it would complicate checkpointing --- see notes for
 	 * CheckPointRelationMap.
 	 */
+	pgstat_report_wait_start(WAIT_EVENT_RELATION_MAP_SYNC);
 	if (pg_fsync(fd) != 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not fsync relation mapping file \"%s\": %m",
 						mapfilename)));
+	pgstat_report_wait_end();
 
 	if (CloseTransientFile(fd))
 		ereport(ERROR,

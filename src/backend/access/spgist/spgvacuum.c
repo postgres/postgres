@@ -4,7 +4,7 @@
  *	  vacuum for SP-GiST
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -17,6 +17,7 @@
 
 #include "access/genam.h"
 #include "access/spgist_private.h"
+#include "access/spgxlog.h"
 #include "access/transam.h"
 #include "access/xloginsert.h"
 #include "catalog/storage_xlog.h"
@@ -33,7 +34,7 @@ typedef struct spgVacPendingItem
 {
 	ItemPointerData tid;		/* redirection target to visit */
 	bool		done;			/* have we dealt with this? */
-	struct spgVacPendingItem *next;		/* list link */
+	struct spgVacPendingItem *next; /* list link */
 } spgVacPendingItem;
 
 /* Local state for vacuum operations */
@@ -47,7 +48,7 @@ typedef struct spgBulkDeleteState
 
 	/* Additional working state */
 	SpGistState spgstate;		/* for SPGiST operations that need one */
-	spgVacPendingItem *pendingList;		/* TIDs we need to (re)visit */
+	spgVacPendingItem *pendingList; /* TIDs we need to (re)visit */
 	TransactionId myXmin;		/* for detecting newly-added redirects */
 	BlockNumber lastFilledBlock;	/* last non-deletable block */
 } spgBulkDeleteState;
@@ -749,7 +750,7 @@ spgprocesspending(spgBulkDeleteState *bds)
 
 					offset = ItemPointerGetOffsetNumber(&nitem->tid);
 					innerTuple = (SpGistInnerTuple) PageGetItem(page,
-												PageGetItemId(page, offset));
+																PageGetItemId(page, offset));
 					if (innerTuple->tupstate == SPGIST_LIVE)
 					{
 						SpGistNodeTuple node;
@@ -765,7 +766,7 @@ spgprocesspending(spgBulkDeleteState *bds)
 					{
 						/* transfer attention to redirect point */
 						spgAddPendingTID(bds,
-								   &((SpGistDeadTuple) innerTuple)->pointer);
+										 &((SpGistDeadTuple) innerTuple)->pointer);
 					}
 					else
 						elog(ERROR, "unexpected SPGiST tuple state: %d",

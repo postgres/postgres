@@ -3,7 +3,7 @@
  * pg_rewind.c
  *	  Synchronizes a PostgreSQL data directory to a new timeline
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  *
  *-------------------------------------------------------------------------
  */
@@ -162,6 +162,13 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
+	if (datadir_source != NULL && connstr_source != NULL)
+	{
+		fprintf(stderr, _("%s: only one of --source-pgdata or --source-server can be specified\n"), progname);
+		fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
+		exit(1);
+	}
+
 	if (datadir_target == NULL)
 	{
 		fprintf(stderr, _("%s: no target data directory specified (--target-pgdata)\n"), progname);
@@ -224,7 +231,7 @@ main(int argc, char **argv)
 	else
 	{
 		findCommonAncestorTimeline(&divergerec, &lastcommontliIndex);
-		printf(_("servers diverged at WAL position %X/%X on timeline %u\n"),
+		printf(_("servers diverged at WAL location %X/%X on timeline %u\n"),
 			   (uint32) (divergerec >> 32), (uint32) divergerec,
 			   targetHistory[lastcommontliIndex].tli);
 
@@ -408,9 +415,9 @@ sanityChecks(void)
 }
 
 /*
- * Find minimum from two XLOG positions assuming InvalidXLogRecPtr means
+ * Find minimum from two WAL locations assuming InvalidXLogRecPtr means
  * infinity as src/include/access/timeline.h states. This routine should
- * be used only when comparing XLOG positions related to history files.
+ * be used only when comparing WAL locations related to history files.
  */
 static XLogRecPtr
 MinXLogRecPtr(XLogRecPtr a, XLogRecPtr b)
@@ -582,14 +589,14 @@ createBackupLabel(XLogRecPtr startpoint, TimeLineID starttli, XLogRecPtr checkpo
 				   "BACKUP FROM: standby\n"
 				   "START TIME: %s\n",
 	/* omit LABEL: line */
-			  (uint32) (startpoint >> 32), (uint32) startpoint, xlogfilename,
+				   (uint32) (startpoint >> 32), (uint32) startpoint, xlogfilename,
 				   (uint32) (checkpointloc >> 32), (uint32) checkpointloc,
 				   strfbuf);
 	if (len >= sizeof(buf))
 		pg_fatal("backup label buffer too small\n");	/* shouldn't happen */
 
 	/* TODO: move old file out of the way, if any. */
-	open_target_file("backup_label", true);		/* BACKUP_LABEL_FILE */
+	open_target_file("backup_label", true); /* BACKUP_LABEL_FILE */
 	write_target_range(buf, 0, len);
 	close_target_file();
 }

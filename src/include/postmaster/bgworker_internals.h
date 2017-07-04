@@ -2,7 +2,7 @@
  * bgworker_internals.h
  *		POSTGRES pluggable background workers internals
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -15,6 +15,13 @@
 #include "datatype/timestamp.h"
 #include "lib/ilist.h"
 #include "postmaster/bgworker.h"
+
+/* GUC options */
+
+/*
+ * Maximum possible value of parallel workers.
+ */
+#define MAX_PARALLEL_WORKER_LIMIT 1024
 
 /*
  * List of background workers, private to postmaster.
@@ -42,6 +49,7 @@ extern void BackgroundWorkerShmemInit(void);
 extern void BackgroundWorkerStateChange(void);
 extern void ForgetBackgroundWorker(slist_mutable_iter *cur);
 extern void ReportBackgroundWorkerPID(RegisteredBgWorker *);
+extern void ReportBackgroundWorkerExit(slist_mutable_iter *cur);
 extern void BackgroundWorkerStopNotifications(pid_t pid);
 extern void ResetBackgroundWorkerCrashTimes(void);
 
@@ -52,4 +60,4 @@ extern void StartBackgroundWorker(void) pg_attribute_noreturn();
 extern BackgroundWorker *BackgroundWorkerEntry(int slotno);
 #endif
 
-#endif   /* BGWORKER_INTERNALS_H */
+#endif							/* BGWORKER_INTERNALS_H */

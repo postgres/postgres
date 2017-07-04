@@ -12,6 +12,15 @@
   obtain tuple-level statistics.
  </para>
 
+ <para>
+  As these functions return detailed page-level information, only the superuser
+  has EXECUTE privileges on them upon installation.  After the functions have
+  been installed, users may issue <command>GRANT</command> commands to change
+  the privileges on the functions to allow non-superusers to execute them. Members
+  of the <literal>pg_stat_scan_tables</literal> role are granted access by default. See
+  the description of the <xref linkend="sql-grant"> command for specifics.
+ </para>
+
  <sect2>
   <title>Functions</title>
 
@@ -108,6 +117,16 @@ free_percent       | 1.95
       </tbody>
      </tgroup>
     </table>
+
+    <note>
+     <para>
+      The <literal>table_len</literal> will always be greater than the sum
+      of the <literal>tuple_len</literal>, <literal>dead_tuple_len</literal>
+      and <literal>free_space</literal>. The difference is accounted for by
+      fixed page overhead, the per-page table of pointers to tuples, and
+      padding to ensure that tuples are correctly aligned.
+     </para>
+    </note>
 
     <para>
      <function>pgstattuple</function> acquires only a read lock on the
@@ -325,6 +344,101 @@ pending_tuples | 0
         <entry><structfield>pending_tuples</structfield></entry>
         <entry><type>bigint</type></entry>
         <entry>Number of tuples in the pending list</entry>
+       </row>
+
+      </tbody>
+     </tgroup>
+    </informaltable>
+    </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
+     <indexterm>
+      <primary>pgstathashindex</primary>
+     </indexterm>
+     <function>pgstathashindex(regclass) returns record</>
+    </term>
+
+    <listitem>
+     <para>
+      <function>pgstathashindex</function> returns a record showing information
+      about a HASH index.  For example:
+<programlisting>
+test=&gt; select * from pgstathashindex('con_hash_index');
+-[ RECORD 1 ]--+-----------------
+version        | 2
+bucket_pages   | 33081
+overflow_pages | 0
+bitmap_pages   | 1
+unused_pages   | 32455
+live_items     | 10204006
+dead_items     | 0
+free_percent   | 61.8005949100872
+</programlisting>
+     </para>
+
+    <para>
+     The output columns are:
+
+    <informaltable>
+     <tgroup cols="3">
+      <thead>
+       <row>
+        <entry>Column</entry>
+        <entry>Type</entry>
+        <entry>Description</entry>
+       </row>
+      </thead>
+
+      <tbody>
+       <row>
+        <entry><structfield>version</structfield></entry>
+        <entry><type>integer</type></entry>
+        <entry>HASH version number</entry>
+       </row>
+
+       <row>
+        <entry><structfield>bucket_pages</structfield></entry>
+        <entry><type>bigint</type></entry>
+        <entry>Number of bucket pages</entry>
+       </row>
+
+       <row>
+        <entry><structfield>overflow_pages</structfield></entry>
+        <entry><type>bigint</type></entry>
+        <entry>Number of overflow pages</entry>
+       </row>
+
+       <row>
+        <entry><structfield>bitmap_pages</structfield></entry>
+        <entry><type>bigint</type></entry>
+        <entry>Number of bitmap pages</entry>
+       </row>
+
+       <row>
+        <entry><structfield>unused_pages</structfield></entry>
+        <entry><type>bigint</type></entry>
+        <entry>Number of unused pages</entry>
+       </row>
+
+       <row>
+        <entry><structfield>live_items</structfield></entry>
+        <entry><type>bigint</type></entry>
+        <entry>Number of live tuples</entry>
+       </row>
+
+       <row>
+        <entry><structfield>dead_tuples</structfield></entry>
+        <entry><type>bigint</type></entry>
+        <entry>Number of dead tuples</entry>
+       </row>
+
+       <row>
+        <entry><structfield>free_percent</structfield></entry>
+        <entry><type>float</type></entry>
+        <entry>Percentage of free space</entry>
        </row>
 
       </tbody>

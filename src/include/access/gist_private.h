@@ -4,7 +4,7 @@
  *	  private declarations for GiST -- declarations related to the
  *	  internal implementation of GiST, not the public API
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/access/gist_private.h
@@ -17,7 +17,6 @@
 #include "access/amapi.h"
 #include "access/gist.h"
 #include "access/itup.h"
-#include "access/xlogreader.h"
 #include "fmgr.h"
 #include "lib/pairingheap.h"
 #include "storage/bufmgr.h"
@@ -107,15 +106,11 @@ typedef struct GISTSTATE
  * upper index pages; this rule avoids doing extra work during a search that
  * ends early due to LIMIT.
  *
- * To perform an ordered search, we use an RBTree to manage the distance-order
- * queue.  Each GISTSearchTreeItem stores all unvisited items of the same
- * distance; they are GISTSearchItems chained together via their next fields.
- *
- * In a non-ordered search (no order-by operators), the RBTree degenerates
- * to a single item, which we use as a queue of unvisited index pages only.
- * In this case matched heap items from the current index leaf page are
- * remembered in GISTScanOpaqueData.pageData[] and returned directly from
- * there, instead of building a separate GISTSearchItem for each one.
+ * To perform an ordered search, we use a pairing heap to manage the
+ * distance-order queue.  In a non-ordered search (no order-by operators),
+ * we use it to return heap tuples before unvisited index pages, to
+ * ensure depth-first order, but all entries are otherwise considered
+ * equal.
  */
 
 /* Individual heap tuple to be visited */
@@ -123,8 +118,8 @@ typedef struct GISTSearchHeapItem
 {
 	ItemPointerData heapPtr;
 	bool		recheck;		/* T if quals must be rechecked */
-	bool		recheckDistances;		/* T if distances must be rechecked */
-	IndexTuple	ftup;			/* data fetched back from the index, used in
+	bool		recheckDistances;	/* T if distances must be rechecked */
+	HeapTuple	recontup;		/* data reconstructed from the index, used in
 								 * index-only scans */
 	OffsetNumber offnum;		/* track offset in page to mark tuple as
 								 * LP_DEAD */
@@ -141,8 +136,8 @@ typedef struct GISTSearchItem
 		/* we must store parentlsn to detect whether a split occurred */
 		GISTSearchHeapItem heap;	/* heap info, if heap tuple */
 	}			data;
-	double		distances[FLEXIBLE_ARRAY_MEMBER];		/* numberOfOrderBys
-														 * entries */
+	double		distances[FLEXIBLE_ARRAY_MEMBER];	/* numberOfOrderBys
+													 * entries */
 } GISTSearchItem;
 
 #define GISTSearchItemIsHeap(item)	((item).blkno == InvalidBlockNumber)
@@ -181,51 +176,7 @@ typedef struct GISTScanOpaqueData
 
 typedef GISTScanOpaqueData *GISTScanOpaque;
 
-
-/* XLog stuff */
-
-#define XLOG_GIST_PAGE_UPDATE		0x00
- /* #define XLOG_GIST_NEW_ROOT			 0x20 */	/* not used anymore */
-#define XLOG_GIST_PAGE_SPLIT		0x30
- /* #define XLOG_GIST_INSERT_COMPLETE	 0x40 */	/* not used anymore */
-#define XLOG_GIST_CREATE_INDEX		0x50
- /* #define XLOG_GIST_PAGE_DELETE		 0x60 */	/* not used anymore */
-
-/*
- * Backup Blk 0: updated page.
- * Backup Blk 1: If this operation completes a page split, by inserting a
- *				 downlink for the split page, the left half of the split
- */
-typedef struct gistxlogPageUpdate
-{
-	/* number of deleted offsets */
-	uint16		ntodelete;
-	uint16		ntoinsert;
-
-	/*
-	 * In payload of blk 0 : 1. todelete OffsetNumbers 2. tuples to insert
-	 */
-} gistxlogPageUpdate;
-
-/*
- * Backup Blk 0: If this operation completes a page split, by inserting a
- *				 downlink for the split page, the left half of the split
- * Backup Blk 1 - npage: split pages (1 is the original page)
- */
-typedef struct gistxlogPageSplit
-{
-	BlockNumber origrlink;		/* rightlink of the page before split */
-	GistNSN		orignsn;		/* NSN of the page before split */
-	bool		origleaf;		/* was splitted page a leaf page? */
-
-	uint16		npage;			/* # of pages in the split */
-	bool		markfollowright;	/* set F_FOLLOW_RIGHT flags */
-
-	/*
-	 * follow: 1. gistxlogPage and array of IndexTupleData per page
-	 */
-} gistxlogPageSplit;
-
+/* despite the name, gistxlogPage is not part of any xlog record */
 typedef struct gistxlogPage
 {
 	BlockNumber blkno;
@@ -274,12 +225,12 @@ typedef struct GistSplitVector
 {
 	GIST_SPLITVEC splitVector;	/* passed to/from user PickSplit method */
 
-	Datum		spl_lattr[INDEX_MAX_KEYS];		/* Union of subkeys in
-												 * splitVector.spl_left */
+	Datum		spl_lattr[INDEX_MAX_KEYS];	/* Union of subkeys in
+											 * splitVector.spl_left */
 	bool		spl_lisnull[INDEX_MAX_KEYS];
 
-	Datum		spl_rattr[INDEX_MAX_KEYS];		/* Union of subkeys in
-												 * splitVector.spl_right */
+	Datum		spl_rattr[INDEX_MAX_KEYS];	/* Union of subkeys in
+											 * splitVector.spl_right */
 	bool		spl_risnull[INDEX_MAX_KEYS];
 
 	bool	   *spl_dontcare;	/* flags tuples which could go to either side
@@ -298,8 +249,8 @@ typedef struct
 #define GIST_ROOT_BLKNO				0
 
 /*
- * Before PostgreSQL 9.1, we used rely on so-called "invalid tuples" on inner
- * pages to finish crash recovery of incomplete page splits. If a crash
+ * Before PostgreSQL 9.1, we used to rely on so-called "invalid tuples" on
+ * inner pages to finish crash recovery of incomplete page splits. If a crash
  * happened in the middle of a page split, so that the downlink pointers were
  * not yet inserted, crash recovery inserted a special downlink pointer. The
  * semantics of an invalid tuple was that it if you encounter one in a scan,
@@ -337,7 +288,7 @@ typedef struct
 	int32		blocksCount;	/* current # of blocks occupied by buffer */
 
 	BlockNumber pageBlocknum;	/* temporary file block # */
-	GISTNodeBufferPage *pageBuffer;		/* in-memory buffer page */
+	GISTNodeBufferPage *pageBuffer; /* in-memory buffer page */
 
 	/* is this buffer queued for emptying? */
 	bool		queuedForEmptying;
@@ -409,8 +360,8 @@ typedef struct GISTBuildBuffers
 	 * loaded in main memory.
 	 */
 	GISTNodeBuffer **loadedBuffers;
-	int			loadedBuffersCount;		/* # of entries in loadedBuffers */
-	int			loadedBuffersLen;		/* allocated size of loadedBuffers */
+	int			loadedBuffersCount; /* # of entries in loadedBuffers */
+	int			loadedBuffersLen;	/* allocated size of loadedBuffers */
 
 	/* Level of the current root node (= height of the index tree - 1) */
 	int			rootlevel;
@@ -427,11 +378,11 @@ typedef struct GiSTOptions
 } GiSTOptions;
 
 /* gist.c */
-extern Datum gisthandler(PG_FUNCTION_ARGS);
 extern void gistbuildempty(Relation index);
 extern bool gistinsert(Relation r, Datum *values, bool *isnull,
 		   ItemPointer ht_ctid, Relation heapRel,
-		   IndexUniqueCheck checkUnique);
+		   IndexUniqueCheck checkUnique,
+		   struct IndexInfo *indexInfo);
 extern MemoryContext createTempGistContext(void);
 extern GISTSTATE *initGISTstate(Relation index);
 extern void freeGISTstate(GISTSTATE *giststate);
@@ -457,13 +408,6 @@ extern bool gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 
 extern SplitedPageLayout *gistSplit(Relation r, Page page, IndexTuple *itup,
 		  int len, GISTSTATE *giststate);
-
-/* gistxlog.c */
-extern void gist_redo(XLogReaderState *record);
-extern void gist_desc(StringInfo buf, XLogReaderState *record);
-extern const char *gist_identify(uint8 info);
-extern void gist_xlog_startup(void);
-extern void gist_xlog_cleanup(void);
 
 extern XLogRecPtr gistXLogUpdate(Buffer buffer,
 			   OffsetNumber *todelete, int ntodelete,
@@ -533,7 +477,7 @@ extern void gistMakeUnionItVec(GISTSTATE *giststate, IndexTuple *itvec, int len,
 extern bool gistKeyIsEQ(GISTSTATE *giststate, int attno, Datum a, Datum b);
 extern void gistDeCompressAtt(GISTSTATE *giststate, Relation r, IndexTuple tuple, Page p,
 				  OffsetNumber o, GISTENTRY *attdata, bool *isnull);
-extern IndexTuple gistFetchTuple(GISTSTATE *giststate, Relation r,
+extern HeapTuple gistFetchTuple(GISTSTATE *giststate, Relation r,
 			   IndexTuple tuple);
 extern void gistMakeUnionKey(GISTSTATE *giststate, int attno,
 				 GISTENTRY *entry1, bool isnull1,
@@ -578,4 +522,4 @@ extern void gistRelocateBuildBuffersOnSplit(GISTBuildBuffers *gfbb,
 								List *splitinfo);
 extern void gistUnloadNodeBuffers(GISTBuildBuffers *gfbb);
 
-#endif   /* GIST_PRIVATE_H */
+#endif							/* GIST_PRIVATE_H */

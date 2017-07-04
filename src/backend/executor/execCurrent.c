@@ -3,7 +3,7 @@
  * execCurrent.c
  *	  executor support for WHERE CURRENT OF cursor
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *	src/backend/executor/execCurrent.c
@@ -151,7 +151,7 @@ execCurrentOf(CurrentOfExpr *cexpr,
 	{
 		ScanState  *scanstate;
 		bool		lisnull;
-		Oid tuple_tableoid PG_USED_FOR_ASSERTS_ONLY;
+		Oid			tuple_tableoid PG_USED_FOR_ASSERTS_ONLY;
 		ItemPointer tuple_tid;
 
 		/*

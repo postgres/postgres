@@ -46,6 +46,10 @@ GRANT { USAGE | ALL [ PRIVILEGES ] }
     ON TYPES
     TO { [ GROUP ] <replaceable class="PARAMETER">role_name</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 
+GRANT { USAGE | CREATE | ALL [ PRIVILEGES ] }
+    ON SCHEMAS
+    TO { [ GROUP ] <replaceable class="PARAMETER">role_name</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
+
 REVOKE [ GRANT OPTION FOR ]
     { { SELECT | INSERT | UPDATE | DELETE | TRUNCATE | REFERENCES | TRIGGER }
     [, ...] | ALL [ PRIVILEGES ] }
@@ -71,6 +75,12 @@ REVOKE [ GRANT OPTION FOR ]
     ON TYPES
     FROM { [ GROUP ] <replaceable class="PARAMETER">role_name</replaceable> | PUBLIC } [, ...]
     [ CASCADE | RESTRICT ]
+
+REVOKE [ GRANT OPTION FOR ]
+    { USAGE | CREATE | ALL [ PRIVILEGES ] }
+    ON SCHEMAS
+    FROM { [ GROUP ] <replaceable class="PARAMETER">role_name</replaceable> | PUBLIC } [, ...]
+    [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -81,8 +91,9 @@ REVOKE [ GRANT OPTION FOR ]
    <command>ALTER DEFAULT PRIVILEGES</> allows you to set the privileges
    that will be applied to objects created in the future.  (It does not
    affect privileges assigned to already-existing objects.)  Currently,
-   only the privileges for tables (including views and foreign tables),
-   sequences, functions, and types (including domains) can be altered.
+   only the privileges for schemas, tables (including views and foreign
+   tables), sequences, functions, and types (including domains) can be
+   altered.
   </para>
 
   <para>
@@ -125,6 +136,8 @@ REVOKE [ GRANT OPTION FOR ]
       are altered for objects later created in that schema.
       If <literal>IN SCHEMA</> is omitted, the global default privileges
       are altered.
+      <literal>IN SCHEMA</> is not allowed when using <literal>ON SCHEMAS</>
+      as schemas can't be nested.
      </para>
     </listitem>
    </varlistentry>

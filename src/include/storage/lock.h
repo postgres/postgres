@@ -4,7 +4,7 @@
  *	  POSTGRES low-level lock mechanism
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/storage/lock.h
@@ -42,7 +42,7 @@ extern bool Trace_locks;
 extern bool Trace_userlocks;
 extern int	Trace_lock_table;
 extern bool Debug_deadlocks;
-#endif   /* LOCK_DEBUG */
+#endif							/* LOCK_DEBUG */
 
 
 /*
@@ -63,8 +63,7 @@ extern bool Debug_deadlocks;
 typedef struct
 {
 	BackendId	backendId;		/* determined at backend startup */
-	LocalTransactionId localTransactionId;		/* backend-local transaction
-												 * id */
+	LocalTransactionId localTransactionId;	/* backend-local transaction id */
 } VirtualTransactionId;
 
 #define InvalidLocalTransactionId		0
@@ -113,7 +112,7 @@ typedef struct LockMethodData
 {
 	int			numLockModes;
 	const LOCKMASK *conflictTab;
-	const char *const * lockModeNames;
+	const char *const *lockModeNames;
 	const bool *trace_flag;
 } LockMethodData;
 
@@ -292,7 +291,7 @@ typedef struct LOCK
 	LOCKMASK	waitMask;		/* bitmask for lock types awaited */
 	SHM_QUEUE	procLocks;		/* list of PROCLOCK objects assoc. with lock */
 	PROC_QUEUE	waitProcs;		/* list of PGPROC objects waiting on lock */
-	int			requested[MAX_LOCKMODES];		/* counts of requested locks */
+	int			requested[MAX_LOCKMODES];	/* counts of requested locks */
 	int			nRequested;		/* total of requested[] array */
 	int			granted[MAX_LOCKMODES]; /* counts of granted locks */
 	int			nGranted;		/* total of granted[] array */
@@ -586,4 +585,4 @@ extern void VirtualXactLockTableInsert(VirtualTransactionId vxid);
 extern void VirtualXactLockTableCleanup(void);
 extern bool VirtualXactLock(VirtualTransactionId vxid, bool wait);
 
-#endif   /* LOCK_H */
+#endif							/* LOCK_H */

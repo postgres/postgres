@@ -2,7 +2,7 @@
  *
  * dropdb
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/bin/scripts/dropdb.c
@@ -129,7 +129,7 @@ main(int argc, char *argv[])
 		maintenance_db = "template1";
 
 	conn = connectMaintenanceDatabase(maintenance_db,
-							host, port, username, prompt_password, progname);
+									  host, port, username, prompt_password, progname);
 
 	if (echo)
 		printf("%s\n", sql.data);

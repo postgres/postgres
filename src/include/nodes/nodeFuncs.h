@@ -3,7 +3,7 @@
  * nodeFuncs.h
  *		Various general-purpose manipulations of Node trees
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/nodes/nodeFuncs.h
@@ -17,13 +17,13 @@
 
 
 /* flags bits for query_tree_walker and query_tree_mutator */
-#define QTW_IGNORE_RT_SUBQUERIES	0x01		/* subqueries in rtable */
-#define QTW_IGNORE_CTE_SUBQUERIES	0x02		/* subqueries in cteList */
-#define QTW_IGNORE_RC_SUBQUERIES	0x03		/* both of above */
-#define QTW_IGNORE_JOINALIASES		0x04		/* JOIN alias var lists */
-#define QTW_IGNORE_RANGE_TABLE		0x08		/* skip rangetable entirely */
-#define QTW_EXAMINE_RTES			0x10		/* examine RTEs */
-#define QTW_DONT_COPY_QUERY			0x20		/* do not copy top Query */
+#define QTW_IGNORE_RT_SUBQUERIES	0x01	/* subqueries in rtable */
+#define QTW_IGNORE_CTE_SUBQUERIES	0x02	/* subqueries in cteList */
+#define QTW_IGNORE_RC_SUBQUERIES	0x03	/* both of above */
+#define QTW_IGNORE_JOINALIASES		0x04	/* JOIN alias var lists */
+#define QTW_IGNORE_RANGE_TABLE		0x08	/* skip rangetable entirely */
+#define QTW_EXAMINE_RTES			0x10	/* examine RTEs */
+#define QTW_DONT_COPY_QUERY			0x20	/* do not copy top Query */
 
 /* callback function for check_functions_in_node */
 typedef bool (*check_function_callback) (Oid func_id, void *context);
@@ -51,30 +51,30 @@ extern bool check_functions_in_node(Node *node, check_function_callback checker,
 						void *context);
 
 extern bool expression_tree_walker(Node *node, bool (*walker) (),
-											   void *context);
+								   void *context);
 extern Node *expression_tree_mutator(Node *node, Node *(*mutator) (),
-												 void *context);
+									 void *context);
 
 extern bool query_tree_walker(Query *query, bool (*walker) (),
-										  void *context, int flags);
+							  void *context, int flags);
 extern Query *query_tree_mutator(Query *query, Node *(*mutator) (),
-											 void *context, int flags);
+								 void *context, int flags);
 
 extern bool range_table_walker(List *rtable, bool (*walker) (),
-										   void *context, int flags);
+							   void *context, int flags);
 extern List *range_table_mutator(List *rtable, Node *(*mutator) (),
-											 void *context, int flags);
+								 void *context, int flags);
 
 extern bool query_or_expression_tree_walker(Node *node, bool (*walker) (),
-												   void *context, int flags);
+											void *context, int flags);
 extern Node *query_or_expression_tree_mutator(Node *node, Node *(*mutator) (),
-												   void *context, int flags);
+											  void *context, int flags);
 
 extern bool raw_expression_tree_walker(Node *node, bool (*walker) (),
-												   void *context);
+									   void *context);
 
 struct PlanState;
 extern bool planstate_tree_walker(struct PlanState *planstate, bool (*walker) (),
-											  void *context);
+								  void *context);
 
-#endif   /* NODEFUNCS_H */
+#endif							/* NODEFUNCS_H */

@@ -1,0 +1,592 @@
+<!-- doc/src/sgml/logical-replication.sgml -->
+
+<chapter id="logical-replication">
+ <title>Logical Replication</title>
+
+ <para>
+  Logical replication is a method of replicating data objects and their
+  changes, based upon their replication identity (usually a primary key).  We
+  use the term logical in contrast to physical replication, which uses exact
+  block addresses and byte-by-byte replication.  PostgreSQL supports both
+  mechanisms concurrently, see <xref linkend="high-availability">.  Logical
+  replication allows fine-grained control over both data replication and
+  security.
+ </para>
+
+ <para>
+  Logical replication uses a <firstterm>publish</firstterm>
+  and <firstterm>subscribe</firstterm> model with one or
+  more <firstterm>subscribers</firstterm> subscribing to one or more
+  <firstterm>publications</firstterm> on a <firstterm>publisher</firstterm>
+  node.  Subscribers pull data from the publications they subscribe to and may
+  subsequently re-publish data to allow cascading replication or more complex
+  configurations.
+ </para>
+
+ <para>
+  Logical replication of a table typically starts with taking a snapshot
+  of the data on the publisher database and copying that to the subscriber.
+  Once that is done, the changes on the publisher are sent to the subscriber
+  as they occur in real-time.  The subscriber applies the data in the same
+  order as the publisher so that transactional consistency is guaranteed for
+  publications within a single subscription.  This method of data replication
+  is sometimes referred to as transactional replication.
+ </para>
+
+ <para>
+  The typical use-cases for logical replication are:
+
+  <itemizedlist>
+   <listitem>
+    <para>
+     Sending incremental changes in a single database or a subset of a
+     database to subscribers as they occur.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     Firing triggers for individual changes as they arrive on the
+     subscriber.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     Consolidating multiple databases into a single one (for example for
+     analytical purposes).
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     Replicating between different major versions of PostgreSQL.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     Giving access to replicated data to different groups of users.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     Sharing a subset of the database between multiple databases.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </para>
+
+ <para>
+  The subscriber database behaves in the same way as any other PostgreSQL
+  instance and can be used as a publisher for other databases by defining its
+  own publications.  When the subscriber is treated as read-only by
+  application, there will be no conflicts from a single subscription.  On the
+  other hand, if there are other writes done either by an application or by other
+  subscribers to the same set of tables, conflicts can arise.
+ </para>
+
+ <sect1 id="logical-replication-publication">
+  <title>Publication</title>
+
+  <para>
+   A <firstterm>publication</firstterm> can be defined on any physical
+   replication master.  The node where a publication is defined is referred to
+   as <firstterm>publisher</firstterm>.  A publication is a set of changes
+   generated from a table or a group of tables, and might also be described as
+   a change set or replication set.  Each publication exists in only one database.
+  </para>
+
+  <para>
+   Publications are different from schemas and do not affect how the table is
+   accessed.  Each table can be added to multiple publications if needed.
+   Publications may currently only contain tables.  Objects must be added
+   explicitly, except when a publication is created for <literal>ALL
+   TABLES</literal>.
+  </para>
+
+  <para>
+   Publications can choose to limit the changes they produce to
+   any combination of <command>INSERT</command>, <command>UPDATE</command>, and
+   <command>DELETE</command>, similar to how triggers are fired by
+   particular event types.  By default, all operation types are replicated.
+  </para>
+
+  <para>
+   A published table must have a <quote>replica identity</quote> configured in
+   order to be able to replicate <command>UPDATE</command>
+   and <command>DELETE</command> operations, so that appropriate rows to
+   update or delete can be identified on the subscriber side.  By default,
+   this is the primary key, if there is one.  Another unique index (with
+   certain additional requirements) can also be set to be the replica
+   identity.  If the table does not have any suitable key, then it can be set
+   to replica identity <quote>full</quote>, which means the entire row becomes
+   the key.  This, however, is very inefficient and should only be used as a
+   fallback if no other solution is possible.  If a replica identity other
+   than <quote>full</quote> is set on the publisher side, a replica identity
+   comprising the same or fewer columns must also be set on the subscriber
+   side.  See <xref linkend="SQL-CREATETABLE-REPLICA-IDENTITY"> for details on
+   how to set the replica identity.  If a table without a replica identity is
+   added to a publication that replicates <command>UPDATE</command>
+   or <command>DELETE</command> operations then
+   subsequent <command>UPDATE</command> or <command>DELETE</command>
+   operations will cause an error on the publisher.  <command>INSERT</command>
+   operations can proceed regardless of any replica identity.
+  </para>
+
+  <para>
+   Every publication can have multiple subscribers.
+  </para>
+
+  <para>
+   A publication is created using the <xref linkend="sql-createpublication">
+   command and may later be altered or dropped using corresponding commands.
+  </para>
+
+  <para>
+   The individual tables can be added and removed dynamically using
+   <xref linkend="sql-alterpublication">.  Both the <literal>ADD
+   TABLE</literal> and <literal>DROP TABLE</literal> operations are
+   transactional; so the table will start or stop replicating at the correct
+   snapshot once the transaction has committed.
+  </para>
+ </sect1>
+
+ <sect1 id="logical-replication-subscription">
+  <title>Subscription</title>
+
+  <para>
+   A <firstterm>subscription</firstterm> is the downstream side of logical
+   replication.  The node where a subscription is defined is referred to as
+   the <firstterm>subscriber</firstterm>.  A subscription defines the connection
+   to another database and set of publications (one or more) to which it wants
+   to subscribe.
+  </para>
+
+  <para>
+   The subscriber database behaves in the same way as any other PostgreSQL
+   instance and can be used as a publisher for other databases by defining its
+   own publications.
+  </para>
+
+  <para>
+   A subscriber node may have multiple subscriptions if desired.  It is
+   possible to define multiple subscriptions between a single
+   publisher-subscriber pair, in which case care must be taken to ensure
+   that the subscribed publication objects don't overlap.
+  </para>
+
+  <para>
+   Each subscription will receive changes via one replication slot (see
+   <xref linkend="streaming-replication-slots">).  Additional temporary
+   replication slots may be required for the initial data synchronization
+   of pre-existing table data.
+  </para>
+
+  <para>
+   A logical replication subscription can be a standby for synchronous
+   replication (see <xref linkend="synchronous-replication">).  The standby
+   name is by default the subscription name.  An alternative name can be
+   specified as <literal>application_name</literal> in the connection
+   information of the subscription.
+  </para>
+
+  <para>
+   Subscriptions are dumped by <command>pg_dump</command> if the current user
+   is a superuser.  Otherwise a warning is written and subscriptions are
+   skipped, because non-superusers cannot read all subscription information
+   from the <structname>pg_subscription</structname> catalog.
+  </para>
+
+  <para>
+   The subscription is added using <xref linkend="sql-createsubscription"> and
+   can be stopped/resumed at any time using the
+   <xref linkend="sql-altersubscription"> command and removed using
+   <xref linkend="sql-dropsubscription">.
+  </para>
+
+  <para>
+   When a subscription is dropped and recreated, the synchronization
+   information is lost.  This means that the data has to be resynchronized
+   afterwards.
+  </para>
+
+  <para>
+   The schema definitions are not replicated, and the published tables must
+   exist on the subscriber.  Only regular tables may be
+   the target of replication.  For example, you can't replicate to a view.
+  </para>
+
+  <para>
+   The tables are matched between the publisher and the subscriber using the
+   fully qualified table name.  Replication to differently-named tables on the
+   subscriber is not supported.
+  </para>
+
+  <para>
+   Columns of a table are also matched by name.  A different order of columns
+   in the target table is allowed, but the column types have to match.  The
+   target table can have additional columns not provided by the published
+   table.  Those will be filled with their default values.
+  </para>
+
+  <sect2 id="logical-replication-subscription-slot">
+   <title>Replication Slot Management</title>
+
+   <para>
+    As mentioned earlier, each (active) subscription receives changes from a
+    replication slot on the remote (publishing) side.  Normally, the remote
+    replication slot is created automatically when the subscription is created
+    using <command>CREATE SUBSCRIPTION</command> and it is dropped
+    automatically when the subscription is dropped using <command>DROP
+    SUBSCRIPTION</command>.  In some situations, however, it can be useful or
+    necessary to manipulate the subscription and the underlying replication
+    slot separately.  Here are some scenarios:
+
+    <itemizedlist>
+     <listitem>
+      <para>
+       When creating a subscription, the replication slot already exists.  In
+       that case, the subscription can be created using
+       the <literal>create_slot = false</literal> option to associate with the
+       existing slot.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       When creating a subscription, the remote host is not reachable or in an
+       unclear state.  In that case, the subscription can be created using
+       the <literal>connect = false</literal> option.  The remote host will then not
+       be contacted at all.  This is what <application>pg_dump</application>
+       uses.  The remote replication slot will then have to be created
+       manually before the subscription can be activated.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       When dropping a subscription, the replication slot should be kept.
+       This could be useful when the subscriber database is being moved to a
+       different host and will be activated from there.  In that case,
+       disassociate the slot from the subscription using <command>ALTER
+       SUBSCRIPTION</command> before attempting to drop the subscription.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       When dropping a subscription, the remote host is not reachable.  In
+       that case, disassociate the slot from the subscription
+       using <command>ALTER SUBSCRIPTION</command> before attempting to drop
+       the subscription.  If the remote database instance no longer exists, no
+       further action is then necessary.  If, however, the remote database
+       instance is just unreachable, the replication slot should then be
+       dropped manually; otherwise it would continue to reserve WAL and might
+       eventually cause the disk to fill up.  Such cases should be carefully
+       investigated.
+      </para>
+     </listitem>
+    </itemizedlist>
+   </para>
+  </sect2>
+ </sect1>
+
+ <sect1 id="logical-replication-conflicts">
+  <title>Conflicts</title>
+
+  <para>
+   Logical replication behaves similarly to normal DML operations in that
+   the data will be updated even if it was changed locally on the subscriber
+   node.  If incoming data violates any constraints the replication will
+   stop.  This is referred to as a <firstterm>conflict</firstterm>.  When
+   replicating <command>UPDATE</command> or <command>DELETE</command>
+   operations, missing data will not produce a conflict and such operations
+   will simply be skipped.
+  </para>
+
+  <para>
+   A conflict will produce an error and will stop the replication; it must be
+   resolved manually by the user.  Details about the conflict can be found in
+   the subscriber's server log.
+  </para>
+
+  <para>
+   The resolution can be done either by changing data on the subscriber so
+   that it does not conflict with the incoming change or by skipping the
+   transaction that conflicts with the existing data.  The transaction can be
+   skipped by calling the <link linkend="pg-replication-origin-advance">
+   <function>pg_replication_origin_advance()</function></link> function with
+   a <parameter>node_name</parameter> corresponding to the subscription name,
+   and a position.  The current position of origins can be seen in the
+   <link linkend="view-pg-replication-origin-status">
+   <structname>pg_replication_origin_status</structname></link> system view.
+  </para>
+ </sect1>
+
+ <sect1 id="logical-replication-restrictions">
+  <title>Restrictions</title>
+
+  <para>
+   Logical replication currently has the following restrictions or missing
+   functionality.  These might be addressed in future releases.
+  </para>
+
+  <itemizedlist>
+   <listitem>
+    <para>
+     The database schema and DDL commands are not replicated.  The initial
+     schema can be copied by hand using <literal>pg_dump
+     --schema-only</literal>.  Subsequent schema changes would need to be kept
+     in sync manually.  (Note, however, that there is no need for the schemas
+     to be absolutely the same on both sides.)  Logical replication is robust
+     when schema definitions change in a live database: When the schema is
+     changed on the publisher and replicated data starts arriving at the
+     subscriber but does not fit into the table schema, replication will error
+     until the schema is updated.  In many cases, intermittent errors can be
+     avoided by applying additive schema changes to the subscriber first.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     Sequence data is not replicated.  The data in serial or identity columns
+     backed by sequences will of course be replicated as part of the table,
+     but the sequence itself would still show the start value on the
+     subscriber.  If the subscriber is used as a read-only database, then this
+     should typically not be a problem.  If, however, some kind of switchover
+     or failover to the subscriber database is intended, then the sequences
+     would need to be updated to the latest values, either by copying the
+     current data from the publisher (perhaps
+     using <command>pg_dump</command>) or by determining a sufficiently high
+     value from the tables themselves.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     <command>TRUNCATE</command> commands are not replicated.  This can, of
+     course, be worked around by using <command>DELETE</command> instead.  To
+     avoid accidental <command>TRUNCATE</command> invocations, you can revoke
+     the <literal>TRUNCATE</literal> privilege from tables.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     Large objects (see <xref linkend="largeobjects">) are not replicated.
+     There is no workaround for that, other than storing data in normal
+     tables.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     Replication is only possible from base tables to base tables.  That is,
+     the tables on the publication and on the subscription side must be normal
+     tables, not views, materialized views, partition root tables, or foreign
+     tables.  In the case of partitions, you can therefore replicate a
+     partition hierarchy one-to-one, but you cannot currently replicate to a
+     differently partitioned setup.  Attempts to replicate tables other than
+     base tables will result in an error.
+    </para>
+   </listitem>
+  </itemizedlist>
+ </sect1>
+
+ <sect1 id="logical-replication-architecture">
+  <title>Architecture</title>
+
+  <para>
+   Logical replication starts by copying a snapshot of the data on the
+   publisher database.  Once that is done, changes on the publisher are sent
+   to the subscriber as they occur in real time.  The subscriber applies data
+   in the order in which commits were made on the publisher so that
+   transactional consistency is guaranteed for the publications within any
+   single subscription.
+  </para>
+
+  <para>
+   Logical replication is built with an architecture similar to physical
+   streaming replication (see <xref linkend="streaming-replication">).  It is
+   implemented by <quote>walsender</quote> and <quote>apply</quote>
+   processes.  The walsender process starts logical decoding (described
+   in <xref linkend="logicaldecoding">) of the WAL and loads the standard
+   logical decoding plugin (pgoutput).  The plugin transforms the changes read
+   from WAL to the logical replication protocol
+   (see <xref linkend="protocol-logical-replication">) and filters the data
+   according to the publication specification.  The data is then continuously
+   transferred using the streaming replication protocol to the apply worker,
+   which maps the data to local tables and applies the individual changes as
+   they are received, in correct transactional order.
+  </para>
+
+  <para>
+   The apply process on the subscriber database always runs with
+   <varname>session_replication_role</varname> set
+   to <literal>replica</literal>, which produces the usual effects on triggers
+   and constraints.
+  </para>
+
+  <para>
+   The logical replication apply process currently only fires row triggers,
+   not statement triggers.  The initial table synchronization, however, is
+   implemented like a <command>COPY</command> command and thus fires both row
+   and statement triggers for <command>INSERT</command>.
+  </para>
+
+  <sect2 id="logical-replication-snapshot">
+    <title>Initial Snapshot</title>
+    <para>
+      The initial data in existing subscribed tables are snapshotted and
+      copied in a parallel instance of a special kind of apply process.
+      This process will create its own temporary replication slot and
+      copy the existing data. Once existing data is copied, the worker
+      enters synchronization mode, which ensures that the table is brought
+      up to a synchronized state with the main apply process by streaming
+      any changes that happened during the initial data copy using standard
+      logical replication. Once the synchronization is done, the control
+      of the replication of the table is given back to the main apply
+      process where the replication continues as normal.
+    </para>
+  </sect2>
+ </sect1>
+
+ <sect1 id="logical-replication-monitoring">
+  <title>Monitoring</title>
+
+  <para>
+   Because logical replication is based on a similar architecture as
+   <link linkend="streaming-replication">physical streaming replication</link>,
+   the monitoring on a publication node is similar to monitoring of a
+   physical replication master
+   (see <xref linkend="streaming-replication-monitoring">).
+  </para>
+
+  <para>
+   The monitoring information about subscription is visible in
+   <link linkend="pg-stat-subscription"><literal>pg_stat_subscription</literal></link>.
+   This view contains one row for every subscription worker.  A subscription
+   can have zero or more active subscription workers depending on its state.
+  </para>
+
+  <para>
+   Normally, there is a single apply process running for an enabled
+   subscription.  A disabled subscription or a crashed subscription will have
+   zero rows in this view.  If the initial data synchronization of any
+   table is in progress, there will be additional workers for the tables
+   being synchronized.
+  </para>
+ </sect1>
+
+ <sect1 id="logical-replication-security">
+  <title>Security</title>
+
+  <para>
+   The role used for the replication connection must have
+   the <literal>REPLICATION</literal> attribute (or be a superuser).  Access for the role must be
+   configured in <filename>pg_hba.conf</filename>.
+  </para>
+
+  <para>
+   To create a publication, the user must have the <literal>CREATE</literal>
+   privilege in the database.
+  </para>
+
+  <para>
+   To add tables to a publication, the user must have ownership rights on the
+   table.  To create a publication that publishes all tables automatically,
+   the user must be a superuser.
+  </para>
+
+  <para>
+   To create a subscription, the user must be a superuser.
+  </para>
+
+  <para>
+   The subscription apply process will run in the local database with the
+   privileges of a superuser.
+  </para>
+
+  <para>
+   Privileges are only checked once at the start of a replication connection.
+   They are not re-checked as each change record is read from the publisher,
+   nor are they re-checked for each change when applied.
+  </para>
+ </sect1>
+
+ <sect1 id="logical-replication-config">
+  <title>Configuration Settings</title>
+
+  <para>
+   Logical replication requires several configuration options to be set.
+  </para>
+
+  <para>
+   On the publisher side, <varname>wal_level</varname> must be set to
+   <literal>logical</literal>, and <varname>max_replication_slots</varname>
+   must be set to at least the number of subscriptions expected to connect,
+   plus some reserve for table synchronization.  And
+   <varname>max_wal_senders</varname> should be set to at least the same as
+   <varname>max_replication_slots</varname> plus the number of physical
+   replicas that are connected at the same time.
+  </para>
+
+  <para>
+   The subscriber also requires the <varname>max_replication_slots</varname>
+   to be set.  In this case it should be set to at least the number of
+   subscriptions that will be added to the subscriber.
+   <varname>max_logical_replication_workers</varname> must be set to at
+   least the number of subscriptions, again plus some reserve for the table
+   synchronization.  Additionally the <varname>max_worker_processes</varname>
+   may need to be adjusted to accommodate for replication workers, at least
+   (<varname>max_logical_replication_workers</varname>
+   + <literal>1</literal>).  Note that some extensions and parallel queries
+   also take worker slots from <varname>max_worker_processes</varname>.
+  </para>
+ </sect1>
+
+ <sect1 id="logical-replication-quick-setup">
+  <title>Quick Setup</title>
+
+  <para>
+   First set the configuration options in <filename>postgresql.conf</filename>:
+<programlisting>
+wal_level = logical
+</programlisting>
+   The other required settings have default values that are sufficient for a
+   basic setup.
+  </para>
+
+  <para>
+   <filename>pg_hba.conf</filename> needs to be adjusted to allow replication
+   (the values here depend on your actual network configuration and user you
+   want to use for connecting):
+<programlisting>
+host     all     repuser     0.0.0.0/0     md5
+</programlisting>
+  </para>
+
+  <para>
+   Then on the publisher database:
+<programlisting>
+CREATE PUBLICATION mypub FOR TABLE users, departments;
+</programlisting>
+  </para>
+
+  <para>
+   And on the subscriber database:
+<programlisting>
+CREATE SUBSCRIPTION mysub CONNECTION 'dbname=foo host=bar user=repuser' PUBLICATION mypub;
+</programlisting>
+  </para>
+
+  <para>
+   The above will start the replication process, which synchronizes the
+   initial table contents of the tables <literal>users</literal> and
+   <literal>departments</literal> and then starts replicating
+   incremental changes to those tables.
+  </para>
+ </sect1>
+</chapter>

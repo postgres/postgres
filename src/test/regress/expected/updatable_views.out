@@ -86,55 +86,48 @@ SELECT table_name, column_name, is_updatable
   FROM information_schema.columns
  WHERE table_name LIKE E'r_\\_view%'
  ORDER BY table_name, ordinal_position;
- table_name |  column_name  | is_updatable 
-------------+---------------+--------------
- ro_view1   | a             | NO
- ro_view1   | b             | NO
- ro_view10  | a             | NO
- ro_view11  | a             | NO
- ro_view11  | b             | NO
- ro_view12  | a             | NO
- ro_view13  | a             | NO
- ro_view13  | b             | NO
- ro_view17  | a             | NO
- ro_view17  | b             | NO
- ro_view18  | a             | NO
- ro_view19  | sequence_name | NO
- ro_view19  | last_value    | NO
- ro_view19  | start_value   | NO
- ro_view19  | increment_by  | NO
- ro_view19  | max_value     | NO
- ro_view19  | min_value     | NO
- ro_view19  | cache_value   | NO
- ro_view19  | log_cnt       | NO
- ro_view19  | is_cycled     | NO
- ro_view19  | is_called     | NO
- ro_view2   | a             | NO
- ro_view2   | b             | NO
- ro_view20  | a             | NO
- ro_view20  | b             | NO
- ro_view20  | g             | NO
- ro_view3   | ?column?      | NO
- ro_view4   | count         | NO
- ro_view5   | a             | NO
- ro_view5   | rank          | NO
- ro_view6   | a             | NO
- ro_view6   | b             | NO
- ro_view7   | a             | NO
- ro_view7   | b             | NO
- ro_view8   | a             | NO
- ro_view8   | b             | NO
- ro_view9   | a             | NO
- ro_view9   | b             | NO
- rw_view14  | ctid          | NO
- rw_view14  | a             | YES
- rw_view14  | b             | YES
- rw_view15  | a             | YES
- rw_view15  | upper         | NO
- rw_view16  | a             | YES
- rw_view16  | b             | YES
- rw_view16  | aa            | YES
-(46 rows)
+ table_name | column_name | is_updatable 
+------------+-------------+--------------
+ ro_view1   | a           | NO
+ ro_view1   | b           | NO
+ ro_view10  | a           | NO
+ ro_view11  | a           | NO
+ ro_view11  | b           | NO
+ ro_view12  | a           | NO
+ ro_view13  | a           | NO
+ ro_view13  | b           | NO
+ ro_view17  | a           | NO
+ ro_view17  | b           | NO
+ ro_view18  | a           | NO
+ ro_view19  | last_value  | NO
+ ro_view19  | log_cnt     | NO
+ ro_view19  | is_called   | NO
+ ro_view2   | a           | NO
+ ro_view2   | b           | NO
+ ro_view20  | a           | NO
+ ro_view20  | b           | NO
+ ro_view20  | g           | NO
+ ro_view3   | ?column?    | NO
+ ro_view4   | count       | NO
+ ro_view5   | a           | NO
+ ro_view5   | rank        | NO
+ ro_view6   | a           | NO
+ ro_view6   | b           | NO
+ ro_view7   | a           | NO
+ ro_view7   | b           | NO
+ ro_view8   | a           | NO
+ ro_view8   | b           | NO
+ ro_view9   | a           | NO
+ ro_view9   | b           | NO
+ rw_view14  | ctid        | NO
+ rw_view14  | a           | YES
+ rw_view14  | b           | YES
+ rw_view15  | a           | YES
+ rw_view15  | upper       | NO
+ rw_view16  | a           | YES
+ rw_view16  | b           | YES
+ rw_view16  | aa          | YES
+(39 rows)
 
 -- Read-only views
 DELETE FROM ro_view1;
@@ -327,7 +320,7 @@ DELETE FROM ro_view18;
 ERROR:  cannot delete from view "ro_view18"
 DETAIL:  Views that do not select from a single table or view are not automatically updatable.
 HINT:  To enable deleting from the view, provide an INSTEAD OF DELETE trigger or an unconditional ON DELETE DO INSTEAD rule.
-UPDATE ro_view19 SET max_value=1000;
+UPDATE ro_view19 SET last_value=1000;
 ERROR:  cannot update view "ro_view19"
 DETAIL:  Views that do not select from a single table or view are not automatically updatable.
 HINT:  To enable updating the view, provide an INSTEAD OF UPDATE trigger or an unconditional ON UPDATE DO INSTEAD rule.
@@ -1433,11 +1426,11 @@ INSERT INTO base_tbl VALUES (1,2), (2,3), (1,-1);
 CREATE VIEW rw_view1 AS SELECT * FROM base_tbl WHERE a < b
   WITH LOCAL CHECK OPTION;
 \d+ rw_view1
-                View "public.rw_view1"
- Column |  Type   | Modifiers | Storage | Description 
---------+---------+-----------+---------+-------------
- a      | integer |           | plain   | 
- b      | integer |           | plain   | 
+                          View "public.rw_view1"
+ Column |  Type   | Collation | Nullable | Default | Storage | Description 
+--------+---------+-----------+----------+---------+---------+-------------
+ a      | integer |           |          |         | plain   | 
+ b      | integer |           |          |         | plain   | 
 View definition:
  SELECT base_tbl.a,
     base_tbl.b
@@ -1487,10 +1480,10 @@ CREATE VIEW rw_view1 AS SELECT * FROM base_tbl WHERE a > 0;
 CREATE VIEW rw_view2 AS SELECT * FROM rw_view1 WHERE a < 10
   WITH CHECK OPTION; -- implicitly cascaded
 \d+ rw_view2
-                View "public.rw_view2"
- Column |  Type   | Modifiers | Storage | Description 
---------+---------+-----------+---------+-------------
- a      | integer |           | plain   | 
+                          View "public.rw_view2"
+ Column |  Type   | Collation | Nullable | Default | Storage | Description 
+--------+---------+-----------+----------+---------+---------+-------------
+ a      | integer |           |          |         | plain   | 
 View definition:
  SELECT rw_view1.a
    FROM rw_view1
@@ -1527,10 +1520,10 @@ DETAIL:  Failing row contains (15).
 CREATE OR REPLACE VIEW rw_view2 AS SELECT * FROM rw_view1 WHERE a < 10
   WITH LOCAL CHECK OPTION;
 \d+ rw_view2
-                View "public.rw_view2"
- Column |  Type   | Modifiers | Storage | Description 
---------+---------+-----------+---------+-------------
- a      | integer |           | plain   | 
+                          View "public.rw_view2"
+ Column |  Type   | Collation | Nullable | Default | Storage | Description 
+--------+---------+-----------+----------+---------+---------+-------------
+ a      | integer |           |          |         | plain   | 
 View definition:
  SELECT rw_view1.a
    FROM rw_view1
@@ -1568,10 +1561,10 @@ ERROR:  new row violates check option for view "rw_view2"
 DETAIL:  Failing row contains (30).
 ALTER VIEW rw_view2 RESET (check_option);
 \d+ rw_view2
-                View "public.rw_view2"
- Column |  Type   | Modifiers | Storage | Description 
---------+---------+-----------+---------+-------------
- a      | integer |           | plain   | 
+                          View "public.rw_view2"
+ Column |  Type   | Collation | Nullable | Default | Storage | Description 
+--------+---------+-----------+----------+---------+---------+-------------
+ a      | integer |           |          |         | plain   | 
 View definition:
  SELECT rw_view1.a
    FROM rw_view1
@@ -1680,7 +1673,7 @@ EXPLAIN (costs off) UPDATE rw_view1 SET a = a + 5;
                            QUERY PLAN                            
 -----------------------------------------------------------------
  Update on base_tbl b
-   ->  Hash Semi Join
+   ->  Hash Join
          Hash Cond: (b.a = r.a)
          ->  Seq Scan on base_tbl b
          ->  Hash
@@ -1903,26 +1896,20 @@ EXPLAIN (costs off) SELECT * FROM rw_view1 WHERE snoop(person);
 (4 rows)
 
 EXPLAIN (costs off) UPDATE rw_view1 SET person=person WHERE snoop(person);
-                        QUERY PLAN                         
------------------------------------------------------------
- Update on base_tbl base_tbl_1
-   ->  Subquery Scan on base_tbl
-         Filter: snoop(base_tbl.person)
-         ->  LockRows
-               ->  Seq Scan on base_tbl base_tbl_2
-                     Filter: (visibility = 'public'::text)
-(6 rows)
+                            QUERY PLAN                             
+-------------------------------------------------------------------
+ Update on base_tbl
+   ->  Seq Scan on base_tbl
+         Filter: ((visibility = 'public'::text) AND snoop(person))
+(3 rows)
 
 EXPLAIN (costs off) DELETE FROM rw_view1 WHERE NOT snoop(person);
-                        QUERY PLAN                         
------------------------------------------------------------
- Delete on base_tbl base_tbl_1
-   ->  Subquery Scan on base_tbl
-         Filter: (NOT snoop(base_tbl.person))
-         ->  LockRows
-               ->  Seq Scan on base_tbl base_tbl_2
-                     Filter: (visibility = 'public'::text)
-(6 rows)
+                               QUERY PLAN                                
+-------------------------------------------------------------------------
+ Delete on base_tbl
+   ->  Seq Scan on base_tbl
+         Filter: ((visibility = 'public'::text) AND (NOT snoop(person)))
+(3 rows)
 
 -- security barrier view on top of security barrier view
 CREATE VIEW rw_view2 WITH (security_barrier = true) AS
@@ -1985,30 +1972,20 @@ EXPLAIN (costs off) SELECT * FROM rw_view2 WHERE snoop(person);
 (6 rows)
 
 EXPLAIN (costs off) UPDATE rw_view2 SET person=person WHERE snoop(person);
-                           QUERY PLAN                            
------------------------------------------------------------------
- Update on base_tbl base_tbl_1
-   ->  Subquery Scan on base_tbl
-         Filter: snoop(base_tbl.person)
-         ->  Subquery Scan on base_tbl_2
-               Filter: snoop(base_tbl_2.person)
-               ->  LockRows
-                     ->  Seq Scan on base_tbl base_tbl_3
-                           Filter: (visibility = 'public'::text)
-(8 rows)
+                                     QUERY PLAN                                      
+-------------------------------------------------------------------------------------
+ Update on base_tbl
+   ->  Seq Scan on base_tbl
+         Filter: ((visibility = 'public'::text) AND snoop(person) AND snoop(person))
+(3 rows)
 
 EXPLAIN (costs off) DELETE FROM rw_view2 WHERE NOT snoop(person);
-                           QUERY PLAN                            
------------------------------------------------------------------
- Delete on base_tbl base_tbl_1
-   ->  Subquery Scan on base_tbl
-         Filter: (NOT snoop(base_tbl.person))
-         ->  Subquery Scan on base_tbl_2
-               Filter: snoop(base_tbl_2.person)
-               ->  LockRows
-                     ->  Seq Scan on base_tbl base_tbl_3
-                           Filter: (visibility = 'public'::text)
-(8 rows)
+                                        QUERY PLAN                                         
+-------------------------------------------------------------------------------------------
+ Delete on base_tbl
+   ->  Seq Scan on base_tbl
+         Filter: ((visibility = 'public'::text) AND snoop(person) AND (NOT snoop(person)))
+(3 rows)
 
 DROP TABLE base_tbl CASCADE;
 NOTICE:  drop cascades to 2 other objects
@@ -2033,18 +2010,16 @@ SELECT * FROM rw_view1;
 (1 row)
 
 EXPLAIN (costs off) DELETE FROM rw_view1 WHERE id = 1 AND snoop(data);
-                               QUERY PLAN                                
--------------------------------------------------------------------------
+                            QUERY PLAN                             
+-------------------------------------------------------------------
  Update on base_tbl base_tbl_1
    ->  Nested Loop
          ->  Index Scan using base_tbl_pkey on base_tbl base_tbl_1
                Index Cond: (id = 1)
-         ->  Subquery Scan on base_tbl
-               Filter: snoop(base_tbl.data)
-               ->  Index Scan using base_tbl_pkey on base_tbl base_tbl_2
-                     Index Cond: (id = 1)
-                     Filter: (NOT deleted)
-(9 rows)
+         ->  Index Scan using base_tbl_pkey on base_tbl
+               Index Cond: (id = 1)
+               Filter: ((NOT deleted) AND snoop(data))
+(7 rows)
 
 DELETE FROM rw_view1 WHERE id = 1 AND snoop(data);
 NOTICE:  snooped value: Row 1
@@ -2121,85 +2096,45 @@ SELECT * FROM v1 WHERE a=8;
 (4 rows)
 
 EXPLAIN (VERBOSE, COSTS OFF)
-UPDATE v1 SET a=100 WHERE snoop(a) AND leakproof(a) AND a = 3;
-                                                             QUERY PLAN                                                             
-------------------------------------------------------------------------------------------------------------------------------------
- Update on public.t1 t1_4
-   Update on public.t1 t1_4
-   Update on public.t11 t1
-   Update on public.t12 t1
-   Update on public.t111 t1
-   ->  Subquery Scan on t1
+UPDATE v1 SET a=100 WHERE snoop(a) AND leakproof(a) AND a < 7 AND a != 6;
+                                                        QUERY PLAN                                                         
+---------------------------------------------------------------------------------------------------------------------------
+ Update on public.t1
+   Update on public.t1
+   Update on public.t11
+   Update on public.t12
+   Update on public.t111
+   ->  Index Scan using t1_a_idx on public.t1
          Output: 100, t1.b, t1.c, t1.ctid
-         Filter: snoop(t1.a)
-         ->  LockRows
-               Output: t1_5.ctid, t1_5.a, t1_5.b, t1_5.c, t1_5.ctid, t12.ctid, t12.tableoid
-               ->  Nested Loop Semi Join
-                     Output: t1_5.ctid, t1_5.a, t1_5.b, t1_5.c, t1_5.ctid, t12.ctid, t12.tableoid
-                     ->  Seq Scan on public.t1 t1_5
-                           Output: t1_5.ctid, t1_5.a, t1_5.b, t1_5.c
-                           Filter: ((t1_5.a > 5) AND (t1_5.a = 3) AND leakproof(t1_5.a))
-                     ->  Append
-                           ->  Seq Scan on public.t12
-                                 Output: t12.ctid, t12.tableoid, t12.a
-                                 Filter: (t12.a = 3)
-                           ->  Seq Scan on public.t111
-                                 Output: t111.ctid, t111.tableoid, t111.a
-                                 Filter: (t111.a = 3)
-   ->  Subquery Scan on t1_1
-         Output: 100, t1_1.b, t1_1.c, t1_1.d, t1_1.ctid
-         Filter: snoop(t1_1.a)
-         ->  LockRows
-               Output: t11.ctid, t11.a, t11.b, t11.c, t11.d, t11.ctid, t12_1.ctid, t12_1.tableoid
-               ->  Nested Loop Semi Join
-                     Output: t11.ctid, t11.a, t11.b, t11.c, t11.d, t11.ctid, t12_1.ctid, t12_1.tableoid
-                     ->  Seq Scan on public.t11
-                           Output: t11.ctid, t11.a, t11.b, t11.c, t11.d
-                           Filter: ((t11.a > 5) AND (t11.a = 3) AND leakproof(t11.a))
-                     ->  Append
-                           ->  Seq Scan on public.t12 t12_1
-                                 Output: t12_1.ctid, t12_1.tableoid, t12_1.a
-                                 Filter: (t12_1.a = 3)
-                           ->  Seq Scan on public.t111 t111_1
-                                 Output: t111_1.ctid, t111_1.tableoid, t111_1.a
-                                 Filter: (t111_1.a = 3)
-   ->  Subquery Scan on t1_2
-         Output: 100, t1_2.b, t1_2.c, t1_2.e, t1_2.ctid
-         Filter: snoop(t1_2.a)
-         ->  LockRows
-               Output: t12_2.ctid, t12_2.a, t12_2.b, t12_2.c, t12_2.e, t12_2.ctid, t12_3.ctid, t12_3.tableoid
-               ->  Nested Loop Semi Join
-                     Output: t12_2.ctid, t12_2.a, t12_2.b, t12_2.c, t12_2.e, t12_2.ctid, t12_3.ctid, t12_3.tableoid
-                     ->  Seq Scan on public.t12 t12_2
-                           Output: t12_2.ctid, t12_2.a, t12_2.b, t12_2.c, t12_2.e
-                           Filter: ((t12_2.a > 5) AND (t12_2.a = 3) AND leakproof(t12_2.a))
-                     ->  Append
-                           ->  Seq Scan on public.t12 t12_3
-                                 Output: t12_3.ctid, t12_3.tableoid, t12_3.a
-                                 Filter: (t12_3.a = 3)
-                           ->  Seq Scan on public.t111 t111_2
-                                 Output: t111_2.ctid, t111_2.tableoid, t111_2.a
-                                 Filter: (t111_2.a = 3)
-   ->  Subquery Scan on t1_3
-         Output: 100, t1_3.b, t1_3.c, t1_3.d, t1_3.e, t1_3.ctid
-         Filter: snoop(t1_3.a)
-         ->  LockRows
-               Output: t111_3.ctid, t111_3.a, t111_3.b, t111_3.c, t111_3.d, t111_3.e, t111_3.ctid, t12_4.ctid, t12_4.tableoid
-               ->  Nested Loop Semi Join
-                     Output: t111_3.ctid, t111_3.a, t111_3.b, t111_3.c, t111_3.d, t111_3.e, t111_3.ctid, t12_4.ctid, t12_4.tableoid
-                     ->  Seq Scan on public.t111 t111_3
-                           Output: t111_3.ctid, t111_3.a, t111_3.b, t111_3.c, t111_3.d, t111_3.e
-                           Filter: ((t111_3.a > 5) AND (t111_3.a = 3) AND leakproof(t111_3.a))
-                     ->  Append
-                           ->  Seq Scan on public.t12 t12_4
-                                 Output: t12_4.ctid, t12_4.tableoid, t12_4.a
-                                 Filter: (t12_4.a = 3)
-                           ->  Seq Scan on public.t111 t111_4
-                                 Output: t111_4.ctid, t111_4.tableoid, t111_4.a
-                                 Filter: (t111_4.a = 3)
-(73 rows)
+         Index Cond: ((t1.a > 5) AND (t1.a < 7))
+         Filter: ((t1.a <> 6) AND (alternatives: SubPlan 1 or hashed SubPlan 2) AND snoop(t1.a) AND leakproof(t1.a))
+         SubPlan 1
+           ->  Append
+                 ->  Seq Scan on public.t12 t12_1
+                       Filter: (t12_1.a = t1.a)
+                 ->  Seq Scan on public.t111 t111_1
+                       Filter: (t111_1.a = t1.a)
+         SubPlan 2
+           ->  Append
+                 ->  Seq Scan on public.t12 t12_2
+                       Output: t12_2.a
+                 ->  Seq Scan on public.t111 t111_2
+                       Output: t111_2.a
+   ->  Index Scan using t11_a_idx on public.t11
+         Output: 100, t11.b, t11.c, t11.d, t11.ctid
+         Index Cond: ((t11.a > 5) AND (t11.a < 7))
+         Filter: ((t11.a <> 6) AND (alternatives: SubPlan 1 or hashed SubPlan 2) AND snoop(t11.a) AND leakproof(t11.a))
+   ->  Index Scan using t12_a_idx on public.t12
+         Output: 100, t12.b, t12.c, t12.e, t12.ctid
+         Index Cond: ((t12.a > 5) AND (t12.a < 7))
+         Filter: ((t12.a <> 6) AND (alternatives: SubPlan 1 or hashed SubPlan 2) AND snoop(t12.a) AND leakproof(t12.a))
+   ->  Index Scan using t111_a_idx on public.t111
+         Output: 100, t111.b, t111.c, t111.d, t111.e, t111.ctid
+         Index Cond: ((t111.a > 5) AND (t111.a < 7))
+         Filter: ((t111.a <> 6) AND (alternatives: SubPlan 1 or hashed SubPlan 2) AND snoop(t111.a) AND leakproof(t111.a))
+(33 rows)
 
-UPDATE v1 SET a=100 WHERE snoop(a) AND leakproof(a) AND a = 3;
+UPDATE v1 SET a=100 WHERE snoop(a) AND leakproof(a) AND a < 7 AND a != 6;
 SELECT * FROM v1 WHERE a=100; -- Nothing should have been changed to 100
  a | b | c | d 
 ---+---+---+---
@@ -2212,82 +2147,42 @@ SELECT * FROM t1 WHERE a=100; -- Nothing should have been changed to 100
 
 EXPLAIN (VERBOSE, COSTS OFF)
 UPDATE v1 SET a=a+1 WHERE snoop(a) AND leakproof(a) AND a = 8;
-                                                             QUERY PLAN                                                             
-------------------------------------------------------------------------------------------------------------------------------------
- Update on public.t1 t1_4
-   Update on public.t1 t1_4
-   Update on public.t11 t1
-   Update on public.t12 t1
-   Update on public.t111 t1
-   ->  Subquery Scan on t1
+                                               QUERY PLAN                                                
+---------------------------------------------------------------------------------------------------------
+ Update on public.t1
+   Update on public.t1
+   Update on public.t11
+   Update on public.t12
+   Update on public.t111
+   ->  Index Scan using t1_a_idx on public.t1
          Output: (t1.a + 1), t1.b, t1.c, t1.ctid
-         Filter: snoop(t1.a)
-         ->  LockRows
-               Output: t1_5.a, t1_5.ctid, t1_5.b, t1_5.c, t1_5.ctid, t12.ctid, t12.tableoid
-               ->  Nested Loop Semi Join
-                     Output: t1_5.a, t1_5.ctid, t1_5.b, t1_5.c, t1_5.ctid, t12.ctid, t12.tableoid
-                     ->  Seq Scan on public.t1 t1_5
-                           Output: t1_5.a, t1_5.ctid, t1_5.b, t1_5.c
-                           Filter: ((t1_5.a > 5) AND (t1_5.a = 8) AND leakproof(t1_5.a))
-                     ->  Append
-                           ->  Seq Scan on public.t12
-                                 Output: t12.ctid, t12.tableoid, t12.a
-                                 Filter: (t12.a = 8)
-                           ->  Seq Scan on public.t111
-                                 Output: t111.ctid, t111.tableoid, t111.a
-                                 Filter: (t111.a = 8)
-   ->  Subquery Scan on t1_1
-         Output: (t1_1.a + 1), t1_1.b, t1_1.c, t1_1.d, t1_1.ctid
-         Filter: snoop(t1_1.a)
-         ->  LockRows
-               Output: t11.a, t11.ctid, t11.b, t11.c, t11.d, t11.ctid, t12_1.ctid, t12_1.tableoid
-               ->  Nested Loop Semi Join
-                     Output: t11.a, t11.ctid, t11.b, t11.c, t11.d, t11.ctid, t12_1.ctid, t12_1.tableoid
-                     ->  Seq Scan on public.t11
-                           Output: t11.a, t11.ctid, t11.b, t11.c, t11.d
-                           Filter: ((t11.a > 5) AND (t11.a = 8) AND leakproof(t11.a))
-                     ->  Append
-                           ->  Seq Scan on public.t12 t12_1
-                                 Output: t12_1.ctid, t12_1.tableoid, t12_1.a
-                                 Filter: (t12_1.a = 8)
-                           ->  Seq Scan on public.t111 t111_1
-                                 Output: t111_1.ctid, t111_1.tableoid, t111_1.a
-                                 Filter: (t111_1.a = 8)
-   ->  Subquery Scan on t1_2
-         Output: (t1_2.a + 1), t1_2.b, t1_2.c, t1_2.e, t1_2.ctid
-         Filter: snoop(t1_2.a)
-         ->  LockRows
-               Output: t12_2.a, t12_2.ctid, t12_2.b, t12_2.c, t12_2.e, t12_2.ctid, t12_3.ctid, t12_3.tableoid
-               ->  Nested Loop Semi Join
-                     Output: t12_2.a, t12_2.ctid, t12_2.b, t12_2.c, t12_2.e, t12_2.ctid, t12_3.ctid, t12_3.tableoid
-                     ->  Seq Scan on public.t12 t12_2
-                           Output: t12_2.a, t12_2.ctid, t12_2.b, t12_2.c, t12_2.e
-                           Filter: ((t12_2.a > 5) AND (t12_2.a = 8) AND leakproof(t12_2.a))
-                     ->  Append
-                           ->  Seq Scan on public.t12 t12_3
-                                 Output: t12_3.ctid, t12_3.tableoid, t12_3.a
-                                 Filter: (t12_3.a = 8)
-                           ->  Seq Scan on public.t111 t111_2
-                                 Output: t111_2.ctid, t111_2.tableoid, t111_2.a
-                                 Filter: (t111_2.a = 8)
-   ->  Subquery Scan on t1_3
-         Output: (t1_3.a + 1), t1_3.b, t1_3.c, t1_3.d, t1_3.e, t1_3.ctid
-         Filter: snoop(t1_3.a)
-         ->  LockRows
-               Output: t111_3.a, t111_3.ctid, t111_3.b, t111_3.c, t111_3.d, t111_3.e, t111_3.ctid, t12_4.ctid, t12_4.tableoid
-               ->  Nested Loop Semi Join
-                     Output: t111_3.a, t111_3.ctid, t111_3.b, t111_3.c, t111_3.d, t111_3.e, t111_3.ctid, t12_4.ctid, t12_4.tableoid
-                     ->  Seq Scan on public.t111 t111_3
-                           Output: t111_3.a, t111_3.ctid, t111_3.b, t111_3.c, t111_3.d, t111_3.e
-                           Filter: ((t111_3.a > 5) AND (t111_3.a = 8) AND leakproof(t111_3.a))
-                     ->  Append
-                           ->  Seq Scan on public.t12 t12_4
-                                 Output: t12_4.ctid, t12_4.tableoid, t12_4.a
-                                 Filter: (t12_4.a = 8)
-                           ->  Seq Scan on public.t111 t111_4
-                                 Output: t111_4.ctid, t111_4.tableoid, t111_4.a
-                                 Filter: (t111_4.a = 8)
-(73 rows)
+         Index Cond: ((t1.a > 5) AND (t1.a = 8))
+         Filter: ((alternatives: SubPlan 1 or hashed SubPlan 2) AND snoop(t1.a) AND leakproof(t1.a))
+         SubPlan 1
+           ->  Append
+                 ->  Seq Scan on public.t12 t12_1
+                       Filter: (t12_1.a = t1.a)
+                 ->  Seq Scan on public.t111 t111_1
+                       Filter: (t111_1.a = t1.a)
+         SubPlan 2
+           ->  Append
+                 ->  Seq Scan on public.t12 t12_2
+                       Output: t12_2.a
+                 ->  Seq Scan on public.t111 t111_2
+                       Output: t111_2.a
+   ->  Index Scan using t11_a_idx on public.t11
+         Output: (t11.a + 1), t11.b, t11.c, t11.d, t11.ctid
+         Index Cond: ((t11.a > 5) AND (t11.a = 8))
+         Filter: ((alternatives: SubPlan 1 or hashed SubPlan 2) AND snoop(t11.a) AND leakproof(t11.a))
+   ->  Index Scan using t12_a_idx on public.t12
+         Output: (t12.a + 1), t12.b, t12.c, t12.e, t12.ctid
+         Index Cond: ((t12.a > 5) AND (t12.a = 8))
+         Filter: ((alternatives: SubPlan 1 or hashed SubPlan 2) AND snoop(t12.a) AND leakproof(t12.a))
+   ->  Index Scan using t111_a_idx on public.t111
+         Output: (t111.a + 1), t111.b, t111.c, t111.d, t111.e, t111.ctid
+         Index Cond: ((t111.a > 5) AND (t111.a = 8))
+         Filter: ((alternatives: SubPlan 1 or hashed SubPlan 2) AND snoop(t111.a) AND leakproof(t111.a))
+(33 rows)
 
 UPDATE v1 SET a=a+1 WHERE snoop(a) AND leakproof(a) AND a = 8;
 NOTICE:  snooped value: 8
@@ -2459,3 +2354,76 @@ DROP VIEW v2;
 DROP VIEW v1;
 DROP TABLE t2;
 DROP TABLE t1;
+--
+-- Test CREATE OR REPLACE VIEW turning a non-updatable view into an
+-- auto-updatable view and adding check options in a single step
+--
+CREATE TABLE t1 (a int, b text);
+CREATE VIEW v1 AS SELECT null::int AS a;
+CREATE OR REPLACE VIEW v1 AS SELECT * FROM t1 WHERE a > 0 WITH CHECK OPTION;
+INSERT INTO v1 VALUES (1, 'ok'); -- ok
+INSERT INTO v1 VALUES (-1, 'invalid'); -- should fail
+ERROR:  new row violates check option for view "v1"
+DETAIL:  Failing row contains (-1, invalid).
+DROP VIEW v1;
+DROP TABLE t1;
+-- check that an auto-updatable view on a partitioned table works correctly
+create table pt (a int, b int) partition by range (a, b);
+create table pt1 (b int not null, a int not null) partition by range (b);
+create table pt11 (like pt1);
+alter table pt11 drop a;
+alter table pt11 add a int;
+alter table pt11 drop a;
+alter table pt11 add a int not null;
+alter table pt1 attach partition pt11 for values from (2) to (5);
+alter table pt attach partition pt1 for values from (1, 2) to (1, 10);
+create view ptv as select * from pt;
+select events & 4 != 0 AS upd,
+       events & 8 != 0 AS ins,
+       events & 16 != 0 AS del
+  from pg_catalog.pg_relation_is_updatable('pt'::regclass, false) t(events);
+ upd | ins | del 
+-----+-----+-----
+ t   | t   | t
+(1 row)
+
+select pg_catalog.pg_column_is_updatable('pt'::regclass, 1::smallint, false);
+ pg_column_is_updatable 
+------------------------
+ t
+(1 row)
+
+select pg_catalog.pg_column_is_updatable('pt'::regclass, 2::smallint, false);
+ pg_column_is_updatable 
+------------------------
+ t
+(1 row)
+
+select table_name, is_updatable, is_insertable_into
+  from information_schema.views where table_name = 'ptv';
+ table_name | is_updatable | is_insertable_into 
+------------+--------------+--------------------
+ ptv        | YES          | YES
+(1 row)
+
+select table_name, column_name, is_updatable
+  from information_schema.columns where table_name = 'ptv' order by column_name;
+ table_name | column_name | is_updatable 
+------------+-------------+--------------
+ ptv        | a           | YES
+ ptv        | b           | YES
+(2 rows)
+
+insert into ptv values (1, 2);
+select tableoid::regclass, * from pt;
+ tableoid | a | b 
+----------+---+---
+ pt11     | 1 | 2
+(1 row)
+
+create view ptv_wco as select * from pt where a = 0 with check option;
+insert into ptv_wco values (1, 2);
+ERROR:  new row violates check option for view "ptv_wco"
+DETAIL:  Failing row contains (2, 1).
+drop view ptv, ptv_wco;
+drop table pt, pt1, pt11;

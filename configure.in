@@ -17,13 +17,13 @@ dnl Read the Autoconf manual for details.
 dnl
 m4_pattern_forbid(^PGAC_)dnl to catch undefined macros
 
-AC_INIT([PostgreSQL], [10devel], [pgsql-bugs@postgresql.org])
+AC_INIT([PostgreSQL], [10beta1], [pgsql-bugs@postgresql.org])
 
 m4_if(m4_defn([m4_PACKAGE_VERSION]), [2.69], [], [m4_fatal([Autoconf version 2.69 is required.
 Untested combinations of 'autoconf' and PostgreSQL versions are not
 recommended.  You can remove the check from 'configure.in' but it is then
 your responsibility whether the result works or not.])])
-AC_COPYRIGHT([Copyright (c) 1996-2016, PostgreSQL Global Development Group])
+AC_COPYRIGHT([Copyright (c) 1996-2017, PostgreSQL Global Development Group])
 AC_CONFIG_SRCDIR([src/backend/access/common/heaptuple.c])
 AC_CONFIG_AUX_DIR(config)
 AC_PREFIX_DEFAULT(/usr/local/pgsql)
@@ -69,9 +69,7 @@ dragonfly*) template=netbsd ;;
    mingw*) template=win32 ;;
   netbsd*) template=netbsd ;;
  openbsd*) template=openbsd ;;
-     sco*) template=sco ;;
  solaris*) template=solaris ;;
-   sysv5*) template=unixware ;;
 esac
 
   if test x"$template" = x"" ; then
@@ -124,13 +122,13 @@ PGAC_ARG_REQ(with, libs,      [DIRS], [alternative spelling of --with-libraries]
 
 
 #
-# 64-bit integer date/time storage: enabled by default.
+# 64-bit integer date/time storage is now the only option, but to avoid
+# unnecessary breakage of build scripts, continue to accept an explicit
+# "--enable-integer-datetimes" switch.
 #
-AC_MSG_CHECKING([whether to build with 64-bit integer date/time support])
-PGAC_ARG_BOOL(enable, integer-datetimes, yes, [disable 64-bit integer date/time support],
-              [AC_DEFINE([USE_INTEGER_DATETIMES], 1,
-                         [Define to 1 if you want 64-bit integer timestamp and interval support. (--enable-integer-datetimes)])])
-AC_MSG_RESULT([$enable_integer_datetimes])
+PGAC_ARG_BOOL(enable, integer-datetimes, yes, [obsolete option, no longer supported],
+              [],
+              [AC_MSG_ERROR([--disable-integer-datetimes is no longer supported])])
 
 
 #
@@ -194,6 +192,13 @@ PGAC_ARG_BOOL(enable, spinlocks, yes,
 #
 PGAC_ARG_BOOL(enable, atomics, yes,
               [do not use atomic operations])
+
+#
+# Random number generation
+#
+PGAC_ARG_BOOL(enable, strong-random, yes,
+              [do not use a strong random number source])
+AC_SUBST(enable_strong_random)
 
 #
 # --enable-debug adds -g to compiler flags
@@ -353,7 +358,11 @@ case ${wal_segsize} in
  16) ;;
  32) ;;
  64) ;;
-  *) AC_MSG_ERROR([Invalid WAL segment size. Allowed values are 1,2,4,8,16,32,64.])
+ 128) ;;
+ 256) ;;
+ 512) ;;
+ 1024) ;;
+  *) AC_MSG_ERROR([Invalid WAL segment size. Allowed values are 1,2,4,8,16,32,64,128,256,512,1024.])
 esac
 AC_MSG_RESULT([${wal_segsize}MB])
 
@@ -607,6 +616,19 @@ if test "$enable_thread_safety" = yes; then
 fi
 AC_MSG_RESULT([$enable_thread_safety])
 AC_SUBST(enable_thread_safety)
+
+#
+# ICU
+#
+AC_MSG_CHECKING([whether to build with ICU support])
+PGAC_ARG_BOOL(with, icu, no, [build with ICU support],
+              [AC_DEFINE([USE_ICU], 1, [Define to build with ICU support. (--with-icu)])])
+AC_MSG_RESULT([$with_icu])
+AC_SUBST(with_icu)
+
+if test "$with_icu" = yes; then
+  PKG_CHECK_MODULES(ICU, icu-uc icu-i18n)
+fi
 
 #
 # Optionally build Tcl modules (PL/Tcl)
@@ -871,18 +893,6 @@ AC_ARG_VAR(LDFLAGS_SL, [extra linker flags for linking shared libraries only])
 PGAC_PROG_LD
 AC_SUBST(LD)
 AC_SUBST(with_gnu_ld)
-case $host_os in sysv5*)
-  AC_CACHE_CHECK([whether ld -R works], [pgac_cv_prog_ld_R],
-  [
-    pgac_save_LDFLAGS=$LDFLAGS; LDFLAGS="$LDFLAGS -Wl,-R/usr/lib"
-    AC_LINK_IFELSE([AC_LANG_PROGRAM([], [])],
-      [pgac_cv_prog_ld_R=yes],
-      [pgac_cv_prog_ld_R=no])
-    LDFLAGS=$pgac_save_LDFLAGS
-  ])
-  ld_R_works=$pgac_cv_prog_ld_R
-  AC_SUBST(ld_R_works)
-esac
 AC_PROG_RANLIB
 PGAC_CHECK_STRIP
 AC_CHECK_TOOL(AR, ar, ar)
@@ -894,7 +904,7 @@ fi
 
 AC_PROG_INSTALL
 # When Autoconf chooses install-sh as install program it tries to generate
-# a relative path to it in each makefile where it subsitutes it. This clashes
+# a relative path to it in each makefile where it substitutes it. This clashes
 # with our Makefile.global concept. This workaround helps.
 case $INSTALL in
   *install-sh*) install_bin='';;
@@ -907,7 +917,7 @@ AC_PROG_LN_S
 AC_PROG_AWK
 AC_PROG_MKDIR_P
 # When Autoconf chooses install-sh as mkdir -p program it tries to generate
-# a relative path to it in each makefile where it subsitutes it. This clashes
+# a relative path to it in each makefile where it substitutes it. This clashes
 # with our Makefile.global concept. This workaround helps.
 case $MKDIR_P in
   *install-sh*) MKDIR_P='\${SHELL} \${top_srcdir}/config/install-sh -c -d';;
@@ -934,40 +944,6 @@ fi
 if test "$with_python" = yes; then
   PGAC_PATH_PYTHON
   PGAC_CHECK_PYTHON_EMBED_SETUP
-
-  # We need libpython as a shared library.  With Python >=2.5, we
-  # check the Py_ENABLE_SHARED setting.  On Debian, the setting is not
-  # correct before the jessie release (http://bugs.debian.org/695979).
-  # We also want to support older Python versions.  So as a fallback
-  # we see if there is a file that is named like a shared library.
-
-  if test "$python_enable_shared" != 1; then
-    if test "$PORTNAME" = darwin; then
-      # OS X does supply a .dylib even though Py_ENABLE_SHARED does
-      # not get set.  The file detection logic below doesn't succeed
-      # on older OS X versions, so make it explicit.
-      python_enable_shared=1
-    elif test "$PORTNAME" = win32; then
-      # Windows also needs an explicit override.
-      python_enable_shared=1
-    else
-      # We don't know the platform shared library extension here yet,
-      # so we try some candidates.
-      for dlsuffix in .so .sl; do
-        if ls "$python_libdir"/libpython*${dlsuffix}* >/dev/null 2>&1; then
-          python_enable_shared=1
-          break
-        fi
-      done
-    fi
-  fi
-
-  if test "$python_enable_shared" != 1; then
-    AC_MSG_ERROR([cannot build PL/Python because libpython is not a shared library
-You might have to rebuild your Python installation.  Refer to the
-documentation for details.  Use --without-python to disable building
-PL/Python.])
-  fi
 fi
 
 if test "$cross_compiling" = yes && test -z "$with_system_tzdata"; then
@@ -1057,6 +1033,7 @@ AC_SEARCH_LIBS(getopt_long, [getopt gnugetopt])
 AC_SEARCH_LIBS(crypt, crypt)
 AC_SEARCH_LIBS(shm_open, rt)
 AC_SEARCH_LIBS(shm_unlink, rt)
+AC_SEARCH_LIBS(clock_gettime, [rt posix4])
 # Solaris:
 AC_SEARCH_LIBS(fdatasync, [rt posix4])
 # Required for thread_test.c on Solaris
@@ -1112,12 +1089,22 @@ if test "$with_openssl" = yes ; then
   dnl Order matters!
   if test "$PORTNAME" != "win32"; then
      AC_CHECK_LIB(crypto, CRYPTO_new_ex_data, [], [AC_MSG_ERROR([library 'crypto' is required for OpenSSL])])
-     AC_CHECK_LIB(ssl,    SSL_library_init, [], [AC_MSG_ERROR([library 'ssl' is required for OpenSSL])])
+     AC_CHECK_LIB(ssl,    SSL_new, [], [AC_MSG_ERROR([library 'ssl' is required for OpenSSL])])
   else
      AC_SEARCH_LIBS(CRYPTO_new_ex_data, eay32 crypto, [], [AC_MSG_ERROR([library 'eay32' or 'crypto' is required for OpenSSL])])
-     AC_SEARCH_LIBS(SSL_library_init, ssleay32 ssl, [], [AC_MSG_ERROR([library 'ssleay32' or 'ssl' is required for OpenSSL])])
+     AC_SEARCH_LIBS(SSL_new, ssleay32 ssl, [], [AC_MSG_ERROR([library 'ssleay32' or 'ssl' is required for OpenSSL])])
   fi
   AC_CHECK_FUNCS([SSL_get_current_compression])
+  # Functions introduced in OpenSSL 1.1.0. We used to check for
+  # OPENSSL_VERSION_NUMBER, but that didn't work with 1.1.0, because LibreSSL
+  # defines OPENSSL_VERSION_NUMBER to claim version 2.0.0, even though it
+  # doesn't have these OpenSSL 1.1.0 functions. So check for individual
+  # functions.
+  AC_CHECK_FUNCS([OPENSSL_init_ssl BIO_get_data BIO_meth_new ASN1_STRING_get0_data RAND_OpenSSL])
+  # OpenSSL versions before 1.1.0 required setting callback functions, for
+  # thread-safety. In 1.1.0, it's no longer required, and CRYPTO_lock()
+  # function was removed.
+  AC_CHECK_FUNCS([CRYPTO_lock])
 fi
 
 if test "$with_pam" = yes ; then
@@ -1172,7 +1159,7 @@ if test "$with_uuid" = bsd ; then
     [UUID_LIBS=""],
     [AC_MSG_ERROR([BSD UUID functions are not present])])
 elif test "$with_uuid" = e2fs ; then
-  # On OS X, the UUID functions are in libc
+  # On macOS, the UUID functions are in libc
   AC_CHECK_FUNC(uuid_generate,
     [UUID_LIBS=""],
     [AC_CHECK_LIB(uuid, uuid_generate,
@@ -1192,16 +1179,13 @@ AC_SUBST(UUID_LIBS)
 ## Header files
 ##
 
-dnl sys/socket.h is required by AC_FUNC_ACCEPT_ARGTYPES
-AC_CHECK_HEADERS([atomic.h crypt.h dld.h fp_class.h getopt.h ieeefp.h ifaddrs.h langinfo.h mbarrier.h poll.h pwd.h sys/epoll.h sys/ioctl.h sys/ipc.h sys/poll.h sys/pstat.h sys/resource.h sys/select.h sys/sem.h sys/shm.h sys/socket.h sys/sockio.h sys/tas.h sys/time.h sys/un.h termios.h ucred.h utime.h wchar.h wctype.h])
+AC_CHECK_HEADERS([atomic.h crypt.h dld.h fp_class.h getopt.h ieeefp.h ifaddrs.h langinfo.h mbarrier.h poll.h sys/epoll.h sys/ipc.h sys/pstat.h sys/resource.h sys/select.h sys/sem.h sys/shm.h sys/sockio.h sys/tas.h sys/un.h termios.h ucred.h utime.h wchar.h wctype.h])
 
 # On BSD, test for net/if.h will fail unless sys/socket.h
 # is included first.
 AC_CHECK_HEADERS(net/if.h, [], [],
 [AC_INCLUDES_DEFAULT
-#ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
-#endif
 ])
 
 # On OpenBSD, test for sys/ucred.h will fail unless sys/param.h
@@ -1213,12 +1197,9 @@ AC_CHECK_HEADERS(sys/ucred.h, [], [],
 
 # At least on IRIX, test for netinet/tcp.h will fail unless
 # netinet/in.h is included first.
-AC_CHECK_HEADERS(netinet/in.h)
 AC_CHECK_HEADERS(netinet/tcp.h, [], [],
 [AC_INCLUDES_DEFAULT
-#ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
-#endif
 ])
 
 if expr x"$pgac_cv_check_readline" : 'x-lreadline' >/dev/null ; then
@@ -1353,11 +1334,13 @@ AC_C_FLEXIBLE_ARRAY_MEMBER
 PGAC_C_SIGNED
 PGAC_C_FUNCNAME_SUPPORT
 PGAC_C_STATIC_ASSERT
+PGAC_C_TYPEOF
 PGAC_C_TYPES_COMPATIBLE
 PGAC_C_BUILTIN_BSWAP32
 PGAC_C_BUILTIN_BSWAP64
 PGAC_C_BUILTIN_CONSTANT_P
 PGAC_C_BUILTIN_UNREACHABLE
+PGAC_C_COMPUTED_GOTO
 PGAC_C_VA_ARGS
 PGAC_STRUCT_TIMEZONE
 PGAC_UNION_SEMUN
@@ -1415,8 +1398,8 @@ esac
 if test "$PORTNAME" != "win32"; then
    AC_SYS_LARGEFILE
    dnl Autoconf 2.69's AC_SYS_LARGEFILE believes it's a good idea to #define
-   dnl _DARWIN_USE_64_BIT_INODE, but it isn't: on OS X 10.5 that activates a
-   dnl bug that causes readdir() to sometimes return EINVAL.  On later OS X
+   dnl _DARWIN_USE_64_BIT_INODE, but it isn't: on macOS 10.5 that activates a
+   dnl bug that causes readdir() to sometimes return EINVAL.  On later macOS
    dnl versions where the feature actually works, it's on by default anyway.
    AH_VERBATIM([_DARWIN_USE_64_BIT_INODE],[])
 fi
@@ -1446,7 +1429,7 @@ PGAC_FUNC_WCSTOMBS_L
 LIBS_including_readline="$LIBS"
 LIBS=`echo "$LIBS" | sed -e 's/-ledit//g' -e 's/-lreadline//g'`
 
-AC_CHECK_FUNCS([cbrt dlopen fdatasync getifaddrs getpeerucred getrlimit mbstowcs_l memmove poll pstat pthread_is_threaded_np readlink setproctitle setsid shm_open symlink sync_file_range towlower utime utimes wcstombs wcstombs_l])
+AC_CHECK_FUNCS([cbrt clock_gettime dlopen fdatasync getifaddrs getpeerucred getrlimit mbstowcs_l memmove poll pstat pthread_is_threaded_np readlink setproctitle setsid shm_open symlink sync_file_range towlower utime utimes wcstombs wcstombs_l])
 
 AC_REPLACE_FUNCS(fseeko)
 case $host_os in
@@ -1469,7 +1452,7 @@ fi
 
 AC_CHECK_DECLS(fdatasync, [], [], [#include <unistd.h>])
 AC_CHECK_DECLS([strlcat, strlcpy])
-# This is probably only present on Darwin, but may as well check always
+# This is probably only present on macOS, but may as well check always
 AC_CHECK_DECLS(F_FULLFSYNC, [], [], [#include <fcntl.h>])
 
 HAVE_IPV6=no
@@ -1669,6 +1652,28 @@ fi
 
 AC_CHECK_FUNCS([strtoll strtoq], [break])
 AC_CHECK_FUNCS([strtoull strtouq], [break])
+
+if test "$with_icu" = yes; then
+  # ICU functions are macros, so we need to do this the long way.
+
+  # ucol_strcollUTF8() appeared in ICU 50.
+  AC_CACHE_CHECK([for ucol_strcollUTF8], [pgac_cv_func_ucol_strcollUTF8],
+[ac_save_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$ICU_CFLAGS $CPPFLAGS"
+ac_save_LIBS=$LIBS
+LIBS="$ICU_LIBS $LIBS"
+AC_LINK_IFELSE([AC_LANG_PROGRAM(
+[#include <unicode/ucol.h>
+],
+[ucol_strcollUTF8(NULL, NULL, 0, NULL, 0, NULL);])],
+[pgac_cv_func_ucol_strcollUTF8=yes],
+[pgac_cv_func_ucol_strcollUTF8=no])
+CPPFLAGS=$ac_save_CPPFLAGS
+LIBS=$ac_save_LIBS])
+  if test "$pgac_cv_func_ucol_strcollUTF8" = yes ; then
+    AC_DEFINE([HAVE_UCOL_STRCOLLUTF8], 1, [Define to 1 if you have the `ucol_strcollUTF8' function.])
+  fi
+fi
 
 # Lastly, restore full LIBS list and check for readline/libedit symbols
 LIBS="$LIBS_including_readline"
@@ -1963,18 +1968,31 @@ AC_SUBST(PG_CRC32C_OBJS)
 
 # Select semaphore implementation type.
 if test "$PORTNAME" != "win32"; then
+  if test x"$PREFERRED_SEMAPHORES" = x"NAMED_POSIX" ; then
+    # Need sem_open for this
+    AC_SEARCH_LIBS(sem_open, [rt pthread], [USE_NAMED_POSIX_SEMAPHORES=1])
+  fi
+  if test x"$PREFERRED_SEMAPHORES" = x"UNNAMED_POSIX" ; then
+    # Need sem_init for this
+    AC_SEARCH_LIBS(sem_init, [rt pthread], [USE_UNNAMED_POSIX_SEMAPHORES=1])
+  fi
+  AC_MSG_CHECKING([which semaphore API to use])
   if test x"$USE_NAMED_POSIX_SEMAPHORES" = x"1" ; then
     AC_DEFINE(USE_NAMED_POSIX_SEMAPHORES, 1, [Define to select named POSIX semaphores.])
     SEMA_IMPLEMENTATION="src/backend/port/posix_sema.c"
+    sematype="named POSIX"
   else
     if test x"$USE_UNNAMED_POSIX_SEMAPHORES" = x"1" ; then
       AC_DEFINE(USE_UNNAMED_POSIX_SEMAPHORES, 1, [Define to select unnamed POSIX semaphores.])
       SEMA_IMPLEMENTATION="src/backend/port/posix_sema.c"
+      sematype="unnamed POSIX"
     else
       AC_DEFINE(USE_SYSV_SEMAPHORES, 1, [Define to select SysV-style semaphores.])
       SEMA_IMPLEMENTATION="src/backend/port/sysv_sema.c"
+      sematype="System V"
     fi
   fi
+  AC_MSG_RESULT([$sematype])
 else
   AC_DEFINE(USE_WIN32_SEMAPHORES, 1, [Define to select Win32-style semaphores.])
   SEMA_IMPLEMENTATION="src/backend/port/win32_sema.c"
@@ -1988,6 +2006,51 @@ if test "$PORTNAME" != "win32"; then
 else
   AC_DEFINE(USE_WIN32_SHARED_MEMORY, 1, [Define to select Win32-style shared memory.])
   SHMEM_IMPLEMENTATION="src/backend/port/win32_shmem.c"
+fi
+
+# Select random number source
+#
+# You can override this logic by setting the appropriate USE_*RANDOM flag to 1
+# in the template or configure command line.
+
+# If not selected manually, try to select a source automatically.
+if test "$enable_strong_random" = "yes" && test x"$USE_OPENSSL_RANDOM" = x"" && test x"$USE_WIN32_RANDOM" = x"" && test x"$USE_DEV_URANDOM" = x"" ; then
+  if test x"$with_openssl" = x"yes" ; then
+    USE_OPENSSL_RANDOM=1
+  elif test "$PORTNAME" = "win32" ; then
+    USE_WIN32_RANDOM=1
+  else
+    AC_CHECK_FILE([/dev/urandom], [], [])
+
+    if test x"$ac_cv_file__dev_urandom" = x"yes" ; then
+      USE_DEV_URANDOM=1
+    fi
+  fi
+fi
+
+AC_MSG_CHECKING([which random number source to use])
+if test "$enable_strong_random" = yes ; then
+  if test x"$USE_OPENSSL_RANDOM" = x"1" ; then
+    AC_DEFINE(USE_OPENSSL_RANDOM, 1, [Define to use OpenSSL for random number generation])
+    AC_MSG_RESULT([OpenSSL])
+  elif test x"$USE_WIN32_RANDOM" = x"1" ; then
+    AC_DEFINE(USE_WIN32_RANDOM, 1, [Define to use native Windows API for random number generation])
+    AC_MSG_RESULT([Windows native])
+  elif test x"$USE_DEV_URANDOM" = x"1" ; then
+    AC_DEFINE(USE_DEV_URANDOM, 1, [Define to use /dev/urandom for random number generation])
+    AC_MSG_RESULT([/dev/urandom])
+  else
+    AC_MSG_ERROR([
+no source of strong random numbers was found
+PostgreSQL can use OpenSSL or /dev/urandom as a source of random numbers,
+for authentication protocols. You can use --disable-strong-random to use a
+built-in pseudo random number generator, but that may be insecure.])
+  fi
+  AC_DEFINE(HAVE_STRONG_RANDOM, 1, [Define to use have a strong random number source])
+else
+    AC_MSG_RESULT([weak builtin PRNG])
+    AC_MSG_WARN([
+*** Not using a strong random number source may be insecure.])
 fi
 
 # If not set in template file, set bytes to use libc memset()
@@ -2054,14 +2117,12 @@ fi
 # Check for DocBook and tools
 #
 PGAC_PROG_NSGMLS
-PGAC_PROG_JADE
 PGAC_CHECK_DOCBOOK(4.2)
-PGAC_PATH_DOCBOOK_STYLESHEETS
-PGAC_PATH_COLLATEINDEX
 AC_CHECK_PROGS(DBTOEPUB, dbtoepub)
 AC_CHECK_PROGS(XMLLINT, xmllint)
 AC_CHECK_PROGS(XSLTPROC, xsltproc)
 AC_CHECK_PROGS(OSX, [osx sgml2xml sx])
+AC_CHECK_PROGS(FOP, fop)
 
 #
 # Check for test tools
@@ -2074,6 +2135,9 @@ if test "$enable_tap_tests" = yes; then
   if test -z "$PERL"; then
     AC_MSG_ERROR([Perl not found])
   fi
+  # Check for necessary modules
+  AX_PROG_PERL_MODULES(IPC::Run, ,
+    AC_MSG_ERROR([Perl module IPC::Run is required to run TAP tests]))
 fi
 
 # Thread testing

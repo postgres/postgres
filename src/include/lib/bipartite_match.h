@@ -1,7 +1,7 @@
 /*
  * bipartite_match.h
  *
- * Copyright (c) 2015-2016, PostgreSQL Global Development Group
+ * Copyright (c) 2015-2017, PostgreSQL Global Development Group
  *
  * src/include/lib/bipartite_match.h
  */
@@ -43,4 +43,4 @@ extern BipartiteMatchState *BipartiteMatch(int u_size, int v_size, short **adjac
 
 extern void BipartiteMatchFree(BipartiteMatchState *state);
 
-#endif   /* BIPARTITE_MATCH_H */
+#endif							/* BIPARTITE_MATCH_H */

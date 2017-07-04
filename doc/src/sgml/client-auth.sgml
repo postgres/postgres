@@ -156,9 +156,11 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
       <para>
        To make use of this option the server must be built with
        <acronym>SSL</acronym> support. Furthermore,
-       <acronym>SSL</acronym> must be enabled at server start time
+       <acronym>SSL</acronym> must be enabled
        by setting the <xref linkend="guc-ssl"> configuration parameter (see
        <xref linkend="ssl-tcp"> for more information).
+       Otherwise, the <literal>hostssl</literal> record is ignored except for
+       logging a warning that it cannot match any connections.
       </para>
      </listitem>
     </varlistentry>
@@ -191,7 +193,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
        members of the role, directly or indirectly, and not just by
        virtue of being a superuser.
        The value <literal>replication</> specifies that the record
-       matches if a replication connection is requested (note that
+       matches if a physical replication connection is requested (note that
        replication connections do not specify any particular database).
        Otherwise, this is the name of
        a specific <productname>PostgreSQL</productname> database.
@@ -410,12 +412,22 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
        </varlistentry>
 
        <varlistentry>
+        <term><literal>scram-sha-256</></term>
+        <listitem>
+         <para>
+          Perform SCRAM-SHA-256 authentication to verify the user's
+          password. See <xref linkend="auth-password"> for details.
+         </para>
+        </listitem>
+       </varlistentry>
+
+       <varlistentry>
         <term><literal>md5</></term>
         <listitem>
          <para>
-          Require the client to supply a double-MD5-hashed password for
-          authentication.
-          See <xref linkend="auth-password"> for details.
+          Perform SCRAM-SHA-256 or MD5 authentication to verify the
+          user's password. See <xref linkend="auth-password">
+          for details.
          </para>
         </listitem>
        </varlistentry>
@@ -595,6 +607,24 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
    re-read the file.
   </para>
 
+  <note>
+   <para>
+    The preceding statement is not true on Microsoft Windows: there, any
+    changes in the <filename>pg_hba.conf</filename> file are immediately
+    applied by subsequent new connections.
+   </para>
+  </note>
+
+  <para>
+   The system view
+   <link linkend="view-pg-hba-file-rules"><structname>pg_hba_file_rules</structname></link>
+   can be helpful for pre-testing changes to the <filename>pg_hba.conf</>
+   file, or for diagnosing problems if loading of the file did not have the
+   desired effects.  Rows in the view with
+   non-null <structfield>error</structfield> fields indicate problems in the
+   corresponding lines of the file.
+  </para>
+ 
   <tip>
    <para>
     To connect to a particular database, a user must not only pass the
@@ -653,13 +683,18 @@ host    postgres        all             192.168.93.0/24         ident
 # "postgres" if the user's password is correctly supplied.
 #
 # TYPE  DATABASE        USER            ADDRESS                 METHOD
-host    postgres        all             192.168.12.10/32        md5
+host    postgres        all             192.168.12.10/32        scram-sha-256
 
 # Allow any user from hosts in the example.com domain to connect to
 # any database if the user's password is correctly supplied.
 #
+# Require SCRAM authentication for most users, but make an exception
+# for user 'mike', who uses an older client that doesn't support SCRAM
+# authentication.
+#
 # TYPE  DATABASE        USER            ADDRESS                 METHOD
-host    all             all             .example.com            md5
+host    all             mike            .example.com            md5
+host    all             all             .example.com            scram-sha-256
 
 # In the absence of preceding "host" lines, these two lines will
 # reject all connections from 192.168.54.1 (since that entry will be
@@ -711,7 +746,7 @@ local   db1,db2,@demodbs  all                                   md5
   <para>
    When using an external authentication system such as Ident or GSSAPI,
    the name of the operating system user that initiated the connection
-   might not be the same as the database user that is to be connect as.
+   might not be the same as the database user (role) that is to be used.
    In this case, a user name map can be applied to map the operating system
    user name to a database user.  To use user name mapping, specify
    <literal>map</literal>=<replaceable>map-name</replaceable>
@@ -887,21 +922,39 @@ omicron         bryanh                  guest1
    </indexterm>
 
    <para>
-    The password-based authentication methods are <literal>md5</>
-    and <literal>password</>. These methods operate
+    The password-based authentication methods are <literal>scram-sha-256</>,
+    <literal>md5</>, and <literal>password</>. These methods operate
     similarly except for the way that the password is sent across the
-    connection, namely MD5-hashed and clear-text respectively.
+    connection.
    </para>
 
    <para>
-    If you are at all concerned about password
-    <quote>sniffing</> attacks then <literal>md5</> is preferred.
-    Plain <literal>password</> should always be avoided if possible.
-    However, <literal>md5</> cannot be used with the <xref
-    linkend="guc-db-user-namespace"> feature.  If the connection is
-    protected by SSL encryption then <literal>password</> can be used
-    safely (though SSL certificate authentication might be a better
-    choice if one is depending on using SSL).
+    Plain <literal>password</> sends the password in clear-text, and is
+    therefore vulnerable to password <quote>sniffing</> attacks. It should
+    always be avoided if possible. If the connection is protected by SSL
+    encryption then <literal>password</> can be used safely, though.
+    (Though SSL certificate authentication might be a better choice if one
+    is depending on using SSL).
+   </para>
+
+
+   <para>
+    <literal>scram-sha-256</> performs SCRAM-SHA-256 authentication, as
+    described in
+    <ulink url="https://tools.ietf.org/html/rfc5802">RFC5802</ulink>. It
+    is a challenge-response scheme, that prevents password sniffing on
+    untrusted connections. It is more secure than the <literal>md5</>
+    method, but might not be supported by older clients.
+   </para>
+
+   <para>
+    <literal>md5</> allows falling back to a less secure challenge-response
+    mechanism for those users with an MD5 hashed password.
+    The fallback mechanism also prevents password sniffing, but provides no
+    protection if an attacker manages to steal the password hash from the
+    server, and it cannot be used with the <xref
+    linkend="guc-db-user-namespace"> feature. For all other users,
+    <literal>md5</> works the same as <literal>scram-sha-256</>.
    </para>
 
    <para>
@@ -1306,7 +1359,7 @@ omicron         bryanh                  guest1
     socket parameter, or similar mechanisms.  Currently that includes
     <systemitem class="osname">Linux</>,
     most flavors of <systemitem class="osname">BSD</> including
-    <systemitem class="osname">OS X</>,
+    <systemitem class="osname">macOS</>,
     and <systemitem class="osname">Solaris</systemitem>.
    </para>
 
@@ -1569,23 +1622,35 @@ host ... ldap ldapurl="ldap://ldap.example.net/dc=example,dc=net?uid?sub"
    </para>
 
    <para>
+    Multiple RADIUS servers can be specified, in which case they will
+    be tried sequentially. If a negative response is received from
+    a server, the authentication will fail. If no response is received,
+    the next server in the list will be tried. To specify multiple
+    servers, put the names within quotes and separate the server names
+    with a comma. If multiple servers are specified, all other RADIUS
+    options can also be given as a comma separate list, to apply
+    individual values to each server. They can also be specified as
+    a single value, in which case this value will apply to all servers.
+   </para>
+
+   <para>
     The following configuration options are supported for RADIUS:
      <variablelist>
       <varlistentry>
-       <term><literal>radiusserver</literal></term>
+       <term><literal>radiusservers</literal></term>
        <listitem>
         <para>
-         The name or IP address of the RADIUS server to connect to.
+         The name or IP addresses of the RADIUS servers to connect to.
          This parameter is required.
         </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
-       <term><literal>radiussecret</literal></term>
+       <term><literal>radiussecrets</literal></term>
        <listitem>
         <para>
-         The shared secret used when talking securely to the RADIUS
+         The shared secrets used when talking securely to the RADIUS
          server. This must have exactly the same value on the PostgreSQL
          and RADIUS servers. It is recommended that this be a string of
          at least 16 characters. This parameter is required.
@@ -1603,17 +1668,17 @@ host ... ldap ldapurl="ldap://ldap.example.net/dc=example,dc=net?uid?sub"
       </varlistentry>
 
       <varlistentry>
-       <term><literal>radiusport</literal></term>
+       <term><literal>radiusports</literal></term>
        <listitem>
         <para>
-         The port number on the RADIUS server to connect to. If no port
+         The port number on the RADIUS servers to connect to. If no port
          is specified, the default port <literal>1812</> will be used.
         </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
-       <term><literal>radiusidentifier</literal></term>
+       <term><literal>radiusidentifiers</literal></term>
        <listitem>
         <para>
          The string used as <literal>NAS Identifier</> in the RADIUS

@@ -443,8 +443,8 @@ hstore_recv(PG_FUNCTION_ARGS)
 	if (pcount < 0 || pcount > MaxAllocSize / sizeof(Pairs))
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-			  errmsg("number of pairs (%d) exceeds the maximum allowed (%d)",
-					 pcount, (int) (MaxAllocSize / sizeof(Pairs)))));
+				 errmsg("number of pairs (%d) exceeds the maximum allowed (%d)",
+						pcount, (int) (MaxAllocSize / sizeof(Pairs)))));
 	pairs = palloc(pcount * sizeof(Pairs));
 
 	for (i = 0; i < pcount; ++i)
@@ -562,8 +562,8 @@ hstore_from_arrays(PG_FUNCTION_ARGS)
 	if (key_count > MaxAllocSize / sizeof(Pairs))
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-			  errmsg("number of pairs (%d) exceeds the maximum allowed (%d)",
-					 key_count, (int) (MaxAllocSize / sizeof(Pairs)))));
+				 errmsg("number of pairs (%d) exceeds the maximum allowed (%d)",
+						key_count, (int) (MaxAllocSize / sizeof(Pairs)))));
 
 	/* value_array might be NULL */
 
@@ -611,19 +611,22 @@ hstore_from_arrays(PG_FUNCTION_ARGS)
 
 		if (!value_nulls || value_nulls[i])
 		{
-			pairs[i].key = VARDATA_ANY(key_datums[i]);
+			pairs[i].key = VARDATA(key_datums[i]);
 			pairs[i].val = NULL;
-			pairs[i].keylen = hstoreCheckKeyLen(VARSIZE_ANY_EXHDR(key_datums[i]));
+			pairs[i].keylen =
+				hstoreCheckKeyLen(VARSIZE(key_datums[i]) - VARHDRSZ);
 			pairs[i].vallen = 4;
 			pairs[i].isnull = true;
 			pairs[i].needfree = false;
 		}
 		else
 		{
-			pairs[i].key = VARDATA_ANY(key_datums[i]);
-			pairs[i].val = VARDATA_ANY(value_datums[i]);
-			pairs[i].keylen = hstoreCheckKeyLen(VARSIZE_ANY_EXHDR(key_datums[i]));
-			pairs[i].vallen = hstoreCheckValLen(VARSIZE_ANY_EXHDR(value_datums[i]));
+			pairs[i].key = VARDATA(key_datums[i]);
+			pairs[i].val = VARDATA(value_datums[i]);
+			pairs[i].keylen =
+				hstoreCheckKeyLen(VARSIZE(key_datums[i]) - VARHDRSZ);
+			pairs[i].vallen =
+				hstoreCheckValLen(VARSIZE(value_datums[i]) - VARHDRSZ);
 			pairs[i].isnull = false;
 			pairs[i].needfree = false;
 		}
@@ -690,8 +693,8 @@ hstore_from_array(PG_FUNCTION_ARGS)
 	if (count > MaxAllocSize / sizeof(Pairs))
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-			  errmsg("number of pairs (%d) exceeds the maximum allowed (%d)",
-					 count, (int) (MaxAllocSize / sizeof(Pairs)))));
+				 errmsg("number of pairs (%d) exceeds the maximum allowed (%d)",
+						count, (int) (MaxAllocSize / sizeof(Pairs)))));
 
 	pairs = palloc(count * sizeof(Pairs));
 
@@ -704,19 +707,22 @@ hstore_from_array(PG_FUNCTION_ARGS)
 
 		if (in_nulls[i * 2 + 1])
 		{
-			pairs[i].key = VARDATA_ANY(in_datums[i * 2]);
+			pairs[i].key = VARDATA(in_datums[i * 2]);
 			pairs[i].val = NULL;
-			pairs[i].keylen = hstoreCheckKeyLen(VARSIZE_ANY_EXHDR(in_datums[i * 2]));
+			pairs[i].keylen =
+				hstoreCheckKeyLen(VARSIZE(in_datums[i * 2]) - VARHDRSZ);
 			pairs[i].vallen = 4;
 			pairs[i].isnull = true;
 			pairs[i].needfree = false;
 		}
 		else
 		{
-			pairs[i].key = VARDATA_ANY(in_datums[i * 2]);
-			pairs[i].val = VARDATA_ANY(in_datums[i * 2 + 1]);
-			pairs[i].keylen = hstoreCheckKeyLen(VARSIZE_ANY_EXHDR(in_datums[i * 2]));
-			pairs[i].vallen = hstoreCheckValLen(VARSIZE_ANY_EXHDR(in_datums[i * 2 + 1]));
+			pairs[i].key = VARDATA(in_datums[i * 2]);
+			pairs[i].val = VARDATA(in_datums[i * 2 + 1]);
+			pairs[i].keylen =
+				hstoreCheckKeyLen(VARSIZE(in_datums[i * 2]) - VARHDRSZ);
+			pairs[i].vallen =
+				hstoreCheckValLen(VARSIZE(in_datums[i * 2 + 1]) - VARHDRSZ);
 			pairs[i].isnull = false;
 			pairs[i].needfree = false;
 		}
@@ -823,7 +829,7 @@ hstore_from_record(PG_FUNCTION_ARGS)
 		my_extra->ncolumns = ncolumns;
 	}
 
-	Assert(ncolumns <= MaxTupleAttributeNumber);		/* thus, no overflow */
+	Assert(ncolumns <= MaxTupleAttributeNumber);	/* thus, no overflow */
 	pairs = palloc(ncolumns * sizeof(Pairs));
 
 	if (rec)
@@ -1429,8 +1435,8 @@ hstore_to_jsonb_loose(PG_FUNCTION_ARGS)
 			{
 				val.type = jbvNumeric;
 				val.val.numeric = DatumGetNumeric(
-											  DirectFunctionCall3(numeric_in,
-										  CStringGetDatum(tmp.data), 0, -1));
+												  DirectFunctionCall3(numeric_in,
+																	  CStringGetDatum(tmp.data), 0, -1));
 			}
 			else
 			{

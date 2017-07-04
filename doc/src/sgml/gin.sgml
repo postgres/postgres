@@ -85,298 +85,8 @@
     </thead>
     <tbody>
      <row>
-      <entry><literal>_abstime_ops</></entry>
-      <entry><type>abstime[]</></entry>
-      <entry>
-       <literal>&amp;&amp;</>
-       <literal>&lt;@</>
-       <literal>=</>
-       <literal>@&gt;</>
-      </entry>
-     </row>
-     <row>
-      <entry><literal>_bit_ops</></entry>
-      <entry><type>bit[]</></entry>
-      <entry>
-       <literal>&amp;&amp;</>
-       <literal>&lt;@</>
-       <literal>=</>
-       <literal>@&gt;</>
-      </entry>
-     </row>
-     <row>
-      <entry><literal>_bool_ops</></entry>
-      <entry><type>boolean[]</></entry>
-      <entry>
-       <literal>&amp;&amp;</>
-       <literal>&lt;@</>
-       <literal>=</>
-       <literal>@&gt;</>
-      </entry>
-     </row>
-     <row>
-      <entry><literal>_bpchar_ops</></entry>
-      <entry><type>character[]</></entry>
-      <entry>
-       <literal>&amp;&amp;</>
-       <literal>&lt;@</>
-       <literal>=</>
-       <literal>@&gt;</>
-      </entry>
-     </row>
-     <row>
-      <entry><literal>_bytea_ops</></entry>
-      <entry><type>bytea[]</></entry>
-      <entry>
-       <literal>&amp;&amp;</>
-       <literal>&lt;@</>
-       <literal>=</>
-       <literal>@&gt;</>
-      </entry>
-     </row>
-     <row>
-      <entry><literal>_char_ops</></entry>
-      <entry><type>"char"[]</></entry>
-      <entry>
-       <literal>&amp;&amp;</>
-       <literal>&lt;@</>
-       <literal>=</>
-       <literal>@&gt;</>
-      </entry>
-     </row>
-     <row>
-      <entry><literal>_cidr_ops</></entry>
-      <entry><type>cidr[]</></entry>
-      <entry>
-       <literal>&amp;&amp;</>
-       <literal>&lt;@</>
-       <literal>=</>
-       <literal>@&gt;</>
-      </entry>
-     </row>
-     <row>
-      <entry><literal>_date_ops</></entry>
-      <entry><type>date[]</></entry>
-      <entry>
-       <literal>&amp;&amp;</>
-       <literal>&lt;@</>
-       <literal>=</>
-       <literal>@&gt;</>
-      </entry>
-     </row>
-     <row>
-      <entry><literal>_float4_ops</></entry>
-      <entry><type>float4[]</></entry>
-      <entry>
-       <literal>&amp;&amp;</>
-       <literal>&lt;@</>
-       <literal>=</>
-       <literal>@&gt;</>
-      </entry>
-     </row>
-     <row>
-      <entry><literal>_float8_ops</></entry>
-      <entry><type>float8[]</></entry>
-      <entry>
-       <literal>&amp;&amp;</>
-       <literal>&lt;@</>
-       <literal>=</>
-       <literal>@&gt;</>
-      </entry>
-     </row>
-     <row>
-      <entry><literal>_inet_ops</></entry>
-      <entry><type>inet[]</></entry>
-      <entry>
-       <literal>&amp;&amp;</>
-       <literal>&lt;@</>
-       <literal>=</>
-       <literal>@&gt;</>
-      </entry>
-     </row>
-     <row>
-      <entry><literal>_int2_ops</></entry>
-      <entry><type>smallint[]</></entry>
-      <entry>
-       <literal>&amp;&amp;</>
-       <literal>&lt;@</>
-       <literal>=</>
-       <literal>@&gt;</>
-      </entry>
-     </row>
-     <row>
-      <entry><literal>_int4_ops</></entry>
-      <entry><type>integer[]</></entry>
-      <entry>
-       <literal>&amp;&amp;</>
-       <literal>&lt;@</>
-       <literal>=</>
-       <literal>@&gt;</>
-      </entry>
-     </row>
-     <row>
-      <entry><literal>_int8_ops</></entry>
-      <entry><type>bigint[]</></entry>
-      <entry>
-       <literal>&amp;&amp;</>
-       <literal>&lt;@</>
-       <literal>=</>
-       <literal>@&gt;</>
-      </entry>
-     </row>
-     <row>
-      <entry><literal>_interval_ops</></entry>
-      <entry><type>interval[]</></entry>
-      <entry>
-       <literal>&amp;&amp;</>
-       <literal>&lt;@</>
-       <literal>=</>
-       <literal>@&gt;</>
-      </entry>
-     </row>
-     <row>
-      <entry><literal>_macaddr_ops</></entry>
-      <entry><type>macaddr[]</></entry>
-      <entry>
-       <literal>&amp;&amp;</>
-       <literal>&lt;@</>
-       <literal>=</>
-       <literal>@&gt;</>
-      </entry>
-     </row>
-     <row>
-      <entry><literal>_money_ops</></entry>
-      <entry><type>money[]</></entry>
-      <entry>
-       <literal>&amp;&amp;</>
-       <literal>&lt;@</>
-       <literal>=</>
-       <literal>@&gt;</>
-      </entry>
-     </row>
-     <row>
-      <entry><literal>_name_ops</></entry>
-      <entry><type>name[]</></entry>
-      <entry>
-       <literal>&amp;&amp;</>
-       <literal>&lt;@</>
-       <literal>=</>
-       <literal>@&gt;</>
-      </entry>
-     </row>
-     <row>
-      <entry><literal>_numeric_ops</></entry>
-      <entry><type>numeric[]</></entry>
-      <entry>
-       <literal>&amp;&amp;</>
-       <literal>&lt;@</>
-       <literal>=</>
-       <literal>@&gt;</>
-      </entry>
-     </row>
-     <row>
-      <entry><literal>_oid_ops</></entry>
-      <entry><type>oid[]</></entry>
-      <entry>
-       <literal>&amp;&amp;</>
-       <literal>&lt;@</>
-       <literal>=</>
-       <literal>@&gt;</>
-      </entry>
-     </row>
-     <row>
-      <entry><literal>_oidvector_ops</></entry>
-      <entry><type>oidvector[]</></entry>
-      <entry>
-       <literal>&amp;&amp;</>
-       <literal>&lt;@</>
-       <literal>=</>
-       <literal>@&gt;</>
-      </entry>
-     </row>
-     <row>
-      <entry><literal>_reltime_ops</></entry>
-      <entry><type>reltime[]</></entry>
-      <entry>
-       <literal>&amp;&amp;</>
-       <literal>&lt;@</>
-       <literal>=</>
-       <literal>@&gt;</>
-      </entry>
-     </row>
-     <row>
-      <entry><literal>_text_ops</></entry>
-      <entry><type>text[]</></entry>
-      <entry>
-       <literal>&amp;&amp;</>
-       <literal>&lt;@</>
-       <literal>=</>
-       <literal>@&gt;</>
-      </entry>
-     </row>
-     <row>
-      <entry><literal>_time_ops</></entry>
-      <entry><type>time[]</></entry>
-      <entry>
-       <literal>&amp;&amp;</>
-       <literal>&lt;@</>
-       <literal>=</>
-       <literal>@&gt;</>
-      </entry>
-     </row>
-     <row>
-      <entry><literal>_timestamp_ops</></entry>
-      <entry><type>timestamp[]</></entry>
-      <entry>
-       <literal>&amp;&amp;</>
-       <literal>&lt;@</>
-       <literal>=</>
-       <literal>@&gt;</>
-      </entry>
-     </row>
-     <row>
-      <entry><literal>_timestamptz_ops</></entry>
-      <entry><type>timestamp with time zone[]</></entry>
-      <entry>
-       <literal>&amp;&amp;</>
-       <literal>&lt;@</>
-       <literal>=</>
-       <literal>@&gt;</>
-      </entry>
-     </row>
-     <row>
-      <entry><literal>_timetz_ops</></entry>
-      <entry><type>time with time zone[]</></entry>
-      <entry>
-       <literal>&amp;&amp;</>
-       <literal>&lt;@</>
-       <literal>=</>
-       <literal>@&gt;</>
-      </entry>
-     </row>
-     <row>
-      <entry><literal>_tinterval_ops</></entry>
-      <entry><type>tinterval[]</></entry>
-      <entry>
-       <literal>&amp;&amp;</>
-       <literal>&lt;@</>
-       <literal>=</>
-       <literal>@&gt;</>
-      </entry>
-     </row>
-     <row>
-      <entry><literal>_varbit_ops</></entry>
-      <entry><type>bit varying[]</></entry>
-      <entry>
-       <literal>&amp;&amp;</>
-       <literal>&lt;@</>
-       <literal>=</>
-       <literal>@&gt;</>
-      </entry>
-     </row>
-     <row>
-      <entry><literal>_varchar_ops</></entry>
-      <entry><type>character varying[]</></entry>
+      <entry><literal>array_ops</></entry>
+      <entry><type>anyarray</></entry>
       <entry>
        <literal>&amp;&amp;</>
        <literal>&lt;@</>
@@ -441,22 +151,10 @@
  </para>
 
  <para>
-   There are three methods that an operator class for
+   There are two methods that an operator class for
    <acronym>GIN</acronym> must provide:
 
- <variablelist>
-    <varlistentry>
-     <term><function>int compare(Datum a, Datum b)</></term>
-     <listitem>
-      <para>
-       Compares two keys (not indexed items!) and returns an integer less than
-       zero, zero, or greater than zero, indicating whether the first key is
-       less than, equal to, or greater than the second.  Null keys are never
-       passed to this function.
-      </para>
-     </listitem>
-    </varlistentry>
-
+  <variablelist>
     <varlistentry>
      <term><function>Datum *extractValue(Datum itemValue, int32 *nkeys,
         bool **nullFlags)</></term>
@@ -645,7 +343,38 @@
      </listitem>
     </varlistentry>
   </variablelist>
+ </para>
 
+ <para>
+  In addition, GIN must have a way to sort the key values stored in the index.
+  The operator class can define the sort ordering by specifying a comparison
+  method:
+
+  <variablelist>
+    <varlistentry>
+     <term><function>int compare(Datum a, Datum b)</></term>
+     <listitem>
+      <para>
+       Compares two keys (not indexed items!) and returns an integer less than
+       zero, zero, or greater than zero, indicating whether the first key is
+       less than, equal to, or greater than the second.  Null keys are never
+       passed to this function.
+      </para>
+     </listitem>
+    </varlistentry>
+  </variablelist>
+
+  Alternatively, if the operator class does not provide a <function>compare</>
+  method, GIN will look up the default btree operator class for the index
+  key data type, and use its comparison function.  It is recommended to
+  specify the comparison function in a GIN operator class that is meant for
+  just one data type, as looking up the btree operator class costs a few
+  cycles.  However, polymorphic GIN operator classes (such
+  as <literal>array_ops</>) typically cannot specify a single comparison
+  function.
+ </para>
+
+ <para>
   Optionally, an operator class for <acronym>GIN</acronym> can supply the
   following method:
 
@@ -900,11 +629,9 @@
  <title>Examples</title>
 
  <para>
-  The <productname>PostgreSQL</productname> source distribution includes
-  <acronym>GIN</acronym> operator classes for <type>tsvector</> and
-  for one-dimensional arrays of all internal types.  Prefix searching in
-  <type>tsvector</> is implemented using the <acronym>GIN</> partial match
-  feature.
+  The core <productname>PostgreSQL</> distribution
+  includes the <acronym>GIN</acronym> operator classes previously shown in
+  <xref linkend="gin-builtin-opclasses-table">.
   The following <filename>contrib</> modules also contain
   <acronym>GIN</acronym> operator classes:
 

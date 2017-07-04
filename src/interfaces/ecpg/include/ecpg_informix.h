@@ -29,7 +29,7 @@
 #define ECPG_INFORMIX_EXTRA_CHARS	-1264
 
 #ifdef __cplusplus
-extern		"C"
+extern "C"
 {
 #endif
 
@@ -87,4 +87,4 @@ extern int	dtcvfmtasc(char *, char *, timestamp *);
 }
 #endif
 
-#endif   /* ndef _ECPG_INFORMIX_H */
+#endif							/* ndef _ECPG_INFORMIX_H */

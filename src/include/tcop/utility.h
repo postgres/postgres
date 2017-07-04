@@ -4,7 +4,7 @@
  *	  prototypes for utility.c.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/tcop/utility.h
@@ -24,17 +24,20 @@ typedef enum
 } ProcessUtilityContext;
 
 /* Hook for plugins to get control in ProcessUtility() */
-typedef void (*ProcessUtility_hook_type) (Node *parsetree,
-					  const char *queryString, ProcessUtilityContext context,
-													  ParamListInfo params,
-									DestReceiver *dest, char *completionTag);
+typedef void (*ProcessUtility_hook_type) (PlannedStmt *pstmt,
+										  const char *queryString, ProcessUtilityContext context,
+										  ParamListInfo params,
+										  QueryEnvironment *queryEnv,
+										  DestReceiver *dest, char *completionTag);
 extern PGDLLIMPORT ProcessUtility_hook_type ProcessUtility_hook;
 
-extern void ProcessUtility(Node *parsetree, const char *queryString,
+extern void ProcessUtility(PlannedStmt *pstmt, const char *queryString,
 			   ProcessUtilityContext context, ParamListInfo params,
+			   QueryEnvironment *queryEnv,
 			   DestReceiver *dest, char *completionTag);
-extern void standard_ProcessUtility(Node *parsetree, const char *queryString,
+extern void standard_ProcessUtility(PlannedStmt *pstmt, const char *queryString,
 						ProcessUtilityContext context, ParamListInfo params,
+						QueryEnvironment *queryEnv,
 						DestReceiver *dest, char *completionTag);
 
 extern bool UtilityReturnsTuples(Node *parsetree);
@@ -47,6 +50,6 @@ extern const char *CreateCommandTag(Node *parsetree);
 
 extern LogStmtLevel GetCommandLogLevel(Node *parsetree);
 
-extern bool CommandIsReadOnly(Node *parsetree);
+extern bool CommandIsReadOnly(PlannedStmt *pstmt);
 
-#endif   /* UTILITY_H */
+#endif							/* UTILITY_H */

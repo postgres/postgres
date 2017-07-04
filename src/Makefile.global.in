@@ -179,6 +179,7 @@ pgxsdir = $(pkglibdir)/pgxs
 #
 # Records the choice of the various --enable-xxx and --with-xxx options.
 
+with_icu	= @with_icu@
 with_perl	= @with_perl@
 with_python	= @with_python@
 with_tcl	= @with_tcl@
@@ -197,6 +198,7 @@ enable_dtrace	= @enable_dtrace@
 enable_coverage	= @enable_coverage@
 enable_tap_tests	= @enable_tap_tests@
 enable_thread_safety	= @enable_thread_safety@
+enable_strong_random	= @enable_strong_random@
 
 python_includespec	= @python_includespec@
 python_libdir		= @python_libdir@
@@ -206,6 +208,9 @@ python_majorversion	= @python_majorversion@
 python_version		= @python_version@
 
 krb_srvtab = @krb_srvtab@
+
+ICU_CFLAGS		= @ICU_CFLAGS@
+ICU_LIBS		= @ICU_LIBS@
 
 TCLSH			= @TCLSH@
 TCL_LIBS		= @TCL_LIBS@
@@ -226,6 +231,8 @@ PTHREAD_LIBS		= @PTHREAD_LIBS@
 
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
+
+override CPPFLAGS := $(CPPFLAGS) $(ICU_CFLAGS)
 
 ifdef PGXS
 override CPPFLAGS := -I$(includedir_server) -I$(includedir_internal) $(CPPFLAGS)
@@ -265,7 +272,6 @@ UUID_LIBS = @UUID_LIBS@
 UUID_EXTRA_OBJS = @UUID_EXTRA_OBJS@
 LD = @LD@
 with_gnu_ld = @with_gnu_ld@
-ld_R_works = @ld_R_works@
 
 # We want -L for libpgport.a and libpgcommon.a to be first in LDFLAGS.  We
 # also need LDFLAGS to be a "recursively expanded" variable, else adjustments
@@ -332,8 +338,11 @@ endif
 endif
 
 PROVE = @PROVE@
-PG_PROVE_FLAGS = -I $(top_srcdir)/src/test/perl/
-PROVE_FLAGS = --verbose
+# There are common routines in src/test/perl, and some test suites have
+# extra perl modules in their own directory.
+PG_PROVE_FLAGS = -I $(top_srcdir)/src/test/perl/ -I $(srcdir)
+# User-supplied prove flags such as --verbose can be provided in PROVE_FLAGS.
+PROVE_FLAGS =
 
 # prepend to path if already set, else just set it
 define add_to_path
@@ -342,7 +351,7 @@ endef
 
 # platform-specific environment variable to set shared library path
 define ld_library_path_var
-$(if $(filter $(PORTNAME),darwin),DYLD_LIBRARY_PATH,$(if $(filter $(PORTNAME),aix),LIBPATH,LD_LIBRARY_PATH))
+$(if $(filter $(PORTNAME),darwin),DYLD_LIBRARY_PATH,$(if $(filter $(PORTNAME),aix),LIBPATH,$(if $(filter $(PORTNAME),hpux),SHLIB_PATH,LD_LIBRARY_PATH)))
 endef
 
 define with_temp_install
@@ -353,12 +362,12 @@ ifeq ($(enable_tap_tests),yes)
 
 define prove_installcheck
 rm -rf $(CURDIR)/tmp_check/log
-cd $(srcdir) && TESTDIR='$(CURDIR)' PATH="$(bindir):$$PATH" PGPORT='6$(DEF_PGPORT)' top_builddir='$(CURDIR)/$(top_builddir)' PG_REGRESS='$(CURDIR)/$(top_builddir)/src/test/regress/pg_regress' $(PROVE) $(PG_PROVE_FLAGS) $(PROVE_FLAGS) t/*.pl
+cd $(srcdir) && TESTDIR='$(CURDIR)' PATH="$(bindir):$$PATH" PGPORT='6$(DEF_PGPORT)' top_builddir='$(CURDIR)/$(top_builddir)' PG_REGRESS='$(CURDIR)/$(top_builddir)/src/test/regress/pg_regress' $(PROVE) $(PG_PROVE_FLAGS) $(PROVE_FLAGS) $(if $(PROVE_TESTS),$(PROVE_TESTS),t/*.pl)
 endef
 
 define prove_check
 rm -rf $(CURDIR)/tmp_check/log
-cd $(srcdir) && TESTDIR='$(CURDIR)' $(with_temp_install) PGPORT='6$(DEF_PGPORT)' PG_REGRESS='$(CURDIR)/$(top_builddir)/src/test/regress/pg_regress' $(PROVE) $(PG_PROVE_FLAGS) $(PROVE_FLAGS) t/*.pl
+cd $(srcdir) && TESTDIR='$(CURDIR)' $(with_temp_install) PGPORT='6$(DEF_PGPORT)' PG_REGRESS='$(CURDIR)/$(top_builddir)/src/test/regress/pg_regress' $(PROVE) $(PG_PROVE_FLAGS) $(PROVE_FLAGS) $(if $(PROVE_TESTS),$(PROVE_TESTS),t/*.pl)
 endef
 
 else
@@ -392,11 +401,8 @@ STRIP_SHARED_LIB = @STRIP_SHARED_LIB@
 
 # Documentation
 
-have_docbook	= @have_docbook@
-COLLATEINDEX	= @COLLATEINDEX@
 DBTOEPUB	= @DBTOEPUB@
-DOCBOOKSTYLE	= @DOCBOOKSTYLE@
-JADE			= @JADE@
+FOP				= @FOP@
 NSGMLS			= @NSGMLS@
 OSX				= @OSX@
 XMLLINT			= @XMLLINT@
@@ -543,14 +549,35 @@ TEMP_CONF += --temp-config=$(TEMP_CONFIG)
 endif
 
 pg_regress_locale_flags = $(if $(ENCODING),--encoding=$(ENCODING)) $(NOLOCALE)
+pg_regress_clean_files = results/ regression.diffs regression.out tmp_check/ tmp_check_iso/ log/ output_iso/
 
-pg_regress_check = $(with_temp_install) $(top_builddir)/src/test/regress/pg_regress --inputdir=$(srcdir) --temp-instance=./tmp_check $(TEMP_CONF) --bindir= $(pg_regress_locale_flags) $(EXTRA_REGRESS_OPTS)
-pg_regress_installcheck = $(top_builddir)/src/test/regress/pg_regress --inputdir=$(srcdir) --bindir='$(bindir)' $(pg_regress_locale_flags) $(EXTRA_REGRESS_OPTS)
+pg_regress_check = \
+    $(with_temp_install) \
+    $(top_builddir)/src/test/regress/pg_regress \
+    --temp-instance=./tmp_check \
+    --inputdir=$(srcdir) \
+    --bindir= \
+    $(TEMP_CONF) \
+    $(pg_regress_locale_flags) $(EXTRA_REGRESS_OPTS)
+pg_regress_installcheck = \
+    $(top_builddir)/src/test/regress/pg_regress \
+    --inputdir=$(srcdir) \
+    --bindir='$(bindir)' \
+    $(pg_regress_locale_flags) $(EXTRA_REGRESS_OPTS)
 
-pg_regress_clean_files = results/ regression.diffs regression.out tmp_check/ log/
-
-pg_isolation_regress_check = $(with_temp_install) $(top_builddir)/src/test/isolation/pg_isolation_regress --inputdir=$(srcdir) --temp-instance=./tmp_check $(TEMP_CONF) --bindir= $(pg_regress_locale_flags) $(EXTRA_REGRESS_OPTS)
-pg_isolation_regress_installcheck = $(top_builddir)/src/test/isolation/pg_isolation_regress --inputdir=$(srcdir) $(pg_regress_locale_flags) $(EXTRA_REGRESS_OPTS)
+pg_isolation_regress_check = \
+    $(with_temp_install) \
+    $(top_builddir)/src/test/isolation/pg_isolation_regress \
+    --temp-instance=./tmp_check_iso \
+    --inputdir=$(srcdir) --outputdir=output_iso \
+    --bindir= \
+    $(TEMP_CONF) \
+    $(pg_regress_locale_flags) $(EXTRA_REGRESS_OPTS)
+pg_isolation_regress_installcheck = \
+    $(top_builddir)/src/test/isolation/pg_isolation_regress \
+    --inputdir=$(srcdir) --outputdir=output_iso \
+    --bindir='$(bindir)' \
+    $(pg_regress_locale_flags) $(EXTRA_REGRESS_OPTS)
 
 ##########################################################################
 #
@@ -580,6 +607,11 @@ ifneq ($(CUSTOM_COPT),)
   COPT= $(CUSTOM_COPT)
 endif
 
+#
+# These variables are meant to be set in the environment of "make"
+# to add flags to whatever configure picked.  Unlike the ones above,
+# they are documented.
+#
 ifdef COPT
    CFLAGS += $(COPT)
    LDFLAGS += $(COPT)
@@ -620,6 +652,7 @@ TAS         = @TAS@
 ifdef FLEX
 	$(FLEX) $(if $(FLEX_NO_BACKUP),-b) $(FLEXFLAGS) -o'$@' $<
 	@$(if $(FLEX_NO_BACKUP),if [ `wc -l <lex.backup` -eq 1 ]; then rm lex.backup; else echo "Scanner requires backup; see lex.backup." 1>&2; exit 1; fi)
+	$(if $(FLEX_FIX_WARNING),$(PERL) $(top_srcdir)/src/tools/fix-old-flex-code.pl '$@')
 else
 	@$(missing) flex $< '$@'
 endif

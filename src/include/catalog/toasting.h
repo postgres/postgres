@@ -4,7 +4,7 @@
  *	  This file provides some definitions to support creation of toast tables
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/toasting.h
@@ -53,6 +53,7 @@ DECLARE_TOAST(pg_proc, 2836, 2837);
 DECLARE_TOAST(pg_rewrite, 2838, 2839);
 DECLARE_TOAST(pg_seclabel, 3598, 3599);
 DECLARE_TOAST(pg_statistic, 2840, 2841);
+DECLARE_TOAST(pg_statistic_ext, 3439, 3440);
 DECLARE_TOAST(pg_trigger, 2336, 2337);
 
 /* shared catalogs */
@@ -66,4 +67,4 @@ DECLARE_TOAST(pg_shseclabel, 4060, 4061);
 #define PgShseclabelToastTable 4060
 #define PgShseclabelToastIndex 4061
 
-#endif   /* TOASTING_H */
+#endif							/* TOASTING_H */

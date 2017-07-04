@@ -4,7 +4,7 @@
  *	  Standard POSTGRES buffer page definitions.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/storage/bufpage.h
@@ -173,13 +173,12 @@ typedef PageHeaderData *PageHeader;
  * page for its new tuple version; this suggests that a prune is needed.
  * Again, this is just a hint.
  */
-#define PD_HAS_FREE_LINES	0x0001		/* are there any unused line pointers? */
-#define PD_PAGE_FULL		0x0002		/* not enough free space for new
-										 * tuple? */
-#define PD_ALL_VISIBLE		0x0004		/* all tuples on page are visible to
-										 * everyone */
+#define PD_HAS_FREE_LINES	0x0001	/* are there any unused line pointers? */
+#define PD_PAGE_FULL		0x0002	/* not enough free space for new tuple? */
+#define PD_ALL_VISIBLE		0x0004	/* all tuples on page are visible to
+									 * everyone */
 
-#define PD_VALID_FLAG_BITS	0x0007		/* OR of all valid pd_flags bits */
+#define PD_VALID_FLAG_BITS	0x0007	/* OR of all valid pd_flags bits */
 
 /*
  * Page layout version number 0 is for pre-7.3 Postgres releases.
@@ -409,12 +408,14 @@ do { \
  */
 #define PAI_OVERWRITE			(1 << 0)
 #define PAI_IS_HEAP				(1 << 1)
-#define PAI_ALLOW_FAR_OFFSET	(1 << 2)
+
+#define PageAddItem(page, item, size, offsetNumber, overwrite, is_heap) \
+	PageAddItemExtended(page, item, size, offsetNumber, \
+						((overwrite) ? PAI_OVERWRITE : 0) | \
+						((is_heap) ? PAI_IS_HEAP : 0))
 
 extern void PageInit(Page page, Size pageSize, Size specialSize);
 extern bool PageIsVerified(Page page, BlockNumber blkno);
-extern OffsetNumber PageAddItem(Page page, Item item, Size size,
-			OffsetNumber offsetNumber, bool overwrite, bool is_heap);
 extern OffsetNumber PageAddItemExtended(Page page, Item item, Size size,
 					OffsetNumber offsetNumber, int flags);
 extern Page PageGetTempPage(Page page);
@@ -423,13 +424,15 @@ extern Page PageGetTempPageCopySpecial(Page page);
 extern void PageRestoreTempPage(Page tempPage, Page oldPage);
 extern void PageRepairFragmentation(Page page);
 extern Size PageGetFreeSpace(Page page);
+extern Size PageGetFreeSpaceForMultipleTuples(Page page, int ntups);
 extern Size PageGetExactFreeSpace(Page page);
 extern Size PageGetHeapFreeSpace(Page page);
 extern void PageIndexTupleDelete(Page page, OffsetNumber offset);
 extern void PageIndexMultiDelete(Page page, OffsetNumber *itemnos, int nitems);
-extern void PageIndexDeleteNoCompact(Page page, OffsetNumber *itemnos,
-						 int nitems);
+extern void PageIndexTupleDeleteNoCompact(Page page, OffsetNumber offset);
+extern bool PageIndexTupleOverwrite(Page page, OffsetNumber offnum,
+						Item newtup, Size newsize);
 extern char *PageSetChecksumCopy(Page page, BlockNumber blkno);
 extern void PageSetChecksumInplace(Page page, BlockNumber blkno);
 
-#endif   /* BUFPAGE_H */
+#endif							/* BUFPAGE_H */

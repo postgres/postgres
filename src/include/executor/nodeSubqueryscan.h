@@ -4,7 +4,7 @@
  *
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/executor/nodeSubqueryscan.h
@@ -21,4 +21,4 @@ extern TupleTableSlot *ExecSubqueryScan(SubqueryScanState *node);
 extern void ExecEndSubqueryScan(SubqueryScanState *node);
 extern void ExecReScanSubqueryScan(SubqueryScanState *node);
 
-#endif   /* NODESUBQUERYSCAN_H */
+#endif							/* NODESUBQUERYSCAN_H */

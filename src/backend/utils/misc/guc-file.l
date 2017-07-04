@@ -2,7 +2,7 @@
 /*
  * Scanner for the configuration file
  *
- * Copyright (c) 2000-2016, PostgreSQL Global Development Group
+ * Copyright (c) 2000-2017, PostgreSQL Global Development Group
  *
  * src/backend/utils/misc/guc-file.l
  */
@@ -145,9 +145,7 @@ ProcessConfigFile(GucContext context)
 	 */
 	config_cxt = AllocSetContextCreate(CurrentMemoryContext,
 									   "config file processing",
-									   ALLOCSET_DEFAULT_MINSIZE,
-									   ALLOCSET_DEFAULT_MINSIZE,
-									   ALLOCSET_DEFAULT_MAXSIZE);
+									   ALLOCSET_DEFAULT_SIZES);
 	caller_cxt = MemoryContextSwitchTo(config_cxt);
 
 	/*

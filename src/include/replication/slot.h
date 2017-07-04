@@ -2,7 +2,7 @@
  * slot.h
  *	   Replication slot management.
  *
- * Copyright (c) 2012-2016, PostgreSQL Global Development Group
+ * Copyright (c) 2012-2017, PostgreSQL Global Development Group
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,8 @@
 typedef enum ReplicationSlotPersistency
 {
 	RS_PERSISTENT,
-	RS_EPHEMERAL
+	RS_EPHEMERAL,
+	RS_TEMPORARY
 } ReplicationSlotPersistency;
 
 /*
@@ -165,6 +166,7 @@ extern void ReplicationSlotDrop(const char *name);
 
 extern void ReplicationSlotAcquire(const char *name);
 extern void ReplicationSlotRelease(void);
+extern void ReplicationSlotCleanup(void);
 extern void ReplicationSlotSave(void);
 extern void ReplicationSlotMarkDirty(void);
 
@@ -175,16 +177,11 @@ extern void ReplicationSlotsComputeRequiredXmin(bool already_locked);
 extern void ReplicationSlotsComputeRequiredLSN(void);
 extern XLogRecPtr ReplicationSlotsComputeLogicalRestartLSN(void);
 extern bool ReplicationSlotsCountDBSlots(Oid dboid, int *nslots, int *nactive);
+extern void ReplicationSlotsDropDBSlots(Oid dboid);
 
 extern void StartupReplicationSlots(void);
 extern void CheckPointReplicationSlots(void);
 
 extern void CheckSlotRequirements(void);
 
-/* SQL callable functions */
-extern Datum pg_create_physical_replication_slot(PG_FUNCTION_ARGS);
-extern Datum pg_create_logical_replication_slot(PG_FUNCTION_ARGS);
-extern Datum pg_drop_replication_slot(PG_FUNCTION_ARGS);
-extern Datum pg_get_replication_slots(PG_FUNCTION_ARGS);
-
-#endif   /* SLOT_H */
+#endif							/* SLOT_H */

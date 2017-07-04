@@ -335,11 +335,13 @@
     by <application>pg_dump</>.  Such a change is usually only sensible if
     you concurrently make the same change in the extension's script file.
     (But there are special provisions for tables containing configuration
-    data; see below.)
+    data; see <xref linkend="extend-extensions-config-tables">.)
+    In production situations, it's generally better to create an extension
+    update script to perform changes to extension member objects.
    </para>
 
    <para>
-    The extension script may set privileges on objects which are part of the
+    The extension script may set privileges on objects that are part of the
     extension via <command>GRANT</command> and <command>REVOKE</command>
     statements.  The final set of privileges for each object (if any are set)
     will be stored in the
@@ -386,6 +388,15 @@
     however, will belong to schemas whenever appropriate for their object
     types.  It may or may not be appropriate for an extension to own the
     schema(s) its member objects are within.
+   </para>
+
+   <para>
+    If an extension's script creates any temporary objects (such as temp
+    tables), those objects are treated as extension members for the
+    remainder of the current session, but are automatically dropped at
+    session end, as any temporary object would be.  This is an exception
+    to the rule that extension member objects cannot be dropped without
+    dropping the whole extension.
    </para>
 
    <sect2>
@@ -453,9 +464,11 @@
       <term><varname>comment</varname> (<type>string</type>)</term>
       <listitem>
        <para>
-        A comment (any string) about the extension.  Alternatively,
-        the comment can be set by means of the <xref linkend="sql-comment">
-        command in the script file.
+        A comment (any string) about the extension.  The comment is applied
+        when initially creating an extension, but not during extension updates
+        (since that might override user-added comments).  Alternatively,
+        the extension's comment can be set by writing
+        a <xref linkend="sql-comment"> command in the script file.
        </para>
       </listitem>
      </varlistentry>
@@ -518,7 +531,7 @@
         its contained objects into a different schema after initial creation
         of the extension.  The default is <literal>false</>, i.e. the
         extension is not relocatable.
-        See below for more information.
+        See <xref linkend="extend-extensions-relocation"> for more information.
        </para>
       </listitem>
      </varlistentry>
@@ -529,7 +542,10 @@
        <para>
         This parameter can only be set for non-relocatable extensions.
         It forces the extension to be loaded into exactly the named schema
-        and not any other.  See below for more information.
+        and not any other.
+        The <varname>schema</varname> parameter is consulted only when
+        initially creating an extension, not during extension updates.
+        See <xref linkend="extend-extensions-relocation"> for more information.
        </para>
       </listitem>
      </varlistentry>
@@ -562,7 +578,8 @@
      comments) by the extension mechanism.  This provision is commonly used
      to throw an error if the script file is fed to <application>psql</>
      rather than being loaded via <command>CREATE EXTENSION</> (see example
-     script below).  Without that, users might accidentally load the
+     script in <xref linkend="extend-extensions-example">).
+     Without that, users might accidentally load the
      extension's contents as <quote>loose</> objects rather than as an
      extension, a state of affairs that's a bit tedious to recover from.
     </para>
@@ -580,7 +597,7 @@
 
    </sect2>
 
-   <sect2>
+   <sect2 id="extend-extensions-relocation">
     <title>Extension Relocatability</title>
 
     <para>
@@ -678,7 +695,7 @@ SET LOCAL search_path TO @extschema@;
     </para>
    </sect2>
 
-   <sect2>
+   <sect2 id="extend-extensions-config-tables">
     <title>Extension Configuration Tables</title>
 
     <para>
@@ -762,7 +779,7 @@ SELECT pg_catalog.pg_extension_config_dump('my_config', 'WHERE NOT standard_entr
      out but the dump will not be able to be restored directly and user
      intervention will be required.
     </para>
-    
+
     <para>
      Sequences associated with <type>serial</> or <type>bigserial</> columns
      need to be directly marked to dump their state. Marking their parent
@@ -795,7 +812,8 @@ SELECT pg_catalog.pg_extension_config_dump('my_config', 'WHERE NOT standard_entr
      environment that <command>CREATE EXTENSION</> provides for installation
      scripts: in particular, <varname>search_path</> is set up in the same
      way, and any new objects created by the script are automatically added
-     to the extension.
+     to the extension.  Also, if the script chooses to drop extension member
+     objects, they are automatically dissociated from the extension.
     </para>
 
     <para>
@@ -878,6 +896,47 @@ SELECT * FROM pg_extension_update_paths('<replaceable>extension_name</>');
    </sect2>
 
    <sect2>
+    <title>Installing Extensions using Update Scripts</title>
+
+    <para>
+     An extension that has been around for awhile will probably exist in
+     several versions, for which the author will need to write update scripts.
+     For example, if you have released a <literal>foo</> extension in
+     versions <literal>1.0</>, <literal>1.1</>, and <literal>1.2</>, there
+     should be update scripts <filename>foo--1.0--1.1.sql</>
+     and <filename>foo--1.1--1.2.sql</>.
+     Before <productname>PostgreSQL</> 10, it was necessary to also create
+     new script files <filename>foo--1.1.sql</> and <filename>foo--1.2.sql</>
+     that directly build the newer extension versions, or else the newer
+     versions could not be installed directly, only by
+     installing <literal>1.0</> and then updating.  That was tedious and
+     duplicative, but now it's unnecessary, because <command>CREATE
+     EXTENSION</> can follow update chains automatically.
+     For example, if only the script
+     files <filename>foo--1.0.sql</>, <filename>foo--1.0--1.1.sql</>,
+     and <filename>foo--1.1--1.2.sql</> are available then a request to
+     install version <literal>1.2</> is honored by running those three
+     scripts in sequence.  The processing is the same as if you'd first
+     installed <literal>1.0</> and then updated to <literal>1.2</>.
+     (As with <command>ALTER EXTENSION UPDATE</>, if multiple pathways are
+     available then the shortest is preferred.)  Arranging an extension's
+     script files in this style can reduce the amount of maintenance effort
+     needed to produce small updates.
+    </para>
+
+    <para>
+     If you use secondary (version-specific) control files with an extension
+     maintained in this style, keep in mind that each version needs a control
+     file even if it has no stand-alone installation script, as that control
+     file will determine how the implicit update to that version is performed.
+     For example, if <filename>foo--1.0.control</> specifies <literal>requires
+     = 'bar'</> but <literal>foo</>'s other control files do not, the
+     extension's dependency on <literal>bar</> will be dropped when updating
+     from <literal>1.0</> to another version.
+    </para>
+   </sect2>
+
+   <sect2 id="extend-extensions-example">
     <title>Extension Example</title>
 
     <para>
@@ -1140,6 +1199,15 @@ include $(PGXS)
       <listitem>
        <para>
         additional switches to pass to <application>pg_regress</>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>NO_INSTALLCHECK</varname></term>
+      <listitem>
+       <para>
+        don't define an <literal>installcheck</literal> target, useful e.g. if tests require special configuration, or don't use <application>pg_regress</application>
        </para>
       </listitem>
      </varlistentry>

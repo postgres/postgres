@@ -5,7 +5,7 @@
  *	  along with the relation's initial contents.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_operator.h
@@ -155,8 +155,6 @@ DESCR("factorial");
 DATA(insert OID = 389 (  "!!"	   PGNSP PGUID l f f	 0	20	1700  0  0 numeric_fac - - ));
 DESCR("deprecated, use ! instead");
 DATA(insert OID = 385 (  "="	   PGNSP PGUID b f t	29	29	16 385	 0 cideq eqsel eqjoinsel ));
-DESCR("equal");
-DATA(insert OID = 386 (  "="	   PGNSP PGUID b f t	22	22	16 386	 0 int2vectoreq eqsel eqjoinsel ));
 DESCR("equal");
 
 DATA(insert OID = 387 (  "="	   PGNSP PGUID b t f	27	27	16 387 402 tideq eqsel eqjoinsel ));
@@ -711,6 +709,10 @@ DATA(insert OID = 908 (  "*"	   PGNSP PGUID b f f	790  701	790 916   0 cash_mul_
 DESCR("multiply");
 DATA(insert OID = 909 (  "/"	   PGNSP PGUID b f f	790  701	790   0   0 cash_div_flt8 - - ));
 DESCR("divide");
+DATA(insert OID = 3346 (  "*"	   PGNSP PGUID b f f	790  20		790 3349  0 cash_mul_int8 - - ));
+DESCR("multiply");
+DATA(insert OID = 3347 (  "/"	   PGNSP PGUID b f f	790  20		790   0   0 cash_div_int8 - - ));
+DESCR("divide");
 DATA(insert OID = 912 (  "*"	   PGNSP PGUID b f f	790  23		790 917   0 cash_mul_int4 - - ));
 DESCR("multiply");
 DATA(insert OID = 913 (  "/"	   PGNSP PGUID b f f	790  23		790   0   0 cash_div_int4 - - ));
@@ -720,6 +722,8 @@ DESCR("multiply");
 DATA(insert OID = 915 (  "/"	   PGNSP PGUID b f f	790  21		790   0   0 cash_div_int2 - - ));
 DESCR("divide");
 DATA(insert OID = 916 (  "*"	   PGNSP PGUID b f f	701  790	790 908   0 flt8_mul_cash - - ));
+DESCR("multiply");
+DATA(insert OID = 3349 (  "*"	   PGNSP PGUID b f f	20	790		790 3346  0 int8_mul_cash - - ));
 DESCR("multiply");
 DATA(insert OID = 917 (  "*"	   PGNSP PGUID b f f	23	790		790 912   0 int4_mul_cash - - ));
 DESCR("multiply");
@@ -1115,7 +1119,7 @@ DESCR("equal");
 DATA(insert OID = 1617 (  "#"	  PGNSP PGUID b f f  628	628  600 1617  0 line_interpt - - ));
 DESCR("intersection point");
 
-/* MAC type */
+/* MACADDR type */
 DATA(insert OID = 1220 (  "="	   PGNSP PGUID b t t 829 829	 16 1220 1221 macaddr_eq eqsel eqjoinsel ));
 DESCR("equal");
 DATA(insert OID = 1221 (  "<>"	   PGNSP PGUID b f f 829 829	 16 1221 1220 macaddr_ne neqsel neqjoinsel ));
@@ -1134,6 +1138,27 @@ DESCR("bitwise not");
 DATA(insert OID = 3148 (  "&"	   PGNSP PGUID b f f	829 829 829 0 0 macaddr_and - - ));
 DESCR("bitwise and");
 DATA(insert OID = 3149 (  "|"	   PGNSP PGUID b f f	829 829 829 0 0 macaddr_or - - ));
+DESCR("bitwise or");
+
+/* MACADDR8 type */
+DATA(insert OID = 3362 (  "="	   PGNSP PGUID b t t 774 774	 16 3362 3363 macaddr8_eq eqsel eqjoinsel ));
+DESCR("equal");
+DATA(insert OID = 3363 (  "<>"	   PGNSP PGUID b f f 774 774	 16 3363 3362 macaddr8_ne neqsel neqjoinsel ));
+DESCR("not equal");
+DATA(insert OID = 3364 (  "<"	   PGNSP PGUID b f f 774 774	 16 3366 3367 macaddr8_lt scalarltsel scalarltjoinsel ));
+DESCR("less than");
+DATA(insert OID = 3365 (  "<="	   PGNSP PGUID b f f 774 774	 16 3367 3366 macaddr8_le scalarltsel scalarltjoinsel ));
+DESCR("less than or equal");
+DATA(insert OID = 3366 (  ">"	   PGNSP PGUID b f f 774 774	 16 3364 3365 macaddr8_gt scalargtsel scalargtjoinsel ));
+DESCR("greater than");
+DATA(insert OID = 3367 (  ">="	   PGNSP PGUID b f f 774 774	 16 3365 3364 macaddr8_ge scalargtsel scalargtjoinsel ));
+DESCR("greater than or equal");
+
+DATA(insert OID = 3368 (  "~"	   PGNSP PGUID l f f	  0 774 774 0 0 macaddr8_not - - ));
+DESCR("bitwise not");
+DATA(insert OID = 3369 (  "&"	   PGNSP PGUID b f f	774 774 774 0 0 macaddr8_and - - ));
+DESCR("bitwise and");
+DATA(insert OID = 3370 (  "|"	   PGNSP PGUID b f f	774 774 774 0 0 macaddr8_or - - ));
 DESCR("bitwise or");
 
 /* INET type (these also support CIDR via implicit cast) */
@@ -1822,9 +1847,11 @@ DATA(insert OID = 3284 (  "||"	   PGNSP PGUID b f f 3802 3802 3802 0 0 jsonb_con
 DESCR("concatenate");
 DATA(insert OID = 3285 (  "-"	   PGNSP PGUID b f f 3802 25 3802 0 0 3302 - - ));
 DESCR("delete object field");
+DATA(insert OID = 3398 (  "-"	   PGNSP PGUID b f f 3802 1009 3802 0 0 3343 - -));
+DESCR("delete object fields");
 DATA(insert OID = 3286 (  "-"	   PGNSP PGUID b f f 3802 23 3802 0 0 3303 - - ));
 DESCR("delete array element");
 DATA(insert OID = 3287 (  "#-"	   PGNSP PGUID b f f 3802 1009 3802 0 0 jsonb_delete_path - - ));
 DESCR("delete path");
 
-#endif   /* PG_OPERATOR_H */
+#endif							/* PG_OPERATOR_H */

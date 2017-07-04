@@ -17,9 +17,12 @@ use File::Spec;
 use File::Temp ();
 use IPC::Run;
 use SimpleTee;
-use Test::More;
+
+# specify a recent enough version of Test::More  to support the note() function
+use Test::More 0.82;
 
 our @EXPORT = qw(
+  generate_ascii_string
   slurp_dir
   slurp_file
   append_to_file
@@ -34,6 +37,7 @@ our @EXPORT = qw(
   program_version_ok
   program_options_handling_ok
   command_like
+  command_fails_like
 
   $windows_os
 );
@@ -60,6 +64,8 @@ BEGIN
 	delete $ENV{PGPORT};
 	delete $ENV{PGHOST};
 
+	$ENV{PGAPPNAME} = $0;
+
 	# Must be set early
 	$windows_os = $Config{osname} eq 'MSWin32' || $Config{osname} eq 'msys';
 }
@@ -80,14 +86,14 @@ INIT
 	$test_logfile = basename($0);
 	$test_logfile =~ s/\.[^.]+$//;
 	$test_logfile = "$log_path/regress_log_$test_logfile";
-	open TESTLOG, '>', $test_logfile
+	open my $testlog, '>', $test_logfile
 	  or die "could not open STDOUT to logfile \"$test_logfile\": $!";
 
 	# Hijack STDOUT and STDERR to the log file
-	open(ORIG_STDOUT, ">&STDOUT");
-	open(ORIG_STDERR, ">&STDERR");
-	open(STDOUT,      ">&TESTLOG");
-	open(STDERR,      ">&TESTLOG");
+	open(my $orig_stdout, '>&', \*STDOUT);
+	open(my $orig_stderr, '>&', \*STDERR);
+	open(STDOUT,          '>&', $testlog);
+	open(STDERR,          '>&', $testlog);
 
 	# The test output (ok ...) needs to be printed to the original STDOUT so
 	# that the 'prove' program can parse it, and display it to the user in
@@ -95,16 +101,16 @@ INIT
 	# in the log.
 	my $builder = Test::More->builder;
 	my $fh      = $builder->output;
-	tie *$fh, "SimpleTee", *ORIG_STDOUT, *TESTLOG;
+	tie *$fh, "SimpleTee", $orig_stdout, $testlog;
 	$fh = $builder->failure_output;
-	tie *$fh, "SimpleTee", *ORIG_STDERR, *TESTLOG;
+	tie *$fh, "SimpleTee", $orig_stderr, $testlog;
 
 	# Enable auto-flushing for all the file handles. Stderr and stdout are
 	# redirected to the same file, and buffering causes the lines to appear
 	# in the log in confusing order.
 	autoflush STDOUT 1;
 	autoflush STDERR 1;
-	autoflush TESTLOG 1;
+	autoflush $testlog 1;
 }
 
 END
@@ -163,6 +169,19 @@ sub run_log
 {
 	print("# Running: " . join(" ", @{ $_[0] }) . "\n");
 	return IPC::Run::run(@_);
+}
+
+# Generate a string made of the given range of ASCII characters
+sub generate_ascii_string
+{
+	my ($from_char, $to_char) = @_;
+	my $res;
+
+	for my $i ($from_char .. $to_char)
+	{
+		$res .= sprintf("%c", $i);
+	}
+	return $res;
 }
 
 sub slurp_dir
@@ -276,9 +295,19 @@ sub command_like
 	my ($stdout, $stderr);
 	print("# Running: " . join(" ", @{$cmd}) . "\n");
 	my $result = IPC::Run::run $cmd, '>', \$stdout, '2>', \$stderr;
-	ok($result, "@$cmd exit code 0");
-	is($stderr, '', "@$cmd no stderr");
+	ok($result, "$test_name: exit code 0");
+	is($stderr, '', "$test_name: no stderr");
 	like($stdout, $expected_stdout, "$test_name: matches");
+}
+
+sub command_fails_like
+{
+	my ($cmd, $expected_stderr, $test_name) = @_;
+	my ($stdout, $stderr);
+	print("# Running: " . join(" ", @{$cmd}) . "\n");
+	my $result = IPC::Run::run $cmd, '>', \$stdout, '2>', \$stderr;
+	ok(!$result, "$test_name: exit code not 0");
+	like($stderr, $expected_stderr, "$test_name: matches");
 }
 
 1;

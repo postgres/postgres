@@ -325,7 +325,7 @@ generate_trgm(char *str, int slen)
 
 	protect_out_of_mem(slen);
 
-	trg = (TRGM *) palloc(TRGMHDRSIZE + sizeof(trgm) * (slen / 2 + 1) *3);
+	trg = (TRGM *) palloc(TRGMHDRSIZE + sizeof(trgm) * (slen / 2 + 1) * 3);
 	trg->flag = ARRKEY;
 
 	len = generate_trgm_only(GETARR(trg), str, slen);
@@ -413,7 +413,7 @@ comp_ptrgm(const void *v1, const void *v2)
  * ulen1: count of unique trigrams of array "trg1".
  * len2: length of array "trg2" and array "trg2indexes".
  * len: length of the array "found".
- * check_only: if true then only check existaince of similar search pattern in
+ * check_only: if true then only check existence of similar search pattern in
  *			   text.
  *
  * Returns word similarity.
@@ -456,7 +456,7 @@ iterate_word_similarity(int *trg2indexes,
 			lastpos[trgindex] = i;
 		}
 
-		/* Adjust lower bound if this trigram is present in required substing */
+		/* Adjust lower bound if this trigram is present in required substring */
 		if (found[trgindex])
 		{
 			int			prev_lower,
@@ -547,7 +547,7 @@ iterate_word_similarity(int *trg2indexes,
  *
  * str1: search pattern string, of length slen1 bytes.
  * str2: text in which we are looking for a word, of length slen2 bytes.
- * check_only: if true then only check existaince of similar search pattern in
+ * check_only: if true then only check existence of similar search pattern in
  *			   text.
  *
  * Returns word similarity.
@@ -572,8 +572,8 @@ calc_word_similarity(char *str1, int slen1, char *str2, int slen2,
 	protect_out_of_mem(slen1 + slen2);
 
 	/* Make positional trigrams */
-	trg1 = (trgm *) palloc(sizeof(trgm) * (slen1 / 2 + 1) *3);
-	trg2 = (trgm *) palloc(sizeof(trgm) * (slen2 / 2 + 1) *3);
+	trg1 = (trgm *) palloc(sizeof(trgm) * (slen1 / 2 + 1) * 3);
+	trg2 = (trgm *) palloc(sizeof(trgm) * (slen2 / 2 + 1) * 3);
 
 	len1 = generate_trgm_only(trg1, str1, slen1);
 	len2 = generate_trgm_only(trg2, str2, slen2);
@@ -806,7 +806,7 @@ generate_wildcard_trgm(const char *str, int slen)
 
 	protect_out_of_mem(slen);
 
-	trg = (TRGM *) palloc(TRGMHDRSIZE + sizeof(trgm) * (slen / 2 + 1) *3);
+	trg = (TRGM *) palloc(TRGMHDRSIZE + sizeof(trgm) * (slen / 2 + 1) * 3);
 	trg->flag = ARRKEY;
 	SET_VARSIZE(trg, TRGMHDRSIZE);
 
@@ -878,14 +878,14 @@ trgm2int(trgm *ptr)
 Datum
 show_trgm(PG_FUNCTION_ARGS)
 {
-	text	   *in = PG_GETARG_TEXT_P(0);
+	text	   *in = PG_GETARG_TEXT_PP(0);
 	TRGM	   *trg;
 	Datum	   *d;
 	ArrayType  *a;
 	trgm	   *ptr;
 	int			i;
 
-	trg = generate_trgm(VARDATA(in), VARSIZE(in) - VARHDRSZ);
+	trg = generate_trgm(VARDATA_ANY(in), VARSIZE_ANY_EXHDR(in));
 	d = (Datum *) palloc(sizeof(Datum) * (1 + ARRNELEM(trg)));
 
 	for (i = 0, ptr = GETARR(trg); i < ARRNELEM(trg); i++, ptr++)
@@ -1053,14 +1053,14 @@ trgm_presence_map(TRGM *query, TRGM *key)
 Datum
 similarity(PG_FUNCTION_ARGS)
 {
-	text	   *in1 = PG_GETARG_TEXT_P(0);
-	text	   *in2 = PG_GETARG_TEXT_P(1);
+	text	   *in1 = PG_GETARG_TEXT_PP(0);
+	text	   *in2 = PG_GETARG_TEXT_PP(1);
 	TRGM	   *trg1,
 			   *trg2;
 	float4		res;
 
-	trg1 = generate_trgm(VARDATA(in1), VARSIZE(in1) - VARHDRSZ);
-	trg2 = generate_trgm(VARDATA(in2), VARSIZE(in2) - VARHDRSZ);
+	trg1 = generate_trgm(VARDATA_ANY(in1), VARSIZE_ANY_EXHDR(in1));
+	trg2 = generate_trgm(VARDATA_ANY(in2), VARSIZE_ANY_EXHDR(in2));
 
 	res = cnt_sml(trg1, trg2, false);
 

@@ -8,14 +8,12 @@
  * directory (copy method), or a remote PostgreSQL server (libpq fetch
  * method).
  *
- * Copyright (c) 2013-2016, PostgreSQL Global Development Group
+ * Copyright (c) 2013-2017, PostgreSQL Global Development Group
  *
  *-------------------------------------------------------------------------
  */
 #ifndef FETCH_H
 #define FETCH_H
-
-#include "c.h"
 
 #include "access/xlogdefs.h"
 
@@ -43,4 +41,4 @@ extern void copy_executeFileMap(filemap_t *map);
 typedef void (*process_file_callback_t) (const char *path, file_type_t type, size_t size, const char *link_target);
 extern void traverse_datadir(const char *datadir, process_file_callback_t callback);
 
-#endif   /* FETCH_H */
+#endif							/* FETCH_H */

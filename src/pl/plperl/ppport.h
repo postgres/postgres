@@ -79,7 +79,7 @@ to be installed on your system.
 If this option is given, a copy of each file will be saved with
 the given suffix that contains the suggested changes. This does
 not require any external programs. Note that this does not
-automagially add a dot between the original filename and the
+automagically add a dot between the original filename and the
 suffix. If you want the dot, you have to include it in the option
 argument.
 
@@ -4364,9 +4364,9 @@ DPPP_(my_vload_module)(U32 flags, SV *name, SV *ver, va_list *args)
 
     OP * const modname = newSVOP(OP_CONST, 0, name);
     /* 5.005 has a somewhat hacky force_normal that doesn't croak on
-       SvREADONLY() if PL_compling is true. Current perls take care in
+       SvREADONLY() if PL_compiling is true. Current perls take care in
        ck_require() to correctly turn off SvREADONLY before calling
-       force_normal_flags(). This seems a better fix than fudging PL_compling
+       force_normal_flags(). This seems a better fix than fudging PL_compiling
      */
     SvREADONLY_off(((SVOP*)modname)->op_sv);
     modname->op_private |= OPpCONST_BARE;
@@ -6205,10 +6205,10 @@ DPPP_(my_grok_number)(pTHX_ const char *pv, STRLEN len, UV *valuep)
     /* UVs are at least 32 bits, so the first 9 decimal digits cannot
        overflow.  */
     UV value = *s - '0';
-    /* This construction seems to be more optimiser friendly.
+    /* This construction seems to be more optimizer friendly.
        (without it gcc does the isDIGIT test and the *s - '0' separately)
        With it gcc on arm is managing 6 instructions (6 cycles) per digit.
-       In theory the optimiser could deduce how far to unroll the loop
+       In theory the optimizer could deduce how far to unroll the loop
        before checking for overflow.  */
     if (++s < send) {
       int digit = *s - '0';
@@ -6606,7 +6606,7 @@ DPPP_(my_grok_oct)(pTHX_ const char *start, STRLEN *len_p, I32 *flags, NV *resul
     bool overflowed = FALSE;
 
     for (; len-- && *s; s++) {
-         /* gcc 2.95 optimiser not smart enough to figure that this subtraction
+         /* gcc 2.95 optimizer not smart enough to figure that this subtraction
             out front allows slicker code.  */
         int digit = *s - '0';
         if (digit >= 0 && digit <= 7) {

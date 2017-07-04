@@ -8,7 +8,7 @@
  *
  * This code is released under the terms of the PostgreSQL License.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/interfaces/ecpg/test/pg_regress_ecpg.c
@@ -16,9 +16,12 @@
  *-------------------------------------------------------------------------
  */
 
+#include "postgres_fe.h"
+
 #include "pg_regress.h"
 
 #define LINEBUFSIZE 300
+
 static void
 ecpg_filter(const char *sourcefile, const char *outfile)
 {

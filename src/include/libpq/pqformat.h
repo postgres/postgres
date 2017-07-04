@@ -3,7 +3,7 @@
  * pqformat.h
  *		Definitions for formatting and parsing frontend/backend messages
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/libpq/pqformat.h
@@ -47,4 +47,4 @@ extern const char *pq_getmsgstring(StringInfo msg);
 extern const char *pq_getmsgrawstring(StringInfo msg);
 extern void pq_getmsgend(StringInfo msg);
 
-#endif   /* PQFORMAT_H */
+#endif							/* PQFORMAT_H */

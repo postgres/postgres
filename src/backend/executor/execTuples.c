@@ -12,7 +12,7 @@
  *	  This information is needed by routines manipulating tuples
  *	  (getattribute, formtuple, etc.).
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -160,10 +160,7 @@ ExecResetTupleTable(List *tupleTable,	/* tuple table */
 
 	foreach(lc, tupleTable)
 	{
-		TupleTableSlot *slot = (TupleTableSlot *) lfirst(lc);
-
-		/* Sanity checks */
-		Assert(IsA(slot, TupleTableSlot));
+		TupleTableSlot *slot = lfirst_node(TupleTableSlot, lc);
 
 		/* Always release resources and reset the slot to empty */
 		ExecClearTuple(slot);
@@ -247,8 +244,8 @@ ExecDropSingleTupleTableSlot(TupleTableSlot *slot)
  * --------------------------------
  */
 void
-ExecSetSlotDescriptor(TupleTableSlot *slot,		/* slot to change */
-					  TupleDesc tupdesc)		/* new tuple descriptor */
+ExecSetSlotDescriptor(TupleTableSlot *slot, /* slot to change */
+					  TupleDesc tupdesc)	/* new tuple descriptor */
 {
 	/* For safety, make sure slot is empty before changing it */
 	ExecClearTuple(slot);
@@ -1216,7 +1213,7 @@ HeapTupleHeaderGetDatum(HeapTupleHeader tuple)
 
 	/* And do the flattening */
 	result = toast_flatten_tuple_to_datum(tuple,
-										HeapTupleHeaderGetDatumLength(tuple),
+										  HeapTupleHeaderGetDatumLength(tuple),
 										  tupDesc);
 
 	ReleaseTupleDesc(tupDesc);

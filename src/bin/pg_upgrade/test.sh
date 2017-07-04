@@ -6,7 +6,7 @@
 # runs the regression tests (to put in some data), runs pg_dumpall,
 # runs pg_upgrade, runs pg_dumpall again, compares the dumps.
 #
-# Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+# Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 
 set -e
@@ -83,6 +83,8 @@ if [ "$1" = '--install' ]; then
 	export DYLD_LIBRARY_PATH
 	LIBPATH=$libdir:$LIBPATH
 	export LIBPATH
+	SHLIB_PATH=$libdir:$SHLIB_PATH
+	export SHLIB_PATH
 	PATH=$libdir:$PATH
 
 	# We need to make it use psql from our temporary installation,
@@ -168,18 +170,32 @@ createdb "$dbname2" || createdb_status=$?
 createdb "$dbname3" || createdb_status=$?
 
 if "$MAKE" -C "$oldsrc" installcheck; then
-	pg_dumpall -f "$temp_root"/dump1.sql || pg_dumpall1_status=$?
+	oldpgversion=`psql -X -A -t -d regression -c "SHOW server_version_num"`
+
+	# before dumping, get rid of objects not existing in later versions
 	if [ "$newsrc" != "$oldsrc" ]; then
-		oldpgversion=`psql -X -A -t -d regression -c "SHOW server_version_num"`
 		fix_sql=""
 		case $oldpgversion in
 			804??)
-				fix_sql="UPDATE pg_proc SET probin = replace(probin::text, '$oldsrc', '$newsrc')::bytea WHERE probin LIKE '$oldsrc%'; DROP FUNCTION public.myfunc(integer);"
+				fix_sql="DROP FUNCTION public.myfunc(integer); DROP FUNCTION public.oldstyle_length(integer, text);"
 				;;
-			900??)
-				fix_sql="SET bytea_output TO escape; UPDATE pg_proc SET probin = replace(probin::text, '$oldsrc', '$newsrc')::bytea WHERE probin LIKE '$oldsrc%';"
+			*)
+				fix_sql="DROP FUNCTION public.oldstyle_length(integer, text);"
 				;;
-			901??)
+		esac
+		psql -X -d regression -c "$fix_sql;" || psql_fix_sql_status=$?
+	fi
+
+	pg_dumpall --no-sync -f "$temp_root"/dump1.sql || pg_dumpall1_status=$?
+
+	if [ "$newsrc" != "$oldsrc" ]; then
+		# update references to old source tree's regress.so etc
+		fix_sql=""
+		case $oldpgversion in
+			804??)
+				fix_sql="UPDATE pg_proc SET probin = replace(probin::text, '$oldsrc', '$newsrc')::bytea WHERE probin LIKE '$oldsrc%';"
+				;;
+			*)
 				fix_sql="UPDATE pg_proc SET probin = replace(probin, '$oldsrc', '$newsrc') WHERE probin LIKE '$oldsrc%';"
 				;;
 		esac
@@ -219,7 +235,7 @@ case $testhost in
 	*)		sh ./analyze_new_cluster.sh ;;
 esac
 
-pg_dumpall -f "$temp_root"/dump2.sql || pg_dumpall2_status=$?
+pg_dumpall --no-sync -f "$temp_root"/dump2.sql || pg_dumpall2_status=$?
 pg_ctl -m fast stop
 
 # no need to echo commands anymore

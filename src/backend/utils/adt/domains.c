@@ -19,7 +19,7 @@
  *		to evaluate them in.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -35,6 +35,7 @@
 #include "executor/executor.h"
 #include "lib/stringinfo.h"
 #include "utils/builtins.h"
+#include "utils/expandeddatum.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 #include "utils/typcache.h"
@@ -72,18 +73,27 @@ static DomainIOData *
 domain_state_setup(Oid domainType, bool binary, MemoryContext mcxt)
 {
 	DomainIOData *my_extra;
+	TypeCacheEntry *typentry;
 	Oid			baseType;
 
 	my_extra = (DomainIOData *) MemoryContextAlloc(mcxt, sizeof(DomainIOData));
 
-	/* Find out the base type */
-	my_extra->typtypmod = -1;
-	baseType = getBaseTypeAndTypmod(domainType, &my_extra->typtypmod);
-	if (baseType == domainType)
+	/*
+	 * Verify that domainType represents a valid domain type.  We need to be
+	 * careful here because domain_in and domain_recv can be called from SQL,
+	 * possibly with incorrect arguments.  We use lookup_type_cache mainly
+	 * because it will throw a clean user-facing error for a bad OID.
+	 */
+	typentry = lookup_type_cache(domainType, 0);
+	if (typentry->typtype != TYPTYPE_DOMAIN)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("type %s is not a domain",
 						format_type_be(domainType))));
+
+	/* Find out the base type */
+	my_extra->typtypmod = -1;
+	baseType = getBaseTypeAndTypmod(domainType, &my_extra->typtypmod);
 
 	/* Look up underlying I/O function */
 	if (binary)
@@ -97,7 +107,7 @@ domain_state_setup(Oid domainType, bool binary, MemoryContext mcxt)
 	fmgr_info_cxt(my_extra->typiofunc, &my_extra->proc, mcxt);
 
 	/* Look up constraints for domain */
-	InitDomainConstraintRef(domainType, &my_extra->constraint_ref, mcxt);
+	InitDomainConstraintRef(domainType, &my_extra->constraint_ref, mcxt, true);
 
 	/* We don't make an ExprContext until needed */
 	my_extra->econtext = NULL;
@@ -112,7 +122,9 @@ domain_state_setup(Oid domainType, bool binary, MemoryContext mcxt)
 /*
  * domain_check_input - apply the cached checks.
  *
- * This is extremely similar to ExecEvalCoerceToDomain in execQual.c.
+ * This is roughly similar to the handling of CoerceToDomain nodes in
+ * execExpr*.c, but we execute each constraint separately, rather than
+ * compiling them in-line within a larger expression.
  */
 static void
 domain_check_input(Datum value, bool isnull, DomainIOData *my_extra)
@@ -139,9 +151,6 @@ domain_check_input(Datum value, bool isnull, DomainIOData *my_extra)
 				break;
 			case DOM_CONSTRAINT_CHECK:
 				{
-					Datum		conResult;
-					bool		conIsNull;
-
 					/* Make the econtext if we didn't already */
 					if (econtext == NULL)
 					{
@@ -155,19 +164,20 @@ domain_check_input(Datum value, bool isnull, DomainIOData *my_extra)
 
 					/*
 					 * Set up value to be returned by CoerceToDomainValue
-					 * nodes.  Unlike ExecEvalCoerceToDomain, this econtext
-					 * couldn't be shared with anything else, so no need to
-					 * save and restore fields.
+					 * nodes.  Unlike in the generic expression case, this
+					 * econtext couldn't be shared with anything else, so no
+					 * need to save and restore fields.  But we do need to
+					 * protect the passed-in value against being changed by
+					 * called functions.  (It couldn't be a R/W expanded
+					 * object for most uses, but that seems possible for
+					 * domain_check().)
 					 */
-					econtext->domainValue_datum = value;
+					econtext->domainValue_datum =
+						MakeExpandedObjectReadOnly(value, isnull,
+												   my_extra->constraint_ref.tcache->typlen);
 					econtext->domainValue_isNull = isnull;
 
-					conResult = ExecEvalExprSwitchContext(con->check_expr,
-														  econtext,
-														  &conIsNull, NULL);
-
-					if (!conIsNull &&
-						!DatumGetBool(conResult))
+					if (!ExecCheck(con->check_exprstate, econtext))
 						ereport(ERROR,
 								(errcode(ERRCODE_CHECK_VIOLATION),
 								 errmsg("value for domain %s violates check constraint \"%s\"",

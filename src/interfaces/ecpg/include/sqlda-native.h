@@ -40,4 +40,4 @@ struct sqlda_struct
 	struct sqlvar_struct sqlvar[1];
 };
 
-#endif   /* ECPG_SQLDA_NATIVE_H */
+#endif							/* ECPG_SQLDA_NATIVE_H */

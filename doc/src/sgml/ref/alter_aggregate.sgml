@@ -179,8 +179,7 @@ ALTER AGGREGATE mypercentile(float8 ORDER BY integer) SET SCHEMA myschema;
    This will work too:
 <programlisting>
 ALTER AGGREGATE mypercentile(float8, integer) SET SCHEMA myschema;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

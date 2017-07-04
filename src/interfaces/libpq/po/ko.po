@@ -3,23 +3,23 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 9.5\n"
+"Project-Id-Version: PostgreSQL 9.6 libpq\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2015-12-23 14:15+0900\n"
-"PO-Revision-Date: 2015-12-23 15:01+0900\n"
+"POT-Creation-Date: 2016-09-26 14:02+0900\n"
+"PO-Revision-Date: 2016-09-26 16:37+0900\n"
 "Last-Translator: Ioseph Kim <ioseph@uri.sarang.net>\n"
 "Language-Team: Korean <pgsql-kr@postgresql.kr>\n"
+"Language: ko\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: ko\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
 #: fe-auth.c:148
 msgid "GSSAPI continuation error"
 msgstr "GSSAPI 연속 오류"
 
-#: fe-auth.c:177 fe-auth.c:410
+#: fe-auth.c:177 fe-auth.c:412
 msgid "host name must be specified\n"
 msgstr "호스트 이름을 지정해야 함\n"
 
@@ -27,14 +27,14 @@ msgstr "호스트 이름을 지정해야 함\n"
 msgid "duplicate GSS authentication request\n"
 msgstr "중복된 GSS 인증 요청\n"
 
-#: fe-auth.c:197 fe-auth.c:307 fe-auth.c:381 fe-auth.c:416 fe-auth.c:512
-#: fe-auth.c:778 fe-connect.c:707 fe-connect.c:904 fe-connect.c:1080
-#: fe-connect.c:2091 fe-connect.c:3483 fe-connect.c:3735 fe-connect.c:3854
-#: fe-connect.c:4094 fe-connect.c:4174 fe-connect.c:4273 fe-connect.c:4525
-#: fe-connect.c:4554 fe-connect.c:4626 fe-connect.c:4644 fe-connect.c:4740
-#: fe-connect.c:5074 fe-connect.c:5224 fe-exec.c:3339 fe-exec.c:3504
-#: fe-lobj.c:896 fe-protocol2.c:1206 fe-protocol3.c:1613
-#: fe-secure-openssl.c:527 fe-secure-openssl.c:1069
+#: fe-auth.c:197 fe-auth.c:309 fe-auth.c:383 fe-auth.c:418 fe-auth.c:514
+#: fe-auth.c:780 fe-connect.c:707 fe-connect.c:904 fe-connect.c:1080
+#: fe-connect.c:2091 fe-connect.c:3484 fe-connect.c:3736 fe-connect.c:3855
+#: fe-connect.c:4095 fe-connect.c:4175 fe-connect.c:4274 fe-connect.c:4530
+#: fe-connect.c:4559 fe-connect.c:4631 fe-connect.c:4649 fe-connect.c:4745
+#: fe-connect.c:5079 fe-connect.c:5229 fe-exec.c:2652 fe-exec.c:3399
+#: fe-exec.c:3564 fe-lobj.c:896 fe-protocol2.c:1206 fe-protocol3.c:992
+#: fe-protocol3.c:1678 fe-secure-openssl.c:552 fe-secure-openssl.c:1094
 msgid "out of memory\n"
 msgstr "메모리 부족\n"
 
@@ -42,54 +42,54 @@ msgstr "메모리 부족\n"
 msgid "GSSAPI name import error"
 msgstr "GSSAPI 이름 가져오기 오류"
 
-#: fe-auth.c:296
+#: fe-auth.c:298
 msgid "SSPI continuation error"
 msgstr "SSPI 연속 오류"
 
-#: fe-auth.c:396
+#: fe-auth.c:398
 msgid "could not acquire SSPI credentials"
 msgstr "SSPI 자격 증명을 가져올 수 없음"
 
-#: fe-auth.c:487
+#: fe-auth.c:489
 msgid "SCM_CRED authentication method not supported\n"
 msgstr "SCM_CRED 인증 방법이 지원되지 않음\n"
 
-#: fe-auth.c:563
+#: fe-auth.c:565
 msgid "Kerberos 4 authentication not supported\n"
 msgstr "Kerberos 4 인증 방법이 지원되지 않음\n"
 
-#: fe-auth.c:568
+#: fe-auth.c:570
 msgid "Kerberos 5 authentication not supported\n"
 msgstr "Kerberos 5 인증 방법이 지원되지 않음\n"
 
-#: fe-auth.c:639
+#: fe-auth.c:641
 msgid "GSSAPI authentication not supported\n"
 msgstr "GSSAPI 인증은 지원되지 않음\n"
 
-#: fe-auth.c:671
+#: fe-auth.c:673
 msgid "SSPI authentication not supported\n"
 msgstr "SSPI 인증은 지원되지 않음\n"
 
-#: fe-auth.c:679
+#: fe-auth.c:681
 msgid "Crypt authentication not supported\n"
 msgstr "암호화 인증은 지원되지 않음\n"
 
-#: fe-auth.c:706
+#: fe-auth.c:708
 #, c-format
 msgid "authentication method %u not supported\n"
 msgstr "%u 인증 방법이 지원되지 않음\n"
 
-#: fe-auth.c:753
+#: fe-auth.c:755
 #, c-format
 msgid "user name lookup failure: error code %lu\n"
 msgstr "사용자 이름 찾기 실패: 오류 코드 %lu\n"
 
-#: fe-auth.c:763 fe-connect.c:2018
+#: fe-auth.c:765 fe-connect.c:2018
 #, c-format
 msgid "could not look up local user ID %d: %s\n"
 msgstr "UID %d 해당하는 사용자를 찾을 수 없음: %s\n"
 
-#: fe-auth.c:768 fe-connect.c:2023
+#: fe-auth.c:770 fe-connect.c:2023
 #, c-format
 msgid "local user with ID %d does not exist\n"
 msgstr "ID %d 로컬 사용자 없음\n"
@@ -167,7 +167,7 @@ msgstr "setsockopt(TCP_KEEPCNT) 실패: %s\n"
 #: fe-connect.c:1374
 #, c-format
 msgid "WSAIoctl(SIO_KEEPALIVE_VALS) failed: %ui\n"
-msgstr ""
+msgstr "WSAIoctl(SIO_KEEPALIVE_VALS) 실패: %ui\n"
 
 #: fe-connect.c:1426
 #, c-format
@@ -177,7 +177,7 @@ msgstr "잘못된 포트 번호: \"%s\"\n"
 #: fe-connect.c:1459
 #, c-format
 msgid "Unix-domain socket path \"%s\" is too long (maximum %d bytes)\n"
-msgstr ""
+msgstr "\"%s\" 유닉스 도메인 소켓 경로가 너무 깁니다 (최대 %d 바이트)\n"
 
 #: fe-connect.c:1478
 #, c-format
@@ -239,7 +239,7 @@ msgstr "신뢰성 피어를 얻을 수 없습니다: %s\n"
 #: fe-connect.c:2031
 #, c-format
 msgid "requirepeer specifies \"%s\", but actual peer user name is \"%s\"\n"
-msgstr ""
+msgstr "\"%s\" 이름으로 requirepeer를 지정했지만, 실재 사용자 이름은 \"%s\" 입니다\n"
 
 #: fe-connect.c:2065
 #, c-format
@@ -279,165 +279,168 @@ msgstr "시작하는 동안 서버로부터 기대되지 않는 메시지\n"
 msgid "invalid connection state %d, probably indicative of memory corruption\n"
 msgstr "잘못된 연결 상태 %d,  메모리 손상일 가능성이 큼\n"
 
-#: fe-connect.c:3089 fe-connect.c:3149
+#: fe-connect.c:3090 fe-connect.c:3150
 #, c-format
 msgid "PGEventProc \"%s\" failed during PGEVT_CONNRESET event\n"
 msgstr "PGEVT_CONNRESET 이벤트 동안 PGEventProc \"%s\"이(가) 실패함\n"
 
-#: fe-connect.c:3496
+#: fe-connect.c:3497
 #, c-format
 msgid "invalid LDAP URL \"%s\": scheme must be ldap://\n"
 msgstr "잘못된 LDAP URL \"%s\": 스키마는 ldap:// 여야함\n"
 
-#: fe-connect.c:3511
+#: fe-connect.c:3512
 #, c-format
 msgid "invalid LDAP URL \"%s\": missing distinguished name\n"
 msgstr "잘못된 LDAP URL \"%s\": 식별자 이름이 빠졌음\n"
 
-#: fe-connect.c:3522 fe-connect.c:3575
+#: fe-connect.c:3523 fe-connect.c:3576
 #, c-format
 msgid "invalid LDAP URL \"%s\": must have exactly one attribute\n"
 msgstr "잘못된 LDAP URL \"%s\": 단 하나의 속성만 가져야함\n"
 
-#: fe-connect.c:3532 fe-connect.c:3589
+#: fe-connect.c:3533 fe-connect.c:3590
 #, c-format
 msgid "invalid LDAP URL \"%s\": must have search scope (base/one/sub)\n"
 msgstr "잘못된 LDAP URL \"%s\": 검색범위(base/one/sub)를 지정해야함\n"
 
-#: fe-connect.c:3543
+#: fe-connect.c:3544
 #, c-format
 msgid "invalid LDAP URL \"%s\": no filter\n"
 msgstr "잘못된 LDAP URL \"%s\": 필터 없음\n"
 
-#: fe-connect.c:3564
+#: fe-connect.c:3565
 #, c-format
 msgid "invalid LDAP URL \"%s\": invalid port number\n"
 msgstr "잘못된 LDAP URL \"%s\": 포트번호가 잘못됨\n"
 
-#: fe-connect.c:3598
+#: fe-connect.c:3599
 msgid "could not create LDAP structure\n"
 msgstr "LDAP 구조를 만들 수 없음\n"
 
-#: fe-connect.c:3674
+#: fe-connect.c:3675
 #, c-format
 msgid "lookup on LDAP server failed: %s\n"
 msgstr "LDAP 서버를 찾을 수 없음: %s\n"
 
-#: fe-connect.c:3685
+#: fe-connect.c:3686
 msgid "more than one entry found on LDAP lookup\n"
 msgstr "LDAP 검색에서 하나 이상의 엔트리가 발견되었음\n"
 
-#: fe-connect.c:3686 fe-connect.c:3698
+#: fe-connect.c:3687 fe-connect.c:3699
 msgid "no entry found on LDAP lookup\n"
 msgstr "LDAP 검색에서 해당 항목 없음\n"
 
-#: fe-connect.c:3709 fe-connect.c:3722
+#: fe-connect.c:3710 fe-connect.c:3723
 msgid "attribute has no values on LDAP lookup\n"
 msgstr "LDAP 검색에서 속성의 값이 없음\n"
 
-#: fe-connect.c:3774 fe-connect.c:3793 fe-connect.c:4312
+#: fe-connect.c:3775 fe-connect.c:3794 fe-connect.c:4313
 #, c-format
 msgid "missing \"=\" after \"%s\" in connection info string\n"
 msgstr "연결문자열에서 \"%s\" 다음에 \"=\" 문자 빠졌음\n"
 
-#: fe-connect.c:3866 fe-connect.c:4493 fe-connect.c:5207
+#: fe-connect.c:3867 fe-connect.c:4498 fe-connect.c:5212
 #, c-format
 msgid "invalid connection option \"%s\"\n"
 msgstr "잘못된 연결 옵션 \"%s\"\n"
 
-#: fe-connect.c:3882 fe-connect.c:4361
+#: fe-connect.c:3883 fe-connect.c:4362
 msgid "unterminated quoted string in connection info string\n"
 msgstr "연결문자열에서 완성되지 못한 따옴표문자열이 있음\n"
 
-#: fe-connect.c:3922
+#: fe-connect.c:3923
 msgid "could not get home directory to locate service definition file"
 msgstr "서비스 정의 파일이 있는 홈 디렉토리를 찾을 수 없음"
 
-#: fe-connect.c:3955
+#: fe-connect.c:3956
 #, c-format
 msgid "definition of service \"%s\" not found\n"
 msgstr "\"%s\" 서비스 정의를 찾을 수 없음\n"
 
-#: fe-connect.c:3978
+#: fe-connect.c:3979
 #, c-format
 msgid "service file \"%s\" not found\n"
 msgstr "\"%s\" 서비스 파일을 찾을 수 없음\n"
 
-#: fe-connect.c:3991
+#: fe-connect.c:3992
 #, c-format
 msgid "line %d too long in service file \"%s\"\n"
 msgstr "%d번째 줄이 \"%s\" 서비스 파일에서 너무 깁니다\n"
 
-#: fe-connect.c:4062 fe-connect.c:4106
+#: fe-connect.c:4063 fe-connect.c:4107
 #, c-format
 msgid "syntax error in service file \"%s\", line %d\n"
 msgstr "\"%s\" 서비스 파일의 %d번째 줄에 구문 오류 있음\n"
 
-#: fe-connect.c:4073
+#: fe-connect.c:4074
 #, c-format
 msgid ""
 "nested service specifications not supported in service file \"%s\", line %d\n"
 msgstr "\"%s\" 서비스 파일의 %d번째 줄에 설정을 지원하지 않음\n"
 
-#: fe-connect.c:4751
+#: fe-connect.c:4756
 #, c-format
 msgid "invalid URI propagated to internal parser routine: \"%s\"\n"
 msgstr "URI 구문 분석을 할 수 없음: \"%s\"\n"
 
-#: fe-connect.c:4821
+#: fe-connect.c:4826
 #, c-format
 msgid ""
 "end of string reached when looking for matching \"]\" in IPv6 host address "
 "in URI: \"%s\"\n"
 msgstr ""
+"URI의 IPv6 호스트 주소에서 \"]\" 매칭 검색을 실패했습니다, 해당 URI: \"%s\"\n"
 
-#: fe-connect.c:4828
+#: fe-connect.c:4833
 #, c-format
 msgid "IPv6 host address may not be empty in URI: \"%s\"\n"
-msgstr ""
+msgstr "IPv6 호스트 주소가 없습니다, 해당 URI: \"%s\"\n"
 
-#: fe-connect.c:4843
+#: fe-connect.c:4848
 #, c-format
 msgid ""
 "unexpected character \"%c\" at position %d in URI (expected \":\" or \"/\"): "
 "\"%s\"\n"
 msgstr ""
+"잘못된 \"%c\" 문자가 URI 문자열 가운데 %d 번째 있습니다(\":\" 또는 \"/\" 문자가 있어야 함): "
+"\"%s\"\n"
 
-#: fe-connect.c:4957
+#: fe-connect.c:4962
 #, c-format
 msgid "extra key/value separator \"=\" in URI query parameter: \"%s\"\n"
-msgstr ""
+msgstr "키/밸류 구분자 \"=\" 문자가 필요함, 해당 URI 쿼리 매개변수: \"%s\"\n"
 
-#: fe-connect.c:4977
+#: fe-connect.c:4982
 #, c-format
 msgid "missing key/value separator \"=\" in URI query parameter: \"%s\"\n"
-msgstr ""
+msgstr "키/밸류 구분자 \"=\" 문자가 필요함, 해당 URI 쿼리 매개변수: \"%s\"\n"
 
-#: fe-connect.c:5028
+#: fe-connect.c:5033
 #, c-format
 msgid "invalid URI query parameter: \"%s\"\n"
 msgstr "잘못된 URL 쿼리 매개변수값: \"%s\"\n"
 
-#: fe-connect.c:5102
+#: fe-connect.c:5107
 #, c-format
 msgid "invalid percent-encoded token: \"%s\"\n"
 msgstr "잘못된 퍼센트 인코드 토큰: \"%s\"\n"
 
-#: fe-connect.c:5112
+#: fe-connect.c:5117
 #, c-format
 msgid "forbidden value %%00 in percent-encoded value: \"%s\"\n"
-msgstr ""
+msgstr "퍼센트 인코드 값에 %%00 숨김 값이 있음: \"%s\"\n"
 
-#: fe-connect.c:5443
+#: fe-connect.c:5451
 msgid "connection pointer is NULL\n"
 msgstr "연결 포인터가 NULL\n"
 
-#: fe-connect.c:5729
+#: fe-connect.c:5749
 #, c-format
 msgid "WARNING: password file \"%s\" is not a plain file\n"
 msgstr "경고: \"%s\" 패스워드 파일이 plain 파일이 아님\n"
 
-#: fe-connect.c:5738
+#: fe-connect.c:5758
 #, c-format
 msgid ""
 "WARNING: password file \"%s\" has group or world access; permissions should "
@@ -446,103 +449,107 @@ msgstr ""
 "경고: 패스워드 파일 \"%s\"에 그룹 또는 범용 액세스 권한이 있습니다. 권한은 "
 "u=rw(0600) 이하여야 합니다.\n"
 
-#: fe-connect.c:5844
+#: fe-connect.c:5864
 #, c-format
 msgid "password retrieved from file \"%s\"\n"
 msgstr "\"%s\" 파일에서 암호를 찾을 수 없음\n"
 
-#: fe-exec.c:825
+#: fe-exec.c:826
 msgid "NOTICE"
 msgstr "알림"
 
-#: fe-exec.c:1122 fe-exec.c:1180 fe-exec.c:1226
+#: fe-exec.c:1141 fe-exec.c:1199 fe-exec.c:1245
 msgid "command string is a null pointer\n"
 msgstr "명령 문자열이 null 포인터\n"
 
-#: fe-exec.c:1186 fe-exec.c:1232 fe-exec.c:1327
+#: fe-exec.c:1205 fe-exec.c:1251 fe-exec.c:1346
 msgid "number of parameters must be between 0 and 65535\n"
 msgstr "매개변수값으로 숫자는 0에서 65535까지만 쓸 수 있음\n"
 
-#: fe-exec.c:1220 fe-exec.c:1321
+#: fe-exec.c:1239 fe-exec.c:1340
 msgid "statement name is a null pointer\n"
 msgstr "실행 구문 이름이 null 포인트(값이 없음)입니다\n"
 
-#: fe-exec.c:1240 fe-exec.c:1404 fe-exec.c:2119 fe-exec.c:2318
+#: fe-exec.c:1259 fe-exec.c:1423 fe-exec.c:2141 fe-exec.c:2340
 msgid "function requires at least protocol version 3.0\n"
 msgstr "함수는 적어도 버전 3의 프로토콜을 요구하고 있습니다\n"
 
-#: fe-exec.c:1358
+#: fe-exec.c:1377
 msgid "no connection to the server\n"
 msgstr "서버에 대한 연결이 없음\n"
 
-#: fe-exec.c:1365
+#: fe-exec.c:1384
 msgid "another command is already in progress\n"
 msgstr "처리 중에 이미 다른 명령이 존재함\n"
 
-#: fe-exec.c:1480
+#: fe-exec.c:1499
 msgid "length must be given for binary parameter\n"
 msgstr "바이너리 자료 매개 변수를 사용할 때는 그 길이를 지정해야 함\n"
 
-#: fe-exec.c:1749
+#: fe-exec.c:1771
 #, c-format
 msgid "unexpected asyncStatus: %d\n"
 msgstr "기대되지 않은 동기화상태: %d\n"
 
-#: fe-exec.c:1769
+#: fe-exec.c:1791
 #, c-format
 msgid "PGEventProc \"%s\" failed during PGEVT_RESULTCREATE event\n"
 msgstr "PGEVT_RESULTCREATE 이벤트 동안 PGEventProc \"%s\" 실패함\n"
 
-#: fe-exec.c:1929
+#: fe-exec.c:1951
 msgid "COPY terminated by new PQexec"
 msgstr "새 PQexec 호출로 COPY 작업이 중지 되었습니다"
 
-#: fe-exec.c:1937
+#: fe-exec.c:1959
 msgid "COPY IN state must be terminated first\n"
 msgstr "COPY IN 상태가 먼저 끝나야함\n"
 
-#: fe-exec.c:1957
+#: fe-exec.c:1979
 msgid "COPY OUT state must be terminated first\n"
 msgstr "COPY OUT 상태가 먼저 끝나야함\n"
 
-#: fe-exec.c:1965
+#: fe-exec.c:1987
 msgid "PQexec not allowed during COPY BOTH\n"
 msgstr "COPY BOTH 작업 중에는 PQexec 사용할 수 없음\n"
 
-#: fe-exec.c:2208 fe-exec.c:2275 fe-exec.c:2365 fe-protocol2.c:1352
-#: fe-protocol3.c:1752
+#: fe-exec.c:2230 fe-exec.c:2297 fe-exec.c:2387 fe-protocol2.c:1352
+#: fe-protocol3.c:1817
 msgid "no COPY in progress\n"
 msgstr "처리 가운데 COPY가 없음\n"
 
-#: fe-exec.c:2555
+#: fe-exec.c:2577
 msgid "connection in wrong state\n"
 msgstr "잘못된 상태의 연결\n"
 
-#: fe-exec.c:2586
+#: fe-exec.c:2608
 msgid "invalid ExecStatusType code"
 msgstr "잘못된 ExecStatusType 코드"
 
-#: fe-exec.c:2650 fe-exec.c:2673
+#: fe-exec.c:2635
+msgid "PGresult is not an error result\n"
+msgstr "PGresult가 오류 결과가 아님\n"
+
+#: fe-exec.c:2710 fe-exec.c:2733
 #, c-format
 msgid "column number %d is out of range 0..%d"
 msgstr "%d 번째 열은 0..%d 범위를 벗어났음"
 
-#: fe-exec.c:2666
+#: fe-exec.c:2726
 #, c-format
 msgid "row number %d is out of range 0..%d"
 msgstr "%d 번째 행(row)은 0..%d 범위를 벗어났음"
 
-#: fe-exec.c:2688
+#: fe-exec.c:2748
 #, c-format
 msgid "parameter number %d is out of range 0..%d"
 msgstr "%d개의 매개 변수는 0..%d 범위를 벗어났음"
 
-#: fe-exec.c:2998
+#: fe-exec.c:3058
 #, c-format
 msgid "could not interpret result from server: %s"
 msgstr "서버로부터 결과처리를 중지 시킬 수 없음: %s"
 
-#: fe-exec.c:3237 fe-exec.c:3321
+#: fe-exec.c:3297 fe-exec.c:3381
 msgid "incomplete multibyte character\n"
 msgstr "완성되지 않은 멀티바이트 문자\n"
 
@@ -643,7 +650,7 @@ msgstr "%lu 정수형 크기는 pqPutInt 함수에서 지원하지 않음"
 msgid "connection not open\n"
 msgstr "연결 열기 실패\n"
 
-#: fe-misc.c:812 fe-secure-openssl.c:249 fe-secure-openssl.c:355
+#: fe-misc.c:812 fe-secure-openssl.c:271 fe-secure-openssl.c:380
 #: fe-secure.c:253 fe-secure.c:362
 msgid ""
 "server closed the connection unexpectedly\n"
@@ -659,8 +666,8 @@ msgid "timeout expired\n"
 msgstr "시간 초과\n"
 
 #: fe-misc.c:1061
-msgid "socket not open\n"
-msgstr "소캣 열기 실패\n"
+msgid "invalid socket\n"
+msgstr "잘못된 소켓\n"
 
 #: fe-misc.c:1084
 #, c-format
@@ -684,7 +691,7 @@ msgstr "휴지(idle)동안 서버로 부터 0x%02x 형태 메시지를 받았음
 
 #: fe-protocol2.c:503 fe-protocol2.c:538 fe-protocol2.c:1049
 #: fe-protocol3.c:209 fe-protocol3.c:236 fe-protocol3.c:253 fe-protocol3.c:333
-#: fe-protocol3.c:720 fe-protocol3.c:1037
+#: fe-protocol3.c:728 fe-protocol3.c:951
 msgid "out of memory"
 msgstr "메모리 부족"
 
@@ -715,11 +722,11 @@ msgstr ""
 msgid "unexpected response from server; first received character was \"%c\"\n"
 msgstr "서버로부터 예상치 못한 응답을 받았음; \"%c\" 문자를 첫문자로 받았음\n"
 
-#: fe-protocol2.c:762 fe-protocol2.c:937 fe-protocol3.c:627 fe-protocol3.c:841
+#: fe-protocol2.c:762 fe-protocol2.c:937 fe-protocol3.c:627 fe-protocol3.c:854
 msgid "out of memory for query result"
 msgstr "쿼리 결과 처리를 위한 메모리 부족"
 
-#: fe-protocol2.c:1395 fe-protocol3.c:1821
+#: fe-protocol2.c:1395 fe-protocol3.c:1886
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -729,7 +736,7 @@ msgstr "%s"
 msgid "lost synchronization with server, resetting connection"
 msgstr "서버와의 동기화가 끊김, 연결을 재 시도함"
 
-#: fe-protocol2.c:1541 fe-protocol2.c:1573 fe-protocol3.c:2024
+#: fe-protocol2.c:1541 fe-protocol2.c:1573 fe-protocol3.c:2089
 #, c-format
 msgid "protocol error: id=0x%x\n"
 msgstr "프로토콜 오류: id=0x%x\n"
@@ -759,93 +766,101 @@ msgstr "\"T\" 메시지 안에 부족자 데이터"
 msgid "extraneous data in \"T\" message"
 msgstr "\"T\" 메시지 안에 잘못된 데이터"
 
-#: fe-protocol3.c:749 fe-protocol3.c:781 fe-protocol3.c:799
+#: fe-protocol3.c:691
+msgid "extraneous data in \"t\" message"
+msgstr "\"t\" 메시지 안에 잘못된 데이터"
+
+#: fe-protocol3.c:762 fe-protocol3.c:794 fe-protocol3.c:812
 msgid "insufficient data in \"D\" message"
 msgstr "\"D\" 메시지 안에 불충분한 데이터"
 
-#: fe-protocol3.c:755
+#: fe-protocol3.c:768
 msgid "unexpected field count in \"D\" message"
 msgstr "\"D\" 메시지 안에 예상치 못한 필드 수"
 
-#: fe-protocol3.c:808
+#: fe-protocol3.c:821
 msgid "extraneous data in \"D\" message"
 msgstr "\"D\" 메시지 안에 잘못된 데이터"
 
+#: fe-protocol3.c:1005
+msgid "no error message available\n"
+msgstr "보여줄 오류 메시지가 없음\n"
+
 #. translator: %s represents a digit string
-#: fe-protocol3.c:940 fe-protocol3.c:959
+#: fe-protocol3.c:1035 fe-protocol3.c:1054
 #, c-format
 msgid " at character %s"
 msgstr " 위치: %s"
 
-#: fe-protocol3.c:972
+#: fe-protocol3.c:1067
 #, c-format
 msgid "DETAIL:  %s\n"
 msgstr "상세정보:  %s\n"
 
-#: fe-protocol3.c:975
+#: fe-protocol3.c:1070
 #, c-format
 msgid "HINT:  %s\n"
 msgstr "힌트:  %s\n"
 
-#: fe-protocol3.c:978
+#: fe-protocol3.c:1073
 #, c-format
 msgid "QUERY:  %s\n"
 msgstr "쿼리:  %s\n"
 
-#: fe-protocol3.c:981
+#: fe-protocol3.c:1080
 #, c-format
 msgid "CONTEXT:  %s\n"
 msgstr "구문:  %s\n"
 
-#: fe-protocol3.c:988
+#: fe-protocol3.c:1089
 #, c-format
 msgid "SCHEMA NAME:  %s\n"
 msgstr "스키마 이름:  %s\n"
 
-#: fe-protocol3.c:992
+#: fe-protocol3.c:1093
 #, c-format
 msgid "TABLE NAME:  %s\n"
 msgstr "테이블 이름:  %s\n"
 
-#: fe-protocol3.c:996
+#: fe-protocol3.c:1097
 #, c-format
 msgid "COLUMN NAME:  %s\n"
 msgstr "칼럼 이름:  %s\n"
 
-#: fe-protocol3.c:1000
+#: fe-protocol3.c:1101
 #, c-format
 msgid "DATATYPE NAME:  %s\n"
 msgstr "자료형 이름:  %s\n"
 
-#: fe-protocol3.c:1004
+#: fe-protocol3.c:1105
 #, c-format
 msgid "CONSTRAINT NAME:  %s\n"
 msgstr "제약조건 이름:  %s\n"
 
-#: fe-protocol3.c:1016
+#: fe-protocol3.c:1117
 msgid "LOCATION:  "
 msgstr "위치:  "
 
-#: fe-protocol3.c:1018
+#: fe-protocol3.c:1119
 #, c-format
 msgid "%s, "
 msgstr "%s, "
 
-#: fe-protocol3.c:1020
+#: fe-protocol3.c:1121
 #, c-format
 msgid "%s:%s"
 msgstr "%s:%s"
 
-#: fe-protocol3.c:1251
+#: fe-protocol3.c:1316
 #, c-format
 msgid "LINE %d: "
 msgstr "줄 %d: "
 
-#: fe-protocol3.c:1646
+#: fe-protocol3.c:1711
 msgid "PQgetline: not doing text COPY OUT\n"
 msgstr "PQgetline: text COPY OUT 작업을 할 수 없음\n"
 
-#: fe-secure-openssl.c:146 fe-secure-openssl.c:1006 fe-secure-openssl.c:1226
+#: fe-secure-openssl.c:146 fe-secure-openssl.c:1031 fe-secure-openssl.c:1251
 #, c-format
 msgid "could not acquire mutex: %s\n"
 msgstr "mutex 취득 실패: %s\n"
@@ -855,121 +870,121 @@ msgstr "mutex 취득 실패: %s\n"
 msgid "could not establish SSL connection: %s\n"
 msgstr "SSL 연결을 확립할 수 없음: %s\n"
 
-#: fe-secure-openssl.c:254 fe-secure-openssl.c:360 fe-secure-openssl.c:1349
+#: fe-secure-openssl.c:276 fe-secure-openssl.c:385 fe-secure-openssl.c:1377
 #, c-format
 msgid "SSL SYSCALL error: %s\n"
 msgstr "SSL SYSCALL 오류: %s\n"
 
-#: fe-secure-openssl.c:261 fe-secure-openssl.c:367 fe-secure-openssl.c:1353
+#: fe-secure-openssl.c:283 fe-secure-openssl.c:392 fe-secure-openssl.c:1381
 msgid "SSL SYSCALL error: EOF detected\n"
 msgstr "SSL SYSCALL 오류: EOF 감지됨\n"
 
-#: fe-secure-openssl.c:272 fe-secure-openssl.c:378 fe-secure-openssl.c:1362
+#: fe-secure-openssl.c:294 fe-secure-openssl.c:403 fe-secure-openssl.c:1390
 #, c-format
 msgid "SSL error: %s\n"
 msgstr "SSL 오류: %s\n"
 
-#: fe-secure-openssl.c:287 fe-secure-openssl.c:393
+#: fe-secure-openssl.c:309 fe-secure-openssl.c:418
 msgid "SSL connection has been closed unexpectedly\n"
-msgstr ""
+msgstr "SSL 연결이 예상치 못하게 끊김\n"
 
-#: fe-secure-openssl.c:293 fe-secure-openssl.c:399 fe-secure-openssl.c:1371
+#: fe-secure-openssl.c:315 fe-secure-openssl.c:424 fe-secure-openssl.c:1399
 #, c-format
 msgid "unrecognized SSL error code: %d\n"
 msgstr "알 수 없는 SSL 오류 코드: %d\n"
 
-#: fe-secure-openssl.c:511
+#: fe-secure-openssl.c:536
 msgid "SSL certificate's name entry is missing\n"
 msgstr "SSL 인증서의 이름 항목이 잘못됨\n"
 
-#: fe-secure-openssl.c:541
+#: fe-secure-openssl.c:566
 msgid "SSL certificate's name contains embedded null\n"
 msgstr "SSL 인증서의 이름에 null 문자가 있음\n"
 
-#: fe-secure-openssl.c:592
+#: fe-secure-openssl.c:617
 msgid "host name must be specified for a verified SSL connection\n"
 msgstr "인증된 SSL 접속을 위해서는 호스트 이름을 지정해야 함\n"
 
-#: fe-secure-openssl.c:692
+#: fe-secure-openssl.c:717
 #, c-format
 msgid "server certificate for \"%s\" does not match host name \"%s\"\n"
 msgstr ""
 "서버 인증서의 이름 \"%s\"이(가) 호스트 이름 \"%s\"과(와) 일치하지 않음\n"
 
-#: fe-secure-openssl.c:698
+#: fe-secure-openssl.c:723
 msgid "could not get server's host name from server certificate\n"
 msgstr "서버 인증서에서 서버 호스트 이름을 찾을 수 없음\n"
 
-#: fe-secure-openssl.c:845
+#: fe-secure-openssl.c:870
 #, c-format
 msgid "could not create SSL context: %s\n"
 msgstr "SSL context를 만들 수 없음: %s\n"
 
-#: fe-secure-openssl.c:976
+#: fe-secure-openssl.c:1001
 #, c-format
 msgid "could not open certificate file \"%s\": %s\n"
 msgstr "\"%s\" 인증서 파일을 열수 없음: %s\n"
 
-#: fe-secure-openssl.c:1015 fe-secure-openssl.c:1030
+#: fe-secure-openssl.c:1040 fe-secure-openssl.c:1055
 #, c-format
 msgid "could not read certificate file \"%s\": %s\n"
 msgstr "\"%s\" 인증서 파일을 읽을 수 없음: %s\n"
 
-#: fe-secure-openssl.c:1085
+#: fe-secure-openssl.c:1110
 #, c-format
 msgid "could not load SSL engine \"%s\": %s\n"
 msgstr "SSL 엔진 \"%s\"을(를) 로드할 수 없음: %s\n"
 
-#: fe-secure-openssl.c:1097
+#: fe-secure-openssl.c:1122
 #, c-format
 msgid "could not initialize SSL engine \"%s\": %s\n"
 msgstr "SSL 엔진 \"%s\"을(를) 초기화할 수 없음: %s\n"
 
-#: fe-secure-openssl.c:1113
+#: fe-secure-openssl.c:1138
 #, c-format
 msgid "could not read private SSL key \"%s\" from engine \"%s\": %s\n"
 msgstr "개인 SSL 키 \"%s\"을(를) \"%s\" 엔진에서 읽을 수 없음: %s\n"
 
-#: fe-secure-openssl.c:1127
+#: fe-secure-openssl.c:1152
 #, c-format
 msgid "could not load private SSL key \"%s\" from engine \"%s\": %s\n"
 msgstr "개인 SSL 키 \"%s\"을(를) \"%s\" 엔진에서 읽을 수 없음: %s\n"
 
-#: fe-secure-openssl.c:1164
+#: fe-secure-openssl.c:1189
 #, c-format
 msgid "certificate present, but not private key file \"%s\"\n"
 msgstr "인증서가 있지만, \"%s\" 개인키가 아닙니다.\n"
 
-#: fe-secure-openssl.c:1172
+#: fe-secure-openssl.c:1197
 #, c-format
 msgid ""
 "private key file \"%s\" has group or world access; permissions should be "
 "u=rw (0600) or less\n"
 msgstr ""
-"개인 키 파일 \"%s\"에 그룹 또는 범용 액세스 권한이 있습니다. 권한은 u=rw"
-"(0600) 이하여야 합니다.\n"
+"개인 키 파일 \"%s\"에 그룹 또는 범용 액세스 권한이 있습니다. 권한은 "
+"u=rw(0600) 이하여야 합니다.\n"
 
-#: fe-secure-openssl.c:1183
+#: fe-secure-openssl.c:1208
 #, c-format
 msgid "could not load private key file \"%s\": %s\n"
 msgstr "\"%s\" 개인키 파일을 불러들일 수 없습니다: %s\n"
 
-#: fe-secure-openssl.c:1197
+#: fe-secure-openssl.c:1222
 #, c-format
 msgid "certificate does not match private key file \"%s\": %s\n"
 msgstr "인증서가 \"%s\" 개인키 파일과 맞지 않습니다: %s\n"
 
-#: fe-secure-openssl.c:1235
+#: fe-secure-openssl.c:1260
 #, c-format
 msgid "could not read root certificate file \"%s\": %s\n"
 msgstr "\"%s\" 루트 인증서 파일을 읽을 수 없음: %s\n"
 
-#: fe-secure-openssl.c:1265
+#: fe-secure-openssl.c:1290
 #, c-format
 msgid "SSL library does not support CRL certificates (file \"%s\")\n"
 msgstr "SSL 라이브러리가 CRL 인증서 (\"%s\" 파일)를 지원하지 않음\n"
 
-#: fe-secure-openssl.c:1298
+#: fe-secure-openssl.c:1323
 msgid ""
 "could not get home directory to locate root certificate file\n"
 "Either provide the file or change sslmode to disable server certificate "
@@ -979,7 +994,7 @@ msgstr ""
 "해당 파일을 제공하거나 서버 인증서 확인을 사용하지 않도록 sslmode를 변경하십"
 "시오.\n"
 
-#: fe-secure-openssl.c:1302
+#: fe-secure-openssl.c:1327
 #, c-format
 msgid ""
 "root certificate file \"%s\" does not exist\n"
@@ -990,17 +1005,17 @@ msgstr ""
 "해당 파일을 제공하거나 서버 인증서 확인을 사용하지 않도록 sslmode를 변경하십"
 "시오.\n"
 
-#: fe-secure-openssl.c:1390
+#: fe-secure-openssl.c:1420
 #, c-format
 msgid "certificate could not be obtained: %s\n"
 msgstr "인증서를 구하질 못했습니다: %s\n"
 
-#: fe-secure-openssl.c:1482
+#: fe-secure-openssl.c:1512
 #, c-format
 msgid "no SSL error reported"
 msgstr "SSL 오류 없음이 보고됨"
 
-#: fe-secure-openssl.c:1491
+#: fe-secure-openssl.c:1521
 #, c-format
 msgid "SSL error code %lu"
 msgstr "SSL 오류 번호 %lu"

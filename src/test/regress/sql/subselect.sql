@@ -92,6 +92,21 @@ SELECT '' AS eight, ss.f1 AS "Correlated Field", ss.f3 AS "Second Field"
 select q1, float8(count(*)) / (select count(*) from int8_tbl)
 from int8_tbl group by q1 order by q1;
 
+-- Unspecified-type literals in output columns should resolve as text
+
+SELECT *, pg_typeof(f1) FROM
+  (SELECT 'foo' AS f1 FROM generate_series(1,3)) ss ORDER BY 1;
+
+-- ... unless there's context to suggest differently
+
+explain verbose select '42' union all select '43';
+explain verbose select '42' union all select 43;
+
+-- check materialization of an initplan reference (bug #14524)
+explain (verbose, costs off)
+select 1 = all (select (select 1));
+select 1 = all (select (select 1));
+
 --
 -- Check EXISTS simplification with LIMIT
 --
@@ -481,3 +496,47 @@ select * from
   order by 1;
 
 select nextval('ts1');
+
+--
+-- Check that volatile quals aren't pushed down past a set-returning function;
+-- while a nonvolatile qual can be, if it doesn't reference the SRF.
+--
+create function tattle(x int, y int) returns bool
+volatile language plpgsql as $$
+begin
+  raise notice 'x = %, y = %', x, y;
+  return x > y;
+end$$;
+
+explain (verbose, costs off)
+select * from
+  (select 9 as x, unnest(array[1,2,3,11,12,13]) as u) ss
+  where tattle(x, 8);
+
+select * from
+  (select 9 as x, unnest(array[1,2,3,11,12,13]) as u) ss
+  where tattle(x, 8);
+
+-- if we pretend it's stable, we get different results:
+alter function tattle(x int, y int) stable;
+
+explain (verbose, costs off)
+select * from
+  (select 9 as x, unnest(array[1,2,3,11,12,13]) as u) ss
+  where tattle(x, 8);
+
+select * from
+  (select 9 as x, unnest(array[1,2,3,11,12,13]) as u) ss
+  where tattle(x, 8);
+
+-- although even a stable qual should not be pushed down if it references SRF
+explain (verbose, costs off)
+select * from
+  (select 9 as x, unnest(array[1,2,3,11,12,13]) as u) ss
+  where tattle(x, u);
+
+select * from
+  (select 9 as x, unnest(array[1,2,3,11,12,13]) as u) ss
+  where tattle(x, u);
+
+drop function tattle(x int, y int);

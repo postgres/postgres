@@ -4,7 +4,7 @@
  *
  *	  Definitions for network authentication routines
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/interfaces/libpq/fe-auth.h
@@ -18,7 +18,16 @@
 #include "libpq-int.h"
 
 
-extern int	pg_fe_sendauth(AuthRequest areq, PGconn *conn);
+/* Prototypes for functions in fe-auth.c */
+extern int	pg_fe_sendauth(AuthRequest areq, int payloadlen, PGconn *conn);
 extern char *pg_fe_getauthname(PQExpBuffer errorMessage);
 
-#endif   /* FE_AUTH_H */
+/* Prototypes for functions in fe-auth-scram.c */
+extern void *pg_fe_scram_init(const char *username, const char *password);
+extern void pg_fe_scram_free(void *opaq);
+extern void pg_fe_scram_exchange(void *opaq, char *input, int inputlen,
+					 char **output, int *outputlen,
+					 bool *done, bool *success, PQExpBuffer errorMessage);
+extern char *pg_fe_scram_build_verifier(const char *password);
+
+#endif							/* FE_AUTH_H */

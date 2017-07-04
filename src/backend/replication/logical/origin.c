@@ -3,7 +3,7 @@
  * origin.c
  *	  Logical replication progress tracking support.
  *
- * Copyright (c) 2013-2016, PostgreSQL Global Development Group
+ * Copyright (c) 2013-2017, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/replication/logical/origin.c
@@ -24,7 +24,7 @@
  * two bytes allow us to be more space efficient.
  *
  * Replication progress is tracked in a shared memory table
- * (ReplicationStates) that's dumped to disk every checkpoint. Entries
+ * (ReplicationState) that's dumped to disk every checkpoint. Entries
  * ('slots') in this table are identified by the internal id. That's the case
  * because it allows to increase replication progress during crash
  * recovery. To allow doing so we store the original LSN (from the originating
@@ -48,7 +48,7 @@
  *	 pg_replication_slot is required for the duration. That allows us to
  *	 safely and conflict free assign new origins using a dirty snapshot.
  *
- * * When creating an in-memory replication progress slot the ReplicationOirgin
+ * * When creating an in-memory replication progress slot the ReplicationOrigin
  *	 LWLock has to be held exclusively; when iterating over the replication
  *	 progress a shared lock has to be held, the same when advancing the
  *	 replication progress of an individual backend that has not setup as the
@@ -143,12 +143,11 @@ typedef struct ReplicationStateOnDisk
 typedef struct ReplicationStateCtl
 {
 	int			tranche_id;
-	LWLockTranche tranche;
 	ReplicationState states[FLEXIBLE_ARRAY_MEMBER];
 } ReplicationStateCtl;
 
 /* external variables */
-RepOriginId replorigin_session_origin = InvalidRepOriginId;		/* assumed identity */
+RepOriginId replorigin_session_origin = InvalidRepOriginId; /* assumed identity */
 XLogRecPtr	replorigin_session_origin_lsn = InvalidXLogRecPtr;
 TimestampTz replorigin_session_origin_timestamp = 0;
 
@@ -163,8 +162,8 @@ static ReplicationState *replication_states;
 static ReplicationStateCtl *replication_states_ctl;
 
 /*
- * Backend-local, cached element from ReplicationStates for use in a backend
- * replaying remote commits, so we don't have to search ReplicationStates for
+ * Backend-local, cached element from ReplicationState for use in a backend
+ * replaying remote commits, so we don't have to search ReplicationState for
  * the backends current RepOriginId.
  */
 static ReplicationState *session_replication_state = NULL;
@@ -188,7 +187,7 @@ replorigin_check_prerequisites(bool check_slots, bool recoveryOK)
 	if (!recoveryOK && RecoveryInProgress())
 		ereport(ERROR,
 				(errcode(ERRCODE_READ_ONLY_SQL_TRANSACTION),
-		   errmsg("cannot manipulate replication origins during recovery")));
+				 errmsg("cannot manipulate replication origins during recovery")));
 
 }
 
@@ -300,8 +299,7 @@ replorigin_create(char *roname)
 			values[Anum_pg_replication_origin_roname - 1] = roname_d;
 
 			tuple = heap_form_tuple(RelationGetDescr(rel), values, nulls);
-			simple_heap_insert(rel, tuple);
-			CatalogUpdateIndexes(rel, tuple);
+			CatalogTupleInsert(rel, tuple);
 			CommandCounterIncrement();
 			break;
 		}
@@ -379,7 +377,7 @@ replorigin_drop(RepOriginId roident)
 		elog(ERROR, "cache lookup failed for replication origin with oid %u",
 			 roident);
 
-	simple_heap_delete(rel, &tuple->t_self);
+	CatalogTupleDelete(rel, &tuple->t_self);
 	ReleaseSysCache(tuple);
 
 	CommandCounterIncrement();
@@ -443,7 +441,7 @@ ReplicationOriginShmemSize(void)
 	/*
 	 * XXX: max_replication_slots is arguably the wrong thing to use, as here
 	 * we keep the replay state of *remote* transactions. But for now it seems
-	 * sufficient to reuse it, lest we introduce a separate guc.
+	 * sufficient to reuse it, lest we introduce a separate GUC.
 	 */
 	if (max_replication_slots == 0)
 		return size;
@@ -451,7 +449,7 @@ ReplicationOriginShmemSize(void)
 	size = add_size(size, offsetof(ReplicationStateCtl, states));
 
 	size = add_size(size,
-				  mul_size(max_replication_slots, sizeof(ReplicationState)));
+					mul_size(max_replication_slots, sizeof(ReplicationState)));
 	return size;
 }
 
@@ -474,11 +472,6 @@ ReplicationOriginShmemInit(void)
 		int			i;
 
 		replication_states_ctl->tranche_id = LWTRANCHE_REPLICATION_ORIGIN;
-		replication_states_ctl->tranche.name = "replication_origin";
-		replication_states_ctl->tranche.array_base =
-			&replication_states[0].lock;
-		replication_states_ctl->tranche.array_stride =
-			sizeof(ReplicationState);
 
 		MemSet(replication_states, 0, ReplicationOriginShmemSize());
 
@@ -488,7 +481,7 @@ ReplicationOriginShmemInit(void)
 	}
 
 	LWLockRegisterTranche(replication_states_ctl->tranche_id,
-						  &replication_states_ctl->tranche);
+						  "replication_origin");
 }
 
 /* ---------------------------------------------------------------------------
@@ -504,7 +497,7 @@ ReplicationOriginShmemInit(void)
  *
  * So its just the magic, followed by the statically sized
  * ReplicationStateOnDisk structs. Note that the maximum number of
- * ReplicationStates is determined by max_replication_slots.
+ * ReplicationState is determined by max_replication_slots.
  * ---------------------------------------------------------------------------
  */
 void
@@ -565,6 +558,9 @@ CheckPointReplicationOrigin(void)
 
 		if (curstate->roident == InvalidRepOriginId)
 			continue;
+
+		/* zero, to avoid uninitialized padding bytes */
+		memset(&disk_state, 0, sizeof(disk_state));
 
 		LWLockAcquire(&curstate->lock, LW_SHARED);
 
@@ -668,8 +664,8 @@ StartupReplicationOrigin(void)
 
 	if (magic != REPLICATION_STATE_MAGIC)
 		ereport(PANIC,
-		   (errmsg("replication checkpoint has wrong magic %u instead of %u",
-				   magic, REPLICATION_STATE_MAGIC)));
+				(errmsg("replication checkpoint has wrong magic %u instead of %u",
+						magic, REPLICATION_STATE_MAGIC)));
 
 	/* we can skip locking here, no other access is possible */
 
@@ -1001,7 +997,7 @@ replorigin_session_setup(RepOriginId node)
 	if (session_replication_state != NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-		errmsg("cannot setup replication origin when one is already setup")));
+				 errmsg("cannot setup replication origin when one is already setup")));
 
 	/* Lock exclusively, as we may have to create a new table entry. */
 	LWLockAcquire(ReplicationOriginLock, LW_EXCLUSIVE);
@@ -1030,8 +1026,8 @@ replorigin_session_setup(RepOriginId node)
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_OBJECT_IN_USE),
-			 errmsg("replication identifier %d is already active for PID %d",
-					curstate->roident, curstate->acquired_by)));
+					 errmsg("replication identifier %d is already active for PID %d",
+							curstate->roident, curstate->acquired_by)));
 		}
 
 		/* ok, found slot */
@@ -1257,7 +1253,7 @@ pg_replication_origin_session_is_setup(PG_FUNCTION_ARGS)
  * Return the replication progress for origin setup in the current session.
  *
  * If 'flush' is set to true it is ensured that the returned value corresponds
- * to a local transaction that has been flushed. this is useful if asychronous
+ * to a local transaction that has been flushed. This is useful if asynchronous
  * commits are used when replaying replicated transactions.
  */
 Datum
@@ -1314,7 +1310,7 @@ pg_replication_origin_xact_reset(PG_FUNCTION_ARGS)
 Datum
 pg_replication_origin_advance(PG_FUNCTION_ARGS)
 {
-	text	   *name = PG_GETARG_TEXT_P(0);
+	text	   *name = PG_GETARG_TEXT_PP(0);
 	XLogRecPtr	remote_commit = PG_GETARG_LSN(1);
 	RepOriginId node;
 
@@ -1331,7 +1327,7 @@ pg_replication_origin_advance(PG_FUNCTION_ARGS)
 	 * set up the initial replication state, but not for replay.
 	 */
 	replorigin_advance(node, remote_commit, InvalidXLogRecPtr,
-					   true /* go backward */ , true /* wal log */ );
+					   true /* go backward */ , true /* WAL log */ );
 
 	UnlockRelationOid(ReplicationOriginRelationId, RowExclusiveLock);
 
@@ -1343,7 +1339,7 @@ pg_replication_origin_advance(PG_FUNCTION_ARGS)
  * Return the replication progress for an individual replication origin.
  *
  * If 'flush' is set to true it is ensured that the returned value corresponds
- * to a local transaction that has been flushed. this is useful if asychronous
+ * to a local transaction that has been flushed. This is useful if asynchronous
  * commits are used when replaying replicated transactions.
  */
 Datum

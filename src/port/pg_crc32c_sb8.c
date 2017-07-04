@@ -8,7 +8,7 @@
  * Generation", IEEE Transactions on Computers, vol.57, no. 11,
  * pp. 1550-1560, November 2008, doi:10.1109/TC.2008.85
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -1165,5 +1165,5 @@ static const uint32 pg_crc32c_table[8][256] = {
 		0xA1354CE5, 0x864870AC, 0xEFCF3477, 0xC8B2083E,
 		0xCCB751C4, 0xEBCA6D8D, 0x824D2956, 0xA530151F
 	}
-#endif   /* WORDS_BIGENDIAN */
+#endif							/* WORDS_BIGENDIAN */
 };

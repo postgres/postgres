@@ -69,19 +69,19 @@ CREATE VIEW test_tablesample_v1 AS
 CREATE VIEW test_tablesample_v2 AS
   SELECT id FROM test_tablesample TABLESAMPLE SYSTEM (99);
 \d+ test_tablesample_v1
-          View "public.test_tablesample_v1"
- Column |  Type   | Modifiers | Storage | Description 
---------+---------+-----------+---------+-------------
- id     | integer |           | plain   | 
+                     View "public.test_tablesample_v1"
+ Column |  Type   | Collation | Nullable | Default | Storage | Description 
+--------+---------+-----------+----------+---------+---------+-------------
+ id     | integer |           |          |         | plain   | 
 View definition:
  SELECT test_tablesample.id
    FROM test_tablesample TABLESAMPLE system ((10 * 2)) REPEATABLE (2);
 
 \d+ test_tablesample_v2
-          View "public.test_tablesample_v2"
- Column |  Type   | Modifiers | Storage | Description 
---------+---------+-----------+---------+-------------
- id     | integer |           | plain   | 
+                     View "public.test_tablesample_v2"
+ Column |  Type   | Collation | Nullable | Default | Storage | Description 
+--------+---------+-----------+----------+---------+---------+-------------
+ id     | integer |           |          |         | plain   | 
 View definition:
  SELECT test_tablesample.id
    FROM test_tablesample TABLESAMPLE system (99);
@@ -313,3 +313,19 @@ SELECT q.* FROM (SELECT * FROM test_tablesample) as q TABLESAMPLE BERNOULLI (5);
 ERROR:  syntax error at or near "TABLESAMPLE"
 LINE 1: ...CT q.* FROM (SELECT * FROM test_tablesample) as q TABLESAMPL...
                                                              ^
+-- check partitioned tables support tablesample
+create table parted_sample (a int) partition by list (a);
+create table parted_sample_1 partition of parted_sample for values in (1);
+create table parted_sample_2 partition of parted_sample for values in (2);
+explain (costs off)
+  select * from parted_sample tablesample bernoulli (100);
+                QUERY PLAN                 
+-------------------------------------------
+ Append
+   ->  Sample Scan on parted_sample_1
+         Sampling: bernoulli ('100'::real)
+   ->  Sample Scan on parted_sample_2
+         Sampling: bernoulli ('100'::real)
+(5 rows)
+
+drop table parted_sample, parted_sample_1, parted_sample_2;

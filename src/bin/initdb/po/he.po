@@ -1,0 +1,1053 @@
+# Hebrew message translation file for initdb
+# Copyright (C) 2017 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+# Michael Goldberg <mic.goldbrg@gmail.com>, 2017.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: initdb (PostgreSQL) 10\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2017-05-12 20:33+0300\n"
+"PO-Revision-Date: 2017-05-14 16:16+0300\n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 2.0.1\n"
+"Last-Translator: Michael Goldberg <mic.goldbrg@gmail.com>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: he_IL\n"
+
+#: ../../common/exec.c:127 ../../common/exec.c:241 ../../common/exec.c:284
+#, c-format
+msgid "could not identify current directory: %s"
+msgstr "לא יוכל לזהות את הספריה הנוכחית: %s"
+
+#: ../../common/exec.c:146
+#, c-format
+msgid "invalid binary \"%s\""
+msgstr "בינארי לא חוקי \"%s\""
+
+#: ../../common/exec.c:195
+#, c-format
+msgid "could not read binary \"%s\""
+msgstr "לא ניתן לקרוא בינארי \"%s\""
+
+#: ../../common/exec.c:202
+#, c-format
+msgid "could not find a \"%s\" to execute"
+msgstr "לא ניתן למצוא \"%s\" לביצוע"
+
+#: ../../common/exec.c:257 ../../common/exec.c:293
+#, c-format
+msgid "could not change directory to \"%s\": %s"
+msgstr "לא לשנות לשנות ספריות ל \"%s\": %s"
+
+#: ../../common/exec.c:272
+#, c-format
+msgid "could not read symbolic link \"%s\""
+msgstr "לא ניתן לקרוא את הקישור הסימבולי \"%s\""
+
+#: ../../common/exec.c:523
+#, c-format
+msgid "pclose failed: %s"
+msgstr "נכשלpclose : %s"
+
+#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
+#: ../../common/fe_memutils.c:98
+#, c-format
+msgid "out of memory\n"
+msgstr "אין זיכרון פנוי\n"
+
+#: ../../common/fe_memutils.c:92
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "לא ניתן לשכפל מצביע ריק (שגיאה פנימית)\n"
+
+#: ../../common/file_utils.c:82 ../../common/file_utils.c:186
+#, c-format
+msgid "%s: could not stat file \"%s\": %s\n"
+msgstr "תכנית %s: לא היה ניתן לקבל מידע (stat) על קובץ  \"%s\": %s\n"
+
+#: ../../common/file_utils.c:162
+#, c-format
+msgid "%s: could not open directory \"%s\": %s\n"
+msgstr "תכנית %s: לא ניתן לפתוח תיקייה \"%s\": %s\n"
+
+#: ../../common/file_utils.c:198
+#, c-format
+msgid "%s: could not read directory \"%s\": %s\n"
+msgstr "תכנית %s: לא ניתן לקרוא מתיקייה \"%s\": %s\n"
+
+#: ../../common/file_utils.c:231 ../../common/file_utils.c:291
+#: ../../common/file_utils.c:367
+#, c-format
+msgid "%s: could not open file \"%s\": %s\n"
+msgstr "תכנית %s: לא ניתן לפתוח קובץ \"%s\": %s\n"
+
+#: ../../common/file_utils.c:304 ../../common/file_utils.c:376
+#, c-format
+msgid "%s: could not fsync file \"%s\": %s\n"
+msgstr "תכנית %s: לא ניתן להעביר תוכן הקובץ (fsync) לדיסק \"%s\": %s\n"
+
+#: ../../common/file_utils.c:387
+#, c-format
+msgid "%s: could not rename file \"%s\" to \"%s\": %s\n"
+msgstr "תכנית %s: לא ניתן לשנות שם הקובץ \"%s\" \"%s\": %s\n"
+
+#: ../../common/pgfnames.c:45
+#, c-format
+msgid "could not open directory \"%s\": %s\n"
+msgstr "לא ניתן לפתוח תיקייה \"%s\": %s\n"
+
+#: ../../common/pgfnames.c:72
+#, c-format
+msgid "could not read directory \"%s\": %s\n"
+msgstr "לא ניתן לקרוא מתיקייה \"%s\": %s\n"
+
+#: ../../common/pgfnames.c:84
+#, c-format
+msgid "could not close directory \"%s\": %s\n"
+msgstr "לא יניתן לסגור את מדריך \"%s\": %s\n"
+
+#: ../../common/restricted_token.c:68
+#, c-format
+msgid "%s: WARNING: cannot create restricted tokens on this platform\n"
+msgstr ""
+"תכנית %s:  אזהרה: אין אפשרות ליצור אסימוני גישה מוגבלים בפלטפורמה זו\n"
+
+#: ../../common/restricted_token.c:77
+#, c-format
+msgid "%s: could not open process token: error code %lu\n"
+msgstr "תכנית %s: לא ניתן לפתוח את התהליך token: קוד שגיאה % lu\n"
+
+#: ../../common/restricted_token.c:90
+#, c-format
+msgid "%s: could not allocate SIDs: error code %lu\n"
+msgstr "תכנית %s: לא ניתן להקצות SID: קוד שגיאה % lu\n"
+
+#: ../../common/restricted_token.c:110
+#, c-format
+msgid "%s: could not create restricted token: error code %lu\n"
+msgstr "תכנית %s:  אין אפשרות ליצור אסימוני גישה: קוד שגיאה  %lu\n"
+
+#: ../../common/restricted_token.c:132
+#, c-format
+msgid "%s: could not start process for command \"%s\": error code %lu\n"
+msgstr "תכנית %s:  לא ניתן להפעיל תהליך עבור הפקודה \"%s\": קוד שגיאה % lu\n"
+
+#: ../../common/restricted_token.c:170
+#, c-format
+msgid "%s: could not re-execute with restricted token: error code %lu\n"
+msgstr "תכנית %s:  לא ניתן לבצע מחדש עם אסימון גישה מוגבל: קוד שגיאה % lu\n"
+
+#: ../../common/restricted_token.c:186
+#, c-format
+msgid "%s: could not get exit code from subprocess: error code %lu\n"
+msgstr "תכנית %s:  לא ניתן לקבל קוד היציאה מן תהליך משנה: קוד שגיאה % lu\n"
+
+#: ../../common/rmtree.c:77
+#, c-format
+msgid "could not stat file or directory \"%s\": %s\n"
+msgstr "יכול לא stat קובץ או ספריה \"%s\": %s\n"
+
+#: ../../common/rmtree.c:104 ../../common/rmtree.c:121
+#, c-format
+msgid "could not remove file or directory \"%s\": %s\n"
+msgstr "לא היתה אפשרות להסיר קובץ או ספריה \"%s\": %s\n"
+
+#: ../../common/username.c:43
+#, c-format
+msgid "could not look up effective user ID %ld: %s"
+msgstr "לא יכול לחפש יעיל את המשתמש עם מזהה % ld: %s"
+
+#: ../../common/username.c:45
+msgid "user does not exist"
+msgstr "משתמש לא קיים"
+
+#: ../../common/username.c:60
+#, c-format
+msgid "user name lookup failure: error code %lu"
+msgstr "כישלון בדיקה עבור שם המשתמש: קוד שגיאה % lu"
+
+#: ../../common/wait_error.c:45
+#, c-format
+msgid "command not executable"
+msgstr "לא ניתן לבצע את הפקודה"
+
+#: ../../common/wait_error.c:49
+#, c-format
+msgid "command not found"
+msgstr "הפקודה לא נמצאה"
+
+#: ../../common/wait_error.c:54
+#, c-format
+msgid "child process exited with exit code %d"
+msgstr "תהליך צאצא יצא עם %d"
+
+#: ../../common/wait_error.c:61
+#, c-format
+msgid "child process was terminated by exception 0x%X"
+msgstr "תהליך צאצא הופסק על ידי חריגה 0 0x %X"
+
+#: ../../common/wait_error.c:71
+#, c-format
+msgid "child process was terminated by signal %s"
+msgstr "תהליך צאצא הופסק על ידי האות %s"
+
+#: ../../common/wait_error.c:75
+#, c-format
+msgid "child process was terminated by signal %d"
+msgstr "תהליך צאצא הופסק על ידי האות %d"
+
+#: ../../common/wait_error.c:80
+#, c-format
+msgid "child process exited with unrecognized status %d"
+msgstr "תהליך צאצא יצא עם מצב לא מזוהה %d"
+
+#: ../../port/dirmod.c:221
+#, c-format
+msgid "could not set junction for \"%s\": %s\n"
+msgstr "לא היתה אפשרות להגדיר את הצומת של \"%s\": %s\n"
+
+#: ../../port/dirmod.c:298
+#, c-format
+msgid "could not get junction for \"%s\": %s\n"
+msgstr "לא היתה אפשרות לקבל צומת עבור \"%s\": %s\n"
+
+#: initdb.c:331
+#, c-format
+msgid "%s: out of memory\n"
+msgstr "תכנית %s:  אין זיכרון פנוי\n"
+
+#: initdb.c:441 initdb.c:1442
+#, c-format
+msgid "%s: could not open file \"%s\" for reading: %s\n"
+msgstr "תכנית %s:  לא ניתן לפתוח קובץ \"%s\" לקריאה: %s\n"
+
+#: initdb.c:497 initdb.c:813 initdb.c:841
+#, c-format
+msgid "%s: could not open file \"%s\" for writing: %s\n"
+msgstr "תכנית %s:  לא היתה אפשרות לפתוח הקובץ \"%s\" לכתיבה: %s\n"
+
+#: initdb.c:505 initdb.c:513 initdb.c:820 initdb.c:847
+#, c-format
+msgid "%s: could not write file \"%s\": %s\n"
+msgstr "תכנית %s:  לא ניתן לכתוב את הקובץ \"%s\": %s\n"
+
+#: initdb.c:532
+#, c-format
+msgid "%s: could not execute command \"%s\": %s\n"
+msgstr "תכנית %s:  לא היה ניתן לבצע את הפקודה \"%s\": %s\n"
+
+#: initdb.c:548
+#, c-format
+msgid "%s: removing data directory \"%s\"\n"
+msgstr "תכנית %s:  הסרת ספריית נתונים \"%s\"\n"
+
+#: initdb.c:551
+#, c-format
+msgid "%s: failed to remove data directory\n"
+msgstr "תכנית %s:  כשל בלהסיר את ספריית הנתונים\n"
+
+#: initdb.c:557
+#, c-format
+msgid "%s: removing contents of data directory \"%s\"\n"
+msgstr "תכנית %s:  הסרת התוכן של ספריית הנתונים \"%s\"\n"
+
+#: initdb.c:560
+#, c-format
+msgid "%s: failed to remove contents of data directory\n"
+msgstr "תכנית %s:  כשל בלהסיר את התוכן של ספריית הנתונים\n"
+
+#: initdb.c:566
+#, c-format
+msgid "%s: removing WAL directory \"%s\"\n"
+msgstr "תכנית %s:  הסרת ספריית WAL \"%s\"\n"
+
+#: initdb.c:569
+#, c-format
+msgid "%s: failed to remove WAL directory\n"
+msgstr "תכנית %s:  כשל בלהסיר מדריך את תיקיית WAL\n"
+
+#: initdb.c:575
+#, c-format
+msgid "%s: removing contents of WAL directory \"%s\"\n"
+msgstr "תכנית %s:  הסרת התוכן של תיקיית WAL \"%s\"\n"
+
+#: initdb.c:578
+#, c-format
+msgid "%s: failed to remove contents of WAL directory\n"
+msgstr "תכנית %s:  כשל בלהסיר את התוכן של הספרית WAL\n"
+
+#: initdb.c:587
+#, c-format
+msgid "%s: data directory \"%s\" not removed at user's request\n"
+msgstr "תכנית %s:  תיקיית הנתונים \"%s\" לא הוסרה לבקשת המשתמש\n"
+
+#: initdb.c:592
+#, c-format
+msgid "%s: WAL directory \"%s\" not removed at user's request\n"
+msgstr "תכנית %s:  תיקייה WAL \"%s\" לא הוסרה לבקשת המשתמש\n"
+
+#: initdb.c:613
+#, c-format
+msgid ""
+"%s: cannot be run as root\n"
+"Please log in (using, e.g., \"su\") as the (unprivileged) user that will\n"
+"own the server process.\n"
+msgstr ""
+"תכנית %s:  לא ניתן להפעיל ע\"י root\n"
+"נא להיכנס (באמצעות, למשל, \" su\") כמו המשתמש (ללא הרשאות)\n"
+"שתהליך השרת יהיה בבעלותו\n"
+
+#: initdb.c:649
+#, c-format
+msgid "%s: \"%s\" is not a valid server encoding name\n"
+msgstr "תכנית %s:  \"%s\" אינו שם קידוד חוקי\n"
+
+#: initdb.c:769
+#, c-format
+msgid "%s: file \"%s\" does not exist\n"
+msgstr "תכנית %s:  הקובץ '%s' אינו קיים\n"
+
+#: initdb.c:771 initdb.c:780 initdb.c:790
+#, c-format
+msgid ""
+"This might mean you have a corrupted installation or identified\n"
+"the wrong directory with the invocation option -L.\n"
+msgstr ""
+"המשמעות יכולה להיות שהתקנה פגומה\n"
+"או זוהה הספריה הלא נכון עם אופציה  לקריאה -L.\n"
+" \n"
+
+#: initdb.c:777
+#, c-format
+msgid "%s: could not access file \"%s\": %s\n"
+msgstr "תכנית %s:  לא יכול לגשת לקובץ \"%s\": %s\n"
+
+#: initdb.c:788
+#, c-format
+msgid "%s: file \"%s\" is not a regular file\n"
+msgstr "תכנית %s:  קובץ '%s' אינו קובץ רגיל\n"
+
+#: initdb.c:933
+#, c-format
+msgid "selecting default max_connections ... "
+msgstr "בחירת ברירת המחדל max_connections... "
+
+#: initdb.c:963
+#, c-format
+msgid "selecting default shared_buffers ... "
+msgstr "בחירת ברירת המחדל shared_buffers... "
+
+#: initdb.c:996
+#, c-format
+msgid "selecting dynamic shared memory implementation ... "
+msgstr "בחירת יישום זיכרון דינמי משותף... "
+
+#: initdb.c:1014
+msgid "creating configuration files ... "
+msgstr "יצירת קבצי תצורה... "
+
+#: initdb.c:1146 initdb.c:1166 initdb.c:1253 initdb.c:1269
+#, c-format
+msgid "%s: could not change permissions of \"%s\": %s\n"
+msgstr "תכנית %s:  לא היתה אפשרות לשנות הרשאות עבור \"%s\": %s\n"
+
+#: initdb.c:1293
+#, c-format
+msgid "running bootstrap script ... "
+msgstr "הפעלת סקריפט אתחול... "
+
+#: initdb.c:1309
+#, c-format
+msgid ""
+"%s: input file \"%s\" does not belong to PostgreSQL %s\n"
+"Check your installation or specify the correct path using the option -L.\n"
+msgstr ""
+"תכנית %s:  קובץ הקלט '%s' אינו שייך ל PostgreSQL %s \n"
+"תבדוק את ההתקנה שלך או תציין את הנתיב הנכון באמצעות האפשרות -L.\n"
+
+#: initdb.c:1419
+msgid "Enter new superuser password: "
+msgstr "הזן סיסמת משתמש על חדשה: "
+
+#: initdb.c:1420
+msgid "Enter it again: "
+msgstr "הזן שוב: "
+
+#: initdb.c:1423
+#, c-format
+msgid "Passwords didn't match.\n"
+msgstr "סיסמאות אינן תואמות.\n"
+
+#: initdb.c:1449
+#, c-format
+msgid "%s: could not read password from file \"%s\": %s\n"
+msgstr "תכנית %s:  לא היתה אפשרות לקרוא את הסיסמה מהקובץ \"%s\": %s\n"
+
+#: initdb.c:1452
+#, c-format
+msgid "%s: password file \"%s\" is empty\n"
+msgstr "תכנית %s:  קובץ הסיסמה  \"%s\" ריק\n"
+
+#: initdb.c:2012
+#, c-format
+msgid "caught signal\n"
+msgstr "אות הנתפס\n"
+
+#: initdb.c:2018
+#, c-format
+msgid "could not write to child process: %s\n"
+msgstr "לא ניתן לכתוב לתהליך צאצא: %s\n"
+
+#: initdb.c:2026
+#, c-format
+msgid "ok\n"
+msgstr "אישור\n"
+
+#: initdb.c:2116
+#, c-format
+msgid "%s: setlocale() failed\n"
+msgstr "תכנית %s:  נכשל התהליך להגדרת הגדרות אזוריות (setlocale())\n"
+
+#: initdb.c:2134
+#, c-format
+msgid "%s: failed to restore old locale \"%s\"\n"
+msgstr "תכנית %s:  כשל בשחזור הגדרת האזור הישנה \"%s\"\n"
+
+#: initdb.c:2144
+#, c-format
+msgid "%s: invalid locale name \"%s\"\n"
+msgstr "תכנית %s:  הגדרת אזור לא חוקית בשם \"%s\"\n"
+
+#: initdb.c:2156
+#, c-format
+msgid ""
+"%s: invalid locale settings; check LANG and LC_* environment variables\n"
+msgstr ""
+"תכנית %s:  הגדרות אזור לא חוקיות; בדוק את משתני הסביבה LANG ו- LC_ *\n"
+
+#: initdb.c:2184
+#, c-format
+msgid "%s: encoding mismatch\n"
+msgstr "תכנית %s:  אי-התאמת בקידוד\n"
+
+#: initdb.c:2186
+#, c-format
+msgid ""
+"The encoding you selected (%s) and the encoding that the\n"
+"selected locale uses (%s) do not match.  This would lead to\n"
+"misbehavior in various character string processing functions.\n"
+"Rerun %s and either do not specify an encoding explicitly,\n"
+"or choose a matching combination.\n"
+msgstr ""
+"קידוד אותו נבחרת (%s) ואת הקידוד\n"
+"בו משתמש הגדרה אזורית שנבחרה (%s) אינם תואמים.  זה להוביל\n"
+"להתנהגות בלתי צפויה בפונקציות שונות לעיבוד מחרוזת תווים.\n"
+"הפעל מחדש את %s ו או  אל תציין במפורש הקידוד, או תבחר את שילוב התואם.\n"
+
+#: initdb.c:2258
+#, c-format
+msgid ""
+"%s initializes a PostgreSQL database cluster.\n"
+"\n"
+msgstr ""
+"תכנית %s:  אתחול האשכול של מסד נתונים PostgreSQL \n"
+"\n"
+
+#: initdb.c:2259
+#, c-format
+msgid "Usage:\n"
+msgstr "שימוש:\n"
+
+#: initdb.c:2260
+#, c-format
+msgid "  %s [OPTION]... [DATADIR]\n"
+msgstr ""
+" שימוש\n"
+"%s [אפשרות]... [תיקיית נתונים]\n"
+
+#: initdb.c:2261
+#, c-format
+msgid ""
+"\n"
+"Options:\n"
+msgstr ""
+"\n"
+"אפשרויות:\n"
+
+#: initdb.c:2262
+#, c-format
+msgid ""
+"  -A, --auth=METHOD         default authentication method for local "
+"connections\n"
+msgstr ""
+" -A\n"
+" --auth=METHOD\n"
+"שיטת אימות ברירת המחדל עבור חיבורים מקומיים\n"
+
+#: initdb.c:2263
+#, c-format
+msgid ""
+"      --auth-host=METHOD    default authentication method for local TCP/IP "
+"connections\n"
+msgstr ""
+"       --auth-host=METHOD\n"
+"שיטת אימות ברירת המחדל עבור חיבורי TCP / IP מקומיים\n"
+
+#: initdb.c:2264
+#, c-format
+msgid ""
+"      --auth-local=METHOD   default authentication method for local-socket "
+"connections\n"
+msgstr ""
+"       --auth-local=METHOD\n"
+"שיטת אימות ברירת המחדל עבור חיבורי שקע מקומי\n"
+
+#: initdb.c:2265
+#, c-format
+msgid " [-D, --pgdata=]DATADIR     location for this database cluster\n"
+msgstr ""
+" [-D, --pgdata=]DATADIR\n"
+"מיקום עבור אשכול שלמסד הנתונים\n"
+
+#: initdb.c:2266
+#, c-format
+msgid "  -E, --encoding=ENCODING   set default encoding for new databases\n"
+msgstr ""
+" -E\n"
+" --encoding=ENCODING\n"
+"קידוד שנקבע כברירת מחדל עבור מסדי הנתונים החדשים\n"
+
+#: initdb.c:2267
+#, c-format
+msgid "      --locale=LOCALE       set default locale for new databases\n"
+msgstr ""
+"       --locale=LOCALE\n"
+"להגדיר הגדרות אזוריות ברירת המחדל עבור מסדי הנתונים החדשים\n"
+
+#: initdb.c:2268
+#, c-format
+msgid ""
+"      --lc-collate=, --lc-ctype=, --lc-messages=LOCALE\n"
+"      --lc-monetary=, --lc-numeric=, --lc-time=LOCALE\n"
+"                            set default locale in the respective category "
+"for\n"
+"                            new databases (default taken from environment)\n"
+msgstr ""
+"       --lc-collate=LOCALE\n"
+"       --lc-ctype=LOCALE\n"
+"       --lc-messages=LOCALE\n"
+"       --lc-monetary=LOCALE\n"
+"       --lc-numeric=LOCALE\n"
+"       --lc\n"
+"מגדיר הגדרות אזוריות ברירת המחדל בקטרגוריה המתאימה עבור\n"
+"מסדי הנתונים החדשים (ברירת מחדל נלקחת מהסביבה)\n"
+
+#: initdb.c:2272
+#, c-format
+msgid "      --no-locale           equivalent to --locale=C\n"
+msgstr ""
+"       --no-locale\n"
+"מקבילה ל --locale=C\n"
+
+#: initdb.c:2273
+#, c-format
+msgid ""
+"      --pwfile=FILE         read password for the new superuser from file\n"
+msgstr ""
+"       --pwfile=FILE\n"
+"לקרוא סיסמת משתמש העל החדש מקובץ\n"
+
+#: initdb.c:2274
+#, c-format
+msgid ""
+"  -T, --text-search-config=CFG\n"
+"                            default text search configuration\n"
+msgstr ""
+" -T\n"
+" --text-search-config=CFG\n"
+"תצורת חיפוש טקסט ברירת המחדל\n"
+
+#: initdb.c:2276
+#, c-format
+msgid "  -U, --username=NAME       database superuser name\n"
+msgstr ""
+" -U,\n"
+" --username=NAME\n"
+"שם של משתמש על מסד הנתונים\n"
+
+#: initdb.c:2277
+#, c-format
+msgid ""
+"  -W, --pwprompt            prompt for a password for the new superuser\n"
+msgstr ""
+" -W\n"
+" --pwprompt\n"
+"בקשה להזנת סיסמת משתמש חדש\n"
+
+#: initdb.c:2278
+#, c-format
+msgid ""
+"  -X, --waldir=WALDIR       location for the write-ahead log directory\n"
+msgstr ""
+" -X\n"
+" --waldir = WALDIR\n"
+"מיקום עבור ספריית הרישום כתיבת WAL לוגים\n"
+
+#: initdb.c:2279
+#, c-format
+msgid ""
+"\n"
+"Less commonly used options:\n"
+msgstr ""
+"\n"
+"אפשרויות פחות נפוצות:\n"
+
+#: initdb.c:2280
+#, c-format
+msgid "  -d, --debug               generate lots of debugging output\n"
+msgstr ""
+" -d\n"
+" --debug\n"
+"מפיק פלט מרובה מאיתור הבאגים\n"
+
+#: initdb.c:2281
+#, c-format
+msgid "  -k, --data-checksums      use data page checksums\n"
+msgstr ""
+" -k\n"
+" --data-checksums\n"
+"להשתמש בבדיקות סיכום דף נתונים\n"
+
+#: initdb.c:2282
+#, c-format
+msgid "  -L DIRECTORY              where to find the input files\n"
+msgstr ""
+" -L DIRECTORY\n"
+"איפה למצוא את קבצי הקלט\n"
+
+#: initdb.c:2283
+#, c-format
+msgid "  -n, --no-clean            do not clean up after errors\n"
+msgstr ""
+" -n\n"
+" --no-clean\n"
+"לא לנקות לאחר שגיאות\n"
+
+#: initdb.c:2284
+#, c-format
+msgid ""
+"  -N, --no-sync             do not wait for changes to be written safely to "
+"disk\n"
+msgstr ""
+" -N\n"
+" --no-sync\n"
+"לא לחכות עד אשר השינויים ייכתבו בבטחה לדיסק\n"
+
+#: initdb.c:2285
+#, c-format
+msgid "  -s, --show                show internal settings\n"
+msgstr ""
+" -s\n"
+" --show \n"
+"הצג הגדרות פנימיות\n"
+
+#: initdb.c:2286
+#, c-format
+msgid "  -S, --sync-only           only sync data directory\n"
+msgstr ""
+" -S\n"
+" --sync-only\n"
+"לסנכרן ספריית נתונים בלבד\n"
+
+#: initdb.c:2287
+#, c-format
+msgid ""
+"\n"
+"Other options:\n"
+msgstr ""
+"\n"
+"אפשרויות נוספות:\n"
+
+#: initdb.c:2288
+#, c-format
+msgid "  -V, --version             output version information, then exit\n"
+msgstr ""
+" -V\n"
+" --version\n"
+"להציג מידע על הגירסה, ולאחר מכן לצאת\n"
+
+#: initdb.c:2289
+#, c-format
+msgid "  -?, --help                show this help, then exit\n"
+msgstr ""
+" -?\n"
+" --help\n"
+"להציג עזרה זו, ולאחר מכן לצאת\n"
+
+#: initdb.c:2290
+#, c-format
+msgid ""
+"\n"
+"If the data directory is not specified, the environment variable PGDATA\n"
+"is used.\n"
+msgstr ""
+"\n"
+"אם הספרית נתונים לא צוינה, נעשה שימוש במשתנה סביבה PGDATA.\n"
+"\n"
+
+#: initdb.c:2292
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr ""
+"\n"
+"לדווח על באגים ל <pgsql-bugs@postgresql.org>\n"
+
+#: initdb.c:2300
+msgid ""
+"\n"
+"WARNING: enabling \"trust\" authentication for local connections\n"
+"You can change this by editing pg_hba.conf or using the option -A, or\n"
+"--auth-local and --auth-host, the next time you run initdb.\n"
+msgstr ""
+"\n"
+"אזהרה: הפעלת \"אמון\" אימות עבור התקשרויות מקומיות\n"
+"ניתן לשנות זאת על-ידי עריכת pg_hba.conf או שימוש באפשרות - A, או\n"
+"--auth-local ו --auth-host, בהפעלת initdb הבאה\n"
+
+#: initdb.c:2322
+#, c-format
+msgid "%s: invalid authentication method \"%s\" for \"%s\" connections\n"
+msgstr "תכנית %s:  שיטת אימות לא חוקית \"%s\" עבור חיבורים \"%s\"\n"
+
+#: initdb.c:2338
+#, c-format
+msgid ""
+"%s: must specify a password for the superuser to enable %s authentication\n"
+msgstr "תכנית %s:  עליך לציין סיסמה עבור משתמש העל על מנת לאפשר אימות %s\n"
+
+#: initdb.c:2366
+#, c-format
+msgid ""
+"%s: no data directory specified\n"
+"You must identify the directory where the data for this database system\n"
+"will reside.  Do this with either the invocation option -D or the\n"
+"environment variable PGDATA.\n"
+msgstr ""
+"תכנית %s:  לא צוינה תיקיית הנתונים\n"
+"עליך לציין את התיקייה איפה הנתונים עבור מערכת מסד הנתונים זה\n"
+"ימקמו.  לעשות זאת ניתן עם אפשרות -D או\n"
+"להגדיר את משתנה הסביבה PGDATA.\n"
+
+#: initdb.c:2404
+#, c-format
+msgid ""
+"The program \"postgres\" is needed by %s but was not found in the\n"
+"same directory as \"%s\".\n"
+"Check your installation.\n"
+msgstr ""
+"התוכנית \"postgres\" נדרשת על-ידי %s אבל לא נמצאה \n"
+"באותה ספריה כמו \"%s\".\n"
+"יש לבדוק את ההתקנה שלך.\n"
+
+#: initdb.c:2411
+#, c-format
+msgid ""
+"The program \"postgres\" was found by \"%s\"\n"
+"but was not the same version as %s.\n"
+"Check your installation.\n"
+msgstr ""
+"התוכנית \"postgres\" נמצאה על ידי \"%s\"\n"
+"אבל לא הייתה מגירסה זהה כמו %s.\n"
+"יש לבדוק את ההתקנה שלך.\n"
+
+#: initdb.c:2430
+#, c-format
+msgid "%s: input file location must be an absolute path\n"
+msgstr "תכנית %s:  מיקום קובץ הקלט חייב להיות נתיב מוחלט\n"
+
+#: initdb.c:2449
+#, c-format
+msgid "The database cluster will be initialized with locale \"%s\".\n"
+msgstr "האשכול מסד הנתונים יאותחל עם הגדרה אזורית \"%s\".\n"
+
+#: initdb.c:2452
+#, c-format
+msgid ""
+"The database cluster will be initialized with locales\n"
+"  COLLATE:  %s\n"
+"  CTYPE:    %s\n"
+"  MESSAGES: %s\n"
+"  MONETARY: %s\n"
+"  NUMERIC:  %s\n"
+"  TIME:     %s\n"
+msgstr ""
+"האשכול מסד הנתונים יאותחל עם הגדרות אזוריות\n"
+" COLLATE:  %s\n"
+" CTYPE:    %s\n"
+"  MESSAGES: %s\n"
+"  MONETARY: %s\n"
+"  NUMERIC:  %s\n"
+"  TIME:     %s\n"
+
+#: initdb.c:2476
+#, c-format
+msgid "%s: could not find suitable encoding for locale \"%s\"\n"
+msgstr "תכנית %s:  לא ניתן למצוא קידוד מתאים עבור הגדרות אזור \"%s\"\n"
+
+#: initdb.c:2478
+#, c-format
+msgid "Rerun %s with the -E option.\n"
+msgstr "הפעל מחדש את %s עם האפשרות -E.\n"
+
+#: initdb.c:2479 initdb.c:3103 initdb.c:3124
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "נסה '%s --help' לקבלת מידע נוסף.\n"
+
+#: initdb.c:2491
+#, c-format
+msgid ""
+"Encoding \"%s\" implied by locale is not allowed as a server-side "
+"encoding.\n"
+"The default database encoding will be set to \"%s\" instead.\n"
+msgstr ""
+"קידוד \"%s\" המשתמע  בהגדרה אזורית אסור כי קידוד בצד השרת.\n"
+"קידוד ברירת המחדל של מסד הנתונים יוגדר ל \"%s\" במקום.\n"
+
+#: initdb.c:2499
+#, c-format
+msgid "%s: locale \"%s\" requires unsupported encoding \"%s\"\n"
+msgstr "תכנית %s:  הגדרה אזורית \"%s\" דורשת קידוד אשר לא נתמך \"%s\"\n"
+
+#: initdb.c:2502
+#, c-format
+msgid ""
+"Encoding \"%s\" is not allowed as a server-side encoding.\n"
+"Rerun %s with a different locale selection.\n"
+msgstr ""
+"קידוד '%s' אינו מותר בקידוד בצד השרת.\n"
+"הפעל מחדש את %s עם בחירה של הגדרה אזורית שונה.\n"
+
+#: initdb.c:2511
+#, c-format
+msgid "The default database encoding has accordingly been set to \"%s\".\n"
+msgstr "קידוד ברירת המחדל של מסד הנתונים בהתאם הוגדר ל \"%s\".\n"
+
+#: initdb.c:2582
+#, c-format
+msgid ""
+"%s: could not find suitable text search configuration for locale \"%s\"\n"
+msgstr ""
+"תכנית %s:  לא היתה אפשרות למצוא תצורת חיפוש טקסט מתאים עבור הגדרות אזור \"%s"
+"\"\n"
+
+#: initdb.c:2593
+#, c-format
+msgid ""
+"%s: warning: suitable text search configuration for locale \"%s\" is "
+"unknown\n"
+msgstr ""
+"תכנית %s:  אזהרה: תצורת חיפוש טקסט מתאים עבור הגדרות אזוריות '%s' אינו "
+"ידוע\n"
+
+#: initdb.c:2598
+#, c-format
+msgid ""
+"%s: warning: specified text search configuration \"%s\" might not match "
+"locale \"%s\"\n"
+msgstr ""
+"תכנית %s:  אזהרה: תצורה חיפוש טקסט אשר צוינה \"%s\" עלולה לא להתאים להגדרות "
+"אזוריות \"%s\"\n"
+
+#: initdb.c:2603
+#, c-format
+msgid "The default text search configuration will be set to \"%s\".\n"
+msgstr "תצורת ברירת המחדל של חיפוש טקסט תוגדר \"%s\".\n"
+
+#: initdb.c:2647 initdb.c:2733
+#, c-format
+msgid "creating directory %s ... "
+msgstr "יצירת הספריה %s... "
+
+#: initdb.c:2653 initdb.c:2739 initdb.c:2807 initdb.c:2863
+#, c-format
+msgid "%s: could not create directory \"%s\": %s\n"
+msgstr "תכנית %s:  לא היתה אפשרות ליצור תיקייה \"%s\": %s\n"
+
+#: initdb.c:2665 initdb.c:2751
+#, c-format
+msgid "fixing permissions on existing directory %s ... "
+msgstr "תיקון הרשאות בספריה קיימת %s... "
+
+#: initdb.c:2671 initdb.c:2757
+#, c-format
+msgid "%s: could not change permissions of directory \"%s\": %s\n"
+msgstr "תכנית %s:  לא היתה אפשרות לשנות הרשאות עבור תיקייה \"%s\": %s\n"
+
+#: initdb.c:2686 initdb.c:2772
+#, c-format
+msgid "%s: directory \"%s\" exists but is not empty\n"
+msgstr "תכנית %s:  תיקייה \"%s\" קיימת, אך אינה ריקה\n"
+
+#: initdb.c:2692
+#, c-format
+msgid ""
+"If you want to create a new database system, either remove or empty\n"
+"the directory \"%s\" or run %s\n"
+"with an argument other than \"%s\".\n"
+msgstr ""
+"אם ברצונך ליצור מערכת מסד נתונים חדש, הסר או לרוקן את הספריה\n"
+"\"%s\" או להפעיל את %s\n"
+"עם ארגומנט  שאינו \"%s\".\n"
+
+#: initdb.c:2700 initdb.c:2785 initdb.c:3137
+#, c-format
+msgid "%s: could not access directory \"%s\": %s\n"
+msgstr "תכנית %s:  לא ניתן לגשת לתיקייה \"%s\": %s\n"
+
+#: initdb.c:2724
+#, c-format
+msgid "%s: WAL directory location must be an absolute path\n"
+msgstr "תכנית %s: המיקום התיקייה עבור WAL חייב להיות נתיב מוחלט\n"
+
+#: initdb.c:2778
+#, c-format
+msgid ""
+"If you want to store the WAL there, either remove or empty the directory\n"
+"\"%s\".\n"
+msgstr ""
+"אם ברצונך לאחסן את WAL שם, הסר או לרוקן את הספריה\n"
+"\"%s\"\n"
+
+#: initdb.c:2793
+#, c-format
+msgid "%s: could not create symbolic link \"%s\": %s\n"
+msgstr "תכנית %s:  לא ניתן ליצור קישור סמלי \"%s\": %s\n"
+
+#: initdb.c:2798
+#, c-format
+msgid "%s: symlinks are not supported on this platform"
+msgstr "תכנית %s:  קישורים סימבוליים אינם נתמכים בפלטפורמה זו"
+
+#: initdb.c:2822
+#, c-format
+msgid ""
+"It contains a dot-prefixed/invisible file, perhaps due to it being a mount "
+"point.\n"
+msgstr ""
+"הוא מכיל קובץ שר מתחיל בנקודה/בלתי-נראה, אולי עקב היותו נקודת עגינה.\n"
+
+#: initdb.c:2825
+#, c-format
+msgid ""
+"It contains a lost+found directory, perhaps due to it being a mount point.\n"
+msgstr "הוא מכיל תיקייה אבדות ומציאות, אולי עקב היותו נקודת עגינה.\n"
+
+#: initdb.c:2828
+#, c-format
+msgid ""
+"Using a mount point directly as the data directory is not recommended.\n"
+"Create a subdirectory under the mount point.\n"
+msgstr ""
+"באמצעות נקודת עגינה ישירות כספריית הנתונים אינו מומלץ.\n"
+"יש ליצור ספריית משנה תחת נקודת עגינה .\n"
+
+#: initdb.c:2848
+#, c-format
+msgid "creating subdirectories ... "
+msgstr "יצירת ספריות משנה... "
+
+#: initdb.c:2895
+msgid "performing post-bootstrap initialization ... "
+msgstr "מבצע איניציאליזציה שלאחר האתחול... "
+
+#: initdb.c:3047
+#, c-format
+msgid "Running in debug mode.\n"
+msgstr "פועל במצב איתור באגים.\n"
+
+#: initdb.c:3051
+#, c-format
+msgid "Running in no-clean mode.  Mistakes will not be cleaned up.\n"
+msgstr "פועל במצב no-clean. טעויות לא ינוקו.\n"
+
+#: initdb.c:3122
+#, c-format
+msgid "%s: too many command-line arguments (first is \"%s\")\n"
+msgstr "תכנית %s:  יותר מדי ארגומנטים של שורת הפקודה (הראשון הוא \"%s\")\n"
+
+#: initdb.c:3142 initdb.c:3208
+msgid "syncing data to disk ... "
+msgstr "סינכרון נתונים בדיסק... "
+
+#: initdb.c:3151
+#, c-format
+msgid "%s: password prompt and password file cannot be specified together\n"
+msgstr "תכנית %s:  לא ניתן לציין את דרישת הסיסמה ממשתמש ואת קובץ הסיסמה יחד\n"
+
+#: initdb.c:3175
+#, c-format
+msgid ""
+"%s: superuser name \"%s\" is disallowed; role names cannot begin with \"pg_"
+"\"\n"
+msgstr ""
+"תכנית %s:  משתמש על בשם \"%s\" מוגדר כאסור; שמות התפקידים אינם יכולים "
+"להתחיל מ\"pg_\"\n"
+
+#: initdb.c:3179
+#, c-format
+msgid ""
+"The files belonging to this database system will be owned by user \"%s\".\n"
+"This user must also own the server process.\n"
+"\n"
+msgstr ""
+"הקבצים השייכים למסד נתונים זה יהיו בבעלות המשתמש \"%s\".\n"
+"תהליך השרת יהיה בבעלות של משתמש זה גם .\n"
+"\n"
+
+#: initdb.c:3195
+#, c-format
+msgid "Data page checksums are enabled.\n"
+msgstr "בדיקת דף הנתונים זמינה.\n"
+
+#: initdb.c:3197
+#, c-format
+msgid "Data page checksums are disabled.\n"
+msgstr "בדיקת דף הנתונים אינה זמינה.\n"
+
+#: initdb.c:3214
+#, c-format
+msgid ""
+"\n"
+"Sync to disk skipped.\n"
+"The data directory might become corrupt if the operating system crashes.\n"
+msgstr ""
+"\n"
+"דילוג על סנכרון לדיסק.\n"
+"הספרית הנתונים עלולה להפוך למושחתת אם מערכת ההפעלה תקרוס.\n"
+
+#. translator: This is a placeholder in a shell command.
+#: initdb.c:3240
+msgid "logfile"
+msgstr "יומן"
+
+#: initdb.c:3242
+#, c-format
+msgid ""
+"\n"
+"Success. You can now start the database server using:\n"
+"\n"
+"    %s\n"
+"\n"
+msgstr ""
+"\n"
+"הצלחה. עכשיו אתה יכול להפעיל את שרת מסד הנתונים באמצעות:\n"
+"\n"
+"    %s\n"
+"\n"

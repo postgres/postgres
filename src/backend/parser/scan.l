@@ -21,7 +21,7 @@
  * Postgres 9.2, this check is made automatically by the Makefile.)
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -1433,6 +1433,13 @@ litbuf_udeescape(unsigned char escape, core_yyscan_t yyscanner)
 			}
 			*out++ = *in++;
 		}
+	}
+
+	/* unfinished surrogate pair? */
+	if (pair_first)
+	{
+		ADVANCE_YYLLOC(in - litbuf + 3);				/* 3 for U&" */
+		yyerror("invalid Unicode surrogate pair");
 	}
 
 	*out = '\0';

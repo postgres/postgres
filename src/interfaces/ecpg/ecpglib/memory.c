@@ -93,7 +93,7 @@ get_auto_allocs(void)
 }
 
 static void
-set_auto_allocs(struct auto_mem * am)
+set_auto_allocs(struct auto_mem *am)
 {
 	pthread_setspecific(auto_mem_key, am);
 }

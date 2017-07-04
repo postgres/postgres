@@ -28,8 +28,7 @@ PGLOG="$PGDATA/serverlog"
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 
 # What to use to start up the postmaster.  (If you want the script to wait
-# until the server has started, you could use "pg_ctl start -w" here.
-# But without -w, pg_ctl adds no value.)
+# until the server has started, you could use "pg_ctl start" here.)
 DAEMON="$prefix/bin/postmaster"
 
 # What to use to shut down the postmaster
@@ -48,10 +47,10 @@ case $1 in
 	echo -n ' postgresql'
 	;;
     stop)
-	su -l $PGUSER -c "$PGCTL stop -D '$PGDATA' -s -m fast"
+	su -l $PGUSER -c "$PGCTL stop -D '$PGDATA' -s"
 	;;
     restart)
-	su -l $PGUSER -c "$PGCTL stop -D '$PGDATA' -s -m fast -w"
+	su -l $PGUSER -c "$PGCTL stop -D '$PGDATA' -s"
 	su -l $PGUSER -c "$DAEMON -D '$PGDATA' &" >>$PGLOG 2>&1
 	;;
     status)

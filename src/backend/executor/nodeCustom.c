@@ -3,7 +3,7 @@
  * nodeCustom.c
  *		Routines to handle execution of custom scan node
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * ------------------------------------------------------------------------
@@ -35,8 +35,8 @@ ExecInitCustomScan(CustomScan *cscan, EState *estate, int eflags)
 	 * methods field correctly at this time.  Other standard fields should be
 	 * set to zero.
 	 */
-	css = (CustomScanState *) cscan->methods->CreateCustomScanState(cscan);
-	Assert(IsA(css, CustomScanState));
+	css = castNode(CustomScanState,
+				   cscan->methods->CreateCustomScanState(cscan));
 
 	/* ensure flags is filled correctly */
 	css->flags = cscan->flags;
@@ -48,15 +48,9 @@ ExecInitCustomScan(CustomScan *cscan, EState *estate, int eflags)
 	/* create expression context for node */
 	ExecAssignExprContext(estate, &css->ss.ps);
 
-	css->ss.ps.ps_TupFromTlist = false;
-
 	/* initialize child expressions */
-	css->ss.ps.targetlist = (List *)
-		ExecInitExpr((Expr *) cscan->scan.plan.targetlist,
-					 (PlanState *) css);
-	css->ss.ps.qual = (List *)
-		ExecInitExpr((Expr *) cscan->scan.plan.qual,
-					 (PlanState *) css);
+	css->ss.ps.qual =
+		ExecInitQual(cscan->scan.plan.qual, (PlanState *) css);
 
 	/* tuple table initialization */
 	ExecInitScanTupleSlot(estate, &css->ss);
@@ -200,7 +194,16 @@ ExecCustomScanInitializeWorker(CustomScanState *node, shm_toc *toc)
 		int			plan_node_id = node->ss.ps.plan->plan_node_id;
 		void	   *coordinate;
 
-		coordinate = shm_toc_lookup(toc, plan_node_id);
+		coordinate = shm_toc_lookup(toc, plan_node_id, false);
 		methods->InitializeWorkerCustomScan(node, toc, coordinate);
 	}
+}
+
+void
+ExecShutdownCustomScan(CustomScanState *node)
+{
+	const CustomExecMethods *methods = node->methods;
+
+	if (methods->ShutdownCustomScan)
+		methods->ShutdownCustomScan(node);
 }

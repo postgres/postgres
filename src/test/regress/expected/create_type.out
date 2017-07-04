@@ -115,6 +115,31 @@ CREATE TYPE not_existing_type (INPUT = array_in,
     ELEMENT = int,
     INTERNALLENGTH = 32);
 ERROR:  function array_out(not_existing_type) does not exist
+-- Check dependency transfer of opaque functions when creating a new type
+CREATE FUNCTION base_fn_in(cstring) RETURNS opaque AS 'boolin'
+    LANGUAGE internal IMMUTABLE STRICT;
+CREATE FUNCTION base_fn_out(opaque) RETURNS opaque AS 'boolout'
+    LANGUAGE internal IMMUTABLE STRICT;
+CREATE TYPE base_type(INPUT = base_fn_in, OUTPUT = base_fn_out);
+WARNING:  changing argument type of function base_fn_out from "opaque" to base_type
+WARNING:  changing return type of function base_fn_in from opaque to base_type
+WARNING:  changing return type of function base_fn_out from opaque to cstring
+DROP FUNCTION base_fn_in(cstring); -- error
+ERROR:  cannot drop function base_fn_in(cstring) because other objects depend on it
+DETAIL:  type base_type depends on function base_fn_in(cstring)
+function base_fn_out(base_type) depends on type base_type
+HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+DROP FUNCTION base_fn_out(opaque); -- error
+ERROR:  function base_fn_out(opaque) does not exist
+DROP TYPE base_type; -- error
+ERROR:  cannot drop type base_type because other objects depend on it
+DETAIL:  function base_fn_out(base_type) depends on type base_type
+function base_fn_in(cstring) depends on type base_type
+HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+DROP TYPE base_type CASCADE;
+NOTICE:  drop cascades to 2 other objects
+DETAIL:  drop cascades to function base_fn_out(base_type)
+drop cascades to function base_fn_in(cstring)
 -- Check usage of typmod with a user-defined type
 -- (we have borrowed numeric's typmod functions)
 CREATE TEMP TABLE mytab (foo widget(42,13,7));     -- should fail

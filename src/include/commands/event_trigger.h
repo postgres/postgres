@@ -3,7 +3,7 @@
  * event_trigger.h
  *	  Declarations for command trigger handling.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/commands/event_trigger.h
@@ -86,4 +86,4 @@ extern void EventTriggerCollectAlterTSConfig(AlterTSConfigurationStmt *stmt,
 								 Oid cfgId, Oid *dictIds, int ndicts);
 extern void EventTriggerCollectAlterDefPrivs(AlterDefaultPrivilegesStmt *stmt);
 
-#endif   /* EVENT_TRIGGER_H */
+#endif							/* EVENT_TRIGGER_H */

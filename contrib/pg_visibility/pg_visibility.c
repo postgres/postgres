@@ -3,6 +3,8 @@
  * pg_visibility.c
  *	  display visibility map information and page-level visibility bits
  *
+ * Copyright (c) 2016-2017, PostgreSQL Global Development Group
+ *
  *	  contrib/pg_visibility/pg_visibility.c
  *-------------------------------------------------------------------------
  */
@@ -51,9 +53,14 @@ static corrupt_items *collect_corrupt_items(Oid relid, bool all_visible,
 static void record_corrupt_item(corrupt_items *items, ItemPointer tid);
 static bool tuple_all_visible(HeapTuple tup, TransactionId OldestXmin,
 				  Buffer buffer);
+static void check_relation_relkind(Relation rel);
 
 /*
  * Visibility map information for a single block of a relation.
+ *
+ * Note: the VM code will silently return zeroes for pages past the end
+ * of the map, so we allow probes up to MaxBlockNumber regardless of the
+ * actual relation size.
  */
 Datum
 pg_visibility_map(PG_FUNCTION_ARGS)
@@ -68,6 +75,9 @@ pg_visibility_map(PG_FUNCTION_ARGS)
 	bool		nulls[2];
 
 	rel = relation_open(relid, AccessShareLock);
+
+	/* Only some relkinds have a visibility map */
+	check_relation_relkind(rel);
 
 	if (blkno < 0 || blkno > MaxBlockNumber)
 		ereport(ERROR,
@@ -108,6 +118,9 @@ pg_visibility(PG_FUNCTION_ARGS)
 
 	rel = relation_open(relid, AccessShareLock);
 
+	/* Only some relkinds have a visibility map */
+	check_relation_relkind(rel);
+
 	if (blkno < 0 || blkno > MaxBlockNumber)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -122,13 +135,22 @@ pg_visibility(PG_FUNCTION_ARGS)
 	values[0] = BoolGetDatum((mapbits & VISIBILITYMAP_ALL_VISIBLE) != 0);
 	values[1] = BoolGetDatum((mapbits & VISIBILITYMAP_ALL_FROZEN) != 0);
 
-	buffer = ReadBuffer(rel, blkno);
-	LockBuffer(buffer, BUFFER_LOCK_SHARE);
+	/* Here we have to explicitly check rel size ... */
+	if (blkno < RelationGetNumberOfBlocks(rel))
+	{
+		buffer = ReadBuffer(rel, blkno);
+		LockBuffer(buffer, BUFFER_LOCK_SHARE);
 
-	page = BufferGetPage(buffer);
-	values[2] = BoolGetDatum(PageIsAllVisible(page));
+		page = BufferGetPage(buffer);
+		values[2] = BoolGetDatum(PageIsAllVisible(page));
 
-	UnlockReleaseBuffer(buffer);
+		UnlockReleaseBuffer(buffer);
+	}
+	else
+	{
+		/* As with the vismap, silently return 0 for pages past EOF */
+		values[2] = BoolGetDatum(false);
+	}
 
 	relation_close(rel, AccessShareLock);
 
@@ -152,6 +174,7 @@ pg_visibility_map_rel(PG_FUNCTION_ARGS)
 		funcctx = SRF_FIRSTCALL_INIT();
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 		funcctx->tuple_desc = pg_visibility_tupdesc(true, false);
+		/* collect_visibility_data will verify the relkind */
 		funcctx->user_fctx = collect_visibility_data(relid, false);
 		MemoryContextSwitchTo(oldcontext);
 	}
@@ -196,6 +219,7 @@ pg_visibility_rel(PG_FUNCTION_ARGS)
 		funcctx = SRF_FIRSTCALL_INIT();
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 		funcctx->tuple_desc = pg_visibility_tupdesc(true, true);
+		/* collect_visibility_data will verify the relkind */
 		funcctx->user_fctx = collect_visibility_data(relid, true);
 		MemoryContextSwitchTo(oldcontext);
 	}
@@ -242,6 +266,10 @@ pg_visibility_map_summary(PG_FUNCTION_ARGS)
 	bool		nulls[2];
 
 	rel = relation_open(relid, AccessShareLock);
+
+	/* Only some relkinds have a visibility map */
+	check_relation_relkind(rel);
+
 	nblocks = RelationGetNumberOfBlocks(rel);
 
 	for (blkno = 0; blkno < nblocks; ++blkno)
@@ -294,6 +322,7 @@ pg_check_frozen(PG_FUNCTION_ARGS)
 
 		funcctx = SRF_FIRSTCALL_INIT();
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+		/* collect_corrupt_items will verify the relkind */
 		funcctx->user_fctx = collect_corrupt_items(relid, false, true);
 		MemoryContextSwitchTo(oldcontext);
 	}
@@ -325,6 +354,7 @@ pg_check_visible(PG_FUNCTION_ARGS)
 
 		funcctx = SRF_FIRSTCALL_INIT();
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+		/* collect_corrupt_items will verify the relkind */
 		funcctx->user_fctx = collect_corrupt_items(relid, true, false);
 		MemoryContextSwitchTo(oldcontext);
 	}
@@ -354,13 +384,8 @@ pg_truncate_visibility_map(PG_FUNCTION_ARGS)
 
 	rel = relation_open(relid, AccessExclusiveLock);
 
-	if (rel->rd_rel->relkind != RELKIND_RELATION &&
-		rel->rd_rel->relkind != RELKIND_MATVIEW &&
-		rel->rd_rel->relkind != RELKIND_TOASTVALUE)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-		   errmsg("\"%s\" is not a table, materialized view, or TOAST table",
-				  RelationGetRelationName(rel))));
+	/* Only some relkinds have a visibility map */
+	check_relation_relkind(rel);
 
 	RelationOpenSmgr(rel);
 	rel->rd_smgr->smgr_vm_nblocks = InvalidBlockNumber;
@@ -436,6 +461,9 @@ pg_visibility_tupdesc(bool include_blkno, bool include_pd)
 
 /*
  * Collect visibility data about a relation.
+ *
+ * Checks relkind of relid and will throw an error if the relation does not
+ * have a VM.
  */
 static vbits *
 collect_visibility_data(Oid relid, bool include_pd)
@@ -449,8 +477,11 @@ collect_visibility_data(Oid relid, bool include_pd)
 
 	rel = relation_open(relid, AccessShareLock);
 
+	/* Only some relkinds have a visibility map */
+	check_relation_relkind(rel);
+
 	nblocks = RelationGetNumberOfBlocks(rel);
-	info = palloc0(offsetof(vbits, bits) +nblocks);
+	info = palloc0(offsetof(vbits, bits) + nblocks);
 	info->next = 0;
 	info->count = nblocks;
 
@@ -508,6 +539,9 @@ collect_visibility_data(Oid relid, bool include_pd)
  *
  * If all_frozen is passed as true, this will include all items which are
  * on pages marked as all-frozen but which do not seem to in fact be frozen.
+ *
+ * Checks relkind of relid and will throw an error if the relation does not
+ * have a VM.
  */
 static corrupt_items *
 collect_corrupt_items(Oid relid, bool all_visible, bool all_frozen)
@@ -523,18 +557,13 @@ collect_corrupt_items(Oid relid, bool all_visible, bool all_frozen)
 	if (all_visible)
 	{
 		/* Don't pass rel; that will fail in recovery. */
-		OldestXmin = GetOldestXmin(NULL, true);
+		OldestXmin = GetOldestXmin(NULL, PROCARRAY_FLAGS_VACUUM);
 	}
 
 	rel = relation_open(relid, AccessShareLock);
 
-	if (rel->rd_rel->relkind != RELKIND_RELATION &&
-		rel->rd_rel->relkind != RELKIND_MATVIEW &&
-		rel->rd_rel->relkind != RELKIND_TOASTVALUE)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-		   errmsg("\"%s\" is not a table, materialized view, or TOAST table",
-				  RelationGetRelationName(rel))));
+	/* Only some relkinds have a visibility map */
+	check_relation_relkind(rel);
 
 	nblocks = RelationGetNumberOfBlocks(rel);
 
@@ -611,14 +640,13 @@ collect_corrupt_items(Oid relid, bool all_visible, bool all_frozen)
 			/* Dead line pointers are neither all-visible nor frozen. */
 			if (ItemIdIsDead(itemid))
 			{
-				ItemPointerData tid;
-
-				ItemPointerSet(&tid, blkno, offnum);
-				record_corrupt_item(items, &tid);
+				ItemPointerSet(&(tuple.t_self), blkno, offnum);
+				record_corrupt_item(items, &tuple.t_self);
 				continue;
 			}
 
 			/* Initialize a HeapTupleData structure for checks below. */
+			ItemPointerSet(&(tuple.t_self), blkno, offnum);
 			tuple.t_data = (HeapTupleHeader) PageGetItem(page, itemid);
 			tuple.t_len = ItemIdGetLength(itemid);
 			tuple.t_tableOid = relid;
@@ -646,15 +674,15 @@ collect_corrupt_items(Oid relid, bool all_visible, bool all_frozen)
 				 * a buffer lock. And this shouldn't happen often, so it's
 				 * worth being careful so as to avoid false positives.
 				 */
-				RecomputedOldestXmin = GetOldestXmin(NULL, true);
+				RecomputedOldestXmin = GetOldestXmin(NULL, PROCARRAY_FLAGS_VACUUM);
 
 				if (!TransactionIdPrecedes(OldestXmin, RecomputedOldestXmin))
-					record_corrupt_item(items, &tuple.t_data->t_ctid);
+					record_corrupt_item(items, &tuple.t_self);
 				else
 				{
 					OldestXmin = RecomputedOldestXmin;
 					if (!tuple_all_visible(&tuple, OldestXmin, buffer))
-						record_corrupt_item(items, &tuple.t_data->t_ctid);
+						record_corrupt_item(items, &tuple.t_self);
 				}
 			}
 
@@ -665,7 +693,7 @@ collect_corrupt_items(Oid relid, bool all_visible, bool all_frozen)
 			if (check_frozen)
 			{
 				if (heap_tuple_needs_eventual_freeze(tuple.t_data))
-					record_corrupt_item(items, &tuple.t_data->t_ctid);
+					record_corrupt_item(items, &tuple.t_self);
 			}
 		}
 
@@ -732,4 +760,20 @@ tuple_all_visible(HeapTuple tup, TransactionId OldestXmin, Buffer buffer)
 		return false;			/* xmin not old enough for all to see */
 
 	return true;
+}
+
+/*
+ * check_relation_relkind - convenience routine to check that relation
+ * is of the relkind supported by the callers
+ */
+static void
+check_relation_relkind(Relation rel)
+{
+	if (rel->rd_rel->relkind != RELKIND_RELATION &&
+		rel->rd_rel->relkind != RELKIND_MATVIEW &&
+		rel->rd_rel->relkind != RELKIND_TOASTVALUE)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is not a table, materialized view, or TOAST table",
+						RelationGetRelationName(rel))));
 }

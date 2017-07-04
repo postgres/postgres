@@ -3,12 +3,12 @@
 #ifndef _ECPG_LIB_EXTERN_H
 #define _ECPG_LIB_EXTERN_H
 
-#include "postgres_fe.h"
 #include "libpq-fe.h"
 #include "sqlca.h"
 #include "sqlda-native.h"
 #include "sqlda-compat.h"
 #include "ecpg_config.h"
+
 #ifndef CHAR_BIT
 #include <limits.h>
 #endif
@@ -163,18 +163,18 @@ struct descriptor *ecpggetdescp(int, char *);
 struct descriptor *ecpg_find_desc(int line, const char *name);
 
 struct prepared_statement *ecpg_find_prepared_statement(const char *,
-						  struct connection *, struct prepared_statement **);
+							 struct connection *, struct prepared_statement **);
 
 bool ecpg_store_result(const PGresult *results, int act_field,
-				  const struct statement * stmt, struct variable * var);
+				  const struct statement *stmt, struct variable *var);
 bool		ecpg_store_input(const int, const bool, const struct variable *, char **, bool);
-void		ecpg_free_params(struct statement * stmt, bool print);
+void		ecpg_free_params(struct statement *stmt, bool print);
 bool ecpg_do_prologue(int, const int, const int, const char *, const bool,
 				 enum ECPG_statement_type, const char *, va_list,
 				 struct statement **);
 bool		ecpg_build_params(struct statement *);
-bool		ecpg_autostart_transaction(struct statement * stmt);
-bool		ecpg_execute(struct statement * stmt);
+bool		ecpg_autostart_transaction(struct statement *stmt);
+bool		ecpg_execute(struct statement *stmt);
 bool		ecpg_process_output(struct statement *, bool);
 void		ecpg_do_epilogue(struct statement *);
 bool ecpg_do(const int, const int, const int, const char *, const bool,
@@ -184,10 +184,10 @@ bool		ecpg_check_PQresult(PGresult *, int, PGconn *, enum COMPAT_MODE);
 void		ecpg_raise(int line, int code, const char *sqlstate, const char *str);
 void		ecpg_raise_backend(int line, PGresult *result, PGconn *conn, int compat);
 char	   *ecpg_prepared(const char *, struct connection *);
-bool		ecpg_deallocate_all_conn(int lineno, enum COMPAT_MODE c, struct connection * conn);
+bool		ecpg_deallocate_all_conn(int lineno, enum COMPAT_MODE c, struct connection *conn);
 void		ecpg_log(const char *format,...) pg_attribute_printf(1, 2);
 bool		ecpg_auto_prepare(int, const char *, const int, char **, const char *);
-void		ecpg_init_sqlca(struct sqlca_t * sqlca);
+void		ecpg_init_sqlca(struct sqlca_t *sqlca);
 
 struct sqlda_compat *ecpg_build_compat_sqlda(int, PGresult *, int, enum COMPAT_MODE);
 void		ecpg_set_compat_sqlda(int, struct sqlda_compat **, const PGresult *, int, enum COMPAT_MODE);
@@ -220,4 +220,4 @@ void		ecpg_set_native_sqlda(int, struct sqlda_struct **, const PGresult *, int, 
 #define ECPG_SQLSTATE_ECPG_INTERNAL_ERROR	"YE000"
 #define ECPG_SQLSTATE_ECPG_OUT_OF_MEMORY	"YE001"
 
-#endif   /* _ECPG_LIB_EXTERN_H */
+#endif							/* _ECPG_LIB_EXTERN_H */

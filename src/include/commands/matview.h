@@ -4,7 +4,7 @@
  *	  prototypes for matview.c.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/commands/matview.h
@@ -30,4 +30,4 @@ extern DestReceiver *CreateTransientRelDestReceiver(Oid oid);
 
 extern bool MatViewIncrementalMaintenanceIsEnabled(void);
 
-#endif   /* MATVIEW_H */
+#endif							/* MATVIEW_H */

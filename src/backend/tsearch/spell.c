@@ -3,7 +3,7 @@
  * spell.c
  *		Normalizing word with ISpell
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  *
  * Ispell dictionary
  * -----------------
@@ -37,7 +37,7 @@
  *	  Spell field. The AffixData field is initialized if AF parameter is not
  *	  defined.
  *	- NISortAffixes():
- *	  - builds a list of compond affixes from the affix list and stores it
+ *	  - builds a list of compound affixes from the affix list and stores it
  *		in the CompoundAffix.
  *	  - builds prefix trees (Trie) from the affix list for prefixes and suffixes
  *		and stores them in Suffix and Prefix fields.
@@ -92,9 +92,7 @@ NIStartBuild(IspellDict *Conf)
 	 */
 	Conf->buildCxt = AllocSetContextCreate(CurTransactionContext,
 										   "Ispell dictionary init context",
-										   ALLOCSET_DEFAULT_MINSIZE,
-										   ALLOCSET_DEFAULT_INITSIZE,
-										   ALLOCSET_DEFAULT_MAXSIZE);
+										   ALLOCSET_DEFAULT_SIZES);
 }
 
 /*
@@ -413,8 +411,8 @@ getNextFlagFromString(IspellDict *Conf, char **sflagset, char *sflag)
 					{
 						ereport(ERROR,
 								(errcode(ERRCODE_CONFIG_FILE_ERROR),
-							 errmsg("invalid character in affix flag \"%s\"",
-									*sflagset)));
+								 errmsg("invalid character in affix flag \"%s\"",
+										*sflagset)));
 					}
 
 					*sflagset += pg_mblen(*sflagset);
@@ -805,7 +803,7 @@ get_nextfield(char **str, char *next)
 				state = PAE_INMASK;
 			}
 		}
-		else	/* state == PAE_INMASK */
+		else					/* state == PAE_INMASK */
 		{
 			if (t_isspace(*str))
 			{
@@ -829,7 +827,7 @@ get_nextfield(char **str, char *next)
 
 	*next = '\0';
 
-	return (state == PAE_INMASK);		/* OK if we got a nonempty field */
+	return (state == PAE_INMASK);	/* OK if we got a nonempty field */
 }
 
 /*
@@ -1090,7 +1088,7 @@ addCompoundAffixFlagValue(IspellDict *Conf, char *s, uint32 val)
 			Conf->mCompoundAffixFlag *= 2;
 			Conf->CompoundAffixFlags = (CompoundAffixFlag *)
 				repalloc((void *) Conf->CompoundAffixFlags,
-					   Conf->mCompoundAffixFlag * sizeof(CompoundAffixFlag));
+						 Conf->mCompoundAffixFlag * sizeof(CompoundAffixFlag));
 		}
 		else
 		{
@@ -1308,7 +1306,7 @@ NIImportOOAffixes(IspellDict *Conf, const char *filename)
 				if (naffix == 0)
 					ereport(ERROR,
 							(errcode(ERRCODE_CONFIG_FILE_ERROR),
-						   errmsg("invalid number of flag vector aliases")));
+							 errmsg("invalid number of flag vector aliases")));
 
 				/* Also reserve place for empty flag set */
 				naffix++;
@@ -1541,7 +1539,7 @@ isnewformat:
 	if (oldformat)
 		ereport(ERROR,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
-		errmsg("affix file contains both old-style and new-style commands")));
+				 errmsg("affix file contains both old-style and new-style commands")));
 	tsearch_readline_end(&trst);
 
 	NIImportOOAffixes(Conf, filename);
@@ -1568,7 +1566,7 @@ MergeAffix(IspellDict *Conf, int a1, int a2)
 	{
 		Conf->lenAffixData *= 2;
 		Conf->AffixData = (char **) repalloc(Conf->AffixData,
-										sizeof(char *) * Conf->lenAffixData);
+											 sizeof(char *) * Conf->lenAffixData);
 	}
 
 	ptr = Conf->AffixData + Conf->nAffixData;
@@ -1666,7 +1664,7 @@ mkSPNode(IspellDict *Conf, int low, int high, int level)
 					 */
 
 					clearCompoundOnly = (FF_COMPOUNDONLY & data->compoundflag
-						& makeCompoundFlags(Conf, Conf->Spell[i]->p.d.affix))
+										 & makeCompoundFlags(Conf, Conf->Spell[i]->p.d.affix))
 						? false : true;
 					data->affix = MergeAffix(Conf, data->affix, Conf->Spell[i]->p.d.affix);
 				}

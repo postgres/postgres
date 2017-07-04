@@ -20,29 +20,23 @@ typedef long long int int64;
 #error must have a working 64-bit integer datatype
 #endif
 
-#ifdef USE_INTEGER_DATETIMES
 #define HAVE_INT64_TIMESTAMP
-#endif
-#endif   /* C_H */
+#endif							/* C_H */
 
 typedef struct
 {
-#ifdef HAVE_INT64_TIMESTAMP
 	int64		time;			/* all time units other than months and years */
-#else
-	double		time;			/* all time units other than months and years */
-#endif
 	long		month;			/* months and years, after time for alignment */
-}	interval;
+}			interval;
 
 #ifdef __cplusplus
-extern		"C"
+extern "C"
 {
 #endif
 
-extern interval *PGTYPESinterval_new(void);
+extern interval * PGTYPESinterval_new(void);
 extern void PGTYPESinterval_free(interval *);
-extern interval *PGTYPESinterval_from_asc(char *, char **);
+extern interval * PGTYPESinterval_from_asc(char *, char **);
 extern char *PGTYPESinterval_to_asc(interval *);
 extern int	PGTYPESinterval_copy(interval *, interval *);
 
@@ -50,4 +44,4 @@ extern int	PGTYPESinterval_copy(interval *, interval *);
 }
 #endif
 
-#endif   /* PGTYPES_INTERVAL */
+#endif							/* PGTYPES_INTERVAL */

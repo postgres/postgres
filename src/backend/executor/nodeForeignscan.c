@@ -3,7 +3,7 @@
  * nodeForeignscan.c
  *	  Routines to support scans of foreign tables
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -101,7 +101,7 @@ ForeignRecheck(ForeignScanState *node, TupleTableSlot *slot)
 		!fdwroutine->RecheckForeignScan(node, slot))
 		return false;
 
-	return ExecQual(node->fdw_recheck_quals, econtext, false);
+	return ExecQual(node->fdw_recheck_quals, econtext);
 }
 
 /* ----------------------------------------------------------------
@@ -152,20 +152,13 @@ ExecInitForeignScan(ForeignScan *node, EState *estate, int eflags)
 	 */
 	ExecAssignExprContext(estate, &scanstate->ss.ps);
 
-	scanstate->ss.ps.ps_TupFromTlist = false;
-
 	/*
 	 * initialize child expressions
 	 */
-	scanstate->ss.ps.targetlist = (List *)
-		ExecInitExpr((Expr *) node->scan.plan.targetlist,
-					 (PlanState *) scanstate);
-	scanstate->ss.ps.qual = (List *)
-		ExecInitExpr((Expr *) node->scan.plan.qual,
-					 (PlanState *) scanstate);
-	scanstate->fdw_recheck_quals = (List *)
-		ExecInitExpr((Expr *) node->fdw_recheck_quals,
-					 (PlanState *) scanstate);
+	scanstate->ss.ps.qual =
+		ExecInitQual(node->scan.plan.qual, (PlanState *) scanstate);
+	scanstate->fdw_recheck_quals =
+		ExecInitQual(node->fdw_recheck_quals, (PlanState *) scanstate);
 
 	/*
 	 * tuple table initialization
@@ -351,7 +344,23 @@ ExecForeignScanInitializeWorker(ForeignScanState *node, shm_toc *toc)
 		int			plan_node_id = node->ss.ps.plan->plan_node_id;
 		void	   *coordinate;
 
-		coordinate = shm_toc_lookup(toc, plan_node_id);
+		coordinate = shm_toc_lookup(toc, plan_node_id, false);
 		fdwroutine->InitializeWorkerForeignScan(node, toc, coordinate);
 	}
+}
+
+/* ----------------------------------------------------------------
+ *		ExecShutdownForeignScan
+ *
+ *		Gives FDW chance to stop asynchronous resource consumption
+ *		and release any resources still held.
+ * ----------------------------------------------------------------
+ */
+void
+ExecShutdownForeignScan(ForeignScanState *node)
+{
+	FdwRoutine *fdwroutine = node->fdwroutine;
+
+	if (fdwroutine->ShutdownForeignScan)
+		fdwroutine->ShutdownForeignScan(node);
 }

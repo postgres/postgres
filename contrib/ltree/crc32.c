@@ -9,10 +9,6 @@
 
 #include "postgres.h"
 
-#include <sys/types.h>
-#include <stdio.h>
-#include <sys/types.h>
-
 #ifdef LOWER_NODE
 #include <ctype.h>
 #define TOLOWER(x)	tolower((unsigned char) (x))

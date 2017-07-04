@@ -3,7 +3,7 @@
  * tsquery_op.c
  *	  Various operations with tsquery
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
@@ -15,6 +15,7 @@
 #include "postgres.h"
 
 #include "tsearch/ts_utils.h"
+#include "utils/builtins.h"
 
 Datum
 tsquery_numnode(PG_FUNCTION_ARGS)
@@ -104,7 +105,7 @@ tsquery_or(PG_FUNCTION_ARGS)
 	PG_FREE_IF_COPY(a, 0);
 	PG_FREE_IF_COPY(b, 1);
 
-	PG_RETURN_POINTER(query);
+	PG_RETURN_TSQUERY(query);
 }
 
 Datum
@@ -140,7 +141,7 @@ tsquery_phrase_distance(PG_FUNCTION_ARGS)
 	PG_FREE_IF_COPY(a, 0);
 	PG_FREE_IF_COPY(b, 1);
 
-	PG_RETURN_POINTER(cleanup_fakeval_and_phrase(query));
+	PG_RETURN_TSQUERY(query);
 }
 
 Datum

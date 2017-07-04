@@ -4,7 +4,7 @@
  *	  support for communication destinations
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -28,6 +28,7 @@
 
 #include "postgres.h"
 
+#include "access/printsimple.h"
 #include "access/printtup.h"
 #include "access/xact.h"
 #include "commands/copy.h"
@@ -76,6 +77,11 @@ static DestReceiver debugtupDR = {
 	DestDebug
 };
 
+static DestReceiver printsimpleDR = {
+	printsimple, printsimple_startup, donothingCleanup, donothingCleanup,
+	DestRemoteSimple
+};
+
 static DestReceiver spi_printtupDR = {
 	spi_printtup, spi_dest_startup, donothingCleanup, donothingCleanup,
 	DestSPI
@@ -107,6 +113,9 @@ CreateDestReceiver(CommandDest dest)
 		case DestRemote:
 		case DestRemoteExecute:
 			return printtup_create_DR(dest);
+
+		case DestRemoteSimple:
+			return &printsimpleDR;
 
 		case DestNone:
 			return &donothingDR;
@@ -151,6 +160,7 @@ EndCommand(const char *commandTag, CommandDest dest)
 	{
 		case DestRemote:
 		case DestRemoteExecute:
+		case DestRemoteSimple:
 
 			/*
 			 * We assume the commandTag is plain ASCII and therefore requires
@@ -191,6 +201,7 @@ NullCommand(CommandDest dest)
 	{
 		case DestRemote:
 		case DestRemoteExecute:
+		case DestRemoteSimple:
 
 			/*
 			 * tell the fe that we saw an empty query string.  In protocols
@@ -218,8 +229,8 @@ NullCommand(CommandDest dest)
 /* ----------------
  *		ReadyForQuery - tell dest that we are ready for a new query
  *
- *		The ReadyForQuery message is sent in protocol versions 2.0 and up
- *		so that the FE can tell when we are done processing a query string.
+ *		The ReadyForQuery message is sent so that the FE can tell when
+ *		we are done processing a query string.
  *		In versions 3.0 and up, it also carries a transaction state indicator.
  *
  *		Note that by flushing the stdio buffer here, we can avoid doing it
@@ -233,6 +244,7 @@ ReadyForQuery(CommandDest dest)
 	{
 		case DestRemote:
 		case DestRemoteExecute:
+		case DestRemoteSimple:
 			if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 3)
 			{
 				StringInfoData buf;
@@ -241,7 +253,7 @@ ReadyForQuery(CommandDest dest)
 				pq_sendbyte(&buf, TransactionBlockStatusCode());
 				pq_endmessage(&buf);
 			}
-			else if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 2)
+			else
 				pq_putemptymessage('Z');
 			/* Flush output at end of cycle in any case. */
 			pq_flush();

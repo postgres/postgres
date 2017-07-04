@@ -2,13 +2,10 @@
  *
  * parallel.h
  *
- *	Parallel support header file for the pg_dump archiver
+ *	Parallel support for pg_dump and pg_restore
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
- *
- *	The author is not responsible for loss or damages that may
- *	result from its use.
  *
  * IDENTIFICATION
  *		src/bin/pg_dump/parallel.h
@@ -21,45 +18,31 @@
 
 #include "pg_backup_archiver.h"
 
+/* Function to call in master process on completion of a worker task */
+typedef void (*ParallelCompletionPtr) (ArchiveHandle *AH,
+									   TocEntry *te,
+									   int status,
+									   void *callback_data);
+
+/* Wait options for WaitForWorkers */
 typedef enum
 {
-	WRKR_TERMINATED = 0,
-	WRKR_IDLE,
-	WRKR_WORKING,
-	WRKR_FINISHED
-} T_WorkerStatus;
+	WFW_NO_WAIT,
+	WFW_GOT_STATUS,
+	WFW_ONE_IDLE,
+	WFW_ALL_IDLE
+} WFW_WaitOption;
 
-/* Arguments needed for a worker process */
-typedef struct ParallelArgs
-{
-	ArchiveHandle *AH;
-	TocEntry   *te;
-} ParallelArgs;
+/* ParallelSlot is an opaque struct known only within parallel.c */
+typedef struct ParallelSlot ParallelSlot;
 
-/* State for each parallel activity slot */
-typedef struct ParallelSlot
-{
-	ParallelArgs *args;
-	T_WorkerStatus workerStatus;
-	int			status;
-	int			pipeRead;		/* master's end of the pipes */
-	int			pipeWrite;
-	int			pipeRevRead;	/* child's end of the pipes */
-	int			pipeRevWrite;
-#ifdef WIN32
-	uintptr_t	hThread;
-	unsigned int threadId;
-#else
-	pid_t		pid;
-#endif
-} ParallelSlot;
-
-#define NO_SLOT (-1)
-
+/* Overall state for parallel.c */
 typedef struct ParallelState
 {
-	int			numWorkers;
-	ParallelSlot *parallelSlot;
+	int			numWorkers;		/* allowed number of workers */
+	/* these arrays have numWorkers entries, one per worker: */
+	TocEntry  **te;				/* item being worked on, or NULL */
+	ParallelSlot *parallelSlot; /* private info about each worker */
 } ParallelState;
 
 #ifdef WIN32
@@ -69,19 +52,19 @@ extern DWORD mainThreadId;
 
 extern void init_parallel_dump_utils(void);
 
-extern int	GetIdleWorker(ParallelState *pstate);
 extern bool IsEveryWorkerIdle(ParallelState *pstate);
-extern void ListenToWorkers(ArchiveHandle *AH, ParallelState *pstate, bool do_wait);
-extern int	ReapWorkerStatus(ParallelState *pstate, int *status);
-extern void EnsureIdleWorker(ArchiveHandle *AH, ParallelState *pstate);
-extern void EnsureWorkersFinished(ArchiveHandle *AH, ParallelState *pstate);
+extern void WaitForWorkers(ArchiveHandle *AH, ParallelState *pstate,
+			   WFW_WaitOption mode);
 
 extern ParallelState *ParallelBackupStart(ArchiveHandle *AH);
 extern void DispatchJobForTocEntry(ArchiveHandle *AH,
 					   ParallelState *pstate,
-					   TocEntry *te, T_Action act);
+					   TocEntry *te,
+					   T_Action act,
+					   ParallelCompletionPtr callback,
+					   void *callback_data);
 extern void ParallelBackupEnd(ArchiveHandle *AH, ParallelState *pstate);
 
 extern void set_archive_cancel_info(ArchiveHandle *AH, PGconn *conn);
 
-#endif   /* PG_DUMP_PARALLEL_H */
+#endif							/* PG_DUMP_PARALLEL_H */

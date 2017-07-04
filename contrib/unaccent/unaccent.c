@@ -3,7 +3,7 @@
  * unaccent.c
  *	  Text search unaccent dictionary
  *
- * Copyright (c) 2009-2016, PostgreSQL Global Development Group
+ * Copyright (c) 2009-2017, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  contrib/unaccent/unaccent.c
@@ -20,6 +20,7 @@
 #include "tsearch/ts_locale.h"
 #include "tsearch/ts_public.h"
 #include "utils/builtins.h"
+#include "utils/regproc.h"
 
 PG_MODULE_MAGIC;
 
@@ -66,7 +67,7 @@ placeChar(TrieChar *node, const unsigned char *str, int lenstr,
 		if (curnode->replaceTo)
 			ereport(WARNING,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
-				errmsg("duplicate source strings, first one will be used")));
+					 errmsg("duplicate source strings, first one will be used")));
 		else
 		{
 			curnode->replacelen = replacelen;
@@ -383,14 +384,14 @@ unaccent_dict(PG_FUNCTION_ARGS)
 		dictOid = PG_GETARG_OID(0);
 		strArg = 1;
 	}
-	str = PG_GETARG_TEXT_P(strArg);
+	str = PG_GETARG_TEXT_PP(strArg);
 
 	dict = lookup_ts_dictionary_cache(dictOid);
 
 	res = (TSLexeme *) DatumGetPointer(FunctionCall4(&(dict->lexize),
-											 PointerGetDatum(dict->dictData),
-											   PointerGetDatum(VARDATA(str)),
-									  Int32GetDatum(VARSIZE(str) - VARHDRSZ),
+													 PointerGetDatum(dict->dictData),
+													 PointerGetDatum(VARDATA_ANY(str)),
+													 Int32GetDatum(VARSIZE_ANY_EXHDR(str)),
 													 PointerGetDatum(NULL)));
 
 	PG_FREE_IF_COPY(str, strArg);

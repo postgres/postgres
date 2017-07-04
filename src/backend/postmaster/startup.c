@@ -9,7 +9,7 @@
  * though.)
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
@@ -25,6 +25,7 @@
 #include "access/xlog.h"
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
+#include "pgstat.h"
 #include "postmaster/startup.h"
 #include "storage/ipc.h"
 #include "storage/latch.h"
@@ -182,7 +183,7 @@ StartupProcessMain(void)
 	 */
 	pqsignal(SIGHUP, StartupProcSigHupHandler); /* reload config file */
 	pqsignal(SIGINT, SIG_IGN);	/* ignore query cancel */
-	pqsignal(SIGTERM, StartupProcShutdownHandler);		/* request shutdown */
+	pqsignal(SIGTERM, StartupProcShutdownHandler);	/* request shutdown */
 	pqsignal(SIGQUIT, startupproc_quickdie);	/* hard crash time */
 	InitializeTimeouts();		/* establishes SIGALRM handler */
 	pqsignal(SIGPIPE, SIG_IGN);

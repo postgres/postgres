@@ -2,6 +2,14 @@
 --  Test cube datatype
 --
 CREATE EXTENSION cube;
+-- Check whether any of our opclasses fail amvalidate
+SELECT amname, opcname
+FROM pg_opclass opc LEFT JOIN pg_am am ON am.oid = opcmethod
+WHERE opc.oid >= 16384 AND NOT amvalidate(opc.oid);
+ amname | opcname 
+--------+---------
+(0 rows)
+
 --
 -- testing the input and output functions
 --
@@ -126,16 +134,34 @@ SELECT '-1.0e-7'::cube AS cube;
  (-1e-07)
 (1 row)
 
-SELECT '1e-700'::cube AS cube;
- cube 
-------
- (0)
+SELECT '1e-300'::cube AS cube;
+   cube   
+----------
+ (1e-300)
 (1 row)
 
-SELECT '-1e-700'::cube AS cube;
- cube 
-------
- (0)
+SELECT '-1e-300'::cube AS cube;
+   cube    
+-----------
+ (-1e-300)
+(1 row)
+
+SELECT 'infinity'::cube AS cube;
+    cube    
+------------
+ (Infinity)
+(1 row)
+
+SELECT '-infinity'::cube AS cube;
+    cube     
+-------------
+ (-Infinity)
+(1 row)
+
+SELECT 'NaN'::cube AS cube;
+ cube  
+-------
+ (NaN)
 (1 row)
 
 SELECT '1234567890123456'::cube AS cube;
@@ -175,6 +201,12 @@ SELECT '-.1234567890123456'::cube AS cube;
 (1 row)
 
 -- simple lists (points)
+SELECT '()'::cube AS cube;
+ cube 
+------
+ ()
+(1 row)
+
 SELECT '1,2'::cube AS cube;
   cube  
 --------
@@ -200,6 +232,12 @@ SELECT '(1,2,3,4,5)'::cube AS cube;
 (1 row)
 
 -- double lists (cubes)
+SELECT '(),()'::cube AS cube;
+ cube 
+------
+ ()
+(1 row)
+
 SELECT '(0),(0)'::cube AS cube;
  cube 
 ------
@@ -250,146 +288,145 @@ SELECT '[(0,0,0,0),(1,0,0,0)]'::cube AS cube;
 
 -- invalid input: parse errors
 SELECT ''::cube AS cube;
-ERROR:  bad cube representation
+ERROR:  invalid input syntax for cube
 LINE 1: SELECT ''::cube AS cube;
                ^
 DETAIL:  syntax error at end of input
 SELECT 'ABC'::cube AS cube;
-ERROR:  bad cube representation
+ERROR:  invalid input syntax for cube
 LINE 1: SELECT 'ABC'::cube AS cube;
                ^
 DETAIL:  syntax error at or near "A"
-SELECT '()'::cube AS cube;
-ERROR:  bad cube representation
-LINE 1: SELECT '()'::cube AS cube;
-               ^
-DETAIL:  syntax error at or near ")"
 SELECT '[]'::cube AS cube;
-ERROR:  bad cube representation
+ERROR:  invalid input syntax for cube
 LINE 1: SELECT '[]'::cube AS cube;
                ^
 DETAIL:  syntax error at or near "]"
 SELECT '[()]'::cube AS cube;
-ERROR:  bad cube representation
+ERROR:  invalid input syntax for cube
 LINE 1: SELECT '[()]'::cube AS cube;
                ^
-DETAIL:  syntax error at or near ")"
+DETAIL:  syntax error at or near "]"
 SELECT '[(1)]'::cube AS cube;
-ERROR:  bad cube representation
+ERROR:  invalid input syntax for cube
 LINE 1: SELECT '[(1)]'::cube AS cube;
                ^
 DETAIL:  syntax error at or near "]"
 SELECT '[(1),]'::cube AS cube;
-ERROR:  bad cube representation
+ERROR:  invalid input syntax for cube
 LINE 1: SELECT '[(1),]'::cube AS cube;
                ^
 DETAIL:  syntax error at or near "]"
 SELECT '[(1),2]'::cube AS cube;
-ERROR:  bad cube representation
+ERROR:  invalid input syntax for cube
 LINE 1: SELECT '[(1),2]'::cube AS cube;
                ^
 DETAIL:  syntax error at or near "2"
 SELECT '[(1),(2),(3)]'::cube AS cube;
-ERROR:  bad cube representation
+ERROR:  invalid input syntax for cube
 LINE 1: SELECT '[(1),(2),(3)]'::cube AS cube;
                ^
 DETAIL:  syntax error at or near ","
 SELECT '1,'::cube AS cube;
-ERROR:  bad cube representation
+ERROR:  invalid input syntax for cube
 LINE 1: SELECT '1,'::cube AS cube;
                ^
 DETAIL:  syntax error at end of input
 SELECT '1,2,'::cube AS cube;
-ERROR:  bad cube representation
+ERROR:  invalid input syntax for cube
 LINE 1: SELECT '1,2,'::cube AS cube;
                ^
 DETAIL:  syntax error at end of input
 SELECT '1,,2'::cube AS cube;
-ERROR:  bad cube representation
+ERROR:  invalid input syntax for cube
 LINE 1: SELECT '1,,2'::cube AS cube;
                ^
 DETAIL:  syntax error at or near ","
 SELECT '(1,)'::cube AS cube;
-ERROR:  bad cube representation
+ERROR:  invalid input syntax for cube
 LINE 1: SELECT '(1,)'::cube AS cube;
                ^
 DETAIL:  syntax error at or near ")"
 SELECT '(1,2,)'::cube AS cube;
-ERROR:  bad cube representation
+ERROR:  invalid input syntax for cube
 LINE 1: SELECT '(1,2,)'::cube AS cube;
                ^
 DETAIL:  syntax error at or near ")"
 SELECT '(1,,2)'::cube AS cube;
-ERROR:  bad cube representation
+ERROR:  invalid input syntax for cube
 LINE 1: SELECT '(1,,2)'::cube AS cube;
                ^
 DETAIL:  syntax error at or near ","
 -- invalid input: semantic errors and trailing garbage
 SELECT '[(1),(2)],'::cube AS cube; -- 0
-ERROR:  bad cube representation
+ERROR:  invalid input syntax for cube
 LINE 1: SELECT '[(1),(2)],'::cube AS cube;
                ^
 DETAIL:  syntax error at or near ","
 SELECT '[(1,2,3),(2,3)]'::cube AS cube; -- 1
-ERROR:  bad cube representation
+ERROR:  invalid input syntax for cube
 LINE 1: SELECT '[(1,2,3),(2,3)]'::cube AS cube;
                ^
 DETAIL:  Different point dimensions in (1,2,3) and (2,3).
 SELECT '[(1,2),(1,2,3)]'::cube AS cube; -- 1
-ERROR:  bad cube representation
+ERROR:  invalid input syntax for cube
 LINE 1: SELECT '[(1,2),(1,2,3)]'::cube AS cube;
                ^
 DETAIL:  Different point dimensions in (1,2) and (1,2,3).
 SELECT '(1),(2),'::cube AS cube; -- 2
-ERROR:  bad cube representation
+ERROR:  invalid input syntax for cube
 LINE 1: SELECT '(1),(2),'::cube AS cube;
                ^
 DETAIL:  syntax error at or near ","
 SELECT '(1,2,3),(2,3)'::cube AS cube; -- 3
-ERROR:  bad cube representation
+ERROR:  invalid input syntax for cube
 LINE 1: SELECT '(1,2,3),(2,3)'::cube AS cube;
                ^
 DETAIL:  Different point dimensions in (1,2,3) and (2,3).
 SELECT '(1,2),(1,2,3)'::cube AS cube; -- 3
-ERROR:  bad cube representation
+ERROR:  invalid input syntax for cube
 LINE 1: SELECT '(1,2),(1,2,3)'::cube AS cube;
                ^
 DETAIL:  Different point dimensions in (1,2) and (1,2,3).
 SELECT '(1,2,3)ab'::cube AS cube; -- 4
-ERROR:  bad cube representation
+ERROR:  invalid input syntax for cube
 LINE 1: SELECT '(1,2,3)ab'::cube AS cube;
                ^
 DETAIL:  syntax error at or near "a"
 SELECT '(1,2,3)a'::cube AS cube; -- 5
-ERROR:  bad cube representation
+ERROR:  invalid input syntax for cube
 LINE 1: SELECT '(1,2,3)a'::cube AS cube;
                ^
 DETAIL:  syntax error at or near "a"
 SELECT '(1,2)('::cube AS cube; -- 5
-ERROR:  bad cube representation
+ERROR:  invalid input syntax for cube
 LINE 1: SELECT '(1,2)('::cube AS cube;
                ^
 DETAIL:  syntax error at or near "("
 SELECT '1,2ab'::cube AS cube; -- 6
-ERROR:  bad cube representation
+ERROR:  invalid input syntax for cube
 LINE 1: SELECT '1,2ab'::cube AS cube;
                ^
 DETAIL:  syntax error at or near "a"
 SELECT '1 e7'::cube AS cube; -- 6
-ERROR:  bad cube representation
+ERROR:  invalid input syntax for cube
 LINE 1: SELECT '1 e7'::cube AS cube;
                ^
 DETAIL:  syntax error at or near "e"
 SELECT '1,2a'::cube AS cube; -- 7
-ERROR:  bad cube representation
+ERROR:  invalid input syntax for cube
 LINE 1: SELECT '1,2a'::cube AS cube;
                ^
 DETAIL:  syntax error at or near "a"
 SELECT '1..2'::cube AS cube; -- 7
-ERROR:  bad cube representation
+ERROR:  invalid input syntax for cube
 LINE 1: SELECT '1..2'::cube AS cube;
                ^
 DETAIL:  syntax error at or near ".2"
+SELECT '-1e-700'::cube AS cube; -- out of range
+ERROR:  "-1e-700" is out of range for type double precision
+LINE 1: SELECT '-1e-700'::cube AS cube;
+               ^
 --
 -- Testing building cubes from float8 values
 --
@@ -556,12 +593,12 @@ SELECT cube(cube(1,2), 42, 24); -- cube_c_f8_f8
 -- Testing limit of CUBE_MAX_DIM dimensions check in cube_in.
 --
 select '(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)'::cube;
-ERROR:  bad cube representation
+ERROR:  invalid input syntax for cube
 LINE 1: select '(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0...
                ^
 DETAIL:  A cube cannot have more than 100 dimensions.
 select '(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0),(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)'::cube;
-ERROR:  bad cube representation
+ERROR:  invalid input syntax for cube
 LINE 1: select '(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0...
                ^
 DETAIL:  A cube cannot have more than 100 dimensions.
@@ -1019,7 +1056,7 @@ SELECT cube_dim('(4,8,15,16,23),(4,8,15,16,23)'::cube);
         5
 (1 row)
 
--- Test of cube_ll_coord function (retrieves LL coodinate values)
+-- Test of cube_ll_coord function (retrieves LL coordinate values)
 --
 SELECT cube_ll_coord('(-1,1),(2,-2)'::cube, 1);
  cube_ll_coord 
@@ -1075,7 +1112,7 @@ SELECT cube_ll_coord('(42,137)'::cube, 3);
              0
 (1 row)
 
--- Test of cube_ur_coord function (retrieves UR coodinate values)
+-- Test of cube_ur_coord function (retrieves UR coordinate values)
 --
 SELECT cube_ur_coord('(-1,1),(2,-2)'::cube, 1);
  cube_ur_coord 

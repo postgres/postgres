@@ -6,7 +6,7 @@
  *	  message integrity and endpoint authentication.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -33,6 +33,7 @@
 
 #include "libpq/libpq.h"
 #include "miscadmin.h"
+#include "pgstat.h"
 #include "tcop/tcopprot.h"
 #include "utils/memutils.h"
 #include "storage/ipc.h"
@@ -62,16 +63,31 @@ bool		SSLPreferServerCiphers;
 /* ------------------------------------------------------------ */
 
 /*
- *	Initialize global context
+ *	Initialize global context.
+ *
+ * If isServerStart is true, report any errors as FATAL (so we don't return).
+ * Otherwise, log errors at LOG level and return -1 to indicate trouble,
+ * preserving the old SSL state if any.  Returns 0 if OK.
  */
 int
-secure_initialize(void)
+secure_initialize(bool isServerStart)
 {
 #ifdef USE_SSL
-	be_tls_init();
-#endif
-
+	return be_tls_init(isServerStart);
+#else
 	return 0;
+#endif
+}
+
+/*
+ *	Destroy global context, if any.
+ */
+void
+secure_destroy(void)
+{
+#ifdef USE_SSL
+	be_tls_destroy();
+#endif
 }
 
 /*
@@ -146,7 +162,8 @@ retry:
 
 		ModifyWaitEvent(FeBeWaitSet, 0, waitfor, NULL);
 
-		WaitEventSetWait(FeBeWaitSet, -1 /* no timeout */ , &event, 1);
+		WaitEventSetWait(FeBeWaitSet, -1 /* no timeout */ , &event, 1,
+						 WAIT_EVENT_CLIENT_READ);
 
 		/*
 		 * If the postmaster has died, it's not safe to continue running,
@@ -247,7 +264,8 @@ retry:
 
 		ModifyWaitEvent(FeBeWaitSet, 0, waitfor, NULL);
 
-		WaitEventSetWait(FeBeWaitSet, -1 /* no timeout */ , &event, 1);
+		WaitEventSetWait(FeBeWaitSet, -1 /* no timeout */ , &event, 1,
+						 WAIT_EVENT_CLIENT_WRITE);
 
 		/* See comments in secure_read. */
 		if (event.events & WL_POSTMASTER_DEATH)

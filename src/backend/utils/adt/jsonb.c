@@ -3,7 +3,7 @@
  * jsonb.c
  *		I/O routines for jsonb type
  *
- * Copyright (c) 2014-2016, PostgreSQL Global Development Group
+ * Copyright (c) 2014-2017, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/utils/adt/jsonb.c
@@ -320,8 +320,8 @@ jsonb_put_escaped_value(StringInfo out, JsonbValue *scalarVal)
 			break;
 		case jbvNumeric:
 			appendStringInfoString(out,
-							 DatumGetCString(DirectFunctionCall1(numeric_out,
-								  PointerGetDatum(scalarVal->val.numeric))));
+								   DatumGetCString(DirectFunctionCall1(numeric_out,
+																	   PointerGetDatum(scalarVal->val.numeric))));
 			break;
 		case jbvBool:
 			if (scalarVal->val.boolean)
@@ -644,9 +644,10 @@ jsonb_categorize_type(Oid typoid,
 
 		default:
 			/* Check for arrays and composites */
-			if (OidIsValid(get_element_type(typoid)))
+			if (OidIsValid(get_element_type(typoid)) || typoid == ANYARRAYOID
+				|| typoid == RECORDARRAYOID)
 				*tcategory = JSONBTYPE_ARRAY;
-			else if (type_is_rowtype(typoid))
+			else if (type_is_rowtype(typoid))	/* includes RECORDOID */
 				*tcategory = JSONBTYPE_COMPOSITE;
 			else
 			{
@@ -663,7 +664,7 @@ jsonb_categorize_type(Oid typoid,
 					CoercionPathType ctype;
 
 					ctype = find_coercion_pathway(JSONOID, typoid,
-											   COERCION_EXPLICIT, &castfunc);
+												  COERCION_EXPLICIT, &castfunc);
 					if (ctype == COERCION_PATH_FUNC && OidIsValid(castfunc))
 					{
 						*tcategory = JSONBTYPE_JSONCAST;
@@ -721,7 +722,7 @@ datum_to_jsonb(Datum val, bool is_null, JsonbInState *result,
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-		 errmsg("key value must be scalar, not array, composite, or json")));
+				 errmsg("key value must be scalar, not array, composite, or json")));
 	}
 	else
 	{
@@ -856,7 +857,7 @@ datum_to_jsonb(Datum val, bool is_null, JsonbInState *result,
 					/* parse the json right into the existing result object */
 					JsonLexContext *lex;
 					JsonSemAction sem;
-					text	   *json = DatumGetTextP(val);
+					text	   *json = DatumGetTextPP(val);
 
 					lex = makeJsonLexContext(json, true);
 
@@ -1211,7 +1212,7 @@ jsonb_build_object(PG_FUNCTION_ARGS)
 		if (val_type == InvalidOid || val_type == UNKNOWNOID)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			   errmsg("argument %d: could not determine data type", i + 1)));
+					 errmsg("could not determine data type for argument %d", i + 1)));
 
 		add_jsonb(arg, false, &result, val_type, true);
 
@@ -1234,7 +1235,7 @@ jsonb_build_object(PG_FUNCTION_ARGS)
 		if (val_type == InvalidOid || val_type == UNKNOWNOID)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			   errmsg("argument %d: could not determine data type", i + 2)));
+					 errmsg("could not determine data type for argument %d", i + 2)));
 		add_jsonb(arg, PG_ARGISNULL(i + 1), &result, val_type, false);
 	}
 
@@ -1294,7 +1295,7 @@ jsonb_build_array(PG_FUNCTION_ARGS)
 		if (val_type == InvalidOid || val_type == UNKNOWNOID)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			   errmsg("argument %d: could not determine data type", i + 1)));
+					 errmsg("could not determine data type for argument %d", i + 1)));
 		add_jsonb(arg, PG_ARGISNULL(i), &result, val_type, false);
 	}
 
@@ -1660,8 +1661,8 @@ jsonb_agg_transfn(PG_FUNCTION_ARGS)
 				{
 					/* same for numeric */
 					v.val.numeric =
-					DatumGetNumeric(DirectFunctionCall1(numeric_uplus,
-											NumericGetDatum(v.val.numeric)));
+						DatumGetNumeric(DirectFunctionCall1(numeric_uplus,
+															NumericGetDatum(v.val.numeric)));
 				}
 				result->res = pushJsonbValue(&result->parseState,
 											 type, &v);
@@ -1890,8 +1891,8 @@ jsonb_object_agg_transfn(PG_FUNCTION_ARGS)
 				{
 					/* same for numeric */
 					v.val.numeric =
-					DatumGetNumeric(DirectFunctionCall1(numeric_uplus,
-											NumericGetDatum(v.val.numeric)));
+						DatumGetNumeric(DirectFunctionCall1(numeric_uplus,
+															NumericGetDatum(v.val.numeric)));
 				}
 				result->res = pushJsonbValue(&result->parseState,
 											 single_scalar ? WJB_VALUE : type,

@@ -5,7 +5,7 @@
  *	  along with the relation's initial contents.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_statistic.h
@@ -275,7 +275,7 @@ typedef FormData_pg_statistic *Form_pg_statistic;
  * fraction of empty ranges. stavalues is a histogram of non-empty lengths, in
  * a format similar to STATISTIC_KIND_HISTOGRAM: it contains M (>=2) range
  * values that divide the column data values into M-1 bins of approximately
- * equal population. The lengths are stores as float8s, as measured by the
+ * equal population. The lengths are stored as float8s, as measured by the
  * range type's subdiff function. Only non-null rows are considered.
  */
 #define STATISTIC_KIND_RANGE_LENGTH_HISTOGRAM  6
@@ -291,4 +291,4 @@ typedef FormData_pg_statistic *Form_pg_statistic;
  */
 #define STATISTIC_KIND_BOUNDS_HISTOGRAM  7
 
-#endif   /* PG_STATISTIC_H */
+#endif							/* PG_STATISTIC_H */

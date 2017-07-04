@@ -3,7 +3,7 @@
  * geqo_random.h
  *	  random number generator
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/optimizer/geqo_random.h
@@ -38,4 +38,4 @@ extern double geqo_rand(PlannerInfo *root);
 #define geqo_randint(root, upper, lower) \
 	( (int) floor( geqo_rand(root)*(((upper)-(lower))+0.999999) ) + (lower) )
 
-#endif   /* GEQO_RANDOM_H */
+#endif							/* GEQO_RANDOM_H */

@@ -12,7 +12,7 @@
  * The struct type SharedInvalidationMessage, defining the contents of
  * a single message, is defined in sinval.h.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/storage/sinvaladt.h
@@ -40,4 +40,4 @@ extern void SICleanupQueue(bool callerHasWriteLock, int minFree);
 
 extern LocalTransactionId GetNextLocalTransactionId(void);
 
-#endif   /* SINVALADT_H */
+#endif							/* SINVALADT_H */

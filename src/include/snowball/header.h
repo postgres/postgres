@@ -13,7 +13,7 @@
  *
  * NOTE: this file should not be included into any non-snowball sources!
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  *
  * src/include/snowball/header.h
  *
@@ -22,6 +22,11 @@
 #ifndef SNOWBALL_HEADR_H
 #define SNOWBALL_HEADR_H
 
+/*
+ * It's against Postgres coding conventions to include postgres.h in a
+ * header file, but we allow the violation here because the alternative is
+ * to modify the machine-generated .c files provided by the Snowball project.
+ */
 #include "postgres.h"
 
 /* Some platforms define MAXINT and/or MININT, causing conflicts */
@@ -59,4 +64,4 @@
 #endif
 #define free(a)			pfree(a)
 
-#endif   /* SNOWBALL_HEADR_H */
+#endif							/* SNOWBALL_HEADR_H */

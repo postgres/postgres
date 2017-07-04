@@ -3,7 +3,7 @@
  * pg_constraint.c
  *	  routines to support manipulation of the pg_constraint relation
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -226,10 +226,7 @@ CreateConstraintEntry(const char *constraintName,
 
 	tup = heap_form_tuple(RelationGetDescr(conDesc), values, nulls);
 
-	conOid = simple_heap_insert(conDesc, tup);
-
-	/* update catalog indexes */
-	CatalogUpdateIndexes(conDesc, tup);
+	conOid = CatalogTupleInsert(conDesc, tup);
 
 	conobject.classId = ConstraintRelationId;
 	conobject.objectId = conOid;
@@ -368,7 +365,7 @@ CreateConstraintEntry(const char *constraintName,
 		 */
 		recordDependencyOnSingleRelExpr(&conobject, conExpr, relId,
 										DEPENDENCY_NORMAL,
-										DEPENDENCY_NORMAL);
+										DEPENDENCY_NORMAL, false);
 	}
 
 	/* Post creation hook for new constraint */
@@ -579,14 +576,12 @@ RemoveConstraintById(Oid conId)
 					 con->conrelid);
 			classForm = (Form_pg_class) GETSTRUCT(relTup);
 
-			if (classForm->relchecks == 0)		/* should not happen */
+			if (classForm->relchecks == 0)	/* should not happen */
 				elog(ERROR, "relation \"%s\" has relchecks = 0",
 					 RelationGetRelationName(rel));
 			classForm->relchecks--;
 
-			simple_heap_update(pgrel, &relTup->t_self, relTup);
-
-			CatalogUpdateIndexes(pgrel, relTup);
+			CatalogTupleUpdate(pgrel, &relTup->t_self, relTup);
 
 			heap_freetuple(relTup);
 
@@ -609,7 +604,7 @@ RemoveConstraintById(Oid conId)
 		elog(ERROR, "constraint %u is not of a known type", conId);
 
 	/* Fry the constraint itself */
-	simple_heap_delete(conDesc, &tup->t_self);
+	CatalogTupleDelete(conDesc, &tup->t_self);
 
 	/* Clean up */
 	ReleaseSysCache(tup);
@@ -651,8 +646,8 @@ RenameConstraintById(Oid conId, const char *newname)
 							 newname))
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
-			   errmsg("constraint \"%s\" for relation \"%s\" already exists",
-					  newname, get_rel_name(con->conrelid))));
+				 errmsg("constraint \"%s\" for relation \"%s\" already exists",
+						newname, get_rel_name(con->conrelid))));
 	if (OidIsValid(con->contypid) &&
 		ConstraintNameIsUsed(CONSTRAINT_DOMAIN,
 							 con->contypid,
@@ -666,10 +661,7 @@ RenameConstraintById(Oid conId, const char *newname)
 	/* OK, do the rename --- tuple is a copy, so OK to scribble on it */
 	namestrcpy(&(con->conname), newname);
 
-	simple_heap_update(conDesc, &tuple->t_self, tuple);
-
-	/* update the system catalog indexes */
-	CatalogUpdateIndexes(conDesc, tuple);
+	CatalogTupleUpdate(conDesc, &tuple->t_self, tuple);
 
 	InvokeObjectPostAlterHook(ConstraintRelationId, conId, 0);
 
@@ -686,7 +678,7 @@ RenameConstraintById(Oid conId, const char *newname)
  */
 void
 AlterConstraintNamespaces(Oid ownerId, Oid oldNspId,
-					   Oid newNspId, bool isType, ObjectAddresses *objsMoved)
+						  Oid newNspId, bool isType, ObjectAddresses *objsMoved)
 {
 	Relation	conRel;
 	ScanKeyData key[1];
@@ -736,8 +728,7 @@ AlterConstraintNamespaces(Oid ownerId, Oid oldNspId,
 
 			conform->connamespace = newNspId;
 
-			simple_heap_update(conRel, &tup->t_self, tup);
-			CatalogUpdateIndexes(conRel, tup);
+			CatalogTupleUpdate(conRel, &tup->t_self, tup);
 
 			/*
 			 * Note: currently, the constraint will not have its own
@@ -794,8 +785,8 @@ get_relation_constraint_oid(Oid relid, const char *conname, bool missing_ok)
 			if (OidIsValid(conOid))
 				ereport(ERROR,
 						(errcode(ERRCODE_DUPLICATE_OBJECT),
-				 errmsg("table \"%s\" has multiple constraints named \"%s\"",
-						get_rel_name(relid), conname)));
+						 errmsg("table \"%s\" has multiple constraints named \"%s\"",
+								get_rel_name(relid), conname)));
 			conOid = HeapTupleGetOid(tuple);
 		}
 	}
@@ -852,8 +843,8 @@ get_domain_constraint_oid(Oid typid, const char *conname, bool missing_ok)
 			if (OidIsValid(conOid))
 				ereport(ERROR,
 						(errcode(ERRCODE_DUPLICATE_OBJECT),
-				errmsg("domain \"%s\" has multiple constraints named \"%s\"",
-					   format_type_be(typid), conname)));
+						 errmsg("domain %s has multiple constraints named \"%s\"",
+								format_type_be(typid), conname)));
 			conOid = HeapTupleGetOid(tuple);
 		}
 	}
@@ -864,7 +855,7 @@ get_domain_constraint_oid(Oid typid, const char *conname, bool missing_ok)
 	if (!OidIsValid(conOid) && !missing_ok)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("constraint \"%s\" for domain \"%s\" does not exist",
+				 errmsg("constraint \"%s\" for domain %s does not exist",
 						conname, format_type_be(typid))));
 
 	heap_close(pg_constraint, AccessShareLock);
@@ -937,7 +928,7 @@ get_primary_key_attnos(Oid relid, bool deferrableOk, Oid *constraintOid)
 		if (isNull)
 			elog(ERROR, "null conkey for constraint %u",
 				 HeapTupleGetOid(tuple));
-		arr = DatumGetArrayTypeP(adatum);		/* ensure not toasted */
+		arr = DatumGetArrayTypeP(adatum);	/* ensure not toasted */
 		numkeys = ARR_DIMS(arr)[0];
 		if (ARR_NDIM(arr) != 1 ||
 			numkeys < 0 ||
@@ -950,7 +941,7 @@ get_primary_key_attnos(Oid relid, bool deferrableOk, Oid *constraintOid)
 		for (i = 0; i < numkeys; i++)
 		{
 			pkattnos = bms_add_member(pkattnos,
-							attnums[i] - FirstLowInvalidHeapAttributeNumber);
+									  attnums[i] - FirstLowInvalidHeapAttributeNumber);
 		}
 		*constraintOid = HeapTupleGetOid(tuple);
 
@@ -1006,7 +997,7 @@ check_functional_grouping(Oid relid,
 			gvar->varno == varno &&
 			gvar->varlevelsup == varlevelsup)
 			groupbyattnos = bms_add_member(groupbyattnos,
-						gvar->varattno - FirstLowInvalidHeapAttributeNumber);
+										   gvar->varattno - FirstLowInvalidHeapAttributeNumber);
 	}
 
 	if (bms_is_subset(pkattnos, groupbyattnos))

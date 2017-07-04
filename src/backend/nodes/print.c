@@ -3,7 +3,7 @@
  * print.c
  *	  various print routines (used mostly for debugging)
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -279,12 +279,20 @@ print_rt(const List *rtable)
 				printf("%d\t%s\t[rangefunction]",
 					   i, rte->eref->aliasname);
 				break;
+			case RTE_TABLEFUNC:
+				printf("%d\t%s\t[table function]",
+					   i, rte->eref->aliasname);
+				break;
 			case RTE_VALUES:
 				printf("%d\t%s\t[values list]",
 					   i, rte->eref->aliasname);
 				break;
 			case RTE_CTE:
 				printf("%d\t%s\t[cte]",
+					   i, rte->eref->aliasname);
+				break;
+			case RTE_NAMEDTUPLESTORE:
+				printf("%d\t%s\t[tuplestore]",
 					   i, rte->eref->aliasname);
 				break;
 			default:

@@ -25,7 +25,7 @@ ALTER OPERATOR FAMILY <replaceable>name</replaceable> USING <replaceable class="
   {  OPERATOR <replaceable class="parameter">strategy_number</replaceable> <replaceable class="parameter">operator_name</replaceable> ( <replaceable class="parameter">op_type</replaceable>, <replaceable class="parameter">op_type</replaceable> )
               [ FOR SEARCH | FOR ORDER BY <replaceable class="parameter">sort_family_name</replaceable> ]
    | FUNCTION <replaceable class="parameter">support_number</replaceable> [ ( <replaceable class="parameter">op_type</replaceable> [ , <replaceable class="parameter">op_type</replaceable> ] ) ]
-              <replaceable class="parameter">function_name</replaceable> ( <replaceable class="parameter">argument_type</replaceable> [, ...] )
+              <replaceable class="parameter">function_name</replaceable> [ ( <replaceable class="parameter">argument_type</replaceable> [, ...] ) ]
   } [, ... ]
 
 ALTER OPERATOR FAMILY <replaceable>name</replaceable> USING <replaceable class="parameter">index_method</replaceable> DROP
@@ -195,8 +195,9 @@ ALTER OPERATOR FAMILY <replaceable>name</replaceable> USING <replaceable class="
     <term><replaceable class="parameter">function_name</replaceable></term>
     <listitem>
      <para>
-      The name (optionally schema-qualified) of a function that is an
-      index method support procedure for the operator family.
+      The name (optionally schema-qualified) of a function that is an index
+      method support procedure for the operator family.  If no argument list
+      is specified, the name must be unique in its schema.
      </para>
     </listitem>
    </varlistentry>

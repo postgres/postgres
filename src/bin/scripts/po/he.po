@@ -1,0 +1,1079 @@
+# Hewbrew message translation file for pgscripts
+# Copyright (C) 2017 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+# Michael Goldberg <mic.goldbrg@gmail.com>, 2017.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pgscripts (PostgreSQL) 10\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2017-05-03 10:36+0300\n"
+"PO-Revision-Date: 2017-05-04 10:59+0300\n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 2.0.1\n"
+"Last-Translator:  Michael Goldberg <mic.goldbrg@gmail.com>\n"
+"Language: he_IL\n"
+
+#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
+#: ../../common/fe_memutils.c:98
+#, c-format
+msgid "out of memory\n"
+msgstr "אין זיכרון פנוי\n"
+
+#: ../../common/fe_memutils.c:92
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "לא ניתן לשכפל מצביע ריק (שגיאה פנימית)\n"
+
+#: ../../common/username.c:43
+#, c-format
+msgid "could not look up effective user ID %ld: %s"
+msgstr "לא יכול לחפש יעיל את המשתמש עם מזהה % ld: %s"
+
+#: ../../common/username.c:45
+msgid "user does not exist"
+msgstr "משתמש לא קיים"
+
+#: ../../common/username.c:60
+#, c-format
+msgid "user name lookup failure: error code %lu"
+msgstr "כישלון בדיקה עבור שם המשתמש: קוד שגיאה % lu"
+
+#: ../../fe_utils/print.c:353
+#, c-format
+msgid "(%lu row)"
+msgid_plural "(%lu rows)"
+msgstr[0] "(% lu שורה)"
+msgstr[1] "(% lu שורות)"
+
+#: ../../fe_utils/print.c:2913
+#, c-format
+msgid "Interrupted\n"
+msgstr "הופסק\n"
+
+#: ../../fe_utils/print.c:2977
+#, c-format
+msgid "Cannot add header to table content: column count of %d exceeded.\n"
+msgstr "אין אפשרות להוסיף כותרת לתוכן בטבלה:  סה\"כ חריגה של %d העמודות.\n"
+
+#: ../../fe_utils/print.c:3017
+#, c-format
+msgid "Cannot add cell to table content: total cell count of %d exceeded.\n"
+msgstr "לא ניתן להוסיף תא לתוכן בטבלה: סה\"כ חריגה של %d התאים.\n"
+
+#: ../../fe_utils/print.c:3266
+#, c-format
+msgid "invalid output format (internal error): %d"
+msgstr "תבנית הפלט לא תיקנית (שגיאה פנימית): %d"
+
+#: clusterdb.c:111 clusterdb.c:130 createdb.c:119 createdb.c:138
+#: createuser.c:171 createuser.c:186 dropdb.c:94 dropdb.c:103 dropdb.c:111
+#: dropuser.c:90 dropuser.c:105 dropuser.c:120 pg_isready.c:93 pg_isready.c:107
+#: reindexdb.c:131 reindexdb.c:150 vacuumdb.c:213 vacuumdb.c:232
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "נסה '%s - עזרה' לקבלת מידע נוסף.\n"
+
+#: clusterdb.c:128 createdb.c:136 createuser.c:184 dropdb.c:109 dropuser.c:103
+#: pg_isready.c:105 reindexdb.c:148 vacuumdb.c:230
+#, c-format
+msgid "%s: too many command-line arguments (first is \"%s\")\n"
+msgstr "%s: יותר מדי ארגומנטים של שורת הפקודה (הראשון הוא \"%s\")\n"
+
+#: clusterdb.c:140
+#, c-format
+msgid "%s: cannot cluster all databases and a specific one at the same time\n"
+msgstr "%s: לא יכול ל'בץ את כל מסדי הנתונים ואחד ספציפי זה בו זמנית\n"
+
+#: clusterdb.c:147
+#, c-format
+msgid "%s: cannot cluster specific table(s) in all databases\n"
+msgstr "%s: לא יכול לקבץ טבלאות ספציפיות / טבלה ספציפית בתוך כל מסדי הנתונים\n"
+
+#: clusterdb.c:212
+#, c-format
+msgid "%s: clustering of table \"%s\" in database \"%s\" failed: %s"
+msgstr "%s: התקבצות של \"%s\" הטבלה במסד הנתונים '%s' נכשלה: %s"
+
+#: clusterdb.c:215
+#, c-format
+msgid "%s: clustering of database \"%s\" failed: %s"
+msgstr "%s: התקבצות של מסד הנתונים '%s' נכשל: %s"
+
+#: clusterdb.c:248
+#, c-format
+msgid "%s: clustering database \"%s\"\n"
+msgstr "%s: קיבוץ באשכולות מסד הנתונים '%s'. \n"
+
+#: clusterdb.c:269
+#, c-format
+msgid ""
+"%s clusters all previously clustered tables in a database.\n"
+"\n"
+msgstr "%s מקבץ את כל הטבלאות המקובצות בעבר במסד נתונים.\n"
+
+#: clusterdb.c:270 createdb.c:252 createuser.c:354 dropdb.c:155 dropuser.c:161
+#: pg_isready.c:222 reindexdb.c:401 vacuumdb.c:952
+#, c-format
+msgid "Usage:\n"
+msgstr "שימוש:\n"
+
+#: clusterdb.c:271 reindexdb.c:402 vacuumdb.c:953
+#, c-format
+msgid "  %s [OPTION]... [DBNAME]\n"
+msgstr ""
+
+#: clusterdb.c:272 createdb.c:254 createuser.c:356 dropdb.c:157 dropuser.c:163
+#: pg_isready.c:225 reindexdb.c:403 vacuumdb.c:954
+#, c-format
+msgid ""
+"\n"
+"Options:\n"
+msgstr ""
+"\n"
+"אפשרויות:\n"
+
+#: clusterdb.c:273
+#, c-format
+msgid "  -a, --all                 cluster all databases\n"
+msgstr "  -a, --all                 לקבץ את כל מסדי הנתונים\n"
+
+#: clusterdb.c:274
+#, c-format
+msgid "  -d, --dbname=DBNAME       database to cluster\n"
+msgstr " -d, --dbname=DBNAME       לקבץ את מסד הנתונים\n"
+
+#: clusterdb.c:275 createuser.c:360 dropdb.c:158 dropuser.c:164 reindexdb.c:406
+#, c-format
+msgid ""
+"  -e, --echo                show the commands being sent to the server\n"
+msgstr "  -e, --echo                להציג  את הפקודות הנשלחות לשרת\n"
+
+#: clusterdb.c:276 reindexdb.c:408
+#, c-format
+msgid "  -q, --quiet               don't write any messages\n"
+msgstr "  -q, --quiet               אל תכתוב שום הודעות\n"
+
+#: clusterdb.c:277
+#, c-format
+msgid "  -t, --table=TABLE         cluster specific table(s) only\n"
+msgstr "  -t, --table=TABLE         לקבץ את הטבלה(אות) ספציפית(יות) בלבד\n"
+
+#: clusterdb.c:278 reindexdb.c:412
+#, c-format
+msgid "  -v, --verbose             write a lot of output\n"
+msgstr "  -v, --verbose             לכתוב הרבה פלט מפורט\n"
+
+#: clusterdb.c:279 createuser.c:374 dropdb.c:160 dropuser.c:167 reindexdb.c:413
+#, c-format
+msgid "  -V, --version             output version information, then exit\n"
+msgstr "  -V, --version             להציג מידע על הגירסה, ולאחר מכן לצאת\n"
+
+#: clusterdb.c:280 createuser.c:379 dropdb.c:162 dropuser.c:169 reindexdb.c:414
+#, c-format
+msgid "  -?, --help                show this help, then exit\n"
+msgstr "  -?, --help                להציג עזרה זו, ולאחר מכן לצאת\n"
+
+#: clusterdb.c:281 createdb.c:265 createuser.c:380 dropdb.c:163 dropuser.c:170
+#: pg_isready.c:231 reindexdb.c:415 vacuumdb.c:970
+#, c-format
+msgid ""
+"\n"
+"Connection options:\n"
+msgstr ""
+"\n"
+"אפשרויות חיבור:\n"
+
+#: clusterdb.c:282 createuser.c:381 dropdb.c:164 dropuser.c:171 reindexdb.c:416
+#: vacuumdb.c:971
+#, c-format
+msgid "  -h, --host=HOSTNAME       database server host or socket directory\n"
+msgstr "  -h, --host=HOSTNAME שרת מארח של מסד הנתונים  או ספריית שקע\n"
+
+#: clusterdb.c:283 createuser.c:382 dropdb.c:165 dropuser.c:172 reindexdb.c:417
+#: vacuumdb.c:972
+#, c-format
+msgid "  -p, --port=PORT           database server port\n"
+msgstr "  -p, --port=PORT יציאת שרת מסד נתונים\n"
+
+#: clusterdb.c:284 dropdb.c:166 reindexdb.c:418 vacuumdb.c:973
+#, c-format
+msgid "  -U, --username=USERNAME   user name to connect as\n"
+msgstr "  -U, --username=USERNAME שם המשתמש להתחבר איתו\n"
+
+#: clusterdb.c:285 createuser.c:384 dropdb.c:167 dropuser.c:174 reindexdb.c:419
+#: vacuumdb.c:974
+#, c-format
+msgid "  -w, --no-password         never prompt for password\n"
+msgstr "  -w, --no-password לעולם לא לבקש סיסמה\n"
+
+#: clusterdb.c:286 createuser.c:385 dropdb.c:168 dropuser.c:175 reindexdb.c:420
+#: vacuumdb.c:975
+#, c-format
+msgid "  -W, --password            force password prompt\n"
+msgstr "  -W, --password   נדרשת בקשת סיסמה\n"
+
+#: clusterdb.c:287 dropdb.c:169 reindexdb.c:421 vacuumdb.c:976
+#, c-format
+msgid "  --maintenance-db=DBNAME   alternate maintenance database\n"
+msgstr "  --maintenance-db=DBNAME מסד נתונים תחזוקה חלופי\n"
+
+#: clusterdb.c:288
+#, c-format
+msgid ""
+"\n"
+"Read the description of the SQL command CLUSTER for details.\n"
+msgstr ""
+"\n"
+"תקרא את התיאור של הפקודת CLUSTER  לקבלת פרטים.\n"
+
+#: clusterdb.c:289 createdb.c:273 createuser.c:386 dropdb.c:170 dropuser.c:176
+#: pg_isready.c:236 reindexdb.c:423 vacuumdb.c:978
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr ""
+"\n"
+"לדווח על באגים ל <pgsql-bugs@postgresql.org>\n"
+
+#: common.c:80 common.c:126
+msgid "Password: "
+msgstr "סיסמה: "
+
+#: common.c:113
+#, c-format
+msgid "%s: could not connect to database %s: out of memory\n"
+msgstr "%s: לא ניתן להתחבר אל מסד הנתונים %s: אין מספיק זיכרון\n"
+
+#: common.c:140
+#, c-format
+msgid "%s: could not connect to database %s: %s"
+msgstr "%s: לא ניתן להתחבר אל מסד נתונים %s: %s"
+
+#: common.c:189 common.c:217
+#, c-format
+msgid "%s: query failed: %s"
+msgstr "%s: שאילתה נכשלה: %s"
+
+#: common.c:191 common.c:219
+#, c-format
+msgid "%s: query was: %s\n"
+msgstr "%s: שאילתה היתה: %s\n"
+
+#. translator: abbreviation for "yes"
+#: common.c:260
+msgid "y"
+msgstr ""
+
+#. translator: abbreviation for "no"
+#: common.c:262
+msgid "n"
+msgstr ""
+
+#. translator: This is a question followed by the translated options for
+#. "yes" and "no".
+#: common.c:272
+#, c-format
+msgid "%s (%s/%s) "
+msgstr ""
+
+#: common.c:286
+#, c-format
+msgid "Please answer \"%s\" or \"%s\".\n"
+msgstr "נא לענות \"%s\" או \"%s\".\n"
+
+#: common.c:365 common.c:402
+#, c-format
+msgid "Cancel request sent\n"
+msgstr "בקשת ביטול נשלחה\n"
+
+#: common.c:368 common.c:406
+#, c-format
+msgid "Could not send cancel request: %s"
+msgstr "לא ניתן לשלוח את בקשת ביטול: %s"
+
+#: createdb.c:146
+#, c-format
+msgid "%s: only one of --locale and --lc-ctype can be specified\n"
+msgstr "%s: ניתן לציין רק אחד מ  --locale ו  --lc-ctype\n"
+
+#: createdb.c:152
+#, c-format
+msgid "%s: only one of --locale and --lc-collate can be specified\n"
+msgstr "%s: ניתן לציין רק אחד מ  --locale ו  --lc-collate\n"
+
+#: createdb.c:164
+#, c-format
+msgid "%s: \"%s\" is not a valid encoding name\n"
+msgstr "%s: \"%s\" אינו שם קידוד חוקי\n"
+
+#: createdb.c:213
+#, c-format
+msgid "%s: database creation failed: %s"
+msgstr "%s: יצירה של מסד הנתונים נכשל: %s"
+
+#: createdb.c:233
+#, c-format
+msgid "%s: comment creation failed (database was created): %s"
+msgstr "%s: יצירת הערה נכשלה (מסד נתונים נוצר): %s"
+
+#: createdb.c:251
+#, c-format
+msgid ""
+"%s creates a PostgreSQL database.\n"
+"\n"
+msgstr "%s יוצר מסד נתונים PostgreSQL.\n"
+
+#: createdb.c:253
+#, c-format
+msgid "  %s [OPTION]... [DBNAME] [DESCRIPTION]\n"
+msgstr ""
+
+#: createdb.c:255
+#, c-format
+msgid "  -D, --tablespace=TABLESPACE  default tablespace for the database\n"
+msgstr ""
+" -D, --tablespace=TABLESPACE   מרחב טבלאות ברירת מחדל עבור מסד הנתונים\n"
+
+#: createdb.c:256
+#, c-format
+msgid ""
+"  -e, --echo                   show the commands being sent to the server\n"
+msgstr "  -e, --echo                להציג  את הפקודות הנשלחות לשרת\n"
+
+#: createdb.c:257
+#, c-format
+msgid "  -E, --encoding=ENCODING      encoding for the database\n"
+msgstr "  -E, --encoding=ENCODING       קידוד של מסד הנתונים\n"
+
+#: createdb.c:258
+#, c-format
+msgid "  -l, --locale=LOCALE          locale settings for the database\n"
+msgstr "  -l, --locale=LOCALE          הגדרות אזוריות של מסד הנתונים\n"
+
+#: createdb.c:259
+#, c-format
+msgid "      --lc-collate=LOCALE      LC_COLLATE setting for the database\n"
+msgstr "      --lc-collate=LOCALE      LC_COLLATE הגדרות עבור מסד הנתונים\n"
+
+#: createdb.c:260
+#, c-format
+msgid "      --lc-ctype=LOCALE        LC_CTYPE setting for the database\n"
+msgstr "      --lc-ctype=LOCALE        LC_CTYPE הגדרה עבור מסד הנתונים\n"
+
+#: createdb.c:261
+#, c-format
+msgid "  -O, --owner=OWNER            database user to own the new database\n"
+msgstr ""
+"  -O, --owner=OWNER            משתמש מסד הנתונים הבעלים של מסד הנתונים החדש\n"
+
+#: createdb.c:262
+#, c-format
+msgid "  -T, --template=TEMPLATE      template database to copy\n"
+msgstr "  -T, --template=TEMPLATE      תבנית מסד הנתונים להעתקה\n"
+
+#: createdb.c:263
+#, c-format
+msgid "  -V, --version                output version information, then exit\n"
+msgstr "  -V, --version             להציג מידע על הגירסה, ולאחר מכן לצאת\n"
+
+#: createdb.c:264
+#, c-format
+msgid "  -?, --help                   show this help, then exit\n"
+msgstr "  -?, --help                להציג עזרה זו, ולאחר מכן לצאת\n"
+
+#: createdb.c:266
+#, c-format
+msgid ""
+"  -h, --host=HOSTNAME          database server host or socket directory\n"
+msgstr "  -h, --host=HOSTNAME שרת מארח של מסד הנתונים  או ספריית שקע\n"
+
+#: createdb.c:267
+#, c-format
+msgid "  -p, --port=PORT              database server port\n"
+msgstr "  -p, --port=PORT יציאת שרת מסד נתונים\n"
+
+#: createdb.c:268
+#, c-format
+msgid "  -U, --username=USERNAME      user name to connect as\n"
+msgstr "  -U, --username=USERNAME שם המשתמש להתחבר איתו\n"
+
+#: createdb.c:269
+#, c-format
+msgid "  -w, --no-password            never prompt for password\n"
+msgstr "  -w, --no-password לעולם לא לבקש סיסמה\n"
+
+#: createdb.c:270
+#, c-format
+msgid "  -W, --password               force password prompt\n"
+msgstr "  -W, --password   נדרשת בקשת סיסמה\n"
+
+#: createdb.c:271
+#, c-format
+msgid "  --maintenance-db=DBNAME      alternate maintenance database\n"
+msgstr "  --maintenance-db=DBNAME מסד נתונים תחזוקה חלופי\n"
+
+#: createdb.c:272
+#, c-format
+msgid ""
+"\n"
+"By default, a database with the same name as the current user is created.\n"
+msgstr ""
+"\n"
+"כברירת מחדל, מסד נתונים נוצר עם שם זהה לזה המשתמש הנוכחי.\n"
+
+#: createuser.c:194
+msgid "Enter name of role to add: "
+msgstr "הזן שם של תפקיד כדי להוסיף: "
+
+#: createuser.c:211
+msgid "Enter password for new role: "
+msgstr "הזן סיסמה עבור תפקיד חדש: "
+
+#: createuser.c:213
+msgid "Enter it again: "
+msgstr "הזן שוב: "
+
+#: createuser.c:216
+#, c-format
+msgid "Passwords didn't match.\n"
+msgstr "סיסמאות אינן תואמות.\n"
+
+#: createuser.c:224
+msgid "Shall the new role be a superuser?"
+msgstr "יהיה התפקיד החדש משתמש על?"
+
+#: createuser.c:239
+msgid "Shall the new role be allowed to create databases?"
+msgstr "התפקיד החדש יהיה רשאי ליצור מסדי נתונים?"
+
+#: createuser.c:247
+msgid "Shall the new role be allowed to create more new roles?"
+msgstr "התפקיד החדש יהיה רשאי ליצור תפקידים חדשים?"
+
+#: createuser.c:281
+#, c-format
+msgid "Password encryption failed.\n"
+msgstr "הצפנת סיסמה נכשל.\n"
+
+#: createuser.c:338
+#, c-format
+msgid "%s: creation of new role failed: %s"
+msgstr "%s: יצירת תפקיד חדש נכשלה: %s"
+
+#: createuser.c:353
+#, c-format
+msgid ""
+"%s creates a new PostgreSQL role.\n"
+"\n"
+msgstr ""
+"%s יוצר תפקיד PostgreSQL חדש.\n"
+"\n"
+
+#: createuser.c:355 dropuser.c:162
+#, c-format
+msgid "  %s [OPTION]... [ROLENAME]\n"
+msgstr ""
+
+#: createuser.c:357
+#, c-format
+msgid ""
+"  -c, --connection-limit=N  connection limit for role (default: no limit)\n"
+msgstr ""
+"  -c, --connection-limit=N  מגבלת החיבורים עבור תפקיד (ברירת מחדל: אין "
+"גבול)\n"
+
+#: createuser.c:358
+#, c-format
+msgid "  -d, --createdb            role can create new databases\n"
+msgstr "  -d, --createdb            תפקיד יכול ליצור מסדי נתונים חדשים\n"
+
+#: createuser.c:359
+#, c-format
+msgid "  -D, --no-createdb         role cannot create databases (default)\n"
+msgstr ""
+"  -D, --no-createdb         תפקיד לא יכול ליצור מסדי נתונים חדשים (ברירת "
+"מחדל)\n"
+
+#: createuser.c:361
+#, c-format
+msgid "  -E, --encrypted           encrypt stored password\n"
+msgstr "  -E, --encrypted           להצפין סיסמה מאוחסנת\n"
+
+#: createuser.c:362
+#, c-format
+msgid "  -g, --role=ROLE           new role will be a member of this role\n"
+msgstr "  -g, --role=ROLE           תפקיד חדש יהיה חבר של תפקיד זה\n"
+
+#: createuser.c:363
+#, c-format
+msgid ""
+"  -i, --inherit             role inherits privileges of roles it is a\n"
+"                            member of (default)\n"
+msgstr ""
+"  -i, --inherit             תפקיד יורש הרשאות מתפקידים\n"
+"                            אשר הוא חבר בהם (ברירת מחדל)\n"
+
+#: createuser.c:365
+#, c-format
+msgid "  -I, --no-inherit          role does not inherit privileges\n"
+msgstr "  -I, --no-inherit          תפקיד אינו יורש הרשאות\n"
+
+#: createuser.c:366
+#, c-format
+msgid "  -l, --login               role can login (default)\n"
+msgstr "  -l, --login               תפקיד יכול להתחבר (ברירת מחדל)\n"
+
+#: createuser.c:367
+#, c-format
+msgid "  -L, --no-login            role cannot login\n"
+msgstr "  -L, --no-login            תפקיד לא כול להתחבר\n"
+
+#: createuser.c:368
+#, c-format
+msgid "  -N, --unencrypted         do not encrypt stored password\n"
+msgstr "  -N, --unencrypted         לא למצפין את הסיסמה המאוחסנת\n"
+
+#: createuser.c:369
+#, c-format
+msgid "  -P, --pwprompt            assign a password to new role\n"
+msgstr "  -P, --pwprompt            להקצות סיסמה לתפקיד חדש\n"
+
+#: createuser.c:370
+#, c-format
+msgid "  -r, --createrole          role can create new roles\n"
+msgstr "  -r, --createrole          תפקיד יכול ליצור תפקידים חדשים\n"
+
+#: createuser.c:371
+#, c-format
+msgid "  -R, --no-createrole       role cannot create roles (default)\n"
+msgstr "  -R, --no-createrole       תפקיד לא יכוך ליצור תפקידים (ברירת מחדל)\n"
+
+#: createuser.c:372
+#, c-format
+msgid "  -s, --superuser           role will be superuser\n"
+msgstr "  -s, --superuser           תפקיד יהיה משתמש על\n"
+
+#: createuser.c:373
+#, c-format
+msgid "  -S, --no-superuser        role will not be superuser (default)\n"
+msgstr "  -S, --no-superuser        תפקיד לא יהיה משתמש על (ברירת מחדל)\n"
+
+#: createuser.c:375
+#, c-format
+msgid ""
+"  --interactive             prompt for missing role name and attributes "
+"rather\n"
+"                            than using defaults\n"
+msgstr ""
+"  --interactive             לבקש את שם התפקיד ותכונות החסרות במקום\n"
+"                            שימוש בברירת מחדל\n"
+
+#: createuser.c:377
+#, c-format
+msgid "  --replication             role can initiate replication\n"
+msgstr "  --replication             תפקיד יכול ליזום שכפול\n"
+
+#: createuser.c:378
+#, c-format
+msgid "  --no-replication          role cannot initiate replication\n"
+msgstr "  --no-replication          תפקיד לא יכול ליזום שכפול\n"
+
+#: createuser.c:383
+#, c-format
+msgid ""
+"  -U, --username=USERNAME   user name to connect as (not the one to create)\n"
+msgstr "  -U, --username=USERNAME שם המשתמש להתחבר איתו (לא אחד כדי ליצור)\n"
+
+#: dropdb.c:102
+#, c-format
+msgid "%s: missing required argument database name\n"
+msgstr "%s: חסר שם מסד הנתונים של ארגומנט נדרש\n"
+
+#: dropdb.c:117
+#, c-format
+msgid "Database \"%s\" will be permanently removed.\n"
+msgstr "מסד הנתונים '%s' יוסר לצמיתות.\n"
+
+#: dropdb.c:118 dropuser.c:128
+msgid "Are you sure?"
+msgstr "האם אתה בטוח?"
+
+#: dropdb.c:139
+#, c-format
+msgid "%s: database removal failed: %s"
+msgstr "%s: הסרת מסד הנתונים נכשלה: %s"
+
+#: dropdb.c:154
+#, c-format
+msgid ""
+"%s removes a PostgreSQL database.\n"
+"\n"
+msgstr "%s מסיר מסד נתונים PostgreSQL.\n"
+
+#: dropdb.c:156
+#, c-format
+msgid "  %s [OPTION]... DBNAME\n"
+msgstr ""
+
+#: dropdb.c:159
+#, c-format
+msgid "  -i, --interactive         prompt before deleting anything\n"
+msgstr "  -i, --interactive         לבקש אישור לפני מחיקת כל דבר\n"
+
+#: dropdb.c:161
+#, c-format
+msgid ""
+"  --if-exists               don't report error if database doesn't exist\n"
+msgstr ""
+"  --if-exists               לא לדווח על שגיאה אם מסד הנתונים אינו קיים\n"
+
+#: dropuser.c:113
+msgid "Enter name of role to drop: "
+msgstr "הזן שם של תפקיד על מנת למחוק: "
+
+#: dropuser.c:119
+#, c-format
+msgid "%s: missing required argument role name\n"
+msgstr "%s: חסר ארגומנט נדרש שם תפקיד\n"
+
+#: dropuser.c:127
+#, c-format
+msgid "Role \"%s\" will be permanently removed.\n"
+msgstr "תפקיד \"%s\" יוסר לצמיתות.\n"
+
+#: dropuser.c:145
+#, c-format
+msgid "%s: removal of role \"%s\" failed: %s"
+msgstr "%s: הסרת תפקיד \"%s\" נכשלה: %s"
+
+#: dropuser.c:160
+#, c-format
+msgid ""
+"%s removes a PostgreSQL role.\n"
+"\n"
+msgstr ""
+"%s מסיר  תפקיד של PostgreSQL.\n"
+"\n"
+
+#: dropuser.c:165
+#, c-format
+msgid ""
+"  -i, --interactive         prompt before deleting anything, and prompt for\n"
+"                            role name if not specified\n"
+msgstr ""
+"  -i, --interactive         לבקש אישור לפני מחיקת כל דבר, לא לבקש\n"
+"                           שם תפקיד אם לא צוין\n"
+
+#: dropuser.c:168
+#, c-format
+msgid "  --if-exists               don't report error if user doesn't exist\n"
+msgstr "  --if-exists               לא לדווח שגיאה אם המשתמש אינו קיים\n"
+
+#: dropuser.c:173
+#, c-format
+msgid ""
+"  -U, --username=USERNAME   user name to connect as (not the one to drop)\n"
+msgstr ""
+"  -U, --username=USERNAME שם המשתמש להתחבר איתו (לא אחד שצריכים למחוק)\n"
+
+#: pg_isready.c:142
+#, c-format
+msgid "%s: %s"
+msgstr "%s: %s"
+
+#: pg_isready.c:150
+#, c-format
+msgid "%s: could not fetch default options\n"
+msgstr "%s: לא יכול להביא את אפשרויות ברירת המחדל\n"
+
+#: pg_isready.c:199
+#, c-format
+msgid "accepting connections\n"
+msgstr "קבלת חיבורים\n"
+
+#: pg_isready.c:202
+#, c-format
+msgid "rejecting connections\n"
+msgstr "דחיית חיבורים\n"
+
+#: pg_isready.c:205
+#, c-format
+msgid "no response\n"
+msgstr "אין תגובה\n"
+
+#: pg_isready.c:208
+#, c-format
+msgid "no attempt\n"
+msgstr "אין ניסיון\n"
+
+#: pg_isready.c:211
+#, c-format
+msgid "unknown\n"
+msgstr "לא ידוע\n"
+
+#: pg_isready.c:221
+#, c-format
+msgid ""
+"%s issues a connection check to a PostgreSQL database.\n"
+"\n"
+msgstr ""
+"%s מתחיל בדיקת חיבור למסד נתונים PostgreSQL.\n"
+"\n"
+
+#: pg_isready.c:223
+#, c-format
+msgid "  %s [OPTION]...\n"
+msgstr ""
+
+#: pg_isready.c:226
+#, c-format
+msgid "  -d, --dbname=DBNAME      database name\n"
+msgstr "  -d, --dbname=DBNAME      שם מסד הנתונים\n"
+
+#: pg_isready.c:227
+#, c-format
+msgid "  -q, --quiet              run quietly\n"
+msgstr "  -q, --quiet              לרוץ בשקט\n"
+
+#: pg_isready.c:228
+#, c-format
+msgid "  -V, --version            output version information, then exit\n"
+msgstr "  -V, --version             להציג מידע על הגירסה, ולאחר מכן לצאת\n"
+
+#: pg_isready.c:229
+#, c-format
+msgid "  -?, --help               show this help, then exit\n"
+msgstr "  -?, --help                להציג עזרה זו, ולאחר מכן לצאת\n"
+
+#: pg_isready.c:232
+#, c-format
+msgid "  -h, --host=HOSTNAME      database server host or socket directory\n"
+msgstr "  -h, --host=HOSTNAME שרת מארח של מסד הנתונים  או ספריית שקע\n"
+
+#: pg_isready.c:233
+#, c-format
+msgid "  -p, --port=PORT          database server port\n"
+msgstr "  -p, --port=PORT יציאת שרת מסד נתונים\n"
+
+#: pg_isready.c:234
+#, c-format
+msgid ""
+"  -t, --timeout=SECS       seconds to wait when attempting connection, 0 "
+"disables (default: %s)\n"
+msgstr ""
+"  -t, --timeout=SECS       שניות שיש להמתין בעת ניסיון ההתקשרות, 0 משבית "
+"(ברירת המחדל: %s)\n"
+
+#: pg_isready.c:235
+#, c-format
+msgid "  -U, --username=USERNAME  user name to connect as\n"
+msgstr "  -U, --username=USERNAME שם המשתמש להתחבר איתו\n"
+
+#: reindexdb.c:160
+#, c-format
+msgid "%s: cannot reindex all databases and a specific one at the same time\n"
+msgstr ""
+"%s: לא ניתן ליצור אינדקס מחדש עבור כל מסדי הנתונים ועבור האחד הספציפי בו "
+"זמנית\n"
+
+#: reindexdb.c:165
+#, c-format
+msgid "%s: cannot reindex all databases and system catalogs at the same time\n"
+msgstr ""
+"%s: לא ניתן ליצור אינדקס מחדש עבור כל מסדי הנתונים וכל קטלוגים של מערכת בו "
+"זמנית\n"
+
+#: reindexdb.c:170
+#, c-format
+msgid "%s: cannot reindex specific schema(s) in all databases\n"
+msgstr ""
+"%s: לא ניתן ליצור אינדקס מחדש עבור סכימה(ות) ספציפית(יות) בכל מסדי הנתונים\n"
+
+#: reindexdb.c:175
+#, c-format
+msgid "%s: cannot reindex specific table(s) in all databases\n"
+msgstr ""
+"%s: לא ניתן ליצור אינדקס מחדש עבור טבלה(ות) ספציפית(יות) בכל מסדי הנתונים\n"
+
+#: reindexdb.c:180
+#, c-format
+msgid "%s: cannot reindex specific index(es) in all databases\n"
+msgstr ""
+"%s: לא ניתן ליצור אינדקס מחדש עבור אינדקס(ים) ספציפי(ים) בכל מסדי הנתונים\n"
+
+#: reindexdb.c:191
+#, c-format
+msgid ""
+"%s: cannot reindex specific schema(s) and system catalogs at the same time\n"
+msgstr ""
+"%s: לא ניתן ליצור אינדקס מחדש עבור סכימה(ות) ספציפית(יות) וקטלוגים של מערכת "
+"בו זמנית\n"
+
+#: reindexdb.c:196
+#, c-format
+msgid ""
+"%s: cannot reindex specific table(s) and system catalogs at the same time\n"
+msgstr ""
+"%s: לא ניתן ליצור אינדקס מחדש עבור טבלה(ות) ספציפית(יות) וקטלוגים של מערכת "
+"בו זמנית\n"
+
+#: reindexdb.c:201
+#, c-format
+msgid ""
+"%s: cannot reindex specific index(es) and system catalogs at the same time\n"
+msgstr ""
+"%s: לא ניתן ליצור אינדקס מחדש עבור אינדקס(ים) ספציפי(ים)  וקטלוגים של מערכת "
+"בו זמנית\n"
+
+#: reindexdb.c:307
+#, c-format
+msgid "%s: reindexing of table \"%s\" in database \"%s\" failed: %s"
+msgstr "%s: יוצר אינדקס מחדש של הטבלה \"%s\"  במסד הנתונים '%s' נכשל: %s"
+
+#: reindexdb.c:310
+#, c-format
+msgid "%s: reindexing of index \"%s\" in database \"%s\" failed: %s"
+msgstr "%s: יוצר אינדקס מחדש של אינדקס \"%s\"  במסד הנתונים '%s' נכשל: %s"
+
+#: reindexdb.c:313
+#, c-format
+msgid "%s: reindexing of schema \"%s\" in database \"%s\" failed: %s"
+msgstr "%s: יוצר אינדקס מחדש של סכימה \"%s\"  במסד הנתונים '%s' נכשל: %s"
+
+#: reindexdb.c:316
+#, c-format
+msgid "%s: reindexing of database \"%s\" failed: %s"
+msgstr "%s: יוצר אינדקס מחדש של מסד הנתונים '%s' נכשל: %s"
+
+#: reindexdb.c:349
+#, c-format
+msgid "%s: reindexing database \"%s\"\n"
+msgstr "%s: יצור אינדקס מחדש את מסד הנתונים '%s'. \n"
+
+#: reindexdb.c:388
+#, c-format
+msgid "%s: reindexing of system catalogs failed: %s"
+msgstr "%s: יוצר אינדקס מחדש של קטלוג המערכת נכשל: %s"
+
+#: reindexdb.c:400
+#, c-format
+msgid ""
+"%s reindexes a PostgreSQL database.\n"
+"\n"
+msgstr ""
+"%s יוצר אינדקס מחדש עובר מסד נתונים PostgreSQL.\n"
+"\n"
+
+#: reindexdb.c:404
+#, c-format
+msgid "  -a, --all                 reindex all databases\n"
+msgstr "  -a, --all                 לאנדקס מחדש את כל מסדי הנתונים\n"
+
+#: reindexdb.c:405
+#, c-format
+msgid "  -d, --dbname=DBNAME       database to reindex\n"
+msgstr "  -d, --dbname=DBNAME       מסד נתונים ליצירת אינדקס מחדש\n"
+
+#: reindexdb.c:407
+#, c-format
+msgid "  -i, --index=INDEX         recreate specific index(es) only\n"
+msgstr "  -i, --index=INDEX         ,תשחזר רק אינדקס(ים) ספציפי(ים) בלבד\n"
+
+#: reindexdb.c:409
+#, c-format
+msgid "  -s, --system              reindex system catalogs\n"
+msgstr "  -s, --system              מאנדקס מחדש את קטלוגים של מערכת\n"
+
+#: reindexdb.c:410
+#, c-format
+msgid "  -S, --schema=SCHEMA       reindex specific schema(s) only\n"
+msgstr ""
+"  -S, --schema=SCHEMA       לאנדקס מחדש את הסכימה(ות) ספציפי(ות) בלבד\n"
+
+#: reindexdb.c:411
+#, c-format
+msgid "  -t, --table=TABLE         reindex specific table(s) only\n"
+msgstr ""
+"  -t, --table=TABLE         לאנדקס מחדש את הטבלה(אות) ספציפית(יות) בלבד\n"
+
+#: reindexdb.c:422
+#, c-format
+msgid ""
+"\n"
+"Read the description of the SQL command REINDEX for details.\n"
+msgstr ""
+"\n"
+"תקרא את התיאור של הפקודה REINDEX  לפרטים.\n"
+
+#: vacuumdb.c:195
+#, c-format
+msgid "%s: number of parallel jobs must be at least 1\n"
+msgstr "%s: מספר משימות מקבילות חייב להיות לפחות 1\n"
+
+#: vacuumdb.c:201
+#, c-format
+msgid "%s: too many parallel jobs requested (maximum: %d)\n"
+msgstr "%s: משימות מקבילות רבות מדי המבוקש ( מספר מרבי: %d)\n"
+
+#: vacuumdb.c:240 vacuumdb.c:246
+#, c-format
+msgid "%s: cannot use the \"%s\" option when performing only analyze\n"
+msgstr "%s: לא ניתן להשתמש באפשרות \"%s\" בעת ביצוע ניתוח בלבד\n"
+
+#: vacuumdb.c:263
+#, c-format
+msgid "%s: cannot vacuum all databases and a specific one at the same time\n"
+msgstr "%s: לא יכול לנקות את כל מסדי הנתונים ואחד ספציפי זה בו זמנית\n"
+
+#: vacuumdb.c:269
+#, c-format
+msgid "%s: cannot vacuum specific table(s) in all databases\n"
+msgstr "%s: לא יכול לנקות טבלאות ספציפיות / טבלה ספציפית בכל מסדי הנתונים\n"
+
+#: vacuumdb.c:355
+msgid "Generating minimal optimizer statistics (1 target)"
+msgstr "הפקת הסטטיסטיקה מינימלי ת עובר האופטימיזציה (יעד 1)"
+
+#: vacuumdb.c:356
+msgid "Generating medium optimizer statistics (10 targets)"
+msgstr "הפקת הסטטיסטיקה מינימלי ת עובר האופטימיזציה (10 יעדים)"
+
+#: vacuumdb.c:357
+msgid "Generating default (full) optimizer statistics"
+msgstr "הפקת הסטטיסטיקות ברירת המחדל (מלאות) עבור האופטימיזציה"
+
+#: vacuumdb.c:369
+#, c-format
+msgid "%s: processing database \"%s\": %s\n"
+msgstr "%s: מעבד מסד הנתונים '%s': %s\n"
+
+#: vacuumdb.c:372
+#, c-format
+msgid "%s: vacuuming database \"%s\"\n"
+msgstr "%s: מנקה מסד הנתונים '%s'\n"
+
+#: vacuumdb.c:708
+#, c-format
+msgid "%s: vacuuming of table \"%s\" in database \"%s\" failed: %s"
+msgstr "%s: ניקוי של \"%s\" הטבלה במסד הנתונים '%s' נכשל: %s"
+
+#: vacuumdb.c:711 vacuumdb.c:828
+#, c-format
+msgid "%s: vacuuming of database \"%s\" failed: %s"
+msgstr "%s: ניקוי של מסד הנתונים '%s' נכשל: %s"
+
+#: vacuumdb.c:942
+#, c-format
+msgid "%s: invalid socket: %s"
+msgstr "%s: שקע לא חוקית: %s"
+
+#: vacuumdb.c:951
+#, c-format
+msgid ""
+"%s cleans and analyzes a PostgreSQL database.\n"
+"\n"
+msgstr ""
+"%s מנקה ומנתח PostgreSQL מסד נתונים.\n"
+"\n"
+
+#: vacuumdb.c:955
+#, c-format
+msgid "  -a, --all                       vacuum all databases\n"
+msgstr "  -a, --all                       לנקות כל מסדי נתונים\n"
+
+#: vacuumdb.c:956
+#, c-format
+msgid "  -d, --dbname=DBNAME             database to vacuum\n"
+msgstr "  -d, --dbname=DBNAME             מסד נתונים לניקוי\n"
+
+#: vacuumdb.c:957
+#, c-format
+msgid ""
+"  -e, --echo                      show the commands being sent to the "
+"server\n"
+msgstr "  -e, --echo                להציג  את הפקודות הנשלחות לשרת\n"
+
+#: vacuumdb.c:958
+#, c-format
+msgid "  -f, --full                      do full vacuuming\n"
+msgstr "  -f, --full                      תעשה ניקוי מלא\n"
+
+#: vacuumdb.c:959
+#, c-format
+msgid "  -F, --freeze                    freeze row transaction information\n"
+msgstr "  -F, --freeze                    להקפיא נתוני הטרנסאקציה של שורה\n"
+
+#: vacuumdb.c:960
+#, c-format
+msgid ""
+"  -j, --jobs=NUM                  use this many concurrent connections to "
+"vacuum\n"
+msgstr ""
+"  -j, --jobs=NUM                  להשתמש בחיבורים מקבילים רבים לניקוי\n"
+
+#: vacuumdb.c:961
+#, c-format
+msgid "  -q, --quiet                     don't write any messages\n"
+msgstr "  -q, --quiet               אל תכתוב שום הודעות\n"
+
+#: vacuumdb.c:962
+#, c-format
+msgid "  -t, --table='TABLE[(COLUMNS)]'  vacuum specific table(s) only\n"
+msgstr "  -t, --table='TABLE[(COLUMNS)]' ואקום טבלאות ספציפיות בלבד\n"
+
+#: vacuumdb.c:963
+#, c-format
+msgid "  -v, --verbose                   write a lot of output\n"
+msgstr "  -v, --verbose             לכתוב הרבה פלט מפורט\n"
+
+#: vacuumdb.c:964
+#, c-format
+msgid ""
+"  -V, --version                   output version information, then exit\n"
+msgstr "  -V, --version             להציג מידע על הגירסה, ולאחר מכן לצאת\n"
+
+#: vacuumdb.c:965
+#, c-format
+msgid "  -z, --analyze                   update optimizer statistics\n"
+msgstr ""
+"  -z, --analyze                   לעדכן את הסטטיסטיקה עבור האופטימיזציה\n"
+
+#: vacuumdb.c:966
+#, c-format
+msgid ""
+"  -Z, --analyze-only              only update optimizer statistics; no "
+"vacuum\n"
+msgstr ""
+"  -Z, --analyze-only              רק לעדכן את הסטטיסטיקה עובר האופטימיזציה; "
+"אין ניקוי\n"
+
+#: vacuumdb.c:967
+#, c-format
+msgid ""
+"      --analyze-in-stages         only update optimizer statistics, in "
+"multiple\n"
+"                                  stages for faster results; no vacuum\n"
+msgstr ""
+"      --analyze-in-stages          רק לעדכן את סטטיסטיקה עבור האופטימיזציה, "
+"בשלבים מרובים \n"
+"                              עבור תוצאות מהירות יותר; אין ניקוי\n"
+
+#: vacuumdb.c:969
+#, c-format
+msgid "  -?, --help                      show this help, then exit\n"
+msgstr "  -?, --help                להציג עזרה זו, ולאחר מכן לצאת\n"
+
+#: vacuumdb.c:977
+#, c-format
+msgid ""
+"\n"
+"Read the description of the SQL command VACUUM for details.\n"
+msgstr ""
+"\n"
+"תקרא את התיאור של הפקודה VACUUM לפרטים.\n"

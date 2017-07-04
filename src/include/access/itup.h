@@ -4,7 +4,7 @@
  *	  POSTGRES index tuple definitions.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/access/itup.h
@@ -55,15 +55,15 @@ typedef IndexTupleData *IndexTuple;
 typedef struct IndexAttributeBitMapData
 {
 	bits8		bits[(INDEX_MAX_KEYS + 8 - 1) / 8];
-}	IndexAttributeBitMapData;
+}			IndexAttributeBitMapData;
 
-typedef IndexAttributeBitMapData *IndexAttributeBitMap;
+typedef IndexAttributeBitMapData * IndexAttributeBitMap;
 
 /*
  * t_info manipulation macros
  */
 #define INDEX_SIZE_MASK 0x1FFF
-/* bit 0x2000 is not used at present */
+/* bit 0x2000 is reserved for index-AM specific usage */
 #define INDEX_VAR_MASK	0x4000
 #define INDEX_NULL_MASK 0x8000
 
@@ -148,4 +148,4 @@ extern void index_deform_tuple(IndexTuple tup, TupleDesc tupleDescriptor,
 				   Datum *values, bool *isnull);
 extern IndexTuple CopyIndexTuple(IndexTuple source);
 
-#endif   /* ITUP_H */
+#endif							/* ITUP_H */

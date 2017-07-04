@@ -69,7 +69,7 @@ geo_distance_internal(Point *pt1, Point *pt2)
 		longdiff = TWO_PI - longdiff;
 
 	sino = sqrt(sin(fabs(lat1 - lat2) / 2.) * sin(fabs(lat1 - lat2) / 2.) +
-			cos(lat1) * cos(lat2) * sin(longdiff / 2.) * sin(longdiff / 2.));
+				cos(lat1) * cos(lat2) * sin(longdiff / 2.) * sin(longdiff / 2.));
 	if (sino > 1.)
 		sino = 1.;
 
@@ -88,15 +88,7 @@ geo_distance_internal(Point *pt1, Point *pt2)
  *
  * returns: float8
  *	 distance between the points in miles on earth's surface
- *
- * If float8 is passed-by-value, the oldstyle version-0 calling convention
- * is unportable, so we use version-1.  However, if it's passed-by-reference,
- * continue to use oldstyle.  This is just because we'd like earthdistance
- * to serve as a canary for any unintentional breakage of version-0 functions
- * with float8 results.
  ******************************************************/
-
-#ifdef USE_FLOAT8_BYVAL
 
 PG_FUNCTION_INFO_V1(geo_distance);
 
@@ -110,17 +102,3 @@ geo_distance(PG_FUNCTION_ARGS)
 	result = geo_distance_internal(pt1, pt2);
 	PG_RETURN_FLOAT8(result);
 }
-#else							/* !USE_FLOAT8_BYVAL */
-
-double	   *geo_distance(Point *pt1, Point *pt2);
-
-double *
-geo_distance(Point *pt1, Point *pt2)
-{
-	double	   *resultp = palloc(sizeof(double));
-
-	*resultp = geo_distance_internal(pt1, pt2);
-	return resultp;
-}
-
-#endif   /* USE_FLOAT8_BYVAL */

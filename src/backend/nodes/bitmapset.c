@@ -11,7 +11,7 @@
  * bms_is_empty() in preference to testing for NULL.)
  *
  *
- * Copyright (c) 2003-2016, PostgreSQL Global Development Group
+ * Copyright (c) 2003-2017, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/nodes/bitmapset.c
@@ -21,6 +21,7 @@
 #include "postgres.h"
 
 #include "access/hash.h"
+#include "nodes/pg_list.h"
 
 
 #define WORDNUM(x)	((x) / BITS_PER_BITMAPWORD)
@@ -454,6 +455,35 @@ bms_overlap(const Bitmapset *a, const Bitmapset *b)
 		if ((a->words[i] & b->words[i]) != 0)
 			return true;
 	}
+	return false;
+}
+
+/*
+ * bms_overlap_list - does a set overlap an integer list?
+ */
+bool
+bms_overlap_list(const Bitmapset *a, const List *b)
+{
+	ListCell   *lc;
+	int			wordnum,
+				bitnum;
+
+	if (a == NULL || b == NIL)
+		return false;
+
+	foreach(lc, b)
+	{
+		int			x = lfirst_int(lc);
+
+		if (x < 0)
+			elog(ERROR, "negative bitmapset member not allowed");
+		wordnum = WORDNUM(x);
+		bitnum = BITNUM(x);
+		if (wordnum < a->nwords)
+			if ((a->words[wordnum] & ((bitmapword) 1 << bitnum)) != 0)
+				return true;
+	}
+
 	return false;
 }
 

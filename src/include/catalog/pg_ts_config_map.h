@@ -4,7 +4,7 @@
  *	definition of token mappings for configurations of tsearch
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_ts_config_map.h
@@ -75,4 +75,4 @@ DATA(insert ( 3748	20	1	3765 ));
 DATA(insert ( 3748	21	1	3765 ));
 DATA(insert ( 3748	22	1	3765 ));
 
-#endif   /* PG_TS_CONFIG_MAP_H */
+#endif							/* PG_TS_CONFIG_MAP_H */

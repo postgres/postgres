@@ -1,0 +1,25 @@
+Parsed test spec with 3 sessions
+
+starting permutation: s2rx s2ry s1ry s1wy s1c s3r s2wx s2c s3c
+step s2rx: SELECT balance FROM bank_account WHERE id = 'X';
+balance        
+
+0              
+step s2ry: SELECT balance FROM bank_account WHERE id = 'Y';
+balance        
+
+0              
+step s1ry: SELECT balance FROM bank_account WHERE id = 'Y';
+balance        
+
+0              
+step s1wy: UPDATE bank_account SET balance = 20 WHERE id = 'Y';
+step s1c: COMMIT;
+step s3r: SELECT id, balance FROM bank_account WHERE id IN ('X', 'Y') ORDER BY id;
+id             balance        
+
+X              0              
+Y              20             
+step s2wx: UPDATE bank_account SET balance = -11 WHERE id = 'X';
+step s2c: COMMIT;
+step s3c: COMMIT;

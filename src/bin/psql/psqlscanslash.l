@@ -8,7 +8,7 @@
  *
  * See fe_utils/psqlscan_int.h for additional commentary.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -19,6 +19,7 @@
 #include "postgres_fe.h"
 
 #include "psqlscanslash.h"
+#include "conditional.h"
 
 #include "libpq-fe.h"
 }
@@ -230,8 +231,7 @@ other			.
 
 :{variable_char}+	{
 					/* Possible psql variable substitution */
-					if (option_type == OT_NO_EVAL ||
-						cur_state->callbacks->get_variable == NULL)
+					if (cur_state->callbacks->get_variable == NULL)
 						ECHO;
 					else
 					{
@@ -242,8 +242,8 @@ other			.
 															 yytext + 1,
 															 yyleng - 1);
 						value = cur_state->callbacks->get_variable(varname,
-																   false,
-																   false);
+																   PQUOTE_PLAIN,
+																   cur_state->cb_passthrough);
 						free(varname);
 
 						/*
@@ -267,25 +267,17 @@ other			.
 				}
 
 :'{variable_char}+'	{
-					if (option_type == OT_NO_EVAL)
-						ECHO;
-					else
-					{
-						psqlscan_escape_variable(cur_state, yytext, yyleng, false);
-						*option_quote = ':';
-					}
+					psqlscan_escape_variable(cur_state, yytext, yyleng,
+											 PQUOTE_SQL_LITERAL);
+					*option_quote = ':';
 					unquoted_option_chars = 0;
 				}
 
 
 :\"{variable_char}+\"	{
-					if (option_type == OT_NO_EVAL)
-						ECHO;
-					else
-					{
-						psqlscan_escape_variable(cur_state, yytext, yyleng, true);
-						*option_quote = ':';
-					}
+					psqlscan_escape_variable(cur_state, yytext, yyleng,
+											 PQUOTE_SQL_IDENT);
+					*option_quote = ':';
 					unquoted_option_chars = 0;
 				}
 
@@ -346,16 +338,54 @@ other			.
 
 <xslashbackquote>{
 	/*
-	 * backticked text: copy everything until next backquote, then evaluate.
-	 *
-	 * XXX Possible future behavioral change: substitute for :VARIABLE?
+	 * backticked text: copy everything until next backquote (expanding
+	 * variable references, but doing nought else), then evaluate.
 	 */
 
 "`"				{
-					/* In NO_EVAL mode, don't evaluate the command */
-					if (option_type != OT_NO_EVAL)
+					/* In an inactive \if branch, don't evaluate the command */
+					if (cur_state->cb_passthrough == NULL ||
+						conditional_active((ConditionalStack) cur_state->cb_passthrough))
 						evaluate_backtick(cur_state);
 					BEGIN(xslasharg);
+				}
+
+:{variable_char}+	{
+					/* Possible psql variable substitution */
+					if (cur_state->callbacks->get_variable == NULL)
+						ECHO;
+					else
+					{
+						char	   *varname;
+						char	   *value;
+
+						varname = psqlscan_extract_substring(cur_state,
+															 yytext + 1,
+															 yyleng - 1);
+						value = cur_state->callbacks->get_variable(varname,
+																   PQUOTE_PLAIN,
+																   cur_state->cb_passthrough);
+						free(varname);
+
+						if (value)
+						{
+							appendPQExpBufferStr(output_buf, value);
+							free(value);
+						}
+						else
+							ECHO;
+					}
+				}
+
+:'{variable_char}+'	{
+					psqlscan_escape_variable(cur_state, yytext, yyleng,
+											 PQUOTE_SHELL_ARG);
+				}
+
+:'{variable_char}*	{
+					/* Throw back everything but the colon */
+					yyless(1);
+					ECHO;
 				}
 
 {other}|\n		{ ECHO; }
@@ -638,6 +668,25 @@ psql_scan_slash_command_end(PsqlScanState state)
 	 * reselect the appropriate initial state.
 	 */
 	psql_scan_reselect_sql_lexer(state);
+}
+
+/*
+ * Fetch current paren nesting depth
+ */
+int
+psql_scan_get_paren_depth(PsqlScanState state)
+{
+	return state->paren_depth;
+}
+
+/*
+ * Set paren nesting depth
+ */
+void
+psql_scan_set_paren_depth(PsqlScanState state, int depth)
+{
+	Assert(depth >= 0);
+	state->paren_depth = depth;
 }
 
 /*

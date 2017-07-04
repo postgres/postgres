@@ -38,36 +38,41 @@ n            [0-9]+
 integer      [+-]?{n}
 real         [+-]?({n}\.{n}?|\.{n})
 float        ({integer}|{real})([eE]{integer})?
+infinity     [+-]?[iI][nN][fF]([iI][nN][iI][tT][yY])?
+NaN          [nN][aA][nN]
 
 %%
 
 {float}      yylval = yytext; return CUBEFLOAT;
+{infinity}   yylval = yytext; return CUBEFLOAT;
+{NaN}        yylval = yytext; return CUBEFLOAT;
 \[           yylval = "("; return O_BRACKET;
 \]           yylval = ")"; return C_BRACKET;
 \(           yylval = "("; return O_PAREN;
 \)           yylval = ")"; return C_PAREN;
-\,           yylval = ")"; return COMMA;
+\,           yylval = ","; return COMMA;
 [ \t\n\r\f]+ /* discard spaces */
 .            return yytext[0]; /* alert parser of the garbage */
 
 %%
 
+/* result is not used, but Bison expects this signature */
 void
 yyerror(NDBOX **result, const char *message)
 {
 	if (*yytext == YY_END_OF_BUFFER_CHAR)
 	{
 		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("bad cube representation"),
+				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+				 errmsg("invalid input syntax for cube"),
 				 /* translator: %s is typically "syntax error" */
 				 errdetail("%s at end of input", message)));
 	}
 	else
 	{
 		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("bad cube representation"),
+				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+				 errmsg("invalid input syntax for cube"),
 				 /* translator: first %s is typically "syntax error" */
 				 errdetail("%s at or near \"%s\"", message, yytext)));
 	}

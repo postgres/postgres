@@ -43,7 +43,7 @@
  * overflow.)
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -79,11 +79,10 @@
 #include "utils/ps_status.h"
 
 
+/* In this module, access gettext() via err_gettext() */
 #undef _
 #define _(x) err_gettext(x)
 
-static const char *err_gettext(const char *str) pg_attribute_format_arg(1);
-static void set_errdata_field(MemoryContextData *cxt, char **ptr, const char *str);
 
 /* Global variables */
 ErrorContextCallback *error_context_stack = NULL;
@@ -103,7 +102,7 @@ emit_log_hook_type emit_log_hook = NULL;
 
 /* GUC parameters */
 int			Log_error_verbosity = PGERROR_VERBOSE;
-char	   *Log_line_prefix = NULL;		/* format for extra log line info */
+char	   *Log_line_prefix = NULL; /* format for extra log line info */
 int			Log_destination = LOG_DESTINATION_STDERR;
 char	   *Log_destination_string = NULL;
 bool		syslog_sequence_numbers = true;
@@ -129,10 +128,9 @@ static int	syslog_facility = LOG_LOCAL0;
 static void write_syslog(int level, const char *line);
 #endif
 
-static void write_console(const char *line, int len);
-
 #ifdef WIN32
 extern char *event_source;
+
 static void write_eventlog(int level, const char *line, int len);
 #endif
 
@@ -149,7 +147,6 @@ static int	recursion_depth = 0;	/* to detect actual recursion */
  * Saved timeval and buffers for formatted timestamps that might be used by
  * both log_line_prefix and csv logs.
  */
-
 static struct timeval saved_timeval;
 static bool saved_timeval_set = false;
 
@@ -169,9 +166,16 @@ static char formatted_log_time[FORMATTED_TS_LEN];
 	} while (0)
 
 
+static const char *err_gettext(const char *str) pg_attribute_format_arg(1);
+static void set_errdata_field(MemoryContextData *cxt, char **ptr, const char *str);
+static void write_console(const char *line, int len);
+static void setup_formatted_log_time(void);
+static void setup_formatted_start_time(void);
 static const char *process_log_prefix_padding(const char *p, int *padding);
 static void log_line_prefix(StringInfo buf, ErrorData *edata);
+static void write_csvlog(ErrorData *edata);
 static void send_message_to_server_log(ErrorData *edata);
+static void write_pipe_chunks(char *data, int len, int dest);
 static void send_message_to_frontend(ErrorData *edata);
 static char *expand_fmt_string(const char *fmt, ErrorData *edata);
 static const char *useful_strerror(int errnum);
@@ -179,10 +183,6 @@ static const char *get_errno_symbol(int errnum);
 static const char *error_severity(int elevel);
 static void append_with_tabs(StringInfo buf, const char *str);
 static bool is_log_level_output(int elevel, int log_min_level);
-static void write_pipe_chunks(char *data, int len, int dest);
-static void write_csvlog(ErrorData *edata);
-static void setup_formatted_log_time(void);
-static void setup_formatted_start_time(void);
 
 
 /*
@@ -318,7 +318,7 @@ errstart(int elevel, const char *filename, int lineno,
 	 */
 	if (ErrorContext == NULL)
 	{
-		/* Ooops, hard crash time; very little we can do safely here */
+		/* Oops, hard crash time; very little we can do safely here */
 		write_stderr("error occurred at %s:%d before error message processing is available\n",
 					 filename ? filename : "(unknown file)", lineno);
 		exit(2);
@@ -331,7 +331,7 @@ errstart(int elevel, const char *filename, int lineno,
 	if (recursion_depth++ > 0 && elevel >= ERROR)
 	{
 		/*
-		 * Ooops, error during error processing.  Clear ErrorContext as
+		 * Oops, error during error processing.  Clear ErrorContext as
 		 * discussed at top of file.  We will not return to the original
 		 * error's reporter or handler, so we don't need it.
 		 */
@@ -356,7 +356,7 @@ errstart(int elevel, const char *filename, int lineno,
 		 * because it suggests an infinite loop of errors during error
 		 * recovery.
 		 */
-		errordata_stack_depth = -1;		/* make room on stack */
+		errordata_stack_depth = -1; /* make room on stack */
 		ereport(PANIC, (errmsg_internal("ERRORDATA_STACK_SIZE exceeded")));
 	}
 
@@ -627,7 +627,7 @@ errcode_for_file_access(void)
 		case ENOTDIR:			/* Not a directory */
 		case EISDIR:			/* Is a directory */
 #if defined(ENOTEMPTY) && (ENOTEMPTY != EEXIST) /* same code on AIX */
-		case ENOTEMPTY: /* Directory not empty */
+		case ENOTEMPTY:			/* Directory not empty */
 #endif
 			edata->sqlerrcode = ERRCODE_WRONG_OBJECT_TYPE;
 			break;
@@ -1302,7 +1302,7 @@ elog_start(const char *filename, int lineno, const char *funcname)
 	/* Make sure that memory context initialization has finished */
 	if (ErrorContext == NULL)
 	{
-		/* Ooops, hard crash time; very little we can do safely here */
+		/* Oops, hard crash time; very little we can do safely here */
 		write_stderr("error occurred at %s:%d before error message processing is available\n",
 					 filename ? filename : "(unknown file)", lineno);
 		exit(2);
@@ -1317,7 +1317,7 @@ elog_start(const char *filename, int lineno, const char *funcname)
 		 * else failure to convert it to client encoding could cause further
 		 * recursion.
 		 */
-		errordata_stack_depth = -1;		/* make room on stack */
+		errordata_stack_depth = -1; /* make room on stack */
 		ereport(PANIC, (errmsg_internal("ERRORDATA_STACK_SIZE exceeded")));
 	}
 
@@ -1601,7 +1601,10 @@ FlushErrorState(void)
 /*
  * ThrowErrorData --- report an error described by an ErrorData structure
  *
- * This is intended to be used to re-report errors originally thrown by
+ * This is somewhat like ReThrowError, but it allows elevels besides ERROR,
+ * and the boolean flags such as output_to_server are computed via the
+ * default rules rather than being copied from the given ErrorData.
+ * This is primarily used to re-report errors originally reported by
  * background worker processes and then propagated (with or without
  * modification) to the backend responsible for them.
  */
@@ -1613,13 +1616,14 @@ ThrowErrorData(ErrorData *edata)
 
 	if (!errstart(edata->elevel, edata->filename, edata->lineno,
 				  edata->funcname, NULL))
-		return;
+		return;					/* error is not to be reported at all */
 
 	newedata = &errordata[errordata_stack_depth];
-	oldcontext = MemoryContextSwitchTo(edata->assoc_context);
+	recursion_depth++;
+	oldcontext = MemoryContextSwitchTo(newedata->assoc_context);
 
-	/* Copy the supplied fields to the error stack. */
-	if (edata->sqlerrcode > 0)
+	/* Copy the supplied fields to the error stack entry. */
+	if (edata->sqlerrcode != 0)
 		newedata->sqlerrcode = edata->sqlerrcode;
 	if (edata->message)
 		newedata->message = pstrdup(edata->message);
@@ -1631,6 +1635,7 @@ ThrowErrorData(ErrorData *edata)
 		newedata->hint = pstrdup(edata->hint);
 	if (edata->context)
 		newedata->context = pstrdup(edata->context);
+	/* assume message_id is not available */
 	if (edata->schema_name)
 		newedata->schema_name = pstrdup(edata->schema_name);
 	if (edata->table_name)
@@ -1641,11 +1646,15 @@ ThrowErrorData(ErrorData *edata)
 		newedata->datatype_name = pstrdup(edata->datatype_name);
 	if (edata->constraint_name)
 		newedata->constraint_name = pstrdup(edata->constraint_name);
+	newedata->cursorpos = edata->cursorpos;
+	newedata->internalpos = edata->internalpos;
 	if (edata->internalquery)
 		newedata->internalquery = pstrdup(edata->internalquery);
 
 	MemoryContextSwitchTo(oldcontext);
+	recursion_depth--;
 
+	/* Process the error. */
 	errfinish(0);
 }
 
@@ -1675,7 +1684,7 @@ ReThrowError(ErrorData *edata)
 		 * because it suggests an infinite loop of errors during error
 		 * recovery.
 		 */
-		errordata_stack_depth = -1;		/* make room on stack */
+		errordata_stack_depth = -1; /* make room on stack */
 		ereport(PANIC, (errmsg_internal("ERRORDATA_STACK_SIZE exceeded")));
 	}
 
@@ -1801,7 +1810,7 @@ GetErrorContextStack(void)
 		 * because it suggests an infinite loop of errors during error
 		 * recovery.
 		 */
-		errordata_stack_depth = -1;		/* make room on stack */
+		errordata_stack_depth = -1; /* make room on stack */
 		ereport(PANIC, (errmsg_internal("ERRORDATA_STACK_SIZE exceeded")));
 	}
 
@@ -1867,7 +1876,7 @@ DebugFileOpen(void)
 					   0666)) < 0)
 			ereport(FATAL,
 					(errcode_for_file_access(),
-				  errmsg("could not open file \"%s\": %m", OutputFileName)));
+					 errmsg("could not open file \"%s\": %m", OutputFileName)));
 		istty = isatty(fd);
 		close(fd);
 
@@ -2038,7 +2047,7 @@ write_syslog(int level, const char *line)
 			syslog(level, "%s", line);
 	}
 }
-#endif   /* HAVE_SYSLOG */
+#endif							/* HAVE_SYSLOG */
 
 #ifdef WIN32
 /*
@@ -2070,7 +2079,7 @@ write_eventlog(int level, const char *line, int len)
 	if (evtHandle == INVALID_HANDLE_VALUE)
 	{
 		evtHandle = RegisterEventSource(NULL,
-						 event_source ? event_source : DEFAULT_EVENT_SOURCE);
+										event_source ? event_source : DEFAULT_EVENT_SOURCE);
 		if (evtHandle == NULL)
 		{
 			evtHandle = INVALID_HANDLE_VALUE;
@@ -2142,7 +2151,7 @@ write_eventlog(int level, const char *line, int len)
 				 &line,
 				 NULL);
 }
-#endif   /* WIN32 */
+#endif							/* WIN32 */
 
 static void
 write_console(const char *line, int len)
@@ -2219,7 +2228,7 @@ static void
 setup_formatted_log_time(void)
 {
 	pg_time_t	stamp_time;
-	char		msbuf[8];
+	char		msbuf[13];
 
 	if (!saved_timeval_set)
 	{
@@ -2475,8 +2484,9 @@ log_line_prefix(StringInfo buf, ErrorData *edata)
 						saved_timeval_set = true;
 					}
 
-					sprintf(strfbuf, "%ld.%03d", saved_timeval.tv_sec,
-							(int) (saved_timeval.tv_usec / 1000));
+					snprintf(strfbuf, sizeof(strfbuf), "%ld.%03d",
+							 (long) saved_timeval.tv_sec,
+							 (int) (saved_timeval.tv_usec / 1000));
 
 					if (padding != 0)
 						appendStringInfo(buf, "%*s", padding, strfbuf);
@@ -2744,7 +2754,7 @@ write_csvlog(ErrorData *edata)
 	appendStringInfoChar(&buf, ',');
 
 	/* Error severity */
-	appendStringInfoString(&buf, error_severity(edata->elevel));
+	appendStringInfoString(&buf, _(error_severity(edata->elevel)));
 	appendStringInfoChar(&buf, ',');
 
 	/* SQL state code */
@@ -2861,7 +2871,7 @@ send_message_to_server_log(ErrorData *edata)
 	formatted_log_time[0] = '\0';
 
 	log_line_prefix(&buf, edata);
-	appendStringInfo(&buf, "%s:  ", error_severity(edata->elevel));
+	appendStringInfo(&buf, "%s:  ", _(error_severity(edata->elevel)));
 
 	if (Log_error_verbosity >= PGERROR_VERBOSE)
 		appendStringInfo(&buf, "%s: ", unpack_sql_state(edata->sqlerrcode));
@@ -2987,7 +2997,7 @@ send_message_to_server_log(ErrorData *edata)
 
 		write_syslog(syslog_level, buf.data);
 	}
-#endif   /* HAVE_SYSLOG */
+#endif							/* HAVE_SYSLOG */
 
 #ifdef WIN32
 	/* Write to eventlog, if enabled */
@@ -2995,7 +3005,7 @@ send_message_to_server_log(ErrorData *edata)
 	{
 		write_eventlog(edata->elevel, buf.data, buf.len);
 	}
-#endif   /* WIN32 */
+#endif							/* WIN32 */
 
 	/* Write to stderr, if enabled */
 	if ((Log_destination & LOG_DESTINATION_STDERR) || whereToSendOutput == DestDebug)
@@ -3144,12 +3154,16 @@ send_message_to_frontend(ErrorData *edata)
 	if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 3)
 	{
 		/* New style with separate fields */
+		const char *sev;
 		char		tbuf[12];
 		int			ssval;
 		int			i;
 
+		sev = error_severity(edata->elevel);
 		pq_sendbyte(&msgbuf, PG_DIAG_SEVERITY);
-		err_sendstring(&msgbuf, error_severity(edata->elevel));
+		err_sendstring(&msgbuf, _(sev));
+		pq_sendbyte(&msgbuf, PG_DIAG_SEVERITY_NONLOCALIZED);
+		err_sendstring(&msgbuf, sev);
 
 		/* unpack MAKE_SQLSTATE code */
 		ssval = edata->sqlerrcode;
@@ -3259,7 +3273,7 @@ send_message_to_frontend(ErrorData *edata)
 			err_sendstring(&msgbuf, edata->funcname);
 		}
 
-		pq_sendbyte(&msgbuf, '\0');		/* terminator */
+		pq_sendbyte(&msgbuf, '\0'); /* terminator */
 	}
 	else
 	{
@@ -3268,7 +3282,7 @@ send_message_to_frontend(ErrorData *edata)
 
 		initStringInfo(&buf);
 
-		appendStringInfo(&buf, "%s:  ", error_severity(edata->elevel));
+		appendStringInfo(&buf, "%s:  ", _(error_severity(edata->elevel)));
 
 		if (edata->show_funcname && edata->funcname)
 			appendStringInfo(&buf, "%s: ", edata->funcname);
@@ -3578,7 +3592,10 @@ get_errno_symbol(int errnum)
 
 
 /*
- * error_severity --- get localized string representing elevel
+ * error_severity --- get string representing elevel
+ *
+ * The string is not localized here, but we mark the strings for translation
+ * so that callers can invoke _() on the result.
  */
 static const char *
 error_severity(int elevel)
@@ -3592,29 +3609,29 @@ error_severity(int elevel)
 		case DEBUG3:
 		case DEBUG4:
 		case DEBUG5:
-			prefix = _("DEBUG");
+			prefix = gettext_noop("DEBUG");
 			break;
 		case LOG:
 		case LOG_SERVER_ONLY:
-			prefix = _("LOG");
+			prefix = gettext_noop("LOG");
 			break;
 		case INFO:
-			prefix = _("INFO");
+			prefix = gettext_noop("INFO");
 			break;
 		case NOTICE:
-			prefix = _("NOTICE");
+			prefix = gettext_noop("NOTICE");
 			break;
 		case WARNING:
-			prefix = _("WARNING");
+			prefix = gettext_noop("WARNING");
 			break;
 		case ERROR:
-			prefix = _("ERROR");
+			prefix = gettext_noop("ERROR");
 			break;
 		case FATAL:
-			prefix = _("FATAL");
+			prefix = gettext_noop("FATAL");
 			break;
 		case PANIC:
-			prefix = _("PANIC");
+			prefix = gettext_noop("PANIC");
 			break;
 		default:
 			prefix = "???";

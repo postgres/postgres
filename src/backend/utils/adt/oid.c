@@ -3,7 +3,7 @@
  * oid.c
  *	  Functions for the built-in type Oid ... also oidvector.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -19,6 +19,7 @@
 
 #include "catalog/pg_type.h"
 #include "libpq/pqformat.h"
+#include "nodes/value.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 
@@ -40,8 +41,8 @@ oidin_subr(const char *s, char **endloc)
 	if (*s == '\0')
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("invalid input syntax for type oid: \"%s\"",
-						s)));
+				 errmsg("invalid input syntax for type %s: \"%s\"",
+						"oid", s)));
 
 	errno = 0;
 	cvt = strtoul(s, &endptr, 10);
@@ -54,19 +55,20 @@ oidin_subr(const char *s, char **endloc)
 	if (errno && errno != ERANGE && errno != EINVAL)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("invalid input syntax for type oid: \"%s\"",
-						s)));
+				 errmsg("invalid input syntax for type %s: \"%s\"",
+						"oid", s)));
 
 	if (endptr == s && *s != '\0')
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("invalid input syntax for type oid: \"%s\"",
-						s)));
+				 errmsg("invalid input syntax for type %s: \"%s\"",
+						"oid", s)));
 
 	if (errno == ERANGE)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("value \"%s\" is out of range for type oid", s)));
+				 errmsg("value \"%s\" is out of range for type %s",
+						s, "oid")));
 
 	if (endloc)
 	{
@@ -81,8 +83,8 @@ oidin_subr(const char *s, char **endloc)
 		if (*endptr)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-					 errmsg("invalid input syntax for type oid: \"%s\"",
-							s)));
+					 errmsg("invalid input syntax for type %s: \"%s\"",
+							"oid", s)));
 	}
 
 	result = (Oid) cvt;
@@ -104,7 +106,8 @@ oidin_subr(const char *s, char **endloc)
 		cvt != (unsigned long) ((int) result))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("value \"%s\" is out of range for type oid", s)));
+				 errmsg("value \"%s\" is out of range for type %s",
+						s, "oid")));
 #endif
 
 	return result;
@@ -326,6 +329,20 @@ oidparse(Node *node)
 			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(node));
 	}
 	return InvalidOid;			/* keep compiler quiet */
+}
+
+/* qsort comparison function for Oids */
+int
+oid_cmp(const void *p1, const void *p2)
+{
+	Oid			v1 = *((const Oid *) p1);
+	Oid			v2 = *((const Oid *) p2);
+
+	if (v1 < v2)
+		return -1;
+	if (v1 > v2)
+		return 1;
+	return 0;
 }
 
 

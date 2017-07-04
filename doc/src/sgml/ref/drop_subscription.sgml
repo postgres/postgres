@@ -1,0 +1,125 @@
+<!--
+doc/src/sgml/ref/drop_subscription.sgml
+PostgreSQL documentation
+-->
+
+<refentry id="SQL-DROPSUBSCRIPTION">
+ <indexterm zone="sql-dropsubscription">
+  <primary>DROP SUBSCRIPTION</primary>
+ </indexterm>
+
+ <refmeta>
+  <refentrytitle>DROP SUBSCRIPTION</refentrytitle>
+  <manvolnum>7</manvolnum>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>DROP SUBSCRIPTION</refname>
+  <refpurpose>remove a subscription</refpurpose>
+ </refnamediv>
+
+ <refsynopsisdiv>
+<synopsis>
+DROP SUBSCRIPTION [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [ CASCADE | RESTRICT ]
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>DROP SUBSCRIPTION</command> removes a subscription from the
+   database cluster.
+  </para>
+
+  <para>
+   A subscription can only be dropped by a superuser.
+  </para>
+
+  <para>
+   <command>DROP SUBSCRIPTION</command> cannot be executed inside a
+   transaction block if the subscription is associated with a replication
+   slot.  (You can use <command>ALTER SUBSCRIPTION</command> to unset the
+   slot.)
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="parameter">name</replaceable></term>
+    <listitem>
+     <para>
+      The name of a subscription to be dropped.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>CASCADE</literal></term>
+    <term><literal>RESTRICT</literal></term>
+
+    <listitem>
+     <para>
+      These key words do not have any effect, since there are no dependencies
+      on subscriptions.
+     </para>
+    </listitem>
+   </varlistentry>
+
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   When dropping a subscription that is associated with a replication slot on
+   the remote host (the normal state), <command>DROP SUBSCRIPTION</command>
+   will connect to the remote host and try to drop the replication slot as
+   part of its operation.  This is necessary so that the resources allocated
+   for the subscription on the remote host are released.  If this fails,
+   either because the remote host is not reachable or because the remote
+   replication slot cannot be dropped or does not exist or never existed,
+   the <command>DROP SUBSCRIPTION</command> command will fail.  To proceed in
+   this situation, disassociate the subscription from the replication slot by
+   executing <literal>ALTER SUBSCRIPTION ... SET (slot_name = NONE)</literal>.
+   After that, <command>DROP SUBSCRIPTION</command> will no longer attempt any
+   actions on a remote host.  Note that if the remote replication slot still
+   exists, it should then be dropped manually; otherwise it will continue to
+   reserve WAL and might eventually cause the disk to fill up.  See
+   also <xref linkend="logical-replication-subscription-slot">.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
+  <para>
+   Drop a subscription:
+<programlisting>
+DROP SUBSCRIPTION mysub;
+</programlisting></para>
+ </refsect1>
+
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   <command>DROP SUBSCRIPTION</command> is a <productname>PostgreSQL</>
+   extension.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-createsubscription"></member>
+   <member><xref linkend="sql-altersubscription"></member>
+  </simplelist>
+ </refsect1>
+</refentry>

@@ -4,7 +4,7 @@
  *	  prototypes for discard.c.
  *
  *
- * Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Copyright (c) 1996-2017, PostgreSQL Global Development Group
  *
  * src/include/commands/discard.h
  *
@@ -17,4 +17,4 @@
 
 extern void DiscardCommand(DiscardStmt *stmt, bool isTopLevel);
 
-#endif   /* DISCARD_H */
+#endif							/* DISCARD_H */

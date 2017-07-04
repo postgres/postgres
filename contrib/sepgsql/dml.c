@@ -4,7 +4,7 @@
  *
  * Routines to handle DML permission checks
  *
- * Copyright (c) 2010-2016, PostgreSQL Global Development Group
+ * Copyright (c) 2010-2017, PostgreSQL Global Development Group
  *
  * -------------------------------------------------------------------------
  */
@@ -190,6 +190,7 @@ check_relation_privileges(Oid relOid,
 	switch (relkind)
 	{
 		case RELKIND_RELATION:
+		case RELKIND_PARTITIONED_TABLE:
 			result = sepgsql_avc_check_perms(&object,
 											 SEPG_CLASS_DB_TABLE,
 											 required,
@@ -225,7 +226,7 @@ check_relation_privileges(Oid relOid,
 	/*
 	 * Only columns owned by relations shall be checked
 	 */
-	if (relkind != RELKIND_RELATION)
+	if (relkind != RELKIND_RELATION && relkind != RELKIND_PARTITIONED_TABLE)
 		return true;
 
 	/*

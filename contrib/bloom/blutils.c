@@ -3,7 +3,7 @@
  * blutils.c
  *		Bloom index utilities.
  *
- * Portions Copyright (c) 2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2016-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1990-1993, Regents of the University of California
  *
  * IDENTIFICATION
@@ -75,7 +75,7 @@ _PG_init(void)
 		bl_relopt_tab[i + 1].optname = MemoryContextStrdup(TopMemoryContext,
 														   buf);
 		bl_relopt_tab[i + 1].opttype = RELOPT_TYPE_INT;
-		bl_relopt_tab[i + 1].offset = offsetof(BloomOptions, bitSize[i]);
+		bl_relopt_tab[i + 1].offset = offsetof(BloomOptions, bitSize[0]) + sizeof(int) * i;
 	}
 }
 
@@ -119,6 +119,7 @@ blhandler(PG_FUNCTION_ARGS)
 	amroutine->amstorage = false;
 	amroutine->amclusterable = false;
 	amroutine->ampredlocks = false;
+	amroutine->amcanparallel = false;
 	amroutine->amkeytype = InvalidOid;
 
 	amroutine->ambuild = blbuild;
@@ -138,6 +139,9 @@ blhandler(PG_FUNCTION_ARGS)
 	amroutine->amendscan = blendscan;
 	amroutine->ammarkpos = NULL;
 	amroutine->amrestrpos = NULL;
+	amroutine->amestimateparallelscan = NULL;
+	amroutine->aminitparallelscan = NULL;
+	amroutine->amparallelrescan = NULL;
 
 	PG_RETURN_POINTER(amroutine);
 }

@@ -6,6 +6,9 @@
 
 SET client_encoding TO UTF8;
 
+CREATE SCHEMA collate_tests;
+SET search_path = collate_tests;
+
 
 CREATE TABLE collate_test1 (
     a int,
@@ -133,6 +136,25 @@ SELECT * FROM collate_test1 WHERE b ~ 'bc';
 SELECT * FROM collate_test1 WHERE b ~* '^abc$';
 SELECT * FROM collate_test1 WHERE b ~* '^abc';
 SELECT * FROM collate_test1 WHERE b ~* 'bc';
+
+CREATE TABLE collate_test6 (
+    a int,
+    b text COLLATE "en_US"
+);
+INSERT INTO collate_test6 VALUES (1, 'abc'), (2, 'ABC'), (3, '123'), (4, 'ab1'),
+                                 (5, 'a1!'), (6, 'a c'), (7, '!.;'), (8, '   '),
+                                 (9, 'äbç'), (10, 'ÄBÇ');
+SELECT b,
+       b ~ '^[[:alpha:]]+$' AS is_alpha,
+       b ~ '^[[:upper:]]+$' AS is_upper,
+       b ~ '^[[:lower:]]+$' AS is_lower,
+       b ~ '^[[:digit:]]+$' AS is_digit,
+       b ~ '^[[:alnum:]]+$' AS is_alnum,
+       b ~ '^[[:graph:]]+$' AS is_graph,
+       b ~ '^[[:print:]]+$' AS is_print,
+       b ~ '^[[:punct:]]+$' AS is_punct,
+       b ~ '^[[:space:]]+$' AS is_space
+FROM collate_test6;
 
 SELECT 'Türkiye' COLLATE "en_US" ~* 'KI' AS "true";
 SELECT 'Türkiye' COLLATE "tr_TR" ~* 'KI' AS "false";
@@ -325,6 +347,8 @@ BEGIN
 END
 $$;
 CREATE COLLATION test0 FROM "C"; -- fail, duplicate name
+CREATE COLLATION IF NOT EXISTS test0 FROM "C"; -- ok, skipped
+CREATE COLLATION IF NOT EXISTS test0 (locale = 'foo'); -- ok, skipped
 do $$
 BEGIN
   EXECUTE 'CREATE COLLATION test1 (lc_collate = ' ||
@@ -335,6 +359,7 @@ END
 $$;
 CREATE COLLATION test3 (lc_collate = 'en_US.utf8'); -- fail, need lc_ctype
 CREATE COLLATION testx (locale = 'nonsense'); -- fail
+CREATE COLLATION testy (locale = 'en_US.utf8', version = 'foo'); -- fail, no versions for libc
 
 CREATE COLLATION test4 FROM nonsense;
 CREATE COLLATION test5 FROM test0;
@@ -364,6 +389,11 @@ SELECT collname FROM pg_collation WHERE collname LIKE 'test%';
 
 DROP SCHEMA test_schema;
 DROP ROLE regress_test_role;
+
+
+-- ALTER
+
+ALTER COLLATION "en_US" REFRESH VERSION;
 
 
 -- dependencies
@@ -396,3 +426,7 @@ select textrange_en_us('A','Z') @> 'b'::text;
 
 drop type textrange_c;
 drop type textrange_en_us;
+
+
+-- cleanup
+DROP SCHEMA collate_tests CASCADE;

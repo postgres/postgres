@@ -3,7 +3,7 @@
  * parse_agg.h
  *	  handle aggregates and window functions in parser
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/parser/parse_agg.h
@@ -65,4 +65,4 @@ extern void build_aggregate_finalfn_expr(Oid *agg_input_types,
 							 Oid finalfn_oid,
 							 Expr **finalfnexpr);
 
-#endif   /* PARSE_AGG_H */
+#endif							/* PARSE_AGG_H */

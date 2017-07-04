@@ -4,7 +4,7 @@
  *	 Implementation of generic xlog records.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/backend/access/transam/generic_xlog.c
@@ -13,6 +13,7 @@
  */
 #include "postgres.h"
 
+#include "access/bufmask.h"
 #include "access/generic_xlog.h"
 #include "access/xlogutils.h"
 #include "miscadmin.h"
@@ -532,4 +533,15 @@ generic_redo(XLogReaderState *record)
 		if (BufferIsValid(buffers[block_id]))
 			UnlockReleaseBuffer(buffers[block_id]);
 	}
+}
+
+/*
+ * Mask a generic page before performing consistency checks on it.
+ */
+void
+generic_mask(char *page, BlockNumber blkno)
+{
+	mask_page_lsn(page);
+
+	mask_unused_space(page);
 }

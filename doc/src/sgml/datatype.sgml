@@ -167,6 +167,12 @@
       </row>
 
       <row>
+       <entry><type>macaddr8</type></entry>
+       <entry></entry>
+       <entry>MAC (Media Access Control) address (EUI-64 format)</entry>
+      </row>
+
+      <row>
        <entry><type>money</type></entry>
        <entry></entry>
        <entry>currency amount</entry>
@@ -750,7 +756,7 @@ FROM generate_series(-3.5, 3.5, 1) as x;
      floating-point arithmetic does not follow IEEE 754, these values
      will probably not work as expected.)  When writing these values
      as constants in an SQL command, you must put quotes around them,
-     for example <literal>UPDATE table SET x = 'Infinity'</>.  On input,
+     for example <literal>UPDATE table SET x = '-Infinity'</>.  On input,
      these strings are recognized in a case-insensitive manner.
     </para>
 
@@ -937,7 +943,7 @@ ALTER SEQUENCE <replaceable class="parameter">tablename</replaceable>_<replaceab
       </thead>
       <tbody>
        <row>
-        <entry>money</entry>
+        <entry><type>money</type></entry>
         <entry>8 bytes</entry>
         <entry>currency amount</entry>
         <entry>-92233720368547758.08 to +92233720368547758.07</entry>
@@ -977,6 +983,11 @@ SELECT '52093.89'::money::numeric::float8;
    </para>
 
    <para>
+    Division of a <type>money</type> value by an integer value is performed
+    with truncation of the fractional part towards zero.  To get a rounded
+    result, divide by a floating-point value, or cast the <type>money</type>
+    value to <type>numeric</> before dividing and back to <type>money</type>
+    afterwards.  (The latter is preferable to avoid risking precision loss.)
     When a <type>money</type> value is divided by another <type>money</type>
     value, the result is <type>double precision</type> (i.e., a pure number,
     not money); the currency units cancel each other out in the division.
@@ -1580,7 +1591,7 @@ SELECT E'\\xDEADBEEF';
         <entry>both date and time (no time zone)</entry>
         <entry>4713 BC</entry>
         <entry>294276 AD</entry>
-        <entry>1 microsecond / 14 digits</entry>
+        <entry>1 microsecond</entry>
        </row>
        <row>
         <entry><type>timestamp [ (<replaceable>p</replaceable>) ] with time zone</type></entry>
@@ -1588,7 +1599,7 @@ SELECT E'\\xDEADBEEF';
         <entry>both date and time, with time zone</entry>
         <entry>4713 BC</entry>
         <entry>294276 AD</entry>
-        <entry>1 microsecond / 14 digits</entry>
+        <entry>1 microsecond</entry>
        </row>
        <row>
         <entry><type>date</type></entry>
@@ -1604,15 +1615,15 @@ SELECT E'\\xDEADBEEF';
         <entry>time of day (no date)</entry>
         <entry>00:00:00</entry>
         <entry>24:00:00</entry>
-        <entry>1 microsecond / 14 digits</entry>
+        <entry>1 microsecond</entry>
        </row>
        <row>
         <entry><type>time [ (<replaceable>p</replaceable>) ] with time zone</type></entry>
         <entry>12 bytes</entry>
-        <entry>times of day only, with time zone</entry>
+        <entry>time of day (no date), with time zone</entry>
         <entry>00:00:00+1459</entry>
         <entry>24:00:00-1459</entry>
-        <entry>1 microsecond / 14 digits</entry>
+        <entry>1 microsecond</entry>
        </row>
        <row>
         <entry><type>interval [ <replaceable>fields</replaceable> ] [ (<replaceable>p</replaceable>) ]</type></entry>
@@ -1620,7 +1631,7 @@ SELECT E'\\xDEADBEEF';
         <entry>time interval</entry>
         <entry>-178000000 years</entry>
         <entry>178000000 years</entry>
-        <entry>1 microsecond / 14 digits</entry>
+        <entry>1 microsecond</entry>
        </row>
       </tbody>
      </tgroup>
@@ -1643,40 +1654,7 @@ SELECT E'\\xDEADBEEF';
     <replaceable>p</replaceable> which specifies the number of
     fractional digits retained in the seconds field. By default, there
     is no explicit bound on precision.  The allowed range of
-    <replaceable>p</replaceable> is from 0 to 6 for the
-    <type>timestamp</type> and <type>interval</type> types.
-   </para>
-
-   <note>
-   <para>
-    When <type>timestamp</> values are stored as eight-byte integers
-    (currently the default), microsecond precision is available over
-    the full range of values. When <type>timestamp</> values are
-    stored as double precision floating-point numbers instead (a
-    deprecated compile-time option), the effective limit of precision
-    might be less than 6. <type>timestamp</type> values are stored as
-    seconds before or after midnight 2000-01-01.  When
-    <type>timestamp</type> values are implemented using floating-point
-    numbers, microsecond precision is achieved for dates within a few
-    years of 2000-01-01, but the precision degrades for dates further
-    away. Note that using floating-point datetimes allows a larger
-    range of <type>timestamp</type> values to be represented than
-    shown above: from 4713 BC up to 5874897 AD.
-   </para>
-
-   <para>
-    The same compile-time option also determines whether
-    <type>time</type> and <type>interval</type> values are stored as
-    floating-point numbers or eight-byte integers.  In the
-    floating-point case, large <type>interval</type> values degrade in
-    precision as the size of the interval increases.
-   </para>
-   </note>
-
-   <para>
-    For the <type>time</type> types, the allowed range of
-    <replaceable>p</replaceable> is from 0 to 6 when eight-byte integer
-    storage is used, or from 0 to 10 when floating-point storage is used.
+    <replaceable>p</replaceable> is from 0 to 6.
    </para>
 
    <para>
@@ -1759,9 +1737,10 @@ MINUTE TO SECOND
      specification giving the number of
      fractional digits in the seconds field. Precision can be
      specified for <type>time</type>, <type>timestamp</type>, and
-     <type>interval</type> types.  The allowed values are mentioned
-     above.  If no precision is specified in a constant specification,
-     it defaults to the precision of the literal value.
+     <type>interval</type> types, and can range from 0 to 6.
+     If no precision is specified in a constant specification,
+     it defaults to the precision of the literal value (but not
+     more than 6 digits).
     </para>
 
     <sect3>
@@ -3460,6 +3439,12 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
         <entry>MAC addresses</entry>
        </row>
 
+       <row>
+        <entry><type>macaddr8</type></entry>
+        <entry>8 bytes</entry>
+        <entry>MAC addresses (EUI-64 format)</entry>
+       </row>
+
       </tbody>
      </tgroup>
     </table>
@@ -3698,6 +3683,77 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
     <para>
      The remaining five input formats are not part of any standard.
     </para>
+   </sect2>
+
+   <sect2 id="datatype-macaddr8">
+    <title><type>macaddr8</type></title>
+
+    <indexterm>
+     <primary>macaddr8 (data type)</primary>
+    </indexterm>
+
+    <indexterm>
+     <primary>MAC address (EUI-64 format)</primary>
+     <see>macaddr</see>
+    </indexterm>
+
+    <para>
+     The <type>macaddr8</> type stores MAC addresses in EUI-64
+     format, known for example from Ethernet card hardware addresses
+     (although MAC addresses are used for other purposes as well).
+     This type can accept both 6 and 8 byte length MAC addresses
+     and stores them in 8 byte length format.  MAC addresses given
+     in 6 byte format will be stored in 8 byte length format with the
+     4th and 5th bytes set to FF and FE, respectively.
+
+     Note that IPv6 uses a modified EUI-64 format where the 7th bit
+     should be set to one after the conversion from EUI-48.  The
+     function <function>macaddr8_set7bit</> is provided to make this
+     change.
+
+     Generally speaking, any input which is comprised of pairs of hex
+     digits (on byte boundaries), optionally separated consistently by
+     one of <literal>':'</>, <literal>'-'</> or <literal>'.'</>, is
+     accepted.  The number of hex digits must be either 16 (8 bytes) or
+     12 (6 bytes).  Leading and trailing whitespace is ignored.
+
+     The following are examples of input formats that are accepted:
+
+     <simplelist>
+      <member><literal>'08:00:2b:01:02:03:04:05'</></member>
+      <member><literal>'08-00-2b-01-02-03-04-05'</></member>
+      <member><literal>'08002b:0102030405'</></member>
+      <member><literal>'08002b-0102030405'</></member>
+      <member><literal>'0800.2b01.0203.0405'</></member>
+      <member><literal>'0800-2b01-0203-0405'</></member>
+      <member><literal>'08002b01:02030405'</></member>
+      <member><literal>'08002b0102030405'</></member>
+     </simplelist>
+
+     These examples would all specify the same address.  Upper and
+     lower case is accepted for the digits
+     <literal>a</> through <literal>f</>.  Output is always in the
+     first of the forms shown.
+
+     The last six input formats that are mentioned above are not part
+     of any standard.
+
+     To convert a traditional 48 bit MAC address in EUI-48 format to
+     modified EUI-64 format to be included as the host portion of an
+     IPv6 address, use <function>macaddr8_set7bit</> as shown:
+
+<programlisting>
+SELECT macaddr8_set7bit('08:00:2b:01:02:03');
+<computeroutput>
+    macaddr8_set7bit     
+-------------------------
+ 0a:00:2b:ff:fe:01:02:03
+(1 row)
+</computeroutput>
+</programlisting>
+
+    </para>
+
    </sect2>
 
   </sect1>
@@ -3959,15 +4015,7 @@ SELECT 'fat &amp; rat &amp; ! cat'::tsquery;
         tsquery         
 ------------------------
  'fat' &amp; 'rat' &amp; !'cat'
-
-SELECT '(fat | rat) &lt;-&gt; cat'::tsquery;
-              tsquery
------------------------------------
- 'fat' &lt;-&gt; 'cat' | 'rat' &lt;-&gt; 'cat'
 </programlisting>
-
-     The last example demonstrates that <type>tsquery</type> sometimes
-     rearranges nested operators into a logically equivalent formulation.
     </para>
 
     <para>
@@ -4579,7 +4627,7 @@ SELECT * FROM pg_attribute
 
    <para>
     The <type>pg_lsn</type> data type can be used to store LSN (Log Sequence
-    Number) data which is a pointer to a location in the XLOG. This type is a
+    Number) data which is a pointer to a location in the WAL. This type is a
     representation of <type>XLogRecPtr</type> and an internal system type of
     <productname>PostgreSQL</productname>.
    </para>
@@ -4592,7 +4640,7 @@ SELECT * FROM pg_attribute
     standard comparison operators, like <literal>=</literal> and
     <literal>&gt;</literal>.  Two LSNs can be subtracted using the
     <literal>-</literal> operator; the result is the number of bytes separating
-    those write-ahead log positions.
+    those write-ahead log locations.
    </para>
   </sect1>
 
@@ -4665,6 +4713,10 @@ SELECT * FROM pg_attribute
 
    <indexterm zone="datatype-pseudo">
     <primary>internal</primary>
+   </indexterm>
+
+   <indexterm zone="datatype-pseudo">
+    <primary>unknown</primary>
    </indexterm>
 
    <indexterm zone="datatype-pseudo">
@@ -4789,8 +4841,15 @@ SELECT * FROM pg_attribute
        </row>
 
        <row>
+        <entry><type>unknown</></entry>
+        <entry>Identifies a not-yet-resolved type, e.g. of an undecorated
+         string literal.</entry>
+       </row>
+
+       <row>
         <entry><type>opaque</></entry>
-        <entry>An obsolete type name that formerly served all the above purposes.</entry>
+        <entry>An obsolete type name that formerly served many of the above
+         purposes.</entry>
        </row>
       </tbody>
      </tgroup>

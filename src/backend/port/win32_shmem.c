@@ -3,7 +3,7 @@
  * win32_shmem.c
  *	  Implement shared memory using win32 facilities
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/port/win32_shmem.c
@@ -49,7 +49,7 @@ GetSharedMemName(void)
 		elog(FATAL, "could not get size for full pathname of datadir %s: error code %lu",
 			 DataDir, GetLastError());
 
-	retptr = malloc(bufsize + 18);		/* 18 for Global\PostgreSQL: */
+	retptr = malloc(bufsize + 18);	/* 18 for Global\PostgreSQL: */
 	if (retptr == NULL)
 		elog(FATAL, "could not allocate memory for shared memory name");
 
@@ -163,9 +163,9 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port,
 
 		hmap = CreateFileMapping(INVALID_HANDLE_VALUE,	/* Use the pagefile */
 								 NULL,	/* Default security attrs */
-								 PAGE_READWRITE,		/* Memory is Read/Write */
-								 size_high,		/* Size Upper 32 Bits	*/
-								 size_low,		/* Size Lower 32 bits */
+								 PAGE_READWRITE,	/* Memory is Read/Write */
+								 size_high, /* Size Upper 32 Bits	*/
+								 size_low,	/* Size Lower 32 bits */
 								 szShareMem);
 
 		if (!hmap)

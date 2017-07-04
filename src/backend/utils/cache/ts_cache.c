@@ -17,7 +17,7 @@
  * any database access.
  *
  *
- * Copyright (c) 2006-2016, PostgreSQL Global Development Group
+ * Copyright (c) 2006-2017, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/utils/cache/ts_cache.c
@@ -45,6 +45,7 @@
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
+#include "utils/regproc.h"
 #include "utils/syscache.h"
 #include "utils/tqual.h"
 
@@ -295,9 +296,7 @@ lookup_ts_dictionary_cache(Oid dictId)
 			/* Create private memory context the first time through */
 			saveCtx = AllocSetContextCreate(CacheMemoryContext,
 											NameStr(dict->dictname),
-											ALLOCSET_SMALL_MINSIZE,
-											ALLOCSET_SMALL_INITSIZE,
-											ALLOCSET_SMALL_MAXSIZE);
+											ALLOCSET_SMALL_SIZES);
 		}
 		else
 		{
@@ -335,7 +334,7 @@ lookup_ts_dictionary_cache(Oid dictId)
 
 			entry->dictData =
 				DatumGetPointer(OidFunctionCall1(template->tmplinit,
-											  PointerGetDatum(dictoptions)));
+												 PointerGetDatum(dictoptions)));
 
 			MemoryContextSwitchTo(oldcontext);
 		}

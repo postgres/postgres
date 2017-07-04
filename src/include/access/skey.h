@@ -4,7 +4,7 @@
  *	  POSTGRES scan key definitions.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/access/skey.h
@@ -112,16 +112,15 @@ typedef ScanKeyData *ScanKey;
  * bits should be defined here).  Bits 16-31 are reserved for use within
  * individual index access methods.
  */
-#define SK_ISNULL			0x0001		/* sk_argument is NULL */
-#define SK_UNARY			0x0002		/* unary operator (not supported!) */
-#define SK_ROW_HEADER		0x0004		/* row comparison header (see above) */
-#define SK_ROW_MEMBER		0x0008		/* row comparison member (see above) */
-#define SK_ROW_END			0x0010		/* last row comparison member */
-#define SK_SEARCHARRAY		0x0020		/* scankey represents ScalarArrayOp */
-#define SK_SEARCHNULL		0x0040		/* scankey represents "col IS NULL" */
-#define SK_SEARCHNOTNULL	0x0080		/* scankey represents "col IS NOT
-										 * NULL" */
-#define SK_ORDER_BY			0x0100		/* scankey is for ORDER BY op */
+#define SK_ISNULL			0x0001	/* sk_argument is NULL */
+#define SK_UNARY			0x0002	/* unary operator (not supported!) */
+#define SK_ROW_HEADER		0x0004	/* row comparison header (see above) */
+#define SK_ROW_MEMBER		0x0008	/* row comparison member (see above) */
+#define SK_ROW_END			0x0010	/* last row comparison member */
+#define SK_SEARCHARRAY		0x0020	/* scankey represents ScalarArrayOp */
+#define SK_SEARCHNULL		0x0040	/* scankey represents "col IS NULL" */
+#define SK_SEARCHNOTNULL	0x0080	/* scankey represents "col IS NOT NULL" */
+#define SK_ORDER_BY			0x0100	/* scankey is for ORDER BY op */
 
 
 /*
@@ -149,4 +148,4 @@ extern void ScanKeyEntryInitializeWithInfo(ScanKey entry,
 							   FmgrInfo *finfo,
 							   Datum argument);
 
-#endif   /* SKEY_H */
+#endif							/* SKEY_H */

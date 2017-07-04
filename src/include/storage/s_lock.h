@@ -86,7 +86,7 @@
  *	when using the SysV semaphore code.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *	  src/include/storage/s_lock.h
@@ -706,29 +706,6 @@ typedef unsigned char slock_t;
 #if !defined(HAS_TEST_AND_SET)	/* We didn't trigger above, let's try here */
 
 
-#if defined(USE_UNIVEL_CC)		/* Unixware compiler */
-#define HAS_TEST_AND_SET
-
-typedef unsigned char slock_t;
-
-#define TAS(lock)	tas(lock)
-
-asm int
-tas(volatile slock_t *s_lock)
-{
-/* UNIVEL wants %mem in column 1, so we don't pgindent this file */
-%mem s_lock
-	pushl %ebx
-	movl s_lock, %ebx
-	movl $255, %eax
-	lock
-	xchgb %al, (%ebx)
-	popl %ebx
-}
-
-#endif	 /* defined(USE_UNIVEL_CC) */
-
-
 #if defined(__hppa) || defined(__hppa__)	/* HP PA-RISC, GCC and HP compilers */
 /*
  * HP's PA-RISC
@@ -856,7 +833,7 @@ extern slock_t pg_atomic_cas(volatile slock_t *lock, slock_t with,
 #endif
 
 
-#ifdef WIN32_ONLY_COMPILER
+#ifdef _MSC_VER
 typedef LONG slock_t;
 
 #define HAS_TEST_AND_SET
@@ -865,7 +842,7 @@ typedef LONG slock_t;
 #define SPIN_DELAY() spin_delay()
 
 /* If using Visual C++ on Win64, inline assembly is unavailable.
- * Use a _mm_pause instrinsic instead of rep nop.
+ * Use a _mm_pause intrinsic instead of rep nop.
  */
 #if defined(_WIN64)
 static __forceinline void

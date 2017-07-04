@@ -75,6 +75,12 @@
 /* Define to 1 if you have the `class' function. */
 /* #undef HAVE_CLASS */
 
+/* Define to 1 if you have the `clock_gettime' function. */
+/* #undef HAVE_CLOCK_GETTIME */
+
+/* Define to 1 if your compiler handles computed gotos. */
+/* #undef HAVE_COMPUTED_GOTO */
+
 /* Define to 1 if you have the `crypt' function. */
 /* #undef HAVE_CRYPT */
 
@@ -249,9 +255,6 @@
 /* Define to 1 if you have the `mkdtemp' function. */
 /* #undef HAVE_MKDTEMP */
 
-/* Define to 1 if you have the <netinet/in.h> header file. */
-#define HAVE_NETINET_IN_H 1
-
 /* Define to 1 if you have the <netinet/tcp.h> header file. */
 /* #undef HAVE_NETINET_TCP_H */
 
@@ -269,9 +272,6 @@
 
 /* Define to 1 if the PS_STRINGS thing exists. */
 /* #undef HAVE_PS_STRINGS */
-
-/* Define to 1 if you have the <pwd.h> header file. */
-#define HAVE_PWD_H 1
 
 /* Define to 1 if you have the `random' function. */
 /* #undef HAVE_RANDOM */
@@ -348,6 +348,9 @@
 /* Define to 1 if you have the <string.h> header file. */
 #define HAVE_STRING_H 1
 
+/* Define to use have a strong random number source */
+#define HAVE_STRONG_RANDOM 1
+
 /* Define to 1 if you have the `strtoll' function. */
 //#define HAVE_STRTOLL 1
 
@@ -414,9 +417,6 @@
 /* Define to 1 if you have the <sys/ipc.h> header file. */
 /* #undef HAVE_SYS_IPC_H */
 
-/* Define to 1 if you have the <sys/poll.h> header file. */
-/* #undef HAVE_SYS_POLL_H */
-
 /* Define to 1 if you have the <sys/pstat.h> header file. */
 /* #undef HAVE_SYS_PSTAT_H */
 
@@ -429,14 +429,8 @@
 /* Define to 1 if you have the <sys/shm.h> header file. */
 /* #undef HAVE_SYS_SHM_H */
 
-/* Define to 1 if you have the <sys/socket.h> header file. */
-#define HAVE_SYS_SOCKET_H 1
-
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #define HAVE_SYS_STAT_H 1
-
-/* Define to 1 if you have the <sys/time.h> header file. */
-#define HAVE_SYS_TIME_H 1
 
 /* Define to 1 if you have the <sys/types.h> header file. */
 #define HAVE_SYS_TYPES_H 1
@@ -457,8 +451,14 @@
 /* Define to 1 if you have the `towlower' function. */
 #define HAVE_TOWLOWER 1
 
+/* Define to 1 if your compiler understands `typeof' or something similar. */
+/* #undef HAVE_TYPEOF */
+
 /* Define to 1 if you have the external array `tzname'. */
 /* #undef HAVE_TZNAME */
+
+/* Define to 1 if you have the `ucol_strcollUTF8' function. */
+#define HAVE_UCOL_STRCOLLUTF8 1
 
 /* Define to 1 if the system has the type `uint64'. */
 /* #undef HAVE_UINT64 */
@@ -554,10 +554,10 @@
 #define PACKAGE_NAME "PostgreSQL"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "PostgreSQL 10devel"
+#define PACKAGE_STRING "PostgreSQL 10beta1"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "10devel"
+#define PACKAGE_VERSION "10beta1"
 
 /* Define to the name of a signed 128-bit integer type. */
 #undef PG_INT128_TYPE
@@ -566,7 +566,7 @@
 #define PG_INT64_TYPE long long int
 
 /* PostgreSQL version as a string */
-#define PG_VERSION "10devel"
+#define PG_VERSION "10beta1"
 
 /* PostgreSQL version as a number */
 #define PG_VERSION_NUM 100000
@@ -616,9 +616,8 @@
 /* Define to 1 to build with BSD Authentication support. (--with-bsd-auth) */
 /* #undef USE_BSD_AUTH */
 
-/* Define to 1 if you want 64-bit integer timestamp and interval support.
-   (--enable-integer-datetimes) */
-/* #undef USE_INTEGER_DATETIMES */
+/* Define to use /dev/urandom for random number generation */
+/* #undef USE_DEV_URANDOM */
 
 /* Define to 1 to build with LDAP support. (--with-ldap) */
 /* #undef USE_LDAP */
@@ -628,6 +627,9 @@
 
 /* Define to build with OpenSSL support. (--with-openssl) */
 /* #undef USE_OPENSSL */
+
+/* Define to use OpenSSL for random number generation */
+/* #undef USE_OPENSSL_RANDOM */
 
 /* Define to 1 to build with PAM support. (--with-pam) */
 /* #undef USE_PAM */
@@ -657,6 +659,9 @@
 /* Define to select unnamed POSIX semaphores. */
 /* #undef USE_UNNAMED_POSIX_SEMAPHORES */
 
+/* Define to use native Windows API for random number generation */
+#define USE_WIN32_RANDOM 1
+
 /* Define to select Win32-style semaphores. */
 #define USE_WIN32_SEMAPHORES 1
 
@@ -680,3 +685,6 @@
 
 /* Define to empty if the C compiler does not understand signed types. */
 /* #undef signed */
+
+/* Define to how the compiler spells `typeof'. */
+/* #undef typeof */

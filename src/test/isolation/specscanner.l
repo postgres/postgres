@@ -4,7 +4,7 @@
  * specscanner.l
  *	  a lexical scanner for an isolation test specification
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *-------------------------------------------------------------------------
@@ -56,7 +56,7 @@ teardown		{ return(TEARDOWN); }
 				}
 <qstr>\"		{
 					litbuf[litbufpos] = '\0';
-					yylval.str = strdup(litbuf);
+					yylval.str = pg_strdup(litbuf);
 					BEGIN(INITIAL);
 					return(string_literal);
 				}
@@ -72,7 +72,7 @@ teardown		{ return(TEARDOWN); }
 				}
 <sql>{space}*"}" {
 					litbuf[litbufpos] = '\0';
-					yylval.str = strdup(litbuf);
+					yylval.str = pg_strdup(litbuf);
 					BEGIN(INITIAL);
 					return(sqlblock);
 				}

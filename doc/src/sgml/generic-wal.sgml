@@ -35,7 +35,7 @@
       &mdash; register a buffer to be modified within the current generic WAL
       record.  This function returns a pointer to a temporary copy of the
       buffer's page, where modifications should be made.  (Do not modify the
-      buffer's contents directly.)  The third argument is a bitmask of flags
+      buffer's contents directly.)  The third argument is a bit mask of flags
       applicable to the operation.  Currently the only such flag is
       <literal>GENERIC_XLOG_FULL_IMAGE</>, which indicates that a full-page
       image rather than a delta update should be included in the WAL record.

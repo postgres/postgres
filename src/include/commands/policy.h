@@ -4,7 +4,7 @@
  *	  prototypes for policy.c.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/commands/policy.h
@@ -35,4 +35,4 @@ extern ObjectAddress rename_policy(RenameStmt *stmt);
 
 extern bool relation_has_policies(Relation rel);
 
-#endif   /* POLICY_H */
+#endif							/* POLICY_H */

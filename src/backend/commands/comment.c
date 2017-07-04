@@ -4,7 +4,7 @@
  *
  * PostgreSQL object comments utility code.
  *
- * Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Copyright (c) 1996-2017, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/commands/comment.c
@@ -48,12 +48,11 @@ CommentObject(CommentStmt *stmt)
 	 * (which is really pg_restore's fault, but for now we will work around
 	 * the problem here).  Consensus is that the best fix is to treat wrong
 	 * database name as a WARNING not an ERROR; hence, the following special
-	 * case.  (If the length of stmt->objname is not 1, get_object_address
-	 * will throw an error below; that's OK.)
+	 * case.
 	 */
-	if (stmt->objtype == OBJECT_DATABASE && list_length(stmt->objname) == 1)
+	if (stmt->objtype == OBJECT_DATABASE)
 	{
-		char	   *database = strVal(linitial(stmt->objname));
+		char	   *database = strVal((Value *) stmt->object);
 
 		if (!OidIsValid(get_database_oid(database, true)))
 		{
@@ -70,12 +69,12 @@ CommentObject(CommentStmt *stmt)
 	 * does not exist, and will also acquire a lock on the target to guard
 	 * against concurrent DROP operations.
 	 */
-	address = get_object_address(stmt->objtype, stmt->objname, stmt->objargs,
+	address = get_object_address(stmt->objtype, stmt->object,
 								 &relation, ShareUpdateExclusiveLock, false);
 
 	/* Require ownership of the target object. */
 	check_object_ownership(GetUserId(), stmt->objtype, address,
-						   stmt->objname, stmt->objargs, relation);
+						   stmt->object, relation);
 
 	/* Perform other integrity checks as needed. */
 	switch (stmt->objtype)
@@ -95,7 +94,8 @@ CommentObject(CommentStmt *stmt)
 				relation->rd_rel->relkind != RELKIND_VIEW &&
 				relation->rd_rel->relkind != RELKIND_MATVIEW &&
 				relation->rd_rel->relkind != RELKIND_COMPOSITE_TYPE &&
-				relation->rd_rel->relkind != RELKIND_FOREIGN_TABLE)
+				relation->rd_rel->relkind != RELKIND_FOREIGN_TABLE &&
+				relation->rd_rel->relkind != RELKIND_PARTITIONED_TABLE)
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 						 errmsg("\"%s\" is not a table, view, materialized view, composite type, or foreign table",
@@ -194,12 +194,12 @@ CreateComments(Oid oid, Oid classoid, int32 subid, char *comment)
 		/* Found the old tuple, so delete or update it */
 
 		if (comment == NULL)
-			simple_heap_delete(description, &oldtuple->t_self);
+			CatalogTupleDelete(description, &oldtuple->t_self);
 		else
 		{
 			newtuple = heap_modify_tuple(oldtuple, RelationGetDescr(description), values,
 										 nulls, replaces);
-			simple_heap_update(description, &oldtuple->t_self, newtuple);
+			CatalogTupleUpdate(description, &oldtuple->t_self, newtuple);
 		}
 
 		break;					/* Assume there can be only one match */
@@ -213,15 +213,11 @@ CreateComments(Oid oid, Oid classoid, int32 subid, char *comment)
 	{
 		newtuple = heap_form_tuple(RelationGetDescr(description),
 								   values, nulls);
-		simple_heap_insert(description, newtuple);
+		CatalogTupleInsert(description, newtuple);
 	}
 
-	/* Update indexes, if necessary */
 	if (newtuple != NULL)
-	{
-		CatalogUpdateIndexes(description, newtuple);
 		heap_freetuple(newtuple);
-	}
 
 	/* Done */
 
@@ -288,12 +284,12 @@ CreateSharedComments(Oid oid, Oid classoid, char *comment)
 		/* Found the old tuple, so delete or update it */
 
 		if (comment == NULL)
-			simple_heap_delete(shdescription, &oldtuple->t_self);
+			CatalogTupleDelete(shdescription, &oldtuple->t_self);
 		else
 		{
 			newtuple = heap_modify_tuple(oldtuple, RelationGetDescr(shdescription),
 										 values, nulls, replaces);
-			simple_heap_update(shdescription, &oldtuple->t_self, newtuple);
+			CatalogTupleUpdate(shdescription, &oldtuple->t_self, newtuple);
 		}
 
 		break;					/* Assume there can be only one match */
@@ -307,15 +303,11 @@ CreateSharedComments(Oid oid, Oid classoid, char *comment)
 	{
 		newtuple = heap_form_tuple(RelationGetDescr(shdescription),
 								   values, nulls);
-		simple_heap_insert(shdescription, newtuple);
+		CatalogTupleInsert(shdescription, newtuple);
 	}
 
-	/* Update indexes, if necessary */
 	if (newtuple != NULL)
-	{
-		CatalogUpdateIndexes(shdescription, newtuple);
 		heap_freetuple(newtuple);
-	}
 
 	/* Done */
 
@@ -366,7 +358,7 @@ DeleteComments(Oid oid, Oid classoid, int32 subid)
 							NULL, nkeys, skey);
 
 	while ((oldtuple = systable_getnext(sd)) != NULL)
-		simple_heap_delete(description, &oldtuple->t_self);
+		CatalogTupleDelete(description, &oldtuple->t_self);
 
 	/* Done */
 
@@ -402,7 +394,7 @@ DeleteSharedComments(Oid oid, Oid classoid)
 							NULL, 2, skey);
 
 	while ((oldtuple = systable_getnext(sd)) != NULL)
-		simple_heap_delete(shdescription, &oldtuple->t_self);
+		CatalogTupleDelete(shdescription, &oldtuple->t_self);
 
 	/* Done */
 

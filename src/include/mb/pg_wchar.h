@@ -3,7 +3,7 @@
  * pg_wchar.h
  *	  multibyte-character support
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/mb/pg_wchar.h
@@ -133,10 +133,12 @@ typedef unsigned int pg_wchar;
 #define LC_JISX0212			0x94	/* Japanese Kanji (JIS X 0212) */
 #define LC_CNS11643_1		0x95	/* CNS 11643-1992 Plane 1 */
 #define LC_CNS11643_2		0x96	/* CNS 11643-1992 Plane 2 */
-#define LC_JISX0213_1		0x97/* Japanese Kanji (JIS X 0213 Plane 1) (not
-								 * supported) */
-#define LC_BIG5_1			0x98	/* Plane 1 Chinese traditional (not supported) */
-#define LC_BIG5_2			0x99	/* Plane 1 Chinese traditional (not supported) */
+#define LC_JISX0213_1		0x97	/* Japanese Kanji (JIS X 0213 Plane 1)
+									 * (not supported) */
+#define LC_BIG5_1			0x98	/* Plane 1 Chinese traditional (not
+									 * supported) */
+#define LC_BIG5_2			0x99	/* Plane 1 Chinese traditional (not
+									 * supported) */
 
 /* Is a leading byte for "official" multibyte encodings? */
 #define IS_LC2(c)	((unsigned char)(c) >= 0x90 && (unsigned char)(c) <= 0x99)
@@ -168,44 +170,44 @@ typedef unsigned int pg_wchar;
 /*
  * Charset IDs for private single byte encodings (0xa0-0xef)
  */
-#define LC_SISHENG			0xa0/* Chinese SiSheng characters for
-								 * PinYin/ZhuYin (not supported) */
-#define LC_IPA				0xa1/* IPA (International Phonetic Association)
-								 * (not supported) */
-#define LC_VISCII_LOWER		0xa2/* Vietnamese VISCII1.1 lower-case (not
-								 * supported) */
-#define LC_VISCII_UPPER		0xa3/* Vietnamese VISCII1.1 upper-case (not
-								 * supported) */
+#define LC_SISHENG			0xa0	/* Chinese SiSheng characters for
+									 * PinYin/ZhuYin (not supported) */
+#define LC_IPA				0xa1	/* IPA (International Phonetic
+									 * Association) (not supported) */
+#define LC_VISCII_LOWER		0xa2	/* Vietnamese VISCII1.1 lower-case (not
+									 * supported) */
+#define LC_VISCII_UPPER		0xa3	/* Vietnamese VISCII1.1 upper-case (not
+									 * supported) */
 #define LC_ARABIC_DIGIT		0xa4	/* Arabic digit (not supported) */
 #define LC_ARABIC_1_COLUMN	0xa5	/* Arabic 1-column (not supported) */
 #define LC_ASCII_RIGHT_TO_LEFT	0xa6	/* ASCII (left half of ISO8859-1) with
 										 * right-to-left direction (not
 										 * supported) */
-#define LC_LAO				0xa7/* Lao characters (ISO10646 0E80..0EDF) (not
-								 * supported) */
+#define LC_LAO				0xa7	/* Lao characters (ISO10646 0E80..0EDF)
+									 * (not supported) */
 #define LC_ARABIC_2_COLUMN	0xa8	/* Arabic 1-column (not supported) */
 
 /*
  * Charset IDs for private multibyte encodings (0xf0-0xff)
  */
-#define LC_INDIAN_1_COLUMN	0xf0/* Indian charset for 1-column width glyphs
-								 * (not supported) */
-#define LC_TIBETAN_1_COLUMN 0xf1/* Tibetan 1-column width glyphs (not
-								 * supported) */
-#define LC_UNICODE_SUBSET_2 0xf2/* Unicode characters of the range
-								 * U+2500..U+33FF. (not supported) */
-#define LC_UNICODE_SUBSET_3 0xf3/* Unicode characters of the range
-								 * U+E000..U+FFFF. (not supported) */
-#define LC_UNICODE_SUBSET	0xf4/* Unicode characters of the range
-								 * U+0100..U+24FF. (not supported) */
+#define LC_INDIAN_1_COLUMN	0xf0	/* Indian charset for 1-column width
+									 * glyphs (not supported) */
+#define LC_TIBETAN_1_COLUMN 0xf1	/* Tibetan 1-column width glyphs (not
+									 * supported) */
+#define LC_UNICODE_SUBSET_2 0xf2	/* Unicode characters of the range
+									 * U+2500..U+33FF. (not supported) */
+#define LC_UNICODE_SUBSET_3 0xf3	/* Unicode characters of the range
+									 * U+E000..U+FFFF. (not supported) */
+#define LC_UNICODE_SUBSET	0xf4	/* Unicode characters of the range
+									 * U+0100..U+24FF. (not supported) */
 #define LC_ETHIOPIC			0xf5	/* Ethiopic characters (not supported) */
 #define LC_CNS11643_3		0xf6	/* CNS 11643-1992 Plane 3 */
 #define LC_CNS11643_4		0xf7	/* CNS 11643-1992 Plane 4 */
 #define LC_CNS11643_5		0xf8	/* CNS 11643-1992 Plane 5 */
 #define LC_CNS11643_6		0xf9	/* CNS 11643-1992 Plane 6 */
 #define LC_CNS11643_7		0xfa	/* CNS 11643-1992 Plane 7 */
-#define LC_INDIAN_2_COLUMN	0xfb/* Indian charset for 2-column width glyphs
-								 * (not supported) */
+#define LC_INDIAN_2_COLUMN	0xfb	/* Indian charset for 2-column width
+									 * glyphs (not supported) */
 #define LC_TIBETAN			0xfc	/* Tibetan (not supported) */
 /* #define FREE				0xfd	free (unused) */
 /* #define FREE				0xfe	free (unused) */
@@ -333,15 +335,21 @@ typedef struct pg_enc2gettext
 extern const pg_enc2gettext pg_enc2gettext_tbl[];
 
 /*
+ * Encoding names for ICU
+ */
+extern bool is_encoding_supported_by_icu(int encoding);
+extern const char *get_encoding_name_for_icu(int encoding);
+
+/*
  * pg_wchar stuff
  */
 typedef int (*mb2wchar_with_len_converter) (const unsigned char *from,
-														pg_wchar *to,
-														int len);
+											pg_wchar *to,
+											int len);
 
 typedef int (*wchar2mb_with_len_converter) (const pg_wchar *from,
-														unsigned char *to,
-														int len);
+											unsigned char *to,
+											int len);
 
 typedef int (*mblen_converter) (const unsigned char *mbstr);
 
@@ -353,12 +361,12 @@ typedef int (*mbverifier) (const unsigned char *mbstr, int len);
 
 typedef struct
 {
-	mb2wchar_with_len_converter mb2wchar_with_len;		/* convert a multibyte
-														 * string to a wchar */
-	wchar2mb_with_len_converter wchar2mb_with_len;		/* convert a wchar
-														 * string to a multibyte */
+	mb2wchar_with_len_converter mb2wchar_with_len;	/* convert a multibyte
+													 * string to a wchar */
+	wchar2mb_with_len_converter wchar2mb_with_len;	/* convert a wchar string
+													 * to a multibyte */
 	mblen_converter mblen;		/* get byte length of a char */
-	mbdisplaylen_converter dsplen;		/* get display width of a char */
+	mbdisplaylen_converter dsplen;	/* get display width of a char */
 	mbverifier	mbverify;		/* verify multibyte sequence */
 	int			maxmblen;		/* max bytes for a char in this encoding */
 } pg_wchar_tbl;
@@ -372,25 +380,81 @@ extern const pg_wchar_tbl pg_wchar_table[];
  * characters up to 4 bytes long.  For example, the byte sequence 0xC2 0x89
  * would be represented by 0x0000C289, and 0xE8 0xA2 0xB4 by 0x00E8A2B4.
  *
- * Maps are arrays of these structs, which must be in order by the lookup key
- * (so that bsearch() can be used).
+ * There are three possible ways a character can be mapped:
  *
- * UTF-8 to local code conversion map
+ * 1. Using a radix tree, from source to destination code.
+ * 2. Using a sorted array of source -> destination code pairs. This
+ *	  method is used for "combining" characters. There are so few of
+ *	  them that building a radix tree would be wasteful.
+ * 3. Using a conversion function.
  */
-typedef struct
-{
-	uint32		utf;			/* UTF-8 */
-	uint32		code;			/* local code */
-} pg_utf_to_local;
 
 /*
- * local code to UTF-8 conversion map
+ * Radix tree for character conversion.
+ *
+ * Logically, this is actually four different radix trees, for 1-byte,
+ * 2-byte, 3-byte and 4-byte inputs. The 1-byte tree is a simple lookup
+ * table from source to target code. The 2-byte tree consists of two levels:
+ * one lookup table for the first byte, where the value in the lookup table
+ * points to a lookup table for the second byte. And so on.
+ *
+ * Physically, all the trees are stored in one big array, in 'chars16' or
+ * 'chars32', depending on the maximum value that needs to be reprented. For
+ * each level in each tree, we also store lower and upper bound of allowed
+ * values - values outside those bounds are considered invalid, and are left
+ * out of the tables.
+ *
+ * In the intermediate levels of the trees, the values stored are offsets
+ * into the chars[16|32] array.
+ *
+ * In the beginning of the chars[16|32] array, there is always a number of
+ * zeros, so that you safely follow an index from an intermediate table
+ * without explicitly checking for a zero. Following a zero any number of
+ * times will always bring you to the dummy, all-zeros table in the
+ * beginning. This helps to shave some cycles when looking up values.
  */
 typedef struct
 {
-	uint32		code;			/* local code */
-	uint32		utf;			/* UTF-8 */
-} pg_local_to_utf;
+	/*
+	 * Array containing all the values. Only one of chars16 or chars32 is
+	 * used, depending on how wide the values we need to represent are.
+	 */
+	const uint16 *chars16;
+	const uint32 *chars32;
+
+	/* Radix tree for 1-byte inputs */
+	uint32		b1root;			/* offset of table in the chars[16|32] array */
+	uint8		b1_lower;		/* min allowed value for a single byte input */
+	uint8		b1_upper;		/* max allowed value for a single byte input */
+
+	/* Radix tree for 2-byte inputs */
+	uint32		b2root;			/* offset of 1st byte's table */
+	uint8		b2_1_lower;		/* min/max allowed value for 1st input byte */
+	uint8		b2_1_upper;
+	uint8		b2_2_lower;		/* min/max allowed value for 2nd input byte */
+	uint8		b2_2_upper;
+
+	/* Radix tree for 3-byte inputs */
+	uint32		b3root;			/* offset of 1st byte's table */
+	uint8		b3_1_lower;		/* min/max allowed value for 1st input byte */
+	uint8		b3_1_upper;
+	uint8		b3_2_lower;		/* min/max allowed value for 2nd input byte */
+	uint8		b3_2_upper;
+	uint8		b3_3_lower;		/* min/max allowed value for 3rd input byte */
+	uint8		b3_3_upper;
+
+	/* Radix tree for 4-byte inputs */
+	uint32		b4root;			/* offset of 1st byte's table */
+	uint8		b4_1_lower;		/* min/max allowed value for 1st input byte */
+	uint8		b4_1_upper;
+	uint8		b4_2_lower;		/* min/max allowed value for 2nd input byte */
+	uint8		b4_2_upper;
+	uint8		b4_3_lower;		/* min/max allowed value for 3rd input byte */
+	uint8		b4_3_upper;
+	uint8		b4_4_lower;		/* min/max allowed value for 4th input byte */
+	uint8		b4_4_upper;
+
+} pg_mb_radix_tree;
 
 /*
  * UTF-8 to local code conversion map (for combined characters)
@@ -510,13 +574,13 @@ extern unsigned short CNStoBIG5(unsigned short cns, unsigned char lc);
 
 extern void UtfToLocal(const unsigned char *utf, int len,
 		   unsigned char *iso,
-		   const pg_utf_to_local *map, int mapsize,
+		   const pg_mb_radix_tree *map,
 		   const pg_utf_to_local_combined *cmap, int cmapsize,
 		   utf_local_conversion_func conv_func,
 		   int encoding);
 extern void LocalToUtf(const unsigned char *iso, int len,
 		   unsigned char *utf,
-		   const pg_local_to_utf *map, int mapsize,
+		   const pg_mb_radix_tree *map,
 		   const pg_local_to_utf_combined *cmap, int cmapsize,
 		   utf_local_conversion_func conv_func,
 		   int encoding);
@@ -535,7 +599,7 @@ extern void check_encoding_conversion_args(int src_encoding,
 
 extern void report_invalid_encoding(int encoding, const char *mbstr, int len) pg_attribute_noreturn();
 extern void report_untranslatable_char(int src_encoding, int dest_encoding,
-						 const char *mbstr, int len) pg_attribute_noreturn();
+						   const char *mbstr, int len) pg_attribute_noreturn();
 
 extern void local2local(const unsigned char *l, unsigned char *p, int len,
 			int src_encoding, int dest_encoding, const unsigned char *tab);
@@ -558,4 +622,4 @@ extern bool pg_utf8_islegal(const unsigned char *source, int length);
 extern WCHAR *pgwin32_message_to_UTF16(const char *str, int len, int *utf16len);
 #endif
 
-#endif   /* PG_WCHAR_H */
+#endif							/* PG_WCHAR_H */

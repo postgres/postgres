@@ -12,7 +12,7 @@
  * the metapage.  When the revmap needs to be expanded, all tuples on the
  * regular BRIN page at that block (if any) are moved out of the way.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -48,7 +48,7 @@ struct BrinRevmap
 {
 	Relation	rm_irel;
 	BlockNumber rm_pagesPerRange;
-	BlockNumber rm_lastRevmapPage;		/* cached from the metapage */
+	BlockNumber rm_lastRevmapPage;	/* cached from the metapage */
 	Buffer		rm_metaBuf;
 	Buffer		rm_currBuf;
 };
@@ -168,21 +168,27 @@ brinSetHeapBlockItemptr(Buffer buf, BlockNumber pagesPerRange,
 	iptr = (ItemPointerData *) contents->rm_tids;
 	iptr += HEAPBLK_TO_REVMAP_INDEX(pagesPerRange, heapBlk);
 
-	ItemPointerSet(iptr,
-				   ItemPointerGetBlockNumber(&tid),
-				   ItemPointerGetOffsetNumber(&tid));
+	if (ItemPointerIsValid(&tid))
+		ItemPointerSet(iptr,
+					   ItemPointerGetBlockNumber(&tid),
+					   ItemPointerGetOffsetNumber(&tid));
+	else
+		ItemPointerSetInvalid(iptr);
 }
 
 /*
  * Fetch the BrinTuple for a given heap block.
  *
- * The buffer containing the tuple is locked, and returned in *buf. As an
- * optimization, the caller can pass a pinned buffer *buf on entry, which will
- * avoid a pin-unpin cycle when the next tuple is on the same page as a
- * previous one.
+ * The buffer containing the tuple is locked, and returned in *buf.  The
+ * returned tuple points to the shared buffer and must not be freed; if caller
+ * wants to use it after releasing the buffer lock, it must create its own
+ * palloc'ed copy.  As an optimization, the caller can pass a pinned buffer
+ * *buf on entry, which will avoid a pin-unpin cycle when the next tuple is on
+ * the same page as a previous one.
  *
  * If no tuple is found for the given heap range, returns NULL. In that case,
- * *buf might still be updated, but it's not locked.
+ * *buf might still be updated (and pin must be released by caller), but it's
+ * not locked.
  *
  * The output tuple offset within the buffer is returned in *off, and its size
  * is returned in *size.
@@ -205,7 +211,11 @@ brinGetTupleForHeapBlock(BrinRevmap *revmap, BlockNumber heapBlk,
 	/* normalize the heap block number to be the first page in the range */
 	heapBlk = (heapBlk / revmap->rm_pagesPerRange) * revmap->rm_pagesPerRange;
 
-	/* Compute the revmap page number we need */
+	/*
+	 * Compute the revmap page number we need.  If Invalid is returned (i.e.,
+	 * the revmap page hasn't been created yet), the requested page range is
+	 * not summarized.
+	 */
 	mapBlk = revmap_get_blkno(revmap, heapBlk);
 	if (mapBlk == InvalidBlockNumber)
 	{
@@ -250,7 +260,7 @@ brinGetTupleForHeapBlock(BrinRevmap *revmap, BlockNumber heapBlk,
 		if (ItemPointerIsValid(&previptr) && ItemPointerEquals(&previptr, iptr))
 			ereport(ERROR,
 					(errcode(ERRCODE_INDEX_CORRUPTED),
-			errmsg_internal("corrupted BRIN index: inconsistent range map")));
+					 errmsg_internal("corrupted BRIN index: inconsistent range map")));
 		previptr = *iptr;
 
 		blk = ItemPointerGetBlockNumber(iptr);
@@ -298,6 +308,138 @@ brinGetTupleForHeapBlock(BrinRevmap *revmap, BlockNumber heapBlk,
 	}
 	/* not reached, but keep compiler quiet */
 	return NULL;
+}
+
+/*
+ * Delete an index tuple, marking a page range as unsummarized.
+ *
+ * Index must be locked in ShareUpdateExclusiveLock mode.
+ *
+ * Return FALSE if caller should retry.
+ */
+bool
+brinRevmapDesummarizeRange(Relation idxrel, BlockNumber heapBlk)
+{
+	BrinRevmap *revmap;
+	BlockNumber pagesPerRange;
+	RevmapContents *contents;
+	ItemPointerData *iptr;
+	ItemPointerData invalidIptr;
+	BlockNumber revmapBlk;
+	Buffer		revmapBuf;
+	Buffer		regBuf;
+	Page		revmapPg;
+	Page		regPg;
+	OffsetNumber revmapOffset;
+	OffsetNumber regOffset;
+	ItemId		lp;
+	BrinTuple  *tup;
+
+	revmap = brinRevmapInitialize(idxrel, &pagesPerRange, NULL);
+
+	revmapBlk = revmap_get_blkno(revmap, heapBlk);
+	if (!BlockNumberIsValid(revmapBlk))
+	{
+		/* revmap page doesn't exist: range not summarized, we're done */
+		brinRevmapTerminate(revmap);
+		return true;
+	}
+
+	/* Lock the revmap page, obtain the index tuple pointer from it */
+	revmapBuf = brinLockRevmapPageForUpdate(revmap, heapBlk);
+	revmapPg = BufferGetPage(revmapBuf);
+	revmapOffset = HEAPBLK_TO_REVMAP_INDEX(revmap->rm_pagesPerRange, heapBlk);
+
+	contents = (RevmapContents *) PageGetContents(revmapPg);
+	iptr = contents->rm_tids;
+	iptr += revmapOffset;
+
+	if (!ItemPointerIsValid(iptr))
+	{
+		/* no index tuple: range not summarized, we're done */
+		LockBuffer(revmapBuf, BUFFER_LOCK_UNLOCK);
+		brinRevmapTerminate(revmap);
+		return true;
+	}
+
+	regBuf = ReadBuffer(idxrel, ItemPointerGetBlockNumber(iptr));
+	LockBuffer(regBuf, BUFFER_LOCK_EXCLUSIVE);
+	regPg = BufferGetPage(regBuf);
+
+	/* if this is no longer a regular page, tell caller to start over */
+	if (!BRIN_IS_REGULAR_PAGE(regPg))
+	{
+		LockBuffer(revmapBuf, BUFFER_LOCK_UNLOCK);
+		LockBuffer(regBuf, BUFFER_LOCK_UNLOCK);
+		brinRevmapTerminate(revmap);
+		return false;
+	}
+
+	regOffset = ItemPointerGetOffsetNumber(iptr);
+	if (regOffset > PageGetMaxOffsetNumber(regPg))
+		ereport(ERROR,
+				(errcode(ERRCODE_INDEX_CORRUPTED),
+				 errmsg("corrupted BRIN index: inconsistent range map")));
+
+	lp = PageGetItemId(regPg, regOffset);
+	if (!ItemIdIsUsed(lp))
+		ereport(ERROR,
+				(errcode(ERRCODE_INDEX_CORRUPTED),
+				 errmsg("corrupted BRIN index: inconsistent range map")));
+	tup = (BrinTuple *) PageGetItem(regPg, lp);
+	/* XXX apply sanity checks?  Might as well delete a bogus tuple ... */
+
+	/*
+	 * We're only removing data, not reading it, so there's no need to
+	 * TestForOldSnapshot here.
+	 */
+
+	/*
+	 * Because of SUE lock, this function shouldn't run concurrently with
+	 * summarization.  Placeholder tuples can only exist as leftovers from
+	 * crashed summarization, so if we detect any, we complain but proceed.
+	 */
+	if (BrinTupleIsPlaceholder(tup))
+		ereport(WARNING,
+				(errmsg("leftover placeholder tuple detected in BRIN index \"%s\", deleting",
+						RelationGetRelationName(idxrel))));
+
+	START_CRIT_SECTION();
+
+	ItemPointerSetInvalid(&invalidIptr);
+	brinSetHeapBlockItemptr(revmapBuf, revmap->rm_pagesPerRange, heapBlk,
+							invalidIptr);
+	PageIndexTupleDeleteNoCompact(regPg, regOffset);
+	/* XXX record free space in FSM? */
+
+	MarkBufferDirty(regBuf);
+	MarkBufferDirty(revmapBuf);
+
+	if (RelationNeedsWAL(idxrel))
+	{
+		xl_brin_desummarize xlrec;
+		XLogRecPtr	recptr;
+
+		xlrec.pagesPerRange = revmap->rm_pagesPerRange;
+		xlrec.heapBlk = heapBlk;
+		xlrec.regOffset = regOffset;
+
+		XLogBeginInsert();
+		XLogRegisterData((char *) &xlrec, SizeOfBrinDesummarize);
+		XLogRegisterBuffer(0, revmapBuf, 0);
+		XLogRegisterBuffer(1, regBuf, REGBUF_STANDARD);
+		recptr = XLogInsert(RM_BRIN_ID, XLOG_BRIN_DESUMMARIZE);
+		PageSetLSN(revmapPg, recptr);
+		PageSetLSN(regPg, recptr);
+	}
+
+	END_CRIT_SECTION();
+
+	UnlockReleaseBuffer(regBuf);
+	LockBuffer(revmapBuf, BUFFER_LOCK_UNLOCK);
+	brinRevmapTerminate(revmap);
+
+	return true;
 }
 
 /*
@@ -456,10 +598,10 @@ revmap_physical_extend(BrinRevmap *revmap)
 	if (!PageIsNew(page) && !BRIN_IS_REGULAR_PAGE(page))
 		ereport(ERROR,
 				(errcode(ERRCODE_INDEX_CORRUPTED),
-		  errmsg("unexpected page type 0x%04X in BRIN index \"%s\" block %u",
-				 BrinPageType(page),
-				 RelationGetRelationName(irel),
-				 BufferGetBlockNumber(buf))));
+				 errmsg("unexpected page type 0x%04X in BRIN index \"%s\" block %u",
+						BrinPageType(page),
+						RelationGetRelationName(irel),
+						BufferGetBlockNumber(buf))));
 
 	/* If the page is in use, evacuate it and restart */
 	if (brin_start_evacuating_page(irel, buf))

@@ -43,7 +43,7 @@
  * before switching to the other state or activating a different read pointer.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -109,6 +109,7 @@ struct Tuplestorestate
 	bool		truncated;		/* tuplestore_trim has removed tuples? */
 	int64		availMem;		/* remaining memory available, in bytes */
 	int64		allowedMem;		/* total memory allowed, in bytes */
+	int64		tuples;			/* number of tuples added */
 	BufFile    *myfile;			/* underlying file, or NULL if none */
 	MemoryContext context;		/* memory context for holding tuples */
 	ResourceOwner resowner;		/* resowner for holding temp files */
@@ -267,6 +268,7 @@ tuplestore_begin_common(int eflags, bool interXact, int maxKBytes)
 
 	state->memtupdeleted = 0;
 	state->memtupcount = 0;
+	state->tuples = 0;
 
 	/*
 	 * Initial size of array must be more than ALLOCSET_SEPARATE_THRESHOLD;
@@ -433,6 +435,7 @@ tuplestore_clear(Tuplestorestate *state)
 	state->truncated = false;
 	state->memtupdeleted = 0;
 	state->memtupcount = 0;
+	state->tuples = 0;
 	readptr = state->readptrs;
 	for (i = 0; i < state->readptrcount; readptr++, i++)
 	{
@@ -531,6 +534,18 @@ tuplestore_select_read_pointer(Tuplestorestate *state, int ptr)
 	}
 
 	state->activeptr = ptr;
+}
+
+/*
+ * tuplestore_tuple_count
+ *
+ * Returns the number of tuples added since creation or the last
+ * tuplestore_clear().
+ */
+int64
+tuplestore_tuple_count(Tuplestorestate *state)
+{
+	return state->tuples;
 }
 
 /*
@@ -753,6 +768,8 @@ tuplestore_puttuple_common(Tuplestorestate *state, void *tuple)
 	int			i;
 	ResourceOwner oldowner;
 
+	state->tuples++;
+
 	switch (state->status)
 	{
 		case TSS_INMEM:
@@ -849,7 +866,7 @@ tuplestore_puttuple_common(Tuplestorestate *state, void *tuple)
 							SEEK_SET) != 0)
 				ereport(ERROR,
 						(errcode_for_file_access(),
-				 errmsg("could not seek in tuplestore temporary file: %m")));
+						 errmsg("could not seek in tuplestore temporary file: %m")));
 			state->status = TSS_WRITEFILE;
 
 			/*
@@ -1034,7 +1051,7 @@ tuplestore_gettuple(Tuplestorestate *state, bool forward,
 							SEEK_CUR) != 0)
 				ereport(ERROR,
 						(errcode_for_file_access(),
-				 errmsg("could not seek in tuplestore temporary file: %m")));
+						 errmsg("could not seek in tuplestore temporary file: %m")));
 			tup = READTUP(state, tuplen);
 			return tup;
 
@@ -1236,7 +1253,7 @@ tuplestore_rescan(Tuplestorestate *state)
 			if (BufFileSeek(state->myfile, 0, 0L, SEEK_SET) != 0)
 				ereport(ERROR,
 						(errcode_for_file_access(),
-				 errmsg("could not seek in tuplestore temporary file: %m")));
+						 errmsg("could not seek in tuplestore temporary file: %m")));
 			break;
 		default:
 			elog(ERROR, "invalid tuplestore state");
@@ -1457,7 +1474,7 @@ getlen(Tuplestorestate *state, bool eofOK)
 	if (nbytes != 0 || !eofOK)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-			   errmsg("could not read from tuplestore temporary file: %m")));
+				 errmsg("could not read from tuplestore temporary file: %m")));
 	return 0;
 }
 
@@ -1509,7 +1526,7 @@ writetup_heap(Tuplestorestate *state, void *tup)
 						 sizeof(tuplen)) != sizeof(tuplen))
 			ereport(ERROR,
 					(errcode_for_file_access(),
-				errmsg("could not write to tuplestore temporary file: %m")));
+					 errmsg("could not write to tuplestore temporary file: %m")));
 
 	FREEMEM(state, GetMemoryChunkSpace(tuple));
 	heap_free_minimal_tuple(tuple);
@@ -1530,12 +1547,12 @@ readtup_heap(Tuplestorestate *state, unsigned int len)
 					tupbodylen) != (size_t) tupbodylen)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-			   errmsg("could not read from tuplestore temporary file: %m")));
+				 errmsg("could not read from tuplestore temporary file: %m")));
 	if (state->backward)		/* need trailing length word? */
 		if (BufFileRead(state->myfile, (void *) &tuplen,
 						sizeof(tuplen)) != sizeof(tuplen))
 			ereport(ERROR,
 					(errcode_for_file_access(),
-			   errmsg("could not read from tuplestore temporary file: %m")));
+					 errmsg("could not read from tuplestore temporary file: %m")));
 	return (void *) tuple;
 }

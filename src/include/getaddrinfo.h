@@ -13,7 +13,7 @@
  * This code will also work on platforms where struct addrinfo is defined
  * in the system headers but no getaddrinfo() can be located.
  *
- * Copyright (c) 2003-2016, PostgreSQL Global Development Group
+ * Copyright (c) 2003-2017, PostgreSQL Global Development Group
  *
  * src/include/getaddrinfo.h
  *
@@ -40,13 +40,11 @@
 #define EAI_MEMORY		(-10)
 #define EAI_SYSTEM		(-11)
 #else							/* WIN32 */
-#ifdef WIN32_ONLY_COMPILER
+#ifdef _MSC_VER
 #ifndef WSA_NOT_ENOUGH_MEMORY
 #define WSA_NOT_ENOUGH_MEMORY	(WSAENOBUFS)
 #endif
-#ifndef __BORLANDC__
 #define WSATYPE_NOT_FOUND		(WSABASEERR+109)
-#endif
 #endif
 #define EAI_AGAIN		WSATRY_AGAIN
 #define EAI_BADFLAGS	WSAEINVAL
@@ -57,8 +55,8 @@
 #define EAI_NONAME		WSAHOST_NOT_FOUND
 #define EAI_SERVICE		WSATYPE_NOT_FOUND
 #define EAI_SOCKTYPE	WSAESOCKTNOSUPPORT
-#endif   /* !WIN32 */
-#endif   /* !EAI_FAIL */
+#endif							/* !WIN32 */
+#endif							/* !EAI_FAIL */
 
 #ifndef AI_PASSIVE
 #define AI_PASSIVE		0x0001
@@ -126,7 +124,7 @@ struct addrinfo
 	struct addrinfo *ai_next;
 };
 #endif
-#endif   /* HAVE_STRUCT_ADDRINFO */
+#endif							/* HAVE_STRUCT_ADDRINFO */
 
 
 #ifndef HAVE_GETADDRINFO
@@ -153,12 +151,12 @@ struct addrinfo
 #define getnameinfo pg_getnameinfo
 
 extern int getaddrinfo(const char *node, const char *service,
-			const struct addrinfo * hints, struct addrinfo ** res);
-extern void freeaddrinfo(struct addrinfo * res);
+			const struct addrinfo *hints, struct addrinfo **res);
+extern void freeaddrinfo(struct addrinfo *res);
 extern const char *gai_strerror(int errcode);
-extern int getnameinfo(const struct sockaddr * sa, int salen,
+extern int getnameinfo(const struct sockaddr *sa, int salen,
 			char *node, int nodelen,
 			char *service, int servicelen, int flags);
-#endif   /* HAVE_GETADDRINFO */
+#endif							/* HAVE_GETADDRINFO */
 
-#endif   /* GETADDRINFO_H */
+#endif							/* GETADDRINFO_H */

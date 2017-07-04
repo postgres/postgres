@@ -30,7 +30,6 @@
 
 
 static PyObject *PLy_spi_execute_query(char *query, long limit);
-static PyObject *PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit);
 static PyObject *PLy_spi_execute_fetch_result(SPITupleTable *tuptable,
 							 uint64 rows, int status);
 static void PLy_spi_exception_set(PyObject *excclass, ErrorData *edata);
@@ -51,13 +50,13 @@ PLy_spi_prepare(PyObject *self, PyObject *args)
 	volatile ResourceOwner oldowner;
 	volatile int nargs;
 
-	if (!PyArg_ParseTuple(args, "s|O", &query, &list))
+	if (!PyArg_ParseTuple(args, "s|O:prepare", &query, &list))
 		return NULL;
 
 	if (list && (!PySequence_Check(list)))
 	{
 		PLy_exception_set(PyExc_TypeError,
-					   "second argument of plpy.prepare must be a sequence");
+						  "second argument of plpy.prepare must be a sequence");
 		return NULL;
 	}
 
@@ -66,9 +65,7 @@ PLy_spi_prepare(PyObject *self, PyObject *args)
 
 	plan->mcxt = AllocSetContextCreate(TopMemoryContext,
 									   "PL/Python plan context",
-									   ALLOCSET_DEFAULT_MINSIZE,
-									   ALLOCSET_DEFAULT_INITSIZE,
-									   ALLOCSET_DEFAULT_MAXSIZE);
+									   ALLOCSET_DEFAULT_SIZES);
 	oldcontext = MemoryContextSwitchTo(plan->mcxt);
 
 	nargs = list ? PySequence_Length(list) : 0;
@@ -195,7 +192,7 @@ PLy_spi_execute(PyObject *self, PyObject *args)
 	return NULL;
 }
 
-static PyObject *
+PyObject *
 PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit)
 {
 	volatile int nargs;
@@ -229,8 +226,8 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit)
 			PLy_elog(ERROR, "could not execute plan");
 		sv = PyString_AsString(so);
 		PLy_exception_set_plural(PyExc_TypeError,
-							  "Expected sequence of %d argument, got %d: %s",
-							 "Expected sequence of %d arguments, got %d: %s",
+								 "Expected sequence of %d argument, got %d: %s",
+								 "Expected sequence of %d arguments, got %d: %s",
 								 plan->nargs,
 								 plan->nargs, nargs, sv);
 		Py_DECREF(so);
@@ -266,7 +263,8 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit)
 					plan->values[j] =
 						plan->args[j].out.d.func(&(plan->args[j].out.d),
 												 -1,
-												 elem);
+												 elem,
+												 false);
 				}
 				PG_CATCH();
 				{
@@ -413,9 +411,7 @@ PLy_spi_execute_fetch_result(SPITupleTable *tuptable, uint64 rows, int status)
 
 		cxt = AllocSetContextCreate(CurrentMemoryContext,
 									"PL/Python temp context",
-									ALLOCSET_DEFAULT_MINSIZE,
-									ALLOCSET_DEFAULT_INITSIZE,
-									ALLOCSET_DEFAULT_MAXSIZE);
+									ALLOCSET_DEFAULT_SIZES);
 		PLy_typeinfo_init(&args, cxt);
 
 		oldcontext = CurrentMemoryContext;
@@ -519,12 +515,6 @@ PLy_spi_subtransaction_commit(MemoryContext oldcontext, ResourceOwner oldowner)
 	ReleaseCurrentSubTransaction();
 	MemoryContextSwitchTo(oldcontext);
 	CurrentResourceOwner = oldowner;
-
-	/*
-	 * AtEOSubXact_SPI() should not have popped any SPI context, but just in
-	 * case it did, make sure we remain connected.
-	 */
-	SPI_restore_connection();
 }
 
 void
@@ -543,13 +533,6 @@ PLy_spi_subtransaction_abort(MemoryContext oldcontext, ResourceOwner oldowner)
 	RollbackAndReleaseCurrentSubTransaction();
 	MemoryContextSwitchTo(oldcontext);
 	CurrentResourceOwner = oldowner;
-
-	/*
-	 * If AtEOSubXact_SPI() popped any SPI context of the subxact, it will
-	 * have left us in a disconnected state.  We need this hack to return to
-	 * connected state.
-	 */
-	SPI_restore_connection();
 
 	/* Look up the correct exception */
 	entry = hash_search(PLy_spi_exceptions, &(edata->sqlerrcode),
@@ -587,7 +570,7 @@ PLy_spi_exception_set(PyObject *excclass, ErrorData *edata)
 
 	spidata = Py_BuildValue("(izzzizzzzz)", edata->sqlerrcode, edata->detail, edata->hint,
 							edata->internalquery, edata->internalpos,
-				   edata->schema_name, edata->table_name, edata->column_name,
+							edata->schema_name, edata->table_name, edata->column_name,
 							edata->datatype_name, edata->constraint_name);
 	if (!spidata)
 		goto failure;

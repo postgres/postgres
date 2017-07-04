@@ -3,7 +3,7 @@
  * pg_prewarm.c
  *		  prewarming utilities
  *
- * Copyright (c) 2010-2016, PostgreSQL Global Development Group
+ * Copyright (c) 2010-2017, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		  contrib/pg_prewarm/pg_prewarm.c
@@ -79,7 +79,7 @@ pg_prewarm(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 (errmsg("prewarm type cannot be null"))));
-	type = PG_GETARG_TEXT_P(1);
+	type = PG_GETARG_TEXT_PP(1);
 	ttype = text_to_cstring(type);
 	if (strcmp(ttype, "prefetch") == 0)
 		ptype = PREWARM_PREFETCH;
@@ -99,7 +99,7 @@ pg_prewarm(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 (errmsg("relation fork cannot be null"))));
-	forkName = PG_GETARG_TEXT_P(2);
+	forkName = PG_GETARG_TEXT_PP(2);
 	forkString = text_to_cstring(forkName);
 	forkNumber = forkname_to_number(forkString);
 
@@ -138,8 +138,8 @@ pg_prewarm(PG_FUNCTION_ARGS)
 		if (last_block < 0 || last_block >= nblocks)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			errmsg("ending block number must be between 0 and " INT64_FORMAT,
-				   nblocks - 1)));
+					 errmsg("ending block number must be between 0 and " INT64_FORMAT,
+							nblocks - 1)));
 	}
 
 	/* Now we're ready to do the real work. */

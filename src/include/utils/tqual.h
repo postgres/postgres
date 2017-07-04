@@ -5,7 +5,7 @@
  *
  *	  Should be moved/renamed...    - vadim 07/28/98
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/tqual.h
@@ -51,7 +51,7 @@ typedef enum
 	HEAPTUPLE_DEAD,				/* tuple is dead and deletable */
 	HEAPTUPLE_LIVE,				/* tuple is live (committed, no deleter) */
 	HEAPTUPLE_RECENTLY_DEAD,	/* tuple is dead, but not deletable yet */
-	HEAPTUPLE_INSERT_IN_PROGRESS,		/* inserting xact is still in progress */
+	HEAPTUPLE_INSERT_IN_PROGRESS,	/* inserting xact is still in progress */
 	HEAPTUPLE_DELETE_IN_PROGRESS	/* deleting xact is still in progress */
 } HTSV_Result;
 
@@ -109,4 +109,4 @@ extern bool ResolveCminCmaxDuringDecoding(struct HTAB *tuplecid_data,
 	 (snapshotdata).lsn = (l),					\
 	 (snapshotdata).whenTaken = (w))
 
-#endif   /* TQUAL_H */
+#endif							/* TQUAL_H */

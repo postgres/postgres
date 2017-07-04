@@ -4,7 +4,7 @@
  *	 prototypes for logging functions
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *-------------------------------------------------------------------------
@@ -32,4 +32,4 @@ extern void pg_fatal(const char *fmt,...) pg_attribute_printf(1, 2) pg_attribute
 
 extern void progress_report(bool force);
 
-#endif   /* PG_REWIND_LOGGING_H */
+#endif							/* PG_REWIND_LOGGING_H */

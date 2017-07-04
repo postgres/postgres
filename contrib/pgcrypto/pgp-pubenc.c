@@ -39,7 +39,7 @@
 static int
 pad_eme_pkcs1_v15(uint8 *data, int data_len, int res_len, uint8 **res_p)
 {
-	int			res;
+#ifdef HAVE_STRONG_RANDOM
 	uint8	   *buf,
 			   *p;
 	int			pad_len = res_len - 2 - data_len;
@@ -49,11 +49,11 @@ pad_eme_pkcs1_v15(uint8 *data, int data_len, int res_len, uint8 **res_p)
 
 	buf = px_alloc(res_len);
 	buf[0] = 0x02;
-	res = px_get_random_bytes(buf + 1, pad_len);
-	if (res < 0)
+
+	if (!pg_strong_random((char *) buf + 1, pad_len))
 	{
 		px_free(buf);
-		return res;
+		return PXE_NO_RANDOM;
 	}
 
 	/* pad must not contain zero bytes */
@@ -62,19 +62,15 @@ pad_eme_pkcs1_v15(uint8 *data, int data_len, int res_len, uint8 **res_p)
 	{
 		if (*p == 0)
 		{
-			res = px_get_random_bytes(p, 1);
-			if (res < 0)
+			if (!pg_strong_random((char *) p, 1))
+			{
+				px_memset(buf, 0, res_len);
+				px_free(buf);
 				break;
+			}
 		}
 		if (*p != 0)
 			p++;
-	}
-
-	if (res < 0)
-	{
-		px_memset(buf, 0, res_len);
-		px_free(buf);
-		return res;
 	}
 
 	buf[pad_len + 1] = 0;
@@ -82,6 +78,10 @@ pad_eme_pkcs1_v15(uint8 *data, int data_len, int res_len, uint8 **res_p)
 	*res_p = buf;
 
 	return 0;
+
+#else
+	return PXE_NO_RANDOM;
+#endif
 }
 
 static int

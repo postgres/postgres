@@ -63,8 +63,11 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table_name</replaceable> [ 
     <listitem>
      <para>
       The name (possibly schema-qualified) of a specific table to
-      analyze.  If omitted, all regular tables (but not foreign tables)
-      in the current database are analyzed.
+      analyze.  If omitted, all regular tables, partitioned tables, and
+      materialized views in the current database are analyzed (but not
+      foreign tables).  If the specified table is a partitioned table, both the
+      inheritance statistics of the partitioned table as a whole and
+      statistics of the individual partitions are updated.
      </para>
     </listitem>
    </varlistentry>

@@ -8,7 +8,7 @@
  * --- ie, rule names are only unique among the rules of a given table.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_rewrite.h
@@ -65,4 +65,4 @@ typedef FormData_pg_rewrite *Form_pg_rewrite;
 #define Anum_pg_rewrite_ev_qual			6
 #define Anum_pg_rewrite_ev_action		7
 
-#endif   /* PG_REWRITE_H */
+#endif							/* PG_REWRITE_H */

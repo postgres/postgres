@@ -3,7 +3,7 @@
  * tsgistidx.c
  *	  GiST support functions for tsvector_ops
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
@@ -17,6 +17,7 @@
 #include "access/gist.h"
 #include "access/tuptoaster.h"
 #include "tsearch/ts_utils.h"
+#include "utils/builtins.h"
 #include "utils/pg_crc.h"
 
 
@@ -359,12 +360,11 @@ gtsvector_consistent(PG_FUNCTION_ARGS)
 		if (ISALLTRUE(key))
 			PG_RETURN_BOOL(true);
 
-		PG_RETURN_BOOL(TS_execute(
-								  GETQUERY(query),
+		/* since signature is lossy, cannot specify CALC_NOT here */
+		PG_RETURN_BOOL(TS_execute(GETQUERY(query),
 								  (void *) GETSIGN(key),
-								  TS_EXEC_PHRASE_AS_AND,
-								  checkcondition_bit
-								  ));
+								  TS_EXEC_PHRASE_NO_POS,
+								  checkcondition_bit));
 	}
 	else
 	{							/* only leaf pages */
@@ -372,12 +372,10 @@ gtsvector_consistent(PG_FUNCTION_ARGS)
 
 		chkval.arrb = GETARR(key);
 		chkval.arre = chkval.arrb + ARRNELEM(key);
-		PG_RETURN_BOOL(TS_execute(
-								  GETQUERY(query),
+		PG_RETURN_BOOL(TS_execute(GETQUERY(query),
 								  (void *) &chkval,
-								  TS_EXEC_PHRASE_AS_AND | TS_EXEC_CALC_NOT,
-								  checkcondition_arr
-								  ));
+								  TS_EXEC_PHRASE_NO_POS | TS_EXEC_CALC_NOT,
+								  checkcondition_arr));
 	}
 }
 

@@ -3,7 +3,7 @@
  * joinrels.c
  *	  Routines to determine which relations should be joined
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -32,6 +32,9 @@ static bool is_dummy_rel(RelOptInfo *rel);
 static void mark_dummy_rel(RelOptInfo *rel);
 static bool restriction_is_constant_false(List *restrictlist,
 							  bool only_pushed_down);
+static void populate_joinrel_with_paths(PlannerInfo *root, RelOptInfo *rel1,
+							RelOptInfo *rel2, RelOptInfo *joinrel,
+							SpecialJoinInfo *sjinfo, List *restrictlist);
 
 
 /*
@@ -90,7 +93,7 @@ join_search_one_level(PlannerInfo *root, int level)
 
 			if (level == 2)		/* consider remaining initial rels */
 				other_rels = lnext(r);
-			else	/* consider all initial rels */
+			else				/* consider all initial rels */
 				other_rels = list_head(joinrels[1]);
 
 			make_rels_by_clause_joins(root,
@@ -612,7 +615,7 @@ join_is_legal(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 						!bms_is_subset(sjinfo->min_righthand, join_plus_rhs))
 					{
 						join_plus_rhs = bms_add_members(join_plus_rhs,
-													  sjinfo->min_righthand);
+														sjinfo->min_righthand);
 						more = true;
 					}
 					/* full joins constrain both sides symmetrically */
@@ -724,6 +727,27 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 		return joinrel;
 	}
 
+	/* Add paths to the join relation. */
+	populate_joinrel_with_paths(root, rel1, rel2, joinrel, sjinfo,
+								restrictlist);
+
+	bms_free(joinrelids);
+
+	return joinrel;
+}
+
+/*
+ * populate_joinrel_with_paths
+ *	  Add paths to the given joinrel for given pair of joining relations. The
+ *	  SpecialJoinInfo provides details about the join and the restrictlist
+ *	  contains the join clauses and the other clauses applicable for given pair
+ *	  of the joining relations.
+ */
+static void
+populate_joinrel_with_paths(PlannerInfo *root, RelOptInfo *rel1,
+							RelOptInfo *rel2, RelOptInfo *joinrel,
+							SpecialJoinInfo *sjinfo, List *restrictlist)
+{
 	/*
 	 * Consider paths using each rel as both outer and inner.  Depending on
 	 * the join type, a provably empty outer or inner rel might mean the join
@@ -868,10 +892,6 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 			elog(ERROR, "unrecognized join type: %d", (int) sjinfo->jointype);
 			break;
 	}
-
-	bms_free(joinrelids);
-
-	return joinrel;
 }
 
 
@@ -1197,7 +1217,7 @@ mark_dummy_rel(RelOptInfo *rel)
 	rel->partial_pathlist = NIL;
 
 	/* Set up the dummy path */
-	add_path(rel, (Path *) create_append_path(rel, NIL, NULL, 0));
+	add_path(rel, (Path *) create_append_path(rel, NIL, NULL, 0, NIL));
 
 	/* Set or update cheapest_total_path and related fields */
 	set_cheapest(rel);
@@ -1230,9 +1250,8 @@ restriction_is_constant_false(List *restrictlist, bool only_pushed_down)
 	 */
 	foreach(lc, restrictlist)
 	{
-		RestrictInfo *rinfo = (RestrictInfo *) lfirst(lc);
+		RestrictInfo *rinfo = lfirst_node(RestrictInfo, lc);
 
-		Assert(IsA(rinfo, RestrictInfo));
 		if (only_pushed_down && !rinfo->is_pushed_down)
 			continue;
 

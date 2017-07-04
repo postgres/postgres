@@ -1254,6 +1254,20 @@ InitializeWorkerForeignScan(ForeignScanState *node, shm_toc *toc,
     This callback is optional, and needs only be supplied if this
     custom path supports parallel execution.
    </para>
+
+   <para>
+<programlisting>
+void
+ShutdownForeignScan(ForeignScanState *node);
+</programlisting>
+    Release resources when it is anticipated the node will not be executed
+    to completion.  This is not called in all cases; sometimes,
+    <literal>EndForeignScan</> may be called without this function having
+    been called first.  Since the DSM segment used by parallel query is
+    destroyed just after this callback is invoked, foreign data wrappers that
+    wish to take some action before the DSM segment goes away should implement
+    this method.
+   </para>
    </sect2>
 
    </sect1>

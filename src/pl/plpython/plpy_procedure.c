@@ -122,7 +122,7 @@ PLy_procedure_get(Oid fn_oid, Oid fn_rel, bool is_trigger)
 	}
 	PG_CATCH();
 	{
-		/* Do not leave an uninitialised entry in the cache */
+		/* Do not leave an uninitialized entry in the cache */
 		if (use_cache)
 			hash_search(PLy_procedure_cache, &key, HASH_REMOVE, NULL);
 		PG_RE_THROW();
@@ -167,9 +167,7 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 
 	cxt = AllocSetContextCreate(TopMemoryContext,
 								procName,
-								ALLOCSET_DEFAULT_MINSIZE,
-								ALLOCSET_DEFAULT_INITSIZE,
-								ALLOCSET_DEFAULT_MAXSIZE);
+								ALLOCSET_DEFAULT_SIZES);
 
 	oldcxt = MemoryContextSwitchTo(cxt);
 
@@ -217,7 +215,7 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 			Form_pg_type rvTypeStruct;
 
 			rvTypeTup = SearchSysCache1(TYPEOID,
-								   ObjectIdGetDatum(procStruct->prorettype));
+										ObjectIdGetDatum(procStruct->prorettype));
 			if (!HeapTupleIsValid(rvTypeTup))
 				elog(ERROR, "cache lookup failed for type %u",
 					 procStruct->prorettype);
@@ -234,8 +232,8 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 						 procStruct->prorettype != RECORDOID)
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						  errmsg("PL/Python functions cannot return type %s",
-								 format_type_be(procStruct->prorettype))));
+							 errmsg("PL/Python functions cannot return type %s",
+									format_type_be(procStruct->prorettype))));
 			}
 
 			if (rvTypeStruct->typtype == TYPTYPE_COMPOSITE ||
@@ -315,8 +313,8 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 						/* Disallow pseudotype argument */
 						ereport(ERROR,
 								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						  errmsg("PL/Python functions cannot accept type %s",
-								 format_type_be(types[i]))));
+								 errmsg("PL/Python functions cannot accept type %s",
+										format_type_be(types[i]))));
 						break;
 					case TYPTYPE_COMPOSITE:
 						/* we'll set IO funcs at first call */

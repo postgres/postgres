@@ -3,7 +3,7 @@
  * parse_coerce.c
  *		handle type coercions/conversions for parser
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -302,7 +302,7 @@ coerce_type(ParseState *pstate, Node *node,
 		 */
 		if (!con->constisnull)
 			newcon->constvalue = stringTypeDatum(baseType,
-											DatumGetCString(con->constvalue),
+												 DatumGetCString(con->constvalue),
 												 inputTypeMod);
 		else
 			newcon->constvalue = stringTypeDatum(baseType,
@@ -342,7 +342,7 @@ coerce_type(ParseState *pstate, Node *node,
 				val2 = PointerGetDatum(PG_DETOAST_DATUM(val2));
 			if (!datumIsEqual(newcon->constvalue, val2, false, newcon->constlen))
 				elog(WARNING, "type %s has unstable input conversion for \"%s\"",
-				   typeTypeName(baseType), DatumGetCString(con->constvalue));
+					 typeTypeName(baseType), DatumGetCString(con->constvalue));
 		}
 #endif
 
@@ -418,7 +418,7 @@ coerce_type(ParseState *pstate, Node *node,
 			result = build_coercion_expression(node, pathtype, funcId,
 											   baseTypeId, baseTypeMod,
 											   cformat, location,
-										  (cformat != COERCE_IMPLICIT_CAST));
+											   (cformat != COERCE_IMPLICIT_CAST));
 
 			/*
 			 * If domain, coerce to the domain type and relabel with domain
@@ -549,7 +549,7 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *target_typeids,
 		/* accept if target is polymorphic, for now */
 		if (IsPolymorphicType(targetTypeId))
 		{
-			have_generics = true;		/* do more checking later */
+			have_generics = true;	/* do more checking later */
 			continue;
 		}
 
@@ -1077,8 +1077,9 @@ coerce_to_boolean(ParseState *pstate, Node *node,
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 			/* translator: first %s is name of a SQL construct, eg WHERE */
-				   errmsg("argument of %s must be type boolean, not type %s",
-						  constructName, format_type_be(inputTypeId)),
+					 errmsg("argument of %s must be type %s, not type %s",
+							constructName, "boolean",
+							format_type_be(inputTypeId)),
 					 parser_errposition(pstate, exprLocation(node))));
 		node = newnode;
 	}
@@ -1095,9 +1096,9 @@ coerce_to_boolean(ParseState *pstate, Node *node,
 }
 
 /*
- * coerce_to_specific_type()
- *		Coerce an argument of a construct that requires a specific data type.
- *		Also check that input is not a set.
+ * coerce_to_specific_type_typmod()
+ *		Coerce an argument of a construct that requires a specific data type,
+ *		with a specific typmod.  Also check that input is not a set.
  *
  * Returns the possibly-transformed node tree.
  *
@@ -1105,9 +1106,9 @@ coerce_to_boolean(ParseState *pstate, Node *node,
  * processing is wanted.
  */
 Node *
-coerce_to_specific_type(ParseState *pstate, Node *node,
-						Oid targetTypeId,
-						const char *constructName)
+coerce_to_specific_type_typmod(ParseState *pstate, Node *node,
+							   Oid targetTypeId, int32 targetTypmod,
+							   const char *constructName)
 {
 	Oid			inputTypeId = exprType(node);
 
@@ -1116,7 +1117,7 @@ coerce_to_specific_type(ParseState *pstate, Node *node,
 		Node	   *newnode;
 
 		newnode = coerce_to_target_type(pstate, node, inputTypeId,
-										targetTypeId, -1,
+										targetTypeId, targetTypmod,
 										COERCION_ASSIGNMENT,
 										COERCE_IMPLICIT_CAST,
 										-1);
@@ -1143,6 +1144,25 @@ coerce_to_specific_type(ParseState *pstate, Node *node,
 	return node;
 }
 
+/*
+ * coerce_to_specific_type()
+ *		Coerce an argument of a construct that requires a specific data type.
+ *		Also check that input is not a set.
+ *
+ * Returns the possibly-transformed node tree.
+ *
+ * As with coerce_type, pstate may be NULL if no special unknown-Param
+ * processing is wanted.
+ */
+Node *
+coerce_to_specific_type(ParseState *pstate, Node *node,
+						Oid targetTypeId,
+						const char *constructName)
+{
+	return coerce_to_specific_type_typmod(pstate, node,
+										  targetTypeId, -1,
+										  constructName);
+}
 
 /*
  * parser_coercion_errposition - report coercion error location, if possible
@@ -1423,7 +1443,7 @@ check_generic_type_consistency(Oid *actual_arg_types,
 		{
 			if (actual_type == UNKNOWNOID)
 				continue;
-			actual_type = getBaseType(actual_type);		/* flatten domains */
+			actual_type = getBaseType(actual_type); /* flatten domains */
 			if (OidIsValid(array_typeid) && actual_type != array_typeid)
 				return false;
 			array_typeid = actual_type;
@@ -1432,7 +1452,7 @@ check_generic_type_consistency(Oid *actual_arg_types,
 		{
 			if (actual_type == UNKNOWNOID)
 				continue;
-			actual_type = getBaseType(actual_type);		/* flatten domains */
+			actual_type = getBaseType(actual_type); /* flatten domains */
 			if (OidIsValid(range_typeid) && actual_type != range_typeid)
 				return false;
 			range_typeid = actual_type;
@@ -1626,7 +1646,7 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 			if (OidIsValid(elem_typeid) && actual_type != elem_typeid)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
-				errmsg("arguments declared \"anyelement\" are not all alike"),
+						 errmsg("arguments declared \"anyelement\" are not all alike"),
 						 errdetail("%s versus %s",
 								   format_type_be(elem_typeid),
 								   format_type_be(actual_type))));
@@ -1642,11 +1662,11 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 			}
 			if (allow_poly && decl_type == actual_type)
 				continue;		/* no new information here */
-			actual_type = getBaseType(actual_type);		/* flatten domains */
+			actual_type = getBaseType(actual_type); /* flatten domains */
 			if (OidIsValid(array_typeid) && actual_type != array_typeid)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("arguments declared \"anyarray\" are not all alike"),
+						 errmsg("arguments declared \"anyarray\" are not all alike"),
 						 errdetail("%s versus %s",
 								   format_type_be(array_typeid),
 								   format_type_be(actual_type))));
@@ -1662,11 +1682,11 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 			}
 			if (allow_poly && decl_type == actual_type)
 				continue;		/* no new information here */
-			actual_type = getBaseType(actual_type);		/* flatten domains */
+			actual_type = getBaseType(actual_type); /* flatten domains */
 			if (OidIsValid(range_typeid) && actual_type != range_typeid)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("arguments declared \"anyrange\" are not all alike"),
+						 errmsg("arguments declared \"anyrange\" are not all alike"),
 						 errdetail("%s versus %s",
 								   format_type_be(range_typeid),
 								   format_type_be(actual_type))));
@@ -1695,8 +1715,8 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 			if (!OidIsValid(array_typelem))
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
-						 errmsg("argument declared \"anyarray\" is not an array but type %s",
-								format_type_be(array_typeid))));
+						 errmsg("argument declared %s is not an array but type %s",
+								"anyarray", format_type_be(array_typeid))));
 		}
 
 		if (!OidIsValid(elem_typeid))
@@ -1711,7 +1731,8 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 			/* otherwise, they better match */
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("argument declared \"anyarray\" is not consistent with argument declared \"anyelement\""),
+					 errmsg("argument declared %s is not consistent with argument declared %s",
+							"anyarray", "anyelement"),
 					 errdetail("%s versus %s",
 							   format_type_be(array_typeid),
 							   format_type_be(elem_typeid))));
@@ -1732,7 +1753,8 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 			if (!OidIsValid(range_typelem))
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
-						 errmsg("argument declared \"anyrange\" is not a range type but type %s",
+						 errmsg("argument declared %s is not a range type but type %s",
+								"anyrange",
 								format_type_be(range_typeid))));
 		}
 
@@ -1748,7 +1770,8 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 			/* otherwise, they better match */
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("argument declared \"anyrange\" is not consistent with argument declared \"anyelement\""),
+					 errmsg("argument declared %s is not consistent with argument declared %s",
+							"anyrange", "anyelement"),
 					 errdetail("%s versus %s",
 							   format_type_be(range_typeid),
 							   format_type_be(elem_typeid))));
@@ -1768,7 +1791,8 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 			/* Only way to get here is if all the generic args are UNKNOWN */
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("could not determine polymorphic type because input has type \"unknown\"")));
+					 errmsg("could not determine polymorphic type because input has type %s",
+							"unknown")));
 		}
 	}
 
@@ -1778,8 +1802,8 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 		if (type_is_array_domain(elem_typeid))
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
-				   errmsg("type matched to anynonarray is an array type: %s",
-						  format_type_be(elem_typeid))));
+					 errmsg("type matched to anynonarray is an array type: %s",
+							format_type_be(elem_typeid))));
 	}
 
 	if (have_anyenum && elem_typeid != ANYELEMENTOID)
@@ -1817,8 +1841,8 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 					if (!OidIsValid(array_typeid))
 						ereport(ERROR,
 								(errcode(ERRCODE_UNDEFINED_OBJECT),
-						 errmsg("could not find array type for data type %s",
-								format_type_be(elem_typeid))));
+								 errmsg("could not find array type for data type %s",
+										format_type_be(elem_typeid))));
 				}
 				declared_arg_types[j] = array_typeid;
 			}
@@ -1828,8 +1852,8 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 				{
 					ereport(ERROR,
 							(errcode(ERRCODE_UNDEFINED_OBJECT),
-						 errmsg("could not find range type for data type %s",
-								format_type_be(elem_typeid))));
+							 errmsg("could not find range type for data type %s",
+									format_type_be(elem_typeid))));
 				}
 				declared_arg_types[j] = range_typeid;
 			}
@@ -1906,8 +1930,8 @@ resolve_generic_type(Oid declared_type,
 			if (!OidIsValid(array_typelem))
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
-						 errmsg("argument declared \"anyarray\" is not an array but type %s",
-								format_type_be(context_base_type))));
+						 errmsg("argument declared %s is not an array but type %s",
+								"anyarray", format_type_be(context_base_type))));
 			return context_base_type;
 		}
 		else if (context_declared_type == ANYELEMENTOID ||
@@ -1940,8 +1964,8 @@ resolve_generic_type(Oid declared_type,
 			if (!OidIsValid(array_typelem))
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
-						 errmsg("argument declared \"anyarray\" is not an array but type %s",
-								format_type_be(context_base_type))));
+						 errmsg("argument declared %s is not an array but type %s",
+								"anyarray", format_type_be(context_base_type))));
 			return array_typelem;
 		}
 		else if (context_declared_type == ANYRANGEOID)
@@ -1953,8 +1977,8 @@ resolve_generic_type(Oid declared_type,
 			if (!OidIsValid(range_typelem))
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
-						 errmsg("argument declared \"anyrange\" is not a range type but type %s",
-								format_type_be(context_base_type))));
+						 errmsg("argument declared %s is not a range type but type %s",
+								"anyrange", format_type_be(context_base_type))));
 			return range_typelem;
 		}
 		else if (context_declared_type == ANYELEMENTOID ||
@@ -2229,7 +2253,7 @@ find_coercion_pathway(Oid targetTypeId, Oid sourceTypeId,
 			Oid			sourceElem;
 
 			if ((targetElem = get_element_type(targetTypeId)) != InvalidOid &&
-			(sourceElem = get_base_element_type(sourceTypeId)) != InvalidOid)
+				(sourceElem = get_base_element_type(sourceTypeId)) != InvalidOid)
 			{
 				CoercionPathType elempathtype;
 				Oid			elemfuncid;

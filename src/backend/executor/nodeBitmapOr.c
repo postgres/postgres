@@ -3,7 +3,7 @@
  * nodeBitmapOr.c
  *	  routines to handle BitmapOr nodes.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -129,7 +129,9 @@ MultiExecBitmapOr(BitmapOrState *node)
 			if (result == NULL) /* first subplan */
 			{
 				/* XXX should we use less than work_mem for this? */
-				result = tbm_create(work_mem * 1024L);
+				result = tbm_create(work_mem * 1024L,
+									((BitmapOr *) node->ps.plan)->isshared ?
+									node->ps.state->es_query_dsa : NULL);
 			}
 
 			((BitmapIndexScanState *) subnode)->biss_result = result;
@@ -148,7 +150,7 @@ MultiExecBitmapOr(BitmapOrState *node)
 				elog(ERROR, "unrecognized result from subplan");
 
 			if (result == NULL)
-				result = subresult;		/* first subplan */
+				result = subresult; /* first subplan */
 			else
 			{
 				tbm_union(result, subresult);

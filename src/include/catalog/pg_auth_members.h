@@ -5,7 +5,7 @@
  *	  (pg_auth_members) along with the relation's initial contents.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_auth_members.h
@@ -54,4 +54,4 @@ typedef FormData_pg_auth_members *Form_pg_auth_members;
 #define Anum_pg_auth_members_grantor		3
 #define Anum_pg_auth_members_admin_option	4
 
-#endif   /* PG_AUTH_MEMBERS_H */
+#endif							/* PG_AUTH_MEMBERS_H */

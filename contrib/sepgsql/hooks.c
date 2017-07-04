@@ -4,7 +4,7 @@
  *
  * Entrypoints of the hooks in PostgreSQL, and dispatches the callbacks.
  *
- * Copyright (c) 2010-2016, PostgreSQL Global Development Group
+ * Copyright (c) 2010-2017, PostgreSQL Global Development Group
  *
  * -------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@
 #include "miscadmin.h"
 #include "tcop/utility.h"
 #include "utils/guc.h"
+#include "utils/queryenvironment.h"
 
 #include "sepgsql.h"
 
@@ -51,7 +52,7 @@ typedef struct
 	 * command. Elsewhere (including the case of default) NULL.
 	 */
 	const char *createdb_dtemplate;
-}	sepgsql_context_info_t;
+}			sepgsql_context_info_t;
 
 static sepgsql_context_info_t sepgsql_context_info;
 
@@ -107,7 +108,7 @@ sepgsql_object_access(ObjectAccessType access,
 					case DatabaseRelationId:
 						Assert(!is_internal);
 						sepgsql_database_post_create(objectId,
-									sepgsql_context_info.createdb_dtemplate);
+													 sepgsql_context_info.createdb_dtemplate);
 						break;
 
 					case NamespaceRelationId:
@@ -297,13 +298,15 @@ sepgsql_exec_check_perms(List *rangeTabls, bool abort)
  * break whole of the things if nefarious user would use.
  */
 static void
-sepgsql_utility_command(Node *parsetree,
+sepgsql_utility_command(PlannedStmt *pstmt,
 						const char *queryString,
 						ProcessUtilityContext context,
 						ParamListInfo params,
+						QueryEnvironment *queryEnv,
 						DestReceiver *dest,
 						char *completionTag)
 {
+	Node	   *parsetree = pstmt->utilityStmt;
 	sepgsql_context_info_t saved_context_info = sepgsql_context_info;
 	ListCell   *cell;
 
@@ -362,12 +365,12 @@ sepgsql_utility_command(Node *parsetree,
 		}
 
 		if (next_ProcessUtility_hook)
-			(*next_ProcessUtility_hook) (parsetree, queryString,
-										 context, params,
+			(*next_ProcessUtility_hook) (pstmt, queryString,
+										 context, params, queryEnv,
 										 dest, completionTag);
 		else
-			standard_ProcessUtility(parsetree, queryString,
-									context, params,
+			standard_ProcessUtility(pstmt, queryString,
+									context, params, queryEnv,
 									dest, completionTag);
 	}
 	PG_CATCH();
@@ -392,7 +395,7 @@ _PG_init(void)
 	if (IsUnderPostmaster)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-			 errmsg("sepgsql must be loaded via shared_preload_libraries")));
+				 errmsg("sepgsql must be loaded via shared_preload_libraries")));
 
 	/*
 	 * Check availability of SELinux on the platform. If disabled, we cannot

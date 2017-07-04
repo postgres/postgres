@@ -40,21 +40,16 @@
  */
 #include "postgres_fe.h"
 
+#include <ctype.h>
+#ifdef HAVE_TERMIOS_H
+#include <termios.h>
+#endif
+
 #include "getopt_long.h"
 
 #include "dumputils.h"
 #include "parallel.h"
 #include "pg_backup_utils.h"
-
-#include <ctype.h>
-
-#ifdef HAVE_TERMIOS_H
-#include <termios.h>
-#endif
-
-#ifdef ENABLE_NLS
-#include <locale.h>
-#endif
 
 
 static void usage(const char *progname);
@@ -76,7 +71,9 @@ main(int argc, char **argv)
 	static int	no_data_for_failed_tables = 0;
 	static int	outputNoTablespaces = 0;
 	static int	use_setsessauth = 0;
+	static int	no_publications = 0;
 	static int	no_security_labels = 0;
+	static int	no_subscriptions = 0;
 	static int	strict_names = 0;
 
 	struct option cmdopts[] = {
@@ -85,6 +82,7 @@ main(int argc, char **argv)
 		{"data-only", 0, NULL, 'a'},
 		{"dbname", 1, NULL, 'd'},
 		{"exit-on-error", 0, NULL, 'e'},
+		{"exclude-schema", 1, NULL, 'N'},
 		{"file", 1, NULL, 'f'},
 		{"format", 1, NULL, 'F'},
 		{"function", 1, NULL, 'P'},
@@ -121,7 +119,9 @@ main(int argc, char **argv)
 		{"section", required_argument, NULL, 3},
 		{"strict-names", no_argument, &strict_names, 1},
 		{"use-set-session-authorization", no_argument, &use_setsessauth, 1},
+		{"no-publications", no_argument, &no_publications, 1},
 		{"no-security-labels", no_argument, &no_security_labels, 1},
+		{"no-subscriptions", no_argument, &no_subscriptions, 1},
 
 		{NULL, 0, NULL, 0}
 	};
@@ -148,7 +148,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	while ((c = getopt_long(argc, argv, "acCd:ef:F:h:I:j:lL:n:Op:P:RsS:t:T:U:vwWx1",
+	while ((c = getopt_long(argc, argv, "acCd:ef:F:h:I:j:lL:n:N:Op:P:RsS:t:T:U:vwWx1",
 							cmdopts, NULL)) != -1)
 	{
 		switch (c)
@@ -194,6 +194,10 @@ main(int argc, char **argv)
 
 			case 'n':			/* Dump data for this schema only */
 				simple_string_list_append(&opts->schemaNames, optarg);
+				break;
+
+			case 'N':			/* Do not dump data for this schema */
+				simple_string_list_append(&opts->schemaExcludeNames, optarg);
 				break;
 
 			case 'O':
@@ -325,6 +329,22 @@ main(int argc, char **argv)
 		exit_nicely(1);
 	}
 
+	if (numWorkers <= 0)
+	{
+		fprintf(stderr, _("%s: invalid number of parallel jobs\n"), progname);
+		exit(1);
+	}
+
+	/* See comments in pg_dump.c */
+#ifdef WIN32
+	if (numWorkers > MAXIMUM_WAIT_OBJECTS)
+	{
+		fprintf(stderr, _("%s: maximum number of parallel jobs is %d\n"),
+				progname, MAXIMUM_WAIT_OBJECTS);
+		exit(1);
+	}
+#endif
+
 	/* Can't do single-txn mode with multiple connections */
 	if (opts->single_txn && numWorkers > 1)
 	{
@@ -338,7 +358,9 @@ main(int argc, char **argv)
 	opts->noDataForFailedTables = no_data_for_failed_tables;
 	opts->noTablespace = outputNoTablespaces;
 	opts->use_setsessauth = use_setsessauth;
+	opts->no_publications = no_publications;
 	opts->no_security_labels = no_security_labels;
+	opts->no_subscriptions = no_subscriptions;
 
 	if (if_exists && !opts->dropSchema)
 	{
@@ -397,16 +419,6 @@ main(int argc, char **argv)
 	if (opts->tocFile)
 		SortTocFromFile(AH);
 
-	/* See comments in pg_dump.c */
-#ifdef WIN32
-	if (numWorkers > MAXIMUM_WAIT_OBJECTS)
-	{
-		fprintf(stderr, _("%s: maximum number of parallel jobs is %d\n"),
-				progname, MAXIMUM_WAIT_OBJECTS);
-		exit(1);
-	}
-#endif
-
 	AH->numWorkers = numWorkers;
 
 	if (opts->tocSummary)
@@ -456,6 +468,7 @@ usage(const char *progname)
 	printf(_("  -L, --use-list=FILENAME      use table of contents from this file for\n"
 			 "                               selecting/ordering output\n"));
 	printf(_("  -n, --schema=NAME            restore only objects in this schema\n"));
+	printf(_("  -N, --exclude-schema=NAME    do not restore objects in this schema\n"));
 	printf(_("  -O, --no-owner               skip restoration of object ownership\n"));
 	printf(_("  -P, --function=NAME(args)    restore named function\n"));
 	printf(_("  -s, --schema-only            restore only the schema, no data\n"));
@@ -469,11 +482,13 @@ usage(const char *progname)
 	printf(_("  --if-exists                  use IF EXISTS when dropping objects\n"));
 	printf(_("  --no-data-for-failed-tables  do not restore data of tables that could not be\n"
 			 "                               created\n"));
+	printf(_("  --no-publications            do not restore publications\n"));
 	printf(_("  --no-security-labels         do not restore security labels\n"));
+	printf(_("  --no-subscriptions           do not restore subscriptions\n"));
 	printf(_("  --no-tablespaces             do not restore tablespace assignments\n"));
 	printf(_("  --section=SECTION            restore named section (pre-data, data, or post-data)\n"));
 	printf(_("  --strict-names               require table and/or schema include patterns to\n"
-		 "                               match at least one entity each\n"));
+			 "                               match at least one entity each\n"));
 	printf(_("  --use-set-session-authorization\n"
 			 "                               use SET SESSION AUTHORIZATION commands instead of\n"
 			 "                               ALTER OWNER commands to set ownership\n"));

@@ -4,7 +4,7 @@
  * repl_scanner.l
  *	  a lexical scanner for the replication commands
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -83,6 +83,7 @@ identifier		{ident_start}{ident_cont}*
 BASE_BACKUP			{ return K_BASE_BACKUP; }
 FAST			{ return K_FAST; }
 IDENTIFY_SYSTEM		{ return K_IDENTIFY_SYSTEM; }
+SHOW		{ return K_SHOW; }
 LABEL			{ return K_LABEL; }
 NOWAIT			{ return K_NOWAIT; }
 PROGRESS			{ return K_PROGRESS; }
@@ -98,6 +99,10 @@ PHYSICAL			{ return K_PHYSICAL; }
 RESERVE_WAL			{ return K_RESERVE_WAL; }
 LOGICAL				{ return K_LOGICAL; }
 SLOT				{ return K_SLOT; }
+TEMPORARY			{ return K_TEMPORARY; }
+EXPORT_SNAPSHOT		{ return K_EXPORT_SNAPSHOT; }
+NOEXPORT_SNAPSHOT	{ return K_NOEXPORT_SNAPSHOT; }
+USE_SNAPSHOT		{ return K_USE_SNAPSHOT; }
 
 ","				{ return ','; }
 ";"				{ return ';'; }
@@ -176,9 +181,7 @@ SLOT				{ return K_SLOT; }
 				}
 
 .				{
-					ereport(ERROR,
-							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("syntax error: unexpected character \"%s\"", yytext)));
+					return T_WORD;
 				}
 %%
 

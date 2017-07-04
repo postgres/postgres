@@ -5,7 +5,7 @@
  *	  along with the relation's initial contents.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_database.h
@@ -79,4 +79,4 @@ DATA(insert OID = 1 (  template1 PGUID ENCODING "LC_COLLATE" "LC_CTYPE" t t -1 0
 SHDESCR("default template for new databases");
 #define TemplateDbOid			1
 
-#endif   /* PG_DATABASE_H */
+#endif							/* PG_DATABASE_H */

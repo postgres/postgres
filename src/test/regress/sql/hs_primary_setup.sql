@@ -22,4 +22,4 @@ insert into hs3 values (115);
 DROP sequence if exists hsseq;
 create sequence hsseq;
 
-SELECT pg_switch_xlog();
+SELECT pg_switch_wal();

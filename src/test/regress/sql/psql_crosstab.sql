@@ -111,3 +111,14 @@ SELECT a,a,1 FROM generate_series(1,3000) AS a
 SELECT 1 \crosstabview
 
 DROP TABLE ctv_data;
+
+-- check error reporting (bug #14476)
+CREATE TABLE ctv_data (x int, y int, v text);
+
+INSERT INTO ctv_data SELECT 1, x, '*' || x FROM generate_series(1,10) x;
+SELECT * FROM ctv_data \crosstabview
+
+INSERT INTO ctv_data VALUES (1, 10, '*'); -- duplicate data to cause error
+SELECT * FROM ctv_data \crosstabview
+
+DROP TABLE ctv_data;

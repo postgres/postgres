@@ -1368,11 +1368,11 @@ PGTYPESnumeric_cmp(numeric *var1, numeric *var2)
 {
 	/* use cmp_abs function to calculate the result */
 
-	/* both are positive: normal comparation with cmp_abs */
+	/* both are positive: normal comparison with cmp_abs */
 	if (var1->sign == NUMERIC_POS && var2->sign == NUMERIC_POS)
 		return cmp_abs(var1, var2);
 
-	/* both are negative: return the inverse of the normal comparation */
+	/* both are negative: return the inverse of the normal comparison */
 	if (var1->sign == NUMERIC_NEG && var2->sign == NUMERIC_NEG)
 	{
 		/*

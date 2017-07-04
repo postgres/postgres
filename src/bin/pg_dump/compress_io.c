@@ -4,7 +4,7 @@
  *	 Routines for archivers to write an uncompressed or compressed data
  *	 stream.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * This file includes two APIs for dealing with compressed data. The first
@@ -388,7 +388,7 @@ ReadDataFromArchiveZlib(ArchiveHandle *AH, ReadFunc readF)
 	free(out);
 	free(zp);
 }
-#endif   /* HAVE_LIBZ */
+#endif							/* HAVE_LIBZ */
 
 
 /*
@@ -593,7 +593,7 @@ cfread(void *ptr, int size, cfp *fp)
 		ret = gzread(fp->compressedfp, ptr, size);
 		if (ret != size && !gzeof(fp->compressedfp))
 			exit_horribly(modulename,
-					"could not read from input file: %s\n", strerror(errno));
+						  "could not read from input file: %s\n", strerror(errno));
 	}
 	else
 #endif
@@ -629,10 +629,10 @@ cfgetc(cfp *fp)
 		{
 			if (!gzeof(fp->compressedfp))
 				exit_horribly(modulename,
-					"could not read from input file: %s\n", strerror(errno));
+							  "could not read from input file: %s\n", strerror(errno));
 			else
 				exit_horribly(modulename,
-							"could not read from input file: end of file\n");
+							  "could not read from input file: end of file\n");
 		}
 	}
 	else

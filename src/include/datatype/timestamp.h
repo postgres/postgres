@@ -5,7 +5,7 @@
  *
  * Note: this file must be includable in both frontend and backend contexts.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/datatype/timestamp.h
@@ -14,10 +14,6 @@
  */
 #ifndef DATATYPE_TIMESTAMP_H
 #define DATATYPE_TIMESTAMP_H
-
-#include <math.h>
-#include <limits.h>
-#include <float.h>
 
 /*
  * Timestamp represents absolute time.
@@ -29,29 +25,20 @@
  * Note that Postgres uses "time interval" to mean a bounded interval,
  * consisting of a beginning and ending time, not a time span - thomas 97/03/20
  *
- * We have two implementations, one that uses int64 values with units of
- * microseconds, and one that uses double values with units of seconds.
+ * Timestamps, as well as the h/m/s fields of intervals, are stored as
+ * int64 values with units of microseconds.  (Once upon a time they were
+ * double values with units of seconds.)
  *
- * TimeOffset and fsec_t are convenience typedefs for temporary variables
- * that are of different types in the two cases.  Do not use fsec_t in values
- * stored on-disk, since it is not the same size in both implementations.
+ * TimeOffset and fsec_t are convenience typedefs for temporary variables.
+ * Do not use fsec_t in values stored on-disk.
  * Also, fsec_t is only meant for *fractional* seconds; beware of overflow
  * if the value you need to store could be many seconds.
  */
-
-#ifdef HAVE_INT64_TIMESTAMP
 
 typedef int64 Timestamp;
 typedef int64 TimestampTz;
 typedef int64 TimeOffset;
 typedef int32 fsec_t;			/* fractional seconds (in microseconds) */
-#else
-
-typedef double Timestamp;
-typedef double TimestampTz;
-typedef double TimeOffset;
-typedef double fsec_t;			/* fractional seconds (in seconds) */
-#endif
 
 typedef struct
 {
@@ -62,6 +49,7 @@ typedef struct
 } Interval;
 
 
+/* Limits on the "precision" option (typmod) for these data types */
 #define MAX_TIMESTAMP_PRECISION 6
 #define MAX_INTERVAL_PRECISION 6
 
@@ -118,18 +106,8 @@ typedef struct
 /*
  * DT_NOBEGIN represents timestamp -infinity; DT_NOEND represents +infinity
  */
-#ifdef HAVE_INT64_TIMESTAMP
 #define DT_NOBEGIN		PG_INT64_MIN
 #define DT_NOEND		PG_INT64_MAX
-#else							/* !HAVE_INT64_TIMESTAMP */
-#ifdef HUGE_VAL
-#define DT_NOBEGIN		(-HUGE_VAL)
-#define DT_NOEND		(HUGE_VAL)
-#else
-#define DT_NOBEGIN		(-DBL_MAX)
-#define DT_NOEND		(DBL_MAX)
-#endif
-#endif   /* HAVE_INT64_TIMESTAMP */
 
 #define TIMESTAMP_NOBEGIN(j)	\
 	do {(j) = DT_NOBEGIN;} while (0)
@@ -191,35 +169,22 @@ typedef struct
  * so that is the lower bound for both dates and timestamps.
  *
  * The upper limit for dates is 5874897-12-31, which is a bit less than what
- * the Julian-date code can allow.  We use that same limit for timestamps when
- * using floating-point timestamps (so that the timezone offset problem would
- * exist here too if there were no slop).  For integer timestamps, the upper
- * limit is 294276-12-31.  The int64 overflow limit would be a few days later;
- * again, leaving some slop avoids worries about corner-case overflow, and
- * provides a simpler user-visible definition.
+ * the Julian-date code can allow.  For timestamps, the upper limit is
+ * 294276-12-31.  The int64 overflow limit would be a few days later; again,
+ * leaving some slop avoids worries about corner-case overflow, and provides
+ * a simpler user-visible definition.
  */
 
 /* First allowed date, and first disallowed date, in Julian-date form */
 #define DATETIME_MIN_JULIAN (0)
 #define DATE_END_JULIAN (2147483494)	/* == date2j(JULIAN_MAXYEAR, 1, 1) */
-#ifdef HAVE_INT64_TIMESTAMP
-#define TIMESTAMP_END_JULIAN (109203528)		/* == date2j(294277, 1, 1) */
-#else
-#define TIMESTAMP_END_JULIAN DATE_END_JULIAN
-#endif
+#define TIMESTAMP_END_JULIAN (109203528)	/* == date2j(294277, 1, 1) */
 
 /* Timestamp limits */
-#ifdef HAVE_INT64_TIMESTAMP
 #define MIN_TIMESTAMP	INT64CONST(-211813488000000000)
 /* == (DATETIME_MIN_JULIAN - POSTGRES_EPOCH_JDATE) * USECS_PER_DAY */
 #define END_TIMESTAMP	INT64CONST(9223371331200000000)
 /* == (TIMESTAMP_END_JULIAN - POSTGRES_EPOCH_JDATE) * USECS_PER_DAY */
-#else
-#define MIN_TIMESTAMP	(-211813488000.0)
-/* == (DATETIME_MIN_JULIAN - POSTGRES_EPOCH_JDATE) * SECS_PER_DAY */
-#define END_TIMESTAMP	185330760393600.0
-/* == (TIMESTAMP_END_JULIAN - POSTGRES_EPOCH_JDATE) * SECS_PER_DAY */
-#endif
 
 /* Range-check a date (given in Postgres, not Julian, numbering) */
 #define IS_VALID_DATE(d) \
@@ -229,4 +194,4 @@ typedef struct
 /* Range-check a timestamp */
 #define IS_VALID_TIMESTAMP(t)  (MIN_TIMESTAMP <= (t) && (t) < END_TIMESTAMP)
 
-#endif   /* DATATYPE_TIMESTAMP_H */
+#endif							/* DATATYPE_TIMESTAMP_H */

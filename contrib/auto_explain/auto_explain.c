@@ -3,7 +3,7 @@
  * auto_explain.c
  *
  *
- * Copyright (c) 2008-2016, PostgreSQL Global Development Group
+ * Copyright (c) 2008-2017, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  contrib/auto_explain/auto_explain.c
@@ -61,7 +61,7 @@ void		_PG_fini(void);
 static void explain_ExecutorStart(QueryDesc *queryDesc, int eflags);
 static void explain_ExecutorRun(QueryDesc *queryDesc,
 					ScanDirection direction,
-					uint64 count);
+					uint64 count, bool execute_once);
 static void explain_ExecutorFinish(QueryDesc *queryDesc);
 static void explain_ExecutorEnd(QueryDesc *queryDesc);
 
@@ -74,8 +74,8 @@ _PG_init(void)
 {
 	/* Define custom GUC variables. */
 	DefineCustomIntVariable("auto_explain.log_min_duration",
-		 "Sets the minimum execution time above which plans will be logged.",
-						 "Zero prints all plans. -1 turns this feature off.",
+							"Sets the minimum execution time above which plans will be logged.",
+							"Zero prints all plans. -1 turns this feature off.",
 							&auto_explain_log_min_duration,
 							-1,
 							-1, INT_MAX / 1000,
@@ -120,7 +120,7 @@ _PG_init(void)
 
 	DefineCustomBoolVariable("auto_explain.log_triggers",
 							 "Include trigger statistics in plans.",
-						"This has no effect unless log_analyze is also set.",
+							 "This has no effect unless log_analyze is also set.",
 							 &auto_explain_log_triggers,
 							 false,
 							 PGC_SUSET,
@@ -257,15 +257,16 @@ explain_ExecutorStart(QueryDesc *queryDesc, int eflags)
  * ExecutorRun hook: all we need do is track nesting depth
  */
 static void
-explain_ExecutorRun(QueryDesc *queryDesc, ScanDirection direction, uint64 count)
+explain_ExecutorRun(QueryDesc *queryDesc, ScanDirection direction,
+					uint64 count, bool execute_once)
 {
 	nesting_level++;
 	PG_TRY();
 	{
 		if (prev_ExecutorRun)
-			prev_ExecutorRun(queryDesc, direction, count);
+			prev_ExecutorRun(queryDesc, direction, count, execute_once);
 		else
-			standard_ExecutorRun(queryDesc, direction, count);
+			standard_ExecutorRun(queryDesc, direction, count, execute_once);
 		nesting_level--;
 	}
 	PG_CATCH();

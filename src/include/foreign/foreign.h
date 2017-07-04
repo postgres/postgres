@@ -4,7 +4,7 @@
  *	  support for foreign-data wrappers, servers and user mappings.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  *
  * src/include/foreign/foreign.h
  *
@@ -23,7 +23,7 @@
 
 /*
  * Generic option types for validation.
- * NB! Thes are treated as flags, so use only powers of two here.
+ * NB! These are treated as flags, so use only powers of two here.
  */
 typedef enum
 {
@@ -82,4 +82,4 @@ extern List *GetForeignColumnOptions(Oid relid, AttrNumber attnum);
 extern Oid	get_foreign_data_wrapper_oid(const char *fdwname, bool missing_ok);
 extern Oid	get_foreign_server_oid(const char *servername, bool missing_ok);
 
-#endif   /* FOREIGN_H */
+#endif							/* FOREIGN_H */

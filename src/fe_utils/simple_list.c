@@ -7,7 +7,7 @@
  * it's all we need in, eg, pg_dump.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/fe_utils/simple_list.c
@@ -65,7 +65,7 @@ simple_string_list_append(SimpleStringList *list, const char *val)
 	SimpleStringListCell *cell;
 
 	cell = (SimpleStringListCell *)
-		pg_malloc(offsetof(SimpleStringListCell, val) +strlen(val) + 1);
+		pg_malloc(offsetof(SimpleStringListCell, val) + strlen(val) + 1);
 
 	cell->next = NULL;
 	cell->touched = false;

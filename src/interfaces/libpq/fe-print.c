@@ -3,7 +3,7 @@
  * fe-print.c
  *	  functions for pretty-printing query results
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * These functions were formerly part of fe-exec.c, but they
@@ -166,8 +166,9 @@ PQprint(FILE *fout, const PGresult *res, const PQprintOpt *po)
 			screen_size.ws_col = 80;
 #endif
 			pagerenv = getenv("PAGER");
+			/* if PAGER is unset, empty or all-white-space, don't use pager */
 			if (pagerenv != NULL &&
-				pagerenv[0] != '\0' &&
+				strspn(pagerenv, " \t\r\n") != strlen(pagerenv) &&
 				!po->html3 &&
 				((po->expanded &&
 				  nTups * (nFields + 1) >= screen_size.ws_row) ||
@@ -176,7 +177,7 @@ PQprint(FILE *fout, const PGresult *res, const PQprintOpt *po)
 				  (1 + (po->standard != 0)) >= screen_size.ws_row -
 				  (po->header != 0) *
 				  (total_line_length / screen_size.ws_col + 1) * 2
-				  - (po->header != 0) * 2		/* row count and newline */
+				  - (po->header != 0) * 2	/* row count and newline */
 				  )))
 			{
 				fout = popen(pagerenv, "w");
@@ -189,8 +190,8 @@ PQprint(FILE *fout, const PGresult *res, const PQprintOpt *po)
 						sigpipe_masked = true;
 #else
 					oldsigpipehandler = pqsignal(SIGPIPE, SIG_IGN);
-#endif   /* ENABLE_THREAD_SAFETY */
-#endif   /* WIN32 */
+#endif							/* ENABLE_THREAD_SAFETY */
+#endif							/* WIN32 */
 				}
 				else
 					fout = stdout;
@@ -270,7 +271,7 @@ PQprint(FILE *fout, const PGresult *res, const PQprintOpt *po)
 				{
 					if (po->caption)
 						fprintf(fout,
-						   "<table %s><caption align=\"top\">%s</caption>\n",
+								"<table %s><caption align=\"top\">%s</caption>\n",
 								po->tableOpt ? po->tableOpt : "",
 								po->caption);
 					else
@@ -278,7 +279,7 @@ PQprint(FILE *fout, const PGresult *res, const PQprintOpt *po)
 								"<table %s><caption align=\"top\">"
 								"Retrieved %d rows * %d fields"
 								"</caption>\n",
-						   po->tableOpt ? po->tableOpt : "", nTups, nFields);
+								po->tableOpt ? po->tableOpt : "", nTups, nFields);
 				}
 				else
 					fprintf(fout, "<table %s>", po->tableOpt ? po->tableOpt : "");
@@ -312,8 +313,8 @@ PQprint(FILE *fout, const PGresult *res, const PQprintOpt *po)
 				pq_reset_sigpipe(&osigset, sigpipe_pending, true);
 #else
 			pqsignal(SIGPIPE, oldsigpipehandler);
-#endif   /* ENABLE_THREAD_SAFETY */
-#endif   /* WIN32 */
+#endif							/* ENABLE_THREAD_SAFETY */
+#endif							/* WIN32 */
 		}
 		if (po->html3 && !po->expanded)
 			fputs("</table>\n", fout);
@@ -325,7 +326,7 @@ static void
 do_field(const PQprintOpt *po, const PGresult *res,
 		 const int i, const int j, const int fs_len,
 		 char **fields,
-		 const int nFields, char const ** fieldNames,
+		 const int nFields, char const **fieldNames,
 		 unsigned char *fieldNotNum, int *fieldMax,
 		 const int fieldMaxLen, FILE *fout)
 {

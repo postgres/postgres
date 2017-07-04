@@ -3,7 +3,7 @@
  * joininfo.c
  *	  joininfo list manipulation routines
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -24,7 +24,7 @@
  *		Detect whether there is a joinclause that involves
  *		the two given relations.
  *
- * Note: the joinclause does not have to be evaluatable with only these two
+ * Note: the joinclause does not have to be evaluable with only these two
  * relations.  This is intentional.  For example consider
  *		SELECT * FROM a, b, c WHERE a.x = (b.y + c.z)
  * If a is much larger than the other tables, it may be worthwhile to

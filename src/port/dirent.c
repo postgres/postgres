@@ -3,7 +3,7 @@
  * dirent.c
  *	  opendir/readdir/closedir for win32/msvc
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -64,8 +64,7 @@ opendir(const char *dirname)
 	strcpy(d->dirname, dirname);
 	if (d->dirname[strlen(d->dirname) - 1] != '/' &&
 		d->dirname[strlen(d->dirname) - 1] != '\\')
-		strcat(d->dirname, "\\");		/* Append backslash if not already
-										 * there */
+		strcat(d->dirname, "\\");	/* Append backslash if not already there */
 	strcat(d->dirname, "*");	/* Search for entries named anything */
 	d->handle = INVALID_HANDLE_VALUE;
 	d->ret.d_ino = 0;			/* no inodes on win32 */
@@ -102,8 +101,7 @@ readdir(DIR *d)
 			return NULL;
 		}
 	}
-	strcpy(d->ret.d_name, fd.cFileName);		/* Both strings are MAX_PATH
-												 * long */
+	strcpy(d->ret.d_name, fd.cFileName);	/* Both strings are MAX_PATH long */
 	d->ret.d_namlen = strlen(d->ret.d_name);
 
 	return &d->ret;

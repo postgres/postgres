@@ -4,7 +4,7 @@
  *
  *	  Routines for opclass (and opfamily) manipulation commands
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -278,9 +278,7 @@ CreateOpFamily(char *amname, char *opfname, Oid namespaceoid, Oid amoid)
 
 	tup = heap_form_tuple(rel->rd_att, values, nulls);
 
-	opfamilyoid = simple_heap_insert(rel, tup);
-
-	CatalogUpdateIndexes(rel, tup);
+	opfamilyoid = CatalogTupleInsert(rel, tup);
 
 	heap_freetuple(tup);
 
@@ -462,13 +460,12 @@ DefineOpClass(CreateOpClassStmt *stmt)
 	 */
 	foreach(l, stmt->items)
 	{
-		CreateOpClassItem *item = lfirst(l);
+		CreateOpClassItem *item = lfirst_node(CreateOpClassItem, l);
 		Oid			operOid;
 		Oid			funcOid;
 		Oid			sortfamilyOid;
 		OpFamilyMember *member;
 
-		Assert(IsA(item, CreateOpClassItem));
 		switch (item->itemtype)
 		{
 			case OPCLASS_ITEM_OPERATOR:
@@ -478,19 +475,12 @@ DefineOpClass(CreateOpClassStmt *stmt)
 							 errmsg("invalid operator number %d,"
 									" must be between 1 and %d",
 									item->number, maxOpNumber)));
-				if (item->args != NIL)
-				{
-					TypeName   *typeName1 = (TypeName *) linitial(item->args);
-					TypeName   *typeName2 = (TypeName *) lsecond(item->args);
-
-					operOid = LookupOperNameTypeNames(NULL, item->name,
-													  typeName1, typeName2,
-													  false, -1);
-				}
+				if (item->name->objargs != NIL)
+					operOid = LookupOperWithArgs(item->name, false);
 				else
 				{
 					/* Default to binary op on input datatype */
-					operOid = LookupOperName(NULL, item->name,
+					operOid = LookupOperName(NULL, item->name->objname,
 											 typeoid, typeoid,
 											 false, -1);
 				}
@@ -529,8 +519,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 							 errmsg("invalid procedure number %d,"
 									" must be between 1 and %d",
 									item->number, maxProcNumber)));
-				funcOid = LookupFuncNameTypeNames(item->name, item->args,
-												  false);
+				funcOid = LookupFuncWithArgs(item->name, false);
 #ifdef NOT_USED
 				/* XXX this is unnecessary given the superuser check above */
 				/* Caller must own function */
@@ -556,7 +545,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 				if (OidIsValid(storageoid))
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						   errmsg("storage type specified more than once")));
+							 errmsg("storage type specified more than once")));
 				storageoid = typenameTypeId(NULL, item->storedtype);
 
 #ifdef NOT_USED
@@ -630,8 +619,8 @@ DefineOpClass(CreateOpClassStmt *stmt)
 						 errmsg("could not make operator class \"%s\" be default for type %s",
 								opcname,
 								TypeNameToString(stmt->datatype)),
-				   errdetail("Operator class \"%s\" already is the default.",
-							 NameStr(opclass->opcname))));
+						 errdetail("Operator class \"%s\" already is the default.",
+								   NameStr(opclass->opcname))));
 		}
 
 		systable_endscan(scan);
@@ -655,9 +644,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 
 	tup = heap_form_tuple(rel->rd_att, values, nulls);
 
-	opclassoid = simple_heap_insert(rel, tup);
-
-	CatalogUpdateIndexes(rel, tup);
+	opclassoid = CatalogTupleInsert(rel, tup);
 
 	heap_freetuple(tup);
 
@@ -847,13 +834,12 @@ AlterOpFamilyAdd(AlterOpFamilyStmt *stmt, Oid amoid, Oid opfamilyoid,
 	 */
 	foreach(l, items)
 	{
-		CreateOpClassItem *item = lfirst(l);
+		CreateOpClassItem *item = lfirst_node(CreateOpClassItem, l);
 		Oid			operOid;
 		Oid			funcOid;
 		Oid			sortfamilyOid;
 		OpFamilyMember *member;
 
-		Assert(IsA(item, CreateOpClassItem));
 		switch (item->itemtype)
 		{
 			case OPCLASS_ITEM_OPERATOR:
@@ -863,21 +849,14 @@ AlterOpFamilyAdd(AlterOpFamilyStmt *stmt, Oid amoid, Oid opfamilyoid,
 							 errmsg("invalid operator number %d,"
 									" must be between 1 and %d",
 									item->number, maxOpNumber)));
-				if (item->args != NIL)
-				{
-					TypeName   *typeName1 = (TypeName *) linitial(item->args);
-					TypeName   *typeName2 = (TypeName *) lsecond(item->args);
-
-					operOid = LookupOperNameTypeNames(NULL, item->name,
-													  typeName1, typeName2,
-													  false, -1);
-				}
+				if (item->name->objargs != NIL)
+					operOid = LookupOperWithArgs(item->name, false);
 				else
 				{
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("operator argument types must be specified in ALTER OPERATOR FAMILY")));
-					operOid = InvalidOid;		/* keep compiler quiet */
+					operOid = InvalidOid;	/* keep compiler quiet */
 				}
 
 				if (item->order_family)
@@ -914,8 +893,7 @@ AlterOpFamilyAdd(AlterOpFamilyStmt *stmt, Oid amoid, Oid opfamilyoid,
 							 errmsg("invalid procedure number %d,"
 									" must be between 1 and %d",
 									item->number, maxProcNumber)));
-				funcOid = LookupFuncNameTypeNames(item->name, item->args,
-												  false);
+				funcOid = LookupFuncWithArgs(item->name, false);
 #ifdef NOT_USED
 				/* XXX this is unnecessary given the superuser check above */
 				/* Caller must own function */
@@ -981,12 +959,11 @@ AlterOpFamilyDrop(AlterOpFamilyStmt *stmt, Oid amoid, Oid opfamilyoid,
 	 */
 	foreach(l, items)
 	{
-		CreateOpClassItem *item = lfirst(l);
+		CreateOpClassItem *item = lfirst_node(CreateOpClassItem, l);
 		Oid			lefttype,
 					righttype;
 		OpFamilyMember *member;
 
-		Assert(IsA(item, CreateOpClassItem));
 		switch (item->itemtype)
 		{
 			case OPCLASS_ITEM_OPERATOR:
@@ -996,7 +973,7 @@ AlterOpFamilyDrop(AlterOpFamilyStmt *stmt, Oid amoid, Oid opfamilyoid,
 							 errmsg("invalid operator number %d,"
 									" must be between 1 and %d",
 									item->number, maxOpNumber)));
-				processTypesSpec(item->args, &lefttype, &righttype);
+				processTypesSpec(item->class_args, &lefttype, &righttype);
 				/* Save the info */
 				member = (OpFamilyMember *) palloc0(sizeof(OpFamilyMember));
 				member->number = item->number;
@@ -1011,7 +988,7 @@ AlterOpFamilyDrop(AlterOpFamilyStmt *stmt, Oid amoid, Oid opfamilyoid,
 							 errmsg("invalid procedure number %d,"
 									" must be between 1 and %d",
 									item->number, maxProcNumber)));
-				processTypesSpec(item->args, &lefttype, &righttype);
+				processTypesSpec(item->class_args, &lefttype, &righttype);
 				/* Save the info */
 				member = (OpFamilyMember *) palloc0(sizeof(OpFamilyMember));
 				member->number = item->number;
@@ -1108,8 +1085,8 @@ assignOperTypes(OpFamilyMember *member, Oid amoid, Oid typeoid)
 		if (!amroutine->amcanorderbyop)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-			errmsg("access method \"%s\" does not support ordering operators",
-				   get_am_name(amoid))));
+					 errmsg("access method \"%s\" does not support ordering operators",
+							get_am_name(amoid))));
 	}
 	else
 	{
@@ -1165,7 +1142,7 @@ assignProcTypes(OpFamilyMember *member, Oid amoid, Oid typeoid)
 			if (procform->prorettype != INT4OID)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("btree comparison procedures must return integer")));
+						 errmsg("btree comparison procedures must return integer")));
 
 			/*
 			 * If lefttype/righttype isn't specified, use the proc's input
@@ -1186,7 +1163,7 @@ assignProcTypes(OpFamilyMember *member, Oid amoid, Oid typeoid)
 			if (procform->prorettype != VOIDOID)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				  errmsg("btree sort support procedures must return void")));
+						 errmsg("btree sort support procedures must return void")));
 
 			/*
 			 * Can't infer lefttype/righttype from proc, so use default rule
@@ -1330,9 +1307,7 @@ storeOperators(List *opfamilyname, Oid amoid,
 
 		tup = heap_form_tuple(rel->rd_att, values, nulls);
 
-		entryoid = simple_heap_insert(rel, tup);
-
-		CatalogUpdateIndexes(rel, tup);
+		entryoid = CatalogTupleInsert(rel, tup);
 
 		heap_freetuple(tup);
 
@@ -1441,9 +1416,7 @@ storeProcedures(List *opfamilyname, Oid amoid,
 
 		tup = heap_form_tuple(rel->rd_att, values, nulls);
 
-		entryoid = simple_heap_insert(rel, tup);
-
-		CatalogUpdateIndexes(rel, tup);
+		entryoid = CatalogTupleInsert(rel, tup);
 
 		heap_freetuple(tup);
 
@@ -1582,7 +1555,7 @@ RemoveOpFamilyById(Oid opfamilyOid)
 	if (!HeapTupleIsValid(tup)) /* should not happen */
 		elog(ERROR, "cache lookup failed for opfamily %u", opfamilyOid);
 
-	simple_heap_delete(rel, &tup->t_self);
+	CatalogTupleDelete(rel, &tup->t_self);
 
 	ReleaseSysCache(tup);
 
@@ -1601,7 +1574,7 @@ RemoveOpClassById(Oid opclassOid)
 	if (!HeapTupleIsValid(tup)) /* should not happen */
 		elog(ERROR, "cache lookup failed for opclass %u", opclassOid);
 
-	simple_heap_delete(rel, &tup->t_self);
+	CatalogTupleDelete(rel, &tup->t_self);
 
 	ReleaseSysCache(tup);
 
@@ -1631,7 +1604,7 @@ RemoveAmOpEntryById(Oid entryOid)
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "could not find tuple for amop entry %u", entryOid);
 
-	simple_heap_delete(rel, &tup->t_self);
+	CatalogTupleDelete(rel, &tup->t_self);
 
 	systable_endscan(scan);
 	heap_close(rel, RowExclusiveLock);
@@ -1660,7 +1633,7 @@ RemoveAmProcEntryById(Oid entryOid)
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "could not find tuple for amproc entry %u", entryOid);
 
-	simple_heap_delete(rel, &tup->t_self);
+	CatalogTupleDelete(rel, &tup->t_self);
 
 	systable_endscan(scan);
 	heap_close(rel, RowExclusiveLock);

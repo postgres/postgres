@@ -497,6 +497,49 @@ ALTER OPERATOR FAMILY alt_opf18 USING btree DROP FUNCTION 2 (int4, int4);
 ERROR:  function 2(integer,integer) does not exist in operator family "alt_opf18"
 DROP OPERATOR FAMILY alt_opf18 USING btree;
 --
+-- Statistics
+--
+SET SESSION AUTHORIZATION regress_alter_user1;
+CREATE TABLE alt_regress_1 (a INTEGER, b INTEGER);
+CREATE STATISTICS alt_stat1 ON a, b FROM alt_regress_1;
+CREATE STATISTICS alt_stat2 ON a, b FROM alt_regress_1;
+ALTER STATISTICS alt_stat1 RENAME TO alt_stat2;   -- failed (name conflict)
+ERROR:  statistics object "alt_stat2" already exists in schema "alt_nsp1"
+ALTER STATISTICS alt_stat1 RENAME TO alt_stat3;   -- failed (name conflict)
+ALTER STATISTICS alt_stat2 OWNER TO regress_alter_user2;  -- failed (no role membership)
+ERROR:  must be member of role "regress_alter_user2"
+ALTER STATISTICS alt_stat2 OWNER TO regress_alter_user3;  -- OK
+ALTER STATISTICS alt_stat2 SET SCHEMA alt_nsp2;    -- OK
+SET SESSION AUTHORIZATION regress_alter_user2;
+CREATE TABLE alt_regress_2 (a INTEGER, b INTEGER);
+CREATE STATISTICS alt_stat1 ON a, b FROM alt_regress_2;
+CREATE STATISTICS alt_stat2 ON a, b FROM alt_regress_2;
+ALTER STATISTICS alt_stat3 RENAME TO alt_stat4;    -- failed (not owner)
+ERROR:  must be owner of statistics object alt_stat3
+ALTER STATISTICS alt_stat1 RENAME TO alt_stat4;    -- OK
+ALTER STATISTICS alt_stat3 OWNER TO regress_alter_user2; -- failed (not owner)
+ERROR:  must be owner of statistics object alt_stat3
+ALTER STATISTICS alt_stat2 OWNER TO regress_alter_user3; -- failed (no role membership)
+ERROR:  must be member of role "regress_alter_user3"
+ALTER STATISTICS alt_stat3 SET SCHEMA alt_nsp2;		-- failed (not owner)
+ERROR:  must be owner of statistics object alt_stat3
+ALTER STATISTICS alt_stat2 SET SCHEMA alt_nsp2;		-- failed (name conflict)
+ERROR:  statistics object "alt_stat2" already exists in schema "alt_nsp2"
+RESET SESSION AUTHORIZATION;
+SELECT nspname, stxname, rolname
+  FROM pg_statistic_ext s, pg_namespace n, pg_authid a
+ WHERE s.stxnamespace = n.oid AND s.stxowner = a.oid
+   AND n.nspname in ('alt_nsp1', 'alt_nsp2')
+ ORDER BY nspname, stxname;
+ nspname  |  stxname  |       rolname       
+----------+-----------+---------------------
+ alt_nsp1 | alt_stat2 | regress_alter_user2
+ alt_nsp1 | alt_stat3 | regress_alter_user1
+ alt_nsp1 | alt_stat4 | regress_alter_user2
+ alt_nsp2 | alt_stat2 | regress_alter_user3
+(4 rows)
+
+--
 -- Text Search Dictionary
 --
 SET SESSION AUTHORIZATION regress_alter_user1;
@@ -630,53 +673,13 @@ SELECT nspname, prsname
 ---
 --- Cleanup resources
 ---
+set client_min_messages to warning; -- suppress cascade notices
 DROP FOREIGN DATA WRAPPER alt_fdw2 CASCADE;
-NOTICE:  drop cascades to server alt_fserv2
 DROP FOREIGN DATA WRAPPER alt_fdw3 CASCADE;
-NOTICE:  drop cascades to server alt_fserv3
 DROP LANGUAGE alt_lang2 CASCADE;
 DROP LANGUAGE alt_lang3 CASCADE;
-DROP LANGUAGE alt_lang4 CASCADE;
-ERROR:  language "alt_lang4" does not exist
 DROP SCHEMA alt_nsp1 CASCADE;
-NOTICE:  drop cascades to 26 other objects
-DETAIL:  drop cascades to function alt_func3(integer)
-drop cascades to function alt_agg3(integer)
-drop cascades to function alt_func4(integer)
-drop cascades to function alt_func2(integer)
-drop cascades to function alt_agg4(integer)
-drop cascades to function alt_agg2(integer)
-drop cascades to conversion alt_conv3
-drop cascades to conversion alt_conv4
-drop cascades to conversion alt_conv2
-drop cascades to operator @+@(integer,integer)
-drop cascades to operator @-@(integer,integer)
-drop cascades to operator family alt_opf3 for access method hash
-drop cascades to operator family alt_opc1 for access method hash
-drop cascades to operator family alt_opc2 for access method hash
-drop cascades to operator family alt_opf4 for access method hash
-drop cascades to operator family alt_opf2 for access method hash
-drop cascades to text search dictionary alt_ts_dict3
-drop cascades to text search dictionary alt_ts_dict4
-drop cascades to text search dictionary alt_ts_dict2
-drop cascades to text search configuration alt_ts_conf3
-drop cascades to text search configuration alt_ts_conf4
-drop cascades to text search configuration alt_ts_conf2
-drop cascades to text search template alt_ts_temp3
-drop cascades to text search template alt_ts_temp2
-drop cascades to text search parser alt_ts_prs3
-drop cascades to text search parser alt_ts_prs2
 DROP SCHEMA alt_nsp2 CASCADE;
-NOTICE:  drop cascades to 9 other objects
-DETAIL:  drop cascades to function alt_nsp2.alt_func2(integer)
-drop cascades to function alt_nsp2.alt_agg2(integer)
-drop cascades to conversion alt_conv2
-drop cascades to operator alt_nsp2.@-@(integer,integer)
-drop cascades to operator family alt_nsp2.alt_opf2 for access method hash
-drop cascades to text search dictionary alt_ts_dict2
-drop cascades to text search configuration alt_ts_conf2
-drop cascades to text search template alt_ts_temp2
-drop cascades to text search parser alt_ts_prs2
 DROP USER regress_alter_user1;
 DROP USER regress_alter_user2;
 DROP USER regress_alter_user3;

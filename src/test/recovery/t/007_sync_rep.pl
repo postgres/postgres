@@ -3,13 +3,13 @@ use strict;
 use warnings;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 8;
+use Test::More tests => 11;
 
 # Query checking sync_priority and sync_state of each standby
 my $check_sql =
 "SELECT application_name, sync_priority, sync_state FROM pg_stat_replication ORDER BY application_name;";
 
-# Check that sync_state of each standby is expected.
+# Check that sync_state of each standby is expected (waiting till it is).
 # If $setting is given, synchronous_standby_names is set to it and
 # the configuration file is reloaded before the test.
 sub test_sync_state
@@ -23,24 +23,7 @@ sub test_sync_state
 		$self->reload;
 	}
 
-	my $timeout_max = 30;
-	my $timeout     = 0;
-	my $result;
-
-	# A reload may take some time to take effect on busy machines,
-	# hence use a loop with a timeout to give some room for the test
-	# to pass.
-	while ($timeout < $timeout_max)
-	{
-		$result = $self->safe_psql('postgres', $check_sql);
-
-		last if ($result eq $expected);
-
-		$timeout++;
-		sleep 1;
-	}
-
-	is($result, $expected, $msg);
+	ok( $self->poll_query_until('postgres', $check_sql, $expected), $msg);
 }
 
 # Initialize master node
@@ -172,3 +155,34 @@ test_sync_state(
 standby2|1|sync
 standby4|1|potential),
 	'potential standby found earlier in array is promoted to sync');
+
+# Check that standby1 and standby2 are chosen as sync standbys
+# based on their priorities.
+test_sync_state(
+	$node_master, qq(standby1|1|sync
+standby2|2|sync
+standby4|0|async),
+	'priority-based sync replication specified by FIRST keyword',
+	'FIRST 2(standby1, standby2)');
+
+# Check that all the listed standbys are considered as candidates
+# for sync standbys in a quorum-based sync replication.
+test_sync_state(
+	$node_master, qq(standby1|1|quorum
+standby2|1|quorum
+standby4|0|async),
+	'2 quorum and 1 async',
+	'ANY 2(standby1, standby2)');
+
+# Start Standby3 which will be considered in 'quorum' state.
+$node_standby_3->start;
+
+# Check that the setting of 'ANY 2(*)' chooses all standbys as
+# candidates for quorum sync standbys.
+test_sync_state(
+	$node_master, qq(standby1|1|quorum
+standby2|1|quorum
+standby3|1|quorum
+standby4|1|quorum),
+	'all standbys are considered as candidates for quorum sync standbys',
+	'ANY 2(*)');

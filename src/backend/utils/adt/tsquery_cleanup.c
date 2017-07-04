@@ -4,7 +4,7 @@
  *	 Cleanup query from NOT values and/or stopword
  *	 Utility functions to correct work.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
@@ -24,19 +24,6 @@ typedef struct NODE
 	struct NODE *right;
 	QueryItem  *valnode;
 } NODE;
-
-/*
- * To simplify walking on query tree and pushing down of phrase operator
- * we define some fake priority here: phrase operator has highest priority
- * of any other operators (and we believe here that OP_PHRASE is a highest
- * code of operations) and value node has ever highest priority.
- * Priority values of other operations don't matter until they are less than
- * phrase operator and value node.
- */
-#define VALUE_PRIORITY			(OP_COUNT + 1)
-#define NODE_PRIORITY(x) \
-	( ((x)->valnode->qoperator.type == QI_OPR) ? \
-		(x)->valnode->qoperator.oper : VALUE_PRIORITY )
 
 /*
  * make query tree from plain view of query
@@ -207,45 +194,59 @@ clean_NOT(QueryItem *ptr, int *len)
 }
 
 
-#ifdef V_UNKNOWN				/* exists in Windows headers */
-#undef V_UNKNOWN
-#endif
-#ifdef V_FALSE					/* exists in Solaris headers */
-#undef V_FALSE
-#endif
-
 /*
- * output values for result output parameter of clean_fakeval_intree
- */
-#define V_UNKNOWN	0			/* the expression can't be evaluated
-								 * statically */
-#define V_TRUE		1			/* the expression is always true (not
-								 * implemented) */
-#define V_FALSE		2			/* the expression is always false (not
-								 * implemented) */
-#define V_STOP		3			/* the expression is a stop word */
-
-/*
- * Remove QI_VALSTOP (stopword nodes) from query tree.
+ * Remove QI_VALSTOP (stopword) nodes from query tree.
+ *
+ * Returns NULL if the query degenerates to nothing.  Input must not be NULL.
+ *
+ * When we remove a phrase operator due to removing one or both of its
+ * arguments, we might need to adjust the distance of a parent phrase
+ * operator.  For example, 'a' is a stopword, so:
+ *		(b <-> a) <-> c  should become	b <2> c
+ *		b <-> (a <-> c)  should become	b <2> c
+ *		(b <-> (a <-> a)) <-> c  should become	b <3> c
+ *		b <-> ((a <-> a) <-> c)  should become	b <3> c
+ * To handle that, we define two output parameters:
+ *		ladd: amount to add to a phrase distance to the left of this node
+ *		radd: amount to add to a phrase distance to the right of this node
+ * We need two outputs because we could need to bubble up adjustments to two
+ * different parent phrase operators.  Consider
+ *		w <-> (((a <-> x) <2> (y <3> a)) <-> z)
+ * After we've removed the two a's and are considering the <2> node (which is
+ * now just x <2> y), we have an ladd distance of 1 that needs to propagate
+ * up to the topmost (leftmost) <->, and an radd distance of 3 that needs to
+ * propagate to the rightmost <->, so that we'll end up with
+ *		w <2> ((x <2> y) <4> z)
+ * Near the bottom of the tree, we may have subtrees consisting only of
+ * stopwords.  The distances of any phrase operators within such a subtree are
+ * summed and propagated to both ladd and radd, since we don't know which side
+ * of the lowest surviving phrase operator we are in.  The rule is that any
+ * subtree that degenerates to NULL must return equal values of ladd and radd,
+ * and the parent node dealing with it should incorporate only one of those.
+ *
+ * Currently, we only implement this adjustment for adjacent phrase operators.
+ * Thus for example 'x <-> ((a <-> y) | z)' will become 'x <-> (y | z)', which
+ * isn't ideal, but there is no way to represent the really desired semantics
+ * without some redesign of the tsquery structure.  Certainly it would not be
+ * any better to convert that to 'x <2> (y | z)'.  Since this is such a weird
+ * corner case, let it go for now.  But we can fix it in cases where the
+ * intervening non-phrase operator also gets removed, for example
+ * '((x <-> a) | a) <-> y' will become 'x <2> y'.
  */
 static NODE *
-clean_fakeval_intree(NODE *node, char *result, int *adddistance)
+clean_stopword_intree(NODE *node, int *ladd, int *radd)
 {
-	char		lresult = V_UNKNOWN,
-				rresult = V_UNKNOWN;
-
 	/* since this function recurses, it could be driven to stack overflow. */
 	check_stack_depth();
 
-	if (adddistance)
-		*adddistance = 0;
+	/* default output parameters indicate no change in parent distance */
+	*ladd = *radd = 0;
 
 	if (node->valnode->type == QI_VAL)
 		return node;
 	else if (node->valnode->type == QI_VALSTOP)
 	{
 		pfree(node);
-		*result = V_STOP;
 		return NULL;
 	}
 
@@ -253,10 +254,10 @@ clean_fakeval_intree(NODE *node, char *result, int *adddistance)
 
 	if (node->valnode->qoperator.oper == OP_NOT)
 	{
-		node->right = clean_fakeval_intree(node->right, &rresult, NULL);
+		/* NOT doesn't change pattern width, so just report child distances */
+		node->right = clean_stopword_intree(node->right, ladd, radd);
 		if (!node->right)
 		{
-			*result = V_STOP;
 			freetree(node);
 			return NULL;
 		}
@@ -264,292 +265,93 @@ clean_fakeval_intree(NODE *node, char *result, int *adddistance)
 	else
 	{
 		NODE	   *res = node;
+		bool		isphrase;
 		int			ndistance,
-					ldistance = 0,
-					rdistance = 0;
+					lladd,
+					lradd,
+					rladd,
+					rradd;
 
-		ndistance = (node->valnode->qoperator.oper == OP_PHRASE) ?
-			node->valnode->qoperator.distance :
-			0;
+		/* First, recurse */
+		node->left = clean_stopword_intree(node->left, &lladd, &lradd);
+		node->right = clean_stopword_intree(node->right, &rladd, &rradd);
 
-		node->left = clean_fakeval_intree(node->left,
-										  &lresult,
-										  ndistance ? &ldistance : NULL);
+		/* Check if current node is OP_PHRASE, get its distance */
+		isphrase = (node->valnode->qoperator.oper == OP_PHRASE);
+		ndistance = isphrase ? node->valnode->qoperator.distance : 0;
 
-		node->right = clean_fakeval_intree(node->right,
-										   &rresult,
-										   ndistance ? &rdistance : NULL);
-
-		/*
-		 * ndistance, ldistance and rdistance are greater than zero if their
-		 * corresponding nodes are OP_PHRASE
-		 */
-
-		if (lresult == V_STOP && rresult == V_STOP)
+		if (node->left == NULL && node->right == NULL)
 		{
-			if (adddistance && ndistance)
-				*adddistance = ldistance + ndistance + rdistance;
+			/*
+			 * When we collapse out a phrase node entirely, propagate its own
+			 * distance into both *ladd and *radd; it is the responsibility of
+			 * the parent node to count it only once.  Also, for a phrase
+			 * node, distances coming from children are summed and propagated
+			 * up to parent (we assume lladd == lradd and rladd == rradd, else
+			 * rule was broken at a lower level).  But if this isn't a phrase
+			 * node, take the larger of the two child distances; that
+			 * corresponds to what TS_execute will do in non-stopword cases.
+			 */
+			if (isphrase)
+				*ladd = *radd = lladd + ndistance + rladd;
+			else
+				*ladd = *radd = Max(lladd, rladd);
 			freetree(node);
-			*result = V_STOP;
 			return NULL;
 		}
-		else if (lresult == V_STOP)
+		else if (node->left == NULL)
 		{
+			/* Removing this operator and left subnode */
+			/* lladd and lradd are equal/redundant, don't count both */
+			if (isphrase)
+			{
+				/* operator's own distance must propagate to left */
+				*ladd = lladd + ndistance + rladd;
+				*radd = rradd;
+			}
+			else
+			{
+				/* at non-phrase op, just forget the left subnode entirely */
+				*ladd = rladd;
+				*radd = rradd;
+			}
 			res = node->right;
-
-			/*
-			 * propagate distance from current node to the right upper
-			 * subtree.
-			 */
-			if (adddistance && ndistance)
-				*adddistance = rdistance;
 			pfree(node);
 		}
-		else if (rresult == V_STOP)
+		else if (node->right == NULL)
 		{
+			/* Removing this operator and right subnode */
+			/* rladd and rradd are equal/redundant, don't count both */
+			if (isphrase)
+			{
+				/* operator's own distance must propagate to right */
+				*ladd = lladd;
+				*radd = lradd + ndistance + rradd;
+			}
+			else
+			{
+				/* at non-phrase op, just forget the right subnode entirely */
+				*ladd = lladd;
+				*radd = lradd;
+			}
 			res = node->left;
-
-			/*
-			 * propagate distance from current node to the upper tree.
-			 */
-			if (adddistance && ndistance)
-				*adddistance = ndistance + ldistance;
 			pfree(node);
 		}
-		else if (ndistance)
+		else if (isphrase)
 		{
-			node->valnode->qoperator.distance += ldistance;
-			if (adddistance)
-				*adddistance = 0;
+			/* Absorb appropriate corrections at this level */
+			node->valnode->qoperator.distance += lradd + rladd;
+			/* Propagate up any unaccounted-for corrections */
+			*ladd = lladd;
+			*radd = rradd;
 		}
-		else if (adddistance)
+		else
 		{
-			*adddistance = 0;
+			/* We're keeping a non-phrase operator, so ladd/radd remain 0 */
 		}
 
 		return res;
 	}
-	return node;
-}
-
-static NODE *
-copyNODE(NODE *node)
-{
-	NODE	   *cnode = palloc(sizeof(NODE));
-
-	/* since this function recurses, it could be driven to stack overflow. */
-	check_stack_depth();
-
-	cnode->valnode = palloc(sizeof(QueryItem));
-	*(cnode->valnode) = *(node->valnode);
-
-	if (node->valnode->type == QI_OPR)
-	{
-		cnode->right = copyNODE(node->right);
-		if (node->valnode->qoperator.oper != OP_NOT)
-			cnode->left = copyNODE(node->left);
-	}
-
-	return cnode;
-}
-
-static NODE *
-makeNODE(int8 op, NODE *left, NODE *right)
-{
-	NODE	   *node = palloc(sizeof(NODE));
-
-	/* zeroing allocation to prevent difference in unused bytes */
-	node->valnode = palloc0(sizeof(QueryItem));
-
-	node->valnode->qoperator.type = QI_OPR;
-	node->valnode->qoperator.oper = op;
-
-	node->left = left;
-	node->right = right;
-
-	return node;
-}
-
-/*
- * Move operation with high priority to the leaves. This guarantees
- * that the phrase operator will be near the bottom of the tree.
- * An idea behind is do not store position of lexemes during execution
- * of ordinary operations (AND, OR, NOT) because it could be expensive.
- * Actual transformation will be performed only on subtrees under the
- * <-> (<n>) operation since it's needed solely for the phrase operator.
- *
- * Rules:
- *	  a  <->  (b | c)	=>	(a <-> b)  |   (a <-> c)
- *	 (a | b)  <->	 c	   =>	(a <-> c)  |   (b <-> c)
- *	  a  <->	!b	   =>		a	  &  !(a <-> b)
- *	 !a  <->	 b	   =>		b	  &  !(a <-> b)
- *
- * Warnings for readers:
- *		  a <-> b	   !=	   b <-> a
- *
- *	  a <n> (b <n> c)	!=	 (a <n> b) <n> c since the phrase lengths are:
- *			 n					2n-1
- */
-static NODE *
-normalize_phrase_tree(NODE *node)
-{
-	/* there should be no stop words at this point */
-	Assert(node->valnode->type != QI_VALSTOP);
-
-	if (node->valnode->type == QI_VAL)
-		return node;
-
-	/* since this function recurses, it could be driven to stack overflow. */
-	check_stack_depth();
-
-	Assert(node->valnode->type == QI_OPR);
-
-	if (node->valnode->qoperator.oper == OP_NOT)
-	{
-		NODE	   *orignode = node;
-
-		/* eliminate NOT sequence */
-		while (node->valnode->type == QI_OPR &&
-		node->valnode->qoperator.oper == node->right->valnode->qoperator.oper)
-		{
-			node = node->right->right;
-		}
-
-		if (orignode != node)
-			/* current node isn't checked yet */
-			node = normalize_phrase_tree(node);
-		else
-			node->right = normalize_phrase_tree(node->right);
-	}
-	else if (node->valnode->qoperator.oper == OP_PHRASE)
-	{
-		int16		distance;
-		NODE	   *X;
-
-		node->left = normalize_phrase_tree(node->left);
-		node->right = normalize_phrase_tree(node->right);
-
-		/*
-		 * if subtree contains only nodes with higher "priority" then we are
-		 * done. See comment near NODE_PRIORITY()
-		 */
-		if (NODE_PRIORITY(node) <= NODE_PRIORITY(node->right) &&
-			NODE_PRIORITY(node) <= NODE_PRIORITY(node->left))
-			return node;
-
-		/*
-		 * We can't swap left-right and works only with left child because of
-		 * a <-> b	!=	b <-> a
-		 */
-
-		distance = node->valnode->qoperator.distance;
-
-		if (node->right->valnode->type == QI_OPR)
-		{
-			switch (node->right->valnode->qoperator.oper)
-			{
-				case OP_AND:
-					/* a <-> (b & c)  =>  (a <-> b) & (a <-> c) */
-					node = makeNODE(OP_AND,
-									makeNODE(OP_PHRASE,
-											 node->left,
-											 node->right->left),
-									makeNODE(OP_PHRASE,
-											 copyNODE(node->left),
-											 node->right->right));
-					node->left->valnode->qoperator.distance =
-						node->right->valnode->qoperator.distance = distance;
-					break;
-				case OP_OR:
-					/* a <-> (b | c)  =>  (a <-> b) | (a <-> c) */
-					node = makeNODE(OP_OR,
-									makeNODE(OP_PHRASE,
-											 node->left,
-											 node->right->left),
-									makeNODE(OP_PHRASE,
-											 copyNODE(node->left),
-											 node->right->right));
-					node->left->valnode->qoperator.distance =
-						node->right->valnode->qoperator.distance = distance;
-					break;
-				case OP_NOT:
-					/* a <-> !b  =>  a & !(a <-> b) */
-					X = node->right;
-					node->right = node->right->right;
-					X->right = node;
-					node = makeNODE(OP_AND,
-									copyNODE(node->left),
-									X);
-					break;
-				case OP_PHRASE:
-					/* no-op */
-					break;
-				default:
-					elog(ERROR, "Wrong type of tsquery node: %d",
-						 node->right->valnode->qoperator.oper);
-			}
-		}
-
-		if (node->left->valnode->type == QI_OPR &&
-			node->valnode->qoperator.oper == OP_PHRASE)
-		{
-			/*
-			 * if the node is still OP_PHRASE, check the left subtree,
-			 * otherwise the whole node will be transformed later.
-			 */
-			switch (node->left->valnode->qoperator.oper)
-			{
-				case OP_AND:
-					/* (a & b) <-> c  =>  (a <-> c) & (b <-> c) */
-					node = makeNODE(OP_AND,
-									makeNODE(OP_PHRASE,
-											 node->left->left,
-											 node->right),
-									makeNODE(OP_PHRASE,
-											 node->left->right,
-											 copyNODE(node->right)));
-					node->left->valnode->qoperator.distance =
-						node->right->valnode->qoperator.distance = distance;
-					break;
-				case OP_OR:
-					/* (a | b) <-> c  =>  (a <-> c) | (b <-> c) */
-					node = makeNODE(OP_OR,
-									makeNODE(OP_PHRASE,
-											 node->left->left,
-											 node->right),
-									makeNODE(OP_PHRASE,
-											 node->left->right,
-											 copyNODE(node->right)));
-					node->left->valnode->qoperator.distance =
-						node->right->valnode->qoperator.distance = distance;
-					break;
-				case OP_NOT:
-					/* !a <-> b  =>  b & !(a <-> b) */
-					X = node->left;
-					node->left = node->left->right;
-					X->right = node;
-					node = makeNODE(OP_AND,
-									X,
-									copyNODE(node->right));
-					break;
-				case OP_PHRASE:
-					/* no-op */
-					break;
-				default:
-					elog(ERROR, "Wrong type of tsquery node: %d",
-						 node->left->valnode->qoperator.oper);
-			}
-		}
-
-		/* continue transformation */
-		node = normalize_phrase_tree(node);
-	}
-	else	/* AND or OR */
-	{
-		node->left = normalize_phrase_tree(node->left);
-		node->right = normalize_phrase_tree(node->right);
-	}
-
 	return node;
 }
 
@@ -577,15 +379,19 @@ calcstrlen(NODE *node)
 	return size;
 }
 
+/*
+ * Remove QI_VALSTOP (stopword) nodes from TSQuery.
+ */
 TSQuery
-cleanup_fakeval_and_phrase(TSQuery in)
+cleanup_tsquery_stopwords(TSQuery in)
 {
 	int32		len,
 				lenstr,
 				commonlen,
 				i;
 	NODE	   *root;
-	char		result = V_UNKNOWN;
+	int			ladd,
+				radd;
 	TSQuery		out;
 	QueryItem  *items;
 	char	   *operands;
@@ -594,8 +400,8 @@ cleanup_fakeval_and_phrase(TSQuery in)
 		return in;
 
 	/* eliminate stop words */
-	root = clean_fakeval_intree(maketree(GETQUERY(in)), &result, NULL);
-	if (result != V_UNKNOWN)
+	root = clean_stopword_intree(maketree(GETQUERY(in)), &ladd, &radd);
+	if (root == NULL)
 	{
 		ereport(NOTICE,
 				(errmsg("text-search query contains only stop words or doesn't contain lexemes, ignored")));
@@ -604,9 +410,6 @@ cleanup_fakeval_and_phrase(TSQuery in)
 		SET_VARSIZE(out, HDRSIZETQ);
 		return out;
 	}
-
-	/* push OP_PHRASE nodes down */
-	root = normalize_phrase_tree(root);
 
 	/*
 	 * Build TSQuery from plain view

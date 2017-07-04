@@ -3,7 +3,7 @@
  * binaryheap.c
  *	  A simple binary heap implementation
  *
- * Portions Copyright (c) 2012-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2012-2017, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/lib/binaryheap.c
@@ -35,7 +35,7 @@ binaryheap_allocate(int capacity, binaryheap_comparator compare, void *arg)
 	int			sz;
 	binaryheap *heap;
 
-	sz = offsetof(binaryheap, bh_nodes) +sizeof(Datum) * capacity;
+	sz = offsetof(binaryheap, bh_nodes) + sizeof(Datum) * capacity;
 	heap = (binaryheap *) palloc(sz);
 	heap->bh_space = capacity;
 	heap->bh_compare = compare;

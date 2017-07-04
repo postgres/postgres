@@ -25,7 +25,7 @@ float8	   *add_one_float8(float8 *arg);
 Point	   *makepoint(Point *pointx, Point *pointy);
 text	   *copytext(text *t);
 text	   *concat_text(text *arg1, text *arg2);
-bool c_overpaid(HeapTupleHeader t,	/* the current instance of EMP */
+bool c_overpaid(HeapTupleHeader t,		/* the current instance of EMP */
 		   int32 limit);
 
 
@@ -75,9 +75,9 @@ copytext(text *t)
 	/*
 	 * VARDATA is a pointer to the data region of the struct.
 	 */
-	memcpy((void *) VARDATA(new_t),		/* destination */
+	memcpy((void *) VARDATA(new_t), /* destination */
 		   (void *) VARDATA(t), /* source */
-		   VARSIZE(t) - VARHDRSZ);		/* how many bytes */
+		   VARSIZE(t) - VARHDRSZ);	/* how many bytes */
 	return new_t;
 }
 

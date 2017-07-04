@@ -1,0 +1,219 @@
+<!--
+doc/src/sgml/ref/create_publication.sgml
+PostgreSQL documentation
+-->
+
+<refentry id="SQL-CREATEPUBLICATION">
+ <indexterm zone="sql-createpublication">
+  <primary>CREATE PUBLICATION</primary>
+ </indexterm>
+
+ <refmeta>
+  <refentrytitle>CREATE PUBLICATION</refentrytitle>
+  <manvolnum>7</manvolnum>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>CREATE PUBLICATION</refname>
+  <refpurpose>define a new publication</refpurpose>
+ </refnamediv>
+
+ <refsynopsisdiv>
+<synopsis>
+CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
+    [ FOR TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] [, ...]
+      | FOR ALL TABLES ]
+    [ WITH ( <replaceable class="parameter">publication_parameter</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] ) ]
+
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>CREATE PUBLICATION</command> adds a new publication
+   into the current database.  The publication name must be distinct from
+   the name of any existing publication in the current database.
+  </para>
+
+  <para>
+   A publication is essentially a group of tables whose data changes are
+   intended to be replicated through logical replication.  See
+   <xref linkend="logical-replication-publication"> for details about how
+   publications fit into the logical replication setup.
+   </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="parameter">name</replaceable></term>
+    <listitem>
+     <para>
+      The name of the new publication.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>FOR TABLE</literal></term>
+    <listitem>
+     <para>
+      Specifies a list of tables to add to the publication.  If
+      <literal>ONLY</> is specified before the table name, only
+      that table is added to the publication.  If <literal>ONLY</> is not
+      specified, the table and all its descendant tables (if any) are added.
+      Optionally, <literal>*</> can be specified after the table name to
+      explicitly indicate that descendant tables are included.
+     </para>
+
+     <para>
+      Only persistent base tables can be part of a publication.  Temporary
+      tables, unlogged tables, foreign tables, materialized views, regular
+      views, and partitioned tables cannot be part of a publication.  To
+      replicate a partitioned table, add the individual partitions to the
+      publication.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>FOR ALL TABLES</literal></term>
+    <listitem>
+     <para>
+      Marks the publication as one that replicates changes for all tables in
+      the database, including tables created in the future.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>WITH ( <replaceable class="parameter">publication_parameter</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] )</literal></term>
+    <listitem>
+     <para>
+      This clause specifies optional parameters for a publication.  The
+      following parameters are supported:
+
+      <variablelist>
+       <varlistentry>
+        <term><literal>publish</literal> (<type>string</type>)</term>
+        <listitem>
+         <para>
+          This parameter determines which DML operations will be published by
+          the new publication to the subscribers.  The value is
+          comma-separated list of operations.  The allowed operations are
+          <literal>insert</literal>, <literal>update</literal>, and
+          <literal>delete</literal>.  The default is to publish all actions,
+          and so the default value for this option is
+          <literal>'insert, update, delete'</literal>.
+         </para>
+        </listitem>
+       </varlistentry>
+      </variablelist>
+
+     </para>
+    </listitem>
+   </varlistentry>
+
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   If neither <literal>FOR TABLE</literal> nor <literal>FOR ALL
+   TABLES</literal> is specified, then the publication starts out with an
+   empty set of tables.  That is useful if tables are to be added later.
+  </para>
+
+  <para>
+   The creation of a publication does not start replication.  It only defines
+   a grouping and filtering logic for future subscribers.
+  </para>
+
+  <para>
+   To create a publication, the invoking user must have the
+   <literal>CREATE</> privilege for the current database.
+   (Of course, superusers bypass this check.)
+  </para>
+
+  <para>
+   To add a table to a publication, the invoking user must have ownership
+   rights on the table.  The <command>FOR ALL TABLES</command> clause requires
+   the invoking user to be a superuser.
+  </para>
+
+  <para>
+   The tables added to a publication that publishes <command>UPDATE</command>
+   and/or <command>DELETE</command> operations must have
+   <literal>REPLICA IDENTITY</> defined.  Otherwise those operations will be
+   disallowed on those tables.
+  </para>
+
+  <para>
+   For an <command>INSERT ... ON CONFLICT</> command, the publication will
+   publish the operation that actually results from the command.  So depending
+   of the outcome, it may be published as either <command>INSERT</command> or
+   <command>UPDATE</command>, or it may not be published at all.
+  </para>
+
+  <para>
+   <command>COPY ... FROM</command> commands are published
+   as <command>INSERT</command> operations.
+  </para>
+
+  <para>
+   <command>TRUNCATE</command> and <acronym>DDL</acronym> operations
+   are not published.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
+  <para>
+   Create a publication that publishes all changes in two tables:
+<programlisting>
+CREATE PUBLICATION mypublication FOR TABLE users, departments;
+</programlisting>
+  </para>
+
+  <para>
+   Create a publication that publishes all changes in all tables:
+<programlisting>
+CREATE PUBLICATION alltables FOR ALL TABLES;
+</programlisting>
+  </para>
+
+  <para>
+   Create a publication that only publishes <command>INSERT</command>
+   operations in one table:
+<programlisting>
+CREATE PUBLICATION insert_only FOR TABLE mydata
+    WITH (publish = 'insert');
+</programlisting></para>
+ </refsect1>
+
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   <command>CREATE PUBLICATION</command> is a <productname>PostgreSQL</>
+   extension.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-alterpublication"></member>
+   <member><xref linkend="sql-droppublication"></member>
+  </simplelist>
+ </refsect1>
+</refentry>

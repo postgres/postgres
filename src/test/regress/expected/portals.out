@@ -1320,17 +1320,19 @@ fetch backward all in c1;
 rollback;
 begin;
 explain (costs off) declare c2 cursor for select generate_series(1,3) as g;
- QUERY PLAN 
-------------
- Result
-(1 row)
-
-explain (costs off) declare c2 scroll cursor for select generate_series(1,3) as g;
   QUERY PLAN  
 --------------
- Materialize
+ ProjectSet
    ->  Result
 (2 rows)
+
+explain (costs off) declare c2 scroll cursor for select generate_series(1,3) as g;
+     QUERY PLAN     
+--------------------
+ Materialize
+   ->  ProjectSet
+         ->  Result
+(3 rows)
 
 declare c2 scroll cursor for select generate_series(1,3) as g;
 fetch all in c2;

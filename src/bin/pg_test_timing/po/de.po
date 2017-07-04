@@ -1,0 +1,79 @@
+# German message translation file for pg_test_timing
+# Copyright (C) 2017 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+# Peter Eisentraut <peter_e@gmx.net>, 2017.
+#
+# Use these quotes: »%s«
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pg_test_timing (PostgreSQL) 10\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2017-02-10 21:45+0000\n"
+"PO-Revision-Date: 2017-02-10 21:46-0500\n"
+"Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
+"Language-Team: German <pgsql-translators@postgresql.org>\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+
+#: pg_test_timing.c:55
+#, c-format
+msgid "Usage: %s [-d DURATION]\n"
+msgstr "Aufruf: %s [-d DAUER]\n"
+
+#: pg_test_timing.c:75 pg_test_timing.c:87 pg_test_timing.c:104
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "Versuchen Sie »%s --help« für weitere Informationen.\n"
+
+#: pg_test_timing.c:85
+#, c-format
+msgid "%s: too many command-line arguments (first is \"%s\")\n"
+msgstr "%s: zu viele Kommandozeilenargumente (das erste ist »%s«)\n"
+
+#: pg_test_timing.c:94
+#, c-format
+msgid "Testing timing overhead for %d second.\n"
+msgid_plural "Testing timing overhead for %d seconds.\n"
+msgstr[0] "Testen des Overheads der Zeitmessung für %d Sekunde\n"
+msgstr[1] "Testen des Overheads der Zeitmessung für %d Sekunden\n"
+
+#: pg_test_timing.c:102
+#, c-format
+msgid "%s: duration must be a positive integer (duration is \"%d\")\n"
+msgstr "%s: Dauer muss eine positive ganze Zahl sein (Dauer ist »%d«)\n"
+
+#: pg_test_timing.c:140
+#, c-format
+msgid "Detected clock going backwards in time.\n"
+msgstr "Rückwärts gehende Uhr festgestellt.\n"
+
+#: pg_test_timing.c:141
+#, c-format
+msgid "Time warp: %d ms\n"
+msgstr "Zeitdifferenz: %d ms\n"
+
+#: pg_test_timing.c:164
+#, c-format
+msgid "Per loop time including overhead: %0.2f ns\n"
+msgstr "Zeit pro Durchlauf einschließlich Overhead: %0.2f ns\n"
+
+#: pg_test_timing.c:180
+#, c-format
+msgid "Histogram of timing durations:\n"
+msgstr "Histogramm der Dauern der Zeitmessungen:\n"
+
+#: pg_test_timing.c:181
+msgid "% of total"
+msgstr "% von gesamt"
+
+#: pg_test_timing.c:181
+msgid "< us"
+msgstr "< us"
+
+#: pg_test_timing.c:181
+msgid "count"
+msgstr "Anzahl"

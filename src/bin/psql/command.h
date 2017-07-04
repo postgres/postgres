@@ -1,7 +1,7 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
- * Copyright (c) 2000-2016, PostgreSQL Global Development Group
+ * Copyright (c) 2000-2017, PostgreSQL Global Development Group
  *
  * src/bin/psql/command.h
  */
@@ -10,6 +10,7 @@
 
 #include "fe_utils/print.h"
 #include "fe_utils/psqlscan.h"
+#include "conditional.h"
 
 
 typedef enum _backslashResult
@@ -25,7 +26,9 @@ typedef enum _backslashResult
 
 
 extern backslashResult HandleSlashCmds(PsqlScanState scan_state,
-				PQExpBuffer query_buf);
+				ConditionalStack cstack,
+				PQExpBuffer query_buf,
+				PQExpBuffer previous_buf);
 
 extern int	process_file(char *filename, bool use_relative_path);
 
@@ -40,4 +43,4 @@ extern void SyncVariables(void);
 
 extern void UnsyncVariables(void);
 
-#endif   /* COMMAND_H */
+#endif							/* COMMAND_H */

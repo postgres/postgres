@@ -410,6 +410,24 @@ PostgresPollingStatusType PQconnectPoll(PGconn *conn);
           </para>
          </listitem>
         </varlistentry>
+
+        <varlistentry id="libpq-connection-check-writable">
+         <term><symbol>CONNECTION_CHECK_WRITABLE</symbol></term>
+         <listitem>
+          <para>
+           Checking if connection is able to handle write transactions.
+          </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="libpq-connection-consume">
+         <term><symbol>CONNECTION_CONSUME</symbol></term>
+         <listitem>
+          <para>
+           Consuming any remaining response messages on connection.
+          </para>
+         </listitem>
+        </varlistentry>
        </variablelist>
 
        Note that, although these constants will remain (in order to maintain
@@ -756,8 +774,10 @@ PGPing PQping(const char *conninfo);
     Several <application>libpq</> functions parse a user-specified string to obtain
     connection parameters.  There are two accepted formats for these strings:
     plain <literal>keyword = value</literal> strings
-    and <ulink url="http://www.ietf.org/rfc/rfc3986.txt">RFC
-    3986</ulink> URIs.
+    and URIs.  URIs generally follow
+    <ulink url="http://www.ietf.org/rfc/rfc3986.txt">RFC
+    3986</ulink>, except that multi-host connection strings are allowed
+    as further described below.
    </para>
 
    <sect3>
@@ -792,7 +812,7 @@ host=localhost port=5432 dbname=mydb connect_timeout=10
    <para>
    The general form for a connection <acronym>URI</acronym> is:
 <synopsis>
-postgresql://[user[:password]@][netloc][:port][/dbname][?param1=value1&amp;...]
+postgresql://[user[:password]@][netloc][:port][,...][/dbname][?param1=value1&amp;...]
 </synopsis>
    </para>
 
@@ -809,6 +829,7 @@ postgresql://localhost/mydb
 postgresql://user@localhost
 postgresql://user:secret@localhost
 postgresql://other@localhost/otherdb?connect_timeout=10&amp;application_name=myapp
+postgresql://host1:123,host2:456/somedb?target_session_attrs=any&amp;application_name=myapp
 </programlisting>
     Components of the hierarchical part of the <acronym>URI</acronym> can also
     be given as parameters.  For example:
@@ -856,6 +877,15 @@ postgresql:///dbname?host=/var/lib/postgresql
 postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
 </programlisting>
    </para>
+
+   <para>
+    It is possible to specify multiple host components, each with an optional
+    port component, in a single URI.  A URI of the form
+    <literal>postgresql://host1:port1,host2:port2,host3:port3/</literal>
+    is equivalent to a connection string of the form
+    <literal>host=host1,host2,host3 port=port1,port2,port3</literal>.  Each
+    host will be tried in turn until a connection is successfully established.
+   </para>
    </sect3>
   </sect2>
 
@@ -870,12 +900,13 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
       <term><literal>host</literal></term>
       <listitem>
        <para>
-        Name of host to connect to.<indexterm><primary>host name</></>
-        If this begins with a slash, it specifies Unix-domain
+        Comma-separated list of host names.<indexterm><primary>host name</></>
+        If a host name begins with a slash, it specifies Unix-domain
         communication rather than TCP/IP communication; the value is the
-        name of the directory in which the socket file is stored.  The
-        default behavior when <literal>host</literal> is not specified
-        is to connect to a Unix-domain
+        name of the directory in which the socket file is stored.  If
+        multiple host names are specified, each will be tried in turn in
+        the order given.  The default behavior when <literal>host</literal> is
+        not specified is to connect to a Unix-domain
         socket<indexterm><primary>Unix domain socket</></> in
         <filename>/tmp</filename> (or whatever socket directory was specified
         when <productname>PostgreSQL</> was built). On machines without
@@ -930,7 +961,7 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
         Note that authentication is likely to fail if <literal>host</>
         is not the name of the server at network address <literal>hostaddr</>.
         Also, note that <literal>host</> rather than <literal>hostaddr</>
-        is used to identify the connection in <filename>~/.pgpass</> (see
+        is used to identify the connection in a password file (see
         <xref linkend="libpq-pgpass">).
        </para>
 
@@ -950,6 +981,9 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
         Port number to connect to at the server host, or socket file
         name extension for Unix-domain
         connections.<indexterm><primary>port</></>
+        If the <literal>host</> parameter included multiple, comma-separated
+        hosts, this parameter may specify a list of ports of equal length,
+        or it may specify a single port number to be used for all hosts.
        </para>
       </listitem>
      </varlistentry>
@@ -986,6 +1020,19 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
       </listitem>
      </varlistentry>
 
+     <varlistentry id="libpq-connect-passfile" xreflabel="passfile">
+      <term><literal>passfile</literal></term>
+      <listitem>
+      <para>
+       Specifies the name of the file used to store passwords
+       (see <xref linkend="libpq-pgpass">).
+       Defaults to <filename>~/.pgpass</filename>, or
+       <filename>%APPDATA%\postgresql\pgpass.conf</> on Microsoft Windows.
+       (No error is reported if this file does not exist.)
+      </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="libpq-connect-connect-timeout" xreflabel="connect_timeout">
       <term><literal>connect_timeout</literal></term>
       <listitem>
@@ -993,6 +1040,11 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
        Maximum wait for connection, in seconds (write as a decimal integer
        string). Zero or not specified means wait indefinitely.  It is not
        recommended to use a timeout of less than 2 seconds.
+       This timeout applies separately to each connection attempt.
+       For example, if you specify two hosts and <literal>connect_timeout</>
+       is 5, each host will time out if no connection is made within 5
+       seconds, so the total time spent waiting for a connection might be
+       up to 10 seconds.
       </para>
       </listitem>
      </varlistentry>
@@ -1073,10 +1125,10 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
         Controls the number of seconds of inactivity after which TCP should
         send a keepalive message to the server.  A value of zero uses the
         system default. This parameter is ignored for connections made via a
-        Unix-domain socket, or if keepalives are disabled. It is only supported
-        on systems where the <symbol>TCP_KEEPIDLE</> or <symbol>TCP_KEEPALIVE</>
-        socket option is available, and on Windows; on other systems, it has no
-        effect.
+        Unix-domain socket, or if keepalives are disabled.
+        It is only supported on systems where <symbol>TCP_KEEPIDLE</> or
+        an equivalent socket option is available, and on Windows; on other
+        systems, it has no effect.
        </para>
       </listitem>
      </varlistentry>
@@ -1089,9 +1141,9 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
         that is not acknowledged by the server should be retransmitted.  A
         value of zero uses the system default. This parameter is ignored for
         connections made via a Unix-domain socket, or if keepalives are disabled.
-        It is only supported on systems where the <symbol>TCP_KEEPINTVL</>
-        socket option is available, and on Windows; on other systems, it has no
-        effect.
+        It is only supported on systems where <symbol>TCP_KEEPINTVL</> or
+        an equivalent socket option is available, and on Windows; on other
+        systems, it has no effect.
        </para>
       </listitem>
      </varlistentry>
@@ -1104,8 +1156,9 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
         client's connection to the server is considered dead.  A value of
         zero uses the system default. This parameter is ignored for
         connections made via a Unix-domain socket, or if keepalives are disabled.
-        It is only supported on systems where the <symbol>TCP_KEEPCNT</>
-        socket option is available; on other systems, it has no effect.
+        It is only supported on systems where <symbol>TCP_KEEPCNT</> or
+        an equivalent socket option is available; on other systems, it has no
+        effect.
        </para>
       </listitem>
      </varlistentry>
@@ -1238,8 +1291,7 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
       <listitem>
        <para>
         If set to 1 (default), data sent over SSL connections will be
-        compressed (this requires <productname>OpenSSL</> version
-        0.9.8 or later).
+        compressed.
         If set to 0, compression will be disabled (this requires
         <productname>OpenSSL</> 1.0.0 or later).
         This parameter is ignored if a connection without SSL is made,
@@ -1367,6 +1419,23 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
        </para>
       </listitem>
      </varlistentry>
+
+     <varlistentry id="libpq-connect-target-session-attrs" xreflabel="target_session_attrs">
+      <term><literal>target_session_attrs</literal></term>
+      <listitem>
+       <para>
+        If this parameter is set to <literal>read-write</literal>, only a
+        connection in which read-write transactions are accepted by default
+        is considered acceptable.  The query
+        <literal>SHOW transaction_read_only</literal> will be sent upon any
+        successful connection; if it returns <literal>on</>, the connection
+        will be closed.  If multiple hosts were specified in the connection
+        string, any remaining servers will be tried just as if the connection
+        attempt had failed.  The default value of this parameter,
+        <literal>any</>, regards all connections as acceptable.
+      </para>
+      </listitem>
+    </varlistentry>
     </variablelist>
    </para>
   </sect2>
@@ -1395,7 +1464,11 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
 
   <para>
    The following functions return parameter values established at connection.
-   These values are fixed for the life of the <structname>PGconn</> object.
+   These values are fixed for the life of the connection.  If a multi-host
+   connection string is used, the values of <function>PQhost</>,
+   <function>PQport</>, and <function>PQpass</> can change if a new connection
+   is established using the same <structname>PGconn</> object.  Other values
+   are fixed for the lifetime of the <structname>PGconn</> object.
 
    <variablelist>
     <varlistentry id="libpq-pqdb">
@@ -1911,8 +1984,7 @@ const char *PQsslAttribute(const PGconn *conn, const char *attribute_name);
           <listitem>
            <para>
              SSL/TLS version in use. Common values
-             are <literal>"SSLv2"</literal>, <literal>"SSLv3"</literal>,
-             <literal>"TLSv1"</literal>, <literal>"TLSv1.1"</literal>
+             are <literal>"TLSv1"</literal>, <literal>"TLSv1.1"</literal>
              and <literal>"TLSv1.2"</literal>, but an implementation may
              return other strings if some other protocol is used.
            </para>
@@ -2763,6 +2835,22 @@ char *PQresultErrorField(const PGresult *res, int fieldcode);
             or <literal>WARNING</>, <literal>NOTICE</>, <literal>DEBUG</>,
             <literal>INFO</>, or <literal>LOG</> (in a notice message), or
             a localized translation of one of these.  Always present.
+           </para>
+          </listitem>
+         </varlistentry>
+
+         <varlistentry id="libpq-pg-diag-severity-nonlocalized">
+          <term><symbol>PG_DIAG_SEVERITY_NONLOCALIZED</></term>
+          <listitem>
+           <para>
+            The severity; the field contents are <literal>ERROR</>,
+            <literal>FATAL</>, or <literal>PANIC</> (in an error message),
+            or <literal>WARNING</>, <literal>NOTICE</>, <literal>DEBUG</>,
+            <literal>INFO</>, or <literal>LOG</> (in a notice message).
+            This is identical to the <symbol>PG_DIAG_SEVERITY</> field except
+            that the contents are never localized.  This is present only in
+            reports generated by <productname>PostgreSQL</> versions 9.6
+            and later.
            </para>
           </listitem>
          </varlistentry>
@@ -5788,6 +5876,60 @@ void PQconninfoFree(PQconninfoOption *connOptions);
     </listitem>
    </varlistentry>
 
+   <varlistentry id="libpq-pqencryptpasswordconn">
+    <term>
+     <function>PQencryptPasswordConn</function>
+     <indexterm>
+      <primary>PQencryptPasswordConn</primary>
+     </indexterm>
+    </term>
+
+    <listitem>
+     <para>
+      Prepares the encrypted form of a <productname>PostgreSQL</> password.
+<synopsis>
+char *PQencryptPasswordConn(PGconn *conn, const char *passwd, const char *user, const char *algorithm);
+</synopsis>
+      This function is intended to be used by client applications that
+      wish to send commands like <literal>ALTER USER joe PASSWORD
+      'pwd'</>.  It is good practice not to send the original cleartext
+      password in such a command, because it might be exposed in command
+      logs, activity displays, and so on.  Instead, use this function to
+      convert the password to encrypted form before it is sent.
+     </para>
+
+     <para>
+      The <parameter>passwd</> and <parameter>user</> arguments
+      are the cleartext password, and the SQL name of the user it is for.
+      <parameter>algorithm</> specifies the encryption algorithm
+      to use to encrypt the password. Currently supported algorithms are
+      <literal>md5</> and <literal>scram-sha-256</> (<literal>on</> and
+      <literal>off</> are also accepted as aliases for <literal>md5</>, for
+      compatibility with older server versions). Note that support for
+      <literal>scram-sha-256</> was introduced in <productname>PostgreSQL</>
+      version 10, and will not work correctly with older server versions. If
+      <parameter>algorithm</> is <symbol>NULL</>, this function will query
+      the server for the current value of the
+      <xref linkend="guc-password-encryption"> setting. That can block, and
+      will fail if the current transaction is aborted, or if the connection
+      is busy executing another query. If you wish to use the default
+      algorithm for the server but want to avoid blocking, query
+      <varname>password_encryption</> yourself before calling
+      <function>PQencryptPasswordConn</>, and pass that value as the
+      <parameter>algorithm</>.
+     </para>
+
+     <para>
+      The return value is a string allocated by <function>malloc</>.
+      The caller can assume the string doesn't contain any special characters
+      that would require escaping.  Use <function>PQfreemem</> to free the
+      result when done with it. On error, returns <symbol>NULL</>, and
+      a suitable message is stored in the connection object.
+     </para>
+
+    </listitem>
+   </varlistentry>
+
    <varlistentry id="libpq-pqencryptpassword">
     <term>
      <function>PQencryptPassword</function>
@@ -5798,22 +5940,15 @@ void PQconninfoFree(PQconninfoOption *connOptions);
 
     <listitem>
      <para>
-      Prepares the encrypted form of a <productname>PostgreSQL</> password.
+      Prepares the md5-encrypted form of a <productname>PostgreSQL</> password.
 <synopsis>
-char * PQencryptPassword(const char *passwd, const char *user);
+char *PQencryptPassword(const char *passwd, const char *user);
 </synopsis>
-      This function is intended to be used by client applications that
-      wish to send commands like <literal>ALTER USER joe PASSWORD
-      'pwd'</>.  It is good practice not to send the original cleartext
-      password in such a command, because it might be exposed in command
-      logs, activity displays, and so on.  Instead, use this function to
-      convert the password to encrypted form before it is sent.  The
-      arguments are the cleartext password, and the SQL name of the user
-      it is for.  The return value is a string allocated by
-      <function>malloc</function>, or <symbol>NULL</symbol> if out of
-      memory.  The caller can assume the string doesn't contain any
-      special characters that would require escaping.  Use
-      <function>PQfreemem</> to free the result when done with it.
+      <function>PQencryptPassword</> is an older, deprecated version of
+      <function>PQencryptPasswodConn</>. The difference is that
+      <function>PQencryptPassword</> does not
+      require a connection object, and <literal>md5</> is always used as the
+      encryption algorithm.
      </para>
     </listitem>
    </varlistentry>
@@ -6837,8 +6972,8 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       Use of this environment variable
       is not recommended for security reasons, as some operating systems
       allow non-root users to see process environment variables via
-      <application>ps</>; instead consider using the
-      <filename>~/.pgpass</> file (see <xref linkend="libpq-pgpass">).
+      <application>ps</>; instead consider using a password file
+      (see <xref linkend="libpq-pgpass">).
      </para>
     </listitem>
 
@@ -6847,9 +6982,8 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       <indexterm>
        <primary><envar>PGPASSFILE</envar></primary>
       </indexterm>
-      <envar>PGPASSFILE</envar> specifies the name of the password file to
-      use for lookups.  If not set, it defaults to <filename>~/.pgpass</>
-      (see <xref linkend="libpq-pgpass">).
+      <envar>PGPASSFILE</envar> behaves the same as the <xref
+      linkend="libpq-connect-passfile"> connection parameter.
      </para>
     </listitem>
 
@@ -6872,22 +7006,6 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       connection service file.  If not set, it defaults
       to <filename>~/.pg_service.conf</>
       (see <xref linkend="libpq-pgservice">).
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      <indexterm>
-       <primary><envar>PGREALM</envar></primary>
-      </indexterm>
-      <envar>PGREALM</envar> sets the Kerberos realm to use with
-      <productname>PostgreSQL</productname>, if  it is different from the
-      local realm.  If <envar>PGREALM</envar> is set,
-      <application>libpq</application> applications will attempt
-      authentication  with  servers for this realm and use separate ticket
-      files to avoid conflicts with local ticket files.   This
-      environment  variable is only used if GSSAPI authentication is
-      selected by the server.
      </para>
     </listitem>
 
@@ -6928,6 +7046,9 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       </indexterm>
       <envar>PGREQUIRESSL</envar> behaves the same as the <xref
       linkend="libpq-connect-requiressl"> connection parameter.
+      This environment variable is deprecated in favor of the
+      <envar>PGSSLMODE</envar> variable; setting both variables suppresses the
+      effect of this one.
      </para>
     </listitem>
 
@@ -7030,6 +7151,16 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       linkend="libpq-connect-client-encoding"> connection parameter.
      </para>
     </listitem>
+
+    <listitem>
+     <para>
+      <indexterm>
+       <primary><envar>PGTARGETSESSIONATTRS</envar></primary>
+      </indexterm>
+      <envar>PGTARGETSESSIONATTRS</envar> behaves the same as the <xref
+      linkend="libpq-connect-target-session-attrs"> connection parameter.
+     </para>
+    </listitem>
    </itemizedlist>
   </para>
 
@@ -7121,13 +7252,16 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
   </indexterm>
 
   <para>
-   The file <filename>.pgpass</filename> in a user's home directory or the
-   file referenced by <envar>PGPASSFILE</envar> can contain passwords to
+   The file <filename>.pgpass</filename> in a user's home directory can
+   contain passwords to
    be used if the connection requires a password (and no password has been
    specified  otherwise). On Microsoft Windows the file is named
    <filename>%APPDATA%\postgresql\pgpass.conf</> (where
    <filename>%APPDATA%</> refers to the Application Data subdirectory in
    the user's profile).
+   Alternatively, a password file can be specified
+   using the connection parameter <xref linkend="libpq-connect-passfile">
+   or the environment variable <envar>PGPASSFILE</envar>.
   </para>
 
   <para>
@@ -7153,8 +7287,8 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
   </para>
 
   <para>
-   On Unix systems, the permissions on <filename>.pgpass</filename> must
-   disallow any access to world or group; achieve this by the command
+   On Unix systems, the permissions on a password file must
+   disallow any access to world or group; achieve this by a command such as
    <command>chmod 0600 ~/.pgpass</command>.  If the permissions are less
    strict than this, the file will be ignored.  On Microsoft Windows, it
    is assumed that the file is stored in a directory that is secure, so

@@ -258,7 +258,8 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
    The <literal>CONNECTION LIMIT</> option is only enforced approximately;
    if two new sessions start at about the same time when just one
    connection <quote>slot</> remains for the database, it is possible that
-   both will fail.  Also, the limit is not enforced against superusers.
+   both will fail.  Also, the limit is not enforced against superusers or
+   background worker processes.
   </para>
  </refsect1>
 
@@ -283,17 +284,33 @@ CREATE DATABASE sales OWNER salesapp TABLESPACE salesspace;
   </para>
 
   <para>
-   To create a database <literal>music</> which supports the ISO-8859-1
-   character set:
-
+   To create a database <literal>music</> with a different locale:
 <programlisting>
-CREATE DATABASE music ENCODING 'LATIN1' TEMPLATE template0;
+CREATE DATABASE music
+    LC_COLLATE 'sv_SE.utf8' LC_CTYPE 'sv_SE.utf8'
+    TEMPLATE template0;
 </programlisting>
+    In this example, the <literal>TEMPLATE template0</> clause is required if
+    the specified locale is different from the one in <literal>template1</>.
+    (If it is not, then specifying the locale explicitly is redundant.)
+  </para>
 
-   In this example, the <literal>TEMPLATE template0</> clause would only
-   be required if <literal>template1</>'s encoding is not ISO-8859-1.
-   Note that changing encoding might require selecting new
-   <literal>LC_COLLATE</> and <literal>LC_CTYPE</> settings as well.
+  <para>
+   To create a database <literal>music2</> with a different locale and a
+   different character set encoding:
+<programlisting>
+CREATE DATABASE music2
+    LC_COLLATE 'sv_SE.iso885915' LC_CTYPE 'sv_SE.iso885915'
+    ENCODING LATIN9
+    TEMPLATE template0;
+</programlisting>
+   The specified locale and encoding settings must match, or an error will be
+   reported.
+  </para>
+
+  <para>
+   Note that locale names are specific to the operating system, so that the
+   above commands might not work in the same way everywhere.
   </para>
  </refsect1>
 

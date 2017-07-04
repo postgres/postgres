@@ -7,7 +7,7 @@
  *
  * Prototypes for functions in commands/comment.c
  *
- * Copyright (c) 1999-2016, PostgreSQL Global Development Group
+ * Copyright (c) 1999-2017, PostgreSQL Global Development Group
  *
  *-------------------------------------------------------------------------
  */
@@ -42,4 +42,4 @@ extern void CreateSharedComments(Oid oid, Oid classoid, char *comment);
 
 extern char *GetComment(Oid oid, Oid classoid, int32 subid);
 
-#endif   /* COMMENT_H */
+#endif							/* COMMENT_H */

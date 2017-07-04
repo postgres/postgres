@@ -1,0 +1,399 @@
+<!--
+doc/src/sgml/ref/pg_receivewal.sgml
+PostgreSQL documentation
+-->
+
+<refentry id="app-pgreceivewal">
+ <indexterm zone="app-pgreceivewal">
+  <primary>pg_receivewal</primary>
+ </indexterm>
+
+ <refmeta>
+  <refentrytitle>pg_receivewal</refentrytitle>
+  <manvolnum>1</manvolnum>
+  <refmiscinfo>Application</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>pg_receivewal</refname>
+  <refpurpose>stream write-ahead logs from a <productname>PostgreSQL</productname> server</refpurpose>
+ </refnamediv>
+
+ <refsynopsisdiv>
+  <cmdsynopsis>
+   <command>pg_receivewal</command>
+   <arg rep="repeat"><replaceable>option</></arg>
+  </cmdsynopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>
+   Description
+  </title>
+  <para>
+   <application>pg_receivewal</application> is used to stream the write-ahead log
+   from a running <productname>PostgreSQL</productname> cluster. The write-ahead
+   log is streamed using the streaming replication protocol, and is written
+   to a local directory of files. This directory can be used as the archive
+   location for doing a restore using point-in-time recovery (see
+   <xref linkend="continuous-archiving">).
+  </para>
+
+  <para>
+   <application>pg_receivewal</application> streams the write-ahead
+   log in real time as it's being generated on the server, and does not wait
+   for segments to complete like <xref linkend="guc-archive-command"> does.
+   For this reason, it is not necessary to set
+   <xref linkend="guc-archive-timeout"> when using
+    <application>pg_receivewal</application>.
+  </para>
+
+  <para>
+   Unlike the WAL receiver of a PostgreSQL standby server, <application>pg_receivewal</>
+   by default flushes WAL data only when a WAL file is closed.
+   The option <option>--synchronous</> must be specified to flush WAL data
+   in real time.
+  </para>
+
+  <para>
+   The write-ahead log is streamed over a regular
+   <productname>PostgreSQL</productname> connection and uses the replication
+   protocol. The connection must be made with a superuser or a user
+   having <literal>REPLICATION</literal> permissions (see
+   <xref linkend="role-attributes">), and <filename>pg_hba.conf</filename>
+   must permit the replication connection. The server must also be
+   configured with <xref linkend="guc-max-wal-senders"> set high enough to
+   leave at least one session available for the stream.
+  </para>
+
+  <para>
+   If the connection is lost, or if it cannot be initially established,
+   with a non-fatal error, <application>pg_receivewal</application> will
+   retry the connection indefinitely, and reestablish streaming as soon
+   as possible. To avoid this behavior, use the <literal>-n</literal>
+   parameter.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Options</title>
+
+    <variablelist>
+     <varlistentry>
+      <term><option>-D <replaceable class="parameter">directory</replaceable></option></term>
+      <term><option>--directory=<replaceable class="parameter">directory</replaceable></option></term>
+      <listitem>
+       <para>
+        Directory to write the output to.
+       </para>
+       <para>
+        This parameter is required.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--if-not-exists</option></term>
+      <listitem>
+       <para>
+        Do not error out when <option>--create-slot</option> is specified
+        and a slot with the specified name already exists.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-n</option></term>
+      <term><option>--no-loop</option></term>
+      <listitem>
+       <para>
+        Don't loop on connection errors. Instead, exit right away with
+        an error.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-s <replaceable class="parameter">interval</replaceable></option></term>
+      <term><option>--status-interval=<replaceable class="parameter">interval</replaceable></option></term>
+      <listitem>
+       <para>
+        Specifies the number of seconds between status packets sent back to the
+        server. This allows for easier monitoring of the progress from server.
+        A value of zero disables the periodic status updates completely,
+        although an update will still be sent when requested by the server, to
+        avoid timeout disconnect. The default value is 10 seconds.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-S <replaceable>slotname</replaceable></option></term>
+      <term><option>--slot=<replaceable class="parameter">slotname</replaceable></option></term>
+      <listitem>
+        <para>
+         Require <application>pg_receivewal</application> to use an existing
+         replication slot (see <xref linkend="streaming-replication-slots">).
+         When this option is used, <application>pg_receivewal</> will report
+         a flush position to the server, indicating when each segment has been
+         synchronized to disk so that the server can remove that segment if it
+         is not otherwise needed.
+        </para>
+
+        <para>
+         When the replication client
+         of <application>pg_receivewal</application> is configured on the
+         server as a synchronous standby, then using a replication slot will
+         report the flush position to the server, but only when a WAL file is
+         closed.  Therefore, that configuration will cause transactions on the
+         primary to wait for a long time and effectively not work
+         satisfactorily.  The option <literal>--synchronous</literal> (see
+         below) must be specified in addition to make this work correctly.
+        </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--synchronous</option></term>
+      <listitem>
+       <para>
+        Flush the WAL data to disk immediately after it has been received. Also
+        send a status packet back to the server immediately after flushing,
+        regardless of <literal>--status-interval</>.
+       </para>
+
+       <para>
+        This option should be specified if the replication client
+        of <application>pg_receivewal</application> is configured on the
+        server as a synchronous standby, to ensure that timely feedback is
+        sent to the server.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-v</option></term>
+      <term><option>--verbose</option></term>
+      <listitem>
+       <para>
+        Enables verbose mode.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-Z <replaceable class="parameter">level</replaceable></option></term>
+      <term><option>--compress=<replaceable class="parameter">level</replaceable></option></term>
+      <listitem>
+       <para>
+        Enables gzip compression of write-ahead logs, and specifies the
+        compression level (0 through 9, 0 being no compression and 9 being best
+        compression).  The suffix <filename>.gz</filename> will
+        automatically be added to all filenames.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+
+   <para>
+    The following command-line options control the database connection parameters.
+
+    <variablelist>
+     <varlistentry>
+      <term><option>-d <replaceable class="parameter">connstr</replaceable></option></term>
+      <term><option>--dbname=<replaceable class="parameter">connstr</replaceable></option></term>
+      <listitem>
+       <para>
+        Specifies parameters used to connect to the server, as a connection
+        string. See <xref linkend="libpq-connstring"> for more information.
+       </para>
+       <para>
+        The option is called <literal>--dbname</> for consistency with other
+        client applications, but because <application>pg_receivewal</application>
+        doesn't connect to any particular database in the cluster, database
+        name in the connection string will be ignored.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-h <replaceable class="parameter">host</replaceable></option></term>
+      <term><option>--host=<replaceable class="parameter">host</replaceable></option></term>
+      <listitem>
+       <para>
+        Specifies the host name of the machine on which the server is
+        running.  If the value begins with a slash, it is used as the
+        directory for the Unix domain socket. The default is taken
+        from the <envar>PGHOST</envar> environment variable, if set,
+        else a Unix domain socket connection is attempted.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-p <replaceable class="parameter">port</replaceable></option></term>
+      <term><option>--port=<replaceable class="parameter">port</replaceable></option></term>
+      <listitem>
+       <para>
+        Specifies the TCP port or local Unix domain socket file
+        extension on which the server is listening for connections.
+        Defaults to the <envar>PGPORT</envar> environment variable, if
+        set, or a compiled-in default.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-U <replaceable>username</replaceable></option></term>
+      <term><option>--username=<replaceable class="parameter">username</replaceable></option></term>
+      <listitem>
+       <para>
+        User name to connect as.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-w</></term>
+      <term><option>--no-password</></term>
+      <listitem>
+       <para>
+        Never issue a password prompt.  If the server requires
+        password authentication and a password is not available by
+        other means such as a <filename>.pgpass</filename> file, the
+        connection attempt will fail.  This option can be useful in
+        batch jobs and scripts where no user is present to enter a
+        password.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-W</option></term>
+      <term><option>--password</option></term>
+      <listitem>
+       <para>
+        Force <application>pg_receivewal</application> to prompt for a
+        password before connecting to a database.
+       </para>
+
+       <para>
+        This option is never essential, since
+        <application>pg_receivewal</application> will automatically prompt
+        for a password if the server demands password authentication.
+        However, <application>pg_receivewal</application> will waste a
+        connection attempt finding out that the server wants a password.
+        In some cases it is worth typing <option>-W</> to avoid the extra
+        connection attempt.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+
+   <para>
+    <application>pg_receivewal</application> can perform one of the two
+    following actions in order to control physical replication slots:
+
+    <variablelist>
+     <varlistentry>
+      <term><option>--create-slot</option></term>
+      <listitem>
+       <para>
+        Create a new physical replication slot with the name specified in
+        <option>--slot</option>, then exit.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--drop-slot</option></term>
+      <listitem>
+       <para>
+        Drop the replication slot with the name specified in
+        <option>--slot</option>, then exit.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+
+   <para>
+    Other options are also available:
+
+    <variablelist>
+     <varlistentry>
+       <term><option>-V</></term>
+       <term><option>--version</></term>
+       <listitem>
+       <para>
+       Print the <application>pg_receivewal</application> version and exit.
+       </para>
+       </listitem>
+     </varlistentry>
+
+     <varlistentry>
+       <term><option>-?</></term>
+       <term><option>--help</></term>
+       <listitem>
+       <para>
+       Show help about <application>pg_receivewal</application> command line
+       arguments, and exit.
+       </para>
+       </listitem>
+     </varlistentry>
+
+    </variablelist>
+   </para>
+
+ </refsect1>
+
+ <refsect1>
+  <title>Environment</title>
+
+  <para>
+   This utility, like most other <productname>PostgreSQL</> utilities,
+   uses the environment variables supported by <application>libpq</>
+   (see <xref linkend="libpq-envars">).
+  </para>
+
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   When using <application>pg_receivewal</application> instead of
+   <xref linkend="guc-archive-command"> as the main WAL backup method, it is
+   strongly recommended to use replication slots.  Otherwise, the server is
+   free to recycle or remove write-ahead log files before they are backed up,
+   because it does not have any information, either
+   from <xref linkend="guc-archive-command"> or the replication slots, about
+   how far the WAL stream has been archived.  Note, however, that a
+   replication slot will fill up the server's disk space if the receiver does
+   not keep up with fetching the WAL data.
+  </para>
+
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
+  <para>
+   To stream the write-ahead log from the server at
+   <literal>mydbserver</literal> and store it in the local directory
+   <filename>/usr/local/pgsql/archive</filename>:
+<screen>
+<prompt>$</prompt> <userinput>pg_receivewal -h mydbserver -D /usr/local/pgsql/archive</userinput>
+</screen></para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="APP-PGBASEBACKUP"></member>
+  </simplelist>
+ </refsect1>
+
+</refentry>

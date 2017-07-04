@@ -53,7 +53,7 @@ WHERE (p1.typtype = 'c' AND p1.typrelid = 0) OR
 -- Look for types that should have an array type according to their typtype,
 -- but don't.  We exclude composites here because we have not bothered to
 -- make array types corresponding to the system catalogs' rowtypes.
--- NOTE: as of 9.1, this check finds pg_node_tree, smgr, and unknown.
+-- NOTE: as of v10, this check finds pg_node_tree, pg_ndistinct, smgr.
 
 SELECT p1.oid, p1.typname
 FROM pg_type as p1
@@ -339,7 +339,7 @@ ORDER BY 1;
 
 SELECT p1.oid, p1.relname
 FROM pg_class as p1
-WHERE relkind NOT IN ('r', 'i', 's', 'S', 'c', 't', 'v', 'f') OR
+WHERE relkind NOT IN ('r', 'i', 'S', 't', 'v', 'm', 'c', 'f', 'p') OR
     relpersistence NOT IN ('p', 'u', 't') OR
     relreplident NOT IN ('d', 'n', 'f', 'i');
 

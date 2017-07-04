@@ -5,7 +5,7 @@
  *	  along with the relation's initial contents.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_range.h
@@ -82,4 +82,4 @@ extern void RangeCreate(Oid rangeTypeOid, Oid rangeSubType, Oid rangeCollation,
 			RegProcedure rangeSubDiff);
 extern void RangeDelete(Oid rangeTypeOid);
 
-#endif   /* PG_RANGE_H */
+#endif							/* PG_RANGE_H */

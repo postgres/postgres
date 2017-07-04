@@ -3,7 +3,7 @@
  *
  *	database server functions
  *
- *	Copyright (c) 2010-2016, PostgreSQL Global Development Group
+ *	Copyright (c) 2010-2017, PostgreSQL Global Development Group
  *	src/bin/pg_upgrade/server.c
  */
 
@@ -36,7 +36,7 @@ connectToServer(ClusterInfo *cluster, const char *db_name)
 		if (conn)
 			PQfinish(conn);
 
-		printf("Failure, exiting\n");
+		printf(_("Failure, exiting\n"));
 		exit(1);
 	}
 
@@ -136,7 +136,7 @@ executeQueryOrDie(PGconn *conn, const char *fmt,...)
 			   PQerrorMessage(conn));
 		PQclear(result);
 		PQfinish(conn);
-		printf("Failure, exiting\n");
+		printf(_("Failure, exiting\n"));
 		exit(1);
 	}
 	else
@@ -231,13 +231,13 @@ start_postmaster(ClusterInfo *cluster, bool throw_error)
 	 * win on ext4.
 	 */
 	snprintf(cmd, sizeof(cmd),
-		  "\"%s/pg_ctl\" -w -l \"%s\" -D \"%s\" -o \"-p %d%s%s %s%s\" start",
-		  cluster->bindir, SERVER_LOG_FILE, cluster->pgconfig, cluster->port,
+			 "\"%s/pg_ctl\" -w -l \"%s\" -D \"%s\" -o \"-p %d%s%s %s%s\" start",
+			 cluster->bindir, SERVER_LOG_FILE, cluster->pgconfig, cluster->port,
 			 (cluster->controldata.cat_ver >=
 			  BINARY_UPGRADE_SERVER_FLAG_CAT_VER) ? " -b" :
 			 " -c autovacuum=off -c autovacuum_freeze_max_age=2000000000",
 			 (cluster == &new_cluster) ?
-	  " -c synchronous_commit=off -c fsync=off -c full_page_writes=off" : "",
+			 " -c synchronous_commit=off -c fsync=off -c full_page_writes=off" : "",
 			 cluster->pgopts ? cluster->pgopts : "", socket_string);
 
 	/*
@@ -320,7 +320,7 @@ stop_postmaster(bool fast)
 			  "\"%s/pg_ctl\" -w -D \"%s\" -o \"%s\" %s stop",
 			  cluster->bindir, cluster->pgconfig,
 			  cluster->pgopts ? cluster->pgopts : "",
-			  fast ? "-m fast" : "");
+			  fast ? "-m fast" : "-m smart");
 
 	os_info.running_cluster = NULL;
 }

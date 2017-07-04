@@ -1,7 +1,7 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
- * Copyright (c) 2000-2016, PostgreSQL Global Development Group
+ * Copyright (c) 2000-2017, PostgreSQL Global Development Group
  *
  * src/bin/psql/stringutils.c
  */
@@ -58,8 +58,8 @@ strtokx(const char *s,
 		bool del_quotes,
 		int encoding)
 {
-	static char *storage = NULL;/* store the local copy of the users string
-								 * here */
+	static char *storage = NULL;	/* store the local copy of the users
+									 * string here */
 	static char *string = NULL; /* pointer into storage where to continue on
 								 * next call */
 

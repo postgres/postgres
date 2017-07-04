@@ -37,13 +37,8 @@ PGTYPESdate_from_timestamp(timestamp dt)
 
 	if (!TIMESTAMP_NOT_FINITE(dt))
 	{
-#ifdef HAVE_INT64_TIMESTAMP
 		/* Microseconds to days */
 		dDate = (dt / USECS_PER_DAY);
-#else
-		/* Seconds to days */
-		dDate = (dt / (double) SECS_PER_DAY);
-#endif
 	}
 
 	return dDate;
@@ -161,8 +156,8 @@ PGTYPESdate_today(date * d)
 	return;
 }
 
-#define PGTYPES_DATE_NUM_MAX_DIGITS		20		/* should suffice for most
-												 * years... */
+#define PGTYPES_DATE_NUM_MAX_DIGITS		20	/* should suffice for most
+											 * years... */
 
 #define PGTYPES_FMTDATE_DAY_DIGITS_LZ		1	/* LZ means "leading zeroes" */
 #define PGTYPES_FMTDATE_DOW_LITERAL_SHORT	2
@@ -324,7 +319,7 @@ PGTYPESdate_fmt_asc(date dDate, const char *fmtstring, char *outbuf)
  *
  * function works as follows:
  *	 - first we analyze the parameters
- *	 - if this is a special case with no delimiters, add delimters
+ *	 - if this is a special case with no delimiters, add delimiters
  *	 - find the tokens. First we look for numerical values. If we have found
  *	   less than 3 tokens, we check for the months' names and thereafter for
  *	   the abbreviations of the months' names.
@@ -446,7 +441,7 @@ PGTYPESdate_defmt_asc(date * d, const char *fmt, char *str)
 
 		/*
 		 * as long as the string, one additional byte for the terminator and 2
-		 * for the delimiters between the 3 fiedls
+		 * for the delimiters between the 3 fields
 		 */
 		str_copy = pgtypes_alloc(strlen(str) + 1 + 2);
 		if (!str_copy)

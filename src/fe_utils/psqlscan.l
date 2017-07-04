@@ -23,7 +23,7 @@
  *
  * See psqlscan_int.h for additional commentary.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -699,8 +699,8 @@ other			.
 														 yyleng - 1);
 					if (cur_state->callbacks->get_variable)
 						value = cur_state->callbacks->get_variable(varname,
-																   false,
-																   false);
+																   PQUOTE_PLAIN,
+																   cur_state->cb_passthrough);
 					else
 						value = NULL;
 
@@ -736,11 +736,13 @@ other			.
 				}
 
 :'{variable_char}+'	{
-					psqlscan_escape_variable(cur_state, yytext, yyleng, false);
+					psqlscan_escape_variable(cur_state, yytext, yyleng,
+											 PQUOTE_SQL_LITERAL);
 				}
 
 :\"{variable_char}+\"	{
-					psqlscan_escape_variable(cur_state, yytext, yyleng, true);
+					psqlscan_escape_variable(cur_state, yytext, yyleng,
+											 PQUOTE_SQL_IDENT);
 				}
 
 	/*
@@ -920,6 +922,19 @@ psql_scan_destroy(PsqlScanState state)
 	yylex_destroy(state->scanner);
 
 	free(state);
+}
+
+/*
+ * Set the callback passthrough pointer for the lexer.
+ *
+ * This could have been integrated into psql_scan_create, but keeping it
+ * separate allows the application to change the pointer later, which might
+ * be useful.
+ */
+void
+psql_scan_set_passthrough(PsqlScanState state, void *passthrough)
+{
+	state->cb_passthrough = passthrough;
 }
 
 /*
@@ -1401,7 +1416,7 @@ psqlscan_extract_substring(PsqlScanState state, const char *txt, int len)
  */
 void
 psqlscan_escape_variable(PsqlScanState state, const char *txt, int len,
-						 bool as_ident)
+						 PsqlScanQuoteType quote)
 {
 	char	   *varname;
 	char	   *value;
@@ -1409,7 +1424,8 @@ psqlscan_escape_variable(PsqlScanState state, const char *txt, int len,
 	/* Variable lookup. */
 	varname = psqlscan_extract_substring(state, txt + 2, len - 3);
 	if (state->callbacks->get_variable)
-		value = state->callbacks->get_variable(varname, true, as_ident);
+		value = state->callbacks->get_variable(varname, quote,
+											   state->cb_passthrough);
 	else
 		value = NULL;
 	free(varname);

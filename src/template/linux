@@ -1,5 +1,10 @@
 # src/template/linux
 
+# Prefer unnamed POSIX semaphores if available, unless user overrides choice
+if test x"$PREFERRED_SEMAPHORES" = x"" ; then
+  PREFERRED_SEMAPHORES=UNNAMED_POSIX
+fi
+
 # Force _GNU_SOURCE on; plperl is broken with Perl 5.8.0 otherwise
 CPPFLAGS="$CPPFLAGS -D_GNU_SOURCE"
 

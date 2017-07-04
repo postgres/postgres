@@ -4,7 +4,7 @@
  *	  POSTGRES relation scan descriptor definitions.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/access/relscan.h
@@ -19,6 +19,7 @@
 #include "access/htup_details.h"
 #include "access/itup.h"
 #include "access/tupdesc.h"
+#include "storage/spin.h"
 
 /*
  * Shared state for parallel heap scan.
@@ -38,7 +39,7 @@ typedef struct ParallelHeapScanDescData
 	BlockNumber phs_startblock; /* starting block number */
 	BlockNumber phs_cblock;		/* current block number */
 	char		phs_snapshot_data[FLEXIBLE_ARRAY_MEMBER];
-}	ParallelHeapScanDescData;
+}			ParallelHeapScanDescData;
 
 typedef struct HeapScanDescData
 {
@@ -74,7 +75,7 @@ typedef struct HeapScanDescData
 	int			rs_cindex;		/* current tuple's index in vistuples */
 	int			rs_ntuples;		/* number of visible tuples on page */
 	OffsetNumber rs_vistuples[MaxHeapTuplesPerPage];	/* their offsets */
-}	HeapScanDescData;
+}			HeapScanDescData;
 
 /*
  * We use the same IndexScanDescData structure for both amgettuple-based
@@ -88,13 +89,14 @@ typedef struct IndexScanDescData
 	Relation	indexRelation;	/* index relation descriptor */
 	Snapshot	xs_snapshot;	/* snapshot to see */
 	int			numberOfKeys;	/* number of index qualifier conditions */
-	int			numberOfOrderBys;		/* number of ordering operators */
+	int			numberOfOrderBys;	/* number of ordering operators */
 	ScanKey		keyData;		/* array of index qualifier descriptors */
 	ScanKey		orderByData;	/* array of ordering op descriptors */
 	bool		xs_want_itup;	/* caller requests index tuples */
+	bool		xs_temp_snap;	/* unregister snapshot at scan end? */
 
 	/* signaling to index AM about killing index tuples */
-	bool		kill_prior_tuple;		/* last-returned tuple is dead */
+	bool		kill_prior_tuple;	/* last-returned tuple is dead */
 	bool		ignore_killed_tuples;	/* do not return killed entries */
 	bool		xactStartedInRecovery;	/* prevents killing/seeing killed
 										 * tuples */
@@ -102,9 +104,16 @@ typedef struct IndexScanDescData
 	/* index access method's private state */
 	void	   *opaque;			/* access-method-specific info */
 
-	/* in an index-only scan, this is valid after a successful amgettuple */
+	/*
+	 * In an index-only scan, a successful amgettuple call must fill either
+	 * xs_itup (and xs_itupdesc) or xs_hitup (and xs_hitupdesc) to provide the
+	 * data returned by the scan.  It can fill both, in which case the heap
+	 * format will be used.
+	 */
 	IndexTuple	xs_itup;		/* index tuple returned by AM */
 	TupleDesc	xs_itupdesc;	/* rowtype descriptor of xs_itup */
+	HeapTuple	xs_hitup;		/* index data returned by AM, as HeapTuple */
+	TupleDesc	xs_hitupdesc;	/* rowtype descriptor of xs_hitup */
 
 	/* xs_ctup/xs_cbuf/xs_recheck are valid after a successful index_getnext */
 	HeapTupleData xs_ctup;		/* current heap tuple, if any */
@@ -125,7 +134,19 @@ typedef struct IndexScanDescData
 
 	/* state data for traversing HOT chains in index_getnext */
 	bool		xs_continue_hot;	/* T if must keep walking HOT chain */
-}	IndexScanDescData;
+
+	/* parallel index scan information, in shared memory */
+	ParallelIndexScanDesc parallel_scan;
+}			IndexScanDescData;
+
+/* Generic structure for parallel scans */
+typedef struct ParallelIndexScanDescData
+{
+	Oid			ps_relid;
+	Oid			ps_indexid;
+	Size		ps_offset;		/* Offset in bytes of am specific structure */
+	char		ps_snapshot_data[FLEXIBLE_ARRAY_MEMBER];
+}			ParallelIndexScanDescData;
 
 /* Struct for heap-or-index scans of system tables */
 typedef struct SysScanDescData
@@ -135,6 +156,6 @@ typedef struct SysScanDescData
 	HeapScanDesc scan;			/* only valid in heap-scan case */
 	IndexScanDesc iscan;		/* only valid in index-scan case */
 	Snapshot	snapshot;		/* snapshot to unregister at end of scan */
-}	SysScanDescData;
+}			SysScanDescData;
 
-#endif   /* RELSCAN_H */
+#endif							/* RELSCAN_H */

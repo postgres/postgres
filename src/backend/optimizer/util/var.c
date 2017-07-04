@@ -9,7 +9,7 @@
  * contains variables.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -62,8 +62,8 @@ typedef struct
 {
 	PlannerInfo *root;
 	int			sublevels_up;
-	bool		possible_sublink;		/* could aliases include a SubLink? */
-	bool		inserted_sublink;		/* have we inserted a SubLink? */
+	bool		possible_sublink;	/* could aliases include a SubLink? */
+	bool		inserted_sublink;	/* have we inserted a SubLink? */
 } flatten_join_alias_vars_context;
 
 static bool pull_varnos_walker(Node *node,
@@ -240,7 +240,7 @@ pull_varattnos_walker(Node *node, pull_varattnos_context *context)
 		if (var->varno == context->varno && var->varlevelsup == 0)
 			context->varattnos =
 				bms_add_member(context->varattnos,
-						 var->varattno - FirstLowInvalidHeapAttributeNumber);
+							   var->varattno - FirstLowInvalidHeapAttributeNumber);
 		return false;
 	}
 
@@ -778,7 +778,7 @@ flatten_join_alias_vars_mutator(Node *node,
 		PlaceHolderVar *phv;
 
 		phv = (PlaceHolderVar *) expression_tree_mutator(node,
-											 flatten_join_alias_vars_mutator,
+														 flatten_join_alias_vars_mutator,
 														 (void *) context);
 		/* now fix PlaceHolderVar's relid sets */
 		if (phv->phlevelsup == context->sublevels_up)

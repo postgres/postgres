@@ -132,4 +132,4 @@ extern TRGM *createTrgmNFA(text *text_re, Oid collation,
 			  TrgmPackedGraph **graph, MemoryContext rcontext);
 extern bool trigramsMatchGraph(TrgmPackedGraph *graph, bool *check);
 
-#endif   /* __TRGM_H__ */
+#endif							/* __TRGM_H__ */

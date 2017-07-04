@@ -4,7 +4,7 @@
  *	  Functions for the built-in type "char" (not to be confused with
  *	  bpchar, which is the SQL CHAR(n) type).
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -175,7 +175,7 @@ i4tochar(PG_FUNCTION_ARGS)
 Datum
 text_char(PG_FUNCTION_ARGS)
 {
-	text	   *arg1 = PG_GETARG_TEXT_P(0);
+	text	   *arg1 = PG_GETARG_TEXT_PP(0);
 	char		result;
 
 	/*
@@ -183,8 +183,8 @@ text_char(PG_FUNCTION_ARGS)
 	 * If the input is longer than one character, the excess data is silently
 	 * discarded.
 	 */
-	if (VARSIZE(arg1) > VARHDRSZ)
-		result = *(VARDATA(arg1));
+	if (VARSIZE_ANY_EXHDR(arg1) > 0)
+		result = *(VARDATA_ANY(arg1));
 	else
 		result = '\0';
 

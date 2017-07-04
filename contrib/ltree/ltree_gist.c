@@ -302,7 +302,7 @@ ltree_picksplit(PG_FUNCTION_ARGS)
 	for (j = FirstOffsetNumber; j <= maxoff; j = OffsetNumberNext(j))
 	{
 		array[j].index = j;
-		lu = GETENTRY(entryvec, j);		/* use as tmp val */
+		lu = GETENTRY(entryvec, j); /* use as tmp val */
 		array[j].r = LTG_GETLNODE(lu);
 	}
 
@@ -312,7 +312,7 @@ ltree_picksplit(PG_FUNCTION_ARGS)
 	lu_l = lu_r = ru_l = ru_r = NULL;
 	for (j = FirstOffsetNumber; j <= maxoff; j = OffsetNumberNext(j))
 	{
-		lu = GETENTRY(entryvec, array[j].index);		/* use as tmp val */
+		lu = GETENTRY(entryvec, array[j].index);	/* use as tmp val */
 		if (j <= (maxoff - FirstOffsetNumber + 1) / 2)
 		{
 			v->spl_left[v->spl_nleft] = array[j].index;
@@ -672,8 +672,8 @@ ltree_consistent(PG_FUNCTION_ARGS)
 			query = PG_GETARG_LQUERY(1);
 			if (GIST_LEAF(entry))
 				res = DatumGetBool(DirectFunctionCall2(ltq_regex,
-											  PointerGetDatum(LTG_NODE(key)),
-											PointerGetDatum((lquery *) query)
+													   PointerGetDatum(LTG_NODE(key)),
+													   PointerGetDatum((lquery *) query)
 													   ));
 			else
 				res = (gist_qe(key, (lquery *) query) && gist_between(key, (lquery *) query));
@@ -683,8 +683,8 @@ ltree_consistent(PG_FUNCTION_ARGS)
 			query = PG_GETARG_LQUERY(1);
 			if (GIST_LEAF(entry))
 				res = DatumGetBool(DirectFunctionCall2(ltxtq_exec,
-											  PointerGetDatum(LTG_NODE(key)),
-											PointerGetDatum((lquery *) query)
+													   PointerGetDatum(LTG_NODE(key)),
+													   PointerGetDatum((lquery *) query)
 													   ));
 			else
 				res = gist_qtxt(key, (ltxtquery *) query);
@@ -694,8 +694,8 @@ ltree_consistent(PG_FUNCTION_ARGS)
 			query = DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(1)));
 			if (GIST_LEAF(entry))
 				res = DatumGetBool(DirectFunctionCall2(lt_q_regex,
-											  PointerGetDatum(LTG_NODE(key)),
-										 PointerGetDatum((ArrayType *) query)
+													   PointerGetDatum(LTG_NODE(key)),
+													   PointerGetDatum((ArrayType *) query)
 													   ));
 			else
 				res = arrq_cons(key, (ArrayType *) query);

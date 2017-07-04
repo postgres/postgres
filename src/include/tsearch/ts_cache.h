@@ -3,7 +3,7 @@
  * ts_cache.h
  *	  Tsearch related object caches.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/tsearch/ts_cache.h
@@ -95,4 +95,4 @@ extern Oid	getTSCurrentConfig(bool emitError);
 extern bool check_TSCurrentConfig(char **newval, void **extra, GucSource source);
 extern void assign_TSCurrentConfig(const char *newval, void *extra);
 
-#endif   /* TS_CACHE_H */
+#endif							/* TS_CACHE_H */

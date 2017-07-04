@@ -4,7 +4,7 @@
  *	  Implement higher level operations based on some lower level atomic
  *	  operations.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/port/atomics/generic.h
@@ -53,6 +53,15 @@ pg_atomic_read_u32_impl(volatile pg_atomic_uint32 *ptr)
 #define PG_HAVE_ATOMIC_WRITE_U32
 static inline void
 pg_atomic_write_u32_impl(volatile pg_atomic_uint32 *ptr, uint32 val)
+{
+	ptr->value = val;
+}
+#endif
+
+#ifndef PG_HAVE_ATOMIC_UNLOCKED_WRITE_U32
+#define PG_HAVE_ATOMIC_UNLOCKED_WRITE_U32
+static inline void
+pg_atomic_unlocked_write_u32_impl(volatile pg_atomic_uint32 *ptr, uint32 val)
 {
 	ptr->value = val;
 }
@@ -246,8 +255,6 @@ pg_atomic_sub_fetch_u32_impl(volatile pg_atomic_uint32 *ptr, int32 sub_)
 }
 #endif
 
-#ifdef PG_HAVE_ATOMIC_U64_SUPPORT
-
 #if !defined(PG_HAVE_ATOMIC_EXCHANGE_U64) && defined(PG_HAVE_ATOMIC_COMPARE_EXCHANGE_U64)
 #define PG_HAVE_ATOMIC_EXCHANGE_U64
 static inline uint64
@@ -266,6 +273,24 @@ pg_atomic_exchange_u64_impl(volatile pg_atomic_uint64 *ptr, uint64 xchg_)
 
 #ifndef PG_HAVE_ATOMIC_WRITE_U64
 #define PG_HAVE_ATOMIC_WRITE_U64
+
+#if defined(PG_HAVE_8BYTE_SINGLE_COPY_ATOMICITY) && \
+	!defined(PG_HAVE_ATOMIC_U64_SIMULATION)
+
+static inline void
+pg_atomic_write_u64_impl(volatile pg_atomic_uint64 *ptr, uint64 val)
+{
+	/*
+	 * On this platform aligned 64bit writes are guaranteed to be atomic,
+	 * except if using the fallback implementation, where can't guarantee the
+	 * required alignment.
+	 */
+	AssertPointerAlignment(ptr, 8);
+	ptr->value = val;
+}
+
+#else
+
 static inline void
 pg_atomic_write_u64_impl(volatile pg_atomic_uint64 *ptr, uint64 val)
 {
@@ -275,10 +300,30 @@ pg_atomic_write_u64_impl(volatile pg_atomic_uint64 *ptr, uint64 val)
 	 */
 	pg_atomic_exchange_u64_impl(ptr, val);
 }
-#endif
+
+#endif /* PG_HAVE_8BYTE_SINGLE_COPY_ATOMICITY && !PG_HAVE_ATOMIC_U64_SIMULATION */
+#endif /* PG_HAVE_ATOMIC_WRITE_U64 */
 
 #ifndef PG_HAVE_ATOMIC_READ_U64
 #define PG_HAVE_ATOMIC_READ_U64
+
+#if defined(PG_HAVE_8BYTE_SINGLE_COPY_ATOMICITY) && \
+	!defined(PG_HAVE_ATOMIC_U64_SIMULATION)
+
+static inline uint64
+pg_atomic_read_u64_impl(volatile pg_atomic_uint64 *ptr)
+{
+	/*
+	 * On this platform aligned 64bit reads are guaranteed to be atomic,
+	 * except if using the fallback implementation, where can't guarantee the
+	 * required alignment.
+	 */
+	AssertPointerAlignment(ptr, 8);
+	return *(&ptr->value);
+}
+
+#else
+
 static inline uint64
 pg_atomic_read_u64_impl(volatile pg_atomic_uint64 *ptr)
 {
@@ -294,7 +339,8 @@ pg_atomic_read_u64_impl(volatile pg_atomic_uint64 *ptr)
 
 	return old;
 }
-#endif
+#endif /* PG_HAVE_8BYTE_SINGLE_COPY_ATOMICITY && !PG_HAVE_ATOMIC_U64_SIMULATION */
+#endif /* PG_HAVE_ATOMIC_READ_U64 */
 
 #ifndef PG_HAVE_ATOMIC_INIT_U64
 #define PG_HAVE_ATOMIC_INIT_U64
@@ -379,5 +425,3 @@ pg_atomic_sub_fetch_u64_impl(volatile pg_atomic_uint64 *ptr, int64 sub_)
 	return pg_atomic_fetch_sub_u64_impl(ptr, sub_) - sub_;
 }
 #endif
-
-#endif /* PG_HAVE_ATOMIC_COMPARE_EXCHANGE_U64 */

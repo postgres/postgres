@@ -181,7 +181,7 @@
  * 7) Mark state 3 final because state 5 of source NFA is marked as final.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -200,9 +200,10 @@
 
 
 /*
- * Uncomment to print intermediate stages, for exploring and debugging the
- * algorithm implementation.  This produces three graph files in /tmp,
- * in Graphviz .dot format.
+ * Uncomment (or use -DTRGM_REGEXP_DEBUG) to print debug info,
+ * for exploring and debugging the algorithm implementation.
+ * This produces three graph files in /tmp, in Graphviz .dot format.
+ * Some progress information is also printed to postmaster stderr.
  */
 /* #define TRGM_REGEXP_DEBUG */
 
@@ -226,7 +227,7 @@
  * Penalty multipliers for trigram counts depending on whitespace contents.
  * Numbers based on analysis of real-life texts.
  */
-const float4 penalties[8] = {
+static const float4 penalties[8] = {
 	1.0f,						/* "aaa" */
 	3.5f,						/* "aa " */
 	0.0f,						/* "a a" (impossible) */
@@ -318,22 +319,27 @@ typedef struct
  *	arcs	 - outgoing arcs of this state (List of TrgmArc)
  *	enterKeys - enter keys reachable from this state without reading any
  *			   predictable trigram (List of TrgmStateKey)
- *	fin		 - flag indicating this state is final
- *	init	 - flag indicating this state is initial
+ *	flags	 - flag bits
+ *	snumber  - number of this state (initially assigned as -1, -2, etc,
+ *			   for debugging purposes only; then at the packaging stage,
+ *			   surviving states are renumbered with positive numbers)
  *	parent	 - parent state, if this state has been merged into another
- *	children - child states (states that have been merged into this one)
- *	number	 - number of this state (used at the packaging stage)
+ *	tentFlags - flags this state would acquire via planned merges
+ *	tentParent - planned parent state, if considering a merge
  */
+#define TSTATE_INIT		0x01	/* flag indicating this state is initial */
+#define TSTATE_FIN		0x02	/* flag indicating this state is final */
+
 typedef struct TrgmState
 {
 	TrgmStateKey stateKey;		/* hashtable key: must be first field */
 	List	   *arcs;
 	List	   *enterKeys;
-	bool		fin;
-	bool		init;
+	int			flags;
+	int			snumber;
 	struct TrgmState *parent;
-	List	   *children;
-	int			number;
+	int			tentFlags;
+	struct TrgmState *tentParent;
 } TrgmState;
 
 /*
@@ -360,7 +366,7 @@ typedef struct
  * Information about color trigram (used in stage 3)
  *
  * ctrgm	- trigram itself
- * number	- number of this trigram (used in the packaging stage)
+ * cnumber	- number of this trigram (used in the packaging stage)
  * count	- number of simple trigrams created from this color trigram
  * expanded - indicates this color trigram is expanded into simple trigrams
  * arcs		- list of all arcs labeled with this color trigram.
@@ -368,7 +374,7 @@ typedef struct
 typedef struct
 {
 	ColorTrgm	ctrgm;
-	int			number;
+	int			cnumber;
 	int			count;
 	float4		penalty;
 	bool		expanded;
@@ -402,6 +408,7 @@ typedef struct
 	/* Expanded graph (stage 2) */
 	HTAB	   *states;
 	TrgmState  *initState;
+	int			nstates;
 
 	/* Workspace for stage 2 */
 	List	   *queue;
@@ -443,7 +450,7 @@ struct TrgmPackedGraph
 	 * by color trigram number.
 	 */
 	int			colorTrigramsCount;
-	int		   *colorTrigramGroups;		/* array of size colorTrigramsCount */
+	int		   *colorTrigramGroups; /* array of size colorTrigramsCount */
 
 	/*
 	 * The states of the simplified NFA.  State number 0 is always initial
@@ -529,9 +536,7 @@ createTrgmNFA(text *text_re, Oid collation,
 	 */
 	tmpcontext = AllocSetContextCreate(CurrentMemoryContext,
 									   "createTrgmNFA temporary context",
-									   ALLOCSET_DEFAULT_MINSIZE,
-									   ALLOCSET_DEFAULT_INITSIZE,
-									   ALLOCSET_DEFAULT_MAXSIZE);
+									   ALLOCSET_DEFAULT_SIZES);
 	oldcontext = MemoryContextSwitchTo(tmpcontext);
 
 	/*
@@ -601,7 +606,7 @@ createTrgmNFAInternal(regex_t *regex, TrgmPackedGraph **graph,
 	 * get from the initial state to the final state without reading any
 	 * predictable trigram.
 	 */
-	if (trgmNFA.initState->fin)
+	if (trgmNFA.initState->flags & TSTATE_FIN)
 		return NULL;
 
 	/*
@@ -919,6 +924,7 @@ transformGraph(TrgmNFA *trgmNFA)
 								  1024,
 								  &hashCtl,
 								  HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
+	trgmNFA->nstates = 0;
 
 	/* Create initial state: ambiguous prefix, NFA's initial state */
 	MemSet(&initkey, 0, sizeof(initkey));
@@ -927,7 +933,7 @@ transformGraph(TrgmNFA *trgmNFA)
 	initkey.nstate = pg_reg_getinitialstate(trgmNFA->regex);
 
 	initstate = getState(trgmNFA, &initkey);
-	initstate->init = true;
+	initstate->flags |= TSTATE_INIT;
 	trgmNFA->initState = initstate;
 
 	/*
@@ -945,7 +951,7 @@ transformGraph(TrgmNFA *trgmNFA)
 		 * actual processing.
 		 */
 		if (trgmNFA->overflowed)
-			state->fin = true;
+			state->flags |= TSTATE_FIN;
 		else
 			processState(trgmNFA, state);
 
@@ -970,7 +976,7 @@ processState(TrgmNFA *trgmNFA, TrgmState *state)
 	 * queue is empty.  But we can quit if the state gets marked final.
 	 */
 	addKey(trgmNFA, state, &state->stateKey);
-	while (trgmNFA->keysQueue != NIL && !state->fin)
+	while (trgmNFA->keysQueue != NIL && !(state->flags & TSTATE_FIN))
 	{
 		TrgmStateKey *key = (TrgmStateKey *) linitial(trgmNFA->keysQueue);
 
@@ -982,7 +988,7 @@ processState(TrgmNFA *trgmNFA, TrgmState *state)
 	 * Add outgoing arcs only if state isn't final (we have no interest in
 	 * outgoing arcs if we already match)
 	 */
-	if (!state->fin)
+	if (!(state->flags & TSTATE_FIN))
 		addArcs(trgmNFA, state);
 }
 
@@ -991,7 +997,7 @@ processState(TrgmNFA *trgmNFA, TrgmState *state)
  * whether this should result in any further enter keys being added.
  * If so, add those keys to keysQueue so that processState will handle them.
  *
- * If the enter key is for the NFA's final state, set state->fin = TRUE.
+ * If the enter key is for the NFA's final state, mark state as TSTATE_FIN.
  * This situation means that we can reach the final state from this expanded
  * state without reading any predictable trigram, so we must consider this
  * state as an accepting one.
@@ -1061,7 +1067,7 @@ addKey(TrgmNFA *trgmNFA, TrgmState *state, TrgmStateKey *key)
 	/* If state is now known final, mark it and we're done */
 	if (key->nstate == pg_reg_getfinalstate(trgmNFA->regex))
 	{
-		state->fin = true;
+		state->flags |= TSTATE_FIN;
 		return;
 	}
 
@@ -1387,11 +1393,12 @@ getState(TrgmNFA *trgmNFA, TrgmStateKey *key)
 		/* New state: initialize and queue it */
 		state->arcs = NIL;
 		state->enterKeys = NIL;
-		state->init = false;
-		state->fin = false;
+		state->flags = 0;
+		/* states are initially given negative numbers */
+		state->snumber = -(++trgmNFA->nstates);
 		state->parent = NULL;
-		state->children = NIL;
-		state->number = -1;
+		state->tentFlags = 0;
+		state->tentParent = NULL;
 
 		trgmNFA->queue = lappend(trgmNFA->queue, state);
 	}
@@ -1456,10 +1463,10 @@ selectColorTrigrams(TrgmNFA *trgmNFA)
 	ColorTrgmInfo *colorTrgms;
 	int64		totalTrgmCount;
 	float4		totalTrgmPenalty;
-	int			number;
+	int			cnumber;
 
 	/* Collect color trigrams from all arcs */
-	colorTrgms = (ColorTrgmInfo *) palloc(sizeof(ColorTrgmInfo) * arcsCount);
+	colorTrgms = (ColorTrgmInfo *) palloc0(sizeof(ColorTrgmInfo) * arcsCount);
 	trgmNFA->colorTrgms = colorTrgms;
 
 	i = 0;
@@ -1472,12 +1479,15 @@ selectColorTrigrams(TrgmNFA *trgmNFA)
 		{
 			TrgmArc    *arc = (TrgmArc *) lfirst(cell);
 			TrgmArcInfo *arcInfo = (TrgmArcInfo *) palloc(sizeof(TrgmArcInfo));
+			ColorTrgmInfo *trgmInfo = &colorTrgms[i];
 
 			arcInfo->source = state;
 			arcInfo->target = arc->target;
-			colorTrgms[i].arcs = list_make1(arcInfo);
-			colorTrgms[i].expanded = true;
-			colorTrgms[i].ctrgm = arc->ctrgm;
+			trgmInfo->ctrgm = arc->ctrgm;
+			trgmInfo->cnumber = -1;
+			/* count and penalty will be set below */
+			trgmInfo->expanded = true;
+			trgmInfo->arcs = list_make1(arcInfo);
 			i++;
 		}
 	}
@@ -1575,6 +1585,15 @@ selectColorTrigrams(TrgmNFA *trgmNFA)
 		if (totalTrgmPenalty <= WISH_TRGM_PENALTY)
 			break;
 
+#ifdef TRGM_REGEXP_DEBUG
+		fprintf(stderr, "considering ctrgm %d %d %d, penalty %f, %d arcs\n",
+				trgmInfo->ctrgm.colors[0],
+				trgmInfo->ctrgm.colors[1],
+				trgmInfo->ctrgm.colors[2],
+				trgmInfo->penalty,
+				list_length(trgmInfo->arcs));
+#endif
+
 		/*
 		 * Does any arc of this color trigram connect initial and final
 		 * states?	If so we can't remove it.
@@ -1584,6 +1603,14 @@ selectColorTrigrams(TrgmNFA *trgmNFA)
 			TrgmArcInfo *arcInfo = (TrgmArcInfo *) lfirst(cell);
 			TrgmState  *source = arcInfo->source,
 					   *target = arcInfo->target;
+			int			source_flags,
+						target_flags;
+
+#ifdef TRGM_REGEXP_DEBUG
+			fprintf(stderr, "examining arc to s%d (%x) from s%d (%x)\n",
+					-target->snumber, target->flags,
+					-source->snumber, source->flags);
+#endif
 
 			/* examine parent states, if any merging has already happened */
 			while (source->parent)
@@ -1591,15 +1618,98 @@ selectColorTrigrams(TrgmNFA *trgmNFA)
 			while (target->parent)
 				target = target->parent;
 
-			if ((source->init || target->init) &&
-				(source->fin || target->fin))
+#ifdef TRGM_REGEXP_DEBUG
+			fprintf(stderr, " ... after completed merges: to s%d (%x) from s%d (%x)\n",
+					-target->snumber, target->flags,
+					-source->snumber, source->flags);
+#endif
+
+			/* we must also consider merges we are planning right now */
+			source_flags = source->flags | source->tentFlags;
+			while (source->tentParent)
+			{
+				source = source->tentParent;
+				source_flags |= source->flags | source->tentFlags;
+			}
+			target_flags = target->flags | target->tentFlags;
+			while (target->tentParent)
+			{
+				target = target->tentParent;
+				target_flags |= target->flags | target->tentFlags;
+			}
+
+#ifdef TRGM_REGEXP_DEBUG
+			fprintf(stderr, " ... after tentative merges: to s%d (%x) from s%d (%x)\n",
+					-target->snumber, target_flags,
+					-source->snumber, source_flags);
+#endif
+
+			/* would fully-merged state have both INIT and FIN set? */
+			if (((source_flags | target_flags) & (TSTATE_INIT | TSTATE_FIN)) ==
+				(TSTATE_INIT | TSTATE_FIN))
 			{
 				canRemove = false;
 				break;
 			}
+
+			/* ok so far, so remember planned merge */
+			if (source != target)
+			{
+#ifdef TRGM_REGEXP_DEBUG
+				fprintf(stderr, " ... tentatively merging s%d into s%d\n",
+						-target->snumber, -source->snumber);
+#endif
+				target->tentParent = source;
+				source->tentFlags |= target_flags;
+			}
 		}
+
+		/*
+		 * We must reset all the tentFlags/tentParent fields before
+		 * continuing.  tentFlags could only have become set in states that
+		 * are the source or parent or tentative parent of one of the current
+		 * arcs; likewise tentParent could only have become set in states that
+		 * are the target or parent or tentative parent of one of the current
+		 * arcs.  There might be some overlap between those sets, but if we
+		 * clear tentFlags in target states as well as source states, we
+		 * should be okay even if we visit a state as target before visiting
+		 * it as a source.
+		 */
+		foreach(cell, trgmInfo->arcs)
+		{
+			TrgmArcInfo *arcInfo = (TrgmArcInfo *) lfirst(cell);
+			TrgmState  *source = arcInfo->source,
+					   *target = arcInfo->target;
+			TrgmState  *ttarget;
+
+			/* no need to touch previously-merged states */
+			while (source->parent)
+				source = source->parent;
+			while (target->parent)
+				target = target->parent;
+
+			while (source)
+			{
+				source->tentFlags = 0;
+				source = source->tentParent;
+			}
+
+			while ((ttarget = target->tentParent) != NULL)
+			{
+				target->tentParent = NULL;
+				target->tentFlags = 0;	/* in case it was also a source */
+				target = ttarget;
+			}
+		}
+
+		/* Now, move on if we can't drop this trigram */
 		if (!canRemove)
+		{
+#ifdef TRGM_REGEXP_DEBUG
+			fprintf(stderr, " ... not ok to merge\n");
+#endif
 			continue;
+		}
 
 		/* OK, merge states linked by each arc labeled by the trigram */
 		foreach(cell, trgmInfo->arcs)
@@ -1613,7 +1723,16 @@ selectColorTrigrams(TrgmNFA *trgmNFA)
 			while (target->parent)
 				target = target->parent;
 			if (source != target)
+			{
+#ifdef TRGM_REGEXP_DEBUG
+				fprintf(stderr, "merging s%d into s%d\n",
+						-target->snumber, -source->snumber);
+#endif
 				mergeStates(source, target);
+				/* Assert we didn't merge initial and final states */
+				Assert((source->flags & (TSTATE_INIT | TSTATE_FIN)) !=
+					   (TSTATE_INIT | TSTATE_FIN));
+			}
 		}
 
 		/* Mark trigram unexpanded, and update totals */
@@ -1632,15 +1751,15 @@ selectColorTrigrams(TrgmNFA *trgmNFA)
 	 * Sort color trigrams by colors (will be useful for bsearch in packGraph)
 	 * and enumerate the color trigrams that are expanded.
 	 */
-	number = 0;
+	cnumber = 0;
 	qsort(colorTrgms, trgmNFA->colorTrgmsCount, sizeof(ColorTrgmInfo),
 		  colorTrgmInfoCmp);
 	for (i = 0; i < trgmNFA->colorTrgmsCount; i++)
 	{
 		if (colorTrgms[i].expanded)
 		{
-			colorTrgms[i].number = number;
-			number++;
+			colorTrgms[i].cnumber = cnumber;
+			cnumber++;
 		}
 	}
 
@@ -1756,27 +1875,15 @@ fillTrgm(trgm *ptrgm, trgm_mb_char s[3])
 static void
 mergeStates(TrgmState *state1, TrgmState *state2)
 {
-	ListCell   *cell;
-
 	Assert(state1 != state2);
 	Assert(!state1->parent);
 	Assert(!state2->parent);
 
-	/* state1 absorbs state2's init/fin flags */
-	state1->init |= state2->init;
-	state1->fin |= state2->fin;
+	/* state1 absorbs state2's flags */
+	state1->flags |= state2->flags;
 
-	/* state2, and all its children, become children of state1 */
-	foreach(cell, state2->children)
-	{
-		TrgmState  *state = (TrgmState *) lfirst(cell);
-
-		state->parent = state1;
-	}
+	/* state2, and indirectly all its children, become children of state1 */
 	state2->parent = state1;
-	state1->children = list_concat(state1->children, state2->children);
-	state1->children = lappend(state1->children, state2);
-	state2->children = NIL;
 }
 
 /*
@@ -1823,7 +1930,7 @@ colorTrgmInfoPenaltyCmp(const void *p1, const void *p2)
 static TrgmPackedGraph *
 packGraph(TrgmNFA *trgmNFA, MemoryContext rcontext)
 {
-	int			number = 2,
+	int			snumber = 2,
 				arcIndex,
 				arcsCount;
 	HASH_SEQ_STATUS scan_status;
@@ -1843,16 +1950,16 @@ packGraph(TrgmNFA *trgmNFA, MemoryContext rcontext)
 		while (state->parent)
 			state = state->parent;
 
-		if (state->number < 0)
+		if (state->snumber < 0)
 		{
-			if (state->init)
-				state->number = 0;
-			else if (state->fin)
-				state->number = 1;
+			if (state->flags & TSTATE_INIT)
+				state->snumber = 0;
+			else if (state->flags & TSTATE_FIN)
+				state->snumber = 1;
 			else
 			{
-				state->number = number;
-				number++;
+				state->snumber = snumber;
+				snumber++;
 			}
 		}
 	}
@@ -1878,7 +1985,7 @@ packGraph(TrgmNFA *trgmNFA, MemoryContext rcontext)
 			while (target->parent)
 				target = target->parent;
 
-			if (source->number != target->number)
+			if (source->snumber != target->snumber)
 			{
 				ColorTrgmInfo *ctrgm;
 
@@ -1890,9 +1997,9 @@ packGraph(TrgmNFA *trgmNFA, MemoryContext rcontext)
 				Assert(ctrgm != NULL);
 				Assert(ctrgm->expanded);
 
-				arcs[arcIndex].sourceState = source->number;
-				arcs[arcIndex].targetState = target->number;
-				arcs[arcIndex].colorTrgm = ctrgm->number;
+				arcs[arcIndex].sourceState = source->snumber;
+				arcs[arcIndex].targetState = target->snumber;
+				arcs[arcIndex].colorTrgm = ctrgm->cnumber;
 				arcIndex++;
 			}
 		}
@@ -1938,13 +2045,13 @@ packGraph(TrgmNFA *trgmNFA, MemoryContext rcontext)
 	}
 
 	/* Pack states and arcs information */
-	result->statesCount = number;
+	result->statesCount = snumber;
 	result->states = (TrgmPackedState *)
-		MemoryContextAlloc(rcontext, number * sizeof(TrgmPackedState));
+		MemoryContextAlloc(rcontext, snumber * sizeof(TrgmPackedState));
 	packedArcs = (TrgmPackedArc *)
 		MemoryContextAlloc(rcontext, arcsCount * sizeof(TrgmPackedArc));
 	j = 0;
-	for (i = 0; i < number; i++)
+	for (i = 0; i < snumber; i++)
 	{
 		int			cnt = 0;
 
@@ -2110,10 +2217,10 @@ printTrgmNFA(TrgmNFA *trgmNFA)
 	{
 		ListCell   *cell;
 
-		appendStringInfo(&buf, "s%p", (void *) state);
-		if (state->fin)
+		appendStringInfo(&buf, "s%d", -state->snumber);
+		if (state->flags & TSTATE_FIN)
 			appendStringInfoString(&buf, " [shape = doublecircle]");
-		if (state->init)
+		if (state->flags & TSTATE_INIT)
 			initstate = state;
 		appendStringInfo(&buf, " [label = \"%d\"]", state->stateKey.nstate);
 		appendStringInfoString(&buf, ";\n");
@@ -2122,8 +2229,8 @@ printTrgmNFA(TrgmNFA *trgmNFA)
 		{
 			TrgmArc    *arc = (TrgmArc *) lfirst(cell);
 
-			appendStringInfo(&buf, "  s%p -> s%p [label = \"",
-							 (void *) state, (void *) arc->target);
+			appendStringInfo(&buf, "  s%d -> s%d [label = \"",
+							 -state->snumber, -arc->target->snumber);
 			printTrgmColor(&buf, arc->ctrgm.colors[0]);
 			appendStringInfoChar(&buf, ' ');
 			printTrgmColor(&buf, arc->ctrgm.colors[1]);
@@ -2136,7 +2243,7 @@ printTrgmNFA(TrgmNFA *trgmNFA)
 	if (initstate)
 	{
 		appendStringInfoString(&buf, " node [shape = point ]; initial;\n");
-		appendStringInfo(&buf, " initial -> s%p;\n", (void *) initstate);
+		appendStringInfo(&buf, " initial -> s%d;\n", -initstate->snumber);
 	}
 
 	appendStringInfoString(&buf, "}\n");
@@ -2243,4 +2350,4 @@ printTrgmPackedGraph(TrgmPackedGraph *packedGraph, TRGM *trigrams)
 	pfree(buf.data);
 }
 
-#endif   /* TRGM_REGEXP_DEBUG */
+#endif							/* TRGM_REGEXP_DEBUG */

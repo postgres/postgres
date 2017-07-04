@@ -91,6 +91,13 @@ pg_lrand48(void)
 	return ((long) _rand48_seed[2] << 15) + ((long) _rand48_seed[1] >> 1);
 }
 
+long
+pg_jrand48(unsigned short xseed[3])
+{
+	_dorand48(xseed);
+	return ((long) xseed[2] << 16) + ((long) xseed[1]);
+}
+
 void
 pg_srand48(long seed)
 {

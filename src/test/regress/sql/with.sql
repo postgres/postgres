@@ -69,14 +69,23 @@ SELECT * FROM t LIMIT 10;
 
 -- Test behavior with an unknown-type literal in the WITH
 WITH q AS (SELECT 'foo' AS x)
-SELECT x, x IS OF (unknown) as is_unknown FROM q;
+SELECT x, x IS OF (text) AS is_text FROM q;
 
 WITH RECURSIVE t(n) AS (
     SELECT 'foo'
 UNION ALL
     SELECT n || ' bar' FROM t WHERE length(n) < 20
 )
-SELECT n, n IS OF (text) as is_text FROM t;
+SELECT n, n IS OF (text) AS is_text FROM t;
+
+-- In a perfect world, this would work and resolve the literal as int ...
+-- but for now, we have to be content with resolving to text too soon.
+WITH RECURSIVE t(n) AS (
+    SELECT '7'
+UNION ALL
+    SELECT n+1 FROM t WHERE n < 10
+)
+SELECT n, n IS OF (int) AS is_int FROM t;
 
 --
 -- Some examples with a tree
@@ -575,7 +584,7 @@ WITH outermost(x) AS (
          SELECT * FROM innermost
          UNION SELECT 3)
 )
-SELECT * FROM outermost;
+SELECT * FROM outermost ORDER BY 1;
 
 WITH outermost(x) AS (
   SELECT 1
@@ -583,7 +592,7 @@ WITH outermost(x) AS (
          SELECT * FROM outermost  -- fail
          UNION SELECT * FROM innermost)
 )
-SELECT * FROM outermost;
+SELECT * FROM outermost ORDER BY 1;
 
 WITH RECURSIVE outermost(x) AS (
   SELECT 1
@@ -591,14 +600,14 @@ WITH RECURSIVE outermost(x) AS (
          SELECT * FROM outermost
          UNION SELECT * FROM innermost)
 )
-SELECT * FROM outermost;
+SELECT * FROM outermost ORDER BY 1;
 
 WITH RECURSIVE outermost(x) AS (
   WITH innermost as (SELECT 2 FROM outermost) -- fail
     SELECT * FROM innermost
     UNION SELECT * from outermost
 )
-SELECT * FROM outermost;
+SELECT * FROM outermost ORDER BY 1;
 
 --
 -- This test will fail with the old implementation of PARAM_EXEC parameter
@@ -1019,3 +1028,6 @@ DROP RULE y_rule ON y;
 create table foo (with baz);  -- fail, WITH is a reserved word
 create table foo (with ordinality);  -- fail, WITH is a reserved word
 with ordinality as (select 1 as x) select * from ordinality;
+
+-- check sane response to attempt to modify CTE relation
+WITH d AS (SELECT 42) INSERT INTO d VALUES (1);

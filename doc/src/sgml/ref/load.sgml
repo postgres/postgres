@@ -38,11 +38,12 @@ LOAD '<replaceable class="PARAMETER">filename</replaceable>'
   </para>
 
   <para>
-   The file name is specified in the same way as for shared library
-   names in <xref linkend="sql-createfunction">; in particular, one
-   can rely on a search path and automatic addition of the system's standard
-   shared library file name extension.  See <xref linkend="xfunc-c"> for
-   more information on this topic.
+   The library file name is typically given as just a bare file name,
+   which is sought in the server's library search path (set
+   by <xref linkend="guc-dynamic-library-path">).  Alternatively it can be
+   given as a full path name.  In either case the platform's standard shared
+   library file name extension may be omitted.
+   See <xref linkend="xfunc-c-dynload"> for more information on this topic.
   </para>
 
   <indexterm>

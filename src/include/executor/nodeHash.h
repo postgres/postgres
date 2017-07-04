@@ -4,7 +4,7 @@
  *	  prototypes for nodeHash.c
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/executor/nodeHash.h
@@ -50,4 +50,4 @@ extern void ExecChooseHashTableSize(double ntuples, int tupwidth, bool useskew,
 						int *num_skew_mcvs);
 extern int	ExecHashGetSkewBucket(HashJoinTable hashtable, uint32 hashvalue);
 
-#endif   /* NODEHASH_H */
+#endif							/* NODEHASH_H */

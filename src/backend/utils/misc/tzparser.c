@@ -11,7 +11,7 @@
  * PG_TRY if necessary.
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -450,9 +450,7 @@ load_tzoffsets(const char *filename)
 	 */
 	tmpContext = AllocSetContextCreate(CurrentMemoryContext,
 									   "TZParserMemory",
-									   ALLOCSET_SMALL_MINSIZE,
-									   ALLOCSET_SMALL_INITSIZE,
-									   ALLOCSET_SMALL_MAXSIZE);
+									   ALLOCSET_SMALL_SIZES);
 	oldContext = MemoryContextSwitchTo(tmpContext);
 
 	/* Initialize array at a reasonable size */

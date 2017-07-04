@@ -1,4 +1,4 @@
-# src/test/modules/test_rls_hooks/Makefile
+# src/test/modules/test_pg_dump/Makefile
 
 MODULE = test_pg_dump
 PGFILEDESC = "test_pg_dump - Test pg_dump with an extension"
@@ -7,11 +7,6 @@ EXTENSION = test_pg_dump
 DATA = test_pg_dump--1.0.sql
 
 REGRESS = test_pg_dump
-
-check: prove-check
-
-prove-check:
-	$(prove_check)
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config
@@ -23,3 +18,8 @@ top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 include $(top_srcdir)/contrib/contrib-global.mk
 endif
+
+check: prove-check
+
+prove-check:
+	$(prove_check)

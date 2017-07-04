@@ -39,7 +39,7 @@ static char sccsid[] = "@(#)crypt.c	8.1.1.1 (Berkeley) 8/18/93";
 #else
 __RCSID("$NetBSD: crypt.c,v 1.18 2001/03/01 14:37:35 wiz Exp $");
 #endif
-#endif   /* not lint */
+#endif							/* not lint */
 
 #include "c.h"
 
@@ -287,7 +287,7 @@ typedef union
 	{ C_block tblk; permute(cpp,&tblk,p,8); LOAD (d,d0,d1,tblk); }
 #define PERM3264(d,d0,d1,cpp,p)				\
 	{ C_block tblk; permute(cpp,&tblk,p,4); LOAD (d,d0,d1,tblk); }
-#endif   /* LARGEDATA */
+#endif							/* LARGEDATA */
 
 STATIC		init_des(void);
 STATIC		init_perm(C_block[64 / CHUNKBITS][1 << CHUNKBITS], unsigned char[64], int, int);
@@ -307,6 +307,7 @@ unsigned char *cp;
 C_block    *out;
 C_block    *p;
 int			chars_in;
+
 {
 	DCL_BLOCK(D, D0, D1);
 	C_block    *tp;
@@ -325,12 +326,12 @@ int			chars_in;
 	} while (--chars_in > 0);
 	STORE(D, D0, D1, *out);
 }
-#endif   /* LARGEDATA */
+#endif							/* LARGEDATA */
 
 
 /* =====  (mostly) Standard DES Tables ==================== */
 
-static const unsigned char IP[] = {		/* initial permutation */
+static const unsigned char IP[] = { /* initial permutation */
 	58, 50, 42, 34, 26, 18, 10, 2,
 	60, 52, 44, 36, 28, 20, 12, 4,
 	62, 54, 46, 38, 30, 22, 14, 6,
@@ -343,7 +344,7 @@ static const unsigned char IP[] = {		/* initial permutation */
 
 /* The final permutation is the inverse of IP - no table is necessary */
 
-static const unsigned char ExpandTr[] = {		/* expansion operation */
+static const unsigned char ExpandTr[] = {	/* expansion operation */
 	32, 1, 2, 3, 4, 5,
 	4, 5, 6, 7, 8, 9,
 	8, 9, 10, 11, 12, 13,
@@ -366,7 +367,7 @@ static const unsigned char PC1[] = {	/* permuted choice table 1 */
 	21, 13, 5, 28, 20, 12, 4,
 };
 
-static const unsigned char Rotates[] = {		/* PC1 rotation schedule */
+static const unsigned char Rotates[] = {	/* PC1 rotation schedule */
 	1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1,
 };
 
@@ -456,7 +457,7 @@ static const unsigned char itoa64[] =	/* 0..63 => ascii-64 */
 /* =====  Tables that are initialized at run time  ==================== */
 
 
-static unsigned char a64toi[128];		/* ascii-64 => 0..63 */
+static unsigned char a64toi[128];	/* ascii-64 => 0..63 */
 
 /* Initial key schedule permutation */
 static C_block PC1ROT[64 / CHUNKBITS][1 << CHUNKBITS];
@@ -481,7 +482,7 @@ static C_block constdatablock;	/* encryption constant */
 static char cryptresult[1 + 4 + 4 + 11 + 1];	/* encrypted result */
 
 extern char *__md5crypt(const char *, const char *);	/* XXX */
-extern char *__bcrypt(const char *, const char *);		/* XXX */
+extern char *__bcrypt(const char *, const char *);	/* XXX */
 
 
 /*
@@ -523,7 +524,7 @@ const char *setting;
 			key++;
 		keyblock.b[i] = t;
 	}
-	if (des_setkey((char *) keyblock.b))		/* also initializes "a64toi" */
+	if (des_setkey((char *) keyblock.b))	/* also initializes "a64toi" */
 		return (NULL);
 
 	encp = &cryptresult[0];
@@ -714,7 +715,7 @@ int			num_iter;
 	R1 = (R1 >> 1) & 0x55555555L;
 	L1 = R0 | R1;				/* L1 is the odd-numbered input bits */
 	STORE(L, L0, L1, B);
-	PERM3264(L, L0, L1, B.b, (C_block *) IE3264);		/* even bits */
+	PERM3264(L, L0, L1, B.b, (C_block *) IE3264);	/* even bits */
 	PERM3264(R, R0, R1, B.b + 4, (C_block *) IE3264);	/* odd bits */
 
 	if (num_iter >= 0)
@@ -977,6 +978,7 @@ C_block		perm[64 / CHUNKBITS][1 << CHUNKBITS];
 unsigned char p[64];
 int			chars_in,
 			chars_out;
+
 {
 	int			i,
 				j,
@@ -1068,6 +1070,7 @@ prtab(s, t, num_rows)
 char	   *s;
 unsigned char *t;
 int			num_rows;
+
 {
 	int			i,
 				j;

@@ -34,7 +34,7 @@
 #define _ECPGTYPE_H
 
 #ifdef __cplusplus
-extern		"C"
+extern "C"
 {
 #endif
 
@@ -103,4 +103,4 @@ enum ECPG_statement_type
 }
 #endif
 
-#endif   /* _ECPGTYPE_H */
+#endif							/* _ECPGTYPE_H */

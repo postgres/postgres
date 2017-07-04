@@ -35,15 +35,15 @@ extern char *descriptor_index;
 extern char *descriptor_name;
 extern char *connection;
 extern char *input_filename;
-extern char *yytext,
+extern char *base_yytext,
 		   *token_start;
 
 #ifdef YYDEBUG
-extern int	yydebug;
+extern int	base_yydebug;
 #endif
-extern int	yylineno;
-extern FILE *yyin,
-		   *yyout;
+extern int	base_yylineno;
+extern FILE *base_yyin,
+		   *base_yyout;
 extern char *output_filename;
 
 extern struct _include_path *include_paths;
@@ -94,7 +94,7 @@ extern struct variable *descriptor_variable(const char *name, int input);
 extern struct variable *sqlda_variable(const char *name);
 extern void add_variable_to_head(struct arguments **, struct variable *, struct variable *);
 extern void add_variable_to_tail(struct arguments **, struct variable *, struct variable *);
-extern void remove_variable_from_list(struct arguments ** list, struct variable * var);
+extern void remove_variable_from_list(struct arguments **list, struct variable *var);
 extern void dump_variables(struct arguments *, int);
 extern struct typedefs *get_typedef(char *);
 extern void adjust_array(enum ECPGttype, char **, char **, char *, char *, int, bool);
@@ -128,4 +128,4 @@ extern enum COMPAT_MODE compat;
 
 #define INFORMIX_MODE	(compat == ECPG_COMPAT_INFORMIX || compat == ECPG_COMPAT_INFORMIX_SE)
 
-#endif   /* _ECPG_PREPROC_EXTERN_H */
+#endif							/* _ECPG_PREPROC_EXTERN_H */

@@ -3,7 +3,7 @@
  * execUtils.c
  *	  miscellaneous executor utility routines
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -28,8 +28,13 @@
  *		ExecOpenScanRelation	Common code for scan node init routines.
  *		ExecCloseScanRelation
  *
+ *		executor_errposition	Report syntactic position of an error.
+ *
  *		RegisterExprContextCallback    Register function shutdown callback
  *		UnregisterExprContextCallback  Deregister function shutdown callback
+ *
+ *		GetAttributeByName		Runtime extraction of columns from tuples.
+ *		GetAttributeByNum
  *
  *	 NOTES
  *		This file has traditionally been the place to stick misc.
@@ -41,13 +46,16 @@
 #include "access/relscan.h"
 #include "access/transam.h"
 #include "executor/executor.h"
+#include "mb/pg_wchar.h"
 #include "nodes/nodeFuncs.h"
 #include "parser/parsetree.h"
+#include "storage/lmgr.h"
+#include "utils/builtins.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
+#include "utils/typcache.h"
 
 
-static bool get_last_attnums(Node *node, ProjectionInfo *projInfo);
 static void ShutdownExprContext(ExprContext *econtext, bool isCommit);
 
 
@@ -80,9 +88,7 @@ CreateExecutorState(void)
 	 */
 	qcontext = AllocSetContextCreate(CurrentMemoryContext,
 									 "ExecutorState",
-									 ALLOCSET_DEFAULT_MINSIZE,
-									 ALLOCSET_DEFAULT_INITSIZE,
-									 ALLOCSET_DEFAULT_MAXSIZE);
+									 ALLOCSET_DEFAULT_SIZES);
 
 	/*
 	 * Make the EState node within the per-query context.  This way, we don't
@@ -96,7 +102,7 @@ CreateExecutorState(void)
 	 * Initialize all fields of the Executor State structure
 	 */
 	estate->es_direction = ForwardScanDirection;
-	estate->es_snapshot = InvalidSnapshot;		/* caller must initialize this */
+	estate->es_snapshot = InvalidSnapshot;	/* caller must initialize this */
 	estate->es_crosscheck_snapshot = InvalidSnapshot;	/* no crosscheck */
 	estate->es_range_table = NIL;
 	estate->es_plannedstmt = NULL;
@@ -116,6 +122,8 @@ CreateExecutorState(void)
 
 	estate->es_param_list_info = NULL;
 	estate->es_param_exec_vals = NULL;
+
+	estate->es_queryEnv = NULL;
 
 	estate->es_query_cxt = qcontext;
 
@@ -141,6 +149,7 @@ CreateExecutorState(void)
 	estate->es_epqTuple = NULL;
 	estate->es_epqTupleSet = NULL;
 	estate->es_epqScanDone = NULL;
+	estate->es_sourceText = NULL;
 
 	/*
 	 * Return the executor state structure
@@ -229,9 +238,7 @@ CreateExprContext(EState *estate)
 	econtext->ecxt_per_tuple_memory =
 		AllocSetContextCreate(estate->es_query_cxt,
 							  "ExprContext",
-							  ALLOCSET_DEFAULT_MINSIZE,
-							  ALLOCSET_DEFAULT_INITSIZE,
-							  ALLOCSET_DEFAULT_MAXSIZE);
+							  ALLOCSET_DEFAULT_SIZES);
 
 	econtext->ecxt_param_exec_vals = estate->es_param_exec_vals;
 	econtext->ecxt_param_list_info = estate->es_param_list_info;
@@ -300,9 +307,7 @@ CreateStandaloneExprContext(void)
 	econtext->ecxt_per_tuple_memory =
 		AllocSetContextCreate(CurrentMemoryContext,
 							  "ExprContext",
-							  ALLOCSET_DEFAULT_MINSIZE,
-							  ALLOCSET_DEFAULT_INITSIZE,
-							  ALLOCSET_DEFAULT_MAXSIZE);
+							  ALLOCSET_DEFAULT_SIZES);
 
 	econtext->ecxt_param_exec_vals = NULL;
 	econtext->ecxt_param_list_info = NULL;
@@ -468,192 +473,6 @@ ExecGetResultType(PlanState *planstate)
 	return slot->tts_tupleDescriptor;
 }
 
-/* ----------------
- *		ExecBuildProjectionInfo
- *
- * Build a ProjectionInfo node for evaluating the given tlist in the given
- * econtext, and storing the result into the tuple slot.  (Caller must have
- * ensured that tuple slot has a descriptor matching the tlist!)  Note that
- * the given tlist should be a list of ExprState nodes, not Expr nodes.
- *
- * inputDesc can be NULL, but if it is not, we check to see whether simple
- * Vars in the tlist match the descriptor.  It is important to provide
- * inputDesc for relation-scan plan nodes, as a cross check that the relation
- * hasn't been changed since the plan was made.  At higher levels of a plan,
- * there is no need to recheck.
- * ----------------
- */
-ProjectionInfo *
-ExecBuildProjectionInfo(List *targetList,
-						ExprContext *econtext,
-						TupleTableSlot *slot,
-						TupleDesc inputDesc)
-{
-	ProjectionInfo *projInfo = makeNode(ProjectionInfo);
-	int			len = ExecTargetListLength(targetList);
-	int		   *workspace;
-	int		   *varSlotOffsets;
-	int		   *varNumbers;
-	int		   *varOutputCols;
-	List	   *exprlist;
-	int			numSimpleVars;
-	bool		directMap;
-	ListCell   *tl;
-
-	projInfo->pi_exprContext = econtext;
-	projInfo->pi_slot = slot;
-	/* since these are all int arrays, we need do just one palloc */
-	workspace = (int *) palloc(len * 3 * sizeof(int));
-	projInfo->pi_varSlotOffsets = varSlotOffsets = workspace;
-	projInfo->pi_varNumbers = varNumbers = workspace + len;
-	projInfo->pi_varOutputCols = varOutputCols = workspace + len * 2;
-	projInfo->pi_lastInnerVar = 0;
-	projInfo->pi_lastOuterVar = 0;
-	projInfo->pi_lastScanVar = 0;
-
-	/*
-	 * We separate the target list elements into simple Var references and
-	 * expressions which require the full ExecTargetList machinery.  To be a
-	 * simple Var, a Var has to be a user attribute and not mismatch the
-	 * inputDesc.  (Note: if there is a type mismatch then ExecEvalScalarVar
-	 * will probably throw an error at runtime, but we leave that to it.)
-	 */
-	exprlist = NIL;
-	numSimpleVars = 0;
-	directMap = true;
-	foreach(tl, targetList)
-	{
-		GenericExprState *gstate = (GenericExprState *) lfirst(tl);
-		Var		   *variable = (Var *) gstate->arg->expr;
-		bool		isSimpleVar = false;
-
-		if (variable != NULL &&
-			IsA(variable, Var) &&
-			variable->varattno > 0)
-		{
-			if (!inputDesc)
-				isSimpleVar = true;		/* can't check type, assume OK */
-			else if (variable->varattno <= inputDesc->natts)
-			{
-				Form_pg_attribute attr;
-
-				attr = inputDesc->attrs[variable->varattno - 1];
-				if (!attr->attisdropped && variable->vartype == attr->atttypid)
-					isSimpleVar = true;
-			}
-		}
-
-		if (isSimpleVar)
-		{
-			TargetEntry *tle = (TargetEntry *) gstate->xprstate.expr;
-			AttrNumber	attnum = variable->varattno;
-
-			varNumbers[numSimpleVars] = attnum;
-			varOutputCols[numSimpleVars] = tle->resno;
-			if (tle->resno != numSimpleVars + 1)
-				directMap = false;
-
-			switch (variable->varno)
-			{
-				case INNER_VAR:
-					varSlotOffsets[numSimpleVars] = offsetof(ExprContext,
-															 ecxt_innertuple);
-					if (projInfo->pi_lastInnerVar < attnum)
-						projInfo->pi_lastInnerVar = attnum;
-					break;
-
-				case OUTER_VAR:
-					varSlotOffsets[numSimpleVars] = offsetof(ExprContext,
-															 ecxt_outertuple);
-					if (projInfo->pi_lastOuterVar < attnum)
-						projInfo->pi_lastOuterVar = attnum;
-					break;
-
-					/* INDEX_VAR is handled by default case */
-
-				default:
-					varSlotOffsets[numSimpleVars] = offsetof(ExprContext,
-															 ecxt_scantuple);
-					if (projInfo->pi_lastScanVar < attnum)
-						projInfo->pi_lastScanVar = attnum;
-					break;
-			}
-			numSimpleVars++;
-		}
-		else
-		{
-			/* Not a simple variable, add it to generic targetlist */
-			exprlist = lappend(exprlist, gstate);
-			/* Examine expr to include contained Vars in lastXXXVar counts */
-			get_last_attnums((Node *) variable, projInfo);
-		}
-	}
-	projInfo->pi_targetlist = exprlist;
-	projInfo->pi_numSimpleVars = numSimpleVars;
-	projInfo->pi_directMap = directMap;
-
-	if (exprlist == NIL)
-		projInfo->pi_itemIsDone = NULL; /* not needed */
-	else
-		projInfo->pi_itemIsDone = (ExprDoneCond *)
-			palloc(len * sizeof(ExprDoneCond));
-
-	return projInfo;
-}
-
-/*
- * get_last_attnums: expression walker for ExecBuildProjectionInfo
- *
- *	Update the lastXXXVar counts to be at least as large as the largest
- *	attribute numbers found in the expression
- */
-static bool
-get_last_attnums(Node *node, ProjectionInfo *projInfo)
-{
-	if (node == NULL)
-		return false;
-	if (IsA(node, Var))
-	{
-		Var		   *variable = (Var *) node;
-		AttrNumber	attnum = variable->varattno;
-
-		switch (variable->varno)
-		{
-			case INNER_VAR:
-				if (projInfo->pi_lastInnerVar < attnum)
-					projInfo->pi_lastInnerVar = attnum;
-				break;
-
-			case OUTER_VAR:
-				if (projInfo->pi_lastOuterVar < attnum)
-					projInfo->pi_lastOuterVar = attnum;
-				break;
-
-				/* INDEX_VAR is handled by default case */
-
-			default:
-				if (projInfo->pi_lastScanVar < attnum)
-					projInfo->pi_lastScanVar = attnum;
-				break;
-		}
-		return false;
-	}
-
-	/*
-	 * Don't examine the arguments or filters of Aggrefs or WindowFuncs,
-	 * because those do not represent expressions to be evaluated within the
-	 * overall targetlist's econtext.  GroupingFunc arguments are never
-	 * evaluated at all.
-	 */
-	if (IsA(node, Aggref))
-		return false;
-	if (IsA(node, WindowFunc))
-		return false;
-	if (IsA(node, GroupingFunc))
-		return false;
-	return expression_tree_walker(node, get_last_attnums,
-								  (void *) projInfo);
-}
 
 /* ----------------
  *		ExecAssignProjectionInfo
@@ -669,9 +488,10 @@ ExecAssignProjectionInfo(PlanState *planstate,
 						 TupleDesc inputDesc)
 {
 	planstate->ps_ProjInfo =
-		ExecBuildProjectionInfo(planstate->targetlist,
+		ExecBuildProjectionInfo(planstate->plan->targetlist,
 								planstate->ps_ExprContext,
 								planstate->ps_ResultTupleSlot,
+								planstate,
 								inputDesc);
 }
 
@@ -869,6 +689,36 @@ UpdateChangedParamSet(PlanState *node, Bitmapset *newchg)
 }
 
 /*
+ * executor_errposition
+ *		Report an execution-time cursor position, if possible.
+ *
+ * This is expected to be used within an ereport() call.  The return value
+ * is a dummy (always 0, in fact).
+ *
+ * The locations stored in parsetrees are byte offsets into the source string.
+ * We have to convert them to 1-based character indexes for reporting to
+ * clients.  (We do things this way to avoid unnecessary overhead in the
+ * normal non-error case: computing character indexes would be much more
+ * expensive than storing token offsets.)
+ */
+int
+executor_errposition(EState *estate, int location)
+{
+	int			pos;
+
+	/* No-op if location was not provided */
+	if (location < 0)
+		return 0;
+	/* Can't do anything if source text is not available */
+	if (estate == NULL || estate->es_sourceText == NULL)
+		return 0;
+	/* Convert offset to character number */
+	pos = pg_mbstrlen_with_len(estate->es_sourceText, location) + 1;
+	/* And pass it to the ereport mechanism */
+	return errposition(pos);
+}
+
+/*
  * Register a shutdown callback in an ExprContext.
  *
  * Shutdown callbacks will be called (in reverse order of registration)
@@ -963,4 +813,208 @@ ShutdownExprContext(ExprContext *econtext, bool isCommit)
 	}
 
 	MemoryContextSwitchTo(oldcontext);
+}
+
+/*
+ * ExecLockNonLeafAppendTables
+ *
+ * Locks, if necessary, the tables indicated by the RT indexes contained in
+ * the partitioned_rels list.  These are the non-leaf tables in the partition
+ * tree controlled by a given Append or MergeAppend node.
+ */
+void
+ExecLockNonLeafAppendTables(List *partitioned_rels, EState *estate)
+{
+	PlannedStmt *stmt = estate->es_plannedstmt;
+	ListCell   *lc;
+
+	foreach(lc, partitioned_rels)
+	{
+		ListCell   *l;
+		Index		rti = lfirst_int(lc);
+		bool		is_result_rel = false;
+		Oid			relid = getrelid(rti, estate->es_range_table);
+
+		/* If this is a result relation, already locked in InitPlan */
+		foreach(l, stmt->nonleafResultRelations)
+		{
+			if (rti == lfirst_int(l))
+			{
+				is_result_rel = true;
+				break;
+			}
+		}
+
+		/*
+		 * Not a result relation; check if there is a RowMark that requires
+		 * taking a RowShareLock on this rel.
+		 */
+		if (!is_result_rel)
+		{
+			PlanRowMark *rc = NULL;
+
+			foreach(l, stmt->rowMarks)
+			{
+				if (((PlanRowMark *) lfirst(l))->rti == rti)
+				{
+					rc = lfirst(l);
+					break;
+				}
+			}
+
+			if (rc && RowMarkRequiresRowShareLock(rc->markType))
+				LockRelationOid(relid, RowShareLock);
+			else
+				LockRelationOid(relid, AccessShareLock);
+		}
+	}
+}
+
+/*
+ *		GetAttributeByName
+ *		GetAttributeByNum
+ *
+ *		These functions return the value of the requested attribute
+ *		out of the given tuple Datum.
+ *		C functions which take a tuple as an argument are expected
+ *		to use these.  Ex: overpaid(EMP) might call GetAttributeByNum().
+ *		Note: these are actually rather slow because they do a typcache
+ *		lookup on each call.
+ */
+Datum
+GetAttributeByName(HeapTupleHeader tuple, const char *attname, bool *isNull)
+{
+	AttrNumber	attrno;
+	Datum		result;
+	Oid			tupType;
+	int32		tupTypmod;
+	TupleDesc	tupDesc;
+	HeapTupleData tmptup;
+	int			i;
+
+	if (attname == NULL)
+		elog(ERROR, "invalid attribute name");
+
+	if (isNull == NULL)
+		elog(ERROR, "a NULL isNull pointer was passed");
+
+	if (tuple == NULL)
+	{
+		/* Kinda bogus but compatible with old behavior... */
+		*isNull = true;
+		return (Datum) 0;
+	}
+
+	tupType = HeapTupleHeaderGetTypeId(tuple);
+	tupTypmod = HeapTupleHeaderGetTypMod(tuple);
+	tupDesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
+
+	attrno = InvalidAttrNumber;
+	for (i = 0; i < tupDesc->natts; i++)
+	{
+		if (namestrcmp(&(tupDesc->attrs[i]->attname), attname) == 0)
+		{
+			attrno = tupDesc->attrs[i]->attnum;
+			break;
+		}
+	}
+
+	if (attrno == InvalidAttrNumber)
+		elog(ERROR, "attribute \"%s\" does not exist", attname);
+
+	/*
+	 * heap_getattr needs a HeapTuple not a bare HeapTupleHeader.  We set all
+	 * the fields in the struct just in case user tries to inspect system
+	 * columns.
+	 */
+	tmptup.t_len = HeapTupleHeaderGetDatumLength(tuple);
+	ItemPointerSetInvalid(&(tmptup.t_self));
+	tmptup.t_tableOid = InvalidOid;
+	tmptup.t_data = tuple;
+
+	result = heap_getattr(&tmptup,
+						  attrno,
+						  tupDesc,
+						  isNull);
+
+	ReleaseTupleDesc(tupDesc);
+
+	return result;
+}
+
+Datum
+GetAttributeByNum(HeapTupleHeader tuple,
+				  AttrNumber attrno,
+				  bool *isNull)
+{
+	Datum		result;
+	Oid			tupType;
+	int32		tupTypmod;
+	TupleDesc	tupDesc;
+	HeapTupleData tmptup;
+
+	if (!AttributeNumberIsValid(attrno))
+		elog(ERROR, "invalid attribute number %d", attrno);
+
+	if (isNull == NULL)
+		elog(ERROR, "a NULL isNull pointer was passed");
+
+	if (tuple == NULL)
+	{
+		/* Kinda bogus but compatible with old behavior... */
+		*isNull = true;
+		return (Datum) 0;
+	}
+
+	tupType = HeapTupleHeaderGetTypeId(tuple);
+	tupTypmod = HeapTupleHeaderGetTypMod(tuple);
+	tupDesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
+
+	/*
+	 * heap_getattr needs a HeapTuple not a bare HeapTupleHeader.  We set all
+	 * the fields in the struct just in case user tries to inspect system
+	 * columns.
+	 */
+	tmptup.t_len = HeapTupleHeaderGetDatumLength(tuple);
+	ItemPointerSetInvalid(&(tmptup.t_self));
+	tmptup.t_tableOid = InvalidOid;
+	tmptup.t_data = tuple;
+
+	result = heap_getattr(&tmptup,
+						  attrno,
+						  tupDesc,
+						  isNull);
+
+	ReleaseTupleDesc(tupDesc);
+
+	return result;
+}
+
+/*
+ * Number of items in a tlist (including any resjunk items!)
+ */
+int
+ExecTargetListLength(List *targetlist)
+{
+	/* This used to be more complex, but fjoins are dead */
+	return list_length(targetlist);
+}
+
+/*
+ * Number of items in a tlist, not including any resjunk items
+ */
+int
+ExecCleanTargetListLength(List *targetlist)
+{
+	int			len = 0;
+	ListCell   *tl;
+
+	foreach(tl, targetlist)
+	{
+		TargetEntry *curTle = lfirst_node(TargetEntry, tl);
+
+		if (!curTle->resjunk)
+			len++;
+	}
+	return len;
 }

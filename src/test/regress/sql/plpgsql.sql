@@ -1350,7 +1350,7 @@ select * from WSlot order by slotname;
 
 --
 -- Install the central phone system and create the phone numbers.
--- They are weired on insert to the patchfields. Again the
+-- They are wired on insert to the patchfields. Again the
 -- triggers automatically tell the PSlots to update their
 -- backlink field.
 --
@@ -3719,6 +3719,7 @@ drop function tftest(int);
 create or replace function rttest()
 returns setof int as $$
 declare rc int;
+  rca int[];
 begin
   return query values(10),(20);
   get diagnostics rc = row_count;
@@ -3727,11 +3728,12 @@ begin
   get diagnostics rc = row_count;
   raise notice '% %', found, rc;
   return query execute 'values(10),(20)';
-  get diagnostics rc = row_count;
-  raise notice '% %', found, rc;
+  -- just for fun, let's use array elements as targets
+  get diagnostics rca[1] = row_count;
+  raise notice '% %', found, rca[1];
   return query execute 'select * from (values(10),(20)) f(a) where false';
-  get diagnostics rc = row_count;
-  raise notice '% %', found, rc;
+  get diagnostics rca[2] = row_count;
+  raise notice '% %', found, rca[2];
 end;
 $$ language plpgsql;
 
@@ -4428,3 +4430,384 @@ exception when others then
   null; -- do nothing
 end;
 $$;
+
+-- Test use of plpgsql in a domain check constraint (cf. bug #14414)
+
+create function plpgsql_domain_check(val int) returns boolean as $$
+begin return val > 0; end
+$$ language plpgsql immutable;
+
+create domain plpgsql_domain as integer check(plpgsql_domain_check(value));
+
+do $$
+declare v_test plpgsql_domain;
+begin
+  v_test := 1;
+end;
+$$;
+
+do $$
+declare v_test plpgsql_domain := 1;
+begin
+  v_test := 0;  -- fail
+end;
+$$;
+
+-- Test handling of expanded array passed to a domain constraint (bug #14472)
+
+create function plpgsql_arr_domain_check(val int[]) returns boolean as $$
+begin return val[1] > 0; end
+$$ language plpgsql immutable;
+
+create domain plpgsql_arr_domain as int[] check(plpgsql_arr_domain_check(value));
+
+do $$
+declare v_test plpgsql_arr_domain;
+begin
+  v_test := array[1];
+  v_test := v_test || 2;
+end;
+$$;
+
+do $$
+declare v_test plpgsql_arr_domain := array[1];
+begin
+  v_test := 0 || v_test;  -- fail
+end;
+$$;
+
+--
+-- test usage of transition tables in AFTER triggers
+--
+
+CREATE TABLE transition_table_base (id int PRIMARY KEY, val text);
+
+CREATE FUNCTION transition_table_base_ins_func()
+  RETURNS trigger
+  LANGUAGE plpgsql
+AS $$
+DECLARE
+  t text;
+  l text;
+BEGIN
+  t = '';
+  FOR l IN EXECUTE
+           $q$
+             EXPLAIN (TIMING off, COSTS off, VERBOSE on)
+             SELECT * FROM newtable
+           $q$ LOOP
+    t = t || l || E'\n';
+  END LOOP;
+
+  RAISE INFO '%', t;
+  RETURN new;
+END;
+$$;
+
+CREATE TRIGGER transition_table_base_ins_trig
+  AFTER INSERT ON transition_table_base
+  REFERENCING OLD TABLE AS oldtable NEW TABLE AS newtable
+  FOR EACH STATEMENT
+  EXECUTE PROCEDURE transition_table_base_ins_func();
+
+CREATE TRIGGER transition_table_base_ins_trig
+  AFTER INSERT ON transition_table_base
+  REFERENCING NEW TABLE AS newtable
+  FOR EACH STATEMENT
+  EXECUTE PROCEDURE transition_table_base_ins_func();
+
+INSERT INTO transition_table_base VALUES (1, 'One'), (2, 'Two');
+INSERT INTO transition_table_base VALUES (3, 'Three'), (4, 'Four');
+
+CREATE OR REPLACE FUNCTION transition_table_base_upd_func()
+  RETURNS trigger
+  LANGUAGE plpgsql
+AS $$
+DECLARE
+  t text;
+  l text;
+BEGIN
+  t = '';
+  FOR l IN EXECUTE
+           $q$
+             EXPLAIN (TIMING off, COSTS off, VERBOSE on)
+             SELECT * FROM oldtable ot FULL JOIN newtable nt USING (id)
+           $q$ LOOP
+    t = t || l || E'\n';
+  END LOOP;
+
+  RAISE INFO '%', t;
+  RETURN new;
+END;
+$$;
+
+CREATE TRIGGER transition_table_base_upd_trig
+  AFTER UPDATE ON transition_table_base
+  REFERENCING OLD TABLE AS oldtable NEW TABLE AS newtable
+  FOR EACH STATEMENT
+  EXECUTE PROCEDURE transition_table_base_upd_func();
+
+UPDATE transition_table_base
+  SET val = '*' || val || '*'
+  WHERE id BETWEEN 2 AND 3;
+
+CREATE TABLE transition_table_level1
+(
+      level1_no serial NOT NULL ,
+      level1_node_name varchar(255),
+       PRIMARY KEY (level1_no)
+) WITHOUT OIDS;
+
+CREATE TABLE transition_table_level2
+(
+      level2_no serial NOT NULL ,
+      parent_no int NOT NULL,
+      level1_node_name varchar(255),
+       PRIMARY KEY (level2_no)
+) WITHOUT OIDS;
+
+CREATE TABLE transition_table_status
+(
+      level int NOT NULL,
+      node_no int NOT NULL,
+      status int,
+       PRIMARY KEY (level, node_no)
+) WITHOUT OIDS;
+
+CREATE FUNCTION transition_table_level1_ri_parent_del_func()
+  RETURNS TRIGGER
+  LANGUAGE plpgsql
+AS $$
+  DECLARE n bigint;
+  BEGIN
+    PERFORM FROM p JOIN transition_table_level2 c ON c.parent_no = p.level1_no;
+    IF FOUND THEN
+      RAISE EXCEPTION 'RI error';
+    END IF;
+    RETURN NULL;
+  END;
+$$;
+
+CREATE TRIGGER transition_table_level1_ri_parent_del_trigger
+  AFTER DELETE ON transition_table_level1
+  REFERENCING OLD TABLE AS p
+  FOR EACH STATEMENT EXECUTE PROCEDURE
+    transition_table_level1_ri_parent_del_func();
+
+CREATE FUNCTION transition_table_level1_ri_parent_upd_func()
+  RETURNS TRIGGER
+  LANGUAGE plpgsql
+AS $$
+  DECLARE
+    x int;
+  BEGIN
+    WITH p AS (SELECT level1_no, sum(delta) cnt
+                 FROM (SELECT level1_no, 1 AS delta FROM i
+                       UNION ALL
+                       SELECT level1_no, -1 AS delta FROM d) w
+                 GROUP BY level1_no
+                 HAVING sum(delta) < 0)
+    SELECT level1_no
+      FROM p JOIN transition_table_level2 c ON c.parent_no = p.level1_no
+      INTO x;
+    IF FOUND THEN
+      RAISE EXCEPTION 'RI error';
+    END IF;
+    RETURN NULL;
+  END;
+$$;
+
+CREATE TRIGGER transition_table_level1_ri_parent_upd_trigger
+  AFTER UPDATE ON transition_table_level1
+  REFERENCING OLD TABLE AS d NEW TABLE AS i
+  FOR EACH STATEMENT EXECUTE PROCEDURE
+    transition_table_level1_ri_parent_upd_func();
+
+CREATE FUNCTION transition_table_level2_ri_child_insupd_func()
+  RETURNS TRIGGER
+  LANGUAGE plpgsql
+AS $$
+  BEGIN
+    PERFORM FROM i
+      LEFT JOIN transition_table_level1 p
+        ON p.level1_no IS NOT NULL AND p.level1_no = i.parent_no
+      WHERE p.level1_no IS NULL;
+    IF FOUND THEN
+      RAISE EXCEPTION 'RI error';
+    END IF;
+    RETURN NULL;
+  END;
+$$;
+
+CREATE TRIGGER transition_table_level2_ri_child_ins_trigger
+  AFTER INSERT ON transition_table_level2
+  REFERENCING NEW TABLE AS i
+  FOR EACH STATEMENT EXECUTE PROCEDURE
+    transition_table_level2_ri_child_insupd_func();
+
+CREATE TRIGGER transition_table_level2_ri_child_upd_trigger
+  AFTER UPDATE ON transition_table_level2
+  REFERENCING NEW TABLE AS i
+  FOR EACH STATEMENT EXECUTE PROCEDURE
+    transition_table_level2_ri_child_insupd_func();
+
+-- create initial test data
+INSERT INTO transition_table_level1 (level1_no)
+  SELECT generate_series(1,200);
+ANALYZE transition_table_level1;
+
+INSERT INTO transition_table_level2 (level2_no, parent_no)
+  SELECT level2_no, level2_no / 50 + 1 AS parent_no
+    FROM generate_series(1,9999) level2_no;
+ANALYZE transition_table_level2;
+
+INSERT INTO transition_table_status (level, node_no, status)
+  SELECT 1, level1_no, 0 FROM transition_table_level1;
+
+INSERT INTO transition_table_status (level, node_no, status)
+  SELECT 2, level2_no, 0 FROM transition_table_level2;
+ANALYZE transition_table_status;
+
+INSERT INTO transition_table_level1(level1_no)
+  SELECT generate_series(201,1000);
+ANALYZE transition_table_level1;
+
+-- behave reasonably if someone tries to modify a transition table
+CREATE FUNCTION transition_table_level2_bad_usage_func()
+  RETURNS TRIGGER
+  LANGUAGE plpgsql
+AS $$
+  BEGIN
+    INSERT INTO d VALUES (1000000, 1000000, 'x');
+    RETURN NULL;
+  END;
+$$;
+
+CREATE TRIGGER transition_table_level2_bad_usage_trigger
+  AFTER DELETE ON transition_table_level2
+  REFERENCING OLD TABLE AS d
+  FOR EACH STATEMENT EXECUTE PROCEDURE
+    transition_table_level2_bad_usage_func();
+
+DELETE FROM transition_table_level2
+  WHERE level2_no BETWEEN 301 AND 305;
+
+DROP TRIGGER transition_table_level2_bad_usage_trigger
+  ON transition_table_level2;
+
+-- attempt modifications which would break RI (should all fail)
+DELETE FROM transition_table_level1
+  WHERE level1_no = 25;
+
+UPDATE transition_table_level1 SET level1_no = -1
+  WHERE level1_no = 30;
+
+INSERT INTO transition_table_level2 (level2_no, parent_no)
+  VALUES (10000, 10000);
+
+UPDATE transition_table_level2 SET parent_no = 2000
+  WHERE level2_no = 40;
+
+
+-- attempt modifications which would not break RI (should all succeed)
+DELETE FROM transition_table_level1
+  WHERE level1_no BETWEEN 201 AND 1000;
+
+DELETE FROM transition_table_level1
+  WHERE level1_no BETWEEN 100000000 AND 100000010;
+
+SELECT count(*) FROM transition_table_level1;
+
+DELETE FROM transition_table_level2
+  WHERE level2_no BETWEEN 211 AND 220;
+
+SELECT count(*) FROM transition_table_level2;
+
+CREATE TABLE alter_table_under_transition_tables
+(
+  id int PRIMARY KEY,
+  name text
+);
+
+CREATE FUNCTION alter_table_under_transition_tables_upd_func()
+  RETURNS TRIGGER
+  LANGUAGE plpgsql
+AS $$
+BEGIN
+  RAISE WARNING 'old table = %, new table = %',
+                  (SELECT string_agg(id || '=' || name, ',') FROM d),
+                  (SELECT string_agg(id || '=' || name, ',') FROM i);
+  RAISE NOTICE 'one = %', (SELECT 1 FROM alter_table_under_transition_tables LIMIT 1);
+  RETURN NULL;
+END;
+$$;
+
+-- should fail, TRUNCATE is not compatible with transition tables
+CREATE TRIGGER alter_table_under_transition_tables_upd_trigger
+  AFTER TRUNCATE OR UPDATE ON alter_table_under_transition_tables
+  REFERENCING OLD TABLE AS d NEW TABLE AS i
+  FOR EACH STATEMENT EXECUTE PROCEDURE
+    alter_table_under_transition_tables_upd_func();
+
+-- should work
+CREATE TRIGGER alter_table_under_transition_tables_upd_trigger
+  AFTER UPDATE ON alter_table_under_transition_tables
+  REFERENCING OLD TABLE AS d NEW TABLE AS i
+  FOR EACH STATEMENT EXECUTE PROCEDURE
+    alter_table_under_transition_tables_upd_func();
+
+INSERT INTO alter_table_under_transition_tables
+  VALUES (1, '1'), (2, '2'), (3, '3');
+UPDATE alter_table_under_transition_tables
+  SET name = name || name;
+
+-- now change 'name' to an integer to see what happens...
+ALTER TABLE alter_table_under_transition_tables
+  ALTER COLUMN name TYPE int USING name::integer;
+UPDATE alter_table_under_transition_tables
+  SET name = (name::text || name::text)::integer;
+
+-- now drop column 'name'
+ALTER TABLE alter_table_under_transition_tables
+  DROP column name;
+UPDATE alter_table_under_transition_tables
+  SET id = id;
+
+--
+-- Check type parsing and record fetching from partitioned tables
+--
+
+CREATE TABLE partitioned_table (a int, b text) PARTITION BY LIST (a);
+CREATE TABLE pt_part1 PARTITION OF partitioned_table FOR VALUES IN (1);
+CREATE TABLE pt_part2 PARTITION OF partitioned_table FOR VALUES IN (2);
+
+INSERT INTO partitioned_table VALUES (1, 'Row 1');
+INSERT INTO partitioned_table VALUES (2, 'Row 2');
+
+CREATE OR REPLACE FUNCTION get_from_partitioned_table(partitioned_table.a%type)
+RETURNS partitioned_table AS $$
+DECLARE
+    a_val partitioned_table.a%TYPE;
+    result partitioned_table%ROWTYPE;
+BEGIN
+    a_val := $1;
+    SELECT * INTO result FROM partitioned_table WHERE a = a_val;
+    RETURN result;
+END; $$ LANGUAGE plpgsql;
+
+SELECT * FROM get_from_partitioned_table(1) AS t;
+
+CREATE OR REPLACE FUNCTION list_partitioned_table()
+RETURNS SETOF partitioned_table.a%TYPE AS $$
+DECLARE
+    row partitioned_table%ROWTYPE;
+    a_val partitioned_table.a%TYPE;
+BEGIN
+    FOR row IN SELECT * FROM partitioned_table ORDER BY a LOOP
+        a_val := row.a;
+        RETURN NEXT a_val;
+    END LOOP;
+    RETURN;
+END; $$ LANGUAGE plpgsql;
+
+SELECT * FROM list_partitioned_table() AS t;

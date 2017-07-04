@@ -3,7 +3,7 @@
  * buf_init.c
  *	  buffer manager initialization routines
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -21,8 +21,6 @@
 BufferDescPadded *BufferDescriptors;
 char	   *BufferBlocks;
 LWLockMinimallyPadded *BufferIOLWLockArray = NULL;
-LWLockTranche BufferIOLWLockTranche;
-LWLockTranche BufferContentLWLockTranche;
 WritebackContext BackendWritebackContext;
 CkptSortItem *CkptBufferIds;
 
@@ -90,18 +88,8 @@ InitBufferPool(void)
 						NBuffers * (Size) sizeof(LWLockMinimallyPadded),
 						&foundIOLocks);
 
-	BufferIOLWLockTranche.name = "buffer_io";
-	BufferIOLWLockTranche.array_base = BufferIOLWLockArray;
-	BufferIOLWLockTranche.array_stride = sizeof(LWLockMinimallyPadded);
-	LWLockRegisterTranche(LWTRANCHE_BUFFER_IO_IN_PROGRESS,
-						  &BufferIOLWLockTranche);
-
-	BufferContentLWLockTranche.name = "buffer_content";
-	BufferContentLWLockTranche.array_base =
-		((char *) BufferDescriptors) + offsetof(BufferDesc, content_lock);
-	BufferContentLWLockTranche.array_stride = sizeof(BufferDescPadded);
-	LWLockRegisterTranche(LWTRANCHE_BUFFER_CONTENT,
-						  &BufferContentLWLockTranche);
+	LWLockRegisterTranche(LWTRANCHE_BUFFER_IO_IN_PROGRESS, "buffer_io");
+	LWLockRegisterTranche(LWTRANCHE_BUFFER_CONTENT, "buffer_content");
 
 	/*
 	 * The array used to sort to-be-checkpointed buffer ids is located in

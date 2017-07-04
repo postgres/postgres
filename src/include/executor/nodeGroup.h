@@ -4,7 +4,7 @@
  *	  prototypes for nodeGroup.c
  *
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/executor/nodeGroup.h
@@ -21,4 +21,4 @@ extern TupleTableSlot *ExecGroup(GroupState *node);
 extern void ExecEndGroup(GroupState *node);
 extern void ExecReScanGroup(GroupState *node);
 
-#endif   /* NODEGROUP_H */
+#endif							/* NODEGROUP_H */

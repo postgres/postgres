@@ -3,7 +3,7 @@
  * fmgrtab.h
  *	  The function manager's table of internal functions.
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/fmgrtab.h
@@ -36,4 +36,4 @@ extern const FmgrBuiltin fmgr_builtins[];
 
 extern const int fmgr_nbuiltins;	/* number of entries in table */
 
-#endif   /* FMGRTAB_H */
+#endif							/* FMGRTAB_H */

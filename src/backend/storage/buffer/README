@@ -63,7 +63,7 @@ at about the same time would OR the same bits into the field, so there
 is little or no risk of conflicting update; what's more, if there did
 manage to be a conflict it would merely mean that one bit-update would
 be lost and need to be done again later.  These four bits are only hints
-(they cache the results of transaction status lookups in pg_clog), so no
+(they cache the results of transaction status lookups in pg_xact), so no
 great harm is done if they get reset to zero by conflicting updates.
 Note, however, that a tuple is frozen by setting both HEAP_XMIN_INVALID
 and HEAP_XMIN_COMMITTED; this is a critical update and accordingly requires

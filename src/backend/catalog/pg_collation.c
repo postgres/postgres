@@ -3,7 +3,7 @@
  * pg_collation.c
  *	  routines to support manipulation of the pg_collation relation
  *
- * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -27,6 +27,7 @@
 #include "mb/pg_wchar.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
+#include "utils/pg_locale.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
 #include "utils/tqual.h"
@@ -36,12 +37,21 @@
  * CollationCreate
  *
  * Add a new tuple to pg_collation.
+ *
+ * if_not_exists: if true, don't fail on duplicate name, just print a notice
+ * and return InvalidOid.
+ * quiet: if true, don't fail on duplicate name, just silently return
+ * InvalidOid (overrides if_not_exists).
  */
 Oid
 CollationCreate(const char *collname, Oid collnamespace,
 				Oid collowner,
+				char collprovider,
 				int32 collencoding,
-				const char *collcollate, const char *collctype)
+				const char *collcollate, const char *collctype,
+				const char *collversion,
+				bool if_not_exists,
+				bool quiet)
 {
 	Relation	rel;
 	TupleDesc	tupDesc;
@@ -72,27 +82,72 @@ CollationCreate(const char *collname, Oid collnamespace,
 							  PointerGetDatum(collname),
 							  Int32GetDatum(collencoding),
 							  ObjectIdGetDatum(collnamespace)))
-		ereport(ERROR,
-				(errcode(ERRCODE_DUPLICATE_OBJECT),
-				 errmsg("collation \"%s\" for encoding \"%s\" already exists",
-						collname, pg_encoding_to_char(collencoding))));
+	{
+		if (quiet)
+			return InvalidOid;
+		else if (if_not_exists)
+		{
+			ereport(NOTICE,
+					(errcode(ERRCODE_DUPLICATE_OBJECT),
+					 collencoding == -1
+					 ? errmsg("collation \"%s\" already exists, skipping",
+							  collname)
+					 : errmsg("collation \"%s\" for encoding \"%s\" already exists, skipping",
+							  collname, pg_encoding_to_char(collencoding))));
+			return InvalidOid;
+		}
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_DUPLICATE_OBJECT),
+					 collencoding == -1
+					 ? errmsg("collation \"%s\" already exists",
+							  collname)
+					 : errmsg("collation \"%s\" for encoding \"%s\" already exists",
+							  collname, pg_encoding_to_char(collencoding))));
+	}
+
+	/* open pg_collation; see below about the lock level */
+	rel = heap_open(CollationRelationId, ShareRowExclusiveLock);
 
 	/*
-	 * Also forbid matching an any-encoding entry.  This test of course is not
-	 * backed up by the unique index, but it's not a problem since we don't
-	 * support adding any-encoding entries after initdb.
+	 * Also forbid a specific-encoding collation shadowing an any-encoding
+	 * collation, or an any-encoding collation being shadowed (see
+	 * get_collation_name()).  This test is not backed up by the unique index,
+	 * so we take a ShareRowExclusiveLock earlier, to protect against
+	 * concurrent changes fooling this check.
 	 */
-	if (SearchSysCacheExists3(COLLNAMEENCNSP,
-							  PointerGetDatum(collname),
-							  Int32GetDatum(-1),
-							  ObjectIdGetDatum(collnamespace)))
-		ereport(ERROR,
-				(errcode(ERRCODE_DUPLICATE_OBJECT),
-				 errmsg("collation \"%s\" already exists",
-						collname)));
+	if ((collencoding == -1 &&
+		 SearchSysCacheExists3(COLLNAMEENCNSP,
+							   PointerGetDatum(collname),
+							   Int32GetDatum(GetDatabaseEncoding()),
+							   ObjectIdGetDatum(collnamespace))) ||
+		(collencoding != -1 &&
+		 SearchSysCacheExists3(COLLNAMEENCNSP,
+							   PointerGetDatum(collname),
+							   Int32GetDatum(-1),
+							   ObjectIdGetDatum(collnamespace))))
+	{
+		if (quiet)
+		{
+			heap_close(rel, NoLock);
+			return InvalidOid;
+		}
+		else if (if_not_exists)
+		{
+			heap_close(rel, NoLock);
+			ereport(NOTICE,
+					(errcode(ERRCODE_DUPLICATE_OBJECT),
+					 errmsg("collation \"%s\" already exists, skipping",
+							collname)));
+			return InvalidOid;
+		}
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_DUPLICATE_OBJECT),
+					 errmsg("collation \"%s\" already exists",
+							collname)));
+	}
 
-	/* open pg_collation */
-	rel = heap_open(CollationRelationId, RowExclusiveLock);
 	tupDesc = RelationGetDescr(rel);
 
 	/* form a tuple */
@@ -102,20 +157,22 @@ CollationCreate(const char *collname, Oid collnamespace,
 	values[Anum_pg_collation_collname - 1] = NameGetDatum(&name_name);
 	values[Anum_pg_collation_collnamespace - 1] = ObjectIdGetDatum(collnamespace);
 	values[Anum_pg_collation_collowner - 1] = ObjectIdGetDatum(collowner);
+	values[Anum_pg_collation_collprovider - 1] = CharGetDatum(collprovider);
 	values[Anum_pg_collation_collencoding - 1] = Int32GetDatum(collencoding);
 	namestrcpy(&name_collate, collcollate);
 	values[Anum_pg_collation_collcollate - 1] = NameGetDatum(&name_collate);
 	namestrcpy(&name_ctype, collctype);
 	values[Anum_pg_collation_collctype - 1] = NameGetDatum(&name_ctype);
+	if (collversion)
+		values[Anum_pg_collation_collversion - 1] = CStringGetTextDatum(collversion);
+	else
+		nulls[Anum_pg_collation_collversion - 1] = true;
 
 	tup = heap_form_tuple(tupDesc, values, nulls);
 
 	/* insert a new tuple */
-	oid = simple_heap_insert(rel, tup);
+	oid = CatalogTupleInsert(rel, tup);
 	Assert(OidIsValid(oid));
-
-	/* update the index if any */
-	CatalogUpdateIndexes(rel, tup);
 
 	/* set up dependencies for the new collation */
 	myself.classId = CollationRelationId;
@@ -139,7 +196,7 @@ CollationCreate(const char *collname, Oid collnamespace,
 	InvokeObjectPostCreateHook(CollationRelationId, oid, 0);
 
 	heap_freetuple(tup);
-	heap_close(rel, RowExclusiveLock);
+	heap_close(rel, NoLock);
 
 	return oid;
 }
@@ -171,7 +228,7 @@ RemoveCollationById(Oid collationOid)
 	tuple = systable_getnext(scandesc);
 
 	if (HeapTupleIsValid(tuple))
-		simple_heap_delete(rel, &tuple->t_self);
+		CatalogTupleDelete(rel, &tuple->t_self);
 	else
 		elog(ERROR, "could not find tuple for collation %u", collationOid);
 
