@@ -57,7 +57,8 @@
  *
  * In the case of range partitioning, ndatums will typically be far less than
  * 2 * nparts, because a partition's upper bound and the next partition's lower
- * bound are the same in most common cases, and we only store one of them.
+ * bound are the same in most common cases, and we only store one of them (the
+ * upper bound).
  *
  * In the case of list partitioning, the indexes array stores one entry for
  * every datum, which is the index of the partition that accepts a given datum.
@@ -2136,7 +2137,14 @@ qsort_partition_rbound_cmp(const void *a, const void *b, void *arg)
  * partition_rbound_cmp
  *
  * Return for two range bounds whether the 1st one (specified in datum1,
- * content1, and lower1) is <=, =, >= the bound specified in *b2
+ * content1, and lower1) is <, =, or > the bound specified in *b2.
+ *
+ * Note that if the values of the two range bounds compare equal, then we take
+ * into account whether they are upper or lower bounds, and an upper bound is
+ * considered to be smaller than a lower bound. This is important to the way
+ * that RelationBuildPartitionDesc() builds the PartitionBoundInfoData
+ * structure, which only stores the upper bound of a common boundary between
+ * two contiguous partitions.
  */
 static int32
 partition_rbound_cmp(PartitionKey key,
@@ -2152,22 +2160,30 @@ partition_rbound_cmp(PartitionKey key,
 	for (i = 0; i < key->partnatts; i++)
 	{
 		/*
-		 * First, handle cases involving infinity, which don't require
-		 * invoking the comparison proc.
+		 * First, handle cases where the column is unbounded, which should not
+		 * invoke the comparison procedure, and should not consider any later
+		 * columns.
 		 */
-		if (content1[i] != RANGE_DATUM_FINITE &&
+		if (content1[i] != RANGE_DATUM_FINITE ||
 			content2[i] != RANGE_DATUM_FINITE)
-
+		{
 			/*
-			 * Both are infinity, so they are equal unless one is negative
-			 * infinity and other positive (or vice versa)
+			 * If the bound values are equal, fall through and compare whether
+			 * they are upper or lower bounds.
 			 */
-			return content1[i] == content2[i] ? 0
-				: (content1[i] < content2[i] ? -1 : 1);
-		else if (content1[i] != RANGE_DATUM_FINITE)
-			return content1[i] == RANGE_DATUM_NEG_INF ? -1 : 1;
-		else if (content2[i] != RANGE_DATUM_FINITE)
-			return content2[i] == RANGE_DATUM_NEG_INF ? 1 : -1;
+			if (content1[i] == content2[i])
+				break;
+
+			/* Otherwise, one bound is definitely larger than the other */
+			if (content1[i] == RANGE_DATUM_NEG_INF)
+				return -1;
+			else if (content1[i] == RANGE_DATUM_POS_INF)
+				return 1;
+			else if (content2[i] == RANGE_DATUM_NEG_INF)
+				return 1;
+			else if (content2[i] == RANGE_DATUM_POS_INF)
+				return -1;
+		}
 
 		cmpval = DatumGetInt32(FunctionCall2Coll(&key->partsupfunc[i],
 												 key->partcollation[i],
