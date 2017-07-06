@@ -6627,7 +6627,7 @@ heap_prepare_freeze_tuple(HeapTupleHeader tuple, TransactionId cutoff_xid,
 			frz->t_infomask &= ~HEAP_XMAX_BITS;
 			frz->xmax = newxmax;
 			if (flags & FRM_MARK_COMMITTED)
-				frz->t_infomask &= HEAP_XMAX_COMMITTED;
+				frz->t_infomask |= HEAP_XMAX_COMMITTED;
 			changed = true;
 			totally_frozen = false;
 		}
