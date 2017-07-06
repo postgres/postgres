@@ -589,7 +589,7 @@ CREATE TABLE part3 PARTITION OF range_parted2 FOR VALUES FROM (30) TO (40);
 CREATE TABLE fail_part PARTITION OF range_parted2 FOR VALUES FROM (10) TO (30);
 ERROR:  partition "fail_part" would overlap partition "part2"
 CREATE TABLE fail_part PARTITION OF range_parted2 FOR VALUES FROM (10) TO (50);
-ERROR:  partition "fail_part" would overlap partition "part3"
+ERROR:  partition "fail_part" would overlap partition "part2"
 -- now check for multi-column range partition key
 CREATE TABLE range_parted3 (
 	a int,

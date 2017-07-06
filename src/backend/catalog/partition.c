@@ -745,78 +745,64 @@ check_new_partition_bound(char *relname, Relation parent,
 				if (partdesc->nparts > 0)
 				{
 					PartitionBoundInfo boundinfo = partdesc->boundinfo;
-					int			off1,
-								off2;
-					bool		equal = false;
+					int			offset;
+					bool		equal;
 
 					Assert(boundinfo && boundinfo->ndatums > 0 &&
 						   boundinfo->strategy == PARTITION_STRATEGY_RANGE);
 
 					/*
-					 * Firstly, find the greatest range bound that is less
-					 * than or equal to the new lower bound.
+					 * Test whether the new lower bound (which is treated
+					 * inclusively as part of the new partition) lies inside an
+					 * existing partition, or in a gap.
+					 *
+					 * If it's inside an existing partition, the bound at
+					 * offset + 1 will be the upper bound of that partition,
+					 * and its index will be >= 0.
+					 *
+					 * If it's in a gap, the bound at offset + 1 will be the
+					 * lower bound of the next partition, and its index will be
+					 * -1. This is also true if there is no next partition,
+					 * since the index array is initialised with an extra -1 at
+					 * the end.
 					 */
-					off1 = partition_bound_bsearch(key, boundinfo, lower, true,
-												   &equal);
+					offset = partition_bound_bsearch(key, boundinfo, lower,
+													 true, &equal);
 
-					/*
-					 * off1 == -1 means that all existing bounds are greater
-					 * than the new lower bound.  In that case and the case
-					 * where no partition is defined between the bounds at
-					 * off1 and off1 + 1, we have a "gap" in the range that
-					 * could be occupied by the new partition.  We confirm if
-					 * so by checking whether the new upper bound is confined
-					 * within the gap.
-					 */
-					if (!equal && boundinfo->indexes[off1 + 1] < 0)
+					if (boundinfo->indexes[offset + 1] < 0)
 					{
-						off2 = partition_bound_bsearch(key, boundinfo, upper,
-													   true, &equal);
-
 						/*
-						 * If the new upper bound is returned to be equal to
-						 * the bound at off2, the latter must be the upper
-						 * bound of some partition with which the new
-						 * partition clearly overlaps.
-						 *
-						 * Also, if bound at off2 is not same as the one
-						 * returned for the new lower bound (IOW, off1 !=
-						 * off2), then the new partition overlaps at least one
-						 * partition.
+						 * Check that the new partition will fit in the gap.
+						 * For it to fit, the new upper bound must be less than
+						 * or equal to the lower bound of the next partition,
+						 * if there is one.
 						 */
-						if (equal || off1 != off2)
+						if (offset + 1 < boundinfo->ndatums)
 						{
-							overlap = true;
+							int32		cmpval;
 
-							/*
-							 * The bound at off2 could be the lower bound of
-							 * the partition with which the new partition
-							 * overlaps.  In that case, use the upper bound
-							 * (that is, the bound at off2 + 1) to get the
-							 * index of that partition.
-							 */
-							if (boundinfo->indexes[off2] < 0)
-								with = boundinfo->indexes[off2 + 1];
-							else
-								with = boundinfo->indexes[off2];
+							cmpval = partition_bound_cmp(key, boundinfo,
+														 offset + 1, upper,
+														 true);
+							if (cmpval < 0)
+							{
+								/*
+								 * The new partition overlaps with the existing
+								 * partition between offset + 1 and offset + 2.
+								 */
+								overlap = true;
+								with = boundinfo->indexes[offset + 2];
+							}
 						}
 					}
 					else
 					{
 						/*
-						 * Equal has been set to true and there is no "gap"
-						 * between the bound at off1 and that at off1 + 1, so
-						 * the new partition will overlap some partition. In
-						 * the former case, the new lower bound is found to be
-						 * equal to the bound at off1, which could only ever
-						 * be true if the latter is the lower bound of some
-						 * partition.  It's clear in such a case that the new
-						 * partition overlaps that partition, whose index we
-						 * get using its upper bound (that is, using the bound
-						 * at off1 + 1).
+						 * The new partition overlaps with the existing
+						 * partition between offset and offset + 1.
 						 */
 						overlap = true;
-						with = boundinfo->indexes[off1 + 1];
+						with = boundinfo->indexes[offset + 1];
 					}
 				}
 
