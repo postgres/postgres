@@ -1,6 +1,7 @@
 /*-------------------------------------------------------------------------
  *
- * streamutil.c - utility functions for pg_basebackup and pg_receivelog
+ * streamutil.c - utility functions for pg_basebackup, pg_receivewal and
+ * 					pg_recvlogical
  *
  * Author: Magnus Hagander <magnus@hagander.net>
  *
