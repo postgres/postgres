@@ -357,6 +357,12 @@ pg_collation_actual_version(PG_FUNCTION_ARGS)
 }
 
 
+/* will we use "locale -a" in pg_import_system_collations? */
+#if defined(HAVE_LOCALE_T) && !defined(WIN32)
+#define READ_LOCALE_A_OUTPUT
+#endif
+
+#if defined(READ_LOCALE_A_OUTPUT) || defined(USE_ICU)
 /*
  * Check a string to see if it is pure ASCII
  */
@@ -371,11 +377,7 @@ is_all_ascii(const char *str)
 	}
 	return true;
 }
-
-/* will we use "locale -a" in pg_import_system_collations? */
-#if defined(HAVE_LOCALE_T) && !defined(WIN32)
-#define READ_LOCALE_A_OUTPUT
-#endif
+#endif							/* READ_LOCALE_A_OUTPUT || USE_ICU */
 
 #ifdef READ_LOCALE_A_OUTPUT
 /*
