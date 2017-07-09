@@ -392,7 +392,7 @@ s{PG_VERSION_STR "[^"]+"}{PG_VERSION_STR "PostgreSQL $self->{strver}$extraver, c
 		while (<$i>)
 		{
 			s/(VERSION.*),0/$1,$d/;
-			print $o;
+			print $o $_;
 		}
 		close($i);
 		close($o);
