@@ -6,7 +6,7 @@
 
   <formalpara>
    <title>Release date:</title>
-   <para>2017-09-XX (CURRENT AS OF 2017-05-14)</para>
+   <para>2017-??-?? (current as of 2017-07-09, commit 3381898f9)</para>
   </formalpara>
 
   <sect2>
@@ -20,7 +20,7 @@
 
    <itemizedlist>
 
-   <listitem><para> </para></listitem>
+   <listitem><para>(to be written)</para></listitem>
    </itemizedlist>
 
    <para>
@@ -49,6 +49,7 @@
     <listitem>
 <!--
 2017-04-03 [ea69a0dea] Expand hash indexes more gradually.
+2017-05-19 [a95410e2e] pg_upgrade: Handle hash index upgrades more smoothly.
 -->
      <para>
       <application>pg_upgrade</>-ed hash indexes from previous major
@@ -200,7 +201,7 @@
 -->
     <para>
      Make all <application><xref linkend="app-pg-ctl"></> actions wait
-     by default for completion (Peter Eisentraut)
+     for completion by default (Peter Eisentraut)
     </para>
 
     <para>
@@ -294,6 +295,23 @@
     <para>
      This replaces <varname>min_parallel_relation_size</>, which was
      too generic.
+    </para>
+    </listitem>
+
+    <listitem>
+<!--
+2017-06-20 [a69dfe5f4] Don't downcase entries within shared_preload_libraries e
+-->
+    <para>
+     Don't downcase unquoted text
+     within <xref linkend="guc-shared-preload-libraries"> and related
+     settings (QL Zhuo)
+    </para>
+
+    <para>
+     These settings are really lists of file names, but they were
+     previously treated as lists of SQL identifiers, which have different
+     parsing rules.
     </para>
     </listitem>
 
@@ -712,6 +730,7 @@
 <!--
 2017-03-24 [7b504eb28] Implement multivariate n-distinct coefficients
 2017-04-05 [2686ee1b7] Collect and use multi-column dependency stats
+2017-05-12 [bc085205c] Change CREATE STATISTICS syntax
 -->
       <para>
        Add multi-column optimizer statistics to compute the correlation
@@ -812,6 +831,7 @@
       <listitem>
 <!--
 2017-04-07 [9c7f5229a] Optimize joins when the inner relation can be proven uni
+2017-06-03 [23886581b] Fix old corner-case logic error in final_cost_nestloop()
 -->
        <para>
         Use uniqueness guarantees to optimize certain join types (David
@@ -851,6 +871,8 @@
 <!--
 2016-12-20 [1753b1b02] Add pg_sequence system catalog
 2016-11-18 [67dc4ccbb] Add pg_sequences view
+2017-05-15 [f8dc1985f] Fix ALTER SEQUENCE locking
+2017-06-01 [3d79013b9] Make ALTER SEQUENCE, including RESTART, fully transactio
 -->
        <para>
         Create a <link
@@ -859,11 +881,18 @@
        </para>
 
        <para>
-        Sequence metadata includes start, increment, etc,
-        which is now transactional.  Sequence counters are
-        still stored in separate heap relations.  Also add <link
-        linkend="view-pg-sequences"><structname>pg_sequences</></> view
-        to show all sequences.
+        Sequence metadata includes the start, increment, etc, properties.
+        <command>ALTER SEQUENCE</> updates are now fully transactional,
+        implying that the sequence is locked until commit.  Sequences'
+        current values are still stored in individual table files, and
+        the <function>nextval()</> and <function>setval()</> functions
+        remain nontransactional.
+       </para>
+
+       <para>
+        Also
+        add <link linkend="view-pg-sequences"><structname>pg_sequences</></>
+        view to show all sequences.
        </para>
       </listitem>
 
@@ -2056,15 +2085,17 @@
      <listitem>
 <!--
 2016-11-03 [274bb2b38] libpq: Allow connection strings and URIs to specify mult
+2017-05-19 [5f374fe7a] libpq: Try next host if one of them times out.
 -->
       <para>
-       Allow libpq to connect to <link
-       linkend="libpq-connect-host">multiple specified</> host names
+       Allow specification of <link
+       linkend="libpq-connect-host">multiple host names</> in libpq
+       connection strings and URIs
        (Robert Haas)
       </para>
 
       <para>
-       libpq will connect with the first responsive host name.
+       libpq will connect to the first responsive server in the list.
       </para>
      </listitem>
 
@@ -2435,7 +2466,7 @@
       <listitem>
 <!--
 2016-09-29 [bc34223bc] pg_basebackup pg_receivexlog: Issue fsync more carefully
-2016-09-29 [6ed2d8584] pg_basebackup: Add - option
+2016-09-29 [6ed2d8584] pg_basebackup: Add -\-nosync option
 -->
        <para>
         Improve fsync handling of <application>pg_basebackup</> and
@@ -2495,12 +2526,60 @@
 2016-10-19 [caf936b09] pg_ctl: Add long option for -o
 -->
        <para>
-        Add long options flag for <application>pg_ctl</>
-        <literal>options</> (Peter Eisentraut)
+        Add long option for <application>pg_ctl</> server options
+        (<option>--options</>) (Peter Eisentraut)
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
+2017-06-28 [f13ea95f9] Change pg_ctl to detect server-ready by watching status
+-->
+       <para>
+        Make <literal>pg_ctl start --wait</> detect server-ready by
+        watching <filename>postmaster.pid</>, not by attempting connections
+        (Tom Lane)
        </para>
 
        <para>
-        It is called <option>--options</>.
+        The postmaster has been changed to report its ready-for-connections
+        status in <filename>postmaster.pid</>, and <application>pg_ctl</>
+        now examines that file to detect whether startup is complete.
+        This is more efficient and reliable than the old method, and it
+        eliminates postmaster log entries about rejected connection
+        attempts during startup.
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
+2017-06-26 [c61559ec3] Reduce pg_ctl's reaction time when waiting for postmaste
+-->
+       <para>
+        Reduce <application>pg_ctl</>'s reaction time when waiting for
+        postmaster start/stop (Tom Lane)
+       </para>
+
+       <para>
+        <application>pg_ctl</> now probes ten times per second when waiting
+        for a postmaster state change, rather than once per second.
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
+2017-07-05 [1bac5f552] pg_ctl: Make failure to complete operation a nonzero exi
+-->
+       <para>
+        Ensure that <application>pg_ctl</> exits with nonzero status if an
+        operation being waited for does not complete within the timeout
+        (Peter Eisentraut)
+       </para>
+
+       <para>
+        The <literal>start</> and <literal>promote</> operations now return
+        exit status 1, not 0, in such cases.  The <literal>stop</> operation
+        has always done that.
        </para>
       </listitem>
 
@@ -2526,6 +2605,30 @@
        Major versions will now increase just the first number, and minor
        releases will increase just the second number.  A third number
        will no longer be used in PostgreSQL version numbers.
+      </para>
+     </listitem>
+
+     <listitem>
+<!--
+2017-06-21 [8ff6d4ec7] Adjust pgindent script to use pg_bsd_indent 2.0.
+2017-06-21 [e3860ffa4] Initial pgindent run with pg_bsd_indent version 2.0.
+2017-06-21 [c7b8998eb] Phase 2 of pgindent updates.
+2017-06-21 [382ceffdf] Phase 3 of pgindent updates.
+2017-06-21 [81f056c72] Remove entab and associated detritus.
+-->
+      <para>
+       Improve behavior of <application>pgindent</>
+       (Piotr Stefaniak, Tom Lane)
+      </para>
+
+      <para>
+       We have switched to a new version of <application>pg_bsd_indent</>
+       based on recent improvements made by the FreeBSD project.  This
+       fixes numerous small bugs that led to odd C code formatting
+       decisions.  Most notably, lines within parentheses (such as in a
+       multi-line function call) are now uniformly indented to match the
+       opening paren, even if that would result in code extending past the
+       right margin.
       </para>
      </listitem>
 
@@ -2638,6 +2741,7 @@
      <listitem>
 <!--
 2016-12-05 [fe0a0b599] Replace PostmasterRandom() with a stronger source, secon
+2017-07-03 [bf723a274] Forbid gen_random_uuid() with -\-disable-strong-random
 -->
       <para>
        Add more robust random number generators to be used for
