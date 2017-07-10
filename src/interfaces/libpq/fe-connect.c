@@ -965,8 +965,8 @@ connectOptions2(PGconn *conn)
 		{
 			conn->status = CONNECTION_BAD;
 			printfPQExpBuffer(&conn->errorMessage,
-			libpq_gettext("could not match %d host names to %d hostaddrs\n"),
-				 count_comma_separated_elems(conn->pghost), conn->nconnhost);
+							  libpq_gettext("could not match %d host names to %d hostaddrs\n"),
+							  count_comma_separated_elems(conn->pghost), conn->nconnhost);
 			return false;
 		}
 	}
@@ -1097,7 +1097,7 @@ connectOptions2(PGconn *conn)
 			char	   *pwhost = conn->connhost[i].host;
 
 			if (conn->connhost[i].type == CHT_HOST_ADDRESS &&
-			conn->connhost[i].host != NULL && conn->connhost[i].host != '\0')
+				conn->connhost[i].host != NULL && conn->connhost[i].host[0] != '\0')
 				pwhost = conn->connhost[i].hostaddr;
 
 			conn->connhost[i].password =
