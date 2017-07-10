@@ -828,6 +828,62 @@ connectOptions1(PGconn *conn, const char *conninfo)
 }
 
 /*
+ * Count the number of elements in a simple comma-separated list.
+ */
+static int
+count_comma_separated_elems(const char *input)
+{
+	int			n;
+
+	n = 1;
+	for (; *input != '\0'; input++)
+	{
+		if (*input == ',')
+			n++;
+	}
+
+	return n;
+}
+
+/*
+ * Parse a simple comma-separated list.
+ *
+ * On each call, returns a malloc'd copy of the next element, and sets *more
+ * to indicate whether there are any more elements in the list after this,
+ * and updates *startptr to point to the next element, if any.
+ *
+ * On out of memory, returns NULL.
+ */
+static char *
+parse_comma_separated_list(char **startptr, bool *more)
+{
+	char	   *p;
+	char	   *s = *startptr;
+	char	   *e;
+	int			len;
+
+	/*
+	 * Search for the end of the current element; a comma or end-of-string
+	 * acts as a terminator.
+	 */
+	e = s;
+	while (*e != '\0' && *e != ',')
+		++e;
+	*more = (*e == ',');
+
+	len = e - s;
+	p = (char *) malloc(sizeof(char) * (len + 1));
+	if (p)
+	{
+		memcpy(p, s, len);
+		p[len] = '\0';
+	}
+	*startptr = e + 1;
+
+	return p;
+}
+
+/*
  *		connectOptions2
  *
  * Compute derived connection options after absorbing all user-supplied info.
@@ -840,21 +896,16 @@ connectOptions2(PGconn *conn)
 {
 	/*
 	 * Allocate memory for details about each host to which we might possibly
-	 * try to connect.  If pghostaddr is set, we're only going to try to
-	 * connect to that one particular address.  If it's not, we'll use pghost,
-	 * which may contain multiple, comma-separated names.
+	 * try to connect.  For that, count the number of elements in the hostaddr
+	 * or host options.  If neither is given, assume one host.
 	 */
-	conn->nconnhost = 1;
 	conn->whichhost = 0;
-	if ((conn->pghostaddr == NULL || conn->pghostaddr[0] == '\0')
-		&& conn->pghost != NULL)
-	{
-		char	   *s;
-
-		for (s = conn->pghost; *s != '\0'; ++s)
-			if (*s == ',')
-				conn->nconnhost++;
-	}
+	if (conn->pghostaddr && conn->pghostaddr[0] != '\0')
+		conn->nconnhost = count_comma_separated_elems(conn->pghostaddr);
+	else if (conn->pghost && conn->pghost[0] != '\0')
+		conn->nconnhost = count_comma_separated_elems(conn->pghost);
+	else
+		conn->nconnhost = 1;
 	conn->connhost = (pg_conn_host *)
 		calloc(conn->nconnhost, sizeof(pg_conn_host));
 	if (conn->connhost == NULL)
@@ -866,51 +917,67 @@ connectOptions2(PGconn *conn)
 	 */
 	if (conn->pghostaddr != NULL && conn->pghostaddr[0] != '\0')
 	{
-		conn->connhost[0].host = strdup(conn->pghostaddr);
-		if (conn->connhost[0].host == NULL)
-			goto oom_error;
-		conn->connhost[0].type = CHT_HOST_ADDRESS;
-	}
-	else if (conn->pghost != NULL && conn->pghost[0] != '\0')
-	{
-		int			i = 0;
-		char	   *s = conn->pghost;
+		int			i;
+		char	   *s = conn->pghostaddr;
+		bool		more = true;
 
-		while (1)
+		for (i = 0; i < conn->nconnhost && more; i++)
 		{
-			char	   *e = s;
+			conn->connhost[i].hostaddr = parse_comma_separated_list(&s, &more);
+			if (conn->connhost[i].hostaddr == NULL)
+				goto oom_error;
 
-			/*
-			 * Search for the end of the current hostname; a comma or
-			 * end-of-string acts as a terminator.
-			 */
-			while (*e != '\0' && *e != ',')
-				++e;
+			conn->connhost[i].type = CHT_HOST_ADDRESS;
+		}
 
-			/* Copy the hostname whose bounds we just identified. */
-			conn->connhost[i].host =
-				(char *) malloc(sizeof(char) * (e - s + 1));
+		/*
+		 * If hostaddr was given, the array was allocated according to the
+		 * number of elements in the hostaddr list, so it really should be the
+		 * right size.
+		 */
+		Assert(!more);
+		Assert(i == conn->nconnhost);
+	}
+
+	if (conn->pghost != NULL && conn->pghost[0] != '\0')
+	{
+		int			i;
+		char	   *s = conn->pghost;
+		bool		more = true;
+
+		for (i = 0; i < conn->nconnhost && more; i++)
+		{
+			conn->connhost[i].host = parse_comma_separated_list(&s, &more);
 			if (conn->connhost[i].host == NULL)
 				goto oom_error;
-			memcpy(conn->connhost[i].host, s, e - s);
-			conn->connhost[i].host[e - s] = '\0';
 
 			/* Identify the type of host. */
-			conn->connhost[i].type = CHT_HOST_NAME;
+			if (conn->pghostaddr == NULL || conn->pghostaddr[0] == '\0')
+			{
+				conn->connhost[i].type = CHT_HOST_NAME;
 #ifdef HAVE_UNIX_SOCKETS
-			if (is_absolute_path(conn->connhost[i].host))
-				conn->connhost[i].type = CHT_UNIX_SOCKET;
+				if (is_absolute_path(conn->connhost[i].host))
+					conn->connhost[i].type = CHT_UNIX_SOCKET;
 #endif
-
-			/* Prepare to find the next host (if any). */
-			if (*e == '\0')
-				break;
-			s = e + 1;
-			i++;
+			}
+		}
+		if (more || i != conn->nconnhost)
+		{
+			conn->status = CONNECTION_BAD;
+			printfPQExpBuffer(&conn->errorMessage,
+			libpq_gettext("could not match %d host names to %d hostaddrs\n"),
+				 count_comma_separated_elems(conn->pghost), conn->nconnhost);
+			return false;
 		}
 	}
-	else
+
+	/*
+	 * If neither host or hostaddr options was given, connect to default host.
+	 */
+	if ((conn->pghostaddr == NULL || conn->pghostaddr[0] == '\0') &&
+		(conn->pghost == NULL || conn->pghost[0] == '\0'))
 	{
+		Assert(conn->nconnhost == 1);
 #ifdef HAVE_UNIX_SOCKETS
 		conn->connhost[0].host = strdup(DEFAULT_PGSOCKET_DIR);
 		conn->connhost[0].type = CHT_UNIX_SOCKET;
@@ -927,54 +994,36 @@ connectOptions2(PGconn *conn)
 	 */
 	if (conn->pgport != NULL && conn->pgport[0] != '\0')
 	{
-		int			i = 0;
+		int			i;
 		char	   *s = conn->pgport;
-		int			nports = 1;
+		bool		more = true;
 
-		for (i = 0; i < conn->nconnhost; ++i)
+		for (i = 0; i < conn->nconnhost && more; i++)
 		{
-			char	   *e = s;
-
-			/* Search for the end of the current port number. */
-			while (*e != '\0' && *e != ',')
-				++e;
-
-			/*
-			 * If we found a port number of non-zero length, copy it.
-			 * Otherwise, insert the default port number.
-			 */
-			if (e > s)
-			{
-				conn->connhost[i].port =
-					(char *) malloc(sizeof(char) * (e - s + 1));
-				if (conn->connhost[i].port == NULL)
-					goto oom_error;
-				memcpy(conn->connhost[i].port, s, e - s);
-				conn->connhost[i].port[e - s] = '\0';
-			}
-
-			/*
-			 * Move on to the next port number, unless there are no more. (If
-			 * only one part number is specified, we reuse it for every host.)
-			 */
-			if (*e != '\0')
-			{
-				s = e + 1;
-				++nports;
-			}
+			conn->connhost[i].port = parse_comma_separated_list(&s, &more);
+			if (conn->connhost[i].port == NULL)
+				goto oom_error;
 		}
 
 		/*
-		 * If multiple ports were specified, there must be exactly as many
-		 * ports as there were hosts.  Otherwise, we do not know how to match
-		 * them up.
+		 * If exactly one port was given, use it for every host.  Otherwise,
+		 * there must be exactly as many ports as there were hosts.
 		 */
-		if (nports != 1 && nports != conn->nconnhost)
+		if (i == 1 && !more)
+		{
+			for (i = 1; i < conn->nconnhost; i++)
+			{
+				conn->connhost[i].port = strdup(conn->connhost[0].port);
+				if (conn->connhost[i].port == NULL)
+					goto oom_error;
+			}
+		}
+		else if (more || i != conn->nconnhost)
 		{
 			conn->status = CONNECTION_BAD;
 			printfPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext("could not match %d port numbers to %d hosts\n"),
-							  nports, conn->nconnhost);
+							  count_comma_separated_elems(conn->pgport), conn->nconnhost);
 			return false;
 		}
 	}
@@ -1048,8 +1097,8 @@ connectOptions2(PGconn *conn)
 			char	   *pwhost = conn->connhost[i].host;
 
 			if (conn->connhost[i].type == CHT_HOST_ADDRESS &&
-				conn->pghost != NULL && conn->pghost[0] != '\0')
-				pwhost = conn->pghost;
+			conn->connhost[i].host != NULL && conn->connhost[i].host != '\0')
+				pwhost = conn->connhost[i].hostaddr;
 
 			conn->connhost[i].password =
 				passwordFromFile(pwhost,
@@ -1399,8 +1448,8 @@ connectFailureMessage(PGconn *conn, int errorno)
 		 * Optionally display the network address with the hostname. This is
 		 * useful to distinguish between IPv4 and IPv6 connections.
 		 */
-		if (conn->pghostaddr != NULL)
-			strlcpy(host_addr, conn->pghostaddr, NI_MAXHOST);
+		if (conn->connhost[conn->whichhost].type == CHT_HOST_ADDRESS)
+			strlcpy(host_addr, conn->connhost[conn->whichhost].hostaddr, NI_MAXHOST);
 		else if (addr->ss_family == AF_INET)
 		{
 			if (inet_net_ntop(AF_INET,
@@ -1423,7 +1472,10 @@ connectFailureMessage(PGconn *conn, int errorno)
 			strcpy(host_addr, "???");
 
 		/* To which host and port were we actually connecting? */
-		displayed_host = conn->connhost[conn->whichhost].host;
+		if (conn->connhost[conn->whichhost].type == CHT_HOST_ADDRESS)
+			displayed_host = conn->connhost[conn->whichhost].hostaddr;
+		else
+			displayed_host = conn->connhost[conn->whichhost].host;
 		displayed_port = conn->connhost[conn->whichhost].port;
 		if (displayed_port == NULL || displayed_port[0] == '\0')
 			displayed_port = DEF_PGPORT_STR;
@@ -1433,8 +1485,8 @@ connectFailureMessage(PGconn *conn, int errorno)
 		 * 'host' was missing or does not match our lookup, display the
 		 * looked-up IP address.
 		 */
-		if ((conn->pghostaddr == NULL) &&
-			(conn->pghost == NULL || strcmp(conn->pghost, host_addr) != 0))
+		if (conn->connhost[conn->whichhost].type != CHT_HOST_ADDRESS &&
+			strcmp(displayed_host, host_addr) != 0)
 			appendPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext("could not connect to server: %s\n"
 											"\tIs the server running on host \"%s\" (%s) and accepting\n"
@@ -1659,7 +1711,7 @@ connectDBStart(PGconn *conn)
 		hint.ai_family = AF_UNSPEC;
 
 		/* Figure out the port number we're going to use. */
-		if (ch->port == NULL)
+		if (ch->port == NULL || ch->port[0] == '\0')
 			thisport = DEF_PGPORT;
 		else
 		{
@@ -1689,7 +1741,7 @@ connectDBStart(PGconn *conn)
 
 			case CHT_HOST_ADDRESS:
 				hint.ai_flags = AI_NUMERICHOST;
-				ret = pg_getaddrinfo_all(ch->host, portstr, &hint, &ch->addrlist);
+				ret = pg_getaddrinfo_all(ch->hostaddr, portstr, &hint, &ch->addrlist);
 				if (ret || !ch->addrlist)
 					appendPQExpBuffer(&conn->errorMessage,
 									  libpq_gettext("could not parse network address \"%s\": %s\n"),
@@ -3041,6 +3093,9 @@ keep_going:						/* We will come back to here until there is
 			}
 		case CONNECTION_CHECK_WRITABLE:
 			{
+				const char *displayed_host;
+				const char *displayed_port;
+
 				if (!saveErrorMessage(conn, &savedMessage))
 					goto error_return;
 
@@ -3067,6 +3122,17 @@ keep_going:						/* We will come back to here until there is
 					val = PQgetvalue(res, 0, 0);
 					if (strncmp(val, "on", 2) == 0)
 					{
+						const char *displayed_host;
+						const char *displayed_port;
+
+						if (conn->connhost[conn->whichhost].type == CHT_HOST_ADDRESS)
+							displayed_host = conn->connhost[conn->whichhost].hostaddr;
+						else
+							displayed_host = conn->connhost[conn->whichhost].host;
+						displayed_port = conn->connhost[conn->whichhost].port;
+						if (displayed_port == NULL || displayed_port[0] == '\0')
+							displayed_port = DEF_PGPORT_STR;
+
 						PQclear(res);
 						restoreErrorMessage(conn, &savedMessage);
 
@@ -3075,8 +3141,7 @@ keep_going:						/* We will come back to here until there is
 										  libpq_gettext("could not make a writable "
 														"connection to server "
 														"\"%s:%s\"\n"),
-										  conn->connhost[conn->whichhost].host,
-										  conn->connhost[conn->whichhost].port);
+										  displayed_host, displayed_port);
 						conn->status = CONNECTION_OK;
 						sendTerminateConn(conn);
 						pqDropConnection(conn, true);
@@ -3113,11 +3178,18 @@ keep_going:						/* We will come back to here until there is
 				if (res)
 					PQclear(res);
 				restoreErrorMessage(conn, &savedMessage);
+
+				if (conn->connhost[conn->whichhost].type == CHT_HOST_ADDRESS)
+					displayed_host = conn->connhost[conn->whichhost].hostaddr;
+				else
+					displayed_host = conn->connhost[conn->whichhost].host;
+				displayed_port = conn->connhost[conn->whichhost].port;
+				if (displayed_port == NULL || displayed_port[0] == '\0')
+					displayed_port = DEF_PGPORT_STR;
 				appendPQExpBuffer(&conn->errorMessage,
 								  libpq_gettext("test \"SHOW transaction_read_only\" failed "
 												"on server \"%s:%s\"\n"),
-								  conn->connhost[conn->whichhost].host,
-								  conn->connhost[conn->whichhost].port);
+								  displayed_host, displayed_port);
 				conn->status = CONNECTION_OK;
 				sendTerminateConn(conn);
 				pqDropConnection(conn, true);
@@ -3350,6 +3422,8 @@ freePGconn(PGconn *conn)
 		{
 			if (conn->connhost[i].host != NULL)
 				free(conn->connhost[i].host);
+			if (conn->connhost[i].hostaddr != NULL)
+				free(conn->connhost[i].hostaddr);
 			if (conn->connhost[i].port != NULL)
 				free(conn->connhost[i].port);
 			if (conn->connhost[i].password != NULL)

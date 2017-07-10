@@ -887,6 +887,42 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
     host will be tried in turn until a connection is successfully established.
    </para>
    </sect3>
+
+   <sect3 id="libpq-multiple-hosts">
+     <title>Specifying Multiple Hosts</title>
+
+     <para>
+       It is possible to specify multiple hosts to connect to, so that they are 
+       tried in the given order. In the Keyword/Value format, the <literal>host</>, 
+       <literal>hostaddr</>, and <literal>port</> options accept a comma-separated
+       list of values. The same number of elements must be given in each option, such
+       that e.g. the first <literal>hostaddr</> corresponds to the first host name,
+       the second <literal>hostaddr</> corresponds to the second host name, and so
+       forth. As an exception, if only one <literal>port</literal> is specified, it
+       applies to all the hosts.
+     </para>
+
+     <para>
+       In the connection URI format, you can list multiple <literal>host:port</> pairs 
+       separated by commas, in the <literal>host</> component of the URI. In either
+       format, a single hostname can also translate to multiple network addresses. A
+       common example of this is a host that has both an IPv4 and an IPv6 address.
+     </para>
+
+     <para>
+       When multiple hosts are specified, or when a single hostname is 
+       translated to multiple addresses,  all the hosts and addresses will be 
+       tried in order, until one succeeds. If none of the hosts can be reached, 
+       the connection fails. If a connection is established successfully, but 
+       authentication fails, the remaining hosts in the list are not tried.
+     </para>
+
+     <para>
+       If a password file is used, you can have different passwords for 
+       different hosts. All the other connection options are the same for every 
+       host, it is not possible to e.g. specify a different username for 
+       different hosts.
+     </para>
   </sect2>
 
   <sect2 id="libpq-paramkeywords">
@@ -900,7 +936,7 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
       <term><literal>host</literal></term>
       <listitem>
        <para>
-        Comma-separated list of host names.<indexterm><primary>host name</></>
+        Name of host to connect to.<indexterm><primary>host name</></>
         If a host name begins with a slash, it specifies Unix-domain
         communication rather than TCP/IP communication; the value is the
         name of the directory in which the socket file is stored.  If
@@ -911,6 +947,11 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
         <filename>/tmp</filename> (or whatever socket directory was specified
         when <productname>PostgreSQL</> was built). On machines without
         Unix-domain sockets, the default is to connect to <literal>localhost</>.
+       </para>
+       <para>
+        A comma-separated list of host names is also accepted, in which case
+        each host name in the list is tried in order. See
+        <xref linkend="libpq-multiple-hosts"> for details.
        </para>
       </listitem>
      </varlistentry>
@@ -966,6 +1007,11 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
        </para>
 
        <para>
+        A comma-separated list of <literal>hostaddrs</> is also accepted, in
+        which case each host in the list is tried in order. See
+        <xref linkend="libpq-multiple-hosts"> for details.
+       </para>
+       <para>
         Without either a host name or host address,
         <application>libpq</application> will connect using a
         local Unix-domain socket; or on machines without Unix-domain
@@ -981,9 +1027,10 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
         Port number to connect to at the server host, or socket file
         name extension for Unix-domain
         connections.<indexterm><primary>port</></>
-        If the <literal>host</> parameter included multiple, comma-separated
-        hosts, this parameter may specify a list of ports of equal length,
-        or it may specify a single port number to be used for all hosts.
+        If multiple hosts were given in the <literal>host</literal> or
+        <literal>hostaddr</> parameters, this parameter may specify a list
+        of ports of equal length, or it may specify a single port number to
+        be used for all hosts.
        </para>
       </listitem>
      </varlistentry>

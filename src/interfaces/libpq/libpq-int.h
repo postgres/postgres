@@ -304,8 +304,9 @@ typedef enum pg_conn_host_type
  */
 typedef struct pg_conn_host
 {
-	char	   *host;			/* host name or address, or socket path */
 	pg_conn_host_type type;		/* type of host */
+	char	   *host;			/* host name or socket path */
+	char	   *hostaddr;		/* host address */
 	char	   *port;			/* port number for this host; if not NULL,
 								 * overrides the PGConn's pgport */
 	char	   *password;		/* password for this host, read from the
