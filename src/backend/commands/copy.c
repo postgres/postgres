@@ -2915,7 +2915,7 @@ CopyFromInsertBatch(CopyState cstate, EState *estate, CommandId mycid,
 									  estate, false, NULL, NIL);
 			ExecARInsertTriggers(estate, resultRelInfo,
 								 bufferedTuples[i],
-								 recheckIndexes, NULL);
+								 recheckIndexes, cstate->transition_capture);
 			list_free(recheckIndexes);
 		}
 	}
