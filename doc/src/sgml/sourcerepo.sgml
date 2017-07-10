@@ -20,9 +20,9 @@
    Note that building <productname>PostgreSQL</productname> from the source
    repository requires reasonably up-to-date versions of <application>bison</>,
    <application>flex</>, and <application>Perl</>. These tools are not needed
-   to build from a distribution tarball since the files they are used to build
-   are included in the tarball.  Other tool requirements are the same as shown
-   in <xref linkend="installation">.
+   to build from a distribution tarball, because the files that these tools
+   are used to build are included in the tarball.  Other tool requirements
+   are the same as shown in <xref linkend="install-requirements">.
   </para>
 
  <sect1 id="git">
