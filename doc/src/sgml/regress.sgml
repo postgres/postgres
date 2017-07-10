@@ -207,7 +207,7 @@ make installcheck-world
   </para>
 
   <para>
-   The TAP tests are only run when PostgreSQL was configured with the
+   The TAP-based tests are run only when PostgreSQL was configured with the
    option <option>--enable-tap-tests</option>.  This is recommended for
    development, but can be omitted if there is no suitable Perl installation.
   </para>
@@ -664,20 +664,19 @@ float8:out:i.86-.*-openbsd=float8-small-is-zero.out
    <title>TAP Tests</title>
 
    <para>
-    The client program tests under <filename>src/bin</filename> use the Perl
-    TAP tools and are run by <command>prove</command>.  You can pass
+    Various tests, particularly the client program tests
+    under <filename>src/bin</filename>, use the Perl TAP tools and are run
+    using the Perl testing program <command>prove</command>.  You can pass
     command-line options to <command>prove</command> by setting
     the <command>make</command> variable <varname>PROVE_FLAGS</>, for example:
 <programlisting>
-make -C src/bin check PROVE_FLAGS='--reverse'
+make -C src/bin check PROVE_FLAGS='--timer'
 </programlisting>
-    The default is <literal>--verbose</literal>.  See the manual page
-    of <command>prove</command> for more information.
+    See the manual page of <command>prove</command> for more information.
    </para>
 
    <para>
-    The tests written in Perl require the Perl
-    module <literal>IPC::Run</literal>.
+    The TAP tests require the Perl module <literal>IPC::Run</literal>.
     This module is available from CPAN or an operating system package.
    </para>
   </sect1>
