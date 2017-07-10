@@ -923,6 +923,7 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
        host, it is not possible to e.g. specify a different username for 
        different hosts.
      </para>
+   </sect3>
   </sect2>
 
   <sect2 id="libpq-paramkeywords">
