@@ -934,6 +934,7 @@ process_matched_tle(TargetEntry *src_tle,
 					const char *attrName)
 {
 	TargetEntry *result;
+	CoerceToDomain *coerce_expr = NULL;
 	Node	   *src_expr;
 	Node	   *prior_expr;
 	Node	   *src_input;
@@ -970,10 +971,30 @@ process_matched_tle(TargetEntry *src_tle,
 	 * For FieldStore, instead of nesting we can generate a single
 	 * FieldStore with multiple target fields.  We must nest when
 	 * ArrayRefs are involved though.
+	 *
+	 * As a further complication, the destination column might be a domain,
+	 * resulting in each assignment containing a CoerceToDomain node over a
+	 * FieldStore or ArrayRef.  These should have matching target domains,
+	 * so we strip them and reconstitute a single CoerceToDomain over the
+	 * combined FieldStore/ArrayRef nodes.  (Notice that this has the result
+	 * that the domain's checks are applied only after we do all the field or
+	 * element updates, not after each one.  This is arguably desirable.)
 	 *----------
 	 */
 	src_expr = (Node *) src_tle->expr;
 	prior_expr = (Node *) prior_tle->expr;
+
+	if (src_expr && IsA(src_expr, CoerceToDomain) &&
+		prior_expr && IsA(prior_expr, CoerceToDomain) &&
+		((CoerceToDomain *) src_expr)->resulttype ==
+		((CoerceToDomain *) prior_expr)->resulttype)
+	{
+		/* we assume without checking that resulttypmod/resultcollid match */
+		coerce_expr = (CoerceToDomain *) src_expr;
+		src_expr = (Node *) ((CoerceToDomain *) src_expr)->arg;
+		prior_expr = (Node *) ((CoerceToDomain *) prior_expr)->arg;
+	}
+
 	src_input = get_assignment_input(src_expr);
 	prior_input = get_assignment_input(prior_expr);
 	if (src_input == NULL ||
@@ -1040,6 +1061,16 @@ process_matched_tle(TargetEntry *src_tle,
 	{
 		elog(ERROR, "cannot happen");
 		newexpr = NULL;
+	}
+
+	if (coerce_expr)
+	{
+		/* put back the CoerceToDomain */
+		CoerceToDomain *newcoerce = makeNode(CoerceToDomain);
+
+		memcpy(newcoerce, coerce_expr, sizeof(CoerceToDomain));
+		newcoerce->arg = (Expr *) newexpr;
+		newexpr = (Node *) newcoerce;
 	}
 
 	result = flatCopyTargetEntry(src_tle);

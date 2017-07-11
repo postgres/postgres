@@ -85,6 +85,7 @@ INSERT INTO domarrtest values ('{2,2}', '{{"a","b"},{"c","d"},{"e","f"}}');
 INSERT INTO domarrtest values ('{2,2}', '{{"a"},{"c"}}');
 INSERT INTO domarrtest values (NULL, '{{"a","b","c"},{"d","e","f"}}');
 INSERT INTO domarrtest values (NULL, '{{"toolong","b","c"},{"d","e","f"}}');
+INSERT INTO domarrtest (testint4arr[1], testint4arr[3]) values (11,22);
 select * from domarrtest;
 select testint4arr[1], testchar4arr[2:2] from domarrtest;
 select array_dims(testint4arr), array_dims(testchar4arr) from domarrtest;
@@ -100,6 +101,13 @@ COPY domarrtest FROM stdin;	-- fail
 
 select * from domarrtest;
 
+update domarrtest set
+  testint4arr[1] = testint4arr[1] + 1,
+  testint4arr[3] = testint4arr[3] - 1
+where testchar4arr is null;
+
+select * from domarrtest where testchar4arr is null;
+
 drop table domarrtest;
 drop domain domainint4arr restrict;
 drop domain domainchar4arr restrict;
@@ -110,6 +118,46 @@ select array_dims('{1,2,3}'::dia);
 select pg_typeof('{1,2,3}'::dia);
 select pg_typeof('{1,2,3}'::dia || 42); -- should be int[] not dia
 drop domain dia;
+
+
+-- Test domains over arrays of composite
+
+create type comptype as (r float8, i float8);
+create domain dcomptypea as comptype[];
+create table dcomptable (d1 dcomptypea unique);
+
+insert into dcomptable values (array[row(1,2)]::dcomptypea);
+insert into dcomptable values (array[row(3,4), row(5,6)]::comptype[]);
+insert into dcomptable values (array[row(7,8)::comptype, row(9,10)::comptype]);
+insert into dcomptable values (array[row(1,2)]::dcomptypea);  -- fail on uniqueness
+insert into dcomptable (d1[1]) values(row(9,10));
+insert into dcomptable (d1[1].r) values(11);
+
+select * from dcomptable;
+select d1[2], d1[1].r, d1[1].i from dcomptable;
+update dcomptable set d1[2] = row(d1[2].i, d1[2].r);
+select * from dcomptable;
+update dcomptable set d1[1].r = d1[1].r + 1 where d1[1].i > 0;
+select * from dcomptable;
+
+alter domain dcomptypea add constraint c1 check (value[1].r <= value[1].i);
+alter domain dcomptypea add constraint c2 check (value[1].r > value[1].i);  -- fail
+
+select array[row(2,1)]::dcomptypea;  -- fail
+insert into dcomptable values (array[row(1,2)]::comptype[]);
+insert into dcomptable values (array[row(2,1)]::comptype[]);  -- fail
+insert into dcomptable (d1[1].r) values(99);
+insert into dcomptable (d1[1].r, d1[1].i) values(99, 100);
+insert into dcomptable (d1[1].r, d1[1].i) values(100, 99);  -- fail
+update dcomptable set d1[1].r = d1[1].r + 1 where d1[1].i > 0;  -- fail
+update dcomptable set d1[1].r = d1[1].r - 1 where d1[1].i > 0;
+select * from dcomptable;
+
+drop table dcomptable;
+drop type comptype cascade;
+
+
+-- Test not-null restrictions
 
 create domain dnotnull varchar(15) NOT NULL;
 create domain dnull    varchar(15);
