@@ -150,8 +150,17 @@ insert into dcomptable (d1[1].r) values(99);
 insert into dcomptable (d1[1].r, d1[1].i) values(99, 100);
 insert into dcomptable (d1[1].r, d1[1].i) values(100, 99);  -- fail
 update dcomptable set d1[1].r = d1[1].r + 1 where d1[1].i > 0;  -- fail
-update dcomptable set d1[1].r = d1[1].r - 1 where d1[1].i > 0;
+update dcomptable set d1[1].r = d1[1].r - 1, d1[1].i = d1[1].i + 1
+  where d1[1].i > 0;
 select * from dcomptable;
+
+explain (verbose, costs off)
+  update dcomptable set d1[1].r = d1[1].r - 1, d1[1].i = d1[1].i + 1
+    where d1[1].i > 0;
+create rule silly as on delete to dcomptable do instead
+  update dcomptable set d1[1].r = d1[1].r - 1, d1[1].i = d1[1].i + 1
+    where d1[1].i > 0;
+\d+ dcomptable
 
 drop table dcomptable;
 drop type comptype cascade;
