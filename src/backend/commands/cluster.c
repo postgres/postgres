@@ -130,28 +130,7 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 
 		if (stmt->indexname == NULL)
 		{
-			ListCell   *index;
-
-			/* We need to find the index that has indisclustered set. */
-			foreach(index, RelationGetIndexList(rel))
-			{
-				HeapTuple	idxtuple;
-				Form_pg_index indexForm;
-
-				indexOid = lfirst_oid(index);
-				idxtuple = SearchSysCache1(INDEXRELID,
-										   ObjectIdGetDatum(indexOid));
-				if (!HeapTupleIsValid(idxtuple))
-					elog(ERROR, "cache lookup failed for index %u", indexOid);
-				indexForm = (Form_pg_index) GETSTRUCT(idxtuple);
-				if (indexForm->indisclustered)
-				{
-					ReleaseSysCache(idxtuple);
-					break;
-				}
-				ReleaseSysCache(idxtuple);
-				indexOid = InvalidOid;
-			}
+            indexOid = RelationGetClusteredIndex(rel);
 
 			if (!OidIsValid(indexOid))
 				ereport(ERROR,
