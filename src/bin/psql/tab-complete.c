@@ -3901,13 +3901,9 @@ psql_completion(const char *text, int start, int end)
 		}
 	}
 	else if (strcmp(prev_wd, "\\unset") == 0)
-	{
 		matches = complete_from_variables(text, "", "", true);
-	}
 	else if (strcmp(prev_wd, "\\set") == 0)
-	{
 		matches = complete_from_variables(text, "", "", false);
-	}
 	else if (strcmp(prev2_wd, "\\set") == 0)
 	{
 		static const char *const boolean_value_list[] =
