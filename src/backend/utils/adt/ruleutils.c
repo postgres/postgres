@@ -8910,12 +8910,17 @@ get_opclass_name(Oid opclass, Oid actual_datatype,
  * We strip any top-level FieldStore or assignment ArrayRef nodes that
  * appear in the input, and return the subexpression that's to be assigned.
  * If printit is true, we also print out the appropriate decoration for the
- * base column name (that the caller just printed).
+ * base column name (that the caller just printed).  We might also need to
+ * strip CoerceToDomain nodes, but only ones that appear above assignment
+ * nodes.
+ *
+ * Returns the subexpression that's to be assigned.
  */
 static Node *
 processIndirection(Node *node, deparse_context *context, bool printit)
 {
 	StringInfo	buf = context->buf;
+	CoerceToDomain *cdomain = NULL;
 
 	for (;;)
 	{
@@ -8965,9 +8970,27 @@ processIndirection(Node *node, deparse_context *context, bool printit)
 			 */
 			node = (Node *) aref->refassgnexpr;
 		}
+		else if (IsA(node, CoerceToDomain))
+		{
+			cdomain = (CoerceToDomain *) node;
+			/* If it's an explicit domain coercion, we're done */
+			if (cdomain->coercionformat != COERCE_IMPLICIT_CAST)
+				break;
+			/* Tentatively descend past the CoerceToDomain */
+			node = (Node *) cdomain->arg;
+		}
 		else
 			break;
 	}
+
+	/*
+	 * If we descended past a CoerceToDomain whose argument turned out not to
+	 * be a FieldStore or array assignment, back up to the CoerceToDomain.
+	 * (This is not enough to be fully correct if there are nested implicit
+	 * CoerceToDomains, but such cases shouldn't ever occur.)
+	 */
+	if (cdomain && node == (Node *) cdomain->arg)
+		node = (Node *) cdomain;
 
 	return node;
 }
