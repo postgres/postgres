@@ -587,10 +587,10 @@ StandbyLockTimeoutHandler(void)
  * one transaction on one relation.
  *
  * We keep a single dynamically expandible list of locks in local memory,
- * RelationLockList, so we can keep track of the various entries made by
+ * RecoveryLockList, so we can keep track of the various entries made by
  * the Startup process's virtual xid in the shared lock table.
  *
- * List elements use type xl_rel_lock, since the WAL record type exactly
+ * List elements use type xl_standby_lock, since the WAL record type exactly
  * matches the information that we need to keep track of.
  *
  * We use session locks rather than normal locks so we don't need
