@@ -3800,7 +3800,7 @@ tuplesort_heap_siftup(Tuplesortstate *state, bool checkIndex)
 {
 	SortTuple  *memtuples = state->memtuples;
 	SortTuple  *tuple;
-	int			i,
+	unsigned int i,
 				n;
 
 	Assert(!checkIndex || state->currentRun == RUN_FIRST);
@@ -3809,12 +3809,17 @@ tuplesort_heap_siftup(Tuplesortstate *state, bool checkIndex)
 
 	CHECK_FOR_INTERRUPTS();
 
+	/*
+	 * state->memtupcount is "int", but we use "unsigned int" for i, j, n.
+	 * This prevents overflow in the "2 * i + 1" calculation, since at the top
+	 * of the loop we must have i < n <= INT_MAX <= UINT_MAX/2.
+	 */
 	n = state->memtupcount;
 	tuple = &memtuples[n];		/* tuple that must be reinserted */
 	i = 0;						/* i is where the "hole" is */
 	for (;;)
 	{
-		int			j = 2 * i + 1;
+		unsigned int j = 2 * i + 1;
 
 		if (j >= n)
 			break;
