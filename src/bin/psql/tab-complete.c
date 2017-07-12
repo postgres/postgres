@@ -1533,47 +1533,31 @@ psql_completion(const char *text, int start, int end)
 	}
 	/* ALTER PUBLICATION <name> */
 	else if (Matches3("ALTER", "PUBLICATION", MatchAny))
-	{
 		COMPLETE_WITH_LIST5("ADD TABLE", "DROP TABLE", "OWNER TO", "RENAME TO", "SET");
-	}
 	/* ALTER PUBLICATION <name> SET */
 	else if (Matches4("ALTER", "PUBLICATION", MatchAny, "SET"))
-	{
 		COMPLETE_WITH_LIST2("(", "TABLE");
-	}
 	/* ALTER PUBLICATION <name> SET ( */
 	else if (HeadMatches3("ALTER", "PUBLICATION", MatchAny) && TailMatches2("SET", "("))
-	{
 		COMPLETE_WITH_CONST("publish");
-	}
 	/* ALTER SUBSCRIPTION <name> */
 	else if (Matches3("ALTER", "SUBSCRIPTION", MatchAny))
-	{
 		COMPLETE_WITH_LIST7("CONNECTION", "ENABLE", "DISABLE", "OWNER TO",
 							"RENAME TO", "REFRESH PUBLICATION", "SET");
-	}
 	/* ALTER SUBSCRIPTION <name> REFRESH PUBLICATION */
 	else if (HeadMatches3("ALTER", "SUBSCRIPTION", MatchAny) &&
 			 TailMatches2("REFRESH", "PUBLICATION"))
-	{
 		COMPLETE_WITH_CONST("WITH (");
-	}
 	/* ALTER SUBSCRIPTION <name> REFRESH PUBLICATION WITH ( */
 	else if (HeadMatches3("ALTER", "SUBSCRIPTION", MatchAny) &&
 			 TailMatches4("REFRESH", "PUBLICATION", "WITH", "("))
-	{
 		COMPLETE_WITH_CONST("copy_data");
-	}
 	/* ALTER SUBSCRIPTION <name> SET */
 	else if (Matches4("ALTER", "SUBSCRIPTION", MatchAny, "SET"))
-	{
 		COMPLETE_WITH_LIST2("(", "PUBLICATION");
-	}
 	/* ALTER SUBSCRIPTION <name> SET ( */
 	else if (HeadMatches3("ALTER", "SUBSCRIPTION", MatchAny) && TailMatches2("SET", "("))
-	{
 		COMPLETE_WITH_LIST2("slot_name", "synchronous_commit");
-	}
 	/* ALTER SUBSCRIPTION <name> SET PUBLICATION */
 	else if (HeadMatches3("ALTER", "SUBSCRIPTION", MatchAny) && TailMatches2("SET", "PUBLICATION"))
 	{
@@ -1582,15 +1566,11 @@ psql_completion(const char *text, int start, int end)
 	/* ALTER SUBSCRIPTION <name> SET PUBLICATION <name> */
 	else if (HeadMatches3("ALTER", "SUBSCRIPTION", MatchAny) &&
 			 TailMatches3("SET", "PUBLICATION", MatchAny))
-	{
 		COMPLETE_WITH_CONST("WITH (");
-	}
 	/* ALTER SUBSCRIPTION <name> SET PUBLICATION <name> WITH ( */
 	else if (HeadMatches3("ALTER", "SUBSCRIPTION", MatchAny) &&
 			 TailMatches5("SET", "PUBLICATION", MatchAny, "WITH", "("))
-	{
 		COMPLETE_WITH_LIST2("copy_data", "refresh");
-	}
 	/* ALTER SCHEMA <name> */
 	else if (Matches3("ALTER", "SCHEMA", MatchAny))
 		COMPLETE_WITH_LIST2("OWNER TO", "RENAME TO");
@@ -3558,13 +3538,9 @@ psql_completion(const char *text, int start, int end)
 			COMPLETE_WITH_LIST_CS2("single", "double");
 	}
 	else if (TailMatchesCS1("\\unset"))
-	{
 		matches = complete_from_variables(text, "", "", true);
-	}
 	else if (TailMatchesCS1("\\set"))
-	{
 		matches = complete_from_variables(text, "", "", false);
-	}
 	else if (TailMatchesCS2("\\set", MatchAny))
 	{
 		if (TailMatchesCS1("AUTOCOMMIT|ON_ERROR_STOP|QUIET|"
