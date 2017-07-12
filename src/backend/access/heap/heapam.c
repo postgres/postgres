@@ -2415,7 +2415,7 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 	 * Find buffer to insert this tuple into.  If the page is all visible,
 	 * this will also pin the requisite visibility map page.
 	 */
-	buffer = RelationGetBufferForTuple(relation, heaptup->t_len,
+    buffer = RelationGetBufferForTuple(relation, heaptup,
 									   InvalidBuffer, options, bistate,
 									   &vmbuffer, NULL);
 
@@ -2726,7 +2726,7 @@ heap_multi_insert(Relation relation, HeapTuple *tuples, int ntuples,
 		 * Find buffer where at least the next tuple will fit.  If the page is
 		 * all-visible, this will also pin the requisite visibility map page.
 		 */
-		buffer = RelationGetBufferForTuple(relation, heaptuples[ndone]->t_len,
+        buffer = RelationGetBufferForTuple(relation, heaptuples[ndone],
 										   InvalidBuffer, options, bistate,
 										   &vmbuffer, NULL);
 		page = BufferGetPage(buffer);
@@ -4095,7 +4095,7 @@ l2:
 		if (newtupsize > pagefree)
 		{
 			/* Assume there's no chance to put heaptup on same page. */
-			newbuf = RelationGetBufferForTuple(relation, heaptup->t_len,
+            newbuf = RelationGetBufferForTuple(relation, heaptup,
 											   buffer, 0, NULL,
 											   &vmbuffer_new, &vmbuffer);
 		}
@@ -4113,7 +4113,7 @@ l2:
 				 * seldom be taken.
 				 */
 				LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-				newbuf = RelationGetBufferForTuple(relation, heaptup->t_len,
+                newbuf = RelationGetBufferForTuple(relation, heaptup,
 												   buffer, 0, NULL,
 												   &vmbuffer_new, &vmbuffer);
 			}

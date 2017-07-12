@@ -43,6 +43,7 @@ extern List *RelationGetStatExtList(Relation relation);
 extern Oid	RelationGetOidIndex(Relation relation);
 extern Oid	RelationGetPrimaryKeyIndex(Relation relation);
 extern Oid	RelationGetReplicaIndex(Relation relation);
+extern Oid	RelationGetClusteredIndex(Relation relation);
 extern List *RelationGetIndexExpressions(Relation relation);
 extern List *RelationGetIndexPredicate(Relation relation);
 

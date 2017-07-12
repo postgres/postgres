@@ -136,6 +136,7 @@ typedef struct RelationData
 	Oid			rd_oidindex;	/* OID of unique index on OID, if any */
 	Oid			rd_pkindex;		/* OID of primary key, if any */
 	Oid			rd_replidindex; /* OID of replica identity index, if any */
+    Oid			rd_clusteredindex; /* OID of clustered index, if any */
 
 	/* data managed by RelationGetStatExtList: */
 	List	   *rd_statlist;	/* list of OIDs of extended stats */
