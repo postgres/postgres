@@ -3083,13 +3083,9 @@ psql_completion(const char *text, int start, int end)
 			COMPLETE_WITH_LIST_CS2("single", "double");
 	}
 	else if (TailMatchesCS1("\\unset"))
-	{
 		matches = complete_from_variables(text, "", "", true);
-	}
 	else if (TailMatchesCS1("\\set"))
-	{
 		matches = complete_from_variables(text, "", "", false);
-	}
 	else if (TailMatchesCS2("\\set", MatchAny))
 	{
 		if (TailMatchesCS1("AUTOCOMMIT|ON_ERROR_STOP|QUIET|"
