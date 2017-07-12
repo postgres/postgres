@@ -294,7 +294,7 @@ RelationAddExtraBlocks(Relation relation, BulkInsertState bistate)
  *	before any (unlogged) changes are made in buffer pool.
  */
 Buffer
-RelationGetBufferForTuple(Relation relation, Size len,
+RelationGetBufferForTuple(Relation relation, HeapTuple heaptup,
 						  Buffer otherBuffer, int options,
 						  BulkInsertState bistate,
 						  Buffer *vmbuffer, Buffer *vmbuffer_other)
@@ -302,16 +302,17 @@ RelationGetBufferForTuple(Relation relation, Size len,
 	bool		use_fsm = !(options & HEAP_INSERT_SKIP_FSM);
 	Buffer		buffer = InvalidBuffer;
 	Page		page;
-	Size		pageFreeSpace = 0,
+    Size	len,
+            pageFreeSpace = 0,
 				saveFreeSpace = 0;
 	BlockNumber targetBlock,
 				otherBlock;
 	bool		needLock;
 
-	len = MAXALIGN(len);		/* be conservative */
-
 	/* Bulk insert is not supported for updates, only inserts. */
 	Assert(otherBuffer == InvalidBuffer || !bistate);
+
+    len = MAXALIGN(heaptup->t_len);		/* be conservative */
 
 	/*
 	 * If we're gonna fail for oversize tuple, do it right away
