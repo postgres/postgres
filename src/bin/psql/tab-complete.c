@@ -3360,9 +3360,7 @@ psql_completion(char *text, int start, int end)
 		}
 	}
 	else if (strcmp(prev_wd, "\\set") == 0)
-	{
 		matches = complete_from_variables(text, "", "");
-	}
 	else if (strcmp(prev_wd, "\\sf") == 0 || strcmp(prev_wd, "\\sf+") == 0)
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_functions, NULL);
 	else if (strcmp(prev_wd, "\\cd") == 0 ||
