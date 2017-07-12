@@ -266,19 +266,46 @@ insert into dcomptable (d1[1].r, d1[1].i) values(100, 99);  -- fail
 ERROR:  value for domain dcomptypea violates check constraint "c1"
 update dcomptable set d1[1].r = d1[1].r + 1 where d1[1].i > 0;  -- fail
 ERROR:  value for domain dcomptypea violates check constraint "c1"
-update dcomptable set d1[1].r = d1[1].r - 1 where d1[1].i > 0;
+update dcomptable set d1[1].r = d1[1].r - 1, d1[1].i = d1[1].i + 1
+  where d1[1].i > 0;
 select * from dcomptable;
          d1         
 --------------------
  {"(11,)","(,)"}
  {"(99,)"}
- {"(1,2)","(,)"}
- {"(3,4)","(6,5)"}
- {"(7,8)","(10,9)"}
- {"(9,10)","(,)"}
- {"(0,2)"}
- {"(98,100)"}
+ {"(1,3)","(,)"}
+ {"(3,5)","(6,5)"}
+ {"(7,9)","(10,9)"}
+ {"(9,11)","(,)"}
+ {"(0,3)"}
+ {"(98,101)"}
 (8 rows)
+
+explain (verbose, costs off)
+  update dcomptable set d1[1].r = d1[1].r - 1, d1[1].i = d1[1].i + 1
+    where d1[1].i > 0;
+                                                   QUERY PLAN                                                   
+----------------------------------------------------------------------------------------------------------------
+ Update on public.dcomptable
+   ->  Seq Scan on public.dcomptable
+         Output: (d1[1].r := (d1[1].r - '1'::double precision))[1].i := (d1[1].i + '1'::double precision), ctid
+         Filter: (dcomptable.d1[1].i > '0'::double precision)
+(4 rows)
+
+create rule silly as on delete to dcomptable do instead
+  update dcomptable set d1[1].r = d1[1].r - 1, d1[1].i = d1[1].i + 1
+    where d1[1].i > 0;
+\d+ dcomptable
+                                  Table "public.dcomptable"
+ Column |    Type    | Collation | Nullable | Default | Storage  | Stats target | Description 
+--------+------------+-----------+----------+---------+----------+--------------+-------------
+ d1     | dcomptypea |           |          |         | extended |              | 
+Indexes:
+    "dcomptable_d1_key" UNIQUE CONSTRAINT, btree (d1)
+Rules:
+    silly AS
+    ON DELETE TO dcomptable DO INSTEAD  UPDATE dcomptable SET d1[1].r = dcomptable.d1[1].r - 1::double precision, d1[1].i = dcomptable.d1[1].i + 1::double precision
+  WHERE dcomptable.d1[1].i > 0::double precision
 
 drop table dcomptable;
 drop type comptype cascade;
