@@ -547,6 +547,18 @@ select 'foo'::text = any(array['abc','def','foo']::text[]) c1,
        'foo'::text = any((select array['abc','def','foo']::text[])::text[]) c2;
 select pg_get_viewdef('tt19v', true);
 
+-- check display of assorted RTE_FUNCTION expressions
+
+create view tt20v as
+select * from
+  coalesce(1,2) as c,
+  collation for ('x'::text) col,
+  current_date as d,
+  localtimestamp(3) as t,
+  cast(1+2 as int4) as i4,
+  cast(1+2 as int8) as i8;
+select pg_get_viewdef('tt20v', true);
+
 -- clean up all the random objects we made above
 set client_min_messages = warning;
 DROP SCHEMA temp_view_test CASCADE;

@@ -416,6 +416,9 @@ static void get_rule_expr(Node *node, deparse_context *context,
 			  bool showimplicit);
 static void get_rule_expr_toplevel(Node *node, deparse_context *context,
 					   bool showimplicit);
+static void get_rule_expr_funccall(Node *node, deparse_context *context,
+					   bool showimplicit);
+static bool looks_like_function(Node *node);
 static void get_oper_expr(OpExpr *expr, deparse_context *context);
 static void get_func_expr(FuncExpr *expr, deparse_context *context,
 			  bool showimplicit);
@@ -1308,8 +1311,7 @@ pg_get_indexdef_worker(Oid indexrelid, int colno,
 			if (!colno || colno == keyno + 1)
 			{
 				/* Need parens if it's not a bare function call */
-				if (indexkey && IsA(indexkey, FuncExpr) &&
-					((FuncExpr *) indexkey)->funcformat == COERCE_EXPLICIT_CALL)
+				if (looks_like_function(indexkey))
 					appendStringInfoString(&buf, str);
 				else
 					appendStringInfo(&buf, "(%s)", str);
@@ -1698,11 +1700,16 @@ pg_get_partkeydef_worker(Oid relid, int prettyFlags,
 				elog(ERROR, "too few entries in partexprs list");
 			partkey = (Node *) lfirst(partexpr_item);
 			partexpr_item = lnext(partexpr_item);
+
 			/* Deparse */
 			str = deparse_expression_pretty(partkey, context, false, false,
-											0, 0);
+											prettyFlags, 0);
+			/* Need parens if it's not a bare function call */
+			if (looks_like_function(partkey))
+				appendStringInfoString(&buf, str);
+			else
+				appendStringInfo(&buf, "(%s)", str);
 
-			appendStringInfoString(&buf, str);
 			keycoltype = exprType(partkey);
 			keycolcollation = exprCollation(partkey);
 		}
@@ -8776,6 +8783,64 @@ get_rule_expr_toplevel(Node *node, deparse_context *context,
 		get_rule_expr(node, context, showimplicit);
 }
 
+/*
+ * get_rule_expr_funccall		- Parse back a function-call expression
+ *
+ * Same as get_rule_expr(), except that we guarantee that the output will
+ * look like a function call, or like one of the things the grammar treats as
+ * equivalent to a function call (see the func_expr_windowless production).
+ * This is needed in places where the grammar uses func_expr_windowless and
+ * you can't substitute a parenthesized a_expr.  If what we have isn't going
+ * to look like a function call, wrap it in a dummy CAST() expression, which
+ * will satisfy the grammar --- and, indeed, is likely what the user wrote to
+ * produce such a thing.
+ */
+static void
+get_rule_expr_funccall(Node *node, deparse_context *context,
+					   bool showimplicit)
+{
+	if (looks_like_function(node))
+		get_rule_expr(node, context, showimplicit);
+	else
+	{
+		StringInfo	buf = context->buf;
+
+		appendStringInfoString(buf, "CAST(");
+		/* no point in showing any top-level implicit cast */
+		get_rule_expr(node, context, false);
+		appendStringInfo(buf, " AS %s)",
+						 format_type_with_typemod(exprType(node),
+												  exprTypmod(node)));
+	}
+}
+
+/*
+ * Helper function to identify node types that satisfy func_expr_windowless.
+ * If in doubt, "false" is always a safe answer.
+ */
+static bool
+looks_like_function(Node *node)
+{
+	if (node == NULL)
+		return false;			/* probably shouldn't happen */
+	switch (nodeTag(node))
+	{
+		case T_FuncExpr:
+			/* OK, unless it's going to deparse as a cast */
+			return (((FuncExpr *) node)->funcformat == COERCE_EXPLICIT_CALL);
+		case T_NullIfExpr:
+		case T_CoalesceExpr:
+		case T_MinMaxExpr:
+		case T_SQLValueFunction:
+		case T_XmlExpr:
+			/* these are all accepted by func_expr_common_subexpr */
+			return true;
+		default:
+			break;
+	}
+	return false;
+}
+
 
 /*
  * get_oper_expr			- Parse back an OpExpr node
@@ -9749,7 +9814,7 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 				if (list_length(rte->functions) == 1 &&
 					(rtfunc1->funccolnames == NIL || !rte->funcordinality))
 				{
-					get_rule_expr(rtfunc1->funcexpr, context, true);
+					get_rule_expr_funccall(rtfunc1->funcexpr, context, true);
 					/* we'll print the coldeflist below, if it has one */
 				}
 				else
@@ -9812,7 +9877,7 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 
 							if (funcno > 0)
 								appendStringInfoString(buf, ", ");
-							get_rule_expr(rtfunc->funcexpr, context, true);
+							get_rule_expr_funccall(rtfunc->funcexpr, context, true);
 							if (rtfunc->funccolnames != NIL)
 							{
 								/* Reconstruct the column definition list */

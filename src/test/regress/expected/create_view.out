@@ -1622,6 +1622,32 @@ select pg_get_viewdef('tt19v', true);
      'foo'::text = ANY ((( SELECT ARRAY['abc'::text, 'def'::text, 'foo'::text] AS "array"))::text[]) AS c2;
 (1 row)
 
+-- check display of assorted RTE_FUNCTION expressions
+create view tt20v as
+select * from
+  coalesce(1,2) as c,
+  collation for ('x'::text) col,
+  current_date as d,
+  localtimestamp(3) as t,
+  cast(1+2 as int4) as i4,
+  cast(1+2 as int8) as i8;
+select pg_get_viewdef('tt20v', true);
+               pg_get_viewdef                
+---------------------------------------------
+  SELECT c.c,                               +
+     col.col,                               +
+     d.d,                                   +
+     t.t,                                   +
+     i4.i4,                                 +
+     i8.i8                                  +
+    FROM COALESCE(1, 2) c(c),               +
+     pg_collation_for('x'::text) col(col),  +
+     CURRENT_DATE d(d),                     +
+     LOCALTIMESTAMP(3) t(t),                +
+     CAST(1 + 2 AS integer) i4(i4),         +
+     CAST((1 + 2)::bigint AS bigint) i8(i8);
+(1 row)
+
 -- clean up all the random objects we made above
 set client_min_messages = warning;
 DROP SCHEMA temp_view_test CASCADE;

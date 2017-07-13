@@ -434,7 +434,7 @@ Partition key: RANGE (a oid_ops, plusone(b), c, d COLLATE "C")
  Column |  Type   | Collation | Nullable | Default 
 --------+---------+-----------+----------+---------
  a      | integer |           |          | 
-Partition key: LIST ((a + 1))
+Partition key: LIST (((a + 1)))
 
 DROP TABLE partitioned, partitioned2;
 --
