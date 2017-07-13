@@ -974,7 +974,7 @@
 -->
         <para>
          Add functions to return the log and <acronym>WAL</> directory
-         names (Dave Page)
+         contents (Dave Page)
         </para>
 
         <para>
