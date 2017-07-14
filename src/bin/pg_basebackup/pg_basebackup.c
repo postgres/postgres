@@ -954,6 +954,10 @@ ReceiveTarFile(PGconn *conn, PGresult *res, int rownum)
 		 */
 		if (strcmp(basedir, "-") == 0)
 		{
+#ifdef WIN32
+			_setmode(fileno(stdout), _O_BINARY);
+#endif
+
 #ifdef HAVE_LIBZ
 			if (compresslevel != 0)
 			{

@@ -2346,9 +2346,9 @@ _allocAH(const char *FileSpec, const ArchiveFormat fmt,
 		(AH->fSpec == NULL || strcmp(AH->fSpec, "") == 0))
 	{
 		if (mode == archModeWrite)
-			setmode(fileno(stdout), O_BINARY);
+			_setmode(fileno(stdout), O_BINARY);
 		else
-			setmode(fileno(stdin), O_BINARY);
+			_setmode(fileno(stdin), O_BINARY);
 	}
 #endif
 
