@@ -1203,6 +1203,20 @@ _readCurrentOfExpr(void)
 }
 
 /*
+ * _readNextValueExpr
+ */
+static NextValueExpr *
+_readNextValueExpr(void)
+{
+	READ_LOCALS(NextValueExpr);
+
+	READ_OID_FIELD(seqid);
+	READ_OID_FIELD(typeId);
+
+	READ_DONE();
+}
+
+/*
  * _readInferenceElem
  */
 static InferenceElem *
@@ -2517,6 +2531,8 @@ parseNodeString(void)
 		return_value = _readSetToDefault();
 	else if (MATCH("CURRENTOFEXPR", 13))
 		return_value = _readCurrentOfExpr();
+	else if (MATCH("NEXTVALUEEXPR", 13))
+		return_value = _readNextValueExpr();
 	else if (MATCH("INFERENCEELEM", 13))
 		return_value = _readInferenceElem();
 	else if (MATCH("TARGETENTRY", 11))

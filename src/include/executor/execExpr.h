@@ -362,7 +362,7 @@ typedef struct ExprEvalStep
 			SQLValueFunction *svf;
 		}			sqlvaluefunction;
 
-		/* for EEOP_NEXTVALUEXPR */
+		/* for EEOP_NEXTVALUEEXPR */
 		struct
 		{
 			Oid			seqid;
@@ -615,6 +615,7 @@ extern void ExecEvalParamExtern(ExprState *state, ExprEvalStep *op,
 					ExprContext *econtext);
 extern void ExecEvalSQLValueFunction(ExprState *state, ExprEvalStep *op);
 extern void ExecEvalCurrentOfExpr(ExprState *state, ExprEvalStep *op);
+extern void ExecEvalNextValueExpr(ExprState *state, ExprEvalStep *op);
 extern void ExecEvalRowNull(ExprState *state, ExprEvalStep *op,
 				ExprContext *econtext);
 extern void ExecEvalRowNotNull(ExprState *state, ExprEvalStep *op,

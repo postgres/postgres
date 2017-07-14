@@ -1232,21 +1232,11 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 
 		EEO_CASE(EEOP_NEXTVALUEEXPR)
 		{
-			switch (op->d.nextvalueexpr.seqtypid)
-			{
-				case INT2OID:
-					*op->resvalue = Int16GetDatum((int16) nextval_internal(op->d.nextvalueexpr.seqid, false));
-					break;
-				case INT4OID:
-					*op->resvalue = Int32GetDatum((int32) nextval_internal(op->d.nextvalueexpr.seqid, false));
-					break;
-				case INT8OID:
-					*op->resvalue = Int64GetDatum((int64) nextval_internal(op->d.nextvalueexpr.seqid, false));
-					break;
-				default:
-					elog(ERROR, "unsupported sequence type %u", op->d.nextvalueexpr.seqtypid);
-			}
-			*op->resnull = false;
+			/*
+			 * Doesn't seem worthwhile to have an inline implementation
+			 * efficiency-wise.
+			 */
+			ExecEvalNextValueExpr(state, op);
 
 			EEO_NEXT();
 		}
@@ -1987,6 +1977,32 @@ ExecEvalCurrentOfExpr(ExprState *state, ExprEvalStep *op)
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			 errmsg("WHERE CURRENT OF is not supported for this table type")));
+}
+
+/*
+ * Evaluate NextValueExpr.
+ */
+void
+ExecEvalNextValueExpr(ExprState *state, ExprEvalStep *op)
+{
+	int64		newval = nextval_internal(op->d.nextvalueexpr.seqid, false);
+
+	switch (op->d.nextvalueexpr.seqtypid)
+	{
+		case INT2OID:
+			*op->resvalue = Int16GetDatum((int16) newval);
+			break;
+		case INT4OID:
+			*op->resvalue = Int32GetDatum((int32) newval);
+			break;
+		case INT8OID:
+			*op->resvalue = Int64GetDatum((int64) newval);
+			break;
+		default:
+			elog(ERROR, "unsupported sequence type %u",
+				 op->d.nextvalueexpr.seqtypid);
+	}
+	*op->resnull = false;
 }
 
 /*

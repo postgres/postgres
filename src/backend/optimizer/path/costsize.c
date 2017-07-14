@@ -3627,6 +3627,15 @@ cost_qual_eval_walker(Node *node, cost_qual_eval_context *context)
 				cpu_operator_cost;
 		}
 	}
+	else if (IsA(node, MinMaxExpr) ||
+			 IsA(node, SQLValueFunction) ||
+			 IsA(node, XmlExpr) ||
+			 IsA(node, CoerceToDomain) ||
+			 IsA(node, NextValueExpr))
+	{
+		/* Treat all these as having cost 1 */
+		context->total.per_tuple += cpu_operator_cost;
+	}
 	else if (IsA(node, CurrentOfExpr))
 	{
 		/* Report high cost to prevent selection of anything but TID scan */

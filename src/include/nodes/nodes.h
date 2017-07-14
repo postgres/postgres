@@ -183,6 +183,7 @@ typedef enum NodeTag
 	T_CoerceToDomainValue,
 	T_SetToDefault,
 	T_CurrentOfExpr,
+	T_NextValueExpr,
 	T_InferenceElem,
 	T_TargetEntry,
 	T_RangeTblRef,
@@ -190,7 +191,6 @@ typedef enum NodeTag
 	T_FromExpr,
 	T_OnConflictExpr,
 	T_IntoClause,
-	T_NextValueExpr,
 
 	/*
 	 * TAGS FOR EXPRESSION STATE NODES (execnodes.h)

@@ -2763,6 +2763,14 @@ JumbleExpr(pgssJumbleState *jstate, Node *node)
 				APP_JUMB(ce->cursor_param);
 			}
 			break;
+		case T_NextValueExpr:
+			{
+				NextValueExpr *nve = (NextValueExpr *) node;
+
+				APP_JUMB(nve->seqid);
+				APP_JUMB(nve->typeId);
+			}
+			break;
 		case T_InferenceElem:
 			{
 				InferenceElem *ie = (InferenceElem *) node;

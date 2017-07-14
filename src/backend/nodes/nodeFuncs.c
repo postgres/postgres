@@ -1642,10 +1642,10 @@ set_sa_opfuncid(ScalarArrayOpExpr *opexpr)
  * for themselves, in case additional checks should be made, or because they
  * have special rules about which parts of the tree need to be visited.
  *
- * Note: we ignore MinMaxExpr, SQLValueFunction, XmlExpr, and CoerceToDomain
- * nodes, because they do not contain SQL function OIDs.  However, they can
- * invoke SQL-visible functions, so callers should take thought about how to
- * treat them.
+ * Note: we ignore MinMaxExpr, SQLValueFunction, XmlExpr, CoerceToDomain,
+ * and NextValueExpr nodes, because they do not contain SQL function OIDs.
+ * However, they can invoke SQL-visible functions, so callers should take
+ * thought about how to treat them.
  */
 bool
 check_functions_in_node(Node *node, check_function_callback checker,
@@ -1865,12 +1865,12 @@ expression_tree_walker(Node *node,
 		case T_Var:
 		case T_Const:
 		case T_Param:
-		case T_CoerceToDomainValue:
 		case T_CaseTestExpr:
+		case T_SQLValueFunction:
+		case T_CoerceToDomainValue:
 		case T_SetToDefault:
 		case T_CurrentOfExpr:
 		case T_NextValueExpr:
-		case T_SQLValueFunction:
 		case T_RangeTblRef:
 		case T_SortGroupClause:
 			/* primitive node types with no expression subnodes */
@@ -2461,12 +2461,12 @@ expression_tree_mutator(Node *node,
 			}
 			break;
 		case T_Param:
-		case T_CoerceToDomainValue:
 		case T_CaseTestExpr:
+		case T_SQLValueFunction:
+		case T_CoerceToDomainValue:
 		case T_SetToDefault:
 		case T_CurrentOfExpr:
 		case T_NextValueExpr:
-		case T_SQLValueFunction:
 		case T_RangeTblRef:
 		case T_SortGroupClause:
 			return (Node *) copyObject(node);
