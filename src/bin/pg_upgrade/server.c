@@ -285,9 +285,14 @@ start_postmaster(ClusterInfo *cluster, bool throw_error)
 			   PQerrorMessage(conn));
 		if (conn)
 			PQfinish(conn);
-		pg_fatal("could not connect to %s postmaster started with the command:\n"
-				 "%s\n",
-				 CLUSTER_NAME(cluster), cmd);
+		if (cluster == &old_cluster)
+			pg_fatal("could not connect to source postmaster started with the command:\n"
+					 "%s\n",
+					 cmd);
+		else
+			pg_fatal("could not connect to target postmaster started with the command:\n"
+					 "%s\n",
+					 cmd);
 	}
 	PQfinish(conn);
 
@@ -297,8 +302,12 @@ start_postmaster(ClusterInfo *cluster, bool throw_error)
 	 * running.
 	 */
 	if (!pg_ctl_return)
-		pg_fatal("pg_ctl failed to start the %s server, or connection failed\n",
-				 CLUSTER_NAME(cluster));
+	{
+		if (cluster == &old_cluster)
+			pg_fatal("pg_ctl failed to start the source server, or connection failed\n");
+		else
+			pg_fatal("pg_ctl failed to start the target server, or connection failed\n");
+	}
 
 	return true;
 }

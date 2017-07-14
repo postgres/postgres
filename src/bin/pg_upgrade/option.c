@@ -405,8 +405,10 @@ adjust_data_dir(ClusterInfo *cluster)
 
 	/* Must be a configuration directory, so find the real data directory. */
 
-	prep_status("Finding the real data directory for the %s cluster",
-				CLUSTER_NAME(cluster));
+	if (cluster == &old_cluster)
+		prep_status("Finding the real data directory for the source cluster");
+	else
+		prep_status("Finding the real data directory for the target cluster");
 
 	/*
 	 * We don't have a data directory yet, so we can't check the PG version,

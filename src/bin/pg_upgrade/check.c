@@ -770,8 +770,12 @@ check_for_prepared_transactions(ClusterInfo *cluster)
 							"FROM pg_catalog.pg_prepared_xacts");
 
 	if (PQntuples(res) != 0)
-		pg_fatal("The %s cluster contains prepared transactions\n",
-				 CLUSTER_NAME(cluster));
+	{
+		if (cluster == &old_cluster)
+			pg_fatal("The source cluster contains prepared transactions\n");
+		else
+			pg_fatal("The target cluster contains prepared transactions\n");
+	}
 
 	PQclear(res);
 
@@ -1082,8 +1086,12 @@ check_for_pg_role_prefix(ClusterInfo *cluster)
 							"WHERE rolname ~ '^pg_'");
 
 	if (PQntuples(res) != 0)
-		pg_fatal("The %s cluster contains roles starting with 'pg_'\n",
-				 CLUSTER_NAME(cluster));
+	{
+		if (cluster == &old_cluster)
+			pg_fatal("The source cluster contains roles starting with 'pg_'\n");
+		else
+			pg_fatal("The target cluster contains roles starting with 'pg_'\n");
+	}
 
 	PQclear(res);
 

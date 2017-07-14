@@ -94,8 +94,6 @@ extern char *output_files[];
 #define ECHO_BLANK	"."
 #endif
 
-#define CLUSTER_NAME(cluster)	((cluster) == &old_cluster ? "old" : \
-								 (cluster) == &new_cluster ? "new" : "none")
 
 /* OID system catalog preservation added during PG 9.0 development */
 #define TABLE_SPACE_SUBDIRS_CAT_VER 201001111
