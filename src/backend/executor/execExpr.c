@@ -2443,14 +2443,14 @@ ExecInitArrayRef(ExprEvalStep *scratch, ArrayRef *aref, PlanState *parent,
 		 * refassgnexpr is itself a FieldStore or ArrayRef that needs to
 		 * obtain and modify the previous value of the array element or slice
 		 * being replaced.  If so, we have to extract that value from the
-		 * array and pass it down via the CaseTextExpr mechanism.  It's safe
+		 * array and pass it down via the CaseTestExpr mechanism.  It's safe
 		 * to reuse the CASE mechanism because there cannot be a CASE between
 		 * here and where the value would be needed, and an array assignment
 		 * can't be within a CASE either.  (So saving and restoring
 		 * innermost_caseval is just paranoia, but let's do it anyway.)
 		 *
 		 * Since fetching the old element might be a nontrivial expense, do it
-		 * only if the argument appears to actually need it.
+		 * only if the argument actually needs it.
 		 */
 		if (isAssignmentIndirectionExpr(aref->refassgnexpr))
 		{
@@ -2506,10 +2506,16 @@ ExecInitArrayRef(ExprEvalStep *scratch, ArrayRef *aref, PlanState *parent,
 
 /*
  * Helper for preparing ArrayRef expressions for evaluation: is expr a nested
- * FieldStore or ArrayRef that might need the old element value passed down?
+ * FieldStore or ArrayRef that needs the old element value passed down?
  *
  * (We could use this in FieldStore too, but in that case passing the old
  * value is so cheap there's no need.)
+ *
+ * Note: it might seem that this needs to recurse, but it does not; the
+ * CaseTestExpr, if any, will be directly the arg or refexpr of the top-level
+ * node.  Nested-assignment situations give rise to expression trees in which
+ * each level of assignment has its own CaseTestExpr, and the recursive
+ * structure appears within the newvals or refassgnexpr field.
  */
 static bool
 isAssignmentIndirectionExpr(Expr *expr)
