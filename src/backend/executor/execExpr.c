@@ -1116,6 +1116,18 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
 					 * field assignment can't be within a CASE either.  (So
 					 * saving and restoring innermost_caseval is just
 					 * paranoia, but let's do it anyway.)
+					 *
+					 * Another non-obvious point is that it's safe to use the
+					 * field's values[]/nulls[] entries as both the caseval
+					 * source and the result address for this subexpression.
+					 * That's okay only because (1) both FieldStore and
+					 * ArrayRef evaluate their arg or refexpr inputs first,
+					 * and (2) any such CaseTestExpr is directly the arg or
+					 * refexpr input.  So any read of the caseval will occur
+					 * before there's a chance to overwrite it.  Also, if
+					 * multiple entries in the newvals/fieldnums lists target
+					 * the same field, they'll effectively be applied
+					 * left-to-right which is what we want.
 					 */
 					save_innermost_caseval = state->innermost_caseval;
 					save_innermost_casenull = state->innermost_casenull;
