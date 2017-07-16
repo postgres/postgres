@@ -233,7 +233,7 @@ sub taptest
 
 	die "no tests found!" unless -d "$topdir/$dir/t";
 
-	push(@args,"$topdir/$dir);
+	push(@args,"$topdir/$dir");
 
 	InstallTemp();
 	my $status = tap_check(@args);
