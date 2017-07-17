@@ -17,7 +17,6 @@
 #include "nodes/execnodes.h"
 
 extern WorkTableScanState *ExecInitWorkTableScan(WorkTableScan *node, EState *estate, int eflags);
-extern TupleTableSlot *ExecWorkTableScan(WorkTableScanState *node);
 extern void ExecEndWorkTableScan(WorkTableScanState *node);
 extern void ExecReScanWorkTableScan(WorkTableScanState *node);
 

@@ -306,9 +306,11 @@ IndexOnlyRecheck(IndexOnlyScanState *node, TupleTableSlot *slot)
  *		ExecIndexOnlyScan(node)
  * ----------------------------------------------------------------
  */
-TupleTableSlot *
-ExecIndexOnlyScan(IndexOnlyScanState *node)
+static TupleTableSlot *
+ExecIndexOnlyScan(PlanState *pstate)
 {
+	IndexOnlyScanState *node = castNode(IndexOnlyScanState, pstate);
+
 	/*
 	 * If we have runtime keys and they've not already been set up, do it now.
 	 */
@@ -476,6 +478,7 @@ ExecInitIndexOnlyScan(IndexOnlyScan *node, EState *estate, int eflags)
 	indexstate = makeNode(IndexOnlyScanState);
 	indexstate->ss.ps.plan = (Plan *) node;
 	indexstate->ss.ps.state = estate;
+	indexstate->ss.ps.ExecProcNode = ExecIndexOnlyScan;
 	indexstate->ioss_HeapFetches = 0;
 
 	/*

@@ -35,9 +35,10 @@
  *		  -- the outer child is prepared to return the first tuple.
  * ----------------------------------------------------------------
  */
-TupleTableSlot *
-ExecSort(SortState *node)
+static TupleTableSlot *
+ExecSort(PlanState *pstate)
 {
+	SortState  *node = castNode(SortState, pstate);
 	EState	   *estate;
 	ScanDirection dir;
 	Tuplesortstate *tuplesortstate;
@@ -165,6 +166,7 @@ ExecInitSort(Sort *node, EState *estate, int eflags)
 	sortstate = makeNode(SortState);
 	sortstate->ss.ps.plan = (Plan *) node;
 	sortstate->ss.ps.state = estate;
+	sortstate->ss.ps.ExecProcNode = ExecSort;
 
 	/*
 	 * We must have random access to the sort output to do backward scan or

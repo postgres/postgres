@@ -225,13 +225,30 @@ extern void EvalPlanQualBegin(EPQState *epqstate, EState *parentestate);
 extern void EvalPlanQualEnd(EPQState *epqstate);
 
 /*
- * prototypes from functions in execProcnode.c
+ * functions in execProcnode.c
  */
 extern PlanState *ExecInitNode(Plan *node, EState *estate, int eflags);
-extern TupleTableSlot *ExecProcNode(PlanState *node);
 extern Node *MultiExecProcNode(PlanState *node);
 extern void ExecEndNode(PlanState *node);
 extern bool ExecShutdownNode(PlanState *node);
+
+
+/* ----------------------------------------------------------------
+ *		ExecProcNode
+ *
+ *		Execute the given node to return a(nother) tuple.
+ * ----------------------------------------------------------------
+ */
+#ifndef FRONTEND
+static inline TupleTableSlot *
+ExecProcNode(PlanState *node)
+{
+	if (node->chgParam != NULL) /* something changed? */
+		ExecReScan(node);		/* let ReScan handle this */
+
+	return node->ExecProcNode(node);
+}
+#endif
 
 /*
  * prototypes from functions in execExpr.c

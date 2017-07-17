@@ -50,6 +50,7 @@
  */
 typedef int32 SlotNumber;
 
+static TupleTableSlot *ExecMergeAppend(PlanState *pstate);
 static int	heap_compare_slots(Datum a, Datum b, void *arg);
 
 
@@ -89,6 +90,7 @@ ExecInitMergeAppend(MergeAppend *node, EState *estate, int eflags)
 	 */
 	mergestate->ps.plan = (Plan *) node;
 	mergestate->ps.state = estate;
+	mergestate->ps.ExecProcNode = ExecMergeAppend;
 	mergestate->mergeplans = mergeplanstates;
 	mergestate->ms_nplans = nplans;
 
@@ -169,9 +171,10 @@ ExecInitMergeAppend(MergeAppend *node, EState *estate, int eflags)
  *		Handles iteration over multiple subplans.
  * ----------------------------------------------------------------
  */
-TupleTableSlot *
-ExecMergeAppend(MergeAppendState *node)
+static TupleTableSlot *
+ExecMergeAppend(PlanState *pstate)
 {
+	MergeAppendState *node = castNode(MergeAppendState, pstate);
 	TupleTableSlot *result;
 	SlotNumber	i;
 

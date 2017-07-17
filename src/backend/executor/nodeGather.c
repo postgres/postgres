@@ -43,6 +43,7 @@
 #include "utils/rel.h"
 
 
+static TupleTableSlot *ExecGather(PlanState *pstate);
 static TupleTableSlot *gather_getnext(GatherState *gatherstate);
 static HeapTuple gather_readnext(GatherState *gatherstate);
 static void ExecShutdownGatherWorkers(GatherState *node);
@@ -69,6 +70,7 @@ ExecInitGather(Gather *node, EState *estate, int eflags)
 	gatherstate = makeNode(GatherState);
 	gatherstate->ps.plan = (Plan *) node;
 	gatherstate->ps.state = estate;
+	gatherstate->ps.ExecProcNode = ExecGather;
 	gatherstate->need_to_scan_locally = !node->single_copy;
 
 	/*
@@ -120,9 +122,10 @@ ExecInitGather(Gather *node, EState *estate, int eflags)
  *		the next qualifying tuple.
  * ----------------------------------------------------------------
  */
-TupleTableSlot *
-ExecGather(GatherState *node)
+static TupleTableSlot *
+ExecGather(PlanState *pstate)
 {
+	GatherState *node = castNode(GatherState, pstate);
 	TupleTableSlot *fslot = node->funnel_slot;
 	int			i;
 	TupleTableSlot *slot;

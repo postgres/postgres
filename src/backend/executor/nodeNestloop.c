@@ -57,9 +57,10 @@
  *			   are prepared to return the first tuple.
  * ----------------------------------------------------------------
  */
-TupleTableSlot *
-ExecNestLoop(NestLoopState *node)
+static TupleTableSlot *
+ExecNestLoop(PlanState *pstate)
 {
+	NestLoopState *node = castNode(NestLoopState, pstate);
 	NestLoop   *nl;
 	PlanState  *innerPlan;
 	PlanState  *outerPlan;
@@ -275,6 +276,7 @@ ExecInitNestLoop(NestLoop *node, EState *estate, int eflags)
 	nlstate = makeNode(NestLoopState);
 	nlstate->js.ps.plan = (Plan *) node;
 	nlstate->js.ps.state = estate;
+	nlstate->js.ps.ExecProcNode = ExecNestLoop;
 
 	/*
 	 * Miscellaneous initialization

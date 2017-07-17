@@ -37,9 +37,10 @@ static void pass_down_bound(LimitState *node, PlanState *child_node);
  *		filtering on the stream of tuples returned by a subplan.
  * ----------------------------------------------------------------
  */
-TupleTableSlot *				/* return: a tuple or NULL */
-ExecLimit(LimitState *node)
+static TupleTableSlot *			/* return: a tuple or NULL */
+ExecLimit(PlanState *pstate)
 {
+	LimitState *node = castNode(LimitState, pstate);
 	ScanDirection direction;
 	TupleTableSlot *slot;
 	PlanState  *outerPlan;
@@ -378,6 +379,7 @@ ExecInitLimit(Limit *node, EState *estate, int eflags)
 	limitstate = makeNode(LimitState);
 	limitstate->ps.plan = (Plan *) node;
 	limitstate->ps.state = estate;
+	limitstate->ps.ExecProcNode = ExecLimit;
 
 	limitstate->lstate = LIMIT_INITIAL;
 

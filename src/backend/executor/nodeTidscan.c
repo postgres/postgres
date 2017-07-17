@@ -445,9 +445,11 @@ TidRecheck(TidScanState *node, TupleTableSlot *slot)
  *		  -- tidPtr is -1.
  * ----------------------------------------------------------------
  */
-TupleTableSlot *
-ExecTidScan(TidScanState *node)
+static TupleTableSlot *
+ExecTidScan(PlanState *pstate)
 {
+	TidScanState *node = castNode(TidScanState, pstate);
+
 	return ExecScan(&node->ss,
 					(ExecScanAccessMtd) TidNext,
 					(ExecScanRecheckMtd) TidRecheck);
@@ -519,6 +521,7 @@ ExecInitTidScan(TidScan *node, EState *estate, int eflags)
 	tidstate = makeNode(TidScanState);
 	tidstate->ss.ps.plan = (Plan *) node;
 	tidstate->ss.ps.state = estate;
+	tidstate->ss.ps.ExecProcNode = ExecTidScan;
 
 	/*
 	 * Miscellaneous initialization

@@ -39,9 +39,10 @@ static TupleTableSlot *ExecProjectSRF(ProjectSetState *node, bool continuing);
  *		returning functions).
  * ----------------------------------------------------------------
  */
-TupleTableSlot *
-ExecProjectSet(ProjectSetState *node)
+static TupleTableSlot *
+ExecProjectSet(PlanState *pstate)
 {
+	ProjectSetState *node = castNode(ProjectSetState, pstate);
 	TupleTableSlot *outerTupleSlot;
 	TupleTableSlot *resultSlot;
 	PlanState  *outerPlan;
@@ -215,6 +216,7 @@ ExecInitProjectSet(ProjectSet *node, EState *estate, int eflags)
 	state = makeNode(ProjectSetState);
 	state->ps.plan = (Plan *) node;
 	state->ps.state = estate;
+	state->ps.ExecProcNode = ExecProjectSet;
 
 	state->pending_srf_tuples = false;
 

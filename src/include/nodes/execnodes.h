@@ -818,6 +818,18 @@ typedef struct DomainConstraintState
  * ----------------------------------------------------------------
  */
 
+struct PlanState;
+
+/* ----------------
+ *	 ExecProcNodeMtd
+ *
+ * This is the method called by ExecProcNode to return the next tuple
+ * from an executor node.  It returns NULL, or an empty TupleTableSlot,
+ * if no more tuples are available.
+ * ----------------
+ */
+typedef TupleTableSlot *(*ExecProcNodeMtd) (struct PlanState *pstate);
+
 /* ----------------
  *		PlanState node
  *
@@ -834,6 +846,10 @@ typedef struct PlanState
 	EState	   *state;			/* at execution time, states of individual
 								 * nodes point to one EState for the whole
 								 * top-level plan */
+
+	ExecProcNodeMtd ExecProcNode;	/* function to return next tuple */
+	ExecProcNodeMtd ExecProcNodeReal;	/* actual function, if above is a
+										 * wrapper */
 
 	Instrumentation *instrument;	/* Optional runtime stats for this node */
 	WorkerInstrumentation *worker_instrument;	/* per-worker instrumentation */

@@ -21,7 +21,6 @@
  */
 extern CustomScanState *ExecInitCustomScan(CustomScan *custom_scan,
 				   EState *estate, int eflags);
-extern TupleTableSlot *ExecCustomScan(CustomScanState *node);
 extern void ExecEndCustomScan(CustomScanState *node);
 
 extern void ExecReScanCustomScan(CustomScanState *node);

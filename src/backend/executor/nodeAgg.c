@@ -2099,9 +2099,10 @@ lookup_hash_entries(AggState *aggstate)
  *	  stored in the expression context to be used when ExecProject evaluates
  *	  the result tuple.
  */
-TupleTableSlot *
-ExecAgg(AggState *node)
+static TupleTableSlot *
+ExecAgg(PlanState *pstate)
 {
+	AggState   *node = castNode(AggState, pstate);
 	TupleTableSlot *result = NULL;
 
 	CHECK_FOR_INTERRUPTS();
@@ -2695,6 +2696,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 	aggstate = makeNode(AggState);
 	aggstate->ss.ps.plan = (Plan *) node;
 	aggstate->ss.ps.state = estate;
+	aggstate->ss.ps.ExecProcNode = ExecAgg;
 
 	aggstate->aggs = NIL;
 	aggstate->numaggs = 0;

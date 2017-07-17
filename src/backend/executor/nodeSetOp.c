@@ -180,9 +180,10 @@ set_output_count(SetOpState *setopstate, SetOpStatePerGroup pergroup)
  *		ExecSetOp
  * ----------------------------------------------------------------
  */
-TupleTableSlot *				/* return: a tuple or NULL */
-ExecSetOp(SetOpState *node)
+static TupleTableSlot *			/* return: a tuple or NULL */
+ExecSetOp(PlanState *pstate)
 {
+	SetOpState *node = castNode(SetOpState, pstate);
 	SetOp	   *plannode = (SetOp *) node->ps.plan;
 	TupleTableSlot *resultTupleSlot = node->ps.ps_ResultTupleSlot;
 
@@ -485,6 +486,7 @@ ExecInitSetOp(SetOp *node, EState *estate, int eflags)
 	setopstate = makeNode(SetOpState);
 	setopstate->ps.plan = (Plan *) node;
 	setopstate->ps.state = estate;
+	setopstate->ps.ExecProcNode = ExecSetOp;
 
 	setopstate->eqfunctions = NULL;
 	setopstate->hashfunctions = NULL;

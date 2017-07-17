@@ -36,9 +36,10 @@
  *		ExecLockRows
  * ----------------------------------------------------------------
  */
-TupleTableSlot *				/* return: a tuple or NULL */
-ExecLockRows(LockRowsState *node)
+static TupleTableSlot *			/* return: a tuple or NULL */
+ExecLockRows(PlanState *pstate)
 {
+	LockRowsState *node = castNode(LockRowsState, pstate);
 	TupleTableSlot *slot;
 	EState	   *estate;
 	PlanState  *outerPlan;
@@ -364,6 +365,7 @@ ExecInitLockRows(LockRows *node, EState *estate, int eflags)
 	lrstate = makeNode(LockRowsState);
 	lrstate->ps.plan = (Plan *) node;
 	lrstate->ps.state = estate;
+	lrstate->ps.ExecProcNode = ExecLockRows;
 
 	/*
 	 * Miscellaneous initialization

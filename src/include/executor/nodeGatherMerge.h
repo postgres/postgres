@@ -19,7 +19,6 @@
 extern GatherMergeState *ExecInitGatherMerge(GatherMerge *node,
 					EState *estate,
 					int eflags);
-extern TupleTableSlot *ExecGatherMerge(GatherMergeState *node);
 extern void ExecEndGatherMerge(GatherMergeState *node);
 extern void ExecReScanGatherMerge(GatherMergeState *node);
 extern void ExecShutdownGatherMerge(GatherMergeState *node);

@@ -17,15 +17,10 @@
  *-------------------------------------------------------------------------
  */
 /*
- *	 INTERFACE ROUTINES
- *		ExecInitNode	-		initialize a plan node and its subplans
- *		ExecProcNode	-		get a tuple by executing the plan node
- *		ExecEndNode		-		shut down a plan node and its subplans
- *
  *	 NOTES
  *		This used to be three files.  It is now all combined into
- *		one file so that it is easier to keep ExecInitNode, ExecProcNode,
- *		and ExecEndNode in sync when new nodes are added.
+ *		one file so that it is easier to keep the dispatch routines
+ *		in sync when new nodes are added.
  *
  *	 EXAMPLE
  *		Suppose we want the age of the manager of the shoe department and
@@ -122,6 +117,10 @@
 #include "miscadmin.h"
 
 
+static TupleTableSlot *ExecProcNodeFirst(PlanState *node);
+static TupleTableSlot *ExecProcNodeInstr(PlanState *node);
+
+
 /* ------------------------------------------------------------------------
  *		ExecInitNode
  *
@@ -148,6 +147,13 @@ ExecInitNode(Plan *node, EState *estate, int eflags)
 	 */
 	if (node == NULL)
 		return NULL;
+
+	/*
+	 * Make sure there's enough stack available. Need to check here, in
+	 * addition to ExecProcNode() (via ExecProcNodeFirst()), to ensure the
+	 * stack isn't overrun while initializing the node tree.
+	 */
+	check_stack_depth();
 
 	switch (nodeTag(node))
 	{
@@ -365,6 +371,13 @@ ExecInitNode(Plan *node, EState *estate, int eflags)
 	}
 
 	/*
+	 * Add a wrapper around the ExecProcNode callback that checks stack depth
+	 * during the first execution.
+	 */
+	result->ExecProcNodeReal = result->ExecProcNode;
+	result->ExecProcNode = ExecProcNodeFirst;
+
+	/*
 	 * Initialize any initPlans present in this node.  The planner put them in
 	 * a separate list for us.
 	 */
@@ -388,195 +401,51 @@ ExecInitNode(Plan *node, EState *estate, int eflags)
 }
 
 
-/* ----------------------------------------------------------------
- *		ExecProcNode
- *
- *		Execute the given node to return a(nother) tuple.
- * ----------------------------------------------------------------
+/*
+ * ExecProcNode wrapper that performs some one-time checks, before calling
+ * the relevant node method (possibly via an instrumentation wrapper).
  */
-TupleTableSlot *
-ExecProcNode(PlanState *node)
+static TupleTableSlot *
+ExecProcNodeFirst(PlanState *node)
+{
+	/*
+	 * Perform stack depth check during the first execution of the node.  We
+	 * only do so the first time round because it turns out to not be cheap on
+	 * some common architectures (eg. x86).  This relies on the assumption that
+	 * ExecProcNode calls for a given plan node will always be made at roughly
+	 * the same stack depth.
+	 */
+	check_stack_depth();
+
+	/*
+	 * If instrumentation is required, change the wrapper to one that just
+	 * does instrumentation.  Otherwise we can dispense with all wrappers and
+	 * have ExecProcNode() directly call the relevant function from now on.
+	 */
+	if (node->instrument)
+		node->ExecProcNode = ExecProcNodeInstr;
+	else
+		node->ExecProcNode = node->ExecProcNodeReal;
+
+	return node->ExecProcNode(node);
+}
+
+
+/*
+ * ExecProcNode wrapper that performs instrumentation calls.  By keeping
+ * this a separate function, we avoid overhead in the normal case where
+ * no instrumentation is wanted.
+ */
+static TupleTableSlot *
+ExecProcNodeInstr(PlanState *node)
 {
 	TupleTableSlot *result;
 
-	if (node->chgParam != NULL) /* something changed */
-		ExecReScan(node);		/* let ReScan handle this */
+	InstrStartNode(node->instrument);
 
-	if (node->instrument)
-		InstrStartNode(node->instrument);
+	result = node->ExecProcNodeReal(node);
 
-	switch (nodeTag(node))
-	{
-			/*
-			 * control nodes
-			 */
-		case T_ResultState:
-			result = ExecResult((ResultState *) node);
-			break;
-
-		case T_ProjectSetState:
-			result = ExecProjectSet((ProjectSetState *) node);
-			break;
-
-		case T_ModifyTableState:
-			result = ExecModifyTable((ModifyTableState *) node);
-			break;
-
-		case T_AppendState:
-			result = ExecAppend((AppendState *) node);
-			break;
-
-		case T_MergeAppendState:
-			result = ExecMergeAppend((MergeAppendState *) node);
-			break;
-
-		case T_RecursiveUnionState:
-			result = ExecRecursiveUnion((RecursiveUnionState *) node);
-			break;
-
-			/* BitmapAndState does not yield tuples */
-
-			/* BitmapOrState does not yield tuples */
-
-			/*
-			 * scan nodes
-			 */
-		case T_SeqScanState:
-			result = ExecSeqScan((SeqScanState *) node);
-			break;
-
-		case T_SampleScanState:
-			result = ExecSampleScan((SampleScanState *) node);
-			break;
-
-		case T_IndexScanState:
-			result = ExecIndexScan((IndexScanState *) node);
-			break;
-
-		case T_IndexOnlyScanState:
-			result = ExecIndexOnlyScan((IndexOnlyScanState *) node);
-			break;
-
-			/* BitmapIndexScanState does not yield tuples */
-
-		case T_BitmapHeapScanState:
-			result = ExecBitmapHeapScan((BitmapHeapScanState *) node);
-			break;
-
-		case T_TidScanState:
-			result = ExecTidScan((TidScanState *) node);
-			break;
-
-		case T_SubqueryScanState:
-			result = ExecSubqueryScan((SubqueryScanState *) node);
-			break;
-
-		case T_FunctionScanState:
-			result = ExecFunctionScan((FunctionScanState *) node);
-			break;
-
-		case T_TableFuncScanState:
-			result = ExecTableFuncScan((TableFuncScanState *) node);
-			break;
-
-		case T_ValuesScanState:
-			result = ExecValuesScan((ValuesScanState *) node);
-			break;
-
-		case T_CteScanState:
-			result = ExecCteScan((CteScanState *) node);
-			break;
-
-		case T_NamedTuplestoreScanState:
-			result = ExecNamedTuplestoreScan((NamedTuplestoreScanState *) node);
-			break;
-
-		case T_WorkTableScanState:
-			result = ExecWorkTableScan((WorkTableScanState *) node);
-			break;
-
-		case T_ForeignScanState:
-			result = ExecForeignScan((ForeignScanState *) node);
-			break;
-
-		case T_CustomScanState:
-			result = ExecCustomScan((CustomScanState *) node);
-			break;
-
-			/*
-			 * join nodes
-			 */
-		case T_NestLoopState:
-			result = ExecNestLoop((NestLoopState *) node);
-			break;
-
-		case T_MergeJoinState:
-			result = ExecMergeJoin((MergeJoinState *) node);
-			break;
-
-		case T_HashJoinState:
-			result = ExecHashJoin((HashJoinState *) node);
-			break;
-
-			/*
-			 * materialization nodes
-			 */
-		case T_MaterialState:
-			result = ExecMaterial((MaterialState *) node);
-			break;
-
-		case T_SortState:
-			result = ExecSort((SortState *) node);
-			break;
-
-		case T_GroupState:
-			result = ExecGroup((GroupState *) node);
-			break;
-
-		case T_AggState:
-			result = ExecAgg((AggState *) node);
-			break;
-
-		case T_WindowAggState:
-			result = ExecWindowAgg((WindowAggState *) node);
-			break;
-
-		case T_UniqueState:
-			result = ExecUnique((UniqueState *) node);
-			break;
-
-		case T_GatherState:
-			result = ExecGather((GatherState *) node);
-			break;
-
-		case T_GatherMergeState:
-			result = ExecGatherMerge((GatherMergeState *) node);
-			break;
-
-		case T_HashState:
-			result = ExecHash((HashState *) node);
-			break;
-
-		case T_SetOpState:
-			result = ExecSetOp((SetOpState *) node);
-			break;
-
-		case T_LockRowsState:
-			result = ExecLockRows((LockRowsState *) node);
-			break;
-
-		case T_LimitState:
-			result = ExecLimit((LimitState *) node);
-			break;
-
-		default:
-			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(node));
-			result = NULL;
-			break;
-	}
-
-	if (node->instrument)
-		InstrStopNode(node->instrument, TupIsNull(result) ? 0.0 : 1.0);
+	InstrStopNode(node->instrument, TupIsNull(result) ? 0.0 : 1.0);
 
 	return result;
 }
@@ -599,6 +468,8 @@ Node *
 MultiExecProcNode(PlanState *node)
 {
 	Node	   *result;
+
+	check_stack_depth();
 
 	CHECK_FOR_INTERRUPTS();
 
@@ -656,6 +527,13 @@ ExecEndNode(PlanState *node)
 	 */
 	if (node == NULL)
 		return;
+
+	/*
+	 * Make sure there's enough stack available. Need to check here, in
+	 * addition to ExecProcNode() (via ExecProcNodeFirst()), because it's not
+	 * guaranteed that ExecProcNode() is reached for all nodes.
+	 */
+	check_stack_depth();
 
 	if (node->chgParam != NULL)
 	{
@@ -854,6 +732,8 @@ ExecShutdownNode(PlanState *node)
 {
 	if (node == NULL)
 		return false;
+
+	check_stack_depth();
 
 	planstate_tree_walker(node, ExecShutdownNode, NULL);
 

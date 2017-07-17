@@ -43,9 +43,10 @@
  *		ExecUnique
  * ----------------------------------------------------------------
  */
-TupleTableSlot *				/* return: a tuple or NULL */
-ExecUnique(UniqueState *node)
+static TupleTableSlot *			/* return: a tuple or NULL */
+ExecUnique(PlanState *pstate)
 {
+	UniqueState *node = castNode(UniqueState, pstate);
 	Unique	   *plannode = (Unique *) node->ps.plan;
 	TupleTableSlot *resultTupleSlot;
 	TupleTableSlot *slot;
@@ -125,6 +126,7 @@ ExecInitUnique(Unique *node, EState *estate, int eflags)
 	uniquestate = makeNode(UniqueState);
 	uniquestate->ps.plan = (Plan *) node;
 	uniquestate->ps.state = estate;
+	uniquestate->ps.ExecProcNode = ExecUnique;
 
 	/*
 	 * Miscellaneous initialization

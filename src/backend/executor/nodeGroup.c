@@ -32,9 +32,10 @@
  *
  *		Return one tuple for each group of matching input tuples.
  */
-TupleTableSlot *
-ExecGroup(GroupState *node)
+static TupleTableSlot *
+ExecGroup(PlanState *pstate)
 {
+	GroupState *node = castNode(GroupState, pstate);
 	ExprContext *econtext;
 	int			numCols;
 	AttrNumber *grpColIdx;
@@ -175,6 +176,7 @@ ExecInitGroup(Group *node, EState *estate, int eflags)
 	grpstate = makeNode(GroupState);
 	grpstate->ss.ps.plan = (Plan *) node;
 	grpstate->ss.ps.state = estate;
+	grpstate->ss.ps.ExecProcNode = ExecGroup;
 	grpstate->grp_done = FALSE;
 
 	/*

@@ -665,9 +665,11 @@ BitmapHeapRecheck(BitmapHeapScanState *node, TupleTableSlot *slot)
  *		ExecBitmapHeapScan(node)
  * ----------------------------------------------------------------
  */
-TupleTableSlot *
-ExecBitmapHeapScan(BitmapHeapScanState *node)
+static TupleTableSlot *
+ExecBitmapHeapScan(PlanState *pstate)
 {
+	BitmapHeapScanState *node = castNode(BitmapHeapScanState, pstate);
+
 	return ExecScan(&node->ss,
 					(ExecScanAccessMtd) BitmapHeapNext,
 					(ExecScanRecheckMtd) BitmapHeapRecheck);
@@ -815,6 +817,7 @@ ExecInitBitmapHeapScan(BitmapHeapScan *node, EState *estate, int eflags)
 	scanstate = makeNode(BitmapHeapScanState);
 	scanstate->ss.ps.plan = (Plan *) node;
 	scanstate->ss.ps.state = estate;
+	scanstate->ss.ps.ExecProcNode = ExecBitmapHeapScan;
 
 	scanstate->tbm = NULL;
 	scanstate->tbmiterator = NULL;

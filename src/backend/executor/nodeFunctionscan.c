@@ -262,9 +262,11 @@ FunctionRecheck(FunctionScanState *node, TupleTableSlot *slot)
  *		access method functions.
  * ----------------------------------------------------------------
  */
-TupleTableSlot *
-ExecFunctionScan(FunctionScanState *node)
+static TupleTableSlot *
+ExecFunctionScan(PlanState *pstate)
 {
+	FunctionScanState *node = castNode(FunctionScanState, pstate);
+
 	return ExecScan(&node->ss,
 					(ExecScanAccessMtd) FunctionNext,
 					(ExecScanRecheckMtd) FunctionRecheck);
@@ -299,6 +301,7 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, int eflags)
 	scanstate = makeNode(FunctionScanState);
 	scanstate->ss.ps.plan = (Plan *) node;
 	scanstate->ss.ps.state = estate;
+	scanstate->ss.ps.ExecProcNode = ExecFunctionScan;
 	scanstate->eflags = eflags;
 
 	/*

@@ -79,9 +79,11 @@ SubqueryRecheck(SubqueryScanState *node, TupleTableSlot *slot)
  *		access method functions.
  * ----------------------------------------------------------------
  */
-TupleTableSlot *
-ExecSubqueryScan(SubqueryScanState *node)
+static TupleTableSlot *
+ExecSubqueryScan(PlanState *pstate)
 {
+	SubqueryScanState *node = castNode(SubqueryScanState, pstate);
+
 	return ExecScan(&node->ss,
 					(ExecScanAccessMtd) SubqueryNext,
 					(ExecScanRecheckMtd) SubqueryRecheck);
@@ -109,6 +111,7 @@ ExecInitSubqueryScan(SubqueryScan *node, EState *estate, int eflags)
 	subquerystate = makeNode(SubqueryScanState);
 	subquerystate->ss.ps.plan = (Plan *) node;
 	subquerystate->ss.ps.state = estate;
+	subquerystate->ss.ps.ExecProcNode = ExecSubqueryScan;
 
 	/*
 	 * Miscellaneous initialization

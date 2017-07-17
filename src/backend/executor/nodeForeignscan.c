@@ -113,10 +113,12 @@ ForeignRecheck(ForeignScanState *node, TupleTableSlot *slot)
  *		access method functions.
  * ----------------------------------------------------------------
  */
-TupleTableSlot *
-ExecForeignScan(ForeignScanState *node)
+static TupleTableSlot *
+ExecForeignScan(PlanState *pstate)
 {
-	return ExecScan((ScanState *) node,
+	ForeignScanState *node = castNode(ForeignScanState, pstate);
+
+	return ExecScan(&node->ss,
 					(ExecScanAccessMtd) ForeignNext,
 					(ExecScanRecheckMtd) ForeignRecheck);
 }
@@ -144,6 +146,7 @@ ExecInitForeignScan(ForeignScan *node, EState *estate, int eflags)
 	scanstate = makeNode(ForeignScanState);
 	scanstate->ss.ps.plan = (Plan *) node;
 	scanstate->ss.ps.state = estate;
+	scanstate->ss.ps.ExecProcNode = ExecForeignScan;
 
 	/*
 	 * Miscellaneous initialization

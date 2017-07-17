@@ -18,7 +18,6 @@
 #include "nodes/execnodes.h"
 
 extern ForeignScanState *ExecInitForeignScan(ForeignScan *node, EState *estate, int eflags);
-extern TupleTableSlot *ExecForeignScan(ForeignScanState *node);
 extern void ExecEndForeignScan(ForeignScanState *node);
 extern void ExecReScanForeignScan(ForeignScanState *node);
 

@@ -596,9 +596,10 @@ ExecMergeTupleDump(MergeJoinState *mergestate)
  *		ExecMergeJoin
  * ----------------------------------------------------------------
  */
-TupleTableSlot *
-ExecMergeJoin(MergeJoinState *node)
+static TupleTableSlot *
+ExecMergeJoin(PlanState *pstate)
 {
+	MergeJoinState *node = castNode(MergeJoinState, pstate);
 	ExprState  *joinqual;
 	ExprState  *otherqual;
 	bool		qualResult;
@@ -1448,6 +1449,7 @@ ExecInitMergeJoin(MergeJoin *node, EState *estate, int eflags)
 	mergestate = makeNode(MergeJoinState);
 	mergestate->js.ps.plan = (Plan *) node;
 	mergestate->js.ps.state = estate;
+	mergestate->js.ps.ExecProcNode = ExecMergeJoin;
 
 	/*
 	 * Miscellaneous initialization

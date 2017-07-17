@@ -17,7 +17,6 @@
 #include "nodes/execnodes.h"
 
 extern AggState *ExecInitAgg(Agg *node, EState *estate, int eflags);
-extern TupleTableSlot *ExecAgg(AggState *node);
 extern void ExecEndAgg(AggState *node);
 extern void ExecReScanAgg(AggState *node);
 

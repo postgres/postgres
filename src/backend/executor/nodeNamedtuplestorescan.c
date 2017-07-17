@@ -63,9 +63,11 @@ NamedTuplestoreScanRecheck(NamedTuplestoreScanState *node, TupleTableSlot *slot)
  *		access method functions.
  * ----------------------------------------------------------------
  */
-TupleTableSlot *
-ExecNamedTuplestoreScan(NamedTuplestoreScanState *node)
+static TupleTableSlot *
+ExecNamedTuplestoreScan(PlanState *pstate)
 {
+	NamedTuplestoreScanState *node = castNode(NamedTuplestoreScanState, pstate);
+
 	return ExecScan(&node->ss,
 					(ExecScanAccessMtd) NamedTuplestoreScanNext,
 					(ExecScanRecheckMtd) NamedTuplestoreScanRecheck);
@@ -97,6 +99,7 @@ ExecInitNamedTuplestoreScan(NamedTuplestoreScan *node, EState *estate, int eflag
 	scanstate = makeNode(NamedTuplestoreScanState);
 	scanstate->ss.ps.plan = (Plan *) node;
 	scanstate->ss.ps.state = estate;
+	scanstate->ss.ps.ExecProcNode = ExecNamedTuplestoreScan;
 
 	enr = get_ENR(estate->es_queryEnv, node->enrname);
 	if (!enr)

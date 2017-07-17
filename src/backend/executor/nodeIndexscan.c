@@ -542,9 +542,11 @@ reorderqueue_pop(IndexScanState *node)
  *		ExecIndexScan(node)
  * ----------------------------------------------------------------
  */
-TupleTableSlot *
-ExecIndexScan(IndexScanState *node)
+static TupleTableSlot *
+ExecIndexScan(PlanState *pstate)
 {
+	IndexScanState *node = castNode(IndexScanState, pstate);
+
 	/*
 	 * If we have runtime keys and they've not already been set up, do it now.
 	 */
@@ -910,6 +912,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate, int eflags)
 	indexstate = makeNode(IndexScanState);
 	indexstate->ss.ps.plan = (Plan *) node;
 	indexstate->ss.ps.state = estate;
+	indexstate->ss.ps.ExecProcNode = ExecIndexScan;
 
 	/*
 	 * Miscellaneous initialization

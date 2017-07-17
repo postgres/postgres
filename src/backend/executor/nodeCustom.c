@@ -21,6 +21,10 @@
 #include "utils/memutils.h"
 #include "utils/rel.h"
 
+
+static TupleTableSlot *ExecCustomScan(PlanState *pstate);
+
+
 CustomScanState *
 ExecInitCustomScan(CustomScan *cscan, EState *estate, int eflags)
 {
@@ -45,6 +49,7 @@ ExecInitCustomScan(CustomScan *cscan, EState *estate, int eflags)
 	/* fill up fields of ScanState */
 	css->ss.ps.plan = &cscan->scan.plan;
 	css->ss.ps.state = estate;
+	css->ss.ps.ExecProcNode = ExecCustomScan;
 
 	/* create expression context for node */
 	ExecAssignExprContext(estate, &css->ss.ps);
@@ -102,9 +107,11 @@ ExecInitCustomScan(CustomScan *cscan, EState *estate, int eflags)
 	return css;
 }
 
-TupleTableSlot *
-ExecCustomScan(CustomScanState *node)
+static TupleTableSlot *
+ExecCustomScan(PlanState *pstate)
 {
+	CustomScanState *node = castNode(CustomScanState, pstate);
+
 	CHECK_FOR_INTERRUPTS();
 
 	Assert(node->methods->ExecCustomScan != NULL);
