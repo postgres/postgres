@@ -345,11 +345,19 @@ _hash_init(Relation rel, double num_tuples, ForkNumber forkNum)
 	int32		ffactor;
 	uint32		num_buckets;
 	uint32		i;
+	bool		use_wal;
 
 	/* safety check */
 	if (RelationGetNumberOfBlocksInFork(rel, forkNum) != 0)
 		elog(ERROR, "cannot initialize non-empty hash index \"%s\"",
 			 RelationGetRelationName(rel));
+
+	/*
+	 * WAL log creation of pages if the relation is persistent, or this is the
+	 * init fork.  Init forks for unlogged relations always need to be WAL
+	 * logged.
+	 */
+	use_wal = RelationNeedsWAL(rel) || forkNum == INIT_FORKNUM;
 
 	/*
 	 * Determine the target fill factor (in tuples per bucket) for this index.
@@ -384,7 +392,7 @@ _hash_init(Relation rel, double num_tuples, ForkNumber forkNum)
 	metap = HashPageGetMeta(pg);
 
 	/* XLOG stuff */
-	if (RelationNeedsWAL(rel))
+	if (use_wal)
 	{
 		xl_hash_init_meta_page xlrec;
 		XLogRecPtr	recptr;
@@ -427,11 +435,12 @@ _hash_init(Relation rel, double num_tuples, ForkNumber forkNum)
 		_hash_initbuf(buf, metap->hashm_maxbucket, i, LH_BUCKET_PAGE, false);
 		MarkBufferDirty(buf);
 
-		log_newpage(&rel->rd_node,
-					forkNum,
-					blkno,
-					BufferGetPage(buf),
-					true);
+		if (use_wal)
+			log_newpage(&rel->rd_node,
+						forkNum,
+						blkno,
+						BufferGetPage(buf),
+						true);
 		_hash_relbuf(rel, buf);
 	}
 
@@ -459,7 +468,7 @@ _hash_init(Relation rel, double num_tuples, ForkNumber forkNum)
 	MarkBufferDirty(metabuf);
 
 	/* XLOG stuff */
-	if (RelationNeedsWAL(rel))
+	if (use_wal)
 	{
 		xl_hash_init_bitmap_page xlrec;
 		XLogRecPtr	recptr;
