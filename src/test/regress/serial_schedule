@@ -115,12 +115,11 @@ test: matview
 test: lock
 test: replica_identity
 test: rowsecurity
-test: password
 test: object_address
 test: tablesample
 test: groupingsets
 test: drop_operator
-test: large_object
+test: password
 test: alter_generic
 test: alter_operator
 test: misc
