@@ -1249,7 +1249,7 @@ sub poll_query_until
 		}
 
 		# Wait 0.1 second before retrying.
-		usleep(100000);
+		usleep(100_000);
 
 		$attempts++;
 	}
