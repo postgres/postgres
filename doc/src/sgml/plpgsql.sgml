@@ -180,8 +180,26 @@
   <title>Structure of <application>PL/pgSQL</application></title>
 
   <para>
+   Functions written in <application>PL/pgSQL</application> are defined
+   to the server by executing <xref linkend="sql-createfunction"> commands.
+   Such a command would normally look like, say,
+<programlisting>
+CREATE FUNCTION somefunc(integer, text) RETURNS integer
+AS '<replaceable>function body text</>'
+LANGUAGE plpgsql;
+</programlisting>
+   The function body is simply a string literal so far as <command>CREATE
+   FUNCTION</> is concerned.  It is often helpful to use dollar quoting
+   (see <xref linkend="sql-syntax-dollar-quoting">) to write the function
+   body, rather than the normal single quote syntax.  Without dollar quoting,
+   any single quotes or backslashes in the function body must be escaped by
+   doubling them.  Almost all the examples in this chapter use dollar-quoted
+   literals for their function bodies.
+  </para>
+
+  <para>
    <application>PL/pgSQL</application> is a block-structured language.
-   The complete text of a function definition must be a
+   The complete text of a function body must be a
    <firstterm>block</>. A block is defined as:
 
 <synopsis>
