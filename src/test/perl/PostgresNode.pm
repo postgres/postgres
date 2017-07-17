@@ -93,6 +93,7 @@ use RecursiveCopy;
 use Socket;
 use Test::More;
 use TestLib ();
+use Time::HiRes qw(usleep);
 use Scalar::Util qw(blessed);
 
 our @EXPORT = qw(
@@ -1248,7 +1249,7 @@ sub poll_query_until
 		}
 
 		# Wait 0.1 second before retrying.
-		select undef, undef, undef, 0.1;
+		usleep(100000);
 
 		$attempts++;
 	}
