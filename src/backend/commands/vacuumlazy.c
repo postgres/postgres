@@ -639,8 +639,7 @@ lazy_scan_heap(Relation onerel, int options, LVRelStats *vacrelstats,
 
 			/*
 			 * We know we can't skip the current block.  But set up
-			 * skipping_all_visible_blocks to do the right thing at the
-			 * following blocks.
+			 * skipping_blocks to do the right thing at the following blocks.
 			 */
 			if (next_unskippable_block - blkno > SKIP_PAGES_THRESHOLD)
 				skipping_blocks = true;
