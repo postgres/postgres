@@ -451,7 +451,6 @@ sub mkvcbuild
 			'imath.c');
 	}
 	$pgcrypto->AddReference($postgres);
-	$pgcrypto->AddReference($libpgcommon);
 	$pgcrypto->AddLibrary('ws2_32.lib');
 	my $mf = Project::read_file('contrib/pgcrypto/Makefile');
 	GenerateContribSqlFiles('pgcrypto', $mf);
