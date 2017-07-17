@@ -170,4 +170,11 @@ SELECT pageno, data FROM pg_largeobject WHERE loid = :newloid;
 SELECT lo_unlink(loid) FROM lotest_stash_values;
 \lo_unlink :newloid
 
-TRUNCATE lotest_stash_values;
+-- Create one more object that we leave behind for testing pg_dump/pg_upgrade;
+-- this one intentionally has an OID in the system range
+SELECT lo_create(3001);
+
+COMMENT ON LARGE OBJECT 3001 IS 'testing comments';
+
+-- Clean up
+DROP TABLE lotest_stash_values;
