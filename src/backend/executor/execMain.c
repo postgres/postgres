@@ -3213,6 +3213,7 @@ EvalPlanQualEnd(EPQState *epqstate)
  */
 void
 ExecSetupPartitionTupleRouting(Relation rel,
+							   Index resultRTindex,
 							   PartitionDispatch **pd,
 							   ResultRelInfo **partitions,
 							   TupleConversionMap ***tup_conv_maps,
@@ -3271,7 +3272,7 @@ ExecSetupPartitionTupleRouting(Relation rel,
 
 		InitResultRelInfo(leaf_part_rri,
 						  partrel,
-						  1,	/* dummy */
+						  resultRTindex,
 						  rel,
 						  0);
 

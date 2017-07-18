@@ -1914,6 +1914,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 					num_partitions;
 
 		ExecSetupPartitionTupleRouting(rel,
+									   node->nominalRelation,
 									   &partition_dispatch_info,
 									   &partitions,
 									   &partition_tupconv_maps,

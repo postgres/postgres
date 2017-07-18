@@ -1433,6 +1433,7 @@ BeginCopy(ParseState *pstate,
 						num_partitions;
 
 			ExecSetupPartitionTupleRouting(rel,
+										   1,
 										   &partition_dispatch_info,
 										   &partitions,
 										   &partition_tupconv_maps,

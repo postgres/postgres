@@ -506,5 +506,23 @@ DETAIL:  Failing row contains (2, hi there).
 insert into brtrigpartcon1 values (1, 'hi there');
 ERROR:  new row for relation "brtrigpartcon1" violates partition constraint
 DETAIL:  Failing row contains (2, hi there).
+-- check that the message shows the appropriate column description in a
+-- situation where the partitioned table is not the primary ModifyTable node
+create table inserttest3 (f1 text default 'foo', f2 text default 'bar', f3 int);
+create role regress_coldesc_role;
+grant insert on inserttest3 to regress_coldesc_role;
+grant insert on brtrigpartcon to regress_coldesc_role;
+revoke select on brtrigpartcon from regress_coldesc_role;
+set role regress_coldesc_role;
+with result as (insert into brtrigpartcon values (1, 'hi there') returning 1)
+  insert into inserttest3 (f3) select * from result;
+ERROR:  new row for relation "brtrigpartcon1" violates partition constraint
+DETAIL:  Failing row contains (a, b) = (2, hi there).
+reset role;
+-- cleanup
+revoke all on inserttest3 from regress_coldesc_role;
+revoke all on brtrigpartcon from regress_coldesc_role;
+drop role regress_coldesc_role;
+drop table inserttest3;
 drop table brtrigpartcon;
 drop function brtrigpartcon1trigf();

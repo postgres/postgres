@@ -340,5 +340,23 @@ create or replace function brtrigpartcon1trigf() returns trigger as $$begin new.
 create trigger brtrigpartcon1trig before insert on brtrigpartcon1 for each row execute procedure brtrigpartcon1trigf();
 insert into brtrigpartcon values (1, 'hi there');
 insert into brtrigpartcon1 values (1, 'hi there');
+
+-- check that the message shows the appropriate column description in a
+-- situation where the partitioned table is not the primary ModifyTable node
+create table inserttest3 (f1 text default 'foo', f2 text default 'bar', f3 int);
+create role regress_coldesc_role;
+grant insert on inserttest3 to regress_coldesc_role;
+grant insert on brtrigpartcon to regress_coldesc_role;
+revoke select on brtrigpartcon from regress_coldesc_role;
+set role regress_coldesc_role;
+with result as (insert into brtrigpartcon values (1, 'hi there') returning 1)
+  insert into inserttest3 (f3) select * from result;
+reset role;
+
+-- cleanup
+revoke all on inserttest3 from regress_coldesc_role;
+revoke all on brtrigpartcon from regress_coldesc_role;
+drop role regress_coldesc_role;
+drop table inserttest3;
 drop table brtrigpartcon;
 drop function brtrigpartcon1trigf();
