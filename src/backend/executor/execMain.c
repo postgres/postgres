@@ -2097,6 +2097,25 @@ ExecWithCheckOptions(WCOKind kind, ResultRelInfo *resultRelInfo,
 					 * USING policy.
 					 */
 				case WCO_VIEW_CHECK:
+					/* See the comment in ExecConstraints(). */
+					if (resultRelInfo->ri_PartitionRoot)
+					{
+						HeapTuple	tuple = ExecFetchSlotTuple(slot);
+						TupleDesc	old_tupdesc = RelationGetDescr(rel);
+						TupleConversionMap *map;
+
+						rel = resultRelInfo->ri_PartitionRoot;
+						tupdesc = RelationGetDescr(rel);
+						/* a reverse map */
+						map = convert_tuples_by_name(old_tupdesc, tupdesc,
+													 gettext_noop("could not convert row type"));
+						if (map != NULL)
+						{
+							tuple = do_convert_tuple(tuple, map);
+							ExecStoreTuple(tuple, slot, InvalidBuffer, false);
+						}
+					}
+
 					insertedCols = GetInsertedColumns(resultRelInfo, estate);
 					updatedCols = GetUpdatedColumns(resultRelInfo, estate);
 					modifiedCols = bms_union(insertedCols, updatedCols);

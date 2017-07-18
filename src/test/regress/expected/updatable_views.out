@@ -2424,6 +2424,6 @@ select tableoid::regclass, * from pt;
 create view ptv_wco as select * from pt where a = 0 with check option;
 insert into ptv_wco values (1, 2);
 ERROR:  new row violates check option for view "ptv_wco"
-DETAIL:  Failing row contains (2, 1).
+DETAIL:  Failing row contains (1, 2).
 drop view ptv, ptv_wco;
 drop table pt, pt1, pt11;
