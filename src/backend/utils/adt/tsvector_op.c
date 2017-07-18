@@ -2579,28 +2579,15 @@ tsvector_update_trigger(PG_FUNCTION_ARGS, bool config_column)
 	}
 
 	/* make tsvector value */
-	if (prs.curwords)
-	{
-		datum = PointerGetDatum(make_tsvector(&prs));
-		isnull = false;
-		rettuple = heap_modify_tuple_by_cols(rettuple, rel->rd_att,
-											 1, &tsvector_attr_num,
-											 &datum, &isnull);
-		pfree(DatumGetPointer(datum));
-	}
-	else
-	{
-		TSVector	out = palloc(CALCDATASIZE(0, 0));
+	datum = TSVectorGetDatum(make_tsvector(&prs));
+	isnull = false;
 
-		SET_VARSIZE(out, CALCDATASIZE(0, 0));
-		out->size = 0;
-		datum = PointerGetDatum(out);
-		isnull = false;
-		rettuple = heap_modify_tuple_by_cols(rettuple, rel->rd_att,
-											 1, &tsvector_attr_num,
-											 &datum, &isnull);
-		pfree(prs.words);
-	}
+	/* and insert it into tuple */
+	rettuple = heap_modify_tuple_by_cols(rettuple, rel->rd_att,
+										 1, &tsvector_attr_num,
+										 &datum, &isnull);
+
+	pfree(DatumGetPointer(datum));
 
 	return PointerGetDatum(rettuple);
 }

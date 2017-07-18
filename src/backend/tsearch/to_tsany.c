@@ -149,6 +149,8 @@ uniqueWORD(ParsedWord *a, int32 l)
 
 /*
  * make value of tsvector, given parsed text
+ *
+ * Note: frees prs->words and subsidiary data.
  */
 TSVector
 make_tsvector(ParsedText *prs)
@@ -162,7 +164,11 @@ make_tsvector(ParsedText *prs)
 	char	   *str;
 	int			stroff;
 
-	prs->curwords = uniqueWORD(prs->words, prs->curwords);
+	/* Merge duplicate words */
+	if (prs->curwords > 0)
+		prs->curwords = uniqueWORD(prs->words, prs->curwords);
+
+	/* Determine space needed */
 	for (i = 0; i < prs->curwords; i++)
 	{
 		lenstr += prs->words[i].len;
@@ -217,7 +223,10 @@ make_tsvector(ParsedText *prs)
 			ptr->haspos = 0;
 		ptr++;
 	}
-	pfree(prs->words);
+
+	if (prs->words)
+		pfree(prs->words);
+
 	return in;
 }
 
@@ -231,26 +240,19 @@ to_tsvector_byid(PG_FUNCTION_ARGS)
 
 	prs.lenwords = VARSIZE_ANY_EXHDR(in) / 6;	/* just estimation of word's
 												 * number */
-	if (prs.lenwords == 0)
+	if (prs.lenwords < 2)
 		prs.lenwords = 2;
 	prs.curwords = 0;
 	prs.pos = 0;
 	prs.words = (ParsedWord *) palloc(sizeof(ParsedWord) * prs.lenwords);
 
 	parsetext(cfgId, &prs, VARDATA_ANY(in), VARSIZE_ANY_EXHDR(in));
+
 	PG_FREE_IF_COPY(in, 1);
 
-	if (prs.curwords)
-		out = make_tsvector(&prs);
-	else
-	{
-		pfree(prs.words);
-		out = palloc(CALCDATASIZE(0, 0));
-		SET_VARSIZE(out, CALCDATASIZE(0, 0));
-		out->size = 0;
-	}
+	out = make_tsvector(&prs);
 
-	PG_RETURN_POINTER(out);
+	PG_RETURN_TSVECTOR(out);
 }
 
 Datum
@@ -281,20 +283,9 @@ jsonb_to_tsvector_byid(PG_FUNCTION_ARGS)
 
 	iterate_jsonb_string_values(jb, &state, add_to_tsvector);
 
-	if (prs.curwords > 0)
-		result = make_tsvector(&prs);
-	else
-	{
-		/*
-		 * There weren't any string elements in jsonb, so we need to return an
-		 * empty vector
-		 */
-		result = palloc(CALCDATASIZE(0, 0));
-		SET_VARSIZE(result, CALCDATASIZE(0, 0));
-		result->size = 0;
-	}
-
 	PG_FREE_IF_COPY(jb, 1);
+
+	result = make_tsvector(&prs);
 
 	PG_RETURN_TSVECTOR(result);
 }
@@ -327,20 +318,9 @@ json_to_tsvector_byid(PG_FUNCTION_ARGS)
 
 	iterate_json_string_values(json, &state, add_to_tsvector);
 
-	if (prs.curwords > 0)
-		result = make_tsvector(&prs);
-	else
-	{
-		/*
-		 * There weren't any string elements in json, so we need to return an
-		 * empty vector
-		 */
-		result = palloc(CALCDATASIZE(0, 0));
-		SET_VARSIZE(result, CALCDATASIZE(0, 0));
-		result->size = 0;
-	}
-
 	PG_FREE_IF_COPY(json, 1);
+
+	result = make_tsvector(&prs);
 
 	PG_RETURN_TSVECTOR(result);
 }
