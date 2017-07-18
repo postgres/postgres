@@ -28,11 +28,11 @@ typedef struct MorphOpaque
 typedef struct TSVectorBuildState
 {
 	ParsedText *prs;
-	TSVector	result;
 	Oid			cfgId;
 } TSVectorBuildState;
 
-static void add_to_tsvector(void *state, char *elem_value, int elem_len);
+static void add_to_tsvector(void *_state, char *elem_value, int elem_len);
+
 
 Datum
 get_current_ts_config(PG_FUNCTION_ARGS)
@@ -270,34 +270,33 @@ jsonb_to_tsvector_byid(PG_FUNCTION_ARGS)
 {
 	Oid			cfgId = PG_GETARG_OID(0);
 	Jsonb	   *jb = PG_GETARG_JSONB(1);
+	TSVector	result;
 	TSVectorBuildState state;
-	ParsedText *prs = (ParsedText *) palloc(sizeof(ParsedText));
+	ParsedText	prs;
 
-	prs->words = NULL;
-	state.result = NULL;
+	prs.words = NULL;
+	prs.curwords = 0;
+	state.prs = &prs;
 	state.cfgId = cfgId;
-	state.prs = prs;
 
-	iterate_jsonb_string_values(jb, &state, (JsonIterateStringValuesAction) add_to_tsvector);
+	iterate_jsonb_string_values(jb, &state, add_to_tsvector);
+
+	if (prs.curwords > 0)
+		result = make_tsvector(&prs);
+	else
+	{
+		/*
+		 * There weren't any string elements in jsonb, so we need to return an
+		 * empty vector
+		 */
+		result = palloc(CALCDATASIZE(0, 0));
+		SET_VARSIZE(result, CALCDATASIZE(0, 0));
+		result->size = 0;
+	}
 
 	PG_FREE_IF_COPY(jb, 1);
 
-	if (state.result == NULL)
-	{
-		/*
-		 * There weren't any string elements in jsonb, so wee need to return
-		 * an empty vector
-		 */
-
-		if (prs->words != NULL)
-			pfree(prs->words);
-
-		state.result = palloc(CALCDATASIZE(0, 0));
-		SET_VARSIZE(state.result, CALCDATASIZE(0, 0));
-		state.result->size = 0;
-	}
-
-	PG_RETURN_TSVECTOR(state.result);
+	PG_RETURN_TSVECTOR(result);
 }
 
 Datum
@@ -317,33 +316,33 @@ json_to_tsvector_byid(PG_FUNCTION_ARGS)
 {
 	Oid			cfgId = PG_GETARG_OID(0);
 	text	   *json = PG_GETARG_TEXT_P(1);
+	TSVector	result;
 	TSVectorBuildState state;
-	ParsedText *prs = (ParsedText *) palloc(sizeof(ParsedText));
+	ParsedText	prs;
 
-	prs->words = NULL;
-	state.result = NULL;
+	prs.words = NULL;
+	prs.curwords = 0;
+	state.prs = &prs;
 	state.cfgId = cfgId;
-	state.prs = prs;
 
-	iterate_json_string_values(json, &state, (JsonIterateStringValuesAction) add_to_tsvector);
+	iterate_json_string_values(json, &state, add_to_tsvector);
 
-	PG_FREE_IF_COPY(json, 1);
-	if (state.result == NULL)
+	if (prs.curwords > 0)
+		result = make_tsvector(&prs);
+	else
 	{
 		/*
-		 * There weren't any string elements in json, so wee need to return an
+		 * There weren't any string elements in json, so we need to return an
 		 * empty vector
 		 */
-
-		if (prs->words != NULL)
-			pfree(prs->words);
-
-		state.result = palloc(CALCDATASIZE(0, 0));
-		SET_VARSIZE(state.result, CALCDATASIZE(0, 0));
-		state.result->size = 0;
+		result = palloc(CALCDATASIZE(0, 0));
+		SET_VARSIZE(result, CALCDATASIZE(0, 0));
+		result->size = 0;
 	}
 
-	PG_RETURN_TSVECTOR(state.result);
+	PG_FREE_IF_COPY(json, 1);
+
+	PG_RETURN_TSVECTOR(result);
 }
 
 Datum
@@ -359,44 +358,41 @@ json_to_tsvector(PG_FUNCTION_ARGS)
 }
 
 /*
- * Extend current TSVector from _state with a new one,
- * build over a json(b) element.
+ * Parse lexemes in an element of a json(b) value, add to TSVectorBuildState.
  */
 static void
 add_to_tsvector(void *_state, char *elem_value, int elem_len)
 {
 	TSVectorBuildState *state = (TSVectorBuildState *) _state;
 	ParsedText *prs = state->prs;
-	TSVector	item_vector;
-	int			i;
+	int32		prevwords;
 
-	prs->lenwords = elem_len / 6;
-	if (prs->lenwords == 0)
-		prs->lenwords = 2;
+	if (prs->words == NULL)
+	{
+		/*
+		 * First time through: initialize words array to a reasonable size.
+		 * (parsetext() will realloc it bigger as needed.)
+		 */
+		prs->lenwords = Max(elem_len / 6, 64);
+		prs->words = (ParsedWord *) palloc(sizeof(ParsedWord) * prs->lenwords);
+		prs->curwords = 0;
+		prs->pos = 0;
+	}
 
-	prs->words = (ParsedWord *) palloc(sizeof(ParsedWord) * prs->lenwords);
-	prs->curwords = 0;
-	prs->pos = 0;
+	prevwords = prs->curwords;
 
 	parsetext(state->cfgId, prs, elem_value, elem_len);
 
-	if (prs->curwords)
-	{
-		if (state->result != NULL)
-		{
-			for (i = 0; i < prs->curwords; i++)
-				prs->words[i].pos.pos = prs->words[i].pos.pos + TS_JUMP;
-
-			item_vector = make_tsvector(prs);
-
-			state->result = (TSVector) DirectFunctionCall2(tsvector_concat,
-														   TSVectorGetDatum(state->result),
-														   PointerGetDatum(item_vector));
-		}
-		else
-			state->result = make_tsvector(prs);
-	}
+	/*
+	 * If we extracted any words from this JSON element, advance pos to create
+	 * an artificial break between elements.  This is because we don't want
+	 * phrase searches to think that the last word in this element is adjacent
+	 * to the first word in the next one.
+	 */
+	if (prs->curwords > prevwords)
+		prs->pos += 1;
 }
+
 
 /*
  * to_tsquery
