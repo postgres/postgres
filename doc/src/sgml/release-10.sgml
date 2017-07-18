@@ -269,7 +269,7 @@
 2017-03-27 [3371e4d9b] Change default of log_directory to 'log'
 -->
      <para>
-      Change the default value of the <xref linkend="guc-log-destination">
+      Change the default value of the <xref linkend="guc-log-directory">
       server parameter from <filename>pg_log</> to <filename>log</>
       (Andreas Karlsson)
      </para>
