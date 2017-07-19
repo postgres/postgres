@@ -625,9 +625,9 @@ checkControlFile(ControlFileData *ControlFile)
 static void
 digestControlFile(ControlFileData *ControlFile, char *src, size_t size)
 {
-	if (size != PG_CONTROL_SIZE)
+	if (size != PG_CONTROL_FILE_SIZE)
 		pg_fatal("unexpected control file size %d, expected %d\n",
-				 (int) size, PG_CONTROL_SIZE);
+				 (int) size, PG_CONTROL_FILE_SIZE);
 
 	memcpy(ControlFile, src, sizeof(ControlFileData));
 
@@ -641,7 +641,16 @@ digestControlFile(ControlFileData *ControlFile, char *src, size_t size)
 static void
 updateControlFile(ControlFileData *ControlFile)
 {
-	char		buffer[PG_CONTROL_SIZE];
+	char		buffer[PG_CONTROL_FILE_SIZE];
+
+	/*
+	 * For good luck, apply the same static assertions as in backend's
+	 * WriteControlFile().
+	 */
+	StaticAssertStmt(sizeof(ControlFileData) <= PG_CONTROL_MAX_SAFE_SIZE,
+					 "pg_control is too large for atomic disk writes");
+	StaticAssertStmt(sizeof(ControlFileData) <= PG_CONTROL_FILE_SIZE,
+					 "sizeof(ControlFileData) exceeds PG_CONTROL_FILE_SIZE");
 
 	/* Recalculate CRC of control file */
 	INIT_CRC32C(ControlFile->crc);
@@ -651,16 +660,16 @@ updateControlFile(ControlFileData *ControlFile)
 	FIN_CRC32C(ControlFile->crc);
 
 	/*
-	 * Write out PG_CONTROL_SIZE bytes into pg_control by zero-padding the
-	 * excess over sizeof(ControlFileData) to avoid premature EOF related
+	 * Write out PG_CONTROL_FILE_SIZE bytes into pg_control by zero-padding
+	 * the excess over sizeof(ControlFileData), to avoid premature EOF related
 	 * errors when reading it.
 	 */
-	memset(buffer, 0, PG_CONTROL_SIZE);
+	memset(buffer, 0, PG_CONTROL_FILE_SIZE);
 	memcpy(buffer, ControlFile, sizeof(ControlFileData));
 
 	open_target_file("global/pg_control", false);
 
-	write_target_range(buffer, 0, PG_CONTROL_SIZE);
+	write_target_range(buffer, 0, PG_CONTROL_FILE_SIZE);
 
 	close_target_file();
 }

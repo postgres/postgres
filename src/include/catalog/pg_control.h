@@ -20,10 +20,11 @@
 #include "port/pg_crc32c.h"
 
 
-#define MOCK_AUTH_NONCE_LEN		32
-
 /* Version identifier for this pg_control format */
 #define PG_CONTROL_VERSION	1002
+
+/* Nonce key length, see below */
+#define MOCK_AUTH_NONCE_LEN		32
 
 /*
  * Body of CheckPoint XLOG records.  This is declared here because we keep
@@ -94,10 +95,6 @@ typedef enum DBState
 
 /*
  * Contents of pg_control.
- *
- * NOTE: try to keep this under 512 bytes so that it will fit on one physical
- * sector of typical disk drives.  This reduces the odds of corruption due to
- * power failure midway through a write.
  */
 
 typedef struct ControlFileData
@@ -236,12 +233,20 @@ typedef struct ControlFileData
 } ControlFileData;
 
 /*
+ * Maximum safe value of sizeof(ControlFileData).  For reliability's sake,
+ * it's critical that pg_control updates be atomic writes.  That generally
+ * means the active data can't be more than one disk sector, which is 512
+ * bytes on common hardware.  Be very careful about raising this limit.
+ */
+#define PG_CONTROL_MAX_SAFE_SIZE	512
+
+/*
  * Physical size of the pg_control file.  Note that this is considerably
  * bigger than the actually used size (ie, sizeof(ControlFileData)).
  * The idea is to keep the physical size constant independent of format
  * changes, so that ReadControlFile will deliver a suitable wrong-version
  * message instead of a read error if it's looking at an incompatible file.
  */
-#define PG_CONTROL_SIZE		8192
+#define PG_CONTROL_FILE_SIZE		8192
 
 #endif							/* PG_CONTROL_H */
