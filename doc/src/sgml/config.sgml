@@ -5376,6 +5376,7 @@ log_line_prefix = '%m [%p] %q%u@%d/%a '
         longer than <xref linkend="guc-deadlock-timeout"> to acquire a
         lock.  This is useful in determining if lock waits are causing
         poor performance.  The default is <literal>off</>.
+        Only superusers can change this setting.
        </para>
       </listitem>
      </varlistentry>
