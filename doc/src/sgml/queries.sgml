@@ -391,8 +391,8 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
         consisting of all column names that appear in both
         input tables.  As with <literal>USING</>, these columns appear
         only once in the output table.  If there are no common
-        column names, <literal>NATURAL</literal> behaves like
-        <literal>CROSS JOIN</literal>.
+        column names, <literal>NATURAL JOIN</literal> behaves like
+        <literal>JOIN ... ON TRUE</literal>, producing a cross-product join.
        </para>
 
        <note>
