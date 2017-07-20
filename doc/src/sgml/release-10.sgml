@@ -151,6 +151,43 @@
 
     <listitem>
 <!--
+2016-12-20 [1753b1b02] Add pg_sequence system catalog
+2016-11-18 [67dc4ccbb] Add pg_sequences view
+2017-05-15 [f8dc1985f] Fix ALTER SEQUENCE locking
+2017-06-01 [3d79013b9] Make ALTER SEQUENCE, including RESTART, fully transactio
+-->
+     <para>
+      Move sequences' metadata fields into a new <link
+      linkend="catalog-pg-sequence"><structname>pg_sequence</></>
+      system catalog (Peter Eisentraut)
+     </para>
+
+     <para>
+      A sequence relation now stores only the fields that can be modified
+      by <function>nextval()</>, that
+      is <structfield>last_value</>, <structfield>log_cnt</>,
+      and <structfield>is_called</>.  Other sequence properties, such as
+      the starting value and increment, are kept in a corresponding row of
+      the <structname>pg_sequence</> catalog.
+      <command>ALTER SEQUENCE</> updates are now fully transactional,
+      implying that the sequence is locked until commit.
+      The <function>nextval()</> and <function>setval()</> functions
+      remain nontransactional.
+     </para>
+
+     <para>
+      The main incompatibility introduced by this change is that selecting
+      from a sequence relation now returns only the three fields named
+      above.  To obtain the sequence's other properties, applications must
+      look into <structname>pg_sequence</>.  The new system
+      view <link linkend="view-pg-sequences"><structname>pg_sequences</></>
+      can also be used for this purpose; it provides column names that are
+      more compatible with existing code.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
 2017-01-04 [9a4d51077] Make wal streaming the default mode for pg_basebackup
 -->
      <para>
@@ -872,35 +909,6 @@
      <title>Monitoring</title>
 
      <itemizedlist>
-
-      <listitem>
-<!--
-2016-12-20 [1753b1b02] Add pg_sequence system catalog
-2016-11-18 [67dc4ccbb] Add pg_sequences view
-2017-05-15 [f8dc1985f] Fix ALTER SEQUENCE locking
-2017-06-01 [3d79013b9] Make ALTER SEQUENCE, including RESTART, fully transactio
--->
-       <para>
-        Create a <link
-        linkend="catalog-pg-sequence"><structname>pg_sequence</></>
-        system catalog to store sequence metadata (Peter Eisentraut)
-       </para>
-
-       <para>
-        Sequence metadata includes the start, increment, etc, properties.
-        <command>ALTER SEQUENCE</> updates are now fully transactional,
-        implying that the sequence is locked until commit.  Sequences'
-        current values are still stored in individual table files, and
-        the <function>nextval()</> and <function>setval()</> functions
-        remain nontransactional.
-       </para>
-
-       <para>
-        Also
-        add <link linkend="view-pg-sequences"><structname>pg_sequences</></>
-        view to show all sequences.
-       </para>
-      </listitem>
 
       <listitem>
 <!--
