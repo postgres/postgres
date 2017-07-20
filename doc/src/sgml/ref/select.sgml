@@ -603,9 +603,12 @@ TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
      <varlistentry>
       <term><literal>NATURAL</literal></term>
       <listitem>
-       <para><literal>NATURAL</literal> is shorthand for a
+       <para>
+        <literal>NATURAL</literal> is shorthand for a
         <literal>USING</> list that mentions all columns in the two
-        tables that have the same names.
+        tables that have matching names.  If there are no common
+        column names, <literal>NATURAL</literal> is equivalent
+        to <literal>ON TRUE</>.
        </para>
       </listitem>
      </varlistentry>
