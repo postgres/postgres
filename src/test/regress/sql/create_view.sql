@@ -559,6 +559,16 @@ select * from
   cast(1+2 as int8) as i8;
 select pg_get_viewdef('tt20v', true);
 
+-- corner cases with empty join conditions
+
+create view tt21v as
+select * from tt5 natural inner join tt6;
+select pg_get_viewdef('tt21v', true);
+
+create view tt22v as
+select * from tt5 natural left join tt6;
+select pg_get_viewdef('tt22v', true);
+
 -- clean up all the random objects we made above
 set client_min_messages = warning;
 DROP SCHEMA temp_view_test CASCADE;

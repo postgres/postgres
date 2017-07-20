@@ -10082,6 +10082,11 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 			if (!PRETTY_PAREN(context))
 				appendStringInfoChar(buf, ')');
 		}
+		else if (j->jointype != JOIN_INNER)
+		{
+			/* If we didn't say CROSS JOIN above, we must provide an ON */
+			appendStringInfoString(buf, " ON TRUE");
+		}
 
 		if (!PRETTY_PAREN(context) || j->alias != NULL)
 			appendStringInfoChar(buf, ')');
