@@ -195,6 +195,26 @@ ALTER FOREIGN TABLE ft1 ALTER COLUMN c1 OPTIONS (column_name 'C 1');
 ALTER FOREIGN TABLE ft2 ALTER COLUMN c1 OPTIONS (column_name 'C 1');
 \det+
 
+-- Test that alteration of server options causes reconnection
+SELECT c3, c4 FROM ft1 ORDER BY c3, c1 LIMIT 1;  -- should work
+ALTER SERVER loopback OPTIONS (SET dbname 'no such database');
+SELECT c3, c4 FROM ft1 ORDER BY c3, c1 LIMIT 1;  -- should fail
+DO $d$
+    BEGIN
+        EXECUTE $$ALTER SERVER loopback
+            OPTIONS (SET dbname '$$||current_database()||$$')$$;
+    END;
+$d$;
+SELECT c3, c4 FROM ft1 ORDER BY c3, c1 LIMIT 1;  -- should work again
+
+-- Test that alteration of user mapping options causes reconnection
+ALTER USER MAPPING FOR CURRENT_USER SERVER loopback
+  OPTIONS (ADD user 'no such user');
+SELECT c3, c4 FROM ft1 ORDER BY c3, c1 LIMIT 1;  -- should fail
+ALTER USER MAPPING FOR CURRENT_USER SERVER loopback
+  OPTIONS (DROP user);
+SELECT c3, c4 FROM ft1 ORDER BY c3, c1 LIMIT 1;  -- should work again
+
 -- Now we should be able to run ANALYZE.
 -- To exercise multiple code paths, we use local stats on ft1
 -- and remote-estimate mode on ft2.
