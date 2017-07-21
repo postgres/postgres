@@ -192,6 +192,8 @@ ALTER FOREIGN TABLE ft2 ALTER COLUMN c1 OPTIONS (column_name 'C 1');
 (6 rows)
 
 -- Test that alteration of server options causes reconnection
+-- Remote's errors might be non-English, so hide them to ensure stable results
+\set VERBOSITY terse
 SELECT c3, c4 FROM ft1 ORDER BY c3, c1 LIMIT 1;  -- should work
   c3   |              c4              
 -------+------------------------------
@@ -201,7 +203,6 @@ SELECT c3, c4 FROM ft1 ORDER BY c3, c1 LIMIT 1;  -- should work
 ALTER SERVER loopback OPTIONS (SET dbname 'no such database');
 SELECT c3, c4 FROM ft1 ORDER BY c3, c1 LIMIT 1;  -- should fail
 ERROR:  could not connect to server "loopback"
-DETAIL:  FATAL:  database "no such database" does not exist
 DO $d$
     BEGIN
         EXECUTE $$ALTER SERVER loopback
@@ -219,7 +220,6 @@ ALTER USER MAPPING FOR CURRENT_USER SERVER loopback
   OPTIONS (ADD user 'no such user');
 SELECT c3, c4 FROM ft1 ORDER BY c3, c1 LIMIT 1;  -- should fail
 ERROR:  could not connect to server "loopback"
-DETAIL:  FATAL:  role "no such user" does not exist
 ALTER USER MAPPING FOR CURRENT_USER SERVER loopback
   OPTIONS (DROP user);
 SELECT c3, c4 FROM ft1 ORDER BY c3, c1 LIMIT 1;  -- should work again
@@ -228,6 +228,7 @@ SELECT c3, c4 FROM ft1 ORDER BY c3, c1 LIMIT 1;  -- should work again
  00001 | Fri Jan 02 00:00:00 1970 PST
 (1 row)
 
+\set VERBOSITY default
 -- Now we should be able to run ANALYZE.
 -- To exercise multiple code paths, we use local stats on ft1
 -- and remote-estimate mode on ft2.
