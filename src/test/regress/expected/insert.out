@@ -528,14 +528,14 @@ drop table brtrigpartcon;
 drop function brtrigpartcon1trigf();
 -- check multi-column range partitioning with minvalue/maxvalue constraints
 create table mcrparted (a text, b int) partition by range(a, b);
-create table mcrparted_lt_b partition of mcrparted for values from (minvalue, 0) to ('b', minvalue);
-create table mcrparted_b partition of mcrparted for values from ('b', minvalue) to ('c', minvalue);
-create table mcrparted_c_to_common partition of mcrparted for values from ('c', minvalue) to ('common', minvalue);
-create table mcrparted_common_lt_0 partition of mcrparted for values from ('common', minvalue) to ('common', 0);
-create table mcrparted_common_0_to_10 partition of mcrparted for values from ('common', 0) to ('common', 10);
-create table mcrparted_common_ge_10 partition of mcrparted for values from ('common', 10) to ('common', maxvalue);
-create table mcrparted_gt_common_lt_d partition of mcrparted for values from ('common', maxvalue) to ('d', minvalue);
-create table mcrparted_ge_d partition of mcrparted for values from ('d', minvalue) to (maxvalue, 0);
+create table mcrparted1_lt_b partition of mcrparted for values from (minvalue, 0) to ('b', minvalue);
+create table mcrparted2_b partition of mcrparted for values from ('b', minvalue) to ('c', minvalue);
+create table mcrparted3_c_to_common partition of mcrparted for values from ('c', minvalue) to ('common', minvalue);
+create table mcrparted4_common_lt_0 partition of mcrparted for values from ('common', minvalue) to ('common', 0);
+create table mcrparted5_common_0_to_10 partition of mcrparted for values from ('common', 0) to ('common', 10);
+create table mcrparted6_common_ge_10 partition of mcrparted for values from ('common', 10) to ('common', maxvalue);
+create table mcrparted7_gt_common_lt_d partition of mcrparted for values from ('common', maxvalue) to ('d', minvalue);
+create table mcrparted8_ge_d partition of mcrparted for values from ('d', minvalue) to (maxvalue, 0);
 \d+ mcrparted
                                  Table "public.mcrparted"
  Column |  Type   | Collation | Nullable | Default | Storage  | Stats target | Description 
@@ -543,17 +543,17 @@ create table mcrparted_ge_d partition of mcrparted for values from ('d', minvalu
  a      | text    |           |          |         | extended |              | 
  b      | integer |           |          |         | plain    |              | 
 Partition key: RANGE (a, b)
-Partitions: mcrparted_b FOR VALUES FROM ('b', MINVALUE) TO ('c', MINVALUE),
-            mcrparted_common_0_to_10 FOR VALUES FROM ('common', 0) TO ('common', 10),
-            mcrparted_common_ge_10 FOR VALUES FROM ('common', 10) TO ('common', MAXVALUE),
-            mcrparted_common_lt_0 FOR VALUES FROM ('common', MINVALUE) TO ('common', 0),
-            mcrparted_c_to_common FOR VALUES FROM ('c', MINVALUE) TO ('common', MINVALUE),
-            mcrparted_ge_d FOR VALUES FROM ('d', MINVALUE) TO (MAXVALUE, 0),
-            mcrparted_gt_common_lt_d FOR VALUES FROM ('common', MAXVALUE) TO ('d', MINVALUE),
-            mcrparted_lt_b FOR VALUES FROM (MINVALUE, 0) TO ('b', MINVALUE)
+Partitions: mcrparted1_lt_b FOR VALUES FROM (MINVALUE, 0) TO ('b', MINVALUE),
+            mcrparted2_b FOR VALUES FROM ('b', MINVALUE) TO ('c', MINVALUE),
+            mcrparted3_c_to_common FOR VALUES FROM ('c', MINVALUE) TO ('common', MINVALUE),
+            mcrparted4_common_lt_0 FOR VALUES FROM ('common', MINVALUE) TO ('common', 0),
+            mcrparted5_common_0_to_10 FOR VALUES FROM ('common', 0) TO ('common', 10),
+            mcrparted6_common_ge_10 FOR VALUES FROM ('common', 10) TO ('common', MAXVALUE),
+            mcrparted7_gt_common_lt_d FOR VALUES FROM ('common', MAXVALUE) TO ('d', MINVALUE),
+            mcrparted8_ge_d FOR VALUES FROM ('d', MINVALUE) TO (MAXVALUE, 0)
 
-\d+ mcrparted_lt_b
-                               Table "public.mcrparted_lt_b"
+\d+ mcrparted1_lt_b
+                              Table "public.mcrparted1_lt_b"
  Column |  Type   | Collation | Nullable | Default | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+----------+--------------+-------------
  a      | text    |           |          |         | extended |              | 
@@ -561,8 +561,8 @@ Partitions: mcrparted_b FOR VALUES FROM ('b', MINVALUE) TO ('c', MINVALUE),
 Partition of: mcrparted FOR VALUES FROM (MINVALUE, 0) TO ('b', MINVALUE)
 Partition constraint: ((a IS NOT NULL) AND (b IS NOT NULL) AND (a < 'b'::text))
 
-\d+ mcrparted_b
-                                Table "public.mcrparted_b"
+\d+ mcrparted2_b
+                                Table "public.mcrparted2_b"
  Column |  Type   | Collation | Nullable | Default | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+----------+--------------+-------------
  a      | text    |           |          |         | extended |              | 
@@ -570,8 +570,8 @@ Partition constraint: ((a IS NOT NULL) AND (b IS NOT NULL) AND (a < 'b'::text))
 Partition of: mcrparted FOR VALUES FROM ('b', MINVALUE) TO ('c', MINVALUE)
 Partition constraint: ((a IS NOT NULL) AND (b IS NOT NULL) AND (a >= 'b'::text) AND (a < 'c'::text))
 
-\d+ mcrparted_c_to_common
-                           Table "public.mcrparted_c_to_common"
+\d+ mcrparted3_c_to_common
+                           Table "public.mcrparted3_c_to_common"
  Column |  Type   | Collation | Nullable | Default | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+----------+--------------+-------------
  a      | text    |           |          |         | extended |              | 
@@ -579,8 +579,8 @@ Partition constraint: ((a IS NOT NULL) AND (b IS NOT NULL) AND (a >= 'b'::text) 
 Partition of: mcrparted FOR VALUES FROM ('c', MINVALUE) TO ('common', MINVALUE)
 Partition constraint: ((a IS NOT NULL) AND (b IS NOT NULL) AND (a >= 'c'::text) AND (a < 'common'::text))
 
-\d+ mcrparted_common_lt_0
-                           Table "public.mcrparted_common_lt_0"
+\d+ mcrparted4_common_lt_0
+                           Table "public.mcrparted4_common_lt_0"
  Column |  Type   | Collation | Nullable | Default | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+----------+--------------+-------------
  a      | text    |           |          |         | extended |              | 
@@ -588,8 +588,8 @@ Partition constraint: ((a IS NOT NULL) AND (b IS NOT NULL) AND (a >= 'c'::text) 
 Partition of: mcrparted FOR VALUES FROM ('common', MINVALUE) TO ('common', 0)
 Partition constraint: ((a IS NOT NULL) AND (b IS NOT NULL) AND (a = 'common'::text) AND (b < 0))
 
-\d+ mcrparted_common_0_to_10
-                          Table "public.mcrparted_common_0_to_10"
+\d+ mcrparted5_common_0_to_10
+                         Table "public.mcrparted5_common_0_to_10"
  Column |  Type   | Collation | Nullable | Default | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+----------+--------------+-------------
  a      | text    |           |          |         | extended |              | 
@@ -597,8 +597,8 @@ Partition constraint: ((a IS NOT NULL) AND (b IS NOT NULL) AND (a = 'common'::te
 Partition of: mcrparted FOR VALUES FROM ('common', 0) TO ('common', 10)
 Partition constraint: ((a IS NOT NULL) AND (b IS NOT NULL) AND (a = 'common'::text) AND (b >= 0) AND (b < 10))
 
-\d+ mcrparted_common_ge_10
-                           Table "public.mcrparted_common_ge_10"
+\d+ mcrparted6_common_ge_10
+                          Table "public.mcrparted6_common_ge_10"
  Column |  Type   | Collation | Nullable | Default | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+----------+--------------+-------------
  a      | text    |           |          |         | extended |              | 
@@ -606,8 +606,8 @@ Partition constraint: ((a IS NOT NULL) AND (b IS NOT NULL) AND (a = 'common'::te
 Partition of: mcrparted FOR VALUES FROM ('common', 10) TO ('common', MAXVALUE)
 Partition constraint: ((a IS NOT NULL) AND (b IS NOT NULL) AND (a = 'common'::text) AND (b >= 10))
 
-\d+ mcrparted_gt_common_lt_d
-                          Table "public.mcrparted_gt_common_lt_d"
+\d+ mcrparted7_gt_common_lt_d
+                         Table "public.mcrparted7_gt_common_lt_d"
  Column |  Type   | Collation | Nullable | Default | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+----------+--------------+-------------
  a      | text    |           |          |         | extended |              | 
@@ -615,8 +615,8 @@ Partition constraint: ((a IS NOT NULL) AND (b IS NOT NULL) AND (a = 'common'::te
 Partition of: mcrparted FOR VALUES FROM ('common', MAXVALUE) TO ('d', MINVALUE)
 Partition constraint: ((a IS NOT NULL) AND (b IS NOT NULL) AND (a > 'common'::text) AND (a < 'd'::text))
 
-\d+ mcrparted_ge_d
-                               Table "public.mcrparted_ge_d"
+\d+ mcrparted8_ge_d
+                              Table "public.mcrparted8_ge_d"
  Column |  Type   | Collation | Nullable | Default | Storage  | Stats target | Description 
 --------+---------+-----------+----------+---------+----------+--------------+-------------
  a      | text    |           |          |         | extended |              | 
@@ -628,19 +628,19 @@ insert into mcrparted values ('aaa', 0), ('b', 0), ('bz', 10), ('c', -10),
     ('comm', -10), ('common', -10), ('common', 0), ('common', 10),
     ('commons', 0), ('d', -10), ('e', 0);
 select tableoid::regclass, * from mcrparted order by a, b;
-         tableoid         |    a    |  b  
---------------------------+---------+-----
- mcrparted_lt_b           | aaa     |   0
- mcrparted_b              | b       |   0
- mcrparted_b              | bz      |  10
- mcrparted_c_to_common    | c       | -10
- mcrparted_c_to_common    | comm    | -10
- mcrparted_common_lt_0    | common  | -10
- mcrparted_common_0_to_10 | common  |   0
- mcrparted_common_ge_10   | common  |  10
- mcrparted_gt_common_lt_d | commons |   0
- mcrparted_ge_d           | d       | -10
- mcrparted_ge_d           | e       |   0
+         tableoid          |    a    |  b  
+---------------------------+---------+-----
+ mcrparted1_lt_b           | aaa     |   0
+ mcrparted2_b              | b       |   0
+ mcrparted2_b              | bz      |  10
+ mcrparted3_c_to_common    | c       | -10
+ mcrparted3_c_to_common    | comm    | -10
+ mcrparted4_common_lt_0    | common  | -10
+ mcrparted5_common_0_to_10 | common  |   0
+ mcrparted6_common_ge_10   | common  |  10
+ mcrparted7_gt_common_lt_d | commons |   0
+ mcrparted8_ge_d           | d       | -10
+ mcrparted8_ge_d           | e       |   0
 (11 rows)
 
 drop table mcrparted;

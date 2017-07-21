@@ -363,24 +363,24 @@ drop function brtrigpartcon1trigf();
 
 -- check multi-column range partitioning with minvalue/maxvalue constraints
 create table mcrparted (a text, b int) partition by range(a, b);
-create table mcrparted_lt_b partition of mcrparted for values from (minvalue, 0) to ('b', minvalue);
-create table mcrparted_b partition of mcrparted for values from ('b', minvalue) to ('c', minvalue);
-create table mcrparted_c_to_common partition of mcrparted for values from ('c', minvalue) to ('common', minvalue);
-create table mcrparted_common_lt_0 partition of mcrparted for values from ('common', minvalue) to ('common', 0);
-create table mcrparted_common_0_to_10 partition of mcrparted for values from ('common', 0) to ('common', 10);
-create table mcrparted_common_ge_10 partition of mcrparted for values from ('common', 10) to ('common', maxvalue);
-create table mcrparted_gt_common_lt_d partition of mcrparted for values from ('common', maxvalue) to ('d', minvalue);
-create table mcrparted_ge_d partition of mcrparted for values from ('d', minvalue) to (maxvalue, 0);
+create table mcrparted1_lt_b partition of mcrparted for values from (minvalue, 0) to ('b', minvalue);
+create table mcrparted2_b partition of mcrparted for values from ('b', minvalue) to ('c', minvalue);
+create table mcrparted3_c_to_common partition of mcrparted for values from ('c', minvalue) to ('common', minvalue);
+create table mcrparted4_common_lt_0 partition of mcrparted for values from ('common', minvalue) to ('common', 0);
+create table mcrparted5_common_0_to_10 partition of mcrparted for values from ('common', 0) to ('common', 10);
+create table mcrparted6_common_ge_10 partition of mcrparted for values from ('common', 10) to ('common', maxvalue);
+create table mcrparted7_gt_common_lt_d partition of mcrparted for values from ('common', maxvalue) to ('d', minvalue);
+create table mcrparted8_ge_d partition of mcrparted for values from ('d', minvalue) to (maxvalue, 0);
 
 \d+ mcrparted
-\d+ mcrparted_lt_b
-\d+ mcrparted_b
-\d+ mcrparted_c_to_common
-\d+ mcrparted_common_lt_0
-\d+ mcrparted_common_0_to_10
-\d+ mcrparted_common_ge_10
-\d+ mcrparted_gt_common_lt_d
-\d+ mcrparted_ge_d
+\d+ mcrparted1_lt_b
+\d+ mcrparted2_b
+\d+ mcrparted3_c_to_common
+\d+ mcrparted4_common_lt_0
+\d+ mcrparted5_common_0_to_10
+\d+ mcrparted6_common_ge_10
+\d+ mcrparted7_gt_common_lt_d
+\d+ mcrparted8_ge_d
 
 insert into mcrparted values ('aaa', 0), ('b', 0), ('bz', 10), ('c', -10),
     ('comm', -10), ('common', -10), ('common', 0), ('common', 10),
