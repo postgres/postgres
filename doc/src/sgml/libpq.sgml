@@ -892,8 +892,8 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
      <title>Specifying Multiple Hosts</title>
 
      <para>
-       It is possible to specify multiple hosts to connect to, so that they are 
-       tried in the given order. In the Keyword/Value format, the <literal>host</>, 
+       It is possible to specify multiple hosts to connect to, so that they are
+       tried in the given order. In the Keyword/Value format, the <literal>host</>,
        <literal>hostaddr</>, and <literal>port</> options accept a comma-separated
        list of values. The same number of elements must be given in each option, such
        that e.g. the first <literal>hostaddr</> corresponds to the first host name,
@@ -903,24 +903,24 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
      </para>
 
      <para>
-       In the connection URI format, you can list multiple <literal>host:port</> pairs 
+       In the connection URI format, you can list multiple <literal>host:port</> pairs
        separated by commas, in the <literal>host</> component of the URI. In either
        format, a single hostname can also translate to multiple network addresses. A
        common example of this is a host that has both an IPv4 and an IPv6 address.
      </para>
 
      <para>
-       When multiple hosts are specified, or when a single hostname is 
-       translated to multiple addresses,  all the hosts and addresses will be 
-       tried in order, until one succeeds. If none of the hosts can be reached, 
-       the connection fails. If a connection is established successfully, but 
+       When multiple hosts are specified, or when a single hostname is
+       translated to multiple addresses,  all the hosts and addresses will be
+       tried in order, until one succeeds. If none of the hosts can be reached,
+       the connection fails. If a connection is established successfully, but
        authentication fails, the remaining hosts in the list are not tried.
      </para>
 
      <para>
-       If a password file is used, you can have different passwords for 
-       different hosts. All the other connection options are the same for every 
-       host, it is not possible to e.g. specify a different username for 
+       If a password file is used, you can have different passwords for
+       different hosts. All the other connection options are the same for every
+       host, it is not possible to e.g. specify a different username for
        different hosts.
      </para>
    </sect3>
@@ -1844,17 +1844,36 @@ int PQprotocolVersion(const PGconn *conn);
 
      <listitem>
       <para>
-       Returns an integer representing the backend version.
+       Returns an integer representing the server version.
 <synopsis>
 int PQserverVersion(const PGconn *conn);
 </synopsis>
-       Applications might use this function to determine the version of the database
-       server they are connected to. The number is formed by converting
-       the major, minor, and revision numbers into two-decimal-digit
-       numbers and appending them together. For example, version 8.1.5
-       will be returned as 80105, and version 8.2 will be returned as
-       80200 (leading zeroes are not shown).  Zero is returned if the
-       connection is bad.
+      </para>
+
+      <para>
+       Applications might use this function to determine the version of the
+       database server they are connected to.  The result is formed by
+       multiplying the server's major version number by 10000 and adding
+       the minor version number.  For example, version 10.1 will be
+       returned as 100001, and version 11.0 will be returned as 110000.
+       Zero is returned if the connection is bad.
+      </para>
+
+      <para>
+       Prior to major version 10, <productname>PostgreSQL</> used
+       three-part version numbers in which the first two parts together
+       represented the major version.  For those
+       versions, <function>PQserverVersion</> uses two digits for each
+       part; for example version 9.1.5 will be returned as 90105, and
+       version 9.2.0 will be returned as 90200.
+      </para>
+
+      <para>
+       Therefore, for purposes of determining feature compatibility,
+       applications should divide the result of <function>PQserverVersion</>
+       by 100 not 10000 to determine a logical major version number.
+       In all release series, only the last two digits differ between
+       minor releases (bug-fix releases).
       </para>
      </listitem>
     </varlistentry>
@@ -6224,26 +6243,42 @@ int PQlibVersion(void);
 
      <para>
       The result of this function can be used to determine, at
-      run time, if specific functionality is available in the currently
+      run time, whether specific functionality is available in the currently
       loaded version of libpq. The function can be used, for example,
-      to determine which connection options are available for
-      <function>PQconnectdb</> or if the <literal>hex</> <type>bytea</>
-      output added in PostgreSQL 9.0 is supported.
+      to determine which connection options are available in
+      <function>PQconnectdb</>.
      </para>
 
      <para>
-      The number is formed by converting the major, minor, and revision
-      numbers into two-decimal-digit numbers and appending them together.
-      For example, version 9.1 will be returned as 90100, and version
-      9.1.2 will be returned as 90102 (leading zeroes are not shown).
+      The result is formed by multiplying the library's major version
+      number by 10000 and adding the minor version number.  For example,
+      version 10.1 will be returned as 100001, and version 11.0 will be
+      returned as 110000.
+     </para>
+
+     <para>
+      Prior to major version 10, <productname>PostgreSQL</> used
+      three-part version numbers in which the first two parts together
+      represented the major version.  For those
+      versions, <function>PQlibVersion</> uses two digits for each
+      part; for example version 9.1.5 will be returned as 90105, and
+      version 9.2.0 will be returned as 90200.
+     </para>
+
+     <para>
+      Therefore, for purposes of determining feature compatibility,
+      applications should divide the result of <function>PQlibVersion</>
+      by 100 not 10000 to determine a logical major version number.
+      In all release series, only the last two digits differ between
+      minor releases (bug-fix releases).
      </para>
 
      <note>
       <para>
        This function appeared in <productname>PostgreSQL</> version 9.1, so
        it cannot be used to detect required functionality in earlier
-       versions, since linking to it will create a link dependency
-       on version 9.1.
+       versions, since calling it will create a link dependency
+       on version 9.1 or later.
       </para>
      </note>
     </listitem>
