@@ -205,14 +205,15 @@ SimpleLruInit(SlruCtl ctl, const char *name, int nslots, int nlsns,
 		shared->page_lru_count = (int *) (ptr + offset);
 		offset += MAXALIGN(nslots * sizeof(int));
 
+		/* Initialize LWLocks */
+		shared->buffer_locks = (LWLockPadded *) (ptr + offset);
+		offset += MAXALIGN(nslots * sizeof(LWLockPadded));
+
 		if (nlsns > 0)
 		{
 			shared->group_lsn = (XLogRecPtr *) (ptr + offset);
 			offset += MAXALIGN(nslots * nlsns * sizeof(XLogRecPtr));
 		}
-
-		/* Initialize LWLocks */
-		shared->buffer_locks = (LWLockPadded *) ShmemAlloc(sizeof(LWLockPadded) * nslots);
 
 		Assert(strlen(name) + 1 < SLRU_MAX_NAME_LENGTH);
 		strlcpy(shared->lwlock_tranche_name, name, SLRU_MAX_NAME_LENGTH);
@@ -230,6 +231,9 @@ SimpleLruInit(SlruCtl ctl, const char *name, int nslots, int nlsns,
 			shared->page_lru_count[slotno] = 0;
 			ptr += BLCKSZ;
 		}
+
+		/* Should fit to estimated shmem size */
+		Assert(ptr - (char *) shared  <= SimpleLruShmemSize(nslots, nlsns));
 	}
 	else
 		Assert(found);
