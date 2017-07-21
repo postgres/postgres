@@ -269,8 +269,8 @@ receiveFileChunks(const char *sql)
 		if (PQnfields(res) != 3 || PQntuples(res) != 1)
 			pg_fatal("unexpected result set size while fetching remote files\n");
 
-		if (PQftype(res, 0) != TEXTOID &&
-			PQftype(res, 1) != INT4OID &&
+		if (PQftype(res, 0) != TEXTOID ||
+			PQftype(res, 1) != INT4OID ||
 			PQftype(res, 2) != BYTEAOID)
 		{
 			pg_fatal("unexpected data types in result set while fetching remote files: %u %u %u\n",
