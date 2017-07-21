@@ -483,12 +483,7 @@ CREATE TABLE fail_part PARTITION OF range_parted FOR VALUES FROM ('a', 1) TO ('z
 CREATE TABLE fail_part PARTITION OF range_parted FOR VALUES FROM ('a') TO ('z', 1);
 
 -- cannot specify null values in range bounds
-CREATE TABLE fail_part PARTITION OF range_parted FOR VALUES FROM (null) TO (unbounded);
-
--- cannot specify finite values after UNBOUNDED has been specified
-CREATE TABLE range_parted_multicol (a int, b int, c int) PARTITION BY RANGE (a, b, c);
-CREATE TABLE fail_part PARTITION OF range_parted_multicol FOR VALUES FROM (1, UNBOUNDED, 1) TO (UNBOUNDED, 1, 1);
-DROP TABLE range_parted_multicol;
+CREATE TABLE fail_part PARTITION OF range_parted FOR VALUES FROM (null) TO (maxvalue);
 
 -- check if compatible with the specified parent
 
@@ -542,10 +537,10 @@ CREATE TABLE fail_part PARTITION OF range_parted2 FOR VALUES FROM (1) TO (0);
 -- note that the range '[1, 1)' has no elements
 CREATE TABLE fail_part PARTITION OF range_parted2 FOR VALUES FROM (1) TO (1);
 
-CREATE TABLE part0 PARTITION OF range_parted2 FOR VALUES FROM (unbounded) TO (1);
-CREATE TABLE fail_part PARTITION OF range_parted2 FOR VALUES FROM (unbounded) TO (2);
+CREATE TABLE part0 PARTITION OF range_parted2 FOR VALUES FROM (minvalue) TO (1);
+CREATE TABLE fail_part PARTITION OF range_parted2 FOR VALUES FROM (minvalue) TO (2);
 CREATE TABLE part1 PARTITION OF range_parted2 FOR VALUES FROM (1) TO (10);
-CREATE TABLE fail_part PARTITION OF range_parted2 FOR VALUES FROM (9) TO (unbounded);
+CREATE TABLE fail_part PARTITION OF range_parted2 FOR VALUES FROM (9) TO (maxvalue);
 CREATE TABLE part2 PARTITION OF range_parted2 FOR VALUES FROM (20) TO (30);
 CREATE TABLE part3 PARTITION OF range_parted2 FOR VALUES FROM (30) TO (40);
 CREATE TABLE fail_part PARTITION OF range_parted2 FOR VALUES FROM (10) TO (30);
@@ -557,18 +552,18 @@ CREATE TABLE range_parted3 (
 	b int
 ) PARTITION BY RANGE (a, (b+1));
 
-CREATE TABLE part00 PARTITION OF range_parted3 FOR VALUES FROM (0, unbounded) TO (0, unbounded);
-CREATE TABLE fail_part PARTITION OF range_parted3 FOR VALUES FROM (0, unbounded) TO (0, 1);
+CREATE TABLE part00 PARTITION OF range_parted3 FOR VALUES FROM (0, minvalue) TO (0, maxvalue);
+CREATE TABLE fail_part PARTITION OF range_parted3 FOR VALUES FROM (0, minvalue) TO (0, 1);
 
-CREATE TABLE part10 PARTITION OF range_parted3 FOR VALUES FROM (1, unbounded) TO (1, 1);
+CREATE TABLE part10 PARTITION OF range_parted3 FOR VALUES FROM (1, minvalue) TO (1, 1);
 CREATE TABLE part11 PARTITION OF range_parted3 FOR VALUES FROM (1, 1) TO (1, 10);
-CREATE TABLE part12 PARTITION OF range_parted3 FOR VALUES FROM (1, 10) TO (1, unbounded);
+CREATE TABLE part12 PARTITION OF range_parted3 FOR VALUES FROM (1, 10) TO (1, maxvalue);
 CREATE TABLE fail_part PARTITION OF range_parted3 FOR VALUES FROM (1, 10) TO (1, 20);
 
 -- cannot create a partition that says column b is allowed to range
 -- from -infinity to +infinity, while there exist partitions that have
 -- more specific ranges
-CREATE TABLE fail_part PARTITION OF range_parted3 FOR VALUES FROM (1, unbounded) TO (1, unbounded);
+CREATE TABLE fail_part PARTITION OF range_parted3 FOR VALUES FROM (1, minvalue) TO (1, maxvalue);
 
 -- check schema propagation from parent
 
@@ -626,14 +621,14 @@ CREATE TABLE part_c_1_10 PARTITION OF part_c FOR VALUES FROM (1) TO (10);
 
 -- check that we get the expected partition constraints
 CREATE TABLE range_parted4 (a int, b int, c int) PARTITION BY RANGE (abs(a), abs(b), c);
-CREATE TABLE unbounded_range_part PARTITION OF range_parted4 FOR VALUES FROM (UNBOUNDED, UNBOUNDED, UNBOUNDED) TO (UNBOUNDED, UNBOUNDED, UNBOUNDED);
+CREATE TABLE unbounded_range_part PARTITION OF range_parted4 FOR VALUES FROM (MINVALUE, 0, 0) TO (MAXVALUE, 0, 0);
 \d+ unbounded_range_part
 DROP TABLE unbounded_range_part;
-CREATE TABLE range_parted4_1 PARTITION OF range_parted4 FOR VALUES FROM (UNBOUNDED, UNBOUNDED, UNBOUNDED) TO (1, UNBOUNDED, UNBOUNDED);
+CREATE TABLE range_parted4_1 PARTITION OF range_parted4 FOR VALUES FROM (MINVALUE, 0, 0) TO (1, MAXVALUE, 0);
 \d+ range_parted4_1
-CREATE TABLE range_parted4_2 PARTITION OF range_parted4 FOR VALUES FROM (3, 4, 5) TO (6, 7, UNBOUNDED);
+CREATE TABLE range_parted4_2 PARTITION OF range_parted4 FOR VALUES FROM (3, 4, 5) TO (6, 7, MAXVALUE);
 \d+ range_parted4_2
-CREATE TABLE range_parted4_3 PARTITION OF range_parted4 FOR VALUES FROM (6, 8, UNBOUNDED) TO (9, UNBOUNDED, UNBOUNDED);
+CREATE TABLE range_parted4_3 PARTITION OF range_parted4 FOR VALUES FROM (6, 8, MINVALUE) TO (9, MAXVALUE, 0);
 \d+ range_parted4_3
 DROP TABLE range_parted4;
 

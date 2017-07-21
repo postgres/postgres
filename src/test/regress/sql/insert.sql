@@ -169,7 +169,7 @@ select tableoid::regclass, * from list_parted;
 
 -- some more tests to exercise tuple-routing with multi-level partitioning
 create table part_gg partition of list_parted for values in ('gg') partition by range (b);
-create table part_gg1 partition of part_gg for values from (unbounded) to (1);
+create table part_gg1 partition of part_gg for values from (minvalue) to (1);
 create table part_gg2 partition of part_gg for values from (1) to (10) partition by range (b);
 create table part_gg2_1 partition of part_gg2 for values from (1) to (5);
 create table part_gg2_2 partition of part_gg2 for values from (5) to (10);
@@ -293,12 +293,12 @@ drop table key_desc, key_desc_1;
 -- check multi-column range partitioning expression enforces the same
 -- constraint as what tuple-routing would determine it to be
 create table mcrparted (a int, b int, c int) partition by range (a, abs(b), c);
-create table mcrparted0 partition of mcrparted for values from (unbounded, unbounded, unbounded) to (1, unbounded, unbounded);
-create table mcrparted1 partition of mcrparted for values from (2, 1, unbounded) to (10, 5, 10);
-create table mcrparted2 partition of mcrparted for values from (10, 6, unbounded) to (10, unbounded, unbounded);
+create table mcrparted0 partition of mcrparted for values from (minvalue, 0, 0) to (1, maxvalue, 0);
+create table mcrparted1 partition of mcrparted for values from (2, 1, minvalue) to (10, 5, 10);
+create table mcrparted2 partition of mcrparted for values from (10, 6, minvalue) to (10, maxvalue, 0);
 create table mcrparted3 partition of mcrparted for values from (11, 1, 1) to (20, 10, 10);
-create table mcrparted4 partition of mcrparted for values from (21, unbounded, unbounded) to (30, 20, unbounded);
-create table mcrparted5 partition of mcrparted for values from (30, 21, 20) to (unbounded, unbounded, unbounded);
+create table mcrparted4 partition of mcrparted for values from (21, minvalue, 0) to (30, 20, maxvalue);
+create table mcrparted5 partition of mcrparted for values from (30, 21, 20) to (maxvalue, 0, 0);
 
 -- routed to mcrparted0
 insert into mcrparted values (0, 1, 1);
@@ -360,3 +360,30 @@ drop role regress_coldesc_role;
 drop table inserttest3;
 drop table brtrigpartcon;
 drop function brtrigpartcon1trigf();
+
+-- check multi-column range partitioning with minvalue/maxvalue constraints
+create table mcrparted (a text, b int) partition by range(a, b);
+create table mcrparted_lt_b partition of mcrparted for values from (minvalue, 0) to ('b', minvalue);
+create table mcrparted_b partition of mcrparted for values from ('b', minvalue) to ('c', minvalue);
+create table mcrparted_c_to_common partition of mcrparted for values from ('c', minvalue) to ('common', minvalue);
+create table mcrparted_common_lt_0 partition of mcrparted for values from ('common', minvalue) to ('common', 0);
+create table mcrparted_common_0_to_10 partition of mcrparted for values from ('common', 0) to ('common', 10);
+create table mcrparted_common_ge_10 partition of mcrparted for values from ('common', 10) to ('common', maxvalue);
+create table mcrparted_gt_common_lt_d partition of mcrparted for values from ('common', maxvalue) to ('d', minvalue);
+create table mcrparted_ge_d partition of mcrparted for values from ('d', minvalue) to (maxvalue, 0);
+
+\d+ mcrparted
+\d+ mcrparted_lt_b
+\d+ mcrparted_b
+\d+ mcrparted_c_to_common
+\d+ mcrparted_common_lt_0
+\d+ mcrparted_common_0_to_10
+\d+ mcrparted_common_ge_10
+\d+ mcrparted_gt_common_lt_d
+\d+ mcrparted_ge_d
+
+insert into mcrparted values ('aaa', 0), ('b', 0), ('bz', 10), ('c', -10),
+    ('comm', -10), ('common', -10), ('common', 0), ('common', 10),
+    ('commons', 0), ('d', -10), ('e', 0);
+select tableoid::regclass, * from mcrparted order by a, b;
+drop table mcrparted;

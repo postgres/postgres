@@ -8715,8 +8715,10 @@ get_rule_expr(Node *node, deparse_context *context,
 							castNode(PartitionRangeDatum, lfirst(cell));
 
 							appendStringInfoString(buf, sep);
-							if (datum->infinite)
-								appendStringInfoString(buf, "UNBOUNDED");
+							if (datum->kind == PARTITION_RANGE_DATUM_MINVALUE)
+								appendStringInfoString(buf, "MINVALUE");
+							else if (datum->kind == PARTITION_RANGE_DATUM_MAXVALUE)
+								appendStringInfoString(buf, "MAXVALUE");
 							else
 							{
 								Const	   *val = castNode(Const, datum->value);
@@ -8733,8 +8735,10 @@ get_rule_expr(Node *node, deparse_context *context,
 							castNode(PartitionRangeDatum, lfirst(cell));
 
 							appendStringInfoString(buf, sep);
-							if (datum->infinite)
-								appendStringInfoString(buf, "UNBOUNDED");
+							if (datum->kind == PARTITION_RANGE_DATUM_MINVALUE)
+								appendStringInfoString(buf, "MINVALUE");
+							else if (datum->kind == PARTITION_RANGE_DATUM_MAXVALUE)
+								appendStringInfoString(buf, "MAXVALUE");
 							else
 							{
 								Const	   *val = castNode(Const, datum->value);

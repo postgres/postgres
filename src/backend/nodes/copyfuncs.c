@@ -4458,7 +4458,7 @@ _copyPartitionRangeDatum(const PartitionRangeDatum *from)
 {
 	PartitionRangeDatum *newnode = makeNode(PartitionRangeDatum);
 
-	COPY_SCALAR_FIELD(infinite);
+	COPY_SCALAR_FIELD(kind);
 	COPY_NODE_FIELD(value);
 	COPY_LOCATION_FIELD(location);
 

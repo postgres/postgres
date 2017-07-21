@@ -809,16 +809,24 @@ typedef struct PartitionBoundSpec
 } PartitionBoundSpec;
 
 /*
- * PartitionRangeDatum - can be either a value or UNBOUNDED
+ * PartitionRangeDatum - one of the values in a range partition bound
  *
- * "value" is an A_Const in raw grammar output, a Const after analysis
+ * This can be MINVALUE, MAXVALUE or a specific bounded value.
  */
+typedef enum PartitionRangeDatumKind
+{
+	PARTITION_RANGE_DATUM_MINVALUE = -1,	/* less than any other value */
+	PARTITION_RANGE_DATUM_VALUE = 0,	/* a specific (bounded) value */
+	PARTITION_RANGE_DATUM_MAXVALUE = 1	/* greater than any other value */
+} PartitionRangeDatumKind;
+
 typedef struct PartitionRangeDatum
 {
 	NodeTag		type;
 
-	bool		infinite;		/* true if UNBOUNDED */
-	Node	   *value;			/* null if UNBOUNDED */
+	PartitionRangeDatumKind kind;
+	Node	   *value;			/* Const (or A_Const in raw tree), if kind is
+								 * PARTITION_RANGE_DATUM_VALUE, else NULL */
 
 	int			location;		/* token location, or -1 if unknown */
 } PartitionRangeDatum;

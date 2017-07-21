@@ -2404,7 +2404,7 @@ _readPartitionRangeDatum(void)
 {
 	READ_LOCALS(PartitionRangeDatum);
 
-	READ_BOOL_FIELD(infinite);
+	READ_ENUM_FIELD(kind, PartitionRangeDatumKind);
 	READ_NODE_FIELD(value);
 	READ_LOCATION_FIELD(location);
 

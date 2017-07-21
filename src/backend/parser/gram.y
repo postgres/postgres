@@ -2696,11 +2696,21 @@ range_datum_list:
 		;
 
 PartitionRangeDatum:
-			UNBOUNDED
+			MINVALUE
 				{
 					PartitionRangeDatum *n = makeNode(PartitionRangeDatum);
 
-					n->infinite = true;
+					n->kind = PARTITION_RANGE_DATUM_MINVALUE;
+					n->value = NULL;
+					n->location = @1;
+
+					$$ = (Node *) n;
+				}
+			| MAXVALUE
+				{
+					PartitionRangeDatum *n = makeNode(PartitionRangeDatum);
+
+					n->kind = PARTITION_RANGE_DATUM_MAXVALUE;
 					n->value = NULL;
 					n->location = @1;
 
@@ -2710,7 +2720,7 @@ PartitionRangeDatum:
 				{
 					PartitionRangeDatum *n = makeNode(PartitionRangeDatum);
 
-					n->infinite = false;
+					n->kind = PARTITION_RANGE_DATUM_VALUE;
 					n->value = $1;
 					n->location = @1;
 

@@ -1562,6 +1562,7 @@ PartitionKey
 PartitionListValue
 PartitionRangeBound
 PartitionRangeDatum
+PartitionRangeDatumKind
 PartitionSpec
 PartitionedChildRelInfo
 PasswordType

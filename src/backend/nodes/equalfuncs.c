@@ -2849,7 +2849,7 @@ _equalPartitionBoundSpec(const PartitionBoundSpec *a, const PartitionBoundSpec *
 static bool
 _equalPartitionRangeDatum(const PartitionRangeDatum *a, const PartitionRangeDatum *b)
 {
-	COMPARE_SCALAR_FIELD(infinite);
+	COMPARE_SCALAR_FIELD(kind);
 	COMPARE_NODE_FIELD(value);
 	COMPARE_LOCATION_FIELD(location);
 

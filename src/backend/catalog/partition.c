@@ -67,23 +67,14 @@
  * is an upper bound.
  */
 
-/* Ternary value to represent what's contained in a range bound datum */
-typedef enum RangeDatumContent
-{
-	RANGE_DATUM_FINITE = 0,		/* actual datum stored elsewhere */
-	RANGE_DATUM_NEG_INF,		/* negative infinity */
-	RANGE_DATUM_POS_INF			/* positive infinity */
-} RangeDatumContent;
-
 typedef struct PartitionBoundInfoData
 {
 	char		strategy;		/* list or range bounds? */
 	int			ndatums;		/* Length of the datums following array */
 	Datum	  **datums;			/* Array of datum-tuples with key->partnatts
 								 * datums each */
-	RangeDatumContent **content;	/* what's contained in each range bound
-									 * datum? (see the above enum); NULL for
-									 * list partitioned tables */
+	PartitionRangeDatumKind **kind; /* The kind of each range bound datum;
+									 * NULL for list partitioned tables */
 	int		   *indexes;		/* Partition indexes; one entry per member of
 								 * the datums array (plus one if range
 								 * partitioned table) */
@@ -110,7 +101,7 @@ typedef struct PartitionRangeBound
 {
 	int			index;
 	Datum	   *datums;			/* range bound datums */
-	RangeDatumContent *content; /* what's contained in each datum? */
+	PartitionRangeDatumKind *kind;	/* the kind of each datum */
 	bool		lower;			/* this is the lower (vs upper) bound */
 } PartitionRangeBound;
 
@@ -136,10 +127,10 @@ static List *generate_partition_qual(Relation rel);
 static PartitionRangeBound *make_one_range_bound(PartitionKey key, int index,
 					 List *datums, bool lower);
 static int32 partition_rbound_cmp(PartitionKey key,
-					 Datum *datums1, RangeDatumContent *content1, bool lower1,
-					 PartitionRangeBound *b2);
+					 Datum *datums1, PartitionRangeDatumKind *kind1,
+					 bool lower1, PartitionRangeBound *b2);
 static int32 partition_rbound_datum_cmp(PartitionKey key,
-						   Datum *rb_datums, RangeDatumContent *rb_content,
+						   Datum *rb_datums, PartitionRangeDatumKind *rb_kind,
 						   Datum *tuple_datums);
 
 static int32 partition_bound_cmp(PartitionKey key,
@@ -366,29 +357,25 @@ RelationBuildPartitionDesc(Relation rel)
 				bool		is_distinct = false;
 				int			j;
 
-				/* Is current bound is distinct from the previous? */
+				/* Is the current bound distinct from the previous one? */
 				for (j = 0; j < key->partnatts; j++)
 				{
 					Datum		cmpval;
 
-					if (prev == NULL)
+					if (prev == NULL || cur->kind[j] != prev->kind[j])
 					{
 						is_distinct = true;
 						break;
 					}
 
 					/*
-					 * If either of them has infinite element, we can't equate
-					 * them.  Even when both are infinite, they'd have
-					 * opposite signs, because only one of cur and prev is a
-					 * lower bound).
+					 * If the bounds are both MINVALUE or MAXVALUE, stop now
+					 * and treat them as equal, since any values after this
+					 * point must be ignored.
 					 */
-					if (cur->content[j] != RANGE_DATUM_FINITE ||
-						prev->content[j] != RANGE_DATUM_FINITE)
-					{
-						is_distinct = true;
+					if (cur->kind[j] != PARTITION_RANGE_DATUM_VALUE)
 						break;
-					}
+
 					cmpval = FunctionCall2Coll(&key->partsupfunc[j],
 											   key->partcollation[j],
 											   cur->datums[j],
@@ -513,8 +500,9 @@ RelationBuildPartitionDesc(Relation rel)
 
 			case PARTITION_STRATEGY_RANGE:
 				{
-					boundinfo->content = (RangeDatumContent **) palloc(ndatums *
-																	   sizeof(RangeDatumContent *));
+					boundinfo->kind = (PartitionRangeDatumKind **)
+						palloc(ndatums *
+							   sizeof(PartitionRangeDatumKind *));
 					boundinfo->indexes = (int *) palloc((ndatums + 1) *
 														sizeof(int));
 
@@ -524,18 +512,17 @@ RelationBuildPartitionDesc(Relation rel)
 
 						boundinfo->datums[i] = (Datum *) palloc(key->partnatts *
 																sizeof(Datum));
-						boundinfo->content[i] = (RangeDatumContent *)
+						boundinfo->kind[i] = (PartitionRangeDatumKind *)
 							palloc(key->partnatts *
-								   sizeof(RangeDatumContent));
+								   sizeof(PartitionRangeDatumKind));
 						for (j = 0; j < key->partnatts; j++)
 						{
-							if (rbounds[i]->content[j] == RANGE_DATUM_FINITE)
+							if (rbounds[i]->kind[j] == PARTITION_RANGE_DATUM_VALUE)
 								boundinfo->datums[i][j] =
 									datumCopy(rbounds[i]->datums[j],
 											  key->parttypbyval[j],
 											  key->parttyplen[j]);
-							/* Remember, we are storing the tri-state value. */
-							boundinfo->content[i][j] = rbounds[i]->content[j];
+							boundinfo->kind[i][j] = rbounds[i]->kind[j];
 						}
 
 						/*
@@ -617,17 +604,14 @@ partition_bounds_equal(PartitionKey key,
 		for (j = 0; j < key->partnatts; j++)
 		{
 			/* For range partitions, the bounds might not be finite. */
-			if (b1->content != NULL)
+			if (b1->kind != NULL)
 			{
-				/*
-				 * A finite bound always differs from an infinite bound, and
-				 * different kinds of infinities differ from each other.
-				 */
-				if (b1->content[i][j] != b2->content[i][j])
+				/* The different kinds of bound all differ from each other */
+				if (b1->kind[i][j] != b2->kind[i][j])
 					return false;
 
 				/* Non-finite bounds are equal without further examination. */
-				if (b1->content[i][j] != RANGE_DATUM_FINITE)
+				if (b1->kind[i][j] != PARTITION_RANGE_DATUM_VALUE)
 					continue;
 			}
 
@@ -736,7 +720,7 @@ check_new_partition_bound(char *relname, Relation parent,
 				 * First check if the resulting range would be empty with
 				 * specified lower and upper bounds
 				 */
-				if (partition_rbound_cmp(key, lower->datums, lower->content, true,
+				if (partition_rbound_cmp(key, lower->datums, lower->kind, true,
 										 upper) >= 0)
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
@@ -754,18 +738,18 @@ check_new_partition_bound(char *relname, Relation parent,
 
 					/*
 					 * Test whether the new lower bound (which is treated
-					 * inclusively as part of the new partition) lies inside an
-					 * existing partition, or in a gap.
+					 * inclusively as part of the new partition) lies inside
+					 * an existing partition, or in a gap.
 					 *
 					 * If it's inside an existing partition, the bound at
 					 * offset + 1 will be the upper bound of that partition,
 					 * and its index will be >= 0.
 					 *
 					 * If it's in a gap, the bound at offset + 1 will be the
-					 * lower bound of the next partition, and its index will be
-					 * -1. This is also true if there is no next partition,
-					 * since the index array is initialised with an extra -1 at
-					 * the end.
+					 * lower bound of the next partition, and its index will
+					 * be -1. This is also true if there is no next partition,
+					 * since the index array is initialised with an extra -1
+					 * at the end.
 					 */
 					offset = partition_bound_bsearch(key, boundinfo, lower,
 													 true, &equal);
@@ -774,9 +758,9 @@ check_new_partition_bound(char *relname, Relation parent,
 					{
 						/*
 						 * Check that the new partition will fit in the gap.
-						 * For it to fit, the new upper bound must be less than
-						 * or equal to the lower bound of the next partition,
-						 * if there is one.
+						 * For it to fit, the new upper bound must be less
+						 * than or equal to the lower bound of the next
+						 * partition, if there is one.
 						 */
 						if (offset + 1 < boundinfo->ndatums)
 						{
@@ -788,8 +772,9 @@ check_new_partition_bound(char *relname, Relation parent,
 							if (cmpval < 0)
 							{
 								/*
-								 * The new partition overlaps with the existing
-								 * partition between offset + 1 and offset + 2.
+								 * The new partition overlaps with the
+								 * existing partition between offset + 1 and
+								 * offset + 2.
 								 */
 								overlap = true;
 								with = boundinfo->indexes[offset + 2];
@@ -1399,8 +1384,8 @@ get_qual_for_list(PartitionKey key, PartitionBoundSpec *spec)
  *
  * Constructs an Expr for the key column (returned in *keyCol) and Consts
  * for the lower and upper range limits (returned in *lower_val and
- * *upper_val).  For UNBOUNDED limits, NULL is returned instead of a Const.
- * All of these structures are freshly palloc'd.
+ * *upper_val).  For MINVALUE/MAXVALUE limits, NULL is returned instead of
+ * a Const.  All of these structures are freshly palloc'd.
  *
  * *partexprs_item points to the cell containing the next expression in
  * the key->partexprs list, or NULL.  It may be advanced upon return.
@@ -1432,12 +1417,12 @@ get_range_key_properties(PartitionKey key, int keynum,
 	}
 
 	/* Get appropriate Const nodes for the bounds */
-	if (!ldatum->infinite)
+	if (ldatum->kind == PARTITION_RANGE_DATUM_VALUE)
 		*lower_val = castNode(Const, copyObject(ldatum->value));
 	else
 		*lower_val = NULL;
 
-	if (!udatum->infinite)
+	if (udatum->kind == PARTITION_RANGE_DATUM_VALUE)
 		*upper_val = castNode(Const, copyObject(udatum->value));
 	else
 		*upper_val = NULL;
@@ -1471,17 +1456,15 @@ get_range_key_properties(PartitionKey key, int keynum,
  *		AND
  *	(b < bu) OR (b = bu AND c < cu))
  *
- * If cu happens to be UNBOUNDED, we need not emit any expression for it, so
- * the last line would be:
+ * If a bound datum is either MINVALUE or MAXVALUE, these expressions are
+ * simplified using the fact that any value is greater than MINVALUE and less
+ * than MAXVALUE. So, for example, if cu = MAXVALUE, c < cu is automatically
+ * true, and we need not emit any expression for it, and the last line becomes
  *
  *	(b < bu) OR (b = bu), which is simplified to (b <= bu)
  *
  * In most common cases with only one partition column, say a, the following
  * expression tree will be generated: a IS NOT NULL AND a >= al AND a < au
- *
- * If all values of both lower and upper bounds are UNBOUNDED, the partition
- * does not really have a constraint, except the IS NOT NULL constraint for
- * partition keys.
  *
  * If we end up with an empty result list, we return a single-member list
  * containing a constant TRUE, because callers expect a non-empty list.
@@ -1585,9 +1568,10 @@ get_qual_for_range(PartitionKey key, PartitionBoundSpec *spec)
 								 &lower_val, &upper_val);
 
 		/*
-		 * If either or both of lower_val and upper_val is NULL, they are
-		 * unequal, because being NULL means the column is unbounded in the
-		 * respective direction.
+		 * If either value is NULL, the corresponding partition bound is
+		 * either MINVALUE or MAXVALUE, and we treat them as unequal, because
+		 * even if they're the same, there is no common value to equate the
+		 * key column with.
 		 */
 		if (!lower_val || !upper_val)
 			break;
@@ -1668,12 +1652,15 @@ get_qual_for_range(PartitionKey key, PartitionBoundSpec *spec)
 
 				/*
 				 * For the non-last columns of this arm, use the EQ operator.
-				 * For the last or the last finite-valued column, use GE.
+				 * For the last column of this arm, use GT, unless this is the
+				 * last column of the whole bound check, or the next bound
+				 * datum is MINVALUE, in which case use GE.
 				 */
 				if (j - i < current_or_arm)
 					strategy = BTEqualStrategyNumber;
-				else if ((ldatum_next && ldatum_next->infinite) ||
-						 j == key->partnatts - 1)
+				else if (j == key->partnatts - 1 ||
+						 (ldatum_next &&
+						  ldatum_next->kind == PARTITION_RANGE_DATUM_MINVALUE))
 					strategy = BTGreaterEqualStrategyNumber;
 				else
 					strategy = BTGreaterStrategyNumber;
@@ -1691,11 +1678,13 @@ get_qual_for_range(PartitionKey key, PartitionBoundSpec *spec)
 
 				/*
 				 * For the non-last columns of this arm, use the EQ operator.
-				 * For the last finite-valued column, use LE.
+				 * For the last column of this arm, use LT, unless the next
+				 * bound datum is MAXVALUE, in which case use LE.
 				 */
 				if (j - i < current_or_arm)
 					strategy = BTEqualStrategyNumber;
-				else if (udatum_next && udatum_next->infinite)
+				else if (udatum_next &&
+						 udatum_next->kind == PARTITION_RANGE_DATUM_MAXVALUE)
 					strategy = BTLessEqualStrategyNumber;
 				else
 					strategy = BTLessStrategyNumber;
@@ -1716,11 +1705,15 @@ get_qual_for_range(PartitionKey key, PartitionBoundSpec *spec)
 			if (j - i > current_or_arm)
 			{
 				/*
-				 * We need not emit the next arm if the new column that will
-				 * be considered is unbounded.
+				 * We must not emit any more arms if the new column that will
+				 * be considered is unbounded, or this one was.
 				 */
-				need_next_lower_arm = ldatum_next && !ldatum_next->infinite;
-				need_next_upper_arm = udatum_next && !udatum_next->infinite;
+				if (!lower_val || !ldatum_next ||
+					ldatum_next->kind != PARTITION_RANGE_DATUM_VALUE)
+					need_next_lower_arm = false;
+				if (!upper_val || !udatum_next ||
+					udatum_next->kind != PARTITION_RANGE_DATUM_VALUE)
+					need_next_upper_arm = false;
 				break;
 			}
 		}
@@ -2092,8 +2085,8 @@ make_one_range_bound(PartitionKey key, int index, List *datums, bool lower)
 	bound = (PartitionRangeBound *) palloc0(sizeof(PartitionRangeBound));
 	bound->index = index;
 	bound->datums = (Datum *) palloc0(key->partnatts * sizeof(Datum));
-	bound->content = (RangeDatumContent *) palloc0(key->partnatts *
-												   sizeof(RangeDatumContent));
+	bound->kind = (PartitionRangeDatumKind *) palloc0(key->partnatts *
+													  sizeof(PartitionRangeDatumKind));
 	bound->lower = lower;
 
 	i = 0;
@@ -2102,12 +2095,9 @@ make_one_range_bound(PartitionKey key, int index, List *datums, bool lower)
 		PartitionRangeDatum *datum = castNode(PartitionRangeDatum, lfirst(lc));
 
 		/* What's contained in this range datum? */
-		bound->content[i] = !datum->infinite
-			? RANGE_DATUM_FINITE
-			: (lower ? RANGE_DATUM_NEG_INF
-			   : RANGE_DATUM_POS_INF);
+		bound->kind[i] = datum->kind;
 
-		if (bound->content[i] == RANGE_DATUM_FINITE)
+		if (datum->kind == PARTITION_RANGE_DATUM_VALUE)
 		{
 			Const	   *val = castNode(Const, datum->value);
 
@@ -2130,7 +2120,7 @@ qsort_partition_rbound_cmp(const void *a, const void *b, void *arg)
 	PartitionRangeBound *b2 = (*(PartitionRangeBound *const *) b);
 	PartitionKey key = (PartitionKey) arg;
 
-	return partition_rbound_cmp(key, b1->datums, b1->content, b1->lower, b2);
+	return partition_rbound_cmp(key, b1->datums, b1->kind, b1->lower, b2);
 }
 
 /*
@@ -2148,13 +2138,13 @@ qsort_partition_rbound_cmp(const void *a, const void *b, void *arg)
  */
 static int32
 partition_rbound_cmp(PartitionKey key,
-					 Datum *datums1, RangeDatumContent *content1, bool lower1,
-					 PartitionRangeBound *b2)
+					 Datum *datums1, PartitionRangeDatumKind *kind1,
+					 bool lower1, PartitionRangeBound *b2)
 {
 	int32		cmpval = 0;		/* placate compiler */
 	int			i;
 	Datum	   *datums2 = b2->datums;
-	RangeDatumContent *content2 = b2->content;
+	PartitionRangeDatumKind *kind2 = b2->kind;
 	bool		lower2 = b2->lower;
 
 	for (i = 0; i < key->partnatts; i++)
@@ -2162,28 +2152,21 @@ partition_rbound_cmp(PartitionKey key,
 		/*
 		 * First, handle cases where the column is unbounded, which should not
 		 * invoke the comparison procedure, and should not consider any later
-		 * columns.
+		 * columns. Note that the PartitionRangeDatumKind enum elements
+		 * compare the same way as the values they represent.
 		 */
-		if (content1[i] != RANGE_DATUM_FINITE ||
-			content2[i] != RANGE_DATUM_FINITE)
-		{
-			/*
-			 * If the bound values are equal, fall through and compare whether
-			 * they are upper or lower bounds.
-			 */
-			if (content1[i] == content2[i])
-				break;
+		if (kind1[i] < kind2[i])
+			return -1;
+		else if (kind1[i] > kind2[i])
+			return 1;
+		else if (kind1[i] != PARTITION_RANGE_DATUM_VALUE)
 
-			/* Otherwise, one bound is definitely larger than the other */
-			if (content1[i] == RANGE_DATUM_NEG_INF)
-				return -1;
-			else if (content1[i] == RANGE_DATUM_POS_INF)
-				return 1;
-			else if (content2[i] == RANGE_DATUM_NEG_INF)
-				return 1;
-			else if (content2[i] == RANGE_DATUM_POS_INF)
-				return -1;
-		}
+			/*
+			 * The column bounds are both MINVALUE or both MAXVALUE. No later
+			 * columns should be considered, but we still need to compare
+			 * whether they are upper or lower bounds.
+			 */
+			break;
 
 		cmpval = DatumGetInt32(FunctionCall2Coll(&key->partsupfunc[i],
 												 key->partcollation[i],
@@ -2208,12 +2191,12 @@ partition_rbound_cmp(PartitionKey key,
 /*
  * partition_rbound_datum_cmp
  *
- * Return whether range bound (specified in rb_datums, rb_content, and
- * rb_lower) <=, =, >= partition key of tuple (tuple_datums)
+ * Return whether range bound (specified in rb_datums, rb_kind, and rb_lower)
+ * is <, =, or > partition key of tuple (tuple_datums)
  */
 static int32
 partition_rbound_datum_cmp(PartitionKey key,
-						   Datum *rb_datums, RangeDatumContent *rb_content,
+						   Datum *rb_datums, PartitionRangeDatumKind *rb_kind,
 						   Datum *tuple_datums)
 {
 	int			i;
@@ -2221,8 +2204,10 @@ partition_rbound_datum_cmp(PartitionKey key,
 
 	for (i = 0; i < key->partnatts; i++)
 	{
-		if (rb_content[i] != RANGE_DATUM_FINITE)
-			return rb_content[i] == RANGE_DATUM_NEG_INF ? -1 : 1;
+		if (rb_kind[i] == PARTITION_RANGE_DATUM_MINVALUE)
+			return -1;
+		else if (rb_kind[i] == PARTITION_RANGE_DATUM_MAXVALUE)
+			return 1;
 
 		cmpval = DatumGetInt32(FunctionCall2Coll(&key->partsupfunc[i],
 												 key->partcollation[i],
@@ -2238,7 +2223,7 @@ partition_rbound_datum_cmp(PartitionKey key,
 /*
  * partition_bound_cmp
  *
- * Return whether the bound at offset in boundinfo is <=, =, >= the argument
+ * Return whether the bound at offset in boundinfo is <, =, or > the argument
  * specified in *probe.
  */
 static int32
@@ -2259,7 +2244,7 @@ partition_bound_cmp(PartitionKey key, PartitionBoundInfo boundinfo,
 
 		case PARTITION_STRATEGY_RANGE:
 			{
-				RangeDatumContent *content = boundinfo->content[offset];
+				PartitionRangeDatumKind *kind = boundinfo->kind[offset];
 
 				if (probe_is_bound)
 				{
@@ -2271,12 +2256,12 @@ partition_bound_cmp(PartitionKey key, PartitionBoundInfo boundinfo,
 					bool		lower = boundinfo->indexes[offset] < 0;
 
 					cmpval = partition_rbound_cmp(key,
-												  bound_datums, content, lower,
+												  bound_datums, kind, lower,
 												  (PartitionRangeBound *) probe);
 				}
 				else
 					cmpval = partition_rbound_datum_cmp(key,
-														bound_datums, content,
+														bound_datums, kind,
 														(Datum *) probe);
 				break;
 			}
