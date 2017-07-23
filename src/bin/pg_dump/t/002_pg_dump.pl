@@ -466,7 +466,7 @@ my %tests = (
 	'ALTER COLLATION test0 OWNER TO' => {
 		all_runs => 1,
 		catch_all =>
-		  'ALTER ... OWNER commands (except LARGE OBJECTs and PUBLICATIONs)',
+		  'ALTER ... OWNER commands (except post-data objects)',
 		regexp    => qr/^ALTER COLLATION test0 OWNER TO .*;/m,
 		collation => 1,
 		like      => {
@@ -493,7 +493,7 @@ my %tests = (
 	'ALTER FOREIGN DATA WRAPPER dummy OWNER TO' => {
 		all_runs => 1,
 		catch_all =>
-		  'ALTER ... OWNER commands (except LARGE OBJECTs and PUBLICATIONs)',
+		  'ALTER ... OWNER commands (except post-data objects)',
 		regexp => qr/^ALTER FOREIGN DATA WRAPPER dummy OWNER TO .*;/m,
 		like   => {
 			binary_upgrade           => 1,
@@ -520,7 +520,7 @@ my %tests = (
 	'ALTER SERVER s1 OWNER TO' => {
 		all_runs => 1,
 		catch_all =>
-		  'ALTER ... OWNER commands (except LARGE OBJECTs and PUBLICATIONs)',
+		  'ALTER ... OWNER commands (except post-data objects)',
 		regexp => qr/^ALTER SERVER s1 OWNER TO .*;/m,
 		like   => {
 			binary_upgrade           => 1,
@@ -547,7 +547,7 @@ my %tests = (
 	'ALTER FUNCTION dump_test.pltestlang_call_handler() OWNER TO' => {
 		all_runs => 1,
 		catch_all =>
-		  'ALTER ... OWNER commands (except LARGE OBJECTs and PUBLICATIONs)',
+		  'ALTER ... OWNER commands (except post-data objects)',
 		regexp => qr/^
 			\QALTER FUNCTION dump_test.pltestlang_call_handler() \E
 			\QOWNER TO \E
@@ -576,7 +576,7 @@ my %tests = (
 	'ALTER OPERATOR FAMILY dump_test.op_family OWNER TO' => {
 		all_runs => 1,
 		catch_all =>
-		  'ALTER ... OWNER commands (except LARGE OBJECTs and PUBLICATIONs)',
+		  'ALTER ... OWNER commands (except post-data objects)',
 		regexp => qr/^
 			\QALTER OPERATOR FAMILY dump_test.op_family USING btree \E
 			\QOWNER TO \E
@@ -655,7 +655,7 @@ my %tests = (
 	'ALTER OPERATOR CLASS dump_test.op_class OWNER TO' => {
 		all_runs => 1,
 		catch_all =>
-		  'ALTER ... OWNER commands (except LARGE OBJECTs and PUBLICATIONs)',
+		  'ALTER ... OWNER commands (except post-data objects)',
 		regexp => qr/^
 			\QALTER OPERATOR CLASS dump_test.op_class USING btree \E
 			\QOWNER TO \E
@@ -746,7 +746,7 @@ my %tests = (
 	'ALTER PROCEDURAL LANGUAGE pltestlang OWNER TO' => {
 		all_runs => 1,
 		catch_all =>
-		  'ALTER ... OWNER commands (except LARGE OBJECTs and PUBLICATIONs)',
+		  'ALTER ... OWNER commands (except post-data objects)',
 		regexp => qr/^ALTER PROCEDURAL LANGUAGE pltestlang OWNER TO .*;/m,
 		like   => {
 			binary_upgrade           => 1,
@@ -772,7 +772,7 @@ my %tests = (
 	'ALTER SCHEMA dump_test OWNER TO' => {
 		all_runs => 1,
 		catch_all =>
-		  'ALTER ... OWNER commands (except LARGE OBJECTs and PUBLICATIONs)',
+		  'ALTER ... OWNER commands (except post-data objects)',
 		regexp => qr/^ALTER SCHEMA dump_test OWNER TO .*;/m,
 		like   => {
 			binary_upgrade          => 1,
@@ -798,7 +798,7 @@ my %tests = (
 	'ALTER SCHEMA dump_test_second_schema OWNER TO' => {
 		all_runs => 1,
 		catch_all =>
-		  'ALTER ... OWNER commands (except LARGE OBJECTs and PUBLICATIONs)',
+		  'ALTER ... OWNER commands (except post-data objects)',
 		regexp => qr/^ALTER SCHEMA dump_test_second_schema OWNER TO .*;/m,
 		like   => {
 			binary_upgrade           => 1,
@@ -1193,7 +1193,7 @@ my %tests = (
 	'ALTER TABLE test_table OWNER TO' => {
 		all_runs => 1,
 		catch_all =>
-		  'ALTER ... OWNER commands (except LARGE OBJECTs and PUBLICATIONs)',
+		  'ALTER ... OWNER commands (except post-data objects)',
 		regexp => qr/^ALTER TABLE test_table OWNER TO .*;/m,
 		like   => {
 			binary_upgrade          => 1,
@@ -1251,7 +1251,7 @@ my %tests = (
 	'ALTER TABLE test_second_table OWNER TO' => {
 		all_runs => 1,
 		catch_all =>
-		  'ALTER ... OWNER commands (except LARGE OBJECTs and PUBLICATIONs)',
+		  'ALTER ... OWNER commands (except post-data objects)',
 		regexp => qr/^ALTER TABLE test_second_table OWNER TO .*;/m,
 		like   => {
 			binary_upgrade          => 1,
@@ -1278,7 +1278,7 @@ my %tests = (
 	'ALTER TABLE test_third_table OWNER TO' => {
 		all_runs => 1,
 		catch_all =>
-		  'ALTER ... OWNER commands (except LARGE OBJECTs and PUBLICATIONs)',
+		  'ALTER ... OWNER commands (except post-data objects)',
 		regexp => qr/^ALTER TABLE test_third_table OWNER TO .*;/m,
 		like   => {
 			binary_upgrade           => 1,
@@ -1305,7 +1305,7 @@ my %tests = (
 	'ALTER TABLE measurement OWNER TO' => {
 		all_runs => 1,
 		catch_all =>
-		  'ALTER ... OWNER commands (except LARGE OBJECTs and PUBLICATIONs)',
+		  'ALTER ... OWNER commands (except post-data objects)',
 		regexp => qr/^ALTER TABLE measurement OWNER TO .*;/m,
 		like   => {
 			binary_upgrade          => 1,
@@ -1332,7 +1332,7 @@ my %tests = (
 	'ALTER TABLE measurement_y2006m2 OWNER TO' => {
 		all_runs => 1,
 		catch_all =>
-		  'ALTER ... OWNER commands (except LARGE OBJECTs and PUBLICATIONs)',
+		  'ALTER ... OWNER commands (except post-data objects)',
 		regexp => qr/^ALTER TABLE measurement_y2006m2 OWNER TO .*;/m,
 		like   => {
 			binary_upgrade           => 1,
@@ -1359,7 +1359,7 @@ my %tests = (
 	'ALTER FOREIGN TABLE foreign_table OWNER TO' => {
 		all_runs => 1,
 		catch_all =>
-		  'ALTER ... OWNER commands (except LARGE OBJECTs and PUBLICATIONs)',
+		  'ALTER ... OWNER commands (except post-data objects)',
 		regexp => qr/^ALTER FOREIGN TABLE foreign_table OWNER TO .*;/m,
 		like   => {
 			binary_upgrade          => 1,
@@ -1386,7 +1386,7 @@ my %tests = (
 	'ALTER TEXT SEARCH CONFIGURATION alt_ts_conf1 OWNER TO' => {
 		all_runs => 1,
 		catch_all =>
-		  'ALTER ... OWNER commands (except LARGE OBJECTs and PUBLICATIONs)',
+		  'ALTER ... OWNER commands (except post-data objects)',
 		regexp =>
 		  qr/^ALTER TEXT SEARCH CONFIGURATION alt_ts_conf1 OWNER TO .*;/m,
 		like => {
@@ -1414,7 +1414,7 @@ my %tests = (
 	'ALTER TEXT SEARCH DICTIONARY alt_ts_dict1 OWNER TO' => {
 		all_runs => 1,
 		catch_all =>
-		  'ALTER ... OWNER commands (except LARGE OBJECTs and PUBLICATIONs)',
+		  'ALTER ... OWNER commands (except post-data objects)',
 		regexp =>
 		  qr/^ALTER TEXT SEARCH DICTIONARY alt_ts_dict1 OWNER TO .*;/m,
 		like => {
@@ -1439,11 +1439,11 @@ my %tests = (
 			only_dump_test_table     => 1,
 			role                     => 1, }, },
 
-	# catch-all for ALTER ... OWNER (except LARGE OBJECTs and PUBLICATIONs)
-	'ALTER ... OWNER commands (except LARGE OBJECTs and PUBLICATIONs)' => {
+	# catch-all for ALTER ... OWNER (except post-data objects)
+	'ALTER ... OWNER commands (except post-data objects)' => {
 		all_runs => 0,    # catch-all
 		regexp =>
-qr/^ALTER (?!LARGE OBJECT|PUBLICATION|SUBSCRIPTION)(.*) OWNER TO .*;/m,
+qr/^ALTER (?!EVENT TRIGGER|LARGE OBJECT|PUBLICATION|SUBSCRIPTION)(.*) OWNER TO .*;/m,
 		like   => {},     # use more-specific options above
 		unlike => {
 			column_inserts           => 1,
