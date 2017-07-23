@@ -516,18 +516,19 @@ my %tests = (
 			only_dump_test_table   => 1,
 			test_schema_plus_blobs => 1, }, },
 
-	# catch-all for ALTER ... OWNER (except LARGE OBJECTs)
-	'ALTER ... OWNER commands (except LARGE OBJECTs)' => {
-		regexp => qr/^ALTER (?!LARGE OBJECT)(.*) OWNER TO .*;/m,
+	# catch-all for ALTER ... OWNER (except post-data objects)
+	'ALTER ... OWNER commands (except post-data objects)' => {
+		regexp => qr/^ALTER (?!EVENT TRIGGER|LARGE OBJECT)(.*) OWNER TO .*;/m,
 		like   => {},    # use more-specific options above
 		unlike => {
 			column_inserts => 1,
 			data_only      => 1,
-			section_data   => 1, }, },
+			section_data   => 1,
+			section_post_data => 1, }, },
 
-	# catch-all for ALTER TABLE ...
+	# catch-all for ALTER TABLE ... (except OWNER TO)
 	'ALTER TABLE ... commands' => {
-		regexp => qr/^ALTER TABLE .*;/m,
+		regexp => qr/^ALTER TABLE .* (?!OWNER TO)(.*);/m,
 		like   => {},                      # use more-specific options above
 		unlike => {
 			column_inserts           => 1,
@@ -543,8 +544,7 @@ my %tests = (
 		unlike => {
 			no_owner                 => 1,
 			pg_dumpall_globals       => 1,
-			pg_dumpall_globals_clean => 1,
-			section_post_data        => 1, }, },
+			pg_dumpall_globals_clean => 1, }, },
 
 	#	'BLOB load (contents are of test_table)' => {
 	#		create_order => 14,
