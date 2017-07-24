@@ -1677,6 +1677,35 @@ select pg_get_viewdef('tt22v', true);
       LEFT JOIN tt6 ON TRUE;
 (1 row)
 
+-- check handling of views with immediately-renamed columns
+create view tt23v (col_a, col_b) as
+select q1 as other_name1, q2 as other_name2 from int8_tbl
+union
+select 42, 43;
+select pg_get_viewdef('tt23v', true);
+        pg_get_viewdef         
+-------------------------------
+  SELECT int8_tbl.q1 AS col_a,+
+     int8_tbl.q2 AS col_b     +
+    FROM int8_tbl             +
+ UNION                        +
+  SELECT 42 AS col_a,         +
+     43 AS col_b;
+(1 row)
+
+select pg_get_ruledef(oid, true) from pg_rewrite
+  where ev_class = 'tt23v'::regclass and ev_type = '1';
+                         pg_get_ruledef                          
+-----------------------------------------------------------------
+ CREATE RULE "_RETURN" AS                                       +
+     ON SELECT TO tt23v DO INSTEAD  SELECT int8_tbl.q1 AS col_a,+
+     int8_tbl.q2 AS col_b                                       +
+    FROM int8_tbl                                               +
+ UNION                                                          +
+  SELECT 42 AS col_a,                                           +
+     43 AS col_b;
+(1 row)
+
 -- clean up all the random objects we made above
 set client_min_messages = warning;
 DROP SCHEMA temp_view_test CASCADE;
