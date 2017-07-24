@@ -209,7 +209,7 @@ sub mkvcbuild
 		$pltcl->AddIncludeDir($solution->{options}->{tcl} . '/include');
 		$pltcl->AddReference($postgres);
 
-		for my $tclver (qw(86t 85 84))
+		for my $tclver (qw(86t 86 85 84))
 		{
 			my $tcllib = $solution->{options}->{tcl} . "/lib/tcl$tclver.lib";
 			if (-e $tcllib)
