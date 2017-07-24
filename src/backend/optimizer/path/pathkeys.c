@@ -197,8 +197,8 @@ make_pathkey_from_sortinfo(PlannerInfo *root,
 									  opcintype,
 									  BTEqualStrategyNumber);
 	if (!OidIsValid(equality_op))	/* shouldn't happen */
-		elog(ERROR, "could not find equality operator for opfamily %u",
-			 opfamily);
+		elog(ERROR, "missing operator %d(%u,%u) in opfamily %u",
+			 BTEqualStrategyNumber, opcintype, opcintype, opfamily);
 	opfamilies = get_mergejoin_opfamilies(equality_op);
 	if (!opfamilies)			/* certainly should find some */
 		elog(ERROR, "could not find opfamilies for equality operator %u",

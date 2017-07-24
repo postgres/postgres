@@ -1738,6 +1738,10 @@ BuildSpeculativeIndexInfo(Relation index, IndexInfo *ii)
 								index->rd_opcintype[i],
 								index->rd_opcintype[i],
 								ii->ii_UniqueStrats[i]);
+		if (!OidIsValid(ii->ii_UniqueOps[i]))
+			elog(ERROR, "missing operator %d(%u,%u) in opfamily %u",
+				 ii->ii_UniqueStrats[i], index->rd_opcintype[i],
+				 index->rd_opcintype[i], index->rd_opfamily[i]);
 		ii->ii_UniqueProcs[i] = get_opcode(ii->ii_UniqueOps[i]);
 	}
 }

@@ -81,9 +81,8 @@ build_replindex_scan_key(ScanKey skey, Relation rel, Relation idxrel,
 		operator = get_opfamily_member(opfamily, optype,
 									   optype,
 									   BTEqualStrategyNumber);
-
 		if (!OidIsValid(operator))
-			elog(ERROR, "could not find member %d(%u,%u) of opfamily %u",
+			elog(ERROR, "missing operator %d(%u,%u) in opfamily %u",
 				 BTEqualStrategyNumber, optype, optype, opfamily);
 
 		regop = get_opcode(operator);

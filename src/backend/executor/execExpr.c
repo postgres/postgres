@@ -1640,6 +1640,9 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
 											 lefttype,
 											 righttype,
 											 BTORDER_PROC);
+					if (!OidIsValid(proc))
+						elog(ERROR, "missing support function %d(%u,%u) in opfamily %u",
+							 BTORDER_PROC, lefttype, righttype, opfamily);
 
 					/* Set up the primary fmgr lookup information */
 					finfo = palloc0(sizeof(FmgrInfo));

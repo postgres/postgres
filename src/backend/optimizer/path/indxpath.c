@@ -3978,13 +3978,13 @@ adjust_rowcompare_for_index(RowCompareExpr *clause,
 			expr_op = get_opfamily_member(opfam, lefttype, righttype,
 										  op_strategy);
 			if (!OidIsValid(expr_op))	/* should not happen */
-				elog(ERROR, "could not find member %d(%u,%u) of opfamily %u",
+				elog(ERROR, "missing operator %d(%u,%u) in opfamily %u",
 					 op_strategy, lefttype, righttype, opfam);
 			if (!var_on_left)
 			{
 				expr_op = get_commutator(expr_op);
 				if (!OidIsValid(expr_op))	/* should not happen */
-					elog(ERROR, "could not find commutator of member %d(%u,%u) of opfamily %u",
+					elog(ERROR, "could not find commutator of operator %d(%u,%u) of opfamily %u",
 						 op_strategy, lefttype, righttype, opfam);
 			}
 			new_ops = lappend_oid(new_ops, expr_op);

@@ -945,6 +945,10 @@ RelationBuildPartitionKey(Relation relation)
 								   opclassform->opcintype,
 								   opclassform->opcintype,
 								   BTORDER_PROC);
+		if (!OidIsValid(funcid))	/* should not happen */
+			elog(ERROR, "missing support function %d(%u,%u) in opfamily %u",
+				 BTORDER_PROC, opclassform->opcintype, opclassform->opcintype,
+				 opclassform->opcfamily);
 
 		fmgr_info(funcid, &key->partsupfunc[i]);
 

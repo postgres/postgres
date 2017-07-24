@@ -1187,13 +1187,14 @@ get_partition_operator(PartitionKey key, int col, StrategyNumber strategy,
 									  key->partopcintype[col],
 									  key->partopcintype[col],
 									  strategy);
+		if (!OidIsValid(operoid))
+			elog(ERROR, "missing operator %d(%u,%u) in opfamily %u",
+				 strategy, key->partopcintype[col], key->partopcintype[col],
+				 key->partopfamily[col]);
 		*need_relabel = true;
 	}
 	else
 		*need_relabel = false;
-
-	if (!OidIsValid(operoid))
-		elog(ERROR, "could not find operator for partitioning");
 
 	return operoid;
 }
