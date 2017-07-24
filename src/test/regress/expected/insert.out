@@ -410,6 +410,21 @@ with ins (a, b, c) as
  mlparted4  | 1 |  30 |  39
 (5 rows)
 
+alter table mlparted add c text;
+create table mlparted5 (c text, a int not null, b int not null) partition by list (c);
+create table mlparted5a (a int not null, c text, b int not null);
+alter table mlparted5 attach partition mlparted5a for values in ('a');
+alter table mlparted attach partition mlparted5 for values from (1, 40) to (1, 50);
+alter table mlparted add constraint check_b check (a = 1 and b < 45);
+insert into mlparted values (1, 45, 'a');
+ERROR:  new row for relation "mlparted5a" violates check constraint "check_b"
+DETAIL:  Failing row contains (1, 45, a).
+create function mlparted5abrtrig_func() returns trigger as $$ begin new.c = 'b'; return new; end; $$ language plpgsql;
+create trigger mlparted5abrtrig before insert on mlparted5a for each row execute procedure mlparted5abrtrig_func();
+insert into mlparted5 (a, b, c) values (1, 40, 'a');
+ERROR:  new row for relation "mlparted5a" violates partition constraint
+DETAIL:  Failing row contains (b, 1, 40).
+drop table mlparted5;
 -- check that message shown after failure to find a partition shows the
 -- appropriate key description (or none) in various situations
 create table key_desc (a int, b int) partition by list ((a+0));

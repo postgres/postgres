@@ -1114,8 +1114,8 @@ DROP VIEW v1;
 DROP TABLE t1;
 
 -- check that an auto-updatable view on a partitioned table works correctly
-create table pt (a int, b int) partition by range (a, b);
-create table pt1 (b int not null, a int not null) partition by range (b);
+create table pt (a int, b int, v varchar) partition by range (a, b);
+create table pt1 (b int not null, v varchar, a int not null) partition by range (b);
 create table pt11 (like pt1);
 alter table pt11 drop a;
 alter table pt11 add a int;
