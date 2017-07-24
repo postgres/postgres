@@ -272,6 +272,17 @@ select * from
   cast(1+2 as int8) as i8;
 select pg_get_viewdef('tt20v', true);
 
+-- check handling of views with immediately-renamed columns
+
+create view tt23v (col_a, col_b) as
+select q1 as other_name1, q2 as other_name2 from int8_tbl
+union
+select 42, 43;
+
+select pg_get_viewdef('tt23v', true);
+select pg_get_ruledef(oid, true) from pg_rewrite
+  where ev_class = 'tt23v'::regclass and ev_type = '1';
+
 -- clean up all the random objects we made above
 set client_min_messages = warning;
 DROP SCHEMA temp_view_test CASCADE;

@@ -2402,6 +2402,8 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 	char	   *ev_qual;
 	char	   *ev_action;
 	List	   *actions = NIL;
+	Relation	ev_relation;
+	TupleDesc	viewResultDesc = NULL;
 	int			fno;
 	Datum		dat;
 	bool		isnull;
@@ -2443,6 +2445,8 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 	if (ev_action != NULL)
 		actions = (List *) stringToNode(ev_action);
 
+	ev_relation = heap_open(ev_class, AccessShareLock);
+
 	/*
 	 * Build the rules definition text
 	 */
@@ -2459,6 +2463,7 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 	{
 		case '1':
 			appendStringInfo(buf, "SELECT");
+			viewResultDesc = RelationGetDescr(ev_relation);
 			break;
 
 		case '2':
@@ -2553,7 +2558,7 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 		foreach(action, actions)
 		{
 			query = (Query *) lfirst(action);
-			get_query_def(query, buf, NIL, NULL,
+			get_query_def(query, buf, NIL, viewResultDesc,
 						  prettyFlags, WRAP_COLUMN_DEFAULT, 0);
 			if (prettyFlags)
 				appendStringInfo(buf, ";\n");
@@ -2571,10 +2576,12 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 		Query	   *query;
 
 		query = (Query *) linitial(actions);
-		get_query_def(query, buf, NIL, NULL,
+		get_query_def(query, buf, NIL, viewResultDesc,
 					  prettyFlags, WRAP_COLUMN_DEFAULT, 0);
 		appendStringInfo(buf, ";");
 	}
+
+	heap_close(ev_relation, AccessShareLock);
 }
 
 
