@@ -798,6 +798,7 @@ OldSerXidInit(void)
 	oldSerXidControl = (OldSerXidControl)
 		ShmemInitStruct("OldSerXidControlData", sizeof(OldSerXidControlData), &found);
 
+	Assert(found == IsUnderPostmaster);
 	if (!found)
 	{
 		/*
@@ -1093,6 +1094,10 @@ InitPredicateLocks(void)
 	Size		requestSize;
 	bool		found;
 
+#ifndef EXEC_BACKEND
+	Assert(!IsUnderPostmaster);
+#endif
+
 	/*
 	 * Compute size of predicate lock target hashtable. Note these
 	 * calculations must agree with PredicateLockShmemSize!
@@ -1116,16 +1121,22 @@ InitPredicateLocks(void)
 											&info,
 											hash_flags);
 
-	/* Assume an average of 2 xacts per target */
-	max_table_size *= 2;
-
 	/*
 	 * Reserve a dummy entry in the hash table; we use it to make sure there's
 	 * always one entry available when we need to split or combine a page,
 	 * because running out of space there could mean aborting a
 	 * non-serializable transaction.
 	 */
-	hash_search(PredicateLockTargetHash, &ScratchTargetTag, HASH_ENTER, NULL);
+	if (!IsUnderPostmaster)
+	{
+		(void) hash_search(PredicateLockTargetHash, &ScratchTargetTag,
+						   HASH_ENTER, &found);
+		Assert(!found);
+	}
+
+	/* Pre-calculate the hash and partition lock of the scratch entry */
+	ScratchTargetTagHash = PredicateLockTargetTagHashCode(&ScratchTargetTag);
+	ScratchPartitionLock = PredicateLockHashPartitionLock(ScratchTargetTagHash);
 
 	/*
 	 * Allocate hash table for PREDICATELOCK structs.  This stores per
@@ -1137,6 +1148,9 @@ InitPredicateLocks(void)
 	info.hash = predicatelock_hash;
 	info.num_partitions = NUM_PREDICATELOCK_PARTITIONS;
 	hash_flags = (HASH_ELEM | HASH_FUNCTION | HASH_PARTITION | HASH_FIXED_SIZE);
+
+	/* Assume an average of 2 xacts per target */
+	max_table_size *= 2;
 
 	PredicateLockHash = ShmemInitHash("PREDICATELOCK hash",
 									  max_table_size,
@@ -1163,6 +1177,7 @@ InitPredicateLocks(void)
 	PredXact = ShmemInitStruct("PredXactList",
 							   PredXactListDataSize,
 							   &found);
+	Assert(found == IsUnderPostmaster);
 	if (!found)
 	{
 		int			i;
@@ -1242,6 +1257,7 @@ InitPredicateLocks(void)
 	RWConflictPool = ShmemInitStruct("RWConflictPool",
 									 RWConflictPoolHeaderDataSize,
 									 &found);
+	Assert(found == IsUnderPostmaster);
 	if (!found)
 	{
 		int			i;
@@ -1273,6 +1289,7 @@ InitPredicateLocks(void)
 		ShmemInitStruct("FinishedSerializableTransactions",
 						sizeof(SHM_QUEUE),
 						&found);
+	Assert(found == IsUnderPostmaster);
 	if (!found)
 		SHMQueueInit(FinishedSerializableTransactions);
 
@@ -1281,10 +1298,6 @@ InitPredicateLocks(void)
 	 * transactions.
 	 */
 	OldSerXidInit();
-
-	/* Pre-calculate the hash and partition lock of the scratch entry */
-	ScratchTargetTagHash = PredicateLockTargetTagHashCode(&ScratchTargetTag);
-	ScratchPartitionLock = PredicateLockHashPartitionLock(ScratchTargetTagHash);
 }
 
 /*
