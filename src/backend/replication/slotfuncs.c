@@ -171,7 +171,7 @@ pg_drop_replication_slot(PG_FUNCTION_ARGS)
 
 	CheckSlotRequirements();
 
-	ReplicationSlotDrop(NameStr(*name));
+	ReplicationSlotDrop(NameStr(*name), false);
 
 	PG_RETURN_VOID();
 }
@@ -221,6 +221,7 @@ pg_get_replication_slots(PG_FUNCTION_ARGS)
 
 	MemoryContextSwitchTo(oldcontext);
 
+	LWLockAcquire(ReplicationSlotControlLock, LW_SHARED);
 	for (slotno = 0; slotno < max_replication_slots; slotno++)
 	{
 		ReplicationSlot *slot = &ReplicationSlotCtl->replication_slots[slotno];
@@ -238,25 +239,21 @@ pg_get_replication_slots(PG_FUNCTION_ARGS)
 		NameData	plugin;
 		int			i;
 
-		SpinLockAcquire(&slot->mutex);
 		if (!slot->in_use)
-		{
-			SpinLockRelease(&slot->mutex);
 			continue;
-		}
-		else
-		{
-			xmin = slot->data.xmin;
-			catalog_xmin = slot->data.catalog_xmin;
-			database = slot->data.database;
-			restart_lsn = slot->data.restart_lsn;
-			confirmed_flush_lsn = slot->data.confirmed_flush;
-			namecpy(&slot_name, &slot->data.name);
-			namecpy(&plugin, &slot->data.plugin);
 
-			active_pid = slot->active_pid;
-			persistency = slot->data.persistency;
-		}
+		SpinLockAcquire(&slot->mutex);
+
+		xmin = slot->data.xmin;
+		catalog_xmin = slot->data.catalog_xmin;
+		database = slot->data.database;
+		restart_lsn = slot->data.restart_lsn;
+		confirmed_flush_lsn = slot->data.confirmed_flush;
+		namecpy(&slot_name, &slot->data.name);
+		namecpy(&plugin, &slot->data.plugin);
+		active_pid = slot->active_pid;
+		persistency = slot->data.persistency;
+
 		SpinLockRelease(&slot->mutex);
 
 		memset(nulls, 0, sizeof(nulls));
@@ -309,6 +306,7 @@ pg_get_replication_slots(PG_FUNCTION_ARGS)
 
 		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
 	}
+	LWLockRelease(ReplicationSlotControlLock);
 
 	tuplestore_donestoring(tupstore);
 

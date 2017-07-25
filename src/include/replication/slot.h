@@ -12,6 +12,7 @@
 #include "fmgr.h"
 #include "access/xlog.h"
 #include "access/xlogreader.h"
+#include "storage/condition_variable.h"
 #include "storage/lwlock.h"
 #include "storage/shmem.h"
 #include "storage/spin.h"
@@ -19,7 +20,7 @@
 /*
  * Behaviour of replication slots, upon release or crash.
  *
- * Slots marked as PERSISTENT are crashsafe and will not be dropped when
+ * Slots marked as PERSISTENT are crash-safe and will not be dropped when
  * released. Slots marked as EPHEMERAL will be dropped when released or after
  * restarts.
  *
@@ -117,6 +118,9 @@ typedef struct ReplicationSlot
 	/* is somebody performing io on this slot? */
 	LWLock		io_in_progress_lock;
 
+	/* Condition variable signalled when active_pid changes */
+	ConditionVariable active_cv;
+
 	/* all the remaining data is only used for logical slots */
 
 	/*
@@ -162,9 +166,9 @@ extern void ReplicationSlotsShmemInit(void);
 extern void ReplicationSlotCreate(const char *name, bool db_specific,
 					  ReplicationSlotPersistency p);
 extern void ReplicationSlotPersist(void);
-extern void ReplicationSlotDrop(const char *name);
+extern void ReplicationSlotDrop(const char *name, bool nowait);
 
-extern void ReplicationSlotAcquire(const char *name);
+extern void ReplicationSlotAcquire(const char *name, bool nowait);
 extern void ReplicationSlotRelease(void);
 extern void ReplicationSlotCleanup(void);
 extern void ReplicationSlotSave(void);

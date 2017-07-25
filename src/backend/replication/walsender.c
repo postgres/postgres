@@ -541,7 +541,7 @@ StartReplication(StartReplicationCmd *cmd)
 
 	if (cmd->slotname)
 	{
-		ReplicationSlotAcquire(cmd->slotname);
+		ReplicationSlotAcquire(cmd->slotname, true);
 		if (SlotIsLogical(MyReplicationSlot))
 			ereport(ERROR,
 					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
@@ -1028,7 +1028,7 @@ CreateReplicationSlot(CreateReplicationSlotCmd *cmd)
 static void
 DropReplicationSlot(DropReplicationSlotCmd *cmd)
 {
-	ReplicationSlotDrop(cmd->slotname);
+	ReplicationSlotDrop(cmd->slotname, false);
 	EndCommand("DROP_REPLICATION_SLOT", DestRemote);
 }
 
@@ -1046,7 +1046,7 @@ StartLogicalReplication(StartReplicationCmd *cmd)
 
 	Assert(!MyReplicationSlot);
 
-	ReplicationSlotAcquire(cmd->slotname);
+	ReplicationSlotAcquire(cmd->slotname, true);
 
 	/*
 	 * Force a disconnect, so that the decoding code doesn't need to care
