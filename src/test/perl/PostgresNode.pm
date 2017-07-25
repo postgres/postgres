@@ -9,7 +9,7 @@ PostgresNode - class representing PostgreSQL server instance
 
   use PostgresNode;
 
-  my $node = get_new_node('mynode');
+  my $node = PostgresNode->get_new_node('mynode');
 
   # Create a data directory with initdb
   $node->init();
@@ -855,20 +855,24 @@ sub _update_pid
 
 =pod
 
-=item get_new_node(node_name)
+=item PostgresNode->get_new_node(node_name)
 
-Build a new PostgresNode object, assigning a free port number. Standalone
-function that's automatically imported.
+Build a new object of class C<PostgresNode> (or of a subclass, if you have
+one), assigning a free port number.  Remembers the node, to prevent its port
+number from being reused for another node, and to ensure that it gets
+shut down when the test script exits.
 
-Remembers the node, to prevent its port number from being reused for another
-node, and to ensure that it gets shut down when the test script exits.
+You should generally use this instead of C<PostgresNode::new(...)>.
 
-You should generally use this instead of PostgresNode::new(...).
+For backwards compatibility, it is also exported as a standalone function,
+which can only create objects of class C<PostgresNode>.
 
 =cut
 
 sub get_new_node
 {
+	my $class = 'PostgresNode';
+	$class = shift if 1 < scalar @_;
 	my $name  = shift;
 	my $found = 0;
 	my $port  = $last_port_assigned;
@@ -913,7 +917,7 @@ sub get_new_node
 	print "# Found free port $port\n";
 
 	# Lock port number found by creating a new node
-	my $node = new PostgresNode($name, $test_pghost, $port);
+	my $node = $class->new($name, $test_pghost, $port);
 
 	# Add node to list of nodes
 	push(@all_nodes, $node);
