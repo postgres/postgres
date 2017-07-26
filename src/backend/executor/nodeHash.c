@@ -810,6 +810,9 @@ ExecHashIncreaseNumBuckets(HashJoinTable hashtable)
 			idx += MAXALIGN(HJTUPLE_OVERHEAD +
 							HJTUPLE_MINTUPLE(hashTuple)->t_len);
 		}
+
+		/* allow this loop to be cancellable */
+		CHECK_FOR_INTERRUPTS();
 	}
 }
 
@@ -1192,6 +1195,9 @@ ExecScanHashTableForUnmatched(HashJoinState *hjstate, ExprContext *econtext)
 
 			hashTuple = hashTuple->next;
 		}
+
+		/* allow this loop to be cancellable */
+		CHECK_FOR_INTERRUPTS();
 	}
 
 	/*

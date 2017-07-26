@@ -164,6 +164,8 @@ ExecGatherMerge(GatherMergeState *node)
 	ExprContext *econtext;
 	int			i;
 
+	CHECK_FOR_INTERRUPTS();
+
 	/*
 	 * As with Gather, we don't launch workers until this node is actually
 	 * executed.
@@ -393,6 +395,8 @@ gather_merge_init(GatherMergeState *gm_state)
 reread:
 	for (i = 0; i < nreaders + 1; i++)
 	{
+		CHECK_FOR_INTERRUPTS();
+
 		if (!gm_state->gm_tuple_buffers[i].done &&
 			(TupIsNull(gm_state->gm_slots[i]) ||
 			 gm_state->gm_slots[i]->tts_isempty))

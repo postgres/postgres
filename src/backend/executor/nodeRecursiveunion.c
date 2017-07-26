@@ -75,6 +75,8 @@ ExecRecursiveUnion(RecursiveUnionState *node)
 	TupleTableSlot *slot;
 	bool		isnew;
 
+	CHECK_FOR_INTERRUPTS();
+
 	/* 1. Evaluate non-recursive term */
 	if (!node->recursing)
 	{

@@ -24,6 +24,7 @@
 
 #include "executor/executor.h"
 #include "executor/nodeGroup.h"
+#include "miscadmin.h"
 
 
 /*
@@ -39,6 +40,8 @@ ExecGroup(GroupState *node)
 	AttrNumber *grpColIdx;
 	TupleTableSlot *firsttupleslot;
 	TupleTableSlot *outerslot;
+
+	CHECK_FOR_INTERRUPTS();
 
 	/*
 	 * get state info from node

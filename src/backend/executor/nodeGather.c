@@ -128,6 +128,8 @@ ExecGather(GatherState *node)
 	TupleTableSlot *slot;
 	ExprContext *econtext;
 
+	CHECK_FOR_INTERRUPTS();
+
 	/*
 	 * Initialize the parallel context and workers on first execution. We do
 	 * this on first execution rather than during node initialization, as it
@@ -247,6 +249,8 @@ gather_getnext(GatherState *gatherstate)
 
 	while (gatherstate->reader != NULL || gatherstate->need_to_scan_locally)
 	{
+		CHECK_FOR_INTERRUPTS();
+
 		if (gatherstate->reader != NULL)
 		{
 			MemoryContext oldContext;

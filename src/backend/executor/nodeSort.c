@@ -43,6 +43,8 @@ ExecSort(SortState *node)
 	Tuplesortstate *tuplesortstate;
 	TupleTableSlot *slot;
 
+	CHECK_FOR_INTERRUPTS();
+
 	/*
 	 * get state info from node
 	 */

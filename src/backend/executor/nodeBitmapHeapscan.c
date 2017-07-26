@@ -41,6 +41,7 @@
 #include "access/transam.h"
 #include "executor/execdebug.h"
 #include "executor/nodeBitmapHeapscan.h"
+#include "miscadmin.h"
 #include "pgstat.h"
 #include "storage/bufmgr.h"
 #include "storage/predicate.h"
@@ -191,6 +192,8 @@ BitmapHeapNext(BitmapHeapScanState *node)
 	{
 		Page		dp;
 		ItemId		lp;
+
+		CHECK_FOR_INTERRUPTS();
 
 		/*
 		 * Get next page of results if needed

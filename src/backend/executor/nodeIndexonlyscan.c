@@ -34,6 +34,7 @@
 #include "executor/execdebug.h"
 #include "executor/nodeIndexonlyscan.h"
 #include "executor/nodeIndexscan.h"
+#include "miscadmin.h"
 #include "storage/bufmgr.h"
 #include "storage/predicate.h"
 #include "utils/memutils.h"
@@ -116,6 +117,8 @@ IndexOnlyNext(IndexOnlyScanState *node)
 	while ((tid = index_getnext_tid(scandesc, direction)) != NULL)
 	{
 		HeapTuple	tuple = NULL;
+
+		CHECK_FOR_INTERRUPTS();
 
 		/*
 		 * We can skip the heap fetch if the TID references a heap page on

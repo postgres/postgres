@@ -33,6 +33,7 @@
 #include "executor/executor.h"
 #include "executor/nodeSubplan.h"
 #include "nodes/makefuncs.h"
+#include "miscadmin.h"
 #include "optimizer/clauses.h"
 #include "utils/array.h"
 #include "utils/lsyscache.h"
@@ -64,6 +65,8 @@ ExecSubPlan(SubPlanState *node,
 			bool *isNull)
 {
 	SubPlan    *subplan = node->subplan;
+
+	CHECK_FOR_INTERRUPTS();
 
 	/* Set non-null as default */
 	*isNull = false;
@@ -618,6 +621,8 @@ findPartialMatch(TupleHashTable hashtable, TupleTableSlot *slot,
 	InitTupleHashIterator(hashtable, &hashiter);
 	while ((entry = ScanTupleHashTable(hashtable, &hashiter)) != NULL)
 	{
+		CHECK_FOR_INTERRUPTS();
+
 		ExecStoreMinimalTuple(entry->firstTuple, hashtable->tableslot, false);
 		if (!execTuplesUnequal(slot, hashtable->tableslot,
 							   numCols, keyColIdx,

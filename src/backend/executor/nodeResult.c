@@ -47,6 +47,7 @@
 
 #include "executor/executor.h"
 #include "executor/nodeResult.h"
+#include "miscadmin.h"
 #include "utils/memutils.h"
 
 
@@ -69,6 +70,8 @@ ExecResult(ResultState *node)
 	TupleTableSlot *outerTupleSlot;
 	PlanState  *outerPlan;
 	ExprContext *econtext;
+
+	CHECK_FOR_INTERRUPTS();
 
 	econtext = node->ps.ps_ExprContext;
 

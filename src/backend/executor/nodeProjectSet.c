@@ -24,6 +24,7 @@
 
 #include "executor/executor.h"
 #include "executor/nodeProjectSet.h"
+#include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
 #include "utils/memutils.h"
 
@@ -45,6 +46,8 @@ ExecProjectSet(ProjectSetState *node)
 	TupleTableSlot *resultSlot;
 	PlanState  *outerPlan;
 	ExprContext *econtext;
+
+	CHECK_FOR_INTERRUPTS();
 
 	econtext = node->ps.ps_ExprContext;
 

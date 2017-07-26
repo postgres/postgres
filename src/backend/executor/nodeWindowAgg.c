@@ -1594,6 +1594,8 @@ ExecWindowAgg(WindowAggState *winstate)
 	int			i;
 	int			numfuncs;
 
+	CHECK_FOR_INTERRUPTS();
+
 	if (winstate->all_done)
 		return NULL;
 
@@ -2370,6 +2372,9 @@ window_gettupleslot(WindowObject winobj, int64 pos, TupleTableSlot *slot)
 {
 	WindowAggState *winstate = winobj->winstate;
 	MemoryContext oldcontext;
+
+	/* often called repeatedly in a row */
+	CHECK_FOR_INTERRUPTS();
 
 	/* Don't allow passing -1 to spool_tuples here */
 	if (pos < 0)

@@ -23,6 +23,7 @@
 
 #include "executor/executor.h"
 #include "executor/nodeLimit.h"
+#include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
 
 static void recompute_limits(LimitState *node);
@@ -42,6 +43,8 @@ ExecLimit(LimitState *node)
 	ScanDirection direction;
 	TupleTableSlot *slot;
 	PlanState  *outerPlan;
+
+	CHECK_FOR_INTERRUPTS();
 
 	/*
 	 * get information from the node

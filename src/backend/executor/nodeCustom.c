@@ -15,6 +15,7 @@
 #include "executor/nodeCustom.h"
 #include "nodes/execnodes.h"
 #include "nodes/plannodes.h"
+#include "miscadmin.h"
 #include "parser/parsetree.h"
 #include "utils/hsearch.h"
 #include "utils/memutils.h"
@@ -104,6 +105,8 @@ ExecInitCustomScan(CustomScan *cscan, EState *estate, int eflags)
 TupleTableSlot *
 ExecCustomScan(CustomScanState *node)
 {
+	CHECK_FOR_INTERRUPTS();
+
 	Assert(node->methods->ExecCustomScan != NULL);
 	return node->methods->ExecCustomScan(node);
 }

@@ -399,8 +399,6 @@ ExecProcNode(PlanState *node)
 {
 	TupleTableSlot *result;
 
-	CHECK_FOR_INTERRUPTS();
-
 	if (node->chgParam != NULL) /* something changed */
 		ExecReScan(node);		/* let ReScan handle this */
 

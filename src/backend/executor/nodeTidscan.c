@@ -26,6 +26,7 @@
 #include "catalog/pg_type.h"
 #include "executor/execdebug.h"
 #include "executor/nodeTidscan.h"
+#include "miscadmin.h"
 #include "optimizer/clauses.h"
 #include "storage/bufmgr.h"
 #include "utils/array.h"
@@ -400,6 +401,8 @@ TidNext(TidScanState *node)
 			node->tss_TidPtr--;
 		else
 			node->tss_TidPtr++;
+
+		CHECK_FOR_INTERRUPTS();
 	}
 
 	/*

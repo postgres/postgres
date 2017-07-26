@@ -92,6 +92,14 @@ ExecHashJoin(HashJoinState *node)
 	 */
 	for (;;)
 	{
+		/*
+		 * It's possible to iterate this loop many times before returning a
+		 * tuple, in some pathological cases such as needing to move much of
+		 * the current batch to a later batch.  So let's check for interrupts
+		 * each time through.
+		 */
+		CHECK_FOR_INTERRUPTS();
+
 		switch (node->hj_JoinState)
 		{
 			case HJ_BUILD_HASHTABLE:
@@ -245,13 +253,6 @@ ExecHashJoin(HashJoinState *node)
 				/* FALL THRU */
 
 			case HJ_SCAN_BUCKET:
-
-				/*
-				 * We check for interrupts here because this corresponds to
-				 * where we'd fetch a row from a child plan node in other join
-				 * types.
-				 */
-				CHECK_FOR_INTERRUPTS();
 
 				/*
 				 * Scan the selected hash bucket for matches to current outer

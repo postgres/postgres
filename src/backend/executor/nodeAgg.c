@@ -677,6 +677,8 @@ fetch_input_tuple(AggState *aggstate)
 
 	if (aggstate->sort_in)
 	{
+		/* make sure we check for interrupts in either path through here */
+		CHECK_FOR_INTERRUPTS();
 		if (!tuplesort_gettupleslot(aggstate->sort_in, true, false,
 									aggstate->sort_slot, NULL))
 			return NULL;
@@ -1414,6 +1416,8 @@ process_ordered_aggregate_multi(AggState *aggstate,
 	while (tuplesort_gettupleslot(pertrans->sortstates[aggstate->current_set],
 								  true, true, slot1, &newAbbrevVal))
 	{
+		CHECK_FOR_INTERRUPTS();
+
 		/*
 		 * Extract the first numTransInputs columns as datums to pass to the
 		 * transfn.  (This will help execTuplesMatch too, so we do it
@@ -2100,6 +2104,8 @@ ExecAgg(AggState *node)
 {
 	TupleTableSlot *result = NULL;
 
+	CHECK_FOR_INTERRUPTS();
+
 	if (!node->agg_done)
 	{
 		/* Dispatch based on strategy */
@@ -2562,6 +2568,8 @@ agg_retrieve_hash_table(AggState *aggstate)
 	{
 		TupleTableSlot *hashslot = perhash->hashslot;
 		int			i;
+
+		CHECK_FOR_INTERRUPTS();
 
 		/*
 		 * Find the next entry in the hash table

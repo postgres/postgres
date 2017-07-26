@@ -440,6 +440,8 @@ tfuncLoadRows(TableFuncScanState *tstate, ExprContext *econtext)
 		ListCell   *cell = list_head(tstate->coldefexprs);
 		int			colno;
 
+		CHECK_FOR_INTERRUPTS();
+
 		ExecClearTuple(tstate->ss.ss_ScanTupleSlot);
 
 		/*

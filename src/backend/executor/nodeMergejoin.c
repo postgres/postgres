@@ -95,6 +95,7 @@
 #include "access/nbtree.h"
 #include "executor/execdebug.h"
 #include "executor/nodeMergejoin.h"
+#include "miscadmin.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 
@@ -609,6 +610,8 @@ ExecMergeJoin(MergeJoinState *node)
 	ExprContext *econtext;
 	bool		doFillOuter;
 	bool		doFillInner;
+
+	CHECK_FOR_INTERRUPTS();
 
 	/*
 	 * get information from node

@@ -1551,6 +1551,8 @@ ExecModifyTable(ModifyTableState *node)
 	HeapTupleData oldtupdata;
 	HeapTuple	oldtuple;
 
+	CHECK_FOR_INTERRUPTS();
+
 	/*
 	 * This should NOT get called during EvalPlanQual; we should have passed a
 	 * subplan tree to EvalPlanQual, instead.  Use a runtime test not just
