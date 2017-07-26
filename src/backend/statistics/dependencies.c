@@ -286,14 +286,6 @@ dependency_degree(int numrows, HeapTuple *rows, int k, AttrNumber *dependency,
 	 * first (k-1) columns. If there's a single value in the last column, we
 	 * count the group as 'supporting' the functional dependency. Otherwise we
 	 * count it as contradicting.
-	 *
-	 * We also require a group to have a minimum number of rows to be
-	 * considered useful for supporting the dependency. Contradicting groups
-	 * may be of any size, though.
-	 *
-	 * XXX The minimum size requirement makes it impossible to identify case
-	 * when both columns are unique (or nearly unique), and therefore
-	 * trivially functionally dependent.
 	 */
 
 	/* start with the first row forming a group */

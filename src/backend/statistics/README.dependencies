@@ -71,10 +71,6 @@ To count the rows consistent with the dependency (a => b):
  (c) If there's a single distinct value in 'b', the rows are consistent with
      the functional dependency, otherwise they contradict it.
 
-The algorithm also requires a minimum size of the group to consider it
-consistent (currently 3 rows in the sample). Small groups make it less likely
-to break the consistency.
-
 
 Clause reduction (planner/optimizer)
 ------------------------------------
