@@ -37,6 +37,7 @@ our @EXPORT = qw(
   program_version_ok
   program_options_handling_ok
   command_like
+  command_like_safe
   command_fails_like
 
   $windows_os
@@ -295,6 +296,24 @@ sub command_like
 	my ($stdout, $stderr);
 	print("# Running: " . join(" ", @{$cmd}) . "\n");
 	my $result = IPC::Run::run $cmd, '>', \$stdout, '2>', \$stderr;
+	ok($result, "$test_name: exit code 0");
+	is($stderr, '', "$test_name: no stderr");
+	like($stdout, $expected_stdout, "$test_name: matches");
+}
+
+sub command_like_safe
+{
+	# Doesn't rely on detecting end of file on the file descriptors,
+	# which can fail, causing the process to hang, notably on Msys
+	# when used with 'pg_ctl start'
+	my ($cmd, $expected_stdout, $test_name) = @_;
+	my ($stdout, $stderr);
+	my $stdoutfile = File::Temp->new();
+	my $stderrfile = File::Temp->new();
+	print("# Running: " . join(" ", @{$cmd}) . "\n");
+	my $result = IPC::Run::run $cmd, '>', $stdoutfile, '2>', $stderrfile;
+	$stdout = slurp_file($stdoutfile);
+	$stderr = slurp_file($stderrfile);
 	ok($result, "$test_name: exit code 0");
 	is($stderr, '', "$test_name: no stderr");
 	like($stdout, $expected_stdout, "$test_name: matches");
