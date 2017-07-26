@@ -1372,8 +1372,8 @@ describeOneTableDetails(const char *schemaname,
 		appendPQExpBufferStr(&buf, ",\n  NULL AS indexdef");
 	if (tableinfo.relkind == 'f' && pset.sversion >= 90200)
 		appendPQExpBufferStr(&buf, ",\n  CASE WHEN attfdwoptions IS NULL THEN '' ELSE "
-							 "  '(' || array_to_string(ARRAY(SELECT quote_ident(option_name) ||  ' ' || quote_literal(option_value)  FROM "
-							 "  pg_options_to_table(attfdwoptions)), ', ') || ')' END AS attfdwoptions");
+							 "  '(' || pg_catalog.array_to_string(ARRAY(SELECT pg_catalog.quote_ident(option_name) ||  ' ' || pg_catalog.quote_literal(option_value)  FROM "
+							 "  pg_catalog.pg_options_to_table(attfdwoptions)), ', ') || ')' END AS attfdwoptions");
 	else
 		appendPQExpBufferStr(&buf, ",\n  NULL AS attfdwoptions");
 	if (verbose)
@@ -1723,7 +1723,7 @@ describeOneTableDetails(const char *schemaname,
 						  "\n a.attnum=d.refobjsubid)"
 			   "\nWHERE d.classid='pg_catalog.pg_class'::pg_catalog.regclass"
 			 "\n AND d.refclassid='pg_catalog.pg_class'::pg_catalog.regclass"
-						  "\n AND d.objid=%s"
+						  "\n AND d.objid='%s'"
 						  "\n AND d.deptype='a'",
 						  oid);
 
@@ -2242,13 +2242,13 @@ describeOneTableDetails(const char *schemaname,
 			/* Footer information about foreign table */
 			printfPQExpBuffer(&buf,
 							  "SELECT s.srvname,\n"
-							  "       array_to_string(ARRAY(SELECT "
-							  "       quote_ident(option_name) ||  ' ' || "
-							  "       quote_literal(option_value)  FROM "
-							"       pg_options_to_table(ftoptions)),  ', ') "
+							  "  pg_catalog.array_to_string(ARRAY(\n"
+							  "    SELECT pg_catalog.quote_ident(option_name)"
+							  " || ' ' || pg_catalog.quote_literal(option_value)\n"
+							  "    FROM pg_catalog.pg_options_to_table(ftoptions)),  ', ')\n"
 							  "FROM pg_catalog.pg_foreign_table f,\n"
 							  "     pg_catalog.pg_foreign_server s\n"
-							  "WHERE f.ftrelid = %s AND s.oid = f.ftserver;",
+							  "WHERE f.ftrelid = '%s' AND s.oid = f.ftserver;",
 							  oid);
 			result = PSQLexec(buf.data, false);
 			if (!result)
@@ -2668,16 +2668,16 @@ listDbRoleSettings(const char *pattern, const char *pattern2)
 
 		printfPQExpBuffer(&buf, "SELECT rolname AS \"%s\", datname AS \"%s\",\n"
 				  "pg_catalog.array_to_string(setconfig, E'\\n') AS \"%s\"\n"
-						  "FROM pg_db_role_setting AS s\n"
-				   "LEFT JOIN pg_database ON pg_database.oid = setdatabase\n"
-						  "LEFT JOIN pg_roles ON pg_roles.oid = setrole\n",
+						  "FROM pg_catalog.pg_db_role_setting s\n"
+						  "LEFT JOIN pg_catalog.pg_database d ON d.oid = setdatabase\n"
+						  "LEFT JOIN pg_catalog.pg_roles r ON r.oid = setrole\n",
 						  gettext_noop("Role"),
 						  gettext_noop("Database"),
 						  gettext_noop("Settings"));
 		havewhere = processSQLNamePattern(pset.db, &buf, pattern, false, false,
-									   NULL, "pg_roles.rolname", NULL, NULL);
+										  NULL, "r.rolname", NULL, NULL);
 		processSQLNamePattern(pset.db, &buf, pattern2, havewhere, false,
-							  NULL, "pg_database.datname", NULL, NULL);
+							  NULL, "d.datname", NULL, NULL);
 		appendPQExpBufferStr(&buf, "ORDER BY 1, 2;");
 	}
 	else
@@ -2906,13 +2906,13 @@ listLanguages(const char *pattern, bool verbose, bool showSystem)
 	{
 		appendPQExpBuffer(&buf,
 						  ",\n       NOT l.lanispl AS \"%s\",\n"
-						  "       l.lanplcallfoid::regprocedure AS \"%s\",\n"
-				   "       l.lanvalidator::regprocedure AS \"%s\",\n       ",
+						  "       l.lanplcallfoid::pg_catalog.regprocedure AS \"%s\",\n"
+						  "       l.lanvalidator::pg_catalog.regprocedure AS \"%s\",\n       ",
 						  gettext_noop("Internal Language"),
 						  gettext_noop("Call Handler"),
 						  gettext_noop("Validator"));
 		if (pset.sversion >= 90000)
-			appendPQExpBuffer(&buf, "l.laninline::regprocedure AS \"%s\",\n       ",
+			appendPQExpBuffer(&buf, "l.laninline::pg_catalog.regprocedure AS \"%s\",\n       ",
 							  gettext_noop("Inline Handler"));
 		printACLColumn(&buf, "l.lanacl");
 	}
@@ -4037,10 +4037,10 @@ listForeignDataWrappers(const char *pattern, bool verbose)
 		printACLColumn(&buf, "fdwacl");
 		appendPQExpBuffer(&buf,
 						  ",\n CASE WHEN fdwoptions IS NULL THEN '' ELSE "
-						  "  '(' || array_to_string(ARRAY(SELECT "
-						  "  quote_ident(option_name) ||  ' ' || "
-						  "  quote_literal(option_value)  FROM "
-						  "  pg_options_to_table(fdwoptions)),  ', ') || ')' "
+						  "  '(' || pg_catalog.array_to_string(ARRAY(SELECT "
+						  "  pg_catalog.quote_ident(option_name) ||  ' ' || "
+						  "  pg_catalog.quote_literal(option_value)  FROM "
+						  "  pg_catalog.pg_options_to_table(fdwoptions)),  ', ') || ')' "
 						  "  END AS \"%s\"",
 						  gettext_noop("FDW Options"));
 
@@ -4118,10 +4118,10 @@ listForeignServers(const char *pattern, bool verbose)
 						  "  s.srvtype AS \"%s\",\n"
 						  "  s.srvversion AS \"%s\",\n"
 						  "  CASE WHEN srvoptions IS NULL THEN '' ELSE "
-						  "  '(' || array_to_string(ARRAY(SELECT "
-						  "  quote_ident(option_name) ||  ' ' || "
-						  "  quote_literal(option_value)  FROM "
-						  "  pg_options_to_table(srvoptions)),  ', ') || ')' "
+						  "  '(' || pg_catalog.array_to_string(ARRAY(SELECT "
+						  "  pg_catalog.quote_ident(option_name) ||  ' ' || "
+						  "  pg_catalog.quote_literal(option_value)  FROM "
+						  "  pg_catalog.pg_options_to_table(srvoptions)),  ', ') || ')' "
 						  "  END AS \"%s\",\n"
 						  "  d.description AS \"%s\"",
 						  gettext_noop("Type"),
@@ -4136,7 +4136,7 @@ listForeignServers(const char *pattern, bool verbose)
 
 	if (verbose)
 		appendPQExpBufferStr(&buf,
-							 "LEFT JOIN pg_description d\n       "
+							 "LEFT JOIN pg_catalog.pg_description d\n       "
 						   "ON d.classoid = s.tableoid AND d.objoid = s.oid "
 							 "AND d.objsubid = 0\n");
 
@@ -4192,10 +4192,10 @@ listUserMappings(const char *pattern, bool verbose)
 	if (verbose)
 		appendPQExpBuffer(&buf,
 						  ",\n CASE WHEN umoptions IS NULL THEN '' ELSE "
-						  "  '(' || array_to_string(ARRAY(SELECT "
-						  "  quote_ident(option_name) ||  ' ' || "
-						  "  quote_literal(option_value)  FROM "
-						  "  pg_options_to_table(umoptions)),  ', ') || ')' "
+						  "  '(' || pg_catalog.array_to_string(ARRAY(SELECT "
+						  "  pg_catalog.quote_ident(option_name) ||  ' ' || "
+						  "  pg_catalog.quote_literal(option_value)  FROM "
+						  "  pg_catalog.pg_options_to_table(umoptions)),  ', ') || ')' "
 						  "  END AS \"%s\"",
 						  gettext_noop("FDW Options"));
 
@@ -4255,10 +4255,10 @@ listForeignTables(const char *pattern, bool verbose)
 	if (verbose)
 		appendPQExpBuffer(&buf,
 						  ",\n CASE WHEN ftoptions IS NULL THEN '' ELSE "
-						  "  '(' || array_to_string(ARRAY(SELECT "
-						  "  quote_ident(option_name) ||  ' ' || "
-						  "  quote_literal(option_value)  FROM "
-						  "  pg_options_to_table(ftoptions)),  ', ') || ')' "
+						  "  '(' || pg_catalog.array_to_string(ARRAY(SELECT "
+						  "  pg_catalog.quote_ident(option_name) ||  ' ' || "
+						  "  pg_catalog.quote_literal(option_value)  FROM "
+						  "  pg_catalog.pg_options_to_table(ftoptions)),  ', ') || ')' "
 						  "  END AS \"%s\",\n"
 						  "  d.description AS \"%s\"",
 						  gettext_noop("FDW Options"),
