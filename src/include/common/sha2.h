@@ -3,7 +3,7 @@
  * sha2.h
  *	  Generic headers for SHA224, 256, 384 AND 512 functions of PostgreSQL.
  *
- * Portions Copyright (c) 2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2016-2017, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		  src/include/common/sha2.h

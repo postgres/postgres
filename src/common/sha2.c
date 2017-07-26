@@ -6,7 +6,7 @@
  * This is the set of in-core functions used when there are no other
  * alternative options like OpenSSL.
  *
- * Portions Copyright (c) 2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2016-2017, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/common/sha2.c
