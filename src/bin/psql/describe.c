@@ -1322,8 +1322,13 @@ describeTableDetails(const char *pattern, bool verbose, bool showSystem)
 	if (PQntuples(res) == 0)
 	{
 		if (!pset.quiet)
-			psql_error("Did not find any relation named \"%s\".\n",
-					   pattern);
+		{
+			if (pattern)
+				psql_error("Did not find any relation named \"%s\".\n",
+						   pattern);
+			else
+				psql_error("Did not find any relations.\n");
+		}
 		PQclear(res);
 		return false;
 	}
@@ -3250,12 +3255,22 @@ listDbRoleSettings(const char *pattern, const char *pattern2)
 	if (!res)
 		return false;
 
+	/*
+	 * Most functions in this file are content to print an empty table when
+	 * there are no matching objects.  We intentionally deviate from that
+	 * here, but only in !quiet mode, because of the possibility that the user
+	 * is confused about what the two pattern arguments mean.
+	 */
 	if (PQntuples(res) == 0 && !pset.quiet)
 	{
-		if (pattern)
-			fprintf(pset.queryFout, _("No matching settings found.\n"));
+		if (pattern && pattern2)
+			psql_error("Did not find any settings for role \"%s\" and database \"%s\".\n",
+					   pattern, pattern2);
+		else if (pattern)
+			psql_error("Did not find any settings for role \"%s\".\n",
+					   pattern);
 		else
-			fprintf(pset.queryFout, _("No settings found.\n"));
+			psql_error("Did not find any settings.\n");
 	}
 	else
 	{
@@ -3414,12 +3429,18 @@ listTables(const char *tabtypes, const char *pattern, bool verbose, bool showSys
 	if (!res)
 		return false;
 
+	/*
+	 * Most functions in this file are content to print an empty table when
+	 * there are no matching objects.  We intentionally deviate from that
+	 * here, but only in !quiet mode, for historical reasons.
+	 */
 	if (PQntuples(res) == 0 && !pset.quiet)
 	{
 		if (pattern)
-			fprintf(pset.queryFout, _("No matching relations found.\n"));
+			psql_error("Did not find any relation named \"%s\".\n",
+					   pattern);
 		else
-			fprintf(pset.queryFout, _("No relations found.\n"));
+			psql_error("Did not find any relations.\n");
 	}
 	else
 	{
@@ -4074,8 +4095,13 @@ listTSParsersVerbose(const char *pattern)
 	if (PQntuples(res) == 0)
 	{
 		if (!pset.quiet)
-			psql_error("Did not find any text search parser named \"%s\".\n",
-					   pattern);
+		{
+			if (pattern)
+				psql_error("Did not find any text search parser named \"%s\".\n",
+						   pattern);
+			else
+				psql_error("Did not find any text search parsers.\n");
+		}
 		PQclear(res);
 		return false;
 	}
@@ -4459,8 +4485,13 @@ listTSConfigsVerbose(const char *pattern)
 	if (PQntuples(res) == 0)
 	{
 		if (!pset.quiet)
-			psql_error("Did not find any text search configuration named \"%s\".\n",
-					   pattern);
+		{
+			if (pattern)
+				psql_error("Did not find any text search configuration named \"%s\".\n",
+						   pattern);
+			else
+				psql_error("Did not find any text search configurations.\n");
+		}
 		PQclear(res);
 		return false;
 	}
@@ -5145,6 +5176,22 @@ describePublications(const char *pattern)
 	if (!res)
 	{
 		termPQExpBuffer(&buf);
+		return false;
+	}
+
+	if (PQntuples(res) == 0)
+	{
+		if (!pset.quiet)
+		{
+			if (pattern)
+				psql_error("Did not find any publication named \"%s\".\n",
+						   pattern);
+			else
+				psql_error("Did not find any publications.\n");
+		}
+
+		termPQExpBuffer(&buf);
+		PQclear(res);
 		return false;
 	}
 
