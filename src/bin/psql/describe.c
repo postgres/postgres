@@ -4113,7 +4113,7 @@ describeOneTSParser(const char *oid, const char *nspname, const char *prsname)
 {
 	PQExpBufferData buf;
 	PGresult   *res;
-	char		title[1024];
+	PQExpBufferData title;
 	printQueryOpt myopt = pset.popt;
 	static const bool translate_columns[] = {true, false, false};
 
@@ -4169,11 +4169,13 @@ describeOneTSParser(const char *oid, const char *nspname, const char *prsname)
 		return false;
 
 	myopt.nullPrint = NULL;
+	initPQExpBuffer(&title);
 	if (nspname)
-		sprintf(title, _("Text search parser \"%s.%s\""), nspname, prsname);
+		printfPQExpBuffer(&title, _("Text search parser \"%s.%s\""),
+						  nspname, prsname);
 	else
-		sprintf(title, _("Text search parser \"%s\""), prsname);
-	myopt.title = title;
+		printfPQExpBuffer(&title, _("Text search parser \"%s\""), prsname);
+	myopt.title = title.data;
 	myopt.footers = NULL;
 	myopt.topt.default_footer = false;
 	myopt.translate_header = true;
@@ -4202,10 +4204,11 @@ describeOneTSParser(const char *oid, const char *nspname, const char *prsname)
 
 	myopt.nullPrint = NULL;
 	if (nspname)
-		sprintf(title, _("Token types for parser \"%s.%s\""), nspname, prsname);
+		printfPQExpBuffer(&title, _("Token types for parser \"%s.%s\""),
+						  nspname, prsname);
 	else
-		sprintf(title, _("Token types for parser \"%s\""), prsname);
-	myopt.title = title;
+		printfPQExpBuffer(&title, _("Token types for parser \"%s\""), prsname);
+	myopt.title = title.data;
 	myopt.footers = NULL;
 	myopt.topt.default_footer = true;
 	myopt.translate_header = true;
@@ -4214,6 +4217,7 @@ describeOneTSParser(const char *oid, const char *nspname, const char *prsname)
 
 	printQuery(res, &myopt, pset.queryFout, false, pset.logfile);
 
+	termPQExpBuffer(&title);
 	PQclear(res);
 	return true;
 }
@@ -5004,7 +5008,7 @@ listOneExtensionContents(const char *extname, const char *oid)
 {
 	PQExpBufferData buf;
 	PGresult   *res;
-	char		title[1024];
+	PQExpBufferData title;
 	printQueryOpt myopt = pset.popt;
 
 	initPQExpBuffer(&buf);
@@ -5022,12 +5026,14 @@ listOneExtensionContents(const char *extname, const char *oid)
 		return false;
 
 	myopt.nullPrint = NULL;
-	snprintf(title, sizeof(title), _("Objects in extension \"%s\""), extname);
-	myopt.title = title;
+	initPQExpBuffer(&title);
+	printfPQExpBuffer(&title, _("Objects in extension \"%s\""), extname);
+	myopt.title = title.data;
 	myopt.translate_header = true;
 
 	printQuery(res, &myopt, pset.queryFout, false, pset.logfile);
 
+	termPQExpBuffer(&title);
 	PQclear(res);
 	return true;
 }
