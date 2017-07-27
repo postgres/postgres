@@ -806,6 +806,9 @@ exec_command_d(PsqlScanState scan_state, bool active_branch, const char *cmd)
 						pattern2 = psql_scan_slash_option(scan_state,
 														  OT_NORMAL, NULL, true);
 					success = listDbRoleSettings(pattern, pattern2);
+
+					if (pattern2)
+						free(pattern2);
 				}
 				else
 					status = PSQL_CMD_UNKNOWN;
@@ -2725,6 +2728,8 @@ exec_command_slash_command_help(PsqlScanState scan_state, bool active_branch)
 
 /*
  * Read and interpret an argument to the \connect slash command.
+ *
+ * Returns a malloc'd string, or NULL if no/empty argument.
  */
 static char *
 read_connect_arg(PsqlScanState scan_state)
@@ -2750,7 +2755,10 @@ read_connect_arg(PsqlScanState scan_state)
 		return result;
 
 	if (*result == '\0' || strcmp(result, "-") == 0)
+	{
+		free(result);
 		return NULL;
+	}
 
 	return result;
 }
