@@ -54,7 +54,8 @@ static bool listOneExtensionContents(const char *extname, const char *oid);
  */
 
 
-/* \da
+/*
+ * \da
  * Takes an optional regexp to select particular aggregates
  */
 bool
@@ -131,7 +132,8 @@ describeAggregates(const char *pattern, bool verbose, bool showSystem)
 	return true;
 }
 
-/* \dA
+/*
+ * \dA
  * Takes an optional regexp to select particular access methods
  */
 bool
@@ -198,7 +200,8 @@ describeAccessMethods(const char *pattern, bool verbose)
 	return true;
 }
 
-/* \db
+/*
+ * \db
  * Takes an optional regexp to select particular tablespaces
  */
 bool
@@ -283,7 +286,8 @@ describeTablespaces(const char *pattern, bool verbose)
 }
 
 
-/* \df
+/*
+ * \df
  * Takes an optional regexp to select particular functions.
  *
  * As with \d, you can specify the kinds of functions you want:
@@ -696,7 +700,8 @@ describeTypes(const char *pattern, bool verbose, bool showSystem)
 }
 
 
-/* \do
+/*
+ * \do
  * Describe operators
  */
 bool
@@ -2997,7 +3002,10 @@ add_tablespace_footer(printTableContent *const cont, char relkind,
 							  "WHERE oid = '%u';", tablespace);
 			result = PSQLexec(buf.data);
 			if (!result)
+			{
+				termPQExpBuffer(&buf);
 				return;
+			}
 			/* Should always be the case, but.... */
 			if (PQntuples(result) > 0)
 			{
@@ -3209,35 +3217,36 @@ listDbRoleSettings(const char *pattern, const char *pattern2)
 	PQExpBufferData buf;
 	PGresult   *res;
 	printQueryOpt myopt = pset.popt;
+	bool		havewhere;
+
+	if (pset.sversion < 90000)
+	{
+		char		sverbuf[32];
+
+		psql_error("The server (version %s) does not support per-database role settings.\n",
+				   formatPGVersionNumber(pset.sversion, false,
+										 sverbuf, sizeof(sverbuf)));
+		return true;
+	}
 
 	initPQExpBuffer(&buf);
 
-	if (pset.sversion >= 90000)
-	{
-		bool		havewhere;
-
-		printfPQExpBuffer(&buf, "SELECT rolname AS \"%s\", datname AS \"%s\",\n"
-						  "pg_catalog.array_to_string(setconfig, E'\\n') AS \"%s\"\n"
-						  "FROM pg_catalog.pg_db_role_setting s\n"
-						  "LEFT JOIN pg_catalog.pg_database d ON d.oid = setdatabase\n"
-						  "LEFT JOIN pg_catalog.pg_roles r ON r.oid = setrole\n",
-						  gettext_noop("Role"),
-						  gettext_noop("Database"),
-						  gettext_noop("Settings"));
-		havewhere = processSQLNamePattern(pset.db, &buf, pattern, false, false,
-										  NULL, "r.rolname", NULL, NULL);
-		processSQLNamePattern(pset.db, &buf, pattern2, havewhere, false,
-							  NULL, "d.datname", NULL, NULL);
-		appendPQExpBufferStr(&buf, "ORDER BY 1, 2;");
-	}
-	else
-	{
-		fprintf(pset.queryFout,
-				_("No per-database role settings support in this server version.\n"));
-		return false;
-	}
+	printfPQExpBuffer(&buf, "SELECT rolname AS \"%s\", datname AS \"%s\",\n"
+					  "pg_catalog.array_to_string(setconfig, E'\\n') AS \"%s\"\n"
+					  "FROM pg_catalog.pg_db_role_setting s\n"
+					  "LEFT JOIN pg_catalog.pg_database d ON d.oid = setdatabase\n"
+					  "LEFT JOIN pg_catalog.pg_roles r ON r.oid = setrole\n",
+					  gettext_noop("Role"),
+					  gettext_noop("Database"),
+					  gettext_noop("Settings"));
+	havewhere = processSQLNamePattern(pset.db, &buf, pattern, false, false,
+									  NULL, "r.rolname", NULL, NULL);
+	processSQLNamePattern(pset.db, &buf, pattern2, havewhere, false,
+						  NULL, "d.datname", NULL, NULL);
+	appendPQExpBufferStr(&buf, "ORDER BY 1, 2;");
 
 	res = PSQLexec(buf.data);
+	termPQExpBuffer(&buf);
 	if (!res)
 		return false;
 
@@ -3258,7 +3267,6 @@ listDbRoleSettings(const char *pattern, const char *pattern2)
 	}
 
 	PQclear(res);
-	resetPQExpBuffer(&buf);
 	return true;
 }
 
@@ -5024,7 +5032,8 @@ listOneExtensionContents(const char *extname, const char *oid)
 	return true;
 }
 
-/* \dRp
+/*
+ * \dRp
  * Lists publications.
  *
  * Takes an optional regexp to select particular publications
@@ -5090,7 +5099,8 @@ listPublications(const char *pattern)
 	return true;
 }
 
-/* \dRp+
+/*
+ * \dRp+
  * Describes publications including the contents.
  *
  * Takes an optional regexp to select particular publications
@@ -5211,7 +5221,8 @@ describePublications(const char *pattern)
 	return true;
 }
 
-/* \dRs
+/*
+ * \dRs
  * Describes subscriptions.
  *
  * Takes an optional regexp to select particular subscriptions
