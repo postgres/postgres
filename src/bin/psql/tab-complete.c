@@ -1056,7 +1056,7 @@ static const pgsql_thing_t words_after_create[] = {
 															 * INDEX ... */
 	{"UNLOGGED", NULL, NULL, THING_NO_DROP | THING_NO_ALTER},	/* for CREATE UNLOGGED
 																 * TABLE ... */
-	{"USER", Query_for_list_of_roles},
+	{"USER", Query_for_list_of_roles " UNION SELECT 'MAPPING FOR'"},
 	{"USER MAPPING FOR", NULL, NULL},
 	{"VIEW", NULL, &Query_for_list_of_views},
 	{NULL}						/* end of list */
