@@ -24,7 +24,7 @@
 #ifdef isnan
 #undef isnan
 #endif
-#endif
+#endif							/* WIN32 */
 
 /*
  * Supply a value of PERL_UNUSED_DECL that will satisfy gcc - the one
@@ -43,10 +43,22 @@
 #endif
 
 
-/* required for perl API */
+/*
+ * Get the basic Perl API.  We use PERL_NO_GET_CONTEXT mode so that our code
+ * can compile against MULTIPLICITY Perl builds without including XSUB.h.
+ */
+#define PERL_NO_GET_CONTEXT
 #include "EXTERN.h"
 #include "perl.h"
+
+/*
+ * We want to include XSUB.h only within .xs files, because on some platforms
+ * it undesirably redefines a lot of libc functions.  But it must appear
+ * before ppport.h, so use a #define flag to control inclusion here.
+ */
+#ifdef PG_NEED_PERL_XSUB_H
 #include "XSUB.h"
+#endif
 
 /* put back our snprintf and vsnprintf */
 #ifdef USE_REPL_SNPRINTF
@@ -106,5 +118,6 @@ SV		   *plperl_spi_query_prepared(char *, int, SV **);
 void		plperl_spi_freeplan(char *);
 void		plperl_spi_cursor_close(char *);
 char	   *plperl_sv_to_literal(SV *, char *);
+void		plperl_util_elog(int level, SV *msg);
 
 #endif							/* PL_PERL_H */
