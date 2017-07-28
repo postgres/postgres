@@ -5162,8 +5162,9 @@ describePublications(const char *pattern)
 	initPQExpBuffer(&buf);
 
 	printfPQExpBuffer(&buf,
-					  "SELECT oid, pubname, puballtables, pubinsert,\n"
-					  "  pubupdate, pubdelete\n"
+					  "SELECT oid, pubname,\n"
+					  "  pg_catalog.pg_get_userbyid(pubowner) AS owner,\n"
+					  "  puballtables, pubinsert, pubupdate, pubdelete\n"
 					  "FROM pg_catalog.pg_publication\n");
 
 	processSQLNamePattern(pset.db, &buf, pattern, false, false,
@@ -5198,13 +5199,13 @@ describePublications(const char *pattern)
 	for (i = 0; i < PQntuples(res); i++)
 	{
 		const char	align = 'l';
-		int			ncols = 4;
+		int			ncols = 5;
 		int			nrows = 1;
 		int			tables = 0;
 		PGresult   *tabres;
 		char	   *pubid = PQgetvalue(res, i, 0);
 		char	   *pubname = PQgetvalue(res, i, 1);
-		bool		puballtables = strcmp(PQgetvalue(res, i, 2), "t") == 0;
+		bool		puballtables = strcmp(PQgetvalue(res, i, 3), "t") == 0;
 		int			j;
 		PQExpBufferData title;
 		printTableOpt myopt = pset.popt.topt;
@@ -5214,6 +5215,7 @@ describePublications(const char *pattern)
 		printfPQExpBuffer(&title, _("Publication %s"), pubname);
 		printTableInit(&cont, &myopt, title.data, ncols, nrows);
 
+		printTableAddHeader(&cont, gettext_noop("Owner"), true, align);
 		printTableAddHeader(&cont, gettext_noop("All tables"), true, align);
 		printTableAddHeader(&cont, gettext_noop("Inserts"), true, align);
 		printTableAddHeader(&cont, gettext_noop("Updates"), true, align);
@@ -5223,6 +5225,7 @@ describePublications(const char *pattern)
 		printTableAddCell(&cont, PQgetvalue(res, i, 3), false, false);
 		printTableAddCell(&cont, PQgetvalue(res, i, 4), false, false);
 		printTableAddCell(&cont, PQgetvalue(res, i, 5), false, false);
+		printTableAddCell(&cont, PQgetvalue(res, i, 6), false, false);
 
 		if (!puballtables)
 		{
