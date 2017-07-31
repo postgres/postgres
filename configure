@@ -669,6 +669,7 @@ python_version
 python_majorversion
 PYTHON
 perl_embed_ldflags
+perl_embed_ccflags
 perl_useshrplib
 perl_privlibexp
 perl_archlibexp
@@ -7389,6 +7390,18 @@ perl_useshrplib=`$PERL -MConfig -e 'print $Config{useshrplib}'`
 test "$PORTNAME" = "win32" && perl_useshrplib=`echo $perl_useshrplib | sed 's,\\\\,/,g'`
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $perl_useshrplib" >&5
 $as_echo "$perl_useshrplib" >&6; }
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for CFLAGS recommended by Perl" >&5
+$as_echo_n "checking for CFLAGS recommended by Perl... " >&6; }
+perl_ccflags=`$PERL -MConfig -e 'print $Config{ccflags}'`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $perl_ccflags" >&5
+$as_echo "$perl_ccflags" >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for CFLAGS to compile embedded Perl" >&5
+$as_echo_n "checking for CFLAGS to compile embedded Perl... " >&6; }
+perl_embed_ccflags=`$PERL -MConfig -e 'foreach $f (split(" ",$Config{ccflags})) {print $f, " " if ($f =~ /^-D[^_]/)}'`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $perl_embed_ccflags" >&5
+$as_echo "$perl_embed_ccflags" >&6; }
+
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for flags to link embedded Perl" >&5
 $as_echo_n "checking for flags to link embedded Perl... " >&6; }
