@@ -1,6 +1,8 @@
 #ifndef PL_PERL_HELPERS_H
 #define PL_PERL_HELPERS_H
 
+#include "mb/pg_wchar.h"
+
 /*
  * convert from utf8 to database encoding
  *
@@ -48,6 +50,7 @@ utf_e2u(const char *str)
 static inline char *
 sv2cstr(SV *sv)
 {
+	dTHX;
 	char	   *val,
 			   *res;
 	STRLEN		len;
@@ -105,6 +108,7 @@ sv2cstr(SV *sv)
 static inline SV *
 cstr2sv(const char *str)
 {
+	dTHX;
 	SV		   *sv;
 	char	   *utf8_str;
 
@@ -132,6 +136,8 @@ cstr2sv(const char *str)
 static inline void
 croak_cstr(const char *str)
 {
+	dTHX;
+
 #ifdef croak_sv
 	/* Use sv_2mortal() to be sure the transient SV gets freed */
 	croak_sv(sv_2mortal(cstr2sv(str)));
