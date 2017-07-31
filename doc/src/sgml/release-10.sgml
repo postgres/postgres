@@ -408,6 +408,43 @@
 
     <listitem>
 <!--
+2017-07-31 [c0a15e07c] Always use 2048 bit DH parameters for OpenSSL ephemeral
+-->
+     <para>
+      Add configuration option <xref linkend="guc-ssl-dh-params-file"> to
+      specify filename for custom OpenSSL DH parameters (Heikki Linnakangas)
+     </para>
+
+     <para>
+      This replaces the hardcoded, undocumented <filename>dh1024.pem</>
+      filename. Note that <filename>dh1024.pem</> is no longer used by default;
+      you must set the option to use custom DH parameters.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2017-07-31 [c0a15e07c] Always use 2048 bit DH parameters for OpenSSL ephemeral
+-->
+     <para>
+      Increase the size of DH parameters used for OpenSSL ephemeral DH ciphers
+      to 2048 bits (Heikki Linnakangas)
+     </para>
+
+     <para>
+      The size of the compiled-in DH parameters has been increased from 1024
+      to 2048 bits, making DH key exchange more resistent to a brute-force
+      attack. However, some old SSL implementations, notably some revisions of
+      Java Runtime Environment version 6, will not accept DH parameters longer
+      than 1024 bits, and will not be able to connect over SSL. As a
+      work-around, you can use custom 1024-bit DH parameters, instead of the
+      compiled-in defaults. See <xref linkend="guc-ssl-dh-params-file"> for
+      information on using custom DH parameters.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
 2017-02-13 [7ada2d31f] Remove contrib/tsearch2.
 -->
      <para>
