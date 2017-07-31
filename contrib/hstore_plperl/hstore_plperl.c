@@ -13,6 +13,7 @@ PG_FUNCTION_INFO_V1(hstore_to_plperl);
 Datum
 hstore_to_plperl(PG_FUNCTION_ARGS)
 {
+	dTHX;
 	HStore	   *in = PG_GETARG_HS(0);
 	int			i;
 	int			count = HS_COUNT(in);
@@ -45,15 +46,14 @@ PG_FUNCTION_INFO_V1(plperl_to_hstore);
 Datum
 plperl_to_hstore(PG_FUNCTION_ARGS)
 {
-	HV		   *hv;
+	dTHX;
+	HV		   *hv = (HV *) SvRV((SV *) PG_GETARG_POINTER(0));
 	HE		   *he;
 	int32		buflen;
 	int32		i;
 	int32		pcount;
 	HStore	   *out;
 	Pairs	   *pairs;
-
-	hv = (HV *) SvRV((SV *) PG_GETARG_POINTER(0));
 
 	pcount = hv_iterinit(hv);
 
