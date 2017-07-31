@@ -180,7 +180,8 @@ $ENV{MSBFLAGS}="/m";
       ActiveState Perl is required to run the build generation scripts. MinGW
       or Cygwin Perl will not work. It must also be present in the PATH.
       Binaries can be downloaded from
-      <ulink url="http://www.activestate.com"></> (Note: version 5.8 or later is required,
+      <ulink url="http://www.activestate.com"></>
+      (Note: version 5.8.3 or later is required,
       the free Standard Distribution is sufficient).
      </para></listitem>
     </varlistentry>

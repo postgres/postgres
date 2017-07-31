@@ -163,6 +163,7 @@ su - postgres
       <application>PL/Perl</application> you need a full
       <productname>Perl</productname> installation, including the
       <filename>libperl</filename> library and the header files.
+      The minimum required version is <productname>Perl</productname> 5.8.3.
       Since <application>PL/Perl</application> will be a shared
       library, the <indexterm><primary>libperl</primary></indexterm>
       <filename>libperl</filename> library must be a shared library
@@ -309,7 +310,7 @@ su - postgres
        <primary>perl</primary>
       </indexterm>
 
-      <application>Perl</> 5.8 or later is needed to build from a Git checkout,
+      <application>Perl</> 5.8.3 or later is needed to build from a Git checkout,
       or if you changed the input files for any of the build steps that
       use Perl scripts.  If building on Windows you will need
       <application>Perl</> in any case.  <application>Perl</application> is
