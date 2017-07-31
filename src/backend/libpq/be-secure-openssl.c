@@ -61,6 +61,7 @@
 #include "libpq/libpq.h"
 #include "miscadmin.h"
 #include "pgstat.h"
+#include "storage/fd.h"
 #include "storage/latch.h"
 #include "tcop/tcopprot.h"
 #include "utils/memutils.h"
@@ -71,13 +72,12 @@ static int	my_sock_write(BIO *h, const char *buf, int size);
 static BIO_METHOD *my_BIO_s_socket(void);
 static int	my_SSL_set_fd(Port *port, int fd);
 
-static DH  *load_dh_file(int keylength);
+static DH  *load_dh_file(char *filename, bool isServerStart);
 static DH  *load_dh_buffer(const char *, size_t);
-static DH  *generate_dh_parameters(int prime_len, int generator);
-static DH  *tmp_dh_cb(SSL *s, int is_export, int keylength);
 static int	ssl_passwd_cb(char *buf, int size, int rwflag, void *userdata);
 static int	verify_cb(int, X509_STORE_CTX *);
 static void info_cb(const SSL *ssl, int type, int args);
+static bool initialize_dh(SSL_CTX *context, bool isServerStart);
 static bool initialize_ecdh(SSL_CTX *context, bool isServerStart);
 static const char *SSLerrmessage(unsigned long ecode);
 
@@ -96,36 +96,20 @@ static bool ssl_passwd_cb_called = false;
  *	As discussed above, EDH protects the confidentiality of
  *	sessions even if the static private key is compromised,
  *	so we are *highly* motivated to ensure that we can use
- *	EDH even if the DBA... or an attacker... deletes the
- *	$DataDir/dh*.pem files.
+ *	EDH even if the DBA has not provided custom DH parameters.
  *
  *	We could refuse SSL connections unless a good DH parameter
  *	file exists, but some clients may quietly renegotiate an
  *	unsecured connection without fully informing the user.
- *	Very uncool.
- *
- *	Alternatively, the backend could attempt to load these files
- *	on startup if SSL is enabled - and refuse to start if any
- *	do not exist - but this would tend to piss off DBAs.
+ *	Very uncool. Alternatively, the system could refuse to start
+ *	if a DH parameters is not specified, but this would tend to
+ *	piss off DBAs.
  *
  *	If you want to create your own hardcoded DH parameters
  *	for fun and profit, review "Assigned Number for SKIP
  *	Protocols" (http://www.skip-vpn.org/spec/numbers.html)
  *	for suggestions.
  */
-
-static const char file_dh512[] =
-"-----BEGIN DH PARAMETERS-----\n\
-MEYCQQD1Kv884bEpQBgRjXyEpwpy1obEAxnIByl6ypUM2Zafq9AKUJsCRtMIPWak\n\
-XUGfnHy9iUsiGSa6q6Jew1XpKgVfAgEC\n\
------END DH PARAMETERS-----\n";
-
-static const char file_dh1024[] =
-"-----BEGIN DH PARAMETERS-----\n\
-MIGHAoGBAPSI/VhOSdvNILSd5JEHNmszbDgNRR0PfIizHHxbLY7288kjwEPwpVsY\n\
-jY67VYy4XTjTNP18F1dDox0YbN4zISy1Kv884bEpQBgRjXyEpwpy1obEAxnIByl6\n\
-ypUM2Zafq9AKUJsCRtMIPWakXUGfnHy9iUsiGSa6q6Jew1XpL3jHAgEC\n\
------END DH PARAMETERS-----\n";
 
 static const char file_dh2048[] =
 "-----BEGIN DH PARAMETERS-----\n\
@@ -135,21 +119,6 @@ T8X8dryDxUcwYc58yWb/Ffm7/ZFexwGq01uejaClcjrUGvC/RgBYK+X0iP1YTknb\n\
 zSC0neSRBzZrM2w4DUUdD3yIsxx8Wy2O9vPJI8BD8KVbGI2Ou1WMuF040zT9fBdX\n\
 Q6MdGGzeMyEstSr/POGxKUAYEY18hKcKctaGxAMZyAcpesqVDNmWn6vQClCbAkbT\n\
 CD1mpF1Bn5x8vYlLIhkmuquiXsNV6TILOwIBAg==\n\
------END DH PARAMETERS-----\n";
-
-static const char file_dh4096[] =
-"-----BEGIN DH PARAMETERS-----\n\
-MIICCAKCAgEA+hRyUsFN4VpJ1O8JLcCo/VWr19k3BCgJ4uk+d+KhehjdRqNDNyOQ\n\
-l/MOyQNQfWXPeGKmOmIig6Ev/nm6Nf9Z2B1h3R4hExf+zTiHnvVPeRBhjdQi81rt\n\
-Xeoh6TNrSBIKIHfUJWBh3va0TxxjQIs6IZOLeVNRLMqzeylWqMf49HsIXqbcokUS\n\
-Vt1BkvLdW48j8PPv5DsKRN3tloTxqDJGo9tKvj1Fuk74A+Xda1kNhB7KFlqMyN98\n\
-VETEJ6c7KpfOo30mnK30wqw3S8OtaIR/maYX72tGOno2ehFDkq3pnPtEbD2CScxc\n\
-alJC+EL7RPk5c/tgeTvCngvc1KZn92Y//EI7G9tPZtylj2b56sHtMftIoYJ9+ODM\n\
-sccD5Piz/rejE3Ome8EOOceUSCYAhXn8b3qvxVI1ddd1pED6FHRhFvLrZxFvBEM9\n\
-ERRMp5QqOaHJkM+Dxv8Cj6MqrCbfC4u+ZErxodzuusgDgvZiLF22uxMZbobFWyte\n\
-OvOzKGtwcTqO/1wV5gKkzu1ZVswVUQd5Gg8lJicwqRWyyNRczDDoG9jVDxmogKTH\n\
-AaqLulO7R8Ifa1SwF2DteSGVtgWEN8gDpN3RBmmPTDngyF2DHb5qmpnznwtFKdTL\n\
-KWbuHn491xNO25CQWMtem80uKw+pTnisBRF/454n1Jnhub144YRBoN8CAQI=\n\
 -----END DH PARAMETERS-----\n";
 
 
@@ -316,13 +285,14 @@ be_tls_init(bool isServerStart)
 		goto error;
 	}
 
-	/* set up ephemeral DH keys, and disallow SSL v2/v3 while at it */
-	SSL_CTX_set_tmp_dh_callback(context, tmp_dh_cb);
+	/* disallow SSL v2/v3 */
 	SSL_CTX_set_options(context,
 						SSL_OP_SINGLE_DH_USE |
 						SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
 
-	/* set up ephemeral ECDH keys */
+	/* set up ephemeral DH and ECDH keys */
+	if (!initialize_dh(context, isServerStart))
+		goto error;
 	if (!initialize_ecdh(context, isServerStart))
 		goto error;
 
@@ -918,53 +888,57 @@ err:
  *	what we expect it to contain.
  */
 static DH  *
-load_dh_file(int keylength)
+load_dh_file(char *filename, bool isServerStart)
 {
 	FILE	   *fp;
-	char		fnbuf[MAXPGPATH];
 	DH		   *dh = NULL;
 	int			codes;
 
 	/* attempt to open file.  It's not an error if it doesn't exist. */
-	snprintf(fnbuf, sizeof(fnbuf), "dh%d.pem", keylength);
-	if ((fp = fopen(fnbuf, "r")) == NULL)
-		return NULL;
-
-/*	flock(fileno(fp), LOCK_SH); */
-	dh = PEM_read_DHparams(fp, NULL, NULL, NULL);
-/*	flock(fileno(fp), LOCK_UN); */
-	fclose(fp);
-
-	/* is the prime the correct size? */
-	if (dh != NULL && 8 * DH_size(dh) < keylength)
+	if ((fp = AllocateFile(filename, "r")) == NULL)
 	{
-		elog(LOG, "DH errors (%s): %d bits expected, %d bits found",
-			 fnbuf, keylength, 8 * DH_size(dh));
-		dh = NULL;
+		ereport(isServerStart ? FATAL : LOG,
+				(errcode_for_file_access(),
+				 errmsg("could not open DH parameters file \"%s\": %m",
+						filename)));
+		return NULL;
+	}
+
+	dh = PEM_read_DHparams(fp, NULL, NULL, NULL);
+	FreeFile(fp);
+
+	if (dh == NULL)
+	{
+		ereport(isServerStart ? FATAL : LOG,
+				(errcode(ERRCODE_CONFIG_FILE_ERROR),
+				 errmsg("could not load DH parameters file: %s",
+						SSLerrmessage(ERR_get_error()))));
+		return NULL;
 	}
 
 	/* make sure the DH parameters are usable */
-	if (dh != NULL)
+	if (DH_check(dh, &codes) == 0)
 	{
-		if (DH_check(dh, &codes) == 0)
-		{
-			elog(LOG, "DH_check error (%s): %s", fnbuf,
-				 SSLerrmessage(ERR_get_error()));
-			return NULL;
-		}
-		if (codes & DH_CHECK_P_NOT_PRIME)
-		{
-			elog(LOG, "DH error (%s): p is not prime", fnbuf);
-			return NULL;
-		}
-		if ((codes & DH_NOT_SUITABLE_GENERATOR) &&
-			(codes & DH_CHECK_P_NOT_SAFE_PRIME))
-		{
-			elog(LOG,
-				 "DH error (%s): neither suitable generator or safe prime",
-				 fnbuf);
-			return NULL;
-		}
+		ereport(isServerStart ? FATAL : LOG,
+				(errcode(ERRCODE_CONFIG_FILE_ERROR),
+				 errmsg("invalid DH parameters: %s",
+						SSLerrmessage(ERR_get_error()))));
+		return NULL;
+	}
+	if (codes & DH_CHECK_P_NOT_PRIME)
+	{
+		ereport(isServerStart ? FATAL : LOG,
+				(errcode(ERRCODE_CONFIG_FILE_ERROR),
+				 errmsg("invalid DH parameters: p is not prime")));
+		return NULL;
+	}
+	if ((codes & DH_NOT_SUITABLE_GENERATOR) &&
+		(codes & DH_CHECK_P_NOT_SAFE_PRIME))
+	{
+		ereport(isServerStart ? FATAL : LOG,
+				(errcode(ERRCODE_CONFIG_FILE_ERROR),
+				 errmsg("invalid DH parameters: neither suitable generator or safe prime")));
+		return NULL;
 	}
 
 	return dh;
@@ -993,102 +967,6 @@ load_dh_buffer(const char *buffer, size_t len)
 	BIO_free(bio);
 
 	return dh;
-}
-
-/*
- *	Generate DH parameters.
- *
- *	Last resort if we can't load precomputed nor hardcoded
- *	parameters.
- */
-static DH  *
-generate_dh_parameters(int prime_len, int generator)
-{
-	DH		   *dh;
-
-	if ((dh = DH_new()) == NULL)
-		return NULL;
-
-	if (DH_generate_parameters_ex(dh, prime_len, generator, NULL))
-		return dh;
-
-	DH_free(dh);
-	return NULL;
-}
-
-/*
- *	Generate an ephemeral DH key.  Because this can take a long
- *	time to compute, we can use precomputed parameters of the
- *	common key sizes.
- *
- *	Since few sites will bother to precompute these parameter
- *	files, we also provide a fallback to the parameters provided
- *	by the OpenSSL project.
- *
- *	These values can be static (once loaded or computed) since
- *	the OpenSSL library can efficiently generate random keys from
- *	the information provided.
- */
-static DH  *
-tmp_dh_cb(SSL *s, int is_export, int keylength)
-{
-	DH		   *r = NULL;
-	static DH  *dh = NULL;
-	static DH  *dh512 = NULL;
-	static DH  *dh1024 = NULL;
-	static DH  *dh2048 = NULL;
-	static DH  *dh4096 = NULL;
-
-	switch (keylength)
-	{
-		case 512:
-			if (dh512 == NULL)
-				dh512 = load_dh_file(keylength);
-			if (dh512 == NULL)
-				dh512 = load_dh_buffer(file_dh512, sizeof file_dh512);
-			r = dh512;
-			break;
-
-		case 1024:
-			if (dh1024 == NULL)
-				dh1024 = load_dh_file(keylength);
-			if (dh1024 == NULL)
-				dh1024 = load_dh_buffer(file_dh1024, sizeof file_dh1024);
-			r = dh1024;
-			break;
-
-		case 2048:
-			if (dh2048 == NULL)
-				dh2048 = load_dh_file(keylength);
-			if (dh2048 == NULL)
-				dh2048 = load_dh_buffer(file_dh2048, sizeof file_dh2048);
-			r = dh2048;
-			break;
-
-		case 4096:
-			if (dh4096 == NULL)
-				dh4096 = load_dh_file(keylength);
-			if (dh4096 == NULL)
-				dh4096 = load_dh_buffer(file_dh4096, sizeof file_dh4096);
-			r = dh4096;
-			break;
-
-		default:
-			if (dh == NULL)
-				dh = load_dh_file(keylength);
-			r = dh;
-	}
-
-	/* this may take a long time, but it may be necessary... */
-	if (r == NULL || 8 * DH_size(r) < keylength)
-	{
-		ereport(DEBUG2,
-				(errmsg_internal("DH: generating parameters (%d bits)",
-								 keylength)));
-		r = generate_dh_parameters(keylength, DH_GENERATOR_2);
-	}
-
-	return r;
 }
 
 /*
@@ -1172,6 +1050,54 @@ info_cb(const SSL *ssl, int type, int args)
 	}
 }
 
+/*
+ * Set DH parameters for generating ephemeral DH keys.  The
+ * DH parameters can take a long time to compute, so they must be
+ * precomputed.
+ *
+ * Since few sites will bother to create a parameter file, we also
+ * also provide a fallback to the parameters provided by the
+ * OpenSSL project.
+ *
+ * These values can be static (once loaded or computed) since the
+ * OpenSSL library can efficiently generate random keys from the
+ * information provided.
+ */
+static bool
+initialize_dh(SSL_CTX *context, bool isServerStart)
+{
+	DH		   *dh = NULL;
+
+	SSL_CTX_set_options(context, SSL_OP_SINGLE_DH_USE);
+
+	if (ssl_dh_params_file[0])
+		dh = load_dh_file(ssl_dh_params_file, isServerStart);
+	if (!dh)
+		dh = load_dh_buffer(file_dh2048, sizeof file_dh2048);
+	if (!dh)
+	{
+		ereport(isServerStart ? FATAL : LOG,
+				(errcode(ERRCODE_CONFIG_FILE_ERROR),
+				 (errmsg("DH: could not load DH parameters"))));
+		return false;
+	}
+
+	if (SSL_CTX_set_tmp_dh(context, dh) != 1)
+	{
+		ereport(isServerStart ? FATAL : LOG,
+				(errcode(ERRCODE_CONFIG_FILE_ERROR),
+				 (errmsg("DH: could not set DH parameters: %s",
+						 SSLerrmessage(ERR_get_error())))));
+		return false;
+	}
+	return true;
+}
+
+/*
+ * Set ECDH parameters for generating ephemeral Elliptic Curve DH
+ * keys.  This is much simpler than the DH parameters, as we just
+ * need to provide the name of the curve to OpenSSL.
+ */
 static bool
 initialize_ecdh(SSL_CTX *context, bool isServerStart)
 {

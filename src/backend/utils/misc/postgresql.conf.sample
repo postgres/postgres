@@ -80,6 +80,7 @@
 #ssl_ciphers = 'HIGH:MEDIUM:+3DES:!aNULL' # allowed SSL ciphers
 #ssl_prefer_server_ciphers = on
 #ssl_ecdh_curve = 'prime256v1'
+#ssl_dh_params_file = ''
 #ssl_cert_file = 'server.crt'
 #ssl_key_file = 'server.key'
 #ssl_ca_file = ''

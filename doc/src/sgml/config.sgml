@@ -1203,6 +1203,30 @@ include_dir 'conf.d'
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-ssl-dh-params-file" xreflabel="ssl_dh_params_file">
+      <term><varname>ssl_dh_params_file</varname> (<type>string</type>)
+      <indexterm>
+       <primary><varname>ssl_dh_params_file</> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Specifies the name of the file containing Diffie-Hellman parameters
+        used for so-called ephemeral DH family of SSL ciphers. The default is
+        empty, in which case compiled-in default DH parameters used. Using
+        custom DH parameters reduces the exposure if an attacker manages to
+        crack the well-known compiled-in DH parameters. You can create your own
+        DH parameters file with the command
+        <command>openssl dhparam -out dhparams.pem 2048</command>.
+       </para>
+
+       <para>
+        This parameter can only be set in the <filename>postgresql.conf</>
+        file or on the server command line.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-krb-server-keyfile" xreflabel="krb_server_keyfile">
       <term><varname>krb_server_keyfile</varname> (<type>string</type>)
       <indexterm>

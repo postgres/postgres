@@ -3607,6 +3607,17 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
+		{"ssl_dh_params_file", PGC_SIGHUP, CONN_AUTH_SECURITY,
+			gettext_noop("Location of the SSL DH params file."),
+			NULL,
+			GUC_SUPERUSER_ONLY
+		},
+		&ssl_dh_params_file,
+		"",
+		NULL, NULL, NULL
+	},
+
+	{
 		{"application_name", PGC_USERSET, LOGGING_WHAT,
 			gettext_noop("Sets the application name to be reported in statistics and logs."),
 			NULL,
