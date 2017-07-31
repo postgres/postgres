@@ -96,7 +96,7 @@ typedef XLogLongPageHeaderData *XLogLongPageHeader;
 		(dest) = (segno) * XLOG_SEG_SIZE + (offset)
 
 /*
- * Compute ID and segment from an XLogRecPtr.
+ * Compute a segment number from an XLogRecPtr.
  *
  * For XLByteToSeg, do the computation at face value.  For XLByteToPrevSeg,
  * a boundary byte is taken to be in the previous segment.  This is suitable
