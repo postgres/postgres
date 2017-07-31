@@ -210,7 +210,7 @@ create_rel_filename_map(const char *old_data, const char *new_data,
 	/* new_relfilenode will match old and new pg_class.oid */
 	map->new_relfilenode = new_rel->relfilenode;
 
-	/* used only for logging and error reporing, old/new are identical */
+	/* used only for logging and error reporting, old/new are identical */
 	map->nspname = old_rel->nspname;
 	map->relname = old_rel->relname;
 }
