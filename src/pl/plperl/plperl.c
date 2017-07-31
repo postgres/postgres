@@ -3247,12 +3247,18 @@ plperl_return_next_internal(SV *sv)
 
 		/*
 		 * This is the first call to return_next in the current PL/Perl
-		 * function call, so memoize some lookups
+		 * function call, so identify the output tuple descriptor and create a
+		 * tuplestore to hold the result rows.
 		 */
 		if (prodesc->fn_retistuple)
 			(void) get_call_result_type(fcinfo, NULL, &tupdesc);
 		else
+		{
 			tupdesc = rsi->expectedDesc;
+			/* Protect assumption below that we return exactly one column */
+			if (tupdesc == NULL || tupdesc->natts != 1)
+				elog(ERROR, "expected single-column result descriptor for non-composite SETOF result");
+		}
 
 		/*
 		 * Make sure the tuple_store and ret_tdesc are sufficiently
@@ -3300,20 +3306,20 @@ plperl_return_next_internal(SV *sv)
 	}
 	else
 	{
-		Datum		ret;
-		bool		isNull;
+		Datum		ret[1];
+		bool		isNull[1];
 
-		ret = plperl_sv_to_datum(sv,
-								 prodesc->result_oid,
-								 -1,
-								 fcinfo,
-								 &prodesc->result_in_func,
-								 prodesc->result_typioparam,
-								 &isNull);
+		ret[0] = plperl_sv_to_datum(sv,
+									prodesc->result_oid,
+									-1,
+									fcinfo,
+									&prodesc->result_in_func,
+									prodesc->result_typioparam,
+									&isNull[0]);
 
 		tuplestore_putvalues(current_call_data->tuple_store,
 							 current_call_data->ret_tdesc,
-							 &ret, &isNull);
+							 ret, isNull);
 	}
 
 	MemoryContextSwitchTo(old_cxt);
