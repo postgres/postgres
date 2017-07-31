@@ -229,7 +229,7 @@ AC_DEFUN([PGAC_CHECK_GETTEXT],
                  [AC_MSG_ERROR([a gettext implementation is required for NLS])])
   AC_CHECK_HEADER([libintl.h], [],
                   [AC_MSG_ERROR([header file <libintl.h> is required for NLS])])
-  AC_CHECK_PROGS(MSGFMT, msgfmt)
+  AC_PATH_PROGS(MSGFMT, msgfmt)
   if test -z "$MSGFMT"; then
     AC_MSG_ERROR([msgfmt is required for NLS])
   fi
@@ -238,8 +238,8 @@ AC_DEFUN([PGAC_CHECK_GETTEXT],
     pgac_cv_msgfmt_flags=-c
 fi])
   AC_SUBST(MSGFMT_FLAGS, $pgac_cv_msgfmt_flags)
-  AC_CHECK_PROGS(MSGMERGE, msgmerge)
-  AC_CHECK_PROGS(XGETTEXT, xgettext)
+  AC_PATH_PROGS(MSGMERGE, msgmerge)
+  AC_PATH_PROGS(XGETTEXT, xgettext)
 ])# PGAC_CHECK_GETTEXT
 
 

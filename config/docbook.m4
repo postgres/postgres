@@ -3,7 +3,7 @@
 # PGAC_PROG_NSGMLS
 # ----------------
 AC_DEFUN([PGAC_PROG_NSGMLS],
-[AC_CHECK_PROGS([NSGMLS], [onsgmls nsgmls])])
+[AC_PATH_PROGS([NSGMLS], [onsgmls nsgmls])])
 
 
 # PGAC_CHECK_DOCBOOK(VERSION)
