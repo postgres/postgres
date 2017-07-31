@@ -12,7 +12,11 @@ override CPPFLAGS += -DPLPERL_HAVE_UID_GID
 override CPPFLAGS += -Wno-comment
 endif
 
-override CPPFLAGS := -I. -I$(srcdir) $(CPPFLAGS) -I$(perl_archlibexp)/CORE
+# Note: we need to make sure that the CORE directory is included last,
+# probably because it sometimes contains some header files with names
+# that clash with some of ours, or with some that we include, notably on
+# Windows.
+override CPPFLAGS := -I. -I$(srcdir) $(CPPFLAGS) $(perl_embed_ccflags) -I$(perl_archlibexp)/CORE
 
 rpathdir = $(perl_archlibexp)/CORE
 
