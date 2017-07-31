@@ -850,6 +850,7 @@ if test "$with_perl" = yes; then
     AC_MSG_ERROR([Perl not found])
   fi
   PGAC_CHECK_PERL_CONFIGS([archlibexp,privlibexp,useshrplib])
+  PGAC_CHECK_PERL_EMBED_CCFLAGS
   PGAC_CHECK_PERL_EMBED_LDFLAGS
 fi
 
