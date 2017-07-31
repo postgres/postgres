@@ -14435,10 +14435,20 @@ dumpDefaultACL(Archive *fout, DefaultACLInfo *daclinfo)
  * 'tag' is the tag for the archive entry (typ. unquoted name of object).
  * 'nspname' is the namespace the object is in (NULL if none).
  * 'owner' is the owner, NULL if there is no owner (for languages).
- * 'acls' is the string read out of the fooacl system catalog field;
- *		it will be parsed here.
- * 'racls' contains any initial ACLs that the object had which have now been
- *		revoked by the user, it will also be parsed here.
+ * 'acls' contains the ACL string of the object from the appropriate system
+ * 		catalog field; it will be passed to buildACLCommands for building the
+ * 		appropriate GRANT commands.
+ * 'racls' contains the ACL string of any initial-but-now-revoked ACLs of the
+ * 		object; it will be passed to buildACLCommands for building the
+ * 		appropriate REVOKE commands.
+ * 'initacls' In binary-upgrade mode, ACL string of the object's initial
+ * 		privileges, to be recorded into pg_init_privs
+ * 'initracls' In binary-upgrade mode, ACL string of the object's
+ * 		revoked-from-default privileges, to be recorded into pg_init_privs
+ *
+ * NB: initacls/initracls are needed because extensions can set privileges on
+ * an object during the extension's script file and we record those into
+ * pg_init_privs as that object's initial privileges.
  *----------
  */
 static void
