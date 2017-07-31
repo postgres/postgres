@@ -49,6 +49,31 @@ AC_DEFUN([PGAC_CHECK_PERL_CONFIGS],
 [m4_foreach([pgac_item], [$1], [PGAC_CHECK_PERL_CONFIG(pgac_item)])])
 
 
+# PGAC_CHECK_PERL_EMBED_CCFLAGS
+# -----------------------------
+# We selectively extract stuff from $Config{ccflags}.  We don't really need
+# anything except -D switches, and other sorts of compiler switches can
+# actively break things if Perl was compiled with a different compiler.
+# Moreover, although Perl likes to put stuff like -D_LARGEFILE_SOURCE and
+# -D_FILE_OFFSET_BITS=64 here, it would be fatal to try to compile PL/Perl
+# to a different libc ABI than core Postgres uses.  The available information
+# says that all the symbols that affect Perl's own ABI begin with letters,
+# so it should be sufficient to adopt -D switches for symbols not beginning
+# with underscore.
+# For debugging purposes, let's have the configure output report the raw
+# ccflags value as well as the set of flags we chose to adopt.
+AC_DEFUN([PGAC_CHECK_PERL_EMBED_CCFLAGS],
+[AC_REQUIRE([PGAC_PATH_PERL])
+AC_MSG_CHECKING([for CFLAGS recommended by Perl])
+perl_ccflags=`$PERL -MConfig -e ['print $Config{ccflags}']`
+AC_MSG_RESULT([$perl_ccflags])
+AC_MSG_CHECKING([for CFLAGS to compile embedded Perl])
+perl_embed_ccflags=`$PERL -MConfig -e ['foreach $f (split(" ",$Config{ccflags})) {print $f, " " if ($f =~ /^-D[^_]/)}']`
+AC_SUBST(perl_embed_ccflags)dnl
+AC_MSG_RESULT([$perl_embed_ccflags])
+])# PGAC_CHECK_PERL_EMBED_CCFLAGS
+
+
 # PGAC_CHECK_PERL_EMBED_LDFLAGS
 # -----------------------------
 # We are after Embed's ldopts, but without the subset mentioned in
