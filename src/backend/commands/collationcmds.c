@@ -722,7 +722,17 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 
 			/*
 			 * Add keyword variants
+			 *
+			 * In ICU 4.2, ucol_getKeywordsForLocale() sometimes returns
+			 * values that will not be accepted by uloc_toLanguageTag().  Skip
+			 * loading keyword variants in that version.  (Both
+			 * ucol_getKeywordValuesForLocale() and uloc_toLanguageTag() are
+			 * new in ICU 4.2, so older versions are not supported at all.)
+			 *
+			 * XXX We have no information about ICU 4.3 through 4.7, but we
+			 * know the below works with 4.8.
 			 */
+#if U_ICU_VERSION_MAJOR_NUM > 4 || (U_ICU_VERSION_MAJOR_NUM == 4 && U_ICU_VERSION_MINOR_NUM > 2)
 			status = U_ZERO_ERROR;
 			en = ucol_getKeywordValuesForLocale("collation", name, TRUE, &status);
 			if (U_FAILURE(status))
@@ -769,6 +779,7 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 						(errmsg("could not get keyword values for locale \"%s\": %s",
 								name, u_errorName(status))));
 			uenum_close(en);
+#endif							/* ICU >4.2 */
 		}
 	}
 #endif							/* USE_ICU */

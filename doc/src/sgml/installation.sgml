@@ -774,10 +774,26 @@ su - postgres
          Build with support for
          the <productname>ICU</productname><indexterm><primary>ICU</></>
          library.  This requires the <productname>ICU4C</productname> package
-         as well
-         as <productname>pkg-config</productname><indexterm><primary>pkg-config</></>
          to be installed.  The minimum required version
-         of <productname>ICU4C</productname> is currently 4.6.
+         of <productname>ICU4C</productname> is currently 4.2.
+        </para>
+
+        <para>
+         By default,
+         <productname>pkg-config</productname><indexterm><primary>pkg-config</></>
+         will be used to find the required compilation options.  This is
+         supported for <productname>ICU4C</productname> version 4.6 and later.
+         For older versions, or if <productname>pkg-config</productname> is
+         not available, the variables <envar>ICU_CFLAGS</envar>
+         and <envar>ICU_LIBS</envar> can be specified
+         to <filename>configure</filename>, like in this example:
+<programlisting>
+./configure ... --with-icu ICU_CFLAGS='-I/some/where/include' ICU_LIBS='-L/some/where/lib -licui18n -licuuc -licudata'
+</programlisting>
+         (If <productname>ICU4C</productname> is in the default search path
+         for the compiler, then you still need to specify a nonempty string in
+         order to avoid use of <productname>pkg-config</productname>, for
+         example, <literal>ICU_CFLAGS=' '</literal>.)
         </para>
        </listitem>
       </varlistentry>
