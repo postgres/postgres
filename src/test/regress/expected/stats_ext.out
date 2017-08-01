@@ -122,10 +122,12 @@ EXCEPTION WHEN wrong_object_type THEN
 END;
 $$;
 NOTICE:  stats on toast table not created
-SET client_min_messages TO warning;
+\set VERBOSITY terse \\ -- suppress cascade details
 DROP SCHEMA tststats CASCADE;
+NOTICE:  drop cascades to 7 other objects
 DROP FOREIGN DATA WRAPPER extstats_dummy_fdw CASCADE;
-RESET client_min_messages;
+NOTICE:  drop cascades to server extstats_dummy_srv
+\set VERBOSITY default
 -- n-distinct tests
 CREATE TABLE ndistinct (
     filler1 TEXT,

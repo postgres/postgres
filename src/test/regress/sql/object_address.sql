@@ -201,7 +201,7 @@ SELECT (pg_identify_object(addr1.classid, addr1.objid, addr1.objsubid)).*,
 ---
 --- Cleanup resources
 ---
-SET client_min_messages TO 'warning';
+\set VERBOSITY terse \\ -- suppress cascade details
 
 DROP FOREIGN DATA WRAPPER addr_fdw CASCADE;
 DROP PUBLICATION addr_pub;

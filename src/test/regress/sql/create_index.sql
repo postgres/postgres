@@ -1083,6 +1083,5 @@ REINDEX SCHEMA schema_to_reindex;
 -- Clean up
 RESET ROLE;
 DROP ROLE regress_reindexuser;
-SET client_min_messages TO 'warning';
+\set VERBOSITY terse \\ -- suppress cascade details
 DROP SCHEMA schema_to_reindex CASCADE;
-RESET client_min_messages;

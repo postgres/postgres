@@ -981,9 +981,9 @@ REVOKE ALL ON ALL FUNCTIONS IN SCHEMA testns FROM PUBLIC;
 
 SELECT has_function_privilege('regress_user1', 'testns.testfunc(int)', 'EXECUTE'); -- false
 
-SET client_min_messages TO 'warning';
+\set VERBOSITY terse \\ -- suppress cascade details
 DROP SCHEMA testns CASCADE;
-RESET client_min_messages;
+\set VERBOSITY default
 
 
 -- Change owner of the schema & and rename of new schema owner
@@ -1002,9 +1002,9 @@ ALTER ROLE regress_schemauser2 RENAME TO regress_schemauser_renamed;
 SELECT nspname, rolname FROM pg_namespace, pg_roles WHERE pg_namespace.nspname = 'testns' AND pg_namespace.nspowner = pg_roles.oid;
 
 set session role regress_schemauser_renamed;
-SET client_min_messages TO 'warning';
+\set VERBOSITY terse \\ -- suppress cascade details
 DROP SCHEMA testns CASCADE;
-RESET client_min_messages;
+\set VERBOSITY default
 
 -- clean up
 \c -

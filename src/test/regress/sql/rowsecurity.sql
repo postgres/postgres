@@ -517,11 +517,10 @@ SELECT * FROM rec1;    -- fail, mutual recursion via views
 -- Mutual recursion via .s.b views
 --
 SET SESSION AUTHORIZATION regress_rls_bob;
--- Suppress NOTICE messages when doing a cascaded drop.
-SET client_min_messages TO 'warning';
 
+\set VERBOSITY terse \\ -- suppress cascade details
 DROP VIEW rec1v, rec2v CASCADE;
-RESET client_min_messages;
+\set VERBOSITY default
 
 CREATE VIEW rec1v WITH (security_barrier) AS SELECT * FROM rec1;
 CREATE VIEW rec2v WITH (security_barrier) AS SELECT * FROM rec2;
@@ -1026,11 +1025,10 @@ DROP TABLE test_qual_pushdown;
 -- Plancache invalidate on user change.
 --
 RESET SESSION AUTHORIZATION;
--- Suppress NOTICE messages when doing a cascaded drop.
-SET client_min_messages TO 'warning';
 
+\set VERBOSITY terse \\ -- suppress cascade details
 DROP TABLE t1 CASCADE;
-RESET client_min_messages;
+\set VERBOSITY default
 
 CREATE TABLE t1 (a integer);
 
@@ -1762,11 +1760,9 @@ DROP USER regress_rls_dob_role2;
 --
 RESET SESSION AUTHORIZATION;
 
--- Suppress NOTICE messages when doing a cascaded drop.
-SET client_min_messages TO 'warning';
-
+\set VERBOSITY terse \\ -- suppress cascade details
 DROP SCHEMA regress_rls_schema CASCADE;
-RESET client_min_messages;
+\set VERBOSITY default
 
 DROP USER regress_rls_alice;
 DROP USER regress_rls_bob;

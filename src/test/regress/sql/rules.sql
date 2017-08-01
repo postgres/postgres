@@ -936,9 +936,9 @@ update id_ordered set name = 'update 4' where id = 4;
 update id_ordered set name = 'update 5' where id = 5;
 select * from id_ordered;
 
-set client_min_messages to warning; -- suppress cascade notices
+\set VERBOSITY terse \\ -- suppress cascade details
 drop table id cascade;
-reset client_min_messages;
+\set VERBOSITY default
 
 --
 -- check corner case where an entirely-dummy subplan is created by

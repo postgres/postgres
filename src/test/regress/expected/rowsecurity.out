@@ -1393,10 +1393,10 @@ ERROR:  infinite recursion detected in policy for relation "rec1"
 -- Mutual recursion via .s.b views
 --
 SET SESSION AUTHORIZATION regress_rls_bob;
--- Suppress NOTICE messages when doing a cascaded drop.
-SET client_min_messages TO 'warning';
+\set VERBOSITY terse \\ -- suppress cascade details
 DROP VIEW rec1v, rec2v CASCADE;
-RESET client_min_messages;
+NOTICE:  drop cascades to 2 other objects
+\set VERBOSITY default
 CREATE VIEW rec1v WITH (security_barrier) AS SELECT * FROM rec1;
 CREATE VIEW rec2v WITH (security_barrier) AS SELECT * FROM rec2;
 SET SESSION AUTHORIZATION regress_rls_alice;
@@ -2775,10 +2775,10 @@ DROP TABLE test_qual_pushdown;
 -- Plancache invalidate on user change.
 --
 RESET SESSION AUTHORIZATION;
--- Suppress NOTICE messages when doing a cascaded drop.
-SET client_min_messages TO 'warning';
+\set VERBOSITY terse \\ -- suppress cascade details
 DROP TABLE t1 CASCADE;
-RESET client_min_messages;
+NOTICE:  drop cascades to 2 other objects
+\set VERBOSITY default
 CREATE TABLE t1 (a integer);
 GRANT SELECT ON t1 TO regress_rls_bob, regress_rls_carol;
 CREATE POLICY p1 ON t1 TO regress_rls_bob USING ((a % 2) = 0);
@@ -3902,10 +3902,10 @@ DROP USER regress_rls_dob_role2;
 -- Clean up objects
 --
 RESET SESSION AUTHORIZATION;
--- Suppress NOTICE messages when doing a cascaded drop.
-SET client_min_messages TO 'warning';
+\set VERBOSITY terse \\ -- suppress cascade details
 DROP SCHEMA regress_rls_schema CASCADE;
-RESET client_min_messages;
+NOTICE:  drop cascades to 29 other objects
+\set VERBOSITY default
 DROP USER regress_rls_alice;
 DROP USER regress_rls_bob;
 DROP USER regress_rls_carol;

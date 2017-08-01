@@ -673,13 +673,17 @@ SELECT nspname, prsname
 ---
 --- Cleanup resources
 ---
-set client_min_messages to warning; -- suppress cascade notices
+\set VERBOSITY terse \\ -- suppress cascade details
 DROP FOREIGN DATA WRAPPER alt_fdw2 CASCADE;
+NOTICE:  drop cascades to server alt_fserv2
 DROP FOREIGN DATA WRAPPER alt_fdw3 CASCADE;
+NOTICE:  drop cascades to server alt_fserv3
 DROP LANGUAGE alt_lang2 CASCADE;
 DROP LANGUAGE alt_lang3 CASCADE;
 DROP SCHEMA alt_nsp1 CASCADE;
+NOTICE:  drop cascades to 28 other objects
 DROP SCHEMA alt_nsp2 CASCADE;
+NOTICE:  drop cascades to 9 other objects
 DROP USER regress_alter_user1;
 DROP USER regress_alter_user2;
 DROP USER regress_alter_user3;
