@@ -4,10 +4,7 @@
 # PGAC_PATH_PERL
 # --------------
 AC_DEFUN([PGAC_PATH_PERL],
-[# Let the user override the search
-if test -z "$PERL"; then
-  AC_PATH_PROG(PERL, perl)
-fi
+[PGAC_PATH_PROGS(PERL, perl)
 
 if test "$PERL"; then
   pgac_perl_version=`$PERL -v 2>/dev/null | sed -n ['s/This is perl.*v[a-z ]*\([0-9]\.[0-9][0-9.]*\).*$/\1/p']`

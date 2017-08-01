@@ -1,6 +1,24 @@
 # config/programs.m4
 
 
+# PGAC_PATH_PROGS
+# ---------------
+# This wrapper for AC_PATH_PROGS behaves like that macro except when
+# VARIABLE is already set; in that case we just accept the value verbatim.
+# (AC_PATH_PROGS would accept it only if it looks like an absolute path.)
+# A desirable future improvement would be to convert a non-absolute-path
+# input into absolute form.
+AC_DEFUN([PGAC_PATH_PROGS],
+[if test -z "$$1"; then
+  AC_PATH_PROGS($@)
+else
+  # Report the value of $1 in configure's output in all cases.
+  AC_MSG_CHECKING([for $1])
+  AC_MSG_RESULT([$$1])
+fi
+])
+
+
 # PGAC_PATH_BISON
 # ---------------
 # Look for Bison, set the output variable BISON to its path if found.
@@ -8,10 +26,7 @@
 # Note we do not accept other implementations of yacc.
 
 AC_DEFUN([PGAC_PATH_BISON],
-[# Let the user override the search
-if test -z "$BISON"; then
-  AC_PATH_PROGS(BISON, bison)
-fi
+[PGAC_PATH_PROGS(BISON, bison)
 
 if test "$BISON"; then
   pgac_bison_version=`$BISON --version 2>/dev/null | sed q`
@@ -41,7 +56,7 @@ if test -z "$BISON"; then
 *** PostgreSQL then you do not need to worry about this, because the Bison
 *** output is pre-generated.)])
 fi
-# We don't need AC_SUBST(BISON) because AC_PATH_PROG did it
+# We don't need AC_SUBST(BISON) because PGAC_PATH_PROGS did it
 AC_SUBST(BISONFLAGS)
 ])# PGAC_PATH_BISON
 
@@ -229,7 +244,7 @@ AC_DEFUN([PGAC_CHECK_GETTEXT],
                  [AC_MSG_ERROR([a gettext implementation is required for NLS])])
   AC_CHECK_HEADER([libintl.h], [],
                   [AC_MSG_ERROR([header file <libintl.h> is required for NLS])])
-  AC_PATH_PROGS(MSGFMT, msgfmt)
+  PGAC_PATH_PROGS(MSGFMT, msgfmt)
   if test -z "$MSGFMT"; then
     AC_MSG_ERROR([msgfmt is required for NLS])
   fi
@@ -238,8 +253,8 @@ AC_DEFUN([PGAC_CHECK_GETTEXT],
     pgac_cv_msgfmt_flags=-c
 fi])
   AC_SUBST(MSGFMT_FLAGS, $pgac_cv_msgfmt_flags)
-  AC_PATH_PROGS(MSGMERGE, msgmerge)
-  AC_PATH_PROGS(XGETTEXT, xgettext)
+  PGAC_PATH_PROGS(MSGMERGE, msgmerge)
+  PGAC_PATH_PROGS(XGETTEXT, xgettext)
 ])# PGAC_CHECK_GETTEXT
 
 

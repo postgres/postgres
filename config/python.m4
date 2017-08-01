@@ -6,10 +6,10 @@
 
 # PGAC_PATH_PYTHON
 # ----------------
-# Look for Python and set the output variable 'PYTHON'
-# to 'python' if found, empty otherwise.
+# Look for Python and set the output variable 'PYTHON' if found,
+# fail otherwise.
 AC_DEFUN([PGAC_PATH_PYTHON],
-[AC_PATH_PROG(PYTHON, python)
+[PGAC_PATH_PROGS(PYTHON, python)
 if test x"$PYTHON" = x""; then
   AC_MSG_ERROR([Python not found])
 fi

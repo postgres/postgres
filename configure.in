@@ -218,15 +218,15 @@ PGAC_ARG_BOOL(enable, profiling, no,
 #
 PGAC_ARG_BOOL(enable, coverage, no,
               [build with coverage testing instrumentation],
-[AC_PATH_PROGS(GCOV, gcov)
+[PGAC_PATH_PROGS(GCOV, gcov)
 if test -z "$GCOV"; then
   AC_MSG_ERROR([gcov not found])
 fi
-AC_PATH_PROGS(LCOV, lcov)
+PGAC_PATH_PROGS(LCOV, lcov)
 if test -z "$LCOV"; then
   AC_MSG_ERROR([lcov not found])
 fi
-AC_PATH_PROGS(GENHTML, genhtml)
+PGAC_PATH_PROGS(GENHTML, genhtml)
 if test -z "$GENHTML"; then
   AC_MSG_ERROR([genhtml not found])
 fi])
@@ -237,7 +237,7 @@ AC_SUBST(enable_coverage)
 #
 PGAC_ARG_BOOL(enable, dtrace, no,
               [build with DTrace support],
-[AC_PATH_PROGS(DTRACE, dtrace)
+[PGAC_PATH_PROGS(DTRACE, dtrace)
 if test -z "$DTRACE"; then
   AC_MSG_ERROR([dtrace not found])
 fi
@@ -816,7 +816,7 @@ PGAC_ARG_BOOL(with, libxml, no, [build with XML support],
               [AC_DEFINE([USE_LIBXML], 1, [Define to 1 to build with XML support. (--with-libxml)])])
 
 if test "$with_libxml" = yes ; then
-  AC_PATH_PROGS(XML2_CONFIG, xml2-config)
+  PGAC_PATH_PROGS(XML2_CONFIG, xml2-config)
   if test -n "$XML2_CONFIG"; then
     for pgac_option in `$XML2_CONFIG --cflags`; do
       case $pgac_option in
@@ -912,7 +912,7 @@ case $INSTALL in
 esac
 AC_SUBST(install_bin)
 
-AC_PATH_PROG(TAR, tar)
+PGAC_PATH_PROGS(TAR, tar)
 AC_PROG_LN_S
 AC_PROG_AWK
 AC_PROG_MKDIR_P
@@ -948,7 +948,7 @@ if test "$with_python" = yes; then
 fi
 
 if test "$cross_compiling" = yes && test -z "$with_system_tzdata"; then
-  AC_PATH_PROG(ZIC, zic)
+  PGAC_PATH_PROGS(ZIC, zic)
   if test -z "$ZIC"; then
     AC_MSG_ERROR([
 When cross-compiling, either use the option --with-system-tzdata to use
@@ -2119,17 +2119,17 @@ fi
 #
 PGAC_PROG_NSGMLS
 PGAC_CHECK_DOCBOOK(4.2)
-AC_PATH_PROGS(DBTOEPUB, dbtoepub)
-AC_PATH_PROGS(XMLLINT, xmllint)
-AC_PATH_PROGS(XSLTPROC, xsltproc)
-AC_PATH_PROGS(OSX, [osx sgml2xml sx])
-AC_PATH_PROGS(FOP, fop)
+PGAC_PATH_PROGS(DBTOEPUB, dbtoepub)
+PGAC_PATH_PROGS(XMLLINT, xmllint)
+PGAC_PATH_PROGS(XSLTPROC, xsltproc)
+PGAC_PATH_PROGS(OSX, [osx sgml2xml sx])
+PGAC_PATH_PROGS(FOP, fop)
 
 #
 # Check for test tools
 #
 if test "$enable_tap_tests" = yes; then
-  AC_PATH_PROGS(PROVE, prove)
+  PGAC_PATH_PROGS(PROVE, prove)
   if test -z "$PROVE"; then
     AC_MSG_ERROR([prove not found])
   fi
