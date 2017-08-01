@@ -1227,13 +1227,18 @@ lc_ctype_is_c(Oid collation)
 static void
 report_newlocale_failure(const char *localename)
 {
-	/* copy errno in case one of the ereport auxiliary functions changes it */
-	int			save_errno = errno;
+	int			save_errno;
+
+	/* On Windows, transform _create_locale() error to errno */
+#ifdef WIN32
+	_dosmaperr(GetLastError());
+#endif
 
 	/*
 	 * ENOENT means "no such locale", not "no such file", so clarify that
 	 * errno with an errdetail message.
 	 */
+	save_errno = errno;			/* auxiliary funcs might change errno */
 	ereport(ERROR,
 			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 			 errmsg("could not create locale \"%s\": %m",
