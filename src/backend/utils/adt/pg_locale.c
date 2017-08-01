@@ -1229,10 +1229,15 @@ report_newlocale_failure(const char *localename)
 {
 	int			save_errno;
 
-	/* On Windows, transform _create_locale() error to errno */
-#ifdef WIN32
-	_dosmaperr(GetLastError());
-#endif
+	/*
+	 * Windows doesn't provide any useful error indication from
+	 * _create_locale(), and BSD-derived platforms don't seem to feel they
+	 * need to set errno either (even though POSIX is pretty clear that
+	 * newlocale should do so).  So, if errno hasn't been set, assume ENOENT
+	 * is what to report.
+	 */
+	if (errno == 0)
+		errno = ENOENT;
 
 	/*
 	 * ENOENT means "no such locale", not "no such file", so clarify that
@@ -1311,6 +1316,7 @@ pg_newlocale_from_collation(Oid collid)
 			if (strcmp(collcollate, collctype) == 0)
 			{
 				/* Normal case where they're the same */
+				errno = 0;
 #ifndef WIN32
 				loc = newlocale(LC_COLLATE_MASK | LC_CTYPE_MASK, collcollate,
 								NULL);
@@ -1326,9 +1332,11 @@ pg_newlocale_from_collation(Oid collid)
 				/* We need two newlocale() steps */
 				locale_t	loc1;
 
+				errno = 0;
 				loc1 = newlocale(LC_COLLATE_MASK, collcollate, NULL);
 				if (!loc1)
 					report_newlocale_failure(collcollate);
+				errno = 0;
 				loc = newlocale(LC_CTYPE_MASK, collctype, loc1);
 				if (!loc)
 					report_newlocale_failure(collctype);
