@@ -1045,7 +1045,7 @@ f(x) = exp(-parameter * (x - min) / (max - min + 1)) / (1 - exp(-parameter))
 </literallayout>
       Then value <replaceable>i</> between <replaceable>min</> and
       <replaceable>max</> inclusive is drawn with probability:
-      <literal>f(x) - f(x + 1)</>.
+      <literal>f(i) - f(i + 1)</>.
      </para>
 
      <para>
