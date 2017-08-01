@@ -229,6 +229,17 @@ EXPLAIN (COSTS OFF)
   SELECT * FROM collate_test10 ORDER BY x DESC, y COLLATE "C" ASC NULLS FIRST;
 
 
+-- CREATE/DROP COLLATION
+
+CREATE COLLATION mycoll1 FROM "C";
+CREATE COLLATION mycoll2 ( LC_COLLATE = "POSIX", LC_CTYPE = "POSIX" );
+CREATE COLLATION mycoll3 FROM "default";  -- intentionally unsupported
+
+DROP COLLATION mycoll1;
+CREATE TABLE collate_test23 (f1 text collate mycoll2);
+DROP COLLATION mycoll2;  -- fail
+
+
 -- 9.1 bug with useless COLLATE in an expression subject to length coercion
 
 CREATE TEMP TABLE vctable (f1 varchar(25));
@@ -246,4 +257,5 @@ SELECT collation for ((SELECT b FROM collate_test1 LIMIT 1));
 -- trying to run any platform-specific collation tests later, so we
 -- must get rid of them.
 --
+\set VERBOSITY terse
 DROP SCHEMA collate_tests CASCADE;

@@ -622,6 +622,17 @@ EXPLAIN (COSTS OFF)
    ->  Seq Scan on collate_test10
 (3 rows)
 
+-- CREATE/DROP COLLATION
+CREATE COLLATION mycoll1 FROM "C";
+CREATE COLLATION mycoll2 ( LC_COLLATE = "POSIX", LC_CTYPE = "POSIX" );
+CREATE COLLATION mycoll3 FROM "default";  -- intentionally unsupported
+ERROR:  collation "default" cannot be copied
+DROP COLLATION mycoll1;
+CREATE TABLE collate_test23 (f1 text collate mycoll2);
+DROP COLLATION mycoll2;  -- fail
+ERROR:  cannot drop collation mycoll2 because other objects depend on it
+DETAIL:  table collate_test23 column f1 depends on collation mycoll2
+HINT:  Use DROP ... CASCADE to drop the dependent objects too.
 -- 9.1 bug with useless COLLATE in an expression subject to length coercion
 CREATE TEMP TABLE vctable (f1 varchar(25));
 INSERT INTO vctable VALUES ('foo' COLLATE "C");
@@ -650,20 +661,6 @@ SELECT collation for ((SELECT b FROM collate_test1 LIMIT 1));
 -- trying to run any platform-specific collation tests later, so we
 -- must get rid of them.
 --
+\set VERBOSITY terse
 DROP SCHEMA collate_tests CASCADE;
-NOTICE:  drop cascades to 15 other objects
-DETAIL:  drop cascades to table collate_test1
-drop cascades to table collate_test_like
-drop cascades to table collate_test2
-drop cascades to type testdomain_p
-drop cascades to table collate_test4
-drop cascades to table collate_test5
-drop cascades to table collate_test10
-drop cascades to view collview1
-drop cascades to view collview2
-drop cascades to view collview3
-drop cascades to type testdomain
-drop cascades to function dup(anyelement)
-drop cascades to table collate_test20
-drop cascades to table collate_test21
-drop cascades to table collate_test22
+NOTICE:  drop cascades to 17 other objects
