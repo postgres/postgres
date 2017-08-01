@@ -250,7 +250,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 		AlterObjectDependsStmt AlterObjectSchemaStmt AlterOwnerStmt
 		AlterOperatorStmt AlterSeqStmt AlterSystemStmt AlterTableStmt
 		AlterTblSpcStmt AlterExtensionStmt AlterExtensionContentsStmt AlterForeignTableStmt
-		AlterCompositeTypeStmt AlterUserStmt AlterUserMappingStmt AlterUserSetStmt
+		AlterCompositeTypeStmt AlterUserMappingStmt
 		AlterRoleStmt AlterRoleSetStmt AlterPolicyStmt
 		AlterDefaultPrivilegesStmt DefACLAction
 		AnalyzeStmt ClosePortalStmt ClusterStmt CommentStmt
@@ -262,9 +262,9 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 		CreateAssertStmt CreateTransformStmt CreateTrigStmt CreateEventTrigStmt
 		CreateUserStmt CreateUserMappingStmt CreateRoleStmt CreatePolicyStmt
 		CreatedbStmt DeclareCursorStmt DefineStmt DeleteStmt DiscardStmt DoStmt
-		DropGroupStmt DropOpClassStmt DropOpFamilyStmt DropPLangStmt DropStmt
+		DropOpClassStmt DropOpFamilyStmt DropPLangStmt DropStmt
 		DropAssertStmt DropCastStmt DropRoleStmt
-		DropUserStmt DropdbStmt DropTableSpaceStmt
+		DropdbStmt DropTableSpaceStmt
 		DropTransformStmt
 		DropUserMappingStmt ExplainStmt FetchStmt
 		GrantStmt GrantRoleStmt ImportForeignSchemaStmt IndexStmt InsertStmt
@@ -841,8 +841,6 @@ stmt :
 			| AlterTSConfigurationStmt
 			| AlterTSDictionaryStmt
 			| AlterUserMappingStmt
-			| AlterUserSetStmt
-			| AlterUserStmt
 			| AnalyzeStmt
 			| CheckPointStmt
 			| ClosePortalStmt
@@ -890,7 +888,6 @@ stmt :
 			| DoStmt
 			| DropAssertStmt
 			| DropCastStmt
-			| DropGroupStmt
 			| DropOpClassStmt
 			| DropOpFamilyStmt
 			| DropOwnedStmt
@@ -900,7 +897,6 @@ stmt :
 			| DropTableSpaceStmt
 			| DropTransformStmt
 			| DropRoleStmt
-			| DropUserStmt
 			| DropUserMappingStmt
 			| DropdbStmt
 			| ExecuteStmt
@@ -1130,6 +1126,14 @@ AlterRoleStmt:
 					n->options = $5;
 					$$ = (Node *)n;
 				 }
+			| ALTER USER RoleSpec opt_with AlterOptRoleList
+				 {
+					AlterRoleStmt *n = makeNode(AlterRoleStmt);
+					n->role = $3;
+					n->action = +1;	/* add, if there are members */
+					n->options = $5;
+					$$ = (Node *)n;
+				 }
 		;
 
 opt_in_database:
@@ -1154,37 +1158,23 @@ AlterRoleSetStmt:
 					n->setstmt = $5;
 					$$ = (Node *)n;
 				}
-		;
-
-
-/*****************************************************************************
- *
- * Alter a postgresql DBMS user
- *
- *****************************************************************************/
-
-AlterUserStmt:
-			ALTER USER RoleSpec opt_with AlterOptRoleList
-				 {
-					AlterRoleStmt *n = makeNode(AlterRoleStmt);
-					n->role = $3;
-					n->action = +1;	/* add, if there are members */
-					n->options = $5;
-					$$ = (Node *)n;
-				 }
-		;
-
-
-AlterUserSetStmt:
-			ALTER USER RoleSpec SetResetClause
+			| ALTER USER RoleSpec opt_in_database SetResetClause
 				{
 					AlterRoleSetStmt *n = makeNode(AlterRoleSetStmt);
 					n->role = $3;
-					n->database = NULL;
-					n->setstmt = $4;
+					n->database = $4;
+					n->setstmt = $5;
 					$$ = (Node *)n;
 				}
-			;
+			| ALTER USER ALL opt_in_database SetResetClause
+				{
+					AlterRoleSetStmt *n = makeNode(AlterRoleSetStmt);
+					n->role = NULL;
+					n->database = $4;
+					n->setstmt = $5;
+					$$ = (Node *)n;
+				}
+		;
 
 
 /*****************************************************************************
@@ -1211,17 +1201,7 @@ DropRoleStmt:
 					n->roles = $5;
 					$$ = (Node *)n;
 				}
-			;
-
-/*****************************************************************************
- *
- * Drop a postgresql DBMS user
- *
- * XXX As with DROP ROLE, no CASCADE/RESTRICT here.
- *****************************************************************************/
-
-DropUserStmt:
-			DROP USER role_list
+			| DROP USER role_list
 				{
 					DropRoleStmt *n = makeNode(DropRoleStmt);
 					n->missing_ok = FALSE;
@@ -1233,6 +1213,20 @@ DropUserStmt:
 					DropRoleStmt *n = makeNode(DropRoleStmt);
 					n->roles = $5;
 					n->missing_ok = TRUE;
+					$$ = (Node *)n;
+				}
+			| DROP GROUP_P role_list
+				{
+					DropRoleStmt *n = makeNode(DropRoleStmt);
+					n->missing_ok = FALSE;
+					n->roles = $3;
+					$$ = (Node *)n;
+				}
+			| DROP GROUP_P IF_P EXISTS role_list
+				{
+					DropRoleStmt *n = makeNode(DropRoleStmt);
+					n->missing_ok = TRUE;
+					n->roles = $5;
 					$$ = (Node *)n;
 				}
 			;
@@ -1276,31 +1270,6 @@ AlterGroupStmt:
 
 add_drop:	ADD_P									{ $$ = +1; }
 			| DROP									{ $$ = -1; }
-		;
-
-
-/*****************************************************************************
- *
- * Drop a postgresql group
- *
- * XXX As with DROP ROLE, no CASCADE/RESTRICT here.
- *****************************************************************************/
-
-DropGroupStmt:
-			DROP GROUP_P role_list
-				{
-					DropRoleStmt *n = makeNode(DropRoleStmt);
-					n->missing_ok = FALSE;
-					n->roles = $3;
-					$$ = (Node *)n;
-				}
-			| DROP GROUP_P IF_P EXISTS role_list
-				{
-					DropRoleStmt *n = makeNode(DropRoleStmt);
-					n->missing_ok = TRUE;
-					n->roles = $5;
-					$$ = (Node *)n;
-				}
 		;
 
 
