@@ -286,9 +286,7 @@ be_tls_init(bool isServerStart)
 	}
 
 	/* disallow SSL v2/v3 */
-	SSL_CTX_set_options(context,
-						SSL_OP_SINGLE_DH_USE |
-						SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
+	SSL_CTX_set_options(context, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
 
 	/* set up ephemeral DH and ECDH keys */
 	if (!initialize_dh(context, isServerStart))
