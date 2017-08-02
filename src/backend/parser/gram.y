@@ -6507,7 +6507,7 @@ SecLabelStmt:
 				{
 					SecLabelStmt *n = makeNode(SecLabelStmt);
 					n->provider = $3;
-					n->objtype = OBJECT_TYPE;
+					n->objtype = OBJECT_DOMAIN;
 					n->object = (Node *) $6;
 					n->label = $8;
 					$$ = (Node *) n;
