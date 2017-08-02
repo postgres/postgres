@@ -703,7 +703,7 @@ init_htab(HTAB *hashp, long nelem)
 	hctl->nelem_alloc = choose_nelem_alloc(hctl->entrysize);
 
 #if HASH_DEBUG
-	fprintf(stderr, "init_htab:\n%s%p\n%s%ld\n%s%ld\n%s%d\n%s%ld\n%s%u\n%s%x\n%s%x\n%s%ld\n%s%ld\n",
+	fprintf(stderr, "init_htab:\n%s%p\n%s%ld\n%s%ld\n%s%d\n%s%ld\n%s%u\n%s%x\n%s%x\n%s%ld\n",
 			"TABLE POINTER   ", hashp,
 			"DIRECTORY SIZE  ", hctl->dsize,
 			"SEGMENT SIZE    ", hctl->ssize,
@@ -712,8 +712,7 @@ init_htab(HTAB *hashp, long nelem)
 			"MAX BUCKET      ", hctl->max_bucket,
 			"HIGH MASK       ", hctl->high_mask,
 			"LOW  MASK       ", hctl->low_mask,
-			"NSEGS           ", hctl->nsegs,
-			"NENTRIES        ", hash_get_num_entries(hctl));
+			"NSEGS           ", hctl->nsegs);
 #endif
 	return true;
 }
