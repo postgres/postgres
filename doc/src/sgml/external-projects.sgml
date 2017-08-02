@@ -97,6 +97,13 @@
      </row>
 
      <row>
+      <entry>pgtcl</entry>
+      <entry>Tcl</entry>
+      <entry></entry>
+      <entry><ulink url="https://github.com/flightaware/Pgtcl"></ulink></entry>
+     </row>
+
+     <row>
       <entry>pgtclng</entry>
       <entry>Tcl</entry>
       <entry></entry>
