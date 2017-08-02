@@ -217,7 +217,7 @@ sub CopySolutionOutput
 	my $conf   = shift;
 	my $target = shift;
 	my $rem =
-	  qr{Project\("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}"\) = "([^"]+)"};
+	  qr{Project\("\{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942\}"\) = "([^"]+)"};
 
 	my $sln = read_file("pgsql.sln") || croak "Could not open pgsql.sln\n";
 
