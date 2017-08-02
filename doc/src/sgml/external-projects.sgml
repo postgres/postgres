@@ -65,42 +65,63 @@
       <entry>DBD::Pg</entry>
       <entry>Perl</entry>
       <entry>Perl DBI driver</entry>
-      <entry><ulink url="http://search.cpan.org/dist/DBD-Pg/">http://search.cpan.org/dist/DBD-Pg/</ulink></entry>
+      <entry><ulink url="http://search.cpan.org/dist/DBD-Pg/"></ulink></entry>
      </row>
 
      <row>
       <entry>JDBC</entry>
-      <entry>JDBC</entry>
+      <entry>Java</entry>
       <entry>Type 4 JDBC driver</entry>
-      <entry><ulink url="https://jdbc.postgresql.org/">https://jdbc.postgresql.org/</ulink></entry>
+      <entry><ulink url="https://jdbc.postgresql.org/"></ulink></entry>
      </row>
 
      <row>
       <entry>libpqxx</entry>
       <entry>C++</entry>
       <entry>New-style C++ interface</entry>
-      <entry><ulink url="http://pqxx.org/">http://pqxx.org/</ulink></entry>
+      <entry><ulink url="http://pqxx.org/"></ulink></entry>
+     </row>
+
+     <row>
+      <entry>node-postgres</entry>
+      <entry>JavaScript</entry>
+      <entry>Node.js driver</entry>
+      <entry><ulink url="https://node-postgres.com/"></ulink></entry>
      </row>
 
      <row>
       <entry>Npgsql</entry>
       <entry>.NET</entry>
       <entry>.NET data provider</entry>
-      <entry><ulink url="http://www.npgsql.org/">http://www.npgsql.org/</ulink></entry>
+      <entry><ulink url="http://www.npgsql.org/"></ulink></entry>
+     </row>
+
+     <row>
+      <entry>pgtcl</entry>
+      <entry>Tcl</entry>
+      <entry></entry>
+      <entry><ulink url="https://github.com/flightaware/Pgtcl"></ulink></entry>
      </row>
 
      <row>
       <entry>pgtclng</entry>
       <entry>Tcl</entry>
       <entry></entry>
-      <entry><ulink url="http://sourceforge.net/projects/pgtclng/">http://sourceforge.net/projects/pgtclng/</ulink></entry>
+      <entry><ulink url="http://sourceforge.net/projects/pgtclng/"></ulink></entry>
+     </row>
+
+     <row>
+      <entry>pq</entry>
+      <entry>Go</entry>
+      <entry>Pure Go driver for Go's database/sql</entry>
+      <entry><ulink url="https://github.com/lib/pq"></ulink></entry>
      </row>
 
      <row>
       <entry>psqlODBC</entry>
       <entry>ODBC</entry>
       <entry>ODBC driver</entry>
-      <entry><ulink url="https://odbc.postgresql.org/">https://odbc.postgresql.org/</ulink></entry>
+      <entry><ulink url="https://odbc.postgresql.org/"></ulink></entry>
      </row>
 
      <row>
