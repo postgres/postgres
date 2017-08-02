@@ -592,8 +592,14 @@ cfread(void *ptr, int size, cfp *fp)
 	{
 		ret = gzread(fp->compressedfp, ptr, size);
 		if (ret != size && !gzeof(fp->compressedfp))
+		{
+			int		errnum;
+			const char *errmsg = gzerror(fp->compressedfp, &errnum);
+
 			exit_horribly(modulename,
-						  "could not read from input file: %s\n", strerror(errno));
+						  "could not read from input file: %s\n",
+						  errnum == Z_ERRNO ? strerror(errno) : errmsg);
+		}
 	}
 	else
 #endif
@@ -693,6 +699,22 @@ cfeof(cfp *fp)
 	else
 #endif
 		return feof(fp->uncompressedfp);
+}
+
+const char *
+get_cfp_error(cfp *fp)
+{
+#ifdef HAVE_LIBZ
+	if (fp->compressedfp)
+	{
+		int			errnum;
+		const char *errmsg = gzerror(fp->compressedfp, &errnum);
+
+		if (errnum != Z_ERRNO)
+			return errmsg;
+	}
+#endif
+	return strerror(errno);
 }
 
 #ifdef HAVE_LIBZ
