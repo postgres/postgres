@@ -234,7 +234,6 @@ EXPLAIN (COSTS OFF)
 CREATE COLLATION mycoll1 FROM "C";
 CREATE COLLATION mycoll2 ( LC_COLLATE = "POSIX", LC_CTYPE = "POSIX" );
 CREATE COLLATION mycoll3 FROM "default";  -- intentionally unsupported
-CREATE COLLATION mycoll4 ( LOCALE = "no_such_locale" );  -- fail
 
 DROP COLLATION mycoll1;
 CREATE TABLE collate_test23 (f1 text collate mycoll2);
