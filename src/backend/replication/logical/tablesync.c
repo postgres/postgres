@@ -917,7 +917,9 @@ LogicalRepSyncTableStart(XLogRecPtr *origin_startpos)
 				walrcv_create_slot(wrconn, slotname, true,
 								   CRS_USE_SNAPSHOT, origin_startpos);
 
+				PushActiveSnapshot(GetTransactionSnapshot());
 				copy_table(rel);
+				PopActiveSnapshot();
 
 				res = walrcv_exec(wrconn, "COMMIT", 0, NULL);
 				if (res->status != WALRCV_OK_COMMAND)
