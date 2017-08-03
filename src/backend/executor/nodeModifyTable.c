@@ -1696,7 +1696,7 @@ ExecModifyTable(PlanState *pstate)
 				 * the old relation tuple.
 				 *
 				 * Foreign table updates have a wholerow attribute when the
-				 * relation has an AFTER ROW trigger.  Note that the wholerow
+				 * relation has a row-level trigger.  Note that the wholerow
 				 * attribute does not carry system columns.  Foreign table
 				 * triggers miss seeing those, except that we know enough here
 				 * to set t_tableOid.  Quite separately from this, the FDW may
@@ -2182,8 +2182,11 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 	/*
 	 * Initialize the junk filter(s) if needed.  INSERT queries need a filter
 	 * if there are any junk attrs in the tlist.  UPDATE and DELETE always
-	 * need a filter, since there's always a junk 'ctid' or 'wholerow'
-	 * attribute present --- no need to look first.
+	 * need a filter, since there's always at least one junk attribute present
+	 * --- no need to look first.  Typically, this will be a 'ctid' or
+	 * 'wholerow' attribute, but in the case of a foreign data wrapper it
+	 * might be a set of junk attributes sufficient to identify the remote
+	 * row.
 	 *
 	 * If there are multiple result relations, each one needs its own junk
 	 * filter.  Note multiple rels are only possible for UPDATE/DELETE, so we
@@ -2251,7 +2254,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 					else if (relkind == RELKIND_FOREIGN_TABLE)
 					{
 						/*
-						 * When there is an AFTER trigger, there should be a
+						 * When there is a row-level trigger, there should be a
 						 * wholerow attribute.
 						 */
 						j->jf_junkAttNo = ExecFindJunkAttribute(j, "wholerow");
