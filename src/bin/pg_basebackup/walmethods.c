@@ -404,7 +404,7 @@ typedef struct TarMethodData
 static TarMethodData *tar_data = NULL;
 
 #define tar_clear_error() tar_data->lasterror[0] = '\0'
-#define tar_set_error(msg) strlcpy(tar_data->lasterror, msg, sizeof(tar_data->lasterror))
+#define tar_set_error(msg) strlcpy(tar_data->lasterror, _(msg), sizeof(tar_data->lasterror))
 
 static const char *
 tar_getlasterror(void)
