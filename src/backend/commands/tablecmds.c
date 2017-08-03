@@ -13489,9 +13489,20 @@ ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd)
 	/*
 	 * Prevent circularity by seeing if rel is a partition of attachrel. (In
 	 * particular, this disallows making a rel a partition of itself.)
+	 *
+	 * We do that by checking if rel is a member of the list of attachRel's
+	 * partitions provided the latter is partitioned at all.  We want to avoid
+	 * having to construct this list again, so we request the strongest lock
+	 * on all partitions.  We need the strongest lock, because we may decide
+	 * to scan them if we find out that the table being attached (or its leaf
+	 * partitions) may contain rows that violate the partition constraint.
+	 * If the table has a constraint that would prevent such rows, which by
+	 * definition is present in all the partitions, we need not scan the
+	 * table, nor its partitions.  But we cannot risk a deadlock by taking a
+	 * weaker lock now and the stronger one only when needed.
 	 */
 	attachrel_children = find_all_inheritors(RelationGetRelid(attachrel),
-											 AccessShareLock, NULL);
+											 AccessExclusiveLock, NULL);
 	if (list_member_oid(attachrel_children, RelationGetRelid(rel)))
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_TABLE),
@@ -13694,17 +13705,9 @@ ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd)
 	else
 	{
 		/* Constraints proved insufficient, so we need to scan the table. */
-		List	   *all_parts;
 		ListCell   *lc;
 
-		/* Take an exclusive lock on the partitions to be checked */
-		if (attachrel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
-			all_parts = find_all_inheritors(RelationGetRelid(attachrel),
-											AccessExclusiveLock, NULL);
-		else
-			all_parts = list_make1_oid(RelationGetRelid(attachrel));
-
-		foreach(lc, all_parts)
+		foreach(lc, attachrel_children)
 		{
 			AlteredTableInfo *tab;
 			Oid			part_relid = lfirst_oid(lc);
