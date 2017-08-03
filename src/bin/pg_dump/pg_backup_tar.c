@@ -556,12 +556,18 @@ _tarReadRaw(ArchiveHandle *AH, void *buf, size_t len, TAR_MEMBER *th, FILE *fh)
 				res = GZREAD(&((char *) buf)[used], 1, len, th->zFH);
 				if (res != len && !GZEOF(th->zFH))
 				{
+#ifdef HAVE_LIBZ
 					int		errnum;
 					const char *errmsg = gzerror(th->zFH, &errnum);
 
 					exit_horribly(modulename,
 								  "could not read from input file: %s\n",
 								  errnum == Z_ERRNO ? strerror(errno) : errmsg);
+#else
+					exit_horribly(modulename,
+								  "could not read from input file: %s\n",
+								  strerror(errno));
+#endif
 				}
 			}
 			else
