@@ -203,6 +203,30 @@ typedef enum
 	OUTPUT_OTHERDATA			/* writing data as INSERT commands */
 } ArchiverOutput;
 
+/*
+ * For historical reasons, ACL items are interspersed with everything else in
+ * a dump file's TOC; typically they're right after the object they're for.
+ * However, we need to restore data before ACLs, as otherwise a read-only
+ * table (ie one where the owner has revoked her own INSERT privilege) causes
+ * data restore failures.  On the other hand, matview REFRESH commands should
+ * come out after ACLs, as otherwise non-superuser-owned matviews might not
+ * be able to execute.  (If the permissions at the time of dumping would not
+ * allow a REFRESH, too bad; we won't fix that for you.)  These considerations
+ * force us to make three passes over the TOC, restoring the appropriate
+ * subset of items in each pass.  We assume that the dependency sort resulted
+ * in an appropriate ordering of items within each subset.
+ * XXX This mechanism should be superseded by tracking dependencies on ACLs
+ * properly; but we'll still need it for old dump files even after that.
+ */
+typedef enum
+{
+	RESTORE_PASS_MAIN = 0,		/* Main pass (most TOC item types) */
+	RESTORE_PASS_ACL,			/* ACL item types */
+	RESTORE_PASS_REFRESH		/* Matview REFRESH items */
+
+#define RESTORE_PASS_LAST RESTORE_PASS_REFRESH
+} RestorePass;
+
 typedef enum
 {
 	REQ_SCHEMA = 0x01,			/* want schema */
@@ -329,6 +353,7 @@ struct _archiveHandle
 	int			noTocComments;
 	ArchiverStage stage;
 	ArchiverStage lastErrorStage;
+	RestorePass restorePass;	/* used only during parallel restore */
 	struct _tocEntry *currentTE;
 	struct _tocEntry *lastErrorTE;
 };
