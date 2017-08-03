@@ -1203,14 +1203,12 @@ replace_rte_variables_mutator(Node *node,
  * appear in the expression.
  *
  * If the expression tree contains a whole-row Var for the target RTE,
- * the Var is not changed but *found_whole_row is returned as TRUE.
- * For most callers this is an error condition, but we leave it to the caller
- * to report the error so that useful context can be provided.  (In some
- * usages it would be appropriate to modify the Var's vartype and insert a
- * ConvertRowtypeExpr node to map back to the original vartype.  We might
- * someday extend this function's API to support that.  For now, the only
- * concession to that future need is that this function is a tree mutator
- * not just a walker.)
+ * *found_whole_row is returned as TRUE.  In addition, if to_rowtype is
+ * not InvalidOid, we modify the Var's vartype and insert a ConvertRowTypeExpr
+ * to map back to the orignal rowtype.  Callers that don't provide to_rowtype
+ * should report an error if *found_row_type is true; we don't do that here
+ * because we don't know exactly what wording for the error message would
+ * be most appropriate.  The caller will be aware of the context.
  *
  * This could be built using replace_rte_variables and a callback function,
  * but since we don't ever need to insert sublinks, replace_rte_variables is
@@ -1223,6 +1221,8 @@ typedef struct
 	int			sublevels_up;	/* (current) nesting depth */
 	const AttrNumber *attno_map;	/* map array for user attnos */
 	int			map_length;		/* number of entries in attno_map[] */
+	/* Target type when converting whole-row vars */
+	Oid			to_rowtype;
 	bool	   *found_whole_row;	/* output flag */
 } map_variable_attnos_context;
 
@@ -1257,6 +1257,34 @@ map_variable_attnos_mutator(Node *node,
 			{
 				/* whole-row variable, warn caller */
 				*(context->found_whole_row) = true;
+
+				/* If the callers expects us to convert the same, do so. */
+				if (OidIsValid(context->to_rowtype))
+				{
+					/* No support for RECORDOID. */
+					Assert(var->vartype != RECORDOID);
+
+					/* Don't convert unless necessary. */
+					if (context->to_rowtype != var->vartype)
+					{
+						ConvertRowtypeExpr *r;
+
+						/* Var itself is converted to the requested type. */
+						newvar->vartype = context->to_rowtype;
+
+						/*
+						 * And a conversion node on top to convert back to the
+						 * original type.
+						 */
+						r = makeNode(ConvertRowtypeExpr);
+						r->arg = (Expr *) newvar;
+						r->resulttype = var->vartype;
+						r->convertformat = COERCE_IMPLICIT_CAST;
+						r->location = -1;
+
+						return (Node *) r;
+					}
+				}
 			}
 			return (Node *) newvar;
 		}
@@ -1283,7 +1311,7 @@ Node *
 map_variable_attnos(Node *node,
 					int target_varno, int sublevels_up,
 					const AttrNumber *attno_map, int map_length,
-					bool *found_whole_row)
+					Oid to_rowtype, bool *found_whole_row)
 {
 	map_variable_attnos_context context;
 
@@ -1291,6 +1319,7 @@ map_variable_attnos(Node *node,
 	context.sublevels_up = sublevels_up;
 	context.attno_map = attno_map;
 	context.map_length = map_length;
+	context.to_rowtype = to_rowtype;
 	context.found_whole_row = found_whole_row;
 
 	*found_whole_row = false;

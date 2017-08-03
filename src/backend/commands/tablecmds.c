@@ -1989,7 +1989,7 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
 				expr = map_variable_attnos(stringToNode(check[i].ccbin),
 										   1, 0,
 										   newattno, tupleDesc->natts,
-										   &found_whole_row);
+										   InvalidOid, &found_whole_row);
 
 				/*
 				 * For the moment we have to reject whole-row variables. We
@@ -8874,7 +8874,7 @@ ATPrepAlterColumnType(List **wqueue,
 					map_variable_attnos(def->cooked_default,
 										1, 0,
 										attmap, RelationGetDescr(rel)->natts,
-										&found_whole_row);
+										InvalidOid, &found_whole_row);
 				if (found_whole_row)
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -13713,6 +13713,7 @@ ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd)
 			Oid			part_relid = lfirst_oid(lc);
 			Relation	part_rel;
 			Expr	   *constr;
+			bool		found_whole_row;
 
 			/* Lock already taken */
 			if (part_relid != RelationGetRelid(attachRel))
@@ -13738,7 +13739,12 @@ ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd)
 			constr = linitial(partConstraint);
 			tab->partition_constraint = (Expr *)
 				map_partition_varattnos((List *) constr, 1,
-										part_rel, rel);
+										part_rel, rel,
+										&found_whole_row);
+			/* There can never be a whole-row reference here */
+			if (found_whole_row)
+				elog(ERROR, "unexpected whole-row reference found in partition key");
+
 			/* keep our lock until commit */
 			if (part_rel != attachRel)
 				heap_close(part_rel, NoLock);

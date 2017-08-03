@@ -1107,7 +1107,7 @@ transformTableLikeClause(CreateStmtContext *cxt, TableLikeClause *table_like_cla
 			ccbin_node = map_variable_attnos(stringToNode(ccbin),
 											 1, 0,
 											 attmap, tupleDesc->natts,
-											 &found_whole_row);
+											 InvalidOid, &found_whole_row);
 
 			/*
 			 * We reject whole-row variables because the whole point of LIKE
@@ -1463,7 +1463,7 @@ generateClonedIndexStmt(CreateStmtContext *cxt, Relation source_idx,
 			indexkey = map_variable_attnos(indexkey,
 										   1, 0,
 										   attmap, attmap_length,
-										   &found_whole_row);
+										   InvalidOid, &found_whole_row);
 
 			/* As in transformTableLikeClause, reject whole-row variables */
 			if (found_whole_row)
@@ -1539,7 +1539,7 @@ generateClonedIndexStmt(CreateStmtContext *cxt, Relation source_idx,
 		pred_tree = map_variable_attnos(pred_tree,
 										1, 0,
 										attmap, attmap_length,
-										&found_whole_row);
+										InvalidOid, &found_whole_row);
 
 		/* As in transformTableLikeClause, reject whole-row variables */
 		if (found_whole_row)

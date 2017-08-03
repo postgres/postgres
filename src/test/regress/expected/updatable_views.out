@@ -2428,3 +2428,29 @@ ERROR:  new row violates check option for view "ptv_wco"
 DETAIL:  Failing row contains (1, 2, null).
 drop view ptv, ptv_wco;
 drop table pt, pt1, pt11;
+-- check that wholerow vars appearing in WITH CHECK OPTION constraint expressions
+-- work fine with partitioned tables
+create table wcowrtest (a int) partition by list (a);
+create table wcowrtest1 partition of wcowrtest for values in (1);
+create view wcowrtest_v as select * from wcowrtest where wcowrtest = '(2)'::wcowrtest with check option;
+insert into wcowrtest_v values (1);
+ERROR:  new row violates check option for view "wcowrtest_v"
+DETAIL:  Failing row contains (1).
+alter table wcowrtest add b text;
+create table wcowrtest2 (b text, c int, a int);
+alter table wcowrtest2 drop c;
+alter table wcowrtest attach partition wcowrtest2 for values in (2);
+create table sometable (a int, b text);
+insert into sometable values (1, 'a'), (2, 'b');
+create view wcowrtest_v2 as
+    select *
+      from wcowrtest r
+      where r in (select s from sometable s where r.a = s.a)
+with check option;
+-- WITH CHECK qual will be processed with wcowrtest2's
+-- rowtype after tuple-routing
+insert into wcowrtest_v2 values (2, 'no such row in sometable');
+ERROR:  new row violates check option for view "wcowrtest_v2"
+DETAIL:  Failing row contains (2, no such row in sometable).
+drop view wcowrtest_v, wcowrtest_v2;
+drop table wcowrtest, sometable;

@@ -80,7 +80,8 @@ extern Oid	get_partition_parent(Oid relid);
 extern List *get_qual_from_partbound(Relation rel, Relation parent,
 						PartitionBoundSpec *spec);
 extern List *map_partition_varattnos(List *expr, int target_varno,
-						Relation partrel, Relation parent);
+						Relation partrel, Relation parent,
+						bool *found_whole_row);
 extern List *RelationGetPartitionQual(Relation rel);
 extern Expr *get_partition_qual_relid(Oid relid);
 

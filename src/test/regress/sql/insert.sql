@@ -399,3 +399,16 @@ insert into mcrparted values ('aaa', 0), ('b', 0), ('bz', 10), ('c', -10),
     ('commons', 0), ('d', -10), ('e', 0);
 select tableoid::regclass, * from mcrparted order by a, b;
 drop table mcrparted;
+
+-- check that wholerow vars in the RETURNING list work with partitioned tables
+create table returningwrtest (a int) partition by list (a);
+create table returningwrtest1 partition of returningwrtest for values in (1);
+insert into returningwrtest values (1) returning returningwrtest;
+
+-- check also that the wholerow vars in RETURNING list are converted as needed
+alter table returningwrtest add b text;
+create table returningwrtest2 (b text, c int, a int);
+alter table returningwrtest2 drop c;
+alter table returningwrtest attach partition returningwrtest2 for values in (2);
+insert into returningwrtest values (2, 'foo') returning returningwrtest;
+drop table returningwrtest;

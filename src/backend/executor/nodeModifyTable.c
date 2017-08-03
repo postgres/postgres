@@ -1996,7 +1996,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 			/* varno = node->nominalRelation */
 			mapped_wcoList = map_partition_varattnos(wcoList,
 													 node->nominalRelation,
-													 partrel, rel);
+													 partrel, rel, NULL);
 			foreach(ll, mapped_wcoList)
 			{
 				WithCheckOption *wco = castNode(WithCheckOption, lfirst(ll));
@@ -2069,7 +2069,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 			/* varno = node->nominalRelation */
 			rlist = map_partition_varattnos(returningList,
 											node->nominalRelation,
-											partrel, rel);
+											partrel, rel, NULL);
 			resultRelInfo->ri_projectReturning =
 				ExecBuildProjectionInfo(rlist, econtext, slot, &mtstate->ps,
 										resultRelInfo->ri_RelationDesc->rd_att);
