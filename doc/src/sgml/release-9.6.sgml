@@ -1,6 +1,1145 @@
 <!-- doc/src/sgml/release-9.6.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-9-6-4">
+  <title>Release 9.6.4</title>
+
+  <formalpara>
+  <title>Release date:</title>
+  <para>2017-08-10</para>
+  </formalpara>
+
+  <para>
+   This release contains a variety of fixes from 9.6.3.
+   For information about new features in the 9.6 major release, see
+   <xref linkend="release-9-6">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 9.6.4</title>
+
+   <para>
+    A dump/restore is not required for those running 9.6.X.
+   </para>
+
+   <para>
+    However, if you are upgrading from a version earlier than 9.6.3,
+    see <xref linkend="release-9-6-3">.
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+<!--
+Author: Bruce Momjian <bruce@momjian.us>
+Branch: master [0f33a719f] 2017-06-15 12:30:02 -0400
+Branch: REL9_6_STABLE [a0873fbab] 2017-06-15 12:30:02 -0400
+Branch: REL9_5_STABLE [fd376afc9] 2017-06-15 12:30:02 -0400
+-->
+     <para>
+      Correct the documentation about the process for upgrading standby
+      servers with <application>pg_upgrade</> (Bruce Momjian)
+     </para>
+
+     <para>
+      The previous documentation instructed users to start/stop the primary
+      server after running <application>pg_upgrade</> but before syncing
+      the standby servers.  This sequence is unsafe.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+Branch: master [459c64d32] 2017-07-26 17:24:16 -0400
+Branch: REL9_6_STABLE [8c348765f] 2017-07-26 17:24:16 -0400
+Branch: REL9_5_STABLE [0d4604ad6] 2017-07-26 17:24:16 -0400
+Branch: REL9_4_STABLE [dfd091985] 2017-07-26 17:25:46 -0400
+Branch: REL9_3_STABLE [2efbfb94b] 2017-07-26 17:24:16 -0400
+-->
+     <para>
+      Fix concurrent locking of tuple update chains (&Aacute;lvaro Herrera)
+     </para>
+
+     <para>
+      If several sessions concurrently lock a tuple update chain with
+      nonconflicting lock modes using an old snapshot, and they all
+      succeed, it was possible for some of them to nonetheless fail (and
+      conclude there is no live tuple version) due to a race condition.
+      This had consequences such as foreign-key checks failing to see a
+      tuple that definitely exists but is being updated concurrently.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Teodor Sigaev <teodor@sigaev.ru>
+Branch: master [31b8db8e6] 2017-07-06 17:18:55 +0300
+Branch: REL9_6_STABLE [42f62e4c9] 2017-07-06 17:19:44 +0300
+Branch: REL9_5_STABLE [fb2d385e6] 2017-07-06 17:20:17 +0300
+Branch: REL9_4_STABLE [b90e4ca3e] 2017-07-06 17:20:37 +0300
+Branch: REL9_3_STABLE [f371cc9e9] 2017-07-06 17:20:56 +0300
+-->
+     <para>
+      Fix potential data corruption when freezing a tuple whose XMAX is a
+      multixact with exactly one still-interesting member (Teodor Sigaev)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [512f67c8d] 2017-07-12 13:24:16 -0400
+Branch: REL9_6_STABLE [09c598898] 2017-07-12 13:24:16 -0400
+Branch: REL9_5_STABLE [e7213fe2b] 2017-07-12 13:24:16 -0400
+Branch: REL9_4_STABLE [e439bbe99] 2017-07-12 13:24:17 -0400
+-->
+     <para>
+      Avoid integer overflow and ensuing crash when sorting more than one
+      billion tuples in-memory (Sergey Koposov)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [45e004fb4] 2017-07-10 11:00:09 -0400
+Branch: REL9_6_STABLE [c0077f738] 2017-07-10 11:00:09 -0400
+Branch: REL9_5_STABLE [afd1415a4] 2017-07-10 11:00:09 -0400
+Branch: REL9_4_STABLE [bc0f76e7a] 2017-07-10 11:00:09 -0400
+Branch: REL9_3_STABLE [59892b120] 2017-07-10 11:00:09 -0400
+Branch: REL9_2_STABLE [a4a590ee7] 2017-07-10 11:00:09 -0400
+-->
+     <para>
+      On Windows, retry process creation if we fail to reserve the address
+      range for our shared memory in the new process (Tom Lane, Amit
+      Kapila)
+     </para>
+
+     <para>
+      This is expected to fix infrequent child-process-launch failures that
+      are probably due to interference from antivirus products.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [e2c8100e6] 2017-07-24 16:45:58 -0400
+Branch: REL9_6_STABLE [51865a0a0] 2017-07-24 16:46:00 -0400
+Branch: REL9_5_STABLE [5146ca352] 2017-07-24 16:45:46 -0400
+Branch: REL9_4_STABLE [8ad35c7fa] 2017-07-24 16:45:46 -0400
+Branch: REL9_3_STABLE [4ecee1192] 2017-07-24 16:45:47 -0400
+Branch: REL9_2_STABLE [05a562d9c] 2017-07-24 16:45:47 -0400
+-->
+     <para>
+      Fix low-probability corruption of shared predicate-lock hash table
+      in Windows builds (Thomas Munro, Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
+Branch: master [b93827c74] 2017-07-03 14:51:51 +0300
+Branch: REL9_6_STABLE [f73382877] 2017-07-03 14:53:01 +0300
+Branch: REL9_5_STABLE [90630a6ad] 2017-07-03 14:53:06 +0300
+Branch: REL9_4_STABLE [fb63a0aa3] 2017-07-03 14:53:08 +0300
+Branch: REL9_3_STABLE [543e00bc1] 2017-07-03 14:53:10 +0300
+Branch: REL9_2_STABLE [fb1110085] 2017-07-03 14:53:12 +0300
+-->
+     <para>
+      Avoid logging clean closure of an SSL connection as though
+      it were a connection reset (Michael Paquier)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [97d3a0b09] 2017-08-04 11:07:10 -0400
+Branch: REL9_6_STABLE [b798ea88a] 2017-08-04 11:07:10 -0400
+Branch: REL9_5_STABLE [bebee333c] 2017-08-04 11:07:10 -0400
+Branch: REL9_4_STABLE [8d05db3d8] 2017-08-04 11:07:10 -0400
+Branch: REL9_3_STABLE [dda04b9dd] 2017-08-04 11:07:10 -0400
+Branch: REL9_2_STABLE [c180d2eb7] 2017-08-04 11:07:11 -0400
+-->
+     <para>
+      Prevent sending SSL session tickets to clients (Tom Lane)
+     </para>
+
+     <para>
+      This fix prevents reconnection failures with ticket-aware client-side
+      SSL code.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [f0256c774] 2017-06-27 18:47:57 -0400
+Branch: REL9_6_STABLE [55968ed89] 2017-06-27 18:47:57 -0400
+Branch: REL9_5_STABLE [d16e96fb2] 2017-06-27 18:47:57 -0400
+Branch: REL9_4_STABLE [c2cb606a2] 2017-06-27 18:47:57 -0400
+Branch: REL9_3_STABLE [9ce7f3919] 2017-06-27 18:47:57 -0400
+Branch: REL9_2_STABLE [6ccab9242] 2017-06-27 18:47:57 -0400
+Branch: master [99255d73c] 2017-06-28 12:30:16 -0400
+Branch: REL9_6_STABLE [43c67e32f] 2017-06-28 12:30:16 -0400
+Branch: REL9_5_STABLE [63f5db8ab] 2017-06-28 12:30:16 -0400
+Branch: REL9_4_STABLE [e97b7372b] 2017-06-28 12:30:16 -0400
+Branch: REL9_3_STABLE [cc154d9a0] 2017-06-28 12:30:16 -0400
+Branch: REL9_2_STABLE [5e7447132] 2017-06-28 12:30:16 -0400
+-->
+     <para>
+      Fix code for setting <xref linkend="guc-tcp-keepalives-idle"> on
+      Solaris (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [ad1b5c842] 2017-06-26 16:17:05 -0400
+Branch: REL9_6_STABLE [f6af9c749] 2017-06-26 16:17:05 -0400
+Branch: REL9_5_STABLE [5a6b95cdf] 2017-06-26 16:17:06 -0400
+Branch: REL9_4_STABLE [fc4da1fde] 2017-06-26 16:17:06 -0400
+Branch: REL9_3_STABLE [456bf261d] 2017-06-26 16:17:06 -0400
+Branch: REL9_2_STABLE [439b6363d] 2017-06-26 16:17:06 -0400
+-->
+     <para>
+      Fix statistics collector to honor inquiry messages issued just after
+      a postmaster shutdown and immediate restart (Tom Lane)
+     </para>
+
+     <para>
+      Confusion between permanent and temporary statistics file timestamps
+      allowed the collector to think it had already written data satisfying
+      the request, when it had not.  This only affected inquiries issued
+      within half a second of the previous postmaster shutdown.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [8b0b6303e] 2017-05-16 15:24:52 -0400
+Branch: REL9_6_STABLE [34782a348] 2017-05-29 20:27:45 -0400
+Branch: REL9_5_STABLE [82f8c21e0] 2017-05-29 20:27:45 -0400
+Branch: REL9_4_STABLE [54676c72c] 2017-05-29 20:27:45 -0400
+Branch: REL9_3_STABLE [4a3bb96ce] 2017-05-29 20:27:45 -0400
+Branch: REL9_2_STABLE [364100e0b] 2017-05-29 20:27:45 -0400
+-->
+     <para>
+      Ensure that the statistics collector's receive buffer size is at
+      least 100KB (Tom Lane)
+     </para>
+
+     <para>
+      This reduces the risk of dropped statistics data on older platforms
+      whose default receive buffer size is less than that.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Andres Freund <andres@anarazel.de>
+Branch: master [fb886c153] 2017-06-21 14:14:45 -0700
+Branch: REL9_6_STABLE [39e30cbc1] 2017-06-21 14:14:38 -0700
+Branch: REL9_5_STABLE [7775ebaf0] 2017-06-21 14:14:29 -0700
+Branch: REL9_4_STABLE [823a51ed3] 2017-06-21 14:14:21 -0700
+Branch: REL9_3_STABLE [511d803ca] 2017-06-21 14:14:12 -0700
+Branch: REL9_2_STABLE [81bf7b5b1] 2017-06-21 14:13:58 -0700
+-->
+     <para>
+      Fix possible creation of an invalid WAL segment when a standby is
+      promoted just after it processes an <literal>XLOG_SWITCH</> WAL
+      record (Andres Freund)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [fca85f8ef] 2017-06-30 12:00:15 -0400
+Branch: REL9_6_STABLE [e9d4aa594] 2017-06-30 12:00:03 -0400
+Branch: REL9_5_STABLE [446914f6b] 2017-06-30 12:00:03 -0400
+Branch: REL9_4_STABLE [5aa8db014] 2017-06-30 12:00:03 -0400
+-->
+     <para>
+      Fix <application>walsender</> to exit promptly when client requests
+      shutdown (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Andres Freund <andres@anarazel.de>
+Branch: master [47fd420fb] 2017-06-05 19:18:15 -0700
+Branch: REL9_6_STABLE [b3d5b6833] 2017-06-05 19:18:16 -0700
+Branch: REL9_5_STABLE [e1319f64e] 2017-06-05 19:18:16 -0700
+Branch: REL9_4_STABLE [f4e484dd0] 2017-06-05 19:18:16 -0700
+Branch: master [6e1dd2773] 2017-06-05 19:18:16 -0700
+Branch: REL9_6_STABLE [b8bd32a51] 2017-06-05 19:18:16 -0700
+Branch: REL9_5_STABLE [641a60b02] 2017-06-05 19:18:16 -0700
+Branch: REL9_4_STABLE [55d7027d5] 2017-06-05 19:18:16 -0700
+Branch: REL9_3_STABLE [45d067d50] 2017-06-05 19:18:16 -0700
+Branch: REL9_2_STABLE [133b1920c] 2017-06-05 19:18:16 -0700
+-->
+     <para>
+      Fix <systemitem>SIGHUP</> and <systemitem>SIGUSR1</> handling in
+      walsender processes (Petr Jelinek, Andres Freund)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Andres Freund <andres@anarazel.de>
+Branch: master [c6c333436] 2017-06-05 19:18:15 -0700
+Branch: REL9_6_STABLE [862204aac] 2017-06-05 19:18:16 -0700
+Branch: REL9_5_STABLE [50581f2e7] 2017-06-05 19:18:16 -0700
+Branch: REL9_4_STABLE [1cdc0ab9c] 2017-06-05 19:18:16 -0700
+-->
+     <para>
+      Prevent walsender-triggered panics during shutdown checkpoints
+      (Andres Freund, Michael Paquier)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [e5d494d78] 2017-06-26 17:31:56 -0400
+Branch: REL9_6_STABLE [a4d1ce095] 2017-06-26 17:31:56 -0400
+Branch: REL9_5_STABLE [dc311b5bd] 2017-06-26 17:31:56 -0400
+Branch: REL9_4_STABLE [47fec424c] 2017-06-26 17:31:56 -0400
+Branch: REL9_3_STABLE [cb59949f6] 2017-06-26 17:31:56 -0400
+Branch: REL9_2_STABLE [e96adaacd] 2017-06-26 17:31:56 -0400
+-->
+     <para>
+      Fix unnecessarily slow restarts of <application>walreceiver</>
+      processes due to race condition in postmaster (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Andres Freund <andres@anarazel.de>
+Branch: master [3bdea167e] 2017-06-18 19:12:56 -0700
+Branch: REL9_6_STABLE [810344436] 2017-06-18 19:13:15 -0700
+Branch: REL9_5_STABLE [1ba1adf77] 2017-06-18 19:13:50 -0700
+Branch: REL9_4_STABLE [a27c566c7] 2017-06-18 19:14:09 -0700
+-->
+     <para>
+      Fix leakage of small subtransactions spilled to disk during logical
+      decoding (Andres Freund)
+     </para>
+
+     <para>
+      This resulted in temporary files consuming excessive disk space.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Andres Freund <andres@anarazel.de>
+Branch: master [524dbc143] 2017-05-13 15:06:40 -0700
+Branch: REL9_6_STABLE [bd619fcfe] 2017-05-13 15:06:40 -0700
+Branch: REL9_5_STABLE [fa9207c74] 2017-05-13 15:06:40 -0700
+Branch: REL9_4_STABLE [2dca50b76] 2017-05-13 15:06:40 -0700
+-->
+     <para>
+      Reduce the work needed to build snapshots during creation of
+      logical-decoding slots (Andres Freund, Petr Jelinek)
+     </para>
+
+     <para>
+      The previous algorithm was infeasibly expensive on a server with a
+      lot of open transactions.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Andres Freund <andres@anarazel.de>
+Branch: master [955a684e0] 2017-05-13 14:21:00 -0700
+Branch: REL9_6_STABLE [75784859c] 2017-05-13 14:21:00 -0700
+Branch: REL9_5_STABLE [b64a68e36] 2017-05-13 14:21:00 -0700
+Branch: REL9_4_STABLE [79abd23db] 2017-05-13 14:21:00 -0700
+-->
+     <para>
+      Fix race condition that could indefinitely delay creation of
+      logical-decoding slots (Andres Freund, Petr Jelinek)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [50ee1c746] 2017-05-12 18:17:29 -0400
+Branch: REL9_6_STABLE [b7a98b14c] 2017-05-12 18:17:29 -0400
+Branch: REL9_5_STABLE [3569a9a73] 2017-05-12 18:17:29 -0400
+Branch: REL9_4_STABLE [64417f8d3] 2017-05-12 18:17:29 -0400
+Branch: master [8085a4f75] 2017-05-12 18:30:17 -0400
+Branch: REL9_6_STABLE [f7d0a31ce] 2017-05-12 18:30:02 -0400
+Branch: REL9_5_STABLE [8a7506e04] 2017-05-12 18:30:02 -0400
+Branch: REL9_4_STABLE [ef7a6b3c9] 2017-05-12 18:30:02 -0400
+Branch: master [2df5d4655] 2017-05-12 19:05:27 -0400
+Branch: REL9_6_STABLE [d0755dc32] 2017-05-12 19:05:28 -0400
+Branch: REL9_5_STABLE [e7955ac64] 2017-05-12 19:05:29 -0400
+Branch: REL9_4_STABLE [32900700f] 2017-05-12 19:05:30 -0400
+-->
+     <para>
+      Reduce overhead in processing syscache invalidation events (Tom Lane)
+     </para>
+
+     <para>
+      This is particularly helpful for logical decoding, which triggers
+      frequent cache invalidation.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [d8e6b84bd] 2017-06-19 15:33:41 -0400
+Branch: REL9_6_STABLE [1f184426b] 2017-06-19 15:33:41 -0400
+-->
+     <para>
+      Remove incorrect heuristic used in some cases to estimate join
+      selectivity based on the presence of foreign-key constraints
+      (David Rowley)
+     </para>
+
+     <para>
+      In some cases where a multi-column foreign key constraint existed but
+      did not exactly match a query's join structure, the planner used an
+      estimation heuristic that turns out not to work well at all.  Revert
+      such cases to the way they were estimated before 9.6.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [b1cb32fb6] 2017-07-11 16:48:59 -0400
+Branch: REL9_6_STABLE [123368061] 2017-07-11 16:48:59 -0400
+Branch: REL9_5_STABLE [56076b88d] 2017-07-11 16:48:59 -0400
+Branch: REL9_4_STABLE [a8358559e] 2017-07-11 16:48:59 -0400
+Branch: REL9_3_STABLE [521fede16] 2017-07-11 16:48:59 -0400
+Branch: REL9_2_STABLE [55204850a] 2017-07-11 16:48:59 -0400
+Branch: master [bc2d716ad] 2017-07-12 18:00:04 -0400
+Branch: REL9_6_STABLE [ff2d53722] 2017-07-12 18:00:04 -0400
+Branch: REL9_5_STABLE [2346f1c10] 2017-07-12 18:00:04 -0400
+Branch: REL9_4_STABLE [a2320b337] 2017-07-12 18:00:04 -0400
+Branch: REL9_3_STABLE [aea1a3f0e] 2017-07-12 18:00:04 -0400
+Branch: REL9_2_STABLE [75670ec37] 2017-07-12 18:00:04 -0400
+-->
+     <para>
+      Fix cases where an <command>INSERT</> or <command>UPDATE</> assigns
+      to more than one element of a column that is of domain-over-array
+      type (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [9c7dc8928] 2017-06-27 17:51:11 -0400
+Branch: REL9_6_STABLE [3a7bd59c4] 2017-06-27 17:51:11 -0400
+Branch: REL9_5_STABLE [9a2706572] 2017-06-27 17:51:11 -0400
+Branch: REL9_4_STABLE [dc777f9db] 2017-06-27 17:51:11 -0400
+Branch: REL9_3_STABLE [66dee28b4] 2017-06-27 17:51:11 -0400
+-->
+     <para>
+      Allow window functions to be used in sub-<literal>SELECT</>s that
+      are within the arguments of an aggregate function (Tom Lane)
+     </para>
+
+     <para>
+      This case is perfectly valid, but it was accidentally rejected by an
+      overly-aggressive error check.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Robert Haas <rhaas@postgresql.org>
+Branch: master [7086be6e3] 2017-07-24 15:57:24 -0400
+Branch: REL9_6_STABLE [971faefc2] 2017-07-24 16:24:42 -0400
+-->
+     <para>
+      Ensure that a view's <literal>CHECK OPTIONS</> clause is enforced
+      properly when the underlying table is a foreign table (Etsuro Fujita)
+     </para>
+
+     <para>
+      Previously, the update might get pushed entirely to the foreign
+      server, but the need to verify the view conditions was missed if so.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [94aced8cd] 2017-05-26 15:16:59 -0400
+Branch: REL9_6_STABLE [acab87ece] 2017-05-26 15:16:59 -0400
+Branch: REL9_5_STABLE [9ded51719] 2017-05-26 15:16:59 -0400
+Branch: REL9_4_STABLE [8f62b388b] 2017-05-26 15:16:59 -0400
+Branch: REL9_3_STABLE [525780c62] 2017-05-26 15:16:59 -0400
+Branch: REL9_2_STABLE [da9165686] 2017-05-26 15:16:59 -0400
+-->
+     <para>
+      Move autogenerated array types out of the way during
+      <command>ALTER ... RENAME</> (Vik Fearing)
+     </para>
+
+     <para>
+      Previously, we would rename a conflicting autogenerated array type
+      out of the way during <command>CREATE</>; this fix extends that
+      behavior to renaming operations.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [12590c5d3] 2017-05-15 11:33:44 -0400
+Branch: REL9_6_STABLE [b35cce914] 2017-05-15 11:33:44 -0400
+Branch: REL9_5_STABLE [53a1aa9f9] 2017-05-15 11:33:45 -0400
+-->
+     <para>
+      Fix dangling pointer in <command>ALTER TABLE</> when there is a
+      comment on a constraint belonging to the table (David Rowley)
+     </para>
+
+     <para>
+      Re-applying the comment to the reconstructed constraint could fail
+      with a weird error message, or even crash.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Peter Eisentraut <peter_e@gmx.net>
+Branch: master [b37448122] 2017-08-03 20:34:45 -0400
+Branch: REL9_6_STABLE [df04db041] 2017-08-03 20:49:07 -0400
+Branch: REL9_5_STABLE [f2878a608] 2017-08-03 20:55:44 -0400
+Branch: REL9_4_STABLE [e0446d06e] 2017-08-03 21:08:39 -0400
+Branch: REL9_3_STABLE [b7d1bc820] 2017-08-03 21:29:36 -0400
+Branch: REL9_2_STABLE [22eb38caa] 2017-08-03 21:42:46 -0400
+-->
+     <para>
+      Ensure that <command>ALTER USER ... SET</> accepts all the syntax
+      variants that <command>ALTER ROLE ... SET</> does (Peter Eisentraut)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Robert Haas <rhaas@postgresql.org>
+Branch: master [86705aa8c] 2017-08-03 13:24:48 -0400
+Branch: REL9_6_STABLE [1f220c390] 2017-08-03 13:25:32 -0400
+-->
+     <para>
+      Allow a foreign table's <literal>CHECK</> constraints to be
+      initially <literal>NOT VALID</> (Amit Langote)
+     </para>
+
+     <para>
+      <command>CREATE TABLE</> silently drops <literal>NOT VALID</>
+      specifiers for <literal>CHECK</> constraints, reasoning that the
+      table must be empty so the constraint can be validated immediately.
+      But this is wrong for <command>CREATE FOREIGN TABLE</>, where there's
+      no reason to suppose that the underlying table is empty, and even if
+      it is it's no business of ours to decide that the constraint can be
+      treated as valid going forward.  Skip the <quote>optimization</> in
+      that case.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
+Branch: master [30681c830] 2017-06-16 11:33:12 +0300
+Branch: REL9_6_STABLE [a9a5eb32b] 2017-06-16 11:39:45 +0300
+Branch: REL9_5_STABLE [501e6f8b7] 2017-06-16 11:44:00 +0300
+Branch: REL9_4_STABLE [6338b50b9] 2017-06-16 11:46:15 +0300
+Branch: REL9_3_STABLE [b47e2f7a9] 2017-06-16 11:46:11 +0300
+Branch: REL9_2_STABLE [ac93a78b0] 2017-06-16 11:46:26 +0300
+-->
+     <para>
+      Properly update dependency info when changing a datatype I/O
+      function's argument or return type from <type>opaque</> to the
+      correct type (Heikki Linnakangas)
+     </para>
+
+     <para>
+      <command>CREATE TYPE</> updates I/O functions declared in this
+      long-obsolete style, but it forgot to record a dependency on the
+      type, allowing a subsequent <command>DROP TYPE</> to leave broken
+      function definitions behind.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Andres Freund <andres@anarazel.de>
+Branch: master [34aebcf42] 2017-06-02 19:11:15 -0700
+Branch: REL9_6_STABLE [8a7cd781e] 2017-06-02 19:11:23 -0700
+-->
+     <para>
+      Allow parallelism in the query plan when <command>COPY</> copies from
+      a query's result (Andres Freund)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
+Branch: master [da11977de] 2017-07-12 22:06:13 +0300
+Branch: REL9_6_STABLE [bbeec3c74] 2017-07-12 22:06:10 +0300
+Branch: REL9_5_STABLE [209970ded] 2017-07-12 22:03:58 +0300
+Branch: REL9_4_STABLE [852902822] 2017-07-12 22:04:03 +0300
+Branch: REL9_3_STABLE [11854dee0] 2017-07-12 22:04:08 +0300
+Branch: REL9_2_STABLE [40ba61b44] 2017-07-12 22:04:15 +0300
+-->
+     <para>
+      Reduce memory usage when <command>ANALYZE</> processes
+      a <type>tsvector</> column (Heikki Linnakangas)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [d761fe218] 2017-05-21 13:05:16 -0400
+Branch: REL9_6_STABLE [c101d83a3] 2017-05-21 13:05:17 -0400
+Branch: REL9_5_STABLE [5032f704e] 2017-05-21 13:05:17 -0400
+Branch: REL9_4_STABLE [83f4e8f71] 2017-05-21 13:05:17 -0400
+Branch: REL9_3_STABLE [b3c536bce] 2017-05-21 13:05:17 -0400
+Branch: REL9_2_STABLE [798d2321e] 2017-05-21 13:05:17 -0400
+-->
+     <para>
+      Fix unnecessary precision loss and sloppy rounding when multiplying
+      or dividing <type>money</> values by integers or floats (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [9ae2661fe] 2017-05-24 15:28:34 -0400
+Branch: REL9_6_STABLE [8527132e5] 2017-05-24 15:28:34 -0400
+Branch: REL9_5_STABLE [2c5e3fab3] 2017-05-24 15:28:35 -0400
+Branch: REL9_4_STABLE [a3043d363] 2017-05-24 15:28:35 -0400
+Branch: REL9_3_STABLE [971a158e6] 2017-05-24 15:28:35 -0400
+Branch: REL9_2_STABLE [a047270d5] 2017-05-24 15:28:35 -0400
+-->
+     <para>
+      Tighten checks for whitespace in functions that parse identifiers,
+      such as <function>regprocedurein()</> (Tom Lane)
+     </para>
+
+     <para>
+      Depending on the prevailing locale, these functions could
+      misinterpret fragments of multibyte characters as whitespace.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [bebe174bb] 2017-07-28 12:25:43 -0400
+Branch: REL9_6_STABLE [30a5c8bfb] 2017-07-31 12:10:36 -0400
+Branch: REL9_5_STABLE [99eea89db] 2017-07-31 12:10:36 -0400
+Branch: REL9_4_STABLE [d48180ec8] 2017-07-31 12:10:36 -0400
+Branch: REL9_3_STABLE [b92f17277] 2017-07-31 12:10:36 -0400
+Branch: REL9_2_STABLE [b4b958251] 2017-07-31 12:10:36 -0400
+Branch: master [3c163a7fc] 2017-07-28 14:25:28 -0400
+Branch: REL9_6_STABLE [1e58c503e] 2017-07-31 12:38:35 -0400
+Branch: REL9_5_STABLE [df52739ce] 2017-07-31 12:38:35 -0400
+Branch: REL9_4_STABLE [9cbdc6894] 2017-07-31 12:38:35 -0400
+Branch: REL9_3_STABLE [0d8f015e7] 2017-07-31 12:38:35 -0400
+Branch: REL9_2_STABLE [456c7dff2] 2017-07-31 12:38:35 -0400
+-->
+     <para>
+      Use relevant <literal>#define</> symbols from Perl while
+      compiling <application>PL/Perl</> (Ashutosh Sharma, Tom Lane)
+     </para>
+
+     <para>
+      This avoids portability problems, typically manifesting as
+      a <quote>handshake</> mismatch during library load, when working with
+      recent Perl versions.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
+Branch: master [e6c33d594] 2017-06-07 14:01:46 +0300
+Branch: REL9_6_STABLE [f44c609ea] 2017-06-07 14:04:54 +0300
+Branch: REL9_5_STABLE [739cb7f8b] 2017-06-07 14:03:27 +0300
+Branch: REL9_4_STABLE [1fe1fc449] 2017-06-07 14:04:49 +0300
+Branch: REL9_3_STABLE [f2fa0c651] 2017-06-07 14:04:44 +0300
+-->
+     <para>
+      In <application>libpq</>, reset GSS/SASL and SSPI authentication
+      state properly after a failed connection attempt (Michael Paquier)
+     </para>
+
+     <para>
+      Failure to do this meant that when falling back from SSL to non-SSL
+      connections, a GSS/SASL failure in the SSL attempt would always cause
+      the non-SSL attempt to fail.  SSPI did not fail, but it leaked memory.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [9485516ea] 2017-05-17 12:24:19 -0400
+Branch: REL9_6_STABLE [bee9e8698] 2017-05-17 12:24:19 -0400
+Branch: REL9_5_STABLE [49dfbb53c] 2017-05-17 12:24:19 -0400
+Branch: REL9_4_STABLE [ff0e30512] 2017-05-17 12:24:19 -0400
+Branch: REL9_3_STABLE [6bc710f6d] 2017-05-17 12:24:19 -0400
+Branch: REL9_2_STABLE [07477130e] 2017-05-17 12:24:19 -0400
+-->
+     <para>
+      In <application>psql</>, fix failure when <command>COPY FROM STDIN</>
+      is ended with a keyboard EOF signal and then another <command>COPY
+      FROM STDIN</> is attempted (Thomas Munro)
+     </para>
+
+     <para>
+      This misbehavior is observed on BSD-derived platforms (including
+      macOS), but not on most others.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [3eb9a5e7c] 2017-08-03 17:36:39 -0400
+Branch: REL9_6_STABLE [3d7632829] 2017-08-03 17:36:41 -0400
+Branch: REL9_5_STABLE [65048cf23] 2017-08-03 17:36:42 -0400
+Branch: REL9_4_STABLE [b93217653] 2017-08-03 17:36:43 -0400
+Branch: REL9_3_STABLE [035bb8222] 2017-08-03 17:36:23 -0400
+-->
+     <para>
+      Fix <application>pg_dump</> and <application>pg_restore</> to
+      emit <command>REFRESH MATERIALIZED VIEW</> commands last (Tom Lane)
+     </para>
+
+     <para>
+      This prevents errors during dump/restore when a materialized view
+      refers to tables owned by a different user.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+Branch: master [4d57e8381] 2017-08-02 18:26:59 -0400
+Branch: REL9_6_STABLE [060393f2a] 2017-08-02 18:26:58 -0400
+Branch: REL9_5_STABLE [f3142c027] 2017-08-02 18:26:58 -0400
+Branch: REL9_4_STABLE [330e68734] 2017-08-02 18:26:57 -0400
+Branch: master [9a3b5d3ad] 2017-08-03 14:54:28 -0400
+Branch: REL9_6_STABLE [611840074] 2017-08-03 14:55:18 -0400
+Branch: REL9_5_STABLE [12f1e523a] 2017-08-03 14:55:17 -0400
+Branch: REL9_4_STABLE [69ad12b58] 2017-08-03 14:55:17 -0400
+-->
+     <para>
+      Improve <application>pg_dump</>/<application>pg_restore</>'s
+      reporting of error conditions originating in <application>zlib</>
+      (Vladimir Kunschikov, &Aacute;lvaro Herrera)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [93f039b49] 2017-07-22 20:20:09 -0400
+Branch: REL9_6_STABLE [82ebda7ff] 2017-07-22 20:20:09 -0400
+Branch: REL9_5_STABLE [7debd9f79] 2017-07-22 20:20:09 -0400
+Branch: REL9_4_STABLE [502ead3d6] 2017-07-22 20:20:10 -0400
+Branch: REL9_3_STABLE [68a22bc69] 2017-07-22 20:20:10 -0400
+-->
+     <para>
+      Fix <application>pg_dump</> with the <option>--clean</> option to
+      drop event triggers as expected (Tom Lane)
+     </para>
+
+     <para>
+      It also now correctly assigns ownership of event triggers; before,
+      they were restored as being owned by the superuser running the
+      restore script.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Stephen Frost <sfrost@snowman.net>
+Branch: master [4500edc7e] 2017-06-28 10:33:57 -0400
+Branch: REL9_6_STABLE [a2de017b3] 2017-06-28 10:34:01 -0400
+-->
+     <para>
+      Fix <application>pg_dump</> with the <option>--clean</> option to not
+      fail when the <literal>public</> schema doesn't exist (Stephen Frost)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [0461b66e3] 2017-05-26 12:51:05 -0400
+Branch: REL9_6_STABLE [5886c7d58] 2017-05-26 12:51:05 -0400
+Branch: REL9_5_STABLE [41c4eb5ec] 2017-05-26 12:51:05 -0400
+Branch: REL9_4_STABLE [1cfc9dc75] 2017-05-26 12:51:05 -0400
+Branch: REL9_3_STABLE [a561254e4] 2017-05-26 12:51:05 -0400
+Branch: REL9_2_STABLE [f62e1eff5] 2017-05-26 12:51:06 -0400
+-->
+     <para>
+      Fix <application>pg_dump</> to not emit invalid SQL for an empty
+      operator class (Daniel Gustafsson)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [bd61d5a19] 2017-06-19 11:02:45 -0400
+Branch: REL9_6_STABLE [3ef40dcec] 2017-06-19 11:03:02 -0400
+Branch: REL9_5_STABLE [4fc274dd8] 2017-06-19 11:03:07 -0400
+Branch: REL9_4_STABLE [d063f972d] 2017-06-19 11:03:11 -0400
+Branch: REL9_3_STABLE [2943c04f7] 2017-06-19 11:03:16 -0400
+Branch: REL9_2_STABLE [c10cbf77a] 2017-06-19 11:03:21 -0400
+-->
+     <para>
+      Fix <application>pg_dump</> output to stdout on Windows (Kuntal Ghosh)
+     </para>
+
+     <para>
+      A compressed plain-text dump written to stdout would contain corrupt
+      data due to failure to put the file descriptor into binary mode.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [b4af9e3f3] 2017-07-24 15:16:31 -0400
+Branch: REL9_6_STABLE [3a07ba128] 2017-07-24 15:16:31 -0400
+Branch: REL9_5_STABLE [f579580be] 2017-07-24 15:16:31 -0400
+Branch: REL9_4_STABLE [f0f255a34] 2017-07-24 15:16:31 -0400
+Branch: REL9_3_STABLE [b6d640047] 2017-07-24 15:16:31 -0400
+Branch: REL9_2_STABLE [d9874fde8] 2017-07-24 15:16:31 -0400
+-->
+     <para>
+      Fix <function>pg_get_ruledef()</> to print correct output for
+      the <literal>ON SELECT</> rule of a view whose columns have been
+      renamed (Tom Lane)
+     </para>
+
+     <para>
+      In some corner cases, <application>pg_dump</> relies
+      on <function>pg_get_ruledef()</> to dump views, so that this error
+      could result in dump/reload failures.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [eb145fdfe] 2017-07-20 11:29:36 -0400
+Branch: REL9_6_STABLE [41ada8377] 2017-07-20 11:29:36 -0400
+Branch: REL9_5_STABLE [c2bbec9f2] 2017-07-20 11:29:36 -0400
+Branch: REL9_4_STABLE [6ab4a1136] 2017-07-20 11:29:36 -0400
+Branch: REL9_3_STABLE [e947838ae] 2017-07-20 11:29:36 -0400
+-->
+     <para>
+      Fix dumping of outer joins with empty constraints, such as the result
+      of a <literal>NATURAL JOIN</> with no common columns (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [a3ca72ae9] 2017-07-13 19:25:03 -0400
+Branch: REL9_6_STABLE [3b0c2dbed] 2017-07-13 19:24:44 -0400
+Branch: REL9_5_STABLE [3fbebd781] 2017-07-13 19:24:44 -0400
+Branch: REL9_4_STABLE [26d867875] 2017-07-13 19:24:44 -0400
+Branch: REL9_3_STABLE [0ecc407d9] 2017-07-13 19:24:44 -0400
+Branch: REL9_2_STABLE [bccfb1776] 2017-07-13 19:24:44 -0400
+-->
+     <para>
+      Fix dumping of function expressions in the <literal>FROM</> clause in
+      cases where the expression does not deparse into something that looks
+      like a function call (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
+Branch: master [8046465c2] 2017-07-14 16:02:53 +0300
+Branch: REL9_6_STABLE [cedd25ae8] 2017-07-14 16:03:05 +0300
+Branch: REL9_5_STABLE [f20d58a6f] 2017-07-14 16:03:12 +0300
+Branch: REL9_4_STABLE [240299806] 2017-07-14 16:03:16 +0300
+Branch: REL9_3_STABLE [f3633689f] 2017-07-14 16:03:23 +0300
+Branch: REL9_2_STABLE [4b994a96c] 2017-07-14 16:03:27 +0300
+-->
+     <para>
+      Fix <application>pg_basebackup</> output to stdout on Windows
+      (Haribabu Kommi)
+     </para>
+
+     <para>
+      A backup written to stdout would contain corrupt data due to failure
+      to put the file descriptor into binary mode.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Robert Haas <rhaas@postgresql.org>
+Branch: master [a46fe6e8b] 2017-07-21 14:25:36 -0400
+Branch: REL9_6_STABLE [73fbf3d3d] 2017-07-21 22:04:55 -0400
+Branch: REL9_5_STABLE [ed367be64] 2017-07-21 22:05:07 -0400
+-->
+     <para>
+      Fix <application>pg_rewind</> to correctly handle files exceeding 2GB
+      (Kuntal Ghosh, Michael Paquier)
+     </para>
+
+     <para>
+      Ordinarily such files won't appear in <productname>PostgreSQL</> data
+      directories, but they could be present in some cases.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Bruce Momjian <bruce@momjian.us>
+Branch: master [b710248dd] 2017-06-20 13:20:10 -0400
+Branch: REL9_6_STABLE [0efdbd323] 2017-06-20 13:20:02 -0400
+Branch: REL9_5_STABLE [f4f867bda] 2017-06-20 13:20:02 -0400
+Branch: REL9_4_STABLE [a0e854881] 2017-06-20 13:20:02 -0400
+Branch: REL9_3_STABLE [5c890645d] 2017-06-20 13:20:02 -0400
+Branch: REL9_2_STABLE [65beccae5] 2017-06-20 13:20:02 -0400
+-->
+     <para>
+      Fix <application>pg_upgrade</> to ensure that the ending WAL record
+      does not have <xref linkend="guc-wal-level"> = <literal>minimum</>
+      (Bruce Momjian)
+     </para>
+
+     <para>
+      This condition could prevent upgraded standby servers from
+      reconnecting.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Andres Freund <andres@anarazel.de>
+Branch: master [c25ed2006] 2017-06-05 16:10:07 -0700
+Branch: REL9_6_STABLE [d3ca4b4b4] 2017-06-05 16:10:07 -0700
+Branch: REL9_5_STABLE [25653c171] 2017-06-05 16:10:07 -0700
+-->
+     <para>
+      Fix <application>pg_xlogdump</>'s computation of WAL record length
+      (Andres Freund)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [8bf58c0d9] 2017-07-21 12:51:38 -0400
+Branch: REL9_6_STABLE [d86a2b7b5] 2017-07-21 12:51:38 -0400
+Branch: REL9_5_STABLE [72318eaed] 2017-07-21 12:51:38 -0400
+Branch: REL9_4_STABLE [cb2b1cac0] 2017-07-21 12:51:38 -0400
+Branch: REL9_3_STABLE [69711415e] 2017-07-21 12:51:38 -0400
+Branch: master [88f48b57f] 2017-07-21 14:20:43 -0400
+Branch: REL9_6_STABLE [0d503dd1f] 2017-07-21 14:20:43 -0400
+Branch: REL9_5_STABLE [90877d28e] 2017-07-21 14:20:43 -0400
+Branch: REL9_4_STABLE [a648fc70a] 2017-07-21 14:20:43 -0400
+Branch: REL9_3_STABLE [6d9de660d] 2017-07-21 14:20:43 -0400
+-->
+     <para>
+      In <filename>postgres_fdw</>, re-establish connections to remote
+      servers after <command>ALTER SERVER</> or <command>ALTER USER
+      MAPPING</> commands (Kyotaro Horiguchi)
+     </para>
+
+     <para>
+      This ensures that option changes affecting connection parameters will
+      be applied promptly.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Robert Haas <rhaas@postgresql.org>
+Branch: master [ae9bfc5d6] 2017-06-07 15:14:55 -0400
+Branch: REL9_6_STABLE [fd849956c] 2017-06-07 15:24:22 -0400
+Branch: REL9_5_STABLE [b7665f079] 2017-06-07 15:33:32 -0400
+Branch: REL9_4_STABLE [c02c450cf] 2017-06-07 15:40:35 -0400
+Branch: REL9_3_STABLE [fc267a0c3] 2017-06-07 15:41:05 -0400
+-->
+     <para>
+      In <filename>postgres_fdw</>, allow cancellation of transaction
+      control commands (Robert Haas, Rafia Sabih)
+     </para>
+
+     <para>
+      This change allows us to quickly escape a wait for an unresponsive
+      remote server in many more cases than previously.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [596a7c8df] 2017-05-11 14:51:21 -0400
+Branch: REL9_6_STABLE [128e133cc] 2017-05-11 14:51:33 -0400
+Branch: REL9_5_STABLE [6f2fe2468] 2017-05-11 14:51:38 -0400
+Branch: REL9_4_STABLE [5c633f76b] 2017-05-11 14:51:46 -0400
+-->
+     <para>
+      Increase <literal>MAX_SYSCACHE_CALLBACKS</> to provide more room for
+      extensions (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [e9a3c047a] 2017-06-01 13:32:55 -0400
+Branch: REL9_6_STABLE [8d9b4fe01] 2017-06-01 13:32:56 -0400
+Branch: REL9_5_STABLE [68938ab8e] 2017-06-01 13:32:56 -0400
+Branch: REL9_4_STABLE [894ce0e97] 2017-06-01 13:32:56 -0400
+Branch: REL9_3_STABLE [cee7238de] 2017-06-01 13:32:56 -0400
+Branch: REL9_2_STABLE [a378b9bc2] 2017-06-01 13:32:56 -0400
+-->
+     <para>
+      Always use <option>-fPIC</>, not <option>-fpic</>, when building
+      shared libraries with gcc (Tom Lane)
+     </para>
+
+     <para>
+      This supports larger extension libraries on platforms where it makes
+      a difference.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: REL9_5_STABLE [af1f18259] 2017-08-02 15:07:20 -0400
+Branch: REL9_4_STABLE [8892170e7] 2017-08-02 15:07:20 -0400
+Branch: REL9_3_STABLE [3d9ae20e7] 2017-08-02 15:07:20 -0400
+Branch: REL9_2_STABLE [1188b9b2c] 2017-08-02 15:07:21 -0400
+-->
+     <para>
+      Fix unescaped-braces issue in our build scripts for Microsoft MSVC,
+      to avoid a warning or error from recent Perl versions (Andrew
+      Dunstan)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Andrew Dunstan <andrew@dunslane.net>
+Branch: master [614350a3a] 2017-06-05 14:24:42 -0400
+Branch: REL9_6_STABLE [b64ff9c5a] 2017-06-05 14:27:59 -0400
+Branch: REL9_5_STABLE [0fde390f6] 2017-06-05 14:28:13 -0400
+Branch: REL9_4_STABLE [307fc49d5] 2017-06-05 14:28:26 -0400
+Branch: REL9_3_STABLE [fe39a086d] 2017-06-05 14:28:44 -0400
+Branch: REL9_2_STABLE [545dc4d21] 2017-06-05 14:29:00 -0400
+Branch: master [2e02136fe] 2017-06-05 20:38:46 -0400
+Branch: REL9_6_STABLE [ec504aff7] 2017-06-05 20:39:53 -0400
+Branch: REL9_5_STABLE [b2482ab83] 2017-06-05 20:40:11 -0400
+Branch: REL9_4_STABLE [6da999635] 2017-06-05 20:40:27 -0400
+Branch: REL9_3_STABLE [da30fa603] 2017-06-05 20:40:47 -0400
+Branch: REL9_2_STABLE [f964a7c5a] 2017-06-05 20:41:01 -0400
+-->
+     <para>
+      In MSVC builds, handle the case where the <application>openssl</>
+      library is not within a <filename>VC</> subdirectory (Andrew Dunstan)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Andrew Dunstan <andrew@dunslane.net>
+Branch: master [b757e01f6] 2017-05-12 10:21:13 -0400
+Branch: REL9_6_STABLE [69ce3ead1] 2017-05-12 10:22:20 -0400
+Branch: REL9_5_STABLE [8ec82ee6a] 2017-05-12 10:23:39 -0400
+Branch: REL9_4_STABLE [616dd9978] 2017-05-12 10:24:00 -0400
+Branch: REL9_3_STABLE [2c7d2114b] 2017-05-12 10:24:16 -0400
+Branch: REL9_2_STABLE [614f83c12] 2017-05-12 10:24:36 -0400
+-->
+     <para>
+      In MSVC builds, add proper include path for <application>libxml2</>
+      header files (Andrew Dunstan)
+     </para>
+
+     <para>
+      This fixes a former need to move things around in standard Windows
+      installations of <application>libxml2</>.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Noah Misch <noah@leadboat.com>
+Branch: master [71ad8000d] 2017-07-23 23:53:27 -0700
+Branch: REL9_6_STABLE [bcc2c3b45] 2017-07-23 23:53:37 -0700
+Branch: REL9_5_STABLE [bef96e57e] 2017-07-23 23:53:41 -0700
+Branch: REL9_4_STABLE [0328bd1ef] 2017-07-23 23:53:46 -0700
+Branch: REL9_3_STABLE [9842c1b55] 2017-07-23 23:53:51 -0700
+Branch: REL9_2_STABLE [4885e5c88] 2017-07-23 23:53:55 -0700
+-->
+     <para>
+      In MSVC builds, recognize a Tcl library that is
+      named <filename>tcl86.lib</> (Noah Misch)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Andrew Dunstan <andrew@dunslane.net>
+Branch: master [56b6ef893] 2017-05-12 11:11:49 -0400
+Branch: REL9_6_STABLE [cb701af78] 2017-05-12 11:21:20 -0400
+Branch: REL9_5_STABLE [054a897c4] 2017-05-12 11:26:40 -0400
+Branch: REL9_4_STABLE [d39d968f5] 2017-05-12 11:27:56 -0400
+Branch: master [93b7d9731] 2017-06-10 10:19:06 -0400
+Branch: REL9_6_STABLE [3c017a545] 2017-06-10 10:22:14 -0400
+Branch: REL9_5_STABLE [11aa362c8] 2017-06-10 10:23:21 -0400
+Branch: REL9_4_STABLE [6b2a0b475] 2017-06-10 10:23:43 -0400
+Branch: master [fd2487e49] 2017-07-16 11:24:29 -0400
+Branch: REL9_6_STABLE [b4a1d69ed] 2017-07-16 11:27:00 -0400
+Branch: REL9_5_STABLE [7eb4124da] 2017-07-16 11:27:07 -0400
+Branch: REL9_4_STABLE [9c3f502b4] 2017-07-16 11:27:15 -0400
+-->
+     <para>
+      In MSVC builds, honor <literal>PROVE_FLAGS</> settings
+      on <filename>vcregress.pl</>'s command line (Andrew Dunstan)
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-9-6-3">
   <title>Release 9.6.3</title>
 
