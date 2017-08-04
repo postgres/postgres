@@ -956,9 +956,9 @@ restart_expand:
 					  buf_oblkno, buf_nblkno, NULL,
 					  maxbucket, highmask, lowmask);
 
-	/* all done, now release the locks and pins on primary buckets. */
-	_hash_relbuf(rel, buf_oblkno);
-	_hash_relbuf(rel, buf_nblkno);
+	/* all done, now release the pins on primary buckets. */
+	_hash_dropbuf(rel, buf_oblkno);
+	_hash_dropbuf(rel, buf_nblkno);
 
 	return;
 
@@ -1068,10 +1068,11 @@ _hash_alloc_buckets(Relation rel, BlockNumber firstblock, uint32 nblocks)
  * while a split is in progress.
  *
  * In addition, the caller must have created the new bucket's base page,
- * which is passed in buffer nbuf, pinned and write-locked.  That lock and
- * pin are released here.  (The API is set up this way because we must do
- * _hash_getnewbuf() before releasing the metapage write lock.  So instead of
- * passing the new bucket's start block number, we pass an actual buffer.)
+ * which is passed in buffer nbuf, pinned and write-locked.  The lock will be
+ * released here and pin must be released by the caller.  (The API is set up
+ * this way because we must do _hash_getnewbuf() before releasing the metapage
+ * write lock.  So instead of passing the new bucket's start block number, we
+ * pass an actual buffer.)
  */
 static void
 _hash_splitbucket(Relation rel,
@@ -1280,8 +1281,9 @@ _hash_splitbucket(Relation rel,
 
 	/*
 	 * After the split is finished, mark the old bucket to indicate that it
-	 * contains deletable tuples.  Vacuum will clear split-cleanup flag after
-	 * deleting such tuples.
+	 * contains deletable tuples.  We will clear split-cleanup flag after
+	 * deleting such tuples either at the end of split or at the next split
+	 * from old bucket or at the time of vacuum.
 	 */
 	oopaque->hasho_flag |= LH_BUCKET_NEEDS_SPLIT_CLEANUP;
 
@@ -1314,6 +1316,28 @@ _hash_splitbucket(Relation rel,
 	}
 
 	END_CRIT_SECTION();
+
+	/*
+	 * If possible, clean up the old bucket.  We might not be able to do this
+	 * if someone else has a pin on it, but if not then we can go ahead.  This
+	 * isn't absolutely necessary, but it reduces bloat; if we don't do it now,
+	 * VACUUM will do it eventually, but maybe not until new overflow pages
+	 * have been allocated.  Note that there's no need to clean up the new
+	 * bucket.
+	 */
+	if (IsBufferCleanupOK(bucket_obuf))
+	{
+		LockBuffer(bucket_nbuf, BUFFER_LOCK_UNLOCK);
+		hashbucketcleanup(rel, obucket, bucket_obuf,
+						  BufferGetBlockNumber(bucket_obuf), NULL,
+						  maxbucket, highmask, lowmask, NULL, NULL, true,
+						  NULL, NULL);
+	}
+	else
+	{
+		LockBuffer(bucket_nbuf, BUFFER_LOCK_UNLOCK);
+		LockBuffer(bucket_obuf, BUFFER_LOCK_UNLOCK);
+	}
 }
 
 /*
@@ -1434,8 +1458,7 @@ _hash_finish_split(Relation rel, Buffer metabuf, Buffer obuf, Bucket obucket,
 					  nbucket, obuf, bucket_nbuf, tidhtab,
 					  maxbucket, highmask, lowmask);
 
-	_hash_relbuf(rel, bucket_nbuf);
-	LockBuffer(obuf, BUFFER_LOCK_UNLOCK);
+	_hash_dropbuf(rel, bucket_nbuf);
 	hash_destroy(tidhtab);
 }
 
