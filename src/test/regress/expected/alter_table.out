@@ -328,7 +328,7 @@ Number of child tables: 1 (Use \d+ to list them.)
       Table "public.constraint_rename_test2"
  Column |  Type   | Collation | Nullable | Default 
 --------+---------+-----------+----------+---------
- a      | integer |           |          | 
+ a      | integer |           | not null | 
  b      | integer |           |          | 
  c      | integer |           |          | 
  d      | integer |           |          | 
