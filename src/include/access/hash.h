@@ -158,8 +158,7 @@ typedef HashScanOpaqueData *HashScanOpaque;
 #define HASH_METAPAGE	0		/* metapage is always block 0 */
 
 #define HASH_MAGIC		0x6440640
-#define HASH_VERSION	3		/* 3 signifies multi-phased bucket allocation
-								 * to reduce doubling */
+#define HASH_VERSION	4
 
 /*
  * spares[] holds the number of overflow pages currently allocated at or
@@ -182,10 +181,10 @@ typedef HashScanOpaqueData *HashScanOpaque;
  * after HASH_SPLITPOINT_GROUPS_WITH_ONE_PHASE).
  *
  * There is no particular upper limit on the size of mapp[], other than
- * needing to fit into the metapage.  (With 8K block size, 128 bitmaps
- * limit us to 64 GB of overflow space...)
+ * needing to fit into the metapage.  (With 8K block size, 1024 bitmaps
+ * limit us to 256 GB of overflow space...)
  */
-#define HASH_MAX_BITMAPS			128
+#define HASH_MAX_BITMAPS			1024
 
 #define HASH_SPLITPOINT_PHASE_BITS	2
 #define HASH_SPLITPOINT_PHASES_PER_GRP	(1 << HASH_SPLITPOINT_PHASE_BITS)

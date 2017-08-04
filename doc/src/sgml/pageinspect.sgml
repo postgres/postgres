@@ -687,8 +687,13 @@ test=# SELECT * FROM hash_bitmap_info('con_hash_index', 2052);
       <function>hash_metapage_info</function> returns information stored
       in meta page of a <acronym>HASH</acronym> index.  For example:
 <screen>
-test=# SELECT * FROM hash_metapage_info(get_raw_page('con_hash_index', 0));
--[ RECORD 1 ]-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+test=# SELECT magic, version, ntuples, ffactor, bsize, bmsize, bmshift,
+test-#     maxbucket, highmask, lowmask, ovflpoint, firstfree, nmaps, procid,
+test-#     regexp_replace(spares::text, '(,0)*}', '}') as spares,
+test-#     regexp_replace(mapp::text, '(,0)*}', '}') as mapp
+test-# FROM hash_metapage_info(get_raw_page('con_hash_index', 0));
+-[ RECORD 1 ]-------------------------------------------------------------------------------
+spares    | {0,0,0,0,0,0,1,1,1,1,1,1,1,1,3,4,4,4,45,55,58,59,508,567,628,704,1193,1202,1204}
 magic     | 105121344
 version   | 3
 ntuples   | 500500
@@ -703,8 +708,8 @@ ovflpoint | 28
 firstfree | 1204
 nmaps     | 1
 procid    | 450
-spares    | {0,0,0,0,0,0,1,1,1,1,1,1,1,1,3,4,4,4,45,55,58,59,508,567,628,704,1193,1202,1204,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
-mapp      | {65,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
+spares    | {0,0,0,0,0,0,1,1,1,1,1,1,1,1,3,4,4,4,45,55,58,59,508,567,628,704,1193,1202,1204}
+mapp      | {65}
 </screen>
      </para>
     </listitem>

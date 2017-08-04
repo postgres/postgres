@@ -368,7 +368,7 @@ pending_tuples | 0
 <programlisting>
 test=&gt; select * from pgstathashindex('con_hash_index');
 -[ RECORD 1 ]--+-----------------
-version        | 2
+version        | 4
 bucket_pages   | 33081
 overflow_pages | 0
 bitmap_pages   | 1
