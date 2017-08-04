@@ -270,6 +270,14 @@ be_tls_init(void)
 						SSL_OP_SINGLE_DH_USE |
 						SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
 
+	/* disallow SSL session tickets */
+#ifdef SSL_OP_NO_TICKET			/* added in openssl 0.9.8f */
+	SSL_CTX_set_options(SSL_context, SSL_OP_NO_TICKET);
+#endif
+
+	/* disallow SSL session caching, too */
+	SSL_CTX_set_session_cache_mode(SSL_context, SSL_SESS_CACHE_OFF);
+
 	/* set up ephemeral ECDH keys */
 	initialize_ecdh();
 
