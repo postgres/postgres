@@ -1002,7 +1002,7 @@ PLySequence_ToArray(PLyObToDatum *arg, int32 typmod, PyObject *plrv, bool inarra
 
 		dims[ndim] = PySequence_Length(pyptr);
 		if (dims[ndim] < 0)
-			PLy_elog(ERROR, "cannot determine sequence length for function return value");
+			PLy_elog(ERROR, "could not determine sequence length for function return value");
 
 		if (dims[ndim] > MaxAllocSize)
 			PLy_elog(ERROR, "array size exceeds the maximum allowed");
@@ -1087,10 +1087,10 @@ PLySequence_ToArray_recurse(PLyObToDatum *elm, PyObject *list,
 	int			i;
 
 	if (PySequence_Length(list) != dims[dim])
-		PLy_elog(ERROR,
-				 "multidimensional arrays must have array expressions with matching dimensions. "
-				 "PL/Python function return value has sequence length %d while expected %d",
-				 (int) PySequence_Length(list), dims[dim]);
+		ereport(ERROR,
+				(errmsg("wrong length of inner sequence: has length %d, but %d was expected",
+						(int) PySequence_Length(list), dims[dim]),
+				 (errdetail("To construct a multidimensional array, the inner sequences must all have the same length."))));
 
 	if (dim < ndim - 1)
 	{

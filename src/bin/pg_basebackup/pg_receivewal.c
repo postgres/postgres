@@ -280,7 +280,7 @@ FindStreamingStart(uint32 *tli)
 			}
 			if (lseek(fd, (off_t) (-4), SEEK_END) < 0)
 			{
-				fprintf(stderr, _("%s: could not seek compressed file \"%s\": %s\n"),
+				fprintf(stderr, _("%s: could not seek in compressed file \"%s\": %s\n"),
 						progname, fullpath, strerror(errno));
 				disconnect_and_exit(1);
 			}

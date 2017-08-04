@@ -432,7 +432,7 @@ tar_write_compressed_data(void *buf, size_t count, bool flush)
 		r = deflate(tar_data->zp, flush ? Z_FINISH : Z_NO_FLUSH);
 		if (r == Z_STREAM_ERROR)
 		{
-			tar_set_error("deflate failed");
+			tar_set_error("could not compress data");
 			return false;
 		}
 
@@ -456,7 +456,7 @@ tar_write_compressed_data(void *buf, size_t count, bool flush)
 		/* Reset the stream for writing */
 		if (deflateReset(tar_data->zp) != Z_OK)
 		{
-			tar_set_error("deflateReset failed");
+			tar_set_error("could not reset compression stream");
 			return false;
 		}
 	}
@@ -557,7 +557,7 @@ tar_open_for_write(const char *pathname, const char *temp_suffix, size_t pad_to_
 			{
 				pg_free(tar_data->zp);
 				tar_data->zp = NULL;
-				tar_set_error("deflateInit2 failed");
+				tar_set_error("could not initialize compression library");
 				return NULL;
 			}
 		}
@@ -569,7 +569,7 @@ tar_open_for_write(const char *pathname, const char *temp_suffix, size_t pad_to_
 	Assert(tar_data->currentfile == NULL);
 	if (tar_data->currentfile != NULL)
 	{
-		tar_set_error("implementation error: tar files can't have more than one open file\n");
+		tar_set_error("implementation error: tar files can't have more than one open file");
 		return NULL;
 	}
 
@@ -597,7 +597,7 @@ tar_open_for_write(const char *pathname, const char *temp_suffix, size_t pad_to_
 		/* Turn off compression for header */
 		if (deflateParams(tar_data->zp, 0, 0) != Z_OK)
 		{
-			tar_set_error("deflateParams failed");
+			tar_set_error("could not change compression parameters");
 			return NULL;
 		}
 	}
@@ -635,7 +635,7 @@ tar_open_for_write(const char *pathname, const char *temp_suffix, size_t pad_to_
 		/* Re-enable compression for the rest of the file */
 		if (deflateParams(tar_data->zp, tar_data->compression, 0) != Z_OK)
 		{
-			tar_set_error("deflateParams failed");
+			tar_set_error("could not change compression parameters");
 			return NULL;
 		}
 	}
@@ -824,7 +824,7 @@ tar_close(Walfile f, WalCloseMethod method)
 		/* Turn off compression */
 		if (deflateParams(tar_data->zp, 0, 0) != Z_OK)
 		{
-			tar_set_error("deflateParams failed");
+			tar_set_error("could not change compression parameters");
 			return -1;
 		}
 
@@ -835,7 +835,7 @@ tar_close(Walfile f, WalCloseMethod method)
 		/* Turn compression back on */
 		if (deflateParams(tar_data->zp, tar_data->compression, 0) != Z_OK)
 		{
-			tar_set_error("deflateParams failed");
+			tar_set_error("could not change compression parameters");
 			return -1;
 		}
 	}
@@ -901,7 +901,7 @@ tar_finish(void)
 
 			if (r == Z_STREAM_ERROR)
 			{
-				tar_set_error("deflate failed");
+				tar_set_error("could not compress data");
 				return false;
 			}
 			if (tar_data->zp->avail_out < ZLIB_OUT_SIZE)
@@ -917,7 +917,7 @@ tar_finish(void)
 
 		if (deflateEnd(tar_data->zp) != Z_OK)
 		{
-			tar_set_error("deflateEnd failed");
+			tar_set_error("could not close compression stream");
 			return false;
 		}
 	}

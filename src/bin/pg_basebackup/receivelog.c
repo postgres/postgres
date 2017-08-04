@@ -136,7 +136,7 @@ open_walfile(StreamCtl *stream, XLogRecPtr startpoint)
 			if (stream->walmethod->sync(f) != 0)
 			{
 				fprintf(stderr,
-						_("%s: could not sync existing write-ahead log file \"%s\": %s\n"),
+						_("%s: could not fsync existing write-ahead log file \"%s\": %s\n"),
 						progname, fn, stream->walmethod->getlasterror());
 				stream->walmethod->close(f, CLOSE_UNLINK);
 				return false;
@@ -151,7 +151,9 @@ open_walfile(StreamCtl *stream, XLogRecPtr startpoint)
 			if (errno == 0)
 				errno = ENOSPC;
 			fprintf(stderr,
-					_("%s: write-ahead log file \"%s\" has %d bytes, should be 0 or %d\n"),
+					ngettext("%s: write-ahead log file \"%s\" has %d byte, should be 0 or %d\n",
+							 "%s: write-ahead log file \"%s\" has %d bytes, should be 0 or %d\n",
+							 size),
 					progname, fn, (int) size, XLogSegSize);
 			return false;
 		}

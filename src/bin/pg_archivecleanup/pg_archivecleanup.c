@@ -245,7 +245,7 @@ SetWALFileNameForCleanup(void)
 
 	if (!fnameOK)
 	{
-		fprintf(stderr, _("%s: invalid filename input\n"), progname);
+		fprintf(stderr, _("%s: invalid file name argument\n"), progname);
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 		exit(2);
 	}
@@ -350,14 +350,14 @@ main(int argc, char **argv)
 	}
 	else
 	{
-		fprintf(stderr, _("%s: must specify restartfilename\n"), progname);
+		fprintf(stderr, _("%s: must specify oldest kept WAL file\n"), progname);
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 		exit(2);
 	}
 
 	if (optind < argc)
 	{
-		fprintf(stderr, _("%s: too many parameters\n"), progname);
+		fprintf(stderr, _("%s: too many command-line arguments\n"), progname);
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 		exit(2);
 	}
@@ -376,7 +376,7 @@ main(int argc, char **argv)
 	{
 		snprintf(WALFilePath, MAXPGPATH, "%s/%s",
 				 archiveLocation, exclusiveCleanupFileName);
-		fprintf(stderr, _("%s: keep WAL file \"%s\" and later\n"),
+		fprintf(stderr, _("%s: keeping WAL file \"%s\" and later\n"),
 				progname, WALFilePath);
 	}
 

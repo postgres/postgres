@@ -691,7 +691,8 @@ CREATE FUNCTION test_type_conversion_mdarray_malformed() RETURNS int[] AS $$
 return [[1,2,3],[4,5]]
 $$ LANGUAGE plpython3u;
 SELECT * FROM test_type_conversion_mdarray_malformed();
-ERROR:  multidimensional arrays must have array expressions with matching dimensions. PL/Python function return value has sequence length 2 while expected 3
+ERROR:  wrong length of inner sequence: has length 2, but 3 was expected
+DETAIL:  To construct a multidimensional array, the inner sequences must all have the same length.
 CONTEXT:  while creating return value
 PL/Python function "test_type_conversion_mdarray_malformed"
 CREATE FUNCTION test_type_conversion_mdarray_toodeep() RETURNS int[] AS $$

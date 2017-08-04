@@ -308,7 +308,7 @@ build_client_first_message(fe_scram_state *state, PQExpBuffer errormessage)
 	if (!pg_frontend_random(raw_nonce, SCRAM_RAW_NONCE_LEN))
 	{
 		printfPQExpBuffer(errormessage,
-						  libpq_gettext("failed to generate nonce\n"));
+						  libpq_gettext("could not generate nonce\n"));
 		return NULL;
 	}
 
