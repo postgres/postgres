@@ -1655,13 +1655,17 @@ AC_CHECK_FUNCS([strtoll strtoq], [break])
 AC_CHECK_FUNCS([strtoull strtouq], [break])
 
 if test "$with_icu" = yes; then
-  # ICU functions are macros, so we need to do this the long way.
+  ac_save_CPPFLAGS=$CPPFLAGS
+  CPPFLAGS="$ICU_CFLAGS $CPPFLAGS"
 
-  # ucol_strcollUTF8() appeared in ICU 50.
+  # Verify we have ICU's header files
+  AC_CHECK_HEADER(unicode/ucol.h, [],
+        [AC_MSG_ERROR([header file <unicode/ucol.h> is required for ICU])])
+
+  # ucol_strcollUTF8() appeared in ICU 50, so check if we have it.
+  # ICU functions are macros, so we need to do this the long way.
   AC_CACHE_CHECK([for ucol_strcollUTF8], [pgac_cv_func_ucol_strcollUTF8],
-[ac_save_CPPFLAGS=$CPPFLAGS
-CPPFLAGS="$ICU_CFLAGS $CPPFLAGS"
-ac_save_LIBS=$LIBS
+[ac_save_LIBS=$LIBS
 LIBS="$ICU_LIBS $LIBS"
 AC_LINK_IFELSE([AC_LANG_PROGRAM(
 [#include <unicode/ucol.h>
@@ -1669,11 +1673,12 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM(
 [ucol_strcollUTF8(NULL, NULL, 0, NULL, 0, NULL);])],
 [pgac_cv_func_ucol_strcollUTF8=yes],
 [pgac_cv_func_ucol_strcollUTF8=no])
-CPPFLAGS=$ac_save_CPPFLAGS
 LIBS=$ac_save_LIBS])
   if test "$pgac_cv_func_ucol_strcollUTF8" = yes ; then
     AC_DEFINE([HAVE_UCOL_STRCOLLUTF8], 1, [Define to 1 if you have the `ucol_strcollUTF8' function.])
   fi
+
+  CPPFLAGS=$ac_save_CPPFLAGS
 fi
 
 # Lastly, restore full LIBS list and check for readline/libedit symbols

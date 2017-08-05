@@ -13910,17 +13910,27 @@ done
 
 
 if test "$with_icu" = yes; then
-  # ICU functions are macros, so we need to do this the long way.
+  ac_save_CPPFLAGS=$CPPFLAGS
+  CPPFLAGS="$ICU_CFLAGS $CPPFLAGS"
 
-  # ucol_strcollUTF8() appeared in ICU 50.
+  # Verify we have ICU's header files
+  ac_fn_c_check_header_mongrel "$LINENO" "unicode/ucol.h" "ac_cv_header_unicode_ucol_h" "$ac_includes_default"
+if test "x$ac_cv_header_unicode_ucol_h" = xyes; then :
+
+else
+  as_fn_error $? "header file <unicode/ucol.h> is required for ICU" "$LINENO" 5
+fi
+
+
+
+  # ucol_strcollUTF8() appeared in ICU 50, so check if we have it.
+  # ICU functions are macros, so we need to do this the long way.
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ucol_strcollUTF8" >&5
 $as_echo_n "checking for ucol_strcollUTF8... " >&6; }
 if ${pgac_cv_func_ucol_strcollUTF8+:} false; then :
   $as_echo_n "(cached) " >&6
 else
-  ac_save_CPPFLAGS=$CPPFLAGS
-CPPFLAGS="$ICU_CFLAGS $CPPFLAGS"
-ac_save_LIBS=$LIBS
+  ac_save_LIBS=$LIBS
 LIBS="$ICU_LIBS $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -13941,7 +13951,6 @@ else
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
-CPPFLAGS=$ac_save_CPPFLAGS
 LIBS=$ac_save_LIBS
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv_func_ucol_strcollUTF8" >&5
@@ -13951,6 +13960,8 @@ $as_echo "$pgac_cv_func_ucol_strcollUTF8" >&6; }
 $as_echo "#define HAVE_UCOL_STRCOLLUTF8 1" >>confdefs.h
 
   fi
+
+  CPPFLAGS=$ac_save_CPPFLAGS
 fi
 
 # Lastly, restore full LIBS list and check for readline/libedit symbols
