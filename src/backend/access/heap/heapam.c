@@ -7086,7 +7086,13 @@ log_heap_update(Relation reln, Buffer oldbuf,
 		/* We need to log a tuple identity */
 		if (old_key_tuple)
 		{
-			/* don't really need this, but its more comfy to decode */
+			/*
+			 * This isn't needed, and can't actually capture the contents of
+			 * the tuple accurately (because t_len isn't guaranteed to be big
+			 * enough to contain old tuples which can be up to 1 GB long). But
+			 * previous versions of 9.4 used this, so we can't change the WAL
+			 * format.
+			 */
 			xlhdr_idx.header.t_infomask2 = old_key_tuple->t_data->t_infomask2;
 			xlhdr_idx.header.t_infomask = old_key_tuple->t_data->t_infomask;
 			xlhdr_idx.header.t_hoff = old_key_tuple->t_data->t_hoff;
