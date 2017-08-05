@@ -2277,6 +2277,15 @@ PrepareTransaction(void)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot PREPARE a transaction that has exported snapshots")));
 
+	/*
+	 * Don't allow PREPARE but for transaction that has/might kill logical
+	 * replication workers.
+	 */
+	if (XactManipulatesLogicalReplicationWorkers())
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot PREPARE a transaction that has manipulated logical replication workers")));
+
 	/* Prevent cancel/die interrupt while cleaning up */
 	HOLD_INTERRUPTS();
 
