@@ -2178,6 +2178,44 @@ ALTER TABLE part_5 DROP CONSTRAINT check_a;
 ALTER TABLE part_5 ADD CONSTRAINT check_a CHECK (a IN (5)), ALTER a SET NOT NULL;
 ALTER TABLE list_parted2 ATTACH PARTITION part_5 FOR VALUES IN (5);
 
+-- Check the case where attnos of the partitioning columns in the table being
+-- attached differs from the parent.  It should not affect the constraint-
+-- checking logic that allows to skip the scan.
+CREATE TABLE part_6 (
+	c int,
+	LIKE list_parted2,
+	CONSTRAINT check_a CHECK (a IS NOT NULL AND a = 6)
+);
+ALTER TABLE part_6 DROP c;
+ALTER TABLE list_parted2 ATTACH PARTITION part_6 FOR VALUES IN (6);
+
+-- Similar to above, but the table being attached is a partitioned table
+-- whose partition has still different attnos for the root partitioning
+-- columns.
+CREATE TABLE part_7 (
+	LIKE list_parted2,
+	CONSTRAINT check_a CHECK (a IS NOT NULL AND a = 7)
+) PARTITION BY LIST (b);
+CREATE TABLE part_7_a_null (
+	c int,
+	d int,
+	e int,
+	LIKE list_parted2,  -- 'a' will have attnum = 4
+	CONSTRAINT check_b CHECK (b IS NULL OR b = 'a'),
+	CONSTRAINT check_a CHECK (a IS NOT NULL AND a = 7)
+);
+ALTER TABLE part_7_a_null DROP c, DROP d, DROP e;
+ALTER TABLE part_7 ATTACH PARTITION part_7_a_null FOR VALUES IN ('a', null);
+ALTER TABLE list_parted2 ATTACH PARTITION part_7 FOR VALUES IN (7);
+
+-- Same example, but check this time that the constraint correctly detects
+-- violating rows
+ALTER TABLE list_parted2 DETACH PARTITION part_7;
+ALTER TABLE part_7 DROP CONSTRAINT check_a; -- thusly, scan won't be skipped
+INSERT INTO part_7 (a, b) VALUES (8, null), (9, 'a');
+SELECT tableoid::regclass, a, b FROM part_7 order by a;
+ALTER TABLE list_parted2 ATTACH PARTITION part_7 FOR VALUES IN (7);
+
 -- check that the table being attached is not already a partition
 ALTER TABLE list_parted2 ATTACH PARTITION part_2 FOR VALUES IN (2);
 

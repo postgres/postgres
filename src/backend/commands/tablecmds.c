@@ -13433,6 +13433,7 @@ ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd)
 	bool		skip_validate = false;
 	ObjectAddress address;
 	const char *trigger_name;
+	bool		found_whole_row;
 
 	attachrel = heap_openrv(cmd->name, AccessExclusiveLock);
 
@@ -13614,6 +13615,16 @@ ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd)
 	partConstraint = list_make1(make_ands_explicit(partConstraint));
 
 	/*
+	 * Adjust the generated constraint to match this partition's attribute
+	 * numbers.
+	 */
+	partConstraint = map_partition_varattnos(partConstraint, 1, attachrel,
+											 rel, &found_whole_row);
+	/* There can never be a whole-row reference here */
+	if (found_whole_row)
+		elog(ERROR, "unexpected whole-row reference found in partition key");
+
+	/*
 	 * Check if we can do away with having to scan the table being attached to
 	 * validate the partition constraint, by *proving* that the existing
 	 * constraints of the table *imply* the partition predicate.  We include
@@ -13712,8 +13723,7 @@ ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd)
 			AlteredTableInfo *tab;
 			Oid			part_relid = lfirst_oid(lc);
 			Relation	part_rel;
-			Expr	   *constr;
-			bool		found_whole_row;
+			List	   *my_partconstr = partConstraint;
 
 			/* Lock already taken */
 			if (part_relid != RelationGetRelid(attachrel))
@@ -13732,18 +13742,24 @@ ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd)
 				continue;
 			}
 
+			if (part_rel != attachrel)
+			{
+				/*
+				 * Adjust the constraint that we constructed above for
+				 * attachRel so that it matches this partition's attribute
+				 * numbers.
+				 */
+				my_partconstr = map_partition_varattnos(my_partconstr, 1,
+														part_rel, attachrel,
+														&found_whole_row);
+				/* There can never be a whole-row reference here */
+				if (found_whole_row)
+					elog(ERROR, "unexpected whole-row reference found in partition key");
+			}
+
 			/* Grab a work queue entry. */
 			tab = ATGetQueueEntry(wqueue, part_rel);
-
-			/* Adjust constraint to match this partition */
-			constr = linitial(partConstraint);
-			tab->partition_constraint = (Expr *)
-				map_partition_varattnos((List *) constr, 1,
-										part_rel, rel,
-										&found_whole_row);
-			/* There can never be a whole-row reference here */
-			if (found_whole_row)
-				elog(ERROR, "unexpected whole-row reference found in partition key");
+			tab->partition_constraint = (Expr *) linitial(my_partconstr);
 
 			/* keep our lock until commit */
 			if (part_rel != attachrel)
