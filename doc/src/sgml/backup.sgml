@@ -1012,10 +1012,15 @@ SELECT pg_start_backup('label', true);
 <programlisting>
 SELECT pg_stop_backup();
 </programlisting>
-     This terminates the backup mode and performs an automatic switch to
-     the next WAL segment.  The reason for the switch is to arrange for
-     the last WAL segment file written during the backup interval to be
-     ready to archive.
+     This function, when called on a primary, terminates the backup mode and
+     performs an automatic switch to the next WAL segment. The reason for the
+     switch is to arrange for the last WAL segment written during the backup
+     interval to be ready to archive.  When called on a standby, this function
+     only terminates backup mode.  A subsequent WAL segment switch will be
+     needed in order to ensure that all WAL files needed to restore the backup
+     can be archived; if the primary does not have sufficient write activity
+     to trigger one, <function>pg_switch_wal</function> should be executed on
+     the primary.
     </para>
    </listitem>
    <listitem>

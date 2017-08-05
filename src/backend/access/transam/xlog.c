@@ -10880,11 +10880,13 @@ do_pg_stop_backup(char *labelfile, bool waitforarchive, TimeLineID *stoptli_p)
 	 * backup. We have no way of checking if pg_control wasn't backed up last
 	 * however.
 	 *
-	 * We don't force a switch to new WAL file and wait for all the required
-	 * files to be archived. This is okay if we use the backup to start the
-	 * standby. But, if it's for an archive recovery, to ensure all the
-	 * required files are available, a user should wait for them to be
-	 * archived, or include them into the backup.
+	 * We don't force a switch to new WAL file but it is still possible to
+	 * wait for all the required files to be archived if waitforarchive is
+	 * true. This is okay if we use the backup to start a standby and fetch
+	 * the missing WAL using streaming replication. But in the case of an
+	 * archive recovery, a user should set waitforarchive to true and wait for
+	 * them to be archived to ensure that all the required files are
+	 * available.
 	 *
 	 * We return the current minimum recovery point as the backup end
 	 * location. Note that it can be greater than the exact backup end
@@ -10924,66 +10926,65 @@ do_pg_stop_backup(char *labelfile, bool waitforarchive, TimeLineID *stoptli_p)
 		stoppoint = ControlFile->minRecoveryPoint;
 		stoptli = ControlFile->minRecoveryPointTLI;
 		LWLockRelease(ControlFileLock);
-
-		if (stoptli_p)
-			*stoptli_p = stoptli;
-		return stoppoint;
 	}
+	else
+	{
+		/*
+		 * Write the backup-end xlog record
+		 */
+		XLogBeginInsert();
+		XLogRegisterData((char *) (&startpoint), sizeof(startpoint));
+		stoppoint = XLogInsert(RM_XLOG_ID, XLOG_BACKUP_END);
+		stoptli = ThisTimeLineID;
 
-	/*
-	 * Write the backup-end xlog record
-	 */
-	XLogBeginInsert();
-	XLogRegisterData((char *) (&startpoint), sizeof(startpoint));
-	stoppoint = XLogInsert(RM_XLOG_ID, XLOG_BACKUP_END);
-	stoptli = ThisTimeLineID;
+		/*
+		 * Force a switch to a new xlog segment file, so that the backup is
+		 * valid as soon as archiver moves out the current segment file.
+		 */
+		RequestXLogSwitch(false);
 
-	/*
-	 * Force a switch to a new xlog segment file, so that the backup is valid
-	 * as soon as archiver moves out the current segment file.
-	 */
-	RequestXLogSwitch(false);
+		XLByteToPrevSeg(stoppoint, _logSegNo);
+		XLogFileName(stopxlogfilename, stoptli, _logSegNo);
 
-	XLByteToPrevSeg(stoppoint, _logSegNo);
-	XLogFileName(stopxlogfilename, ThisTimeLineID, _logSegNo);
+		/* Use the log timezone here, not the session timezone */
+		stamp_time = (pg_time_t) time(NULL);
+		pg_strftime(strfbuf, sizeof(strfbuf),
+					"%Y-%m-%d %H:%M:%S %Z",
+					pg_localtime(&stamp_time, log_timezone));
 
-	/* Use the log timezone here, not the session timezone */
-	stamp_time = (pg_time_t) time(NULL);
-	pg_strftime(strfbuf, sizeof(strfbuf),
-				"%Y-%m-%d %H:%M:%S %Z",
-				pg_localtime(&stamp_time, log_timezone));
+		/*
+		 * Write the backup history file
+		 */
+		XLByteToSeg(startpoint, _logSegNo);
+		BackupHistoryFilePath(histfilepath, stoptli, _logSegNo,
+							  (uint32) (startpoint % XLogSegSize));
+		fp = AllocateFile(histfilepath, "w");
+		if (!fp)
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not create file \"%s\": %m",
+							histfilepath)));
+		fprintf(fp, "START WAL LOCATION: %X/%X (file %s)\n",
+				(uint32) (startpoint >> 32), (uint32) startpoint, startxlogfilename);
+		fprintf(fp, "STOP WAL LOCATION: %X/%X (file %s)\n",
+				(uint32) (stoppoint >> 32), (uint32) stoppoint, stopxlogfilename);
+		/* transfer remaining lines from label to history file */
+		fprintf(fp, "%s", remaining);
+		fprintf(fp, "STOP TIME: %s\n", strfbuf);
+		if (fflush(fp) || ferror(fp) || FreeFile(fp))
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not write file \"%s\": %m",
+							histfilepath)));
 
-	/*
-	 * Write the backup history file
-	 */
-	XLByteToSeg(startpoint, _logSegNo);
-	BackupHistoryFilePath(histfilepath, ThisTimeLineID, _logSegNo,
-						  (uint32) (startpoint % XLogSegSize));
-	fp = AllocateFile(histfilepath, "w");
-	if (!fp)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not create file \"%s\": %m",
-						histfilepath)));
-	fprintf(fp, "START WAL LOCATION: %X/%X (file %s)\n",
-			(uint32) (startpoint >> 32), (uint32) startpoint, startxlogfilename);
-	fprintf(fp, "STOP WAL LOCATION: %X/%X (file %s)\n",
-			(uint32) (stoppoint >> 32), (uint32) stoppoint, stopxlogfilename);
-	/* transfer remaining lines from label to history file */
-	fprintf(fp, "%s", remaining);
-	fprintf(fp, "STOP TIME: %s\n", strfbuf);
-	if (fflush(fp) || ferror(fp) || FreeFile(fp))
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not write file \"%s\": %m",
-						histfilepath)));
-
-	/*
-	 * Clean out any no-longer-needed history files.  As a side effect, this
-	 * will post a .ready file for the newly created history file, notifying
-	 * the archiver that history file may be archived immediately.
-	 */
-	CleanupBackupHistory();
+		/*
+		 * Clean out any no-longer-needed history files.  As a side effect,
+		 * this will post a .ready file for the newly created history file,
+		 * notifying the archiver that history file may be archived
+		 * immediately.
+		 */
+		CleanupBackupHistory();
+	}
 
 	/*
 	 * If archiving is enabled, wait for all the required WAL files to be
@@ -11005,13 +11006,16 @@ do_pg_stop_backup(char *labelfile, bool waitforarchive, TimeLineID *stoptli_p)
 	 * or you can set statement_timeout.  Also, some notices are issued to
 	 * clue in anyone who might be doing this interactively.
 	 */
-	if (waitforarchive && XLogArchivingActive())
+
+	if (waitforarchive &&
+		((!backup_started_in_recovery && XLogArchivingActive()) ||
+		 (backup_started_in_recovery && XLogArchivingAlways())))
 	{
 		XLByteToPrevSeg(stoppoint, _logSegNo);
-		XLogFileName(lastxlogfilename, ThisTimeLineID, _logSegNo);
+		XLogFileName(lastxlogfilename, stoptli, _logSegNo);
 
 		XLByteToSeg(startpoint, _logSegNo);
-		BackupHistoryFileName(histfilename, ThisTimeLineID, _logSegNo,
+		BackupHistoryFileName(histfilename, stoptli, _logSegNo,
 							  (uint32) (startpoint % XLogSegSize));
 
 		seconds_before_warning = 60;

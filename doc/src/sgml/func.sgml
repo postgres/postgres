@@ -18597,7 +18597,12 @@ postgres=# select pg_start_backup('label_goes_here');
     WAL to be archived.  This behavior is only useful for backup
     software which independently monitors WAL archiving. Otherwise, WAL
     required to make the backup consistent might be missing and make the backup
-    useless.
+    useless.  When this parameter is set to true, <function>pg_stop_backup</>
+    will wait for WAL to be archived when archiving is enabled; on the standby,
+    this means that it will wait only when <varname>archive_mode = always</>.
+    If write activity on the primary is low, it may be useful to run
+    <function>pg_switch_wal</> on the primary in order to trigger
+    an immediate segment switch.
    </para>
 
    <para>
