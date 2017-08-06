@@ -574,7 +574,7 @@ SnapBuildInitialSnapshot(SnapBuild *builder)
 		TransactionId safeXid;
 
 		LWLockAcquire(ProcArrayLock, LW_SHARED);
-		safeXid = GetOldestSafeDecodingTransactionId(true);
+		safeXid = GetOldestSafeDecodingTransactionId(false);
 		LWLockRelease(ProcArrayLock);
 
 		Assert(TransactionIdPrecedesOrEquals(safeXid, snap->xmin));

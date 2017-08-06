@@ -288,7 +288,7 @@ CreateInitDecodingContext(char *plugin,
 	 */
 	LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
 
-	xmin_horizon = GetOldestSafeDecodingTransactionId(need_full_snapshot);
+	xmin_horizon = GetOldestSafeDecodingTransactionId(!need_full_snapshot);
 
 	slot->effective_catalog_xmin = xmin_horizon;
 	slot->data.catalog_xmin = xmin_horizon;
