@@ -216,10 +216,8 @@ Branch: REL9_2_STABLE [439b6363d] 2017-06-26 16:17:06 -0400
      </para>
 
      <para>
-      Confusion between permanent and temporary statistics file timestamps
-      allowed the collector to think it had already written data satisfying
-      the request, when it had not.  This only affected inquiries issued
-      within half a second of the previous postmaster shutdown.
+      Statistics inquiries issued within half a second of the previous
+      postmaster shutdown were effectively ignored.
      </para>
     </listitem>
 
@@ -458,11 +456,6 @@ Branch: REL9_3_STABLE [66dee28b4] 2017-06-27 17:51:11 -0400
       Allow window functions to be used in sub-<literal>SELECT</>s that
       are within the arguments of an aggregate function (Tom Lane)
      </para>
-
-     <para>
-      This case is perfectly valid, but it was accidentally rejected by an
-      overly-aggressive error check.
-     </para>
     </listitem>
 
     <listitem>
@@ -556,8 +549,8 @@ Branch: REL9_6_STABLE [1f220c390] 2017-08-03 13:25:32 -0400
       But this is wrong for <command>CREATE FOREIGN TABLE</>, where there's
       no reason to suppose that the underlying table is empty, and even if
       it is it's no business of ours to decide that the constraint can be
-      treated as valid going forward.  Skip the <quote>optimization</> in
-      that case.
+      treated as valid going forward.  Skip this <quote>optimization</> for
+      foreign tables.
      </para>
     </listitem>
 
@@ -716,7 +709,7 @@ Branch: REL9_2_STABLE [07477130e] 2017-05-17 12:24:19 -0400
      </para>
 
      <para>
-      This misbehavior is observed on BSD-derived platforms (including
+      This misbehavior was observed on BSD-derived platforms (including
       macOS), but not on most others.
      </para>
     </listitem>
@@ -863,7 +856,7 @@ Branch: REL9_3_STABLE [e947838ae] 2017-07-20 11:29:36 -0400
 -->
      <para>
       Fix dumping of outer joins with empty constraints, such as the result
-      of a <literal>NATURAL JOIN</> with no common columns (Tom Lane)
+      of a <literal>NATURAL LEFT JOIN</> with no common columns (Tom Lane)
      </para>
     </listitem>
 
@@ -994,8 +987,8 @@ Branch: REL9_4_STABLE [c02c450cf] 2017-06-07 15:40:35 -0400
 Branch: REL9_3_STABLE [fc267a0c3] 2017-06-07 15:41:05 -0400
 -->
      <para>
-      In <filename>postgres_fdw</>, allow cancellation of transaction
-      control commands (Robert Haas, Rafia Sabih)
+      In <filename>postgres_fdw</>, allow cancellation of remote
+      transaction control commands (Robert Haas, Rafia Sabih)
      </para>
 
      <para>
@@ -1036,21 +1029,6 @@ Branch: REL9_2_STABLE [a378b9bc2] 2017-06-01 13:32:56 -0400
      <para>
       This supports larger extension libraries on platforms where it makes
       a difference.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: REL9_5_STABLE [af1f18259] 2017-08-02 15:07:20 -0400
-Branch: REL9_4_STABLE [8892170e7] 2017-08-02 15:07:20 -0400
-Branch: REL9_3_STABLE [3d9ae20e7] 2017-08-02 15:07:20 -0400
-Branch: REL9_2_STABLE [1188b9b2c] 2017-08-02 15:07:21 -0400
--->
-     <para>
-      Fix unescaped-braces issue in our build scripts for Microsoft MSVC,
-      to avoid a warning or error from recent Perl versions (Andrew
-      Dunstan)
      </para>
     </listitem>
 
