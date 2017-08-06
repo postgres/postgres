@@ -1,6 +1,574 @@
 <!-- doc/src/sgml/release-9.5.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-9-5-8">
+  <title>Release 9.5.8</title>
+
+  <formalpara>
+  <title>Release date:</title>
+  <para>2017-08-10</para>
+  </formalpara>
+
+  <para>
+   This release contains a variety of fixes from 9.5.7.
+   For information about new features in the 9.5 major release, see
+   <xref linkend="release-9-5">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 9.5.8</title>
+
+   <para>
+    A dump/restore is not required for those running 9.5.X.
+   </para>
+
+   <para>
+    However, if you are upgrading from a version earlier than 9.5.7,
+    see <xref linkend="release-9-5-7">.
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Correct the documentation about the process for upgrading standby
+      servers with <application>pg_upgrade</> (Bruce Momjian)
+     </para>
+
+     <para>
+      The previous documentation instructed users to start/stop the primary
+      server after running <application>pg_upgrade</> but before syncing
+      the standby servers.  This sequence is unsafe.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix concurrent locking of tuple update chains (&Aacute;lvaro Herrera)
+     </para>
+
+     <para>
+      If several sessions concurrently lock a tuple update chain with
+      nonconflicting lock modes using an old snapshot, and they all
+      succeed, it was possible for some of them to nonetheless fail (and
+      conclude there is no live tuple version) due to a race condition.
+      This had consequences such as foreign-key checks failing to see a
+      tuple that definitely exists but is being updated concurrently.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix potential data corruption when freezing a tuple whose XMAX is a
+      multixact with exactly one still-interesting member (Teodor Sigaev)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid integer overflow and ensuing crash when sorting more than one
+      billion tuples in-memory (Sergey Koposov)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      On Windows, retry process creation if we fail to reserve the address
+      range for our shared memory in the new process (Tom Lane, Amit
+      Kapila)
+     </para>
+
+     <para>
+      This is expected to fix infrequent child-process-launch failures that
+      are probably due to interference from antivirus products.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix low-probability corruption of shared predicate-lock hash table
+      in Windows builds (Thomas Munro, Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Avoid logging clean closure of an SSL connection as though
+      it were a connection reset (Michael Paquier)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent sending SSL session tickets to clients (Tom Lane)
+     </para>
+
+     <para>
+      This fix prevents reconnection failures with ticket-aware client-side
+      SSL code.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix code for setting <xref linkend="guc-tcp-keepalives-idle"> on
+      Solaris (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix statistics collector to honor inquiry messages issued just after
+      a postmaster shutdown and immediate restart (Tom Lane)
+     </para>
+
+     <para>
+      Statistics inquiries issued within half a second of the previous
+      postmaster shutdown were effectively ignored.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure that the statistics collector's receive buffer size is at
+      least 100KB (Tom Lane)
+     </para>
+
+     <para>
+      This reduces the risk of dropped statistics data on older platforms
+      whose default receive buffer size is less than that.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible creation of an invalid WAL segment when a standby is
+      promoted just after it processes an <literal>XLOG_SWITCH</> WAL
+      record (Andres Freund)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>walsender</> to exit promptly when client requests
+      shutdown (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <systemitem>SIGHUP</> and <systemitem>SIGUSR1</> handling in
+      walsender processes (Petr Jelinek, Andres Freund)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent walsender-triggered panics during shutdown checkpoints
+      (Andres Freund, Michael Paquier)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix unnecessarily slow restarts of <application>walreceiver</>
+      processes due to race condition in postmaster (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix leakage of small subtransactions spilled to disk during logical
+      decoding (Andres Freund)
+     </para>
+
+     <para>
+      This resulted in temporary files consuming excessive disk space.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Reduce the work needed to build snapshots during creation of
+      logical-decoding slots (Andres Freund, Petr Jelinek)
+     </para>
+
+     <para>
+      The previous algorithm was infeasibly expensive on a server with a
+      lot of open transactions.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix race condition that could indefinitely delay creation of
+      logical-decoding slots (Andres Freund, Petr Jelinek)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Reduce overhead in processing syscache invalidation events (Tom Lane)
+     </para>
+
+     <para>
+      This is particularly helpful for logical decoding, which triggers
+      frequent cache invalidation.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix cases where an <command>INSERT</> or <command>UPDATE</> assigns
+      to more than one element of a column that is of domain-over-array
+      type (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow window functions to be used in sub-<literal>SELECT</>s that
+      are within the arguments of an aggregate function (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Move autogenerated array types out of the way during
+      <command>ALTER ... RENAME</> (Vik Fearing)
+     </para>
+
+     <para>
+      Previously, we would rename a conflicting autogenerated array type
+      out of the way during <command>CREATE</>; this fix extends that
+      behavior to renaming operations.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix dangling pointer in <command>ALTER TABLE</> when there is a
+      comment on a constraint belonging to the table (David Rowley)
+     </para>
+
+     <para>
+      Re-applying the comment to the reconstructed constraint could fail
+      with a weird error message, or even crash.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Ensure that <command>ALTER USER ... SET</> accepts all the syntax
+      variants that <command>ALTER ROLE ... SET</> does (Peter Eisentraut)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Properly update dependency info when changing a datatype I/O
+      function's argument or return type from <type>opaque</> to the
+      correct type (Heikki Linnakangas)
+     </para>
+
+     <para>
+      <command>CREATE TYPE</> updates I/O functions declared in this
+      long-obsolete style, but it forgot to record a dependency on the
+      type, allowing a subsequent <command>DROP TYPE</> to leave broken
+      function definitions behind.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Reduce memory usage when <command>ANALYZE</> processes
+      a <type>tsvector</> column (Heikki Linnakangas)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix unnecessary precision loss and sloppy rounding when multiplying
+      or dividing <type>money</> values by integers or floats (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Tighten checks for whitespace in functions that parse identifiers,
+      such as <function>regprocedurein()</> (Tom Lane)
+     </para>
+
+     <para>
+      Depending on the prevailing locale, these functions could
+      misinterpret fragments of multibyte characters as whitespace.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Use relevant <literal>#define</> symbols from Perl while
+      compiling <application>PL/Perl</> (Ashutosh Sharma, Tom Lane)
+     </para>
+
+     <para>
+      This avoids portability problems, typically manifesting as
+      a <quote>handshake</> mismatch during library load, when working with
+      recent Perl versions.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      In <application>libpq</>, reset GSS/SASL and SSPI authentication
+      state properly after a failed connection attempt (Michael Paquier)
+     </para>
+
+     <para>
+      Failure to do this meant that when falling back from SSL to non-SSL
+      connections, a GSS/SASL failure in the SSL attempt would always cause
+      the non-SSL attempt to fail.  SSPI did not fail, but it leaked memory.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      In <application>psql</>, fix failure when <command>COPY FROM STDIN</>
+      is ended with a keyboard EOF signal and then another <command>COPY
+      FROM STDIN</> is attempted (Thomas Munro)
+     </para>
+
+     <para>
+      This misbehavior was observed on BSD-derived platforms (including
+      macOS), but not on most others.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>pg_dump</> and <application>pg_restore</> to
+      emit <command>REFRESH MATERIALIZED VIEW</> commands last (Tom Lane)
+     </para>
+
+     <para>
+      This prevents errors during dump/restore when a materialized view
+      refers to tables owned by a different user.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve <application>pg_dump</>/<application>pg_restore</>'s
+      reporting of error conditions originating in <application>zlib</>
+      (Vladimir Kunschikov, &Aacute;lvaro Herrera)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>pg_dump</> with the <option>--clean</> option to
+      drop event triggers as expected (Tom Lane)
+     </para>
+
+     <para>
+      It also now correctly assigns ownership of event triggers; before,
+      they were restored as being owned by the superuser running the
+      restore script.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>pg_dump</> to not emit invalid SQL for an empty
+      operator class (Daniel Gustafsson)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>pg_dump</> output to stdout on Windows (Kuntal Ghosh)
+     </para>
+
+     <para>
+      A compressed plain-text dump written to stdout would contain corrupt
+      data due to failure to put the file descriptor into binary mode.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <function>pg_get_ruledef()</> to print correct output for
+      the <literal>ON SELECT</> rule of a view whose columns have been
+      renamed (Tom Lane)
+     </para>
+
+     <para>
+      In some corner cases, <application>pg_dump</> relies
+      on <function>pg_get_ruledef()</> to dump views, so that this error
+      could result in dump/reload failures.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix dumping of outer joins with empty constraints, such as the result
+      of a <literal>NATURAL LEFT JOIN</> with no common columns (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix dumping of function expressions in the <literal>FROM</> clause in
+      cases where the expression does not deparse into something that looks
+      like a function call (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>pg_basebackup</> output to stdout on Windows
+      (Haribabu Kommi)
+     </para>
+
+     <para>
+      A backup written to stdout would contain corrupt data due to failure
+      to put the file descriptor into binary mode.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>pg_rewind</> to correctly handle files exceeding 2GB
+      (Kuntal Ghosh, Michael Paquier)
+     </para>
+
+     <para>
+      Ordinarily such files won't appear in <productname>PostgreSQL</> data
+      directories, but they could be present in some cases.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>pg_upgrade</> to ensure that the ending WAL record
+      does not have <xref linkend="guc-wal-level"> = <literal>minimum</>
+      (Bruce Momjian)
+     </para>
+
+     <para>
+      This condition could prevent upgraded standby servers from
+      reconnecting.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>pg_xlogdump</>'s computation of WAL record length
+      (Andres Freund)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      In <filename>postgres_fdw</>, re-establish connections to remote
+      servers after <command>ALTER SERVER</> or <command>ALTER USER
+      MAPPING</> commands (Kyotaro Horiguchi)
+     </para>
+
+     <para>
+      This ensures that option changes affecting connection parameters will
+      be applied promptly.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      In <filename>postgres_fdw</>, allow cancellation of remote
+      transaction control commands (Robert Haas, Rafia Sabih)
+     </para>
+
+     <para>
+      This change allows us to quickly escape a wait for an unresponsive
+      remote server in many more cases than previously.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Increase <literal>MAX_SYSCACHE_CALLBACKS</> to provide more room for
+      extensions (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Always use <option>-fPIC</>, not <option>-fpic</>, when building
+      shared libraries with gcc (Tom Lane)
+     </para>
+
+     <para>
+      This supports larger extension libraries on platforms where it makes
+      a difference.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: REL9_5_STABLE [af1f18259] 2017-08-02 15:07:20 -0400
+Branch: REL9_4_STABLE [8892170e7] 2017-08-02 15:07:20 -0400
+Branch: REL9_3_STABLE [3d9ae20e7] 2017-08-02 15:07:20 -0400
+Branch: REL9_2_STABLE [1188b9b2c] 2017-08-02 15:07:21 -0400
+-->
+     <para>
+      Fix unescaped-braces issue in our build scripts for Microsoft MSVC,
+      to avoid a warning or error from recent Perl versions (Andrew
+      Dunstan)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      In MSVC builds, handle the case where the <application>openssl</>
+      library is not within a <filename>VC</> subdirectory (Andrew Dunstan)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      In MSVC builds, add proper include path for <application>libxml2</>
+      header files (Andrew Dunstan)
+     </para>
+
+     <para>
+      This fixes a former need to move things around in standard Windows
+      installations of <application>libxml2</>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      In MSVC builds, recognize a Tcl library that is
+      named <filename>tcl86.lib</> (Noah Misch)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      In MSVC builds, honor <literal>PROVE_FLAGS</> settings
+      on <filename>vcregress.pl</>'s command line (Andrew Dunstan)
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-9-5-7">
   <title>Release 9.5.7</title>
 
