@@ -69,13 +69,34 @@ md5_crypt_verify(const Port *port, const char *role, char *client_pass)
 
 	ReleaseSysCache(roleTup);
 
-	if (*shadow_pass == '\0')
-		return STATUS_ERROR;	/* empty password */
-
 	/* Re-enable immediate response to SIGTERM/SIGINT/timeout interrupts */
 	ImmediateInterruptOK = true;
 	/* And don't forget to detect one that already arrived */
 	CHECK_FOR_INTERRUPTS();
+
+	/*
+	 * Don't allow an empty password. Libpq treats an empty password the same
+	 * as no password at all, and won't even try to authenticate. But other
+	 * clients might, so allowing it would be confusing.
+	 *
+	 * For a plaintext password, we can simply check that it's not an empty
+	 * string. For an encrypted password, check that it does not match the MD5
+	 * hash of an empty string.
+	 */
+	if (*shadow_pass == '\0')
+		return STATUS_ERROR;	/* empty password */
+	if (isMD5(shadow_pass))
+	{
+		char		crypt_empty[MD5_PASSWD_LEN + 1];
+
+		if (!pg_md5_encrypt("",
+							port->user_name,
+							strlen(port->user_name),
+							crypt_empty))
+			return STATUS_ERROR;
+		if (strcmp(shadow_pass, crypt_empty) == 0)
+			return STATUS_ERROR;	/* empty password */
+	}
 
 	/*
 	 * Compare with the encrypted or plain password depending on the

@@ -700,6 +700,20 @@ recv_password_packet(Port *port)
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
 				 errmsg("invalid password packet size")));
 
+	/*
+	 * Don't allow an empty password. Libpq treats an empty password the same
+	 * as no password at all, and won't even try to authenticate. But other
+	 * clients might, so allowing it would be confusing.
+	 *
+	 * Note that this only catches an empty password sent by the client in
+	 * plaintext. There's another check in md5_crypt_verify to prevent an
+	 * empty password from being used with MD5 authentication.
+	 */
+	if (buf.data[0] == '\0')
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PASSWORD),
+				 errmsg("empty password returned by client")));
+
 	/* Do not echo password to logs, for security. */
 	ereport(DEBUG5,
 			(errmsg("received password packet")));
@@ -1893,12 +1907,6 @@ pam_passwd_conv_proc(int num_msg, const struct pam_message ** msg,
 						 */
 						goto fail;
 					}
-					if (strlen(passwd) == 0)
-					{
-						ereport(LOG,
-							  (errmsg("empty password returned by client")));
-						goto fail;
-					}
 				}
 				if ((reply[i].resp = strdup(passwd)) == NULL)
 					goto fail;
@@ -2165,16 +2173,11 @@ CheckLDAPAuth(Port *port)
 	if (passwd == NULL)
 		return STATUS_EOF;		/* client wouldn't send password */
 
-	if (strlen(passwd) == 0)
-	{
-		ereport(LOG,
-				(errmsg("empty password returned by client")));
-		return STATUS_ERROR;
-	}
-
 	if (InitializeLDAPConnection(port, &ldap) == STATUS_ERROR)
+	{
 		/* Error message already sent */
 		return STATUS_ERROR;
+	}
 
 	if (port->hba->ldapbasedn)
 	{
@@ -2527,13 +2530,6 @@ CheckRADIUSAuth(Port *port)
 	passwd = recv_password_packet(port);
 	if (passwd == NULL)
 		return STATUS_EOF;		/* client wouldn't send password */
-
-	if (strlen(passwd) == 0)
-	{
-		ereport(LOG,
-				(errmsg("empty password returned by client")));
-		return STATUS_ERROR;
-	}
 
 	if (strlen(passwd) > RADIUS_VECTOR_LENGTH)
 	{
