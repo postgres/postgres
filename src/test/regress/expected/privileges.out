@@ -1238,6 +1238,14 @@ SELECT lo_create(2002);
       2002
 (1 row)
 
+SELECT loread(lo_open(1001, x'20000'::int), 32);	-- allowed, for now
+ loread 
+--------
+ \x
+(1 row)
+
+SELECT lowrite(lo_open(1001, x'40000'::int), 'abcd');	-- fail, wrong mode
+ERROR:  large object descriptor 0 was not opened for writing
 SELECT loread(lo_open(1001, x'40000'::int), 32);
  loread 
 --------
@@ -1332,6 +1340,8 @@ ERROR:  permission denied for large object 1002
 SELECT lowrite(lo_open(1002, x'20000'::int), 'abcd');	-- to be denied
 ERROR:  permission denied for large object 1002
 SELECT lo_truncate(lo_open(1002, x'20000'::int), 10);	-- to be denied
+ERROR:  permission denied for large object 1002
+SELECT lo_put(1002, 1, 'abcd');				-- to be denied
 ERROR:  permission denied for large object 1002
 SELECT lo_unlink(1002);					-- to be denied
 ERROR:  must be owner of large object 1002

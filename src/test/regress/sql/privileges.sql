@@ -779,6 +779,9 @@ SET SESSION AUTHORIZATION regress_user2;
 SELECT lo_create(2001);
 SELECT lo_create(2002);
 
+SELECT loread(lo_open(1001, x'20000'::int), 32);	-- allowed, for now
+SELECT lowrite(lo_open(1001, x'40000'::int), 'abcd');	-- fail, wrong mode
+
 SELECT loread(lo_open(1001, x'40000'::int), 32);
 SELECT loread(lo_open(1002, x'40000'::int), 32);	-- to be denied
 SELECT loread(lo_open(1003, x'40000'::int), 32);
@@ -818,6 +821,7 @@ SET SESSION AUTHORIZATION regress_user4;
 SELECT loread(lo_open(1002, x'40000'::int), 32);	-- to be denied
 SELECT lowrite(lo_open(1002, x'20000'::int), 'abcd');	-- to be denied
 SELECT lo_truncate(lo_open(1002, x'20000'::int), 10);	-- to be denied
+SELECT lo_put(1002, 1, 'abcd');				-- to be denied
 SELECT lo_unlink(1002);					-- to be denied
 SELECT lo_export(1001, '/dev/null');			-- to be denied
 

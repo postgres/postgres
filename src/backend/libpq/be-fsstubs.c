@@ -896,6 +896,18 @@ be_lo_put(PG_FUNCTION_ARGS)
 	CreateFSContext();
 
 	loDesc = inv_open(loOid, INV_WRITE, fscxt);
+
+	/* Permission check */
+	if (!lo_compat_privileges &&
+		pg_largeobject_aclcheck_snapshot(loDesc->id,
+										 GetUserId(),
+										 ACL_UPDATE,
+										 loDesc->snapshot) != ACLCHECK_OK)
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("permission denied for large object %u",
+						loDesc->id)));
+
 	inv_seek(loDesc, offset, SEEK_SET);
 	written = inv_write(loDesc, VARDATA_ANY(str), VARSIZE_ANY_EXHDR(str));
 	Assert(written == VARSIZE_ANY_EXHDR(str));
