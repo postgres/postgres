@@ -1,0 +1,105 @@
+# Swedish message translation file for pltcl
+# Copyright (C) 2017 PostgreSQL Global Development Group
+# This file is distributed under the same license as the PostgreSQL package.
+# Dennis Björklund <db@zigo.dhs.org>, 2017.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pltcl (PostgreSQL) 10\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
+"POT-Creation-Date: 2017-07-20 21:07+0000\n"
+"PO-Revision-Date: 2017-07-21 06:04+0200\n"
+"Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
+"Language-Team: Swedish <sv@li.org>\n"
+"Language: sv\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: pltcl.c:459
+msgid "PL/Tcl function to call once when pltcl is first used."
+msgstr "PL/Tcl-funktion att anropa en gång när pltcl först används."
+
+#: pltcl.c:466
+msgid "PL/TclU function to call once when pltclu is first used."
+msgstr "PL/TclU-funktion att anrop en gång när pltclu först används."
+
+#: pltcl.c:629
+#, c-format
+msgid "function \"%s\" is in the wrong language"
+msgstr "funktionen \"%s\" är skriven i fel språk"
+
+#: pltcl.c:640
+#, c-format
+msgid "function \"%s\" must not be SECURITY DEFINER"
+msgstr "funktionen \"%s\" får ej vara SECURITY DEFINER"
+
+#. translator: %s is "pltcl.start_proc" or "pltclu.start_proc"
+#: pltcl.c:674
+#, c-format
+msgid "processing %s parameter"
+msgstr "processar parameter %s"
+
+#: pltcl.c:830
+#, c-format
+msgid "set-valued function called in context that cannot accept a set"
+msgstr "en funktion som returnerar en mängd anropades i kontext som inte godtar en mängd"
+
+#: pltcl.c:994
+#, c-format
+msgid "function returning record called in context that cannot accept type record"
+msgstr "en funktion med post som värde anropades i sammanhang där poster inte kan godtagas."
+
+#: pltcl.c:1263
+#, c-format
+msgid "could not split return value from trigger: %s"
+msgstr "kunde inte dela på returvärde och utlösare: %s"
+
+#: pltcl.c:1343 pltcl.c:1771
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: pltcl.c:1344
+#, c-format
+msgid ""
+"%s\n"
+"in PL/Tcl function \"%s\""
+msgstr ""
+"%s\n"
+"i PL/Tcl-funktion \"%s\""
+
+#: pltcl.c:1509
+#, c-format
+msgid "trigger functions can only be called as triggers"
+msgstr "Triggningsfunktioner kan bara anropas vid triggning."
+
+#: pltcl.c:1513
+#, c-format
+msgid "PL/Tcl functions cannot return type %s"
+msgstr "PL/Tcl-funktioner kan inte returnera typ %s"
+
+#: pltcl.c:1549
+#, c-format
+msgid "PL/Tcl functions cannot accept type %s"
+msgstr "PL/Tcl-funktioner kan inte ta emot typ %s"
+
+#: pltcl.c:1663
+#, c-format
+msgid "could not create internal procedure \"%s\": %s"
+msgstr "kunde inte skapa en intern procedur \"%s\": %s"
+
+#: pltcl.c:3100
+#, c-format
+msgid "column name/value list must have even number of elements"
+msgstr "kolumn-namn/-värde måste ha ett jämt antal element"
+
+#: pltcl.c:3118
+#, c-format
+msgid "column name/value list contains nonexistent column name \"%s\""
+msgstr "listan med kolumn-namn/-värde innehåller det icke existerande kolumnnamnet \"%s\""
+
+#: pltcl.c:3125
+#, c-format
+msgid "cannot set system attribute \"%s\""
+msgstr "kan inte sätta systemattribut \"%s\""

@@ -10,10 +10,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pgscripts (PostgreSQL 9.6)\n"
+"Project-Id-Version: pgscripts (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2017-07-05 15:16+0000\n"
-"PO-Revision-Date: 2016-05-25 11:14-0500\n"
+"PO-Revision-Date: 2017-07-11 11:26-0500\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: Castellano <pgsql-es-ayuda@postgresql.org>\n"
 "Language: es\n"
@@ -21,7 +21,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 1.8.7\n"
+"X-Generator: Poedit 2.0.2\n"
 
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
 #: ../../common/fe_memutils.c:98
@@ -77,9 +77,8 @@ msgstr "formato de salida no válido (error interno): %d"
 
 #: clusterdb.c:111 clusterdb.c:130 createdb.c:119 createdb.c:138
 #: createuser.c:166 createuser.c:181 dropdb.c:94 dropdb.c:103 dropdb.c:111
-#: dropuser.c:90 dropuser.c:105 dropuser.c:120 pg_isready.c:93
-#: pg_isready.c:107 reindexdb.c:131 reindexdb.c:150 vacuumdb.c:213
-#: vacuumdb.c:232
+#: dropuser.c:90 dropuser.c:105 dropuser.c:120 pg_isready.c:93 pg_isready.c:107
+#: reindexdb.c:131 reindexdb.c:150 vacuumdb.c:213 vacuumdb.c:232
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Use «%s --help» para mayor información.\n"
@@ -163,8 +162,7 @@ msgstr "  -a, --all                 reordenar todas las bases de datos\n"
 msgid "  -d, --dbname=DBNAME       database to cluster\n"
 msgstr "  -d, --dbname=BASE         base de datos a reordenar\n"
 
-#: clusterdb.c:275 createuser.c:349 dropdb.c:158 dropuser.c:164
-#: reindexdb.c:406
+#: clusterdb.c:275 createuser.c:349 dropdb.c:158 dropuser.c:164 reindexdb.c:406
 #, c-format
 msgid "  -e, --echo                show the commands being sent to the server\n"
 msgstr "  -e, --echo                mostrar las órdenes a medida que se ejecutan\n"
@@ -184,14 +182,12 @@ msgstr "  -t, --table=TABLA         reordenar sólo esta(s) tabla(s)\n"
 msgid "  -v, --verbose             write a lot of output\n"
 msgstr "  -v, --verbose             desplegar varios mensajes informativos\n"
 
-#: clusterdb.c:279 createuser.c:361 dropdb.c:160 dropuser.c:167
-#: reindexdb.c:413
+#: clusterdb.c:279 createuser.c:361 dropdb.c:160 dropuser.c:167 reindexdb.c:413
 #, c-format
 msgid "  -V, --version             output version information, then exit\n"
 msgstr "  -V, --version             mostrar información de versión y salir\n"
 
-#: clusterdb.c:280 createuser.c:366 dropdb.c:162 dropuser.c:169
-#: reindexdb.c:414
+#: clusterdb.c:280 createuser.c:366 dropdb.c:162 dropuser.c:169 reindexdb.c:414
 #, c-format
 msgid "  -?, --help                show this help, then exit\n"
 msgstr "  -?, --help                mostrar esta ayuda y salir\n"
@@ -206,14 +202,14 @@ msgstr ""
 "\n"
 "Opciones de conexión:\n"
 
-#: clusterdb.c:282 createuser.c:368 dropdb.c:164 dropuser.c:171
-#: reindexdb.c:416 vacuumdb.c:971
+#: clusterdb.c:282 createuser.c:368 dropdb.c:164 dropuser.c:171 reindexdb.c:416
+#: vacuumdb.c:971
 #, c-format
 msgid "  -h, --host=HOSTNAME       database server host or socket directory\n"
 msgstr "  -h, --host=ANFITRIÓN      nombre del servidor o directorio del socket\n"
 
-#: clusterdb.c:283 createuser.c:369 dropdb.c:165 dropuser.c:172
-#: reindexdb.c:417 vacuumdb.c:972
+#: clusterdb.c:283 createuser.c:369 dropdb.c:165 dropuser.c:172 reindexdb.c:417
+#: vacuumdb.c:972
 #, c-format
 msgid "  -p, --port=PORT           database server port\n"
 msgstr "  -p, --port=PUERTO         puerto del servidor\n"
@@ -223,14 +219,14 @@ msgstr "  -p, --port=PUERTO         puerto del servidor\n"
 msgid "  -U, --username=USERNAME   user name to connect as\n"
 msgstr "  -U, --username=USUARIO    nombre de usuario para la conexión\n"
 
-#: clusterdb.c:285 createuser.c:371 dropdb.c:167 dropuser.c:174
-#: reindexdb.c:419 vacuumdb.c:974
+#: clusterdb.c:285 createuser.c:371 dropdb.c:167 dropuser.c:174 reindexdb.c:419
+#: vacuumdb.c:974
 #, c-format
 msgid "  -w, --no-password         never prompt for password\n"
 msgstr "  -w, --no-password         nunca pedir contraseña\n"
 
-#: clusterdb.c:286 createuser.c:372 dropdb.c:168 dropuser.c:175
-#: reindexdb.c:420 vacuumdb.c:975
+#: clusterdb.c:286 createuser.c:372 dropdb.c:168 dropuser.c:175 reindexdb.c:420
+#: vacuumdb.c:975
 #, c-format
 msgid "  -W, --password            force password prompt\n"
 msgstr "  -W, --password            forzar la petición de contraseña\n"
@@ -478,9 +474,9 @@ msgid "Shall the new role be allowed to create more new roles?"
 msgstr "¿Debe permitírsele al rol la creación de otros roles?"
 
 #: createuser.c:272
-#, fuzzy, c-format
+#, c-format
 msgid "%s: password encryption failed: %s"
-msgstr "El cifrado de la contraseña falló.\n"
+msgstr "%s: el cifrado de la contraseña falló: %s"
 
 #: createuser.c:327
 #, c-format

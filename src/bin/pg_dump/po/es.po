@@ -9,10 +9,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_dump (PostgreSQL 9.6)\n"
+"Project-Id-Version: pg_dump (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2017-07-05 15:16+0000\n"
-"PO-Revision-Date: 2016-05-24 10:40-0500\n"
+"PO-Revision-Date: 2017-07-12 11:12-0500\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: PgSQL Español <pgsql-es-ayuda@postgresql.org>\n"
 "Language: es\n"
@@ -20,7 +20,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Poedit 1.8.7\n"
+"X-Generator: Poedit 2.0.2\n"
 
 #: ../../common/exec.c:127 ../../common/exec.c:241 ../../common/exec.c:284
 #, c-format
@@ -256,9 +256,9 @@ msgid "reading indexes\n"
 msgstr "leyendo los índices\n"
 
 #: common.c:261
-#, fuzzy, c-format
+#, c-format
 msgid "reading extended statistics\n"
-msgstr "leyendo las extensiones\n"
+msgstr "leyendo estadísticas extendidas\n"
 
 #: common.c:265
 #, c-format
@@ -281,19 +281,19 @@ msgid "reading policies\n"
 msgstr "leyendo políticas\n"
 
 #: common.c:281
-#, fuzzy, c-format
+#, c-format
 msgid "reading publications\n"
-msgstr "leyendo políticas\n"
+msgstr "leyendo publicaciones\n"
 
 #: common.c:285
-#, fuzzy, c-format
+#, c-format
 msgid "reading publication membership\n"
-msgstr "leyendo políticas\n"
+msgstr "leyendo membresía en publicaciones\n"
 
 #: common.c:289
-#, fuzzy, c-format
+#, c-format
 msgid "reading subscriptions\n"
-msgstr "leyendo las extensiones\n"
+msgstr "leyendo las suscripciones\n"
 
 #: common.c:924
 #, c-format
@@ -1515,7 +1515,7 @@ msgstr "  --lock-wait-timeout=SEGS espera a lo más SEGS segundos obtener un loc
 #: pg_dump.c:926 pg_dumpall.c:605
 #, c-format
 msgid "  --no-sync                    do not wait for changes to be written safely to disk\n"
-msgstr ""
+msgstr "  --no-sync                no esperar que los cambios se sincronicen a disco\n"
 
 #: pg_dump.c:927 pg_dumpall.c:583
 #, c-format
@@ -1534,49 +1534,49 @@ msgstr ""
 #: pg_dump.c:930 pg_dumpall.c:585
 #, c-format
 msgid "  -a, --data-only              dump only the data, not the schema\n"
-msgstr "  -a, --data-only          extrae sólo los datos, no el esquema\n"
+msgstr "  -a, --data-only              extrae sólo los datos, no el esquema\n"
 
 #: pg_dump.c:931
 #, c-format
 msgid "  -b, --blobs                  include large objects in dump\n"
-msgstr "  -b, --blobs              incluye objetos grandes en la extracción\n"
+msgstr "  -b, --blobs                  incluye objetos grandes en la extracción\n"
 
 #: pg_dump.c:932
-#, fuzzy, c-format
+#, c-format
 msgid "  -B, --no-blobs               exclude large objects in dump\n"
-msgstr "  -b, --blobs              incluye objetos grandes en la extracción\n"
+msgstr "  -B, --no-blobs               excluye objetos grandes en la extracción\n"
 
 #: pg_dump.c:933 pg_restore.c:463
 #, c-format
 msgid "  -c, --clean                  clean (drop) database objects before recreating\n"
-msgstr "  -c, --clean              tira (drop) la base de datos antes de crearla\n"
+msgstr "  -c, --clean                  tira (drop) la base de datos antes de crearla\n"
 
 #: pg_dump.c:934
 #, c-format
 msgid "  -C, --create                 include commands to create database in dump\n"
 msgstr ""
-"  -C, --create             incluye órdenes para crear la base de datos\n"
-"                           en la extracción\n"
+"  -C, --create                 incluye órdenes para crear la base de datos\n"
+"                               en la extracción\n"
 
 #: pg_dump.c:935
 #, c-format
 msgid "  -E, --encoding=ENCODING      dump the data in encoding ENCODING\n"
-msgstr "  -E, --encoding=CODIF     extrae los datos con la codificación CODIF\n"
+msgstr "  -E, --encoding=CODIF         extrae los datos con la codificación CODIF\n"
 
 #: pg_dump.c:936
 #, c-format
 msgid "  -n, --schema=SCHEMA          dump the named schema(s) only\n"
-msgstr "  -n, --schema=ESQUEMA     extrae sólo el esquema nombrado\n"
+msgstr "  -n, --schema=ESQUEMA         extrae sólo el esquema nombrado\n"
 
 #: pg_dump.c:937
 #, c-format
 msgid "  -N, --exclude-schema=SCHEMA  do NOT dump the named schema(s)\n"
-msgstr "  -N, --exclude-schema=ESQUEMA  NO extrae el o los esquemas nombrados\n"
+msgstr "  -N, --exclude-schema=ESQUEMA NO extrae el o los esquemas nombrados\n"
 
 #: pg_dump.c:938 pg_dumpall.c:588
 #, c-format
 msgid "  -o, --oids                   include OIDs in dump\n"
-msgstr "  -o, --oids               incluye OIDs en la extracción\n"
+msgstr "  -o, --oids                   incluye OIDs en la extracción\n"
 
 #: pg_dump.c:939
 #, c-format
@@ -1584,59 +1584,59 @@ msgid ""
 "  -O, --no-owner               skip restoration of object ownership in\n"
 "                               plain-text format\n"
 msgstr ""
-"  -O, --no-owner           en formato de sólo texto, no reestablece\n"
-"                           los dueños de los objetos\n"
+"  -O, --no-owner               en formato de sólo texto, no reestablece\n"
+"                               los dueños de los objetos\n"
 
 #: pg_dump.c:941 pg_dumpall.c:591
 #, c-format
 msgid "  -s, --schema-only            dump only the schema, no data\n"
-msgstr "  -s, --schema-only        extrae sólo el esquema, no los datos\n"
+msgstr "  -s, --schema-only            extrae sólo el esquema, no los datos\n"
 
 #: pg_dump.c:942
 #, c-format
 msgid "  -S, --superuser=NAME         superuser user name to use in plain-text format\n"
-msgstr "  -S, --superuser=NAME     superusuario a utilizar en el volcado de texto\n"
+msgstr "  -S, --superuser=NAME         superusuario a utilizar en el volcado de texto\n"
 
 #: pg_dump.c:943
 #, c-format
 msgid "  -t, --table=TABLE            dump the named table(s) only\n"
-msgstr "  -t, --table=TABLE        extrae sólo la o las tablas nombradas\n"
+msgstr "  -t, --table=TABLE            extrae sólo la o las tablas nombradas\n"
 
 #: pg_dump.c:944
 #, c-format
 msgid "  -T, --exclude-table=TABLE    do NOT dump the named table(s)\n"
-msgstr "  -T, --exclude-table=TABLA  NO extrae la(s) tabla(s) nombrada(s)\n"
+msgstr "  -T, --exclude-table=TABLA    NO extrae la(s) tabla(s) nombrada(s)\n"
 
 #: pg_dump.c:945 pg_dumpall.c:594
 #, c-format
 msgid "  -x, --no-privileges          do not dump privileges (grant/revoke)\n"
-msgstr "  -x, --no-privileges      no extrae los privilegios (grant/revoke)\n"
+msgstr "  -x, --no-privileges          no extrae los privilegios (grant/revoke)\n"
 
 #: pg_dump.c:946 pg_dumpall.c:595
 #, c-format
 msgid "  --binary-upgrade             for use by upgrade utilities only\n"
-msgstr "  --binary-upgrade         sólo para uso de utilidades de upgrade\n"
+msgstr "  --binary-upgrade             sólo para uso de utilidades de upgrade\n"
 
 #: pg_dump.c:947 pg_dumpall.c:596
 #, c-format
 msgid "  --column-inserts             dump data as INSERT commands with column names\n"
 msgstr ""
-"  --column-inserts         extrae los datos usando INSERT con nombres\n"
-"                           de columnas\n"
+"  --column-inserts             extrae los datos usando INSERT con nombres\n"
+"                               de columnas\n"
 
 #: pg_dump.c:948 pg_dumpall.c:597
 #, c-format
 msgid "  --disable-dollar-quoting     disable dollar quoting, use SQL standard quoting\n"
 msgstr ""
-"  --disable-dollar-quoting deshabilita el uso de «delimitadores de dólar»,\n"
-"                           usa delimitadores de cadena estándares\n"
+"  --disable-dollar-quoting     deshabilita el uso de «delimitadores de dólar»,\n"
+"                               usa delimitadores de cadena estándares\n"
 
 #: pg_dump.c:949 pg_dumpall.c:598 pg_restore.c:480
 #, c-format
 msgid "  --disable-triggers           disable triggers during data-only restore\n"
 msgstr ""
-"  --disable-triggers       deshabilita los disparadores (triggers) durante el\n"
-"                           restablecimiento de la extracción de sólo-datos\n"
+"  --disable-triggers           deshabilita los disparadores (triggers) durante el\n"
+"                               restablecimiento de la extracción de sólo-datos\n"
 
 #: pg_dump.c:950
 #, c-format
@@ -1650,70 +1650,70 @@ msgstr ""
 #: pg_dump.c:952
 #, c-format
 msgid "  --exclude-table-data=TABLE   do NOT dump data for the named table(s)\n"
-msgstr "  --exclude-table-data=TABLA  NO extrae los datos de la(s) tabla(s) nombrada(s)\n"
+msgstr "  --exclude-table-data=TABLA   NO extrae los datos de la(s) tabla(s) nombrada(s)\n"
 
 #: pg_dump.c:953 pg_dumpall.c:599 pg_restore.c:482
 #, c-format
 msgid "  --if-exists                  use IF EXISTS when dropping objects\n"
-msgstr "  --if-exists               usa IF EXISTS al eliminar objetos\n"
+msgstr "  --if-exists                  usa IF EXISTS al eliminar objetos\n"
 
 #: pg_dump.c:954 pg_dumpall.c:600
 #, c-format
 msgid "  --inserts                    dump data as INSERT commands, rather than COPY\n"
-msgstr "  --inserts                extrae los datos usando INSERT, en vez de COPY\n"
+msgstr "  --inserts                    extrae los datos usando INSERT, en vez de COPY\n"
 
 #: pg_dump.c:955 pg_dumpall.c:601
-#, fuzzy, c-format
+#, c-format
 msgid "  --no-publications            do not dump publications\n"
-msgstr "  --no-tablespaces         no volcar asignaciones de tablespace\n"
+msgstr "  --no-publications            no volcar las publicaciones\n"
 
 #: pg_dump.c:956 pg_dumpall.c:603
 #, c-format
 msgid "  --no-security-labels         do not dump security label assignments\n"
-msgstr "  --no-security-labels     no volcar asignaciones de etiquetas de seguridad\n"
+msgstr "  --no-security-labels         no volcar asignaciones de etiquetas de seguridad\n"
 
 #: pg_dump.c:957 pg_dumpall.c:604
-#, fuzzy, c-format
+#, c-format
 msgid "  --no-subscriptions           do not dump subscriptions\n"
-msgstr "  --no-security-labels     no volcar asignaciones de etiquetas de seguridad\n"
+msgstr "  --no-subscriptions           no volcar las suscripciones\n"
 
 #: pg_dump.c:958
 #, c-format
 msgid "  --no-synchronized-snapshots  do not use synchronized snapshots in parallel jobs\n"
 msgstr ""
 "  --no-synchronized-snapshots  no usar snapshots sincronizados en trabajos\n"
-"                           en paralelo\n"
+"                               en paralelo\n"
 
 #: pg_dump.c:959 pg_dumpall.c:606
 #, c-format
 msgid "  --no-tablespaces             do not dump tablespace assignments\n"
-msgstr "  --no-tablespaces         no volcar asignaciones de tablespace\n"
+msgstr "  --no-tablespaces             no volcar asignaciones de tablespace\n"
 
 #: pg_dump.c:960 pg_dumpall.c:607
 #, c-format
 msgid "  --no-unlogged-table-data     do not dump unlogged table data\n"
-msgstr "  --no-unlogged-table-data no volcar datos de tablas unlogged\n"
+msgstr "  --no-unlogged-table-data     no volcar datos de tablas unlogged\n"
 
 #: pg_dump.c:961 pg_dumpall.c:608
 #, c-format
 msgid "  --quote-all-identifiers      quote all identifiers, even if not key words\n"
 msgstr ""
-"  --quote-all-identifiers  entrecomilla todos los identificadores, incluso\n"
-"                           si no son palabras clave\n"
+"  --quote-all-identifiers      entrecomilla todos los identificadores, incluso\n"
+"                               si no son palabras clave\n"
 
 #: pg_dump.c:962
 #, c-format
 msgid "  --section=SECTION            dump named section (pre-data, data, or post-data)\n"
 msgstr ""
-"  --section=SECCIÓN        volcar la sección nombrada (pre-data, data,\n"
-"                           post-data)\n"
+"  --section=SECCIÓN            volcar la sección nombrada (pre-data, data,\n"
+"                               post-data)\n"
 
 #: pg_dump.c:963
 #, c-format
 msgid "  --serializable-deferrable    wait until the dump can run without anomalies\n"
 msgstr ""
-"  --serializable-deferrable  espera hasta que el respaldo pueda completarse\n"
-"                           sin anomalías\n"
+"  --serializable-deferrable    espera hasta que el respaldo pueda completarse\n"
+"                               sin anomalías\n"
 
 #: pg_dump.c:964
 #, c-format
@@ -1726,8 +1726,8 @@ msgid ""
 "  --strict-names               require table and/or schema include patterns to\n"
 "                               match at least one entity each\n"
 msgstr ""
-"  --strict-names           requerir al menos una coincidencia para cada patrón\n"
-"                           de nombre de tablas y esquemas\n"
+"  --strict-names               requerir al menos una coincidencia para cada patrón\n"
+"                               de nombre de tablas y esquemas\n"
 
 #: pg_dump.c:967 pg_dumpall.c:609 pg_restore.c:492
 #, c-format
@@ -1737,8 +1737,8 @@ msgid ""
 "                               ALTER OWNER commands to set ownership\n"
 msgstr ""
 "  --use-set-session-authorization\n"
-"                           usa órdenes SESSION AUTHORIZATION en lugar de\n"
-"                           ALTER OWNER para cambiar los dueño de los objetos\n"
+"                               usa órdenes SESSION AUTHORIZATION en lugar de\n"
+"                               ALTER OWNER para cambiar los dueño de los objetos\n"
 
 #: pg_dump.c:971 pg_dumpall.c:613 pg_restore.c:496
 #, c-format
@@ -1902,34 +1902,34 @@ msgid "reading policies for table \"%s.%s\"\n"
 msgstr "extrayendo las políticas para la tabla «%s.%s»\n"
 
 #: pg_dump.c:3329
-#, fuzzy, c-format
+#, c-format
 msgid "unexpected policy command type: %c\n"
-msgstr "tipo de orden inesperada en política: «%s»\n"
+msgstr "tipo de orden inesperada en política: %c\n"
 
 #: pg_dump.c:3445
-#, fuzzy, c-format
+#, c-format
 msgid "WARNING: owner of publication \"%s\" appears to be invalid\n"
-msgstr "PRECAUCIÓN: el dueño de la función «%s» parece no ser válido\n"
+msgstr "PRECAUCIÓN: el dueño de la publicación «%s» parece no ser válido\n"
 
 #: pg_dump.c:3575
-#, fuzzy, c-format
+#, c-format
 msgid "reading publication membership for table \"%s.%s\"\n"
-msgstr "extrayendo las políticas para la tabla «%s.%s»\n"
+msgstr "extrayendo la membresía en publicaciones para la tabla «%s.%s»\n"
 
 #: pg_dump.c:3722
 #, c-format
 msgid "WARNING: subscriptions not dumped because current user is not a superuser\n"
-msgstr ""
+msgstr "PRECAUCIÓN: no se volcaron las suscripciones porque el usuario actual no es un superusuario\n"
 
 #: pg_dump.c:3776
-#, fuzzy, c-format
+#, c-format
 msgid "WARNING: owner of subscription \"%s\" appears to be invalid\n"
-msgstr "PRECAUCIÓN: el dueño de la función «%s» parece no ser válido\n"
+msgstr "PRECAUCIÓN: el dueño de la suscripción «%s» parece no ser válido\n"
 
 #: pg_dump.c:3820
-#, fuzzy, c-format
+#, c-format
 msgid "WARNING: could not parse subpublications array\n"
-msgstr "PRECAUCIÓN: no se pudo interpretar el arreglo reloptions\n"
+msgstr "PRECAUCIÓN: no se pudo interpretar el arreglo subpublications\n"
 
 #: pg_dump.c:4053
 #, c-format
@@ -1982,9 +1982,9 @@ msgid "WARNING: owner of table \"%s\" appears to be invalid\n"
 msgstr "PRECAUCIÓN: el dueño de la tabla «%s» parece no ser válido\n"
 
 #: pg_dump.c:6300 pg_dump.c:16529
-#, fuzzy, c-format
+#, c-format
 msgid "failed sanity check, parent table with OID %u of sequence with OID %u not found\n"
-msgstr "falló la revisión de integridad: no se encontró la tabla padre OID %u de la secuencia con OID %u\n"
+msgstr "falló la revisión de integridad, no se encontró la tabla padre con OID %u de la secuencia con OID %u\n"
 
 #: pg_dump.c:6431
 #, c-format
@@ -1992,9 +1992,9 @@ msgid "reading indexes for table \"%s.%s\"\n"
 msgstr "extrayendo los índices para la tabla «%s.%s»\n"
 
 #: pg_dump.c:6712
-#, fuzzy, c-format
+#, c-format
 msgid "reading extended statistics for table \"%s.%s\"\n"
-msgstr "extrayendo los índices para la tabla «%s.%s»\n"
+msgstr "extrayendo las estadísticas extendidas para la tabla «%s.%s»\n"
 
 #: pg_dump.c:6795
 #, c-format
@@ -2002,9 +2002,9 @@ msgid "reading foreign key constraints for table \"%s.%s\"\n"
 msgstr "extrayendo restricciones de llave foránea para la tabla «%s.%s»\n"
 
 #: pg_dump.c:7019
-#, fuzzy, c-format
+#, c-format
 msgid "failed sanity check, parent table with OID %u of pg_rewrite entry with OID %u not found\n"
-msgstr "falló la revisión de integridad: no se encontró la tabla padre OID %u del elemento con OID %u de pg_rewrite\n"
+msgstr "falló la revisión de integridad, no se encontró la tabla padre con OID %u del elemento con OID %u de pg_rewrite\n"
 
 #: pg_dump.c:7103
 #, c-format
@@ -2131,9 +2131,9 @@ msgid "WARNING: invalid type \"%c\" of access method \"%s\"\n"
 msgstr "PRECAUCIÓN: el tipo «%c» para el método de acceso «%s» no es válido\n"
 
 #: pg_dump.c:13086
-#, fuzzy, c-format
+#, c-format
 msgid "unrecognized collation provider: %s\n"
-msgstr "tipo de restricción inesperado: %c\n"
+msgstr "proveedor de ordenamiento (collation) no reconocido: %s\n"
 
 #: pg_dump.c:13533
 #, c-format
@@ -2178,9 +2178,9 @@ msgid "definition of view \"%s\" appears to be empty (length zero)\n"
 msgstr "la definición de la vista «%s» parece estar vacía (tamaño cero)\n"
 
 #: pg_dump.c:15200
-#, fuzzy, c-format
+#, c-format
 msgid "invalid number of parents %d for table \"%s\"\n"
-msgstr "el valor de adnum %d para la tabla «%s» no es válido\n"
+msgstr "número de padres %d para la tabla «%s» no es válido\n"
 
 #: pg_dump.c:15847
 #, c-format
@@ -2394,9 +2394,9 @@ msgstr ""
 "                           ni roles\n"
 
 #: pg_dumpall.c:602
-#, fuzzy, c-format
+#, c-format
 msgid "  --no-role-passwords          do not dump passwords for roles\n"
-msgstr "  -w, --no-password        nunca pedir una contraseña\n"
+msgstr "  --no-role-passwords      no extraer contraseñas para roles\n"
 
 #: pg_dumpall.c:614
 #, c-format
@@ -2589,29 +2589,29 @@ msgstr ""
 #: pg_restore.c:462
 #, c-format
 msgid "  -a, --data-only              restore only the data, no schema\n"
-msgstr "  -a, --data-only          reestablece sólo los datos, no el esquema\n"
+msgstr "  -a, --data-only              reestablece sólo los datos, no el esquema\n"
 
 #: pg_restore.c:464
 #, c-format
 msgid "  -C, --create                 create the target database\n"
-msgstr "  -C, --create             crea la base de datos de destino\n"
+msgstr "  -C, --create                 crea la base de datos de destino\n"
 
 #: pg_restore.c:465
 #, c-format
 msgid "  -e, --exit-on-error          exit on error, default is to continue\n"
 msgstr ""
-"  -e, --exit-on-error      abandonar al encontrar un error\n"
-"                           por omisión, se continúa la restauración\n"
+"  -e, --exit-on-error          abandonar al encontrar un error\n"
+"                               por omisión, se continúa la restauración\n"
 
 #: pg_restore.c:466
 #, c-format
 msgid "  -I, --index=NAME             restore named index\n"
-msgstr "  -I, --index=NOMBRE       reestablece el índice nombrado\n"
+msgstr "  -I, --index=NOMBRE           reestablece el índice nombrado\n"
 
 #: pg_restore.c:467
 #, c-format
 msgid "  -j, --jobs=NUM               use this many parallel jobs to restore\n"
-msgstr "  -j, --jobs=NUM           máximo de procesos paralelos para restaurar\n"
+msgstr "  -j, --jobs=NUM               máximo de procesos paralelos para restaurar\n"
 
 #: pg_restore.c:468
 #, c-format
@@ -2619,62 +2619,60 @@ msgid ""
 "  -L, --use-list=FILENAME      use table of contents from this file for\n"
 "                               selecting/ordering output\n"
 msgstr ""
-"  -L, --use-list=ARCHIVO   usa la tabla de contenido especificada para ordenar\n"
-"                           la salida de este archivo\n"
+"  -L, --use-list=ARCHIVO       usa la tabla de contenido especificada para ordenar\n"
+"                               la salida de este archivo\n"
 
 #: pg_restore.c:470
 #, c-format
 msgid "  -n, --schema=NAME            restore only objects in this schema\n"
-msgstr "  -n, --schema=NAME        reestablece sólo los objetos en este esquema\n"
+msgstr "  -n, --schema=NAME            reestablece sólo los objetos en este esquema\n"
 
 #: pg_restore.c:471
-#, fuzzy, c-format
+#, c-format
 msgid "  -N, --exclude-schema=NAME    do not restore objects in this schema\n"
-msgstr "  -n, --schema=NAME        reestablece sólo los objetos en este esquema\n"
+msgstr "  -N, --exclude-schema=NAME    no reestablecer los objetos en este esquema\n"
 
 #: pg_restore.c:473
 #, c-format
 msgid "  -P, --function=NAME(args)    restore named function\n"
-msgstr ""
-"  -P, --function=NOMBRE(args)\n"
-"                           reestablece la función nombrada\n"
+msgstr "  -P, --function=NOMBRE(args)  reestablece la función nombrada\n"
 
 #: pg_restore.c:474
 #, c-format
 msgid "  -s, --schema-only            restore only the schema, no data\n"
-msgstr "  -s, --schema-only        reestablece el esquema únicamente, no los datos\n"
+msgstr "  -s, --schema-only            reestablece el esquema únicamente, no los datos\n"
 
 #: pg_restore.c:475
 #, c-format
 msgid "  -S, --superuser=NAME         superuser user name to use for disabling triggers\n"
 msgstr ""
-"  -S, --superuser=NOMBRE   especifica el nombre del superusuario que se usa\n"
-"                           para deshabilitar los disparadores (triggers)\n"
+"  -S, --superuser=NOMBRE       especifica el nombre del superusuario que se usa\n"
+"                               para deshabilitar los disparadores (triggers)\n"
 
 #: pg_restore.c:476
 #, c-format
 msgid "  -t, --table=NAME             restore named relation (table, view, etc.)\n"
-msgstr "  -t, --table=NOMBRE       reestablece la relación (tabla, vista, etc.) nombrada\n"
+msgstr "  -t, --table=NOMBRE           reestablece la relación (tabla, vista, etc.) nombrada\n"
 
 #: pg_restore.c:477
 #, c-format
 msgid "  -T, --trigger=NAME           restore named trigger\n"
-msgstr "  -T, --trigger=NOMBRE     reestablece el disparador (trigger) nombrado\n"
+msgstr "  -T, --trigger=NOMBRE         reestablece el disparador (trigger) nombrado\n"
 
 #: pg_restore.c:478
 #, c-format
 msgid "  -x, --no-privileges          skip restoration of access privileges (grant/revoke)\n"
-msgstr "  -x, --no-privileges      no reestablece los privilegios (grant/revoke)\n"
+msgstr "  -x, --no-privileges          no reestablece los privilegios (grant/revoke)\n"
 
 #: pg_restore.c:479
 #, c-format
 msgid "  -1, --single-transaction     restore as a single transaction\n"
-msgstr "  -1, --single-transaction reestablece en una única transacción\n"
+msgstr "  -1, --single-transaction     reestablece en una única transacción\n"
 
 #: pg_restore.c:481
 #, c-format
 msgid "  --enable-row-security        enable row security\n"
-msgstr "  --enable-row-security    activa seguridad de filas\n"
+msgstr "  --enable-row-security        activa seguridad de filas\n"
 
 #: pg_restore.c:483
 #, c-format
@@ -2682,41 +2680,40 @@ msgid ""
 "  --no-data-for-failed-tables  do not restore data of tables that could not be\n"
 "                               created\n"
 msgstr ""
-"  --no-data-for-failed-tables\n"
-"                           no reestablece datos de tablas que no pudieron\n"
-"                           ser creadas\n"
+"  --no-data-for-failed-tables  no reestablece datos de tablas que no pudieron\n"
+"                               ser creadas\n"
 
 #: pg_restore.c:485
-#, fuzzy, c-format
+#, c-format
 msgid "  --no-publications            do not restore publications\n"
-msgstr "  --no-tablespaces         no vuelca asignaciones de tablespace\n"
+msgstr "  --no-publications            no restaurar publicaciones\n"
 
 #: pg_restore.c:486
 #, c-format
 msgid "  --no-security-labels         do not restore security labels\n"
-msgstr "  --no-security-labels     no restaura etiquetas de seguridad\n"
+msgstr "  --no-security-labels         no restaura etiquetas de seguridad\n"
 
 #: pg_restore.c:487
-#, fuzzy, c-format
+#, c-format
 msgid "  --no-subscriptions           do not restore subscriptions\n"
-msgstr "  --no-security-labels     no restaura etiquetas de seguridad\n"
+msgstr "  --no-subscriptions           no restaurar suscripciones\n"
 
 #: pg_restore.c:488
 #, c-format
 msgid "  --no-tablespaces             do not restore tablespace assignments\n"
-msgstr "  --no-tablespaces         no vuelca asignaciones de tablespace\n"
+msgstr "  --no-tablespaces             no vuelca asignaciones de tablespace\n"
 
 #: pg_restore.c:489
 #, c-format
 msgid "  --section=SECTION            restore named section (pre-data, data, or post-data)\n"
 msgstr ""
-"  --section=SECCIÓN        reestablece la sección nombrada (pre-data, data\n"
-"                           post-data)\n"
+"  --section=SECCIÓN            reestablece la sección nombrada (pre-data, data\n"
+"                               post-data)\n"
 
 #: pg_restore.c:502
 #, c-format
 msgid "  --role=ROLENAME          do SET ROLE before restore\n"
-msgstr "  --role=ROLENAME          hace SET ROLE antes de restaurar\n"
+msgstr "  --role=ROLENAME              hace SET ROLE antes de restaurar\n"
 
 #: pg_restore.c:504
 #, c-format

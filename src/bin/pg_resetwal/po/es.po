@@ -1,4 +1,4 @@
-# Spanish message translation file for pg_resetxlog
+# Spanish message translation file for pg_resetwal
 #
 # Copyright (C) 2003-2012 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
@@ -10,10 +10,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_resetxlog (PostgreSQL 9.6)\n"
+"Project-Id-Version: pg_resetwal (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2017-07-05 15:16+0000\n"
-"PO-Revision-Date: 2017-07-07 20:27-0500\n"
+"PO-Revision-Date: 2017-07-10 12:13-0400\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: Español <pgsql-es-ayuda@postgresql.org>\n"
 "Language: es\n"
@@ -169,7 +169,7 @@ msgstr ""
 #: pg_resetwal.c:454
 #, c-format
 msgid "Write-ahead log reset\n"
-msgstr "Restablecimiento de WAL\n"
+msgstr "«Write-ahead log» restablecido\n"
 
 #: pg_resetwal.c:491
 #, c-format
@@ -523,7 +523,7 @@ msgid ""
 "%s resets the PostgreSQL write-ahead log.\n"
 "\n"
 msgstr ""
-"%s restablece el WAL de PostgreSQL.\n"
+"%s restablece el WAL («write-ahead log») de PostgreSQL.\n"
 "\n"
 
 #: pg_resetwal.c:1231
@@ -617,6 +617,3 @@ msgid ""
 msgstr ""
 "\n"
 "Reporte errores a <pgsql-bugs@postgresql.org>.\n"
-
-#~ msgid "floating-point numbers"
-#~ msgstr "números de coma flotante"
