@@ -1,13 +1,13 @@
 # Brazilian Portuguese message translation file for plpython
 # Copyright (C) 2009 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Euler Taveira de Oliveira <euler@timbira.com>, 2009-2016.
+# Euler Taveira de Oliveira <euler@timbira.com>, 2009-2017.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.6\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2016-08-09 22:53-0300\n"
+"POT-Creation-Date: 2017-05-10 12:09-0300\n"
 "PO-Revision-Date: 2009-05-10 01:15-0300\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@timbira.com>\n"
 "Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"
@@ -22,49 +22,49 @@ msgstr ""
 msgid "plpy.cursor expected a query or a plan"
 msgstr "plpy.cursor esperava uma consulta ou um plano"
 
-#: plpy_cursorobject.c:179
+#: plpy_cursorobject.c:177
 #, c-format
 msgid "plpy.cursor takes a sequence as its second argument"
 msgstr "plpy.cursor tem uma sequência como seu segundo argumento"
 
-#: plpy_cursorobject.c:195 plpy_spi.c:229
+#: plpy_cursorobject.c:193 plpy_spi.c:227
 #, c-format
 msgid "could not execute plan"
 msgstr "não pôde executar plano"
 
-#: plpy_cursorobject.c:198 plpy_spi.c:232
+#: plpy_cursorobject.c:196 plpy_spi.c:230
 #, c-format
 msgid "Expected sequence of %d argument, got %d: %s"
 msgid_plural "Expected sequence of %d arguments, got %d: %s"
 msgstr[0] "Sequência esperada de %d argumento, recebeu %d: %s"
 msgstr[1] "Sequência esperada de %d argumentos, recebeu %d: %s"
 
-#: plpy_cursorobject.c:354
+#: plpy_cursorobject.c:350
 #, c-format
 msgid "iterating a closed cursor"
 msgstr "iterando um cursor fechado"
 
-#: plpy_cursorobject.c:362 plpy_cursorobject.c:427
+#: plpy_cursorobject.c:358 plpy_cursorobject.c:423
 #, c-format
 msgid "iterating a cursor in an aborted subtransaction"
 msgstr "iterando um cursor em uma subtransação abortada"
 
-#: plpy_cursorobject.c:419
+#: plpy_cursorobject.c:415
 #, c-format
 msgid "fetch from a closed cursor"
 msgstr "busca em um cursor fechado"
 
-#: plpy_cursorobject.c:467 plpy_spi.c:438
+#: plpy_cursorobject.c:463 plpy_spi.c:434
 #, c-format
 msgid "query result has too many rows to fit in a Python list"
 msgstr "resultado da consulta tem muitos registros para caber em uma lista Python"
 
-#: plpy_cursorobject.c:508
+#: plpy_cursorobject.c:504
 #, c-format
 msgid "closing a cursor in an aborted subtransaction"
 msgstr "fechando um cursor em uma subtransação abortada"
 
-#: plpy_elog.c:127 plpy_elog.c:128 plpy_plpymodule.c:527
+#: plpy_elog.c:127 plpy_elog.c:128 plpy_plpymodule.c:548
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -204,12 +204,12 @@ msgstr "não pôde criar globais"
 msgid "could not initialize globals"
 msgstr "não pôde inicializar globais"
 
-#: plpy_main.c:389
+#: plpy_main.c:387
 #, c-format
 msgid "PL/Python function \"%s\""
 msgstr "função PL/Python \"%s\""
 
-#: plpy_main.c:396
+#: plpy_main.c:394
 #, c-format
 msgid "PL/Python anonymous code block"
 msgstr "bloco de código PL/Python anônimo"
@@ -219,71 +219,76 @@ msgstr "bloco de código PL/Python anônimo"
 msgid "plan.status takes no arguments"
 msgstr "plan.status não contém argumentos"
 
-#: plpy_plpymodule.c:178 plpy_plpymodule.c:181
+#: plpy_plpymodule.c:181 plpy_plpymodule.c:184
 #, c-format
 msgid "could not import \"plpy\" module"
 msgstr "não pôde importar módulo \"plpy\""
 
-#: plpy_plpymodule.c:196
+#: plpy_plpymodule.c:199
+#, c-format
+msgid "could not create the spiexceptions module"
+msgstr "não pôde criar o módulo spiexceptions"
+
+#: plpy_plpymodule.c:207
 #, c-format
 msgid "could not add the spiexceptions module"
 msgstr "não pôde adicionar o módulo spiexceptions"
 
-#: plpy_plpymodule.c:217
+#: plpy_plpymodule.c:236
 #, c-format
-msgid "could not create the base SPI exceptions"
-msgstr "não pôde criar as exceções base da SPI"
+msgid "could not create exception \"%s\""
+msgstr "não pôde criar exceção \"%s\""
 
-#: plpy_plpymodule.c:252 plpy_plpymodule.c:256
+#: plpy_plpymodule.c:271 plpy_plpymodule.c:275
 #, c-format
 msgid "could not generate SPI exceptions"
 msgstr "não pôde gerar exceções da SPI"
 
-#: plpy_plpymodule.c:422
+#: plpy_plpymodule.c:443
 #, c-format
 msgid "could not unpack arguments in plpy.elog"
 msgstr "não pode desempacotar argumentos em plpy.elog"
 
-#: plpy_plpymodule.c:431
+#: plpy_plpymodule.c:452
 msgid "could not parse error message in plpy.elog"
 msgstr "não pode analisar mensagem de erro em plpy.elog"
 
-#: plpy_plpymodule.c:448
+#: plpy_plpymodule.c:469
 #, c-format
 msgid "Argument 'message' given by name and position"
 msgstr "Argumento 'message' informado por nome e posição"
 
-#: plpy_plpymodule.c:475
+#: plpy_plpymodule.c:496
 #, c-format
 msgid "'%s' is an invalid keyword argument for this function"
 msgstr "'%s' é um argumento inválido para esta função"
 
-#: plpy_plpymodule.c:486 plpy_plpymodule.c:492
+#: plpy_plpymodule.c:507 plpy_plpymodule.c:513
 #, c-format
 msgid "invalid SQLSTATE code"
 msgstr "código SQLSTATE inválido"
 
-#: plpy_procedure.c:232
+#: plpy_procedure.c:230
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "funções de gatilho só podem ser chamadas como gatilhos"
 
-#: plpy_procedure.c:237
+#: plpy_procedure.c:235
 #, c-format
 msgid "PL/Python functions cannot return type %s"
 msgstr "funções PL/Python não podem retornar tipo %s"
 
-#: plpy_procedure.c:318
+#: plpy_procedure.c:316
 #, c-format
 msgid "PL/Python functions cannot accept type %s"
 msgstr "funções PL/Python não podem aceitar tipo %s"
 
-#: plpy_procedure.c:414
+#: plpy_procedure.c:412
 #, c-format
 msgid "could not compile PL/Python function \"%s\""
 msgstr "não pôde compilar função PL/Python \"%s\""
 
-#: plpy_procedure.c:417
+#: plpy_procedure.c:415
 #, c-format
 msgid "could not compile anonymous PL/Python code block"
 msgstr "não pôde compilar bloco de código PL/Python anônimo"
@@ -298,27 +303,27 @@ msgstr "comando não produziu um conjunto de resultados"
 msgid "second argument of plpy.prepare must be a sequence"
 msgstr "segundo argumento de plpy.prepare deve ser uma sequência"
 
-#: plpy_spi.c:118
+#: plpy_spi.c:116
 #, c-format
 msgid "plpy.prepare: type name at ordinal position %d is not a string"
 msgstr "plpy.prepare: nome do tipo na posição %d não é uma cadeia de caracteres"
 
-#: plpy_spi.c:194
+#: plpy_spi.c:192
 #, c-format
 msgid "plpy.execute expected a query or a plan"
 msgstr "plpy.execute espera uma consulta ou um plano"
 
-#: plpy_spi.c:213
+#: plpy_spi.c:211
 #, c-format
 msgid "plpy.execute takes a sequence as its second argument"
 msgstr "plpy.execute recebe uma sequência como segundo argumento"
 
-#: plpy_spi.c:337
+#: plpy_spi.c:335
 #, c-format
 msgid "SPI_execute_plan failed: %s"
 msgstr "SPI_execute_plan falhou: %s"
 
-#: plpy_spi.c:379
+#: plpy_spi.c:377
 #, c-format
 msgid "SPI_execute failed: %s"
 msgstr "SPI_execute falhou: %s"
@@ -383,42 +388,42 @@ msgstr "não pôde criar nova lista Python"
 msgid "could not create bytes representation of Python object"
 msgstr "não pôde criar representação de bytes de um objeto Python"
 
-#: plpy_typeio.c:822
+#: plpy_typeio.c:820
 #, c-format
 msgid "could not create string representation of Python object"
 msgstr "não pôde criar representação de cadeia de caracteres de um objeto Python"
 
-#: plpy_typeio.c:833
+#: plpy_typeio.c:831
 #, c-format
 msgid "could not convert Python object into cstring: Python string representation appears to contain null bytes"
 msgstr "não pôde converter objeto Python em cstring: representação de cadeia de caracteres Python parece conter bytes nulos"
 
-#: plpy_typeio.c:879
+#: plpy_typeio.c:877
 #, c-format
 msgid "return value of function with array return type is not a Python sequence"
 msgstr "valor de retorno da função do tipo matriz retorna tipo que não é uma sequência Python"
 
-#: plpy_typeio.c:1000
+#: plpy_typeio.c:996
 #, c-format
 msgid "key \"%s\" not found in mapping"
 msgstr "chave \"%s\" não foi encontrada no mapeamento"
 
-#: plpy_typeio.c:1001
+#: plpy_typeio.c:997
 #, c-format
 msgid "To return null in a column, add the value None to the mapping with the key named after the column."
 msgstr "Para retornar nulo em uma coluna, adicionar o valor None no mapeamento cuja chave é o nome da coluna."
 
-#: plpy_typeio.c:1052
+#: plpy_typeio.c:1048
 #, c-format
 msgid "length of returned sequence did not match number of columns in row"
 msgstr "tamanho da sequência retornada não combina com número de colunas no registro"
 
-#: plpy_typeio.c:1163
+#: plpy_typeio.c:1159
 #, c-format
 msgid "attribute \"%s\" does not exist in Python object"
 msgstr "atributo \"%s\" não existe no objeto Python"
 
-#: plpy_typeio.c:1164
+#: plpy_typeio.c:1160
 #, c-format
 msgid "To return null in a column, let the returned object have an attribute named after column with value None."
 msgstr "Para retornar nulo na coluna, deixe o objeto retornado ter um atributo cuja chave é o nome do coluna e o valor é None."

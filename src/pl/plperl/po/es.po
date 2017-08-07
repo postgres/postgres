@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: plperl (PostgreSQL 9.6)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2016-05-02 20:07+0000\n"
+"POT-Creation-Date: 2017-05-18 07:48+0000\n"
 "PO-Revision-Date: 2016-05-25 11:29-0500\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
@@ -203,22 +203,22 @@ msgstr "el resultado de la consulta tiene demasiados registros y no entran en un
 msgid "cannot use return_next in a non-SETOF function"
 msgstr "no se puede utilizar return_next en una función sin SETOF"
 
-#: plperl.c:3222
+#: plperl.c:3220
 #, c-format
 msgid "SETOF-composite-returning PL/Perl function must call return_next with reference to hash"
 msgstr "una función Perl que retorna SETOF de un tipo compuesto debe invocar return_next con una referencia a un hash"
 
-#: plperl.c:3954
+#: plperl.c:3948
 #, c-format
 msgid "PL/Perl function \"%s\""
 msgstr "función PL/Perl «%s»"
 
-#: plperl.c:3966
+#: plperl.c:3960
 #, c-format
 msgid "compilation of PL/Perl function \"%s\""
 msgstr "compilación de la función PL/Perl «%s»"
 
-#: plperl.c:3975
+#: plperl.c:3969
 #, c-format
 msgid "PL/Perl anonymous code block"
 msgstr "bloque de código anónimo de PL/Perl"

@@ -24,8 +24,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psql (PostgreSQL) 9.6\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-02-09 21:13+0000\n"
-"PO-Revision-Date: 2017-04-23 02:39+0100\n"
+"POT-Creation-Date: 2017-05-22 15:43+0000\n"
+"PO-Revision-Date: 2017-05-29 22:06+0100\n"
 "Last-Translator: Daniele Varrazzo <daniele.varrazzo@gmail.com>\n"
 "Language-Team: Gruppo traduzioni ITPUG <traduzioni@itpug.org>\n"
 "Language: it\n"
@@ -234,7 +234,7 @@ msgid "%s: invalid encoding name or conversion procedure not found\n"
 msgstr "%s: nome codifica errato oppure non esiste una procedura di conversione\n"
 
 #: command.c:871 command.c:1962 command.c:3649 common.c:153 common.c:200
-#: common.c:497 common.c:1190 common.c:1218 common.c:1319 copy.c:489 copy.c:699
+#: common.c:497 common.c:1190 common.c:1218 common.c:1319 copy.c:489 copy.c:709
 #: large_obj.c:156 large_obj.c:191 large_obj.c:253
 #, c-format
 msgid "%s"
@@ -822,16 +822,16 @@ msgstr "annullata dall'utente"
 #: copy.c:542
 msgid ""
 "Enter data to be copied followed by a newline.\n"
-"End with a backslash and a period on a line by itself."
+"End with a backslash and a period on a line by itself, or an EOF signal."
 msgstr ""
 "Inserire i dati da copiare seguiti da un \"a capo\".\n"
-"Terminare con un backslash ed un punto su una singola riga."
+"Terminare con un backslash ed un punto su una singola riga, o un segnale EOF."
 
 #: copy.c:671
 msgid "aborted because of read failure"
 msgstr "interrotto a causa di lettura non riuscita"
 
-#: copy.c:695
+#: copy.c:705
 msgid "trying to exit copy mode"
 msgstr "tentativo di uscita dalla modalità copy"
 
@@ -1419,6 +1419,16 @@ msgstr "Trigger sempre abilitati:"
 #: describe.c:2462
 msgid "Triggers firing on replica only:"
 msgstr "Trigger abilitati solo su replica."
+
+#: describe.c:2519
+#, c-format
+msgid "Server: %s"
+msgstr "Server: %s"
+
+#: describe.c:2527
+#, c-format
+msgid "FDW Options: (%s)"
+msgstr "Opzioni FDW: (%s)"
 
 #: describe.c:2541
 msgid "Inherits"
@@ -5354,7 +5364,7 @@ msgstr "%s: il proprio programma eseguibile non è stato trovato\n"
 msgid "unrecognized value \"%s\" for \"%s\"; assuming \"%s\"\n"
 msgstr "valore \"%s\" non riconosciuto per \"%s\"; interpretato come \"%s\"\n"
 
-#: tab-complete.c:3743
+#: tab-complete.c:3744
 #, c-format
 msgid ""
 "tab completion query failed: %s\n"

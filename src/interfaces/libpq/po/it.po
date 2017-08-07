@@ -40,8 +40,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libpq (PostgreSQL) 9.6\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-02-09 21:08+0000\n"
-"PO-Revision-Date: 2016-04-17 20:43+0100\n"
+"POT-Creation-Date: 2017-05-22 15:38+0000\n"
+"PO-Revision-Date: 2017-05-23 01:18+0100\n"
 "Last-Translator: Daniele Varrazzo <daniele.varrazzo@gmail.com>\n"
 "Language-Team: Gruppo traduzioni ITPUG <traduzioni@itpug.org>\n"
 "Language: it\n"
@@ -50,7 +50,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 "X-Poedit-SourceCharset: UTF-8\n"
-"X-Generator: Poedit 1.5.4\n"
+"X-Generator: Poedit 1.8.7.1\n"
 
 # DV: non ne sono convinto
 #: fe-auth.c:148
@@ -66,13 +66,14 @@ msgid "duplicate GSS authentication request\n"
 msgstr "richiesta di autenticazione GSS duplicata\n"
 
 #: fe-auth.c:197 fe-auth.c:309 fe-auth.c:383 fe-auth.c:418 fe-auth.c:514
-#: fe-auth.c:780 fe-connect.c:707 fe-connect.c:904 fe-connect.c:1080
+#: fe-auth.c:793 fe-connect.c:707 fe-connect.c:904 fe-connect.c:1080
 #: fe-connect.c:2091 fe-connect.c:3484 fe-connect.c:3736 fe-connect.c:3855
 #: fe-connect.c:4095 fe-connect.c:4175 fe-connect.c:4274 fe-connect.c:4530
-#: fe-connect.c:4559 fe-connect.c:4631 fe-connect.c:4649 fe-connect.c:4745
-#: fe-connect.c:5079 fe-connect.c:5229 fe-exec.c:2651 fe-exec.c:3398
-#: fe-exec.c:3563 fe-lobj.c:896 fe-protocol2.c:1206 fe-protocol3.c:992
-#: fe-protocol3.c:1678 fe-secure-openssl.c:515 fe-secure-openssl.c:1139
+#: fe-connect.c:4559 fe-connect.c:4631 fe-connect.c:4655 fe-connect.c:4673
+#: fe-connect.c:4769 fe-connect.c:5103 fe-connect.c:5253 fe-exec.c:2651
+#: fe-exec.c:3398 fe-exec.c:3563 fe-lobj.c:896 fe-protocol2.c:1206
+#: fe-protocol3.c:992 fe-protocol3.c:1678 fe-secure-openssl.c:515
+#: fe-secure-openssl.c:1139
 msgid "out of memory\n"
 msgstr "memoria esaurita\n"
 
@@ -113,22 +114,26 @@ msgstr "l'autenticazione SSPI non è supportata\n"
 msgid "Crypt authentication not supported\n"
 msgstr "l'autenticazione Crypt non è supportata\n"
 
-#: fe-auth.c:708
+#: fe-auth.c:716
+msgid "SCRAM authentication requires libpq version 10 or above\n"
+msgstr "l'autenticazione SCRAM richiede libpq versione 10 o successiva\n"
+
+#: fe-auth.c:721
 #, c-format
 msgid "authentication method %u not supported\n"
 msgstr "l'autenticazione %u non è supportata\n"
 
-#: fe-auth.c:755
+#: fe-auth.c:768
 #, c-format
 msgid "user name lookup failure: error code %lu\n"
 msgstr "ricerca del nome utente fallita: codice di errore %lu\n"
 
-#: fe-auth.c:765 fe-connect.c:2018
+#: fe-auth.c:778 fe-connect.c:2018
 #, c-format
 msgid "could not look up local user ID %d: %s\n"
 msgstr "ricerca dell'ID utente locale %d non riuscita: %s\n"
 
-#: fe-auth.c:770 fe-connect.c:2023
+#: fe-auth.c:783 fe-connect.c:2023
 #, c-format
 msgid "local user with ID %d does not exist\n"
 msgstr "l'utente locale con ID %d non esiste\n"
@@ -377,7 +382,7 @@ msgstr "l'attributo non ha valori nella ricerca LDAP\n"
 msgid "missing \"=\" after \"%s\" in connection info string\n"
 msgstr "manca \"=\" dopo \"%s\" nella stringa di connessione\n"
 
-#: fe-connect.c:3867 fe-connect.c:4498 fe-connect.c:5212
+#: fe-connect.c:3867 fe-connect.c:4498 fe-connect.c:5236
 #, c-format
 msgid "invalid connection option \"%s\"\n"
 msgstr "opzione di connessione errata \"%s\"\n"
@@ -415,68 +420,68 @@ msgstr "errore di sintassi del file di servizio \"%s\", alla riga %d\n"
 msgid "nested service specifications not supported in service file \"%s\", line %d\n"
 msgstr "specifiche di servizio annidate non supportate nel file di servizio \"%s\", linea %d\n"
 
-#: fe-connect.c:4756
+#: fe-connect.c:4780
 #, c-format
 msgid "invalid URI propagated to internal parser routine: \"%s\"\n"
 msgstr "URI invalida propagata alla routine di parsing interna: \"%s\"\n"
 
-#: fe-connect.c:4826
+#: fe-connect.c:4850
 #, c-format
 msgid "end of string reached when looking for matching \"]\" in IPv6 host address in URI: \"%s\"\n"
 msgstr "fine stringa raggiunta cercando un \"]\" corrispondente nell'indirizzo host IPv6 nella URI: \"%s\"\n"
 
-#: fe-connect.c:4833
+#: fe-connect.c:4857
 #, c-format
 msgid "IPv6 host address may not be empty in URI: \"%s\"\n"
 msgstr "l'indirizzo host IPv6 non dev'essere assente nella URI: \"%s\"\n"
 
-#: fe-connect.c:4848
+#: fe-connect.c:4872
 #, c-format
 msgid "unexpected character \"%c\" at position %d in URI (expected \":\" or \"/\"): \"%s\"\n"
 msgstr "carattere inatteso \"%c\" in posizione %d nella uri URI (atteso \":\" oppure \"/\"): \"%s\"\n"
 
-#: fe-connect.c:4962
+#: fe-connect.c:4986
 #, c-format
 msgid "extra key/value separator \"=\" in URI query parameter: \"%s\"\n"
 msgstr "separatore chiave/valore \"=\" in eccesso nei parametri della URI: \"%s\"\n"
 
-#: fe-connect.c:4982
+#: fe-connect.c:5006
 #, c-format
 msgid "missing key/value separator \"=\" in URI query parameter: \"%s\"\n"
 msgstr "separatore chiave/valore \"=\" mancante nei parametri della URI: \"%s\"\n"
 
-#: fe-connect.c:5033
+#: fe-connect.c:5057
 #, c-format
 msgid "invalid URI query parameter: \"%s\"\n"
 msgstr "parametro URI non valido: \"%s\"\n"
 
-#: fe-connect.c:5107
+#: fe-connect.c:5131
 #, c-format
 msgid "invalid percent-encoded token: \"%s\"\n"
 msgstr "simbolo percent-encoded non valido \"%s\"\n"
 
-#: fe-connect.c:5117
+#: fe-connect.c:5141
 #, c-format
 msgid "forbidden value %%00 in percent-encoded value: \"%s\"\n"
 msgstr "valore non ammesso %%00 nel valore percent-encoded: \"%s\"\n"
 
-#: fe-connect.c:5451
+#: fe-connect.c:5475
 msgid "connection pointer is NULL\n"
 msgstr "il puntatore della connessione è NULL\n"
 
-#: fe-connect.c:5749
+#: fe-connect.c:5773
 #, c-format
 msgid "WARNING: password file \"%s\" is not a plain file\n"
 msgstr "ATTENZIONE: il file delle password \"%s\" non è un file regolare\n"
 
-#: fe-connect.c:5758
+#: fe-connect.c:5782
 #, c-format
 msgid "WARNING: password file \"%s\" has group or world access; permissions should be u=rw (0600) or less\n"
 msgstr ""
 "ATTENZIONE: Il file delle password %s ha privilegi di accesso in lettura e scrittura per tutti;\n"
 "i permessi dovrebbero essere u=rw (0600) o inferiori\n"
 
-#: fe-connect.c:5872
+#: fe-connect.c:5896
 #, c-format
 msgid "password retrieved from file \"%s\"\n"
 msgstr "password ottenuta dal file \"%s\"\n"

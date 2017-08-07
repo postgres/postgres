@@ -1,5 +1,5 @@
 # Swedish message translation file for pg_config.
-# Dennis Björklund <db@zigo.dhs.org>, 2004, 2005, 2006.
+# Dennis Björklund <db@zigo.dhs.org>, 2004, 2005, 2006, 2017.
 # Mats Erik Andersson <bsd@gisladisker.se>, 2014.
 #
 msgid ""
@@ -7,8 +7,8 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 9.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2014-11-17 21:11+0000\n"
-"PO-Revision-Date: 2014-11-22 23:54+0100\n"
-"Last-Translator: Mats Erik Andersson <bsd@gisladisker.se>\n"
+"PO-Revision-Date: 2017-07-21 06:14+0200\n"
+"Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "Language: sv\n"
 "MIME-Version: 1.0\n"
@@ -18,17 +18,17 @@ msgstr ""
 #: ../../common/exec.c:127 ../../common/exec.c:241 ../../common/exec.c:284
 #, c-format
 msgid "could not identify current directory: %s"
-msgstr "kunde inte identifiera aktuella katalogen: %s"
+msgstr "kunde inte identifiera aktuell katalog: %s"
 
 #: ../../common/exec.c:146
 #, c-format
 msgid "invalid binary \"%s\""
-msgstr "ogiltig binärfil \"%s\""
+msgstr "ogiltig binär \"%s\""
 
 #: ../../common/exec.c:195
 #, c-format
 msgid "could not read binary \"%s\""
-msgstr "kunde inte läsa binärfil \"%s\""
+msgstr "kunde inte läsa binär \"%s\""
 
 #: ../../common/exec.c:202
 #, c-format
@@ -85,7 +85,7 @@ msgstr ""
 #: pg_config.c:431
 #, c-format
 msgid "Options:\n"
-msgstr "Programväxlar:\n"
+msgstr "Flaggor:\n"
 
 #: pg_config.c:432
 #, c-format
@@ -239,9 +239,9 @@ msgstr "Försök med \"%s --help\" för mer information.\n"
 #: pg_config.c:504
 #, c-format
 msgid "%s: could not find own program executable\n"
-msgstr "%s: Kunde inte hitta min egen körbara fil.\n"
+msgstr "%s: kunde inte hitta min egen körbara fil.\n"
 
 #: pg_config.c:527
 #, c-format
 msgid "%s: invalid argument: %s\n"
-msgstr "%s: Ogiltigt argument: %s\n"
+msgstr "%s: ogiltigt argument: %s\n"

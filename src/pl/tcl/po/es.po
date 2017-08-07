@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pltcl (PostgreSQL 9.6)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2016-05-02 20:07+0000\n"
+"POT-Creation-Date: 2017-05-18 07:48+0000\n"
 "PO-Revision-Date: 2016-05-03 12:17-0300\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
@@ -39,22 +39,22 @@ msgstr "no se pudo separar el valor de retorno del disparador: %s"
 msgid "trigger's return list must have even number of elements"
 msgstr "la lista de retorno del disparador debe tener un número par de elementos"
 
-#: pltcl.c:1109
+#: pltcl.c:1110
 #, c-format
 msgid "unrecognized attribute \"%s\""
 msgstr "atributo «%s» no reconocido"
 
-#: pltcl.c:1114
+#: pltcl.c:1116
 #, c-format
 msgid "cannot set system attribute \"%s\""
 msgstr "no se puede definir el atributo de sistema «%s»"
 
-#: pltcl.c:1230 pltcl.c:1655
+#: pltcl.c:1232 pltcl.c:1657
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pltcl.c:1231
+#: pltcl.c:1233
 #, c-format
 msgid ""
 "%s\n"
@@ -63,32 +63,32 @@ msgstr ""
 "%s\n"
 "en función PL/Tcl \"%s\""
 
-#: pltcl.c:1338 pltcl.c:1345
+#: pltcl.c:1340 pltcl.c:1347
 #, c-format
 msgid "out of memory"
 msgstr "memoria agotada"
 
-#: pltcl.c:1393
+#: pltcl.c:1395
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "las funciones disparadoras sólo pueden ser invocadas como disparadores"
 
-#: pltcl.c:1402
+#: pltcl.c:1404
 #, c-format
 msgid "PL/Tcl functions cannot return type %s"
 msgstr "las funciones PL/Tcl no pueden retornar tipo %s"
 
-#: pltcl.c:1414
+#: pltcl.c:1416
 #, c-format
 msgid "PL/Tcl functions cannot return composite types"
 msgstr "las funciones PL/Tcl no pueden retornar tipos compuestos"
 
-#: pltcl.c:1453
+#: pltcl.c:1455
 #, c-format
 msgid "PL/Tcl functions cannot accept type %s"
 msgstr "las funciones PL/Tcl no pueden aceptar el tipog%s"
 
-#: pltcl.c:1576
+#: pltcl.c:1578
 #, c-format
 msgid "could not create internal procedure \"%s\": %s"
 msgstr "no se pudo crear procedimiento interno «%s»: %s"
