@@ -573,9 +573,8 @@ AlterSubscription_refresh(Subscription *sub, bool copy_data)
 									copy_data ? SUBREL_STATE_INIT : SUBREL_STATE_READY,
 									InvalidXLogRecPtr, false);
 			ereport(DEBUG1,
-					(errmsg("added subscription for table %s.%s",
-							quote_identifier(rv->schemaname),
-							quote_identifier(rv->relname))));
+					(errmsg("table \"%s.%s\" added to subscription \"%s\"",
+							rv->schemaname, rv->relname, sub->name)));
 		}
 	}
 
@@ -593,17 +592,15 @@ AlterSubscription_refresh(Subscription *sub, bool copy_data)
 		if (!bsearch(&relid, pubrel_local_oids,
 					 list_length(pubrel_names), sizeof(Oid), oid_cmp))
 		{
-			char	   *namespace;
-
 			RemoveSubscriptionRel(sub->oid, relid);
 
 			logicalrep_worker_stop_at_commit(sub->oid, relid);
 
-			namespace = get_namespace_name(get_rel_namespace(relid));
 			ereport(DEBUG1,
-					(errmsg("removed subscription for table %s.%s",
-							quote_identifier(namespace),
-							quote_identifier(get_rel_name(relid)))));
+					(errmsg("table \"%s.%s\" removed from subscription \"%s\"",
+							get_namespace_name(get_rel_namespace(relid)),
+							get_rel_name(relid),
+							sub->name)));
 		}
 	}
 }
