@@ -679,7 +679,7 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 		for (i = -1; i < ucol_countAvailable(); i++)
 		{
 			/*
-			 * In ICU 4.2, ucol_getKeywordsForLocale() sometimes returns
+			 * In ICU 4.2, ucol_getKeywordValuesForLocale() sometimes returns
 			 * values that will not be accepted by uloc_toLanguageTag().  Skip
 			 * loading keyword variants in that version.  (Both
 			 * ucol_getKeywordValuesForLocale() and uloc_toLanguageTag() are
