@@ -89,6 +89,8 @@ $node_publisher->safe_psql('postgres',
 $node_publisher->safe_psql('postgres', "DELETE FROM tab_rep WHERE a > 20");
 $node_publisher->safe_psql('postgres', "UPDATE tab_rep SET a = -a");
 
+$node_publisher->safe_psql('postgres', "INSERT INTO tab_mixed VALUES (2, 'bar')");
+
 $node_publisher->poll_query_until('postgres', $caughtup_query)
   or die "Timed out while waiting for subscriber to catch up";
 
@@ -102,7 +104,8 @@ is($result, qq(20|-20|-1), 'check replicated changes on subscriber');
 
 $result = $node_subscriber->safe_psql('postgres',
 	"SELECT c, b, a FROM tab_mixed");
-is($result, qq(|foo|1), 'check replicated changes with different column order');
+is($result, qq(|foo|1
+|bar|2), 'check replicated changes with different column order');
 
 # insert some duplicate rows
 $node_publisher->safe_psql('postgres',
