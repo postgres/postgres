@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.1\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2015-09-04 17:57+0000\n"
+"POT-Creation-Date: 2017-05-21 17:45+0000\n"
 "PO-Revision-Date: 2013-08-30 12:11-0400\n"
 "Last-Translator: Emanuel Calvo Franco <postgres-arg@gmail.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
@@ -84,9 +84,7 @@ msgstr "sintaxis de entrada no válida para el tipo entero: «%s», en línea %d
 #: error.c:96
 #, c-format
 msgid "invalid input syntax for type unsigned int: \"%s\", on line %d"
-msgstr ""
-"sintaxis de entrada no válida para el tipo entero sin signo: «%s», en línea "
-"%d"
+msgstr "sintaxis de entrada no válida para el tipo entero sin signo: «%s», en línea %d"
 
 #. translator: this string will be truncated at 149 characters
 #. expanded.
@@ -94,9 +92,7 @@ msgstr ""
 #: error.c:106
 #, c-format
 msgid "invalid input syntax for floating-point type: \"%s\", on line %d"
-msgstr ""
-"sintaxis de entrada no válida para el tipo de coma flotante: «%s», en línea "
-"%d"
+msgstr "sintaxis de entrada no válida para el tipo de coma flotante: «%s», en línea %d"
 
 #. translator: this string will be truncated at 149 characters
 #. expanded.
@@ -112,8 +108,7 @@ msgstr "sintaxis no válida para el tipo booleano: «%s», en línea %d"
 #: error.c:125
 #, c-format
 msgid "could not convert boolean value: size mismatch, on line %d"
-msgstr ""
-"no se puede convertir el valor booleano: tamaño incorrecto, en línea %d"
+msgstr "no se puede convertir el valor booleano: tamaño incorrecto, en línea %d"
 
 #. translator: this string will be truncated at 149 characters
 #. expanded.
@@ -252,6 +247,6 @@ msgstr "se ha perdido la conexión al servidor"
 msgid "SQL error: %s\n"
 msgstr "error SQL: %s\n"
 
-#: execute.c:1910
+#: execute.c:1901
 msgid "<empty>"
 msgstr "<vacío>"

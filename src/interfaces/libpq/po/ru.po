@@ -4,15 +4,14 @@
 # Serguei A. Mokhov <mokhov@cs.concordia.ca>, 2001-2004.
 # Oleg Bartunov <oleg@sai.msu.su>, 2005.
 # Andrey Sudnik <sudnikand@yandex.ru>, 2010.
-# Alexander Lakhin <exclusion@gmail.com>, 2012-2016.
+# Alexander Lakhin <exclusion@gmail.com>, 2012-2016, 2017.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: libpq (PostgreSQL 9)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2016-11-23 19:35+0000\n"
-"PO-Revision-Date: 2016-09-20 12:00+0300\n"
-"Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
+"POT-Creation-Date: 2017-05-26 21:04+0000\n"
+"PO-Revision-Date: 2017-05-27 12:34+0300\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -20,6 +19,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 
 #: fe-auth.c:210 fe-auth.c:429 fe-auth.c:658
 msgid "host name must be specified\n"
@@ -61,8 +61,8 @@ msgstr "ошибка продолжения в SSPI"
 #: fe-connect.c:3744 fe-connect.c:3863 fe-connect.c:4093 fe-connect.c:4167
 #: fe-connect.c:4254 fe-connect.c:4510 fe-connect.c:4538 fe-connect.c:4607
 #: fe-connect.c:4624 fe-connect.c:4716 fe-connect.c:5067 fe-connect.c:5203
-#: fe-exec.c:3307 fe-exec.c:3472 fe-lobj.c:712 fe-protocol2.c:1206
-#: fe-protocol3.c:1584 fe-secure.c:780 fe-secure.c:1259
+#: fe-exec.c:3306 fe-exec.c:3471 fe-lobj.c:712 fe-protocol2.c:1206
+#: fe-protocol3.c:1584 fe-secure.c:780 fe-secure.c:1270
 msgid "out of memory\n"
 msgstr "нехватка памяти\n"
 
@@ -94,7 +94,11 @@ msgstr "аутентификация через SSPI не поддерживае
 msgid "Crypt authentication not supported\n"
 msgstr "аутентификация Crypt не поддерживается\n"
 
-#: fe-auth.c:966
+#: fe-auth.c:974
+msgid "SCRAM authentication requires libpq version 10 or above\n"
+msgstr "для аутентификации SCRAM требуется libpq версии 10 или новее\n"
+
+#: fe-auth.c:979
 #, c-format
 msgid "authentication method %u not supported\n"
 msgstr "метод аутентификации %u не поддерживается\n"
@@ -544,12 +548,12 @@ msgstr "номер записи %d вне диапазона 0..%d"
 msgid "parameter number %d is out of range 0..%d"
 msgstr "номер параметра %d вне диапазона 0..%d"
 
-#: fe-exec.c:2966
+#: fe-exec.c:2965
 #, c-format
 msgid "could not interpret result from server: %s"
 msgstr "не удалось интерпретировать ответ сервера: %s"
 
-#: fe-exec.c:3205 fe-exec.c:3289
+#: fe-exec.c:3204 fe-exec.c:3288
 msgid "incomplete multibyte character\n"
 msgstr "неполный многобайтный символ\n"
 
@@ -806,16 +810,16 @@ msgstr "СТРОКА %d: "
 msgid "PQgetline: not doing text COPY OUT\n"
 msgstr "PQgetline можно вызывать только во время COPY OUT с текстом\n"
 
-#: fe-secure.c:378 fe-secure.c:542 fe-secure.c:1449
+#: fe-secure.c:378 fe-secure.c:542 fe-secure.c:1460
 #, c-format
 msgid "SSL SYSCALL error: %s\n"
 msgstr "ошибка SSL SYSCALL: %s\n"
 
-#: fe-secure.c:385 fe-secure.c:549 fe-secure.c:1453
+#: fe-secure.c:385 fe-secure.c:549 fe-secure.c:1464
 msgid "SSL SYSCALL error: EOF detected\n"
 msgstr "ошибка SSL SYSCALL: конец файла (EOF)\n"
 
-#: fe-secure.c:396 fe-secure.c:560 fe-secure.c:1462
+#: fe-secure.c:396 fe-secure.c:560 fe-secure.c:1473
 #, c-format
 msgid "SSL error: %s\n"
 msgstr "ошибка SSL: %s\n"
@@ -824,7 +828,7 @@ msgstr "ошибка SSL: %s\n"
 msgid "SSL connection has been closed unexpectedly\n"
 msgstr "SSL-соединение было неожиданно закрыто\n"
 
-#: fe-secure.c:417 fe-secure.c:581 fe-secure.c:1471
+#: fe-secure.c:417 fe-secure.c:581 fe-secure.c:1482
 #, c-format
 msgid "unrecognized SSL error code: %d\n"
 msgstr "нераспознанный код ошибки SSL: %d\n"
@@ -856,22 +860,22 @@ msgstr "для проверенного SSL-соединения требует�
 msgid "server common name \"%s\" does not match host name \"%s\"\n"
 msgstr "имя в сертификате \"%s\" не совпадает с именем сервера \"%s\"\n"
 
-#: fe-secure.c:1051
+#: fe-secure.c:1062
 #, c-format
 msgid "could not create SSL context: %s\n"
 msgstr "не удалось создать контекст SSL: %s\n"
 
-#: fe-secure.c:1088
+#: fe-secure.c:1099
 #, c-format
 msgid "could not read root certificate file \"%s\": %s\n"
 msgstr "не удалось прочитать файл корневых сертификатов \"%s\": %s\n"
 
-#: fe-secure.c:1116
+#: fe-secure.c:1127
 #, c-format
 msgid "SSL library does not support CRL certificates (file \"%s\")\n"
 msgstr "Библиотека SSL не поддерживает проверку CRL (файл \"%s\")\n"
 
-#: fe-secure.c:1144
+#: fe-secure.c:1155
 msgid ""
 "could not get home directory to locate root certificate file\n"
 "Either provide the file or change sslmode to disable server certificate "
@@ -881,7 +885,7 @@ msgstr ""
 "Укажите полный путь к файлу или отключите проверку сертификата сервера, "
 "изменив sslmode.\n"
 
-#: fe-secure.c:1148
+#: fe-secure.c:1159
 #, c-format
 msgid ""
 "root certificate file \"%s\" does not exist\n"
@@ -892,47 +896,47 @@ msgstr ""
 "Укажите полный путь к файлу или отключите проверку сертификата сервера, "
 "изменив sslmode.\n"
 
-#: fe-secure.c:1179
+#: fe-secure.c:1190
 #, c-format
 msgid "could not open certificate file \"%s\": %s\n"
 msgstr "не удалось открыть файл сертификата \"%s\": %s\n"
 
-#: fe-secure.c:1198
+#: fe-secure.c:1209
 #, c-format
 msgid "could not read certificate file \"%s\": %s\n"
 msgstr "не удалось прочитать файл сертификата \"%s\": %s\n"
 
-#: fe-secure.c:1222
+#: fe-secure.c:1233
 #, c-format
 msgid "could not establish SSL connection: %s\n"
 msgstr "не удалось установить SSL-соединение: %s\n"
 
-#: fe-secure.c:1275
+#: fe-secure.c:1286
 #, c-format
 msgid "could not load SSL engine \"%s\": %s\n"
 msgstr "не удалось загрузить модуль SSL ENGINE \"%s\": %s\n"
 
-#: fe-secure.c:1287
+#: fe-secure.c:1298
 #, c-format
 msgid "could not initialize SSL engine \"%s\": %s\n"
 msgstr "не удалось инициализировать модуль SSL ENGINE \"%s\": %s\n"
 
-#: fe-secure.c:1303
+#: fe-secure.c:1314
 #, c-format
 msgid "could not read private SSL key \"%s\" from engine \"%s\": %s\n"
 msgstr "не удалось прочитать закрытый ключ SSL \"%s\" из модуля \"%s\": %s\n"
 
-#: fe-secure.c:1317
+#: fe-secure.c:1328
 #, c-format
 msgid "could not load private SSL key \"%s\" from engine \"%s\": %s\n"
 msgstr "не удалось загрузить закрытый ключ SSL \"%s\" из модуля \"%s\": %s\n"
 
-#: fe-secure.c:1354
+#: fe-secure.c:1365
 #, c-format
 msgid "certificate present, but not private key file \"%s\"\n"
 msgstr "сертификат присутствует, но файла закрытого ключа \"%s\" нет\n"
 
-#: fe-secure.c:1362
+#: fe-secure.c:1373
 #, c-format
 msgid ""
 "private key file \"%s\" has group or world access; permissions should be "
@@ -941,27 +945,27 @@ msgstr ""
 "к файлу закрытого ключа \"%s\" имеют доступ все или группа; права должны "
 "быть u=rw (0600) или более ограниченные\n"
 
-#: fe-secure.c:1373
+#: fe-secure.c:1384
 #, c-format
 msgid "could not load private key file \"%s\": %s\n"
 msgstr "не удалось загрузить файл закрытого ключа \"%s\": %s\n"
 
-#: fe-secure.c:1387
+#: fe-secure.c:1398
 #, c-format
 msgid "certificate does not match private key file \"%s\": %s\n"
 msgstr "сертификат не соответствует файлу закрытого ключа \"%s\": %s\n"
 
-#: fe-secure.c:1492
+#: fe-secure.c:1503
 #, c-format
 msgid "certificate could not be obtained: %s\n"
 msgstr "не удалось получить сертификат: %s\n"
 
-#: fe-secure.c:1588
+#: fe-secure.c:1599
 #, c-format
 msgid "no SSL error reported"
 msgstr "нет сообщения об ошибке SSL"
 
-#: fe-secure.c:1597
+#: fe-secure.c:1608
 #, c-format
 msgid "SSL error code %lu"
 msgstr "код ошибки SSL: %lu"

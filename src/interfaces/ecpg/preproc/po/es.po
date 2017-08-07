@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecpg (PostgreSQL 9.2)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2016-10-21 02:04+0000\n"
+"POT-Creation-Date: 2017-05-21 17:46+0000\n"
 "PO-Revision-Date: 2012-08-06 15:35-0400\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
@@ -31,7 +31,7 @@ msgstr "la variable «%s» debe tener tipo numérico"
 msgid "descriptor \"%s\" does not exist"
 msgstr "no existe el descriptor «%s»"
 
-#: descriptor.c:161 descriptor.c:212
+#: descriptor.c:161 descriptor.c:213
 #, c-format
 msgid "descriptor header item \"%d\" does not exist"
 msgstr "no existe el descriptor del elemento de cabecera «%d»"
@@ -46,12 +46,12 @@ msgstr "nullable es siempre 1"
 msgid "key_member is always 0"
 msgstr "key_member es siempre 0"
 
-#: descriptor.c:279
+#: descriptor.c:280
 #, c-format
 msgid "descriptor item \"%s\" is not implemented"
 msgstr "elemento del descriptor «%s» no está implementado"
 
-#: descriptor.c:289
+#: descriptor.c:290
 #, c-format
 msgid "descriptor item \"%s\" cannot be set"
 msgstr "no se puede establecer el elemento del descriptor «%s»"
@@ -179,7 +179,7 @@ msgstr ""
 "\n"
 "Reporte errores a <pgsql-bugs@postgresql.org>.\n"
 
-#: ecpg.c:171 ecpg.c:322 ecpg.c:332
+#: ecpg.c:171 ecpg.c:323 ecpg.c:333
 #, c-format
 msgid "%s: could not open file \"%s\": %s\n"
 msgstr "%s: no se pudo abrir el archivo «%s»: %s\n"
@@ -214,107 +214,107 @@ msgstr "fin de la lista de búsqueda\n"
 msgid "%s: no input files specified\n"
 msgstr "%s: no se especificaron archivos de entrada\n"
 
-#: ecpg.c:455
+#: ecpg.c:456
 #, c-format
 msgid "cursor \"%s\" has been declared but not opened"
 msgstr "el cursor «%s» fue declarado pero no abierto"
 
-#: ecpg.c:468 preproc.y:109
+#: ecpg.c:469 preproc.y:109
 #, c-format
 msgid "could not remove output file \"%s\"\n"
 msgstr "no se pudo eliminar el archivo de salida «%s»\n"
 
-#: pgc.l:403
+#: pgc.l:407
 #, c-format
 msgid "unterminated /* comment"
 msgstr "comentario /* no cerrado"
 
-#: pgc.l:416
+#: pgc.l:420
 #, c-format
 msgid "invalid bit string literal"
 msgstr "cadena de bits no válida"
 
-#: pgc.l:425
+#: pgc.l:429
 #, c-format
 msgid "unterminated bit string literal"
 msgstr "una cadena de bits está inconclusa"
 
-#: pgc.l:441
+#: pgc.l:445
 #, c-format
 msgid "unterminated hexadecimal string literal"
 msgstr "una cadena hexadecimal está inconclusa"
 
-#: pgc.l:519
+#: pgc.l:523
 #, c-format
 msgid "unterminated quoted string"
 msgstr "una cadena en comillas está inconclusa"
 
-#: pgc.l:576 pgc.l:589
+#: pgc.l:581 pgc.l:594
 #, c-format
 msgid "zero-length delimited identifier"
 msgstr "identificador delimitado de longitud cero"
 
-#: pgc.l:597
+#: pgc.l:602
 #, c-format
 msgid "unterminated quoted identifier"
 msgstr "un identificador en comillas está inconcluso"
 
-#: pgc.l:943
+#: pgc.l:948
 #, c-format
 msgid "missing identifier in EXEC SQL UNDEF command"
 msgstr "falta un identificador en la orden EXEC SQL UNDEF"
 
-#: pgc.l:989 pgc.l:1003
+#: pgc.l:994 pgc.l:1008
 #, c-format
 msgid "missing matching \"EXEC SQL IFDEF\" / \"EXEC SQL IFNDEF\""
 msgstr "falta el «EXEC SQL IFDEF» / «EXEC SQL IFNDEF»"
 
-#: pgc.l:992 pgc.l:1005 pgc.l:1181
+#: pgc.l:997 pgc.l:1010 pgc.l:1186
 #, c-format
 msgid "missing \"EXEC SQL ENDIF;\""
 msgstr "falta el «EXEC SQL ENDIF;»"
 
-#: pgc.l:1021 pgc.l:1040
+#: pgc.l:1026 pgc.l:1045
 #, c-format
 msgid "more than one EXEC SQL ELSE"
 msgstr "hay más de un EXEC SQL ELSE"
 
-#: pgc.l:1062 pgc.l:1076
+#: pgc.l:1067 pgc.l:1081
 #, c-format
 msgid "unmatched EXEC SQL ENDIF"
 msgstr "EXEC SQL ENDIF sin coincidencia"
 
-#: pgc.l:1096
+#: pgc.l:1101
 #, c-format
 msgid "too many nested EXEC SQL IFDEF conditions"
 msgstr "demasiadas condiciones EXEC SQL IFDEF anidadas"
 
-#: pgc.l:1129
+#: pgc.l:1134
 #, c-format
 msgid "missing identifier in EXEC SQL IFDEF command"
 msgstr "identificador faltante en la orden EXEC SQL IFDEF"
 
-#: pgc.l:1138
+#: pgc.l:1143
 #, c-format
 msgid "missing identifier in EXEC SQL DEFINE command"
 msgstr "identificador faltante en la orden EXEC SQL DEFINE"
 
-#: pgc.l:1171
+#: pgc.l:1176
 #, c-format
 msgid "syntax error in EXEC SQL INCLUDE command"
 msgstr "error de sintaxis en orden EXEC SQL INCLUDE"
 
-#: pgc.l:1220
+#: pgc.l:1225
 #, c-format
 msgid "internal error: unreachable state; please report this to <pgsql-bugs@postgresql.org>"
 msgstr "Error Interno: estado no esperado; por favor reporte a <pgsql-bugs@postgresql.org>"
 
-#: pgc.l:1344
+#: pgc.l:1349
 #, c-format
 msgid "Error: include path \"%s/%s\" is too long on line %d, skipping\n"
 msgstr "Error: ruta de inclusión «%s/%s» es demasiada larga en la línea %d, omitiendo\n"
 
-#: pgc.l:1367
+#: pgc.l:1372
 #, c-format
 msgid "could not open include file \"%s\" on line %d"
 msgstr "no se pudo abrir el archivo a incluir «%s» en la línea %d"
