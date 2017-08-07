@@ -2134,16 +2134,19 @@ PGAC_PATH_PROGS(FOP, fop)
 # Check for test tools
 #
 if test "$enable_tap_tests" = yes; then
+  # Check for necessary modules, unless user has specified the "prove" to use;
+  # in that case it's her responsibility to have a working configuration.
+  # (prove might be part of a different Perl installation than perl, eg on
+  # MSys, so the result of AX_PROG_PERL_MODULES could be irrelevant anyway.)
+  if test -z "$PROVE"; then
+    AX_PROG_PERL_MODULES(IPC::Run, ,
+      AC_MSG_ERROR([Perl module IPC::Run is required to run TAP tests]))
+  fi
+  # Now make sure we know where prove is
   PGAC_PATH_PROGS(PROVE, prove)
   if test -z "$PROVE"; then
     AC_MSG_ERROR([prove not found])
   fi
-  if test -z "$PERL"; then
-    AC_MSG_ERROR([Perl not found])
-  fi
-  # Check for necessary modules
-  AX_PROG_PERL_MODULES(IPC::Run, ,
-    AC_MSG_ERROR([Perl module IPC::Run is required to run TAP tests]))
 fi
 
 # Thread testing
