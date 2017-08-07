@@ -24,8 +24,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psql (PostgreSQL) 9.5\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-02-09 21:21+0000\n"
-"PO-Revision-Date: 2017-04-23 02:39+0100\n"
+"POT-Creation-Date: 2017-05-22 15:50+0000\n"
+"PO-Revision-Date: 2017-05-29 22:06+0100\n"
 "Last-Translator: Daniele Varrazzo <daniele.varrazzo@gmail.com>\n"
 "Language-Team: Gruppo traduzioni ITPUG <traduzioni@itpug.org>\n"
 "Language: it\n"
@@ -289,7 +289,7 @@ msgid "All connection parameters must be supplied because no database connection
 msgstr "Tutti i parametri di connessione devono essere forniti perché non esiste alcuna connessione di database\n"
 
 #: command.c:1803 command.c:3268 common.c:140 common.c:437 common.c:1025
-#: common.c:1053 common.c:1153 copy.c:488 copy.c:698 large_obj.c:156
+#: common.c:1053 common.c:1153 copy.c:488 copy.c:708 large_obj.c:156
 #: large_obj.c:191 large_obj.c:253 psqlscan.l:1973
 #, c-format
 msgid "%s"
@@ -746,16 +746,16 @@ msgstr "annullata dall'utente"
 #: copy.c:541
 msgid ""
 "Enter data to be copied followed by a newline.\n"
-"End with a backslash and a period on a line by itself."
+"End with a backslash and a period on a line by itself, or an EOF signal."
 msgstr ""
 "Inserire i dati da copiare seguiti da un \"a capo\".\n"
-"Terminare con un backslash ed un punto su una singola riga."
+"Terminare con un backslash ed un punto su una singola riga, o un segnale EOF."
 
 #: copy.c:670
 msgid "aborted because of read failure"
 msgstr "interrotto a causa di lettura non riuscita"
 
-#: copy.c:694
+#: copy.c:704
 msgid "trying to exit copy mode"
 msgstr "tentativo di uscita dalla modalità copy"
 
@@ -1264,6 +1264,16 @@ msgstr "Trigger sempre abilitati:"
 #: describe.c:2367
 msgid "Triggers firing on replica only:"
 msgstr "Trigger abilitati solo su replica."
+
+#: describe.c:2424
+#, c-format
+msgid "Server: %s"
+msgstr "Server: %s"
+
+#: describe.c:2432
+#, c-format
+msgid "FDW Options: (%s)"
+msgstr "Opzioni FDW: (%s)"
 
 #: describe.c:2446
 msgid "Inherits"

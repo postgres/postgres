@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_resetxlog (PostgreSQL 9.4)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2015-10-04 00:43+0000\n"
+"POT-Creation-Date: 2017-05-21 17:31+0000\n"
 "PO-Revision-Date: 2015-09-30 12:34-0300\n"
 "Last-Translator: Martín Marqués <martin@2ndquadrant.com>\n"
 "Language-Team: Español <pgsql-es-ayuda@postgresql.org>\n"
@@ -295,13 +295,13 @@ msgstr "BD del oldestMultiXid del checkpt. más reciente: %u\n"
 
 #: pg_resetxlog.c:668
 #, c-format
-msgid "Latest checkpoint's oldestCommitTs:   %u\n"
-msgstr "oldestCommitTs del último checkpoint:            %u\n"
+msgid "Latest checkpoint's oldestCommitTsXid:%u\n"
+msgstr "oldestCommitTsXid del último checkpoint:         %u\n"
 
 #: pg_resetxlog.c:670
 #, c-format
-msgid "Latest checkpoint's newestCommitTs:   %u\n"
-msgstr "newestCommitTs del último checkpoint:            %u\n"
+msgid "Latest checkpoint's newestCommitTsXid:%u\n"
+msgstr "newestCommitTsXid del último checkpoint:         %u\n"
 
 #: pg_resetxlog.c:672
 #, c-format
@@ -449,13 +449,13 @@ msgstr "Epoch del NextXID:                    %u\n"
 
 #: pg_resetxlog.c:756
 #, c-format
-msgid "oldestCommitTs:                       %u\n"
-msgstr "OldestCommitTs:                       %u\n"
+msgid "oldestCommitTsXid:                    %u\n"
+msgstr "oldestCommitTsXid:                    %u\n"
 
 #: pg_resetxlog.c:761
 #, c-format
-msgid "newestCommitTs:                       %u\n"
-msgstr "newestCommitTs:                       %u\n"
+msgid "newestCommitTsXid:                    %u\n"
+msgstr "newestCommitTsXid:                    %u\n"
 
 #: pg_resetxlog.c:827
 #, c-format
