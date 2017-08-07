@@ -483,7 +483,7 @@ pg_upgrade.exe
 
       <para>
        From a directory that is above the old and new database cluster
-       directories, run this for each slave:
+       directories, run this for each standby:
 
 <programlisting>
 rsync --archive --delete --hard-links --size-only old_pgdata new_pgdata remote_dir
@@ -517,7 +517,7 @@ rsync --archive --delete --hard-links --size-only old_pgdata new_pgdata remote_d
       <para>
        Configure the servers for log shipping.  (You do not need to run
        <function>pg_start_backup()</> and <function>pg_stop_backup()</>
-       or take a file system backup as the slaves are still synchronized
+       or take a file system backup as the standbys are still synchronized
        with the master.)
       </para>
      </step>

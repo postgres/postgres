@@ -3802,10 +3802,10 @@ InitTempTableNamespace(void)
 						get_database_name(MyDatabaseId))));
 
 	/*
-	 * Do not allow a Hot Standby slave session to make temp tables.  Aside
+	 * Do not allow a Hot Standby session to make temp tables.  Aside
 	 * from problems with modifying the system catalogs, there is a naming
 	 * conflict: pg_temp_N belongs to the session with BackendId N on the
-	 * master, not to a slave session with the same BackendId.  We should not
+	 * master, not to a hot standby session with the same BackendId.  We should not
 	 * be able to get here anyway due to XactReadOnly checks, but let's just
 	 * make real sure.  Note that this also backstops various operations that
 	 * allow XactReadOnly transactions to modify temp tables; they'd need

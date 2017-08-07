@@ -939,7 +939,7 @@ GetNewMultiXactId(int nmembers, MultiXactOffset *offset)
 
 	debug_elog3(DEBUG2, "GetNew: for %d xids", nmembers);
 
-	/* safety check, we should never get this far in a HS slave */
+	/* safety check, we should never get this far in a HS standby */
 	if (RecoveryInProgress())
 		elog(ERROR, "cannot assign MultiXactIds during recovery");
 

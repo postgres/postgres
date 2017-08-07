@@ -472,8 +472,8 @@ show_log_timezone(void)
  * We allow idempotent changes (r/w -> r/w and r/o -> r/o) at any time, and
  * we also always allow changes from read-write to read-only.  However,
  * read-only may be changed to read-write only when in a top-level transaction
- * that has not yet taken an initial snapshot.  Can't do it in a hot standby
- * slave, either.
+ * that has not yet taken an initial snapshot.  Can't do it in a hot standby,
+ * either.
  *
  * If we are not in a transaction at all, just allow the change; it means
  * nothing since XactReadOnly will be reset by the next StartTransaction().

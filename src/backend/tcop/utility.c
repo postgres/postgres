@@ -264,7 +264,7 @@ PreventCommandIfParallelMode(const char *cmdname)
 /*
  * PreventCommandDuringRecovery: throw error if RecoveryInProgress
  *
- * The majority of operations that are unsafe in a Hot Standby slave
+ * The majority of operations that are unsafe in a Hot Standby
  * will be rejected by XactReadOnly tests.  However there are a few
  * commands that are allowed in "read-only" xacts but cannot be allowed
  * in Hot Standby mode.  Those commands should call this function.

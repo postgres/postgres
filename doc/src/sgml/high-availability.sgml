@@ -40,7 +40,7 @@
   server to modify the data.  Servers that can modify data are
   called read/write, <firstterm>master</> or <firstterm>primary</> servers.
   Servers that track changes in the master are called <firstterm>standby</>
-  or <firstterm>slave</> servers. A standby server that cannot be connected
+  or <firstterm>secondary</> servers. A standby server that cannot be connected
   to until it is promoted to a master server is called a <firstterm>warm
   standby</> server, and one that can accept connections and serves read-only
   queries is called a <firstterm>hot standby</> server.

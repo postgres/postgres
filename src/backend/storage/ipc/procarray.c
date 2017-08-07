@@ -1408,7 +1408,7 @@ GetOldestXmin(Relation rel, int flags)
 		 * being careful not to generate a "permanent" XID.
 		 *
 		 * vacuum_defer_cleanup_age provides some additional "slop" for the
-		 * benefit of hot standby queries on slave servers.  This is quick and
+		 * benefit of hot standby queries on standby servers.  This is quick and
 		 * dirty, and perhaps not all that useful unless the master has a
 		 * predictable transaction rate, but it offers some protection when
 		 * there's no walsender connection.  Note that we are assuming

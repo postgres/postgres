@@ -160,7 +160,7 @@ sub promote_standby
 	$node_master->poll_query_until('postgres', $wal_received_query)
 	  or die "Timed out while waiting for standby to receive and write WAL";
 
-	# Now promote slave and insert some new data on master, this will put
+	# Now promote standby and insert some new data on master, this will put
 	# the master out-of-sync with the standby.
 	$node_standby->promote;
 

@@ -621,7 +621,7 @@ CommitTsParameterChange(bool newvalue, bool oldvalue)
  *
  * The reason why this SLRU needs separate activation/deactivation functions is
  * that it can be enabled/disabled during start and the activation/deactivation
- * on master is propagated to slave via replay. Other SLRUs don't have this
+ * on master is propagated to standby via replay. Other SLRUs don't have this
  * property and they can be just initialized during normal startup.
  *
  * This is in charge of creating the currently active segment, if it's not

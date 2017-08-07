@@ -18,11 +18,11 @@ $node_master->start;
 $node_master->backup('master_backup');
 $node_master->psql('postgres', "CREATE TABLE t_012_tbl (id int)");
 
-# Setup slave node
-my $node_slave = get_new_node('slave');
-$node_slave->init_from_backup($node_master, 'master_backup',
+# Setup standby node
+my $node_standby = get_new_node('standby');
+$node_standby->init_from_backup($node_master, 'master_backup',
 	has_streaming => 1);
-$node_slave->start;
+$node_standby->start;
 
 # Switch to synchronous replication
 $node_master->append_conf(
@@ -100,31 +100,31 @@ $node_master->psql(
 	BEGIN;
 	SELECT hs_subxids(127);
 	COMMIT;");
-$node_master->wait_for_catchup($node_slave, 'replay',
+$node_master->wait_for_catchup($node_standby, 'replay',
 	$node_master->lsn('insert'));
-$node_slave->psql(
+$node_standby->psql(
 	'postgres',
 	"SELECT coalesce(sum(id),-1) FROM t_012_tbl",
 	stdout => \$psql_out);
 is($psql_out, '8128', "Visible");
 $node_master->stop;
-$node_slave->promote;
+$node_standby->promote;
 
-$node_slave->psql(
+$node_standby->psql(
 	'postgres',
 	"SELECT coalesce(sum(id),-1) FROM t_012_tbl",
 	stdout => \$psql_out);
 is($psql_out, '8128', "Visible");
 
 # restore state
-($node_master, $node_slave) = ($node_slave, $node_master);
-$node_slave->enable_streaming($node_master);
-$node_slave->append_conf(
+($node_master, $node_standby) = ($node_standby, $node_master);
+$node_standby->enable_streaming($node_master);
+$node_standby->append_conf(
 	'recovery.conf', qq(
 recovery_target_timeline='latest'
 ));
-$node_slave->start;
-$node_slave->psql(
+$node_standby->start;
+$node_standby->psql(
 	'postgres',
 	"SELECT coalesce(sum(id),-1) FROM t_012_tbl",
 	stdout => \$psql_out);
@@ -151,33 +151,33 @@ $node_master->psql(
 	BEGIN;
 	SELECT hs_subxids(127);
 	PREPARE TRANSACTION 'xact_012_1';");
-$node_master->wait_for_catchup($node_slave, 'replay',
+$node_master->wait_for_catchup($node_standby, 'replay',
 	$node_master->lsn('insert'));
-$node_slave->psql(
+$node_standby->psql(
 	'postgres',
 	"SELECT coalesce(sum(id),-1) FROM t_012_tbl",
 	stdout => \$psql_out);
 is($psql_out, '-1', "Not visible");
 $node_master->stop;
-$node_slave->promote;
+$node_standby->promote;
 
-$node_slave->psql(
+$node_standby->psql(
 	'postgres',
 	"SELECT coalesce(sum(id),-1) FROM t_012_tbl",
 	stdout => \$psql_out);
 is($psql_out, '-1', "Not visible");
 
 # restore state
-($node_master, $node_slave) = ($node_slave, $node_master);
-$node_slave->enable_streaming($node_master);
-$node_slave->append_conf(
+($node_master, $node_standby) = ($node_standby, $node_master);
+$node_standby->enable_streaming($node_master);
+$node_standby->append_conf(
 	'recovery.conf', qq(
 recovery_target_timeline='latest'
 ));
-$node_slave->start;
+$node_standby->start;
 $psql_rc = $node_master->psql('postgres', "COMMIT PREPARED 'xact_012_1'");
 is($psql_rc, '0',
-"Restore of PGPROC_MAX_CACHED_SUBXIDS+ prepared transaction on promoted slave"
+"Restore of PGPROC_MAX_CACHED_SUBXIDS+ prepared transaction on promoted standby"
 );
 
 $node_master->psql(
@@ -192,33 +192,33 @@ $node_master->psql(
 	BEGIN;
 	SELECT hs_subxids(201);
 	PREPARE TRANSACTION 'xact_012_1';");
-$node_master->wait_for_catchup($node_slave, 'replay',
+$node_master->wait_for_catchup($node_standby, 'replay',
 	$node_master->lsn('insert'));
-$node_slave->psql(
+$node_standby->psql(
 	'postgres',
 	"SELECT coalesce(sum(id),-1) FROM t_012_tbl",
 	stdout => \$psql_out);
 is($psql_out, '-1', "Not visible");
 $node_master->stop;
-$node_slave->promote;
+$node_standby->promote;
 
-$node_slave->psql(
+$node_standby->psql(
 	'postgres',
 	"SELECT coalesce(sum(id),-1) FROM t_012_tbl",
 	stdout => \$psql_out);
 is($psql_out, '-1', "Not visible");
 
 # restore state
-($node_master, $node_slave) = ($node_slave, $node_master);
-$node_slave->enable_streaming($node_master);
-$node_slave->append_conf(
+($node_master, $node_standby) = ($node_standby, $node_master);
+$node_standby->enable_streaming($node_master);
+$node_standby->append_conf(
 	'recovery.conf', qq(
 recovery_target_timeline='latest'
 ));
-$node_slave->start;
+$node_standby->start;
 $psql_rc = $node_master->psql('postgres', "ROLLBACK PREPARED 'xact_012_1'");
 is($psql_rc, '0',
-"Rollback of PGPROC_MAX_CACHED_SUBXIDS+ prepared transaction on promoted slave"
+"Rollback of PGPROC_MAX_CACHED_SUBXIDS+ prepared transaction on promoted standby"
 );
 
 $node_master->psql(

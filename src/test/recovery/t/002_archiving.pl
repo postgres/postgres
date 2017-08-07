@@ -16,7 +16,7 @@ my $backup_name = 'my_backup';
 # Start it
 $node_master->start;
 
-# Take backup for slave
+# Take backup for standby
 $node_master->backup($backup_name);
 
 # Initialize standby node from backup, fetching WAL from archives

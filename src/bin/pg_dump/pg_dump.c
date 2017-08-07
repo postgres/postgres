@@ -676,7 +676,7 @@ main(int argc, char **argv)
 		dopt.no_security_labels = 1;
 
 	/*
-	 * On hot standby slaves, never try to dump unlogged table data, since it
+	 * On hot standbys, never try to dump unlogged table data, since it
 	 * will just throw an error.
 	 */
 	if (fout->isStandby)

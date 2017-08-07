@@ -34,7 +34,7 @@ my $master_lsn =
   $master->safe_psql('postgres', 'select pg_current_wal_lsn()');
 $standby->poll_query_until('postgres',
 	qq{SELECT '$master_lsn'::pg_lsn <= pg_last_wal_replay_lsn()})
-  or die "slave never caught up";
+  or die "standby never caught up";
 
 my $standby_ts = $standby->safe_psql('postgres',
 qq{select ts.* from pg_class, pg_xact_commit_timestamp(xmin) ts where relname = 't10'}
@@ -47,7 +47,7 @@ $master->safe_psql('postgres', 'checkpoint');
 $master_lsn = $master->safe_psql('postgres', 'select pg_current_wal_lsn()');
 $standby->poll_query_until('postgres',
 	qq{SELECT '$master_lsn'::pg_lsn <= pg_last_wal_replay_lsn()})
-  or die "slave never caught up";
+  or die "standby never caught up";
 $standby->safe_psql('postgres', 'checkpoint');
 
 # This one should raise an error now

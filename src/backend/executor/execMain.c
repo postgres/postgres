@@ -759,8 +759,8 @@ ExecCheckRTEPermsModified(Oid relOid, Oid userid, Bitmapset *modifiedCols,
  * unless we're in parallel mode, in which case don't even allow writes
  * to temp tables.
  *
- * Note: in a Hot Standby slave this would need to reject writes to temp
- * tables just as we do in parallel mode; but an HS slave can't have created
+ * Note: in a Hot Standby this would need to reject writes to temp
+ * tables just as we do in parallel mode; but an HS standby can't have created
  * any temp tables in the first place, so no need to check that.
  */
 static void
