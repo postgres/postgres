@@ -460,7 +460,10 @@ CREATE SERVER s10 FOREIGN DATA WRAPPER foo;                     -- ERROR
 ALTER SERVER s9 VERSION '1.1';
 GRANT USAGE ON FOREIGN SERVER s9 TO regress_test_role;
 CREATE USER MAPPING FOR current_user SERVER s9;
+-- We use terse mode to avoid ordering issues in cascade detail output.
+\set VERBOSITY terse
 DROP SERVER s9 CASCADE;
+\set VERBOSITY default
 RESET ROLE;
 CREATE SERVER s9 FOREIGN DATA WRAPPER foo;
 GRANT USAGE ON FOREIGN SERVER s9 TO unprivileged_role;
@@ -474,17 +477,19 @@ DROP SERVER s9 CASCADE;                                         -- ERROR
 SET ROLE regress_test_role;
 CREATE SERVER s10 FOREIGN DATA WRAPPER foo;
 CREATE USER MAPPING FOR public SERVER s10 OPTIONS (user 'secret');
-GRANT USAGE ON FOREIGN SERVER s10 TO unprivileged_role;
--- owner of server can see option fields
+CREATE USER MAPPING FOR unprivileged_role SERVER s10 OPTIONS (user 'secret');
+-- owner of server can see some option fields
 \deu+
 RESET ROLE;
--- superuser can see option fields
+-- superuser can see all option fields
 \deu+
--- unprivileged user cannot see option fields
+-- unprivileged user cannot see any option field
 SET ROLE unprivileged_role;
 \deu+
 RESET ROLE;
+\set VERBOSITY terse
 DROP SERVER s10 CASCADE;
+\set VERBOSITY default
 
 -- DROP FOREIGN TABLE
 DROP FOREIGN TABLE no_table;                                    -- ERROR
@@ -501,12 +506,10 @@ DROP SCHEMA foreign_schema CASCADE;
 DROP ROLE regress_test_role;                                -- ERROR
 DROP SERVER t1 CASCADE;
 DROP USER MAPPING FOR regress_test_role SERVER s6;
--- This test causes some order dependent cascade detail output,
--- so switch to terse mode for it.
 \set VERBOSITY terse
 DROP FOREIGN DATA WRAPPER foo CASCADE;
-\set VERBOSITY default
 DROP SERVER s8 CASCADE;
+\set VERBOSITY default
 DROP ROLE regress_test_indirect;
 DROP ROLE regress_test_role;
 DROP ROLE unprivileged_role;                                -- ERROR

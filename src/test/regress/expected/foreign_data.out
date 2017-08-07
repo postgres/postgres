@@ -1144,10 +1144,11 @@ ERROR:  permission denied for foreign-data wrapper foo
 ALTER SERVER s9 VERSION '1.1';
 GRANT USAGE ON FOREIGN SERVER s9 TO regress_test_role;
 CREATE USER MAPPING FOR current_user SERVER s9;
+-- We use terse mode to avoid ordering issues in cascade detail output.
+\set VERBOSITY terse
 DROP SERVER s9 CASCADE;
 NOTICE:  drop cascades to 2 other objects
-DETAIL:  drop cascades to user mapping for public on server s9
-drop cascades to user mapping for unprivileged_role on server s9
+\set VERBOSITY default
 RESET ROLE;
 CREATE SERVER s9 FOREIGN DATA WRAPPER foo;
 GRANT USAGE ON FOREIGN SERVER s9 TO unprivileged_role;
@@ -1163,13 +1164,14 @@ ERROR:  must be owner of foreign server s9
 SET ROLE regress_test_role;
 CREATE SERVER s10 FOREIGN DATA WRAPPER foo;
 CREATE USER MAPPING FOR public SERVER s10 OPTIONS (user 'secret');
-GRANT USAGE ON FOREIGN SERVER s10 TO unprivileged_role;
--- owner of server can see option fields
+CREATE USER MAPPING FOR unprivileged_role SERVER s10 OPTIONS (user 'secret');
+-- owner of server can see some option fields
 \deu+
              List of user mappings
  Server |     User name     |    FDW Options    
 --------+-------------------+-------------------
  s10    | public            | ("user" 'secret')
+ s10    | unprivileged_role | 
  s4     | foreign_data_user | 
  s5     | regress_test_role | (modified '1')
  s6     | regress_test_role | 
@@ -1177,15 +1179,16 @@ GRANT USAGE ON FOREIGN SERVER s10 TO unprivileged_role;
  s8     | public            | 
  s9     | unprivileged_role | 
  t1     | public            | (modified '1')
-(8 rows)
+(9 rows)
 
 RESET ROLE;
--- superuser can see option fields
+-- superuser can see all option fields
 \deu+
               List of user mappings
  Server |     User name     |     FDW Options     
 --------+-------------------+---------------------
  s10    | public            | ("user" 'secret')
+ s10    | unprivileged_role | ("user" 'secret')
  s4     | foreign_data_user | 
  s5     | regress_test_role | (modified '1')
  s6     | regress_test_role | 
@@ -1193,15 +1196,16 @@ RESET ROLE;
  s8     | public            | 
  s9     | unprivileged_role | 
  t1     | public            | (modified '1')
-(8 rows)
+(9 rows)
 
--- unprivileged user cannot see option fields
+-- unprivileged user cannot see any option field
 SET ROLE unprivileged_role;
 \deu+
           List of user mappings
  Server |     User name     | FDW Options 
 --------+-------------------+-------------
  s10    | public            | 
+ s10    | unprivileged_role | 
  s4     | foreign_data_user | 
  s5     | regress_test_role | 
  s6     | regress_test_role | 
@@ -1209,11 +1213,13 @@ SET ROLE unprivileged_role;
  s8     | public            | 
  s9     | unprivileged_role | 
  t1     | public            | 
-(8 rows)
+(9 rows)
 
 RESET ROLE;
+\set VERBOSITY terse
 DROP SERVER s10 CASCADE;
-NOTICE:  drop cascades to user mapping for public on server s10
+NOTICE:  drop cascades to 2 other objects
+\set VERBOSITY default
 -- DROP FOREIGN TABLE
 DROP FOREIGN TABLE no_table;                                    -- ERROR
 ERROR:  foreign table "no_table" does not exist
@@ -1238,16 +1244,12 @@ owner of user mapping for regress_test_role on server s6
 DROP SERVER t1 CASCADE;
 NOTICE:  drop cascades to user mapping for public on server t1
 DROP USER MAPPING FOR regress_test_role SERVER s6;
--- This test causes some order dependent cascade detail output,
--- so switch to terse mode for it.
 \set VERBOSITY terse
 DROP FOREIGN DATA WRAPPER foo CASCADE;
 NOTICE:  drop cascades to 5 other objects
-\set VERBOSITY default
 DROP SERVER s8 CASCADE;
 NOTICE:  drop cascades to 2 other objects
-DETAIL:  drop cascades to user mapping for foreign_data_user on server s8
-drop cascades to user mapping for public on server s8
+\set VERBOSITY default
 DROP ROLE regress_test_indirect;
 DROP ROLE regress_test_role;
 DROP ROLE unprivileged_role;                                -- ERROR
