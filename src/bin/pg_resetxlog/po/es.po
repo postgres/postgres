@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_resetxlog (PostgreSQL 9.3)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2015-09-28 22:55+0000\n"
+"POT-Creation-Date: 2017-05-21 17:44+0000\n"
 "PO-Revision-Date: 2013-08-29 15:01-0400\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: Español <pgsql-es-ayuda@postgresql.org>\n"
@@ -120,8 +120,7 @@ msgid ""
 "Is a server running?  If not, delete the lock file and try again.\n"
 msgstr ""
 "%s: el archivo candado «%s» existe\n"
-"¿Hay un servidor corriendo? Si no, borre el archivo candado e inténtelo de "
-"nuevo\n"
+"¿Hay un servidor corriendo? Si no, borre el archivo candado e inténtelo de nuevo\n"
 
 #: pg_resetxlog.c:371
 #, c-format
@@ -167,14 +166,12 @@ msgstr "%s: no se pudo leer el archivo «%s»: %s\n"
 #: pg_resetxlog.c:462
 #, c-format
 msgid "%s: pg_control exists but has invalid CRC; proceed with caution\n"
-msgstr ""
-"%s: existe pg_control pero tiene un CRC no válido, proceda con precaución\n"
+msgstr "%s: existe pg_control pero tiene un CRC no válido, proceda con precaución\n"
 
 #: pg_resetxlog.c:471
 #, c-format
 msgid "%s: pg_control exists but is broken or unknown version; ignoring it\n"
-msgstr ""
-"%s: existe pg_control pero está roto o se desconoce su versión; ignorándolo\n"
+msgstr "%s: existe pg_control pero está roto o se desconoce su versión; ignorándolo\n"
 
 #: pg_resetxlog.c:570
 #, c-format
@@ -355,12 +352,8 @@ msgstr "Versión de suma de verificación de datos:        %u\n"
 
 #: pg_resetxlog.c:699
 #, c-format
-msgid ""
-"%s: internal error -- sizeof(ControlFileData) is too large ... fix "
-"PG_CONTROL_SIZE\n"
-msgstr ""
-"%s: error interno -- sizeof(ControlFileData) es demasiado grande ... corrija "
-"PG_CONTROL_SIZE\n"
+msgid "%s: internal error -- sizeof(ControlFileData) is too large ... fix PG_CONTROL_SIZE\n"
+msgstr "%s: error interno -- sizeof(ControlFileData) es demasiado grande ... corrija PG_CONTROL_SIZE\n"
 
 #: pg_resetxlog.c:714
 #, c-format
@@ -410,8 +403,7 @@ msgstr "%s: no se pudo escribir en el archivo «%s»: %s\n"
 #: pg_resetxlog.c:1080
 #, c-format
 msgid "%s: WARNING: cannot create restricted tokens on this platform\n"
-msgstr ""
-"%s: ATENCIÓN: no se pueden crear tokens restrigidos en esta plataforma\n"
+msgstr "%s: ATENCIÓN: no se pueden crear tokens restrigidos en esta plataforma\n"
 
 #: pg_resetxlog.c:1089
 #, c-format
@@ -431,21 +423,17 @@ msgstr "%s: no se pudo crear el token restringido: código de error %lu\n"
 #: pg_resetxlog.c:1142
 #, c-format
 msgid "%s: could not start process for command \"%s\": error code %lu\n"
-msgstr ""
-"%s: no se pudo iniciar el proceso para la orden «%s»: código de error %lu\n"
+msgstr "%s: no se pudo iniciar el proceso para la orden «%s»: código de error %lu\n"
 
 #: pg_resetxlog.c:1174
 #, c-format
 msgid "%s: could not re-execute with restricted token: error code %lu\n"
-msgstr ""
-"%s: no se pudo re-ejecutar con el token restringido: código de error %lu\n"
+msgstr "%s: no se pudo re-ejecutar con el token restringido: código de error %lu\n"
 
 #: pg_resetxlog.c:1189
 #, c-format
 msgid "%s: could not get exit code from subprocess: error code %lu\n"
-msgstr ""
-"%s: no se pudo obtener el código de salida del subproceso»: código de error "
-"%lu\n"
+msgstr "%s: no se pudo obtener el código de salida del subproceso»: código de error %lu\n"
 
 #: pg_resetxlog.c:1201
 #, c-format
@@ -484,9 +472,7 @@ msgstr "  -f              fuerza que la actualización sea hecha\n"
 
 #: pg_resetxlog.c:1206
 #, c-format
-msgid ""
-"  -l XLOGFILE      force minimum WAL starting location for new transaction "
-"log\n"
+msgid "  -l XLOGFILE      force minimum WAL starting location for new transaction log\n"
 msgstr ""
 "  -l XLOGFILE     fuerza una posición mínima de inicio de WAL para una\n"
 "                  nueva transacción\n"
@@ -494,18 +480,13 @@ msgstr ""
 #: pg_resetxlog.c:1207
 #, c-format
 msgid "  -m MXID,MXID     set next and oldest multitransaction ID\n"
-msgstr ""
-"  -m MXID,MXID    asigna el siguiente ID de multitransacción y el más "
-"antiguo\n"
+msgstr "  -m MXID,MXID    asigna el siguiente ID de multitransacción y el más antiguo\n"
 
 #: pg_resetxlog.c:1208
 #, c-format
-msgid ""
-"  -n               no update, just show extracted control values (for "
-"testing)\n"
+msgid "  -n               no update, just show extracted control values (for testing)\n"
 msgstr ""
-"  -n              no actualiza, sólo muestra los valores de control "
-"extraídos\n"
+"  -n              no actualiza, sólo muestra los valores de control extraídos\n"
 "                  (para prueba)\n"
 
 #: pg_resetxlog.c:1209

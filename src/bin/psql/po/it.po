@@ -24,8 +24,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psql (PostgreSQL) 9.3\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-02-07 20:11+0000\n"
-"PO-Revision-Date: 2017-04-23 02:39+0100\n"
+"POT-Creation-Date: 2017-05-22 16:48+0000\n"
+"PO-Revision-Date: 2017-05-29 22:06+0100\n"
 "Last-Translator: Daniele Varrazzo <daniele.varrazzo@gmail.com>\n"
 "Language-Team: Gruppo traduzioni ITPUG <traduzioni@itpug.org>\n"
 "Language: it\n"
@@ -274,7 +274,7 @@ msgid "All connection parameters must be supplied because no database connection
 msgstr "Tutti i parametri di connessione devono essere forniti perché non esiste alcuna connessione di database\n"
 
 #: command.c:1749 command.c:2946 common.c:121 common.c:418 common.c:483
-#: common.c:914 common.c:942 common.c:1039 copy.c:487 copy.c:684
+#: common.c:914 common.c:942 common.c:1039 copy.c:487 copy.c:694
 #: large_obj.c:158 large_obj.c:193 large_obj.c:255 psqlscan.l:1949
 #, c-format
 msgid "%s"
@@ -663,16 +663,16 @@ msgstr "annullata dall'utente"
 #: copy.c:539
 msgid ""
 "Enter data to be copied followed by a newline.\n"
-"End with a backslash and a period on a line by itself."
+"End with a backslash and a period on a line by itself, or an EOF signal."
 msgstr ""
 "Inserire i dati da copiare seguiti da un \"a capo\".\n"
-"Terminare con un backslash ed un punto su una singola riga."
+"Terminare con un backslash ed un punto su una singola riga, o un segnale EOF."
 
 #: copy.c:656
 msgid "aborted because of read failure"
 msgstr "interrotto a causa di lettura non riuscita"
 
-#: copy.c:680
+#: copy.c:690
 msgid "trying to exit copy mode"
 msgstr "tentativo di uscita dalla modalità copy"
 
@@ -1132,6 +1132,16 @@ msgstr "Trigger sempre abilitati:"
 #: describe.c:2127
 msgid "Triggers firing on replica only:"
 msgstr "Trigger abilitati solo su replica."
+
+#: describe.c:2184
+#, c-format
+msgid "Server: %s"
+msgstr "Server: %s"
+
+#: describe.c:2192
+#, c-format
+msgid "FDW Options: (%s)"
+msgstr "Opzioni FDW: (%s)"
 
 #: describe.c:2206
 msgid "Inherits"

@@ -4,15 +4,14 @@
 # Serguei A. Mokhov <mokhov@cs.concordia.ca>, 2001-2005.
 # Oleg Bartunov <oleg@sai.msu.su>, 2004-2005.
 # Sergey Burladyan <eshkinkot@gmail.com>, 2012.
-# Alexander Lakhin <exclusion@gmail.com>, 2012-2016.
+# Alexander Lakhin <exclusion@gmail.com>, 2012-2016, 2017.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: psql (PostgreSQL 9)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-01-30 17:33+0000\n"
-"PO-Revision-Date: 2016-11-24 18:24+0300\n"
-"Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
+"POT-Creation-Date: 2017-05-26 21:02+0000\n"
+"PO-Revision-Date: 2017-05-27 13:06+0300\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -20,6 +19,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 
 #: ../../common/fe_memutils.c:33 ../../common/fe_memutils.c:60
 #: ../../common/fe_memutils.c:83 input.c:216 mainloop.c:72 mainloop.c:234
@@ -274,7 +274,7 @@ msgstr ""
 "подключения\n"
 
 #: command.c:1749 command.c:2946 common.c:121 common.c:418 common.c:483
-#: common.c:914 common.c:942 common.c:1039 copy.c:487 copy.c:684
+#: common.c:914 common.c:942 common.c:1039 copy.c:487 copy.c:694
 #: large_obj.c:158 large_obj.c:193 large_obj.c:255 psqlscan.l:1949
 #, c-format
 msgid "%s"
@@ -691,16 +691,16 @@ msgstr "отменено пользователем"
 #: copy.c:539
 msgid ""
 "Enter data to be copied followed by a newline.\n"
-"End with a backslash and a period on a line by itself."
+"End with a backslash and a period on a line by itself, or an EOF signal."
 msgstr ""
 "Вводите данные для копирования, разделяя строки переводом строки.\n"
-"Закончите ввод строкой '\\.'."
+"Закончите ввод строкой '\\.' или сигналом EOF."
 
 #: copy.c:656
 msgid "aborted because of read failure"
 msgstr "прерывание из-за ошибки чтения"
 
-#: copy.c:680
+#: copy.c:690
 msgid "trying to exit copy mode"
 msgstr "попытка выйти из режима копирования"
 
@@ -1163,6 +1163,17 @@ msgstr "Триггеры, срабатывающие всегда:"
 #: describe.c:2127
 msgid "Triggers firing on replica only:"
 msgstr "Триггеры, срабатывающие только в реплике:"
+
+#: describe.c:2184
+#, c-format
+msgid "Server: %s"
+msgstr "Сервер: %s"
+
+# well-spelled: ОСД
+#: describe.c:2192
+#, c-format
+msgid "FDW Options: (%s)"
+msgstr "Параметры ОСД: (%s)"
 
 #: describe.c:2206
 msgid "Inherits"
