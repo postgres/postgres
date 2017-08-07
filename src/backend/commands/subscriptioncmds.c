@@ -572,7 +572,7 @@ AlterSubscription_refresh(Subscription *sub, bool copy_data)
 			SetSubscriptionRelState(sub->oid, relid,
 									copy_data ? SUBREL_STATE_INIT : SUBREL_STATE_READY,
 									InvalidXLogRecPtr, false);
-			ereport(NOTICE,
+			ereport(DEBUG1,
 					(errmsg("added subscription for table %s.%s",
 							quote_identifier(rv->schemaname),
 							quote_identifier(rv->relname))));
@@ -600,7 +600,7 @@ AlterSubscription_refresh(Subscription *sub, bool copy_data)
 			logicalrep_worker_stop_at_commit(sub->oid, relid);
 
 			namespace = get_namespace_name(get_rel_namespace(relid));
-			ereport(NOTICE,
+			ereport(DEBUG1,
 					(errmsg("removed subscription for table %s.%s",
 							quote_identifier(namespace),
 							quote_identifier(get_rel_name(relid)))));
