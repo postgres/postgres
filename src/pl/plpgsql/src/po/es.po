@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: plpgsql (PostgreSQL 9.4)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2015-09-04 17:45+0000\n"
+"POT-Creation-Date: 2017-05-21 17:33+0000\n"
 "PO-Revision-Date: 2014-12-15 16:23-0300\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
@@ -22,7 +22,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 
-#: pl_comp.c:436 pl_handler.c:438
+#: pl_comp.c:436 pl_handler.c:440
 #, c-format
 msgid "PL/pgSQL functions cannot accept type %s"
 msgstr "las funciones PL/pgSQL no pueden aceptar el tipo %s"
@@ -37,7 +37,7 @@ msgstr "no se pudo determinar el verdadero tipo de resultado para la función po
 msgid "trigger functions can only be called as triggers"
 msgstr "las funciones de disparador sólo pueden ser invocadas como disparadores"
 
-#: pl_comp.c:551 pl_handler.c:423
+#: pl_comp.c:551 pl_handler.c:425
 #, c-format
 msgid "PL/pgSQL functions cannot return type %s"
 msgstr "las funciones PL/pgSQL no pueden retornar el tipo %s"
@@ -780,19 +780,19 @@ msgstr "no se reconoce la opción de sentencia RAISE"
 msgid "syntax error, expected \"=\""
 msgstr "error de sintaxis, se esperaba «=»"
 
-#: pl_handler.c:147
+#: pl_handler.c:149
 msgid "Sets handling of conflicts between PL/pgSQL variable names and table column names."
 msgstr "Determina el manejo de conflictos entre nombres de variables PL/pgSQL y nombres de columnas de tablas."
 
-#: pl_handler.c:156
+#: pl_handler.c:158
 msgid "Print information about parameters in the DETAIL part of the error messages generated on INTO ... STRICT failures."
 msgstr "Imprimir información de parámetros en la parte DETALLE de los mensajes de error generados por fallos en INTO ... STRICT."
 
-#: pl_handler.c:164
+#: pl_handler.c:166
 msgid "List of programming constructs that should produce a warning."
 msgstr "Listado de estructuras de programación que deben dar una advertencia."
 
-#: pl_handler.c:174
+#: pl_handler.c:176
 msgid "List of programming constructs that should produce an error."
 msgstr "Listado de estructuras de programación que deben dar un error."
 

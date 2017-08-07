@@ -40,8 +40,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libpq (PostgreSQL) 9.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-02-09 21:23+0000\n"
-"PO-Revision-Date: 2016-04-17 20:43+0100\n"
+"POT-Creation-Date: 2017-05-22 16:38+0000\n"
+"PO-Revision-Date: 2017-05-23 01:18+0100\n"
 "Last-Translator: Daniele Varrazzo <daniele.varrazzo@gmail.com>\n"
 "Language-Team: Gruppo traduzioni ITPUG <traduzioni@itpug.org>\n"
 "Language: it\n"
@@ -50,7 +50,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 "X-Poedit-SourceCharset: UTF-8\n"
-"X-Generator: Poedit 1.5.4\n"
+"X-Generator: Poedit 1.8.7.1\n"
 
 # DV: non ne sono convinto
 #: fe-auth.c:148
@@ -66,13 +66,13 @@ msgid "duplicate GSS authentication request\n"
 msgstr "richiesta di autenticazione GSS duplicata\n"
 
 #: fe-auth.c:197 fe-auth.c:309 fe-auth.c:383 fe-auth.c:418 fe-auth.c:514
-#: fe-auth.c:780 fe-connect.c:707 fe-connect.c:904 fe-connect.c:1080
+#: fe-auth.c:793 fe-connect.c:707 fe-connect.c:904 fe-connect.c:1080
 #: fe-connect.c:2091 fe-connect.c:3482 fe-connect.c:3734 fe-connect.c:3853
 #: fe-connect.c:4083 fe-connect.c:4163 fe-connect.c:4258 fe-connect.c:4514
-#: fe-connect.c:4542 fe-connect.c:4614 fe-connect.c:4632 fe-connect.c:4728
-#: fe-connect.c:5079 fe-connect.c:5229 fe-exec.c:3354 fe-exec.c:3519
-#: fe-lobj.c:896 fe-protocol2.c:1206 fe-protocol3.c:1613 fe-secure.c:779
-#: fe-secure.c:1258
+#: fe-connect.c:4542 fe-connect.c:4614 fe-connect.c:4638 fe-connect.c:4656
+#: fe-connect.c:4752 fe-connect.c:5103 fe-connect.c:5253 fe-exec.c:3354
+#: fe-exec.c:3519 fe-lobj.c:896 fe-protocol2.c:1206 fe-protocol3.c:1613
+#: fe-secure.c:779 fe-secure.c:1269
 msgid "out of memory\n"
 msgstr "memoria esaurita\n"
 
@@ -113,22 +113,26 @@ msgstr "l'autenticazione SSPI non è supportata\n"
 msgid "Crypt authentication not supported\n"
 msgstr "l'autenticazione Crypt non è supportata\n"
 
-#: fe-auth.c:708
+#: fe-auth.c:716
+msgid "SCRAM authentication requires libpq version 10 or above\n"
+msgstr "l'autenticazione SCRAM richiede libpq versione 10 o successiva\n"
+
+#: fe-auth.c:721
 #, c-format
 msgid "authentication method %u not supported\n"
 msgstr "l'autenticazione %u non è supportata\n"
 
-#: fe-auth.c:755
+#: fe-auth.c:768
 #, c-format
 msgid "user name lookup failure: error code %lu\n"
 msgstr "ricerca del nome utente fallita: codice di errore %lu\n"
 
-#: fe-auth.c:765 fe-connect.c:2018
+#: fe-auth.c:778 fe-connect.c:2018
 #, c-format
 msgid "could not look up local user ID %d: %s\n"
 msgstr "ricerca dell'ID utente locale %d non riuscita: %s\n"
 
-#: fe-auth.c:770 fe-connect.c:2023
+#: fe-auth.c:783 fe-connect.c:2023
 #, c-format
 msgid "local user with ID %d does not exist\n"
 msgstr "l'utente locale con ID %d non esiste\n"
@@ -377,7 +381,7 @@ msgstr "l'attributo non ha valori nella ricerca LDAP\n"
 msgid "missing \"=\" after \"%s\" in connection info string\n"
 msgstr "manca \"=\" dopo \"%s\" nella stringa di connessione\n"
 
-#: fe-connect.c:3865 fe-connect.c:4482 fe-connect.c:5212
+#: fe-connect.c:3865 fe-connect.c:4482 fe-connect.c:5236
 #, c-format
 msgid "invalid connection option \"%s\"\n"
 msgstr "opzione di connessione errata \"%s\"\n"
@@ -410,68 +414,68 @@ msgstr "la riga %d nel file di servizio \"%s\" è troppo lunga\n"
 msgid "syntax error in service file \"%s\", line %d\n"
 msgstr "errore di sintassi del file di servizio \"%s\", alla riga %d\n"
 
-#: fe-connect.c:4739
+#: fe-connect.c:4763
 #, c-format
 msgid "invalid URI propagated to internal parser routine: \"%s\"\n"
 msgstr "URI invalida propagata alla routine di parsing interna: \"%s\"\n"
 
-#: fe-connect.c:4809
+#: fe-connect.c:4833
 #, c-format
 msgid "end of string reached when looking for matching \"]\" in IPv6 host address in URI: \"%s\"\n"
 msgstr "fine stringa raggiunta cercando un \"]\" corrispondente nell'indirizzo host IPv6 nella URI: \"%s\"\n"
 
-#: fe-connect.c:4816
+#: fe-connect.c:4840
 #, c-format
 msgid "IPv6 host address may not be empty in URI: \"%s\"\n"
 msgstr "l'indirizzo host IPv6 non dev'essere assente nella URI: \"%s\"\n"
 
-#: fe-connect.c:4831
+#: fe-connect.c:4855
 #, c-format
 msgid "unexpected character \"%c\" at position %d in URI (expected \":\" or \"/\"): \"%s\"\n"
 msgstr "carattere inatteso \"%c\" in posizione %d nella uri URI (atteso \":\" oppure \"/\"): \"%s\"\n"
 
-#: fe-connect.c:4945
+#: fe-connect.c:4969
 #, c-format
 msgid "extra key/value separator \"=\" in URI query parameter: \"%s\"\n"
 msgstr "separatore chiave/valore \"=\" in eccesso nei parametri della URI: \"%s\"\n"
 
-#: fe-connect.c:4965
+#: fe-connect.c:4989
 #, c-format
 msgid "missing key/value separator \"=\" in URI query parameter: \"%s\"\n"
 msgstr "separatore chiave/valore \"=\" mancante nei parametri della URI: \"%s\"\n"
 
-#: fe-connect.c:5035
+#: fe-connect.c:5059
 #, c-format
 msgid "invalid URI query parameter: \"%s\"\n"
 msgstr "parametro URI non valido: \"%s\"\n"
 
-#: fe-connect.c:5107
+#: fe-connect.c:5131
 #, c-format
 msgid "invalid percent-encoded token: \"%s\"\n"
 msgstr "simbolo percent-encoded non valido \"%s\"\n"
 
-#: fe-connect.c:5117
+#: fe-connect.c:5141
 #, c-format
 msgid "forbidden value %%00 in percent-encoded value: \"%s\"\n"
 msgstr "valore non ammesso %%00 nel valore percent-encoded: \"%s\"\n"
 
-#: fe-connect.c:5448
+#: fe-connect.c:5472
 msgid "connection pointer is NULL\n"
 msgstr "il puntatore della connessione è NULL\n"
 
-#: fe-connect.c:5734
+#: fe-connect.c:5758
 #, c-format
 msgid "WARNING: password file \"%s\" is not a plain file\n"
 msgstr "ATTENZIONE: il file delle password \"%s\" non è un file regolare\n"
 
-#: fe-connect.c:5743
+#: fe-connect.c:5767
 #, c-format
 msgid "WARNING: password file \"%s\" has group or world access; permissions should be u=rw (0600) or less\n"
 msgstr ""
 "ATTENZIONE: Il file delle password %s ha privilegi di accesso in lettura e scrittura per tutti;\n"
 "i permessi dovrebbero essere u=rw (0600) o inferiori\n"
 
-#: fe-connect.c:5857
+#: fe-connect.c:5881
 #, c-format
 msgid "password retrieved from file \"%s\"\n"
 msgstr "password ottenuta dal file \"%s\"\n"
@@ -861,16 +865,16 @@ msgstr "RIGA %d: "
 msgid "PQgetline: not doing text COPY OUT\n"
 msgstr "PQgetline: COPY OUT testuale ignorato\n"
 
-#: fe-secure.c:377 fe-secure.c:541 fe-secure.c:1448
+#: fe-secure.c:377 fe-secure.c:541 fe-secure.c:1459
 #, c-format
 msgid "SSL SYSCALL error: %s\n"
 msgstr "errore SSL SYSCALL: %s\n"
 
-#: fe-secure.c:384 fe-secure.c:548 fe-secure.c:1452
+#: fe-secure.c:384 fe-secure.c:548 fe-secure.c:1463
 msgid "SSL SYSCALL error: EOF detected\n"
 msgstr "errore SSL SYSCALL: rilevato EOF\n"
 
-#: fe-secure.c:395 fe-secure.c:559 fe-secure.c:1461
+#: fe-secure.c:395 fe-secure.c:559 fe-secure.c:1472
 #, c-format
 msgid "SSL error: %s\n"
 msgstr "errore SSL: %s\n"
@@ -879,7 +883,7 @@ msgstr "errore SSL: %s\n"
 msgid "SSL connection has been closed unexpectedly\n"
 msgstr "la connessione SSL è stata chiusa inaspettatamente\n"
 
-#: fe-secure.c:416 fe-secure.c:580 fe-secure.c:1470
+#: fe-secure.c:416 fe-secure.c:580 fe-secure.c:1481
 #, c-format
 msgid "unrecognized SSL error code: %d\n"
 msgstr "codice di errore SSL sconosciuto: %d\n"
@@ -911,22 +915,22 @@ msgstr "il nome dell'host dev'essere specificato per una connessione SSL verific
 msgid "server common name \"%s\" does not match host name \"%s\"\n"
 msgstr "il nome comune del server \"%s\" non corrisponde al nome dell'host \"%s\"\n"
 
-#: fe-secure.c:1050
+#: fe-secure.c:1061
 #, c-format
 msgid "could not create SSL context: %s\n"
 msgstr "creazione del contesto SSL fallita: %s\n"
 
-#: fe-secure.c:1087
+#: fe-secure.c:1098
 #, c-format
 msgid "could not read root certificate file \"%s\": %s\n"
 msgstr "lettura del file di certificato radice \"%s\" fallita: %s\n"
 
-#: fe-secure.c:1115
+#: fe-secure.c:1126
 #, c-format
 msgid "SSL library does not support CRL certificates (file \"%s\")\n"
 msgstr "la libreria SSL non supporta i certificati di tipo CRL (file \"%s\")\n"
 
-#: fe-secure.c:1143
+#: fe-secure.c:1154
 msgid ""
 "could not get home directory to locate root certificate file\n"
 "Either provide the file or change sslmode to disable server certificate verification.\n"
@@ -934,7 +938,7 @@ msgstr ""
 "directory utente non trovata per la locazione del file di certificato radice\n"
 "Per favore fornisci il file oppure cambia sslmode per disabilitare la verifica del certificato del server.\n"
 
-#: fe-secure.c:1147
+#: fe-secure.c:1158
 #, c-format
 msgid ""
 "root certificate file \"%s\" does not exist\n"
@@ -943,72 +947,72 @@ msgstr ""
 "il file \"%s\" del certificato radice non esiste\n"
 "Per favore fornisci il file oppure cambia sslmode per disabilitare la verifica del certificato del server.\n"
 
-#: fe-secure.c:1178
+#: fe-secure.c:1189
 #, c-format
 msgid "could not open certificate file \"%s\": %s\n"
 msgstr "apertura del file di certificato \"%s\" fallita: %s\n"
 
-#: fe-secure.c:1197
+#: fe-secure.c:1208
 #, c-format
 msgid "could not read certificate file \"%s\": %s\n"
 msgstr "lettura del file di certificato \"%s\" fallita: %s\n"
 
-#: fe-secure.c:1221
+#: fe-secure.c:1232
 #, c-format
 msgid "could not establish SSL connection: %s\n"
 msgstr "non è stato possibile stabilire una connessione SSL: %s\n"
 
-#: fe-secure.c:1274
+#: fe-secure.c:1285
 #, c-format
 msgid "could not load SSL engine \"%s\": %s\n"
 msgstr "caricamento del motore SSL \"%s\" fallito: %s\n"
 
-#: fe-secure.c:1286
+#: fe-secure.c:1297
 #, c-format
 msgid "could not initialize SSL engine \"%s\": %s\n"
 msgstr "inizializzazione del motore SSL \"%s\" fallita: %s\n"
 
-#: fe-secure.c:1302
+#: fe-secure.c:1313
 #, c-format
 msgid "could not read private SSL key \"%s\" from engine \"%s\": %s\n"
 msgstr "lettura del file della chiave privata SSL \"%s\" dal motore \"%s\" fallita: %s\n"
 
-#: fe-secure.c:1316
+#: fe-secure.c:1327
 #, c-format
 msgid "could not load private SSL key \"%s\" from engine \"%s\": %s\n"
 msgstr "caricamento della chiave privata SSL \"%s\" dal motore \"%s\" fallito: %s\n"
 
-#: fe-secure.c:1353
+#: fe-secure.c:1364
 #, c-format
 msgid "certificate present, but not private key file \"%s\"\n"
 msgstr "certificato trovato, ma non la chiave privata \"%s\"\n"
 
-#: fe-secure.c:1361
+#: fe-secure.c:1372
 #, c-format
 msgid "private key file \"%s\" has group or world access; permissions should be u=rw (0600) or less\n"
 msgstr "Il file della chiave privata \"%s\" ha privilegi di accesso in lettura e scrittura per tutti; i permessi dovrebbero essere u=rw (0600) o inferiori\n"
 
-#: fe-secure.c:1372
+#: fe-secure.c:1383
 #, c-format
 msgid "could not load private key file \"%s\": %s\n"
 msgstr "caricamento del file della chiave privata \"%s\" fallito: %s\n"
 
-#: fe-secure.c:1386
+#: fe-secure.c:1397
 #, c-format
 msgid "certificate does not match private key file \"%s\": %s\n"
 msgstr "il certificato non corrisponde con il file della chiave privata \"%s\": %s\n"
 
-#: fe-secure.c:1491
+#: fe-secure.c:1502
 #, c-format
 msgid "certificate could not be obtained: %s\n"
 msgstr "non è stato possibile possibile ottenere il certificato: %s\n"
 
-#: fe-secure.c:1587
+#: fe-secure.c:1598
 #, c-format
 msgid "no SSL error reported"
 msgstr "nessun errore SSL riportato"
 
-#: fe-secure.c:1596
+#: fe-secure.c:1607
 #, c-format
 msgid "SSL error code %lu"
 msgstr "codice di errore SSL: %lu"

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecpg (PostgreSQL 9)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-01-30 17:23+0000\n"
+"POT-Creation-Date: 2017-05-26 20:52+0000\n"
 "PO-Revision-Date: 2016-11-24 16:50+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -253,67 +253,67 @@ msgstr "оборванная шестнадцатеричная строка"
 msgid "unterminated quoted string"
 msgstr "незавершённая строка в кавычках"
 
-#: pgc.l:598 pgc.l:611
+#: pgc.l:599 pgc.l:612
 #, c-format
 msgid "zero-length delimited identifier"
 msgstr "пустой идентификатор в кавычках"
 
-#: pgc.l:619
+#: pgc.l:620
 #, c-format
 msgid "unterminated quoted identifier"
 msgstr "незавершённый идентификатор в кавычках"
 
-#: pgc.l:873
+#: pgc.l:874
 #, c-format
 msgid "nested /* ... */ comments"
 msgstr "вложенные комментарии /* ... */"
 
-#: pgc.l:966
+#: pgc.l:967
 #, c-format
 msgid "missing identifier in EXEC SQL UNDEF command"
 msgstr "в команде EXEC SQL UNDEF отсутствует идентификатор"
 
-#: pgc.l:1012 pgc.l:1026
+#: pgc.l:1013 pgc.l:1027
 #, c-format
 msgid "missing matching \"EXEC SQL IFDEF\" / \"EXEC SQL IFNDEF\""
 msgstr "нет соответствующего \"EXEC SQL IFDEF\" / \"EXEC SQL IFNDEF\""
 
-#: pgc.l:1015 pgc.l:1028 pgc.l:1204
+#: pgc.l:1016 pgc.l:1029 pgc.l:1205
 #, c-format
 msgid "missing \"EXEC SQL ENDIF;\""
 msgstr "отсутствует \"EXEC SQL ENDIF;\""
 
-#: pgc.l:1044 pgc.l:1063
+#: pgc.l:1045 pgc.l:1064
 #, c-format
 msgid "more than one EXEC SQL ELSE"
 msgstr "неоднократная команда EXEC SQL ELSE"
 
-#: pgc.l:1085 pgc.l:1099
+#: pgc.l:1086 pgc.l:1100
 #, c-format
 msgid "unmatched EXEC SQL ENDIF"
 msgstr "непарная команда EXEC SQL ENDIF"
 
-#: pgc.l:1119
+#: pgc.l:1120
 #, c-format
 msgid "too many nested EXEC SQL IFDEF conditions"
 msgstr "слишком много вложенных условий EXEC SQL IFDEF"
 
-#: pgc.l:1152
+#: pgc.l:1153
 #, c-format
 msgid "missing identifier in EXEC SQL IFDEF command"
 msgstr "в команде EXEC SQL IFDEF отсутствует идентификатор"
 
-#: pgc.l:1161
+#: pgc.l:1162
 #, c-format
 msgid "missing identifier in EXEC SQL DEFINE command"
 msgstr "в команде EXEC SQL DEFINE отсутствует идентификатор"
 
-#: pgc.l:1194
+#: pgc.l:1195
 #, c-format
 msgid "syntax error in EXEC SQL INCLUDE command"
 msgstr "ошибка синтаксиса в команде EXEC SQL INCLUDE"
 
-#: pgc.l:1243
+#: pgc.l:1244
 #, c-format
 msgid ""
 "internal error: unreachable state; please report this to <pgsql-"
@@ -322,14 +322,14 @@ msgstr ""
 "внутренняя ошибка: недостижимое состояние; пожалуйста, сообщите в <pgsql-"
 "bugs@postgresql.org>"
 
-#: pgc.l:1367
+#: pgc.l:1368
 #, c-format
 msgid "Error: include path \"%s/%s\" is too long on line %d, skipping\n"
 msgstr ""
 "Ошибка: путь включаемых файлов \"%s/%s\" в строке %d слишком длинный, "
 "пропускается\n"
 
-#: pgc.l:1390
+#: pgc.l:1391
 #, c-format
 msgid "could not open include file \"%s\" on line %d"
 msgstr "не удалось открыть включаемый файл \"%s\" (строка %d)"

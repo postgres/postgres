@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: plpython (PostgreSQL 9.4)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2015-09-25 17:45+0000\n"
+"POT-Creation-Date: 2017-05-21 17:33+0000\n"
 "PO-Revision-Date: 2015-09-26 00:06-0300\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
@@ -63,7 +63,7 @@ msgstr "haciendo «fetch» en un cursor cerrado"
 msgid "closing a cursor in an aborted subtransaction"
 msgstr "cerrando un cursor en una subtransacción abortada"
 
-#: plpy_elog.c:103 plpy_elog.c:104 plpy_plpymodule.c:420
+#: plpy_elog.c:108 plpy_elog.c:109 plpy_plpymodule.c:441
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -174,47 +174,57 @@ msgstr "mientras se modificaba la fila de disparador"
 msgid "forcibly aborting a subtransaction that has not been exited"
 msgstr "abortando una subtransacción que no se ha cerrado"
 
-#: plpy_main.c:93
+#: plpy_main.c:124
 #, c-format
 msgid "Python major version mismatch in session"
 msgstr "las versiones mayores de Python no coinciden en esta sesión"
 
-#: plpy_main.c:94
+#: plpy_main.c:125
 #, c-format
 msgid "This session has previously used Python major version %d, and it is now attempting to use Python major version %d."
 msgstr "Esta sesión ha usado previamente la versión mayor de Python %d, y ahora está intentando usar la versión mayor %d."
 
-#: plpy_main.c:96
+#: plpy_main.c:127
 #, c-format
 msgid "Start a new session to use a different Python major version."
 msgstr "Inicie una nueva sesión para usar una versión mayor de Python diferente."
 
-#: plpy_main.c:111
+#: plpy_main.c:150
+#, c-format
+msgid "multiple Python libraries are present in session"
+msgstr "hay múltiples librerías de Python presentes en esta sesión"
+
+#: plpy_main.c:151
+#, c-format
+msgid "Only one Python major version can be used in one session."
+msgstr "Sólo se puede usar una versión mayor de Python en cada sesión."
+
+#: plpy_main.c:167
 #, c-format
 msgid "untrapped error in initialization"
 msgstr "error no capturado en la inicialización"
 
-#: plpy_main.c:134
+#: plpy_main.c:190
 #, c-format
 msgid "could not import \"__main__\" module"
 msgstr "no se pudo importar el módulo «__main__»"
 
-#: plpy_main.c:139
+#: plpy_main.c:195
 #, c-format
 msgid "could not create globals"
 msgstr "no se pudo crear las globales"
 
-#: plpy_main.c:143
+#: plpy_main.c:199
 #, c-format
 msgid "could not initialize globals"
 msgstr "no se pudo inicializar las globales"
 
-#: plpy_main.c:347
+#: plpy_main.c:408
 #, c-format
 msgid "PL/Python function \"%s\""
 msgstr "función PL/Python «%s»"
 
-#: plpy_main.c:354
+#: plpy_main.c:415
 #, c-format
 msgid "PL/Python anonymous code block"
 msgstr "bloque de código anónimo de PL/Python"
@@ -224,56 +234,61 @@ msgstr "bloque de código anónimo de PL/Python"
 msgid "plan.status takes no arguments"
 msgstr "plan.status no lleva argumentos"
 
-#: plpy_plpymodule.c:178 plpy_plpymodule.c:181
+#: plpy_plpymodule.c:181 plpy_plpymodule.c:184
 #, c-format
 msgid "could not import \"plpy\" module"
 msgstr "no se pudo importar el módulo «plpy»"
 
-#: plpy_plpymodule.c:196
+#: plpy_plpymodule.c:199
+#, c-format
+msgid "could not create the spiexceptions module"
+msgstr "no se pudo crear el módulo spiexceptions"
+
+#: plpy_plpymodule.c:207
 #, c-format
 msgid "could not add the spiexceptions module"
 msgstr "no se pudo importar el módulo spiexceptions"
 
-#: plpy_plpymodule.c:217
+#: plpy_plpymodule.c:237
 #, c-format
-msgid "could not create the base SPI exceptions"
-msgstr "no se pudo crear las excepciones SPI basales"
+msgid "could not create exception \"%s\""
+msgstr "no se pudo crear la excepción «%s»"
 
-#: plpy_plpymodule.c:253 plpy_plpymodule.c:257
+#: plpy_plpymodule.c:272 plpy_plpymodule.c:276
 #, c-format
 msgid "could not generate SPI exceptions"
 msgstr "no se pudo generar excepciones SPI"
 
-#: plpy_plpymodule.c:388
+#: plpy_plpymodule.c:409
 #, c-format
 msgid "could not unpack arguments in plpy.elog"
 msgstr "no se pudo desempaquetar los argumentos de plpy.elog"
 
-#: plpy_plpymodule.c:396
+#: plpy_plpymodule.c:417
 msgid "could not parse error message in plpy.elog"
 msgstr "no se pudo analizar el mensaje de error de plpy.elog"
 
-#: plpy_procedure.c:200
+#: plpy_procedure.c:210
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "las funciones disparadoras sólo pueden ser llamadas como disparadores"
 
-#: plpy_procedure.c:205 plpy_typeio.c:409
+#: plpy_procedure.c:215 plpy_typeio.c:409
 #, c-format
 msgid "PL/Python functions cannot return type %s"
 msgstr "las funciones PL/Python no pueden retornar el tipo %s"
 
-#: plpy_procedure.c:287
+#: plpy_procedure.c:297
 #, c-format
 msgid "PL/Python functions cannot accept type %s"
 msgstr "la funciones PL/Python no pueden aceptar el tipo %s"
 
-#: plpy_procedure.c:383
+#: plpy_procedure.c:393
 #, c-format
 msgid "could not compile PL/Python function \"%s\""
 msgstr "no se pudo compilar la función PL/Python «%s»"
 
-#: plpy_procedure.c:386
+#: plpy_procedure.c:396
 #, c-format
 msgid "could not compile anonymous PL/Python code block"
 msgstr "no se pudo compilar el bloque anónimo PL/Python"
@@ -432,3 +447,6 @@ msgstr "no se pudo convertir el objeto Unicode de Python a bytes"
 #, c-format
 msgid "could not extract bytes from encoded string"
 msgstr "no se pudo extraer bytes desde la cadena codificada"
+
+#~ msgid "could not create the base SPI exceptions"
+#~ msgstr "no se pudo crear las excepciones SPI basales"

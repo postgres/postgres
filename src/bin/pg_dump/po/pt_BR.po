@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.4\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-02-02 14:15-0300\n"
+"POT-Creation-Date: 2017-08-04 17:03-0300\n"
 "PO-Revision-Date: 2005-10-04 23:16-0300\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@timbira.com>\n"
 "Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"
@@ -311,14 +311,14 @@ msgstr "não pôde descomprimir dados: %s\n"
 msgid "could not close compression library: %s\n"
 msgstr "não pôde fechar biblioteca de compressão: %s\n"
 
-#: compress_io.c:596 compress_io.c:632 pg_backup_custom.c:590
-#: pg_backup_tar.c:561
+#: compress_io.c:600 compress_io.c:638 pg_backup_custom.c:590
+#: pg_backup_tar.c:566 pg_backup_tar.c:570
 #, c-format
 msgid "could not read from input file: %s\n"
 msgstr "não pôde ler arquivo de entrada: %s\n"
 
-#: compress_io.c:635 pg_backup_custom.c:587 pg_backup_directory.c:547
-#: pg_backup_tar.c:797 pg_backup_tar.c:821
+#: compress_io.c:641 pg_backup_custom.c:587 pg_backup_directory.c:551
+#: pg_backup_tar.c:809 pg_backup_tar.c:833
 #, c-format
 msgid "could not read from input file: end of file\n"
 msgstr "não pôde ler arquivo de entrada: fim do arquivo\n"
@@ -431,455 +431,450 @@ msgstr "pgpipe: não pôde aceitar conexão: código de erro %d\n"
 msgid "archiver"
 msgstr "arquivador"
 
-#: pg_backup_archiver.c:169 pg_backup_archiver.c:1424
+#: pg_backup_archiver.c:172 pg_backup_archiver.c:1481
 #, c-format
 msgid "could not close output file: %s\n"
 msgstr "não pôde fechar arquivo de saída: %s\n"
 
-#: pg_backup_archiver.c:204 pg_backup_archiver.c:209
+#: pg_backup_archiver.c:207 pg_backup_archiver.c:212
 #, c-format
 msgid "WARNING: archive items not in correct section order\n"
 msgstr "AVISO: itens do archive não estão na ordem correta de seções\n"
 
-#: pg_backup_archiver.c:215
+#: pg_backup_archiver.c:218
 #, c-format
 msgid "unexpected section code %d\n"
 msgstr "código de seção %d inesperado\n"
 
-#: pg_backup_archiver.c:247
+#: pg_backup_archiver.c:250
 #, c-format
 msgid "-C and -1 are incompatible options\n"
 msgstr "-C e -1 são opções incompatíveis\n"
 
-#: pg_backup_archiver.c:257
+#: pg_backup_archiver.c:260
 #, c-format
 msgid "parallel restore is not supported with this archive file format\n"
 msgstr "restauração paralela não é suportada por este formato de arquivo\n"
 
-#: pg_backup_archiver.c:261
+#: pg_backup_archiver.c:264
 #, c-format
 msgid "parallel restore is not supported with archives made by pre-8.0 pg_dump\n"
 msgstr "restauração paralela não é suportada por arquivos produzidos por pg_dum anterior a 8.0\n"
 
-#: pg_backup_archiver.c:279
+#: pg_backup_archiver.c:282
 #, c-format
 msgid "cannot restore from compressed archive (compression not supported in this installation)\n"
 msgstr "não pode recuperar arquivo comprimido (compressão não é suportada nesta instalação)\n"
 
-#: pg_backup_archiver.c:296
+#: pg_backup_archiver.c:299
 #, c-format
 msgid "connecting to database for restore\n"
 msgstr "conectando ao banco de dados para restauração\n"
 
-#: pg_backup_archiver.c:298
+#: pg_backup_archiver.c:301
 #, c-format
 msgid "direct database connections are not supported in pre-1.3 archives\n"
 msgstr "conexões diretas ao banco de dados não são suportadas em arquivos anteriores a versão 1.3\n"
 
-#: pg_backup_archiver.c:343
+#: pg_backup_archiver.c:346
 #, c-format
 msgid "implied data-only restore\n"
 msgstr "restauração do tipo somente dados implícita\n"
 
-#: pg_backup_archiver.c:412
+#: pg_backup_archiver.c:415
 #, c-format
 msgid "dropping %s %s\n"
 msgstr "removendo %s %s\n"
 
-#: pg_backup_archiver.c:505
+#: pg_backup_archiver.c:508
 #, c-format
 msgid "WARNING: could not find where to insert IF EXISTS in statement \"%s\"\n"
 msgstr "AVISO: não pôde encontrar onde inserir IF EXISTS no comando \"%s\"\n"
 
-#: pg_backup_archiver.c:579
-#, c-format
-msgid "setting owner and privileges for %s %s\n"
-msgstr "definindo dono e privilégios para %s %s\n"
-
-#: pg_backup_archiver.c:645 pg_backup_archiver.c:647
+#: pg_backup_archiver.c:671 pg_backup_archiver.c:673
 #, c-format
 msgid "warning from original dump file: %s\n"
 msgstr "aviso do arquivo de cópia de segurança: %s\n"
 
-#: pg_backup_archiver.c:654
+#: pg_backup_archiver.c:683
 #, c-format
 msgid "creating %s %s\n"
 msgstr "criando %s %s\n"
 
-#: pg_backup_archiver.c:705
+#: pg_backup_archiver.c:734
 #, c-format
 msgid "connecting to new database \"%s\"\n"
 msgstr "conectando ao novo banco de dados \"%s\"\n"
 
-#: pg_backup_archiver.c:733
+#: pg_backup_archiver.c:762
 #, c-format
 msgid "processing %s\n"
 msgstr "processando %s\n"
 
-#: pg_backup_archiver.c:753
+#: pg_backup_archiver.c:782
 #, c-format
 msgid "processing data for table \"%s\"\n"
 msgstr "processando dados da tabela \"%s\"\n"
 
-#: pg_backup_archiver.c:815
+#: pg_backup_archiver.c:844
 #, c-format
 msgid "executing %s %s\n"
 msgstr "executando %s %s\n"
 
-#: pg_backup_archiver.c:852
+#: pg_backup_archiver.c:881
 #, c-format
 msgid "disabling triggers for %s\n"
 msgstr "desabilitando gatilhos para %s\n"
 
-#: pg_backup_archiver.c:878
+#: pg_backup_archiver.c:907
 #, c-format
 msgid "enabling triggers for %s\n"
 msgstr "habilitando gatilhos para %s\n"
 
-#: pg_backup_archiver.c:908
+#: pg_backup_archiver.c:937
 #, c-format
 msgid "internal error -- WriteData cannot be called outside the context of a DataDumper routine\n"
 msgstr "erro interno -- WriteData não pode ser chamada fora do contexto de uma rotina DataDumper\n"
 
-#: pg_backup_archiver.c:1067
+#: pg_backup_archiver.c:1124
 #, c-format
 msgid "large-object output not supported in chosen format\n"
 msgstr "cópia de segurança de objetos grandes não é suportada no formato escolhido\n"
 
-#: pg_backup_archiver.c:1121
+#: pg_backup_archiver.c:1178
 #, c-format
 msgid "restored %d large object\n"
 msgid_plural "restored %d large objects\n"
 msgstr[0] "restaurado %d objeto grande\n"
 msgstr[1] "restaurado %d objetos grandes\n"
 
-#: pg_backup_archiver.c:1142 pg_backup_tar.c:739
+#: pg_backup_archiver.c:1199 pg_backup_tar.c:751
 #, c-format
 msgid "restoring large object with OID %u\n"
 msgstr "restaurando objeto grande com OID %u\n"
 
-#: pg_backup_archiver.c:1154
+#: pg_backup_archiver.c:1211
 #, c-format
 msgid "could not create large object %u: %s"
 msgstr "não pôde criar objeto grande %u: %s"
 
-#: pg_backup_archiver.c:1159 pg_dump.c:2875
+#: pg_backup_archiver.c:1216 pg_dump.c:2897
 #, c-format
 msgid "could not open large object %u: %s"
 msgstr "não pôde abrir objeto grande %u: %s"
 
-#: pg_backup_archiver.c:1216
+#: pg_backup_archiver.c:1273
 #, c-format
 msgid "could not open TOC file \"%s\": %s\n"
 msgstr "não pôde abrir arquivo TOC \"%s\": %s\n"
 
-#: pg_backup_archiver.c:1257
+#: pg_backup_archiver.c:1314
 #, c-format
 msgid "WARNING: line ignored: %s\n"
 msgstr "AVISO: linha ignorada: %s\n"
 
-#: pg_backup_archiver.c:1264
+#: pg_backup_archiver.c:1321
 #, c-format
 msgid "could not find entry for ID %d\n"
 msgstr "não pôde encontrar registro para ID %d\n"
 
-#: pg_backup_archiver.c:1285 pg_backup_directory.c:229
-#: pg_backup_directory.c:596
+#: pg_backup_archiver.c:1342 pg_backup_directory.c:229
+#: pg_backup_directory.c:600
 #, c-format
 msgid "could not close TOC file: %s\n"
 msgstr "não pôde fechar arquivo TOC: %s\n"
 
-#: pg_backup_archiver.c:1394 pg_backup_custom.c:161 pg_backup_directory.c:340
-#: pg_backup_directory.c:582 pg_backup_directory.c:640
-#: pg_backup_directory.c:660
+#: pg_backup_archiver.c:1451 pg_backup_custom.c:161 pg_backup_directory.c:340
+#: pg_backup_directory.c:586 pg_backup_directory.c:644
+#: pg_backup_directory.c:664
 #, c-format
 msgid "could not open output file \"%s\": %s\n"
 msgstr "não pôde abrir arquivo de saída \"%s\": %s\n"
 
-#: pg_backup_archiver.c:1397 pg_backup_custom.c:168
+#: pg_backup_archiver.c:1454 pg_backup_custom.c:168
 #, c-format
 msgid "could not open output file: %s\n"
 msgstr "não pôde abrir arquivo de saída: %s\n"
 
-#: pg_backup_archiver.c:1501
+#: pg_backup_archiver.c:1558
 #, c-format
 msgid "wrote %lu byte of large object data (result = %lu)\n"
 msgid_plural "wrote %lu bytes of large object data (result = %lu)\n"
 msgstr[0] "escreveu %lu byte de dados de objeto grande (resultado = %lu)\n"
 msgstr[1] "escreveu %lu bytes de dados de objeto grande (resultado = %lu)\n"
 
-#: pg_backup_archiver.c:1507
+#: pg_backup_archiver.c:1564
 #, c-format
 msgid "could not write to large object (result: %lu, expected: %lu)\n"
 msgstr "não pôde escrever objeto grande (resultado: %lu, esperado %lu)\n"
 
-#: pg_backup_archiver.c:1600
+#: pg_backup_archiver.c:1657
 #, c-format
 msgid "Error while INITIALIZING:\n"
 msgstr "Erro ao INICIALIZAR:\n"
 
-#: pg_backup_archiver.c:1605
+#: pg_backup_archiver.c:1662
 #, c-format
 msgid "Error while PROCESSING TOC:\n"
 msgstr "Erro ao PROCESSAR TOC:\n"
 
-#: pg_backup_archiver.c:1610
+#: pg_backup_archiver.c:1667
 #, c-format
 msgid "Error while FINALIZING:\n"
 msgstr "Erro ao FINALIZAR:\n"
 
-#: pg_backup_archiver.c:1615
+#: pg_backup_archiver.c:1672
 #, c-format
 msgid "Error from TOC entry %d; %u %u %s %s %s\n"
 msgstr "Erro no registro do TOC %d; %u %u %s %s %s\n"
 
-#: pg_backup_archiver.c:1688
+#: pg_backup_archiver.c:1745
 #, c-format
 msgid "bad dumpId\n"
 msgstr "dumpId inválido\n"
 
-#: pg_backup_archiver.c:1709
+#: pg_backup_archiver.c:1766
 #, c-format
 msgid "bad table dumpId for TABLE DATA item\n"
 msgstr "dumpId de tabela inválido para item TABLE DATA\n"
 
-#: pg_backup_archiver.c:1801
+#: pg_backup_archiver.c:1858
 #, c-format
 msgid "unexpected data offset flag %d\n"
 msgstr "Marcador de deslocamento de dado %d é inesperado\n"
 
-#: pg_backup_archiver.c:1814
+#: pg_backup_archiver.c:1871
 #, c-format
 msgid "file offset in dump file is too large\n"
 msgstr "deslocamento no arquivo de cópia de segurança é muito grande\n"
 
-#: pg_backup_archiver.c:1927
+#: pg_backup_archiver.c:1984
 #, c-format
 msgid "attempting to ascertain archive format\n"
 msgstr "tentando verificar formato de arquivo\n"
 
-#: pg_backup_archiver.c:1953 pg_backup_archiver.c:1963
+#: pg_backup_archiver.c:2010 pg_backup_archiver.c:2020
 #, c-format
 msgid "directory name too long: \"%s\"\n"
 msgstr "nome de diretório é muito longo: \"%s\"\n"
 
-#: pg_backup_archiver.c:1971
+#: pg_backup_archiver.c:2028
 #, c-format
 msgid "directory \"%s\" does not appear to be a valid archive (\"toc.dat\" does not exist)\n"
 msgstr "diretório \"%s\" não parece ser um archive válido (\"toc.dat\" não existe)\n"
 
-#: pg_backup_archiver.c:1979 pg_backup_custom.c:180 pg_backup_custom.c:769
-#: pg_backup_directory.c:213 pg_backup_directory.c:398
+#: pg_backup_archiver.c:2036 pg_backup_custom.c:180 pg_backup_custom.c:769
+#: pg_backup_directory.c:213 pg_backup_directory.c:400
 #, c-format
 msgid "could not open input file \"%s\": %s\n"
 msgstr "não pôde abrir arquivo de entrada \"%s\": %s\n"
 
-#: pg_backup_archiver.c:1987 pg_backup_custom.c:187
+#: pg_backup_archiver.c:2044 pg_backup_custom.c:187
 #, c-format
 msgid "could not open input file: %s\n"
 msgstr "não pôde abrir arquivo de entrada: %s\n"
 
-#: pg_backup_archiver.c:1994
+#: pg_backup_archiver.c:2051
 #, c-format
 msgid "could not read input file: %s\n"
 msgstr "não pôde ler arquivo de entrada: %s\n"
 
-#: pg_backup_archiver.c:1996
+#: pg_backup_archiver.c:2053
 #, c-format
 msgid "input file is too short (read %lu, expected 5)\n"
 msgstr "arquivo de entrada é muito pequeno (lido %lu, esperado 5)\n"
 
-#: pg_backup_archiver.c:2079
+#: pg_backup_archiver.c:2136
 #, c-format
 msgid "input file appears to be a text format dump. Please use psql.\n"
 msgstr "arquivo de entrada parece estar no formato texto. Por favor utilize o psql.\n"
 
-#: pg_backup_archiver.c:2085
+#: pg_backup_archiver.c:2142
 #, c-format
 msgid "input file does not appear to be a valid archive (too short?)\n"
 msgstr "arquivo de entrada não parece ser um arquivo válido (muito pequeno?)\n"
 
-#: pg_backup_archiver.c:2091
+#: pg_backup_archiver.c:2148
 #, c-format
 msgid "input file does not appear to be a valid archive\n"
 msgstr "arquivo de entrada não parece ser um arquivo válido\n"
 
-#: pg_backup_archiver.c:2111
+#: pg_backup_archiver.c:2168
 #, c-format
 msgid "could not close input file: %s\n"
 msgstr "não pôde fechar arquivo de entrada: %s\n"
 
-#: pg_backup_archiver.c:2128
+#: pg_backup_archiver.c:2185
 #, c-format
 msgid "allocating AH for %s, format %d\n"
 msgstr "alocando AH para %s, formato %d\n"
 
-#: pg_backup_archiver.c:2233
+#: pg_backup_archiver.c:2290
 #, c-format
 msgid "unrecognized file format \"%d\"\n"
 msgstr "formato de arquivo \"%d\" é desconhecido\n"
 
-#: pg_backup_archiver.c:2389
+#: pg_backup_archiver.c:2446
 #, c-format
 msgid "entry ID %d out of range -- perhaps a corrupt TOC\n"
 msgstr "ID do registro %d fora do intervalo -- talvez o TOC esteja corrompido\n"
 
-#: pg_backup_archiver.c:2505
+#: pg_backup_archiver.c:2562
 #, c-format
 msgid "read TOC entry %d (ID %d) for %s %s\n"
 msgstr "lendo registro do TOC %d (ID %d) de %s %s\n"
 
-#: pg_backup_archiver.c:2539
+#: pg_backup_archiver.c:2596
 #, c-format
 msgid "unrecognized encoding \"%s\"\n"
 msgstr "codificação \"%s\" é desconhecida\n"
 
-#: pg_backup_archiver.c:2544
+#: pg_backup_archiver.c:2601
 #, c-format
 msgid "invalid ENCODING item: %s\n"
 msgstr "item ENCODING inválido: %s\n"
 
-#: pg_backup_archiver.c:2562
+#: pg_backup_archiver.c:2619
 #, c-format
 msgid "invalid STDSTRINGS item: %s\n"
 msgstr "item STDSTRINGS inválido: %s\n"
 
-#: pg_backup_archiver.c:2779
+#: pg_backup_archiver.c:2868
 #, c-format
 msgid "could not set session user to \"%s\": %s"
 msgstr "não pôde definir \"%s\" como usuário da sessão: %s"
 
-#: pg_backup_archiver.c:2811
+#: pg_backup_archiver.c:2900
 #, c-format
 msgid "could not set default_with_oids: %s"
 msgstr "não pôde definir default_with_oids: %s"
 
-#: pg_backup_archiver.c:2954
+#: pg_backup_archiver.c:3043
 #, c-format
 msgid "could not set search_path to \"%s\": %s"
 msgstr "não pôde definir search_path para \"%s\": %s"
 
-#: pg_backup_archiver.c:3015
+#: pg_backup_archiver.c:3104
 #, c-format
 msgid "could not set default_tablespace to %s: %s"
 msgstr "não pôde definir default_tablespace para %s: %s"
 
-#: pg_backup_archiver.c:3102 pg_backup_archiver.c:3292
+#: pg_backup_archiver.c:3192 pg_backup_archiver.c:3378
 #, c-format
-msgid "WARNING: don't know how to set owner for object type %s\n"
-msgstr "AVISO: não se sabe como definir o dono para tipo de objeto %s\n"
+msgid "WARNING: don't know how to set owner for object type \"%s\"\n"
+msgstr "AVISO: não se sabe como definir o dono para tipo de objeto \"%s\"\n"
 
-#: pg_backup_archiver.c:3374
+#: pg_backup_archiver.c:3464
 #, c-format
 msgid "did not find magic string in file header\n"
 msgstr "não encontrou cadeia de caracteres mágica no cabeçalho do arquivo\n"
 
-#: pg_backup_archiver.c:3387
+#: pg_backup_archiver.c:3477
 #, c-format
 msgid "unsupported version (%d.%d) in file header\n"
 msgstr "versão não é suportada (%d.%d) no cabeçalho do arquivo\n"
 
-#: pg_backup_archiver.c:3392
+#: pg_backup_archiver.c:3482
 #, c-format
 msgid "sanity check on integer size (%lu) failed\n"
 msgstr "verificação de sanidade no tamanho do inteiro (%lu) falhou\n"
 
-#: pg_backup_archiver.c:3396
+#: pg_backup_archiver.c:3486
 #, c-format
 msgid "WARNING: archive was made on a machine with larger integers, some operations might fail\n"
 msgstr "AVISO: arquivo foi feito em uma máquina com inteiros longos, algumas operações podem falhar\n"
 
-#: pg_backup_archiver.c:3406
+#: pg_backup_archiver.c:3496
 #, c-format
 msgid "expected format (%d) differs from format found in file (%d)\n"
 msgstr "formato esperado (%d) difere do formato encontrado no arquivo (%d)\n"
 
-#: pg_backup_archiver.c:3422
+#: pg_backup_archiver.c:3512
 #, c-format
 msgid "WARNING: archive is compressed, but this installation does not support compression -- no data will be available\n"
 msgstr "AVISO: arquivo está comprimido, mas esta instalação não suporta compressão -- nenhum dado está disponível\n"
 
-#: pg_backup_archiver.c:3440
+#: pg_backup_archiver.c:3530
 #, c-format
 msgid "WARNING: invalid creation date in header\n"
 msgstr "AVISO: data de criação inválida no cabeçalho\n"
 
-#: pg_backup_archiver.c:3528
+#: pg_backup_archiver.c:3616
 #, c-format
 msgid "entering restore_toc_entries_prefork\n"
 msgstr "executando restore_toc_entries_prefork\n"
 
-#: pg_backup_archiver.c:3572
+#: pg_backup_archiver.c:3679
 #, c-format
 msgid "processing item %d %s %s\n"
 msgstr "processando item %d %s %s\n"
 
-#: pg_backup_archiver.c:3624
+#: pg_backup_archiver.c:3733
 #, c-format
 msgid "entering restore_toc_entries_parallel\n"
 msgstr "executando restore_toc_entries_parallel\n"
 
-#: pg_backup_archiver.c:3672
+#: pg_backup_archiver.c:3754
 #, c-format
 msgid "entering main parallel loop\n"
 msgstr "executando laço paralelo principal\n"
 
-#: pg_backup_archiver.c:3683
+#: pg_backup_archiver.c:3765
 #, c-format
 msgid "skipping item %d %s %s\n"
 msgstr "ignorando item %d %s %s\n"
 
-#: pg_backup_archiver.c:3693
+#: pg_backup_archiver.c:3775
 #, c-format
 msgid "launching item %d %s %s\n"
 msgstr "iniciando item %d %s %s\n"
 
-#: pg_backup_archiver.c:3749
+#: pg_backup_archiver.c:3856
 #, c-format
 msgid "finished main parallel loop\n"
 msgstr "laço paralelo principal terminado\n"
 
-#: pg_backup_archiver.c:3758
+#: pg_backup_archiver.c:3874
 #, c-format
 msgid "entering restore_toc_entries_postfork\n"
 msgstr "executando restore_toc_entries_postfork\n"
 
-#: pg_backup_archiver.c:3777
+#: pg_backup_archiver.c:3894
 #, c-format
 msgid "processing missed item %d %s %s\n"
 msgstr "iniciando item adiado %d %s %s\n"
 
-#: pg_backup_archiver.c:3926
+#: pg_backup_archiver.c:4071
 #, c-format
 msgid "no item ready\n"
 msgstr "nenhum item está pronto\n"
 
-#: pg_backup_archiver.c:3975
+#: pg_backup_archiver.c:4120
 #, c-format
 msgid "could not find slot of finished worker\n"
 msgstr "não pôde encontrar entrada do processo filho terminado\n"
 
-#: pg_backup_archiver.c:3977
+#: pg_backup_archiver.c:4122
 #, c-format
 msgid "finished item %d %s %s\n"
 msgstr "item terminado %d %s %s\n"
 
-#: pg_backup_archiver.c:3990
+#: pg_backup_archiver.c:4135
 #, c-format
 msgid "worker process failed: exit code %d\n"
 msgstr "processo filho falhou: código de saída %d\n"
 
-#: pg_backup_archiver.c:4152
+#: pg_backup_archiver.c:4297
 #, c-format
 msgid "transferring dependency %d -> %d to %d\n"
 msgstr "tranferindo dependência %d -> %d para %d\n"
 
-#: pg_backup_archiver.c:4225
+#: pg_backup_archiver.c:4370
 #, c-format
 msgid "reducing dependencies for %d\n"
 msgstr "reduzindo dependências para %d\n"
 
-#: pg_backup_archiver.c:4264
+#: pg_backup_archiver.c:4418
 #, c-format
 msgid "table \"%s\" could not be created, will not restore its data\n"
 msgstr "tabela \"%s\" não pôde ser criada, não restaurará os seus dados\n"
@@ -930,7 +925,7 @@ msgid "unrecognized data block type %d while restoring archive\n"
 msgstr "tipo de bloco de dados desconhecido %d durante restauração do arquivo\n"
 
 #: pg_backup_custom.c:708 pg_backup_custom.c:758 pg_backup_custom.c:907
-#: pg_backup_tar.c:1084
+#: pg_backup_tar.c:1096
 #, c-format
 msgid "could not determine seek position in archive file: %s\n"
 msgstr "não pôde determinar posição de busca no arquivo: %s\n"
@@ -1069,7 +1064,7 @@ msgstr "erro retornado pelo PQputCopyEnd: %s"
 msgid "COPY failed for table \"%s\": %s"
 msgstr "COPY falhou para tabela \"%s\": %s"
 
-#: pg_backup_db.c:612 pg_dump.c:1679
+#: pg_backup_db.c:612 pg_dump.c:1688
 #, c-format
 msgid "WARNING: unexpected extra results during COPY of table \"%s\"\n"
 msgstr "AVISO: resultados extra inesperados durante COPY da tabela \"%s\"\n"
@@ -1107,42 +1102,48 @@ msgstr "não pôde fechar diretório \"%s\": %s\n"
 msgid "could not create directory \"%s\": %s\n"
 msgstr "não pôde criar diretório \"%s\": %s\n"
 
-#: pg_backup_directory.c:411
+#: pg_backup_directory.c:359 pg_backup_directory.c:499
+#: pg_backup_directory.c:529
+#, c-format
+msgid "could not write to output file: %s\n"
+msgstr "não pôde escrever em arquivo de saída: %s\n"
+
+#: pg_backup_directory.c:413
 #, c-format
 msgid "could not close data file: %s\n"
 msgstr "não pôde fechar arquivo de dados: %s\n"
 
-#: pg_backup_directory.c:452
+#: pg_backup_directory.c:454
 #, c-format
 msgid "could not open large object TOC file \"%s\" for input: %s\n"
 msgstr "não pôde abrir arquivo TOC de objetos grandes \"%s\" para entrada: %s\n"
 
-#: pg_backup_directory.c:463
+#: pg_backup_directory.c:465
 #, c-format
 msgid "invalid line in large object TOC file \"%s\": \"%s\"\n"
 msgstr "linha inválida em arquivo TOC de objetos grandes \"%s\": \"%s\"\n"
 
-#: pg_backup_directory.c:472
+#: pg_backup_directory.c:474
 #, c-format
 msgid "error reading large object TOC file \"%s\"\n"
 msgstr "erro ao ler arquivo TOC de objetos grandes \"%s\"\n"
 
-#: pg_backup_directory.c:476
+#: pg_backup_directory.c:478
 #, c-format
 msgid "could not close large object TOC file \"%s\": %s\n"
 msgstr "não pôde fechar arquivo TOC de objetos grandes \"%s\": %s\n"
 
-#: pg_backup_directory.c:683
+#: pg_backup_directory.c:687
 #, c-format
 msgid "could not write to blobs TOC file\n"
 msgstr "não pôde escrever em arquivo TOC de objetos grandes\n"
 
-#: pg_backup_directory.c:715
+#: pg_backup_directory.c:719
 #, c-format
 msgid "file name too long: \"%s\"\n"
 msgstr "nome de arquivo muito longo: \"%s\"\n"
 
-#: pg_backup_directory.c:801
+#: pg_backup_directory.c:805
 #, c-format
 msgid "error during backup\n"
 msgstr "erro durante cópia de segurança\n"
@@ -1202,69 +1203,69 @@ msgstr "não pôde abrir arquivo temporário\n"
 msgid "could not close tar member\n"
 msgstr "não pôde fechar membro tar\n"
 
-#: pg_backup_tar.c:571
+#: pg_backup_tar.c:583
 #, c-format
 msgid "internal error -- neither th nor fh specified in tarReadRaw()\n"
 msgstr "erro interno -- th e fh não foram especificados em tarReadRaw()\n"
 
-#: pg_backup_tar.c:694
+#: pg_backup_tar.c:706
 #, c-format
 msgid "unexpected COPY statement syntax: \"%s\"\n"
 msgstr "sintaxe do comando COPY inesperada: \"%s\"\n"
 
-#: pg_backup_tar.c:956
+#: pg_backup_tar.c:968
 #, c-format
 msgid "invalid OID for large object (%u)\n"
 msgstr "OID inválido para objeto grande (%u)\n"
 
-#: pg_backup_tar.c:1100
+#: pg_backup_tar.c:1112
 #, c-format
 msgid "could not close temporary file: %s\n"
 msgstr "não pôde fechar arquivo temporário: %s\n"
 
-#: pg_backup_tar.c:1110
+#: pg_backup_tar.c:1122
 #, c-format
 msgid "actual file length (%s) does not match expected (%s)\n"
 msgstr "tamanho do arquivo atual (%s) não corresponde ao esperado (%s)\n"
 
-#: pg_backup_tar.c:1147
+#: pg_backup_tar.c:1159
 #, c-format
 msgid "moving from position %s to next member at file position %s\n"
 msgstr "movendo da posição %s para próximo membro na posição %s do arquivo\n"
 
-#: pg_backup_tar.c:1158
+#: pg_backup_tar.c:1170
 #, c-format
 msgid "now at file position %s\n"
 msgstr "agora na posição %s do arquivo\n"
 
-#: pg_backup_tar.c:1167 pg_backup_tar.c:1197
+#: pg_backup_tar.c:1179 pg_backup_tar.c:1209
 #, c-format
 msgid "could not find header for file \"%s\" in tar archive\n"
 msgstr "não pôde encontrar cabeçalho do arquivo \"%s\" no arquivo tar\n"
 
-#: pg_backup_tar.c:1181
+#: pg_backup_tar.c:1193
 #, c-format
 msgid "skipping tar member %s\n"
 msgstr "ignorando membro tar %s\n"
 
-#: pg_backup_tar.c:1185
+#: pg_backup_tar.c:1197
 #, c-format
 msgid "restoring data out of order is not supported in this archive format: \"%s\" is required, but comes before \"%s\" in the archive file.\n"
 msgstr "restaurar dados fora da ordem não é suportado neste formato de arquivo: \"%s\" é requerido, mas vem antes de \"%s\" no arquivo.\n"
 
-#: pg_backup_tar.c:1231
+#: pg_backup_tar.c:1243
 #, c-format
 msgid "incomplete tar header found (%lu byte)\n"
 msgid_plural "incomplete tar header found (%lu bytes)\n"
 msgstr[0] "cabeçalho tar incompleto encontrado (%lu byte)\n"
 msgstr[1] "cabeçalho tar incompleto encontrado (%lu bytes)\n"
 
-#: pg_backup_tar.c:1272
+#: pg_backup_tar.c:1284
 #, c-format
 msgid "TOC Entry %s at %s (length %s, checksum %d)\n"
 msgstr "Registro TOC %s em %s (tamanho %s, soma de verificação %d)\n"
 
-#: pg_backup_tar.c:1283
+#: pg_backup_tar.c:1295
 #, c-format
 msgid "corrupt tar header found in %s (expected %d, computed %d) file position %s\n"
 msgstr "cabeçalho tar corrompido foi encontrado em %s (esperado %d, computado %d) na posição %s do arquivo\n"
@@ -1367,7 +1368,7 @@ msgstr "Nenhum esquema correspondente foi encontrado\n"
 msgid "No matching tables were found\n"
 msgstr "Nenhuma tabela correspondente foi encontrada\n"
 
-#: pg_dump.c:893
+#: pg_dump.c:902
 #, c-format
 msgid ""
 "%s dumps a database as a text file or to other formats.\n"
@@ -1376,17 +1377,17 @@ msgstr ""
 "%s salva um banco de dados em um arquivo texto ou em outros formatos.\n"
 "\n"
 
-#: pg_dump.c:894 pg_dumpall.c:551 pg_restore.c:438
+#: pg_dump.c:903 pg_dumpall.c:551 pg_restore.c:438
 #, c-format
 msgid "Usage:\n"
 msgstr "Uso:\n"
 
-#: pg_dump.c:895
+#: pg_dump.c:904
 #, c-format
 msgid "  %s [OPTION]... [DBNAME]\n"
 msgstr "  %s [OPÇÃO]... [NOMEBD]\n"
 
-#: pg_dump.c:897 pg_dumpall.c:554 pg_restore.c:441
+#: pg_dump.c:906 pg_dumpall.c:554 pg_restore.c:441
 #, c-format
 msgid ""
 "\n"
@@ -1395,12 +1396,12 @@ msgstr ""
 "\n"
 "Opções gerais:\n"
 
-#: pg_dump.c:898
+#: pg_dump.c:907
 #, c-format
 msgid "  -f, --file=FILENAME          output file or directory name\n"
 msgstr "  -f, --file=ARQUIVO           nome do arquivo ou diretório de saída\n"
 
-#: pg_dump.c:899
+#: pg_dump.c:908
 #, c-format
 msgid ""
 "  -F, --format=c|d|t|p         output file format (custom, directory, tar,\n"
@@ -1409,37 +1410,37 @@ msgstr ""
 "  -F, --format=c|d|t|p         formato do arquivo de saída (personalizado, diretório,\n"
 "                               tar, texto (padrão))\n"
 
-#: pg_dump.c:901
+#: pg_dump.c:910
 #, c-format
 msgid "  -j, --jobs=NUM               use this many parallel jobs to dump\n"
 msgstr "  -j, --jobs=NUM               use esse número de tarefas paralelas para copiar\n"
 
-#: pg_dump.c:902 pg_dumpall.c:556
+#: pg_dump.c:911 pg_dumpall.c:556
 #, c-format
 msgid "  -v, --verbose                verbose mode\n"
 msgstr "  -v, --verbose                modo informações detalhadas\n"
 
-#: pg_dump.c:903 pg_dumpall.c:557
+#: pg_dump.c:912 pg_dumpall.c:557
 #, c-format
 msgid "  -V, --version                output version information, then exit\n"
 msgstr "  -V, --version                mostra informação sobre a versão e termina\n"
 
-#: pg_dump.c:904
+#: pg_dump.c:913
 #, c-format
 msgid "  -Z, --compress=0-9           compression level for compressed formats\n"
 msgstr "  -Z, --compress=0-9           nível de compressão para formatos comprimidos\n"
 
-#: pg_dump.c:905 pg_dumpall.c:558
+#: pg_dump.c:914 pg_dumpall.c:558
 #, c-format
 msgid "  --lock-wait-timeout=TIMEOUT  fail after waiting TIMEOUT for a table lock\n"
 msgstr "  --lock-wait-timeout=TEMPO    falha após esperar TEMPO por um travamento de tabela\n"
 
-#: pg_dump.c:906 pg_dumpall.c:559
+#: pg_dump.c:915 pg_dumpall.c:559
 #, c-format
 msgid "  -?, --help                   show this help, then exit\n"
 msgstr "  -?, --help                   mostra essa ajuda e termina\n"
 
-#: pg_dump.c:908 pg_dumpall.c:560
+#: pg_dump.c:917 pg_dumpall.c:560
 #, c-format
 msgid ""
 "\n"
@@ -1448,47 +1449,47 @@ msgstr ""
 "\n"
 "Opções que controlam a saída do conteúdo:\n"
 
-#: pg_dump.c:909 pg_dumpall.c:561
+#: pg_dump.c:918 pg_dumpall.c:561
 #, c-format
 msgid "  -a, --data-only              dump only the data, not the schema\n"
 msgstr "  -a, --data-only              copia somente os dados, não o esquema\n"
 
-#: pg_dump.c:910
+#: pg_dump.c:919
 #, c-format
 msgid "  -b, --blobs                  include large objects in dump\n"
 msgstr "  -b, --blobs                  inclui objetos grandes na cópia de segurança\n"
 
-#: pg_dump.c:911 pg_restore.c:452
+#: pg_dump.c:920 pg_restore.c:452
 #, c-format
 msgid "  -c, --clean                  clean (drop) database objects before recreating\n"
 msgstr "  -c, --clean                  exclui (remove) bancos de dados antes de criá-lo novamente\n"
 
-#: pg_dump.c:912
+#: pg_dump.c:921
 #, c-format
 msgid "  -C, --create                 include commands to create database in dump\n"
 msgstr "  -C, --create                 inclui comandos para criação dos bancos de dados na cópia de segurança\n"
 
-#: pg_dump.c:913
+#: pg_dump.c:922
 #, c-format
 msgid "  -E, --encoding=ENCODING      dump the data in encoding ENCODING\n"
 msgstr "  -E, --encoding=CODIFICAÇÃO   copia dados na codificação CODIFICAÇÃO\n"
 
-#: pg_dump.c:914
+#: pg_dump.c:923
 #, c-format
 msgid "  -n, --schema=SCHEMA          dump the named schema(s) only\n"
 msgstr "  -n, --schema=ESQUEMA         copia somente o(s) esquema(s) especificado(s)\n"
 
-#: pg_dump.c:915
+#: pg_dump.c:924
 #, c-format
 msgid "  -N, --exclude-schema=SCHEMA  do NOT dump the named schema(s)\n"
 msgstr "  -N, --exclude-schema=ESQUEMA NÃO copia o(s) esquema(s) especificado(s)\n"
 
-#: pg_dump.c:916 pg_dumpall.c:564
+#: pg_dump.c:925 pg_dumpall.c:564
 #, c-format
 msgid "  -o, --oids                   include OIDs in dump\n"
 msgstr "  -o, --oids                   inclui OIDs na cópia de segurança\n"
 
-#: pg_dump.c:917
+#: pg_dump.c:926
 #, c-format
 msgid ""
 "  -O, --no-owner               skip restoration of object ownership in\n"
@@ -1497,102 +1498,102 @@ msgstr ""
 "  -O, --no-owner               ignora restauração do dono dos objetos\n"
 "                               no formato texto\n"
 
-#: pg_dump.c:919 pg_dumpall.c:567
+#: pg_dump.c:928 pg_dumpall.c:567
 #, c-format
 msgid "  -s, --schema-only            dump only the schema, no data\n"
 msgstr "  -s, --schema-only            copia somente o esquema, e não os dados\n"
 
-#: pg_dump.c:920
+#: pg_dump.c:929
 #, c-format
 msgid "  -S, --superuser=NAME         superuser user name to use in plain-text format\n"
 msgstr "  -S, --superuser=NOME         nome de super-usuário a ser usado no formato texto\n"
 
-#: pg_dump.c:921
+#: pg_dump.c:930
 #, c-format
 msgid "  -t, --table=TABLE            dump the named table(s) only\n"
 msgstr "  -t, --table=TABELA           copia somente a(s) tabela(s) especificada(s)\n"
 
-#: pg_dump.c:922
+#: pg_dump.c:931
 #, c-format
 msgid "  -T, --exclude-table=TABLE    do NOT dump the named table(s)\n"
 msgstr "  -T, --exclude-table=TABELA   NÃO copia a(s) tabela(s) especificada(s)\n"
 
-#: pg_dump.c:923 pg_dumpall.c:570
+#: pg_dump.c:932 pg_dumpall.c:570
 #, c-format
 msgid "  -x, --no-privileges          do not dump privileges (grant/revoke)\n"
 msgstr "  -x, --no-privileges          não copia os privilégios (grant/revoke)\n"
 
-#: pg_dump.c:924 pg_dumpall.c:571
+#: pg_dump.c:933 pg_dumpall.c:571
 #, c-format
 msgid "  --binary-upgrade             for use by upgrade utilities only\n"
 msgstr "  --binary-upgrade             usado somente por utilitários de atualização\n"
 
-#: pg_dump.c:925 pg_dumpall.c:572
+#: pg_dump.c:934 pg_dumpall.c:572
 #, c-format
 msgid "  --column-inserts             dump data as INSERT commands with column names\n"
 msgstr "  --column-inserts             copia dados utilizando comandos INSERT com nomes das colunas\n"
 
-#: pg_dump.c:926 pg_dumpall.c:573
+#: pg_dump.c:935 pg_dumpall.c:573
 #, c-format
 msgid "  --disable-dollar-quoting     disable dollar quoting, use SQL standard quoting\n"
 msgstr "  --disable-dollar-quoting     desabilita delimitação por cifrão, usa delimitadores do padrão SQL\n"
 
-#: pg_dump.c:927 pg_dumpall.c:574 pg_restore.c:468
+#: pg_dump.c:936 pg_dumpall.c:574 pg_restore.c:468
 #, c-format
 msgid "  --disable-triggers           disable triggers during data-only restore\n"
 msgstr "  --disable-triggers           desabilita gatilhos durante a restauração do tipo somente dados\n"
 
-#: pg_dump.c:928
+#: pg_dump.c:937
 #, c-format
 msgid "  --exclude-table-data=TABLE   do NOT dump data for the named table(s)\n"
 msgstr "  --exclude-table-data=TABELA  NÃO copia os dados da(s) tabela(s) especificada(s)\n"
 
-#: pg_dump.c:929 pg_dumpall.c:575 pg_restore.c:469
+#: pg_dump.c:938 pg_dumpall.c:575 pg_restore.c:469
 #, c-format
 msgid "  --if-exists                  use IF EXISTS when dropping objects\n"
 msgstr "  --if-exists                  use IF EXISTS ao remover objetos\n"
 
-#: pg_dump.c:930 pg_dumpall.c:576
+#: pg_dump.c:939 pg_dumpall.c:576
 #, c-format
 msgid "  --inserts                    dump data as INSERT commands, rather than COPY\n"
 msgstr "  --inserts                    copia dados utilizando comandos INSERT, ao invés de comandos COPY\n"
 
-#: pg_dump.c:931 pg_dumpall.c:577
+#: pg_dump.c:940 pg_dumpall.c:577
 #, c-format
 msgid "  --no-security-labels         do not dump security label assignments\n"
 msgstr "  --no-security-labels         não copia atribuições de rótulos de segurança\n"
 
-#: pg_dump.c:932
+#: pg_dump.c:941
 #, c-format
 msgid "  --no-synchronized-snapshots  do not use synchronized snapshots in parallel jobs\n"
 msgstr "  --no-synchronized-snapshots  não utiliza instantâneos sincronizados em tarefas paralelas\n"
 
-#: pg_dump.c:933 pg_dumpall.c:578
+#: pg_dump.c:942 pg_dumpall.c:578
 #, c-format
 msgid "  --no-tablespaces             do not dump tablespace assignments\n"
 msgstr "  --no-tablespaces             não copia atribuições de tablespaces\n"
 
-#: pg_dump.c:934 pg_dumpall.c:579
+#: pg_dump.c:943 pg_dumpall.c:579
 #, c-format
 msgid "  --no-unlogged-table-data     do not dump unlogged table data\n"
 msgstr "  --no-unlogged-table-data     não copia dados de tabelas unlogged\n"
 
-#: pg_dump.c:935 pg_dumpall.c:580
+#: pg_dump.c:944 pg_dumpall.c:580
 #, c-format
 msgid "  --quote-all-identifiers      quote all identifiers, even if not key words\n"
 msgstr "  --quote-all-identifiers      todos os identificadores entre aspas, mesmo que não sejam palavras chave\n"
 
-#: pg_dump.c:936
+#: pg_dump.c:945
 #, c-format
 msgid "  --section=SECTION            dump named section (pre-data, data, or post-data)\n"
 msgstr "  --section=SEÇÃO              copia seção especificada (pre-data, data ou post-data)\n"
 
-#: pg_dump.c:937
+#: pg_dump.c:946
 #, c-format
 msgid "  --serializable-deferrable    wait until the dump can run without anomalies\n"
 msgstr "  --serializable-deferrable    espera até que a cópia seja executada sem anomalias\n"
 
-#: pg_dump.c:938 pg_dumpall.c:581 pg_restore.c:475
+#: pg_dump.c:947 pg_dumpall.c:581 pg_restore.c:475
 #, c-format
 msgid ""
 "  --use-set-session-authorization\n"
@@ -1603,7 +1604,7 @@ msgstr ""
 "                               usa comandos SET SESSION AUTHORIZATION ao invés de\n"
 "                               comandos ALTER OWNER para definir o dono\n"
 
-#: pg_dump.c:942 pg_dumpall.c:585 pg_restore.c:479
+#: pg_dump.c:951 pg_dumpall.c:585 pg_restore.c:479
 #, c-format
 msgid ""
 "\n"
@@ -1612,42 +1613,42 @@ msgstr ""
 "\n"
 "Opções de conexão:\n"
 
-#: pg_dump.c:943
+#: pg_dump.c:952
 #, c-format
 msgid "  -d, --dbname=DBNAME      database to dump\n"
 msgstr "  -d, --dbname=NOMEBD      banco de dados a ser copiado\n"
 
-#: pg_dump.c:944 pg_dumpall.c:587 pg_restore.c:480
+#: pg_dump.c:953 pg_dumpall.c:587 pg_restore.c:480
 #, c-format
 msgid "  -h, --host=HOSTNAME      database server host or socket directory\n"
 msgstr "  -h, --host=MÁQUINA       máquina do servidor de banco de dados ou diretório do soquete\n"
 
-#: pg_dump.c:945 pg_dumpall.c:589 pg_restore.c:481
+#: pg_dump.c:954 pg_dumpall.c:589 pg_restore.c:481
 #, c-format
 msgid "  -p, --port=PORT          database server port number\n"
 msgstr "  -p, --port=PORTA         número da porta do servidor de banco de dados\n"
 
-#: pg_dump.c:946 pg_dumpall.c:590 pg_restore.c:482
+#: pg_dump.c:955 pg_dumpall.c:590 pg_restore.c:482
 #, c-format
 msgid "  -U, --username=NAME      connect as specified database user\n"
 msgstr "  -U, --username=NOME      conecta como usuário do banco de dados especificado\n"
 
-#: pg_dump.c:947 pg_dumpall.c:591 pg_restore.c:483
+#: pg_dump.c:956 pg_dumpall.c:591 pg_restore.c:483
 #, c-format
 msgid "  -w, --no-password        never prompt for password\n"
 msgstr "  -w, --no-password        nunca pergunta senha\n"
 
-#: pg_dump.c:948 pg_dumpall.c:592 pg_restore.c:484
+#: pg_dump.c:957 pg_dumpall.c:592 pg_restore.c:484
 #, c-format
 msgid "  -W, --password           force password prompt (should happen automatically)\n"
 msgstr "  -W, --password           pergunta senha (pode ocorrer automaticamente)\n"
 
-#: pg_dump.c:949 pg_dumpall.c:593
+#: pg_dump.c:958 pg_dumpall.c:593
 #, c-format
 msgid "  --role=ROLENAME          do SET ROLE before dump\n"
 msgstr "  --role=NOMEROLE          executa SET ROLE antes da cópia de segurança\n"
 
-#: pg_dump.c:951
+#: pg_dump.c:960
 #, c-format
 msgid ""
 "\n"
@@ -1660,336 +1661,336 @@ msgstr ""
 "PGDATABASE é utilizada.\n"
 "\n"
 
-#: pg_dump.c:953 pg_dumpall.c:597 pg_restore.c:491
+#: pg_dump.c:962 pg_dumpall.c:597 pg_restore.c:491
 #, c-format
 msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
 msgstr "Relate erros a <pgsql-bugs@postgresql.org>.\n"
 
-#: pg_dump.c:968
+#: pg_dump.c:977
 #, c-format
 msgid "invalid client encoding \"%s\" specified\n"
 msgstr "codificação de cliente \"%s\" especificada é inválida\n"
 
-#: pg_dump.c:1151
+#: pg_dump.c:1160
 #, c-format
 msgid "invalid output format \"%s\" specified\n"
 msgstr "formato de saída especificado \"%s\" é inválido\n"
 
-#: pg_dump.c:1173
+#: pg_dump.c:1182
 #, c-format
 msgid "server version must be at least 7.3 to use schema selection switches\n"
 msgstr "versão do servidor deve ser pelo menos versão 7.3 para utilizar opções com esquemas\n"
 
-#: pg_dump.c:1537
+#: pg_dump.c:1546
 #, c-format
 msgid "dumping contents of table %s\n"
 msgstr "copiando conteúdo da tabela %s\n"
 
-#: pg_dump.c:1660
+#: pg_dump.c:1669
 #, c-format
 msgid "Dumping the contents of table \"%s\" failed: PQgetCopyData() failed.\n"
 msgstr "Cópia do conteúdo da tabela \"%s\" falhou: PQgetCopyData() falhou.\n"
 
-#: pg_dump.c:1661 pg_dump.c:1671
+#: pg_dump.c:1670 pg_dump.c:1680
 #, c-format
 msgid "Error message from server: %s"
 msgstr "Mensagem de erro do servidor: %s"
 
-#: pg_dump.c:1662 pg_dump.c:1672
+#: pg_dump.c:1671 pg_dump.c:1681
 #, c-format
 msgid "The command was: %s\n"
 msgstr "O comando foi: %s\n"
 
-#: pg_dump.c:1670
+#: pg_dump.c:1679
 #, c-format
 msgid "Dumping the contents of table \"%s\" failed: PQgetResult() failed.\n"
 msgstr "Cópia do conteúdo da tabela \"%s\" falhou: PQgetResult() falhou.\n"
 
-#: pg_dump.c:2313
+#: pg_dump.c:2322
 #, c-format
 msgid "saving database definition\n"
 msgstr "salvando definição do banco de dados\n"
 
-#: pg_dump.c:2646
+#: pg_dump.c:2655
 #, c-format
 msgid "saving encoding = %s\n"
 msgstr "salvando codificação = %s\n"
 
-#: pg_dump.c:2673
+#: pg_dump.c:2682
 #, c-format
 msgid "saving standard_conforming_strings = %s\n"
 msgstr "salvando padrão de escape de cadeia de caracteres = %s\n"
 
-#: pg_dump.c:2706
+#: pg_dump.c:2715
 #, c-format
 msgid "reading large objects\n"
 msgstr "lendo objetos grandes\n"
 
-#: pg_dump.c:2838
+#: pg_dump.c:2860
 #, c-format
 msgid "saving large objects\n"
 msgstr "salvando objetos grandes\n"
 
-#: pg_dump.c:2885
+#: pg_dump.c:2907
 #, c-format
 msgid "error reading large object %u: %s"
 msgstr "erro ao ler objeto grande %u: %s"
 
-#: pg_dump.c:3078
+#: pg_dump.c:3100
 #, c-format
 msgid "could not find parent extension for %s\n"
 msgstr "não pôde encontrar extensão pai para %s\n"
 
-#: pg_dump.c:3181
+#: pg_dump.c:3203
 #, c-format
 msgid "WARNING: owner of schema \"%s\" appears to be invalid\n"
 msgstr "AVISO: dono do esquema \"%s\" parece ser inválido\n"
 
-#: pg_dump.c:3224
+#: pg_dump.c:3246
 #, c-format
 msgid "schema with OID %u does not exist\n"
 msgstr "esquema com OID %u não existe\n"
 
-#: pg_dump.c:3574
+#: pg_dump.c:3596
 #, c-format
 msgid "WARNING: owner of data type \"%s\" appears to be invalid\n"
 msgstr "AVISO: dono do tipo de dado \"%s\" parece ser inválido\n"
 
-#: pg_dump.c:3685
+#: pg_dump.c:3707
 #, c-format
 msgid "WARNING: owner of operator \"%s\" appears to be invalid\n"
 msgstr "AVISO: dono do operador \"%s\" parece ser inválido\n"
 
-#: pg_dump.c:3944
+#: pg_dump.c:3966
 #, c-format
 msgid "WARNING: owner of operator class \"%s\" appears to be invalid\n"
 msgstr "AVISO: dono da classe de operadores \"%s\" parece ser inválido\n"
 
-#: pg_dump.c:4032
+#: pg_dump.c:4054
 #, c-format
 msgid "WARNING: owner of operator family \"%s\" appears to be invalid\n"
 msgstr "AVISO: dono da família de operadores \"%s\" parece ser inválido\n"
 
-#: pg_dump.c:4170
+#: pg_dump.c:4192
 #, c-format
 msgid "WARNING: owner of aggregate function \"%s\" appears to be invalid\n"
 msgstr "AVISO: dono da função de agregação \"%s\" parece ser inválido\n"
 
-#: pg_dump.c:4363
+#: pg_dump.c:4385
 #, c-format
 msgid "WARNING: owner of function \"%s\" appears to be invalid\n"
 msgstr "AVISO: dono da função \"%s\" parece ser inválido\n"
 
-#: pg_dump.c:4981
+#: pg_dump.c:5003
 #, c-format
 msgid "WARNING: owner of table \"%s\" appears to be invalid\n"
 msgstr "AVISO: dono da tabela \"%s\" parece ser inválido\n"
 
-#: pg_dump.c:5133
+#: pg_dump.c:5155
 #, c-format
 msgid "reading indexes for table \"%s\"\n"
 msgstr "lendo índices da tabela \"%s\"\n"
 
-#: pg_dump.c:5499
+#: pg_dump.c:5521
 #, c-format
 msgid "reading foreign key constraints for table \"%s\"\n"
 msgstr "lendo restrições de chave estrangeira da tabela \"%s\"\n"
 
-#: pg_dump.c:5744
+#: pg_dump.c:5766
 #, c-format
 msgid "failed sanity check, parent table OID %u of pg_rewrite entry OID %u not found\n"
 msgstr "verificação de sanidade falhou, OID %u da tabela pai de pg_rewrite com OID %u não foi encontrado\n"
 
-#: pg_dump.c:5837
+#: pg_dump.c:5859
 #, c-format
 msgid "reading triggers for table \"%s\"\n"
 msgstr "lendo gatilhos da tabela \"%s\"\n"
 
-#: pg_dump.c:6001
+#: pg_dump.c:6023
 #, c-format
 msgid "query produced null referenced table name for foreign key trigger \"%s\" on table \"%s\" (OID of table: %u)\n"
 msgstr "consulta produziu nome nulo da tabela referenciada pelo gatilho de chave estrangeira \"%s\" na tabela \"%s\" (OID da tabela: %u)\n"
 
-#: pg_dump.c:6472
+#: pg_dump.c:6494
 #, c-format
 msgid "finding the columns and types of table \"%s\"\n"
 msgstr "encontrando as colunas e tipos da tabela \"%s\"\n"
 
-#: pg_dump.c:6650
+#: pg_dump.c:6672
 #, c-format
 msgid "invalid column numbering in table \"%s\"\n"
 msgstr "númeração de coluna inválida para tabela \"%s\"\n"
 
-#: pg_dump.c:6684
+#: pg_dump.c:6706
 #, c-format
 msgid "finding default expressions of table \"%s\"\n"
 msgstr "encontrando expressões padrão da tabela \"%s\"\n"
 
-#: pg_dump.c:6736
+#: pg_dump.c:6758
 #, c-format
 msgid "invalid adnum value %d for table \"%s\"\n"
 msgstr "valor %d do número da coluna é inválido para tabela \"%s\"\n"
 
-#: pg_dump.c:6808
+#: pg_dump.c:6830
 #, c-format
 msgid "finding check constraints for table \"%s\"\n"
 msgstr "encontrando restrições de verificação para tabela \"%s\"\n"
 
-#: pg_dump.c:6903
+#: pg_dump.c:6925
 #, c-format
 msgid "expected %d check constraint on table \"%s\" but found %d\n"
 msgid_plural "expected %d check constraints on table \"%s\" but found %d\n"
 msgstr[0] "esperado %d restrição de verificação na tabela \"%s\" mas encontrou %d\n"
 msgstr[1] "esperado %d restrições de verificação na tabela \"%s\" mas encontrou %d\n"
 
-#: pg_dump.c:6907
+#: pg_dump.c:6929
 #, c-format
 msgid "(The system catalogs might be corrupted.)\n"
 msgstr "(O catálogo do sistema pode estar corrompido).\n"
 
-#: pg_dump.c:8278
+#: pg_dump.c:8301
 #, c-format
 msgid "WARNING: typtype of data type \"%s\" appears to be invalid\n"
 msgstr "AVISO: typtype do tipo de dado \"%s\" parece ser inválido\n"
 
-#: pg_dump.c:9749
+#: pg_dump.c:9772
 #, c-format
 msgid "WARNING: bogus value in proargmodes array\n"
 msgstr "AVISO: valor inválido na matriz proargmodes\n"
 
-#: pg_dump.c:10077
+#: pg_dump.c:10100
 #, c-format
 msgid "WARNING: could not parse proallargtypes array\n"
 msgstr "AVISO: não pôde validar matriz proallargtypes\n"
 
-#: pg_dump.c:10093
+#: pg_dump.c:10116
 #, c-format
 msgid "WARNING: could not parse proargmodes array\n"
 msgstr "AVISO: não pôde validar matriz proargmodes\n"
 
-#: pg_dump.c:10107
+#: pg_dump.c:10130
 #, c-format
 msgid "WARNING: could not parse proargnames array\n"
 msgstr "AVISO: não pôde validar matriz proargnames\n"
 
-#: pg_dump.c:10118
+#: pg_dump.c:10141
 #, c-format
 msgid "WARNING: could not parse proconfig array\n"
 msgstr "AVISO: não pôde validar matriz proconfig\n"
 
-#: pg_dump.c:10173
+#: pg_dump.c:10196
 #, c-format
 msgid "unrecognized provolatile value for function \"%s\"\n"
 msgstr "valor de provolatile desconhecido para função \"%s\"\n"
 
-#: pg_dump.c:10305
+#: pg_dump.c:10328
 #, c-format
-msgid "unable to find function definition for OID %u"
-msgstr "não foi possível encontrar definição da função para OID %u"
+msgid "could not find function definition for function with OID %u\n"
+msgstr "não foi possível encontrar definição da função para OID %u\n"
 
-#: pg_dump.c:10350
+#: pg_dump.c:10373
 #, c-format
 msgid "WARNING: bogus value in pg_cast.castfunc or pg_cast.castmethod field\n"
 msgstr "AVISO: valor inválido no campo pg_cast.castfunc ou pg_cast.castmethod\n"
 
-#: pg_dump.c:10353
+#: pg_dump.c:10376
 #, c-format
 msgid "WARNING: bogus value in pg_cast.castmethod field\n"
 msgstr "AVISO: valor inválido no campo pg_cast.castmethod\n"
 
-#: pg_dump.c:10741
+#: pg_dump.c:10764
 #, c-format
 msgid "WARNING: could not find operator with OID %s\n"
 msgstr "AVISO: não pôde encontrar operador com OID %s\n"
 
-#: pg_dump.c:11871
+#: pg_dump.c:11906
 #, c-format
 msgid "WARNING: aggregate function %s could not be dumped correctly for this database version; ignored\n"
 msgstr "AVISO: função de agregação %s não pôde ser copiada corretamente para esta versão do banco de dados; ignorado\n"
 
-#: pg_dump.c:12688
+#: pg_dump.c:12723
 #, c-format
 msgid "unrecognized object type in default privileges: %d\n"
 msgstr "tipo de objeto desconhecido em privilégios padrão: %d\n"
 
-#: pg_dump.c:12703
+#: pg_dump.c:12738
 #, c-format
 msgid "could not parse default ACL list (%s)\n"
 msgstr "não pôde validar a lista ACL (%s)\n"
 
-#: pg_dump.c:12758
+#: pg_dump.c:12793
 #, c-format
 msgid "could not parse ACL list (%s) for object \"%s\" (%s)\n"
 msgstr "não pôde validar a lista ACL (%s) para objeto \"%s\" (%s)\n"
 
-#: pg_dump.c:13175
+#: pg_dump.c:13211
 #, c-format
 msgid "query to obtain definition of view \"%s\" returned no data\n"
 msgstr "consulta para obter definição da visão \"%s\" não retornou dados\n"
 
-#: pg_dump.c:13178
+#: pg_dump.c:13214
 #, c-format
 msgid "query to obtain definition of view \"%s\" returned more than one definition\n"
 msgstr "consulta para obter definição da visão \"%s\" retornou mais de uma definição\n"
 
-#: pg_dump.c:13185
+#: pg_dump.c:13221
 #, c-format
 msgid "definition of view \"%s\" appears to be empty (length zero)\n"
 msgstr "definição da visão \"%s\" parece estar vazia (tamanho zero)\n"
 
-#: pg_dump.c:13923
+#: pg_dump.c:13959
 #, c-format
 msgid "invalid column number %d for table \"%s\"\n"
 msgstr "número de colunas %d é inválido para tabela \"%s\"\n"
 
-#: pg_dump.c:14047
+#: pg_dump.c:14083
 #, c-format
 msgid "missing index for constraint \"%s\"\n"
 msgstr "faltando índice para restrição \"%s\"\n"
 
-#: pg_dump.c:14238
+#: pg_dump.c:14274
 #, c-format
 msgid "unrecognized constraint type: %c\n"
 msgstr "tipo de restrição é desconhecido: %c\n"
 
-#: pg_dump.c:14387 pg_dump.c:14551
+#: pg_dump.c:14423 pg_dump.c:14587
 #, c-format
 msgid "query to get data of sequence \"%s\" returned %d row (expected 1)\n"
 msgid_plural "query to get data of sequence \"%s\" returned %d rows (expected 1)\n"
 msgstr[0] "consulta para obter dados da sequência \"%s\" retornou %d linha (esperado 1)\n"
 msgstr[1] "consulta para obter dados da sequência \"%s\" retornou %d linhas (esperado 1)\n"
 
-#: pg_dump.c:14398
+#: pg_dump.c:14434
 #, c-format
 msgid "query to get data of sequence \"%s\" returned name \"%s\"\n"
 msgstr "consulta para obter dados sobre sequência \"%s\" retornou nome \"%s\"\n"
 
-#: pg_dump.c:14646
+#: pg_dump.c:14682
 #, c-format
 msgid "unexpected tgtype value: %d\n"
 msgstr "valor tgtype inesperado: %d\n"
 
-#: pg_dump.c:14728
+#: pg_dump.c:14764
 #, c-format
 msgid "invalid argument string (%s) for trigger \"%s\" on table \"%s\"\n"
 msgstr "argumento inválido (%s) para gatilho \"%s\" na tabela \"%s\"\n"
 
-#: pg_dump.c:14915
+#: pg_dump.c:14961
 #, c-format
 msgid "query to get rule \"%s\" for table \"%s\" failed: wrong number of rows returned\n"
 msgstr "consulta para obter regra \"%s\" para tabela \"%s\" falhou: número incorreto de registros foi retornado\n"
 
-#: pg_dump.c:15294
+#: pg_dump.c:15340
 #, c-format
 msgid "reading dependency data\n"
 msgstr "lendo dados sobre dependência\n"
 
-#: pg_dump.c:15852
+#: pg_dump.c:15898
 #, c-format
 msgid "WARNING: could not parse reloptions array\n"
 msgstr "AVISO: não pôde validar matriz reloptions\n"
 
-#: pg_dump.c:15916
+#: pg_dump.c:15962
 #, c-format
 msgid "query returned %d row instead of one: %s\n"
 msgid_plural "query returned %d rows instead of one: %s\n"

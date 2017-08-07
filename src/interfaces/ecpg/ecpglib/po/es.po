@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecpglib (PostgreSQL 9.4)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2015-09-04 17:45+0000\n"
+"POT-Creation-Date: 2017-05-21 17:33+0000\n"
 "PO-Revision-Date: 2014-12-16 12:12-0300\n"
 "Last-Translator: Emanuel Calvo Franco <postgres-arg@gmail.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
@@ -195,6 +195,6 @@ msgstr "se ha perdido la conexión al servidor"
 msgid "SQL error: %s\n"
 msgstr "error SQL: %s\n"
 
-#: execute.c:1966
+#: execute.c:1956
 msgid "<empty>"
 msgstr "<vacío>"
