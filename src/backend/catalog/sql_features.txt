@@ -447,7 +447,7 @@ T261	Chained transactions			NO
 T271	Savepoints			YES	
 T272	Enhanced savepoint management			NO	
 T281	SELECT privilege with column granularity			YES	
-T285	Enhanced derived column names			NO	
+T285	Enhanced derived column names			YES	
 T301	Functional dependencies			NO	partially supported
 T312	OVERLAY function			YES	
 T321	Basic SQL-invoked routines			NO	
@@ -536,7 +536,7 @@ X010	XML type			YES
 X011	Arrays of XML type			YES	
 X012	Multisets of XML type			NO	
 X013	Distinct types of XML type			NO	
-X014	Attributes of XML type			NO	
+X014	Attributes of XML type			YES	
 X015	Fields of XML type			NO	
 X016	Persistent XML values			YES	
 X020	XMLConcat			YES	
@@ -593,7 +593,7 @@ X085	Predefined namespace prefixes			NO
 X086	XML namespace declarations in XMLTable			NO	
 X090	XML document predicate			YES	
 X091	XML content predicate			NO	
-X096	XMLExists			NO	
+X096	XMLExists			NO	XPath only
 X100	Host language support for XML: CONTENT option			NO	
 X101	Host language support for XML: DOCUMENT option			NO	
 X110	Host language support for XML: VARCHAR mapping			NO	
@@ -636,7 +636,7 @@ X205	XMLQuery: EMPTY ON EMPTY option			NO
 X206	XMLQuery: NULL ON EMPTY option			NO	
 X211	XML 1.1 support			NO	
 X221	XML passing mechanism BY VALUE			NO	
-X222	XML passing mechanism BY REF			NO	
+X222	XML passing mechanism BY REF			YES	
 X231	XML(CONTENT(UNTYPED)) type			NO	
 X232	XML(CONTENT(ANY)) type			NO	
 X241	RETURNING CONTENT in XML publishing			NO	
@@ -661,11 +661,11 @@ X282	XMLValidate with CONTENT option			NO
 X283	XMLValidate with SEQUENCE option			NO	
 X284	XMLValidate: NAMESPACE without ELEMENT clause			NO	
 X286	XMLValidate: NO NAMESPACE with ELEMENT clause			NO	
-X300	XMLTable			NO	
-X301	XMLTable: derived column list option			NO	
-X302	XMLTable: ordinality column option			NO	
-X303	XMLTable: column default option			NO	
-X304	XMLTable: passing a context item			NO	
+X300	XMLTable			NO	XPath only
+X301	XMLTable: derived column list option			YES	
+X302	XMLTable: ordinality column option			YES	
+X303	XMLTable: column default option			YES	
+X304	XMLTable: passing a context item			YES	
 X305	XMLTable: initializing an XQuery variable			NO	
 X400	Name and identifier mapping			YES	
 X410	Alter column data type: XML type			YES	
