@@ -910,7 +910,9 @@ CREATE VIEW pg_user_mappings AS
         ELSE
             A.rolname
         END AS usename,
-        CASE WHEN (U.umuser <> 0 AND A.rolname = current_user)
+        CASE WHEN (U.umuser <> 0 AND A.rolname = current_user
+                     AND (pg_has_role(S.srvowner, 'USAGE')
+                          OR has_server_privilege(S.oid, 'USAGE')))
                     OR (U.umuser = 0 AND pg_has_role(S.srvowner, 'USAGE'))
                     OR (SELECT rolsuper FROM pg_authid WHERE rolname = current_user)
                     THEN U.umoptions
