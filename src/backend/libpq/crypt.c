@@ -71,14 +71,6 @@ get_role_password(const char *role, char **logdetail)
 
 	ReleaseSysCache(roleTup);
 
-	if (*shadow_pass == '\0')
-	{
-		*logdetail = psprintf(_("User \"%s\" has an empty password."),
-							  role);
-		pfree(shadow_pass);
-		return NULL;			/* empty password */
-	}
-
 	/*
 	 * Password OK, but check to be sure we are not past rolvaliduntil
 	 */

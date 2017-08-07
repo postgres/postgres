@@ -219,6 +219,17 @@ CREATE ROLE <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replac
         user.  A null password can optionally be written explicitly as
         <literal>PASSWORD NULL</literal>.
        </para>
+       <note>
+         <para>
+           Specifying an empty string will also set the password to null,
+           but that was not the case before <productname>PostgreSQL</>
+           version 10. In earlier versions, an empty string could be used,
+           or not, depending on the authentication method and the exact
+           version, and libpq would refuse to use it in any case.
+           To avoid the ambiguity, specifying an empty string should be
+           avoided.
+         </para>
+       </note>
        <para>
         The password is always stored encrypted in the system catalogs. The
         <literal>ENCRYPTED</> keyword has no effect, but is accepted for

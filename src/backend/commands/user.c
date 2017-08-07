@@ -384,13 +384,36 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 
 	if (password)
 	{
-		/* Encrypt the password to the requested format. */
 		char	   *shadow_pass;
+		char	   *logdetail;
 
-		shadow_pass = encrypt_password(Password_encryption, stmt->role,
-									   password);
-		new_record[Anum_pg_authid_rolpassword - 1] =
-			CStringGetTextDatum(shadow_pass);
+		/*
+		 * Don't allow an empty password. Libpq treats an empty password the
+		 * same as no password at all, and won't even try to authenticate. But
+		 * other clients might, so allowing it would be confusing. By clearing
+		 * the password when an empty string is specified, the account is
+		 * consistently locked for all clients.
+		 *
+		 * Note that this only covers passwords stored in the database itself.
+		 * There are also checks in the authentication code, to forbid an
+		 * empty password from being used with authentication methods that
+		 * fetch the password from an external system, like LDAP or PAM.
+		 */
+		if (password[0] == '\0' ||
+			plain_crypt_verify(stmt->role, password, "", &logdetail) == STATUS_OK)
+		{
+			ereport(NOTICE,
+					(errmsg("empty string is not a valid password, clearing password")));
+			new_record_nulls[Anum_pg_authid_rolpassword - 1] = true;
+		}
+		else
+		{
+			/* Encrypt the password to the requested format. */
+			shadow_pass = encrypt_password(Password_encryption, stmt->role,
+										   password);
+			new_record[Anum_pg_authid_rolpassword - 1] =
+				CStringGetTextDatum(shadow_pass);
+		}
 	}
 	else
 		new_record_nulls[Anum_pg_authid_rolpassword - 1] = true;
@@ -782,13 +805,25 @@ AlterRole(AlterRoleStmt *stmt)
 	/* password */
 	if (password)
 	{
-		/* Encrypt the password to the requested format. */
 		char	   *shadow_pass;
+		char	   *logdetail;
 
-		shadow_pass = encrypt_password(Password_encryption, rolename,
-									   password);
-		new_record[Anum_pg_authid_rolpassword - 1] =
-			CStringGetTextDatum(shadow_pass);
+		/* Like in CREATE USER, don't allow an empty password. */
+		if (password[0] == '\0' ||
+			plain_crypt_verify(rolename, password, "", &logdetail) == STATUS_OK)
+		{
+			ereport(NOTICE,
+					(errmsg("empty string is not a valid password, clearing password")));
+			new_record_nulls[Anum_pg_authid_rolpassword - 1] = true;
+		}
+		else
+		{
+			/* Encrypt the password to the requested format. */
+			shadow_pass = encrypt_password(Password_encryption, rolename,
+										   password);
+			new_record[Anum_pg_authid_rolpassword - 1] =
+				CStringGetTextDatum(shadow_pass);
+		}
 		new_record_repl[Anum_pg_authid_rolpassword - 1] = true;
 	}
 
