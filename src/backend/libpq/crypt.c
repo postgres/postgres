@@ -74,11 +74,36 @@ md5_crypt_verify(const Port *port, const char *role, char *client_pass,
 
 	ReleaseSysCache(roleTup);
 
+	/*
+	 * Don't allow an empty password. Libpq treats an empty password the same
+	 * as no password at all, and won't even try to authenticate. But other
+	 * clients might, so allowing it would be confusing.
+	 *
+	 * For a plaintext password, we can simply check that it's not an empty
+	 * string. For an encrypted password, check that it does not match the MD5
+	 * hash of an empty string.
+	 */
 	if (*shadow_pass == '\0')
 	{
 		*logdetail = psprintf(_("User \"%s\" has an empty password."),
 							  role);
 		return STATUS_ERROR;	/* empty password */
+	}
+	if (isMD5(shadow_pass))
+	{
+		char		crypt_empty[MD5_PASSWD_LEN + 1];
+
+		if (!pg_md5_encrypt("",
+							port->user_name,
+							strlen(port->user_name),
+							crypt_empty))
+			return STATUS_ERROR;
+		if (strcmp(shadow_pass, crypt_empty) == 0)
+		{
+			*logdetail = psprintf(_("User \"%s\" has an empty password."),
+								  role);
+			return STATUS_ERROR;	/* empty password */
+		}
 	}
 
 	/*
