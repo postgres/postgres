@@ -23,7 +23,12 @@
    </para>
 
    <para>
-    However, if you are upgrading from a version earlier than 9.6.3,
+    However, if you use foreign data servers that make use of user
+    passwords for authentication, see the first changelog entry below.
+   </para>
+
+   <para>
+    Also, if you are upgrading from a version earlier than 9.6.3,
     see <xref linkend="release-9-6-3">.
    </para>
   </sect2>
@@ -32,6 +37,165 @@
    <title>Changes</title>
 
    <itemizedlist>
+
+    <listitem>
+<!--
+Author: Noah Misch <noah@leadboat.com>
+Branch: master [e568e1eee] 2017-08-07 07:09:28 -0700
+Branch: REL9_6_STABLE [156099630] 2017-08-07 07:09:31 -0700
+Branch: REL9_5_STABLE [36f9f6095] 2017-08-07 07:09:31 -0700
+Branch: REL9_4_STABLE [b6e39ca92] 2017-08-07 07:09:31 -0700
+Branch: REL9_3_STABLE [5e8e00914] 2017-08-07 07:09:31 -0700
+Branch: REL9_2_STABLE [e255e97a2] 2017-08-07 07:09:32 -0700
+-->
+     <para>
+      Further restrict visibility
+      of <structname>pg_user_mappings</>.<structfield>umoptions</>, to
+      protect passwords stored as user mapping options
+      (Noah Misch)
+     </para>
+
+     <para>
+      The fix for CVE-2017-7486 was incorrect: it allowed a user
+      to see the options in her own user mapping, even if she did not
+      have <literal>USAGE</> permission on the associated foreign server.
+      Such options might include a password that had been provided by the
+      server owner rather than the user herself.
+      Since <structname>information_schema.user_mapping_options</> does not
+      show the options in such cases, <structname>pg_user_mappings</>
+      should not either.
+      (CVE-2017-7547)
+     </para>
+
+     <para>
+      By itself, this patch will only fix the behavior in newly initdb'd
+      databases.  If you wish to apply this change in an existing database,
+      you will need to do the following:
+     </para>
+
+     <procedure>
+      <step>
+       <para>
+        Restart the postmaster after adding <literal>allow_system_table_mods
+        = true</> to <filename>postgresql.conf</>.  (In versions
+        supporting <command>ALTER SYSTEM</>, you can use that to make the
+        configuration change, but you'll still need a restart.)
+       </para>
+      </step>
+
+      <step>
+       <para>
+        In <emphasis>each</> database of the cluster,
+        run the following commands as superuser:
+<programlisting>
+SET search_path = pg_catalog;
+CREATE OR REPLACE VIEW pg_user_mappings AS
+    SELECT
+        U.oid       AS umid,
+        S.oid       AS srvid,
+        S.srvname   AS srvname,
+        U.umuser    AS umuser,
+        CASE WHEN U.umuser = 0 THEN
+            'public'
+        ELSE
+            A.rolname
+        END AS usename,
+        CASE WHEN (U.umuser &lt;&gt; 0 AND A.rolname = current_user
+                     AND (pg_has_role(S.srvowner, 'USAGE')
+                          OR has_server_privilege(S.oid, 'USAGE')))
+                    OR (U.umuser = 0 AND pg_has_role(S.srvowner, 'USAGE'))
+                    OR (SELECT rolsuper FROM pg_authid WHERE rolname = current_user)
+                    THEN U.umoptions
+                 ELSE NULL END AS umoptions
+    FROM pg_user_mapping U
+         LEFT JOIN pg_authid A ON (A.oid = U.umuser) JOIN
+        pg_foreign_server S ON (U.umserver = S.oid);
+</programlisting>
+       </para>
+      </step>
+
+      <step>
+       <para>
+        Do not forget to include the <literal>template0</>
+        and <literal>template1</> databases, or the vulnerability will still
+        exist in databases you create later.  To fix <literal>template0</>,
+        you'll need to temporarily make it accept connections.
+        In <productname>PostgreSQL</> 9.5 and later, you can use
+<programlisting>
+ALTER DATABASE template0 WITH ALLOW_CONNECTIONS true;
+</programlisting>
+        and then after fixing <literal>template0</>, undo that with
+<programlisting>
+ALTER DATABASE template0 WITH ALLOW_CONNECTIONS false;
+</programlisting>
+        In prior versions, instead use
+<programlisting>
+UPDATE pg_database SET datallowconn = true WHERE datname = 'template0';
+UPDATE pg_database SET datallowconn = false WHERE datname = 'template0';
+</programlisting>
+       </para>
+      </step>
+
+      <step>
+       <para>
+        Finally, remove the <literal>allow_system_table_mods</> configuration
+        setting, and again restart the postmaster.
+       </para>
+      </step>
+     </procedure>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
+Branch: master [bf6b9e944] 2017-08-07 17:03:42 +0300
+Branch: REL9_6_STABLE [f6fc72cb6] 2017-08-07 17:03:49 +0300
+Branch: REL9_5_STABLE [127835ddf] 2017-08-07 17:04:00 +0300
+Branch: REL9_4_STABLE [d5d46d99b] 2017-08-07 17:04:07 +0300
+Branch: REL9_3_STABLE [b2f833ea7] 2017-08-07 17:04:12 +0300
+Branch: REL9_2_STABLE [06651648a] 2017-08-07 17:04:17 +0300
+-->
+     <para>
+      Disallow empty passwords in all password-based authentication methods
+      (Heikki Linnakangas)
+     </para>
+
+     <para>
+      <application>libpq</> ignores empty password specifications, and does
+      not transmit them to the server.  So, if a user's password has been
+      set to the empty string, it's impossible to log in with that password
+      via <application>psql</> or other <application>libpq</>-based
+      clients.  An administrator might therefore believe that setting the
+      password to empty is equivalent to disabling password login.
+      However, with a modified or non-<application>libpq</>-based client,
+      logging in could be possible, depending on which authentication
+      method is configured.  In particular the most common
+      method, <literal>md5</>, accepted empty passwords.
+      Change the server to reject empty passwords in all cases.
+      (CVE-2017-7546)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [8d9881911] 2017-08-07 10:19:19 -0400
+Branch: REL9_6_STABLE [52a414387] 2017-08-07 10:19:20 -0400
+Branch: REL9_5_STABLE [873741c68] 2017-08-07 10:19:21 -0400
+Branch: REL9_4_STABLE [f1cda6d6c] 2017-08-07 10:19:22 -0400
+-->
+     <para>
+      Make <function>lo_put()</> check for <literal>UPDATE</> privilege on
+      the target large object (Tom Lane, Michael Paquier)
+     </para>
+
+     <para>
+      <function>lo_put()</> should surely require the same permissions
+      as <function>lowrite()</>, but the check was missing, allowing any
+      user to change the data in a large object.
+      (CVE-2017-7548)
+     </para>
+    </listitem>
 
     <listitem>
 <!--
@@ -1193,77 +1357,9 @@ Branch: REL9_2_STABLE [99cbb0bd9] 2017-05-08 07:24:28 -0700
      <para>
       By itself, this patch will only fix the behavior in newly initdb'd
       databases.  If you wish to apply this change in an existing database,
-      you will need to do the following:
+      follow the corrected procedure shown in the changelog entry for
+      CVE-2017-7547, in <xref linkend="release-9-6-4">.
      </para>
-
-     <procedure>
-      <step>
-       <para>
-        Restart the postmaster after adding <literal>allow_system_table_mods
-        = true</> to <filename>postgresql.conf</>.  (In versions
-        supporting <command>ALTER SYSTEM</>, you can use that to make the
-        configuration change, but you'll still need a restart.)
-       </para>
-      </step>
-
-      <step>
-       <para>
-        In <emphasis>each</> database of the cluster,
-        run the following commands as superuser:
-<programlisting>
-SET search_path = pg_catalog;
-CREATE OR REPLACE VIEW pg_user_mappings AS
-    SELECT
-        U.oid       AS umid,
-        S.oid       AS srvid,
-        S.srvname   AS srvname,
-        U.umuser    AS umuser,
-        CASE WHEN U.umuser = 0 THEN
-            'public'
-        ELSE
-            A.rolname
-        END AS usename,
-        CASE WHEN (U.umuser &lt;&gt; 0 AND A.rolname = current_user)
-                    OR (U.umuser = 0 AND pg_has_role(S.srvowner, 'USAGE'))
-                    OR (SELECT rolsuper FROM pg_authid WHERE rolname = current_user)
-                    THEN U.umoptions
-                 ELSE NULL END AS umoptions
-    FROM pg_user_mapping U
-         LEFT JOIN pg_authid A ON (A.oid = U.umuser) JOIN
-        pg_foreign_server S ON (U.umserver = S.oid);
-</programlisting>
-       </para>
-      </step>
-
-      <step>
-       <para>
-        Do not forget to include the <literal>template0</>
-        and <literal>template1</> databases, or the vulnerability will still
-        exist in databases you create later.  To fix <literal>template0</>,
-        you'll need to temporarily make it accept connections.
-        In <productname>PostgreSQL</> 9.5 and later, you can use
-<programlisting>
-ALTER DATABASE template0 WITH ALLOW_CONNECTIONS true;
-</programlisting>
-        and then after fixing <literal>template0</>, undo that with
-<programlisting>
-ALTER DATABASE template0 WITH ALLOW_CONNECTIONS false;
-</programlisting>
-        In prior versions, instead use
-<programlisting>
-UPDATE pg_database SET datallowconn = true WHERE datname = 'template0';
-UPDATE pg_database SET datallowconn = false WHERE datname = 'template0';
-</programlisting>
-       </para>
-      </step>
-
-      <step>
-       <para>
-        Finally, remove the <literal>allow_system_table_mods</> configuration
-        setting, and again restart the postmaster.
-       </para>
-      </step>
-     </procedure>
     </listitem>
 
     <listitem>
