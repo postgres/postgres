@@ -2627,7 +2627,7 @@ mergeruns(Tuplesortstate *state)
 	/*
 	 * If we produced only one initial run (quite likely if the total data
 	 * volume is between 1X and 2X workMem when replacement selection is used,
-	 * but something we particular count on when input is presorted), we can
+	 * but something we particularly count on when input is presorted), we can
 	 * just use that tape as the finished output, rather than doing a useless
 	 * merge.  (This obvious optimization is not in Knuth's algorithm.)
 	 */
