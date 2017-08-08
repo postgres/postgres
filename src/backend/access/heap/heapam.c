@@ -3983,7 +3983,7 @@ l2:
 
 		/*
 		 * To prevent concurrent sessions from updating the tuple, we have to
-		 * temporarily mark it locked, while we release the lock.
+		 * temporarily mark it locked, while we release the page-level lock.
 		 *
 		 * To satisfy the rule that any xid potentially appearing in a buffer
 		 * written out to disk, we unfortunately have to WAL log this
@@ -3995,8 +3995,9 @@ l2:
 
 		/*
 		 * Compute xmax / infomask appropriate for locking the tuple. This has
-		 * to be done separately from the lock, because the potentially
-		 * created multixact would otherwise be wrong.
+		 * to be done separately from the combo that's going to be used for
+		 * updating, because the potentially created multixact would otherwise
+		 * be wrong.
 		 */
 		compute_new_xmax_infomask(HeapTupleHeaderGetRawXmax(oldtup.t_data),
 								  oldtup.t_data->t_infomask,
