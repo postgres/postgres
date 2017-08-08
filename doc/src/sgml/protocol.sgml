@@ -6170,6 +6170,26 @@ Relation
 </para>
 </listitem>
 </varlistentry>
+<varlistentry>
+<term>
+        Int32
+</term>
+<listitem>
+<para>
+                OID of the column's data type.
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+        Int32
+</term>
+<listitem>
+<para>
+                Type modifier of the column (<structfield>atttypmod</structfield>).
+</para>
+</listitem>
+</varlistentry>
 
 </variablelist>
 </para>
@@ -6417,7 +6437,7 @@ Delete
 
 <para>
 
-Following message parts that are shared by above messages.
+The following message parts are shared by the above messages.
 
 </para>
 
