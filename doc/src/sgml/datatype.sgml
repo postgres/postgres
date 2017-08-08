@@ -4301,7 +4301,7 @@ SET xmloption TO { DOCUMENT | CONTENT };
     <para>
      Some XML-related functions may not work at all on non-ASCII data
      when the server encoding is not UTF-8.  This is known to be an
-     issue for <function>xpath()</> in particular.
+     issue for <function>xmltable()</> and <function>xpath()</> in particular.
     </para>
    </caution>
    </sect2>
