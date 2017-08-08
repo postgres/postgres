@@ -268,11 +268,11 @@ datumEstimateSpace(Datum value, bool isnull, bool typByVal, int typLen)
 		/* no need to use add_size, can't overflow */
 		if (typByVal)
 			sz += sizeof(Datum);
-		else if (VARATT_IS_EXTERNAL_EXPANDED(value))
+		else if (typLen == -1 &&
+				 VARATT_IS_EXTERNAL_EXPANDED(DatumGetPointer(value)))
 		{
-			ExpandedObjectHeader *eoh = DatumGetEOHP(value);
-
-			sz += EOH_get_flat_size(eoh);
+			/* Expanded objects need to be flattened, see comment below */
+			sz += EOH_get_flat_size(DatumGetEOHP(value));
 		}
 		else
 			sz += datumGetSize(value, typByVal, typLen);
@@ -285,6 +285,13 @@ datumEstimateSpace(Datum value, bool isnull, bool typByVal, int typLen)
  * datumSerialize
  *
  * Serialize a possibly-NULL datum into caller-provided storage.
+ *
+ * Note: "expanded" objects are flattened so as to produce a self-contained
+ * representation, but other sorts of toast pointers are transferred as-is.
+ * This is because the intended use of this function is to pass the value
+ * to another process within the same database server.  The other process
+ * could not access an "expanded" object within this process's memory, but
+ * we assume it can dereference the same TOAST pointers this one can.
  *
  * The format is as follows: first, we write a 4-byte header word, which
  * is either the length of a pass-by-reference datum, -1 for a
@@ -310,7 +317,8 @@ datumSerialize(Datum value, bool isnull, bool typByVal, int typLen,
 		header = -2;
 	else if (typByVal)
 		header = -1;
-	else if (VARATT_IS_EXTERNAL_EXPANDED(value))
+	else if (typLen == -1 &&
+			 VARATT_IS_EXTERNAL_EXPANDED(DatumGetPointer(value)))
 	{
 		eoh = DatumGetEOHP(value);
 		header = EOH_get_flat_size(eoh);
