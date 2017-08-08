@@ -939,7 +939,7 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 	snprintf(originname, sizeof(originname), "pg_%u", subid);
 	originid = replorigin_by_name(originname, true);
 	if (originid != InvalidRepOriginId)
-		replorigin_drop(originid);
+		replorigin_drop(originid, false);
 
 	/*
 	 * If there is no slot associated with the subscription, we can finish

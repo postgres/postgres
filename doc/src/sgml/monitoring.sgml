@@ -1222,11 +1222,11 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
         </row>
         <row>
          <entry><literal>LibPQWalReceiverConnect</></entry>
-         <entry>Waiting in WAL receiver to establish connection to remote server.<entry>
+         <entry>Waiting in WAL receiver to establish connection to remote server.</entry>
         </row>
         <row>
          <entry><literal>LibPQWalReceiverReceive</></entry>
-         <entry>Waiting in WAL receiver to receive data from remote server.<entry>
+         <entry>Waiting in WAL receiver to receive data from remote server.</entry>
         </row>
         <row>
          <entry><literal>SSLOpenServer</></entry>
@@ -1301,6 +1301,10 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
         <row>
          <entry><literal>ProcArrayGroupUpdate</></entry>
          <entry>Waiting for group leader to clear transaction id at transaction end.</entry>
+        </row>
+        <row>
+         <entry><literal>ReplicationOriginDrop</></entry>
+         <entry>Waiting for a replication origin to become inactive to be dropped.</entry>
         </row>
         <row>
          <entry><literal>ReplicationSlotDrop</></entry>
