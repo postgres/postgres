@@ -391,7 +391,8 @@ retry:
 							name, active_pid)));
 
 		/* Wait here until we get signaled, and then restart */
-		ConditionVariableSleep(&slot->active_cv, PG_WAIT_LOCK);
+		ConditionVariableSleep(&slot->active_cv,
+							   WAIT_EVENT_REPLICATION_SLOT_DROP);
 		ConditionVariableCancelSleep();
 		goto retry;
 	}

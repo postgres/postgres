@@ -181,7 +181,7 @@ libpqrcv_connect(const char *conninfo, bool logical, const char *appname,
 							   WL_LATCH_SET | io_flag,
 							   PQsocket(conn->streamConn),
 							   0,
-							   WAIT_EVENT_LIBPQWALRECEIVER);
+							   WAIT_EVENT_LIBPQWALRECEIVER_CONNECT);
 
 		/* Emergency bailout? */
 		if (rc & WL_POSTMASTER_DEATH)
@@ -582,7 +582,7 @@ libpqrcv_PQexec(PGconn *streamConn, const char *query)
 								   WL_LATCH_SET,
 								   PQsocket(streamConn),
 								   0,
-								   WAIT_EVENT_LIBPQWALRECEIVER);
+								   WAIT_EVENT_LIBPQWALRECEIVER_RECEIVE);
 
 			/* Emergency bailout? */
 			if (rc & WL_POSTMASTER_DEATH)

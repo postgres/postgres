@@ -1176,6 +1176,14 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
          <entry>Waiting in main loop of checkpointer process.</entry>
         </row>
         <row>
+         <entry><literal>LogicalLauncherMain</></entry>
+         <entry>Waiting in main loop of logical launcher process.</entry>
+        </row>
+        <row>
+         <entry><literal>LogicalApplyMain</></entry>
+         <entry>Waiting in main loop of logical apply process.</entry>
+        </row>
+        <row>
          <entry><literal>PgStatMain</></entry>
          <entry>Waiting in main loop of the statistics collector process.</entry>
         </row>
@@ -1211,6 +1219,14 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
         <row>
          <entry><literal>ClientWrite</></entry>
          <entry>Waiting to write data from the client.</entry>
+        </row>
+        <row>
+         <entry><literal>LibPQWalReceiverConnect</></entry>
+         <entry>Waiting in WAL receiver to establish connection to remote server.<entry>
+        </row>
+        <row>
+         <entry><literal>LibPQWalReceiverReceive</></entry>
+         <entry>Waiting in WAL receiver to receive data from remote server.<entry>
         </row>
         <row>
          <entry><literal>SSLOpenServer</></entry>
@@ -1251,6 +1267,14 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
          <entry>Waiting for activity from child process when executing <literal>Gather</> node.</entry>
         </row>
         <row>
+         <entry><literal>LogicalSyncData</></entry>
+         <entry>Waiting for logical replication remote server to send data for initial table synchronization.</entry>
+        </row>
+        <row>
+         <entry><literal>LogicalSyncStateChange</></entry>
+         <entry>Waiting for logical replication remote server to change state.</entry>
+        </row>
+        <row>
          <entry><literal>MessageQueueInternal</></entry>
          <entry>Waiting for other process to be attached in shared message queue.</entry>
         </row>
@@ -1271,12 +1295,16 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
          <entry>Waiting for parallel workers to finish computing.</entry>
         </row>
         <row>
-         <entry><literal>ParallelBitmapPopulate</></entry>
-         <entry>Waiting for the leader to populate the TidBitmap.</entry>
+         <entry><literal>ParallelBitmapScan</></entry>
+         <entry>Waiting for parallel bitmap scan to become initialized.</entry>
         </row>
         <row>
          <entry><literal>ProcArrayGroupUpdate</></entry>
          <entry>Waiting for group leader to clear transaction id at transaction end.</entry>
+        </row>
+        <row>
+         <entry><literal>ReplicationSlotDrop</></entry>
+         <entry>Waiting for a replication slot to become inactive to be dropped.</entry>
         </row>
         <row>
          <entry><literal>SafeSnapshot</></entry>
