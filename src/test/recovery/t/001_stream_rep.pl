@@ -220,9 +220,13 @@ isnt($xmin, '', 'xmin of non-cascaded slot non-null with hs feedback');
 is($catalog_xmin, '',
 	'catalog xmin of non-cascaded slot still null with hs_feedback');
 
+wait_slot_xmins($node_standby_1, $slotname_2,
+				"xmin IS NOT NULL AND catalog_xmin IS NULL");
+
 my ($xmin1, $catalog_xmin1) = get_slot_xmins($node_standby_1, $slotname_2);
 isnt($xmin1, '', 'xmin of cascaded slot non-null with hs feedback');
-is($catalog_xmin1, '', 'catalog xmin of cascaded slot still null with hs_feedback');
+is($catalog_xmin1, '',
+	'catalog xmin of cascaded slot still null with hs_feedback');
 
 note "doing some work to advance xmin";
 $node_master->safe_psql('postgres', q{
@@ -296,6 +300,8 @@ replay_check();
 $node_standby_2->safe_psql('postgres',
 	'ALTER SYSTEM SET hot_standby_feedback = off;');
 $node_standby_2->stop;
+
+wait_slot_xmins($node_standby_1, $slotname_2, "xmin IS NOT NULL");
 
 ($xmin, $catalog_xmin) = get_slot_xmins($node_standby_1, $slotname_2);
 isnt($xmin, '', 'xmin of cascaded slot non-null with postgres shut down');
