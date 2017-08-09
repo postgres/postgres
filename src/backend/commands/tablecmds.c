@@ -4849,13 +4849,18 @@ ATTypedTableRecursion(List **wqueue, Relation rel, AlterTableCmd *cmd,
 /*
  * find_composite_type_dependencies
  *
- * Check to see if a composite type is being used as a column in some
- * other table (possibly nested several levels deep in composite types!).
+ * Check to see if the type "typeOid" is being used as a column in some table
+ * (possibly nested several levels deep in composite types, arrays, etc!).
  * Eventually, we'd like to propagate the check or rewrite operation
- * into other such tables, but for now, just error out if we find any.
+ * into such tables, but for now, just error out if we find any.
  *
- * Caller should provide either a table name or a type name (not both) to
- * report in the error message, if any.
+ * Caller should provide either the associated relation of a rowtype,
+ * or a type name (not both) for use in the error message, if any.
+ *
+ * Note that "typeOid" is not necessarily a composite type; it could also be
+ * another container type such as an array or range, or a domain over one of
+ * these things.  The name of this function is therefore somewhat historical,
+ * but it's not worth changing.
  *
  * We assume that functions and views depending on the type are not reasons
  * to reject the ALTER.  (How safe is this really?)
@@ -4868,11 +4873,13 @@ find_composite_type_dependencies(Oid typeOid, Relation origRelation,
 	ScanKeyData key[2];
 	SysScanDesc depScan;
 	HeapTuple	depTup;
-	Oid			arrayOid;
+
+	/* since this function recurses, it could be driven to stack overflow */
+	check_stack_depth();
 
 	/*
-	 * We scan pg_depend to find those things that depend on the rowtype. (We
-	 * assume we can ignore refobjsubid for a rowtype.)
+	 * We scan pg_depend to find those things that depend on the given type.
+	 * (We assume we can ignore refobjsubid for a type.)
 	 */
 	depRel = heap_open(DependRelationId, AccessShareLock);
 
@@ -4894,8 +4901,22 @@ find_composite_type_dependencies(Oid typeOid, Relation origRelation,
 		Relation	rel;
 		Form_pg_attribute att;
 
-		/* Ignore dependees that aren't user columns of relations */
-		/* (we assume system columns are never of rowtypes) */
+		/* Check for directly dependent types */
+		if (pg_depend->classid == TypeRelationId)
+		{
+			/*
+			 * This must be an array, domain, or range containing the given
+			 * type, so recursively check for uses of this type.  Note that
+			 * any error message will mention the original type not the
+			 * container; this is intentional.
+			 */
+			find_composite_type_dependencies(pg_depend->objid,
+											 origRelation, origTypeName);
+			continue;
+		}
+
+		/* Else, ignore dependees that aren't user columns of relations */
+		/* (we assume system columns are never of interesting types) */
 		if (pg_depend->classid != RelationRelationId ||
 			pg_depend->objsubid <= 0)
 			continue;
@@ -4952,14 +4973,6 @@ find_composite_type_dependencies(Oid typeOid, Relation origRelation,
 	systable_endscan(depScan);
 
 	relation_close(depRel, AccessShareLock);
-
-	/*
-	 * If there's an array type for the rowtype, must check for uses of it,
-	 * too.
-	 */
-	arrayOid = get_array_type(typeOid);
-	if (OidIsValid(arrayOid))
-		find_composite_type_dependencies(arrayOid, origRelation, origTypeName);
 }
 
 
