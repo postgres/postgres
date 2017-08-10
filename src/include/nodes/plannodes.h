@@ -67,7 +67,7 @@ typedef struct PlannedStmt
 
 	/*
 	 * rtable indexes of non-leaf target relations for UPDATE/DELETE on all
-	 * the partitioned table mentioned in the query.
+	 * the partitioned tables mentioned in the query.
 	 */
 	List	   *nonleafResultRelations;
 
