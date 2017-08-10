@@ -678,10 +678,6 @@ TruncateCLOG(TransactionId oldestXact, Oid oldestxid_datoid)
 	 */
 	AdvanceOldestClogXid(oldestXact);
 
-	/* vac_truncate_clog already advanced oldestXid */
-	Assert(TransactionIdPrecedesOrEquals(oldestXact,
-										 ShmemVariableCache->oldestXid));
-
 	/*
 	 * Write XLOG record and flush XLOG to disk. We record the oldest xid
 	 * we're keeping information about here so we can ensure that it's always
