@@ -232,7 +232,7 @@ PTHREAD_LIBS		= @PTHREAD_LIBS@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
 
-override CPPFLAGS := $(CPPFLAGS) $(ICU_CFLAGS)
+override CPPFLAGS := $(ICU_CFLAGS) $(CPPFLAGS)
 
 ifdef PGXS
 override CPPFLAGS := -I$(includedir_server) -I$(includedir_internal) $(CPPFLAGS)
