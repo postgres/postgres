@@ -2050,8 +2050,8 @@ include_dir 'conf.d'
        <listitem>
         <para>
          Sets the maximum number of workers that can be started by a single
-         <literal>Gather</literal> node.  Parallel workers are taken from the
-         pool of processes established by
+         <literal>Gather</literal> or <literal>Gather Merge</literal> node.
+         Parallel workers are taken from the pool of processes established by
          <xref linkend="guc-max-worker-processes">, limited by
          <xref linkend="guc-max-parallel-workers">.  Note that the requested
          number of workers may not actually be available at run time.  If this
