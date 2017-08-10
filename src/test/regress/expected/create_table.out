@@ -567,10 +567,12 @@ CREATE TABLE range_parted2 (
 ) PARTITION BY RANGE (a);
 -- trying to create range partition with empty range
 CREATE TABLE fail_part PARTITION OF range_parted2 FOR VALUES FROM (1) TO (0);
-ERROR:  cannot create range partition with empty range
+ERROR:  empty range bound specified for partition "fail_part"
+DETAIL:  Specified lower bound (1) is greater than or equal to upper bound (0).
 -- note that the range '[1, 1)' has no elements
 CREATE TABLE fail_part PARTITION OF range_parted2 FOR VALUES FROM (1) TO (1);
-ERROR:  cannot create range partition with empty range
+ERROR:  empty range bound specified for partition "fail_part"
+DETAIL:  Specified lower bound (1) is greater than or equal to upper bound (1).
 CREATE TABLE part0 PARTITION OF range_parted2 FOR VALUES FROM (minvalue) TO (1);
 CREATE TABLE fail_part PARTITION OF range_parted2 FOR VALUES FROM (minvalue) TO (2);
 ERROR:  partition "fail_part" would overlap partition "part0"

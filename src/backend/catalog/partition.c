@@ -722,10 +722,16 @@ check_new_partition_bound(char *relname, Relation parent,
 				 */
 				if (partition_rbound_cmp(key, lower->datums, lower->kind, true,
 										 upper) >= 0)
+				{
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-							 errmsg("cannot create range partition with empty range"),
-							 parser_errposition(pstate, spec->location)));
+							 errmsg("empty range bound specified for partition \"%s\"",
+									relname),
+							 errdetail("Specified lower bound %s is greater than or equal to upper bound %s.",
+								get_range_partbound_string(spec->lowerdatums),
+								get_range_partbound_string(spec->upperdatums)),
+								parser_errposition(pstate, spec->location)));
+				}
 
 				if (partdesc->nparts > 0)
 				{

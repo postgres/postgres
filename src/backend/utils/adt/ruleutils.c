@@ -8722,47 +8722,9 @@ get_rule_expr(Node *node, deparse_context *context,
 							   list_length(spec->lowerdatums) ==
 							   list_length(spec->upperdatums));
 
-						appendStringInfoString(buf, "FOR VALUES FROM (");
-						sep = "";
-						foreach(cell, spec->lowerdatums)
-						{
-							PartitionRangeDatum *datum =
-							castNode(PartitionRangeDatum, lfirst(cell));
-
-							appendStringInfoString(buf, sep);
-							if (datum->kind == PARTITION_RANGE_DATUM_MINVALUE)
-								appendStringInfoString(buf, "MINVALUE");
-							else if (datum->kind == PARTITION_RANGE_DATUM_MAXVALUE)
-								appendStringInfoString(buf, "MAXVALUE");
-							else
-							{
-								Const	   *val = castNode(Const, datum->value);
-
-								get_const_expr(val, context, -1);
-							}
-							sep = ", ";
-						}
-						appendStringInfoString(buf, ") TO (");
-						sep = "";
-						foreach(cell, spec->upperdatums)
-						{
-							PartitionRangeDatum *datum =
-							castNode(PartitionRangeDatum, lfirst(cell));
-
-							appendStringInfoString(buf, sep);
-							if (datum->kind == PARTITION_RANGE_DATUM_MINVALUE)
-								appendStringInfoString(buf, "MINVALUE");
-							else if (datum->kind == PARTITION_RANGE_DATUM_MAXVALUE)
-								appendStringInfoString(buf, "MAXVALUE");
-							else
-							{
-								Const	   *val = castNode(Const, datum->value);
-
-								get_const_expr(val, context, -1);
-							}
-							sep = ", ";
-						}
-						appendStringInfoString(buf, ")");
+						appendStringInfo(buf, "FOR VALUES FROM %s TO %s",
+							get_range_partbound_string(spec->lowerdatums),
+							get_range_partbound_string(spec->upperdatums));
 						break;
 
 					default:
@@ -10942,4 +10904,44 @@ flatten_reloptions(Oid relid)
 	ReleaseSysCache(tuple);
 
 	return result;
+}
+
+/*
+ * get_one_range_partition_bound_string
+ *		A C string representation of one range partition bound
+ */
+char *
+get_range_partbound_string(List *bound_datums)
+{
+	deparse_context context;
+	StringInfo	buf = makeStringInfo();
+	ListCell   *cell;
+	char	   *sep;
+
+	memset(&context, 0, sizeof(deparse_context));
+	context.buf = buf;
+
+	appendStringInfoString(buf, "(");
+	sep = "";
+	foreach(cell, bound_datums)
+	{
+		PartitionRangeDatum *datum =
+		castNode(PartitionRangeDatum, lfirst(cell));
+
+		appendStringInfoString(buf, sep);
+		if (datum->kind == PARTITION_RANGE_DATUM_MINVALUE)
+			appendStringInfoString(buf, "MINVALUE");
+		else if (datum->kind == PARTITION_RANGE_DATUM_MAXVALUE)
+			appendStringInfoString(buf, "MAXVALUE");
+		else
+		{
+			Const	   *val = castNode(Const, datum->value);
+
+			get_const_expr(val, &context, -1);
+		}
+		sep = ", ";
+	}
+	appendStringInfoString(buf, ")");
+
+	return buf->data;
 }
