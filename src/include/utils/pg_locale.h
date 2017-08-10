@@ -21,6 +21,19 @@
 
 #include "utils/guc.h"
 
+#ifdef USE_ICU
+/*
+ * ucol_strcollUTF8() was introduced in ICU 50, but it is buggy before ICU 53.
+ * (see
+ * <https://www.postgresql.org/message-id/flat/f1438ec6-22aa-4029-9a3b-26f79d330e72%40manitou-mail.org>)
+ */
+#if U_ICU_VERSION_MAJOR_NUM >= 53
+#define HAVE_UCOL_STRCOLLUTF8 1
+#else
+#undef HAVE_UCOL_STRCOLLUTF8
+#endif
+#endif
+
 
 /* GUC settings */
 extern char *locale_messages;

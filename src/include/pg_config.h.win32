@@ -457,9 +457,6 @@
 /* Define to 1 if you have the external array `tzname'. */
 /* #undef HAVE_TZNAME */
 
-/* Define to 1 if you have the `ucol_strcollUTF8' function. */
-#define HAVE_UCOL_STRCOLLUTF8 1
-
 /* Define to 1 if the system has the type `uint64'. */
 /* #undef HAVE_UINT64 */
 

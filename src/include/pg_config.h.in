@@ -606,9 +606,6 @@
 /* Define to 1 if you have the external array `tzname'. */
 #undef HAVE_TZNAME
 
-/* Define to 1 if you have the `ucol_strcollUTF8' function. */
-#undef HAVE_UCOL_STRCOLLUTF8
-
 /* Define to 1 if you have the <ucred.h> header file. */
 #undef HAVE_UCRED_H
 
