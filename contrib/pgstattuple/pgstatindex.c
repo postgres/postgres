@@ -687,13 +687,14 @@ pgstathashindex(PG_FUNCTION_ARGS)
 	index_close(rel, AccessShareLock);
 
 	/* Count unused pages as free space. */
-	stats.free_space += stats.unused_pages * stats.space_per_page;
+	stats.free_space += (uint64) stats.unused_pages * stats.space_per_page;
 
 	/*
 	 * Total space available for tuples excludes the metapage and the bitmap
 	 * pages.
 	 */
-	total_space = (nblocks - (stats.bitmap_pages + 1)) * stats.space_per_page;
+	total_space = (uint64) (nblocks - (stats.bitmap_pages + 1)) *
+		stats.space_per_page;
 
 	if (total_space == 0)
 		free_percent = 0.0;
