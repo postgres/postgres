@@ -3623,7 +3623,9 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
     <para>
     The essential difference between <type>inet</type> and <type>cidr</type>
     data types is that <type>inet</type> accepts values with nonzero bits to
-    the right of the netmask, whereas <type>cidr</type> does not.
+    the right of the netmask, whereas <type>cidr</type> does not.  For
+    example, <literal>192.168.0.1/24</literal> is valid for <type>inet</type>
+    but not for <type>cidr</type>.
     </para>
 
       <tip>
