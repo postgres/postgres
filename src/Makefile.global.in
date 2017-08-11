@@ -896,7 +896,7 @@ coverage-html-stamp: lcov.info
 all_gcda_files = $(shell find . -name '*.gcda' -print)
 
 lcov.info: $(all_gcda_files)
-	$(LCOV) -d . -c -o $@ $(LCOVFLAGS) --gcov-tool $(GCOV)
+	$(LCOV) -d . -c -o $@ $(LCOVFLAGS) --gcov-tool $(GCOV) --no-external
 
 
 # hook for clean-up
