@@ -707,6 +707,19 @@ make coverage-html
    </para>
 
    <para>
+    If you don't have <command>lcov</command> or prefer text output over an
+    HTML report, you can also run
+<screen>
+make coverage
+</screen>
+    instead of <literal>make coverage-html</literal>, which will
+    produce <filename>.gcov</filename> output files for each source file
+    relevant to the test.  (<literal>make coverage</literal> and <literal>make
+    coverage-html</literal> will overwrite each other's files, so mixing them
+    might be confusing.)
+   </para>
+
+   <para>
     To reset the execution counts between test runs, run:
 <screen>
 make coverage-clean

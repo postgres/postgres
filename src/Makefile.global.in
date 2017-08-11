@@ -874,25 +874,29 @@ endif # enable_nls
 
 ifeq ($(enable_coverage), yes)
 
-# There is a strange interaction between lcov and existing .gcov
-# output files.  Hence the rm command and the ordering dependency.
+# make coverage -- text output
 
-gcda_files := $(wildcard *.gcda)
+local_gcda_files = $(wildcard *.gcda)
 
-lcov.info: $(gcda_files)
-	rm -f *.gcov .*.gcov
-	$(if $^,$(LCOV) -d . -c -o $@ $(LCOVFLAGS) --gcov-tool $(GCOV))
+coverage: $(local_gcda_files:.gcda=.c.gcov)
 
-%.c.gcov: %.gcda | lcov.info
+%.c.gcov: %.gcda
 	$(GCOV) -b -f -p -o . $(GCOVFLAGS) $*.c >$*.c.gcov.out
 
-coverage: $(gcda_files:.gcda=.c.gcov) lcov.info
+# make coverage-html -- HTML output via lcov
 
 .PHONY: coverage-html
-coverage-html: coverage
+coverage-html: coverage-html-stamp
+
+coverage-html-stamp: lcov.info
 	rm -rf coverage
-	mkdir coverage
-	$(GENHTML) --show-details --legend --output-directory=coverage --title=PostgreSQL --num-spaces=4 --prefix=$(abs_top_srcdir) `find . -name lcov.info -print`
+	$(GENHTML) --show-details --legend --output-directory=coverage --title=PostgreSQL --num-spaces=4 --prefix=$(abs_top_srcdir) $<
+	touch $@
+
+all_gcda_files = $(shell find . -name '*.gcda' -print)
+
+lcov.info: $(all_gcda_files)
+	$(LCOV) -d . -c -o $@ $(LCOVFLAGS) --gcov-tool $(GCOV)
 
 
 # hook for clean-up
@@ -900,7 +904,7 @@ clean distclean maintainer-clean: clean-coverage
 
 .PHONY: clean-coverage
 clean-coverage:
-	rm -rf coverage
+	rm -rf coverage coverage-html-stamp
 	rm -f *.gcda *.gcno lcov.info *.gcov .*.gcov *.gcov.out
 
 
