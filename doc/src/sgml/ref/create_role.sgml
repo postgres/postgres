@@ -167,8 +167,11 @@ CREATE ROLE <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replac
       <term><literal>NOREPLICATION</literal></term>
       <listitem>
        <para>
-        These clauses determine whether a role is allowed to initiate
-        streaming replication or put the system in and out of backup mode.
+        These clauses determine whether a role is a replication role.  A role
+        must have this attribute (or be a superuser) in order to be able to
+        connect to the server in replication mode (physical or logical
+        replication) and in order to be able to create or drop replication
+        slots.
         A role having the <literal>REPLICATION</> attribute is a very
         highly privileged role, and should only be used on roles actually
         used for replication. If not specified,
