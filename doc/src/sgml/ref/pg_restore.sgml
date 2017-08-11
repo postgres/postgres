@@ -273,7 +273,7 @@
       <term><option>--list</option></term>
       <listitem>
        <para>
-        List the contents of the archive. The output of this operation
+        List the table of contents of the archive. The output of this operation
         can be used as input to the <option>-L</option> option.  Note that
         if filtering switches such as <option>-n</> or <option>-t</> are
         used with <option>-l</>, they will restrict the items listed.
