@@ -108,6 +108,185 @@ SELECT ''::text AS five, unique1, unique2, stringu1
       |     904 |     793 | UIAAAA
 (5 rows)
 
+-- Test null limit and offset.  The planner would discard a simple null
+-- constant, so to ensure executor is exercised, do this:
+select * from int8_tbl limit (case when random() < 0.5 then null::bigint end);
+        q1        |        q2         
+------------------+-------------------
+              123 |               456
+              123 |  4567890123456789
+ 4567890123456789 |               123
+ 4567890123456789 |  4567890123456789
+ 4567890123456789 | -4567890123456789
+(5 rows)
+
+select * from int8_tbl offset (case when random() < 0.5 then null::bigint end);
+        q1        |        q2         
+------------------+-------------------
+              123 |               456
+              123 |  4567890123456789
+ 4567890123456789 |               123
+ 4567890123456789 |  4567890123456789
+ 4567890123456789 | -4567890123456789
+(5 rows)
+
+-- Test assorted cases involving backwards fetch from a LIMIT plan node
+begin;
+declare c1 cursor for select * from int8_tbl limit 10;
+fetch all in c1;
+        q1        |        q2         
+------------------+-------------------
+              123 |               456
+              123 |  4567890123456789
+ 4567890123456789 |               123
+ 4567890123456789 |  4567890123456789
+ 4567890123456789 | -4567890123456789
+(5 rows)
+
+fetch 1 in c1;
+ q1 | q2 
+----+----
+(0 rows)
+
+fetch backward 1 in c1;
+        q1        |        q2         
+------------------+-------------------
+ 4567890123456789 | -4567890123456789
+(1 row)
+
+fetch backward all in c1;
+        q1        |        q2        
+------------------+------------------
+ 4567890123456789 | 4567890123456789
+ 4567890123456789 |              123
+              123 | 4567890123456789
+              123 |              456
+(4 rows)
+
+fetch backward 1 in c1;
+ q1 | q2 
+----+----
+(0 rows)
+
+fetch all in c1;
+        q1        |        q2         
+------------------+-------------------
+              123 |               456
+              123 |  4567890123456789
+ 4567890123456789 |               123
+ 4567890123456789 |  4567890123456789
+ 4567890123456789 | -4567890123456789
+(5 rows)
+
+declare c2 cursor for select * from int8_tbl limit 3;
+fetch all in c2;
+        q1        |        q2        
+------------------+------------------
+              123 |              456
+              123 | 4567890123456789
+ 4567890123456789 |              123
+(3 rows)
+
+fetch 1 in c2;
+ q1 | q2 
+----+----
+(0 rows)
+
+fetch backward 1 in c2;
+        q1        | q2  
+------------------+-----
+ 4567890123456789 | 123
+(1 row)
+
+fetch backward all in c2;
+ q1  |        q2        
+-----+------------------
+ 123 | 4567890123456789
+ 123 |              456
+(2 rows)
+
+fetch backward 1 in c2;
+ q1 | q2 
+----+----
+(0 rows)
+
+fetch all in c2;
+        q1        |        q2        
+------------------+------------------
+              123 |              456
+              123 | 4567890123456789
+ 4567890123456789 |              123
+(3 rows)
+
+declare c3 cursor for select * from int8_tbl offset 3;
+fetch all in c3;
+        q1        |        q2         
+------------------+-------------------
+ 4567890123456789 |  4567890123456789
+ 4567890123456789 | -4567890123456789
+(2 rows)
+
+fetch 1 in c3;
+ q1 | q2 
+----+----
+(0 rows)
+
+fetch backward 1 in c3;
+        q1        |        q2         
+------------------+-------------------
+ 4567890123456789 | -4567890123456789
+(1 row)
+
+fetch backward all in c3;
+        q1        |        q2        
+------------------+------------------
+ 4567890123456789 | 4567890123456789
+(1 row)
+
+fetch backward 1 in c3;
+ q1 | q2 
+----+----
+(0 rows)
+
+fetch all in c3;
+        q1        |        q2         
+------------------+-------------------
+ 4567890123456789 |  4567890123456789
+ 4567890123456789 | -4567890123456789
+(2 rows)
+
+declare c4 cursor for select * from int8_tbl offset 10;
+fetch all in c4;
+ q1 | q2 
+----+----
+(0 rows)
+
+fetch 1 in c4;
+ q1 | q2 
+----+----
+(0 rows)
+
+fetch backward 1 in c4;
+ q1 | q2 
+----+----
+(0 rows)
+
+fetch backward all in c4;
+ q1 | q2 
+----+----
+(0 rows)
+
+fetch backward 1 in c4;
+ q1 | q2 
+----+----
+(0 rows)
+
+fetch all in c4;
+ q1 | q2 
+----+----
+(0 rows)
+
+rollback;
 -- Stress test for variable LIMIT in conjunction with bounded-heap sorting
 SELECT
   (SELECT n
