@@ -878,7 +878,7 @@ ifeq ($(enable_coverage), yes)
 gcda_files := $(wildcard *.gcda)
 
 lcov.info: $(gcda_files)
-	rm -f *.gcov
+	rm -f *.gcov .*.gcov
 	$(if $^,$(LCOV) -d . -c -o $@ $(LCOVFLAGS) --gcov-tool $(GCOV))
 
 %.c.gcov: %.gcda | lcov.info
@@ -899,7 +899,7 @@ clean distclean maintainer-clean: clean-coverage
 .PHONY: clean-coverage
 clean-coverage:
 	rm -rf coverage
-	rm -f *.gcda *.gcno lcov.info *.gcov *.gcov.out
+	rm -f *.gcda *.gcno lcov.info *.gcov .*.gcov *.gcov.out
 
 
 # User-callable target to reset counts between test runs
