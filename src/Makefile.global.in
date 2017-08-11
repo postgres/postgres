@@ -893,7 +893,7 @@ coverage: $(local_gcda_files:.gcda=.c.gcov)
 .PHONY: coverage-html
 coverage-html: coverage-html-stamp
 
-GENHTML_FLAGS = --show-details --legend
+GENHTML_FLAGS = --legend
 GENHTML_TITLE = PostgreSQL $(VERSION)
 
 coverage-html-stamp: lcov_base.info lcov_test.info
