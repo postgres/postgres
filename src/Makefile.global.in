@@ -869,8 +869,13 @@ endif # enable_nls
 #		gcov from foo.gcda (by "make coverage")
 #   foo.c.gcov.out  stdout captured when foo.c.gcov is created, mildly
 #		interesting
-#   lcov.info	lcov tracefile, built from gcda files in one directory,
+#   lcov_test.info
+#		lcov tracefile, built from gcda files in one directory,
 #		later collected by "make coverage-html"
+#   lcov_base.info
+#		tracefile for zero counters for every file, so that
+#		even files that are not touched by tests are counted
+#		for the overall coverage rate
 
 ifeq ($(enable_coverage), yes)
 
@@ -888,15 +893,23 @@ coverage: $(local_gcda_files:.gcda=.c.gcov)
 .PHONY: coverage-html
 coverage-html: coverage-html-stamp
 
-coverage-html-stamp: lcov.info
+coverage-html-stamp: lcov_base.info lcov_test.info
 	rm -rf coverage
-	$(GENHTML) --show-details --legend --output-directory=coverage --title=PostgreSQL --num-spaces=4 --prefix=$(abs_top_srcdir) $<
+	$(GENHTML) --show-details --legend --output-directory=coverage --title=PostgreSQL --num-spaces=4 --prefix=$(abs_top_srcdir) $^
 	touch $@
+
+LCOV += --gcov-tool $(GCOV)
+LCOVFLAGS = --no-external
+
+all_gcno_files = $(shell find . -name '*.gcno' -print)
+
+lcov_base.info: $(all_gcno_files)
+	$(LCOV) $(LCOVFLAGS) -c -i -d . -o $@
 
 all_gcda_files = $(shell find . -name '*.gcda' -print)
 
-lcov.info: $(all_gcda_files)
-	$(LCOV) -d . -c -o $@ $(LCOVFLAGS) --gcov-tool $(GCOV) --no-external
+lcov_test.info: $(all_gcda_files)
+	$(LCOV) $(LCOVFLAGS) -c -d . -o $@
 
 
 # hook for clean-up
@@ -905,7 +918,7 @@ clean distclean maintainer-clean: clean-coverage
 .PHONY: clean-coverage
 clean-coverage:
 	rm -rf coverage coverage-html-stamp
-	rm -f *.gcda *.gcno lcov.info *.gcov .*.gcov *.gcov.out
+	rm -f *.gcda *.gcno lcov*.info *.gcov .*.gcov *.gcov.out
 
 
 # User-callable target to reset counts between test runs
