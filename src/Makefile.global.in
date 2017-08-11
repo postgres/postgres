@@ -898,7 +898,7 @@ GENHTML_TITLE = PostgreSQL $(VERSION)
 
 coverage-html-stamp: lcov_base.info lcov_test.info
 	rm -rf coverage
-	$(GENHTML) $(GENHTML_FLAGS) -o coverage --title='$(GENHTML_TITLE)' --num-spaces=4 --prefix='$(abs_top_srcdir)' $^
+	$(GENHTML) $(GENHTML_FLAGS) -o coverage --title='$(GENHTML_TITLE)' --num-spaces=4 $^
 	touch $@
 
 LCOV += --gcov-tool $(GCOV)
@@ -907,12 +907,12 @@ LCOVFLAGS = -q --no-external
 all_gcno_files = $(shell find . -name '*.gcno' -print)
 
 lcov_base.info: $(all_gcno_files)
-	$(LCOV) $(LCOVFLAGS) -c -i -d . -o $@
+	$(LCOV) $(LCOVFLAGS) -c -i -d . -d $(srcdir) -o $@
 
 all_gcda_files = $(shell find . -name '*.gcda' -print)
 
 lcov_test.info: $(all_gcda_files)
-	$(LCOV) $(LCOVFLAGS) -c -d . -o $@
+	$(LCOV) $(LCOVFLAGS) -c -d . -d $(srcdir) -o $@
 
 
 # hook for clean-up
