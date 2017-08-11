@@ -1326,10 +1326,8 @@
       <entry><structfield>rolreplication</structfield></entry>
       <entry><type>bool</type></entry>
       <entry>
-       Role is a replication role. That is, this role can initiate streaming
-       replication (see <xref linkend="streaming-replication">) and set/unset
-       the system backup mode using <function>pg_start_backup</> and
-       <function>pg_stop_backup</>
+       Role is a replication role. A replication role can initiate replication
+       connections and create and drop replication slots.
       </entry>
      </row>
 
@@ -9852,10 +9850,8 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>
-       Role is a replication role. That is, this role can initiate streaming
-       replication (see <xref linkend="streaming-replication">) and set/unset
-       the system backup mode using <function>pg_start_backup</> and
-       <function>pg_stop_backup</>
+       Role is a replication role. A replication role can initiate replication
+       connections and create and drop replication slots.
       </entry>
      </row>
 
