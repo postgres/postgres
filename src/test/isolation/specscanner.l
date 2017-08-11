@@ -17,6 +17,8 @@ static int litbufpos = 0;
 
 static void addlitchar(char c);
 
+/* LCOV_EXCL_START */
+
 %}
 
 %option 8bit
@@ -92,6 +94,8 @@ teardown		{ return TEARDOWN; }
 					exit(1);
 				}
 %%
+
+/* LCOV_EXCL_STOP */
 
 static void
 addlitchar(char c)

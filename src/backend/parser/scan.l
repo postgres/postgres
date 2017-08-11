@@ -41,6 +41,9 @@
 }
 
 %{
+
+/* LCOV_EXCL_START */
+
 /* Avoid exit() on fatal scanner errors (a bit ugly -- see yy_fatal_error) */
 #undef fprintf
 #define fprintf(file, fmt, msg)  fprintf_to_ereport(fmt, msg)
@@ -1010,6 +1013,8 @@ other			.
 				}
 
 %%
+
+/* LCOV_EXCL_STOP */
 
 /*
  * Arrange access to yyextra for subroutines of the main yylex() function.

@@ -71,6 +71,8 @@ typedef int YYSTYPE;
 extern int	psql_yyget_column(yyscan_t yyscanner);
 extern void psql_yyset_column(int column_no, yyscan_t yyscanner);
 
+/* LCOV_EXCL_START */
+
 %}
 
 %option reentrant
@@ -898,6 +900,8 @@ other			.
 				}
 
 %%
+
+/* LCOV_EXCL_STOP */
 
 /*
  * Create a lexer working state struct.

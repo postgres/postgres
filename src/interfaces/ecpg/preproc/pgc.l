@@ -79,6 +79,8 @@ static struct _if_value
 	short else_branch;
 } stacked_if_value[MAX_NESTED_IF];
 
+/* LCOV_EXCL_START */
+
 %}
 
 %option 8bit
@@ -1249,7 +1251,11 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 					}
 				}
 <INITIAL>{other}|\n	{ mmfatal(PARSE_ERROR, "internal error: unreachable state; please report this to <pgsql-bugs@postgresql.org>"); }
+
 %%
+
+/* LCOV_EXCL_STOP */
+
 void
 lex_init(void)
 {

@@ -43,6 +43,8 @@ static bool last_was_newline = false;
 extern int	expr_yyget_column(yyscan_t yyscanner);
 extern void expr_yyset_column(int column_no, yyscan_t yyscanner);
 
+/* LCOV_EXCL_START */
+
 %}
 
 /* Except for the prefix, these options should match psqlscan.l */
@@ -189,6 +191,8 @@ continuation	\\{newline}
 				}
 
 %%
+
+/* LCOV_EXCL_STOP */
 
 void
 expr_yyerror_more(yyscan_t yyscanner, const char *message, const char *more)

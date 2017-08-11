@@ -67,6 +67,8 @@ static void evaluate_backtick(PsqlScanState state);
 extern int	slash_yyget_column(yyscan_t yyscanner);
 extern void slash_yyset_column(int column_no, yyscan_t yyscanner);
 
+/* LCOV_EXCL_START */
+
 %}
 
 /* Except for the prefix, these options should match psqlscan.l */
@@ -467,6 +469,8 @@ other			.
 				}
 
 %%
+
+/* LCOV_EXCL_STOP */
 
 /*
  * Scan the command name of a psql backslash command.  This should be called

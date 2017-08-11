@@ -38,6 +38,7 @@
 /* Not needed now that this file is compiled as part of bootparse. */
 /* #include "bootparse.h" */
 
+/* LCOV_EXCL_START */
 
 /* Avoid exit() on fatal scanner errors (a bit ugly -- see yy_fatal_error) */
 #undef fprintf
@@ -133,6 +134,8 @@ insert			{ return INSERT_TUPLE; }
 
 
 %%
+
+/* LCOV_EXCL_STOP */
 
 void
 yyerror(const char *message)
