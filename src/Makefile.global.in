@@ -893,7 +893,7 @@ coverage: $(local_gcda_files:.gcda=.c.gcov)
 .PHONY: coverage-html
 coverage-html: coverage-html-stamp
 
-GENHTML_FLAGS = --legend
+GENHTML_FLAGS = -q --legend
 GENHTML_TITLE = PostgreSQL $(VERSION)
 
 coverage-html-stamp: lcov_base.info lcov_test.info
@@ -902,7 +902,7 @@ coverage-html-stamp: lcov_base.info lcov_test.info
 	touch $@
 
 LCOV += --gcov-tool $(GCOV)
-LCOVFLAGS = --no-external
+LCOVFLAGS = -q --no-external
 
 all_gcno_files = $(shell find . -name '*.gcno' -print)
 
