@@ -81,13 +81,9 @@ perlchunks.h: $(PERLCHUNKS)
 
 all: all-lib
 
-SPI.c: SPI.xs plperl_helpers.h
+%.c: %.xs
 	@if [ x"$(perl_privlibexp)" = x"" ]; then echo "configure switch --with-perl was not specified."; exit 1; fi
-	$(PERL) $(XSUBPPDIR)/ExtUtils/xsubpp -typemap $(perl_privlibexp)/ExtUtils/typemap $< >$@
-
-Util.c: Util.xs plperl_helpers.h
-	@if [ x"$(perl_privlibexp)" = x"" ]; then echo "configure switch --with-perl was not specified."; exit 1; fi
-	$(PERL) $(XSUBPPDIR)/ExtUtils/xsubpp -typemap $(perl_privlibexp)/ExtUtils/typemap $< >$@
+	$(PERL) $(XSUBPPDIR)/ExtUtils/xsubpp -typemap $(perl_privlibexp)/ExtUtils/typemap -output $@ $<
 
 
 install: all install-lib install-data
