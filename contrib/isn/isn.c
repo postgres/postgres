@@ -26,6 +26,12 @@
 
 PG_MODULE_MAGIC;
 
+#ifdef USE_ASSERT_CHECKING
+#define ISN_DEBUG 1
+#else
+#define ISN_DEBUG 0
+#endif
+
 #define MAXEAN13LEN 18
 
 enum isn_type
@@ -36,7 +42,6 @@ enum isn_type
 static const char *const isn_names[] = {"EAN13/UPC/ISxN", "EAN13/UPC/ISxN", "EAN13", "ISBN", "ISMN", "ISSN", "UPC"};
 
 static bool g_weak = false;
-static bool g_initialized = false;
 
 
 /***********************************************************************
@@ -56,7 +61,7 @@ static bool g_initialized = false;
 /*
  * Check if the table and its index is correct (just for debugging)
  */
-#ifdef ISN_DEBUG
+pg_attribute_unused()
 static bool
 check_table(const char *(*TABLE)[2], const unsigned TABLE_index[10][2])
 {
@@ -68,7 +73,6 @@ check_table(const char *(*TABLE)[2], const unsigned TABLE_index[10][2])
 				y = -1,
 				i = 0,
 				j,
-				cnt = 0,
 				init = 0;
 
 	if (TABLE == NULL || TABLE_index == NULL)
@@ -131,7 +135,6 @@ invalidindex:
 	elog(DEBUG1, "index %d is invalid", j);
 	return false;
 }
-#endif							/* ISN_DEBUG */
 
 /*----------------------------------------------------------
  * Formatting and conversion routines.
@@ -922,22 +925,24 @@ eantoobig:
  * Exported routines.
  *---------------------------------------------------------*/
 
+void _PG_init(void);
+
 void
-initialize(void)
+_PG_init(void)
 {
-#ifdef ISN_DEBUG
-	if (!check_table(EAN13, EAN13_index))
-		elog(LOG, "EAN13 failed check");
-	if (!check_table(ISBN, ISBN_index))
-		elog(LOG, "ISBN failed check");
-	if (!check_table(ISMN, ISMN_index))
-		elog(LOG, "ISMN failed check");
-	if (!check_table(ISSN, ISSN_index))
-		elog(LOG, "ISSN failed check");
-	if (!check_table(UPC, UPC_index))
-		elog(LOG, "UPC failed check");
-#endif
-	g_initialized = true;
+	if (ISN_DEBUG)
+	{
+		if (!check_table(EAN13_range, EAN13_index))
+			elog(ERROR, "EAN13 failed check");
+		if (!check_table(ISBN_range, ISBN_index))
+			elog(ERROR, "ISBN failed check");
+		if (!check_table(ISMN_range, ISMN_index))
+			elog(ERROR, "ISMN failed check");
+		if (!check_table(ISSN_range, ISSN_index))
+			elog(ERROR, "ISSN failed check");
+		if (!check_table(UPC_range, UPC_index))
+			elog(ERROR, "UPC failed check");
+	}
 }
 
 /* isn_out
