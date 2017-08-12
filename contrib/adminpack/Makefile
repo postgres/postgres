@@ -8,6 +8,8 @@ EXTENSION = adminpack
 DATA = adminpack--1.0.sql
 PGFILEDESC = "adminpack - support functions for pgAdmin"
 
+REGRESS = adminpack
+
 ifdef USE_PGXS
 PG_CONFIG = pg_config
 PGXS := $(shell $(PG_CONFIG) --pgxs)
