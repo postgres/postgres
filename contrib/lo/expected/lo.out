@@ -1,0 +1,42 @@
+CREATE EXTENSION lo;
+CREATE TABLE image (title text, raster lo);
+CREATE TRIGGER t_raster BEFORE UPDATE OR DELETE ON image
+    FOR EACH ROW EXECUTE PROCEDURE lo_manage(raster);
+SELECT lo_create(43213);
+ lo_create 
+-----------
+     43213
+(1 row)
+
+SELECT lo_create(43214);
+ lo_create 
+-----------
+     43214
+(1 row)
+
+INSERT INTO image (title, raster) VALUES ('beautiful image', 43213);
+SELECT lo_get(43213);
+ lo_get 
+--------
+ \x
+(1 row)
+
+SELECT lo_get(43214);
+ lo_get 
+--------
+ \x
+(1 row)
+
+UPDATE image SET raster = 43214 WHERE title = 'beautiful image';
+SELECT lo_get(43213);
+ERROR:  large object 43213 does not exist
+SELECT lo_get(43214);
+ lo_get 
+--------
+ \x
+(1 row)
+
+DELETE FROM image;
+SELECT lo_get(43214);
+ERROR:  large object 43214 does not exist
+DROP TABLE image;
