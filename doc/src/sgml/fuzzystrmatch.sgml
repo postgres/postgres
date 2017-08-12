@@ -133,19 +133,19 @@ test=# SELECT levenshtein('GUMBO', 'GAMBOL');
            2
 (1 row)
 
-test=# SELECT levenshtein('GUMBO', 'GAMBOL', 2,1,1);
+test=# SELECT levenshtein('GUMBO', 'GAMBOL', 2, 1, 1);
  levenshtein
 -------------
            3
 (1 row)
 
-test=# SELECT levenshtein_less_equal('extensive', 'exhaustive',2);
+test=# SELECT levenshtein_less_equal('extensive', 'exhaustive', 2);
  levenshtein_less_equal
 ------------------------
                       3
 (1 row)
 
-test=# SELECT levenshtein_less_equal('extensive', 'exhaustive',4);
+test=# SELECT levenshtein_less_equal('extensive', 'exhaustive', 4);
  levenshtein_less_equal
 ------------------------
                       4
@@ -227,7 +227,7 @@ dmetaphone_alt(text source) returns text
   </para>
 
 <screen>
-test=# select dmetaphone('gumbo');
+test=# SELECT dmetaphone('gumbo');
  dmetaphone
 ------------
  KMP

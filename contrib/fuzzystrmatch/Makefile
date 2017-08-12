@@ -8,6 +8,8 @@ DATA = fuzzystrmatch--1.1.sql fuzzystrmatch--1.0--1.1.sql \
 	fuzzystrmatch--unpackaged--1.0.sql
 PGFILEDESC = "fuzzystrmatch - similarities and distance between strings"
 
+REGRESS = fuzzystrmatch
+
 ifdef USE_PGXS
 PG_CONFIG = pg_config
 PGXS := $(shell $(PG_CONFIG) --pgxs)

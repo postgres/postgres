@@ -1,0 +1,67 @@
+CREATE EXTENSION fuzzystrmatch;
+SELECT soundex('hello world!');
+ soundex 
+---------
+ H464
+(1 row)
+
+SELECT soundex('Anne'), soundex('Ann'), difference('Anne', 'Ann');
+ soundex | soundex | difference 
+---------+---------+------------
+ A500    | A500    |          4
+(1 row)
+
+SELECT soundex('Anne'), soundex('Andrew'), difference('Anne', 'Andrew');
+ soundex | soundex | difference 
+---------+---------+------------
+ A500    | A536    |          2
+(1 row)
+
+SELECT soundex('Anne'), soundex('Margaret'), difference('Anne', 'Margaret');
+ soundex | soundex | difference 
+---------+---------+------------
+ A500    | M626    |          0
+(1 row)
+
+SELECT levenshtein('GUMBO', 'GAMBOL');
+ levenshtein 
+-------------
+           2
+(1 row)
+
+SELECT levenshtein('GUMBO', 'GAMBOL', 2, 1, 1);
+ levenshtein 
+-------------
+           3
+(1 row)
+
+SELECT levenshtein_less_equal('extensive', 'exhaustive', 2);
+ levenshtein_less_equal 
+------------------------
+                      3
+(1 row)
+
+SELECT levenshtein_less_equal('extensive', 'exhaustive', 4);
+ levenshtein_less_equal 
+------------------------
+                      4
+(1 row)
+
+SELECT metaphone('GUMBO', 4);
+ metaphone 
+-----------
+ KM
+(1 row)
+
+SELECT dmetaphone('gumbo');
+ dmetaphone 
+------------
+ KMP
+(1 row)
+
+SELECT dmetaphone_alt('gumbo');
+ dmetaphone_alt 
+----------------
+ KMP
+(1 row)
+
