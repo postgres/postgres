@@ -9,6 +9,8 @@ PGFILEDESC = "chkpass - encrypted password data type"
 
 SHLIB_LINK = $(filter -lcrypt, $(LIBS))
 
+REGRESS = chkpass
+
 ifdef USE_PGXS
 PG_CONFIG = pg_config
 PGXS := $(shell $(PG_CONFIG) --pgxs)

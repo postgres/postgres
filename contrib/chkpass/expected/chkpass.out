@@ -1,0 +1,18 @@
+CREATE EXTENSION chkpass;
+WARNING:  type input function chkpass_in should not be volatile
+CREATE TABLE test (i int, p chkpass);
+INSERT INTO test VALUES (1, 'hello'), (2, 'goodbye');
+SELECT i, p = 'hello' AS "hello?" FROM test;
+ i | hello? 
+---+--------
+ 1 | t
+ 2 | f
+(2 rows)
+
+SELECT i, p <> 'hello' AS "!hello?" FROM test;
+ i | !hello? 
+---+---------
+ 1 | f
+ 2 | t
+(2 rows)
+
