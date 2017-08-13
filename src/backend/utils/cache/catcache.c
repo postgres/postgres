@@ -543,57 +543,6 @@ CreateCacheMemoryContext(void)
 
 
 /*
- *		AtEOXact_CatCache
- *
- * Clean up catcaches at end of main transaction (either commit or abort)
- *
- * As of PostgreSQL 8.1, catcache pins should get released by the
- * ResourceOwner mechanism.  This routine is just a debugging
- * cross-check that no pins remain.
- */
-void
-AtEOXact_CatCache(bool isCommit)
-{
-#ifdef USE_ASSERT_CHECKING
-	if (assert_enabled)
-	{
-		CatCache   *ccp;
-
-		for (ccp = CacheHdr->ch_caches; ccp; ccp = ccp->cc_next)
-		{
-			Dlelem	   *elt;
-			int			i;
-
-			/* Check CatCLists */
-			for (elt = DLGetHead(&ccp->cc_lists); elt; elt = DLGetSucc(elt))
-			{
-				CatCList   *cl = (CatCList *) DLE_VAL(elt);
-
-				Assert(cl->cl_magic == CL_MAGIC);
-				Assert(cl->refcount == 0);
-				Assert(!cl->dead);
-			}
-
-			/* Check individual tuples */
-			for (i = 0; i < ccp->cc_nbuckets; i++)
-			{
-				for (elt = DLGetHead(&ccp->cc_bucket[i]);
-					 elt;
-					 elt = DLGetSucc(elt))
-				{
-					CatCTup    *ct = (CatCTup *) DLE_VAL(elt);
-
-					Assert(ct->ct_magic == CT_MAGIC);
-					Assert(ct->refcount == 0);
-					Assert(!ct->dead);
-				}
-			}
-		}
-	}
-#endif
-}
-
-/*
  *		ResetCatalogCache
  *
  * Reset one catalog cache to empty.
