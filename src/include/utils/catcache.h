@@ -167,7 +167,6 @@ typedef struct catcacheheader
 extern PGDLLIMPORT MemoryContext CacheMemoryContext;
 
 extern void CreateCacheMemoryContext(void);
-extern void AtEOXact_CatCache(bool isCommit);
 
 extern CatCache *InitCatCache(int id, Oid reloid, Oid indexoid,
 			 int nkeys, const int *key,

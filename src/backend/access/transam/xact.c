@@ -2124,9 +2124,6 @@ CommitTransaction(void)
 	 */
 	smgrDoPendingDeletes(true);
 
-	/* Check we've released all catcache entries */
-	AtEOXact_CatCache(true);
-
 	AtCommit_Notify();
 	AtEOXact_GUC(true, 1);
 	AtEOXact_SPI(true);
@@ -2405,9 +2402,6 @@ PrepareTransaction(void)
 	 */
 	PostPrepare_Twophase();
 
-	/* Check we've released all catcache entries */
-	AtEOXact_CatCache(true);
-
 	/* PREPARE acts the same as COMMIT as far as GUC is concerned */
 	AtEOXact_GUC(true, 1);
 	AtEOXact_SPI(true);
@@ -2610,7 +2604,6 @@ AbortTransaction(void)
 							 RESOURCE_RELEASE_AFTER_LOCKS,
 							 false, true);
 		smgrDoPendingDeletes(false);
-		AtEOXact_CatCache(false);
 
 		AtEOXact_GUC(false, 1);
 		AtEOXact_SPI(false);
