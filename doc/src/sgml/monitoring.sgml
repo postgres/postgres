@@ -845,7 +845,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
 
       <tbody>
        <row>
-        <entry morerows="59"><literal>LWLock</></entry>
+        <entry morerows="60"><literal>LWLock</></entry>
         <entry><literal>ShmemIndexLock</></entry>
         <entry>Waiting to find or allocate space in shared memory.</entry>
        </row>
@@ -1155,7 +1155,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
          <entry>Waiting to acquire a pin on a buffer.</entry>
         </row>
         <row>
-         <entry morerows="11"><literal>Activity</></entry>
+         <entry morerows="13"><literal>Activity</></entry>
          <entry><literal>ArchiverMain</></entry>
          <entry>Waiting in main loop of the archiver process.</entry>
         </row>
@@ -1212,7 +1212,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
          <entry>Waiting in main loop of WAL writer process.</entry>
         </row>
         <row>
-         <entry morerows="5"><literal>Client</></entry>
+         <entry morerows="7"><literal>Client</></entry>
          <entry><literal>ClientRead</></entry>
          <entry>Waiting to read data from the client.</entry>
         </row>
@@ -1250,7 +1250,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
          <entry>Waiting in an extension.</entry>
         </row>
         <row>
-         <entry morerows="12"><literal>IPC</></entry>
+         <entry morerows="16"><literal>IPC</></entry>
          <entry><literal>BgWorkerShutdown</></entry>
          <entry>Waiting for background worker to shut down.</entry>
         </row>
