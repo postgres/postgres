@@ -458,7 +458,7 @@ AlterSequence(ParseState *pstate, AlterSeqStmt *stmt)
 	/* lock page's buffer and read tuple into new sequence structure */
 	(void) read_seq_tuple(seqrel, &buf, &datatuple);
 
-	/* copy the existing sequence data tuple, so it can be modified localy */
+	/* copy the existing sequence data tuple, so it can be modified locally */
 	newdatatuple = heap_copytuple(&datatuple);
 	newdataform = (Form_pg_sequence_data) GETSTRUCT(newdatatuple);
 
