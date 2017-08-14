@@ -56,7 +56,9 @@ AC_DEFUN([PGAC_CHECK_PERL_CONFIGS],
 # to a different libc ABI than core Postgres uses.  The available information
 # says that all the symbols that affect Perl's own ABI begin with letters,
 # so it should be sufficient to adopt -D switches for symbols not beginning
-# with underscore.
+# with underscore.  An exception is that we need to let through
+# -D_USE_32BIT_TIME_T if it's present.  (We probably could restrict that to
+# only get through on Windows, but for the moment we let it through always.)
 # For debugging purposes, let's have the configure output report the raw
 # ccflags value as well as the set of flags we chose to adopt.
 AC_DEFUN([PGAC_CHECK_PERL_EMBED_CCFLAGS],
@@ -65,7 +67,7 @@ AC_MSG_CHECKING([for CFLAGS recommended by Perl])
 perl_ccflags=`$PERL -MConfig -e ['print $Config{ccflags}']`
 AC_MSG_RESULT([$perl_ccflags])
 AC_MSG_CHECKING([for CFLAGS to compile embedded Perl])
-perl_embed_ccflags=`$PERL -MConfig -e ['foreach $f (split(" ",$Config{ccflags})) {print $f, " " if ($f =~ /^-D[^_]/)}']`
+perl_embed_ccflags=`$PERL -MConfig -e ['foreach $f (split(" ",$Config{ccflags})) {print $f, " " if ($f =~ /^-D[^_]/ || $f =~ /^-D_USE_32BIT_TIME_T/)}']`
 AC_SUBST(perl_embed_ccflags)dnl
 AC_MSG_RESULT([$perl_embed_ccflags])
 ])# PGAC_CHECK_PERL_EMBED_CCFLAGS

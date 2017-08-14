@@ -7866,7 +7866,7 @@ perl_ccflags=`$PERL -MConfig -e 'print $Config{ccflags}'`
 $as_echo "$perl_ccflags" >&6; }
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for CFLAGS to compile embedded Perl" >&5
 $as_echo_n "checking for CFLAGS to compile embedded Perl... " >&6; }
-perl_embed_ccflags=`$PERL -MConfig -e 'foreach $f (split(" ",$Config{ccflags})) {print $f, " " if ($f =~ /^-D[^_]/)}'`
+perl_embed_ccflags=`$PERL -MConfig -e 'foreach $f (split(" ",$Config{ccflags})) {print $f, " " if ($f =~ /^-D[^_]/ || $f =~ /^-D_USE_32BIT_TIME_T/)}'`
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $perl_embed_ccflags" >&5
 $as_echo "$perl_embed_ccflags" >&6; }
 
