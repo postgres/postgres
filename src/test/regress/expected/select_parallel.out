@@ -258,32 +258,73 @@ select  count(*) from tenk1, tenk2 where tenk1.unique1 = tenk2.unique1;
 
 reset enable_hashjoin;
 reset enable_nestloop;
---test gather merge
-set enable_hashagg to off;
+-- test gather merge
+set enable_hashagg = false;
 explain (costs off)
-   select  string4, count((unique2)) from tenk1 group by string4 order by string4;
+   select count(*) from tenk1 group by twenty;
                      QUERY PLAN                     
 ----------------------------------------------------
  Finalize GroupAggregate
-   Group Key: string4
+   Group Key: twenty
    ->  Gather Merge
          Workers Planned: 4
          ->  Partial GroupAggregate
-               Group Key: string4
+               Group Key: twenty
                ->  Sort
-                     Sort Key: string4
+                     Sort Key: twenty
                      ->  Parallel Seq Scan on tenk1
 (9 rows)
 
-select  string4, count((unique2)) from tenk1 group by string4 order by string4;
- string4 | count 
----------+-------
- AAAAxx  |  2500
- HHHHxx  |  2500
- OOOOxx  |  2500
- VVVVxx  |  2500
-(4 rows)
+select count(*) from tenk1 group by twenty;
+ count 
+-------
+   500
+   500
+   500
+   500
+   500
+   500
+   500
+   500
+   500
+   500
+   500
+   500
+   500
+   500
+   500
+   500
+   500
+   500
+   500
+   500
+(20 rows)
 
+-- gather merge test with 0 worker
+set max_parallel_workers = 0;
+explain (costs off)
+   select string4 from tenk1 order by string4 limit 5;
+                  QUERY PLAN                  
+----------------------------------------------
+ Limit
+   ->  Gather Merge
+         Workers Planned: 4
+         ->  Sort
+               Sort Key: string4
+               ->  Parallel Seq Scan on tenk1
+(6 rows)
+
+select string4 from tenk1 order by string4 limit 5;
+ string4 
+---------
+ AAAAxx
+ AAAAxx
+ AAAAxx
+ AAAAxx
+ AAAAxx
+(5 rows)
+
+reset max_parallel_workers;
 reset enable_hashagg;
 set force_parallel_mode=1;
 explain (costs off)
