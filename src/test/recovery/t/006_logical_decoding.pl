@@ -111,8 +111,7 @@ SKIP:
 			'-S', 'otherdb_slot', '-f', '-', '--start' ]);
 	$node_master->poll_query_until('otherdb',
 "SELECT EXISTS (SELECT 1 FROM pg_replication_slots WHERE slot_name = 'otherdb_slot' AND active_pid IS NOT NULL)"
-	)
-	  or die "slot never became active";
+	) or die "slot never became active";
 	is($node_master->psql('postgres', 'DROP DATABASE otherdb'),
 		3, 'dropping a DB with active logical slots fails');
 	$pg_recvlogical->kill_kill;
@@ -122,8 +121,7 @@ SKIP:
 
 $node_master->poll_query_until('otherdb',
 "SELECT EXISTS (SELECT 1 FROM pg_replication_slots WHERE slot_name = 'otherdb_slot' AND active_pid IS NULL)"
-)
-  or die "slot never became inactive";
+) or die "slot never became inactive";
 
 is($node_master->psql('postgres', 'DROP DATABASE otherdb'),
 	0, 'dropping a DB with inactive logical slots succeeds');

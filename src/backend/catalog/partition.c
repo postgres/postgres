@@ -728,9 +728,9 @@ check_new_partition_bound(char *relname, Relation parent,
 							 errmsg("empty range bound specified for partition \"%s\"",
 									relname),
 							 errdetail("Specified lower bound %s is greater than or equal to upper bound %s.",
-								get_range_partbound_string(spec->lowerdatums),
-								get_range_partbound_string(spec->upperdatums)),
-								parser_errposition(pstate, spec->location)));
+									   get_range_partbound_string(spec->lowerdatums),
+									   get_range_partbound_string(spec->upperdatums)),
+							 parser_errposition(pstate, spec->location)));
 				}
 
 				if (partdesc->nparts > 0)

@@ -303,6 +303,7 @@ sub command_like
 
 sub command_like_safe
 {
+
 	# Doesn't rely on detecting end of file on the file descriptors,
 	# which can fail, causing the process to hang, notably on Msys
 	# when used with 'pg_ctl start'

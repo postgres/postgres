@@ -730,9 +730,10 @@ be_tls_write(Port *port, void *ptr, size_t len, int *waitfor)
 			n = -1;
 			break;
 		case SSL_ERROR_ZERO_RETURN:
+
 			/*
-			 * the SSL connnection was closed, leave it to the caller
-			 * to ereport it
+			 * the SSL connnection was closed, leave it to the caller to
+			 * ereport it
 			 */
 			errno = ECONNRESET;
 			n = -1;

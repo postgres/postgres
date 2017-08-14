@@ -2131,8 +2131,8 @@ transformCheckConstraints(CreateStmtContext *cxt, bool skipValidation)
 
 	/*
 	 * If creating a new table (but not a foreign table), we can safely skip
-	 * validation of check constraints, and nonetheless mark them valid.
-	 * (This will override any user-supplied NOT VALID flag.)
+	 * validation of check constraints, and nonetheless mark them valid. (This
+	 * will override any user-supplied NOT VALID flag.)
 	 */
 	if (skipValidation)
 	{

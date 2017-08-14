@@ -18,8 +18,7 @@ sub configure_and_reload
 		'postgresql.conf', qq(
 		$parameter
 	));
-	$node->psql('postgres', "SELECT pg_reload_conf()",
-				stdout => \$psql_out);
+	$node->psql('postgres', "SELECT pg_reload_conf()", stdout => \$psql_out);
 	is($psql_out, 't', "reload node $name with $parameter");
 }
 
@@ -44,7 +43,7 @@ $node_paris->start;
 
 # Switch to synchronous replication in both directions
 configure_and_reload($node_london, "synchronous_standby_names = 'paris'");
-configure_and_reload($node_paris, "synchronous_standby_names = 'london'");
+configure_and_reload($node_paris,  "synchronous_standby_names = 'london'");
 
 # Set up nonce names for current master and standby nodes
 note "Initially, london is master and paris is standby";
@@ -352,7 +351,7 @@ $cur_master->psql(
 	'postgres',
 	"SELECT * FROM t_009_tbl ORDER BY id",
 	stdout => \$psql_out);
-is($psql_out, qq{1|issued to london
+is( $psql_out, qq{1|issued to london
 2|issued to london
 5|issued to london
 6|issued to london
@@ -374,14 +373,15 @@ is($psql_out, qq{1|issued to london
 24|issued to paris
 25|issued to london
 26|issued to london},
-   "Check expected t_009_tbl data on master");
+	"Check expected t_009_tbl data on master");
 
 $cur_master->psql(
 	'postgres',
 	"SELECT * FROM t_009_tbl2",
 	stdout => \$psql_out);
-is($psql_out, qq{27|issued to paris},
-   "Check expected t_009_tbl2 data on master");
+is( $psql_out,
+	qq{27|issued to paris},
+	"Check expected t_009_tbl2 data on master");
 
 $cur_standby->psql(
 	'postgres',
@@ -393,7 +393,7 @@ $cur_standby->psql(
 	'postgres',
 	"SELECT * FROM t_009_tbl ORDER BY id",
 	stdout => \$psql_out);
-is($psql_out, qq{1|issued to london
+is( $psql_out, qq{1|issued to london
 2|issued to london
 5|issued to london
 6|issued to london
@@ -415,11 +415,12 @@ is($psql_out, qq{1|issued to london
 24|issued to paris
 25|issued to london
 26|issued to london},
-   "Check expected t_009_tbl data on standby");
+	"Check expected t_009_tbl data on standby");
 
 $cur_standby->psql(
 	'postgres',
 	"SELECT * FROM t_009_tbl2",
 	stdout => \$psql_out);
-is($psql_out, qq{27|issued to paris},
-   "Check expected t_009_tbl2 data on standby");
+is( $psql_out,
+	qq{27|issued to paris},
+	"Check expected t_009_tbl2 data on standby");

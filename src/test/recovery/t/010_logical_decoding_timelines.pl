@@ -117,8 +117,7 @@ $node_master->poll_query_until(
 	SELECT catalog_xmin IS NOT NULL
 	FROM pg_replication_slots
 	WHERE slot_name = 'phys_slot'
-	])
-  or die "slot's catalog_xmin never became set";
+	]) or die "slot's catalog_xmin never became set";
 
 my $phys_slot = $node_master->slot('phys_slot');
 isnt($phys_slot->{'xmin'}, '', 'xmin assigned on physical slot of master');

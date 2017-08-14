@@ -1320,10 +1320,10 @@ _hash_splitbucket(Relation rel,
 	/*
 	 * If possible, clean up the old bucket.  We might not be able to do this
 	 * if someone else has a pin on it, but if not then we can go ahead.  This
-	 * isn't absolutely necessary, but it reduces bloat; if we don't do it now,
-	 * VACUUM will do it eventually, but maybe not until new overflow pages
-	 * have been allocated.  Note that there's no need to clean up the new
-	 * bucket.
+	 * isn't absolutely necessary, but it reduces bloat; if we don't do it
+	 * now, VACUUM will do it eventually, but maybe not until new overflow
+	 * pages have been allocated.  Note that there's no need to clean up the
+	 * new bucket.
 	 */
 	if (IsBufferCleanupOK(bucket_obuf))
 	{

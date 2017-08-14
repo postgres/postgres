@@ -100,18 +100,12 @@ my %pgdump_runs = (
 	defaults_no_public => {
 		database => 'regress_pg_dump_test',
 		dump_cmd => [
-			'pg_dump',
-			'--no-sync',
-			'-f',
-			"$tempdir/defaults_no_public.sql",
+			'pg_dump', '--no-sync', '-f', "$tempdir/defaults_no_public.sql",
 			'regress_pg_dump_test', ], },
 	defaults_no_public_clean => {
 		database => 'regress_pg_dump_test',
 		dump_cmd => [
-			'pg_dump',
-			'--no-sync',
-			'-c',
-			'-f',
+			'pg_dump', '--no-sync', '-c', '-f',
 			"$tempdir/defaults_no_public_clean.sql",
 			'regress_pg_dump_test', ], },
 
@@ -464,9 +458,8 @@ my %tests = (
 			with_oids                => 1, }, },
 
 	'ALTER COLLATION test0 OWNER TO' => {
-		all_runs => 1,
-		catch_all =>
-		  'ALTER ... OWNER commands (except post-data objects)',
+		all_runs  => 1,
+		catch_all => 'ALTER ... OWNER commands (except post-data objects)',
 		regexp    => qr/^ALTER COLLATION test0 OWNER TO .*;/m,
 		collation => 1,
 		like      => {
@@ -491,11 +484,10 @@ my %tests = (
 			test_schema_plus_blobs => 1, }, },
 
 	'ALTER FOREIGN DATA WRAPPER dummy OWNER TO' => {
-		all_runs => 1,
-		catch_all =>
-		  'ALTER ... OWNER commands (except post-data objects)',
-		regexp => qr/^ALTER FOREIGN DATA WRAPPER dummy OWNER TO .*;/m,
-		like   => {
+		all_runs  => 1,
+		catch_all => 'ALTER ... OWNER commands (except post-data objects)',
+		regexp    => qr/^ALTER FOREIGN DATA WRAPPER dummy OWNER TO .*;/m,
+		like      => {
 			binary_upgrade           => 1,
 			clean                    => 1,
 			clean_if_exists          => 1,
@@ -518,11 +510,10 @@ my %tests = (
 			test_schema_plus_blobs => 1, }, },
 
 	'ALTER SERVER s1 OWNER TO' => {
-		all_runs => 1,
-		catch_all =>
-		  'ALTER ... OWNER commands (except post-data objects)',
-		regexp => qr/^ALTER SERVER s1 OWNER TO .*;/m,
-		like   => {
+		all_runs  => 1,
+		catch_all => 'ALTER ... OWNER commands (except post-data objects)',
+		regexp    => qr/^ALTER SERVER s1 OWNER TO .*;/m,
+		like      => {
 			binary_upgrade           => 1,
 			clean                    => 1,
 			clean_if_exists          => 1,
@@ -545,10 +536,9 @@ my %tests = (
 			test_schema_plus_blobs => 1, }, },
 
 	'ALTER FUNCTION dump_test.pltestlang_call_handler() OWNER TO' => {
-		all_runs => 1,
-		catch_all =>
-		  'ALTER ... OWNER commands (except post-data objects)',
-		regexp => qr/^
+		all_runs  => 1,
+		catch_all => 'ALTER ... OWNER commands (except post-data objects)',
+		regexp    => qr/^
 			\QALTER FUNCTION dump_test.pltestlang_call_handler() \E
 			\QOWNER TO \E
 			.*;/xm,
@@ -574,10 +564,9 @@ my %tests = (
 			role                     => 1, }, },
 
 	'ALTER OPERATOR FAMILY dump_test.op_family OWNER TO' => {
-		all_runs => 1,
-		catch_all =>
-		  'ALTER ... OWNER commands (except post-data objects)',
-		regexp => qr/^
+		all_runs  => 1,
+		catch_all => 'ALTER ... OWNER commands (except post-data objects)',
+		regexp    => qr/^
 			\QALTER OPERATOR FAMILY dump_test.op_family USING btree \E
 			\QOWNER TO \E
 			.*;/xm,
@@ -653,10 +642,9 @@ my %tests = (
 			role                     => 1, }, },
 
 	'ALTER OPERATOR CLASS dump_test.op_class OWNER TO' => {
-		all_runs => 1,
-		catch_all =>
-		  'ALTER ... OWNER commands (except post-data objects)',
-		regexp => qr/^
+		all_runs  => 1,
+		catch_all => 'ALTER ... OWNER commands (except post-data objects)',
+		regexp    => qr/^
 			\QALTER OPERATOR CLASS dump_test.op_class USING btree \E
 			\QOWNER TO \E
 			.*;/xm,
@@ -744,11 +732,10 @@ my %tests = (
 			section_post_data        => 1, }, },
 
 	'ALTER PROCEDURAL LANGUAGE pltestlang OWNER TO' => {
-		all_runs => 1,
-		catch_all =>
-		  'ALTER ... OWNER commands (except post-data objects)',
-		regexp => qr/^ALTER PROCEDURAL LANGUAGE pltestlang OWNER TO .*;/m,
-		like   => {
+		all_runs  => 1,
+		catch_all => 'ALTER ... OWNER commands (except post-data objects)',
+		regexp    => qr/^ALTER PROCEDURAL LANGUAGE pltestlang OWNER TO .*;/m,
+		like      => {
 			binary_upgrade           => 1,
 			clean                    => 1,
 			clean_if_exists          => 1,
@@ -770,11 +757,10 @@ my %tests = (
 			test_schema_plus_blobs => 1, }, },
 
 	'ALTER SCHEMA dump_test OWNER TO' => {
-		all_runs => 1,
-		catch_all =>
-		  'ALTER ... OWNER commands (except post-data objects)',
-		regexp => qr/^ALTER SCHEMA dump_test OWNER TO .*;/m,
-		like   => {
+		all_runs  => 1,
+		catch_all => 'ALTER ... OWNER commands (except post-data objects)',
+		regexp    => qr/^ALTER SCHEMA dump_test OWNER TO .*;/m,
+		like      => {
 			binary_upgrade          => 1,
 			clean                   => 1,
 			clean_if_exists         => 1,
@@ -796,11 +782,10 @@ my %tests = (
 			role                     => 1, }, },
 
 	'ALTER SCHEMA dump_test_second_schema OWNER TO' => {
-		all_runs => 1,
-		catch_all =>
-		  'ALTER ... OWNER commands (except post-data objects)',
-		regexp => qr/^ALTER SCHEMA dump_test_second_schema OWNER TO .*;/m,
-		like   => {
+		all_runs  => 1,
+		catch_all => 'ALTER ... OWNER commands (except post-data objects)',
+		regexp    => qr/^ALTER SCHEMA dump_test_second_schema OWNER TO .*;/m,
+		like      => {
 			binary_upgrade           => 1,
 			clean                    => 1,
 			clean_if_exists          => 1,
@@ -1191,11 +1176,10 @@ my %tests = (
 			section_post_data        => 1, }, },
 
 	'ALTER TABLE test_table OWNER TO' => {
-		all_runs => 1,
-		catch_all =>
-		  'ALTER ... OWNER commands (except post-data objects)',
-		regexp => qr/^ALTER TABLE test_table OWNER TO .*;/m,
-		like   => {
+		all_runs  => 1,
+		catch_all => 'ALTER ... OWNER commands (except post-data objects)',
+		regexp    => qr/^ALTER TABLE test_table OWNER TO .*;/m,
+		like      => {
 			binary_upgrade          => 1,
 			clean                   => 1,
 			clean_if_exists         => 1,
@@ -1249,11 +1233,10 @@ my %tests = (
 			role                     => 1, }, },
 
 	'ALTER TABLE test_second_table OWNER TO' => {
-		all_runs => 1,
-		catch_all =>
-		  'ALTER ... OWNER commands (except post-data objects)',
-		regexp => qr/^ALTER TABLE test_second_table OWNER TO .*;/m,
-		like   => {
+		all_runs  => 1,
+		catch_all => 'ALTER ... OWNER commands (except post-data objects)',
+		regexp    => qr/^ALTER TABLE test_second_table OWNER TO .*;/m,
+		like      => {
 			binary_upgrade          => 1,
 			clean                   => 1,
 			clean_if_exists         => 1,
@@ -1276,11 +1259,10 @@ my %tests = (
 			role                     => 1, }, },
 
 	'ALTER TABLE test_third_table OWNER TO' => {
-		all_runs => 1,
-		catch_all =>
-		  'ALTER ... OWNER commands (except post-data objects)',
-		regexp => qr/^ALTER TABLE test_third_table OWNER TO .*;/m,
-		like   => {
+		all_runs  => 1,
+		catch_all => 'ALTER ... OWNER commands (except post-data objects)',
+		regexp    => qr/^ALTER TABLE test_third_table OWNER TO .*;/m,
+		like      => {
 			binary_upgrade           => 1,
 			clean                    => 1,
 			clean_if_exists          => 1,
@@ -1303,11 +1285,10 @@ my %tests = (
 			test_schema_plus_blobs => 1, }, },
 
 	'ALTER TABLE measurement OWNER TO' => {
-		all_runs => 1,
-		catch_all =>
-		  'ALTER ... OWNER commands (except post-data objects)',
-		regexp => qr/^ALTER TABLE measurement OWNER TO .*;/m,
-		like   => {
+		all_runs  => 1,
+		catch_all => 'ALTER ... OWNER commands (except post-data objects)',
+		regexp    => qr/^ALTER TABLE measurement OWNER TO .*;/m,
+		like      => {
 			binary_upgrade          => 1,
 			clean                   => 1,
 			clean_if_exists         => 1,
@@ -1330,11 +1311,10 @@ my %tests = (
 			role                     => 1, }, },
 
 	'ALTER TABLE measurement_y2006m2 OWNER TO' => {
-		all_runs => 1,
-		catch_all =>
-		  'ALTER ... OWNER commands (except post-data objects)',
-		regexp => qr/^ALTER TABLE measurement_y2006m2 OWNER TO .*;/m,
-		like   => {
+		all_runs  => 1,
+		catch_all => 'ALTER ... OWNER commands (except post-data objects)',
+		regexp    => qr/^ALTER TABLE measurement_y2006m2 OWNER TO .*;/m,
+		like      => {
 			binary_upgrade           => 1,
 			clean                    => 1,
 			clean_if_exists          => 1,
@@ -1357,11 +1337,10 @@ my %tests = (
 			test_schema_plus_blobs => 1, }, },
 
 	'ALTER FOREIGN TABLE foreign_table OWNER TO' => {
-		all_runs => 1,
-		catch_all =>
-		  'ALTER ... OWNER commands (except post-data objects)',
-		regexp => qr/^ALTER FOREIGN TABLE foreign_table OWNER TO .*;/m,
-		like   => {
+		all_runs  => 1,
+		catch_all => 'ALTER ... OWNER commands (except post-data objects)',
+		regexp    => qr/^ALTER FOREIGN TABLE foreign_table OWNER TO .*;/m,
+		like      => {
 			binary_upgrade          => 1,
 			clean                   => 1,
 			clean_if_exists         => 1,
@@ -1384,9 +1363,8 @@ my %tests = (
 			role                     => 1, }, },
 
 	'ALTER TEXT SEARCH CONFIGURATION alt_ts_conf1 OWNER TO' => {
-		all_runs => 1,
-		catch_all =>
-		  'ALTER ... OWNER commands (except post-data objects)',
+		all_runs  => 1,
+		catch_all => 'ALTER ... OWNER commands (except post-data objects)',
 		regexp =>
 		  qr/^ALTER TEXT SEARCH CONFIGURATION alt_ts_conf1 OWNER TO .*;/m,
 		like => {
@@ -1412,9 +1390,8 @@ my %tests = (
 			role                     => 1, }, },
 
 	'ALTER TEXT SEARCH DICTIONARY alt_ts_dict1 OWNER TO' => {
-		all_runs => 1,
-		catch_all =>
-		  'ALTER ... OWNER commands (except post-data objects)',
+		all_runs  => 1,
+		catch_all => 'ALTER ... OWNER commands (except post-data objects)',
 		regexp =>
 		  qr/^ALTER TEXT SEARCH DICTIONARY alt_ts_dict1 OWNER TO .*;/m,
 		like => {
@@ -4542,12 +4519,12 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 			test_schema_plus_blobs   => 1, }, },
 
 	'CREATE SCHEMA public' => {
-		all_runs     => 1,
-		catch_all    => 'CREATE ... commands',
-		regexp       => qr/^CREATE SCHEMA public;/m,
-		like         => {
-			clean                   => 1,
-			clean_if_exists         => 1, },
+		all_runs  => 1,
+		catch_all => 'CREATE ... commands',
+		regexp    => qr/^CREATE SCHEMA public;/m,
+		like      => {
+			clean           => 1,
+			clean_if_exists => 1, },
 		unlike => {
 			binary_upgrade           => 1,
 			createdb                 => 1,
@@ -5266,31 +5243,32 @@ qr/CREATE TRANSFORM FOR integer LANGUAGE sql \(FROM SQL WITH FUNCTION pg_catalog
 			section_data   => 1, }, },
 
 	'DROP SCHEMA public (for testing without public schema)' => {
-		all_runs  => 1,
-		database => 'regress_pg_dump_test',
+		all_runs     => 1,
+		database     => 'regress_pg_dump_test',
 		create_order => 100,
-		create_sql => 'DROP SCHEMA public;',
-		regexp    => qr/^DROP SCHEMA public;/m,
-		like      => { },
-		unlike    => { defaults_no_public => 1,
-		               defaults_no_public_clean => 1, } },
+		create_sql   => 'DROP SCHEMA public;',
+		regexp       => qr/^DROP SCHEMA public;/m,
+		like         => {},
+		unlike       => {
+			defaults_no_public       => 1,
+			defaults_no_public_clean => 1, } },
 
 	'DROP SCHEMA public' => {
 		all_runs  => 1,
 		catch_all => 'DROP ... commands',
 		regexp    => qr/^DROP SCHEMA public;/m,
-		like         => { clean => 1 },
-		unlike => {
-			clean_if_exists         => 1,
+		like      => { clean => 1 },
+		unlike    => {
+			clean_if_exists          => 1,
 			pg_dumpall_globals_clean => 1, }, },
 
 	'DROP SCHEMA IF EXISTS public' => {
 		all_runs  => 1,
 		catch_all => 'DROP ... commands',
 		regexp    => qr/^DROP SCHEMA IF EXISTS public;/m,
-		like         => { clean_if_exists => 1 },
-		unlike => {
-			clean => 1,
+		like      => { clean_if_exists => 1 },
+		unlike    => {
+			clean                    => 1,
 			pg_dumpall_globals_clean => 1, }, },
 
 	'DROP EXTENSION plpgsql' => {
@@ -6508,7 +6486,7 @@ if ($collation_check_stderr !~ /ERROR: /)
 }
 
 # Create a second database for certain tests to work against
-$node->psql('postgres','create database regress_pg_dump_test;');
+$node->psql('postgres', 'create database regress_pg_dump_test;');
 
 # Start with number of command_fails_like()*2 tests below (each
 # command_fails_like is actually 2 tests)
@@ -6517,9 +6495,10 @@ my $num_tests = 12;
 foreach my $run (sort keys %pgdump_runs)
 {
 	my $test_key = $run;
-	my $run_db = 'postgres';
+	my $run_db   = 'postgres';
 
-	if (defined($pgdump_runs{$run}->{database})) {
+	if (defined($pgdump_runs{$run}->{database}))
+	{
 		$run_db = $pgdump_runs{$run}->{database};
 	}
 
@@ -6540,17 +6519,20 @@ foreach my $run (sort keys %pgdump_runs)
 	# Then count all the tests run against each run
 	foreach my $test (sort keys %tests)
 	{
+
 		# postgres is the default database, if it isn't overridden
 		my $test_db = 'postgres';
 
 		# Specific tests can override the database to use
-		if (defined($tests{$test}->{database})) {
+		if (defined($tests{$test}->{database}))
+		{
 			$test_db = $tests{$test}->{database};
 		}
 
 		# The database to test against needs to match the database the run is
 		# for, so skip combinations where they don't match up.
-		if ($run_db ne $test_db) {
+		if ($run_db ne $test_db)
+		{
 			next;
 		}
 
@@ -6626,7 +6608,8 @@ foreach my $test (
 {
 	my $test_db = 'postgres';
 
-	if (defined($tests{$test}->{database})) {
+	if (defined($tests{$test}->{database}))
+	{
 		$test_db = $tests{$test}->{database};
 	}
 

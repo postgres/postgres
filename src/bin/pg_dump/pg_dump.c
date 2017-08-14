@@ -676,8 +676,8 @@ main(int argc, char **argv)
 		dopt.no_security_labels = 1;
 
 	/*
-	 * On hot standbys, never try to dump unlogged table data, since it
-	 * will just throw an error.
+	 * On hot standbys, never try to dump unlogged table data, since it will
+	 * just throw an error.
 	 */
 	if (fout->isStandby)
 		dopt.no_unlogged_table_data = true;
@@ -4141,8 +4141,8 @@ getNamespaces(Archive *fout, int *numNamespaces)
 		 */
 		if (dopt->outputClean)
 			appendPQExpBuffer(query, " AND pip.objoid <> "
-									 "coalesce((select oid from pg_namespace "
-									 "where nspname = 'public'),0)");
+							  "coalesce((select oid from pg_namespace "
+							  "where nspname = 'public'),0)");
 
 		appendPQExpBuffer(query, ") ");
 

@@ -2071,11 +2071,11 @@ FindTriggerIncompatibleWithInheritance(TriggerDesc *trigdesc)
 {
 	if (trigdesc != NULL)
 	{
-		int		i;
+		int			i;
 
 		for (i = 0; i < trigdesc->numtriggers; ++i)
 		{
-			Trigger	   *trigger = &trigdesc->triggers[i];
+			Trigger    *trigger = &trigdesc->triggers[i];
 
 			if (trigger->tgoldtable != NULL || trigger->tgnewtable != NULL)
 				return trigger->tgname;
@@ -5253,12 +5253,12 @@ AfterTriggerSaveEvent(EState *estate, ResultRelInfo *relinfo,
 	 */
 	if (row_trigger && transition_capture != NULL)
 	{
-		HeapTuple original_insert_tuple = transition_capture->tcs_original_insert_tuple;
+		HeapTuple	original_insert_tuple = transition_capture->tcs_original_insert_tuple;
 		TupleConversionMap *map = transition_capture->tcs_map;
-		bool delete_old_table = transition_capture->tcs_delete_old_table;
-		bool update_old_table = transition_capture->tcs_update_old_table;
-		bool update_new_table = transition_capture->tcs_update_new_table;
-		bool insert_new_table = transition_capture->tcs_insert_new_table;;
+		bool		delete_old_table = transition_capture->tcs_delete_old_table;
+		bool		update_old_table = transition_capture->tcs_update_old_table;
+		bool		update_new_table = transition_capture->tcs_update_new_table;
+		bool		insert_new_table = transition_capture->tcs_insert_new_table;;
 
 		if ((event == TRIGGER_EVENT_DELETE && delete_old_table) ||
 			(event == TRIGGER_EVENT_UPDATE && update_old_table))

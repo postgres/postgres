@@ -228,10 +228,10 @@ pg_recvint64(int64 value)
 {
 	union
 	{
-		int64	i64;
-		uint32	i32[2];
-	} swap;
-	int64	result;
+		int64		i64;
+		uint32		i32[2];
+	}			swap;
+	int64		result;
 
 	swap.i64 = value;
 

@@ -233,7 +233,7 @@ SimpleLruInit(SlruCtl ctl, const char *name, int nslots, int nlsns,
 		}
 
 		/* Should fit to estimated shmem size */
-		Assert(ptr - (char *) shared  <= SimpleLruShmemSize(nslots, nlsns));
+		Assert(ptr - (char *) shared <= SimpleLruShmemSize(nslots, nlsns));
 	}
 	else
 		Assert(found);

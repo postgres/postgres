@@ -32,14 +32,16 @@ else
 	print $conf "listen_addresses = '127.0.0.1'\n";
 }
 close $conf;
-my $ctlcmd = [ 'pg_ctl', 'start', '-D', "$tempdir/data",
-			   '-l', "$TestLib::log_path/001_start_stop_server.log" ];
+my $ctlcmd = [
+	'pg_ctl', 'start', '-D', "$tempdir/data", '-l',
+	"$TestLib::log_path/001_start_stop_server.log" ];
 if ($Config{osname} ne 'msys')
 {
 	command_like($ctlcmd, qr/done.*server started/s, 'pg_ctl start');
 }
 else
 {
+
 	# use the version of command_like that doesn't hang on Msys here
 	command_like_safe($ctlcmd, qr/done.*server started/s, 'pg_ctl start');
 }

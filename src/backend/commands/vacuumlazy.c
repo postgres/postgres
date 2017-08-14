@@ -529,11 +529,11 @@ lazy_scan_heap(Relation onerel, int options, LVRelStats *vacrelstats,
 	 * safely set for relfrozenxid or relminmxid.
 	 *
 	 * Before entering the main loop, establish the invariant that
-	 * next_unskippable_block is the next block number >= blkno that we
-	 * can't skip based on the visibility map, either all-visible for a
-	 * regular scan or all-frozen for an aggressive scan.  We set it to
-	 * nblocks if there's no such block.  We also set up the skipping_blocks
-	 * flag correctly at this stage.
+	 * next_unskippable_block is the next block number >= blkno that we can't
+	 * skip based on the visibility map, either all-visible for a regular scan
+	 * or all-frozen for an aggressive scan.  We set it to nblocks if there's
+	 * no such block.  We also set up the skipping_blocks flag correctly at
+	 * this stage.
 	 *
 	 * Note: The value returned by visibilitymap_get_status could be slightly
 	 * out-of-date, since we make this test before reading the corresponding

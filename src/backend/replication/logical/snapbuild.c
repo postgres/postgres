@@ -1117,9 +1117,9 @@ SnapBuildProcessRunningXacts(SnapBuild *builder, XLogRecPtr lsn, xl_running_xact
 	 * only ever look at those.
 	 *
 	 * NB: We only increase xmax when a catalog modifying transaction commits
-	 * (see SnapBuildCommitTxn).  Because of this, xmax can be lower than xmin,
-	 * which looks odd but is correct and actually more efficient, since we hit
-	 * fast paths in tqual.c.
+	 * (see SnapBuildCommitTxn).  Because of this, xmax can be lower than
+	 * xmin, which looks odd but is correct and actually more efficient, since
+	 * we hit fast paths in tqual.c.
 	 */
 	builder->xmin = running->oldestRunningXid;
 

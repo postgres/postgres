@@ -593,7 +593,7 @@ cfread(void *ptr, int size, cfp *fp)
 		ret = gzread(fp->compressedfp, ptr, size);
 		if (ret != size && !gzeof(fp->compressedfp))
 		{
-			int		errnum;
+			int			errnum;
 			const char *errmsg = gzerror(fp->compressedfp, &errnum);
 
 			exit_horribly(modulename,

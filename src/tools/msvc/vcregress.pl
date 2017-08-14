@@ -183,7 +183,7 @@ sub tap_check
 	{
 		next unless $_[$arg] =~ /^PROVE_FLAGS=(.*)/;
 		@flags = split(/\s+/, $1);
-		splice(@_,$arg,1);
+		splice(@_, $arg, 1);
 		last;
 	}
 
@@ -237,7 +237,7 @@ sub taptest
 
 	die "no tests found!" unless -d "$topdir/$dir/t";
 
-	push(@args,"$topdir/$dir");
+	push(@args, "$topdir/$dir");
 
 	InstallTemp();
 	my $status = tap_check(@args);

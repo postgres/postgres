@@ -293,8 +293,8 @@ SyncRepWaitForLSN(XLogRecPtr lsn, bool commit)
 	 * WalSender has checked our LSN and has removed us from queue. Clean up
 	 * state and leave.  It's OK to reset these shared memory fields without
 	 * holding SyncRepLock, because any walsenders will ignore us anyway when
-	 * we're not on the queue.  We need a read barrier to make sure we see
-	 * the changes to the queue link (this might be unnecessary without
+	 * we're not on the queue.  We need a read barrier to make sure we see the
+	 * changes to the queue link (this might be unnecessary without
 	 * assertions, but better safe than sorry).
 	 */
 	pg_read_barrier();
@@ -715,7 +715,7 @@ SyncRepGetSyncStandbysQuorum(bool *am_sync)
 	for (i = 0; i < max_wal_senders; i++)
 	{
 		XLogRecPtr	flush;
-		WalSndState	state;
+		WalSndState state;
 		int			pid;
 
 		walsnd = &WalSndCtl->walsnds[i];
@@ -794,7 +794,7 @@ SyncRepGetSyncStandbysPriority(bool *am_sync)
 	for (i = 0; i < max_wal_senders; i++)
 	{
 		XLogRecPtr	flush;
-		WalSndState	state;
+		WalSndState state;
 		int			pid;
 
 		walsnd = &WalSndCtl->walsnds[i];

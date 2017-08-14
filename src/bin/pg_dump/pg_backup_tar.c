@@ -557,7 +557,7 @@ _tarReadRaw(ArchiveHandle *AH, void *buf, size_t len, TAR_MEMBER *th, FILE *fh)
 				if (res != len && !GZEOF(th->zFH))
 				{
 #ifdef HAVE_LIBZ
-					int		errnum;
+					int			errnum;
 					const char *errmsg = gzerror(th->zFH, &errnum);
 
 					exit_horribly(modulename,

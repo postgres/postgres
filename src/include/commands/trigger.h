@@ -75,13 +75,14 @@ typedef struct TransitionCaptureState
 
 	/*
 	 * The tuplestores backing the transition tables.  We use separate
-	 * tuplestores for INSERT and UPDATE, because INSERT ... ON CONFLICT
-	 * ... DO UPDATE causes INSERT and UPDATE triggers to fire and needs a way
-	 * to keep track of the new tuple images resulting from the two cases
+	 * tuplestores for INSERT and UPDATE, because INSERT ... ON CONFLICT ...
+	 * DO UPDATE causes INSERT and UPDATE triggers to fire and needs a way to
+	 * keep track of the new tuple images resulting from the two cases
 	 * separately.  We only need a single old image tuplestore, because there
 	 * is no statement that can both update and delete at the same time.
 	 */
-	Tuplestorestate *tcs_old_tuplestore; /* for DELETE and UPDATE old images */
+	Tuplestorestate *tcs_old_tuplestore;	/* for DELETE and UPDATE old
+											 * images */
 	Tuplestorestate *tcs_insert_tuplestore; /* for INSERT new images */
 	Tuplestorestate *tcs_update_tuplestore; /* for UPDATE new images */
 } TransitionCaptureState;

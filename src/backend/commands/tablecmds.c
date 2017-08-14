@@ -13509,8 +13509,8 @@ ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd)
 	 * having to construct this list again, so we request the strongest lock
 	 * on all partitions.  We need the strongest lock, because we may decide
 	 * to scan them if we find out that the table being attached (or its leaf
-	 * partitions) may contain rows that violate the partition constraint.
-	 * If the table has a constraint that would prevent such rows, which by
+	 * partitions) may contain rows that violate the partition constraint. If
+	 * the table has a constraint that would prevent such rows, which by
 	 * definition is present in all the partitions, we need not scan the
 	 * table, nor its partitions.  But we cannot risk a deadlock by taking a
 	 * weaker lock now and the stronger one only when needed.

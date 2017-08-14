@@ -1232,10 +1232,9 @@ sub poll_query_until
 {
 	my ($self, $dbname, $query, $expected) = @_;
 
-	$expected = 't' unless defined($expected);	# default value
+	$expected = 't' unless defined($expected);    # default value
 
-	my $cmd =
-		[ 'psql', '-XAt', '-c', $query, '-d', $self->connstr($dbname) ];
+	my $cmd = [ 'psql', '-XAt', '-c', $query, '-d', $self->connstr($dbname) ];
 	my ($stdout, $stderr);
 	my $max_attempts = 180 * 10;
 	my $attempts     = 0;

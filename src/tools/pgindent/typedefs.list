@@ -307,7 +307,6 @@ CheckpointStatsData
 CheckpointerRequest
 CheckpointerShmemStruct
 Chromosome
-City
 CkptSortItem
 CkptTsStatus
 ClientAuthentication_hook_type
@@ -327,6 +326,7 @@ CoerceViaIO
 CoercionContext
 CoercionForm
 CoercionPathType
+CollAliasData
 CollInfo
 CollateClause
 CollateExpr
@@ -569,6 +569,7 @@ ExecForeignUpdate_function
 ExecParallelEstimateContext
 ExecParallelInitializeDSMContext
 ExecPhraseData
+ExecProcNodeMtd
 ExecRowMark
 ExecScanAccessMtd
 ExecScanRecheckMtd
@@ -1180,6 +1181,7 @@ LogicalRepRelation
 LogicalRepTupleData
 LogicalRepTyp
 LogicalRepWorker
+LogicalRepWorkerId
 LogicalRewriteMappingData
 LogicalTape
 LogicalTapeSet
@@ -1770,7 +1772,6 @@ RWConflictPoolHeader
 Range
 RangeBound
 RangeBox
-RangeDatumContent
 RangeFunction
 RangeIOData
 RangeQueryClause
@@ -1880,6 +1881,7 @@ ResourceReleaseCallback
 ResourceReleaseCallbackItem
 ResourceReleasePhase
 RestoreOptions
+RestorePass
 RestrictInfo
 Result
 ResultPath
@@ -2251,6 +2253,7 @@ TransactionStmt
 TransactionStmtKind
 TransformInfo
 TransformJsonStringValuesState
+TransitionCaptureState
 TrgmArc
 TrgmArcInfo
 TrgmColor
@@ -2388,6 +2391,7 @@ WaitEventIO
 WaitEventIPC
 WaitEventSet
 WaitEventTimeout
+WaitPMResult
 WalCloseMethod
 WalLevel
 WalRcvData

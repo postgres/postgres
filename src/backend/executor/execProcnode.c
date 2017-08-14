@@ -411,9 +411,9 @@ ExecProcNodeFirst(PlanState *node)
 	/*
 	 * Perform stack depth check during the first execution of the node.  We
 	 * only do so the first time round because it turns out to not be cheap on
-	 * some common architectures (eg. x86).  This relies on the assumption that
-	 * ExecProcNode calls for a given plan node will always be made at roughly
-	 * the same stack depth.
+	 * some common architectures (eg. x86).  This relies on the assumption
+	 * that ExecProcNode calls for a given plan node will always be made at
+	 * roughly the same stack depth.
 	 */
 	check_stack_depth();
 

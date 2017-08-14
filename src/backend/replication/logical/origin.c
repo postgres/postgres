@@ -353,7 +353,7 @@ restart:
 		{
 			if (state->acquired_by != 0)
 			{
-				ConditionVariable  *cv;
+				ConditionVariable *cv;
 
 				if (nowait)
 					ereport(ERROR,
@@ -977,7 +977,7 @@ replorigin_get_progress(RepOriginId node, bool flush)
 static void
 ReplicationOriginExitCleanup(int code, Datum arg)
 {
-	ConditionVariable   *cv = NULL;
+	ConditionVariable *cv = NULL;
 
 	LWLockAcquire(ReplicationOriginLock, LW_EXCLUSIVE);
 
@@ -1097,7 +1097,7 @@ replorigin_session_setup(RepOriginId node)
 void
 replorigin_session_reset(void)
 {
-	ConditionVariable  *cv;
+	ConditionVariable *cv;
 
 	Assert(max_replication_slots != 0);
 

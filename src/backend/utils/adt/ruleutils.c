@@ -8723,8 +8723,8 @@ get_rule_expr(Node *node, deparse_context *context,
 							   list_length(spec->upperdatums));
 
 						appendStringInfo(buf, "FOR VALUES FROM %s TO %s",
-							get_range_partbound_string(spec->lowerdatums),
-							get_range_partbound_string(spec->upperdatums));
+										 get_range_partbound_string(spec->lowerdatums),
+										 get_range_partbound_string(spec->upperdatums));
 						break;
 
 					default:

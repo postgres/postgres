@@ -919,9 +919,10 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 	LWLockAcquire(LogicalRepWorkerLock, LW_SHARED);
 	subworkers = logicalrep_workers_find(subid, false);
 	LWLockRelease(LogicalRepWorkerLock);
-	foreach (lc, subworkers)
+	foreach(lc, subworkers)
 	{
 		LogicalRepWorker *w = (LogicalRepWorker *) lfirst(lc);
+
 		if (slotname)
 			logicalrep_worker_stop(w->subid, w->relid);
 		else
