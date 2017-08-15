@@ -80,6 +80,7 @@ static int	no_subscriptions = 0;
 static int	no_unlogged_table_data = 0;
 static int	no_role_passwords = 0;
 static int	server_version;
+static int	load_via_partition_root = 0;
 
 static char role_catalog[10];
 #define PG_AUTHID "pg_authid"
@@ -128,6 +129,7 @@ main(int argc, char *argv[])
 		{"lock-wait-timeout", required_argument, NULL, 2},
 		{"no-tablespaces", no_argument, &no_tablespaces, 1},
 		{"quote-all-identifiers", no_argument, &quote_all_identifiers, 1},
+		{"load-via-partition-root", no_argument, &load_via_partition_root, 1},
 		{"role", required_argument, NULL, 3},
 		{"use-set-session-authorization", no_argument, &use_setsessauth, 1},
 		{"no-publications", no_argument, &no_publications, 1},
@@ -385,6 +387,8 @@ main(int argc, char *argv[])
 		appendPQExpBufferStr(pgdumpopts, " --no-tablespaces");
 	if (quote_all_identifiers)
 		appendPQExpBufferStr(pgdumpopts, " --quote-all-identifiers");
+	if (load_via_partition_root)
+		appendPQExpBufferStr(pgdumpopts, " --load-via-partition-root");
 	if (use_setsessauth)
 		appendPQExpBufferStr(pgdumpopts, " --use-set-session-authorization");
 	if (no_publications)
@@ -606,6 +610,7 @@ help(void)
 	printf(_("  --no-tablespaces             do not dump tablespace assignments\n"));
 	printf(_("  --no-unlogged-table-data     do not dump unlogged table data\n"));
 	printf(_("  --quote-all-identifiers      quote all identifiers, even if not key words\n"));
+	printf(_("  --load-via-partition-root    load partitions via the root table\n"));
 	printf(_("  --use-set-session-authorization\n"
 			 "                               use SET SESSION AUTHORIZATION commands instead of\n"
 			 "                               ALTER OWNER commands to set ownership\n"));

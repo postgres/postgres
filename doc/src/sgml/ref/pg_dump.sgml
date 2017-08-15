@@ -889,6 +889,21 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>--load-via-partition-root</></term>
+      <listitem>
+       <para>
+        When dumping a COPY or INSERT statement for a partitioned table,
+        target the root of the partitioning hierarchy which contains it rather
+        than the partition itself.  This may be useful when reloading data on
+        a server where rows do not always fall into the same partitions as
+        they did on the original server.  This could happen, for example, if
+        the partitioning column is of type text and the two system have
+        different definitions of the collation used to partition the data.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
        <term><option>--section=<replaceable class="parameter">sectionname</replaceable></option></term>
        <listitem>
          <para>
