@@ -1360,8 +1360,12 @@ expand_inherited_tables(PlannerInfo *root)
  * table, but with inh = false, to represent the parent table in its role
  * as a simple member of the inheritance set.
  *
- * A childless table is never considered to be an inheritance set; therefore
- * a parent RTE must always have at least two associated AppendRelInfos.
+ * A childless table is never considered to be an inheritance set. For
+ * regular inheritance, a parent RTE must always have at least two associated
+ * AppendRelInfos: one corresponding to the parent table as a simple member of
+ * inheritance set and one or more corresponding to the actual children.
+ * Since a partitioned table is not scanned, it might have only one associated
+ * AppendRelInfo.
  */
 static void
 expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
@@ -1374,7 +1378,7 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 	List	   *inhOIDs;
 	List	   *appinfos;
 	ListCell   *l;
-	bool		need_append;
+	bool		has_child;
 	PartitionedChildRelInfo *pcinfo;
 	List	   *partitioned_child_rels = NIL;
 
@@ -1448,7 +1452,7 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 
 	/* Scan the inheritance set and expand it */
 	appinfos = NIL;
-	need_append = false;
+	has_child = false;
 	foreach(l, inhOIDs)
 	{
 		Oid			childOID = lfirst_oid(l);
@@ -1502,7 +1506,10 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 		 */
 		if (childrte->relkind != RELKIND_PARTITIONED_TABLE)
 		{
-			need_append = true;
+			/* Remember if we saw a real child. */
+			if (childOID != parentOID)
+				has_child = true;
+
 			appinfo = makeNode(AppendRelInfo);
 			appinfo->parent_relid = rti;
 			appinfo->child_relid = childRTindex;
@@ -1582,7 +1589,7 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 	 * the parent table is harmless, so we don't bother to get rid of it;
 	 * ditto for the useless PlanRowMark node.
 	 */
-	if (!need_append)
+	if (!has_child)
 	{
 		/* Clear flag before returning */
 		rte->inh = false;
