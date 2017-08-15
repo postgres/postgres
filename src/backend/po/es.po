@@ -12561,7 +12561,7 @@ msgstr[1] "el método de tablesample «%s» requiere %d argumentos, no %d"
 #: parser/parse_clause.c:809
 #, c-format
 msgid "tablesample method %s does not support REPEATABLE"
-msgstr "el método de tablesample «%s» no soporta la opción REPEATABLE" 
+msgstr "el método de tablesample «%s» no soporta la opción REPEATABLE"
 
 #: parser/parse_clause.c:940
 #, c-format
