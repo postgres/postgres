@@ -91,6 +91,7 @@
 #include "storage/proc.h"
 #include "storage/procsignal.h"
 #include "storage/sinvaladt.h"
+#include "storage/smgr.h"
 #include "tcop/tcopprot.h"
 #include "utils/dsa.h"
 #include "utils/fmgroids.h"
@@ -523,6 +524,26 @@ AutoVacLauncherMain(int argc, char *argv[])
 
 		/* Abort the current transaction in order to recover */
 		AbortCurrentTransaction();
+
+		/*
+		 * Release any other resources, for the case where we were not in a
+		 * transaction.
+		 */
+		LWLockReleaseAll();
+		pgstat_report_wait_end();
+		AbortBufferIO();
+		UnlockBuffers();
+		if (CurrentResourceOwner)
+		{
+			ResourceOwnerRelease(CurrentResourceOwner,
+								 RESOURCE_RELEASE_BEFORE_LOCKS,
+								 false, true);
+			/* we needn't bother with the other ResourceOwnerRelease phases */
+		}
+		AtEOXact_Buffers(false);
+		AtEOXact_SMgr();
+		AtEOXact_Files();
+		AtEOXact_HashTables(false);
 
 		/*
 		 * Now return to normal top-level context and clear ErrorContext for
