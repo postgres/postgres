@@ -1868,7 +1868,7 @@ CREATE VIEW table_privileges AS
          ) AS grantee (oid, rolname)
 
     WHERE c.relnamespace = nc.oid
-          AND c.relkind IN ('r', 'v', 'p')
+          AND c.relkind IN ('r', 'v', 'f', 'p')
           AND c.grantee = grantee.oid
           AND c.grantor = u_grantor.oid
           AND c.prtype IN ('INSERT', 'SELECT', 'UPDATE', 'DELETE', 'TRUNCATE', 'REFERENCES', 'TRIGGER')
