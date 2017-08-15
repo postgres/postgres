@@ -2185,6 +2185,8 @@ _copyRestrictInfo(const RestrictInfo *from)
 	COPY_SCALAR_FIELD(hashjoinoperator);
 	COPY_SCALAR_FIELD(left_bucketsize);
 	COPY_SCALAR_FIELD(right_bucketsize);
+	COPY_SCALAR_FIELD(left_mcvfreq);
+	COPY_SCALAR_FIELD(right_mcvfreq);
 
 	return newnode;
 }

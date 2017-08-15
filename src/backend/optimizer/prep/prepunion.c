@@ -2067,6 +2067,8 @@ adjust_appendrel_attrs_mutator(Node *node,
 		newinfo->scansel_cache = NIL;
 		newinfo->left_bucketsize = -1;
 		newinfo->right_bucketsize = -1;
+		newinfo->left_mcvfreq = -1;
+		newinfo->right_mcvfreq = -1;
 
 		return (Node *) newinfo;
 	}

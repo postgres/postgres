@@ -1807,6 +1807,8 @@ typedef struct RestrictInfo
 	/* cache space for hashclause processing; -1 if not yet set */
 	Selectivity left_bucketsize;	/* avg bucketsize of left side */
 	Selectivity right_bucketsize;	/* avg bucketsize of right side */
+	Selectivity left_mcvfreq;	/* left side's most common val's freq */
+	Selectivity right_mcvfreq;	/* right side's most common val's freq */
 } RestrictInfo;
 
 /*

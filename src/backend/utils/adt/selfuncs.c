@@ -3559,9 +3559,16 @@ estimate_num_groups(PlannerInfo *root, List *groupExprs, double input_rows,
 }
 
 /*
- * Estimate hash bucketsize fraction (ie, number of entries in a bucket
- * divided by total tuples in relation) if the specified expression is used
- * as a hash key.
+ * Estimate hash bucket statistics when the specified expression is used
+ * as a hash key for the given number of buckets.
+ *
+ * This attempts to determine two values:
+ *
+ * 1. The frequency of the most common value of the expression (returns
+ * zero into *mcv_freq if we can't get that).
+ *
+ * 2. The "bucketsize fraction", ie, average number of entries in a bucket
+ * divided by total tuples in relation.
  *
  * XXX This is really pretty bogus since we're effectively assuming that the
  * distribution of hash keys will be the same after applying restriction
@@ -3587,29 +3594,58 @@ estimate_num_groups(PlannerInfo *root, List *groupExprs, double input_rows,
  * discourage use of a hash rather strongly if the inner relation is large,
  * which is what we want.  We do not want to hash unless we know that the
  * inner rel is well-dispersed (or the alternatives seem much worse).
+ *
+ * The caller should also check that the mcv_freq is not so large that the
+ * most common value would by itself require an impractically large bucket.
+ * In a hash join, the executor can split buckets if they get too big, but
+ * obviously that doesn't help for a bucket that contains many duplicates of
+ * the same value.
  */
-Selectivity
-estimate_hash_bucketsize(PlannerInfo *root, Node *hashkey, double nbuckets)
+void
+estimate_hash_bucket_stats(PlannerInfo *root, Node *hashkey, double nbuckets,
+						   Selectivity *mcv_freq,
+						   Selectivity *bucketsize_frac)
 {
 	VariableStatData vardata;
 	double		estfract,
 				ndistinct,
 				stanullfrac,
-				mcvfreq,
 				avgfreq;
 	bool		isdefault;
 	AttStatsSlot sslot;
 
 	examine_variable(root, hashkey, 0, &vardata);
 
+	/* Look up the frequency of the most common value, if available */
+	*mcv_freq = 0.0;
+
+	if (HeapTupleIsValid(vardata.statsTuple))
+	{
+		if (get_attstatsslot(&sslot, vardata.statsTuple,
+							 STATISTIC_KIND_MCV, InvalidOid,
+							 ATTSTATSSLOT_NUMBERS))
+		{
+			/*
+			 * The first MCV stat is for the most common value.
+			 */
+			if (sslot.nnumbers > 0)
+				*mcv_freq = sslot.numbers[0];
+			free_attstatsslot(&sslot);
+		}
+	}
+
 	/* Get number of distinct values */
 	ndistinct = get_variable_numdistinct(&vardata, &isdefault);
 
-	/* If ndistinct isn't real, punt and return 0.1, per comments above */
+	/*
+	 * If ndistinct isn't real, punt.  We normally return 0.1, but if the
+	 * mcv_freq is known to be even higher than that, use it instead.
+	 */
 	if (isdefault)
 	{
+		*bucketsize_frac = (Selectivity) Max(0.1, *mcv_freq);
 		ReleaseVariableStats(vardata);
-		return (Selectivity) 0.1;
+		return;
 	}
 
 	/* Get fraction that are null */
@@ -3651,30 +3687,10 @@ estimate_hash_bucketsize(PlannerInfo *root, Node *hashkey, double nbuckets)
 		estfract = 1.0 / ndistinct;
 
 	/*
-	 * Look up the frequency of the most common value, if available.
-	 */
-	mcvfreq = 0.0;
-
-	if (HeapTupleIsValid(vardata.statsTuple))
-	{
-		if (get_attstatsslot(&sslot, vardata.statsTuple,
-							 STATISTIC_KIND_MCV, InvalidOid,
-							 ATTSTATSSLOT_NUMBERS))
-		{
-			/*
-			 * The first MCV stat is for the most common value.
-			 */
-			if (sslot.nnumbers > 0)
-				mcvfreq = sslot.numbers[0];
-			free_attstatsslot(&sslot);
-		}
-	}
-
-	/*
 	 * Adjust estimated bucketsize upward to account for skewed distribution.
 	 */
-	if (avgfreq > 0.0 && mcvfreq > avgfreq)
-		estfract *= mcvfreq / avgfreq;
+	if (avgfreq > 0.0 && *mcv_freq > avgfreq)
+		estfract *= *mcv_freq / avgfreq;
 
 	/*
 	 * Clamp bucketsize to sane range (the above adjustment could easily
@@ -3686,9 +3702,9 @@ estimate_hash_bucketsize(PlannerInfo *root, Node *hashkey, double nbuckets)
 	else if (estfract > 1.0)
 		estfract = 1.0;
 
-	ReleaseVariableStats(vardata);
+	*bucketsize_frac = (Selectivity) estfract;
 
-	return (Selectivity) estfract;
+	ReleaseVariableStats(vardata);
 }
 
 

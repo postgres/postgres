@@ -3028,6 +3028,7 @@ final_cost_hashjoin(PlannerInfo *root, HashPath *path,
 	double		hashjointuples;
 	double		virtualbuckets;
 	Selectivity innerbucketsize;
+	Selectivity innermcvfreq;
 	ListCell   *hcl;
 
 	/* Mark the path with the correct row estimate */
@@ -3060,9 +3061,9 @@ final_cost_hashjoin(PlannerInfo *root, HashPath *path,
 	virtualbuckets = (double) numbuckets * (double) numbatches;
 
 	/*
-	 * Determine bucketsize fraction for inner relation.  We use the smallest
-	 * bucketsize estimated for any individual hashclause; this is undoubtedly
-	 * conservative.
+	 * Determine bucketsize fraction and MCV frequency for the inner relation.
+	 * We use the smallest bucketsize or MCV frequency estimated for any
+	 * individual hashclause; this is undoubtedly conservative.
 	 *
 	 * BUT: if inner relation has been unique-ified, we can assume it's good
 	 * for hashing.  This is important both because it's the right answer, and
@@ -3070,22 +3071,27 @@ final_cost_hashjoin(PlannerInfo *root, HashPath *path,
 	 * non-unique-ified paths.
 	 */
 	if (IsA(inner_path, UniquePath))
+	{
 		innerbucketsize = 1.0 / virtualbuckets;
+		innermcvfreq = 0.0;
+	}
 	else
 	{
 		innerbucketsize = 1.0;
+		innermcvfreq = 1.0;
 		foreach(hcl, hashclauses)
 		{
 			RestrictInfo *restrictinfo = lfirst_node(RestrictInfo, hcl);
 			Selectivity thisbucketsize;
+			Selectivity thismcvfreq;
 
 			/*
 			 * First we have to figure out which side of the hashjoin clause
 			 * is the inner side.
 			 *
 			 * Since we tend to visit the same clauses over and over when
-			 * planning a large query, we cache the bucketsize estimate in the
-			 * RestrictInfo node to avoid repeated lookups of statistics.
+			 * planning a large query, we cache the bucket stats estimates in
+			 * the RestrictInfo node to avoid repeated lookups of statistics.
 			 */
 			if (bms_is_subset(restrictinfo->right_relids,
 							  inner_path->parent->relids))
@@ -3095,12 +3101,14 @@ final_cost_hashjoin(PlannerInfo *root, HashPath *path,
 				if (thisbucketsize < 0)
 				{
 					/* not cached yet */
-					thisbucketsize =
-						estimate_hash_bucketsize(root,
-												 get_rightop(restrictinfo->clause),
-												 virtualbuckets);
-					restrictinfo->right_bucketsize = thisbucketsize;
+					estimate_hash_bucket_stats(root,
+											   get_rightop(restrictinfo->clause),
+											   virtualbuckets,
+											   &restrictinfo->right_mcvfreq,
+											   &restrictinfo->right_bucketsize);
+					thisbucketsize = restrictinfo->right_bucketsize;
 				}
+				thismcvfreq = restrictinfo->right_mcvfreq;
 			}
 			else
 			{
@@ -3111,18 +3119,35 @@ final_cost_hashjoin(PlannerInfo *root, HashPath *path,
 				if (thisbucketsize < 0)
 				{
 					/* not cached yet */
-					thisbucketsize =
-						estimate_hash_bucketsize(root,
-												 get_leftop(restrictinfo->clause),
-												 virtualbuckets);
-					restrictinfo->left_bucketsize = thisbucketsize;
+					estimate_hash_bucket_stats(root,
+											   get_leftop(restrictinfo->clause),
+											   virtualbuckets,
+											   &restrictinfo->left_mcvfreq,
+											   &restrictinfo->left_bucketsize);
+					thisbucketsize = restrictinfo->left_bucketsize;
 				}
+				thismcvfreq = restrictinfo->left_mcvfreq;
 			}
 
 			if (innerbucketsize > thisbucketsize)
 				innerbucketsize = thisbucketsize;
+			if (innermcvfreq > thismcvfreq)
+				innermcvfreq = thismcvfreq;
 		}
 	}
+
+	/*
+	 * If the bucket holding the inner MCV would exceed work_mem, we don't
+	 * want to hash unless there is really no other alternative, so apply
+	 * disable_cost.  (The executor normally copes with excessive memory usage
+	 * by splitting batches, but obviously it cannot separate equal values
+	 * that way, so it will be unable to drive the batch size below work_mem
+	 * when this is true.)
+	 */
+	if (relation_byte_size(clamp_row_est(inner_path_rows * innermcvfreq),
+						   inner_path->pathtarget->width) >
+		(work_mem * 1024L))
+		startup_cost += disable_cost;
 
 	/*
 	 * Compute cost of the hashquals and qpquals (other restriction clauses)
