@@ -126,6 +126,16 @@ typedef struct Latch
 #define WL_SOCKET_WRITEABLE  (1 << 2)
 #define WL_TIMEOUT			 (1 << 3)	/* not for WaitEventSetWait() */
 #define WL_POSTMASTER_DEATH  (1 << 4)
+#ifdef WIN32
+#define WL_SOCKET_CONNECTED  (1 << 5)
+#else
+/* avoid having to to deal with case on platforms not requiring it */
+#define WL_SOCKET_CONNECTED  WL_SOCKET_WRITEABLE
+#endif
+
+#define WL_SOCKET_MASK		(WL_SOCKET_READABLE | \
+							 WL_SOCKET_WRITEABLE | \
+							 WL_SOCKET_CONNECTED)
 
 typedef struct WaitEvent
 {
