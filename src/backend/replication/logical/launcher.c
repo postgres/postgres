@@ -929,11 +929,14 @@ ApplyLauncherMain(Datum main_arg)
 				Subscription *sub = (Subscription *) lfirst(lc);
 				LogicalRepWorker *w;
 
+				if (!sub->enabled)
+					continue;
+
 				LWLockAcquire(LogicalRepWorkerLock, LW_SHARED);
 				w = logicalrep_worker_find(sub->oid, InvalidOid, false);
 				LWLockRelease(LogicalRepWorkerLock);
 
-				if (sub->enabled && w == NULL)
+				if (w == NULL)
 				{
 					last_start_time = now;
 					wait_time = wal_retrieve_retry_interval;
