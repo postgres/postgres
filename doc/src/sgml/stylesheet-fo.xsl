@@ -70,4 +70,28 @@
   <xsl:apply-templates mode="no.anchor.mode"/>
 </xsl:template>
 
+<!-- include refsects in PDF bookmarks
+     (https://github.com/docbook/xslt10-stylesheets/issues/46) -->
+
+<xsl:template match="refsect1|refsect2|refsect3"
+              mode="bookmark">
+
+  <xsl:variable name="id">
+    <xsl:call-template name="object.id"/>
+  </xsl:variable>
+  <xsl:variable name="bookmark-label">
+    <xsl:apply-templates select="." mode="object.title.markup"/>
+  </xsl:variable>
+
+  <fo:bookmark internal-destination="{$id}">
+    <xsl:attribute name="starting-state">
+      <xsl:value-of select="$bookmarks.state"/>
+    </xsl:attribute>
+    <fo:bookmark-title>
+      <xsl:value-of select="normalize-space($bookmark-label)"/>
+    </fo:bookmark-title>
+    <xsl:apply-templates select="*" mode="bookmark"/>
+  </fo:bookmark>
+</xsl:template>
+
 </xsl:stylesheet>
