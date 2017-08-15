@@ -6553,7 +6553,7 @@ exec_save_simple_expr(PLpgSQL_expr *expr, CachedPlan *cplan)
 {
 	PlannedStmt *stmt;
 	Plan	   *plan;
-	TargetEntry *tle;
+	Expr	   *tle_expr;
 
 	/*
 	 * Given the checks that exec_simple_check_plan did, none of the Asserts
@@ -6563,33 +6563,64 @@ exec_save_simple_expr(PLpgSQL_expr *expr, CachedPlan *cplan)
 	/* Extract the single PlannedStmt */
 	Assert(list_length(cplan->stmt_list) == 1);
 	stmt = linitial_node(PlannedStmt, cplan->stmt_list);
-
-	/* Should be a trivial Result plan */
 	Assert(stmt->commandType == CMD_SELECT);
-	plan = stmt->planTree;
-	Assert(IsA(plan, Result));
-	Assert(plan->lefttree == NULL &&
-		   plan->righttree == NULL &&
-		   plan->initPlan == NULL &&
-		   plan->qual == NULL &&
-		   ((Result *) plan)->resconstantqual == NULL);
 
-	/* Extract the single tlist expression */
-	Assert(list_length(plan->targetlist) == 1);
-	tle = (TargetEntry *) linitial(plan->targetlist);
+	/*
+	 * Ordinarily, the plan node should be a simple Result.  However, if
+	 * force_parallel_mode is on, the planner might've stuck a Gather node
+	 * atop that.  The simplest way to deal with this is to look through the
+	 * Gather node.  The Gather node's tlist would normally contain a Var
+	 * referencing the child node's output ... but setrefs.c might also have
+	 * copied a Const as-is.
+	 */
+	plan = stmt->planTree;
+	for (;;)
+	{
+		/* Extract the single tlist expression */
+		Assert(list_length(plan->targetlist) == 1);
+		tle_expr = castNode(TargetEntry, linitial(plan->targetlist))->expr;
+
+		if (IsA(plan, Result))
+		{
+			Assert(plan->lefttree == NULL &&
+				   plan->righttree == NULL &&
+				   plan->initPlan == NULL &&
+				   plan->qual == NULL &&
+				   ((Result *) plan)->resconstantqual == NULL);
+			break;
+		}
+		else if (IsA(plan, Gather))
+		{
+			Assert(plan->lefttree != NULL &&
+				   plan->righttree == NULL &&
+				   plan->initPlan == NULL &&
+				   plan->qual == NULL);
+			/* If setrefs.c copied up a Const, no need to look further */
+			if (IsA(tle_expr, Const))
+				break;
+			/* Otherwise, it better be an outer Var */
+			Assert(IsA(tle_expr, Var));
+			Assert(((Var *) tle_expr)->varno == OUTER_VAR);
+			/* Descend to the child node */
+			plan = plan->lefttree;
+		}
+		else
+			elog(ERROR, "unexpected plan node type: %d",
+				 (int) nodeTag(plan));
+	}
 
 	/*
 	 * Save the simple expression, and initialize state to "not valid in
 	 * current transaction".
 	 */
-	expr->expr_simple_expr = tle->expr;
+	expr->expr_simple_expr = tle_expr;
 	expr->expr_simple_generation = cplan->generation;
 	expr->expr_simple_state = NULL;
 	expr->expr_simple_in_use = false;
 	expr->expr_simple_lxid = InvalidLocalTransactionId;
 	/* Also stash away the expression result type */
-	expr->expr_simple_type = exprType((Node *) tle->expr);
-	expr->expr_simple_typmod = exprTypmod((Node *) tle->expr);
+	expr->expr_simple_type = exprType((Node *) tle_expr);
+	expr->expr_simple_typmod = exprTypmod((Node *) tle_expr);
 }
 
 /*
