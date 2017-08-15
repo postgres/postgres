@@ -224,9 +224,8 @@ static void exec_eval_cleanup(PLpgSQL_execstate *estate);
 
 static void exec_prepare_plan(PLpgSQL_execstate *estate,
 				  PLpgSQL_expr *expr, int cursorOptions);
-static bool exec_simple_check_node(Node *node);
 static void exec_simple_check_plan(PLpgSQL_execstate *estate, PLpgSQL_expr *expr);
-static void exec_simple_recheck_plan(PLpgSQL_expr *expr, CachedPlan *cplan);
+static void exec_save_simple_expr(PLpgSQL_expr *expr, CachedPlan *cplan);
 static void exec_check_rw_parameter(PLpgSQL_expr *expr, int target_dno);
 static bool contains_target_param(Node *node, int *target_dno);
 static bool exec_eval_simple_expr(PLpgSQL_execstate *estate,
@@ -5488,13 +5487,12 @@ loop_exit:
  * of the tree was aborted by an error: the tree may contain bogus state
  * so we dare not re-use it.
  *
- * It is possible though unlikely for a simple expression to become non-simple
- * (consider for example redefining a trivial view).  We must handle that for
- * correctness; fortunately it's normally inexpensive to call
- * SPI_plan_get_cached_plan for a simple expression.  We do not consider the
- * other direction (non-simple expression becoming simple) because we'll still
- * give correct results if that happens, and it's unlikely to be worth the
- * cycles to check.
+ * It is possible that we'd need to replan a simple expression; for example,
+ * someone might redefine a SQL function that had been inlined into the simple
+ * expression.  That cannot cause a simple expression to become non-simple (or
+ * vice versa), but we do have to handle replacing the expression tree.
+ * Fortunately it's normally inexpensive to call SPI_plan_get_cached_plan for
+ * a simple expression.
  *
  * Note: if pass-by-reference, the result is in the eval_mcontext.
  * It will be freed when exec_eval_cleanup is done.
@@ -5543,19 +5541,13 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
 	 */
 	Assert(cplan != NULL);
 
+	/* If it got replanned, update our copy of the simple expression */
 	if (cplan->generation != expr->expr_simple_generation)
 	{
-		/* It got replanned ... is it still simple? */
-		exec_simple_recheck_plan(expr, cplan);
-		/* better recheck r/w safety, as well */
+		exec_save_simple_expr(expr, cplan);
+		/* better recheck r/w safety, as it could change due to inlining */
 		if (expr->rwparam >= 0)
 			exec_check_rw_parameter(expr, expr->rwparam);
-		if (expr->expr_simple_expr == NULL)
-		{
-			/* Oops, release refcount and fail */
-			ReleaseCachedPlan(cplan, true);
-			return false;
-		}
 	}
 
 	/*
@@ -5567,7 +5559,7 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
 	/*
 	 * Prepare the expression for execution, if it's not been done already in
 	 * the current transaction.  (This will be forced to happen if we called
-	 * exec_simple_recheck_plan above.)
+	 * exec_save_simple_expr above.)
 	 */
 	if (expr->expr_simple_lxid != curlxid)
 	{
@@ -6450,265 +6442,6 @@ get_cast_hashentry(PLpgSQL_execstate *estate,
 	return cast_entry;
 }
 
-/* ----------
- * exec_simple_check_node -		Recursively check if an expression
- *								is made only of simple things we can
- *								hand out directly to ExecEvalExpr()
- *								instead of calling SPI.
- * ----------
- */
-static bool
-exec_simple_check_node(Node *node)
-{
-	if (node == NULL)
-		return TRUE;
-
-	switch (nodeTag(node))
-	{
-		case T_Const:
-			return TRUE;
-
-		case T_Param:
-			return TRUE;
-
-		case T_ArrayRef:
-			{
-				ArrayRef   *expr = (ArrayRef *) node;
-
-				if (!exec_simple_check_node((Node *) expr->refupperindexpr))
-					return FALSE;
-				if (!exec_simple_check_node((Node *) expr->reflowerindexpr))
-					return FALSE;
-				if (!exec_simple_check_node((Node *) expr->refexpr))
-					return FALSE;
-				if (!exec_simple_check_node((Node *) expr->refassgnexpr))
-					return FALSE;
-
-				return TRUE;
-			}
-
-		case T_FuncExpr:
-			{
-				FuncExpr   *expr = (FuncExpr *) node;
-
-				if (expr->funcretset)
-					return FALSE;
-				if (!exec_simple_check_node((Node *) expr->args))
-					return FALSE;
-
-				return TRUE;
-			}
-
-		case T_OpExpr:
-			{
-				OpExpr	   *expr = (OpExpr *) node;
-
-				if (expr->opretset)
-					return FALSE;
-				if (!exec_simple_check_node((Node *) expr->args))
-					return FALSE;
-
-				return TRUE;
-			}
-
-		case T_DistinctExpr:
-			{
-				DistinctExpr *expr = (DistinctExpr *) node;
-
-				if (expr->opretset)
-					return FALSE;
-				if (!exec_simple_check_node((Node *) expr->args))
-					return FALSE;
-
-				return TRUE;
-			}
-
-		case T_NullIfExpr:
-			{
-				NullIfExpr *expr = (NullIfExpr *) node;
-
-				if (expr->opretset)
-					return FALSE;
-				if (!exec_simple_check_node((Node *) expr->args))
-					return FALSE;
-
-				return TRUE;
-			}
-
-		case T_ScalarArrayOpExpr:
-			{
-				ScalarArrayOpExpr *expr = (ScalarArrayOpExpr *) node;
-
-				if (!exec_simple_check_node((Node *) expr->args))
-					return FALSE;
-
-				return TRUE;
-			}
-
-		case T_BoolExpr:
-			{
-				BoolExpr   *expr = (BoolExpr *) node;
-
-				if (!exec_simple_check_node((Node *) expr->args))
-					return FALSE;
-
-				return TRUE;
-			}
-
-		case T_FieldSelect:
-			return exec_simple_check_node((Node *) ((FieldSelect *) node)->arg);
-
-		case T_FieldStore:
-			{
-				FieldStore *expr = (FieldStore *) node;
-
-				if (!exec_simple_check_node((Node *) expr->arg))
-					return FALSE;
-				if (!exec_simple_check_node((Node *) expr->newvals))
-					return FALSE;
-
-				return TRUE;
-			}
-
-		case T_RelabelType:
-			return exec_simple_check_node((Node *) ((RelabelType *) node)->arg);
-
-		case T_CoerceViaIO:
-			return exec_simple_check_node((Node *) ((CoerceViaIO *) node)->arg);
-
-		case T_ArrayCoerceExpr:
-			return exec_simple_check_node((Node *) ((ArrayCoerceExpr *) node)->arg);
-
-		case T_ConvertRowtypeExpr:
-			return exec_simple_check_node((Node *) ((ConvertRowtypeExpr *) node)->arg);
-
-		case T_CaseExpr:
-			{
-				CaseExpr   *expr = (CaseExpr *) node;
-
-				if (!exec_simple_check_node((Node *) expr->arg))
-					return FALSE;
-				if (!exec_simple_check_node((Node *) expr->args))
-					return FALSE;
-				if (!exec_simple_check_node((Node *) expr->defresult))
-					return FALSE;
-
-				return TRUE;
-			}
-
-		case T_CaseWhen:
-			{
-				CaseWhen   *when = (CaseWhen *) node;
-
-				if (!exec_simple_check_node((Node *) when->expr))
-					return FALSE;
-				if (!exec_simple_check_node((Node *) when->result))
-					return FALSE;
-
-				return TRUE;
-			}
-
-		case T_CaseTestExpr:
-			return TRUE;
-
-		case T_ArrayExpr:
-			{
-				ArrayExpr  *expr = (ArrayExpr *) node;
-
-				if (!exec_simple_check_node((Node *) expr->elements))
-					return FALSE;
-
-				return TRUE;
-			}
-
-		case T_RowExpr:
-			{
-				RowExpr    *expr = (RowExpr *) node;
-
-				if (!exec_simple_check_node((Node *) expr->args))
-					return FALSE;
-
-				return TRUE;
-			}
-
-		case T_RowCompareExpr:
-			{
-				RowCompareExpr *expr = (RowCompareExpr *) node;
-
-				if (!exec_simple_check_node((Node *) expr->largs))
-					return FALSE;
-				if (!exec_simple_check_node((Node *) expr->rargs))
-					return FALSE;
-
-				return TRUE;
-			}
-
-		case T_CoalesceExpr:
-			{
-				CoalesceExpr *expr = (CoalesceExpr *) node;
-
-				if (!exec_simple_check_node((Node *) expr->args))
-					return FALSE;
-
-				return TRUE;
-			}
-
-		case T_MinMaxExpr:
-			{
-				MinMaxExpr *expr = (MinMaxExpr *) node;
-
-				if (!exec_simple_check_node((Node *) expr->args))
-					return FALSE;
-
-				return TRUE;
-			}
-
-		case T_SQLValueFunction:
-			return TRUE;
-
-		case T_XmlExpr:
-			{
-				XmlExpr    *expr = (XmlExpr *) node;
-
-				if (!exec_simple_check_node((Node *) expr->named_args))
-					return FALSE;
-				if (!exec_simple_check_node((Node *) expr->args))
-					return FALSE;
-
-				return TRUE;
-			}
-
-		case T_NullTest:
-			return exec_simple_check_node((Node *) ((NullTest *) node)->arg);
-
-		case T_BooleanTest:
-			return exec_simple_check_node((Node *) ((BooleanTest *) node)->arg);
-
-		case T_CoerceToDomain:
-			return exec_simple_check_node((Node *) ((CoerceToDomain *) node)->arg);
-
-		case T_CoerceToDomainValue:
-			return TRUE;
-
-		case T_List:
-			{
-				List	   *expr = (List *) node;
-				ListCell   *l;
-
-				foreach(l, expr)
-				{
-					if (!exec_simple_check_node(lfirst(l)))
-						return FALSE;
-				}
-
-				return TRUE;
-			}
-
-		default:
-			return FALSE;
-	}
-}
-
 
 /* ----------
  * exec_simple_check_plan -		Check if a plan is simple enough to
@@ -6726,12 +6459,16 @@ exec_simple_check_plan(PLpgSQL_execstate *estate, PLpgSQL_expr *expr)
 	MemoryContext oldcontext;
 
 	/*
-	 * Initialize to "not simple", and remember the plan generation number we
-	 * last checked.  (If we don't get as far as obtaining a plan to check, we
-	 * just leave expr_simple_generation set to 0.)
+	 * Initialize to "not simple".
 	 */
 	expr->expr_simple_expr = NULL;
-	expr->expr_simple_generation = 0;
+
+	/*
+	 * Check the analyzed-and-rewritten form of the query to see if we will be
+	 * able to treat it as a simple expression.  Since this function is only
+	 * called immediately after creating the CachedPlanSource, we need not
+	 * worry about the query being stale.
+	 */
 
 	/*
 	 * We can only test queries that resulted in exactly one CachedPlanSource
@@ -6740,15 +6477,6 @@ exec_simple_check_plan(PLpgSQL_execstate *estate, PLpgSQL_expr *expr)
 	if (list_length(plansources) != 1)
 		return;
 	plansource = (CachedPlanSource *) linitial(plansources);
-
-	/*
-	 * Do some checking on the analyzed-and-rewritten form of the query. These
-	 * checks are basically redundant with the tests in
-	 * exec_simple_recheck_plan, but the point is to avoid building a plan if
-	 * possible.  Since this function is only called immediately after
-	 * creating the CachedPlanSource, we need not worry about the query being
-	 * stale.
-	 */
 
 	/*
 	 * 1. There must be one single querytree.
@@ -6768,16 +6496,20 @@ exec_simple_check_plan(PLpgSQL_execstate *estate, PLpgSQL_expr *expr)
 		return;
 
 	/*
-	 * 3. Can't have any subplans, aggregates, qual clauses either
+	 * 3. Can't have any subplans, aggregates, qual clauses either.  (These
+	 * tests should generally match what inline_function() checks before
+	 * inlining a SQL function; otherwise, inlining could change our
+	 * conclusion about whether an expression is simple, which we don't want.)
 	 */
 	if (query->hasAggs ||
 		query->hasWindowFuncs ||
 		query->hasTargetSRFs ||
 		query->hasSubLinks ||
-		query->hasForUpdate ||
 		query->cteList ||
+		query->jointree->fromlist ||
 		query->jointree->quals ||
 		query->groupClause ||
+		query->groupingSets ||
 		query->havingQual ||
 		query->windowClause ||
 		query->distinctClause ||
@@ -6794,7 +6526,7 @@ exec_simple_check_plan(PLpgSQL_execstate *estate, PLpgSQL_expr *expr)
 		return;
 
 	/*
-	 * OK, it seems worth constructing a plan for more careful checking.
+	 * OK, we can treat it as a simple plan.
 	 *
 	 * Get the generic plan for the query.  If replanning is needed, do that
 	 * work in the eval_mcontext.
@@ -6806,75 +6538,52 @@ exec_simple_check_plan(PLpgSQL_execstate *estate, PLpgSQL_expr *expr)
 	/* Can't fail, because we checked for a single CachedPlanSource above */
 	Assert(cplan != NULL);
 
-	/* Share the remaining work with recheck code path */
-	exec_simple_recheck_plan(expr, cplan);
+	/* Share the remaining work with replan code path */
+	exec_save_simple_expr(expr, cplan);
 
 	/* Release our plan refcount */
 	ReleaseCachedPlan(cplan, true);
 }
 
 /*
- * exec_simple_recheck_plan --- check for simple plan once we have CachedPlan
+ * exec_save_simple_expr --- extract simple expression from CachedPlan
  */
 static void
-exec_simple_recheck_plan(PLpgSQL_expr *expr, CachedPlan *cplan)
+exec_save_simple_expr(PLpgSQL_expr *expr, CachedPlan *cplan)
 {
 	PlannedStmt *stmt;
 	Plan	   *plan;
 	TargetEntry *tle;
 
 	/*
-	 * Initialize to "not simple", and remember the plan generation number we
-	 * last checked.
+	 * Given the checks that exec_simple_check_plan did, none of the Asserts
+	 * here should ever fail.
 	 */
-	expr->expr_simple_expr = NULL;
-	expr->expr_simple_generation = cplan->generation;
 
-	/*
-	 * 1. There must be one single plantree
-	 */
-	if (list_length(cplan->stmt_list) != 1)
-		return;
+	/* Extract the single PlannedStmt */
+	Assert(list_length(cplan->stmt_list) == 1);
 	stmt = linitial_node(PlannedStmt, cplan->stmt_list);
 
-	/*
-	 * 2. It must be a RESULT plan --> no scan's required
-	 */
-	if (stmt->commandType != CMD_SELECT)
-		return;
+	/* Should be a trivial Result plan */
+	Assert(stmt->commandType == CMD_SELECT);
 	plan = stmt->planTree;
-	if (!IsA(plan, Result))
-		return;
+	Assert(IsA(plan, Result));
+	Assert(plan->lefttree == NULL &&
+		   plan->righttree == NULL &&
+		   plan->initPlan == NULL &&
+		   plan->qual == NULL &&
+		   ((Result *) plan)->resconstantqual == NULL);
 
-	/*
-	 * 3. Can't have any subplan or qual clause, either
-	 */
-	if (plan->lefttree != NULL ||
-		plan->righttree != NULL ||
-		plan->initPlan != NULL ||
-		plan->qual != NULL ||
-		((Result *) plan)->resconstantqual != NULL)
-		return;
-
-	/*
-	 * 4. The plan must have a single attribute as result
-	 */
-	if (list_length(plan->targetlist) != 1)
-		return;
-
+	/* Extract the single tlist expression */
+	Assert(list_length(plan->targetlist) == 1);
 	tle = (TargetEntry *) linitial(plan->targetlist);
 
 	/*
-	 * 5. Check that all the nodes in the expression are non-scary.
-	 */
-	if (!exec_simple_check_node((Node *) tle->expr))
-		return;
-
-	/*
-	 * Yes - this is a simple expression.  Mark it as such, and initialize
-	 * state to "not valid in current transaction".
+	 * Save the simple expression, and initialize state to "not valid in
+	 * current transaction".
 	 */
 	expr->expr_simple_expr = tle->expr;
+	expr->expr_simple_generation = cplan->generation;
 	expr->expr_simple_state = NULL;
 	expr->expr_simple_in_use = false;
 	expr->expr_simple_lxid = InvalidLocalTransactionId;

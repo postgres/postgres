@@ -4445,6 +4445,11 @@ inline_function(Oid funcid, Oid result_type, Oid result_collid,
 
 	/*
 	 * The single command must be a simple "SELECT expression".
+	 *
+	 * Note: if you change the tests involved in this, see also plpgsql's
+	 * exec_simple_check_plan().  That generally needs to have the same idea
+	 * of what's a "simple expression", so that inlining a function that
+	 * previously wasn't inlined won't change plpgsql's conclusion.
 	 */
 	if (!IsA(querytree, Query) ||
 		querytree->commandType != CMD_SELECT ||
