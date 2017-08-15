@@ -318,18 +318,15 @@ add_paths_to_joinrel(PlannerInfo *root,
  */
 static inline bool
 allow_star_schema_join(PlannerInfo *root,
-					   Path *outer_path,
-					   Path *inner_path)
+					   Relids outerrelids,
+					   Relids inner_paramrels)
 {
-	Relids		innerparams = PATH_REQ_OUTER(inner_path);
-	Relids		outerrelids = outer_path->parent->relids;
-
 	/*
 	 * It's a star-schema case if the outer rel provides some but not all of
 	 * the inner rel's parameterization.
 	 */
-	return (bms_overlap(innerparams, outerrelids) &&
-			bms_nonempty_difference(innerparams, outerrelids));
+	return (bms_overlap(inner_paramrels, outerrelids) &&
+			bms_nonempty_difference(inner_paramrels, outerrelids));
 }
 
 /*
@@ -348,6 +345,12 @@ try_nestloop_path(PlannerInfo *root,
 {
 	Relids		required_outer;
 	JoinCostWorkspace workspace;
+	RelOptInfo *innerrel = inner_path->parent;
+	RelOptInfo *outerrel = outer_path->parent;
+	Relids		innerrelids = innerrel->relids;
+	Relids		outerrelids = outerrel->relids;
+	Relids		inner_paramrels = PATH_REQ_OUTER(inner_path);
+	Relids		outer_paramrels = PATH_REQ_OUTER(outer_path);
 
 	/*
 	 * Check to see if proposed path is still parameterized, and reject if the
@@ -356,14 +359,12 @@ try_nestloop_path(PlannerInfo *root,
 	 * doesn't like the look of it, which could only happen if the nestloop is
 	 * still parameterized.
 	 */
-	required_outer = calc_nestloop_required_outer(outer_path,
-												  inner_path);
+	required_outer = calc_nestloop_required_outer(outerrelids, outer_paramrels,
+												  innerrelids, inner_paramrels);
 	if (required_outer &&
 		((!bms_overlap(required_outer, extra->param_source_rels) &&
-		  !allow_star_schema_join(root, outer_path, inner_path)) ||
-		 have_dangerous_phv(root,
-							outer_path->parent->relids,
-							PATH_REQ_OUTER(inner_path))))
+		  !allow_star_schema_join(root, outerrelids, inner_paramrels)) ||
+		 have_dangerous_phv(root, outerrelids, inner_paramrels)))
 	{
 		/* Waste no memory when we reject a path here */
 		bms_free(required_outer);

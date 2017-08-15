@@ -1993,14 +1993,15 @@ create_foreignscan_path(PlannerInfo *root, RelOptInfo *rel,
  * Note: result must not share storage with either input
  */
 Relids
-calc_nestloop_required_outer(Path *outer_path, Path *inner_path)
+calc_nestloop_required_outer(Relids outerrelids,
+							 Relids outer_paramrels,
+							 Relids innerrelids,
+							 Relids inner_paramrels)
 {
-	Relids		outer_paramrels = PATH_REQ_OUTER(outer_path);
-	Relids		inner_paramrels = PATH_REQ_OUTER(inner_path);
 	Relids		required_outer;
 
 	/* inner_path can require rels from outer path, but not vice versa */
-	Assert(!bms_overlap(outer_paramrels, inner_path->parent->relids));
+	Assert(!bms_overlap(outer_paramrels, innerrelids));
 	/* easy case if inner path is not parameterized */
 	if (!inner_paramrels)
 		return bms_copy(outer_paramrels);
@@ -2008,7 +2009,7 @@ calc_nestloop_required_outer(Path *outer_path, Path *inner_path)
 	required_outer = bms_union(outer_paramrels, inner_paramrels);
 	/* ... and remove any mention of now-satisfied outer rels */
 	required_outer = bms_del_members(required_outer,
-									 outer_path->parent->relids);
+									 outerrelids);
 	/* maintain invariant that required_outer is exactly NULL if empty */
 	if (bms_is_empty(required_outer))
 	{

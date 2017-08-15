@@ -1208,7 +1208,9 @@ equalPartitionDescs(PartitionKey key, PartitionDesc partdesc1,
 			if (partdesc2->boundinfo == NULL)
 				return false;
 
-			if (!partition_bounds_equal(key, partdesc1->boundinfo,
+			if (!partition_bounds_equal(key->partnatts, key->parttyplen,
+										key->parttypbyval,
+										partdesc1->boundinfo,
 										partdesc2->boundinfo))
 				return false;
 		}
