@@ -55,7 +55,8 @@
 typedef struct
 {
 	PlannerInfo *root;
-	AppendRelInfo *appinfo;
+	int			nappinfos;
+	AppendRelInfo **appinfos;
 } adjust_appendrel_attrs_context;
 
 static Path *recurse_set_operations(Node *setOp, PlannerInfo *root,
@@ -107,7 +108,8 @@ static Bitmapset *translate_col_privs(const Bitmapset *parent_privs,
 					List *translated_vars);
 static Node *adjust_appendrel_attrs_mutator(Node *node,
 							   adjust_appendrel_attrs_context *context);
-static Relids adjust_relid_set(Relids relids, Index oldrelid, Index newrelid);
+static Relids adjust_child_relids(Relids relids, int nappinfos,
+					AppendRelInfo **appinfos);
 static List *adjust_inherited_tlist(List *tlist,
 					   AppendRelInfo *context);
 
@@ -1775,10 +1777,10 @@ translate_col_privs(const Bitmapset *parent_privs,
 
 /*
  * adjust_appendrel_attrs
- *	  Copy the specified query or expression and translate Vars referring
- *	  to the parent rel of the specified AppendRelInfo to refer to the
- *	  child rel instead.  We also update rtindexes appearing outside Vars,
- *	  such as resultRelation and jointree relids.
+ *	  Copy the specified query or expression and translate Vars referring to a
+ *	  parent rel to refer to the corresponding child rel instead.  We also
+ *	  update rtindexes appearing outside Vars, such as resultRelation and
+ *	  jointree relids.
  *
  * Note: this is only applied after conversion of sublinks to subplans,
  * so we don't need to cope with recursion into sub-queries.
@@ -1787,13 +1789,18 @@ translate_col_privs(const Bitmapset *parent_privs,
  * maybe we should try to fold the two routines together.
  */
 Node *
-adjust_appendrel_attrs(PlannerInfo *root, Node *node, AppendRelInfo *appinfo)
+adjust_appendrel_attrs(PlannerInfo *root, Node *node, int nappinfos,
+					   AppendRelInfo **appinfos)
 {
 	Node	   *result;
 	adjust_appendrel_attrs_context context;
 
 	context.root = root;
-	context.appinfo = appinfo;
+	context.nappinfos = nappinfos;
+	context.appinfos = appinfos;
+
+	/* If there's nothing to adjust, don't call this function. */
+	Assert(nappinfos >= 1 && appinfos != NULL);
 
 	/*
 	 * Must be prepared to start with a Query or a bare expression tree.
@@ -1801,20 +1808,28 @@ adjust_appendrel_attrs(PlannerInfo *root, Node *node, AppendRelInfo *appinfo)
 	if (node && IsA(node, Query))
 	{
 		Query	   *newnode;
+		int			cnt;
 
 		newnode = query_tree_mutator((Query *) node,
 									 adjust_appendrel_attrs_mutator,
 									 (void *) &context,
 									 QTW_IGNORE_RC_SUBQUERIES);
-		if (newnode->resultRelation == appinfo->parent_relid)
+		for (cnt = 0; cnt < nappinfos; cnt++)
 		{
-			newnode->resultRelation = appinfo->child_relid;
-			/* Fix tlist resnos too, if it's inherited UPDATE */
-			if (newnode->commandType == CMD_UPDATE)
-				newnode->targetList =
-					adjust_inherited_tlist(newnode->targetList,
-										   appinfo);
+			AppendRelInfo *appinfo = appinfos[cnt];
+
+			if (newnode->resultRelation == appinfo->parent_relid)
+			{
+				newnode->resultRelation = appinfo->child_relid;
+				/* Fix tlist resnos too, if it's inherited UPDATE */
+				if (newnode->commandType == CMD_UPDATE)
+					newnode->targetList =
+						adjust_inherited_tlist(newnode->targetList,
+											   appinfo);
+				break;
+			}
 		}
+
 		result = (Node *) newnode;
 	}
 	else
@@ -1827,16 +1842,27 @@ static Node *
 adjust_appendrel_attrs_mutator(Node *node,
 							   adjust_appendrel_attrs_context *context)
 {
-	AppendRelInfo *appinfo = context->appinfo;
+	AppendRelInfo **appinfos = context->appinfos;
+	int			nappinfos = context->nappinfos;
+	int			cnt;
 
 	if (node == NULL)
 		return NULL;
 	if (IsA(node, Var))
 	{
 		Var		   *var = (Var *) copyObject(node);
+		AppendRelInfo *appinfo = NULL;
 
-		if (var->varlevelsup == 0 &&
-			var->varno == appinfo->parent_relid)
+		for (cnt = 0; cnt < nappinfos; cnt++)
+		{
+			if (var->varno == appinfos[cnt]->parent_relid)
+			{
+				appinfo = appinfos[cnt];
+				break;
+			}
+		}
+
+		if (var->varlevelsup == 0 && appinfo)
 		{
 			var->varno = appinfo->child_relid;
 			var->varnoold = appinfo->child_relid;
@@ -1916,29 +1942,54 @@ adjust_appendrel_attrs_mutator(Node *node,
 	{
 		CurrentOfExpr *cexpr = (CurrentOfExpr *) copyObject(node);
 
-		if (cexpr->cvarno == appinfo->parent_relid)
-			cexpr->cvarno = appinfo->child_relid;
+		for (cnt = 0; cnt < nappinfos; cnt++)
+		{
+			AppendRelInfo *appinfo = appinfos[cnt];
+
+			if (cexpr->cvarno == appinfo->parent_relid)
+			{
+				cexpr->cvarno = appinfo->child_relid;
+				break;
+			}
+		}
 		return (Node *) cexpr;
 	}
 	if (IsA(node, RangeTblRef))
 	{
 		RangeTblRef *rtr = (RangeTblRef *) copyObject(node);
 
-		if (rtr->rtindex == appinfo->parent_relid)
-			rtr->rtindex = appinfo->child_relid;
+		for (cnt = 0; cnt < nappinfos; cnt++)
+		{
+			AppendRelInfo *appinfo = appinfos[cnt];
+
+			if (rtr->rtindex == appinfo->parent_relid)
+			{
+				rtr->rtindex = appinfo->child_relid;
+				break;
+			}
+		}
 		return (Node *) rtr;
 	}
 	if (IsA(node, JoinExpr))
 	{
 		/* Copy the JoinExpr node with correct mutation of subnodes */
 		JoinExpr   *j;
+		AppendRelInfo *appinfo;
 
 		j = (JoinExpr *) expression_tree_mutator(node,
 												 adjust_appendrel_attrs_mutator,
 												 (void *) context);
 		/* now fix JoinExpr's rtindex (probably never happens) */
-		if (j->rtindex == appinfo->parent_relid)
-			j->rtindex = appinfo->child_relid;
+		for (cnt = 0; cnt < nappinfos; cnt++)
+		{
+			appinfo = appinfos[cnt];
+
+			if (j->rtindex == appinfo->parent_relid)
+			{
+				j->rtindex = appinfo->child_relid;
+				break;
+			}
+		}
 		return (Node *) j;
 	}
 	if (IsA(node, PlaceHolderVar))
@@ -1951,9 +2002,8 @@ adjust_appendrel_attrs_mutator(Node *node,
 														 (void *) context);
 		/* now fix PlaceHolderVar's relid sets */
 		if (phv->phlevelsup == 0)
-			phv->phrels = adjust_relid_set(phv->phrels,
-										   appinfo->parent_relid,
-										   appinfo->child_relid);
+			phv->phrels = adjust_child_relids(phv->phrels, context->nappinfos,
+											  context->appinfos);
 		return (Node *) phv;
 	}
 	/* Shouldn't need to handle planner auxiliary nodes here */
@@ -1984,24 +2034,24 @@ adjust_appendrel_attrs_mutator(Node *node,
 			adjust_appendrel_attrs_mutator((Node *) oldinfo->orclause, context);
 
 		/* adjust relid sets too */
-		newinfo->clause_relids = adjust_relid_set(oldinfo->clause_relids,
-												  appinfo->parent_relid,
-												  appinfo->child_relid);
-		newinfo->required_relids = adjust_relid_set(oldinfo->required_relids,
-													appinfo->parent_relid,
-													appinfo->child_relid);
-		newinfo->outer_relids = adjust_relid_set(oldinfo->outer_relids,
-												 appinfo->parent_relid,
-												 appinfo->child_relid);
-		newinfo->nullable_relids = adjust_relid_set(oldinfo->nullable_relids,
-													appinfo->parent_relid,
-													appinfo->child_relid);
-		newinfo->left_relids = adjust_relid_set(oldinfo->left_relids,
-												appinfo->parent_relid,
-												appinfo->child_relid);
-		newinfo->right_relids = adjust_relid_set(oldinfo->right_relids,
-												 appinfo->parent_relid,
-												 appinfo->child_relid);
+		newinfo->clause_relids = adjust_child_relids(oldinfo->clause_relids,
+													 context->nappinfos,
+													 context->appinfos);
+		newinfo->required_relids = adjust_child_relids(oldinfo->required_relids,
+													   context->nappinfos,
+													   context->appinfos);
+		newinfo->outer_relids = adjust_child_relids(oldinfo->outer_relids,
+													context->nappinfos,
+													context->appinfos);
+		newinfo->nullable_relids = adjust_child_relids(oldinfo->nullable_relids,
+													   context->nappinfos,
+													   context->appinfos);
+		newinfo->left_relids = adjust_child_relids(oldinfo->left_relids,
+												   context->nappinfos,
+												   context->appinfos);
+		newinfo->right_relids = adjust_child_relids(oldinfo->right_relids,
+													context->nappinfos,
+													context->appinfos);
 
 		/*
 		 * Reset cached derivative fields, since these might need to have
@@ -2033,19 +2083,36 @@ adjust_appendrel_attrs_mutator(Node *node,
 }
 
 /*
- * Substitute newrelid for oldrelid in a Relid set
+ * Substitute child relids for parent relids in a Relid set.  The array of
+ * appinfos specifies the substitutions to be performed.
  */
-static Relids
-adjust_relid_set(Relids relids, Index oldrelid, Index newrelid)
+Relids
+adjust_child_relids(Relids relids, int nappinfos, AppendRelInfo **appinfos)
 {
-	if (bms_is_member(oldrelid, relids))
+	Bitmapset  *result = NULL;
+	int			cnt;
+
+	for (cnt = 0; cnt < nappinfos; cnt++)
 	{
-		/* Ensure we have a modifiable copy */
-		relids = bms_copy(relids);
-		/* Remove old, add new */
-		relids = bms_del_member(relids, oldrelid);
-		relids = bms_add_member(relids, newrelid);
+		AppendRelInfo *appinfo = appinfos[cnt];
+
+		/* Remove parent, add child */
+		if (bms_is_member(appinfo->parent_relid, relids))
+		{
+			/* Make a copy if we are changing the set. */
+			if (!result)
+				result = bms_copy(relids);
+
+			result = bms_del_member(result, appinfo->parent_relid);
+			result = bms_add_member(result, appinfo->child_relid);
+		}
 	}
+
+	/* If we made any changes, return the modified copy. */
+	if (result)
+		return result;
+
+	/* Otherwise, return the original set without modification. */
 	return relids;
 }
 
@@ -2150,21 +2217,77 @@ adjust_inherited_tlist(List *tlist, AppendRelInfo *context)
  * adjust_appendrel_attrs_multilevel
  *	  Apply Var translations from a toplevel appendrel parent down to a child.
  *
- * In some cases we need to translate expressions referencing a baserel
+ * In some cases we need to translate expressions referencing a parent relation
  * to reference an appendrel child that's multiple levels removed from it.
  */
 Node *
 adjust_appendrel_attrs_multilevel(PlannerInfo *root, Node *node,
-								  RelOptInfo *child_rel)
+								  Relids child_relids,
+								  Relids top_parent_relids)
 {
-	AppendRelInfo *appinfo = find_childrel_appendrelinfo(root, child_rel);
-	RelOptInfo *parent_rel = find_base_rel(root, appinfo->parent_relid);
+	AppendRelInfo **appinfos;
+	Bitmapset  *parent_relids = NULL;
+	int			nappinfos;
+	int			cnt;
 
-	/* If parent is also a child, first recurse to apply its translations */
-	if (IS_OTHER_REL(parent_rel))
-		node = adjust_appendrel_attrs_multilevel(root, node, parent_rel);
-	else
-		Assert(parent_rel->reloptkind == RELOPT_BASEREL);
+	Assert(bms_num_members(child_relids) == bms_num_members(top_parent_relids));
+
+	appinfos = find_appinfos_by_relids(root, child_relids, &nappinfos);
+
+	/* Construct relids set for the immediate parent of given child. */
+	for (cnt = 0; cnt < nappinfos; cnt++)
+	{
+		AppendRelInfo *appinfo = appinfos[cnt];
+
+		parent_relids = bms_add_member(parent_relids, appinfo->parent_relid);
+	}
+
+	/* Recurse if immediate parent is not the top parent. */
+	if (!bms_equal(parent_relids, top_parent_relids))
+		node = adjust_appendrel_attrs_multilevel(root, node, parent_relids,
+												 top_parent_relids);
+
 	/* Now translate for this child */
-	return adjust_appendrel_attrs(root, node, appinfo);
+	node = adjust_appendrel_attrs(root, node, nappinfos, appinfos);
+
+	pfree(appinfos);
+
+	return node;
+}
+
+/*
+ * find_appinfos_by_relids
+ * 		Find AppendRelInfo structures for all relations specified by relids.
+ *
+ * The AppendRelInfos are returned in an array, which can be pfree'd by the
+ * caller. *nappinfos is set to the the number of entries in the array.
+ */
+AppendRelInfo **
+find_appinfos_by_relids(PlannerInfo *root, Relids relids, int *nappinfos)
+{
+	ListCell   *lc;
+	AppendRelInfo **appinfos;
+	int			cnt = 0;
+
+	*nappinfos = bms_num_members(relids);
+	appinfos = (AppendRelInfo **) palloc(sizeof(AppendRelInfo *) * *nappinfos);
+
+	foreach(lc, root->append_rel_list)
+	{
+		AppendRelInfo *appinfo = lfirst(lc);
+
+		if (bms_is_member(appinfo->child_relid, relids))
+		{
+			appinfos[cnt] = appinfo;
+			cnt++;
+
+			/* Stop when we have gathered all the AppendRelInfos. */
+			if (cnt == *nappinfos)
+				return appinfos;
+		}
+	}
+
+	/* Should have found the entries ... */
+	elog(ERROR, "did not find all requested child rels in append_rel_list");
+	return NULL;				/* not reached */
 }

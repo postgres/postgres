@@ -942,7 +942,7 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 			Assert(IsA(rinfo, RestrictInfo));
 			childqual = adjust_appendrel_attrs(root,
 											   (Node *) rinfo->clause,
-											   appinfo);
+											   1, &appinfo);
 			childqual = eval_const_expressions(root, childqual);
 			/* check for flat-out constant */
 			if (childqual && IsA(childqual, Const))
@@ -1061,11 +1061,11 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 		childrel->joininfo = (List *)
 			adjust_appendrel_attrs(root,
 								   (Node *) rel->joininfo,
-								   appinfo);
+								   1, &appinfo);
 		childrel->reltarget->exprs = (List *)
 			adjust_appendrel_attrs(root,
 								   (Node *) rel->reltarget->exprs,
-								   appinfo);
+								   1, &appinfo);
 
 		/*
 		 * We have to make child entries in the EquivalenceClass data

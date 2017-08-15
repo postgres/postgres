@@ -1329,7 +1329,8 @@ generate_join_implied_equalities_broken(PlannerInfo *root,
 	if (IS_OTHER_REL(inner_rel) && result != NIL)
 		result = (List *) adjust_appendrel_attrs_multilevel(root,
 															(Node *) result,
-															inner_rel);
+															inner_rel->relids,
+															inner_rel->top_parent_relids);
 
 	return result;
 }
@@ -2112,7 +2113,7 @@ add_child_rel_equivalences(PlannerInfo *root,
 				child_expr = (Expr *)
 					adjust_appendrel_attrs(root,
 										   (Node *) cur_em->em_expr,
-										   appinfo);
+										   1, &appinfo);
 
 				/*
 				 * Transform em_relids to match.  Note we do *not* do

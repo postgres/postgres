@@ -1142,7 +1142,7 @@ inheritance_planner(PlannerInfo *root)
 		subroot->parse = (Query *)
 			adjust_appendrel_attrs(root,
 								   (Node *) parse,
-								   appinfo);
+								   1, &appinfo);
 
 		/*
 		 * If there are securityQuals attached to the parent, move them to the

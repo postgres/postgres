@@ -53,9 +53,13 @@ extern RelOptInfo *plan_set_operations(PlannerInfo *root);
 extern void expand_inherited_tables(PlannerInfo *root);
 
 extern Node *adjust_appendrel_attrs(PlannerInfo *root, Node *node,
-					   AppendRelInfo *appinfo);
+					   int nappinfos, AppendRelInfo **appinfos);
 
 extern Node *adjust_appendrel_attrs_multilevel(PlannerInfo *root, Node *node,
-								  RelOptInfo *child_rel);
+								  Relids child_relids,
+								  Relids top_parent_relids);
+
+extern AppendRelInfo **find_appinfos_by_relids(PlannerInfo *root,
+						Relids relids, int *nappinfos);
 
 #endif							/* PREP_H */
