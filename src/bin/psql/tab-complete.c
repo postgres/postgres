@@ -3532,6 +3532,8 @@ psql_completion(const char *text, int start, int end)
 		}
 		else if (TailMatchesCS1("linestyle"))
 			COMPLETE_WITH_LIST_CS3("ascii", "old-ascii", "unicode");
+		else if (TailMatchesCS1("pager"))
+			COMPLETE_WITH_LIST_CS3("on", "off", "always");
 		else if (TailMatchesCS1("unicode_border_linestyle|"
 								"unicode_column_linestyle|"
 								"unicode_header_linestyle"))
