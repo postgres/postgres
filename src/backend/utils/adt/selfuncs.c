@@ -5009,6 +5009,17 @@ get_variable_numdistinct(VariableStatData *vardata, bool *isdefault)
 		 */
 		stadistinct = 2.0;
 	}
+	else if (vardata->rel && vardata->rel->rtekind == RTE_VALUES)
+	{
+		/*
+		 * If the Var represents a column of a VALUES RTE, assume it's unique.
+		 * This could of course be very wrong, but it should tend to be true
+		 * in well-written queries.  We could consider examining the VALUES'
+		 * contents to get some real statistics; but that only works if the
+		 * entries are all constants, and it would be pretty expensive anyway.
+		 */
+		stadistinct = -1.0;		/* unique (and all non null) */
+	}
 	else
 	{
 		/*
