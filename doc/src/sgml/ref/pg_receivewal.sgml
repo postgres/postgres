@@ -73,6 +73,12 @@ PostgreSQL documentation
    as possible. To avoid this behavior, use the <literal>-n</literal>
    parameter.
   </para>
+
+  <para>
+   In the absence of fatal errors, <application>pg_receivewal</application>
+   will run until terminated by the <systemitem>SIGINT</systemitem> signal
+   (<keycombo action="simul"><keycap>Control</><keycap>C</></>).
+  </para>
  </refsect1>
 
  <refsect1>
@@ -345,6 +351,18 @@ PostgreSQL documentation
 
     </variablelist>
    </para>
+
+ </refsect1>
+
+ <refsect1>
+  <title>Exit Status</title>
+
+  <para>
+   <application>pg_receivewal</application> will exit with status 0 when
+   terminated by the <systemitem>SIGINT</systemitem> signal.  (That is the
+   normal way to end it.  Hence it is not an error.)  For fatal errors or
+   other signals, the exit status will be nonzero.
+  </para>
 
  </refsect1>
 
