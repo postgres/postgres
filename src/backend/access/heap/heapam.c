@@ -1638,7 +1638,7 @@ heap_parallelscan_initialize(ParallelHeapScanDesc target, Relation relation,
 		target->phs_nblocks > NBuffers / 4;
 	SpinLockInit(&target->phs_mutex);
 	target->phs_startblock = InvalidBlockNumber;
-	pg_atomic_write_u64(&target->phs_nallocated, 0);
+	pg_atomic_init_u64(&target->phs_nallocated, 0);
 	SerializeSnapshot(snapshot, target->phs_snapshot_data);
 }
 
