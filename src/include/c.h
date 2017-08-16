@@ -211,8 +211,6 @@ typedef char bool;
 #endif
 #endif							/* not C++ */
 
-typedef bool *BoolPtr;
-
 #ifndef TRUE
 #define TRUE	1
 #endif
