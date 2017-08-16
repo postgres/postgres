@@ -48,24 +48,47 @@ def is_mark(codepoint):
     return codepoint.general_category in ("Mn", "Me", "Mc")
 
 def is_letter_with_marks(codepoint, table):
-    """Returns true for plain letters combined with one or more marks."""
+    """Returns true for letters combined with one or more marks."""
     # See http://www.unicode.org/reports/tr44/tr44-14.html#General_Category_Values
-    return len(codepoint.combining_ids) > 1 and \
-           is_plain_letter(table[codepoint.combining_ids[0]]) and \
-           all(is_mark(table[i]) for i in codepoint.combining_ids[1:])
+
+    # Letter may have no combining characters, in which case it has
+    # no marks.
+    if len(codepoint.combining_ids) == 1:
+        return False
+
+    # A letter without diacritical marks has none of them.
+    if any(is_mark(table[i]) for i in codepoint.combining_ids[1:]) is False:
+        return False
+
+    # Check if the base letter of this letter has marks.
+    codepoint_base = codepoint.combining_ids[0]
+    if (is_plain_letter(table[codepoint_base]) is False and \
+        is_letter_with_marks(table[codepoint_base], table) is False):
+        return False
+
+    return True
 
 def is_letter(codepoint, table):
     """Return true for letter with or without diacritical marks."""
     return is_plain_letter(codepoint) or is_letter_with_marks(codepoint, table)
 
 def get_plain_letter(codepoint, table):
-    """Return the base codepoint without marks."""
+    """Return the base codepoint without marks. If this codepoint has more
+    than one combining character, do a recursive lookup on the table to
+    find out its plain base letter."""
     if is_letter_with_marks(codepoint, table):
-        return table[codepoint.combining_ids[0]]
+        if len(table[codepoint.combining_ids[0]].combining_ids) > 1:
+            return get_plain_letter(table[codepoint.combining_ids[0]], table)
+        elif is_plain_letter(table[codepoint.combining_ids[0]]):
+            return table[codepoint.combining_ids[0]]
+
+        # Should not come here
+        assert(False)
     elif is_plain_letter(codepoint):
         return codepoint
-    else:
-        raise "mu"
+
+    # Should not come here
+    assert(False)
 
 def is_ligature(codepoint, table):
     """Return true for letters combined with letters."""
