@@ -27,7 +27,7 @@
  *	  -------	------------------------------------------------
  *		0)		pg_config.h and standard system headers
  *		1)		compiler characteristics
- *		2)		bool, true, false, TRUE, FALSE
+ *		2)		bool, true, false
  *		3)		standard system types
  *		4)		IsValid macros for system types
  *		5)		offsetof, lengthof, alignment
@@ -257,7 +257,7 @@
 
 
 /* ----------------------------------------------------------------
- *				Section 2:	bool, true, false, TRUE, FALSE
+ *				Section 2:	bool, true, false
  * ----------------------------------------------------------------
  */
 
@@ -284,14 +284,6 @@ typedef char bool;
 #endif
 
 #endif							/* not C++ */
-
-#ifndef TRUE
-#define TRUE	1
-#endif
-
-#ifndef FALSE
-#define FALSE	0
-#endif
 
 
 /* ----------------------------------------------------------------
