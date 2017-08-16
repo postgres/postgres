@@ -193,7 +193,7 @@ btree_xlog_insert(bool isleaf, bool ismeta, XLogReaderState *record)
 }
 
 static void
-btree_xlog_split(bool onleft, bool isroot, XLogReaderState *record)
+btree_xlog_split(bool onleft, XLogReaderState *record)
 {
 	XLogRecPtr	lsn = record->EndRecPtr;
 	xl_btree_split *xlrec = (xl_btree_split *) XLogRecGetData(record);
@@ -996,16 +996,10 @@ btree_redo(XLogReaderState *record)
 			btree_xlog_insert(false, true, record);
 			break;
 		case XLOG_BTREE_SPLIT_L:
-			btree_xlog_split(true, false, record);
+			btree_xlog_split(true, record);
 			break;
 		case XLOG_BTREE_SPLIT_R:
-			btree_xlog_split(false, false, record);
-			break;
-		case XLOG_BTREE_SPLIT_L_ROOT:
-			btree_xlog_split(true, true, record);
-			break;
-		case XLOG_BTREE_SPLIT_R_ROOT:
-			btree_xlog_split(false, true, record);
+			btree_xlog_split(false, record);
 			break;
 		case XLOG_BTREE_VACUUM:
 			btree_xlog_vacuum(record);

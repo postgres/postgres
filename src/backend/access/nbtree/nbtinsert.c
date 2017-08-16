@@ -980,7 +980,6 @@ _bt_split(Relation rel, Buffer buf, Buffer cbuf, OffsetNumber firstright,
 				rightoff;
 	OffsetNumber maxoff;
 	OffsetNumber i;
-	bool		isroot;
 	bool		isleaf;
 
 	/* Acquire a new page to split into */
@@ -1019,7 +1018,6 @@ _bt_split(Relation rel, Buffer buf, Buffer cbuf, OffsetNumber firstright,
 	lopaque = (BTPageOpaque) PageGetSpecialPointer(leftpage);
 	ropaque = (BTPageOpaque) PageGetSpecialPointer(rightpage);
 
-	isroot = P_ISROOT(oopaque);
 	isleaf = P_ISLEAF(oopaque);
 
 	/* if we're splitting this page, it won't be the root when we're done */
@@ -1330,11 +1328,7 @@ _bt_split(Relation rel, Buffer buf, Buffer cbuf, OffsetNumber firstright,
 							(char *) rightpage + ((PageHeader) rightpage)->pd_upper,
 							((PageHeader) rightpage)->pd_special - ((PageHeader) rightpage)->pd_upper);
 
-		if (isroot)
-			xlinfo = newitemonleft ? XLOG_BTREE_SPLIT_L_ROOT : XLOG_BTREE_SPLIT_R_ROOT;
-		else
-			xlinfo = newitemonleft ? XLOG_BTREE_SPLIT_L : XLOG_BTREE_SPLIT_R;
-
+		xlinfo = newitemonleft ? XLOG_BTREE_SPLIT_L : XLOG_BTREE_SPLIT_R;
 		recptr = XLogInsert(RM_BTREE_ID, xlinfo);
 
 		PageSetLSN(origpage, recptr);
