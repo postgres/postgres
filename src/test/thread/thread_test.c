@@ -22,19 +22,6 @@
 
 #if !defined(IN_CONFIGURE) && !defined(WIN32)
 #include "postgres.h"
-#else
-/* From src/include/c.h" */
-#ifndef bool
-typedef char bool;
-#endif
-
-#ifndef true
-#define true	((bool) 1)
-#endif
-
-#ifndef false
-#define false	((bool) 0)
-#endif
 #endif
 
 #include <stdio.h>
@@ -93,23 +80,23 @@ static volatile int errno2_set = 0;
 #ifndef HAVE_STRERROR_R
 static char *strerror_p1;
 static char *strerror_p2;
-static bool strerror_threadsafe = false;
+static int strerror_threadsafe = 0;
 #endif
 
 #if !defined(WIN32) && !defined(HAVE_GETPWUID_R)
 static struct passwd *passwd_p1;
 static struct passwd *passwd_p2;
-static bool getpwuid_threadsafe = false;
+static int getpwuid_threadsafe = 0;
 #endif
 
 #if !defined(HAVE_GETADDRINFO) && !defined(HAVE_GETHOSTBYNAME_R)
 static struct hostent *hostent_p1;
 static struct hostent *hostent_p2;
 static char myhostname[MAXHOSTNAMELEN];
-static bool gethostbyname_threadsafe = false;
+static int gethostbyname_threadsafe = 0;
 #endif
 
-static bool platform_is_threadsafe = true;
+static int platform_is_threadsafe = 1;
 
 int
 main(int argc, char *argv[])
@@ -187,17 +174,17 @@ main(int argc, char *argv[])
 
 #ifndef HAVE_STRERROR_R
 	if (strerror_p1 != strerror_p2)
-		strerror_threadsafe = true;
+		strerror_threadsafe = 1;
 #endif
 
 #if !defined(WIN32) && !defined(HAVE_GETPWUID_R)
 	if (passwd_p1 != passwd_p2)
-		getpwuid_threadsafe = true;
+		getpwuid_threadsafe = 1;
 #endif
 
 #if !defined(HAVE_GETADDRINFO) && !defined(HAVE_GETHOSTBYNAME_R)
 	if (hostent_p1 != hostent_p2)
-		gethostbyname_threadsafe = true;
+		gethostbyname_threadsafe = 1;
 #endif
 
 	/* close down threads */
@@ -218,7 +205,7 @@ main(int argc, char *argv[])
 	else
 	{
 		printf("not thread-safe. **\n");
-		platform_is_threadsafe = false;
+		platform_is_threadsafe = 0;
 	}
 #endif
 
@@ -233,7 +220,7 @@ main(int argc, char *argv[])
 	else
 	{
 		printf("not thread-safe. **\n");
-		platform_is_threadsafe = false;
+		platform_is_threadsafe = 0;
 	}
 #endif
 
@@ -249,7 +236,7 @@ main(int argc, char *argv[])
 	else
 	{
 		printf("not thread-safe. **\n");
-		platform_is_threadsafe = false;
+		platform_is_threadsafe = 0;
 	}
 #endif
 
