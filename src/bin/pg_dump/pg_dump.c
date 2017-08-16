@@ -15424,7 +15424,7 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 
 			if (tbinfo->ispartition && !dopt->binary_upgrade)
 			{
-				appendPQExpBufferStr(q, "\n");
+				appendPQExpBufferChar(q, '\n');
 				appendPQExpBufferStr(q, tbinfo->partbound);
 			}
 
@@ -17127,8 +17127,7 @@ dumpRule(Archive *fout, RuleInfo *rinfo)
 
 		appendPQExpBuffer(delcmd, "CREATE OR REPLACE VIEW %s.",
 						  fmtId(tbinfo->dobj.namespace->dobj.name));
-		appendPQExpBuffer(delcmd, "%s",
-						  fmtId(tbinfo->dobj.name));
+		appendPQExpBufferStr(delcmd, fmtId(tbinfo->dobj.name));
 		result = createDummyViewAsClause(fout, tbinfo);
 		appendPQExpBuffer(delcmd, " AS\n%s;\n", result->data);
 		destroyPQExpBuffer(result);

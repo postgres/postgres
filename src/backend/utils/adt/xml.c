@@ -3458,8 +3458,8 @@ map_sql_type_to_xmlschema_type(Oid typeoid, int typmod)
 			case BPCHAROID:
 			case VARCHAROID:
 			case TEXTOID:
-				appendStringInfo(&result,
-								 "  <xsd:restriction base=\"xsd:string\">\n");
+				appendStringInfoString(&result,
+									   "  <xsd:restriction base=\"xsd:string\">\n");
 				if (typmod != -1)
 					appendStringInfo(&result,
 									 "    <xsd:maxLength value=\"%d\"/>\n",

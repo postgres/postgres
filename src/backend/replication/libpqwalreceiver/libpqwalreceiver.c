@@ -355,7 +355,7 @@ libpqrcv_startstreaming(WalReceiverConn *conn,
 						 options->slotname);
 
 	if (options->logical)
-		appendStringInfo(&cmd, " LOGICAL");
+		appendStringInfoString(&cmd, " LOGICAL");
 
 	appendStringInfo(&cmd, " %X/%X",
 					 (uint32) (options->startpoint >> 32),
@@ -774,21 +774,21 @@ libpqrcv_create_slot(WalReceiverConn *conn, const char *slotname,
 	appendStringInfo(&cmd, "CREATE_REPLICATION_SLOT \"%s\"", slotname);
 
 	if (temporary)
-		appendStringInfo(&cmd, " TEMPORARY");
+		appendStringInfoString(&cmd, " TEMPORARY");
 
 	if (conn->logical)
 	{
-		appendStringInfo(&cmd, " LOGICAL pgoutput");
+		appendStringInfoString(&cmd, " LOGICAL pgoutput");
 		switch (snapshot_action)
 		{
 			case CRS_EXPORT_SNAPSHOT:
-				appendStringInfo(&cmd, " EXPORT_SNAPSHOT");
+				appendStringInfoString(&cmd, " EXPORT_SNAPSHOT");
 				break;
 			case CRS_NOEXPORT_SNAPSHOT:
-				appendStringInfo(&cmd, " NOEXPORT_SNAPSHOT");
+				appendStringInfoString(&cmd, " NOEXPORT_SNAPSHOT");
 				break;
 			case CRS_USE_SNAPSHOT:
-				appendStringInfo(&cmd, " USE_SNAPSHOT");
+				appendStringInfoString(&cmd, " USE_SNAPSHOT");
 				break;
 		}
 	}

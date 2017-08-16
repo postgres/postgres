@@ -5508,8 +5508,8 @@ conninfo_uri_parse_options(PQconninfoOption *options, const char *uri,
 		if (prevchar != ',')
 			break;
 		++p;					/* advance past comma separator */
-		appendPQExpBufferStr(&hostbuf, ",");
-		appendPQExpBufferStr(&portbuf, ",");
+		appendPQExpBufferChar(&hostbuf, ',');
+		appendPQExpBufferChar(&portbuf, ',');
 	}
 
 	/* Save final values for host and port. */

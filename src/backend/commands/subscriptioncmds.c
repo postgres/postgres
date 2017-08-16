@@ -1117,9 +1117,9 @@ fetch_table_list(WalReceiverConn *wrconn, List *publications)
 	Assert(list_length(publications) > 0);
 
 	initStringInfo(&cmd);
-	appendStringInfo(&cmd, "SELECT DISTINCT t.schemaname, t.tablename\n"
-					 "  FROM pg_catalog.pg_publication_tables t\n"
-					 " WHERE t.pubname IN (");
+	appendStringInfoString(&cmd, "SELECT DISTINCT t.schemaname, t.tablename\n"
+						   "  FROM pg_catalog.pg_publication_tables t\n"
+						   " WHERE t.pubname IN (");
 	first = true;
 	foreach(lc, publications)
 	{
@@ -1130,9 +1130,9 @@ fetch_table_list(WalReceiverConn *wrconn, List *publications)
 		else
 			appendStringInfoString(&cmd, ", ");
 
-		appendStringInfo(&cmd, "%s", quote_literal_cstr(pubname));
+		appendStringInfoString(&cmd, quote_literal_cstr(pubname));
 	}
-	appendStringInfoString(&cmd, ")");
+	appendStringInfoChar(&cmd, ')');
 
 	res = walrcv_exec(wrconn, cmd.data, 2, tableRow);
 	pfree(cmd.data);

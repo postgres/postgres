@@ -3177,7 +3177,7 @@ describeRoles(const char *pattern, bool verbose, bool showSystem)
 		if (strcmp(PQgetvalue(res, i, 7), "") != 0)
 		{
 			if (buf.len > 0)
-				appendPQExpBufferStr(&buf, "\n");
+				appendPQExpBufferChar(&buf, '\n');
 			appendPQExpBufferStr(&buf, _("Password valid until "));
 			appendPQExpBufferStr(&buf, PQgetvalue(res, i, 7));
 		}
