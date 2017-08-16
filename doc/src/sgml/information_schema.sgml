@@ -5456,7 +5456,7 @@ ORDER BY c.ordinal_position;
       <entry>
        Type of the table: <literal>BASE TABLE</literal> for a
        persistent base table (the normal table type),
-       <literal>VIEW</literal> for a view, <literal>FOREIGN TABLE</literal>
+       <literal>VIEW</literal> for a view, <literal>FOREIGN</literal>
        for a foreign table, or
        <literal>LOCAL TEMPORARY</literal> for a temporary table
       </entry>
