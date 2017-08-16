@@ -1056,7 +1056,7 @@ get_primary_key_attnos(Oid relid, bool deferrableOk, Oid *constraintOid)
 
 /*
  * Determine whether a relation can be proven functionally dependent on
- * a set of grouping columns.  If so, return TRUE and add the pg_constraint
+ * a set of grouping columns.  If so, return true and add the pg_constraint
  * OIDs of the constraints needed for the proof to the *constraintDeps list.
  *
  * grouping_columns is a list of grouping expressions, in which columns of

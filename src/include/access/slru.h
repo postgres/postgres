@@ -37,7 +37,7 @@
 
 /*
  * Page status codes.  Note that these do not include the "dirty" bit.
- * page_dirty can be TRUE only in the VALID or WRITE_IN_PROGRESS states;
+ * page_dirty can be true only in the VALID or WRITE_IN_PROGRESS states;
  * in the latter case it implies that the page has been re-dirtied since
  * the write started.
  */

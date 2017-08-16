@@ -223,9 +223,9 @@
       <para>
        <literal>pmatch</literal> is an output argument for use when partial match
        is supported.  To use it, <function>extractQuery</function> must allocate
-       an array of <literal>*nkeys</literal> booleans and store its address at
-       <literal>*pmatch</literal>.  Each element of the array should be set to TRUE
-       if the corresponding key requires partial match, FALSE if not.
+       an array of <literal>*nkeys</literal> bools and store its address at
+       <literal>*pmatch</literal>.  Each element of the array should be set to true
+       if the corresponding key requires partial match, false if not.
        If <literal>*pmatch</literal> is set to <symbol>NULL</symbol> then GIN assumes partial match
        is not required.  The variable is initialized to <symbol>NULL</symbol> before call,
        so this argument can simply be ignored by operator classes that do
@@ -267,7 +267,7 @@
         Datum queryKeys[], bool nullFlags[])</function></term>
      <listitem>
       <para>
-       Returns TRUE if an indexed item satisfies the query operator with
+       Returns true if an indexed item satisfies the query operator with
        strategy number <literal>n</literal> (or might satisfy it, if the recheck
        indication is returned).  This function does not have direct access
        to the indexed item's value, since <acronym>GIN</acronym> does not
@@ -277,8 +277,8 @@
        <literal>nkeys</literal>, which is the same as the number of keys previously
        returned by <function>extractQuery</function> for this <literal>query</literal> datum.
        Each element of the
-       <literal>check</literal> array is TRUE if the indexed item contains the
-       corresponding query key, i.e., if (check[i] == TRUE) the i-th key of the
+       <literal>check</literal> array is true if the indexed item contains the
+       corresponding query key, i.e., if (check[i] == true) the i-th key of the
        <function>extractQuery</function> result array is present in the indexed item.
        The original <literal>query</literal> datum is
        passed in case the <function>consistent</function> method needs to consult it,
@@ -291,7 +291,7 @@
       <para>
        When <function>extractQuery</function> returns a null key in
        <literal>queryKeys[]</literal>, the corresponding <literal>check[]</literal> element
-       is TRUE if the indexed item contains a null key; that is, the
+       is true if the indexed item contains a null key; that is, the
        semantics of <literal>check[]</literal> are like <literal>IS NOT DISTINCT
        FROM</literal>.  The <function>consistent</function> function can examine the
        corresponding <literal>nullFlags[]</literal> element if it needs to tell
@@ -299,13 +299,13 @@
       </para>
 
       <para>
-       On success, <literal>*recheck</literal> should be set to TRUE if the heap
-       tuple needs to be rechecked against the query operator, or FALSE if
-       the index test is exact.  That is, a FALSE return value guarantees
-       that the heap tuple does not match the query; a TRUE return value with
-       <literal>*recheck</literal> set to FALSE guarantees that the heap tuple does
-       match the query; and a TRUE return value with
-       <literal>*recheck</literal> set to TRUE means that the heap tuple might match
+       On success, <literal>*recheck</literal> should be set to true if the heap
+       tuple needs to be rechecked against the query operator, or false if
+       the index test is exact.  That is, a false return value guarantees
+       that the heap tuple does not match the query; a true return value with
+       <literal>*recheck</literal> set to false guarantees that the heap tuple does
+       match the query; and a true return value with
+       <literal>*recheck</literal> set to true means that the heap tuple might match
        the query, so it needs to be fetched and rechecked by evaluating the
        query operator directly against the originally indexed item.
       </para>

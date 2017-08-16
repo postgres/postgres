@@ -342,13 +342,13 @@ sortDumpableObjects(DumpableObject **objs, int numObjs,
  * The input is the list of numObjs objects in objs[].  This list is not
  * modified.
  *
- * Returns TRUE if able to build an ordering that satisfies all the
- * constraints, FALSE if not (there are contradictory constraints).
+ * Returns true if able to build an ordering that satisfies all the
+ * constraints, false if not (there are contradictory constraints).
  *
- * On success (TRUE result), ordering[] is filled with a sorted array of
+ * On success (true result), ordering[] is filled with a sorted array of
  * DumpableObject pointers, of length equal to the input list length.
  *
- * On failure (FALSE result), ordering[] is filled with an unsorted array of
+ * On failure (false result), ordering[] is filled with an unsorted array of
  * DumpableObject pointers of length *nOrdering, listing the objects that
  * prevented the sort from being completed.  In general, these objects either
  * participate directly in a dependency cycle, or are depended on by objects

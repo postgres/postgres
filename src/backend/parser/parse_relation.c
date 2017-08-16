@@ -2157,8 +2157,8 @@ addRTEtoQuery(ParseState *pstate, RangeTblEntry *rte,
  *
  * This creates lists of an RTE's column names (aliases if provided, else
  * real names) and Vars for each column.  Only user columns are considered.
- * If include_dropped is FALSE then dropped columns are omitted from the
- * results.  If include_dropped is TRUE then empty strings and NULL constants
+ * If include_dropped is false then dropped columns are omitted from the
+ * results.  If include_dropped is true then empty strings and NULL constants
  * (not Vars!) are returned for dropped columns.
  *
  * rtindex, sublevels_up, and location are the varno, varlevelsup, and location
@@ -3315,7 +3315,7 @@ errorMissingColumn(ParseState *pstate,
 
 
 /*
- * Examine a fully-parsed query, and return TRUE iff any relation underlying
+ * Examine a fully-parsed query, and return true iff any relation underlying
  * the query is a temporary relation (table, view, or materialized view).
  */
 bool

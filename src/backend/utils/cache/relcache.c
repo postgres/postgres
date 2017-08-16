@@ -227,7 +227,7 @@ do { \
 typedef struct opclasscacheent
 {
 	Oid			opclassoid;		/* lookup key: OID of opclass */
-	bool		valid;			/* set TRUE after successful fill-in */
+	bool		valid;			/* set true after successful fill-in */
 	StrategyNumber numSupport;	/* max # of support procs (from pg_am) */
 	Oid			opcfamily;		/* OID of opclass's family */
 	Oid			opcintype;		/* OID of opclass's declared input type */
@@ -5358,9 +5358,9 @@ errtableconstraint(Relation rel, const char *conname)
  * load_relcache_init_file -- attempt to load cache from the shared
  * or local cache init file
  *
- * If successful, return TRUE and set criticalRelcachesBuilt or
+ * If successful, return true and set criticalRelcachesBuilt or
  * criticalSharedRelcachesBuilt to true.
- * If not successful, return FALSE.
+ * If not successful, return false.
  *
  * NOTE: we assume we are already switched into CacheMemoryContext.
  */

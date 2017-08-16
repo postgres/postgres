@@ -225,13 +225,13 @@ ECPGtrans(int lineno, const char *connection_name, const char *transaction)
 		{
 			res = PQexec(con->connection, "begin transaction");
 			if (!ecpg_check_PQresult(res, lineno, con->connection, ECPG_COMPAT_PGSQL))
-				return FALSE;
+				return false;
 			PQclear(res);
 		}
 
 		res = PQexec(con->connection, transaction);
 		if (!ecpg_check_PQresult(res, lineno, con->connection, ECPG_COMPAT_PGSQL))
-			return FALSE;
+			return false;
 		PQclear(res);
 	}
 

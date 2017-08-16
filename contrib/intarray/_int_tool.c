@@ -40,7 +40,7 @@ inner_int_contains(ArrayType *a, ArrayType *b)
 			break;				/* db[j] is not in da */
 	}
 
-	return (n == nb) ? TRUE : FALSE;
+	return (n == nb) ? true : false;
 }
 
 /* arguments are assumed sorted */
@@ -65,12 +65,12 @@ inner_int_overlap(ArrayType *a, ArrayType *b)
 		if (da[i] < db[j])
 			i++;
 		else if (da[i] == db[j])
-			return TRUE;
+			return true;
 		else
 			j++;
 	}
 
-	return FALSE;
+	return false;
 }
 
 ArrayType *

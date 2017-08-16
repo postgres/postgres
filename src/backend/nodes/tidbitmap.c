@@ -593,7 +593,7 @@ tbm_intersect(TIDBitmap *a, const TIDBitmap *b)
 /*
  * Process one page of a during an intersection op
  *
- * Returns TRUE if apage is now empty and should be deleted from a
+ * Returns true if apage is now empty and should be deleted from a
  */
 static bool
 tbm_intersect_page(TIDBitmap *a, PagetableEntry *apage, const TIDBitmap *b)

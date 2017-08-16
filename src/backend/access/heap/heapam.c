@@ -1379,7 +1379,7 @@ heap_openrv_extended(const RangeVar *relation, LOCKMODE lockmode,
  * heap_beginscan_strat offers an extended API that lets the caller control
  * whether a nondefault buffer access strategy can be used, and whether
  * syncscan can be chosen (possibly resulting in the scan not starting from
- * block zero).  Both of these default to TRUE with plain heap_beginscan.
+ * block zero).  Both of these default to true with plain heap_beginscan.
  *
  * heap_beginscan_bm is an alternative entry point for setting up a
  * HeapScanDesc for a bitmap heap scan.  Although that scan technology is
@@ -1842,16 +1842,16 @@ heap_getnext(HeapScanDesc scan, ScanDirection direction)
  * against the specified snapshot.
  *
  * If successful (tuple found and passes snapshot time qual), then *userbuf
- * is set to the buffer holding the tuple and TRUE is returned.  The caller
+ * is set to the buffer holding the tuple and true is returned.  The caller
  * must unpin the buffer when done with the tuple.
  *
  * If the tuple is not found (ie, item number references a deleted slot),
- * then tuple->t_data is set to NULL and FALSE is returned.
+ * then tuple->t_data is set to NULL and false is returned.
  *
- * If the tuple is found but fails the time qual check, then FALSE is returned
+ * If the tuple is found but fails the time qual check, then false is returned
  * but tuple->t_data is left pointing to the tuple.
  *
- * keep_buf determines what is done with the buffer in the FALSE-result cases.
+ * keep_buf determines what is done with the buffer in the false-result cases.
  * When the caller specifies keep_buf = true, we retain the pin on the buffer
  * and return it in *userbuf (so the caller must eventually unpin it); when
  * keep_buf = false, the pin is released and *userbuf is set to InvalidBuffer.
@@ -1993,15 +1993,15 @@ heap_fetch(Relation relation,
  * of a HOT chain), and buffer is the buffer holding this tuple.  We search
  * for the first chain member satisfying the given snapshot.  If one is
  * found, we update *tid to reference that tuple's offset number, and
- * return TRUE.  If no match, return FALSE without modifying *tid.
+ * return true.  If no match, return false without modifying *tid.
  *
  * heapTuple is a caller-supplied buffer.  When a match is found, we return
  * the tuple here, in addition to updating *tid.  If no match is found, the
  * contents of this buffer on return are undefined.
  *
  * If all_dead is not NULL, we check non-visible tuples to see if they are
- * globally dead; *all_dead is set TRUE if all members of the HOT chain
- * are vacuumable, FALSE if not.
+ * globally dead; *all_dead is set true if all members of the HOT chain
+ * are vacuumable, false if not.
  *
  * Unlike heap_fetch, the caller must already have pin and (at least) share
  * lock on the buffer; it is still pinned/locked at exit.  Also unlike
@@ -6594,7 +6594,7 @@ FreezeMultiXactId(MultiXactId multi, uint16 t_infomask,
  * Check to see whether any of the XID fields of a tuple (xmin, xmax, xvac)
  * are older than the specified cutoff XID and cutoff MultiXactId.  If so,
  * setup enough state (in the *frz output argument) to later execute and
- * WAL-log what we would need to do, and return TRUE.  Return FALSE if nothing
+ * WAL-log what we would need to do, and return true.  Return false if nothing
  * is to be changed.  In addition, set *totally_frozen_p to true if the tuple
  * will be totally frozen after these operations are performed and false if
  * more freezing will eventually be required.
@@ -7242,7 +7242,7 @@ heap_tuple_needs_eventual_freeze(HeapTupleHeader tuple)
  * heap_tuple_needs_freeze
  *
  * Check to see whether any of the XID fields of a tuple (xmin, xmax, xvac)
- * are older than the specified cutoff XID or MultiXactId.  If so, return TRUE.
+ * are older than the specified cutoff XID or MultiXactId.  If so, return true.
  *
  * It doesn't matter whether the tuple is alive or dead, we are checking
  * to see if a tuple needs to be removed or frozen to avoid wraparound.

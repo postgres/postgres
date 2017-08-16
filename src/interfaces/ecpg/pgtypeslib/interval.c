@@ -338,7 +338,7 @@ DecodeInterval(char **field, int *ftype, int nf,	/* int range, */
 {
 	int			IntervalStyle = INTSTYLE_POSTGRES_VERBOSE;
 	int			range = INTERVAL_FULL_RANGE;
-	bool		is_before = FALSE;
+	bool		is_before = false;
 	char	   *cp;
 	int			fmask = 0,
 				tmask,
@@ -583,7 +583,7 @@ DecodeInterval(char **field, int *ftype, int nf,	/* int range, */
 						break;
 
 					case AGO:
-						is_before = TRUE;
+						is_before = true;
 						type = val;
 						break;
 
@@ -705,7 +705,7 @@ AddVerboseIntPart(char *cp, int value, const char *units,
 	else if (*is_before)
 		value = -value;
 	sprintf(cp, " %d %s%s", value, units, (value == 1) ? "" : "s");
-	*is_zero = FALSE;
+	*is_zero = false;
 	return cp + strlen(cp);
 }
 
@@ -728,7 +728,7 @@ AddPostgresIntPart(char *cp, int value, const char *units,
 	 * tad bizarre but it's how it worked before...
 	 */
 	*is_before = (value < 0);
-	*is_zero = FALSE;
+	*is_zero = false;
 	return cp + strlen(cp);
 }
 
@@ -779,8 +779,8 @@ EncodeInterval(struct /* pg_ */ tm *tm, fsec_t fsec, int style, char *str)
 	int			hour = tm->tm_hour;
 	int			min = tm->tm_min;
 	int			sec = tm->tm_sec;
-	bool		is_before = FALSE;
-	bool		is_zero = TRUE;
+	bool		is_before = false;
+	bool		is_zero = true;
 
 	/*
 	 * The sign of year and month are guaranteed to match, since they are
@@ -926,7 +926,7 @@ EncodeInterval(struct /* pg_ */ tm *tm, fsec_t fsec, int style, char *str)
 				if (sec < 0 || (sec == 0 && fsec < 0))
 				{
 					if (is_zero)
-						is_before = TRUE;
+						is_before = true;
 					else if (!is_before)
 						*cp++ = '-';
 				}
@@ -936,7 +936,7 @@ EncodeInterval(struct /* pg_ */ tm *tm, fsec_t fsec, int style, char *str)
 				cp += strlen(cp);
 				sprintf(cp, " sec%s",
 						(abs(sec) != 1 || fsec != 0) ? "s" : "");
-				is_zero = FALSE;
+				is_zero = false;
 			}
 			/* identically zero? then put in a unitless zero... */
 			if (is_zero)

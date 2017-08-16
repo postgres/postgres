@@ -86,7 +86,7 @@ gbt_num_compress(GISTENTRY *entry, const gbtree_ninfo *tinfo)
 		memcpy((void *) &r[tinfo->size], leaf, tinfo->size);
 		retval = palloc(sizeof(GISTENTRY));
 		gistentryinit(*retval, PointerGetDatum(r), entry->rel, entry->page,
-					  entry->offset, FALSE);
+					  entry->offset, false);
 	}
 	else
 		retval = entry;
@@ -150,7 +150,7 @@ gbt_num_fetch(GISTENTRY *entry, const gbtree_ninfo *tinfo)
 
 	retval = palloc(sizeof(GISTENTRY));
 	gistentryinit(*retval, datum, entry->rel, entry->page, entry->offset,
-				  FALSE);
+				  false);
 	return retval;
 }
 

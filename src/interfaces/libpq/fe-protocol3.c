@@ -510,7 +510,7 @@ getRowDescriptions(PGconn *conn, int msgLength)
 	if (nfields > 0)
 	{
 		result->attDescs = (PGresAttDesc *)
-			pqResultAlloc(result, nfields * sizeof(PGresAttDesc), TRUE);
+			pqResultAlloc(result, nfields * sizeof(PGresAttDesc), true);
 		if (!result->attDescs)
 		{
 			errmsg = NULL;		/* means "out of memory", see below */
@@ -668,7 +668,7 @@ getParamDescriptions(PGconn *conn, int msgLength)
 	if (nparams > 0)
 	{
 		result->paramDescs = (PGresParamDesc *)
-			pqResultAlloc(result, nparams * sizeof(PGresParamDesc), TRUE);
+			pqResultAlloc(result, nparams * sizeof(PGresParamDesc), true);
 		if (!result->paramDescs)
 			goto advance_and_error;
 		MemSet(result->paramDescs, 0, nparams * sizeof(PGresParamDesc));
@@ -1466,7 +1466,7 @@ getCopyStart(PGconn *conn, ExecStatusType copytype)
 	if (nfields > 0)
 	{
 		result->attDescs = (PGresAttDesc *)
-			pqResultAlloc(result, nfields * sizeof(PGresAttDesc), TRUE);
+			pqResultAlloc(result, nfields * sizeof(PGresAttDesc), true);
 		if (!result->attDescs)
 			goto failure;
 		MemSet(result->attDescs, 0, nfields * sizeof(PGresAttDesc));
@@ -1657,7 +1657,7 @@ pqGetCopyData3(PGconn *conn, char **buffer, int async)
 			if (async)
 				return 0;
 			/* Need to load more data */
-			if (pqWait(TRUE, FALSE, conn) ||
+			if (pqWait(true, false, conn) ||
 				pqReadData(conn) < 0)
 				return -2;
 			continue;
@@ -1715,7 +1715,7 @@ pqGetline3(PGconn *conn, char *s, int maxlen)
 	while ((status = PQgetlineAsync(conn, s, maxlen - 1)) == 0)
 	{
 		/* need to load more data */
-		if (pqWait(TRUE, FALSE, conn) ||
+		if (pqWait(true, false, conn) ||
 			pqReadData(conn) < 0)
 		{
 			*s = '\0';
@@ -1968,7 +1968,7 @@ pqFunctionCall3(PGconn *conn, Oid fnid,
 		if (needInput)
 		{
 			/* Wait for some data to arrive (or for the channel to close) */
-			if (pqWait(TRUE, FALSE, conn) ||
+			if (pqWait(true, false, conn) ||
 				pqReadData(conn) < 0)
 				break;
 		}

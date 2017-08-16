@@ -289,7 +289,7 @@ heap_fill_tuple(TupleDesc tupleDesc,
  */
 
 /* ----------------
- *		heap_attisnull	- returns TRUE iff tuple attribute is not present
+ *		heap_attisnull	- returns true iff tuple attribute is not present
  * ----------------
  */
 bool

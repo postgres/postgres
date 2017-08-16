@@ -3255,7 +3255,7 @@ textToQualifiedNameList(text *textval)
  *	namelist: filled with a palloc'd list of pointers to identifiers within
  *			  rawstring.  Caller should list_free() this even on error return.
  *
- * Returns TRUE if okay, FALSE if there is a syntax error in the string.
+ * Returns true if okay, false if there is a syntax error in the string.
  *
  * Note that an empty string is considered okay here, though not in
  * textToQualifiedNameList.
@@ -3383,7 +3383,7 @@ SplitIdentifierString(char *rawstring, char separator,
  *	namelist: filled with a palloc'd list of directory names.
  *			  Caller should list_free_deep() this even on error return.
  *
- * Returns TRUE if okay, FALSE if there is a syntax error in the string.
+ * Returns true if okay, false if there is a syntax error in the string.
  *
  * Note that an empty string is considered okay here.
  */

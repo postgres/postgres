@@ -1728,7 +1728,7 @@ stringToQualifiedNameList(const char *string)
  * the argtypes array should be of size FUNC_MAX_ARGS).  The function or
  * operator name is returned to *names as a List of Strings.
  *
- * If allowNone is TRUE, accept "NONE" and return it as InvalidOid (this is
+ * If allowNone is true, accept "NONE" and return it as InvalidOid (this is
  * for unary operators).
  */
 static void

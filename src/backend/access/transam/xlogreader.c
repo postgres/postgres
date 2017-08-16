@@ -1302,8 +1302,8 @@ err:
  * Returns information about the block that a block reference refers to.
  *
  * If the WAL record contains a block reference with the given ID, *rnode,
- * *forknum, and *blknum are filled in (if not NULL), and returns TRUE.
- * Otherwise returns FALSE.
+ * *forknum, and *blknum are filled in (if not NULL), and returns true.
+ * Otherwise returns false.
  */
 bool
 XLogRecGetBlockTag(XLogReaderState *record, uint8 block_id,

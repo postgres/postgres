@@ -113,7 +113,7 @@ plpgsql_ns_additem(PLpgSQL_nsitem_type itemtype, int itemno, const char *name)
  *
  * Note that this only searches for variables, not labels.
  *
- * If localmode is TRUE, only the topmost block level is searched.
+ * If localmode is true, only the topmost block level is searched.
  *
  * name1 must be non-NULL.  Pass NULL for name2 and/or name3 if parsing a name
  * with fewer than three components.

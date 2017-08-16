@@ -87,7 +87,7 @@ soundex_code(char letter)
 		phoned_word		--	The final phonized word.  (We'll allocate the
 							memory.)
 	Output
-		error	--	A simple error flag, returns TRUE or FALSE
+		error	--	A simple error flag, returns true or false
 
 	NOTES:	ALL non-alpha characters are ignored, this includes whitespace,
 	although non-alpha characters will break up phonemes.

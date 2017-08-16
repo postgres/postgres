@@ -52,7 +52,7 @@ ginCombineData(RBNode *existing, const RBNode *newdata, void *arg)
 	}
 
 	/* If item pointers are not ordered, they will need to be sorted later */
-	if (eo->shouldSort == FALSE)
+	if (eo->shouldSort == false)
 	{
 		int			res;
 
@@ -60,7 +60,7 @@ ginCombineData(RBNode *existing, const RBNode *newdata, void *arg)
 		Assert(res != 0);
 
 		if (res > 0)
-			eo->shouldSort = TRUE;
+			eo->shouldSort = true;
 	}
 
 	eo->list[eo->count] = en->list[0];
@@ -176,7 +176,7 @@ ginInsertBAEntry(BuildAccumulator *accum,
 			ea->key = getDatumCopy(accum, attnum, key);
 		ea->maxcount = DEF_NPTR;
 		ea->count = 1;
-		ea->shouldSort = FALSE;
+		ea->shouldSort = false;
 		ea->list =
 			(ItemPointerData *) palloc(sizeof(ItemPointerData) * DEF_NPTR);
 		ea->list[0] = *heapptr;

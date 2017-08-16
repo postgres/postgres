@@ -342,7 +342,7 @@ gin_bool_consistent(QUERYTYPE *query, bool *check)
 				j = 0;
 
 	if (query->size <= 0)
-		return FALSE;
+		return false;
 
 	/*
 	 * Set up data for checkcondition_gin.  This must agree with the query

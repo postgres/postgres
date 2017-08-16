@@ -918,10 +918,10 @@ ExecHashTableInsert(HashJoinTable hashtable,
  * econtext->ecxt_innertuple.  Vars in the hashkeys expressions should have
  * varno either OUTER_VAR or INNER_VAR.
  *
- * A TRUE result means the tuple's hash value has been successfully computed
- * and stored at *hashvalue.  A FALSE result means the tuple cannot match
+ * A true result means the tuple's hash value has been successfully computed
+ * and stored at *hashvalue.  A false result means the tuple cannot match
  * because it contains a null attribute, and hence it should be discarded
- * immediately.  (If keep_nulls is true then FALSE is never returned.)
+ * immediately.  (If keep_nulls is true then false is never returned.)
  */
 bool
 ExecHashGetHashValue(HashJoinTable hashtable,

@@ -794,7 +794,7 @@ typedef struct spgLeafConsistentOut
    trees, in which each level of the tree includes a prefix that is short
    enough to fit on a page, and the final leaf level includes a suffix also
    short enough to fit on a page.  The operator class should set
-   <structfield>longValuesOK</structfield> to TRUE only if it is prepared to arrange for
+   <structfield>longValuesOK</structfield> to true only if it is prepared to arrange for
    this to happen.  Otherwise, the <acronym>SP-GiST</acronym> core will
    reject any request to index a value that is too large to fit
    on an index page.

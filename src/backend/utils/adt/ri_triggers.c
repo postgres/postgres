@@ -2075,8 +2075,8 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
  *
  *	Check if we really need to fire the RI trigger for an update to a PK
  *	relation.  This is called by the AFTER trigger queue manager to see if
- *	it can skip queuing an instance of an RI trigger.  Returns TRUE if the
- *	trigger must be fired, FALSE if we can prove the constraint will still
+ *	it can skip queuing an instance of an RI trigger.  Returns true if the
+ *	trigger must be fired, false if we can prove the constraint will still
  *	be satisfied.
  * ----------
  */
@@ -2132,8 +2132,8 @@ RI_FKey_pk_upd_check_required(Trigger *trigger, Relation pk_rel,
  *
  *	Check if we really need to fire the RI trigger for an update to an FK
  *	relation.  This is called by the AFTER trigger queue manager to see if
- *	it can skip queuing an instance of an RI trigger.  Returns TRUE if the
- *	trigger must be fired, FALSE if we can prove the constraint will still
+ *	it can skip queuing an instance of an RI trigger.  Returns true if the
+ *	trigger must be fired, false if we can prove the constraint will still
  *	be satisfied.
  * ----------
  */

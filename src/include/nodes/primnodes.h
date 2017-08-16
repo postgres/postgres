@@ -302,7 +302,7 @@ typedef struct Aggref
 	List	   *aggorder;		/* ORDER BY (list of SortGroupClause) */
 	List	   *aggdistinct;	/* DISTINCT (list of SortGroupClause) */
 	Expr	   *aggfilter;		/* FILTER expression, if any */
-	bool		aggstar;		/* TRUE if argument list was really '*' */
+	bool		aggstar;		/* true if argument list was really '*' */
 	bool		aggvariadic;	/* true if variadic arguments have been
 								 * combined into an array last argument */
 	char		aggkind;		/* aggregate kind (see pg_aggregate.h) */
@@ -359,7 +359,7 @@ typedef struct WindowFunc
 	List	   *args;			/* arguments to the window function */
 	Expr	   *aggfilter;		/* FILTER expression, if any */
 	Index		winref;			/* index of associated WindowClause */
-	bool		winstar;		/* TRUE if argument list was really '*' */
+	bool		winstar;		/* true if argument list was really '*' */
 	bool		winagg;			/* is function a simple aggregate? */
 	int			location;		/* token location, or -1 if unknown */
 } WindowFunc;
@@ -695,9 +695,9 @@ typedef struct SubPlan
 	Oid			firstColCollation;	/* Collation of first column of subplan
 									 * result */
 	/* Information about execution strategy: */
-	bool		useHashTable;	/* TRUE to store subselect output in a hash
+	bool		useHashTable;	/* true to store subselect output in a hash
 								 * table (implies we are doing "IN") */
-	bool		unknownEqFalse; /* TRUE if it's okay to return FALSE when the
+	bool		unknownEqFalse; /* true if it's okay to return FALSE when the
 								 * spec result is UNKNOWN; this allows much
 								 * simpler handling of null values */
 	bool		parallel_safe;	/* is the subplan parallel-safe? */

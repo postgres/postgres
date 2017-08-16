@@ -336,7 +336,7 @@ add_paths_to_joinrel(PlannerInfo *root,
  * across joins unless there's a join-order-constraint-based reason to do so.
  * So we ignore the param_source_rels restriction when this case applies.
  *
- * allow_star_schema_join() returns TRUE if the param_source_rels restriction
+ * allow_star_schema_join() returns true if the param_source_rels restriction
  * should be overridden, ie, it's okay to perform this join.
  */
 static inline bool
@@ -1880,7 +1880,7 @@ hash_inner_and_outer(PlannerInfo *root,
  *	  Select mergejoin clauses that are usable for a particular join.
  *	  Returns a list of RestrictInfo nodes for those clauses.
  *
- * *mergejoin_allowed is normally set to TRUE, but it is set to FALSE if
+ * *mergejoin_allowed is normally set to true, but it is set to false if
  * this is a right/full join and there are nonmergejoinable join clauses.
  * The executor's mergejoin machinery cannot handle such cases, so we have
  * to avoid generating a mergejoin plan.  (Note that this flag does NOT

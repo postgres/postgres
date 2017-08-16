@@ -47,7 +47,7 @@
 
 /*
  * Common subroutine for num_nulls() and num_nonnulls().
- * Returns TRUE if successful, FALSE if function should return NULL.
+ * Returns true if successful, false if function should return NULL.
  * If successful, total argument count and number of nulls are
  * returned into *nargs and *nulls.
  */

@@ -693,13 +693,13 @@ load_relmap_file(bool shared)
  * The magic number and CRC are automatically updated in *newmap.  On
  * success, we copy the data to the appropriate permanent static variable.
  *
- * If write_wal is TRUE then an appropriate WAL message is emitted.
+ * If write_wal is true then an appropriate WAL message is emitted.
  * (It will be false for bootstrap and WAL replay cases.)
  *
- * If send_sinval is TRUE then a SI invalidation message is sent.
+ * If send_sinval is true then a SI invalidation message is sent.
  * (This should be true except in bootstrap case.)
  *
- * If preserve_files is TRUE then the storage manager is warned not to
+ * If preserve_files is true then the storage manager is warned not to
  * delete the files listed in the map.
  *
  * Because this may be called during WAL replay when MyDatabaseId,

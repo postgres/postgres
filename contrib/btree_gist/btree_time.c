@@ -183,7 +183,7 @@ gbt_timetz_compress(PG_FUNCTION_ARGS)
 		r->lower = r->upper = tmp;
 		gistentryinit(*retval, PointerGetDatum(r),
 					  entry->rel, entry->page,
-					  entry->offset, FALSE);
+					  entry->offset, false);
 	}
 	else
 		retval = entry;

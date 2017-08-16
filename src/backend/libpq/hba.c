@@ -187,9 +187,9 @@ pg_isblank(const char c)
  * set *err_msg to a string describing the error.  Currently the only
  * possible error is token too long for buf.
  *
- * If successful: store null-terminated token at *buf and return TRUE.
- * If no more tokens on line: set *buf = '\0' and return FALSE.
- * If error: fill buf with truncated or misformatted token and return FALSE.
+ * If successful: store null-terminated token at *buf and return true.
+ * If no more tokens on line: set *buf = '\0' and return false.
+ * If error: fill buf with truncated or misformatted token and return false.
  */
 static bool
 next_token(char **lineptr, char *buf, int bufsz,

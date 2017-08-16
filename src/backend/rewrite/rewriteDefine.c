@@ -531,7 +531,7 @@ DefineQueryRewrite(char *rulename,
 							replace);
 
 		/*
-		 * Set pg_class 'relhasrules' field TRUE for event relation.
+		 * Set pg_class 'relhasrules' field true for event relation.
 		 *
 		 * Important side effect: an SI notice is broadcast to force all
 		 * backends (including me!) to update relcache entries with the new

@@ -821,9 +821,9 @@ makeArrayTypeName(const char *typeName, Oid typeNamespace)
  * determine the new type's own array type name; else the latter will
  * certainly pick the same name.
  *
- * Returns TRUE if successfully moved the type, FALSE if not.
+ * Returns true if successfully moved the type, false if not.
  *
- * We also return TRUE if the given type is a shell type.  In this case
+ * We also return true if the given type is a shell type.  In this case
  * the type has not been renamed out of the way, but nonetheless it can
  * be expected that TypeCreate will succeed.  This behavior is convenient
  * for most callers --- those that need to distinguish the shell-type case

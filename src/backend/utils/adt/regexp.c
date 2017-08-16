@@ -247,7 +247,7 @@ RE_compile_and_cache(text *text_re, int cflags, Oid collation)
 /*
  * RE_wchar_execute - execute a RE on pg_wchar data
  *
- * Returns TRUE on match, FALSE on no match
+ * Returns true on match, false on no match
  *
  *	re --- the compiled pattern as returned by RE_compile_and_cache
  *	data --- the data to match against (need not be null-terminated)
@@ -291,7 +291,7 @@ RE_wchar_execute(regex_t *re, pg_wchar *data, int data_len,
 /*
  * RE_execute - execute a RE
  *
- * Returns TRUE on match, FALSE on no match
+ * Returns true on match, false on no match
  *
  *	re --- the compiled pattern as returned by RE_compile_and_cache
  *	dat --- the data to match against (need not be null-terminated)
@@ -323,7 +323,7 @@ RE_execute(regex_t *re, char *dat, int dat_len,
 /*
  * RE_compile_and_execute - compile and execute a RE
  *
- * Returns TRUE on match, FALSE on no match
+ * Returns true on match, false on no match
  *
  *	text_re --- the pattern, expressed as a TEXT object
  *	dat --- the data to match against (need not be null-terminated)
@@ -1294,7 +1294,7 @@ build_regexp_split_result(regexp_matches_ctx *splitctx)
  * regexp_fixed_prefix - extract fixed prefix, if any, for a regexp
  *
  * The result is NULL if there is no fixed prefix, else a palloc'd string.
- * If it is an exact match, not just a prefix, *exact is returned as TRUE.
+ * If it is an exact match, not just a prefix, *exact is returned as true.
  */
 char *
 regexp_fixed_prefix(text *text_re, bool case_insensitive, Oid collation,

@@ -319,7 +319,7 @@ CreateOneShotCachedPlan(RawStmt *raw_parse_tree,
  * parserSetup: alternate method for handling query parameters
  * parserSetupArg: data to pass to parserSetup
  * cursor_options: options bitmask to pass to planner
- * fixed_result: TRUE to disallow future changes in query's result tupdesc
+ * fixed_result: true to disallow future changes in query's result tupdesc
  */
 void
 CompleteCachedPlan(CachedPlanSource *plansource,

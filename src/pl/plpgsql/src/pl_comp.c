@@ -869,7 +869,7 @@ plpgsql_compile_inline(char *proc_source)
 
 	/*
 	 * Remember if function is STABLE/IMMUTABLE.  XXX would it be better to
-	 * set this TRUE inside a read-only transaction?  Not clear.
+	 * set this true inside a read-only transaction?  Not clear.
 	 */
 	function->fn_readonly = false;
 
@@ -1350,8 +1350,8 @@ make_datum_param(PLpgSQL_expr *expr, int dno, int location)
  * yytxt is the original token text; we need this to check for quoting,
  * so that later checks for unreserved keywords work properly.
  *
- * If recognized as a variable, fill in *wdatum and return TRUE;
- * if not recognized, fill in *word and return FALSE.
+ * If recognized as a variable, fill in *wdatum and return true;
+ * if not recognized, fill in *word and return false.
  * (Note: those two pointers actually point to members of the same union,
  * but for notational reasons we pass them separately.)
  * ----------

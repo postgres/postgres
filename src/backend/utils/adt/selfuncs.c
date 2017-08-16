@@ -790,7 +790,7 @@ ineq_histogram_selectivity(PlannerInfo *root,
 	 * hand!  (For example, we might have a '<=' operator rather than the '<'
 	 * operator that will appear in staop.)  For now, assume that whatever
 	 * appears in pg_statistic is sorted the same way our operator sorts, or
-	 * the reverse way if isgt is TRUE.
+	 * the reverse way if isgt is true.
 	 */
 	if (HeapTupleIsValid(vardata->statsTuple) &&
 		statistic_proc_security_check(vardata, opproc->fn_oid) &&
@@ -3814,7 +3814,7 @@ estimate_hash_bucket_stats(PlannerInfo *root, Node *hashkey, double nbuckets,
  *
  * Varinfos that aren't for simple Vars are ignored.
  *
- * Return TRUE if we're able to find a match, FALSE otherwise.
+ * Return true if we're able to find a match, false otherwise.
  */
 static bool
 estimate_multivariate_ndistinct(PlannerInfo *root, RelOptInfo *rel,
@@ -4527,12 +4527,12 @@ convert_timevalue_to_scalar(Datum value, Oid typid)
  *	args: clause argument list
  *	varRelid: see specs for restriction selectivity functions
  *
- * Outputs: (these are valid only if TRUE is returned)
+ * Outputs: (these are valid only if true is returned)
  *	*vardata: gets information about variable (see examine_variable)
  *	*other: gets other clause argument, aggressively reduced to a constant
- *	*varonleft: set TRUE if variable is on the left, FALSE if on the right
+ *	*varonleft: set true if variable is on the left, false if on the right
  *
- * Returns TRUE if a variable is identified, otherwise FALSE.
+ * Returns true if a variable is identified, otherwise false.
  *
  * Note: if there are Vars on both sides of the clause, we must fail, because
  * callers are expecting that the other side will act like a pseudoconstant.
@@ -4648,12 +4648,12 @@ get_join_variables(PlannerInfo *root, List *args, SpecialJoinInfo *sjinfo,
  *	atttype, atttypmod: actual type/typmod of the "var" expression.  This is
  *		commonly the same as the exposed type of the variable argument,
  *		but can be different in binary-compatible-type cases.
- *	isunique: TRUE if we were able to match the var to a unique index or a
+ *	isunique: true if we were able to match the var to a unique index or a
  *		single-column DISTINCT clause, implying its values are unique for
  *		this query.  (Caution: this should be trusted for statistical
  *		purposes only, since we do not check indimmediate nor verify that
  *		the exact same definition of equality applies.)
- *	acl_ok: TRUE if current user has permission to read the column(s)
+ *	acl_ok: true if current user has permission to read the column(s)
  *		underlying the pg_statistic entry.  This is consulted by
  *		statistic_proc_security_check().
  *
@@ -5060,7 +5060,7 @@ statistic_proc_security_check(VariableStatData *vardata, Oid func_oid)
  *	  Estimate the number of distinct values of a variable.
  *
  * vardata: results of examine_variable
- * *isdefault: set to TRUE if the result is a default rather than based on
+ * *isdefault: set to true if the result is a default rather than based on
  * anything meaningful.
  *
  * NB: be careful to produce a positive integral result, since callers may
@@ -5193,8 +5193,8 @@ get_variable_numdistinct(VariableStatData *vardata, bool *isdefault)
 /*
  * get_variable_range
  *		Estimate the minimum and maximum value of the specified variable.
- *		If successful, store values in *min and *max, and return TRUE.
- *		If no data available, return FALSE.
+ *		If successful, store values in *min and *max, and return true.
+ *		If no data available, return false.
  *
  * sortop is the "<" comparison operator to use.  This should generally
  * be "<" not ">", as only the former is likely to be found in pg_statistic.
@@ -5327,9 +5327,9 @@ get_variable_range(PlannerInfo *root, VariableStatData *vardata, Oid sortop,
  *		Attempt to identify the current *actual* minimum and/or maximum
  *		of the specified variable, by looking for a suitable btree index
  *		and fetching its low and/or high values.
- *		If successful, store values in *min and *max, and return TRUE.
+ *		If successful, store values in *min and *max, and return true.
  *		(Either pointer can be NULL if that endpoint isn't needed.)
- *		If no data available, return FALSE.
+ *		If no data available, return false.
  *
  * sortop is the "<" comparison operator to use.
  */

@@ -170,9 +170,9 @@ typedef struct GlobalTransactionData
 
 	Oid			owner;			/* ID of user that executed the xact */
 	BackendId	locking_backend;	/* backend currently working on the xact */
-	bool		valid;			/* TRUE if PGPROC entry is in proc array */
-	bool		ondisk;			/* TRUE if prepare state file is on disk */
-	bool		inredo;			/* TRUE if entry was added via xlog_redo */
+	bool		valid;			/* true if PGPROC entry is in proc array */
+	bool		ondisk;			/* true if prepare state file is on disk */
+	bool		inredo;			/* true if entry was added via xlog_redo */
 	char		gid[GIDSIZE];	/* The GID assigned to the prepared xact */
 }			GlobalTransactionData;
 

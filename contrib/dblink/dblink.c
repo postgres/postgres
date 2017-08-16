@@ -243,7 +243,7 @@ dblink_init(void)
 		pconn = (remoteConn *) MemoryContextAlloc(TopMemoryContext, sizeof(remoteConn));
 		pconn->conn = NULL;
 		pconn->openCursorCount = 0;
-		pconn->newXactForCursor = FALSE;
+		pconn->newXactForCursor = false;
 	}
 }
 
@@ -423,7 +423,7 @@ dblink_open(PG_FUNCTION_ARGS)
 		if (PQresultStatus(res) != PGRES_COMMAND_OK)
 			dblink_res_internalerror(conn, res, "begin error");
 		PQclear(res);
-		rconn->newXactForCursor = TRUE;
+		rconn->newXactForCursor = true;
 
 		/*
 		 * Since transaction state was IDLE, we force cursor count to
@@ -523,7 +523,7 @@ dblink_close(PG_FUNCTION_ARGS)
 		/* if count is zero, commit the transaction */
 		if (rconn->openCursorCount == 0)
 		{
-			rconn->newXactForCursor = FALSE;
+			rconn->newXactForCursor = false;
 
 			res = PQexec(conn, "COMMIT");
 			if (PQresultStatus(res) != PGRES_COMMAND_OK)

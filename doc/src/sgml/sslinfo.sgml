@@ -32,7 +32,7 @@
     </term>
     <listitem>
     <para>
-     Returns TRUE if current connection to server uses SSL, and FALSE
+     Returns true if current connection to server uses SSL, and false
      otherwise.
     </para>
     </listitem>
@@ -77,8 +77,8 @@
     </term>
     <listitem>
     <para>
-     Returns TRUE if current client has presented a valid SSL client
-     certificate to the server, and FALSE otherwise.  (The server
+     Returns true if current client has presented a valid SSL client
+     certificate to the server, and false otherwise.  (The server
      might or might not be configured to require a client certificate.)
     </para>
     </listitem>

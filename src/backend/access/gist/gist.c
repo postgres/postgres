@@ -1364,8 +1364,8 @@ gistSplit(Relation r,
 						IndexTupleSize(itup[0]), GiSTPageSize,
 						RelationGetRelationName(r))));
 
-	memset(v.spl_lisnull, TRUE, sizeof(bool) * giststate->tupdesc->natts);
-	memset(v.spl_risnull, TRUE, sizeof(bool) * giststate->tupdesc->natts);
+	memset(v.spl_lisnull, true, sizeof(bool) * giststate->tupdesc->natts);
+	memset(v.spl_risnull, true, sizeof(bool) * giststate->tupdesc->natts);
 	gistSplitByKey(r, page, itup, len, giststate, &v, 0);
 
 	/* form left and right vector */

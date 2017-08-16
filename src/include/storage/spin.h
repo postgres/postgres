@@ -19,7 +19,7 @@
  *		Unlock a previously acquired lock.
  *
  *	bool SpinLockFree(slock_t *lock)
- *		Tests if the lock is free. Returns TRUE if free, FALSE if locked.
+ *		Tests if the lock is free. Returns true if free, false if locked.
  *		This does *not* change the state of the lock.
  *
  *	Callers must beware that the macro argument may be evaluated multiple

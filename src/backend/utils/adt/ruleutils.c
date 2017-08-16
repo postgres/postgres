@@ -112,7 +112,7 @@ typedef struct
 	int			prettyFlags;	/* enabling of pretty-print functions */
 	int			wrapColumn;		/* max line length, or -1 for no limit */
 	int			indentLevel;	/* current indent level for prettyprint */
-	bool		varprefix;		/* TRUE to print prefixes on Vars */
+	bool		varprefix;		/* true to print prefixes on Vars */
 	ParseExprKind special_exprkind; /* set only for exprkinds needing special
 									 * handling */
 } deparse_context;
@@ -130,7 +130,7 @@ typedef struct
  * rtable_columns holds the column alias names to be used for each RTE.
  *
  * In some cases we need to make names of merged JOIN USING columns unique
- * across the whole query, not only per-RTE.  If so, unique_using is TRUE
+ * across the whole query, not only per-RTE.  If so, unique_using is true
  * and using_names is a list of C strings representing names already assigned
  * to USING columns.
  *
@@ -3012,9 +3012,9 @@ deparse_expression(Node *expr, List *dpcontext,
  * for interpreting Vars in the node tree.  It can be NIL if no Vars are
  * expected.
  *
- * forceprefix is TRUE to force all Vars to be prefixed with their table names.
+ * forceprefix is true to force all Vars to be prefixed with their table names.
  *
- * showimplicit is TRUE to force all implicit casts to be shown explicitly.
+ * showimplicit is true to force all implicit casts to be shown explicitly.
  *
  * Tries to pretty up the output according to prettyFlags and startIndent.
  *
@@ -3587,7 +3587,7 @@ set_using_names(deparse_namespace *dpns, Node *jtnode, List *parentUsing)
 		 * If there's a USING clause, select the USING column names and push
 		 * those names down to the children.  We have two strategies:
 		 *
-		 * If dpns->unique_using is TRUE, we force all USING names to be
+		 * If dpns->unique_using is true, we force all USING names to be
 		 * unique across the whole query level.  In principle we'd only need
 		 * the names of dangerous USING columns to be globally unique, but to
 		 * safely assign all USING names in a single pass, we have to enforce
@@ -3600,7 +3600,7 @@ set_using_names(deparse_namespace *dpns, Node *jtnode, List *parentUsing)
 		 * this simplifies the logic and seems likely to lead to less aliasing
 		 * overall.
 		 *
-		 * If dpns->unique_using is FALSE, we only need USING names to be
+		 * If dpns->unique_using is false, we only need USING names to be
 		 * unique within their own join RTE.  We still need to honor
 		 * pushed-down names, though.
 		 *
@@ -5167,7 +5167,7 @@ get_simple_values_rte(Query *query)
 	ListCell   *lc;
 
 	/*
-	 * We want to return TRUE even if the Query also contains OLD or NEW rule
+	 * We want to return true even if the Query also contains OLD or NEW rule
 	 * RTEs.  So the idea is to scan the rtable and see if there is only one
 	 * inFromCl RTE that is a VALUES RTE.
 	 */
@@ -6416,7 +6416,7 @@ get_utility_query_def(Query *query, deparse_context *context)
  * the Var's varlevelsup has to be interpreted with respect to a context
  * above the current one; levelsup indicates the offset.
  *
- * If istoplevel is TRUE, the Var is at the top level of a SELECT's
+ * If istoplevel is true, the Var is at the top level of a SELECT's
  * targetlist, which means we need special treatment of whole-row Vars.
  * Instead of the normal "tab.*", we'll print "tab.*::typename", which is a
  * dirty hack to prevent "tab.*" from being expanded into multiple columns.
@@ -10612,7 +10612,7 @@ generate_qualified_relation_name(Oid relid)
  * means a FuncExpr or Aggref, not some other way of calling a function), then
  * has_variadic must specify whether variadic arguments have been merged,
  * and *use_variadic_p will be set to indicate whether to print VARIADIC in
- * the output.  For non-FuncExpr cases, has_variadic should be FALSE and
+ * the output.  For non-FuncExpr cases, has_variadic should be false and
  * use_variadic_p can be NULL.
  *
  * The result includes all necessary quoting and schema-prefixing.

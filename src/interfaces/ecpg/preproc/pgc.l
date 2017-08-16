@@ -989,12 +989,12 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 						  return S_ANYTHING;
 					  }
 					}
-<C,xskip>{exec_sql}{ifdef}{space}*	{ ifcond = TRUE; BEGIN(xcond); }
+<C,xskip>{exec_sql}{ifdef}{space}*	{ ifcond = true; BEGIN(xcond); }
 <C,xskip>{informix_special}{ifdef}{space}* {
 					  /* are we simulating Informix? */
 					  if (INFORMIX_MODE)
 					  {
-						  ifcond = TRUE;
+						  ifcond = true;
 						  BEGIN(xcond);
 					  }
 					  else
@@ -1003,12 +1003,12 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 						  return S_ANYTHING;
 					  }
 					}
-<C,xskip>{exec_sql}{ifndef}{space}* { ifcond = FALSE; BEGIN(xcond); }
+<C,xskip>{exec_sql}{ifndef}{space}* { ifcond = false; BEGIN(xcond); }
 <C,xskip>{informix_special}{ifndef}{space}* {
 					  /* are we simulating Informix? */
 					  if (INFORMIX_MODE)
 					  {
-						  ifcond = FALSE;
+						  ifcond = false;
 						  BEGIN(xcond);
 					  }
 					  else
@@ -1026,7 +1026,7 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 						else
 							preproc_tos--;
 
-						ifcond = TRUE; BEGIN(xcond);
+						ifcond = true; BEGIN(xcond);
 					}
 <C,xskip>{informix_special}{elif}{space}* {
 					/* are we simulating Informix? */
@@ -1039,7 +1039,7 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 						else
 							preproc_tos--;
 
-						ifcond = TRUE;
+						ifcond = true;
 						BEGIN(xcond);
 					}
 					else
@@ -1054,7 +1054,7 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 						mmfatal(PARSE_ERROR, "more than one EXEC SQL ELSE");
 					else
 					{
-						stacked_if_value[preproc_tos].else_branch = TRUE;
+						stacked_if_value[preproc_tos].else_branch = true;
 						stacked_if_value[preproc_tos].condition =
 							(stacked_if_value[preproc_tos-1].condition &&
 							 !stacked_if_value[preproc_tos].condition);
@@ -1073,7 +1073,7 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 							mmfatal(PARSE_ERROR, "more than one EXEC SQL ELSE");
 						else
 						{
-							stacked_if_value[preproc_tos].else_branch = TRUE;
+							stacked_if_value[preproc_tos].else_branch = true;
 							stacked_if_value[preproc_tos].condition =
 							(stacked_if_value[preproc_tos-1].condition &&
 							 !stacked_if_value[preproc_tos].condition);
@@ -1147,7 +1147,7 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 							 defptr = defptr->next);
 
 						preproc_tos++;
-						stacked_if_value[preproc_tos].else_branch = FALSE;
+						stacked_if_value[preproc_tos].else_branch = false;
 						stacked_if_value[preproc_tos].condition =
 						(defptr ? ifcond : !ifcond) && stacked_if_value[preproc_tos-1].condition;
 					}
@@ -1265,9 +1265,9 @@ lex_init(void)
 
 	preproc_tos = 0;
 	yylineno = 1;
-	ifcond = TRUE;
+	ifcond = true;
 	stacked_if_value[preproc_tos].condition = ifcond;
-	stacked_if_value[preproc_tos].else_branch = FALSE;
+	stacked_if_value[preproc_tos].else_branch = false;
 
 	/* initialize literal buffer to a reasonable but expansible size */
 	if (literalbuf == NULL)
@@ -1412,7 +1412,7 @@ parse_include(void)
 }
 
 /*
- * ecpg_isspace() --- return TRUE if flex scanner considers char whitespace
+ * ecpg_isspace() --- return true if flex scanner considers char whitespace
  */
 static bool
 ecpg_isspace(char ch)

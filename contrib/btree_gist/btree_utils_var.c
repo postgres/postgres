@@ -45,7 +45,7 @@ gbt_var_decompress(PG_FUNCTION_ARGS)
 
 		gistentryinit(*retval, PointerGetDatum(key),
 					  entry->rel, entry->page,
-					  entry->offset, FALSE);
+					  entry->offset, false);
 
 		PG_RETURN_POINTER(retval);
 	}
@@ -169,7 +169,7 @@ gbt_var_node_cp_len(const GBT_VARKEY *node, const gbtree_vinfo *tinfo)
 static bool
 gbt_bytea_pf_match(const bytea *pf, const bytea *query, const gbtree_vinfo *tinfo)
 {
-	bool		out = FALSE;
+	bool		out = false;
 	int32		qlen = VARSIZE(query) - VARHDRSZ;
 	int32		nlen = VARSIZE(pf) - VARHDRSZ;
 
@@ -294,7 +294,7 @@ gbt_var_compress(GISTENTRY *entry, const gbtree_vinfo *tinfo)
 		retval = palloc(sizeof(GISTENTRY));
 		gistentryinit(*retval, PointerGetDatum(r),
 					  entry->rel, entry->page,
-					  entry->offset, TRUE);
+					  entry->offset, true);
 	}
 	else
 		retval = entry;
@@ -314,7 +314,7 @@ gbt_var_fetch(PG_FUNCTION_ARGS)
 	retval = palloc(sizeof(GISTENTRY));
 	gistentryinit(*retval, PointerGetDatum(r.lower),
 				  entry->rel, entry->page,
-				  entry->offset, TRUE);
+				  entry->offset, true);
 
 	PG_RETURN_POINTER(retval);
 }
@@ -561,7 +561,7 @@ gbt_var_consistent(GBT_VARKEY_R *key,
 				   const gbtree_vinfo *tinfo,
 				   FmgrInfo *flinfo)
 {
-	bool		retval = FALSE;
+	bool		retval = false;
 
 	switch (strategy)
 	{
@@ -607,7 +607,7 @@ gbt_var_consistent(GBT_VARKEY_R *key,
 					   tinfo->f_eq(query, key->upper, collation, flinfo));
 			break;
 		default:
-			retval = FALSE;
+			retval = false;
 	}
 
 	return retval;

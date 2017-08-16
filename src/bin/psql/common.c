@@ -44,7 +44,7 @@ static bool is_select_command(const char *query);
  * Returns output file pointer into *fout, and is-a-pipe flag into *is_pipe.
  * Caller is responsible for adjusting SIGPIPE state if it's a pipe.
  *
- * On error, reports suitable error message and returns FALSE.
+ * On error, reports suitable error message and returns false.
  */
 bool
 openQueryOutputFile(const char *fname, FILE **fout, bool *is_pipe)
@@ -266,7 +266,7 @@ NoticeProcessor(void *arg, const char *message)
  * database queries.  In most places, this is accomplished by checking
  * cancel_pressed during long-running loops.  However, that won't work when
  * blocked on user input (in readline() or fgets()).  In those places, we
- * set sigint_interrupt_enabled TRUE while blocked, instructing the signal
+ * set sigint_interrupt_enabled true while blocked, instructing the signal
  * catcher to longjmp through sigint_interrupt_jmp.  We assume readline and
  * fgets are coded to handle possible interruption.  (XXX currently this does
  * not work on win32, so control-C is less useful there)

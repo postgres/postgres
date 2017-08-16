@@ -1144,7 +1144,7 @@ DecodeNumberField(int len, char *str, int fmask,
 			tm->tm_mon = atoi(str + 2);
 			*(str + 2) = '\0';
 			tm->tm_year = atoi(str + 0);
-			*is2digits = TRUE;
+			*is2digits = true;
 
 			return DTK_DATE;
 		}
@@ -1156,7 +1156,7 @@ DecodeNumberField(int len, char *str, int fmask,
 			*(str + 2) = '\0';
 			tm->tm_mon = 1;
 			tm->tm_year = atoi(str + 0);
-			*is2digits = TRUE;
+			*is2digits = true;
 
 			return DTK_DATE;
 		}
@@ -1314,8 +1314,8 @@ DecodeDate(char *str, int fmask, int *tmask, struct tm *tm, bool EuroDates)
 	int			nf = 0;
 	int			i,
 				len;
-	bool		bc = FALSE;
-	bool		is2digits = FALSE;
+	bool		bc = false;
+	bool		is2digits = false;
 	int			type,
 				val,
 				dmask = 0;
@@ -1792,9 +1792,9 @@ DecodeDateTime(char **field, int *ftype, int nf,
 	int			i;
 	int			val;
 	int			mer = HR24;
-	bool		haveTextMonth = FALSE;
-	bool		is2digits = FALSE;
-	bool		bc = FALSE;
+	bool		haveTextMonth = false;
+	bool		is2digits = false;
+	bool		bc = false;
 	int			t = 0;
 	int		   *tzp = &t;
 
@@ -2200,7 +2200,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 							tm->tm_mday = tm->tm_mon;
 							tmask = DTK_M(DAY);
 						}
-						haveTextMonth = TRUE;
+						haveTextMonth = true;
 						tm->tm_mon = val;
 						break;
 

@@ -2307,7 +2307,7 @@ MergeAttributes(List *schema, List *supers, char relpersistence,
  *
  * constraints is a list of CookedConstraint structs for previous constraints.
  *
- * Returns TRUE if merged (constraint is a duplicate), or FALSE if it's
+ * Returns true if merged (constraint is a duplicate), or false if it's
  * got a so-far-unique name, or throws error if conflict.
  */
 static bool
@@ -5778,7 +5778,7 @@ ATExecDropNotNull(Relation rel, const char *colName, LOCKMODE lockmode)
 	 */
 	if (((Form_pg_attribute) GETSTRUCT(tuple))->attnotnull)
 	{
-		((Form_pg_attribute) GETSTRUCT(tuple))->attnotnull = FALSE;
+		((Form_pg_attribute) GETSTRUCT(tuple))->attnotnull = false;
 
 		CatalogTupleUpdate(attr_rel, &tuple->t_self, tuple);
 
@@ -5859,7 +5859,7 @@ ATExecSetNotNull(AlteredTableInfo *tab, Relation rel,
 	 */
 	if (!((Form_pg_attribute) GETSTRUCT(tuple))->attnotnull)
 	{
-		((Form_pg_attribute) GETSTRUCT(tuple))->attnotnull = TRUE;
+		((Form_pg_attribute) GETSTRUCT(tuple))->attnotnull = true;
 
 		CatalogTupleUpdate(attr_rel, &tuple->t_self, tuple);
 
@@ -8312,16 +8312,16 @@ validateForeignKeyConstraint(char *conname,
 	trig.tgoid = InvalidOid;
 	trig.tgname = conname;
 	trig.tgenabled = TRIGGER_FIRES_ON_ORIGIN;
-	trig.tgisinternal = TRUE;
+	trig.tgisinternal = true;
 	trig.tgconstrrelid = RelationGetRelid(pkrel);
 	trig.tgconstrindid = pkindOid;
 	trig.tgconstraint = constraintOid;
-	trig.tgdeferrable = FALSE;
-	trig.tginitdeferred = FALSE;
+	trig.tgdeferrable = false;
+	trig.tginitdeferred = false;
 	/* we needn't fill in remaining fields */
 
 	/*
-	 * See if we can do it with a single LEFT JOIN query.  A FALSE result
+	 * See if we can do it with a single LEFT JOIN query.  A false result
 	 * indicates we must proceed with the fire-the-trigger method.
 	 */
 	if (RI_Initial_Check(&trig, rel, pkrel))

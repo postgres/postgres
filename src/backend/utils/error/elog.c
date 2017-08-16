@@ -226,7 +226,7 @@ err_gettext(const char *str)
  * the stack entry.  Finally, errfinish() will be called to actually process
  * the error report.
  *
- * Returns TRUE in normal case.  Returns FALSE to short-circuit the error
+ * Returns true in normal case.  Returns false to short-circuit the error
  * report (if it's a warning or lower and not to be reported anywhere).
  */
 bool
@@ -285,7 +285,7 @@ errstart(int elevel, const char *filename, int lineno,
 
 	/*
 	 * Now decide whether we need to process this report at all; if it's
-	 * warning or less and not enabled for logging, just return FALSE without
+	 * warning or less and not enabled for logging, just return false without
 	 * starting up any error logging machinery.
 	 */
 

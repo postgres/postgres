@@ -1465,7 +1465,7 @@ coerce_to_common_type(ParseState *pstate, Node *node,
  * that is, so long as there is no use of ANYELEMENT.  This is mostly for
  * backwards compatibility with the pre-7.4 behavior of ANYARRAY.
  *
- * We do not ereport here, but just return FALSE if a rule is violated.
+ * We do not ereport here, but just return false if a rule is violated.
  */
 bool
 check_generic_type_consistency(Oid *actual_arg_types,
@@ -2088,7 +2088,7 @@ TypeCategory(Oid type)
 /* IsPreferredType()
  *		Check if this type is a preferred type for the given category.
  *
- * If category is TYPCATEGORY_INVALID, then we'll return TRUE for preferred
+ * If category is TYPCATEGORY_INVALID, then we'll return true for preferred
  * types of any category; otherwise, only for preferred types of that
  * category.
  */

@@ -1281,7 +1281,7 @@ LWLockAcquire(LWLock *lock, LWLockMode mode)
 /*
  * LWLockConditionalAcquire - acquire a lightweight lock in the specified mode
  *
- * If the lock is not available, return FALSE with no side-effects.
+ * If the lock is not available, return false with no side-effects.
  *
  * If successful, cancel/die interrupts are held off until lock release.
  */

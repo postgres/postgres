@@ -5688,7 +5688,7 @@ make_pathkeys_for_window(PlannerInfo *root, WindowClause *wc,
  * below the Sort step (and the Distinct step, if any).  This will be
  * exactly final_target if we decide a projection step wouldn't be helpful.
  *
- * In addition, *have_postponed_srfs is set to TRUE if we choose to postpone
+ * In addition, *have_postponed_srfs is set to true if we choose to postpone
  * any set-returning functions to after the Sort.
  */
 static PathTarget *
@@ -6040,7 +6040,7 @@ expression_planner(Expr *expr)
  * tableOid is the OID of a table to be clustered on its index indexOid
  * (which is already known to be a btree index).  Decide whether it's
  * cheaper to do an indexscan or a seqscan-plus-sort to execute the CLUSTER.
- * Return TRUE to use sorting, FALSE to use an indexscan.
+ * Return true to use sorting, false to use an indexscan.
  *
  * Note: caller had better already hold some type of lock on the table.
  */

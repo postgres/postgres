@@ -1718,8 +1718,8 @@ AlterDatabaseOwner(const char *dbname, Oid newOwnerId)
 /*
  * Look up info about the database named "name".  If the database exists,
  * obtain the specified lock type on it, fill in any of the remaining
- * parameters that aren't NULL, and return TRUE.  If no such database,
- * return FALSE.
+ * parameters that aren't NULL, and return true.  If no such database,
+ * return false.
  */
 static bool
 get_db_info(const char *name, LOCKMODE lockmode,
@@ -1923,7 +1923,7 @@ remove_dbtablespaces(Oid db_id)
 
 /*
  * Check for existing files that conflict with a proposed new DB OID;
- * return TRUE if there are any
+ * return true if there are any
  *
  * If there were a subdirectory in any tablespace matching the proposed new
  * OID, we'd get a create failure due to the duplicate name ... and then we'd

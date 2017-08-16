@@ -95,7 +95,7 @@
  * set up until the first attempt to create something in it.  (The reason for
  * klugery is that we can't create the temp namespace outside a transaction,
  * but initial GUC processing of search_path happens outside a transaction.)
- * activeTempCreationPending is TRUE if "pg_temp" appears first in the string
+ * activeTempCreationPending is true if "pg_temp" appears first in the string
  * but is not reflected in activeCreationNamespace because the namespace isn't
  * set up yet.
  *
@@ -136,7 +136,7 @@ static List *activeSearchPath = NIL;
 /* default place to create stuff; if InvalidOid, no default */
 static Oid	activeCreationNamespace = InvalidOid;
 
-/* if TRUE, activeCreationNamespace is wrong, it should be temp namespace */
+/* if true, activeCreationNamespace is wrong, it should be temp namespace */
 static bool activeTempCreationPending = false;
 
 /* These variables are the values last derived from namespace_search_path: */

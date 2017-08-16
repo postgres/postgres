@@ -2455,7 +2455,7 @@ getTableDataFKConstraints(void)
  *	In 8.4 and up we can rely on the conislocal field to decide which
  *	constraints must be dumped; much safer.
  *
- *	This function assumes all conislocal flags were initialized to TRUE.
+ *	This function assumes all conislocal flags were initialized to true.
  *	It clears the flag on anything that seems to be inherited.
  */
 static void

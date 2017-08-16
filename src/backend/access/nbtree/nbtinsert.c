@@ -99,8 +99,8 @@ static void _bt_vacuum_one_page(Relation rel, Buffer buffer, Relation heapRel);
  *		don't actually insert.
  *
  *		The result value is only significant for UNIQUE_CHECK_PARTIAL:
- *		it must be TRUE if the entry is known unique, else FALSE.
- *		(In the current implementation we'll also return TRUE after a
+ *		it must be true if the entry is known unique, else false.
+ *		(In the current implementation we'll also return true after a
  *		successful UNIQUE_CHECK_YES or UNIQUE_CHECK_EXISTING call, but
  *		that's just a coding artifact.)
  */

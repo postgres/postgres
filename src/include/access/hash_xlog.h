@@ -149,7 +149,7 @@ typedef struct xl_hash_split_complete
 typedef struct xl_hash_move_page_contents
 {
 	uint16		ntups;
-	bool		is_prim_bucket_same_wrt;	/* TRUE if the page to which
+	bool		is_prim_bucket_same_wrt;	/* true if the page to which
 											 * tuples are moved is same as
 											 * primary bucket page */
 } xl_hash_move_page_contents;
@@ -174,10 +174,10 @@ typedef struct xl_hash_squeeze_page
 	BlockNumber prevblkno;
 	BlockNumber nextblkno;
 	uint16		ntups;
-	bool		is_prim_bucket_same_wrt;	/* TRUE if the page to which
+	bool		is_prim_bucket_same_wrt;	/* true if the page to which
 											 * tuples are moved is same as
 											 * primary bucket page */
-	bool		is_prev_bucket_same_wrt;	/* TRUE if the page to which
+	bool		is_prev_bucket_same_wrt;	/* true if the page to which
 											 * tuples are moved is the page
 											 * previous to the freed overflow
 											 * page */
@@ -196,9 +196,9 @@ typedef struct xl_hash_squeeze_page
  */
 typedef struct xl_hash_delete
 {
-	bool		clear_dead_marking; /* TRUE if this operation clears
+	bool		clear_dead_marking; /* true if this operation clears
 									 * LH_PAGE_HAS_DEAD_TUPLES flag */
-	bool		is_primary_bucket_page; /* TRUE if the operation is for
+	bool		is_primary_bucket_page; /* true if the operation is for
 										 * primary bucket page */
 } xl_hash_delete;
 

@@ -4376,7 +4376,7 @@ XmlTableSetColumnFilter(TableFuncScanState *state, char *path, int colnum)
 /*
  * XmlTableFetchRow
  *		Prepare the next "current" tuple for upcoming GetValue calls.
- *		Returns FALSE if the row-filter expression returned no more rows.
+ *		Returns false if the row-filter expression returned no more rows.
  */
 static bool
 XmlTableFetchRow(TableFuncScanState *state)

@@ -629,7 +629,7 @@ SimpleLruDoesPhysicalPageExist(SlruCtl ctl, int pageno)
  * Physical read of a (previously existing) page into a buffer slot
  *
  * On failure, we cannot just ereport(ERROR) since caller has put state in
- * shared memory that must be undone.  So, we return FALSE and save enough
+ * shared memory that must be undone.  So, we return false and save enough
  * info in static variables to let SlruReportIOError make the report.
  *
  * For now, assume it's not worth keeping a file pointer open across
@@ -705,7 +705,7 @@ SlruPhysicalReadPage(SlruCtl ctl, int pageno, int slotno)
  * Physical write of a page from a buffer slot
  *
  * On failure, we cannot just ereport(ERROR) since caller has put state in
- * shared memory that must be undone.  So, we return FALSE and save enough
+ * shared memory that must be undone.  So, we return false and save enough
  * info in static variables to let SlruReportIOError make the report.
  *
  * For now, assume it's not worth keeping a file pointer open across

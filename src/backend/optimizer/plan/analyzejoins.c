@@ -582,7 +582,7 @@ reduce_unique_semijoins(PlannerInfo *root)
  *		Could the relation possibly be proven distinct on some set of columns?
  *
  * This is effectively a pre-checking function for rel_is_distinct_for().
- * It must return TRUE if rel_is_distinct_for() could possibly return TRUE
+ * It must return true if rel_is_distinct_for() could possibly return true
  * with this rel, but it should not expend a lot of cycles.  The idea is
  * that callers can avoid doing possibly-expensive processing to compute
  * rel_is_distinct_for()'s argument lists if the call could not possibly
@@ -735,7 +735,7 @@ rel_is_distinct_for(PlannerInfo *root, RelOptInfo *rel, List *clause_list)
  *		on some set of output columns?
  *
  * This is effectively a pre-checking function for query_is_distinct_for().
- * It must return TRUE if query_is_distinct_for() could possibly return TRUE
+ * It must return true if query_is_distinct_for() could possibly return true
  * with this query, but it should not expend a lot of cycles.  The idea is
  * that callers can avoid doing possibly-expensive processing to compute
  * query_is_distinct_for()'s argument lists if the call could not possibly

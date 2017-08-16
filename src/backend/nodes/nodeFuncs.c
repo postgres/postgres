@@ -663,7 +663,7 @@ strip_implicit_coercions(Node *node)
  *	  Test whether an expression returns a set result.
  *
  * Because we use expression_tree_walker(), this can also be applied to
- * whole targetlists; it'll produce TRUE if any one of the tlist items
+ * whole targetlists; it'll produce true if any one of the tlist items
  * returns a set.
  */
 bool
@@ -1632,9 +1632,9 @@ set_sa_opfuncid(ScalarArrayOpExpr *opexpr)
  *	check_functions_in_node -
  *	  apply checker() to each function OID contained in given expression node
  *
- * Returns TRUE if the checker() function does; for nodes representing more
- * than one function call, returns TRUE if the checker() function does so
- * for any of those functions.  Returns FALSE if node does not invoke any
+ * Returns true if the checker() function does; for nodes representing more
+ * than one function call, returns true if the checker() function does so
+ * for any of those functions.  Returns false if node does not invoke any
  * SQL-visible function.  Caller must not pass node == NULL.
  *
  * This function examines only the given node; it does not recurse into any

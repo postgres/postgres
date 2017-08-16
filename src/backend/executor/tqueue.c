@@ -48,7 +48,7 @@ struct TupleQueueReader
 /*
  * Receive a tuple from a query, and send it to the designated shm_mq.
  *
- * Returns TRUE if successful, FALSE if shm_mq has been detached.
+ * Returns true if successful, false if shm_mq has been detached.
  */
 static bool
 tqueueReceiveSlot(TupleTableSlot *slot, DestReceiver *self)

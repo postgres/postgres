@@ -335,7 +335,7 @@ make_rels_by_clauseless_joins(PlannerInfo *root,
  *
  * On success, *sjinfo_p is set to NULL if this is to be a plain inner join,
  * else it's set to point to the associated SpecialJoinInfo node.  Also,
- * *reversed_p is set TRUE if the given relations need to be swapped to
+ * *reversed_p is set true if the given relations need to be swapped to
  * match the SpecialJoinInfo node.
  */
 static bool
@@ -1250,7 +1250,7 @@ mark_dummy_rel(RelOptInfo *rel)
  * decide there's no match for an outer row, which is pretty stupid.  So,
  * we need to detect the case.
  *
- * If only_pushed_down is TRUE, then consider only pushed-down quals.
+ * If only_pushed_down is true, then consider only pushed-down quals.
  */
 static bool
 restriction_is_constant_false(List *restrictlist, bool only_pushed_down)

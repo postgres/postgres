@@ -27,7 +27,7 @@ PG_FUNCTION_INFO_V1(g_int_same);
 /*
 ** The GiST Consistent method for _intments
 ** Should return false if for all data items x below entry,
-** the predicate x op query == FALSE, where op is the oper
+** the predicate x op query == false, where op is the oper
 ** corresponding to strategy in the pg_amop table.
 */
 Datum
@@ -89,7 +89,7 @@ g_int_consistent(PG_FUNCTION_ARGS)
 										   query);
 			break;
 		default:
-			retval = FALSE;
+			retval = false;
 	}
 	pfree(query);
 	PG_RETURN_BOOL(retval);
@@ -159,7 +159,7 @@ g_int_compress(PG_FUNCTION_ARGS)
 
 		retval = palloc(sizeof(GISTENTRY));
 		gistentryinit(*retval, PointerGetDatum(r),
-					  entry->rel, entry->page, entry->offset, FALSE);
+					  entry->rel, entry->page, entry->offset, false);
 
 		PG_RETURN_POINTER(retval);
 	}
@@ -206,7 +206,7 @@ g_int_compress(PG_FUNCTION_ARGS)
 		r = resize_intArrayType(r, len);
 		retval = palloc(sizeof(GISTENTRY));
 		gistentryinit(*retval, PointerGetDatum(r),
-					  entry->rel, entry->page, entry->offset, FALSE);
+					  entry->rel, entry->page, entry->offset, false);
 		PG_RETURN_POINTER(retval);
 	}
 	else
@@ -236,7 +236,7 @@ g_int_decompress(PG_FUNCTION_ARGS)
 		{
 			retval = palloc(sizeof(GISTENTRY));
 			gistentryinit(*retval, PointerGetDatum(in),
-						  entry->rel, entry->page, entry->offset, FALSE);
+						  entry->rel, entry->page, entry->offset, false);
 			PG_RETURN_POINTER(retval);
 		}
 
@@ -251,7 +251,7 @@ g_int_decompress(PG_FUNCTION_ARGS)
 		{
 			retval = palloc(sizeof(GISTENTRY));
 			gistentryinit(*retval, PointerGetDatum(in),
-						  entry->rel, entry->page, entry->offset, FALSE);
+						  entry->rel, entry->page, entry->offset, false);
 
 			PG_RETURN_POINTER(retval);
 		}
@@ -273,7 +273,7 @@ g_int_decompress(PG_FUNCTION_ARGS)
 		pfree(in);
 	retval = palloc(sizeof(GISTENTRY));
 	gistentryinit(*retval, PointerGetDatum(r),
-				  entry->rel, entry->page, entry->offset, FALSE);
+				  entry->rel, entry->page, entry->offset, false);
 
 	PG_RETURN_POINTER(retval);
 }
@@ -321,14 +321,14 @@ g_int_same(PG_FUNCTION_ARGS)
 		*result = false;
 		PG_RETURN_POINTER(result);
 	}
-	*result = TRUE;
+	*result = true;
 	da = ARRPTR(a);
 	db = ARRPTR(b);
 	while (n--)
 	{
 		if (*da++ != *db++)
 		{
-			*result = FALSE;
+			*result = false;
 			break;
 		}
 	}

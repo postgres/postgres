@@ -309,7 +309,7 @@ cube_out(PG_FUNCTION_ARGS)
 /*
 ** The GiST Consistent method for boxes
 ** Should return false if for all data items x below entry,
-** the predicate x op query == FALSE, where op is the oper
+** the predicate x op query == false, where op is the oper
 ** corresponding to strategy in the pg_amop table.
 */
 Datum
@@ -396,7 +396,7 @@ g_cube_decompress(PG_FUNCTION_ARGS)
 
 		gistentryinit(*retval, PointerGetDatum(key),
 					  entry->rel, entry->page,
-					  entry->offset, FALSE);
+					  entry->offset, false);
 		PG_RETURN_POINTER(retval);
 	}
 	PG_RETURN_POINTER(entry);
@@ -590,9 +590,9 @@ g_cube_same(PG_FUNCTION_ARGS)
 	bool	   *result = (bool *) PG_GETARG_POINTER(2);
 
 	if (cube_cmp_v0(b1, b2) == 0)
-		*result = TRUE;
+		*result = true;
 	else
-		*result = FALSE;
+		*result = false;
 
 	PG_RETURN_NDBOX_P(result);
 }
@@ -624,7 +624,7 @@ g_cube_leaf_consistent(NDBOX *key,
 			retval = cube_contains_v0(query, key);
 			break;
 		default:
-			retval = FALSE;
+			retval = false;
 	}
 	return retval;
 }
@@ -651,7 +651,7 @@ g_cube_internal_consistent(NDBOX *key,
 			retval = (bool) cube_overlap_v0(key, query);
 			break;
 		default:
-			retval = FALSE;
+			retval = false;
 	}
 	return retval;
 }
@@ -1059,7 +1059,7 @@ cube_contains_v0(NDBOX *a, NDBOX *b)
 	int			i;
 
 	if ((a == NULL) || (b == NULL))
-		return FALSE;
+		return false;
 
 	if (DIM(a) < DIM(b))
 	{
@@ -1071,9 +1071,9 @@ cube_contains_v0(NDBOX *a, NDBOX *b)
 		for (i = DIM(a); i < DIM(b); i++)
 		{
 			if (LL_COORD(b, i) != 0)
-				return FALSE;
+				return false;
 			if (UR_COORD(b, i) != 0)
-				return FALSE;
+				return false;
 		}
 	}
 
@@ -1082,13 +1082,13 @@ cube_contains_v0(NDBOX *a, NDBOX *b)
 	{
 		if (Min(LL_COORD(a, i), UR_COORD(a, i)) >
 			Min(LL_COORD(b, i), UR_COORD(b, i)))
-			return FALSE;
+			return false;
 		if (Max(LL_COORD(a, i), UR_COORD(a, i)) <
 			Max(LL_COORD(b, i), UR_COORD(b, i)))
-			return FALSE;
+			return false;
 	}
 
-	return TRUE;
+	return true;
 }
 
 Datum
@@ -1129,7 +1129,7 @@ cube_overlap_v0(NDBOX *a, NDBOX *b)
 	int			i;
 
 	if ((a == NULL) || (b == NULL))
-		return FALSE;
+		return false;
 
 	/* swap the box pointers if needed */
 	if (DIM(a) < DIM(b))
@@ -1144,21 +1144,21 @@ cube_overlap_v0(NDBOX *a, NDBOX *b)
 	for (i = 0; i < DIM(b); i++)
 	{
 		if (Min(LL_COORD(a, i), UR_COORD(a, i)) > Max(LL_COORD(b, i), UR_COORD(b, i)))
-			return FALSE;
+			return false;
 		if (Max(LL_COORD(a, i), UR_COORD(a, i)) < Min(LL_COORD(b, i), UR_COORD(b, i)))
-			return FALSE;
+			return false;
 	}
 
 	/* compare to zero those dimensions in (a) absent in (b) */
 	for (i = DIM(b); i < DIM(a); i++)
 	{
 		if (Min(LL_COORD(a, i), UR_COORD(a, i)) > 0)
-			return FALSE;
+			return false;
 		if (Max(LL_COORD(a, i), UR_COORD(a, i)) < 0)
-			return FALSE;
+			return false;
 	}
 
-	return TRUE;
+	return true;
 }
 
 

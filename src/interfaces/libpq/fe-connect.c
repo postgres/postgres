@@ -3586,7 +3586,7 @@ closePGconn(PGconn *conn)
 	 * Don't call PQsetnonblocking() because it will fail if it's unable to
 	 * flush the connection.
 	 */
-	conn->nonblocking = FALSE;
+	conn->nonblocking = false;
 
 	/*
 	 * Close the connection, reset all transient state, flush I/O buffers.
@@ -3781,8 +3781,8 @@ PQfreeCancel(PGcancel *cancel)
  * PQcancel and PQrequestCancel: attempt to request cancellation of the
  * current operation.
  *
- * The return value is TRUE if the cancel request was successfully
- * dispatched, FALSE if not (in which case an error message is available).
+ * The return value is true if the cancel request was successfully
+ * dispatched, false if not (in which case an error message is available).
  * Note: successful dispatch is no guarantee that there will be any effect at
  * the backend.  The application must read the operation result as usual.
  *
@@ -3871,7 +3871,7 @@ retry5:
 	/* All done */
 	closesocket(tmpsock);
 	SOCK_ERRNO_SET(save_errno);
-	return TRUE;
+	return true;
 
 cancel_errReturn:
 
@@ -3889,13 +3889,13 @@ cancel_errReturn:
 	if (tmpsock != PGINVALID_SOCKET)
 		closesocket(tmpsock);
 	SOCK_ERRNO_SET(save_errno);
-	return FALSE;
+	return false;
 }
 
 /*
  * PQcancel: request query cancel
  *
- * Returns TRUE if able to send the cancel request, FALSE if not.
+ * Returns true if able to send the cancel request, false if not.
  *
  * On failure, an error message is stored in *errbuf, which must be of size
  * errbufsize (recommended size is 256 bytes).  *errbuf is not changed on
@@ -3907,7 +3907,7 @@ PQcancel(PGcancel *cancel, char *errbuf, int errbufsize)
 	if (!cancel)
 	{
 		strlcpy(errbuf, "PQcancel() -- no cancel object supplied", errbufsize);
-		return FALSE;
+		return false;
 	}
 
 	return internal_cancel(&cancel->raddr, cancel->be_pid, cancel->be_key,
@@ -3917,7 +3917,7 @@ PQcancel(PGcancel *cancel, char *errbuf, int errbufsize)
 /*
  * PQrequestCancel: old, not thread-safe function for requesting query cancel
  *
- * Returns TRUE if able to send the cancel request, FALSE if not.
+ * Returns true if able to send the cancel request, false if not.
  *
  * On failure, the error message is saved in conn->errorMessage; this means
  * that this can't be used when there might be other active operations on
@@ -3933,7 +3933,7 @@ PQrequestCancel(PGconn *conn)
 
 	/* Check we have an open connection */
 	if (!conn)
-		return FALSE;
+		return false;
 
 	if (conn->sock == PGINVALID_SOCKET)
 	{
@@ -3942,7 +3942,7 @@ PQrequestCancel(PGconn *conn)
 				conn->errorMessage.maxlen);
 		conn->errorMessage.len = strlen(conn->errorMessage.data);
 
-		return FALSE;
+		return false;
 	}
 
 	r = internal_cancel(&conn->raddr, conn->be_pid, conn->be_key,
@@ -4781,7 +4781,7 @@ conninfo_init(PQExpBuffer errorMessage)
  * Returns a malloc'd PQconninfoOption array, if parsing is successful.
  * Otherwise, NULL is returned and an error message is left in errorMessage.
  *
- * If use_defaults is TRUE, default values are filled in (from a service file,
+ * If use_defaults is true, default values are filled in (from a service file,
  * environment variables, etc).
  */
 static PQconninfoOption *
@@ -5004,7 +5004,7 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage,
  * If not successful, NULL is returned and an error message is
  * left in errorMessage.
  * Defaults are supplied (from a service file, environment variables, etc)
- * for unspecified options, but only if use_defaults is TRUE.
+ * for unspecified options, but only if use_defaults is true.
  *
  * If expand_dbname is non-zero, and the value passed for the first occurrence
  * of "dbname" keyword is a connection string (as indicated by
@@ -5175,7 +5175,7 @@ conninfo_array_parse(const char *const *keywords, const char *const *values,
  *
  * Defaults are obtained from a service file, environment variables, etc.
  *
- * Returns TRUE if successful, otherwise FALSE; errorMessage, if supplied,
+ * Returns true if successful, otherwise false; errorMessage, if supplied,
  * is filled in upon failure.  Note that failure to locate a default value
  * is not an error condition here --- we just leave the option's value as
  * NULL.
@@ -5826,7 +5826,7 @@ conninfo_getval(PQconninfoOption *connOptions,
  *
  * If not successful, returns NULL and fills errorMessage accordingly.
  * However, if the reason of failure is an invalid keyword being passed and
- * ignoreMissing is TRUE, errorMessage will be left untouched.
+ * ignoreMissing is true, errorMessage will be left untouched.
  */
 static PQconninfoOption *
 conninfo_storeval(PQconninfoOption *connOptions,

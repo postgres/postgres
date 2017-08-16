@@ -776,7 +776,7 @@ NIAddAffix(IspellDict *Conf, const char *flag, char flagflags, const char *mask,
  *
  * The buffer at "next" must be of size BUFSIZ; we truncate the input to fit.
  *
- * Returns TRUE if we found a field, FALSE if not.
+ * Returns true if we found a field, false if not.
  */
 static bool
 get_nextfield(char **str, char *next)

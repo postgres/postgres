@@ -339,7 +339,7 @@ typedef struct _attrDefInfo
 	TableInfo  *adtable;		/* link to table of attribute */
 	int			adnum;
 	char	   *adef_expr;		/* decompiled DEFAULT expression */
-	bool		separate;		/* TRUE if must dump as separate item */
+	bool		separate;		/* true if must dump as separate item */
 } AttrDefInfo;
 
 typedef struct _tableDataInfo
@@ -380,7 +380,7 @@ typedef struct _ruleInfo
 	char		ev_type;
 	bool		is_instead;
 	char		ev_enabled;
-	bool		separate;		/* TRUE if must dump as separate item */
+	bool		separate;		/* true if must dump as separate item */
 	/* separate is always true for non-ON SELECT rules */
 } RuleInfo;
 
@@ -430,10 +430,10 @@ typedef struct _constraintInfo
 	char	   *condef;			/* definition, if CHECK or FOREIGN KEY */
 	Oid			confrelid;		/* referenced table, if FOREIGN KEY */
 	DumpId		conindex;		/* identifies associated index if any */
-	bool		condeferrable;	/* TRUE if constraint is DEFERRABLE */
-	bool		condeferred;	/* TRUE if constraint is INITIALLY DEFERRED */
-	bool		conislocal;		/* TRUE if constraint has local definition */
-	bool		separate;		/* TRUE if must dump as separate item */
+	bool		condeferrable;	/* true if constraint is DEFERRABLE */
+	bool		condeferred;	/* true if constraint is INITIALLY DEFERRED */
+	bool		conislocal;		/* true if constraint has local definition */
+	bool		separate;		/* true if must dump as separate item */
 } ConstraintInfo;
 
 typedef struct _procLangInfo

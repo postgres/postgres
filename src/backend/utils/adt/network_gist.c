@@ -561,13 +561,13 @@ inet_gist_compress(PG_FUNCTION_ARGS)
 
 			gistentryinit(*retval, PointerGetDatum(r),
 						  entry->rel, entry->page,
-						  entry->offset, FALSE);
+						  entry->offset, false);
 		}
 		else
 		{
 			gistentryinit(*retval, (Datum) 0,
 						  entry->rel, entry->page,
-						  entry->offset, FALSE);
+						  entry->offset, false);
 		}
 	}
 	else
@@ -602,7 +602,7 @@ inet_gist_fetch(PG_FUNCTION_ARGS)
 
 	retval = palloc(sizeof(GISTENTRY));
 	gistentryinit(*retval, InetPGetDatum(dst), entry->rel, entry->page,
-				  entry->offset, FALSE);
+				  entry->offset, false);
 
 	PG_RETURN_POINTER(retval);
 }

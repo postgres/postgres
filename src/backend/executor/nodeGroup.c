@@ -73,7 +73,7 @@ ExecGroup(PlanState *pstate)
 		if (TupIsNull(outerslot))
 		{
 			/* empty input, so return nothing */
-			node->grp_done = TRUE;
+			node->grp_done = true;
 			return NULL;
 		}
 		/* Copy tuple into firsttupleslot */
@@ -116,7 +116,7 @@ ExecGroup(PlanState *pstate)
 			if (TupIsNull(outerslot))
 			{
 				/* no more groups, so we're done */
-				node->grp_done = TRUE;
+				node->grp_done = true;
 				return NULL;
 			}
 
@@ -177,7 +177,7 @@ ExecInitGroup(Group *node, EState *estate, int eflags)
 	grpstate->ss.ps.plan = (Plan *) node;
 	grpstate->ss.ps.state = estate;
 	grpstate->ss.ps.ExecProcNode = ExecGroup;
-	grpstate->grp_done = FALSE;
+	grpstate->grp_done = false;
 
 	/*
 	 * create expression context
@@ -246,7 +246,7 @@ ExecReScanGroup(GroupState *node)
 {
 	PlanState  *outerPlan = outerPlanState(node);
 
-	node->grp_done = FALSE;
+	node->grp_done = false;
 	/* must clear first tuple */
 	ExecClearTuple(node->ss.ss_ScanTupleSlot);
 

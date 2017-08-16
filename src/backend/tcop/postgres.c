@@ -2122,7 +2122,7 @@ check_log_statement(List *stmt_list)
  * If logging is needed, the duration in msec is formatted into msec_str[],
  * which must be a 32-byte buffer.
  *
- * was_logged should be TRUE if caller already logged query details (this
+ * was_logged should be true if caller already logged query details (this
  * essentially prevents 2 from being returned).
  */
 int

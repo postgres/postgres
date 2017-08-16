@@ -740,7 +740,7 @@ deconstruct_jointree(PlannerInfo *root)
  *
  * Inputs:
  *	jtnode is the jointree node to examine
- *	below_outer_join is TRUE if this node is within the nullable side of a
+ *	below_outer_join is true if this node is within the nullable side of a
  *		higher-level outer join
  * Outputs:
  *	*qualscope gets the set of base Relids syntactically included in this
@@ -1609,8 +1609,8 @@ compute_semijoin_info(SpecialJoinInfo *sjinfo, List *clause)
  *	  as belonging to a higher join level, just add it to postponed_qual_list.
  *
  * 'clause': the qual clause to be distributed
- * 'is_deduced': TRUE if the qual came from implied-equality deduction
- * 'below_outer_join': TRUE if the qual is from a JOIN/ON that is below the
+ * 'is_deduced': true if the qual came from implied-equality deduction
+ * 'below_outer_join': true if the qual is from a JOIN/ON that is below the
  *		nullable side of a higher-level outer join
  * 'jointype': type of join the qual is from (JOIN_INNER for a WHERE clause)
  * 'security_level': security_level to assign to the qual
@@ -1621,7 +1621,7 @@ compute_semijoin_info(SpecialJoinInfo *sjinfo, List *clause)
  *		baserels appearing on the outer (nonnullable) side of the join
  *		(for FULL JOIN this includes both sides of the join, and must in fact
  *		equal qualscope)
- * 'deduced_nullable_relids': if is_deduced is TRUE, the nullable relids to
+ * 'deduced_nullable_relids': if is_deduced is true, the nullable relids to
  *		impute to the clause; otherwise NULL
  * 'postponed_qual_list': list of PostponedQual structs, which we can add
  *		this qual to if it turns out to belong to a higher join level.
@@ -1631,9 +1631,9 @@ compute_semijoin_info(SpecialJoinInfo *sjinfo, List *clause)
  * 'ojscope' is needed if we decide to force the qual up to the outer-join
  * level, which will be ojscope not necessarily qualscope.
  *
- * In normal use (when is_deduced is FALSE), at the time this is called,
+ * In normal use (when is_deduced is false), at the time this is called,
  * root->join_info_list must contain entries for all and only those special
- * joins that are syntactically below this qual.  But when is_deduced is TRUE,
+ * joins that are syntactically below this qual.  But when is_deduced is true,
  * we are adding new deduced clauses after completion of deconstruct_jointree,
  * so it cannot be assumed that root->join_info_list has anything to do with
  * qual placement.
@@ -2023,8 +2023,8 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
  *		may force extra delay of higher-level outer joins.
  *
  * If the qual must be delayed, add relids to *relids_p to reflect the lowest
- * safe level for evaluating the qual, and return TRUE.  Any extra delay for
- * higher-level joins is reflected by setting delay_upper_joins to TRUE in
+ * safe level for evaluating the qual, and return true.  Any extra delay for
+ * higher-level joins is reflected by setting delay_upper_joins to true in
  * SpecialJoinInfo structs.  We also compute nullable_relids, the set of
  * referenced relids that are nullable by lower outer joins (note that this
  * can be nonempty even for a non-delayed qual).
@@ -2056,7 +2056,7 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
  * Lastly, a pushed-down qual that references the nullable side of any current
  * join_info_list member and has to be evaluated above that OJ (because its
  * required relids overlap the LHS too) causes that OJ's delay_upper_joins
- * flag to be set TRUE.  This will prevent any higher-level OJs from
+ * flag to be set true.  This will prevent any higher-level OJs from
  * being interchanged with that OJ, which would result in not having any
  * correct place to evaluate the qual.  (The case we care about here is a
  * sub-select WHERE clause within the RHS of some outer join.  The WHERE
@@ -2140,7 +2140,7 @@ check_outerjoin_delay(PlannerInfo *root,
 /*
  * check_equivalence_delay
  *		Detect whether a potential equivalence clause is rendered unsafe
- *		by outer-join-delay considerations.  Return TRUE if it's safe.
+ *		by outer-join-delay considerations.  Return true if it's safe.
  *
  * The initial tests in distribute_qual_to_rels will consider a mergejoinable
  * clause to be a potential equivalence clause if it is not outerjoin_delayed.

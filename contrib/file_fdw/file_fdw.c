@@ -824,7 +824,7 @@ fileIsForeignScanParallelSafe(PlannerInfo *root, RelOptInfo *rel,
  *
  * Check to see if it's useful to convert only a subset of the file's columns
  * to binary.  If so, construct a list of the column names to be converted,
- * return that at *columns, and return TRUE.  (Note that it's possible to
+ * return that at *columns, and return true.  (Note that it's possible to
  * determine that no columns need be converted, for instance with a COUNT(*)
  * query.  So we can't use returning a NIL list to indicate failure.)
  */

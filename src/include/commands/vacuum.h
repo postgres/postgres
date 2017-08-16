@@ -29,8 +29,8 @@
  * so they live until the end of the ANALYZE operation.
  *
  * The type-specific typanalyze function is passed a pointer to this struct
- * and must return TRUE to continue analysis, FALSE to skip analysis of this
- * column.  In the TRUE case it must set the compute_stats and minrows fields,
+ * and must return true to continue analysis, false to skip analysis of this
+ * column.  In the true case it must set the compute_stats and minrows fields,
  * and can optionally set extra_data to pass additional info to compute_stats.
  * minrows is its request for the minimum number of sample rows to be gathered
  * (but note this request might not be honored, eg if there are fewer rows
@@ -45,7 +45,7 @@
  * The fetchfunc may be called with rownum running from 0 to samplerows-1.
  * It returns a Datum and an isNull flag.
  *
- * compute_stats should set stats_valid TRUE if it is able to compute
+ * compute_stats should set stats_valid true if it is able to compute
  * any useful statistics.  If it does, the remainder of the struct holds
  * the information to be stored in a pg_statistic row for the column.  Be
  * careful to allocate any pointed-to data in anl_context, which will NOT
@@ -86,7 +86,7 @@ typedef struct VacAttrStats
 
 	/*
 	 * These fields must be filled in by the typanalyze routine, unless it
-	 * returns FALSE.
+	 * returns false.
 	 */
 	AnalyzeAttrComputeStatsFunc compute_stats;	/* function pointer */
 	int			minrows;		/* Minimum # of rows wanted for stats */

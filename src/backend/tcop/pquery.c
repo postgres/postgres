@@ -682,7 +682,7 @@ PortalSetResultFormat(Portal portal, int nFormats, int16 *formats)
  *		in which to store a command completion status string.
  *		May be NULL if caller doesn't want a status string.
  *
- * Returns TRUE if the portal's execution is complete, FALSE if it was
+ * Returns true if the portal's execution is complete, false if it was
  * suspended due to exhaustion of the count parameter.
  */
 bool

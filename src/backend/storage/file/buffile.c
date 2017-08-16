@@ -68,7 +68,7 @@ struct BufFile
 	 * avoid making redundant FileSeek calls.
 	 */
 
-	bool		isTemp;			/* can only add files if this is TRUE */
+	bool		isTemp;			/* can only add files if this is true */
 	bool		isInterXact;	/* keep open over transactions? */
 	bool		dirty;			/* does buffer need to be written? */
 

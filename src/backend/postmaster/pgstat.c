@@ -5270,7 +5270,7 @@ done:
  * pgstat_read_db_statsfile_timestamp() -
  *
  *	Attempt to determine the timestamp of the last db statfile write.
- *	Returns TRUE if successful; the timestamp is stored in *ts.
+ *	Returns true if successful; the timestamp is stored in *ts.
  *
  *	This needs to be careful about handling databases for which no stats file
  *	exists, such as databases without a stat entry or those not yet written:

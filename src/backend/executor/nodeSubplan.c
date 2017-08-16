@@ -220,7 +220,7 @@ ExecScanSubPlan(SubPlanState *node,
 	MemoryContext oldcontext;
 	TupleTableSlot *slot;
 	Datum		result;
-	bool		found = false;	/* TRUE if got at least one subplan tuple */
+	bool		found = false;	/* true if got at least one subplan tuple */
 	ListCell   *pvar;
 	ListCell   *l;
 	ArrayBuildStateAny *astate = NULL;

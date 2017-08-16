@@ -74,19 +74,19 @@ _int_same(PG_FUNCTION_ARGS)
 	da = ARRPTR(a);
 	db = ARRPTR(b);
 
-	result = FALSE;
+	result = false;
 
 	if (na == nb)
 	{
 		SORT(a);
 		SORT(b);
-		result = TRUE;
+		result = true;
 
 		for (n = 0; n < na; n++)
 		{
 			if (da[n] != db[n])
 			{
-				result = FALSE;
+				result = false;
 				break;
 			}
 		}
@@ -110,7 +110,7 @@ _int_overlap(PG_FUNCTION_ARGS)
 	CHECKARRVALID(a);
 	CHECKARRVALID(b);
 	if (ARRISEMPTY(a) || ARRISEMPTY(b))
-		return FALSE;
+		return false;
 
 	SORT(a);
 	SORT(b);

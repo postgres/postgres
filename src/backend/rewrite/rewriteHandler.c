@@ -325,8 +325,8 @@ acquireLocksOnSubLinks(Node *node, acquireLocksOnSubLinks_context *context)
  *	rt_index - RT index of result relation in original query
  *	event - type of rule event
  * Output arguments:
- *	*returning_flag - set TRUE if we rewrite RETURNING clause in rule_action
- *					(must be initialized to FALSE)
+ *	*returning_flag - set true if we rewrite RETURNING clause in rule_action
+ *					(must be initialized to false)
  * Return value:
  *	rewritten form of rule_action
  */
@@ -2017,10 +2017,10 @@ CopyAndAddInvertedQual(Query *parsetree,
  *	event - type of rule event
  *	locks - list of rules to fire
  * Output arguments:
- *	*instead_flag - set TRUE if any unqualified INSTEAD rule is found
- *					(must be initialized to FALSE)
- *	*returning_flag - set TRUE if we rewrite RETURNING clause in any rule
- *					(must be initialized to FALSE)
+ *	*instead_flag - set true if any unqualified INSTEAD rule is found
+ *					(must be initialized to false)
+ *	*returning_flag - set true if we rewrite RETURNING clause in any rule
+ *					(must be initialized to false)
  *	*qual_product - filled with modified original query if any qualified
  *					INSTEAD rule is found (must be initialized to NULL)
  * Return value:

@@ -1422,7 +1422,7 @@ HeapTupleSatisfiesNonVacuumable(HeapTuple htup, Snapshot snapshot,
  *	should already be set.  We assume that if no hint bits are set, the xmin
  *	or xmax transaction is still running.  This is therefore faster than
  *	HeapTupleSatisfiesVacuum, because we don't consult PGXACT nor CLOG.
- *	It's okay to return FALSE when in doubt, but we must return TRUE only
+ *	It's okay to return false when in doubt, but we must return true only
  *	if the tuple is removable.
  */
 bool

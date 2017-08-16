@@ -1791,7 +1791,7 @@ GetSnapshotData(Snapshot snapshot)
  * check that the source transaction is still running, and we'd better do
  * that atomically with installing the new xmin.
  *
- * Returns TRUE if successful, FALSE if source xact is no longer running.
+ * Returns true if successful, false if source xact is no longer running.
  */
 bool
 ProcArrayInstallImportedXmin(TransactionId xmin,
@@ -1866,7 +1866,7 @@ ProcArrayInstallImportedXmin(TransactionId xmin,
  * PGPROC of the transaction from which we imported the snapshot, rather than
  * an XID.
  *
- * Returns TRUE if successful, FALSE if source xact is no longer running.
+ * Returns true if successful, false if source xact is no longer running.
  */
 bool
 ProcArrayInstallRestoredXmin(TransactionId xmin, PGPROC *proc)
@@ -2873,7 +2873,7 @@ CountUserBackends(Oid roleid)
  * The current backend is always ignored; it is caller's responsibility to
  * check whether the current backend uses the given DB, if it's important.
  *
- * Returns TRUE if there are (still) other backends in the DB, FALSE if not.
+ * Returns true if there are (still) other backends in the DB, false if not.
  * Also, *nbackends and *nprepared are set to the number of other backends
  * and prepared transactions in the DB, respectively.
  *

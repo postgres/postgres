@@ -315,7 +315,7 @@ brinGetTupleForHeapBlock(BrinRevmap *revmap, BlockNumber heapBlk,
  *
  * Index must be locked in ShareUpdateExclusiveLock mode.
  *
- * Return FALSE if caller should retry.
+ * Return false if caller should retry.
  */
 bool
 brinRevmapDesummarizeRange(Relation idxrel, BlockNumber heapBlk)

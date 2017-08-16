@@ -655,7 +655,7 @@ create_tablespace_directories(const char *location, const Oid tablespaceoid)
  * does not justify throwing an error that would require manual intervention
  * to get the database running again.
  *
- * Returns TRUE if successful, FALSE if some subdirectory is not empty
+ * Returns true if successful, false if some subdirectory is not empty
  */
 static bool
 destroy_tablespace_directories(Oid tablespaceoid, bool redo)

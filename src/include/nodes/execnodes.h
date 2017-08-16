@@ -768,8 +768,8 @@ typedef struct SubPlanState
 	ProjectionInfo *projRight;	/* for projecting subselect output */
 	TupleHashTable hashtable;	/* hash table for no-nulls subselect rows */
 	TupleHashTable hashnulls;	/* hash table for rows with null(s) */
-	bool		havehashrows;	/* TRUE if hashtable is not empty */
-	bool		havenullrows;	/* TRUE if hashnulls is not empty */
+	bool		havehashrows;	/* true if hashtable is not empty */
+	bool		havenullrows;	/* true if hashnulls is not empty */
 	MemoryContext hashtablecxt; /* memory context containing hash tables */
 	MemoryContext hashtempcxt;	/* temp memory context for hash tables */
 	ExprContext *innerecontext; /* econtext for computing inner tuples */

@@ -2324,7 +2324,7 @@ XLogCheckpointNeeded(XLogSegNo new_segno)
 /*
  * Write and/or fsync the log at least as far as WriteRqst indicates.
  *
- * If flexible == TRUE, we don't have to write as far as WriteRqst, but
+ * If flexible == true, we don't have to write as far as WriteRqst, but
  * may stop at any convenient boundary (such as a cache or logfile boundary).
  * This option allows us to avoid uselessly issuing multiple writes when a
  * single one would do.
@@ -2945,7 +2945,7 @@ XLogFlush(XLogRecPtr record)
  *
  * This routine is invoked periodically by the background walwriter process.
  *
- * Returns TRUE if there was any work to do, even if we skipped flushing due
+ * Returns true if there was any work to do, even if we skipped flushing due
  * to wal_writer_delay/wal_writer_flush_after.
  */
 bool
@@ -3141,12 +3141,12 @@ XLogNeedsFlush(XLogRecPtr record)
  *
  * log, seg: identify segment to be created/opened.
  *
- * *use_existent: if TRUE, OK to use a pre-existing file (else, any
- * pre-existing file will be deleted).  On return, TRUE if a pre-existing
+ * *use_existent: if true, OK to use a pre-existing file (else, any
+ * pre-existing file will be deleted).  On return, true if a pre-existing
  * file was used.
  *
- * use_lock: if TRUE, acquire ControlFileLock while moving file into
- * place.  This should be TRUE except during bootstrap log creation.  The
+ * use_lock: if true, acquire ControlFileLock while moving file into
+ * place.  This should be true except during bootstrap log creation.  The
  * caller must *not* hold the lock at call.
  *
  * Returns FD of opened file.
@@ -3441,24 +3441,24 @@ XLogFileCopy(XLogSegNo destsegno, TimeLineID srcTLI, XLogSegNo srcsegno,
  * filename while it's being created) and to recycle an old segment.
  *
  * *segno: identify segment to install as (or first possible target).
- * When find_free is TRUE, this is modified on return to indicate the
+ * When find_free is true, this is modified on return to indicate the
  * actual installation location or last segment searched.
  *
  * tmppath: initial name of file to install.  It will be renamed into place.
  *
- * find_free: if TRUE, install the new segment at the first empty segno
- * number at or after the passed numbers.  If FALSE, install the new segment
+ * find_free: if true, install the new segment at the first empty segno
+ * number at or after the passed numbers.  If false, install the new segment
  * exactly where specified, deleting any existing segment file there.
  *
  * max_segno: maximum segment number to install the new file as.  Fail if no
  * free slot is found between *segno and max_segno. (Ignored when find_free
- * is FALSE.)
+ * is false.)
  *
- * use_lock: if TRUE, acquire ControlFileLock while moving file into
- * place.  This should be TRUE except during bootstrap log creation.  The
+ * use_lock: if true, acquire ControlFileLock while moving file into
+ * place.  This should be true except during bootstrap log creation.  The
  * caller must *not* hold the lock at call.
  *
- * Returns TRUE if the file was installed successfully.  FALSE indicates that
+ * Returns true if the file was installed successfully.  false indicates that
  * max_segno limit was exceeded, or an error occurred while renaming the
  * file into place.
  */
@@ -5680,7 +5680,7 @@ getRecordTimestamp(XLogReaderState *record, TimestampTz *recordXtime)
  * For point-in-time recovery, this function decides whether we want to
  * stop applying the XLOG before the current record.
  *
- * Returns TRUE if we are stopping, FALSE otherwise. If stopping, some
+ * Returns true if we are stopping, false otherwise. If stopping, some
  * information is saved in recoveryStopXid et al for use in annotating the
  * new timeline's history file.
  */
@@ -6659,7 +6659,7 @@ StartupXLOG(void)
 	ereport(DEBUG1,
 			(errmsg_internal("redo record is at %X/%X; shutdown %s",
 							 (uint32) (checkPoint.redo >> 32), (uint32) checkPoint.redo,
-							 wasShutdown ? "TRUE" : "FALSE")));
+							 wasShutdown ? "true" : "false")));
 	ereport(DEBUG1,
 			(errmsg_internal("next transaction ID: %u:%u; next OID: %u",
 							 checkPoint.nextXidEpoch, checkPoint.nextXid,
@@ -11192,11 +11192,11 @@ GetOldestRestartPoint(XLogRecPtr *oldrecptr, TimeLineID *oldtli)
  * later than the start of the dump, and so if we rely on it as the start
  * point, we will fail to restore a consistent database state.
  *
- * Returns TRUE if a backup_label was found (and fills the checkpoint
+ * Returns true if a backup_label was found (and fills the checkpoint
  * location and its REDO location into *checkPointLoc and RedoStartLSN,
- * respectively); returns FALSE if not. If this backup_label came from a
- * streamed backup, *backupEndRequired is set to TRUE. If this backup_label
- * was created during recovery, *backupFromStandby is set to TRUE.
+ * respectively); returns false if not. If this backup_label came from a
+ * streamed backup, *backupEndRequired is set to true. If this backup_label
+ * was created during recovery, *backupFromStandby is set to true.
  */
 static bool
 read_backup_label(XLogRecPtr *checkPointLoc, bool *backupEndRequired,
@@ -11279,8 +11279,8 @@ read_backup_label(XLogRecPtr *checkPointLoc, bool *backupEndRequired,
  * recovering from a backup dump file, and we therefore need to create symlinks
  * as per the information present in tablespace_map file.
  *
- * Returns TRUE if a tablespace_map file was found (and fills the link
- * information for all the tablespace links present in file); returns FALSE
+ * Returns true if a tablespace_map file was found (and fills the link
+ * information for all the tablespace links present in file); returns false
  * if not.
  */
 static bool
@@ -11714,7 +11714,7 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 					 * If primary_conninfo is set, launch walreceiver to try
 					 * to stream the missing WAL.
 					 *
-					 * If fetching_ckpt is TRUE, RecPtr points to the initial
+					 * If fetching_ckpt is true, RecPtr points to the initial
 					 * checkpoint location. In that case, we use RedoStartLSN
 					 * as the streaming start position instead of RecPtr, so
 					 * that when we later jump backwards to start redo at

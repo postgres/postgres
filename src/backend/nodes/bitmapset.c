@@ -558,8 +558,8 @@ bms_singleton_member(const Bitmapset *a)
  * bms_get_singleton_member
  *
  * Test whether the given set is a singleton.
- * If so, set *member to the value of its sole member, and return TRUE.
- * If not, return FALSE, without changing *member.
+ * If so, set *member to the value of its sole member, and return true.
+ * If not, return false, without changing *member.
  *
  * This is more convenient and faster than calling bms_membership() and then
  * bms_singleton_member(), if we don't care about distinguishing empty sets

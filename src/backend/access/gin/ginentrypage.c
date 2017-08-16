@@ -30,7 +30,7 @@ static void entrySplitPage(GinBtree btree, Buffer origbuf,
  * Form a tuple for entry tree.
  *
  * If the tuple would be too big to be stored, function throws a suitable
- * error if errorTooBig is TRUE, or returns NULL if errorTooBig is FALSE.
+ * error if errorTooBig is true, or returns NULL if errorTooBig is false.
  *
  * See src/backend/access/gin/README for a description of the index tuple
  * format that is being built here.  We build on the assumption that we
@@ -249,7 +249,7 @@ entryIsMoveRight(GinBtree btree, Page page)
 	GinNullCategory category;
 
 	if (GinPageRightMost(page))
-		return FALSE;
+		return false;
 
 	itup = getRightMostTuple(page);
 	attnum = gintuple_get_attrnum(btree->ginstate, itup);
@@ -258,9 +258,9 @@ entryIsMoveRight(GinBtree btree, Page page)
 	if (ginCompareAttEntries(btree->ginstate,
 							 btree->entryAttnum, btree->entryKey, btree->entryCategory,
 							 attnum, key, category) > 0)
-		return TRUE;
+		return true;
 
-	return FALSE;
+	return false;
 }
 
 /*
@@ -356,7 +356,7 @@ entryLocateLeafEntry(GinBtree btree, GinBtreeStack *stack)
 	if (btree->fullScan)
 	{
 		stack->off = FirstOffsetNumber;
-		return TRUE;
+		return true;
 	}
 
 	low = FirstOffsetNumber;
@@ -762,9 +762,9 @@ ginPrepareEntryScan(GinBtree btree, OffsetNumber attnum,
 	btree->fillRoot = ginEntryFillRoot;
 	btree->prepareDownlink = entryPrepareDownlink;
 
-	btree->isData = FALSE;
-	btree->fullScan = FALSE;
-	btree->isBuild = FALSE;
+	btree->isData = false;
+	btree->fullScan = false;
+	btree->isBuild = false;
 
 	btree->entryAttnum = attnum;
 	btree->entryKey = key;

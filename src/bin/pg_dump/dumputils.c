@@ -42,7 +42,7 @@ static void AddAcl(PQExpBuffer aclbuf, const char *keyword,
  *	prefix: string to prefix to each generated command; typically empty
  *	remoteVersion: version of database
  *
- * Returns TRUE if okay, FALSE if could not parse the acl string.
+ * Returns true if okay, false if could not parse the acl string.
  * The resulting commands (if any) are appended to the contents of 'sql'.
  *
  * Note: when processing a default ACL, prefix is "ALTER DEFAULT PRIVILEGES "
@@ -359,7 +359,7 @@ buildACLCommands(const char *name, const char *subname,
  *	owner: username of privileges owner (will be passed through fmtId)
  *	remoteVersion: version of database
  *
- * Returns TRUE if okay, FALSE if could not parse the acl string.
+ * Returns true if okay, false if could not parse the acl string.
  * The resulting commands (if any) are appended to the contents of 'sql'.
  */
 bool

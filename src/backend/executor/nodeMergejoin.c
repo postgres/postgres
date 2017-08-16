@@ -510,7 +510,7 @@ MJFillInner(MergeJoinState *node)
 
 /*
  * Check that a qual condition is constant true or constant false.
- * If it is constant false (or null), set *is_const_false to TRUE.
+ * If it is constant false (or null), set *is_const_false to true.
  *
  * Constant true would normally be represented by a NIL list, but we allow an
  * actual bool Const as well.  We do expect that the planner will have thrown

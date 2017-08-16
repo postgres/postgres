@@ -623,8 +623,8 @@ PortalHashTableDeleteAll(void)
  * simply removed.  Portals remaining from prior transactions should be
  * left untouched.
  *
- * Returns TRUE if any portals changed state (possibly causing user-defined
- * code to be run), FALSE if not.
+ * Returns true if any portals changed state (possibly causing user-defined
+ * code to be run), false if not.
  */
 bool
 PreCommit_Portals(bool isPrepare)

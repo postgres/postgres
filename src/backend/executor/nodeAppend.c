@@ -88,10 +88,10 @@ exec_append_initialize_next(AppendState *appendstate)
 		/*
 		 * if scanning in reverse, we start at the last scan in the list and
 		 * then proceed back to the first.. in any case we inform ExecAppend
-		 * that we are at the end of the line by returning FALSE
+		 * that we are at the end of the line by returning false
 		 */
 		appendstate->as_whichplan = 0;
-		return FALSE;
+		return false;
 	}
 	else if (whichplan >= appendstate->as_nplans)
 	{
@@ -99,11 +99,11 @@ exec_append_initialize_next(AppendState *appendstate)
 		 * as above, end the scan if we go beyond the last scan in our list..
 		 */
 		appendstate->as_whichplan = appendstate->as_nplans - 1;
-		return FALSE;
+		return false;
 	}
 	else
 	{
-		return TRUE;
+		return true;
 	}
 }
 

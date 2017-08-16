@@ -1000,15 +1000,15 @@ AddNewRelationType(const char *typeName,
  *	cooked_constraints: list of precooked check constraints and defaults
  *	relkind: relkind for new rel
  *	relpersistence: rel's persistence status (permanent, temp, or unlogged)
- *	shared_relation: TRUE if it's to be a shared relation
- *	mapped_relation: TRUE if the relation will use the relfilenode map
- *	oidislocal: TRUE if oid column (if any) should be marked attislocal
+ *	shared_relation: true if it's to be a shared relation
+ *	mapped_relation: true if the relation will use the relfilenode map
+ *	oidislocal: true if oid column (if any) should be marked attislocal
  *	oidinhcount: attinhcount to assign to oid column (if any)
  *	oncommit: ON COMMIT marking (only relevant if it's a temp table)
  *	reloptions: reloptions in Datum form, or (Datum) 0 if none
- *	use_user_acl: TRUE if should look for user-defined default permissions;
- *		if FALSE, relacl is always set NULL
- *	allow_system_table_mods: TRUE to allow creation in system namespaces
+ *	use_user_acl: true if should look for user-defined default permissions;
+ *		if false, relacl is always set NULL
+ *	allow_system_table_mods: true to allow creation in system namespaces
  *	is_internal: is this a system-generated catalog?
  *
  * Output parameters:
@@ -2208,9 +2208,9 @@ StoreConstraints(Relation rel, List *cooked_constraints, bool is_internal)
  * rel: relation to be modified
  * newColDefaults: list of RawColumnDefault structures
  * newConstraints: list of Constraint nodes
- * allow_merge: TRUE if check constraints may be merged with existing ones
- * is_local: TRUE if definition is local, FALSE if it's inherited
- * is_internal: TRUE if result of some internal process, not a user request
+ * allow_merge: true if check constraints may be merged with existing ones
+ * is_local: true if definition is local, false if it's inherited
+ * is_internal: true if result of some internal process, not a user request
  *
  * All entries in newColDefaults will be processed.  Entries in newConstraints
  * will be processed only if they are CONSTR_CHECK type.
@@ -2455,7 +2455,7 @@ AddRelationNewConstraints(Relation rel,
  * new one, and either adjust its conislocal/coninhcount settings or throw
  * error as needed.
  *
- * Returns TRUE if merged (constraint is a duplicate), or FALSE if it's
+ * Returns true if merged (constraint is a duplicate), or false if it's
  * got a so-far-unique name, or throws error if conflict.
  *
  * XXX See MergeConstraintsIntoExisting too if you change this code.

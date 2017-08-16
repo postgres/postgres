@@ -513,7 +513,7 @@ find_language_template(const char *languageName)
 
 
 /*
- * This just returns TRUE if we have a valid template for a given language
+ * This just returns true if we have a valid template for a given language
  */
 bool
 PLTemplateExists(const char *languageName)

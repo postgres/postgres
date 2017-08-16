@@ -232,9 +232,9 @@ preprocess_minmax_aggregates(PlannerInfo *root, List *tlist)
  *		that each one is a MIN/MAX aggregate.  If so, build a list of the
  *		distinct aggregate calls in the tree.
  *
- * Returns TRUE if a non-MIN/MAX aggregate is found, FALSE otherwise.
+ * Returns true if a non-MIN/MAX aggregate is found, false otherwise.
  * (This seemingly-backward definition is used because expression_tree_walker
- * aborts the scan on TRUE return, which is what we want.)
+ * aborts the scan on true return, which is what we want.)
  *
  * Found aggregates are added to the list at *context; it's up to the caller
  * to initialize the list to NIL.
@@ -335,8 +335,8 @@ find_minmax_aggs_walker(Node *node, List **context)
  *		Given a MIN/MAX aggregate, try to build an indexscan Path it can be
  *		optimized with.
  *
- * If successful, stash the best path in *mminfo and return TRUE.
- * Otherwise, return FALSE.
+ * If successful, stash the best path in *mminfo and return true.
+ * Otherwise, return false.
  */
 static bool
 build_minmax_path(PlannerInfo *root, MinMaxAggInfo *mminfo,

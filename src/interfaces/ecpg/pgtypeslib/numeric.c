@@ -162,7 +162,7 @@ PGTYPESdecimal_new(void)
 static int
 set_var_from_str(char *str, char **ptr, numeric *dest)
 {
-	bool		have_dp = FALSE;
+	bool		have_dp = false;
 	int			i = 0;
 
 	errno = 0;
@@ -214,7 +214,7 @@ set_var_from_str(char *str, char **ptr, numeric *dest)
 
 	if (*(*ptr) == '.')
 	{
-		have_dp = TRUE;
+		have_dp = true;
 		(*ptr)++;
 	}
 
@@ -241,7 +241,7 @@ set_var_from_str(char *str, char **ptr, numeric *dest)
 				errno = PGTYPES_NUM_BAD_NUMERIC;
 				return -1;
 			}
-			have_dp = TRUE;
+			have_dp = true;
 			(*ptr)++;
 		}
 		else

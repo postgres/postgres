@@ -2577,7 +2577,7 @@ SetTempTablespaces(Oid *tableSpaces, int numSpaces)
 /*
  * TempTablespacesAreSet
  *
- * Returns TRUE if SetTempTablespaces has been called in current transaction.
+ * Returns true if SetTempTablespaces has been called in current transaction.
  * (This is just so that tablespaces.c doesn't need its own per-transaction
  * state.)
  */

@@ -1487,8 +1487,8 @@ ExecCleanUpTriggerState(EState *estate)
  * going to be stored into a relation that has OIDs.  In other contexts
  * we are free to choose whether to leave space for OIDs in result tuples
  * (we generally don't want to, but we do if a physical-tlist optimization
- * is possible).  This routine checks the plan context and returns TRUE if the
- * choice is forced, FALSE if the choice is not forced.  In the TRUE case,
+ * is possible).  This routine checks the plan context and returns true if the
+ * choice is forced, false if the choice is not forced.  In the true case,
  * *hasoids is set to the required value.
  *
  * One reason this is ugly is that all plan nodes in the plan tree will emit

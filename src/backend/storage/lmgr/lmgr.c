@@ -129,7 +129,7 @@ LockRelationOid(Oid relid, LOCKMODE lockmode)
  *		ConditionalLockRelationOid
  *
  * As above, but only lock if we can get the lock without blocking.
- * Returns TRUE iff the lock was acquired.
+ * Returns true iff the lock was acquired.
  *
  * NOTE: we do not currently need conditional versions of all the
  * LockXXX routines in this file, but they could easily be added if needed.
@@ -344,7 +344,7 @@ LockRelationForExtension(Relation relation, LOCKMODE lockmode)
  *		ConditionalLockRelationForExtension
  *
  * As above, but only lock if we can get the lock without blocking.
- * Returns TRUE iff the lock was acquired.
+ * Returns true iff the lock was acquired.
  */
 bool
 ConditionalLockRelationForExtension(Relation relation, LOCKMODE lockmode)
@@ -413,7 +413,7 @@ LockPage(Relation relation, BlockNumber blkno, LOCKMODE lockmode)
  *		ConditionalLockPage
  *
  * As above, but only lock if we can get the lock without blocking.
- * Returns TRUE iff the lock was acquired.
+ * Returns true iff the lock was acquired.
  */
 bool
 ConditionalLockPage(Relation relation, BlockNumber blkno, LOCKMODE lockmode)
@@ -469,7 +469,7 @@ LockTuple(Relation relation, ItemPointer tid, LOCKMODE lockmode)
  *		ConditionalLockTuple
  *
  * As above, but only lock if we can get the lock without blocking.
- * Returns TRUE iff the lock was acquired.
+ * Returns true iff the lock was acquired.
  */
 bool
 ConditionalLockTuple(Relation relation, ItemPointer tid, LOCKMODE lockmode)
@@ -601,7 +601,7 @@ XactLockTableWait(TransactionId xid, Relation rel, ItemPointer ctid,
  *		ConditionalXactLockTableWait
  *
  * As above, but only lock if we can get the lock without blocking.
- * Returns TRUE if the lock was acquired.
+ * Returns true if the lock was acquired.
  */
 bool
 ConditionalXactLockTableWait(TransactionId xid)

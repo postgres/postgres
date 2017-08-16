@@ -111,7 +111,7 @@ static const gbtree_vinfo tinfo =
 {
 	gbt_t_bit,
 	0,
-	TRUE,
+	true,
 	gbt_bitgt,
 	gbt_bitge,
 	gbt_biteq,
@@ -152,13 +152,13 @@ gbt_bit_consistent(PG_FUNCTION_ARGS)
 
 	if (GIST_LEAF(entry))
 		retval = gbt_var_consistent(&r, query, strategy, PG_GET_COLLATION(),
-									TRUE, &tinfo, fcinfo->flinfo);
+									true, &tinfo, fcinfo->flinfo);
 	else
 	{
 		bytea	   *q = gbt_bit_xfrm((bytea *) query);
 
 		retval = gbt_var_consistent(&r, q, strategy, PG_GET_COLLATION(),
-									FALSE, &tinfo, fcinfo->flinfo);
+									false, &tinfo, fcinfo->flinfo);
 	}
 	PG_RETURN_BOOL(retval);
 }

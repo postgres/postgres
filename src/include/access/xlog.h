@@ -43,7 +43,7 @@ extern bool InRecovery;
 /*
  * Like InRecovery, standbyState is only valid in the startup process.
  * In all other processes it will have the value STANDBY_DISABLED (so
- * InHotStandby will read as FALSE).
+ * InHotStandby will read as false).
  *
  * In DISABLED state, we're performing crash recovery or hot standby was
  * disabled in postgresql.conf.

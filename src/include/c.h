@@ -493,7 +493,7 @@ typedef NameData *Name;
 #define NameStr(name)	((name).data)
 
 /*
- * Support macros for escaping strings.  escape_backslash should be TRUE
+ * Support macros for escaping strings.  escape_backslash should be true
  * if generating a non-standard-conforming string.  Prefixing a string
  * with ESCAPE_STRING_SYNTAX guarantees it is non-standard-conforming.
  * Beware of multiple evaluation of the "ch" argument!

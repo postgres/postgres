@@ -838,12 +838,12 @@ get_index_paths(PlannerInfo *root, RelOptInfo *rel,
  *
  * If skip_nonnative_saop is non-NULL, we ignore ScalarArrayOpExpr clauses
  * unless the index AM supports them directly, and we set *skip_nonnative_saop
- * to TRUE if we found any such clauses (caller must initialize the variable
- * to FALSE).  If it's NULL, we do not ignore ScalarArrayOpExpr clauses.
+ * to true if we found any such clauses (caller must initialize the variable
+ * to false).  If it's NULL, we do not ignore ScalarArrayOpExpr clauses.
  *
  * If skip_lower_saop is non-NULL, we ignore ScalarArrayOpExpr clauses for
- * non-first index columns, and we set *skip_lower_saop to TRUE if we found
- * any such clauses (caller must initialize the variable to FALSE).  If it's
+ * non-first index columns, and we set *skip_lower_saop to true if we found
+ * any such clauses (caller must initialize the variable to false).  If it's
  * NULL, we do not ignore non-first ScalarArrayOpExpr clauses, but they will
  * result in considering the scan's output to be unordered.
  *

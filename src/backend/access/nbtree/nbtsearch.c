@@ -524,7 +524,7 @@ _bt_compare(Relation rel,
  *		scan->xs_ctup.t_self is set to the heap TID of the current tuple,
  *		and if requested, scan->xs_itup points to a copy of the index tuple.
  *
- * If there are no matching items in the index, we return FALSE, with no
+ * If there are no matching items in the index, we return false, with no
  * pins or locks held.
  *
  * Note that scan->keyData[], and the so->keyData[] scankey built from it,
@@ -1336,7 +1336,7 @@ _bt_saveitem(BTScanOpaque so, int itemIndex,
  *
  * For success on a scan using a non-MVCC snapshot we hold a pin, but not a
  * read lock, on that page.  If we do not hold the pin, we set so->currPos.buf
- * to InvalidBuffer.  We return TRUE to indicate success.
+ * to InvalidBuffer.  We return true to indicate success.
  */
 static bool
 _bt_steppage(IndexScanDesc scan, ScanDirection dir)
@@ -1440,10 +1440,10 @@ _bt_steppage(IndexScanDesc scan, ScanDirection dir)
  *
  * On success exit, so->currPos is updated to contain data from the next
  * interesting page.  Caller is responsible to release lock and pin on
- * buffer on success.  We return TRUE to indicate success.
+ * buffer on success.  We return true to indicate success.
  *
  * If there are no more matching records in the given direction, we drop all
- * locks and pins, set so->currPos.buf to InvalidBuffer, and return FALSE.
+ * locks and pins, set so->currPos.buf to InvalidBuffer, and return false.
  */
 static bool
 _bt_readnextpage(IndexScanDesc scan, BlockNumber blkno, ScanDirection dir)
@@ -1608,7 +1608,7 @@ _bt_readnextpage(IndexScanDesc scan, BlockNumber blkno, ScanDirection dir)
 /*
  *	_bt_parallel_readpage() -- Read current page containing valid data for scan
  *
- * On success, release lock and maybe pin on buffer.  We return TRUE to
+ * On success, release lock and maybe pin on buffer.  We return true to
  * indicate success.
  */
 static bool

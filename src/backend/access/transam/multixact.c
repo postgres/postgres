@@ -1892,7 +1892,7 @@ BootStrapMultiXact(void)
 
 /*
  * Initialize (or reinitialize) a page of MultiXactOffset to zeroes.
- * If writeXlog is TRUE, also emit an XLOG record saying we did this.
+ * If writeXlog is true, also emit an XLOG record saying we did this.
  *
  * The page is not actually written, just set up in shared memory.
  * The slot number of the new page is returned.

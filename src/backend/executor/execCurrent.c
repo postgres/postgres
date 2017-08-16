@@ -32,7 +32,7 @@ static ScanState *search_plan_tree(PlanState *node, Oid table_oid);
  * of the table is currently being scanned by the cursor named by CURRENT OF,
  * and return the row's TID into *current_tid.
  *
- * Returns TRUE if a row was identified.  Returns FALSE if the cursor is valid
+ * Returns true if a row was identified.  Returns false if the cursor is valid
  * for the table but is not currently scanning a row of the table (this is a
  * legal situation in inheritance cases).  Raises error if cursor is not a
  * valid updatable scan of the specified table.

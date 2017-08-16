@@ -1166,7 +1166,7 @@ tuplesort_end(Tuplesortstate *state)
 /*
  * Grow the memtuples[] array, if possible within our memory constraint.  We
  * must not exceed INT_MAX tuples in memory or the caller-provided memory
- * limit.  Return TRUE if we were able to enlarge the array, FALSE if not.
+ * limit.  Return true if we were able to enlarge the array, false if not.
  *
  * Normally, at each increment we double the size of the array.  When doing
  * that would exceed a limit, we attempt one last, smaller increase (and then
@@ -1733,7 +1733,7 @@ tuplesort_performsort(Tuplesortstate *state)
 
 /*
  * Internal routine to fetch the next tuple in either forward or back
- * direction into *stup.  Returns FALSE if no more tuples.
+ * direction into *stup.  Returns false if no more tuples.
  * Returned tuple belongs to tuplesort memory context, and must not be freed
  * by caller.  Note that fetched tuple is stored in memory that may be
  * recycled by any future fetch.
@@ -1975,10 +1975,10 @@ tuplesort_gettuple_common(Tuplesortstate *state, bool forward,
 
 /*
  * Fetch the next tuple in either forward or back direction.
- * If successful, put tuple in slot and return TRUE; else, clear the slot
- * and return FALSE.
+ * If successful, put tuple in slot and return true; else, clear the slot
+ * and return false.
  *
- * Caller may optionally be passed back abbreviated value (on TRUE return
+ * Caller may optionally be passed back abbreviated value (on true return
  * value) when abbreviation was used, which can be used to cheaply avoid
  * equality checks that might otherwise be required.  Caller can safely make a
  * determination of "non-equal tuple" based on simple binary inequality.  A
@@ -2065,13 +2065,13 @@ tuplesort_getindextuple(Tuplesortstate *state, bool forward)
 
 /*
  * Fetch the next Datum in either forward or back direction.
- * Returns FALSE if no more datums.
+ * Returns false if no more datums.
  *
  * If the Datum is pass-by-ref type, the returned value is freshly palloc'd
  * and is now owned by the caller (this differs from similar routines for
  * other types of tuplesorts).
  *
- * Caller may optionally be passed back abbreviated value (on TRUE return
+ * Caller may optionally be passed back abbreviated value (on true return
  * value) when abbreviation was used, which can be used to cheaply avoid
  * equality checks that might otherwise be required.  Caller can safely make a
  * determination of "non-equal tuple" based on simple binary inequality.  A
@@ -2115,7 +2115,7 @@ tuplesort_getdatum(Tuplesortstate *state, bool forward,
 /*
  * Advance over N tuples in either forward or back direction,
  * without returning any data.  N==0 is a no-op.
- * Returns TRUE if successful, FALSE if ran out of tuples.
+ * Returns true if successful, false if ran out of tuples.
  */
 bool
 tuplesort_skiptuples(Tuplesortstate *state, int64 ntuples, bool forward)

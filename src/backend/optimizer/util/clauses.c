@@ -832,7 +832,7 @@ expression_returns_set_rows(Node *clause)
  * contain_subplans
  *	  Recursively search for subplan nodes within a clause.
  *
- * If we see a SubLink node, we will return TRUE.  This is only possible if
+ * If we see a SubLink node, we will return true.  This is only possible if
  * the expression tree hasn't yet been transformed by subselect.c.  We do not
  * know whether the node will produce a true subplan or just an initplan,
  * but we make the conservative assumption that it will be a subplan.
@@ -1626,8 +1626,8 @@ contain_leaked_vars_walker(Node *node, void *context)
  * that either v1 or v2 can't be NULL, but it does prove that the t1 row
  * as a whole can't be all-NULL.
  *
- * top_level is TRUE while scanning top-level AND/OR structure; here, showing
- * the result is either FALSE or NULL is good enough.  top_level is FALSE when
+ * top_level is true while scanning top-level AND/OR structure; here, showing
+ * the result is either FALSE or NULL is good enough.  top_level is false when
  * we have descended below a NOT or a strict function: now we must be able to
  * prove that the subexpression goes to NULL.
  *
@@ -1834,8 +1834,8 @@ find_nonnullable_rels_walker(Node *node, bool top_level)
  * The result is a palloc'd List, but we have not copied the member Var nodes.
  * Also, we don't bother trying to eliminate duplicate entries.
  *
- * top_level is TRUE while scanning top-level AND/OR structure; here, showing
- * the result is either FALSE or NULL is good enough.  top_level is FALSE when
+ * top_level is true while scanning top-level AND/OR structure; here, showing
+ * the result is either FALSE or NULL is good enough.  top_level is false when
  * we have descended below a NOT or a strict function: now we must be able to
  * prove that the subexpression goes to NULL.
  *
@@ -3620,8 +3620,8 @@ eval_const_expressions_mutator(Node *node,
  * input is TRUE and at least one is NULL.  We don't actually include the NULL
  * here, that's supposed to be done by the caller.
  *
- * The output arguments *haveNull and *forceTrue must be initialized FALSE
- * by the caller.  They will be set TRUE if a null constant or true constant,
+ * The output arguments *haveNull and *forceTrue must be initialized false
+ * by the caller.  They will be set true if a NULL constant or TRUE constant,
  * respectively, is detected anywhere in the argument list.
  */
 static List *
@@ -3732,8 +3732,8 @@ simplify_or_arguments(List *args,
  * no input is FALSE and at least one is NULL.  We don't actually include the
  * NULL here, that's supposed to be done by the caller.
  *
- * The output arguments *haveNull and *forceFalse must be initialized FALSE
- * by the caller.  They will be set TRUE if a null constant or false constant,
+ * The output arguments *haveNull and *forceFalse must be initialized false
+ * by the caller.  They will be set true if a null constant or false constant,
  * respectively, is detected anywhere in the argument list.
  */
 static List *

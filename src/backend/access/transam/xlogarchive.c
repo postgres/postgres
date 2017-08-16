@@ -33,11 +33,11 @@
  * Attempt to retrieve the specified file from off-line archival storage.
  * If successful, fill "path" with its complete path (note that this will be
  * a temp file name that doesn't follow the normal naming convention), and
- * return TRUE.
+ * return true.
  *
  * If not successful, fill "path" with the name of the normal on-line file
  * (which may or may not actually exist, but we'll try to use it), and return
- * FALSE.
+ * false.
  *
  * For fixed-size files, the caller may pass the expected size as an
  * additional crosscheck on successful recovery.  If the file size is not

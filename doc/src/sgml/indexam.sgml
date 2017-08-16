@@ -280,9 +280,9 @@ aminsert (Relation indexRelation,
   <para>
    The function's Boolean result value is significant only when
    <literal>checkUnique</literal> is <literal>UNIQUE_CHECK_PARTIAL</literal>.
-   In this case a TRUE result means the new entry is known unique, whereas
-   FALSE means it might be non-unique (and a deferred uniqueness check must
-   be scheduled).  For other cases a constant FALSE result is recommended.
+   In this case a true result means the new entry is known unique, whereas
+   false means it might be non-unique (and a deferred uniqueness check must
+   be scheduled).  For other cases a constant false result is recommended.
   </para>
 
   <para>
@@ -368,8 +368,8 @@ amcanreturn (Relation indexRelation, int attno);
    linkend="indexes-index-only-scans"><firstterm>index-only scans</firstterm></link> on
    the given column, by returning the indexed column values for an index entry
    in the form of an <structname>IndexTuple</structname>.  The attribute number
-   is 1-based, i.e. the first column's attno is 1. Returns TRUE if supported,
-   else FALSE.  If the access method does not support index-only scans at all,
+   is 1-based, i.e. the first column's attno is 1. Returns true if supported,
+   else false.  If the access method does not support index-only scans at all,
    the <structfield>amcanreturn</structfield> field in its <structname>IndexAmRoutine</structname>
    struct can be set to NULL.
   </para>
@@ -532,15 +532,15 @@ amgettuple (IndexScanDesc scan,
             ScanDirection direction);
 </programlisting>
    Fetch the next tuple in the given scan, moving in the given
-   direction (forward or backward in the index).  Returns TRUE if a tuple was
-   obtained, FALSE if no matching tuples remain.  In the TRUE case the tuple
+   direction (forward or backward in the index).  Returns true if a tuple was
+   obtained, false if no matching tuples remain.  In the true case the tuple
    TID is stored into the <literal>scan</literal> structure.  Note that
    <quote>success</quote> means only that the index contains an entry that matches
    the scan keys, not that the tuple necessarily still exists in the heap or
    will pass the caller's snapshot test.  On success, <function>amgettuple</function>
-   must also set <literal>scan-&gt;xs_recheck</literal> to TRUE or FALSE.
-   FALSE means it is certain that the index entry matches the scan keys.
-   TRUE means this is not certain, and the conditions represented by the
+   must also set <literal>scan-&gt;xs_recheck</literal> to true or false.
+   False means it is certain that the index entry matches the scan keys.
+   true means this is not certain, and the conditions represented by the
    scan keys must be rechecked against the heap tuple after fetching it.
    This provision supports <quote>lossy</quote> index operators.
    Note that rechecking will extend only to the scan conditions; a partial
@@ -550,7 +550,7 @@ amgettuple (IndexScanDesc scan,
 
   <para>
    If the index supports <link linkend="indexes-index-only-scans">index-only
-   scans</link> (i.e., <function>amcanreturn</function> returns TRUE for it),
+   scans</link> (i.e., <function>amcanreturn</function> returns true for it),
    then on success the AM must also check <literal>scan-&gt;xs_want_itup</literal>,
    and if that is true it must return the originally indexed data for the
    index entry.  The data can be returned in the form of an
@@ -1082,8 +1082,8 @@ amparallelrescan (IndexScanDesc scan);
        constraint is deferrable. <productname>PostgreSQL</productname>
        will use this mode to insert each row's index entry.  The access
        method must allow duplicate entries into the index, and report any
-       potential duplicates by returning FALSE from <function>aminsert</function>.
-       For each row for which FALSE is returned, a deferred recheck will
+       potential duplicates by returning false from <function>aminsert</function>.
+       For each row for which false is returned, a deferred recheck will
        be scheduled.
       </para>
 

@@ -1023,7 +1023,7 @@ static HTAB *OprCacheHash = NULL;
  * make_oper_cache_key
  *		Fill the lookup key struct given operator name and arg types.
  *
- * Returns TRUE if successful, FALSE if the search_path overflowed
+ * Returns true if successful, false if the search_path overflowed
  * (hence no caching is possible).
  *
  * pstate/location are used only to report the error position; pass NULL/-1

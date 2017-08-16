@@ -142,8 +142,8 @@ HeapTupleHeaderGetCmax(HeapTupleHeader tup)
  * into its t_cid field.
  *
  * If we don't need a combo CID, *cmax is unchanged and *iscombo is set to
- * FALSE.  If we do need one, *cmax is replaced by a combo CID and *iscombo
- * is set to TRUE.
+ * false.  If we do need one, *cmax is replaced by a combo CID and *iscombo
+ * is set to true.
  *
  * The reason this is separate from the actual HeapTupleHeaderSetCmax()
  * operation is that this could fail due to out-of-memory conditions.  Hence

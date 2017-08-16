@@ -1563,7 +1563,7 @@ convert_EXISTS_sublink_to_join(PlannerInfo *root, SubLink *sublink,
  * won't occur, nor will other side-effects of volatile functions.  This seems
  * unlikely to bother anyone in practice.
  *
- * Returns TRUE if was able to discard the targetlist, else FALSE.
+ * Returns true if was able to discard the targetlist, else false.
  */
 static bool
 simplify_EXISTS_query(PlannerInfo *root, Query *query)

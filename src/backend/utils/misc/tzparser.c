@@ -45,7 +45,7 @@ static int ParseTzFile(const char *filename, int depth,
 /*
  * Apply additional validation checks to a tzEntry
  *
- * Returns TRUE if OK, else false
+ * Returns true if OK, else false
  */
 static bool
 validateTzEntry(tzEntry *tzentry)
@@ -92,7 +92,7 @@ validateTzEntry(tzEntry *tzentry)
  *	name  zone
  *	name  offset  dst
  *
- * Returns TRUE if OK, else false; data is stored in *tzentry
+ * Returns true if OK, else false; data is stored in *tzentry
  */
 static bool
 splitTzLine(const char *filename, int lineno, char *line, tzEntry *tzentry)
@@ -180,7 +180,7 @@ splitTzLine(const char *filename, int lineno, char *line, tzEntry *tzentry)
  * *arraysize: allocated length of array (changeable if must enlarge array)
  * n: current number of valid elements in array
  * entry: new data to insert
- * override: TRUE if OK to override
+ * override: true if OK to override
  *
  * Returns the new array length (new value for n), or -1 if error
  */

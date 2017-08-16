@@ -992,7 +992,7 @@ fail:
  * for the purpose.  OTOH, adding a splitpoint is a very infrequent operation,
  * so it may not be worth worrying about.
  *
- * Returns TRUE if successful, or FALSE if allocation failed due to
+ * Returns true if successful, or false if allocation failed due to
  * BlockNumber overflow.
  */
 static bool

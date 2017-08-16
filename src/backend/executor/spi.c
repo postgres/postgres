@@ -1907,9 +1907,9 @@ _SPI_prepare_oneshot_plan(const char *src, SPIPlanPtr plan)
  * snapshot: query snapshot to use, or InvalidSnapshot for the normal
  *		behavior of taking a new snapshot for each query.
  * crosscheck_snapshot: for RI use, all others pass InvalidSnapshot
- * read_only: TRUE for read-only execution (no CommandCounterIncrement)
- * fire_triggers: TRUE to fire AFTER triggers at end of query (normal case);
- *		FALSE means any AFTER triggers are postponed to end of outer query
+ * read_only: true for read-only execution (no CommandCounterIncrement)
+ * fire_triggers: true to fire AFTER triggers at end of query (normal case);
+ *		false means any AFTER triggers are postponed to end of outer query
  * tcount: execution tuple-count limit, or 0 for none
  */
 static int

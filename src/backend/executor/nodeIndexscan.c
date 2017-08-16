@@ -676,8 +676,8 @@ ExecIndexEvalRuntimeKeys(ExprContext *econtext,
  * ExecIndexEvalArrayKeys
  *		Evaluate any array key values, and set up to iterate through arrays.
  *
- * Returns TRUE if there are array elements to consider; FALSE means there
- * is at least one null or empty array, so no match is possible.  On TRUE
+ * Returns true if there are array elements to consider; false means there
+ * is at least one null or empty array, so no match is possible.  On true
  * result, the scankeys are initialized with the first elements of the arrays.
  */
 bool
@@ -756,8 +756,8 @@ ExecIndexEvalArrayKeys(ExprContext *econtext,
  * ExecIndexAdvanceArrayKeys
  *		Advance to the next set of array key values, if any.
  *
- * Returns TRUE if there is another set of values to consider, FALSE if not.
- * On TRUE result, the scankeys are initialized with the next set of values.
+ * Returns true if there is another set of values to consider, false if not.
+ * On true result, the scankeys are initialized with the next set of values.
  */
 bool
 ExecIndexAdvanceArrayKeys(IndexArrayKeyInfo *arrayKeys, int numArrayKeys)

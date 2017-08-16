@@ -72,7 +72,7 @@ static bool reconsider_full_join_clause(PlannerInfo *root,
  *	  any delay by an outer join, so its two sides can be considered equal
  *	  anywhere they are both computable; moreover that equality can be
  *	  extended transitively.  Record this knowledge in the EquivalenceClass
- *	  data structure, if applicable.  Returns TRUE if successful, FALSE if not
+ *	  data structure, if applicable.  Returns true if successful, false if not
  *	  (in which case caller should treat the clause as ordinary, not an
  *	  equivalence).
  *
@@ -602,8 +602,8 @@ add_eq_member(EquivalenceClass *ec, Expr *expr, Relids relids,
  * so for now we live with just reporting the first match.  See also
  * generate_implied_equalities_for_column and match_pathkeys_to_index.)
  *
- * If create_it is TRUE, we'll build a new EquivalenceClass when there is no
- * match.  If create_it is FALSE, we just return NULL when no match.
+ * If create_it is true, we'll build a new EquivalenceClass when there is no
+ * match.  If create_it is false, we just return NULL when no match.
  *
  * This can be used safely both before and after EquivalenceClass merging;
  * since it never causes merging it does not invalidate any existing ECs
@@ -1675,7 +1675,7 @@ reconsider_outer_join_clauses(PlannerInfo *root)
 /*
  * reconsider_outer_join_clauses for a single LEFT/RIGHT JOIN clause
  *
- * Returns TRUE if we were able to propagate a constant through the clause.
+ * Returns true if we were able to propagate a constant through the clause.
  */
 static bool
 reconsider_outer_join_clause(PlannerInfo *root, RestrictInfo *rinfo,
@@ -1800,7 +1800,7 @@ reconsider_outer_join_clause(PlannerInfo *root, RestrictInfo *rinfo,
 /*
  * reconsider_outer_join_clauses for a single FULL JOIN clause
  *
- * Returns TRUE if we were able to propagate a constant through the clause.
+ * Returns true if we were able to propagate a constant through the clause.
  */
 static bool
 reconsider_full_join_clause(PlannerInfo *root, RestrictInfo *rinfo)

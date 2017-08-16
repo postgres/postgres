@@ -186,7 +186,7 @@ get_opfamily_member(Oid opfamily, Oid lefttype, Oid righttype,
  *		determine its opfamily, its declared input datatype, and its
  *		strategy number (BTLessStrategyNumber or BTGreaterStrategyNumber).
  *
- * Returns TRUE if successful, FALSE if no matching pg_amop entry exists.
+ * Returns true if successful, false if no matching pg_amop entry exists.
  * (This indicates that the operator is not a valid ordering operator.)
  *
  * Note: the operator could be registered in multiple families, for example
@@ -254,8 +254,8 @@ get_ordering_op_properties(Oid opno,
  *		Get the OID of the datatype-specific btree equality operator
  *		associated with an ordering operator (a "<" or ">" operator).
  *
- * If "reverse" isn't NULL, also set *reverse to FALSE if the operator is "<",
- * TRUE if it's ">"
+ * If "reverse" isn't NULL, also set *reverse to false if the operator is "<",
+ * true if it's ">"
  *
  * Returns InvalidOid if no matching equality operator can be found.
  * (This indicates that the operator is not a valid ordering operator.)
@@ -682,7 +682,7 @@ get_op_btree_interpretation(Oid opno)
 
 /*
  * equality_ops_are_compatible
- *		Return TRUE if the two given equality operators have compatible
+ *		Return true if the two given equality operators have compatible
  *		semantics.
  *
  * This is trivially true if they are the same operator.  Otherwise,
@@ -2868,7 +2868,7 @@ get_attavgwidth(Oid relid, AttrNumber attnum)
  * get_attstatsslot
  *
  *		Extract the contents of a "slot" of a pg_statistic tuple.
- *		Returns TRUE if requested slot type was found, else FALSE.
+ *		Returns true if requested slot type was found, else false.
  *
  * Unlike other routines in this file, this takes a pointer to an
  * already-looked-up tuple in the pg_statistic cache.  We do this since
@@ -2884,7 +2884,7 @@ get_attavgwidth(Oid relid, AttrNumber attnum)
  * reqop: STAOP value wanted, or InvalidOid if don't care.
  * flags: bitmask of ATTSTATSSLOT_VALUES and/or ATTSTATSSLOT_NUMBERS.
  *
- * If a matching slot is found, TRUE is returned, and *sslot is filled thus:
+ * If a matching slot is found, true is returned, and *sslot is filled thus:
  * staop: receives the actual STAOP value.
  * valuetype: receives actual datatype of the elements of stavalues.
  * values: receives pointer to an array of the slot's stavalues.
@@ -2896,7 +2896,7 @@ get_attavgwidth(Oid relid, AttrNumber attnum)
  * wasn't specified.  Likewise, numbers/nnumbers are NULL/0 if
  * ATTSTATSSLOT_NUMBERS wasn't specified.
  *
- * If no matching slot is found, FALSE is returned, and *sslot is zeroed.
+ * If no matching slot is found, false is returned, and *sslot is zeroed.
  *
  * The data referred to by the fields of sslot is locally palloc'd and
  * is independent of the original pg_statistic tuple.  When the caller

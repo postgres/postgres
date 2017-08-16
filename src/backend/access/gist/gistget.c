@@ -197,7 +197,7 @@ gistindex_keytest(IndexScanDesc scan,
 
 			gistdentryinit(giststate, key->sk_attno - 1, &de,
 						   datum, r, page, offset,
-						   FALSE, isNull);
+						   false, isNull);
 
 			/*
 			 * Call the Consistent function to evaluate the test.  The
@@ -258,7 +258,7 @@ gistindex_keytest(IndexScanDesc scan,
 
 			gistdentryinit(giststate, key->sk_attno - 1, &de,
 						   datum, r, page, offset,
-						   FALSE, isNull);
+						   false, isNull);
 
 			/*
 			 * Call the Distance function to evaluate the distance.  The

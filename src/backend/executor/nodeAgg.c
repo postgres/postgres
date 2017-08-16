@@ -2628,7 +2628,7 @@ agg_retrieve_hash_table(AggState *aggstate)
 			else
 			{
 				/* No more hashtables, so done */
-				aggstate->agg_done = TRUE;
+				aggstate->agg_done = true;
 				return NULL;
 			}
 		}
@@ -4206,12 +4206,12 @@ AggGetTempMemoryContext(FunctionCallInfo fcinfo)
  * AggStateIsShared - find out whether transition state is shared
  *
  * If the function is being called as an aggregate support function,
- * return TRUE if the aggregate's transition state is shared across
- * multiple aggregates, FALSE if it is not.
+ * return true if the aggregate's transition state is shared across
+ * multiple aggregates, false if it is not.
  *
- * Returns TRUE if not called as an aggregate support function.
+ * Returns true if not called as an aggregate support function.
  * This is intended as a conservative answer, ie "no you'd better not
- * scribble on your input".  In particular, will return TRUE if the
+ * scribble on your input".  In particular, will return true if the
  * aggregate is being used as a window function, which is a scenario
  * in which changing the transition state is a bad idea.  We might
  * want to refine the behavior for the window case in future.

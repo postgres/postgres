@@ -562,7 +562,7 @@ tuplestore_ateof(Tuplestorestate *state)
 /*
  * Grow the memtuples[] array, if possible within our memory constraint.  We
  * must not exceed INT_MAX tuples in memory or the caller-provided memory
- * limit.  Return TRUE if we were able to enlarge the array, FALSE if not.
+ * limit.  Return true if we were able to enlarge the array, false if not.
  *
  * Normally, at each increment we double the size of the array.  When doing
  * that would exceed a limit, we attempt one last, smaller increase (and then
@@ -1064,12 +1064,12 @@ tuplestore_gettuple(Tuplestorestate *state, bool forward,
 /*
  * tuplestore_gettupleslot - exported function to fetch a MinimalTuple
  *
- * If successful, put tuple in slot and return TRUE; else, clear the slot
- * and return FALSE.
+ * If successful, put tuple in slot and return true; else, clear the slot
+ * and return false.
  *
- * If copy is TRUE, the slot receives a copied tuple (allocated in current
+ * If copy is true, the slot receives a copied tuple (allocated in current
  * memory context) that will stay valid regardless of future manipulations of
- * the tuplestore's state.  If copy is FALSE, the slot may just receive a
+ * the tuplestore's state.  If copy is false, the slot may just receive a
  * pointer to a tuple held within the tuplestore.  The latter is more
  * efficient but the slot contents may be corrupted if additional writes to
  * the tuplestore occur.  (If using tuplestore_trim, see comments therein.)
@@ -1129,7 +1129,7 @@ tuplestore_advance(Tuplestorestate *state, bool forward)
 /*
  * Advance over N tuples in either forward or back direction,
  * without returning any data.  N<=0 is a no-op.
- * Returns TRUE if successful, FALSE if ran out of tuples.
+ * Returns true if successful, false if ran out of tuples.
  */
 bool
 tuplestore_skiptuples(Tuplestorestate *state, int64 ntuples, bool forward)

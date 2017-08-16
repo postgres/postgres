@@ -3950,9 +3950,9 @@ static int	num_guc_variables;
 static int	size_guc_variables;
 
 
-static bool guc_dirty;			/* TRUE if need to do commit/abort work */
+static bool guc_dirty;			/* true if need to do commit/abort work */
 
-static bool reporting_enabled;	/* TRUE to enable GUC_REPORT */
+static bool reporting_enabled;	/* true to enable GUC_REPORT */
 
 static int	GUCNestLevel = 0;	/* 1 when in main transaction */
 
@@ -4374,7 +4374,7 @@ add_placeholder_variable(const char *name, int elevel)
 
 /*
  * Look up option NAME.  If it exists, return a pointer to its record,
- * else return NULL.  If create_placeholders is TRUE, we'll create a
+ * else return NULL.  If create_placeholders is true, we'll create a
  * placeholder record for a valid-looking custom variable name.
  */
 static struct config_generic *
@@ -5643,7 +5643,7 @@ config_enum_lookup_by_value(struct config_enum *record, int val)
  * Lookup the value for an enum option with the selected name
  * (case-insensitive).
  * If the enum option is found, sets the retval value and returns
- * true. If it's not found, return FALSE and retval is set to 0.
+ * true. If it's not found, return false and retval is set to 0.
  */
 bool
 config_enum_lookup_by_name(struct config_enum *record, const char *value,
@@ -5656,12 +5656,12 @@ config_enum_lookup_by_name(struct config_enum *record, const char *value,
 		if (pg_strcasecmp(value, entry->name) == 0)
 		{
 			*retval = entry->val;
-			return TRUE;
+			return true;
 		}
 	}
 
 	*retval = 0;
-	return FALSE;
+	return false;
 }
 
 
@@ -8370,7 +8370,7 @@ show_config_by_name(PG_FUNCTION_ARGS)
 /*
  * show_config_by_name_missing_ok - equiv to SHOW X command but implemented as
  * a function.  If X does not exist, suppress the error and just return NULL
- * if missing_ok is TRUE.
+ * if missing_ok is true.
  */
 Datum
 show_config_by_name_missing_ok(PG_FUNCTION_ARGS)
@@ -9692,7 +9692,7 @@ GUCArrayReset(ArrayType *array)
  * or NULL for the Delete/Reset cases.  If skipIfNoPermissions is true, it's
  * not an error to have no permissions to set the option.
  *
- * Returns TRUE if OK, FALSE if skipIfNoPermissions is true and user does not
+ * Returns true if OK, false if skipIfNoPermissions is true and user does not
  * have permission to change this option (all other error cases result in an
  * error being thrown).
  */
@@ -9718,7 +9718,7 @@ validate_option_array_item(const char *name, const char *value,
 	 * define_custom_variable assumes we checked that.
 	 *
 	 * name is not known and can't be created as a placeholder.  Throw error,
-	 * unless skipIfNoPermissions is true, in which case return FALSE.
+	 * unless skipIfNoPermissions is true, in which case return false.
 	 */
 	gconf = find_option(name, true, WARNING);
 	if (!gconf)

@@ -39,7 +39,7 @@ static void _hash_readnext(IndexScanDesc scan, Buffer *bufp,
  *		On successful exit, scan->xs_ctup.t_self is set to the TID
  *		of the next heap tuple. so->currPos is updated as needed.
  *
- *		On failure exit (no more tuples), we return FALSE with pin
+ *		On failure exit (no more tuples), we return false with pin
  *		held on bucket page but no pins or locks held on overflow
  *		page.
  */
@@ -283,7 +283,7 @@ _hash_readprev(IndexScanDesc scan,
  *		tuple(s) on the page has been loaded into so->currPos,
  *		scan->xs_ctup.t_self is set to the heap TID of the current tuple.
  *
- *		On failure exit (no more tuples), we return FALSE, with pin held on
+ *		On failure exit (no more tuples), we return false, with pin held on
  *		bucket page but no pins or locks held on overflow page.
  */
 bool
@@ -507,7 +507,7 @@ _hash_readpage(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 			{
 				/*
 				 * Remember next and previous block numbers for scrollable
-				 * cursors to know the start position and return FALSE
+				 * cursors to know the start position and return false
 				 * indicating that no more matching tuples were found. Also,
 				 * don't reset currPage or lsn, because we expect
 				 * _hash_kill_items to be called for the old page after this
@@ -560,7 +560,7 @@ _hash_readpage(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 			{
 				/*
 				 * Remember next and previous block numbers for scrollable
-				 * cursors to know the start position and return FALSE
+				 * cursors to know the start position and return false
 				 * indicating that no more matching tuples were found. Also,
 				 * don't reset currPage or lsn, because we expect
 				 * _hash_kill_items to be called for the old page after this

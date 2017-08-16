@@ -628,7 +628,7 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 									column->colname, cxt->relation->relname),
 							 parser_errposition(cxt->pstate,
 												constraint->location)));
-				column->is_not_null = FALSE;
+				column->is_not_null = false;
 				saw_nullable = true;
 				break;
 
@@ -640,7 +640,7 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 									column->colname, cxt->relation->relname),
 							 parser_errposition(cxt->pstate,
 												constraint->location)));
-				column->is_not_null = TRUE;
+				column->is_not_null = true;
 				saw_nullable = true;
 				break;
 
@@ -680,7 +680,7 @@ transformColumnDefinition(CreateStmtContext *cxt, ColumnDef *column)
 
 					column->identity = constraint->generated_when;
 					saw_identity = true;
-					column->is_not_null = TRUE;
+					column->is_not_null = true;
 					break;
 				}
 
@@ -2010,7 +2010,7 @@ transformIndexConstraint(Constraint *constraint, CreateStmtContext *cxt)
 		{
 			/* found column in the new table; force it to be NOT NULL */
 			if (constraint->contype == CONSTR_PRIMARY)
-				column->is_not_null = TRUE;
+				column->is_not_null = true;
 		}
 		else if (SystemAttributeByName(key, cxt->hasoids) != NULL)
 		{

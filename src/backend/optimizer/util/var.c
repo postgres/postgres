@@ -657,9 +657,9 @@ pull_var_clause_walker(Node *node, pull_var_clause_context *context)
  * entries might now be arbitrary expressions, not just Vars.  This affects
  * this function in one important way: we might find ourselves inserting
  * SubLink expressions into subqueries, and we must make sure that their
- * Query.hasSubLinks fields get set to TRUE if so.  If there are any
+ * Query.hasSubLinks fields get set to true if so.  If there are any
  * SubLinks in the join alias lists, the outer Query should already have
- * hasSubLinks = TRUE, so this is only relevant to un-flattened subqueries.
+ * hasSubLinks = true, so this is only relevant to un-flattened subqueries.
  *
  * NOTE: this is used on not-yet-planned expressions.  We do not expect it
  * to be applied directly to the whole Query, so if we see a Query to start

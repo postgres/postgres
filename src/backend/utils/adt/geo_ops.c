@@ -1530,7 +1530,7 @@ path_close(PG_FUNCTION_ARGS)
 {
 	PATH	   *path = PG_GETARG_PATH_P_COPY(0);
 
-	path->closed = TRUE;
+	path->closed = true;
 
 	PG_RETURN_PATH_P(path);
 }
@@ -1540,7 +1540,7 @@ path_open(PG_FUNCTION_ARGS)
 {
 	PATH	   *path = PG_GETARG_PATH_P_COPY(0);
 
-	path->closed = FALSE;
+	path->closed = false;
 
 	PG_RETURN_PATH_P(path);
 }
@@ -4499,7 +4499,7 @@ poly_path(PG_FUNCTION_ARGS)
 
 	SET_VARSIZE(path, size);
 	path->npts = poly->npts;
-	path->closed = TRUE;
+	path->closed = true;
 	/* prevent instability in unused pad bytes */
 	path->dummy = 0;
 
@@ -5401,7 +5401,7 @@ plist_same(int npts, Point *p1, Point *p2)
 			printf("plist_same- ii = %d/%d after forward match\n", ii, npts);
 #endif
 			if (ii == npts)
-				return TRUE;
+				return true;
 
 			/* match not found forwards? then look backwards */
 			for (ii = 1, j = i - 1; ii < npts; ii++, j--)
@@ -5421,11 +5421,11 @@ plist_same(int npts, Point *p1, Point *p2)
 			printf("plist_same- ii = %d/%d after reverse match\n", ii, npts);
 #endif
 			if (ii == npts)
-				return TRUE;
+				return true;
 		}
 	}
 
-	return FALSE;
+	return false;
 }
 
 

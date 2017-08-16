@@ -1884,7 +1884,7 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	 * Zero out result area for subquery_is_pushdown_safe, so that it can set
 	 * flags as needed while recursing.  In particular, we need a workspace
 	 * for keeping track of unsafe-to-reference columns.  unsafeColumns[i]
-	 * will be set TRUE if we find that output column i of the subquery is
+	 * will be set true if we find that output column i of the subquery is
 	 * unsafe to use in a pushed-down qual.
 	 */
 	memset(&safetyInfo, 0, sizeof(safetyInfo));
@@ -2566,7 +2566,7 @@ standard_join_search(PlannerInfo *root, int levels_needed, List *initial_rels)
  * In addition, we make several checks on the subquery's output columns to see
  * if it is safe to reference them in pushed-down quals.  If output column k
  * is found to be unsafe to reference, we set safetyInfo->unsafeColumns[k]
- * to TRUE, but we don't reject the subquery overall since column k might not
+ * to true, but we don't reject the subquery overall since column k might not
  * be referenced by some/all quals.  The unsafeColumns[] array will be
  * consulted later by qual_is_pushdown_safe().  It's better to do it this way
  * than to make the checks directly in qual_is_pushdown_safe(), because when
@@ -2688,7 +2688,7 @@ recurse_pushdown_safe(Node *setOp, Query *topquery,
  *
  * There are several cases in which it's unsafe to push down an upper-level
  * qual if it references a particular output column of a subquery.  We check
- * each output column of the subquery and set unsafeColumns[k] to TRUE if
+ * each output column of the subquery and set unsafeColumns[k] to true if
  * that column is unsafe for a pushed-down qual to reference.  The conditions
  * checked here are:
  *

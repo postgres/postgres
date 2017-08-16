@@ -80,7 +80,7 @@ static gbtree_vinfo tinfo =
 {
 	gbt_t_text,
 	0,
-	FALSE,
+	false,
 	gbt_textgt,
 	gbt_textge,
 	gbt_texteq,
@@ -128,7 +128,7 @@ gbt_bpchar_compress(PG_FUNCTION_ARGS)
 
 		gistentryinit(trim, d,
 					  entry->rel, entry->page,
-					  entry->offset, TRUE);
+					  entry->offset, true);
 		retval = gbt_var_compress(&trim, &tinfo);
 	}
 	else

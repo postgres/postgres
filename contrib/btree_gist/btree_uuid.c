@@ -114,7 +114,7 @@ gbt_uuid_compress(PG_FUNCTION_ARGS)
 		memcpy((void *) (r + UUID_LEN), (void *) key, UUID_LEN);
 		gistentryinit(*retval, PointerGetDatum(r),
 					  entry->rel, entry->page,
-					  entry->offset, FALSE);
+					  entry->offset, false);
 	}
 	else
 		retval = entry;

@@ -914,7 +914,7 @@ RemoveSocketFiles(void)
 /* --------------------------------
  *			  socket_set_nonblocking - set socket blocking/non-blocking
  *
- * Sets the socket non-blocking if nonblocking is TRUE, or sets it
+ * Sets the socket non-blocking if nonblocking is true, or sets it
  * blocking otherwise.
  * --------------------------------
  */

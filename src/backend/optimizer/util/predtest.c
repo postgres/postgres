@@ -1048,7 +1048,7 @@ arrayexpr_cleanup_fn(PredIterInfo info)
  *	  Does the predicate implication test for a "simple clause" predicate
  *	  and a "simple clause" restriction.
  *
- * We return TRUE if able to prove the implication, FALSE if not.
+ * We return true if able to prove the implication, false if not.
  *
  * We have three strategies for determining whether one simple clause
  * implies another:
@@ -1116,7 +1116,7 @@ predicate_implied_by_simple_clause(Expr *predicate, Node *clause,
  *	  Does the predicate refutation test for a "simple clause" predicate
  *	  and a "simple clause" restriction.
  *
- * We return TRUE if able to prove the refutation, FALSE if not.
+ * We return true if able to prove the refutation, false if not.
  *
  * Unlike the implication case, checking for equal() clauses isn't
  * helpful.
@@ -1360,12 +1360,12 @@ static const bool BT_implies_table[6][6] = {
  *			The predicate operator:
  *	 LT    LE	 EQ    GE	 GT    NE
  */
-	{TRUE, TRUE, none, none, none, TRUE},	/* LT */
-	{none, TRUE, none, none, none, none},	/* LE */
-	{none, TRUE, TRUE, TRUE, none, none},	/* EQ */
-	{none, none, none, TRUE, none, none},	/* GE */
-	{none, none, none, TRUE, TRUE, TRUE},	/* GT */
-	{none, none, none, none, none, TRUE}	/* NE */
+	{true, true, none, none, none, true},	/* LT */
+	{none, true, none, none, none, none},	/* LE */
+	{none, true, true, true, none, none},	/* EQ */
+	{none, none, none, true, none, none},	/* GE */
+	{none, none, none, true, true, true},	/* GT */
+	{none, none, none, none, none, true}	/* NE */
 };
 
 static const bool BT_refutes_table[6][6] = {
@@ -1373,12 +1373,12 @@ static const bool BT_refutes_table[6][6] = {
  *			The predicate operator:
  *	 LT    LE	 EQ    GE	 GT    NE
  */
-	{none, none, TRUE, TRUE, TRUE, none},	/* LT */
-	{none, none, none, none, TRUE, none},	/* LE */
-	{TRUE, none, none, none, TRUE, TRUE},	/* EQ */
-	{TRUE, none, none, none, none, none},	/* GE */
-	{TRUE, TRUE, TRUE, none, none, none},	/* GT */
-	{none, none, TRUE, none, none, none}	/* NE */
+	{none, none, true, true, true, none},	/* LT */
+	{none, none, none, none, true, none},	/* LE */
+	{true, none, none, none, true, true},	/* EQ */
+	{true, none, none, none, none, none},	/* GE */
+	{true, true, true, none, none, none},	/* GT */
+	{none, none, true, none, none, none}	/* NE */
 };
 
 static const StrategyNumber BT_implic_table[6][6] = {
@@ -1417,7 +1417,7 @@ static const StrategyNumber BT_refute_table[6][6] = {
  * When refute_it == false, we want to prove the predicate true;
  * when refute_it == true, we want to prove the predicate false.
  * (There is enough common code to justify handling these two cases
- * in one routine.)  We return TRUE if able to make the proof, FALSE
+ * in one routine.)  We return true if able to make the proof, false
  * if not able to prove it.
  *
  * We can make proofs involving several expression forms (here "foo" and "bar"
@@ -1661,7 +1661,7 @@ operator_predicate_proof(Expr *predicate, Node *clause, bool refute_it)
  *	  Assuming that EXPR1 clause_op EXPR2 is true, try to prove or refute
  *	  EXPR1 pred_op EXPR2.
  *
- * Return TRUE if able to make the proof, false if not able to prove it.
+ * Return true if able to make the proof, false if not able to prove it.
  */
 static bool
 operator_same_subexprs_proof(Oid pred_op, Oid clause_op, bool refute_it)

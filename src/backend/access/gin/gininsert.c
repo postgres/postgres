@@ -185,7 +185,7 @@ ginEntryInsert(GinState *ginstate,
 	IndexTuple	itup;
 	Page		page;
 
-	insertdata.isDelete = FALSE;
+	insertdata.isDelete = false;
 
 	/* During index build, count the to-be-inserted entry */
 	if (buildStats)
@@ -221,7 +221,7 @@ ginEntryInsert(GinState *ginstate,
 		itup = addItemPointersToLeafTuple(ginstate, itup,
 										  items, nitem, buildStats);
 
-		insertdata.isDelete = TRUE;
+		insertdata.isDelete = true;
 	}
 	else
 	{

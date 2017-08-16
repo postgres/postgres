@@ -22,7 +22,7 @@
  *		Unlock a previously acquired lock.
  *
  *	bool S_LOCK_FREE(slock_t *lock)
- *		Tests if the lock is free. Returns TRUE if free, FALSE if locked.
+ *		Tests if the lock is free. Returns true if free, false if locked.
  *		This does *not* change the state of the lock.
  *
  *	void SPIN_DELAY(void)

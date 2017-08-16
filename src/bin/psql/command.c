@@ -4370,7 +4370,7 @@ echo_hidden_command(const char *query)
 
 /*
  * Look up the object identified by obj_type and desc.  If successful,
- * store its OID in *obj_oid and return TRUE, else return FALSE.
+ * store its OID in *obj_oid and return true, else return false.
  *
  * Note that we'll fail if the object doesn't exist OR if there are multiple
  * matching candidates OR if there's something syntactically wrong with the

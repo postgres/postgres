@@ -6970,12 +6970,12 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
             break;
         }
 
-        /* unknown event ID, just return TRUE. */
+        /* unknown event ID, just return true. */
         default:
             break;
     }
 
-    return TRUE; /* event processing succeeded */
+    return true; /* event processing succeeded */
 }
 ]]>
 </programlisting>

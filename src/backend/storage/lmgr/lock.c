@@ -768,7 +768,7 @@ LockAcquireExtended(const LOCKTAG *locktag,
 		locallock->nLocks = 0;
 		locallock->numLockOwners = 0;
 		locallock->maxLockOwners = 8;
-		locallock->holdsStrongLockCount = FALSE;
+		locallock->holdsStrongLockCount = false;
 		locallock->lockOwners = NULL;	/* in case next line fails */
 		locallock->lockOwners = (LOCALLOCKOWNER *)
 			MemoryContextAlloc(TopMemoryContext,
@@ -1264,7 +1264,7 @@ RemoveLocalLock(LOCALLOCK *locallock)
 		SpinLockAcquire(&FastPathStrongRelationLocks->mutex);
 		Assert(FastPathStrongRelationLocks->count[fasthashcode] > 0);
 		FastPathStrongRelationLocks->count[fasthashcode]--;
-		locallock->holdsStrongLockCount = FALSE;
+		locallock->holdsStrongLockCount = false;
 		SpinLockRelease(&FastPathStrongRelationLocks->mutex);
 	}
 
@@ -1578,7 +1578,7 @@ static void
 BeginStrongLockAcquire(LOCALLOCK *locallock, uint32 fasthashcode)
 {
 	Assert(StrongLockInProgress == NULL);
-	Assert(locallock->holdsStrongLockCount == FALSE);
+	Assert(locallock->holdsStrongLockCount == false);
 
 	/*
 	 * Adding to a memory location is not atomic, so we take a spinlock to
@@ -1591,7 +1591,7 @@ BeginStrongLockAcquire(LOCALLOCK *locallock, uint32 fasthashcode)
 
 	SpinLockAcquire(&FastPathStrongRelationLocks->mutex);
 	FastPathStrongRelationLocks->count[fasthashcode]++;
-	locallock->holdsStrongLockCount = TRUE;
+	locallock->holdsStrongLockCount = true;
 	StrongLockInProgress = locallock;
 	SpinLockRelease(&FastPathStrongRelationLocks->mutex);
 }
@@ -1620,11 +1620,11 @@ AbortStrongLockAcquire(void)
 		return;
 
 	fasthashcode = FastPathStrongLockHashPartition(locallock->hashcode);
-	Assert(locallock->holdsStrongLockCount == TRUE);
+	Assert(locallock->holdsStrongLockCount == true);
 	SpinLockAcquire(&FastPathStrongRelationLocks->mutex);
 	Assert(FastPathStrongRelationLocks->count[fasthashcode] > 0);
 	FastPathStrongRelationLocks->count[fasthashcode]--;
-	locallock->holdsStrongLockCount = FALSE;
+	locallock->holdsStrongLockCount = false;
 	StrongLockInProgress = NULL;
 	SpinLockRelease(&FastPathStrongRelationLocks->mutex);
 }
@@ -1857,7 +1857,7 @@ LockRelease(const LOCKTAG *locktag, LOCKMODE lockmode, bool sessionLock)
 	{
 		elog(WARNING, "you don't own a lock of type %s",
 			 lockMethodTable->lockModeNames[lockmode]);
-		return FALSE;
+		return false;
 	}
 
 	/*
@@ -1896,7 +1896,7 @@ LockRelease(const LOCKTAG *locktag, LOCKMODE lockmode, bool sessionLock)
 			/* don't release a lock belonging to another owner */
 			elog(WARNING, "you don't own a lock of type %s",
 				 lockMethodTable->lockModeNames[lockmode]);
-			return FALSE;
+			return false;
 		}
 	}
 
@@ -1907,7 +1907,7 @@ LockRelease(const LOCKTAG *locktag, LOCKMODE lockmode, bool sessionLock)
 	locallock->nLocks--;
 
 	if (locallock->nLocks > 0)
-		return TRUE;
+		return true;
 
 	/* Attempt fast release of any lock eligible for the fast path. */
 	if (EligibleForRelationFastPath(locktag, lockmode) &&
@@ -1926,7 +1926,7 @@ LockRelease(const LOCKTAG *locktag, LOCKMODE lockmode, bool sessionLock)
 		if (released)
 		{
 			RemoveLocalLock(locallock);
-			return TRUE;
+			return true;
 		}
 	}
 
@@ -1984,7 +1984,7 @@ LockRelease(const LOCKTAG *locktag, LOCKMODE lockmode, bool sessionLock)
 		elog(WARNING, "you don't own a lock of type %s",
 			 lockMethodTable->lockModeNames[lockmode]);
 		RemoveLocalLock(locallock);
-		return FALSE;
+		return false;
 	}
 
 	/*
@@ -1999,7 +1999,7 @@ LockRelease(const LOCKTAG *locktag, LOCKMODE lockmode, bool sessionLock)
 	LWLockRelease(partitionLock);
 
 	RemoveLocalLock(locallock);
-	return TRUE;
+	return true;
 }
 
 /*
@@ -3137,7 +3137,7 @@ AtPrepare_Locks(void)
 		 * entry.  We must retain the count until the prepared transaction is
 		 * committed or rolled back.
 		 */
-		locallock->holdsStrongLockCount = FALSE;
+		locallock->holdsStrongLockCount = false;
 
 		/*
 		 * Create a 2PC record.

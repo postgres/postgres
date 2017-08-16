@@ -311,7 +311,7 @@ restartScanEntry:
 	entry->nlist = 0;
 	entry->matchBitmap = NULL;
 	entry->matchResult = NULL;
-	entry->reduceResult = FALSE;
+	entry->reduceResult = false;
 	entry->predictNumberResult = 0;
 
 	/*
@@ -324,9 +324,9 @@ restartScanEntry:
 	stackEntry = ginFindLeafPage(&btreeEntry, true, snapshot);
 	page = BufferGetPage(stackEntry->buffer);
 	/* ginFindLeafPage() will have already checked snapshot age. */
-	needUnlock = TRUE;
+	needUnlock = true;
 
-	entry->isFinished = TRUE;
+	entry->isFinished = true;
 
 	if (entry->isPartialMatch ||
 		entry->queryCategory == GIN_CAT_EMPTY_QUERY)
@@ -363,7 +363,7 @@ restartScanEntry:
 		if (entry->matchBitmap && !tbm_is_empty(entry->matchBitmap))
 		{
 			entry->matchIterator = tbm_begin_iterate(entry->matchBitmap);
-			entry->isFinished = FALSE;
+			entry->isFinished = false;
 		}
 	}
 	else if (btreeEntry.findItem(&btreeEntry, stackEntry))
@@ -385,7 +385,7 @@ restartScanEntry:
 			 * root of posting tree.
 			 */
 			LockBuffer(stackEntry->buffer, GIN_UNLOCK);
-			needUnlock = FALSE;
+			needUnlock = false;
 
 			stack = ginScanBeginPostingTree(&entry->btree, ginstate->index,
 											rootPostingTree, snapshot);
@@ -410,7 +410,7 @@ restartScanEntry:
 
 			LockBuffer(entry->buffer, GIN_UNLOCK);
 			freeGinBtreeStack(stack);
-			entry->isFinished = FALSE;
+			entry->isFinished = false;
 		}
 		else if (GinGetNPosting(itup) > 0)
 		{
@@ -418,7 +418,7 @@ restartScanEntry:
 									   &entry->nlist);
 			entry->predictNumberResult = entry->nlist;
 
-			entry->isFinished = FALSE;
+			entry->isFinished = false;
 		}
 	}
 
@@ -565,7 +565,7 @@ startScan(IndexScanDesc scan)
 			for (i = 0; i < so->totalentries; i++)
 			{
 				so->entries[i]->predictNumberResult /= so->totalentries;
-				so->entries[i]->reduceResult = TRUE;
+				so->entries[i]->reduceResult = true;
 			}
 		}
 	}
@@ -666,7 +666,7 @@ entryLoadMoreItems(GinState *ginstate, GinScanEntry entry,
 			{
 				UnlockReleaseBuffer(entry->buffer);
 				entry->buffer = InvalidBuffer;
-				entry->isFinished = TRUE;
+				entry->isFinished = true;
 				return;
 			}
 
@@ -728,7 +728,7 @@ entryLoadMoreItems(GinState *ginstate, GinScanEntry entry,
 
 /*
  * Sets entry->curItem to next heap item pointer > advancePast, for one entry
- * of one scan key, or sets entry->isFinished to TRUE if there are no more.
+ * of one scan key, or sets entry->isFinished to true if there are no more.
  *
  * Item pointers are returned in ascending order.
  *
@@ -775,7 +775,7 @@ entryGetItem(GinState *ginstate, GinScanEntry entry,
 					ItemPointerSetInvalid(&entry->curItem);
 					tbm_end_iterate(entry->matchIterator);
 					entry->matchIterator = NULL;
-					entry->isFinished = TRUE;
+					entry->isFinished = true;
 					break;
 				}
 
@@ -835,7 +835,7 @@ entryGetItem(GinState *ginstate, GinScanEntry entry,
 						   entry->matchResult->offsets[entry->offset]);
 			entry->offset++;
 			gotitem = true;
-		} while (!gotitem || (entry->reduceResult == TRUE && dropItem(entry)));
+		} while (!gotitem || (entry->reduceResult == true && dropItem(entry)));
 	}
 	else if (!BufferIsValid(entry->buffer))
 	{
@@ -848,7 +848,7 @@ entryGetItem(GinState *ginstate, GinScanEntry entry,
 			if (entry->offset >= entry->nlist)
 			{
 				ItemPointerSetInvalid(&entry->curItem);
-				entry->isFinished = TRUE;
+				entry->isFinished = true;
 				break;
 			}
 
@@ -876,7 +876,7 @@ entryGetItem(GinState *ginstate, GinScanEntry entry,
 			entry->curItem = entry->list[entry->offset++];
 
 		} while (ginCompareItemPointers(&entry->curItem, &advancePast) <= 0 ||
-				 (entry->reduceResult == TRUE && dropItem(entry)));
+				 (entry->reduceResult == true && dropItem(entry)));
 	}
 }
 
@@ -891,7 +891,7 @@ entryGetItem(GinState *ginstate, GinScanEntry entry,
  * iff recheck is needed for this item pointer (including the case where the
  * item pointer is a lossy page pointer).
  *
- * If all entry streams are exhausted, sets key->isFinished to TRUE.
+ * If all entry streams are exhausted, sets key->isFinished to true.
  *
  * Item pointers must be returned in ascending order.
  *
@@ -963,7 +963,7 @@ keyGetItem(GinState *ginstate, MemoryContext tempCtx, GinScanKey key,
 	if (allFinished)
 	{
 		/* all entries are finished */
-		key->isFinished = TRUE;
+		key->isFinished = true;
 		return;
 	}
 
@@ -1051,7 +1051,7 @@ keyGetItem(GinState *ginstate, MemoryContext tempCtx, GinScanKey key,
 	 * them. We could pass them as MAYBE as well, but if we're using the
 	 * "shim" implementation of a tri-state consistent function (see
 	 * ginlogic.c), it's better to pass as few MAYBEs as possible. So pass
-	 * them as TRUE.
+	 * them as true.
 	 *
 	 * Note that only lossy-page entries pointing to the current item's page
 	 * should trigger this processing; we might have future lossy pages in the
@@ -1064,7 +1064,7 @@ keyGetItem(GinState *ginstate, MemoryContext tempCtx, GinScanKey key,
 	for (i = 0; i < key->nentries; i++)
 	{
 		entry = key->scanEntry[i];
-		if (entry->isFinished == FALSE &&
+		if (entry->isFinished == false &&
 			ginCompareItemPointers(&entry->curItem, &curPageLossy) == 0)
 		{
 			if (i < key->nuserentries)
@@ -1314,7 +1314,7 @@ scanGetItem(IndexScanDesc scan, ItemPointerData advancePast,
 		}
 	}
 
-	return TRUE;
+	return true;
 }
 
 
@@ -1508,7 +1508,7 @@ collectMatchesForHeapRow(IndexScanDesc scan, pendingPosition *pos)
 
 		memset(key->entryRes, GIN_FALSE, key->nentries);
 	}
-	memset(pos->hasMatchKey, FALSE, so->nkeys);
+	memset(pos->hasMatchKey, false, so->nkeys);
 
 	/*
 	 * Outer loop iterates over multiple pending-list pages when a single heap

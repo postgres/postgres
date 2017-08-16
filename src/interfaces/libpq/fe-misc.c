@@ -934,7 +934,7 @@ pqSendSome(PGconn *conn, int len)
 				break;
 			}
 
-			if (pqWait(TRUE, TRUE, conn))
+			if (pqWait(true, true, conn))
 			{
 				result = -1;
 				break;
