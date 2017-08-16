@@ -111,7 +111,7 @@
   </varlistentry>
 
   <varlistentry>
-   <term>File System (Block-Device) Replication</term>
+   <term>File System (Block Device) Replication</term>
    <listitem>
 
     <para>
@@ -154,6 +154,24 @@ protocol to make nodes agree on a serializable transactional order.
      (<xref linkend="warm-standby">) or streaming replication (see
      <xref linkend="streaming-replication">), or a combination of both. For
      information on hot standby, see <xref linkend="hot-standby">.
+    </para>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry>
+   <term>Logical Replication</term>
+   <listitem>
+    <para>
+     Logical replication allows a database server to send a stream of data
+     modifications to another server.  <productname>PostgreSQL</productname>
+     logical replication constructs a stream of logical data modifications
+     from the WAL.  Logical replication allows the data changes from
+     individual tables to be replicated.  Logical replication doesn't require
+     a particular server to be designated as a master or a replica but allows
+     data to flow in multiple directions.  For more information on logical
+     replication, see <xref linkend="logical-replication">.  Through the
+     logical decoding interface (<xref linkend="logicaldecoding">),
+     third-party extensions can also provide similar functionality.
     </para>
    </listitem>
   </varlistentry>
@@ -290,6 +308,7 @@ protocol to make nodes agree on a serializable transactional order.
      <entry>Shared Disk Failover</entry>
      <entry>File System Replication</entry>
      <entry>Write-Ahead Log Shipping</entry>
+     <entry>Logical Replication</entry>
      <entry>Trigger-Based Master-Standby Replication</entry>
      <entry>Statement-Based Replication Middleware</entry>
      <entry>Asynchronous Multimaster Replication</entry>
@@ -300,21 +319,23 @@ protocol to make nodes agree on a serializable transactional order.
    <tbody>
 
     <row>
-     <entry>Most Common Implementation</entry>
+     <entry>Most common implementations</entry>
      <entry align="center">NAS</entry>
      <entry align="center">DRBD</entry>
-     <entry align="center">Streaming Repl.</entry>
-     <entry align="center">Slony</entry>
+     <entry align="center">built-in streaming replication</entry>
+     <entry align="center">built-in logical replication, pglogical</entry>
+     <entry align="center">Londiste, Slony</entry>
      <entry align="center">pgpool-II</entry>
      <entry align="center">Bucardo</entry>
      <entry align="center"></entry>
     </row>
 
     <row>
-     <entry>Communication Method</entry>
+     <entry>Communication method</entry>
      <entry align="center">shared disk</entry>
      <entry align="center">disk blocks</entry>
      <entry align="center">WAL</entry>
+     <entry align="center">logical decoding</entry>
      <entry align="center">table rows</entry>
      <entry align="center">SQL</entry>
      <entry align="center">table rows</entry>
@@ -330,6 +351,7 @@ protocol to make nodes agree on a serializable transactional order.
      <entry align="center">&bull;</entry>
      <entry align="center">&bull;</entry>
      <entry align="center">&bull;</entry>
+     <entry align="center">&bull;</entry>
     </row>
 
     <row>
@@ -337,6 +359,7 @@ protocol to make nodes agree on a serializable transactional order.
      <entry align="center"></entry>
      <entry align="center"></entry>
      <entry align="center"></entry>
+     <entry align="center">&bull;</entry>
      <entry align="center"></entry>
      <entry align="center">&bull;</entry>
      <entry align="center">&bull;</entry>
@@ -347,6 +370,7 @@ protocol to make nodes agree on a serializable transactional order.
      <entry>No master server overhead</entry>
      <entry align="center">&bull;</entry>
      <entry align="center"></entry>
+     <entry align="center">&bull;</entry>
      <entry align="center">&bull;</entry>
      <entry align="center"></entry>
      <entry align="center">&bull;</entry>
@@ -359,6 +383,7 @@ protocol to make nodes agree on a serializable transactional order.
      <entry align="center">&bull;</entry>
      <entry align="center"></entry>
      <entry align="center">with sync off</entry>
+     <entry align="center">with sync off</entry>
      <entry align="center">&bull;</entry>
      <entry align="center"></entry>
      <entry align="center">&bull;</entry>
@@ -370,6 +395,7 @@ protocol to make nodes agree on a serializable transactional order.
      <entry align="center">&bull;</entry>
      <entry align="center">&bull;</entry>
      <entry align="center">with sync on</entry>
+     <entry align="center">with sync on</entry>
      <entry align="center"></entry>
      <entry align="center">&bull;</entry>
      <entry align="center"></entry>
@@ -377,10 +403,11 @@ protocol to make nodes agree on a serializable transactional order.
     </row>
 
     <row>
-     <entry>Standby accept read-only queries</entry>
+     <entry>Replicas accept read-only queries</entry>
      <entry align="center"></entry>
      <entry align="center"></entry>
-     <entry align="center">with hot</entry>
+     <entry align="center">with hot standby</entry>
+     <entry align="center">&bull;</entry>
      <entry align="center">&bull;</entry>
      <entry align="center">&bull;</entry>
      <entry align="center">&bull;</entry>
@@ -393,6 +420,7 @@ protocol to make nodes agree on a serializable transactional order.
      <entry align="center"></entry>
      <entry align="center"></entry>
      <entry align="center">&bull;</entry>
+     <entry align="center">&bull;</entry>
      <entry align="center"></entry>
      <entry align="center">&bull;</entry>
      <entry align="center">&bull;</entry>
@@ -403,6 +431,7 @@ protocol to make nodes agree on a serializable transactional order.
      <entry align="center">&bull;</entry>
      <entry align="center">&bull;</entry>
      <entry align="center">&bull;</entry>
+     <entry align="center"></entry>
      <entry align="center">&bull;</entry>
      <entry align="center"></entry>
      <entry align="center"></entry>
