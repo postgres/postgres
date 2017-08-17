@@ -334,6 +334,7 @@ ExecReScanGatherMerge(GatherMergeState *node)
 	ExecShutdownGatherMergeWorkers(node);
 
 	node->initialized = false;
+	node->gm_initialized = false;
 
 	if (node->pei)
 		ExecParallelReinitialize(node->pei);
