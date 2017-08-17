@@ -941,7 +941,7 @@ omicron         bryanh                  guest1
    <para>
     <literal>scram-sha-256</> performs SCRAM-SHA-256 authentication, as
     described in
-    <ulink url="https://tools.ietf.org/html/rfc5802">RFC5802</ulink>. It
+    <ulink url="https://tools.ietf.org/html/rfc7677">RFC 7677</ulink>. It
     is a challenge-response scheme, that prevents password sniffing on
     untrusted connections. It is more secure than the <literal>md5</>
     method, but might not be supported by older clients.
