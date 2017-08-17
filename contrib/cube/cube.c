@@ -609,18 +609,18 @@ g_cube_leaf_consistent(NDBOX *key,
 	switch (strategy)
 	{
 		case RTOverlapStrategyNumber:
-			retval = (bool) cube_overlap_v0(key, query);
+			retval = cube_overlap_v0(key, query);
 			break;
 		case RTSameStrategyNumber:
-			retval = (bool) (cube_cmp_v0(key, query) == 0);
+			retval = (cube_cmp_v0(key, query) == 0);
 			break;
 		case RTContainsStrategyNumber:
 		case RTOldContainsStrategyNumber:
-			retval = (bool) cube_contains_v0(key, query);
+			retval = cube_contains_v0(key, query);
 			break;
 		case RTContainedByStrategyNumber:
 		case RTOldContainedByStrategyNumber:
-			retval = (bool) cube_contains_v0(query, key);
+			retval = cube_contains_v0(query, key);
 			break;
 		default:
 			retval = FALSE;
