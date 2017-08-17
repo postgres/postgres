@@ -2088,7 +2088,7 @@ adjust_appendrel_attrs_mutator(Node *node,
  * Substitute child relids for parent relids in a Relid set.  The array of
  * appinfos specifies the substitutions to be performed.
  */
-Relids
+static Relids
 adjust_child_relids(Relids relids, int nappinfos, AppendRelInfo **appinfos)
 {
 	Bitmapset  *result = NULL;
