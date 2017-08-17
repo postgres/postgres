@@ -4497,7 +4497,6 @@ postgresGetForeignJoinPaths(PlannerInfo *root,
 	 * the path list of the joinrel, if one exists.  We must be careful to
 	 * call it before adding any ForeignPath, since the ForeignPath might
 	 * dominate the only suitable local path available.  We also do it before
-	 * reconstruct the row for EvalPlanQual(). Find an alternative local path
 	 * calling foreign_join_ok(), since that function updates fpinfo and marks
 	 * it as pushable if the join is found to be pushable.
 	 */
