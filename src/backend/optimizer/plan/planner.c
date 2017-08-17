@@ -291,13 +291,21 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	}
 
 	/*
-	 * glob->parallelModeNeeded should tell us whether it's necessary to
-	 * impose the parallel mode restrictions, but we don't actually want to
-	 * impose them unless we choose a parallel plan, so it is normally set
-	 * only if a parallel plan is chosen (see create_gather_plan).  That way,
-	 * people who mislabel their functions but don't use parallelism anyway
-	 * aren't harmed.  But when force_parallel_mode is set, we enable the
-	 * restrictions whenever possible for testing purposes.
+	 * glob->parallelModeNeeded is normally set to false here and changed to
+	 * true during plan creation if a Gather or Gather Merge plan is actually
+	 * created (cf. create_gather_plan, create_gather_merge_plan).
+	 *
+	 * However, if force_parallel_mode = on or force_parallel_mode = regress,
+	 * then we impose parallel mode whenever it's safe to do so, even if the
+	 * final plan doesn't use parallelism.  It's not safe to do so if the
+	 * query contains anything parallel-unsafe; parallelModeOK will be false
+	 * in that case.  Note that parallelModeOK can't change after this point.
+	 * Otherwise, everything in the query is either parallel-safe or
+	 * parallel-restricted, and in either case it should be OK to impose
+	 * parallel-mode restrictions.  If that ends up breaking something, then
+	 * either some function the user included in the query is incorrectly
+	 * labelled as parallel-safe or parallel-restricted when in reality it's
+	 * parallel-unsafe, or else the query planner itself has a bug.
 	 */
 	glob->parallelModeNeeded = glob->parallelModeOK &&
 		(force_parallel_mode != FORCE_PARALLEL_OFF);
