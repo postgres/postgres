@@ -301,7 +301,7 @@ protocol to make nodes agree on a serializable transactional order.
 
  <table id="high-availability-matrix">
   <title>High Availability, Load Balancing, and Replication Feature Matrix</title>
-  <tgroup cols="8">
+  <tgroup cols="9">
    <thead>
     <row>
      <entry>Feature</entry>
