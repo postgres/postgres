@@ -118,22 +118,6 @@ explain (costs off)
 
 select count(*) from tenk1 group by twenty;
 
---test rescan behavior of gather merge
-set enable_material = false;
-
-explain (costs off)
-select * from
-  (select string4, count(unique2)
-   from tenk1 group by string4 order by string4) ss
-  right join (values (1),(2),(3)) v(x) on true;
-
-select * from
-  (select string4, count(unique2)
-   from tenk1 group by string4 order by string4) ss
-  right join (values (1),(2),(3)) v(x) on true;
-
-reset enable_material;
-
 -- gather merge test with 0 worker
 set max_parallel_workers = 0;
 explain (costs off)
