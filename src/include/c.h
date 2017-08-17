@@ -30,7 +30,7 @@
  *		2)		bool, true, false, TRUE, FALSE
  *		3)		standard system types
  *		4)		IsValid macros for system types
- *		5)		offsetof, lengthof, endof, alignment
+ *		5)		offsetof, lengthof, alignment
  *		6)		assertions
  *		7)		widely useful macros
  *		8)		random stuff
@@ -537,7 +537,7 @@ typedef NameData *Name;
 
 
 /* ----------------------------------------------------------------
- *				Section 5:	offsetof, lengthof, endof, alignment
+ *				Section 5:	offsetof, lengthof, alignment
  * ----------------------------------------------------------------
  */
 /*
@@ -556,12 +556,6 @@ typedef NameData *Name;
  *		Number of elements in an array.
  */
 #define lengthof(array) (sizeof (array) / sizeof ((array)[0]))
-
-/*
- * endof
- *		Address of the element one past the last in an array.
- */
-#define endof(array)	(&(array)[lengthof(array)])
 
 /* ----------------
  * Alignment macros: align a length or address appropriately for a given type.
