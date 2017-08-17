@@ -94,18 +94,6 @@ soundex_code(char letter)
 ****************************************************************************/
 
 
-/**************************************************************************
-	my constants -- constants I like
-
-	Probably redundant.
-
-***************************************************************************/
-
-#define META_ERROR			FALSE
-#define META_SUCCESS		TRUE
-#define META_FAILURE		FALSE
-
-
 /*	I add modifications to the traditional metaphone algorithm that you
 	might find in books.  Define this if you want metaphone to behave
 	traditionally */
@@ -116,7 +104,7 @@ soundex_code(char letter)
 #define  TH		'0'
 
 static char Lookahead(char *word, int how_far);
-static int	_metaphone(char *word, int max_phonemes, char **phoned_word);
+static void	_metaphone(char *word, int max_phonemes, char **phoned_word);
 
 /* Metachar.h ... little bits about characters for metaphone */
 
@@ -272,7 +260,6 @@ metaphone(PG_FUNCTION_ARGS)
 	size_t		str_i_len = strlen(str_i);
 	int			reqlen;
 	char	   *metaph;
-	int			retval;
 
 	/* return an empty string if we receive one */
 	if (!(str_i_len > 0))
@@ -296,17 +283,8 @@ metaphone(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_ZERO_LENGTH_CHARACTER_STRING),
 				 errmsg("output cannot be empty string")));
 
-
-	retval = _metaphone(str_i, reqlen, &metaph);
-	if (retval == META_SUCCESS)
-		PG_RETURN_TEXT_P(cstring_to_text(metaph));
-	else
-	{
-		/* internal error */
-		elog(ERROR, "metaphone: failure");
-		/* keep the compiler quiet */
-		PG_RETURN_NULL();
-	}
+	_metaphone(str_i, reqlen, &metaph);
+	PG_RETURN_TEXT_P(cstring_to_text(metaph));
 }
 
 
@@ -362,7 +340,7 @@ Lookahead(char *word, int how_far)
 #define Isbreak(c)	(!isalpha((unsigned char) (c)))
 
 
-static int
+static void
 _metaphone(char *word,			/* IN */
 		   int max_phonemes,
 		   char **phoned_word)	/* OUT */
@@ -404,7 +382,7 @@ _metaphone(char *word,			/* IN */
 		if (Curr_Letter == '\0')
 		{
 			End_Phoned_Word;
-			return META_SUCCESS;	/* For testing */
+			return;
 		}
 	}
 
@@ -721,7 +699,7 @@ _metaphone(char *word,			/* IN */
 
 	End_Phoned_Word;
 
-	return (META_SUCCESS);
+	return;
 }								/* END metaphone */
 
 
