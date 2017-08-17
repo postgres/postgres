@@ -27,7 +27,7 @@
  *	  -------	------------------------------------------------
  *		0)		pg_config.h and standard system headers
  *		1)		hacks to cope with non-ANSI C compilers
- *		2)		bool, true, false, TRUE, FALSE, NULL
+ *		2)		bool, true, false, TRUE, FALSE
  *		3)		standard system types
  *		4)		IsValid macros for system types
  *		5)		offsetof, lengthof, endof, alignment
@@ -184,7 +184,7 @@
 #endif
 
 /* ----------------------------------------------------------------
- *				Section 2:	bool, true, false, TRUE, FALSE, NULL
+ *				Section 2:	bool, true, false, TRUE, FALSE
  * ----------------------------------------------------------------
  */
 
@@ -219,14 +219,6 @@ typedef bool *BoolPtr;
 
 #ifndef FALSE
 #define FALSE	0
-#endif
-
-/*
- * NULL
- *		Null pointer.
- */
-#ifndef NULL
-#define NULL	((void *) 0)
 #endif
 
 
