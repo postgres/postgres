@@ -812,7 +812,7 @@ sub ucs2utf
 		  (((($ucs & 0x3ffff) >> 12) | 0x80) << 16) |
 		  (((($ucs & 0x0fc0) >> 6) | 0x80) << 8) | (($ucs & 0x003f) | 0x80);
 	}
-	return ($utf);
+	return $utf;
 }
 
 1;

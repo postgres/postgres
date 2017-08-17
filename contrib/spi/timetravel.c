@@ -517,7 +517,7 @@ findTTStatus(char *name)
 AbsoluteTime
 currabstime()
 {
-	return (GetCurrentAbsoluteTime());
+	return GetCurrentAbsoluteTime();
 }
 */
 
@@ -549,5 +549,5 @@ find_plan(char *ident, EPlan **eplan, int *nplans)
 	newp->splan = NULL;
 	(*nplans)++;
 
-	return (newp);
+	return newp;
 }

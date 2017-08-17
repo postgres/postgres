@@ -137,7 +137,7 @@ main(int argc, char *const argv[])
 	if (find_my_exec(argv[0], my_exec_path) < 0)
 	{
 		fprintf(stderr, _("%s: could not locate my own executable path\n"), argv[0]);
-		return (ILLEGAL_OPTION);
+		return ILLEGAL_OPTION;
 	}
 
 	if (argc > 1)
@@ -266,7 +266,7 @@ main(int argc, char *const argv[])
 	{
 		fprintf(stderr, _("%s: no input files specified\n"), progname);
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"), argv[0]);
-		return (ILLEGAL_OPTION);
+		return ILLEGAL_OPTION;
 	}
 	else
 	{

@@ -18,7 +18,7 @@ new_variable(const char *name, struct ECPGtype *type, int brace_level)
 	p->next = allvariables;
 	allvariables = p;
 
-	return (p);
+	return p;
 }
 
 static struct variable *
@@ -44,12 +44,12 @@ find_struct_member(char *name, char *str, struct ECPGstruct_member *members, int
 				switch (members->type->type)
 				{
 					case ECPGt_array:
-						return (new_variable(name, ECPGmake_array_type(ECPGmake_simple_type(members->type->u.element->type, members->type->u.element->size, members->type->u.element->counter), members->type->size), brace_level));
+						return new_variable(name, ECPGmake_array_type(ECPGmake_simple_type(members->type->u.element->type, members->type->u.element->size, members->type->u.element->counter), members->type->size), brace_level);
 					case ECPGt_struct:
 					case ECPGt_union:
-						return (new_variable(name, ECPGmake_struct_type(members->type->u.members, members->type->type, members->type->type_name, members->type->struct_sizeof), brace_level));
+						return new_variable(name, ECPGmake_struct_type(members->type->u.members, members->type->type, members->type->type_name, members->type->struct_sizeof), brace_level);
 					default:
-						return (new_variable(name, ECPGmake_simple_type(members->type->type, members->type->size, members->type->counter), brace_level));
+						return new_variable(name, ECPGmake_simple_type(members->type->type, members->type->size, members->type->counter), brace_level);
 				}
 			}
 			else
@@ -91,26 +91,26 @@ find_struct_member(char *name, char *str, struct ECPGstruct_member *members, int
 						switch (members->type->u.element->type)
 						{
 							case ECPGt_array:
-								return (new_variable(name, ECPGmake_array_type(ECPGmake_simple_type(members->type->u.element->u.element->type, members->type->u.element->u.element->size, members->type->u.element->u.element->counter), members->type->u.element->size), brace_level));
+								return new_variable(name, ECPGmake_array_type(ECPGmake_simple_type(members->type->u.element->u.element->type, members->type->u.element->u.element->size, members->type->u.element->u.element->counter), members->type->u.element->size), brace_level);
 							case ECPGt_struct:
 							case ECPGt_union:
-								return (new_variable(name, ECPGmake_struct_type(members->type->u.element->u.members, members->type->u.element->type, members->type->u.element->type_name, members->type->u.element->struct_sizeof), brace_level));
+								return new_variable(name, ECPGmake_struct_type(members->type->u.element->u.members, members->type->u.element->type, members->type->u.element->type_name, members->type->u.element->struct_sizeof), brace_level);
 							default:
-								return (new_variable(name, ECPGmake_simple_type(members->type->u.element->type, members->type->u.element->size, members->type->u.element->counter), brace_level));
+								return new_variable(name, ECPGmake_simple_type(members->type->u.element->type, members->type->u.element->size, members->type->u.element->counter), brace_level);
 						}
 						break;
 					case '-':
 						if (members->type->type == ECPGt_array)
-							return (find_struct_member(name, ++end, members->type->u.element->u.members, brace_level));
+							return find_struct_member(name, ++end, members->type->u.element->u.members, brace_level);
 						else
-							return (find_struct_member(name, ++end, members->type->u.members, brace_level));
+							return find_struct_member(name, ++end, members->type->u.members, brace_level);
 						break;
 						break;
 					case '.':
 						if (members->type->type == ECPGt_array)
-							return (find_struct_member(name, end, members->type->u.element->u.members, brace_level));
+							return find_struct_member(name, end, members->type->u.element->u.members, brace_level);
 						else
-							return (find_struct_member(name, end, members->type->u.members, brace_level));
+							return find_struct_member(name, end, members->type->u.members, brace_level);
 						break;
 					default:
 						mmfatal(PARSE_ERROR, "incorrectly formed variable \"%s\"", name);
@@ -120,7 +120,7 @@ find_struct_member(char *name, char *str, struct ECPGstruct_member *members, int
 		}
 	}
 
-	return (NULL);
+	return NULL;
 }
 
 static struct variable *
@@ -185,7 +185,7 @@ find_simple(char *name)
 			return p;
 	}
 
-	return (NULL);
+	return NULL;
 }
 
 /* Note that this function will end the program in case of an unknown */
@@ -236,12 +236,12 @@ find_variable(char *name)
 				switch (p->type->u.element->type)
 				{
 					case ECPGt_array:
-						return (new_variable(name, ECPGmake_array_type(ECPGmake_simple_type(p->type->u.element->u.element->type, p->type->u.element->u.element->size, p->type->u.element->u.element->counter), p->type->u.element->size), p->brace_level));
+						return new_variable(name, ECPGmake_array_type(ECPGmake_simple_type(p->type->u.element->u.element->type, p->type->u.element->u.element->size, p->type->u.element->u.element->counter), p->type->u.element->size), p->brace_level);
 					case ECPGt_struct:
 					case ECPGt_union:
-						return (new_variable(name, ECPGmake_struct_type(p->type->u.element->u.members, p->type->u.element->type, p->type->u.element->type_name, p->type->u.element->struct_sizeof), p->brace_level));
+						return new_variable(name, ECPGmake_struct_type(p->type->u.element->u.members, p->type->u.element->type, p->type->u.element->type_name, p->type->u.element->struct_sizeof), p->brace_level);
 					default:
-						return (new_variable(name, ECPGmake_simple_type(p->type->u.element->type, p->type->u.element->size, p->type->u.element->counter), p->brace_level));
+						return new_variable(name, ECPGmake_simple_type(p->type->u.element->type, p->type->u.element->size, p->type->u.element->counter), p->brace_level);
 				}
 			}
 		}
@@ -254,7 +254,7 @@ find_variable(char *name)
 	if (p == NULL)
 		mmfatal(PARSE_ERROR, "variable \"%s\" is not declared", name);
 
-	return (p);
+	return p;
 }
 
 void
@@ -505,7 +505,7 @@ get_typedef(char *name)
 	if (!this)
 		mmfatal(PARSE_ERROR, "unrecognized data type name \"%s\"", name);
 
-	return (this);
+	return this;
 }
 
 void

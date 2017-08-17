@@ -69,7 +69,7 @@ ECPGstruct_member_dup(struct ECPGstruct_member *rm)
 		rm = rm->next;
 	}
 
-	return (new);
+	return new;
 }
 
 /* The NAME argument is copied. The type argument is preserved as a pointer. */
@@ -135,78 +135,78 @@ get_type(enum ECPGttype type)
 	switch (type)
 	{
 		case ECPGt_char:
-			return ("ECPGt_char");
+			return "ECPGt_char";
 			break;
 		case ECPGt_unsigned_char:
-			return ("ECPGt_unsigned_char");
+			return "ECPGt_unsigned_char";
 			break;
 		case ECPGt_short:
-			return ("ECPGt_short");
+			return "ECPGt_short";
 			break;
 		case ECPGt_unsigned_short:
-			return ("ECPGt_unsigned_short");
+			return "ECPGt_unsigned_short";
 			break;
 		case ECPGt_int:
-			return ("ECPGt_int");
+			return "ECPGt_int";
 			break;
 		case ECPGt_unsigned_int:
-			return ("ECPGt_unsigned_int");
+			return "ECPGt_unsigned_int";
 			break;
 		case ECPGt_long:
-			return ("ECPGt_long");
+			return "ECPGt_long";
 			break;
 		case ECPGt_unsigned_long:
-			return ("ECPGt_unsigned_long");
+			return "ECPGt_unsigned_long";
 			break;
 		case ECPGt_long_long:
-			return ("ECPGt_long_long");
+			return "ECPGt_long_long";
 			break;
 		case ECPGt_unsigned_long_long:
-			return ("ECPGt_unsigned_long_long");
+			return "ECPGt_unsigned_long_long";
 			break;
 		case ECPGt_float:
-			return ("ECPGt_float");
+			return "ECPGt_float";
 			break;
 		case ECPGt_double:
-			return ("ECPGt_double");
+			return "ECPGt_double";
 			break;
 		case ECPGt_bool:
-			return ("ECPGt_bool");
+			return "ECPGt_bool";
 			break;
 		case ECPGt_varchar:
-			return ("ECPGt_varchar");
+			return "ECPGt_varchar";
 		case ECPGt_NO_INDICATOR:	/* no indicator */
-			return ("ECPGt_NO_INDICATOR");
+			return "ECPGt_NO_INDICATOR";
 			break;
 		case ECPGt_char_variable:	/* string that should not be quoted */
-			return ("ECPGt_char_variable");
+			return "ECPGt_char_variable";
 			break;
 		case ECPGt_const:		/* constant string quoted */
-			return ("ECPGt_const");
+			return "ECPGt_const";
 			break;
 		case ECPGt_decimal:
-			return ("ECPGt_decimal");
+			return "ECPGt_decimal";
 			break;
 		case ECPGt_numeric:
-			return ("ECPGt_numeric");
+			return "ECPGt_numeric";
 			break;
 		case ECPGt_interval:
-			return ("ECPGt_interval");
+			return "ECPGt_interval";
 			break;
 		case ECPGt_descriptor:
-			return ("ECPGt_descriptor");
+			return "ECPGt_descriptor";
 			break;
 		case ECPGt_sqlda:
-			return ("ECPGt_sqlda");
+			return "ECPGt_sqlda";
 			break;
 		case ECPGt_date:
-			return ("ECPGt_date");
+			return "ECPGt_date";
 			break;
 		case ECPGt_timestamp:
-			return ("ECPGt_timestamp");
+			return "ECPGt_timestamp";
 			break;
 		case ECPGt_string:
-			return ("ECPGt_string");
+			return "ECPGt_string";
 			break;
 		default:
 			mmerror(PARSE_ERROR, ET_ERROR, "unrecognized variable type code %d", type);
@@ -674,51 +674,51 @@ get_dtype(enum ECPGdtype type)
 	switch (type)
 	{
 		case ECPGd_count:
-			return ("ECPGd_countr");
+			return "ECPGd_countr";
 			break;
 		case ECPGd_data:
-			return ("ECPGd_data");
+			return "ECPGd_data";
 			break;
 		case ECPGd_di_code:
-			return ("ECPGd_di_code");
+			return "ECPGd_di_code";
 			break;
 		case ECPGd_di_precision:
-			return ("ECPGd_di_precision");
+			return "ECPGd_di_precision";
 			break;
 		case ECPGd_indicator:
-			return ("ECPGd_indicator");
+			return "ECPGd_indicator";
 			break;
 		case ECPGd_key_member:
-			return ("ECPGd_key_member");
+			return "ECPGd_key_member";
 			break;
 		case ECPGd_length:
-			return ("ECPGd_length");
+			return "ECPGd_length";
 			break;
 		case ECPGd_name:
-			return ("ECPGd_name");
+			return "ECPGd_name";
 			break;
 		case ECPGd_nullable:
-			return ("ECPGd_nullable");
+			return "ECPGd_nullable";
 			break;
 		case ECPGd_octet:
-			return ("ECPGd_octet");
+			return "ECPGd_octet";
 			break;
 		case ECPGd_precision:
-			return ("ECPGd_precision");
+			return "ECPGd_precision";
 			break;
 		case ECPGd_ret_length:
-			return ("ECPGd_ret_length");
+			return "ECPGd_ret_length";
 		case ECPGd_ret_octet:
-			return ("ECPGd_ret_octet");
+			return "ECPGd_ret_octet";
 			break;
 		case ECPGd_scale:
-			return ("ECPGd_scale");
+			return "ECPGd_scale";
 			break;
 		case ECPGd_type:
-			return ("ECPGd_type");
+			return "ECPGd_type";
 			break;
 		case ECPGd_cardinality:
-			return ("ECPGd_cardinality");
+			return "ECPGd_cardinality";
 		default:
 			mmerror(PARSE_ERROR, ET_ERROR, "unrecognized descriptor item code %d", type);
 	}

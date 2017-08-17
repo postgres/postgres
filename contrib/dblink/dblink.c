@@ -2217,7 +2217,7 @@ get_sql_insert(Relation rel, int *pkattnums, int pknumatts, char **src_pkattvals
 	}
 	appendStringInfoChar(&buf, ')');
 
-	return (buf.data);
+	return buf.data;
 }
 
 static char *
@@ -2254,7 +2254,7 @@ get_sql_delete(Relation rel, int *pkattnums, int pknumatts, char **tgt_pkattvals
 			appendStringInfoString(&buf, " IS NULL");
 	}
 
-	return (buf.data);
+	return buf.data;
 }
 
 static char *
@@ -2341,7 +2341,7 @@ get_sql_update(Relation rel, int *pkattnums, int pknumatts, char **src_pkattvals
 			appendStringInfoString(&buf, " IS NULL");
 	}
 
-	return (buf.data);
+	return buf.data;
 }
 
 /*
@@ -2549,9 +2549,9 @@ getConnectionByName(const char *name)
 											   key, HASH_FIND, NULL);
 
 	if (hentry)
-		return (hentry->rconn);
+		return hentry->rconn;
 
-	return (NULL);
+	return NULL;
 }
 
 static HTAB *

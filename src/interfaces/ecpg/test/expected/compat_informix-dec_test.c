@@ -226,7 +226,7 @@ main(void)
 	}
 	free(decarr);
 
-	return (0);
+	return 0;
 }
 
 static void

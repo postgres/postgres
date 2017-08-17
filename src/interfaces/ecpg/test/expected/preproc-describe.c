@@ -477,5 +477,5 @@ if (sqlca.sqlcode < 0) exit (1);}
 #line 144 "describe.pgc"
 
 
-	return (0);
+	return 0;
 }

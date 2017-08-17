@@ -16,5 +16,5 @@ main(void)
 
 	exec sql disconnect DEFAULT;
 
-	return (0);
+	return 0;
 }

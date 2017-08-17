@@ -26,7 +26,7 @@ ltree_execute(ITEM *curitem, void *checkval, bool calcnot, bool (*chkcond) (void
 		return (*chkcond) (checkval, curitem);
 	else if (curitem->val == (int32) '!')
 	{
-		return (calcnot) ?
+		return calcnot ?
 			((ltree_execute(curitem + 1, checkval, calcnot, chkcond)) ? false : true)
 			: true;
 	}

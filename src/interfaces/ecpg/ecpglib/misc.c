@@ -110,7 +110,7 @@ ecpg_init(const struct connection *con, const char *connection_name, const int l
 	{
 		ecpg_raise(lineno, ECPG_OUT_OF_MEMORY, ECPG_SQLSTATE_ECPG_OUT_OF_MEMORY,
 				   NULL);
-		return (false);
+		return false;
 	}
 
 	ecpg_init_sqlca(sqlca);
@@ -118,10 +118,10 @@ ecpg_init(const struct connection *con, const char *connection_name, const int l
 	{
 		ecpg_raise(lineno, ECPG_NO_CONN, ECPG_SQLSTATE_CONNECTION_DOES_NOT_EXIST,
 				   connection_name ? connection_name : ecpg_gettext("NULL"));
-		return (false);
+		return false;
 	}
 
-	return (true);
+	return true;
 }
 
 #ifdef ENABLE_THREAD_SAFETY
@@ -155,9 +155,9 @@ ECPGget_sqlca(void)
 		ecpg_init_sqlca(sqlca);
 		pthread_setspecific(sqlca_key, sqlca);
 	}
-	return (sqlca);
+	return sqlca;
 #else
-	return (&sqlca);
+	return &sqlca;
 #endif
 }
 
@@ -167,7 +167,7 @@ ECPGstatus(int lineno, const char *connection_name)
 	struct connection *con = ecpg_get_connection(connection_name);
 
 	if (!ecpg_init(con, connection_name, lineno))
-		return (false);
+		return false;
 
 	/* are we connected? */
 	if (con->connection == NULL)
@@ -176,7 +176,7 @@ ECPGstatus(int lineno, const char *connection_name)
 		return false;
 	}
 
-	return (true);
+	return true;
 }
 
 PGTransactionStatusType
@@ -202,7 +202,7 @@ ECPGtrans(int lineno, const char *connection_name, const char *transaction)
 	struct connection *con = ecpg_get_connection(connection_name);
 
 	if (!ecpg_init(con, connection_name, lineno))
-		return (false);
+		return false;
 
 	ecpg_log("ECPGtrans on line %d: action \"%s\"; connection \"%s\"\n", lineno, transaction, con ? con->name : "null");
 
@@ -419,10 +419,10 @@ ECPGis_noind_null(enum ECPGttype type, void *ptr)
 			break;
 #endif							/* HAVE_LONG_LONG_INT */
 		case ECPGt_float:
-			return (_check(ptr, sizeof(float)));
+			return _check(ptr, sizeof(float));
 			break;
 		case ECPGt_double:
-			return (_check(ptr, sizeof(double)));
+			return _check(ptr, sizeof(double));
 			break;
 		case ECPGt_varchar:
 			if (*(((struct ECPGgeneric_varchar *) ptr)->arr) == 0x00)
@@ -437,10 +437,10 @@ ECPGis_noind_null(enum ECPGttype type, void *ptr)
 				return true;
 			break;
 		case ECPGt_interval:
-			return (_check(ptr, sizeof(interval)));
+			return _check(ptr, sizeof(interval));
 			break;
 		case ECPGt_timestamp:
-			return (_check(ptr, sizeof(timestamp)));
+			return _check(ptr, sizeof(timestamp));
 			break;
 		default:
 			break;

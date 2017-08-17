@@ -142,7 +142,7 @@ cat2_str(char *str1, char *str2)
 	strcat(res_str, str2);
 	free(str1);
 	free(str2);
-	return(res_str);
+	return res_str;
 }
 
 static char *
@@ -162,7 +162,7 @@ cat_str(int count, ...)
 
 	va_end(args);
 
-	return(res_str);
+	return res_str;
 }
 
 static char *
@@ -174,7 +174,7 @@ make2_str(char *str1, char *str2)
 	strcat(res_str, str2);
 	free(str1);
 	free(str2);
-	return(res_str);
+	return res_str;
 }
 
 static char *
@@ -188,7 +188,7 @@ make3_str(char *str1, char *str2, char *str3)
 	free(str1);
 	free(str2);
 	free(str3);
-	return(res_str);
+	return res_str;
 }
 
 /* and the rest */
@@ -233,7 +233,7 @@ create_questionmarks(char *name, bool array)
 	/* removed the trailing " ," */
 
 	result[strlen(result)-3] = '\0';
-	return(result);
+	return result;
 }
 
 static char *

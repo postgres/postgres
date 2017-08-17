@@ -79,7 +79,7 @@ deccall2(decimal *arg1, decimal *arg2, int (*ptr) (numeric *, numeric *))
 	PGTYPESnumeric_free(a1);
 	PGTYPESnumeric_free(a2);
 
-	return (i);
+	return i;
 }
 
 static int
@@ -143,7 +143,7 @@ deccall3(decimal *arg1, decimal *arg2, decimal *result, int (*ptr) (numeric *, n
 	PGTYPESnumeric_free(a1);
 	PGTYPESnumeric_free(a2);
 
-	return (i);
+	return i;
 }
 
 /* we start with the numeric functions */
@@ -166,7 +166,7 @@ decadd(decimal *arg1, decimal *arg2, decimal *sum)
 int
 deccmp(decimal *arg1, decimal *arg2)
 {
-	return (deccall2(arg1, arg2, PGTYPESnumeric_cmp));
+	return deccall2(arg1, arg2, PGTYPESnumeric_cmp);
 }
 
 void
@@ -261,7 +261,7 @@ deccvdbl(double dbl, decimal *np)
 		result = PGTYPESnumeric_to_decimal(nres, np);
 
 	PGTYPESnumeric_free(nres);
-	return (result);
+	return result;
 }
 
 int
@@ -283,7 +283,7 @@ deccvint(int in, decimal *np)
 		result = PGTYPESnumeric_to_decimal(nres, np);
 
 	PGTYPESnumeric_free(nres);
-	return (result);
+	return result;
 }
 
 int
@@ -305,7 +305,7 @@ deccvlong(long lng, decimal *np)
 		result = PGTYPESnumeric_to_decimal(nres, np);
 
 	PGTYPESnumeric_free(nres);
-	return (result);
+	return result;
 }
 
 int
@@ -598,7 +598,7 @@ rmdyjul(short mdy[3], date * d)
 int
 rdayofweek(date d)
 {
-	return (PGTYPESdate_dayofweek(d));
+	return PGTYPESdate_dayofweek(d);
 }
 
 /* And the datetime stuff */
@@ -1049,5 +1049,5 @@ rsetnull(int t, char *ptr)
 int
 risnull(int t, char *ptr)
 {
-	return (ECPGis_noind_null(t, ptr));
+	return ECPGis_noind_null(t, ptr);
 }

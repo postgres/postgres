@@ -247,5 +247,5 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 87 "oldexec.pgc"
 
 
-	return (0);
+	return 0;
 }

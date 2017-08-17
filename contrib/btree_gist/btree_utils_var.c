@@ -159,7 +159,7 @@ gbt_var_node_cp_len(const GBT_VARKEY *node, const gbtree_vinfo *tinfo)
 		l--;
 		i++;
 	}
-	return (ml);				/* lower == upper */
+	return ml;				/* lower == upper */
 }
 
 
@@ -299,7 +299,7 @@ gbt_var_compress(GISTENTRY *entry, const gbtree_vinfo *tinfo)
 	else
 		retval = entry;
 
-	return (retval);
+	return retval;
 }
 
 

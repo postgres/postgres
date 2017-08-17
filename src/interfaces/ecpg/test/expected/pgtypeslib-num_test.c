@@ -157,5 +157,5 @@ if (sqlca.sqlcode < 0) sqlprint ( );}
 #line 94 "num_test.pgc"
 
 
-	return (0);
+	return 0;
 }

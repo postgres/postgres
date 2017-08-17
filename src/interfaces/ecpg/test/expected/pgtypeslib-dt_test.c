@@ -449,5 +449,5 @@ if (sqlca.sqlcode < 0) sqlprint ( );}
 #line 366 "dt_test.pgc"
 
 
-	return (0);
+	return 0;
 }

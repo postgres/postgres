@@ -164,5 +164,5 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 59 "define.pgc"
 
 
-	return (0);
+	return 0;
 }

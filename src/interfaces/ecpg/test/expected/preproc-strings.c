@@ -66,5 +66,5 @@ int main(void)
   { ECPGdisconnect(__LINE__, "CURRENT");}
 #line 25 "strings.pgc"
 
-  return (0);
+  return 0;
 }

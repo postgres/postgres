@@ -317,14 +317,14 @@ checkcondition_arr(void *checkval, QueryOperand *val, ExecPhraseData *data)
 	{
 		StopMiddle = StopLow + (StopHigh - StopLow) / 2;
 		if (*StopMiddle == val->valcrc)
-			return (true);
+			return true;
 		else if (*StopMiddle < val->valcrc)
 			StopLow = StopMiddle + 1;
 		else
 			StopHigh = StopMiddle;
 	}
 
-	return (false);
+	return false;
 }
 
 static bool

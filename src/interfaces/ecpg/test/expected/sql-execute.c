@@ -327,5 +327,5 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 110 "execute.pgc"
 
 
-	return (0);
+	return 0;
 }

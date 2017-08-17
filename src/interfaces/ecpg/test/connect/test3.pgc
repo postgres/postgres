@@ -48,5 +48,5 @@ exec sql end declare section;
 	 *     are used in other tests
 	 */
 
-	return (0);
+	return 0;
 }

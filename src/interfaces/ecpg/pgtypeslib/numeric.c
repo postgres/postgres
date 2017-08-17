@@ -40,7 +40,7 @@ apply_typmod(numeric *var, long typmod)
 
 	/* Do nothing if we have a default typmod (-1) */
 	if (typmod < (long) (VARHDRSZ))
-		return (0);
+		return 0;
 
 	typmod -= VARHDRSZ;
 	precision = (typmod >> 16) & 0xffff;
@@ -100,7 +100,7 @@ apply_typmod(numeric *var, long typmod)
 
 	var->rscale = scale;
 	var->dscale = scale;
-	return (0);
+	return 0;
 }
 #endif
 
@@ -296,7 +296,7 @@ set_var_from_str(char *str, char **ptr, numeric *dest)
 		dest->weight = 0;
 
 	dest->rscale = dest->dscale;
-	return (0);
+	return 0;
 }
 
 
@@ -412,16 +412,16 @@ PGTYPESnumeric_from_asc(char *str, char **endptr)
 	char	  **ptr = (endptr != NULL) ? endptr : &realptr;
 
 	if (!value)
-		return (NULL);
+		return NULL;
 
 	ret = set_var_from_str(str, ptr, value);
 	if (ret)
 	{
 		PGTYPESnumeric_free(value);
-		return (NULL);
+		return NULL;
 	}
 
-	return (value);
+	return value;
 }
 
 char *
@@ -445,7 +445,7 @@ PGTYPESnumeric_to_asc(numeric *num, int dscale)
 	/* get_str_from_var may change its argument */
 	s = get_str_from_var(numcopy, dscale);
 	PGTYPESnumeric_free(numcopy);
-	return (s);
+	return s;
 }
 
 /* ----------

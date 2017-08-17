@@ -195,14 +195,14 @@ static char *VoidString = "";
 static int
 cmpspell(const void *s1, const void *s2)
 {
-	return (strcmp((*(SPELL *const *) s1)->word, (*(SPELL *const *) s2)->word));
+	return strcmp((*(SPELL *const *) s1)->word, (*(SPELL *const *) s2)->word);
 }
 
 static int
 cmpspellaffix(const void *s1, const void *s2)
 {
-	return (strcmp((*(SPELL *const *) s1)->p.flag,
-				   (*(SPELL *const *) s2)->p.flag));
+	return strcmp((*(SPELL *const *) s1)->p.flag,
+				   (*(SPELL *const *) s2)->p.flag);
 }
 
 static int
@@ -2240,9 +2240,9 @@ NormalizeSubWord(IspellDict *Conf, char *word, int flag)
 	if (cur == forms)
 	{
 		pfree(forms);
-		return (NULL);
+		return NULL;
 	}
-	return (forms);
+	return forms;
 }
 
 typedef struct SplitVar

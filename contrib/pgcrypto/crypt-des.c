@@ -206,18 +206,18 @@ static inline int
 ascii_to_bin(char ch)
 {
 	if (ch > 'z')
-		return (0);
+		return 0;
 	if (ch >= 'a')
 		return (ch - 'a' + 38);
 	if (ch > 'Z')
-		return (0);
+		return 0;
 	if (ch >= 'A')
 		return (ch - 'A' + 12);
 	if (ch > '9')
-		return (0);
+		return 0;
 	if (ch >= '.')
 		return (ch - '.');
-	return (0);
+	return 0;
 }
 
 static void
@@ -420,7 +420,7 @@ des_setkey(const char *key)
 		 * (which is weak and has bad parity anyway) in order to simplify the
 		 * starting conditions.
 		 */
-		return (0);
+		return 0;
 	}
 	old_rawkey0 = rawkey0;
 	old_rawkey1 = rawkey1;
@@ -479,7 +479,7 @@ des_setkey(const char *key)
 			| comp_maskr[6][(t1 >> 7) & 0x7f]
 			| comp_maskr[7][t1 & 0x7f];
 	}
-	return (0);
+	return 0;
 }
 
 static int
@@ -500,7 +500,7 @@ do_des(uint32 l_in, uint32 r_in, uint32 *l_out, uint32 *r_out, int count)
 	int			round;
 
 	if (count == 0)
-		return (1);
+		return 1;
 	else if (count > 0)
 	{
 		/*
@@ -613,7 +613,7 @@ do_des(uint32 l_in, uint32 r_in, uint32 *l_out, uint32 *r_out, int count)
 		| fp_maskr[5][(r >> 16) & 0xff]
 		| fp_maskr[6][(r >> 8) & 0xff]
 		| fp_maskr[7][r & 0xff];
-	return (0);
+	return 0;
 }
 
 static int
@@ -639,7 +639,7 @@ des_cipher(const char *in, char *out, long salt, int count)
 
 	retval = do_des(rawl, rawr, &l_out, &r_out, count);
 	if (retval)
-		return (retval);
+		return retval;
 
 	buffer[0] = htonl(l_out);
 	buffer[1] = htonl(r_out);
@@ -647,7 +647,7 @@ des_cipher(const char *in, char *out, long salt, int count)
 	/* copy data to avoid assuming output is word-aligned */
 	memcpy(out, buffer, sizeof(buffer));
 
-	return (retval);
+	return retval;
 }
 
 char *
@@ -680,7 +680,7 @@ px_crypt_des(const char *key, const char *setting)
 			key++;
 	}
 	if (des_setkey((char *) keybuf))
-		return (NULL);
+		return NULL;
 
 #ifndef DISABLE_XDES
 	if (*setting == _PASSWORD_EFMT1)
@@ -711,7 +711,7 @@ px_crypt_des(const char *key, const char *setting)
 			 * Encrypt the key with itself.
 			 */
 			if (des_cipher((char *) keybuf, (char *) keybuf, 0L, 1))
-				return (NULL);
+				return NULL;
 
 			/*
 			 * And XOR with the next 8 characters of the key.
@@ -721,7 +721,7 @@ px_crypt_des(const char *key, const char *setting)
 				*q++ ^= *key++ << 1;
 
 			if (des_setkey((char *) keybuf))
-				return (NULL);
+				return NULL;
 		}
 		StrNCpy(output, setting, 10);
 
@@ -767,7 +767,7 @@ px_crypt_des(const char *key, const char *setting)
 	 * Do it.
 	 */
 	if (do_des(0L, 0L, &r0, &r1, count))
-		return (NULL);
+		return NULL;
 
 	/*
 	 * Now encode the result...
@@ -790,5 +790,5 @@ px_crypt_des(const char *key, const char *setting)
 	*p++ = _crypt_a64[l & 0x3f];
 	*p = 0;
 
-	return (output);
+	return output;
 }

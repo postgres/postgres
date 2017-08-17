@@ -158,5 +158,5 @@ main(void)
 #line 73 "test5.pgc"
 
 
-	return (0);
+	return 0;
 }

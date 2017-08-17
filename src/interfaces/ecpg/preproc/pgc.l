@@ -768,7 +768,7 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 					}
 <SQL>:{identifier}((("->"|\.){identifier})|(\[{array}\]))*	{
 						base_yylval.str = mm_strdup(yytext+1);
-						return(CVARIABLE);
+						return CVARIABLE;
 					}
 <SQL>{identifier}	{
 						const ScanKeyword  *keyword;
@@ -832,7 +832,7 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 						else
 						{
 							base_yylval.str = mm_strdup(yytext);
-							return(CPP_LINE);
+							return CPP_LINE;
 						}
 					}
 <C>{cppinclude_next}		{
@@ -844,12 +844,12 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 						else
 						{
 							base_yylval.str = mm_strdup(yytext);
-							return(CPP_LINE);
+							return CPP_LINE;
 						}
 					}
 <C,SQL>{cppline}	{
 						base_yylval.str = mm_strdup(yytext);
-						return(CPP_LINE);
+						return CPP_LINE;
 					}
 <C>{identifier}		{
 						const ScanKeyword		*keyword;
@@ -879,38 +879,38 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 						}
 					}
 <C>{xcstop}			{ mmerror(PARSE_ERROR, ET_ERROR, "nested /* ... */ comments"); }
-<C>":"				{ return(':'); }
-<C>";"				{ return(';'); }
-<C>","				{ return(','); }
-<C>"*"				{ return('*'); }
-<C>"%"				{ return('%'); }
-<C>"/"				{ return('/'); }
-<C>"+"				{ return('+'); }
-<C>"-"				{ return('-'); }
-<C>"("				{ parenths_open++; return('('); }
-<C>")"				{ parenths_open--; return(')'); }
+<C>":"				{ return ':'; }
+<C>";"				{ return ';'; }
+<C>","				{ return ','; }
+<C>"*"				{ return '*'; }
+<C>"%"				{ return '%'; }
+<C>"/"				{ return '/'; }
+<C>"+"				{ return '+'; }
+<C>"-"				{ return '-'; }
+<C>"("				{ parenths_open++; return '('; }
+<C>")"				{ parenths_open--; return ')'; }
 <C,xskip>{space}		{ ECHO; }
-<C>\{				{ return('{'); }
-<C>\}				{ return('}'); }
-<C>\[				{ return('['); }
-<C>\]				{ return(']'); }
-<C>\=				{ return('='); }
-<C>"->"				{ return(S_MEMBER); }
-<C>">>"				{ return(S_RSHIFT); }
-<C>"<<"				{ return(S_LSHIFT); }
-<C>"||"				{ return(S_OR); }
-<C>"&&"				{ return(S_AND); }
-<C>"++"				{ return(S_INC); }
-<C>"--"				{ return(S_DEC); }
-<C>"=="				{ return(S_EQUAL); }
-<C>"!="				{ return(S_NEQUAL); }
-<C>"+="				{ return(S_ADD); }
-<C>"-="				{ return(S_SUB); }
-<C>"*="				{ return(S_MUL); }
-<C>"/="				{ return(S_DIV); }
-<C>"%="				{ return(S_MOD); }
-<C>"->*"			{ return(S_MEMPOINT); }
-<C>".*"				{ return(S_DOTPOINT); }
+<C>\{				{ return '{'; }
+<C>\}				{ return '}'; }
+<C>\[				{ return '['; }
+<C>\]				{ return ']'; }
+<C>\=				{ return '='; }
+<C>"->"				{ return S_MEMBER; }
+<C>">>"				{ return S_RSHIFT; }
+<C>"<<"				{ return S_LSHIFT; }
+<C>"||"				{ return S_OR; }
+<C>"&&"				{ return S_AND; }
+<C>"++"				{ return S_INC; }
+<C>"--"				{ return S_DEC; }
+<C>"=="				{ return S_EQUAL; }
+<C>"!="				{ return S_NEQUAL; }
+<C>"+="				{ return S_ADD; }
+<C>"-="				{ return S_SUB; }
+<C>"*="				{ return S_MUL; }
+<C>"/="				{ return S_DIV; }
+<C>"%="				{ return S_MOD; }
+<C>"->*"			{ return S_MEMPOINT; }
+<C>".*"				{ return S_DOTPOINT; }
 <C>{other}			{ return S_ANYTHING; }
 <C>{exec_sql}{define}{space}*	{ BEGIN(def_ident); }
 <C>{informix_special}{define}{space}*	{
@@ -922,7 +922,7 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 						else
 						{
 							yyless(1);
-							return (S_ANYTHING);
+							return S_ANYTHING;
 						}
 					}
 <C>{exec_sql}{undef}{space}*		{ BEGIN(undef); }
@@ -935,7 +935,7 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 						else
 						{
 							yyless(1);
-							return (S_ANYTHING);
+							return S_ANYTHING;
 						}
 					}
 <undef>{identifier}{space}*";" {
@@ -984,7 +984,7 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 					  else
 					  {
 						  yyless(1);
-						  return (S_ANYTHING);
+						  return S_ANYTHING;
 					  }
 					}
 <C,xskip>{exec_sql}{ifdef}{space}*	{ ifcond = TRUE; BEGIN(xcond); }
@@ -998,7 +998,7 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 					  else
 					  {
 						  yyless(1);
-						  return (S_ANYTHING);
+						  return S_ANYTHING;
 					  }
 					}
 <C,xskip>{exec_sql}{ifndef}{space}* { ifcond = FALSE; BEGIN(xcond); }
@@ -1012,7 +1012,7 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 					  else
 					  {
 						  yyless(1);
-						  return (S_ANYTHING);
+						  return S_ANYTHING;
 					  }
 					}
 <C,xskip>{exec_sql}{elif}{space}*	{	/* pop stack */
@@ -1043,7 +1043,7 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 					else
 					{
 						yyless(1);
-						return (S_ANYTHING);
+						return S_ANYTHING;
 					}
 				}
 
@@ -1085,7 +1085,7 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 					else
 					{
 						yyless(1);
-						return (S_ANYTHING);
+						return S_ANYTHING;
 					}
 				}
 <C,xskip>{exec_sql}{endif}{space}*";" {
@@ -1116,7 +1116,7 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 					else
 					{
 						yyless(1);
-						return (S_ANYTHING);
+						return S_ANYTHING;
 					}
 				}
 

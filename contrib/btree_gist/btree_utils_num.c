@@ -296,7 +296,7 @@ gbt_num_consistent(const GBT_NUMKEY_R *key,
 			retval = false;
 	}
 
-	return (retval);
+	return retval;
 }
 
 

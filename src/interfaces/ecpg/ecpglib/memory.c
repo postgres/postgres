@@ -26,7 +26,7 @@ ecpg_alloc(long size, int lineno)
 		return NULL;
 	}
 
-	return (new);
+	return new;
 }
 
 char *
@@ -40,7 +40,7 @@ ecpg_realloc(void *ptr, long size, int lineno)
 		return NULL;
 	}
 
-	return (new);
+	return new;
 }
 
 char *
@@ -58,7 +58,7 @@ ecpg_strdup(const char *string, int lineno)
 		return NULL;
 	}
 
-	return (new);
+	return new;
 }
 
 /* keep a list of memory we allocated for the user */

@@ -61,5 +61,5 @@ exec sql end declare section;
 	exec sql connect to unix:postgresql://localhost/ecpg2_regression user regress_ecpg_user1 identified by "wrongpw";
 	/* no disconnect necessary */
 
-	return (0);
+	return 0;
 }

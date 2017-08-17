@@ -123,5 +123,5 @@ main (void)
 	strcpy(msg, "disconnect");
 	exec sql disconnect;
 
-	return (0);
+	return 0;
 }

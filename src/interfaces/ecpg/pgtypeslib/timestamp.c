@@ -224,14 +224,14 @@ PGTYPEStimestamp_from_asc(char *str, char **endptr)
 	if (strlen(str) > MAXDATELEN)
 	{
 		errno = PGTYPES_TS_BAD_TIMESTAMP;
-		return (noresult);
+		return noresult;
 	}
 
 	if (ParseDateTime(str, lowstr, field, ftype, &nf, ptr) != 0 ||
 		DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, 0) != 0)
 	{
 		errno = PGTYPES_TS_BAD_TIMESTAMP;
-		return (noresult);
+		return noresult;
 	}
 
 	switch (dtype)
@@ -240,7 +240,7 @@ PGTYPEStimestamp_from_asc(char *str, char **endptr)
 			if (tm2timestamp(tm, fsec, NULL, &result) != 0)
 			{
 				errno = PGTYPES_TS_BAD_TIMESTAMP;
-				return (noresult);
+				return noresult;
 			}
 			break;
 
@@ -258,11 +258,11 @@ PGTYPEStimestamp_from_asc(char *str, char **endptr)
 
 		case DTK_INVALID:
 			errno = PGTYPES_TS_BAD_TIMESTAMP;
-			return (noresult);
+			return noresult;
 
 		default:
 			errno = PGTYPES_TS_BAD_TIMESTAMP;
-			return (noresult);
+			return noresult;
 	}
 
 	/* AdjustTimestampForTypmod(&result, typmod); */

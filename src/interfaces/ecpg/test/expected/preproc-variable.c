@@ -272,5 +272,5 @@ if (sqlca.sqlcode < 0) exit (1);}
 #line 98 "variable.pgc"
 
 
-	return (0);
+	return 0;
 }

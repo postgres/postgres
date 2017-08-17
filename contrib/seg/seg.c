@@ -528,7 +528,7 @@ gseg_binary_union(Datum r1, Datum r2, int *sizep)
 	retval = DirectFunctionCall2(seg_union, r1, r2);
 	*sizep = sizeof(SEG);
 
-	return (retval);
+	return retval;
 }
 
 
@@ -1040,7 +1040,7 @@ restore(char *result, float val, int n)
 
 		/* ... this is not done yet. */
 	}
-	return (strlen(result));
+	return strlen(result);
 }
 
 
@@ -1080,7 +1080,7 @@ significant_digits(char *s)
 	}
 
 	if (!n)
-		return (zeroes);
+		return zeroes;
 
-	return (n);
+	return n;
 }

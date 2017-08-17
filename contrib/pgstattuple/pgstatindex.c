@@ -568,7 +568,7 @@ pgstatginindex_internal(Oid relid, FunctionCallInfo fcinfo)
 	tuple = heap_form_tuple(tupleDesc, values, nulls);
 	result = HeapTupleGetDatum(tuple);
 
-	return (result);
+	return result;
 }
 
 /* ------------------------------------------------------

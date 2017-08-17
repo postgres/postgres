@@ -158,7 +158,7 @@ main(void)
 	/* ECPG_INFORMIX_BAD_YEAR */
 	/* ??? */
 
-	return (0);
+	return 0;
 }
 
 static void

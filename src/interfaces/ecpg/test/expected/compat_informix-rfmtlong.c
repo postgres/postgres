@@ -56,7 +56,7 @@ main(void)
 	fmtlong(-8494493, "abc: ################+-+");
 	fmtlong(-8494493, "+<<<<,<<<,<<<,<<<");
 
-	return (0);
+	return 0;
 }
 
 static void

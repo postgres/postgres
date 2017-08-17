@@ -120,5 +120,5 @@ main(void)
 
 	/* no disconnect necessary */
 
-	return (0);
+	return 0;
 }

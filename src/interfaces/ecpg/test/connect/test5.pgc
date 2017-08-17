@@ -72,5 +72,5 @@ exec sql end declare section;
 	/* not connected */
 	exec sql disconnect nonexistant;
 
-	return (0);
+	return 0;
 }

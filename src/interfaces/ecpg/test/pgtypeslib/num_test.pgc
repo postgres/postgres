@@ -93,5 +93,5 @@ main(void)
 	exec sql rollback;
 	exec sql disconnect;
 
-	return (0);
+	return 0;
 }

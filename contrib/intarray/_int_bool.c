@@ -245,7 +245,7 @@ checkcondition_arr(void *checkval, ITEM *item)
 	{
 		StopMiddle = StopLow + (StopHigh - StopLow) / 2;
 		if (*StopMiddle == item->val)
-			return (true);
+			return true;
 		else if (*StopMiddle < item->val)
 			StopLow = StopMiddle + 1;
 		else
@@ -274,7 +274,7 @@ execute(ITEM *curitem, void *checkval, bool calcnot,
 		return (*chkcond) (checkval, curitem);
 	else if (curitem->val == (int32) '!')
 	{
-		return (calcnot) ?
+		return calcnot ?
 			((execute(curitem - 1, checkval, calcnot, chkcond)) ? false : true)
 			: true;
 	}

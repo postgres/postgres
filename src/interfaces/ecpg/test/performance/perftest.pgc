@@ -140,5 +140,5 @@ exec sql end declare section;
 
 	exec sql disconnect;
 
-	return (0);
+	return 0;
 }

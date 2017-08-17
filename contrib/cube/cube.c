@@ -625,7 +625,7 @@ g_cube_leaf_consistent(NDBOX *key,
 		default:
 			retval = FALSE;
 	}
-	return (retval);
+	return retval;
 }
 
 bool
@@ -652,7 +652,7 @@ g_cube_internal_consistent(NDBOX *key,
 		default:
 			retval = FALSE;
 	}
-	return (retval);
+	return retval;
 }
 
 NDBOX *
@@ -663,7 +663,7 @@ g_cube_binary_union(NDBOX *r1, NDBOX *r2, int *sizep)
 	retval = cube_union_v0(r1, r2);
 	*sizep = VARSIZE(retval);
 
-	return (retval);
+	return retval;
 }
 
 
@@ -729,7 +729,7 @@ cube_union_v0(NDBOX *a, NDBOX *b)
 		SET_POINT_BIT(result);
 	}
 
-	return (result);
+	return result;
 }
 
 Datum
@@ -1058,7 +1058,7 @@ cube_contains_v0(NDBOX *a, NDBOX *b)
 	int			i;
 
 	if ((a == NULL) || (b == NULL))
-		return (FALSE);
+		return FALSE;
 
 	if (DIM(a) < DIM(b))
 	{
@@ -1070,9 +1070,9 @@ cube_contains_v0(NDBOX *a, NDBOX *b)
 		for (i = DIM(a); i < DIM(b); i++)
 		{
 			if (LL_COORD(b, i) != 0)
-				return (FALSE);
+				return FALSE;
 			if (UR_COORD(b, i) != 0)
-				return (FALSE);
+				return FALSE;
 		}
 	}
 
@@ -1081,13 +1081,13 @@ cube_contains_v0(NDBOX *a, NDBOX *b)
 	{
 		if (Min(LL_COORD(a, i), UR_COORD(a, i)) >
 			Min(LL_COORD(b, i), UR_COORD(b, i)))
-			return (FALSE);
+			return FALSE;
 		if (Max(LL_COORD(a, i), UR_COORD(a, i)) <
 			Max(LL_COORD(b, i), UR_COORD(b, i)))
-			return (FALSE);
+			return FALSE;
 	}
 
-	return (TRUE);
+	return TRUE;
 }
 
 Datum
@@ -1128,7 +1128,7 @@ cube_overlap_v0(NDBOX *a, NDBOX *b)
 	int			i;
 
 	if ((a == NULL) || (b == NULL))
-		return (FALSE);
+		return FALSE;
 
 	/* swap the box pointers if needed */
 	if (DIM(a) < DIM(b))
@@ -1143,21 +1143,21 @@ cube_overlap_v0(NDBOX *a, NDBOX *b)
 	for (i = 0; i < DIM(b); i++)
 	{
 		if (Min(LL_COORD(a, i), UR_COORD(a, i)) > Max(LL_COORD(b, i), UR_COORD(b, i)))
-			return (FALSE);
+			return FALSE;
 		if (Max(LL_COORD(a, i), UR_COORD(a, i)) < Min(LL_COORD(b, i), UR_COORD(b, i)))
-			return (FALSE);
+			return FALSE;
 	}
 
 	/* compare to zero those dimensions in (a) absent in (b) */
 	for (i = DIM(b); i < DIM(a); i++)
 	{
 		if (Min(LL_COORD(a, i), UR_COORD(a, i)) > 0)
-			return (FALSE);
+			return FALSE;
 		if (Max(LL_COORD(a, i), UR_COORD(a, i)) < 0)
-			return (FALSE);
+			return FALSE;
 	}
 
-	return (TRUE);
+	return TRUE;
 }
 
 
@@ -1385,7 +1385,7 @@ distance_1D(double a1, double a2, double b1, double b2)
 		return (Min(a1, a2) - Max(b1, b2));
 
 	/* the rest are all sorts of intersections */
-	return (0.0);
+	return 0.0;
 }
 
 /* Test if a box is also a point */

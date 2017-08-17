@@ -4397,7 +4397,7 @@ execq(text *sql, int cnt)
     SPI_finish();
     pfree(command);
 
-    return (proc);
+    return proc;
 }
 </programlisting>
 
