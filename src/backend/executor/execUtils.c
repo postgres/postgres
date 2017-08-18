@@ -115,6 +115,11 @@ CreateExecutorState(void)
 	estate->es_num_result_relations = 0;
 	estate->es_result_relation_info = NULL;
 
+	estate->es_root_result_relations = NULL;
+	estate->es_num_root_result_relations = 0;
+
+	estate->es_leaf_result_relations = NIL;
+
 	estate->es_trig_target_relations = NIL;
 	estate->es_trig_tuple_slot = NULL;
 	estate->es_trig_oldtup_slot = NULL;

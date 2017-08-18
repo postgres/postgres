@@ -656,16 +656,29 @@ ExplainPrintTriggers(ExplainState *es, QueryDesc *queryDesc)
 	ResultRelInfo *rInfo;
 	bool		show_relname;
 	int			numrels = queryDesc->estate->es_num_result_relations;
+	int			numrootrels = queryDesc->estate->es_num_root_result_relations;
+	List	   *leafrels = queryDesc->estate->es_leaf_result_relations;
 	List	   *targrels = queryDesc->estate->es_trig_target_relations;
 	int			nr;
 	ListCell   *l;
 
 	ExplainOpenGroup("Triggers", "Triggers", false, es);
 
-	show_relname = (numrels > 1 || targrels != NIL);
+	show_relname = (numrels > 1 || numrootrels > 0 ||
+					leafrels != NIL || targrels != NIL);
 	rInfo = queryDesc->estate->es_result_relations;
 	for (nr = 0; nr < numrels; rInfo++, nr++)
 		report_triggers(rInfo, show_relname, es);
+
+	rInfo = queryDesc->estate->es_root_result_relations;
+	for (nr = 0; nr < numrootrels; rInfo++, nr++)
+		report_triggers(rInfo, show_relname, es);
+
+	foreach(l, leafrels)
+	{
+		rInfo = (ResultRelInfo *) lfirst(l);
+		report_triggers(rInfo, show_relname, es);
+	}
 
 	foreach(l, targrels)
 	{

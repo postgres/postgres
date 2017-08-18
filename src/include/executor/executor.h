@@ -208,6 +208,7 @@ extern void EvalPlanQualSetTuple(EPQState *epqstate, Index rti,
 extern HeapTuple EvalPlanQualGetTuple(EPQState *epqstate, Index rti);
 extern void ExecSetupPartitionTupleRouting(Relation rel,
 							   Index resultRTindex,
+							   EState *estate,
 							   PartitionDispatch **pd,
 							   ResultRelInfo **partitions,
 							   TupleConversionMap ***tup_conv_maps,

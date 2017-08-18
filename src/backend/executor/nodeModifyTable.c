@@ -1919,6 +1919,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 
 		ExecSetupPartitionTupleRouting(rel,
 									   node->nominalRelation,
+									   estate,
 									   &partition_dispatch_info,
 									   &partitions,
 									   &partition_tupconv_maps,
