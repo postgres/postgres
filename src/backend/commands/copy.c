@@ -1415,59 +1415,6 @@ BeginCopy(ParseState *pstate,
 					(errcode(ERRCODE_UNDEFINED_COLUMN),
 					 errmsg("table \"%s\" does not have OIDs",
 							RelationGetRelationName(cstate->rel))));
-
-		/*
-		 * If there are any triggers with transition tables on the named
-		 * relation, we need to be prepared to capture transition tuples.
-		 */
-		cstate->transition_capture = MakeTransitionCaptureState(rel->trigdesc);
-
-		/* Initialize state for CopyFrom tuple routing. */
-		if (is_from && rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
-		{
-			PartitionDispatch *partition_dispatch_info;
-			ResultRelInfo *partitions;
-			TupleConversionMap **partition_tupconv_maps;
-			TupleTableSlot *partition_tuple_slot;
-			int			num_parted,
-						num_partitions;
-
-			ExecSetupPartitionTupleRouting(rel,
-										   1,
-										   &partition_dispatch_info,
-										   &partitions,
-										   &partition_tupconv_maps,
-										   &partition_tuple_slot,
-										   &num_parted, &num_partitions);
-			cstate->partition_dispatch_info = partition_dispatch_info;
-			cstate->num_dispatch = num_parted;
-			cstate->partitions = partitions;
-			cstate->num_partitions = num_partitions;
-			cstate->partition_tupconv_maps = partition_tupconv_maps;
-			cstate->partition_tuple_slot = partition_tuple_slot;
-
-			/*
-			 * If we are capturing transition tuples, they may need to be
-			 * converted from partition format back to partitioned table
-			 * format (this is only ever necessary if a BEFORE trigger
-			 * modifies the tuple).
-			 */
-			if (cstate->transition_capture != NULL)
-			{
-				int			i;
-
-				cstate->transition_tupconv_maps = (TupleConversionMap **)
-					palloc0(sizeof(TupleConversionMap *) *
-							cstate->num_partitions);
-				for (i = 0; i < cstate->num_partitions; ++i)
-				{
-					cstate->transition_tupconv_maps[i] =
-						convert_tuples_by_name(RelationGetDescr(cstate->partitions[i].ri_RelationDesc),
-											   RelationGetDescr(rel),
-											   gettext_noop("could not convert row type"));
-				}
-			}
-		}
 	}
 	else
 	{
@@ -2481,6 +2428,63 @@ CopyFrom(CopyState cstate)
 	ExecSetSlotDescriptor(myslot, tupDesc);
 	/* Triggers might need a slot as well */
 	estate->es_trig_tuple_slot = ExecInitExtraTupleSlot(estate);
+
+	/*
+	 * If there are any triggers with transition tables on the named relation,
+	 * we need to be prepared to capture transition tuples.
+	 */
+	cstate->transition_capture =
+		MakeTransitionCaptureState(cstate->rel->trigdesc);
+
+	/*
+	 * If the named relation is a partitioned table, initialize state for
+	 * CopyFrom tuple routing.
+	 */
+	if (cstate->rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
+	{
+		PartitionDispatch *partition_dispatch_info;
+		ResultRelInfo *partitions;
+		TupleConversionMap **partition_tupconv_maps;
+		TupleTableSlot *partition_tuple_slot;
+		int			num_parted,
+					num_partitions;
+
+		ExecSetupPartitionTupleRouting(cstate->rel,
+									   1,
+									   estate,
+									   &partition_dispatch_info,
+									   &partitions,
+									   &partition_tupconv_maps,
+									   &partition_tuple_slot,
+									   &num_parted, &num_partitions);
+		cstate->partition_dispatch_info = partition_dispatch_info;
+		cstate->num_dispatch = num_parted;
+		cstate->partitions = partitions;
+		cstate->num_partitions = num_partitions;
+		cstate->partition_tupconv_maps = partition_tupconv_maps;
+		cstate->partition_tuple_slot = partition_tuple_slot;
+
+		/*
+		 * If we are capturing transition tuples, they may need to be
+		 * converted from partition format back to partitioned table format
+		 * (this is only ever necessary if a BEFORE trigger modifies the
+		 * tuple).
+		 */
+		if (cstate->transition_capture != NULL)
+		{
+			int			i;
+
+			cstate->transition_tupconv_maps = (TupleConversionMap **)
+				palloc0(sizeof(TupleConversionMap *) * cstate->num_partitions);
+			for (i = 0; i < cstate->num_partitions; ++i)
+			{
+				cstate->transition_tupconv_maps[i] =
+					convert_tuples_by_name(RelationGetDescr(cstate->partitions[i].ri_RelationDesc),
+										   RelationGetDescr(cstate->rel),
+										   gettext_noop("could not convert row type"));
+			}
+		}
+	}
 
 	/*
 	 * It's more efficient to prepare a bunch of tuples for insertion, and

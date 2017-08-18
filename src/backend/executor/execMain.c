@@ -1365,16 +1365,18 @@ InitResultRelInfo(ResultRelInfo *resultRelInfo,
  *
  * Get a ResultRelInfo for a trigger target relation.  Most of the time,
  * triggers are fired on one of the result relations of the query, and so
- * we can just return a member of the es_result_relations array.  (Note: in
- * self-join situations there might be multiple members with the same OID;
- * if so it doesn't matter which one we pick.)  However, it is sometimes
- * necessary to fire triggers on other relations; this happens mainly when an
- * RI update trigger queues additional triggers on other relations, which will
- * be processed in the context of the outer query.  For efficiency's sake,
- * we want to have a ResultRelInfo for those triggers too; that can avoid
- * repeated re-opening of the relation.  (It also provides a way for EXPLAIN
- * ANALYZE to report the runtimes of such triggers.)  So we make additional
- * ResultRelInfo's as needed, and save them in es_trig_target_relations.
+ * we can just return a member of the es_result_relations array, the
+ * es_root_result_relations array (if any), or the es_leaf_result_relations
+ * list (if any).  (Note: in self-join situations there might be multiple
+ * members with the same OID; if so it doesn't matter which one we pick.)
+ * However, it is sometimes necessary to fire triggers on other relations;
+ * this happens mainly when an RI update trigger queues additional triggers
+ * on other relations, which will be processed in the context of the outer
+ * query.  For efficiency's sake, we want to have a ResultRelInfo for those
+ * triggers too; that can avoid repeated re-opening of the relation.  (It
+ * also provides a way for EXPLAIN ANALYZE to report the runtimes of such
+ * triggers.)  So we make additional ResultRelInfo's as needed, and save them
+ * in es_trig_target_relations.
  */
 ResultRelInfo *
 ExecGetTriggerResultRel(EState *estate, Oid relid)
@@ -1394,6 +1396,23 @@ ExecGetTriggerResultRel(EState *estate, Oid relid)
 			return rInfo;
 		rInfo++;
 		nr--;
+	}
+	/* Second, search through the root result relations, if any */
+	rInfo = estate->es_root_result_relations;
+	nr = estate->es_num_root_result_relations;
+	while (nr > 0)
+	{
+		if (RelationGetRelid(rInfo->ri_RelationDesc) == relid)
+			return rInfo;
+		rInfo++;
+		nr--;
+	}
+	/* Third, search through the leaf result relations, if any */
+	foreach(l, estate->es_leaf_result_relations)
+	{
+		rInfo = (ResultRelInfo *) lfirst(l);
+		if (RelationGetRelid(rInfo->ri_RelationDesc) == relid)
+			return rInfo;
 	}
 	/* Nope, but maybe we already made an extra ResultRelInfo for it */
 	foreach(l, estate->es_trig_target_relations)
@@ -3238,6 +3257,7 @@ EvalPlanQualEnd(EPQState *epqstate)
 void
 ExecSetupPartitionTupleRouting(Relation rel,
 							   Index resultRTindex,
+							   EState *estate,
 							   PartitionDispatch **pd,
 							   ResultRelInfo **partitions,
 							   TupleConversionMap ***tup_conv_maps,
@@ -3301,7 +3321,10 @@ ExecSetupPartitionTupleRouting(Relation rel,
 						  partrel,
 						  resultRTindex,
 						  rel,
-						  0);
+						  estate->es_instrument);
+
+		estate->es_leaf_result_relations =
+			lappend(estate->es_leaf_result_relations, leaf_part_rri);
 
 		/*
 		 * Open partition indices (remember we do not support ON CONFLICT in

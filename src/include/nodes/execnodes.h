@@ -452,6 +452,9 @@ typedef struct EState
 	ResultRelInfo *es_root_result_relations;	/* array of ResultRelInfos */
 	int			es_num_root_result_relations;	/* length of the array */
 
+	/* Info about leaf partitions of partitioned table(s) for insert queries: */
+	List	   *es_leaf_result_relations;	/* List of ResultRelInfos */
+
 	/* Stuff used for firing triggers: */
 	List	   *es_trig_target_relations;	/* trigger-only ResultRelInfos */
 	TupleTableSlot *es_trig_tuple_slot; /* for trigger output tuples */
