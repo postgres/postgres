@@ -775,7 +775,7 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 
 					CommandCounterIncrement();
 
-					icucomment = get_icu_locale_comment(name);
+					icucomment = get_icu_locale_comment(localeid);
 					if (icucomment)
 						CreateComments(collid, CollationRelationId, 0,
 									   icucomment);
