@@ -3851,8 +3851,9 @@ restore_toc_entries_prefork(ArchiveHandle *AH, TocEntry *pending_list)
 	 *
 	 * Note: as of 9.2, it should be guaranteed that all PRE_DATA items appear
 	 * before DATA items, and all DATA items before POST_DATA items.  That is
-	 * not certain to be true in older archives, though, so this loop is coded
-	 * to not assume it.
+	 * not certain to be true in older archives, though, and in any case use
+	 * of a list file would destroy that ordering (cf. SortTocFromFile).  So
+	 * this loop cannot assume that it holds.
 	 */
 	AH->restorePass = RESTORE_PASS_MAIN;
 	skipped_some = false;
@@ -3899,7 +3900,7 @@ restore_toc_entries_prefork(ArchiveHandle *AH, TocEntry *pending_list)
 
 			(void) restore_toc_entry(AH, next_work_item, false);
 
-			/* there should be no touch of ready_list here, so pass NULL */
+			/* Reduce dependencies, but don't move anything to ready_list */
 			reduce_dependencies(AH, next_work_item, NULL);
 		}
 		else
@@ -4545,7 +4546,7 @@ identify_locking_dependencies(ArchiveHandle *AH, TocEntry *te)
 /*
  * Remove the specified TOC entry from the depCounts of items that depend on
  * it, thereby possibly making them ready-to-run.  Any pending item that
- * becomes ready should be moved to the ready list.
+ * becomes ready should be moved to the ready_list, if that's provided.
  */
 static void
 reduce_dependencies(ArchiveHandle *AH, TocEntry *te, TocEntry *ready_list)
@@ -4562,15 +4563,19 @@ reduce_dependencies(ArchiveHandle *AH, TocEntry *te, TocEntry *ready_list)
 		otherte->depCount--;
 
 		/*
-		 * It's ready if it has no remaining dependencies and it belongs in
-		 * the current restore pass.  However, don't move it if it has not yet
-		 * been put into the pending list.
+		 * It's ready if it has no remaining dependencies, and it belongs in
+		 * the current restore pass, and it is currently a member of the
+		 * pending list (that check is needed to prevent double restore in
+		 * some cases where a list-file forces out-of-order restoring).
+		 * However, if ready_list == NULL then caller doesn't want any list
+		 * memberships changed.
 		 */
 		if (otherte->depCount == 0 &&
 			_tocEntryRestorePass(otherte) == AH->restorePass &&
-			otherte->par_prev != NULL)
+			otherte->par_prev != NULL &&
+			ready_list != NULL)
 		{
-			/* It must be in the pending list, so remove it ... */
+			/* Remove it from pending list ... */
 			par_list_remove(otherte);
 			/* ... and add to ready_list */
 			par_list_append(ready_list, otherte);
