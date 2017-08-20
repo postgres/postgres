@@ -430,7 +430,7 @@ get_file_fdw_attribute_options(Oid relid)
 	/* Retrieve FDW options for all user-defined attributes. */
 	for (attnum = 1; attnum <= natts; attnum++)
 	{
-		Form_pg_attribute attr = tupleDesc->attrs[attnum - 1];
+		Form_pg_attribute attr = TupleDescAttr(tupleDesc, attnum - 1);
 		List	   *options;
 		ListCell   *lc;
 
@@ -898,7 +898,7 @@ check_selective_binary_conversion(RelOptInfo *baserel,
 		/* Get user attributes. */
 		if (attnum > 0)
 		{
-			Form_pg_attribute attr = tupleDesc->attrs[attnum - 1];
+			Form_pg_attribute attr = TupleDescAttr(tupleDesc, attnum - 1);
 			char	   *attname = NameStr(attr->attname);
 
 			/* Skip dropped attributes (probably shouldn't see any here). */
@@ -912,7 +912,7 @@ check_selective_binary_conversion(RelOptInfo *baserel,
 	numattrs = 0;
 	for (i = 0; i < tupleDesc->natts; i++)
 	{
-		Form_pg_attribute attr = tupleDesc->attrs[i];
+		Form_pg_attribute attr = TupleDescAttr(tupleDesc, i);
 
 		if (attr->attisdropped)
 			continue;

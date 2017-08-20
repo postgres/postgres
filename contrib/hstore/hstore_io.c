@@ -855,15 +855,16 @@ hstore_from_record(PG_FUNCTION_ARGS)
 	for (i = 0, j = 0; i < ncolumns; ++i)
 	{
 		ColumnIOData *column_info = &my_extra->columns[i];
-		Oid			column_type = tupdesc->attrs[i]->atttypid;
+		Form_pg_attribute att = TupleDescAttr(tupdesc, i);
+		Oid			column_type = att->atttypid;
 		char	   *value;
 
 		/* Ignore dropped columns in datatype */
-		if (tupdesc->attrs[i]->attisdropped)
+		if (att->attisdropped)
 			continue;
 
-		pairs[j].key = NameStr(tupdesc->attrs[i]->attname);
-		pairs[j].keylen = hstoreCheckKeyLen(strlen(NameStr(tupdesc->attrs[i]->attname)));
+		pairs[j].key = NameStr(att->attname);
+		pairs[j].keylen = hstoreCheckKeyLen(strlen(NameStr(att->attname)));
 
 		if (!nulls || nulls[i])
 		{
@@ -1034,21 +1035,22 @@ hstore_populate_record(PG_FUNCTION_ARGS)
 	for (i = 0; i < ncolumns; ++i)
 	{
 		ColumnIOData *column_info = &my_extra->columns[i];
-		Oid			column_type = tupdesc->attrs[i]->atttypid;
+		Form_pg_attribute att = TupleDescAttr(tupdesc, i);
+		Oid			column_type = att->atttypid;
 		char	   *value;
 		int			idx;
 		int			vallen;
 
 		/* Ignore dropped columns in datatype */
-		if (tupdesc->attrs[i]->attisdropped)
+		if (att->attisdropped)
 		{
 			nulls[i] = true;
 			continue;
 		}
 
 		idx = hstoreFindKey(hs, 0,
-							NameStr(tupdesc->attrs[i]->attname),
-							strlen(NameStr(tupdesc->attrs[i]->attname)));
+							NameStr(att->attname),
+							strlen(NameStr(att->attname)));
 
 		/*
 		 * we can't just skip here if the key wasn't found since we might have
@@ -1082,7 +1084,7 @@ hstore_populate_record(PG_FUNCTION_ARGS)
 			 */
 			values[i] = InputFunctionCall(&column_info->proc, NULL,
 										  column_info->typioparam,
-										  tupdesc->attrs[i]->atttypmod);
+										  att->atttypmod);
 			nulls[i] = true;
 		}
 		else
@@ -1094,7 +1096,7 @@ hstore_populate_record(PG_FUNCTION_ARGS)
 
 			values[i] = InputFunctionCall(&column_info->proc, value,
 										  column_info->typioparam,
-										  tupdesc->attrs[i]->atttypmod);
+										  att->atttypmod);
 			nulls[i] = false;
 		}
 	}

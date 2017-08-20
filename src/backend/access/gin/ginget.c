@@ -129,7 +129,7 @@ collectMatchBitmap(GinBtreeData *btree, GinBtreeStack *stack,
 
 	/* Locate tupdesc entry for key column (for attbyval/attlen data) */
 	attnum = scanEntry->attnum;
-	attr = btree->ginstate->origTupdesc->attrs[attnum - 1];
+	attr = TupleDescAttr(btree->ginstate->origTupdesc, attnum - 1);
 
 	for (;;)
 	{

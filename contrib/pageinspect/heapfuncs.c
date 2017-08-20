@@ -316,7 +316,7 @@ tuple_data_split_internal(Oid relid, char *tupdata,
 		bool		is_null;
 		bytea	   *attr_data = NULL;
 
-		attr = tupdesc->attrs[i];
+		attr = TupleDescAttr(tupdesc, i);
 		is_null = (t_infomask & HEAP_HASNULL) && att_isnull(i, t_bits);
 
 		/*
@@ -334,7 +334,7 @@ tuple_data_split_internal(Oid relid, char *tupdata,
 
 			if (attr->attlen == -1)
 			{
-				off = att_align_pointer(off, tupdesc->attrs[i]->attalign, -1,
+				off = att_align_pointer(off, attr->attalign, -1,
 										tupdata + off);
 
 				/*
@@ -353,7 +353,7 @@ tuple_data_split_internal(Oid relid, char *tupdata,
 			}
 			else
 			{
-				off = att_align_nominal(off, tupdesc->attrs[i]->attalign);
+				off = att_align_nominal(off, attr->attalign);
 				len = attr->attlen;
 			}
 
@@ -371,7 +371,7 @@ tuple_data_split_internal(Oid relid, char *tupdata,
 				memcpy(VARDATA(attr_data), tupdata + off, len);
 			}
 
-			off = att_addlength_pointer(off, tupdesc->attrs[i]->attlen,
+			off = att_addlength_pointer(off, attr->attlen,
 										tupdata + off);
 		}
 

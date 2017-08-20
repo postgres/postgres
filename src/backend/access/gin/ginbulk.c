@@ -127,9 +127,10 @@ ginInitBA(BuildAccumulator *accum)
 static Datum
 getDatumCopy(BuildAccumulator *accum, OffsetNumber attnum, Datum value)
 {
-	Form_pg_attribute att = accum->ginstate->origTupdesc->attrs[attnum - 1];
+	Form_pg_attribute att;
 	Datum		res;
 
+	att = TupleDescAttr(accum->ginstate->origTupdesc, attnum - 1);
 	if (att->attbyval)
 		res = value;
 	else

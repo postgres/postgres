@@ -2366,7 +2366,7 @@ rowtype_field_matches(Oid rowtypeid, int fieldnum,
 		ReleaseTupleDesc(tupdesc);
 		return false;
 	}
-	attr = tupdesc->attrs[fieldnum - 1];
+	attr = TupleDescAttr(tupdesc, fieldnum - 1);
 	if (attr->attisdropped ||
 		attr->atttypid != expectedtype ||
 		attr->atttypmod != expectedtypmod ||

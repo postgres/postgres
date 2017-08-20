@@ -153,9 +153,10 @@ triggered_change_notification(PG_FUNCTION_ARGS)
 				for (i = 0; i < numatts; i++)
 				{
 					int			colno = index->indkey.values[i];
+					Form_pg_attribute attr = TupleDescAttr(tupdesc, colno - 1);
 
 					appendStringInfoCharMacro(payload, ',');
-					strcpy_quoted(payload, NameStr((tupdesc->attrs[colno - 1])->attname), '"');
+					strcpy_quoted(payload, NameStr(attr->attname), '"');
 					appendStringInfoCharMacro(payload, '=');
 					strcpy_quoted(payload, SPI_getvalue(trigtuple, tupdesc, colno), '\'');
 				}

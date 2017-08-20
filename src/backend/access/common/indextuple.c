@@ -63,7 +63,7 @@ index_form_tuple(TupleDesc tupleDescriptor,
 #ifdef TOAST_INDEX_HACK
 	for (i = 0; i < numberOfAttributes; i++)
 	{
-		Form_pg_attribute att = tupleDescriptor->attrs[i];
+		Form_pg_attribute att = TupleDescAttr(tupleDescriptor, i);
 
 		untoasted_values[i] = values[i];
 		untoasted_free[i] = false;
@@ -209,7 +209,6 @@ nocache_index_getattr(IndexTuple tup,
 					  int attnum,
 					  TupleDesc tupleDesc)
 {
-	Form_pg_attribute *att = tupleDesc->attrs;
 	char	   *tp;				/* ptr to data part of tuple */
 	bits8	   *bp = NULL;		/* ptr to null bitmap in tuple */
 	bool		slow = false;	/* do we have to walk attrs? */
@@ -271,15 +270,15 @@ nocache_index_getattr(IndexTuple tup,
 
 	if (!slow)
 	{
+		Form_pg_attribute att;
+
 		/*
 		 * If we get here, there are no nulls up to and including the target
 		 * attribute.  If we have a cached offset, we can use it.
 		 */
-		if (att[attnum]->attcacheoff >= 0)
-		{
-			return fetchatt(att[attnum],
-							tp + att[attnum]->attcacheoff);
-		}
+		att = TupleDescAttr(tupleDesc, attnum);
+		if (att->attcacheoff >= 0)
+			return fetchatt(att, tp + att->attcacheoff);
 
 		/*
 		 * Otherwise, check for non-fixed-length attrs up to and including
@@ -292,7 +291,7 @@ nocache_index_getattr(IndexTuple tup,
 
 			for (j = 0; j <= attnum; j++)
 			{
-				if (att[j]->attlen <= 0)
+				if (TupleDescAttr(tupleDesc, j)->attlen <= 0)
 				{
 					slow = true;
 					break;
@@ -315,29 +314,32 @@ nocache_index_getattr(IndexTuple tup,
 		 * fixed-width columns, in hope of avoiding future visits to this
 		 * routine.
 		 */
-		att[0]->attcacheoff = 0;
+		TupleDescAttr(tupleDesc, 0)->attcacheoff = 0;
 
 		/* we might have set some offsets in the slow path previously */
-		while (j < natts && att[j]->attcacheoff > 0)
+		while (j < natts && TupleDescAttr(tupleDesc, j)->attcacheoff > 0)
 			j++;
 
-		off = att[j - 1]->attcacheoff + att[j - 1]->attlen;
+		off = TupleDescAttr(tupleDesc, j - 1)->attcacheoff +
+			TupleDescAttr(tupleDesc, j - 1)->attlen;
 
 		for (; j < natts; j++)
 		{
-			if (att[j]->attlen <= 0)
+			Form_pg_attribute att = TupleDescAttr(tupleDesc, j);
+
+			if (att->attlen <= 0)
 				break;
 
-			off = att_align_nominal(off, att[j]->attalign);
+			off = att_align_nominal(off, att->attalign);
 
-			att[j]->attcacheoff = off;
+			att->attcacheoff = off;
 
-			off += att[j]->attlen;
+			off += att->attlen;
 		}
 
 		Assert(j > attnum);
 
-		off = att[attnum]->attcacheoff;
+		off = TupleDescAttr(tupleDesc, attnum)->attcacheoff;
 	}
 	else
 	{
@@ -357,6 +359,8 @@ nocache_index_getattr(IndexTuple tup,
 		off = 0;
 		for (i = 0;; i++)		/* loop exit is at "break" */
 		{
+			Form_pg_attribute att = TupleDescAttr(tupleDesc, i);
+
 			if (IndexTupleHasNulls(tup) && att_isnull(i, bp))
 			{
 				usecache = false;
@@ -364,9 +368,9 @@ nocache_index_getattr(IndexTuple tup,
 			}
 
 			/* If we know the next offset, we can skip the rest */
-			if (usecache && att[i]->attcacheoff >= 0)
-				off = att[i]->attcacheoff;
-			else if (att[i]->attlen == -1)
+			if (usecache && att->attcacheoff >= 0)
+				off = att->attcacheoff;
+			else if (att->attlen == -1)
 			{
 				/*
 				 * We can only cache the offset for a varlena attribute if the
@@ -375,11 +379,11 @@ nocache_index_getattr(IndexTuple tup,
 				 * either an aligned or unaligned value.
 				 */
 				if (usecache &&
-					off == att_align_nominal(off, att[i]->attalign))
-					att[i]->attcacheoff = off;
+					off == att_align_nominal(off, att->attalign))
+					att->attcacheoff = off;
 				else
 				{
-					off = att_align_pointer(off, att[i]->attalign, -1,
+					off = att_align_pointer(off, att->attalign, -1,
 											tp + off);
 					usecache = false;
 				}
@@ -387,23 +391,23 @@ nocache_index_getattr(IndexTuple tup,
 			else
 			{
 				/* not varlena, so safe to use att_align_nominal */
-				off = att_align_nominal(off, att[i]->attalign);
+				off = att_align_nominal(off, att->attalign);
 
 				if (usecache)
-					att[i]->attcacheoff = off;
+					att->attcacheoff = off;
 			}
 
 			if (i == attnum)
 				break;
 
-			off = att_addlength_pointer(off, att[i]->attlen, tp + off);
+			off = att_addlength_pointer(off, att->attlen, tp + off);
 
-			if (usecache && att[i]->attlen <= 0)
+			if (usecache && att->attlen <= 0)
 				usecache = false;
 		}
 	}
 
-	return fetchatt(att[attnum], tp + off);
+	return fetchatt(TupleDescAttr(tupleDesc, attnum), tp + off);
 }
 
 /*

@@ -722,11 +722,11 @@ struct MinimalTupleData
 	(*(isnull) = false),											\
 	HeapTupleNoNulls(tup) ?											\
 	(																\
-		(tupleDesc)->attrs[(attnum)-1]->attcacheoff >= 0 ?			\
+		TupleDescAttr((tupleDesc), (attnum)-1)->attcacheoff >= 0 ?	\
 		(															\
-			fetchatt((tupleDesc)->attrs[(attnum)-1],				\
+			fetchatt(TupleDescAttr((tupleDesc), (attnum)-1),		\
 				(char *) (tup)->t_data + (tup)->t_data->t_hoff +	\
-					(tupleDesc)->attrs[(attnum)-1]->attcacheoff)	\
+				TupleDescAttr((tupleDesc), (attnum)-1)->attcacheoff)\
 		)															\
 		:															\
 			nocachegetattr((tup), (attnum), (tupleDesc))			\

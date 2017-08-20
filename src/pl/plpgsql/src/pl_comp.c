@@ -2012,7 +2012,7 @@ build_row_from_class(Oid classOid)
 		/*
 		 * Get the attribute and check for dropped column
 		 */
-		attrStruct = row->rowtupdesc->attrs[i];
+		attrStruct = TupleDescAttr(row->rowtupdesc, i);
 
 		if (!attrStruct->attisdropped)
 		{

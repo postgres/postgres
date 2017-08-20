@@ -54,8 +54,8 @@ pg_config(PG_FUNCTION_ARGS)
 	 * Check to make sure we have a reasonable tuple descriptor
 	 */
 	if (tupdesc->natts != 2 ||
-		tupdesc->attrs[0]->atttypid != TEXTOID ||
-		tupdesc->attrs[1]->atttypid != TEXTOID)
+		TupleDescAttr(tupdesc, 0)->atttypid != TEXTOID ||
+		TupleDescAttr(tupdesc, 1)->atttypid != TEXTOID)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("query-specified return tuple and "

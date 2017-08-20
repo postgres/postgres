@@ -152,21 +152,21 @@ PLy_input_tuple_funcs(PLyTypeInfo *arg, TupleDesc desc)
 	for (i = 0; i < desc->natts; i++)
 	{
 		HeapTuple	typeTup;
+		Form_pg_attribute attr = TupleDescAttr(desc, i);
 
-		if (desc->attrs[i]->attisdropped)
+		if (attr->attisdropped)
 			continue;
 
-		if (arg->in.r.atts[i].typoid == desc->attrs[i]->atttypid)
+		if (arg->in.r.atts[i].typoid == attr->atttypid)
 			continue;			/* already set up this entry */
 
-		typeTup = SearchSysCache1(TYPEOID,
-								  ObjectIdGetDatum(desc->attrs[i]->atttypid));
+		typeTup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(attr->atttypid));
 		if (!HeapTupleIsValid(typeTup))
 			elog(ERROR, "cache lookup failed for type %u",
-				 desc->attrs[i]->atttypid);
+				 attr->atttypid);
 
 		PLy_input_datum_func2(&(arg->in.r.atts[i]), arg->mcxt,
-							  desc->attrs[i]->atttypid,
+							  attr->atttypid,
 							  typeTup,
 							  exec_ctx->curr_proc->langid,
 							  exec_ctx->curr_proc->trftypes);
@@ -224,18 +224,18 @@ PLy_output_tuple_funcs(PLyTypeInfo *arg, TupleDesc desc)
 	for (i = 0; i < desc->natts; i++)
 	{
 		HeapTuple	typeTup;
+		Form_pg_attribute attr = TupleDescAttr(desc, i);
 
-		if (desc->attrs[i]->attisdropped)
+		if (attr->attisdropped)
 			continue;
 
-		if (arg->out.r.atts[i].typoid == desc->attrs[i]->atttypid)
+		if (arg->out.r.atts[i].typoid == attr->atttypid)
 			continue;			/* already set up this entry */
 
-		typeTup = SearchSysCache1(TYPEOID,
-								  ObjectIdGetDatum(desc->attrs[i]->atttypid));
+		typeTup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(attr->atttypid));
 		if (!HeapTupleIsValid(typeTup))
 			elog(ERROR, "cache lookup failed for type %u",
-				 desc->attrs[i]->atttypid);
+				 attr->atttypid);
 
 		PLy_output_datum_func2(&(arg->out.r.atts[i]), arg->mcxt, typeTup,
 							   exec_ctx->curr_proc->langid,
@@ -306,11 +306,12 @@ PLyDict_FromTuple(PLyTypeInfo *info, HeapTuple tuple, TupleDesc desc)
 			Datum		vattr;
 			bool		is_null;
 			PyObject   *value;
+			Form_pg_attribute attr = TupleDescAttr(desc, i);
 
-			if (desc->attrs[i]->attisdropped)
+			if (attr->attisdropped)
 				continue;
 
-			key = NameStr(desc->attrs[i]->attname);
+			key = NameStr(attr->attname);
 			vattr = heap_getattr(tuple, (i + 1), desc, &is_null);
 
 			if (is_null || info->in.r.atts[i].func == NULL)
@@ -1183,15 +1184,16 @@ PLyMapping_ToComposite(PLyTypeInfo *info, TupleDesc desc, PyObject *mapping)
 		char	   *key;
 		PyObject   *volatile value;
 		PLyObToDatum *att;
+		Form_pg_attribute attr = TupleDescAttr(desc, i);
 
-		if (desc->attrs[i]->attisdropped)
+		if (attr->attisdropped)
 		{
 			values[i] = (Datum) 0;
 			nulls[i] = true;
 			continue;
 		}
 
-		key = NameStr(desc->attrs[i]->attname);
+		key = NameStr(attr->attname);
 		value = NULL;
 		att = &info->out.r.atts[i];
 		PG_TRY();
@@ -1256,7 +1258,7 @@ PLySequence_ToComposite(PLyTypeInfo *info, TupleDesc desc, PyObject *sequence)
 	idx = 0;
 	for (i = 0; i < desc->natts; i++)
 	{
-		if (!desc->attrs[i]->attisdropped)
+		if (!TupleDescAttr(desc, i)->attisdropped)
 			idx++;
 	}
 	if (PySequence_Length(sequence) != idx)
@@ -1277,7 +1279,7 @@ PLySequence_ToComposite(PLyTypeInfo *info, TupleDesc desc, PyObject *sequence)
 		PyObject   *volatile value;
 		PLyObToDatum *att;
 
-		if (desc->attrs[i]->attisdropped)
+		if (TupleDescAttr(desc, i)->attisdropped)
 		{
 			values[i] = (Datum) 0;
 			nulls[i] = true;
@@ -1346,15 +1348,16 @@ PLyGenericObject_ToComposite(PLyTypeInfo *info, TupleDesc desc, PyObject *object
 		char	   *key;
 		PyObject   *volatile value;
 		PLyObToDatum *att;
+		Form_pg_attribute attr = TupleDescAttr(desc, i);
 
-		if (desc->attrs[i]->attisdropped)
+		if (attr->attisdropped)
 		{
 			values[i] = (Datum) 0;
 			nulls[i] = true;
 			continue;
 		}
 
-		key = NameStr(desc->attrs[i]->attname);
+		key = NameStr(attr->attname);
 		value = NULL;
 		att = &info->out.r.atts[i];
 		PG_TRY();

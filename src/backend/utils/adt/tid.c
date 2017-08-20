@@ -273,9 +273,11 @@ currtid_for_view(Relation viewrel, ItemPointer tid)
 
 	for (i = 0; i < natts; i++)
 	{
-		if (strcmp(NameStr(att->attrs[i]->attname), "ctid") == 0)
+		Form_pg_attribute attr = TupleDescAttr(att, i);
+
+		if (strcmp(NameStr(attr->attname), "ctid") == 0)
 		{
-			if (att->attrs[i]->atttypid != TIDOID)
+			if (attr->atttypid != TIDOID)
 				elog(ERROR, "ctid isn't of type TID");
 			tididx = i;
 			break;

@@ -724,12 +724,16 @@ initialize_aggregate(AggState *aggstate, AggStatePerTrans pertrans,
 		 * process_ordered_aggregate_single.)
 		 */
 		if (pertrans->numInputs == 1)
+		{
+			Form_pg_attribute attr = TupleDescAttr(pertrans->sortdesc, 0);
+
 			pertrans->sortstates[aggstate->current_set] =
-				tuplesort_begin_datum(pertrans->sortdesc->attrs[0]->atttypid,
+				tuplesort_begin_datum(attr->atttypid,
 									  pertrans->sortOperators[0],
 									  pertrans->sortCollations[0],
 									  pertrans->sortNullsFirst[0],
 									  work_mem, false);
+		}
 		else
 			pertrans->sortstates[aggstate->current_set] =
 				tuplesort_begin_heap(pertrans->sortdesc,

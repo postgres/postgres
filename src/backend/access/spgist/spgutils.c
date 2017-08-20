@@ -112,7 +112,7 @@ spgGetCache(Relation index)
 		 * tupdesc.  We pass this to the opclass config function so that
 		 * polymorphic opclasses are possible.
 		 */
-		atttype = index->rd_att->attrs[0]->atttypid;
+		atttype = TupleDescAttr(index->rd_att, 0)->atttypid;
 
 		/* Call the config function to get config info for the opclass */
 		in.attType = atttype;

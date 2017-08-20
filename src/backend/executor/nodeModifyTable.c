@@ -95,7 +95,8 @@ ExecCheckPlanOutput(Relation resultRel, List *targetList)
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 					 errmsg("table row type and query-specified row type do not match"),
 					 errdetail("Query has too many columns.")));
-		attr = resultDesc->attrs[attno++];
+		attr = TupleDescAttr(resultDesc, attno);
+		attno++;
 
 		if (!attr->attisdropped)
 		{

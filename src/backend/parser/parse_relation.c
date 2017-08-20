@@ -1052,7 +1052,7 @@ buildRelationAliases(TupleDesc tupdesc, Alias *alias, Alias *eref)
 
 	for (varattno = 0; varattno < maxattrs; varattno++)
 	{
-		Form_pg_attribute attr = tupdesc->attrs[varattno];
+		Form_pg_attribute attr = TupleDescAttr(tupdesc, varattno);
 		Value	   *attrname;
 
 		if (attr->attisdropped)
@@ -2026,19 +2026,18 @@ addRangeTableEntryForENR(ParseState *pstate,
 	rte->colcollations = NIL;
 	for (attno = 1; attno <= tupdesc->natts; ++attno)
 	{
-		if (tupdesc->attrs[attno - 1]->atttypid == InvalidOid &&
-			!(tupdesc->attrs[attno - 1]->attisdropped))
+		Form_pg_attribute att = TupleDescAttr(tupdesc, attno - 1);
+
+		if (att->atttypid == InvalidOid &&
+			!(att->attisdropped))
 			elog(ERROR, "atttypid was invalid for column which has not been dropped from \"%s\"",
 				 rv->relname);
 		rte->coltypes =
-			lappend_oid(rte->coltypes,
-						tupdesc->attrs[attno - 1]->atttypid);
+			lappend_oid(rte->coltypes, att->atttypid);
 		rte->coltypmods =
-			lappend_int(rte->coltypmods,
-						tupdesc->attrs[attno - 1]->atttypmod);
+			lappend_int(rte->coltypmods, att->atttypmod);
 		rte->colcollations =
-			lappend_oid(rte->colcollations,
-						tupdesc->attrs[attno - 1]->attcollation);
+			lappend_oid(rte->colcollations, att->attcollation);
 	}
 
 	/*
@@ -2514,7 +2513,7 @@ expandTupleDesc(TupleDesc tupdesc, Alias *eref, int count, int offset,
 	Assert(count <= tupdesc->natts);
 	for (varattno = 0; varattno < count; varattno++)
 	{
-		Form_pg_attribute attr = tupdesc->attrs[varattno];
+		Form_pg_attribute attr = TupleDescAttr(tupdesc, varattno);
 
 		if (attr->attisdropped)
 		{
@@ -2749,7 +2748,7 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 
 							Assert(tupdesc);
 							Assert(attnum <= tupdesc->natts);
-							att_tup = tupdesc->attrs[attnum - 1];
+							att_tup = TupleDescAttr(tupdesc, attnum - 1);
 
 							/*
 							 * If dropped column, pretend it ain't there.  See
@@ -2953,7 +2952,8 @@ get_rte_attribute_is_dropped(RangeTblEntry *rte, AttrNumber attnum)
 
 							Assert(tupdesc);
 							Assert(attnum - atts_done <= tupdesc->natts);
-							att_tup = tupdesc->attrs[attnum - atts_done - 1];
+							att_tup = TupleDescAttr(tupdesc,
+													attnum - atts_done - 1);
 							return att_tup->attisdropped;
 						}
 						/* Otherwise, it can't have any dropped columns */
@@ -3042,7 +3042,7 @@ attnameAttNum(Relation rd, const char *attname, bool sysColOK)
 
 	for (i = 0; i < rd->rd_rel->relnatts; i++)
 	{
-		Form_pg_attribute att = rd->rd_att->attrs[i];
+		Form_pg_attribute att = TupleDescAttr(rd->rd_att, i);
 
 		if (namestrcmp(&(att->attname), attname) == 0 && !att->attisdropped)
 			return i + 1;
@@ -3102,7 +3102,7 @@ attnumAttName(Relation rd, int attid)
 	}
 	if (attid > rd->rd_att->natts)
 		elog(ERROR, "invalid attribute number %d", attid);
-	return &rd->rd_att->attrs[attid - 1]->attname;
+	return &TupleDescAttr(rd->rd_att, attid - 1)->attname;
 }
 
 /*
@@ -3124,7 +3124,7 @@ attnumTypeId(Relation rd, int attid)
 	}
 	if (attid > rd->rd_att->natts)
 		elog(ERROR, "invalid attribute number %d", attid);
-	return rd->rd_att->attrs[attid - 1]->atttypid;
+	return TupleDescAttr(rd->rd_att, attid - 1)->atttypid;
 }
 
 /*
@@ -3142,7 +3142,7 @@ attnumCollationId(Relation rd, int attid)
 	}
 	if (attid > rd->rd_att->natts)
 		elog(ERROR, "invalid attribute number %d", attid);
-	return rd->rd_att->attrs[attid - 1]->attcollation;
+	return TupleDescAttr(rd->rd_att, attid - 1)->attcollation;
 }
 
 /*

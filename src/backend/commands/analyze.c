@@ -871,7 +871,7 @@ compute_index_stats(Relation onerel, double totalrows,
 static VacAttrStats *
 examine_attribute(Relation onerel, int attnum, Node *index_expr)
 {
-	Form_pg_attribute attr = onerel->rd_att->attrs[attnum - 1];
+	Form_pg_attribute attr = TupleDescAttr(onerel->rd_att, attnum - 1);
 	HeapTuple	typtuple;
 	VacAttrStats *stats;
 	int			i;

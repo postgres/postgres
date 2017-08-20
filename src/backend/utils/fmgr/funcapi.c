@@ -419,7 +419,7 @@ resolve_polymorphic_tupdesc(TupleDesc tupdesc, oidvector *declared_args,
 	/* See if there are any polymorphic outputs; quick out if not */
 	for (i = 0; i < natts; i++)
 	{
-		switch (tupdesc->attrs[i]->atttypid)
+		switch (TupleDescAttr(tupdesc, i)->atttypid)
 		{
 			case ANYELEMENTOID:
 				have_anyelement_result = true;
@@ -548,13 +548,15 @@ resolve_polymorphic_tupdesc(TupleDesc tupdesc, oidvector *declared_args,
 	/* And finally replace the tuple column types as needed */
 	for (i = 0; i < natts; i++)
 	{
-		switch (tupdesc->attrs[i]->atttypid)
+		Form_pg_attribute att = TupleDescAttr(tupdesc, i);
+
+		switch (att->atttypid)
 		{
 			case ANYELEMENTOID:
 			case ANYNONARRAYOID:
 			case ANYENUMOID:
 				TupleDescInitEntry(tupdesc, i + 1,
-								   NameStr(tupdesc->attrs[i]->attname),
+								   NameStr(att->attname),
 								   anyelement_type,
 								   -1,
 								   0);
@@ -562,7 +564,7 @@ resolve_polymorphic_tupdesc(TupleDesc tupdesc, oidvector *declared_args,
 				break;
 			case ANYARRAYOID:
 				TupleDescInitEntry(tupdesc, i + 1,
-								   NameStr(tupdesc->attrs[i]->attname),
+								   NameStr(att->attname),
 								   anyarray_type,
 								   -1,
 								   0);
@@ -570,7 +572,7 @@ resolve_polymorphic_tupdesc(TupleDesc tupdesc, oidvector *declared_args,
 				break;
 			case ANYRANGEOID:
 				TupleDescInitEntry(tupdesc, i + 1,
-								   NameStr(tupdesc->attrs[i]->attname),
+								   NameStr(att->attname),
 								   anyrange_type,
 								   -1,
 								   0);
@@ -1344,9 +1346,10 @@ TypeGetTupleDesc(Oid typeoid, List *colaliases)
 			for (varattno = 0; varattno < natts; varattno++)
 			{
 				char	   *label = strVal(list_nth(colaliases, varattno));
+				Form_pg_attribute attr = TupleDescAttr(tupdesc, varattno);
 
 				if (label != NULL)
-					namestrcpy(&(tupdesc->attrs[varattno]->attname), label);
+					namestrcpy(&(attr->attname), label);
 			}
 
 			/* The tuple type is now an anonymous record type */

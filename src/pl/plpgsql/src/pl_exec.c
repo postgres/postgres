@@ -2841,6 +2841,7 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 					PLpgSQL_var *var = (PLpgSQL_var *) retvar;
 					Datum		retval = var->value;
 					bool		isNull = var->isnull;
+					Form_pg_attribute attr = TupleDescAttr(tupdesc, 0);
 
 					if (natts != 1)
 						ereport(ERROR,
@@ -2858,8 +2859,8 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 											 &isNull,
 											 var->datatype->typoid,
 											 var->datatype->atttypmod,
-											 tupdesc->attrs[0]->atttypid,
-											 tupdesc->attrs[0]->atttypmod);
+											 attr->atttypid,
+											 attr->atttypmod);
 
 					tuplestore_putvalues(estate->tuple_store, tupdesc,
 										 &retval, &isNull);
@@ -2968,6 +2969,8 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 		}
 		else
 		{
+			Form_pg_attribute attr = TupleDescAttr(tupdesc, 0);
+
 			/* Simple scalar result */
 			if (natts != 1)
 				ereport(ERROR,
@@ -2980,8 +2983,8 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 									 &isNull,
 									 rettype,
 									 rettypmod,
-									 tupdesc->attrs[0]->atttypid,
-									 tupdesc->attrs[0]->atttypmod);
+									 attr->atttypid,
+									 attr->atttypmod);
 
 			tuplestore_putvalues(estate->tuple_store, tupdesc,
 								 &retval, &isNull);
@@ -4588,8 +4591,8 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				 * Now insert the new value, being careful to cast it to the
 				 * right type.
 				 */
-				atttype = rec->tupdesc->attrs[fno - 1]->atttypid;
-				atttypmod = rec->tupdesc->attrs[fno - 1]->atttypmod;
+				atttype = TupleDescAttr(rec->tupdesc, fno - 1)->atttypid;
+				atttypmod = TupleDescAttr(rec->tupdesc, fno - 1)->atttypmod;
 				values[0] = exec_cast_value(estate,
 											value,
 											&isNull,
@@ -4913,7 +4916,11 @@ exec_eval_datum(PLpgSQL_execstate *estate,
 									rec->refname, recfield->fieldname)));
 				*typeid = SPI_gettypeid(rec->tupdesc, fno);
 				if (fno > 0)
-					*typetypmod = rec->tupdesc->attrs[fno - 1]->atttypmod;
+				{
+					Form_pg_attribute attr = TupleDescAttr(rec->tupdesc, fno - 1);
+
+					*typetypmod = attr->atttypmod;
+				}
 				else
 					*typetypmod = -1;
 				*value = SPI_getbinval(rec->tup, rec->tupdesc, fno, isnull);
@@ -5089,11 +5096,19 @@ plpgsql_exec_get_datum_type_info(PLpgSQL_execstate *estate,
 									rec->refname, recfield->fieldname)));
 				*typeid = SPI_gettypeid(rec->tupdesc, fno);
 				if (fno > 0)
-					*typmod = rec->tupdesc->attrs[fno - 1]->atttypmod;
+				{
+					Form_pg_attribute attr = TupleDescAttr(rec->tupdesc, fno - 1);
+
+					*typmod = attr->atttypmod;
+				}
 				else
 					*typmod = -1;
 				if (fno > 0)
-					*collation = rec->tupdesc->attrs[fno - 1]->attcollation;
+				{
+					Form_pg_attribute attr = TupleDescAttr(rec->tupdesc, fno - 1);
+
+					*collation = attr->attcollation;
+				}
 				else			/* no system column types have collation */
 					*collation = InvalidOid;
 				break;
@@ -5172,6 +5187,7 @@ exec_eval_expr(PLpgSQL_execstate *estate,
 {
 	Datum		result = 0;
 	int			rc;
+	Form_pg_attribute attr;
 
 	/*
 	 * If first time through, create a plan for this expression.
@@ -5211,8 +5227,9 @@ exec_eval_expr(PLpgSQL_execstate *estate,
 	/*
 	 * ... and get the column's datatype.
 	 */
-	*rettype = estate->eval_tuptable->tupdesc->attrs[0]->atttypid;
-	*rettypmod = estate->eval_tuptable->tupdesc->attrs[0]->atttypmod;
+	attr = TupleDescAttr(estate->eval_tuptable->tupdesc, 0);
+	*rettype = attr->atttypid;
+	*rettypmod = attr->atttypmod;
 
 	/*
 	 * If there are no rows selected, the result is a NULL of that type.
@@ -6030,7 +6047,8 @@ exec_move_row(PLpgSQL_execstate *estate,
 
 			var = (PLpgSQL_var *) (estate->datums[row->varnos[fnum]]);
 
-			while (anum < td_natts && tupdesc->attrs[anum]->attisdropped)
+			while (anum < td_natts &&
+				   TupleDescAttr(tupdesc, anum)->attisdropped)
 				anum++;			/* skip dropped column in tuple */
 
 			if (anum < td_natts)
@@ -6042,8 +6060,8 @@ exec_move_row(PLpgSQL_execstate *estate,
 					value = (Datum) 0;
 					isnull = true;
 				}
-				valtype = tupdesc->attrs[anum]->atttypid;
-				valtypmod = tupdesc->attrs[anum]->atttypmod;
+				valtype = TupleDescAttr(tupdesc, anum)->atttypid;
+				valtypmod = TupleDescAttr(tupdesc, anum)->atttypmod;
 				anum++;
 			}
 			else
@@ -6095,7 +6113,7 @@ make_tuple_from_row(PLpgSQL_execstate *estate,
 		Oid			fieldtypeid;
 		int32		fieldtypmod;
 
-		if (tupdesc->attrs[i]->attisdropped)
+		if (TupleDescAttr(tupdesc, i)->attisdropped)
 		{
 			nulls[i] = true;	/* leave the column as null */
 			continue;
@@ -6106,7 +6124,7 @@ make_tuple_from_row(PLpgSQL_execstate *estate,
 		exec_eval_datum(estate, estate->datums[row->varnos[i]],
 						&fieldtypeid, &fieldtypmod,
 						&dvalues[i], &nulls[i]);
-		if (fieldtypeid != tupdesc->attrs[i]->atttypid)
+		if (fieldtypeid != TupleDescAttr(tupdesc, i)->atttypid)
 			return NULL;
 		/* XXX should we insist on typmod match, too? */
 	}

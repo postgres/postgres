@@ -38,7 +38,7 @@ printsimple_startup(DestReceiver *self, int operation, TupleDesc tupdesc)
 
 	for (i = 0; i < tupdesc->natts; ++i)
 	{
-		Form_pg_attribute attr = tupdesc->attrs[i];
+		Form_pg_attribute attr = TupleDescAttr(tupdesc, i);
 
 		pq_sendstring(&buf, NameStr(attr->attname));
 		pq_sendint(&buf, 0, 4); /* table oid */
@@ -71,7 +71,7 @@ printsimple(TupleTableSlot *slot, DestReceiver *self)
 
 	for (i = 0; i < tupdesc->natts; ++i)
 	{
-		Form_pg_attribute attr = tupdesc->attrs[i];
+		Form_pg_attribute attr = TupleDescAttr(tupdesc, i);
 		Datum		value;
 
 		if (slot->tts_isnull[i])

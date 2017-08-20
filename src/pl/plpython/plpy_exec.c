@@ -950,6 +950,7 @@ PLy_modify_tuple(PLyProcedure *proc, PyObject *pltd, TriggerData *tdata,
 			char	   *plattstr;
 			int			attn;
 			PLyObToDatum *att;
+			Form_pg_attribute attr;
 
 			platt = PyList_GetItem(plkeys, i);
 			if (PyString_Check(platt))
@@ -982,11 +983,12 @@ PLy_modify_tuple(PLyProcedure *proc, PyObject *pltd, TriggerData *tdata,
 
 			Py_INCREF(plval);
 
+			attr = TupleDescAttr(tupdesc, attn - 1);
 			if (plval != Py_None)
 			{
 				modvalues[attn - 1] =
 					(att->func) (att,
-								 tupdesc->attrs[attn - 1]->atttypmod,
+								 attr->atttypmod,
 								 plval,
 								 false);
 				modnulls[attn - 1] = false;
@@ -997,7 +999,7 @@ PLy_modify_tuple(PLyProcedure *proc, PyObject *pltd, TriggerData *tdata,
 					InputFunctionCall(&att->typfunc,
 									  NULL,
 									  att->typioparam,
-									  tupdesc->attrs[attn - 1]->atttypmod);
+									  attr->atttypmod);
 				modnulls[attn - 1] = true;
 			}
 			modrepls[attn - 1] = true;

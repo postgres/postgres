@@ -247,7 +247,7 @@ slot_fill_defaults(LogicalRepRelMapEntry *rel, EState *estate,
 	{
 		Expr	   *defexpr;
 
-		if (desc->attrs[attnum]->attisdropped)
+		if (TupleDescAttr(desc, attnum)->attisdropped)
 			continue;
 
 		if (rel->attrmap[attnum] >= 0)
@@ -323,7 +323,7 @@ slot_store_cstrings(TupleTableSlot *slot, LogicalRepRelMapEntry *rel,
 	/* Call the "in" function for each non-dropped attribute */
 	for (i = 0; i < natts; i++)
 	{
-		Form_pg_attribute att = slot->tts_tupleDescriptor->attrs[i];
+		Form_pg_attribute att = TupleDescAttr(slot->tts_tupleDescriptor, i);
 		int			remoteattnum = rel->attrmap[i];
 
 		if (!att->attisdropped && remoteattnum >= 0 &&
@@ -388,7 +388,7 @@ slot_modify_cstrings(TupleTableSlot *slot, LogicalRepRelMapEntry *rel,
 	/* Call the "in" function for each replaced attribute */
 	for (i = 0; i < natts; i++)
 	{
-		Form_pg_attribute att = slot->tts_tupleDescriptor->attrs[i];
+		Form_pg_attribute att = TupleDescAttr(slot->tts_tupleDescriptor, i);
 		int			remoteattnum = rel->attrmap[i];
 
 		if (remoteattnum >= 0 && !replaces[remoteattnum])

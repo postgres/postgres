@@ -1575,7 +1575,7 @@ postgresPlanForeignModify(PlannerInfo *root,
 
 		for (attnum = 1; attnum <= tupdesc->natts; attnum++)
 		{
-			Form_pg_attribute attr = tupdesc->attrs[attnum - 1];
+			Form_pg_attribute attr = TupleDescAttr(tupdesc, attnum - 1);
 
 			if (!attr->attisdropped)
 				targetAttrs = lappend_int(targetAttrs, attnum);
@@ -1675,6 +1675,7 @@ postgresBeginForeignModify(ModifyTableState *mtstate,
 	Oid			typefnoid;
 	bool		isvarlena;
 	ListCell   *lc;
+	TupleDesc	tupdesc = RelationGetDescr(rel);
 
 	/*
 	 * Do nothing in EXPLAIN (no ANALYZE) case.  resultRelInfo->ri_FdwState
@@ -1719,7 +1720,7 @@ postgresBeginForeignModify(ModifyTableState *mtstate,
 
 	/* Prepare for input conversion of RETURNING results. */
 	if (fmstate->has_returning)
-		fmstate->attinmeta = TupleDescGetAttInMetadata(RelationGetDescr(rel));
+		fmstate->attinmeta = TupleDescGetAttInMetadata(tupdesc);
 
 	/* Prepare for output conversion of parameters used in prepared stmt. */
 	n_params = list_length(fmstate->target_attrs) + 1;
@@ -1748,7 +1749,7 @@ postgresBeginForeignModify(ModifyTableState *mtstate,
 		foreach(lc, fmstate->target_attrs)
 		{
 			int			attnum = lfirst_int(lc);
-			Form_pg_attribute attr = RelationGetDescr(rel)->attrs[attnum - 1];
+			Form_pg_attribute attr = TupleDescAttr(tupdesc, attnum - 1);
 
 			Assert(!attr->attisdropped);
 
@@ -5090,9 +5091,10 @@ conversion_error_callback(void *arg)
 	{
 		/* error occurred in a scan against a foreign table */
 		TupleDesc	tupdesc = RelationGetDescr(errpos->rel);
+		Form_pg_attribute attr = TupleDescAttr(tupdesc, errpos->cur_attno - 1);
 
 		if (errpos->cur_attno > 0 && errpos->cur_attno <= tupdesc->natts)
-			attname = NameStr(tupdesc->attrs[errpos->cur_attno - 1]->attname);
+			attname = NameStr(attr->attname);
 		else if (errpos->cur_attno == SelfItemPointerAttributeNumber)
 			attname = "ctid";
 		else if (errpos->cur_attno == ObjectIdAttributeNumber)

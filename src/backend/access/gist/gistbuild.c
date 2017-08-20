@@ -295,10 +295,10 @@ gistInitBuffering(GISTBuildState *buildstate)
 	itupMinSize = (Size) MAXALIGN(sizeof(IndexTupleData));
 	for (i = 0; i < index->rd_att->natts; i++)
 	{
-		if (index->rd_att->attrs[i]->attlen < 0)
+		if (TupleDescAttr(index->rd_att, i)->attlen < 0)
 			itupMinSize += VARHDRSZ;
 		else
-			itupMinSize += index->rd_att->attrs[i]->attlen;
+			itupMinSize += TupleDescAttr(index->rd_att, i)->attlen;
 	}
 
 	/* Calculate average and maximal number of index tuples which fit to page */

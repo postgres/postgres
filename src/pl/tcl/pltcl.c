@@ -1106,11 +1106,13 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS, pltcl_call_state *call_state,
 		Tcl_ListObjAppendElement(NULL, tcl_trigtup, Tcl_NewObj());
 		for (i = 0; i < tupdesc->natts; i++)
 		{
-			if (tupdesc->attrs[i]->attisdropped)
+			Form_pg_attribute att = TupleDescAttr(tupdesc, i);
+
+			if (att->attisdropped)
 				Tcl_ListObjAppendElement(NULL, tcl_trigtup, Tcl_NewObj());
 			else
 				Tcl_ListObjAppendElement(NULL, tcl_trigtup,
-										 Tcl_NewStringObj(utf_e2u(NameStr(tupdesc->attrs[i]->attname)), -1));
+										 Tcl_NewStringObj(utf_e2u(NameStr(att->attname)), -1));
 		}
 		Tcl_ListObjAppendElement(NULL, tcl_cmd, tcl_trigtup);
 
@@ -2952,15 +2954,17 @@ pltcl_set_tuple_values(Tcl_Interp *interp, const char *arrayname,
 
 	for (i = 0; i < tupdesc->natts; i++)
 	{
+		Form_pg_attribute att = TupleDescAttr(tupdesc, i);
+
 		/* ignore dropped attributes */
-		if (tupdesc->attrs[i]->attisdropped)
+		if (att->attisdropped)
 			continue;
 
 		/************************************************************
 		 * Get the attribute name
 		 ************************************************************/
 		UTF_BEGIN;
-		attname = pstrdup(UTF_E2U(NameStr(tupdesc->attrs[i]->attname)));
+		attname = pstrdup(UTF_E2U(NameStr(att->attname)));
 		UTF_END;
 
 		/************************************************************
@@ -2978,8 +2982,7 @@ pltcl_set_tuple_values(Tcl_Interp *interp, const char *arrayname,
 		 ************************************************************/
 		if (!isnull)
 		{
-			getTypeOutputInfo(tupdesc->attrs[i]->atttypid,
-							  &typoutput, &typisvarlena);
+			getTypeOutputInfo(att->atttypid, &typoutput, &typisvarlena);
 			outputstr = OidOutputFunctionCall(typoutput, attr);
 			UTF_BEGIN;
 			Tcl_SetVar2Ex(interp, *arrptr, *nameptr,
@@ -3013,14 +3016,16 @@ pltcl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc)
 
 	for (i = 0; i < tupdesc->natts; i++)
 	{
+		Form_pg_attribute att = TupleDescAttr(tupdesc, i);
+
 		/* ignore dropped attributes */
-		if (tupdesc->attrs[i]->attisdropped)
+		if (att->attisdropped)
 			continue;
 
 		/************************************************************
 		 * Get the attribute name
 		 ************************************************************/
-		attname = NameStr(tupdesc->attrs[i]->attname);
+		attname = NameStr(att->attname);
 
 		/************************************************************
 		 * Get the attributes value
@@ -3037,7 +3042,7 @@ pltcl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc)
 		 ************************************************************/
 		if (!isnull)
 		{
-			getTypeOutputInfo(tupdesc->attrs[i]->atttypid,
+			getTypeOutputInfo(att->atttypid,
 							  &typoutput, &typisvarlena);
 			outputstr = OidOutputFunctionCall(typoutput, attr);
 			UTF_BEGIN;

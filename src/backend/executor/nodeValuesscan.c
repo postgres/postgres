@@ -95,7 +95,6 @@ ValuesNext(ValuesScanState *node)
 		List	   *exprstatelist;
 		Datum	   *values;
 		bool	   *isnull;
-		Form_pg_attribute *att;
 		ListCell   *lc;
 		int			resind;
 
@@ -131,12 +130,13 @@ ValuesNext(ValuesScanState *node)
 		 */
 		values = slot->tts_values;
 		isnull = slot->tts_isnull;
-		att = slot->tts_tupleDescriptor->attrs;
 
 		resind = 0;
 		foreach(lc, exprstatelist)
 		{
 			ExprState  *estate = (ExprState *) lfirst(lc);
+			Form_pg_attribute attr = TupleDescAttr(slot->tts_tupleDescriptor,
+												   resind);
 
 			values[resind] = ExecEvalExpr(estate,
 										  econtext,
@@ -150,7 +150,7 @@ ValuesNext(ValuesScanState *node)
 			 */
 			values[resind] = MakeExpandedObjectReadOnly(values[resind],
 														isnull[resind],
-														att[resind]->attlen);
+														attr->attlen);
 
 			resind++;
 		}

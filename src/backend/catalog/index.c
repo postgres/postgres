@@ -307,7 +307,7 @@ ConstructTupleDescriptor(Relation heapRelation,
 	for (i = 0; i < numatts; i++)
 	{
 		AttrNumber	atnum = indexInfo->ii_KeyAttrNumbers[i];
-		Form_pg_attribute to = indexTupDesc->attrs[i];
+		Form_pg_attribute to = TupleDescAttr(indexTupDesc, i);
 		HeapTuple	tuple;
 		Form_pg_type typeTup;
 		Form_pg_opclass opclassTup;
@@ -333,7 +333,8 @@ ConstructTupleDescriptor(Relation heapRelation,
 				 */
 				if (atnum > natts)	/* safety check */
 					elog(ERROR, "invalid column number %d", atnum);
-				from = heapTupDesc->attrs[AttrNumberGetAttrOffset(atnum)];
+				from = TupleDescAttr(heapTupDesc,
+									 AttrNumberGetAttrOffset(atnum));
 			}
 
 			/*
@@ -495,7 +496,7 @@ InitializeAttributeOids(Relation indexRelation,
 	tupleDescriptor = RelationGetDescr(indexRelation);
 
 	for (i = 0; i < numatts; i += 1)
-		tupleDescriptor->attrs[i]->attrelid = indexoid;
+		TupleDescAttr(tupleDescriptor, i)->attrelid = indexoid;
 }
 
 /* ----------------------------------------------------------------
@@ -524,14 +525,16 @@ AppendAttributeTuples(Relation indexRelation, int numatts)
 
 	for (i = 0; i < numatts; i++)
 	{
+		Form_pg_attribute attr = TupleDescAttr(indexTupDesc, i);
+
 		/*
 		 * There used to be very grotty code here to set these fields, but I
 		 * think it's unnecessary.  They should be set already.
 		 */
-		Assert(indexTupDesc->attrs[i]->attnum == i + 1);
-		Assert(indexTupDesc->attrs[i]->attcacheoff == -1);
+		Assert(attr->attnum == i + 1);
+		Assert(attr->attcacheoff == -1);
 
-		InsertPgAttributeTuple(pg_attribute, indexTupDesc->attrs[i], indstate);
+		InsertPgAttributeTuple(pg_attribute, attr, indstate);
 	}
 
 	CatalogCloseIndexes(indstate);

@@ -1095,6 +1095,7 @@ plperl_build_tuple_result(HV *perlhash, TupleDesc td)
 		SV		   *val = HeVAL(he);
 		char	   *key = hek2cstr(he);
 		int			attn = SPI_fnumber(td, key);
+		Form_pg_attribute attr = TupleDescAttr(td, attn - 1);
 
 		if (attn == SPI_ERROR_NOATTRIBUTE)
 			ereport(ERROR,
@@ -1108,8 +1109,8 @@ plperl_build_tuple_result(HV *perlhash, TupleDesc td)
 							key)));
 
 		values[attn - 1] = plperl_sv_to_datum(val,
-											  td->attrs[attn - 1]->atttypid,
-											  td->attrs[attn - 1]->atttypmod,
+											  attr->atttypid,
+											  attr->atttypmod,
 											  NULL,
 											  NULL,
 											  InvalidOid,
@@ -1757,6 +1758,7 @@ plperl_modify_tuple(HV *hvTD, TriggerData *tdata, HeapTuple otup)
 		char	   *key = hek2cstr(he);
 		SV		   *val = HeVAL(he);
 		int			attn = SPI_fnumber(tupdesc, key);
+		Form_pg_attribute attr = TupleDescAttr(tupdesc, attn - 1);
 
 		if (attn == SPI_ERROR_NOATTRIBUTE)
 			ereport(ERROR,
@@ -1770,8 +1772,8 @@ plperl_modify_tuple(HV *hvTD, TriggerData *tdata, HeapTuple otup)
 							key)));
 
 		modvalues[attn - 1] = plperl_sv_to_datum(val,
-												 tupdesc->attrs[attn - 1]->atttypid,
-												 tupdesc->attrs[attn - 1]->atttypmod,
+												 attr->atttypid,
+												 attr->atttypmod,
 												 NULL,
 												 NULL,
 												 InvalidOid,
@@ -3014,11 +3016,12 @@ plperl_hash_from_tuple(HeapTuple tuple, TupleDesc tupdesc)
 					typisvarlena;
 		char	   *attname;
 		Oid			typoutput;
+		Form_pg_attribute att = TupleDescAttr(tupdesc, i);
 
-		if (tupdesc->attrs[i]->attisdropped)
+		if (att->attisdropped)
 			continue;
 
-		attname = NameStr(tupdesc->attrs[i]->attname);
+		attname = NameStr(att->attname);
 		attr = heap_getattr(tuple, i + 1, tupdesc, &isnull);
 
 		if (isnull)
@@ -3032,7 +3035,7 @@ plperl_hash_from_tuple(HeapTuple tuple, TupleDesc tupdesc)
 			continue;
 		}
 
-		if (type_is_rowtype(tupdesc->attrs[i]->atttypid))
+		if (type_is_rowtype(att->atttypid))
 		{
 			SV		   *sv = plperl_hash_from_datum(attr);
 
@@ -3043,17 +3046,16 @@ plperl_hash_from_tuple(HeapTuple tuple, TupleDesc tupdesc)
 			SV		   *sv;
 			Oid			funcid;
 
-			if (OidIsValid(get_base_element_type(tupdesc->attrs[i]->atttypid)))
-				sv = plperl_ref_from_pg_array(attr, tupdesc->attrs[i]->atttypid);
-			else if ((funcid = get_transform_fromsql(tupdesc->attrs[i]->atttypid, current_call_data->prodesc->lang_oid, current_call_data->prodesc->trftypes)))
+			if (OidIsValid(get_base_element_type(att->atttypid)))
+				sv = plperl_ref_from_pg_array(attr, att->atttypid);
+			else if ((funcid = get_transform_fromsql(att->atttypid, current_call_data->prodesc->lang_oid, current_call_data->prodesc->trftypes)))
 				sv = (SV *) DatumGetPointer(OidFunctionCall1(funcid, attr));
 			else
 			{
 				char	   *outputstr;
 
 				/* XXX should have a way to cache these lookups */
-				getTypeOutputInfo(tupdesc->attrs[i]->atttypid,
-								  &typoutput, &typisvarlena);
+				getTypeOutputInfo(att->atttypid, &typoutput, &typisvarlena);
 
 				outputstr = OidOutputFunctionCall(typoutput, attr);
 				sv = cstr2sv(outputstr);

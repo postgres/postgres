@@ -159,12 +159,13 @@ record_in(PG_FUNCTION_ARGS)
 
 	for (i = 0; i < ncolumns; i++)
 	{
+		Form_pg_attribute att = TupleDescAttr(tupdesc, i);
 		ColumnIOData *column_info = &my_extra->columns[i];
-		Oid			column_type = tupdesc->attrs[i]->atttypid;
+		Oid			column_type = att->atttypid;
 		char	   *column_data;
 
 		/* Ignore dropped columns in datatype, but fill with nulls */
-		if (tupdesc->attrs[i]->attisdropped)
+		if (att->attisdropped)
 		{
 			values[i] = (Datum) 0;
 			nulls[i] = true;
@@ -252,7 +253,7 @@ record_in(PG_FUNCTION_ARGS)
 		values[i] = InputFunctionCall(&column_info->proc,
 									  column_data,
 									  column_info->typioparam,
-									  tupdesc->attrs[i]->atttypmod);
+									  att->atttypmod);
 
 		/*
 		 * Prep for next column
@@ -367,15 +368,16 @@ record_out(PG_FUNCTION_ARGS)
 
 	for (i = 0; i < ncolumns; i++)
 	{
+		Form_pg_attribute att = TupleDescAttr(tupdesc, i);
 		ColumnIOData *column_info = &my_extra->columns[i];
-		Oid			column_type = tupdesc->attrs[i]->atttypid;
+		Oid			column_type = att->atttypid;
 		Datum		attr;
 		char	   *value;
 		char	   *tmp;
 		bool		nq;
 
 		/* Ignore dropped columns in datatype */
-		if (tupdesc->attrs[i]->attisdropped)
+		if (att->attisdropped)
 			continue;
 
 		if (needComma)
@@ -519,7 +521,7 @@ record_recv(PG_FUNCTION_ARGS)
 	validcols = 0;
 	for (i = 0; i < ncolumns; i++)
 	{
-		if (!tupdesc->attrs[i]->attisdropped)
+		if (!TupleDescAttr(tupdesc, i)->attisdropped)
 			validcols++;
 	}
 	if (usercols != validcols)
@@ -531,8 +533,9 @@ record_recv(PG_FUNCTION_ARGS)
 	/* Process each column */
 	for (i = 0; i < ncolumns; i++)
 	{
+		Form_pg_attribute att = TupleDescAttr(tupdesc, i);
 		ColumnIOData *column_info = &my_extra->columns[i];
-		Oid			column_type = tupdesc->attrs[i]->atttypid;
+		Oid			column_type = att->atttypid;
 		Oid			coltypoid;
 		int			itemlen;
 		StringInfoData item_buf;
@@ -540,7 +543,7 @@ record_recv(PG_FUNCTION_ARGS)
 		char		csave;
 
 		/* Ignore dropped columns in datatype, but fill with nulls */
-		if (tupdesc->attrs[i]->attisdropped)
+		if (att->attisdropped)
 		{
 			values[i] = (Datum) 0;
 			nulls[i] = true;
@@ -605,7 +608,7 @@ record_recv(PG_FUNCTION_ARGS)
 		values[i] = ReceiveFunctionCall(&column_info->proc,
 										bufptr,
 										column_info->typioparam,
-										tupdesc->attrs[i]->atttypmod);
+										att->atttypmod);
 
 		if (bufptr)
 		{
@@ -712,20 +715,21 @@ record_send(PG_FUNCTION_ARGS)
 	validcols = 0;
 	for (i = 0; i < ncolumns; i++)
 	{
-		if (!tupdesc->attrs[i]->attisdropped)
+		if (!TupleDescAttr(tupdesc, i)->attisdropped)
 			validcols++;
 	}
 	pq_sendint(&buf, validcols, 4);
 
 	for (i = 0; i < ncolumns; i++)
 	{
+		Form_pg_attribute att = TupleDescAttr(tupdesc, i);
 		ColumnIOData *column_info = &my_extra->columns[i];
-		Oid			column_type = tupdesc->attrs[i]->atttypid;
+		Oid			column_type = att->atttypid;
 		Datum		attr;
 		bytea	   *outputbytes;
 
 		/* Ignore dropped columns in datatype */
-		if (tupdesc->attrs[i]->attisdropped)
+		if (att->attisdropped)
 			continue;
 
 		pq_sendint(&buf, column_type, sizeof(Oid));
@@ -873,18 +877,20 @@ record_cmp(FunctionCallInfo fcinfo)
 	i1 = i2 = j = 0;
 	while (i1 < ncolumns1 || i2 < ncolumns2)
 	{
+		Form_pg_attribute att1;
+		Form_pg_attribute att2;
 		TypeCacheEntry *typentry;
 		Oid			collation;
 
 		/*
 		 * Skip dropped columns
 		 */
-		if (i1 < ncolumns1 && tupdesc1->attrs[i1]->attisdropped)
+		if (i1 < ncolumns1 && TupleDescAttr(tupdesc1, i1)->attisdropped)
 		{
 			i1++;
 			continue;
 		}
-		if (i2 < ncolumns2 && tupdesc2->attrs[i2]->attisdropped)
+		if (i2 < ncolumns2 && TupleDescAttr(tupdesc2, i2)->attisdropped)
 		{
 			i2++;
 			continue;
@@ -892,24 +898,26 @@ record_cmp(FunctionCallInfo fcinfo)
 		if (i1 >= ncolumns1 || i2 >= ncolumns2)
 			break;				/* we'll deal with mismatch below loop */
 
+		att1 = TupleDescAttr(tupdesc1, i1);
+		att2 = TupleDescAttr(tupdesc2, i2);
+
 		/*
 		 * Have two matching columns, they must be same type
 		 */
-		if (tupdesc1->attrs[i1]->atttypid !=
-			tupdesc2->attrs[i2]->atttypid)
+		if (att1->atttypid != att2->atttypid)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 					 errmsg("cannot compare dissimilar column types %s and %s at record column %d",
-							format_type_be(tupdesc1->attrs[i1]->atttypid),
-							format_type_be(tupdesc2->attrs[i2]->atttypid),
+							format_type_be(att1->atttypid),
+							format_type_be(att2->atttypid),
 							j + 1)));
 
 		/*
 		 * If they're not same collation, we don't complain here, but the
 		 * comparison function might.
 		 */
-		collation = tupdesc1->attrs[i1]->attcollation;
-		if (collation != tupdesc2->attrs[i2]->attcollation)
+		collation = att1->attcollation;
+		if (collation != att2->attcollation)
 			collation = InvalidOid;
 
 		/*
@@ -917,9 +925,9 @@ record_cmp(FunctionCallInfo fcinfo)
 		 */
 		typentry = my_extra->columns[j].typentry;
 		if (typentry == NULL ||
-			typentry->type_id != tupdesc1->attrs[i1]->atttypid)
+			typentry->type_id != att1->atttypid)
 		{
-			typentry = lookup_type_cache(tupdesc1->attrs[i1]->atttypid,
+			typentry = lookup_type_cache(att1->atttypid,
 										 TYPECACHE_CMP_PROC_FINFO);
 			if (!OidIsValid(typentry->cmp_proc_finfo.fn_oid))
 				ereport(ERROR,
@@ -1111,6 +1119,8 @@ record_eq(PG_FUNCTION_ARGS)
 	i1 = i2 = j = 0;
 	while (i1 < ncolumns1 || i2 < ncolumns2)
 	{
+		Form_pg_attribute att1;
+		Form_pg_attribute att2;
 		TypeCacheEntry *typentry;
 		Oid			collation;
 		FunctionCallInfoData locfcinfo;
@@ -1119,12 +1129,12 @@ record_eq(PG_FUNCTION_ARGS)
 		/*
 		 * Skip dropped columns
 		 */
-		if (i1 < ncolumns1 && tupdesc1->attrs[i1]->attisdropped)
+		if (i1 < ncolumns1 && TupleDescAttr(tupdesc1, i1)->attisdropped)
 		{
 			i1++;
 			continue;
 		}
-		if (i2 < ncolumns2 && tupdesc2->attrs[i2]->attisdropped)
+		if (i2 < ncolumns2 && TupleDescAttr(tupdesc2, i2)->attisdropped)
 		{
 			i2++;
 			continue;
@@ -1132,24 +1142,26 @@ record_eq(PG_FUNCTION_ARGS)
 		if (i1 >= ncolumns1 || i2 >= ncolumns2)
 			break;				/* we'll deal with mismatch below loop */
 
+		att1 = TupleDescAttr(tupdesc1, i1);
+		att2 = TupleDescAttr(tupdesc2, i2);
+
 		/*
 		 * Have two matching columns, they must be same type
 		 */
-		if (tupdesc1->attrs[i1]->atttypid !=
-			tupdesc2->attrs[i2]->atttypid)
+		if (att1->atttypid != att2->atttypid)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 					 errmsg("cannot compare dissimilar column types %s and %s at record column %d",
-							format_type_be(tupdesc1->attrs[i1]->atttypid),
-							format_type_be(tupdesc2->attrs[i2]->atttypid),
+							format_type_be(att1->atttypid),
+							format_type_be(att2->atttypid),
 							j + 1)));
 
 		/*
 		 * If they're not same collation, we don't complain here, but the
 		 * equality function might.
 		 */
-		collation = tupdesc1->attrs[i1]->attcollation;
-		if (collation != tupdesc2->attrs[i2]->attcollation)
+		collation = att1->attcollation;
+		if (collation != att2->attcollation)
 			collation = InvalidOid;
 
 		/*
@@ -1157,9 +1169,9 @@ record_eq(PG_FUNCTION_ARGS)
 		 */
 		typentry = my_extra->columns[j].typentry;
 		if (typentry == NULL ||
-			typentry->type_id != tupdesc1->attrs[i1]->atttypid)
+			typentry->type_id != att1->atttypid)
 		{
-			typentry = lookup_type_cache(tupdesc1->attrs[i1]->atttypid,
+			typentry = lookup_type_cache(att1->atttypid,
 										 TYPECACHE_EQ_OPR_FINFO);
 			if (!OidIsValid(typentry->eq_opr_finfo.fn_oid))
 				ereport(ERROR,
@@ -1370,15 +1382,18 @@ record_image_cmp(FunctionCallInfo fcinfo)
 	i1 = i2 = j = 0;
 	while (i1 < ncolumns1 || i2 < ncolumns2)
 	{
+		Form_pg_attribute att1;
+		Form_pg_attribute att2;
+
 		/*
 		 * Skip dropped columns
 		 */
-		if (i1 < ncolumns1 && tupdesc1->attrs[i1]->attisdropped)
+		if (i1 < ncolumns1 && TupleDescAttr(tupdesc1, i1)->attisdropped)
 		{
 			i1++;
 			continue;
 		}
-		if (i2 < ncolumns2 && tupdesc2->attrs[i2]->attisdropped)
+		if (i2 < ncolumns2 && TupleDescAttr(tupdesc2, i2)->attisdropped)
 		{
 			i2++;
 			continue;
@@ -1386,24 +1401,25 @@ record_image_cmp(FunctionCallInfo fcinfo)
 		if (i1 >= ncolumns1 || i2 >= ncolumns2)
 			break;				/* we'll deal with mismatch below loop */
 
+		att1 = TupleDescAttr(tupdesc1, i1);
+		att2 = TupleDescAttr(tupdesc2, i2);
+
 		/*
 		 * Have two matching columns, they must be same type
 		 */
-		if (tupdesc1->attrs[i1]->atttypid !=
-			tupdesc2->attrs[i2]->atttypid)
+		if (att1->atttypid != att2->atttypid)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 					 errmsg("cannot compare dissimilar column types %s and %s at record column %d",
-							format_type_be(tupdesc1->attrs[i1]->atttypid),
-							format_type_be(tupdesc2->attrs[i2]->atttypid),
+							format_type_be(att1->atttypid),
+							format_type_be(att2->atttypid),
 							j + 1)));
 
 		/*
 		 * The same type should have the same length (or both should be
 		 * variable).
 		 */
-		Assert(tupdesc1->attrs[i1]->attlen ==
-			   tupdesc2->attrs[i2]->attlen);
+		Assert(att1->attlen == att2->attlen);
 
 		/*
 		 * We consider two NULLs equal; NULL > not-NULL.
@@ -1426,7 +1442,7 @@ record_image_cmp(FunctionCallInfo fcinfo)
 			}
 
 			/* Compare the pair of elements */
-			if (tupdesc1->attrs[i1]->attlen == -1)
+			if (att1->attlen == -1)
 			{
 				Size		len1,
 							len2;
@@ -1449,9 +1465,9 @@ record_image_cmp(FunctionCallInfo fcinfo)
 				if ((Pointer) arg2val != (Pointer) values2[i2])
 					pfree(arg2val);
 			}
-			else if (tupdesc1->attrs[i1]->attbyval)
+			else if (att1->attbyval)
 			{
-				switch (tupdesc1->attrs[i1]->attlen)
+				switch (att1->attlen)
 				{
 					case 1:
 						if (GET_1_BYTE(values1[i1]) !=
@@ -1495,7 +1511,7 @@ record_image_cmp(FunctionCallInfo fcinfo)
 			{
 				cmpresult = memcmp(DatumGetPointer(values1[i1]),
 								   DatumGetPointer(values2[i2]),
-								   tupdesc1->attrs[i1]->attlen);
+								   att1->attlen);
 			}
 
 			if (cmpresult < 0)
@@ -1647,15 +1663,18 @@ record_image_eq(PG_FUNCTION_ARGS)
 	i1 = i2 = j = 0;
 	while (i1 < ncolumns1 || i2 < ncolumns2)
 	{
+		Form_pg_attribute att1;
+		Form_pg_attribute att2;
+
 		/*
 		 * Skip dropped columns
 		 */
-		if (i1 < ncolumns1 && tupdesc1->attrs[i1]->attisdropped)
+		if (i1 < ncolumns1 && TupleDescAttr(tupdesc1, i1)->attisdropped)
 		{
 			i1++;
 			continue;
 		}
-		if (i2 < ncolumns2 && tupdesc2->attrs[i2]->attisdropped)
+		if (i2 < ncolumns2 && TupleDescAttr(tupdesc2, i2)->attisdropped)
 		{
 			i2++;
 			continue;
@@ -1663,16 +1682,18 @@ record_image_eq(PG_FUNCTION_ARGS)
 		if (i1 >= ncolumns1 || i2 >= ncolumns2)
 			break;				/* we'll deal with mismatch below loop */
 
+		att1 = TupleDescAttr(tupdesc1, i1);
+		att2 = TupleDescAttr(tupdesc2, i2);
+
 		/*
 		 * Have two matching columns, they must be same type
 		 */
-		if (tupdesc1->attrs[i1]->atttypid !=
-			tupdesc2->attrs[i2]->atttypid)
+		if (att1->atttypid != att2->atttypid)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 					 errmsg("cannot compare dissimilar column types %s and %s at record column %d",
-							format_type_be(tupdesc1->attrs[i1]->atttypid),
-							format_type_be(tupdesc2->attrs[i2]->atttypid),
+							format_type_be(att1->atttypid),
+							format_type_be(att2->atttypid),
 							j + 1)));
 
 		/*
@@ -1687,7 +1708,7 @@ record_image_eq(PG_FUNCTION_ARGS)
 			}
 
 			/* Compare the pair of elements */
-			if (tupdesc1->attrs[i1]->attlen == -1)
+			if (att1->attlen == -1)
 			{
 				Size		len1,
 							len2;
@@ -1716,9 +1737,9 @@ record_image_eq(PG_FUNCTION_ARGS)
 						pfree(arg2val);
 				}
 			}
-			else if (tupdesc1->attrs[i1]->attbyval)
+			else if (att1->attbyval)
 			{
-				switch (tupdesc1->attrs[i1]->attlen)
+				switch (att1->attlen)
 				{
 					case 1:
 						result = (GET_1_BYTE(values1[i1]) ==
@@ -1746,7 +1767,7 @@ record_image_eq(PG_FUNCTION_ARGS)
 			{
 				result = (memcmp(DatumGetPointer(values1[i1]),
 								 DatumGetPointer(values2[i2]),
-								 tupdesc1->attrs[i1]->attlen) == 0);
+								 att1->attlen) == 0);
 			}
 			if (!result)
 				break;

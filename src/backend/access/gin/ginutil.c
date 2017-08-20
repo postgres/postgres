@@ -96,6 +96,8 @@ initGinState(GinState *state, Relation index)
 
 	for (i = 0; i < origTupdesc->natts; i++)
 	{
+		Form_pg_attribute attr = TupleDescAttr(origTupdesc, i);
+
 		if (state->oneCol)
 			state->tupdesc[i] = state->origTupdesc;
 		else
@@ -105,11 +107,11 @@ initGinState(GinState *state, Relation index)
 			TupleDescInitEntry(state->tupdesc[i], (AttrNumber) 1, NULL,
 							   INT2OID, -1, 0);
 			TupleDescInitEntry(state->tupdesc[i], (AttrNumber) 2, NULL,
-							   origTupdesc->attrs[i]->atttypid,
-							   origTupdesc->attrs[i]->atttypmod,
-							   origTupdesc->attrs[i]->attndims);
+							   attr->atttypid,
+							   attr->atttypmod,
+							   attr->attndims);
 			TupleDescInitEntryCollation(state->tupdesc[i], (AttrNumber) 2,
-										origTupdesc->attrs[i]->attcollation);
+										attr->attcollation);
 		}
 
 		/*
@@ -126,13 +128,13 @@ initGinState(GinState *state, Relation index)
 		{
 			TypeCacheEntry *typentry;
 
-			typentry = lookup_type_cache(origTupdesc->attrs[i]->atttypid,
+			typentry = lookup_type_cache(attr->atttypid,
 										 TYPECACHE_CMP_PROC_FINFO);
 			if (!OidIsValid(typentry->cmp_proc_finfo.fn_oid))
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_FUNCTION),
 						 errmsg("could not identify a comparison function for type %s",
-								format_type_be(origTupdesc->attrs[i]->atttypid))));
+								format_type_be(attr->atttypid))));
 			fmgr_info_copy(&(state->compareFn[i]),
 						   &(typentry->cmp_proc_finfo),
 						   CurrentMemoryContext);

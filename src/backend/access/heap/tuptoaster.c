@@ -464,7 +464,6 @@ void
 toast_delete(Relation rel, HeapTuple oldtup, bool is_speculative)
 {
 	TupleDesc	tupleDesc;
-	Form_pg_attribute *att;
 	int			numAttrs;
 	int			i;
 	Datum		toast_values[MaxHeapAttributeNumber];
@@ -489,7 +488,6 @@ toast_delete(Relation rel, HeapTuple oldtup, bool is_speculative)
 	 * least one varlena column, by the way.)
 	 */
 	tupleDesc = rel->rd_att;
-	att = tupleDesc->attrs;
 	numAttrs = tupleDesc->natts;
 
 	Assert(numAttrs <= MaxHeapAttributeNumber);
@@ -501,7 +499,7 @@ toast_delete(Relation rel, HeapTuple oldtup, bool is_speculative)
 	 */
 	for (i = 0; i < numAttrs; i++)
 	{
-		if (att[i]->attlen == -1)
+		if (TupleDescAttr(tupleDesc, i)->attlen == -1)
 		{
 			Datum		value = toast_values[i];
 
@@ -538,7 +536,6 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 {
 	HeapTuple	result_tuple;
 	TupleDesc	tupleDesc;
-	Form_pg_attribute *att;
 	int			numAttrs;
 	int			i;
 
@@ -579,7 +576,6 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 	 * Get the tuple descriptor and break down the tuple(s) into fields.
 	 */
 	tupleDesc = rel->rd_att;
-	att = tupleDesc->attrs;
 	numAttrs = tupleDesc->natts;
 
 	Assert(numAttrs <= MaxHeapAttributeNumber);
@@ -606,6 +602,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 
 	for (i = 0; i < numAttrs; i++)
 	{
+		Form_pg_attribute att = TupleDescAttr(tupleDesc, i);
 		struct varlena *old_value;
 		struct varlena *new_value;
 
@@ -621,7 +618,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 			 * If the old value is stored on disk, check if it has changed so
 			 * we have to delete it later.
 			 */
-			if (att[i]->attlen == -1 && !toast_oldisnull[i] &&
+			if (att->attlen == -1 && !toast_oldisnull[i] &&
 				VARATT_IS_EXTERNAL_ONDISK(old_value))
 			{
 				if (toast_isnull[i] || !VARATT_IS_EXTERNAL_ONDISK(new_value) ||
@@ -668,12 +665,12 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 		/*
 		 * Now look at varlena attributes
 		 */
-		if (att[i]->attlen == -1)
+		if (att->attlen == -1)
 		{
 			/*
 			 * If the table's attribute says PLAIN always, force it so.
 			 */
-			if (att[i]->attstorage == 'p')
+			if (att->attstorage == 'p')
 				toast_action[i] = 'p';
 
 			/*
@@ -687,7 +684,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 			if (VARATT_IS_EXTERNAL(new_value))
 			{
 				toast_oldexternal[i] = new_value;
-				if (att[i]->attstorage == 'p')
+				if (att->attstorage == 'p')
 					new_value = heap_tuple_untoast_attr(new_value);
 				else
 					new_value = heap_tuple_fetch_attr(new_value);
@@ -749,13 +746,15 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 		 */
 		for (i = 0; i < numAttrs; i++)
 		{
+			Form_pg_attribute att = TupleDescAttr(tupleDesc, i);
+
 			if (toast_action[i] != ' ')
 				continue;
 			if (VARATT_IS_EXTERNAL(DatumGetPointer(toast_values[i])))
 				continue;		/* can't happen, toast_action would be 'p' */
 			if (VARATT_IS_COMPRESSED(DatumGetPointer(toast_values[i])))
 				continue;
-			if (att[i]->attstorage != 'x' && att[i]->attstorage != 'e')
+			if (att->attstorage != 'x' && att->attstorage != 'e')
 				continue;
 			if (toast_sizes[i] > biggest_size)
 			{
@@ -771,7 +770,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 		 * Attempt to compress it inline, if it has attstorage 'x'
 		 */
 		i = biggest_attno;
-		if (att[i]->attstorage == 'x')
+		if (TupleDescAttr(tupleDesc, i)->attstorage == 'x')
 		{
 			old_value = toast_values[i];
 			new_value = toast_compress_datum(old_value);
@@ -841,11 +840,13 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 		 */
 		for (i = 0; i < numAttrs; i++)
 		{
+			Form_pg_attribute att = TupleDescAttr(tupleDesc, i);
+
 			if (toast_action[i] == 'p')
 				continue;
 			if (VARATT_IS_EXTERNAL(DatumGetPointer(toast_values[i])))
 				continue;		/* can't happen, toast_action would be 'p' */
-			if (att[i]->attstorage != 'x' && att[i]->attstorage != 'e')
+			if (att->attstorage != 'x' && att->attstorage != 'e')
 				continue;
 			if (toast_sizes[i] > biggest_size)
 			{
@@ -896,7 +897,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 				continue;		/* can't happen, toast_action would be 'p' */
 			if (VARATT_IS_COMPRESSED(DatumGetPointer(toast_values[i])))
 				continue;
-			if (att[i]->attstorage != 'm')
+			if (TupleDescAttr(tupleDesc, i)->attstorage != 'm')
 				continue;
 			if (toast_sizes[i] > biggest_size)
 			{
@@ -959,7 +960,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 				continue;
 			if (VARATT_IS_EXTERNAL(DatumGetPointer(toast_values[i])))
 				continue;		/* can't happen, toast_action would be 'p' */
-			if (att[i]->attstorage != 'm')
+			if (TupleDescAttr(tupleDesc, i)->attstorage != 'm')
 				continue;
 			if (toast_sizes[i] > biggest_size)
 			{
@@ -1084,7 +1085,6 @@ HeapTuple
 toast_flatten_tuple(HeapTuple tup, TupleDesc tupleDesc)
 {
 	HeapTuple	new_tuple;
-	Form_pg_attribute *att = tupleDesc->attrs;
 	int			numAttrs = tupleDesc->natts;
 	int			i;
 	Datum		toast_values[MaxTupleAttributeNumber];
@@ -1104,7 +1104,7 @@ toast_flatten_tuple(HeapTuple tup, TupleDesc tupleDesc)
 		/*
 		 * Look at non-null varlena attributes
 		 */
-		if (!toast_isnull[i] && att[i]->attlen == -1)
+		if (!toast_isnull[i] && TupleDescAttr(tupleDesc, i)->attlen == -1)
 		{
 			struct varlena *new_value;
 
@@ -1193,7 +1193,6 @@ toast_flatten_tuple_to_datum(HeapTupleHeader tup,
 	int32		new_data_len;
 	int32		new_tuple_len;
 	HeapTupleData tmptup;
-	Form_pg_attribute *att = tupleDesc->attrs;
 	int			numAttrs = tupleDesc->natts;
 	int			i;
 	bool		has_nulls = false;
@@ -1222,7 +1221,7 @@ toast_flatten_tuple_to_datum(HeapTupleHeader tup,
 		 */
 		if (toast_isnull[i])
 			has_nulls = true;
-		else if (att[i]->attlen == -1)
+		else if (TupleDescAttr(tupleDesc, i)->attlen == -1)
 		{
 			struct varlena *new_value;
 
@@ -1307,7 +1306,6 @@ toast_build_flattened_tuple(TupleDesc tupleDesc,
 							bool *isnull)
 {
 	HeapTuple	new_tuple;
-	Form_pg_attribute *att = tupleDesc->attrs;
 	int			numAttrs = tupleDesc->natts;
 	int			num_to_free;
 	int			i;
@@ -1327,7 +1325,7 @@ toast_build_flattened_tuple(TupleDesc tupleDesc,
 		/*
 		 * Look at non-null varlena attributes
 		 */
-		if (!isnull[i] && att[i]->attlen == -1)
+		if (!isnull[i] && TupleDescAttr(tupleDesc, i)->attlen == -1)
 		{
 			struct varlena *new_value;
 

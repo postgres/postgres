@@ -1714,15 +1714,16 @@ composite_to_json(Datum composite, StringInfo result, bool use_line_feeds)
 		char	   *attname;
 		JsonTypeCategory tcategory;
 		Oid			outfuncoid;
+		Form_pg_attribute att = TupleDescAttr(tupdesc, i);
 
-		if (tupdesc->attrs[i]->attisdropped)
+		if (att->attisdropped)
 			continue;
 
 		if (needsep)
 			appendStringInfoString(result, sep);
 		needsep = true;
 
-		attname = NameStr(tupdesc->attrs[i]->attname);
+		attname = NameStr(att->attname);
 		escape_json(result, attname);
 		appendStringInfoChar(result, ':');
 
@@ -1734,8 +1735,7 @@ composite_to_json(Datum composite, StringInfo result, bool use_line_feeds)
 			outfuncoid = InvalidOid;
 		}
 		else
-			json_categorize_type(tupdesc->attrs[i]->atttypid,
-								 &tcategory, &outfuncoid);
+			json_categorize_type(att->atttypid, &tcategory, &outfuncoid);
 
 		datum_to_json(val, isnull, result, tcategory, outfuncoid, false);
 	}

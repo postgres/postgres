@@ -283,8 +283,8 @@ checkViewTupleDesc(TupleDesc newdesc, TupleDesc olddesc)
 
 	for (i = 0; i < olddesc->natts; i++)
 	{
-		Form_pg_attribute newattr = newdesc->attrs[i];
-		Form_pg_attribute oldattr = olddesc->attrs[i];
+		Form_pg_attribute newattr = TupleDescAttr(newdesc, i);
+		Form_pg_attribute oldattr = TupleDescAttr(olddesc, i);
 
 		/* XXX msg not right, but we don't support DROP COL on view anyway */
 		if (newattr->attisdropped != oldattr->attisdropped)

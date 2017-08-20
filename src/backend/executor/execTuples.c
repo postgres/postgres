@@ -997,7 +997,8 @@ ExecTypeSetColNames(TupleDesc typeInfo, List *namesList)
 		/* Guard against too-long names list */
 		if (colno >= typeInfo->natts)
 			break;
-		attr = typeInfo->attrs[colno++];
+		attr = TupleDescAttr(typeInfo, colno);
+		colno++;
 
 		/* Ignore empty aliases (these must be for dropped columns) */
 		if (cname[0] == '\0')
@@ -1090,13 +1091,15 @@ TupleDescGetAttInMetadata(TupleDesc tupdesc)
 
 	for (i = 0; i < natts; i++)
 	{
+		Form_pg_attribute att = TupleDescAttr(tupdesc, i);
+
 		/* Ignore dropped attributes */
-		if (!tupdesc->attrs[i]->attisdropped)
+		if (!att->attisdropped)
 		{
-			atttypeid = tupdesc->attrs[i]->atttypid;
+			atttypeid = att->atttypid;
 			getTypeInputInfo(atttypeid, &attinfuncid, &attioparams[i]);
 			fmgr_info(attinfuncid, &attinfuncinfo[i]);
-			atttypmods[i] = tupdesc->attrs[i]->atttypmod;
+			atttypmods[i] = att->atttypmod;
 		}
 	}
 	attinmeta->attinfuncs = attinfuncinfo;
@@ -1127,7 +1130,7 @@ BuildTupleFromCStrings(AttInMetadata *attinmeta, char **values)
 	/* Call the "in" function for each non-dropped attribute */
 	for (i = 0; i < natts; i++)
 	{
-		if (!tupdesc->attrs[i]->attisdropped)
+		if (!TupleDescAttr(tupdesc, i)->attisdropped)
 		{
 			/* Non-dropped attributes */
 			dvalues[i] = InputFunctionCall(&attinmeta->attinfuncs[i],

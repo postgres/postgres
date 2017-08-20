@@ -3099,13 +3099,15 @@ map_sql_table_to_xmlschema(TupleDesc tupdesc, Oid relid, bool nulls,
 
 	for (i = 0; i < tupdesc->natts; i++)
 	{
-		if (tupdesc->attrs[i]->attisdropped)
+		Form_pg_attribute att = TupleDescAttr(tupdesc, i);
+
+		if (att->attisdropped)
 			continue;
 		appendStringInfo(&result,
 						 "    <xsd:element name=\"%s\" type=\"%s\"%s></xsd:element>\n",
-						 map_sql_identifier_to_xml_name(NameStr(tupdesc->attrs[i]->attname),
+						 map_sql_identifier_to_xml_name(NameStr(att->attname),
 														true, false),
-						 map_sql_type_to_xml_name(tupdesc->attrs[i]->atttypid, -1),
+						 map_sql_type_to_xml_name(att->atttypid, -1),
 						 nulls ? " nillable=\"true\"" : " minOccurs=\"0\"");
 	}
 
@@ -3392,10 +3394,11 @@ map_sql_typecoll_to_xmlschema_types(List *tupdesc_list)
 
 		for (i = 0; i < tupdesc->natts; i++)
 		{
-			if (tupdesc->attrs[i]->attisdropped)
+			Form_pg_attribute att = TupleDescAttr(tupdesc, i);
+
+			if (att->attisdropped)
 				continue;
-			uniquetypes = list_append_unique_oid(uniquetypes,
-												 tupdesc->attrs[i]->atttypid);
+			uniquetypes = list_append_unique_oid(uniquetypes, att->atttypid);
 		}
 	}
 

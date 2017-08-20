@@ -175,7 +175,9 @@ CreateTupleDescCopyConstr(TupleDesc tupdesc)
 
 	for (i = 0; i < desc->natts; i++)
 	{
-		memcpy(desc->attrs[i], tupdesc->attrs[i], ATTRIBUTE_FIXED_PART_SIZE);
+		memcpy(TupleDescAttr(desc, i),
+			   TupleDescAttr(tupdesc, i),
+			   ATTRIBUTE_FIXED_PART_SIZE);
 	}
 
 	if (constr)
@@ -230,6 +232,9 @@ void
 TupleDescCopyEntry(TupleDesc dst, AttrNumber dstAttno,
 				   TupleDesc src, AttrNumber srcAttno)
 {
+	Form_pg_attribute dstAtt = TupleDescAttr(dst, dstAttno - 1);
+	Form_pg_attribute srcAtt = TupleDescAttr(src, srcAttno - 1);
+
 	/*
 	 * sanity checks
 	 */
@@ -240,8 +245,7 @@ TupleDescCopyEntry(TupleDesc dst, AttrNumber dstAttno,
 	AssertArg(dstAttno >= 1);
 	AssertArg(dstAttno <= dst->natts);
 
-	memcpy(dst->attrs[dstAttno - 1], src->attrs[srcAttno - 1],
-		   ATTRIBUTE_FIXED_PART_SIZE);
+	memcpy(dstAtt, srcAtt, ATTRIBUTE_FIXED_PART_SIZE);
 
 	/*
 	 * Aside from updating the attno, we'd better reset attcacheoff.
@@ -252,13 +256,13 @@ TupleDescCopyEntry(TupleDesc dst, AttrNumber dstAttno,
 	 * by other uses of this function or TupleDescInitEntry.  So we cheat a
 	 * bit to avoid a useless O(N^2) penalty.
 	 */
-	dst->attrs[dstAttno - 1]->attnum = dstAttno;
-	dst->attrs[dstAttno - 1]->attcacheoff = -1;
+	dstAtt->attnum = dstAttno;
+	dstAtt->attcacheoff = -1;
 
 	/* since we're not copying constraints or defaults, clear these */
-	dst->attrs[dstAttno - 1]->attnotnull = false;
-	dst->attrs[dstAttno - 1]->atthasdef = false;
-	dst->attrs[dstAttno - 1]->attidentity = '\0';
+	dstAtt->attnotnull = false;
+	dstAtt->atthasdef = false;
+	dstAtt->attidentity = '\0';
 }
 
 /*
@@ -366,8 +370,8 @@ equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)
 
 	for (i = 0; i < tupdesc1->natts; i++)
 	{
-		Form_pg_attribute attr1 = tupdesc1->attrs[i];
-		Form_pg_attribute attr2 = tupdesc2->attrs[i];
+		Form_pg_attribute attr1 = TupleDescAttr(tupdesc1, i);
+		Form_pg_attribute attr2 = TupleDescAttr(tupdesc2, i);
 
 		/*
 		 * We do not need to check every single field here: we can disregard
@@ -515,7 +519,7 @@ TupleDescInitEntry(TupleDesc desc,
 	/*
 	 * initialize the attribute fields
 	 */
-	att = desc->attrs[attributeNumber - 1];
+	att = TupleDescAttr(desc, attributeNumber - 1);
 
 	att->attrelid = 0;			/* dummy value */
 
@@ -580,7 +584,7 @@ TupleDescInitBuiltinEntry(TupleDesc desc,
 	AssertArg(attributeNumber <= desc->natts);
 
 	/* initialize the attribute fields */
-	att = desc->attrs[attributeNumber - 1];
+	att = TupleDescAttr(desc, attributeNumber - 1);
 	att->attrelid = 0;			/* dummy value */
 
 	/* unlike TupleDescInitEntry, we require an attribute name */
@@ -664,7 +668,7 @@ TupleDescInitEntryCollation(TupleDesc desc,
 	AssertArg(attributeNumber >= 1);
 	AssertArg(attributeNumber <= desc->natts);
 
-	desc->attrs[attributeNumber - 1]->attcollation = collationid;
+	TupleDescAttr(desc, attributeNumber - 1)->attcollation = collationid;
 }
 
 
@@ -704,6 +708,7 @@ BuildDescForRelation(List *schema)
 	{
 		ColumnDef  *entry = lfirst(l);
 		AclResult	aclresult;
+		Form_pg_attribute att;
 
 		/*
 		 * for each entry in the list, get the name and type information from
@@ -730,17 +735,18 @@ BuildDescForRelation(List *schema)
 
 		TupleDescInitEntry(desc, attnum, attname,
 						   atttypid, atttypmod, attdim);
+		att = TupleDescAttr(desc, attnum - 1);
 
 		/* Override TupleDescInitEntry's settings as requested */
 		TupleDescInitEntryCollation(desc, attnum, attcollation);
 		if (entry->storage)
-			desc->attrs[attnum - 1]->attstorage = entry->storage;
+			att->attstorage = entry->storage;
 
 		/* Fill in additional stuff not handled by TupleDescInitEntry */
-		desc->attrs[attnum - 1]->attnotnull = entry->is_not_null;
+		att->attnotnull = entry->is_not_null;
 		has_not_null |= entry->is_not_null;
-		desc->attrs[attnum - 1]->attislocal = entry->is_local;
-		desc->attrs[attnum - 1]->attinhcount = entry->inhcount;
+		att->attislocal = entry->is_local;
+		att->attinhcount = entry->inhcount;
 	}
 
 	if (has_not_null)

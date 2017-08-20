@@ -770,9 +770,9 @@ make_tuple_indirect(PG_FUNCTION_ARGS)
 		struct varatt_indirect redirect_pointer;
 
 		/* only work on existing, not-null varlenas */
-		if (tupdesc->attrs[i]->attisdropped ||
+		if (TupleDescAttr(tupdesc, i)->attisdropped ||
 			nulls[i] ||
-			tupdesc->attrs[i]->attlen != -1)
+			TupleDescAttr(tupdesc, i)->attlen != -1)
 			continue;
 
 		attr = (struct varlena *) DatumGetPointer(values[i]);

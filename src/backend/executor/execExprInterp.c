@@ -1553,7 +1553,7 @@ CheckVarSlotCompatibility(TupleTableSlot *slot, int attnum, Oid vartype)
 			elog(ERROR, "attribute number %d exceeds number of columns %d",
 				 attnum, slot_tupdesc->natts);
 
-		attr = slot_tupdesc->attrs[attnum - 1];
+		attr = TupleDescAttr(slot_tupdesc, attnum - 1);
 
 		if (attr->attisdropped)
 			ereport(ERROR,
@@ -2081,7 +2081,7 @@ ExecEvalRowNullInt(ExprState *state, ExprEvalStep *op,
 	for (att = 1; att <= tupDesc->natts; att++)
 	{
 		/* ignore dropped columns */
-		if (tupDesc->attrs[att - 1]->attisdropped)
+		if (TupleDescAttr(tupDesc, att - 1)->attisdropped)
 			continue;
 		if (heap_attisnull(&tmptup, att))
 		{
@@ -2494,7 +2494,7 @@ ExecEvalFieldSelect(ExprState *state, ExprEvalStep *op, ExprContext *econtext)
 	if (fieldnum > tupDesc->natts)	/* should never happen */
 		elog(ERROR, "attribute number %d exceeds number of columns %d",
 			 fieldnum, tupDesc->natts);
-	attr = tupDesc->attrs[fieldnum - 1];
+	attr = TupleDescAttr(tupDesc, fieldnum - 1);
 
 	/* Check for dropped column, and force a NULL result if so */
 	if (attr->attisdropped)
@@ -3441,8 +3441,8 @@ ExecEvalWholeRowVar(ExprState *state, ExprEvalStep *op, ExprContext *econtext)
 
 			for (i = 0; i < var_tupdesc->natts; i++)
 			{
-				Form_pg_attribute vattr = var_tupdesc->attrs[i];
-				Form_pg_attribute sattr = slot_tupdesc->attrs[i];
+				Form_pg_attribute vattr = TupleDescAttr(var_tupdesc, i);
+				Form_pg_attribute sattr = TupleDescAttr(slot_tupdesc, i);
 
 				if (vattr->atttypid == sattr->atttypid)
 					continue;	/* no worries */
@@ -3540,8 +3540,8 @@ ExecEvalWholeRowVar(ExprState *state, ExprEvalStep *op, ExprContext *econtext)
 
 		for (i = 0; i < var_tupdesc->natts; i++)
 		{
-			Form_pg_attribute vattr = var_tupdesc->attrs[i];
-			Form_pg_attribute sattr = tupleDesc->attrs[i];
+			Form_pg_attribute vattr = TupleDescAttr(var_tupdesc, i);
+			Form_pg_attribute sattr = TupleDescAttr(tupleDesc, i);
 
 			if (!vattr->attisdropped)
 				continue;		/* already checked non-dropped cols */

@@ -80,6 +80,8 @@ typedef struct tupleDesc
 	int			tdrefcount;		/* reference count, or -1 if not counting */
 }		   *TupleDesc;
 
+/* Accessor for the i'th attribute of tupdesc. */
+#define TupleDescAttr(tupdesc, i) ((tupdesc)->attrs[(i)])
 
 extern TupleDesc CreateTemplateTupleDesc(int natts, bool hasoid);
 

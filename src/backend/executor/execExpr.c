@@ -347,7 +347,7 @@ ExecBuildProjectionInfo(List *targetList,
 				isSafeVar = true;	/* can't check, just assume OK */
 			else if (attnum <= inputDesc->natts)
 			{
-				Form_pg_attribute attr = inputDesc->attrs[attnum - 1];
+				Form_pg_attribute attr = TupleDescAttr(inputDesc, attnum - 1);
 
 				/*
 				 * If user attribute is dropped or has a type mismatch, don't
@@ -1492,7 +1492,6 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
 				RowExpr    *rowexpr = (RowExpr *) node;
 				int			nelems = list_length(rowexpr->args);
 				TupleDesc	tupdesc;
-				Form_pg_attribute *attrs;
 				int			i;
 				ListCell   *l;
 
@@ -1539,13 +1538,13 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
 				memset(scratch.d.row.elemnulls, true, sizeof(bool) * nelems);
 
 				/* Set up evaluation, skipping any deleted columns */
-				attrs = tupdesc->attrs;
 				i = 0;
 				foreach(l, rowexpr->args)
 				{
+					Form_pg_attribute att = TupleDescAttr(tupdesc, i);
 					Expr	   *e = (Expr *) lfirst(l);
 
-					if (!attrs[i]->attisdropped)
+					if (!att->attisdropped)
 					{
 						/*
 						 * Guard against ALTER COLUMN TYPE on rowtype since
@@ -1553,12 +1552,12 @@ ExecInitExprRec(Expr *node, PlanState *parent, ExprState *state,
 						 * typmod too?	Not sure we can be sure it'll be the
 						 * same.
 						 */
-						if (exprType((Node *) e) != attrs[i]->atttypid)
+						if (exprType((Node *) e) != att->atttypid)
 							ereport(ERROR,
 									(errcode(ERRCODE_DATATYPE_MISMATCH),
 									 errmsg("ROW() column has type %s instead of type %s",
 											format_type_be(exprType((Node *) e)),
-											format_type_be(attrs[i]->atttypid))));
+											format_type_be(att->atttypid))));
 					}
 					else
 					{

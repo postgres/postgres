@@ -2800,7 +2800,7 @@ ReorderBufferToastReplace(ReorderBuffer *rb, ReorderBufferTXN *txn,
 
 	for (natt = 0; natt < desc->natts; natt++)
 	{
-		Form_pg_attribute attr = desc->attrs[natt];
+		Form_pg_attribute attr = TupleDescAttr(desc, natt);
 		ReorderBufferToastEnt *ent;
 		struct varlena *varlena;
 

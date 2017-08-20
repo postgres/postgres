@@ -1125,13 +1125,15 @@ hypothetical_check_argtypes(FunctionCallInfo fcinfo, int nargs,
 	/* check that we have an int4 flag column */
 	if (!tupdesc ||
 		(nargs + 1) != tupdesc->natts ||
-		tupdesc->attrs[nargs]->atttypid != INT4OID)
+		TupleDescAttr(tupdesc, nargs)->atttypid != INT4OID)
 		elog(ERROR, "type mismatch in hypothetical-set function");
 
 	/* check that direct args match in type with aggregated args */
 	for (i = 0; i < nargs; i++)
 	{
-		if (get_fn_expr_argtype(fcinfo->flinfo, i + 1) != tupdesc->attrs[i]->atttypid)
+		Form_pg_attribute attr = TupleDescAttr(tupdesc, i);
+
+		if (get_fn_expr_argtype(fcinfo->flinfo, i + 1) != attr->atttypid)
 			elog(ERROR, "type mismatch in hypothetical-set function");
 	}
 }

@@ -242,7 +242,7 @@ CheckIndexCompatible(Oid oldId,
 	for (i = 0; i < old_natts; i++)
 	{
 		if (IsPolymorphicType(get_opclass_input_type(classObjectId[i])) &&
-			irel->rd_att->attrs[i]->atttypid != typeObjectId[i])
+			TupleDescAttr(irel->rd_att, i)->atttypid != typeObjectId[i])
 		{
 			ret = false;
 			break;
@@ -270,7 +270,7 @@ CheckIndexCompatible(Oid oldId,
 
 				op_input_types(indexInfo->ii_ExclusionOps[i], &left, &right);
 				if ((IsPolymorphicType(left) || IsPolymorphicType(right)) &&
-					irel->rd_att->attrs[i]->atttypid != typeObjectId[i])
+					TupleDescAttr(irel->rd_att, i)->atttypid != typeObjectId[i])
 				{
 					ret = false;
 					break;

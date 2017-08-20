@@ -1834,7 +1834,7 @@ ParseComplexProjection(ParseState *pstate, char *funcname, Node *first_arg,
 
 	for (i = 0; i < tupdesc->natts; i++)
 	{
-		Form_pg_attribute att = tupdesc->attrs[i];
+		Form_pg_attribute att = TupleDescAttr(tupdesc, i);
 
 		if (strcmp(funcname, NameStr(att->attname)) == 0 &&
 			!att->attisdropped)

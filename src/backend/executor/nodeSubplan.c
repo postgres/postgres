@@ -360,7 +360,7 @@ ExecScanSubPlan(SubPlanState *node,
 
 			found = true;
 			/* stash away current value */
-			Assert(subplan->firstColType == tdesc->attrs[0]->atttypid);
+			Assert(subplan->firstColType == TupleDescAttr(tdesc, 0)->atttypid);
 			dvalue = slot_getattr(slot, 1, &disnull);
 			astate = accumArrayResultAny(astate, dvalue, disnull,
 										 subplan->firstColType, oldcontext);
@@ -992,7 +992,7 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
 
 			found = true;
 			/* stash away current value */
-			Assert(subplan->firstColType == tdesc->attrs[0]->atttypid);
+			Assert(subplan->firstColType == TupleDescAttr(tdesc, 0)->atttypid);
 			dvalue = slot_getattr(slot, 1, &disnull);
 			astate = accumArrayResultAny(astate, dvalue, disnull,
 										 subplan->firstColType, oldcontext);

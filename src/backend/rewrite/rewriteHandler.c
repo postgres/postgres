@@ -751,7 +751,7 @@ rewriteTargetListIU(List *targetList,
 			attrno = old_tle->resno;
 			if (attrno < 1 || attrno > numattrs)
 				elog(ERROR, "bogus resno %d in targetlist", attrno);
-			att_tup = target_relation->rd_att->attrs[attrno - 1];
+			att_tup = TupleDescAttr(target_relation->rd_att, attrno - 1);
 
 			/* put attrno into attrno_list even if it's dropped */
 			if (attrno_list)
@@ -794,7 +794,7 @@ rewriteTargetListIU(List *targetList,
 		TargetEntry *new_tle = new_tles[attrno - 1];
 		bool		apply_default;
 
-		att_tup = target_relation->rd_att->attrs[attrno - 1];
+		att_tup = TupleDescAttr(target_relation->rd_att, attrno - 1);
 
 		/* We can (and must) ignore deleted attributes */
 		if (att_tup->attisdropped)
@@ -1112,7 +1112,7 @@ Node *
 build_column_default(Relation rel, int attrno)
 {
 	TupleDesc	rd_att = rel->rd_att;
-	Form_pg_attribute att_tup = rd_att->attrs[attrno - 1];
+	Form_pg_attribute att_tup = TupleDescAttr(rd_att, attrno - 1);
 	Oid			atttype = att_tup->atttypid;
 	int32		atttypmod = att_tup->atttypmod;
 	Node	   *expr = NULL;
@@ -1247,7 +1247,7 @@ rewriteValuesRTE(RangeTblEntry *rte, Relation target_relation, List *attrnos)
 				Form_pg_attribute att_tup;
 				Node	   *new_expr;
 
-				att_tup = target_relation->rd_att->attrs[attrno - 1];
+				att_tup = TupleDescAttr(target_relation->rd_att, attrno - 1);
 
 				if (!att_tup->attisdropped)
 					new_expr = build_column_default(target_relation, attrno);

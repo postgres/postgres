@@ -609,7 +609,7 @@ boot_openrel(char *relname)
 		if (attrtypes[i] == NULL)
 			attrtypes[i] = AllocateAttribute();
 		memmove((char *) attrtypes[i],
-				(char *) boot_reldesc->rd_att->attrs[i],
+				(char *) TupleDescAttr(boot_reldesc->rd_att, i),
 				ATTRIBUTE_FIXED_PART_SIZE);
 
 		{
@@ -816,7 +816,7 @@ InsertOneValue(char *value, int i)
 
 	elog(DEBUG4, "inserting column %d value \"%s\"", i, value);
 
-	typoid = boot_reldesc->rd_att->attrs[i]->atttypid;
+	typoid = TupleDescAttr(boot_reldesc->rd_att, i)->atttypid;
 
 	boot_get_type_io_data(typoid,
 						  &typlen, &typbyval, &typalign,
@@ -843,10 +843,10 @@ InsertOneNull(int i)
 {
 	elog(DEBUG4, "inserting column %d NULL", i);
 	Assert(i >= 0 && i < MAXATTR);
-	if (boot_reldesc->rd_att->attrs[i]->attnotnull)
+	if (TupleDescAttr(boot_reldesc->rd_att, i)->attnotnull)
 		elog(ERROR,
 			 "NULL value specified for not-null column \"%s\" of relation \"%s\"",
-			 NameStr(boot_reldesc->rd_att->attrs[i]->attname),
+			 NameStr(TupleDescAttr(boot_reldesc->rd_att, i)->attname),
 			 RelationGetRelationName(boot_reldesc));
 	values[i] = PointerGetDatum(NULL);
 	Nulls[i] = true;

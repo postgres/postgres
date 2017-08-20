@@ -103,11 +103,11 @@ typedef IndexAttributeBitMapData * IndexAttributeBitMap;
 	*(isnull) = false, \
 	!IndexTupleHasNulls(tup) ? \
 	( \
-		(tupleDesc)->attrs[(attnum)-1]->attcacheoff >= 0 ? \
+		TupleDescAttr((tupleDesc), (attnum)-1)->attcacheoff >= 0 ? \
 		( \
-			fetchatt((tupleDesc)->attrs[(attnum)-1], \
+			fetchatt(TupleDescAttr((tupleDesc), (attnum)-1), \
 			(char *) (tup) + IndexInfoFindDataOffset((tup)->t_info) \
-			+ (tupleDesc)->attrs[(attnum)-1]->attcacheoff) \
+			+ TupleDescAttr((tupleDesc), (attnum)-1)->attcacheoff) \
 		) \
 		: \
 			nocache_index_getattr((tup), (attnum), (tupleDesc)) \

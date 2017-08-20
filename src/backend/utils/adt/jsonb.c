@@ -1075,11 +1075,12 @@ composite_to_jsonb(Datum composite, JsonbInState *result)
 		JsonbTypeCategory tcategory;
 		Oid			outfuncoid;
 		JsonbValue	v;
+		Form_pg_attribute att = TupleDescAttr(tupdesc, i);
 
-		if (tupdesc->attrs[i]->attisdropped)
+		if (att->attisdropped)
 			continue;
 
-		attname = NameStr(tupdesc->attrs[i]->attname);
+		attname = NameStr(att->attname);
 
 		v.type = jbvString;
 		/* don't need checkStringLen here - can't exceed maximum name length */
@@ -1096,8 +1097,7 @@ composite_to_jsonb(Datum composite, JsonbInState *result)
 			outfuncoid = InvalidOid;
 		}
 		else
-			jsonb_categorize_type(tupdesc->attrs[i]->atttypid,
-								  &tcategory, &outfuncoid);
+			jsonb_categorize_type(att->atttypid, &tcategory, &outfuncoid);
 
 		datum_to_jsonb(val, isnull, result, tcategory, outfuncoid, false);
 	}

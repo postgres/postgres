@@ -546,7 +546,7 @@ RelationBuildTupleDesc(Relation relation)
 			elog(ERROR, "invalid attribute number %d for %s",
 				 attp->attnum, RelationGetRelationName(relation));
 
-		memcpy(relation->rd_att->attrs[attp->attnum - 1],
+		memcpy(TupleDescAttr(relation->rd_att, attp->attnum - 1),
 			   attp,
 			   ATTRIBUTE_FIXED_PART_SIZE);
 
@@ -590,7 +590,7 @@ RelationBuildTupleDesc(Relation relation)
 		int			i;
 
 		for (i = 0; i < relation->rd_rel->relnatts; i++)
-			Assert(relation->rd_att->attrs[i]->attcacheoff == -1);
+			Assert(TupleDescAttr(relation->rd_att, i)->attcacheoff == -1);
 	}
 #endif
 
@@ -600,7 +600,7 @@ RelationBuildTupleDesc(Relation relation)
 	 * for attnum=1 that used to exist in fastgetattr() and index_getattr().
 	 */
 	if (relation->rd_rel->relnatts > 0)
-		relation->rd_att->attrs[0]->attcacheoff = 0;
+		TupleDescAttr(relation->rd_att, 0)->attcacheoff = 0;
 
 	/*
 	 * Set up constraint/default info
@@ -958,9 +958,11 @@ RelationBuildPartitionKey(Relation relation)
 		/* Collect type information */
 		if (attno != 0)
 		{
-			key->parttypid[i] = relation->rd_att->attrs[attno - 1]->atttypid;
-			key->parttypmod[i] = relation->rd_att->attrs[attno - 1]->atttypmod;
-			key->parttypcoll[i] = relation->rd_att->attrs[attno - 1]->attcollation;
+			Form_pg_attribute att = TupleDescAttr(relation->rd_att, attno - 1);
+
+			key->parttypid[i] = att->atttypid;
+			key->parttypmod[i] = att->atttypmod;
+			key->parttypcoll[i] = att->attcollation;
 		}
 		else
 		{
@@ -1977,16 +1979,16 @@ formrdesc(const char *relationName, Oid relationReltype,
 	has_not_null = false;
 	for (i = 0; i < natts; i++)
 	{
-		memcpy(relation->rd_att->attrs[i],
+		memcpy(TupleDescAttr(relation->rd_att, i),
 			   &attrs[i],
 			   ATTRIBUTE_FIXED_PART_SIZE);
 		has_not_null |= attrs[i].attnotnull;
 		/* make sure attcacheoff is valid */
-		relation->rd_att->attrs[i]->attcacheoff = -1;
+		TupleDescAttr(relation->rd_att, i)->attcacheoff = -1;
 	}
 
 	/* initialize first attribute's attcacheoff, cf RelationBuildTupleDesc */
-	relation->rd_att->attrs[0]->attcacheoff = 0;
+	TupleDescAttr(relation->rd_att, 0)->attcacheoff = 0;
 
 	/* mark not-null status */
 	if (has_not_null)
@@ -2000,7 +2002,7 @@ formrdesc(const char *relationName, Oid relationReltype,
 	/*
 	 * initialize relation id from info in att array (my, this is ugly)
 	 */
-	RelationGetRelid(relation) = relation->rd_att->attrs[0]->attrelid;
+	RelationGetRelid(relation) = TupleDescAttr(relation->rd_att, 0)->attrelid;
 
 	/*
 	 * All relations made with formrdesc are mapped.  This is necessarily so
@@ -3274,9 +3276,12 @@ RelationBuildLocalRelation(const char *relname,
 	has_not_null = false;
 	for (i = 0; i < natts; i++)
 	{
-		rel->rd_att->attrs[i]->attidentity = tupDesc->attrs[i]->attidentity;
-		rel->rd_att->attrs[i]->attnotnull = tupDesc->attrs[i]->attnotnull;
-		has_not_null |= tupDesc->attrs[i]->attnotnull;
+		Form_pg_attribute satt = TupleDescAttr(tupDesc, i);
+		Form_pg_attribute datt = TupleDescAttr(rel->rd_att, i);
+
+		datt->attidentity = satt->attidentity;
+		datt->attnotnull = satt->attnotnull;
+		has_not_null |= satt->attnotnull;
 	}
 
 	if (has_not_null)
@@ -3346,7 +3351,7 @@ RelationBuildLocalRelation(const char *relname,
 	RelationGetRelid(rel) = relid;
 
 	for (i = 0; i < natts; i++)
-		rel->rd_att->attrs[i]->attrelid = relid;
+		TupleDescAttr(rel->rd_att, i)->attrelid = relid;
 
 	rel->rd_rel->reltablespace = reltablespace;
 
@@ -3971,13 +3976,13 @@ BuildHardcodedDescriptor(int natts, const FormData_pg_attribute *attrs,
 
 	for (i = 0; i < natts; i++)
 	{
-		memcpy(result->attrs[i], &attrs[i], ATTRIBUTE_FIXED_PART_SIZE);
+		memcpy(TupleDescAttr(result, i), &attrs[i], ATTRIBUTE_FIXED_PART_SIZE);
 		/* make sure attcacheoff is valid */
-		result->attrs[i]->attcacheoff = -1;
+		TupleDescAttr(result, i)->attcacheoff = -1;
 	}
 
 	/* initialize first attribute's attcacheoff, cf RelationBuildTupleDesc */
-	result->attrs[0]->attcacheoff = 0;
+	TupleDescAttr(result, 0)->attcacheoff = 0;
 
 	/* Note: we don't bother to set up a TupleConstr entry */
 
@@ -4044,6 +4049,7 @@ AttrDefaultFetch(Relation relation)
 	while (HeapTupleIsValid(htup = systable_getnext(adscan)))
 	{
 		Form_pg_attrdef adform = (Form_pg_attrdef) GETSTRUCT(htup);
+		Form_pg_attribute attr = TupleDescAttr(relation->rd_att, adform->adnum - 1);
 
 		for (i = 0; i < ndef; i++)
 		{
@@ -4051,7 +4057,7 @@ AttrDefaultFetch(Relation relation)
 				continue;
 			if (attrdef[i].adbin != NULL)
 				elog(WARNING, "multiple attrdef records found for attr %s of rel %s",
-					 NameStr(relation->rd_att->attrs[adform->adnum - 1]->attname),
+					 NameStr(attr->attname),
 					 RelationGetRelationName(relation));
 			else
 				found++;
@@ -4061,7 +4067,7 @@ AttrDefaultFetch(Relation relation)
 							  adrel->rd_att, &isnull);
 			if (isnull)
 				elog(WARNING, "null adbin for attr %s of rel %s",
-					 NameStr(relation->rd_att->attrs[adform->adnum - 1]->attname),
+					 NameStr(attr->attname),
 					 RelationGetRelationName(relation));
 			else
 			{
@@ -5270,7 +5276,7 @@ errtablecol(Relation rel, int attnum)
 
 	/* Use reldesc if it's a user attribute, else consult the catalogs */
 	if (attnum > 0 && attnum <= reldesc->natts)
-		colname = NameStr(reldesc->attrs[attnum - 1]->attname);
+		colname = NameStr(TupleDescAttr(reldesc, attnum - 1)->attname);
 	else
 		colname = get_relid_attribute_name(RelationGetRelid(rel), attnum);
 
@@ -5460,14 +5466,16 @@ load_relcache_init_file(bool shared)
 		has_not_null = false;
 		for (i = 0; i < relform->relnatts; i++)
 		{
+			Form_pg_attribute attr = TupleDescAttr(rel->rd_att, i);
+
 			if (fread(&len, 1, sizeof(len), fp) != sizeof(len))
 				goto read_failed;
 			if (len != ATTRIBUTE_FIXED_PART_SIZE)
 				goto read_failed;
-			if (fread(rel->rd_att->attrs[i], 1, len, fp) != len)
+			if (fread(attr, 1, len, fp) != len)
 				goto read_failed;
 
-			has_not_null |= rel->rd_att->attrs[i]->attnotnull;
+			has_not_null |= attr->attnotnull;
 		}
 
 		/* next read the access method specific field */
@@ -5848,7 +5856,8 @@ write_relcache_init_file(bool shared)
 		/* next, do all the attribute tuple form data entries */
 		for (i = 0; i < relform->relnatts; i++)
 		{
-			write_item(rel->rd_att->attrs[i], ATTRIBUTE_FIXED_PART_SIZE, fp);
+			write_item(TupleDescAttr(rel->rd_att, i),
+					   ATTRIBUTE_FIXED_PART_SIZE, fp);
 		}
 
 		/* next, do the access method specific field */

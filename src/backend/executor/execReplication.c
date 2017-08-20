@@ -247,7 +247,7 @@ tuple_equals_slot(TupleDesc desc, HeapTuple tup, TupleTableSlot *slot)
 		if (isnull[attrnum])
 			continue;
 
-		att = desc->attrs[attrnum];
+		att = TupleDescAttr(desc, attrnum);
 
 		typentry = lookup_type_cache(att->atttypid, TYPECACHE_EQ_OPR_FINFO);
 		if (!OidIsValid(typentry->eq_opr_finfo.fn_oid))

@@ -1072,7 +1072,7 @@ get_rel_data_width(Relation rel, int32 *attr_widths)
 
 	for (i = 1; i <= RelationGetNumberOfAttributes(rel); i++)
 	{
-		Form_pg_attribute att = rel->rd_att->attrs[i - 1];
+		Form_pg_attribute att = TupleDescAttr(rel->rd_att, i - 1);
 		int32		item_width;
 
 		if (att->attisdropped)
@@ -1208,7 +1208,7 @@ get_relation_constraints(PlannerInfo *root,
 
 			for (i = 1; i <= natts; i++)
 			{
-				Form_pg_attribute att = relation->rd_att->attrs[i - 1];
+				Form_pg_attribute att = TupleDescAttr(relation->rd_att, i - 1);
 
 				if (att->attnotnull && !att->attisdropped)
 				{
@@ -1489,7 +1489,8 @@ build_physical_tlist(PlannerInfo *root, RelOptInfo *rel)
 			numattrs = RelationGetNumberOfAttributes(relation);
 			for (attrno = 1; attrno <= numattrs; attrno++)
 			{
-				Form_pg_attribute att_tup = relation->rd_att->attrs[attrno - 1];
+				Form_pg_attribute att_tup = TupleDescAttr(relation->rd_att,
+														  attrno - 1);
 
 				if (att_tup->attisdropped)
 				{
@@ -1609,7 +1610,7 @@ build_index_tlist(PlannerInfo *root, IndexOptInfo *index,
 				att_tup = SystemAttributeDefinition(indexkey,
 													heapRelation->rd_rel->relhasoids);
 			else
-				att_tup = heapRelation->rd_att->attrs[indexkey - 1];
+				att_tup = TupleDescAttr(heapRelation->rd_att, indexkey - 1);
 
 			indexvar = (Expr *) makeVar(varno,
 										indexkey,

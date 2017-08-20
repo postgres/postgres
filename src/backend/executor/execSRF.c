@@ -903,8 +903,8 @@ tupledesc_match(TupleDesc dst_tupdesc, TupleDesc src_tupdesc)
 
 	for (i = 0; i < dst_tupdesc->natts; i++)
 	{
-		Form_pg_attribute dattr = dst_tupdesc->attrs[i];
-		Form_pg_attribute sattr = src_tupdesc->attrs[i];
+		Form_pg_attribute dattr = TupleDescAttr(dst_tupdesc, i);
+		Form_pg_attribute sattr = TupleDescAttr(src_tupdesc, i);
 
 		if (IsBinaryCoercible(sattr->atttypid, dattr->atttypid))
 			continue;			/* no worries */

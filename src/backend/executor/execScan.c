@@ -269,7 +269,7 @@ tlist_matches_tupdesc(PlanState *ps, List *tlist, Index varno, TupleDesc tupdesc
 	/* Check the tlist attributes */
 	for (attrno = 1; attrno <= numattrs; attrno++)
 	{
-		Form_pg_attribute att_tup = tupdesc->attrs[attrno - 1];
+		Form_pg_attribute att_tup = TupleDescAttr(tupdesc, attrno - 1);
 		Var		   *var;
 
 		if (tlist_item == NULL)

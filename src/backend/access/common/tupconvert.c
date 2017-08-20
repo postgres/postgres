@@ -84,7 +84,7 @@ convert_tuples_by_position(TupleDesc indesc,
 	same = true;
 	for (i = 0; i < n; i++)
 	{
-		Form_pg_attribute att = outdesc->attrs[i];
+		Form_pg_attribute att = TupleDescAttr(outdesc, i);
 		Oid			atttypid;
 		int32		atttypmod;
 
@@ -95,7 +95,7 @@ convert_tuples_by_position(TupleDesc indesc,
 		atttypmod = att->atttypmod;
 		for (; j < indesc->natts; j++)
 		{
-			att = indesc->attrs[j];
+			att = TupleDescAttr(indesc, j);
 			if (att->attisdropped)
 				continue;
 			nincols++;
@@ -122,7 +122,7 @@ convert_tuples_by_position(TupleDesc indesc,
 	/* Check for unused input columns */
 	for (; j < indesc->natts; j++)
 	{
-		if (indesc->attrs[j]->attisdropped)
+		if (TupleDescAttr(indesc, j)->attisdropped)
 			continue;
 		nincols++;
 		same = false;			/* we'll complain below */
@@ -149,6 +149,9 @@ convert_tuples_by_position(TupleDesc indesc,
 	{
 		for (i = 0; i < n; i++)
 		{
+			Form_pg_attribute inatt;
+			Form_pg_attribute outatt;
+
 			if (attrMap[i] == (i + 1))
 				continue;
 
@@ -157,10 +160,12 @@ convert_tuples_by_position(TupleDesc indesc,
 			 * also dropped, we needn't convert.  However, attlen and attalign
 			 * must agree.
 			 */
+			inatt = TupleDescAttr(indesc, i);
+			outatt = TupleDescAttr(outdesc, i);
 			if (attrMap[i] == 0 &&
-				indesc->attrs[i]->attisdropped &&
-				indesc->attrs[i]->attlen == outdesc->attrs[i]->attlen &&
-				indesc->attrs[i]->attalign == outdesc->attrs[i]->attalign)
+				inatt->attisdropped &&
+				inatt->attlen == outatt->attlen &&
+				inatt->attalign == outatt->attalign)
 				continue;
 
 			same = false;
@@ -228,6 +233,9 @@ convert_tuples_by_name(TupleDesc indesc,
 		same = true;
 		for (i = 0; i < n; i++)
 		{
+			Form_pg_attribute inatt;
+			Form_pg_attribute outatt;
+
 			if (attrMap[i] == (i + 1))
 				continue;
 
@@ -236,10 +244,12 @@ convert_tuples_by_name(TupleDesc indesc,
 			 * also dropped, we needn't convert.  However, attlen and attalign
 			 * must agree.
 			 */
+			inatt = TupleDescAttr(indesc, i);
+			outatt = TupleDescAttr(outdesc, i);
 			if (attrMap[i] == 0 &&
-				indesc->attrs[i]->attisdropped &&
-				indesc->attrs[i]->attlen == outdesc->attrs[i]->attlen &&
-				indesc->attrs[i]->attalign == outdesc->attrs[i]->attalign)
+				inatt->attisdropped &&
+				inatt->attlen == outatt->attlen &&
+				inatt->attalign == outatt->attalign)
 				continue;
 
 			same = false;
@@ -292,26 +302,27 @@ convert_tuples_by_name_map(TupleDesc indesc,
 	attrMap = (AttrNumber *) palloc0(n * sizeof(AttrNumber));
 	for (i = 0; i < n; i++)
 	{
-		Form_pg_attribute att = outdesc->attrs[i];
+		Form_pg_attribute outatt = TupleDescAttr(outdesc, i);
 		char	   *attname;
 		Oid			atttypid;
 		int32		atttypmod;
 		int			j;
 
-		if (att->attisdropped)
+		if (outatt->attisdropped)
 			continue;			/* attrMap[i] is already 0 */
-		attname = NameStr(att->attname);
-		atttypid = att->atttypid;
-		atttypmod = att->atttypmod;
+		attname = NameStr(outatt->attname);
+		atttypid = outatt->atttypid;
+		atttypmod = outatt->atttypmod;
 		for (j = 0; j < indesc->natts; j++)
 		{
-			att = indesc->attrs[j];
-			if (att->attisdropped)
+			Form_pg_attribute inatt = TupleDescAttr(indesc, j);
+
+			if (inatt->attisdropped)
 				continue;
-			if (strcmp(attname, NameStr(att->attname)) == 0)
+			if (strcmp(attname, NameStr(inatt->attname)) == 0)
 			{
 				/* Found it, check type */
-				if (atttypid != att->atttypid || atttypmod != att->atttypmod)
+				if (atttypid != inatt->atttypid || atttypmod != inatt->atttypmod)
 					ereport(ERROR,
 							(errcode(ERRCODE_DATATYPE_MISMATCH),
 							 errmsg_internal("%s", _(msg)),

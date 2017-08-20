@@ -235,9 +235,9 @@ create_toast_table(Relation rel, Oid toastOid, Oid toastIndexOid,
 	 * toast :-(.  This is essential for chunk_data because type bytea is
 	 * toastable; hit the other two just to be sure.
 	 */
-	tupdesc->attrs[0]->attstorage = 'p';
-	tupdesc->attrs[1]->attstorage = 'p';
-	tupdesc->attrs[2]->attstorage = 'p';
+	TupleDescAttr(tupdesc, 0)->attstorage = 'p';
+	TupleDescAttr(tupdesc, 1)->attstorage = 'p';
+	TupleDescAttr(tupdesc, 2)->attstorage = 'p';
 
 	/*
 	 * Toast tables for regular relations go in pg_toast; those for temp
@@ -402,33 +402,33 @@ needs_toast_table(Relation rel)
 	bool		maxlength_unknown = false;
 	bool		has_toastable_attrs = false;
 	TupleDesc	tupdesc;
-	Form_pg_attribute *att;
 	int32		tuple_length;
 	int			i;
 
 	tupdesc = rel->rd_att;
-	att = tupdesc->attrs;
 
 	for (i = 0; i < tupdesc->natts; i++)
 	{
-		if (att[i]->attisdropped)
+		Form_pg_attribute att = TupleDescAttr(tupdesc, i);
+
+		if (att->attisdropped)
 			continue;
-		data_length = att_align_nominal(data_length, att[i]->attalign);
-		if (att[i]->attlen > 0)
+		data_length = att_align_nominal(data_length, att->attalign);
+		if (att->attlen > 0)
 		{
 			/* Fixed-length types are never toastable */
-			data_length += att[i]->attlen;
+			data_length += att->attlen;
 		}
 		else
 		{
-			int32		maxlen = type_maximum_size(att[i]->atttypid,
-												   att[i]->atttypmod);
+			int32		maxlen = type_maximum_size(att->atttypid,
+												   att->atttypmod);
 
 			if (maxlen < 0)
 				maxlength_unknown = true;
 			else
 				data_length += maxlen;
-			if (att[i]->attstorage != 'p')
+			if (att->attstorage != 'p')
 				has_toastable_attrs = true;
 		}
 	}

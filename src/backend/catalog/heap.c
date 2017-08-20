@@ -431,12 +431,14 @@ CheckAttributeNamesTypes(TupleDesc tupdesc, char relkind,
 	{
 		for (i = 0; i < natts; i++)
 		{
-			if (SystemAttributeByName(NameStr(tupdesc->attrs[i]->attname),
+			Form_pg_attribute attr = TupleDescAttr(tupdesc, i);
+
+			if (SystemAttributeByName(NameStr(attr->attname),
 									  tupdesc->tdhasoid) != NULL)
 				ereport(ERROR,
 						(errcode(ERRCODE_DUPLICATE_COLUMN),
 						 errmsg("column name \"%s\" conflicts with a system column name",
-								NameStr(tupdesc->attrs[i]->attname))));
+								NameStr(attr->attname))));
 		}
 	}
 
@@ -447,12 +449,12 @@ CheckAttributeNamesTypes(TupleDesc tupdesc, char relkind,
 	{
 		for (j = 0; j < i; j++)
 		{
-			if (strcmp(NameStr(tupdesc->attrs[j]->attname),
-					   NameStr(tupdesc->attrs[i]->attname)) == 0)
+			if (strcmp(NameStr(TupleDescAttr(tupdesc, j)->attname),
+					   NameStr(TupleDescAttr(tupdesc, i)->attname)) == 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_DUPLICATE_COLUMN),
 						 errmsg("column name \"%s\" specified more than once",
-								NameStr(tupdesc->attrs[j]->attname))));
+								NameStr(TupleDescAttr(tupdesc, j)->attname))));
 		}
 	}
 
@@ -461,9 +463,9 @@ CheckAttributeNamesTypes(TupleDesc tupdesc, char relkind,
 	 */
 	for (i = 0; i < natts; i++)
 	{
-		CheckAttributeType(NameStr(tupdesc->attrs[i]->attname),
-						   tupdesc->attrs[i]->atttypid,
-						   tupdesc->attrs[i]->attcollation,
+		CheckAttributeType(NameStr(TupleDescAttr(tupdesc, i)->attname),
+						   TupleDescAttr(tupdesc, i)->atttypid,
+						   TupleDescAttr(tupdesc, i)->attcollation,
 						   NIL, /* assume we're creating a new rowtype */
 						   allow_system_table_mods);
 	}
@@ -545,7 +547,7 @@ CheckAttributeType(const char *attname,
 
 		for (i = 0; i < tupdesc->natts; i++)
 		{
-			Form_pg_attribute attr = tupdesc->attrs[i];
+			Form_pg_attribute attr = TupleDescAttr(tupdesc, i);
 
 			if (attr->attisdropped)
 				continue;
@@ -678,7 +680,7 @@ AddNewAttributeTuples(Oid new_rel_oid,
 	 */
 	for (i = 0; i < natts; i++)
 	{
-		attr = tupdesc->attrs[i];
+		attr = TupleDescAttr(tupdesc, i);
 		/* Fill in the correct relation OID */
 		attr->attrelid = new_rel_oid;
 		/* Make sure these are OK, too */
@@ -2245,7 +2247,7 @@ AddRelationNewConstraints(Relation rel,
 	foreach(cell, newColDefaults)
 	{
 		RawColumnDefault *colDef = (RawColumnDefault *) lfirst(cell);
-		Form_pg_attribute atp = rel->rd_att->attrs[colDef->attnum - 1];
+		Form_pg_attribute atp = TupleDescAttr(rel->rd_att, colDef->attnum - 1);
 		Oid			defOid;
 
 		expr = cookDefault(pstate, colDef->raw_default,

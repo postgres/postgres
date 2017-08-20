@@ -797,7 +797,7 @@ do { \
 		if (cache->cc_key[i] > 0) { \
 			elog(DEBUG2, "CatalogCacheInitializeCache: load %d/%d w/%d, %u", \
 				i+1, cache->cc_nkeys, cache->cc_key[i], \
-				 tupdesc->attrs[cache->cc_key[i] - 1]->atttypid); \
+				 TupleDescAttr(tupdesc, cache->cc_key[i] - 1)->atttypid); \
 		} else { \
 			elog(DEBUG2, "CatalogCacheInitializeCache: load %d/%d w/%d", \
 				i+1, cache->cc_nkeys, cache->cc_key[i]); \
@@ -862,7 +862,8 @@ CatalogCacheInitializeCache(CatCache *cache)
 
 		if (cache->cc_key[i] > 0)
 		{
-			Form_pg_attribute attr = tupdesc->attrs[cache->cc_key[i] - 1];
+			Form_pg_attribute attr = TupleDescAttr(tupdesc,
+												   cache->cc_key[i] - 1);
 
 			keytype = attr->atttypid;
 			/* cache key columns should always be NOT NULL */

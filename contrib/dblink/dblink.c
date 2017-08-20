@@ -2172,14 +2172,16 @@ get_sql_insert(Relation rel, int *pkattnums, int pknumatts, char **src_pkattvals
 	needComma = false;
 	for (i = 0; i < natts; i++)
 	{
-		if (tupdesc->attrs[i]->attisdropped)
+		Form_pg_attribute att = TupleDescAttr(tupdesc, i);
+
+		if (att->attisdropped)
 			continue;
 
 		if (needComma)
 			appendStringInfoChar(&buf, ',');
 
 		appendStringInfoString(&buf,
-							   quote_ident_cstr(NameStr(tupdesc->attrs[i]->attname)));
+							   quote_ident_cstr(NameStr(att->attname)));
 		needComma = true;
 	}
 
@@ -2191,7 +2193,7 @@ get_sql_insert(Relation rel, int *pkattnums, int pknumatts, char **src_pkattvals
 	needComma = false;
 	for (i = 0; i < natts; i++)
 	{
-		if (tupdesc->attrs[i]->attisdropped)
+		if (TupleDescAttr(tupdesc, i)->attisdropped)
 			continue;
 
 		if (needComma)
@@ -2237,12 +2239,13 @@ get_sql_delete(Relation rel, int *pkattnums, int pknumatts, char **tgt_pkattvals
 	for (i = 0; i < pknumatts; i++)
 	{
 		int			pkattnum = pkattnums[i];
+		Form_pg_attribute attr = TupleDescAttr(tupdesc, pkattnum);
 
 		if (i > 0)
 			appendStringInfoString(&buf, " AND ");
 
 		appendStringInfoString(&buf,
-							   quote_ident_cstr(NameStr(tupdesc->attrs[pkattnum]->attname)));
+							   quote_ident_cstr(NameStr(attr->attname)));
 
 		if (tgt_pkattvals[i] != NULL)
 			appendStringInfo(&buf, " = %s",
@@ -2289,14 +2292,16 @@ get_sql_update(Relation rel, int *pkattnums, int pknumatts, char **src_pkattvals
 	needComma = false;
 	for (i = 0; i < natts; i++)
 	{
-		if (tupdesc->attrs[i]->attisdropped)
+		Form_pg_attribute attr = TupleDescAttr(tupdesc, i);
+
+		if (attr->attisdropped)
 			continue;
 
 		if (needComma)
 			appendStringInfoString(&buf, ", ");
 
 		appendStringInfo(&buf, "%s = ",
-						 quote_ident_cstr(NameStr(tupdesc->attrs[i]->attname)));
+						 quote_ident_cstr(NameStr(attr->attname)));
 
 		key = get_attnum_pk_pos(pkattnums, pknumatts, i);
 
@@ -2320,12 +2325,13 @@ get_sql_update(Relation rel, int *pkattnums, int pknumatts, char **src_pkattvals
 	for (i = 0; i < pknumatts; i++)
 	{
 		int			pkattnum = pkattnums[i];
+		Form_pg_attribute attr = TupleDescAttr(tupdesc, pkattnum);
 
 		if (i > 0)
 			appendStringInfoString(&buf, " AND ");
 
 		appendStringInfoString(&buf,
-							   quote_ident_cstr(NameStr(tupdesc->attrs[pkattnum]->attname)));
+							   quote_ident_cstr(NameStr(attr->attname)));
 
 		val = tgt_pkattvals[i];
 
@@ -2409,14 +2415,16 @@ get_tuple_of_interest(Relation rel, int *pkattnums, int pknumatts, char **src_pk
 
 	for (i = 0; i < natts; i++)
 	{
+		Form_pg_attribute attr = TupleDescAttr(tupdesc, i);
+
 		if (i > 0)
 			appendStringInfoString(&buf, ", ");
 
-		if (tupdesc->attrs[i]->attisdropped)
+		if (attr->attisdropped)
 			appendStringInfoString(&buf, "NULL");
 		else
 			appendStringInfoString(&buf,
-								   quote_ident_cstr(NameStr(tupdesc->attrs[i]->attname)));
+								   quote_ident_cstr(NameStr(attr->attname)));
 	}
 
 	appendStringInfo(&buf, " FROM %s WHERE ", relname);
@@ -2424,12 +2432,13 @@ get_tuple_of_interest(Relation rel, int *pkattnums, int pknumatts, char **src_pk
 	for (i = 0; i < pknumatts; i++)
 	{
 		int			pkattnum = pkattnums[i];
+		Form_pg_attribute attr = TupleDescAttr(tupdesc, pkattnum);
 
 		if (i > 0)
 			appendStringInfoString(&buf, " AND ");
 
 		appendStringInfoString(&buf,
-							   quote_ident_cstr(NameStr(tupdesc->attrs[pkattnum]->attname)));
+							   quote_ident_cstr(NameStr(attr->attname)));
 
 		if (src_pkattvals[i] != NULL)
 			appendStringInfo(&buf, " = %s",
@@ -2894,7 +2903,7 @@ validate_pkattnums(Relation rel,
 		for (j = 0; j < natts; j++)
 		{
 			/* dropped columns don't count */
-			if (tupdesc->attrs[j]->attisdropped)
+			if (TupleDescAttr(tupdesc, j)->attisdropped)
 				continue;
 
 			if (++lnum == pkattnum)

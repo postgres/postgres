@@ -917,9 +917,11 @@ GetAttributeByName(HeapTupleHeader tuple, const char *attname, bool *isNull)
 	attrno = InvalidAttrNumber;
 	for (i = 0; i < tupDesc->natts; i++)
 	{
-		if (namestrcmp(&(tupDesc->attrs[i]->attname), attname) == 0)
+		Form_pg_attribute att = TupleDescAttr(tupDesc, i);
+
+		if (namestrcmp(&(att->attname), attname) == 0)
 		{
-			attrno = tupDesc->attrs[i]->attnum;
+			attrno = att->attnum;
 			break;
 		}
 	}

@@ -1950,8 +1950,9 @@ ExecConstraints(ResultRelInfo *resultRelInfo,
 
 		for (attrChk = 1; attrChk <= natts; attrChk++)
 		{
-			if (tupdesc->attrs[attrChk - 1]->attnotnull &&
-				slot_attisnull(slot, attrChk))
+			Form_pg_attribute att = TupleDescAttr(tupdesc, attrChk - 1);
+
+			if (att->attnotnull && slot_attisnull(slot, attrChk))
 			{
 				char	   *val_desc;
 				Relation	orig_rel = rel;
@@ -1994,7 +1995,7 @@ ExecConstraints(ResultRelInfo *resultRelInfo,
 				ereport(ERROR,
 						(errcode(ERRCODE_NOT_NULL_VIOLATION),
 						 errmsg("null value in column \"%s\" violates not-null constraint",
-								NameStr(orig_tupdesc->attrs[attrChk - 1]->attname)),
+								NameStr(att->attname)),
 						 val_desc ? errdetail("Failing row contains %s.", val_desc) : 0,
 						 errtablecol(orig_rel, attrChk)));
 			}
@@ -2261,9 +2262,10 @@ ExecBuildSlotValueDescription(Oid reloid,
 		bool		column_perm = false;
 		char	   *val;
 		int			vallen;
+		Form_pg_attribute att = TupleDescAttr(tupdesc, i);
 
 		/* ignore dropped columns */
-		if (tupdesc->attrs[i]->attisdropped)
+		if (att->attisdropped)
 			continue;
 
 		if (!table_perm)
@@ -2274,9 +2276,9 @@ ExecBuildSlotValueDescription(Oid reloid,
 			 * for the column.  If not, omit this column from the error
 			 * message.
 			 */
-			aclresult = pg_attribute_aclcheck(reloid, tupdesc->attrs[i]->attnum,
+			aclresult = pg_attribute_aclcheck(reloid, att->attnum,
 											  GetUserId(), ACL_SELECT);
-			if (bms_is_member(tupdesc->attrs[i]->attnum - FirstLowInvalidHeapAttributeNumber,
+			if (bms_is_member(att->attnum - FirstLowInvalidHeapAttributeNumber,
 							  modifiedCols) || aclresult == ACLCHECK_OK)
 			{
 				column_perm = any_perm = true;
@@ -2286,7 +2288,7 @@ ExecBuildSlotValueDescription(Oid reloid,
 				else
 					write_comma_collist = true;
 
-				appendStringInfoString(&collist, NameStr(tupdesc->attrs[i]->attname));
+				appendStringInfoString(&collist, NameStr(att->attname));
 			}
 		}
 
@@ -2299,7 +2301,7 @@ ExecBuildSlotValueDescription(Oid reloid,
 				Oid			foutoid;
 				bool		typisvarlena;
 
-				getTypeOutputInfo(tupdesc->attrs[i]->atttypid,
+				getTypeOutputInfo(att->atttypid,
 								  &foutoid, &typisvarlena);
 				val = OidOutputFunctionCall(foutoid, slot->tts_values[i]);
 			}

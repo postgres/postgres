@@ -1759,7 +1759,7 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 							 errmsg("return type mismatch in function declared to return %s",
 									format_type_be(rettype)),
 							 errdetail("Final statement returns too many columns.")));
-				attr = tupdesc->attrs[colindex - 1];
+				attr = TupleDescAttr(tupdesc, colindex - 1);
 				if (attr->attisdropped && modifyTargetList)
 				{
 					Expr	   *null_expr;
@@ -1816,7 +1816,7 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 		/* remaining columns in tupdesc had better all be dropped */
 		for (colindex++; colindex <= tupnatts; colindex++)
 		{
-			if (!tupdesc->attrs[colindex - 1]->attisdropped)
+			if (!TupleDescAttr(tupdesc, colindex - 1)->attisdropped)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 						 errmsg("return type mismatch in function declared to return %s",

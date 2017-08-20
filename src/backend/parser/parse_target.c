@@ -484,8 +484,8 @@ transformAssignedExpr(ParseState *pstate,
 						colname),
 				 parser_errposition(pstate, location)));
 	attrtype = attnumTypeId(rd, attrno);
-	attrtypmod = rd->rd_att->attrs[attrno - 1]->atttypmod;
-	attrcollation = rd->rd_att->attrs[attrno - 1]->attcollation;
+	attrtypmod = TupleDescAttr(rd->rd_att, attrno - 1)->atttypmod;
+	attrcollation = TupleDescAttr(rd->rd_att, attrno - 1)->attcollation;
 
 	/*
 	 * If the expression is a DEFAULT placeholder, insert the attribute's
@@ -959,19 +959,21 @@ checkInsertTargets(ParseState *pstate, List *cols, List **attrnos)
 		/*
 		 * Generate default column list for INSERT.
 		 */
-		Form_pg_attribute *attr = pstate->p_target_relation->rd_att->attrs;
 		int			numcol = pstate->p_target_relation->rd_rel->relnatts;
 		int			i;
 
 		for (i = 0; i < numcol; i++)
 		{
 			ResTarget  *col;
+			Form_pg_attribute attr;
 
-			if (attr[i]->attisdropped)
+			attr = TupleDescAttr(pstate->p_target_relation->rd_att, i);
+
+			if (attr->attisdropped)
 				continue;
 
 			col = makeNode(ResTarget);
-			col->name = pstrdup(NameStr(attr[i]->attname));
+			col->name = pstrdup(NameStr(attr->attname));
 			col->indirection = NIL;
 			col->val = NULL;
 			col->location = -1;
@@ -1407,7 +1409,7 @@ ExpandRowReference(ParseState *pstate, Node *expr,
 	numAttrs = tupleDesc->natts;
 	for (i = 0; i < numAttrs; i++)
 	{
-		Form_pg_attribute att = tupleDesc->attrs[i];
+		Form_pg_attribute att = TupleDescAttr(tupleDesc, i);
 		FieldSelect *fselect;
 
 		if (att->attisdropped)

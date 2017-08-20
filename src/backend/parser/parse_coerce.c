@@ -982,9 +982,10 @@ coerce_record_to_complex(ParseState *pstate, Node *node,
 		Node	   *expr;
 		Node	   *cexpr;
 		Oid			exprtype;
+		Form_pg_attribute attr = TupleDescAttr(tupdesc, i);
 
 		/* Fill in NULLs for dropped columns in rowtype */
-		if (tupdesc->attrs[i]->attisdropped)
+		if (attr->attisdropped)
 		{
 			/*
 			 * can't use atttypid here, but it doesn't really matter what type
@@ -1008,8 +1009,8 @@ coerce_record_to_complex(ParseState *pstate, Node *node,
 
 		cexpr = coerce_to_target_type(pstate,
 									  expr, exprtype,
-									  tupdesc->attrs[i]->atttypid,
-									  tupdesc->attrs[i]->atttypmod,
+									  attr->atttypid,
+									  attr->atttypmod,
 									  ccontext,
 									  COERCE_IMPLICIT_CAST,
 									  -1);
@@ -1021,7 +1022,7 @@ coerce_record_to_complex(ParseState *pstate, Node *node,
 							format_type_be(targetTypeId)),
 					 errdetail("Cannot cast type %s to %s in column %d.",
 							   format_type_be(exprtype),
-							   format_type_be(tupdesc->attrs[i]->atttypid),
+							   format_type_be(attr->atttypid),
 							   ucolno),
 					 parser_coercion_errposition(pstate, location, expr)));
 		newargs = lappend(newargs, cexpr);

@@ -1066,11 +1066,11 @@ fastgetattr(HeapTuple tup, int attnum, TupleDesc tupleDesc,
 			 (*(isnull) = false),
 			 HeapTupleNoNulls(tup) ?
 			 (
-			  (tupleDesc)->attrs[(attnum) - 1]->attcacheoff >= 0 ?
+			  TupleDescAttr((tupleDesc), (attnum) - 1)->attcacheoff >= 0 ?
 			  (
-			   fetchatt((tupleDesc)->attrs[(attnum) - 1],
+			   fetchatt(TupleDescAttr((tupleDesc), (attnum) - 1),
 						(char *) (tup)->t_data + (tup)->t_data->t_hoff +
-						(tupleDesc)->attrs[(attnum) - 1]->attcacheoff)
+						TupleDescAttr((tupleDesc), (attnum) - 1)->attcacheoff)
 			   )
 			  :
 			  nocachegetattr((tup), (attnum), (tupleDesc))
@@ -4422,7 +4422,7 @@ heap_tuple_attr_equals(TupleDesc tupdesc, int attrnum,
 	else
 	{
 		Assert(attrnum <= tupdesc->natts);
-		att = tupdesc->attrs[attrnum - 1];
+		att = TupleDescAttr(tupdesc, attrnum - 1);
 		return datumIsEqual(value1, value2, att->attbyval, att->attlen);
 	}
 }
