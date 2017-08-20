@@ -71,17 +71,17 @@ typedef struct tupleConstr
 typedef struct tupleDesc
 {
 	int			natts;			/* number of attributes in the tuple */
-	Form_pg_attribute *attrs;
-	/* attrs[N] is a pointer to the description of Attribute Number N+1 */
-	TupleConstr *constr;		/* constraints, or NULL if none */
 	Oid			tdtypeid;		/* composite type ID for tuple type */
 	int32		tdtypmod;		/* typmod for tuple type */
 	bool		tdhasoid;		/* tuple has oid attribute in its header */
 	int			tdrefcount;		/* reference count, or -1 if not counting */
+	TupleConstr *constr;		/* constraints, or NULL if none */
+	/* attrs[N] is the description of Attribute Number N+1 */
+	FormData_pg_attribute attrs[FLEXIBLE_ARRAY_MEMBER];
 }		   *TupleDesc;
 
 /* Accessor for the i'th attribute of tupdesc. */
-#define TupleDescAttr(tupdesc, i) ((tupdesc)->attrs[(i)])
+#define TupleDescAttr(tupdesc, i) (&(tupdesc)->attrs[(i)])
 
 extern TupleDesc CreateTemplateTupleDesc(int natts, bool hasoid);
 

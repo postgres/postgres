@@ -41,8 +41,6 @@ TupleDesc
 CreateTemplateTupleDesc(int natts, bool hasoid)
 {
 	TupleDesc	desc;
-	char	   *stg;
-	int			attroffset;
 
 	/*
 	 * sanity checks
@@ -51,38 +49,10 @@ CreateTemplateTupleDesc(int natts, bool hasoid)
 
 	/*
 	 * Allocate enough memory for the tuple descriptor, including the
-	 * attribute rows, and set up the attribute row pointers.
-	 *
-	 * Note: we assume that sizeof(struct tupleDesc) is a multiple of the
-	 * struct pointer alignment requirement, and hence we don't need to insert
-	 * alignment padding between the struct and the array of attribute row
-	 * pointers.
-	 *
-	 * Note: Only the fixed part of pg_attribute rows is included in tuple
-	 * descriptors, so we only need ATTRIBUTE_FIXED_PART_SIZE space per attr.
-	 * That might need alignment padding, however.
+	 * attribute rows.
 	 */
-	attroffset = sizeof(struct tupleDesc) + natts * sizeof(Form_pg_attribute);
-	attroffset = MAXALIGN(attroffset);
-	stg = palloc(attroffset + natts * MAXALIGN(ATTRIBUTE_FIXED_PART_SIZE));
-	desc = (TupleDesc) stg;
-
-	if (natts > 0)
-	{
-		Form_pg_attribute *attrs;
-		int			i;
-
-		attrs = (Form_pg_attribute *) (stg + sizeof(struct tupleDesc));
-		desc->attrs = attrs;
-		stg += attroffset;
-		for (i = 0; i < natts; i++)
-		{
-			attrs[i] = (Form_pg_attribute) stg;
-			stg += MAXALIGN(ATTRIBUTE_FIXED_PART_SIZE);
-		}
-	}
-	else
-		desc->attrs = NULL;
+	desc = (TupleDesc) palloc(offsetof(struct tupleDesc, attrs) +
+							  natts * sizeof(FormData_pg_attribute));
 
 	/*
 	 * Initialize other fields of the tupdesc.
@@ -99,11 +69,8 @@ CreateTemplateTupleDesc(int natts, bool hasoid)
 
 /*
  * CreateTupleDesc
- *		This function allocates a new TupleDesc pointing to a given
+ *		This function allocates a new TupleDesc by copying a given
  *		Form_pg_attribute array.
- *
- * Note: if the TupleDesc is ever freed, the Form_pg_attribute array
- * will not be freed thereby.
  *
  * Tuple type ID information is initially set for an anonymous record type;
  * caller can overwrite this if needed.
@@ -112,20 +79,12 @@ TupleDesc
 CreateTupleDesc(int natts, bool hasoid, Form_pg_attribute *attrs)
 {
 	TupleDesc	desc;
+	int			i;
 
-	/*
-	 * sanity checks
-	 */
-	AssertArg(natts >= 0);
+	desc = CreateTemplateTupleDesc(natts, hasoid);
 
-	desc = (TupleDesc) palloc(sizeof(struct tupleDesc));
-	desc->attrs = attrs;
-	desc->natts = natts;
-	desc->constr = NULL;
-	desc->tdtypeid = RECORDOID;
-	desc->tdtypmod = -1;
-	desc->tdhasoid = hasoid;
-	desc->tdrefcount = -1;		/* assume not reference-counted */
+	for (i = 0; i < natts; ++i)
+		memcpy(TupleDescAttr(desc, i), attrs[i], ATTRIBUTE_FIXED_PART_SIZE);
 
 	return desc;
 }
@@ -147,10 +106,12 @@ CreateTupleDescCopy(TupleDesc tupdesc)
 
 	for (i = 0; i < desc->natts; i++)
 	{
-		memcpy(desc->attrs[i], tupdesc->attrs[i], ATTRIBUTE_FIXED_PART_SIZE);
-		desc->attrs[i]->attnotnull = false;
-		desc->attrs[i]->atthasdef = false;
-		desc->attrs[i]->attidentity = '\0';
+		Form_pg_attribute att = TupleDescAttr(desc, i);
+
+		memcpy(att, &tupdesc->attrs[i], ATTRIBUTE_FIXED_PART_SIZE);
+		att->attnotnull = false;
+		att->atthasdef = false;
+		att->attidentity = '\0';
 	}
 
 	desc->tdtypeid = tupdesc->tdtypeid;
