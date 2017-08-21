@@ -138,6 +138,7 @@ AttrDefault
 AttrNumber
 AttributeOpts
 AuthRequest
+AutoPrewarmSharedState
 AutoVacOpts
 AutoVacuumShmemStruct
 AutoVacuumWorkItem
@@ -218,6 +219,7 @@ BlobInfo
 Block
 BlockId
 BlockIdData
+BlockInfoRecord
 BlockNumber
 BlockSampler
 BlockSamplerData

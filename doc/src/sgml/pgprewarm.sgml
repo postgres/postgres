@@ -10,7 +10,13 @@
  <para>
   The <filename>pg_prewarm</filename> module provides a convenient way
   to load relation data into either the operating system buffer cache
-  or the <productname>PostgreSQL</productname> buffer cache.
+  or the <productname>PostgreSQL</productname> buffer cache.  Prewarming
+  can be performed manually using the <filename>pg_prewarm</> function,
+  or can be performed automatically by including <literal>pg_prewarm</> in
+  <xref linkend="guc-shared-preload-libraries">.  In the latter case, the
+  system will run a background worker which periodically records the contents
+  of shared buffers in a file called <filename>autoprewarm.blocks</> and
+  will, using 2 background workers, reload those same blocks after a restart.
  </para>
 
  <sect2>
@@ -55,6 +61,67 @@ pg_prewarm(regclass, mode text default 'buffer', fork text default 'main',
    cache. For these reasons, prewarming is typically most useful at startup,
    when caches are largely empty.
   </para>
+
+<synopsis>
+autoprewarm_start_worker() RETURNS void
+</synopsis>
+
+  <para>
+   Launch the main autoprewarm worker.  This will normally happen
+   automatically, but is useful if automatic prewarm was not configured at
+   server startup time and you wish to start up the worker at a later time.
+  </para>
+
+<synopsis>
+autoprewarm_dump_now() RETURNS int8
+</synopsis>
+
+  <para>
+   Update <filename>autoprewarm.blocks</> immediately.  This may be useful
+   if the autoprewarm worker is not running but you anticipate running it
+   after the next restart.  The return value is the number of records written
+   to <filename>autoprewarm.blocks</>.
+  </para>
+ </sect2>
+
+ <sect2>
+  <title>Configuration Parameters</title>
+
+ <variablelist>
+   <varlistentry>
+    <term>
+     <varname>pg_prewarm.autoprewarm</varname> (<type>boolean</type>)
+     <indexterm>
+      <primary><varname>pg_prewarm.autoprewarm</> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      Controls whether the server should run the autoprewarm worker. This is
+      on by default. This parameter can only be set at server start.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+
+  <variablelist>
+   <varlistentry>
+   <term>
+     <varname>pg_prewarm.autoprewarm_interval</varname> (<type>int</type>)
+     <indexterm>
+      <primary><varname>pg_prewarm.autoprewarm_interval</> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      This is the interval between updates to <literal>autoprewarm.blocks</>.
+      The default is 300 seconds. If set to 0, the file will not be
+      dumped at regular intervals, but only when the server is shut down.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+
  </sect2>
 
  <sect2>

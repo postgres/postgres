@@ -169,6 +169,23 @@ ClockSweepTick(void)
 }
 
 /*
+ * have_free_buffer -- a lockless check to see if there is a free buffer in
+ *					   buffer pool.
+ *
+ * If the result is true that will become stale once free buffers are moved out
+ * by other operations, so the caller who strictly want to use a free buffer
+ * should not call this.
+ */
+bool
+have_free_buffer()
+{
+	if (StrategyControl->firstFreeBuffer >= 0)
+		return true;
+	else
+		return false;
+}
+
+/*
  * StrategyGetBuffer
  *
  *	Called by the bufmgr to get the next candidate buffer to use in
