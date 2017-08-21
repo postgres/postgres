@@ -653,9 +653,8 @@ SELECT a COLLATE "C" &lt; b COLLATE "POSIX" FROM test1;
     string will be accepted as a locale name.)
     See <ulink url="http://userguide.icu-project.org/locale"></ulink> for
     information on ICU locale naming.  <command>initdb</command> uses the ICU
-    APIs to extract a set of locales with distinct collation rules to populate
-    the initial set of collations.  Here are some example collations that
-    might be created:
+    APIs to extract a set of distinct locales to populate the initial set of
+    collations.  Here are some example collations that might be created:
 
     <variablelist>
      <varlistentry>
@@ -677,9 +676,9 @@ SELECT a COLLATE "C" &lt; b COLLATE "POSIX" FROM test1;
       <listitem>
        <para>German collation for Austria, default variant</para>
        <para>
-        (As of this writing, there is no,
-        say, <literal>de-DE-x-icu</literal> or <literal>de-CH-x-icu</literal>,
-        because those are equivalent to <literal>de-x-icu</literal>.)
+        (There are also, say, <literal>de-DE-x-icu</literal>
+        or <literal>de-CH-x-icu</literal>, but as of this writing, they are
+        equivalent to <literal>de-x-icu</literal>.)
        </para>
       </listitem>
      </varlistentry>
@@ -690,6 +689,7 @@ SELECT a COLLATE "C" &lt; b COLLATE "POSIX" FROM test1;
        <para>German collation for Austria, phone book variant</para>
       </listitem>
      </varlistentry>
+
      <varlistentry>
       <term><literal>und-x-icu</literal> (for <quote>undefined</quote>)</term>
       <listitem>
@@ -724,7 +724,6 @@ SELECT a COLLATE "C" &lt; b COLLATE "POSIX" FROM test1;
 <programlisting>
 CREATE COLLATION german FROM "de_DE";
 CREATE COLLATION french FROM "fr-x-icu";
-CREATE COLLATION "de-DE-x-icu" FROM "de-x-icu";
 </programlisting>
    </para>
 

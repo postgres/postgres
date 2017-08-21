@@ -667,7 +667,16 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 	}
 #endif							/* READ_LOCALE_A_OUTPUT */
 
-	/* Load collations known to ICU */
+	/*
+	 * Load collations known to ICU
+	 *
+	 * We use uloc_countAvailable()/uloc_getAvailable() rather than
+	 * ucol_countAvailable()/ucol_getAvailable().  The former returns a full
+	 * set of language+region combinations, whereas the latter only returns
+	 * language+region combinations of they are distinct from the language's
+	 * base collation.  So there might not be a de-DE or en-GB, which would be
+	 * confusing.
+	 */
 #ifdef USE_ICU
 	{
 		int			i;
@@ -676,7 +685,7 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 		 * Start the loop at -1 to sneak in the root locale without too much
 		 * code duplication.
 		 */
-		for (i = -1; i < ucol_countAvailable(); i++)
+		for (i = -1; i < uloc_countAvailable(); i++)
 		{
 			/*
 			 * In ICU 4.2, ucol_getKeywordValuesForLocale() sometimes returns
@@ -706,7 +715,7 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 			if (i == -1)
 				name = "";		/* ICU root locale */
 			else
-				name = ucol_getAvailable(i);
+				name = uloc_getAvailable(i);
 
 			langtag = get_icu_language_tag(name);
 			collcollate = U_ICU_VERSION_MAJOR_NUM >= 54 ? langtag : name;
