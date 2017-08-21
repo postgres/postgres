@@ -665,13 +665,6 @@ SELECT a COLLATE "C" &lt; b COLLATE "POSIX" FROM test1;
      </varlistentry>
 
      <varlistentry>
-      <term><literal>de-u-co-phonebk-x-icu</literal></term>
-      <listitem>
-       <para>German collation, phone book variant</para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><literal>de-AT-x-icu</literal></term>
       <listitem>
        <para>German collation for Austria, default variant</para>
@@ -680,13 +673,6 @@ SELECT a COLLATE "C" &lt; b COLLATE "POSIX" FROM test1;
         or <literal>de-CH-x-icu</literal>, but as of this writing, they are
         equivalent to <literal>de-x-icu</literal>.)
        </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><literal>de-AT-u-co-phonebk-x-icu</literal></term>
-      <listitem>
-       <para>German collation for Austria, phone book variant</para>
       </listitem>
      </varlistentry>
 
@@ -708,6 +694,90 @@ SELECT a COLLATE "C" &lt; b COLLATE "POSIX" FROM test1;
     in <literal>pg_collation</literal> are ignored.  Attempting to use one
     will draw an error along the lines of <quote>collation "de-x-icu" for
     encoding "WIN874" does not exist</>.
+   </para>
+
+   <para>
+    ICU allows collations to be customized beyond the basic language+country
+    set that is preloaded by <command>initdb</command>.  Users are encouraged
+    to define their own collation objects that make use of these facilities to
+    suit the sorting behavior to their requirements.  Here are some examples:
+
+    <variablelist>
+     <varlistentry>
+      <term><literal>CREATE COLLATION "de-u-co-phonebk-x-icu" (provider = icu, locale = 'de-u-co-phonebk')</literal></term>
+      <listitem>
+       <para>German collation with phone book collation type</para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>CREATE COLLATION "und-u-co-emoji-x-icu" (provider = icu, locale = 'und-u-co-emoji')</literal></term>
+      <listitem>
+       <para>
+        Root collation with Emoji collation type, per Unicode Technical Standard #51
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>CREATE COLLATION digitslast (provider = icu, locale = 'en-u-kr-latn-digit')</literal></term>
+      <listitem>
+       <para>
+        Sort digits after Latin letters.  (The default is digits before letters.)
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>CREATE COLLATION upperfirst (provider = icu, locale = 'en-u-kf-upper')</literal></term>
+      <listitem>
+       <para>
+        Sort upper-case letters before lower-case letters.  (The default is
+        lower-case letters first.)
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>CREATE COLLATION special (provider = icu, locale = 'en-u-kf-upper-kr-latn-digit')</literal></term>
+      <listitem>
+       <para>
+        Combines both of the above options.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>CREATE COLLATION numeric (provider = icu, locale = 'en-u-kn-true')</literal></term>
+      <listitem>
+       <para>
+        Numeric ordering, sorts sequences of digits by their numeric value,
+        for example: <literal>A-21</literal> &lt; <literal>A-123</literal>
+        (also known as natural sort).
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+
+    See <ulink url="http://unicode.org/reports/tr35/tr35-collation.html">Unicode
+    Technical Standard #35</ulink>
+    and <ulink url="https://tools.ietf.org/html/bcp47">BCP 47</ulink> for
+    details.  The list of possible collation types (<literal>co</literal>
+    subtag) can be found in
+    the <ulink url="http://www.unicode.org/repos/cldr/trunk/common/bcp47/collation.xml">CLDR
+    repository</ulink>.
+    The <ulink url="https://ssl.icu-project.org/icu-bin/locexp">ICU Locale
+    Explorer</ulink> can be used to check the details of a particular locale
+    definition.
+   </para>
+
+   <para>
+    Note that while this system allows creating collations that <quote>ignore
+    case</quote> or <quote>ignore accents</quote> or similar (using
+    the <literal>ks</literal> key), PostgreSQL does not at the moment allow
+    such collations to act in a truly case- or accent-insensitive manner.  Any
+    strings that compare equal according to the collation but are not
+    byte-wise equal will be sorted according to their byte values.
    </para>
    </sect4>
    </sect3>
