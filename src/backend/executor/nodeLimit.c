@@ -308,6 +308,9 @@ recompute_limits(LimitState *node)
  * since the MergeAppend surely need read no more than that many tuples from
  * any one input.  We also have to be prepared to look through a Result,
  * since the planner might stick one atop MergeAppend for projection purposes.
+ * We can also accept one or more levels of subqueries that have no quals or
+ * SRFs (that is, each subquery is just projecting columns) between the LIMIT
+ * and any of the above.
  *
  * This is a bit of a kluge, but we don't have any more-abstract way of
  * communicating between the two nodes; and it doesn't seem worth trying
@@ -320,6 +323,29 @@ recompute_limits(LimitState *node)
 static void
 pass_down_bound(LimitState *node, PlanState *child_node)
 {
+	/*
+	 * If the child is a subquery that does no filtering (no predicates)
+	 * and does not have any SRFs in the target list then we can potentially
+	 * push the limit through the subquery. It is possible that we could have
+	 * multiple subqueries, so tunnel through them all.
+	 */
+	while (IsA(child_node, SubqueryScanState))
+	{
+		SubqueryScanState *subqueryScanState;
+
+		subqueryScanState = (SubqueryScanState *) child_node;
+
+		/*
+		 * Non-empty predicates or an SRF means we cannot push down the limit.
+		 */
+		if (subqueryScanState->ss.ps.qual != NULL ||
+			expression_returns_set((Node *) child_node->plan->targetlist))
+			return;
+
+		/* Use the child in the following checks */
+		child_node = subqueryScanState->subplan;
+	}
+
 	if (IsA(child_node, SortState))
 	{
 		SortState  *sortState = (SortState *) child_node;

@@ -1041,3 +1041,55 @@ NOTICE:  x = 9, y = 13
 (3 rows)
 
 drop function tattle(x int, y int);
+--
+-- Test that LIMIT can be pushed to SORT through a subquery that just
+-- projects columns
+--
+create table sq_limit (pk int primary key, c1 int, c2 int);
+insert into sq_limit values
+	(1, 1, 1),
+	(2, 2, 2),
+	(3, 3, 3),
+	(4, 4, 4),
+	(5, 1, 1),
+	(6, 2, 2),
+	(7, 3, 3),
+	(8, 4, 4);
+-- The explain contains data that may not be invariant, so
+-- filter for just the interesting bits.  The goal here is that
+-- we should see three notices, in order:
+--   NOTICE: Limit
+--   NOTICE: Subquery
+--   NOTICE: Top-N Sort
+-- A missing step, or steps out of order means we have a problem.
+do $$
+	declare x text;
+	begin
+		for x in
+			explain (analyze, summary off, timing off, costs off)
+			select * from (select pk,c2 from sq_limit order by c1,pk) as x limit 3
+		loop
+			if (left(ltrim(x), 5) = 'Limit') then
+				raise notice 'Limit';
+			end if;
+			if (left(ltrim(x), 12) = '->  Subquery') then
+				raise notice 'Subquery';
+			end if;
+			if (left(ltrim(x), 18) = 'Sort Method: top-N') then
+				raise notice 'Top-N Sort';
+			end if;
+		end loop;
+	end;
+$$;
+NOTICE:  Limit
+NOTICE:  Subquery
+NOTICE:  Top-N Sort
+select * from (select pk,c2 from sq_limit order by c1,pk) as x limit 3;
+ pk | c2 
+----+----
+  1 |  1
+  5 |  1
+  2 |  2
+(3 rows)
+
+drop table sq_limit;
