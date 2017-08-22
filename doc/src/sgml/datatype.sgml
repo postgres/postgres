@@ -837,6 +837,14 @@ FROM generate_series(-3.5, 3.5, 1) as x;
      <secondary>and serial type</secondary>
     </indexterm>
 
+    <note>
+     <para>
+      This section describes a PostgreSQL-specific way to create an
+      autoincrementing column.  Another way is to use the SQL-standard
+      identity column feature, described at <xref linkend="sql-createtable">.
+     </para>
+    </note>
+
     <para>
      The data types <type>smallserial</type>, <type>serial</type> and
      <type>bigserial</type> are not true types, but merely
