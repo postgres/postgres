@@ -114,6 +114,8 @@ extern void DecrTupleDescRefCount(TupleDesc tupdesc);
 
 extern bool equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2);
 
+extern uint32 hashTupleDesc(TupleDesc tupdesc);
+
 extern void TupleDescInitEntry(TupleDesc desc,
 				   AttrNumber attributeNumber,
 				   const char *attributeName,

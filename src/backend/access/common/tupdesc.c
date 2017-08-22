@@ -19,6 +19,7 @@
 
 #include "postgres.h"
 
+#include "access/hash.h"
 #include "access/htup_details.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_type.h"
@@ -26,6 +27,7 @@
 #include "parser/parse_type.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
+#include "utils/hashutils.h"
 #include "utils/resowner_private.h"
 #include "utils/syscache.h"
 
@@ -441,6 +443,31 @@ equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)
 	else if (tupdesc2->constr != NULL)
 		return false;
 	return true;
+}
+
+/*
+ * hashTupleDesc
+ *		Compute a hash value for a tuple descriptor.
+ *
+ * If two tuple descriptors would be considered equal by equalTupleDescs()
+ * then their hash value will be equal according to this function.
+ *
+ * Note that currently contents of constraint are not hashed - it'd be a bit
+ * painful to do so, and conflicts just due to constraints are unlikely.
+ */
+uint32
+hashTupleDesc(TupleDesc desc)
+{
+	uint32		s;
+	int			i;
+
+	s = hash_combine(0, hash_uint32(desc->natts));
+	s = hash_combine(s, hash_uint32(desc->tdtypeid));
+	s = hash_combine(s, hash_uint32(desc->tdhasoid));
+	for (i = 0; i < desc->natts; ++i)
+		s = hash_combine(s, hash_uint32(TupleDescAttr(desc, i)->atttypid));
+
+	return s;
 }
 
 /*

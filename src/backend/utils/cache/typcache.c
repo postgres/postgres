@@ -133,19 +133,12 @@ typedef struct TypeCacheEnumData
  *
  * Stored record types are remembered in a linear array of TupleDescs,
  * which can be indexed quickly with the assigned typmod.  There is also
- * a hash table to speed searches for matching TupleDescs.  The hash key
- * uses just the first N columns' type OIDs, and so we may have multiple
- * entries with the same hash key.
+ * a hash table to speed searches for matching TupleDescs.
  */
-#define REC_HASH_KEYS	16		/* use this many columns in hash key */
 
 typedef struct RecordCacheEntry
 {
-	/* the hash lookup key MUST BE FIRST */
-	Oid			hashkey[REC_HASH_KEYS]; /* column type IDs, zero-filled */
-
-	/* list of TupleDescs for record types with this hashkey */
-	List	   *tupdescs;
+	TupleDesc	tupdesc;
 } RecordCacheEntry;
 
 static HTAB *RecordCacheHash = NULL;
@@ -1297,6 +1290,28 @@ lookup_rowtype_tupdesc_copy(Oid type_id, int32 typmod)
 	return CreateTupleDescCopyConstr(tmp);
 }
 
+/*
+ * Hash function for the hash table of RecordCacheEntry.
+ */
+static uint32
+record_type_typmod_hash(const void *data, size_t size)
+{
+	RecordCacheEntry *entry = (RecordCacheEntry *) data;
+
+	return hashTupleDesc(entry->tupdesc);
+}
+
+/*
+ * Match function for the hash table of RecordCacheEntry.
+ */
+static int
+record_type_typmod_compare(const void *a, const void *b, size_t size)
+{
+	RecordCacheEntry *left = (RecordCacheEntry *) a;
+	RecordCacheEntry *right = (RecordCacheEntry *) b;
+
+	return equalTupleDescs(left->tupdesc, right->tupdesc) ? 0 : 1;
+}
 
 /*
  * assign_record_type_typmod
@@ -1310,10 +1325,7 @@ assign_record_type_typmod(TupleDesc tupDesc)
 {
 	RecordCacheEntry *recentry;
 	TupleDesc	entDesc;
-	Oid			hashkey[REC_HASH_KEYS];
 	bool		found;
-	int			i;
-	ListCell   *l;
 	int32		newtypmod;
 	MemoryContext oldcxt;
 
@@ -1325,45 +1337,31 @@ assign_record_type_typmod(TupleDesc tupDesc)
 		HASHCTL		ctl;
 
 		MemSet(&ctl, 0, sizeof(ctl));
-		ctl.keysize = REC_HASH_KEYS * sizeof(Oid);
+		ctl.keysize = sizeof(TupleDesc);	/* just the pointer */
 		ctl.entrysize = sizeof(RecordCacheEntry);
+		ctl.hash = record_type_typmod_hash;
+		ctl.match = record_type_typmod_compare;
 		RecordCacheHash = hash_create("Record information cache", 64,
-									  &ctl, HASH_ELEM | HASH_BLOBS);
+									  &ctl,
+									  HASH_ELEM | HASH_FUNCTION | HASH_COMPARE);
 
 		/* Also make sure CacheMemoryContext exists */
 		if (!CacheMemoryContext)
 			CreateCacheMemoryContext();
 	}
 
-	/* Find or create a hashtable entry for this hash class */
-	MemSet(hashkey, 0, sizeof(hashkey));
-	for (i = 0; i < tupDesc->natts; i++)
-	{
-		if (i >= REC_HASH_KEYS)
-			break;
-		hashkey[i] = TupleDescAttr(tupDesc, i)->atttypid;
-	}
+	/* Find or create a hashtable entry for this tuple descriptor */
 	recentry = (RecordCacheEntry *) hash_search(RecordCacheHash,
-												(void *) hashkey,
+												(void *) &tupDesc,
 												HASH_ENTER, &found);
-	if (!found)
+	if (found && recentry->tupdesc != NULL)
 	{
-		/* New entry ... hash_search initialized only the hash key */
-		recentry->tupdescs = NIL;
-	}
-
-	/* Look for existing record cache entry */
-	foreach(l, recentry->tupdescs)
-	{
-		entDesc = (TupleDesc) lfirst(l);
-		if (equalTupleDescs(tupDesc, entDesc))
-		{
-			tupDesc->tdtypmod = entDesc->tdtypmod;
-			return;
-		}
+		tupDesc->tdtypmod = recentry->tupdesc->tdtypmod;
+		return;
 	}
 
 	/* Not present, so need to manufacture an entry */
+	recentry->tupdesc = NULL;
 	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 
 	if (RecordCacheArray == NULL)
@@ -1382,7 +1380,7 @@ assign_record_type_typmod(TupleDesc tupDesc)
 
 	/* if fail in subrs, no damage except possibly some wasted memory... */
 	entDesc = CreateTupleDescCopy(tupDesc);
-	recentry->tupdescs = lcons(entDesc, recentry->tupdescs);
+	recentry->tupdesc = entDesc;
 	/* mark it as a reference-counted tupdesc */
 	entDesc->tdrefcount = 1;
 	/* now it's safe to advance NextRecordTypmod */
