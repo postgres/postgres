@@ -1,0 +1,107 @@
+/*-------------------------------------------------------------------------
+ *
+ * dshash.h
+ *	  Concurrent hash tables backed by dynamic shared memory areas.
+ *
+ * Portions Copyright (c) 1996-2017, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * IDENTIFICATION
+ *	  src/include/lib/dshash.h
+ *
+ *-------------------------------------------------------------------------
+ */
+#ifndef DSHASH_H
+#define DSHASH_H
+
+#include "utils/dsa.h"
+
+/* The opaque type representing a hash table. */
+struct dshash_table;
+typedef struct dshash_table dshash_table;
+
+/* A handle for a dshash_table which can be shared with other processes. */
+typedef dsa_pointer dshash_table_handle;
+
+/* The type for hash values. */
+typedef uint32 dshash_hash;
+
+/*
+ * A function used for comparing keys.  This version is compatible with
+ * HashCompareFunction in hsearch.h and memcmp.
+ */
+typedef int (*dshash_compare_function) (const void *a, const void *b, size_t size);
+
+/*
+ * A function type used for comparing keys.  This version allows compare
+ * functions to receive a pointer to arbitrary user data that was given to the
+ * create or attach function.  Similar to qsort_arg_comparator.
+ */
+typedef int (*dshash_compare_arg_function) (const void *a, const void *b, void *arg);
+
+/*
+ * A function type for computing hash values for keys.  This version is
+ * compatible with HashValueFunc in hsearch.h and hash functions like
+ * tag_hash.
+ */
+typedef dshash_hash (*dshash_hash_function) (const void *v, size_t size);
+
+/*
+ * A function type for computing hash values for keys.  This version allows
+ * hash functions to receive a pointer to arbitrary user data that was given
+ * to the create or attach function.
+ */
+typedef dshash_hash (*dshash_hash_arg_function) (const void *v, void *arg);
+
+/*
+ * The set of parameters needed to create or attach to a hash table.  The
+ * members tranche_id and tranche_name do not need to be initialized when
+ * attaching to an existing hash table.
+ *
+ * Compare and hash functions mus be supplied even when attaching, because we
+ * can't safely share function pointers between backends in general.  Either
+ * the arg variants or the non-arg variants should be supplied; the other
+ * function pointers should be NULL.  If the arg varants are supplied then the
+ * user data pointer supplied to the create and attach functions will be
+ * passed to the hash and compare functions.
+ */
+typedef struct dshash_parameters
+{
+	size_t		key_size;		/* Size of the key (initial bytes of entry) */
+	size_t		entry_size;		/* Total size of entry */
+	dshash_compare_function compare_function;	/* Compare function */
+	dshash_compare_arg_function compare_arg_function;	/* Arg version */
+	dshash_hash_function hash_function; /* Hash function */
+	dshash_hash_arg_function hash_arg_function; /* Arg version */
+	int			tranche_id;		/* The tranche ID to use for locks */
+} dshash_parameters;
+
+/* Forward declaration of private types for use only by dht.c. */
+struct dshash_table_item;
+typedef struct dshash_table_item dshash_table_item;
+
+/* Creating, sharing and destroying from hash tables. */
+extern dshash_table *dshash_create(dsa_area *area,
+			  const dshash_parameters *params,
+			  void *arg);
+extern dshash_table *dshash_attach(dsa_area *area,
+			  const dshash_parameters *params,
+			  dshash_table_handle handle,
+			  void *arg);
+extern void dshash_detach(dshash_table *hash_table);
+extern dshash_table_handle dshash_get_hash_table_handle(dshash_table *hash_table);
+extern void dshash_destroy(dshash_table *hash_table);
+
+/* Finding, creating, deleting entries. */
+extern void *dshash_find(dshash_table *hash_table,
+			const void *key, bool exclusive);
+extern void *dshash_find_or_insert(dshash_table *hash_table,
+					  const void *key, bool *found);
+extern bool dshash_delete_key(dshash_table *hash_table, const void *key);
+extern void dshash_delete_entry(dshash_table *hash_table, void *entry);
+extern void dshash_release_lock(dshash_table *hash_table, void *entry);
+
+/* Debugging support. */
+extern void dshash_dump(dshash_table *hash_table);
+
+#endif							/* DSHASH_H */

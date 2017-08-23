@@ -2604,6 +2604,13 @@ dsa_pointer
 dsa_segment_header
 dsa_segment_index
 dsa_segment_map
+dshash_hash
+dshash_parameters
+dshash_partition
+dshash_table
+dshash_table_control
+dshash_table_handle
+dshash_table_item
 dsm_control_header
 dsm_control_item
 dsm_handle
