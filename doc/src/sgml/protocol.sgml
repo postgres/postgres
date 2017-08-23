@@ -1405,13 +1405,13 @@ ErrorMessage.
   </para>
 
   <para>
-When SCRAM-SHA-256 is used in PostgreSQL, the server will ignore the username
-that the client sends in the <structname>client-first-message</>. The username
+When SCRAM-SHA-256 is used in PostgreSQL, the server will ignore the user name
+that the client sends in the <structname>client-first-message</>. The user name
 that was already sent in the startup message is used instead.
 <productname>PostgreSQL</> supports multiple character encodings, while SCRAM
-dictates UTF-8 to be used for the username, so it might be impossible to
-represent the PostgreSQL username in UTF-8. To avoid confusion, the client
-should use <literal>pg_same_as_startup_message</literal> as the username in the
+dictates UTF-8 to be used for the user name, so it might be impossible to
+represent the PostgreSQL user name in UTF-8. To avoid confusion, the client
+should use <literal>pg_same_as_startup_message</literal> as the user name in the
 <structname>client-first-message</>.
   </para>
 
@@ -5274,7 +5274,7 @@ RowDescription (B)
 
 <varlistentry>
 <term>
-SASLInitialresponse (F)
+SASLInitialResponse (F)
 </term>
 <listitem>
 <para>
