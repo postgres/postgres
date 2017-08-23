@@ -307,7 +307,7 @@ check_single_dir(const char *pg_data, const char *subdir)
 		report_status(PG_FATAL, "check for \"%s\" failed: %s\n",
 					  subDirName, strerror(errno));
 	else if (!S_ISDIR(statBuf.st_mode))
-		report_status(PG_FATAL, "%s is not a directory\n",
+		report_status(PG_FATAL, "\"%s\" is not a directory\n",
 					  subDirName);
 }
 
@@ -370,7 +370,7 @@ check_bin_dir(ClusterInfo *cluster)
 		report_status(PG_FATAL, "check for \"%s\" failed: %s\n",
 					  cluster->bindir, strerror(errno));
 	else if (!S_ISDIR(statBuf.st_mode))
-		report_status(PG_FATAL, "%s is not a directory\n",
+		report_status(PG_FATAL, "\"%s\" is not a directory\n",
 					  cluster->bindir);
 
 	validate_exec(cluster->bindir, "postgres");
