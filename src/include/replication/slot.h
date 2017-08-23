@@ -22,9 +22,13 @@
  *
  * Slots marked as PERSISTENT are crash-safe and will not be dropped when
  * released. Slots marked as EPHEMERAL will be dropped when released or after
- * restarts.
+ * restarts.  Slots marked TEMPORARY will be dropped at the end of a session
+ * or on error.
  *
- * EPHEMERAL slots can be made PERSISTENT by calling ReplicationSlotPersist().
+ * EPHEMERAL is used as a not-quite-ready state when creating persistent
+ * slots.  EPHEMERAL slots can be made PERSISTENT by calling
+ * ReplicationSlotPersist().  For a slot that goes away at the end of a
+ * session, TEMPORARY is the appropriate choice.
  */
 typedef enum ReplicationSlotPersistency
 {
