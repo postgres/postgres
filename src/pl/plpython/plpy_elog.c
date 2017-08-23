@@ -44,7 +44,7 @@ static bool set_string_attr(PyObject *obj, char *attrname, char *str);
  * in the context.
  */
 void
-PLy_elog(int elevel, const char *fmt,...)
+PLy_elog_impl(int elevel, const char *fmt,...)
 {
 	char	   *xmsg;
 	char	   *tbmsg;
