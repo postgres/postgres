@@ -104,8 +104,10 @@ main(int argc, char **argv)
 	check_new_cluster();
 	report_clusters_compatible();
 
-	pg_log(PG_REPORT, "\nPerforming Upgrade\n");
-	pg_log(PG_REPORT, "------------------\n");
+	pg_log(PG_REPORT,
+		   "\n"
+		   "Performing Upgrade\n"
+		   "------------------\n");
 
 	prepare_new_cluster();
 
@@ -164,8 +166,10 @@ main(int argc, char **argv)
 
 	issue_warnings_and_set_wal_level();
 
-	pg_log(PG_REPORT, "\nUpgrade Complete\n");
-	pg_log(PG_REPORT, "----------------\n");
+	pg_log(PG_REPORT,
+		   "\n"
+		   "Upgrade Complete\n"
+		   "----------------\n");
 
 	output_completion_banner(analyze_script_file_name,
 							 deletion_script_file_name);

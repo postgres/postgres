@@ -30,7 +30,7 @@ connectToServer(ClusterInfo *cluster, const char *db_name)
 
 	if (conn == NULL || PQstatus(conn) != CONNECTION_OK)
 	{
-		pg_log(PG_REPORT, "connection to database failed: %s\n",
+		pg_log(PG_REPORT, "connection to database failed: %s",
 			   PQerrorMessage(conn));
 
 		if (conn)
@@ -132,7 +132,7 @@ executeQueryOrDie(PGconn *conn, const char *fmt,...)
 
 	if ((status != PGRES_TUPLES_OK) && (status != PGRES_COMMAND_OK))
 	{
-		pg_log(PG_REPORT, "SQL command failed\n%s\n%s\n", query,
+		pg_log(PG_REPORT, "SQL command failed\n%s\n%s", query,
 			   PQerrorMessage(conn));
 		PQclear(result);
 		PQfinish(conn);
@@ -281,7 +281,7 @@ start_postmaster(ClusterInfo *cluster, bool throw_error)
 	if ((conn = get_db_conn(cluster, "template1")) == NULL ||
 		PQstatus(conn) != CONNECTION_OK)
 	{
-		pg_log(PG_REPORT, "\nconnection to database failed: %s\n",
+		pg_log(PG_REPORT, "\nconnection to database failed: %s",
 			   PQerrorMessage(conn));
 		if (conn)
 			PQfinish(conn);
