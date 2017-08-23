@@ -116,10 +116,12 @@
  *			than its own active transaction must acquire an exclusive
  *			lock.
  *
- *	FirstPredicateLockMgrLock based partition locks
+ *	PredicateLockHashPartitionLock(hashcode)
  *		- The same lock protects a target, all locks on that target, and
- *			the linked list of locks on the target..
- *		- When more than one is needed, acquire in ascending order.
+ *			the linked list of locks on the target.
+ *		- When more than one is needed, acquire in ascending address order.
+ *		- When all are needed (rare), acquire in ascending index order with
+ *			PredicateLockHashPartitionLockByIndex(index).
  *
  *	SerializableXactHashLock
  *		- Protects both PredXact and SerializableXidHash.
