@@ -723,7 +723,10 @@ op_error(ParseState *pstate, List *op, char oprkind,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
 				 errmsg("operator does not exist: %s",
 						op_signature_string(op, oprkind, arg1, arg2)),
-				 errhint("No operator matches the given name and argument type(s). "
+				 (!arg1 || !arg2) ?
+				 errhint("No operator matches the given name and argument type. "
+						 "You might need to add an explicit type cast.") :
+				 errhint("No operator matches the given name and argument types. "
 						 "You might need to add explicit type casts."),
 				 parser_errposition(pstate, location)));
 }

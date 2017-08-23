@@ -1605,7 +1605,7 @@ select 'foo'::text = any((select array['abc','def','foo']::text[]));  -- fail
 ERROR:  operator does not exist: text = text[]
 LINE 1: select 'foo'::text = any((select array['abc','def','foo']::t...
                            ^
-HINT:  No operator matches the given name and argument type(s). You might need to add explicit type casts.
+HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
 select 'foo'::text = any((select array['abc','def','foo']::text[])::text[]);
  ?column? 
 ----------
