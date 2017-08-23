@@ -57,6 +57,7 @@ static void PLy_abort_open_subtransactions(int save_subxact_level);
 Datum
 PLy_exec_function(FunctionCallInfo fcinfo, PLyProcedure *proc)
 {
+	bool		is_setof = proc->is_setof;
 	Datum		rv;
 	PyObject   *volatile plargs = NULL;
 	PyObject   *volatile plrv = NULL;
@@ -73,7 +74,7 @@ PLy_exec_function(FunctionCallInfo fcinfo, PLyProcedure *proc)
 
 	PG_TRY();
 	{
-		if (proc->is_setof)
+		if (is_setof)
 		{
 			/* First Call setup */
 			if (SRF_IS_FIRSTCALL())
@@ -93,6 +94,7 @@ PLy_exec_function(FunctionCallInfo fcinfo, PLyProcedure *proc)
 			funcctx = SRF_PERCALL_SETUP();
 			Assert(funcctx != NULL);
 			srfstate = (PLySRFState *) funcctx->user_fctx;
+			Assert(srfstate != NULL);
 		}
 
 		if (srfstate == NULL || srfstate->iter == NULL)
@@ -125,7 +127,7 @@ PLy_exec_function(FunctionCallInfo fcinfo, PLyProcedure *proc)
 		 * We stay in the SPI context while doing this, because PyIter_Next()
 		 * calls back into Python code which might contain SPI calls.
 		 */
-		if (proc->is_setof)
+		if (is_setof)
 		{
 			if (srfstate->iter == NULL)
 			{
