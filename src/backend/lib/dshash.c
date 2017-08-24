@@ -243,10 +243,20 @@ dshash_create(dsa_area *area, const dshash_parameters *params, void *arg)
 	 */
 	hash_table->control->size_log2 = DSHASH_NUM_PARTITIONS_LOG2;
 	hash_table->control->buckets =
-		dsa_allocate(area, sizeof(dsa_pointer) * DSHASH_NUM_PARTITIONS);
+		dsa_allocate_extended(area,
+							  sizeof(dsa_pointer) * DSHASH_NUM_PARTITIONS,
+							  DSA_ALLOC_NO_OOM | DSA_ALLOC_ZERO);
+	if (!DsaPointerIsValid(hash_table->control->buckets))
+	{
+		dsa_free(area, control);
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory"),
+				 errdetail("Failed on DSA request of size %zu.",
+						   sizeof(dsa_pointer) * DSHASH_NUM_PARTITIONS)));
+	}
 	hash_table->buckets = dsa_get_address(area,
 										  hash_table->control->buckets);
-	memset(hash_table->buckets, 0, sizeof(dsa_pointer) * DSHASH_NUM_PARTITIONS);
 
 	return hash_table;
 }
