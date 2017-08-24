@@ -542,47 +542,38 @@ select * from
 drop function tattle(x int, y int);
 
 --
--- Test that LIMIT can be pushed to SORT through a subquery that just
--- projects columns
+-- Test that LIMIT can be pushed to SORT through a subquery that just projects
+-- columns.  We check for that having happened by looking to see if EXPLAIN
+-- ANALYZE shows that a top-N sort was used.  We must suppress or filter away
+-- all the non-invariant parts of the EXPLAIN ANALYZE output.
 --
-create table sq_limit (pk int primary key, c1 int, c2 int);
+create temp table sq_limit (pk int primary key, c1 int, c2 int);
 insert into sq_limit values
-	(1, 1, 1),
-	(2, 2, 2),
-	(3, 3, 3),
-	(4, 4, 4),
-	(5, 1, 1),
-	(6, 2, 2),
-	(7, 3, 3),
-	(8, 4, 4);
+    (1, 1, 1),
+    (2, 2, 2),
+    (3, 3, 3),
+    (4, 4, 4),
+    (5, 1, 1),
+    (6, 2, 2),
+    (7, 3, 3),
+    (8, 4, 4);
 
--- The explain contains data that may not be invariant, so
--- filter for just the interesting bits.  The goal here is that
--- we should see three notices, in order:
---   NOTICE: Limit
---   NOTICE: Subquery
---   NOTICE: Top-N Sort
--- A missing step, or steps out of order means we have a problem.
-do $$
-	declare x text;
-	begin
-		for x in
-			explain (analyze, summary off, timing off, costs off)
-			select * from (select pk,c2 from sq_limit order by c1,pk) as x limit 3
-		loop
-			if (left(ltrim(x), 5) = 'Limit') then
-				raise notice 'Limit';
-			end if;
-			if (left(ltrim(x), 12) = '->  Subquery') then
-				raise notice 'Subquery';
-			end if;
-			if (left(ltrim(x), 18) = 'Sort Method: top-N') then
-				raise notice 'Top-N Sort';
-			end if;
-		end loop;
-	end;
+create function explain_sq_limit() returns setof text language plpgsql as
+$$
+declare ln text;
+begin
+    for ln in
+        explain (analyze, summary off, timing off, costs off)
+        select * from (select pk,c2 from sq_limit order by c1,pk) as x limit 3
+    loop
+        ln := regexp_replace(ln, 'Memory: \S*',  'Memory: xxx');
+        return next ln;
+    end loop;
+end;
 $$;
+
+select * from explain_sq_limit();
 
 select * from (select pk,c2 from sq_limit order by c1,pk) as x limit 3;
 
-drop table sq_limit;
+drop function explain_sq_limit();
