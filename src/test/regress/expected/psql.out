@@ -51,6 +51,31 @@ four  | 4
      3 |    4
 (1 row)
 
+-- \gx should work in FETCH_COUNT mode too
+\set FETCH_COUNT 1
+SELECT 1 as one, 2 as two \g
+ one | two 
+-----+-----
+   1 |   2
+(1 row)
+
+\gx
+-[ RECORD 1 ]
+one | 1
+two | 2
+
+SELECT 3 as three, 4 as four \gx
+-[ RECORD 1 ]
+three | 3
+four  | 4
+
+\g
+ three | four 
+-------+------
+     3 |    4
+(1 row)
+
+\unset FETCH_COUNT
 -- \gset
 select 10 as test01, 20 as test02, 'Hello' as test03 \gset pref01_
 \echo :pref01_test01 :pref01_test02 :pref01_test03

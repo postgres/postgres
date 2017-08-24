@@ -28,6 +28,16 @@ SELECT 1 as one, 2 as two \g
 SELECT 3 as three, 4 as four \gx
 \g
 
+-- \gx should work in FETCH_COUNT mode too
+\set FETCH_COUNT 1
+
+SELECT 1 as one, 2 as two \g
+\gx
+SELECT 3 as three, 4 as four \gx
+\g
+
+\unset FETCH_COUNT
+
 -- \gset
 
 select 10 as test01, 20 as test02, 'Hello' as test03 \gset pref01_

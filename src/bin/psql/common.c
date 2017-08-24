@@ -1565,6 +1565,10 @@ ExecQueryUsingCursor(const char *query, double *elapsed_msec)
 			 "FETCH FORWARD %d FROM _psql_cursor",
 			 fetch_count);
 
+	/* one-shot expanded output requested via \gx */
+	if (pset.g_expanded)
+		my_popt.topt.expanded = 1;
+
 	/* prepare to write output to \g argument, if any */
 	if (pset.gfname)
 	{
