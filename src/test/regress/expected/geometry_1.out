@@ -107,7 +107,7 @@ SELECT '' AS count, p.f1, l.s, l.s # p.f1 AS intersection
 ERROR:  operator does not exist: lseg # point
 LINE 1: SELECT '' AS count, p.f1, l.s, l.s # p.f1 AS intersection
                                            ^
-HINT:  No operator matches the given name and argument type(s). You might need to add explicit type casts.
+HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
 -- closest point
 SELECT '' AS thirty, p.f1, l.s, p.f1 ## l.s AS closest
    FROM LSEG_TBL l, POINT_TBL p;
