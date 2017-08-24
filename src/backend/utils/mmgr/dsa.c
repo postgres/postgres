@@ -707,7 +707,7 @@ dsa_allocate_extended(dsa_area *area, Size size, int flags)
 			dsa_free(area, span_pointer);
 
 			/* Raise error unless asked not to. */
-			if ((flags & MCXT_ALLOC_NO_OOM) == 0)
+			if ((flags & DSA_ALLOC_NO_OOM) == 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_OUT_OF_MEMORY),
 						 errmsg("out of memory"),
