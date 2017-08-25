@@ -126,15 +126,42 @@ select string4 from tenk1 order by string4 limit 5;
 reset max_parallel_workers;
 reset enable_hashagg;
 
-set force_parallel_mode=1;
-
+SAVEPOINT settings;
+SET LOCAL force_parallel_mode = 1;
 explain (costs off)
   select stringu1::int2 from tenk1 where unique1 = 1;
+ROLLBACK TO SAVEPOINT settings;
+
+-- exercise record typmod remapping between backends
+CREATE OR REPLACE FUNCTION make_record(n int)
+  RETURNS RECORD LANGUAGE plpgsql PARALLEL SAFE AS
+$$
+BEGIN
+  RETURN CASE n
+           WHEN 1 THEN ROW(1)
+           WHEN 2 THEN ROW(1, 2)
+           WHEN 3 THEN ROW(1, 2, 3)
+           WHEN 4 THEN ROW(1, 2, 3, 4)
+           ELSE ROW(1, 2, 3, 4, 5)
+         END;
+END;
+$$;
+SAVEPOINT settings;
+SET LOCAL force_parallel_mode = 1;
+SELECT make_record(x) FROM (SELECT generate_series(1, 5) x) ss ORDER BY x;
+ROLLBACK TO SAVEPOINT settings;
+DROP function make_record(n int);
 
 -- to increase the parallel query test coverage
+SAVEPOINT settings;
+SET LOCAL force_parallel_mode = 1;
 EXPLAIN (analyze, timing off, summary off, costs off) SELECT * FROM tenk1;
+ROLLBACK TO SAVEPOINT settings;
 
 -- provoke error in worker
+SAVEPOINT settings;
+SET LOCAL force_parallel_mode = 1;
 select stringu1::int2 from tenk1 where unique1 = 1;
+ROLLBACK TO SAVEPOINT settings;
 
 rollback;
