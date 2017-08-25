@@ -18606,7 +18606,8 @@ postgres=# select pg_start_backup('label_goes_here');
    </para>
 
    <para>
-    The function also creates a backup history file in the write-ahead log
+    When executed on a primary, the function also creates a backup history file
+    in the write-ahead log
     archive area. The history file includes the label given to
     <function>pg_start_backup</>, the starting and ending write-ahead log locations for
     the backup, and the starting and ending times of the backup.  The return

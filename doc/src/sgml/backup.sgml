@@ -889,8 +889,11 @@ SELECT pg_start_backup('label', false, false);
 <programlisting>
 SELECT * FROM pg_stop_backup(false, true);
 </programlisting>
-     This terminates the backup mode and performs an automatic switch to
-     the next WAL segment.  The reason for the switch is to arrange for
+     This terminates backup mode. On a primary, it also performs an automatic
+     switch to the next WAL segment.  On a standby, it is not possible to
+     automatically switch WAL segments, so you may wish to run
+     <function>pg_switch_wal</function> on the primary to perform a manual
+     switch. The reason for the switch is to arrange for
      the last WAL segment file written during the backup interval to be
      ready to archive.
     </para>
@@ -908,9 +911,12 @@ SELECT * FROM pg_stop_backup(false, true);
      Once the WAL segment files active during the backup are archived, you are
      done.  The file identified by <function>pg_stop_backup</>'s first return
      value is the last segment that is required to form a complete set of
-     backup files.  If <varname>archive_mode</> is enabled,
+     backup files.  On a primary, if <varname>archive_mode</> is enabled and the
+     <literal>wait_for_archive</> parameter is <literal>true</>,
      <function>pg_stop_backup</> does not return until the last segment has
      been archived.
+     On a standby, <varname>archive_mode</> must be <literal>always</> in order
+     for <function>pg_stop_backup</> to wait.
      Archiving of these files happens automatically since you have
      already configured <varname>archive_command</>. In most cases this
      happens quickly, but you are advised to monitor your archive
@@ -926,8 +932,9 @@ SELECT * FROM pg_stop_backup(false, true);
     </para>
     <para>
      If the backup process monitors and ensures that all WAL segment files
-     required for the backup are successfully archived then the second
-     parameter (which defaults to true) can be set to false to have
+     required for the backup are successfully archived then the
+     <literal>wait_for_archive</> parameter (which defaults to true) can be set
+     to false to have
      <function>pg_stop_backup</> return as soon as the stop backup record is
      written to the WAL.  By default, <function>pg_stop_backup</> will wait
      until all WAL has been archived, which can take some time.  This option
@@ -943,9 +950,9 @@ SELECT * FROM pg_stop_backup(false, true);
     <title>Making an exclusive low level backup</title>
     <para>
      The process for an exclusive backup is mostly the same as for a
-     non-exclusive one, but it differs in a few key steps. It does not allow
-     more than one concurrent backup to run, and there can be some issues on
-     the server if it crashes during the backup. Prior to PostgreSQL 9.6, this
+     non-exclusive one, but it differs in a few key steps. This type of backup
+     can only be taken on a primary and does not allow concurrent backups.
+     Prior to <productname>PostgreSQL</> 9.6, this
      was the only low-level method available, but it is now recommended that
      all users upgrade their scripts to use non-exclusive backups if possible.
     </para>
@@ -1003,6 +1010,11 @@ SELECT pg_start_backup('label', true);
      <xref linkend="backup-lowlevel-base-backup-data"> for things to
      consider during this backup.
     </para>
+    <para>
+      Note that if the server crashes during the backup it may not be
+      possible to restart until the <literal>backup_label</> file has been
+      manually deleted from the <envar>PGDATA</envar> directory.
+    </para>
    </listitem>
    <listitem>
     <para>
@@ -1012,15 +1024,10 @@ SELECT pg_start_backup('label', true);
 <programlisting>
 SELECT pg_stop_backup();
 </programlisting>
-     This function, when called on a primary, terminates the backup mode and
+     This function terminates backup mode and
      performs an automatic switch to the next WAL segment. The reason for the
      switch is to arrange for the last WAL segment written during the backup
-     interval to be ready to archive.  When called on a standby, this function
-     only terminates backup mode.  A subsequent WAL segment switch will be
-     needed in order to ensure that all WAL files needed to restore the backup
-     can be archived; if the primary does not have sufficient write activity
-     to trigger one, <function>pg_switch_wal</function> should be executed on
-     the primary.
+     interval to be ready to archive.
     </para>
    </listitem>
    <listitem>
