@@ -98,11 +98,11 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 32 "whenever_do_continue.pgc"
 
 
-	/* declare c cursor for select ename , sal , comm from emp order by ename asc */
+	/* declare c cursor for select ename , sal , comm from emp order by ename collate \"C\" asc */
 #line 34 "whenever_do_continue.pgc"
 
 
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare c cursor for select ename , sal , comm from emp order by ename asc", ECPGt_EOIT, ECPGt_EORT);
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare c cursor for select ename , sal , comm from emp order by ename collate \"C\" asc", ECPGt_EOIT, ECPGt_EORT);
 #line 36 "whenever_do_continue.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
