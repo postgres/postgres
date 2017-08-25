@@ -303,14 +303,11 @@ recompute_limits(LimitState *node)
 
 /*
  * If we have a COUNT, and our input is a Sort node, notify it that it can
- * use bounded sort.  Also, if our input is a MergeAppend, we can apply the
- * same bound to any Sorts that are direct children of the MergeAppend,
- * since the MergeAppend surely need read no more than that many tuples from
- * any one input.  We also have to be prepared to look through a Result,
- * since the planner might stick one atop MergeAppend for projection purposes.
- * We can also accept one or more levels of subqueries that have no quals or
- * SRFs (that is, each subquery is just projecting columns) between the LIMIT
- * and any of the above.
+ * use bounded sort.  We can also pass down the bound through plan nodes
+ * that cannot remove or combine input rows; for example, if our input is a
+ * MergeAppend, we can apply the same bound to any Sorts that are direct
+ * children of the MergeAppend, since the MergeAppend surely need not read
+ * more than that many tuples from any one input.
  *
  * This is a bit of a kluge, but we don't have any more-abstract way of
  * communicating between the two nodes; and it doesn't seem worth trying
@@ -324,27 +321,10 @@ static void
 pass_down_bound(LimitState *node, PlanState *child_node)
 {
 	/*
-	 * If the child is a subquery that does no filtering (no predicates)
-	 * and does not have any SRFs in the target list then we can potentially
-	 * push the limit through the subquery. It is possible that we could have
-	 * multiple subqueries, so tunnel through them all.
+	 * Since this function recurses, in principle we should check stack depth
+	 * here.  In practice, it's probably pointless since the earlier node
+	 * initialization tree traversal would surely have consumed more stack.
 	 */
-	while (IsA(child_node, SubqueryScanState))
-	{
-		SubqueryScanState *subqueryScanState;
-
-		subqueryScanState = (SubqueryScanState *) child_node;
-
-		/*
-		 * Non-empty predicates or an SRF means we cannot push down the limit.
-		 */
-		if (subqueryScanState->ss.ps.qual != NULL ||
-			expression_returns_set((Node *) child_node->plan->targetlist))
-			return;
-
-		/* Use the child in the following checks */
-		child_node = subqueryScanState->subplan;
-	}
 
 	if (IsA(child_node, SortState))
 	{
@@ -365,6 +345,7 @@ pass_down_bound(LimitState *node, PlanState *child_node)
 	}
 	else if (IsA(child_node, MergeAppendState))
 	{
+		/* Pass down the bound through MergeAppend */
 		MergeAppendState *maState = (MergeAppendState *) child_node;
 		int			i;
 
@@ -374,6 +355,9 @@ pass_down_bound(LimitState *node, PlanState *child_node)
 	else if (IsA(child_node, ResultState))
 	{
 		/*
+		 * We also have to be prepared to look through a Result, since the
+		 * planner might stick one atop MergeAppend for projection purposes.
+		 *
 		 * If Result supported qual checking, we'd have to punt on seeing a
 		 * qual.  Note that having a resconstantqual is not a showstopper: if
 		 * that fails we're not getting any rows at all.
@@ -381,6 +365,24 @@ pass_down_bound(LimitState *node, PlanState *child_node)
 		if (outerPlanState(child_node))
 			pass_down_bound(node, outerPlanState(child_node));
 	}
+	else if (IsA(child_node, SubqueryScanState))
+	{
+		/*
+		 * We can also look through SubqueryScan, but only if it has no qual
+		 * (otherwise it might discard rows).
+		 */
+		SubqueryScanState *subqueryState = (SubqueryScanState *) child_node;
+
+		if (subqueryState->ss.ps.qual == NULL)
+			pass_down_bound(node, subqueryState->subplan);
+	}
+
+	/*
+	 * In principle we could look through any plan node type that is certain
+	 * not to discard or combine input rows.  In practice, there are not many
+	 * node types that the planner might put between Sort and Limit, so trying
+	 * to be very general is not worth the trouble.
+	 */
 }
 
 /* ----------------------------------------------------------------
