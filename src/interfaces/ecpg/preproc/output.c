@@ -51,6 +51,9 @@ print_action(struct when *w)
 		case W_BREAK:
 			fprintf(base_yyout, "break;");
 			break;
+		case W_CONTINUE:
+			fprintf(base_yyout, "continue;");
+			break;
 		default:
 			fprintf(base_yyout, "{/* %d not implemented yet */}", w->code);
 			break;

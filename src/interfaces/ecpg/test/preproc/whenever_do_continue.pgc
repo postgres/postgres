@@ -1,0 +1,63 @@
+#include <stdlib.h>
+
+exec sql include ../regression;
+
+exec sql whenever sqlerror sqlprint;
+
+int main(void)
+{
+	exec sql begin declare section;
+	struct
+	{
+		char ename[12];
+		float sal;
+		float comm;
+	} emp;
+
+	char msg[128];
+	exec sql end declare section;
+
+	ECPGdebug(1, stderr);
+
+	strcpy(msg, "connect");
+	exec sql connect to REGRESSDB1;
+
+	strcpy(msg, "create");
+	exec sql  create table emp(ename varchar,sal double precision, comm double precision);
+
+	strcpy(msg, "insert");
+	exec sql insert into emp values ('Ram',111100,21);
+	exec sql insert into emp values ('aryan',11110,null);
+	exec sql insert into emp values ('josh',10000,10);
+	exec sql insert into emp values ('tom',20000,null);
+
+	exec sql declare c cursor for select ename, sal, comm from emp order by ename asc;
+
+	exec sql open c;
+
+	/* The 'BREAK' condition to exit the loop. */
+	exec sql whenever not found do break;
+
+	/* The DO CONTINUE makes the loop start at the next iteration when an error occurs.*/
+	exec sql whenever sqlerror do continue;
+
+	while (1)
+	{
+		exec sql fetch c into :emp;
+		/* The employees with non-NULL commissions will be displayed. */
+		printf("%s %7.2f %9.2f\n", emp.ename, emp.sal, emp.comm);
+	}
+
+	/*
+	 * This 'CONTINUE' shuts off the 'DO CONTINUE' and allow the program to
+	 * proceed if any further errors do occur.
+	 */
+	exec sql whenever sqlerror continue;
+
+	exec sql close c;
+
+	strcpy(msg, "drop");
+	exec sql drop table emp;
+
+	exit(0);
+}

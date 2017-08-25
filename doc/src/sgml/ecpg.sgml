@@ -4763,6 +4763,17 @@ EXEC SQL WHENEVER <replaceable>condition</replaceable> <replaceable>action</repl
      </varlistentry>
 
      <varlistentry>
+      <term><literal>DO CONTINUE</literal></term>
+      <listitem>
+       <para>
+        Execute the C statement <literal>continue</literal>.  This should
+        only be used in loops statements.  if executed, will cause the flow 
+        of control to return to the top of the loop.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><literal>CALL <replaceable>name</replaceable> (<replaceable>args</replaceable>)</literal></term>
       <term><literal>DO <replaceable>name</replaceable> (<replaceable>args</replaceable>)</literal></term>
       <listitem>
@@ -7799,6 +7810,7 @@ WHENEVER { NOT FOUND | SQLERROR | SQLWARNING } <replaceable class="PARAMETER">ac
 <programlisting>
 EXEC SQL WHENEVER NOT FOUND CONTINUE;
 EXEC SQL WHENEVER NOT FOUND DO BREAK;
+EXEC SQL WHENEVER NOT FOUND DO CONTINUE;
 EXEC SQL WHENEVER SQLWARNING SQLPRINT;
 EXEC SQL WHENEVER SQLWARNING DO warn();
 EXEC SQL WHENEVER SQLERROR sqlprint;

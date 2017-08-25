@@ -1454,6 +1454,12 @@ action : CONTINUE_P
 			$<action>$.command = NULL;
 			$<action>$.str = mm_strdup("break");
 		}
+		| DO CONTINUE_P
+		{
+			$<action>$.code = W_CONTINUE;
+			$<action>$.command = NULL;
+			$<action>$.str = mm_strdup("continue");
+		}
 		| SQL_CALL name '(' c_args ')'
 		{
 			$<action>$.code = W_DO;

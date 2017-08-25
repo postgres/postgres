@@ -15,6 +15,7 @@ TESTS = array_of_struct array_of_struct.c \
 	type type.c \
 	variable variable.c \
 	whenever whenever.c \
+	whenever_do_continue whenever_do_continue.c \
 	pointer_to_struct pointer_to_struct.c
 
 all: $(TESTS)
