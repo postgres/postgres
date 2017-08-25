@@ -95,10 +95,12 @@ extern char *output_files[];
 #endif
 
 
-/* OID system catalog preservation added during PG 9.0 development */
-#define TABLE_SPACE_SUBDIRS_CAT_VER 201001111
-/* postmaster/postgres -b (binary_upgrade) flag added during PG 9.1 development */
+/*
+ * postmaster/postgres -b (binary_upgrade) flag added during PG 9.1
+ * development
+ */
 #define BINARY_UPGRADE_SERVER_FLAG_CAT_VER 201104251
+
 /*
  *	Visibility map changed with this 9.2 commit,
  *	8f9fe6edce358f7904e0db119416b4d1080a83aa; pick later catalog version.
@@ -109,6 +111,7 @@ extern char *output_files[];
  * The format of visibility map is changed with this 9.6 commit,
  */
 #define VISIBILITY_MAP_FROZEN_BIT_CAT_VER 201603011
+
 /*
  * pg_multixact format changed in 9.3 commit 0ac5ad5134f2769ccbaefec73844f85,
  * ("Improve concurrency of foreign key locking") which also updated catalog
@@ -127,6 +130,7 @@ extern char *output_files[];
  * change in JSONB format during 9.4 beta
  */
 #define JSONB_FORMAT_CHANGE_CAT_VER 201409291
+
 
 /*
  * Each relation is represented by a relinfo structure.
