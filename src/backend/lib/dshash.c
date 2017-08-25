@@ -35,6 +35,7 @@
 #include "storage/ipc.h"
 #include "storage/lwlock.h"
 #include "utils/dsa.h"
+#include "utils/hsearch.h"
 #include "utils/memutils.h"
 
 /*
@@ -188,23 +189,14 @@ static inline bool equal_keys(dshash_table *hash_table,
 /*
  * Create a new hash table backed by the given dynamic shared area, with the
  * given parameters.  The returned object is allocated in backend-local memory
- * using the current MemoryContext.  If 'arg' is non-null, the arg variants of
- * hash and compare functions must be provided in 'params' and 'arg' will be
- * passed down to them.
+ * using the current MemoryContext.  'arg' will be passed through to the
+ * compare and hash functions.
  */
 dshash_table *
 dshash_create(dsa_area *area, const dshash_parameters *params, void *arg)
 {
 	dshash_table *hash_table;
 	dsa_pointer control;
-
-	/* Sanity checks on the set of supplied functions. */
-	Assert((params->compare_function != NULL) ^
-		   (params->compare_arg_function != NULL));
-	Assert((params->hash_function != NULL) ^
-		   (params->hash_arg_function != NULL));
-	Assert(arg == NULL || (params->compare_arg_function != NULL));
-	Assert(arg == NULL || (params->hash_arg_function != NULL));
 
 	/* Allocate the backend-local object representing the hash table. */
 	hash_table = palloc(sizeof(dshash_table));
@@ -263,9 +255,8 @@ dshash_create(dsa_area *area, const dshash_parameters *params, void *arg)
 
 /*
  * Attach to an existing hash table using a handle.  The returned object is
- * allocated in backend-local memory using the current MemoryContext.  If
- * 'arg' is non-null, the arg variants of hash and compare functions must be
- * provided in 'params' and 'arg' will be passed down to them.
+ * allocated in backend-local memory using the current MemoryContext.  'arg'
+ * will be passed through to the compare and hash functions.
  */
 dshash_table *
 dshash_attach(dsa_area *area, const dshash_parameters *params,
@@ -273,14 +264,6 @@ dshash_attach(dsa_area *area, const dshash_parameters *params,
 {
 	dshash_table *hash_table;
 	dsa_pointer control;
-
-	/* Sanity checks on the set of supplied functions. */
-	Assert((params->compare_function != NULL) ^
-		   (params->compare_arg_function != NULL));
-	Assert((params->hash_function != NULL) ^
-		   (params->hash_arg_function != NULL));
-	Assert(arg == NULL || (params->compare_arg_function != NULL));
-	Assert(arg == NULL || (params->hash_arg_function != NULL));
 
 	/* Allocate the backend-local object representing the hash table. */
 	hash_table = palloc(sizeof(dshash_table));
@@ -583,6 +566,24 @@ dshash_release_lock(dshash_table *hash_table, void *entry)
 }
 
 /*
+ * A compare function that forwards to memcmp.
+ */
+int
+dshash_memcmp(const void *a, const void *b, size_t size, void *arg)
+{
+	return memcmp(a, b, size);
+}
+
+/*
+ * A hash function that forwards to tag_hash.
+ */
+dshash_hash
+dshash_memhash(const void *v, size_t size, void *arg)
+{
+	return tag_hash(v, size);
+}
+
+/*
  * Print debugging information about the internal state of the hash table to
  * stderr.  The caller must hold no partition locks.
  */
@@ -874,11 +875,9 @@ delete_item_from_bucket(dshash_table *hash_table,
 static inline dshash_hash
 hash_key(dshash_table *hash_table, const void *key)
 {
-	if (hash_table->params.hash_arg_function != NULL)
-		return hash_table->params.hash_arg_function(key, hash_table->arg);
-	else
-		return hash_table->params.hash_function(key,
-												hash_table->params.key_size);
+	return hash_table->params.hash_function(key,
+											hash_table->params.key_size,
+											hash_table->arg);
 }
 
 /*
@@ -887,13 +886,7 @@ hash_key(dshash_table *hash_table, const void *key)
 static inline bool
 equal_keys(dshash_table *hash_table, const void *a, const void *b)
 {
-	int			r;
-
-	if (hash_table->params.compare_arg_function != NULL)
-		r = hash_table->params.compare_arg_function(a, b, hash_table->arg);
-	else
-		r = hash_table->params.compare_function(a, b,
-												hash_table->params.key_size);
-
-	return r == 0;
+	return hash_table->params.compare_function(a, b,
+											   hash_table->params.key_size,
+											   hash_table->arg) == 0;
 }

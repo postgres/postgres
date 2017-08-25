@@ -26,32 +26,13 @@ typedef dsa_pointer dshash_table_handle;
 /* The type for hash values. */
 typedef uint32 dshash_hash;
 
-/*
- * A function used for comparing keys.  This version is compatible with
- * HashCompareFunction in hsearch.h and memcmp.
- */
-typedef int (*dshash_compare_function) (const void *a, const void *b, size_t size);
+/* A function type for comparing keys. */
+typedef int (*dshash_compare_function) (const void *a, const void *b,
+										size_t size, void *arg);
 
-/*
- * A function type used for comparing keys.  This version allows compare
- * functions to receive a pointer to arbitrary user data that was given to the
- * create or attach function.  Similar to qsort_arg_comparator.
- */
-typedef int (*dshash_compare_arg_function) (const void *a, const void *b, void *arg);
-
-/*
- * A function type for computing hash values for keys.  This version is
- * compatible with HashValueFunc in hsearch.h and hash functions like
- * tag_hash.
- */
-typedef dshash_hash (*dshash_hash_function) (const void *v, size_t size);
-
-/*
- * A function type for computing hash values for keys.  This version allows
- * hash functions to receive a pointer to arbitrary user data that was given
- * to the create or attach function.
- */
-typedef dshash_hash (*dshash_hash_arg_function) (const void *v, void *arg);
+/* A function type for computing hash values for keys. */
+typedef dshash_hash (*dshash_hash_function) (const void *v, size_t size,
+											 void *arg);
 
 /*
  * The set of parameters needed to create or attach to a hash table.  The
@@ -70,9 +51,7 @@ typedef struct dshash_parameters
 	size_t		key_size;		/* Size of the key (initial bytes of entry) */
 	size_t		entry_size;		/* Total size of entry */
 	dshash_compare_function compare_function;	/* Compare function */
-	dshash_compare_arg_function compare_arg_function;	/* Arg version */
 	dshash_hash_function hash_function; /* Hash function */
-	dshash_hash_arg_function hash_arg_function; /* Arg version */
 	int			tranche_id;		/* The tranche ID to use for locks */
 } dshash_parameters;
 
@@ -100,6 +79,10 @@ extern void *dshash_find_or_insert(dshash_table *hash_table,
 extern bool dshash_delete_key(dshash_table *hash_table, const void *key);
 extern void dshash_delete_entry(dshash_table *hash_table, void *entry);
 extern void dshash_release_lock(dshash_table *hash_table, void *entry);
+
+/* Convenience hash and compare functions wrapping memcmp and tag_hash. */
+extern int dshash_memcmp(const void *a, const void *b, size_t size, void *arg);
+extern dshash_hash dshash_memhash(const void *v, size_t size, void *arg);
 
 /* Debugging support. */
 extern void dshash_dump(dshash_table *hash_table);
