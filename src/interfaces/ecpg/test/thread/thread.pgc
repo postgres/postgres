@@ -99,14 +99,16 @@ void *test_thread(void *arg)
 {
   long threadnum = (long)arg;
 
-#ifdef WIN32
-	_configthreadlocale(_ENABLE_PER_THREAD_LOCALE);
-#endif
-
   EXEC SQL BEGIN DECLARE SECTION;
   int  l_i;
   char l_connection[128];
   EXEC SQL END DECLARE SECTION;
+
+#ifdef WIN32
+#ifdef _MSC_VER                /* requires MSVC */
+	_configthreadlocale(_ENABLE_PER_THREAD_LOCALE);
+#endif
+#endif
 
   /* build up connection name, and connect to database */
 #ifndef _MSC_VER
