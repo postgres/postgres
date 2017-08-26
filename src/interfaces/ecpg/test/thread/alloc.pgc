@@ -36,15 +36,17 @@ static void* fn(void* arg)
 {
 	int i;
 
-#ifdef WIN32
-	_configthreadlocale(_ENABLE_PER_THREAD_LOCALE);
-#endif
-
 	EXEC SQL BEGIN DECLARE SECTION;
 	int  value;
 	char name[100];
 	char **r = NULL;
 	EXEC SQL END DECLARE SECTION;
+
+#ifdef WIN32
+#ifdef _MSC_VER                /* requires MSVC */
+	_configthreadlocale(_ENABLE_PER_THREAD_LOCALE);
+#endif
+#endif
 
 	value = (long)arg;
 	sprintf(name, "Connection: %d", value);
