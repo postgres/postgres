@@ -27,6 +27,7 @@ main(void)
 #include <pthread.h>
 #else
 #include <windows.h>
+#include <locale.h>
 #endif
 
 
@@ -37,7 +38,7 @@ main(void)
 
 
 
-#line 23 "thread_implicit.pgc"
+#line 24 "thread_implicit.pgc"
 
 
 void *test_thread(void *arg);
@@ -56,10 +57,10 @@ int main()
   /* exec sql begin declare section */
    
   
-#line 39 "thread_implicit.pgc"
+#line 40 "thread_implicit.pgc"
  int l_rows ;
 /* exec sql end declare section */
-#line 40 "thread_implicit.pgc"
+#line 41 "thread_implicit.pgc"
 
 
  /* Do not switch on debug output for regression tests. The threads get executed in
@@ -68,22 +69,22 @@ int main()
 
   /* setup test_thread table */
   { ECPGconnect(__LINE__, 0, "ecpg1_regression" , NULL, NULL , NULL, 0); }
-#line 47 "thread_implicit.pgc"
+#line 48 "thread_implicit.pgc"
 
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "drop table test_thread", ECPGt_EOIT, ECPGt_EORT);}
-#line 48 "thread_implicit.pgc"
+#line 49 "thread_implicit.pgc"
  /* DROP might fail */
   { ECPGtrans(__LINE__, NULL, "commit");}
-#line 49 "thread_implicit.pgc"
+#line 50 "thread_implicit.pgc"
 
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create table test_thread ( tstamp timestamp not null default cast ( timeofday ( ) as timestamp ) , thread text not null , iteration integer not null , primary key ( thread , iteration ) )", ECPGt_EOIT, ECPGt_EORT);}
-#line 54 "thread_implicit.pgc"
-
-  { ECPGtrans(__LINE__, NULL, "commit");}
 #line 55 "thread_implicit.pgc"
 
-  { ECPGdisconnect(__LINE__, "CURRENT");}
+  { ECPGtrans(__LINE__, NULL, "commit");}
 #line 56 "thread_implicit.pgc"
+
+  { ECPGdisconnect(__LINE__, "CURRENT");}
+#line 57 "thread_implicit.pgc"
 
 
   /* create, and start, threads */
@@ -115,18 +116,18 @@ int main()
 
   /* and check results */
   { ECPGconnect(__LINE__, 0, "ecpg1_regression" , NULL, NULL , NULL, 0); }
-#line 86 "thread_implicit.pgc"
+#line 87 "thread_implicit.pgc"
 
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select count ( * ) from test_thread", ECPGt_EOIT, 
 	ECPGt_int,&(l_rows),(long)1,(long)1,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);}
-#line 87 "thread_implicit.pgc"
-
-  { ECPGtrans(__LINE__, NULL, "commit");}
 #line 88 "thread_implicit.pgc"
 
-  { ECPGdisconnect(__LINE__, "CURRENT");}
+  { ECPGtrans(__LINE__, NULL, "commit");}
 #line 89 "thread_implicit.pgc"
+
+  { ECPGdisconnect(__LINE__, "CURRENT");}
+#line 90 "thread_implicit.pgc"
 
   if( l_rows == (nthreads * iterations) )
     printf("Success.\n");
@@ -139,17 +140,22 @@ int main()
 void *test_thread(void *arg)
 {
   long threadnum = (long)arg;
+
+#ifdef WIN32
+	_configthreadlocale(_ENABLE_PER_THREAD_LOCALE);
+#endif
+
   /* exec sql begin declare section */
     
    
   
-#line 102 "thread_implicit.pgc"
+#line 108 "thread_implicit.pgc"
  int l_i ;
  
-#line 103 "thread_implicit.pgc"
+#line 109 "thread_implicit.pgc"
  char l_connection [ 128 ] ;
 /* exec sql end declare section */
-#line 104 "thread_implicit.pgc"
+#line 110 "thread_implicit.pgc"
 
 
   /* build up connection name, and connect to database */
@@ -159,13 +165,13 @@ void *test_thread(void *arg)
   _snprintf(l_connection, sizeof(l_connection), "thread_%03ld", threadnum);
 #endif
   /* exec sql whenever sqlerror  sqlprint ; */
-#line 112 "thread_implicit.pgc"
+#line 118 "thread_implicit.pgc"
 
   { ECPGconnect(__LINE__, 0, "ecpg1_regression" , NULL, NULL , l_connection, 0); 
-#line 113 "thread_implicit.pgc"
+#line 119 "thread_implicit.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 113 "thread_implicit.pgc"
+#line 119 "thread_implicit.pgc"
 
   if( sqlca.sqlcode != 0 )
     {
@@ -173,10 +179,10 @@ if (sqlca.sqlcode < 0) sqlprint();}
       return( NULL );
     }
   { ECPGtrans(__LINE__, NULL, "begin");
-#line 119 "thread_implicit.pgc"
+#line 125 "thread_implicit.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 119 "thread_implicit.pgc"
+#line 125 "thread_implicit.pgc"
 
 
   /* insert into test_thread table */
@@ -187,10 +193,10 @@ if (sqlca.sqlcode < 0) sqlprint();}
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_int,&(l_i),(long)1,(long)1,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
-#line 124 "thread_implicit.pgc"
+#line 130 "thread_implicit.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 124 "thread_implicit.pgc"
+#line 130 "thread_implicit.pgc"
 
       if( sqlca.sqlcode != 0 )
 	printf("%s: ERROR: insert failed!\n", l_connection);
@@ -198,16 +204,16 @@ if (sqlca.sqlcode < 0) sqlprint();}
 
   /* all done */
   { ECPGtrans(__LINE__, NULL, "commit");
-#line 130 "thread_implicit.pgc"
+#line 136 "thread_implicit.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 130 "thread_implicit.pgc"
+#line 136 "thread_implicit.pgc"
 
   { ECPGdisconnect(__LINE__, l_connection);
-#line 131 "thread_implicit.pgc"
+#line 137 "thread_implicit.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 131 "thread_implicit.pgc"
+#line 137 "thread_implicit.pgc"
 
   return( NULL );
 }

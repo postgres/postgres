@@ -17,6 +17,7 @@ main(void)
 #include <pthread.h>
 #else
 #include <windows.h>
+#include <locale.h>
 #endif
 
 exec sql include ../regression;
@@ -97,6 +98,11 @@ int main()
 void *test_thread(void *arg)
 {
   long threadnum = (long)arg;
+
+#ifdef WIN32
+	_configthreadlocale(_ENABLE_PER_THREAD_LOCALE);
+#endif
+
   EXEC SQL BEGIN DECLARE SECTION;
   int  l_i;
   char l_connection[128];

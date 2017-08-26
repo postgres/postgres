@@ -12,6 +12,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <process.h>
+#include <locale.h>
 #else
 #include <pthread.h>
 #endif
@@ -90,13 +91,13 @@ struct sqlca_t *ECPGget_sqlca(void);
 
 #endif
 
-#line 15 "descriptor.pgc"
-
-/* exec sql whenever sqlerror  sqlprint ; */
 #line 16 "descriptor.pgc"
 
-/* exec sql whenever not found  sqlprint ; */
+/* exec sql whenever sqlerror  sqlprint ; */
 #line 17 "descriptor.pgc"
+
+/* exec sql whenever not found  sqlprint ; */
+#line 18 "descriptor.pgc"
 
 
 #if defined(ENABLE_THREAD_SAFETY) && defined(WIN32)
@@ -107,19 +108,23 @@ static void* fn(void* arg)
 {
 	int i;
 
+#ifdef WIN32
+	_configthreadlocale(_ENABLE_PER_THREAD_LOCALE);
+#endif
+
 	for (i = 1; i <= REPEATS; ++i)
 	{
 		ECPGallocate_desc(__LINE__, "mydesc");
-#line 29 "descriptor.pgc"
+#line 34 "descriptor.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();
-#line 29 "descriptor.pgc"
+#line 34 "descriptor.pgc"
 
 		ECPGdeallocate_desc(__LINE__, "mydesc");
-#line 30 "descriptor.pgc"
+#line 35 "descriptor.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();
-#line 30 "descriptor.pgc"
+#line 35 "descriptor.pgc"
 
 	}
 
