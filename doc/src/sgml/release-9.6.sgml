@@ -1,6 +1,271 @@
 <!-- doc/src/sgml/release-9.6.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-9-6-5">
+  <title>Release 9.6.5</title>
+
+  <formalpara>
+  <title>Release date:</title>
+  <para>2017-08-31</para>
+  </formalpara>
+
+  <para>
+   This release contains a small number of fixes from 9.6.4.
+   For information about new features in the 9.6 major release, see
+   <xref linkend="release-9-6">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 9.6.5</title>
+
+   <para>
+    A dump/restore is not required for those running 9.6.X.
+   </para>
+
+   <para>
+    However, if you are upgrading from a version earlier than 9.6.4,
+    see <xref linkend="release-9-6-4">.
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+<!--
+Author: Andres Freund <andres@anarazel.de>
+Branch: REL9_4_STABLE [b51c8efc6] 2017-08-24 15:21:32 -0700
+-->
+     <para>
+      Fix failure of walsender processes to respond to shutdown signals
+      (Marco Nenciarini)
+     </para>
+
+     <para>
+      A missed flag update resulted in walsenders continuing to run as long
+      as they had a standby server connected, preventing primary-server
+      shutdown unless immediate shutdown mode is used.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Peter Eisentraut <peter_e@gmx.net>
+Branch: master [0659465ca] 2017-08-15 19:27:22 -0400
+Branch: REL_10_STABLE [3ea58216d] 2017-08-15 19:30:35 -0400
+Branch: REL9_6_STABLE [dce90c7c8] 2017-08-15 19:31:06 -0400
+Branch: REL9_5_STABLE [dbeefe64f] 2017-08-15 19:32:00 -0400
+Branch: REL9_4_STABLE [52427015a] 2017-08-15 19:32:41 -0400
+Branch: REL9_3_STABLE [9f0f4efc2] 2017-08-15 19:32:52 -0400
+Branch: REL9_2_STABLE [98e6784aa] 2017-08-15 19:33:04 -0400
+-->
+     <para>
+      Show foreign tables
+      in <structname>information_schema</>.<structname>table_privileges</>
+      view (Peter Eisentraut)
+     </para>
+
+     <para>
+      All other relevant <structname>information_schema</> views include
+      foreign tables, but this one ignored them.
+     </para>
+
+     <para>
+      Since this view definition is installed by <application>initdb</>,
+      merely upgrading will not fix the problem.  If you need to fix this
+      in an existing installation, you can, as a superuser, do this
+      in <application>psql</>:
+<programlisting>
+BEGIN;
+DROP SCHEMA information_schema CASCADE;
+\i <replaceable>SHAREDIR</>/information_schema.sql
+COMMIT;
+</programlisting>
+      (Run <literal>pg_config --sharedir</> if you're uncertain
+      where <replaceable>SHAREDIR</> is.)  This must be repeated in each
+      database to be fixed.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master Release: REL_10_STABLE [5b6289c1e] 2017-08-14 15:43:20 -0400
+Branch: REL9_6_STABLE [624b6f328] 2017-08-14 15:43:20 -0400
+Branch: REL9_5_STABLE [51684bad9] 2017-08-14 15:43:20 -0400
+Branch: REL9_4_STABLE [daafb11ff] 2017-08-14 15:43:20 -0400
+Branch: REL9_3_STABLE [cd184273b] 2017-08-14 15:43:20 -0400
+Branch: REL9_2_STABLE [8ae41ceae] 2017-08-14 15:43:20 -0400
+-->
+     <para>
+      Clean up handling of a fatal exit (e.g., due to receipt
+      of <systemitem>SIGTERM</>) that occurs while trying to execute
+      a <command>ROLLBACK</> of a failed transaction (Tom Lane)
+     </para>
+
+     <para>
+      This situation could result in an assertion failure.  In production
+      builds, the exit would still occur, but it would log an unexpected
+      message about <quote>cannot drop active portal</>.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master Release: REL_10_STABLE [004a9702e] 2017-08-13 16:15:14 -0400
+Branch: REL9_6_STABLE [a64b5a992] 2017-08-13 16:15:14 -0400
+Branch: REL9_5_STABLE [425be3ac9] 2017-08-13 16:15:14 -0400
+Branch: REL9_4_STABLE [5a3688dc8] 2017-08-13 16:15:14 -0400
+Branch: REL9_3_STABLE [bb11ff2bc] 2017-08-13 16:15:14 -0400
+Branch: REL9_2_STABLE [5069017fe] 2017-08-13 16:15:14 -0400
+-->
+     <para>
+      Remove assertion that could trigger during a fatal exit (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master Release: REL_10_STABLE [749c7c417] 2017-08-09 17:03:09 -0400
+Branch: REL9_6_STABLE [e2e398473] 2017-08-09 17:03:09 -0400
+Branch: REL9_5_STABLE [d1c1d90e1] 2017-08-09 17:03:09 -0400
+Branch: REL9_4_STABLE [95a0a8d2a] 2017-08-09 17:03:09 -0400
+Branch: REL9_3_STABLE [06931a9c0] 2017-08-09 17:03:10 -0400
+Branch: REL9_2_STABLE [4e704aac1] 2017-08-09 17:03:10 -0400
+-->
+     <para>
+      Correctly identify columns that are of a range type or domain type over
+      a composite type or domain type being searched for (Tom Lane)
+     </para>
+
+     <para>
+      Certain <command>ALTER</> commands that change the definition of a
+      composite type or domain type are supposed to fail if there are any
+      stored values of that type in the database, because they lack the
+      infrastructure needed to update or check such values.  Previously,
+      these checks could miss relevant values that are wrapped inside range
+      types or sub-domains, possibly allowing the database to become
+      inconsistent.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master Release: REL_10_STABLE [9bf4068cc] 2017-08-08 19:18:22 -0400
+Branch: REL9_6_STABLE [fe578cbd4] 2017-08-08 19:18:23 -0400
+-->
+     <para>
+      Prevent crash when passing fixed-length pass-by-reference data types
+      to parallel worker processes (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [b1c2d76a2] 2017-08-19 13:39:51 -0400
+Branch: REL_10_STABLE [1c3869c0b] 2017-08-19 13:39:52 -0400
+Branch: REL9_6_STABLE [41803d55a] 2017-08-19 13:39:38 -0400
+Branch: REL9_5_STABLE [258aac0b2] 2017-08-19 13:39:38 -0400
+Branch: REL9_4_STABLE [59dde9fed] 2017-08-19 13:39:38 -0400
+Branch: REL9_3_STABLE [ece4bd901] 2017-08-19 13:39:38 -0400
+-->
+     <para>
+      Fix crash in <application>pg_restore</> when using parallel mode and
+      using a list file to select a subset of items to restore (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Michael Meskes <meskes@postgresql.org>
+Branch: master Release: REL_10_STABLE [ea0ca75d5] 2017-08-14 11:29:34 +0200
+Branch: REL9_6_STABLE [3d7a1e2b9] 2017-08-16 13:28:14 +0200
+Branch: REL9_5_STABLE [f2ed2d0a1] 2017-08-16 13:28:37 +0200
+Branch: REL9_4_STABLE [bd502753a] 2017-08-16 13:29:00 +0200
+Branch: REL9_3_STABLE [f8bc6b2f6] 2017-08-16 13:30:09 +0200
+Branch: REL9_2_STABLE [60b135c82] 2017-08-16 13:30:20 +0200
+-->
+     <para>
+      Change <application>ecpg</>'s parser to allow <literal>RETURNING</>
+      clauses without attached C variables (Michael Meskes)
+     </para>
+
+     <para>
+      This allows <application>ecpg</> programs to contain SQL constructs
+      that use <literal>RETURNING</> internally (for example, inside a CTE)
+      rather than using it to define values to be returned to the client.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Michael Meskes <meskes@postgresql.org>
+Branch: master [a4619b26a] 2017-08-15 17:14:52 +0200
+Branch: REL_10_STABLE [a6b174f55] 2017-08-16 13:27:21 +0200
+Branch: REL9_6_STABLE [954490fec] 2017-08-16 13:28:10 +0200
+-->
+     <para>
+      Change <application>ecpg</>'s parser to recognize backslash
+      continuation of C preprocessor command lines (Michael Meskes)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master Release: REL_10_STABLE [5a5c2feca] 2017-08-14 11:48:59 -0400
+Branch: REL9_6_STABLE [3883be3ea] 2017-08-14 11:48:59 -0400
+Branch: REL9_5_STABLE [1621a7553] 2017-08-14 11:48:59 -0400
+Branch: REL9_4_STABLE [01de7ea85] 2017-08-14 11:48:59 -0400
+Branch: REL9_3_STABLE [25169b948] 2017-08-14 11:48:59 -0400
+Branch: REL9_2_STABLE [e3335ec0b] 2017-08-14 11:48:59 -0400
+Branch: master [b5178c5d0] 2017-08-17 13:13:47 -0400
+Branch: REL_10_STABLE [1d7a479d2] 2017-08-17 13:13:56 -0400
+Branch: REL9_6_STABLE [c34331488] 2017-08-17 13:14:06 -0400
+Branch: REL9_5_STABLE [bff216d87] 2017-08-17 13:14:11 -0400
+Branch: REL9_4_STABLE [4f862351d] 2017-08-17 13:15:15 -0400
+Branch: REL9_3_STABLE [bc4404405] 2017-08-17 13:15:36 -0400
+Branch: REL9_2_STABLE [f7e4783dd] 2017-08-17 13:15:46 -0400
+-->
+     <para>
+      Improve selection of compiler flags for PL/Perl on Windows (Tom Lane)
+     </para>
+
+     <para>
+      This fix avoids possible crashes of PL/Perl due to inconsistent
+      assumptions about the width of <type>time_t</> values.
+      A side-effect that may be visible to extension developers is
+      that <literal>_USE_32BIT_TIME_T</> is no longer defined globally
+      in <productname>PostgreSQL</> Windows builds.  This is not expected
+      to cause problems, because type <type>time_t</> is not used
+      in any <productname>PostgreSQL</> API definitions.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master Release: REL_10_STABLE [a76200de8] 2017-08-09 12:05:53 -0400
+Branch: REL9_6_STABLE [fc2aafe4a] 2017-08-09 12:06:08 -0400
+Branch: REL9_5_STABLE [a784d5f21] 2017-08-09 12:06:14 -0400
+-->
+     <para>
+      Fix <literal>make check</> to behave correctly when invoked via a
+      non-GNU make program (Thomas Munro)
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-9-6-4">
   <title>Release 9.6.4</title>
 
