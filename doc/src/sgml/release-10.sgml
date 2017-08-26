@@ -6,7 +6,7 @@
 
   <formalpara>
    <title>Release date:</title>
-   <para>2017-??-?? (current as of 2017-08-05, commit eccead9ed)</para>
+   <para>2017-??-?? (current as of 2017-08-26, commit 145ca364d)</para>
   </formalpara>
 
   <sect2>
@@ -1490,6 +1490,7 @@
      <listitem>
 <!--
 2017-03-22 [017e4f258] Expose waitforarchive option through pg_stop_backup()
+2017-08-05 [52f8a59dd] Make pg_stop_backup's wait_for_archive flag work on stan
 -->
       <para>
        Allow users to disable <link
@@ -2356,6 +2357,16 @@
        </para>
       </listitem>
 
+      <listitem>
+<!--
+2017-08-11 [796818442] Remove pgbench's restriction on placement of -M switch.
+-->
+       <para>
+        Remove restriction on placement of <option>-M</> option relative to
+        other command line options (Tom Lane)
+       </para>
+      </listitem>
+
      </itemizedlist>
 
     </sect4>
@@ -2459,6 +2470,16 @@
        <para>
         This allows use of <application>pg_dumpall</> by non-superusers;
         without this option, it fails due to inability to read passwords.
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
+2017-08-16 [e4892c681] pg_dump: Support using synchronized snapshots on standby
+-->
+       <para>
+        Support using synchronized snapshots when dumping from a standby
+        server (Petr Jelinek)
        </para>
       </listitem>
 
@@ -2848,6 +2869,16 @@
        option <option>--disable-strong-random</> is used.  However, with
        this option, pgcrypto functions requiring a strong random number
        generator will be disabled.
+      </para>
+     </listitem>
+
+     <listitem>
+<!--
+2017-08-15 [d7ab908fb] Distinguish wait-for-connection from wait-for-write-read
+-->
+      <para>
+       Allow <function>WaitLatchOrSocket()</> to wait for socket
+       connection on Windows (Andres Freund)
       </para>
      </listitem>
 
