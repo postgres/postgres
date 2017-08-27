@@ -35,23 +35,6 @@
 
     <listitem>
 <!--
-Author: Andres Freund <andres@anarazel.de>
-Branch: REL9_4_STABLE [b51c8efc6] 2017-08-24 15:21:32 -0700
--->
-     <para>
-      Fix failure of walsender processes to respond to shutdown signals
-      (Marco Nenciarini)
-     </para>
-
-     <para>
-      A missed flag update resulted in walsenders continuing to run as long
-      as they had a standby server connected, preventing primary-server
-      shutdown unless immediate shutdown mode is used.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
 Author: Peter Eisentraut <peter_e@gmx.net>
 Branch: master [0659465ca] 2017-08-15 19:27:22 -0400
 Branch: REL_10_STABLE [3ea58216d] 2017-08-15 19:30:35 -0400
