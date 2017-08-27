@@ -1,6 +1,146 @@
 <!-- doc/src/sgml/release-9.3.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-9-3-19">
+  <title>Release 9.3.19</title>
+
+  <formalpara>
+  <title>Release date:</title>
+  <para>2017-08-31</para>
+  </formalpara>
+
+  <para>
+   This release contains a small number of fixes from 9.3.18.
+   For information about new features in the 9.3 major release, see
+   <xref linkend="release-9-3">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 9.3.19</title>
+
+   <para>
+    A dump/restore is not required for those running 9.3.X.
+   </para>
+
+   <para>
+    However, if you are upgrading from a version earlier than 9.3.18,
+    see <xref linkend="release-9-3-18">.
+   </para>
+
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Show foreign tables
+      in <structname>information_schema</>.<structname>table_privileges</>
+      view (Peter Eisentraut)
+     </para>
+
+     <para>
+      All other relevant <structname>information_schema</> views include
+      foreign tables, but this one ignored them.
+     </para>
+
+     <para>
+      Since this view definition is installed by <application>initdb</>,
+      merely upgrading will not fix the problem.  If you need to fix this
+      in an existing installation, you can, as a superuser, do this
+      in <application>psql</>:
+<programlisting>
+BEGIN;
+DROP SCHEMA information_schema CASCADE;
+\i <replaceable>SHAREDIR</>/information_schema.sql
+COMMIT;
+</programlisting>
+      (Run <literal>pg_config --sharedir</> if you're uncertain
+      where <replaceable>SHAREDIR</> is.)  This must be repeated in each
+      database to be fixed.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Clean up handling of a fatal exit (e.g., due to receipt
+      of <systemitem>SIGTERM</>) that occurs while trying to execute
+      a <command>ROLLBACK</> of a failed transaction (Tom Lane)
+     </para>
+
+     <para>
+      This situation could result in an assertion failure.  In production
+      builds, the exit would still occur, but it would log an unexpected
+      message about <quote>cannot drop active portal</>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Remove assertion that could trigger during a fatal exit (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Correctly identify columns that are of a range type or domain type over
+      a composite type or domain type being searched for (Tom Lane)
+     </para>
+
+     <para>
+      Certain <command>ALTER</> commands that change the definition of a
+      composite type or domain type are supposed to fail if there are any
+      stored values of that type in the database, because they lack the
+      infrastructure needed to update or check such values.  Previously,
+      these checks could miss relevant values that are wrapped inside range
+      types or sub-domains, possibly allowing the database to become
+      inconsistent.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix crash in <application>pg_restore</> when using parallel mode and
+      using a list file to select a subset of items to restore (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Change <application>ecpg</>'s parser to allow <literal>RETURNING</>
+      clauses without attached C variables (Michael Meskes)
+     </para>
+
+     <para>
+      This allows <application>ecpg</> programs to contain SQL constructs
+      that use <literal>RETURNING</> internally (for example, inside a CTE)
+      rather than using it to define values to be returned to the client.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Improve selection of compiler flags for PL/Perl on Windows (Tom Lane)
+     </para>
+
+     <para>
+      This fix avoids possible crashes of PL/Perl due to inconsistent
+      assumptions about the width of <type>time_t</> values.
+      A side-effect that may be visible to extension developers is
+      that <literal>_USE_32BIT_TIME_T</> is no longer defined globally
+      in <productname>PostgreSQL</> Windows builds.  This is not expected
+      to cause problems, because type <type>time_t</> is not used
+      in any <productname>PostgreSQL</> API definitions.
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-9-3-18">
   <title>Release 9.3.18</title>
 
