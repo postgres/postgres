@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: initdb (PostgreSQL 9.6)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-05-18 07:54+0000\n"
-"PO-Revision-Date: 2017-05-19 18:35-0400\n"
+"POT-Creation-Date: 2017-08-27 21:52+0000\n"
+"PO-Revision-Date: 2017-08-28 11:37+0200\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
 "Language: es\n"
@@ -993,51 +993,3 @@ msgstr ""
 "\n"
 "    %s%s%spg_ctl%s -D %s%s%s -l archivo_de_log start\n"
 "\n"
-
-#~ msgid "copying template1 to postgres ... "
-#~ msgstr "copiando template1 a postgres ... "
-
-#~ msgid "copying template1 to template0 ... "
-#~ msgstr "copiando template1 a template0 ... "
-
-#~ msgid "vacuuming database template1 ... "
-#~ msgstr "haciendo vacuum a la base de datos template1 ... "
-
-#~ msgid "loading PL/pgSQL server-side language ... "
-#~ msgstr "instalando el lenguaje PL/pgSQL ... "
-
-#~ msgid "creating information schema ... "
-#~ msgstr "creando el esquema de información ... "
-
-#~ msgid "setting privileges on built-in objects ... "
-#~ msgstr "estableciendo privilegios en objetos predefinidos ... "
-
-#~ msgid "creating dictionaries ... "
-#~ msgstr "creando diccionarios ... "
-
-#~ msgid "creating conversions ... "
-#~ msgstr "creando conversiones ... "
-
-#~ msgid "not supported on this platform\n"
-#~ msgstr "no está soportado en esta plataforma\n"
-
-#~ msgid "creating collations ... "
-#~ msgstr "creando algoritmos de ordenamiento ... "
-
-#~ msgid "loading system objects' descriptions ... "
-#~ msgstr "cargando las descripciones de los objetos del sistema ... "
-
-#~ msgid "creating system views ... "
-#~ msgstr "creando las vistas de sistema ... "
-
-#~ msgid "initializing dependencies ... "
-#~ msgstr "inicializando dependencias ... "
-
-#~ msgid "setting password ... "
-#~ msgstr "estableciendo contraseña ... "
-
-#~ msgid "initializing pg_authid ... "
-#~ msgstr "inicializando pg_authid ... "
-
-#~ msgid "creating template1 database in %s/base/1 ... "
-#~ msgstr "creando base de datos template1 en %s/base/1 ... "

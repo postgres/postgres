@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL) 9.6\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-05-18 07:55+0000\n"
+"POT-Creation-Date: 2017-08-27 21:53+0000\n"
 "PO-Revision-Date: 2017-05-20 21:25-0400\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: PgSQL Español <pgsql-es-ayuda@postgresql.org>\n"
@@ -18,8 +18,7 @@ msgstr ""
 "X-Generator: Poedit 1.8.7\n"
 
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 parsexlog.c:74 parsexlog.c:127
-#: parsexlog.c:179
+#: ../../common/fe_memutils.c:98 parsexlog.c:74 parsexlog.c:127 parsexlog.c:179
 #, c-format
 msgid "out of memory\n"
 msgstr "memoria agotada\n"
@@ -280,97 +279,97 @@ msgstr "no se pudo obtener el listado de archivos: %s"
 msgid "unexpected result set while fetching file list\n"
 msgstr "conjunto de resultados inesperado mientras se obtenía el listado de archivos\n"
 
-#: libpq_fetch.c:240
+#: libpq_fetch.c:262
 #, c-format
 msgid "could not send query: %s"
 msgstr "no se pudo enviar la consulta: %s"
 
-#: libpq_fetch.c:242
+#: libpq_fetch.c:264
 #, c-format
 msgid "getting file chunks\n"
 msgstr "obteniendo trozos de archivos\n"
 
-#: libpq_fetch.c:245
+#: libpq_fetch.c:267
 #, c-format
 msgid "could not set libpq connection to single row mode\n"
 msgstr "no se pudo establecer la coneción libpq a modo «single row»\n"
 
-#: libpq_fetch.c:265
+#: libpq_fetch.c:287
 #, c-format
 msgid "unexpected result while fetching remote files: %s"
 msgstr "resultados inesperados mientras se obtenían archivos remotos: %s"
 
-#: libpq_fetch.c:271
+#: libpq_fetch.c:293
 #, c-format
 msgid "unexpected result set size while fetching remote files\n"
 msgstr "tamaño del conjunto de resultados inesperado mientras se obtenían archivos remotos\n"
 
-#: libpq_fetch.c:277
+#: libpq_fetch.c:299
 #, c-format
 msgid "unexpected data types in result set while fetching remote files: %u %u %u\n"
 msgstr "tipos de dato inesperados en el conjunto de resultados mientras se obtenían archivos remotos: %u %u %u\n"
 
-#: libpq_fetch.c:285
+#: libpq_fetch.c:307
 #, c-format
 msgid "unexpected result format while fetching remote files\n"
 msgstr "formato de resultados inesperado mientras se obtenían archivos remotos\n"
 
-#: libpq_fetch.c:291
+#: libpq_fetch.c:313
 #, c-format
 msgid "unexpected null values in result while fetching remote files\n"
 msgstr "valores nulos inesperados en el resultado mientras se obtenían archivos remotos\n"
 
-#: libpq_fetch.c:295
+#: libpq_fetch.c:317
 #, c-format
 msgid "unexpected result length while fetching remote files\n"
 msgstr "largo del resultado inesperado mientras se obtenían los archivos remotos\n"
 
-#: libpq_fetch.c:317
+#: libpq_fetch.c:339
 #, c-format
 msgid "received null value for chunk for file \"%s\", file has been deleted\n"
 msgstr "recibido un valor NULL para un trozo del archivo «%s», el archivo ha sido borrado\n"
 
-#: libpq_fetch.c:324
-#, c-format
-msgid "received chunk for file \"%s\", offset %d, size %d\n"
+#: libpq_fetch.c:346
+#, fuzzy, c-format
+msgid "received chunk for file \"%s\", offset "
 msgstr "recibido un trozo para el archivo «%s», posición %d, tamaño %d\n"
 
-#: libpq_fetch.c:353
+#: libpq_fetch.c:375
 #, c-format
 msgid "could not fetch remote file \"%s\": %s"
 msgstr "no se pudo obtener el archivo remoto «%s»: %s"
 
-#: libpq_fetch.c:358
+#: libpq_fetch.c:380
 #, c-format
 msgid "unexpected result set while fetching remote file \"%s\"\n"
 msgstr "conjunto de resultados inesperado mientras se obtenía el archivo remoto «%s»\n"
 
-#: libpq_fetch.c:369
+#: libpq_fetch.c:391
 #, c-format
 msgid "fetched file \"%s\", length %d\n"
 msgstr "obtenido archivo «%s», largo %d\n"
 
-#: libpq_fetch.c:401
+#: libpq_fetch.c:424
 #, c-format
 msgid "could not send COPY data: %s"
 msgstr "no se pudo enviar datos COPY: %s"
 
-#: libpq_fetch.c:427
+#: libpq_fetch.c:450
 #, c-format
 msgid "could not create temporary table: %s"
 msgstr "no se pudo crear tabla temporal: %s"
 
-#: libpq_fetch.c:435
+#: libpq_fetch.c:458
 #, c-format
 msgid "could not send file list: %s"
 msgstr "no se pudo enviar el listado de archivos: %s"
 
-#: libpq_fetch.c:477
+#: libpq_fetch.c:500
 #, c-format
 msgid "could not send end-of-COPY: %s"
 msgstr "no se pudo enviar fin-de-COPY: %s"
 
-#: libpq_fetch.c:483
+#: libpq_fetch.c:506
 #, c-format
 msgid "unexpected result while sending file list: %s"
 msgstr "resultados inesperados mientras se enviaba el listado de archivos: %s"

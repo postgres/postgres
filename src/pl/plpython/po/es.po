@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: plpython (PostgreSQL 9.6)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-05-18 07:48+0000\n"
-"PO-Revision-Date: 2017-05-19 18:35-0400\n"
+"POT-Creation-Date: 2017-08-27 21:46+0000\n"
+"PO-Revision-Date: 2017-08-28 11:38+0200\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
 "Language: es\n"
@@ -442,21 +442,3 @@ msgstr "no se pudo convertir el objeto Unicode de Python a bytes"
 #, c-format
 msgid "could not extract bytes from encoded string"
 msgstr "no se pudo extraer bytes desde la cadena codificada"
-
-#~ msgid "could not create the base SPI exceptions"
-#~ msgstr "no se pudo crear las excepciones SPI basales"
-
-#~ msgid "the message is already specified"
-#~ msgstr "el mensaje ya está definido"
-
-#~ msgid "PL/Python does not support conversion to arrays of row types."
-#~ msgstr "PL/Python no soporta la conversión de arrays a tipos de registro."
-
-#~ msgid "plpy.prepare does not support composite types"
-#~ msgstr "plpy.prepare no soporta tipos compuestos"
-
-#~ msgid "Start a new session to use a different Python major version."
-#~ msgstr "Inicie una nueva sesión para usar una versión mayor de Python diferente."
-
-#~ msgid "This session has previously used Python major version %d, and it is now attempting to use Python major version %d."
-#~ msgstr "Esta sesión ha usado previamente la versión mayor de Python %d, y ahora está intentando usar la versión mayor %d."

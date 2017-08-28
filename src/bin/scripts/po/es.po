@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pgscripts (PostgreSQL 9.6)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-05-18 07:54+0000\n"
+"POT-Creation-Date: 2017-08-27 21:52+0000\n"
 "PO-Revision-Date: 2016-05-25 11:14-0500\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: Castellano <pgsql-es-ayuda@postgresql.org>\n"
@@ -223,8 +223,8 @@ msgstr "  -h, --host=ANFITRIÓN      nombre del servidor o directorio del socket
 msgid "  -p, --port=PORT           database server port\n"
 msgstr "  -p, --port=PUERTO         puerto del servidor\n"
 
-#: clusterdb.c:284 createlang.c:247 dropdb.c:166 droplang.c:248
-#: reindexdb.c:418 vacuumdb.c:967
+#: clusterdb.c:284 createlang.c:247 dropdb.c:166 droplang.c:248 reindexdb.c:418
+#: vacuumdb.c:967
 #, c-format
 msgid "  -U, --username=USERNAME   user name to connect as\n"
 msgstr "  -U, --username=USUARIO    nombre de usuario para la conexión\n"

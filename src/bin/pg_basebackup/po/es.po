@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_basebackup (PostgreSQL 9.6)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-05-18 07:54+0000\n"
-"PO-Revision-Date: 2017-05-19 18:18-0400\n"
+"POT-Creation-Date: 2017-08-27 21:52+0000\n"
+"PO-Revision-Date: 2017-08-28 11:37+0200\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: Spanish <pgsql-es-ayuda@postgresql.org>\n"
 "Language: es\n"
@@ -265,7 +265,7 @@ msgstr ""
 msgid "%s: could not read from ready pipe: %s\n"
 msgstr "%s: no se pudo leer desde la tubería: %s\n"
 
-#: pg_basebackup.c:321 pg_basebackup.c:424 pg_basebackup.c:1906
+#: pg_basebackup.c:321 pg_basebackup.c:424 pg_basebackup.c:1910
 #: streamutil.c:293
 #, c-format
 msgid "%s: could not parse transaction log location \"%s\"\n"
@@ -276,7 +276,7 @@ msgstr "%s: no se pudo interpretar la ubicación del registro transaccional «%s
 msgid "%s: could not create pipe for background process: %s\n"
 msgstr "%s: no se pudo crear la tubería para el proceso en segundo plano: %s\n"
 
-#: pg_basebackup.c:462 pg_basebackup.c:517 pg_basebackup.c:1265
+#: pg_basebackup.c:462 pg_basebackup.c:517 pg_basebackup.c:1269
 #, c-format
 msgid "%s: could not create directory \"%s\": %s\n"
 msgstr "%s: no se pudo crear el directorio «%s»: %s\n"
@@ -357,233 +357,233 @@ msgstr "%s: la tasa de transferencia «%s» está fuera de rango\n"
 msgid "%s: could not write to compressed file \"%s\": %s\n"
 msgstr "%s: no se pudo escribir al archivo comprimido «%s»: %s\n"
 
-#: pg_basebackup.c:762 pg_basebackup.c:1359 pg_basebackup.c:1584
+#: pg_basebackup.c:762 pg_basebackup.c:1363 pg_basebackup.c:1588
 #, c-format
 msgid "%s: could not write to file \"%s\": %s\n"
 msgstr "%s: no se pudo escribir al archivo «%s»: %s\n"
 
-#: pg_basebackup.c:817 pg_basebackup.c:838 pg_basebackup.c:866
+#: pg_basebackup.c:821 pg_basebackup.c:842 pg_basebackup.c:870
 #, c-format
 msgid "%s: could not set compression level %d: %s\n"
 msgstr "%s: no se pudo definir el nivel de compresión %d: %s\n"
 
-#: pg_basebackup.c:887
+#: pg_basebackup.c:891
 #, c-format
 msgid "%s: could not create compressed file \"%s\": %s\n"
 msgstr "%s: no se pudo crear el archivo comprimido «%s»: %s\n"
 
-#: pg_basebackup.c:898 pg_basebackup.c:1319 pg_basebackup.c:1577
+#: pg_basebackup.c:902 pg_basebackup.c:1323 pg_basebackup.c:1581
 #, c-format
 msgid "%s: could not create file \"%s\": %s\n"
 msgstr "%s: no se pudo crear el archivo «%s»: %s\n"
 
-#: pg_basebackup.c:910 pg_basebackup.c:1174
+#: pg_basebackup.c:914 pg_basebackup.c:1178
 #, c-format
 msgid "%s: could not get COPY data stream: %s"
 msgstr "%s: no se pudo obtener un flujo de datos COPY: %s"
 
-#: pg_basebackup.c:967
+#: pg_basebackup.c:971
 #, c-format
 msgid "%s: could not close compressed file \"%s\": %s\n"
 msgstr "%s: no se pudo cerrar el archivo comprimido «%s»: %s\n"
 
-#: pg_basebackup.c:980 pg_recvlogical.c:580 receivelog.c:206 receivelog.c:354
+#: pg_basebackup.c:984 pg_recvlogical.c:580 receivelog.c:206 receivelog.c:354
 #: receivelog.c:743
 #, c-format
 msgid "%s: could not close file \"%s\": %s\n"
 msgstr "%s: no se pudo cerrar el archivo «%s»: %s\n"
 
-#: pg_basebackup.c:991 pg_basebackup.c:1203 pg_recvlogical.c:446
+#: pg_basebackup.c:995 pg_basebackup.c:1207 pg_recvlogical.c:446
 #: receivelog.c:1024
 #, c-format
 msgid "%s: could not read COPY data: %s"
 msgstr "%s: no fue posible leer datos COPY: %s"
 
-#: pg_basebackup.c:1217
+#: pg_basebackup.c:1221
 #, c-format
 msgid "%s: invalid tar block header size: %d\n"
 msgstr "%s: tamaño de bloque de cabecera de tar no válido: %d\n"
 
-#: pg_basebackup.c:1273
+#: pg_basebackup.c:1277
 #, c-format
 msgid "%s: could not set permissions on directory \"%s\": %s\n"
 msgstr "%s: no se pudo definir los permisos en el directorio «%s»: %s\n"
 
-#: pg_basebackup.c:1297
+#: pg_basebackup.c:1301
 #, c-format
 msgid "%s: could not create symbolic link from \"%s\" to \"%s\": %s\n"
 msgstr "%s: no se pudo crear un enlace simbólico desde «%s» a «%s»: %s\n"
 
-#: pg_basebackup.c:1306
+#: pg_basebackup.c:1310
 #, c-format
 msgid "%s: unrecognized link indicator \"%c\"\n"
 msgstr "%s: indicador de enlace «%c» no reconocido\n"
 
-#: pg_basebackup.c:1326
+#: pg_basebackup.c:1330
 #, c-format
 msgid "%s: could not set permissions on file \"%s\": %s\n"
 msgstr "%s: no se pudo definir los permisos al archivo «%s»: %s\n"
 
-#: pg_basebackup.c:1385
+#: pg_basebackup.c:1389
 #, c-format
 msgid "%s: COPY stream ended before last file was finished\n"
 msgstr "%s: el flujo COPY terminó antes que el último archivo estuviera completo\n"
 
-#: pg_basebackup.c:1471 pg_basebackup.c:1491 pg_basebackup.c:1498
-#: pg_basebackup.c:1552
+#: pg_basebackup.c:1475 pg_basebackup.c:1495 pg_basebackup.c:1502
+#: pg_basebackup.c:1556
 #, c-format
 msgid "%s: out of memory\n"
 msgstr "%s: memoria agotada\n"
 
-#: pg_basebackup.c:1629
+#: pg_basebackup.c:1633
 #, c-format
 msgid "%s: incompatible server version %s\n"
 msgstr "%s: versión del servidor %s incompatible\n"
 
-#: pg_basebackup.c:1666
+#: pg_basebackup.c:1670
 #, c-format
 msgid "%s: initiating base backup, waiting for checkpoint to complete\n"
 msgstr "%s: iniciando el respaldo base, esperando que el checkpoint se complete\n"
 
-#: pg_basebackup.c:1684 pg_recvlogical.c:264 receivelog.c:541 receivelog.c:592
+#: pg_basebackup.c:1688 pg_recvlogical.c:264 receivelog.c:541 receivelog.c:592
 #: receivelog.c:632 streamutil.c:263 streamutil.c:367 streamutil.c:413
 #, c-format
 msgid "%s: could not send replication command \"%s\": %s"
 msgstr "%s: no se pudo ejecutar la orden de replicación «%s»: %s"
 
-#: pg_basebackup.c:1695
+#: pg_basebackup.c:1699
 #, c-format
 msgid "%s: could not initiate base backup: %s"
 msgstr "%s: no se pudo iniciar el respaldo base: %s"
 
-#: pg_basebackup.c:1702
+#: pg_basebackup.c:1706
 #, c-format
 msgid "%s: server returned unexpected response to BASE_BACKUP command; got %d rows and %d fields, expected %d rows and %d fields\n"
 msgstr "%s: el servidor envió una respuesta inesperada a la orden BASE_BACKUP; se obtuvieron %d filas y %d campos, se esperaban %d filas y %d campos\n"
 
-#: pg_basebackup.c:1710
+#: pg_basebackup.c:1714
 #, c-format
 msgid "%s: checkpoint completed\n"
 msgstr "%s: el checkpoint se ha completado\n"
 
-#: pg_basebackup.c:1725
+#: pg_basebackup.c:1729
 #, c-format
 msgid "transaction log start point: %s on timeline %u\n"
 msgstr "punto de inicio del registro transaccional: %s en el timeline %u\n"
 
-#: pg_basebackup.c:1734
+#: pg_basebackup.c:1738
 #, c-format
 msgid "%s: could not get backup header: %s"
 msgstr "%s: no se pudo obtener la cabecera de respaldo: %s"
 
-#: pg_basebackup.c:1740
+#: pg_basebackup.c:1744
 #, c-format
 msgid "%s: no data returned from server\n"
 msgstr "%s: el servidor no retornó datos\n"
 
-#: pg_basebackup.c:1772
+#: pg_basebackup.c:1776
 #, c-format
 msgid "%s: can only write single tablespace to stdout, database has %d\n"
 msgstr "%s: sólo se puede escribir un tablespace a stdout, la base de datos tiene %d\n"
 
-#: pg_basebackup.c:1784
+#: pg_basebackup.c:1788
 #, c-format
 msgid "%s: starting background WAL receiver\n"
 msgstr "%s: iniciando el receptor de WAL en segundo plano\n"
 
-#: pg_basebackup.c:1815
+#: pg_basebackup.c:1819
 #, c-format
 msgid "%s: could not get transaction log end position from server: %s"
 msgstr "%s: no se pudo obtener la posición final del registro transaccional del servidor: %s"
 
-#: pg_basebackup.c:1822
+#: pg_basebackup.c:1826
 #, c-format
 msgid "%s: no transaction log end position returned from server\n"
 msgstr "%s: el servidor no retornó la posición final del registro transaccional\n"
 
-#: pg_basebackup.c:1834
+#: pg_basebackup.c:1838
 #, c-format
 msgid "%s: final receive failed: %s"
 msgstr "%s: la recepción final falló: %s"
 
-#: pg_basebackup.c:1858
+#: pg_basebackup.c:1862
 #, c-format
 msgid "%s: waiting for background process to finish streaming ...\n"
 msgstr "%s: esperando que el proceso en segundo plano complete el flujo...\n"
 
-#: pg_basebackup.c:1864
+#: pg_basebackup.c:1868
 #, c-format
 msgid "%s: could not send command to background pipe: %s\n"
 msgstr "%s: no se pudo enviar una orden a la tubería de segundo plano: %s\n"
 
-#: pg_basebackup.c:1873
+#: pg_basebackup.c:1877
 #, c-format
 msgid "%s: could not wait for child process: %s\n"
 msgstr "%s: no se pudo esperar al proceso hijo: %s\n"
 
-#: pg_basebackup.c:1879
+#: pg_basebackup.c:1883
 #, c-format
 msgid "%s: child %d died, expected %d\n"
 msgstr "%s: el hijo %d murió, pero se esperaba al %d\n"
 
-#: pg_basebackup.c:1885
+#: pg_basebackup.c:1889
 #, c-format
 msgid "%s: child process did not exit normally\n"
 msgstr "%s: el proceso hijo no terminó normalmente\n"
 
-#: pg_basebackup.c:1891
+#: pg_basebackup.c:1895
 #, c-format
 msgid "%s: child process exited with error %d\n"
 msgstr "%s: el proceso hijo terminó con código de salida %d\n"
 
-#: pg_basebackup.c:1918
+#: pg_basebackup.c:1922
 #, c-format
 msgid "%s: could not wait for child thread: %s\n"
 msgstr "%s: no se pudo esperar el hilo hijo: %s\n"
 
-#: pg_basebackup.c:1925
+#: pg_basebackup.c:1929
 #, c-format
 msgid "%s: could not get child thread exit status: %s\n"
 msgstr "%s: no se pudo obtener la cabecera de respaldo: %s\n"
 
-#: pg_basebackup.c:1931
+#: pg_basebackup.c:1935
 #, c-format
 msgid "%s: child thread exited with error %u\n"
 msgstr "%s: el hilo hijo terminó con error %u\n"
 
-#: pg_basebackup.c:2021
+#: pg_basebackup.c:2025
 #, c-format
 msgid "%s: invalid output format \"%s\", must be \"plain\" or \"tar\"\n"
 msgstr "%s: formato de salida «%s» no válido, debe ser «plain» o «tar»\n"
 
-#: pg_basebackup.c:2042 pg_basebackup.c:2054
+#: pg_basebackup.c:2046 pg_basebackup.c:2058
 #, c-format
 msgid "%s: cannot specify both --xlog and --xlog-method\n"
 msgstr "%s: no se puede tanto --xlog como --xlog-method\n"
 
-#: pg_basebackup.c:2069
+#: pg_basebackup.c:2073
 #, c-format
 msgid "%s: invalid xlog-method option \"%s\", must be \"fetch\" or \"stream\"\n"
 msgstr "%s: opción de xlog-method «%s» no válida, debe ser «fetch» o «stream»\n"
 
-#: pg_basebackup.c:2091
+#: pg_basebackup.c:2095
 #, c-format
 msgid "%s: invalid compression level \"%s\"\n"
 msgstr "%s: valor de compresión «%s» no válido\n"
 
-#: pg_basebackup.c:2103
+#: pg_basebackup.c:2107
 #, c-format
 msgid "%s: invalid checkpoint argument \"%s\", must be \"fast\" or \"spread\"\n"
 msgstr "%s: argumento de checkpoint «%s» no válido, debe ser «fast» o «spread»\n"
 
-#: pg_basebackup.c:2130 pg_receivexlog.c:445 pg_recvlogical.c:763
+#: pg_basebackup.c:2134 pg_receivexlog.c:445 pg_recvlogical.c:763
 #, c-format
 msgid "%s: invalid status interval \"%s\"\n"
 msgstr "%s: intervalo de estado «%s» no válido\n"
 
-#: pg_basebackup.c:2146 pg_basebackup.c:2160 pg_basebackup.c:2171
-#: pg_basebackup.c:2184 pg_basebackup.c:2194 pg_basebackup.c:2204
-#: pg_basebackup.c:2216 pg_basebackup.c:2227 pg_receivexlog.c:477
+#: pg_basebackup.c:2150 pg_basebackup.c:2164 pg_basebackup.c:2175
+#: pg_basebackup.c:2188 pg_basebackup.c:2198 pg_basebackup.c:2208
+#: pg_basebackup.c:2220 pg_basebackup.c:2231 pg_receivexlog.c:477
 #: pg_receivexlog.c:491 pg_receivexlog.c:499 pg_receivexlog.c:509
 #: pg_receivexlog.c:520 pg_recvlogical.c:790 pg_recvlogical.c:804
 #: pg_recvlogical.c:815 pg_recvlogical.c:823 pg_recvlogical.c:831
@@ -592,52 +592,52 @@ msgstr "%s: intervalo de estado «%s» no válido\n"
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Use «%s --help» para obtener más información.\n"
 
-#: pg_basebackup.c:2158 pg_receivexlog.c:489 pg_recvlogical.c:802
+#: pg_basebackup.c:2162 pg_receivexlog.c:489 pg_recvlogical.c:802
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
 msgstr "%s: demasiados argumentos en la línea de órdenes (el primero es «%s»)\n"
 
-#: pg_basebackup.c:2170 pg_receivexlog.c:519
+#: pg_basebackup.c:2174 pg_receivexlog.c:519
 #, c-format
 msgid "%s: no target directory specified\n"
 msgstr "%s: no se especificó un directorio de salida\n"
 
-#: pg_basebackup.c:2182
+#: pg_basebackup.c:2186
 #, c-format
 msgid "%s: only tar mode backups can be compressed\n"
 msgstr "%s: sólo los respaldos de modo tar pueden ser comprimidos\n"
 
-#: pg_basebackup.c:2192
+#: pg_basebackup.c:2196
 #, c-format
 msgid "%s: WAL streaming can only be used in plain mode\n"
 msgstr "%s: el flujo de WAL sólo puede usar en modo «plain»\n"
 
-#: pg_basebackup.c:2202
+#: pg_basebackup.c:2206
 #, c-format
 msgid "%s: replication slots can only be used with WAL streaming\n"
 msgstr "%s: los slots de replicación sólo pueden usarse con flujo de WAL\n"
 
-#: pg_basebackup.c:2214
+#: pg_basebackup.c:2218
 #, c-format
 msgid "%s: transaction log directory location can only be specified in plain mode\n"
 msgstr "%s: la ubicación del registro transaccional sólo puede especificarse en modo «plain»\n"
 
-#: pg_basebackup.c:2225
+#: pg_basebackup.c:2229
 #, c-format
 msgid "%s: transaction log directory location must be an absolute path\n"
 msgstr "%s: la ubicación del registro transaccional debe ser una ruta absoluta\n"
 
-#: pg_basebackup.c:2237
+#: pg_basebackup.c:2241
 #, c-format
 msgid "%s: this build does not support compression\n"
 msgstr "%s: esta instalación no soporta compresión\n"
 
-#: pg_basebackup.c:2264
+#: pg_basebackup.c:2268
 #, c-format
 msgid "%s: could not create symbolic link \"%s\": %s\n"
 msgstr "%s: no se pudo crear el enlace simbólico «%s»: %s\n"
 
-#: pg_basebackup.c:2269
+#: pg_basebackup.c:2273
 #, c-format
 msgid "%s: symlinks are not supported on this platform\n"
 msgstr "%s: los enlaces simbólicos no están soportados en esta plataforma\n"
@@ -1161,12 +1161,3 @@ msgstr "%s: no se pudo create el slot de replicación «%s»: se obtuvieron %d f
 #, c-format
 msgid "%s: could not drop replication slot \"%s\": got %d rows and %d fields, expected %d rows and %d fields\n"
 msgstr "%s: no se pudo eliminar el slot de replicación «%s»: se obtuvieron %d filas y %d campos, se esperaban %d filas y %d campos\n"
-
-#~ msgid "%s: socket not open"
-#~ msgstr "%s: socket no abierto"
-
-#~ msgid "%s: could not parse file mode\n"
-#~ msgstr "%s: nose pudo interpretar el modo del archivo\n"
-
-#~ msgid "%s: could not parse file size\n"
-#~ msgstr "%s: no se pudo interpretar el tamaño del archivo\n"
