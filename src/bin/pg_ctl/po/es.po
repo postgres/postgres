@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_ctl (PostgreSQL 9.3)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-05-21 17:44+0000\n"
+"POT-Creation-Date: 2017-08-27 22:12+0000\n"
 "PO-Revision-Date: 2013-08-30 13:07-0400\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL Español <pgsql-es-ayuda@postgresql.org>\n"
@@ -819,26 +819,26 @@ msgstr "%s: no se especificó directorio de datos y la variable PGDATA no está 
 
 #~ msgid ""
 #~ "\n"
-#~ "Options for stop, restart, or promote:\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Opciones para detención, reinicio o promoción:\n"
-
-#~ msgid "  --version              output version information, then exit\n"
-#~ msgstr "  --version              mostrar información sobre versión y salir\n"
-
-#~ msgid "  --help                 show this help, then exit\n"
-#~ msgstr "  --help                 mostrar este texto y salir\n"
-
-#~ msgid "%s: could not open process token: %lu\n"
-#~ msgstr "%s: no se pudo abrir el token de proceso: %lu\n"
-
-#~ msgid "%s: could not start server: exit code was %d\n"
-#~ msgstr "%s: no se pudo iniciar el servidor: el código de retorno fue %d\n"
-
-#~ msgid ""
-#~ "\n"
 #~ "%s: this data directory appears to be running a pre-existing postmaster\n"
 #~ msgstr ""
 #~ "\n"
 #~ "%s: este directorio de datos parece estar ejecutando un postmaster pre-existente\n"
+
+#~ msgid "%s: could not start server: exit code was %d\n"
+#~ msgstr "%s: no se pudo iniciar el servidor: el código de retorno fue %d\n"
+
+#~ msgid "%s: could not open process token: %lu\n"
+#~ msgstr "%s: no se pudo abrir el token de proceso: %lu\n"
+
+#~ msgid "  --help                 show this help, then exit\n"
+#~ msgstr "  --help                 mostrar este texto y salir\n"
+
+#~ msgid "  --version              output version information, then exit\n"
+#~ msgstr "  --version              mostrar información sobre versión y salir\n"
+
+#~ msgid ""
+#~ "\n"
+#~ "Options for stop, restart, or promote:\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Opciones para detención, reinicio o promoción:\n"

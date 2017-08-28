@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_config (PostgreSQL 9.3)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-05-21 17:44+0000\n"
+"POT-Creation-Date: 2017-08-27 22:11+0000\n"
 "PO-Revision-Date: 2013-08-28 15:41-0400\n"
 "Last-Translator: Alvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: es <pgsql-es-ayuda@postgresql.org>\n"
@@ -277,17 +277,17 @@ msgstr "%s: no se pudo encontrar el ejecutable propio\n"
 msgid "%s: invalid argument: %s\n"
 msgstr "%s: el argumento no es válido: %s\n"
 
-#~ msgid "child process exited with exit code %d"
-#~ msgstr "el proceso hijo terminó con código de salida %d"
-
-#~ msgid "child process was terminated by exception 0x%X"
-#~ msgstr "el proceso hijo fue terminado por una excepción 0x%X"
-
-#~ msgid "child process was terminated by signal %s"
-#~ msgstr "el proceso hijo fue terminado por una señal %s"
+#~ msgid "child process exited with unrecognized status %d"
+#~ msgstr "el proceso hijo terminó con código no reconocido %d"
 
 #~ msgid "child process was terminated by signal %d"
 #~ msgstr "el proceso hijo fue terminado por una señal %d"
 
-#~ msgid "child process exited with unrecognized status %d"
-#~ msgstr "el proceso hijo terminó con código no reconocido %d"
+#~ msgid "child process was terminated by signal %s"
+#~ msgstr "el proceso hijo fue terminado por una señal %s"
+
+#~ msgid "child process was terminated by exception 0x%X"
+#~ msgstr "el proceso hijo fue terminado por una excepción 0x%X"
+
+#~ msgid "child process exited with exit code %d"
+#~ msgstr "el proceso hijo terminó con código de salida %d"
