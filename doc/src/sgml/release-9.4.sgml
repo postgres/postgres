@@ -119,7 +119,8 @@ COMMIT;
     <listitem>
      <para>
       Fix crash in <application>pg_restore</> when using parallel mode and
-      using a list file to select a subset of items to restore (Tom Lane)
+      using a list file to select a subset of items to restore
+      (Fabr&iacute;zio de Royes Mello)
      </para>
     </listitem>
 

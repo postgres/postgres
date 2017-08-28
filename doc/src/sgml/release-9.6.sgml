@@ -160,7 +160,8 @@ Branch: REL9_3_STABLE [ece4bd901] 2017-08-19 13:39:38 -0400
 -->
      <para>
       Fix crash in <application>pg_restore</> when using parallel mode and
-      using a list file to select a subset of items to restore (Tom Lane)
+      using a list file to select a subset of items to restore
+      (Fabr&iacute;zio de Royes Mello)
      </para>
     </listitem>
 
