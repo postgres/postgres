@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_dump (PostgreSQL 9.2)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-05-21 17:49+0000\n"
+"POT-Creation-Date: 2017-08-27 22:17+0000\n"
 "PO-Revision-Date: 2013-06-05 01:26-0400\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL Español <pgsql-es-ayuda@postgresql.org>\n"
@@ -1826,96 +1826,96 @@ msgstr "PRECAUCIÓN: valor no válido en el campo pg_cast.castmethod\n"
 msgid "WARNING: could not find operator with OID %s\n"
 msgstr "PRECAUCIÓN: no se pudo encontrar el operador con OID %s\n"
 
-#: pg_dump.c:11117
+#: pg_dump.c:11129
 #, c-format
 msgid "WARNING: aggregate function %s could not be dumped correctly for this database version; ignored\n"
 msgstr ""
 "PRECAUCIÓN: la función de agregación «%s» no se pudo extraer correctamente\n"
 "para esta versión de la base de datos; ignorada\n"
 
-#: pg_dump.c:11885
+#: pg_dump.c:11897
 #, c-format
 msgid "unrecognized object type in default privileges: %d\n"
 msgstr "tipo de objeto desconocido en privilegios por omisión: %d\n"
 
-#: pg_dump.c:11900
+#: pg_dump.c:11912
 #, c-format
 msgid "could not parse default ACL list (%s)\n"
 msgstr "no se pudo interpretar la lista de ACL (%s)\n"
 
-#: pg_dump.c:11955
+#: pg_dump.c:11967
 #, c-format
 msgid "could not parse ACL list (%s) for object \"%s\" (%s)\n"
 msgstr "no se pudo interpretar la lista de ACL (%s) para el objeto «%s» (%s)\n"
 
-#: pg_dump.c:12397
+#: pg_dump.c:12409
 #, c-format
 msgid "query to obtain definition of view \"%s\" returned no data\n"
 msgstr "la consulta para obtener la definición de la vista «%s» no regresó datos\n"
 
-#: pg_dump.c:12400
+#: pg_dump.c:12412
 #, c-format
 msgid "query to obtain definition of view \"%s\" returned more than one definition\n"
 msgstr "la consulta para obtener la definición de la vista «%s» regresó más de una definición\n"
 
-#: pg_dump.c:12407
+#: pg_dump.c:12419
 #, c-format
 msgid "definition of view \"%s\" appears to be empty (length zero)\n"
 msgstr "la definición de la vista «%s» parece estar vacía (tamaño cero)\n"
 
-#: pg_dump.c:13029
+#: pg_dump.c:13041
 #, c-format
 msgid "invalid column number %d for table \"%s\"\n"
 msgstr "el número de columna %d no es válido para la tabla «%s»\n"
 
-#: pg_dump.c:13144
+#: pg_dump.c:13156
 #, c-format
 msgid "missing index for constraint \"%s\"\n"
 msgstr "falta un índice para restricción «%s»\n"
 
-#: pg_dump.c:13335
+#: pg_dump.c:13347
 #, c-format
 msgid "unrecognized constraint type: %c\n"
 msgstr "tipo de restricción inesperado: %c\n"
 
-#: pg_dump.c:13484 pg_dump.c:13648
+#: pg_dump.c:13496 pg_dump.c:13660
 #, c-format
 msgid "query to get data of sequence \"%s\" returned %d row (expected 1)\n"
 msgid_plural "query to get data of sequence \"%s\" returned %d rows (expected 1)\n"
 msgstr[0] "la consulta para obtener los datos de la secuencia «%s» regresó %d entrada, pero se esperaba 1\n"
 msgstr[1] "la consulta para obtener los datos de la secuencia «%s» regresó %d entradas, pero se esperaba 1\n"
 
-#: pg_dump.c:13495
+#: pg_dump.c:13507
 #, c-format
 msgid "query to get data of sequence \"%s\" returned name \"%s\"\n"
 msgstr "la consulta para obtener los datos de la secuencia «%s» regresó el nombre «%s»\n"
 
-#: pg_dump.c:13735
+#: pg_dump.c:13747
 #, c-format
 msgid "unexpected tgtype value: %d\n"
 msgstr "tgtype no esperado: %d\n"
 
-#: pg_dump.c:13817
+#: pg_dump.c:13829
 #, c-format
 msgid "invalid argument string (%s) for trigger \"%s\" on table \"%s\"\n"
 msgstr "argumento de cadena (%s) no válido para el disparador (trigger) «%s» en la tabla «%s»\n"
 
-#: pg_dump.c:13934
+#: pg_dump.c:13946
 #, c-format
 msgid "query to get rule \"%s\" for table \"%s\" failed: wrong number of rows returned\n"
 msgstr "la consulta para obtener la regla «%s» asociada con la tabla «%s» falló: retornó un número incorrecto de renglones\n"
 
-#: pg_dump.c:14313
+#: pg_dump.c:14325
 #, c-format
 msgid "reading dependency data\n"
 msgstr "obteniendo datos de dependencias\n"
 
-#: pg_dump.c:14907
+#: pg_dump.c:14919
 #, c-format
 msgid "WARNING: could not parse reloptions array\n"
 msgstr "PRECAUCIÓN: no se pudo interpretar el arreglo reloptions\n"
 
-#: pg_dump.c:14971
+#: pg_dump.c:14983
 #, c-format
 msgid "query returned %d row instead of one: %s\n"
 msgid_plural "query returned %d rows instead of one: %s\n"
@@ -2373,14 +2373,14 @@ msgstr ""
 "Si no se especifica un archivo de entrada, se usa la entrada estándar.\n"
 "\n"
 
-#~ msgid "invalid COPY statement -- could not find \"from stdin\" in string \"%s\" starting at position %lu\n"
-#~ msgstr "sentencia COPY no válida -- no se pudo encontrar «from stdin» en la cadena «%s» empezando en la posición %lu\n"
-
-#~ msgid "invalid COPY statement -- could not find \"copy\" in string \"%s\"\n"
-#~ msgstr "sentencia COPY no válida -- no se pudo encontrar «copy» en la cadena «%s»\n"
+#~ msgid "archive member too large for tar format\n"
+#~ msgstr "el miembro de archivador es demasiado grande para el formato tar\n"
 
 #~ msgid "-C and -c are incompatible options\n"
 #~ msgstr "-C y -c son opciones incompatibles\n"
 
-#~ msgid "archive member too large for tar format\n"
-#~ msgstr "el miembro de archivador es demasiado grande para el formato tar\n"
+#~ msgid "invalid COPY statement -- could not find \"copy\" in string \"%s\"\n"
+#~ msgstr "sentencia COPY no válida -- no se pudo encontrar «copy» en la cadena «%s»\n"
+
+#~ msgid "invalid COPY statement -- could not find \"from stdin\" in string \"%s\" starting at position %lu\n"
+#~ msgstr "sentencia COPY no válida -- no se pudo encontrar «from stdin» en la cadena «%s» empezando en la posición %lu\n"

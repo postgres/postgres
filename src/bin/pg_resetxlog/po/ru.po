@@ -5,15 +5,14 @@
 # Oleg Bartunov <oleg@sai.msu.su>, 2004.
 # Sergey Burladyan <eshkinkot@gmail.com>, 2009.
 # Dmitriy Olshevskiy <olshevskiy87@bk.ru>, 2014.
-# Alexander Lakhin <exclusion@gmail.com>, 2012-2016.
+# Alexander Lakhin <exclusion@gmail.com>, 2012-2016, 2017.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_resetxlog (PostgreSQL 9)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-02-06 22:37+0000\n"
-"PO-Revision-Date: 2016-12-20 18:26+0300\n"
-"Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
+"POT-Creation-Date: 2017-08-17 18:17+0000\n"
+"PO-Revision-Date: 2017-08-18 16:07+0300\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -21,95 +20,96 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 
-#: pg_resetxlog.c:143
+#: pg_resetxlog.c:144
 #, c-format
 msgid "%s: invalid argument for option -e\n"
 msgstr "%s: недопустимый аргумент параметра -e\n"
 
-#: pg_resetxlog.c:144 pg_resetxlog.c:159 pg_resetxlog.c:174 pg_resetxlog.c:189
-#: pg_resetxlog.c:204 pg_resetxlog.c:219 pg_resetxlog.c:226 pg_resetxlog.c:233
-#: pg_resetxlog.c:239 pg_resetxlog.c:247
+#: pg_resetxlog.c:145 pg_resetxlog.c:160 pg_resetxlog.c:175 pg_resetxlog.c:190
+#: pg_resetxlog.c:205 pg_resetxlog.c:220 pg_resetxlog.c:227 pg_resetxlog.c:234
+#: pg_resetxlog.c:240 pg_resetxlog.c:248
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Для дополнительной информации попробуйте \"%s --help\".\n"
 
-#: pg_resetxlog.c:149
+#: pg_resetxlog.c:150
 #, c-format
 msgid "%s: transaction ID epoch (-e) must not be -1\n"
 msgstr "%s: эпоха ID транзакции (-e) не должна быть равна -1\n"
 
-#: pg_resetxlog.c:158
+#: pg_resetxlog.c:159
 #, c-format
 msgid "%s: invalid argument for option -x\n"
 msgstr "%s: недопустимый аргумент параметра -x\n"
 
-#: pg_resetxlog.c:164
+#: pg_resetxlog.c:165
 #, c-format
 msgid "%s: transaction ID (-x) must not be 0\n"
 msgstr "%s: ID транзакции (-x) не должен быть равен 0\n"
 
-#: pg_resetxlog.c:173
+#: pg_resetxlog.c:174
 #, c-format
 msgid "%s: invalid argument for option -o\n"
 msgstr "%s: недопустимый аргумент параметра -o\n"
 
-#: pg_resetxlog.c:179
+#: pg_resetxlog.c:180
 #, c-format
 msgid "%s: OID (-o) must not be 0\n"
 msgstr "%s: OID (-o) не должен быть равен 0\n"
 
-#: pg_resetxlog.c:188
+#: pg_resetxlog.c:189
 #, c-format
 msgid "%s: invalid argument for option -m\n"
 msgstr "%s: недопустимый аргумент параметра -m\n"
 
-#: pg_resetxlog.c:194
+#: pg_resetxlog.c:195
 #, c-format
 msgid "%s: multitransaction ID (-m) must not be 0\n"
 msgstr "%s: ID мультитранзакции (-m) не должен быть равен 0\n"
 
-#: pg_resetxlog.c:203
+#: pg_resetxlog.c:204
 #, c-format
 msgid "%s: invalid argument for option -O\n"
 msgstr "%s: недопустимый аргумент параметра -O\n"
 
-#: pg_resetxlog.c:209
+#: pg_resetxlog.c:210
 #, c-format
 msgid "%s: multitransaction offset (-O) must not be -1\n"
 msgstr "%s: смещение мультитранзакции (-O) не должно быть равно -1\n"
 
-#: pg_resetxlog.c:218 pg_resetxlog.c:225 pg_resetxlog.c:232
+#: pg_resetxlog.c:219 pg_resetxlog.c:226 pg_resetxlog.c:233
 #, c-format
 msgid "%s: invalid argument for option -l\n"
 msgstr "%s: недопустимый аргумент параметра -l\n"
 
-#: pg_resetxlog.c:246
+#: pg_resetxlog.c:247
 #, c-format
 msgid "%s: no data directory specified\n"
 msgstr "%s: каталог данных не указан\n"
 
-#: pg_resetxlog.c:260
+#: pg_resetxlog.c:261
 #, c-format
 msgid "%s: cannot be executed by \"root\"\n"
 msgstr "%s: программу не должен запускать root\n"
 
-#: pg_resetxlog.c:262
+#: pg_resetxlog.c:263
 #, c-format
 msgid "You must run %s as the PostgreSQL superuser.\n"
 msgstr "Запускать %s нужно от имени суперпользователя PostgreSQL.\n"
 
-#: pg_resetxlog.c:273
+#: pg_resetxlog.c:274
 #, c-format
 msgid "%s: could not change directory to \"%s\": %s\n"
 msgstr "%s: не удалось перейти в каталог \"%s\": %s\n"
 
-#: pg_resetxlog.c:286 pg_resetxlog.c:429
+#: pg_resetxlog.c:290 pg_resetxlog.c:434 pg_resetxlog.c:497
 #, c-format
 msgid "%s: could not open file \"%s\" for reading: %s\n"
 msgstr "%s: не удалось открыть файл \"%s\" для чтения: %s\n"
 
-#: pg_resetxlog.c:293
+#: pg_resetxlog.c:297
 #, c-format
 msgid ""
 "%s: lock file \"%s\" exists\n"
@@ -118,7 +118,7 @@ msgstr ""
 "%s: обнаружен файл блокировки \"%s\"\n"
 "Возможно, сервер запущен? Если нет, удалите этот файл и попробуйте снова.\n"
 
-#: pg_resetxlog.c:363
+#: pg_resetxlog.c:367
 #, c-format
 msgid ""
 "\n"
@@ -128,7 +128,7 @@ msgstr ""
 "Если эти значения приемлемы, выполните сброс принудительно, добавив ключ -"
 "f.\n"
 
-#: pg_resetxlog.c:375
+#: pg_resetxlog.c:379
 #, c-format
 msgid ""
 "The database server was not shut down cleanly.\n"
@@ -139,17 +139,37 @@ msgstr ""
 "Сброс журнала транзакций может привести к потере данных.\n"
 "Если вы хотите сбросить его, несмотря на это, добавьте ключ -f.\n"
 
-#: pg_resetxlog.c:389
+#: pg_resetxlog.c:393
 #, c-format
 msgid "Transaction log reset\n"
 msgstr "Журнал транзакций сброшен\n"
 
-#: pg_resetxlog.c:401
+#: pg_resetxlog.c:405
 #, c-format
 msgid "out of memory\n"
 msgstr "нехватка памяти\n"
 
-#: pg_resetxlog.c:432
+#: pg_resetxlog.c:444
+#, c-format
+msgid "%s: unexpected empty file \"%s\"\n"
+msgstr "%s: файл \"%s\" оказался пустым\n"
+
+#: pg_resetxlog.c:449 pg_resetxlog.c:513
+#, c-format
+msgid "%s: could not read file \"%s\": %s\n"
+msgstr "%s: не удалось прочитать файл \"%s\": %s\n"
+
+#: pg_resetxlog.c:466
+#, c-format
+msgid ""
+"%s: data directory is of wrong version\n"
+"File \"%s\" contains \"%s\", which is not compatible with this program's "
+"version \"%s\".\n"
+msgstr ""
+"%s: каталог данных неверной версии\n"
+"Файл \"%s\" содержит строку \"%s\", а ожидается версия программы \"%s\".\n"
+
+#: pg_resetxlog.c:500
 #, c-format
 msgid ""
 "If you are sure the data directory path is correct, execute\n"
@@ -160,25 +180,21 @@ msgstr ""
 "  touch %s\n"
 "и повторите попытку.\n"
 
-#: pg_resetxlog.c:445
-#, c-format
-msgid "%s: could not read file \"%s\": %s\n"
-msgstr "%s: не удалось прочитать файл \"%s\": %s\n"
-
-#: pg_resetxlog.c:468
+#: pg_resetxlog.c:536
 #, c-format
 msgid "%s: pg_control exists but has invalid CRC; proceed with caution\n"
 msgstr ""
 "%s: pg_control существует, но его контрольная сумма неверна; продолжайте с "
 "осторожностью\n"
 
-#: pg_resetxlog.c:477
+#: pg_resetxlog.c:545
 #, c-format
-msgid "%s: pg_control exists but is broken or unknown version; ignoring it\n"
+msgid "%s: pg_control exists but is broken or wrong version; ignoring it\n"
 msgstr ""
-"%s: pg_control испорчен или имеет неизвестную версию; игнорируется...\n"
+"%s: pg_control испорчен или имеет неизвестную либо недопустимую версию; "
+"игнорируется...\n"
 
-#: pg_resetxlog.c:572
+#: pg_resetxlog.c:640
 #, c-format
 msgid ""
 "Guessed pg_control values:\n"
@@ -187,7 +203,7 @@ msgstr ""
 "Предполагаемые значения pg_control:\n"
 "\n"
 
-#: pg_resetxlog.c:574
+#: pg_resetxlog.c:642
 #, c-format
 msgid ""
 "pg_control values:\n"
@@ -196,166 +212,166 @@ msgstr ""
 "значения pg_control:\n"
 "\n"
 
-#: pg_resetxlog.c:583
+#: pg_resetxlog.c:651
 #, c-format
 msgid "First log file ID after reset:        %u\n"
 msgstr "ID первого журнала после сброса:      %u\n"
 
-#: pg_resetxlog.c:585
+#: pg_resetxlog.c:653
 #, c-format
 msgid "First log file segment after reset:   %u\n"
 msgstr "Сегмент первого журнала после сброса: %u\n"
 
-#: pg_resetxlog.c:587
+#: pg_resetxlog.c:655
 #, c-format
 msgid "pg_control version number:            %u\n"
 msgstr "Номер версии pg_control:              %u\n"
 
-#: pg_resetxlog.c:589
+#: pg_resetxlog.c:657
 #, c-format
 msgid "Catalog version number:               %u\n"
 msgstr "Номер версии каталога:                %u\n"
 
-#: pg_resetxlog.c:591
+#: pg_resetxlog.c:659
 #, c-format
 msgid "Database system identifier:           %s\n"
 msgstr "Идентификатор системы баз данных:     %s\n"
 
 # skip-rule: capital-letter-first
-#: pg_resetxlog.c:593
+#: pg_resetxlog.c:661
 #, c-format
 msgid "Latest checkpoint's TimeLineID:       %u\n"
 msgstr "Линия времени последней конт. точки:  %u\n"
 
 # skip-rule: no-space-after-period
-#: pg_resetxlog.c:595
+#: pg_resetxlog.c:663
 #, c-format
 msgid "Latest checkpoint's full_page_writes: %s\n"
 msgstr "Режим full_page_writes последней к.т: %s\n"
 
-#: pg_resetxlog.c:596
+#: pg_resetxlog.c:664
 msgid "off"
 msgstr "выкл."
 
-#: pg_resetxlog.c:596
+#: pg_resetxlog.c:664
 msgid "on"
 msgstr "вкл."
 
 # skip-rule: capital-letter-first
-#: pg_resetxlog.c:597
+#: pg_resetxlog.c:665
 #, c-format
 msgid "Latest checkpoint's NextXID:          %u/%u\n"
 msgstr "NextXID последней конт. точки:        %u/%u\n"
 
 # skip-rule: capital-letter-first
-#: pg_resetxlog.c:600
+#: pg_resetxlog.c:668
 #, c-format
 msgid "Latest checkpoint's NextOID:          %u\n"
 msgstr "NextOID последней конт. точки:        %u\n"
 
 # skip-rule: capital-letter-first
-#: pg_resetxlog.c:602
+#: pg_resetxlog.c:670
 #, c-format
 msgid "Latest checkpoint's NextMultiXactId:  %u\n"
 msgstr "NextMultiXactId послед. конт. точки:  %u\n"
 
 # skip-rule: capital-letter-first
-#: pg_resetxlog.c:604
+#: pg_resetxlog.c:672
 #, c-format
 msgid "Latest checkpoint's NextMultiOffset:  %u\n"
 msgstr "NextMultiOffset послед. конт. точки:  %u\n"
 
 # skip-rule: capital-letter-first
-#: pg_resetxlog.c:606
+#: pg_resetxlog.c:674
 #, c-format
 msgid "Latest checkpoint's oldestXID:        %u\n"
 msgstr "oldestXID последней конт. точки:      %u\n"
 
 # skip-rule: capital-letter-first
-#: pg_resetxlog.c:608
+#: pg_resetxlog.c:676
 #, c-format
 msgid "Latest checkpoint's oldestXID's DB:   %u\n"
 msgstr "БД с oldestXID последней конт. точки: %u\n"
 
 # skip-rule: capital-letter-first
-#: pg_resetxlog.c:610
+#: pg_resetxlog.c:678
 #, c-format
 msgid "Latest checkpoint's oldestActiveXID:  %u\n"
 msgstr "oldestActiveXID последней к. т.:      %u\n"
 
-#: pg_resetxlog.c:612
+#: pg_resetxlog.c:680
 #, c-format
 msgid "Maximum data alignment:               %u\n"
 msgstr "Макс. предел выравнивания данных:     %u\n"
 
-#: pg_resetxlog.c:615
+#: pg_resetxlog.c:683
 #, c-format
 msgid "Database block size:                  %u\n"
 msgstr "Размер блока БД:                      %u\n"
 
 # skip-rule: double-space
-#: pg_resetxlog.c:617
+#: pg_resetxlog.c:685
 #, c-format
 msgid "Blocks per segment of large relation: %u\n"
 msgstr "Блоков в макс. сегменте отношений:    %u\n"
 
-#: pg_resetxlog.c:619
+#: pg_resetxlog.c:687
 #, c-format
 msgid "WAL block size:                       %u\n"
 msgstr "Размер блока WAL:                     %u\n"
 
-#: pg_resetxlog.c:621
+#: pg_resetxlog.c:689
 #, c-format
 msgid "Bytes per WAL segment:                %u\n"
 msgstr "Байт в сегменте WAL:                  %u\n"
 
-#: pg_resetxlog.c:623
+#: pg_resetxlog.c:691
 #, c-format
 msgid "Maximum length of identifiers:        %u\n"
 msgstr "Максимальная длина идентификаторов:   %u\n"
 
-#: pg_resetxlog.c:625
+#: pg_resetxlog.c:693
 #, c-format
 msgid "Maximum columns in an index:          %u\n"
 msgstr "Максимальное число колонок в индексе: %u\n"
 
-#: pg_resetxlog.c:627
+#: pg_resetxlog.c:695
 #, c-format
 msgid "Maximum size of a TOAST chunk:        %u\n"
 msgstr "Максимальный размер порции TOAST:     %u\n"
 
-#: pg_resetxlog.c:629
+#: pg_resetxlog.c:697
 #, c-format
 msgid "Date/time type storage:               %s\n"
 msgstr "Формат хранения даты/времени:         %s\n"
 
-#: pg_resetxlog.c:630
+#: pg_resetxlog.c:698
 msgid "64-bit integers"
 msgstr "64-битные целые"
 
-#: pg_resetxlog.c:630
+#: pg_resetxlog.c:698
 msgid "floating-point numbers"
 msgstr "числа с плавающей точкой"
 
-#: pg_resetxlog.c:631
+#: pg_resetxlog.c:699
 #, c-format
 msgid "Float4 argument passing:              %s\n"
 msgstr "Передача аргумента Float4:            %s\n"
 
-#: pg_resetxlog.c:632 pg_resetxlog.c:634
+#: pg_resetxlog.c:700 pg_resetxlog.c:702
 msgid "by reference"
 msgstr "по ссылке"
 
-#: pg_resetxlog.c:632 pg_resetxlog.c:634
+#: pg_resetxlog.c:700 pg_resetxlog.c:702
 msgid "by value"
 msgstr "по значению"
 
-#: pg_resetxlog.c:633
+#: pg_resetxlog.c:701
 #, c-format
 msgid "Float8 argument passing:              %s\n"
 msgstr "Передача аргумента Float8:            %s\n"
 
-#: pg_resetxlog.c:699
+#: pg_resetxlog.c:767
 #, c-format
 msgid ""
 "%s: internal error -- sizeof(ControlFileData) is too large ... fix "
@@ -364,89 +380,89 @@ msgstr ""
 "%s: внутренняя ошибка -- размер ControlFileData слишком велик -- исправьте "
 "PG_CONTROL_SIZE\n"
 
-#: pg_resetxlog.c:714
+#: pg_resetxlog.c:782
 #, c-format
 msgid "%s: could not create pg_control file: %s\n"
 msgstr "%s: не удалось создать файл pg_control: %s\n"
 
-#: pg_resetxlog.c:725
+#: pg_resetxlog.c:793
 #, c-format
 msgid "%s: could not write pg_control file: %s\n"
 msgstr "%s: не удалось записать файл pg_control: %s\n"
 
-#: pg_resetxlog.c:732 pg_resetxlog.c:1042
+#: pg_resetxlog.c:800 pg_resetxlog.c:1110
 #, c-format
 msgid "%s: fsync error: %s\n"
 msgstr "%s: ошибка синхронизации с ФС: %s\n"
 
-#: pg_resetxlog.c:770 pg_resetxlog.c:846 pg_resetxlog.c:903
+#: pg_resetxlog.c:838 pg_resetxlog.c:914 pg_resetxlog.c:971
 #, c-format
 msgid "%s: could not open directory \"%s\": %s\n"
 msgstr "%s: не удалось открыть каталог \"%s\": %s\n"
 
-#: pg_resetxlog.c:809 pg_resetxlog.c:874 pg_resetxlog.c:932
+#: pg_resetxlog.c:877 pg_resetxlog.c:942 pg_resetxlog.c:1000
 #, c-format
 msgid "%s: could not read directory \"%s\": %s\n"
 msgstr "%s: не удалось прочитать каталог \"%s\": %s\n"
 
-#: pg_resetxlog.c:816 pg_resetxlog.c:881 pg_resetxlog.c:939
+#: pg_resetxlog.c:884 pg_resetxlog.c:949 pg_resetxlog.c:1007
 #, c-format
 msgid "%s: could not close directory \"%s\": %s\n"
 msgstr "%s: не удалось закрыть каталог \"%s\": %s\n"
 
-#: pg_resetxlog.c:859 pg_resetxlog.c:917
+#: pg_resetxlog.c:927 pg_resetxlog.c:985
 #, c-format
 msgid "%s: could not delete file \"%s\": %s\n"
 msgstr "%s: ошибка при удалении файла \"%s\": %s\n"
 
-#: pg_resetxlog.c:1009
+#: pg_resetxlog.c:1077
 #, c-format
 msgid "%s: could not open file \"%s\": %s\n"
 msgstr "%s: не удалось открыть файл \"%s\": %s\n"
 
-#: pg_resetxlog.c:1020 pg_resetxlog.c:1034
+#: pg_resetxlog.c:1088 pg_resetxlog.c:1102
 #, c-format
 msgid "%s: could not write file \"%s\": %s\n"
 msgstr "%s: не удалось записать файл \"%s\": %s\n"
 
-#: pg_resetxlog.c:1088
+#: pg_resetxlog.c:1156
 #, c-format
 msgid "%s: WARNING: cannot create restricted tokens on this platform\n"
 msgstr "%s: ПРЕДУПРЕЖДЕНИЕ: в этой ОС нельзя создавать ограниченные маркеры\n"
 
-#: pg_resetxlog.c:1097
+#: pg_resetxlog.c:1165
 #, c-format
 msgid "%s: could not open process token: error code %lu\n"
 msgstr "%s: не удалось открыть маркер процесса (код ошибки: %lu)\n"
 
-#: pg_resetxlog.c:1110
+#: pg_resetxlog.c:1178
 #, c-format
 msgid "%s: could not allocate SIDs: error code %lu\n"
 msgstr "%s: не удалось подготовить структуры SID (код ошибки: %lu)\n"
 
-#: pg_resetxlog.c:1129
+#: pg_resetxlog.c:1197
 #, c-format
 msgid "%s: could not create restricted token: error code %lu\n"
 msgstr "%s: не удалось создать ограниченный маркер (код ошибки: %lu)\n"
 
-#: pg_resetxlog.c:1150
+#: pg_resetxlog.c:1218
 #, c-format
 msgid "%s: could not start process for command \"%s\": error code %lu\n"
 msgstr ""
 "%s: не удалось запустить процесс для команды \"%s\" (код ошибки: %lu)\n"
 
-#: pg_resetxlog.c:1182
+#: pg_resetxlog.c:1250
 #, c-format
 msgid "%s: could not re-execute with restricted token: error code %lu\n"
 msgstr ""
 "%s: не удалось перезапуститься с ограниченным маркером (код ошибки: %lu)\n"
 
-#: pg_resetxlog.c:1197
+#: pg_resetxlog.c:1265
 #, c-format
 msgid "%s: could not get exit code from subprocess: error code %lu\n"
 msgstr "%s: не удалось получить код выхода от подпроцесса (код ошибки: %lu)\n"
 
-#: pg_resetxlog.c:1209
+#: pg_resetxlog.c:1277
 #, c-format
 msgid ""
 "%s resets the PostgreSQL transaction log.\n"
@@ -455,7 +471,7 @@ msgstr ""
 "%s сбрасывает журнал транзакций PostgreSQL.\n"
 "\n"
 
-#: pg_resetxlog.c:1210
+#: pg_resetxlog.c:1278
 #, c-format
 msgid ""
 "Usage:\n"
@@ -466,24 +482,24 @@ msgstr ""
 "  %s [ПАРАМЕТР]... КАТ_ДАННЫХ\n"
 "\n"
 
-#: pg_resetxlog.c:1211
+#: pg_resetxlog.c:1279
 #, c-format
 msgid "Options:\n"
 msgstr "Параметры:\n"
 
-#: pg_resetxlog.c:1212
+#: pg_resetxlog.c:1280
 #, c-format
 msgid "  -e XIDEPOCH      set next transaction ID epoch\n"
 msgstr "  -e XIDEPOCH      задать эпоху в ID следующей транзакции\n"
 
-#: pg_resetxlog.c:1213
+#: pg_resetxlog.c:1281
 #, c-format
 msgid "  -f               force update to be done\n"
 msgstr "  -f               принудительное выполнение операции\n"
 
 # skip-rule: space-after-comma
 # well-spelled: СЕГ
-#: pg_resetxlog.c:1214
+#: pg_resetxlog.c:1282
 #, c-format
 msgid ""
 "  -l TLI,FILE,SEG  force minimum WAL starting location for new transaction "
@@ -492,12 +508,12 @@ msgstr ""
 "  -l TLI,ФАЙЛ,СЕГ  задать минимальное начальное положение WAL для нового\n"
 "                   журнала транзакций\n"
 
-#: pg_resetxlog.c:1215
+#: pg_resetxlog.c:1283
 #, c-format
 msgid "  -m XID           set next multitransaction ID\n"
 msgstr "  -m XID           задать ID следующей мультитранзакции\n"
 
-#: pg_resetxlog.c:1216
+#: pg_resetxlog.c:1284
 #, c-format
 msgid ""
 "  -n               no update, just show extracted control values (for "
@@ -506,32 +522,32 @@ msgstr ""
 "  -n               ничего не делать, только показать извлечённые значения\n"
 "                   параметров (для проверки)\n"
 
-#: pg_resetxlog.c:1217
+#: pg_resetxlog.c:1285
 #, c-format
 msgid "  -o OID           set next OID\n"
 msgstr "  -o OID           задать следующий OID\n"
 
-#: pg_resetxlog.c:1218
+#: pg_resetxlog.c:1286
 #, c-format
 msgid "  -O OFFSET        set next multitransaction offset\n"
 msgstr "  -O СМЕЩЕНИЕ      задать смещение следующей мультитранзакции\n"
 
-#: pg_resetxlog.c:1219
+#: pg_resetxlog.c:1287
 #, c-format
 msgid "  -V, --version    output version information, then exit\n"
 msgstr "  -V, --version    показать версию и выйти\n"
 
-#: pg_resetxlog.c:1220
+#: pg_resetxlog.c:1288
 #, c-format
 msgid "  -x XID           set next transaction ID\n"
 msgstr "  -x XID           задать ID следующей транзакции\n"
 
-#: pg_resetxlog.c:1221
+#: pg_resetxlog.c:1289
 #, c-format
 msgid "  -?, --help       show this help, then exit\n"
 msgstr "  -?, --help       показать эту справку и выйти\n"
 
-#: pg_resetxlog.c:1222
+#: pg_resetxlog.c:1290
 #, c-format
 msgid ""
 "\n"

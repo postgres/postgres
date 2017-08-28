@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_ctl (PostgreSQL 9.2)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-05-21 17:49+0000\n"
+"POT-Creation-Date: 2017-08-27 22:17+0000\n"
 "PO-Revision-Date: 2012-08-03 13:28-0400\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL Español <pgsql-es-ayuda@postgresql.org>\n"
@@ -791,21 +791,21 @@ msgstr "%s: no se especificó operación\n"
 msgid "%s: no database directory specified and environment variable PGDATA unset\n"
 msgstr "%s: no se especificó directorio de datos y la variable PGDATA no está definida\n"
 
-#~ msgid "%s: could not open process token: %lu\n"
-#~ msgstr "%s: no se pudo abrir el token de proceso: %lu\n"
-
-#~ msgid "  --help                 show this help, then exit\n"
-#~ msgstr "  --help                 mostrar este texto y salir\n"
-
-#~ msgid "  --version              output version information, then exit\n"
-#~ msgstr "  --version              mostrar información sobre versión y salir\n"
-
-#~ msgid "%s: could not start server: exit code was %d\n"
-#~ msgstr "%s: no se pudo iniciar el servidor: el código de retorno fue %d\n"
-
 #~ msgid ""
 #~ "\n"
 #~ "%s: this data directory appears to be running a pre-existing postmaster\n"
 #~ msgstr ""
 #~ "\n"
 #~ "%s: este directorio de datos parece estar ejecutando un postmaster pre-existente\n"
+
+#~ msgid "%s: could not start server: exit code was %d\n"
+#~ msgstr "%s: no se pudo iniciar el servidor: el código de retorno fue %d\n"
+
+#~ msgid "  --version              output version information, then exit\n"
+#~ msgstr "  --version              mostrar información sobre versión y salir\n"
+
+#~ msgid "  --help                 show this help, then exit\n"
+#~ msgstr "  --help                 mostrar este texto y salir\n"
+
+#~ msgid "%s: could not open process token: %lu\n"
+#~ msgstr "%s: no se pudo abrir el token de proceso: %lu\n"
