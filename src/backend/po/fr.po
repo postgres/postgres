@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.5\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-07-19 17:26+0000\n"
-"PO-Revision-Date: 2017-07-20 08:18+0200\n"
+"POT-Creation-Date: 2017-08-07 14:26+0000\n"
+"PO-Revision-Date: 2017-08-07 18:05+0200\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=ISO-8859-15\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 1.8.12\n"
+"X-Generator: Poedit 2.0.2\n"
 
 #: ../common/exec.c:127 ../common/exec.c:241 ../common/exec.c:284
 #, c-format
@@ -79,7 +79,7 @@ msgstr "n'a pas pu lire le répertoire « %s » : %s\n"
 msgid "could not close directory \"%s\": %s\n"
 msgstr "n'a pas pu fermer le répertoire « %s » : %s\n"
 
-#: ../common/psprintf.c:179 ../port/path.c:600 ../port/path.c:638 ../port/path.c:655 access/transam/xlog.c:6066 lib/stringinfo.c:258 libpq/auth.c:823 libpq/auth.c:1186 libpq/auth.c:1254 libpq/auth.c:1665 postmaster/bgworker.c:309 postmaster/bgworker.c:821 postmaster/postmaster.c:2341 postmaster/postmaster.c:2372 postmaster/postmaster.c:3892 postmaster/postmaster.c:4590 postmaster/postmaster.c:4665 postmaster/postmaster.c:5329
+#: ../common/psprintf.c:179 ../port/path.c:600 ../port/path.c:638 ../port/path.c:655 access/transam/xlog.c:6066 lib/stringinfo.c:258 libpq/auth.c:837 libpq/auth.c:1200 libpq/auth.c:1268 libpq/auth.c:1679 postmaster/bgworker.c:309 postmaster/bgworker.c:821 postmaster/postmaster.c:2341 postmaster/postmaster.c:2372 postmaster/postmaster.c:3892 postmaster/postmaster.c:4590 postmaster/postmaster.c:4665 postmaster/postmaster.c:5329
 #: postmaster/postmaster.c:5641 replication/logical/logical.c:168 storage/buffer/localbuf.c:396 storage/file/fd.c:595 storage/file/fd.c:1023 storage/file/fd.c:1141 storage/file/fd.c:1793 storage/ipc/procarray.c:907 storage/ipc/procarray.c:1393 storage/ipc/procarray.c:1400 storage/ipc/procarray.c:1793 storage/ipc/procarray.c:2385 utils/adt/formatting.c:1522 utils/adt/formatting.c:1642 utils/adt/formatting.c:1763 utils/adt/pg_locale.c:463
 #: utils/adt/pg_locale.c:647 utils/adt/regexp.c:219 utils/adt/varlena.c:4212 utils/adt/varlena.c:4233 utils/fmgr/dfmgr.c:216 utils/hash/dynahash.c:411 utils/hash/dynahash.c:488 utils/hash/dynahash.c:1002 utils/mb/mbutils.c:376 utils/mb/mbutils.c:709 utils/misc/guc.c:3723 utils/misc/guc.c:3739 utils/misc/guc.c:3752 utils/misc/guc.c:6686 utils/misc/tzparser.c:470 utils/mmgr/aset.c:505 utils/mmgr/mcxt.c:688 utils/mmgr/mcxt.c:723
 #: utils/mmgr/mcxt.c:760 utils/mmgr/mcxt.c:797 utils/mmgr/mcxt.c:831 utils/mmgr/mcxt.c:860 utils/mmgr/mcxt.c:894 utils/mmgr/mcxt.c:976 utils/mmgr/mcxt.c:1010 utils/mmgr/mcxt.c:1059
@@ -149,7 +149,7 @@ msgstr "n'a pas pu supprimer le fichier ou répertoire « %s » : %s\n"
 msgid "could not look up effective user ID %ld: %s"
 msgstr "n'a pas pu trouver l'identifiant réel %ld de l'utilisateur : %s"
 
-#: ../common/username.c:47 libpq/auth.c:1612
+#: ../common/username.c:47 libpq/auth.c:1626
 msgid "user does not exist"
 msgstr "l'utilisateur n'existe pas"
 
@@ -512,7 +512,7 @@ msgstr "ne peut pas supprimer les lignes lors d'une opération parallèle"
 msgid "attempted to delete invisible tuple"
 msgstr "a tenté de supprimer la ligne invisible"
 
-#: access/heap/heapam.c:3266 access/heap/heapam.c:5906
+#: access/heap/heapam.c:3266 access/heap/heapam.c:5939
 #, c-format
 msgid "cannot update tuples during a parallel operation"
 msgstr "ne peut pas mettre à jour les lignes lors d'une opération parallèle"
@@ -3468,7 +3468,7 @@ msgstr "la configuration de recherche plein texte « %s » n'existe pas"
 msgid "cross-database references are not implemented: %s"
 msgstr "les références entre bases de données ne sont pas implémentées : %s"
 
-#: catalog/namespace.c:2652 gram.y:13310 gram.y:14676 parser/parse_expr.c:796 parser/parse_target.c:1148
+#: catalog/namespace.c:2652 gram.y:13318 gram.y:14684 parser/parse_expr.c:796 parser/parse_target.c:1148
 #, c-format
 msgid "improper qualified name (too many dotted names): %s"
 msgstr "mauvaise qualification du nom (trop de points entre les noms) : %s"
@@ -9192,7 +9192,7 @@ msgstr ""
 "SET TRANSACTION ISOLATION LEVEL ne doit pas être appelé dans une\n"
 "sous-transaction"
 
-#: commands/variable.c:572 storage/lmgr/predicate.c:1586
+#: commands/variable.c:572 storage/lmgr/predicate.c:1599
 #, c-format
 msgid "cannot use serializable mode in a hot standby"
 msgstr "ne peut pas utiliser le mode sérialisable sur un serveur en « Hot Standby »"
@@ -9963,278 +9963,278 @@ msgstr "Les options valides dans ce contexte sont %s"
 msgid "unrecognized role option \"%s\""
 msgstr "option « %s » du rôle non reconnu"
 
-#: gram.y:1285 gram.y:1300
+#: gram.y:1293 gram.y:1308
 #, c-format
 msgid "CREATE SCHEMA IF NOT EXISTS cannot include schema elements"
 msgstr "CREATE SCHEMA IF NOT EXISTS n'inclut pas les éléments du schéma"
 
-#: gram.y:1445
+#: gram.y:1453
 #, c-format
 msgid "current database cannot be changed"
 msgstr "la base de données actuelle ne peut pas être changée"
 
-#: gram.y:1569
+#: gram.y:1577
 #, c-format
 msgid "time zone interval must be HOUR or HOUR TO MINUTE"
 msgstr "l'intervalle de fuseau horaire doit être HOUR ou HOUR TO MINUTE"
 
-#: gram.y:2584 gram.y:2613
+#: gram.y:2592 gram.y:2621
 #, c-format
 msgid "STDIN/STDOUT not allowed with PROGRAM"
 msgstr "STDIN/STDOUT non autorisé dans PROGRAM"
 
-#: gram.y:2879 gram.y:2886 gram.y:10154 gram.y:10162
+#: gram.y:2887 gram.y:2894 gram.y:10162 gram.y:10170
 #, c-format
 msgid "GLOBAL is deprecated in temporary table creation"
 msgstr "GLOBAL est obsolète dans la création de la table temporaire"
 
-#: gram.y:3325 utils/adt/ri_triggers.c:314 utils/adt/ri_triggers.c:371 utils/adt/ri_triggers.c:790 utils/adt/ri_triggers.c:1013 utils/adt/ri_triggers.c:1169 utils/adt/ri_triggers.c:1350 utils/adt/ri_triggers.c:1515 utils/adt/ri_triggers.c:1691 utils/adt/ri_triggers.c:1871 utils/adt/ri_triggers.c:2062 utils/adt/ri_triggers.c:2120 utils/adt/ri_triggers.c:2225 utils/adt/ri_triggers.c:2402
+#: gram.y:3333 utils/adt/ri_triggers.c:314 utils/adt/ri_triggers.c:371 utils/adt/ri_triggers.c:790 utils/adt/ri_triggers.c:1013 utils/adt/ri_triggers.c:1169 utils/adt/ri_triggers.c:1350 utils/adt/ri_triggers.c:1515 utils/adt/ri_triggers.c:1691 utils/adt/ri_triggers.c:1871 utils/adt/ri_triggers.c:2062 utils/adt/ri_triggers.c:2120 utils/adt/ri_triggers.c:2225 utils/adt/ri_triggers.c:2402
 #, c-format
 msgid "MATCH PARTIAL not yet implemented"
 msgstr "MATCH PARTIAL non implémenté"
 
-#: gram.y:4760
+#: gram.y:4768
 msgid "duplicate trigger events specified"
 msgstr "événements de trigger dupliqués spécifiés"
 
-#: gram.y:4853 parser/parse_utilcmd.c:2659 parser/parse_utilcmd.c:2685
+#: gram.y:4861 parser/parse_utilcmd.c:2659 parser/parse_utilcmd.c:2685
 #, c-format
 msgid "constraint declared INITIALLY DEFERRED must be DEFERRABLE"
 msgstr "la contrainte déclarée INITIALLY DEFERRED doit être DEFERRABLE"
 
-#: gram.y:4860
+#: gram.y:4868
 #, c-format
 msgid "conflicting constraint properties"
 msgstr "propriétés de contrainte en conflit"
 
-#: gram.y:4992
+#: gram.y:5000
 #, c-format
 msgid "CREATE ASSERTION is not yet implemented"
 msgstr "CREATE ASSERTION n'est pas encore implémenté"
 
-#: gram.y:5008
+#: gram.y:5016
 #, c-format
 msgid "DROP ASSERTION is not yet implemented"
 msgstr "DROP ASSERTION n'est pas encore implémenté"
 
-#: gram.y:5354
+#: gram.y:5362
 #, c-format
 msgid "RECHECK is no longer required"
 msgstr "RECHECK n'est plus nécessaire"
 
-#: gram.y:5355
+#: gram.y:5363
 #, c-format
 msgid "Update your data type."
 msgstr "Mettez à jour votre type de données."
 
-#: gram.y:6932
+#: gram.y:6940
 #, c-format
 msgid "aggregates cannot have output arguments"
 msgstr "les agrégats ne peuvent pas avoir d'arguments en sortie"
 
-#: gram.y:7247 utils/adt/regproc.c:775 utils/adt/regproc.c:816
+#: gram.y:7255 utils/adt/regproc.c:775 utils/adt/regproc.c:816
 #, c-format
 msgid "missing argument"
 msgstr "argument manquant"
 
-#: gram.y:7248 utils/adt/regproc.c:776 utils/adt/regproc.c:817
+#: gram.y:7256 utils/adt/regproc.c:776 utils/adt/regproc.c:817
 #, c-format
 msgid "Use NONE to denote the missing argument of a unary operator."
 msgstr "Utilisez NONE pour dénoter l'argument manquant d'un opérateur unitaire."
 
-#: gram.y:8722 gram.y:8740
+#: gram.y:8730 gram.y:8748
 #, c-format
 msgid "WITH CHECK OPTION not supported on recursive views"
 msgstr "WITH CHECK OPTION non supporté sur les vues récursives"
 
-#: gram.y:9746 parser/parse_expr.c:1476
+#: gram.y:9754 parser/parse_expr.c:1476
 #, c-format
 msgid "number of columns does not match number of values"
 msgstr "le nombre de colonnes ne correspond pas au nombre de valeurs"
 
-#: gram.y:10262
+#: gram.y:10270
 #, c-format
 msgid "LIMIT #,# syntax is not supported"
 msgstr "la syntaxe LIMIT #,# n'est pas supportée"
 
-#: gram.y:10263
+#: gram.y:10271
 #, c-format
 msgid "Use separate LIMIT and OFFSET clauses."
 msgstr "Utilisez les clauses séparées LIMIT et OFFSET."
 
-#: gram.y:10526 gram.y:10551
+#: gram.y:10534 gram.y:10559
 #, c-format
 msgid "VALUES in FROM must have an alias"
 msgstr "VALUES dans FROM doit avoir un alias"
 
-#: gram.y:10527 gram.y:10552
+#: gram.y:10535 gram.y:10560
 #, c-format
 msgid "For example, FROM (VALUES ...) [AS] foo."
 msgstr "Par exemple, FROM (VALUES ...) [AS] quelquechose."
 
-#: gram.y:10532 gram.y:10557
+#: gram.y:10540 gram.y:10565
 #, c-format
 msgid "subquery in FROM must have an alias"
 msgstr "la sous-requête du FROM doit avoir un alias"
 
-#: gram.y:10533 gram.y:10558
+#: gram.y:10541 gram.y:10566
 #, c-format
 msgid "For example, FROM (SELECT ...) [AS] foo."
 msgstr "Par exemple, FROM (SELECT...) [AS] quelquechose."
 
-#: gram.y:11132
+#: gram.y:11140
 #, c-format
 msgid "precision for type float must be at least 1 bit"
 msgstr "la précision du type float doit être d'au moins un bit"
 
-#: gram.y:11141
+#: gram.y:11149
 #, c-format
 msgid "precision for type float must be less than 54 bits"
 msgstr "la précision du type float doit être inférieur à 54 bits"
 
-#: gram.y:11645
+#: gram.y:11653
 #, c-format
 msgid "wrong number of parameters on left side of OVERLAPS expression"
 msgstr "mauvais nombre de paramètres sur le côté gauche de l'expression OVERLAPS"
 
-#: gram.y:11650
+#: gram.y:11658
 #, c-format
 msgid "wrong number of parameters on right side of OVERLAPS expression"
 msgstr "mauvais nombre de paramètres sur le côté droit de l'expression OVERLAPS"
 
-#: gram.y:11827
+#: gram.y:11835
 #, c-format
 msgid "UNIQUE predicate is not yet implemented"
 msgstr "prédicat UNIQUE non implémenté"
 
-#: gram.y:12163
+#: gram.y:12171
 #, c-format
 msgid "cannot use multiple ORDER BY clauses with WITHIN GROUP"
 msgstr "ne peut pas utiliser des clauses ORDER BY multiples dans WITHIN GROUP"
 
-#: gram.y:12168
+#: gram.y:12176
 #, c-format
 msgid "cannot use DISTINCT with WITHIN GROUP"
 msgstr "ne peut pas utiliser DISTINCT avec WITHIN GROUP"
 
-#: gram.y:12173
+#: gram.y:12181
 #, c-format
 msgid "cannot use VARIADIC with WITHIN GROUP"
 msgstr "ne peut pas utiliser VARIADIC avec WITHIN GROUP"
 
-#: gram.y:12679
+#: gram.y:12687
 #, c-format
 msgid "RANGE PRECEDING is only supported with UNBOUNDED"
 msgstr "RANGE PRECEDING est seulement supporté avec UNBOUNDED"
 
-#: gram.y:12685
+#: gram.y:12693
 #, c-format
 msgid "RANGE FOLLOWING is only supported with UNBOUNDED"
 msgstr "RANGE FOLLOWING est seulement supporté avec UNBOUNDED"
 
-#: gram.y:12712 gram.y:12735
+#: gram.y:12720 gram.y:12743
 #, c-format
 msgid "frame start cannot be UNBOUNDED FOLLOWING"
 msgstr "la fin du frame ne peut pas être UNBOUNDED FOLLOWING"
 
-#: gram.y:12717
+#: gram.y:12725
 #, c-format
 msgid "frame starting from following row cannot end with current row"
 msgstr "la frame commençant après la ligne suivante ne peut pas se terminer avec la ligne actuelle"
 
-#: gram.y:12740
+#: gram.y:12748
 #, c-format
 msgid "frame end cannot be UNBOUNDED PRECEDING"
 msgstr "la fin du frame ne peut pas être UNBOUNDED PRECEDING"
 
-#: gram.y:12746
+#: gram.y:12754
 #, c-format
 msgid "frame starting from current row cannot have preceding rows"
 msgstr "la frame commençant à la ligne courante ne peut pas avoir des lignes précédentes"
 
-#: gram.y:12753
+#: gram.y:12761
 #, c-format
 msgid "frame starting from following row cannot have preceding rows"
 msgstr "la frame commençant à la ligne suivante ne peut pas avoir des lignes précédentes"
 
-#: gram.y:13411
+#: gram.y:13419
 #, c-format
 msgid "type modifier cannot have parameter name"
 msgstr "le modificateur de type ne peut pas avoir de nom de paramètre"
 
-#: gram.y:13417
+#: gram.y:13425
 #, c-format
 msgid "type modifier cannot have ORDER BY"
 msgstr "le modificateur de type ne peut pas avoir de clause ORDER BY"
 
-#: gram.y:13475 gram.y:13510
+#: gram.y:13483 gram.y:13518
 #, c-format
 msgid "role name \"%s\" is reserved"
 msgstr "le nom du rôle « %s » est réservé"
 
-#: gram.y:13481 gram.y:13487
+#: gram.y:13489 gram.y:13495
 #, c-format
 msgid "%s cannot be used as a role name here"
 msgstr "%s ne peut pas être utilisé comme nom de rôle ici"
 
-#: gram.y:14106 gram.y:14295
+#: gram.y:14114 gram.y:14303
 msgid "improper use of \"*\""
 msgstr "mauvaise utilisation de « * »"
 
-#: gram.y:14258 gram.y:14275 tsearch/spell.c:667 tsearch/spell.c:684 tsearch/spell.c:701 tsearch/spell.c:718 tsearch/spell.c:740
+#: gram.y:14266 gram.y:14283 tsearch/spell.c:667 tsearch/spell.c:684 tsearch/spell.c:701 tsearch/spell.c:718 tsearch/spell.c:740
 #, c-format
 msgid "syntax error"
 msgstr "erreur de syntaxe"
 
-#: gram.y:14359
+#: gram.y:14367
 #, c-format
 msgid "an ordered-set aggregate with a VARIADIC direct argument must have one VARIADIC aggregated argument of the same data type"
 msgstr "un agrégat par ensemble ordonné avec un argument VARIADIC direct doit avoir un argument VARIADIC agrégé du même type de données"
 
-#: gram.y:14396
+#: gram.y:14404
 #, c-format
 msgid "multiple ORDER BY clauses not allowed"
 msgstr "clauses ORDER BY multiples non autorisées"
 
-#: gram.y:14407
+#: gram.y:14415
 #, c-format
 msgid "multiple OFFSET clauses not allowed"
 msgstr "clauses OFFSET multiples non autorisées"
 
-#: gram.y:14416
+#: gram.y:14424
 #, c-format
 msgid "multiple LIMIT clauses not allowed"
 msgstr "clauses LIMIT multiples non autorisées"
 
-#: gram.y:14425
+#: gram.y:14433
 #, c-format
 msgid "multiple WITH clauses not allowed"
 msgstr "clauses WITH multiples non autorisées"
 
-#: gram.y:14617
+#: gram.y:14625
 #, c-format
 msgid "OUT and INOUT arguments aren't allowed in TABLE functions"
 msgstr "les arguments OUT et INOUT ne sont pas autorisés dans des fonctions TABLE"
 
-#: gram.y:14718
+#: gram.y:14726
 #, c-format
 msgid "multiple COLLATE clauses not allowed"
 msgstr "clauses COLLATE multiples non autorisées"
 
 #. translator: %s is CHECK, UNIQUE, or similar
-#: gram.y:14756 gram.y:14769
+#: gram.y:14764 gram.y:14777
 #, c-format
 msgid "%s constraints cannot be marked DEFERRABLE"
 msgstr "les contraintes %s ne peuvent pas être marquées comme DEFERRABLE"
 
 #. translator: %s is CHECK, UNIQUE, or similar
-#: gram.y:14782
+#: gram.y:14790
 #, c-format
 msgid "%s constraints cannot be marked NOT VALID"
 msgstr "les contraintes %s ne peuvent pas être marquées comme NOT VALID"
 
 #. translator: %s is CHECK, UNIQUE, or similar
-#: gram.y:14795
+#: gram.y:14803
 #, c-format
 msgid "%s constraints cannot be marked NO INHERIT"
 msgstr "les contraintes %s ne peuvent pas être marquées NO INHERIT"
@@ -10494,329 +10494,329 @@ msgstr "en attente du mot de passe, a reçu un type de message %d"
 msgid "invalid password packet size"
 msgstr "taille du paquet du mot de passe invalide"
 
-#: libpq/auth.c:801
+#: libpq/auth.c:685
+#, c-format
+msgid "empty password returned by client"
+msgstr "mot de passe vide renvoyé par le client"
+
+#: libpq/auth.c:815
 #, c-format
 msgid "GSSAPI is not supported in protocol version 2"
 msgstr "GSSAPI n'est pas supporté dans le protocole de version 2"
 
-#: libpq/auth.c:861
+#: libpq/auth.c:875
 #, c-format
 msgid "expected GSS response, got message type %d"
 msgstr "en attente d'une réponse GSS, a reçu un message de type %d"
 
-#: libpq/auth.c:922
+#: libpq/auth.c:936
 msgid "accepting GSS security context failed"
 msgstr "échec de l'acceptation du contexte de sécurité GSS"
 
-#: libpq/auth.c:948
+#: libpq/auth.c:962
 msgid "retrieving GSS user name failed"
 msgstr "échec lors de la récupération du nom de l'utilisateur avec GSS"
 
-#: libpq/auth.c:1067
+#: libpq/auth.c:1081
 #, c-format
 msgid "SSPI is not supported in protocol version 2"
 msgstr "SSPI n'est pas supporté dans le protocole de version 2"
 
-#: libpq/auth.c:1082
+#: libpq/auth.c:1096
 msgid "could not acquire SSPI credentials"
 msgstr "n'a pas pu obtenir les pièces d'identité SSPI"
 
-#: libpq/auth.c:1100
+#: libpq/auth.c:1114
 #, c-format
 msgid "expected SSPI response, got message type %d"
 msgstr "en attente d'une réponse SSPI, a reçu un message de type %d"
 
-#: libpq/auth.c:1172
+#: libpq/auth.c:1186
 msgid "could not accept SSPI security context"
 msgstr "n'a pas pu accepter le contexte de sécurité SSPI"
 
-#: libpq/auth.c:1234
+#: libpq/auth.c:1248
 msgid "could not get token from SSPI security context"
 msgstr "n'a pas pu obtenir le jeton du contexte de sécurité SSPI"
 
-#: libpq/auth.c:1481
+#: libpq/auth.c:1495
 #, c-format
 msgid "could not create socket for Ident connection: %m"
 msgstr "n'a pas pu créer le socket pour la connexion Ident : %m"
 
-#: libpq/auth.c:1496
+#: libpq/auth.c:1510
 #, c-format
 msgid "could not bind to local address \"%s\": %m"
 msgstr "n'a pas pu se lier à l'adresse locale « %s » : %m"
 
-#: libpq/auth.c:1508
+#: libpq/auth.c:1522
 #, c-format
 msgid "could not connect to Ident server at address \"%s\", port %s: %m"
 msgstr "n'a pas pu se connecter au serveur Ident à l'adresse « %s », port %s : %m"
 
-#: libpq/auth.c:1530
+#: libpq/auth.c:1544
 #, c-format
 msgid "could not send query to Ident server at address \"%s\", port %s: %m"
 msgstr "n'a pas pu envoyer la requête au serveur Ident à l'adresse « %s », port %s : %m"
 
-#: libpq/auth.c:1547
+#: libpq/auth.c:1561
 #, c-format
 msgid "could not receive response from Ident server at address \"%s\", port %s: %m"
 msgstr ""
 "n'a pas pu recevoir la réponse du serveur Ident à l'adresse « %s », port %s :\n"
 "%m"
 
-#: libpq/auth.c:1557
+#: libpq/auth.c:1571
 #, c-format
 msgid "invalidly formatted response from Ident server: \"%s\""
 msgstr "réponse mal formatée du serveur Ident : « %s »"
 
-#: libpq/auth.c:1597
+#: libpq/auth.c:1611
 #, c-format
 msgid "peer authentication is not supported on this platform"
 msgstr "la méthode d'authentification «peer n'est pas supportée sur cette plateforme"
 
-#: libpq/auth.c:1601
+#: libpq/auth.c:1615
 #, c-format
 msgid "could not get peer credentials: %m"
 msgstr "n'a pas pu obtenir l'authentification de l'autre : %m"
 
-#: libpq/auth.c:1610
+#: libpq/auth.c:1624
 #, c-format
 msgid "could not look up local user ID %ld: %s"
 msgstr "n'a pas pu rechercher l'identifiant %ld de l'utilisateur local : %s"
 
-#: libpq/auth.c:1694 libpq/auth.c:1965 libpq/auth.c:2324
-#, c-format
-msgid "empty password returned by client"
-msgstr "mot de passe vide renvoyé par le client"
-
-#: libpq/auth.c:1704
+#: libpq/auth.c:1712
 #, c-format
 msgid "error from underlying PAM layer: %s"
 msgstr "erreur provenant de la couche PAM : %s"
 
-#: libpq/auth.c:1773
+#: libpq/auth.c:1781
 #, c-format
 msgid "could not create PAM authenticator: %s"
 msgstr "n'a pas pu créer l'authenticateur PAM : %s"
 
-#: libpq/auth.c:1784
+#: libpq/auth.c:1792
 #, c-format
 msgid "pam_set_item(PAM_USER) failed: %s"
 msgstr "pam_set_item(PAM_USER) a échoué : %s"
 
-#: libpq/auth.c:1795
+#: libpq/auth.c:1803
 #, c-format
 msgid "pam_set_item(PAM_CONV) failed: %s"
 msgstr "pam_set_item(PAM_CONV) a échoué : %s"
 
-#: libpq/auth.c:1806
+#: libpq/auth.c:1814
 #, c-format
 msgid "pam_authenticate failed: %s"
 msgstr "pam_authenticate a échoué : %s"
 
-#: libpq/auth.c:1817
+#: libpq/auth.c:1825
 #, c-format
 msgid "pam_acct_mgmt failed: %s"
 msgstr "pam_acct_mgmt a échoué : %s"
 
-#: libpq/auth.c:1828
+#: libpq/auth.c:1836
 #, c-format
 msgid "could not release PAM authenticator: %s"
 msgstr "n'a pas pu fermer l'authenticateur PAM : %s"
 
-#: libpq/auth.c:1861
+#: libpq/auth.c:1869
 #, c-format
 msgid "could not initialize LDAP: %m"
 msgstr "n'a pas pu initialiser LDAP : %m"
 
-#: libpq/auth.c:1864
+#: libpq/auth.c:1872
 #, c-format
 msgid "could not initialize LDAP: error code %d"
 msgstr "n'a pas pu initialiser LDAP : code d'erreur %d"
 
-#: libpq/auth.c:1874
+#: libpq/auth.c:1882
 #, c-format
 msgid "could not set LDAP protocol version: %s"
 msgstr "n'a pas pu initialiser la version du protocole LDAP : %s"
 
-#: libpq/auth.c:1903
+#: libpq/auth.c:1911
 #, c-format
 msgid "could not load wldap32.dll"
 msgstr "n'a pas pu charger wldap32.dll"
 
-#: libpq/auth.c:1911
+#: libpq/auth.c:1919
 #, c-format
 msgid "could not load function _ldap_start_tls_sA in wldap32.dll"
 msgstr "n'a pas pu charger la fonction _ldap_start_tls_sA de wldap32.dll"
 
-#: libpq/auth.c:1912
+#: libpq/auth.c:1920
 #, c-format
 msgid "LDAP over SSL is not supported on this platform."
 msgstr "LDAP via SSL n'est pas supporté sur cette plateforme."
 
-#: libpq/auth.c:1927
+#: libpq/auth.c:1935
 #, c-format
 msgid "could not start LDAP TLS session: %s"
 msgstr "n'a pas pu démarrer la session TLS LDAP : %s"
 
-#: libpq/auth.c:1949
+#: libpq/auth.c:1957
 #, c-format
 msgid "LDAP server not specified"
 msgstr "serveur LDAP non précisé"
 
-#: libpq/auth.c:2002
+#: libpq/auth.c:2005
 #, c-format
 msgid "invalid character in user name for LDAP authentication"
 msgstr "caractère invalide dans le nom de l'utilisateur pour l'authentification LDAP"
 
-#: libpq/auth.c:2017
+#: libpq/auth.c:2020
 #, c-format
 msgid "could not perform initial LDAP bind for ldapbinddn \"%s\" on server \"%s\": %s"
 msgstr "n'a pas pu réaliser le lien LDAP initiale pour ldapbinddn « %s » sur le serveur « %s » : %s"
 
-#: libpq/auth.c:2041
+#: libpq/auth.c:2044
 #, c-format
 msgid "could not search LDAP for filter \"%s\" on server \"%s\": %s"
 msgstr "n'a pas pu rechercher dans LDAP pour filtrer « %s » sur le serveur « %s » : %s"
 
-#: libpq/auth.c:2052
+#: libpq/auth.c:2055
 #, c-format
 msgid "LDAP user \"%s\" does not exist"
 msgstr "l'utilisateur LDAP « %s » n'existe pas"
 
-#: libpq/auth.c:2053
+#: libpq/auth.c:2056
 #, c-format
 msgid "LDAP search for filter \"%s\" on server \"%s\" returned no entries."
 msgstr "la recherche LDAP pour le filtre « %s » sur le serveur « %s » n'a renvoyé aucun enregistrement."
 
-#: libpq/auth.c:2057
+#: libpq/auth.c:2060
 #, c-format
 msgid "LDAP user \"%s\" is not unique"
 msgstr "l'utilisateur LDAP « %s » n'est pas unique"
 
-#: libpq/auth.c:2058
+#: libpq/auth.c:2061
 #, c-format
 msgid "LDAP search for filter \"%s\" on server \"%s\" returned %d entry."
 msgid_plural "LDAP search for filter \"%s\" on server \"%s\" returned %d entries."
 msgstr[0] "la recherche LDAP pour le filtre « %s » sur le serveur « %s » a renvoyé %d enregistrement."
 msgstr[1] "la recherche LDAP pour le filtre « %s » sur le serveur « %s » a renvoyé %d enregistrements."
 
-#: libpq/auth.c:2076
+#: libpq/auth.c:2079
 #, c-format
 msgid "could not get dn for the first entry matching \"%s\" on server \"%s\": %s"
 msgstr ""
 "n'a pas pu obtenir le dn pour la première entrée correspondante « %s » sur\n"
 "le serveur « %s » : %s"
 
-#: libpq/auth.c:2096
+#: libpq/auth.c:2099
 #, c-format
 msgid "could not unbind after searching for user \"%s\" on server \"%s\": %s"
 msgstr ""
 "n'a pas pu exécuter le unbind après la recherche de l'utilisateur « %s »\n"
 "sur le serveur « %s » : %s"
 
-#: libpq/auth.c:2126
+#: libpq/auth.c:2129
 #, c-format
 msgid "LDAP login failed for user \"%s\" on server \"%s\": %s"
 msgstr "échec de connexion LDAP pour l'utilisateur « %s » sur le serveur « %s » : %s"
 
-#: libpq/auth.c:2154
+#: libpq/auth.c:2157
 #, c-format
 msgid "certificate authentication failed for user \"%s\": client certificate contains no user name"
 msgstr ""
 "l'authentification par le certificat a échoué pour l'utilisateur « %s » :\n"
 "le certificat du client ne contient aucun nom d'utilisateur"
 
-#: libpq/auth.c:2280
+#: libpq/auth.c:2283
 #, c-format
 msgid "RADIUS server not specified"
 msgstr "serveur RADIUS non précisé"
 
-#: libpq/auth.c:2287
+#: libpq/auth.c:2290
 #, c-format
 msgid "RADIUS secret not specified"
 msgstr "secret RADIUS non précisé"
 
-#: libpq/auth.c:2303 libpq/hba.c:1590
+#: libpq/auth.c:2306 libpq/hba.c:1590
 #, c-format
 msgid "could not translate RADIUS server name \"%s\" to address: %s"
 msgstr "n'a pas pu traduire le nom du serveur RADIUS « %s » en une adresse : %s"
 
-#: libpq/auth.c:2331
+#: libpq/auth.c:2327
 #, c-format
 msgid "RADIUS authentication does not support passwords longer than 16 characters"
 msgstr ""
 "l'authentification RADIUS ne supporte pas les mots de passe de plus de 16\n"
 "caractères"
 
-#: libpq/auth.c:2342
+#: libpq/auth.c:2338
 #, c-format
 msgid "could not generate random encryption vector"
 msgstr "n'a pas pu générer le vecteur de chiffrement aléatoire"
 
-#: libpq/auth.c:2365
+#: libpq/auth.c:2361
 #, c-format
 msgid "could not perform MD5 encryption of password"
 msgstr "n'a pas pu réaliser le chiffrement MD5 du mot de passe"
 
-#: libpq/auth.c:2387
+#: libpq/auth.c:2383
 #, c-format
 msgid "could not create RADIUS socket: %m"
 msgstr "n'a pas pu créer le socket RADIUS : %m"
 
-#: libpq/auth.c:2408
+#: libpq/auth.c:2404
 #, c-format
 msgid "could not bind local RADIUS socket: %m"
 msgstr "n'a pas pu se lier à la socket RADIUS : %m"
 
-#: libpq/auth.c:2418
+#: libpq/auth.c:2414
 #, c-format
 msgid "could not send RADIUS packet: %m"
 msgstr "n'a pas pu transmettre le paquet RADIUS : %m"
 
-#: libpq/auth.c:2451 libpq/auth.c:2476
+#: libpq/auth.c:2447 libpq/auth.c:2472
 #, c-format
 msgid "timeout waiting for RADIUS response"
 msgstr "dépassement du délai pour la réponse du RADIUS"
 
-#: libpq/auth.c:2469
+#: libpq/auth.c:2465
 #, c-format
 msgid "could not check status on RADIUS socket: %m"
 msgstr "n'a pas pu vérifier le statut sur la socket RADIUS : %m"
 
-#: libpq/auth.c:2498
+#: libpq/auth.c:2494
 #, c-format
 msgid "could not read RADIUS response: %m"
 msgstr "n'a pas pu lire la réponse RADIUS : %m"
 
-#: libpq/auth.c:2510 libpq/auth.c:2514
+#: libpq/auth.c:2506 libpq/auth.c:2510
 #, c-format
 msgid "RADIUS response was sent from incorrect port: %d"
 msgstr "la réponse RADIUS a été envoyée à partir d'un mauvais port : %d"
 
-#: libpq/auth.c:2523
+#: libpq/auth.c:2519
 #, c-format
 msgid "RADIUS response too short: %d"
 msgstr "réponse RADIUS trop courte : %d"
 
-#: libpq/auth.c:2530
+#: libpq/auth.c:2526
 #, c-format
 msgid "RADIUS response has corrupt length: %d (actual length %d)"
 msgstr "la réponse RADIUS a une longueur corrompue : %d (longueur actuelle %d)"
 
-#: libpq/auth.c:2538
+#: libpq/auth.c:2534
 #, c-format
 msgid "RADIUS response is to a different request: %d (should be %d)"
 msgstr "la réponse RADIUS correspond à une demande différente : %d (devrait être %d)"
 
-#: libpq/auth.c:2563
+#: libpq/auth.c:2559
 #, c-format
 msgid "could not perform MD5 encryption of received packet"
 msgstr "n'a pas pu réaliser le chiffrement MD5 du paquet reçu"
 
-#: libpq/auth.c:2572
+#: libpq/auth.c:2568
 #, c-format
 msgid "RADIUS response has incorrect MD5 signature"
 msgstr "la réponse RADIUS a une signature MD5 erronée"
 
-#: libpq/auth.c:2589
+#: libpq/auth.c:2585
 #, c-format
 msgid "RADIUS response has invalid code (%d) for user \"%s\""
 msgstr "la réponse RADIUS a un code invalide (%d) pour l'utilisateur « %s »"
@@ -10826,7 +10826,7 @@ msgstr "la réponse RADIUS a un code invalide (%d) pour l'utilisateur « %s »"
 msgid "invalid large-object descriptor: %d"
 msgstr "descripteur invalide de « Large Object » : %d"
 
-#: libpq/be-fsstubs.c:180 libpq/be-fsstubs.c:218 libpq/be-fsstubs.c:602 libpq/be-fsstubs.c:790
+#: libpq/be-fsstubs.c:180 libpq/be-fsstubs.c:218 libpq/be-fsstubs.c:602 libpq/be-fsstubs.c:790 libpq/be-fsstubs.c:910
 #, c-format
 msgid "permission denied for large object %u"
 msgstr "droit refusé pour le Large Object %u"
@@ -10933,86 +10933,86 @@ msgstr "n'a pas pu charger le fichier de clé privée « %s » : %s"
 msgid "check of private key failed: %s"
 msgstr "échec de la vérification de la clé privée : %s"
 
-#: libpq/be-secure-openssl.c:269
+#: libpq/be-secure-openssl.c:277
 #, c-format
 msgid "could not load root certificate file \"%s\": %s"
 msgstr "n'a pas pu charger le fichier du certificat racine « %s » : %s"
 
-#: libpq/be-secure-openssl.c:293
+#: libpq/be-secure-openssl.c:301
 #, c-format
 msgid "SSL certificate revocation list file \"%s\" ignored"
 msgstr "liste de révocation des certificats SSL « %s » ignorée"
 
-#: libpq/be-secure-openssl.c:295
+#: libpq/be-secure-openssl.c:303
 #, c-format
 msgid "SSL library does not support certificate revocation lists."
 msgstr "La bibliothèque SSL ne supporte pas les listes de révocation des certificats."
 
-#: libpq/be-secure-openssl.c:300
+#: libpq/be-secure-openssl.c:308
 #, c-format
 msgid "could not load SSL certificate revocation list file \"%s\": %s"
 msgstr "n'a pas pu charger le fichier de liste de révocation des certificats SSL (« %s ») : %s"
 
-#: libpq/be-secure-openssl.c:347
+#: libpq/be-secure-openssl.c:355
 #, c-format
 msgid "could not initialize SSL connection: %s"
 msgstr "n'a pas pu initialiser la connexion SSL : %s"
 
-#: libpq/be-secure-openssl.c:355
+#: libpq/be-secure-openssl.c:363
 #, c-format
 msgid "could not set SSL socket: %s"
 msgstr "n'a pas pu créer le socket SSL : %s"
 
-#: libpq/be-secure-openssl.c:409
+#: libpq/be-secure-openssl.c:417
 #, c-format
 msgid "could not accept SSL connection: %m"
 msgstr "n'a pas pu accepter la connexion SSL : %m"
 
-#: libpq/be-secure-openssl.c:413 libpq/be-secure-openssl.c:424
+#: libpq/be-secure-openssl.c:421 libpq/be-secure-openssl.c:432
 #, c-format
 msgid "could not accept SSL connection: EOF detected"
 msgstr "n'a pas pu accepter la connexion SSL : fin de fichier détecté"
 
-#: libpq/be-secure-openssl.c:418
+#: libpq/be-secure-openssl.c:426
 #, c-format
 msgid "could not accept SSL connection: %s"
 msgstr "n'a pas pu accepter la connexion SSL : %s"
 
-#: libpq/be-secure-openssl.c:429 libpq/be-secure-openssl.c:572 libpq/be-secure-openssl.c:638
+#: libpq/be-secure-openssl.c:437 libpq/be-secure-openssl.c:580 libpq/be-secure-openssl.c:646
 #, c-format
 msgid "unrecognized SSL error code: %d"
 msgstr "code d'erreur SSL inconnu : %d"
 
-#: libpq/be-secure-openssl.c:473
+#: libpq/be-secure-openssl.c:481
 #, c-format
 msgid "SSL certificate's common name contains embedded null"
 msgstr "le nom commun du certificat SSL contient des NULL"
 
-#: libpq/be-secure-openssl.c:484
+#: libpq/be-secure-openssl.c:492
 #, c-format
 msgid "SSL connection from \"%s\""
 msgstr "connexion SSL de « %s »"
 
-#: libpq/be-secure-openssl.c:561 libpq/be-secure-openssl.c:623
+#: libpq/be-secure-openssl.c:569 libpq/be-secure-openssl.c:631
 #, c-format
 msgid "SSL error: %s"
 msgstr "erreur SSL : %s"
 
-#: libpq/be-secure-openssl.c:1040
+#: libpq/be-secure-openssl.c:1048
 #, c-format
 msgid "ECDH: unrecognized curve name: %s"
 msgstr "ECDH : nome de courbe non reconnu : %s"
 
-#: libpq/be-secure-openssl.c:1045
+#: libpq/be-secure-openssl.c:1053
 #, c-format
 msgid "ECDH: could not create key"
 msgstr "ECDH : n'a pas pu créer la clé"
 
-#: libpq/be-secure-openssl.c:1069
+#: libpq/be-secure-openssl.c:1077
 msgid "no SSL error reported"
 msgstr "aucune erreur SSL reportée"
 
-#: libpq/be-secure-openssl.c:1073
+#: libpq/be-secure-openssl.c:1081
 #, c-format
 msgid "SSL error code %lu"
 msgstr "erreur SSL %lu"
@@ -11022,7 +11022,12 @@ msgstr "erreur SSL %lu"
 msgid "User \"%s\" has no password assigned."
 msgstr "L'utilisateur « %s » n'a pas de mot de passe affecté."
 
-#: libpq/crypt.c:150
+#: libpq/crypt.c:86 libpq/crypt.c:101
+#, c-format
+msgid "User \"%s\" has an empty password."
+msgstr "L'utilisateur « %s » a un mot de passe vide."
+
+#: libpq/crypt.c:179
 #, c-format
 msgid "User \"%s\" has an expired password."
 msgstr "L'utilisateur « %s » a un mot de passe expiré."
@@ -16288,7 +16293,7 @@ msgstr "n'a pas pu créer le segment de mémoire partagée « %s » : %m"
 msgid "could not duplicate handle for \"%s\": %m"
 msgstr "n'a pas pu dupliquer le lien pour « %s » : %m"
 
-#: storage/ipc/shm_toc.c:108 storage/ipc/shm_toc.c:189 storage/ipc/shmem.c:205 storage/lmgr/lock.c:867 storage/lmgr/lock.c:901 storage/lmgr/lock.c:2598 storage/lmgr/lock.c:3714 storage/lmgr/lock.c:3779 storage/lmgr/lock.c:4069 storage/lmgr/predicate.c:2328 storage/lmgr/predicate.c:2343 storage/lmgr/predicate.c:3735 storage/lmgr/predicate.c:4878 storage/lmgr/proc.c:200 utils/hash/dynahash.c:998
+#: storage/ipc/shm_toc.c:108 storage/ipc/shm_toc.c:189 storage/ipc/shmem.c:205 storage/lmgr/lock.c:867 storage/lmgr/lock.c:901 storage/lmgr/lock.c:2598 storage/lmgr/lock.c:3714 storage/lmgr/lock.c:3779 storage/lmgr/lock.c:4069 storage/lmgr/predicate.c:2341 storage/lmgr/predicate.c:2356 storage/lmgr/predicate.c:3748 storage/lmgr/predicate.c:4891 storage/lmgr/proc.c:200 utils/hash/dynahash.c:998
 #, c-format
 msgid "out of shared memory"
 msgstr "mémoire partagée épuisée"
@@ -16499,70 +16504,70 @@ msgstr ""
 msgid "not enough elements in RWConflictPool to record a potential read/write conflict"
 msgstr "pas assez d'éléments dans RWConflictPool pour enregistrer un conflit en lecture/écriture potentiel"
 
-#: storage/lmgr/predicate.c:908
+#: storage/lmgr/predicate.c:909
 #, c-format
 msgid "memory for serializable conflict tracking is nearly exhausted"
 msgstr "la mémoire pour tracer les conflits sérialisables est pratiquement pleine"
 
-#: storage/lmgr/predicate.c:909
+#: storage/lmgr/predicate.c:910
 #, c-format
 msgid "There might be an idle transaction or a forgotten prepared transaction causing this."
 msgstr ""
 "Il pourait y avoir une transaction en attente ou une transaction préparée\n"
 "oubliée causant cela."
 
-#: storage/lmgr/predicate.c:1189 storage/lmgr/predicate.c:1260
+#: storage/lmgr/predicate.c:1204 storage/lmgr/predicate.c:1276
 #, c-format
 msgid "not enough shared memory for elements of data structure \"%s\" (%zu bytes requested)"
 msgstr ""
 "pas assez de mémoire partagée pour les éléments de la structure de données\n"
 "« %s » (%zu octets demandés)"
 
-#: storage/lmgr/predicate.c:1548
+#: storage/lmgr/predicate.c:1561
 #, c-format
 msgid "deferrable snapshot was unsafe; trying a new one"
 msgstr "l'image déferrable est non sûre ; tentative avec une nouvelle image"
 
-#: storage/lmgr/predicate.c:1587
+#: storage/lmgr/predicate.c:1600
 #, c-format
 msgid "\"default_transaction_isolation\" is set to \"serializable\"."
 msgstr "« default_transaction_isolation » est configuré à « serializable »."
 
-#: storage/lmgr/predicate.c:1588
+#: storage/lmgr/predicate.c:1601
 #, c-format
 msgid "You can use \"SET default_transaction_isolation = 'repeatable read'\" to change the default."
 msgstr ""
 "Vous pouvez utiliser « SET default_transaction_isolation = 'repeatable read' »\n"
 "pour modifier la valeur par défaut."
 
-#: storage/lmgr/predicate.c:1627
+#: storage/lmgr/predicate.c:1640
 #, c-format
 msgid "a snapshot-importing transaction must not be READ ONLY DEFERRABLE"
 msgstr "une transaction important un snapshot ne doit pas être READ ONLY DEFERRABLE"
 
-#: storage/lmgr/predicate.c:1705 utils/time/snapmgr.c:472 utils/time/snapmgr.c:478
+#: storage/lmgr/predicate.c:1718 utils/time/snapmgr.c:472 utils/time/snapmgr.c:478
 #, c-format
 msgid "could not import the requested snapshot"
 msgstr "n'a pas pu importer le snapshot demandé"
 
-#: storage/lmgr/predicate.c:1706 utils/time/snapmgr.c:479
+#: storage/lmgr/predicate.c:1719 utils/time/snapmgr.c:479
 #, c-format
 msgid "The source transaction %u is not running anymore."
 msgstr "La transaction source %u n'est plus en cours d'exécution."
 
-#: storage/lmgr/predicate.c:2329 storage/lmgr/predicate.c:2344 storage/lmgr/predicate.c:3736
+#: storage/lmgr/predicate.c:2342 storage/lmgr/predicate.c:2357 storage/lmgr/predicate.c:3749
 #, c-format
 msgid "You might need to increase max_pred_locks_per_transaction."
 msgstr "Vous pourriez avoir besoin d'augmenter max_pred_locks_per_transaction."
 
-#: storage/lmgr/predicate.c:3890 storage/lmgr/predicate.c:3979 storage/lmgr/predicate.c:3987 storage/lmgr/predicate.c:4026 storage/lmgr/predicate.c:4265 storage/lmgr/predicate.c:4602 storage/lmgr/predicate.c:4614 storage/lmgr/predicate.c:4656 storage/lmgr/predicate.c:4694
+#: storage/lmgr/predicate.c:3903 storage/lmgr/predicate.c:3992 storage/lmgr/predicate.c:4000 storage/lmgr/predicate.c:4039 storage/lmgr/predicate.c:4278 storage/lmgr/predicate.c:4615 storage/lmgr/predicate.c:4627 storage/lmgr/predicate.c:4669 storage/lmgr/predicate.c:4707
 #, c-format
 msgid "could not serialize access due to read/write dependencies among transactions"
 msgstr ""
 "n'a pas pu sérialiser un accès à cause des dépendances de lecture/écriture\n"
 "parmi les transactions"
 
-#: storage/lmgr/predicate.c:3892 storage/lmgr/predicate.c:3981 storage/lmgr/predicate.c:3989 storage/lmgr/predicate.c:4028 storage/lmgr/predicate.c:4267 storage/lmgr/predicate.c:4604 storage/lmgr/predicate.c:4616 storage/lmgr/predicate.c:4658 storage/lmgr/predicate.c:4696
+#: storage/lmgr/predicate.c:3905 storage/lmgr/predicate.c:3994 storage/lmgr/predicate.c:4002 storage/lmgr/predicate.c:4041 storage/lmgr/predicate.c:4280 storage/lmgr/predicate.c:4617 storage/lmgr/predicate.c:4629 storage/lmgr/predicate.c:4671 storage/lmgr/predicate.c:4709
 #, c-format
 msgid "The transaction might succeed if retried."
 msgstr "La transaction pourrait réussir après une nouvelle tentative."
@@ -19384,7 +19389,7 @@ msgstr "il existe plus d'une fonction nommée « %s »"
 msgid "more than one operator named %s"
 msgstr "il existe plus d'un opérateur nommé%s"
 
-#: utils/adt/regproc.c:780 utils/adt/regproc.c:821 utils/adt/regproc.c:2007 utils/adt/ruleutils.c:8293 utils/adt/ruleutils.c:8418
+#: utils/adt/regproc.c:780 utils/adt/regproc.c:821 utils/adt/regproc.c:2007 utils/adt/ruleutils.c:8308 utils/adt/ruleutils.c:8433
 #, c-format
 msgid "too many arguments"
 msgstr "trop d'arguments"
@@ -19556,7 +19561,7 @@ msgstr ""
 "ne peut pas comparer les types d'enregistrement avec des numéros différents\n"
 "des colonnes"
 
-#: utils/adt/ruleutils.c:4153
+#: utils/adt/ruleutils.c:4158
 #, c-format
 msgid "rule \"%s\" has unsupported event type %d"
 msgstr "la règle « %s » a un type d'événement %d non supporté"
@@ -22929,1157 +22934,449 @@ msgstr ""
 msgid "cannot import a snapshot from a different database"
 msgstr "ne peut pas importer un snapshot à partir d'une base de données différente"
 
-#~ msgid "index row size %lu exceeds maximum %lu for index \"%s\""
-#~ msgstr "la taille de la ligne index, %lu, dépasse le maximum, %lu, pour l'index « %s »"
+#~ msgid "wrong range of array subscripts"
+#~ msgstr "mauvais échelle des indices du tableau"
 
-#~ msgid "%s."
-#~ msgstr "%s."
+#~ msgid "Lower bound of dimension array must be one."
+#~ msgstr "La limite inférieure du tableau doit valoir un."
 
-#~ msgid "cannot create temporary tables in parallel mode"
-#~ msgstr "ne peut pas créer des tables temporaires dans le mode de parallélisation"
+#~ msgid "could not link file \"%s\" to \"%s\" (initialization of log file): %m"
+#~ msgstr "n'a pas pu lier le fichier « %s » à « %s » (initialisation du journal de transactions) : %m"
 
-#~ msgid "setsockopt(SO_REUSEADDR) failed: %m"
-#~ msgstr "setsockopt(SO_REUSEADDR) a échoué : %m"
+#~ msgid "could not rename file \"%s\" to \"%s\" (initialization of log file): %m"
+#~ msgstr "n'a pas pu renommer le fichier « %s » en « %s » (initialisation du journal de transactions) : %m"
 
-#~ msgid "Transaction ID %u finished; no more running transactions."
-#~ msgstr "Identifiant de transaction %u terminé ; plus de transactions en cours."
+#~ msgid "JSON does not support infinite date values."
+#~ msgstr "JSON ne supporte pas les valeurs infinies de date."
 
-#~ msgid "%u transaction needs to finish."
-#~ msgid_plural "%u transactions need to finish."
-#~ msgstr[0] "La transaction %u doit se terminer."
-#~ msgstr[1] "Les transactions %u doivent se terminer."
+#~ msgid "JSON does not support infinite timestamp values."
+#~ msgstr "JSON ne supporte pas les valeurs infinies de timestamp."
 
-#~ msgid "could not determine data type for argument 1"
-#~ msgstr "n'a pas pu déterminer le type de données pour l'argument 1"
+#~ msgid "cannot override frame clause of window \"%s\""
+#~ msgstr "ne peut pas surcharger la frame clause du window « %s »"
 
-#~ msgid "could not determine data type for argument 2"
-#~ msgstr "n'a pas pu déterminer le type de données pour l'argument 2"
+#~ msgid "window functions cannot use named arguments"
+#~ msgstr "les fonctions window ne peuvent pas renvoyer des arguments nommés"
 
-#~ msgid "argument %d: could not determine data type"
-#~ msgstr "argument %d : n'a pas pu déterminer le type de données"
+#~ msgid "invalid list syntax for \"listen_addresses\""
+#~ msgstr "syntaxe de liste invalide pour le paramètre « listen_addresses »"
 
-#~ msgid "system columns cannot be used in an ON CONFLICT clause"
-#~ msgstr "les colonnes systèmes ne peuvent pas être utilisées dans une clause ON CONFLICT"
+#~ msgid "invalid list syntax for \"unix_socket_directories\""
+#~ msgstr "syntaxe de liste invalide pour le paramètre « unix_socket_directories »"
 
-#~ msgid "huge TLB pages not supported on this platform"
-#~ msgstr "Huge Pages TLB non supporté sur cette plateforme."
+#~ msgid "Valid values are '[]', '[)', '(]', and '()'."
+#~ msgstr "Les valeurs valides sont « [] », « [) », « (] » et « () »."
 
-#~ msgid "time zone abbreviation \"%s\" is not used in time zone \"%s\""
-#~ msgstr "l'abréviation « %s » du fuseau horaire n'est pas utilisée dans le fuseau horaire « %s »"
+#~ msgid "poll() failed in statistics collector: %m"
+#~ msgstr "échec du poll() dans le récupérateur de statistiques : %m"
 
-#~ msgid "invalid length in external \"numeric\" value"
-#~ msgstr "longueur invalide dans la valeur externe « numeric »"
+#~ msgid "select() failed in logger process: %m"
+#~ msgstr "échec de select() dans le processus des journaux applicatifs : %m"
 
-#~ msgid "mapped win32 error code %lu to %d"
-#~ msgstr "correspondance du code d'erreur win32 %lu en %d"
+#~ msgid "%s: could not open file \"%s\": %s\n"
+#~ msgstr "%s : n'a pas pu ouvrir le fichier « %s » : %s\n"
 
-#~ msgid "unrecognized win32 error code: %lu"
-#~ msgstr "code d'erreur win32 non reconnu : %lu"
+#~ msgid "%s: could not open log file \"%s/%s\": %s\n"
+#~ msgstr "%s : n'a pas pu ouvrir le journal applicatif « %s/%s » : %s\n"
 
-#~ msgid "invalid value for recovery parameter \"recovery_target\""
-#~ msgstr "valeur invalide pour le paramètre de restauration « recovery_target »"
+#~ msgid "%s: could not fork background process: %s\n"
+#~ msgstr "%s : n'a pas pu créer un processus fils : %s\n"
 
-#~ msgid "redo record is at %X/%X; shutdown %s"
-#~ msgstr "l'enregistrement à ré-exécuter se trouve à %X/%X ; arrêt %s"
+#~ msgid "%s: could not dissociate from controlling TTY: %s\n"
+#~ msgstr "%s : n'a pas pu se dissocier du TTY contrôlant : %s\n"
 
-#~ msgid "next transaction ID: %u/%u; next OID: %u"
-#~ msgstr "prochain identifiant de transaction : %u/%u ; prochain OID : %u"
+#~ msgid "Runs the server silently."
+#~ msgstr "Lance le serveur de manière silencieuse."
 
-#~ msgid "next MultiXactId: %u; next MultiXactOffset: %u"
-#~ msgstr "prochain MultiXactId : %u ; prochain MultiXactOffset : %u"
-
-#~ msgid "oldest unfrozen transaction ID: %u, in database %u"
+#~ msgid "If this parameter is set, the server will automatically run in the background and any controlling terminals are dissociated."
 #~ msgstr ""
-#~ "identifiant de transaction non gelé le plus ancien : %u, dans la base de\n"
-#~ "données %u"
+#~ "Si ce paramètre est initialisé, le serveur sera exécuté automatiquement en\n"
+#~ "tâche de fond et les terminaux de contrôles seront dés-associés."
 
-#~ msgid "invalid xlog switch record at %X/%X"
-#~ msgstr "enregistrement de basculement du journal de transaction invalide à %X/%X"
-
-#~ msgid "record with zero length at %X/%X"
-#~ msgstr "enregistrement de longueur nulle à %X/%X"
-
-#~ msgid "invalid backup block size in record at %X/%X"
-#~ msgstr "taille du bloc de sauvegarde invalide dans l'enregistrement à %X/%X"
-
-#~ msgid "incorrect hole size in record at %X/%X"
-#~ msgstr "taille du trou incorrect à l'enregistrement %X/%X"
-
-#~ msgid "incorrect total length in record at %X/%X"
-#~ msgstr "longueur totale incorrecte à l'enregistrement %X/%X"
-
-#~ msgid "WAL file is from different database system: WAL file database system identifier is %s, pg_control database system identifier is %s."
+#~ msgid "WAL sender sleep time between WAL replications."
 #~ msgstr ""
-#~ "L'identifiant du journal de transactions du système de base de données est %s,\n"
-#~ "l'identifiant pg_control du système de base de données dans pg_control est %s."
+#~ "Temps d'endormissement du processus d'envoi des journaux de transactions entre\n"
+#~ "les réplications des journaux de transactions."
 
-#~ msgid "WAL file is from different database system: Incorrect XLOG_SEG_SIZE in page header."
+#~ msgid "Sets the list of known custom variable classes."
+#~ msgstr "Initialise la liste des classes variables personnalisées connues."
+
+#~ msgid "foreign key constraint \"%s\" of relation \"%s\" does not exist"
+#~ msgstr "la clé étrangère « %s » de la relation « %s » n'existe pas"
+
+#~ msgid "removing built-in function \"%s\""
+#~ msgstr "suppression de la fonction interne « %s »"
+
+#~ msgid "permission denied to drop foreign-data wrapper \"%s\""
+#~ msgstr "droit refusé pour supprimer le wrapper de données distantes « %s »"
+
+#~ msgid "Must be superuser to drop a foreign-data wrapper."
+#~ msgstr "Doit être super-utilisateur pour supprimer un wrapper de données distantes."
+
+#~ msgid "must be superuser to drop text search parsers"
 #~ msgstr ""
-#~ "le journal de transactions provient d'un système de bases de données différent :\n"
-#~ "XLOG_SEG_SIZE incorrect dans l'en-tête de page."
-
-#~ msgid "WAL file is from different database system: Incorrect XLOG_BLCKSZ in page header."
-#~ msgstr ""
-#~ "le journal de transactions provient d'un système de bases de données différent :\n"
-#~ "XLOG_BLCKSZ incorrect dans l'en-tête de page."
-
-#~ msgid "=> is deprecated as an operator name"
-#~ msgstr "=> est un nom d'opérateur obsolète"
-
-#~ msgid "This name may be disallowed altogether in future versions of PostgreSQL."
-#~ msgstr "Ce nom pourrait être interdit dans les prochaines versions de PostgreSQL."
-
-#~ msgid "inherited relation \"%s\" is not a table"
-#~ msgstr "la relation héritée « %s » n'est pas une table"
-
-#~ msgid "\"%s\" is not a table, materialized view, composite type, or foreign table"
-#~ msgstr "« %s » n'est ni une table, ni une vue matérialisée, ni un type composite, ni une table distante"
-
-#~ msgid "Specify a USING expression to perform the conversion."
-#~ msgstr "Donnez une expression USING pour réaliser la conversion."
-
-#~ msgid ""
-#~ "automatic vacuum of table \"%s.%s.%s\": index scans: %d\n"
-#~ "pages: %d removed, %d remain\n"
-#~ "tuples: %.0f removed, %.0f remain, %.0f are dead but not yet removable\n"
-#~ "buffer usage: %d hits, %d misses, %d dirtied\n"
-#~ "avg read rate: %.3f MB/s, avg write rate: %.3f MB/s\n"
-#~ "system usage: %s"
-#~ msgstr ""
-#~ "VACUUM automatique de la table « %s.%s.%s » : parcours d'index : %d\n"
-#~ "pages : %d supprimées, %d restantes\n"
-#~ "lignes : %.0f supprimées, %.0f restantes, %.0f sont mortes mais non supprimables\n"
-#~ "utilisation des tampons : %d lus dans le cache, %d lus hors du cache, %d modifiés\n"
-#~ "taux moyen de lecture : %.3f Mo/s, taux moyen d'écriture : %.3f Mo/s\n"
-#~ "utilisation système : %s"
-
-#~ msgid ""
-#~ "%.0f dead row versions cannot be removed yet.\n"
-#~ "There were %.0f unused item pointers.\n"
-#~ "%u pages are entirely empty.\n"
-#~ "%s."
-#~ msgstr ""
-#~ "%.0f versions de lignes mortes ne peuvent pas encore être supprimées.\n"
-#~ "Il y avait %.0f pointeurs d'éléments inutilisés.\n"
-#~ "%u pages sont entièrement vides.\n"
-#~ "%s."
-
-#~ msgid "interval precision specified twice"
-#~ msgstr "précision d'intervalle spécifiée deux fois"
-
-#~ msgid "received password packet"
-#~ msgstr "paquet du mot de passe reçu"
-
-#~ msgid "SSL failure during renegotiation start"
-#~ msgstr "échec SSL au début de la re-négotiation"
-
-#~ msgid "SSL handshake failure on renegotiation, retrying"
-#~ msgstr "échec du handshake SSL lors de la renégotiation, nouvelle tentative"
-
-#~ msgid "could not complete SSL handshake on renegotiation, too many failures"
-#~ msgstr "n'a pas pu terminer la poignée de main de renégotiation, trop d'échecs"
-
-#~ msgid "SSL failed to renegotiate connection before limit expired"
-#~ msgstr "SSL a échoué à renégotier la connexion avant l'expiration du délai"
-
-#~ msgid "could not set socket to blocking mode: %m"
-#~ msgstr "n'a pas pu activer le mode bloquant pour la socket : %m"
-
-#~ msgid "%s: setsysinfo failed: %s\n"
-#~ msgstr "%s : setsysinfo a échoué : %s\n"
-
-#~ msgid "  -A 1|0             enable/disable run-time assert checking\n"
-#~ msgstr ""
-#~ "  -A 1|0             active/désactive la vérification des limites (assert) à\n"
-#~ "                     l'exécution\n"
-
-#~ msgid "subquery must return a column"
-#~ msgstr "la sous-requête doit renvoyer une colonne"
-
-#~ msgid "Consider increasing the configuration parameter \"checkpoint_segments\"."
-#~ msgstr "Considèrez l'augmentation du paramètre « checkpoint_segments »."
-
-#~ msgid "WAL archival (archive_mode=on) requires wal_level \"archive\", \"hot_standby\", or \"logical\""
-#~ msgstr ""
-#~ "l'archivage des journaux de transactions (archive_mode=on) nécessite que\n"
-#~ "le paramètre wal_level soit initialisé avec « archive », « hot_standby » ou « logical »"
-
-#~ msgid "invalid value for parameter \"replication\""
-#~ msgstr "valeur invalide pour le paramètre « replication »"
-
-#~ msgid "postmaster became multithreaded"
-#~ msgstr "le postmaster est devenu multithreadé"
-
-#~ msgid "archive member \"%s\" too large for tar format"
-#~ msgstr "membre « %s » de l'archive trop volumineux pour le format tar"
-
-#~ msgid "could not determine input data types"
-#~ msgstr "n'a pas pu déterminer les types de données en entrée"
-
-#~ msgid "neither input type is an array"
-#~ msgstr "aucun type de données n'est un tableau"
-
-#~ msgid "unexpected \"=\""
-#~ msgstr "« = » inattendu"
-
-#~ msgid "invalid symbol"
-#~ msgstr "symbole invalide"
-
-#~ msgid "must be superuser or have the same role to cancel queries running in other server processes"
-#~ msgstr ""
-#~ "doit être super-utilisateur ou avoir le même rôle pour annuler des requêtes\n"
-#~ "exécutées dans les autres processus serveur"
-
-#~ msgid "must be superuser or have the same role to terminate other server processes"
-#~ msgstr ""
-#~ "doit être super-utilisateur ou avoir le même rôle pour fermer les connexions\n"
-#~ "exécutées dans les autres processus serveur"
-
-#~ msgid "cannot accept a value of type pg_node_tree"
-#~ msgstr "ne peut pas accepter une valeur de type pg_node_tree"
-
-#~ msgid "Turns on various assertion checks."
-#~ msgstr "Active les différentes vérifications des assertions."
-
-#~ msgid "This is a debugging aid."
-#~ msgstr "C'est une aide de débogage."
-
-#~ msgid "This parameter doesn't do anything."
-#~ msgstr "Ce paramètre ne fait rien."
-
-#~ msgid "It's just here so that we won't choke on SET AUTOCOMMIT TO ON from 7.3-vintage clients."
-#~ msgstr ""
-#~ "C'est ici uniquement pour ne pas avoir de problèmes avec le SET AUTOCOMMIT\n"
-#~ "TO ON des clients 7.3."
-
-#~ msgid "Sets the maximum distance in log segments between automatic WAL checkpoints."
-#~ msgstr ""
-#~ "Initialise la distance maximale dans les journaux de transaction entre chaque\n"
-#~ "point de vérification (checkpoints) des journaux."
-
-#~ msgid "Set the amount of traffic to send and receive before renegotiating the encryption keys."
-#~ msgstr ""
-#~ "Configure la quantité de trafic à envoyer et recevoir avant la renégotiation\n"
-#~ "des clés d'enchiffrement."
-
-#~ msgid "SET AUTOCOMMIT TO OFF is no longer supported"
-#~ msgstr "SET AUTOCOMMIT TO OFF n'est plus supporté"
-
-#~ msgid "assertion checking is not supported by this build"
-#~ msgstr "la vérification de l'assertion n'a pas été intégrée lors de la compilation"
-
-#~ msgid "%s \"%s\": return code %d"
-#~ msgstr "%s « %s » : code de retour %d"
-
-#~ msgid "could not parse transaction log location \"%s\""
-#~ msgstr "n'a pas pu analyser l'emplacement du journal des transactions « %s »"
-
-#~ msgid "invalid input syntax for transaction log location: \"%s\""
-#~ msgstr "syntaxe invalide en entrée pour l'emplacement du journal de transactions : « %s »"
-
-#~ msgid "trigger \"%s\" for table \"%s\" does not exist, skipping"
-#~ msgstr "le trigger « %s » pour la table « %s » n'existe pas, poursuite du traitement"
-
-#~ msgid "Kerberos 5 authentication failed for user \"%s\""
-#~ msgstr "authentification Kerberos 5 échouée pour l'utilisateur « %s »"
-
-#~ msgid "Kerberos initialization returned error %d"
-#~ msgstr "l'initialisation de Kerberos a retourné l'erreur %d"
-
-#~ msgid "Kerberos keytab resolving returned error %d"
-#~ msgstr "la résolution keytab de Kerberos a renvoyé l'erreur %d"
-
-#~ msgid "Kerberos sname_to_principal(\"%s\", \"%s\") returned error %d"
-#~ msgstr "sname_to_principal(« %s », « %s ») de Kerberos a renvoyé l'erreur %d"
-
-#~ msgid "Kerberos recvauth returned error %d"
-#~ msgstr "recvauth de Kerberos a renvoyé l'erreur %d"
-
-#~ msgid "Kerberos unparse_name returned error %d"
-#~ msgstr "unparse_name de Kerberos a renvoyé l'erreur %d"
-
-#~ msgid "local user with ID %d does not exist"
-#~ msgstr "l'utilisateur local dont l'identifiant est %d n'existe pas"
-
-#~ msgid "SSL renegotiation failure"
-#~ msgstr "échec lors de la re-négotiation SSL"
-
-#~ msgid "krb5 authentication is not supported on local sockets"
-#~ msgstr ""
-#~ "l'authentification krb5 n'est pas supportée sur les connexions locales par\n"
-#~ "socket"
-
-#~ msgid "%s: invalid effective UID: %d\n"
-#~ msgstr "%s : UID effectif invalide : %d\n"
-
-#~ msgid "%s: could not determine user name (GetUserName failed)\n"
-#~ msgstr "%s : n'a pas pu déterminer le nom de l'utilisateur (GetUserName a échoué)\n"
-
-#~ msgid "too many column aliases specified for function %s"
-#~ msgstr "trop d'alias de colonnes spécifiées pour la fonction %s"
-
-#~ msgid "Expected 1 tuple with 3 fields, got %d tuples with %d fields."
-#~ msgstr "Attendait 1 ligne avec 3 champs, a obtenu %d lignes avec %d champs."
-
-#~ msgid "Security-barrier views are not automatically updatable."
-#~ msgstr "Les vues avec barrière de sécurité ne sont pas automatiquement disponibles en écriture."
-
-#~ msgid "Views that return the same column more than once are not automatically updatable."
-#~ msgstr "Les vues qui renvoient la même colonne plus d'une fois ne sont pas automatiquement disponibles en écriture."
-
-#~ msgid "wrong affix file format for flag"
-#~ msgstr "mauvais format de fichier affixe pour le drapeau"
-
-#~ msgid "missing assignment operator"
-#~ msgstr "opérateur d'affectation manquant"
-
-#~ msgid "cannot call json_object_keys on an array"
-#~ msgstr "ne peut pas appeler json_object_keys sur un tableau"
-
-#~ msgid "cannot call json_object_keys on a scalar"
-#~ msgstr "ne peut pas appeler json_object_keys sur un scalaire"
-
-#~ msgid "cannot call function with null path elements"
-#~ msgstr "ne peut pas appeler une fonction avec des éléments chemins NULL"
-
-#~ msgid "cannot call function with empty path elements"
-#~ msgstr "ne peut pas appeler une fonction avec des éléments chemins vides"
-
-#~ msgid "cannot extract array element from a non-array"
-#~ msgstr "ne peut pas extraire un élément du tableau à partir d'un objet qui n'est pas un tableau"
-
-#~ msgid "cannot extract field from a non-object"
-#~ msgstr "ne peut pas extraire le chemin à partir d'un non-objet"
-
-#~ msgid "cannot call json_array_elements on a non-array"
-#~ msgstr "ne peut pas appeler json_array_elements sur un objet qui n'est pas un tableau"
-
-#~ msgid "cannot call json_array_elements on a scalar"
-#~ msgstr "ne peut pas appeler json_array_elements sur un scalaire"
-
-#~ msgid "first argument of json_populate_record must be a row type"
-#~ msgstr "le premier argument de json_populate_record doit être un type ROW"
-
-#~ msgid "first argument of json_populate_recordset must be a row type"
-#~ msgstr "le premier argument de json_populate_recordset doit être un type ROW"
-
-#~ msgid "cannot call json_populate_recordset on an object"
-#~ msgstr "ne peut pas appeler json_populate_recordset sur un objet"
-
-#~ msgid "cannot call json_populate_recordset with nested objects"
-#~ msgstr "ne peut pas appeler json_populate_recordset sur des objets imbriqués"
-
-#~ msgid "must call json_populate_recordset on an array of objects"
-#~ msgstr "doit appeler json_populate_recordset sur un tableau d'objets"
-
-#~ msgid "cannot call json_populate_recordset with nested arrays"
-#~ msgstr "ne peut pas appeler json_populate_recordset avec des tableaux imbriqués"
-
-#~ msgid "cannot call json_populate_recordset on a scalar"
-#~ msgstr "ne peut pas appeler json_populate_recordset sur un scalaire"
-
-#~ msgid "cannot call json_populate_recordset on a nested object"
-#~ msgstr "ne peut pas appeler json_populate_recordset sur un objet imbriqué"
-
-#~ msgid "No description available."
-#~ msgstr "Aucune description disponible."
-
-#~ msgid "Sets the name of the Kerberos service."
-#~ msgstr "Initialise le nom du service Kerberos."
-
-#~ msgid "time zone offset %d is not a multiple of 900 sec (15 min) in time zone file \"%s\", line %d"
-#~ msgstr ""
-#~ "le décalage %d du fuseau horaire n'est pas un multiples de 900 secondes\n"
-#~ "(15 minutes) dans le fichier des fuseaux horaires « %s », ligne %d"
-
-#~ msgid "Perhaps out of disk space?"
-#~ msgstr "Peut-être manquez-vous de place disque ?"
-
-#~ msgid "could not change directory to \"%s\""
-#~ msgstr "n'a pas pu accéder au répertoire « %s »"
-
-#~ msgid "unlogged GiST indexes are not supported"
-#~ msgstr "les index GiST non tracés ne sont pas supportés"
-
-#~ msgid "could not open file \"%s\" (log file %u, segment %u): %m"
-#~ msgstr "n'a pas pu ouvrir le fichier « %s » (journal de transactions %u, segment %u) : %m"
-
-#~ msgid "there is no contrecord flag in log file %u, segment %u, offset %u"
-#~ msgstr ""
-#~ "il n'y a pas de drapeaux « contrecord » dans le journal de transactions %u,\n"
-#~ "segment %u, décalage %u"
-
-#~ msgid "invalid contrecord length %u in log file %u, segment %u, offset %u"
-#~ msgstr ""
-#~ "longueur invalide du « contrecord » %u dans le journal de tranasctions %u,\n"
-#~ "segment %u, décalage %u"
-
-#~ msgid "Incorrect XLOG_SEG_SIZE in page header."
-#~ msgstr "XLOG_SEG_SIZE incorrecte dans l'en-tête de page."
-
-#~ msgid "Incorrect XLOG_BLCKSZ in page header."
-#~ msgstr "XLOG_BLCKSZ incorrect dans l'en-tête de page."
-
-#~ msgid "xrecoff \"%X\" is out of valid range, 0..%X"
-#~ msgstr "xrecoff « %X » en dehors des limites valides, 0..%X"
-
-#~ msgid "uncataloged table %s"
-#~ msgstr "table %s sans catalogue"
-
-#~ msgid "cannot use subquery in default expression"
-#~ msgstr "ne peut pas utiliser une sous-requête dans l'expression par défaut"
-
-#~ msgid "cannot use aggregate function in default expression"
-#~ msgstr "ne peut pas utiliser une fonction d'agrégat dans une expression par défaut"
-
-#~ msgid "cannot use window function in default expression"
-#~ msgstr "ne peut pas utiliser une fonction window dans une expression par défaut"
-
-#~ msgid "cannot use window function in check constraint"
-#~ msgstr "ne peut pas utiliser une fonction window dans une contrainte de vérification"
-
-#~ msgid "A function returning ANYRANGE must have at least one ANYRANGE argument."
-#~ msgstr ""
-#~ "Une fonction renvoyant ANYRANGE doit avoir au moins un argument du type\n"
-#~ "ANYRANGE."
-
-#~ msgid "%s already exists in schema \"%s\""
-#~ msgstr "%s existe déjà dans le schéma « %s »"
-
-#~ msgid "CREATE TABLE AS specifies too many column names"
-#~ msgstr "CREATE TABLE AS spécifie trop de noms de colonnes"
-
-#~ msgid "cannot use subquery in parameter default value"
-#~ msgstr "ne peut pas utiliser une sous-requête dans une valeur par défaut d'un paramètre"
-
-#~ msgid "cannot use aggregate function in parameter default value"
-#~ msgstr ""
-#~ "ne peut pas utiliser une fonction d'agrégat dans la valeur par défaut d'un\n"
-#~ "paramètre"
-
-#~ msgid "cannot use window function in parameter default value"
-#~ msgstr "ne peut pas utiliser la fonction window dans la valeur par défaut d'un paramètre"
-
-#~ msgid "Use ALTER AGGREGATE to rename aggregate functions."
-#~ msgstr "Utiliser ALTER AGGREGATE pour renommer les fonctions d'agrégat."
-
-#~ msgid "Use ALTER AGGREGATE to change owner of aggregate functions."
-#~ msgstr "Utiliser ALTER AGGREGATE pour changer le propriétaire des fonctions d'agrégat."
-
-#~ msgid "function \"%s\" already exists in schema \"%s\""
-#~ msgstr "la fonction « %s » existe déjà dans le schéma « %s »"
-
-#~ msgid "cannot use aggregate in index predicate"
-#~ msgstr "ne peut pas utiliser un agrégat dans un prédicat d'index"
-
-#~ msgid "cannot use window function in EXECUTE parameter"
-#~ msgstr "ne peut pas utiliser une fonction window dans le paramètre EXECUTE"
-
-#~ msgid "constraints on foreign tables are not supported"
-#~ msgstr "les contraintes sur les tables distantes ne sont pas supportées"
-
-#~ msgid "default values on foreign tables are not supported"
-#~ msgstr "les valeurs par défaut ne sont pas supportées sur les tables distantes"
-
-#~ msgid "cannot use window function in transform expression"
-#~ msgstr "ne peut pas utiliser la fonction window dans l'expression de la transformation"
-
-#~ msgid "Use ALTER FOREIGN TABLE instead."
-#~ msgstr "Utilisez ALTER FOREIGN TABLE à la place."
-
-#~ msgid "cannot use window function in trigger WHEN condition"
-#~ msgstr "ne peut pas utiliser la fonction window dans la condition WHEN d'un trigger"
-
-#~ msgid "must be superuser to rename text search parsers"
-#~ msgstr ""
-#~ "doit être super-utilisateur pour renommer les analyseurs de recherche plein\n"
+#~ "doit être super-utilisateur pour supprimer des analyseurs de recherche plein\n"
 #~ "texte"
 
-#~ msgid "must be superuser to rename text search templates"
-#~ msgstr "doit être super-utilisateur pour renommer les modèles de recherche plein texte"
+#~ msgid "must be superuser to drop text search templates"
+#~ msgstr "doit être super-utilisateur pour supprimer des modèles de recherche plein texte"
 
-#~ msgid "automatic vacuum of table \"%s.%s.%s\": cannot (re)acquire exclusive lock for truncate scan"
-#~ msgstr "vacuum automatique de la table « %s.%s.%s » : ne peut pas acquérir le verrou exclusif pour la tronquer"
+#~ msgid "recovery is still in progress, can't accept WAL streaming connections"
+#~ msgstr "la restauration est en cours, ne peut pas accepter les connexions de flux WAL"
 
-#~ msgid "You need an unconditional ON INSERT DO INSTEAD rule or an INSTEAD OF INSERT trigger."
-#~ msgstr "Vous avez besoin d'une règle ON INSERT DO INSTEAD sans condition ou d'un trigger INSTEAD OF INSERT."
+#~ msgid "standby connections not allowed because wal_level=minimal"
+#~ msgstr "connexions standby non autorisées car wal_level=minimal"
 
-#~ msgid "You need an unconditional ON UPDATE DO INSTEAD rule or an INSTEAD OF UPDATE trigger."
-#~ msgstr "Vous avez besoin d'une règle non conditionnelle ON UPDATE DO INSTEAD ou d'un trigger INSTEAD OF UPDATE."
+#~ msgid "could not open directory \"pg_tblspc\": %m"
+#~ msgstr "n'a pas pu ouvrir le répertoire « pg_tblspc » : %m"
 
-#~ msgid "You need an unconditional ON DELETE DO INSTEAD rule or an INSTEAD OF DELETE trigger."
-#~ msgstr "Vous avez besoin d'une règle inconditionnelle ON DELETE DO INSTEAD ou d'un trigger INSTEAD OF DELETE."
+#~ msgid "could not access root certificate file \"%s\": %m"
+#~ msgstr "n'a pas pu accéder au fichier du certificat racine « %s » : %m"
 
-#~ msgid "LDAP search failed for filter \"%s\" on server \"%s\": user is not unique (%ld matches)"
+#~ msgid "SSL certificate revocation list file \"%s\" not found, skipping: %s"
+#~ msgstr "liste de révocation des certificats SSL « %s » introuvable, continue : %s"
+
+#~ msgid "Certificates will not be checked against revocation list."
+#~ msgstr "Les certificats ne seront pas vérifiés avec la liste de révocation."
+
+#~ msgid "missing or erroneous pg_hba.conf file"
+#~ msgstr "fichier pg_hba.conf manquant ou erroné"
+
+#~ msgid "See server log for details."
+#~ msgstr "Voir les journaux applicatifs du serveur pour plus de détails."
+
+#~ msgid "Make sure the root.crt file is present and readable."
+#~ msgstr "Assurez-vous que le certificat racine (root.crt) est présent et lisible"
+
+#~ msgid "  --help          show this help, then exit\n"
+#~ msgstr "  --help             affiche cette aide, puis quitte\n"
+
+#~ msgid "  --version       output version information, then exit\n"
+#~ msgstr "  --version          affiche la version, puis quitte\n"
+
+#~ msgid "CREATE TABLE AS cannot specify INTO"
+#~ msgstr "CREATE TABLE AS ne peut pas spécifier INTO"
+
+#~ msgid "column name list not allowed in CREATE TABLE / AS EXECUTE"
+#~ msgstr "la liste de noms de colonnes n'est pas autorisée dans CREATE TABLE / AS EXECUTE"
+
+#~ msgid "INSERT ... SELECT cannot specify INTO"
+#~ msgstr "INSERT ... SELECT ne peut pas avoir INTO"
+
+#~ msgid "DECLARE CURSOR cannot specify INTO"
+#~ msgstr "DECLARE CURSOR ne peut pas spécifier INTO"
+
+#~ msgid "subquery in FROM cannot have SELECT INTO"
+#~ msgstr "la sous-requête du FROM ne peut pas avoir de SELECT INTO"
+
+#~ msgid "subquery cannot have SELECT INTO"
+#~ msgstr "la sous-requête ne peut pas avoir de SELECT INTO"
+
+#~ msgid "subquery in WITH cannot have SELECT INTO"
+#~ msgstr "la sous-requête du WITH ne peut pas avoir de SELECT INTO"
+
+#~ msgid "tablespace %u is not empty"
+#~ msgstr "le tablespace %u n'est pas vide"
+
+#~ msgid "consistent state delayed because recovery snapshot incomplete"
+#~ msgstr "état de cohérence pas encore atteint à cause d'un snapshot de restauration incomplet"
+
+#~ msgid "SSPI error %x"
+#~ msgstr "erreur SSPI : %x"
+
+#~ msgid "%s (%x)"
+#~ msgstr "%s (%x)"
+
+#~ msgid "resetting unlogged relations: cleanup %d init %d"
+#~ msgstr "réinitialisation des relations non tracées : nettoyage %d initialisation %d"
+
+#~ msgid "ALTER TYPE USING is only supported on plain tables"
+#~ msgstr "ALTER TYPE USING est seulement supportés sur les tables standards"
+
+#~ msgid "index \"%s\" is not a b-tree"
+#~ msgstr "l'index « %s » n'est pas un btree"
+
+#~ msgid "unable to read symbolic link %s: %m"
+#~ msgstr "incapable de lire le lien symbolique %s : %m"
+
+#~ msgid "unable to open directory pg_tblspc: %m"
+#~ msgstr "impossible d'ouvrir le répertoire p_tblspc : %m"
+
+#~ msgid "Write-Ahead Log / Streaming Replication"
+#~ msgstr "Write-Ahead Log / Réplication en flux"
+
+#~ msgid "syntax error in recovery command file: %s"
+#~ msgstr "erreur de syntaxe dans le fichier de restauration : %s"
+
+#~ msgid "Lines should have the format parameter = 'value'."
+#~ msgstr "Les lignes devraient avoir le format paramètre = 'valeur'"
+
+#~ msgid "index %u/%u/%u needs VACUUM FULL or REINDEX to finish crash recovery"
 #~ msgstr ""
-#~ "échec de la recherche LDAP pour le filtre « %s » sur le serveur « %s » :\n"
-#~ "utilisateur non unique (%ld correspondances)"
+#~ "l'index  %u/%u/%u a besoin d'un VACUUM FULL ou d'un REINDEX pour terminer la\n"
+#~ "récupération suite à un arrêt brutal"
 
-#~ msgid "VALUES must not contain table references"
-#~ msgstr "VALUES ne doit pas contenir de références de table"
-
-#~ msgid "VALUES must not contain OLD or NEW references"
-#~ msgstr "VALUES ne doit pas contenir des références à OLD et NEW"
-
-#~ msgid "Use SELECT ... UNION ALL ... instead."
-#~ msgstr "Utilisez à la place SELECT ... UNION ALL ..."
-
-#~ msgid "cannot use aggregate function in VALUES"
-#~ msgstr "ne peut pas utiliser la fonction d'agrégat dans un VALUES"
-
-#~ msgid "cannot use window function in VALUES"
-#~ msgstr "ne peut pas utiliser la fonction window dans un VALUES"
-
-#~ msgid "cannot use aggregate function in UPDATE"
-#~ msgstr "ne peut pas utiliser une fonction d'agrégat dans un UPDATE"
-
-#~ msgid "cannot use window function in UPDATE"
-#~ msgstr "ne peut pas utiliser une fonction window dans un UPDATE"
-
-#~ msgid "cannot use aggregate function in RETURNING"
-#~ msgstr "ne peut pas utiliser une fonction d'agrégat dans RETURNING"
-
-#~ msgid "cannot use window function in RETURNING"
-#~ msgstr "ne peut pas utiliser une fonction window dans RETURNING"
-
-#~ msgid "RETURNING cannot contain references to other relations"
-#~ msgstr "RETURNING ne doit pas contenir de références à d'autres relations"
-
-#~ msgid "SELECT FOR UPDATE/SHARE is not allowed with GROUP BY clause"
-#~ msgstr "SELECT FOR UPDATE/SHARE n'est pas autorisé avec la clause GROUP BY"
-
-#~ msgid "SELECT FOR UPDATE/SHARE is not allowed with HAVING clause"
-#~ msgstr "SELECT FOR UPDATE/SHARE n'est pas autorisé avec la clause HAVING"
-
-#~ msgid "SELECT FOR UPDATE/SHARE is not allowed with aggregate functions"
-#~ msgstr "SELECT FOR UPDATE/SHARE n'est pas autorisé avec les fonctions d'agrégats"
-
-#~ msgid "SELECT FOR UPDATE/SHARE is not allowed with window functions"
-#~ msgstr "SELECT FOR UPDATE/SHARE n'est pas autorisé avec les fonctions window"
-
-#~ msgid "SELECT FOR UPDATE/SHARE cannot be used with foreign table \"%s\""
-#~ msgstr "SELECT FOR UPDATE/SHARE ne peut pas être utilisé avec une table distante « %s »"
-
-#~ msgid "aggregates not allowed in WHERE clause"
-#~ msgstr "agrégats non autorisés dans une clause WHERE"
-
-#~ msgid "window functions not allowed in GROUP BY clause"
-#~ msgstr "fonctions window non autorisées dans une clause GROUP BY"
-
-#~ msgid "JOIN/ON clause refers to \"%s\", which is not part of JOIN"
-#~ msgstr "la clause JOIN/ON se réfère à « %s », qui ne fait pas partie du JOIN"
-
-#~ msgid "subquery in FROM cannot refer to other relations of same query level"
+#~ msgid "Incomplete insertion detected during crash replay."
 #~ msgstr ""
-#~ "la sous-requête du FROM ne peut pas faire référence à d'autres relations\n"
-#~ "dans le même niveau de la requête"
+#~ "Insertion incomplète détectée lors de la ré-exécution des requêtes suite à\n"
+#~ "l'arrêt brutal."
 
-#~ msgid "function expression in FROM cannot refer to other relations of same query level"
+#~ msgid "index \"%s\" needs VACUUM or REINDEX to finish crash recovery"
 #~ msgstr ""
-#~ "l'expression de la fonction du FROM ne peut pas faire référence à d'autres\n"
-#~ "relations sur le même niveau de la requête"
+#~ "l'index  « %s » a besoin d'un VACUUM ou d'un REINDEX pour terminer la\n"
+#~ "récupération suite à un arrêt brutal"
 
-#~ msgid "cannot use window function in function expression in FROM"
+#~ msgid "index \"%s\" needs VACUUM FULL or REINDEX to finish crash recovery"
 #~ msgstr ""
-#~ "ne peut pas utiliser la fonction window dans l'expression de la fonction\n"
-#~ "du FROM"
+#~ "l'index  « %s » a besoin d'un VACUUM FULL ou d'un REINDEX pour terminer la\n"
+#~ "récupération suite à un arrêt brutal"
 
-#~ msgid "argument of %s must not contain aggregate functions"
-#~ msgstr "l'argument de %s ne doit pas contenir de fonctions d'agrégats"
+#~ msgid "EnumValuesCreate() can only set a single OID"
+#~ msgstr "EnumValuesCreate() peut seulement initialiser un seul OID"
 
-#~ msgid "argument of %s must not contain window functions"
-#~ msgstr "l'argument de %s ne doit pas contenir des fonctions window"
+#~ msgid "clustering \"%s.%s\""
+#~ msgstr "exécution de CLUSTER sur « %s.%s »"
 
-#~ msgid "arguments of row IN must all be row expressions"
-#~ msgstr "les arguments de la ligne IN doivent tous être des expressions de ligne"
-
-#~ msgid "cannot use aggregate function in rule WHERE condition"
-#~ msgstr "ne peut pas utiliser la fonction d'agrégat dans la condition d'une règle WHERE"
-
-#~ msgid "cannot use window function in rule WHERE condition"
-#~ msgstr "ne peut pas utiliser la fonction window dans la condition d'une règle WHERE"
-
-#~ msgid ""
-#~ "This error usually means that PostgreSQL's request for a shared memory segment exceeded your kernel's SHMMAX parameter.  You can either reduce the request size or reconfigure the kernel with larger SHMMAX.  To reduce the request size (currently %lu bytes), reduce PostgreSQL's shared memory usage, perhaps by reducing shared_buffers or max_connections.\n"
-#~ "If the request size is already small, it's possible that it is less than your kernel's SHMMIN parameter, in which case raising the request size or reconfiguring SHMMIN is called for.\n"
-#~ "The PostgreSQL documentation contains more information about shared memory configuration."
+#~ msgid "cannot cluster on index \"%s\" because access method does not handle null values"
 #~ msgstr ""
-#~ "Cette erreur signifie habituellement que la demande de PostgreSQL pour un\n"
-#~ "segment de mémoire partagée a dépassé le paramètre SHMMAX de votre noyau.\n"
-#~ "Vous pouvez soit réduire la taille de la requête soit reconfigurer le noyau\n"
-#~ "avec un SHMMAX plus important. Pour réduire la taille de la requête\n"
-#~ "(actuellement %lu octets), réduisez l'utilisation de la mémoire partagée par PostgreSQL,par exemple en réduisant shared_buffers ou max_connections\n"
-#~ "Si la taille de la requête est déjà petite, il est possible qu'elle soit\n"
-#~ "moindre que le paramètre SHMMIN de votre noyau, auquel cas, augmentez la\n"
-#~ "taille de la requête ou reconfigurez SHMMIN.\n"
-#~ "La documentation de PostgreSQL contient plus d'informations sur la\n"
-#~ "configuration de la mémoire partagée."
+#~ "ne peut pas créer un cluster sur l'index « %s » car la méthode d'accès de\n"
+#~ "l'index ne gère pas les valeurs NULL"
 
-#~ msgid "terminating all walsender processes to force cascaded standby(s) to update timeline and reconnect"
+#~ msgid "You might be able to work around this by marking column \"%s\" NOT NULL, or use ALTER TABLE ... SET WITHOUT CLUSTER to remove the cluster specification from the table."
 #~ msgstr ""
-#~ "arrêt de tous les processus walsender pour forcer les serveurs standby en\n"
-#~ "cascade à mettre à jour la timeline et à se reconnecter"
+#~ "Vous pourriez contourner ceci en marquant la colonne « %s » avec la\n"
+#~ "contrainte NOT NULL ou en utilisant ALTER TABLE ... SET WITHOUT CLUSTER pour\n"
+#~ "supprimer la spécification CLUSTER de la table."
 
-#~ msgid "shutdown requested, aborting active base backup"
-#~ msgstr "arrêt demandé, annulation de la sauvegarde active de base"
+#~ msgid "You might be able to work around this by marking column \"%s\" NOT NULL."
+#~ msgstr "Vous pouvez contourner ceci en marquant la colonne « %s » comme NOT NULL."
 
-#~ msgid "streaming replication successfully connected to primary"
-#~ msgstr "réplication de flux connecté avec succès au serveur principal"
-
-#~ msgid "invalid standby handshake message type %d"
-#~ msgstr "type %d du message de handshake du serveur en attente invalide"
-
-#~ msgid "terminating walsender process to force cascaded standby to update timeline and reconnect"
+#~ msgid "cannot cluster on expressional index \"%s\" because its index access method does not handle null values"
 #~ msgstr ""
-#~ "arrêt du processus walreceiver pour forcer le serveur standby en cascade à\n"
-#~ "mettre à jour la timeline et à se reconnecter"
+#~ "ne peut pas exécuter CLUSTER sur l'index à expression « %s » car sa méthode\n"
+#~ "d'accès ne gère pas les valeurs NULL"
 
-#~ msgid "invalid standby query string: %s"
-#~ msgstr "chaîne de requête invalide sur le serveur en attente : %s"
+#~ msgid "\"%s\" is not a table, view, or composite type"
+#~ msgstr "« %s » n'est pas une table, une vue ou un type composite"
 
-#~ msgid "large object %u was not opened for writing"
-#~ msgstr "le « Large Object » %u n'a pas été ouvert en écriture"
-
-#~ msgid "large object %u was already dropped"
-#~ msgstr "le « Large Object » %u a déjà été supprimé"
-
-#~ msgid "Not enough memory for reassigning the prepared transaction's locks."
-#~ msgstr "Pas assez de mémoire pour réaffecter les verrous des transactions préparées."
-
-#~ msgid "\"interval\" time zone \"%s\" not valid"
-#~ msgstr "le fuseau horaire « %s » n'est pas valide pour le type « interval »"
-
-#~ msgid "inconsistent use of year %04d and \"BC\""
-#~ msgstr "utilisation non cohérente de l'année %04d et de « BC »"
-
-#~ msgid "No rows were found in \"%s\"."
-#~ msgstr "Aucune ligne trouvée dans « %s »."
-
-#~ msgid "argument number is out of range"
-#~ msgstr "le nombre en argument est en dehors des limites"
-
-#~ msgid "index \"%s\" is not ready"
-#~ msgstr "l'index « %s » n'est pas prêt"
-
-#~ msgid "could not remove database directory \"%s\""
-#~ msgstr "n'a pas pu supprimer le répertoire de bases de données « %s »"
-
-#~ msgid "unexpected end of line at line %d of thesaurus file \"%s\""
-#~ msgstr "fin de ligne inattendue à la ligne %d du thésaurus « %s »"
-
-#~ msgid "unexpected end of line or lexeme at line %d of thesaurus file \"%s\""
-#~ msgstr "fin de ligne ou de lexeme inattendu sur la ligne %d du thesaurus « %s »"
-
-#~ msgid "unexpected delimiter at line %d of thesaurus file \"%s\""
-#~ msgstr "délimiteur inattendu sur la ligne %d du thesaurus « %s »"
-
-#~ msgid "Use the @@@ operator instead."
-#~ msgstr "Utilisez à la place l'opérateur @@@."
-
-#~ msgid "@@ operator does not support lexeme weight restrictions in GIN index searches"
+#~ msgid "must be superuser to comment on procedural language"
 #~ msgstr ""
-#~ "l'opérateur @@ ne supporte pas les restrictions de poids de lexeme dans les\n"
-#~ "recherches par index GIN"
+#~ "doit être super-utilisateur pour ajouter un commentaire sur un langage de\n"
+#~ "procédures"
 
-#~ msgid "query requires full scan, which is not supported by GIN indexes"
+#~ msgid "must be superuser to comment on text search parser"
 #~ msgstr ""
-#~ "la requête nécessite un parcours complet, ce qui n'est pas supporté par les\n"
-#~ "index GIN"
+#~ "doit être super-utilisateur pour ajouter un commentaire sur l'analyseur de\n"
+#~ "recherche plein texte"
 
-#~ msgid "cannot calculate week number without year information"
-#~ msgstr "ne peut pas calculer le numéro de la semaine sans informations sur l'année"
-
-#~ msgid "UTF-16 to UTF-8 translation failed: %lu"
-#~ msgstr "échec de la conversion d'UTF16 vers UTF8 : %lu"
-
-#~ msgid "AM/PM hour must be between 1 and 12"
-#~ msgstr "l'heure AM/PM doit être compris entre 1 et 12"
-
-#~ msgid "Sat"
-#~ msgstr "Sam"
-
-#~ msgid "Fri"
-#~ msgstr "Ven"
-
-#~ msgid "Thu"
-#~ msgstr "Jeu"
-
-#~ msgid "Wed"
-#~ msgstr "Mer"
-
-#~ msgid "Tue"
-#~ msgstr "Mar"
-
-#~ msgid "Mon"
-#~ msgstr "Lun"
-
-#~ msgid "Sun"
-#~ msgstr "Dim"
-
-#~ msgid "Saturday"
-#~ msgstr "Samedi"
-
-#~ msgid "Friday"
-#~ msgstr "Vendredi"
-
-#~ msgid "Thursday"
-#~ msgstr "Jeudi"
-
-#~ msgid "Wednesday"
-#~ msgstr "Mercredi"
-
-#~ msgid "Tuesday"
-#~ msgstr "Mardi"
-
-#~ msgid "Monday"
-#~ msgstr "Lundi"
-
-#~ msgid "Sunday"
-#~ msgstr "Dimanche"
-
-#~ msgid "Dec"
-#~ msgstr "Déc"
-
-#~ msgid "Nov"
-#~ msgstr "Nov"
-
-#~ msgid "Oct"
-#~ msgstr "Oct"
-
-#~ msgid "Sep"
-#~ msgstr "Sep"
-
-#~ msgid "Aug"
-#~ msgstr "Aoû"
-
-#~ msgid "Jul"
-#~ msgstr "Juil"
-
-#~ msgid "Jun"
-#~ msgstr "Juin"
-
-#~ msgid "S:May"
-#~ msgstr "S:Mai"
-
-#~ msgid "Apr"
-#~ msgstr "Avr"
-
-#~ msgid "Mar"
-#~ msgstr "Mar"
-
-#~ msgid "Feb"
-#~ msgstr "Fév"
-
-#~ msgid "Jan"
-#~ msgstr "Jan"
-
-#~ msgid "December"
-#~ msgstr "Décembre"
-
-#~ msgid "November"
-#~ msgstr "Novembre"
-
-#~ msgid "October"
-#~ msgstr "Octobre"
-
-#~ msgid "September"
-#~ msgstr "Septembre"
-
-#~ msgid "August"
-#~ msgstr "Août"
-
-#~ msgid "July"
-#~ msgstr "Juillet"
-
-#~ msgid "June"
-#~ msgstr "Juin"
-
-#~ msgid "May"
-#~ msgstr "Mai"
-
-#~ msgid "April"
-#~ msgstr "Avril"
-
-#~ msgid "March"
-#~ msgstr "Mars"
-
-#~ msgid "February"
-#~ msgstr "Février"
-
-#~ msgid "January"
-#~ msgstr "Janvier"
-
-#~ msgid "\"TZ\"/\"tz\" not supported"
-#~ msgstr "« TZ »/« tz » non supporté"
-
-#~ msgid "invalid AM/PM string"
-#~ msgstr "chaîne AM/PM invalide"
-
-#~ msgid "not unique \"S\""
-#~ msgstr "« S » non unique"
-
-#~ msgid "invalid argument for power function"
-#~ msgstr "argument invalide pour la fonction puissance (power)"
-
-#~ msgid "Valid values are DOCUMENT and CONTENT."
-#~ msgstr "Les valeurs valides sont DOCUMENT et CONTENT."
-
-#~ msgid "Valid values are LOCAL0, LOCAL1, LOCAL2, LOCAL3, LOCAL4, LOCAL5, LOCAL6, LOCAL7."
+#~ msgid "must be superuser to comment on text search template"
 #~ msgstr ""
-#~ "Les valeurs valides sont LOCAL0, LOCAL1, LOCAL2, LOCAL3, LOCAL4, LOCAL5,\n"
-#~ "LOCAL6, LOCAL7."
+#~ "doit être super-utilisateur pour ajouter un commentaire sur un modèle de\n"
+#~ "recherche plein texte"
 
-#~ msgid "This can be set to advanced, extended, or basic."
+#~ msgid "function \"%s\" is already in schema \"%s\""
+#~ msgstr "la fonction « %s » existe déjà dans le schéma « %s »"
+
+#~ msgid "cannot reference temporary table from permanent table constraint"
 #~ msgstr ""
-#~ "Ceci peut être initialisé avec advanced (avancé), extended (étendu) ou\n"
-#~ "basic (basique)."
+#~ "ne peut pas référencer une table temporaire à partir d'une contrainte de\n"
+#~ "table permanente"
 
-#~ msgid "Sets the hostname of the Kerberos server."
-#~ msgstr "Initalise le nom d'hôte du serveur Kerberos."
-
-#~ msgid "Sets realm to match Kerberos and GSSAPI users against."
+#~ msgid "cannot reference permanent table from temporary table constraint"
 #~ msgstr ""
-#~ "Indique le royaume pour l'authentification des utilisateurs via Kerberos et\n"
-#~ "GSSAPI."
+#~ "ne peut pas référencer une table permanente à partir de la contrainte de\n"
+#~ "table temporaire"
 
-#~ msgid "Each session can be either \"origin\", \"replica\", or \"local\"."
-#~ msgstr "Chaque session peut valoir soit « origin » soit « replica » soit « local »."
+#~ msgid "composite type must have at least one attribute"
+#~ msgstr "le type composite doit avoir au moins un attribut"
 
-#~ msgid "Each SQL transaction has an isolation level, which can be either \"read uncommitted\", \"read committed\", \"repeatable read\", or \"serializable\"."
+#~ msgid "database \"%s\" not found"
+#~ msgstr "base de données « %s » non trouvée"
+
+#~ msgid "invalid list syntax for parameter \"datestyle\""
+#~ msgstr "syntaxe de liste invalide pour le paramètre « datestyle »"
+
+#~ msgid "unrecognized \"datestyle\" key word: \"%s\""
+#~ msgstr "mot clé « datestyle » non reconnu : « %s »"
+
+#~ msgid "invalid interval value for time zone: month not allowed"
+#~ msgstr "valeur d'intervalle invalide pour le fuseau horaire : les mois ne sont pas autorisés"
+
+#~ msgid "invalid interval value for time zone: day not allowed"
+#~ msgstr "valeur d'intervalle invalide pour le fuseau horaire : jour non autorisé"
+
+#~ msgid "argument to pg_get_expr() must come from system catalogs"
+#~ msgstr "l'argument de pg_get_expr() doit provenir des catalogues systèmes"
+
+#~ msgid "could not enable credential reception: %m"
+#~ msgstr "n'a pas pu activer la réception de lettres de créance : %m"
+
+#~ msgid "could not get effective UID from peer credentials: %m"
+#~ msgstr "n'a pas pu obtenir l'UID réel à partir des pièces d'identité de l'autre : %m"
+
+#~ msgid "Ident authentication is not supported on local connections on this platform"
+#~ msgstr "l'authentification Ident n'est pas supportée sur les connexions locales sur cette plateforme"
+
+#~ msgid "could not create log file \"%s\": %m"
+#~ msgstr "n'a pas pu créer le journal applicatif « %s » : %m"
+
+#~ msgid "could not open new log file \"%s\": %m"
+#~ msgstr "n'a pas pu ouvrir le nouveau journal applicatif « %s » : %m"
+
+#~ msgid "Sets immediate fsync at commit."
+#~ msgstr "Configure un fsync immédiat lors du commit."
+
+#~ msgid "invalid list syntax for parameter \"log_destination\""
+#~ msgstr "syntaxe de liste invalide pour le paramètre « log_destination »"
+
+#~ msgid "unrecognized \"log_destination\" key word: \"%s\""
+#~ msgstr "mot clé « log_destination » non reconnu : « %s »"
+
+#~ msgid "cannot drop \"%s\" because it is being used by active queries in this session"
 #~ msgstr ""
-#~ "Chaque transaction SQL a un niveau d'isolation qui peut être soit « read\n"
-#~ "uncommitted », soit « read committed », soit « repeatable read », soit\n"
-#~ "« serializable »."
+#~ "ne peut pas supprimer « %s » car cet objet est en cours d'utilisation par\n"
+#~ "des requêtes actives dans cette session"
 
-#~ msgid "All SQL statements that cause an error of the specified level or a higher level are logged."
+#~ msgid "parameter \"recovery_target_inclusive\" requires a Boolean value"
+#~ msgstr "le paramètre « recovery_target_inclusive » requiert une valeur booléenne"
+
+#~ msgid "parameter \"standby_mode\" requires a Boolean value"
+#~ msgstr "le paramètre « standby_mode » requiert une valeur booléenne"
+
+#~ msgid "access to %s"
+#~ msgstr "accès à %s"
+
+#~ msgid "Sets the message levels that are logged during recovery."
+#~ msgstr "Initialise les niveaux de messages qui sont tracés lors de la restauration."
+
+#~ msgid "Not safe to send CSV data\n"
+#~ msgstr "Envoi non sûr des données CSV\n"
+
+#~ msgid "recovery restart point at %X/%X with latest known log time %s"
 #~ msgstr ""
-#~ "Toutes les instructions SQL causant une erreur du niveau spécifié ou d'un\n"
-#~ "niveau supérieur sont tracées."
+#~ "point de relancement de la restauration sur %X/%X avec %s comme dernière\n"
+#~ "date connue du journal"
 
-#~ msgid "Valid values are DEBUG5, DEBUG4, DEBUG3, DEBUG2, DEBUG1, INFO, NOTICE, WARNING, ERROR, LOG, FATAL, and PANIC. Each level includes all the levels that follow it."
+#~ msgid "restartpoint_command = '%s'"
+#~ msgstr "restartpoint_command = '%s'"
+
+#~ msgid "usermap \"%s\""
+#~ msgstr "correspondance utilisateur « %s »"
+
+#~ msgid "WAL archiving is not active"
+#~ msgstr "l'archivage des journaux de transactions n'est pas actif"
+
+#~ msgid "archive_mode must be enabled at server start."
+#~ msgstr "archive_mode doit être activé au lancement du serveur."
+
+#~ msgid "archive_command must be defined before online backups can be made safely."
 #~ msgstr ""
-#~ "Les valeurs valides sont DEBUG5, DEBUG4, DEBUG3, DEBUG2, DEBUG1, INFO,\n"
-#~ "NOTICE, WARNING, ERROR, LOG, FATAL et PANIC. Chaque niveau incut tous les\n"
-#~ "niveaux qui le suit."
+#~ "archive_command doit être défini avant que les sauvegardes à chaud puissent\n"
+#~ "s'effectuer correctement."
 
-#~ msgid "Valid values are ON, OFF, and SAFE_ENCODING."
-#~ msgstr "Les valeurs valides sont ON, OFF et SAFE_ENCODING."
-
-#~ msgid "Sets the maximum number of disk pages for which free space is tracked."
+#~ msgid "During recovery, allows connections and queries.  During normal running, causes additional info to be written to WAL to enable hot standby mode on WAL standby nodes."
 #~ msgstr ""
-#~ "Initialise le nombre maximum de pages disque pour lesquelles l'espace libre\n"
-#~ "est tracé."
+#~ "Lors de la restauration, autorise les connexions et les requêtes. Lors d'une\n"
+#~ "exécution normale, fait que des informations supplémentaires sont écrites dans\n"
+#~ "les journaux de transactions pour activer le mode Hot Standby sur les n½uds\n"
+#~ "en attente."
 
-#~ msgid "Sets the maximum number of tables and indexes for which free space is tracked."
+#~ msgid "unlogged operation performed, data may be missing"
+#~ msgstr "opération réalisée non tracée, les données pourraient manquer"
+
+#~ msgid "not enough shared memory for walsender"
+#~ msgstr "pas assez de mémoire partagée pour le processus d'envoi des journaux de transactions"
+
+#~ msgid "not enough shared memory for walreceiver"
 #~ msgstr ""
-#~ "Initialise le nombre maximum de tables et index pour lesquels l'espace libre\n"
-#~ "est tracé."
+#~ "pas assez de mémoire partagée pour le processus de réception des journaux de\n"
+#~ "transactions"
 
-#~ msgid "Uses the indented output format for EXPLAIN VERBOSE."
-#~ msgstr "Utilise le format de sortie indenté pour EXPLAIN VERBOSE."
+#~ msgid "connection limit exceeded for non-superusers"
+#~ msgstr "limite de connexions dépassée pour les utilisateurs standards"
 
-#~ msgid "Prints the execution plan to server log."
-#~ msgstr "Affiche le plan d'exécution dans les journaux applicatifs du serveur."
-
-#~ msgid "Prints the parse tree after rewriting to server log."
-#~ msgstr "Affiche l'arbre d'analyse après ré-écriture dans les journaux applicatifs du serveur."
-
-#~ msgid "Prints the parse tree to the server log."
-#~ msgstr "Affiche l'arbre d'analyse dans les journaux applicatifs du serveur."
-
-#~ msgid "string is too long for tsvector"
-#~ msgstr "la chaîne est trop longue pour un tsvector"
-
-#~ msgid "Consider increasing the configuration parameter \"max_fsm_pages\" to a value over %.0f."
-#~ msgstr ""
-#~ "Considérez l'augmentation du paramètre de configuration « max_fsm_pages »\n"
-#~ "à une valeur supérieure à %.0f."
-
-#~ msgid "number of page slots needed (%.0f) exceeds max_fsm_pages (%d)"
-#~ msgstr "le nombre d'emplacements de pages nécessaires (%.0f) dépasse max_fsm_pages (%d)"
-
-#~ msgid "You have at least %d relations.  Consider increasing the configuration parameter \"max_fsm_relations\"."
-#~ msgstr ""
-#~ "Vous avez au moins %d relations.Considèrez l'augmentation du paramètre de\n"
-#~ "configuration « max_fsm_relations »."
-
-#~ msgid "max_fsm_relations(%d) equals the number of relations checked"
-#~ msgstr "max_fsm_relations(%d) équivaut au nombre de relations tracées"
-
-#~ msgid ""
-#~ "A total of %.0f page slots are in use (including overhead).\n"
-#~ "%.0f page slots are required to track all free space.\n"
-#~ "Current limits are:  %d page slots, %d relations, using %.0f kB."
-#~ msgstr ""
-#~ "Un total de %.0f emplacements de pages est utilisé (ceci incluant la\n"
-#~ "surcharge).\n"
-#~ "%.0f emplacements de pages sont requis pour tracer tout l'espace libre.\n"
-#~ "Les limites actuelles sont : %d emplacements de pages, %d relations,\n"
-#~ "utilisant %.0f Ko."
-
-#~ msgid "free space map contains %d pages in %d relations"
-#~ msgstr "la structure FSM contient %d pages dans %d relations"
-
-#~ msgid "max_fsm_pages must exceed max_fsm_relations * %d"
-#~ msgstr "max_fsm_pages doit excéder max_fsm_relations * %d"
-
-#~ msgid "insufficient shared memory for free space map"
-#~ msgstr "mémoire partagée insuffisante pour la structure FSM"
-
-#~ msgid "could not set statistics collector timer: %m"
-#~ msgstr "n'a pas pu configurer le timer du récupérateur de statistiques : %m"
-
-#~ msgid "%s: the number of buffers (-B) must be at least twice the number of allowed connections (-N) and at least 16\n"
-#~ msgstr ""
-#~ "%s : le nombre de tampons (-B) doit être au moins deux fois le nombre de\n"
-#~ "connexions disponibles (-N) et au moins 16\n"
-
-#~ msgid "adding missing FROM-clause entry in subquery for table \"%s\""
-#~ msgstr "entrée manquante de la clause FROM dans la sous-requête pour la table « %s »"
-
-#~ msgid "missing FROM-clause entry in subquery for table \"%s\""
-#~ msgstr "entrée manquante de la clause FROM dans la sous-requête de la table « %s »"
-
-#~ msgid "SELECT FOR UPDATE/SHARE is not supported for inheritance queries"
-#~ msgstr "SELECT FOR UPDATE/SHARE n'est pas supporté pour les requêtes d'héritage"
-
-#~ msgid "Ident protocol identifies remote user as \"%s\""
-#~ msgstr "le protocole Ident identifie l'utilisateur distant comme « %s »"
-
-#~ msgid "cannot use Ident authentication without usermap field"
-#~ msgstr "n'a pas pu utiliser l'authentication Ident sans le champ usermap"
-
-#~ msgid "missing field in file \"%s\" at end of line %d"
-#~ msgstr "champ manquant dans le fichier « %s » à la fin de la ligne %d"
-
-#~ msgid "invalid entry in file \"%s\" at line %d, token \"%s\""
-#~ msgstr "entrée invalide dans le fichier « %s » à la ligne %d, jeton « %s »"
-
-#~ msgid "cannot use authentication method \"crypt\" because password is MD5-encrypted"
-#~ msgstr ""
-#~ "n'a pas pu utiliser la méthode d'authentification « crypt » car le mot de\n"
-#~ "passe est chiffré avec MD5"
-
-#~ msgid "File must be owned by the database user and must have no permissions for \"group\" or \"other\"."
-#~ msgstr ""
-#~ "Le fichier doit appartenir au propriétaire de la base de données et ne doit\n"
-#~ "pas avoir de droits pour un groupe ou pour les autres."
-
-#~ msgid "unsafe permissions on private key file \"%s\""
-#~ msgstr "droits non sûrs sur le fichier de la clé privée « %s »"
-
-#~ msgid "could not get security token from context"
-#~ msgstr "n'a pas pu récupérer le jeton de sécurité à partir du contexte"
-
-#~ msgid "GSSAPI not implemented on this server"
-#~ msgstr "GSSAPI non implémenté sur ce serveur"
-
-#~ msgid "Kerberos 5 not implemented on this server"
-#~ msgstr "Kerberos 5 non implémenté sur ce serveur"
-
-#~ msgid "unexpected Kerberos user name received from client (received \"%s\", expected \"%s\")"
-#~ msgstr ""
-#~ "nom d'utilisateur Kerberos inattendu reçu à partir du client (reçu « %s »,\n"
-#~ "attendu « %s »)"
-
-#~ msgid "cannot change number of columns in view"
-#~ msgstr "ne peut pas modifier le nombre de colonnes dans la vue"
-
-#~ msgid "Consider using VACUUM FULL on this relation or increasing the configuration parameter \"max_fsm_pages\"."
-#~ msgstr ""
-#~ "Pensez à compacter cette relation en utilisant VACUUM FULL ou à augmenter le\n"
-#~ "paramètre de configuration « max_fsm_pages »."
-
-#~ msgid "relation \"%s.%s\" contains more than \"max_fsm_pages\" pages with useful free space"
-#~ msgstr ""
-#~ "la relation « %s.%s » contient plus de « max_fsm_pages » pages d'espace\n"
-#~ "libre utile"
-
-#~ msgid "constraint definition for check constraint \"%s\" does not match"
-#~ msgstr ""
-#~ "la définition de la contrainte « %s » pour la contrainte de vérification ne\n"
-#~ "correspond pas"
-
-#~ msgid "multiple constraints named \"%s\" were dropped"
-#~ msgstr "les contraintes multiples nommées « %s » ont été supprimées"
-
-#~ msgid "there are objects dependent on %s"
-#~ msgstr "des objets dépendent de %s"
-
-#~ msgid "failed to drop all objects depending on %s"
-#~ msgstr "échec lors de la suppression de tous les objets dépendant de %s"
-
-#~ msgid "parser stack overflow"
-#~ msgstr "saturation de la pile de l'analyseur"
-
-#~ msgid "syntax error; also virtual memory exhausted"
-#~ msgstr "erreur de syntaxe ; de plus, mémoire virtuelle saturée"
-
-#~ msgid "syntax error: cannot back up"
-#~ msgstr "erreur de syntaxe : n'a pas pu revenir"
-
-#~ msgid "log_restartpoints = %s"
-#~ msgstr "log_restartpoints = %s"
-
-#~ msgid "It looks like you need to initdb or install locale support."
-#~ msgstr ""
-#~ "Il semble que vous avez besoin d'exécuter initdb ou d'installer le support\n"
-#~ "des locales."
-
-#~ msgid "The database cluster was initialized with LOCALE_NAME_BUFLEN %d, but the server was compiled with LOCALE_NAME_BUFLEN %d."
-#~ msgstr ""
-#~ "Le cluster de bases de données a été initialisé avec un LOCALE_NAME_BUFLEN\n"
-#~ "à %d alors que le serveur a été compilé avec un LOCALE_NAME_BUFLEN à %d."
-
-#~ msgid "invalid LC_CTYPE setting"
-#~ msgstr "paramètre LC_CTYPE invalide"
-
-#~ msgid "invalid LC_COLLATE setting"
-#~ msgstr "paramètre LC_COLLATE invalide"
-
-#~ msgid "GIN index does not support search with void query"
-#~ msgstr "les index GIN ne supportent pas la recherche avec des requêtes vides"
-
-#~ msgid "fillfactor=%d is out of range (should be between %d and 100)"
-#~ msgstr "le facteur de remplissage (%d) est en dehors des limites (il devrait être entre %d et 100)"
+#~ msgid "not enough shared memory for background writer"
+#~ msgstr "pas assez de mémoire partagée pour le processus d'écriture en tâche de fond"
 
 #, fuzzy
-#~ msgid "wrong number of array_subscripts"
-#~ msgstr "mauvais nombre d'indices du tableau"
+#~ msgid "couldn't put socket to non-blocking mode: %m"
+#~ msgstr "n'a pas pu activer le mode non-bloquant pour la socket : %s\n"
 
-#~ msgid "could not create XPath object"
-#~ msgstr "n'a pas pu créer l'objet XPath"
+#, fuzzy
+#~ msgid "couldn't put socket to blocking mode: %m"
+#~ msgstr "n'a pas pu activer le mode bloquant pour la socket : %s\n"
 
-#~ msgid "multiple TRUNCATE events specified"
-#~ msgstr "multiples événements TRUNCATE spécifiés"
+#~ msgid "WAL file SYSID is %s, pg_control SYSID is %s"
+#~ msgstr "le SYSID du journal de transactions WAL est %s, celui de pg_control est %s"
 
-#~ msgid "multiple UPDATE events specified"
-#~ msgstr "multiples événements UPDATE spécifiés"
+#, fuzzy
+#~ msgid "sorry, too many standbys already"
+#~ msgstr "désolé, trop de clients sont déjà connectés"
 
-#~ msgid "multiple DELETE events specified"
-#~ msgstr "multiples événements DELETE spécifiés"
+#, fuzzy
+#~ msgid "invalid WAL message received from primary"
+#~ msgstr "format du message invalide"
 
-#~ msgid "hurrying in-progress restartpoint"
-#~ msgstr "accélération du restartpoint en cours"
+#~ msgid "PID %d is among the slowest backends."
+#~ msgstr "Le PID %d est parmi les processus serveur les plus lents."
 
-#~ msgid "NEW used in query that is not in a rule"
-#~ msgstr "NEW utilisé dans une requête qui ne fait pas partie d'une règle"
+#~ msgid "transaction is read-only"
+#~ msgstr "la transaction est en lecture seule"
 
-#~ msgid "OLD used in query that is not in a rule"
-#~ msgstr "OLD utilisé dans une requête qui n'est pas une règle"
+#~ msgid "binary value is out of range for type bigint"
+#~ msgstr "la valeur binaire est en dehors des limites du type bigint"
 
-#~ msgid "adding missing FROM-clause entry for table \"%s\""
-#~ msgstr "ajout d'une entrée manquante dans FROM (table « %s »)"
+#~ msgid "redo starts at %X/%X, consistency will be reached at %X/%X"
+#~ msgstr "la restauration comme à %X/%X, la cohérence sera atteinte à %X/%X"
 
-#~ msgid "SELECT FOR UPDATE/SHARE is not allowed in subqueries"
-#~ msgstr "SELECT FOR UPDATE/SHARE n'est pas autorisé dans les sous-requêtes"
-
-#~ msgid "unsupported PAM conversation %d/%s"
-#~ msgstr "conversation PAM %d/%s non supportée"
-
-#~ msgid "could not seek to end of segment %u of relation %s: %m"
-#~ msgstr "n'a pas pu se déplacer à la fin du segment %u de la relation %s : %m"
-
-#~ msgid "could not fsync segment %u of relation %s but retrying: %m"
+#~ msgid "This error can also happen if the byte sequence does not match the encoding expected by the server, which is controlled by \"client_encoding\"."
 #~ msgstr ""
-#~ "n'a pas pu synchroniser sur disque (fsync) le segment %u de la relation\n"
-#~ "%s, nouvelle tentative : %m"
+#~ "Cette erreur peut aussi survenir si la séquence d'octets ne correspond pas\n"
+#~ "au jeu de caractères attendu par le serveur, le jeu étant contrôlé par\n"
+#~ "« client_encoding »."
 
-#~ msgid "could not fsync segment %u of relation %s: %m"
+#~ msgid "Sets the language used in DO statement if LANGUAGE is not specified."
 #~ msgstr ""
-#~ "n'a pas pu synchroniser sur disque (fsync) le segment %u de la relation\n"
-#~ "%s : %m"
+#~ "Configure le langage utilisé dans une instruction DO si la clause LANGUAGE n'est\n"
+#~ "pas spécifiée."
 
-#~ msgid "could not open segment %u of relation %s: %m"
-#~ msgstr "n'a pas pu ouvrir le segment %u de la relation %s : %m"
+#~ msgid "shared index \"%s\" can only be reindexed in stand-alone mode"
+#~ msgstr "un index partagé « %s » peut seulement être réindexé en mode autonome"
 
-#~ msgid "could not write block %u of relation %s: %m"
-#~ msgstr "n'a pas pu écrire le bloc %u de la relation %s : %m"
+#~ msgid "\"%s\" is a system catalog"
+#~ msgstr "« %s » est un catalogue système"
 
-#~ msgid "could not read block %u of relation %s: %m"
-#~ msgstr "n'a pas pu lire le bloc %u de la relation %s : %m"
+#~ msgid "shared table \"%s\" can only be reindexed in stand-alone mode"
+#~ msgstr "la table partagée « %s » peut seulement être réindexé en mode autonome"
 
-#~ msgid "could not open relation %s: %m"
-#~ msgstr "n'a pas pu ouvrir la relation %s : %m"
+#~ msgid "cannot truncate system relation \"%s\""
+#~ msgstr "ne peut pas tronquer la relation système « %s »"
 
-#~ msgid "could not extend relation %s: %m"
-#~ msgstr "n'a pas pu étendre la relation %s : %m"
+#~ msgid "number of distinct values %g is too low"
+#~ msgstr "le nombre de valeurs distinctes %g est trop basse"
 
-#~ msgid "could not seek to block %u of relation %s: %m"
-#~ msgstr "n'a pas pu se positionner sur le bloc %u de la relation %s : %m"
+#~ msgid "directory \"%s\" is not empty"
+#~ msgstr "le répertoire « %s » n'est pas vide"
 
-#~ msgid "could not remove segment %u of relation %s: %m"
-#~ msgstr "n'a pas pu supprimer le segment %u de la relation %s : %m"
-
-#~ msgid "could not remove relation %s: %m"
-#~ msgstr "n'a pas pu supprimer la relation %s : %m"
-
-#~ msgid "SELECT FOR UPDATE/SHARE is not supported within a query with multiple result relations"
+#~ msgid "relation \"%s\" TID %u/%u: XMIN_COMMITTED not set for transaction %u --- cannot shrink relation"
 #~ msgstr ""
-#~ "SELECT FOR UPDATE/SHARE n'est pas supporté dans une requête avec plusieurs\n"
-#~ "relations"
+#~ "relation « %s », TID %u/%u : XMIN_COMMITTED non configuré pour la\n"
+#~ "transaction %u --- n'a pas pu diminuer la taille de la relation"
 
-#~ msgid "cannot set session authorization within security-definer function"
-#~ msgstr "ne peut pas exécuter SESSION AUTHORIZATION sur la fonction SECURITY DEFINER"
-
-#~ msgid "cannot specify CSV in BINARY mode"
-#~ msgstr "ne peut pas spécifier CSV en mode binaire (BINARY)"
-
-#~ msgid "invalid role password \"%s\""
-#~ msgstr "mot de passe « %s » de l'utilisateur invalide"
-
-#~ msgid "invalid role name \"%s\""
-#~ msgstr "nom de rôle « %s » invalide"
-
-#~ msgid "invalid database name \"%s\""
-#~ msgstr "nom de base de données « %s » invalide"
-
-#~ msgid "This parameter cannot be changed after server start."
-#~ msgstr "Ce paramètre ne peut pas être modifié après le lancement du serveur"
-
-#~ msgid "attempted change of parameter \"%s\" ignored"
-#~ msgstr "tentative de modification du paramètre « %s » ignoré"
-
-#~ msgid "Sets the regular expression \"flavor\"."
-#~ msgstr "Initialise l'expression rationnelle « flavor »."
-
-#~ msgid "Automatically adds missing table references to FROM clauses."
+#~ msgid "relation \"%s\" TID %u/%u: dead HOT-updated tuple --- cannot shrink relation"
 #~ msgstr ""
-#~ "Ajoute automatiquement les références à la table manquant dans les clauses\n"
-#~ "FROM."
+#~ "relation « %s », TID %u/%u : ligne morte mise à jour par HOT --- n'a pas pu\n"
+#~ "diminuer la taille de la relation"
 
-#~ msgid "Table contains duplicated values."
-#~ msgstr "La table contient des valeurs dupliquées."
-
-#~ msgid "index row size %lu exceeds btree maximum, %lu"
-#~ msgstr "la taille de la ligne index %lu dépasse le maximum de btree, %lu"
-
-#~ msgid "DISTINCT is supported only for single-argument aggregates"
-#~ msgstr "DISTINCT est seulement supporté pour les agrégats à un seul argument"
-
-#~ msgid "database system is in consistent recovery mode"
-#~ msgstr "le système de bases de données est dans un mode de restauration cohérent"
-
-#~ msgid "frame start at CURRENT ROW is not implemented"
-#~ msgstr "début du frame à CURRENT ROW n'est pas implémenté"
-
-#~ msgid "Rebuild the index with REINDEX."
-#~ msgstr "Reconstruisez l'index avec REINDEX."
-
-#~ msgid "index \"%s\" contains %.0f row versions, but table contains %.0f row versions"
+#~ msgid "relation \"%s\" TID %u/%u: InsertTransactionInProgress %u --- cannot shrink relation"
 #~ msgstr ""
-#~ "l'index « %s » contient %.0f versions de ligne, mais la table contient %.0f\n"
-#~ "versions de ligne"
+#~ "relation « %s », TID %u/%u : InsertTransactionInProgress %u --- n'a pas pu\n"
+#~ "diminuer la taille de la relation"
 
-#~ msgid ""
-#~ "%u index pages have been deleted, %u are currently reusable.\n"
-#~ "%s."
+#~ msgid "relation \"%s\" TID %u/%u: DeleteTransactionInProgress %u --- cannot shrink relation"
 #~ msgstr ""
-#~ "%u pages d'index ont été supprimées, %u sont actuellement réutilisables.\n"
-#~ "%s."
-
-#~ msgid "\"%s\": moved %u row versions, truncated %u to %u pages"
-#~ msgstr "« %s » : %u versions de ligne déplacées, %u pages tronquées sur %u"
+#~ "relation « %s », TID %u/%u : DeleteTransactionInProgress %u --- n'a pas pu\n"
+#~ "diminuer la taille de la relation"
 
 #~ msgid ""
 #~ "%.0f dead row versions cannot be removed yet.\n"
@@ -24101,446 +23398,1154 @@ msgstr "ne peut pas importer un snapshot à partir d'une base de données différen
 #~ "disponibles.\n"
 #~ "%s."
 
-#~ msgid "relation \"%s\" TID %u/%u: DeleteTransactionInProgress %u --- cannot shrink relation"
+#~ msgid "\"%s\": moved %u row versions, truncated %u to %u pages"
+#~ msgstr "« %s » : %u versions de ligne déplacées, %u pages tronquées sur %u"
+
+#~ msgid ""
+#~ "%u index pages have been deleted, %u are currently reusable.\n"
+#~ "%s."
 #~ msgstr ""
-#~ "relation « %s », TID %u/%u : DeleteTransactionInProgress %u --- n'a pas pu\n"
-#~ "diminuer la taille de la relation"
+#~ "%u pages d'index ont été supprimées, %u sont actuellement réutilisables.\n"
+#~ "%s."
 
-#~ msgid "relation \"%s\" TID %u/%u: InsertTransactionInProgress %u --- cannot shrink relation"
+#~ msgid "index \"%s\" contains %.0f row versions, but table contains %.0f row versions"
 #~ msgstr ""
-#~ "relation « %s », TID %u/%u : InsertTransactionInProgress %u --- n'a pas pu\n"
-#~ "diminuer la taille de la relation"
+#~ "l'index « %s » contient %.0f versions de ligne, mais la table contient %.0f\n"
+#~ "versions de ligne"
 
-#~ msgid "relation \"%s\" TID %u/%u: dead HOT-updated tuple --- cannot shrink relation"
+#~ msgid "Rebuild the index with REINDEX."
+#~ msgstr "Reconstruisez l'index avec REINDEX."
+
+#~ msgid "frame start at CURRENT ROW is not implemented"
+#~ msgstr "début du frame à CURRENT ROW n'est pas implémenté"
+
+#~ msgid "database system is in consistent recovery mode"
+#~ msgstr "le système de bases de données est dans un mode de restauration cohérent"
+
+#~ msgid "DISTINCT is supported only for single-argument aggregates"
+#~ msgstr "DISTINCT est seulement supporté pour les agrégats à un seul argument"
+
+#~ msgid "index row size %lu exceeds btree maximum, %lu"
+#~ msgstr "la taille de la ligne index %lu dépasse le maximum de btree, %lu"
+
+#~ msgid "Table contains duplicated values."
+#~ msgstr "La table contient des valeurs dupliquées."
+
+#~ msgid "Automatically adds missing table references to FROM clauses."
 #~ msgstr ""
-#~ "relation « %s », TID %u/%u : ligne morte mise à jour par HOT --- n'a pas pu\n"
-#~ "diminuer la taille de la relation"
+#~ "Ajoute automatiquement les références à la table manquant dans les clauses\n"
+#~ "FROM."
 
-#~ msgid "relation \"%s\" TID %u/%u: XMIN_COMMITTED not set for transaction %u --- cannot shrink relation"
+#~ msgid "Sets the regular expression \"flavor\"."
+#~ msgstr "Initialise l'expression rationnelle « flavor »."
+
+#~ msgid "attempted change of parameter \"%s\" ignored"
+#~ msgstr "tentative de modification du paramètre « %s » ignoré"
+
+#~ msgid "This parameter cannot be changed after server start."
+#~ msgstr "Ce paramètre ne peut pas être modifié après le lancement du serveur"
+
+#~ msgid "invalid database name \"%s\""
+#~ msgstr "nom de base de données « %s » invalide"
+
+#~ msgid "invalid role name \"%s\""
+#~ msgstr "nom de rôle « %s » invalide"
+
+#~ msgid "invalid role password \"%s\""
+#~ msgstr "mot de passe « %s » de l'utilisateur invalide"
+
+#~ msgid "cannot specify CSV in BINARY mode"
+#~ msgstr "ne peut pas spécifier CSV en mode binaire (BINARY)"
+
+#~ msgid "cannot set session authorization within security-definer function"
+#~ msgstr "ne peut pas exécuter SESSION AUTHORIZATION sur la fonction SECURITY DEFINER"
+
+#~ msgid "SELECT FOR UPDATE/SHARE is not supported within a query with multiple result relations"
 #~ msgstr ""
-#~ "relation « %s », TID %u/%u : XMIN_COMMITTED non configuré pour la\n"
-#~ "transaction %u --- n'a pas pu diminuer la taille de la relation"
+#~ "SELECT FOR UPDATE/SHARE n'est pas supporté dans une requête avec plusieurs\n"
+#~ "relations"
 
-#~ msgid "directory \"%s\" is not empty"
-#~ msgstr "le répertoire « %s » n'est pas vide"
+#~ msgid "could not remove relation %s: %m"
+#~ msgstr "n'a pas pu supprimer la relation %s : %m"
 
-#~ msgid "number of distinct values %g is too low"
-#~ msgstr "le nombre de valeurs distinctes %g est trop basse"
+#~ msgid "could not remove segment %u of relation %s: %m"
+#~ msgstr "n'a pas pu supprimer le segment %u de la relation %s : %m"
 
-#~ msgid "cannot truncate system relation \"%s\""
-#~ msgstr "ne peut pas tronquer la relation système « %s »"
+#~ msgid "could not seek to block %u of relation %s: %m"
+#~ msgstr "n'a pas pu se positionner sur le bloc %u de la relation %s : %m"
 
-#~ msgid "shared table \"%s\" can only be reindexed in stand-alone mode"
-#~ msgstr "la table partagée « %s » peut seulement être réindexé en mode autonome"
+#~ msgid "could not extend relation %s: %m"
+#~ msgstr "n'a pas pu étendre la relation %s : %m"
 
-#~ msgid "\"%s\" is a system catalog"
-#~ msgstr "« %s » est un catalogue système"
+#~ msgid "could not open relation %s: %m"
+#~ msgstr "n'a pas pu ouvrir la relation %s : %m"
 
-#~ msgid "shared index \"%s\" can only be reindexed in stand-alone mode"
-#~ msgstr "un index partagé « %s » peut seulement être réindexé en mode autonome"
+#~ msgid "could not read block %u of relation %s: %m"
+#~ msgstr "n'a pas pu lire le bloc %u de la relation %s : %m"
 
-#~ msgid "Sets the language used in DO statement if LANGUAGE is not specified."
+#~ msgid "could not write block %u of relation %s: %m"
+#~ msgstr "n'a pas pu écrire le bloc %u de la relation %s : %m"
+
+#~ msgid "could not open segment %u of relation %s: %m"
+#~ msgstr "n'a pas pu ouvrir le segment %u de la relation %s : %m"
+
+#~ msgid "could not fsync segment %u of relation %s: %m"
 #~ msgstr ""
-#~ "Configure le langage utilisé dans une instruction DO si la clause LANGUAGE n'est\n"
-#~ "pas spécifiée."
+#~ "n'a pas pu synchroniser sur disque (fsync) le segment %u de la relation\n"
+#~ "%s : %m"
 
-#~ msgid "This error can also happen if the byte sequence does not match the encoding expected by the server, which is controlled by \"client_encoding\"."
+#~ msgid "could not fsync segment %u of relation %s but retrying: %m"
 #~ msgstr ""
-#~ "Cette erreur peut aussi survenir si la séquence d'octets ne correspond pas\n"
-#~ "au jeu de caractères attendu par le serveur, le jeu étant contrôlé par\n"
-#~ "« client_encoding »."
+#~ "n'a pas pu synchroniser sur disque (fsync) le segment %u de la relation\n"
+#~ "%s, nouvelle tentative : %m"
 
-#~ msgid "redo starts at %X/%X, consistency will be reached at %X/%X"
-#~ msgstr "la restauration comme à %X/%X, la cohérence sera atteinte à %X/%X"
+#~ msgid "could not seek to end of segment %u of relation %s: %m"
+#~ msgstr "n'a pas pu se déplacer à la fin du segment %u de la relation %s : %m"
 
-#~ msgid "binary value is out of range for type bigint"
-#~ msgstr "la valeur binaire est en dehors des limites du type bigint"
+#~ msgid "unsupported PAM conversation %d/%s"
+#~ msgstr "conversation PAM %d/%s non supportée"
 
-#~ msgid "transaction is read-only"
-#~ msgstr "la transaction est en lecture seule"
+#~ msgid "SELECT FOR UPDATE/SHARE is not allowed in subqueries"
+#~ msgstr "SELECT FOR UPDATE/SHARE n'est pas autorisé dans les sous-requêtes"
 
-#~ msgid "PID %d is among the slowest backends."
-#~ msgstr "Le PID %d est parmi les processus serveur les plus lents."
+#~ msgid "adding missing FROM-clause entry for table \"%s\""
+#~ msgstr "ajout d'une entrée manquante dans FROM (table « %s »)"
+
+#~ msgid "OLD used in query that is not in a rule"
+#~ msgstr "OLD utilisé dans une requête qui n'est pas une règle"
+
+#~ msgid "NEW used in query that is not in a rule"
+#~ msgstr "NEW utilisé dans une requête qui ne fait pas partie d'une règle"
+
+#~ msgid "hurrying in-progress restartpoint"
+#~ msgstr "accélération du restartpoint en cours"
+
+#~ msgid "multiple DELETE events specified"
+#~ msgstr "multiples événements DELETE spécifiés"
+
+#~ msgid "multiple UPDATE events specified"
+#~ msgstr "multiples événements UPDATE spécifiés"
+
+#~ msgid "multiple TRUNCATE events specified"
+#~ msgstr "multiples événements TRUNCATE spécifiés"
+
+#~ msgid "could not create XPath object"
+#~ msgstr "n'a pas pu créer l'objet XPath"
 
 #, fuzzy
-#~ msgid "invalid WAL message received from primary"
-#~ msgstr "format du message invalide"
+#~ msgid "wrong number of array_subscripts"
+#~ msgstr "mauvais nombre d'indices du tableau"
 
-#, fuzzy
-#~ msgid "sorry, too many standbys already"
-#~ msgstr "désolé, trop de clients sont déjà connectés"
+#~ msgid "fillfactor=%d is out of range (should be between %d and 100)"
+#~ msgstr "le facteur de remplissage (%d) est en dehors des limites (il devrait être entre %d et 100)"
 
-#~ msgid "WAL file SYSID is %s, pg_control SYSID is %s"
-#~ msgstr "le SYSID du journal de transactions WAL est %s, celui de pg_control est %s"
+#~ msgid "GIN index does not support search with void query"
+#~ msgstr "les index GIN ne supportent pas la recherche avec des requêtes vides"
 
-#, fuzzy
-#~ msgid "couldn't put socket to blocking mode: %m"
-#~ msgstr "n'a pas pu activer le mode bloquant pour la socket : %s\n"
+#~ msgid "invalid LC_COLLATE setting"
+#~ msgstr "paramètre LC_COLLATE invalide"
 
-#, fuzzy
-#~ msgid "couldn't put socket to non-blocking mode: %m"
-#~ msgstr "n'a pas pu activer le mode non-bloquant pour la socket : %s\n"
+#~ msgid "invalid LC_CTYPE setting"
+#~ msgstr "paramètre LC_CTYPE invalide"
 
-#~ msgid "not enough shared memory for background writer"
-#~ msgstr "pas assez de mémoire partagée pour le processus d'écriture en tâche de fond"
-
-#~ msgid "connection limit exceeded for non-superusers"
-#~ msgstr "limite de connexions dépassée pour les utilisateurs standards"
-
-#~ msgid "not enough shared memory for walreceiver"
+#~ msgid "The database cluster was initialized with LOCALE_NAME_BUFLEN %d, but the server was compiled with LOCALE_NAME_BUFLEN %d."
 #~ msgstr ""
-#~ "pas assez de mémoire partagée pour le processus de réception des journaux de\n"
-#~ "transactions"
+#~ "Le cluster de bases de données a été initialisé avec un LOCALE_NAME_BUFLEN\n"
+#~ "à %d alors que le serveur a été compilé avec un LOCALE_NAME_BUFLEN à %d."
 
-#~ msgid "not enough shared memory for walsender"
-#~ msgstr "pas assez de mémoire partagée pour le processus d'envoi des journaux de transactions"
-
-#~ msgid "unlogged operation performed, data may be missing"
-#~ msgstr "opération réalisée non tracée, les données pourraient manquer"
-
-#~ msgid "During recovery, allows connections and queries.  During normal running, causes additional info to be written to WAL to enable hot standby mode on WAL standby nodes."
+#~ msgid "It looks like you need to initdb or install locale support."
 #~ msgstr ""
-#~ "Lors de la restauration, autorise les connexions et les requêtes. Lors d'une\n"
-#~ "exécution normale, fait que des informations supplémentaires sont écrites dans\n"
-#~ "les journaux de transactions pour activer le mode Hot Standby sur les n½uds\n"
-#~ "en attente."
+#~ "Il semble que vous avez besoin d'exécuter initdb ou d'installer le support\n"
+#~ "des locales."
 
-#~ msgid "archive_command must be defined before online backups can be made safely."
+#~ msgid "log_restartpoints = %s"
+#~ msgstr "log_restartpoints = %s"
+
+#~ msgid "syntax error: cannot back up"
+#~ msgstr "erreur de syntaxe : n'a pas pu revenir"
+
+#~ msgid "syntax error; also virtual memory exhausted"
+#~ msgstr "erreur de syntaxe ; de plus, mémoire virtuelle saturée"
+
+#~ msgid "parser stack overflow"
+#~ msgstr "saturation de la pile de l'analyseur"
+
+#~ msgid "failed to drop all objects depending on %s"
+#~ msgstr "échec lors de la suppression de tous les objets dépendant de %s"
+
+#~ msgid "there are objects dependent on %s"
+#~ msgstr "des objets dépendent de %s"
+
+#~ msgid "multiple constraints named \"%s\" were dropped"
+#~ msgstr "les contraintes multiples nommées « %s » ont été supprimées"
+
+#~ msgid "constraint definition for check constraint \"%s\" does not match"
 #~ msgstr ""
-#~ "archive_command doit être défini avant que les sauvegardes à chaud puissent\n"
-#~ "s'effectuer correctement."
+#~ "la définition de la contrainte « %s » pour la contrainte de vérification ne\n"
+#~ "correspond pas"
 
-#~ msgid "archive_mode must be enabled at server start."
-#~ msgstr "archive_mode doit être activé au lancement du serveur."
-
-#~ msgid "WAL archiving is not active"
-#~ msgstr "l'archivage des journaux de transactions n'est pas actif"
-
-#~ msgid "usermap \"%s\""
-#~ msgstr "correspondance utilisateur « %s »"
-
-#~ msgid "restartpoint_command = '%s'"
-#~ msgstr "restartpoint_command = '%s'"
-
-#~ msgid "recovery restart point at %X/%X with latest known log time %s"
+#~ msgid "relation \"%s.%s\" contains more than \"max_fsm_pages\" pages with useful free space"
 #~ msgstr ""
-#~ "point de relancement de la restauration sur %X/%X avec %s comme dernière\n"
-#~ "date connue du journal"
+#~ "la relation « %s.%s » contient plus de « max_fsm_pages » pages d'espace\n"
+#~ "libre utile"
 
-#~ msgid "Not safe to send CSV data\n"
-#~ msgstr "Envoi non sûr des données CSV\n"
-
-#~ msgid "Sets the message levels that are logged during recovery."
-#~ msgstr "Initialise les niveaux de messages qui sont tracés lors de la restauration."
-
-#~ msgid "access to %s"
-#~ msgstr "accès à %s"
-
-#~ msgid "parameter \"standby_mode\" requires a Boolean value"
-#~ msgstr "le paramètre « standby_mode » requiert une valeur booléenne"
-
-#~ msgid "parameter \"recovery_target_inclusive\" requires a Boolean value"
-#~ msgstr "le paramètre « recovery_target_inclusive » requiert une valeur booléenne"
-
-#~ msgid "cannot drop \"%s\" because it is being used by active queries in this session"
+#~ msgid "Consider using VACUUM FULL on this relation or increasing the configuration parameter \"max_fsm_pages\"."
 #~ msgstr ""
-#~ "ne peut pas supprimer « %s » car cet objet est en cours d'utilisation par\n"
-#~ "des requêtes actives dans cette session"
+#~ "Pensez à compacter cette relation en utilisant VACUUM FULL ou à augmenter le\n"
+#~ "paramètre de configuration « max_fsm_pages »."
 
-#~ msgid "unrecognized \"log_destination\" key word: \"%s\""
-#~ msgstr "mot clé « log_destination » non reconnu : « %s »"
+#~ msgid "cannot change number of columns in view"
+#~ msgstr "ne peut pas modifier le nombre de colonnes dans la vue"
 
-#~ msgid "invalid list syntax for parameter \"log_destination\""
-#~ msgstr "syntaxe de liste invalide pour le paramètre « log_destination »"
-
-#~ msgid "Sets immediate fsync at commit."
-#~ msgstr "Configure un fsync immédiat lors du commit."
-
-#~ msgid "could not open new log file \"%s\": %m"
-#~ msgstr "n'a pas pu ouvrir le nouveau journal applicatif « %s » : %m"
-
-#~ msgid "could not create log file \"%s\": %m"
-#~ msgstr "n'a pas pu créer le journal applicatif « %s » : %m"
-
-#~ msgid "Ident authentication is not supported on local connections on this platform"
-#~ msgstr "l'authentification Ident n'est pas supportée sur les connexions locales sur cette plateforme"
-
-#~ msgid "could not get effective UID from peer credentials: %m"
-#~ msgstr "n'a pas pu obtenir l'UID réel à partir des pièces d'identité de l'autre : %m"
-
-#~ msgid "could not enable credential reception: %m"
-#~ msgstr "n'a pas pu activer la réception de lettres de créance : %m"
-
-#~ msgid "argument to pg_get_expr() must come from system catalogs"
-#~ msgstr "l'argument de pg_get_expr() doit provenir des catalogues systèmes"
-
-#~ msgid "invalid interval value for time zone: day not allowed"
-#~ msgstr "valeur d'intervalle invalide pour le fuseau horaire : jour non autorisé"
-
-#~ msgid "invalid interval value for time zone: month not allowed"
-#~ msgstr "valeur d'intervalle invalide pour le fuseau horaire : les mois ne sont pas autorisés"
-
-#~ msgid "unrecognized \"datestyle\" key word: \"%s\""
-#~ msgstr "mot clé « datestyle » non reconnu : « %s »"
-
-#~ msgid "invalid list syntax for parameter \"datestyle\""
-#~ msgstr "syntaxe de liste invalide pour le paramètre « datestyle »"
-
-#~ msgid "database \"%s\" not found"
-#~ msgstr "base de données « %s » non trouvée"
-
-#~ msgid "composite type must have at least one attribute"
-#~ msgstr "le type composite doit avoir au moins un attribut"
-
-#~ msgid "cannot reference permanent table from temporary table constraint"
+#~ msgid "unexpected Kerberos user name received from client (received \"%s\", expected \"%s\")"
 #~ msgstr ""
-#~ "ne peut pas référencer une table permanente à partir de la contrainte de\n"
-#~ "table temporaire"
+#~ "nom d'utilisateur Kerberos inattendu reçu à partir du client (reçu « %s »,\n"
+#~ "attendu « %s »)"
 
-#~ msgid "cannot reference temporary table from permanent table constraint"
+#~ msgid "Kerberos 5 not implemented on this server"
+#~ msgstr "Kerberos 5 non implémenté sur ce serveur"
+
+#~ msgid "GSSAPI not implemented on this server"
+#~ msgstr "GSSAPI non implémenté sur ce serveur"
+
+#~ msgid "could not get security token from context"
+#~ msgstr "n'a pas pu récupérer le jeton de sécurité à partir du contexte"
+
+#~ msgid "unsafe permissions on private key file \"%s\""
+#~ msgstr "droits non sûrs sur le fichier de la clé privée « %s »"
+
+#~ msgid "File must be owned by the database user and must have no permissions for \"group\" or \"other\"."
 #~ msgstr ""
-#~ "ne peut pas référencer une table temporaire à partir d'une contrainte de\n"
-#~ "table permanente"
+#~ "Le fichier doit appartenir au propriétaire de la base de données et ne doit\n"
+#~ "pas avoir de droits pour un groupe ou pour les autres."
 
-#~ msgid "function \"%s\" is already in schema \"%s\""
-#~ msgstr "la fonction « %s » existe déjà dans le schéma « %s »"
-
-#~ msgid "must be superuser to comment on text search template"
+#~ msgid "cannot use authentication method \"crypt\" because password is MD5-encrypted"
 #~ msgstr ""
-#~ "doit être super-utilisateur pour ajouter un commentaire sur un modèle de\n"
-#~ "recherche plein texte"
+#~ "n'a pas pu utiliser la méthode d'authentification « crypt » car le mot de\n"
+#~ "passe est chiffré avec MD5"
 
-#~ msgid "must be superuser to comment on text search parser"
+#~ msgid "invalid entry in file \"%s\" at line %d, token \"%s\""
+#~ msgstr "entrée invalide dans le fichier « %s » à la ligne %d, jeton « %s »"
+
+#~ msgid "missing field in file \"%s\" at end of line %d"
+#~ msgstr "champ manquant dans le fichier « %s » à la fin de la ligne %d"
+
+#~ msgid "cannot use Ident authentication without usermap field"
+#~ msgstr "n'a pas pu utiliser l'authentication Ident sans le champ usermap"
+
+#~ msgid "Ident protocol identifies remote user as \"%s\""
+#~ msgstr "le protocole Ident identifie l'utilisateur distant comme « %s »"
+
+#~ msgid "SELECT FOR UPDATE/SHARE is not supported for inheritance queries"
+#~ msgstr "SELECT FOR UPDATE/SHARE n'est pas supporté pour les requêtes d'héritage"
+
+#~ msgid "missing FROM-clause entry in subquery for table \"%s\""
+#~ msgstr "entrée manquante de la clause FROM dans la sous-requête de la table « %s »"
+
+#~ msgid "adding missing FROM-clause entry in subquery for table \"%s\""
+#~ msgstr "entrée manquante de la clause FROM dans la sous-requête pour la table « %s »"
+
+#~ msgid "%s: the number of buffers (-B) must be at least twice the number of allowed connections (-N) and at least 16\n"
 #~ msgstr ""
-#~ "doit être super-utilisateur pour ajouter un commentaire sur l'analyseur de\n"
-#~ "recherche plein texte"
+#~ "%s : le nombre de tampons (-B) doit être au moins deux fois le nombre de\n"
+#~ "connexions disponibles (-N) et au moins 16\n"
 
-#~ msgid "must be superuser to comment on procedural language"
+#~ msgid "could not set statistics collector timer: %m"
+#~ msgstr "n'a pas pu configurer le timer du récupérateur de statistiques : %m"
+
+#~ msgid "insufficient shared memory for free space map"
+#~ msgstr "mémoire partagée insuffisante pour la structure FSM"
+
+#~ msgid "max_fsm_pages must exceed max_fsm_relations * %d"
+#~ msgstr "max_fsm_pages doit excéder max_fsm_relations * %d"
+
+#~ msgid "free space map contains %d pages in %d relations"
+#~ msgstr "la structure FSM contient %d pages dans %d relations"
+
+#~ msgid ""
+#~ "A total of %.0f page slots are in use (including overhead).\n"
+#~ "%.0f page slots are required to track all free space.\n"
+#~ "Current limits are:  %d page slots, %d relations, using %.0f kB."
 #~ msgstr ""
-#~ "doit être super-utilisateur pour ajouter un commentaire sur un langage de\n"
-#~ "procédures"
+#~ "Un total de %.0f emplacements de pages est utilisé (ceci incluant la\n"
+#~ "surcharge).\n"
+#~ "%.0f emplacements de pages sont requis pour tracer tout l'espace libre.\n"
+#~ "Les limites actuelles sont : %d emplacements de pages, %d relations,\n"
+#~ "utilisant %.0f Ko."
 
-#~ msgid "\"%s\" is not a table, view, or composite type"
-#~ msgstr "« %s » n'est pas une table, une vue ou un type composite"
+#~ msgid "max_fsm_relations(%d) equals the number of relations checked"
+#~ msgstr "max_fsm_relations(%d) équivaut au nombre de relations tracées"
 
-#~ msgid "cannot cluster on expressional index \"%s\" because its index access method does not handle null values"
+#~ msgid "You have at least %d relations.  Consider increasing the configuration parameter \"max_fsm_relations\"."
 #~ msgstr ""
-#~ "ne peut pas exécuter CLUSTER sur l'index à expression « %s » car sa méthode\n"
-#~ "d'accès ne gère pas les valeurs NULL"
+#~ "Vous avez au moins %d relations.Considèrez l'augmentation du paramètre de\n"
+#~ "configuration « max_fsm_relations »."
 
-#~ msgid "You might be able to work around this by marking column \"%s\" NOT NULL."
-#~ msgstr "Vous pouvez contourner ceci en marquant la colonne « %s » comme NOT NULL."
+#~ msgid "number of page slots needed (%.0f) exceeds max_fsm_pages (%d)"
+#~ msgstr "le nombre d'emplacements de pages nécessaires (%.0f) dépasse max_fsm_pages (%d)"
 
-#~ msgid "You might be able to work around this by marking column \"%s\" NOT NULL, or use ALTER TABLE ... SET WITHOUT CLUSTER to remove the cluster specification from the table."
+#~ msgid "Consider increasing the configuration parameter \"max_fsm_pages\" to a value over %.0f."
 #~ msgstr ""
-#~ "Vous pourriez contourner ceci en marquant la colonne « %s » avec la\n"
-#~ "contrainte NOT NULL ou en utilisant ALTER TABLE ... SET WITHOUT CLUSTER pour\n"
-#~ "supprimer la spécification CLUSTER de la table."
+#~ "Considérez l'augmentation du paramètre de configuration « max_fsm_pages »\n"
+#~ "à une valeur supérieure à %.0f."
 
-#~ msgid "cannot cluster on index \"%s\" because access method does not handle null values"
+#~ msgid "string is too long for tsvector"
+#~ msgstr "la chaîne est trop longue pour un tsvector"
+
+#~ msgid "Prints the parse tree to the server log."
+#~ msgstr "Affiche l'arbre d'analyse dans les journaux applicatifs du serveur."
+
+#~ msgid "Prints the parse tree after rewriting to server log."
+#~ msgstr "Affiche l'arbre d'analyse après ré-écriture dans les journaux applicatifs du serveur."
+
+#~ msgid "Prints the execution plan to server log."
+#~ msgstr "Affiche le plan d'exécution dans les journaux applicatifs du serveur."
+
+#~ msgid "Uses the indented output format for EXPLAIN VERBOSE."
+#~ msgstr "Utilise le format de sortie indenté pour EXPLAIN VERBOSE."
+
+#~ msgid "Sets the maximum number of tables and indexes for which free space is tracked."
 #~ msgstr ""
-#~ "ne peut pas créer un cluster sur l'index « %s » car la méthode d'accès de\n"
-#~ "l'index ne gère pas les valeurs NULL"
+#~ "Initialise le nombre maximum de tables et index pour lesquels l'espace libre\n"
+#~ "est tracé."
 
-#~ msgid "clustering \"%s.%s\""
-#~ msgstr "exécution de CLUSTER sur « %s.%s »"
-
-#~ msgid "EnumValuesCreate() can only set a single OID"
-#~ msgstr "EnumValuesCreate() peut seulement initialiser un seul OID"
-
-#~ msgid "index \"%s\" needs VACUUM FULL or REINDEX to finish crash recovery"
+#~ msgid "Sets the maximum number of disk pages for which free space is tracked."
 #~ msgstr ""
-#~ "l'index  « %s » a besoin d'un VACUUM FULL ou d'un REINDEX pour terminer la\n"
-#~ "récupération suite à un arrêt brutal"
+#~ "Initialise le nombre maximum de pages disque pour lesquelles l'espace libre\n"
+#~ "est tracé."
 
-#~ msgid "index \"%s\" needs VACUUM or REINDEX to finish crash recovery"
+#~ msgid "Valid values are ON, OFF, and SAFE_ENCODING."
+#~ msgstr "Les valeurs valides sont ON, OFF et SAFE_ENCODING."
+
+#~ msgid "Valid values are DEBUG5, DEBUG4, DEBUG3, DEBUG2, DEBUG1, INFO, NOTICE, WARNING, ERROR, LOG, FATAL, and PANIC. Each level includes all the levels that follow it."
 #~ msgstr ""
-#~ "l'index  « %s » a besoin d'un VACUUM ou d'un REINDEX pour terminer la\n"
-#~ "récupération suite à un arrêt brutal"
+#~ "Les valeurs valides sont DEBUG5, DEBUG4, DEBUG3, DEBUG2, DEBUG1, INFO,\n"
+#~ "NOTICE, WARNING, ERROR, LOG, FATAL et PANIC. Chaque niveau incut tous les\n"
+#~ "niveaux qui le suit."
 
-#~ msgid "Incomplete insertion detected during crash replay."
+#~ msgid "All SQL statements that cause an error of the specified level or a higher level are logged."
 #~ msgstr ""
-#~ "Insertion incomplète détectée lors de la ré-exécution des requêtes suite à\n"
-#~ "l'arrêt brutal."
+#~ "Toutes les instructions SQL causant une erreur du niveau spécifié ou d'un\n"
+#~ "niveau supérieur sont tracées."
 
-#~ msgid "index %u/%u/%u needs VACUUM FULL or REINDEX to finish crash recovery"
+#~ msgid "Each SQL transaction has an isolation level, which can be either \"read uncommitted\", \"read committed\", \"repeatable read\", or \"serializable\"."
 #~ msgstr ""
-#~ "l'index  %u/%u/%u a besoin d'un VACUUM FULL ou d'un REINDEX pour terminer la\n"
-#~ "récupération suite à un arrêt brutal"
+#~ "Chaque transaction SQL a un niveau d'isolation qui peut être soit « read\n"
+#~ "uncommitted », soit « read committed », soit « repeatable read », soit\n"
+#~ "« serializable »."
 
-#~ msgid "Lines should have the format parameter = 'value'."
-#~ msgstr "Les lignes devraient avoir le format paramètre = 'valeur'"
+#~ msgid "Each session can be either \"origin\", \"replica\", or \"local\"."
+#~ msgstr "Chaque session peut valoir soit « origin » soit « replica » soit « local »."
 
-#~ msgid "syntax error in recovery command file: %s"
-#~ msgstr "erreur de syntaxe dans le fichier de restauration : %s"
-
-#~ msgid "Write-Ahead Log / Streaming Replication"
-#~ msgstr "Write-Ahead Log / Réplication en flux"
-
-#~ msgid "unable to open directory pg_tblspc: %m"
-#~ msgstr "impossible d'ouvrir le répertoire p_tblspc : %m"
-
-#~ msgid "unable to read symbolic link %s: %m"
-#~ msgstr "incapable de lire le lien symbolique %s : %m"
-
-#~ msgid "index \"%s\" is not a b-tree"
-#~ msgstr "l'index « %s » n'est pas un btree"
-
-#~ msgid "ALTER TYPE USING is only supported on plain tables"
-#~ msgstr "ALTER TYPE USING est seulement supportés sur les tables standards"
-
-#~ msgid "resetting unlogged relations: cleanup %d init %d"
-#~ msgstr "réinitialisation des relations non tracées : nettoyage %d initialisation %d"
-
-#~ msgid "%s (%x)"
-#~ msgstr "%s (%x)"
-
-#~ msgid "SSPI error %x"
-#~ msgstr "erreur SSPI : %x"
-
-#~ msgid "consistent state delayed because recovery snapshot incomplete"
-#~ msgstr "état de cohérence pas encore atteint à cause d'un snapshot de restauration incomplet"
-
-#~ msgid "tablespace %u is not empty"
-#~ msgstr "le tablespace %u n'est pas vide"
-
-#~ msgid "subquery in WITH cannot have SELECT INTO"
-#~ msgstr "la sous-requête du WITH ne peut pas avoir de SELECT INTO"
-
-#~ msgid "subquery cannot have SELECT INTO"
-#~ msgstr "la sous-requête ne peut pas avoir de SELECT INTO"
-
-#~ msgid "subquery in FROM cannot have SELECT INTO"
-#~ msgstr "la sous-requête du FROM ne peut pas avoir de SELECT INTO"
-
-#~ msgid "DECLARE CURSOR cannot specify INTO"
-#~ msgstr "DECLARE CURSOR ne peut pas spécifier INTO"
-
-#~ msgid "INSERT ... SELECT cannot specify INTO"
-#~ msgstr "INSERT ... SELECT ne peut pas avoir INTO"
-
-#~ msgid "column name list not allowed in CREATE TABLE / AS EXECUTE"
-#~ msgstr "la liste de noms de colonnes n'est pas autorisée dans CREATE TABLE / AS EXECUTE"
-
-#~ msgid "CREATE TABLE AS cannot specify INTO"
-#~ msgstr "CREATE TABLE AS ne peut pas spécifier INTO"
-
-#~ msgid "  --version       output version information, then exit\n"
-#~ msgstr "  --version          affiche la version, puis quitte\n"
-
-#~ msgid "  --help          show this help, then exit\n"
-#~ msgstr "  --help             affiche cette aide, puis quitte\n"
-
-#~ msgid "Make sure the root.crt file is present and readable."
-#~ msgstr "Assurez-vous que le certificat racine (root.crt) est présent et lisible"
-
-#~ msgid "See server log for details."
-#~ msgstr "Voir les journaux applicatifs du serveur pour plus de détails."
-
-#~ msgid "missing or erroneous pg_hba.conf file"
-#~ msgstr "fichier pg_hba.conf manquant ou erroné"
-
-#~ msgid "Certificates will not be checked against revocation list."
-#~ msgstr "Les certificats ne seront pas vérifiés avec la liste de révocation."
-
-#~ msgid "SSL certificate revocation list file \"%s\" not found, skipping: %s"
-#~ msgstr "liste de révocation des certificats SSL « %s » introuvable, continue : %s"
-
-#~ msgid "could not access root certificate file \"%s\": %m"
-#~ msgstr "n'a pas pu accéder au fichier du certificat racine « %s » : %m"
-
-#~ msgid "could not open directory \"pg_tblspc\": %m"
-#~ msgstr "n'a pas pu ouvrir le répertoire « pg_tblspc » : %m"
-
-#~ msgid "standby connections not allowed because wal_level=minimal"
-#~ msgstr "connexions standby non autorisées car wal_level=minimal"
-
-#~ msgid "recovery is still in progress, can't accept WAL streaming connections"
-#~ msgstr "la restauration est en cours, ne peut pas accepter les connexions de flux WAL"
-
-#~ msgid "must be superuser to drop text search templates"
-#~ msgstr "doit être super-utilisateur pour supprimer des modèles de recherche plein texte"
-
-#~ msgid "must be superuser to drop text search parsers"
+#~ msgid "Sets realm to match Kerberos and GSSAPI users against."
 #~ msgstr ""
-#~ "doit être super-utilisateur pour supprimer des analyseurs de recherche plein\n"
+#~ "Indique le royaume pour l'authentification des utilisateurs via Kerberos et\n"
+#~ "GSSAPI."
+
+#~ msgid "Sets the hostname of the Kerberos server."
+#~ msgstr "Initalise le nom d'hôte du serveur Kerberos."
+
+#~ msgid "This can be set to advanced, extended, or basic."
+#~ msgstr ""
+#~ "Ceci peut être initialisé avec advanced (avancé), extended (étendu) ou\n"
+#~ "basic (basique)."
+
+#~ msgid "Valid values are LOCAL0, LOCAL1, LOCAL2, LOCAL3, LOCAL4, LOCAL5, LOCAL6, LOCAL7."
+#~ msgstr ""
+#~ "Les valeurs valides sont LOCAL0, LOCAL1, LOCAL2, LOCAL3, LOCAL4, LOCAL5,\n"
+#~ "LOCAL6, LOCAL7."
+
+#~ msgid "Valid values are DOCUMENT and CONTENT."
+#~ msgstr "Les valeurs valides sont DOCUMENT et CONTENT."
+
+#~ msgid "invalid argument for power function"
+#~ msgstr "argument invalide pour la fonction puissance (power)"
+
+#~ msgid "not unique \"S\""
+#~ msgstr "« S » non unique"
+
+#~ msgid "invalid AM/PM string"
+#~ msgstr "chaîne AM/PM invalide"
+
+#~ msgid "\"TZ\"/\"tz\" not supported"
+#~ msgstr "« TZ »/« tz » non supporté"
+
+#~ msgid "January"
+#~ msgstr "Janvier"
+
+#~ msgid "February"
+#~ msgstr "Février"
+
+#~ msgid "March"
+#~ msgstr "Mars"
+
+#~ msgid "April"
+#~ msgstr "Avril"
+
+#~ msgid "May"
+#~ msgstr "Mai"
+
+#~ msgid "June"
+#~ msgstr "Juin"
+
+#~ msgid "July"
+#~ msgstr "Juillet"
+
+#~ msgid "August"
+#~ msgstr "Août"
+
+#~ msgid "September"
+#~ msgstr "Septembre"
+
+#~ msgid "October"
+#~ msgstr "Octobre"
+
+#~ msgid "November"
+#~ msgstr "Novembre"
+
+#~ msgid "December"
+#~ msgstr "Décembre"
+
+#~ msgid "Jan"
+#~ msgstr "Jan"
+
+#~ msgid "Feb"
+#~ msgstr "Fév"
+
+#~ msgid "Mar"
+#~ msgstr "Mar"
+
+#~ msgid "Apr"
+#~ msgstr "Avr"
+
+#~ msgid "S:May"
+#~ msgstr "S:Mai"
+
+#~ msgid "Jun"
+#~ msgstr "Juin"
+
+#~ msgid "Jul"
+#~ msgstr "Juil"
+
+#~ msgid "Aug"
+#~ msgstr "Aoû"
+
+#~ msgid "Sep"
+#~ msgstr "Sep"
+
+#~ msgid "Oct"
+#~ msgstr "Oct"
+
+#~ msgid "Nov"
+#~ msgstr "Nov"
+
+#~ msgid "Dec"
+#~ msgstr "Déc"
+
+#~ msgid "Sunday"
+#~ msgstr "Dimanche"
+
+#~ msgid "Monday"
+#~ msgstr "Lundi"
+
+#~ msgid "Tuesday"
+#~ msgstr "Mardi"
+
+#~ msgid "Wednesday"
+#~ msgstr "Mercredi"
+
+#~ msgid "Thursday"
+#~ msgstr "Jeudi"
+
+#~ msgid "Friday"
+#~ msgstr "Vendredi"
+
+#~ msgid "Saturday"
+#~ msgstr "Samedi"
+
+#~ msgid "Sun"
+#~ msgstr "Dim"
+
+#~ msgid "Mon"
+#~ msgstr "Lun"
+
+#~ msgid "Tue"
+#~ msgstr "Mar"
+
+#~ msgid "Wed"
+#~ msgstr "Mer"
+
+#~ msgid "Thu"
+#~ msgstr "Jeu"
+
+#~ msgid "Fri"
+#~ msgstr "Ven"
+
+#~ msgid "Sat"
+#~ msgstr "Sam"
+
+#~ msgid "AM/PM hour must be between 1 and 12"
+#~ msgstr "l'heure AM/PM doit être compris entre 1 et 12"
+
+#~ msgid "UTF-16 to UTF-8 translation failed: %lu"
+#~ msgstr "échec de la conversion d'UTF16 vers UTF8 : %lu"
+
+#~ msgid "cannot calculate week number without year information"
+#~ msgstr "ne peut pas calculer le numéro de la semaine sans informations sur l'année"
+
+#~ msgid "query requires full scan, which is not supported by GIN indexes"
+#~ msgstr ""
+#~ "la requête nécessite un parcours complet, ce qui n'est pas supporté par les\n"
+#~ "index GIN"
+
+#~ msgid "@@ operator does not support lexeme weight restrictions in GIN index searches"
+#~ msgstr ""
+#~ "l'opérateur @@ ne supporte pas les restrictions de poids de lexeme dans les\n"
+#~ "recherches par index GIN"
+
+#~ msgid "Use the @@@ operator instead."
+#~ msgstr "Utilisez à la place l'opérateur @@@."
+
+#~ msgid "unexpected delimiter at line %d of thesaurus file \"%s\""
+#~ msgstr "délimiteur inattendu sur la ligne %d du thesaurus « %s »"
+
+#~ msgid "unexpected end of line or lexeme at line %d of thesaurus file \"%s\""
+#~ msgstr "fin de ligne ou de lexeme inattendu sur la ligne %d du thesaurus « %s »"
+
+#~ msgid "unexpected end of line at line %d of thesaurus file \"%s\""
+#~ msgstr "fin de ligne inattendue à la ligne %d du thésaurus « %s »"
+
+#~ msgid "could not remove database directory \"%s\""
+#~ msgstr "n'a pas pu supprimer le répertoire de bases de données « %s »"
+
+#~ msgid "index \"%s\" is not ready"
+#~ msgstr "l'index « %s » n'est pas prêt"
+
+#~ msgid "argument number is out of range"
+#~ msgstr "le nombre en argument est en dehors des limites"
+
+#~ msgid "No rows were found in \"%s\"."
+#~ msgstr "Aucune ligne trouvée dans « %s »."
+
+#~ msgid "inconsistent use of year %04d and \"BC\""
+#~ msgstr "utilisation non cohérente de l'année %04d et de « BC »"
+
+#~ msgid "\"interval\" time zone \"%s\" not valid"
+#~ msgstr "le fuseau horaire « %s » n'est pas valide pour le type « interval »"
+
+#~ msgid "Not enough memory for reassigning the prepared transaction's locks."
+#~ msgstr "Pas assez de mémoire pour réaffecter les verrous des transactions préparées."
+
+#~ msgid "large object %u was already dropped"
+#~ msgstr "le « Large Object » %u a déjà été supprimé"
+
+#~ msgid "large object %u was not opened for writing"
+#~ msgstr "le « Large Object » %u n'a pas été ouvert en écriture"
+
+#~ msgid "invalid standby query string: %s"
+#~ msgstr "chaîne de requête invalide sur le serveur en attente : %s"
+
+#~ msgid "terminating walsender process to force cascaded standby to update timeline and reconnect"
+#~ msgstr ""
+#~ "arrêt du processus walreceiver pour forcer le serveur standby en cascade à\n"
+#~ "mettre à jour la timeline et à se reconnecter"
+
+#~ msgid "invalid standby handshake message type %d"
+#~ msgstr "type %d du message de handshake du serveur en attente invalide"
+
+#~ msgid "streaming replication successfully connected to primary"
+#~ msgstr "réplication de flux connecté avec succès au serveur principal"
+
+#~ msgid "shutdown requested, aborting active base backup"
+#~ msgstr "arrêt demandé, annulation de la sauvegarde active de base"
+
+#~ msgid "terminating all walsender processes to force cascaded standby(s) to update timeline and reconnect"
+#~ msgstr ""
+#~ "arrêt de tous les processus walsender pour forcer les serveurs standby en\n"
+#~ "cascade à mettre à jour la timeline et à se reconnecter"
+
+#~ msgid ""
+#~ "This error usually means that PostgreSQL's request for a shared memory segment exceeded your kernel's SHMMAX parameter.  You can either reduce the request size or reconfigure the kernel with larger SHMMAX.  To reduce the request size (currently %lu bytes), reduce PostgreSQL's shared memory usage, perhaps by reducing shared_buffers or max_connections.\n"
+#~ "If the request size is already small, it's possible that it is less than your kernel's SHMMIN parameter, in which case raising the request size or reconfiguring SHMMIN is called for.\n"
+#~ "The PostgreSQL documentation contains more information about shared memory configuration."
+#~ msgstr ""
+#~ "Cette erreur signifie habituellement que la demande de PostgreSQL pour un\n"
+#~ "segment de mémoire partagée a dépassé le paramètre SHMMAX de votre noyau.\n"
+#~ "Vous pouvez soit réduire la taille de la requête soit reconfigurer le noyau\n"
+#~ "avec un SHMMAX plus important. Pour réduire la taille de la requête\n"
+#~ "(actuellement %lu octets), réduisez l'utilisation de la mémoire partagée par PostgreSQL,par exemple en réduisant shared_buffers ou max_connections\n"
+#~ "Si la taille de la requête est déjà petite, il est possible qu'elle soit\n"
+#~ "moindre que le paramètre SHMMIN de votre noyau, auquel cas, augmentez la\n"
+#~ "taille de la requête ou reconfigurez SHMMIN.\n"
+#~ "La documentation de PostgreSQL contient plus d'informations sur la\n"
+#~ "configuration de la mémoire partagée."
+
+#~ msgid "cannot use window function in rule WHERE condition"
+#~ msgstr "ne peut pas utiliser la fonction window dans la condition d'une règle WHERE"
+
+#~ msgid "cannot use aggregate function in rule WHERE condition"
+#~ msgstr "ne peut pas utiliser la fonction d'agrégat dans la condition d'une règle WHERE"
+
+#~ msgid "arguments of row IN must all be row expressions"
+#~ msgstr "les arguments de la ligne IN doivent tous être des expressions de ligne"
+
+#~ msgid "argument of %s must not contain window functions"
+#~ msgstr "l'argument de %s ne doit pas contenir des fonctions window"
+
+#~ msgid "argument of %s must not contain aggregate functions"
+#~ msgstr "l'argument de %s ne doit pas contenir de fonctions d'agrégats"
+
+#~ msgid "cannot use window function in function expression in FROM"
+#~ msgstr ""
+#~ "ne peut pas utiliser la fonction window dans l'expression de la fonction\n"
+#~ "du FROM"
+
+#~ msgid "function expression in FROM cannot refer to other relations of same query level"
+#~ msgstr ""
+#~ "l'expression de la fonction du FROM ne peut pas faire référence à d'autres\n"
+#~ "relations sur le même niveau de la requête"
+
+#~ msgid "subquery in FROM cannot refer to other relations of same query level"
+#~ msgstr ""
+#~ "la sous-requête du FROM ne peut pas faire référence à d'autres relations\n"
+#~ "dans le même niveau de la requête"
+
+#~ msgid "JOIN/ON clause refers to \"%s\", which is not part of JOIN"
+#~ msgstr "la clause JOIN/ON se réfère à « %s », qui ne fait pas partie du JOIN"
+
+#~ msgid "window functions not allowed in GROUP BY clause"
+#~ msgstr "fonctions window non autorisées dans une clause GROUP BY"
+
+#~ msgid "aggregates not allowed in WHERE clause"
+#~ msgstr "agrégats non autorisés dans une clause WHERE"
+
+#~ msgid "SELECT FOR UPDATE/SHARE cannot be used with foreign table \"%s\""
+#~ msgstr "SELECT FOR UPDATE/SHARE ne peut pas être utilisé avec une table distante « %s »"
+
+#~ msgid "SELECT FOR UPDATE/SHARE is not allowed with window functions"
+#~ msgstr "SELECT FOR UPDATE/SHARE n'est pas autorisé avec les fonctions window"
+
+#~ msgid "SELECT FOR UPDATE/SHARE is not allowed with aggregate functions"
+#~ msgstr "SELECT FOR UPDATE/SHARE n'est pas autorisé avec les fonctions d'agrégats"
+
+#~ msgid "SELECT FOR UPDATE/SHARE is not allowed with HAVING clause"
+#~ msgstr "SELECT FOR UPDATE/SHARE n'est pas autorisé avec la clause HAVING"
+
+#~ msgid "SELECT FOR UPDATE/SHARE is not allowed with GROUP BY clause"
+#~ msgstr "SELECT FOR UPDATE/SHARE n'est pas autorisé avec la clause GROUP BY"
+
+#~ msgid "RETURNING cannot contain references to other relations"
+#~ msgstr "RETURNING ne doit pas contenir de références à d'autres relations"
+
+#~ msgid "cannot use window function in RETURNING"
+#~ msgstr "ne peut pas utiliser une fonction window dans RETURNING"
+
+#~ msgid "cannot use aggregate function in RETURNING"
+#~ msgstr "ne peut pas utiliser une fonction d'agrégat dans RETURNING"
+
+#~ msgid "cannot use window function in UPDATE"
+#~ msgstr "ne peut pas utiliser une fonction window dans un UPDATE"
+
+#~ msgid "cannot use aggregate function in UPDATE"
+#~ msgstr "ne peut pas utiliser une fonction d'agrégat dans un UPDATE"
+
+#~ msgid "cannot use window function in VALUES"
+#~ msgstr "ne peut pas utiliser la fonction window dans un VALUES"
+
+#~ msgid "cannot use aggregate function in VALUES"
+#~ msgstr "ne peut pas utiliser la fonction d'agrégat dans un VALUES"
+
+#~ msgid "Use SELECT ... UNION ALL ... instead."
+#~ msgstr "Utilisez à la place SELECT ... UNION ALL ..."
+
+#~ msgid "VALUES must not contain OLD or NEW references"
+#~ msgstr "VALUES ne doit pas contenir des références à OLD et NEW"
+
+#~ msgid "VALUES must not contain table references"
+#~ msgstr "VALUES ne doit pas contenir de références de table"
+
+#~ msgid "LDAP search failed for filter \"%s\" on server \"%s\": user is not unique (%ld matches)"
+#~ msgstr ""
+#~ "échec de la recherche LDAP pour le filtre « %s » sur le serveur « %s » :\n"
+#~ "utilisateur non unique (%ld correspondances)"
+
+#~ msgid "You need an unconditional ON DELETE DO INSTEAD rule or an INSTEAD OF DELETE trigger."
+#~ msgstr "Vous avez besoin d'une règle inconditionnelle ON DELETE DO INSTEAD ou d'un trigger INSTEAD OF DELETE."
+
+#~ msgid "You need an unconditional ON UPDATE DO INSTEAD rule or an INSTEAD OF UPDATE trigger."
+#~ msgstr "Vous avez besoin d'une règle non conditionnelle ON UPDATE DO INSTEAD ou d'un trigger INSTEAD OF UPDATE."
+
+#~ msgid "You need an unconditional ON INSERT DO INSTEAD rule or an INSTEAD OF INSERT trigger."
+#~ msgstr "Vous avez besoin d'une règle ON INSERT DO INSTEAD sans condition ou d'un trigger INSTEAD OF INSERT."
+
+#~ msgid "automatic vacuum of table \"%s.%s.%s\": cannot (re)acquire exclusive lock for truncate scan"
+#~ msgstr "vacuum automatique de la table « %s.%s.%s » : ne peut pas acquérir le verrou exclusif pour la tronquer"
+
+#~ msgid "must be superuser to rename text search templates"
+#~ msgstr "doit être super-utilisateur pour renommer les modèles de recherche plein texte"
+
+#~ msgid "must be superuser to rename text search parsers"
+#~ msgstr ""
+#~ "doit être super-utilisateur pour renommer les analyseurs de recherche plein\n"
 #~ "texte"
 
-#~ msgid "Must be superuser to drop a foreign-data wrapper."
-#~ msgstr "Doit être super-utilisateur pour supprimer un wrapper de données distantes."
+#~ msgid "cannot use window function in trigger WHEN condition"
+#~ msgstr "ne peut pas utiliser la fonction window dans la condition WHEN d'un trigger"
 
-#~ msgid "permission denied to drop foreign-data wrapper \"%s\""
-#~ msgstr "droit refusé pour supprimer le wrapper de données distantes « %s »"
+#~ msgid "Use ALTER FOREIGN TABLE instead."
+#~ msgstr "Utilisez ALTER FOREIGN TABLE à la place."
 
-#~ msgid "removing built-in function \"%s\""
-#~ msgstr "suppression de la fonction interne « %s »"
+#~ msgid "cannot use window function in transform expression"
+#~ msgstr "ne peut pas utiliser la fonction window dans l'expression de la transformation"
 
-#~ msgid "foreign key constraint \"%s\" of relation \"%s\" does not exist"
-#~ msgstr "la clé étrangère « %s » de la relation « %s » n'existe pas"
+#~ msgid "default values on foreign tables are not supported"
+#~ msgstr "les valeurs par défaut ne sont pas supportées sur les tables distantes"
 
-#~ msgid "Sets the list of known custom variable classes."
-#~ msgstr "Initialise la liste des classes variables personnalisées connues."
+#~ msgid "constraints on foreign tables are not supported"
+#~ msgstr "les contraintes sur les tables distantes ne sont pas supportées"
 
-#~ msgid "WAL sender sleep time between WAL replications."
+#~ msgid "cannot use window function in EXECUTE parameter"
+#~ msgstr "ne peut pas utiliser une fonction window dans le paramètre EXECUTE"
+
+#~ msgid "cannot use aggregate in index predicate"
+#~ msgstr "ne peut pas utiliser un agrégat dans un prédicat d'index"
+
+#~ msgid "function \"%s\" already exists in schema \"%s\""
+#~ msgstr "la fonction « %s » existe déjà dans le schéma « %s »"
+
+#~ msgid "Use ALTER AGGREGATE to change owner of aggregate functions."
+#~ msgstr "Utiliser ALTER AGGREGATE pour changer le propriétaire des fonctions d'agrégat."
+
+#~ msgid "Use ALTER AGGREGATE to rename aggregate functions."
+#~ msgstr "Utiliser ALTER AGGREGATE pour renommer les fonctions d'agrégat."
+
+#~ msgid "cannot use window function in parameter default value"
+#~ msgstr "ne peut pas utiliser la fonction window dans la valeur par défaut d'un paramètre"
+
+#~ msgid "cannot use aggregate function in parameter default value"
 #~ msgstr ""
-#~ "Temps d'endormissement du processus d'envoi des journaux de transactions entre\n"
-#~ "les réplications des journaux de transactions."
+#~ "ne peut pas utiliser une fonction d'agrégat dans la valeur par défaut d'un\n"
+#~ "paramètre"
 
-#~ msgid "If this parameter is set, the server will automatically run in the background and any controlling terminals are dissociated."
+#~ msgid "cannot use subquery in parameter default value"
+#~ msgstr "ne peut pas utiliser une sous-requête dans une valeur par défaut d'un paramètre"
+
+#~ msgid "CREATE TABLE AS specifies too many column names"
+#~ msgstr "CREATE TABLE AS spécifie trop de noms de colonnes"
+
+#~ msgid "%s already exists in schema \"%s\""
+#~ msgstr "%s existe déjà dans le schéma « %s »"
+
+#~ msgid "A function returning ANYRANGE must have at least one ANYRANGE argument."
 #~ msgstr ""
-#~ "Si ce paramètre est initialisé, le serveur sera exécuté automatiquement en\n"
-#~ "tâche de fond et les terminaux de contrôles seront dés-associés."
+#~ "Une fonction renvoyant ANYRANGE doit avoir au moins un argument du type\n"
+#~ "ANYRANGE."
 
-#~ msgid "Runs the server silently."
-#~ msgstr "Lance le serveur de manière silencieuse."
+#~ msgid "cannot use window function in check constraint"
+#~ msgstr "ne peut pas utiliser une fonction window dans une contrainte de vérification"
 
-#~ msgid "%s: could not dissociate from controlling TTY: %s\n"
-#~ msgstr "%s : n'a pas pu se dissocier du TTY contrôlant : %s\n"
+#~ msgid "cannot use window function in default expression"
+#~ msgstr "ne peut pas utiliser une fonction window dans une expression par défaut"
 
-#~ msgid "%s: could not fork background process: %s\n"
-#~ msgstr "%s : n'a pas pu créer un processus fils : %s\n"
+#~ msgid "cannot use aggregate function in default expression"
+#~ msgstr "ne peut pas utiliser une fonction d'agrégat dans une expression par défaut"
 
-#~ msgid "%s: could not open log file \"%s/%s\": %s\n"
-#~ msgstr "%s : n'a pas pu ouvrir le journal applicatif « %s/%s » : %s\n"
+#~ msgid "cannot use subquery in default expression"
+#~ msgstr "ne peut pas utiliser une sous-requête dans l'expression par défaut"
 
-#~ msgid "%s: could not open file \"%s\": %s\n"
-#~ msgstr "%s : n'a pas pu ouvrir le fichier « %s » : %s\n"
+#~ msgid "uncataloged table %s"
+#~ msgstr "table %s sans catalogue"
 
-#~ msgid "select() failed in logger process: %m"
-#~ msgstr "échec de select() dans le processus des journaux applicatifs : %m"
+#~ msgid "xrecoff \"%X\" is out of valid range, 0..%X"
+#~ msgstr "xrecoff « %X » en dehors des limites valides, 0..%X"
 
-#~ msgid "poll() failed in statistics collector: %m"
-#~ msgstr "échec du poll() dans le récupérateur de statistiques : %m"
+#~ msgid "Incorrect XLOG_BLCKSZ in page header."
+#~ msgstr "XLOG_BLCKSZ incorrect dans l'en-tête de page."
 
-#~ msgid "Valid values are '[]', '[)', '(]', and '()'."
-#~ msgstr "Les valeurs valides sont « [] », « [) », « (] » et « () »."
+#~ msgid "Incorrect XLOG_SEG_SIZE in page header."
+#~ msgstr "XLOG_SEG_SIZE incorrecte dans l'en-tête de page."
 
-#~ msgid "invalid list syntax for \"unix_socket_directories\""
-#~ msgstr "syntaxe de liste invalide pour le paramètre « unix_socket_directories »"
+#~ msgid "invalid contrecord length %u in log file %u, segment %u, offset %u"
+#~ msgstr ""
+#~ "longueur invalide du « contrecord » %u dans le journal de tranasctions %u,\n"
+#~ "segment %u, décalage %u"
 
-#~ msgid "invalid list syntax for \"listen_addresses\""
-#~ msgstr "syntaxe de liste invalide pour le paramètre « listen_addresses »"
+#~ msgid "there is no contrecord flag in log file %u, segment %u, offset %u"
+#~ msgstr ""
+#~ "il n'y a pas de drapeaux « contrecord » dans le journal de transactions %u,\n"
+#~ "segment %u, décalage %u"
 
-#~ msgid "window functions cannot use named arguments"
-#~ msgstr "les fonctions window ne peuvent pas renvoyer des arguments nommés"
+#~ msgid "could not open file \"%s\" (log file %u, segment %u): %m"
+#~ msgstr "n'a pas pu ouvrir le fichier « %s » (journal de transactions %u, segment %u) : %m"
 
-#~ msgid "cannot override frame clause of window \"%s\""
-#~ msgstr "ne peut pas surcharger la frame clause du window « %s »"
+#~ msgid "unlogged GiST indexes are not supported"
+#~ msgstr "les index GiST non tracés ne sont pas supportés"
 
-#~ msgid "JSON does not support infinite timestamp values."
-#~ msgstr "JSON ne supporte pas les valeurs infinies de timestamp."
+#~ msgid "could not change directory to \"%s\""
+#~ msgstr "n'a pas pu accéder au répertoire « %s »"
 
-#~ msgid "JSON does not support infinite date values."
-#~ msgstr "JSON ne supporte pas les valeurs infinies de date."
+#~ msgid "Perhaps out of disk space?"
+#~ msgstr "Peut-être manquez-vous de place disque ?"
 
-#~ msgid "could not rename file \"%s\" to \"%s\" (initialization of log file): %m"
-#~ msgstr "n'a pas pu renommer le fichier « %s » en « %s » (initialisation du journal de transactions) : %m"
+#~ msgid "time zone offset %d is not a multiple of 900 sec (15 min) in time zone file \"%s\", line %d"
+#~ msgstr ""
+#~ "le décalage %d du fuseau horaire n'est pas un multiples de 900 secondes\n"
+#~ "(15 minutes) dans le fichier des fuseaux horaires « %s », ligne %d"
 
-#~ msgid "could not link file \"%s\" to \"%s\" (initialization of log file): %m"
-#~ msgstr "n'a pas pu lier le fichier « %s » à « %s » (initialisation du journal de transactions) : %m"
+#~ msgid "Sets the name of the Kerberos service."
+#~ msgstr "Initialise le nom du service Kerberos."
 
-#~ msgid "Lower bound of dimension array must be one."
-#~ msgstr "La limite inférieure du tableau doit valoir un."
+#~ msgid "No description available."
+#~ msgstr "Aucune description disponible."
 
-#~ msgid "wrong range of array subscripts"
-#~ msgstr "mauvais échelle des indices du tableau"
+#~ msgid "cannot call json_populate_recordset on a nested object"
+#~ msgstr "ne peut pas appeler json_populate_recordset sur un objet imbriqué"
+
+#~ msgid "cannot call json_populate_recordset on a scalar"
+#~ msgstr "ne peut pas appeler json_populate_recordset sur un scalaire"
+
+#~ msgid "cannot call json_populate_recordset with nested arrays"
+#~ msgstr "ne peut pas appeler json_populate_recordset avec des tableaux imbriqués"
+
+#~ msgid "must call json_populate_recordset on an array of objects"
+#~ msgstr "doit appeler json_populate_recordset sur un tableau d'objets"
+
+#~ msgid "cannot call json_populate_recordset with nested objects"
+#~ msgstr "ne peut pas appeler json_populate_recordset sur des objets imbriqués"
+
+#~ msgid "cannot call json_populate_recordset on an object"
+#~ msgstr "ne peut pas appeler json_populate_recordset sur un objet"
+
+#~ msgid "first argument of json_populate_recordset must be a row type"
+#~ msgstr "le premier argument de json_populate_recordset doit être un type ROW"
+
+#~ msgid "first argument of json_populate_record must be a row type"
+#~ msgstr "le premier argument de json_populate_record doit être un type ROW"
+
+#~ msgid "cannot call json_array_elements on a scalar"
+#~ msgstr "ne peut pas appeler json_array_elements sur un scalaire"
+
+#~ msgid "cannot call json_array_elements on a non-array"
+#~ msgstr "ne peut pas appeler json_array_elements sur un objet qui n'est pas un tableau"
+
+#~ msgid "cannot extract field from a non-object"
+#~ msgstr "ne peut pas extraire le chemin à partir d'un non-objet"
+
+#~ msgid "cannot extract array element from a non-array"
+#~ msgstr "ne peut pas extraire un élément du tableau à partir d'un objet qui n'est pas un tableau"
+
+#~ msgid "cannot call function with empty path elements"
+#~ msgstr "ne peut pas appeler une fonction avec des éléments chemins vides"
+
+#~ msgid "cannot call function with null path elements"
+#~ msgstr "ne peut pas appeler une fonction avec des éléments chemins NULL"
+
+#~ msgid "cannot call json_object_keys on a scalar"
+#~ msgstr "ne peut pas appeler json_object_keys sur un scalaire"
+
+#~ msgid "cannot call json_object_keys on an array"
+#~ msgstr "ne peut pas appeler json_object_keys sur un tableau"
+
+#~ msgid "missing assignment operator"
+#~ msgstr "opérateur d'affectation manquant"
+
+#~ msgid "wrong affix file format for flag"
+#~ msgstr "mauvais format de fichier affixe pour le drapeau"
+
+#~ msgid "Views that return the same column more than once are not automatically updatable."
+#~ msgstr "Les vues qui renvoient la même colonne plus d'une fois ne sont pas automatiquement disponibles en écriture."
+
+#~ msgid "Security-barrier views are not automatically updatable."
+#~ msgstr "Les vues avec barrière de sécurité ne sont pas automatiquement disponibles en écriture."
+
+#~ msgid "Expected 1 tuple with 3 fields, got %d tuples with %d fields."
+#~ msgstr "Attendait 1 ligne avec 3 champs, a obtenu %d lignes avec %d champs."
+
+#~ msgid "too many column aliases specified for function %s"
+#~ msgstr "trop d'alias de colonnes spécifiées pour la fonction %s"
+
+#~ msgid "%s: could not determine user name (GetUserName failed)\n"
+#~ msgstr "%s : n'a pas pu déterminer le nom de l'utilisateur (GetUserName a échoué)\n"
+
+#~ msgid "%s: invalid effective UID: %d\n"
+#~ msgstr "%s : UID effectif invalide : %d\n"
+
+#~ msgid "krb5 authentication is not supported on local sockets"
+#~ msgstr ""
+#~ "l'authentification krb5 n'est pas supportée sur les connexions locales par\n"
+#~ "socket"
+
+#~ msgid "SSL renegotiation failure"
+#~ msgstr "échec lors de la re-négotiation SSL"
+
+#~ msgid "local user with ID %d does not exist"
+#~ msgstr "l'utilisateur local dont l'identifiant est %d n'existe pas"
+
+#~ msgid "Kerberos unparse_name returned error %d"
+#~ msgstr "unparse_name de Kerberos a renvoyé l'erreur %d"
+
+#~ msgid "Kerberos recvauth returned error %d"
+#~ msgstr "recvauth de Kerberos a renvoyé l'erreur %d"
+
+#~ msgid "Kerberos sname_to_principal(\"%s\", \"%s\") returned error %d"
+#~ msgstr "sname_to_principal(« %s », « %s ») de Kerberos a renvoyé l'erreur %d"
+
+#~ msgid "Kerberos keytab resolving returned error %d"
+#~ msgstr "la résolution keytab de Kerberos a renvoyé l'erreur %d"
+
+#~ msgid "Kerberos initialization returned error %d"
+#~ msgstr "l'initialisation de Kerberos a retourné l'erreur %d"
+
+#~ msgid "Kerberos 5 authentication failed for user \"%s\""
+#~ msgstr "authentification Kerberos 5 échouée pour l'utilisateur « %s »"
+
+#~ msgid "trigger \"%s\" for table \"%s\" does not exist, skipping"
+#~ msgstr "le trigger « %s » pour la table « %s » n'existe pas, poursuite du traitement"
+
+#~ msgid "invalid input syntax for transaction log location: \"%s\""
+#~ msgstr "syntaxe invalide en entrée pour l'emplacement du journal de transactions : « %s »"
+
+#~ msgid "could not parse transaction log location \"%s\""
+#~ msgstr "n'a pas pu analyser l'emplacement du journal des transactions « %s »"
+
+#~ msgid "%s \"%s\": return code %d"
+#~ msgstr "%s « %s » : code de retour %d"
+
+#~ msgid "assertion checking is not supported by this build"
+#~ msgstr "la vérification de l'assertion n'a pas été intégrée lors de la compilation"
+
+#~ msgid "SET AUTOCOMMIT TO OFF is no longer supported"
+#~ msgstr "SET AUTOCOMMIT TO OFF n'est plus supporté"
+
+#~ msgid "Set the amount of traffic to send and receive before renegotiating the encryption keys."
+#~ msgstr ""
+#~ "Configure la quantité de trafic à envoyer et recevoir avant la renégotiation\n"
+#~ "des clés d'enchiffrement."
+
+#~ msgid "Sets the maximum distance in log segments between automatic WAL checkpoints."
+#~ msgstr ""
+#~ "Initialise la distance maximale dans les journaux de transaction entre chaque\n"
+#~ "point de vérification (checkpoints) des journaux."
+
+#~ msgid "It's just here so that we won't choke on SET AUTOCOMMIT TO ON from 7.3-vintage clients."
+#~ msgstr ""
+#~ "C'est ici uniquement pour ne pas avoir de problèmes avec le SET AUTOCOMMIT\n"
+#~ "TO ON des clients 7.3."
+
+#~ msgid "This parameter doesn't do anything."
+#~ msgstr "Ce paramètre ne fait rien."
+
+#~ msgid "This is a debugging aid."
+#~ msgstr "C'est une aide de débogage."
+
+#~ msgid "Turns on various assertion checks."
+#~ msgstr "Active les différentes vérifications des assertions."
+
+#~ msgid "cannot accept a value of type pg_node_tree"
+#~ msgstr "ne peut pas accepter une valeur de type pg_node_tree"
+
+#~ msgid "must be superuser or have the same role to terminate other server processes"
+#~ msgstr ""
+#~ "doit être super-utilisateur ou avoir le même rôle pour fermer les connexions\n"
+#~ "exécutées dans les autres processus serveur"
+
+#~ msgid "must be superuser or have the same role to cancel queries running in other server processes"
+#~ msgstr ""
+#~ "doit être super-utilisateur ou avoir le même rôle pour annuler des requêtes\n"
+#~ "exécutées dans les autres processus serveur"
+
+#~ msgid "invalid symbol"
+#~ msgstr "symbole invalide"
+
+#~ msgid "unexpected \"=\""
+#~ msgstr "« = » inattendu"
+
+#~ msgid "neither input type is an array"
+#~ msgstr "aucun type de données n'est un tableau"
+
+#~ msgid "could not determine input data types"
+#~ msgstr "n'a pas pu déterminer les types de données en entrée"
+
+#~ msgid "archive member \"%s\" too large for tar format"
+#~ msgstr "membre « %s » de l'archive trop volumineux pour le format tar"
+
+#~ msgid "postmaster became multithreaded"
+#~ msgstr "le postmaster est devenu multithreadé"
+
+#~ msgid "invalid value for parameter \"replication\""
+#~ msgstr "valeur invalide pour le paramètre « replication »"
+
+#~ msgid "WAL archival (archive_mode=on) requires wal_level \"archive\", \"hot_standby\", or \"logical\""
+#~ msgstr ""
+#~ "l'archivage des journaux de transactions (archive_mode=on) nécessite que\n"
+#~ "le paramètre wal_level soit initialisé avec « archive », « hot_standby » ou « logical »"
+
+#~ msgid "Consider increasing the configuration parameter \"checkpoint_segments\"."
+#~ msgstr "Considèrez l'augmentation du paramètre « checkpoint_segments »."
+
+#~ msgid "subquery must return a column"
+#~ msgstr "la sous-requête doit renvoyer une colonne"
+
+#~ msgid "  -A 1|0             enable/disable run-time assert checking\n"
+#~ msgstr ""
+#~ "  -A 1|0             active/désactive la vérification des limites (assert) à\n"
+#~ "                     l'exécution\n"
+
+#~ msgid "%s: setsysinfo failed: %s\n"
+#~ msgstr "%s : setsysinfo a échoué : %s\n"
+
+#~ msgid "could not set socket to blocking mode: %m"
+#~ msgstr "n'a pas pu activer le mode bloquant pour la socket : %m"
+
+#~ msgid "SSL failed to renegotiate connection before limit expired"
+#~ msgstr "SSL a échoué à renégotier la connexion avant l'expiration du délai"
+
+#~ msgid "could not complete SSL handshake on renegotiation, too many failures"
+#~ msgstr "n'a pas pu terminer la poignée de main de renégotiation, trop d'échecs"
+
+#~ msgid "SSL handshake failure on renegotiation, retrying"
+#~ msgstr "échec du handshake SSL lors de la renégotiation, nouvelle tentative"
+
+#~ msgid "SSL failure during renegotiation start"
+#~ msgstr "échec SSL au début de la re-négotiation"
+
+#~ msgid "received password packet"
+#~ msgstr "paquet du mot de passe reçu"
+
+#~ msgid "interval precision specified twice"
+#~ msgstr "précision d'intervalle spécifiée deux fois"
+
+#~ msgid ""
+#~ "%.0f dead row versions cannot be removed yet.\n"
+#~ "There were %.0f unused item pointers.\n"
+#~ "%u pages are entirely empty.\n"
+#~ "%s."
+#~ msgstr ""
+#~ "%.0f versions de lignes mortes ne peuvent pas encore être supprimées.\n"
+#~ "Il y avait %.0f pointeurs d'éléments inutilisés.\n"
+#~ "%u pages sont entièrement vides.\n"
+#~ "%s."
+
+#~ msgid ""
+#~ "automatic vacuum of table \"%s.%s.%s\": index scans: %d\n"
+#~ "pages: %d removed, %d remain\n"
+#~ "tuples: %.0f removed, %.0f remain, %.0f are dead but not yet removable\n"
+#~ "buffer usage: %d hits, %d misses, %d dirtied\n"
+#~ "avg read rate: %.3f MB/s, avg write rate: %.3f MB/s\n"
+#~ "system usage: %s"
+#~ msgstr ""
+#~ "VACUUM automatique de la table « %s.%s.%s » : parcours d'index : %d\n"
+#~ "pages : %d supprimées, %d restantes\n"
+#~ "lignes : %.0f supprimées, %.0f restantes, %.0f sont mortes mais non supprimables\n"
+#~ "utilisation des tampons : %d lus dans le cache, %d lus hors du cache, %d modifiés\n"
+#~ "taux moyen de lecture : %.3f Mo/s, taux moyen d'écriture : %.3f Mo/s\n"
+#~ "utilisation système : %s"
+
+#~ msgid "Specify a USING expression to perform the conversion."
+#~ msgstr "Donnez une expression USING pour réaliser la conversion."
+
+#~ msgid "\"%s\" is not a table, materialized view, composite type, or foreign table"
+#~ msgstr "« %s » n'est ni une table, ni une vue matérialisée, ni un type composite, ni une table distante"
+
+#~ msgid "inherited relation \"%s\" is not a table"
+#~ msgstr "la relation héritée « %s » n'est pas une table"
+
+#~ msgid "This name may be disallowed altogether in future versions of PostgreSQL."
+#~ msgstr "Ce nom pourrait être interdit dans les prochaines versions de PostgreSQL."
+
+#~ msgid "=> is deprecated as an operator name"
+#~ msgstr "=> est un nom d'opérateur obsolète"
+
+#~ msgid "WAL file is from different database system: Incorrect XLOG_BLCKSZ in page header."
+#~ msgstr ""
+#~ "le journal de transactions provient d'un système de bases de données différent :\n"
+#~ "XLOG_BLCKSZ incorrect dans l'en-tête de page."
+
+#~ msgid "WAL file is from different database system: Incorrect XLOG_SEG_SIZE in page header."
+#~ msgstr ""
+#~ "le journal de transactions provient d'un système de bases de données différent :\n"
+#~ "XLOG_SEG_SIZE incorrect dans l'en-tête de page."
+
+#~ msgid "WAL file is from different database system: WAL file database system identifier is %s, pg_control database system identifier is %s."
+#~ msgstr ""
+#~ "L'identifiant du journal de transactions du système de base de données est %s,\n"
+#~ "l'identifiant pg_control du système de base de données dans pg_control est %s."
+
+#~ msgid "incorrect total length in record at %X/%X"
+#~ msgstr "longueur totale incorrecte à l'enregistrement %X/%X"
+
+#~ msgid "incorrect hole size in record at %X/%X"
+#~ msgstr "taille du trou incorrect à l'enregistrement %X/%X"
+
+#~ msgid "invalid backup block size in record at %X/%X"
+#~ msgstr "taille du bloc de sauvegarde invalide dans l'enregistrement à %X/%X"
+
+#~ msgid "record with zero length at %X/%X"
+#~ msgstr "enregistrement de longueur nulle à %X/%X"
+
+#~ msgid "invalid xlog switch record at %X/%X"
+#~ msgstr "enregistrement de basculement du journal de transaction invalide à %X/%X"
+
+#~ msgid "oldest unfrozen transaction ID: %u, in database %u"
+#~ msgstr ""
+#~ "identifiant de transaction non gelé le plus ancien : %u, dans la base de\n"
+#~ "données %u"
+
+#~ msgid "next MultiXactId: %u; next MultiXactOffset: %u"
+#~ msgstr "prochain MultiXactId : %u ; prochain MultiXactOffset : %u"
+
+#~ msgid "next transaction ID: %u/%u; next OID: %u"
+#~ msgstr "prochain identifiant de transaction : %u/%u ; prochain OID : %u"
+
+#~ msgid "redo record is at %X/%X; shutdown %s"
+#~ msgstr "l'enregistrement à ré-exécuter se trouve à %X/%X ; arrêt %s"
+
+#~ msgid "invalid value for recovery parameter \"recovery_target\""
+#~ msgstr "valeur invalide pour le paramètre de restauration « recovery_target »"
+
+#~ msgid "unrecognized win32 error code: %lu"
+#~ msgstr "code d'erreur win32 non reconnu : %lu"
+
+#~ msgid "mapped win32 error code %lu to %d"
+#~ msgstr "correspondance du code d'erreur win32 %lu en %d"
+
+#~ msgid "invalid length in external \"numeric\" value"
+#~ msgstr "longueur invalide dans la valeur externe « numeric »"
+
+#~ msgid "time zone abbreviation \"%s\" is not used in time zone \"%s\""
+#~ msgstr "l'abréviation « %s » du fuseau horaire n'est pas utilisée dans le fuseau horaire « %s »"
+
+#~ msgid "huge TLB pages not supported on this platform"
+#~ msgstr "Huge Pages TLB non supporté sur cette plateforme."
+
+#~ msgid "system columns cannot be used in an ON CONFLICT clause"
+#~ msgstr "les colonnes systèmes ne peuvent pas être utilisées dans une clause ON CONFLICT"
+
+#~ msgid "argument %d: could not determine data type"
+#~ msgstr "argument %d : n'a pas pu déterminer le type de données"
+
+#~ msgid "could not determine data type for argument 2"
+#~ msgstr "n'a pas pu déterminer le type de données pour l'argument 2"
+
+#~ msgid "could not determine data type for argument 1"
+#~ msgstr "n'a pas pu déterminer le type de données pour l'argument 1"
+
+#~ msgid "%u transaction needs to finish."
+#~ msgid_plural "%u transactions need to finish."
+#~ msgstr[0] "La transaction %u doit se terminer."
+#~ msgstr[1] "Les transactions %u doivent se terminer."
+
+#~ msgid "Transaction ID %u finished; no more running transactions."
+#~ msgstr "Identifiant de transaction %u terminé ; plus de transactions en cours."
+
+#~ msgid "setsockopt(SO_REUSEADDR) failed: %m"
+#~ msgstr "setsockopt(SO_REUSEADDR) a échoué : %m"
+
+#~ msgid "cannot create temporary tables in parallel mode"
+#~ msgstr "ne peut pas créer des tables temporaires dans le mode de parallélisation"
+
+#~ msgid "%s."
+#~ msgstr "%s."
+
+#~ msgid "index row size %lu exceeds maximum %lu for index \"%s\""
+#~ msgstr "la taille de la ligne index, %lu, dépasse le maximum, %lu, pour l'index « %s »"
