@@ -1,83 +1,82 @@
-# LANGUAGE message translation file for pg_test_fsync
+# German message translation file for pg_test_fsync
 # Copyright (C) 2017 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2017.
+# Peter Eisentraut <peter_e@gmx.net>, 2017.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_test_fsync (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-08-26 21:16+0000\n"
-"PO-Revision-Date: 2017-08-27 09:02+0200\n"
-"Last-Translator: \n"
-"Language-Team: \n"
-"Language: fr\n"
+"POT-Creation-Date: 2017-08-26 15:46+0000\n"
+"PO-Revision-Date: 2017-08-26 12:30-0400\n"
+"Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
+"Language-Team: German <pgsql-translators@postgresql.org>\n"
+"Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.0.3\n"
-"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
 
 #. translator: maintain alignment with NA_FORMAT
 #: pg_test_fsync.c:30
 #, c-format
 msgid "%13.3f ops/sec  %6.0f usecs/op\n"
-msgstr "%13.3f ops/sec  %6.0f usecs/op\n"
+msgstr "  %13.3f Op./s  %6.0f µs/Op.\n"
 
 #: pg_test_fsync.c:49
 #, c-format
 msgid "Could not create thread for alarm\n"
-msgstr "N'a pas pu créer un thread pour l'alarme\n"
+msgstr "Konnte Thread für Alarm nicht erzeugen\n"
 
 #: pg_test_fsync.c:154
 #, c-format
 msgid "Usage: %s [-f FILENAME] [-s SECS-PER-TEST]\n"
-msgstr "Usage: %s [-f NOMFICHIER] [-s SECS-PAR-TEST]\n"
+msgstr "Aufruf: %s [-f DATEINAME] [-s SEK-PRO-TEST]\n"
 
 #: pg_test_fsync.c:178 pg_test_fsync.c:190
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Essayez « %s --help » pour plus d'informations.\n"
+msgstr "Versuchen Sie »%s --help« für weitere Informationen.\n"
 
 #: pg_test_fsync.c:188
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
-msgstr "%s : trop d'arguments en ligne de commande (le premier étant « %s »)\n"
+msgstr "%s: zu viele Kommandozeilenargumente (das erste ist »%s«)\n"
 
 #: pg_test_fsync.c:195
 #, c-format
 msgid "%d second per test\n"
 msgid_plural "%d seconds per test\n"
-msgstr[0] "%d seconde par test\n"
-msgstr[1] "%d secondes par test\n"
+msgstr[0] "%d Sekunde pro Test\n"
+msgstr[1] "%d Sekunden pro Test\n"
 
 #: pg_test_fsync.c:200
 #, c-format
 msgid "O_DIRECT supported on this platform for open_datasync and open_sync.\n"
-msgstr "O_DIRECT supporté sur cette plateforme pour open_datasync et open_sync.\n"
+msgstr "O_DIRECT wird auf dieser Plattform für open_datasync und open_sync unterstützt.\n"
 
 #: pg_test_fsync.c:202
 #, c-format
 msgid "Direct I/O is not supported on this platform.\n"
-msgstr "Direct I/O n'est pas supporté sur cette plateforme.\n"
+msgstr "Direct-I/O wird auf dieser Plattform nicht unterstützt.\n"
 
 #: pg_test_fsync.c:227 pg_test_fsync.c:291 pg_test_fsync.c:315
 #: pg_test_fsync.c:338 pg_test_fsync.c:479 pg_test_fsync.c:491
 #: pg_test_fsync.c:507 pg_test_fsync.c:513 pg_test_fsync.c:538
 msgid "could not open output file"
-msgstr "n'a pas pu ouvrir le fichier en sortie"
+msgstr "konnte Ausgabedatei nicht öffnen"
 
 #: pg_test_fsync.c:230 pg_test_fsync.c:272 pg_test_fsync.c:297
 #: pg_test_fsync.c:321 pg_test_fsync.c:344 pg_test_fsync.c:382
 #: pg_test_fsync.c:440 pg_test_fsync.c:481 pg_test_fsync.c:509
 #: pg_test_fsync.c:540
 msgid "write failed"
-msgstr "échec en écriture"
+msgstr "Schreiben fehlgeschlagen"
 
 #: pg_test_fsync.c:234 pg_test_fsync.c:323 pg_test_fsync.c:346
 #: pg_test_fsync.c:483 pg_test_fsync.c:515
 msgid "fsync failed"
-msgstr "échec de la synchronisation (fsync)"
+msgstr "fsync fehlgeschlagen"
 
 #: pg_test_fsync.c:248
 #, c-format
@@ -86,7 +85,7 @@ msgid ""
 "Compare file sync methods using one %dkB write:\n"
 msgstr ""
 "\n"
-"Comparer les méthodes de synchronisation de fichier en utilisant une écriture de %d Ko :\n"
+"Vergleich von Datei-Sync-Methoden bei einem Schreibvorgang aus %dkB:\n"
 
 #: pg_test_fsync.c:250
 #, c-format
@@ -95,26 +94,26 @@ msgid ""
 "Compare file sync methods using two %dkB writes:\n"
 msgstr ""
 "\n"
-"Comparer les méthodes de synchronisation de fichier sur disque en utilisant deux écritures de %d Ko :\n"
+"Vergleich von Datei-Sync-Methoden bei zwei Schreibvorgängen aus je %dkB:\n"
 
 #: pg_test_fsync.c:251
 #, c-format
 msgid "(in wal_sync_method preference order, except fdatasync is Linux's default)\n"
-msgstr "(dans l'ordre de préférence de wal_sync_method, sauf fdatasync qui est la valeur par défaut sous Linux)\n"
+msgstr "(in Rangordnung von wal_sync_method, außer dass fdatasync auf Linux Standard ist)\n"
 
 #: pg_test_fsync.c:262 pg_test_fsync.c:365 pg_test_fsync.c:431
 msgid "n/a*"
-msgstr "n/a*"
+msgstr "entf.*"
 
 #: pg_test_fsync.c:274 pg_test_fsync.c:300 pg_test_fsync.c:325
 #: pg_test_fsync.c:348 pg_test_fsync.c:384 pg_test_fsync.c:442
 msgid "seek failed"
-msgstr "seek échoué"
+msgstr "seek fehlgeschlagen"
 
 #: pg_test_fsync.c:280 pg_test_fsync.c:305 pg_test_fsync.c:353
 #: pg_test_fsync.c:390 pg_test_fsync.c:448
 msgid "n/a"
-msgstr "n/a"
+msgstr "entf."
 
 #: pg_test_fsync.c:395
 #, c-format
@@ -122,8 +121,8 @@ msgid ""
 "* This file system and its mount options do not support direct\n"
 "  I/O, e.g. ext4 in journaled mode.\n"
 msgstr ""
-"* Ce système de fichiers et ses options de montage ne supportent pas les\n"
-"  I/O directes, par exemple ext4 en journalisé.\n"
+"* Dieses Dateisystem und die Mount-Optionen unterstützen kein Direct-I/O,\n"
+"  z.B. ext4 im Journaled-Modus.\n"
 
 #: pg_test_fsync.c:403
 #, c-format
@@ -132,7 +131,7 @@ msgid ""
 "Compare open_sync with different write sizes:\n"
 msgstr ""
 "\n"
-"Comparer open_sync avec différentes tailles d'écriture :\n"
+"Vergleich von open_sync mit verschiedenen Schreibgrößen:\n"
 
 #: pg_test_fsync.c:404
 #, c-format
@@ -140,28 +139,28 @@ msgid ""
 "(This is designed to compare the cost of writing 16kB in different write\n"
 "open_sync sizes.)\n"
 msgstr ""
-"(Ceci est conçu pour comparer le coût d'écriture de 16 Ko dans différentes tailles\n"
-"d'écritures open_sync.)\n"
+"(Damit werden die Kosten für das Schreiben von 16kB in verschieden Größen mit\n"
+"open_sync verglichen.)\n"
 
 #: pg_test_fsync.c:407
 msgid " 1 * 16kB open_sync write"
-msgstr " 1 * 16 Ko, écriture avec open_sync"
+msgstr " 1 * 16kB open_sync schreiben"
 
 #: pg_test_fsync.c:408
 msgid " 2 *  8kB open_sync writes"
-msgstr " 2 * 8 Ko, écriture avec open_sync"
+msgstr " 2 *  8kB open_sync schreiben"
 
 #: pg_test_fsync.c:409
 msgid " 4 *  4kB open_sync writes"
-msgstr " 4 * 4 Ko, écriture avec open_sync"
+msgstr " 4 *  4kB open_sync schreiben"
 
 #: pg_test_fsync.c:410
 msgid " 8 *  2kB open_sync writes"
-msgstr " 8 * 2 Ko, écriture avec open_sync"
+msgstr " 8 *  2kB open_sync schreiben"
 
 #: pg_test_fsync.c:411
 msgid "16 *  1kB open_sync writes"
-msgstr " 16 * 1 Ko, écriture avec open_sync"
+msgstr "16 *  1kB open_sync schreiben"
 
 #: pg_test_fsync.c:464
 #, c-format
@@ -170,7 +169,7 @@ msgid ""
 "Test if fsync on non-write file descriptor is honored:\n"
 msgstr ""
 "\n"
-"Teste si fsync est honoré sur un descripteur de fichiers sans écriture :\n"
+"Probe ob fsync auf einem anderen Dateideskriptor funktioniert:\n"
 
 #: pg_test_fsync.c:465
 #, c-format
@@ -178,8 +177,8 @@ msgid ""
 "(If the times are similar, fsync() can sync data written on a different\n"
 "descriptor.)\n"
 msgstr ""
-"(Si les temps sont similaires, fsync() peut synchroniser sur disque les données écrites sur\n"
-"un descripteur différent.)\n"
+"(Wenn die Zeiten ähnlich sind, dann kann fsync() auf einem anderen Deskriptor\n"
+"geschriebene Daten syncen.)\n"
 
 #: pg_test_fsync.c:530
 #, c-format
@@ -188,9 +187,9 @@ msgid ""
 "Non-sync'ed %dkB writes:\n"
 msgstr ""
 "\n"
-"%d Ko d'écritures non synchronisées :\n"
+"Nicht gesynctes Schreiben von %dkB:\n"
 
 #: pg_test_fsync.c:607
 #, c-format
 msgid "%s: %s\n"
-msgstr "%s : %s\n"
+msgstr "%s: %s\n"

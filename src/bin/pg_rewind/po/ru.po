@@ -7,9 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-03-27 12:46+0000\n"
-"PO-Revision-Date: 2016-11-24 14:26+0300\n"
-"Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
+"POT-Creation-Date: 2017-08-17 23:16+0000\n"
+"PO-Revision-Date: 2017-08-23 10:02+0300\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -17,6 +16,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
 #: ../../common/fe_memutils.c:98 parsexlog.c:74 parsexlog.c:127 parsexlog.c:179
@@ -289,32 +289,32 @@ msgstr "не удалось получить список файлов: %s"
 msgid "unexpected result set while fetching file list\n"
 msgstr "неожиданный результат при получении списка файлов\n"
 
-#: libpq_fetch.c:239
+#: libpq_fetch.c:261
 #, c-format
 msgid "could not send query: %s"
 msgstr "не удалось отправить запрос: %s"
 
-#: libpq_fetch.c:241
+#: libpq_fetch.c:263
 #, c-format
 msgid "getting file chunks\n"
 msgstr "получение сегментов файлов\n"
 
-#: libpq_fetch.c:244
+#: libpq_fetch.c:266
 #, c-format
 msgid "could not set libpq connection to single row mode\n"
 msgstr "не удалось перевести подключение libpq в однострочный режим\n"
 
-#: libpq_fetch.c:264
+#: libpq_fetch.c:286
 #, c-format
 msgid "unexpected result while fetching remote files: %s"
 msgstr "неожиданный результат при получении удалённых файлов: %s"
 
-#: libpq_fetch.c:270
+#: libpq_fetch.c:292
 #, c-format
 msgid "unexpected result set size while fetching remote files\n"
 msgstr "неожиданный размер набора результатов при получении удалённых файлов\n"
 
-#: libpq_fetch.c:276
+#: libpq_fetch.c:298
 #, c-format
 msgid ""
 "unexpected data types in result set while fetching remote files: %u %u %u\n"
@@ -322,68 +322,68 @@ msgstr ""
 "неожиданные типы данных в наборе результатов при получении удалённых файлов: "
 "%u %u %u\n"
 
-#: libpq_fetch.c:284
+#: libpq_fetch.c:306
 #, c-format
 msgid "unexpected result format while fetching remote files\n"
 msgstr "неожиданный формат результата при получении удалённых файлов\n"
 
-#: libpq_fetch.c:290
+#: libpq_fetch.c:312
 #, c-format
 msgid "unexpected null values in result while fetching remote files\n"
 msgstr ""
 "неожиданные значения NULL в результате при получении удалённых файлов\n"
 
-#: libpq_fetch.c:294
+#: libpq_fetch.c:316
 #, c-format
 msgid "unexpected result length while fetching remote files\n"
 msgstr "неожиданная длина результата при получении удалённых файлов\n"
 
-#: libpq_fetch.c:316
+#: libpq_fetch.c:338
 #, c-format
 msgid "received null value for chunk for file \"%s\", file has been deleted\n"
 msgstr "для файла \"%s\" вместо сегмента получено NULL-значение, файл удалён\n"
 
-#: libpq_fetch.c:323
+#: libpq_fetch.c:345
 #, c-format
-msgid "received chunk for file \"%s\", offset %d, size %d\n"
-msgstr "получен сегмент файла \"%s\": смещение %d, размер %d\n"
+msgid "received chunk for file \"%s\", offset "
+msgstr "получен сегмент файла \"%s\": смещение "
 
-#: libpq_fetch.c:352
+#: libpq_fetch.c:374
 #, c-format
 msgid "could not fetch remote file \"%s\": %s"
 msgstr "не удалось получить удалённый файл \"%s\": %s"
 
-#: libpq_fetch.c:357
+#: libpq_fetch.c:379
 #, c-format
 msgid "unexpected result set while fetching remote file \"%s\"\n"
 msgstr "неожиданный набор результатов при получении удалённого файла \"%s\"\n"
 
-#: libpq_fetch.c:368
+#: libpq_fetch.c:390
 #, c-format
 msgid "fetched file \"%s\", length %d\n"
 msgstr "получен файл \"%s\", длина %d\n"
 
-#: libpq_fetch.c:400
+#: libpq_fetch.c:423
 #, c-format
 msgid "could not send COPY data: %s"
 msgstr "не удалось отправить данные COPY: %s"
 
-#: libpq_fetch.c:426
+#: libpq_fetch.c:449
 #, c-format
 msgid "could not create temporary table: %s"
 msgstr "не удалось создать временную таблицу: %s"
 
-#: libpq_fetch.c:434
+#: libpq_fetch.c:457
 #, c-format
 msgid "could not send file list: %s"
 msgstr "не удалось отправить список файлов: %s"
 
-#: libpq_fetch.c:476
+#: libpq_fetch.c:499
 #, c-format
 msgid "could not send end-of-COPY: %s"
 msgstr "не удалось отправить сообщение о завершении копирования: %s"
 
-#: libpq_fetch.c:482
+#: libpq_fetch.c:505
 #, c-format
 msgid "unexpected result while sending file list: %s"
 msgstr "неожиданный результат при передаче списка: %s"
@@ -571,8 +571,8 @@ msgstr "исходный и целевой кластер уже на одной
 
 #: pg_rewind.c:234
 #, c-format
-msgid "servers diverged at WAL position %X/%X on timeline %u\n"
-msgstr "Серверы разошлись в позиции WAL %X/%X на линии времени %u.\n"
+msgid "servers diverged at WAL location %X/%X on timeline %u\n"
+msgstr "серверы разошлись в позиции WAL %X/%X на линии времени %u\n"
 
 #: pg_rewind.c:271
 #, c-format
@@ -697,7 +697,7 @@ msgstr "неверная контрольная сумма управляюще�
 msgid "unexpected control file size %d, expected %d\n"
 msgstr "неверный размер управляющего файла (%d), ожидалось: %d\n"
 
-#: pg_rewind.c:696
+#: pg_rewind.c:705
 #, c-format
 msgid ""
 "The program \"initdb\" is needed by %s but was\n"
@@ -708,7 +708,7 @@ msgstr ""
 "в каталоге \"%s\".\n"
 "Проверьте правильность установки СУБД.\n"
 
-#: pg_rewind.c:700
+#: pg_rewind.c:709
 #, c-format
 msgid ""
 "The program \"initdb\" was found by \"%s\"\n"
@@ -719,7 +719,7 @@ msgstr ""
 "но её версия отличается от версии %s.\n"
 "Проверьте правильность установки СУБД.\n"
 
-#: pg_rewind.c:718
+#: pg_rewind.c:727
 #, c-format
 msgid "sync of target directory failed\n"
 msgstr "сбой синхронизации целевого каталога\n"
@@ -736,8 +736,8 @@ msgstr "Ожидается числовой идентификатор лини�
 
 #: timeline.c:83
 #, c-format
-msgid "Expected a transaction log switchpoint location.\n"
-msgstr "Ожидается положение точки переключения журнала транзакций.\n"
+msgid "Expected a write-ahead log switchpoint location.\n"
+msgstr "Ожидается положение точки переключения журнала предзаписи.\n"
 
 #: timeline.c:88
 #, c-format

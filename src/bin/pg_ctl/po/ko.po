@@ -3,15 +3,15 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 9.6\n"
+"Project-Id-Version: pg_ctl (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2016-09-26 14:02+0900\n"
-"PO-Revision-Date: 2016-09-26 17:02+0900\n"
+"POT-Creation-Date: 2017-08-02 13:57+0900\n"
+"PO-Revision-Date: 2017-08-17 13:16+0900\n"
 "Last-Translator: Ioseph Kim <ioseph@uri.sarang.net>\n"
-"Language-Team: Korean <pgsql-kr@postgresql.kr>\n"
+"Language-Team: Korean Team <pgsql-kr@postgresql.kr>\n"
 "Language: ko\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
@@ -62,37 +62,37 @@ msgstr "메모리 부족\n"
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "null 포인터를 복제할 수 없음(내부 오류)\n"
 
-#: ../../common/wait_error.c:47
+#: ../../common/wait_error.c:45
 #, c-format
 msgid "command not executable"
 msgstr "명령을 실행할 수 없음"
 
-#: ../../common/wait_error.c:51
+#: ../../common/wait_error.c:49
 #, c-format
 msgid "command not found"
 msgstr "명령어를 찾을 수 없음"
 
-#: ../../common/wait_error.c:56
+#: ../../common/wait_error.c:54
 #, c-format
 msgid "child process exited with exit code %d"
 msgstr "하위 프로세스가 종료되었음, 종료 코드 %d"
 
-#: ../../common/wait_error.c:63
+#: ../../common/wait_error.c:61
 #, c-format
 msgid "child process was terminated by exception 0x%X"
 msgstr "0x%X 예외처리로 하위 프로세스가 종료되었음"
 
-#: ../../common/wait_error.c:73
+#: ../../common/wait_error.c:71
 #, c-format
 msgid "child process was terminated by signal %s"
 msgstr "%s 시그널 감지로 하위 프로세스가 종료되었음"
 
-#: ../../common/wait_error.c:77
+#: ../../common/wait_error.c:75
 #, c-format
 msgid "child process was terminated by signal %d"
 msgstr "하위 프로세스가 종료되었음, 시그널 %d"
 
-#: ../../common/wait_error.c:82
+#: ../../common/wait_error.c:80
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "하위 프로세스가 종료되었음, 알수 없는 상태 %d"
@@ -102,82 +102,64 @@ msgstr "하위 프로세스가 종료되었음, 알수 없는 상태 %d"
 msgid "could not get current working directory: %s\n"
 msgstr "현재 작업 디렉터리를 알 수 없음: %s\n"
 
-#: pg_ctl.c:252
+#: pg_ctl.c:263
 #, c-format
 msgid "%s: directory \"%s\" does not exist\n"
 msgstr "%s: \"%s\" 디렉터리 없음\n"
 
-#: pg_ctl.c:255
+#: pg_ctl.c:266
 #, c-format
 msgid "%s: could not access directory \"%s\": %s\n"
 msgstr "%s: \"%s\" 디렉터리에 액세스할 수 없음: %s\n"
 
-#: pg_ctl.c:269
+#: pg_ctl.c:279
 #, c-format
 msgid "%s: directory \"%s\" is not a database cluster directory\n"
 msgstr "%s: 지정한 \"%s\" 디렉터리는 데이터베이스 클러스트 디렉터리가 아님\n"
 
-#: pg_ctl.c:282
+#: pg_ctl.c:292
 #, c-format
 msgid "%s: could not open PID file \"%s\": %s\n"
 msgstr "%s: \"%s\" PID 파일을 열 수 없음: %s\n"
 
-#: pg_ctl.c:291
+#: pg_ctl.c:301
 #, c-format
 msgid "%s: the PID file \"%s\" is empty\n"
 msgstr "%s: \"%s\" PID 파일에 내용이 없습니다\n"
 
-#: pg_ctl.c:294
+#: pg_ctl.c:304
 #, c-format
 msgid "%s: invalid data in PID file \"%s\"\n"
 msgstr "%s: \"%s\" PID 파일이 비었음\n"
 
-#: pg_ctl.c:444 pg_ctl.c:472
+#: pg_ctl.c:465 pg_ctl.c:493
 #, c-format
 msgid "%s: could not start server: %s\n"
 msgstr "%s: 서버를 시작 할 수 없음: %s\n"
 
-#: pg_ctl.c:496
+#: pg_ctl.c:517
 #, c-format
 msgid "%s: could not start server: error code %lu\n"
 msgstr "%s: 서버를 시작할 수 없음: 오류 코드 %lu\n"
 
-#: pg_ctl.c:573
-#, c-format
-msgid ""
-"\n"
-"%s: -w option is not supported when starting a pre-9.1 server\n"
-msgstr ""
-"\n"
-"%s: -w 옵션은 9.1 이전 버전의 서버를 실행할 때는 지원하지 않음\n"
-
-#: pg_ctl.c:638
-#, c-format
-msgid ""
-"\n"
-"%s: -w option cannot use a relative socket directory specification\n"
-msgstr ""
-"\n"
-"%s: -w 옵션은 소켓 디렉터리로 상대 경로를 사용할 수 없음\n"
-
-#: pg_ctl.c:740
+#: pg_ctl.c:664
 #, c-format
 msgid "%s: cannot set core file size limit; disallowed by hard limit\n"
 msgstr ""
 "%s: 코어 파일 크기 한도를 설정할 수 없음, 하드 디스크 용량 초과로 허용되지 않"
 "음\n"
 
-#: pg_ctl.c:765
+#: pg_ctl.c:690
 #, c-format
 msgid "%s: could not read file \"%s\"\n"
 msgstr "%s: \"%s\" 파일을 읽을 수 없음\n"
 
-#: pg_ctl.c:770
+#: pg_ctl.c:695
 #, c-format
 msgid "%s: option file \"%s\" must have exactly one line\n"
 msgstr "%s: \"%s\" 환경설정파일은 반드시 한 줄을 가져야한다?\n"
 
-#: pg_ctl.c:821
+#: pg_ctl.c:741
 #, c-format
 msgid ""
 "The program \"%s\" is needed by %s but was not found in the\n"
@@ -188,7 +170,7 @@ msgstr ""
 "\"%s\" 디렉터리 안에 없습니다.\n"
 "설치 상태를 확인해 주십시오.\n"
 
-#: pg_ctl.c:827
+#: pg_ctl.c:747
 #, c-format
 msgid ""
 "The program \"%s\" was found by \"%s\"\n"
@@ -199,37 +181,38 @@ msgstr ""
 "%s 버전과 같지 않습니다.\n"
 "설치 상태를 확인해 주십시오.\n"
 
-#: pg_ctl.c:860
+#: pg_ctl.c:780
 #, c-format
 msgid "%s: database system initialization failed\n"
 msgstr "%s: 데이터베이스 초기화 실패\n"
 
-#: pg_ctl.c:875
+#: pg_ctl.c:795
 #, c-format
 msgid "%s: another server might be running; trying to start server anyway\n"
 msgstr "%s: 다른 서버가 가동 중인 것 같음; 어째든 서버 가동을 시도함\n"
 
-#: pg_ctl.c:913
+#: pg_ctl.c:833
 msgid "waiting for server to start..."
 msgstr "서버를 시작하기 위해 기다리는 중..."
 
-#: pg_ctl.c:918 pg_ctl.c:1025 pg_ctl.c:1116
+#: pg_ctl.c:838 pg_ctl.c:943 pg_ctl.c:1035 pg_ctl.c:1165
 msgid " done\n"
 msgstr " 완료\n"
 
-#: pg_ctl.c:919
+#: pg_ctl.c:839
 msgid "server started\n"
 msgstr "서버 시작됨\n"
 
-#: pg_ctl.c:922 pg_ctl.c:926
+#: pg_ctl.c:842 pg_ctl.c:848 pg_ctl.c:1170
 msgid " stopped waiting\n"
 msgstr " 중지 기다리는 중\n"
 
-#: pg_ctl.c:923
-msgid "server is still starting up\n"
-msgstr "서버가 여전히 시작 중입니다\n"
+#: pg_ctl.c:843
+#, c-format
+msgid "%s: server did not start in time\n"
+msgstr "%s: 서버가 제 시간에 시작되지 못했음\n"
 
-#: pg_ctl.c:927
+#: pg_ctl.c:849
 #, c-format
 msgid ""
 "%s: could not start server\n"
@@ -238,43 +221,34 @@ msgstr ""
 "%s: 서버를 시작 할 수 없음\n"
 "로그 출력을 살펴보십시오.\n"
 
-#: pg_ctl.c:933 pg_ctl.c:1017 pg_ctl.c:1107
-msgid " failed\n"
-msgstr " 실패\n"
-
-#: pg_ctl.c:934
-#, c-format
-msgid "%s: could not wait for server because of misconfiguration\n"
-msgstr "%s: 잘못된 환경 설정 때문에 대기를 더 이상 할 수 없음\n"
-
-#: pg_ctl.c:940
+#: pg_ctl.c:857
 msgid "server starting\n"
 msgstr "서버를 시작합니다\n"
 
-#: pg_ctl.c:961 pg_ctl.c:1047 pg_ctl.c:1137 pg_ctl.c:1177
+#: pg_ctl.c:878 pg_ctl.c:965 pg_ctl.c:1056 pg_ctl.c:1095
 #, c-format
 msgid "%s: PID file \"%s\" does not exist\n"
 msgstr "%s: \"%s\" PID 파일이 없습니다\n"
 
-#: pg_ctl.c:962 pg_ctl.c:1049 pg_ctl.c:1138 pg_ctl.c:1178
+#: pg_ctl.c:879 pg_ctl.c:967 pg_ctl.c:1057 pg_ctl.c:1096
 msgid "Is server running?\n"
 msgstr "서버가 실행 중입니까?\n"
 
-#: pg_ctl.c:968
+#: pg_ctl.c:885
 #, c-format
 msgid "%s: cannot stop server; single-user server is running (PID: %ld)\n"
 msgstr "%s: 서버 중지 실패; 단일 사용자 서버가 실행 중 (PID: %ld)\n"
 
-#: pg_ctl.c:976 pg_ctl.c:1071
+#: pg_ctl.c:893 pg_ctl.c:989
 #, c-format
 msgid "%s: could not send stop signal (PID: %ld): %s\n"
 msgstr "%s: stop 시그널을 보낼 수 없음 (PID: %ld): %s\n"
 
-#: pg_ctl.c:983
+#: pg_ctl.c:900
 msgid "server shutting down\n"
 msgstr "서버를 멈춥니다\n"
 
-#: pg_ctl.c:998 pg_ctl.c:1086
+#: pg_ctl.c:915 pg_ctl.c:1004
 msgid ""
 "WARNING: online backup mode is active\n"
 "Shutdown will not complete until pg_stop_backup() is called.\n"
@@ -284,16 +258,20 @@ msgstr ""
 "pg_stop_backup()이 호출될 때까지 종료가 완료되지 않습니다.\n"
 "\n"
 
-#: pg_ctl.c:1002 pg_ctl.c:1090
+#: pg_ctl.c:919 pg_ctl.c:1008
 msgid "waiting for server to shut down..."
 msgstr "서버를 멈추기 위해 기다리는 중..."
 
-#: pg_ctl.c:1019 pg_ctl.c:1109
+#: pg_ctl.c:935 pg_ctl.c:1026
+msgid " failed\n"
+msgstr " 실패\n"
+
+#: pg_ctl.c:937 pg_ctl.c:1028
 #, c-format
 msgid "%s: server does not shut down\n"
 msgstr "%s: 서버를 멈추지 못했음\n"
 
-#: pg_ctl.c:1021 pg_ctl.c:1111
+#: pg_ctl.c:939 pg_ctl.c:1030
 msgid ""
 "HINT: The \"-m fast\" option immediately disconnects sessions rather than\n"
 "waiting for session-initiated disconnection.\n"
@@ -301,187 +279,200 @@ msgstr ""
 "힌트: \"-m fast\" 옵션을 사용하면 접속한 세션들을 즉시 정리합니다.\n"
 "이 옵션을 사용하지 않으면 접속한 세션들 스스로 끊을 때까지 기다립니다.\n"
 
-#: pg_ctl.c:1027 pg_ctl.c:1117
+#: pg_ctl.c:945 pg_ctl.c:1036
 msgid "server stopped\n"
 msgstr "서버 멈추었음\n"
 
-#: pg_ctl.c:1050 pg_ctl.c:1123
+#: pg_ctl.c:968 pg_ctl.c:1042
 msgid "starting server anyway\n"
 msgstr "어째든 서버를 시작합니다\n"
 
-#: pg_ctl.c:1059
+#: pg_ctl.c:977
 #, c-format
 msgid "%s: cannot restart server; single-user server is running (PID: %ld)\n"
 msgstr ""
 "%s: 서버를 다시 시작 할 수 없음; 단일사용자 서버가 실행 중임 (PID: %ld)\n"
 
-#: pg_ctl.c:1062 pg_ctl.c:1147
+#: pg_ctl.c:980 pg_ctl.c:1066
 msgid "Please terminate the single-user server and try again.\n"
 msgstr "단일 사용자 서버를 멈추고 다시 시도하십시오.\n"
 
-#: pg_ctl.c:1121
+#: pg_ctl.c:1040
 #, c-format
 msgid "%s: old server process (PID: %ld) seems to be gone\n"
 msgstr "%s: 이전 서버 프로세스(PID: %ld)가 없어졌습니다\n"
 
-#: pg_ctl.c:1144
+#: pg_ctl.c:1063
 #, c-format
 msgid "%s: cannot reload server; single-user server is running (PID: %ld)\n"
 msgstr ""
 "%s: 서버 환경설정을 다시 불러올 수 없음; 단일 사용자 서버가 실행 중임 (PID: "
 "%ld)\n"
 
-#: pg_ctl.c:1153
+#: pg_ctl.c:1072
 #, c-format
 msgid "%s: could not send reload signal (PID: %ld): %s\n"
 msgstr "%s: reload 시그널을 보낼 수 없음 (PID: %ld): %s\n"
 
-#: pg_ctl.c:1158
+#: pg_ctl.c:1077
 msgid "server signaled\n"
 msgstr "서버가 시스템 시그널을 받았음\n"
 
-#: pg_ctl.c:1184
+#: pg_ctl.c:1102
 #, c-format
 msgid "%s: cannot promote server; single-user server is running (PID: %ld)\n"
 msgstr "%s: 운영서버 전환 실패; 단일사용자 서버가 실행 중(PID: %ld)\n"
 
-#: pg_ctl.c:1193
+#: pg_ctl.c:1110
 #, c-format
 msgid "%s: cannot promote server; server is not in standby mode\n"
 msgstr "%s: 운영서버 전환 실패; 서버가 대기 모드로 상태가 아님\n"
 
-#: pg_ctl.c:1208
+#: pg_ctl.c:1125
 #, c-format
 msgid "%s: could not create promote signal file \"%s\": %s\n"
 msgstr "%s: 운영전환 시그널 파일인 \"%s\" 파일을 만들 수 없음: %s\n"
 
-#: pg_ctl.c:1214
+#: pg_ctl.c:1131
 #, c-format
 msgid "%s: could not write promote signal file \"%s\": %s\n"
 msgstr "%s: 운영전환 시그널 파일인 \"%s\" 파일에 쓰기 실패: %s\n"
 
-#: pg_ctl.c:1222
+#: pg_ctl.c:1139
 #, c-format
 msgid "%s: could not send promote signal (PID: %ld): %s\n"
 msgstr "%s: 운영전환 시그널을 서버(PID: %ld)로 보낼 수 없음: %s\n"
 
-#: pg_ctl.c:1225
+#: pg_ctl.c:1142
 #, c-format
 msgid "%s: could not remove promote signal file \"%s\": %s\n"
 msgstr "%s: 운영전환 시그널 파일인 \"%s\" 파일을 지울 수 없음: %s\n"
 
-#: pg_ctl.c:1230
+#: pg_ctl.c:1152
+msgid "waiting for server to promote..."
+msgstr "서버를 운영 모드로 전환하는 중 ..."
+
+#: pg_ctl.c:1166
+msgid "server promoted\n"
+msgstr "운영 모드 전환 완료\n"
+
+#: pg_ctl.c:1171
+#, c-format
+msgid "%s: server did not promote in time\n"
+msgstr "%s: 서버를 제 시간에 운영 모드로 전환하지 못했음\n"
+
+#: pg_ctl.c:1177
 msgid "server promoting\n"
 msgstr "서버를 운영 모드로 전환합니다\n"
 
-#: pg_ctl.c:1277
+#: pg_ctl.c:1224
 #, c-format
 msgid "%s: single-user server is running (PID: %ld)\n"
 msgstr "%s: 단일사용자 서버가 실행 중임 (PID: %ld)\n"
 
-#: pg_ctl.c:1290
+#: pg_ctl.c:1238
 #, c-format
 msgid "%s: server is running (PID: %ld)\n"
 msgstr "%s: 서버가 실행 중임 (PID: %ld)\n"
 
-#: pg_ctl.c:1306
+#: pg_ctl.c:1254
 #, c-format
 msgid "%s: no server running\n"
 msgstr "%s: 가동 중인 서버가 없음\n"
 
-#: pg_ctl.c:1324
+#: pg_ctl.c:1271
 #, c-format
 msgid "%s: could not send signal %d (PID: %ld): %s\n"
 msgstr "%s: %d 시그널을 보낼 수 없음 (PID: %ld): %s\n"
 
-#: pg_ctl.c:1381
+#: pg_ctl.c:1328
 #, c-format
 msgid "%s: could not find own program executable\n"
 msgstr "%s: 실행 가능한 프로그램을 찾을 수 없습니다\n"
 
-#: pg_ctl.c:1391
+#: pg_ctl.c:1338
 #, c-format
 msgid "%s: could not find postgres program executable\n"
 msgstr "%s: 실행 가능한 postgres 프로그램을 찾을 수 없음\n"
 
-#: pg_ctl.c:1461 pg_ctl.c:1495
+#: pg_ctl.c:1408 pg_ctl.c:1442
 #, c-format
 msgid "%s: could not open service manager\n"
 msgstr "%s: 서비스 관리자를 열 수 없음\n"
 
-#: pg_ctl.c:1467
+#: pg_ctl.c:1414
 #, c-format
 msgid "%s: service \"%s\" already registered\n"
 msgstr "%s: \"%s\" 서비스가 이미 등록 되어 있음\n"
 
-#: pg_ctl.c:1478
+#: pg_ctl.c:1425
 #, c-format
 msgid "%s: could not register service \"%s\": error code %lu\n"
 msgstr "%s: \"%s\" 서비스를 등록할 수 없음: 오류 코드 %lu\n"
 
-#: pg_ctl.c:1501
+#: pg_ctl.c:1448
 #, c-format
 msgid "%s: service \"%s\" not registered\n"
 msgstr "%s: \"%s\" 서비스가 등록되어 있지 않음\n"
 
-#: pg_ctl.c:1508
+#: pg_ctl.c:1455
 #, c-format
 msgid "%s: could not open service \"%s\": error code %lu\n"
 msgstr "%s: \"%s\" 서비스를 열 수 없음: 오류 코드 %lu\n"
 
-#: pg_ctl.c:1517
+#: pg_ctl.c:1464
 #, c-format
 msgid "%s: could not unregister service \"%s\": error code %lu\n"
 msgstr "%s: \"%s\" 서비스를 서비스 목록에서 뺄 수 없음: 오류 코드 %lu\n"
 
-#: pg_ctl.c:1604
+#: pg_ctl.c:1551
 msgid "Waiting for server startup...\n"
 msgstr "서버를 시작하기 위해 기다리는 중...\n"
 
-#: pg_ctl.c:1607
+#: pg_ctl.c:1554
 msgid "Timed out waiting for server startup\n"
 msgstr "서버 시작을 기다리는 동안 시간 초과됨\n"
 
-#: pg_ctl.c:1611
+#: pg_ctl.c:1558
 msgid "Server started and accepting connections\n"
 msgstr "서버가 시작되었으며 연결을 허용함\n"
 
-#: pg_ctl.c:1666
+#: pg_ctl.c:1613
 #, c-format
 msgid "%s: could not start service \"%s\": error code %lu\n"
 msgstr "%s: \"%s\" 서비스를 시작할 수 없음: 오류 코드 %lu\n"
 
-#: pg_ctl.c:1740
+#: pg_ctl.c:1687
 #, c-format
 msgid "%s: WARNING: cannot create restricted tokens on this platform\n"
 msgstr "%s: 경고: 이 운영체제에서 restricted token을 만들 수 없음\n"
 
-#: pg_ctl.c:1753
+#: pg_ctl.c:1700
 #, c-format
 msgid "%s: could not open process token: error code %lu\n"
 msgstr "%s: 프로세스 토큰을 열 수 없음: 오류 코드 %lu\n"
 
-#: pg_ctl.c:1767
+#: pg_ctl.c:1714
 #, c-format
 msgid "%s: could not allocate SIDs: error code %lu\n"
 msgstr "%s: SID를 할당할 수 없음: 오류 코드 %lu\n"
 
-#: pg_ctl.c:1787
+#: pg_ctl.c:1734
 #, c-format
 msgid "%s: could not create restricted token: error code %lu\n"
 msgstr "%s: restricted token을 만들 수 없음: 오류 코드 %lu\n"
 
-#: pg_ctl.c:1818
+#: pg_ctl.c:1765
 #, c-format
 msgid "%s: WARNING: could not locate all job object functions in system API\n"
 msgstr "%s: 경고: 시스템 API에서 모든 job 객체 함수를 찾을 수 없음\n"
 
-#: pg_ctl.c:1901
+#: pg_ctl.c:1848
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "보다 자세한 사용법은 \"%s --help\"\n"
 
-#: pg_ctl.c:1909
+#: pg_ctl.c:1856
 #, c-format
 msgid ""
 "%s is a utility to initialize, start, stop, or control a PostgreSQL server.\n"
@@ -490,75 +481,75 @@ msgstr ""
 "%s 프로그램은 PostgreSQL 서버를 초기화, 시작, 중지, 제어하는 도구입니다.\n"
 "\n"
 
-#: pg_ctl.c:1910
+#: pg_ctl.c:1857
 #, c-format
 msgid "Usage:\n"
 msgstr "사용법:\n"
 
-#: pg_ctl.c:1911
+#: pg_ctl.c:1858
 #, c-format
-msgid "  %s init[db]               [-D DATADIR] [-s] [-o \"OPTIONS\"]\n"
-msgstr "  %s init[db]               [-D 데이터디렉터리] [-s] [-o \"옵션\"]\n"
+msgid "  %s init[db] [-D DATADIR] [-s] [-o OPTIONS]\n"
+msgstr "  %s init[db] [-D 데이터디렉터리] [-s] [-o 옵션]\n"
 
-#: pg_ctl.c:1912
-#, c-format
-msgid ""
-"  %s start   [-w] [-t SECS] [-D DATADIR] [-s] [-l FILENAME] [-o \"OPTIONS"
-"\"]\n"
-msgstr ""
-"  %s start   [-w] [-t 초] [-D 데이터디렉터리] [-s] [-l 로그파일] [-o \"옵션"
-"\"]\n"
-
-#: pg_ctl.c:1913
-#, c-format
-msgid "  %s stop    [-W] [-t SECS] [-D DATADIR] [-s] [-m SHUTDOWN-MODE]\n"
-msgstr "  %s stop    [-W] [-t 초] [-D 데이터디렉터리] [-s] [-m 중지모드]\n"
-
-#: pg_ctl.c:1914
+#: pg_ctl.c:1859
 #, c-format
 msgid ""
-"  %s restart [-w] [-t SECS] [-D DATADIR] [-s] [-m SHUTDOWN-MODE]\n"
-"                 [-o \"OPTIONS\"]\n"
+"  %s start    [-D DATADIR] [-l FILENAME] [-W] [-t SECS] [-s]\n"
+"                  [-o OPTIONS] [-p PATH] [-c]\n"
 msgstr ""
-"  %s restart [-w] [-t 초] [-D 데이터디렉터리] [-s] [-m 중지모드]\n"
-"                 [-o \"옵션\"]\n"
+"  %s start    [-D 데이터디렉터리] [-l 파일이름] [-W] [-t 초] [-s]\n"
+"                  [-o 옵션] [-p 경로] [-c]\n"
 
-#: pg_ctl.c:1916
+#: pg_ctl.c:1861
 #, c-format
-msgid "  %s reload  [-D DATADIR] [-s]\n"
-msgstr "  %s reload  [-D 데이터디렉터리] [-s]\n"
+msgid "  %s stop     [-D DATADIR] [-m SHUTDOWN-MODE] [-W] [-t SECS] [-s]\n"
+msgstr "  %s stop     [-D 데이터디렉터리] [-m 중지방법] [-W] [-t 초] [-s]\n"
 
-#: pg_ctl.c:1917
-#, c-format
-msgid "  %s status  [-D DATADIR]\n"
-msgstr "  %s status  [-D 데이터디렉터리]\n"
-
-#: pg_ctl.c:1918
-#, c-format
-msgid "  %s promote [-D DATADIR] [-s]\n"
-msgstr "  %s promote [-D 데이터디렉터리] [-s]\n"
-
-#: pg_ctl.c:1919
-#, c-format
-msgid "  %s kill    SIGNALNAME PID\n"
-msgstr "  %s kill    시그널이름 PID\n"
-
-#: pg_ctl.c:1921
+#: pg_ctl.c:1862
 #, c-format
 msgid ""
-"  %s register   [-N SERVICENAME] [-U USERNAME] [-P PASSWORD] [-D DATADIR]\n"
-"                    [-S START-TYPE] [-w] [-t SECS] [-o \"OPTIONS\"]\n"
+"  %s restart  [-D DATADIR] [-m SHUTDOWN-MODE] [-W] [-t SECS] [-s]\n"
+"                  [-o OPTIONS] [-c]\n"
 msgstr ""
-"  %s register   [-N 서비스이름] [-U 사용자이름] [-P 암호] [-D 데이터디렉터"
-"리]\n"
-"                    [-S 시작형태] [-w] [-t 초] [-o \"옵션\"]\n"
+"  %s restart  [-D 데이터디렉터리] [-m 중지방법] [-W] [-t 초] [-s]\n"
+"                  [-o 옵션] [-c]\n"
 
-#: pg_ctl.c:1923
+#: pg_ctl.c:1864
+#, c-format
+msgid "  %s reload   [-D DATADIR] [-s]\n"
+msgstr "  %s reload   [-D 데이터디렉터리] [-s]\n"
+
+#: pg_ctl.c:1865
+#, c-format
+msgid "  %s status   [-D DATADIR]\n"
+msgstr "  %s status   [-D 데이터디렉터리]\n"
+
+#: pg_ctl.c:1866
+#, c-format
+msgid "  %s promote  [-D DATADIR] [-W] [-t SECS] [-s]\n"
+msgstr "  %s promote  [-D 데이터디렉터리] [-W] [-t 초] [-s]\n"
+
+#: pg_ctl.c:1867
+#, c-format
+msgid "  %s kill     SIGNALNAME PID\n"
+msgstr "  %s kill     시그널이름 PID\n"
+
+#: pg_ctl.c:1869
+#, c-format
+msgid ""
+"  %s register [-D DATADIR] [-N SERVICENAME] [-U USERNAME] [-P PASSWORD]\n"
+"                  [-S START-TYPE] [-e SOURCE] [-W] [-t SECS] [-s] [-o "
+"OPTIONS]\n"
+msgstr ""
+"  %s register [-D 데이터디렉터리] [-N 서비스이름] [-U 사용자이름] [-P 암호]\n"
+"                  [-S 시작형태] [-e SOURCE] [-w] [-t 초] [-o 옵션]\n"
+
+#: pg_ctl.c:1871
 #, c-format
 msgid "  %s unregister [-N SERVICENAME]\n"
 msgstr "  %s unregister [-N 서비스이름]\n"
 
-#: pg_ctl.c:1926
+#: pg_ctl.c:1874
 #, c-format
 msgid ""
 "\n"
@@ -567,64 +558,56 @@ msgstr ""
 "\n"
 "일반 옵션들:\n"
 
-#: pg_ctl.c:1927
+#: pg_ctl.c:1875
 #, c-format
 msgid "  -D, --pgdata=DATADIR   location of the database storage area\n"
 msgstr ""
 "  -D, --pgdata=데이터디렉터리  데이터베이스 자료가 저장되어있는 디렉터리\n"
 
-#: pg_ctl.c:1929
+#: pg_ctl.c:1877
 #, c-format
 msgid ""
 "  -e SOURCE              event source for logging when running as a service\n"
 msgstr ""
 "  -e SOURCE              서비스가 실행 중일때 쌓을 로그를 위한 이벤트 소스\n"
 
-#: pg_ctl.c:1931
+#: pg_ctl.c:1879
 #, c-format
 msgid "  -s, --silent           only print errors, no informational messages\n"
 msgstr ""
 "  -s, --silent           일반적인 메시지는 보이지 않고, 오류만 보여줌\n"
 
-#: pg_ctl.c:1932
+#: pg_ctl.c:1880
 #, c-format
 msgid "  -t, --timeout=SECS     seconds to wait when using -w option\n"
 msgstr "  -t, --timeout=초      -w 옵션 사용 시 대기 시간(초)\n"
 
-#: pg_ctl.c:1933
+#: pg_ctl.c:1881
 #, c-format
 msgid "  -V, --version          output version information, then exit\n"
 msgstr "  -V, --version          버전 정보를 보여주고 마침\n"
 
-#: pg_ctl.c:1934
+#: pg_ctl.c:1882
 #, c-format
-msgid "  -w                     wait until operation completes\n"
-msgstr "  -w                     작업이 끝날 때까지 기다림\n"
+msgid "  -w, --wait             wait until operation completes (default)\n"
+msgstr "  -w, --wait             작업이 끝날 때까지 기다림 (기본값)\n"
 
-#: pg_ctl.c:1935
+#: pg_ctl.c:1883
 #, c-format
-msgid "  -W                     do not wait until operation completes\n"
-msgstr "  -W                     작업이 끝날 때까지 기다리지 않음\n"
+msgid "  -W, --no-wait          do not wait until operation completes\n"
+msgstr "  -W, --no-wait          작업이 끝날 때까지 기다리지 않음\n"
 
-#: pg_ctl.c:1936
+#: pg_ctl.c:1884
 #, c-format
 msgid "  -?, --help             show this help, then exit\n"
 msgstr "  -?, --help             이 도움말을 보여주고 마침\n"
 
-#: pg_ctl.c:1937
-#, c-format
-msgid ""
-"(The default is to wait for shutdown, but not for start or restart.)\n"
-"\n"
-msgstr ""
-"(기본 설정은 중지 할 때는 기다리고, 시작이나 재시작할 때는 안 기다림.)\n"
-
-#: pg_ctl.c:1938
+#: pg_ctl.c:1885
 #, c-format
 msgid "If the -D option is omitted, the environment variable PGDATA is used.\n"
 msgstr "-D 옵션을 사용하지 않으면, PGDATA 환경변수값을 사용함.\n"
 
-#: pg_ctl.c:1940
+#: pg_ctl.c:1887
 #, c-format
 msgid ""
 "\n"
@@ -633,36 +616,36 @@ msgstr ""
 "\n"
 "start, restart 때 사용할 수 있는 옵션들:\n"
 
-#: pg_ctl.c:1942
+#: pg_ctl.c:1889
 #, c-format
 msgid "  -c, --core-files       allow postgres to produce core files\n"
 msgstr "  -c, --core-files       코어 덤프 파일을 만듬\n"
 
-#: pg_ctl.c:1944
+#: pg_ctl.c:1891
 #, c-format
 msgid "  -c, --core-files       not applicable on this platform\n"
 msgstr "  -c, --core-files       이 플랫폼에서는 사용할 수 없음\n"
 
-#: pg_ctl.c:1946
+#: pg_ctl.c:1893
 #, c-format
 msgid "  -l, --log=FILENAME     write (or append) server log to FILENAME\n"
 msgstr "  -l, --log=로그파일     서버 로그를 이 로그파일에 기록함\n"
 
-#: pg_ctl.c:1947
+#: pg_ctl.c:1894
 #, c-format
 msgid ""
-"  -o OPTIONS             command line options to pass to postgres\n"
+"  -o, --options=OPTIONS  command line options to pass to postgres\n"
 "                         (PostgreSQL server executable) or initdb\n"
 msgstr ""
-"  -o 옵션들              PostgreSQL 서버프로그램인 postgres나 initdb\n"
+"  -o, --options=옵션들   PostgreSQL 서버프로그램인 postgres나 initdb\n"
 "                         명령에서 사용할 명령행 옵션들\n"
 
-#: pg_ctl.c:1949
+#: pg_ctl.c:1896
 #, c-format
 msgid "  -p PATH-TO-POSTGRES    normally not necessary\n"
 msgstr "  -p PATH-TO-POSTGRES    보통은 필요치 않음\n"
 
-#: pg_ctl.c:1950
+#: pg_ctl.c:1897
 #, c-format
 msgid ""
 "\n"
@@ -671,14 +654,14 @@ msgstr ""
 "\n"
 "stop, restart 때 사용 할 수 있는 옵션들:\n"
 
-#: pg_ctl.c:1951
+#: pg_ctl.c:1898
 #, c-format
 msgid ""
 "  -m, --mode=MODE        MODE can be \"smart\", \"fast\", or \"immediate\"\n"
 msgstr ""
 "  -m, --mode=모드        모드는 \"smart\", \"fast\", \"immediate\" 중 하나\n"
 
-#: pg_ctl.c:1953
+#: pg_ctl.c:1900
 #, c-format
 msgid ""
 "\n"
@@ -687,17 +670,17 @@ msgstr ""
 "\n"
 "중지방법 설명:\n"
 
-#: pg_ctl.c:1954
+#: pg_ctl.c:1901
 #, c-format
 msgid "  smart       quit after all clients have disconnected\n"
 msgstr "  smart       모든 클라이언트의 연결이 끊기게 되면 중지 됨\n"
 
-#: pg_ctl.c:1955
+#: pg_ctl.c:1902
 #, c-format
-msgid "  fast        quit directly, with proper shutdown\n"
-msgstr "  fast        클라이언트의 연결을 강제로 끊고 정상적으로 중지 됨\n"
+msgid "  fast        quit directly, with proper shutdown (default)\n"
+msgstr "  fast        클라이언트의 연결을 강제로 끊고 정상적으로 중지 됨 (기본값)\n"
 
-#: pg_ctl.c:1956
+#: pg_ctl.c:1903
 #, c-format
 msgid ""
 "  immediate   quit without complete shutdown; will lead to recovery on "
@@ -705,7 +688,7 @@ msgid ""
 msgstr ""
 "  immediate   그냥 무조건 중지함; 다시 시작할 때 복구 작업을 할 수도 있음\n"
 
-#: pg_ctl.c:1958
+#: pg_ctl.c:1905
 #, c-format
 msgid ""
 "\n"
@@ -714,7 +697,7 @@ msgstr ""
 "\n"
 "사용할 수 있는 중지용(for kill) 시그널 이름:\n"
 
-#: pg_ctl.c:1962
+#: pg_ctl.c:1909
 #, c-format
 msgid ""
 "\n"
@@ -723,28 +706,28 @@ msgstr ""
 "\n"
 "서비스 등록/제거용 옵션들:\n"
 
-#: pg_ctl.c:1963
+#: pg_ctl.c:1910
 #, c-format
 msgid ""
 "  -N SERVICENAME  service name with which to register PostgreSQL server\n"
 msgstr "  -N SERVICENAME  서비스 목록에 등록될 PostgreSQL 서비스 이름\n"
 
-#: pg_ctl.c:1964
+#: pg_ctl.c:1911
 #, c-format
 msgid "  -P PASSWORD     password of account to register PostgreSQL server\n"
 msgstr "  -P PASSWORD     이 서비스를 실행할 사용자의 암호\n"
 
-#: pg_ctl.c:1965
+#: pg_ctl.c:1912
 #, c-format
 msgid "  -U USERNAME     user name of account to register PostgreSQL server\n"
 msgstr "  -U USERNAME     이 서비스를 실행할 사용자 이름\n"
 
-#: pg_ctl.c:1966
+#: pg_ctl.c:1913
 #, c-format
 msgid "  -S START-TYPE   service start type to register PostgreSQL server\n"
 msgstr "  -S 시작형태     서비스로 등록된 PostgreSQL 서버 시작 방법\n"
 
-#: pg_ctl.c:1968
+#: pg_ctl.c:1915
 #, c-format
 msgid ""
 "\n"
@@ -753,18 +736,18 @@ msgstr ""
 "\n"
 "시작형태 설명:\n"
 
-#: pg_ctl.c:1969
+#: pg_ctl.c:1916
 #, c-format
 msgid ""
 "  auto       start service automatically during system startup (default)\n"
 msgstr "  auto       시스템이 시작되면 자동으로 서비스가 시작됨 (초기값)\n"
 
-#: pg_ctl.c:1970
+#: pg_ctl.c:1917
 #, c-format
 msgid "  demand     start service on demand\n"
 msgstr "  demand     수동 시작\n"
 
-#: pg_ctl.c:1973
+#: pg_ctl.c:1920
 #, c-format
 msgid ""
 "\n"
@@ -773,27 +756,32 @@ msgstr ""
 "\n"
 "오류보고: <pgsql-bugs@postgresql.org>.\n"
 
-#: pg_ctl.c:1998
+#: pg_ctl.c:1945
 #, c-format
 msgid "%s: unrecognized shutdown mode \"%s\"\n"
 msgstr "%s: 잘못된 중지 방법 \"%s\"\n"
 
-#: pg_ctl.c:2030
+#: pg_ctl.c:1977
 #, c-format
 msgid "%s: unrecognized signal name \"%s\"\n"
 msgstr "%s: 잘못된 시그널 이름 \"%s\"\n"
 
-#: pg_ctl.c:2047
+#: pg_ctl.c:1994
 #, c-format
 msgid "%s: unrecognized start type \"%s\"\n"
 msgstr "%s: 알 수 없는 시작형태 \"%s\"\n"
 
-#: pg_ctl.c:2102
+#: pg_ctl.c:2049
 #, c-format
 msgid "%s: could not determine the data directory using command \"%s\"\n"
 msgstr "%s: \"%s\" 명령에서 사용할 데이터 디렉터리를 알 수 없음\n"
 
-#: pg_ctl.c:2175
+#: pg_ctl.c:2074
+#, c-format
+msgid "%s: control file appears to be corrupt\n"
+msgstr "%s: 컨트롤 파일이 깨졌음\n"
+
+#: pg_ctl.c:2144
 #, c-format
 msgid ""
 "%s: cannot be run as root\n"
@@ -804,32 +792,32 @@ msgstr ""
 "시스템관리자 권한이 없는, 서버프로세스의 소유주가 될 일반 사용자로\n"
 "로그인 해서(\"su\", \"runas\" 같은 명령 이용) 실행하십시오.\n"
 
-#: pg_ctl.c:2258
+#: pg_ctl.c:2228
 #, c-format
 msgid "%s: -S option not supported on this platform\n"
 msgstr "%s: -S 옵션은 이 운영체제에서는 지원하지 않음\n"
 
-#: pg_ctl.c:2297
+#: pg_ctl.c:2265
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
 msgstr "%s: 너무 많은 명령행 인수들 (시작 \"%s\")\n"
 
-#: pg_ctl.c:2321
+#: pg_ctl.c:2289
 #, c-format
 msgid "%s: missing arguments for kill mode\n"
 msgstr "%s: kill 작업에 필요한 인수가 빠졌습니다\n"
 
-#: pg_ctl.c:2339
+#: pg_ctl.c:2307
 #, c-format
 msgid "%s: unrecognized operation mode \"%s\"\n"
 msgstr "%s: 알 수 없는 작업 모드 \"%s\"\n"
 
-#: pg_ctl.c:2349
+#: pg_ctl.c:2317
 #, c-format
 msgid "%s: no operation specified\n"
 msgstr "%s: 수행할 작업을 지정하지 않았습니다\n"
 
-#: pg_ctl.c:2370
+#: pg_ctl.c:2338
 #, c-format
 msgid ""
 "%s: no database directory specified and environment variable PGDATA unset\n"

@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-08-04 16:45+0000\n"
-"PO-Revision-Date: 2017-08-04 16:00-0400\n"
+"POT-Creation-Date: 2017-08-17 00:15+0000\n"
+"PO-Revision-Date: 2017-08-17 00:17-0400\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -53,7 +53,7 @@ msgid "%s: could not open file \"%s\": %s\n"
 msgstr "%s: konnte Datei »%s« nicht öffnen: %s\n"
 
 #: ../../common/file_utils.c:304 ../../common/file_utils.c:376
-#: receivelog.c:802 receivelog.c:1059
+#: receivelog.c:804 receivelog.c:1061
 #, c-format
 msgid "%s: could not fsync file \"%s\": %s\n"
 msgstr "%s: konnte Datei »%s« nicht fsyncen: %s\n"
@@ -486,14 +486,14 @@ msgstr "%s: konnte COPY-Datenstrom nicht empfangen: %s"
 msgid "%s: could not close compressed file \"%s\": %s\n"
 msgstr "%s: konnte komprimierte Datei »%s« nicht schließen: %s\n"
 
-#: pg_basebackup.c:1132 pg_recvlogical.c:631 receivelog.c:221 receivelog.c:306
-#: receivelog.c:712
+#: pg_basebackup.c:1132 pg_recvlogical.c:631 receivelog.c:223 receivelog.c:308
+#: receivelog.c:714
 #, c-format
 msgid "%s: could not close file \"%s\": %s\n"
 msgstr "%s: konnte Datei »%s« nicht schließen: %s\n"
 
 #: pg_basebackup.c:1143 pg_basebackup.c:1359 pg_recvlogical.c:453
-#: receivelog.c:1007
+#: receivelog.c:1009
 #, c-format
 msgid "%s: could not read COPY data: %s"
 msgstr "%s: konnte COPY-Daten nicht lesen: %s"
@@ -549,8 +549,8 @@ msgstr "TIPP: -X none oder -X fetch verwenden um Log-Streaming abzuschalten\n"
 msgid "%s: initiating base backup, waiting for checkpoint to complete\n"
 msgstr "%s: Basissicherung eingeleitet, warte auf Abschluss des Checkpoints\n"
 
-#: pg_basebackup.c:1783 pg_recvlogical.c:270 receivelog.c:490 receivelog.c:561
-#: receivelog.c:601 streamutil.c:256 streamutil.c:364 streamutil.c:410
+#: pg_basebackup.c:1783 pg_recvlogical.c:270 receivelog.c:492 receivelog.c:563
+#: receivelog.c:603 streamutil.c:256 streamutil.c:364 streamutil.c:410
 #, c-format
 msgid "%s: could not send replication command \"%s\": %s"
 msgstr "%s: konnte Replikationsbefehl »%s« nicht senden: %s"
@@ -860,7 +860,7 @@ msgstr "%s: konnte komprimierte Datei »%s« nicht öffnen: %s\n"
 
 #: pg_receivewal.c:283
 #, c-format
-msgid "%s: could not seek compressed file \"%s\": %s\n"
+msgid "%s: could not seek in compressed file \"%s\": %s\n"
 msgstr "%s: konnte Positionszeiger in komprimierter Datei »%s« nicht setzen: %s\n"
 
 #: pg_receivewal.c:289
@@ -998,7 +998,7 @@ msgstr "  -d, --dbname=DBNAME    Datenbank, mit der verbunden werden soll\n"
 msgid "%s: confirming write up to %X/%X, flush to %X/%X (slot %s)\n"
 msgstr "%s: bestätige Schreiben bis %X/%X, Flush bis %X/%X (Slot %s)\n"
 
-#: pg_recvlogical.c:160 receivelog.c:349
+#: pg_recvlogical.c:160 receivelog.c:351
 #, c-format
 msgid "%s: could not send feedback packet: %s"
 msgstr "%s: konnte Rückmeldungspaket nicht senden: %s"
@@ -1023,28 +1023,28 @@ msgstr "%s: Streaming eingeleitet\n"
 msgid "%s: could not open log file \"%s\": %s\n"
 msgstr "%s: konnte Logdatei »%s« nicht öffnen: %s\n"
 
-#: pg_recvlogical.c:376 receivelog.c:912
+#: pg_recvlogical.c:376 receivelog.c:914
 #, c-format
 msgid "%s: invalid socket: %s"
 msgstr "%s: ungültiges Socket: %s"
 
-#: pg_recvlogical.c:430 receivelog.c:941
+#: pg_recvlogical.c:430 receivelog.c:943
 #, c-format
 msgid "%s: select() failed: %s\n"
 msgstr "%s: select() fehlgeschlagen: %s\n"
 
-#: pg_recvlogical.c:439 receivelog.c:993
+#: pg_recvlogical.c:439 receivelog.c:995
 #, c-format
 msgid "%s: could not receive data from WAL stream: %s"
 msgstr "%s: konnte keine Daten vom WAL-Stream empfangen: %s"
 
-#: pg_recvlogical.c:481 pg_recvlogical.c:533 receivelog.c:1038
-#: receivelog.c:1105
+#: pg_recvlogical.c:481 pg_recvlogical.c:533 receivelog.c:1040
+#: receivelog.c:1107
 #, c-format
 msgid "%s: streaming header too small: %d\n"
 msgstr "%s: Streaming-Header zu klein: %d\n"
 
-#: pg_recvlogical.c:517 receivelog.c:872
+#: pg_recvlogical.c:517 receivelog.c:874
 #, c-format
 msgid "%s: unrecognized streaming header: \"%c\"\n"
 msgstr "%s: unbekannter Streaming-Header: »%c«\n"
@@ -1054,7 +1054,7 @@ msgstr "%s: unbekannter Streaming-Header: »%c«\n"
 msgid "%s: could not write %u bytes to log file \"%s\": %s\n"
 msgstr "%s: konnte %u Bytes nicht in Logdatei »%s« schreiben: %s\n"
 
-#: pg_recvlogical.c:617 receivelog.c:665 receivelog.c:703
+#: pg_recvlogical.c:617 receivelog.c:667 receivelog.c:705
 #, c-format
 msgid "%s: unexpected termination of replication stream: %s"
 msgstr "%s: unerwarteter Abbruch des Replikations-Streams: %s"
@@ -1131,120 +1131,122 @@ msgstr "%s: konnte bestehende Write-Ahead-Log-Datei »%s« nicht öffnen: %s\n"
 
 #: receivelog.c:139
 #, c-format
-msgid "%s: could not sync existing write-ahead log file \"%s\": %s\n"
-msgstr "%s: konnte bestehende Write-Ahead-Log-Datei »%s« nicht syncen: %s\n"
+msgid "%s: could not fsync existing write-ahead log file \"%s\": %s\n"
+msgstr "%s: konnte bestehende Write-Ahead-Log-Datei »%s« nicht fsyncen: %s\n"
 
 #: receivelog.c:154
 #, c-format
-msgid "%s: write-ahead log file \"%s\" has %d bytes, should be 0 or %d\n"
-msgstr "%s: Write-Ahead-Log-Datei »%s« hat %d Bytes, sollte 0 oder %d sein\n"
+msgid "%s: write-ahead log file \"%s\" has %d byte, should be 0 or %d\n"
+msgid_plural "%s: write-ahead log file \"%s\" has %d bytes, should be 0 or %d\n"
+msgstr[0] "%s: Write-Ahead-Log-Datei »%s« hat %d Byte, sollte 0 oder %d sein\n"
+msgstr[1] "%s: Write-Ahead-Log-Datei »%s« hat %d Bytes, sollte 0 oder %d sein\n"
 
-#: receivelog.c:167
+#: receivelog.c:169
 #, c-format
 msgid "%s: could not open write-ahead log file \"%s\": %s\n"
 msgstr "%s: konnte Write-Ahead-Log-Datei »%s« nicht öffnen: %s\n"
 
-#: receivelog.c:194
+#: receivelog.c:196
 #, c-format
 msgid "%s: could not determine seek position in file \"%s\": %s\n"
 msgstr "%s: konnte Positionszeiger in Datei »%s« nicht ermitteln: %s\n"
 
-#: receivelog.c:209
+#: receivelog.c:211
 #, c-format
 msgid "%s: not renaming \"%s%s\", segment is not complete\n"
 msgstr "%s: »%s%s« wird nicht umbenannt, Segment ist noch nicht vollständig\n"
 
-#: receivelog.c:278
+#: receivelog.c:280
 #, c-format
 msgid "%s: server reported unexpected history file name for timeline %u: %s\n"
 msgstr "%s: Server berichtete unerwarteten History-Dateinamen für Zeitleiste %u: %s\n"
 
-#: receivelog.c:286
+#: receivelog.c:288
 #, c-format
 msgid "%s: could not create timeline history file \"%s\": %s\n"
 msgstr "%s: konnte Zeitleisten-History-Datei »%s« nicht erzeugen: %s\n"
 
-#: receivelog.c:293
+#: receivelog.c:295
 #, c-format
 msgid "%s: could not write timeline history file \"%s\": %s\n"
 msgstr "%s: konnte Zeitleisten-History-Datei »%s« nicht schreiben: %s\n"
 
-#: receivelog.c:383
+#: receivelog.c:385
 #, c-format
 msgid "%s: incompatible server version %s; client does not support streaming from server versions older than %s\n"
 msgstr "%s: inkompatible Serverversion %s; Client unterstützt Streaming nicht mit Serverversionen älter als %s\n"
 
-#: receivelog.c:393
+#: receivelog.c:395
 #, c-format
 msgid "%s: incompatible server version %s; client does not support streaming from server versions newer than %s\n"
 msgstr "%s: inkompatible Serverversion %s; Client unterstützt Streaming nicht mit Serverversionen neuer als %s\n"
 
-#: receivelog.c:498 streamutil.c:265 streamutil.c:304
+#: receivelog.c:500 streamutil.c:265 streamutil.c:304
 #, c-format
 msgid "%s: could not identify system: got %d rows and %d fields, expected %d rows and %d or more fields\n"
 msgstr "%s: konnte System nicht identifizieren: %d Zeilen und %d Felder erhalten, %d Zeilen und %d oder mehr Felder erwartet\n"
 
-#: receivelog.c:506
+#: receivelog.c:508
 #, c-format
 msgid "%s: system identifier does not match between base backup and streaming connection\n"
 msgstr "%s: Systemidentifikator stimmt nicht zwischen Basissicherung und Streaming-Verbindung überein\n"
 
-#: receivelog.c:514
+#: receivelog.c:516
 #, c-format
 msgid "%s: starting timeline %u is not present in the server\n"
 msgstr "%s: Startzeitleiste %u ist auf dem Server nicht vorhanden\n"
 
-#: receivelog.c:533
+#: receivelog.c:535
 #, c-format
 msgid "%s: could not create temporary replication slot \"%s\": %s"
 msgstr "%s: konnte temporären Replikations-Slot »%s« nicht erzeugen: %s"
 
-#: receivelog.c:574
+#: receivelog.c:576
 #, c-format
 msgid "%s: unexpected response to TIMELINE_HISTORY command: got %d rows and %d fields, expected %d rows and %d fields\n"
 msgstr "%s: unerwartete Antwort auf Befehl TIMELINE_HISTORY: %d Zeilen und %d Felder erhalten, %d Zeilen und %d Felder erwartet\n"
 
-#: receivelog.c:646
+#: receivelog.c:648
 #, c-format
 msgid "%s: server reported unexpected next timeline %u, following timeline %u\n"
 msgstr "%s: Server berichtete unerwartete nächste Zeitleiste %u, folgend auf Zeitleiste %u\n"
 
-#: receivelog.c:653
+#: receivelog.c:655
 #, c-format
 msgid "%s: server stopped streaming timeline %u at %X/%X, but reported next timeline %u to begin at %X/%X\n"
 msgstr "%s: Server beendete Streaming von Zeitleiste %u bei %X/%X, aber gab an, dass nächste Zeitleiste %u bei %X/%X beginnt\n"
 
-#: receivelog.c:694
+#: receivelog.c:696
 #, c-format
 msgid "%s: replication stream was terminated before stop point\n"
 msgstr "%s: Replikationsstrom wurde vor Stopppunkt abgebrochen\n"
 
-#: receivelog.c:743
+#: receivelog.c:745
 #, c-format
 msgid "%s: unexpected result set after end-of-timeline: got %d rows and %d fields, expected %d rows and %d fields\n"
 msgstr "%s: unerwartete Ergebnismenge nach Ende der Zeitleiste: %d Zeilen und %d Felder erhalten, %d Zeilen und %d Felder erwartet\n"
 
-#: receivelog.c:753
+#: receivelog.c:755
 #, c-format
 msgid "%s: could not parse next timeline's starting point \"%s\"\n"
 msgstr "%s: konnte Startpunkt der nächsten Zeitleiste (»%s«) nicht interpretieren\n"
 
-#: receivelog.c:1124
+#: receivelog.c:1126
 #, c-format
 msgid "%s: received write-ahead log record for offset %u with no file open\n"
 msgstr "%s: Write-Ahead-Log-Eintrag für Offset %u erhalten ohne offene Datei\n"
 
-#: receivelog.c:1135
+#: receivelog.c:1137
 #, c-format
 msgid "%s: got WAL data offset %08x, expected %08x\n"
 msgstr "%s: WAL-Daten-Offset %08x erhalten, %08x erwartet\n"
 
-#: receivelog.c:1170
+#: receivelog.c:1172
 #, c-format
 msgid "%s: could not write %u bytes to WAL file \"%s\": %s\n"
 msgstr "%s: konnte %u Bytes nicht in WAL-Datei »%s« schreiben: %s\n"
 
-#: receivelog.c:1195 receivelog.c:1236 receivelog.c:1267
+#: receivelog.c:1197 receivelog.c:1238 receivelog.c:1269
 #, c-format
 msgid "%s: could not send copy-end packet: %s"
 msgstr "%s: konnte COPY-Ende-Paket nicht senden: %s"
@@ -1284,33 +1286,33 @@ msgid "%s: could not drop replication slot \"%s\": got %d rows and %d fields, ex
 msgstr "%s: konnte Replikations-Slot »%s« nicht löschen: %d Zeilen und %d Felder erhalten, %d Zeilen und %d Felder erwartet\n"
 
 #: walmethods.c:435 walmethods.c:904
-msgid "deflate failed"
-msgstr "deflate fehlgeschlagen"
+msgid "could not compress data"
+msgstr "konnte Daten nicht komprimieren"
 
 #: walmethods.c:459
-msgid "deflateReset failed"
-msgstr "deflateReset fehlgeschlagen"
+msgid "could not reset compression stream"
+msgstr "konnte Komprimierungsstrom nicht zurücksetzen"
 
 #: walmethods.c:560
-msgid "deflateInit2 failed"
-msgstr "deflateInit2 fehlgeschlagen"
+msgid "could not initialize compression library"
+msgstr "konnte Komprimierungsbibliothek nicht initialisieren"
 
 #: walmethods.c:572
-msgid "implementation error: tar files can't have more than one open file\n"
-msgstr "Implementierungsfehler: Tar-Dateien können nicht mehr als eine offene Datei haben\n"
+msgid "implementation error: tar files can't have more than one open file"
+msgstr "Implementierungsfehler: Tar-Dateien können nicht mehr als eine offene Datei haben"
 
 #: walmethods.c:586
 msgid "could not create tar header"
 msgstr "konnte Tar-Dateikopf nicht erzeugen"
 
 #: walmethods.c:600 walmethods.c:638 walmethods.c:827 walmethods.c:838
-msgid "deflateParams failed"
-msgstr "deflateParams fehlgeschlagen"
+msgid "could not change compression parameters"
+msgstr "konnte Komprimierungsparameter nicht ändern"
 
 #: walmethods.c:720
 msgid "unlink not supported with compression"
 msgstr "Unlink wird bei Komprimierung nicht unterstützt"
 
 #: walmethods.c:920
-msgid "deflateEnd failed"
-msgstr "deflateEnd fehlgeschlagen"
+msgid "could not close compression stream"
+msgstr "konnte Komprimierungsstrom nicht schließen"

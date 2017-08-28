@@ -9,15 +9,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 9.6\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-08-04 02:38+0000\n"
-"PO-Revision-Date: 2017-08-04 19:53+0200\n"
+"POT-Creation-Date: 2017-08-26 21:08+0000\n"
+"PO-Revision-Date: 2017-08-27 09:01+0200\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: PostgreSQLfr <pgsql-fr-generale@postgresql.org>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.0.2\n"
+"X-Generator: Poedit 2.0.3\n"
 
 #: fe-auth-scram.c:176
 msgid "malformed SCRAM message (empty message)\n"
@@ -28,7 +28,7 @@ msgid "malformed SCRAM message (length mismatch)\n"
 msgstr "message SCRAM malformé (pas de correspondance sur la longueur)\n"
 
 #: fe-auth-scram.c:231
-msgid "invalid server signature\n"
+msgid "incorrect server signature\n"
 msgstr "signature invalide du serveur\n"
 
 #: fe-auth-scram.c:240
@@ -37,17 +37,17 @@ msgstr "état d'échange SCRAM invalide\n"
 
 #: fe-auth-scram.c:263
 #, c-format
-msgid "malformed SCRAM message (%c expected)\n"
-msgstr "message SCRAM malformé (%c attendu)\n"
+msgid "malformed SCRAM message (attribute \"%c\" expected)\n"
+msgstr "message SCRAM malformé (attribut « %c » attendu)\n"
 
 #: fe-auth-scram.c:272
 #, c-format
-msgid "malformed SCRAM message (expected = in attr '%c')\n"
-msgstr "message SCRAM malformé (= attendu dans l'attribut '%c')\n"
+msgid "malformed SCRAM message (expected character \"=\" for attribute \"%c\")\n"
+msgstr "message SCRAM malformé (caractère « = » attendu pour l'attribut « %c »)\n"
 
 #: fe-auth-scram.c:311
-msgid "failed to generate nonce\n"
-msgstr "échec pour la génération de nonce\n"
+msgid "could not generate nonce\n"
+msgstr "n'a pas pu générer le nonce\n"
 
 #: fe-auth-scram.c:319 fe-auth-scram.c:336 fe-auth-scram.c:346
 #: fe-auth-scram.c:400 fe-auth-scram.c:420 fe-auth-scram.c:445
@@ -78,8 +78,8 @@ msgstr "message SCRAM malformé (problème à la fin du server-first-message)\n"
 
 #: fe-auth-scram.c:511
 #, c-format
-msgid "error received from server in SASL exchange: %s\n"
-msgstr "réception d'une erreur du serveur dans l'échange SASL : %s\n"
+msgid "error received from server in SCRAM exchange: %s\n"
+msgstr "réception d'une erreur du serveur dans l'échange SCRAM : %s\n"
 
 #: fe-auth-scram.c:526
 msgid "malformed SCRAM message (garbage at end of server-final-message)\n"
@@ -1150,6 +1150,9 @@ msgstr "n'a pas pu transmettre les données au serveur : %s\n"
 #, c-format
 msgid "unrecognized socket error: 0x%08X/%d"
 msgstr "erreur de socket non reconnue : 0x%08X/%d"
+
+#~ msgid "failed to generate nonce\n"
+#~ msgstr "échec pour la génération de nonce\n"
 
 #~ msgid "socket not open\n"
 #~ msgstr "socket non ouvert\n"

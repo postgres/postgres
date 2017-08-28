@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-08-04 16:38+0000\n"
-"PO-Revision-Date: 2017-08-04 17:31-0400\n"
+"POT-Creation-Date: 2017-08-23 16:38+0000\n"
+"PO-Revision-Date: 2017-08-23 14:11-0400\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -25,8 +25,8 @@ msgid "malformed SCRAM message (length mismatch)\n"
 msgstr "fehlerhafte SCRAM-Nachricht (Länge stimmt nicht überein)\n"
 
 #: fe-auth-scram.c:231
-msgid "invalid server signature\n"
-msgstr "ungültige Serversignatur\n"
+msgid "incorrect server signature\n"
+msgstr "falsche Serversignatur\n"
 
 #: fe-auth-scram.c:240
 msgid "invalid SCRAM exchange state\n"
@@ -34,16 +34,16 @@ msgstr "ungültiger Zustand des SCRAM-Austauschs\n"
 
 #: fe-auth-scram.c:263
 #, c-format
-msgid "malformed SCRAM message (%c expected)\n"
-msgstr ""
+msgid "malformed SCRAM message (attribute \"%c\" expected)\n"
+msgstr "fehlerhafte SCRAM-Nachricht (Attribut »%c« erwartet)\n"
 
 #: fe-auth-scram.c:272
 #, c-format
-msgid "malformed SCRAM message (expected = in attr '%c')\n"
-msgstr ""
+msgid "malformed SCRAM message (expected character \"=\" for attribute \"%c\")\n"
+msgstr "fehlerhafte SCRAM-Nachricht (Zeichen »=« für Attribut »%c« erwartet)\n"
 
 #: fe-auth-scram.c:311
-msgid "failed to generate nonce\n"
+msgid "could not generate nonce\n"
 msgstr "konnte Nonce nicht erzeugen\n"
 
 #: fe-auth-scram.c:319 fe-auth-scram.c:336 fe-auth-scram.c:346
@@ -67,20 +67,20 @@ msgstr "ungültige SCRAM-Antwort (Nonce stimmt nicht überein)\n"
 
 #: fe-auth-scram.c:476
 msgid "malformed SCRAM message (invalid iteration count)\n"
-msgstr ""
+msgstr "fehlerhafte SCRAM-Nachricht (ungültige Iterationszahl)\n"
 
 #: fe-auth-scram.c:482
 msgid "malformed SCRAM message (garbage at end of server-first-message)\n"
-msgstr ""
+msgstr "fehlerhafte SCRAM-Nachricht (Müll am Ende der »server-first-message«)\n"
 
 #: fe-auth-scram.c:511
 #, c-format
-msgid "error received from server in SASL exchange: %s\n"
-msgstr "Fehler vom Server empfangen im SASL-Austausch: %s\n"
+msgid "error received from server in SCRAM exchange: %s\n"
+msgstr "Fehler vom Server empfangen im SCRAM-Austausch: %s\n"
 
 #: fe-auth-scram.c:526
 msgid "malformed SCRAM message (garbage at end of server-final-message)\n"
-msgstr ""
+msgstr "fehlerhafte SCRAM-Nachricht (Müll am Ende der »server-final-message«)\n"
 
 #: fe-auth-scram.c:534
 msgid "malformed SCRAM message (invalid server signature)\n"

@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-08-04 15:37+0000\n"
-"PO-Revision-Date: 2017-08-04 13:01-0400\n"
+"POT-Creation-Date: 2017-08-17 00:07+0000\n"
+"PO-Revision-Date: 2017-08-17 00:11-0400\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -407,8 +407,8 @@ msgstr "Anzahl der Arraydimensionen überschreitet erlaubtes Maximum (%d)"
 
 #: plpy_typeio.c:1005
 #, c-format
-msgid "cannot determine sequence length for function return value"
-msgstr "kann Sequenzlänge für Funktionsrückgabewert nicht ermitteln"
+msgid "could not determine sequence length for function return value"
+msgstr "konnte Sequenzlänge für Funktionsrückgabewert nicht ermitteln"
 
 #: plpy_typeio.c:1008 plpy_typeio.c:1012
 #, c-format
@@ -421,10 +421,14 @@ msgid "return value of function with array return type is not a Python sequence"
 msgstr "Rückgabewert von Funktion mit Array-Rückgabetyp ist keine Python-Sequenz"
 
 #: plpy_typeio.c:1091
-#, fuzzy, c-format
-#| msgid "multidimensional arrays must have array expressions with matching dimensions"
-msgid "multidimensional arrays must have array expressions with matching dimensions. PL/Python function return value has sequence length %d while expected %d"
-msgstr "mehrdimensionale Arrays müssen Arraysausdrücke mit gleicher Anzahl Dimensionen haben"
+#, c-format
+msgid "wrong length of inner sequence: has length %d, but %d was expected"
+msgstr "falsche Länge der inneren Sequenz: hat Länge %d, aber %d wurde erwartet"
+
+#: plpy_typeio.c:1093
+#, c-format
+msgid "To construct a multidimensional array, the inner sequences must all have the same length."
+msgstr "Um ein mehrdimensionales Array zu konstruieren, müssen die inneren Sequenzen alle die gleiche Länge haben."
 
 #: plpy_typeio.c:1213
 #, c-format
