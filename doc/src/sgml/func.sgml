@@ -6351,11 +6351,11 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
       <tbody>
        <row>
         <entry><literal>9</literal></entry>
-        <entry>value with the specified number of digits</entry>
+        <entry>digit position (can be dropped if insignificant)</entry>
        </row>
        <row>
         <entry><literal>0</literal></entry>
-        <entry>value with leading zeros</entry>
+        <entry>digit position (will not be dropped, even if insignificant)</entry>
        </row>
        <row>
         <entry><literal>.</literal> (period)</entry>
@@ -6363,7 +6363,7 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
        </row>
        <row>
         <entry><literal>,</literal> (comma)</entry>
-        <entry>group (thousand) separator</entry>
+        <entry>group (thousands) separator</entry>
        </row>
        <row>
         <entry><literal>PR</literal></entry>
@@ -6423,23 +6423,48 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
     <itemizedlist>
      <listitem>
       <para>
-       A sign formatted using <literal>SG</literal>, <literal>PL</literal>, or
-       <literal>MI</literal> is not anchored to
-       the number; for example,
-       <literal>to_char(-12, 'MI9999')</literal> produces <literal>'-&nbsp;&nbsp;12'</literal>
-       but <literal>to_char(-12, 'S9999')</literal> produces <literal>'&nbsp;&nbsp;-12'</literal>.
-       The Oracle implementation does not allow the use of
-       <literal>MI</literal> before <literal>9</literal>, but rather
-       requires that <literal>9</literal> precede
-       <literal>MI</literal>.
+       <literal>0</> specifies a digit position that will always be printed,
+       even if it contains a leading/trailing zero.  <literal>9</> also
+       specifies a digit position, but if it is a leading zero then it will
+       be replaced by a space, while if it is a trailing zero and fill mode
+       is specified then it will be deleted.  (For <function>to_number()</>,
+       these two pattern characters are equivalent.)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       <literal>9</literal> results in a value with the same number of
-       digits as there are <literal>9</literal>s. If a digit is
-       not available it outputs a space.
+       The pattern characters <literal>S</>, <literal>L</>, <literal>D</>,
+       and <literal>G</> represent the sign, currency symbol, decimal point,
+       and thousands separator characters defined by the current locale
+       (see <xref linkend="guc-lc-monetary">
+       and <xref linkend="guc-lc-numeric">).  The pattern characters period
+       and comma represent those exact characters, with the meanings of
+       decimal point and thousands separator, regardless of locale.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       If no explicit provision is made for a sign
+       in <function>to_char()</>'s pattern, one column will be reserved for
+       the sign, and it will be anchored to (appear just left of) the
+       number.  If <literal>S</> appears just left of some <literal>9</>'s,
+       it will likewise be anchored to the number.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       A sign formatted using <literal>SG</literal>, <literal>PL</literal>, or
+       <literal>MI</literal> is not anchored to
+       the number; for example,
+       <literal>to_char(-12, 'MI9999')</literal> produces <literal>'-&nbsp;&nbsp;12'</literal>
+       but <literal>to_char(-12, 'S9999')</literal> produces <literal>'&nbsp;&nbsp;-12'</literal>.
+       (The Oracle implementation does not allow the use of
+       <literal>MI</literal> before <literal>9</literal>, but rather
+       requires that <literal>9</literal> precede
+       <literal>MI</literal>.)
       </para>
      </listitem>
 
@@ -6486,8 +6511,8 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
 
    <para>
     Certain modifiers can be applied to any template pattern to alter its
-    behavior.  For example, <literal>FM9999</literal>
-    is the <literal>9999</literal> pattern with the
+    behavior.  For example, <literal>FM99.99</literal>
+    is the <literal>99.99</literal> pattern with the
     <literal>FM</literal> modifier.
     <xref linkend="functions-formatting-numericmod-table"> shows the
     modifier patterns for numeric formatting.
@@ -6506,8 +6531,8 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
       <tbody>
        <row>
         <entry><literal>FM</literal> prefix</entry>
-        <entry>fill mode (suppress leading zeroes and padding blanks)</entry>
-        <entry><literal>FM9999</literal></entry>
+        <entry>fill mode (suppress trailing zeroes and padding blanks)</entry>
+        <entry><literal>FM99.99</literal></entry>
        </row>
        <row>
         <entry><literal>TH</literal> suffix</entry>
@@ -6553,6 +6578,10 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
        <row>
         <entry><literal>to_char(-0.1, 'FM9.99')</literal></entry>
         <entry><literal>'-.1'</literal></entry>
+       </row>
+       <row>
+        <entry><literal>to_char(-0.1, 'FM90.99')</literal></entry>
+        <entry><literal>'-0.1'</literal></entry>
        </row>
        <row>
         <entry><literal>to_char(0.1, '0.9')</literal></entry>
