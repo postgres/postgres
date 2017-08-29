@@ -757,3 +757,124 @@ ExecShutdownNode(PlanState *node)
 
 	return false;
 }
+
+/*
+ * ExecSetTupleBound
+ *
+ * Set a tuple bound for a planstate node.  This lets child plan nodes
+ * optimize based on the knowledge that the maximum number of tuples that
+ * their parent will demand is limited.  The tuple bound for a node may
+ * only be changed between scans (i.e., after node initialization or just
+ * before an ExecReScan call).
+ *
+ * Any negative tuples_needed value means "no limit", which should be the
+ * default assumption when this is not called at all for a particular node.
+ *
+ * Note: if this is called repeatedly on a plan tree, the exact same set
+ * of nodes must be updated with the new limit each time; be careful that
+ * only unchanging conditions are tested here.
+ */
+void
+ExecSetTupleBound(int64 tuples_needed, PlanState *child_node)
+{
+	/*
+	 * Since this function recurses, in principle we should check stack depth
+	 * here.  In practice, it's probably pointless since the earlier node
+	 * initialization tree traversal would surely have consumed more stack.
+	 */
+
+	if (IsA(child_node, SortState))
+	{
+		/*
+		 * If it is a Sort node, notify it that it can use bounded sort.
+		 *
+		 * Note: it is the responsibility of nodeSort.c to react properly to
+		 * changes of these parameters.  If we ever redesign this, it'd be a
+		 * good idea to integrate this signaling with the parameter-change
+		 * mechanism.
+		 */
+		SortState  *sortState = (SortState *) child_node;
+
+		if (tuples_needed < 0)
+		{
+			/* make sure flag gets reset if needed upon rescan */
+			sortState->bounded = false;
+		}
+		else
+		{
+			sortState->bounded = true;
+			sortState->bound = tuples_needed;
+		}
+	}
+	else if (IsA(child_node, MergeAppendState))
+	{
+		/*
+		 * If it is a MergeAppend, we can apply the bound to any nodes that
+		 * are children of the MergeAppend, since the MergeAppend surely need
+		 * read no more than that many tuples from any one input.
+		 */
+		MergeAppendState *maState = (MergeAppendState *) child_node;
+		int			i;
+
+		for (i = 0; i < maState->ms_nplans; i++)
+			ExecSetTupleBound(tuples_needed, maState->mergeplans[i]);
+	}
+	else if (IsA(child_node, ResultState))
+	{
+		/*
+		 * Similarly, for a projecting Result, we can apply the bound to its
+		 * child node.
+		 *
+		 * If Result supported qual checking, we'd have to punt on seeing a
+		 * qual.  Note that having a resconstantqual is not a showstopper: if
+		 * that condition succeeds it affects nothing, while if it fails, no
+		 * rows will be demanded from the Result child anyway.
+		 */
+		if (outerPlanState(child_node))
+			ExecSetTupleBound(tuples_needed, outerPlanState(child_node));
+	}
+	else if (IsA(child_node, SubqueryScanState))
+	{
+		/*
+		 * We can also descend through SubqueryScan, but only if it has no
+		 * qual (otherwise it might discard rows).
+		 */
+		SubqueryScanState *subqueryState = (SubqueryScanState *) child_node;
+
+		if (subqueryState->ss.ps.qual == NULL)
+			ExecSetTupleBound(tuples_needed, subqueryState->subplan);
+	}
+	else if (IsA(child_node, GatherState))
+	{
+		/*
+		 * A Gather node can propagate the bound to its workers.  As with
+		 * MergeAppend, no one worker could possibly need to return more
+		 * tuples than the Gather itself needs to.
+		 *
+		 * Note: As with Sort, the Gather node is responsible for reacting
+		 * properly to changes to this parameter.
+		 */
+		GatherState *gstate = (GatherState *) child_node;
+
+		gstate->tuples_needed = tuples_needed;
+
+		/* Also pass down the bound to our own copy of the child plan */
+		ExecSetTupleBound(tuples_needed, outerPlanState(child_node));
+	}
+	else if (IsA(child_node, GatherMergeState))
+	{
+		/* Same comments as for Gather */
+		GatherMergeState *gstate = (GatherMergeState *) child_node;
+
+		gstate->tuples_needed = tuples_needed;
+
+		ExecSetTupleBound(tuples_needed, outerPlanState(child_node));
+	}
+
+	/*
+	 * In principle we could descend through any plan node type that is
+	 * certain not to discard or combine input rows; but on seeing a node that
+	 * can do that, we can't propagate the bound any further.  For the moment
+	 * it's unclear that any other cases are worth checking here.
+	 */
+}

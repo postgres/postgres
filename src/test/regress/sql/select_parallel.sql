@@ -118,13 +118,20 @@ explain (costs off)
 
 select count(*) from tenk1 group by twenty;
 
+reset enable_hashagg;
+
+-- gather merge test with a LIMIT
+explain (costs off)
+  select fivethous from tenk1 order by fivethous limit 4;
+
+select fivethous from tenk1 order by fivethous limit 4;
+
 -- gather merge test with 0 worker
 set max_parallel_workers = 0;
 explain (costs off)
    select string4 from tenk1 order by string4 limit 5;
 select string4 from tenk1 order by string4 limit 5;
 reset max_parallel_workers;
-reset enable_hashagg;
 
 SAVEPOINT settings;
 SET LOCAL force_parallel_mode = 1;

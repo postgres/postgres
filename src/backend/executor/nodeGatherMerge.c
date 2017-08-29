@@ -77,6 +77,7 @@ ExecInitGatherMerge(GatherMerge *node, EState *estate, int eflags)
 	gm_state->ps.plan = (Plan *) node;
 	gm_state->ps.state = estate;
 	gm_state->ps.ExecProcNode = ExecGatherMerge;
+	gm_state->tuples_needed = -1;
 
 	/*
 	 * Miscellaneous initialization
@@ -190,7 +191,8 @@ ExecGatherMerge(PlanState *pstate)
 			if (!node->pei)
 				node->pei = ExecInitParallelPlan(node->ps.lefttree,
 												 estate,
-												 gm->num_workers);
+												 gm->num_workers,
+												 node->tuples_needed);
 
 			/* Try to launch workers. */
 			pcxt = node->pei->pcxt;

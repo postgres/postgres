@@ -1919,6 +1919,7 @@ typedef struct GatherState
 	struct TupleQueueReader **reader;
 	TupleTableSlot *funnel_slot;
 	bool		need_to_scan_locally;
+	int64		tuples_needed;	/* tuple bound, see ExecSetTupleBound */
 } GatherState;
 
 /* ----------------
@@ -1944,6 +1945,7 @@ typedef struct GatherMergeState
 	struct binaryheap *gm_heap; /* binary heap of slot indices */
 	bool		gm_initialized; /* gather merge initilized ? */
 	bool		need_to_scan_locally;
+	int64		tuples_needed;	/* tuple bound, see ExecSetTupleBound */
 	int			gm_nkeys;
 	SortSupport gm_sortkeys;	/* array of length ms_nkeys */
 	struct GMReaderTupleBuffer *gm_tuple_buffers;	/* tuple buffer per reader */

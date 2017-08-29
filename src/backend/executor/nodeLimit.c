@@ -27,7 +27,7 @@
 #include "nodes/nodeFuncs.h"
 
 static void recompute_limits(LimitState *node);
-static void pass_down_bound(LimitState *node, PlanState *child_node);
+static int64 compute_tuples_needed(LimitState *node);
 
 
 /* ----------------------------------------------------------------
@@ -297,92 +297,26 @@ recompute_limits(LimitState *node)
 	/* Set state-machine state */
 	node->lstate = LIMIT_RESCAN;
 
-	/* Notify child node about limit, if useful */
-	pass_down_bound(node, outerPlanState(node));
+	/*
+	 * Notify child node about limit.  Note: think not to "optimize" by
+	 * skipping ExecSetTupleBound if compute_tuples_needed returns < 0.  We
+	 * must update the child node anyway, in case this is a rescan and the
+	 * previous time we got a different result.
+	 */
+	ExecSetTupleBound(compute_tuples_needed(node), outerPlanState(node));
 }
 
 /*
- * If we have a COUNT, and our input is a Sort node, notify it that it can
- * use bounded sort.  We can also pass down the bound through plan nodes
- * that cannot remove or combine input rows; for example, if our input is a
- * MergeAppend, we can apply the same bound to any Sorts that are direct
- * children of the MergeAppend, since the MergeAppend surely need not read
- * more than that many tuples from any one input.
- *
- * This is a bit of a kluge, but we don't have any more-abstract way of
- * communicating between the two nodes; and it doesn't seem worth trying
- * to invent one without some more examples of special communication needs.
- *
- * Note: it is the responsibility of nodeSort.c to react properly to
- * changes of these parameters.  If we ever do redesign this, it'd be a
- * good idea to integrate this signaling with the parameter-change mechanism.
+ * Compute the maximum number of tuples needed to satisfy this Limit node.
+ * Return a negative value if there is not a determinable limit.
  */
-static void
-pass_down_bound(LimitState *node, PlanState *child_node)
+static int64
+compute_tuples_needed(LimitState *node)
 {
-	/*
-	 * Since this function recurses, in principle we should check stack depth
-	 * here.  In practice, it's probably pointless since the earlier node
-	 * initialization tree traversal would surely have consumed more stack.
-	 */
-
-	if (IsA(child_node, SortState))
-	{
-		SortState  *sortState = (SortState *) child_node;
-		int64		tuples_needed = node->count + node->offset;
-
-		/* negative test checks for overflow in sum */
-		if (node->noCount || tuples_needed < 0)
-		{
-			/* make sure flag gets reset if needed upon rescan */
-			sortState->bounded = false;
-		}
-		else
-		{
-			sortState->bounded = true;
-			sortState->bound = tuples_needed;
-		}
-	}
-	else if (IsA(child_node, MergeAppendState))
-	{
-		/* Pass down the bound through MergeAppend */
-		MergeAppendState *maState = (MergeAppendState *) child_node;
-		int			i;
-
-		for (i = 0; i < maState->ms_nplans; i++)
-			pass_down_bound(node, maState->mergeplans[i]);
-	}
-	else if (IsA(child_node, ResultState))
-	{
-		/*
-		 * We also have to be prepared to look through a Result, since the
-		 * planner might stick one atop MergeAppend for projection purposes.
-		 *
-		 * If Result supported qual checking, we'd have to punt on seeing a
-		 * qual.  Note that having a resconstantqual is not a showstopper: if
-		 * that fails we're not getting any rows at all.
-		 */
-		if (outerPlanState(child_node))
-			pass_down_bound(node, outerPlanState(child_node));
-	}
-	else if (IsA(child_node, SubqueryScanState))
-	{
-		/*
-		 * We can also look through SubqueryScan, but only if it has no qual
-		 * (otherwise it might discard rows).
-		 */
-		SubqueryScanState *subqueryState = (SubqueryScanState *) child_node;
-
-		if (subqueryState->ss.ps.qual == NULL)
-			pass_down_bound(node, subqueryState->subplan);
-	}
-
-	/*
-	 * In principle we could look through any plan node type that is certain
-	 * not to discard or combine input rows.  In practice, there are not many
-	 * node types that the planner might put between Sort and Limit, so trying
-	 * to be very general is not worth the trouble.
-	 */
+	if (node->noCount)
+		return -1;
+	/* Note: if this overflows, we'll return a negative value, which is OK */
+	return node->count + node->offset;
 }
 
 /* ----------------------------------------------------------------

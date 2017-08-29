@@ -72,6 +72,7 @@ ExecInitGather(Gather *node, EState *estate, int eflags)
 	gatherstate->ps.state = estate;
 	gatherstate->ps.ExecProcNode = ExecGather;
 	gatherstate->need_to_scan_locally = !node->single_copy;
+	gatherstate->tuples_needed = -1;
 
 	/*
 	 * Miscellaneous initialization
@@ -156,7 +157,8 @@ ExecGather(PlanState *pstate)
 			if (!node->pei)
 				node->pei = ExecInitParallelPlan(node->ps.lefttree,
 												 estate,
-												 gather->num_workers);
+												 gather->num_workers,
+												 node->tuples_needed);
 
 			/*
 			 * Register backend workers. We might not get as many as we
