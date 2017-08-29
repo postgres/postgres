@@ -3199,9 +3199,10 @@ void PQclear(PGresult *res);
 
      <listitem>
       <para>
-       Returns the number of rows (tuples) in the query result.  Because
-       it returns an integer result, large result sets might overflow the
-       return value on 32-bit operating systems.
+       Returns the number of rows (tuples) in the query result.
+       (Note that <structname>PGresult</> objects are limited to no more
+       than <literal>INT_MAX</> rows, so an <type>int</> result is
+       sufficient.)
 
 <synopsis>
 int PQntuples(const PGresult *res);
