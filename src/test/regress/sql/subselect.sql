@@ -547,7 +547,7 @@ drop function tattle(x int, y int);
 -- ANALYZE shows that a top-N sort was used.  We must suppress or filter away
 -- all the non-invariant parts of the EXPLAIN ANALYZE output.
 --
-create temp table sq_limit (pk int primary key, c1 int, c2 int);
+create table sq_limit (pk int primary key, c1 int, c2 int);
 insert into sq_limit values
     (1, 1, 1),
     (2, 2, 2),
@@ -567,6 +567,8 @@ begin
         select * from (select pk,c2 from sq_limit order by c1,pk) as x limit 3
     loop
         ln := regexp_replace(ln, 'Memory: \S*',  'Memory: xxx');
+        -- this case might occur if force_parallel_mode is on:
+        ln := regexp_replace(ln, 'Worker 0:  Sort Method',  'Sort Method');
         return next ln;
     end loop;
 end;
@@ -577,3 +579,5 @@ select * from explain_sq_limit();
 select * from (select pk,c2 from sq_limit order by c1,pk) as x limit 3;
 
 drop function explain_sq_limit();
+
+drop table sq_limit;

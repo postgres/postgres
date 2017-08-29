@@ -3227,13 +3227,10 @@ tuplesort_restorepos(Tuplesortstate *state)
  *
  * This can be called after tuplesort_performsort() finishes to obtain
  * printable summary information about how the sort was performed.
- * spaceUsed is measured in kilobytes.
  */
 void
 tuplesort_get_stats(Tuplesortstate *state,
-					const char **sortMethod,
-					const char **spaceType,
-					long *spaceUsed)
+					TuplesortInstrumentation *stats)
 {
 	/*
 	 * Note: it might seem we should provide both memory and disk usage for a
@@ -3246,33 +3243,66 @@ tuplesort_get_stats(Tuplesortstate *state,
 	 */
 	if (state->tapeset)
 	{
-		*spaceType = "Disk";
-		*spaceUsed = LogicalTapeSetBlocks(state->tapeset) * (BLCKSZ / 1024);
+		stats->spaceType = SORT_SPACE_TYPE_DISK;
+		stats->spaceUsed = LogicalTapeSetBlocks(state->tapeset) * (BLCKSZ / 1024);
 	}
 	else
 	{
-		*spaceType = "Memory";
-		*spaceUsed = (state->allowedMem - state->availMem + 1023) / 1024;
+		stats->spaceType = SORT_SPACE_TYPE_MEMORY;
+		stats->spaceUsed = (state->allowedMem - state->availMem + 1023) / 1024;
 	}
 
 	switch (state->status)
 	{
 		case TSS_SORTEDINMEM:
 			if (state->boundUsed)
-				*sortMethod = "top-N heapsort";
+				stats->sortMethod = SORT_TYPE_TOP_N_HEAPSORT;
 			else
-				*sortMethod = "quicksort";
+				stats->sortMethod = SORT_TYPE_QUICKSORT;
 			break;
 		case TSS_SORTEDONTAPE:
-			*sortMethod = "external sort";
+			stats->sortMethod = SORT_TYPE_EXTERNAL_SORT;
 			break;
 		case TSS_FINALMERGE:
-			*sortMethod = "external merge";
+			stats->sortMethod = SORT_TYPE_EXTERNAL_MERGE;
 			break;
 		default:
-			*sortMethod = "still in progress";
+			stats->sortMethod = SORT_TYPE_STILL_IN_PROGRESS;
 			break;
 	}
+}
+
+/*
+ * Convert TuplesortMethod to a string.
+ */
+const char *
+tuplesort_method_name(TuplesortMethod m)
+{
+	switch (m)
+	{
+		case SORT_TYPE_STILL_IN_PROGRESS:
+			return "still in progress";
+		case SORT_TYPE_TOP_N_HEAPSORT:
+			return "top-N heapsort";
+		case SORT_TYPE_QUICKSORT:
+			return "quicksort";
+		case SORT_TYPE_EXTERNAL_SORT:
+			return "external sort";
+		case SORT_TYPE_EXTERNAL_MERGE:
+			return "external merge";
+	}
+
+	return "unknown";
+}
+
+/*
+ * Convert TuplesortSpaceType to a string.
+ */
+const char *
+tuplesort_space_type_name(TuplesortSpaceType t)
+{
+	Assert(t == SORT_SPACE_TYPE_DISK || t == SORT_SPACE_TYPE_MEMORY);
+	return t == SORT_SPACE_TYPE_DISK ? "Disk" : "Memory";
 }
 
 

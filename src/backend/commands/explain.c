@@ -2292,15 +2292,21 @@ show_tablesample(TableSampleClause *tsc, PlanState *planstate,
 static void
 show_sort_info(SortState *sortstate, ExplainState *es)
 {
-	if (es->analyze && sortstate->sort_Done &&
-		sortstate->tuplesortstate != NULL)
+	if (!es->analyze)
+		return;
+
+	if (sortstate->sort_Done && sortstate->tuplesortstate != NULL)
 	{
 		Tuplesortstate *state = (Tuplesortstate *) sortstate->tuplesortstate;
+		TuplesortInstrumentation stats;
 		const char *sortMethod;
 		const char *spaceType;
 		long		spaceUsed;
 
-		tuplesort_get_stats(state, &sortMethod, &spaceType, &spaceUsed);
+		tuplesort_get_stats(state, &stats);
+		sortMethod = tuplesort_method_name(stats.sortMethod);
+		spaceType = tuplesort_space_type_name(stats.spaceType);
+		spaceUsed = stats.spaceUsed;
 
 		if (es->format == EXPLAIN_FORMAT_TEXT)
 		{
@@ -2314,6 +2320,51 @@ show_sort_info(SortState *sortstate, ExplainState *es)
 			ExplainPropertyLong("Sort Space Used", spaceUsed, es);
 			ExplainPropertyText("Sort Space Type", spaceType, es);
 		}
+	}
+
+	if (sortstate->shared_info != NULL)
+	{
+		int			n;
+		bool		opened_group = false;
+
+		for (n = 0; n < sortstate->shared_info->num_workers; n++)
+		{
+			TuplesortInstrumentation *sinstrument;
+			const char *sortMethod;
+			const char *spaceType;
+			long		spaceUsed;
+
+			sinstrument = &sortstate->shared_info->sinstrument[n];
+			if (sinstrument->sortMethod == SORT_TYPE_STILL_IN_PROGRESS)
+				continue;		/* ignore any unfilled slots */
+			sortMethod = tuplesort_method_name(sinstrument->sortMethod);
+			spaceType = tuplesort_space_type_name(sinstrument->spaceType);
+			spaceUsed = sinstrument->spaceUsed;
+
+			if (es->format == EXPLAIN_FORMAT_TEXT)
+			{
+				appendStringInfoSpaces(es->str, es->indent * 2);
+				appendStringInfo(es->str,
+								 "Worker %d:  Sort Method: %s  %s: %ldkB\n",
+								 n, sortMethod, spaceType, spaceUsed);
+			}
+			else
+			{
+				if (!opened_group)
+				{
+					ExplainOpenGroup("Workers", "Workers", false, es);
+					opened_group = true;
+				}
+				ExplainOpenGroup("Worker", NULL, true, es);
+				ExplainPropertyInteger("Worker Number", n, es);
+				ExplainPropertyText("Sort Method", sortMethod, es);
+				ExplainPropertyLong("Sort Space Used", spaceUsed, es);
+				ExplainPropertyText("Sort Space Type", spaceType, es);
+				ExplainCloseGroup("Worker", NULL, true, es);
+			}
+		}
+		if (opened_group)
+			ExplainCloseGroup("Workers", "Workers", false, es);
 	}
 }
 
