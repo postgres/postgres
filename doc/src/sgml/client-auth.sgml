@@ -320,7 +320,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
        <literal>hostssl</literal>, and <literal>hostnossl</> records.
       </para>
 
-      <sidebar>
+      <note>
        <para>
         Users sometimes wonder why host names are handled
         in this seemingly complicated way, with two name resolutions
@@ -350,7 +350,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
         implementations of host name-based access control, such as the
         Apache HTTP Server and TCP Wrappers.
        </para>
-      </sidebar>
+      </note>
      </listitem>
     </varlistentry>
 
