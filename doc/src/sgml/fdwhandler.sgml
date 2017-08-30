@@ -1191,12 +1191,12 @@ ImportForeignSchema (ImportForeignSchemaStmt *stmt, Oid serverOid);
     <para>
      A <structname>ForeignScan</> node can, optionally, support parallel
      execution.  A parallel <structname>ForeignScan</> will be executed
-     in multiple processes and should return each row only once across
+     in multiple processes and must return each row exactly once across
      all cooperating processes.  To do this, processes can coordinate through
-     fixed size chunks of dynamic shared memory.  This shared memory is not
-     guaranteed to be mapped at the same address in every process, so pointers
-     may not be used.  The following callbacks are all optional in general,
-     but required if parallel execution is to be supported.
+     fixed-size chunks of dynamic shared memory.  This shared memory is not
+     guaranteed to be mapped at the same address in every process, so it
+     must not contain pointers.  The following functions are all optional,
+     but most are required if parallel execution is to be supported.
     </para>
 
     <para>
@@ -1215,7 +1215,7 @@ IsForeignScanParallelSafe(PlannerInfo *root, RelOptInfo *rel,
     </para>
 
     <para>
-    If this callback is not defined, it is assumed that the scan must take
+    If this function is not defined, it is assumed that the scan must take
     place within the parallel leader.  Note that returning true does not mean
     that the scan itself can be done in parallel, only that the scan can be
     performed within a parallel worker.  Therefore, it can be useful to define
@@ -1230,6 +1230,9 @@ EstimateDSMForeignScan(ForeignScanState *node, ParallelContext *pcxt);
     Estimate the amount of dynamic shared memory that will be required
     for parallel operation.  This may be higher than the amount that will
     actually be used, but it must not be lower.  The return value is in bytes.
+    This function is optional, and can be omitted if not needed; but if it
+    is omitted, the next three functions must be omitted as well, because
+    no shared memory will be allocated for the FDW's use.
     </para>
 
     <para>
@@ -1239,8 +1242,25 @@ InitializeDSMForeignScan(ForeignScanState *node, ParallelContext *pcxt,
                          void *coordinate);
 </programlisting>
     Initialize the dynamic shared memory that will be required for parallel
-    operation; <literal>coordinate</> points to an amount of allocated space
-    equal to the return value of <function>EstimateDSMForeignScan</>.
+    operation.  <literal>coordinate</> points to a shared memory area of
+    size equal to the return value of <function>EstimateDSMForeignScan</>.
+    This function is optional, and can be omitted if not needed.
+   </para>
+
+    <para>
+<programlisting>
+void
+ReInitializeDSMForeignScan(ForeignScanState *node, ParallelContext *pcxt,
+                           void *coordinate);
+</programlisting>
+    Re-initialize the dynamic shared memory required for parallel operation
+    when the foreign-scan plan node is about to be re-scanned.
+    This function is optional, and can be omitted if not needed.
+    Recommended practice is that this function reset only shared state,
+    while the <function>ReScanForeignScan</> function resets only local
+    state.  Currently, this function will be called
+    before <function>ReScanForeignScan</>, but it's best not to rely on
+    that ordering.
    </para>
 
    <para>
@@ -1249,10 +1269,9 @@ void
 InitializeWorkerForeignScan(ForeignScanState *node, shm_toc *toc,
                             void *coordinate);
 </programlisting>
-    Initialize a parallel worker's custom state based on the shared state
-    set up in the leader by <literal>InitializeDSMForeignScan</>.
-    This callback is optional, and needs only be supplied if this
-    custom path supports parallel execution.
+    Initialize a parallel worker's local state based on the shared state
+    set up by the leader during <function>InitializeDSMForeignScan</>.
+    This function is optional, and can be omitted if not needed.
    </para>
 
    <para>

@@ -136,6 +136,9 @@ typedef struct CustomExecMethods
 	void		(*InitializeDSMCustomScan) (CustomScanState *node,
 											ParallelContext *pcxt,
 											void *coordinate);
+	void		(*ReInitializeDSMCustomScan) (CustomScanState *node,
+											  ParallelContext *pcxt,
+											  void *coordinate);
 	void		(*InitializeWorkerCustomScan) (CustomScanState *node,
 											   shm_toc *toc,
 											   void *coordinate);

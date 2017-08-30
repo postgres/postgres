@@ -1525,25 +1525,6 @@ heap_rescan(HeapScanDesc scan,
 	 * reinitialize scan descriptor
 	 */
 	initscan(scan, key, true);
-
-	/*
-	 * reset parallel scan, if present
-	 */
-	if (scan->rs_parallel != NULL)
-	{
-		ParallelHeapScanDesc parallel_scan;
-
-		/*
-		 * Caller is responsible for making sure that all workers have
-		 * finished the scan before calling this, so it really shouldn't be
-		 * necessary to acquire the mutex at all.  We acquire it anyway, just
-		 * to be tidy.
-		 */
-		parallel_scan = scan->rs_parallel;
-		SpinLockAcquire(&parallel_scan->phs_mutex);
-		parallel_scan->phs_cblock = parallel_scan->phs_startblock;
-		SpinLockRelease(&parallel_scan->phs_mutex);
-	}
 }
 
 /* ----------------
@@ -1638,6 +1619,25 @@ heap_parallelscan_initialize(ParallelHeapScanDesc target, Relation relation,
 	target->phs_cblock = InvalidBlockNumber;
 	target->phs_startblock = InvalidBlockNumber;
 	SerializeSnapshot(snapshot, target->phs_snapshot_data);
+}
+
+/* ----------------
+ *		heap_parallelscan_reinitialize - reset a parallel scan
+ *
+ *		Call this in the leader process.  Caller is responsible for
+ *		making sure that all workers have finished the scan beforehand.
+ * ----------------
+ */
+void
+heap_parallelscan_reinitialize(ParallelHeapScanDesc parallel_scan)
+{
+	/*
+	 * It shouldn't be necessary to acquire the mutex here, but we do it
+	 * anyway, just to be tidy.
+	 */
+	SpinLockAcquire(&parallel_scan->phs_mutex);
+	parallel_scan->phs_cblock = parallel_scan->phs_startblock;
+	SpinLockRelease(&parallel_scan->phs_mutex);
 }
 
 /* ----------------

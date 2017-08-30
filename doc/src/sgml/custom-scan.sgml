@@ -320,10 +320,27 @@ void (*InitializeDSMCustomScan) (CustomScanState *node,
                                  void *coordinate);
 </programlisting>
     Initialize the dynamic shared memory that will be required for parallel
-    operation; <literal>coordinate</> points to an amount of allocated space
-    equal to the return value of <function>EstimateDSMCustomScan</>.
+    operation.  <literal>coordinate</> points to a shared memory area of
+    size equal to the return value of <function>EstimateDSMCustomScan</>.
     This callback is optional, and need only be supplied if this custom
     scan provider supports parallel execution.
+   </para>
+
+   <para>
+<programlisting>
+void (*ReInitializeDSMCustomScan) (CustomScanState *node,
+                                   ParallelContext *pcxt,
+                                   void *coordinate);
+</programlisting>
+    Re-initialize the dynamic shared memory required for parallel operation
+    when the custom-scan plan node is about to be re-scanned.
+    This callback is optional, and need only be supplied if this custom
+    scan provider supports parallel execution.
+    Recommended practice is that this callback reset only shared state,
+    while the <function>ReScanCustomScan</> callback resets only local
+    state.  Currently, this callback will be called
+    before <function>ReScanCustomScan</>, but it's best not to rely on
+    that ordering.
    </para>
 
    <para>
@@ -332,10 +349,10 @@ void (*InitializeWorkerCustomScan) (CustomScanState *node,
                                     shm_toc *toc,
                                     void *coordinate);
 </programlisting>
-    Initialize a parallel worker's custom state based on the shared state
-    set up in the leader by <literal>InitializeDSMCustomScan</>.
-    This callback is optional, and needs only be supplied if this
-    custom path supports parallel execution.
+    Initialize a parallel worker's local state based on the shared state
+    set up by the leader during <function>InitializeDSMCustomScan</>.
+    This callback is optional, and need only be supplied if this custom
+    scan provider supports parallel execution.
    </para>
 
    <para>

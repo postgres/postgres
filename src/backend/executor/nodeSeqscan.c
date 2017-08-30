@@ -22,6 +22,7 @@
  *
  *		ExecSeqScanEstimate		estimates DSM space needed for parallel scan
  *		ExecSeqScanInitializeDSM initialize DSM for parallel scan
+ *		ExecSeqScanReInitializeDSM reinitialize DSM for fresh parallel scan
  *		ExecSeqScanInitializeWorker attach to DSM info in parallel worker
  */
 #include "postgres.h"
@@ -322,6 +323,21 @@ ExecSeqScanInitializeDSM(SeqScanState *node,
 	shm_toc_insert(pcxt->toc, node->ss.ps.plan->plan_node_id, pscan);
 	node->ss.ss_currentScanDesc =
 		heap_beginscan_parallel(node->ss.ss_currentRelation, pscan);
+}
+
+/* ----------------------------------------------------------------
+ *		ExecSeqScanReInitializeDSM
+ *
+ *		Reset shared state before beginning a fresh scan.
+ * ----------------------------------------------------------------
+ */
+void
+ExecSeqScanReInitializeDSM(SeqScanState *node,
+						   ParallelContext *pcxt)
+{
+	HeapScanDesc scan = node->ss.ss_currentScanDesc;
+
+	heap_parallelscan_reinitialize(scan->rs_parallel);
 }
 
 /* ----------------------------------------------------------------
