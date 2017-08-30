@@ -300,6 +300,49 @@ select count(*) from tenk1 group by twenty;
    500
 (20 rows)
 
+--test rescan behavior of gather merge
+set enable_material = false;
+explain (costs off)
+select * from
+  (select string4, count(unique2)
+   from tenk1 group by string4 order by string4) ss
+  right join (values (1),(2),(3)) v(x) on true;
+                        QUERY PLAN                        
+----------------------------------------------------------
+ Nested Loop Left Join
+   ->  Values Scan on "*VALUES*"
+   ->  Finalize GroupAggregate
+         Group Key: tenk1.string4
+         ->  Gather Merge
+               Workers Planned: 4
+               ->  Partial GroupAggregate
+                     Group Key: tenk1.string4
+                     ->  Sort
+                           Sort Key: tenk1.string4
+                           ->  Parallel Seq Scan on tenk1
+(11 rows)
+
+select * from
+  (select string4, count(unique2)
+   from tenk1 group by string4 order by string4) ss
+  right join (values (1),(2),(3)) v(x) on true;
+ string4 | count | x 
+---------+-------+---
+ AAAAxx  |  2500 | 1
+ HHHHxx  |  2500 | 1
+ OOOOxx  |  2500 | 1
+ VVVVxx  |  2500 | 1
+ AAAAxx  |  2500 | 2
+ HHHHxx  |  2500 | 2
+ OOOOxx  |  2500 | 2
+ VVVVxx  |  2500 | 2
+ AAAAxx  |  2500 | 3
+ HHHHxx  |  2500 | 3
+ OOOOxx  |  2500 | 3
+ VVVVxx  |  2500 | 3
+(12 rows)
+
+reset enable_material;
 reset enable_hashagg;
 -- gather merge test with a LIMIT
 explain (costs off)
