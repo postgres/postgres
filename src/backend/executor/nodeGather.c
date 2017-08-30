@@ -71,6 +71,8 @@ ExecInitGather(Gather *node, EState *estate, int eflags)
 	gatherstate->ps.plan = (Plan *) node;
 	gatherstate->ps.state = estate;
 	gatherstate->ps.ExecProcNode = ExecGather;
+
+	gatherstate->initialized = false;
 	gatherstate->need_to_scan_locally = !node->single_copy;
 
 	/*
@@ -81,10 +83,10 @@ ExecInitGather(Gather *node, EState *estate, int eflags)
 	ExecAssignExprContext(estate, &gatherstate->ps);
 
 	/*
-	 * initialize child expressions
+	 * Gather doesn't support checking a qual (it's always more efficient to
+	 * do it in the child node).
 	 */
-	gatherstate->ps.qual =
-		ExecInitQual(node->plan.qual, (PlanState *) gatherstate);
+	Assert(!node->plan.qual);
 
 	/*
 	 * tuple table initialization
@@ -167,15 +169,16 @@ ExecGather(PlanState *pstate)
 			 */
 			pcxt = node->pei->pcxt;
 			LaunchParallelWorkers(pcxt);
+			/* We save # workers launched for the benefit of EXPLAIN */
 			node->nworkers_launched = pcxt->nworkers_launched;
+			node->nreaders = 0;
+			node->nextreader = 0;
 
 			/* Set up tuple queue readers to read the results. */
 			if (pcxt->nworkers_launched > 0)
 			{
-				node->nreaders = 0;
-				node->nextreader = 0;
-				node->reader =
-					palloc(pcxt->nworkers_launched * sizeof(TupleQueueReader *));
+				node->reader = palloc(pcxt->nworkers_launched *
+									  sizeof(TupleQueueReader *));
 
 				for (i = 0; i < pcxt->nworkers_launched; ++i)
 				{
@@ -314,8 +317,8 @@ gather_readnext(GatherState *gatherstate)
 		tup = TupleQueueReaderNext(reader, true, &readerdone);
 
 		/*
-		 * If this reader is done, remove it.  If all readers are done, clean
-		 * up remaining worker state.
+		 * If this reader is done, remove it, and collapse the array.  If all
+		 * readers are done, clean up remaining worker state.
 		 */
 		if (readerdone)
 		{
