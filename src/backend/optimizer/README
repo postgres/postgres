@@ -374,6 +374,7 @@ RelOptInfo      - a relation or joined relations
   MaterialPath  - a Material plan node
   UniquePath    - remove duplicate rows (either by hashing or sorting)
   GatherPath    - collect the results of parallel workers
+  GatherMergePath - collect parallel results, preserving their common sort order
   ProjectionPath - a Result plan node with child (used for projection)
   ProjectSetPath - a ProjectSet plan node applied to some sub-path
   SortPath      - a Sort plan node applied to some sub-path
@@ -1030,7 +1031,7 @@ either by an entire query or some portion of the query in such a way that
 some of that work can be done by one or more worker processes, which are
 called parallel workers.  Parallel workers are a subtype of dynamic
 background workers; see src/backend/access/transam/README.parallel for a
-fuller description.  Academic literature on parallel query suggests that
+fuller description.  The academic literature on parallel query suggests
 that parallel execution strategies can be divided into essentially two
 categories: pipelined parallelism, where the execution of the query is
 divided into multiple stages and each stage is handled by a separate
@@ -1046,16 +1047,14 @@ that the underlying table be partitioned.  It only requires that (1)
 there is some method of dividing the data from at least one of the base
 tables involved in the relation across multiple processes, (2) allowing
 each process to handle its own portion of the data, and then (3)
-collecting the results.  Requirements (2) and (3) is satisfied by the
-executor node Gather, which launches any number of worker processes and
-executes its single child plan in all of them (and perhaps in the leader
-also, if the children aren't generating enough data to keep the leader
-busy).  Requirement (1) is handled by the SeqScan node: when invoked
-with parallel_aware = true, this node will, in effect, partition the
-table on a block by block basis, returning a subset of the tuples from
-the relation in each worker where that SeqScan is executed.  A similar
-scheme could be (and probably should be) implemented for bitmap heap
-scans.
+collecting the results.  Requirements (2) and (3) are satisfied by the
+executor node Gather (or GatherMerge), which launches any number of worker
+processes and executes its single child plan in all of them, and perhaps
+in the leader also, if the children aren't generating enough data to keep
+the leader busy.  Requirement (1) is handled by the table scan node: when
+invoked with parallel_aware = true, this node will, in effect, partition
+the table on a block by block basis, returning a subset of the tuples from
+the relation in each worker where that scan node is executed.
 
 Just as we do for non-parallel access methods, we build Paths to
 represent access strategies that can be used in a parallel plan.  These

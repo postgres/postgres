@@ -325,6 +325,9 @@ ExecShutdownGatherMergeWorkers(GatherMergeState *node)
 void
 ExecReScanGatherMerge(GatherMergeState *node)
 {
+	GatherMerge *gm = (GatherMerge *) node->ps.plan;
+	PlanState  *outerPlan = outerPlanState(node);
+
 	/*
 	 * Re-initialize the parallel workers to perform rescan of relation. We
 	 * want to gracefully shutdown all the workers so that they should be able
@@ -339,7 +342,24 @@ ExecReScanGatherMerge(GatherMergeState *node)
 	if (node->pei)
 		ExecParallelReinitialize(node->pei);
 
-	ExecReScan(node->ps.lefttree);
+	/*
+	 * Set child node's chgParam to tell it that the next scan might deliver a
+	 * different set of rows within the leader process.  (The overall rowset
+	 * shouldn't change, but the leader process's subset might; hence nodes
+	 * between here and the parallel table scan node mustn't optimize on the
+	 * assumption of an unchanging rowset.)
+	 */
+	if (gm->rescan_param >= 0)
+		outerPlan->chgParam = bms_add_member(outerPlan->chgParam,
+											 gm->rescan_param);
+
+
+	/*
+	 * if chgParam of subnode is not null then plan will be re-scanned by
+	 * first ExecProcNode.
+	 */
+	if (outerPlan->chgParam == NULL)
+		ExecReScan(outerPlan);
 }
 
 /*

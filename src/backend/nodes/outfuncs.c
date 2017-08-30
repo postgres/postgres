@@ -479,6 +479,7 @@ _outGather(StringInfo str, const Gather *node)
 	_outPlanInfo(str, (const Plan *) node);
 
 	WRITE_INT_FIELD(num_workers);
+	WRITE_INT_FIELD(rescan_param);
 	WRITE_BOOL_FIELD(single_copy);
 	WRITE_BOOL_FIELD(invisible);
 }
@@ -493,6 +494,7 @@ _outGatherMerge(StringInfo str, const GatherMerge *node)
 	_outPlanInfo(str, (const Plan *) node);
 
 	WRITE_INT_FIELD(num_workers);
+	WRITE_INT_FIELD(rescan_param);
 	WRITE_INT_FIELD(numCols);
 
 	appendStringInfoString(str, " :sortColIdx");
