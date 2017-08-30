@@ -825,13 +825,21 @@ typedef struct Unique
 
 /* ------------
  *		gather node
+ *
+ * Note: rescan_param is the ID of a PARAM_EXEC parameter slot.  That slot
+ * will never actually contain a value, but the Gather node must flag it as
+ * having changed whenever it is rescanned.  The child parallel-aware scan
+ * nodes are marked as depending on that parameter, so that the rescan
+ * machinery is aware that their output is likely to change across rescans.
+ * In some cases we don't need a rescan Param, so rescan_param is set to -1.
  * ------------
  */
 typedef struct Gather
 {
 	Plan		plan;
-	int			num_workers;
-	bool		single_copy;
+	int			num_workers;	/* planned number of worker processes */
+	int			rescan_param;	/* ID of Param that signals a rescan, or -1 */
+	bool		single_copy;	/* don't execute plan more than once */
 	bool		invisible;		/* suppress EXPLAIN display (for testing)? */
 } Gather;
 
@@ -842,7 +850,8 @@ typedef struct Gather
 typedef struct GatherMerge
 {
 	Plan		plan;
-	int			num_workers;
+	int			num_workers;	/* planned number of worker processes */
+	int			rescan_param;	/* ID of Param that signals a rescan, or -1 */
 	/* remaining fields are just like the sort-key info in struct Sort */
 	int			numCols;		/* number of sort-key columns */
 	AttrNumber *sortColIdx;		/* their indexes in the target list */

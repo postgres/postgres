@@ -375,6 +375,12 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 		gather->invisible = (force_parallel_mode == FORCE_PARALLEL_REGRESS);
 
 		/*
+		 * Since this Gather has no parallel-aware descendants to signal to,
+		 * we don't need a rescan Param.
+		 */
+		gather->rescan_param = -1;
+
+		/*
 		 * Ideally we'd use cost_gather here, but setting up dummy path data
 		 * to satisfy it doesn't seem much cleaner than knowing what it does.
 		 */
