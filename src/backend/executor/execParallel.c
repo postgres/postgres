@@ -119,6 +119,8 @@ static bool ExecParallelInitializeDSM(PlanState *node,
 						  ExecParallelInitializeDSMContext *d);
 static shm_mq_handle **ExecParallelSetupTupleQueues(ParallelContext *pcxt,
 							 bool reinitialize);
+static bool ExecParallelReInitializeDSM(PlanState *planstate,
+							ParallelContext *pcxt);
 static bool ExecParallelRetrieveInstrumentation(PlanState *planstate,
 									SharedExecutorInstrumentation *instrumentation);
 
@@ -255,6 +257,8 @@ ExecParallelEstimate(PlanState *planstate, ExecParallelEstimateContext *e)
 		case T_SortState:
 			/* even when not parallel-aware */
 			ExecSortEstimate((SortState *) planstate, e->pcxt);
+			break;
+
 		default:
 			break;
 	}
@@ -325,6 +329,8 @@ ExecParallelInitializeDSM(PlanState *planstate,
 		case T_SortState:
 			/* even when not parallel-aware */
 			ExecSortInitializeDSM((SortState *) planstate, d->pcxt);
+			break;
+
 		default:
 			break;
 	}
@@ -382,18 +388,6 @@ ExecParallelSetupTupleQueues(ParallelContext *pcxt, bool reinitialize)
 
 	/* Return array of handles. */
 	return responseq;
-}
-
-/*
- * Re-initialize the parallel executor info such that it can be reused by
- * workers.
- */
-void
-ExecParallelReinitialize(ParallelExecutorInfo *pei)
-{
-	ReinitializeParallelDSM(pei->pcxt);
-	pei->tqueue = ExecParallelSetupTupleQueues(pei->pcxt, true);
-	pei->finished = false;
 }
 
 /*
@@ -599,7 +593,7 @@ ExecInitParallelPlan(PlanState *planstate, EState *estate, int nworkers,
 	ExecParallelInitializeDSM(planstate, &d);
 
 	/*
-	 * Make sure that the world hasn't shifted under our feat.  This could
+	 * Make sure that the world hasn't shifted under our feet.  This could
 	 * probably just be an Assert(), but let's be conservative for now.
 	 */
 	if (e.nnodes != d.nnodes)
@@ -607,6 +601,82 @@ ExecInitParallelPlan(PlanState *planstate, EState *estate, int nworkers,
 
 	/* OK, we're ready to rock and roll. */
 	return pei;
+}
+
+/*
+ * Re-initialize the parallel executor shared memory state before launching
+ * a fresh batch of workers.
+ */
+void
+ExecParallelReinitialize(PlanState *planstate,
+						 ParallelExecutorInfo *pei)
+{
+	/* Old workers must already be shut down */
+	Assert(pei->finished);
+
+	ReinitializeParallelDSM(pei->pcxt);
+	pei->tqueue = ExecParallelSetupTupleQueues(pei->pcxt, true);
+	pei->finished = false;
+
+	/* Traverse plan tree and let each child node reset associated state. */
+	ExecParallelReInitializeDSM(planstate, pei->pcxt);
+}
+
+/*
+ * Traverse plan tree to reinitialize per-node dynamic shared memory state
+ */
+static bool
+ExecParallelReInitializeDSM(PlanState *planstate,
+							ParallelContext *pcxt)
+{
+	if (planstate == NULL)
+		return false;
+
+	/*
+	 * Call reinitializers for DSM-using plan nodes.
+	 */
+	switch (nodeTag(planstate))
+	{
+		case T_SeqScanState:
+			if (planstate->plan->parallel_aware)
+				ExecSeqScanReInitializeDSM((SeqScanState *) planstate,
+										   pcxt);
+			break;
+		case T_IndexScanState:
+			if (planstate->plan->parallel_aware)
+				ExecIndexScanReInitializeDSM((IndexScanState *) planstate,
+											 pcxt);
+			break;
+		case T_IndexOnlyScanState:
+			if (planstate->plan->parallel_aware)
+				ExecIndexOnlyScanReInitializeDSM((IndexOnlyScanState *) planstate,
+												 pcxt);
+			break;
+		case T_ForeignScanState:
+			if (planstate->plan->parallel_aware)
+				ExecForeignScanReInitializeDSM((ForeignScanState *) planstate,
+											   pcxt);
+			break;
+		case T_CustomScanState:
+			if (planstate->plan->parallel_aware)
+				ExecCustomScanReInitializeDSM((CustomScanState *) planstate,
+											  pcxt);
+			break;
+		case T_BitmapHeapScanState:
+			if (planstate->plan->parallel_aware)
+				ExecBitmapHeapReInitializeDSM((BitmapHeapScanState *) planstate,
+											  pcxt);
+			break;
+		case T_SortState:
+			/* even when not parallel-aware */
+			ExecSortReInitializeDSM((SortState *) planstate, pcxt);
+			break;
+
+		default:
+			break;
+	}
+
+	return planstate_tree_walker(planstate, ExecParallelReInitializeDSM, pcxt);
 }
 
 /*
@@ -845,12 +915,13 @@ ExecParallelInitializeWorker(PlanState *planstate, shm_toc *toc)
 			break;
 		case T_BitmapHeapScanState:
 			if (planstate->plan->parallel_aware)
-				ExecBitmapHeapInitializeWorker(
-											   (BitmapHeapScanState *) planstate, toc);
+				ExecBitmapHeapInitializeWorker((BitmapHeapScanState *) planstate, toc);
 			break;
 		case T_SortState:
 			/* even when not parallel-aware */
 			ExecSortInitializeWorker((SortState *) planstate, toc);
+			break;
+
 		default:
 			break;
 	}

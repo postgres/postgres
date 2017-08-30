@@ -195,6 +195,21 @@ ExecCustomScanInitializeDSM(CustomScanState *node, ParallelContext *pcxt)
 }
 
 void
+ExecCustomScanReInitializeDSM(CustomScanState *node, ParallelContext *pcxt)
+{
+	const CustomExecMethods *methods = node->methods;
+
+	if (methods->ReInitializeDSMCustomScan)
+	{
+		int			plan_node_id = node->ss.ps.plan->plan_node_id;
+		void	   *coordinate;
+
+		coordinate = shm_toc_lookup(pcxt->toc, plan_node_id, false);
+		methods->ReInitializeDSMCustomScan(node, pcxt, coordinate);
+	}
+}
+
+void
 ExecCustomScanInitializeWorker(CustomScanState *node, shm_toc *toc)
 {
 	const CustomExecMethods *methods = node->methods;

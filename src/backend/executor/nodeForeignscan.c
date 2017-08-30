@@ -332,7 +332,28 @@ ExecForeignScanInitializeDSM(ForeignScanState *node, ParallelContext *pcxt)
 }
 
 /* ----------------------------------------------------------------
- *		ExecForeignScanInitializeDSM
+ *		ExecForeignScanReInitializeDSM
+ *
+ *		Reset shared state before beginning a fresh scan.
+ * ----------------------------------------------------------------
+ */
+void
+ExecForeignScanReInitializeDSM(ForeignScanState *node, ParallelContext *pcxt)
+{
+	FdwRoutine *fdwroutine = node->fdwroutine;
+
+	if (fdwroutine->ReInitializeDSMForeignScan)
+	{
+		int			plan_node_id = node->ss.ps.plan->plan_node_id;
+		void	   *coordinate;
+
+		coordinate = shm_toc_lookup(pcxt->toc, plan_node_id, false);
+		fdwroutine->ReInitializeDSMForeignScan(node, pcxt, coordinate);
+	}
+}
+
+/* ----------------------------------------------------------------
+ *		ExecForeignScanInitializeWorker
  *
  *		Initialization according to the parallel coordination information
  * ----------------------------------------------------------------

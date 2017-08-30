@@ -28,6 +28,8 @@ extern void ExecIndexOnlyScanEstimate(IndexOnlyScanState *node,
 						  ParallelContext *pcxt);
 extern void ExecIndexOnlyScanInitializeDSM(IndexOnlyScanState *node,
 							   ParallelContext *pcxt);
+extern void ExecIndexOnlyScanReInitializeDSM(IndexOnlyScanState *node,
+								 ParallelContext *pcxt);
 extern void ExecIndexOnlyScanInitializeWorker(IndexOnlyScanState *node,
 								  shm_toc *toc);
 

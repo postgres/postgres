@@ -148,6 +148,9 @@ typedef Size (*EstimateDSMForeignScan_function) (ForeignScanState *node,
 typedef void (*InitializeDSMForeignScan_function) (ForeignScanState *node,
 												   ParallelContext *pcxt,
 												   void *coordinate);
+typedef void (*ReInitializeDSMForeignScan_function) (ForeignScanState *node,
+													 ParallelContext *pcxt,
+													 void *coordinate);
 typedef void (*InitializeWorkerForeignScan_function) (ForeignScanState *node,
 													  shm_toc *toc,
 													  void *coordinate);
@@ -224,6 +227,7 @@ typedef struct FdwRoutine
 	IsForeignScanParallelSafe_function IsForeignScanParallelSafe;
 	EstimateDSMForeignScan_function EstimateDSMForeignScan;
 	InitializeDSMForeignScan_function InitializeDSMForeignScan;
+	ReInitializeDSMForeignScan_function ReInitializeDSMForeignScan;
 	InitializeWorkerForeignScan_function InitializeWorkerForeignScan;
 	ShutdownForeignScan_function ShutdownForeignScan;
 } FdwRoutine;
