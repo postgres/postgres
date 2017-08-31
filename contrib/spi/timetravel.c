@@ -341,7 +341,7 @@ timetravel(PG_FUNCTION_ARGS)
 		/* Prepare plan for query */
 		pplan = SPI_prepare(sql, natts, ctypes);
 		if (pplan == NULL)
-			elog(ERROR, "timetravel (%s): SPI_prepare returned %d", relname, SPI_result);
+			elog(ERROR, "timetravel (%s): SPI_prepare returned %s", relname, SPI_result_code_string(SPI_result));
 
 		/*
 		 * Remember that SPI_prepare places plan in current memory context -

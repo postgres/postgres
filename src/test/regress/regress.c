@@ -612,7 +612,7 @@ ttdummy(PG_FUNCTION_ARGS)
 		/* Prepare plan for query */
 		pplan = SPI_prepare(query, natts, ctypes);
 		if (pplan == NULL)
-			elog(ERROR, "ttdummy (%s): SPI_prepare returned %d", relname, SPI_result);
+			elog(ERROR, "ttdummy (%s): SPI_prepare returned %s", relname, SPI_result_code_string(SPI_result));
 
 		if (SPI_keepplan(pplan))
 			elog(ERROR, "ttdummy (%s): SPI_keepplan failed", relname);

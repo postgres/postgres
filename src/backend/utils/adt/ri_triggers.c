@@ -2435,8 +2435,8 @@ RI_Initial_Check(Trigger *trigger, Relation fk_rel, Relation pk_rel)
 	qplan = SPI_prepare(querybuf.data, 0, NULL);
 
 	if (qplan == NULL)
-		elog(ERROR, "SPI_prepare returned %d for %s",
-			 SPI_result, querybuf.data);
+		elog(ERROR, "SPI_prepare returned %s for %s",
+			 SPI_result_code_string(SPI_result), querybuf.data);
 
 	/*
 	 * Run the plan.  For safety we force a current snapshot to be used. (In
@@ -2453,7 +2453,7 @@ RI_Initial_Check(Trigger *trigger, Relation fk_rel, Relation pk_rel)
 
 	/* Check result */
 	if (spi_result != SPI_OK_SELECT)
-		elog(ERROR, "SPI_execute_snapshot returned %d", spi_result);
+		elog(ERROR, "SPI_execute_snapshot returned %s", SPI_result_code_string(spi_result));
 
 	/* Did we find a tuple violating the constraint? */
 	if (SPI_processed > 0)
@@ -3016,7 +3016,7 @@ ri_PlanCheck(const char *querystr, int nargs, Oid *argtypes,
 	qplan = SPI_prepare(querystr, nargs, argtypes);
 
 	if (qplan == NULL)
-		elog(ERROR, "SPI_prepare returned %d for %s", SPI_result, querystr);
+		elog(ERROR, "SPI_prepare returned %s for %s", SPI_result_code_string(SPI_result), querystr);
 
 	/* Restore UID and security context */
 	SetUserIdAndSecContext(save_userid, save_sec_context);
@@ -3144,7 +3144,7 @@ ri_PerformCheck(const RI_ConstraintInfo *riinfo,
 
 	/* Check result */
 	if (spi_result < 0)
-		elog(ERROR, "SPI_execute_snapshot returned %d", spi_result);
+		elog(ERROR, "SPI_execute_snapshot returned %s", SPI_result_code_string(spi_result));
 
 	if (expect_OK >= 0 && spi_result != expect_OK)
 		ereport(ERROR,

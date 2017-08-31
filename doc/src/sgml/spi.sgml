@@ -3546,6 +3546,59 @@ char * SPI_getnspname(Relation <parameter>rel</parameter>)
  </refsect1>
 </refentry>
 
+<refentry id="spi-spi-result-code-string">
+ <indexterm><primary>SPI_result_code_string</primary></indexterm>
+
+ <refmeta>
+  <refentrytitle>SPI_result_code_string</refentrytitle>
+  <manvolnum>3</manvolnum>
+ </refmeta>
+
+ <refnamediv>
+  <refname>SPI_result_code_string</refname>
+  <refpurpose>return error code as string</refpurpose>
+ </refnamediv>
+
+ <refsynopsisdiv>
+<synopsis>
+const char * SPI_result_code_string(int <parameter>code</parameter>);
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <function>SPI_result_code_string</function> returns a string representation
+   of the result code returned by various SPI functions or stored
+   in <varname>SPI_result</varname>.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Arguments</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><literal>int <parameter>code</parameter></literal></term>
+    <listitem>
+     <para>
+      result code
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Return Value</title>
+
+  <para>
+   A string representation of the result code.
+  </para>
+ </refsect1>
+</refentry>
+
  </sect1>
 
  <sect1 id="spi-memory">
