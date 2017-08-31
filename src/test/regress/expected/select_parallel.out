@@ -179,6 +179,61 @@ select  count(*) from tenk1 where thousand > 95;
   9040
 (1 row)
 
+-- test rescan cases too
+set enable_material = false;
+explain (costs off)
+select * from
+  (select count(unique1) from tenk1 where hundred > 10) ss
+  right join (values (1),(2),(3)) v(x) on true;
+                                QUERY PLAN                                
+--------------------------------------------------------------------------
+ Nested Loop Left Join
+   ->  Values Scan on "*VALUES*"
+   ->  Finalize Aggregate
+         ->  Gather
+               Workers Planned: 4
+               ->  Partial Aggregate
+                     ->  Parallel Index Scan using tenk1_hundred on tenk1
+                           Index Cond: (hundred > 10)
+(8 rows)
+
+select * from
+  (select count(unique1) from tenk1 where hundred > 10) ss
+  right join (values (1),(2),(3)) v(x) on true;
+ count | x 
+-------+---
+  8900 | 1
+  8900 | 2
+  8900 | 3
+(3 rows)
+
+explain (costs off)
+select * from
+  (select count(*) from tenk1 where thousand > 99) ss
+  right join (values (1),(2),(3)) v(x) on true;
+                                      QUERY PLAN                                      
+--------------------------------------------------------------------------------------
+ Nested Loop Left Join
+   ->  Values Scan on "*VALUES*"
+   ->  Finalize Aggregate
+         ->  Gather
+               Workers Planned: 4
+               ->  Partial Aggregate
+                     ->  Parallel Index Only Scan using tenk1_thous_tenthous on tenk1
+                           Index Cond: (thousand > 99)
+(8 rows)
+
+select * from
+  (select count(*) from tenk1 where thousand > 99) ss
+  right join (values (1),(2),(3)) v(x) on true;
+ count | x 
+-------+---
+  9000 | 1
+  9000 | 2
+  9000 | 3
+(3 rows)
+
+reset enable_material;
 reset enable_seqscan;
 reset enable_bitmapscan;
 -- test parallel bitmap heap scan.
