@@ -18070,11 +18070,22 @@ postgres=# select pg_start_backup('label_goes_here');
     <function>pg_start_backup</>. In a non-exclusive backup, the contents of
     the <filename>backup_label</> and <filename>tablespace_map</> are returned
     in the result of the function, and should be written to files in the
-    backup (and not in the data directory).
+    backup (and not in the data directory).  When executed on a primary
+    <function>pg_stop_backup</> will wait for WAL to be archived, provided that
+    archiving is enabled.
    </para>
 
    <para>
-    The function also creates a backup history file in the transaction log
+    On a standby <function>pg_stop_backup</> will return immediately without
+    waiting, so it's important to verify that all required WAL segments have
+    been archived.  If write activity on the primary is low, it may be useful
+    to run <function>pg_switch_xlog</> on the primary in order to trigger a
+    segment switch.
+   </para>
+
+   <para>
+    When executed on a primary, the function also creates a backup history file
+    in the write-ahead log
     archive area. The history file includes the label given to
     <function>pg_start_backup</>, the starting and ending transaction log locations for
     the backup, and the starting and ending times of the backup.  The return

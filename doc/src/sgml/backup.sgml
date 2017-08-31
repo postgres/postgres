@@ -889,8 +889,11 @@ SELECT pg_start_backup('label', false, false);
 <programlisting>
 SELECT * FROM pg_stop_backup(false);
 </programlisting>
-     This terminates the backup mode and performs an automatic switch to
-     the next WAL segment.  The reason for the switch is to arrange for
+     This terminates backup mode. On a primary, it also performs an automatic
+     switch to the next WAL segment.  On a standby, it is not possible to
+     automatically switch WAL segments, so you may wish to run
+     <function>pg_switch_xlog</function> on the primary to perform a manual
+     switch. The reason for the switch is to arrange for
      the last WAL segment file written during the backup interval to be
      ready to archive.
     </para>
@@ -908,7 +911,7 @@ SELECT * FROM pg_stop_backup(false);
      Once the WAL segment files active during the backup are archived, you are
      done.  The file identified by <function>pg_stop_backup</>'s first return
      value is the last segment that is required to form a complete set of
-     backup files.  If <varname>archive_mode</> is enabled,
+     backup files.  On a primary, if <varname>archive_mode</> is enabled,
      <function>pg_stop_backup</> does not return until the last segment has
      been archived.
      Archiving of these files happens automatically since you have
@@ -924,6 +927,13 @@ SELECT * FROM pg_stop_backup(false);
      <function>pg_stop_backup</> terminates because of this your backup
      may not be valid.
     </para>
+
+    <para>
+     Note that on a standby <function>pg_stop_backup</> does not wait for
+     WAL segments to be archived so the backup process must ensure that all WAL
+     segments required for the backup are successfully archived.
+    </para>
+
    </listitem>
   </orderedlist>
     </para>
@@ -932,9 +942,9 @@ SELECT * FROM pg_stop_backup(false);
     <title>Making an exclusive low level backup</title>
     <para>
      The process for an exclusive backup is mostly the same as for a
-     non-exclusive one, but it differs in a few key steps. It does not allow
-     more than one concurrent backup to run, and there can be some issues on
-     the server if it crashes during the backup. Prior to PostgreSQL 9.6, this
+     non-exclusive one, but it differs in a few key steps. This type of backup
+     can only be taken on a primary and does not allow concurrent backups.
+     Prior to <productname>PostgreSQL</> 9.6, this
      was the only low-level method available, but it is now recommended that
      all users upgrade their scripts to use non-exclusive backups if possible.
     </para>
@@ -991,6 +1001,11 @@ SELECT pg_start_backup('label', true);
      while you do this. See
      <xref linkend="backup-lowlevel-base-backup-data"> for things to
      consider during this backup.
+    </para>
+    <para>
+      Note that if the server crashes during the backup it may not be
+      possible to restart until the <literal>backup_label</> file has been
+      manually deleted from the <envar>PGDATA</envar> directory.
     </para>
    </listitem>
    <listitem>
