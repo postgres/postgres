@@ -1944,7 +1944,8 @@ typedef struct GatherMergeState
 	int			gm_nkeys;		/* number of sort columns */
 	SortSupport gm_sortkeys;	/* array of length gm_nkeys */
 	struct ParallelExecutorInfo *pei;
-	/* all remaining fields are reinitialized during a rescan: */
+	/* all remaining fields are reinitialized during a rescan */
+	/* (but the arrays are not reallocated, just cleared) */
 	int			nworkers_launched;	/* original number of workers */
 	int			nreaders;		/* number of active workers */
 	TupleTableSlot **gm_slots;	/* array with nreaders+1 entries */
