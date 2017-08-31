@@ -76,7 +76,7 @@ typedef enum
 /* Global options */
 static char *basedir = NULL;
 static TablespaceList tablespace_dirs = {NULL, NULL};
-static char *xlog_dir = "";
+static char *xlog_dir = NULL;
 static char format = 'p';		/* p(lain)/t(ar) */
 static char *label = "pg_basebackup base backup";
 static bool noclean = false;
@@ -2347,7 +2347,7 @@ main(int argc, char **argv)
 		temp_replication_slot = false;
 	}
 
-	if (strcmp(xlog_dir, "") != 0)
+	if (xlog_dir)
 	{
 		if (format != 'p')
 		{
@@ -2398,7 +2398,7 @@ main(int argc, char **argv)
 	}
 
 	/* Create pg_wal symlink, if required */
-	if (strcmp(xlog_dir, "") != 0)
+	if (xlog_dir)
 	{
 		char	   *linkloc;
 
