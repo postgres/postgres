@@ -33,6 +33,7 @@
 #include "access/heapam.h"
 #include "access/htup_details.h"
 #include "access/sysattr.h"
+#include "catalog/partition.h"
 #include "catalog/pg_inherits_fn.h"
 #include "catalog/pg_type.h"
 #include "miscadmin.h"
@@ -100,6 +101,19 @@ static List *generate_append_tlist(List *colTypes, List *colCollations,
 static List *generate_setop_grouplist(SetOperationStmt *op, List *targetlist);
 static void expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte,
 						 Index rti);
+static void expand_partitioned_rtentry(PlannerInfo *root,
+						   RangeTblEntry *parentrte,
+						   Index parentRTindex, Relation parentrel,
+						   PlanRowMark *parentrc, PartitionDesc partdesc,
+						   LOCKMODE lockmode,
+						   bool *has_child, List **appinfos,
+						   List **partitioned_child_rels);
+static void expand_single_inheritance_child(PlannerInfo *root,
+								RangeTblEntry *parentrte,
+								Index parentRTindex, Relation parentrel,
+								PlanRowMark *parentrc, Relation childrel,
+								bool *has_child, List **appinfos,
+								List **partitioned_child_rels);
 static void make_inh_translation_list(Relation oldrelation,
 						  Relation newrelation,
 						  Index newvarno,
@@ -1455,131 +1469,62 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 	/* Scan the inheritance set and expand it */
 	appinfos = NIL;
 	has_child = false;
-	foreach(l, inhOIDs)
+	if (RelationGetPartitionDesc(oldrelation) != NULL)
 	{
-		Oid			childOID = lfirst_oid(l);
-		Relation	newrelation;
-		RangeTblEntry *childrte;
-		Index		childRTindex;
-		AppendRelInfo *appinfo;
-
-		/* Open rel if needed; we already have required locks */
-		if (childOID != parentOID)
-			newrelation = heap_open(childOID, NoLock);
-		else
-			newrelation = oldrelation;
-
 		/*
-		 * It is possible that the parent table has children that are temp
-		 * tables of other backends.  We cannot safely access such tables
-		 * (because of buffering issues), and the best thing to do seems to be
-		 * to silently ignore them.
+		 * If this table has partitions, recursively expand them in the order
+		 * in which they appear in the PartitionDesc.  But first, expand the
+		 * parent itself.
 		 */
-		if (childOID != parentOID && RELATION_IS_OTHER_TEMP(newrelation))
+		expand_single_inheritance_child(root, rte, rti, oldrelation, oldrc,
+										oldrelation,
+										&has_child, &appinfos,
+										&partitioned_child_rels);
+		expand_partitioned_rtentry(root, rte, rti, oldrelation, oldrc,
+									  RelationGetPartitionDesc(oldrelation),
+									  lockmode,
+									  &has_child, &appinfos,
+									  &partitioned_child_rels);
+	}
+	else
+	{
+		/*
+		 * This table has no partitions.  Expand any plain inheritance
+		 * children in the order the OIDs were returned by
+		 * find_all_inheritors.
+		 */
+		foreach(l, inhOIDs)
 		{
-			heap_close(newrelation, lockmode);
-			continue;
-		}
+			Oid			childOID = lfirst_oid(l);
+			Relation	newrelation;
 
-		/*
-		 * Build an RTE for the child, and attach to query's rangetable list.
-		 * We copy most fields of the parent's RTE, but replace relation OID
-		 * and relkind, and set inh = false.  Also, set requiredPerms to zero
-		 * since all required permissions checks are done on the original RTE.
-		 * Likewise, set the child's securityQuals to empty, because we only
-		 * want to apply the parent's RLS conditions regardless of what RLS
-		 * properties individual children may have.  (This is an intentional
-		 * choice to make inherited RLS work like regular permissions checks.)
-		 * The parent securityQuals will be propagated to children along with
-		 * other base restriction clauses, so we don't need to do it here.
-		 */
-		childrte = copyObject(rte);
-		childrte->relid = childOID;
-		childrte->relkind = newrelation->rd_rel->relkind;
-		childrte->inh = false;
-		childrte->requiredPerms = 0;
-		childrte->securityQuals = NIL;
-		parse->rtable = lappend(parse->rtable, childrte);
-		childRTindex = list_length(parse->rtable);
-
-		/*
-		 * Build an AppendRelInfo for this parent and child, unless the child
-		 * is a partitioned table.
-		 */
-		if (childrte->relkind != RELKIND_PARTITIONED_TABLE)
-		{
-			/* Remember if we saw a real child. */
+			/* Open rel if needed; we already have required locks */
 			if (childOID != parentOID)
-				has_child = true;
-
-			appinfo = makeNode(AppendRelInfo);
-			appinfo->parent_relid = rti;
-			appinfo->child_relid = childRTindex;
-			appinfo->parent_reltype = oldrelation->rd_rel->reltype;
-			appinfo->child_reltype = newrelation->rd_rel->reltype;
-			make_inh_translation_list(oldrelation, newrelation, childRTindex,
-									  &appinfo->translated_vars);
-			appinfo->parent_reloid = parentOID;
-			appinfos = lappend(appinfos, appinfo);
+				newrelation = heap_open(childOID, NoLock);
+			else
+				newrelation = oldrelation;
 
 			/*
-			 * Translate the column permissions bitmaps to the child's attnums
-			 * (we have to build the translated_vars list before we can do
-			 * this). But if this is the parent table, leave copyObject's
-			 * result alone.
-			 *
-			 * Note: we need to do this even though the executor won't run any
-			 * permissions checks on the child RTE.  The
-			 * insertedCols/updatedCols bitmaps may be examined for
-			 * trigger-firing purposes.
+			 * It is possible that the parent table has children that are temp
+			 * tables of other backends.  We cannot safely access such tables
+			 * (because of buffering issues), and the best thing to do seems
+			 * to be to silently ignore them.
 			 */
-			if (childOID != parentOID)
+			if (childOID != parentOID && RELATION_IS_OTHER_TEMP(newrelation))
 			{
-				childrte->selectedCols = translate_col_privs(rte->selectedCols,
-															 appinfo->translated_vars);
-				childrte->insertedCols = translate_col_privs(rte->insertedCols,
-															 appinfo->translated_vars);
-				childrte->updatedCols = translate_col_privs(rte->updatedCols,
-															appinfo->translated_vars);
+				heap_close(newrelation, lockmode);
+				continue;
 			}
+
+			expand_single_inheritance_child(root, rte, rti, oldrelation, oldrc,
+											newrelation,
+											&has_child, &appinfos,
+											&partitioned_child_rels);
+
+			/* Close child relations, but keep locks */
+			if (childOID != parentOID)
+				heap_close(newrelation, NoLock);
 		}
-		else
-			partitioned_child_rels = lappend_int(partitioned_child_rels,
-												 childRTindex);
-
-		/*
-		 * Build a PlanRowMark if parent is marked FOR UPDATE/SHARE.
-		 */
-		if (oldrc)
-		{
-			PlanRowMark *newrc = makeNode(PlanRowMark);
-
-			newrc->rti = childRTindex;
-			newrc->prti = rti;
-			newrc->rowmarkId = oldrc->rowmarkId;
-			/* Reselect rowmark type, because relkind might not match parent */
-			newrc->markType = select_rowmark_type(childrte, oldrc->strength);
-			newrc->allMarkTypes = (1 << newrc->markType);
-			newrc->strength = oldrc->strength;
-			newrc->waitPolicy = oldrc->waitPolicy;
-
-			/*
-			 * We mark RowMarks for partitioned child tables as parent
-			 * RowMarks so that the executor ignores them (except their
-			 * existence means that the child tables be locked using
-			 * appropriate mode).
-			 */
-			newrc->isParent = (childrte->relkind == RELKIND_PARTITIONED_TABLE);
-
-			/* Include child's rowmark type in parent's allMarkTypes */
-			oldrc->allMarkTypes |= newrc->allMarkTypes;
-
-			root->rowMarks = lappend(root->rowMarks, newrc);
-		}
-
-		/* Close child relations, but keep locks */
-		if (childOID != parentOID)
-			heap_close(newrelation, NoLock);
 	}
 
 	heap_close(oldrelation, NoLock);
@@ -1618,6 +1563,169 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 
 	/* Otherwise, OK to add to root->append_rel_list */
 	root->append_rel_list = list_concat(root->append_rel_list, appinfos);
+}
+
+static void
+expand_partitioned_rtentry(PlannerInfo *root, RangeTblEntry *parentrte,
+						   Index parentRTindex, Relation parentrel,
+						   PlanRowMark *parentrc, PartitionDesc partdesc,
+						   LOCKMODE lockmode,
+						   bool *has_child, List **appinfos,
+						   List **partitioned_child_rels)
+{
+	int			i;
+
+	check_stack_depth();
+
+	for (i = 0; i < partdesc->nparts; i++)
+	{
+		Oid			childOID = partdesc->oids[i];
+		Relation	childrel;
+
+		/* Open rel; we already have required locks */
+		childrel = heap_open(childOID, NoLock);
+
+		/* As in expand_inherited_rtentry, skip non-local temp tables */
+		if (RELATION_IS_OTHER_TEMP(childrel))
+		{
+			heap_close(childrel, lockmode);
+			continue;
+		}
+
+		expand_single_inheritance_child(root, parentrte, parentRTindex,
+										parentrel, parentrc, childrel,
+										has_child, appinfos,
+										partitioned_child_rels);
+
+		/* If this child is itself partitioned, recurse */
+		if (childrel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
+			expand_partitioned_rtentry(root, parentrte, parentRTindex,
+										  parentrel, parentrc,
+										  RelationGetPartitionDesc(childrel),
+										  lockmode,
+										  has_child, appinfos,
+										  partitioned_child_rels);
+
+		/* Close child relation, but keep locks */
+		heap_close(childrel, NoLock);
+	}
+}
+
+/*
+ * expand_single_inheritance_child
+ *		Expand a single inheritance child, if needed.
+ *
+ * If this is a temp table of another backend, we'll return without doing
+ * anything at all.  Otherwise, we'll set "has_child" to true, build a
+ * RangeTblEntry and either a PartitionedChildRelInfo or AppendRelInfo as
+ * appropriate, plus maybe a PlanRowMark.
+ */
+static void
+expand_single_inheritance_child(PlannerInfo *root, RangeTblEntry *parentrte,
+								Index parentRTindex, Relation parentrel,
+								PlanRowMark *parentrc, Relation childrel,
+								bool *has_child, List **appinfos,
+								List **partitioned_child_rels)
+{
+	Query	   *parse = root->parse;
+	Oid			parentOID = RelationGetRelid(parentrel);
+	Oid			childOID = RelationGetRelid(childrel);
+	RangeTblEntry *childrte;
+	Index		childRTindex;
+	AppendRelInfo *appinfo;
+
+	/*
+	 * Build an RTE for the child, and attach to query's rangetable list. We
+	 * copy most fields of the parent's RTE, but replace relation OID and
+	 * relkind, and set inh = false.  Also, set requiredPerms to zero since
+	 * all required permissions checks are done on the original RTE. Likewise,
+	 * set the child's securityQuals to empty, because we only want to apply
+	 * the parent's RLS conditions regardless of what RLS properties
+	 * individual children may have.  (This is an intentional choice to make
+	 * inherited RLS work like regular permissions checks.) The parent
+	 * securityQuals will be propagated to children along with other base
+	 * restriction clauses, so we don't need to do it here.
+	 */
+	childrte = copyObject(parentrte);
+	childrte->relid = childOID;
+	childrte->relkind = childrel->rd_rel->relkind;
+	childrte->inh = false;
+	childrte->requiredPerms = 0;
+	childrte->securityQuals = NIL;
+	parse->rtable = lappend(parse->rtable, childrte);
+	childRTindex = list_length(parse->rtable);
+
+	/*
+	 * Build an AppendRelInfo for this parent and child, unless the child is a
+	 * partitioned table.
+	 */
+	if (childrte->relkind != RELKIND_PARTITIONED_TABLE)
+	{
+		/* Remember if we saw a real child. */
+		if (childOID != parentOID)
+			*has_child = true;
+
+		appinfo = makeNode(AppendRelInfo);
+		appinfo->parent_relid = parentRTindex;
+		appinfo->child_relid = childRTindex;
+		appinfo->parent_reltype = parentrel->rd_rel->reltype;
+		appinfo->child_reltype = childrel->rd_rel->reltype;
+		make_inh_translation_list(parentrel, childrel, childRTindex,
+								  &appinfo->translated_vars);
+		appinfo->parent_reloid = parentOID;
+		*appinfos = lappend(*appinfos, appinfo);
+
+		/*
+		 * Translate the column permissions bitmaps to the child's attnums (we
+		 * have to build the translated_vars list before we can do this). But
+		 * if this is the parent table, leave copyObject's result alone.
+		 *
+		 * Note: we need to do this even though the executor won't run any
+		 * permissions checks on the child RTE.  The insertedCols/updatedCols
+		 * bitmaps may be examined for trigger-firing purposes.
+		 */
+		if (childOID != parentOID)
+		{
+			childrte->selectedCols = translate_col_privs(parentrte->selectedCols,
+														 appinfo->translated_vars);
+			childrte->insertedCols = translate_col_privs(parentrte->insertedCols,
+														 appinfo->translated_vars);
+			childrte->updatedCols = translate_col_privs(parentrte->updatedCols,
+														appinfo->translated_vars);
+		}
+	}
+	else
+		*partitioned_child_rels = lappend_int(*partitioned_child_rels,
+											  childRTindex);
+
+	/*
+	 * Build a PlanRowMark if parent is marked FOR UPDATE/SHARE.
+	 */
+	if (parentrc)
+	{
+		PlanRowMark *childrc = makeNode(PlanRowMark);
+
+		childrc->rti = childRTindex;
+		childrc->prti = parentRTindex;
+		childrc->rowmarkId = parentrc->rowmarkId;
+		/* Reselect rowmark type, because relkind might not match parent */
+		childrc->markType = select_rowmark_type(childrte, parentrc->strength);
+		childrc->allMarkTypes = (1 << childrc->markType);
+		childrc->strength = parentrc->strength;
+		childrc->waitPolicy = parentrc->waitPolicy;
+
+		/*
+		 * We mark RowMarks for partitioned child tables as parent RowMarks so
+		 * that the executor ignores them (except their existence means that
+		 * the child tables be locked using appropriate mode).
+		 */
+		childrc->isParent = (childrte->relkind == RELKIND_PARTITIONED_TABLE);
+
+		/* Include child's rowmark type in parent's allMarkTypes */
+		parentrc->allMarkTypes |= childrc->allMarkTypes;
+
+		root->rowMarks = lappend(root->rowMarks, childrc);
+	}
 }
 
 /*

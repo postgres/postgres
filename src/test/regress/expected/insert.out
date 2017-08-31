@@ -278,12 +278,12 @@ select tableoid::regclass, * from list_parted;
 -------------+----+----
  part_aa_bb  | aA |   
  part_cc_dd  | cC |  1
- part_null   |    |  0
- part_null   |    |  1
  part_ee_ff1 | ff |  1
  part_ee_ff1 | EE |  1
  part_ee_ff2 | ff | 11
  part_ee_ff2 | EE | 10
+ part_null   |    |  0
+ part_null   |    |  1
 (8 rows)
 
 -- some more tests to exercise tuple-routing with multi-level partitioning
