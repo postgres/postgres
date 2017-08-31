@@ -155,7 +155,7 @@ if (sqlca.sqlcode < 0) sqlprint ( );}
 
 	/* rdate_defmt_asc() */
 
-	date1 = 0; text = "";
+	date1 = 0;
 	fmt = "yy/mm/dd";
 	in = "In the year 1995, the month of December, it is the 25th day";
 	/*    0123456789012345678901234567890123456789012345678901234567890
@@ -166,7 +166,7 @@ if (sqlca.sqlcode < 0) sqlprint ( );}
 	printf("date_defmt_asc1: %s\n", text);
 	free(text);
 
-	date1 = 0; text = "";
+	date1 = 0;
 	fmt = "mmmm. dd. yyyy";
 	in = "12/25/95";
 	PGTYPESdate_defmt_asc(&date1, fmt, in);
@@ -174,7 +174,7 @@ if (sqlca.sqlcode < 0) sqlprint ( );}
 	printf("date_defmt_asc2: %s\n", text);
 	free(text);
 
-	date1 = 0; text = "";
+	date1 = 0;
 	fmt = "yy/mm/dd";
 	in = "95/12/25";
 	PGTYPESdate_defmt_asc(&date1, fmt, in);
@@ -182,7 +182,7 @@ if (sqlca.sqlcode < 0) sqlprint ( );}
 	printf("date_defmt_asc3: %s\n", text);
 	free(text);
 
-	date1 = 0; text = "";
+	date1 = 0;
 	fmt = "yy/mm/dd";
 	in = "1995, December 25th";
 	PGTYPESdate_defmt_asc(&date1, fmt, in);
@@ -190,7 +190,7 @@ if (sqlca.sqlcode < 0) sqlprint ( );}
 	printf("date_defmt_asc4: %s\n", text);
 	free(text);
 
-	date1 = 0; text = "";
+	date1 = 0;
 	fmt = "dd-mm-yy";
 	in = "This is 25th day of December, 1995";
 	PGTYPESdate_defmt_asc(&date1, fmt, in);
@@ -198,7 +198,7 @@ if (sqlca.sqlcode < 0) sqlprint ( );}
 	printf("date_defmt_asc5: %s\n", text);
 	free(text);
 
-	date1 = 0; text = "";
+	date1 = 0;
 	fmt = "mmddyy";
 	in = "Dec. 25th, 1995";
 	PGTYPESdate_defmt_asc(&date1, fmt, in);
@@ -206,7 +206,7 @@ if (sqlca.sqlcode < 0) sqlprint ( );}
 	printf("date_defmt_asc6: %s\n", text);
 	free(text);
 
-	date1 = 0; text = "";
+	date1 = 0;
 	fmt = "mmm. dd. yyyy";
 	in = "dec 25th 1995";
 	PGTYPESdate_defmt_asc(&date1, fmt, in);
@@ -214,7 +214,7 @@ if (sqlca.sqlcode < 0) sqlprint ( );}
 	printf("date_defmt_asc7: %s\n", text);
 	free(text);
 
-	date1 = 0; text = "";
+	date1 = 0;
 	fmt = "mmm. dd. yyyy";
 	in = "DEC-25-1995";
 	PGTYPESdate_defmt_asc(&date1, fmt, in);
@@ -222,7 +222,7 @@ if (sqlca.sqlcode < 0) sqlprint ( );}
 	printf("date_defmt_asc8: %s\n", text);
 	free(text);
 
-	date1 = 0; text = "";
+	date1 = 0;
 	fmt = "mm yy   dd.";
 	in = "12199525";
 	PGTYPESdate_defmt_asc(&date1, fmt, in);
@@ -230,7 +230,7 @@ if (sqlca.sqlcode < 0) sqlprint ( );}
 	printf("date_defmt_asc9: %s\n", text);
 	free(text);
 
-	date1 = 0; text = "";
+	date1 = 0;
 	fmt = "yyyy fierj mm   dd.";
 	in = "19951225";
 	PGTYPESdate_defmt_asc(&date1, fmt, in);
@@ -238,7 +238,7 @@ if (sqlca.sqlcode < 0) sqlprint ( );}
 	printf("date_defmt_asc10: %s\n", text);
 	free(text);
 
-	date1 = 0; text = "";
+	date1 = 0;
 	fmt = "mm/dd/yy";
 	in = "122595";
 	PGTYPESdate_defmt_asc(&date1, fmt, in);
