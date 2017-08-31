@@ -46,9 +46,7 @@
 extern PATH *poly2path(POLYGON *poly);
 extern void regress_lseg_construct(LSEG *lseg, Point *pt1, Point *pt2);
 
-#ifdef PG_MODULE_MAGIC
 PG_MODULE_MAGIC;
-#endif
 
 
 /*

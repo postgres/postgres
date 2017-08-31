@@ -108,9 +108,7 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 
-#ifdef PG_MODULE_MAGIC
 PG_MODULE_MAGIC;
-#endif
 
 PG_FUNCTION_INFO_V1(plsample_call_handler);
 

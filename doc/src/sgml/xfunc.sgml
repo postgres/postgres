@@ -1757,20 +1757,13 @@ CREATE FUNCTION square_root(double precision) RETURNS double precision
     file contains a <quote>magic block</> with the appropriate contents.
     This allows the server to detect obvious incompatibilities, such as code
     compiled for a different major version of
-    <productname>PostgreSQL</productname>.  A magic block is required as of
-    <productname>PostgreSQL</productname> 8.2.  To include a magic block,
+    <productname>PostgreSQL</productname>. To include a magic block,
     write this in one (and only one) of the module source files, after having
     included the header <filename>fmgr.h</>:
 
 <programlisting>
-#ifdef PG_MODULE_MAGIC
 PG_MODULE_MAGIC;
-#endif
 </programlisting>
-
-    The <literal>#ifdef</> test can be omitted if the code doesn't
-    need to compile against pre-8.2 <productname>PostgreSQL</productname>
-    releases.
    </para>
 
    <para>
@@ -2214,9 +2207,7 @@ PG_FUNCTION_INFO_V1(funcname);
 #include "fmgr.h"
 #include "utils/geo_decls.h"
 
-#ifdef PG_MODULE_MAGIC
 PG_MODULE_MAGIC;
-#endif
 
 /* by value */
 
@@ -2554,9 +2545,7 @@ SELECT name, c_overpaid(emp, 1500) AS overpaid
 #include "postgres.h"
 #include "executor/executor.h"  /* for GetAttributeByName() */
 
-#ifdef PG_MODULE_MAGIC
 PG_MODULE_MAGIC;
-#endif
 
 PG_FUNCTION_INFO_V1(c_overpaid);
 
