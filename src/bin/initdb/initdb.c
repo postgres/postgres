@@ -145,7 +145,7 @@ static char *xlog_dir = NULL;
 
 /* internal vars */
 static const char *progname;
-static char *encodingid = "0";
+static int encodingid;
 static char *bki_file;
 static char *desc_file;
 static char *shdesc_file;
@@ -236,7 +236,7 @@ static void writefile(char *path, char **lines);
 static FILE *popen_check(const char *command, const char *mode);
 static void exit_nicely(void);
 static char *get_id(void);
-static char *get_encoding_id(char *encoding_name);
+static int get_encoding_id(char *encoding_name);
 static void set_input(char **dest, char *filename);
 static void check_input(char *path);
 static void write_version_file(char *extrapath);
@@ -636,7 +636,7 @@ encodingid_to_string(int enc)
 /*
  * get the encoding id for a given encoding name
  */
-static char *
+static int
 get_encoding_id(char *encoding_name)
 {
 	int			enc;
@@ -644,7 +644,7 @@ get_encoding_id(char *encoding_name)
 	if (encoding_name && *encoding_name)
 	{
 		if ((enc = pg_valid_server_encoding(encoding_name)) >= 0)
-			return encodingid_to_string(enc);
+			return enc;
 	}
 	fprintf(stderr, _("%s: \"%s\" is not a valid server encoding name\n"),
 			progname, encoding_name ? encoding_name : "(null)");
@@ -1328,7 +1328,7 @@ bootstrap_template1(void)
 
 	bki_lines = replace_token(bki_lines, "POSTGRES", escape_quotes(username));
 
-	bki_lines = replace_token(bki_lines, "ENCODING", encodingid);
+	bki_lines = replace_token(bki_lines, "ENCODING", encodingid_to_string(encodingid));
 
 	bki_lines = replace_token(bki_lines, "LC_COLLATE", escape_quotes(lc_collate));
 
@@ -2454,8 +2454,6 @@ setup_bin_paths(const char *argv0)
 void
 setup_locale_encoding(void)
 {
-	int			user_enc;
-
 	setlocales();
 
 	if (strcmp(lc_ctype, lc_collate) == 0 &&
@@ -2505,12 +2503,11 @@ setup_locale_encoding(void)
 			 * UTF-8.
 			 */
 #ifdef WIN32
+			encodingid = PG_UTF8;
 			printf(_("Encoding \"%s\" implied by locale is not allowed as a server-side encoding.\n"
 					 "The default database encoding will be set to \"%s\" instead.\n"),
 				   pg_encoding_to_char(ctype_enc),
-				   pg_encoding_to_char(PG_UTF8));
-			ctype_enc = PG_UTF8;
-			encodingid = encodingid_to_string(ctype_enc);
+				   pg_encoding_to_char(encodingid));
 #else
 			fprintf(stderr,
 					_("%s: locale \"%s\" requires unsupported encoding \"%s\"\n"),
@@ -2524,17 +2521,16 @@ setup_locale_encoding(void)
 		}
 		else
 		{
-			encodingid = encodingid_to_string(ctype_enc);
+			encodingid = ctype_enc;
 			printf(_("The default database encoding has accordingly been set to \"%s\".\n"),
-				   pg_encoding_to_char(ctype_enc));
+				   pg_encoding_to_char(encodingid));
 		}
 	}
 	else
 		encodingid = get_encoding_id(encoding);
 
-	user_enc = atoi(encodingid);
-	if (!check_locale_encoding(lc_ctype, user_enc) ||
-		!check_locale_encoding(lc_collate, user_enc))
+	if (!check_locale_encoding(lc_ctype, encodingid) ||
+		!check_locale_encoding(lc_collate, encodingid))
 		exit(1);				/* check_locale_encoding printed the error */
 
 }
