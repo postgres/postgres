@@ -480,7 +480,7 @@ LaunchParallelWorkers(ParallelContext *pcxt)
 			 */
 			any_registrations_failed = true;
 			pcxt->worker[i].bgwhandle = NULL;
-			pfree(pcxt->worker[i].error_mqh);
+			shm_mq_detach(pcxt->worker[i].error_mqh);
 			pcxt->worker[i].error_mqh = NULL;
 		}
 	}
@@ -612,7 +612,7 @@ DestroyParallelContext(ParallelContext *pcxt)
 			{
 				TerminateBackgroundWorker(pcxt->worker[i].bgwhandle);
 
-				pfree(pcxt->worker[i].error_mqh);
+				shm_mq_detach(pcxt->worker[i].error_mqh);
 				pcxt->worker[i].error_mqh = NULL;
 			}
 		}
@@ -861,7 +861,7 @@ HandleParallelMessage(ParallelContext *pcxt, int i, StringInfo msg)
 
 		case 'X':				/* Terminate, indicating clean exit */
 			{
-				pfree(pcxt->worker[i].error_mqh);
+				shm_mq_detach(pcxt->worker[i].error_mqh);
 				pcxt->worker[i].error_mqh = NULL;
 				break;
 			}
