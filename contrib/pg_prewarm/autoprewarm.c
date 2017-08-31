@@ -800,7 +800,8 @@ apw_start_master_worker(void)
 	worker.bgw_start_time = BgWorkerStart_ConsistentState;
 	strcpy(worker.bgw_library_name, "pg_prewarm");
 	strcpy(worker.bgw_function_name, "autoprewarm_main");
-	strcpy(worker.bgw_name, "autoprewarm");
+	strcpy(worker.bgw_name, "autoprewarm master");
+	strcpy(worker.bgw_type, "autoprewarm master");
 
 	if (process_shared_preload_libraries_in_progress)
 	{
@@ -840,7 +841,8 @@ apw_start_database_worker(void)
 	worker.bgw_start_time = BgWorkerStart_ConsistentState;
 	strcpy(worker.bgw_library_name, "pg_prewarm");
 	strcpy(worker.bgw_function_name, "autoprewarm_database_main");
-	strcpy(worker.bgw_name, "autoprewarm");
+	strcpy(worker.bgw_name, "autoprewarm worker");
+	strcpy(worker.bgw_type, "autoprewarm worker");
 
 	/* must set notify PID to wait for shutdown */
 	worker.bgw_notify_pid = MyProcPid;

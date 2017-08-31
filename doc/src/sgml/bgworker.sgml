@@ -51,6 +51,7 @@ typedef void (*bgworker_main_type)(Datum main_arg);
 typedef struct BackgroundWorker
 {
     char        bgw_name[BGW_MAXLEN];
+    char        bgw_type[BGW_MAXLEN];
     int         bgw_flags;
     BgWorkerStartTime bgw_start_time;
     int         bgw_restart_time;       /* in seconds, or BGW_NEVER_RESTART */
@@ -64,8 +65,14 @@ typedef struct BackgroundWorker
   </para>
 
   <para>
-   <structfield>bgw_name</> is a string to be used in log messages, process
-   listings and similar contexts.
+   <structfield>bgw_name</> and <structfield>bgw_type</structfield> are
+   strings to be used in log messages, process listings and similar contexts.
+   <structfield>bgw_type</structfield> should be the same for all background
+   workers of the same type, so that it is possible to group such workers in a
+   process listing, for example.  <structfield>bgw_name</structfield> on the
+   other hand can contain additional information about the specific process.
+   (Typically, the string for <structfield>bgw_name</structfield> will contain
+   the type somehow, but that is not strictly required.)
   </para>
 
   <para>

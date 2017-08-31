@@ -21,6 +21,7 @@
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "pgstat.h"
+#include "postmaster/bgworker_internals.h"
 #include "postmaster/postmaster.h"
 #include "storage/proc.h"
 #include "storage/procarray.h"
@@ -823,8 +824,19 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 				}
 			}
 			/* Add backend type */
-			values[17] =
-				CStringGetTextDatum(pgstat_get_backend_desc(beentry->st_backendType));
+			if (beentry->st_backendType == B_BG_WORKER)
+			{
+				const char *bgw_type;
+
+				bgw_type = GetBackgroundWorkerTypeByPid(beentry->st_procpid);
+				if (bgw_type)
+					values[17] = CStringGetTextDatum(bgw_type);
+				else
+					nulls[17] = true;
+			}
+			else
+				values[17] =
+					CStringGetTextDatum(pgstat_get_backend_desc(beentry->st_backendType));
 		}
 		else
 		{
