@@ -651,11 +651,13 @@ CreateTupleQueueReader(shm_mq_handle *handle, TupleDesc tupledesc)
 
 /*
  * Destroy a tuple queue reader.
+ *
+ * Note: cleaning up the underlying shm_mq is the caller's responsibility.
+ * We won't access it here, as it may be detached already.
  */
 void
 DestroyTupleQueueReader(TupleQueueReader *reader)
 {
-	shm_mq_detach(reader->queue);
 	if (reader->typmodmap != NULL)
 		hash_destroy(reader->typmodmap);
 	/* Is it worth trying to free substructure of the remap tree? */
