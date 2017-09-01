@@ -1028,7 +1028,7 @@ CreateReplicationSlot(CreateReplicationSlotCmd *cmd)
 static void
 DropReplicationSlot(DropReplicationSlotCmd *cmd)
 {
-	ReplicationSlotDrop(cmd->slotname, false);
+	ReplicationSlotDrop(cmd->slotname, !cmd->wait);
 	EndCommand("DROP_REPLICATION_SLOT", DestRemote);
 }
 

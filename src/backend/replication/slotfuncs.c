@@ -171,7 +171,7 @@ pg_drop_replication_slot(PG_FUNCTION_ARGS)
 
 	CheckSlotRequirements();
 
-	ReplicationSlotDrop(NameStr(*name), false);
+	ReplicationSlotDrop(NameStr(*name), true);
 
 	PG_RETURN_VOID();
 }
