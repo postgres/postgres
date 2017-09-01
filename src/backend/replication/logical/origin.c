@@ -1205,7 +1205,7 @@ pg_replication_origin_drop(PG_FUNCTION_ARGS)
 	roident = replorigin_by_name(name, false);
 	Assert(OidIsValid(roident));
 
-	replorigin_drop(roident, false);
+	replorigin_drop(roident, true);
 
 	pfree(name);
 
