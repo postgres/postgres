@@ -90,6 +90,7 @@ static TypeCacheEntry *firstDomainTypeEntry = NULL;
 #define TCFLAGS_HAVE_FIELD_EQUALITY			0x1000
 #define TCFLAGS_HAVE_FIELD_COMPARE			0x2000
 #define TCFLAGS_CHECKED_DOMAIN_CONSTRAINTS	0x4000
+#define TCFLAGS_CHECKED_HASH_EXTENDED_PROC	0x8000
 
 /*
  * Data stored about a domain type's constraints.  Note that we do not create
@@ -307,6 +308,8 @@ lookup_type_cache(Oid type_id, int flags)
 		flags |= TYPECACHE_HASH_OPFAMILY;
 
 	if ((flags & (TYPECACHE_HASH_PROC | TYPECACHE_HASH_PROC_FINFO |
+				  TYPECACHE_HASH_EXTENDED_PROC |
+				  TYPECACHE_HASH_EXTENDED_PROC_FINFO |
 				  TYPECACHE_HASH_OPFAMILY)) &&
 		!(typentry->flags & TCFLAGS_CHECKED_HASH_OPCLASS))
 	{
@@ -329,6 +332,7 @@ lookup_type_cache(Oid type_id, int flags)
 		 * decision is still good.
 		 */
 		typentry->flags &= ~(TCFLAGS_CHECKED_HASH_PROC);
+		typentry->flags &= ~(TCFLAGS_CHECKED_HASH_EXTENDED_PROC);
 		typentry->flags |= TCFLAGS_CHECKED_HASH_OPCLASS;
 	}
 
@@ -372,11 +376,12 @@ lookup_type_cache(Oid type_id, int flags)
 		typentry->eq_opr = eq_opr;
 
 		/*
-		 * Reset info about hash function whenever we pick up new info about
-		 * equality operator.  This is so we can ensure that the hash function
-		 * matches the operator.
+		 * Reset info about hash functions whenever we pick up new info about
+		 * equality operator.  This is so we can ensure that the hash functions
+		 * match the operator.
 		 */
 		typentry->flags &= ~(TCFLAGS_CHECKED_HASH_PROC);
+		typentry->flags &= ~(TCFLAGS_CHECKED_HASH_EXTENDED_PROC);
 		typentry->flags |= TCFLAGS_CHECKED_EQ_OPR;
 	}
 	if ((flags & TYPECACHE_LT_OPR) &&
@@ -467,7 +472,7 @@ lookup_type_cache(Oid type_id, int flags)
 			hash_proc = get_opfamily_proc(typentry->hash_opf,
 										  typentry->hash_opintype,
 										  typentry->hash_opintype,
-										  HASHPROC);
+										  HASHSTANDARD_PROC);
 
 		/*
 		 * As above, make sure hash_array will succeed.  We don't currently
@@ -484,6 +489,43 @@ lookup_type_cache(Oid type_id, int flags)
 
 		typentry->hash_proc = hash_proc;
 		typentry->flags |= TCFLAGS_CHECKED_HASH_PROC;
+	}
+	if ((flags & (TYPECACHE_HASH_EXTENDED_PROC |
+				  TYPECACHE_HASH_EXTENDED_PROC_FINFO)) &&
+		!(typentry->flags & TCFLAGS_CHECKED_HASH_EXTENDED_PROC))
+	{
+		Oid			hash_extended_proc = InvalidOid;
+
+		/*
+		 * We insist that the eq_opr, if one has been determined, match the
+		 * hash opclass; else report there is no hash function.
+		 */
+		if (typentry->hash_opf != InvalidOid &&
+			(!OidIsValid(typentry->eq_opr) ||
+			 typentry->eq_opr == get_opfamily_member(typentry->hash_opf,
+													 typentry->hash_opintype,
+													 typentry->hash_opintype,
+													 HTEqualStrategyNumber)))
+			hash_extended_proc = get_opfamily_proc(typentry->hash_opf,
+												   typentry->hash_opintype,
+												   typentry->hash_opintype,
+												   HASHEXTENDED_PROC);
+
+		/*
+		 * As above, make sure hash_array_extended will succeed.  We don't
+		 * currently support hashing for composite types, but when we do,
+		 * we'll need more logic here to check that case too.
+		 */
+		if (hash_extended_proc == F_HASH_ARRAY_EXTENDED &&
+			!array_element_has_hashing(typentry))
+			hash_extended_proc = InvalidOid;
+
+		/* Force update of hash_proc_finfo only if we're changing state */
+		if (typentry->hash_extended_proc != hash_extended_proc)
+			typentry->hash_extended_proc_finfo.fn_oid = InvalidOid;
+
+		typentry->hash_extended_proc = hash_extended_proc;
+		typentry->flags |= TCFLAGS_CHECKED_HASH_EXTENDED_PROC;
 	}
 
 	/*
@@ -521,6 +563,14 @@ lookup_type_cache(Oid type_id, int flags)
 		typentry->hash_proc != InvalidOid)
 	{
 		fmgr_info_cxt(typentry->hash_proc, &typentry->hash_proc_finfo,
+					  CacheMemoryContext);
+	}
+	if ((flags & TYPECACHE_HASH_EXTENDED_PROC_FINFO) &&
+		typentry->hash_extended_proc_finfo.fn_oid == InvalidOid &&
+		typentry->hash_extended_proc != InvalidOid)
+	{
+		fmgr_info_cxt(typentry->hash_extended_proc,
+					  &typentry->hash_extended_proc_finfo,
 					  CacheMemoryContext);
 	}
 

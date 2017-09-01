@@ -1281,6 +1281,69 @@ hash_range(PG_FUNCTION_ARGS)
 }
 
 /*
+ * Returns 64-bit value by hashing a value to a 64-bit value, with a seed.
+ * Otherwise, similar to hash_range.
+ */
+Datum
+hash_range_extended(PG_FUNCTION_ARGS)
+{
+	RangeType  *r = PG_GETARG_RANGE(0);
+	uint64		seed = PG_GETARG_INT64(1);
+	uint64		result;
+	TypeCacheEntry *typcache;
+	TypeCacheEntry *scache;
+	RangeBound	lower;
+	RangeBound	upper;
+	bool		empty;
+	char		flags;
+	uint64		lower_hash;
+	uint64		upper_hash;
+
+	check_stack_depth();
+
+	typcache = range_get_typcache(fcinfo, RangeTypeGetOid(r));
+
+	range_deserialize(typcache, r, &lower, &upper, &empty);
+	flags = range_get_flags(r);
+
+	scache = typcache->rngelemtype;
+	if (!OidIsValid(scache->hash_extended_proc_finfo.fn_oid))
+	{
+		scache = lookup_type_cache(scache->type_id,
+								   TYPECACHE_HASH_EXTENDED_PROC_FINFO);
+		if (!OidIsValid(scache->hash_extended_proc_finfo.fn_oid))
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_FUNCTION),
+					 errmsg("could not identify a hash function for type %s",
+							format_type_be(scache->type_id))));
+	}
+
+	if (RANGE_HAS_LBOUND(flags))
+		lower_hash = DatumGetUInt64(FunctionCall2Coll(&scache->hash_extended_proc_finfo,
+													  typcache->rng_collation,
+													  lower.val,
+													  seed));
+	else
+		lower_hash = 0;
+
+	if (RANGE_HAS_UBOUND(flags))
+		upper_hash = DatumGetUInt64(FunctionCall2Coll(&scache->hash_extended_proc_finfo,
+													  typcache->rng_collation,
+													  upper.val,
+													  seed));
+	else
+		upper_hash = 0;
+
+	/* Merge hashes of flags and bounds */
+	result = hash_uint32_extended((uint32) flags, seed);
+	result ^= lower_hash;
+	result = ROTATE_HIGH_AND_LOW_32BITS(result);
+	result ^= upper_hash;
+
+	PG_RETURN_UINT64(result);
+}
+
+/*
  *----------------------------------------------------------
  * CANONICAL FUNCTIONS
  *

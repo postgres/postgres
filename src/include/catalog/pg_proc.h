@@ -668,35 +668,67 @@ DESCR("convert char(n) to name");
 
 DATA(insert OID = 449 (  hashint2		   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 23 "21" _null_ _null_ _null_ _null_ _null_ hashint2 _null_ _null_ _null_ ));
 DESCR("hash");
+DATA(insert OID = 441 (  hashint2extended  PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 20 "21 20" _null_ _null_ _null_ _null_ _null_ hashint2extended _null_ _null_ _null_ ));
+DESCR("hash");
 DATA(insert OID = 450 (  hashint4		   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 23 "23" _null_ _null_ _null_ _null_ _null_ hashint4 _null_ _null_ _null_ ));
+DESCR("hash");
+DATA(insert OID = 425 (  hashint4extended  PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 20 "23 20" _null_ _null_ _null_ _null_ _null_ hashint4extended _null_ _null_ _null_ ));
 DESCR("hash");
 DATA(insert OID = 949 (  hashint8		   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 23 "20" _null_ _null_ _null_ _null_ _null_ hashint8 _null_ _null_ _null_ ));
 DESCR("hash");
+DATA(insert OID = 442 (  hashint8extended  PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 20 "20 20" _null_ _null_ _null_ _null_ _null_ hashint8extended _null_ _null_ _null_ ));
+DESCR("hash");
 DATA(insert OID = 451 (  hashfloat4		   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 23 "700" _null_ _null_ _null_ _null_ _null_ hashfloat4 _null_ _null_ _null_ ));
+DESCR("hash");
+DATA(insert OID = 443 (  hashfloat4extended	PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 20 "700 20" _null_ _null_ _null_ _null_ _null_ hashfloat4extended _null_ _null_ _null_ ));
 DESCR("hash");
 DATA(insert OID = 452 (  hashfloat8		   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 23 "701" _null_ _null_ _null_ _null_ _null_ hashfloat8 _null_ _null_ _null_ ));
 DESCR("hash");
+DATA(insert OID = 444 (  hashfloat8extended PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 20 "701 20" _null_ _null_ _null_ _null_ _null_ hashfloat8extended _null_ _null_ _null_ ));
+DESCR("hash");
 DATA(insert OID = 453 (  hashoid		   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 23 "26" _null_ _null_ _null_ _null_ _null_ hashoid _null_ _null_ _null_ ));
+DESCR("hash");
+DATA(insert OID = 445 (  hashoidextended   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 20 "26 20" _null_ _null_ _null_ _null_ _null_ hashoidextended _null_ _null_ _null_ ));
 DESCR("hash");
 DATA(insert OID = 454 (  hashchar		   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 23 "18" _null_ _null_ _null_ _null_ _null_ hashchar _null_ _null_ _null_ ));
 DESCR("hash");
+DATA(insert OID = 446 (  hashcharextended  PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 20 "18 20" _null_ _null_ _null_ _null_ _null_ hashcharextended _null_ _null_ _null_ ));
+DESCR("hash");
 DATA(insert OID = 455 (  hashname		   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 23 "19" _null_ _null_ _null_ _null_ _null_ hashname _null_ _null_ _null_ ));
+DESCR("hash");
+DATA(insert OID = 447 (  hashnameextended  PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 20 "19 20" _null_ _null_ _null_ _null_ _null_ hashnameextended _null_ _null_ _null_ ));
 DESCR("hash");
 DATA(insert OID = 400 (  hashtext		   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 23 "25" _null_ _null_ _null_ _null_ _null_ hashtext _null_ _null_ _null_ ));
 DESCR("hash");
+DATA(insert OID = 448 (  hashtextextended  PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 20 "25 20" _null_ _null_ _null_ _null_ _null_ hashtextextended _null_ _null_ _null_ ));
+DESCR("hash");
 DATA(insert OID = 456 (  hashvarlena	   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 23 "2281" _null_ _null_ _null_ _null_ _null_ hashvarlena _null_ _null_ _null_ ));
+DESCR("hash");
+DATA(insert OID = 772 (  hashvarlenaextended PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 20 "2281 20" _null_ _null_ _null_ _null_ _null_ hashvarlenaextended _null_ _null_ _null_ ));
 DESCR("hash");
 DATA(insert OID = 457 (  hashoidvector	   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 23 "30" _null_ _null_ _null_ _null_ _null_ hashoidvector _null_ _null_ _null_ ));
 DESCR("hash");
+DATA(insert OID = 776 (  hashoidvectorextended PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 20 "30 20" _null_ _null_ _null_ _null_ _null_ hashoidvectorextended _null_ _null_ _null_ ));
+DESCR("hash");
 DATA(insert OID = 329 (  hash_aclitem	   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 23 "1033" _null_ _null_ _null_ _null_ _null_	hash_aclitem _null_ _null_ _null_ ));
+DESCR("hash");
+DATA(insert OID = 777 (  hash_aclitem_extended PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 20 "1033 20" _null_ _null_ _null_ _null_ _null_ hash_aclitem_extended _null_ _null_ _null_ ));
 DESCR("hash");
 DATA(insert OID = 399 (  hashmacaddr	   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 23 "829" _null_ _null_ _null_ _null_ _null_ hashmacaddr _null_ _null_ _null_ ));
 DESCR("hash");
+DATA(insert OID = 778 (  hashmacaddrextended PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 20 "829 20" _null_ _null_ _null_ _null_ _null_ hashmacaddrextended _null_ _null_ _null_ ));
+DESCR("hash");
 DATA(insert OID = 422 (  hashinet		   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 23 "869" _null_ _null_ _null_ _null_ _null_ hashinet _null_ _null_ _null_ ));
+DESCR("hash");
+DATA(insert OID = 779 (  hashinetextended  PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 20 "869 20" _null_ _null_ _null_ _null_ _null_ hashinetextended _null_ _null_ _null_ ));
 DESCR("hash");
 DATA(insert OID = 432 (  hash_numeric	   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 23 "1700" _null_ _null_ _null_ _null_ _null_ hash_numeric _null_ _null_ _null_ ));
 DESCR("hash");
+DATA(insert OID = 780 (  hash_numeric_extended PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 20 "1700 20" _null_ _null_ _null_ _null_ _null_ hash_numeric_extended _null_ _null_ _null_ ));
+DESCR("hash");
 DATA(insert OID = 328 (  hashmacaddr8	   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 23 "774" _null_ _null_ _null_ _null_ _null_ hashmacaddr8 _null_ _null_ _null_ ));
+DESCR("hash");
+DATA(insert OID = 781 (  hashmacaddr8extended PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 20 "774 20" _null_ _null_ _null_ _null_ _null_ hashmacaddr8extended _null_ _null_ _null_ ));
 DESCR("hash");
 
 DATA(insert OID = 438 (  num_nulls		   PGNSP PGUID 12 1 0 2276 0 f f f f f f i s 1 0 23 "2276" "{2276}" "{v}" _null_ _null_ _null_ pg_num_nulls _null_ _null_ _null_ ));
@@ -746,6 +778,8 @@ DESCR("convert float8 to int8");
 /* OIDS 600 - 699 */
 
 DATA(insert OID = 626 (  hash_array		   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 23 "2277" _null_ _null_ _null_ _null_ _null_ hash_array _null_ _null_ _null_ ));
+DESCR("hash");
+DATA(insert OID = 782 (  hash_array_extended PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 20 "2277 20" _null_ _null_ _null_ _null_ _null_ hash_array_extended _null_ _null_ _null_ ));
 DESCR("hash");
 
 DATA(insert OID = 652 (  float4			   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 700 "20" _null_ _null_ _null_ _null_ _null_ i8tof _null_ _null_ _null_ ));
@@ -1154,6 +1188,8 @@ DESCR("less-equal-greater");
 DATA(insert OID = 3328 ( bpchar_sortsupport PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 2278 "2281" _null_ _null_ _null_ _null_ _null_ bpchar_sortsupport _null_ _null_ _null_ ));
 DESCR("sort support");
 DATA(insert OID = 1080 (  hashbpchar	   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 23 "1042" _null_ _null_ _null_ _null_ _null_	hashbpchar _null_ _null_ _null_ ));
+DESCR("hash");
+DATA(insert OID = 972  (  hashbpcharextended PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 20 "1042 20" _null_ _null_ _null_ _null_ _null_	hashbpcharextended _null_ _null_ _null_ ));
 DESCR("hash");
 DATA(insert OID = 1081 (  format_type	   PGNSP PGUID 12 1 0 0 0 f f f f f f s s 2 0 25 "26 23" _null_ _null_ _null_ _null_ _null_ format_type _null_ _null_ _null_ ));
 DESCR("format a type oid and atttypmod to canonical SQL");
@@ -2286,9 +2322,15 @@ DESCR("less-equal-greater");
 
 DATA(insert OID = 1688 (  time_hash			PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 23 "1083" _null_ _null_ _null_ _null_ _null_ time_hash _null_ _null_ _null_ ));
 DESCR("hash");
+DATA(insert OID = 3409 (  time_hash_extended	PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 20 "1083 20" _null_ _null_ _null_ _null_ _null_ time_hash_extended _null_ _null_ _null_ ));
+DESCR("hash");
 DATA(insert OID = 1696 (  timetz_hash		PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 23 "1266" _null_ _null_ _null_ _null_ _null_ timetz_hash _null_ _null_ _null_ ));
 DESCR("hash");
+DATA(insert OID = 3410 (  timetz_hash_extended PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 20 "1266 20" _null_ _null_ _null_ _null_ _null_ timetz_hash_extended _null_ _null_ _null_ ));
+DESCR("hash");
 DATA(insert OID = 1697 (  interval_hash		PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 23 "1186" _null_ _null_ _null_ _null_ _null_ interval_hash _null_ _null_ _null_ ));
+DESCR("hash");
+DATA(insert OID = 3418 (  interval_hash_extended PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 20 "1186 20" _null_ _null_ _null_ _null_ _null_ interval_hash_extended _null_ _null_ _null_ ));
 DESCR("hash");
 
 
@@ -3077,6 +3119,8 @@ DESCR("adjust time with time zone to new zone");
 DATA(insert OID = 2038 (  timezone			PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 1266 "1186 1266" _null_ _null_ _null_ _null_ _null_	timetz_izone _null_ _null_ _null_ ));
 DESCR("adjust time with time zone to new zone");
 DATA(insert OID = 2039 (  timestamp_hash	PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 23 "1114" _null_ _null_ _null_ _null_ _null_ timestamp_hash _null_ _null_ _null_ ));
+DESCR("hash");
+DATA(insert OID = 3411 (  timestamp_hash_extended PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 20 "1114 20" _null_ _null_ _null_ _null_ _null_ timestamp_hash_extended _null_ _null_ _null_ ));
 DESCR("hash");
 DATA(insert OID = 2041 ( overlaps			PGNSP PGUID 12 1 0 0 0 f f f f f f i s 4 0 16 "1114 1114 1114 1114" _null_ _null_ _null_ _null_ _null_	overlaps_timestamp _null_ _null_ _null_ ));
 DESCR("intervals overlap?");
@@ -4543,6 +4587,8 @@ DATA(insert OID = 2962 (  uuid_send		   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1
 DESCR("I/O");
 DATA(insert OID = 2963 (  uuid_hash		   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 23 "2950" _null_ _null_ _null_ _null_ _null_ uuid_hash _null_ _null_ _null_ ));
 DESCR("hash");
+DATA(insert OID = 3412 (  uuid_hash_extended PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 20 "2950 20" _null_ _null_ _null_ _null_ _null_ uuid_hash_extended _null_ _null_ _null_ ));
+DESCR("hash");
 
 /* pg_lsn */
 DATA(insert OID = 3229 (  pg_lsn_in		PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 3220 "2275" _null_ _null_ _null_ _null_ _null_ pg_lsn_in _null_ _null_ _null_ ));
@@ -4564,6 +4610,8 @@ DATA(insert OID = 3251 (  pg_lsn_cmp	PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 
 DESCR("less-equal-greater");
 DATA(insert OID = 3252 (  pg_lsn_hash	PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 23 "3220" _null_ _null_ _null_ _null_ _null_ pg_lsn_hash _null_ _null_ _null_ ));
 DESCR("hash");
+DATA(insert OID = 3413 (  pg_lsn_hash_extended PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 20 "3220 20" _null_ _null_ _null_ _null_ _null_ pg_lsn_hash_extended _null_ _null_ _null_ ));
+DESCR("hash");
 
 /* enum related procs */
 DATA(insert OID = 3504 (  anyenum_in	PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 3500 "2275" _null_ _null_ _null_ _null_ _null_ anyenum_in _null_ _null_ _null_ ));
@@ -4583,6 +4631,8 @@ DATA(insert OID = 3513 (  enum_ge		PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 16
 DATA(insert OID = 3514 (  enum_cmp		PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 23 "3500 3500" _null_ _null_ _null_ _null_ _null_ enum_cmp _null_ _null_ _null_ ));
 DESCR("less-equal-greater");
 DATA(insert OID = 3515 (  hashenum		PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 23 "3500" _null_ _null_ _null_ _null_ _null_ hashenum _null_ _null_ _null_ ));
+DESCR("hash");
+DATA(insert OID = 3414 (  hashenumextended PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 20 "3500 20" _null_ _null_ _null_ _null_ _null_ hashenumextended _null_ _null_ _null_ ));
 DESCR("hash");
 DATA(insert OID = 3524 (  enum_smaller	PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 3500 "3500 3500" _null_ _null_ _null_ _null_ _null_ enum_smaller _null_ _null_ _null_ ));
 DESCR("smaller of two");
@@ -4981,6 +5031,8 @@ DATA(insert OID = 4044 (  jsonb_cmp		   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2
 DESCR("less-equal-greater");
 DATA(insert OID = 4045 (  jsonb_hash	   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 23 "3802" _null_ _null_ _null_ _null_ _null_ jsonb_hash _null_ _null_ _null_ ));
 DESCR("hash");
+DATA(insert OID = 3416 (  jsonb_hash_extended PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 20 "3802 20" _null_ _null_ _null_ _null_ _null_ jsonb_hash_extended _null_ _null_ _null_ ));
+DESCR("hash");
 DATA(insert OID = 4046 (  jsonb_contains   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 16 "3802 3802" _null_ _null_ _null_ _null_ _null_ jsonb_contains _null_ _null_ _null_ ));
 DATA(insert OID = 4047 (  jsonb_exists	 PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 16 "3802 25" _null_ _null_ _null_ _null_ _null_ jsonb_exists _null_ _null_ _null_ ));
 DATA(insert OID = 4048 (  jsonb_exists_any	 PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 16 "3802 1009" _null_ _null_ _null_ _null_ _null_ jsonb_exists_any _null_ _null_ _null_ ));
@@ -5170,6 +5222,8 @@ DESCR("GiST support");
 DATA(insert OID = 3881 (  range_gist_same		PGNSP PGUID 12 1 0 0 0 f f f f t f i s 3 0 2281 "3831 3831 2281" _null_ _null_ _null_ _null_ _null_ range_gist_same _null_ _null_ _null_ ));
 DESCR("GiST support");
 DATA(insert OID = 3902 (  hash_range			PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 23 "3831" _null_ _null_ _null_ _null_ _null_ hash_range _null_ _null_ _null_ ));
+DESCR("hash a range");
+DATA(insert OID = 3417 (  hash_range_extended PGNSP PGUID 12 1 0 0 0 f f f f t f i s 2 0 20 "3831 20" _null_ _null_ _null_ _null_ _null_ hash_range_extended _null_ _null_ _null_ ));
 DESCR("hash a range");
 DATA(insert OID = 3916 (  range_typanalyze		PGNSP PGUID 12 1 0 0 0 f f f f t f s s 1 0 16 "2281" _null_ _null_ _null_ _null_ _null_ range_typanalyze _null_ _null_ _null_ ));
 DESCR("range typanalyze");

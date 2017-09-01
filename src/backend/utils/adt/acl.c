@@ -16,6 +16,7 @@
 
 #include <ctype.h>
 
+#include "access/hash.h"
 #include "access/htup_details.h"
 #include "catalog/catalog.h"
 #include "catalog/namespace.h"
@@ -717,6 +718,20 @@ hash_aclitem(PG_FUNCTION_ARGS)
 	PG_RETURN_UINT32((uint32) (a->ai_privs + a->ai_grantee + a->ai_grantor));
 }
 
+/*
+ * 64-bit hash function for aclitem.
+ *
+ * Similar to hash_aclitem, but accepts a seed and returns a uint64 value.
+ */
+Datum
+hash_aclitem_extended(PG_FUNCTION_ARGS)
+{
+	AclItem    *a = PG_GETARG_ACLITEM_P(0);
+	uint64		seed = PG_GETARG_INT64(1);
+	uint32		sum = (uint32) (a->ai_privs + a->ai_grantee + a->ai_grantor);
+
+	return (seed == 0) ? UInt64GetDatum(sum) : hash_uint32_extended(sum, seed);
+}
 
 /*
  * acldefault()  --- create an ACL describing default access permissions

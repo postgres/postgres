@@ -271,6 +271,15 @@ hashmacaddr(PG_FUNCTION_ARGS)
 	return hash_any((unsigned char *) key, sizeof(macaddr));
 }
 
+Datum
+hashmacaddrextended(PG_FUNCTION_ARGS)
+{
+	macaddr    *key = PG_GETARG_MACADDR_P(0);
+
+	return hash_any_extended((unsigned char *) key, sizeof(macaddr),
+							 PG_GETARG_INT64(1));
+}
+
 /*
  * Arithmetic functions: bitwise NOT, AND, OR.
  */

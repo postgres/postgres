@@ -20,6 +20,7 @@
 #endif
 #include <math.h>
 
+#include "access/hash.h"
 #include "access/htup_details.h"
 #include "catalog/pg_type.h"
 #include "funcapi.h"
@@ -4018,6 +4019,84 @@ hash_array(PG_FUNCTION_ARGS)
 	AARR_FREE_IF_COPY(array, 0);
 
 	PG_RETURN_UINT32(result);
+}
+
+/*
+ * Returns 64-bit value by hashing a value to a 64-bit value, with a seed.
+ * Otherwise, similar to hash_array.
+ */
+Datum
+hash_array_extended(PG_FUNCTION_ARGS)
+{
+	AnyArrayType *array = PG_GETARG_ANY_ARRAY(0);
+	uint64		seed = PG_GETARG_INT64(1);
+	int			ndims = AARR_NDIM(array);
+	int		   *dims = AARR_DIMS(array);
+	Oid			element_type = AARR_ELEMTYPE(array);
+	uint64		result = 1;
+	int			nitems;
+	TypeCacheEntry *typentry;
+	int			typlen;
+	bool		typbyval;
+	char		typalign;
+	int			i;
+	array_iter	iter;
+	FunctionCallInfoData locfcinfo;
+
+	typentry = (TypeCacheEntry *) fcinfo->flinfo->fn_extra;
+	if (typentry == NULL ||
+		typentry->type_id != element_type)
+	{
+		typentry = lookup_type_cache(element_type,
+									 TYPECACHE_HASH_EXTENDED_PROC_FINFO);
+		if (!OidIsValid(typentry->hash_extended_proc_finfo.fn_oid))
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_FUNCTION),
+					 errmsg("could not identify an extended hash function for type %s",
+							format_type_be(element_type))));
+		fcinfo->flinfo->fn_extra = (void *) typentry;
+	}
+	typlen = typentry->typlen;
+	typbyval = typentry->typbyval;
+	typalign = typentry->typalign;
+
+	InitFunctionCallInfoData(locfcinfo, &typentry->hash_extended_proc_finfo, 2,
+							 InvalidOid, NULL, NULL);
+
+	/* Loop over source data */
+	nitems = ArrayGetNItems(ndims, dims);
+	array_iter_setup(&iter, array);
+
+	for (i = 0; i < nitems; i++)
+	{
+		Datum		elt;
+		bool		isnull;
+		uint64		elthash;
+
+		/* Get element, checking for NULL */
+		elt = array_iter_next(&iter, &isnull, i, typlen, typbyval, typalign);
+
+		if (isnull)
+		{
+			elthash = 0;
+		}
+		else
+		{
+			/* Apply the hash function */
+			locfcinfo.arg[0] = elt;
+			locfcinfo.arg[1] = seed;
+			locfcinfo.argnull[0] = false;
+			locfcinfo.argnull[1] = false;
+			locfcinfo.isnull = false;
+			elthash = DatumGetUInt64(FunctionCallInvoke(&locfcinfo));
+		}
+
+		result = (result << 5) - result + elthash;
+	}
+
+	AARR_FREE_IF_COPY(array, 0);
+
+	PG_RETURN_UINT64(result);
 }
 
 

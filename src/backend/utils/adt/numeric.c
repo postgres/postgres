@@ -2230,6 +2230,66 @@ hash_numeric(PG_FUNCTION_ARGS)
 	PG_RETURN_DATUM(result);
 }
 
+/*
+ * Returns 64-bit value by hashing a value to a 64-bit value, with a seed.
+ * Otherwise, similar to hash_numeric.
+ */
+Datum
+hash_numeric_extended(PG_FUNCTION_ARGS)
+{
+	Numeric		key = PG_GETARG_NUMERIC(0);
+	uint64		seed = PG_GETARG_INT64(1);
+	Datum		digit_hash;
+	Datum		result;
+	int			weight;
+	int			start_offset;
+	int			end_offset;
+	int			i;
+	int			hash_len;
+	NumericDigit *digits;
+
+	if (NUMERIC_IS_NAN(key))
+		PG_RETURN_UINT64(seed);
+
+	weight = NUMERIC_WEIGHT(key);
+	start_offset = 0;
+	end_offset = 0;
+
+	digits = NUMERIC_DIGITS(key);
+	for (i = 0; i < NUMERIC_NDIGITS(key); i++)
+	{
+		if (digits[i] != (NumericDigit) 0)
+			break;
+
+		start_offset++;
+
+		weight--;
+	}
+
+	if (NUMERIC_NDIGITS(key) == start_offset)
+		PG_RETURN_UINT64(seed - 1);
+
+	for (i = NUMERIC_NDIGITS(key) - 1; i >= 0; i--)
+	{
+		if (digits[i] != (NumericDigit) 0)
+			break;
+
+		end_offset++;
+	}
+
+	Assert(start_offset + end_offset < NUMERIC_NDIGITS(key));
+
+	hash_len = NUMERIC_NDIGITS(key) - start_offset - end_offset;
+	digit_hash = hash_any_extended((unsigned char *) (NUMERIC_DIGITS(key)
+													  + start_offset),
+								   hash_len * sizeof(NumericDigit),
+								   seed);
+
+	result = digit_hash ^ weight;
+
+	PG_RETURN_DATUM(result);
+}
+
 
 /* ----------------------------------------------------------------------
  *

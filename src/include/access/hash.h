@@ -39,6 +39,17 @@ typedef uint32 Bucket;
 		((BlockNumber) ((B) + ((B) ? (metap)->hashm_spares[_hash_spareindex((B)+1)-1] : 0)) + 1)
 
 /*
+ * Rotate the high 32 bits and the low 32 bits separately.  The standard
+ * hash function sometimes rotates the low 32 bits by one bit when
+ * combining elements.  We want extended hash functions to be compatible with
+ * that algorithm when the seed is 0, so we can't just do a normal rotation.
+ * This works, though.
+ */
+#define ROTATE_HIGH_AND_LOW_32BITS(v) \
+	((((v) << 1) & UINT64CONST(0xfffffffefffffffe)) | \
+	(((v) >> 31) & UINT64CONST(0x100000001)))
+
+/*
  * Special space for hash index pages.
  *
  * hasho_flag's LH_PAGE_TYPE bits tell us which type of page we're looking at.
@@ -289,12 +300,20 @@ typedef HashMetaPageData *HashMetaPage;
 #define HTMaxStrategyNumber				1
 
 /*
- *	When a new operator class is declared, we require that the user supply
- *	us with an amproc procudure for hashing a key of the new type.
- *	Since we only have one such proc in amproc, it's number 1.
+ * When a new operator class is declared, we require that the user supply
+ * us with an amproc procudure for hashing a key of the new type, returning
+ * a 32-bit hash value.  We call this the "standard" hash procedure.  We
+ * also allow an optional "extended" hash procedure which accepts a salt and
+ * returns a 64-bit hash value.  This is highly recommended but, for reasons
+ * of backward compatibility, optional.
+ *
+ * When the salt is 0, the low 32 bits of the value returned by the extended
+ * hash procedure should match the value that would have been returned by the
+ * standard hash procedure.
  */
-#define HASHPROC		1
-#define HASHNProcs		1
+#define HASHSTANDARD_PROC		1
+#define HASHEXTENDED_PROC		2
+#define HASHNProcs				2
 
 
 /* public routines */
@@ -322,7 +341,10 @@ extern bytea *hashoptions(Datum reloptions, bool validate);
 extern bool hashvalidate(Oid opclassoid);
 
 extern Datum hash_any(register const unsigned char *k, register int keylen);
+extern Datum hash_any_extended(register const unsigned char *k,
+				  register int keylen, uint64 seed);
 extern Datum hash_uint32(uint32 k);
+extern Datum hash_uint32_extended(uint32 k, uint64 seed);
 
 /* private routines */
 

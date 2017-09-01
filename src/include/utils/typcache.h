@@ -56,6 +56,7 @@ typedef struct TypeCacheEntry
 	Oid			gt_opr;			/* the greater-than operator */
 	Oid			cmp_proc;		/* the btree comparison function */
 	Oid			hash_proc;		/* the hash calculation function */
+	Oid			hash_extended_proc; /* the extended hash calculation function */
 
 	/*
 	 * Pre-set-up fmgr call info for the equality operator, the btree
@@ -67,6 +68,7 @@ typedef struct TypeCacheEntry
 	FmgrInfo	eq_opr_finfo;
 	FmgrInfo	cmp_proc_finfo;
 	FmgrInfo	hash_proc_finfo;
+	FmgrInfo	hash_extended_proc_finfo;
 
 	/*
 	 * Tuple descriptor if it's a composite type (row type).  NULL if not
@@ -120,6 +122,8 @@ typedef struct TypeCacheEntry
 #define TYPECACHE_HASH_OPFAMILY		0x0400
 #define TYPECACHE_RANGE_INFO		0x0800
 #define TYPECACHE_DOMAIN_INFO		0x1000
+#define TYPECACHE_HASH_EXTENDED_PROC		0x2000
+#define TYPECACHE_HASH_EXTENDED_PROC_FINFO	0x4000
 
 /*
  * Callers wishing to maintain a long-lived reference to a domain's constraint

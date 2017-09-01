@@ -436,7 +436,8 @@
    </table>
 
   <para>
-   Hash indexes require one support function, shown in <xref
+   Hash indexes require one support function, and allow a second one to be
+   supplied at the operator class author's option, as shown in <xref
    linkend="xindex-hash-support-table">.
   </para>
 
@@ -451,8 +452,16 @@
      </thead>
      <tbody>
       <row>
-       <entry>Compute the hash value for a key</entry>
+       <entry>Compute the 32-bit hash value for a key</entry>
        <entry>1</entry>
+      </row>
+      <row>
+       <entry>
+         Compute the 64-bit hash value for a key given a 64-bit salt; if
+         the salt is 0, the low 32 bits will match the value that would
+         have been computed by function 1
+       </entry>
+       <entry>2</entry>
       </row>
      </tbody>
     </tgroup>

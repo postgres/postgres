@@ -486,6 +486,16 @@ hashinet(PG_FUNCTION_ARGS)
 	return hash_any((unsigned char *) VARDATA_ANY(addr), addrsize + 2);
 }
 
+Datum
+hashinetextended(PG_FUNCTION_ARGS)
+{
+	inet	   *addr = PG_GETARG_INET_PP(0);
+	int			addrsize = ip_addrsize(addr);
+
+	return hash_any_extended((unsigned char *) VARDATA_ANY(addr), addrsize + 2,
+							 PG_GETARG_INT64(1));
+}
+
 /*
  *	Boolean network-inclusion tests.
  */

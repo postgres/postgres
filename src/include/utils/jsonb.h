@@ -370,6 +370,8 @@ extern Jsonb *JsonbValueToJsonb(JsonbValue *val);
 extern bool JsonbDeepContains(JsonbIterator **val,
 				  JsonbIterator **mContained);
 extern void JsonbHashScalarValue(const JsonbValue *scalarVal, uint32 *hash);
+extern void JsonbHashScalarValueExtended(const JsonbValue *scalarVal,
+							 uint64 *hash, uint64 seed);
 
 /* jsonb.c support functions */
 extern char *JsonbToCString(StringInfo out, JsonbContainer *in,

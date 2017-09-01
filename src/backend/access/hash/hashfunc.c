@@ -47,15 +47,33 @@ hashchar(PG_FUNCTION_ARGS)
 }
 
 Datum
+hashcharextended(PG_FUNCTION_ARGS)
+{
+	return hash_uint32_extended((int32) PG_GETARG_CHAR(0), PG_GETARG_INT64(1));
+}
+
+Datum
 hashint2(PG_FUNCTION_ARGS)
 {
 	return hash_uint32((int32) PG_GETARG_INT16(0));
 }
 
 Datum
+hashint2extended(PG_FUNCTION_ARGS)
+{
+	return hash_uint32_extended((int32) PG_GETARG_INT16(0), PG_GETARG_INT64(1));
+}
+
+Datum
 hashint4(PG_FUNCTION_ARGS)
 {
 	return hash_uint32(PG_GETARG_INT32(0));
+}
+
+Datum
+hashint4extended(PG_FUNCTION_ARGS)
+{
+	return hash_uint32_extended(PG_GETARG_INT32(0), PG_GETARG_INT64(1));
 }
 
 Datum
@@ -79,15 +97,40 @@ hashint8(PG_FUNCTION_ARGS)
 }
 
 Datum
+hashint8extended(PG_FUNCTION_ARGS)
+{
+	/* Same approach as hashint8 */
+	int64		val = PG_GETARG_INT64(0);
+	uint32		lohalf = (uint32) val;
+	uint32		hihalf = (uint32) (val >> 32);
+
+	lohalf ^= (val >= 0) ? hihalf : ~hihalf;
+
+	return hash_uint32_extended(lohalf, PG_GETARG_INT64(1));
+}
+
+Datum
 hashoid(PG_FUNCTION_ARGS)
 {
 	return hash_uint32((uint32) PG_GETARG_OID(0));
 }
 
 Datum
+hashoidextended(PG_FUNCTION_ARGS)
+{
+	return hash_uint32_extended((uint32) PG_GETARG_OID(0), PG_GETARG_INT64(1));
+}
+
+Datum
 hashenum(PG_FUNCTION_ARGS)
 {
 	return hash_uint32((uint32) PG_GETARG_OID(0));
+}
+
+Datum
+hashenumextended(PG_FUNCTION_ARGS)
+{
+	return hash_uint32_extended((uint32) PG_GETARG_OID(0), PG_GETARG_INT64(1));
 }
 
 Datum
@@ -117,6 +160,21 @@ hashfloat4(PG_FUNCTION_ARGS)
 }
 
 Datum
+hashfloat4extended(PG_FUNCTION_ARGS)
+{
+	float4		key = PG_GETARG_FLOAT4(0);
+	uint64		seed = PG_GETARG_INT64(1);
+	float8		key8;
+
+	/* Same approach as hashfloat4 */
+	if (key == (float4) 0)
+		PG_RETURN_UINT64(seed);
+	key8 = key;
+
+	return hash_any_extended((unsigned char *) &key8, sizeof(key8), seed);
+}
+
+Datum
 hashfloat8(PG_FUNCTION_ARGS)
 {
 	float8		key = PG_GETARG_FLOAT8(0);
@@ -133,6 +191,19 @@ hashfloat8(PG_FUNCTION_ARGS)
 }
 
 Datum
+hashfloat8extended(PG_FUNCTION_ARGS)
+{
+	float8		key = PG_GETARG_FLOAT8(0);
+	uint64		seed = PG_GETARG_INT64(1);
+
+	/* Same approach as hashfloat8 */
+	if (key == (float8) 0)
+		PG_RETURN_UINT64(seed);
+
+	return hash_any_extended((unsigned char *) &key, sizeof(key), seed);
+}
+
+Datum
 hashoidvector(PG_FUNCTION_ARGS)
 {
 	oidvector  *key = (oidvector *) PG_GETARG_POINTER(0);
@@ -141,11 +212,30 @@ hashoidvector(PG_FUNCTION_ARGS)
 }
 
 Datum
+hashoidvectorextended(PG_FUNCTION_ARGS)
+{
+	oidvector  *key = (oidvector *) PG_GETARG_POINTER(0);
+
+	return hash_any_extended((unsigned char *) key->values,
+							 key->dim1 * sizeof(Oid),
+							 PG_GETARG_INT64(1));
+}
+
+Datum
 hashname(PG_FUNCTION_ARGS)
 {
 	char	   *key = NameStr(*PG_GETARG_NAME(0));
 
 	return hash_any((unsigned char *) key, strlen(key));
+}
+
+Datum
+hashnameextended(PG_FUNCTION_ARGS)
+{
+	char	   *key = NameStr(*PG_GETARG_NAME(0));
+
+	return hash_any_extended((unsigned char *) key, strlen(key),
+							 PG_GETARG_INT64(1));
 }
 
 Datum
@@ -168,6 +258,22 @@ hashtext(PG_FUNCTION_ARGS)
 	return result;
 }
 
+Datum
+hashtextextended(PG_FUNCTION_ARGS)
+{
+	text	   *key = PG_GETARG_TEXT_PP(0);
+	Datum		result;
+
+	/* Same approach as hashtext */
+	result = hash_any_extended((unsigned char *) VARDATA_ANY(key),
+							   VARSIZE_ANY_EXHDR(key),
+							   PG_GETARG_INT64(1));
+
+	PG_FREE_IF_COPY(key, 0);
+
+	return result;
+}
+
 /*
  * hashvarlena() can be used for any varlena datatype in which there are
  * no non-significant bits, ie, distinct bitpatterns never compare as equal.
@@ -182,6 +288,21 @@ hashvarlena(PG_FUNCTION_ARGS)
 					  VARSIZE_ANY_EXHDR(key));
 
 	/* Avoid leaking memory for toasted inputs */
+	PG_FREE_IF_COPY(key, 0);
+
+	return result;
+}
+
+Datum
+hashvarlenaextended(PG_FUNCTION_ARGS)
+{
+	struct varlena *key = PG_GETARG_VARLENA_PP(0);
+	Datum		result;
+
+	result = hash_any_extended((unsigned char *) VARDATA_ANY(key),
+							   VARSIZE_ANY_EXHDR(key),
+							   PG_GETARG_INT64(1));
+
 	PG_FREE_IF_COPY(key, 0);
 
 	return result;
@@ -502,7 +623,227 @@ hash_any(register const unsigned char *k, register int keylen)
 }
 
 /*
- * hash_uint32() -- hash a 32-bit value
+ * hash_any_extended() -- hash into a 64-bit value, using an optional seed
+ *		k		: the key (the unaligned variable-length array of bytes)
+ *		len		: the length of the key, counting by bytes
+ *		seed	: a 64-bit seed (0 means no seed)
+ *
+ * Returns a uint64 value.  Otherwise similar to hash_any.
+ */
+Datum
+hash_any_extended(register const unsigned char *k, register int keylen,
+				  uint64 seed)
+{
+	register uint32 a,
+				b,
+				c,
+				len;
+
+	/* Set up the internal state */
+	len = keylen;
+	a = b = c = 0x9e3779b9 + len + 3923095;
+
+	/* If the seed is non-zero, use it to perturb the internal state. */
+	if (seed != 0)
+	{
+		/*
+		 * In essence, the seed is treated as part of the data being hashed,
+		 * but for simplicity, we pretend that it's padded with four bytes of
+		 * zeroes so that the seed constitutes a 12-byte chunk.
+		 */
+		a += (uint32) (seed >> 32);
+		b += (uint32) seed;
+		mix(a, b, c);
+	}
+
+	/* If the source pointer is word-aligned, we use word-wide fetches */
+	if (((uintptr_t) k & UINT32_ALIGN_MASK) == 0)
+	{
+		/* Code path for aligned source data */
+		register const uint32 *ka = (const uint32 *) k;
+
+		/* handle most of the key */
+		while (len >= 12)
+		{
+			a += ka[0];
+			b += ka[1];
+			c += ka[2];
+			mix(a, b, c);
+			ka += 3;
+			len -= 12;
+		}
+
+		/* handle the last 11 bytes */
+		k = (const unsigned char *) ka;
+#ifdef WORDS_BIGENDIAN
+		switch (len)
+		{
+			case 11:
+				c += ((uint32) k[10] << 8);
+				/* fall through */
+			case 10:
+				c += ((uint32) k[9] << 16);
+				/* fall through */
+			case 9:
+				c += ((uint32) k[8] << 24);
+				/* the lowest byte of c is reserved for the length */
+				/* fall through */
+			case 8:
+				b += ka[1];
+				a += ka[0];
+				break;
+			case 7:
+				b += ((uint32) k[6] << 8);
+				/* fall through */
+			case 6:
+				b += ((uint32) k[5] << 16);
+				/* fall through */
+			case 5:
+				b += ((uint32) k[4] << 24);
+				/* fall through */
+			case 4:
+				a += ka[0];
+				break;
+			case 3:
+				a += ((uint32) k[2] << 8);
+				/* fall through */
+			case 2:
+				a += ((uint32) k[1] << 16);
+				/* fall through */
+			case 1:
+				a += ((uint32) k[0] << 24);
+				/* case 0: nothing left to add */
+		}
+#else							/* !WORDS_BIGENDIAN */
+		switch (len)
+		{
+			case 11:
+				c += ((uint32) k[10] << 24);
+				/* fall through */
+			case 10:
+				c += ((uint32) k[9] << 16);
+				/* fall through */
+			case 9:
+				c += ((uint32) k[8] << 8);
+				/* the lowest byte of c is reserved for the length */
+				/* fall through */
+			case 8:
+				b += ka[1];
+				a += ka[0];
+				break;
+			case 7:
+				b += ((uint32) k[6] << 16);
+				/* fall through */
+			case 6:
+				b += ((uint32) k[5] << 8);
+				/* fall through */
+			case 5:
+				b += k[4];
+				/* fall through */
+			case 4:
+				a += ka[0];
+				break;
+			case 3:
+				a += ((uint32) k[2] << 16);
+				/* fall through */
+			case 2:
+				a += ((uint32) k[1] << 8);
+				/* fall through */
+			case 1:
+				a += k[0];
+				/* case 0: nothing left to add */
+		}
+#endif							/* WORDS_BIGENDIAN */
+	}
+	else
+	{
+		/* Code path for non-aligned source data */
+
+		/* handle most of the key */
+		while (len >= 12)
+		{
+#ifdef WORDS_BIGENDIAN
+			a += (k[3] + ((uint32) k[2] << 8) + ((uint32) k[1] << 16) + ((uint32) k[0] << 24));
+			b += (k[7] + ((uint32) k[6] << 8) + ((uint32) k[5] << 16) + ((uint32) k[4] << 24));
+			c += (k[11] + ((uint32) k[10] << 8) + ((uint32) k[9] << 16) + ((uint32) k[8] << 24));
+#else							/* !WORDS_BIGENDIAN */
+			a += (k[0] + ((uint32) k[1] << 8) + ((uint32) k[2] << 16) + ((uint32) k[3] << 24));
+			b += (k[4] + ((uint32) k[5] << 8) + ((uint32) k[6] << 16) + ((uint32) k[7] << 24));
+			c += (k[8] + ((uint32) k[9] << 8) + ((uint32) k[10] << 16) + ((uint32) k[11] << 24));
+#endif							/* WORDS_BIGENDIAN */
+			mix(a, b, c);
+			k += 12;
+			len -= 12;
+		}
+
+		/* handle the last 11 bytes */
+#ifdef WORDS_BIGENDIAN
+		switch (len)			/* all the case statements fall through */
+		{
+			case 11:
+				c += ((uint32) k[10] << 8);
+			case 10:
+				c += ((uint32) k[9] << 16);
+			case 9:
+				c += ((uint32) k[8] << 24);
+				/* the lowest byte of c is reserved for the length */
+			case 8:
+				b += k[7];
+			case 7:
+				b += ((uint32) k[6] << 8);
+			case 6:
+				b += ((uint32) k[5] << 16);
+			case 5:
+				b += ((uint32) k[4] << 24);
+			case 4:
+				a += k[3];
+			case 3:
+				a += ((uint32) k[2] << 8);
+			case 2:
+				a += ((uint32) k[1] << 16);
+			case 1:
+				a += ((uint32) k[0] << 24);
+				/* case 0: nothing left to add */
+		}
+#else							/* !WORDS_BIGENDIAN */
+		switch (len)			/* all the case statements fall through */
+		{
+			case 11:
+				c += ((uint32) k[10] << 24);
+			case 10:
+				c += ((uint32) k[9] << 16);
+			case 9:
+				c += ((uint32) k[8] << 8);
+				/* the lowest byte of c is reserved for the length */
+			case 8:
+				b += ((uint32) k[7] << 24);
+			case 7:
+				b += ((uint32) k[6] << 16);
+			case 6:
+				b += ((uint32) k[5] << 8);
+			case 5:
+				b += k[4];
+			case 4:
+				a += ((uint32) k[3] << 24);
+			case 3:
+				a += ((uint32) k[2] << 16);
+			case 2:
+				a += ((uint32) k[1] << 8);
+			case 1:
+				a += k[0];
+				/* case 0: nothing left to add */
+		}
+#endif							/* WORDS_BIGENDIAN */
+	}
+
+	final(a, b, c);
+
+	/* report the result */
+	PG_RETURN_UINT64(((uint64) b << 32) | c);
+}
+
+/*
+ * hash_uint32() -- hash a 32-bit value to a 32-bit value
  *
  * This has the same result as
  *		hash_any(&k, sizeof(uint32))
@@ -522,4 +863,33 @@ hash_uint32(uint32 k)
 
 	/* report the result */
 	return UInt32GetDatum(c);
+}
+
+/*
+ * hash_uint32_extended() -- hash a 32-bit value to a 64-bit value, with a seed
+ *
+ * Like hash_uint32, this is a convenience function.
+ */
+Datum
+hash_uint32_extended(uint32 k, uint64 seed)
+{
+	register uint32 a,
+				b,
+				c;
+
+	a = b = c = 0x9e3779b9 + (uint32) sizeof(uint32) + 3923095;
+
+	if (seed != 0)
+	{
+		a += (uint32) (seed >> 32);
+		b += (uint32) seed;
+		mix(a, b, c);
+	}
+
+	a += k;
+
+	final(a, b, c);
+
+	/* report the result */
+	PG_RETURN_UINT64(((uint64) b << 32) | c);
 }

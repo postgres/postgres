@@ -179,6 +179,12 @@ pg_lsn_hash(PG_FUNCTION_ARGS)
 	return hashint8(fcinfo);
 }
 
+Datum
+pg_lsn_hash_extended(PG_FUNCTION_ARGS)
+{
+	return hashint8extended(fcinfo);
+}
+
 
 /*----------------------------------------------------------
  *	Arithmetic operators on PostgreSQL LSNs.

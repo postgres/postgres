@@ -29,7 +29,7 @@
 #include "utils/syscache.h"
 
 
-static bool check_hash_func_signature(Oid funcid, Oid restype, Oid argtype);
+static bool check_hash_func_signature(Oid funcid, int16 amprocnum, Oid argtype);
 
 
 /*
@@ -105,8 +105,9 @@ hashvalidate(Oid opclassoid)
 		/* Check procedure numbers and function signatures */
 		switch (procform->amprocnum)
 		{
-			case HASHPROC:
-				if (!check_hash_func_signature(procform->amproc, INT4OID,
+			case HASHSTANDARD_PROC:
+			case HASHEXTENDED_PROC:
+				if (!check_hash_func_signature(procform->amproc, procform->amprocnum,
 											   procform->amproclefttype))
 				{
 					ereport(INFO,
@@ -264,11 +265,29 @@ hashvalidate(Oid opclassoid)
  * hacks in the core hash opclass definitions.
  */
 static bool
-check_hash_func_signature(Oid funcid, Oid restype, Oid argtype)
+check_hash_func_signature(Oid funcid, int16 amprocnum, Oid argtype)
 {
 	bool		result = true;
+	Oid			restype;
+	int16		nargs;
 	HeapTuple	tp;
 	Form_pg_proc procform;
+
+	switch (amprocnum)
+	{
+		case HASHSTANDARD_PROC:
+			restype = INT4OID;
+			nargs = 1;
+			break;
+
+		case HASHEXTENDED_PROC:
+			restype = INT8OID;
+			nargs = 2;
+			break;
+
+		default:
+			elog(ERROR, "invalid amprocnum");
+	}
 
 	tp = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
 	if (!HeapTupleIsValid(tp))
@@ -276,7 +295,7 @@ check_hash_func_signature(Oid funcid, Oid restype, Oid argtype)
 	procform = (Form_pg_proc) GETSTRUCT(tp);
 
 	if (procform->prorettype != restype || procform->proretset ||
-		procform->pronargs != 1)
+		procform->pronargs != nargs)
 		result = false;
 
 	if (!IsBinaryCoercible(argtype, procform->proargtypes.values[0]))
@@ -290,23 +309,28 @@ check_hash_func_signature(Oid funcid, Oid restype, Oid argtype)
 		 * identity, not just its input type, because hashvarlena() takes
 		 * INTERNAL and allowing any such function seems too scary.
 		 */
-		if (funcid == F_HASHINT4 &&
+		if ((funcid == F_HASHINT4 || funcid == F_HASHINT4EXTENDED) &&
 			(argtype == DATEOID ||
 			 argtype == ABSTIMEOID || argtype == RELTIMEOID ||
 			 argtype == XIDOID || argtype == CIDOID))
 			 /* okay, allowed use of hashint4() */ ;
-		else if (funcid == F_TIMESTAMP_HASH &&
+		else if ((funcid == F_TIMESTAMP_HASH ||
+				  funcid == F_TIMESTAMP_HASH_EXTENDED) &&
 				 argtype == TIMESTAMPTZOID)
 			 /* okay, allowed use of timestamp_hash() */ ;
-		else if (funcid == F_HASHCHAR &&
+		else if ((funcid == F_HASHCHAR || funcid == F_HASHCHAREXTENDED) &&
 				 argtype == BOOLOID)
 			 /* okay, allowed use of hashchar() */ ;
-		else if (funcid == F_HASHVARLENA &&
+		else if ((funcid == F_HASHVARLENA || funcid == F_HASHVARLENAEXTENDED) &&
 				 argtype == BYTEAOID)
 			 /* okay, allowed use of hashvarlena() */ ;
 		else
 			result = false;
 	}
+
+	/* If function takes a second argument, it must be for a 64-bit salt. */
+	if (nargs == 2 && procform->proargtypes.values[1] != INT8OID)
+		result = false;
 
 	ReleaseSysCache(tp);
 	return result;

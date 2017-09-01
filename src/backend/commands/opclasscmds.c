@@ -18,6 +18,7 @@
 #include <limits.h>
 
 #include "access/genam.h"
+#include "access/hash.h"
 #include "access/heapam.h"
 #include "access/nbtree.h"
 #include "access/htup_details.h"
@@ -1129,7 +1130,8 @@ assignProcTypes(OpFamilyMember *member, Oid amoid, Oid typeoid)
 	/*
 	 * btree comparison procs must be 2-arg procs returning int4, while btree
 	 * sortsupport procs must take internal and return void.  hash support
-	 * procs must be 1-arg procs returning int4.  Otherwise we don't know.
+	 * proc 1 must be a 1-arg proc returning int4, while proc 2 must be a
+	 * 2-arg proc returning int8.  Otherwise we don't know.
 	 */
 	if (amoid == BTREE_AM_OID)
 	{
@@ -1172,14 +1174,28 @@ assignProcTypes(OpFamilyMember *member, Oid amoid, Oid typeoid)
 	}
 	else if (amoid == HASH_AM_OID)
 	{
-		if (procform->pronargs != 1)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("hash procedures must have one argument")));
-		if (procform->prorettype != INT4OID)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("hash procedures must return integer")));
+		if (member->number == HASHSTANDARD_PROC)
+		{
+			if (procform->pronargs != 1)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+						 errmsg("hash procedure 1 must have one argument")));
+			if (procform->prorettype != INT4OID)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+						 errmsg("hash procedure 1 must return integer")));
+		}
+		else if (member->number == HASHEXTENDED_PROC)
+		{
+			if (procform->pronargs != 2)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+						 errmsg("hash procedure 2 must have two arguments")));
+			if (procform->prorettype != INT8OID)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+						 errmsg("hash procedure 2 must return bigint")));
+		}
 
 		/*
 		 * If lefttype/righttype isn't specified, use the proc's input type

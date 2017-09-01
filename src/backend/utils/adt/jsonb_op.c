@@ -291,3 +291,46 @@ jsonb_hash(PG_FUNCTION_ARGS)
 	PG_FREE_IF_COPY(jb, 0);
 	PG_RETURN_INT32(hash);
 }
+
+Datum
+jsonb_hash_extended(PG_FUNCTION_ARGS)
+{
+	Jsonb	   *jb = PG_GETARG_JSONB(0);
+	uint64		seed = PG_GETARG_INT64(1);
+	JsonbIterator *it;
+	JsonbValue	v;
+	JsonbIteratorToken r;
+	uint64		hash = 0;
+
+	if (JB_ROOT_COUNT(jb) == 0)
+		PG_RETURN_UINT64(seed);
+
+	it = JsonbIteratorInit(&jb->root);
+
+	while ((r = JsonbIteratorNext(&it, &v, false)) != WJB_DONE)
+	{
+		switch (r)
+		{
+			/* Rotation is left to JsonbHashScalarValueExtended() */
+			case WJB_BEGIN_ARRAY:
+				hash ^= ((UINT64CONST(JB_FARRAY) << 32) | UINT64CONST(JB_FARRAY));
+				break;
+			case WJB_BEGIN_OBJECT:
+				hash ^= ((UINT64CONST(JB_FOBJECT) << 32) | UINT64CONST(JB_FOBJECT));
+				break;
+			case WJB_KEY:
+			case WJB_VALUE:
+			case WJB_ELEM:
+				JsonbHashScalarValueExtended(&v, &hash, seed);
+				break;
+			case WJB_END_ARRAY:
+			case WJB_END_OBJECT:
+				break;
+			default:
+				elog(ERROR, "invalid JsonbIteratorNext rc: %d", (int) r);
+		}
+	}
+
+	PG_FREE_IF_COPY(jb, 0);
+	PG_RETURN_UINT64(hash);
+}

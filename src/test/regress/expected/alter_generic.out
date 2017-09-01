@@ -421,7 +421,7 @@ BEGIN TRANSACTION;
 CREATE OPERATOR FAMILY alt_opf13 USING hash;
 CREATE FUNCTION fn_opf13  (int4) RETURNS BIGINT AS 'SELECT NULL::BIGINT;' LANGUAGE SQL;
 ALTER OPERATOR FAMILY alt_opf13 USING hash ADD FUNCTION 1 fn_opf13(int4);
-ERROR:  hash procedures must return integer
+ERROR:  hash procedure 1 must return integer
 DROP OPERATOR FAMILY alt_opf13 USING hash;
 ERROR:  current transaction is aborted, commands ignored until end of transaction block
 ROLLBACK;
@@ -439,7 +439,7 @@ BEGIN TRANSACTION;
 CREATE OPERATOR FAMILY alt_opf15 USING hash;
 CREATE FUNCTION fn_opf15 (int4, int2) RETURNS BIGINT AS 'SELECT NULL::BIGINT;' LANGUAGE SQL;
 ALTER OPERATOR FAMILY alt_opf15 USING hash ADD FUNCTION 1 fn_opf15(int4, int2);
-ERROR:  hash procedures must have one argument
+ERROR:  hash procedure 1 must have one argument
 DROP OPERATOR FAMILY alt_opf15 USING hash;
 ERROR:  current transaction is aborted, commands ignored until end of transaction block
 ROLLBACK;

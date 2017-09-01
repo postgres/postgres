@@ -2113,6 +2113,11 @@ timestamp_hash(PG_FUNCTION_ARGS)
 	return hashint8(fcinfo);
 }
 
+Datum
+timestamp_hash_extended(PG_FUNCTION_ARGS)
+{
+	return hashint8extended(fcinfo);
+}
 
 /*
  * Cross-type comparison functions for timestamp vs timestamptz
@@ -2417,6 +2422,20 @@ interval_hash(PG_FUNCTION_ARGS)
 	span64 = int128_to_int64(span);
 
 	return DirectFunctionCall1(hashint8, Int64GetDatumFast(span64));
+}
+
+Datum
+interval_hash_extended(PG_FUNCTION_ARGS)
+{
+	Interval   *interval = PG_GETARG_INTERVAL_P(0);
+	INT128		span = interval_cmp_value(interval);
+	int64		span64;
+
+	/* Same approach as interval_hash */
+	span64 = int128_to_int64(span);
+
+	return DirectFunctionCall2(hashint8extended, Int64GetDatumFast(span64),
+							   PG_GETARG_DATUM(1));
 }
 
 /* overlaps_timestamp() --- implements the SQL OVERLAPS operator.

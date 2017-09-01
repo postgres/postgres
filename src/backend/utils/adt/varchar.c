@@ -947,6 +947,24 @@ hashbpchar(PG_FUNCTION_ARGS)
 	return result;
 }
 
+Datum
+hashbpcharextended(PG_FUNCTION_ARGS)
+{
+	BpChar	   *key = PG_GETARG_BPCHAR_PP(0);
+	char	   *keydata;
+	int			keylen;
+	Datum		result;
+
+	keydata = VARDATA_ANY(key);
+	keylen = bcTruelen(key);
+
+	result = hash_any_extended((unsigned char *) keydata, keylen,
+							   PG_GETARG_INT64(1));
+
+	PG_FREE_IF_COPY(key, 0);
+
+	return result;
+}
 
 /*
  * The following operators support character-by-character comparison

@@ -408,3 +408,11 @@ uuid_hash(PG_FUNCTION_ARGS)
 
 	return hash_any(key->data, UUID_LEN);
 }
+
+Datum
+uuid_hash_extended(PG_FUNCTION_ARGS)
+{
+	pg_uuid_t  *key = PG_GETARG_UUID_P(0);
+
+	return hash_any_extended(key->data, UUID_LEN, PG_GETARG_INT64(1));
+}

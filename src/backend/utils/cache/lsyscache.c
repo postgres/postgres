@@ -490,8 +490,8 @@ get_compatible_hash_operators(Oid opno,
 
 /*
  * get_op_hash_functions
- *		Get the OID(s) of hash support function(s) compatible with the given
- *		operator, operating on its LHS and/or RHS datatype as required.
+ *		Get the OID(s) of the standard hash support function(s) compatible with
+ *		the given operator, operating on its LHS and/or RHS datatype as required.
  *
  * A function for the LHS type is sought and returned into *lhs_procno if
  * lhs_procno isn't NULL.  Similarly, a function for the RHS type is sought
@@ -542,7 +542,7 @@ get_op_hash_functions(Oid opno,
 				*lhs_procno = get_opfamily_proc(aform->amopfamily,
 												aform->amoplefttype,
 												aform->amoplefttype,
-												HASHPROC);
+												HASHSTANDARD_PROC);
 				if (!OidIsValid(*lhs_procno))
 					continue;
 				/* Matching LHS found, done if caller doesn't want RHS */
@@ -564,7 +564,7 @@ get_op_hash_functions(Oid opno,
 				*rhs_procno = get_opfamily_proc(aform->amopfamily,
 												aform->amoprighttype,
 												aform->amoprighttype,
-												HASHPROC);
+												HASHSTANDARD_PROC);
 				if (!OidIsValid(*rhs_procno))
 				{
 					/* Forget any LHS function from this opfamily */

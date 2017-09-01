@@ -373,7 +373,7 @@ _hash_init(Relation rel, double num_tuples, ForkNumber forkNum)
 	if (ffactor < 10)
 		ffactor = 10;
 
-	procid = index_getprocid(rel, 1, HASHPROC);
+	procid = index_getprocid(rel, 1, HASHSTANDARD_PROC);
 
 	/*
 	 * We initialize the metapage, the first N bucket pages, and the first
