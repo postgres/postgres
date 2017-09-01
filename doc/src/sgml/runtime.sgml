@@ -2264,7 +2264,7 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
   <para>
    To require the client to supply a trusted certificate, place
    certificates of the certificate authorities (<acronym>CA</acronym>s)
-   you trust in the file <filename>root.crt</filename> in the data
+   you trust in a file named <filename>root.crt</filename> in the data
    directory, set the parameter <xref linkend="guc-ssl-ca-file"> in
    <filename>postgresql.conf</filename> to <literal>root.crt</literal>,
    and add the authentication option <literal>clientcert=1</literal> to the
@@ -2321,7 +2321,7 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
    <para>
     <xref linkend="ssl-file-usage"> summarizes the files that are
     relevant to the SSL setup on the server.  (The shown file names are default
-    or typical names.  The locally configured names could be different.)
+    names.  The locally configured names could be different.)
    </para>
 
   <table id="ssl-file-usage">
@@ -2351,14 +2351,14 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
      </row>
 
      <row>
-      <entry><xref linkend="guc-ssl-ca-file"> (<filename>$PGDATA/root.crt</>)</entry>
+      <entry><xref linkend="guc-ssl-ca-file"></entry>
       <entry>trusted certificate authorities</entry>
       <entry>checks that client certificate is
       signed by a trusted certificate authority</entry>
      </row>
 
      <row>
-      <entry><xref linkend="guc-ssl-crl-file"> (<filename>$PGDATA/root.crl</>)</entry>
+      <entry><xref linkend="guc-ssl-crl-file"></entry>
       <entry>certificates revoked by certificate authorities</entry>
       <entry>client certificate must not be on this list</entry>
      </row>

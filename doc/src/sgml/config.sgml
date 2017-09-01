@@ -983,10 +983,6 @@ include_dir 'conf.d'
         The default is empty, meaning no CA file is loaded,
         and client certificate verification is not performed.
        </para>
-       <para>
-        In previous releases of PostgreSQL, the name of this file was
-        hard-coded as <filename>root.crt</filename>.
-       </para>
       </listitem>
      </varlistentry>
 
@@ -1021,10 +1017,6 @@ include_dir 'conf.d'
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
         The default is empty, meaning no CRL file is loaded.
-       </para>
-       <para>
-        In previous releases of PostgreSQL, the name of this file was
-        hard-coded as <filename>root.crl</filename>.
        </para>
       </listitem>
      </varlistentry>

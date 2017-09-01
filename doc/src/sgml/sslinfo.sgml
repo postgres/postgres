@@ -150,7 +150,7 @@
     </para>
     <para>
      This function is really useful only if you have more than one trusted CA
-     certificate in your server's <filename>root.crt</> file, or if this CA
+     certificate in your server's certificate authority file, or if this CA
      has issued some intermediate certificate authority certificates.
     </para>
     </listitem>

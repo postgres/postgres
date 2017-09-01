@@ -7638,8 +7638,8 @@ ldap://ldap.acme.com/cn=dbserver,cn=hosts?pgconnectinfo?base?(objectclass=*)
    certificate of the signing authority to the <filename>postgresql.crt</>
    file, then its parent authority's certificate, and so on up to a certificate
    authority, <quote>root</> or <quote>intermediate</>, that is trusted by
-   the server, i.e. signed by a certificate in the server's
-   <filename>root.crt</filename> file.
+   the server, i.e. signed by a certificate in the server's root CA file
+   (<xref linkend="guc-ssl-ca-file">).
   </para>
 
   <para>
