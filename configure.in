@@ -1735,18 +1735,6 @@ fi
 AC_DEFINE_UNQUOTED(PG_INT64_TYPE, $pg_int64_type,
   [Define to the name of a signed 64-bit integer type.])
 
-dnl If we need to use "long long int", figure out whether nnnLL notation works.
-
-if test x"$HAVE_LONG_LONG_INT_64" = xyes ; then
-  AC_COMPILE_IFELSE([AC_LANG_SOURCE([
-#define INT64CONST(x)  x##LL
-long long int foo = INT64CONST(0x1234567890123456);
-])],
-	[AC_DEFINE(HAVE_LL_CONSTANTS, 1, [Define to 1 if constants of type 'long long int' should have the suffix LL.])],
-	[])
-fi
-
-
 # If we found "long int" is 64 bits, assume snprintf handles it.  If
 # we found we need to use "long long int", better check.  We cope with
 # snprintfs that use %lld, %qd, or %I64d as the format.  If none of these

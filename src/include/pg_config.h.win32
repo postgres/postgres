@@ -223,12 +223,6 @@
 /* Define to 1 if you have the `z' library (-lz). */
 /* #undef HAVE_LIBZ */
 
-/* Define to 1 if constants of type 'long long int' should have the suffix LL.
-   */
-#if (_MSC_VER > 1200)
-#define HAVE_LL_CONSTANTS 1
-#endif
-
 /* Define to 1 if the system has the type `locale_t'. */
 #define HAVE_LOCALE_T 1
 
@@ -237,7 +231,7 @@
 
 /* Define to 1 if `long long int' works and is 64 bits. */
 #if (_MSC_VER > 1200)
-#define HAVE_LONG_LONG_INT_64
+#define HAVE_LONG_LONG_INT_64 1
 #endif
 
 /* Define to 1 if you have the `mbstowcs_l' function. */
