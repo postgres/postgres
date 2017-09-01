@@ -303,7 +303,7 @@ $ pg_recvlogical -d postgres --slot test --drop-slot
      </listitem>
 
      <listitem>
-      <para><literal>DROP_REPLICATION_SLOT <replaceable>slot_name</replaceable></literal></para>
+      <para><literal>DROP_REPLICATION_SLOT <replaceable>slot_name</replaceable></literal> <optional> <literal>WAIT</> </></para>
      </listitem>
 
      <listitem>

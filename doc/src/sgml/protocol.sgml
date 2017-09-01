@@ -2173,13 +2173,13 @@ The commands accepted in walsender mode are:
   </varlistentry>
 
   <varlistentry>
-    <term><literal>DROP_REPLICATION_SLOT</literal> <replaceable class="parameter">slot_name</>
+    <term>
+     <literal>DROP_REPLICATION_SLOT</literal> <replaceable class="parameter">slot_name</> <optional> <literal>WAIT</> </optional>
      <indexterm><primary>DROP_REPLICATION_SLOT</primary></indexterm>
     </term>
     <listitem>
      <para>
-      Drops a replication slot, freeing any reserved server-side resources. If
-      the slot is currently in use by an active connection, this command fails.
+      Drops a replication slot, freeing any reserved server-side resources.
       If the slot is a logical slot that was created in a database other than
       the database the walsender is connected to, this command fails.
      </para>
@@ -2190,6 +2190,17 @@ The commands accepted in walsender mode are:
          <para>
           The name of the slot to drop.
          </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><literal>WAIT</literal></term>
+       <listitem>
+        <para>
+         This option causes the command to wait if the slot is active until
+         it becomes inactive, instead of the default behavior of raising an
+         error.
+        </para>
        </listitem>
       </varlistentry>
      </variablelist>

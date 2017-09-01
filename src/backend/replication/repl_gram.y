@@ -72,6 +72,7 @@ static SQLCmd *make_sqlcmd(void);
 %token K_LABEL
 %token K_PROGRESS
 %token K_FAST
+%token K_WAIT
 %token K_NOWAIT
 %token K_MAX_RATE
 %token K_WAL
@@ -272,6 +273,15 @@ drop_replication_slot:
 					DropReplicationSlotCmd *cmd;
 					cmd = makeNode(DropReplicationSlotCmd);
 					cmd->slotname = $2;
+					cmd->wait = false;
+					$$ = (Node *) cmd;
+				}
+			| K_DROP_REPLICATION_SLOT IDENT K_WAIT
+				{
+					DropReplicationSlotCmd *cmd;
+					cmd = makeNode(DropReplicationSlotCmd);
+					cmd->slotname = $2;
+					cmd->wait = true;
 					$$ = (Node *) cmd;
 				}
 			;

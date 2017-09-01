@@ -103,6 +103,7 @@ TEMPORARY			{ return K_TEMPORARY; }
 EXPORT_SNAPSHOT		{ return K_EXPORT_SNAPSHOT; }
 NOEXPORT_SNAPSHOT	{ return K_NOEXPORT_SNAPSHOT; }
 USE_SNAPSHOT		{ return K_USE_SNAPSHOT; }
+WAIT				{ return K_WAIT; }
 
 ","				{ return ','; }
 ";"				{ return ';'; }
