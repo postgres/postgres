@@ -295,6 +295,10 @@ typedef unsigned long long int uint64;
 #define UINT64CONST(x) ((uint64) x)
 #endif
 
+/* Max value of size_t might be missing if we don't have stdint.h */
+#ifndef SIZE_MAX
+#define SIZE_MAX ((size_t) -1)
+#endif
 
 /* Select timestamp representation (float8 or int64) */
 #ifdef USE_INTEGER_DATETIMES
