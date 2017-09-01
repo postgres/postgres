@@ -1250,7 +1250,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
          <entry>Waiting in an extension.</entry>
         </row>
         <row>
-         <entry morerows="16"><literal>IPC</></entry>
+         <entry morerows="17"><literal>IPC</></entry>
          <entry><literal>BgWorkerShutdown</></entry>
          <entry>Waiting for background worker to shut down.</entry>
         </row>
@@ -1301,6 +1301,10 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
         <row>
          <entry><literal>ProcArrayGroupUpdate</></entry>
          <entry>Waiting for group leader to clear transaction id at transaction end.</entry>
+        </row>
+        <row>
+         <entry><literal>ClogGroupUpdate</></entry>
+         <entry>Waiting for group leader to update transaction status at transaction end.</entry>
         </row>
         <row>
          <entry><literal>ReplicationOriginDrop</></entry>
