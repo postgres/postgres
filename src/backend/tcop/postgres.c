@@ -4421,11 +4421,8 @@ ShowUsage(const char *title)
 	}
 
 	/*
-	 * the only stats we don't show here are for memory usage -- i can't
-	 * figure out how to interpret the relevant fields in the rusage struct,
-	 * and they change names across o/s platforms, anyway. if you can figure
-	 * out what the entries mean, you can somehow extract resident set size,
-	 * shared text size, and unshared data and stack sizes.
+	 * The only stats we don't show here are ixrss, idrss, isrss.  It takes
+	 * some work to interpret them, and most platforms don't fill them in.
 	 */
 	initStringInfo(&str);
 
@@ -4445,6 +4442,16 @@ ShowUsage(const char *title)
 					 (long) sys.tv_sec,
 					 (long) sys.tv_usec);
 #if defined(HAVE_GETRUSAGE)
+	appendStringInfo(&str,
+					 "!\t%ld kB max resident size\n",
+#if defined(__darwin__)
+					 /* in bytes on macOS */
+					 r.ru_maxrss/1024
+#else
+					 /* in kilobytes on most other platforms */
+					 r.ru_maxrss
+#endif
+		);
 	appendStringInfo(&str,
 					 "!\t%ld/%ld [%ld/%ld] filesystem blocks in/out\n",
 					 r.ru_inblock - Save_r.ru_inblock,
