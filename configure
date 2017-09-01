@@ -14254,24 +14254,6 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
-
-if test x"$HAVE_LONG_LONG_INT_64" = xyes ; then
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-#define INT64CONST(x)  x##LL
-long long int foo = INT64CONST(0x1234567890123456);
-
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-
-$as_echo "#define HAVE_LL_CONSTANTS 1" >>confdefs.h
-
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-
-
 # If we found "long int" is 64 bits, assume snprintf handles it.  If
 # we found we need to use "long long int", better check.  We cope with
 # snprintfs that use %lld, %qd, or %I64d as the format.  If none of these
