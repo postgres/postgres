@@ -313,10 +313,10 @@ jsonb_hash_extended(PG_FUNCTION_ARGS)
 		{
 			/* Rotation is left to JsonbHashScalarValueExtended() */
 			case WJB_BEGIN_ARRAY:
-				hash ^= ((UINT64CONST(JB_FARRAY) << 32) | UINT64CONST(JB_FARRAY));
+				hash ^= ((uint64) JB_FARRAY) << 32 | JB_FARRAY;
 				break;
 			case WJB_BEGIN_OBJECT:
-				hash ^= ((UINT64CONST(JB_FOBJECT) << 32) | UINT64CONST(JB_FOBJECT));
+				hash ^= ((uint64) JB_FOBJECT) << 32 | JB_FOBJECT;
 				break;
 			case WJB_KEY:
 			case WJB_VALUE:
