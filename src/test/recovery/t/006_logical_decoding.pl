@@ -78,6 +78,11 @@ chomp($stdout_recv);
 is($stdout_recv, $expected,
 	'got same expected output from pg_recvlogical decoding session');
 
+$node_master->poll_query_until('postgres',
+"SELECT EXISTS (SELECT 1 FROM pg_replication_slots WHERE slot_name = 'test_slot' AND active_pid IS NULL)"
+)
+  or die "slot never became inactive";
+
 $stdout_recv = $node_master->pg_recvlogical_upto(
 	'postgres', 'test_slot', $endpos, 10,
 	'include-xids'     => '0',
