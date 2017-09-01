@@ -2223,14 +2223,15 @@ Datum
 timetz_hash_extended(PG_FUNCTION_ARGS)
 {
 	TimeTzADT  *key = PG_GETARG_TIMETZADT_P(0);
-	uint64		seed = PG_GETARG_DATUM(1);
+	Datum		seed = PG_GETARG_DATUM(1);
 	uint64		thash;
 
 	/* Same approach as timetz_hash */
 	thash = DatumGetUInt64(DirectFunctionCall2(hashint8extended,
 											   Int64GetDatumFast(key->time),
 											   seed));
-	thash ^= DatumGetUInt64(hash_uint32_extended(key->zone, seed));
+	thash ^= DatumGetUInt64(hash_uint32_extended(key->zone,
+							DatumGetInt64(seed)));
 	PG_RETURN_UINT64(thash);
 }
 

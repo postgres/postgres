@@ -2285,7 +2285,7 @@ hash_numeric_extended(PG_FUNCTION_ARGS)
 								   hash_len * sizeof(NumericDigit),
 								   seed);
 
-	result = digit_hash ^ weight;
+	result = UInt64GetDatum(DatumGetUInt64(digit_hash) ^ weight);
 
 	PG_RETURN_DATUM(result);
 }

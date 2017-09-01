@@ -4084,7 +4084,7 @@ hash_array_extended(PG_FUNCTION_ARGS)
 		{
 			/* Apply the hash function */
 			locfcinfo.arg[0] = elt;
-			locfcinfo.arg[1] = seed;
+			locfcinfo.arg[1] = Int64GetDatum(seed);
 			locfcinfo.argnull[0] = false;
 			locfcinfo.argnull[1] = false;
 			locfcinfo.isnull = false;

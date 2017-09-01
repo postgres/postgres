@@ -1288,7 +1288,7 @@ Datum
 hash_range_extended(PG_FUNCTION_ARGS)
 {
 	RangeType  *r = PG_GETARG_RANGE(0);
-	uint64		seed = PG_GETARG_INT64(1);
+	Datum		seed = PG_GETARG_DATUM(1);
 	uint64		result;
 	TypeCacheEntry *typcache;
 	TypeCacheEntry *scache;
@@ -1335,7 +1335,8 @@ hash_range_extended(PG_FUNCTION_ARGS)
 		upper_hash = 0;
 
 	/* Merge hashes of flags and bounds */
-	result = hash_uint32_extended((uint32) flags, seed);
+	result = DatumGetUInt64(hash_uint32_extended((uint32) flags,
+												 DatumGetInt64(seed)));
 	result ^= lower_hash;
 	result = ROTATE_HIGH_AND_LOW_32BITS(result);
 	result ^= upper_hash;
