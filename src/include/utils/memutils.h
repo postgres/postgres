@@ -41,7 +41,7 @@
 
 #define AllocSizeIsValid(size)	((Size) (size) <= MaxAllocSize)
 
-#define MaxAllocHugeSize	((Size) -1 >> 1)	/* SIZE_MAX / 2 */
+#define MaxAllocHugeSize	(SIZE_MAX / 2)
 
 #define AllocHugeSizeIsValid(size)	((Size) (size) <= MaxAllocHugeSize)
 
