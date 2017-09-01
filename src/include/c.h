@@ -267,6 +267,8 @@ typedef long int int64;
 #ifndef HAVE_UINT64
 typedef unsigned long int uint64;
 #endif
+#define INT64CONST(x)  (x##L)
+#define UINT64CONST(x) (x##UL)
 #elif defined(HAVE_LONG_LONG_INT_64)
 /* We have working support for "long long int", use that */
 
@@ -276,23 +278,20 @@ typedef long long int int64;
 #ifndef HAVE_UINT64
 typedef unsigned long long int uint64;
 #endif
+#define INT64CONST(x)  (x##LL)
+#define UINT64CONST(x) (x##ULL)
 #else
 /* neither HAVE_LONG_INT_64 nor HAVE_LONG_LONG_INT_64 */
 #error must have a working 64-bit integer datatype
 #endif
 
-/* Decide if we need to decorate 64-bit constants */
-#ifdef HAVE_LL_CONSTANTS
-#define INT64CONST(x)  ((int64) x##LL)
-#define UINT64CONST(x) ((uint64) x##ULL)
-#else
-#define INT64CONST(x)  ((int64) x)
-#define UINT64CONST(x) ((uint64) x)
-#endif
-
 /* Max value of size_t might be missing if we don't have stdint.h */
 #ifndef SIZE_MAX
-#define SIZE_MAX ((size_t) -1)
+#if SIZEOF_SIZE_T == 8
+#define SIZE_MAX UINT64CONST(0xFFFFFFFFFFFFFFFF)
+#else
+#define SIZE_MAX (0xFFFFFFFFU)
+#endif
 #endif
 
 /* Select timestamp representation (float8 or int64) */
