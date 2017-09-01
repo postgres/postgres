@@ -331,6 +331,14 @@ $cur_master->psql(
 	CHECKPOINT;
 	COMMIT PREPARED 'xact_009_13';");
 
+# Ensure that last transaction is replayed on standby.
+my $cur_master_lsn =
+	$cur_master->safe_psql('postgres', "SELECT pg_current_wal_lsn()");
+my $caughtup_query =
+	"SELECT '$cur_master_lsn'::pg_lsn <= pg_last_wal_replay_lsn()";
+$cur_standby->poll_query_until('postgres', $caughtup_query)
+  or die "Timed out while waiting for standby to catch up";
+
 $cur_standby->psql(
 	'postgres',
 	"SELECT count(*) FROM t_009_tbl2",
