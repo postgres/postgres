@@ -100,6 +100,19 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>-E <replaceable class="parameter">encoding</replaceable></option></term>
+      <term><option>--encoding=<replaceable class="parameter">encoding</replaceable></option></term>
+      <listitem>
+       <para>
+        Create the dump in the specified character set encoding. By default,
+        the dump is created in the database encoding.  (Another way to get the
+        same result is to set the <envar>PGCLIENTENCODING</envar> environment
+        variable to the desired dump encoding.)
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-f <replaceable class="parameter">filename</replaceable></option></term>
       <term><option>--file=<replaceable class="parameter">filename</replaceable></option></term>
       <listitem>

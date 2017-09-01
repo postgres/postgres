@@ -97,6 +97,7 @@ main(int argc, char *argv[])
 	static struct option long_options[] = {
 		{"data-only", no_argument, NULL, 'a'},
 		{"clean", no_argument, NULL, 'c'},
+		{"encoding", required_argument, NULL, 'E'},
 		{"file", required_argument, NULL, 'f'},
 		{"globals-only", no_argument, NULL, 'g'},
 		{"host", required_argument, NULL, 'h'},
@@ -147,6 +148,7 @@ main(int argc, char *argv[])
 	char	   *pguser = NULL;
 	char	   *pgdb = NULL;
 	char	   *use_role = NULL;
+	const char *dumpencoding = NULL;
 	trivalue	prompt_password = TRI_DEFAULT;
 	bool		data_only = false;
 	bool		globals_only = false;
@@ -204,7 +206,7 @@ main(int argc, char *argv[])
 
 	pgdumpopts = createPQExpBuffer();
 
-	while ((c = getopt_long(argc, argv, "acd:f:gh:l:oOp:rsS:tU:vwWx", long_options, &optindex)) != -1)
+	while ((c = getopt_long(argc, argv, "acd:E:f:gh:l:oOp:rsS:tU:vwWx", long_options, &optindex)) != -1)
 	{
 		switch (c)
 		{
@@ -219,6 +221,12 @@ main(int argc, char *argv[])
 
 			case 'd':
 				connstr = pg_strdup(optarg);
+				break;
+
+			case 'E':
+				dumpencoding = pg_strdup(optarg);
+				appendPQExpBufferStr(pgdumpopts, " -E ");
+				appendShellString(pgdumpopts, optarg);
 				break;
 
 			case 'f':
@@ -454,6 +462,19 @@ main(int argc, char *argv[])
 		OPF = stdout;
 
 	/*
+	 * Set the client encoding if requested.
+	 */
+	if (dumpencoding)
+	{
+		if (PQsetClientEncoding(conn, dumpencoding) < 0)
+		{
+			fprintf(stderr, _("%s: invalid client encoding \"%s\" specified\n"),
+					progname, dumpencoding);
+			exit_nicely(1);
+		}
+	}
+
+	/*
 	 * Get the active encoding and the standard_conforming_strings setting, so
 	 * we know how to escape strings.
 	 */
@@ -588,6 +609,7 @@ help(void)
 	printf(_("\nOptions controlling the output content:\n"));
 	printf(_("  -a, --data-only              dump only the data, not the schema\n"));
 	printf(_("  -c, --clean                  clean (drop) databases before recreating\n"));
+	printf(_("  -E, --encoding=ENCODING      dump the data in encoding ENCODING\n"));
 	printf(_("  -g, --globals-only           dump only global objects, no databases\n"));
 	printf(_("  -o, --oids                   include OIDs in dump\n"));
 	printf(_("  -O, --no-owner               skip restoration of object ownership\n"));
