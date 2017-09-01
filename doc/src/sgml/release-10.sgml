@@ -20,7 +20,13 @@
 
    <itemizedlist>
 
-   <listitem><para>(to be written)</para></listitem>
+   <listitem><para>(yet to be finalized)</para></listitem>
+   <listitem><para>Logical replication using publish/subscribe</para></listitem>
+   <listitem><para>Declarative Table Partitioning</para></listitem>
+   <listitem><para>Improved Query Parallelism</para></listitem>
+   <listitem><para>Significant general performance improvements</para></listitem>
+   <listitem><para>SCRAM-SHA-256 strong authentication</para></listitem>
+   <listitem><para>Improved monitoring and control</para></listitem>
    </itemizedlist>
 
    <para>
