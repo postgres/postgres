@@ -177,7 +177,6 @@ ExecGatherMerge(PlanState *pstate)
 	GatherMergeState *node = castNode(GatherMergeState, pstate);
 	TupleTableSlot *slot;
 	ExprContext *econtext;
-	int			i;
 
 	CHECK_FOR_INTERRUPTS();
 
@@ -212,27 +211,23 @@ ExecGatherMerge(PlanState *pstate)
 			LaunchParallelWorkers(pcxt);
 			/* We save # workers launched for the benefit of EXPLAIN */
 			node->nworkers_launched = pcxt->nworkers_launched;
-			node->nreaders = 0;
 
 			/* Set up tuple queue readers to read the results. */
 			if (pcxt->nworkers_launched > 0)
 			{
-				node->reader = palloc(pcxt->nworkers_launched *
-									  sizeof(TupleQueueReader *));
-
-				for (i = 0; i < pcxt->nworkers_launched; ++i)
-				{
-					shm_mq_set_handle(node->pei->tqueue[i],
-									  pcxt->worker[i].bgwhandle);
-					node->reader[node->nreaders++] =
-						CreateTupleQueueReader(node->pei->tqueue[i],
-											   node->tupDesc);
-				}
+				ExecParallelCreateReaders(node->pei, node->tupDesc);
+				/* Make a working array showing the active readers */
+				node->nreaders = pcxt->nworkers_launched;
+				node->reader = (TupleQueueReader **)
+					palloc(node->nreaders * sizeof(TupleQueueReader *));
+				memcpy(node->reader, node->pei->reader,
+					   node->nreaders * sizeof(TupleQueueReader *));
 			}
 			else
 			{
 				/* No workers?	Then never mind. */
-				ExecShutdownGatherMergeWorkers(node);
+				node->nreaders = 0;
+				node->reader = NULL;
 			}
 		}
 
@@ -282,8 +277,6 @@ ExecEndGatherMerge(GatherMergeState *node)
  *		ExecShutdownGatherMerge
  *
  *		Destroy the setup for parallel workers including parallel context.
- *		Collect all the stats after workers are stopped, else some work
- *		done by workers won't be accounted.
  * ----------------------------------------------------------------
  */
 void
@@ -302,30 +295,19 @@ ExecShutdownGatherMerge(GatherMergeState *node)
 /* ----------------------------------------------------------------
  *		ExecShutdownGatherMergeWorkers
  *
- *		Destroy the parallel workers.  Collect all the stats after
- *		workers are stopped, else some work done by workers won't be
- *		accounted.
+ *		Stop all the parallel workers.
  * ----------------------------------------------------------------
  */
 static void
 ExecShutdownGatherMergeWorkers(GatherMergeState *node)
 {
-	/* Shut down tuple queue readers before shutting down workers. */
-	if (node->reader != NULL)
-	{
-		int			i;
-
-		for (i = 0; i < node->nreaders; ++i)
-			if (node->reader[i])
-				DestroyTupleQueueReader(node->reader[i]);
-
-		pfree(node->reader);
-		node->reader = NULL;
-	}
-
-	/* Now shut down the workers. */
 	if (node->pei != NULL)
 		ExecParallelFinish(node->pei);
+
+	/* Flush local copy of reader array */
+	if (node->reader)
+		pfree(node->reader);
+	node->reader = NULL;
 }
 
 /* ----------------------------------------------------------------
@@ -670,8 +652,6 @@ gather_merge_readnext(GatherMergeState *gm_state, int reader, bool nowait)
 	else if (tuple_buffer->done)
 	{
 		/* Reader is known to be exhausted. */
-		DestroyTupleQueueReader(gm_state->reader[reader - 1]);
-		gm_state->reader[reader - 1] = NULL;
 		return false;
 	}
 	else
