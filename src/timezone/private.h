@@ -48,10 +48,6 @@
 /* Unlike <ctype.h>'s isdigit, this also works if c < 0 | c > UCHAR_MAX. */
 #define is_digit(c) ((unsigned)(c) - '0' <= 9)
 
-#ifndef SIZE_MAX
-#define SIZE_MAX ((size_t) -1)
-#endif
-
 /*
  * SunOS 4.1.1 libraries lack remove.
  */
