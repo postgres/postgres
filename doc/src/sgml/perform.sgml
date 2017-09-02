@@ -1555,7 +1555,7 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
      <listitem>
       <para>
        Increase <xref linkend="guc-checkpoint-segments"> and <xref
-       linkend="guc-checkpoint-timeout"> ; this reduces the frequency
+       linkend="guc-checkpoint-timeout">; this reduces the frequency
        of checkpoints, but increases the storage requirements of
        <filename>/pg_xlog</>.
       </para>
