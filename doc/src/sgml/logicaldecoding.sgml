@@ -345,7 +345,7 @@ $ pg_recvlogical -d postgres --slot test --drop-slot
    <para>
     The <link linkend="view-pg-replication-slots"><structname>pg_replication_slots</structname></link>
     view and the
-    <link linkend="monitoring-stats-views-table"><structname>pg_stat_replication</structname></link>
+    <link linkend="pg-stat-replication-view"><structname>pg_stat_replication</structname></link>
     view provide information about the current state of replication slots and
     streaming replication connections respectively. These views apply to both physical and
     logical replication.

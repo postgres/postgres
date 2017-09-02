@@ -482,7 +482,7 @@ COPY <replaceable class="parameter">count</replaceable>
    <para>
     For identity columns, the <command>COPY FROM</command> command will always
     write the column values provided in the input data, like
-    the <command>INPUT</command> option <literal>OVERRIDING SYSTEM
+    the <command>INSERT</command> option <literal>OVERRIDING SYSTEM
     VALUE</literal>.
    </para>
 

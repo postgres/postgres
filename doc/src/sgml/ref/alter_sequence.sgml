@@ -89,7 +89,7 @@ ALTER SEQUENCE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> S
         The optional
         clause <literal>AS <replaceable class="parameter">data_type</replaceable></literal>
         changes the data type of the sequence.  Valid types are
-        are <literal>smallint</literal>, <literal>integer</literal>,
+        <literal>smallint</literal>, <literal>integer</literal>,
         and <literal>bigint</literal>.
        </para>
 
