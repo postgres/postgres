@@ -559,7 +559,7 @@ amgettuple (IndexScanDesc scan,
    a <structname>HeapTuple</> pointer stored at <literal>scan-&gt;xs_hitup</>,
    with tuple descriptor <literal>scan-&gt;xs_hitupdesc</>.  (The latter
    format should be used when reconstructing data that might possibly not fit
-   into an IndexTuple.)  In either case,
+   into an <structname>IndexTuple</>.)  In either case,
    management of the data referenced by the pointer is the access method's
    responsibility.  The data must remain good at least until the next
    <function>amgettuple</>, <function>amrescan</>, or <function>amendscan</>

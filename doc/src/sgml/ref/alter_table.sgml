@@ -620,8 +620,8 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
       <literal>SHARE UPDATE EXCLUSIVE</literal> lock will be taken for
       fillfactor and autovacuum storage parameters, as well as the
       following planner related parameters:
-      effective_io_concurrency, parallel_workers, seq_page_cost
-      random_page_cost, n_distinct and n_distinct_inherited.
+      <varname>effective_io_concurrency</>, <varname>parallel_workers</>, <varname>seq_page_cost</>,
+      <varname>random_page_cost</>, <varname>n_distinct</> and <varname>n_distinct_inherited</>.
      </para>
 
      <note>

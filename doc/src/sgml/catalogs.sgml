@@ -5385,7 +5385,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
 
      <row>
       <entry><structfield>pubname</structfield></entry>
-      <entry><type>Name</type></entry>
+      <entry><type>name</type></entry>
       <entry></entry>
       <entry>Name of the publication</entry>
      </row>

@@ -473,8 +473,8 @@ FROM ( { <replaceable class="PARAMETER">numeric_literal</replaceable> | <replace
       <firstterm>partitioned</firstterm> table.  The parenthesized list of
       columns or expressions forms the <firstterm>partition key</firstterm>
       for the table.  When using range partitioning, the partition key can
-      include multiple columns or expressions (up to 32, but this limit can
-      altered when building <productname>PostgreSQL</productname>.), but for
+      include multiple columns or expressions (up to 32, but this limit can be
+      altered when building <productname>PostgreSQL</productname>), but for
       list partitioning, the partition key must consist of a single column or
       expression.  If no B-tree operator class is specified when creating a
       partitioned table, the default B-tree operator class for the datatype will

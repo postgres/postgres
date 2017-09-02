@@ -119,7 +119,7 @@ SELECT * FROM <replaceable>name</replaceable>;
       The optional
       clause <literal>AS <replaceable class="parameter">data_type</replaceable></literal>
       specifies the data type of the sequence.  Valid types are
-      are <literal>smallint</literal>, <literal>integer</literal>,
+      <literal>smallint</literal>, <literal>integer</literal>,
       and <literal>bigint</literal>.  <literal>bigint</literal> is the
       default.  The data type determines the default minimum and maximum
       values of the sequence.
