@@ -39,7 +39,7 @@ typedef dshash_hash (*dshash_hash_function) (const void *v, size_t size,
  * members tranche_id and tranche_name do not need to be initialized when
  * attaching to an existing hash table.
  *
- * Compare and hash functions mus be supplied even when attaching, because we
+ * Compare and hash functions must be supplied even when attaching, because we
  * can't safely share function pointers between backends in general.  Either
  * the arg variants or the non-arg variants should be supplied; the other
  * function pointers should be NULL.  If the arg varants are supplied then the

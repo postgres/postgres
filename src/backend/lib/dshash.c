@@ -315,7 +315,7 @@ dshash_destroy(dshash_table *hash_table)
 	ensure_valid_bucket_pointers(hash_table);
 
 	/* Free all the entries. */
-	size = 1 << hash_table->size_log2;
+	size = ((size_t) 1) << hash_table->size_log2;
 	for (i = 0; i < size; ++i)
 	{
 		dsa_pointer item_pointer = hash_table->buckets[i];
@@ -676,7 +676,7 @@ resize(dshash_table *hash_table, size_t new_size_log2)
 	dsa_pointer new_buckets_shared;
 	dsa_pointer *new_buckets;
 	size_t		size;
-	size_t		new_size = 1 << new_size_log2;
+	size_t		new_size = ((size_t) 1) << new_size_log2;
 	size_t		i;
 
 	/*
@@ -707,10 +707,10 @@ resize(dshash_table *hash_table, size_t new_size_log2)
 	new_buckets = dsa_get_address(hash_table->area, new_buckets_shared);
 
 	/*
-	 * We've allocate the new bucket array; all that remains to do now is to
+	 * We've allocated the new bucket array; all that remains to do now is to
 	 * reinsert all items, which amounts to adjusting all the pointers.
 	 */
-	size = 1 << hash_table->control->size_log2;
+	size = ((size_t) 1) << hash_table->control->size_log2;
 	for (i = 0; i < size; ++i)
 	{
 		dsa_pointer item_pointer = hash_table->buckets[i];
