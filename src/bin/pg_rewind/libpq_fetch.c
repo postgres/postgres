@@ -270,6 +270,7 @@ receiveFileChunks(const char *sql)
 		char	   *filename;
 		int			filenamelen;
 		int64		chunkoff;
+		char		chunkoff_str[32];
 		int			chunksize;
 		char	   *chunk;
 
@@ -342,8 +343,13 @@ receiveFileChunks(const char *sql)
 			continue;
 		}
 
-		pg_log(PG_DEBUG, "received chunk for file \"%s\", offset " INT64_FORMAT ", size %d\n",
-			   filename, chunkoff, chunksize);
+		/*
+		 * Separate step to keep platform-dependent format code out of
+		 * translatable strings.
+		 */
+		snprintf(chunkoff_str, sizeof(chunkoff_str), INT64_FORMAT, chunkoff);
+		pg_log(PG_DEBUG, "received chunk for file \"%s\", offset %s, size %d\n",
+			   filename, chunkoff_str, chunksize);
 
 		open_target_file(filename, false);
 
