@@ -58,9 +58,9 @@ extern void expr_yyset_column(int column_no, yyscan_t yyscanner);
 %option prefix="expr_yy"
 
 /* Character classes */
-alpha			[a-zA-Z_]
+alpha			[a-zA-Z\200-\377_]
 digit			[0-9]
-alnum			[a-zA-Z0-9_]
+alnum			[A-Za-z\200-\377_0-9]
 /* {space} + {nonspace} + {newline} should cover all characters */
 space			[ \t\r\f\v]
 nonspace		[^ \t\r\f\v\n]

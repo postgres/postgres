@@ -771,6 +771,8 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
 
   <para>
    There is a simple variable-substitution facility for script files.
+   Variable names must consist of letters (including non-Latin letters),
+   digits, and underscores.
    Variables can be set by the command-line <option>-D</> option,
    explained above, or by the meta commands explained below.
    In addition to any variables preset by <option>-D</> command-line options,

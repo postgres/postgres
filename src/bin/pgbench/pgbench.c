@@ -1020,19 +1020,38 @@ makeVariableNumeric(Variable *var)
 	return true;
 }
 
-/* check whether the name consists of alphabets, numerals and underscores. */
+/*
+ * Check whether a variable's name is allowed.
+ *
+ * We allow any non-ASCII character, as well as ASCII letters, digits, and
+ * underscore.
+ *
+ * Keep this in sync with the definitions of variable name characters in
+ * "src/fe_utils/psqlscan.l", "src/bin/psql/psqlscanslash.l" and
+ * "src/bin/pgbench/exprscan.l".  Also see parseVariable(), below.
+ *
+ * Note: this static function is copied from "src/bin/psql/variables.c"
+ */
 static bool
-isLegalVariableName(const char *name)
+valid_variable_name(const char *name)
 {
-	int			i;
+	const unsigned char *ptr = (const unsigned char *) name;
 
-	for (i = 0; name[i] != '\0'; i++)
+	/* Mustn't be zero-length */
+	if (*ptr == '\0')
+		return false;
+
+	while (*ptr)
 	{
-		if (!isalnum((unsigned char) name[i]) && name[i] != '_')
+		if (IS_HIGHBIT_SET(*ptr) ||
+			strchr("ABCDEFGHIJKLMNOPQRSTUVWXYZ" "abcdefghijklmnopqrstuvwxyz"
+				   "_0123456789", *ptr) != NULL)
+			ptr++;
+		else
 			return false;
 	}
 
-	return (i > 0);				/* must be non-empty */
+	return true;
 }
 
 /*
@@ -1054,7 +1073,7 @@ lookupCreateVariable(CState *st, const char *context, char *name)
 		 * Check for the name only when declaring a new variable to avoid
 		 * overhead.
 		 */
-		if (!isLegalVariableName(name))
+		if (!valid_variable_name(name))
 		{
 			fprintf(stderr, "%s: invalid variable name: \"%s\"\n",
 					context, name);
@@ -1139,6 +1158,14 @@ putVariableInt(CState *st, const char *context, char *name, int64 value)
 	return putVariableNumber(st, context, name, &val);
 }
 
+/*
+ * Parse a possible variable reference (:varname).
+ *
+ * "sql" points at a colon.  If what follows it looks like a valid
+ * variable name, return a malloc'd string containing the variable name,
+ * and set *eaten to the number of characters consumed.
+ * Otherwise, return NULL.
+ */
 static char *
 parseVariable(const char *sql, int *eaten)
 {
@@ -1148,9 +1175,11 @@ parseVariable(const char *sql, int *eaten)
 	do
 	{
 		i++;
-	} while (isalnum((unsigned char) sql[i]) || sql[i] == '_');
+	} while (IS_HIGHBIT_SET(sql[i]) ||
+			 strchr("ABCDEFGHIJKLMNOPQRSTUVWXYZ" "abcdefghijklmnopqrstuvwxyz"
+					"_0123456789", sql[i]) != NULL);
 	if (i == 1)
-		return NULL;
+		return NULL;			/* no valid variable name chars */
 
 	name = pg_malloc(i);
 	memcpy(name, &sql[1], i - 1);
