@@ -197,7 +197,6 @@ expr_yyerror_more(yyscan_t yyscanner, const char *message, const char *more)
 	int			error_detection_offset = expr_scanner_offset(state) - 1;
 	YYSTYPE		lval;
 	char	   *full_line;
-	size_t		l;
 
 	/*
 	 * While parsing an expression, we may not have collected the whole line
@@ -210,13 +209,11 @@ expr_yyerror_more(yyscan_t yyscanner, const char *message, const char *more)
 			 /* skip */ ;
 	}
 
+	/* Extract the line, trimming trailing newline if any */
 	full_line = expr_scanner_get_substring(state,
 										   expr_start_offset,
-										   expr_scanner_offset(state));
-	/* Trim trailing newline if any */
-	l = strlen(full_line);
-	while (l > 0 && full_line[l - 1] == '\n')
-		full_line[--l] = '\0';
+										   expr_scanner_offset(state),
+										   true);
 
 	syntax_error(expr_source, expr_lineno, full_line, expr_command,
 				 message, more, error_detection_offset - expr_start_offset);
@@ -341,19 +338,30 @@ expr_scanner_offset(PsqlScanState state)
 
 /*
  * Get a malloc'd copy of the lexer input string from start_offset
- * to just before end_offset.
+ * to just before end_offset.  If chomp is true, drop any trailing
+ * newline(s).
  */
 char *
 expr_scanner_get_substring(PsqlScanState state,
-						   int start_offset, int end_offset)
+						   int start_offset, int end_offset,
+						   bool chomp)
 {
 	char	   *result;
+	const char *scanptr = state->scanbuf + start_offset;
 	int			slen = end_offset - start_offset;
 
 	Assert(slen >= 0);
 	Assert(end_offset <= strlen(state->scanbuf));
+
+	if (chomp)
+	{
+		while (slen > 0 &&
+			   (scanptr[slen - 1] == '\n' || scanptr[slen - 1] == '\r'))
+			slen--;
+	}
+
 	result = (char *) pg_malloc(slen + 1);
-	memcpy(result, state->scanbuf + start_offset, slen);
+	memcpy(result, scanptr, slen);
 	result[slen] = '\0';
 
 	return result;

@@ -3065,8 +3065,7 @@ process_backslash_command(PsqlScanState sstate, const char *source)
 	PQExpBufferData word_buf;
 	int			word_offset;
 	int			offsets[MAX_ARGS];	/* offsets of argument words */
-	int			start_offset,
-				end_offset;
+	int			start_offset;
 	int			lineno;
 	int			j;
 
@@ -3120,13 +3119,11 @@ process_backslash_command(PsqlScanState sstate, const char *source)
 
 		my_command->expr = expr_parse_result;
 
-		/* Get location of the ending newline */
-		end_offset = expr_scanner_offset(sstate) - 1;
-
-		/* Save line */
+		/* Save line, trimming any trailing newline */
 		my_command->line = expr_scanner_get_substring(sstate,
 													  start_offset,
-													  end_offset);
+													  expr_scanner_offset(sstate),
+													  true);
 
 		expr_scanner_finish(yyscanner);
 
@@ -3147,13 +3144,11 @@ process_backslash_command(PsqlScanState sstate, const char *source)
 		my_command->argc++;
 	}
 
-	/* Get location of the ending newline */
-	end_offset = expr_scanner_offset(sstate) - 1;
-
-	/* Save line */
+	/* Save line, trimming any trailing newline */
 	my_command->line = expr_scanner_get_substring(sstate,
 												  start_offset,
-												  end_offset);
+												  expr_scanner_offset(sstate),
+												  true);
 
 	if (pg_strcasecmp(my_command->argv[0], "sleep") == 0)
 	{
