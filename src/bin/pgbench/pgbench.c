@@ -229,7 +229,7 @@ typedef struct SimpleStats
 typedef struct StatsData
 {
 	time_t		start_time;		/* interval start time, for aggregates */
-	int64		cnt;			/* number of transactions */
+	int64		cnt;			/* number of transactions, including skipped */
 	int64		skipped;		/* number of transactions skipped under --rate
 								 * and --latency-limit */
 	SimpleStats latency;
@@ -329,7 +329,7 @@ typedef struct
 	bool		prepared[MAX_SCRIPTS];	/* whether client prepared the script */
 
 	/* per client collected stats */
-	int64		cnt;			/* transaction count */
+	int64		cnt;			/* client transaction count, for -t */
 	int			ecnt;			/* error count */
 } CState;
 
@@ -2062,10 +2062,11 @@ doCustom(TState *thread, CState *st, StatsData *agg)
 				}
 
 				/*
-				 * If this --latency-limit is used, and this slot is already
-				 * late so that the transaction will miss the latency limit
-				 * even if it completed immediately, we skip this time slot
-				 * and iterate till the next slot that isn't late yet.
+				 * If --latency-limit is used, and this slot is already late
+				 * so that the transaction will miss the latency limit even if
+				 * it completed immediately, we skip this time slot and
+				 * iterate till the next slot that isn't late yet.  But don't
+				 * iterate beyond the -t limit, if one is given.
 				 */
 				if (latency_limit)
 				{
@@ -2074,13 +2075,20 @@ doCustom(TState *thread, CState *st, StatsData *agg)
 					if (INSTR_TIME_IS_ZERO(now))
 						INSTR_TIME_SET_CURRENT(now);
 					now_us = INSTR_TIME_GET_MICROSEC(now);
-					while (thread->throttle_trigger < now_us - latency_limit)
+					while (thread->throttle_trigger < now_us - latency_limit &&
+						   (nxacts <= 0 || st->cnt < nxacts))
 					{
 						processXactStats(thread, st, &now, true, agg);
 						/* next rendez-vous */
 						wait = getPoissonRand(thread, throttle_delay);
 						thread->throttle_trigger += wait;
 						st->txn_scheduled = thread->throttle_trigger;
+					}
+					/* stop client if -t exceeded */
+					if (nxacts > 0 && st->cnt >= nxacts)
+					{
+						st->state = CSTATE_FINISHED;
+						break;
 					}
 				}
 
@@ -2393,15 +2401,8 @@ doCustom(TState *thread, CState *st, StatsData *agg)
 				 */
 			case CSTATE_END_TX:
 
-				/*
-				 * transaction finished: calculate latency and log the
-				 * transaction
-				 */
-				if (progress || throttle_delay || latency_limit ||
-					per_script_stats || use_log)
-					processXactStats(thread, st, &now, false, agg);
-				else
-					thread->stats.cnt++;
+				/* transaction finished: calculate latency and do log */
+				processXactStats(thread, st, &now, false, agg);
 
 				if (is_connect)
 				{
@@ -2410,7 +2411,6 @@ doCustom(TState *thread, CState *st, StatsData *agg)
 					INSTR_TIME_SET_ZERO(now);
 				}
 
-				++st->cnt;
 				if ((st->cnt >= nxacts && duration <= 0) || timer_exceeded)
 				{
 					/* exit success */
@@ -2540,7 +2540,8 @@ doLog(TState *thread, CState *st,
 /*
  * Accumulate and report statistics at end of a transaction.
  *
- * (This is also called when a transaction is late and thus skipped.)
+ * (This is also called when a transaction is late and thus skipped.
+ * Note that even skipped transactions are counted in the "cnt" fields.)
  */
 static void
 processXactStats(TState *thread, CState *st, instr_time *now,
@@ -2548,19 +2549,22 @@ processXactStats(TState *thread, CState *st, instr_time *now,
 {
 	double		latency = 0.0,
 				lag = 0.0;
+	bool		thread_details = progress || throttle_delay || latency_limit,
+				detailed = thread_details || use_log || per_script_stats;
 
-	if ((!skipped) && INSTR_TIME_IS_ZERO(*now))
-		INSTR_TIME_SET_CURRENT(*now);
-
-	if (!skipped)
+	if (detailed && !skipped)
 	{
+		if (INSTR_TIME_IS_ZERO(*now))
+			INSTR_TIME_SET_CURRENT(*now);
+
 		/* compute latency & lag */
 		latency = INSTR_TIME_GET_MICROSEC(*now) - st->txn_scheduled;
 		lag = INSTR_TIME_GET_MICROSEC(st->txn_begin) - st->txn_scheduled;
 	}
 
-	if (progress || throttle_delay || latency_limit)
+	if (thread_details)
 	{
+		/* keep detailed thread stats */
 		accumStats(&thread->stats, skipped, latency, lag);
 
 		/* count transactions over the latency limit, if needed */
@@ -2568,7 +2572,13 @@ processXactStats(TState *thread, CState *st, instr_time *now,
 			thread->latency_late++;
 	}
 	else
+	{
+		/* no detailed stats, just count */
 		thread->stats.cnt++;
+	}
+
+	/* client stat is just counting */
+	st->cnt++;
 
 	if (use_log)
 		doLog(thread, st, agg, skipped, latency, lag);
@@ -3534,7 +3544,7 @@ printResults(TState *threads, StatsData *total, instr_time total_time,
 	{
 		printf("number of transactions per client: %d\n", nxacts);
 		printf("number of transactions actually processed: " INT64_FORMAT "/%d\n",
-			   total->cnt, nxacts * nclients);
+			   total->cnt - total->skipped, nxacts * nclients);
 	}
 	else
 	{
@@ -3550,12 +3560,12 @@ printResults(TState *threads, StatsData *total, instr_time total_time,
 	if (throttle_delay && latency_limit)
 		printf("number of transactions skipped: " INT64_FORMAT " (%.3f %%)\n",
 			   total->skipped,
-			   100.0 * total->skipped / (total->skipped + total->cnt));
+			   100.0 * total->skipped / total->cnt);
 
 	if (latency_limit)
 		printf("number of transactions above the %.1f ms latency limit: %d (%.3f %%)\n",
 			   latency_limit / 1000.0, latency_late,
-			   100.0 * latency_late / (total->skipped + total->cnt));
+			   100.0 * latency_late / total->cnt);
 
 	if (throttle_delay || progress || latency_limit)
 		printSimpleStats("latency", &total->latency);
@@ -3604,8 +3614,7 @@ printResults(TState *threads, StatsData *total, instr_time total_time,
 			if (latency_limit)
 				printf(" - number of transactions skipped: " INT64_FORMAT " (%.3f%%)\n",
 					   sql_script[i].stats.skipped,
-					   100.0 * sql_script[i].stats.skipped /
-					   (sql_script[i].stats.skipped + sql_script[i].stats.cnt));
+					   100.0 * sql_script[i].stats.skipped / sql_script[i].stats.cnt);
 
 			if (num_scripts > 1)
 				printSimpleStats(" - latency", &sql_script[i].stats.latency);
@@ -4141,6 +4150,12 @@ main(int argc, char **argv)
 	if (duration > 0 && agg_interval > 0 && duration % agg_interval != 0)
 	{
 		fprintf(stderr, "duration (%d) must be a multiple of aggregation interval (%d)\n", duration, agg_interval);
+		exit(1);
+	}
+
+	if (progress_timestamp && progress == 0)
+	{
+		fprintf(stderr, "--progress-timestamp is allowed only under --progress\n");
 		exit(1);
 	}
 
