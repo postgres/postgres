@@ -2665,10 +2665,10 @@ lo_import 152801
           <listitem>
           <para>
           Controls use of a pager program for query and <application>psql</>
-          help output. If the environment variable <envar>PAGER</envar>
-          is set, the output is piped to the specified program.
-          Otherwise a platform-dependent default (such as
-          <filename>more</filename>) is used.
+          help output.  If the environment variable <envar>PSQL_PAGER</envar>
+          or <envar>PAGER</envar> is set, the output is piped to the
+          specified program.  Otherwise a platform-dependent default program
+          (such as <filename>more</filename>) is used.
           </para>
 
           <para>
@@ -4107,21 +4107,6 @@ $endif
    </varlistentry>
 
    <varlistentry>
-    <term><envar>PAGER</envar></term>
-
-    <listitem>
-     <para>
-      If the query results do not fit on the screen, they are piped
-      through this command.  Typical values are
-      <literal>more</literal> or <literal>less</literal>.  The default
-      is platform-dependent.  Use of the pager can be disabled by setting
-      <envar>PAGER</envar> to empty, or by using pager-related options of
-      the <command>\pset</command> command.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
     <term><envar>PGDATABASE</envar></term>
     <term><envar>PGHOST</envar></term>
     <term><envar>PGPORT</envar></term>
@@ -4145,11 +4130,8 @@ $endif
       and <command>\ev</command> commands.
       These variables are examined in the order listed;
       the first that is set is used.
-     </para>
-
-     <para>
-      The built-in default editors are <filename>vi</filename> on Unix
-      systems and <filename>notepad.exe</filename> on Windows systems.
+      If none of them is set, the default is to use <filename>vi</filename>
+      on Unix systems or <filename>notepad.exe</filename> on Windows systems.
      </para>
     </listitem>
    </varlistentry>
@@ -4189,6 +4171,27 @@ PSQL_EDITOR_LINENUMBER_ARG='--line '
      <para>
       Alternative location for the command history file. Tilde (<literal>~</literal>) expansion is performed.
      </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><envar>PSQL_PAGER</envar></term>
+    <term><envar>PAGER</envar></term>
+
+    <listitem>
+     <para>
+      If a query's results do not fit on the screen, they are piped
+      through this command. Typical values are <literal>more</literal>
+      or <literal>less</literal>.
+      Use of the pager can be disabled by setting <envar>PSQL_PAGER</envar>
+      or <envar>PAGER</envar> to an empty string, or by adjusting the
+      pager-related options of the <command>\pset</command> command.
+      These variables are examined in the order listed;
+      the first that is set is used.
+      If none of them is set, the default is to use <literal>more</> on most
+      platforms, but <literal>less</> on Cygwin.
+     </para>
+
     </listitem>
    </varlistentry>
 

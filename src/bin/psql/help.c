@@ -459,8 +459,6 @@ helpVariables(unsigned short int pager)
 
 	fprintf(output, _("  COLUMNS\n"
 					  "    number of columns for wrapped format\n"));
-	fprintf(output, _("  PAGER\n"
-					  "    name of external pager program\n"));
 	fprintf(output, _("  PGAPPNAME\n"
 					  "    same as the application_name connection parameter\n"));
 	fprintf(output, _("  PGDATABASE\n"
@@ -481,6 +479,8 @@ helpVariables(unsigned short int pager)
 					  "    how to specify a line number when invoking the editor\n"));
 	fprintf(output, _("  PSQL_HISTORY\n"
 					  "    alternative location for the command history file\n"));
+	fprintf(output, _("  PSQL_PAGER, PAGER\n"
+					  "    name of external pager program\n"));
 	fprintf(output, _("  PSQLRC\n"
 					  "    alternative location for the user's .psqlrc file\n"));
 	fprintf(output, _("  SHELL\n"
