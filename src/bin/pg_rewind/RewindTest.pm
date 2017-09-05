@@ -114,9 +114,10 @@ sub check_query
 
 sub setup_cluster
 {
+	my $extra_name = shift;
 
 	# Initialize master, data checksums are mandatory
-	$node_master = get_new_node('master');
+	$node_master = get_new_node('master' . ($extra_name ? "_${extra_name}" : ''));
 	$node_master->init(allows_streaming => 1);
 }
 
@@ -130,7 +131,9 @@ sub start_master
 
 sub create_standby
 {
-	$node_standby = get_new_node('standby');
+	my $extra_name = shift;
+
+	$node_standby = get_new_node('standby' . ($extra_name ? "_${extra_name}" : ''));
 	$node_master->backup('my_backup');
 	$node_standby->init_from_backup($node_master, 'my_backup');
 	my $connstr_master = $node_master->connstr();

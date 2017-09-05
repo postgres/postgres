@@ -9,7 +9,7 @@ sub run_test
 {
 	my $test_mode = shift;
 
-	RewindTest::setup_cluster();
+	RewindTest::setup_cluster($test_mode);
 	RewindTest::start_master();
 
 	# Create a test table and insert a row in master.
@@ -28,7 +28,7 @@ sub run_test
 
 	master_psql("CHECKPOINT");
 
-	RewindTest::create_standby();
+	RewindTest::create_standby($test_mode);
 
 	# Insert additional data on master that will be replicated to standby
 	master_psql("INSERT INTO tbl1 values ('in master, before promotion')");
