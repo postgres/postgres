@@ -336,7 +336,7 @@ helpVariables(unsigned short int pager)
 	 * Windows builds currently print one more line than non-Windows builds.
 	 * Using the larger number is fine.
 	 */
-	output = PageOutput(140, pager ? &(pset.popt.topt) : NULL);
+	output = PageOutput(147, pager ? &(pset.popt.topt) : NULL);
 
 	fprintf(output, _("List of specially treated variables\n\n"));
 
@@ -387,6 +387,9 @@ helpVariables(unsigned short int pager)
 					  "    specifies the prompt used during COPY ... FROM STDIN\n"));
 	fprintf(output, _("  QUIET\n"
 					  "    run quietly (same as -q option)\n"));
+	fprintf(output, _("  SERVER_VERSION_NAME\n"
+					  "  SERVER_VERSION_NUM\n"
+					  "    server's version (in short string or numeric format)\n"));
 	fprintf(output, _("  SHOW_CONTEXT\n"
 					  "    controls display of message context fields [never, errors, always]\n"));
 	fprintf(output, _("  SINGLELINE\n"
@@ -397,6 +400,10 @@ helpVariables(unsigned short int pager)
 					  "    the currently connected database user\n"));
 	fprintf(output, _("  VERBOSITY\n"
 					  "    controls verbosity of error reports [default, verbose, terse]\n"));
+	fprintf(output, _("  VERSION\n"
+					  "  VERSION_NAME\n"
+					  "  VERSION_NUM\n"
+					  "    psql's version (in verbose string, short string, or numeric format)\n"));
 
 	fprintf(output, _("\nDisplay settings:\n"));
 	fprintf(output, _("Usage:\n"));
