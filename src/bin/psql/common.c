@@ -29,6 +29,7 @@
 #include "fe_utils/mbprint.h"
 
 
+static bool DescribeQuery(const char *query, double *elapsed_msec);
 static bool ExecQueryUsingCursor(const char *query, double *elapsed_msec);
 static bool command_no_begin(const char *query);
 static bool is_select_command(const char *query);
@@ -1323,8 +1324,15 @@ SendQuery(const char *query)
 		}
 	}
 
-	if (pset.fetch_count <= 0 || pset.gexec_flag ||
-		pset.crosstab_flag || !is_select_command(query))
+	if (pset.gdesc_flag)
+	{
+		/* Describe query's result columns, without executing it */
+		OK = DescribeQuery(query, &elapsed_msec);
+		ResetCancelConn();
+		results = NULL;			/* PQclear(NULL) does nothing */
+	}
+	else if (pset.fetch_count <= 0 || pset.gexec_flag ||
+			 pset.crosstab_flag || !is_select_command(query))
 	{
 		/* Default fetch-it-all-and-print mode */
 		instr_time	before,
@@ -1467,6 +1475,9 @@ sendquery_cleanup:
 		pset.gset_prefix = NULL;
 	}
 
+	/* reset \gdesc trigger */
+	pset.gdesc_flag = false;
+
 	/* reset \gexec trigger */
 	pset.gexec_flag = false;
 
@@ -1477,6 +1488,118 @@ sendquery_cleanup:
 		pg_free(pset.ctv_args[i]);
 		pset.ctv_args[i] = NULL;
 	}
+
+	return OK;
+}
+
+
+/*
+ * DescribeQuery: describe the result columns of a query, without executing it
+ *
+ * Returns true if the operation executed successfully, false otherwise.
+ *
+ * If pset.timing is on, total query time (exclusive of result-printing) is
+ * stored into *elapsed_msec.
+ */
+static bool
+DescribeQuery(const char *query, double *elapsed_msec)
+{
+	PGresult   *results;
+	bool		OK;
+	instr_time	before,
+				after;
+
+	*elapsed_msec = 0;
+
+	if (pset.timing)
+		INSTR_TIME_SET_CURRENT(before);
+
+	/*
+	 * To parse the query but not execute it, we prepare it, using the unnamed
+	 * prepared statement.  This is invisible to psql users, since there's no
+	 * way to access the unnamed prepared statement from psql user space. The
+	 * next Parse or Query protocol message would overwrite the statement
+	 * anyway.  (So there's no great need to clear it when done, which is a
+	 * good thing because libpq provides no easy way to do that.)
+	 */
+	results = PQprepare(pset.db, "", query, 0, NULL);
+	if (PQresultStatus(results) != PGRES_COMMAND_OK)
+	{
+		psql_error("%s", PQerrorMessage(pset.db));
+		ClearOrSaveResult(results);
+		return false;
+	}
+	PQclear(results);
+
+	results = PQdescribePrepared(pset.db, "");
+	OK = AcceptResult(results) &&
+		(PQresultStatus(results) == PGRES_COMMAND_OK);
+	if (OK && results)
+	{
+		if (PQnfields(results) > 0)
+		{
+			PQExpBufferData buf;
+			int			i;
+
+			initPQExpBuffer(&buf);
+
+			printfPQExpBuffer(&buf,
+							  "SELECT name AS \"%s\", pg_catalog.format_type(tp, tpm) AS \"%s\"\n"
+							  "FROM (VALUES ",
+							  gettext_noop("Column"),
+							  gettext_noop("Type"));
+
+			for (i = 0; i < PQnfields(results); i++)
+			{
+				const char *name;
+				char	   *escname;
+
+				if (i > 0)
+					appendPQExpBufferStr(&buf, ",");
+
+				name = PQfname(results, i);
+				escname = PQescapeLiteral(pset.db, name, strlen(name));
+
+				if (escname == NULL)
+				{
+					psql_error("%s", PQerrorMessage(pset.db));
+					PQclear(results);
+					termPQExpBuffer(&buf);
+					return false;
+				}
+
+				appendPQExpBuffer(&buf, "(%s, '%u'::pg_catalog.oid, %d)",
+								  escname,
+								  PQftype(results, i),
+								  PQfmod(results, i));
+
+				PQfreemem(escname);
+			}
+
+			appendPQExpBufferStr(&buf, ") s(name, tp, tpm)");
+			PQclear(results);
+
+			results = PQexec(pset.db, buf.data);
+			OK = AcceptResult(results);
+
+			if (pset.timing)
+			{
+				INSTR_TIME_SET_CURRENT(after);
+				INSTR_TIME_SUBTRACT(after, before);
+				*elapsed_msec += INSTR_TIME_GET_MILLISEC(after);
+			}
+
+			if (OK && results)
+				OK = PrintQueryResults(results);
+
+			termPQExpBuffer(&buf);
+		}
+		else
+			fprintf(pset.queryFout,
+					_("The command has no result, or the result has no columns.\n"));
+	}
+
+	ClearOrSaveResult(results);
 
 	return OK;
 }
@@ -1627,7 +1750,9 @@ ExecQueryUsingCursor(const char *query, double *elapsed_msec)
 			break;
 		}
 
-		/* Note we do not deal with \gexec or \crosstabview modes here */
+		/*
+		 * Note we do not deal with \gdesc, \gexec or \crosstabview modes here
+		 */
 
 		ntuples = PQntuples(results);
 

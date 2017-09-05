@@ -73,6 +73,42 @@ select 10 as test01, 20 as test02 from generate_series(1,0) \gset
 
 \unset FETCH_COUNT
 
+-- \gdesc
+
+SELECT
+    NULL AS zero,
+    1 AS one,
+    2.0 AS two,
+    'three' AS three,
+    $1 AS four,
+    sin($2) as five,
+    'foo'::varchar(4) as six,
+    CURRENT_DATE AS now
+\gdesc
+
+-- should work with tuple-returning utilities, such as EXECUTE
+PREPARE test AS SELECT 1 AS first, 2 AS second;
+EXECUTE test \gdesc
+EXPLAIN EXECUTE test \gdesc
+
+-- should fail cleanly - syntax error
+SELECT 1 + \gdesc
+
+-- check behavior with empty results
+SELECT \gdesc
+CREATE TABLE bububu(a int) \gdesc
+
+-- subject command should not have executed
+TABLE bububu;  -- fail
+
+-- query buffer should remain unchanged
+SELECT 1 AS x, 'Hello', 2 AS y, true AS "dirty\name"
+\gdesc
+\g
+
+-- all on one line
+SELECT 3 AS x, 'Hello', 4 AS y, true AS "dirty\name" \gdesc \g
+
 -- \gexec
 
 create temporary table gexec_test(a int, b text, c date, d float);

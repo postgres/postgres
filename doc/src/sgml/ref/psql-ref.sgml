@@ -1950,6 +1950,25 @@ Tue Oct 26 21:40:57 CEST 1999
 
 
       <varlistentry>
+        <term><literal>\gdesc</literal></term>
+
+        <listitem>
+        <para>
+         Shows the description (that is, the column names and data types)
+         of the result of the current query buffer.  The query is not
+         actually executed; however, if it contains some type of syntax
+         error, that error will be reported in the normal way.
+        </para>
+
+        <para>
+         If the current query buffer is empty, the most recently sent query
+         is described instead.
+        </para>
+        </listitem>
+      </varlistentry>
+
+
+      <varlistentry>
         <term><literal>\gexec</literal></term>
 
         <listitem>

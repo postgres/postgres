@@ -126,6 +126,91 @@ more than one row returned for \gset
 select 10 as test01, 20 as test02 from generate_series(1,0) \gset
 no rows returned for \gset
 \unset FETCH_COUNT
+-- \gdesc
+SELECT
+    NULL AS zero,
+    1 AS one,
+    2.0 AS two,
+    'three' AS three,
+    $1 AS four,
+    sin($2) as five,
+    'foo'::varchar(4) as six,
+    CURRENT_DATE AS now
+\gdesc
+ Column |         Type         
+--------+----------------------
+ zero   | text
+ one    | integer
+ two    | numeric
+ three  | text
+ four   | text
+ five   | double precision
+ six    | character varying(4)
+ now    | date
+(8 rows)
+
+-- should work with tuple-returning utilities, such as EXECUTE
+PREPARE test AS SELECT 1 AS first, 2 AS second;
+EXECUTE test \gdesc
+ Column |  Type   
+--------+---------
+ first  | integer
+ second | integer
+(2 rows)
+
+EXPLAIN EXECUTE test \gdesc
+   Column   | Type 
+------------+------
+ QUERY PLAN | text
+(1 row)
+
+-- should fail cleanly - syntax error
+SELECT 1 + \gdesc
+ERROR:  syntax error at end of input
+LINE 1: SELECT 1 + 
+                   ^
+-- check behavior with empty results
+SELECT \gdesc
+The command has no result, or the result has no columns.
+CREATE TABLE bububu(a int) \gdesc
+The command has no result, or the result has no columns.
+-- subject command should not have executed
+TABLE bububu;  -- fail
+ERROR:  relation "bububu" does not exist
+LINE 1: TABLE bububu;
+              ^
+-- query buffer should remain unchanged
+SELECT 1 AS x, 'Hello', 2 AS y, true AS "dirty\name"
+\gdesc
+   Column   |  Type   
+------------+---------
+ x          | integer
+ ?column?   | text
+ y          | integer
+ dirty\name | boolean
+(4 rows)
+
+\g
+ x | ?column? | y | dirty\name 
+---+----------+---+------------
+ 1 | Hello    | 2 | t
+(1 row)
+
+-- all on one line
+SELECT 3 AS x, 'Hello', 4 AS y, true AS "dirty\name" \gdesc \g
+   Column   |  Type   
+------------+---------
+ x          | integer
+ ?column?   | text
+ y          | integer
+ dirty\name | boolean
+(4 rows)
+
+ x | ?column? | y | dirty\name 
+---+----------+---+------------
+ 3 | Hello    | 4 | t
+(1 row)
+
 -- \gexec
 create temporary table gexec_test(a int, b text, c date, d float);
 select format('create index on gexec_test(%I)', attname)

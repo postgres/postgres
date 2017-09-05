@@ -1433,7 +1433,7 @@ psql_completion(const char *text, int start, int end)
 		"\\e", "\\echo", "\\ef", "\\elif", "\\else", "\\encoding",
 		"\\endif", "\\errverbose", "\\ev",
 		"\\f",
-		"\\g", "\\gexec", "\\gset", "\\gx",
+		"\\g", "\\gdesc", "\\gexec", "\\gset", "\\gx",
 		"\\h", "\\help", "\\H",
 		"\\i", "\\if", "\\ir",
 		"\\l", "\\lo_import", "\\lo_export", "\\lo_list", "\\lo_unlink",
