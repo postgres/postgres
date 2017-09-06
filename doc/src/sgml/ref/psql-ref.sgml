@@ -3671,6 +3671,21 @@ bar
       </varlistentry>
 
       <varlistentry>
+        <term><varname>SERVER_VERSION_NAME</varname></term>
+        <term><varname>SERVER_VERSION_NUM</varname></term>
+        <listitem>
+        <para>
+        The server's version number as a string, for
+        example <literal>9.6.2</>, <literal>10.1</> or <literal>11beta1</>,
+        and in numeric form, for
+        example <literal>90602</> or <literal>100001</>.
+        These are set every time you connect to a database
+        (including program start-up), but can be changed or unset.
+        </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
         <term><varname>SHOW_CONTEXT</varname></term>
         <listitem>
         <para>
@@ -3733,10 +3748,15 @@ bar
 
       <varlistentry>
         <term><varname>VERSION</varname></term>
+        <term><varname>VERSION_NAME</varname></term>
+        <term><varname>VERSION_NUM</varname></term>
         <listitem>
         <para>
-        This variable is set at program start-up to
-        reflect <application>psql</>'s version.  It can be changed or unset.
+        These variables are set at program start-up to reflect
+        <application>psql</>'s version, respectively as a verbose string,
+        a short string (e.g., <literal>9.6.2</>, <literal>10.1</>,
+        or <literal>11beta1</>), and a number (e.g., <literal>90602</>
+        or <literal>100001</>).  They can be changed or unset.
         </para>
         </listitem>
       </varlistentry>

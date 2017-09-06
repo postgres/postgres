@@ -336,7 +336,7 @@ helpVariables(unsigned short int pager)
 	 * Windows builds currently print one more line than non-Windows builds.
 	 * Using the larger number is fine.
 	 */
-	output = PageOutput(88, pager ? &(pset.popt.topt) : NULL);
+	output = PageOutput(93, pager ? &(pset.popt.topt) : NULL);
 
 	fprintf(output, _("List of specially treated variables\n\n"));
 
@@ -368,11 +368,16 @@ helpVariables(unsigned short int pager)
 	fprintf(output, _("  PROMPT2            specifies the prompt used when a statement continues from a previous line\n"));
 	fprintf(output, _("  PROMPT3            specifies the prompt used during COPY ... FROM STDIN\n"));
 	fprintf(output, _("  QUIET              run quietly (same as -q option)\n"));
+	fprintf(output, _("  SERVER_VERSION_NAME  server's version (short string)\n"));
+	fprintf(output, _("  SERVER_VERSION_NUM   server's version (numeric format)\n"));
 	fprintf(output, _("  SHOW_CONTEXT       controls display of message context fields [never, errors, always]\n"));
 	fprintf(output, _("  SINGLELINE         end of line terminates SQL command mode (same as -S option)\n"));
 	fprintf(output, _("  SINGLESTEP         single-step mode (same as -s option)\n"));
 	fprintf(output, _("  USER               the currently connected database user\n"));
 	fprintf(output, _("  VERBOSITY          controls verbosity of error reports [default, verbose, terse]\n"));
+	fprintf(output, _("  VERSION            psql's version (verbose string)\n"));
+	fprintf(output, _("  VERSION_NAME       psql's version (short string)\n"));
+	fprintf(output, _("  VERSION_NUM        psql's version (numeric format)\n"));
 
 	fprintf(output, _("\nDisplay settings:\n"));
 	fprintf(output, _("Usage:\n"));

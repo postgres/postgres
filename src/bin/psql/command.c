@@ -3337,6 +3337,9 @@ checkWin32Codepage(void)
 void
 SyncVariables(void)
 {
+	char		vbuf[32];
+	const char *server_version;
+
 	/* get stuff from connection */
 	pset.encoding = PQclientEncoding(pset.db);
 	pset.popt.topt.encoding = pset.encoding;
@@ -3347,6 +3350,20 @@ SyncVariables(void)
 	SetVariable(pset.vars, "HOST", PQhost(pset.db));
 	SetVariable(pset.vars, "PORT", PQport(pset.db));
 	SetVariable(pset.vars, "ENCODING", pg_encoding_to_char(pset.encoding));
+
+	/* this bit should match connection_warnings(): */
+	/* Try to get full text form of version, might include "devel" etc */
+	server_version = PQparameterStatus(pset.db, "server_version");
+	/* Otherwise fall back on pset.sversion */
+	if (!server_version)
+	{
+		formatPGVersionNumber(pset.sversion, true, vbuf, sizeof(vbuf));
+		server_version = vbuf;
+	}
+	SetVariable(pset.vars, "SERVER_VERSION_NAME", server_version);
+
+	snprintf(vbuf, sizeof(vbuf), "%d", pset.sversion);
+	SetVariable(pset.vars, "SERVER_VERSION_NUM", vbuf);
 
 	/* send stuff to it, too */
 	PQsetErrorVerbosity(pset.db, pset.verbosity);
@@ -3366,6 +3383,8 @@ UnsyncVariables(void)
 	SetVariable(pset.vars, "HOST", NULL);
 	SetVariable(pset.vars, "PORT", NULL);
 	SetVariable(pset.vars, "ENCODING", NULL);
+	SetVariable(pset.vars, "SERVER_VERSION_NAME", NULL);
+	SetVariable(pset.vars, "SERVER_VERSION_NUM", NULL);
 }
 
 
