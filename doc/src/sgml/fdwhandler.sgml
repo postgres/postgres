@@ -101,9 +101,9 @@
     <para>
 <programlisting>
 void
-GetForeignRelSize (PlannerInfo *root,
-                   RelOptInfo *baserel,
-                   Oid foreigntableid);
+GetForeignRelSize(PlannerInfo *root,
+                  RelOptInfo *baserel,
+                  Oid foreigntableid);
 </programlisting>
 
      Obtain relation size estimates for a foreign table.  This is called
@@ -132,9 +132,9 @@ GetForeignRelSize (PlannerInfo *root,
     <para>
 <programlisting>
 void
-GetForeignPaths (PlannerInfo *root,
-                 RelOptInfo *baserel,
-                 Oid foreigntableid);
+GetForeignPaths(PlannerInfo *root,
+                RelOptInfo *baserel,
+                Oid foreigntableid);
 </programlisting>
 
      Create possible access paths for a scan on a foreign table.
@@ -163,13 +163,13 @@ GetForeignPaths (PlannerInfo *root,
     <para>
 <programlisting>
 ForeignScan *
-GetForeignPlan (PlannerInfo *root,
-                RelOptInfo *baserel,
-                Oid foreigntableid,
-                ForeignPath *best_path,
-                List *tlist,
-                List *scan_clauses,
-                Plan *outer_plan);
+GetForeignPlan(PlannerInfo *root,
+               RelOptInfo *baserel,
+               Oid foreigntableid,
+               ForeignPath *best_path,
+               List *tlist,
+               List *scan_clauses,
+               Plan *outer_plan);
 </programlisting>
 
      Create a <structname>ForeignScan</> plan node from the selected foreign
@@ -199,8 +199,8 @@ GetForeignPlan (PlannerInfo *root,
     <para>
 <programlisting>
 void
-BeginForeignScan (ForeignScanState *node,
-                  int eflags);
+BeginForeignScan(ForeignScanState *node,
+                 int eflags);
 </programlisting>
 
      Begin executing a foreign scan. This is called during executor startup.
@@ -227,7 +227,7 @@ BeginForeignScan (ForeignScanState *node,
     <para>
 <programlisting>
 TupleTableSlot *
-IterateForeignScan (ForeignScanState *node);
+IterateForeignScan(ForeignScanState *node);
 </programlisting>
 
      Fetch one row from the foreign source, returning it in a tuple table slot
@@ -264,7 +264,7 @@ IterateForeignScan (ForeignScanState *node);
     <para>
 <programlisting>
 void
-ReScanForeignScan (ForeignScanState *node);
+ReScanForeignScan(ForeignScanState *node);
 </programlisting>
 
      Restart the scan from the beginning.  Note that any parameters the
@@ -275,7 +275,7 @@ ReScanForeignScan (ForeignScanState *node);
     <para>
 <programlisting>
 void
-EndForeignScan (ForeignScanState *node);
+EndForeignScan(ForeignScanState *node);
 </programlisting>
 
      End the scan and release resources.  It is normally not important
@@ -297,12 +297,12 @@ EndForeignScan (ForeignScanState *node);
     <para>
 <programlisting>
 void
-GetForeignJoinPaths (PlannerInfo *root,
-                     RelOptInfo *joinrel,
-                     RelOptInfo *outerrel,
-                     RelOptInfo *innerrel,
-                     JoinType jointype,
-                     JoinPathExtraData *extra);
+GetForeignJoinPaths(PlannerInfo *root,
+                    RelOptInfo *joinrel,
+                    RelOptInfo *outerrel,
+                    RelOptInfo *innerrel,
+                    JoinType jointype,
+                    JoinPathExtraData *extra);
 </programlisting>
      Create possible access paths for a join of two (or more) foreign tables
      that all belong to the same foreign server.  This optional
@@ -356,10 +356,10 @@ GetForeignJoinPaths (PlannerInfo *root,
     <para>
 <programlisting>
 void
-GetForeignUpperPaths (PlannerInfo *root,
-                      UpperRelationKind stage,
-                      RelOptInfo *input_rel,
-                      RelOptInfo *output_rel);
+GetForeignUpperPaths(PlannerInfo *root,
+                     UpperRelationKind stage,
+                     RelOptInfo *input_rel,
+                     RelOptInfo *output_rel);
 </programlisting>
      Create possible access paths for <firstterm>upper relation</> processing,
      which is the planner's term for all post-scan/join query processing, such
@@ -404,9 +404,9 @@ GetForeignUpperPaths (PlannerInfo *root,
     <para>
 <programlisting>
 void
-AddForeignUpdateTargets (Query *parsetree,
-                         RangeTblEntry *target_rte,
-                         Relation target_relation);
+AddForeignUpdateTargets(Query *parsetree,
+                        RangeTblEntry *target_rte,
+                        Relation target_relation);
 </programlisting>
 
      <command>UPDATE</> and <command>DELETE</> operations are performed
@@ -451,10 +451,10 @@ AddForeignUpdateTargets (Query *parsetree,
     <para>
 <programlisting>
 List *
-PlanForeignModify (PlannerInfo *root,
-                   ModifyTable *plan,
-                   Index resultRelation,
-                   int subplan_index);
+PlanForeignModify(PlannerInfo *root,
+                  ModifyTable *plan,
+                  Index resultRelation,
+                  int subplan_index);
 </programlisting>
 
      Perform any additional planning actions needed for an insert, update, or
@@ -490,11 +490,11 @@ PlanForeignModify (PlannerInfo *root,
     <para>
 <programlisting>
 void
-BeginForeignModify (ModifyTableState *mtstate,
-                    ResultRelInfo *rinfo,
-                    List *fdw_private,
-                    int subplan_index,
-                    int eflags);
+BeginForeignModify(ModifyTableState *mtstate,
+                   ResultRelInfo *rinfo,
+                   List *fdw_private,
+                   int subplan_index,
+                   int eflags);
 </programlisting>
 
      Begin executing a foreign table modification operation.  This routine is
@@ -536,10 +536,10 @@ BeginForeignModify (ModifyTableState *mtstate,
     <para>
 <programlisting>
 TupleTableSlot *
-ExecForeignInsert (EState *estate,
-                   ResultRelInfo *rinfo,
-                   TupleTableSlot *slot,
-                   TupleTableSlot *planSlot);
+ExecForeignInsert(EState *estate,
+                  ResultRelInfo *rinfo,
+                  TupleTableSlot *slot,
+                  TupleTableSlot *planSlot);
 </programlisting>
 
      Insert one tuple into the foreign table.
@@ -582,10 +582,10 @@ ExecForeignInsert (EState *estate,
     <para>
 <programlisting>
 TupleTableSlot *
-ExecForeignUpdate (EState *estate,
-                   ResultRelInfo *rinfo,
-                   TupleTableSlot *slot,
-                   TupleTableSlot *planSlot);
+ExecForeignUpdate(EState *estate,
+                  ResultRelInfo *rinfo,
+                  TupleTableSlot *slot,
+                  TupleTableSlot *planSlot);
 </programlisting>
 
      Update one tuple in the foreign table.
@@ -628,10 +628,10 @@ ExecForeignUpdate (EState *estate,
     <para>
 <programlisting>
 TupleTableSlot *
-ExecForeignDelete (EState *estate,
-                   ResultRelInfo *rinfo,
-                   TupleTableSlot *slot,
-                   TupleTableSlot *planSlot);
+ExecForeignDelete(EState *estate,
+                  ResultRelInfo *rinfo,
+                  TupleTableSlot *slot,
+                  TupleTableSlot *planSlot);
 </programlisting>
 
      Delete one tuple from the foreign table.
@@ -672,8 +672,8 @@ ExecForeignDelete (EState *estate,
     <para>
 <programlisting>
 void
-EndForeignModify (EState *estate,
-                  ResultRelInfo *rinfo);
+EndForeignModify(EState *estate,
+                 ResultRelInfo *rinfo);
 </programlisting>
 
      End the table update and release resources.  It is normally not important
@@ -689,7 +689,7 @@ EndForeignModify (EState *estate,
     <para>
 <programlisting>
 int
-IsForeignRelUpdatable (Relation rel);
+IsForeignRelUpdatable(Relation rel);
 </programlisting>
 
      Report which update operations the specified foreign table supports.
@@ -729,10 +729,10 @@ IsForeignRelUpdatable (Relation rel);
     <para>
 <programlisting>
 bool
-PlanDirectModify (PlannerInfo *root,
-                  ModifyTable *plan,
-                  Index resultRelation,
-                  int subplan_index);
+PlanDirectModify(PlannerInfo *root,
+                 ModifyTable *plan,
+                 Index resultRelation,
+                 int subplan_index);
 </programlisting>
 
      Decide whether it is safe to execute a direct modification
@@ -771,8 +771,8 @@ PlanDirectModify (PlannerInfo *root,
     <para>
 <programlisting>
 void
-BeginDirectModify (ForeignScanState *node,
-                   int eflags);
+BeginDirectModify(ForeignScanState *node,
+                  int eflags);
 </programlisting>
 
      Prepare to execute a direct modification on the remote server.
@@ -805,7 +805,7 @@ BeginDirectModify (ForeignScanState *node,
     <para>
 <programlisting>
 TupleTableSlot *
-IterateDirectModify (ForeignScanState *node);
+IterateDirectModify(ForeignScanState *node);
 </programlisting>
 
      When the <command>INSERT</>, <command>UPDATE</> or <command>DELETE</>
@@ -851,7 +851,7 @@ IterateDirectModify (ForeignScanState *node);
     <para>
 <programlisting>
 void
-EndDirectModify (ForeignScanState *node);
+EndDirectModify(ForeignScanState *node);
 </programlisting>
 
      Clean up following a direct modification on the remote server.  It is
@@ -879,8 +879,8 @@ EndDirectModify (ForeignScanState *node);
     <para>
 <programlisting>
 RowMarkType
-GetForeignRowMarkType (RangeTblEntry *rte,
-                       LockClauseStrength strength);
+GetForeignRowMarkType(RangeTblEntry *rte,
+                      LockClauseStrength strength);
 </programlisting>
 
      Report which row-marking option to use for a foreign table.
@@ -911,10 +911,10 @@ GetForeignRowMarkType (RangeTblEntry *rte,
     <para>
 <programlisting>
 HeapTuple
-RefetchForeignRow (EState *estate,
-                   ExecRowMark *erm,
-                   Datum rowid,
-                   bool *updated);
+RefetchForeignRow(EState *estate,
+                  ExecRowMark *erm,
+                  Datum rowid,
+                  bool *updated);
 </programlisting>
 
      Re-fetch one tuple from the foreign table, after locking it if required.
@@ -970,7 +970,8 @@ RefetchForeignRow (EState *estate,
     <para>
 <programlisting>
 bool
-RecheckForeignScan (ForeignScanState *node, TupleTableSlot *slot);
+RecheckForeignScan(ForeignScanState *node,
+                   TupleTableSlot *slot);
 </programlisting>
      Recheck that a previously-returned tuple still matches the relevant
      scan and join qualifiers, and possibly provide a modified version of
@@ -1011,8 +1012,8 @@ RecheckForeignScan (ForeignScanState *node, TupleTableSlot *slot);
     <para>
 <programlisting>
 void
-ExplainForeignScan (ForeignScanState *node,
-                    ExplainState *es);
+ExplainForeignScan(ForeignScanState *node,
+                   ExplainState *es);
 </programlisting>
 
      Print additional <command>EXPLAIN</> output for a foreign table scan.
@@ -1033,11 +1034,11 @@ ExplainForeignScan (ForeignScanState *node,
     <para>
 <programlisting>
 void
-ExplainForeignModify (ModifyTableState *mtstate,
-                      ResultRelInfo *rinfo,
-                      List *fdw_private,
-                      int subplan_index,
-                      struct ExplainState *es);
+ExplainForeignModify(ModifyTableState *mtstate,
+                     ResultRelInfo *rinfo,
+                     List *fdw_private,
+                     int subplan_index,
+                     struct ExplainState *es);
 </programlisting>
 
      Print additional <command>EXPLAIN</> output for a foreign table update.
@@ -1059,8 +1060,8 @@ ExplainForeignModify (ModifyTableState *mtstate,
     <para>
 <programlisting>
 void
-ExplainDirectModify (ForeignScanState *node,
-                     ExplainState *es);
+ExplainDirectModify(ForeignScanState *node,
+                    ExplainState *es);
 </programlisting>
 
      Print additional <command>EXPLAIN</> output for a direct modification
@@ -1087,9 +1088,9 @@ ExplainDirectModify (ForeignScanState *node,
     <para>
 <programlisting>
 bool
-AnalyzeForeignTable (Relation relation,
-                     AcquireSampleRowsFunc *func,
-                     BlockNumber *totalpages);
+AnalyzeForeignTable(Relation relation,
+                    AcquireSampleRowsFunc *func,
+                    BlockNumber *totalpages);
 </programlisting>
 
      This function is called when <xref linkend="sql-analyze"> is executed on
@@ -1109,10 +1110,12 @@ AnalyzeForeignTable (Relation relation,
      If provided, the sample collection function must have the signature
 <programlisting>
 int
-AcquireSampleRowsFunc (Relation relation, int elevel,
-                       HeapTuple *rows, int targrows,
-                       double *totalrows,
-                       double *totaldeadrows);
+AcquireSampleRowsFunc(Relation relation,
+                      int elevel,
+                      HeapTuple *rows,
+                      int targrows,
+                      double *totalrows,
+                      double *totaldeadrows);
 </programlisting>
 
      A random sample of up to <parameter>targrows</> rows should be collected
@@ -1132,7 +1135,7 @@ AcquireSampleRowsFunc (Relation relation, int elevel,
     <para>
 <programlisting>
 List *
-ImportForeignSchema (ImportForeignSchemaStmt *stmt, Oid serverOid);
+ImportForeignSchema(ImportForeignSchemaStmt *stmt, Oid serverOid);
 </programlisting>
 
      Obtain a list of foreign table creation commands.  This function is
