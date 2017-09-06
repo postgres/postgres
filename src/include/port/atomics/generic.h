@@ -170,12 +170,9 @@ static inline uint32
 pg_atomic_exchange_u32_impl(volatile pg_atomic_uint32 *ptr, uint32 xchg_)
 {
 	uint32 old;
-	while (true)
-	{
-		old = pg_atomic_read_u32_impl(ptr);
-		if (pg_atomic_compare_exchange_u32_impl(ptr, &old, xchg_))
-			break;
-	}
+	old = pg_atomic_read_u32_impl(ptr);
+	while (!pg_atomic_compare_exchange_u32_impl(ptr, &old, xchg_))
+		/* skip */;
 	return old;
 }
 #endif
@@ -186,12 +183,9 @@ static inline uint32
 pg_atomic_fetch_add_u32_impl(volatile pg_atomic_uint32 *ptr, int32 add_)
 {
 	uint32 old;
-	while (true)
-	{
-		old = pg_atomic_read_u32_impl(ptr);
-		if (pg_atomic_compare_exchange_u32_impl(ptr, &old, old + add_))
-			break;
-	}
+	old = pg_atomic_read_u32_impl(ptr);
+	while (!pg_atomic_compare_exchange_u32_impl(ptr, &old, old + add_))
+		/* skip */;
 	return old;
 }
 #endif
@@ -211,12 +205,9 @@ static inline uint32
 pg_atomic_fetch_and_u32_impl(volatile pg_atomic_uint32 *ptr, uint32 and_)
 {
 	uint32 old;
-	while (true)
-	{
-		old = pg_atomic_read_u32_impl(ptr);
-		if (pg_atomic_compare_exchange_u32_impl(ptr, &old, old & and_))
-			break;
-	}
+	old = pg_atomic_read_u32_impl(ptr);
+	while (!pg_atomic_compare_exchange_u32_impl(ptr, &old, old & and_))
+		/* skip */;
 	return old;
 }
 #endif
@@ -227,12 +218,9 @@ static inline uint32
 pg_atomic_fetch_or_u32_impl(volatile pg_atomic_uint32 *ptr, uint32 or_)
 {
 	uint32 old;
-	while (true)
-	{
-		old = pg_atomic_read_u32_impl(ptr);
-		if (pg_atomic_compare_exchange_u32_impl(ptr, &old, old | or_))
-			break;
-	}
+	old = pg_atomic_read_u32_impl(ptr);
+	while (!pg_atomic_compare_exchange_u32_impl(ptr, &old, old | or_))
+		/* skip */;
 	return old;
 }
 #endif
@@ -261,12 +249,9 @@ static inline uint64
 pg_atomic_exchange_u64_impl(volatile pg_atomic_uint64 *ptr, uint64 xchg_)
 {
 	uint64 old;
-	while (true)
-	{
-		old = ptr->value;
-		if (pg_atomic_compare_exchange_u64_impl(ptr, &old, xchg_))
-			break;
-	}
+	old = ptr->value;
+	while (!pg_atomic_compare_exchange_u64_impl(ptr, &old, xchg_))
+		/* skip */;
 	return old;
 }
 #endif
@@ -357,12 +342,9 @@ static inline uint64
 pg_atomic_fetch_add_u64_impl(volatile pg_atomic_uint64 *ptr, int64 add_)
 {
 	uint64 old;
-	while (true)
-	{
-		old = pg_atomic_read_u64_impl(ptr);
-		if (pg_atomic_compare_exchange_u64_impl(ptr, &old, old + add_))
-			break;
-	}
+	old = pg_atomic_read_u64_impl(ptr);
+	while (!pg_atomic_compare_exchange_u64_impl(ptr, &old, old + add_))
+		/* skip */;
 	return old;
 }
 #endif
@@ -382,12 +364,9 @@ static inline uint64
 pg_atomic_fetch_and_u64_impl(volatile pg_atomic_uint64 *ptr, uint64 and_)
 {
 	uint64 old;
-	while (true)
-	{
-		old = pg_atomic_read_u64_impl(ptr);
-		if (pg_atomic_compare_exchange_u64_impl(ptr, &old, old & and_))
-			break;
-	}
+	old = pg_atomic_read_u64_impl(ptr);
+	while (!pg_atomic_compare_exchange_u64_impl(ptr, &old, old & and_))
+		/* skip */;
 	return old;
 }
 #endif
@@ -398,12 +377,9 @@ static inline uint64
 pg_atomic_fetch_or_u64_impl(volatile pg_atomic_uint64 *ptr, uint64 or_)
 {
 	uint64 old;
-	while (true)
-	{
-		old = pg_atomic_read_u64_impl(ptr);
-		if (pg_atomic_compare_exchange_u64_impl(ptr, &old, old | or_))
-			break;
-	}
+	old = pg_atomic_read_u64_impl(ptr);
+	while (!pg_atomic_compare_exchange_u64_impl(ptr, &old, old | or_))
+		/* skip */;
 	return old;
 }
 #endif
