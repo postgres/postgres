@@ -2014,11 +2014,13 @@ addRangeTableEntryForENR(ParseState *pstate,
 
 	/*
 	 * Build the list of effective column names using user-supplied aliases
-	 * and/or actual column names.  Also build the cannibalized fields.
+	 * and/or actual column names.
 	 */
 	tupdesc = ENRMetadataGetTupDesc(enrmd);
 	rte->eref = makeAlias(refname, NIL);
 	buildRelationAliases(tupdesc, alias, rte->eref);
+
+	/* Record additional data for ENR, including column type info */
 	rte->enrname = enrmd->name;
 	rte->enrtuples = enrmd->enrtuples;
 	rte->coltypes = NIL;
@@ -2028,16 +2030,24 @@ addRangeTableEntryForENR(ParseState *pstate,
 	{
 		Form_pg_attribute att = TupleDescAttr(tupdesc, attno - 1);
 
-		if (att->atttypid == InvalidOid &&
-			!(att->attisdropped))
-			elog(ERROR, "atttypid was invalid for column which has not been dropped from \"%s\"",
-				 rv->relname);
-		rte->coltypes =
-			lappend_oid(rte->coltypes, att->atttypid);
-		rte->coltypmods =
-			lappend_int(rte->coltypmods, att->atttypmod);
-		rte->colcollations =
-			lappend_oid(rte->colcollations, att->attcollation);
+		if (att->attisdropped)
+		{
+			/* Record zeroes for a dropped column */
+			rte->coltypes = lappend_oid(rte->coltypes, InvalidOid);
+			rte->coltypmods = lappend_int(rte->coltypmods, 0);
+			rte->colcollations = lappend_oid(rte->colcollations, InvalidOid);
+		}
+		else
+		{
+			/* Let's just make sure we can tell this isn't dropped */
+			if (att->atttypid == InvalidOid)
+				elog(ERROR, "atttypid is invalid for non-dropped column in \"%s\"",
+					 rv->relname);
+			rte->coltypes = lappend_oid(rte->coltypes, att->atttypid);
+			rte->coltypmods = lappend_int(rte->coltypmods, att->atttypmod);
+			rte->colcollations = lappend_oid(rte->colcollations,
+											 att->attcollation);
+		}
 	}
 
 	/*
@@ -2416,7 +2426,7 @@ expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 		case RTE_CTE:
 		case RTE_NAMEDTUPLESTORE:
 			{
-				/* Tablefunc, Values or CTE RTE */
+				/* Tablefunc, Values, CTE, or ENR RTE */
 				ListCell   *aliasp_item = list_head(rte->eref->colnames);
 				ListCell   *lct;
 				ListCell   *lcm;
@@ -2436,23 +2446,43 @@ expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 					if (colnames)
 					{
 						/* Assume there is one alias per output column */
-						char	   *label = strVal(lfirst(aliasp_item));
+						if (OidIsValid(coltype))
+						{
+							char	   *label = strVal(lfirst(aliasp_item));
 
-						*colnames = lappend(*colnames,
-											makeString(pstrdup(label)));
+							*colnames = lappend(*colnames,
+												makeString(pstrdup(label)));
+						}
+						else if (include_dropped)
+							*colnames = lappend(*colnames,
+												makeString(pstrdup("")));
+
 						aliasp_item = lnext(aliasp_item);
 					}
 
 					if (colvars)
 					{
-						Var		   *varnode;
+						if (OidIsValid(coltype))
+						{
+							Var		   *varnode;
 
-						varnode = makeVar(rtindex, varattno,
-										  coltype, coltypmod, colcoll,
-										  sublevels_up);
-						varnode->location = location;
+							varnode = makeVar(rtindex, varattno,
+											  coltype, coltypmod, colcoll,
+											  sublevels_up);
+							varnode->location = location;
 
-						*colvars = lappend(*colvars, varnode);
+							*colvars = lappend(*colvars, varnode);
+						}
+						else if (include_dropped)
+						{
+							/*
+							 * It doesn't really matter what type the Const
+							 * claims to be.
+							 */
+							*colvars = lappend(*colvars,
+											   makeNullConst(INT4OID, -1,
+															 InvalidOid));
+						}
 					}
 				}
 			}
@@ -2831,13 +2861,21 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 		case RTE_NAMEDTUPLESTORE:
 			{
 				/*
-				 * tablefunc, VALUES or CTE RTE --- get type info from lists
-				 * in the RTE
+				 * tablefunc, VALUES, CTE, or ENR RTE --- get type info from
+				 * lists in the RTE
 				 */
 				Assert(attnum > 0 && attnum <= list_length(rte->coltypes));
 				*vartype = list_nth_oid(rte->coltypes, attnum - 1);
 				*vartypmod = list_nth_int(rte->coltypmods, attnum - 1);
 				*varcollid = list_nth_oid(rte->colcollations, attnum - 1);
+
+				/* For ENR, better check for dropped column */
+				if (!OidIsValid(*vartype))
+					ereport(ERROR,
+							(errcode(ERRCODE_UNDEFINED_COLUMN),
+							 errmsg("column %d of relation \"%s\" does not exist",
+									attnum,
+									rte->eref->aliasname)));
 			}
 			break;
 		default:
@@ -2888,15 +2926,11 @@ get_rte_attribute_is_dropped(RangeTblEntry *rte, AttrNumber attnum)
 			break;
 		case RTE_NAMEDTUPLESTORE:
 			{
-				Assert(rte->enrname);
-
-				/*
-				 * We checked when we loaded coltypes for the tuplestore that
-				 * InvalidOid was only used for dropped columns, so it is safe
-				 * to count on that here.
-				 */
-				result =
-					((list_nth_oid(rte->coltypes, attnum - 1) == InvalidOid));
+				/* Check dropped-ness by testing for valid coltype */
+				if (attnum <= 0 ||
+					attnum > list_length(rte->coltypes))
+					elog(ERROR, "invalid varattno %d", attnum);
+				result = !OidIsValid((list_nth_oid(rte->coltypes, attnum - 1)));
 			}
 			break;
 		case RTE_JOIN:
