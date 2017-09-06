@@ -131,6 +131,9 @@ extern HeapTuple SearchSysCacheAttName(Oid relid, const char *attname);
 extern HeapTuple SearchSysCacheCopyAttName(Oid relid, const char *attname);
 extern bool SearchSysCacheExistsAttName(Oid relid, const char *attname);
 
+extern HeapTuple SearchSysCacheAttNum(Oid relid, int16 attnum);
+extern HeapTuple SearchSysCacheCopyAttNum(Oid relid, int16 attnum);
+
 extern Datum SysCacheGetAttr(int cacheId, HeapTuple tup,
 				AttrNumber attributeNumber, bool *isNull);
 

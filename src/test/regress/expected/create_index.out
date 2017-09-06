@@ -2324,10 +2324,10 @@ DROP TABLE array_gin_test;
 CREATE INDEX gin_relopts_test ON array_index_op_test USING gin (i)
   WITH (FASTUPDATE=on, GIN_PENDING_LIST_LIMIT=128);
 \d+ gin_relopts_test
-     Index "public.gin_relopts_test"
- Column |  Type   | Definition | Storage 
---------+---------+------------+---------
- i      | integer | i          | plain
+            Index "public.gin_relopts_test"
+ Column |  Type   | Definition | Storage | Stats target 
+--------+---------+------------+---------+--------------
+ i      | integer | i          | plain   | 
 gin, for table "public.array_index_op_test"
 Options: fastupdate=on, gin_pending_list_limit=128
 

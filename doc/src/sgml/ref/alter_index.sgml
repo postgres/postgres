@@ -26,6 +26,8 @@ ALTER INDEX [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> SET 
 ALTER INDEX <replaceable class="PARAMETER">name</replaceable> DEPENDS ON EXTENSION <replaceable class="PARAMETER">extension_name</replaceable>
 ALTER INDEX [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> SET ( <replaceable class="PARAMETER">storage_parameter</replaceable> = <replaceable class="PARAMETER">value</replaceable> [, ... ] )
 ALTER INDEX [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> RESET ( <replaceable class="PARAMETER">storage_parameter</replaceable> [, ... ] )
+ALTER INDEX [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> ALTER [ COLUMN ] <replaceable class="PARAMETER">column_number</replaceable>
+    SET STATISTICS <replaceable class="PARAMETER">integer</replaceable>
 ALTER INDEX ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> [ OWNED BY <replaceable class="PARAMETER">role_name</replaceable> [, ... ] ]
     SET TABLESPACE <replaceable class="PARAMETER">new_tablespace</replaceable> [ NOWAIT ]
 </synopsis>
@@ -110,6 +112,25 @@ ALTER INDEX ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> 
     </listitem>
    </varlistentry>
 
+   <varlistentry>
+    <term><literal>ALTER [ COLUMN ] <replaceable class="PARAMETER">column_number</replaceable> SET STATISTICS <replaceable class="PARAMETER">integer</replaceable></literal></term>
+    <listitem>
+     <para>
+      This form sets the per-column statistics-gathering target for
+      subsequent <xref linkend="sql-analyze"> operations, though can
+      be used only on index columns that are defined as an expression.
+      Since expressions lack a unique name, we refer to them using the
+      ordinal number of the index column. 
+      The target can be set in the range 0 to 10000; alternatively, set it
+      to -1 to revert to using the system default statistics
+      target (<xref linkend="guc-default-statistics-target">).
+      For more information on the use of statistics by the
+      <productname>PostgreSQL</productname> query planner, refer to
+      <xref linkend="planner-stats">.
+     </para>
+    </listitem>
+   </varlistentry>
+
   </variablelist>
   </para>
 
@@ -126,6 +147,16 @@ ALTER INDEX ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> 
        <para>
         Do not throw an error if the index does not exist. A notice is issued
         in this case.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER">column_number</replaceable></term>
+      <listitem>
+       <para>
+        The ordinal number refers to the ordinal (left-to-right) position
+        of the index column.
        </para>
       </listitem>
      </varlistentry>
@@ -234,6 +265,14 @@ ALTER INDEX distributors SET TABLESPACE fasttablespace;
 ALTER INDEX distributors SET (fillfactor = 75);
 REINDEX INDEX distributors;
 </programlisting></para>
+
+  <para>
+   Set the statistics-gathering target for an expression index:
+<programlisting>
+CREATE INDEX coord_idx ON measured (x, y, (z + t));
+ALTER INDEX coord_idx ALTER COLUMN 3 SET STATISTICS 1000;
+</programlisting>
+  </para>
 
  </refsect1>
 

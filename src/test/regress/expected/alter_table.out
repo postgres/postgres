@@ -94,6 +94,30 @@ SELECT * FROM tmp;
          | 4 | name | text | 4.1 | 4.1 | 2 | ((4.1,4.1),(3.1,3.1)) | Mon May 01 00:30:30 1995 PDT | c | {"Mon May 01 00:30:30 1995 PDT","Mon Aug 24 14:43:07 1992 PDT","Wed Dec 31 16:00:00 1969 PST"} | 314159 | (1,1) | 512 | 1 2 3 4 5 6 7 8 | magnetic disk | (1.1,1.1) | [(4.1,4.1),(3.1,3.1)] | ((0,2),(4.1,4.1),(3.1,3.1)) | (4.1,4.1),(3.1,3.1) | ["Wed Dec 31 16:00:00 1969 PST" "infinity"] | Thu Jan 01 00:00:00 1970 | @ 1 hour 10 secs | {1,2,3,4} | {1,2,3,4} | {1,2,3,4}
 (1 row)
 
+CREATE INDEX tmp_idx ON tmp (a, (d + e), b);
+ALTER INDEX tmp_idx ALTER COLUMN 0 SET STATISTICS 1000;
+ERROR:  column number must be in range from 1 to 32767
+LINE 1: ALTER INDEX tmp_idx ALTER COLUMN 0 SET STATISTICS 1000;
+                                         ^
+ALTER INDEX tmp_idx ALTER COLUMN 1 SET STATISTICS 1000;
+ERROR:  cannot alter statistics on non-expression column "a" of index "tmp_idx"
+HINT:  Alter statistics on table column instead.
+ALTER INDEX tmp_idx ALTER COLUMN 2 SET STATISTICS 1000;
+\d+ tmp_idx
+                     Index "public.tmp_idx"
+ Column |       Type       | Definition | Storage | Stats target 
+--------+------------------+------------+---------+--------------
+ a      | integer          | a          | plain   | 
+ expr   | double precision | (d + e)    | plain   | 1000
+ b      | cstring          | b          | plain   | 
+btree, for table "public.tmp"
+
+ALTER INDEX tmp_idx ALTER COLUMN 3 SET STATISTICS 1000;
+ERROR:  cannot alter statistics on non-expression column "b" of index "tmp_idx"
+HINT:  Alter statistics on table column instead.
+ALTER INDEX tmp_idx ALTER COLUMN 4 SET STATISTICS 1000;
+ERROR:  column number 4 of relation "tmp_idx" does not exist
+ALTER INDEX tmp_idx ALTER COLUMN 2 SET STATISTICS -1;
 DROP TABLE tmp;
 --
 -- rename - check on both non-temp and temp tables

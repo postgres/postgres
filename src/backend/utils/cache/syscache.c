@@ -1257,6 +1257,52 @@ SearchSysCacheExistsAttName(Oid relid, const char *attname)
 
 
 /*
+ * SearchSysCacheAttNum
+ *
+ * This routine is equivalent to SearchSysCache on the ATTNUM cache,
+ * except that it will return NULL if the found attribute is marked
+ * attisdropped.  This is convenient for callers that want to act as
+ * though dropped attributes don't exist.
+ */
+HeapTuple
+SearchSysCacheAttNum(Oid relid, int16 attnum)
+{
+	HeapTuple	tuple;
+
+	tuple = SearchSysCache2(ATTNUM,
+							ObjectIdGetDatum(relid),
+							Int16GetDatum(attnum));
+	if (!HeapTupleIsValid(tuple))
+		return NULL;
+	if (((Form_pg_attribute) GETSTRUCT(tuple))->attisdropped)
+	{
+		ReleaseSysCache(tuple);
+		return NULL;
+	}
+	return tuple;
+}
+
+/*
+ * SearchSysCacheCopyAttNum
+ *
+ * As above, an attisdropped-aware version of SearchSysCacheCopy.
+ */
+HeapTuple
+SearchSysCacheCopyAttNum(Oid relid, int16 attnum)
+{
+	HeapTuple	tuple,
+				newtuple;
+
+	tuple = SearchSysCacheAttNum(relid, attnum);
+	if (!HeapTupleIsValid(tuple))
+		return NULL;
+	newtuple = heap_copytuple(tuple);
+	ReleaseSysCache(tuple);
+	return newtuple;
+}
+
+
+/*
  * SysCacheGetAttr
  *
  *		Given a tuple previously fetched by SearchSysCache(),

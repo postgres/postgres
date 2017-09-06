@@ -1742,6 +1742,7 @@ describeOneTableDetails(const char *schemaname,
 	{
 		headers[cols++] = gettext_noop("Storage");
 		if (tableinfo.relkind == RELKIND_RELATION ||
+			tableinfo.relkind == RELKIND_INDEX ||
 			tableinfo.relkind == RELKIND_MATVIEW ||
 			tableinfo.relkind == RELKIND_FOREIGN_TABLE ||
 			tableinfo.relkind == RELKIND_PARTITIONED_TABLE)
@@ -1841,6 +1842,7 @@ describeOneTableDetails(const char *schemaname,
 
 			/* Statistics target, if the relkind supports this feature */
 			if (tableinfo.relkind == RELKIND_RELATION ||
+				tableinfo.relkind == RELKIND_INDEX ||
 				tableinfo.relkind == RELKIND_MATVIEW ||
 				tableinfo.relkind == RELKIND_FOREIGN_TABLE ||
 				tableinfo.relkind == RELKIND_PARTITIONED_TABLE)
