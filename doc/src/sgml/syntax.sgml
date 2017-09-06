@@ -1725,7 +1725,7 @@ SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY income) FROM households;
 <programlisting>
 SELECT
     count(*) AS unfiltered,
-    count(*) FILTER (WHERE i < 5) AS filtered
+    count(*) FILTER (WHERE i &lt; 5) AS filtered
 FROM generate_series(1,10) AS s(i);
  unfiltered | filtered
 ------------+----------

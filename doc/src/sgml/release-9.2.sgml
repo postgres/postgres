@@ -6553,7 +6553,7 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
       to fix all pre-existing data errors.  However, an installation can be
       presumed safe after performing this vacuuming if it has executed fewer
       than 2^31 update transactions in its lifetime (check this with
-      <literal>SELECT txid_current() < 2^31</>).
+      <literal>SELECT txid_current() &lt; 2^31</>).
      </para>
     </listitem>
 

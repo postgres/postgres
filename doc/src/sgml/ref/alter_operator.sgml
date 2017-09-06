@@ -134,9 +134,9 @@ ALTER OPERATOR @@ (text, text) OWNER TO joe;
 </programlisting></para>
 
   <para>
-    Change the restriction and join selectivity estimator functions of a custom operator <literal>a && b</literal> for type <type>int[]</type>:
+    Change the restriction and join selectivity estimator functions of a custom operator <literal>a &amp;&amp; b</literal> for type <type>int[]</type>:
 <programlisting>
-ALTER OPERATOR && (_int4, _int4) SET (RESTRICT = _int_contsel, JOIN = _int_contjoinsel);
+ALTER OPERATOR &amp;&amp; (_int4, _int4) SET (RESTRICT = _int_contsel, JOIN = _int_contjoinsel);
 </programlisting></para>
 
  </refsect1>

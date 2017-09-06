@@ -94,7 +94,7 @@
    nanoseconds. This example from an Intel i7-860 system using a TSC clock
    source shows excellent performance:
 
-<screen>
+<screen><![CDATA[
 Testing timing overhead for 3 seconds.
 Per loop time including overhead: 35.96 ns
 Histogram of timing durations:
@@ -104,7 +104,7 @@ Histogram of timing durations:
      4      0.00015        126
      8      0.00002         13
     16      0.00000          2
-</screen>
+]]></screen>
   </para>
 
   <para>
@@ -152,7 +152,7 @@ EXPLAIN ANALYZE SELECT COUNT(*) FROM t;
    possible from switching to the slower acpi_pm time source, on the same
    system used for the fast results above:
 
-<screen>
+<screen><![CDATA[
 # cat /sys/devices/system/clocksource/clocksource0/available_clocksource
 tsc hpet acpi_pm
 # echo acpi_pm > /sys/devices/system/clocksource/clocksource0/current_clocksource
@@ -165,7 +165,7 @@ Histogram of timing durations:
      4      0.07810       3241
      8      0.01357        563
     16      0.00007          3
-</screen>
+]]></screen>
   </para>
 
   <para>
@@ -201,7 +201,7 @@ kern.timecounter.hardware: ACPI-fast -> TSC
    implementation, which can have good resolution when it's backed by fast
    enough timing hardware, as in this example:
 
-<screen>
+<screen><![CDATA[
 $ cat /sys/devices/system/clocksource/clocksource0/available_clocksource
 jiffies
 $ dmesg | grep time.c
@@ -218,7 +218,7 @@ Histogram of timing durations:
      8      0.00007         22
     16      0.00000          1
     32      0.00000          1
-</screen></para>
+]]></screen></para>
 
  </refsect2>
 

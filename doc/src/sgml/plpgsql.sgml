@@ -1823,8 +1823,8 @@ $BODY$
 BEGIN
     RETURN QUERY SELECT flightid
                    FROM flight
-                  WHERE flightdate >= $1
-                    AND flightdate < ($1 + 1);
+                  WHERE flightdate &gt;= $1
+                    AND flightdate &lt; ($1 + 1);
 
     -- Since execution is not finished, we can check whether rows were returned
     -- and raise exception if not.

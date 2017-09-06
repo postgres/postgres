@@ -696,9 +696,9 @@ IsForeignRelUpdatable (Relation rel);
      The return value should be a bit mask of rule event numbers indicating
      which operations are supported by the foreign table, using the
      <literal>CmdType</> enumeration; that is,
-     <literal>(1 << CMD_UPDATE) = 4</> for <command>UPDATE</>,
-     <literal>(1 << CMD_INSERT) = 8</> for <command>INSERT</>, and
-     <literal>(1 << CMD_DELETE) = 16</> for <command>DELETE</>.
+     <literal>(1 &lt;&lt; CMD_UPDATE) = 4</> for <command>UPDATE</>,
+     <literal>(1 &lt;&lt; CMD_INSERT) = 8</> for <command>INSERT</>, and
+     <literal>(1 &lt;&lt; CMD_DELETE) = 16</> for <command>DELETE</>.
     </para>
 
     <para>

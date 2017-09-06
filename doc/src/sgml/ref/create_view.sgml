@@ -466,7 +466,7 @@ CREATE VIEW comedies AS
 CREATE RECURSIVE VIEW public.nums_1_100 (n) AS
     VALUES (1)
 UNION ALL
-    SELECT n+1 FROM nums_1_100 WHERE n < 100;
+    SELECT n+1 FROM nums_1_100 WHERE n &lt; 100;
 </programlisting>
    Notice that although the recursive view's name is schema-qualified in this
    <command>CREATE</>, its internal self-reference is not schema-qualified.

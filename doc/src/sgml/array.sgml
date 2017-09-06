@@ -654,7 +654,7 @@ SELECT * FROM
   For instance:
 
 <programlisting>
-SELECT * FROM sal_emp WHERE pay_by_quarter && ARRAY[10000];
+SELECT * FROM sal_emp WHERE pay_by_quarter &amp;&amp; ARRAY[10000];
 </programlisting>
 
   This and other array operators are further described in

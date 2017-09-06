@@ -970,7 +970,7 @@ CREATE MATERIALIZED VIEW sales_summary AS
       invoice_date,
       sum(invoice_amt)::numeric(13,2) as sales_amt
     FROM invoice
-    WHERE invoice_date < CURRENT_DATE
+    WHERE invoice_date &lt; CURRENT_DATE
     GROUP BY
       seller_no,
       invoice_date
@@ -1058,7 +1058,7 @@ SELECT count(*) FROM words WHERE word = 'caterpiler';
     have wanted.  Again using <literal>file_fdw</literal>:
 
 <programlisting>
-SELECT word FROM words ORDER BY word <-> 'caterpiler' LIMIT 10;
+SELECT word FROM words ORDER BY word &lt;-&gt; 'caterpiler' LIMIT 10;
 
      word     
 ---------------
