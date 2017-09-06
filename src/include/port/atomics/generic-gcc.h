@@ -176,12 +176,41 @@ pg_atomic_compare_exchange_u32_impl(volatile pg_atomic_uint32 *ptr,
 }
 #endif
 
+/* if we have 32-bit __sync_val_compare_and_swap, assume we have these too: */
+
 #if !defined(PG_HAVE_ATOMIC_FETCH_ADD_U32) && defined(HAVE_GCC__SYNC_INT32_CAS)
 #define PG_HAVE_ATOMIC_FETCH_ADD_U32
 static inline uint32
 pg_atomic_fetch_add_u32_impl(volatile pg_atomic_uint32 *ptr, int32 add_)
 {
 	return __sync_fetch_and_add(&ptr->value, add_);
+}
+#endif
+
+#if !defined(PG_HAVE_ATOMIC_FETCH_SUB_U32) && defined(HAVE_GCC__SYNC_INT32_CAS)
+#define PG_HAVE_ATOMIC_FETCH_SUB_U32
+static inline uint32
+pg_atomic_fetch_sub_u32_impl(volatile pg_atomic_uint32 *ptr, int32 sub_)
+{
+	return __sync_fetch_and_sub(&ptr->value, sub_);
+}
+#endif
+
+#if !defined(PG_HAVE_ATOMIC_FETCH_AND_U32) && defined(HAVE_GCC__SYNC_INT32_CAS)
+#define PG_HAVE_ATOMIC_FETCH_AND_U32
+static inline uint32
+pg_atomic_fetch_and_u32_impl(volatile pg_atomic_uint32 *ptr, uint32 and_)
+{
+	return __sync_fetch_and_and(&ptr->value, and_);
+}
+#endif
+
+#if !defined(PG_HAVE_ATOMIC_FETCH_OR_U32) && defined(HAVE_GCC__SYNC_INT32_CAS)
+#define PG_HAVE_ATOMIC_FETCH_OR_U32
+static inline uint32
+pg_atomic_fetch_or_u32_impl(volatile pg_atomic_uint32 *ptr, uint32 or_)
+{
+	return __sync_fetch_and_or(&ptr->value, or_);
 }
 #endif
 
@@ -214,12 +243,41 @@ pg_atomic_compare_exchange_u64_impl(volatile pg_atomic_uint64 *ptr,
 }
 #endif
 
+/* if we have 64-bit __sync_val_compare_and_swap, assume we have these too: */
+
 #if !defined(PG_HAVE_ATOMIC_FETCH_ADD_U64) && defined(HAVE_GCC__SYNC_INT64_CAS)
 #define PG_HAVE_ATOMIC_FETCH_ADD_U64
 static inline uint64
 pg_atomic_fetch_add_u64_impl(volatile pg_atomic_uint64 *ptr, int64 add_)
 {
 	return __sync_fetch_and_add(&ptr->value, add_);
+}
+#endif
+
+#if !defined(PG_HAVE_ATOMIC_FETCH_SUB_U64) && defined(HAVE_GCC__SYNC_INT64_CAS)
+#define PG_HAVE_ATOMIC_FETCH_SUB_U64
+static inline uint64
+pg_atomic_fetch_sub_u64_impl(volatile pg_atomic_uint64 *ptr, int64 sub_)
+{
+	return __sync_fetch_and_sub(&ptr->value, sub_);
+}
+#endif
+
+#if !defined(PG_HAVE_ATOMIC_FETCH_AND_U64) && defined(HAVE_GCC__SYNC_INT64_CAS)
+#define PG_HAVE_ATOMIC_FETCH_AND_U64
+static inline uint64
+pg_atomic_fetch_and_u64_impl(volatile pg_atomic_uint64 *ptr, uint64 and_)
+{
+	return __sync_fetch_and_and(&ptr->value, and_);
+}
+#endif
+
+#if !defined(PG_HAVE_ATOMIC_FETCH_OR_U64) && defined(HAVE_GCC__SYNC_INT64_CAS)
+#define PG_HAVE_ATOMIC_FETCH_OR_U64
+static inline uint64
+pg_atomic_fetch_or_u64_impl(volatile pg_atomic_uint64 *ptr, uint64 or_)
+{
+	return __sync_fetch_and_or(&ptr->value, or_);
 }
 #endif
 
