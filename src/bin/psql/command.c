@@ -71,10 +71,8 @@ static backslashResult exec_command_d(PsqlScanState scan_state, bool active_bran
 			   const char *cmd);
 static backslashResult exec_command_edit(PsqlScanState scan_state, bool active_branch,
 				  PQExpBuffer query_buf, PQExpBuffer previous_buf);
-static backslashResult exec_command_ef(PsqlScanState scan_state, bool active_branch,
-				PQExpBuffer query_buf);
-static backslashResult exec_command_ev(PsqlScanState scan_state, bool active_branch,
-				PQExpBuffer query_buf);
+static backslashResult exec_command_ef_ev(PsqlScanState scan_state, bool active_branch,
+				   PQExpBuffer query_buf, bool is_func);
 static backslashResult exec_command_echo(PsqlScanState scan_state, bool active_branch,
 				  const char *cmd);
 static backslashResult exec_command_elif(PsqlScanState scan_state, ConditionalStack cstack,
@@ -115,10 +113,8 @@ static backslashResult exec_command_s(PsqlScanState scan_state, bool active_bran
 static backslashResult exec_command_set(PsqlScanState scan_state, bool active_branch);
 static backslashResult exec_command_setenv(PsqlScanState scan_state, bool active_branch,
 					const char *cmd);
-static backslashResult exec_command_sf(PsqlScanState scan_state, bool active_branch,
-				const char *cmd);
-static backslashResult exec_command_sv(PsqlScanState scan_state, bool active_branch,
-				const char *cmd);
+static backslashResult exec_command_sf_sv(PsqlScanState scan_state, bool active_branch,
+				   const char *cmd, bool is_func);
 static backslashResult exec_command_t(PsqlScanState scan_state, bool active_branch);
 static backslashResult exec_command_T(PsqlScanState scan_state, bool active_branch);
 static backslashResult exec_command_timing(PsqlScanState scan_state, bool active_branch);
@@ -319,9 +315,9 @@ exec_command(const char *cmd,
 		status = exec_command_edit(scan_state, active_branch,
 								   query_buf, previous_buf);
 	else if (strcmp(cmd, "ef") == 0)
-		status = exec_command_ef(scan_state, active_branch, query_buf);
+		status = exec_command_ef_ev(scan_state, active_branch, query_buf, true);
 	else if (strcmp(cmd, "ev") == 0)
-		status = exec_command_ev(scan_state, active_branch, query_buf);
+		status = exec_command_ef_ev(scan_state, active_branch, query_buf, false);
 	else if (strcmp(cmd, "echo") == 0 || strcmp(cmd, "qecho") == 0)
 		status = exec_command_echo(scan_state, active_branch, cmd);
 	else if (strcmp(cmd, "elif") == 0)
@@ -380,9 +376,9 @@ exec_command(const char *cmd,
 	else if (strcmp(cmd, "setenv") == 0)
 		status = exec_command_setenv(scan_state, active_branch, cmd);
 	else if (strcmp(cmd, "sf") == 0 || strcmp(cmd, "sf+") == 0)
-		status = exec_command_sf(scan_state, active_branch, cmd);
+		status = exec_command_sf_sv(scan_state, active_branch, cmd, true);
 	else if (strcmp(cmd, "sv") == 0 || strcmp(cmd, "sv+") == 0)
-		status = exec_command_sv(scan_state, active_branch, cmd);
+		status = exec_command_sf_sv(scan_state, active_branch, cmd, false);
 	else if (strcmp(cmd, "t") == 0)
 		status = exec_command_t(scan_state, active_branch);
 	else if (strcmp(cmd, "T") == 0)
@@ -979,28 +975,34 @@ exec_command_edit(PsqlScanState scan_state, bool active_branch,
 }
 
 /*
- * \ef -- edit the named function, or present a blank CREATE FUNCTION
- * template if no argument is given
+ * \ef/\ev -- edit the named function/view, or
+ * present a blank CREATE FUNCTION/VIEW template if no argument is given
  */
 static backslashResult
-exec_command_ef(PsqlScanState scan_state, bool active_branch,
-				PQExpBuffer query_buf)
+exec_command_ef_ev(PsqlScanState scan_state, bool active_branch,
+				   PQExpBuffer query_buf, bool is_func)
 {
 	backslashResult status = PSQL_CMD_SKIP_LINE;
 
 	if (active_branch)
 	{
-		char	   *func = psql_scan_slash_option(scan_state,
-												  OT_WHOLE_LINE, NULL, true);
+		char	   *obj_desc = psql_scan_slash_option(scan_state,
+													  OT_WHOLE_LINE,
+													  NULL, true);
 		int			lineno = -1;
 
-		if (pset.sversion < 80400)
+		if (pset.sversion < (is_func ? 80400 : 70400))
 		{
 			char		sverbuf[32];
 
-			psql_error("The server (version %s) does not support editing function source.\n",
-					   formatPGVersionNumber(pset.sversion, false,
-											 sverbuf, sizeof(sverbuf)));
+			formatPGVersionNumber(pset.sversion, false,
+								  sverbuf, sizeof(sverbuf));
+			if (is_func)
+				psql_error("The server (version %s) does not support editing function source.\n",
+						   sverbuf);
+			else
+				psql_error("The server (version %s) does not support editing view definitions.\n",
+						   sverbuf);
 			status = PSQL_CMD_ERROR;
 		}
 		else if (!query_buf)
@@ -1010,36 +1012,44 @@ exec_command_ef(PsqlScanState scan_state, bool active_branch,
 		}
 		else
 		{
-			Oid			foid = InvalidOid;
+			Oid			obj_oid = InvalidOid;
+			EditableObjectType eot = is_func ? EditableFunction : EditableView;
 
-			lineno = strip_lineno_from_objdesc(func);
+			lineno = strip_lineno_from_objdesc(obj_desc);
 			if (lineno == 0)
 			{
 				/* error already reported */
 				status = PSQL_CMD_ERROR;
 			}
-			else if (!func)
+			else if (!obj_desc)
 			{
 				/* set up an empty command to fill in */
-				printfPQExpBuffer(query_buf,
-								  "CREATE FUNCTION ( )\n"
-								  " RETURNS \n"
-								  " LANGUAGE \n"
-								  " -- common options:  IMMUTABLE  STABLE  STRICT  SECURITY DEFINER\n"
-								  "AS $function$\n"
-								  "\n$function$\n");
+				resetPQExpBuffer(query_buf);
+				if (is_func)
+					appendPQExpBufferStr(query_buf,
+										 "CREATE FUNCTION ( )\n"
+										 " RETURNS \n"
+										 " LANGUAGE \n"
+										 " -- common options:  IMMUTABLE  STABLE  STRICT  SECURITY DEFINER\n"
+										 "AS $function$\n"
+										 "\n$function$\n");
+				else
+					appendPQExpBufferStr(query_buf,
+										 "CREATE VIEW  AS\n"
+										 " SELECT \n"
+										 "  -- something...\n");
 			}
-			else if (!lookup_object_oid(EditableFunction, func, &foid))
+			else if (!lookup_object_oid(eot, obj_desc, &obj_oid))
 			{
 				/* error already reported */
 				status = PSQL_CMD_ERROR;
 			}
-			else if (!get_create_object_cmd(EditableFunction, foid, query_buf))
+			else if (!get_create_object_cmd(eot, obj_oid, query_buf))
 			{
 				/* error already reported */
 				status = PSQL_CMD_ERROR;
 			}
-			else if (lineno > 0)
+			else if (is_func && lineno > 0)
 			{
 				/*
 				 * lineno "1" should correspond to the first line of the
@@ -1078,89 +1088,8 @@ exec_command_ef(PsqlScanState scan_state, bool active_branch,
 				status = PSQL_CMD_NEWEDIT;
 		}
 
-		if (func)
-			free(func);
-	}
-	else
-		ignore_slash_whole_line(scan_state);
-
-	return status;
-}
-
-/*
- * \ev -- edit the named view, or present a blank CREATE VIEW
- * template if no argument is given
- */
-static backslashResult
-exec_command_ev(PsqlScanState scan_state, bool active_branch,
-				PQExpBuffer query_buf)
-{
-	backslashResult status = PSQL_CMD_SKIP_LINE;
-
-	if (active_branch)
-	{
-		char	   *view = psql_scan_slash_option(scan_state,
-												  OT_WHOLE_LINE, NULL, true);
-		int			lineno = -1;
-
-		if (pset.sversion < 70400)
-		{
-			char		sverbuf[32];
-
-			psql_error("The server (version %s) does not support editing view definitions.\n",
-					   formatPGVersionNumber(pset.sversion, false,
-											 sverbuf, sizeof(sverbuf)));
-			status = PSQL_CMD_ERROR;
-		}
-		else if (!query_buf)
-		{
-			psql_error("no query buffer\n");
-			status = PSQL_CMD_ERROR;
-		}
-		else
-		{
-			Oid			view_oid = InvalidOid;
-
-			lineno = strip_lineno_from_objdesc(view);
-			if (lineno == 0)
-			{
-				/* error already reported */
-				status = PSQL_CMD_ERROR;
-			}
-			else if (!view)
-			{
-				/* set up an empty command to fill in */
-				printfPQExpBuffer(query_buf,
-								  "CREATE VIEW  AS\n"
-								  " SELECT \n"
-								  "  -- something...\n");
-			}
-			else if (!lookup_object_oid(EditableView, view, &view_oid))
-			{
-				/* error already reported */
-				status = PSQL_CMD_ERROR;
-			}
-			else if (!get_create_object_cmd(EditableView, view_oid, query_buf))
-			{
-				/* error already reported */
-				status = PSQL_CMD_ERROR;
-			}
-		}
-
-		if (status != PSQL_CMD_ERROR)
-		{
-			bool		edited = false;
-
-			if (!do_edit(NULL, query_buf, lineno, &edited))
-				status = PSQL_CMD_ERROR;
-			else if (!edited)
-				puts(_("No changes"));
-			else
-				status = PSQL_CMD_NEWEDIT;
-		}
-
-		if (view)
-			free(view);
+		if (obj_desc)
+			free(obj_desc);
 	}
 	else
 		ignore_slash_whole_line(scan_state);
@@ -2234,43 +2163,53 @@ exec_command_setenv(PsqlScanState scan_state, bool active_branch,
 }
 
 /*
- * \sf -- show a function's source code
+ * \sf/\sv -- show a function/view's source code
  */
 static backslashResult
-exec_command_sf(PsqlScanState scan_state, bool active_branch, const char *cmd)
+exec_command_sf_sv(PsqlScanState scan_state, bool active_branch,
+				   const char *cmd, bool is_func)
 {
 	backslashResult status = PSQL_CMD_SKIP_LINE;
 
 	if (active_branch)
 	{
-		bool		show_linenumbers = (strcmp(cmd, "sf+") == 0);
-		PQExpBuffer func_buf;
-		char	   *func;
-		Oid			foid = InvalidOid;
+		bool		show_linenumbers = (strchr(cmd, '+') != NULL);
+		PQExpBuffer buf;
+		char	   *obj_desc;
+		Oid			obj_oid = InvalidOid;
+		EditableObjectType eot = is_func ? EditableFunction : EditableView;
 
-		func_buf = createPQExpBuffer();
-		func = psql_scan_slash_option(scan_state,
-									  OT_WHOLE_LINE, NULL, true);
-		if (pset.sversion < 80400)
+		buf = createPQExpBuffer();
+		obj_desc = psql_scan_slash_option(scan_state,
+										  OT_WHOLE_LINE, NULL, true);
+		if (pset.sversion < (is_func ? 80400 : 70400))
 		{
 			char		sverbuf[32];
 
-			psql_error("The server (version %s) does not support showing function source.\n",
-					   formatPGVersionNumber(pset.sversion, false,
-											 sverbuf, sizeof(sverbuf)));
+			formatPGVersionNumber(pset.sversion, false,
+								  sverbuf, sizeof(sverbuf));
+			if (is_func)
+				psql_error("The server (version %s) does not support showing function source.\n",
+						   sverbuf);
+			else
+				psql_error("The server (version %s) does not support showing view definitions.\n",
+						   sverbuf);
 			status = PSQL_CMD_ERROR;
 		}
-		else if (!func)
+		else if (!obj_desc)
 		{
-			psql_error("function name is required\n");
+			if (is_func)
+				psql_error("function name is required\n");
+			else
+				psql_error("view name is required\n");
 			status = PSQL_CMD_ERROR;
 		}
-		else if (!lookup_object_oid(EditableFunction, func, &foid))
+		else if (!lookup_object_oid(eot, obj_desc, &obj_oid))
 		{
 			/* error already reported */
 			status = PSQL_CMD_ERROR;
 		}
-		else if (!get_create_object_cmd(EditableFunction, foid, func_buf))
+		else if (!get_create_object_cmd(eot, obj_oid, buf))
 		{
 			/* error already reported */
 			status = PSQL_CMD_ERROR;
@@ -2284,7 +2223,7 @@ exec_command_sf(PsqlScanState scan_state, bool active_branch, const char *cmd)
 			if (pset.queryFout == stdout)
 			{
 				/* count lines in function to see if pager is needed */
-				int			lineno = count_lines_in_buf(func_buf);
+				int			lineno = count_lines_in_buf(buf);
 
 				output = PageOutput(lineno, &(pset.popt.topt));
 				is_pager = true;
@@ -2299,115 +2238,28 @@ exec_command_sf(PsqlScanState scan_state, bool active_branch, const char *cmd)
 			if (show_linenumbers)
 			{
 				/*
-				 * lineno "1" should correspond to the first line of the
-				 * function body.  We expect that pg_get_functiondef() will
-				 * emit that on a line beginning with "AS ", and that there
-				 * can be no such line before the real start of the function
-				 * body.
+				 * For functions, lineno "1" should correspond to the first
+				 * line of the function body.  We expect that
+				 * pg_get_functiondef() will emit that on a line beginning
+				 * with "AS ", and that there can be no such line before the
+				 * real start of the function body.
 				 */
-				print_with_linenumbers(output, func_buf->data, "AS ");
+				print_with_linenumbers(output, buf->data,
+									   is_func ? "AS " : NULL);
 			}
 			else
 			{
-				/* just send the function definition to output */
-				fputs(func_buf->data, output);
+				/* just send the definition to output */
+				fputs(buf->data, output);
 			}
 
 			if (is_pager)
 				ClosePager(output);
 		}
 
-		if (func)
-			free(func);
-		destroyPQExpBuffer(func_buf);
-	}
-	else
-		ignore_slash_whole_line(scan_state);
-
-	return status;
-}
-
-/*
- * \sv -- show a view's source code
- */
-static backslashResult
-exec_command_sv(PsqlScanState scan_state, bool active_branch, const char *cmd)
-{
-	backslashResult status = PSQL_CMD_SKIP_LINE;
-
-	if (active_branch)
-	{
-		bool		show_linenumbers = (strcmp(cmd, "sv+") == 0);
-		PQExpBuffer view_buf;
-		char	   *view;
-		Oid			view_oid = InvalidOid;
-
-		view_buf = createPQExpBuffer();
-		view = psql_scan_slash_option(scan_state,
-									  OT_WHOLE_LINE, NULL, true);
-		if (pset.sversion < 70400)
-		{
-			char		sverbuf[32];
-
-			psql_error("The server (version %s) does not support showing view definitions.\n",
-					   formatPGVersionNumber(pset.sversion, false,
-											 sverbuf, sizeof(sverbuf)));
-			status = PSQL_CMD_ERROR;
-		}
-		else if (!view)
-		{
-			psql_error("view name is required\n");
-			status = PSQL_CMD_ERROR;
-		}
-		else if (!lookup_object_oid(EditableView, view, &view_oid))
-		{
-			/* error already reported */
-			status = PSQL_CMD_ERROR;
-		}
-		else if (!get_create_object_cmd(EditableView, view_oid, view_buf))
-		{
-			/* error already reported */
-			status = PSQL_CMD_ERROR;
-		}
-		else
-		{
-			FILE	   *output;
-			bool		is_pager;
-
-			/* Select output stream: stdout, pager, or file */
-			if (pset.queryFout == stdout)
-			{
-				/* count lines in view to see if pager is needed */
-				int			lineno = count_lines_in_buf(view_buf);
-
-				output = PageOutput(lineno, &(pset.popt.topt));
-				is_pager = true;
-			}
-			else
-			{
-				/* use previously set output file, without pager */
-				output = pset.queryFout;
-				is_pager = false;
-			}
-
-			if (show_linenumbers)
-			{
-				/* add line numbers, numbering all lines */
-				print_with_linenumbers(output, view_buf->data, NULL);
-			}
-			else
-			{
-				/* just send the view definition to output */
-				fputs(view_buf->data, output);
-			}
-
-			if (is_pager)
-				ClosePager(output);
-		}
-
-		if (view)
-			free(view);
-		destroyPQExpBuffer(view_buf);
+		if (obj_desc)
+			free(obj_desc);
+		destroyPQExpBuffer(buf);
 	}
 	else
 		ignore_slash_whole_line(scan_state);
