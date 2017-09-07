@@ -4602,7 +4602,7 @@ InitializeOneGUCOption(struct config_generic *gconf)
 					elog(FATAL, "failed to initialize %s to %d",
 						 conf->gen.name, (int) newval);
 				if (conf->assign_hook)
-					(*conf->assign_hook) (newval, extra);
+					conf->assign_hook(newval, extra);
 				*conf->variable = conf->reset_val = newval;
 				conf->gen.extra = conf->reset_extra = extra;
 				break;
@@ -4620,7 +4620,7 @@ InitializeOneGUCOption(struct config_generic *gconf)
 					elog(FATAL, "failed to initialize %s to %d",
 						 conf->gen.name, newval);
 				if (conf->assign_hook)
-					(*conf->assign_hook) (newval, extra);
+					conf->assign_hook(newval, extra);
 				*conf->variable = conf->reset_val = newval;
 				conf->gen.extra = conf->reset_extra = extra;
 				break;
@@ -4638,7 +4638,7 @@ InitializeOneGUCOption(struct config_generic *gconf)
 					elog(FATAL, "failed to initialize %s to %g",
 						 conf->gen.name, newval);
 				if (conf->assign_hook)
-					(*conf->assign_hook) (newval, extra);
+					conf->assign_hook(newval, extra);
 				*conf->variable = conf->reset_val = newval;
 				conf->gen.extra = conf->reset_extra = extra;
 				break;
@@ -4660,7 +4660,7 @@ InitializeOneGUCOption(struct config_generic *gconf)
 					elog(FATAL, "failed to initialize %s to \"%s\"",
 						 conf->gen.name, newval ? newval : "");
 				if (conf->assign_hook)
-					(*conf->assign_hook) (newval, extra);
+					conf->assign_hook(newval, extra);
 				*conf->variable = conf->reset_val = newval;
 				conf->gen.extra = conf->reset_extra = extra;
 				break;
@@ -4676,7 +4676,7 @@ InitializeOneGUCOption(struct config_generic *gconf)
 					elog(FATAL, "failed to initialize %s to %d",
 						 conf->gen.name, newval);
 				if (conf->assign_hook)
-					(*conf->assign_hook) (newval, extra);
+					conf->assign_hook(newval, extra);
 				*conf->variable = conf->reset_val = newval;
 				conf->gen.extra = conf->reset_extra = extra;
 				break;
@@ -4901,7 +4901,7 @@ ResetAllOptions(void)
 					struct config_bool *conf = (struct config_bool *) gconf;
 
 					if (conf->assign_hook)
-						(*conf->assign_hook) (conf->reset_val,
+						conf->assign_hook(conf->reset_val,
 											  conf->reset_extra);
 					*conf->variable = conf->reset_val;
 					set_extra_field(&conf->gen, &conf->gen.extra,
@@ -4913,7 +4913,7 @@ ResetAllOptions(void)
 					struct config_int *conf = (struct config_int *) gconf;
 
 					if (conf->assign_hook)
-						(*conf->assign_hook) (conf->reset_val,
+						conf->assign_hook(conf->reset_val,
 											  conf->reset_extra);
 					*conf->variable = conf->reset_val;
 					set_extra_field(&conf->gen, &conf->gen.extra,
@@ -4925,7 +4925,7 @@ ResetAllOptions(void)
 					struct config_real *conf = (struct config_real *) gconf;
 
 					if (conf->assign_hook)
-						(*conf->assign_hook) (conf->reset_val,
+						conf->assign_hook(conf->reset_val,
 											  conf->reset_extra);
 					*conf->variable = conf->reset_val;
 					set_extra_field(&conf->gen, &conf->gen.extra,
@@ -4937,7 +4937,7 @@ ResetAllOptions(void)
 					struct config_string *conf = (struct config_string *) gconf;
 
 					if (conf->assign_hook)
-						(*conf->assign_hook) (conf->reset_val,
+						conf->assign_hook(conf->reset_val,
 											  conf->reset_extra);
 					set_string_field(conf, conf->variable, conf->reset_val);
 					set_extra_field(&conf->gen, &conf->gen.extra,
@@ -4949,7 +4949,7 @@ ResetAllOptions(void)
 					struct config_enum *conf = (struct config_enum *) gconf;
 
 					if (conf->assign_hook)
-						(*conf->assign_hook) (conf->reset_val,
+						conf->assign_hook(conf->reset_val,
 											  conf->reset_extra);
 					*conf->variable = conf->reset_val;
 					set_extra_field(&conf->gen, &conf->gen.extra,
@@ -5240,7 +5240,7 @@ AtEOXact_GUC(bool isCommit, int nestLevel)
 								conf->gen.extra != newextra)
 							{
 								if (conf->assign_hook)
-									(*conf->assign_hook) (newval, newextra);
+									conf->assign_hook(newval, newextra);
 								*conf->variable = newval;
 								set_extra_field(&conf->gen, &conf->gen.extra,
 												newextra);
@@ -5258,7 +5258,7 @@ AtEOXact_GUC(bool isCommit, int nestLevel)
 								conf->gen.extra != newextra)
 							{
 								if (conf->assign_hook)
-									(*conf->assign_hook) (newval, newextra);
+									conf->assign_hook(newval, newextra);
 								*conf->variable = newval;
 								set_extra_field(&conf->gen, &conf->gen.extra,
 												newextra);
@@ -5276,7 +5276,7 @@ AtEOXact_GUC(bool isCommit, int nestLevel)
 								conf->gen.extra != newextra)
 							{
 								if (conf->assign_hook)
-									(*conf->assign_hook) (newval, newextra);
+									conf->assign_hook(newval, newextra);
 								*conf->variable = newval;
 								set_extra_field(&conf->gen, &conf->gen.extra,
 												newextra);
@@ -5294,7 +5294,7 @@ AtEOXact_GUC(bool isCommit, int nestLevel)
 								conf->gen.extra != newextra)
 							{
 								if (conf->assign_hook)
-									(*conf->assign_hook) (newval, newextra);
+									conf->assign_hook(newval, newextra);
 								set_string_field(conf, conf->variable, newval);
 								set_extra_field(&conf->gen, &conf->gen.extra,
 												newextra);
@@ -5321,7 +5321,7 @@ AtEOXact_GUC(bool isCommit, int nestLevel)
 								conf->gen.extra != newextra)
 							{
 								if (conf->assign_hook)
-									(*conf->assign_hook) (newval, newextra);
+									conf->assign_hook(newval, newextra);
 								*conf->variable = newval;
 								set_extra_field(&conf->gen, &conf->gen.extra,
 												newextra);
@@ -6211,7 +6211,7 @@ set_config_option(const char *name, const char *value,
 						push_old_value(&conf->gen, action);
 
 					if (conf->assign_hook)
-						(*conf->assign_hook) (newval, newextra);
+						conf->assign_hook(newval, newextra);
 					*conf->variable = newval;
 					set_extra_field(&conf->gen, &conf->gen.extra,
 									newextra);
@@ -6301,7 +6301,7 @@ set_config_option(const char *name, const char *value,
 						push_old_value(&conf->gen, action);
 
 					if (conf->assign_hook)
-						(*conf->assign_hook) (newval, newextra);
+						conf->assign_hook(newval, newextra);
 					*conf->variable = newval;
 					set_extra_field(&conf->gen, &conf->gen.extra,
 									newextra);
@@ -6391,7 +6391,7 @@ set_config_option(const char *name, const char *value,
 						push_old_value(&conf->gen, action);
 
 					if (conf->assign_hook)
-						(*conf->assign_hook) (newval, newextra);
+						conf->assign_hook(newval, newextra);
 					*conf->variable = newval;
 					set_extra_field(&conf->gen, &conf->gen.extra,
 									newextra);
@@ -6499,7 +6499,7 @@ set_config_option(const char *name, const char *value,
 						push_old_value(&conf->gen, action);
 
 					if (conf->assign_hook)
-						(*conf->assign_hook) (newval, newextra);
+						conf->assign_hook(newval, newextra);
 					set_string_field(conf, conf->variable, newval);
 					set_extra_field(&conf->gen, &conf->gen.extra,
 									newextra);
@@ -6594,7 +6594,7 @@ set_config_option(const char *name, const char *value,
 						push_old_value(&conf->gen, action);
 
 					if (conf->assign_hook)
-						(*conf->assign_hook) (newval, newextra);
+						conf->assign_hook(newval, newextra);
 					*conf->variable = newval;
 					set_extra_field(&conf->gen, &conf->gen.extra,
 									newextra);
@@ -8653,7 +8653,7 @@ _ShowOption(struct config_generic *record, bool use_units)
 				struct config_bool *conf = (struct config_bool *) record;
 
 				if (conf->show_hook)
-					val = (*conf->show_hook) ();
+					val = conf->show_hook();
 				else
 					val = *conf->variable ? "on" : "off";
 			}
@@ -8664,7 +8664,7 @@ _ShowOption(struct config_generic *record, bool use_units)
 				struct config_int *conf = (struct config_int *) record;
 
 				if (conf->show_hook)
-					val = (*conf->show_hook) ();
+					val = conf->show_hook();
 				else
 				{
 					/*
@@ -8694,7 +8694,7 @@ _ShowOption(struct config_generic *record, bool use_units)
 				struct config_real *conf = (struct config_real *) record;
 
 				if (conf->show_hook)
-					val = (*conf->show_hook) ();
+					val = conf->show_hook();
 				else
 				{
 					snprintf(buffer, sizeof(buffer), "%g",
@@ -8709,7 +8709,7 @@ _ShowOption(struct config_generic *record, bool use_units)
 				struct config_string *conf = (struct config_string *) record;
 
 				if (conf->show_hook)
-					val = (*conf->show_hook) ();
+					val = conf->show_hook();
 				else if (*conf->variable && **conf->variable)
 					val = *conf->variable;
 				else
@@ -8722,7 +8722,7 @@ _ShowOption(struct config_generic *record, bool use_units)
 				struct config_enum *conf = (struct config_enum *) record;
 
 				if (conf->show_hook)
-					val = (*conf->show_hook) ();
+					val = conf->show_hook();
 				else
 					val = config_enum_lookup_by_value(conf, *conf->variable);
 			}
@@ -9807,7 +9807,7 @@ call_bool_check_hook(struct config_bool *conf, bool *newval, void **extra,
 	GUC_check_errdetail_string = NULL;
 	GUC_check_errhint_string = NULL;
 
-	if (!(*conf->check_hook) (newval, extra, source))
+	if (!conf->check_hook(newval, extra, source))
 	{
 		ereport(elevel,
 				(errcode(GUC_check_errcode_value),
@@ -9841,7 +9841,7 @@ call_int_check_hook(struct config_int *conf, int *newval, void **extra,
 	GUC_check_errdetail_string = NULL;
 	GUC_check_errhint_string = NULL;
 
-	if (!(*conf->check_hook) (newval, extra, source))
+	if (!conf->check_hook(newval, extra, source))
 	{
 		ereport(elevel,
 				(errcode(GUC_check_errcode_value),
@@ -9875,7 +9875,7 @@ call_real_check_hook(struct config_real *conf, double *newval, void **extra,
 	GUC_check_errdetail_string = NULL;
 	GUC_check_errhint_string = NULL;
 
-	if (!(*conf->check_hook) (newval, extra, source))
+	if (!conf->check_hook(newval, extra, source))
 	{
 		ereport(elevel,
 				(errcode(GUC_check_errcode_value),
@@ -9909,7 +9909,7 @@ call_string_check_hook(struct config_string *conf, char **newval, void **extra,
 	GUC_check_errdetail_string = NULL;
 	GUC_check_errhint_string = NULL;
 
-	if (!(*conf->check_hook) (newval, extra, source))
+	if (!conf->check_hook(newval, extra, source))
 	{
 		ereport(elevel,
 				(errcode(GUC_check_errcode_value),
@@ -9943,7 +9943,7 @@ call_enum_check_hook(struct config_enum *conf, int *newval, void **extra,
 	GUC_check_errdetail_string = NULL;
 	GUC_check_errhint_string = NULL;
 
-	if (!(*conf->check_hook) (newval, extra, source))
+	if (!conf->check_hook(newval, extra, source))
 	{
 		ereport(elevel,
 				(errcode(GUC_check_errcode_value),

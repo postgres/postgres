@@ -202,7 +202,7 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te)
 		if (strcmp(te->desc, "BLOBS") == 0)
 			_StartBlobs(AH, te);
 
-		(*te->dataDumper) ((Archive *) AH, te->dataDumperArg);
+		te->dataDumper((Archive *) AH, te->dataDumperArg);
 
 		if (strcmp(te->desc, "BLOBS") == 0)
 			_EndBlobs(AH, te);

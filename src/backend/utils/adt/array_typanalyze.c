@@ -247,7 +247,7 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 	 * temporarily install that.
 	 */
 	stats->extra_data = extra_data->std_extra_data;
-	(*extra_data->std_compute_stats) (stats, fetchfunc, samplerows, totalrows);
+	extra_data->std_compute_stats(stats, fetchfunc, samplerows, totalrows);
 	stats->extra_data = extra_data;
 
 	/*

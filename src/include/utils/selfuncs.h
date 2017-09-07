@@ -81,7 +81,7 @@ typedef struct VariableStatData
 #define ReleaseVariableStats(vardata)  \
 	do { \
 		if (HeapTupleIsValid((vardata).statsTuple)) \
-			(* (vardata).freefunc) ((vardata).statsTuple); \
+			(vardata).freefunc((vardata).statsTuple); \
 	} while(0)
 
 

@@ -526,7 +526,7 @@ do_analyze_rel(Relation onerel, int options, VacuumParams *params,
 
 			stats->rows = rows;
 			stats->tupDesc = onerel->rd_att;
-			(*stats->compute_stats) (stats,
+			stats->compute_stats(stats,
 									 std_fetch_func,
 									 numrows,
 									 totalrows);
@@ -830,7 +830,7 @@ compute_index_stats(Relation onerel, double totalrows,
 				stats->exprvals = exprvals + i;
 				stats->exprnulls = exprnulls + i;
 				stats->rowstride = attr_cnt;
-				(*stats->compute_stats) (stats,
+				stats->compute_stats(stats,
 										 ind_fetch_func,
 										 numindexrows,
 										 totalindexrows);

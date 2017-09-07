@@ -1049,7 +1049,7 @@ FillPortalStore(Portal portal, bool isTopLevel)
 	if (completionTag[0] != '\0')
 		portal->commandTag = pstrdup(completionTag);
 
-	(*treceiver->rDestroy) (treceiver);
+	treceiver->rDestroy(treceiver);
 }
 
 /*
@@ -1073,7 +1073,7 @@ RunFromStore(Portal portal, ScanDirection direction, uint64 count,
 
 	slot = MakeSingleTupleTableSlot(portal->tupDesc);
 
-	(*dest->rStartup) (dest, CMD_SELECT, portal->tupDesc);
+	dest->rStartup(dest, CMD_SELECT, portal->tupDesc);
 
 	if (ScanDirectionIsNoMovement(direction))
 	{
@@ -1103,7 +1103,7 @@ RunFromStore(Portal portal, ScanDirection direction, uint64 count,
 			 * has closed and no more tuples can be sent. If that's the case,
 			 * end the loop.
 			 */
-			if (!((*dest->receiveSlot) (slot, dest)))
+			if (!dest->receiveSlot(slot, dest))
 				break;
 
 			ExecClearTuple(slot);
@@ -1119,7 +1119,7 @@ RunFromStore(Portal portal, ScanDirection direction, uint64 count,
 		}
 	}
 
-	(*dest->rShutdown) (dest);
+	dest->rShutdown(dest);
 
 	ExecDropSingleTupleTableSlot(slot);
 

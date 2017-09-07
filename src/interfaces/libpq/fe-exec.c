@@ -860,7 +860,7 @@ pqInternalNotice(const PGNoticeHooks *hooks, const char *fmt,...)
 		/*
 		 * Pass to receiver, then free it.
 		 */
-		(*res->noticeHooks.noticeRec) (res->noticeHooks.noticeRecArg, res);
+		res->noticeHooks.noticeRec(res->noticeHooks.noticeRecArg, res);
 	}
 	PQclear(res);
 }

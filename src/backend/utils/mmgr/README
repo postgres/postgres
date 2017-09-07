@@ -402,7 +402,7 @@ GetMemoryChunkContext())
 
 and then invoke the corresponding method for the context
 
-    (*context->methods->free_p) (p);
+    context->methods->free_p(p);
 
 
 More Control Over aset.c Behavior

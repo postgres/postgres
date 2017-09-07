@@ -246,10 +246,10 @@ SetVariable(VariableSpace space, const char *name, const char *value)
 			bool		confirmed;
 
 			if (current->substitute_hook)
-				new_value = (*current->substitute_hook) (new_value);
+				new_value = current->substitute_hook(new_value);
 
 			if (current->assign_hook)
-				confirmed = (*current->assign_hook) (new_value);
+				confirmed = current->assign_hook(new_value);
 			else
 				confirmed = true;
 

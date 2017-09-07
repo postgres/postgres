@@ -369,7 +369,7 @@ coerce_type(ParseState *pstate, Node *node,
 		 * transformed node (very possibly the same Param node), or return
 		 * NULL to indicate we should proceed with normal coercion.
 		 */
-		result = (*pstate->p_coerce_param_hook) (pstate,
+		result = pstate->p_coerce_param_hook(pstate,
 												 (Param *) node,
 												 targetTypeId,
 												 targetTypeMod,

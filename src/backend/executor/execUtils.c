@@ -813,7 +813,7 @@ ShutdownExprContext(ExprContext *econtext, bool isCommit)
 	{
 		econtext->ecxt_callbacks = ecxt_callback->next;
 		if (isCommit)
-			(*ecxt_callback->function) (ecxt_callback->arg);
+			ecxt_callback->function(ecxt_callback->arg);
 		pfree(ecxt_callback);
 	}
 

@@ -672,7 +672,7 @@ ResourceOwnerReleaseInternal(ResourceOwner owner,
 
 	/* Let add-on modules get a chance too */
 	for (item = ResourceRelease_callbacks; item; item = item->next)
-		(*item->callback) (phase, isCommit, isTopLevel, item->arg);
+		item->callback(phase, isCommit, isTopLevel, item->arg);
 
 	CurrentResourceOwner = save;
 }

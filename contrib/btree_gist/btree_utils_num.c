@@ -184,10 +184,10 @@ gbt_num_union(GBT_NUMKEY *out, const GistEntryVector *entryvec, const gbtree_nin
 		c.lower = &cur[0];
 		c.upper = &cur[tinfo->size];
 		/* if out->lower > cur->lower, adopt cur as lower */
-		if ((*tinfo->f_gt) (o.lower, c.lower, flinfo))
+		if (tinfo->f_gt(o.lower, c.lower, flinfo))
 			memcpy((void *) o.lower, (void *) c.lower, tinfo->size);
 		/* if out->upper < cur->upper, adopt cur as upper */
-		if ((*tinfo->f_lt) (o.upper, c.upper, flinfo))
+		if (tinfo->f_lt(o.upper, c.upper, flinfo))
 			memcpy((void *) o.upper, (void *) c.upper, tinfo->size);
 	}
 
@@ -211,8 +211,8 @@ gbt_num_same(const GBT_NUMKEY *a, const GBT_NUMKEY *b, const gbtree_ninfo *tinfo
 	b2.lower = &(((GBT_NUMKEY *) b)[0]);
 	b2.upper = &(((GBT_NUMKEY *) b)[tinfo->size]);
 
-	return ((*tinfo->f_eq) (b1.lower, b2.lower, flinfo) &&
-			(*tinfo->f_eq) (b1.upper, b2.upper, flinfo));
+	return (tinfo->f_eq(b1.lower, b2.lower, flinfo) &&
+			tinfo->f_eq(b1.upper, b2.upper, flinfo));
 }
 
 
@@ -236,9 +236,9 @@ gbt_num_bin_union(Datum *u, GBT_NUMKEY *e, const gbtree_ninfo *tinfo, FmgrInfo *
 
 		ur.lower = &(((GBT_NUMKEY *) DatumGetPointer(*u))[0]);
 		ur.upper = &(((GBT_NUMKEY *) DatumGetPointer(*u))[tinfo->size]);
-		if ((*tinfo->f_gt) ((void *) ur.lower, (void *) rd.lower, flinfo))
+		if (tinfo->f_gt((void *) ur.lower, (void *) rd.lower, flinfo))
 			memcpy((void *) ur.lower, (void *) rd.lower, tinfo->size);
-		if ((*tinfo->f_lt) ((void *) ur.upper, (void *) rd.upper, flinfo))
+		if (tinfo->f_lt((void *) ur.upper, (void *) rd.upper, flinfo))
 			memcpy((void *) ur.upper, (void *) rd.upper, tinfo->size);
 	}
 }
@@ -264,33 +264,33 @@ gbt_num_consistent(const GBT_NUMKEY_R *key,
 	switch (*strategy)
 	{
 		case BTLessEqualStrategyNumber:
-			retval = (*tinfo->f_ge) (query, key->lower, flinfo);
+			retval = tinfo->f_ge(query, key->lower, flinfo);
 			break;
 		case BTLessStrategyNumber:
 			if (is_leaf)
-				retval = (*tinfo->f_gt) (query, key->lower, flinfo);
+				retval = tinfo->f_gt(query, key->lower, flinfo);
 			else
-				retval = (*tinfo->f_ge) (query, key->lower, flinfo);
+				retval = tinfo->f_ge(query, key->lower, flinfo);
 			break;
 		case BTEqualStrategyNumber:
 			if (is_leaf)
-				retval = (*tinfo->f_eq) (query, key->lower, flinfo);
+				retval = tinfo->f_eq(query, key->lower, flinfo);
 			else
-				retval = ((*tinfo->f_le) (key->lower, query, flinfo) &&
-						  (*tinfo->f_le) (query, key->upper, flinfo));
+				retval = (tinfo->f_le(key->lower, query, flinfo) &&
+						  tinfo->f_le(query, key->upper, flinfo));
 			break;
 		case BTGreaterStrategyNumber:
 			if (is_leaf)
-				retval = (*tinfo->f_lt) (query, key->upper, flinfo);
+				retval = tinfo->f_lt(query, key->upper, flinfo);
 			else
-				retval = (*tinfo->f_le) (query, key->upper, flinfo);
+				retval = tinfo->f_le(query, key->upper, flinfo);
 			break;
 		case BTGreaterEqualStrategyNumber:
-			retval = (*tinfo->f_le) (query, key->upper, flinfo);
+			retval = tinfo->f_le(query, key->upper, flinfo);
 			break;
 		case BtreeGistNotEqualStrategyNumber:
-			retval = (!((*tinfo->f_eq) (query, key->lower, flinfo) &&
-						(*tinfo->f_eq) (query, key->upper, flinfo)));
+			retval = (!(tinfo->f_eq(query, key->lower, flinfo) &&
+						tinfo->f_eq(query, key->upper, flinfo)));
 			break;
 		default:
 			retval = false;

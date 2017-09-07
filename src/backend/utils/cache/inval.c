@@ -590,7 +590,7 @@ LocalExecuteInvalidationMessage(SharedInvalidationMessage *msg)
 			{
 				struct RELCACHECALLBACK *ccitem = relcache_callback_list + i;
 
-				(*ccitem->function) (ccitem->arg, msg->rc.relId);
+				ccitem->function(ccitem->arg, msg->rc.relId);
 			}
 		}
 	}
@@ -650,14 +650,14 @@ InvalidateSystemCaches(void)
 	{
 		struct SYSCACHECALLBACK *ccitem = syscache_callback_list + i;
 
-		(*ccitem->function) (ccitem->arg, ccitem->id, 0);
+		ccitem->function(ccitem->arg, ccitem->id, 0);
 	}
 
 	for (i = 0; i < relcache_callback_count; i++)
 	{
 		struct RELCACHECALLBACK *ccitem = relcache_callback_list + i;
 
-		(*ccitem->function) (ccitem->arg, InvalidOid);
+		ccitem->function(ccitem->arg, InvalidOid);
 	}
 }
 
@@ -1460,7 +1460,7 @@ CallSyscacheCallbacks(int cacheid, uint32 hashvalue)
 		struct SYSCACHECALLBACK *ccitem = syscache_callback_list + i;
 
 		Assert(ccitem->id == cacheid);
-		(*ccitem->function) (ccitem->arg, cacheid, hashvalue);
+		ccitem->function(ccitem->arg, cacheid, hashvalue);
 		i = ccitem->link - 1;
 	}
 }

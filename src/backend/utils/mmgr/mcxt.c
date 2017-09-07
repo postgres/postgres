@@ -159,7 +159,7 @@ MemoryContextResetOnly(MemoryContext context)
 	if (!context->isReset)
 	{
 		MemoryContextCallResetCallbacks(context);
-		(*context->methods->reset) (context);
+		context->methods->reset(context);
 		context->isReset = true;
 		VALGRIND_DESTROY_MEMPOOL(context);
 		VALGRIND_CREATE_MEMPOOL(context, 0, false);
@@ -222,7 +222,7 @@ MemoryContextDelete(MemoryContext context)
 	 */
 	MemoryContextSetParent(context, NULL);
 
-	(*context->methods->delete_context) (context);
+	context->methods->delete_context(context);
 	VALGRIND_DESTROY_MEMPOOL(context);
 	pfree(context);
 }
@@ -291,7 +291,7 @@ MemoryContextCallResetCallbacks(MemoryContext context)
 	while ((cb = context->reset_cbs) != NULL)
 	{
 		context->reset_cbs = cb->next;
-		(*cb->func) (cb->arg);
+		cb->func(cb->arg);
 	}
 }
 
@@ -391,8 +391,7 @@ GetMemoryChunkSpace(void *pointer)
 {
 	MemoryContext context = GetMemoryChunkContext(pointer);
 
-	return (context->methods->get_chunk_space) (context,
-												pointer);
+	return context->methods->get_chunk_space(context, pointer);
 }
 
 /*
@@ -423,7 +422,7 @@ MemoryContextIsEmpty(MemoryContext context)
 	if (context->firstchild != NULL)
 		return false;
 	/* Otherwise use the type-specific inquiry */
-	return (*context->methods->is_empty) (context);
+	return context->methods->is_empty(context);
 }
 
 /*
@@ -481,7 +480,7 @@ MemoryContextStatsInternal(MemoryContext context, int level,
 	AssertArg(MemoryContextIsValid(context));
 
 	/* Examine the context itself */
-	(*context->methods->stats) (context, level, print, totals);
+	context->methods->stats(context, level, print, totals);
 
 	/*
 	 * Examine children.  If there are more than max_children of them, we do
@@ -546,7 +545,7 @@ MemoryContextCheck(MemoryContext context)
 
 	AssertArg(MemoryContextIsValid(context));
 
-	(*context->methods->check) (context);
+	context->methods->check(context);
 	for (child = context->firstchild; child != NULL; child = child->nextchild)
 		MemoryContextCheck(child);
 }
@@ -675,7 +674,7 @@ MemoryContextCreate(NodeTag tag, Size size,
 	strcpy(node->name, name);
 
 	/* Type-specific routine finishes any other essential initialization */
-	(*node->methods->init) (node);
+	node->methods->init(node);
 
 	/* OK to link node to parent (if any) */
 	/* Could use MemoryContextSetParent here, but doesn't seem worthwhile */
@@ -716,7 +715,7 @@ MemoryContextAlloc(MemoryContext context, Size size)
 
 	context->isReset = false;
 
-	ret = (*context->methods->alloc) (context, size);
+	ret = context->methods->alloc(context, size);
 	if (ret == NULL)
 	{
 		MemoryContextStats(TopMemoryContext);
@@ -751,7 +750,7 @@ MemoryContextAllocZero(MemoryContext context, Size size)
 
 	context->isReset = false;
 
-	ret = (*context->methods->alloc) (context, size);
+	ret = context->methods->alloc(context, size);
 	if (ret == NULL)
 	{
 		MemoryContextStats(TopMemoryContext);
@@ -788,7 +787,7 @@ MemoryContextAllocZeroAligned(MemoryContext context, Size size)
 
 	context->isReset = false;
 
-	ret = (*context->methods->alloc) (context, size);
+	ret = context->methods->alloc(context, size);
 	if (ret == NULL)
 	{
 		MemoryContextStats(TopMemoryContext);
@@ -823,7 +822,7 @@ MemoryContextAllocExtended(MemoryContext context, Size size, int flags)
 
 	context->isReset = false;
 
-	ret = (*context->methods->alloc) (context, size);
+	ret = context->methods->alloc(context, size);
 	if (ret == NULL)
 	{
 		if ((flags & MCXT_ALLOC_NO_OOM) == 0)
@@ -859,7 +858,7 @@ palloc(Size size)
 
 	CurrentMemoryContext->isReset = false;
 
-	ret = (*CurrentMemoryContext->methods->alloc) (CurrentMemoryContext, size);
+	ret = CurrentMemoryContext->methods->alloc(CurrentMemoryContext, size);
 	if (ret == NULL)
 	{
 		MemoryContextStats(TopMemoryContext);
@@ -888,7 +887,7 @@ palloc0(Size size)
 
 	CurrentMemoryContext->isReset = false;
 
-	ret = (*CurrentMemoryContext->methods->alloc) (CurrentMemoryContext, size);
+	ret = CurrentMemoryContext->methods->alloc(CurrentMemoryContext, size);
 	if (ret == NULL)
 	{
 		MemoryContextStats(TopMemoryContext);
@@ -920,7 +919,7 @@ palloc_extended(Size size, int flags)
 
 	CurrentMemoryContext->isReset = false;
 
-	ret = (*CurrentMemoryContext->methods->alloc) (CurrentMemoryContext, size);
+	ret = CurrentMemoryContext->methods->alloc(CurrentMemoryContext, size);
 	if (ret == NULL)
 	{
 		if ((flags & MCXT_ALLOC_NO_OOM) == 0)
@@ -951,7 +950,7 @@ pfree(void *pointer)
 {
 	MemoryContext context = GetMemoryChunkContext(pointer);
 
-	(*context->methods->free_p) (context, pointer);
+	context->methods->free_p(context, pointer);
 	VALGRIND_MEMPOOL_FREE(context, pointer);
 }
 
@@ -973,7 +972,7 @@ repalloc(void *pointer, Size size)
 	/* isReset must be false already */
 	Assert(!context->isReset);
 
-	ret = (*context->methods->realloc) (context, pointer, size);
+	ret = context->methods->realloc(context, pointer, size);
 	if (ret == NULL)
 	{
 		MemoryContextStats(TopMemoryContext);
@@ -1007,7 +1006,7 @@ MemoryContextAllocHuge(MemoryContext context, Size size)
 
 	context->isReset = false;
 
-	ret = (*context->methods->alloc) (context, size);
+	ret = context->methods->alloc(context, size);
 	if (ret == NULL)
 	{
 		MemoryContextStats(TopMemoryContext);
@@ -1041,7 +1040,7 @@ repalloc_huge(void *pointer, Size size)
 	/* isReset must be false already */
 	Assert(!context->isReset);
 
-	ret = (*context->methods->realloc) (context, pointer, size);
+	ret = context->methods->realloc(context, pointer, size);
 	if (ret == NULL)
 	{
 		MemoryContextStats(TopMemoryContext);

@@ -1081,5 +1081,5 @@ ParallelQueryMain(dsm_segment *seg, shm_toc *toc)
 	/* Cleanup. */
 	dsa_detach(area);
 	FreeQueryDesc(queryDesc);
-	(*receiver->rDestroy) (receiver);
+	receiver->rDestroy(receiver);
 }

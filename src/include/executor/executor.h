@@ -287,7 +287,7 @@ ExecEvalExpr(ExprState *state,
 			 ExprContext *econtext,
 			 bool *isNull)
 {
-	return (*state->evalfunc) (state, econtext, isNull);
+	return state->evalfunc(state, econtext, isNull);
 }
 #endif
 
@@ -306,7 +306,7 @@ ExecEvalExprSwitchContext(ExprState *state,
 	MemoryContext oldContext;
 
 	oldContext = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
-	retDatum = (*state->evalfunc) (state, econtext, isNull);
+	retDatum = state->evalfunc(state, econtext, isNull);
 	MemoryContextSwitchTo(oldContext);
 	return retDatum;
 }

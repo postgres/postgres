@@ -1114,7 +1114,7 @@ exec_simple_query(const char *query_string)
 						 receiver,
 						 completionTag);
 
-		(*receiver->rDestroy) (receiver);
+		receiver->rDestroy(receiver);
 
 		PortalDrop(portal, false);
 
@@ -2002,7 +2002,7 @@ exec_execute_message(const char *portal_name, long max_rows)
 						  receiver,
 						  completionTag);
 
-	(*receiver->rDestroy) (receiver);
+	receiver->rDestroy(receiver);
 
 	if (completed)
 	{

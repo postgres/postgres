@@ -202,7 +202,7 @@ setupRestoreWorker(Archive *AHX)
 {
 	ArchiveHandle *AH = (ArchiveHandle *) AHX;
 
-	(AH->ReopenPtr) (AH);
+	AH->ReopenPtr(AH);
 }
 
 
@@ -237,7 +237,7 @@ CloseArchive(Archive *AHX)
 	int			res = 0;
 	ArchiveHandle *AH = (ArchiveHandle *) AHX;
 
-	(*AH->ClosePtr) (AH);
+	AH->ClosePtr(AH);
 
 	/* Close the output */
 	if (AH->gzOut)
@@ -359,7 +359,7 @@ RestoreArchive(Archive *AHX)
 		 * It's also not gonna work if we can't reopen the input file, so
 		 * let's try that immediately.
 		 */
-		(AH->ReopenPtr) (AH);
+		AH->ReopenPtr(AH);
 	}
 
 	/*
@@ -865,7 +865,7 @@ restore_toc_entry(ArchiveHandle *AH, TocEntry *te, bool is_parallel)
 					if (strcmp(te->desc, "BLOB COMMENTS") == 0)
 						AH->outputKind = OUTPUT_OTHERDATA;
 
-					(*AH->PrintTocDataPtr) (AH, te);
+					AH->PrintTocDataPtr(AH, te);
 
 					AH->outputKind = OUTPUT_SQLCMDS;
 				}
@@ -918,7 +918,7 @@ restore_toc_entry(ArchiveHandle *AH, TocEntry *te, bool is_parallel)
 					else
 						AH->outputKind = OUTPUT_OTHERDATA;
 
-					(*AH->PrintTocDataPtr) (AH, te);
+					AH->PrintTocDataPtr(AH, te);
 
 					/*
 					 * Terminate COPY if needed.
@@ -1038,7 +1038,7 @@ WriteData(Archive *AHX, const void *data, size_t dLen)
 	if (!AH->currToc)
 		exit_horribly(modulename, "internal error -- WriteData cannot be called outside the context of a DataDumper routine\n");
 
-	(*AH->WriteDataPtr) (AH, data, dLen);
+	AH->WriteDataPtr(AH, data, dLen);
 
 	return;
 }
@@ -1109,7 +1109,7 @@ ArchiveEntry(Archive *AHX,
 	newToc->formatData = NULL;
 
 	if (AH->ArchiveEntryPtr != NULL)
-		(*AH->ArchiveEntryPtr) (AH, newToc);
+		AH->ArchiveEntryPtr(AH, newToc);
 }
 
 /* Public */
@@ -1236,7 +1236,7 @@ StartBlob(Archive *AHX, Oid oid)
 	if (!AH->StartBlobPtr)
 		exit_horribly(modulename, "large-object output not supported in chosen format\n");
 
-	(*AH->StartBlobPtr) (AH, AH->currToc, oid);
+	AH->StartBlobPtr(AH, AH->currToc, oid);
 
 	return 1;
 }
@@ -1248,7 +1248,7 @@ EndBlob(Archive *AHX, Oid oid)
 	ArchiveHandle *AH = (ArchiveHandle *) AHX;
 
 	if (AH->EndBlobPtr)
-		(*AH->EndBlobPtr) (AH, AH->currToc, oid);
+		AH->EndBlobPtr(AH, AH->currToc, oid);
 
 	return 1;
 }
@@ -1920,12 +1920,12 @@ WriteOffset(ArchiveHandle *AH, pgoff_t o, int wasSet)
 	int			off;
 
 	/* Save the flag */
-	(*AH->WriteBytePtr) (AH, wasSet);
+	AH->WriteBytePtr(AH, wasSet);
 
 	/* Write out pgoff_t smallest byte first, prevents endian mismatch */
 	for (off = 0; off < sizeof(pgoff_t); off++)
 	{
-		(*AH->WriteBytePtr) (AH, o & 0xFF);
+		AH->WriteBytePtr(AH, o & 0xFF);
 		o >>= 8;
 	}
 	return sizeof(pgoff_t) + 1;
@@ -1964,7 +1964,7 @@ ReadOffset(ArchiveHandle *AH, pgoff_t * o)
 	 * This used to be handled by a negative or zero pointer, now we use an
 	 * extra byte specifically for the state.
 	 */
-	offsetFlg = (*AH->ReadBytePtr) (AH) & 0xFF;
+	offsetFlg = AH->ReadBytePtr(AH) & 0xFF;
 
 	switch (offsetFlg)
 	{
@@ -1984,10 +1984,10 @@ ReadOffset(ArchiveHandle *AH, pgoff_t * o)
 	for (off = 0; off < AH->offSize; off++)
 	{
 		if (off < sizeof(pgoff_t))
-			*o |= ((pgoff_t) ((*AH->ReadBytePtr) (AH))) << (off * 8);
+			*o |= ((pgoff_t) (AH->ReadBytePtr(AH))) << (off * 8);
 		else
 		{
-			if ((*AH->ReadBytePtr) (AH) != 0)
+			if (AH->ReadBytePtr(AH) != 0)
 				exit_horribly(modulename, "file offset in dump file is too large\n");
 		}
 	}
@@ -2011,15 +2011,15 @@ WriteInt(ArchiveHandle *AH, int i)
 	/* SIGN byte */
 	if (i < 0)
 	{
-		(*AH->WriteBytePtr) (AH, 1);
+		AH->WriteBytePtr(AH, 1);
 		i = -i;
 	}
 	else
-		(*AH->WriteBytePtr) (AH, 0);
+		AH->WriteBytePtr(AH, 0);
 
 	for (b = 0; b < AH->intSize; b++)
 	{
-		(*AH->WriteBytePtr) (AH, i & 0xFF);
+		AH->WriteBytePtr(AH, i & 0xFF);
 		i >>= 8;
 	}
 
@@ -2037,11 +2037,11 @@ ReadInt(ArchiveHandle *AH)
 
 	if (AH->version > K_VERS_1_0)
 		/* Read a sign byte */
-		sign = (*AH->ReadBytePtr) (AH);
+		sign = AH->ReadBytePtr(AH);
 
 	for (b = 0; b < AH->intSize; b++)
 	{
-		bv = (*AH->ReadBytePtr) (AH) & 0xFF;
+		bv = AH->ReadBytePtr(AH) & 0xFF;
 		if (bv != 0)
 			res = res + (bv << bitShift);
 		bitShift += 8;
@@ -2063,7 +2063,7 @@ WriteStr(ArchiveHandle *AH, const char *c)
 		int			len = strlen(c);
 
 		res = WriteInt(AH, len);
-		(*AH->WriteBufPtr) (AH, c, len);
+		AH->WriteBufPtr(AH, c, len);
 		res += len;
 	}
 	else
@@ -2084,7 +2084,7 @@ ReadStr(ArchiveHandle *AH)
 	else
 	{
 		buf = (char *) pg_malloc(l + 1);
-		(*AH->ReadBufPtr) (AH, (void *) buf, l);
+		AH->ReadBufPtr(AH, (void *) buf, l);
 
 		buf[l] = '\0';
 	}
@@ -2495,7 +2495,7 @@ WriteDataChunksForTocEntry(ArchiveHandle *AH, TocEntry *te)
 	/*
 	 * The user-provided DataDumper routine needs to call AH->WriteData
 	 */
-	(*te->dataDumper) ((Archive *) AH, te->dataDumperArg);
+	te->dataDumper((Archive *) AH, te->dataDumperArg);
 
 	if (endPtr != NULL)
 		(*endPtr) (AH, te);
@@ -2557,7 +2557,7 @@ WriteToc(ArchiveHandle *AH)
 		WriteStr(AH, NULL);		/* Terminate List */
 
 		if (AH->WriteExtraTocPtr)
-			(*AH->WriteExtraTocPtr) (AH, te);
+			AH->WriteExtraTocPtr(AH, te);
 	}
 }
 
@@ -2699,7 +2699,7 @@ ReadToc(ArchiveHandle *AH)
 		}
 
 		if (AH->ReadExtraTocPtr)
-			(*AH->ReadExtraTocPtr) (AH, te);
+			AH->ReadExtraTocPtr(AH, te);
 
 		ahlog(AH, 3, "read TOC entry %d (ID %d) for %s %s\n",
 			  i, te->dumpId, te->desc, te->tag);
@@ -3520,7 +3520,7 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, bool isData)
 		ahprintf(AH, "\n");
 
 		if (AH->PrintExtraTocPtr != NULL)
-			(*AH->PrintExtraTocPtr) (AH, te);
+			AH->PrintExtraTocPtr(AH, te);
 		ahprintf(AH, "--\n\n");
 	}
 
@@ -3648,13 +3648,13 @@ WriteHead(ArchiveHandle *AH)
 {
 	struct tm	crtm;
 
-	(*AH->WriteBufPtr) (AH, "PGDMP", 5);	/* Magic code */
-	(*AH->WriteBytePtr) (AH, ARCHIVE_MAJOR(AH->version));
-	(*AH->WriteBytePtr) (AH, ARCHIVE_MINOR(AH->version));
-	(*AH->WriteBytePtr) (AH, ARCHIVE_REV(AH->version));
-	(*AH->WriteBytePtr) (AH, AH->intSize);
-	(*AH->WriteBytePtr) (AH, AH->offSize);
-	(*AH->WriteBytePtr) (AH, AH->format);
+	AH->WriteBufPtr(AH, "PGDMP", 5);	/* Magic code */
+	AH->WriteBytePtr(AH, ARCHIVE_MAJOR(AH->version));
+	AH->WriteBytePtr(AH, ARCHIVE_MINOR(AH->version));
+	AH->WriteBytePtr(AH, ARCHIVE_REV(AH->version));
+	AH->WriteBytePtr(AH, AH->intSize);
+	AH->WriteBytePtr(AH, AH->offSize);
+	AH->WriteBytePtr(AH, AH->format);
 	WriteInt(AH, AH->compression);
 	crtm = *localtime(&AH->createDate);
 	WriteInt(AH, crtm.tm_sec);
@@ -3688,16 +3688,16 @@ ReadHead(ArchiveHandle *AH)
 					vmin,
 					vrev;
 
-		(*AH->ReadBufPtr) (AH, tmpMag, 5);
+		AH->ReadBufPtr(AH, tmpMag, 5);
 
 		if (strncmp(tmpMag, "PGDMP", 5) != 0)
 			exit_horribly(modulename, "did not find magic string in file header\n");
 
-		vmaj = (*AH->ReadBytePtr) (AH);
-		vmin = (*AH->ReadBytePtr) (AH);
+		vmaj = AH->ReadBytePtr(AH);
+		vmin = AH->ReadBytePtr(AH);
 
 		if (vmaj > 1 || (vmaj == 1 && vmin > 0))	/* Version > 1.0 */
-			vrev = (*AH->ReadBytePtr) (AH);
+			vrev = AH->ReadBytePtr(AH);
 		else
 			vrev = 0;
 
@@ -3707,7 +3707,7 @@ ReadHead(ArchiveHandle *AH)
 			exit_horribly(modulename, "unsupported version (%d.%d) in file header\n",
 						  vmaj, vmin);
 
-		AH->intSize = (*AH->ReadBytePtr) (AH);
+		AH->intSize = AH->ReadBytePtr(AH);
 		if (AH->intSize > 32)
 			exit_horribly(modulename, "sanity check on integer size (%lu) failed\n",
 						  (unsigned long) AH->intSize);
@@ -3716,11 +3716,11 @@ ReadHead(ArchiveHandle *AH)
 			write_msg(modulename, "WARNING: archive was made on a machine with larger integers, some operations might fail\n");
 
 		if (AH->version >= K_VERS_1_7)
-			AH->offSize = (*AH->ReadBytePtr) (AH);
+			AH->offSize = AH->ReadBytePtr(AH);
 		else
 			AH->offSize = AH->intSize;
 
-		fmt = (*AH->ReadBytePtr) (AH);
+		fmt = AH->ReadBytePtr(AH);
 
 		if (AH->format != fmt)
 			exit_horribly(modulename, "expected format (%d) differs from format found in file (%d)\n",
@@ -3730,7 +3730,7 @@ ReadHead(ArchiveHandle *AH)
 	if (AH->version >= K_VERS_1_2)
 	{
 		if (AH->version < K_VERS_1_4)
-			AH->compression = (*AH->ReadBytePtr) (AH);
+			AH->compression = AH->ReadBytePtr(AH);
 		else
 			AH->compression = ReadInt(AH);
 	}
@@ -4700,7 +4700,7 @@ CloneArchive(ArchiveHandle *AH)
 	}
 
 	/* Let the format-specific code have a chance too */
-	(clone->ClonePtr) (clone);
+	clone->ClonePtr(clone);
 
 	Assert(clone->connection != NULL);
 	return clone;
@@ -4718,7 +4718,7 @@ DeCloneArchive(ArchiveHandle *AH)
 	Assert(AH->connection == NULL);
 
 	/* Clear format-specific state */
-	(AH->DeClonePtr) (AH);
+	AH->DeClonePtr(AH);
 
 	/* Clear state allocated by CloneArchive */
 	if (AH->sqlparse.curCmd)

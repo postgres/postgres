@@ -109,7 +109,7 @@ gbt_var_leaf2node(GBT_VARKEY *leaf, const gbtree_vinfo *tinfo, FmgrInfo *flinfo)
 	GBT_VARKEY *out = leaf;
 
 	if (tinfo->f_l2n)
-		out = (*tinfo->f_l2n) (leaf, flinfo);
+		out = tinfo->f_l2n(leaf, flinfo);
 
 	return out;
 }
@@ -255,13 +255,13 @@ gbt_var_bin_union(Datum *u, GBT_VARKEY *e, Oid collation,
 		nr.lower = ro.lower;
 		nr.upper = ro.upper;
 
-		if ((*tinfo->f_cmp) (ro.lower, eo.lower, collation, flinfo) > 0)
+		if (tinfo->f_cmp(ro.lower, eo.lower, collation, flinfo) > 0)
 		{
 			nr.lower = eo.lower;
 			update = true;
 		}
 
-		if ((*tinfo->f_cmp) (ro.upper, eo.upper, collation, flinfo) < 0)
+		if (tinfo->f_cmp(ro.upper, eo.upper, collation, flinfo) < 0)
 		{
 			nr.upper = eo.upper;
 			update = true;
@@ -371,8 +371,8 @@ gbt_var_same(Datum d1, Datum d2, Oid collation,
 	r1 = gbt_var_key_readable(t1);
 	r2 = gbt_var_key_readable(t2);
 
-	return ((*tinfo->f_cmp) (r1.lower, r2.lower, collation, flinfo) == 0 &&
-			(*tinfo->f_cmp) (r1.upper, r2.upper, collation, flinfo) == 0);
+	return (tinfo->f_cmp(r1.lower, r2.lower, collation, flinfo) == 0 &&
+			tinfo->f_cmp(r1.upper, r2.upper, collation, flinfo) == 0);
 }
 
 
@@ -400,9 +400,9 @@ gbt_var_penalty(float *res, const GISTENTRY *o, const GISTENTRY *n,
 
 	if ((VARSIZE(ok.lower) - VARHDRSZ) == 0 && (VARSIZE(ok.upper) - VARHDRSZ) == 0)
 		*res = 0.0;
-	else if (!(((*tinfo->f_cmp) (nk.lower, ok.lower, collation, flinfo) >= 0 ||
+	else if (!((tinfo->f_cmp(nk.lower, ok.lower, collation, flinfo) >= 0 ||
 				gbt_bytea_pf_match(ok.lower, nk.lower, tinfo)) &&
-			   ((*tinfo->f_cmp) (nk.upper, ok.upper, collation, flinfo) <= 0 ||
+			   (tinfo->f_cmp(nk.upper, ok.upper, collation, flinfo) <= 0 ||
 				gbt_bytea_pf_match(ok.upper, nk.upper, tinfo))))
 	{
 		Datum		d = PointerGetDatum(0);
@@ -449,9 +449,9 @@ gbt_vsrt_cmp(const void *a, const void *b, void *arg)
 	const gbt_vsrt_arg *varg = (const gbt_vsrt_arg *) arg;
 	int			res;
 
-	res = (*varg->tinfo->f_cmp) (ar.lower, br.lower, varg->collation, varg->flinfo);
+	res = varg->tinfo->f_cmp(ar.lower, br.lower, varg->collation, varg->flinfo);
 	if (res == 0)
-		return (*varg->tinfo->f_cmp) (ar.upper, br.upper, varg->collation, varg->flinfo);
+		return varg->tinfo->f_cmp(ar.upper, br.upper, varg->collation, varg->flinfo);
 
 	return res;
 }
@@ -567,44 +567,44 @@ gbt_var_consistent(GBT_VARKEY_R *key,
 	{
 		case BTLessEqualStrategyNumber:
 			if (is_leaf)
-				retval = (*tinfo->f_ge) (query, key->lower, collation, flinfo);
+				retval = tinfo->f_ge(query, key->lower, collation, flinfo);
 			else
-				retval = (*tinfo->f_cmp) (query, key->lower, collation, flinfo) >= 0
+				retval = tinfo->f_cmp(query, key->lower, collation, flinfo) >= 0
 					|| gbt_var_node_pf_match(key, query, tinfo);
 			break;
 		case BTLessStrategyNumber:
 			if (is_leaf)
-				retval = (*tinfo->f_gt) (query, key->lower, collation, flinfo);
+				retval = tinfo->f_gt(query, key->lower, collation, flinfo);
 			else
-				retval = (*tinfo->f_cmp) (query, key->lower, collation, flinfo) >= 0
+				retval = tinfo->f_cmp(query, key->lower, collation, flinfo) >= 0
 					|| gbt_var_node_pf_match(key, query, tinfo);
 			break;
 		case BTEqualStrategyNumber:
 			if (is_leaf)
-				retval = (*tinfo->f_eq) (query, key->lower, collation, flinfo);
+				retval = tinfo->f_eq(query, key->lower, collation, flinfo);
 			else
 				retval =
-					((*tinfo->f_cmp) (key->lower, query, collation, flinfo) <= 0 &&
-					 (*tinfo->f_cmp) (query, key->upper, collation, flinfo) <= 0) ||
+					(tinfo->f_cmp(key->lower, query, collation, flinfo) <= 0 &&
+					 tinfo->f_cmp(query, key->upper, collation, flinfo) <= 0) ||
 					gbt_var_node_pf_match(key, query, tinfo);
 			break;
 		case BTGreaterStrategyNumber:
 			if (is_leaf)
-				retval = (*tinfo->f_lt) (query, key->upper, collation, flinfo);
+				retval = tinfo->f_lt(query, key->upper, collation, flinfo);
 			else
-				retval = (*tinfo->f_cmp) (query, key->upper, collation, flinfo) <= 0
+				retval = tinfo->f_cmp(query, key->upper, collation, flinfo) <= 0
 					|| gbt_var_node_pf_match(key, query, tinfo);
 			break;
 		case BTGreaterEqualStrategyNumber:
 			if (is_leaf)
-				retval = (*tinfo->f_le) (query, key->upper, collation, flinfo);
+				retval = tinfo->f_le(query, key->upper, collation, flinfo);
 			else
-				retval = (*tinfo->f_cmp) (query, key->upper, collation, flinfo) <= 0
+				retval = tinfo->f_cmp(query, key->upper, collation, flinfo) <= 0
 					|| gbt_var_node_pf_match(key, query, tinfo);
 			break;
 		case BtreeGistNotEqualStrategyNumber:
-			retval = !((*tinfo->f_eq) (query, key->lower, collation, flinfo) &&
-					   (*tinfo->f_eq) (query, key->upper, collation, flinfo));
+			retval = !(tinfo->f_eq(query, key->lower, collation, flinfo) &&
+					   tinfo->f_eq(query, key->upper, collation, flinfo));
 			break;
 		default:
 			retval = FALSE;

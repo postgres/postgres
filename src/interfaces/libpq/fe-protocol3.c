@@ -960,7 +960,7 @@ pqGetErrorNotice3(PGconn *conn, bool isError)
 			/* We can cheat a little here and not copy the message. */
 			res->errMsg = workBuf.data;
 			if (res->noticeHooks.noticeRec != NULL)
-				(*res->noticeHooks.noticeRec) (res->noticeHooks.noticeRecArg, res);
+				res->noticeHooks.noticeRec(res->noticeHooks.noticeRecArg, res);
 			PQclear(res);
 		}
 	}

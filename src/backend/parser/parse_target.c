@@ -1108,7 +1108,7 @@ ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref,
 		{
 			Node	   *node;
 
-			node = (*pstate->p_pre_columnref_hook) (pstate, cref);
+			node = pstate->p_pre_columnref_hook(pstate, cref);
 			if (node != NULL)
 				return ExpandRowReference(pstate, node, make_target_entry);
 		}
@@ -1163,7 +1163,7 @@ ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref,
 		{
 			Node	   *node;
 
-			node = (*pstate->p_post_columnref_hook) (pstate, cref,
+			node = pstate->p_post_columnref_hook(pstate, cref,
 													 (Node *) rte);
 			if (node != NULL)
 			{

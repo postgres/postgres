@@ -1055,7 +1055,7 @@ pqGetErrorNotice2(PGconn *conn, bool isError)
 		if (res)
 		{
 			if (res->noticeHooks.noticeRec != NULL)
-				(*res->noticeHooks.noticeRec) (res->noticeHooks.noticeRecArg, res);
+				res->noticeHooks.noticeRec(res->noticeHooks.noticeRecArg, res);
 			PQclear(res);
 		}
 	}

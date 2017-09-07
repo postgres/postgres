@@ -1241,7 +1241,7 @@ begin_tup_output_tupdesc(DestReceiver *dest, TupleDesc tupdesc)
 	tstate->slot = MakeSingleTupleTableSlot(tupdesc);
 	tstate->dest = dest;
 
-	(*tstate->dest->rStartup) (tstate->dest, (int) CMD_SELECT, tupdesc);
+	tstate->dest->rStartup(tstate->dest, (int) CMD_SELECT, tupdesc);
 
 	return tstate;
 }
@@ -1266,7 +1266,7 @@ do_tup_output(TupOutputState *tstate, Datum *values, bool *isnull)
 	ExecStoreVirtualTuple(slot);
 
 	/* send the tuple to the receiver */
-	(void) (*tstate->dest->receiveSlot) (slot, tstate->dest);
+	(void) tstate->dest->receiveSlot(slot, tstate->dest);
 
 	/* clean up */
 	ExecClearTuple(slot);
@@ -1310,7 +1310,7 @@ do_text_output_multiline(TupOutputState *tstate, const char *txt)
 void
 end_tup_output(TupOutputState *tstate)
 {
-	(*tstate->dest->rShutdown) (tstate->dest);
+	tstate->dest->rShutdown(tstate->dest);
 	/* note that destroying the dest is not ours to do */
 	ExecDropSingleTupleTableSlot(tstate->slot);
 	pfree(tstate);

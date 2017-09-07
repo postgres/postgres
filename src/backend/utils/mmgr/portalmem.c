@@ -420,7 +420,7 @@ MarkPortalDone(Portal portal)
 	 */
 	if (PointerIsValid(portal->cleanup))
 	{
-		(*portal->cleanup) (portal);
+		portal->cleanup(portal);
 		portal->cleanup = NULL;
 	}
 }
@@ -448,7 +448,7 @@ MarkPortalFailed(Portal portal)
 	 */
 	if (PointerIsValid(portal->cleanup))
 	{
-		(*portal->cleanup) (portal);
+		portal->cleanup(portal);
 		portal->cleanup = NULL;
 	}
 }
@@ -486,7 +486,7 @@ PortalDrop(Portal portal, bool isTopCommit)
 	 */
 	if (PointerIsValid(portal->cleanup))
 	{
-		(*portal->cleanup) (portal);
+		portal->cleanup(portal);
 		portal->cleanup = NULL;
 	}
 
@@ -786,7 +786,7 @@ AtAbort_Portals(void)
 		 */
 		if (PointerIsValid(portal->cleanup))
 		{
-			(*portal->cleanup) (portal);
+			portal->cleanup(portal);
 			portal->cleanup = NULL;
 		}
 
@@ -980,7 +980,7 @@ AtSubAbort_Portals(SubTransactionId mySubid,
 		 */
 		if (PointerIsValid(portal->cleanup))
 		{
-			(*portal->cleanup) (portal);
+			portal->cleanup(portal);
 			portal->cleanup = NULL;
 		}
 

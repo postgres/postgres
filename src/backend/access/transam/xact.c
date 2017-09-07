@@ -3347,7 +3347,7 @@ CallXactCallbacks(XactEvent event)
 	XactCallbackItem *item;
 
 	for (item = Xact_callbacks; item; item = item->next)
-		(*item->callback) (event, item->arg);
+		item->callback(event, item->arg);
 }
 
 
@@ -3404,7 +3404,7 @@ CallSubXactCallbacks(SubXactEvent event,
 	SubXactCallbackItem *item;
 
 	for (item = SubXact_callbacks; item; item = item->next)
-		(*item->callback) (event, mySubid, parentSubid, item->arg);
+		item->callback(event, mySubid, parentSubid, item->arg);
 }
 
 

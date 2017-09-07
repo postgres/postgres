@@ -886,7 +886,7 @@ postquel_end(execution_state *es)
 		ExecutorEnd(es->qd);
 	}
 
-	(*es->qd->dest->rDestroy) (es->qd->dest);
+	es->qd->dest->rDestroy(es->qd->dest);
 
 	FreeQueryDesc(es->qd);
 	es->qd = NULL;

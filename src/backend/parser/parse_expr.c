@@ -527,7 +527,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 	 */
 	if (pstate->p_pre_columnref_hook != NULL)
 	{
-		node = (*pstate->p_pre_columnref_hook) (pstate, cref);
+		node = pstate->p_pre_columnref_hook(pstate, cref);
 		if (node != NULL)
 			return node;
 	}
@@ -758,7 +758,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 	{
 		Node	   *hookresult;
 
-		hookresult = (*pstate->p_post_columnref_hook) (pstate, cref, node);
+		hookresult = pstate->p_post_columnref_hook(pstate, cref, node);
 		if (node == NULL)
 			node = hookresult;
 		else if (hookresult != NULL)
@@ -813,7 +813,7 @@ transformParamRef(ParseState *pstate, ParamRef *pref)
 	 * call it.  If not, or if the hook returns NULL, throw a generic error.
 	 */
 	if (pstate->p_paramref_hook != NULL)
-		result = (*pstate->p_paramref_hook) (pstate, pref);
+		result = pstate->p_paramref_hook(pstate, pref);
 	else
 		result = NULL;
 
@@ -2585,9 +2585,9 @@ transformCurrentOfExpr(ParseState *pstate, CurrentOfExpr *cexpr)
 
 		/* See if there is a translation available from a parser hook */
 		if (pstate->p_pre_columnref_hook != NULL)
-			node = (*pstate->p_pre_columnref_hook) (pstate, cref);
+			node = pstate->p_pre_columnref_hook(pstate, cref);
 		if (node == NULL && pstate->p_post_columnref_hook != NULL)
-			node = (*pstate->p_post_columnref_hook) (pstate, cref, NULL);
+			node = pstate->p_post_columnref_hook(pstate, cref, NULL);
 
 		/*
 		 * XXX Should we throw an error if we get a translation that isn't a

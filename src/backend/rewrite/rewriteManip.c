@@ -1143,7 +1143,7 @@ replace_rte_variables_mutator(Node *node,
 			/* Found a matching variable, make the substitution */
 			Node	   *newnode;
 
-			newnode = (*context->callback) (var, context);
+			newnode = context->callback(var, context);
 			/* Detect if we are adding a sublink to query */
 			if (!context->inserted_sublink)
 				context->inserted_sublink = checkExprHasSubLink(newnode);

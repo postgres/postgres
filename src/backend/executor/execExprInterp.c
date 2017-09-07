@@ -647,7 +647,7 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 			FunctionCallInfo fcinfo = op->d.func.fcinfo_data;
 
 			fcinfo->isnull = false;
-			*op->resvalue = (op->d.func.fn_addr) (fcinfo);
+			*op->resvalue = op->d.func.fn_addr(fcinfo);
 			*op->resnull = fcinfo->isnull;
 
 			EEO_NEXT();
@@ -669,7 +669,7 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 				}
 			}
 			fcinfo->isnull = false;
-			*op->resvalue = (op->d.func.fn_addr) (fcinfo);
+			*op->resvalue = op->d.func.fn_addr(fcinfo);
 			*op->resnull = fcinfo->isnull;
 
 	strictfail:
@@ -684,7 +684,7 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 			pgstat_init_function_usage(fcinfo, &fcusage);
 
 			fcinfo->isnull = false;
-			*op->resvalue = (op->d.func.fn_addr) (fcinfo);
+			*op->resvalue = op->d.func.fn_addr(fcinfo);
 			*op->resnull = fcinfo->isnull;
 
 			pgstat_end_function_usage(&fcusage, true);
@@ -712,7 +712,7 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 			pgstat_init_function_usage(fcinfo, &fcusage);
 
 			fcinfo->isnull = false;
-			*op->resvalue = (op->d.func.fn_addr) (fcinfo);
+			*op->resvalue = op->d.func.fn_addr(fcinfo);
 			*op->resnull = fcinfo->isnull;
 
 			pgstat_end_function_usage(&fcusage, true);
@@ -1170,7 +1170,7 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 				Datum		eqresult;
 
 				fcinfo->isnull = false;
-				eqresult = (op->d.func.fn_addr) (fcinfo);
+				eqresult = op->d.func.fn_addr(fcinfo);
 				/* Must invert result of "="; safe to do even if null */
 				*op->resvalue = BoolGetDatum(!DatumGetBool(eqresult));
 				*op->resnull = fcinfo->isnull;
@@ -1192,7 +1192,7 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 				Datum		result;
 
 				fcinfo->isnull = false;
-				result = (op->d.func.fn_addr) (fcinfo);
+				result = op->d.func.fn_addr(fcinfo);
 
 				/* if the arguments are equal return null */
 				if (!fcinfo->isnull && DatumGetBool(result))
@@ -1279,7 +1279,7 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 
 			/* Apply comparison function */
 			fcinfo->isnull = false;
-			*op->resvalue = (op->d.rowcompare_step.fn_addr) (fcinfo);
+			*op->resvalue = op->d.rowcompare_step.fn_addr(fcinfo);
 
 			/* force NULL result if NULL function result */
 			if (fcinfo->isnull)
@@ -1878,7 +1878,7 @@ ExecEvalParamExtern(ExprState *state, ExprEvalStep *op, ExprContext *econtext)
 
 		/* give hook a chance in case parameter is dynamic */
 		if (!OidIsValid(prm->ptype) && paramInfo->paramFetch != NULL)
-			(*paramInfo->paramFetch) (paramInfo, paramId);
+			paramInfo->paramFetch(paramInfo, paramId);
 
 		if (likely(OidIsValid(prm->ptype)))
 		{
@@ -3000,7 +3000,7 @@ ExecEvalScalarArrayOp(ExprState *state, ExprEvalStep *op)
 		else
 		{
 			fcinfo->isnull = false;
-			thisresult = (op->d.scalararrayop.fn_addr) (fcinfo);
+			thisresult = op->d.scalararrayop.fn_addr(fcinfo);
 		}
 
 		/* Combine results per OR or AND semantics */
