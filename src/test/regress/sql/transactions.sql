@@ -419,6 +419,60 @@ DROP FUNCTION create_temp_tab();
 DROP FUNCTION invert(x float8);
 
 
+-- Test assorted behaviors around the implicit transaction block created
+-- when multiple SQL commands are sent in a single Query message.  These
+-- tests rely on the fact that psql will not break SQL commands apart at a
+-- backslash-quoted semicolon, but will send them as one Query.
+
+create temp table i_table (f1 int);
+
+-- psql will show only the last result in a multi-statement Query
+SELECT 1\; SELECT 2\; SELECT 3;
+
+-- this implicitly commits:
+insert into i_table values(1)\; select * from i_table;
+-- 1/0 error will cause rolling back the whole implicit transaction
+insert into i_table values(2)\; select * from i_table\; select 1/0;
+select * from i_table;
+
+rollback;  -- we are not in a transaction at this point
+
+-- can use regular begin/commit/rollback within a single Query
+begin\; insert into i_table values(3)\; commit;
+rollback;  -- we are not in a transaction at this point
+begin\; insert into i_table values(4)\; rollback;
+rollback;  -- we are not in a transaction at this point
+
+-- begin converts implicit transaction into a regular one that
+-- can extend past the end of the Query
+select 1\; begin\; insert into i_table values(5);
+commit;
+select 1\; begin\; insert into i_table values(6);
+rollback;
+
+-- commit in implicit-transaction state commits but issues a warning.
+insert into i_table values(7)\; commit\; insert into i_table values(8)\; select 1/0;
+-- similarly, rollback aborts but issues a warning.
+insert into i_table values(9)\; rollback\; select 2;
+
+select * from i_table;
+
+rollback;  -- we are not in a transaction at this point
+
+-- implicit transaction block is still a transaction block, for e.g. VACUUM
+SELECT 1\; VACUUM;
+SELECT 1\; COMMIT\; VACUUM;
+
+-- we disallow savepoint-related commands in implicit-transaction state
+SELECT 1\; SAVEPOINT sp;
+SELECT 1\; COMMIT\; SAVEPOINT sp;
+ROLLBACK TO SAVEPOINT sp\; SELECT 2;
+SELECT 2\; RELEASE SAVEPOINT sp\; SELECT 3;
+
+-- but this is OK, because the BEGIN converts it to a regular xact
+SELECT 1\; BEGIN\; SAVEPOINT sp\; ROLLBACK TO SAVEPOINT sp\; COMMIT;
+
+
 -- Test for successful cleanup of an aborted transaction at session exit.
 -- THIS MUST BE THE LAST TEST IN THIS FILE.
 

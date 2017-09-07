@@ -352,6 +352,8 @@ extern void BeginTransactionBlock(void);
 extern bool EndTransactionBlock(void);
 extern bool PrepareTransactionBlock(char *gid);
 extern void UserAbortTransactionBlock(void);
+extern void BeginImplicitTransactionBlock(void);
+extern void EndImplicitTransactionBlock(void);
 extern void ReleaseSavepoint(List *options);
 extern void DefineSavepoint(char *name);
 extern void RollbackToSavepoint(List *options);
