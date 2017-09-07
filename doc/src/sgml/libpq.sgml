@@ -2223,7 +2223,9 @@ PGresult *PQexec(PGconn *conn, const char *command);
     <function>PQexec</> call are processed in a single transaction, unless
     there are explicit <command>BEGIN</command>/<command>COMMIT</command>
     commands included in the query string to divide it into multiple
-    transactions.  Note however that the returned
+    transactions.  (See <xref linkend="protocol-flow-multi-statement">
+    for more details about how the server handles multi-query strings.)
+    Note however that the returned
     <structname>PGresult</structname> structure describes only the result
     of the last command executed from the string.  Should one of the
     commands fail, processing of the string stops with it and the returned

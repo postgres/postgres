@@ -120,12 +120,14 @@ echo '\x \\ SELECT * FROM foo;' | psql
       </para>
       <para>
        Each <acronym>SQL</acronym> command string passed
-       to <option>-c</option> is sent to the server as a single query.
+       to <option>-c</option> is sent to the server as a single request.
        Because of this, the server executes it as a single transaction even
        if the string contains multiple <acronym>SQL</acronym> commands,
        unless there are explicit <command>BEGIN</>/<command>COMMIT</>
        commands included in the string to divide it into multiple
-       transactions.  Also, <application>psql</application> only prints the
+       transactions.  (See <xref linkend="protocol-flow-multi-statement">
+       for more details about how the server handles multi-query strings.)
+       Also, <application>psql</application> only prints the
        result of the last <acronym>SQL</acronym> command in the string.
        This is different from the behavior when the same string is read from
        a file or fed to <application>psql</application>'s standard input,
@@ -133,7 +135,7 @@ echo '\x \\ SELECT * FROM foo;' | psql
        each <acronym>SQL</acronym> command separately.
       </para>
       <para>
-       Because of this behavior, putting more than one command in a
+       Because of this behavior, putting more than one SQL command in a
        single <option>-c</option> string often has unexpected results.
        It's better to use repeated <option>-c</option> commands or feed
        multiple commands to <application>psql</application>'s standard input,
@@ -3175,6 +3177,47 @@ testdb=&gt; <userinput>\setenv LESS -imx4F</userinput>
         options that can be passed to <application>psql</>;
         and <literal>variables</> shows help about <application>psql</application> configuration
         variables.
+        </para>
+        </listitem>
+      </varlistentry>
+
+
+      <varlistentry>
+        <term><literal>\;</literal></term>
+        <listitem>
+        <para>
+        Backslash-semicolon is not a meta-command in the same way as the
+        preceding commands; rather, it simply causes a semicolon to be
+        added to the query buffer without any further processing.
+        </para>
+
+        <para>
+        Normally, <application>psql</> will dispatch a SQL command to the
+        server as soon as it reaches the command-ending semicolon, even if
+        more input remains on the current line.  Thus for example entering
+<programlisting>
+select 1; select 2; select 3;
+</programlisting>
+        will result in the three SQL commands being individually sent to
+        the server, with each one's results being displayed before
+        continuing to the next command.  However, a semicolon entered
+        as <literal>\;</> will not trigger command processing, so that the
+        command before it and the one after are effectively combined and
+        sent to the server in one request.  So for example
+<programlisting>
+select 1\; select 2\; select 3;
+</programlisting>
+        results in sending the three SQL commands to the server in a single
+        request, when the non-backslashed semicolon is reached.
+        The server executes such a request as a single transaction,
+        unless there are explicit <command>BEGIN</>/<command>COMMIT</>
+        commands included in the string to divide it into multiple
+        transactions.  (See <xref linkend="protocol-flow-multi-statement">
+        for more details about how the server handles multi-query strings.)
+        <application>psql</application> prints only the last query result
+        it receives for each request; in this example, although all
+        three <command>SELECT</>s are indeed executed, <application>psql</>
+        only prints the <literal>3</>.
         </para>
         </listitem>
       </varlistentry>

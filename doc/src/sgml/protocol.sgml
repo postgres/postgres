@@ -675,6 +675,125 @@
     that will accept any message type at any time that it could make sense,
     rather than wiring in assumptions about the exact sequence of messages.
    </para>
+
+   <sect3 id="protocol-flow-multi-statement">
+    <title>Multiple Statements in a Simple Query</title>
+
+    <para>
+     When a simple Query message contains more than one SQL statement
+     (separated by semicolons), those statements are executed as a single
+     transaction, unless explicit transaction control commands are included
+     to force a different behavior.  For example, if the message contains
+<programlisting>
+INSERT INTO mytable VALUES(1);
+SELECT 1/0;
+INSERT INTO mytable VALUES(2);
+</programlisting>
+     then the divide-by-zero failure in the <command>SELECT</> will force
+     rollback of the first <command>INSERT</>.  Furthermore, because
+     execution of the message is abandoned at the first error, the second
+     <command>INSERT</> is never attempted at all.
+    </para>
+
+    <para>
+     If instead the message contains
+<programlisting>
+BEGIN;
+INSERT INTO mytable VALUES(1);
+COMMIT;
+INSERT INTO mytable VALUES(2);
+SELECT 1/0;
+</programlisting>
+     then the first <command>INSERT</> is committed by the
+     explicit <command>COMMIT</> command.  The second <command>INSERT</>
+     and the <command>SELECT</> are still treated as a single transaction,
+     so that the divide-by-zero failure will roll back the
+     second <command>INSERT</>, but not the first one.
+    </para>
+
+    <para>
+     This behavior is implemented by running the statements in a
+     multi-statement Query message in an <firstterm>implicit transaction
+     block</> unless there is some explicit transaction block for them to
+     run in.  The main difference between an implicit transaction block and
+     a regular one is that an implicit block is closed automatically at the
+     end of the Query message, either by an implicit commit if there was no
+     error, or an implicit rollback if there was an error.  This is similar
+     to the implicit commit or rollback that happens for a statement
+     executed by itself (when not in a transaction block).
+    </para>
+
+    <para>
+     If the session is already in a transaction block, as a result of
+     a <command>BEGIN</> in some previous message, then the Query message
+     simply continues that transaction block, whether the message contains
+     one statement or several.  However, if the Query message contains
+     a <command>COMMIT</> or <command>ROLLBACK</> closing the existing
+     transaction block, then any following statements are executed in an
+     implicit transaction block.
+     Conversely, if a <command>BEGIN</> appears in a multi-statement Query
+     message, then it starts a regular transaction block that will only be
+     terminated by an explicit <command>COMMIT</> or <command>ROLLBACK</>,
+     whether that appears in this Query message or a later one.
+     If the <command>BEGIN</> follows some statements that were executed as
+     an implicit transaction block, those statements are not immediately
+     committed; in effect, they are retroactively included into the new
+     regular transaction block.
+    </para>
+
+    <para>
+     A <command>COMMIT</> or <command>ROLLBACK</> appearing in an implicit
+     transaction block is executed as normal, closing the implicit block;
+     however, a warning will be issued since a <command>COMMIT</>
+     or <command>ROLLBACK</> without a previous <command>BEGIN</> might
+     represent a mistake.  If more statements follow, a new implicit
+     transaction block will be started for them.
+    </para>
+
+    <para>
+     Savepoints are not allowed in an implicit transaction block, since
+     they would conflict with the behavior of automatically closing the
+     block upon any error.
+    </para>
+
+    <para>
+     Remember that, regardless of any transaction control commands that may
+     be present, execution of the Query message stops at the first error.
+     Thus for example given
+<programlisting>
+BEGIN;
+SELECT 1/0;
+ROLLBACK;
+</programlisting>
+     in a single Query message, the session will be left inside a failed
+     regular transaction block, since the <command>ROLLBACK</> is not
+     reached after the divide-by-zero error.  Another <command>ROLLBACK</>
+     will be needed to restore the session to a usable state.
+    </para>
+
+    <para>
+     Another behavior of note is that initial lexical and syntactic
+     analysis is done on the entire query string before any of it is
+     executed.  Thus simple errors (such as a misspelled keyword) in later
+     statements can prevent execution of any of the statements.  This
+     is normally invisible to users since the statements would all roll
+     back anyway when done as an implicit transaction block.  However,
+     it can be visible when attempting to do multiple transactions within a
+     multi-statement Query.  For instance, if a typo turned our previous
+     example into
+<programlisting>
+BEGIN;
+INSERT INTO mytable VALUES(1);
+COMMIT;
+INSERT INTO mytable VALUES(2);
+SELCT 1/0;
+</programlisting>
+     then none of the statements would get run, resulting in the visible
+     difference that the first <command>INSERT</> is not committed.
+     Errors detected at semantic analysis or later, such as a misspelled
+     table or column name, do not have this effect.
+    </para>
+   </sect3>
   </sect2>
 
   <sect2 id="protocol-flow-ext-query">
