@@ -1854,7 +1854,7 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		/*
 		 * Verify result relation is a valid target for the current operation
 		 */
-		CheckValidResultRel(resultRelInfo->ri_RelationDesc, operation);
+		CheckValidResultRel(resultRelInfo, operation);
 
 		/*
 		 * If there are indices on the result relation, open them and save

@@ -289,6 +289,87 @@ SELECT tableoid::regclass, * FROM agg FOR UPDATE;
 
 ALTER FOREIGN TABLE agg_csv NO INHERIT agg;
 DROP TABLE agg;
+-- declarative partitioning tests
+SET ROLE regress_file_fdw_superuser;
+CREATE TABLE pt (a int, b text) partition by list (a);
+CREATE FOREIGN TABLE p1 partition of pt for values in (1) SERVER file_server
+OPTIONS (format 'csv', filename '@abs_srcdir@/data/list1.csv', delimiter ',');
+CREATE TABLE p2 partition of pt for values in (2);
+SELECT tableoid::regclass, * FROM pt;
+ tableoid | a |  b  
+----------+---+-----
+ p1       | 1 | foo
+ p1       | 1 | bar
+(2 rows)
+
+SELECT tableoid::regclass, * FROM p1;
+ tableoid | a |  b  
+----------+---+-----
+ p1       | 1 | foo
+ p1       | 1 | bar
+(2 rows)
+
+SELECT tableoid::regclass, * FROM p2;
+ tableoid | a | b 
+----------+---+---
+(0 rows)
+
+COPY pt FROM '@abs_srcdir@/data/list2.bad' with (format 'csv', delimiter ','); -- ERROR
+ERROR:  cannot route inserted tuples to a foreign table
+CONTEXT:  COPY pt, line 2: "1,qux"
+COPY pt FROM '@abs_srcdir@/data/list2.csv' with (format 'csv', delimiter ',');
+SELECT tableoid::regclass, * FROM pt;
+ tableoid | a |  b  
+----------+---+-----
+ p1       | 1 | foo
+ p1       | 1 | bar
+ p2       | 2 | baz
+ p2       | 2 | qux
+(4 rows)
+
+SELECT tableoid::regclass, * FROM p1;
+ tableoid | a |  b  
+----------+---+-----
+ p1       | 1 | foo
+ p1       | 1 | bar
+(2 rows)
+
+SELECT tableoid::regclass, * FROM p2;
+ tableoid | a |  b  
+----------+---+-----
+ p2       | 2 | baz
+ p2       | 2 | qux
+(2 rows)
+
+INSERT INTO pt VALUES (1, 'xyzzy'); -- ERROR
+ERROR:  cannot route inserted tuples to a foreign table
+INSERT INTO pt VALUES (2, 'xyzzy');
+SELECT tableoid::regclass, * FROM pt;
+ tableoid | a |   b   
+----------+---+-------
+ p1       | 1 | foo
+ p1       | 1 | bar
+ p2       | 2 | baz
+ p2       | 2 | qux
+ p2       | 2 | xyzzy
+(5 rows)
+
+SELECT tableoid::regclass, * FROM p1;
+ tableoid | a |  b  
+----------+---+-----
+ p1       | 1 | foo
+ p1       | 1 | bar
+(2 rows)
+
+SELECT tableoid::regclass, * FROM p2;
+ tableoid | a |   b   
+----------+---+-------
+ p2       | 2 | baz
+ p2       | 2 | qux
+ p2       | 2 | xyzzy
+(3 rows)
+
+DROP TABLE pt;
 -- privilege tests
 SET ROLE regress_file_fdw_superuser;
 SELECT * FROM agg_text ORDER BY a;
