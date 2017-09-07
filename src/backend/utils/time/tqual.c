@@ -45,6 +45,8 @@
  *		  like HeapTupleSatisfiesSelf(), but includes open transactions
  *	 HeapTupleSatisfiesVacuum()
  *		  visible to any running transaction, used by VACUUM
+ *	 HeapTupleSatisfiesNonVacuumable()
+ *		  Snapshot-style API for HeapTupleSatisfiesVacuum
  *	 HeapTupleSatisfiesToast()
  *		  visible unless part of interrupted vacuum, used for TOAST
  *	 HeapTupleSatisfiesAny()
@@ -1391,6 +1393,26 @@ HeapTupleSatisfiesVacuum(HeapTuple htup, TransactionId OldestXmin,
 	/* Otherwise, it's dead and removable */
 	return HEAPTUPLE_DEAD;
 }
+
+
+/*
+ * HeapTupleSatisfiesNonVacuumable
+ *
+ *	True if tuple might be visible to some transaction; false if it's
+ *	surely dead to everyone, ie, vacuumable.
+ *
+ *	This is an interface to HeapTupleSatisfiesVacuum that meets the
+ *	SnapshotSatisfiesFunc API, so it can be used through a Snapshot.
+ *	snapshot->xmin must have been set up with the xmin horizon to use.
+ */
+bool
+HeapTupleSatisfiesNonVacuumable(HeapTuple htup, Snapshot snapshot,
+								Buffer buffer)
+{
+	return HeapTupleSatisfiesVacuum(htup, snapshot->xmin, buffer)
+		!= HEAPTUPLE_DEAD;
+}
+
 
 /*
  * HeapTupleIsSurelyDead

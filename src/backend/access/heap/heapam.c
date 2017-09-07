@@ -2118,6 +2118,9 @@ heap_hot_search_buffer(ItemPointer tid, Relation relation, Buffer buffer,
 		 * If we can't see it, maybe no one else can either.  At caller
 		 * request, check whether all chain members are dead to all
 		 * transactions.
+		 *
+		 * Note: if you change the criterion here for what is "dead", fix the
+		 * planner's get_actual_variable_range() function to match.
 		 */
 		if (all_dead && *all_dead &&
 			!HeapTupleIsSurelyDead(heapTuple, RecentGlobalXmin))

@@ -41,6 +41,7 @@ typedef bool (*SnapshotSatisfiesFunc) (HeapTuple htup,
  * * MVCC snapshots taken during recovery (in Hot-Standby mode)
  * * Historic MVCC snapshots used during logical decoding
  * * snapshots passed to HeapTupleSatisfiesDirty()
+ * * snapshots passed to HeapTupleSatisfiesNonVacuumable()
  * * snapshots used for SatisfiesAny, Toast, Self where no members are
  *	 accessed.
  *
@@ -56,7 +57,8 @@ typedef struct SnapshotData
 	/*
 	 * The remaining fields are used only for MVCC snapshots, and are normally
 	 * just zeroes in special snapshots.  (But xmin and xmax are used
-	 * specially by HeapTupleSatisfiesDirty.)
+	 * specially by HeapTupleSatisfiesDirty, and xmin is used specially by
+	 * HeapTupleSatisfiesNonVacuumable.)
 	 *
 	 * An MVCC snapshot can never see the effects of XIDs >= xmax. It can see
 	 * the effects of all older XIDs except those listed in the snapshot. xmin
