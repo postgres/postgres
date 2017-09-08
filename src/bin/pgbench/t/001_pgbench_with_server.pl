@@ -132,7 +132,7 @@ my $nthreads = 2;
 {
 	my ($stderr);
 	run_log([ 'pgbench', '-j', '2', '--bad-option' ], '2>', \$stderr);
-	$nthreads = 1 if $stderr =~ 'threads are not supported on this platform';
+	$nthreads = 1 if $stderr =~ m/threads are not supported on this platform/;
 }
 
 # run custom scripts
@@ -354,7 +354,7 @@ SELECT LEAST(:i, :i, :i, :i, :i, :i, :i, :i, :i, :i, :i);
 		0,
 		[qr{gaussian param.* at least 2}],
 		q{\set i random_gaussian(0, 10, 1.0)} ],
-	[   'set exponential param > 0',
+	[   'set exponential param greater 0',
 		0,
 		[qr{exponential parameter must be greater }],
 		q{\set i random_exponential(0, 10, 0.0)} ],
