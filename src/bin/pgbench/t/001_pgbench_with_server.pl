@@ -126,9 +126,18 @@ pgbench(
 		qr{receiving}, qr{executing} ],
 	'pgbench select only');
 
+# check if threads are supported
+my $nthreads = 2;
+
+{
+	my ($stderr);
+	run_log([ 'pgbench', '-j', '2', '--bad-option' ], '2>', \$stderr);
+	$nthreads = 1 if $stderr =~ 'threads are not supported on this platform';
+}
+
 # run custom scripts
 pgbench(
-	'-t 100 -c 1 -j 2 -M prepared -n',
+	"-t 100 -c 1 -j $nthreads -M prepared -n",
 	0,
 	[   qr{type: multiple scripts},
 		qr{mode: prepared},
@@ -439,11 +448,12 @@ sub check_pgbench_logs
 # note: --progress-timestamp is not tested
 pgbench(
 	'-T 2 -P 1 -l --log-prefix=001_pgbench_log_1 --aggregate-interval=1'
-	  . ' -S -b se@2 --rate=20 --latency-limit=1000 -j 2 -c 3 -r',
+	  . ' -S -b se@2 --rate=20 --latency-limit=1000 -j ' . $nthreads
+	  . ' -c 3 -r',
 	0,
 	[   qr{type: multiple},
 		qr{clients: 3},
-		qr{threads: 2},
+		qr{threads: $nthreads},
 		qr{duration: 2 s},
 		qr{script 1: .* select only},
 		qr{script 2: .* select only},
@@ -452,8 +462,8 @@ pgbench(
 	[ qr{vacuum}, qr{progress: 1\b} ],
 	'pgbench progress');
 
-# 2 threads 2 seconds, sometimes only one aggregated line is written
-check_pgbench_logs('001_pgbench_log_1', 2, 1, 2,
+# $nthreads threads, 2 seconds, sometimes only one aggregated line is written
+check_pgbench_logs('001_pgbench_log_1', $nthreads, 1, 2,
 	qr{^\d+ \d{1,2} \d+ \d+ \d+ \d+ \d+ \d+ \d+ \d+ \d+$});
 
 # with sampling rate
