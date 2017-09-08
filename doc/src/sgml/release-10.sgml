@@ -6,7 +6,7 @@
 
   <formalpara>
    <title>Release date:</title>
-   <para>2017-??-?? (current as of 2017-08-26, commit 145ca364d)</para>
+   <para>2017-??-?? (current as of 2017-09-07, commit 08cb36417)</para>
   </formalpara>
 
   <sect2>
@@ -20,12 +20,11 @@
 
    <itemizedlist>
 
-   <listitem><para>(yet to be finalized)</para></listitem>
    <listitem><para>Logical replication using publish/subscribe</para></listitem>
-   <listitem><para>Declarative Table Partitioning</para></listitem>
-   <listitem><para>Improved Query Parallelism</para></listitem>
+   <listitem><para>Declarative table partitioning</para></listitem>
+   <listitem><para>Improved query parallelism</para></listitem>
    <listitem><para>Significant general performance improvements</para></listitem>
-   <listitem><para>SCRAM-SHA-256 strong authentication</para></listitem>
+   <listitem><para>Stronger password authentication based on SCRAM-SHA-256</para></listitem>
    <listitem><para>Improved monitoring and control</para></listitem>
    </itemizedlist>
 
@@ -56,11 +55,12 @@
 <!--
 2017-04-03 [ea69a0dea] Expand hash indexes more gradually.
 2017-05-19 [a95410e2e] pg_upgrade: Handle hash index upgrades more smoothly.
+2017-08-04 [620b49a16] hash: Increase the number of possible overflow bitmaps b
 -->
      <para>
       Hash indexes must be rebuilt after <application>pg_upgrade</>-ing
       from any previous major <productname>PostgreSQL</> version (Mithun
-      Cy, Robert Haas)
+      Cy, Robert Haas, Amit Kapila)
      </para>
 
      <para>
@@ -329,8 +329,8 @@
     <para>
      Changing this setting from the default value caused queries referencing
      parent tables to not include child tables.  The <acronym>SQL</>
-     standard requires such behavior and this has been the default since
-     <productname>PostgreSQL</> 7.1.
+     standard requires them to be included, however, and this has been the
+     default since <productname>PostgreSQL</> 7.1.
     </para>
     </listitem>
 
@@ -393,8 +393,8 @@
 
      <para>
       This removes configure's <option>--disable-integer-datetimes</>
-      option.  Floating-point timestamps have not been the
-      default since <productname>PostgreSQL</> 8.3 and have few advantages.
+      option.  Floating-point timestamps have few advantages and have not
+      been the default since <productname>PostgreSQL</> 8.3.
      </para>
     </listitem>
 
@@ -403,7 +403,7 @@
 2016-10-11 [2f1eaf87e] Drop server support for FE/BE protocol version 1.0.
 -->
      <para>
-      Remove support for client/server protocol version 1.0 (Tom Lane)
+      Remove server support for client/server protocol version 1.0 (Tom Lane)
      </para>
 
      <para>
@@ -424,8 +424,8 @@
      <para>
       This replaces the hardcoded, undocumented file
       name <filename>dh1024.pem</>.  Note that <filename>dh1024.pem</> is
-      no longer examined by default; you must set this option to use custom
-      DH parameters.
+      no longer examined by default; you must set this option if you want
+      to use custom DH parameters.
      </para>
     </listitem>
 
@@ -485,9 +485,9 @@
      </para>
 
      <para>
-      These were deprecated since <productname>PostgreSQL</> 9.1.  Instead,
-      use <command>CREATE EXTENSION</> and <command>DROP EXTENSION</>
-      directly.
+      These had been deprecated since <productname>PostgreSQL</> 9.1.
+      Instead, use <command>CREATE EXTENSION</> and <command>DROP
+      EXTENSION</> directly.
      </para>
     </listitem>
 
@@ -626,25 +626,41 @@
 
       <listitem>
 <!--
-2016-08-23 [77e290682] Create an SP-GiST opclass for inet/cidr.
+2017-02-27 [30df93f69] hash: Refactor overflow page allocation.
+2017-03-14 [c11453ce0] hash: Add write-ahead logging support.
+2017-02-27 [b0f18cb77] hash: Refactor bucket squeeze code.
 -->
        <para>
-        Add <acronym>SP-GiST</> index support for <type>INET</> and
-        <type>CIDR</> data types (Emre Hasegeli)
+        Add write-ahead logging support to hash indexes (Amit Kapila)
        </para>
 
        <para>
-        These data types already had GiST support.
+        This makes hash indexes crash-safe and replicatable.
+        The former warning message about their use is removed.
        </para>
       </listitem>
 
       <listitem>
 <!--
-2017-03-23 [218f51584] Reduce page locking in GIN vacuum
+2016-11-30 [6d46f4783] Improve hash index bucket split behavior.
+2017-02-07 [293e24e50] Cache hash index's metapage in rel->rd_amcache.
+2017-03-15 [6977b8b7f] Port single-page btree vacuum logic to hash indexes.
+2017-04-03 [ea69a0dea] Expand hash indexes more gradually.
+2017-08-04 [620b49a16] hash: Increase the number of possible overflow bitmaps b
 -->
        <para>
-        Reduce page locking during vacuuming of <acronym>GIN</> indexes
-        (Andrey Borodin)
+        Improve hash index performance (Amit Kapila, Mithun Cy, Ashutosh
+        Sharma)
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
+2016-08-23 [77e290682] Create an SP-GiST opclass for inet/cidr.
+-->
+       <para>
+        Add <acronym>SP-GiST</> index support for <type>INET</> and
+        <type>CIDR</> data types (Emre Hasegeli)
        </para>
       </listitem>
 
@@ -658,8 +674,8 @@
        </para>
 
        <para>
-        Specifically, a new <link linkend="SQL-CREATEINDEX"><command>CREATE
-        INDEX</></> option allows auto-summarization of the
+        A new <link linkend="SQL-CREATEINDEX"><command>CREATE
+        INDEX</></> option enables auto-summarization of the
         previous <acronym>BRIN</> page range when a new page
         range is created.
        </para>
@@ -705,65 +721,17 @@
        </para>
       </listitem>
 
+      <listitem>
+<!--
+2017-03-23 [218f51584] Reduce page locking in GIN vacuum
+-->
+       <para>
+        Reduce page locking during vacuuming of <acronym>GIN</> indexes
+        (Andrey Borodin)
+       </para>
+      </listitem>
+
      </itemizedlist>
-
-     <sect5>
-      <title><link linkend="indexes-types">Hash Indexes</link></title>
-
-      <itemizedlist>
-
-       <listitem>
-<!--
-2017-02-27 [30df93f69] hash: Refactor overflow page allocation.
-2017-03-14 [c11453ce0] hash: Add write-ahead logging support.
-2017-02-27 [b0f18cb77] hash: Refactor bucket squeeze code.
--->
-        <para>
-         Add write-ahead logging support to hash indexes (Amit Kapila)
-        </para>
-
-        <para>
-         This makes hash indexes crash-safe and replicatable.
-         The former warning message about their use is removed.
-        </para>
-       </listitem>
-
-       <listitem>
-<!--
-2016-11-30 [6d46f4783] Improve hash index bucket split behavior.
-2017-02-07 [293e24e50] Cache hash index's metapage in rel->rd_amcache.
--->
-        <para>
-         Improve hash index bucket split performance by reducing locking
-         requirements (Amit Kapila, Mithun Cy)
-        </para>
-
-        <para>
-         Also cache hash index meta-information for faster lookups.
-        </para>
-       </listitem>
-
-       <listitem>
-<!--
-2017-04-03 [ea69a0dea] Expand hash indexes more gradually.
--->
-        <para>
-         Improve efficiency of hash index growth (Amit Kapila, Mithun Cy)
-        </para>
-       </listitem>
-
-       <listitem>
-<!--
-2017-03-15 [6977b8b7f] Port single-page btree vacuum logic to hash indexes.
--->
-        <para>
-         Allow page-at-a-time hash index pruning (Ashutosh Sharma)
-        </para>
-       </listitem>
-
-      </itemizedlist>
-
-     </sect5>
 
     </sect4>
 
@@ -986,17 +954,6 @@
 
       <listitem>
 <!--
-2017-03-18 [17f8ffa1e] Fix REFRESH MATERIALIZED VIEW to report activity to the
--->
-       <para>
-        Properly update the statistics collector during <link
-        linkend="SQL-REFRESHMATERIALIZEDVIEW"><command>REFRESH MATERIALIZED
-        VIEW</></> (Jim Mlodgenski)
-       </para>
-      </listitem>
-
-      <listitem>
-<!--
 2017-03-30 [25fff4079] Default monitoring roles
 -->
        <para>
@@ -1007,6 +964,17 @@
         New roles <literal>pg_monitor</>, <literal>pg_read_all_settings</>,
         <literal>pg_read_all_stats</>, and <literal>pg_stat_scan_tables</>
         allow simplified permission configuration.
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
+2017-03-18 [17f8ffa1e] Fix REFRESH MATERIALIZED VIEW to report activity to the
+-->
+       <para>
+        Properly update the statistics collector during <link
+        linkend="SQL-REFRESHMATERIALIZEDVIEW"><command>REFRESH MATERIALIZED
+        VIEW</></> (Jim Mlodgenski)
        </para>
       </listitem>
 
@@ -1120,25 +1088,17 @@
        <listitem>
 <!--
 2016-10-04 [6f3bd98eb] Extend framework from commit 53be0b1ad to report latch w
--->
-        <para>
-         Add <structname>pg_stat_activity</> reporting of latch wait states
-         (Michael Paquier, Robert Haas)
-        </para>
-
-        <para>
-         This includes the remaining wait events, like client reads,
-         client writes, and synchronous replication.
-        </para>
-       </listitem>
-
-       <listitem>
-<!--
 2017-03-18 [249cf070e] Create and use wait events for read, write, and fsync op
 -->
         <para>
-         Add <structname>pg_stat_activity</> reporting of waits on reads,
-         writes, and fsyncs (Rushabh Lathia)
+         Add <structname>pg_stat_activity</> reporting of low-level wait
+         states (Michael Paquier, Robert Haas, Rushabh Lathia)
+        </para>
+
+        <para>
+         This change enables reporting of numerous low-level wait conditions,
+         including latch waits, file reads/writes/fsyncs, client reads/writes,
+         and synchronous replication.
         </para>
        </listitem>
 
@@ -1315,8 +1275,8 @@
 2017-03-27 [1b02be21f] Fsync directory after creating or unlinking file.
 -->
        <para>
-        Perform an fsync on the directory after creating or unlinking files
-        (Michael Paquier)
+        After creating or unlinking files, perform an fsync on their parent
+        directory (Michael Paquier)
        </para>
 
        <para>
@@ -1367,7 +1327,7 @@
         </para>
 
         <para>
-         Larger <acronym>WAL</> segment sizes allows for fewer
+         A larger <acronym>WAL</> segment size allows for fewer
          <xref linkend="guc-archive-command"> invocations and fewer
          <acronym>WAL</> files to manage.
         </para>
@@ -1400,7 +1360,7 @@
       <para>
        Logical replication allows more flexibility than physical
        replication does, including replication between different major
-       versions of <productname>PostgreSQL</> and selective-table
+       versions of <productname>PostgreSQL</> and selective
        replication.
       </para>
      </listitem>
@@ -1455,7 +1415,7 @@
 
       <para>
        Previously <filename>pg_hba.conf</>'s replication connection
-       lines were commented out.  This is particularly useful for
+       lines were commented out by default.  This is particularly useful for
        <application><xref linkend="app-pgbasebackup"></>.
       </para>
      </listitem>
@@ -1654,7 +1614,7 @@
 
       <para>
        Previously all security policies were permissive, meaning that any
-       matching policy allowed access.  Optional restrictive policies must
+       matching policy allowed access.  A restrictive policy must
        match for access to be granted.  These policy types can be combined.
       </para>
      </listitem>
@@ -1829,7 +1789,7 @@
       <para>
        This complements the existing support
        for <acronym>EUI-48</> <acronym>MAC</> addresses
-       as <type>macaddr</>.
+       (type <type>macaddr</>).
       </para>
      </listitem>
 
@@ -2253,22 +2213,6 @@
 
       <listitem>
 <!--
-2016-11-03 [a0f357e57] psql: Split up "Modifiers" column in \d and \dD
--->
-       <para>
-        Improve <application>psql</>'s <command>\d</> (display relation)
-        and <command>\dD</> (display domain) commands to show collation,
-        nullable, and default properties in separate columns (Peter
-        Eisentraut)
-       </para>
-
-       <para>
-        Previous they were shown in a single <quote>Modifiers</> column.
-       </para>
-      </listitem>
-
-      <listitem>
-<!--
 2017-04-01 [f833c847b] Allow psql variable substitution to occur in backtick co
 -->
        <para>
@@ -2306,6 +2250,47 @@
         the value it acquires at startup.  In sum, a control variable now
         always has a displayable value that reflects
         what <application>psql</> is actually doing.
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
+2017-09-06 [a6c678f01] Add psql variables showing server version and psql versi
+-->
+       <para>
+        Add variables showing server version and <application>psql</> version
+        (Fabien Coelho)
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
+2016-11-03 [a0f357e57] psql: Split up "Modifiers" column in \d and \dD
+-->
+       <para>
+        Improve <application>psql</>'s <command>\d</> (display relation)
+        and <command>\dD</> (display domain) commands to show collation,
+        nullable, and default properties in separate columns (Peter
+        Eisentraut)
+       </para>
+
+       <para>
+        Previously they were shown in a single <quote>Modifiers</> column.
+       </para>
+      </listitem>
+
+      <listitem>
+<!--
+2017-07-27 [77cb4a1d6] Standardize describe.c's behavior for no-matching-object
+-->
+       <para>
+        Make the various <command>\d</> commands handle no-matching-object
+        cases more consistently (Daniel Gustafsson)
+       </para>
+
+       <para>
+        They now all print the message about that to stderr, not stdout,
+        and the message wording is more consistent.
        </para>
       </listitem>
 
@@ -2704,6 +2689,7 @@
 
      <listitem>
 <!--
+2017-06-16 [cea258b63] Teach pgindent to skip files generated by bison or flex
 2017-06-21 [8ff6d4ec7] Adjust pgindent script to use pg_bsd_indent 2.0.
 2017-06-21 [e3860ffa4] Initial pgindent run with pg_bsd_indent version 2.0.
 2017-06-21 [c7b8998eb] Phase 2 of pgindent updates.
@@ -2870,11 +2856,11 @@
       </para>
 
       <para>
-       If no strong random number generator can be found, configure will
-       fail unless the <link linkend="configure">configure</>
-       option <option>--disable-strong-random</> is used.  However, with
-       this option, pgcrypto functions requiring a strong random number
-       generator will be disabled.
+       If no strong random number generator can be
+       found, <link linkend="configure">configure</> will fail unless
+       the <option>--disable-strong-random</> option is used.  However, with
+       this option, <link linkend="pgcrypto"><application>pgcrypto</></>
+       functions requiring a strong random number generator will be disabled.
       </para>
      </listitem>
 
@@ -2885,6 +2871,22 @@
       <para>
        Allow <function>WaitLatchOrSocket()</> to wait for socket
        connection on Windows (Andres Freund)
+      </para>
+     </listitem>
+
+     <listitem>
+<!--
+2017-04-06 [3f902354b] Clean up after insufficiently-researched optimization of
+-->
+      <para>
+       <filename>tupconvert.c</> functions no longer convert tuples just to
+       embed a different composite-type OID in them (Ashutosh Bapat, Tom Lane)
+      </para>
+
+      <para>
+       The majority of callers don't care about the composite-type OID;
+       but if the result tuple is to be used as a composite Datum, steps
+       should be taken to make sure the correct OID is inserted in it.
       </para>
      </listitem>
 
@@ -2956,31 +2958,27 @@
      <listitem>
 <!--
 2016-10-21 [7012b132d] postgres_fdw: Push down aggregates to remote servers.
-2017-04-24 [332bec1e6] postgres_fdw: Fix join push down with extensions
 -->
       <para>
-       Push aggregates to foreign data wrapper servers, where possible
+       In <link linkend="postgres-fdw"><application>postgres_fdw</></>,
+       push aggregate functions to the remote server, when possible
        (Jeevan Chalke, Ashutosh Bapat)
       </para>
 
       <para>
-       This reduces the amount of data that must be passed
-       from the foreign data wrapper server, and offloads
-       aggregate computation from the requesting server.  The <link
-       linkend="postgres-fdw"><application>postgres_fdw</></> FDW is able to
-       perform this optimization.  There are also improvements in
-       pushing down joins involving extensions.
+       This reduces the amount of data that must be passed from the remote
+       server, and offloads aggregate computation from the requesting server.
       </para>
      </listitem>
 
      <listitem>
 <!--
 2017-03-16 [b30fb56b0] postgres_fdw: Push down FULL JOINs with restriction clau
+2017-04-24 [332bec1e6] postgres_fdw: Fix join push down with extensions
 -->
       <para>
-       Allow push down of <literal>FULL JOIN</> queries containing
-       subqueries in the
-      <literal>FROM</> clause to foreign servers (Etsuro Fujita)
+       In <application>postgres_fdw</>, push joins to the remote server in
+       more cases (David Rowley, Ashutosh Bapat, Etsuro Fujita)
       </para>
      </listitem>
 
@@ -3072,7 +3070,7 @@
       </para>
 
       <para>
-       This allows it to be less disruptive when run on production systems.
+       This makes it less disruptive when run on production systems.
       </para>
      </listitem>
 
