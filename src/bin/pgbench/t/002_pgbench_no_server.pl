@@ -26,7 +26,7 @@ my @options = (
 	# name, options, stderr checks
 	[   'bad option',
 		'-h home -p 5432 -U calvin -d --bad-option',
-		[ qr{unrecognized option}, qr{--help.*more information} ] ],
+		[ qr{(unrecognized|illegal) option}, qr{--help.*more information} ] ],
 	[   'no file',
 		'-f no-such-file',
 		[qr{could not open file "no-such-file":}] ],
