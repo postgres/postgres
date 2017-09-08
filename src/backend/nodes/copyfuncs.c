@@ -4450,6 +4450,7 @@ _copyPartitionBoundSpec(const PartitionBoundSpec *from)
 	PartitionBoundSpec *newnode = makeNode(PartitionBoundSpec);
 
 	COPY_SCALAR_FIELD(strategy);
+	COPY_SCALAR_FIELD(is_default);
 	COPY_NODE_FIELD(listdatums);
 	COPY_NODE_FIELD(lowerdatums);
 	COPY_NODE_FIELD(upperdatums);

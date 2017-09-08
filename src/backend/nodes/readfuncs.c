@@ -2390,6 +2390,7 @@ _readPartitionBoundSpec(void)
 	READ_LOCALS(PartitionBoundSpec);
 
 	READ_CHAR_FIELD(strategy);
+	READ_BOOL_FIELD(is_default);
 	READ_NODE_FIELD(listdatums);
 	READ_NODE_FIELD(lowerdatums);
 	READ_NODE_FIELD(upperdatums);

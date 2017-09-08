@@ -1750,7 +1750,7 @@ pg_get_partition_constraintdef(PG_FUNCTION_ARGS)
 
 	constr_expr = get_partition_qual_relid(relationId);
 
-	/* Quick exit if not a partition */
+	/* Quick exit if no partition constraint */
 	if (constr_expr == NULL)
 		PG_RETURN_NULL();
 
@@ -8698,6 +8698,12 @@ get_rule_expr(Node *node, deparse_context *context,
 				PartitionBoundSpec *spec = (PartitionBoundSpec *) node;
 				ListCell   *cell;
 				char	   *sep;
+
+				if (spec->is_default)
+				{
+					appendStringInfoString(buf, "DEFAULT");
+					break;
+				}
 
 				switch (spec->strategy)
 				{

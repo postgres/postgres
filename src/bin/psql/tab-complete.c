@@ -2053,7 +2053,7 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables, "");
 	/* Limited completion support for partition bound specification */
 	else if (TailMatches3("ATTACH", "PARTITION", MatchAny))
-		COMPLETE_WITH_CONST("FOR VALUES");
+		COMPLETE_WITH_LIST2("FOR VALUES", "DEFAULT");
 	else if (TailMatches2("FOR", "VALUES"))
 		COMPLETE_WITH_LIST2("FROM (", "IN (");
 
@@ -2492,7 +2492,7 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_partitioned_tables, "");
 	/* Limited completion support for partition bound specification */
 	else if (TailMatches3("PARTITION", "OF", MatchAny))
-		COMPLETE_WITH_CONST("FOR VALUES");
+		COMPLETE_WITH_LIST2("FOR VALUES", "DEFAULT");
 
 /* CREATE TABLESPACE */
 	else if (Matches3("CREATE", "TABLESPACE", MatchAny))

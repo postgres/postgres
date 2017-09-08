@@ -18,6 +18,7 @@
 #include "catalog/dependency.h"
 #include "catalog/objectaddress.h"
 #include "nodes/parsenodes.h"
+#include "catalog/partition.h"
 #include "storage/lock.h"
 #include "utils/relcache.h"
 
@@ -87,4 +88,7 @@ extern void RangeVarCallbackOwnsTable(const RangeVar *relation,
 
 extern void RangeVarCallbackOwnsRelation(const RangeVar *relation,
 							 Oid relId, Oid oldRelId, void *noCatalogs);
+extern bool PartConstraintImpliedByRelConstraint(Relation scanrel,
+									 List *partConstraint);
+
 #endif							/* TABLECMDS_H */

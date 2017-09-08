@@ -447,6 +447,10 @@ CREATE TABLE fail_part PARTITION OF list_parted FOR VALUES IN ();
 -- trying to specify range for list partitioned table
 CREATE TABLE fail_part PARTITION OF list_parted FOR VALUES FROM (1) TO (2);
 
+-- check default partition cannot be created more than once
+CREATE TABLE part_default PARTITION OF list_parted DEFAULT;
+CREATE TABLE fail_default_part PARTITION OF list_parted DEFAULT;
+
 -- specified literal can't be cast to the partition column data type
 CREATE TABLE bools (
 	a bool
@@ -524,9 +528,13 @@ CREATE TABLE list_parted2 (
 ) PARTITION BY LIST (a);
 CREATE TABLE part_null_z PARTITION OF list_parted2 FOR VALUES IN (null, 'z');
 CREATE TABLE part_ab PARTITION OF list_parted2 FOR VALUES IN ('a', 'b');
+CREATE TABLE list_parted2_def PARTITION OF list_parted2 DEFAULT;
 
 CREATE TABLE fail_part PARTITION OF list_parted2 FOR VALUES IN (null);
 CREATE TABLE fail_part PARTITION OF list_parted2 FOR VALUES IN ('b', 'c');
+-- check default partition overlap
+INSERT INTO list_parted2 VALUES('X');
+CREATE TABLE fail_part PARTITION OF list_parted2 FOR VALUES IN ('W', 'X', 'Y');
 
 CREATE TABLE range_parted2 (
 	a int
@@ -546,6 +554,17 @@ CREATE TABLE part3 PARTITION OF range_parted2 FOR VALUES FROM (30) TO (40);
 CREATE TABLE fail_part PARTITION OF range_parted2 FOR VALUES FROM (10) TO (30);
 CREATE TABLE fail_part PARTITION OF range_parted2 FOR VALUES FROM (10) TO (50);
 
+-- Create a default partition for range partitioned table
+CREATE TABLE range2_default PARTITION OF range_parted2 DEFAULT;
+
+-- More than one default partition is not allowed, so this should give error
+CREATE TABLE fail_default_part PARTITION OF range_parted2 DEFAULT;
+
+-- Check if the range for default partitions overlap
+INSERT INTO range_parted2 VALUES (85);
+CREATE TABLE fail_part PARTITION OF range_parted2 FOR VALUES FROM (80) TO (90);
+CREATE TABLE part4 PARTITION OF range_parted2 FOR VALUES FROM (90) TO (100);
+
 -- now check for multi-column range partition key
 CREATE TABLE range_parted3 (
 	a int,
@@ -559,6 +578,7 @@ CREATE TABLE part10 PARTITION OF range_parted3 FOR VALUES FROM (1, minvalue) TO 
 CREATE TABLE part11 PARTITION OF range_parted3 FOR VALUES FROM (1, 1) TO (1, 10);
 CREATE TABLE part12 PARTITION OF range_parted3 FOR VALUES FROM (1, 10) TO (1, maxvalue);
 CREATE TABLE fail_part PARTITION OF range_parted3 FOR VALUES FROM (1, 10) TO (1, 20);
+CREATE TABLE range3_default PARTITION OF range_parted3 DEFAULT;
 
 -- cannot create a partition that says column b is allowed to range
 -- from -infinity to +infinity, while there exist partitions that have

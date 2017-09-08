@@ -99,4 +99,11 @@ extern int get_partition_for_tuple(PartitionDispatch *pd,
 						EState *estate,
 						PartitionDispatchData **failed_at,
 						TupleTableSlot **failed_slot);
+extern Oid	get_default_oid_from_partdesc(PartitionDesc partdesc);
+extern Oid	get_default_partition_oid(Oid parentId);
+extern void update_default_partition_oid(Oid parentId, Oid defaultPartId);
+extern void check_default_allows_bound(Relation parent, Relation defaultRel,
+						   PartitionBoundSpec *new_spec);
+extern List *get_proposed_default_constraint(List *new_part_constaints);
+
 #endif							/* PARTITION_H */

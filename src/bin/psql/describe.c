@@ -1893,19 +1893,20 @@ describeOneTableDetails(const char *schemaname,
 			parent_name = PQgetvalue(result, 0, 0);
 			partdef = PQgetvalue(result, 0, 1);
 
-			if (PQnfields(result) == 3)
+			if (PQnfields(result) == 3 && !PQgetisnull(result, 0, 2))
 				partconstraintdef = PQgetvalue(result, 0, 2);
 
 			printfPQExpBuffer(&tmpbuf, _("Partition of: %s %s"), parent_name,
 							  partdef);
 			printTableAddFooter(&cont, tmpbuf.data);
 
-			if (partconstraintdef)
-			{
+			/* If there isn't any constraint, show that explicitly */
+			if (partconstraintdef == NULL || partconstraintdef[0] == '\0')
+				printfPQExpBuffer(&tmpbuf, _("No partition constraint"));
+			else
 				printfPQExpBuffer(&tmpbuf, _("Partition constraint: %s"),
 								  partconstraintdef);
-				printTableAddFooter(&cont, tmpbuf.data);
-			}
+			printTableAddFooter(&cont, tmpbuf.data);
 
 			PQclear(result);
 		}

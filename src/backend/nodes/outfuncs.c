@@ -3573,6 +3573,7 @@ _outPartitionBoundSpec(StringInfo str, const PartitionBoundSpec *node)
 	WRITE_NODE_TYPE("PARTITIONBOUNDSPEC");
 
 	WRITE_CHAR_FIELD(strategy);
+	WRITE_BOOL_FIELD(is_default);
 	WRITE_NODE_FIELD(listdatums);
 	WRITE_NODE_FIELD(lowerdatums);
 	WRITE_NODE_FIELD(upperdatums);

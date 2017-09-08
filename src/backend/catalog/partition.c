@@ -27,7 +27,9 @@
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_inherits_fn.h"
 #include "catalog/pg_opclass.h"
+#include "catalog/pg_partitioned_table.h"
 #include "catalog/pg_type.h"
+#include "commands/tablecmds.h"
 #include "executor/executor.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
@@ -35,6 +37,7 @@
 #include "nodes/parsenodes.h"
 #include "optimizer/clauses.h"
 #include "optimizer/planmain.h"
+#include "optimizer/prep.h"
 #include "optimizer/var.h"
 #include "rewrite/rewriteManip.h"
 #include "storage/lmgr.h"
@@ -80,9 +83,12 @@ typedef struct PartitionBoundInfoData
 								 * partitioned table) */
 	int			null_index;		/* Index of the null-accepting partition; -1
 								 * if there isn't one */
+	int			default_index;	/* Index of the default partition; -1 if there
+								 * isn't one */
 } PartitionBoundInfoData;
 
 #define partition_bound_accepts_nulls(bi) ((bi)->null_index != -1)
+#define partition_bound_has_default(bi) ((bi)->default_index != -1)
 
 /*
  * When qsort'ing partition bounds after reading from the catalog, each bound
@@ -120,8 +126,10 @@ static void get_range_key_properties(PartitionKey key, int keynum,
 						 ListCell **partexprs_item,
 						 Expr **keyCol,
 						 Const **lower_val, Const **upper_val);
-static List *get_qual_for_list(PartitionKey key, PartitionBoundSpec *spec);
-static List *get_qual_for_range(PartitionKey key, PartitionBoundSpec *spec);
+static List *get_qual_for_list(Relation parent, PartitionBoundSpec *spec);
+static List *get_qual_for_range(Relation parent, PartitionBoundSpec *spec,
+				   bool for_default);
+static List *get_range_nulltest(PartitionKey key);
 static List *generate_partition_qual(Relation rel);
 
 static PartitionRangeBound *make_one_range_bound(PartitionKey key, int index,
@@ -162,6 +170,7 @@ RelationBuildPartitionDesc(Relation rel)
 	MemoryContext oldcxt;
 
 	int			ndatums = 0;
+	int			default_index = -1;
 
 	/* List partitioning specific */
 	PartitionListValue **all_values = NULL;
@@ -213,6 +222,22 @@ RelationBuildPartitionDesc(Relation rel)
 								&isnull);
 		Assert(!isnull);
 		boundspec = (Node *) stringToNode(TextDatumGetCString(datum));
+
+		/*
+		 * Sanity check: If the PartitionBoundSpec says this is the default
+		 * partition, its OID should correspond to whatever's stored in
+		 * pg_partitioned_table.partdefid; if not, the catalog is corrupt.
+		 */
+		if (castNode(PartitionBoundSpec, boundspec)->is_default)
+		{
+			Oid			partdefid;
+
+			partdefid = get_default_partition_oid(RelationGetRelid(rel));
+			if (partdefid != inhrelid)
+				elog(ERROR, "expected partdefid %u, but got %u",
+					 inhrelid, partdefid);
+		}
+
 		boundspecs = lappend(boundspecs, boundspec);
 		partoids = lappend_oid(partoids, inhrelid);
 		ReleaseSysCache(tuple);
@@ -245,6 +270,18 @@ RelationBuildPartitionDesc(Relation rel)
 
 				if (spec->strategy != PARTITION_STRATEGY_LIST)
 					elog(ERROR, "invalid strategy in partition bound spec");
+
+				/*
+				 * Note the index of the partition bound spec for the default
+				 * partition. There's no datum to add to the list of non-null
+				 * datums for this partition.
+				 */
+				if (spec->is_default)
+				{
+					default_index = i;
+					i++;
+					continue;
+				}
 
 				foreach(c, spec->listdatums)
 				{
@@ -325,6 +362,17 @@ RelationBuildPartitionDesc(Relation rel)
 				if (spec->strategy != PARTITION_STRATEGY_RANGE)
 					elog(ERROR, "invalid strategy in partition bound spec");
 
+				/*
+				 * Note the index of the partition bound spec for the default
+				 * partition. There's no datum to add to the allbounds array
+				 * for this partition.
+				 */
+				if (spec->is_default)
+				{
+					default_index = i++;
+					continue;
+				}
+
 				lower = make_one_range_bound(key, i, spec->lowerdatums,
 											 true);
 				upper = make_one_range_bound(key, i, spec->upperdatums,
@@ -334,10 +382,11 @@ RelationBuildPartitionDesc(Relation rel)
 				i++;
 			}
 
-			Assert(ndatums == nparts * 2);
+			Assert(ndatums == nparts * 2 ||
+				   (default_index != -1 && ndatums == (nparts - 1) * 2));
 
 			/* Sort all the bounds in ascending order */
-			qsort_arg(all_bounds, 2 * nparts,
+			qsort_arg(all_bounds, ndatums,
 					  sizeof(PartitionRangeBound *),
 					  qsort_partition_rbound_cmp,
 					  (void *) key);
@@ -421,6 +470,7 @@ RelationBuildPartitionDesc(Relation rel)
 		boundinfo = (PartitionBoundInfoData *)
 			palloc0(sizeof(PartitionBoundInfoData));
 		boundinfo->strategy = key->strategy;
+		boundinfo->default_index = -1;
 		boundinfo->ndatums = ndatums;
 		boundinfo->null_index = -1;
 		boundinfo->datums = (Datum **) palloc0(ndatums * sizeof(Datum *));
@@ -471,6 +521,21 @@ RelationBuildPartitionDesc(Relation rel)
 						if (mapping[null_index] == -1)
 							mapping[null_index] = next_index++;
 						boundinfo->null_index = mapping[null_index];
+					}
+
+					/* Assign mapped index for the default partition. */
+					if (default_index != -1)
+					{
+						/*
+						 * The default partition accepts any value not
+						 * specified in the lists of other partitions, hence
+						 * it should not get mapped index while assigning
+						 * those for non-null datums.
+						 */
+						Assert(default_index >= 0 &&
+							   mapping[default_index] == -1);
+						mapping[default_index] = next_index++;
+						boundinfo->default_index = mapping[default_index];
 					}
 
 					/* All partition must now have a valid mapping */
@@ -527,6 +592,14 @@ RelationBuildPartitionDesc(Relation rel)
 							boundinfo->indexes[i] = mapping[orig_index];
 						}
 					}
+
+					/* Assign mapped index for the default partition. */
+					if (default_index != -1)
+					{
+						Assert(default_index >= 0 && mapping[default_index] == -1);
+						mapping[default_index] = next_index++;
+						boundinfo->default_index = mapping[default_index];
+					}
 					boundinfo->indexes[i] = -1;
 					break;
 				}
@@ -575,6 +648,9 @@ partition_bounds_equal(int partnatts, int16 *parttyplen, bool *parttypbyval,
 		return false;
 
 	if (b1->null_index != b2->null_index)
+		return false;
+
+	if (b1->default_index != b2->default_index)
 		return false;
 
 	for (i = 0; i < b1->ndatums; i++)
@@ -635,9 +711,23 @@ check_new_partition_bound(char *relname, Relation parent,
 {
 	PartitionKey key = RelationGetPartitionKey(parent);
 	PartitionDesc partdesc = RelationGetPartitionDesc(parent);
+	PartitionBoundInfo boundinfo = partdesc->boundinfo;
 	ParseState *pstate = make_parsestate(NULL);
 	int			with = -1;
 	bool		overlap = false;
+
+	if (spec->is_default)
+	{
+		if (boundinfo == NULL || !partition_bound_has_default(boundinfo))
+			return;
+
+		/* Default partition already exists, error out. */
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				 errmsg("partition \"%s\" conflicts with existing default partition \"%s\"",
+						relname, get_rel_name(partdesc->oids[boundinfo->default_index])),
+				 parser_errposition(pstate, spec->location)));
+	}
 
 	switch (key->strategy)
 	{
@@ -647,13 +737,13 @@ check_new_partition_bound(char *relname, Relation parent,
 
 				if (partdesc->nparts > 0)
 				{
-					PartitionBoundInfo boundinfo = partdesc->boundinfo;
 					ListCell   *cell;
 
 					Assert(boundinfo &&
 						   boundinfo->strategy == PARTITION_STRATEGY_LIST &&
 						   (boundinfo->ndatums > 0 ||
-							partition_bound_accepts_nulls(boundinfo)));
+							partition_bound_accepts_nulls(boundinfo) ||
+							partition_bound_has_default(boundinfo)));
 
 					foreach(cell, spec->listdatums)
 					{
@@ -718,8 +808,10 @@ check_new_partition_bound(char *relname, Relation parent,
 					int			offset;
 					bool		equal;
 
-					Assert(boundinfo && boundinfo->ndatums > 0 &&
-						   boundinfo->strategy == PARTITION_STRATEGY_RANGE);
+					Assert(boundinfo &&
+						   boundinfo->strategy == PARTITION_STRATEGY_RANGE &&
+						   (boundinfo->ndatums > 0 ||
+							partition_bound_has_default(boundinfo)));
 
 					/*
 					 * Test whether the new lower bound (which is treated
@@ -797,6 +889,139 @@ check_new_partition_bound(char *relname, Relation parent,
 }
 
 /*
+ * check_default_allows_bound
+ *
+ * This function checks if there exists a row in the default partition that
+ * would properly belong to the new partition being added.  If it finds one,
+ * it throws an error.
+ */
+void
+check_default_allows_bound(Relation parent, Relation default_rel,
+						   PartitionBoundSpec *new_spec)
+{
+	List	   *new_part_constraints;
+	List	   *def_part_constraints;
+	List	   *all_parts;
+	ListCell   *lc;
+
+	new_part_constraints = (new_spec->strategy == PARTITION_STRATEGY_LIST)
+		? get_qual_for_list(parent, new_spec)
+		: get_qual_for_range(parent, new_spec, false);
+	def_part_constraints =
+		get_proposed_default_constraint(new_part_constraints);
+
+	/*
+	 * If the existing constraints on the default partition imply that it will
+	 * not contain any row that would belong to the new partition, we can
+	 * avoid scanning the default partition.
+	 */
+	if (PartConstraintImpliedByRelConstraint(default_rel, def_part_constraints))
+	{
+		ereport(INFO,
+				(errmsg("partition constraint for table \"%s\" is implied by existing constraints",
+						RelationGetRelationName(default_rel))));
+		return;
+	}
+
+	/*
+	 * Scan the default partition and its subpartitions, and check for rows
+	 * that do not satisfy the revised partition constraints.
+	 */
+	if (default_rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
+		all_parts = find_all_inheritors(RelationGetRelid(default_rel),
+										AccessExclusiveLock, NULL);
+	else
+		all_parts = list_make1_oid(RelationGetRelid(default_rel));
+
+	foreach(lc, all_parts)
+	{
+		Oid			part_relid = lfirst_oid(lc);
+		Relation	part_rel;
+		Expr	   *constr;
+		Expr	   *partition_constraint;
+		EState	   *estate;
+		HeapTuple	tuple;
+		ExprState  *partqualstate = NULL;
+		Snapshot	snapshot;
+		TupleDesc	tupdesc;
+		ExprContext *econtext;
+		HeapScanDesc scan;
+		MemoryContext oldCxt;
+		TupleTableSlot *tupslot;
+
+		/* Lock already taken above. */
+		if (part_relid != RelationGetRelid(default_rel))
+			part_rel = heap_open(part_relid, NoLock);
+		else
+			part_rel = default_rel;
+
+		/*
+		 * Only RELKIND_RELATION relations (i.e. leaf partitions) need to be
+		 * scanned.
+		 */
+		if (part_rel->rd_rel->relkind != RELKIND_RELATION)
+		{
+			if (part_rel->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
+				ereport(WARNING,
+						(errcode(ERRCODE_CHECK_VIOLATION),
+						 errmsg("skipped scanning foreign table \"%s\" which is a partition of default partition \"%s\"",
+								RelationGetRelationName(part_rel),
+								RelationGetRelationName(default_rel))));
+
+			if (RelationGetRelid(default_rel) != RelationGetRelid(part_rel))
+				heap_close(part_rel, NoLock);
+
+			continue;
+		}
+
+		tupdesc = CreateTupleDescCopy(RelationGetDescr(part_rel));
+		constr = linitial(def_part_constraints);
+		partition_constraint = (Expr *)
+			map_partition_varattnos((List *) constr,
+									1, part_rel, parent, NULL);
+		estate = CreateExecutorState();
+
+		/* Build expression execution states for partition check quals */
+		partqualstate = ExecPrepareExpr(partition_constraint, estate);
+
+		econtext = GetPerTupleExprContext(estate);
+		snapshot = RegisterSnapshot(GetLatestSnapshot());
+		scan = heap_beginscan(part_rel, snapshot, 0, NULL);
+		tupslot = MakeSingleTupleTableSlot(tupdesc);
+
+		/*
+		 * Switch to per-tuple memory context and reset it for each tuple
+		 * produced, so we don't leak memory.
+		 */
+		oldCxt = MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
+
+		while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
+		{
+			ExecStoreTuple(tuple, tupslot, InvalidBuffer, false);
+			econtext->ecxt_scantuple = tupslot;
+
+			if (!ExecCheck(partqualstate, econtext))
+				ereport(ERROR,
+						(errcode(ERRCODE_CHECK_VIOLATION),
+						 errmsg("updated partition constraint for default partition \"%s\" would be violated by some row",
+								RelationGetRelationName(default_rel))));
+
+			ResetExprContext(econtext);
+			CHECK_FOR_INTERRUPTS();
+		}
+
+		MemoryContextSwitchTo(oldCxt);
+		heap_endscan(scan);
+		UnregisterSnapshot(snapshot);
+		ExecDropSingleTupleTableSlot(tupslot);
+		FreeExecutorState(estate);
+
+		if (RelationGetRelid(default_rel) != RelationGetRelid(part_rel))
+			heap_close(part_rel, NoLock);	/* keep the lock until commit */
+	}
+}
+
+/*
  * get_partition_parent
  *
  * Returns inheritance parent of a partition by scanning pg_inherits
@@ -860,12 +1085,12 @@ get_qual_from_partbound(Relation rel, Relation parent,
 	{
 		case PARTITION_STRATEGY_LIST:
 			Assert(spec->strategy == PARTITION_STRATEGY_LIST);
-			my_qual = get_qual_for_list(key, spec);
+			my_qual = get_qual_for_list(parent, spec);
 			break;
 
 		case PARTITION_STRATEGY_RANGE:
 			Assert(spec->strategy == PARTITION_STRATEGY_RANGE);
-			my_qual = get_qual_for_range(key, spec);
+			my_qual = get_qual_for_range(parent, spec, false);
 			break;
 
 		default:
@@ -935,7 +1160,8 @@ RelationGetPartitionQual(Relation rel)
  * get_partition_qual_relid
  *
  * Returns an expression tree describing the passed-in relation's partition
- * constraint.
+ * constraint. If there is no partition constraint returns NULL; this can
+ * happen if the default partition is the only partition.
  */
 Expr *
 get_partition_qual_relid(Oid relid)
@@ -948,7 +1174,10 @@ get_partition_qual_relid(Oid relid)
 	if (rel->rd_rel->relispartition)
 	{
 		and_args = generate_partition_qual(rel);
-		if (list_length(and_args) > 1)
+
+		if (and_args == NIL)
+			result = NULL;
+		else if (list_length(and_args) > 1)
 			result = makeBoolExpr(AND_EXPR, and_args, -1);
 		else
 			result = linitial(and_args);
@@ -1263,10 +1492,14 @@ make_partition_op_expr(PartitionKey key, int keynum,
  *
  * Returns an implicit-AND list of expressions to use as a list partition's
  * constraint, given the partition key and bound structures.
+ *
+ * The function returns NIL for a default partition when it's the only
+ * partition since in that case there is no constraint.
  */
 static List *
-get_qual_for_list(PartitionKey key, PartitionBoundSpec *spec)
+get_qual_for_list(Relation parent, PartitionBoundSpec *spec)
 {
+	PartitionKey key = RelationGetPartitionKey(parent);
 	List	   *result;
 	Expr	   *keyCol;
 	ArrayExpr  *arr;
@@ -1293,15 +1526,63 @@ get_qual_for_list(PartitionKey key, PartitionBoundSpec *spec)
 	else
 		keyCol = (Expr *) copyObject(linitial(key->partexprs));
 
-	/* Create list of Consts for the allowed values, excluding any nulls */
-	foreach(cell, spec->listdatums)
+	/*
+	 * For default list partition, collect datums for all the partitions. The
+	 * default partition constraint should check that the partition key is
+	 * equal to none of those.
+	 */
+	if (spec->is_default)
 	{
-		Const	   *val = castNode(Const, lfirst(cell));
+		int			i;
+		int			ndatums = 0;
+		PartitionDesc pdesc = RelationGetPartitionDesc(parent);
+		PartitionBoundInfo boundinfo = pdesc->boundinfo;
 
-		if (val->constisnull)
-			list_has_null = true;
-		else
-			arrelems = lappend(arrelems, copyObject(val));
+		if (boundinfo)
+		{
+			ndatums = boundinfo->ndatums;
+
+			if (partition_bound_accepts_nulls(boundinfo))
+				list_has_null = true;
+		}
+
+		/*
+		 * If default is the only partition, there need not be any partition
+		 * constraint on it.
+		 */
+		if (ndatums == 0 && !list_has_null)
+			return NIL;
+
+		for (i = 0; i < ndatums; i++)
+		{
+			Const	   *val;
+
+			/* Construct const from datum */
+			val = makeConst(key->parttypid[0],
+							key->parttypmod[0],
+							key->parttypcoll[0],
+							key->parttyplen[0],
+							*boundinfo->datums[i],
+							false,	/* isnull */
+							key->parttypbyval[0]);
+
+			arrelems = lappend(arrelems, val);
+		}
+	}
+	else
+	{
+		/*
+		 * Create list of Consts for the allowed values, excluding any nulls.
+		 */
+		foreach(cell, spec->listdatums)
+		{
+			Const	   *val = castNode(Const, lfirst(cell));
+
+			if (val->constisnull)
+				list_has_null = true;
+			else
+				arrelems = lappend(arrelems, copyObject(val));
+		}
 	}
 
 	if (arrelems)
@@ -1365,6 +1646,18 @@ get_qual_for_list(PartitionKey key, PartitionBoundSpec *spec)
 			result = list_make1(nulltest);
 	}
 
+	/*
+	 * Note that, in general, applying NOT to a constraint expression doesn't
+	 * necessarily invert the set of rows it accepts, because NOT (NULL) is
+	 * NULL.  However, the partition constraints we construct here never
+	 * evaluate to NULL, so applying NOT works as intended.
+	 */
+	if (spec->is_default)
+	{
+		result = list_make1(make_ands_explicit(result));
+		result = list_make1(makeBoolExpr(NOT_EXPR, result, -1));
+	}
+
 	return result;
 }
 
@@ -1421,6 +1714,53 @@ get_range_key_properties(PartitionKey key, int keynum,
 		*upper_val = NULL;
 }
 
+ /*
+  * get_range_nulltest
+  *
+  * A non-default range partition table does not currently allow partition
+  * keys to be null, so emit an IS NOT NULL expression for each key column.
+  */
+static List *
+get_range_nulltest(PartitionKey key)
+{
+	List	   *result = NIL;
+	NullTest   *nulltest;
+	ListCell   *partexprs_item;
+	int			i;
+
+	partexprs_item = list_head(key->partexprs);
+	for (i = 0; i < key->partnatts; i++)
+	{
+		Expr	   *keyCol;
+
+		if (key->partattrs[i] != 0)
+		{
+			keyCol = (Expr *) makeVar(1,
+									  key->partattrs[i],
+									  key->parttypid[i],
+									  key->parttypmod[i],
+									  key->parttypcoll[i],
+									  0);
+		}
+		else
+		{
+			if (partexprs_item == NULL)
+				elog(ERROR, "wrong number of partition key expressions");
+			keyCol = copyObject(lfirst(partexprs_item));
+			partexprs_item = lnext(partexprs_item);
+		}
+
+		nulltest = makeNode(NullTest);
+		nulltest->arg = keyCol;
+		nulltest->nulltesttype = IS_NOT_NULL;
+		nulltest->argisrow = false;
+		nulltest->location = -1;
+		result = lappend(result, nulltest);
+	}
+
+	return result;
+}
+
 /*
  * get_qual_for_range
  *
@@ -1459,11 +1799,15 @@ get_range_key_properties(PartitionKey key, int keynum,
  * In most common cases with only one partition column, say a, the following
  * expression tree will be generated: a IS NOT NULL AND a >= al AND a < au
  *
- * If we end up with an empty result list, we return a single-member list
- * containing a constant TRUE, because callers expect a non-empty list.
+ * For default partition, it returns the negation of the constraints of all
+ * the other partitions.
+ *
+ * External callers should pass for_default as false; we set it to true only
+ * when recursing.
  */
 static List *
-get_qual_for_range(PartitionKey key, PartitionBoundSpec *spec)
+get_qual_for_range(Relation parent, PartitionBoundSpec *spec,
+				   bool for_default)
 {
 	List	   *result = NIL;
 	ListCell   *cell1,
@@ -1474,10 +1818,10 @@ get_qual_for_range(PartitionKey key, PartitionBoundSpec *spec)
 				j;
 	PartitionRangeDatum *ldatum,
 			   *udatum;
+	PartitionKey key = RelationGetPartitionKey(parent);
 	Expr	   *keyCol;
 	Const	   *lower_val,
 			   *upper_val;
-	NullTest   *nulltest;
 	List	   *lower_or_arms,
 			   *upper_or_arms;
 	int			num_or_arms,
@@ -1487,43 +1831,76 @@ get_qual_for_range(PartitionKey key, PartitionBoundSpec *spec)
 	bool		need_next_lower_arm,
 				need_next_upper_arm;
 
+	if (spec->is_default)
+	{
+		List	   *or_expr_args = NIL;
+		PartitionDesc pdesc = RelationGetPartitionDesc(parent);
+		Oid		   *inhoids = pdesc->oids;
+		int			nparts = pdesc->nparts,
+					i;
+
+		for (i = 0; i < nparts; i++)
+		{
+			Oid			inhrelid = inhoids[i];
+			HeapTuple	tuple;
+			Datum		datum;
+			bool		isnull;
+			PartitionBoundSpec *bspec;
+
+			tuple = SearchSysCache1(RELOID, inhrelid);
+			if (!HeapTupleIsValid(tuple))
+				elog(ERROR, "cache lookup failed for relation %u", inhrelid);
+
+			datum = SysCacheGetAttr(RELOID, tuple,
+									Anum_pg_class_relpartbound,
+									&isnull);
+
+			Assert(!isnull);
+			bspec = (PartitionBoundSpec *)
+				stringToNode(TextDatumGetCString(datum));
+			if (!IsA(bspec, PartitionBoundSpec))
+				elog(ERROR, "expected PartitionBoundSpec");
+
+			if (!bspec->is_default)
+			{
+				List	   *part_qual;
+
+				part_qual = get_qual_for_range(parent, bspec, true);
+
+				/*
+				 * AND the constraints of the partition and add to
+				 * or_expr_args
+				 */
+				or_expr_args = lappend(or_expr_args, list_length(part_qual) > 1
+									   ? makeBoolExpr(AND_EXPR, part_qual, -1)
+									   : linitial(part_qual));
+			}
+			ReleaseSysCache(tuple);
+		}
+
+		if (or_expr_args != NIL)
+		{
+			/* OR all the non-default partition constraints; then negate it */
+			result = lappend(result,
+							 list_length(or_expr_args) > 1
+							 ? makeBoolExpr(OR_EXPR, or_expr_args, -1)
+							 : linitial(or_expr_args));
+			result = list_make1(makeBoolExpr(NOT_EXPR, result, -1));
+		}
+
+		return result;
+	}
+
 	lower_or_start_datum = list_head(spec->lowerdatums);
 	upper_or_start_datum = list_head(spec->upperdatums);
 	num_or_arms = key->partnatts;
 
 	/*
-	 * A range-partitioned table does not currently allow partition keys to be
-	 * null, so emit an IS NOT NULL expression for each key column.
+	 * If it is the recursive call for default, we skip the get_range_nulltest
+	 * to avoid accumulating the NullTest on the same keys for each partition.
 	 */
-	partexprs_item = list_head(key->partexprs);
-	for (i = 0; i < key->partnatts; i++)
-	{
-		Expr	   *keyCol;
-
-		if (key->partattrs[i] != 0)
-		{
-			keyCol = (Expr *) makeVar(1,
-									  key->partattrs[i],
-									  key->parttypid[i],
-									  key->parttypmod[i],
-									  key->parttypcoll[i],
-									  0);
-		}
-		else
-		{
-			if (partexprs_item == NULL)
-				elog(ERROR, "wrong number of partition key expressions");
-			keyCol = copyObject(lfirst(partexprs_item));
-			partexprs_item = lnext(partexprs_item);
-		}
-
-		nulltest = makeNode(NullTest);
-		nulltest->arg = keyCol;
-		nulltest->nulltesttype = IS_NOT_NULL;
-		nulltest->argisrow = false;
-		nulltest->location = -1;
-		result = lappend(result, nulltest);
-	}
+	if (!for_default)
+		result = get_range_nulltest(key);
 
 	/*
 	 * Iterate over the key columns and check if the corresponding lower and
@@ -1746,9 +2123,16 @@ get_qual_for_range(PartitionKey key, PartitionBoundSpec *spec)
 						 ? makeBoolExpr(OR_EXPR, upper_or_arms, -1)
 						 : linitial(upper_or_arms));
 
-	/* As noted above, caller expects the list to be non-empty. */
+	/*
+	 * As noted above, for non-default, we return list with constant TRUE. If
+	 * the result is NIL during the recursive call for default, it implies
+	 * this is the only other partition which can hold every value of the key
+	 * except NULL. Hence we return the NullTest result skipped earlier.
+	 */
 	if (result == NIL)
-		result = list_make1(makeBoolConst(true, false));
+		result = for_default
+			? get_range_nulltest(key)
+			: list_make1(makeBoolConst(true, false));
 
 	return result;
 }
@@ -1756,7 +2140,8 @@ get_qual_for_range(PartitionKey key, PartitionBoundSpec *spec)
 /*
  * generate_partition_qual
  *
- * Generate partition predicate from rel's partition bound expression
+ * Generate partition predicate from rel's partition bound expression. The
+ * function returns a NIL list if there is no predicate.
  *
  * Result expression tree is stored CacheMemoryContext to ensure it survives
  * as long as the relcache entry. But we should be running in a less long-lived
@@ -1932,7 +2317,7 @@ get_partition_for_tuple(PartitionDispatch *pd,
 		PartitionDesc partdesc = parent->partdesc;
 		TupleTableSlot *myslot = parent->tupslot;
 		TupleConversionMap *map = parent->tupmap;
-		int		cur_index = -1;
+		int			cur_index = -1;
 
 		if (myslot != NULL && map != NULL)
 		{
@@ -1991,14 +2376,25 @@ get_partition_for_tuple(PartitionDispatch *pd,
 
 			case PARTITION_STRATEGY_RANGE:
 				{
-					bool		equal = false;
+					bool		equal = false,
+								range_partkey_has_null = false;
 					int			cur_offset;
 					int			i;
 
-					/* No range includes NULL. */
+					/*
+					 * No range includes NULL, so this will be accepted by the
+					 * default partition if there is one, and otherwise
+					 * rejected.
+					 */
 					for (i = 0; i < key->partnatts; i++)
 					{
-						if (isnull[i])
+						if (isnull[i] &&
+							partition_bound_has_default(partdesc->boundinfo))
+						{
+							range_partkey_has_null = true;
+							break;
+						}
+						else if (isnull[i])
 						{
 							*failed_at = parent;
 							*failed_slot = slot;
@@ -2007,6 +2403,13 @@ get_partition_for_tuple(PartitionDispatch *pd,
 						}
 					}
 
+					/*
+					 * No need to search for partition, as the null key will
+					 * be routed to the default partition.
+					 */
+					if (range_partkey_has_null)
+						break;
+
 					cur_offset = partition_bound_bsearch(key,
 														 partdesc->boundinfo,
 														 values,
@@ -2014,9 +2417,9 @@ get_partition_for_tuple(PartitionDispatch *pd,
 														 &equal);
 
 					/*
-					 * The offset returned is such that the bound at cur_offset
-					 * is less than or equal to the tuple value, so the bound
-					 * at offset+1 is the upper bound.
+					 * The offset returned is such that the bound at
+					 * cur_offset is less than or equal to the tuple value, so
+					 * the bound at offset+1 is the upper bound.
 					 */
 					cur_index = partdesc->boundinfo->indexes[cur_offset + 1];
 				}
@@ -2029,8 +2432,16 @@ get_partition_for_tuple(PartitionDispatch *pd,
 
 		/*
 		 * cur_index < 0 means we failed to find a partition of this parent.
-		 * cur_index >= 0 means we either found the leaf partition, or the
-		 * next parent to find a partition of.
+		 * Use the default partition, if there is one.
+		 */
+		if (cur_index < 0)
+			cur_index = partdesc->boundinfo->default_index;
+
+		/*
+		 * If cur_index is still less than 0 at this point, there's no
+		 * partition for this tuple.  Otherwise, we either found the leaf
+		 * partition, or a child partitioned table through which we have to
+		 * route the tuple.
 		 */
 		if (cur_index < 0)
 		{
@@ -2083,6 +2494,8 @@ make_one_range_bound(PartitionKey key, int index, List *datums, bool lower)
 	PartitionRangeBound *bound;
 	ListCell   *lc;
 	int			i;
+
+	Assert(datums != NIL);
 
 	bound = (PartitionRangeBound *) palloc0(sizeof(PartitionRangeBound));
 	bound->index = index;
@@ -2319,4 +2732,105 @@ partition_bound_bsearch(PartitionKey key, PartitionBoundInfo boundinfo,
 	}
 
 	return lo;
+}
+
+/*
+ * get_default_oid_from_partdesc
+ *
+ * Given a partition descriptor, return the OID of the default partition, if
+ * one exists; else, return InvalidOid.
+ */
+Oid
+get_default_oid_from_partdesc(PartitionDesc partdesc)
+{
+	if (partdesc && partdesc->boundinfo &&
+		partition_bound_has_default(partdesc->boundinfo))
+		return partdesc->oids[partdesc->boundinfo->default_index];
+
+	return InvalidOid;
+}
+
+/*
+ * get_default_partition_oid
+ *
+ * Given a relation OID, return the OID of the default partition, if one
+ * exists.  Use get_default_oid_from_partdesc where possible, for
+ * efficiency.
+ */
+Oid
+get_default_partition_oid(Oid parentId)
+{
+	HeapTuple	tuple;
+	Oid			defaultPartId = InvalidOid;
+
+	tuple = SearchSysCache1(PARTRELID, ObjectIdGetDatum(parentId));
+
+	if (HeapTupleIsValid(tuple))
+	{
+		Form_pg_partitioned_table part_table_form;
+
+		part_table_form = (Form_pg_partitioned_table) GETSTRUCT(tuple);
+		defaultPartId = part_table_form->partdefid;
+	}
+
+	ReleaseSysCache(tuple);
+	return defaultPartId;
+}
+
+/*
+ * update_default_partition_oid
+ *
+ * Update pg_partition_table.partdefid with a new default partition OID.
+ */
+void
+update_default_partition_oid(Oid parentId, Oid defaultPartId)
+{
+	HeapTuple	tuple;
+	Relation	pg_partitioned_table;
+	Form_pg_partitioned_table part_table_form;
+
+	pg_partitioned_table = heap_open(PartitionedRelationId, RowExclusiveLock);
+
+	tuple = SearchSysCacheCopy1(PARTRELID, ObjectIdGetDatum(parentId));
+
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "cache lookup failed for partition key of relation %u",
+			 parentId);
+
+	part_table_form = (Form_pg_partitioned_table) GETSTRUCT(tuple);
+	part_table_form->partdefid = defaultPartId;
+	CatalogTupleUpdate(pg_partitioned_table, &tuple->t_self, tuple);
+
+	heap_freetuple(tuple);
+	heap_close(pg_partitioned_table, RowExclusiveLock);
+}
+
+/*
+ * get_proposed_default_constraint
+ *
+ * This function returns the negation of new_part_constraints, which
+ * would be an integral part of the default partition constraints after
+ * addition of the partition to which the new_part_constraints belongs.
+ */
+List *
+get_proposed_default_constraint(List *new_part_constraints)
+{
+	Expr	   *defPartConstraint;
+
+	defPartConstraint = make_ands_explicit(new_part_constraints);
+
+	/*
+	 * Derive the partition constraints of default partition by negating the
+	 * given partition constraints. The partition constraint never evaluates
+	 * to NULL, so negating it like this is safe.
+	 */
+	defPartConstraint = makeBoolExpr(NOT_EXPR,
+									 list_make1(defPartConstraint),
+									 -1);
+	defPartConstraint =
+		(Expr *) eval_const_expressions(NULL,
+										(Node *) defPartConstraint);
+	defPartConstraint = canonicalize_qual(defPartConstraint);
+
+	return list_make1(defPartConstraint);
 }

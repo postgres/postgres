@@ -34,7 +34,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
 ALTER TABLE ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> [ OWNED BY <replaceable class="PARAMETER">role_name</replaceable> [, ... ] ]
     SET TABLESPACE <replaceable class="PARAMETER">new_tablespace</replaceable> [ NOWAIT ]
 ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
-    ATTACH PARTITION <replaceable class="PARAMETER">partition_name</replaceable> FOR VALUES <replaceable class="PARAMETER">partition_bound_spec</replaceable>
+    ATTACH PARTITION <replaceable class="PARAMETER">partition_name</replaceable> { FOR VALUES <replaceable class="PARAMETER">partition_bound_spec</replaceable> | DEFAULT }
 ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
     DETACH PARTITION <replaceable class="PARAMETER">partition_name</replaceable>
 
@@ -765,11 +765,18 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
    </varlistentry>
 
    <varlistentry>
-    <term><literal>ATTACH PARTITION <replaceable class="PARAMETER">partition_name</replaceable> FOR VALUES <replaceable class="PARAMETER">partition_bound_spec</replaceable></literal></term>
+    <term><literal>ATTACH PARTITION <replaceable class="PARAMETER">partition_name</replaceable> { FOR VALUES <replaceable class="PARAMETER">partition_bound_spec</replaceable> | DEFAULT }</literal></term>
     <listitem>
      <para>
       This form attaches an existing table (which might itself be partitioned)
-      as a partition of the target table using the same syntax for
+      as a partition of the target table. The table can be attached
+      as a partition for specific values using <literal>FOR VALUES
+      </literal> or as a default partition by using <literal>DEFAULT
+      </literal>.
+     </para>
+
+     <para>
+      A partition using <literal>FOR VALUES</literal> uses same syntax for
       <replaceable class="PARAMETER">partition_bound_spec</replaceable> as
       <xref linkend="sql-createtable">.  The partition bound specification
       must correspond to the partitioning strategy and partition key of the
@@ -805,6 +812,17 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
       that all the rows in the foreign table obey the partition constraint.
       (See the discussion in <xref linkend="SQL-CREATEFOREIGNTABLE"> about
       constraints on the foreign table.)
+     </para>
+
+     <para>
+      When a table has a default partition, defining a new partition changes
+      the partition constraint for the default partition. The default
+      partition can't contain any rows that would need to be moved to the new
+      partition, and will be scanned to verify that none are present. This
+      scan, like the scan of the new partition, can be avoided if an
+      appropriate <literal>CHECK</literal> constraint is present. Also like
+      the scan of the new partition, it is always skipped when the default
+      partition is a foreign table.
      </para>
     </listitem>
    </varlistentry>
@@ -1393,6 +1411,13 @@ ALTER TABLE measurement
 <programlisting>
 ALTER TABLE cities
     ATTACH PARTITION cities_ab FOR VALUES IN ('a', 'b');
+</programlisting></para>
+
+  <para>
+   Attach a default partition to a partitioned table:
+<programlisting>
+ALTER TABLE cities
+    ATTACH PARTITION cities_partdef DEFAULT;
 </programlisting></para>
 
   <para>

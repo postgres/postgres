@@ -3307,6 +3307,18 @@ transformPartitionBound(ParseState *pstate, Relation parent,
 	/* Avoid scribbling on input */
 	result_spec = copyObject(spec);
 
+	if (spec->is_default)
+	{
+		/*
+		 * In case of the default partition, parser had no way to identify the
+		 * partition strategy. Assign the parent's strategy to the default
+		 * partition bound spec.
+		 */
+		result_spec->strategy = strategy;
+
+		return result_spec;
+	}
+
 	if (strategy == PARTITION_STRATEGY_LIST)
 	{
 		ListCell   *cell;

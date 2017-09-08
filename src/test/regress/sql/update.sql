@@ -125,5 +125,29 @@ update range_parted set b = b - 1 where b = 10;
 -- ok
 update range_parted set b = b + 1 where b = 10;
 
+-- Creating default partition for range
+create table part_def partition of range_parted default;
+\d+ part_def
+insert into range_parted values ('c', 9);
+-- ok
+update part_def set a = 'd' where a = 'c';
+-- fail
+update part_def set a = 'a' where a = 'd';
+
+create table list_parted (
+	a text,
+	b int
+) partition by list (a);
+create table list_part1  partition of list_parted for values in ('a', 'b');
+create table list_default partition of list_parted default;
+insert into list_part1 values ('a', 1);
+insert into list_default values ('d', 10);
+
+-- fail
+update list_default set a = 'a' where a = 'd';
+-- ok
+update list_default set a = 'x' where a = 'd';
+
 -- cleanup
 drop table range_parted;
+drop table list_parted;

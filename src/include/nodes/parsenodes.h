@@ -797,6 +797,7 @@ typedef struct PartitionBoundSpec
 	NodeTag		type;
 
 	char		strategy;		/* see PARTITION_STRATEGY codes above */
+	bool		is_default;		/* is it a default partition bound? */
 
 	/* Partitioning info for LIST strategy: */
 	List	   *listdatums;		/* List of Consts (or A_Consts in raw tree) */

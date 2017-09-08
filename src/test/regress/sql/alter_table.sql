@@ -2111,6 +2111,13 @@ SELECT conislocal, coninhcount FROM pg_constraint WHERE conrelid = 'part_1'::reg
 -- check that the new partition won't overlap with an existing partition
 CREATE TABLE fail_part (LIKE part_1 INCLUDING CONSTRAINTS);
 ALTER TABLE list_parted ATTACH PARTITION fail_part FOR VALUES IN (1);
+-- check that an existing table can be attached as a default partition
+CREATE TABLE def_part (LIKE list_parted INCLUDING CONSTRAINTS);
+ALTER TABLE list_parted ATTACH PARTITION def_part DEFAULT;
+-- check attaching default partition fails if a default partition already
+-- exists
+CREATE TABLE fail_def_part (LIKE part_1 INCLUDING CONSTRAINTS);
+ALTER TABLE list_parted ATTACH PARTITION fail_def_part DEFAULT;
 
 -- check validation when attaching list partitions
 CREATE TABLE list_parted2 (
@@ -2126,6 +2133,15 @@ ALTER TABLE list_parted2 ATTACH PARTITION part_2 FOR VALUES IN (2);
 -- should be ok after deleting the bad row
 DELETE FROM part_2;
 ALTER TABLE list_parted2 ATTACH PARTITION part_2 FOR VALUES IN (2);
+
+-- check partition cannot be attached if default has some row for its values
+CREATE TABLE list_parted2_def PARTITION OF list_parted2 DEFAULT;
+INSERT INTO list_parted2_def VALUES (11, 'z');
+CREATE TABLE part_3 (LIKE list_parted2);
+ALTER TABLE list_parted2 ATTACH PARTITION part_3 FOR VALUES IN (11);
+-- should be ok after deleting the bad row
+DELETE FROM list_parted2_def WHERE a = 11;
+ALTER TABLE list_parted2 ATTACH PARTITION part_3 FOR VALUES IN (11);
 
 -- adding constraints that describe the desired partition constraint
 -- (or more restrictive) will help skip the validation scan
@@ -2144,6 +2160,9 @@ ALTER TABLE list_parted2 DETACH PARTITION part_3_4;
 ALTER TABLE part_3_4 ALTER a SET NOT NULL;
 ALTER TABLE list_parted2 ATTACH PARTITION part_3_4 FOR VALUES IN (3, 4);
 
+-- check if default partition scan skipped
+ALTER TABLE list_parted2_def ADD CONSTRAINT check_a CHECK (a IN (5, 6));
+CREATE TABLE part_55_66 PARTITION OF list_parted2 FOR VALUES IN (55, 66);
 
 -- check validation when attaching range partitions
 CREATE TABLE range_parted (
@@ -2171,6 +2190,21 @@ CREATE TABLE part2 (
 	b int NOT NULL CHECK (b >= 10 AND b < 18)
 );
 ALTER TABLE range_parted ATTACH PARTITION part2 FOR VALUES FROM (1, 10) TO (1, 20);
+
+-- Create default partition
+CREATE TABLE partr_def1 PARTITION OF range_parted DEFAULT;
+
+-- Only one default partition is allowed, hence, following should give error
+CREATE TABLE partr_def2 (LIKE part1 INCLUDING CONSTRAINTS);
+ALTER TABLE range_parted ATTACH PARTITION partr_def2 DEFAULT;
+
+-- Overlapping partitions cannot be attached, hence, following should give error
+INSERT INTO partr_def1 VALUES (2, 10);
+CREATE TABLE part3 (LIKE range_parted);
+ALTER TABLE range_parted ATTACH partition part3 FOR VALUES FROM (2, 10) TO (2, 20);
+
+-- Attaching partitions should be successful when there are no overlapping rows
+ALTER TABLE range_parted ATTACH partition part3 FOR VALUES FROM (3, 10) TO (3, 20);
 
 -- check that leaf partitions are scanned when attaching a partitioned
 -- table
@@ -2231,6 +2265,18 @@ ALTER TABLE part_7 DROP CONSTRAINT check_a; -- thusly, scan won't be skipped
 INSERT INTO part_7 (a, b) VALUES (8, null), (9, 'a');
 SELECT tableoid::regclass, a, b FROM part_7 order by a;
 ALTER TABLE list_parted2 ATTACH PARTITION part_7 FOR VALUES IN (7);
+
+-- check that leaf partitions of default partition are scanned when
+-- attaching a partitioned table.
+ALTER TABLE part_5 DROP CONSTRAINT check_a;
+CREATE TABLE part5_def PARTITION OF part_5 DEFAULT PARTITION BY LIST(a);
+CREATE TABLE part5_def_p1 PARTITION OF part5_def FOR VALUES IN (5);
+INSERT INTO part5_def_p1 VALUES (5, 'y');
+CREATE TABLE part5_p1 (LIKE part_5);
+ALTER TABLE part_5 ATTACH PARTITION part5_p1 FOR VALUES IN ('y');
+-- should be ok after deleting the bad row
+DELETE FROM part5_def_p1 WHERE b = 'y';
+ALTER TABLE part_5 ATTACH PARTITION part5_p1 FOR VALUES IN ('y');
 
 -- check that the table being attached is not already a partition
 ALTER TABLE list_parted2 ATTACH PARTITION part_2 FOR VALUES IN (2);
@@ -2327,6 +2373,7 @@ ALTER TABLE list_parted2 ALTER COLUMN b TYPE text;
 
 -- cleanup
 DROP TABLE list_parted, list_parted2, range_parted;
+DROP TABLE fail_def_part;
 
 -- more tests for certain multi-level partitioning scenarios
 create table p (a int, b int) partition by range (a, b);

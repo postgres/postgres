@@ -132,13 +132,39 @@ create table part_ee_ff partition of list_parted for values in ('ee', 'ff') part
 create table part_ee_ff1 partition of part_ee_ff for values from (1) to (10);
 create table part_ee_ff2 partition of part_ee_ff for values from (10) to (20);
 
+-- test default partition
+create table part_default partition of list_parted default;
+-- Negative test: a row, which would fit in other partition, does not fit
+-- default partition, even when inserted directly
+insert into part_default values ('aa', 2);
+insert into part_default values (null, 2);
+-- ok
+insert into part_default values ('Zz', 2);
+-- test if default partition works as expected for multi-level partitioned
+-- table as well as when default partition itself is further partitioned
+drop table part_default;
+create table part_xx_yy partition of list_parted for values in ('xx', 'yy') partition by list (a);
+create table part_xx_yy_p1 partition of part_xx_yy for values in ('xx');
+create table part_xx_yy_defpart partition of part_xx_yy default;
+create table part_default partition of list_parted default partition by range(b);
+create table part_default_p1 partition of part_default for values from (20) to (30);
+create table part_default_p2 partition of part_default for values from (30) to (40);
+
 -- fail
 insert into part_ee_ff1 values ('EE', 11);
+insert into part_default_p2 values ('gg', 43);
 -- fail (even the parent's, ie, part_ee_ff's partition constraint applies)
 insert into part_ee_ff1 values ('cc', 1);
+insert into part_default values ('gg', 43);
 -- ok
 insert into part_ee_ff1 values ('ff', 1);
 insert into part_ee_ff2 values ('ff', 11);
+insert into part_default_p1 values ('cd', 25);
+insert into part_default_p2 values ('de', 35);
+insert into list_parted values ('ab', 21);
+insert into list_parted values ('xx', 1);
+insert into list_parted values ('yy', 2);
+select tableoid::regclass, * from list_parted;
 
 -- Check tuple routing for partitioned tables
 
@@ -154,8 +180,19 @@ insert into range_parted values ('b', 1);
 insert into range_parted values ('b', 10);
 -- fail (partition key (b+0) is null)
 insert into range_parted values ('a');
-select tableoid::regclass, * from range_parted;
 
+-- Check default partition
+create table part_def partition of range_parted default;
+-- fail
+insert into part_def values ('b', 10);
+-- ok
+insert into part_def values ('c', 10);
+insert into range_parted values (null, null);
+insert into range_parted values ('a', null);
+insert into range_parted values (null, 19);
+insert into range_parted values ('b', 20);
+
+select tableoid::regclass, * from range_parted;
 -- ok
 insert into list_parted values (null, 1);
 insert into list_parted (a) values ('aA');
@@ -187,6 +224,18 @@ select tableoid::regclass::text, a, min(b) as min_b, max(b) as max_b from list_p
 
 -- cleanup
 drop table range_parted, list_parted;
+
+-- test that a default partition added as the first partition accepts any value
+-- including null
+create table list_parted (a int) partition by list (a);
+create table part_default partition of list_parted default;
+\d+ part_default
+insert into part_default values (null);
+insert into part_default values (1);
+insert into part_default values (-1);
+select tableoid::regclass, a from list_parted;
+-- cleanup
+drop table list_parted;
 
 -- more tests for certain multi-level partitioning scenarios
 create table mlparted (a int, b int) partition by range (a, b);
@@ -274,6 +323,24 @@ create function mlparted5abrtrig_func() returns trigger as $$ begin new.c = 'b';
 create trigger mlparted5abrtrig before insert on mlparted5a for each row execute procedure mlparted5abrtrig_func();
 insert into mlparted5 (a, b, c) values (1, 40, 'a');
 drop table mlparted5;
+alter table mlparted drop constraint check_b;
+
+-- Check multi-level default partition
+create table mlparted_def partition of mlparted default partition by range(a);
+create table mlparted_def1 partition of mlparted_def for values from (40) to (50);
+create table mlparted_def2 partition of mlparted_def for values from (50) to (60);
+insert into mlparted values (40, 100);
+insert into mlparted_def1 values (42, 100);
+insert into mlparted_def2 values (54, 50);
+-- fail
+insert into mlparted values (70, 100);
+insert into mlparted_def1 values (52, 50);
+insert into mlparted_def2 values (34, 50);
+-- ok
+create table mlparted_defd partition of mlparted_def default;
+insert into mlparted values (70, 100);
+
+select tableoid::regclass, * from mlparted_def;
 
 -- check that message shown after failure to find a partition shows the
 -- appropriate key description (or none) in various situations
