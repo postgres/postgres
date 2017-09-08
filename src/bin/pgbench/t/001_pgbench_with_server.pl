@@ -89,10 +89,7 @@ pgbench(
 
 # Again, with all possible options
 pgbench(
-
-	# unlogged => faster test
-	'--initialize --scale=1 --unlogged --fillfactor=98 --foreign-keys --quiet'
-	  . ' --tablespace=pg_default --index-tablespace=pg_default',
+	'--initialize --scale=1 --unlogged-tables --fillfactor=98 --foreign-keys --quiet --tablespace=pg_default --index-tablespace=pg_default',
 	0,
 	[qr{^$}i],
 	[   qr{creating tables},
@@ -220,9 +217,9 @@ pgbench(
 		qr{command=18.: double 18\b},
 		qr{command=19.: double 19\b},
 		qr{command=20.: double 20\b},
-		qr{command=21.: double -?nan\b},
-		qr{command=22.: double inf\b},
-		qr{command=23.: double -inf\b},
+		qr{command=21.: double -?nan}i,
+		qr{command=22.: double inf}i,
+		qr{command=23.: double -inf}i,
 		qr{command=24.: int 9223372036854775807\b}, ],
 	'pgbench expressions',
 	{   '001_pgbench_expressions' => q{-- integer functions
