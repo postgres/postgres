@@ -69,14 +69,6 @@ pgbench(
 	'no such database');
 
 pgbench(
-	'-U no-such-user template0',
-	1,
-	[qr{^$}],
-	[   qr{connection to database "template0" failed},
-		qr{FATAL:  role "no-such-user" does not exist} ],
-	'no such user');
-
-pgbench(
 	'-S -t 1', 1, [qr{^$}],
 	[qr{Perhaps you need to do initialization}],
 	'run without init');
@@ -89,7 +81,7 @@ pgbench(
 
 # Again, with all possible options
 pgbench(
-	'--initialize --scale=1 --unlogged-tables --fillfactor=98 --foreign-keys --quiet --tablespace=pg_default --index-tablespace=pg_default',
+'--initialize --scale=1 --unlogged-tables --fillfactor=98 --foreign-keys --quiet --tablespace=pg_default --index-tablespace=pg_default',
 	0,
 	[qr{^$}i],
 	[   qr{creating tables},
@@ -217,10 +209,7 @@ pgbench(
 		qr{command=18.: double 18\b},
 		qr{command=19.: double 19\b},
 		qr{command=20.: double 20\b},
-		qr{command=21.: double -?nan}i,
-		qr{command=22.: double inf}i,
-		qr{command=23.: double -inf}i,
-		qr{command=24.: int 9223372036854775807\b}, ],
+		qr{command=21.: int 9223372036854775807\b}, ],
 	'pgbench expressions',
 	{   '001_pgbench_expressions' => q{-- integer functions
 \set i1 debug(random(1, 100))
@@ -246,10 +235,7 @@ pgbench(
 \set d6 debug((0.5 * 12.1 - 0.05) * (31.0 / 10))
 \set d7 debug(11.1 + 7.9)
 \set d8 debug(:foo * -2)
--- special values
-\set nan debug(0.0 / 0.0)
-\set pin debug(1.0 / 0.0)
-\set nin debug(-1.0 / 0.0)
+-- forced overflow
 \set maxint debug(:minint - 1)
 -- reset a variable
 \set i1 0

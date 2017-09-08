@@ -340,20 +340,22 @@ sub command_fails_like
 # - test_name: name of test
 sub command_checks_all
 {
-	my ($cmd, $ret, $out, $err, $test_name) = @_;
+	my ($cmd, $expected_ret, $out, $err, $test_name) = @_;
 
 	# run command
 	my ($stdout, $stderr);
 	print("# Running: " . join(" ", @{$cmd}) . "\n");
 	IPC::Run::run($cmd, '>', \$stdout, '2>', \$stderr);
 
-	# On Windows, the exit status of the process is returned directly as the
-	# process's exit code, while on Unix, it's returned in the high bits
-	# of the exit code.
-	my $status = $windows_os ? $? : $? >> 8;
+	# See http://perldoc.perl.org/perlvar.html#%24CHILD_ERROR
+	my $ret = $?;
+	die "command exited with signal " . ($ret & 127)
+	  if $ret & 127;
+	$ret = $ret >> 8;
 
 	# check status
-	ok($ret == $status, "$test_name status (got $status vs expected $ret)");
+	ok($ret == $expected_ret,
+		"$test_name status (got $ret vs expected $expected_ret)");
 
 	# check stdout
 	for my $re (@$out)
