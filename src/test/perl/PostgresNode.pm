@@ -155,8 +155,9 @@ sub new
 		_logfile => "$TestLib::log_path/${testname}_${name}.log" };
 
 	bless $self, $class;
-	mkdir $self->{_basedir}	or
-		BAIL_OUT("could not create data directory \"$self->{_basedir}\": $!");
+	mkdir $self->{_basedir}
+	  or
+	  BAIL_OUT("could not create data directory \"$self->{_basedir}\": $!");
 	$self->dump_info;
 
 	return $self;
@@ -934,8 +935,7 @@ sub get_new_node
 # Retain the errno on die() if set, else assume a generic errno of 1.
 # This will instruct the END handler on how to handle artifacts left
 # behind from tests.
-$SIG{__DIE__} = sub
-{
+$SIG{__DIE__} = sub {
 	if ($!)
 	{
 		$died = $!;
@@ -965,7 +965,7 @@ END
 
 		# clean basedir on clean test invocation
 		$node->clean_node
-			if TestLib::all_tests_passing() && !defined $died && !$exit_code;
+		  if TestLib::all_tests_passing() && !defined $died && !$exit_code;
 	}
 
 	$? = $exit_code;
@@ -1325,9 +1325,9 @@ sub command_ok
 
 =pod
 
-=item $node->command_fails(...) - TestLib::command_fails with our PGPORT
+=item $node->command_fails(...)
 
-See command_ok(...)
+TestLib::command_fails with our PGPORT. See command_ok(...)
 
 =cut
 
@@ -1355,6 +1355,23 @@ sub command_like
 	local $ENV{PGPORT} = $self->port;
 
 	TestLib::command_like(@_);
+}
+
+=pod
+
+=item $node->command_checks_all(...)
+
+TestLib::command_checks_all with our PGPORT. See command_ok(...)
+
+=cut
+
+sub command_checks_all
+{
+	my $self = shift;
+
+	local $ENV{PGPORT} = $self->port;
+
+	TestLib::command_checks_all(@_);
 }
 
 =pod
