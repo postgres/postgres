@@ -916,21 +916,23 @@ map_partition_varattnos(List *expr, int target_varno,
 						Relation partrel, Relation parent,
 						bool *found_whole_row)
 {
-	AttrNumber *part_attnos;
-	bool		my_found_whole_row;
+	bool		my_found_whole_row = false;
 
-	if (expr == NIL)
-		return NIL;
+	if (expr != NIL)
+	{
+		AttrNumber *part_attnos;
 
-	part_attnos = convert_tuples_by_name_map(RelationGetDescr(partrel),
-											 RelationGetDescr(parent),
-											 gettext_noop("could not convert row type"));
-	expr = (List *) map_variable_attnos((Node *) expr,
-										target_varno, 0,
-										part_attnos,
-										RelationGetDescr(parent)->natts,
-										RelationGetForm(partrel)->reltype,
-										&my_found_whole_row);
+		part_attnos = convert_tuples_by_name_map(RelationGetDescr(partrel),
+												 RelationGetDescr(parent),
+												 gettext_noop("could not convert row type"));
+		expr = (List *) map_variable_attnos((Node *) expr,
+											target_varno, 0,
+											part_attnos,
+											RelationGetDescr(parent)->natts,
+											RelationGetForm(partrel)->reltype,
+											&my_found_whole_row);
+	}
+
 	if (found_whole_row)
 		*found_whole_row = my_found_whole_row;
 
