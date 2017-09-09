@@ -51,7 +51,7 @@ get_bin_version(ClusterInfo *cluster)
 		*strchr(cmd_output, '\n') = '\0';
 
 	if (sscanf(cmd_output, "%*s %*s %d.%d", &pre_dot, &post_dot) < 1)
-		pg_fatal("could not get version from %s\n", cmd);
+		pg_fatal("could not get pg_ctl version output from %s\n", cmd);
 
 	cluster->bin_version = (pre_dot * 100 + post_dot) * 100;
 }
@@ -143,7 +143,7 @@ exec_prog(const char *log_file, const char *opt_log_file,
 #endif
 
 	if (log == NULL)
-		pg_fatal("cannot write to log file %s\n", log_file);
+		pg_fatal("could not write to log file \"%s\"\n", log_file);
 
 #ifdef WIN32
 	/* Are we printing "command:" before its output? */
@@ -198,7 +198,7 @@ exec_prog(const char *log_file, const char *opt_log_file,
 	 * log these commands to a third file, but that just adds complexity.
 	 */
 	if ((log = fopen(log_file, "a")) == NULL)
-		pg_fatal("cannot write to log file %s\n", log_file);
+		pg_fatal("could not write to log file \"%s\"\n", log_file);
 	fprintf(log, "\n\n");
 	fclose(log);
 #endif
@@ -426,7 +426,7 @@ validate_exec(const char *dir, const char *cmdName)
 		pg_fatal("check for \"%s\" failed: %s\n",
 				 path, strerror(errno));
 	else if (!S_ISREG(buf.st_mode))
-		pg_fatal("check for \"%s\" failed: not an executable file\n",
+		pg_fatal("check for \"%s\" failed: not a regular file\n",
 				 path);
 
 	/*

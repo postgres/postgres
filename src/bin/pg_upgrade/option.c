@@ -98,7 +98,7 @@ parseCommandLine(int argc, char *argv[])
 		pg_fatal("%s: cannot be run as root\n", os_info.progname);
 
 	if ((log_opts.internal = fopen_priv(INTERNAL_LOG_FILE, "a")) == NULL)
-		pg_fatal("cannot write to log file %s\n", INTERNAL_LOG_FILE);
+		pg_fatal("could not write to log file \"%s\"\n", INTERNAL_LOG_FILE);
 
 	while ((option = getopt_long(argc, argv, "d:D:b:B:cj:ko:O:p:P:rU:v",
 								 long_options, &optindex)) != -1)
@@ -214,7 +214,7 @@ parseCommandLine(int argc, char *argv[])
 	for (filename = output_files; *filename != NULL; filename++)
 	{
 		if ((fp = fopen_priv(*filename, "a")) == NULL)
-			pg_fatal("cannot write to log file %s\n", *filename);
+			pg_fatal("could not write to log file \"%s\"\n", *filename);
 
 		/* Start with newline because we might be appending to a file. */
 		fprintf(fp, "\n"
@@ -262,7 +262,7 @@ parseCommandLine(int argc, char *argv[])
 		canonicalize_path(new_cluster_pgdata);
 
 		if (!getcwd(cwd, MAXPGPATH))
-			pg_fatal("cannot find current directory\n");
+			pg_fatal("could not determine current directory\n");
 		canonicalize_path(cwd);
 		if (path_is_prefix_of_path(new_cluster_pgdata, cwd))
 			pg_fatal("cannot run pg_upgrade from inside the new cluster data directory on Windows\n");
@@ -459,7 +459,7 @@ get_sock_dir(ClusterInfo *cluster, bool live_check)
 			/* Use the current directory for the socket */
 			cluster->sockdir = pg_malloc(MAXPGPATH);
 			if (!getcwd(cluster->sockdir, MAXPGPATH))
-				pg_fatal("cannot find current directory\n");
+				pg_fatal("could not determine current directory\n");
 		}
 		else
 		{
@@ -477,14 +477,16 @@ get_sock_dir(ClusterInfo *cluster, bool live_check)
 			snprintf(filename, sizeof(filename), "%s/postmaster.pid",
 					 cluster->pgdata);
 			if ((fp = fopen(filename, "r")) == NULL)
-				pg_fatal("Cannot open file %s: %m\n", filename);
+				pg_fatal("could not open file \"%s\": %s\n",
+						 filename, strerror(errno));
 
 			for (lineno = 1;
 				 lineno <= Max(LOCK_FILE_LINE_PORT, LOCK_FILE_LINE_SOCKET_DIR);
 				 lineno++)
 			{
 				if (fgets(line, sizeof(line), fp) == NULL)
-					pg_fatal("Cannot read line %d from %s: %m\n", lineno, filename);
+					pg_fatal("could not read line %d from file \"%s\": %s\n",
+							 lineno, filename, strerror(errno));
 
 				/* potentially overwrite user-supplied value */
 				if (lineno == LOCK_FILE_LINE_PORT)
@@ -501,7 +503,7 @@ get_sock_dir(ClusterInfo *cluster, bool live_check)
 
 			/* warn of port number correction */
 			if (orig_port != DEF_PGUPORT && old_cluster.port != orig_port)
-				pg_log(PG_WARNING, "User-supplied old port number %hu corrected to %hu\n",
+				pg_log(PG_WARNING, "user-supplied old port number %hu corrected to %hu\n",
 					   orig_port, cluster->port);
 		}
 	}
