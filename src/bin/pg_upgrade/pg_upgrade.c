@@ -261,7 +261,7 @@ prepare_new_cluster(void)
 	 * datfrozenxid, relfrozenxids, and relminmxid later to match the new xid
 	 * counter later.
 	 */
-	prep_status("Freezing all rows on the new cluster");
+	prep_status("Freezing all rows in the new cluster");
 	exec_prog(UTILITY_LOG_FILE, NULL, true,
 			  "\"%s/vacuumdb\" %s --all --freeze %s",
 			  new_cluster.bindir, cluster_conn_opts(&new_cluster),
@@ -471,7 +471,7 @@ copy_xact_xlog_xid(void)
 		 */
 		remove_new_subdir("pg_multixact/offsets", false);
 
-		prep_status("Setting oldest multixact ID on new cluster");
+		prep_status("Setting oldest multixact ID in new cluster");
 
 		/*
 		 * We don't preserve files in this case, but it's important that the

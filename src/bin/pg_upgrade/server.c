@@ -167,7 +167,7 @@ get_major_server_version(ClusterInfo *cluster)
 	if (fscanf(version_fd, "%63s", cluster->major_version_str) == 0 ||
 		sscanf(cluster->major_version_str, "%d.%d", &integer_version,
 			   &fractional_version) < 1)
-		pg_fatal("could not get version from %s\n", cluster->pgdata);
+		pg_fatal("could not parse PG_VERSION file from %s\n", cluster->pgdata);
 
 	fclose(version_fd);
 
