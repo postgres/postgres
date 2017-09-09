@@ -1559,12 +1559,18 @@ get_qual_for_list(Relation parent, PartitionBoundSpec *spec)
 		{
 			Const	   *val;
 
-			/* Construct const from datum */
+			/*
+			 * Construct Const from known-not-null datum.  We must be careful
+			 * to copy the value, because our result has to be able to outlive
+			 * the relcache entry we're copying from.
+			 */
 			val = makeConst(key->parttypid[0],
 							key->parttypmod[0],
 							key->parttypcoll[0],
 							key->parttyplen[0],
-							*boundinfo->datums[i],
+							datumCopy(*boundinfo->datums[i],
+									  key->parttypbyval[0],
+									  key->parttyplen[0]),
 							false,	/* isnull */
 							key->parttypbyval[0]);
 
