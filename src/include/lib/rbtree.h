@@ -35,9 +35,7 @@ typedef struct RBTree RBTree;
 typedef enum RBOrderControl
 {
 	LeftRightWalk,				/* inorder: left child, node, right child */
-	RightLeftWalk,				/* reverse inorder: right, node, left */
-	DirectWalk,					/* preorder: node, left child, right child */
-	InvertedWalk				/* postorder: left child, right child, node */
+	RightLeftWalk				/* reverse inorder: right, node, left */
 } RBOrderControl;
 
 /*
@@ -52,7 +50,6 @@ struct RBTreeIterator
 	RBTree	   *rb;
 	RBNode	   *(*iterate) (RBTreeIterator *iter);
 	RBNode	   *last_visited;
-	char		next_step;
 	bool		is_over;
 };
 
