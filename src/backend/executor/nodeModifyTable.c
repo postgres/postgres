@@ -2317,8 +2317,14 @@ ExecEndModifyTable(ModifyTableState *node)
 {
 	int			i;
 
-	/* Free transition tables */
-	if (node->mt_transition_capture != NULL)
+	/*
+	 * Free transition tables, unless this query is being run in
+	 * EXEC_FLAG_SKIP_TRIGGERS mode, which means that it may have queued AFTER
+	 * triggers that won't be run till later.  In that case we'll just leak
+	 * the transition tables till end of (sub)transaction.
+	 */
+	if (node->mt_transition_capture != NULL &&
+		!(node->ps.state->es_top_eflags & EXEC_FLAG_SKIP_TRIGGERS))
 		DestroyTransitionCaptureState(node->mt_transition_capture);
 
 	/*
