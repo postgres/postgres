@@ -5474,7 +5474,9 @@ AfterTriggerSaveEvent(EState *estate, ResultRelInfo *relinfo,
 		new_shared.ats_tgoid = trigger->tgoid;
 		new_shared.ats_relid = RelationGetRelid(rel);
 		new_shared.ats_firing_id = 0;
-		new_shared.ats_transition_capture = transition_capture;
+		/* deferrable triggers cannot access transition data */
+		new_shared.ats_transition_capture =
+			trigger->tgdeferrable ? NULL : transition_capture;
 
 		afterTriggerAddEvent(&afterTriggers.query_stack[afterTriggers.query_depth],
 							 &new_event, &new_shared);

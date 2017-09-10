@@ -1771,6 +1771,47 @@ create trigger my_table_multievent_trig
 
 drop table my_table;
 
+--
+-- Test firing of triggers with transition tables by foreign key cascades
+--
+
+create table refd_table (a int primary key, b text);
+create table trig_table (a int, b text,
+  foreign key (a) references refd_table on update cascade on delete cascade
+);
+
+create trigger trig_table_insert_trig
+  after insert on trig_table referencing new table as new_table
+  for each statement execute procedure dump_insert();
+create trigger trig_table_update_trig
+  after update on trig_table referencing old table as old_table new table as new_table
+  for each statement execute procedure dump_update();
+create trigger trig_table_delete_trig
+  after delete on trig_table referencing old table as old_table
+  for each statement execute procedure dump_delete();
+
+insert into refd_table values
+  (1, 'one'),
+  (2, 'two'),
+  (3, 'three');
+insert into trig_table values
+  (1, 'one a'),
+  (1, 'one b'),
+  (2, 'two a'),
+  (2, 'two b'),
+  (3, 'three a'),
+  (3, 'three b');
+
+update refd_table set a = 11 where b = 'one';
+
+select * from trig_table;
+
+delete from refd_table where length(b) = 3;
+
+select * from trig_table;
+
+drop table refd_table, trig_table;
+
 -- cleanup
 drop function dump_insert();
 drop function dump_update();
