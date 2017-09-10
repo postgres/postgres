@@ -13,6 +13,7 @@ SUBDIRS = \
 		  test_extensions \
 		  test_parser \
 		  test_pg_dump \
+		  test_rbtree \
 		  test_rls_hooks \
 		  test_shm_mq \
 		  worker_spi
