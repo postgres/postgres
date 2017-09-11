@@ -15,8 +15,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-05-22 07:46+0000\n"
-"PO-Revision-Date: 2017-05-29 17:25+0100\n"
+"POT-Creation-Date: 2017-09-10 14:15+0000\n"
+"PO-Revision-Date: 2017-09-10 18:02+0100\n"
 "Last-Translator: Daniele Varrazzo <daniele.varrazzo@gmail.com>\n"
 "Language-Team: Gruppo traduzioni ITPUG <traduzioni@itpug.org>\n"
 "Language: it\n"
@@ -25,10 +25,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 "X-Poedit-SourceCharset: utf-8\n"
-"X-Generator: Poedit 1.8.7.1\n"
+"X-Generator: Poedit 1.5.4\n"
 
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 parsexlog.c:74 parsexlog.c:127 parsexlog.c:179
+#: ../../common/fe_memutils.c:98 parsexlog.c:74 parsexlog.c:127
+#: parsexlog.c:179
 #, c-format
 msgid "out of memory\n"
 msgstr "memoria esaurita\n"
@@ -289,97 +290,97 @@ msgstr "ricezione della lista dei file fallita: %s"
 msgid "unexpected result set while fetching file list\n"
 msgstr "risultato imprevisto ricevendo la lista dei file\n"
 
-#: libpq_fetch.c:239
+#: libpq_fetch.c:261
 #, c-format
 msgid "could not send query: %s"
 msgstr "invio della query non riuscito: %s"
 
-#: libpq_fetch.c:241
+#: libpq_fetch.c:263
 #, c-format
 msgid "getting file chunks\n"
 msgstr "ricezione blocchi del file\n"
 
-#: libpq_fetch.c:244
+#: libpq_fetch.c:266
 #, c-format
 msgid "could not set libpq connection to single row mode\n"
 msgstr "impostazione della connessione libpq in modalità riga singola fallita\n"
 
-#: libpq_fetch.c:264
+#: libpq_fetch.c:287
 #, c-format
 msgid "unexpected result while fetching remote files: %s"
 msgstr "risultato imprevisto ricevendo i file remoti: %s"
 
-#: libpq_fetch.c:270
+#: libpq_fetch.c:293
 #, c-format
 msgid "unexpected result set size while fetching remote files\n"
 msgstr "dimensione del risultato imprevisto ricevendo i file remoti\n"
 
-#: libpq_fetch.c:276
+#: libpq_fetch.c:299
 #, c-format
 msgid "unexpected data types in result set while fetching remote files: %u %u %u\n"
 msgstr "tipo di dati imprevisto nel risultato ricevendo i file remoti: %u %u %u\n"
 
-#: libpq_fetch.c:284
+#: libpq_fetch.c:307
 #, c-format
 msgid "unexpected result format while fetching remote files\n"
 msgstr "formato del risultato imprevisto ricevendo i file remoti\n"
 
-#: libpq_fetch.c:290
+#: libpq_fetch.c:313
 #, c-format
 msgid "unexpected null values in result while fetching remote files\n"
 msgstr "valori null non previsti nel risultato ricevendo i file remoti\n"
 
-#: libpq_fetch.c:294
+#: libpq_fetch.c:317
 #, c-format
 msgid "unexpected result length while fetching remote files\n"
 msgstr "lunghezza del risultato non prevista ricevendo i file remoti\n"
 
-#: libpq_fetch.c:316
+#: libpq_fetch.c:339
 #, c-format
 msgid "received null value for chunk for file \"%s\", file has been deleted\n"
 msgstr "ricevuto valore null per il blocco del file \"%s\", il file è stato cancellato\n"
 
-#: libpq_fetch.c:323
+#: libpq_fetch.c:351
 #, c-format
-msgid "received chunk for file \"%s\", offset %d, size %d\n"
-msgstr "ricevuto blocco per il file \"%s\", offset %d, dimensione %d\n"
+msgid "received chunk for file \"%s\", offset %s, size %d\n"
+msgstr "ricevuto blocco per il file \"%s\", offset %s, dimensione %d\n"
 
-#: libpq_fetch.c:352
+#: libpq_fetch.c:380
 #, c-format
 msgid "could not fetch remote file \"%s\": %s"
 msgstr "ricezione del file remoto \"%s\" fallita: %s"
 
-#: libpq_fetch.c:357
+#: libpq_fetch.c:385
 #, c-format
 msgid "unexpected result set while fetching remote file \"%s\"\n"
 msgstr "risultato inatteso leggendo il file remoto \"%s\"\n"
 
-#: libpq_fetch.c:368
+#: libpq_fetch.c:396
 #, c-format
 msgid "fetched file \"%s\", length %d\n"
 msgstr "ricevuto il file \"%s\", lunghezza %d\n"
 
-#: libpq_fetch.c:400
+#: libpq_fetch.c:429
 #, c-format
 msgid "could not send COPY data: %s"
 msgstr "invio dei dati di COPY fallito: %s"
 
-#: libpq_fetch.c:426
+#: libpq_fetch.c:455
 #, c-format
 msgid "could not create temporary table: %s"
 msgstr "creazione della tabella temporanea fallita: %s"
 
-#: libpq_fetch.c:434
+#: libpq_fetch.c:463
 #, c-format
 msgid "could not send file list: %s"
 msgstr "invio della lista dei file fallito: %s"
 
-#: libpq_fetch.c:476
+#: libpq_fetch.c:505
 #, c-format
 msgid "could not send end-of-COPY: %s"
 msgstr "invio del fine-COPY fallito: %s"
 
-#: libpq_fetch.c:482
+#: libpq_fetch.c:511
 #, c-format
 msgid "unexpected result while sending file list: %s"
 msgstr "risultato imprevisto inviando la lista dei file: %s"
@@ -672,7 +673,7 @@ msgstr "CRC del file di controllo imprevisto\n"
 msgid "unexpected control file size %d, expected %d\n"
 msgstr "dimensione del file di controllo %d imprevista, atteso %d\n"
 
-#: pg_rewind.c:696
+#: pg_rewind.c:705
 #, c-format
 msgid ""
 "The program \"initdb\" is needed by %s but was\n"
@@ -683,7 +684,7 @@ msgstr ""
 "stato tro vato nella stessa directory di \"%s\".\n"
 "Controlla la tua installazione.\n"
 
-#: pg_rewind.c:700
+#: pg_rewind.c:709
 #, c-format
 msgid ""
 "The program \"initdb\" was found by \"%s\"\n"
@@ -694,7 +695,7 @@ msgstr ""
 "ma non è la stessa versione di %s.\n"
 "Controlla la tua installazione.\n"
 
-#: pg_rewind.c:718
+#: pg_rewind.c:727
 #, c-format
 msgid "sync of target directory failed\n"
 msgstr "sincronizzazione della directory di destinazione fallita\n"
