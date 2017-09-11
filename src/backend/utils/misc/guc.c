@@ -2201,7 +2201,7 @@ static struct config_int ConfigureNamesInt[] =
 		{"max_pred_locks_per_relation", PGC_SIGHUP, LOCK_MANAGEMENT,
 			gettext_noop("Sets the maximum number of predicate-locked pages and tuples per relation."),
 			gettext_noop("If more than this total of pages and tuples in the same relation are locked "
-						 "by a connection, those locks are replaced by a relation level lock.")
+						 "by a connection, those locks are replaced by a relation-level lock.")
 		},
 		&max_predicate_locks_per_relation,
 		-2, INT_MIN, INT_MAX,
@@ -2212,7 +2212,7 @@ static struct config_int ConfigureNamesInt[] =
 		{"max_pred_locks_per_page", PGC_SIGHUP, LOCK_MANAGEMENT,
 			gettext_noop("Sets the maximum number of predicate-locked tuples per page."),
 			gettext_noop("If more than this number of tuples on the same page are locked "
-						 "by a connection, those locks are replaced by a page level lock.")
+						 "by a connection, those locks are replaced by a page-level lock.")
 		},
 		&max_predicate_locks_per_page,
 		2, 0, INT_MAX,
@@ -3608,7 +3608,7 @@ static struct config_string ConfigureNamesString[] =
 
 	{
 		{"ssl_dh_params_file", PGC_SIGHUP, CONN_AUTH_SECURITY,
-			gettext_noop("Location of the SSL DH params file."),
+			gettext_noop("Location of the SSL DH parameters file."),
 			NULL,
 			GUC_SUPERUSER_ONLY
 		},

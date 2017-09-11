@@ -95,8 +95,8 @@ scanint8(const char *str, bool errorOK, int64 *result)
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-					 errmsg("invalid input syntax for %s: \"%s\"",
-							"integer", str)));
+					 errmsg("invalid input syntax for integer: \"%s\"",
+							str)));
 	}
 
 	/* process digits */
@@ -130,8 +130,8 @@ gotdigits:
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-					 errmsg("invalid input syntax for %s: \"%s\"",
-							"integer", str)));
+					 errmsg("invalid input syntax for integer: \"%s\"",
+							str)));
 	}
 
 	*result = (sign < 0) ? -tmp : tmp;

@@ -425,13 +425,13 @@ DefineQueryRewrite(char *rulename,
 			if (event_relation->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-						 errmsg("could not convert partitioned table \"%s\" to a view",
+						 errmsg("cannot convert partitioned table \"%s\" to a view",
 								RelationGetRelationName(event_relation))));
 
 			if (event_relation->rd_rel->relispartition)
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-						 errmsg("could not convert partition \"%s\" to a view",
+						 errmsg("cannot convert partition \"%s\" to a view",
 								RelationGetRelationName(event_relation))));
 
 			snapshot = RegisterSnapshot(GetLatestSnapshot());

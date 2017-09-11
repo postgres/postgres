@@ -562,8 +562,8 @@ macaddr8tomacaddr(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("macaddr8 data out of range to convert to macaddr"),
 				 errhint("Only addresses that have FF and FE as values in the "
-						 "4th and 5th bytes, from the left, for example: "
-						 "XX-XX-XX-FF-FE-XX-XX-XX, are eligible to be converted "
+						 "4th and 5th bytes from the left, for example "
+						 "xx:xx:xx:ff:fe:xx:xx:xx, are eligible to be converted "
 						 "from macaddr8 to macaddr.")));
 
 	result->a = addr->a;

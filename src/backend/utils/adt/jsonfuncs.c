@@ -2314,7 +2314,7 @@ populate_array_report_expected_array(PopulateArrayContext *ctx, int ndim)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("expected json array"),
-					 errhint("see the value of key \"%s\"", ctx->colname)));
+					 errhint("See the value of key \"%s\".", ctx->colname)));
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
@@ -2336,13 +2336,13 @@ populate_array_report_expected_array(PopulateArrayContext *ctx, int ndim)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("expected json array"),
-					 errhint("see the array element %s of key \"%s\"",
+					 errhint("See the array element %s of key \"%s\".",
 							 indices.data, ctx->colname)));
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("expected json array"),
-					 errhint("see the array element %s",
+					 errhint("See the array element %s.",
 							 indices.data)));
 	}
 }

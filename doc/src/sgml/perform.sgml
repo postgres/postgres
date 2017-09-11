@@ -1107,7 +1107,7 @@ WHERE tablename = 'road';
    </para>
 
    <para>
-    The following subsections describe the types of extended statistics
+    The following subsections describe the kinds of extended statistics
     that are currently supported.
    </para>
 
@@ -1115,7 +1115,7 @@ WHERE tablename = 'road';
     <title>Functional Dependencies</title>
 
     <para>
-     The simplest type of extended statistics tracks <firstterm>functional
+     The simplest kind of extended statistics tracks <firstterm>functional
      dependencies</>, a concept used in definitions of database normal forms.
      We say that column <structfield>b</> is functionally dependent on
      column <structfield>a</> if knowledge of the value of

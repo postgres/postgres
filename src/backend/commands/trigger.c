@@ -416,7 +416,7 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 				 (TRIGGER_FOR_DELETE(tgtype) ? 1 : 0)) != 1)
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("Transition tables cannot be specified for triggers with more than one event")));
+						 errmsg("transition tables cannot be specified for triggers with more than one event")));
 
 			if (tt->isNew)
 			{
