@@ -8,7 +8,7 @@
 invalid variable name: "invalid/name"
 -- fail: invalid value for special variable
 \set AUTOCOMMIT foo
-unrecognized value "foo" for "AUTOCOMMIT": boolean expected
+unrecognized value "foo" for "AUTOCOMMIT": Boolean expected
 \set FETCH_COUNT foo
 invalid value "foo" for "FETCH_COUNT": integer expected
 -- check handling of built-in boolean variable
@@ -2854,7 +2854,7 @@ second thing true
 \endif
 -- invalid boolean expressions are false
 \if invalid boolean expression
-unrecognized value "invalid boolean expression" for "\if expression": boolean expected
+unrecognized value "invalid boolean expression" for "\if expression": Boolean expected
 	\echo 'will not print #6-1'
 \else
 	\echo 'will print anyway #6-2'

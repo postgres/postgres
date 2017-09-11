@@ -3567,7 +3567,7 @@ bar
          will terminate the application.  If set to a larger numeric value,
          that many consecutive <acronym>EOF</> characters must be typed to
          make an interactive session terminate.  If the variable is set to a
-         non-numeric value, it is interpreted as 10.
+         non-numeric value, it is interpreted as 10.  The default is 0.
         </para>
         <note>
         <para>

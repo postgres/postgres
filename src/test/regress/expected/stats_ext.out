@@ -21,7 +21,7 @@ LINE 1: CREATE STATISTICS tst FROM sometab;
 CREATE STATISTICS tst ON a, b FROM nonexistant;
 ERROR:  relation "nonexistant" does not exist
 CREATE STATISTICS tst ON a, b FROM pg_class;
-ERROR:  column "a" referenced in statistics does not exist
+ERROR:  column "a" does not exist
 CREATE STATISTICS tst ON relname, relname, relnatts FROM pg_class;
 ERROR:  duplicate column name in statistics definition
 CREATE STATISTICS tst ON relnatts + relpages FROM pg_class;
@@ -29,7 +29,7 @@ ERROR:  only simple column references are allowed in CREATE STATISTICS
 CREATE STATISTICS tst ON (relpages, reltuples) FROM pg_class;
 ERROR:  only simple column references are allowed in CREATE STATISTICS
 CREATE STATISTICS tst (unrecognized) ON relname, relnatts FROM pg_class;
-ERROR:  unrecognized statistic type "unrecognized"
+ERROR:  unrecognized statistics kind "unrecognized"
 -- Ensure stats are dropped sanely, and test IF NOT EXISTS while at it
 CREATE TABLE ab1 (a INTEGER, b INTEGER, c INTEGER);
 CREATE STATISTICS IF NOT EXISTS ab1_a_b_stats ON a, b FROM ab1;

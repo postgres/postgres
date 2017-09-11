@@ -132,8 +132,8 @@ TransactionIdInRecentPast(uint64 xid_with_epoch, TransactionId *extracted_xid)
 		|| (xid_epoch == now_epoch && xid > now_epoch_last_xid))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("transaction ID " UINT64_FORMAT " is in the future",
-						xid_with_epoch)));
+				 errmsg("transaction ID %s is in the future",
+						psprintf(UINT64_FORMAT, xid_with_epoch))));
 
 	/*
 	 * ShmemVariableCache->oldestClogXid is protected by CLogTruncationLock,
@@ -755,11 +755,11 @@ txid_status(PG_FUNCTION_ARGS)
 		Assert(TransactionIdIsValid(xid));
 
 		if (TransactionIdIsCurrentTransactionId(xid))
-			status = gettext_noop("in progress");
+			status = "in progress";
 		else if (TransactionIdDidCommit(xid))
-			status = gettext_noop("committed");
+			status = "committed";
 		else if (TransactionIdDidAbort(xid))
-			status = gettext_noop("aborted");
+			status = "aborted";
 		else
 		{
 			/*
@@ -774,9 +774,9 @@ txid_status(PG_FUNCTION_ARGS)
 			 * checked commit/abort status).
 			 */
 			if (TransactionIdPrecedes(xid, GetActiveSnapshot()->xmin))
-				status = gettext_noop("aborted");
+				status = "aborted";
 			else
-				status = gettext_noop("in progress");
+				status = "in progress";
 		}
 	}
 	else

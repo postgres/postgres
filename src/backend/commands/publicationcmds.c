@@ -103,7 +103,7 @@ parse_publication_options(List *options,
 			if (!SplitIdentifierString(publish, ',', &publish_list))
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("invalid publish list")));
+						 errmsg("invalid list syntax for \"publish\" option")));
 
 			/* Process the option list. */
 			foreach(lc, publish_list)

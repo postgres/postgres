@@ -3218,7 +3218,7 @@ DROP TABLE fail_part;
 CREATE TABLE fail_part (like list_parted, c int);
 ALTER TABLE list_parted ATTACH PARTITION fail_part FOR VALUES IN (1);
 ERROR:  table "fail_part" contains column "c" not found in parent "list_parted"
-DETAIL:  New partition should contain only the columns present in parent.
+DETAIL:  The new partition may contain only the columns present in parent.
 DROP TABLE fail_part;
 -- check that the table being attached has every column of the parent
 CREATE TABLE fail_part (a int NOT NULL);

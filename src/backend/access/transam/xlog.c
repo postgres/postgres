@@ -8646,7 +8646,7 @@ CreateCheckPoint(int flags)
 			LWLockRelease(CheckpointLock);
 			END_CRIT_SECTION();
 			ereport(DEBUG1,
-					(errmsg("checkpoint skipped due to an idle system")));
+					(errmsg("checkpoint skipped because system is idle")));
 			return;
 		}
 	}

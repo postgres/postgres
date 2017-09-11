@@ -13584,7 +13584,7 @@ ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd)
 					 errmsg("table \"%s\" contains column \"%s\" not found in parent \"%s\"",
 							RelationGetRelationName(attachrel), attributeName,
 							RelationGetRelationName(rel)),
-					 errdetail("New partition should contain only the columns present in parent.")));
+					 errdetail("The new partition may contain only the columns present in parent.")));
 	}
 
 	/*

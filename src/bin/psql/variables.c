@@ -136,7 +136,7 @@ ParseVariableBool(const char *value, const char *name, bool *result)
 	{
 		/* string is not recognized; don't clobber *result */
 		if (name)
-			psql_error("unrecognized value \"%s\" for \"%s\": boolean expected\n",
+			psql_error("unrecognized value \"%s\" for \"%s\": Boolean expected\n",
 					   value, name);
 		valid = false;
 	}

@@ -115,7 +115,7 @@ parse_output_parameters(List *options, uint32 *protocol_version,
 			if (parsed > PG_UINT32_MAX || parsed < 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("proto_verson \"%s\" out of range",
+						 errmsg("proto_version \"%s\" out of range",
 								strVal(defel->arg))));
 
 			*protocol_version = (uint32) parsed;

@@ -22,7 +22,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 CREATE STATISTICS [ IF NOT EXISTS ] <replaceable class="PARAMETER">statistics_name</replaceable>
-    [ ( <replaceable class="PARAMETER">statistic_type</replaceable> [, ... ] ) ]
+    [ ( <replaceable class="PARAMETER">statistics_kind</replaceable> [, ... ] ) ]
     ON <replaceable class="PARAMETER">column_name</replaceable>, <replaceable class="PARAMETER">column_name</replaceable> [, ...]
     FROM <replaceable class="PARAMETER">table_name</replaceable>
 </synopsis>
@@ -76,15 +76,15 @@ CREATE STATISTICS [ IF NOT EXISTS ] <replaceable class="PARAMETER">statistics_na
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">statistic_type</replaceable></term>
+    <term><replaceable class="PARAMETER">statistics_kind</replaceable></term>
     <listitem>
      <para>
-      A statistic type to be computed in this statistics object.
-      Currently supported types are
+      A statistics kind to be computed in this statistics object.
+      Currently supported kinds are
       <literal>ndistinct</literal>, which enables n-distinct statistics, and
       <literal>dependencies</literal>, which enables functional
       dependency statistics.
-      If this clause is omitted, all supported statistic types are
+      If this clause is omitted, all supported statistics kinds are
       included in the statistics object.
       For more information, see <xref linkend="planner-stats-extended">
       and <xref linkend="multivariate-statistics-examples">.

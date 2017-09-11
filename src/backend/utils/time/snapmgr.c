@@ -625,7 +625,7 @@ SetTransactionSnapshot(Snapshot sourcesnap, VirtualTransactionId *sourcevxid,
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("could not import the requested snapshot"),
-				 errdetail("The source process with pid %d is not running anymore.",
+				 errdetail("The source process with PID %d is not running anymore.",
 						   sourcepid)));
 
 	/*

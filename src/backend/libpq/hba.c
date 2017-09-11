@@ -1608,7 +1608,7 @@ verify_option_list_length(List *options, char *optionname, List *masters, char *
 
 	ereport(LOG,
 			(errcode(ERRCODE_CONFIG_FILE_ERROR),
-			 errmsg("the number of %s (%i) must be 1 or the same as the number of %s (%i)",
+			 errmsg("the number of %s (%d) must be 1 or the same as the number of %s (%d)",
 					optionname,
 					list_length(options),
 					mastername,

@@ -559,13 +559,13 @@ CheckCmdReplicaIdentity(Relation rel, CmdType cmd)
 	if (cmd == CMD_UPDATE && pubactions->pubupdate)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("cannot update table \"%s\" because it does not have replica identity and publishes updates",
+				 errmsg("cannot update table \"%s\" because it does not have a replica identity and publishes updates",
 						RelationGetRelationName(rel)),
 				 errhint("To enable updating the table, set REPLICA IDENTITY using ALTER TABLE.")));
 	else if (cmd == CMD_DELETE && pubactions->pubdelete)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("cannot delete from table \"%s\" because it does not have replica identity and publishes deletes",
+				 errmsg("cannot delete from table \"%s\" because it does not have a replica identity and publishes deletes",
 						RelationGetRelationName(rel)),
 				 errhint("To enable deleting from the table, set REPLICA IDENTITY using ALTER TABLE.")));
 }
