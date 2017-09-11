@@ -36,12 +36,13 @@ static int	verbose = 0;
 static int	compresslevel = 0;
 static int	noloop = 0;
 static int	standby_message_timeout = 10 * 1000;	/* 10 sec = default */
-static volatile bool time_to_abort = false;
+static volatile bool time_to_stop = false;
 static bool do_create_slot = false;
 static bool slot_exists_ok = false;
 static bool do_drop_slot = false;
 static bool synchronous = false;
 static char *replication_slot = NULL;
+static XLogRecPtr endpos = InvalidXLogRecPtr;
 
 
 static void usage(void);
@@ -77,6 +78,7 @@ usage(void)
 	printf(_("  %s [OPTION]...\n"), progname);
 	printf(_("\nOptions:\n"));
 	printf(_("  -D, --directory=DIR    receive write-ahead log files into this directory\n"));
+	printf(_("  -E, --endpos=LSN       exit after receiving the specified LSN\n"));
 	printf(_("      --if-not-exists    do not error if slot already exists when creating a slot\n"));
 	printf(_("  -n, --no-loop          do not loop on connection lost\n"));
 	printf(_("  -s, --status-interval=SECS\n"
@@ -112,6 +114,16 @@ stop_streaming(XLogRecPtr xlogpos, uint32 timeline, bool segment_finished)
 				progname, (uint32) (xlogpos >> 32), (uint32) xlogpos,
 				timeline);
 
+	if (!XLogRecPtrIsInvalid(endpos) && endpos < xlogpos)
+	{
+		if (verbose)
+			fprintf(stderr, _("%s: stopped streaming at %X/%X (timeline %u)\n"),
+					progname, (uint32) (xlogpos >> 32), (uint32) xlogpos,
+					timeline);
+		time_to_stop = true;
+		return true;
+	}
+
 	/*
 	 * Note that we report the previous, not current, position here. After a
 	 * timeline switch, xlogpos points to the beginning of the segment because
@@ -128,7 +140,7 @@ stop_streaming(XLogRecPtr xlogpos, uint32 timeline, bool segment_finished)
 	prevtimeline = timeline;
 	prevpos = xlogpos;
 
-	if (time_to_abort)
+	if (time_to_stop)
 	{
 		if (verbose)
 			fprintf(stderr, _("%s: received interrupt signal, exiting\n"),
@@ -448,7 +460,7 @@ StreamLog(void)
 static void
 sigint_handler(int signum)
 {
-	time_to_abort = true;
+	time_to_stop = true;
 }
 #endif
 
@@ -460,6 +472,7 @@ main(int argc, char **argv)
 		{"version", no_argument, NULL, 'V'},
 		{"directory", required_argument, NULL, 'D'},
 		{"dbname", required_argument, NULL, 'd'},
+		{"endpos", required_argument, NULL, 'E'},
 		{"host", required_argument, NULL, 'h'},
 		{"port", required_argument, NULL, 'p'},
 		{"username", required_argument, NULL, 'U'},
@@ -481,6 +494,7 @@ main(int argc, char **argv)
 	int			c;
 	int			option_index;
 	char	   *db_name;
+	uint32		hi, lo;
 
 	progname = get_progname(argv[0]);
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pg_basebackup"));
@@ -500,7 +514,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	while ((c = getopt_long(argc, argv, "D:d:h:p:U:s:S:nwWvZ:",
+	while ((c = getopt_long(argc, argv, "D:d:E:h:p:U:s:S:nwWvZ:",
 							long_options, &option_index)) != -1)
 	{
 		switch (c)
@@ -543,6 +557,16 @@ main(int argc, char **argv)
 				break;
 			case 'S':
 				replication_slot = pg_strdup(optarg);
+				break;
+			case 'E':
+				if (sscanf(optarg, "%X/%X", &hi, &lo) != 2)
+				{
+					fprintf(stderr,
+							_("%s: could not parse end position \"%s\"\n"),
+							progname, optarg);
+					exit(1);
+				}
+				endpos = ((uint64) hi) << 32 | lo;
 				break;
 			case 'n':
 				noloop = 1;
@@ -714,11 +738,11 @@ main(int argc, char **argv)
 	while (true)
 	{
 		StreamLog();
-		if (time_to_abort)
+		if (time_to_stop)
 		{
 			/*
-			 * We've been Ctrl-C'ed. That's not an error, so exit without an
-			 * errorcode.
+			 * We've been Ctrl-C'ed or end of streaming position has been
+			 * willingly reached, so exit without an error code.
 			 */
 			exit(0);
 		}

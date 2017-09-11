@@ -99,6 +99,22 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>-E <replaceable>lsn</replaceable></option></term>
+      <term><option>--endpos=<replaceable>lsn</replaceable></option></term>
+      <listitem>
+       <para>
+        Automatically stop replication and exit with normal exit status 0 when
+        receiving reaches the specified LSN.
+       </para>
+
+       <para>
+        If there is a record with LSN exactly equal to <replaceable>lsn</>,
+        the record will be processed.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>--if-not-exists</option></term>
       <listitem>
        <para>
