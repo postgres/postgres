@@ -4811,3 +4811,12 @@ BEGIN
 END; $$ LANGUAGE plpgsql;
 
 SELECT * FROM list_partitioned_table() AS t;
+
+--
+-- Check argument name is used instead of $n in error message
+--
+CREATE FUNCTION fx(x WSlot) RETURNS void AS $$
+BEGIN
+  GET DIAGNOSTICS x = ROW_COUNT;
+  RETURN;
+END; $$ LANGUAGE plpgsql;
