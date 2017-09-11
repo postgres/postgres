@@ -2046,7 +2046,7 @@
 -->
        <para>
         Allow PL/Tcl functions to return composite types and sets
-        (Jim Nasby)
+        (Karl Lehenbauer)
        </para>
       </listitem>
 
