@@ -352,7 +352,7 @@ adjust_outofscope_cursor_vars(struct cursor *cur)
 				else
 				{
 					newvar = new_variable(cat_str(4, mm_strdup("("),
-												  mm_strdup(ecpg_type_name(ptr->variable->type->type)),
+												  mm_strdup(ecpg_type_name(ptr->variable->type->u.element->type)),
 												  mm_strdup(" *)(ECPGget_var("),
 												  mm_strdup(var_text)),
 										  ECPGmake_array_type(ECPGmake_simple_type(ptr->variable->type->u.element->type,
