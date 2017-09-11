@@ -964,5 +964,23 @@ handle_sighup(SIGNAL_ARGS)
     </para>
    </simplesect>
 
+   <simplesect>
+    <title>Calling Function Pointers</title>
+
+    <para>
+     For clarity, it is preferred to explicitly dereference a function pointer
+     when calling the pointed-to function if the pointer is a simple variable,
+     for example:
+<programlisting>
+(*emit_log_hook) (edata);
+</programlisting>
+     (even though <literal>emit_log_hook(edata)</literal> would also work).
+     When the function pointer is part of a structure, then the extra
+     punctuation can and usually should be omitted, for example:
+<programlisting>
+paramInfo->paramFetch(paramInfo, paramId);
+</programlisting>
+    </para>
+   </simplesect>
   </sect1>
  </chapter>
