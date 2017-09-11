@@ -1594,7 +1594,8 @@
 -->
       <para>
        Add <link linkend="SQL-CREATETRIGGER"><literal>AFTER</> trigger</>
-       transition tables to record changed rows (Kevin Grittner)
+       transition tables to record changed rows (Kevin Grittner, Thomas
+       Munro)
       </para>
 
       <para>
