@@ -722,6 +722,11 @@ static const char *memory_units_hint = gettext_noop("Valid units for this parame
 
 static const unit_conversion memory_unit_conversion_table[] =
 {
+	{"GB", GUC_UNIT_BYTE, 1024 * 1024 * 1024},
+	{"MB", GUC_UNIT_BYTE, 1024 * 1024},
+	{"kB", GUC_UNIT_BYTE, 1024},
+	{"B", GUC_UNIT_BYTE, 1},
+
 	{"TB", GUC_UNIT_KB, 1024 * 1024 * 1024},
 	{"GB", GUC_UNIT_KB, 1024 * 1024},
 	{"MB", GUC_UNIT_KB, 1024},
@@ -2863,11 +2868,7 @@ static struct config_int ConfigureNamesInt[] =
 		{"track_activity_query_size", PGC_POSTMASTER, RESOURCES_MEM,
 			gettext_noop("Sets the size reserved for pg_stat_activity.query, in bytes."),
 			NULL,
-
-			/*
-			 * There is no _bytes_ unit, so the user can't supply units for
-			 * this.
-			 */
+			GUC_UNIT_BYTE
 		},
 		&pgstat_track_activity_query_size,
 		1024, 100, 102400,
@@ -8113,6 +8114,9 @@ GetConfigOptionByNum(int varnum, const char **values, bool *noshow)
 	{
 		switch (conf->flags & (GUC_UNIT_MEMORY | GUC_UNIT_TIME))
 		{
+			case GUC_UNIT_BYTE:
+				values[2] = "B";
+				break;
 			case GUC_UNIT_KB:
 				values[2] = "kB";
 				break;

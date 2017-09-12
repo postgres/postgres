@@ -219,6 +219,7 @@ typedef enum
 #define GUC_UNIT_BLOCKS			0x2000	/* value is in blocks */
 #define GUC_UNIT_XBLOCKS		0x3000	/* value is in xlog blocks */
 #define GUC_UNIT_MB				0x4000	/* value is in megabytes */
+#define GUC_UNIT_BYTE			0x8000	/* value is in bytes */
 #define GUC_UNIT_MEMORY			0xF000	/* mask for size-related units */
 
 #define GUC_UNIT_MS			   0x10000	/* value is in milliseconds */
