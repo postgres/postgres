@@ -1089,7 +1089,7 @@ dt2time(double jd, int *hour, int *min, int *sec, fsec_t *fsec)
  */
 static int
 DecodeNumberField(int len, char *str, int fmask,
-				  int *tmask, struct tm *tm, fsec_t *fsec, int *is2digits)
+				  int *tmask, struct tm *tm, fsec_t *fsec, bool *is2digits)
 {
 	char	   *cp;
 
@@ -1199,7 +1199,7 @@ DecodeNumberField(int len, char *str, int fmask,
  */
 static int
 DecodeNumber(int flen, char *str, int fmask,
-			 int *tmask, struct tm *tm, fsec_t *fsec, int *is2digits, bool EuroDates)
+			 int *tmask, struct tm *tm, fsec_t *fsec, bool *is2digits, bool EuroDates)
 {
 	int			val;
 	char	   *cp;
@@ -1314,8 +1314,8 @@ DecodeDate(char *str, int fmask, int *tmask, struct tm *tm, bool EuroDates)
 	int			nf = 0;
 	int			i,
 				len;
-	int			bc = FALSE;
-	int			is2digits = FALSE;
+	bool		bc = FALSE;
+	bool		is2digits = FALSE;
 	int			type,
 				val,
 				dmask = 0;
@@ -1792,9 +1792,9 @@ DecodeDateTime(char **field, int *ftype, int nf,
 	int			i;
 	int			val;
 	int			mer = HR24;
-	int			haveTextMonth = FALSE;
-	int			is2digits = FALSE;
-	int			bc = FALSE;
+	bool		haveTextMonth = FALSE;
+	bool		is2digits = FALSE;
+	bool		bc = FALSE;
 	int			t = 0;
 	int		   *tzp = &t;
 
