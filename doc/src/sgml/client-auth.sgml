@@ -1529,7 +1529,8 @@ ldap://<replaceable>host</replaceable>[:<replaceable>port</replaceable>]/<replac
 </synopsis>
          <replaceable>scope</replaceable> must be one
          of <literal>base</literal>, <literal>one</literal>, <literal>sub</literal>,
-         typically the last.  <replaceable>attribute</replaceable> can
+         typically the last.  (The default is <literal>base</literal>, which
+         is normally not useful in this application.)  <replaceable>attribute</replaceable> can
          nominate a single attribute, in which case it is used as a value for
          <literal>ldapsearchattribute</literal>.  If
          <replaceable>attribute</replaceable> is empty then
