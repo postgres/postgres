@@ -337,7 +337,7 @@ helpVariables(unsigned short int pager)
 	 * Windows builds currently print one more line than non-Windows builds.
 	 * Using the larger number is fine.
 	 */
-	output = PageOutput(147, pager ? &(pset.popt.topt) : NULL);
+	output = PageOutput(156, pager ? &(pset.popt.topt) : NULL);
 
 	fprintf(output, _("List of specially treated variables\n\n"));
 
@@ -360,6 +360,8 @@ helpVariables(unsigned short int pager)
 					  "    if set to \"noexec\", just show them without execution\n"));
 	fprintf(output, _("  ENCODING\n"
 					  "    current client character set encoding\n"));
+	fprintf(output, _("  ERROR\n"
+					  "    true if last query failed, else false\n"));
 	fprintf(output, _("  FETCH_COUNT\n"
 					  "    the number of result rows to fetch and display at a time (0 = unlimited)\n"));
 	fprintf(output, _("  HISTCONTROL\n"
@@ -374,6 +376,9 @@ helpVariables(unsigned short int pager)
 					  "    number of EOFs needed to terminate an interactive session\n"));
 	fprintf(output, _("  LASTOID\n"
 					  "    value of the last affected OID\n"));
+	fprintf(output, _("  LAST_ERROR_MESSAGE\n"
+					  "  LAST_ERROR_SQLSTATE\n"
+					  "    message and SQLSTATE of last error, or empty string and \"00000\" if none\n"));
 	fprintf(output, _("  ON_ERROR_ROLLBACK\n"
 					  "    if set, an error doesn't stop a transaction (uses implicit savepoints)\n"));
 	fprintf(output, _("  ON_ERROR_STOP\n"
@@ -388,6 +393,8 @@ helpVariables(unsigned short int pager)
 					  "    specifies the prompt used during COPY ... FROM STDIN\n"));
 	fprintf(output, _("  QUIET\n"
 					  "    run quietly (same as -q option)\n"));
+	fprintf(output, _("  ROW_COUNT\n"
+					  "    number of rows returned or affected by last query, or 0\n"));
 	fprintf(output, _("  SERVER_VERSION_NAME\n"
 					  "  SERVER_VERSION_NUM\n"
 					  "    server's version (in short string or numeric format)\n"));
@@ -397,6 +404,8 @@ helpVariables(unsigned short int pager)
 					  "    if set, end of line terminates SQL commands (same as -S option)\n"));
 	fprintf(output, _("  SINGLESTEP\n"
 					  "    single-step mode (same as -s option)\n"));
+	fprintf(output, _("  SQLSTATE\n"
+					  "    SQLSTATE of last query, or \"00000\" if no error\n"));
 	fprintf(output, _("  USER\n"
 					  "    the currently connected database user\n"));
 	fprintf(output, _("  VERBOSITY\n"

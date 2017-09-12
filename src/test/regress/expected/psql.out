@@ -3074,3 +3074,134 @@ SELECT 3
 UNION SELECT 4 
 UNION SELECT 5
 ORDER BY 1;
+-- tests for special result variables
+-- working query, 2 rows selected
+SELECT 1 AS stuff UNION SELECT 2;
+ stuff 
+-------
+     1
+     2
+(2 rows)
+
+\echo 'error:' :ERROR
+error: false
+\echo 'error code:' :SQLSTATE
+error code: 00000
+\echo 'number of rows:' :ROW_COUNT
+number of rows: 2
+-- syntax error
+SELECT 1 UNION;
+ERROR:  syntax error at or near ";"
+LINE 1: SELECT 1 UNION;
+                      ^
+\echo 'error:' :ERROR
+error: true
+\echo 'error code:' :SQLSTATE
+error code: 42601
+\echo 'number of rows:' :ROW_COUNT
+number of rows: 0
+\echo 'last error message:' :LAST_ERROR_MESSAGE
+last error message: syntax error at or near ";"
+\echo 'last error code:' :LAST_ERROR_SQLSTATE
+last error code: 42601
+-- empty query
+;
+\echo 'error:' :ERROR
+error: false
+\echo 'error code:' :SQLSTATE
+error code: 00000
+\echo 'number of rows:' :ROW_COUNT
+number of rows: 0
+-- must have kept previous values
+\echo 'last error message:' :LAST_ERROR_MESSAGE
+last error message: syntax error at or near ";"
+\echo 'last error code:' :LAST_ERROR_SQLSTATE
+last error code: 42601
+-- other query error
+DROP TABLE this_table_does_not_exist;
+ERROR:  table "this_table_does_not_exist" does not exist
+\echo 'error:' :ERROR
+error: true
+\echo 'error code:' :SQLSTATE
+error code: 42P01
+\echo 'number of rows:' :ROW_COUNT
+number of rows: 0
+\echo 'last error message:' :LAST_ERROR_MESSAGE
+last error message: table "this_table_does_not_exist" does not exist
+\echo 'last error code:' :LAST_ERROR_SQLSTATE
+last error code: 42P01
+-- working \gdesc
+SELECT 3 AS three, 4 AS four \gdesc
+ Column |  Type   
+--------+---------
+ three  | integer
+ four   | integer
+(2 rows)
+
+\echo 'error:' :ERROR
+error: false
+\echo 'error code:' :SQLSTATE
+error code: 00000
+\echo 'number of rows:' :ROW_COUNT
+number of rows: 2
+-- \gdesc with an error
+SELECT 4 AS \gdesc
+ERROR:  syntax error at end of input
+LINE 1: SELECT 4 AS 
+                    ^
+\echo 'error:' :ERROR
+error: true
+\echo 'error code:' :SQLSTATE
+error code: 42601
+\echo 'number of rows:' :ROW_COUNT
+number of rows: 0
+\echo 'last error message:' :LAST_ERROR_MESSAGE
+last error message: syntax error at end of input
+\echo 'last error code:' :LAST_ERROR_SQLSTATE
+last error code: 42601
+-- check row count for a cursor-fetched query
+\set FETCH_COUNT 10
+select unique2 from tenk1 limit 19;
+ unique2 
+---------
+       0
+       1
+       2
+       3
+       4
+       5
+       6
+       7
+       8
+       9
+      10
+      11
+      12
+      13
+      14
+      15
+      16
+      17
+      18
+(19 rows)
+
+\echo 'error:' :ERROR
+error: false
+\echo 'error code:' :SQLSTATE
+error code: 00000
+\echo 'number of rows:' :ROW_COUNT
+number of rows: 19
+-- cursor-fetched query with an error
+select 1/unique1 from tenk1;
+ERROR:  division by zero
+\echo 'error:' :ERROR
+error: true
+\echo 'error code:' :SQLSTATE
+error code: 22012
+\echo 'number of rows:' :ROW_COUNT
+number of rows: 0
+\echo 'last error message:' :LAST_ERROR_MESSAGE
+last error message: division by zero
+\echo 'last error code:' :LAST_ERROR_SQLSTATE
+last error code: 22012
+\unset FETCH_COUNT

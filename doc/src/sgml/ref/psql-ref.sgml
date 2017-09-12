@@ -3518,6 +3518,16 @@ bar
       </varlistentry>
 
       <varlistentry>
+       <term><varname>ERROR</varname></term>
+       <listitem>
+        <para>
+         <literal>true</> if the last SQL query failed, <literal>false</> if
+         it succeeded.  See also <varname>SQLSTATE</>.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
         <term><varname>FETCH_COUNT</varname></term>
         <listitem>
         <para>
@@ -3654,6 +3664,19 @@ bar
       </varlistentry>
 
       <varlistentry>
+       <term><varname>LAST_ERROR_MESSAGE</varname></term>
+       <term><varname>LAST_ERROR_SQLSTATE</varname></term>
+       <listitem>
+        <para>
+         The primary error message and associated SQLSTATE code for the most
+         recent failed query in the current <application>psql</> session, or
+         an empty string and <literal>00000</> if no error has occurred in
+         the current session.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
       <term>
        <varname>ON_ERROR_ROLLBACK</varname>
        <indexterm>
@@ -3733,6 +3756,16 @@ bar
       </varlistentry>
 
       <varlistentry>
+       <term><varname>ROW_COUNT</varname></term>
+       <listitem>
+        <para>
+         The number of rows returned or affected by the last SQL query, or 0
+         if the query failed or did not report a row count.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
         <term><varname>SERVER_VERSION_NAME</varname></term>
         <term><varname>SERVER_VERSION_NUM</varname></term>
         <listitem>
@@ -3782,6 +3815,17 @@ bar
         line option <option>-s</option>.
         </para>
         </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><varname>SQLSTATE</varname></term>
+       <listitem>
+        <para>
+         The error code (see <xref linkend="errcodes-appendix">) associated
+         with the last SQL query's failure, or <literal>00000</> if it
+         succeeded.
+        </para>
+       </listitem>
       </varlistentry>
 
       <varlistentry>
