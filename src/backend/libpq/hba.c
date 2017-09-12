@@ -1505,22 +1505,24 @@ parse_hba_line(TokenizedLine *tok_line, int elevel)
 		/*
 		 * LDAP can operate in two modes: either with a direct bind, using
 		 * ldapprefix and ldapsuffix, or using a search+bind, using
-		 * ldapbasedn, ldapbinddn, ldapbindpasswd and ldapsearchattribute.
-		 * Disallow mixing these parameters.
+		 * ldapbasedn, ldapbinddn, ldapbindpasswd and one of
+		 * ldapsearchattribute or ldapsearchfilter.  Disallow mixing these
+		 * parameters.
 		 */
 		if (parsedline->ldapprefix || parsedline->ldapsuffix)
 		{
 			if (parsedline->ldapbasedn ||
 				parsedline->ldapbinddn ||
 				parsedline->ldapbindpasswd ||
-				parsedline->ldapsearchattribute)
+				parsedline->ldapsearchattribute ||
+				parsedline->ldapsearchfilter)
 			{
 				ereport(elevel,
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
-						 errmsg("cannot use ldapbasedn, ldapbinddn, ldapbindpasswd, ldapsearchattribute, or ldapurl together with ldapprefix"),
+						 errmsg("cannot use ldapbasedn, ldapbinddn, ldapbindpasswd, ldapsearchattribute, ldapsearchfilter or ldapurl together with ldapprefix"),
 						 errcontext("line %d of configuration file \"%s\"",
 									line_num, HbaFileName)));
-				*err_msg = "cannot use ldapbasedn, ldapbinddn, ldapbindpasswd, ldapsearchattribute, or ldapurl together with ldapprefix";
+				*err_msg = "cannot use ldapbasedn, ldapbinddn, ldapbindpasswd, ldapsearchattribute, ldapsearchfilter or ldapurl together with ldapprefix";
 				return NULL;
 			}
 		}
@@ -1532,6 +1534,22 @@ parse_hba_line(TokenizedLine *tok_line, int elevel)
 					 errcontext("line %d of configuration file \"%s\"",
 								line_num, HbaFileName)));
 			*err_msg = "authentication method \"ldap\" requires argument \"ldapbasedn\", \"ldapprefix\", or \"ldapsuffix\" to be set";
+			return NULL;
+		}
+
+		/*
+		 * When using search+bind, you can either use a simple attribute
+		 * (defaulting to "uid") or a fully custom search filter.  You can't
+		 * do both.
+		 */
+		if (parsedline->ldapsearchattribute && parsedline->ldapsearchfilter)
+		{
+			ereport(elevel,
+					(errcode(ERRCODE_CONFIG_FILE_ERROR),
+					 errmsg("cannot use ldapsearchattribute together with ldapsearchfilter"),
+					 errcontext("line %d of configuration file \"%s\"",
+								line_num, HbaFileName)));
+			*err_msg = "cannot use ldapsearchattribute together with ldapsearchfilter";
 			return NULL;
 		}
 	}
@@ -1729,14 +1747,7 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline,
 			hbaline->ldapsearchattribute = pstrdup(urldata->lud_attrs[0]);	/* only use first one */
 		hbaline->ldapscope = urldata->lud_scope;
 		if (urldata->lud_filter)
-		{
-			ereport(elevel,
-					(errcode(ERRCODE_CONFIG_FILE_ERROR),
-					 errmsg("filters not supported in LDAP URLs")));
-			*err_msg = "filters not supported in LDAP URLs";
-			ldap_free_urldesc(urldata);
-			return false;
-		}
+			hbaline->ldapsearchfilter = pstrdup(urldata->lud_filter);
 		ldap_free_urldesc(urldata);
 #else							/* not OpenLDAP */
 		ereport(elevel,
@@ -1787,6 +1798,11 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline,
 	{
 		REQUIRE_AUTH_OPTION(uaLDAP, "ldapsearchattribute", "ldap");
 		hbaline->ldapsearchattribute = pstrdup(val);
+	}
+	else if (strcmp(name, "ldapsearchfilter") == 0)
+	{
+		REQUIRE_AUTH_OPTION(uaLDAP, "ldapsearchfilter", "ldap");
+		hbaline->ldapsearchfilter = pstrdup(val);
 	}
 	else if (strcmp(name, "ldapbasedn") == 0)
 	{
@@ -2265,6 +2281,11 @@ gethba_options(HbaLine *hba)
 			options[noptions++] =
 				CStringGetTextDatum(psprintf("ldapsearchattribute=%s",
 											 hba->ldapsearchattribute));
+
+		if (hba->ldapsearchfilter)
+			options[noptions++] =
+				CStringGetTextDatum(psprintf("ldapsearchfilter=%s",
+											 hba->ldapsearchfilter));
 
 		if (hba->ldapscope)
 			options[noptions++] =

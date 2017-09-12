@@ -1508,19 +1508,33 @@ omicron         bryanh                  guest1
        </listitem>
       </varlistentry>
       <varlistentry>
+       <term><literal>ldapsearchfilter</literal></term>
+       <listitem>
+        <para>
+         The search filter to use when doing search+bind authentication.
+         Occurrences of <literal>$username</literal> will be replaced with the
+         user name.  This allows for more flexible search filters than
+         <literal>ldapsearchattribute</literal>.
+        </para>
+       </listitem>
+      </varlistentry>
+      <varlistentry>
        <term><literal>ldapurl</literal></term>
        <listitem>
         <para>
          An RFC 4516 LDAP URL.  This is an alternative way to write some of the
          other LDAP options in a more compact and standard form.  The format is
 <synopsis>
-ldap://<replaceable>host</replaceable>[:<replaceable>port</replaceable>]/<replaceable>basedn</replaceable>[?[<replaceable>attribute</replaceable>][?[<replaceable>scope</replaceable>]]]
+ldap://<replaceable>host</replaceable>[:<replaceable>port</replaceable>]/<replaceable>basedn</replaceable>[?[<replaceable>attribute</replaceable>][?[<replaceable>scope</replaceable>][?[<replaceable>filter</replaceable>]]]]
 </synopsis>
          <replaceable>scope</replaceable> must be one
          of <literal>base</literal>, <literal>one</literal>, <literal>sub</literal>,
-         typically the latter.  Only one attribute is used, and some other
-         components of standard LDAP URLs such as filters and extensions are
-         not supported.
+         typically the last.  <replaceable>attribute</replaceable> can
+         nominate a single attribute, in which case it is used as a value for
+         <literal>ldapsearchattribute</literal>.  If
+         <replaceable>attribute</replaceable> is empty then
+         <replaceable>filter</replaceable> can be used as a value for
+         <literal>ldapsearchfilter</literal>.
         </para>
 
         <para>
@@ -1547,6 +1561,17 @@ ldap://<replaceable>host</replaceable>[:<replaceable>port</replaceable>]/<replac
    <para>
     It is an error to mix configuration options for simple bind with options
     for search+bind.
+   </para>
+
+   <para>
+    When using search+bind mode, the search can be performed using a single
+    attribute specified with <literal>ldapsearchattribute</literal>, or using
+    a custom search filter specified with
+    <literal>ldapsearchfilter</literal>.
+    Specifying <literal>ldapsearchattribute=foo</literal> is equivalent to
+    specifying <literal>ldapsearchfilter="(foo=$username)"</literal>.  If neither
+    option is specified the default is
+    <literal>ldapsearchattribute=uid</literal>.
    </para>
 
    <para>
@@ -1582,6 +1607,16 @@ host ... ldap ldapurl="ldap://ldap.example.net/dc=example,dc=net?uid?sub"
 </programlisting>
     Some other software that supports authentication against LDAP uses the
     same URL format, so it will be easier to share the configuration.
+   </para>
+
+   <para>
+    Here is an example for a search+bind configuration that uses
+    <literal>ldapsearchfilter</literal> instead of
+    <literal>ldapsearchattribute</literal> to allow authentication by
+    user ID or email address:
+<programlisting>
+host ... ldap ldapserver=ldap.example.net ldapbasedn="dc=example, dc=net" ldapsearchfilter="(|(uid=$username)(mail=$username))"
+</programlisting>
    </para>
 
    <tip>
