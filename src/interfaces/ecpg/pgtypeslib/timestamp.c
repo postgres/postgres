@@ -192,7 +192,7 @@ timestamp2tm(timestamp dt, int *tzp, struct tm *tm, fsec_t *fsec, const char **t
 /* EncodeSpecialTimestamp()
  *	* Convert reserved timestamp data type to string.
  *	 */
-static int
+static void
 EncodeSpecialTimestamp(timestamp dt, char *str)
 {
 	if (TIMESTAMP_IS_NOBEGIN(dt))
@@ -200,10 +200,8 @@ EncodeSpecialTimestamp(timestamp dt, char *str)
 	else if (TIMESTAMP_IS_NOEND(dt))
 		strcpy(str, LATE);
 	else
-		return FALSE;
-
-	return TRUE;
-}								/* EncodeSpecialTimestamp() */
+		abort();				/* shouldn't happen */
+}
 
 timestamp
 PGTYPEStimestamp_from_asc(char *str, char **endptr)

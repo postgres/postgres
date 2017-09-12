@@ -331,8 +331,6 @@ DecodeISO8601Interval(char *str,
  *	* ECPG semes not to have a global IntervalStyle
  *	  so added
  *		int IntervalStyle = INTSTYLE_POSTGRES;
- *
- *	* Assert wasn't available so removed it.
  */
 int
 DecodeInterval(char **field, int *ftype, int nf,	/* int range, */
@@ -374,7 +372,7 @@ DecodeInterval(char **field, int *ftype, int nf,	/* int range, */
 				 * least one digit; there could be ':', '.', '-' embedded in
 				 * it as well.
 				 */
-				/* Assert(*field[i] == '-' || *field[i] == '+'); */
+				Assert(*field[i] == '-' || *field[i] == '+');
 
 				/*
 				 * Try for hh:mm or hh:mm:ss.  If not, fall through to
@@ -771,7 +769,7 @@ AppendSeconds(char *cp, int sec, fsec_t fsec, int precision, bool fillzeros)
  * Change pg_tm to tm
  */
 
-int
+void
 EncodeInterval(struct /* pg_ */ tm *tm, fsec_t fsec, int style, char *str)
 {
 	char	   *cp = str;
@@ -947,9 +945,7 @@ EncodeInterval(struct /* pg_ */ tm *tm, fsec_t fsec, int style, char *str)
 				strcat(cp, " ago");
 			break;
 	}
-
-	return 0;
-}								/* EncodeInterval() */
+}
 
 
 /* interval2tm()
@@ -1091,11 +1087,7 @@ PGTYPESinterval_to_asc(interval * span)
 		return NULL;
 	}
 
-	if (EncodeInterval(tm, fsec, IntervalStyle, buf) != 0)
-	{
-		errno = PGTYPES_INTVL_BAD_INTERVAL;
-		return NULL;
-	}
+	EncodeInterval(tm, fsec, IntervalStyle, buf);
 
 	return pgtypes_strdup(buf);
 }

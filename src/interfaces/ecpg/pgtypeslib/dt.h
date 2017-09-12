@@ -313,12 +313,12 @@ do { \
 
 int			DecodeInterval(char **, int *, int, int *, struct tm *, fsec_t *);
 int			DecodeTime(char *, int *, struct tm *, fsec_t *);
-int			EncodeDateTime(struct tm *tm, fsec_t fsec, bool print_tz, int tz, const char *tzn, int style, char *str, bool EuroDates);
-int			EncodeInterval(struct tm *tm, fsec_t fsec, int style, char *str);
+void		EncodeDateTime(struct tm *tm, fsec_t fsec, bool print_tz, int tz, const char *tzn, int style, char *str, bool EuroDates);
+void		EncodeInterval(struct tm *tm, fsec_t fsec, int style, char *str);
 int			tm2timestamp(struct tm *, fsec_t, int *, timestamp *);
 int			DecodeUnits(int field, char *lowtoken, int *val);
 bool		CheckDateTokenTables(void);
-int			EncodeDateOnly(struct tm *tm, int style, char *str, bool EuroDates);
+void		EncodeDateOnly(struct tm *tm, int style, char *str, bool EuroDates);
 int			GetEpochTime(struct tm *);
 int			ParseDateTime(char *, char *, char **, int *, int *, char **);
 int			DecodeDateTime(char **, int *, int, int *, struct tm *, fsec_t *, bool);

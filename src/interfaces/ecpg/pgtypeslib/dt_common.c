@@ -671,11 +671,10 @@ DecodeSpecial(int field, char *lowtoken, int *val)
 /* EncodeDateOnly()
  * Encode date as local time.
  */
-int
+void
 EncodeDateOnly(struct tm *tm, int style, char *str, bool EuroDates)
 {
-	if (tm->tm_mon < 1 || tm->tm_mon > MONTHS_PER_YEAR)
-		return -1;
+	Assert(tm->tm_mon >= 1 && tm->tm_mon <= MONTHS_PER_YEAR);
 
 	switch (style)
 	{
@@ -723,9 +722,7 @@ EncodeDateOnly(struct tm *tm, int style, char *str, bool EuroDates)
 				sprintf(str + 5, "-%04d %s", -(tm->tm_year - 1), "BC");
 			break;
 	}
-
-	return TRUE;
-}								/* EncodeDateOnly() */
+}
 
 void
 TrimTrailingZeros(char *str)
@@ -758,7 +755,7 @@ TrimTrailingZeros(char *str)
  *	US - mm/dd/yyyy
  *	European - dd/mm/yyyy
  */
-int
+void
 EncodeDateTime(struct tm *tm, fsec_t fsec, bool print_tz, int tz, const char *tzn, int style, char *str, bool EuroDates)
 {
 	int			day,
@@ -951,9 +948,7 @@ EncodeDateTime(struct tm *tm, fsec_t fsec, bool print_tz, int tz, const char *tz
 			}
 			break;
 	}
-
-	return TRUE;
-}								/* EncodeDateTime() */
+}
 
 int
 GetEpochTime(struct tm *tm)
