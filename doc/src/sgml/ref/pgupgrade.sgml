@@ -332,7 +332,7 @@ NET STOP postgresql-&majorversion;
     <para>
      Also, if upgrading standby servers, change <varname>wal_level</>
      to <literal>replica</> in the <filename>postgresql.conf</> file on
-     the new master cluster.
+     the new primary cluster.
     </para>
    </step>
 
@@ -425,8 +425,8 @@ pg_upgrade.exe
      linkend="streaming-replication">) or Log-Shipping (see <xref
      linkend="warm-standby">) standby servers, follow these steps to
      upgrade them.  You will not be running <application>pg_upgrade</>
-     on the standby servers, but rather <application>rsync</>.  Do not
-     start any servers yet.
+     on the standby servers, but rather <application>rsync</> on the
+     primary.  Do not start any servers yet.
     </para>
 
     <substeps>
@@ -455,7 +455,7 @@ pg_upgrade.exe
 
       <para>
        Install the same custom shared object files on the new standbys
-       that you installed in the new master cluster.
+       that you installed in the new primary cluster.
       </para>
      </step>
 
@@ -482,25 +482,33 @@ pg_upgrade.exe
       <title>Run <application>rsync</></title>
 
       <para>
-       From a directory that is above the old and new database cluster
-       directories, run this for each standby:
+       From a directory on the primary server that is above the old and
+       new database cluster directories, run this on the
+       <emphasis>primary</> for each standby server:
 
 <programlisting>
 rsync --archive --delete --hard-links --size-only old_pgdata new_pgdata remote_dir
 </programlisting>
 
        where <option>old_pgdata</> and <option>new_pgdata</> are relative
-       to the current directory, and <option>remote_dir</> is
-       <emphasis>above</> the old and new cluster directories on
-       the standby server.  The old and new relative cluster paths
-       must match on the master and standby server.  Consult the
+       to the current directory on the primary, and <option>remote_dir</>
+       is <emphasis>above</> the old and new cluster directories on
+       the standby.  The old and new relative cluster paths
+       must match on the primary and standby server.  Consult the
        <application>rsync</> manual page for details on specifying the
        remote directory, e.g. <literal>standbyhost:/opt/PostgreSQL/</>.
-       <application>rsync</> will be fast when <application>pg_upgrade</>'s
-       <option>--link</> mode is used because it will create hard links
-       on the remote server rather than transferring user data.
-       Unfortunately, <application>rsync</> needlessly copies the
-       files associated with temporary and unlogged tables.
+      </para>
+
+      <para>
+       What <application>rsync</> does is to copy files from the
+       primary to the standby, and, if <application>pg_upgrade</>'s
+       <option>--link</> mode was used, link files from the old to
+       new clusters on the standby.  It links the same files that
+       <application>pg_upgrade</> linked in the primary old and new
+       clusters.  (Of course, linking speeds up <application>rsync</>.)
+       Unfortunately, <application>rsync</> needlessly copies files
+       associated with temporary and unlogged tables because these files
+       don't normally exist on standby servers.
       </para>
 
       <para>
@@ -518,7 +526,7 @@ rsync --archive --delete --hard-links --size-only old_pgdata new_pgdata remote_d
        Configure the servers for log shipping.  (You do not need to run
        <function>pg_start_backup()</> and <function>pg_stop_backup()</>
        or take a file system backup as the standbys are still synchronized
-       with the master.)
+       with the primary.)
       </para>
      </step>
 
