@@ -423,10 +423,12 @@ pg_upgrade.exe
     <para>
      If you have Streaming Replication (see <xref
      linkend="streaming-replication">) or Log-Shipping (see <xref
-     linkend="warm-standby">) standby servers, follow these steps to
-     upgrade them.  You will not be running <application>pg_upgrade</>
-     on the standby servers, but rather <application>rsync</> on the
-     primary.  Do not start any servers yet.
+     linkend="warm-standby">) standby servers, and used link mode,
+     follow these steps to upgrade them.  You will not be running
+     <application>pg_upgrade</> on the standby servers, but rather
+     <application>rsync</> on the primary.  Do not start any servers yet.
+     If you did <emphasis>not</> use link mode, skip the instructions in
+     this section and simply recreate the standby servers.
     </para>
 
     <substeps>
@@ -482,9 +484,11 @@ pg_upgrade.exe
       <title>Run <application>rsync</></title>
 
       <para>
-       From a directory on the primary server that is above the old and
-       new database cluster directories, run this on the
-       <emphasis>primary</> for each standby server:
+       When using link mode, standby servers can be quickly upgraded using
+       <application>rsync</>.  To accomplish this, from a directory on
+       the primary server that is above the old and new database cluster
+       directories, run this on the <emphasis>primary</> for each standby
+       server:
 
 <programlisting>
 rsync --archive --delete --hard-links --size-only old_pgdata new_pgdata remote_dir
@@ -492,30 +496,44 @@ rsync --archive --delete --hard-links --size-only old_pgdata new_pgdata remote_d
 
        where <option>old_pgdata</> and <option>new_pgdata</> are relative
        to the current directory on the primary, and <option>remote_dir</>
-       is <emphasis>above</> the old and new cluster directories on
-       the standby.  The old and new relative cluster paths
-       must match on the primary and standby server.  Consult the
+       is <emphasis>above</> the old and new cluster directories
+       on the standby.  The directory structure under the specified
+       directories on the primary and standbys must match.  Consult the
        <application>rsync</> manual page for details on specifying the
-       remote directory, e.g. <literal>standbyhost:/opt/PostgreSQL/</>.
+       remote directory, e.g.
+
+<programlisting>
+rsync --archive --delete --hard-links --size-only /opt/PostgreSQL/9.5/data \
+      /opt/PostgreSQL/9.6/data standby.example.com:/opt/PostgreSQL
+</programlisting>
+
       </para>
 
       <para>
-       What <application>rsync</> does is to copy files from the
-       primary to the standby, and, if <application>pg_upgrade</>'s
-       <option>--link</> mode was used, link files from the old to
-       new clusters on the standby.  It links the same files that
-       <application>pg_upgrade</> linked in the primary old and new
-       clusters.  (Of course, linking speeds up <application>rsync</>.)
-       Unfortunately, <application>rsync</> needlessly copies files
-       associated with temporary and unlogged tables because these files
-       don't normally exist on standby servers.
+       What this does is to record the links created by
+       <application>pg_upgrade</>'s link mode that connect files in the
+       old and new clusters on the primary server.  It then finds matching
+       files in the standby's old cluster and creates links for them in the
+       standby's new cluster.  Files that were not linked on the primary
+       are copied from the primary to the standby.  (They are usually
+       small.)  This provides rapid standby upgrades.  Unfortunately,
+       <application>rsync</> needlessly copies files associated with
+       temporary and unlogged tables because these files don't normally
+       exist on standby servers.
       </para>
 
       <para>
        If you have tablespaces, you will need to run a similar
-       <application>rsync</> command for each tablespace directory.  If you
-       have relocated <filename>pg_wal</> outside the data directories,
-       <application>rsync</> must be run on those directories too.
+       <application>rsync</> command for each tablespace directory, e.g.:
+
+<programlisting>
+rsync --archive --delete --hard-links --size-only /vol1/pg_tblsp/PG_9.5_201510051 \
+      /vol1/pg_tblsp/PG_9.6_201608131 standby.example.com:/vol1/pg_tblsp
+</programlisting>
+
+       If you have relocated <filename>pg_wal</> outside the data
+       directories, <application>rsync</> must be run on those directories
+       too.
       </para>
      </step>
 
