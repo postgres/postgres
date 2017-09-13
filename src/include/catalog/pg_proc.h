@@ -264,6 +264,15 @@ DESCR("join selectivity of < and related operators on scalar datatypes");
 DATA(insert OID = 108 (  scalargtjoinsel   PGNSP PGUID 12 1 0 0 0 f f f f t f s s 5 0 701 "2281 26 2281 21 2281" _null_ _null_ _null_ _null_ _null_ scalargtjoinsel _null_ _null_ _null_ ));
 DESCR("join selectivity of > and related operators on scalar datatypes");
 
+DATA(insert OID = 336 (  scalarlesel	   PGNSP PGUID 12 1 0 0 0 f f f f t f s s 4 0 701 "2281 26 2281 23" _null_ _null_ _null_ _null_ _null_	scalarlesel _null_ _null_ _null_ ));
+DESCR("restriction selectivity of <= and related operators on scalar datatypes");
+DATA(insert OID = 337 (  scalargesel	   PGNSP PGUID 12 1 0 0 0 f f f f t f s s 4 0 701 "2281 26 2281 23" _null_ _null_ _null_ _null_ _null_	scalargesel _null_ _null_ _null_ ));
+DESCR("restriction selectivity of >= and related operators on scalar datatypes");
+DATA(insert OID = 386 (  scalarlejoinsel   PGNSP PGUID 12 1 0 0 0 f f f f t f s s 5 0 701 "2281 26 2281 21 2281" _null_ _null_ _null_ _null_ _null_ scalarlejoinsel _null_ _null_ _null_ ));
+DESCR("join selectivity of <= and related operators on scalar datatypes");
+DATA(insert OID = 398 (  scalargejoinsel   PGNSP PGUID 12 1 0 0 0 f f f f t f s s 5 0 701 "2281 26 2281 21 2281" _null_ _null_ _null_ _null_ _null_ scalargejoinsel _null_ _null_ _null_ ));
+DESCR("join selectivity of >= and related operators on scalar datatypes");
+
 DATA(insert OID =  109 (  unknownin		   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 705 "2275" _null_ _null_ _null_ _null_ _null_ unknownin _null_ _null_ _null_ ));
 DESCR("I/O");
 DATA(insert OID =  110 (  unknownout	   PGNSP PGUID 12 1 0 0 0 f f f f t f i s 1 0 2275 "705" _null_ _null_ _null_ _null_ _null_ unknownout _null_ _null_ _null_ ));

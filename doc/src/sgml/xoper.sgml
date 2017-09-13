@@ -242,20 +242,11 @@ column OP constant
     <simplelist>
      <member><function>eqsel</> for <literal>=</></member>
      <member><function>neqsel</> for <literal>&lt;&gt;</></member>
-     <member><function>scalarltsel</> for <literal>&lt;</> or <literal>&lt;=</></member>
-     <member><function>scalargtsel</> for <literal>&gt;</> or <literal>&gt;=</></member>
-   </simplelist>
-    It might seem a little odd that these are the categories, but they
-    make sense if you think about it.  <literal>=</> will typically accept only
-    a small fraction of the rows in a table; <literal>&lt;&gt;</> will typically reject
-    only a small fraction.  <literal>&lt;</> will accept a fraction that depends on
-    where the given constant falls in the range of values for that table
-    column (which, it just so happens, is information collected by
-    <command>ANALYZE</command> and made available to the selectivity estimator).
-    <literal>&lt;=</> will accept a slightly larger fraction than <literal>&lt;</> for the same
-    comparison constant, but they're close enough to not be worth
-    distinguishing, especially since we're not likely to do better than a
-    rough guess anyhow.  Similar remarks apply to <literal>&gt;</> and <literal>&gt;=</>.
+     <member><function>scalarltsel</> for <literal>&lt;</></member>
+     <member><function>scalarlesel</> for <literal>&lt;=</></member>
+     <member><function>scalargtsel</> for <literal>&gt;</></member>
+     <member><function>scalargesel</> for <literal>&gt;=</></member>
+    </simplelist>
    </para>
 
    <para>
@@ -267,10 +258,12 @@ column OP constant
    </para>
 
    <para>
-    You can use <function>scalarltsel</> and <function>scalargtsel</> for comparisons on data types that
-    have some sensible means of being converted into numeric scalars for
-    range comparisons.  If possible, add the data type to those understood
-    by the function <function>convert_to_scalar()</function> in <filename>src/backend/utils/adt/selfuncs.c</filename>.
+    You can use <function>scalarltsel</>, <function>scalarlesel</>,
+    <function>scalargtsel</> and <function>scalargesel</> for comparisons on
+    data types that have some sensible means of being converted into numeric
+    scalars for range comparisons.  If possible, add the data type to those
+    understood by the function <function>convert_to_scalar()</function> in
+    <filename>src/backend/utils/adt/selfuncs.c</filename>.
     (Eventually, this function should be replaced by per-data-type functions
     identified through a column of the <classname>pg_type</> system catalog; but that hasn't happened
     yet.)  If you do not do this, things will still work, but the optimizer's
@@ -310,8 +303,10 @@ table1.column1 OP table2.column2
      <simplelist>
       <member><function>eqjoinsel</> for <literal>=</></member>
       <member><function>neqjoinsel</> for <literal>&lt;&gt;</></member>
-      <member><function>scalarltjoinsel</> for <literal>&lt;</> or <literal>&lt;=</></member>
-      <member><function>scalargtjoinsel</> for <literal>&gt;</> or <literal>&gt;=</></member>
+      <member><function>scalarltjoinsel</> for <literal>&lt;</></member>
+      <member><function>scalarlejoinsel</> for <literal>&lt;=</></member>
+      <member><function>scalargtjoinsel</> for <literal>&gt;</></member>
+      <member><function>scalargejoinsel</> for <literal>&gt;=</></member>
       <member><function>areajoinsel</> for 2D area-based comparisons</member>
       <member><function>positionjoinsel</> for 2D position-based comparisons</member>
       <member><function>contjoinsel</> for 2D containment-based comparisons</member>

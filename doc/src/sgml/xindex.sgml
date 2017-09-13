@@ -801,8 +801,7 @@ CREATE OPERATOR &lt; (
    It is important to specify the correct commutator and negator operators,
    as well as suitable restriction and join selectivity
    functions, otherwise the optimizer will be unable to make effective
-   use of the index.  Note that the less-than, equal, and
-   greater-than cases should use different selectivity functions.
+   use of the index.
   </para>
 
   <para>

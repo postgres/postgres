@@ -71,7 +71,7 @@ static RelOptInfo *find_single_rel_for_clauses(PlannerInfo *root,
  *
  * We also recognize "range queries", such as "x > 34 AND x < 42".  Clauses
  * are recognized as possible range query components if they are restriction
- * opclauses whose operators have scalarltsel() or scalargtsel() as their
+ * opclauses whose operators have scalarltsel or a related function as their
  * restriction selectivity estimator.  We pair up clauses of this form that
  * refer to the same variable.  An unpairable clause of this kind is simply
  * multiplied into the selectivity product in the normal way.  But when we
@@ -92,8 +92,8 @@ static RelOptInfo *find_single_rel_for_clauses(PlannerInfo *root,
  * A free side-effect is that we can recognize redundant inequalities such
  * as "x < 4 AND x < 5"; only the tighter constraint will be counted.
  *
- * Of course this is all very dependent on the behavior of
- * scalarltsel/scalargtsel; perhaps some day we can generalize the approach.
+ * Of course this is all very dependent on the behavior of the inequality
+ * selectivity functions; perhaps some day we can generalize the approach.
  */
 Selectivity
 clauselist_selectivity(PlannerInfo *root,
@@ -218,17 +218,19 @@ clauselist_selectivity(PlannerInfo *root,
 			if (ok)
 			{
 				/*
-				 * If it's not a "<" or ">" operator, just merge the
+				 * If it's not a "<"/"<="/">"/">=" operator, just merge the
 				 * selectivity in generically.  But if it's the right oprrest,
 				 * add the clause to rqlist for later processing.
 				 */
 				switch (get_oprrest(expr->opno))
 				{
 					case F_SCALARLTSEL:
+					case F_SCALARLESEL:
 						addRangeClause(&rqlist, clause,
 									   varonleft, true, s2);
 						break;
 					case F_SCALARGTSEL:
+					case F_SCALARGESEL:
 						addRangeClause(&rqlist, clause,
 									   varonleft, false, s2);
 						break;
@@ -368,7 +370,7 @@ addRangeClause(RangeQueryClause **rqlist, Node *clause,
 
 				/*------
 				 * We have found two similar clauses, such as
-				 * x < y AND x < z.
+				 * x < y AND x <= z.
 				 * Keep only the more restrictive one.
 				 *------
 				 */
@@ -388,7 +390,7 @@ addRangeClause(RangeQueryClause **rqlist, Node *clause,
 
 				/*------
 				 * We have found two similar clauses, such as
-				 * x > y AND x > z.
+				 * x > y AND x >= z.
 				 * Keep only the more restrictive one.
 				 *------
 				 */

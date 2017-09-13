@@ -97,9 +97,9 @@ DATA(insert OID =  37 ( "<"		   PGNSP PGUID b f f	23	20	16 419	82 int48lt scalar
 DESCR("less than");
 DATA(insert OID =  76 ( ">"		   PGNSP PGUID b f f	23	20	16 418	80 int48gt scalargtsel scalargtjoinsel ));
 DESCR("greater than");
-DATA(insert OID =  80 ( "<="	   PGNSP PGUID b f f	23	20	16 430	76 int48le scalarltsel scalarltjoinsel ));
+DATA(insert OID =  80 ( "<="	   PGNSP PGUID b f f	23	20	16 430	76 int48le scalarlesel scalarlejoinsel ));
 DESCR("less than or equal");
-DATA(insert OID =  82 ( ">="	   PGNSP PGUID b f f	23	20	16 420	37 int48ge scalargtsel scalargtjoinsel ));
+DATA(insert OID =  82 ( ">="	   PGNSP PGUID b f f	23	20	16 420	37 int48ge scalargesel scalargejoinsel ));
 DESCR("greater than or equal");
 
 DATA(insert OID =  58 ( "<"		   PGNSP PGUID b f f	16	16	16	59	1695 boollt scalarltsel scalarltjoinsel ));
@@ -112,9 +112,9 @@ DESCR("not equal");
 DATA(insert OID =  91 ( "="		   PGNSP PGUID b t t	16	16	16	91	85 booleq eqsel eqjoinsel ));
 DESCR("equal");
 #define BooleanEqualOperator   91
-DATA(insert OID = 1694 (  "<="	   PGNSP PGUID b f f	16	16	16 1695 59 boolle scalarltsel scalarltjoinsel ));
+DATA(insert OID = 1694 (  "<="	   PGNSP PGUID b f f	16	16	16 1695 59 boolle scalarlesel scalarlejoinsel ));
 DESCR("less than or equal");
-DATA(insert OID = 1695 (  ">="	   PGNSP PGUID b f f	16	16	16 1694 58 boolge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 1695 (  ">="	   PGNSP PGUID b f f	16	16	16 1694 58 boolge scalargesel scalargejoinsel ));
 DESCR("greater than or equal");
 
 DATA(insert OID =  92 ( "="		   PGNSP PGUID b t t	18	18	16	92 630 chareq eqsel eqjoinsel ));
@@ -167,9 +167,9 @@ DESCR("less than");
 #define TIDLessOperator    2799
 DATA(insert OID = 2800 (  ">"	   PGNSP PGUID b f f	27	27	16 2799 2801 tidgt scalargtsel scalargtjoinsel ));
 DESCR("greater than");
-DATA(insert OID = 2801 (  "<="	   PGNSP PGUID b f f	27	27	16 2802 2800 tidle scalarltsel scalarltjoinsel ));
+DATA(insert OID = 2801 (  "<="	   PGNSP PGUID b f f	27	27	16 2802 2800 tidle scalarlesel scalarlejoinsel ));
 DESCR("less than or equal");
-DATA(insert OID = 2802 (  ">="	   PGNSP PGUID b f f	27	27	16 2801 2799 tidge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 2802 (  ">="	   PGNSP PGUID b f f	27	27	16 2801 2799 tidge scalargesel scalargejoinsel ));
 DESCR("greater than or equal");
 
 DATA(insert OID = 410 ( "="		   PGNSP PGUID b t t	20	20	16 410 411 int8eq eqsel eqjoinsel ));
@@ -181,9 +181,9 @@ DESCR("less than");
 #define Int8LessOperator	412
 DATA(insert OID = 413 ( ">"		   PGNSP PGUID b f f	20	20	16 412 414 int8gt scalargtsel scalargtjoinsel ));
 DESCR("greater than");
-DATA(insert OID = 414 ( "<="	   PGNSP PGUID b f f	20	20	16 415 413 int8le scalarltsel scalarltjoinsel ));
+DATA(insert OID = 414 ( "<="	   PGNSP PGUID b f f	20	20	16 415 413 int8le scalarlesel scalarlejoinsel ));
 DESCR("less than or equal");
-DATA(insert OID = 415 ( ">="	   PGNSP PGUID b f f	20	20	16 414 412 int8ge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 415 ( ">="	   PGNSP PGUID b f f	20	20	16 414 412 int8ge scalargesel scalargejoinsel ));
 DESCR("greater than or equal");
 
 DATA(insert OID = 416 ( "="		   PGNSP PGUID b t t	20	23	16	15 417 int84eq eqsel eqjoinsel ));
@@ -194,9 +194,9 @@ DATA(insert OID = 418 ( "<"		   PGNSP PGUID b f f	20	23	16	76 430 int84lt scalar
 DESCR("less than");
 DATA(insert OID = 419 ( ">"		   PGNSP PGUID b f f	20	23	16	37 420 int84gt scalargtsel scalargtjoinsel ));
 DESCR("greater than");
-DATA(insert OID = 420 ( "<="	   PGNSP PGUID b f f	20	23	16	82 419 int84le scalarltsel scalarltjoinsel ));
+DATA(insert OID = 420 ( "<="	   PGNSP PGUID b f f	20	23	16	82 419 int84le scalarlesel scalarlejoinsel ));
 DESCR("less than or equal");
-DATA(insert OID = 430 ( ">="	   PGNSP PGUID b f f	20	23	16	80 418 int84ge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 430 ( ">="	   PGNSP PGUID b f f	20	23	16	80 418 int84ge scalargesel scalargejoinsel ));
 DESCR("greater than or equal");
 DATA(insert OID = 439 (  "%"	   PGNSP PGUID b f f	20	20	20	 0	 0 int8mod - - ));
 DESCR("modulus");
@@ -277,13 +277,13 @@ DATA(insert OID = 520 (  ">"	   PGNSP PGUID b f f	21	21	16	95 522 int2gt scalarg
 DESCR("greater than");
 DATA(insert OID = 521 (  ">"	   PGNSP PGUID b f f	23	23	16	97 523 int4gt scalargtsel scalargtjoinsel ));
 DESCR("greater than");
-DATA(insert OID = 522 (  "<="	   PGNSP PGUID b f f	21	21	16 524 520 int2le scalarltsel scalarltjoinsel ));
+DATA(insert OID = 522 (  "<="	   PGNSP PGUID b f f	21	21	16 524 520 int2le scalarlesel scalarlejoinsel ));
 DESCR("less than or equal");
-DATA(insert OID = 523 (  "<="	   PGNSP PGUID b f f	23	23	16 525 521 int4le scalarltsel scalarltjoinsel ));
+DATA(insert OID = 523 (  "<="	   PGNSP PGUID b f f	23	23	16 525 521 int4le scalarlesel scalarlejoinsel ));
 DESCR("less than or equal");
-DATA(insert OID = 524 (  ">="	   PGNSP PGUID b f f	21	21	16 522	95 int2ge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 524 (  ">="	   PGNSP PGUID b f f	21	21	16 522	95 int2ge scalargesel scalargejoinsel ));
 DESCR("greater than or equal");
-DATA(insert OID = 525 (  ">="	   PGNSP PGUID b f f	23	23	16 523	97 int4ge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 525 (  ">="	   PGNSP PGUID b f f	23	23	16 523	97 int4ge scalargesel scalargejoinsel ));
 DESCR("greater than or equal");
 DATA(insert OID = 526 (  "*"	   PGNSP PGUID b f f	21	21	21 526	 0 int2mul - - ));
 DESCR("multiply");
@@ -313,13 +313,13 @@ DATA(insert OID = 538 (  "<>"	   PGNSP PGUID b f f	21	23	16 539 532 int24ne neqs
 DESCR("not equal");
 DATA(insert OID = 539 (  "<>"	   PGNSP PGUID b f f	23	21	16 538 533 int42ne neqsel neqjoinsel ));
 DESCR("not equal");
-DATA(insert OID = 540 (  "<="	   PGNSP PGUID b f f	21	23	16 543 536 int24le scalarltsel scalarltjoinsel ));
+DATA(insert OID = 540 (  "<="	   PGNSP PGUID b f f	21	23	16 543 536 int24le scalarlesel scalarlejoinsel ));
 DESCR("less than or equal");
-DATA(insert OID = 541 (  "<="	   PGNSP PGUID b f f	23	21	16 542 537 int42le scalarltsel scalarltjoinsel ));
+DATA(insert OID = 541 (  "<="	   PGNSP PGUID b f f	23	21	16 542 537 int42le scalarlesel scalarlejoinsel ));
 DESCR("less than or equal");
-DATA(insert OID = 542 (  ">="	   PGNSP PGUID b f f	21	23	16 541 534 int24ge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 542 (  ">="	   PGNSP PGUID b f f	21	23	16 541 534 int24ge scalargesel scalargejoinsel ));
 DESCR("greater than or equal");
-DATA(insert OID = 543 (  ">="	   PGNSP PGUID b f f	23	21	16 540 535 int42ge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 543 (  ">="	   PGNSP PGUID b f f	23	21	16 540 535 int42ge scalargesel scalargejoinsel ));
 DESCR("greater than or equal");
 DATA(insert OID = 544 (  "*"	   PGNSP PGUID b f f	21	23	23 545	 0 int24mul - - ));
 DESCR("multiply");
@@ -357,9 +357,9 @@ DATA(insert OID = 562 (  "<"	   PGNSP PGUID b f f 702 702	16 563 565 abstimelt s
 DESCR("less than");
 DATA(insert OID = 563 (  ">"	   PGNSP PGUID b f f 702 702	16 562 564 abstimegt scalargtsel scalargtjoinsel ));
 DESCR("greater than");
-DATA(insert OID = 564 (  "<="	   PGNSP PGUID b f f 702 702	16 565 563 abstimele scalarltsel scalarltjoinsel ));
+DATA(insert OID = 564 (  "<="	   PGNSP PGUID b f f 702 702	16 565 563 abstimele scalarlesel scalarlejoinsel ));
 DESCR("less than or equal");
-DATA(insert OID = 565 (  ">="	   PGNSP PGUID b f f 702 702	16 564 562 abstimege scalargtsel scalargtjoinsel ));
+DATA(insert OID = 565 (  ">="	   PGNSP PGUID b f f 702 702	16 564 562 abstimege scalargesel scalargejoinsel ));
 DESCR("greater than or equal");
 DATA(insert OID = 566 (  "="	   PGNSP PGUID b t t 703 703	16 566 567 reltimeeq eqsel eqjoinsel ));
 DESCR("equal");
@@ -369,9 +369,9 @@ DATA(insert OID = 568 (  "<"	   PGNSP PGUID b f f 703 703	16 569 571 reltimelt s
 DESCR("less than");
 DATA(insert OID = 569 (  ">"	   PGNSP PGUID b f f 703 703	16 568 570 reltimegt scalargtsel scalargtjoinsel ));
 DESCR("greater than");
-DATA(insert OID = 570 (  "<="	   PGNSP PGUID b f f 703 703	16 571 569 reltimele scalarltsel scalarltjoinsel ));
+DATA(insert OID = 570 (  "<="	   PGNSP PGUID b f f 703 703	16 571 569 reltimele scalarlesel scalarlejoinsel ));
 DESCR("less than or equal");
-DATA(insert OID = 571 (  ">="	   PGNSP PGUID b f f 703 703	16 570 568 reltimege scalargtsel scalargtjoinsel ));
+DATA(insert OID = 571 (  ">="	   PGNSP PGUID b f f 703 703	16 570 568 reltimege scalargesel scalargejoinsel ));
 DESCR("greater than or equal");
 DATA(insert OID = 572 (  "~="	   PGNSP PGUID b f f 704 704	16 572	 0 tintervalsame eqsel eqjoinsel ));
 DESCR("same as");
@@ -438,9 +438,9 @@ DATA(insert OID = 609 (  "<"	   PGNSP PGUID b f f	26	26	16 610 612 oidlt scalarl
 DESCR("less than");
 DATA(insert OID = 610 (  ">"	   PGNSP PGUID b f f	26	26	16 609 611 oidgt scalargtsel scalargtjoinsel ));
 DESCR("greater than");
-DATA(insert OID = 611 (  "<="	   PGNSP PGUID b f f	26	26	16 612 610 oidle scalarltsel scalarltjoinsel ));
+DATA(insert OID = 611 (  "<="	   PGNSP PGUID b f f	26	26	16 612 610 oidle scalarlesel scalarlejoinsel ));
 DESCR("less than or equal");
-DATA(insert OID = 612 (  ">="	   PGNSP PGUID b f f	26	26	16 611 609 oidge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 612 (  ">="	   PGNSP PGUID b f f	26	26	16 611 609 oidge scalargesel scalargejoinsel ));
 DESCR("greater than or equal");
 
 DATA(insert OID = 644 (  "<>"	   PGNSP PGUID b f f	30	30	16 644 649 oidvectorne neqsel neqjoinsel ));
@@ -449,9 +449,9 @@ DATA(insert OID = 645 (  "<"	   PGNSP PGUID b f f	30	30	16 646 648 oidvectorlt s
 DESCR("less than");
 DATA(insert OID = 646 (  ">"	   PGNSP PGUID b f f	30	30	16 645 647 oidvectorgt scalargtsel scalargtjoinsel ));
 DESCR("greater than");
-DATA(insert OID = 647 (  "<="	   PGNSP PGUID b f f	30	30	16 648 646 oidvectorle scalarltsel scalarltjoinsel ));
+DATA(insert OID = 647 (  "<="	   PGNSP PGUID b f f	30	30	16 648 646 oidvectorle scalarlesel scalarlejoinsel ));
 DESCR("less than or equal");
-DATA(insert OID = 648 (  ">="	   PGNSP PGUID b f f	30	30	16 647 645 oidvectorge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 648 (  ">="	   PGNSP PGUID b f f	30	30	16 647 645 oidvectorge scalargesel scalargejoinsel ));
 DESCR("greater than or equal");
 DATA(insert OID = 649 (  "="	   PGNSP PGUID b t t	30	30	16 649 644 oidvectoreq eqsel eqjoinsel ));
 DESCR("equal");
@@ -477,20 +477,20 @@ DATA(insert OID = 622 (  "<"	   PGNSP PGUID b f f	700  700	16 623 625 float4lt s
 DESCR("less than");
 DATA(insert OID = 623 (  ">"	   PGNSP PGUID b f f	700  700	16 622 624 float4gt scalargtsel scalargtjoinsel ));
 DESCR("greater than");
-DATA(insert OID = 624 (  "<="	   PGNSP PGUID b f f	700  700	16 625 623 float4le scalarltsel scalarltjoinsel ));
+DATA(insert OID = 624 (  "<="	   PGNSP PGUID b f f	700  700	16 625 623 float4le scalarlesel scalarlejoinsel ));
 DESCR("less than or equal");
-DATA(insert OID = 625 (  ">="	   PGNSP PGUID b f f	700  700	16 624 622 float4ge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 625 (  ">="	   PGNSP PGUID b f f	700  700	16 624 622 float4ge scalargesel scalargejoinsel ));
 DESCR("greater than or equal");
 DATA(insert OID = 630 (  "<>"	   PGNSP PGUID b f f	18	18		16 630	92	charne neqsel neqjoinsel ));
 DESCR("not equal");
 
 DATA(insert OID = 631 (  "<"	   PGNSP PGUID b f f	18	18	16 633 634 charlt scalarltsel scalarltjoinsel ));
 DESCR("less than");
-DATA(insert OID = 632 (  "<="	   PGNSP PGUID b f f	18	18	16 634 633 charle scalarltsel scalarltjoinsel ));
+DATA(insert OID = 632 (  "<="	   PGNSP PGUID b f f	18	18	16 634 633 charle scalarlesel scalarlejoinsel ));
 DESCR("less than or equal");
 DATA(insert OID = 633 (  ">"	   PGNSP PGUID b f f	18	18	16 631 632 chargt scalargtsel scalargtjoinsel ));
 DESCR("greater than");
-DATA(insert OID = 634 (  ">="	   PGNSP PGUID b f f	18	18	16 632 631 charge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 634 (  ">="	   PGNSP PGUID b f f	18	18	16 632 631 charge scalargesel scalargejoinsel ));
 DESCR("greater than or equal");
 
 DATA(insert OID = 639 (  "~"	   PGNSP PGUID b f f	19	25	16 0 640 nameregexeq regexeqsel regexeqjoinsel ));
@@ -510,19 +510,19 @@ DESCR("concatenate");
 
 DATA(insert OID = 660 (  "<"	   PGNSP PGUID b f f	19	19	16 662 663 namelt scalarltsel scalarltjoinsel ));
 DESCR("less than");
-DATA(insert OID = 661 (  "<="	   PGNSP PGUID b f f	19	19	16 663 662 namele scalarltsel scalarltjoinsel ));
+DATA(insert OID = 661 (  "<="	   PGNSP PGUID b f f	19	19	16 663 662 namele scalarlesel scalarlejoinsel ));
 DESCR("less than or equal");
 DATA(insert OID = 662 (  ">"	   PGNSP PGUID b f f	19	19	16 660 661 namegt scalargtsel scalargtjoinsel ));
 DESCR("greater than");
-DATA(insert OID = 663 (  ">="	   PGNSP PGUID b f f	19	19	16 661 660 namege scalargtsel scalargtjoinsel ));
+DATA(insert OID = 663 (  ">="	   PGNSP PGUID b f f	19	19	16 661 660 namege scalargesel scalargejoinsel ));
 DESCR("greater than or equal");
 DATA(insert OID = 664 (  "<"	   PGNSP PGUID b f f	25	25	16 666 667 text_lt scalarltsel scalarltjoinsel ));
 DESCR("less than");
-DATA(insert OID = 665 (  "<="	   PGNSP PGUID b f f	25	25	16 667 666 text_le scalarltsel scalarltjoinsel ));
+DATA(insert OID = 665 (  "<="	   PGNSP PGUID b f f	25	25	16 667 666 text_le scalarlesel scalarlejoinsel ));
 DESCR("less than or equal");
 DATA(insert OID = 666 (  ">"	   PGNSP PGUID b f f	25	25	16 664 665 text_gt scalargtsel scalargtjoinsel ));
 DESCR("greater than");
-DATA(insert OID = 667 (  ">="	   PGNSP PGUID b f f	25	25	16 665 664 text_ge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 667 (  ">="	   PGNSP PGUID b f f	25	25	16 665 664 text_ge scalargesel scalargejoinsel ));
 DESCR("greater than or equal");
 
 DATA(insert OID = 670 (  "="	   PGNSP PGUID b t t	701  701	16 670 671 float8eq eqsel eqjoinsel ));
@@ -532,11 +532,11 @@ DESCR("not equal");
 DATA(insert OID = 672 (  "<"	   PGNSP PGUID b f f	701  701	16 674 675 float8lt scalarltsel scalarltjoinsel ));
 DESCR("less than");
 #define Float8LessOperator	672
-DATA(insert OID = 673 (  "<="	   PGNSP PGUID b f f	701  701	16 675 674 float8le scalarltsel scalarltjoinsel ));
+DATA(insert OID = 673 (  "<="	   PGNSP PGUID b f f	701  701	16 675 674 float8le scalarlesel scalarlejoinsel ));
 DESCR("less than or equal");
 DATA(insert OID = 674 (  ">"	   PGNSP PGUID b f f	701  701	16 672 673 float8gt scalargtsel scalargtjoinsel ));
 DESCR("greater than");
-DATA(insert OID = 675 (  ">="	   PGNSP PGUID b f f	701  701	16 673 672 float8ge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 675 (  ">="	   PGNSP PGUID b f f	701  701	16 673 672 float8ge scalargesel scalargejoinsel ));
 DESCR("greater than or equal");
 
 DATA(insert OID = 682 (  "@"	   PGNSP PGUID l f f	 0	21	21	 0	 0 int2abs - - ));
@@ -677,9 +677,9 @@ DATA(insert OID = 813 (  "<"	   PGNSP PGUID b f f 704 704	16 814 816 tintervallt
 DESCR("less than");
 DATA(insert OID = 814 (  ">"	   PGNSP PGUID b f f 704 704	16 813 815 tintervalgt scalargtsel scalargtjoinsel ));
 DESCR("greater than");
-DATA(insert OID = 815 (  "<="	   PGNSP PGUID b f f 704 704	16 816 814 tintervalle scalarltsel scalarltjoinsel ));
+DATA(insert OID = 815 (  "<="	   PGNSP PGUID b f f 704 704	16 816 814 tintervalle scalarlesel scalarlejoinsel ));
 DESCR("less than or equal");
-DATA(insert OID = 816 (  ">="	   PGNSP PGUID b f f 704 704	16 815 813 tintervalge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 816 (  ">="	   PGNSP PGUID b f f 704 704	16 815 813 tintervalge scalargesel scalargejoinsel ));
 DESCR("greater than or equal");
 
 DATA(insert OID = 843 (  "*"	   PGNSP PGUID b f f	790  700	790 845   0 cash_mul_flt4 - - ));
@@ -697,9 +697,9 @@ DATA(insert OID = 902 (  "<"	   PGNSP PGUID b f f	790  790	16 903 905 cash_lt sc
 DESCR("less than");
 DATA(insert OID = 903 (  ">"	   PGNSP PGUID b f f	790  790	16 902 904 cash_gt scalargtsel scalargtjoinsel ));
 DESCR("greater than");
-DATA(insert OID = 904 (  "<="	   PGNSP PGUID b f f	790  790	16 905 903 cash_le scalarltsel scalarltjoinsel ));
+DATA(insert OID = 904 (  "<="	   PGNSP PGUID b f f	790  790	16 905 903 cash_le scalarlesel scalarlejoinsel ));
 DESCR("less than or equal");
-DATA(insert OID = 905 (  ">="	   PGNSP PGUID b f f	790  790	16 904 902 cash_ge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 905 (  ">="	   PGNSP PGUID b f f	790  790	16 904 902 cash_ge scalargesel scalargejoinsel ));
 DESCR("greater than or equal");
 DATA(insert OID = 906 (  "+"	   PGNSP PGUID b f f	790  790	790 906   0 cash_pl - - ));
 DESCR("add");
@@ -763,11 +763,11 @@ DATA(insert OID = 1057 ( "<>"	   PGNSP PGUID b f f 1042 1042	 16 1057 1054 bpcha
 DESCR("not equal");
 DATA(insert OID = 1058 ( "<"	   PGNSP PGUID b f f 1042 1042	 16 1060 1061 bpcharlt scalarltsel scalarltjoinsel ));
 DESCR("less than");
-DATA(insert OID = 1059 ( "<="	   PGNSP PGUID b f f 1042 1042	 16 1061 1060 bpcharle scalarltsel scalarltjoinsel ));
+DATA(insert OID = 1059 ( "<="	   PGNSP PGUID b f f 1042 1042	 16 1061 1060 bpcharle scalarlesel scalarlejoinsel ));
 DESCR("less than or equal");
 DATA(insert OID = 1060 ( ">"	   PGNSP PGUID b f f 1042 1042	 16 1058 1059 bpchargt scalargtsel scalargtjoinsel ));
 DESCR("greater than");
-DATA(insert OID = 1061 ( ">="	   PGNSP PGUID b f f 1042 1042	 16 1059 1058 bpcharge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 1061 ( ">="	   PGNSP PGUID b f f 1042 1042	 16 1059 1058 bpcharge scalargesel scalargejoinsel ));
 DESCR("greater than or equal");
 
 /* generic array comparison operators */
@@ -782,9 +782,9 @@ DESCR("less than");
 DATA(insert OID = 1073 (  ">"	   PGNSP PGUID b f f 2277 2277 16 1072 1074 array_gt scalargtsel scalargtjoinsel ));
 DESCR("greater than");
 #define ARRAY_GT_OP 1073
-DATA(insert OID = 1074 (  "<="	   PGNSP PGUID b f f 2277 2277 16 1075 1073 array_le scalarltsel scalarltjoinsel ));
+DATA(insert OID = 1074 (  "<="	   PGNSP PGUID b f f 2277 2277 16 1075 1073 array_le scalarlesel scalarlejoinsel ));
 DESCR("less than or equal");
-DATA(insert OID = 1075 (  ">="	   PGNSP PGUID b f f 2277 2277 16 1074 1072 array_ge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 1075 (  ">="	   PGNSP PGUID b f f 2277 2277 16 1074 1072 array_ge scalargesel scalargejoinsel ));
 DESCR("greater than or equal");
 
 /* date operators */
@@ -798,11 +798,11 @@ DATA(insert OID = 1094 ( "<>"	   PGNSP PGUID b f f	1082	1082   16 1094 1093 date
 DESCR("not equal");
 DATA(insert OID = 1095 ( "<"	   PGNSP PGUID b f f	1082	1082   16 1097 1098 date_lt scalarltsel scalarltjoinsel ));
 DESCR("less than");
-DATA(insert OID = 1096 ( "<="	   PGNSP PGUID b f f	1082	1082   16 1098 1097 date_le scalarltsel scalarltjoinsel ));
+DATA(insert OID = 1096 ( "<="	   PGNSP PGUID b f f	1082	1082   16 1098 1097 date_le scalarlesel scalarlejoinsel ));
 DESCR("less than or equal");
 DATA(insert OID = 1097 ( ">"	   PGNSP PGUID b f f	1082	1082   16 1095 1096 date_gt scalargtsel scalargtjoinsel ));
 DESCR("greater than");
-DATA(insert OID = 1098 ( ">="	   PGNSP PGUID b f f	1082	1082   16 1096 1095 date_ge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 1098 ( ">="	   PGNSP PGUID b f f	1082	1082   16 1096 1095 date_ge scalargesel scalargejoinsel ));
 DESCR("greater than or equal");
 DATA(insert OID = 1099 ( "-"	   PGNSP PGUID b f f	1082	1082   23 0 0 date_mi - - ));
 DESCR("subtract");
@@ -818,11 +818,11 @@ DATA(insert OID = 1109 ( "<>"	   PGNSP PGUID b f f	1083	1083  16 1109 1108 time_
 DESCR("not equal");
 DATA(insert OID = 1110 ( "<"	   PGNSP PGUID b f f	1083	1083  16 1112 1113 time_lt scalarltsel scalarltjoinsel ));
 DESCR("less than");
-DATA(insert OID = 1111 ( "<="	   PGNSP PGUID b f f	1083	1083  16 1113 1112 time_le scalarltsel scalarltjoinsel ));
+DATA(insert OID = 1111 ( "<="	   PGNSP PGUID b f f	1083	1083  16 1113 1112 time_le scalarlesel scalarlejoinsel ));
 DESCR("less than or equal");
 DATA(insert OID = 1112 ( ">"	   PGNSP PGUID b f f	1083	1083  16 1110 1111 time_gt scalargtsel scalargtjoinsel ));
 DESCR("greater than");
-DATA(insert OID = 1113 ( ">="	   PGNSP PGUID b f f	1083	1083  16 1111 1110 time_ge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 1113 ( ">="	   PGNSP PGUID b f f	1083	1083  16 1111 1110 time_ge scalargesel scalargejoinsel ));
 DESCR("greater than or equal");
 
 /* timetz operators */
@@ -832,11 +832,11 @@ DATA(insert OID = 1551 ( "<>"	   PGNSP PGUID b f f	1266 1266	16 1551 1550 timetz
 DESCR("not equal");
 DATA(insert OID = 1552 ( "<"	   PGNSP PGUID b f f	1266 1266	16 1554 1555 timetz_lt scalarltsel scalarltjoinsel ));
 DESCR("less than");
-DATA(insert OID = 1553 ( "<="	   PGNSP PGUID b f f	1266 1266	16 1555 1554 timetz_le scalarltsel scalarltjoinsel ));
+DATA(insert OID = 1553 ( "<="	   PGNSP PGUID b f f	1266 1266	16 1555 1554 timetz_le scalarlesel scalarlejoinsel ));
 DESCR("less than or equal");
 DATA(insert OID = 1554 ( ">"	   PGNSP PGUID b f f	1266 1266	16 1552 1553 timetz_gt scalargtsel scalargtjoinsel ));
 DESCR("greater than");
-DATA(insert OID = 1555 ( ">="	   PGNSP PGUID b f f	1266 1266	16 1553 1552 timetz_ge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 1555 ( ">="	   PGNSP PGUID b f f	1266 1266	16 1553 1552 timetz_ge scalargesel scalargejoinsel ));
 DESCR("greater than or equal");
 
 /* float48 operators */
@@ -856,9 +856,9 @@ DATA(insert OID = 1122 (  "<"		PGNSP PGUID b f f  700	701  16 1133 1125 float48l
 DESCR("less than");
 DATA(insert OID = 1123 (  ">"		PGNSP PGUID b f f  700	701  16 1132 1124 float48gt scalargtsel scalargtjoinsel ));
 DESCR("greater than");
-DATA(insert OID = 1124 (  "<="		PGNSP PGUID b f f  700	701  16 1135 1123 float48le scalarltsel scalarltjoinsel ));
+DATA(insert OID = 1124 (  "<="		PGNSP PGUID b f f  700	701  16 1135 1123 float48le scalarlesel scalarlejoinsel ));
 DESCR("less than or equal");
-DATA(insert OID = 1125 (  ">="		PGNSP PGUID b f f  700	701  16 1134 1122 float48ge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 1125 (  ">="		PGNSP PGUID b f f  700	701  16 1134 1122 float48ge scalargesel scalargejoinsel ));
 DESCR("greater than or equal");
 
 /* float84 operators */
@@ -878,9 +878,9 @@ DATA(insert OID = 1132 (  "<"		PGNSP PGUID b f f  701	700  16 1123 1135 float84l
 DESCR("less than");
 DATA(insert OID = 1133 (  ">"		PGNSP PGUID b f f  701	700  16 1122 1134 float84gt scalargtsel scalargtjoinsel ));
 DESCR("greater than");
-DATA(insert OID = 1134 (  "<="		PGNSP PGUID b f f  701	700  16 1125 1133 float84le scalarltsel scalarltjoinsel ));
+DATA(insert OID = 1134 (  "<="		PGNSP PGUID b f f  701	700  16 1125 1133 float84le scalarlesel scalarlejoinsel ));
 DESCR("less than or equal");
-DATA(insert OID = 1135 (  ">="		PGNSP PGUID b f f  701	700  16 1124 1132 float84ge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 1135 (  ">="		PGNSP PGUID b f f  701	700  16 1124 1132 float84ge scalargesel scalargejoinsel ));
 DESCR("greater than or equal");
 
 
@@ -925,11 +925,11 @@ DATA(insert OID = 1321 (  "<>"	   PGNSP PGUID b f f 1184 1184	 16 1321 1320 time
 DESCR("not equal");
 DATA(insert OID = 1322 (  "<"	   PGNSP PGUID b f f 1184 1184	 16 1324 1325 timestamptz_lt scalarltsel scalarltjoinsel ));
 DESCR("less than");
-DATA(insert OID = 1323 (  "<="	   PGNSP PGUID b f f 1184 1184	 16 1325 1324 timestamptz_le scalarltsel scalarltjoinsel ));
+DATA(insert OID = 1323 (  "<="	   PGNSP PGUID b f f 1184 1184	 16 1325 1324 timestamptz_le scalarlesel scalarlejoinsel ));
 DESCR("less than or equal");
 DATA(insert OID = 1324 (  ">"	   PGNSP PGUID b f f 1184 1184	 16 1322 1323 timestamptz_gt scalargtsel scalargtjoinsel ));
 DESCR("greater than");
-DATA(insert OID = 1325 (  ">="	   PGNSP PGUID b f f 1184 1184	 16 1323 1322 timestamptz_ge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 1325 (  ">="	   PGNSP PGUID b f f 1184 1184	 16 1323 1322 timestamptz_ge scalargesel scalargejoinsel ));
 DESCR("greater than or equal");
 DATA(insert OID = 1327 (  "+"	   PGNSP PGUID b f f 1184 1186 1184  2554 0 timestamptz_pl_interval - - ));
 DESCR("add");
@@ -945,11 +945,11 @@ DATA(insert OID = 1331 (  "<>"	   PGNSP PGUID b f f 1186 1186	 16 1331 1330 inte
 DESCR("not equal");
 DATA(insert OID = 1332 (  "<"	   PGNSP PGUID b f f 1186 1186	 16 1334 1335 interval_lt scalarltsel scalarltjoinsel ));
 DESCR("less than");
-DATA(insert OID = 1333 (  "<="	   PGNSP PGUID b f f 1186 1186	 16 1335 1334 interval_le scalarltsel scalarltjoinsel ));
+DATA(insert OID = 1333 (  "<="	   PGNSP PGUID b f f 1186 1186	 16 1335 1334 interval_le scalarlesel scalarlejoinsel ));
 DESCR("less than or equal");
 DATA(insert OID = 1334 (  ">"	   PGNSP PGUID b f f 1186 1186	 16 1332 1333 interval_gt scalargtsel scalargtjoinsel ));
 DESCR("greater than");
-DATA(insert OID = 1335 (  ">="	   PGNSP PGUID b f f 1186 1186	 16 1333 1332 interval_ge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 1335 (  ">="	   PGNSP PGUID b f f 1186 1186	 16 1333 1332 interval_ge scalargesel scalargejoinsel ));
 DESCR("greater than or equal");
 
 DATA(insert OID = 1336 (  "-"	   PGNSP PGUID l f f	0 1186 1186    0	0 interval_um - - ));
@@ -1126,11 +1126,11 @@ DATA(insert OID = 1221 (  "<>"	   PGNSP PGUID b f f 829 829	 16 1221 1220 macadd
 DESCR("not equal");
 DATA(insert OID = 1222 (  "<"	   PGNSP PGUID b f f 829 829	 16 1224 1225 macaddr_lt scalarltsel scalarltjoinsel ));
 DESCR("less than");
-DATA(insert OID = 1223 (  "<="	   PGNSP PGUID b f f 829 829	 16 1225 1224 macaddr_le scalarltsel scalarltjoinsel ));
+DATA(insert OID = 1223 (  "<="	   PGNSP PGUID b f f 829 829	 16 1225 1224 macaddr_le scalarlesel scalarlejoinsel ));
 DESCR("less than or equal");
 DATA(insert OID = 1224 (  ">"	   PGNSP PGUID b f f 829 829	 16 1222 1223 macaddr_gt scalargtsel scalargtjoinsel ));
 DESCR("greater than");
-DATA(insert OID = 1225 (  ">="	   PGNSP PGUID b f f 829 829	 16 1223 1222 macaddr_ge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 1225 (  ">="	   PGNSP PGUID b f f 829 829	 16 1223 1222 macaddr_ge scalargesel scalargejoinsel ));
 DESCR("greater than or equal");
 
 DATA(insert OID = 3147 (  "~"	   PGNSP PGUID l f f	  0 829 829 0 0 macaddr_not - - ));
@@ -1147,11 +1147,11 @@ DATA(insert OID = 3363 (  "<>"	   PGNSP PGUID b f f 774 774	 16 3363 3362 macadd
 DESCR("not equal");
 DATA(insert OID = 3364 (  "<"	   PGNSP PGUID b f f 774 774	 16 3366 3367 macaddr8_lt scalarltsel scalarltjoinsel ));
 DESCR("less than");
-DATA(insert OID = 3365 (  "<="	   PGNSP PGUID b f f 774 774	 16 3367 3366 macaddr8_le scalarltsel scalarltjoinsel ));
+DATA(insert OID = 3365 (  "<="	   PGNSP PGUID b f f 774 774	 16 3367 3366 macaddr8_le scalarlesel scalarlejoinsel ));
 DESCR("less than or equal");
 DATA(insert OID = 3366 (  ">"	   PGNSP PGUID b f f 774 774	 16 3364 3365 macaddr8_gt scalargtsel scalargtjoinsel ));
 DESCR("greater than");
-DATA(insert OID = 3367 (  ">="	   PGNSP PGUID b f f 774 774	 16 3365 3364 macaddr8_ge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 3367 (  ">="	   PGNSP PGUID b f f 774 774	 16 3365 3364 macaddr8_ge scalargesel scalargejoinsel ));
 DESCR("greater than or equal");
 
 DATA(insert OID = 3368 (  "~"	   PGNSP PGUID l f f	  0 774 774 0 0 macaddr8_not - - ));
@@ -1168,11 +1168,11 @@ DATA(insert OID = 1202 (  "<>"	   PGNSP PGUID b f f 869 869	 16 1202 1201 networ
 DESCR("not equal");
 DATA(insert OID = 1203 (  "<"	   PGNSP PGUID b f f 869 869	 16 1205 1206 network_lt scalarltsel scalarltjoinsel ));
 DESCR("less than");
-DATA(insert OID = 1204 (  "<="	   PGNSP PGUID b f f 869 869	 16 1206 1205 network_le scalarltsel scalarltjoinsel ));
+DATA(insert OID = 1204 (  "<="	   PGNSP PGUID b f f 869 869	 16 1206 1205 network_le scalarlesel scalarlejoinsel ));
 DESCR("less than or equal");
 DATA(insert OID = 1205 (  ">"	   PGNSP PGUID b f f 869 869	 16 1203 1204 network_gt scalargtsel scalargtjoinsel ));
 DESCR("greater than");
-DATA(insert OID = 1206 (  ">="	   PGNSP PGUID b f f 869 869	 16 1204 1203 network_ge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 1206 (  ">="	   PGNSP PGUID b f f 869 869	 16 1204 1203 network_ge scalargesel scalargejoinsel ));
 DESCR("greater than or equal");
 DATA(insert OID = 931  (  "<<"	   PGNSP PGUID b f f 869 869	 16 933		0 network_sub networksel networkjoinsel ));
 DESCR("is subnet");
@@ -1231,11 +1231,11 @@ DATA(insert OID = 1753 (  "<>"	   PGNSP PGUID b f f 1700 1700	 16 1753 1752 nume
 DESCR("not equal");
 DATA(insert OID = 1754 (  "<"	   PGNSP PGUID b f f 1700 1700	 16 1756 1757 numeric_lt scalarltsel scalarltjoinsel ));
 DESCR("less than");
-DATA(insert OID = 1755 (  "<="	   PGNSP PGUID b f f 1700 1700	 16 1757 1756 numeric_le scalarltsel scalarltjoinsel ));
+DATA(insert OID = 1755 (  "<="	   PGNSP PGUID b f f 1700 1700	 16 1757 1756 numeric_le scalarlesel scalarlejoinsel ));
 DESCR("less than or equal");
 DATA(insert OID = 1756 (  ">"	   PGNSP PGUID b f f 1700 1700	 16 1754 1755 numeric_gt scalargtsel scalargtjoinsel ));
 DESCR("greater than");
-DATA(insert OID = 1757 (  ">="	   PGNSP PGUID b f f 1700 1700	 16 1755 1754 numeric_ge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 1757 (  ">="	   PGNSP PGUID b f f 1700 1700	 16 1755 1754 numeric_ge scalargesel scalargejoinsel ));
 DESCR("greater than or equal");
 DATA(insert OID = 1758 (  "+"	   PGNSP PGUID b f f 1700 1700 1700 1758	0 numeric_add - - ));
 DESCR("add");
@@ -1260,9 +1260,9 @@ DATA(insert OID = 1786 (  "<"	  PGNSP PGUID b f f 1560 1560 16 1787 1789 bitlt s
 DESCR("less than");
 DATA(insert OID = 1787 (  ">"	  PGNSP PGUID b f f 1560 1560 16 1786 1788 bitgt scalargtsel scalargtjoinsel ));
 DESCR("greater than");
-DATA(insert OID = 1788 (  "<="	  PGNSP PGUID b f f 1560 1560 16 1789 1787 bitle scalarltsel scalarltjoinsel ));
+DATA(insert OID = 1788 (  "<="	  PGNSP PGUID b f f 1560 1560 16 1789 1787 bitle scalarlesel scalarlejoinsel ));
 DESCR("less than or equal");
-DATA(insert OID = 1789 (  ">="	  PGNSP PGUID b f f 1560 1560 16 1788 1786 bitge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 1789 (  ">="	  PGNSP PGUID b f f 1560 1560 16 1788 1786 bitge scalargesel scalargejoinsel ));
 DESCR("greater than or equal");
 DATA(insert OID = 1791 (  "&"	  PGNSP PGUID b f f 1560 1560 1560 1791  0 bitand - - ));
 DESCR("bitwise and");
@@ -1296,9 +1296,9 @@ DATA(insert OID = 1806 (  "<"	  PGNSP PGUID b f f 1562 1562 16 1807 1809 varbitl
 DESCR("less than");
 DATA(insert OID = 1807 (  ">"	  PGNSP PGUID b f f 1562 1562 16 1806 1808 varbitgt scalargtsel scalargtjoinsel ));
 DESCR("greater than");
-DATA(insert OID = 1808 (  "<="	  PGNSP PGUID b f f 1562 1562 16 1809 1807 varbitle scalarltsel scalarltjoinsel ));
+DATA(insert OID = 1808 (  "<="	  PGNSP PGUID b f f 1562 1562 16 1809 1807 varbitle scalarlesel scalarlejoinsel ));
 DESCR("less than or equal");
-DATA(insert OID = 1809 (  ">="	  PGNSP PGUID b f f 1562 1562 16 1808 1806 varbitge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 1809 (  ">="	  PGNSP PGUID b f f 1562 1562 16 1808 1806 varbitge scalargesel scalargejoinsel ));
 DESCR("greater than or equal");
 
 DATA(insert OID = 1849 (  "+"	   PGNSP PGUID b f f 1186 1083 1083  1800 0 interval_pl_time - - ));
@@ -1312,9 +1312,9 @@ DATA(insert OID = 1864 ( "<"	   PGNSP PGUID b f f	21	20	16 1871  1867 int28lt sc
 DESCR("less than");
 DATA(insert OID = 1865 ( ">"	   PGNSP PGUID b f f	21	20	16 1870  1866 int28gt scalargtsel scalargtjoinsel ));
 DESCR("greater than");
-DATA(insert OID = 1866 ( "<="	   PGNSP PGUID b f f	21	20	16 1873  1865 int28le scalarltsel scalarltjoinsel ));
+DATA(insert OID = 1866 ( "<="	   PGNSP PGUID b f f	21	20	16 1873  1865 int28le scalarlesel scalarlejoinsel ));
 DESCR("less than or equal");
-DATA(insert OID = 1867 ( ">="	   PGNSP PGUID b f f	21	20	16 1872  1864 int28ge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 1867 ( ">="	   PGNSP PGUID b f f	21	20	16 1872  1864 int28ge scalargesel scalargejoinsel ));
 DESCR("greater than or equal");
 
 DATA(insert OID = 1868 ( "="	   PGNSP PGUID b t t	20	21	16	1862 1869 int82eq eqsel eqjoinsel ));
@@ -1325,9 +1325,9 @@ DATA(insert OID = 1870 ( "<"	   PGNSP PGUID b f f	20	21	16	1865 1873 int82lt sca
 DESCR("less than");
 DATA(insert OID = 1871 ( ">"	   PGNSP PGUID b f f	20	21	16	1864 1872 int82gt scalargtsel scalargtjoinsel ));
 DESCR("greater than");
-DATA(insert OID = 1872 ( "<="	   PGNSP PGUID b f f	20	21	16	1867 1871 int82le scalarltsel scalarltjoinsel ));
+DATA(insert OID = 1872 ( "<="	   PGNSP PGUID b f f	20	21	16	1867 1871 int82le scalarlesel scalarlejoinsel ));
 DESCR("less than or equal");
-DATA(insert OID = 1873 ( ">="	   PGNSP PGUID b f f	20	21	16	1866 1870 int82ge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 1873 ( ">="	   PGNSP PGUID b f f	20	21	16	1866 1870 int82ge scalargesel scalargejoinsel ));
 DESCR("greater than or equal");
 
 DATA(insert OID = 1874 ( "&"	   PGNSP PGUID b f f	21	21	21	1874  0 int2and - - ));
@@ -1389,11 +1389,11 @@ DATA(insert OID = 1956 ( "<>"	   PGNSP PGUID b f f 17 17	16 1956 1955 byteane ne
 DESCR("not equal");
 DATA(insert OID = 1957 ( "<"	   PGNSP PGUID b f f 17 17	16 1959 1960 bytealt scalarltsel scalarltjoinsel ));
 DESCR("less than");
-DATA(insert OID = 1958 ( "<="	   PGNSP PGUID b f f 17 17	16 1960 1959 byteale scalarltsel scalarltjoinsel ));
+DATA(insert OID = 1958 ( "<="	   PGNSP PGUID b f f 17 17	16 1960 1959 byteale scalarlesel scalarlejoinsel ));
 DESCR("less than or equal");
 DATA(insert OID = 1959 ( ">"	   PGNSP PGUID b f f 17 17	16 1957 1958 byteagt scalargtsel scalargtjoinsel ));
 DESCR("greater than");
-DATA(insert OID = 1960 ( ">="	   PGNSP PGUID b f f 17 17	16 1958 1957 byteage scalargtsel scalargtjoinsel ));
+DATA(insert OID = 1960 ( ">="	   PGNSP PGUID b f f 17 17	16 1958 1957 byteage scalargesel scalargejoinsel ));
 DESCR("greater than or equal");
 
 DATA(insert OID = 2016 (  "~~"	   PGNSP PGUID b f f 17 17	16 0	2017 bytealike likesel likejoinsel ));
@@ -1411,11 +1411,11 @@ DATA(insert OID = 2061 (  "<>"	   PGNSP PGUID b f f 1114 1114	 16 2061 2060 time
 DESCR("not equal");
 DATA(insert OID = 2062 (  "<"	   PGNSP PGUID b f f 1114 1114	 16 2064 2065 timestamp_lt scalarltsel scalarltjoinsel ));
 DESCR("less than");
-DATA(insert OID = 2063 (  "<="	   PGNSP PGUID b f f 1114 1114	 16 2065 2064 timestamp_le scalarltsel scalarltjoinsel ));
+DATA(insert OID = 2063 (  "<="	   PGNSP PGUID b f f 1114 1114	 16 2065 2064 timestamp_le scalarlesel scalarlejoinsel ));
 DESCR("less than or equal");
 DATA(insert OID = 2064 (  ">"	   PGNSP PGUID b f f 1114 1114	 16 2062 2063 timestamp_gt scalargtsel scalargtjoinsel ));
 DESCR("greater than");
-DATA(insert OID = 2065 (  ">="	   PGNSP PGUID b f f 1114 1114	 16 2063 2062 timestamp_ge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 2065 (  ">="	   PGNSP PGUID b f f 1114 1114	 16 2063 2062 timestamp_ge scalargesel scalargejoinsel ));
 DESCR("greater than or equal");
 DATA(insert OID = 2066 (  "+"	   PGNSP PGUID b f f 1114 1186 1114  2553 0 timestamp_pl_interval - - ));
 DESCR("add");
@@ -1428,18 +1428,18 @@ DESCR("subtract");
 
 DATA(insert OID = 2314 ( "~<~"	PGNSP PGUID b f f 25 25 16 2318 2317 text_pattern_lt scalarltsel scalarltjoinsel ));
 DESCR("less than");
-DATA(insert OID = 2315 ( "~<=~" PGNSP PGUID b f f 25 25 16 2317 2318 text_pattern_le scalarltsel scalarltjoinsel ));
+DATA(insert OID = 2315 ( "~<=~" PGNSP PGUID b f f 25 25 16 2317 2318 text_pattern_le scalarlesel scalarlejoinsel ));
 DESCR("less than or equal");
-DATA(insert OID = 2317 ( "~>=~" PGNSP PGUID b f f 25 25 16 2315 2314 text_pattern_ge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 2317 ( "~>=~" PGNSP PGUID b f f 25 25 16 2315 2314 text_pattern_ge scalargesel scalargejoinsel ));
 DESCR("greater than or equal");
 DATA(insert OID = 2318 ( "~>~"	PGNSP PGUID b f f 25 25 16 2314 2315 text_pattern_gt scalargtsel scalargtjoinsel ));
 DESCR("greater than");
 
 DATA(insert OID = 2326 ( "~<~"	PGNSP PGUID b f f 1042 1042 16 2330 2329 bpchar_pattern_lt scalarltsel scalarltjoinsel ));
 DESCR("less than");
-DATA(insert OID = 2327 ( "~<=~" PGNSP PGUID b f f 1042 1042 16 2329 2330 bpchar_pattern_le scalarltsel scalarltjoinsel ));
+DATA(insert OID = 2327 ( "~<=~" PGNSP PGUID b f f 1042 1042 16 2329 2330 bpchar_pattern_le scalarlesel scalarlejoinsel ));
 DESCR("less than or equal");
-DATA(insert OID = 2329 ( "~>=~" PGNSP PGUID b f f 1042 1042 16 2327 2326 bpchar_pattern_ge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 2329 ( "~>=~" PGNSP PGUID b f f 1042 1042 16 2327 2326 bpchar_pattern_ge scalargesel scalargejoinsel ));
 DESCR("greater than or equal");
 DATA(insert OID = 2330 ( "~>~"	PGNSP PGUID b f f 1042 1042 16 2326 2327 bpchar_pattern_gt scalargtsel scalargtjoinsel ));
 DESCR("greater than");
@@ -1448,11 +1448,11 @@ DESCR("greater than");
 
 DATA(insert OID = 2345 ( "<"	   PGNSP PGUID b f f	1082	1114   16 2375 2348 date_lt_timestamp scalarltsel scalarltjoinsel ));
 DESCR("less than");
-DATA(insert OID = 2346 ( "<="	   PGNSP PGUID b f f	1082	1114   16 2374 2349 date_le_timestamp scalarltsel scalarltjoinsel ));
+DATA(insert OID = 2346 ( "<="	   PGNSP PGUID b f f	1082	1114   16 2374 2349 date_le_timestamp scalarlesel scalarlejoinsel ));
 DESCR("less than or equal");
 DATA(insert OID = 2347 ( "="	   PGNSP PGUID b t f	1082	1114   16 2373 2350 date_eq_timestamp eqsel eqjoinsel ));
 DESCR("equal");
-DATA(insert OID = 2348 ( ">="	   PGNSP PGUID b f f	1082	1114   16 2372 2345 date_ge_timestamp scalargtsel scalargtjoinsel ));
+DATA(insert OID = 2348 ( ">="	   PGNSP PGUID b f f	1082	1114   16 2372 2345 date_ge_timestamp scalargesel scalargejoinsel ));
 DESCR("greater than or equal");
 DATA(insert OID = 2349 ( ">"	   PGNSP PGUID b f f	1082	1114   16 2371 2346 date_gt_timestamp scalargtsel scalargtjoinsel ));
 DESCR("greater than");
@@ -1461,11 +1461,11 @@ DESCR("not equal");
 
 DATA(insert OID = 2358 ( "<"	   PGNSP PGUID b f f	1082	1184   16 2388 2361 date_lt_timestamptz scalarltsel scalarltjoinsel ));
 DESCR("less than");
-DATA(insert OID = 2359 ( "<="	   PGNSP PGUID b f f	1082	1184   16 2387 2362 date_le_timestamptz scalarltsel scalarltjoinsel ));
+DATA(insert OID = 2359 ( "<="	   PGNSP PGUID b f f	1082	1184   16 2387 2362 date_le_timestamptz scalarlesel scalarlejoinsel ));
 DESCR("less than or equal");
 DATA(insert OID = 2360 ( "="	   PGNSP PGUID b t f	1082	1184   16 2386 2363 date_eq_timestamptz eqsel eqjoinsel ));
 DESCR("equal");
-DATA(insert OID = 2361 ( ">="	   PGNSP PGUID b f f	1082	1184   16 2385 2358 date_ge_timestamptz scalargtsel scalargtjoinsel ));
+DATA(insert OID = 2361 ( ">="	   PGNSP PGUID b f f	1082	1184   16 2385 2358 date_ge_timestamptz scalargesel scalargejoinsel ));
 DESCR("greater than or equal");
 DATA(insert OID = 2362 ( ">"	   PGNSP PGUID b f f	1082	1184   16 2384 2359 date_gt_timestamptz scalargtsel scalargtjoinsel ));
 DESCR("greater than");
@@ -1474,11 +1474,11 @@ DESCR("not equal");
 
 DATA(insert OID = 2371 ( "<"	   PGNSP PGUID b f f	1114	1082   16 2349 2374 timestamp_lt_date scalarltsel scalarltjoinsel ));
 DESCR("less than");
-DATA(insert OID = 2372 ( "<="	   PGNSP PGUID b f f	1114	1082   16 2348 2375 timestamp_le_date scalarltsel scalarltjoinsel ));
+DATA(insert OID = 2372 ( "<="	   PGNSP PGUID b f f	1114	1082   16 2348 2375 timestamp_le_date scalarlesel scalarlejoinsel ));
 DESCR("less than or equal");
 DATA(insert OID = 2373 ( "="	   PGNSP PGUID b t f	1114	1082   16 2347 2376 timestamp_eq_date eqsel eqjoinsel ));
 DESCR("equal");
-DATA(insert OID = 2374 ( ">="	   PGNSP PGUID b f f	1114	1082   16 2346 2371 timestamp_ge_date scalargtsel scalargtjoinsel ));
+DATA(insert OID = 2374 ( ">="	   PGNSP PGUID b f f	1114	1082   16 2346 2371 timestamp_ge_date scalargesel scalargejoinsel ));
 DESCR("greater than or equal");
 DATA(insert OID = 2375 ( ">"	   PGNSP PGUID b f f	1114	1082   16 2345 2372 timestamp_gt_date scalargtsel scalargtjoinsel ));
 DESCR("greater than");
@@ -1487,11 +1487,11 @@ DESCR("not equal");
 
 DATA(insert OID = 2384 ( "<"	   PGNSP PGUID b f f	1184	1082   16 2362 2387 timestamptz_lt_date scalarltsel scalarltjoinsel ));
 DESCR("less than");
-DATA(insert OID = 2385 ( "<="	   PGNSP PGUID b f f	1184	1082   16 2361 2388 timestamptz_le_date scalarltsel scalarltjoinsel ));
+DATA(insert OID = 2385 ( "<="	   PGNSP PGUID b f f	1184	1082   16 2361 2388 timestamptz_le_date scalarlesel scalarlejoinsel ));
 DESCR("less than or equal");
 DATA(insert OID = 2386 ( "="	   PGNSP PGUID b t f	1184	1082   16 2360 2389 timestamptz_eq_date eqsel eqjoinsel ));
 DESCR("equal");
-DATA(insert OID = 2387 ( ">="	   PGNSP PGUID b f f	1184	1082   16 2359 2384 timestamptz_ge_date scalargtsel scalargtjoinsel ));
+DATA(insert OID = 2387 ( ">="	   PGNSP PGUID b f f	1184	1082   16 2359 2384 timestamptz_ge_date scalargesel scalargejoinsel ));
 DESCR("greater than or equal");
 DATA(insert OID = 2388 ( ">"	   PGNSP PGUID b f f	1184	1082   16 2358 2385 timestamptz_gt_date scalargtsel scalargtjoinsel ));
 DESCR("greater than");
@@ -1502,11 +1502,11 @@ DESCR("not equal");
 
 DATA(insert OID = 2534 ( "<"	   PGNSP PGUID b f f	1114	1184   16 2544 2537 timestamp_lt_timestamptz scalarltsel scalarltjoinsel ));
 DESCR("less than");
-DATA(insert OID = 2535 ( "<="	   PGNSP PGUID b f f	1114	1184   16 2543 2538 timestamp_le_timestamptz scalarltsel scalarltjoinsel ));
+DATA(insert OID = 2535 ( "<="	   PGNSP PGUID b f f	1114	1184   16 2543 2538 timestamp_le_timestamptz scalarlesel scalarlejoinsel ));
 DESCR("less than or equal");
 DATA(insert OID = 2536 ( "="	   PGNSP PGUID b t f	1114	1184   16 2542 2539 timestamp_eq_timestamptz eqsel eqjoinsel ));
 DESCR("equal");
-DATA(insert OID = 2537 ( ">="	   PGNSP PGUID b f f	1114	1184   16 2541 2534 timestamp_ge_timestamptz scalargtsel scalargtjoinsel ));
+DATA(insert OID = 2537 ( ">="	   PGNSP PGUID b f f	1114	1184   16 2541 2534 timestamp_ge_timestamptz scalargesel scalargejoinsel ));
 DESCR("greater than or equal");
 DATA(insert OID = 2538 ( ">"	   PGNSP PGUID b f f	1114	1184   16 2540 2535 timestamp_gt_timestamptz scalargtsel scalargtjoinsel ));
 DESCR("greater than");
@@ -1515,11 +1515,11 @@ DESCR("not equal");
 
 DATA(insert OID = 2540 ( "<"	   PGNSP PGUID b f f	1184	1114   16 2538 2543 timestamptz_lt_timestamp scalarltsel scalarltjoinsel ));
 DESCR("less than");
-DATA(insert OID = 2541 ( "<="	   PGNSP PGUID b f f	1184	1114   16 2537 2544 timestamptz_le_timestamp scalarltsel scalarltjoinsel ));
+DATA(insert OID = 2541 ( "<="	   PGNSP PGUID b f f	1184	1114   16 2537 2544 timestamptz_le_timestamp scalarlesel scalarlejoinsel ));
 DESCR("less than or equal");
 DATA(insert OID = 2542 ( "="	   PGNSP PGUID b t f	1184	1114   16 2536 2545 timestamptz_eq_timestamp eqsel eqjoinsel ));
 DESCR("equal");
-DATA(insert OID = 2543 ( ">="	   PGNSP PGUID b f f	1184	1114   16 2535 2540 timestamptz_ge_timestamp scalargtsel scalargtjoinsel ));
+DATA(insert OID = 2543 ( ">="	   PGNSP PGUID b f f	1184	1114   16 2535 2540 timestamptz_ge_timestamp scalargesel scalargejoinsel ));
 DESCR("greater than or equal");
 DATA(insert OID = 2544 ( ">"	   PGNSP PGUID b f f	1184	1114   16 2534 2541 timestamptz_gt_timestamp scalargtsel scalargtjoinsel ));
 DESCR("greater than");
@@ -1624,9 +1624,9 @@ DATA(insert OID = 2974 (  "<"	   PGNSP PGUID b f f 2950 2950 16 2975 2977 uuid_l
 DESCR("less than");
 DATA(insert OID = 2975 (  ">"	   PGNSP PGUID b f f 2950 2950 16 2974 2976 uuid_gt scalargtsel scalargtjoinsel ));
 DESCR("greater than");
-DATA(insert OID = 2976 (  "<="	   PGNSP PGUID b f f 2950 2950 16 2977 2975 uuid_le scalarltsel scalarltjoinsel ));
+DATA(insert OID = 2976 (  "<="	   PGNSP PGUID b f f 2950 2950 16 2977 2975 uuid_le scalarlesel scalarlejoinsel ));
 DESCR("less than or equal");
-DATA(insert OID = 2977 (  ">="	   PGNSP PGUID b f f 2950 2950 16 2976 2974 uuid_ge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 2977 (  ">="	   PGNSP PGUID b f f 2950 2950 16 2976 2974 uuid_ge scalargesel scalargejoinsel ));
 DESCR("greater than or equal");
 
 /* pg_lsn operators */
@@ -1638,9 +1638,9 @@ DATA(insert OID = 3224 (  "<"	   PGNSP PGUID b f f 3220 3220 16 3225 3227 pg_lsn
 DESCR("less than");
 DATA(insert OID = 3225 (  ">"	   PGNSP PGUID b f f 3220 3220 16 3224 3226 pg_lsn_gt scalargtsel scalargtjoinsel ));
 DESCR("greater than");
-DATA(insert OID = 3226 (  "<="	   PGNSP PGUID b f f 3220 3220 16 3227 3225 pg_lsn_le scalarltsel scalarltjoinsel ));
+DATA(insert OID = 3226 (  "<="	   PGNSP PGUID b f f 3220 3220 16 3227 3225 pg_lsn_le scalarlesel scalarlejoinsel ));
 DESCR("less than or equal");
-DATA(insert OID = 3227 (  ">="	   PGNSP PGUID b f f 3220 3220 16 3226 3224 pg_lsn_ge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 3227 (  ">="	   PGNSP PGUID b f f 3220 3220 16 3226 3224 pg_lsn_ge scalargesel scalargejoinsel ));
 DESCR("greater than or equal");
 DATA(insert OID = 3228 (  "-"	   PGNSP PGUID b f f 3220 3220 1700    0	0 pg_lsn_mi - - ));
 DESCR("minus");
@@ -1654,9 +1654,9 @@ DATA(insert OID = 3518 (  "<"	   PGNSP PGUID b f f 3500 3500 16 3519 3521 enum_l
 DESCR("less than");
 DATA(insert OID = 3519 (  ">"	   PGNSP PGUID b f f 3500 3500 16 3518 3520 enum_gt scalargtsel scalargtjoinsel ));
 DESCR("greater than");
-DATA(insert OID = 3520 (  "<="	   PGNSP PGUID b f f 3500 3500 16 3521 3519 enum_le scalarltsel scalarltjoinsel ));
+DATA(insert OID = 3520 (  "<="	   PGNSP PGUID b f f 3500 3500 16 3521 3519 enum_le scalarlesel scalarlejoinsel ));
 DESCR("less than or equal");
-DATA(insert OID = 3521 (  ">="	   PGNSP PGUID b f f 3500 3500 16 3520 3518 enum_ge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 3521 (  ">="	   PGNSP PGUID b f f 3500 3500 16 3520 3518 enum_ge scalargesel scalargejoinsel ));
 DESCR("greater than or equal");
 
 /*
@@ -1664,13 +1664,13 @@ DESCR("greater than or equal");
  */
 DATA(insert OID = 3627 (  "<"	   PGNSP PGUID b f f 3614	 3614	 16 3632 3631	 tsvector_lt scalarltsel scalarltjoinsel ));
 DESCR("less than");
-DATA(insert OID = 3628 (  "<="	   PGNSP PGUID b f f 3614	 3614	 16 3631 3632	 tsvector_le scalarltsel scalarltjoinsel ));
+DATA(insert OID = 3628 (  "<="	   PGNSP PGUID b f f 3614	 3614	 16 3631 3632	 tsvector_le scalarlesel scalarlejoinsel ));
 DESCR("less than or equal");
 DATA(insert OID = 3629 (  "="	   PGNSP PGUID b t f 3614	 3614	 16 3629 3630	 tsvector_eq eqsel eqjoinsel ));
 DESCR("equal");
 DATA(insert OID = 3630 (  "<>"	   PGNSP PGUID b f f 3614	 3614	 16 3630 3629	 tsvector_ne neqsel neqjoinsel ));
 DESCR("not equal");
-DATA(insert OID = 3631 (  ">="	   PGNSP PGUID b f f 3614	 3614	 16 3628 3627	 tsvector_ge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 3631 (  ">="	   PGNSP PGUID b f f 3614	 3614	 16 3628 3627	 tsvector_ge scalargesel scalargejoinsel ));
 DESCR("greater than or equal");
 DATA(insert OID = 3632 (  ">"	   PGNSP PGUID b f f 3614	 3614	 16 3627 3628	 tsvector_gt scalargtsel scalargtjoinsel ));
 DESCR("greater than");
@@ -1686,13 +1686,13 @@ DATA(insert OID = 3661 (  "@@@"    PGNSP PGUID b f f 3615	 3614	 16 3660	0	 ts_m
 DESCR("deprecated, use @@ instead");
 DATA(insert OID = 3674 (  "<"	   PGNSP PGUID b f f 3615	 3615	 16 3679 3678	 tsquery_lt scalarltsel scalarltjoinsel ));
 DESCR("less than");
-DATA(insert OID = 3675 (  "<="	   PGNSP PGUID b f f 3615	 3615	 16 3678 3679	 tsquery_le scalarltsel scalarltjoinsel ));
+DATA(insert OID = 3675 (  "<="	   PGNSP PGUID b f f 3615	 3615	 16 3678 3679	 tsquery_le scalarlesel scalarlejoinsel ));
 DESCR("less than or equal");
 DATA(insert OID = 3676 (  "="	   PGNSP PGUID b t f 3615	 3615	 16 3676 3677	 tsquery_eq eqsel eqjoinsel ));
 DESCR("equal");
 DATA(insert OID = 3677 (  "<>"	   PGNSP PGUID b f f 3615	 3615	 16 3677 3676	 tsquery_ne neqsel neqjoinsel ));
 DESCR("not equal");
-DATA(insert OID = 3678 (  ">="	   PGNSP PGUID b f f 3615	 3615	 16 3675 3674	 tsquery_ge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 3678 (  ">="	   PGNSP PGUID b f f 3615	 3615	 16 3675 3674	 tsquery_ge scalargesel scalargejoinsel ));
 DESCR("greater than or equal");
 DATA(insert OID = 3679 (  ">"	   PGNSP PGUID b f f 3615	 3615	 16 3674 3675	 tsquery_gt scalargtsel scalargtjoinsel ));
 DESCR("greater than");
@@ -1726,9 +1726,9 @@ DESCR("less than");
 DATA(insert OID = 2991 (  ">"	   PGNSP PGUID b f f 2249 2249 16 2990 2992 record_gt scalargtsel scalargtjoinsel ));
 DESCR("greater than");
 #define RECORD_GT_OP 2991
-DATA(insert OID = 2992 (  "<="	   PGNSP PGUID b f f 2249 2249 16 2993 2991 record_le scalarltsel scalarltjoinsel ));
+DATA(insert OID = 2992 (  "<="	   PGNSP PGUID b f f 2249 2249 16 2993 2991 record_le scalarlesel scalarlejoinsel ));
 DESCR("less than or equal");
-DATA(insert OID = 2993 (  ">="	   PGNSP PGUID b f f 2249 2249 16 2992 2990 record_ge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 2993 (  ">="	   PGNSP PGUID b f f 2249 2249 16 2992 2990 record_ge scalargesel scalargejoinsel ));
 DESCR("greater than or equal");
 
 /* byte-oriented tests for identical rows and fast sorting */
@@ -1740,9 +1740,9 @@ DATA(insert OID = 3190 (  "*<"	   PGNSP PGUID b f f 2249 2249 16 3191 3193 recor
 DESCR("less than");
 DATA(insert OID = 3191 (  "*>"	   PGNSP PGUID b f f 2249 2249 16 3190 3192 record_image_gt scalargtsel scalargtjoinsel ));
 DESCR("greater than");
-DATA(insert OID = 3192 (  "*<="   PGNSP PGUID b f f 2249 2249 16 3193 3191 record_image_le scalarltsel scalarltjoinsel ));
+DATA(insert OID = 3192 (  "*<="   PGNSP PGUID b f f 2249 2249 16 3193 3191 record_image_le scalarlesel scalarlejoinsel ));
 DESCR("less than or equal");
-DATA(insert OID = 3193 (  "*>="   PGNSP PGUID b f f 2249 2249 16 3192 3190 record_image_ge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 3193 (  "*>="   PGNSP PGUID b f f 2249 2249 16 3192 3190 record_image_ge scalargesel scalargejoinsel ));
 DESCR("greater than or equal");
 
 /* generic range type operators */
@@ -1753,10 +1753,10 @@ DESCR("not equal");
 DATA(insert OID = 3884 (  "<"	   PGNSP PGUID b f f 3831 3831 16 3887 3886 range_lt rangesel scalarltjoinsel ));
 DESCR("less than");
 #define OID_RANGE_LESS_OP 3884
-DATA(insert OID = 3885 (  "<="	   PGNSP PGUID b f f 3831 3831 16 3886 3887 range_le rangesel scalarltjoinsel ));
+DATA(insert OID = 3885 (  "<="	   PGNSP PGUID b f f 3831 3831 16 3886 3887 range_le rangesel scalarlejoinsel ));
 DESCR("less than or equal");
 #define OID_RANGE_LESS_EQUAL_OP 3885
-DATA(insert OID = 3886 (  ">="	   PGNSP PGUID b f f 3831 3831 16 3885 3884 range_ge rangesel scalargtjoinsel ));
+DATA(insert OID = 3886 (  ">="	   PGNSP PGUID b f f 3831 3831 16 3885 3884 range_ge rangesel scalargejoinsel ));
 DESCR("greater than or equal");
 #define OID_RANGE_GREATER_EQUAL_OP 3886
 DATA(insert OID = 3887 (  ">"	   PGNSP PGUID b f f 3831 3831 16 3884 3885 range_gt rangesel scalargtjoinsel ));
@@ -1829,9 +1829,9 @@ DATA(insert OID = 3242 (  "<"		PGNSP PGUID b f f 3802 3802 16 3243 3245 jsonb_lt
 DESCR("less than");
 DATA(insert OID = 3243 (  ">"		PGNSP PGUID b f f 3802 3802 16 3242 3244 jsonb_gt scalargtsel scalargtjoinsel ));
 DESCR("greater than");
-DATA(insert OID = 3244 (  "<="	PGNSP PGUID b f f 3802 3802 16 3245 3243 jsonb_le scalarltsel scalarltjoinsel ));
+DATA(insert OID = 3244 (  "<="	PGNSP PGUID b f f 3802 3802 16 3245 3243 jsonb_le scalarlesel scalarlejoinsel ));
 DESCR("less than or equal");
-DATA(insert OID = 3245 (  ">="	PGNSP PGUID b f f 3802 3802 16 3244 3242 jsonb_ge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 3245 (  ">="	PGNSP PGUID b f f 3802 3802 16 3244 3242 jsonb_ge scalargesel scalargejoinsel ));
 DESCR("greater than or equal");
 DATA(insert OID = 3246 (  "@>"	   PGNSP PGUID b f f 3802 3802 16 3250 0 jsonb_contains contsel contjoinsel ));
 DESCR("contains");

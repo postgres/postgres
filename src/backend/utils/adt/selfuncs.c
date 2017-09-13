@@ -164,7 +164,7 @@ static double var_eq_non_const(VariableStatData *vardata, Oid operator,
 				 bool varonleft, bool negate);
 static double ineq_histogram_selectivity(PlannerInfo *root,
 						   VariableStatData *vardata,
-						   FmgrInfo *opproc, bool isgt,
+						   FmgrInfo *opproc, bool isgt, bool iseq,
 						   Datum constval, Oid consttype);
 static double eqjoinsel_inner(Oid operator,
 				VariableStatData *vardata1, VariableStatData *vardata2);
@@ -545,18 +545,21 @@ neqsel(PG_FUNCTION_ARGS)
 /*
  *	scalarineqsel		- Selectivity of "<", "<=", ">", ">=" for scalars.
  *
- * This is the guts of both scalarltsel and scalargtsel.  The caller has
- * commuted the clause, if necessary, so that we can treat the variable as
- * being on the left.  The caller must also make sure that the other side
- * of the clause is a non-null Const, and dissect same into a value and
- * datatype.
+ * This is the guts of scalarltsel/scalarlesel/scalargtsel/scalargesel.
+ * The isgt and iseq flags distinguish which of the four cases apply.
+ *
+ * The caller has commuted the clause, if necessary, so that we can treat
+ * the variable as being on the left.  The caller must also make sure that
+ * the other side of the clause is a non-null Const, and dissect that into
+ * a value and datatype.  (This definition simplifies some callers that
+ * want to estimate against a computed value instead of a Const node.)
  *
  * This routine works for any datatype (or pair of datatypes) known to
  * convert_to_scalar().  If it is applied to some other datatype,
  * it will return a default estimate.
  */
 static double
-scalarineqsel(PlannerInfo *root, Oid operator, bool isgt,
+scalarineqsel(PlannerInfo *root, Oid operator, bool isgt, bool iseq,
 			  VariableStatData *vardata, Datum constval, Oid consttype)
 {
 	Form_pg_statistic stats;
@@ -588,7 +591,8 @@ scalarineqsel(PlannerInfo *root, Oid operator, bool isgt,
 	 * If there is a histogram, determine which bin the constant falls in, and
 	 * compute the resulting contribution to selectivity.
 	 */
-	hist_selec = ineq_histogram_selectivity(root, vardata, &opproc, isgt,
+	hist_selec = ineq_histogram_selectivity(root, vardata,
+											&opproc, isgt, iseq,
 											constval, consttype);
 
 	/*
@@ -758,7 +762,8 @@ histogram_selectivity(VariableStatData *vardata, FmgrInfo *opproc,
  *	ineq_histogram_selectivity	- Examine the histogram for scalarineqsel
  *
  * Determine the fraction of the variable's histogram population that
- * satisfies the inequality condition, ie, VAR < CONST or VAR > CONST.
+ * satisfies the inequality condition, ie, VAR < (or <=, >, >=) CONST.
+ * The isgt and iseq flags distinguish which of the four cases apply.
  *
  * Returns -1 if there is no histogram (valid results will always be >= 0).
  *
@@ -769,7 +774,7 @@ histogram_selectivity(VariableStatData *vardata, FmgrInfo *opproc,
 static double
 ineq_histogram_selectivity(PlannerInfo *root,
 						   VariableStatData *vardata,
-						   FmgrInfo *opproc, bool isgt,
+						   FmgrInfo *opproc, bool isgt, bool iseq,
 						   Datum constval, Oid consttype)
 {
 	double		hist_selec;
@@ -796,11 +801,17 @@ ineq_histogram_selectivity(PlannerInfo *root,
 		if (sslot.nvalues > 1)
 		{
 			/*
-			 * Use binary search to find proper location, ie, the first slot
-			 * at which the comparison fails.  (If the given operator isn't
-			 * actually sort-compatible with the histogram, you'll get garbage
-			 * results ... but probably not any more garbage-y than you would
-			 * from the old linear search.)
+			 * Use binary search to find the desired location, namely the
+			 * right end of the histogram bin containing the comparison value,
+			 * which is the leftmost entry for which the comparison operator
+			 * succeeds (if isgt) or fails (if !isgt).  (If the given operator
+			 * isn't actually sort-compatible with the histogram, you'll get
+			 * garbage results ... but probably not any more garbage-y than
+			 * you would have from the old linear search.)
+			 *
+			 * In this loop, we pay no attention to whether the operator iseq
+			 * or not; that detail will be mopped up below.  (We cannot tell,
+			 * anyway, whether the operator thinks the values are equal.)
 			 *
 			 * If the binary search accesses the first or last histogram
 			 * entry, we try to replace that endpoint with the true column min
@@ -865,25 +876,74 @@ ineq_histogram_selectivity(PlannerInfo *root,
 
 			if (lobound <= 0)
 			{
-				/* Constant is below lower histogram boundary. */
+				/*
+				 * Constant is below lower histogram boundary.  More
+				 * precisely, we have found that no entry in the histogram
+				 * satisfies the inequality clause (if !isgt) or they all do
+				 * (if isgt).  We estimate that that's true of the entire
+				 * table, so set histfrac to 0.0 (which we'll flip to 1.0
+				 * below, if isgt).
+				 */
 				histfrac = 0.0;
 			}
 			else if (lobound >= sslot.nvalues)
 			{
-				/* Constant is above upper histogram boundary. */
+				/*
+				 * Inverse case: constant is above upper histogram boundary.
+				 */
 				histfrac = 1.0;
 			}
 			else
 			{
+				/* We have values[i-1] <= constant <= values[i]. */
 				int			i = lobound;
+				double		eq_selec = 0;
 				double		val,
 							high,
 							low;
 				double		binfrac;
 
 				/*
-				 * We have values[i-1] <= constant <= values[i].
+				 * In the cases where we'll need it below, obtain an estimate
+				 * of the selectivity of "x = constval".  We use a calculation
+				 * similar to what var_eq_const() does for a non-MCV constant,
+				 * ie, estimate that all distinct non-MCV values occur equally
+				 * often.  But multiplication by "1.0 - sumcommon - nullfrac"
+				 * will be done by our caller, so we shouldn't do that here.
+				 * Therefore we can't try to clamp the estimate by reference
+				 * to the least common MCV; the result would be too small.
 				 *
+				 * Note: since this is effectively assuming that constval
+				 * isn't an MCV, it's logically dubious if constval in fact is
+				 * one.  But we have to apply *some* correction for equality,
+				 * and anyway we cannot tell if constval is an MCV, since we
+				 * don't have a suitable equality operator at hand.
+				 */
+				if (i == 1 || isgt == iseq)
+				{
+					double		otherdistinct;
+					bool		isdefault;
+					AttStatsSlot mcvslot;
+
+					/* Get estimated number of distinct values */
+					otherdistinct = get_variable_numdistinct(vardata,
+															 &isdefault);
+
+					/* Subtract off the number of known MCVs */
+					if (get_attstatsslot(&mcvslot, vardata->statsTuple,
+										 STATISTIC_KIND_MCV, InvalidOid,
+										 ATTSTATSSLOT_NUMBERS))
+					{
+						otherdistinct -= mcvslot.nnumbers;
+						free_attstatsslot(&mcvslot);
+					}
+
+					/* If result doesn't seem sane, leave eq_selec at 0 */
+					if (otherdistinct > 1)
+						eq_selec = 1.0 / otherdistinct;
+				}
+
+				/*
 				 * Convert the constant and the two nearest bin boundary
 				 * values to a uniform comparison scale, and do a linear
 				 * interpolation within this bin.
@@ -937,13 +997,54 @@ ineq_histogram_selectivity(PlannerInfo *root,
 				 */
 				histfrac = (double) (i - 1) + binfrac;
 				histfrac /= (double) (sslot.nvalues - 1);
+
+				/*
+				 * At this point, histfrac is an estimate of the fraction of
+				 * the population represented by the histogram that satisfies
+				 * "x <= constval".  Somewhat remarkably, this statement is
+				 * true regardless of which operator we were doing the probes
+				 * with, so long as convert_to_scalar() delivers reasonable
+				 * results.  If the probe constant is equal to some histogram
+				 * entry, we would have considered the bin to the left of that
+				 * entry if probing with "<" or ">=", or the bin to the right
+				 * if probing with "<=" or ">"; but binfrac would have come
+				 * out as 1.0 in the first case and 0.0 in the second, leading
+				 * to the same histfrac in either case.  For probe constants
+				 * between histogram entries, we find the same bin and get the
+				 * same estimate with any operator.
+				 *
+				 * The fact that the estimate corresponds to "x <= constval"
+				 * and not "x < constval" is because of the way that ANALYZE
+				 * constructs the histogram: each entry is, effectively, the
+				 * rightmost value in its sample bucket.  So selectivity
+				 * values that are exact multiples of 1/(histogram_size-1)
+				 * should be understood as estimates including a histogram
+				 * entry plus everything to its left.
+				 *
+				 * However, that breaks down for the first histogram entry,
+				 * which necessarily is the leftmost value in its sample
+				 * bucket.  That means the first histogram bin is slightly
+				 * narrower than the rest, by an amount equal to eq_selec.
+				 * Another way to say that is that we want "x <= leftmost" to
+				 * be estimated as eq_selec not zero.  So, if we're dealing
+				 * with the first bin (i==1), rescale to make that true while
+				 * adjusting the rest of that bin linearly.
+				 */
+				if (i == 1)
+					histfrac += eq_selec * (1.0 - binfrac);
+
+				/*
+				 * "x <= constval" is good if we want an estimate for "<=" or
+				 * ">", but if we are estimating for "<" or ">=", we now need
+				 * to decrease the estimate by eq_selec.
+				 */
+				if (isgt == iseq)
+					histfrac -= eq_selec;
 			}
 
 			/*
-			 * Now histfrac = fraction of histogram entries below the
-			 * constant.
-			 *
-			 * Account for "<" vs ">"
+			 * Now the estimate is finished for "<" and "<=" cases.  If we are
+			 * estimating for ">" or ">=", flip it.
 			 */
 			hist_selec = isgt ? (1.0 - histfrac) : histfrac;
 
@@ -951,16 +1052,21 @@ ineq_histogram_selectivity(PlannerInfo *root,
 			 * The histogram boundaries are only approximate to begin with,
 			 * and may well be out of date anyway.  Therefore, don't believe
 			 * extremely small or large selectivity estimates --- unless we
-			 * got actual current endpoint values from the table.
+			 * got actual current endpoint values from the table, in which
+			 * case just do the usual sanity clamp.  Somewhat arbitrarily, we
+			 * set the cutoff for other cases at a hundredth of the histogram
+			 * resolution.
 			 */
 			if (have_end)
 				CLAMP_PROBABILITY(hist_selec);
 			else
 			{
-				if (hist_selec < 0.0001)
-					hist_selec = 0.0001;
-				else if (hist_selec > 0.9999)
-					hist_selec = 0.9999;
+				double		cutoff = 0.01 / (double) (sslot.nvalues - 1);
+
+				if (hist_selec < cutoff)
+					hist_selec = cutoff;
+				else if (hist_selec > 1.0 - cutoff)
+					hist_selec = 1.0 - cutoff;
 			}
 		}
 
@@ -971,10 +1077,11 @@ ineq_histogram_selectivity(PlannerInfo *root,
 }
 
 /*
- *		scalarltsel		- Selectivity of "<" (also "<=") for scalars.
+ * Common wrapper function for the selectivity estimators that simply
+ * invoke scalarineqsel().
  */
-Datum
-scalarltsel(PG_FUNCTION_ARGS)
+static Datum
+scalarineqsel_wrapper(PG_FUNCTION_ARGS, bool isgt, bool iseq)
 {
 	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
 	Oid			operator = PG_GETARG_OID(1);
@@ -985,7 +1092,6 @@ scalarltsel(PG_FUNCTION_ARGS)
 	bool		varonleft;
 	Datum		constval;
 	Oid			consttype;
-	bool		isgt;
 	double		selec;
 
 	/*
@@ -1020,14 +1126,8 @@ scalarltsel(PG_FUNCTION_ARGS)
 	/*
 	 * Force the var to be on the left to simplify logic in scalarineqsel.
 	 */
-	if (varonleft)
+	if (!varonleft)
 	{
-		/* we have var < other */
-		isgt = false;
-	}
-	else
-	{
-		/* we have other < var, commute to make var > other */
 		operator = get_commutator(operator);
 		if (!operator)
 		{
@@ -1035,10 +1135,12 @@ scalarltsel(PG_FUNCTION_ARGS)
 			ReleaseVariableStats(vardata);
 			PG_RETURN_FLOAT8(DEFAULT_INEQ_SEL);
 		}
-		isgt = true;
+		isgt = !isgt;
 	}
 
-	selec = scalarineqsel(root, operator, isgt, &vardata, constval, consttype);
+	/* The rest of the work is done by scalarineqsel(). */
+	selec = scalarineqsel(root, operator, isgt, iseq,
+						  &vardata, constval, consttype);
 
 	ReleaseVariableStats(vardata);
 
@@ -1046,78 +1148,39 @@ scalarltsel(PG_FUNCTION_ARGS)
 }
 
 /*
- *		scalargtsel		- Selectivity of ">" (also ">=") for integers.
+ *		scalarltsel		- Selectivity of "<" for scalars.
+ */
+Datum
+scalarltsel(PG_FUNCTION_ARGS)
+{
+	return scalarineqsel_wrapper(fcinfo, false, false);
+}
+
+/*
+ *		scalarlesel		- Selectivity of "<=" for scalars.
+ */
+Datum
+scalarlesel(PG_FUNCTION_ARGS)
+{
+	return scalarineqsel_wrapper(fcinfo, false, true);
+}
+
+/*
+ *		scalargtsel		- Selectivity of ">" for scalars.
  */
 Datum
 scalargtsel(PG_FUNCTION_ARGS)
 {
-	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
-	Oid			operator = PG_GETARG_OID(1);
-	List	   *args = (List *) PG_GETARG_POINTER(2);
-	int			varRelid = PG_GETARG_INT32(3);
-	VariableStatData vardata;
-	Node	   *other;
-	bool		varonleft;
-	Datum		constval;
-	Oid			consttype;
-	bool		isgt;
-	double		selec;
+	return scalarineqsel_wrapper(fcinfo, true, false);
+}
 
-	/*
-	 * If expression is not variable op something or something op variable,
-	 * then punt and return a default estimate.
-	 */
-	if (!get_restriction_variable(root, args, varRelid,
-								  &vardata, &other, &varonleft))
-		PG_RETURN_FLOAT8(DEFAULT_INEQ_SEL);
-
-	/*
-	 * Can't do anything useful if the something is not a constant, either.
-	 */
-	if (!IsA(other, Const))
-	{
-		ReleaseVariableStats(vardata);
-		PG_RETURN_FLOAT8(DEFAULT_INEQ_SEL);
-	}
-
-	/*
-	 * If the constant is NULL, assume operator is strict and return zero, ie,
-	 * operator will never return TRUE.
-	 */
-	if (((Const *) other)->constisnull)
-	{
-		ReleaseVariableStats(vardata);
-		PG_RETURN_FLOAT8(0.0);
-	}
-	constval = ((Const *) other)->constvalue;
-	consttype = ((Const *) other)->consttype;
-
-	/*
-	 * Force the var to be on the left to simplify logic in scalarineqsel.
-	 */
-	if (varonleft)
-	{
-		/* we have var > other */
-		isgt = true;
-	}
-	else
-	{
-		/* we have other > var, commute to make var < other */
-		operator = get_commutator(operator);
-		if (!operator)
-		{
-			/* Use default selectivity (should we raise an error instead?) */
-			ReleaseVariableStats(vardata);
-			PG_RETURN_FLOAT8(DEFAULT_INEQ_SEL);
-		}
-		isgt = false;
-	}
-
-	selec = scalarineqsel(root, operator, isgt, &vardata, constval, consttype);
-
-	ReleaseVariableStats(vardata);
-
-	PG_RETURN_FLOAT8((float8) selec);
+/*
+ *		scalargesel		- Selectivity of ">=" for scalars.
+ */
+Datum
+scalargesel(PG_FUNCTION_ARGS)
+{
+	return scalarineqsel_wrapper(fcinfo, true, true);
 }
 
 /*
@@ -2722,7 +2785,7 @@ neqjoinsel(PG_FUNCTION_ARGS)
 }
 
 /*
- *		scalarltjoinsel - Join selectivity of "<" and "<=" for scalars
+ *		scalarltjoinsel - Join selectivity of "<" for scalars
  */
 Datum
 scalarltjoinsel(PG_FUNCTION_ARGS)
@@ -2731,10 +2794,28 @@ scalarltjoinsel(PG_FUNCTION_ARGS)
 }
 
 /*
- *		scalargtjoinsel - Join selectivity of ">" and ">=" for scalars
+ *		scalarlejoinsel - Join selectivity of "<=" for scalars
+ */
+Datum
+scalarlejoinsel(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_FLOAT8(DEFAULT_INEQ_SEL);
+}
+
+/*
+ *		scalargtjoinsel - Join selectivity of ">" for scalars
  */
 Datum
 scalargtjoinsel(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_FLOAT8(DEFAULT_INEQ_SEL);
+}
+
+/*
+ *		scalargejoinsel - Join selectivity of ">=" for scalars
+ */
+Datum
+scalargejoinsel(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_FLOAT8(DEFAULT_INEQ_SEL);
 }
@@ -3036,13 +3117,13 @@ mergejoinscansel(PlannerInfo *root, Node *clause,
 	 * fraction that's <= the right-side maximum value.  But only believe
 	 * non-default estimates, else stick with our 1.0.
 	 */
-	selec = scalarineqsel(root, leop, isgt, &leftvar,
+	selec = scalarineqsel(root, leop, isgt, true, &leftvar,
 						  rightmax, op_righttype);
 	if (selec != DEFAULT_INEQ_SEL)
 		*leftend = selec;
 
 	/* And similarly for the right variable. */
-	selec = scalarineqsel(root, revleop, isgt, &rightvar,
+	selec = scalarineqsel(root, revleop, isgt, true, &rightvar,
 						  leftmax, op_lefttype);
 	if (selec != DEFAULT_INEQ_SEL)
 		*rightend = selec;
@@ -3066,13 +3147,13 @@ mergejoinscansel(PlannerInfo *root, Node *clause,
 	 * minimum value.  But only believe non-default estimates, else stick with
 	 * our own default.
 	 */
-	selec = scalarineqsel(root, ltop, isgt, &leftvar,
+	selec = scalarineqsel(root, ltop, isgt, false, &leftvar,
 						  rightmin, op_righttype);
 	if (selec != DEFAULT_INEQ_SEL)
 		*leftstart = selec;
 
 	/* And similarly for the right variable. */
-	selec = scalarineqsel(root, revltop, isgt, &rightvar,
+	selec = scalarineqsel(root, revltop, isgt, false, &rightvar,
 						  leftmin, op_lefttype);
 	if (selec != DEFAULT_INEQ_SEL)
 		*rightstart = selec;
@@ -4029,8 +4110,8 @@ convert_numeric_to_scalar(Datum value, Oid typid)
 	}
 
 	/*
-	 * Can't get here unless someone tries to use scalarltsel/scalargtsel on
-	 * an operator with one numeric and one non-numeric operand.
+	 * Can't get here unless someone tries to use scalarineqsel() on an
+	 * operator with one numeric and one non-numeric operand.
 	 */
 	elog(ERROR, "unsupported type: %u", typid);
 	return 0;
@@ -4211,8 +4292,8 @@ convert_string_datum(Datum value, Oid typid)
 		default:
 
 			/*
-			 * Can't get here unless someone tries to use scalarltsel on an
-			 * operator with one string and one non-string operand.
+			 * Can't get here unless someone tries to use scalarineqsel() on
+			 * an operator with one string and one non-string operand.
 			 */
 			elog(ERROR, "unsupported type: %u", typid);
 			return NULL;
@@ -4416,8 +4497,8 @@ convert_timevalue_to_scalar(Datum value, Oid typid)
 	}
 
 	/*
-	 * Can't get here unless someone tries to use scalarltsel/scalargtsel on
-	 * an operator with one timevalue and one non-timevalue operand.
+	 * Can't get here unless someone tries to use scalarineqsel() on an
+	 * operator with one timevalue and one non-timevalue operand.
 	 */
 	elog(ERROR, "unsupported type: %u", typid);
 	return 0;
@@ -5806,7 +5887,8 @@ prefix_selectivity(PlannerInfo *root, VariableStatData *vardata,
 		elog(ERROR, "no >= operator for opfamily %u", opfamily);
 	fmgr_info(get_opcode(cmpopr), &opproc);
 
-	prefixsel = ineq_histogram_selectivity(root, vardata, &opproc, true,
+	prefixsel = ineq_histogram_selectivity(root, vardata,
+										   &opproc, true, true,
 										   prefixcon->constvalue,
 										   prefixcon->consttype);
 
@@ -5832,7 +5914,8 @@ prefix_selectivity(PlannerInfo *root, VariableStatData *vardata,
 	{
 		Selectivity topsel;
 
-		topsel = ineq_histogram_selectivity(root, vardata, &opproc, false,
+		topsel = ineq_histogram_selectivity(root, vardata,
+											&opproc, false, false,
 											greaterstrcon->constvalue,
 											greaterstrcon->consttype);
 
