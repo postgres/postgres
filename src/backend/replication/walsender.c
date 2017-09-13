@@ -1545,7 +1545,7 @@ exec_replication_command(const char *cmd_string)
 		case T_SQLCmd:
 			if (MyDatabaseId == InvalidOid)
 				ereport(ERROR,
-						(errmsg("not connected to database")));
+						(errmsg("cannot execute SQL commands in WAL sender for physical replication")));
 
 			/* Tell the caller that this wasn't a WalSender command. */
 			return false;
