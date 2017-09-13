@@ -2398,6 +2398,11 @@ InitializeLDAPConnection(Port *port, LDAP **ldap)
 #define LPH_USERNAME "$username"
 #define LPH_USERNAME_LEN (sizeof(LPH_USERNAME) - 1)
 
+/* Not all LDAP implementations define this. */
+#ifndef LDAP_NO_ATTRS
+#define LDAP_NO_ATTRS "1.1"
+#endif
+
 /*
  * Return a newly allocated C string copied from "pattern" with all
  * occurrences of the placeholder "$username" replaced with "user_name".
