@@ -421,14 +421,14 @@ pg_upgrade.exe
     <title>Upgrade Streaming Replication and Log-Shipping standby servers</title>
 
     <para>
-     If you have Streaming Replication (see <xref
+     If you used link mode and have Streaming Replication (see <xref
      linkend="streaming-replication">) or Log-Shipping (see <xref
-     linkend="warm-standby">) standby servers, and used link mode,
-     follow these steps to upgrade them.  You will not be running
-     <application>pg_upgrade</> on the standby servers, but rather
-     <application>rsync</> on the primary.  Do not start any servers yet.
-     If you did <emphasis>not</> use link mode, skip the instructions in
-     this section and simply recreate the standby servers.
+     linkend="warm-standby">) standby servers, follow these steps to
+     upgrade them.  You will not be running <application>pg_upgrade</> on
+     the standby servers, but rather <application>rsync</> on the primary.
+     Do not start any servers yet.  If you did <emphasis>not</> use link
+     mode, skip the instructions in this section and simply recreate the
+     standby servers.
     </para>
 
     <substeps>
