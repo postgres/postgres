@@ -3717,6 +3717,9 @@ PostgresMain(int argc, char *argv[],
 		 */
 		CreateDataDirLockFile(false);
 
+		/* read control file (error checking and contains config ) */
+		LocalProcessControlFile();
+
 		/* Initialize MaxBackends (if under postmaster, was done already) */
 		InitializeMaxBackends();
 	}

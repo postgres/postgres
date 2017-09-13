@@ -950,6 +950,9 @@ PostmasterMain(int argc, char *argv[])
 	 */
 	CreateDataDirLockFile(true);
 
+	/* read control file (error checking and contains config) */
+	LocalProcessControlFile();
+
 	/*
 	 * Initialize SSL library, if specified.
 	 */
@@ -4804,6 +4807,9 @@ SubPostmasterMain(int argc, char *argv[])
 
 	/* Read in remaining GUC variables */
 	read_nondefault_variables();
+
+	/* (re-)read control file (contains config) */
+	LocalProcessControlFile();
 
 	/*
 	 * Reload any libraries that were preloaded by the postmaster.  Since we

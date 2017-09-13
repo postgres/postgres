@@ -4800,6 +4800,22 @@ check_wal_buffers(int *newval, void **extra, GucSource source)
 }
 
 /*
+ * Read the control file, set respective GUCs.
+ *
+ * This is to be called during startup, unless in bootstrap mode, where no
+ * control file yet exists.  As there's no shared memory yet (its sizing can
+ * depend on the contents of the control file!), first store data in local
+ * memory. XLOGShemInit() will then copy it to shared memory later.
+ */
+void
+LocalProcessControlFile(void)
+{
+	Assert(ControlFile == NULL);
+	ControlFile = palloc(sizeof(ControlFileData));
+	ReadControlFile();
+}
+
+/*
  * Initialization of shared memory for XLOG
  */
 Size
@@ -4850,6 +4866,7 @@ XLOGShmemInit(void)
 				foundXLog;
 	char	   *allocptr;
 	int			i;
+	ControlFileData *localControlFile;
 
 #ifdef WAL_DEBUG
 
@@ -4867,8 +4884,18 @@ XLOGShmemInit(void)
 	}
 #endif
 
+	/*
+	 * Already have read control file locally, unless in bootstrap mode. Move
+	 * local version into shared memory.
+	 */
+	localControlFile = ControlFile;
 	ControlFile = (ControlFileData *)
 		ShmemInitStruct("Control File", sizeof(ControlFileData), &foundCFile);
+	if (localControlFile)
+	{
+		memcpy(ControlFile, localControlFile, sizeof(ControlFileData));
+		pfree(localControlFile);
+	}
 	XLogCtl = (XLogCtlData *)
 		ShmemInitStruct("XLOG Ctl", XLOGShmemSize(), &foundXLog);
 
@@ -4933,14 +4960,6 @@ XLOGShmemInit(void)
 	SpinLockInit(&XLogCtl->info_lck);
 	SpinLockInit(&XLogCtl->ulsn_lck);
 	InitSharedLatch(&XLogCtl->recoveryWakeupLatch);
-
-	/*
-	 * If we are not in bootstrap mode, pg_control should already exist. Read
-	 * and validate it immediately (see comments in ReadControlFile() for the
-	 * reasons why).
-	 */
-	if (!IsBootstrapProcessingMode())
-		ReadControlFile();
 }
 
 /*
@@ -5129,6 +5148,12 @@ BootStrapXLOG(void)
 	BootStrapMultiXact();
 
 	pfree(buffer);
+
+	/*
+	 * Force control file to be read - in contrast to normal processing we'd
+	 * otherwise never run the checks and GUC related initializations therein.
+	 */
+	ReadControlFile();
 }
 
 static char *
@@ -6227,13 +6252,8 @@ StartupXLOG(void)
 	struct stat st;
 
 	/*
-	 * Read control file and check XLOG status looks valid.
-	 *
-	 * Note: in most control paths, *ControlFile is already valid and we need
-	 * not do ReadControlFile() here, but might as well do it to be sure.
+	 * Verify XLOG status looks valid.
 	 */
-	ReadControlFile();
-
 	if (ControlFile->state < DB_SHUTDOWNED ||
 		ControlFile->state > DB_IN_PRODUCTION ||
 		!XRecOffIsValid(ControlFile->checkPoint))
