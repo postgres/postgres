@@ -3161,7 +3161,7 @@ last error message: syntax error at end of input
 last error code: 42601
 -- check row count for a cursor-fetched query
 \set FETCH_COUNT 10
-select unique2 from tenk1 limit 19;
+select unique2 from tenk1 order by unique2 limit 19;
  unique2 
 ---------
        0
@@ -3191,8 +3191,20 @@ error: false
 error code: 00000
 \echo 'number of rows:' :ROW_COUNT
 number of rows: 19
--- cursor-fetched query with an error
-select 1/unique1 from tenk1;
+-- cursor-fetched query with an error after the first group
+select 1/(15-unique2) from tenk1 order by unique2 limit 19;
+ ?column? 
+----------
+        0
+        0
+        0
+        0
+        0
+        0
+        0
+        0
+        0
+        0
 ERROR:  division by zero
 \echo 'error:' :ERROR
 error: true

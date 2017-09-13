@@ -656,13 +656,13 @@ SELECT 4 AS \gdesc
 
 -- check row count for a cursor-fetched query
 \set FETCH_COUNT 10
-select unique2 from tenk1 limit 19;
+select unique2 from tenk1 order by unique2 limit 19;
 \echo 'error:' :ERROR
 \echo 'error code:' :SQLSTATE
 \echo 'number of rows:' :ROW_COUNT
 
--- cursor-fetched query with an error
-select 1/unique1 from tenk1;
+-- cursor-fetched query with an error after the first group
+select 1/(15-unique2) from tenk1 order by unique2 limit 19;
 \echo 'error:' :ERROR
 \echo 'error code:' :SQLSTATE
 \echo 'number of rows:' :ROW_COUNT
