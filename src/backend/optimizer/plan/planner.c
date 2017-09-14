@@ -6068,7 +6068,8 @@ plan_cluster_use_sort(Oid tableOid, Oid indexOid)
  *		Returns a list of the RT indexes of the partitioned child relations
  *		with rti as the root parent RT index.
  *
- * Note: Only call this function on RTEs known to be partitioned tables.
+ * Note: This function might get called even for range table entries that
+ * are not partitioned tables; in such a case, it will simply return NIL.
  */
 List *
 get_partitioned_child_rels(PlannerInfo *root, Index rti)
@@ -6086,9 +6087,6 @@ get_partitioned_child_rels(PlannerInfo *root, Index rti)
 			break;
 		}
 	}
-
-	/* The root partitioned table is included as a child rel */
-	Assert(list_length(result) >= 1);
 
 	return result;
 }
