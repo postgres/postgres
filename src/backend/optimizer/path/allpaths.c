@@ -24,6 +24,7 @@
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
 #include "foreign/fdwapi.h"
+#include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #ifdef OPTIMIZER_DEBUG
@@ -352,8 +353,8 @@ set_rel_size(PlannerInfo *root, RelOptInfo *rel,
 				else if (rte->relkind == RELKIND_PARTITIONED_TABLE)
 				{
 					/*
-					 * A partitioned table without leaf partitions is marked
-					 * as a dummy rel.
+					 * A partitioned table without any partitions is marked as
+					 * a dummy rel.
 					 */
 					set_dummy_rel_pathlist(rel);
 				}
@@ -867,6 +868,9 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 	int			nattrs;
 	ListCell   *l;
 
+	/* Guard against stack overflow due to overly deep inheritance tree. */
+	check_stack_depth();
+
 	Assert(IS_SIMPLE_REL(rel));
 
 	/*
@@ -1290,25 +1294,23 @@ add_paths_to_append_rel(PlannerInfo *root, RelOptInfo *rel,
 	bool		build_partitioned_rels = false;
 
 	/*
-	 * A plain relation will already have a PartitionedChildRelInfo if it is
-	 * partitioned.  For a subquery RTE, no PartitionedChildRelInfo exists; we
-	 * collect all partitioned_rels associated with any child.  (This assumes
-	 * that we don't need to look through multiple levels of subquery RTEs; if
-	 * we ever do, we could create a PartitionedChildRelInfo with the
-	 * accumulated list of partitioned_rels which would then be found when
-	 * populated our parent rel with paths.  For the present, that appears to
-	 * be unnecessary.)
+	 * A root partition will already have a PartitionedChildRelInfo, and a
+	 * non-root partitioned table doesn't need one, because its Append paths
+	 * will get flattened into the parent anyway.  For a subquery RTE, no
+	 * PartitionedChildRelInfo exists; we collect all partitioned_rels
+	 * associated with any child.  (This assumes that we don't need to look
+	 * through multiple levels of subquery RTEs; if we ever do, we could
+	 * create a PartitionedChildRelInfo with the accumulated list of
+	 * partitioned_rels which would then be found when populated our parent
+	 * rel with paths.  For the present, that appears to be unnecessary.)
 	 */
 	rte = planner_rt_fetch(rel->relid, root);
 	switch (rte->rtekind)
 	{
 		case RTE_RELATION:
 			if (rte->relkind == RELKIND_PARTITIONED_TABLE)
-			{
 				partitioned_rels =
 					get_partitioned_child_rels(root, rel->relid);
-				Assert(list_length(partitioned_rels) >= 1);
-			}
 			break;
 		case RTE_SUBQUERY:
 			build_partitioned_rels = true;

@@ -154,6 +154,23 @@ where parted_tab.a = ss.a;
 select tableoid::regclass::text as relname, parted_tab.* from parted_tab order by 1,2;
 
 drop table parted_tab;
+
+-- Check UPDATE with multi-level partitioned inherited target
+create table mlparted_tab (a int, b char, c text) partition by list (a);
+create table mlparted_tab_part1 partition of mlparted_tab for values in (1);
+create table mlparted_tab_part2 partition of mlparted_tab for values in (2) partition by list (b);
+create table mlparted_tab_part3 partition of mlparted_tab for values in (3);
+create table mlparted_tab_part2a partition of mlparted_tab_part2 for values in ('a');
+create table mlparted_tab_part2b partition of mlparted_tab_part2 for values in ('b');
+insert into mlparted_tab values (1, 'a'), (2, 'a'), (2, 'b'), (3, 'a');
+
+update mlparted_tab mlp set c = 'xxx'
+from
+  (select a from some_tab union all select a+1 from some_tab) ss (a)
+where (mlp.a = ss.a and mlp.b = 'b') or mlp.a = 3;
+select tableoid::regclass::text as relname, mlparted_tab.* from mlparted_tab order by 1,2;
+
+drop table mlparted_tab;
 drop table some_tab cascade;
 
 /* Test multiple inheritance of column defaults */

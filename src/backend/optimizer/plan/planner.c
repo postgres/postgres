@@ -1038,7 +1038,7 @@ static void
 inheritance_planner(PlannerInfo *root)
 {
 	Query	   *parse = root->parse;
-	int			parentRTindex = parse->resultRelation;
+	int			top_parentRTindex = parse->resultRelation;
 	Bitmapset  *subqueryRTindexes;
 	Bitmapset  *modifiableARIindexes;
 	int			nominalRelation = -1;
@@ -1056,6 +1056,10 @@ inheritance_planner(PlannerInfo *root)
 	Index		rti;
 	RangeTblEntry *parent_rte;
 	List	   *partitioned_rels = NIL;
+	PlannerInfo *parent_root;
+	Query	   *parent_parse;
+	Bitmapset  *parent_relids = bms_make_singleton(top_parentRTindex);
+	PlannerInfo **parent_roots = NULL;
 
 	Assert(parse->commandType != CMD_INSERT);
 
@@ -1119,11 +1123,31 @@ inheritance_planner(PlannerInfo *root)
 	 * (including the root parent) as child members of the inheritance set do
 	 * not appear anywhere else in the plan.  The situation is exactly the
 	 * opposite in the case of non-partitioned inheritance parent as described
-	 * below.
+	 * below. For the same reason, collect the list of descendant partitioned
+	 * tables to be saved in ModifyTable node, so that executor can lock those
+	 * as well.
 	 */
-	parent_rte = rt_fetch(parentRTindex, root->parse->rtable);
+	parent_rte = rt_fetch(top_parentRTindex, root->parse->rtable);
 	if (parent_rte->relkind == RELKIND_PARTITIONED_TABLE)
-		nominalRelation = parentRTindex;
+	{
+		nominalRelation = top_parentRTindex;
+		partitioned_rels = get_partitioned_child_rels(root, top_parentRTindex);
+		/* The root partitioned table is included as a child rel */
+		Assert(list_length(partitioned_rels) >= 1);
+	}
+
+	/*
+	 * The PlannerInfo for each child is obtained by translating the relevant
+	 * members of the PlannerInfo for its immediate parent, which we find
+	 * using the parent_relid in its AppendRelInfo.  We save the PlannerInfo
+	 * for each parent in an array indexed by relid for fast retrieval. Since
+	 * the maximum number of parents is limited by the number of RTEs in the
+	 * query, we use that number to allocate the array. An extra entry is
+	 * needed since relids start from 1.
+	 */
+	parent_roots = (PlannerInfo **) palloc0((list_length(parse->rtable) + 1) *
+											sizeof(PlannerInfo *));
+	parent_roots[top_parentRTindex] = root;
 
 	/*
 	 * And now we can get on with generating a plan for each child table.
@@ -1137,15 +1161,24 @@ inheritance_planner(PlannerInfo *root)
 		Path	   *subpath;
 
 		/* append_rel_list contains all append rels; ignore others */
-		if (appinfo->parent_relid != parentRTindex)
+		if (!bms_is_member(appinfo->parent_relid, parent_relids))
 			continue;
+
+		/*
+		 * expand_inherited_rtentry() always processes a parent before any of
+		 * that parent's children, so the parent_root for this relation should
+		 * already be available.
+		 */
+		parent_root = parent_roots[appinfo->parent_relid];
+		Assert(parent_root != NULL);
+		parent_parse = parent_root->parse;
 
 		/*
 		 * We need a working copy of the PlannerInfo so that we can control
 		 * propagation of information back to the main copy.
 		 */
 		subroot = makeNode(PlannerInfo);
-		memcpy(subroot, root, sizeof(PlannerInfo));
+		memcpy(subroot, parent_root, sizeof(PlannerInfo));
 
 		/*
 		 * Generate modified query with this rel as target.  We first apply
@@ -1154,15 +1187,15 @@ inheritance_planner(PlannerInfo *root)
 		 * then fool around with subquery RTEs.
 		 */
 		subroot->parse = (Query *)
-			adjust_appendrel_attrs(root,
-								   (Node *) parse,
+			adjust_appendrel_attrs(parent_root,
+								   (Node *) parent_parse,
 								   1, &appinfo);
 
 		/*
 		 * If there are securityQuals attached to the parent, move them to the
 		 * child rel (they've already been transformed properly for that).
 		 */
-		parent_rte = rt_fetch(parentRTindex, subroot->parse->rtable);
+		parent_rte = rt_fetch(appinfo->parent_relid, subroot->parse->rtable);
 		child_rte = rt_fetch(appinfo->child_relid, subroot->parse->rtable);
 		child_rte->securityQuals = parent_rte->securityQuals;
 		parent_rte->securityQuals = NIL;
@@ -1173,7 +1206,7 @@ inheritance_planner(PlannerInfo *root)
 		 * executor doesn't need to see the modified copies --- we can just
 		 * pass it the original rowMarks list.)
 		 */
-		subroot->rowMarks = copyObject(root->rowMarks);
+		subroot->rowMarks = copyObject(parent_root->rowMarks);
 
 		/*
 		 * The append_rel_list likewise might contain references to subquery
@@ -1190,7 +1223,7 @@ inheritance_planner(PlannerInfo *root)
 			ListCell   *lc2;
 
 			subroot->append_rel_list = NIL;
-			foreach(lc2, root->append_rel_list)
+			foreach(lc2, parent_root->append_rel_list)
 			{
 				AppendRelInfo *appinfo2 = lfirst_node(AppendRelInfo, lc2);
 
@@ -1225,7 +1258,7 @@ inheritance_planner(PlannerInfo *root)
 			ListCell   *lr;
 
 			rti = 1;
-			foreach(lr, parse->rtable)
+			foreach(lr, parent_parse->rtable)
 			{
 				RangeTblEntry *rte = lfirst_node(RangeTblEntry, lr);
 
@@ -1271,6 +1304,22 @@ inheritance_planner(PlannerInfo *root)
 		Assert(subroot->placeholder_list == NIL);
 		/* hack to mark target relation as an inheritance partition */
 		subroot->hasInheritedTarget = true;
+
+		/*
+		 * If the child is further partitioned, remember it as a parent. Since
+		 * a partitioned table does not have any data, we don't need to create
+		 * a plan for it. We do, however, need to remember the PlannerInfo for
+		 * use when processing its children.
+		 */
+		if (child_rte->inh)
+		{
+			Assert(child_rte->relkind == RELKIND_PARTITIONED_TABLE);
+			parent_relids =
+				bms_add_member(parent_relids, appinfo->child_relid);
+			parent_roots[appinfo->child_relid] = subroot;
+
+			continue;
+		}
 
 		/* Generate Path(s) for accessing this result relation */
 		grouping_planner(subroot, true, 0.0 /* retrieve all tuples */ );
@@ -1366,13 +1415,6 @@ inheritance_planner(PlannerInfo *root)
 									 subroot->parse->returningList);
 
 		Assert(!parse->onConflict);
-	}
-
-	if (parent_rte->relkind == RELKIND_PARTITIONED_TABLE)
-	{
-		partitioned_rels = get_partitioned_child_rels(root, parentRTindex);
-		/* The root partitioned table is included as a child rel */
-		Assert(list_length(partitioned_rels) >= 1);
 	}
 
 	/* Result path must go into outer query's FINAL upperrel */

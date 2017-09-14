@@ -1935,10 +1935,10 @@ typedef struct SpecialJoinInfo
  *
  * When we expand an inheritable table or a UNION-ALL subselect into an
  * "append relation" (essentially, a list of child RTEs), we build an
- * AppendRelInfo for each non-partitioned child RTE.  The list of
- * AppendRelInfos indicates which child RTEs must be included when expanding
- * the parent, and each node carries information needed to translate Vars
- * referencing the parent into Vars referencing that child.
+ * AppendRelInfo for each child RTE.  The list of AppendRelInfos indicates
+ * which child RTEs must be included when expanding the parent, and each node
+ * carries information needed to translate Vars referencing the parent into
+ * Vars referencing that child.
  *
  * These structs are kept in the PlannerInfo node's append_rel_list.
  * Note that we just throw all the structs into one list, and scan the
