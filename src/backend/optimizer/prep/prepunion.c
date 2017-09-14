@@ -1565,6 +1565,13 @@ expand_inherited_rtentry(PlannerInfo *root, RangeTblEntry *rte, Index rti)
 	root->append_rel_list = list_concat(root->append_rel_list, appinfos);
 }
 
+/*
+ * expand_partitioned_rtentry
+ *		Recursively expand an RTE for a partitioned table.
+ *
+ * Note that RelationGetPartitionDispatchInfo will expand partitions in the
+ * same order as this code.
+ */
 static void
 expand_partitioned_rtentry(PlannerInfo *root, RangeTblEntry *parentrte,
 						   Index parentRTindex, Relation parentrel,

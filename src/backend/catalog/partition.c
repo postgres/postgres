@@ -147,6 +147,8 @@ static int32 partition_bound_cmp(PartitionKey key,
 static int partition_bound_bsearch(PartitionKey key,
 						PartitionBoundInfo boundinfo,
 						void *probe, bool probe_is_bound, bool *is_equal);
+static void get_partition_dispatch_recurse(Relation rel, Relation parent,
+							   List **pds, List **leaf_part_oids);
 
 /*
  * RelationBuildPartitionDesc
@@ -1192,21 +1194,6 @@ get_partition_qual_relid(Oid relid)
 }
 
 /*
- * Append OIDs of rel's partitions to the list 'partoids' and for each OID,
- * append pointer rel to the list 'parents'.
- */
-#define APPEND_REL_PARTITION_OIDS(rel, partoids, parents) \
-	do\
-	{\
-		int		i;\
-		for (i = 0; i < (rel)->rd_partdesc->nparts; i++)\
-		{\
-			(partoids) = lappend_oid((partoids), (rel)->rd_partdesc->oids[i]);\
-			(parents) = lappend((parents), (rel));\
-		}\
-	} while(0)
-
-/*
  * RelationGetPartitionDispatchInfo
  *		Returns information necessary to route tuples down a partition tree
  *
@@ -1222,151 +1209,130 @@ PartitionDispatch *
 RelationGetPartitionDispatchInfo(Relation rel,
 								 int *num_parted, List **leaf_part_oids)
 {
+	List	   *pdlist = NIL;
 	PartitionDispatchData **pd;
-	List	   *all_parts = NIL,
-			   *all_parents = NIL,
-			   *parted_rels,
-			   *parted_rel_parents;
-	ListCell   *lc1,
-			   *lc2;
-	int			i,
-				k,
-				offset;
+	ListCell   *lc;
+	int			i;
 
-	/*
-	 * We rely on the relcache to traverse the partition tree to build both
-	 * the leaf partition OIDs list and the array of PartitionDispatch objects
-	 * for the partitioned tables in the tree.  That means every partitioned
-	 * table in the tree must be locked, which is fine since we require the
-	 * caller to lock all the partitions anyway.
-	 *
-	 * For every partitioned table in the tree, starting with the root
-	 * partitioned table, add its relcache entry to parted_rels, while also
-	 * queuing its partitions (in the order in which they appear in the
-	 * partition descriptor) to be looked at later in the same loop.  This is
-	 * a bit tricky but works because the foreach() macro doesn't fetch the
-	 * next list element until the bottom of the loop.
-	 */
-	*num_parted = 1;
-	parted_rels = list_make1(rel);
-	/* Root partitioned table has no parent, so NULL for parent */
-	parted_rel_parents = list_make1(NULL);
-	APPEND_REL_PARTITION_OIDS(rel, all_parts, all_parents);
-	forboth(lc1, all_parts, lc2, all_parents)
-	{
-		Oid			partrelid = lfirst_oid(lc1);
-		Relation	parent = lfirst(lc2);
+	Assert(rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE);
 
-		if (get_rel_relkind(partrelid) == RELKIND_PARTITIONED_TABLE)
-		{
-			/*
-			 * Already locked by the caller.  Note that it is the
-			 * responsibility of the caller to close the below relcache entry,
-			 * once done using the information being collected here (for
-			 * example, in ExecEndModifyTable).
-			 */
-			Relation	partrel = heap_open(partrelid, NoLock);
+	*num_parted = 0;
+	*leaf_part_oids = NIL;
 
-			(*num_parted)++;
-			parted_rels = lappend(parted_rels, partrel);
-			parted_rel_parents = lappend(parted_rel_parents, parent);
-			APPEND_REL_PARTITION_OIDS(partrel, all_parts, all_parents);
-		}
-	}
-
-	/*
-	 * We want to create two arrays - one for leaf partitions and another for
-	 * partitioned tables (including the root table and internal partitions).
-	 * While we only create the latter here, leaf partition array of suitable
-	 * objects (such as, ResultRelInfo) is created by the caller using the
-	 * list of OIDs we return.  Indexes into these arrays get assigned in a
-	 * breadth-first manner, whereby partitions of any given level are placed
-	 * consecutively in the respective arrays.
-	 */
+	get_partition_dispatch_recurse(rel, NULL, &pdlist, leaf_part_oids);
+	*num_parted = list_length(pdlist);
 	pd = (PartitionDispatchData **) palloc(*num_parted *
 										   sizeof(PartitionDispatchData *));
-	*leaf_part_oids = NIL;
-	i = k = offset = 0;
-	forboth(lc1, parted_rels, lc2, parted_rel_parents)
+	i = 0;
+	foreach(lc, pdlist)
 	{
-		Relation	partrel = lfirst(lc1);
-		Relation	parent = lfirst(lc2);
-		PartitionKey partkey = RelationGetPartitionKey(partrel);
-		TupleDesc	tupdesc = RelationGetDescr(partrel);
-		PartitionDesc partdesc = RelationGetPartitionDesc(partrel);
-		int			j,
-					m;
-
-		pd[i] = (PartitionDispatch) palloc(sizeof(PartitionDispatchData));
-		pd[i]->reldesc = partrel;
-		pd[i]->key = partkey;
-		pd[i]->keystate = NIL;
-		pd[i]->partdesc = partdesc;
-		if (parent != NULL)
-		{
-			/*
-			 * For every partitioned table other than root, we must store a
-			 * tuple table slot initialized with its tuple descriptor and a
-			 * tuple conversion map to convert a tuple from its parent's
-			 * rowtype to its own. That is to make sure that we are looking at
-			 * the correct row using the correct tuple descriptor when
-			 * computing its partition key for tuple routing.
-			 */
-			pd[i]->tupslot = MakeSingleTupleTableSlot(tupdesc);
-			pd[i]->tupmap = convert_tuples_by_name(RelationGetDescr(parent),
-												   tupdesc,
-												   gettext_noop("could not convert row type"));
-		}
-		else
-		{
-			/* Not required for the root partitioned table */
-			pd[i]->tupslot = NULL;
-			pd[i]->tupmap = NULL;
-		}
-		pd[i]->indexes = (int *) palloc(partdesc->nparts * sizeof(int));
-
-		/*
-		 * Indexes corresponding to the internal partitions are multiplied by
-		 * -1 to distinguish them from those of leaf partitions.  Encountering
-		 * an index >= 0 means we found a leaf partition, which is immediately
-		 * returned as the partition we are looking for.  A negative index
-		 * means we found a partitioned table, whose PartitionDispatch object
-		 * is located at the above index multiplied back by -1.  Using the
-		 * PartitionDispatch object, search is continued further down the
-		 * partition tree.
-		 */
-		m = 0;
-		for (j = 0; j < partdesc->nparts; j++)
-		{
-			Oid			partrelid = partdesc->oids[j];
-
-			if (get_rel_relkind(partrelid) != RELKIND_PARTITIONED_TABLE)
-			{
-				*leaf_part_oids = lappend_oid(*leaf_part_oids, partrelid);
-				pd[i]->indexes[j] = k++;
-			}
-			else
-			{
-				/*
-				 * offset denotes the number of partitioned tables of upper
-				 * levels including those of the current level.  Any partition
-				 * of this table must belong to the next level and hence will
-				 * be placed after the last partitioned table of this level.
-				 */
-				pd[i]->indexes[j] = -(1 + offset + m);
-				m++;
-			}
-		}
-		i++;
-
-		/*
-		 * This counts the number of partitioned tables at upper levels
-		 * including those of the current level.
-		 */
-		offset += m;
+		pd[i++] = lfirst(lc);
 	}
 
 	return pd;
+}
+
+/*
+ * get_partition_dispatch_recurse
+ *		Recursively expand partition tree rooted at rel
+ *
+ * As the partition tree is expanded in a depth-first manner, we mantain two
+ * global lists: of PartitionDispatch objects corresponding to partitioned
+ * tables in *pds and of the leaf partition OIDs in *leaf_part_oids.
+ *
+ * Note that the order of OIDs of leaf partitions in leaf_part_oids matches
+ * the order in which the planner's expand_partitioned_rtentry() processes
+ * them.  It's not necessarily the case that the offsets match up exactly,
+ * because constraint exclusion might prune away some partitions on the
+ * planner side, whereas we'll always have the complete list; but unpruned
+ * partitions will appear in the same order in the plan as they are returned
+ * here.
+ */
+static void
+get_partition_dispatch_recurse(Relation rel, Relation parent,
+							   List **pds, List **leaf_part_oids)
+{
+	TupleDesc	tupdesc = RelationGetDescr(rel);
+	PartitionDesc partdesc = RelationGetPartitionDesc(rel);
+	PartitionKey partkey = RelationGetPartitionKey(rel);
+	PartitionDispatch pd;
+	int			i;
+
+	check_stack_depth();
+
+	/* Build a PartitionDispatch for this table and add it to *pds. */
+	pd = (PartitionDispatch) palloc(sizeof(PartitionDispatchData));
+	*pds = lappend(*pds, pd);
+	pd->reldesc = rel;
+	pd->key = partkey;
+	pd->keystate = NIL;
+	pd->partdesc = partdesc;
+	if (parent != NULL)
+	{
+		/*
+		 * For every partitioned table other than the root, we must store a
+		 * tuple table slot initialized with its tuple descriptor and a tuple
+		 * conversion map to convert a tuple from its parent's rowtype to its
+		 * own. That is to make sure that we are looking at the correct row
+		 * using the correct tuple descriptor when computing its partition key
+		 * for tuple routing.
+		 */
+		pd->tupslot = MakeSingleTupleTableSlot(tupdesc);
+		pd->tupmap = convert_tuples_by_name(RelationGetDescr(parent),
+											tupdesc,
+											gettext_noop("could not convert row type"));
+	}
+	else
+	{
+		/* Not required for the root partitioned table */
+		pd->tupslot = NULL;
+		pd->tupmap = NULL;
+	}
+
+	/*
+	 * Go look at each partition of this table.  If it's a leaf partition,
+	 * simply add its OID to *leaf_part_oids.  If it's a partitioned table,
+	 * recursively call get_partition_dispatch_recurse(), so that its
+	 * partitions are processed as well and a corresponding PartitionDispatch
+	 * object gets added to *pds.
+	 *
+	 * About the values in pd->indexes: for a leaf partition, it contains the
+	 * leaf partition's position in the global list *leaf_part_oids minus 1,
+	 * whereas for a partitioned table partition, it contains the partition's
+	 * position in the global list *pds multiplied by -1.  The latter is
+	 * multiplied by -1 to distinguish partitioned tables from leaf partitions
+	 * when going through the values in pd->indexes.  So, for example, when
+	 * using it during tuple-routing, encountering a value >= 0 means we found
+	 * a leaf partition.  It is immediately returned as the index in the array
+	 * of ResultRelInfos of all the leaf partitions, using which we insert the
+	 * tuple into that leaf partition.  A negative value means we found a
+	 * partitioned table.  The value multiplied by -1 is returned as the index
+	 * in the array of PartitionDispatch objects of all partitioned tables in
+	 * the tree.  This value is used to continue the search in the next level
+	 * of the partition tree.
+	 */
+	pd->indexes = (int *) palloc(partdesc->nparts * sizeof(int));
+	for (i = 0; i < partdesc->nparts; i++)
+	{
+		Oid			partrelid = partdesc->oids[i];
+
+		if (get_rel_relkind(partrelid) != RELKIND_PARTITIONED_TABLE)
+		{
+			*leaf_part_oids = lappend_oid(*leaf_part_oids, partrelid);
+			pd->indexes[i] = list_length(*leaf_part_oids) - 1;
+		}
+		else
+		{
+			/*
+			 * We assume all tables in the partition tree were already locked
+			 * by the caller.
+			 */
+			Relation	partrel = heap_open(partrelid, NoLock);
+
+			pd->indexes[i] = -list_length(*pds);
+			get_partition_dispatch_recurse(partrel, rel, pds, leaf_part_oids);
+		}
+	}
 }
 
 /* Module-local functions */
