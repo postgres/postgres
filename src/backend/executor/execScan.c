@@ -27,7 +27,7 @@ static bool tlist_matches_tupdesc(PlanState *ps, List *tlist, Index varno, Tuple
 
 
 /*
- * ExecScanFetch -- fetch next potential tuple
+ * ExecScanFetch -- check interrupts & fetch next potential tuple
  *
  * This routine is concerned with substituting a test tuple if we are
  * inside an EvalPlanQual recheck.  If we aren't, just execute
@@ -39,6 +39,8 @@ ExecScanFetch(ScanState *node,
 			  ExecScanRecheckMtd recheckMtd)
 {
 	EState	   *estate = node->ps.state;
+
+	CHECK_FOR_INTERRUPTS();
 
 	if (estate->es_epqTuple != NULL)
 	{
@@ -133,6 +135,8 @@ ExecScan(ScanState *node,
 	projInfo = node->ps.ps_ProjInfo;
 	econtext = node->ps.ps_ExprContext;
 
+	/* interrupt checks are in ExecScanFetch */
+
 	/*
 	 * If we have neither a qual to check nor a projection to do, just skip
 	 * all the overhead and return the raw scan tuple.
@@ -156,8 +160,6 @@ ExecScan(ScanState *node,
 	for (;;)
 	{
 		TupleTableSlot *slot;
-
-		CHECK_FOR_INTERRUPTS();
 
 		slot = ExecScanFetch(node, accessMtd, recheckMtd);
 
