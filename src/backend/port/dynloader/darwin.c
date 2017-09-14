@@ -69,7 +69,7 @@ pg_dlopen(char *filename)
 void
 pg_dlclose(void *handle)
 {
-	NSUnLinkModule(handle, FALSE);
+	NSUnLinkModule(handle, NSUNLINKMODULE_OPTION_NONE);
 }
 
 PGFunction
