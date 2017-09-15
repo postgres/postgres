@@ -2016,6 +2016,10 @@ SharedInvalRelmapMsg
 SharedInvalSmgrMsg
 SharedInvalSnapshotMsg
 SharedInvalidationMessage
+SharedRecordTableKey
+SharedRecordTableEntry
+SharedRecordTypmodRegistry
+SharedTypmodTableEntry
 ShellTypeInfo
 ShippableCacheEntry
 ShippableCacheKey

@@ -92,6 +92,12 @@ extern TupleDesc CreateTupleDescCopy(TupleDesc tupdesc);
 
 extern TupleDesc CreateTupleDescCopyConstr(TupleDesc tupdesc);
 
+#define TupleDescSize(src) \
+	(offsetof(struct tupleDesc, attrs) + \
+	 (src)->natts * sizeof(FormData_pg_attribute))
+
+extern void TupleDescCopy(TupleDesc dst, TupleDesc src);
+
 extern void TupleDescCopyEntry(TupleDesc dst, AttrNumber dstAttno,
 				   TupleDesc src, AttrNumber srcAttno);
 

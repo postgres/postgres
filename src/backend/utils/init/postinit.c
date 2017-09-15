@@ -21,6 +21,7 @@
 
 #include "access/heapam.h"
 #include "access/htup_details.h"
+#include "access/session.h"
 #include "access/sysattr.h"
 #include "access/xact.h"
 #include "access/xlog.h"
@@ -1026,6 +1027,9 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 
 	/* initialize client encoding */
 	InitializeClientEncoding();
+
+	/* Initialize this backend's session state. */
+	InitializeSession();
 
 	/* report this backend in the PgBackendStatus array */
 	if (!bootstrap)

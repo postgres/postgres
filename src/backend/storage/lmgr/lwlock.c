@@ -494,7 +494,7 @@ RegisterLWLockTranches(void)
 
 	if (LWLockTrancheArray == NULL)
 	{
-		LWLockTranchesAllocated = 64;
+		LWLockTranchesAllocated = 128;
 		LWLockTrancheArray = (char **)
 			MemoryContextAllocZero(TopMemoryContext,
 								   LWLockTranchesAllocated * sizeof(char *));
@@ -510,6 +510,12 @@ RegisterLWLockTranches(void)
 						  "predicate_lock_manager");
 	LWLockRegisterTranche(LWTRANCHE_PARALLEL_QUERY_DSA,
 						  "parallel_query_dsa");
+	LWLockRegisterTranche(LWTRANCHE_SESSION_DSA,
+						  "session_dsa");
+	LWLockRegisterTranche(LWTRANCHE_SESSION_RECORD_TABLE,
+						  "session_record_table");
+	LWLockRegisterTranche(LWTRANCHE_SESSION_TYPMOD_TABLE,
+						  "session_typmod_table");
 	LWLockRegisterTranche(LWTRANCHE_TBM, "tbm");
 
 	/* Register named tranches. */

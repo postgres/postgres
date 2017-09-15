@@ -18,6 +18,8 @@
 
 #include "access/tupdesc.h"
 #include "fmgr.h"
+#include "storage/dsm.h"
+#include "utils/dsa.h"
 
 
 /* DomainConstraintCache is an opaque struct known only within typcache.c */
@@ -143,6 +145,7 @@ typedef struct DomainConstraintRef
 	MemoryContextCallback callback; /* used to release refcount when done */
 } DomainConstraintRef;
 
+typedef struct SharedRecordTypmodRegistry SharedRecordTypmodRegistry;
 
 extern TypeCacheEntry *lookup_type_cache(Oid type_id, int flags);
 
@@ -163,5 +166,12 @@ extern TupleDesc lookup_rowtype_tupdesc_copy(Oid type_id, int32 typmod);
 extern void assign_record_type_typmod(TupleDesc tupDesc);
 
 extern int	compare_values_of_enum(TypeCacheEntry *tcache, Oid arg1, Oid arg2);
+
+extern size_t SharedRecordTypmodRegistryEstimate(void);
+
+extern void SharedRecordTypmodRegistryInit(SharedRecordTypmodRegistry *,
+							   dsm_segment *segment, dsa_area *area);
+
+extern void SharedRecordTypmodRegistryAttach(SharedRecordTypmodRegistry *);
 
 #endif							/* TYPCACHE_H */

@@ -185,6 +185,22 @@ CreateTupleDescCopyConstr(TupleDesc tupdesc)
 }
 
 /*
+ * TupleDescCopy
+ *		Copy a tuple descriptor into caller-supplied memory.
+ *		The memory may be shared memory mapped at any address, and must
+ *		be sufficient to hold TupleDescSize(src) bytes.
+ *
+ * !!! Constraints and defaults are not copied !!!
+ */
+void
+TupleDescCopy(TupleDesc dst, TupleDesc src)
+{
+	memcpy(dst, src, TupleDescSize(src));
+	dst->constr = NULL;
+	dst->tdrefcount = -1;
+}
+
+/*
  * TupleDescCopyEntry
  *		This function copies a single attribute structure from one tuple
  *		descriptor to another.
