@@ -14,8 +14,8 @@
 
 #include "lib/dshash.h"
 
-/* Defined in typcache.c */
-typedef struct SharedRecordTypmodRegistry SharedRecordTypmodRegistry;
+/* Avoid including typcache.h */
+struct SharedRecordTypmodRegistry;
 
 /*
  * A struct encapsulating some elements of a user's session.  For now this
@@ -28,7 +28,7 @@ typedef struct Session
 	dsa_area   *area;			/* The session-scoped DSA area. */
 
 	/* State managed by typcache.c. */
-	SharedRecordTypmodRegistry *shared_typmod_registry;
+	struct SharedRecordTypmodRegistry *shared_typmod_registry;
 	dshash_table *shared_record_table;
 	dshash_table *shared_typmod_table;
 } Session;
