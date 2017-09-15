@@ -12,6 +12,8 @@ SELECT table_name, column_name, column_default, is_nullable, is_identity, identi
 -- internal sequences should not be shown here
 SELECT sequence_name FROM information_schema.sequences WHERE sequence_name LIKE 'itest%';
 
+SELECT pg_get_serial_sequence('itest1', 'a');
+
 CREATE TABLE itest4 (a int, b text);
 ALTER TABLE itest4 ALTER COLUMN a ADD GENERATED ALWAYS AS IDENTITY;  -- error, requires NOT NULL
 ALTER TABLE itest4 ALTER COLUMN a SET NOT NULL;

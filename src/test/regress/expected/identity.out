@@ -26,6 +26,12 @@ SELECT sequence_name FROM information_schema.sequences WHERE sequence_name LIKE 
 ---------------
 (0 rows)
 
+SELECT pg_get_serial_sequence('itest1', 'a');
+ pg_get_serial_sequence 
+------------------------
+ public.itest1_a_seq
+(1 row)
+
 CREATE TABLE itest4 (a int, b text);
 ALTER TABLE itest4 ALTER COLUMN a ADD GENERATED ALWAYS AS IDENTITY;  -- error, requires NOT NULL
 ERROR:  column "a" of relation "itest4" must be declared NOT NULL before identity can be added

@@ -2322,7 +2322,7 @@ pg_get_userbyid(PG_FUNCTION_ARGS)
 
 /*
  * pg_get_serial_sequence
- *		Get the name of the sequence used by a serial column,
+ *		Get the name of the sequence used by an identity or serial column,
  *		formatted suitably for passing to setval, nextval or currval.
  *		First parameter is not treated as double-quoted, second parameter
  *		is --- see documentation for reason.
@@ -2380,13 +2380,14 @@ pg_get_serial_sequence(PG_FUNCTION_ARGS)
 		Form_pg_depend deprec = (Form_pg_depend) GETSTRUCT(tup);
 
 		/*
-		 * We assume any auto dependency of a sequence on a column must be
-		 * what we are looking for.  (We need the relkind test because indexes
-		 * can also have auto dependencies on columns.)
+		 * Look for an auto dependency (serial column) or internal dependency
+		 * (identity column) of a sequence on a column.  (We need the relkind
+		 * test because indexes can also have auto dependencies on columns.)
 		 */
 		if (deprec->classid == RelationRelationId &&
 			deprec->objsubid == 0 &&
-			deprec->deptype == DEPENDENCY_AUTO &&
+			(deprec->deptype == DEPENDENCY_AUTO ||
+			 deprec->deptype == DEPENDENCY_INTERNAL) &&
 			get_rel_relkind(deprec->objid) == RELKIND_SEQUENCE)
 		{
 			sequenceId = deprec->objid;
