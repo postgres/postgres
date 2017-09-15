@@ -285,8 +285,6 @@ static EnumItem *find_enumitem(TypeCacheEnumData *enumdata, Oid arg);
 static int	enum_oid_cmp(const void *left, const void *right);
 static void shared_record_typmod_registry_detach(dsm_segment *segment,
 									 Datum datum);
-static void shared_record_typmod_registry_worker_detach(dsm_segment *segment,
-											Datum datum);
 static TupleDesc find_or_make_matching_shared_tupledesc(TupleDesc tupdesc);
 static dsa_pointer share_tupledesc(dsa_area *area, TupleDesc tupdesc,
 				uint32 typmod);
@@ -1768,8 +1766,9 @@ SharedRecordTypmodRegistryAttach(SharedRecordTypmodRegistry *registry)
 	 * a freshly started parallel worker.  If we ever support worker
 	 * recycling, a worker would need to zap its local cache in between
 	 * servicing different queries, in order to be able to call this and
-	 * synchronize typmods with a new leader; see
-	 * shared_record_typmod_registry_detach().
+	 * synchronize typmods with a new leader; but that's problematic because
+	 * we can't be very sure that record-typmod-related state hasn't escaped
+	 * to anywhere else in the process.
 	 */
 	Assert(NextRecordTypmod == 0);
 
@@ -1788,11 +1787,12 @@ SharedRecordTypmodRegistryAttach(SharedRecordTypmodRegistry *registry)
 	MemoryContextSwitchTo(old_context);
 
 	/*
-	 * We install a different detach callback that performs a more complete
-	 * reset of backend local state.
+	 * Set up detach hook to run at worker exit.  Currently this is the same
+	 * as the leader's detach hook, but in future they might need to be
+	 * different.
 	 */
 	on_dsm_detach(CurrentSession->segment,
-				  shared_record_typmod_registry_worker_detach,
+				  shared_record_typmod_registry_detach,
 				  PointerGetDatum(registry));
 
 	/*
@@ -2353,10 +2353,8 @@ find_or_make_matching_shared_tupledesc(TupleDesc tupdesc)
 }
 
 /*
- * Detach hook to forget about the current shared record typmod
- * infrastructure.  This is registered directly in leader backends, and
- * reached only in case of error or shutdown.  It's also reached indirectly
- * via the worker detach callback below.
+ * On-DSM-detach hook to forget about the current shared record typmod
+ * infrastructure.  This is currently used by both leader and workers.
  */
 static void
 shared_record_typmod_registry_detach(dsm_segment *segment, Datum datum)
@@ -2373,58 +2371,4 @@ shared_record_typmod_registry_detach(dsm_segment *segment, Datum datum)
 		CurrentSession->shared_typmod_table = NULL;
 	}
 	CurrentSession->shared_typmod_registry = NULL;
-}
-
-/*
- * Deatch hook allowing workers to disconnect from shared record typmod
- * registry.  The resulting state should allow a worker to attach to a
- * different leader, if worker reuse pools are invented.
- */
-static void
-shared_record_typmod_registry_worker_detach(dsm_segment *segment, Datum datum)
-{
-	/*
-	 * Forget everything we learned about record typmods as part of the
-	 * session we are disconnecting from, and return to the initial state.
-	 */
-	if (RecordCacheArray != NULL)
-	{
-		int32		i;
-
-		for (i = 0; i < RecordCacheArrayLen; ++i)
-		{
-			if (RecordCacheArray[i] != NULL)
-			{
-				TupleDesc	tupdesc = RecordCacheArray[i];
-
-				/*
-				 * Pointers to tuple descriptors in shared memory are not
-				 * reference counted, so we are not responsible for freeing
-				 * them.  They'll survive as long as the shared session
-				 * exists, which should be as long as the owning leader
-				 * backend exists.  In theory we do need to free local
-				 * reference counted tuple descriptors however, and we can't
-				 * do that with DescTupleDescRefCount() because we aren't
-				 * using a resource owner.  In practice we don't expect to
-				 * find any non-shared TupleDesc object in a worker.
-				 */
-				if (tupdesc->tdrefcount != -1)
-				{
-					Assert(tupdesc->tdrefcount > 0);
-					if (--tupdesc->tdrefcount == 0)
-						FreeTupleDesc(tupdesc);
-				}
-			}
-		}
-		pfree(RecordCacheArray);
-		RecordCacheArray = NULL;
-	}
-	if (RecordCacheHash != NULL)
-	{
-		hash_destroy(RecordCacheHash);
-		RecordCacheHash = NULL;
-	}
-	NextRecordTypmod = 0;
-	/* Call the code common to leader and worker detach. */
-	shared_record_typmod_registry_detach(segment, datum);
 }
