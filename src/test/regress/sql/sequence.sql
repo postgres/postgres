@@ -61,6 +61,8 @@ INSERT INTO serialTest1 VALUES ('wrong', NULL);
 
 SELECT * FROM serialTest1;
 
+SELECT pg_get_serial_sequence('serialTest1', 'f2');
+
 -- test smallserial / bigserial
 CREATE TABLE serialTest2 (f1 text, f2 serial, f3 smallserial, f4 serial2,
   f5 bigserial, f6 serial8);
