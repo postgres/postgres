@@ -89,6 +89,14 @@ CREATE FOREIGN DATA WRAPPER foo VALIDATOR postgresql_fdw_validator;
  postgresql | regress_foreign_data_user | -       | postgresql_fdw_validator |                   |             | 
 (3 rows)
 
+-- HANDLER related checks
+CREATE FUNCTION invalid_fdw_handler() RETURNS int LANGUAGE SQL AS 'SELECT 1;';
+CREATE FOREIGN DATA WRAPPER test_fdw HANDLER invalid_fdw_handler;  -- ERROR
+ERROR:  function invalid_fdw_handler must return type fdw_handler
+CREATE FOREIGN DATA WRAPPER test_fdw HANDLER test_fdw_handler HANDLER invalid_fdw_handler;  -- ERROR
+ERROR:  conflicting or redundant options
+CREATE FOREIGN DATA WRAPPER test_fdw HANDLER test_fdw_handler;
+DROP FOREIGN DATA WRAPPER test_fdw;
 -- ALTER FOREIGN DATA WRAPPER
 ALTER FOREIGN DATA WRAPPER foo;                             -- ERROR
 ERROR:  syntax error at or near ";"
@@ -188,18 +196,26 @@ ALTER FOREIGN DATA WRAPPER foo RENAME TO foo1;
 (3 rows)
 
 ALTER FOREIGN DATA WRAPPER foo1 RENAME TO foo;
+-- HANDLER related checks
+ALTER FOREIGN DATA WRAPPER foo HANDLER invalid_fdw_handler;  -- ERROR
+ERROR:  function invalid_fdw_handler must return type fdw_handler
+ALTER FOREIGN DATA WRAPPER foo HANDLER test_fdw_handler HANDLER anything;  -- ERROR
+ERROR:  conflicting or redundant options
+ALTER FOREIGN DATA WRAPPER foo HANDLER test_fdw_handler;
+WARNING:  changing the foreign-data wrapper handler can change behavior of existing foreign tables
+DROP FUNCTION invalid_fdw_handler();
 -- DROP FOREIGN DATA WRAPPER
 DROP FOREIGN DATA WRAPPER nonexistent;                      -- ERROR
 ERROR:  foreign-data wrapper "nonexistent" does not exist
 DROP FOREIGN DATA WRAPPER IF EXISTS nonexistent;
 NOTICE:  foreign-data wrapper "nonexistent" does not exist, skipping
 \dew+
-                                                        List of foreign-data wrappers
-    Name    |           Owner           | Handler |        Validator         | Access privileges |         FDW options          | Description 
-------------+---------------------------+---------+--------------------------+-------------------+------------------------------+-------------
- dummy      | regress_foreign_data_user | -       | -                        |                   |                              | useless
- foo        | regress_test_role_super   | -       | -                        |                   | (b '3', c '4', a '2', d '5') | 
- postgresql | regress_foreign_data_user | -       | postgresql_fdw_validator |                   |                              | 
+                                                             List of foreign-data wrappers
+    Name    |           Owner           |     Handler      |        Validator         | Access privileges |         FDW options          | Description 
+------------+---------------------------+------------------+--------------------------+-------------------+------------------------------+-------------
+ dummy      | regress_foreign_data_user | -                | -                        |                   |                              | useless
+ foo        | regress_test_role_super   | test_fdw_handler | -                        |                   | (b '3', c '4', a '2', d '5') | 
+ postgresql | regress_foreign_data_user | -                | postgresql_fdw_validator |                   |                              | 
 (3 rows)
 
 DROP ROLE regress_test_role_super;                          -- ERROR

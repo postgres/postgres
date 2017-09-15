@@ -1096,3 +1096,10 @@ test_atomic_ops(PG_FUNCTION_ARGS)
 
 	PG_RETURN_BOOL(true);
 }
+
+PG_FUNCTION_INFO_V1(test_fdw_handler);
+Datum
+test_fdw_handler(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_NULL();
+}

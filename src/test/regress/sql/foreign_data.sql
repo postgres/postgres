@@ -51,6 +51,13 @@ RESET ROLE;
 CREATE FOREIGN DATA WRAPPER foo VALIDATOR postgresql_fdw_validator;
 \dew+
 
+-- HANDLER related checks
+CREATE FUNCTION invalid_fdw_handler() RETURNS int LANGUAGE SQL AS 'SELECT 1;';
+CREATE FOREIGN DATA WRAPPER test_fdw HANDLER invalid_fdw_handler;  -- ERROR
+CREATE FOREIGN DATA WRAPPER test_fdw HANDLER test_fdw_handler HANDLER invalid_fdw_handler;  -- ERROR
+CREATE FOREIGN DATA WRAPPER test_fdw HANDLER test_fdw_handler;
+DROP FOREIGN DATA WRAPPER test_fdw;
+
 -- ALTER FOREIGN DATA WRAPPER
 ALTER FOREIGN DATA WRAPPER foo;                             -- ERROR
 ALTER FOREIGN DATA WRAPPER foo VALIDATOR bar;               -- ERROR
@@ -87,6 +94,12 @@ RESET ROLE;
 ALTER FOREIGN DATA WRAPPER foo RENAME TO foo1;
 \dew+
 ALTER FOREIGN DATA WRAPPER foo1 RENAME TO foo;
+
+-- HANDLER related checks
+ALTER FOREIGN DATA WRAPPER foo HANDLER invalid_fdw_handler;  -- ERROR
+ALTER FOREIGN DATA WRAPPER foo HANDLER test_fdw_handler HANDLER anything;  -- ERROR
+ALTER FOREIGN DATA WRAPPER foo HANDLER test_fdw_handler;
+DROP FUNCTION invalid_fdw_handler();
 
 -- DROP FOREIGN DATA WRAPPER
 DROP FOREIGN DATA WRAPPER nonexistent;                      -- ERROR
