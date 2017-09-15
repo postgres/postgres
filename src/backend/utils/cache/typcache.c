@@ -172,7 +172,7 @@ typedef struct SharedRecordTableKey
 	{
 		TupleDesc	local_tupdesc;
 		dsa_pointer shared_tupdesc;
-	};
+	}			u;
 	bool		shared;
 } SharedRecordTableKey;
 
@@ -209,14 +209,14 @@ shared_record_table_compare(const void *a, const void *b, size_t size,
 	TupleDesc	t2;
 
 	if (k1->shared)
-		t1 = (TupleDesc) dsa_get_address(area, k1->shared_tupdesc);
+		t1 = (TupleDesc) dsa_get_address(area, k1->u.shared_tupdesc);
 	else
-		t1 = k1->local_tupdesc;
+		t1 = k1->u.local_tupdesc;
 
 	if (k2->shared)
-		t2 = (TupleDesc) dsa_get_address(area, k2->shared_tupdesc);
+		t2 = (TupleDesc) dsa_get_address(area, k2->u.shared_tupdesc);
 	else
-		t2 = k2->local_tupdesc;
+		t2 = k2->u.local_tupdesc;
 
 	return equalTupleDescs(t1, t2) ? 0 : 1;
 }
@@ -232,9 +232,9 @@ shared_record_table_hash(const void *a, size_t size, void *arg)
 	TupleDesc	t;
 
 	if (k->shared)
-		t = (TupleDesc) dsa_get_address(area, k->shared_tupdesc);
+		t = (TupleDesc) dsa_get_address(area, k->u.shared_tupdesc);
 	else
-		t = k->local_tupdesc;
+		t = k->u.local_tupdesc;
 
 	return hashTupleDesc(t);
 }
@@ -1710,14 +1710,14 @@ SharedRecordTypmodRegistryInit(SharedRecordTypmodRegistry *registry,
 
 		/* Insert into the record table. */
 		record_table_key.shared = false;
-		record_table_key.local_tupdesc = tupdesc;
+		record_table_key.u.local_tupdesc = tupdesc;
 		record_table_entry = dshash_find_or_insert(record_table,
 												   &record_table_key,
 												   &found);
 		if (!found)
 		{
 			record_table_entry->key.shared = true;
-			record_table_entry->key.shared_tupdesc = shared_dp;
+			record_table_entry->key.u.shared_tupdesc = shared_dp;
 		}
 		dshash_release_lock(record_table, record_table_entry);
 	}
@@ -2261,7 +2261,7 @@ find_or_make_matching_shared_tupledesc(TupleDesc tupdesc)
 
 	/* Try to find a matching tuple descriptor in the record table. */
 	key.shared = false;
-	key.local_tupdesc = tupdesc;
+	key.u.local_tupdesc = tupdesc;
 	record_table_entry = (SharedRecordTableEntry *)
 		dshash_find(CurrentSession->shared_record_table, &key, false);
 	if (record_table_entry)
@@ -2271,7 +2271,7 @@ find_or_make_matching_shared_tupledesc(TupleDesc tupdesc)
 							record_table_entry);
 		result = (TupleDesc)
 			dsa_get_address(CurrentSession->area,
-							record_table_entry->key.shared_tupdesc);
+							record_table_entry->key.u.shared_tupdesc);
 		Assert(result->tdrefcount == -1);
 
 		return result;
@@ -2342,7 +2342,7 @@ find_or_make_matching_shared_tupledesc(TupleDesc tupdesc)
 
 	/* Store it and return it. */
 	record_table_entry->key.shared = true;
-	record_table_entry->key.shared_tupdesc = shared_dp;
+	record_table_entry->key.u.shared_tupdesc = shared_dp;
 	dshash_release_lock(CurrentSession->shared_record_table,
 						record_table_entry);
 	result = (TupleDesc)
