@@ -1,28 +1,25 @@
 <!-- doc/src/sgml/installation.sgml -->
 <!--
 
-Use </link> not just </> so INSTALL.html can be created without links
-to the main documentation.  Don't use <xref>; or if you must, wrap it
-in a standalone-ignore clause.
+The standalone version has some portions that are different from the version
+that is integrated into the full documentation set, in particular as regards
+links, so that INSTALL.html can be created without links to the main
+documentation.  See standalone-profile.xsl for details.
 
 -->
 
 <chapter id="installation">
- <title><![%standalone-include[<productname>PostgreSQL</>]]>
-  Installation from Source Code</title>
+ <title>Installation from Source Code</title>
 
  <indexterm zone="installation">
   <primary>installation</primary>
  </indexterm>
 
  <para>
-  This <![%standalone-include;[document]]>
-  <![%standalone-ignore;[chapter]]> describes the installation of
+  This chapter describes the installation of
   <productname>PostgreSQL</productname> using the source code
   distribution.  (If you are installing a pre-packaged distribution,
-  such as an RPM or Debian package, ignore this
-  <![%standalone-include;[document]]>
-  <![%standalone-ignore;[chapter]]>
+  such as an RPM or Debian package, ignore this chapter
   and read the packager's instructions instead.)
  </para>
 
@@ -45,8 +42,7 @@ su - postgres
 /usr/local/pgsql/bin/psql test
 </synopsis>
    The long version is the rest of this
-   <![%standalone-include;[document.]]>
-   <![%standalone-ignore;[chapter.]]>
+   <phrase>chapter</phrase>.
   </para>
  </sect1>
 
@@ -197,8 +193,7 @@ su - postgres
       required version is <productname>Python</productname> 2.4.
       <productname>Python 3</productname> is supported if it's
       version 3.1 or later; but see
-      <![%standalone-include[the <application>PL/Python</> documentation]]>
-      <![%standalone-ignore[<xref linkend="plpython-python23">]]>
+      <xref linkend="plpython-python23">
       when using Python 3.
      </para>
 
@@ -267,9 +262,7 @@ su - postgres
      <para>
       To build the <productname>PostgreSQL</productname> documentation,
       there is a separate set of requirements; see
-      <![%standalone-ignore;[<xref linkend="docguide-toolsets">.]]>
-      <![%standalone-include;[the main documentation's appendix on
-      documentation.]]>
+      <xref linkend="docguide-toolsets">.
      </para>
     </listitem>
    </itemizedlist>
@@ -340,7 +333,6 @@ su - postgres
   </para>
  </sect1>
 
-<![%standalone-ignore;[
  <sect1 id="install-getsource">
   <title>Getting The Source</title>
 
@@ -369,7 +361,6 @@ su - postgres
    <xref linkend="sourcerepo">.
   </para>
  </sect1>
-]]>
 
  <sect1 id="install-procedure">
   <title>Installation Procedure</title>
@@ -844,9 +835,8 @@ su - postgres
         <para>
          Build with <acronym>LDAP</><indexterm><primary>LDAP</></>
          support for authentication and connection parameter lookup (see
-         <![%standalone-include[the documentation about client authentication
-         and libpq]]><![%standalone-ignore[<xref linkend="libpq-ldap"> and
-         <xref linkend="auth-ldap">]]> for more information). On Unix,
+         <phrase id="install-ldap-links"><xref linkend="libpq-ldap"> and
+         <xref linkend="auth-ldap"></phrase> for more information). On Unix,
          this requires the <productname>OpenLDAP</> package to be
          installed. On Windows, the default <productname>WinLDAP</>
          library is used.  <filename>configure</> will check for the required
@@ -865,8 +855,8 @@ su - postgres
          for <application>systemd</application><indexterm><primary>systemd</primary></indexterm>
          service notifications.  This improves integration if the server binary
          is started under <application>systemd</application> but has no impact
-         otherwise<![%standalone-ignore[; see <xref linkend="server-start"> for more
-         information]]>.  <application>libsystemd</application> and the
+         otherwise<phrase condition="standalone-ignore">; see <xref linkend="server-start"> for more
+         information</phrase>.  <application>libsystemd</application> and the
          associated header files need to be installed to be able to use this
          option.
         </para>
@@ -911,8 +901,7 @@ su - postgres
        <term><option>--with-uuid=<replaceable>LIBRARY</replaceable></option></term>
        <listitem>
         <para>
-         Build the <![%standalone-include[uuid-ossp]]>
-         <![%standalone-ignore[<xref linkend="uuid-ossp">]]> module
+         Build the <xref linkend="uuid-ossp"> module
          (which provides functions to generate UUIDs), using the specified
          UUID library.<indexterm><primary>UUID</primary></indexterm>
          <replaceable>LIBRARY</replaceable> must be one of:
@@ -979,8 +968,7 @@ su - postgres
        <listitem>
         <para>
          Use libxslt when building the
-         <![%standalone-include[xml2]]>
-         <![%standalone-ignore[<xref linkend="xml2">]]>
+         <xref linkend="xml2">
          module.  <application>xml2</> relies on this library
          to perform XSL transformations of XML.
         </para>
@@ -1096,8 +1084,7 @@ su - postgres
          has no support for strong random numbers on the platform.
          A source of random numbers is needed for some authentication
          protocols, as well as some routines in the
-         <![%standalone-include[pgcrypto]]>
-         <![%standalone-ignore[<xref linkend="pgcrypto">]]>
+         <xref linkend="pgcrypto">
          module. <option>--disable-strong-random</option> disables functionality that
          requires cryptographically strong random numbers, and substitutes
          a weak pseudo-random-number-generator for the generation of
@@ -1201,8 +1188,8 @@ su - postgres
          code coverage testing instrumentation.  When run, they
          generate files in the build directory with code coverage
          metrics.
-         <![%standalone-ignore[See <xref linkend="regress-coverage">
-         for more information.]]> This option is for use only with GCC
+         <phrase condition="standalone-ignore">See <xref linkend="regress-coverage">
+         for more information.</phrase> This option is for use only with GCC
          and when doing development work.
         </para>
        </listitem>
@@ -1262,8 +1249,8 @@ su - postgres
          </indexterm>
          Compiles <productname>PostgreSQL</productname> with support for the
          dynamic tracing tool DTrace.
-         <![%standalone-ignore[See <xref linkend="dynamic-trace">
-         for more information.]]>
+         <phrase condition="standalone-ignore">See <xref linkend="dynamic-trace">
+         for more information.</phrase>
         </para>
 
         <para>
@@ -1298,7 +1285,7 @@ su - postgres
         <para>
          Enable tests using the Perl TAP tools.  This requires a Perl
          installation and the Perl module <literal>IPC::Run</literal>.
-         <![%standalone-ignore;[See <xref linkend="regress-tap"> for more information.]]>
+         <phrase condition="standalone-ignore">See <xref linkend="regress-tap"> for more information.</phrase>
         </para>
        </listitem>
       </varlistentry>
@@ -1455,9 +1442,7 @@ su - postgres
          whether Python 2 or 3 is specified here (or otherwise
          implicitly chosen) determines which variant of the PL/Python
          language becomes available.  See
-         <![%standalone-include[the <application>PL/Python</>
-         documentation]]>
-         <![%standalone-ignore[<xref linkend="plpython-python23">]]>
+         <xref linkend="plpython-python23">
          for more information.
         </para>
        </listitem>
@@ -1584,10 +1569,7 @@ PostgreSQL, contrib, and documentation successfully made. Ready to install.
 <userinput>make check</userinput>
 </screen>
     (This won't work as root; do it as an unprivileged user.)
-    <![%standalone-include[The file
-    <filename>src/test/regress/README</> and the
-    documentation contain]]>
-    <![%standalone-ignore[<xref linkend="regress"> contains]]>
+    See <xref linkend="regress"> for
     detailed information about interpreting the test results. You can
     repeat this test at any later time by issuing the same command.
    </para>
@@ -1599,8 +1581,7 @@ PostgreSQL, contrib, and documentation successfully made. Ready to install.
    <note>
     <para>
      If you are upgrading an existing system be sure to read
-     <![%standalone-include[the documentation,]]>
-     <![%standalone-ignore[<xref linkend="upgrading">]]>
+     <xref linkend="upgrading">,
      which has instructions about upgrading a
      cluster.
     </para>
@@ -1858,167 +1839,6 @@ export MANPATH
   </sect2>
  </sect1>
 
-
-<![%standalone-include;[
- <sect1 id="install-getting-started">
-  <title>Getting Started</title>
-
-  <para>
-   The following is a quick summary of how to get <productname>PostgreSQL</> up and
-   running once installed. The main documentation contains more information.
-  </para>
-
-  <procedure>
-   <step>
-    <para>
-     Create a user account for the <productname>PostgreSQL</>
-     server. This is the user the server will run as. For production
-     use you should create a separate, unprivileged account
-     (<quote>postgres</> is commonly used). If you do not have root
-     access or just want to play around, your own user account is
-     enough, but running the server as root is a security risk and
-     will not work.
-<screen>
-<userinput>adduser postgres</>
-</screen>
-    </para>
-   </step>
-
-   <step>
-    <para>
-     Create a database installation with the <command>initdb</>
-     command. To run <command>initdb</> you must be logged in to your
-     <productname>PostgreSQL</> server account. It will not work as
-     root.
-<screen>
-root# <userinput>mkdir /usr/local/pgsql/data</>
-root# <userinput>chown postgres /usr/local/pgsql/data</>
-root# <userinput>su - postgres</>
-postgres$ <userinput>/usr/local/pgsql/bin/initdb -D /usr/local/pgsql/data</>
-</screen>
-    </para>
-
-    <para>
-     The <option>-D</> option specifies the location where the data
-     will be stored. You can use any path you want, it does not have
-     to be under the installation directory. Just make sure that the
-     server account can write to the directory (or create it, if it
-     doesn't already exist) before starting <command>initdb</>, as
-     illustrated here.
-    </para>
-   </step>
-
-   <step>
-    <para>
-     At this point, if you did not use the <command>initdb</> <literal>-A</>
-     option, you might want to modify <filename>pg_hba.conf</> to control
-     local access to the server before you start it.  The default is to
-     trust all local users.
-    </para>
-   </step>
-
-   <step>
-    <para>
-     The previous <command>initdb</> step should have told you how to
-     start up the database server. Do so now. The command should look
-     something like:
-<programlisting>
-/usr/local/pgsql/bin/postgres -D /usr/local/pgsql/data
-</programlisting>
-     This will start the server in the foreground. To put the server
-     in the background use something like:
-<programlisting>
-nohup /usr/local/pgsql/bin/postgres -D /usr/local/pgsql/data \
-    &lt;/dev/null &gt;&gt;server.log 2&gt;&amp;1 &lt;/dev/null &amp;
-</programlisting>
-    </para>
-
-    <para>
-     To stop a server running in the background you can type:
-<programlisting>
-kill `cat /usr/local/pgsql/data/postmaster.pid`
-</programlisting>
-    </para>
-   </step>
-
-   <step>
-    <para>
-     Create a database:
-<screen>
-<userinput>createdb testdb</>
-</screen>
-     Then enter:
-<screen>
-<userinput>psql testdb</>
-</screen>
-     to connect to that database. At the prompt you can enter SQL
-     commands and start experimenting.
-    </para>
-   </step>
-  </procedure>
- </sect1>
-
- <sect1 id="install-whatnow">
-  <title>What Now?</title>
-
-  <para>
-   <itemizedlist>
-    <listitem>
-     <para>
-      The <productname>PostgreSQL</> distribution contains a
-      comprehensive documentation set, which you should read sometime.
-      After installation, the documentation can be accessed by
-      pointing your browser to
-      <filename>/usr/local/pgsql/doc/html/index.html</>, unless you
-      changed the installation directories.
-     </para>
-
-     <para>
-      The first few chapters of the main documentation are the Tutorial,
-      which should be your first reading if you are completely new to
-      <acronym>SQL</> databases.  If you are familiar with database
-      concepts then you want to proceed with part on server
-      administration, which contains information about how to set up
-      the database server, database users, and authentication.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      Usually, you will want to modify your computer so that it will
-      automatically start the database server whenever it boots. Some
-      suggestions for this are in the documentation.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      Run the regression tests against the installed server (using
-      <command>make installcheck</command>). If you didn't run the
-      tests before installation, you should definitely do it now. This
-      is also explained in the documentation.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      By default, <productname>PostgreSQL</> is configured to run on
-      minimal hardware.  This allows it to start up with almost any
-      hardware configuration. The default configuration is, however,
-      not designed for optimum performance. To achieve optimum
-      performance, several server parameters must be adjusted, the two
-      most common being <varname>shared_buffers</varname> and
-      <varname>work_mem</varname>.
-      Other parameters mentioned in the documentation also affect
-      performance.
-     </para>
-    </listitem>
-   </itemizedlist>
-  </para>
- </sect1>
-]]>
-
-
  <sect1 id="supported-platforms">
   <title>Supported Platforms</title>
 
@@ -2076,9 +1896,7 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
    regarding the installation and setup of PostgreSQL.  Be sure to
    read the installation instructions, and in
    particular <xref linkend="install-requirements"> as well.  Also,
-   check <![%standalone-include[the
-   file <filename>src/test/regress/README</> and the documentation]]>
-   <![%standalone-ignore[<xref linkend="regress">]]> regarding the
+   check <xref linkend="regress"> regarding the
    interpretation of regression test results.
   </para>
 
@@ -2429,7 +2247,7 @@ ERROR:  could not load library "/opt/dbs/pgsql/lib/plperl.so": Bad address
    <para>
     PostgreSQL can be built using Cygwin, a Linux-like environment for
     Windows, but that method is inferior to the native Windows build
-    <![%standalone-ignore[(see <xref linkend="install-windows">)]]> and
+    <phrase condition="standalone-ignore">(see <xref linkend="install-windows">)</phrase> and
     running a server under Cygwin is no longer recommended.
    </para>
 
@@ -2623,8 +2441,7 @@ PHSS_30849  s700_800 u2comp/be/plugin library Patch
     Microsoft's <productname>Visual C++</productname> compiler suite.
     The MinGW build variant uses the normal build system described in
     this chapter; the Visual C++ build works completely differently
-    and is described in <![%standalone-include[the
-    documentation]]><![%standalone-ignore[<xref linkend="install-windows">]]>.
+    and is described in <xref linkend="install-windows">.
     It is a fully native build and uses no additional software like
     MinGW.  A ready-made installer is available on the main
     PostgreSQL web site.
@@ -2785,10 +2602,8 @@ LIBOBJS = snprintf.o
     <title>Using DTrace for Tracing PostgreSQL</title>
 
     <para>
-     Yes, using DTrace is possible.  See <![%standalone-include[the
-     documentation]]>
-     <![%standalone-ignore[<xref linkend="dynamic-trace">]]> for further
-     information.
+     Yes, using DTrace is possible.  See <xref linkend="dynamic-trace"> for
+     further information.
     </para>
 
     <para>

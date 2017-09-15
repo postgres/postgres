@@ -190,12 +190,3 @@
 
 <!-- back matter -->
 <!ENTITY biblio     SYSTEM "biblio.sgml">
-
-<!--
- Some parts of the documentation are also source for some plain-text
- files used during installation.  To selectively ignore or include
- some parts (e.g., external xref's) when generating these files we use
- these parameter entities.  See also standalone-install.sgml.
- -->
-<!ENTITY % standalone-ignore  "INCLUDE">
-<!ENTITY % standalone-include "IGNORE">
