@@ -16,8 +16,8 @@ if ($^O eq 'darwin')
 elsif ($^O eq 'linux')
 {
 	$slapd = '/usr/sbin/slapd';
-	$ldap_schema_dir = '/etc/ldap/schema' if -f '/etc/ldap/schema';
-	$ldap_schema_dir = '/etc/openldap/schema' if -f '/etc/openldap/schema';
+	$ldap_schema_dir = '/etc/ldap/schema' if -d '/etc/ldap/schema';
+	$ldap_schema_dir = '/etc/openldap/schema' if -d '/etc/openldap/schema';
 }
 elsif ($^O eq 'freebsd')
 {
