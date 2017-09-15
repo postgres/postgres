@@ -1,0 +1,32 @@
+dn: dc=example,dc=net
+objectClass: top
+objectClass: dcObject
+objectClass: organization
+dc: example
+o: ExampleCo
+
+dn: uid=test1,dc=example,dc=net
+objectClass: inetOrgPerson
+objectClass: posixAccount
+uid: test1
+sn: Lastname
+givenName: Firstname
+cn: First Test User
+displayName: First Test User
+uidNumber: 101
+gidNumber: 100
+homeDirectory: /home/test1
+mail: test1@example.net
+
+dn: uid=test2,dc=example,dc=net
+objectClass: inetOrgPerson
+objectClass: posixAccount
+uid: test2
+sn: Lastname
+givenName: Firstname
+cn: Second Test User
+displayName: Second Test User
+uidNumber: 102
+gidNumber: 100
+homeDirectory: /home/test2
+mail: test2@example.net
