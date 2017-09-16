@@ -703,7 +703,7 @@ Number of partitions: 3 (Use \d+ to list them.)
 
 -- check that we get the expected partition constraints
 CREATE TABLE range_parted4 (a int, b int, c int) PARTITION BY RANGE (abs(a), abs(b), c);
-CREATE TABLE unbounded_range_part PARTITION OF range_parted4 FOR VALUES FROM (MINVALUE, 0, 0) TO (MAXVALUE, 0, 0);
+CREATE TABLE unbounded_range_part PARTITION OF range_parted4 FOR VALUES FROM (MINVALUE, MINVALUE, MINVALUE) TO (MAXVALUE, MAXVALUE, MAXVALUE);
 \d+ unbounded_range_part
                            Table "public.unbounded_range_part"
  Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
@@ -711,11 +711,11 @@ CREATE TABLE unbounded_range_part PARTITION OF range_parted4 FOR VALUES FROM (MI
  a      | integer |           |          |         | plain   |              | 
  b      | integer |           |          |         | plain   |              | 
  c      | integer |           |          |         | plain   |              | 
-Partition of: range_parted4 FOR VALUES FROM (MINVALUE, 0, 0) TO (MAXVALUE, 0, 0)
+Partition of: range_parted4 FOR VALUES FROM (MINVALUE, MINVALUE, MINVALUE) TO (MAXVALUE, MAXVALUE, MAXVALUE)
 Partition constraint: ((abs(a) IS NOT NULL) AND (abs(b) IS NOT NULL) AND (c IS NOT NULL))
 
 DROP TABLE unbounded_range_part;
-CREATE TABLE range_parted4_1 PARTITION OF range_parted4 FOR VALUES FROM (MINVALUE, 0, 0) TO (1, MAXVALUE, 0);
+CREATE TABLE range_parted4_1 PARTITION OF range_parted4 FOR VALUES FROM (MINVALUE, MINVALUE, MINVALUE) TO (1, MAXVALUE, MAXVALUE);
 \d+ range_parted4_1
                               Table "public.range_parted4_1"
  Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
@@ -723,7 +723,7 @@ CREATE TABLE range_parted4_1 PARTITION OF range_parted4 FOR VALUES FROM (MINVALU
  a      | integer |           |          |         | plain   |              | 
  b      | integer |           |          |         | plain   |              | 
  c      | integer |           |          |         | plain   |              | 
-Partition of: range_parted4 FOR VALUES FROM (MINVALUE, 0, 0) TO (1, MAXVALUE, 0)
+Partition of: range_parted4 FOR VALUES FROM (MINVALUE, MINVALUE, MINVALUE) TO (1, MAXVALUE, MAXVALUE)
 Partition constraint: ((abs(a) IS NOT NULL) AND (abs(b) IS NOT NULL) AND (c IS NOT NULL) AND (abs(a) <= 1))
 
 CREATE TABLE range_parted4_2 PARTITION OF range_parted4 FOR VALUES FROM (3, 4, 5) TO (6, 7, MAXVALUE);
@@ -737,7 +737,7 @@ CREATE TABLE range_parted4_2 PARTITION OF range_parted4 FOR VALUES FROM (3, 4, 5
 Partition of: range_parted4 FOR VALUES FROM (3, 4, 5) TO (6, 7, MAXVALUE)
 Partition constraint: ((abs(a) IS NOT NULL) AND (abs(b) IS NOT NULL) AND (c IS NOT NULL) AND ((abs(a) > 3) OR ((abs(a) = 3) AND (abs(b) > 4)) OR ((abs(a) = 3) AND (abs(b) = 4) AND (c >= 5))) AND ((abs(a) < 6) OR ((abs(a) = 6) AND (abs(b) <= 7))))
 
-CREATE TABLE range_parted4_3 PARTITION OF range_parted4 FOR VALUES FROM (6, 8, MINVALUE) TO (9, MAXVALUE, 0);
+CREATE TABLE range_parted4_3 PARTITION OF range_parted4 FOR VALUES FROM (6, 8, MINVALUE) TO (9, MAXVALUE, MAXVALUE);
 \d+ range_parted4_3
                               Table "public.range_parted4_3"
  Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
@@ -745,7 +745,7 @@ CREATE TABLE range_parted4_3 PARTITION OF range_parted4 FOR VALUES FROM (6, 8, M
  a      | integer |           |          |         | plain   |              | 
  b      | integer |           |          |         | plain   |              | 
  c      | integer |           |          |         | plain   |              | 
-Partition of: range_parted4 FOR VALUES FROM (6, 8, MINVALUE) TO (9, MAXVALUE, 0)
+Partition of: range_parted4 FOR VALUES FROM (6, 8, MINVALUE) TO (9, MAXVALUE, MAXVALUE)
 Partition constraint: ((abs(a) IS NOT NULL) AND (abs(b) IS NOT NULL) AND (c IS NOT NULL) AND ((abs(a) > 6) OR ((abs(a) = 6) AND (abs(b) >= 8))) AND (abs(a) <= 9))
 
 DROP TABLE range_parted4;

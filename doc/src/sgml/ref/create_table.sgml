@@ -322,11 +322,10 @@ FROM ( { <replaceable class="PARAMETER">numeric_literal</replaceable> | <replace
      </para>
 
      <para>
-      Note that any values after <literal>MINVALUE</> or
-      <literal>MAXVALUE</> in a partition bound are ignored; so the bound
-      <literal>(10, MINVALUE, 0)</> is equivalent to
-      <literal>(10, MINVALUE, 10)</> and <literal>(10, MINVALUE, MINVALUE)</>
-      and <literal>(10, MINVALUE, MAXVALUE)</>.
+      Note that if <literal>MINVALUE</> or <literal>MAXVALUE</> is used for
+      one column of a partitioning bound, the same value must be used for all
+      subsequent columns.  For example, <literal>(10, MINVALUE, 0)</> is not
+      a valid bound; you should write <literal>(10, MINVALUE, MINVALUE)</>.
      </para>
 
      <para>
@@ -1643,7 +1642,7 @@ CREATE TABLE measurement_y2016m07
 <programlisting>
 CREATE TABLE measurement_ym_older
     PARTITION OF measurement_year_month
-    FOR VALUES FROM (MINVALUE, 0) TO (2016, 11);
+    FOR VALUES FROM (MINVALUE, MINVALUE) TO (2016, 11);
 
 CREATE TABLE measurement_ym_y2016m11
     PARTITION OF measurement_year_month
