@@ -317,9 +317,11 @@
     be created to make the sets of affected rows available to the trigger.
     <literal>AFTER ROW</> triggers can also request transition tables, so
     that they can see the total changes in the table as well as the change in
-    the individual row they are currently being fired for.  The syntax for
+    the individual row they are currently being fired for.  The method for
     examining the transition tables again depends on the programming language
-    that is being used.
+    that is being used, but the typical approach is to make the transition
+    tables act like read-only temporary tables that can be accessed by SQL
+    commands issued within the trigger function.
    </para>
 
   </sect1>
