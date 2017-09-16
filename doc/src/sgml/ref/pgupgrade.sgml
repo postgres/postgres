@@ -320,19 +320,13 @@ NET STOP postgresql-&majorversion;
     <title>Prepare for standby server upgrades</title>
 
     <para>
-     If you are upgrading standby servers (as outlined in section <xref
-     linkend="pgupgrade-step-replicas">), verify that the old standby
+     If you are upgrading standby servers using methods outlined in section <xref
+     linkend="pgupgrade-step-replicas">, verify that the old standby
      servers are caught up by running <application>pg_controldata</>
      against the old primary and standby clusters.  Verify that the
      <quote>Latest checkpoint location</> values match in all clusters.
      (There will be a mismatch if old standby servers were shut down
      before the old primary.)
-    </para>
-
-    <para>
-     Also, if upgrading standby servers, change <varname>wal_level</>
-     to <literal>replica</> in the <filename>postgresql.conf</> file on
-     the new primary cluster.
     </para>
    </step>
 
@@ -423,12 +417,18 @@ pg_upgrade.exe
     <para>
      If you used link mode and have Streaming Replication (see <xref
      linkend="streaming-replication">) or Log-Shipping (see <xref
-     linkend="warm-standby">) standby servers, follow these steps to
-     upgrade them.  You will not be running <application>pg_upgrade</> on
+     linkend="warm-standby">) standby servers, you can follow these steps to
+     quickly upgrade them.  You will not be running <application>pg_upgrade</> on
      the standby servers, but rather <application>rsync</> on the primary.
-     Do not start any servers yet.  If you did <emphasis>not</> use link
-     mode, skip the instructions in this section and simply recreate the
-     standby servers.
+     Do not start any servers yet.
+    </para>
+
+    <para>
+     If you did <emphasis>not</> use link mode, do not have or do not
+     want to use <application>rsync</>, or want an easier solution, skip
+     the instructions in this section and simply recreate the standby
+     servers once <application>pg_upgrade</> completes and the new primary
+     is running.
     </para>
 
     <substeps>
@@ -448,7 +448,7 @@ pg_upgrade.exe
       <para>
        Make sure the new standby data directories do <emphasis>not</>
        exist or are empty.  If <application>initdb</> was run, delete
-       the standby server data directories.
+       the standby servers' new data directories.
       </para>
      </step>
 
@@ -474,9 +474,10 @@ pg_upgrade.exe
       <title>Save configuration files</title>
 
       <para>
-       Save any configuration files from the standbys you need to keep,
-       e.g.  <filename>postgresql.conf</>, <literal>recovery.conf</>,
-       as these will be overwritten or removed in the next step.
+       Save any configuration files from the old standbys' data
+       directories you need to keep, e.g.  <filename>postgresql.conf</>,
+       <literal>recovery.conf</>, because these will be overwritten or
+       removed in the next step.
       </para>
      </step>
 
@@ -507,6 +508,12 @@ rsync --archive --delete --hard-links --size-only /opt/PostgreSQL/9.5/data \
       /opt/PostgreSQL/9.6/data standby.example.com:/opt/PostgreSQL
 </programlisting>
 
+       You can verify what the command will do using
+       <application>rsync</>'s <option>--dry-run</> option.  While
+       <application>rsync</> must be run on the primary for at least one
+       standby, it is possible to run <application>rsync</> on an upgraded
+       standby to upgrade other standbys, as long as the upgraded standby
+       has not been started.
       </para>
 
       <para>
