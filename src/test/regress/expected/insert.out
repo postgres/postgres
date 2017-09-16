@@ -574,15 +574,28 @@ revoke all on key_desc from someone_else;
 revoke all on key_desc_1 from someone_else;
 drop role someone_else;
 drop table key_desc, key_desc_1;
+-- test minvalue/maxvalue restrictions
+create table mcrparted (a int, b int, c int) partition by range (a, abs(b), c);
+create table mcrparted0 partition of mcrparted for values from (minvalue, 0, 0) to (1, maxvalue, maxvalue);
+ERROR:  every bound following MINVALUE must also be MINVALUE
+LINE 1: ...partition of mcrparted for values from (minvalue, 0, 0) to (...
+                                                             ^
+create table mcrparted2 partition of mcrparted for values from (10, 6, minvalue) to (10, maxvalue, minvalue);
+ERROR:  every bound following MAXVALUE must also be MAXVALUE
+LINE 1: ...r values from (10, 6, minvalue) to (10, maxvalue, minvalue);
+                                                             ^
+create table mcrparted4 partition of mcrparted for values from (21, minvalue, 0) to (30, 20, minvalue);
+ERROR:  every bound following MINVALUE must also be MINVALUE
+LINE 1: ...ition of mcrparted for values from (21, minvalue, 0) to (30,...
+                                                             ^
 -- check multi-column range partitioning expression enforces the same
 -- constraint as what tuple-routing would determine it to be
-create table mcrparted (a int, b int, c int) partition by range (a, abs(b), c);
-create table mcrparted0 partition of mcrparted for values from (minvalue, 0, 0) to (1, maxvalue, 0);
+create table mcrparted0 partition of mcrparted for values from (minvalue, minvalue, minvalue) to (1, maxvalue, maxvalue);
 create table mcrparted1 partition of mcrparted for values from (2, 1, minvalue) to (10, 5, 10);
-create table mcrparted2 partition of mcrparted for values from (10, 6, minvalue) to (10, maxvalue, 0);
+create table mcrparted2 partition of mcrparted for values from (10, 6, minvalue) to (10, maxvalue, maxvalue);
 create table mcrparted3 partition of mcrparted for values from (11, 1, 1) to (20, 10, 10);
-create table mcrparted4 partition of mcrparted for values from (21, minvalue, 0) to (30, 20, maxvalue);
-create table mcrparted5 partition of mcrparted for values from (30, 21, 20) to (maxvalue, 0, 0);
+create table mcrparted4 partition of mcrparted for values from (21, minvalue, minvalue) to (30, 20, maxvalue);
+create table mcrparted5 partition of mcrparted for values from (30, 21, 20) to (maxvalue, maxvalue, maxvalue);
 -- routed to mcrparted0
 insert into mcrparted values (0, 1, 1);
 insert into mcrparted0 values (0, 1, 1);
@@ -666,14 +679,14 @@ drop table brtrigpartcon;
 drop function brtrigpartcon1trigf();
 -- check multi-column range partitioning with minvalue/maxvalue constraints
 create table mcrparted (a text, b int) partition by range(a, b);
-create table mcrparted1_lt_b partition of mcrparted for values from (minvalue, 0) to ('b', minvalue);
+create table mcrparted1_lt_b partition of mcrparted for values from (minvalue, minvalue) to ('b', minvalue);
 create table mcrparted2_b partition of mcrparted for values from ('b', minvalue) to ('c', minvalue);
 create table mcrparted3_c_to_common partition of mcrparted for values from ('c', minvalue) to ('common', minvalue);
 create table mcrparted4_common_lt_0 partition of mcrparted for values from ('common', minvalue) to ('common', 0);
 create table mcrparted5_common_0_to_10 partition of mcrparted for values from ('common', 0) to ('common', 10);
 create table mcrparted6_common_ge_10 partition of mcrparted for values from ('common', 10) to ('common', maxvalue);
 create table mcrparted7_gt_common_lt_d partition of mcrparted for values from ('common', maxvalue) to ('d', minvalue);
-create table mcrparted8_ge_d partition of mcrparted for values from ('d', minvalue) to (maxvalue, 0);
+create table mcrparted8_ge_d partition of mcrparted for values from ('d', minvalue) to (maxvalue, maxvalue);
 \d+ mcrparted
                                  Table "public.mcrparted"
  Column |  Type   | Collation | Nullable | Default | Storage  | Stats target | Description 
@@ -681,14 +694,14 @@ create table mcrparted8_ge_d partition of mcrparted for values from ('d', minval
  a      | text    |           |          |         | extended |              | 
  b      | integer |           |          |         | plain    |              | 
 Partition key: RANGE (a, b)
-Partitions: mcrparted1_lt_b FOR VALUES FROM (MINVALUE, 0) TO ('b', MINVALUE),
+Partitions: mcrparted1_lt_b FOR VALUES FROM (MINVALUE, MINVALUE) TO ('b', MINVALUE),
             mcrparted2_b FOR VALUES FROM ('b', MINVALUE) TO ('c', MINVALUE),
             mcrparted3_c_to_common FOR VALUES FROM ('c', MINVALUE) TO ('common', MINVALUE),
             mcrparted4_common_lt_0 FOR VALUES FROM ('common', MINVALUE) TO ('common', 0),
             mcrparted5_common_0_to_10 FOR VALUES FROM ('common', 0) TO ('common', 10),
             mcrparted6_common_ge_10 FOR VALUES FROM ('common', 10) TO ('common', MAXVALUE),
             mcrparted7_gt_common_lt_d FOR VALUES FROM ('common', MAXVALUE) TO ('d', MINVALUE),
-            mcrparted8_ge_d FOR VALUES FROM ('d', MINVALUE) TO (MAXVALUE, 0)
+            mcrparted8_ge_d FOR VALUES FROM ('d', MINVALUE) TO (MAXVALUE, MAXVALUE)
 
 \d+ mcrparted1_lt_b
                               Table "public.mcrparted1_lt_b"
@@ -696,7 +709,7 @@ Partitions: mcrparted1_lt_b FOR VALUES FROM (MINVALUE, 0) TO ('b', MINVALUE),
 --------+---------+-----------+----------+---------+----------+--------------+-------------
  a      | text    |           |          |         | extended |              | 
  b      | integer |           |          |         | plain    |              | 
-Partition of: mcrparted FOR VALUES FROM (MINVALUE, 0) TO ('b', MINVALUE)
+Partition of: mcrparted FOR VALUES FROM (MINVALUE, MINVALUE) TO ('b', MINVALUE)
 Partition constraint: ((a IS NOT NULL) AND (b IS NOT NULL) AND (a < 'b'::text))
 
 \d+ mcrparted2_b
@@ -759,7 +772,7 @@ Partition constraint: ((a IS NOT NULL) AND (b IS NOT NULL) AND (a > 'common'::te
 --------+---------+-----------+----------+---------+----------+--------------+-------------
  a      | text    |           |          |         | extended |              | 
  b      | integer |           |          |         | plain    |              | 
-Partition of: mcrparted FOR VALUES FROM ('d', MINVALUE) TO (MAXVALUE, 0)
+Partition of: mcrparted FOR VALUES FROM ('d', MINVALUE) TO (MAXVALUE, MAXVALUE)
 Partition constraint: ((a IS NOT NULL) AND (b IS NOT NULL) AND (a >= 'd'::text))
 
 insert into mcrparted values ('aaa', 0), ('b', 0), ('bz', 10), ('c', -10),

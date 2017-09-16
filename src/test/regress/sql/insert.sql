@@ -369,15 +369,20 @@ revoke all on key_desc_1 from someone_else;
 drop role someone_else;
 drop table key_desc, key_desc_1;
 
+-- test minvalue/maxvalue restrictions
+create table mcrparted (a int, b int, c int) partition by range (a, abs(b), c);
+create table mcrparted0 partition of mcrparted for values from (minvalue, 0, 0) to (1, maxvalue, maxvalue);
+create table mcrparted2 partition of mcrparted for values from (10, 6, minvalue) to (10, maxvalue, minvalue);
+create table mcrparted4 partition of mcrparted for values from (21, minvalue, 0) to (30, 20, minvalue);
+
 -- check multi-column range partitioning expression enforces the same
 -- constraint as what tuple-routing would determine it to be
-create table mcrparted (a int, b int, c int) partition by range (a, abs(b), c);
-create table mcrparted0 partition of mcrparted for values from (minvalue, 0, 0) to (1, maxvalue, 0);
+create table mcrparted0 partition of mcrparted for values from (minvalue, minvalue, minvalue) to (1, maxvalue, maxvalue);
 create table mcrparted1 partition of mcrparted for values from (2, 1, minvalue) to (10, 5, 10);
-create table mcrparted2 partition of mcrparted for values from (10, 6, minvalue) to (10, maxvalue, 0);
+create table mcrparted2 partition of mcrparted for values from (10, 6, minvalue) to (10, maxvalue, maxvalue);
 create table mcrparted3 partition of mcrparted for values from (11, 1, 1) to (20, 10, 10);
-create table mcrparted4 partition of mcrparted for values from (21, minvalue, 0) to (30, 20, maxvalue);
-create table mcrparted5 partition of mcrparted for values from (30, 21, 20) to (maxvalue, 0, 0);
+create table mcrparted4 partition of mcrparted for values from (21, minvalue, minvalue) to (30, 20, maxvalue);
+create table mcrparted5 partition of mcrparted for values from (30, 21, 20) to (maxvalue, maxvalue, maxvalue);
 
 -- routed to mcrparted0
 insert into mcrparted values (0, 1, 1);
@@ -442,14 +447,14 @@ drop function brtrigpartcon1trigf();
 
 -- check multi-column range partitioning with minvalue/maxvalue constraints
 create table mcrparted (a text, b int) partition by range(a, b);
-create table mcrparted1_lt_b partition of mcrparted for values from (minvalue, 0) to ('b', minvalue);
+create table mcrparted1_lt_b partition of mcrparted for values from (minvalue, minvalue) to ('b', minvalue);
 create table mcrparted2_b partition of mcrparted for values from ('b', minvalue) to ('c', minvalue);
 create table mcrparted3_c_to_common partition of mcrparted for values from ('c', minvalue) to ('common', minvalue);
 create table mcrparted4_common_lt_0 partition of mcrparted for values from ('common', minvalue) to ('common', 0);
 create table mcrparted5_common_0_to_10 partition of mcrparted for values from ('common', 0) to ('common', 10);
 create table mcrparted6_common_ge_10 partition of mcrparted for values from ('common', 10) to ('common', maxvalue);
 create table mcrparted7_gt_common_lt_d partition of mcrparted for values from ('common', maxvalue) to ('d', minvalue);
-create table mcrparted8_ge_d partition of mcrparted for values from ('d', minvalue) to (maxvalue, 0);
+create table mcrparted8_ge_d partition of mcrparted for values from ('d', minvalue) to (maxvalue, maxvalue);
 
 \d+ mcrparted
 \d+ mcrparted1_lt_b
