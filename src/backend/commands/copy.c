@@ -2429,12 +2429,17 @@ CopyFrom(CopyState cstate)
 	/* Triggers might need a slot as well */
 	estate->es_trig_tuple_slot = ExecInitExtraTupleSlot(estate);
 
+	/* Prepare to catch AFTER triggers. */
+	AfterTriggerBeginQuery();
+
 	/*
 	 * If there are any triggers with transition tables on the named relation,
 	 * we need to be prepared to capture transition tuples.
 	 */
 	cstate->transition_capture =
-		MakeTransitionCaptureState(cstate->rel->trigdesc);
+		MakeTransitionCaptureState(cstate->rel->trigdesc,
+								   RelationGetRelid(cstate->rel),
+								   CMD_INSERT);
 
 	/*
 	 * If the named relation is a partitioned table, initialize state for
@@ -2509,9 +2514,6 @@ CopyFrom(CopyState cstate)
 		useHeapMultiInsert = true;
 		bufferedTuples = palloc(MAX_BUFFERED_TUPLES * sizeof(HeapTuple));
 	}
-
-	/* Prepare to catch AFTER triggers. */
-	AfterTriggerBeginQuery();
 
 	/*
 	 * Check BEFORE STATEMENT insertion triggers. It's debatable whether we

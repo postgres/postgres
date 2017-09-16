@@ -252,16 +252,16 @@ standard_ExecutorStart(QueryDesc *queryDesc, int eflags)
 	estate->es_instrument = queryDesc->instrument_options;
 
 	/*
-	 * Initialize the plan state tree
-	 */
-	InitPlan(queryDesc, eflags);
-
-	/*
 	 * Set up an AFTER-trigger statement context, unless told not to, or
 	 * unless it's EXPLAIN-only mode (when ExecutorFinish won't be called).
 	 */
 	if (!(eflags & (EXEC_FLAG_SKIP_TRIGGERS | EXEC_FLAG_EXPLAIN_ONLY)))
 		AfterTriggerBeginQuery();
+
+	/*
+	 * Initialize the plan state tree
+	 */
+	InitPlan(queryDesc, eflags);
 
 	MemoryContextSwitchTo(oldcontext);
 }
@@ -1174,6 +1174,7 @@ CheckValidResultRel(ResultRelInfo *resultRelInfo, CmdType operation)
 			switch (operation)
 			{
 				case CMD_INSERT:
+
 					/*
 					 * If foreign partition to do tuple-routing for, skip the
 					 * check; it's disallowed elsewhere.

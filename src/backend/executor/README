@@ -241,11 +241,11 @@ This is a sketch of control flow for full query processing:
 		CreateExecutorState
 			creates per-query context
 		switch to per-query context to run ExecInitNode
+		AfterTriggerBeginQuery
 		ExecInitNode --- recursively scans plan tree
 			CreateExprContext
 				creates per-tuple context
 			ExecInitExpr
-		AfterTriggerBeginQuery
 
 	ExecutorRun
 		ExecProcNode --- recursively called in per-query context

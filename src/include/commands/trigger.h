@@ -43,13 +43,21 @@ typedef struct TriggerData
 
 /*
  * The state for capturing old and new tuples into transition tables for a
- * single ModifyTable node.
+ * single ModifyTable node (or other operation source, e.g. copy.c).
+ *
+ * This is per-caller to avoid conflicts in setting tcs_map or
+ * tcs_original_insert_tuple.  Note, however, that the pointed-to
+ * private data may be shared across multiple callers.
  */
+struct AfterTriggersTableData;	/* private in trigger.c */
+
 typedef struct TransitionCaptureState
 {
 	/*
 	 * Is there at least one trigger specifying each transition relation on
 	 * the relation explicitly named in the DML statement or COPY command?
+	 * Note: in current usage, these flags could be part of the private state,
+	 * but it seems possibly useful to let callers see them.
 	 */
 	bool		tcs_delete_old_table;
 	bool		tcs_update_old_table;
@@ -60,7 +68,7 @@ typedef struct TransitionCaptureState
 	 * For UPDATE and DELETE, AfterTriggerSaveEvent may need to convert the
 	 * new and old tuples from a child table's format to the format of the
 	 * relation named in a query so that it is compatible with the transition
-	 * tuplestores.
+	 * tuplestores.  The caller must store the conversion map here if so.
 	 */
 	TupleConversionMap *tcs_map;
 
@@ -74,17 +82,9 @@ typedef struct TransitionCaptureState
 	HeapTuple	tcs_original_insert_tuple;
 
 	/*
-	 * The tuplestores backing the transition tables.  We use separate
-	 * tuplestores for INSERT and UPDATE, because INSERT ... ON CONFLICT ...
-	 * DO UPDATE causes INSERT and UPDATE triggers to fire and needs a way to
-	 * keep track of the new tuple images resulting from the two cases
-	 * separately.  We only need a single old image tuplestore, because there
-	 * is no statement that can both update and delete at the same time.
+	 * Private data including the tuplestore(s) into which to insert tuples.
 	 */
-	Tuplestorestate *tcs_old_tuplestore;	/* for DELETE and UPDATE old
-											 * images */
-	Tuplestorestate *tcs_insert_tuplestore; /* for INSERT new images */
-	Tuplestorestate *tcs_update_tuplestore; /* for UPDATE new images */
+	struct AfterTriggersTableData *tcs_private;
 } TransitionCaptureState;
 
 /*
@@ -174,8 +174,9 @@ extern void RelationBuildTriggers(Relation relation);
 extern TriggerDesc *CopyTriggerDesc(TriggerDesc *trigdesc);
 
 extern const char *FindTriggerIncompatibleWithInheritance(TriggerDesc *trigdesc);
-extern TransitionCaptureState *MakeTransitionCaptureState(TriggerDesc *trigdesc);
-extern void DestroyTransitionCaptureState(TransitionCaptureState *tcs);
+
+extern TransitionCaptureState *MakeTransitionCaptureState(TriggerDesc *trigdesc,
+						   Oid relid, CmdType cmdType);
 
 extern void FreeTriggerDesc(TriggerDesc *trigdesc);
 

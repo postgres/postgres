@@ -234,6 +234,11 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 							RelationGetRelationName(rel)),
 					 errdetail("Foreign tables cannot have TRUNCATE triggers.")));
 
+		/*
+		 * We disallow constraint triggers to protect the assumption that
+		 * triggers on FKs can't be deferred.  See notes with AfterTriggers
+		 * data structures, below.
+		 */
 		if (stmt->isconstraint)
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
@@ -417,6 +422,26 @@ CreateTrigger(CreateTrigStmt *stmt, const char *queryString,
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						 errmsg("transition tables cannot be specified for triggers with more than one event")));
+
+			/*
+			 * We currently don't allow column-specific triggers with
+			 * transition tables.  Per spec, that seems to require
+			 * accumulating separate transition tables for each combination of
+			 * columns, which is a lot of work for a rather marginal feature.
+			 */
+			if (stmt->columns != NIL)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("transition tables cannot be specified for triggers with column lists")));
+
+			/*
+			 * We disallow constraint triggers with transition tables, to
+			 * protect the assumption that such triggers can't be deferred.
+			 * See notes with AfterTriggers data structures, below.
+			 *
+			 * Currently this is enforced by the grammar, so just Assert here.
+			 */
+			Assert(!stmt->isconstraint);
 
 			if (tt->isNew)
 			{
@@ -2086,96 +2111,6 @@ FindTriggerIncompatibleWithInheritance(TriggerDesc *trigdesc)
 }
 
 /*
- * Make a TransitionCaptureState object from a given TriggerDesc.  The
- * resulting object holds the flags which control whether transition tuples
- * are collected when tables are modified, and the tuplestores themselves.
- * Note that we copy the flags from a parent table into this struct (rather
- * than using each relation's TriggerDesc directly) so that we can use it to
- * control the collection of transition tuples from child tables.
- *
- * If there are no triggers with transition tables configured for 'trigdesc',
- * then return NULL.
- *
- * The resulting object can be passed to the ExecAR* functions.  The caller
- * should set tcs_map or tcs_original_insert_tuple as appropriate when dealing
- * with child tables.
- */
-TransitionCaptureState *
-MakeTransitionCaptureState(TriggerDesc *trigdesc)
-{
-	TransitionCaptureState *state = NULL;
-
-	if (trigdesc != NULL &&
-		(trigdesc->trig_delete_old_table || trigdesc->trig_update_old_table ||
-		 trigdesc->trig_update_new_table || trigdesc->trig_insert_new_table))
-	{
-		MemoryContext oldcxt;
-		ResourceOwner saveResourceOwner;
-
-		/*
-		 * Normally DestroyTransitionCaptureState should be called after
-		 * executing all AFTER triggers for the current statement.
-		 *
-		 * To handle error cleanup, TransitionCaptureState and the tuplestores
-		 * it contains will live in the current [sub]transaction's memory
-		 * context.  Likewise for the current resource owner, because we also
-		 * want to clean up temporary files spilled to disk by the tuplestore
-		 * in that scenario.  This scope is sufficient, because AFTER triggers
-		 * with transition tables cannot be deferred (only constraint triggers
-		 * can be deferred, and constraint triggers cannot have transition
-		 * tables).  The AFTER trigger queue may contain pointers to this
-		 * TransitionCaptureState, but any such entries will be processed or
-		 * discarded before the end of the current [sub]transaction.
-		 *
-		 * If a future release allows deferred triggers with transition
-		 * tables, we'll need to reconsider the scope of the
-		 * TransitionCaptureState object.
-		 */
-		oldcxt = MemoryContextSwitchTo(CurTransactionContext);
-		saveResourceOwner = CurrentResourceOwner;
-
-		state = (TransitionCaptureState *)
-			palloc0(sizeof(TransitionCaptureState));
-		state->tcs_delete_old_table = trigdesc->trig_delete_old_table;
-		state->tcs_update_old_table = trigdesc->trig_update_old_table;
-		state->tcs_update_new_table = trigdesc->trig_update_new_table;
-		state->tcs_insert_new_table = trigdesc->trig_insert_new_table;
-		PG_TRY();
-		{
-			CurrentResourceOwner = CurTransactionResourceOwner;
-			if (trigdesc->trig_delete_old_table || trigdesc->trig_update_old_table)
-				state->tcs_old_tuplestore = tuplestore_begin_heap(false, false, work_mem);
-			if (trigdesc->trig_insert_new_table)
-				state->tcs_insert_tuplestore = tuplestore_begin_heap(false, false, work_mem);
-			if (trigdesc->trig_update_new_table)
-				state->tcs_update_tuplestore = tuplestore_begin_heap(false, false, work_mem);
-		}
-		PG_CATCH();
-		{
-			CurrentResourceOwner = saveResourceOwner;
-			PG_RE_THROW();
-		}
-		PG_END_TRY();
-		CurrentResourceOwner = saveResourceOwner;
-		MemoryContextSwitchTo(oldcxt);
-	}
-
-	return state;
-}
-
-void
-DestroyTransitionCaptureState(TransitionCaptureState *tcs)
-{
-	if (tcs->tcs_insert_tuplestore != NULL)
-		tuplestore_end(tcs->tcs_insert_tuplestore);
-	if (tcs->tcs_update_tuplestore != NULL)
-		tuplestore_end(tcs->tcs_update_tuplestore);
-	if (tcs->tcs_old_tuplestore != NULL)
-		tuplestore_end(tcs->tcs_old_tuplestore);
-	pfree(tcs);
-}
-
-/*
  * Call a trigger function.
  *
  *		trigdata: trigger descriptor.
@@ -3338,9 +3273,11 @@ TriggerEnabled(EState *estate, ResultRelInfo *relinfo,
  * during the current transaction tree.  (BEFORE triggers are fired
  * immediately so we don't need any persistent state about them.)  The struct
  * and most of its subsidiary data are kept in TopTransactionContext; however
- * the individual event records are kept in a separate sub-context.  This is
- * done mainly so that it's easy to tell from a memory context dump how much
- * space is being eaten by trigger events.
+ * some data that can be discarded sooner appears in the CurTransactionContext
+ * of the relevant subtransaction.  Also, the individual event records are
+ * kept in a separate sub-context of TopTransactionContext.  This is done
+ * mainly so that it's easy to tell from a memory context dump how much space
+ * is being eaten by trigger events.
  *
  * Because the list of pending events can grow large, we go to some
  * considerable effort to minimize per-event memory consumption.  The event
@@ -3400,6 +3337,13 @@ typedef SetConstraintStateData *SetConstraintState;
  * tuple(s).  This permits storing tuples once regardless of the number of
  * row-level triggers on a foreign table.
  *
+ * Note that we need triggers on foreign tables to be fired in exactly the
+ * order they were queued, so that the tuples come out of the tuplestore in
+ * the right order.  To ensure that, we forbid deferrable (constraint)
+ * triggers on foreign tables.  This also ensures that such triggers do not
+ * get deferred into outer trigger query levels, meaning that it's okay to
+ * destroy the tuplestore at the end of the query level.
+ *
  * Statement-level triggers always bear AFTER_TRIGGER_1CTID, though they
  * require no ctid field.  We lack the flag bit space to neatly represent that
  * distinct case, and it seems unlikely to be worth much trouble.
@@ -3433,7 +3377,7 @@ typedef struct AfterTriggerSharedData
 	Oid			ats_tgoid;		/* the trigger's ID */
 	Oid			ats_relid;		/* the relation it's on */
 	CommandId	ats_firing_id;	/* ID for firing cycle */
-	TransitionCaptureState *ats_transition_capture;
+	struct AfterTriggersTableData *ats_table;	/* transition table access */
 } AfterTriggerSharedData;
 
 typedef struct AfterTriggerEventData *AfterTriggerEvent;
@@ -3505,6 +3449,14 @@ typedef struct AfterTriggerEventList
 #define for_each_event_chunk(eptr, cptr, evtlist) \
 	for_each_chunk(cptr, evtlist) for_each_event(eptr, cptr)
 
+/* Macros for iterating from a start point that might not be list start */
+#define for_each_chunk_from(cptr) \
+	for (; cptr != NULL; cptr = cptr->next)
+#define for_each_event_from(eptr, cptr) \
+	for (; \
+		 (char *) eptr < (cptr)->freeptr; \
+		 eptr = (AfterTriggerEvent) (((char *) eptr) + SizeofTriggerEvent(eptr)))
+
 
 /*
  * All per-transaction data for the AFTER TRIGGERS module.
@@ -3529,59 +3481,106 @@ typedef struct AfterTriggerEventList
  * query_depth is the current depth of nested AfterTriggerBeginQuery calls
  * (-1 when the stack is empty).
  *
- * query_stack[query_depth] is a list of AFTER trigger events queued by the
- * current query (and the query_stack entries below it are lists of trigger
- * events queued by calling queries).  None of these are valid until the
- * matching AfterTriggerEndQuery call occurs.  At that point we fire
- * immediate-mode triggers, and append any deferred events to the main events
- * list.
+ * query_stack[query_depth] is the per-query-level data, including these fields:
  *
- * fdw_tuplestores[query_depth] is a tuplestore containing the foreign tuples
- * needed for the current query.
+ * events is a list of AFTER trigger events queued by the current query.
+ * None of these are valid until the matching AfterTriggerEndQuery call
+ * occurs.  At that point we fire immediate-mode triggers, and append any
+ * deferred events to the main events list.
  *
- * maxquerydepth is just the allocated length of query_stack and the
- * tuplestores.
+ * fdw_tuplestore is a tuplestore containing the foreign-table tuples
+ * needed by events queued by the current query.  (Note: we use just one
+ * tuplestore even though more than one foreign table might be involved.
+ * This is okay because tuplestores don't really care what's in the tuples
+ * they store; but it's possible that someday it'd break.)
  *
- * state_stack is a stack of pointers to saved copies of the SET CONSTRAINTS
- * state data; each subtransaction level that modifies that state first
+ * tables is a List of AfterTriggersTableData structs for target tables
+ * of the current query (see below).
+ *
+ * maxquerydepth is just the allocated length of query_stack.
+ *
+ * trans_stack holds per-subtransaction data, including these fields:
+ *
+ * state is NULL or a pointer to a saved copy of the SET CONSTRAINTS
+ * state data.  Each subtransaction level that modifies that state first
  * saves a copy, which we use to restore the state if we abort.
  *
- * events_stack is a stack of copies of the events head/tail pointers,
+ * events is a copy of the events head/tail pointers,
  * which we use to restore those values during subtransaction abort.
  *
- * depth_stack is a stack of copies of subtransaction-start-time query_depth,
+ * query_depth is the subtransaction-start-time value of query_depth,
  * which we similarly use to clean up at subtransaction abort.
  *
- * firing_stack is a stack of copies of subtransaction-start-time
- * firing_counter.  We use this to recognize which deferred triggers were
- * fired (or marked for firing) within an aborted subtransaction.
+ * firing_counter is the subtransaction-start-time value of firing_counter.
+ * We use this to recognize which deferred triggers were fired (or marked
+ * for firing) within an aborted subtransaction.
  *
  * We use GetCurrentTransactionNestLevel() to determine the correct array
- * index in these stacks.  maxtransdepth is the number of allocated entries in
- * each stack.  (By not keeping our own stack pointer, we can avoid trouble
+ * index in trans_stack.  maxtransdepth is the number of allocated entries in
+ * trans_stack.  (By not keeping our own stack pointer, we can avoid trouble
  * in cases where errors during subxact abort cause multiple invocations
  * of AfterTriggerEndSubXact() at the same nesting depth.)
+ *
+ * We create an AfterTriggersTableData struct for each target table of the
+ * current query, and each operation mode (INSERT/UPDATE/DELETE), that has
+ * either transition tables or AFTER STATEMENT triggers.  This is used to
+ * hold the relevant transition tables, as well as info tracking whether
+ * we already queued the AFTER STATEMENT triggers.  (We use that info to
+ * prevent, as much as possible, firing the same AFTER STATEMENT trigger
+ * more than once per statement.)  These structs, along with the transition
+ * table tuplestores, live in the (sub)transaction's CurTransactionContext.
+ * That's sufficient lifespan because we don't allow transition tables to be
+ * used by deferrable triggers, so they only need to survive until
+ * AfterTriggerEndQuery.
  */
+typedef struct AfterTriggersQueryData AfterTriggersQueryData;
+typedef struct AfterTriggersTransData AfterTriggersTransData;
+typedef struct AfterTriggersTableData AfterTriggersTableData;
+
 typedef struct AfterTriggersData
 {
 	CommandId	firing_counter; /* next firing ID to assign */
 	SetConstraintState state;	/* the active S C state */
 	AfterTriggerEventList events;	/* deferred-event list */
-	int			query_depth;	/* current query list index */
-	AfterTriggerEventList *query_stack; /* events pending from each query */
-	Tuplestorestate **fdw_tuplestores;	/* foreign tuples for one row from
-										 * each query */
-	int			maxquerydepth;	/* allocated len of above array */
 	MemoryContext event_cxt;	/* memory context for events, if any */
 
-	/* these fields are just for resetting at subtrans abort: */
+	/* per-query-level data: */
+	AfterTriggersQueryData *query_stack;	/* array of structs shown below */
+	int			query_depth;	/* current index in above array */
+	int			maxquerydepth;	/* allocated len of above array */
 
-	SetConstraintState *state_stack;	/* stacked S C states */
-	AfterTriggerEventList *events_stack;	/* stacked list pointers */
-	int		   *depth_stack;	/* stacked query_depths */
-	CommandId  *firing_stack;	/* stacked firing_counters */
-	int			maxtransdepth;	/* allocated len of above arrays */
+	/* per-subtransaction-level data: */
+	AfterTriggersTransData *trans_stack;	/* array of structs shown below */
+	int			maxtransdepth;	/* allocated len of above array */
 } AfterTriggersData;
+
+struct AfterTriggersQueryData
+{
+	AfterTriggerEventList events;	/* events pending from this query */
+	Tuplestorestate *fdw_tuplestore;	/* foreign tuples for said events */
+	List	   *tables;			/* list of AfterTriggersTableData, see below */
+};
+
+struct AfterTriggersTransData
+{
+	/* these fields are just for resetting at subtrans abort: */
+	SetConstraintState state;	/* saved S C state, or NULL if not yet saved */
+	AfterTriggerEventList events;	/* saved list pointer */
+	int			query_depth;	/* saved query_depth */
+	CommandId	firing_counter; /* saved firing_counter */
+};
+
+struct AfterTriggersTableData
+{
+	/* relid + cmdType form the lookup key for these structs: */
+	Oid			relid;			/* target table's OID */
+	CmdType		cmdType;		/* event type, CMD_INSERT/UPDATE/DELETE */
+	bool		closed;			/* true when no longer OK to add tuples */
+	bool		stmt_trig_done; /* did we already queue stmt-level triggers? */
+	AfterTriggerEventList stmt_trig_events; /* if so, saved list pointer */
+	Tuplestorestate *old_tuplestore;	/* "old" transition table, if any */
+	Tuplestorestate *new_tuplestore;	/* "new" transition table, if any */
+};
 
 static AfterTriggersData afterTriggers;
 
@@ -3591,38 +3590,41 @@ static void AfterTriggerExecute(AfterTriggerEvent event,
 					Instrumentation *instr,
 					MemoryContext per_tuple_context,
 					TupleTableSlot *trig_tuple_slot1,
-					TupleTableSlot *trig_tuple_slot2,
-					TransitionCaptureState *transition_capture);
+					TupleTableSlot *trig_tuple_slot2);
+static AfterTriggersTableData *GetAfterTriggersTableData(Oid relid,
+						  CmdType cmdType);
+static void AfterTriggerFreeQuery(AfterTriggersQueryData *qs);
 static SetConstraintState SetConstraintStateCreate(int numalloc);
 static SetConstraintState SetConstraintStateCopy(SetConstraintState state);
 static SetConstraintState SetConstraintStateAddItem(SetConstraintState state,
 						  Oid tgoid, bool tgisdeferred);
+static void cancel_prior_stmt_triggers(Oid relid, CmdType cmdType, int tgevent);
 
 
 /*
- * Gets a current query transition tuplestore and initializes it if necessary.
+ * Get the FDW tuplestore for the current trigger query level, creating it
+ * if necessary.
  */
 static Tuplestorestate *
-GetTriggerTransitionTuplestore(Tuplestorestate **tss)
+GetCurrentFDWTuplestore(void)
 {
 	Tuplestorestate *ret;
 
-	ret = tss[afterTriggers.query_depth];
+	ret = afterTriggers.query_stack[afterTriggers.query_depth].fdw_tuplestore;
 	if (ret == NULL)
 	{
 		MemoryContext oldcxt;
 		ResourceOwner saveResourceOwner;
 
 		/*
-		 * Make the tuplestore valid until end of transaction.  This is the
-		 * allocation lifespan of the associated events list, but we really
+		 * Make the tuplestore valid until end of subtransaction.  We really
 		 * only need it until AfterTriggerEndQuery().
 		 */
-		oldcxt = MemoryContextSwitchTo(TopTransactionContext);
+		oldcxt = MemoryContextSwitchTo(CurTransactionContext);
 		saveResourceOwner = CurrentResourceOwner;
 		PG_TRY();
 		{
-			CurrentResourceOwner = TopTransactionResourceOwner;
+			CurrentResourceOwner = CurTransactionResourceOwner;
 			ret = tuplestore_begin_heap(false, false, work_mem);
 		}
 		PG_CATCH();
@@ -3634,7 +3636,7 @@ GetTriggerTransitionTuplestore(Tuplestorestate **tss)
 		CurrentResourceOwner = saveResourceOwner;
 		MemoryContextSwitchTo(oldcxt);
 
-		tss[afterTriggers.query_depth] = ret;
+		afterTriggers.query_stack[afterTriggers.query_depth].fdw_tuplestore = ret;
 	}
 
 	return ret;
@@ -3780,7 +3782,7 @@ afterTriggerAddEvent(AfterTriggerEventList *events,
 		if (newshared->ats_tgoid == evtshared->ats_tgoid &&
 			newshared->ats_relid == evtshared->ats_relid &&
 			newshared->ats_event == evtshared->ats_event &&
-			newshared->ats_transition_capture == evtshared->ats_transition_capture &&
+			newshared->ats_table == evtshared->ats_table &&
 			newshared->ats_firing_id == 0)
 			break;
 	}
@@ -3892,8 +3894,7 @@ AfterTriggerExecute(AfterTriggerEvent event,
 					FmgrInfo *finfo, Instrumentation *instr,
 					MemoryContext per_tuple_context,
 					TupleTableSlot *trig_tuple_slot1,
-					TupleTableSlot *trig_tuple_slot2,
-					TransitionCaptureState *transition_capture)
+					TupleTableSlot *trig_tuple_slot2)
 {
 	AfterTriggerShared evtshared = GetTriggerSharedData(event);
 	Oid			tgoid = evtshared->ats_tgoid;
@@ -3934,9 +3935,7 @@ AfterTriggerExecute(AfterTriggerEvent event,
 	{
 		case AFTER_TRIGGER_FDW_FETCH:
 			{
-				Tuplestorestate *fdw_tuplestore =
-				GetTriggerTransitionTuplestore
-				(afterTriggers.fdw_tuplestores);
+				Tuplestorestate *fdw_tuplestore = GetCurrentFDWTuplestore();
 
 				if (!tuplestore_gettupleslot(fdw_tuplestore, true, false,
 											 trig_tuple_slot1))
@@ -4006,36 +4005,25 @@ AfterTriggerExecute(AfterTriggerEvent event,
 	}
 
 	/*
-	 * Set up the tuplestore information.
+	 * Set up the tuplestore information to let the trigger have access to
+	 * transition tables.  When we first make a transition table available to
+	 * a trigger, mark it "closed" so that it cannot change anymore.  If any
+	 * additional events of the same type get queued in the current trigger
+	 * query level, they'll go into new transition tables.
 	 */
 	LocTriggerData.tg_oldtable = LocTriggerData.tg_newtable = NULL;
-	if (transition_capture != NULL)
+	if (evtshared->ats_table)
 	{
 		if (LocTriggerData.tg_trigger->tgoldtable)
-			LocTriggerData.tg_oldtable = transition_capture->tcs_old_tuplestore;
+		{
+			LocTriggerData.tg_oldtable = evtshared->ats_table->old_tuplestore;
+			evtshared->ats_table->closed = true;
+		}
+
 		if (LocTriggerData.tg_trigger->tgnewtable)
 		{
-			/*
-			 * Currently a trigger with transition tables may only be defined
-			 * for a single event type (here AFTER INSERT or AFTER UPDATE, but
-			 * not AFTER INSERT OR ...).
-			 */
-			Assert((TRIGGER_FOR_INSERT(LocTriggerData.tg_trigger->tgtype) != 0) ^
-				   (TRIGGER_FOR_UPDATE(LocTriggerData.tg_trigger->tgtype) != 0));
-
-			/*
-			 * Show either the insert or update new tuple images, depending on
-			 * which event type the trigger was registered for.  A single
-			 * statement may have produced both in the case of INSERT ... ON
-			 * CONFLICT ... DO UPDATE, and in that case the event determines
-			 * which tuplestore the trigger sees as the NEW TABLE.
-			 */
-			if (TRIGGER_FOR_INSERT(LocTriggerData.tg_trigger->tgtype))
-				LocTriggerData.tg_newtable =
-					transition_capture->tcs_insert_tuplestore;
-			else
-				LocTriggerData.tg_newtable =
-					transition_capture->tcs_update_tuplestore;
+			LocTriggerData.tg_newtable = evtshared->ats_table->new_tuplestore;
+			evtshared->ats_table->closed = true;
 		}
 	}
 
@@ -4245,8 +4233,7 @@ afterTriggerInvokeEvents(AfterTriggerEventList *events,
 				 * won't try to re-fire it.
 				 */
 				AfterTriggerExecute(event, rel, trigdesc, finfo, instr,
-									per_tuple_context, slot1, slot2,
-									evtshared->ats_transition_capture);
+									per_tuple_context, slot1, slot2);
 
 				/*
 				 * Mark the event as done.
@@ -4296,6 +4283,166 @@ afterTriggerInvokeEvents(AfterTriggerEventList *events,
 }
 
 
+/*
+ * GetAfterTriggersTableData
+ *
+ * Find or create an AfterTriggersTableData struct for the specified
+ * trigger event (relation + operation type).  Ignore existing structs
+ * marked "closed"; we don't want to put any additional tuples into them,
+ * nor change their stmt-triggers-fired state.
+ *
+ * Note: the AfterTriggersTableData list is allocated in the current
+ * (sub)transaction's CurTransactionContext.  This is OK because
+ * we don't need it to live past AfterTriggerEndQuery.
+ */
+static AfterTriggersTableData *
+GetAfterTriggersTableData(Oid relid, CmdType cmdType)
+{
+	AfterTriggersTableData *table;
+	AfterTriggersQueryData *qs;
+	MemoryContext oldcxt;
+	ListCell   *lc;
+
+	/* Caller should have ensured query_depth is OK. */
+	Assert(afterTriggers.query_depth >= 0 &&
+		   afterTriggers.query_depth < afterTriggers.maxquerydepth);
+	qs = &afterTriggers.query_stack[afterTriggers.query_depth];
+
+	foreach(lc, qs->tables)
+	{
+		table = (AfterTriggersTableData *) lfirst(lc);
+		if (table->relid == relid && table->cmdType == cmdType &&
+			!table->closed)
+			return table;
+	}
+
+	oldcxt = MemoryContextSwitchTo(CurTransactionContext);
+
+	table = (AfterTriggersTableData *) palloc0(sizeof(AfterTriggersTableData));
+	table->relid = relid;
+	table->cmdType = cmdType;
+	qs->tables = lappend(qs->tables, table);
+
+	MemoryContextSwitchTo(oldcxt);
+
+	return table;
+}
+
+
+/*
+ * MakeTransitionCaptureState
+ *
+ * Make a TransitionCaptureState object for the given TriggerDesc, target
+ * relation, and operation type.  The TCS object holds all the state needed
+ * to decide whether to capture tuples in transition tables.
+ *
+ * If there are no triggers in 'trigdesc' that request relevant transition
+ * tables, then return NULL.
+ *
+ * The resulting object can be passed to the ExecAR* functions.  The caller
+ * should set tcs_map or tcs_original_insert_tuple as appropriate when dealing
+ * with child tables.
+ *
+ * Note that we copy the flags from a parent table into this struct (rather
+ * than subsequently using the relation's TriggerDesc directly) so that we can
+ * use it to control collection of transition tuples from child tables.
+ *
+ * Per SQL spec, all operations of the same kind (INSERT/UPDATE/DELETE)
+ * on the same table during one query should share one transition table.
+ * Therefore, the Tuplestores are owned by an AfterTriggersTableData struct
+ * looked up using the table OID + CmdType, and are merely referenced by
+ * the TransitionCaptureState objects we hand out to callers.
+ */
+TransitionCaptureState *
+MakeTransitionCaptureState(TriggerDesc *trigdesc, Oid relid, CmdType cmdType)
+{
+	TransitionCaptureState *state;
+	bool		need_old,
+				need_new;
+	AfterTriggersTableData *table;
+	MemoryContext oldcxt;
+	ResourceOwner saveResourceOwner;
+
+	if (trigdesc == NULL)
+		return NULL;
+
+	/* Detect which table(s) we need. */
+	switch (cmdType)
+	{
+		case CMD_INSERT:
+			need_old = false;
+			need_new = trigdesc->trig_insert_new_table;
+			break;
+		case CMD_UPDATE:
+			need_old = trigdesc->trig_update_old_table;
+			need_new = trigdesc->trig_update_new_table;
+			break;
+		case CMD_DELETE:
+			need_old = trigdesc->trig_delete_old_table;
+			need_new = false;
+			break;
+		default:
+			elog(ERROR, "unexpected CmdType: %d", (int) cmdType);
+			need_old = need_new = false;	/* keep compiler quiet */
+			break;
+	}
+	if (!need_old && !need_new)
+		return NULL;
+
+	/* Check state, like AfterTriggerSaveEvent. */
+	if (afterTriggers.query_depth < 0)
+		elog(ERROR, "MakeTransitionCaptureState() called outside of query");
+
+	/* Be sure we have enough space to record events at this query depth. */
+	if (afterTriggers.query_depth >= afterTriggers.maxquerydepth)
+		AfterTriggerEnlargeQueryState();
+
+	/*
+	 * Find or create an AfterTriggersTableData struct to hold the
+	 * tuplestore(s).  If there's a matching struct but it's marked closed,
+	 * ignore it; we need a newer one.
+	 *
+	 * Note: the AfterTriggersTableData list, as well as the tuplestores, are
+	 * allocated in the current (sub)transaction's CurTransactionContext, and
+	 * the tuplestores are managed by the (sub)transaction's resource owner.
+	 * This is sufficient lifespan because we do not allow triggers using
+	 * transition tables to be deferrable; they will be fired during
+	 * AfterTriggerEndQuery, after which it's okay to delete the data.
+	 */
+	table = GetAfterTriggersTableData(relid, cmdType);
+
+	/* Now create required tuplestore(s), if we don't have them already. */
+	oldcxt = MemoryContextSwitchTo(CurTransactionContext);
+	saveResourceOwner = CurrentResourceOwner;
+	PG_TRY();
+	{
+		CurrentResourceOwner = CurTransactionResourceOwner;
+		if (need_old && table->old_tuplestore == NULL)
+			table->old_tuplestore = tuplestore_begin_heap(false, false, work_mem);
+		if (need_new && table->new_tuplestore == NULL)
+			table->new_tuplestore = tuplestore_begin_heap(false, false, work_mem);
+	}
+	PG_CATCH();
+	{
+		CurrentResourceOwner = saveResourceOwner;
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+	CurrentResourceOwner = saveResourceOwner;
+	MemoryContextSwitchTo(oldcxt);
+
+	/* Now build the TransitionCaptureState struct, in caller's context */
+	state = (TransitionCaptureState *) palloc0(sizeof(TransitionCaptureState));
+	state->tcs_delete_old_table = trigdesc->trig_delete_old_table;
+	state->tcs_update_old_table = trigdesc->trig_update_old_table;
+	state->tcs_update_new_table = trigdesc->trig_update_new_table;
+	state->tcs_insert_new_table = trigdesc->trig_insert_new_table;
+	state->tcs_private = table;
+
+	return state;
+}
+
+
 /* ----------
  * AfterTriggerBeginXact()
  *
@@ -4319,14 +4466,10 @@ AfterTriggerBeginXact(void)
 	 */
 	Assert(afterTriggers.state == NULL);
 	Assert(afterTriggers.query_stack == NULL);
-	Assert(afterTriggers.fdw_tuplestores == NULL);
 	Assert(afterTriggers.maxquerydepth == 0);
 	Assert(afterTriggers.event_cxt == NULL);
 	Assert(afterTriggers.events.head == NULL);
-	Assert(afterTriggers.state_stack == NULL);
-	Assert(afterTriggers.events_stack == NULL);
-	Assert(afterTriggers.depth_stack == NULL);
-	Assert(afterTriggers.firing_stack == NULL);
+	Assert(afterTriggers.trans_stack == NULL);
 	Assert(afterTriggers.maxtransdepth == 0);
 }
 
@@ -4362,9 +4505,6 @@ AfterTriggerBeginQuery(void)
 void
 AfterTriggerEndQuery(EState *estate)
 {
-	AfterTriggerEventList *events;
-	Tuplestorestate *fdw_tuplestore;
-
 	/* Must be inside a query, too */
 	Assert(afterTriggers.query_depth >= 0);
 
@@ -4393,38 +4533,86 @@ AfterTriggerEndQuery(EState *estate)
 	 * will instead fire any triggers in a dedicated query level.  Foreign key
 	 * enforcement triggers do add to the current query level, thanks to their
 	 * passing fire_triggers = false to SPI_execute_snapshot().  Other
-	 * C-language triggers might do likewise.  Be careful here: firing a
-	 * trigger could result in query_stack being repalloc'd, so we can't save
-	 * its address across afterTriggerInvokeEvents calls.
+	 * C-language triggers might do likewise.
 	 *
 	 * If we find no firable events, we don't have to increment
 	 * firing_counter.
 	 */
 	for (;;)
 	{
-		events = &afterTriggers.query_stack[afterTriggers.query_depth];
-		if (afterTriggerMarkEvents(events, &afterTriggers.events, true))
+		AfterTriggersQueryData *qs;
+
+		/*
+		 * Firing a trigger could result in query_stack being repalloc'd, so
+		 * we must recalculate qs after each afterTriggerInvokeEvents call.
+		 */
+		qs = &afterTriggers.query_stack[afterTriggers.query_depth];
+
+		if (afterTriggerMarkEvents(&qs->events, &afterTriggers.events, true))
 		{
 			CommandId	firing_id = afterTriggers.firing_counter++;
 
 			/* OK to delete the immediate events after processing them */
-			if (afterTriggerInvokeEvents(events, firing_id, estate, true))
+			if (afterTriggerInvokeEvents(&qs->events, firing_id, estate, true))
 				break;			/* all fired */
 		}
 		else
 			break;
 	}
 
-	/* Release query-local storage for events, including tuplestore if any */
-	fdw_tuplestore = afterTriggers.fdw_tuplestores[afterTriggers.query_depth];
-	if (fdw_tuplestore)
-	{
-		tuplestore_end(fdw_tuplestore);
-		afterTriggers.fdw_tuplestores[afterTriggers.query_depth] = NULL;
-	}
-	afterTriggerFreeEventList(&afterTriggers.query_stack[afterTriggers.query_depth]);
+	/* Release query-level-local storage, including tuplestores if any */
+	AfterTriggerFreeQuery(&afterTriggers.query_stack[afterTriggers.query_depth]);
 
 	afterTriggers.query_depth--;
+}
+
+
+/*
+ * AfterTriggerFreeQuery
+ *	Release subsidiary storage for a trigger query level.
+ *	This includes closing down tuplestores.
+ *	Note: it's important for this to be safe if interrupted by an error
+ *	and then called again for the same query level.
+ */
+static void
+AfterTriggerFreeQuery(AfterTriggersQueryData *qs)
+{
+	Tuplestorestate *ts;
+	List	   *tables;
+	ListCell   *lc;
+
+	/* Drop the trigger events */
+	afterTriggerFreeEventList(&qs->events);
+
+	/* Drop FDW tuplestore if any */
+	ts = qs->fdw_tuplestore;
+	qs->fdw_tuplestore = NULL;
+	if (ts)
+		tuplestore_end(ts);
+
+	/* Release per-table subsidiary storage */
+	tables = qs->tables;
+	foreach(lc, tables)
+	{
+		AfterTriggersTableData *table = (AfterTriggersTableData *) lfirst(lc);
+
+		ts = table->old_tuplestore;
+		table->old_tuplestore = NULL;
+		if (ts)
+			tuplestore_end(ts);
+		ts = table->new_tuplestore;
+		table->new_tuplestore = NULL;
+		if (ts)
+			tuplestore_end(ts);
+	}
+
+	/*
+	 * Now free the AfterTriggersTableData structs and list cells.  Reset list
+	 * pointer first; if list_free_deep somehow gets an error, better to leak
+	 * that storage than have an infinite loop.
+	 */
+	qs->tables = NIL;
+	list_free_deep(tables);
 }
 
 
@@ -4521,10 +4709,7 @@ AfterTriggerEndXact(bool isCommit)
 	 * large, we let the eventual reset of TopTransactionContext free the
 	 * memory instead of doing it here.
 	 */
-	afterTriggers.state_stack = NULL;
-	afterTriggers.events_stack = NULL;
-	afterTriggers.depth_stack = NULL;
-	afterTriggers.firing_stack = NULL;
+	afterTriggers.trans_stack = NULL;
 	afterTriggers.maxtransdepth = 0;
 
 
@@ -4534,7 +4719,6 @@ AfterTriggerEndXact(bool isCommit)
 	 * memory here.
 	 */
 	afterTriggers.query_stack = NULL;
-	afterTriggers.fdw_tuplestores = NULL;
 	afterTriggers.maxquerydepth = 0;
 	afterTriggers.state = NULL;
 
@@ -4553,48 +4737,28 @@ AfterTriggerBeginSubXact(void)
 	int			my_level = GetCurrentTransactionNestLevel();
 
 	/*
-	 * Allocate more space in the stacks if needed.  (Note: because the
+	 * Allocate more space in the trans_stack if needed.  (Note: because the
 	 * minimum nest level of a subtransaction is 2, we waste the first couple
-	 * entries of each array; not worth the notational effort to avoid it.)
+	 * entries of the array; not worth the notational effort to avoid it.)
 	 */
 	while (my_level >= afterTriggers.maxtransdepth)
 	{
 		if (afterTriggers.maxtransdepth == 0)
 		{
-			MemoryContext old_cxt;
-
-			old_cxt = MemoryContextSwitchTo(TopTransactionContext);
-
-#define DEFTRIG_INITALLOC 8
-			afterTriggers.state_stack = (SetConstraintState *)
-				palloc(DEFTRIG_INITALLOC * sizeof(SetConstraintState));
-			afterTriggers.events_stack = (AfterTriggerEventList *)
-				palloc(DEFTRIG_INITALLOC * sizeof(AfterTriggerEventList));
-			afterTriggers.depth_stack = (int *)
-				palloc(DEFTRIG_INITALLOC * sizeof(int));
-			afterTriggers.firing_stack = (CommandId *)
-				palloc(DEFTRIG_INITALLOC * sizeof(CommandId));
-			afterTriggers.maxtransdepth = DEFTRIG_INITALLOC;
-
-			MemoryContextSwitchTo(old_cxt);
+			/* Arbitrarily initialize for max of 8 subtransaction levels */
+			afterTriggers.trans_stack = (AfterTriggersTransData *)
+				MemoryContextAlloc(TopTransactionContext,
+								   8 * sizeof(AfterTriggersTransData));
+			afterTriggers.maxtransdepth = 8;
 		}
 		else
 		{
-			/* repalloc will keep the stacks in the same context */
+			/* repalloc will keep the stack in the same context */
 			int			new_alloc = afterTriggers.maxtransdepth * 2;
 
-			afterTriggers.state_stack = (SetConstraintState *)
-				repalloc(afterTriggers.state_stack,
-						 new_alloc * sizeof(SetConstraintState));
-			afterTriggers.events_stack = (AfterTriggerEventList *)
-				repalloc(afterTriggers.events_stack,
-						 new_alloc * sizeof(AfterTriggerEventList));
-			afterTriggers.depth_stack = (int *)
-				repalloc(afterTriggers.depth_stack,
-						 new_alloc * sizeof(int));
-			afterTriggers.firing_stack = (CommandId *)
-				repalloc(afterTriggers.firing_stack,
-						 new_alloc * sizeof(CommandId));
+			afterTriggers.trans_stack = (AfterTriggersTransData *)
+				repalloc(afterTriggers.trans_stack,
+						 new_alloc * sizeof(AfterTriggersTransData));
 			afterTriggers.maxtransdepth = new_alloc;
 		}
 	}
@@ -4604,10 +4768,10 @@ AfterTriggerBeginSubXact(void)
 	 * is not saved until/unless changed.  Likewise, we don't make a
 	 * per-subtransaction event context until needed.
 	 */
-	afterTriggers.state_stack[my_level] = NULL;
-	afterTriggers.events_stack[my_level] = afterTriggers.events;
-	afterTriggers.depth_stack[my_level] = afterTriggers.query_depth;
-	afterTriggers.firing_stack[my_level] = afterTriggers.firing_counter;
+	afterTriggers.trans_stack[my_level].state = NULL;
+	afterTriggers.trans_stack[my_level].events = afterTriggers.events;
+	afterTriggers.trans_stack[my_level].query_depth = afterTriggers.query_depth;
+	afterTriggers.trans_stack[my_level].firing_counter = afterTriggers.firing_counter;
 }
 
 /*
@@ -4631,70 +4795,58 @@ AfterTriggerEndSubXact(bool isCommit)
 	{
 		Assert(my_level < afterTriggers.maxtransdepth);
 		/* If we saved a prior state, we don't need it anymore */
-		state = afterTriggers.state_stack[my_level];
+		state = afterTriggers.trans_stack[my_level].state;
 		if (state != NULL)
 			pfree(state);
 		/* this avoids double pfree if error later: */
-		afterTriggers.state_stack[my_level] = NULL;
+		afterTriggers.trans_stack[my_level].state = NULL;
 		Assert(afterTriggers.query_depth ==
-			   afterTriggers.depth_stack[my_level]);
+			   afterTriggers.trans_stack[my_level].query_depth);
 	}
 	else
 	{
 		/*
 		 * Aborting.  It is possible subxact start failed before calling
 		 * AfterTriggerBeginSubXact, in which case we mustn't risk touching
-		 * stack levels that aren't there.
+		 * trans_stack levels that aren't there.
 		 */
 		if (my_level >= afterTriggers.maxtransdepth)
 			return;
 
 		/*
-		 * Release any event lists from queries being aborted, and restore
+		 * Release query-level storage for queries being aborted, and restore
 		 * query_depth to its pre-subxact value.  This assumes that a
 		 * subtransaction will not add events to query levels started in a
 		 * earlier transaction state.
 		 */
-		while (afterTriggers.query_depth > afterTriggers.depth_stack[my_level])
+		while (afterTriggers.query_depth > afterTriggers.trans_stack[my_level].query_depth)
 		{
 			if (afterTriggers.query_depth < afterTriggers.maxquerydepth)
-			{
-				Tuplestorestate *ts;
-
-				ts = afterTriggers.fdw_tuplestores[afterTriggers.query_depth];
-				if (ts)
-				{
-					tuplestore_end(ts);
-					afterTriggers.fdw_tuplestores[afterTriggers.query_depth] = NULL;
-				}
-
-				afterTriggerFreeEventList(&afterTriggers.query_stack[afterTriggers.query_depth]);
-			}
-
+				AfterTriggerFreeQuery(&afterTriggers.query_stack[afterTriggers.query_depth]);
 			afterTriggers.query_depth--;
 		}
 		Assert(afterTriggers.query_depth ==
-			   afterTriggers.depth_stack[my_level]);
+			   afterTriggers.trans_stack[my_level].query_depth);
 
 		/*
 		 * Restore the global deferred-event list to its former length,
 		 * discarding any events queued by the subxact.
 		 */
 		afterTriggerRestoreEventList(&afterTriggers.events,
-									 &afterTriggers.events_stack[my_level]);
+									 &afterTriggers.trans_stack[my_level].events);
 
 		/*
 		 * Restore the trigger state.  If the saved state is NULL, then this
 		 * subxact didn't save it, so it doesn't need restoring.
 		 */
-		state = afterTriggers.state_stack[my_level];
+		state = afterTriggers.trans_stack[my_level].state;
 		if (state != NULL)
 		{
 			pfree(afterTriggers.state);
 			afterTriggers.state = state;
 		}
 		/* this avoids double pfree if error later: */
-		afterTriggers.state_stack[my_level] = NULL;
+		afterTriggers.trans_stack[my_level].state = NULL;
 
 		/*
 		 * Scan for any remaining deferred events that were marked DONE or IN
@@ -4704,7 +4856,7 @@ AfterTriggerEndSubXact(bool isCommit)
 		 * (This essentially assumes that the current subxact includes all
 		 * subxacts started after it.)
 		 */
-		subxact_firing_id = afterTriggers.firing_stack[my_level];
+		subxact_firing_id = afterTriggers.trans_stack[my_level].firing_counter;
 		for_each_event_chunk(event, chunk, afterTriggers.events)
 		{
 			AfterTriggerShared evtshared = GetTriggerSharedData(event);
@@ -4740,12 +4892,9 @@ AfterTriggerEnlargeQueryState(void)
 	{
 		int			new_alloc = Max(afterTriggers.query_depth + 1, 8);
 
-		afterTriggers.query_stack = (AfterTriggerEventList *)
+		afterTriggers.query_stack = (AfterTriggersQueryData *)
 			MemoryContextAlloc(TopTransactionContext,
-							   new_alloc * sizeof(AfterTriggerEventList));
-		afterTriggers.fdw_tuplestores = (Tuplestorestate **)
-			MemoryContextAllocZero(TopTransactionContext,
-								   new_alloc * sizeof(Tuplestorestate *));
+							   new_alloc * sizeof(AfterTriggersQueryData));
 		afterTriggers.maxquerydepth = new_alloc;
 	}
 	else
@@ -4755,27 +4904,22 @@ AfterTriggerEnlargeQueryState(void)
 		int			new_alloc = Max(afterTriggers.query_depth + 1,
 									old_alloc * 2);
 
-		afterTriggers.query_stack = (AfterTriggerEventList *)
+		afterTriggers.query_stack = (AfterTriggersQueryData *)
 			repalloc(afterTriggers.query_stack,
-					 new_alloc * sizeof(AfterTriggerEventList));
-		afterTriggers.fdw_tuplestores = (Tuplestorestate **)
-			repalloc(afterTriggers.fdw_tuplestores,
-					 new_alloc * sizeof(Tuplestorestate *));
-		/* Clear newly-allocated slots for subsequent lazy initialization. */
-		memset(afterTriggers.fdw_tuplestores + old_alloc,
-			   0, (new_alloc - old_alloc) * sizeof(Tuplestorestate *));
+					 new_alloc * sizeof(AfterTriggersQueryData));
 		afterTriggers.maxquerydepth = new_alloc;
 	}
 
-	/* Initialize new query lists to empty */
+	/* Initialize new array entries to empty */
 	while (init_depth < afterTriggers.maxquerydepth)
 	{
-		AfterTriggerEventList *events;
+		AfterTriggersQueryData *qs = &afterTriggers.query_stack[init_depth];
 
-		events = &afterTriggers.query_stack[init_depth];
-		events->head = NULL;
-		events->tail = NULL;
-		events->tailfree = NULL;
+		qs->events.head = NULL;
+		qs->events.tail = NULL;
+		qs->events.tailfree = NULL;
+		qs->fdw_tuplestore = NULL;
+		qs->tables = NIL;
 
 		++init_depth;
 	}
@@ -4873,9 +5017,9 @@ AfterTriggerSetState(ConstraintsSetStmt *stmt)
 	 * save it so it can be restored if the subtransaction aborts.
 	 */
 	if (my_level > 1 &&
-		afterTriggers.state_stack[my_level] == NULL)
+		afterTriggers.trans_stack[my_level].state == NULL)
 	{
-		afterTriggers.state_stack[my_level] =
+		afterTriggers.trans_stack[my_level].state =
 			SetConstraintStateCopy(afterTriggers.state);
 	}
 
@@ -5184,7 +5328,7 @@ AfterTriggerPendingOnRel(Oid relid)
 	 */
 	for (depth = 0; depth <= afterTriggers.query_depth && depth < afterTriggers.maxquerydepth; depth++)
 	{
-		for_each_event_chunk(event, chunk, afterTriggers.query_stack[depth])
+		for_each_event_chunk(event, chunk, afterTriggers.query_stack[depth].events)
 		{
 			AfterTriggerShared evtshared = GetTriggerSharedData(event);
 
@@ -5229,7 +5373,7 @@ AfterTriggerSaveEvent(EState *estate, ResultRelInfo *relinfo,
 	TriggerDesc *trigdesc = relinfo->ri_TrigDesc;
 	AfterTriggerEventData new_event;
 	AfterTriggerSharedData new_shared;
-	char		relkind = relinfo->ri_RelationDesc->rd_rel->relkind;
+	char		relkind = rel->rd_rel->relkind;
 	int			tgtype_event;
 	int			tgtype_level;
 	int			i;
@@ -5266,7 +5410,7 @@ AfterTriggerSaveEvent(EState *estate, ResultRelInfo *relinfo,
 			Tuplestorestate *old_tuplestore;
 
 			Assert(oldtup != NULL);
-			old_tuplestore = transition_capture->tcs_old_tuplestore;
+			old_tuplestore = transition_capture->tcs_private->old_tuplestore;
 
 			if (map != NULL)
 			{
@@ -5284,10 +5428,7 @@ AfterTriggerSaveEvent(EState *estate, ResultRelInfo *relinfo,
 			Tuplestorestate *new_tuplestore;
 
 			Assert(newtup != NULL);
-			if (event == TRIGGER_EVENT_INSERT)
-				new_tuplestore = transition_capture->tcs_insert_tuplestore;
-			else
-				new_tuplestore = transition_capture->tcs_update_tuplestore;
+			new_tuplestore = transition_capture->tcs_private->new_tuplestore;
 
 			if (original_insert_tuple != NULL)
 				tuplestore_puttuple(new_tuplestore, original_insert_tuple);
@@ -5316,6 +5457,11 @@ AfterTriggerSaveEvent(EState *estate, ResultRelInfo *relinfo,
 	 * The event code will be used both as a bitmask and an array offset, so
 	 * validation is important to make sure we don't walk off the edge of our
 	 * arrays.
+	 *
+	 * Also, if we're considering statement-level triggers, check whether we
+	 * already queued a set of them for this event, and cancel the prior set
+	 * if so.  This preserves the behavior that statement-level triggers fire
+	 * just once per statement and fire after row-level triggers.
 	 */
 	switch (event)
 	{
@@ -5334,6 +5480,8 @@ AfterTriggerSaveEvent(EState *estate, ResultRelInfo *relinfo,
 				Assert(newtup == NULL);
 				ItemPointerSetInvalid(&(new_event.ate_ctid1));
 				ItemPointerSetInvalid(&(new_event.ate_ctid2));
+				cancel_prior_stmt_triggers(RelationGetRelid(rel),
+										   CMD_INSERT, event);
 			}
 			break;
 		case TRIGGER_EVENT_DELETE:
@@ -5351,6 +5499,8 @@ AfterTriggerSaveEvent(EState *estate, ResultRelInfo *relinfo,
 				Assert(newtup == NULL);
 				ItemPointerSetInvalid(&(new_event.ate_ctid1));
 				ItemPointerSetInvalid(&(new_event.ate_ctid2));
+				cancel_prior_stmt_triggers(RelationGetRelid(rel),
+										   CMD_DELETE, event);
 			}
 			break;
 		case TRIGGER_EVENT_UPDATE:
@@ -5368,6 +5518,8 @@ AfterTriggerSaveEvent(EState *estate, ResultRelInfo *relinfo,
 				Assert(newtup == NULL);
 				ItemPointerSetInvalid(&(new_event.ate_ctid1));
 				ItemPointerSetInvalid(&(new_event.ate_ctid2));
+				cancel_prior_stmt_triggers(RelationGetRelid(rel),
+										   CMD_UPDATE, event);
 			}
 			break;
 		case TRIGGER_EVENT_TRUNCATE:
@@ -5407,9 +5559,7 @@ AfterTriggerSaveEvent(EState *estate, ResultRelInfo *relinfo,
 		{
 			if (fdw_tuplestore == NULL)
 			{
-				fdw_tuplestore =
-					GetTriggerTransitionTuplestore
-					(afterTriggers.fdw_tuplestores);
+				fdw_tuplestore = GetCurrentFDWTuplestore();
 				new_event.ate_flags = AFTER_TRIGGER_FDW_FETCH;
 			}
 			else
@@ -5465,6 +5615,8 @@ AfterTriggerSaveEvent(EState *estate, ResultRelInfo *relinfo,
 
 		/*
 		 * Fill in event structure and add it to the current query's queue.
+		 * Note we set ats_table to NULL whenever this trigger doesn't use
+		 * transition tables, to improve sharability of the shared event data.
 		 */
 		new_shared.ats_event =
 			(event & TRIGGER_EVENT_OPMASK) |
@@ -5474,11 +5626,13 @@ AfterTriggerSaveEvent(EState *estate, ResultRelInfo *relinfo,
 		new_shared.ats_tgoid = trigger->tgoid;
 		new_shared.ats_relid = RelationGetRelid(rel);
 		new_shared.ats_firing_id = 0;
-		/* deferrable triggers cannot access transition data */
-		new_shared.ats_transition_capture =
-			trigger->tgdeferrable ? NULL : transition_capture;
+		if ((trigger->tgoldtable || trigger->tgnewtable) &&
+			transition_capture != NULL)
+			new_shared.ats_table = transition_capture->tcs_private;
+		else
+			new_shared.ats_table = NULL;
 
-		afterTriggerAddEvent(&afterTriggers.query_stack[afterTriggers.query_depth],
+		afterTriggerAddEvent(&afterTriggers.query_stack[afterTriggers.query_depth].events,
 							 &new_event, &new_shared);
 	}
 
@@ -5496,6 +5650,100 @@ AfterTriggerSaveEvent(EState *estate, ResultRelInfo *relinfo,
 	}
 }
 
+/*
+ * If we previously queued a set of AFTER STATEMENT triggers for the given
+ * relation + operation, and they've not been fired yet, cancel them.  The
+ * caller will queue a fresh set that's after any row-level triggers that may
+ * have been queued by the current sub-statement, preserving (as much as
+ * possible) the property that AFTER ROW triggers fire before AFTER STATEMENT
+ * triggers, and that the latter only fire once.  This deals with the
+ * situation where several FK enforcement triggers sequentially queue triggers
+ * for the same table into the same trigger query level.  We can't fully
+ * prevent odd behavior though: if there are AFTER ROW triggers taking
+ * transition tables, we don't want to change the transition tables once the
+ * first such trigger has seen them.  In such a case, any additional events
+ * will result in creating new transition tables and allowing new firings of
+ * statement triggers.
+ *
+ * This also saves the current event list location so that a later invocation
+ * of this function can cheaply find the triggers we're about to queue and
+ * cancel them.
+ */
+static void
+cancel_prior_stmt_triggers(Oid relid, CmdType cmdType, int tgevent)
+{
+	AfterTriggersTableData *table;
+	AfterTriggersQueryData *qs = &afterTriggers.query_stack[afterTriggers.query_depth];
+
+	/*
+	 * We keep this state in the AfterTriggersTableData that also holds
+	 * transition tables for the relation + operation.  In this way, if we are
+	 * forced to make a new set of transition tables because more tuples get
+	 * entered after we've already fired triggers, we will allow a new set of
+	 * statement triggers to get queued without canceling the old ones.
+	 */
+	table = GetAfterTriggersTableData(relid, cmdType);
+
+	if (table->stmt_trig_done)
+	{
+		/*
+		 * We want to start scanning from the tail location that existed just
+		 * before we inserted any statement triggers.  But the events list
+		 * might've been entirely empty then, in which case scan from the
+		 * current head.
+		 */
+		AfterTriggerEvent event;
+		AfterTriggerEventChunk *chunk;
+
+		if (table->stmt_trig_events.tail)
+		{
+			chunk = table->stmt_trig_events.tail;
+			event = (AfterTriggerEvent) table->stmt_trig_events.tailfree;
+		}
+		else
+		{
+			chunk = qs->events.head;
+			event = NULL;
+		}
+
+		for_each_chunk_from(chunk)
+		{
+			if (event == NULL)
+				event = (AfterTriggerEvent) CHUNK_DATA_START(chunk);
+			for_each_event_from(event, chunk)
+			{
+				AfterTriggerShared evtshared = GetTriggerSharedData(event);
+
+				/*
+				 * Exit loop when we reach events that aren't AS triggers for
+				 * the target relation.
+				 */
+				if (evtshared->ats_relid != relid)
+					goto done;
+				if ((evtshared->ats_event & TRIGGER_EVENT_OPMASK) != tgevent)
+					goto done;
+				if (!TRIGGER_FIRED_FOR_STATEMENT(evtshared->ats_event))
+					goto done;
+				if (!TRIGGER_FIRED_AFTER(evtshared->ats_event))
+					goto done;
+				/* OK, mark it DONE */
+				event->ate_flags &= ~AFTER_TRIGGER_IN_PROGRESS;
+				event->ate_flags |= AFTER_TRIGGER_DONE;
+			}
+			/* signal we must reinitialize event ptr for next chunk */
+			event = NULL;
+		}
+	}
+done:
+
+	/* In any case, save current insertion point for next time */
+	table->stmt_trig_done = true;
+	table->stmt_trig_events = qs->events;
+}
+
+/*
+ * SQL function pg_trigger_depth()
+ */
 Datum
 pg_trigger_depth(PG_FUNCTION_ARGS)
 {

@@ -1729,6 +1729,12 @@ create trigger table2_trig
 with wcte as (insert into table1 values (42))
   insert into table2 values ('hello world');
 
+with wcte as (insert into table1 values (43))
+  insert into table1 values (44);
+
+select * from table1;
+select * from table2;
+
 drop table table1;
 drop table table2;
 
@@ -1767,6 +1773,15 @@ insert into my_table values (3, 'CCC'), (4, 'DDD')
 
 create trigger my_table_multievent_trig
   after insert or update on my_table referencing new table as new_table
+  for each statement execute procedure dump_insert();
+
+--
+-- Verify that you can't create a trigger with transition tables with
+-- a column list.
+--
+
+create trigger my_table_col_update_trig
+  after update of b on my_table referencing new table as new_table
   for each statement execute procedure dump_insert();
 
 drop table my_table;
@@ -1811,6 +1826,33 @@ delete from refd_table where length(b) = 3;
 select * from trig_table;
 
 drop table refd_table, trig_table;
+
+--
+-- self-referential FKs are even more fun
+--
+
+create table self_ref (a int primary key,
+                       b int references self_ref(a) on delete cascade);
+
+create trigger self_ref_r_trig
+  after delete on self_ref referencing old table as old_table
+  for each row execute procedure dump_delete();
+create trigger self_ref_s_trig
+  after delete on self_ref referencing old table as old_table
+  for each statement execute procedure dump_delete();
+
+insert into self_ref values (1, null), (2, 1), (3, 2);
+
+delete from self_ref where a = 1;
+
+-- without AR trigger, cascaded deletes all end up in one transition table
+drop trigger self_ref_r_trig on self_ref;
+
+insert into self_ref values (1, null), (2, 1), (3, 2), (4, 3);
+
+delete from self_ref where a = 1;
+
+drop table self_ref;
 
 -- cleanup
 drop function dump_insert();
