@@ -983,7 +983,9 @@ typedef struct ModifyTableState
 	/* Per partition tuple conversion map */
 	TupleTableSlot *mt_partition_tuple_slot;
 	struct TransitionCaptureState *mt_transition_capture;
-	/* controls transition table population */
+	/* controls transition table population for specified operation */
+	struct TransitionCaptureState *mt_oc_transition_capture;
+	/* controls transition table population for INSERT...ON CONFLICT UPDATE */
 	TupleConversionMap **mt_transition_tupconv_maps;
 	/* Per plan/partition tuple conversion */
 } ModifyTableState;
