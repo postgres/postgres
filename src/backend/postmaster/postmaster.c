@@ -951,7 +951,7 @@ PostmasterMain(int argc, char *argv[])
 	CreateDataDirLockFile(true);
 
 	/* read control file (error checking and contains config) */
-	LocalProcessControlFile();
+	LocalProcessControlFile(false);
 
 	/*
 	 * Initialize SSL library, if specified.
@@ -3829,6 +3829,10 @@ PostmasterStateMachine(void)
 		ResetBackgroundWorkerCrashTimes();
 
 		shmem_exit(1);
+
+		/* re-read control file into local memory */
+		LocalProcessControlFile(true);
+
 		reset_shared(PostPortNumber);
 
 		StartupPID = StartupDataBase();
@@ -4808,8 +4812,11 @@ SubPostmasterMain(int argc, char *argv[])
 	/* Read in remaining GUC variables */
 	read_nondefault_variables();
 
-	/* (re-)read control file (contains config) */
-	LocalProcessControlFile();
+	/*
+	 * (re-)read control file, as it contains config. The postmaster will
+	 * already have read this, but this process doesn't know about that.
+	 */
+	LocalProcessControlFile(false);
 
 	/*
 	 * Reload any libraries that were preloaded by the postmaster.  Since we

@@ -4802,15 +4802,19 @@ check_wal_buffers(int *newval, void **extra, GucSource source)
 /*
  * Read the control file, set respective GUCs.
  *
- * This is to be called during startup, unless in bootstrap mode, where no
- * control file yet exists.  As there's no shared memory yet (its sizing can
- * depend on the contents of the control file!), first store data in local
- * memory. XLOGShemInit() will then copy it to shared memory later.
+ * This is to be called during startup, including a crash recovery cycle,
+ * unless in bootstrap mode, where no control file yet exists.  As there's no
+ * usable shared memory yet (its sizing can depend on the contents of the
+ * control file!), first store the contents in local memory. XLOGShemInit()
+ * will then copy it to shared memory later.
+ *
+ * reset just controls whether previous contents are to be expected (in the
+ * reset case, there's a dangling pointer into old shared memory), or not.
  */
 void
-LocalProcessControlFile(void)
+LocalProcessControlFile(bool reset)
 {
-	Assert(ControlFile == NULL);
+	Assert(reset || ControlFile == NULL);
 	ControlFile = palloc(sizeof(ControlFileData));
 	ReadControlFile();
 }
@@ -4884,20 +4888,13 @@ XLOGShmemInit(void)
 	}
 #endif
 
-	/*
-	 * Already have read control file locally, unless in bootstrap mode. Move
-	 * local version into shared memory.
-	 */
+
+	XLogCtl = (XLogCtlData *)
+		ShmemInitStruct("XLOG Ctl", XLOGShmemSize(), &foundXLog);
+
 	localControlFile = ControlFile;
 	ControlFile = (ControlFileData *)
 		ShmemInitStruct("Control File", sizeof(ControlFileData), &foundCFile);
-	if (localControlFile)
-	{
-		memcpy(ControlFile, localControlFile, sizeof(ControlFileData));
-		pfree(localControlFile);
-	}
-	XLogCtl = (XLogCtlData *)
-		ShmemInitStruct("XLOG Ctl", XLOGShmemSize(), &foundXLog);
 
 	if (foundCFile || foundXLog)
 	{
@@ -4908,9 +4905,22 @@ XLOGShmemInit(void)
 		WALInsertLocks = XLogCtl->Insert.WALInsertLocks;
 		LWLockRegisterTranche(LWTRANCHE_WAL_INSERT,
 							  "wal_insert");
+
+		if (localControlFile)
+			pfree(localControlFile);
 		return;
 	}
 	memset(XLogCtl, 0, sizeof(XLogCtlData));
+
+	/*
+	 * Already have read control file locally, unless in bootstrap mode. Move
+	 * contents into shared memory.
+	 */
+	if (localControlFile)
+	{
+		memcpy(ControlFile, localControlFile, sizeof(ControlFileData));
+		pfree(localControlFile);
+	}
 
 	/*
 	 * Since XLogCtlData contains XLogRecPtr fields, its sizeof should be a
