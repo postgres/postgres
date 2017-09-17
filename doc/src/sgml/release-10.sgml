@@ -6,7 +6,7 @@
 
   <formalpara>
    <title>Release date:</title>
-   <para>2017-??-?? (current as of 2017-09-07, commit 08cb36417)</para>
+   <para>2017-??-?? (current as of 2017-09-17, commit 244b4a37e)</para>
   </formalpara>
 
   <sect2>
@@ -157,6 +157,38 @@
 
     <listitem>
 <!--
+2017-08-04 [c30f1770a] Apply ALTER ... SET NOT NULL recursively in ALTER ... AD
+-->
+     <para>
+      When <command>ALTER TABLE ... ADD PRIMARY KEY</> marks
+      columns <literal>NOT NULL</>, that change now propagates to
+      inheritance child tables as well (Michael Paquier)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2017-09-16 [54d4d0ff6] Fix SQL-spec incompatibilities in new transition table f
+2017-09-17 [5cc234931] Ensure that BEFORE STATEMENT triggers fire the right num
+-->
+     <para>
+      Prevent statement-level triggers from firing more than once per
+      statement (Tom Lane)
+     </para>
+
+     <para>
+      Cases involving writable CTEs updating the same table updated by the
+      containing statement, or by another writable CTE, fired <literal>BEFORE
+      STATEMENT</> or <literal>AFTER STATEMENT</> triggers more than once.
+      Also, if there were statement-level triggers on a table affected by a
+      foreign key enforcement action (such as <literal>ON DELETE CASCADE</>),
+      they could fire more than once per outer SQL statement.  This is
+      contrary to the SQL standard, so change it.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
 2016-12-20 [1753b1b02] Add pg_sequence system catalog
 2016-11-18 [67dc4ccbb] Add pg_sequences view
 2017-05-15 [f8dc1985f] Fix ALTER SEQUENCE locking
@@ -249,6 +281,55 @@
 
     <listitem>
 <!--
+2017-03-27 [3371e4d9b] Change default of log_directory to 'log'
+-->
+     <para>
+      Change the default value of the <xref linkend="guc-log-directory">
+      server parameter from <filename>pg_log</> to <filename>log</>
+      (Andreas Karlsson)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2017-07-31 [c0a15e07c] Always use 2048 bit DH parameters for OpenSSL ephemeral
+-->
+     <para>
+      Add configuration option <xref linkend="guc-ssl-dh-params-file"> to
+      specify file name for custom OpenSSL DH parameters (Heikki Linnakangas)
+     </para>
+
+     <para>
+      This replaces the hardcoded, undocumented file
+      name <filename>dh1024.pem</>.  Note that <filename>dh1024.pem</> is
+      no longer examined by default; you must set this option if you want
+      to use custom DH parameters.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+2017-07-31 [c0a15e07c] Always use 2048 bit DH parameters for OpenSSL ephemeral
+-->
+     <para>
+      Increase the size of the default DH parameters used for OpenSSL
+      ephemeral DH ciphers to 2048 bits (Heikki Linnakangas)
+     </para>
+
+     <para>
+      The size of the compiled-in DH parameters has been increased from
+      1024 to 2048 bits, making DH key exchange more resistant to
+      brute-force attacks.  However, some old SSL implementations, notably
+      some revisions of Java Runtime Environment version 6, will not accept
+      DH parameters longer than 1024 bits, and hence will not be able to
+      connect over SSL.  If it's necessary to support such old clients, you
+      can use custom 1024-bit DH parameters instead of the compiled-in
+      defaults.  See <xref linkend="guc-ssl-dh-params-file">.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
 2017-05-08 [eb61136dc] Remove support for password_encryption='off' / 'plain'.
 -->
     <para>
@@ -266,6 +347,55 @@
      older versions will be stored encrypted in this release.  The default
      setting for <varname>password_encryption</> is still
      <literal>md5</>.
+    </para>
+    </listitem>
+
+    <listitem>
+<!--
+2017-02-15 [51ee6f316] Replace min_parallel_relation_size with two new GUCs.
+-->
+    <para>
+     Add <xref linkend="guc-min-parallel-table-scan-size">
+     and <xref linkend="guc-min-parallel-index-scan-size"> server
+     parameters to control parallel queries (Amit Kapila, Robert Haas)
+    </para>
+
+    <para>
+     These replace <varname>min_parallel_relation_size</>, which was
+     found to be too generic.
+    </para>
+    </listitem>
+
+    <listitem>
+<!--
+2017-06-20 [a69dfe5f4] Don't downcase entries within shared_preload_libraries e
+-->
+    <para>
+     Don't downcase unquoted text
+     within <xref linkend="guc-shared-preload-libraries"> and related
+     server parameters (QL Zhuo)
+    </para>
+
+    <para>
+     These settings are really lists of file names, but they were
+     previously treated as lists of SQL identifiers, which have different
+     parsing rules.
+    </para>
+    </listitem>
+
+    <listitem>
+<!--
+2016-12-23 [e13486eba] Remove sql_inheritance GUC.
+-->
+    <para>
+     Remove <varname>sql_inheritance</> server parameter (Robert Haas)
+    </para>
+
+    <para>
+     Changing this setting from the default value caused queries referencing
+     parent tables to not include child tables.  The <acronym>SQL</>
+     standard requires them to be included, however, and this has been the
+     default since <productname>PostgreSQL</> 7.1.
     </para>
     </listitem>
 
@@ -304,66 +434,6 @@
      parameters <xref linkend="guc-pltcl-start-proc">
      and <xref linkend="guc-pltclu-start-proc">, which are easier to use
      and more similar to features available in other PLs.
-    </para>
-    </listitem>
-
-    <listitem>
-<!--
-2017-03-27 [3371e4d9b] Change default of log_directory to 'log'
--->
-     <para>
-      Change the default value of the <xref linkend="guc-log-directory">
-      server parameter from <filename>pg_log</> to <filename>log</>
-      (Andreas Karlsson)
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-2016-12-23 [e13486eba] Remove sql_inheritance GUC.
--->
-    <para>
-     Remove <varname>sql_inheritance</> server parameter (Robert Haas)
-    </para>
-
-    <para>
-     Changing this setting from the default value caused queries referencing
-     parent tables to not include child tables.  The <acronym>SQL</>
-     standard requires them to be included, however, and this has been the
-     default since <productname>PostgreSQL</> 7.1.
-    </para>
-    </listitem>
-
-    <listitem>
-<!--
-2017-02-15 [51ee6f316] Replace min_parallel_relation_size with two new GUCs.
--->
-    <para>
-     Add <xref linkend="guc-min-parallel-table-scan-size">
-     and <xref linkend="guc-min-parallel-index-scan-size"> server
-     parameters to control parallel queries (Amit Kapila, Robert Haas)
-    </para>
-
-    <para>
-     These replace <varname>min_parallel_relation_size</>, which was
-     found to be too generic.
-    </para>
-    </listitem>
-
-    <listitem>
-<!--
-2017-06-20 [a69dfe5f4] Don't downcase entries within shared_preload_libraries e
--->
-    <para>
-     Don't downcase unquoted text
-     within <xref linkend="guc-shared-preload-libraries"> and related
-     server parameters (QL Zhuo)
-    </para>
-
-    <para>
-     These settings are really lists of file names, but they were
-     previously treated as lists of SQL identifiers, which have different
-     parsing rules.
     </para>
     </listitem>
 
@@ -409,55 +479,6 @@
      <para>
       This protocol hasn't had client support
       since <productname>PostgreSQL</> 6.3.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-2017-07-31 [c0a15e07c] Always use 2048 bit DH parameters for OpenSSL ephemeral
--->
-     <para>
-      Add configuration option <xref linkend="guc-ssl-dh-params-file"> to
-      specify file name for custom OpenSSL DH parameters (Heikki Linnakangas)
-     </para>
-
-     <para>
-      This replaces the hardcoded, undocumented file
-      name <filename>dh1024.pem</>.  Note that <filename>dh1024.pem</> is
-      no longer examined by default; you must set this option if you want
-      to use custom DH parameters.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-2017-07-31 [c0a15e07c] Always use 2048 bit DH parameters for OpenSSL ephemeral
--->
-     <para>
-      Increase the size of the default DH parameters used for OpenSSL
-      ephemeral DH ciphers to 2048 bits (Heikki Linnakangas)
-     </para>
-
-     <para>
-      The size of the compiled-in DH parameters has been increased from
-      1024 to 2048 bits, making DH key exchange more resistant to
-      brute-force attacks.  However, some old SSL implementations, notably
-      some revisions of Java Runtime Environment version 6, will not accept
-      DH parameters longer than 1024 bits, and hence will not be able to
-      connect over SSL.  If it's necessary to support such old clients, you
-      can use custom 1024-bit DH parameters instead of the compiled-in
-      defaults.  See <xref linkend="guc-ssl-dh-params-file">.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-2017-08-04 [c30f1770a] Apply ALTER ... SET NOT NULL recursively in ALTER ... AD
--->
-     <para>
-      When <command>ALTER TABLE ... ADD PRIMARY KEY</> marks
-      columns <literal>NOT NULL</>, that change now propagates to
-      inheritance child tables as well (Michael Paquier)
      </para>
     </listitem>
 
