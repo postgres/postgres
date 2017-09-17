@@ -100,6 +100,7 @@ static void AfterTriggerSaveEvent(EState *estate, ResultRelInfo *relinfo,
 					  List *recheckIndexes, Bitmapset *modifiedCols,
 					  TransitionCaptureState *transition_capture);
 static void AfterTriggerEnlargeQueryState(void);
+static bool before_stmt_triggers_fired(Oid relid, CmdType cmdType);
 
 
 /*
@@ -2229,6 +2230,11 @@ ExecBSInsertTriggers(EState *estate, ResultRelInfo *relinfo)
 	if (!trigdesc->trig_insert_before_statement)
 		return;
 
+	/* no-op if we already fired BS triggers in this context */
+	if (before_stmt_triggers_fired(RelationGetRelid(relinfo->ri_RelationDesc),
+								   CMD_INSERT))
+		return;
+
 	LocTriggerData.type = T_TriggerData;
 	LocTriggerData.tg_event = TRIGGER_EVENT_INSERT |
 		TRIGGER_EVENT_BEFORE;
@@ -2437,6 +2443,11 @@ ExecBSDeleteTriggers(EState *estate, ResultRelInfo *relinfo)
 	if (trigdesc == NULL)
 		return;
 	if (!trigdesc->trig_delete_before_statement)
+		return;
+
+	/* no-op if we already fired BS triggers in this context */
+	if (before_stmt_triggers_fired(RelationGetRelid(relinfo->ri_RelationDesc),
+								   CMD_DELETE))
 		return;
 
 	LocTriggerData.type = T_TriggerData;
@@ -2649,6 +2660,11 @@ ExecBSUpdateTriggers(EState *estate, ResultRelInfo *relinfo)
 	if (trigdesc == NULL)
 		return;
 	if (!trigdesc->trig_update_before_statement)
+		return;
+
+	/* no-op if we already fired BS triggers in this context */
+	if (before_stmt_triggers_fired(RelationGetRelid(relinfo->ri_RelationDesc),
+								   CMD_UPDATE))
 		return;
 
 	updatedCols = GetUpdatedColumns(relinfo, estate);
@@ -3523,11 +3539,11 @@ typedef struct AfterTriggerEventList
  *
  * We create an AfterTriggersTableData struct for each target table of the
  * current query, and each operation mode (INSERT/UPDATE/DELETE), that has
- * either transition tables or AFTER STATEMENT triggers.  This is used to
+ * either transition tables or statement-level triggers.  This is used to
  * hold the relevant transition tables, as well as info tracking whether
- * we already queued the AFTER STATEMENT triggers.  (We use that info to
- * prevent, as much as possible, firing the same AFTER STATEMENT trigger
- * more than once per statement.)  These structs, along with the transition
+ * we already queued the statement triggers.  (We use that info to prevent
+ * firing the same statement triggers more than once per statement, or really
+ * once per transition table set.)  These structs, along with the transition
  * table tuplestores, live in the (sub)transaction's CurTransactionContext.
  * That's sufficient lifespan because we don't allow transition tables to be
  * used by deferrable triggers, so they only need to survive until
@@ -3576,8 +3592,9 @@ struct AfterTriggersTableData
 	Oid			relid;			/* target table's OID */
 	CmdType		cmdType;		/* event type, CMD_INSERT/UPDATE/DELETE */
 	bool		closed;			/* true when no longer OK to add tuples */
-	bool		stmt_trig_done; /* did we already queue stmt-level triggers? */
-	AfterTriggerEventList stmt_trig_events; /* if so, saved list pointer */
+	bool		before_trig_done;	/* did we already queue BS triggers? */
+	bool		after_trig_done;	/* did we already queue AS triggers? */
+	AfterTriggerEventList after_trig_events;	/* if so, saved list pointer */
 	Tuplestorestate *old_tuplestore;	/* "old" transition table, if any */
 	Tuplestorestate *new_tuplestore;	/* "new" transition table, if any */
 };
@@ -5651,6 +5668,37 @@ AfterTriggerSaveEvent(EState *estate, ResultRelInfo *relinfo,
 }
 
 /*
+ * Detect whether we already queued BEFORE STATEMENT triggers for the given
+ * relation + operation, and set the flag so the next call will report "true".
+ */
+static bool
+before_stmt_triggers_fired(Oid relid, CmdType cmdType)
+{
+	bool		result;
+	AfterTriggersTableData *table;
+
+	/* Check state, like AfterTriggerSaveEvent. */
+	if (afterTriggers.query_depth < 0)
+		elog(ERROR, "before_stmt_triggers_fired() called outside of query");
+
+	/* Be sure we have enough space to record events at this query depth. */
+	if (afterTriggers.query_depth >= afterTriggers.maxquerydepth)
+		AfterTriggerEnlargeQueryState();
+
+	/*
+	 * We keep this state in the AfterTriggersTableData that also holds
+	 * transition tables for the relation + operation.  In this way, if we are
+	 * forced to make a new set of transition tables because more tuples get
+	 * entered after we've already fired triggers, we will allow a new set of
+	 * statement triggers to get queued.
+	 */
+	table = GetAfterTriggersTableData(relid, cmdType);
+	result = table->before_trig_done;
+	table->before_trig_done = true;
+	return result;
+}
+
+/*
  * If we previously queued a set of AFTER STATEMENT triggers for the given
  * relation + operation, and they've not been fired yet, cancel them.  The
  * caller will queue a fresh set that's after any row-level triggers that may
@@ -5684,7 +5732,7 @@ cancel_prior_stmt_triggers(Oid relid, CmdType cmdType, int tgevent)
 	 */
 	table = GetAfterTriggersTableData(relid, cmdType);
 
-	if (table->stmt_trig_done)
+	if (table->after_trig_done)
 	{
 		/*
 		 * We want to start scanning from the tail location that existed just
@@ -5695,10 +5743,10 @@ cancel_prior_stmt_triggers(Oid relid, CmdType cmdType, int tgevent)
 		AfterTriggerEvent event;
 		AfterTriggerEventChunk *chunk;
 
-		if (table->stmt_trig_events.tail)
+		if (table->after_trig_events.tail)
 		{
-			chunk = table->stmt_trig_events.tail;
-			event = (AfterTriggerEvent) table->stmt_trig_events.tailfree;
+			chunk = table->after_trig_events.tail;
+			event = (AfterTriggerEvent) table->after_trig_events.tailfree;
 		}
 		else
 		{
@@ -5737,8 +5785,8 @@ cancel_prior_stmt_triggers(Oid relid, CmdType cmdType, int tgevent)
 done:
 
 	/* In any case, save current insertion point for next time */
-	table->stmt_trig_done = true;
-	table->stmt_trig_events = qs->events;
+	table->after_trig_done = true;
+	table->after_trig_events = qs->events;
 }
 
 /*

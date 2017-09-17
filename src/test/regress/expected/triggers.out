@@ -2289,6 +2289,9 @@ create table refd_table (a int primary key, b text);
 create table trig_table (a int, b text,
   foreign key (a) references refd_table on update cascade on delete cascade
 );
+create trigger trig_table_before_trig
+  before insert or update or delete on trig_table
+  for each statement execute procedure trigger_func('trig_table');
 create trigger trig_table_insert_trig
   after insert on trig_table referencing new table as new_table
   for each statement execute procedure dump_insert();
@@ -2309,8 +2312,10 @@ insert into trig_table values
   (2, 'two b'),
   (3, 'three a'),
   (3, 'three b');
+NOTICE:  trigger_func(trig_table) called: action = INSERT, when = BEFORE, level = STATEMENT
 NOTICE:  trigger = trig_table_insert_trig, new table = (1,"one a"), (1,"one b"), (2,"two a"), (2,"two b"), (3,"three a"), (3,"three b")
 update refd_table set a = 11 where b = 'one';
+NOTICE:  trigger_func(trig_table) called: action = UPDATE, when = BEFORE, level = STATEMENT
 NOTICE:  trigger = trig_table_update_trig, old table = (1,"one a"), (1,"one b"), new table = (11,"one a"), (11,"one b")
 select * from trig_table;
  a  |    b    
@@ -2324,6 +2329,7 @@ select * from trig_table;
 (6 rows)
 
 delete from refd_table where length(b) = 3;
+NOTICE:  trigger_func(trig_table) called: action = DELETE, when = BEFORE, level = STATEMENT
 NOTICE:  trigger = trig_table_delete_trig, old table = (2,"two a"), (2,"two b"), (11,"one a"), (11,"one b")
 select * from trig_table;
  a |    b    
@@ -2338,6 +2344,9 @@ drop table refd_table, trig_table;
 --
 create table self_ref (a int primary key,
                        b int references self_ref(a) on delete cascade);
+create trigger self_ref_before_trig
+  before delete on self_ref
+  for each statement execute procedure trigger_func('self_ref');
 create trigger self_ref_r_trig
   after delete on self_ref referencing old table as old_table
   for each row execute procedure dump_delete();
@@ -2346,7 +2355,9 @@ create trigger self_ref_s_trig
   for each statement execute procedure dump_delete();
 insert into self_ref values (1, null), (2, 1), (3, 2);
 delete from self_ref where a = 1;
+NOTICE:  trigger_func(self_ref) called: action = DELETE, when = BEFORE, level = STATEMENT
 NOTICE:  trigger = self_ref_r_trig, old table = (1,), (2,1)
+NOTICE:  trigger_func(self_ref) called: action = DELETE, when = BEFORE, level = STATEMENT
 NOTICE:  trigger = self_ref_r_trig, old table = (1,), (2,1)
 NOTICE:  trigger = self_ref_s_trig, old table = (1,), (2,1)
 NOTICE:  trigger = self_ref_r_trig, old table = (3,2)
@@ -2355,6 +2366,7 @@ NOTICE:  trigger = self_ref_s_trig, old table = (3,2)
 drop trigger self_ref_r_trig on self_ref;
 insert into self_ref values (1, null), (2, 1), (3, 2), (4, 3);
 delete from self_ref where a = 1;
+NOTICE:  trigger_func(self_ref) called: action = DELETE, when = BEFORE, level = STATEMENT
 NOTICE:  trigger = self_ref_s_trig, old table = (1,), (2,1), (3,2), (4,3)
 drop table self_ref;
 -- cleanup
