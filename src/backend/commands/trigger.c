@@ -3831,14 +3831,12 @@ static void
 afterTriggerFreeEventList(AfterTriggerEventList *events)
 {
 	AfterTriggerEventChunk *chunk;
-	AfterTriggerEventChunk *next_chunk;
 
-	for (chunk = events->head; chunk != NULL; chunk = next_chunk)
+	while ((chunk = events->head) != NULL)
 	{
-		next_chunk = chunk->next;
+		events->head = chunk->next;
 		pfree(chunk);
 	}
-	events->head = NULL;
 	events->tail = NULL;
 	events->tailfree = NULL;
 }
@@ -3880,6 +3878,45 @@ afterTriggerRestoreEventList(AfterTriggerEventList *events,
 		 * They might still be useful, anyway.
 		 */
 	}
+}
+
+/* ----------
+ * afterTriggerDeleteHeadEventChunk()
+ *
+ *	Remove the first chunk of events from the query level's event list.
+ *	Keep any event list pointers elsewhere in the query level's data
+ *	structures in sync.
+ * ----------
+ */
+static void
+afterTriggerDeleteHeadEventChunk(AfterTriggersQueryData *qs)
+{
+	AfterTriggerEventChunk *target = qs->events.head;
+	ListCell   *lc;
+
+	Assert(target && target->next);
+
+	/*
+	 * First, update any pointers in the per-table data, so that they won't be
+	 * dangling.  Resetting obsoleted pointers to NULL will make
+	 * cancel_prior_stmt_triggers start from the list head, which is fine.
+	 */
+	foreach(lc, qs->tables)
+	{
+		AfterTriggersTableData *table = (AfterTriggersTableData *) lfirst(lc);
+
+		if (table->after_trig_done &&
+			table->after_trig_events.tail == target)
+		{
+			table->after_trig_events.head = NULL;
+			table->after_trig_events.tail = NULL;
+			table->after_trig_events.tailfree = NULL;
+		}
+	}
+
+	/* Now we can flush the head chunk */
+	qs->events.head = target->next;
+	pfree(target);
 }
 
 
@@ -4274,7 +4311,7 @@ afterTriggerInvokeEvents(AfterTriggerEventList *events,
 			/*
 			 * If it's last chunk, must sync event list's tailfree too.  Note
 			 * that delete_ok must NOT be passed as true if there could be
-			 * stacked AfterTriggerEventList values pointing at this event
+			 * additional AfterTriggerEventList values pointing at this event
 			 * list, since we'd fail to fix their copies of tailfree.
 			 */
 			if (chunk == events->tail)
@@ -4522,6 +4559,8 @@ AfterTriggerBeginQuery(void)
 void
 AfterTriggerEndQuery(EState *estate)
 {
+	AfterTriggersQueryData *qs;
+
 	/* Must be inside a query, too */
 	Assert(afterTriggers.query_depth >= 0);
 
@@ -4555,23 +4594,40 @@ AfterTriggerEndQuery(EState *estate)
 	 * If we find no firable events, we don't have to increment
 	 * firing_counter.
 	 */
+	qs = &afterTriggers.query_stack[afterTriggers.query_depth];
+
 	for (;;)
 	{
-		AfterTriggersQueryData *qs;
-
-		/*
-		 * Firing a trigger could result in query_stack being repalloc'd, so
-		 * we must recalculate qs after each afterTriggerInvokeEvents call.
-		 */
-		qs = &afterTriggers.query_stack[afterTriggers.query_depth];
-
 		if (afterTriggerMarkEvents(&qs->events, &afterTriggers.events, true))
 		{
 			CommandId	firing_id = afterTriggers.firing_counter++;
+			AfterTriggerEventChunk *oldtail = qs->events.tail;
 
-			/* OK to delete the immediate events after processing them */
-			if (afterTriggerInvokeEvents(&qs->events, firing_id, estate, true))
+			if (afterTriggerInvokeEvents(&qs->events, firing_id, estate, false))
 				break;			/* all fired */
+
+			/*
+			 * Firing a trigger could result in query_stack being repalloc'd,
+			 * so we must recalculate qs after each afterTriggerInvokeEvents
+			 * call.  Furthermore, it's unsafe to pass delete_ok = true here,
+			 * because that could cause afterTriggerInvokeEvents to try to
+			 * access qs->events after the stack has been repalloc'd.
+			 */
+			qs = &afterTriggers.query_stack[afterTriggers.query_depth];
+
+			/*
+			 * We'll need to scan the events list again.  To reduce the cost
+			 * of doing so, get rid of completely-fired chunks.  We know that
+			 * all events were marked IN_PROGRESS or DONE at the conclusion of
+			 * afterTriggerMarkEvents, so any still-interesting events must
+			 * have been added after that, and so must be in the chunk that
+			 * was then the tail chunk, or in later chunks.  So, zap all
+			 * chunks before oldtail.  This is approximately the same set of
+			 * events we would have gotten rid of by passing delete_ok = true.
+			 */
+			Assert(oldtail != NULL);
+			while (qs->events.head != oldtail)
+				afterTriggerDeleteHeadEventChunk(qs);
 		}
 		else
 			break;
