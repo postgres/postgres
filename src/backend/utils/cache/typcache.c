@@ -1386,7 +1386,7 @@ ensure_record_cache_typmod_slot_exists(int32 typmod)
 		RecordCacheArray = (TupleDesc *) repalloc(RecordCacheArray,
 												  newlen * sizeof(TupleDesc));
 		memset(RecordCacheArray + RecordCacheArrayLen, 0,
-			   (newlen - RecordCacheArrayLen) * sizeof(TupleDesc *));
+			   (newlen - RecordCacheArrayLen) * sizeof(TupleDesc));
 		RecordCacheArrayLen = newlen;
 	}
 }
