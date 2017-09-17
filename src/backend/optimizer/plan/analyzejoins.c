@@ -704,6 +704,14 @@ rel_is_distinct_for(PlannerInfo *root, RelOptInfo *rel, List *clause_list)
 				var = (Var *) get_leftop(rinfo->clause);
 
 			/*
+			 * We may ignore any RelabelType node above the operand.  (There
+			 * won't be more than one, since eval_const_expressions() has been
+			 * applied already.)
+			 */
+			if (var && IsA(var, RelabelType))
+				var = (Var *) ((RelabelType *) var)->arg;
+
+			/*
 			 * If inner side isn't a Var referencing a subquery output column,
 			 * this clause doesn't help us.
 			 */
