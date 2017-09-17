@@ -250,7 +250,8 @@ CREATE [ CONSTRAINT ] TRIGGER <replaceable class="PARAMETER">name</replaceable> 
       One of <literal>INSERT</literal>, <literal>UPDATE</literal>,
       <literal>DELETE</literal>, or <literal>TRUNCATE</literal>;
       this specifies the event that will fire the trigger. Multiple
-      events can be specified using <literal>OR</literal>.
+      events can be specified using <literal>OR</literal>, except when
+      transition relations are requested.
      </para>
 
      <para>
@@ -263,7 +264,10 @@ UPDATE OF <replaceable>column_name1</replaceable> [, <replaceable>column_name2</
       is mentioned as a target of the <command>UPDATE</> command.
      </para>
 
-     <para><literal>INSTEAD OF UPDATE</> events do not support lists of columns.
+     <para>
+      <literal>INSTEAD OF UPDATE</> events do not allow a list of columns.
+      A column list cannot be specified when requesting transition relations,
+      either.
      </para>
     </listitem>
    </varlistentry>
@@ -490,9 +494,9 @@ UPDATE OF <replaceable>column_name1</replaceable> [, <replaceable>column_name2</
    trigger that requests transition relations will cause the foreign-key
    enforcement actions triggered by a single SQL command to be split into
    multiple steps, each with its own transition relation(s).  In such cases,
-   any <literal>AFTER STATEMENT</> triggers that are present will be fired
-   once per creation of a transition relation, ensuring that the triggers see
-   each affected row once and only once.
+   any statement-level triggers that are present will be fired once per
+   creation of a transition relation set, ensuring that the triggers see
+   each affected row in a transition relation once and only once.
   </para>
 
   <para>

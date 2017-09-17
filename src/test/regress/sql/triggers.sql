@@ -1795,6 +1795,9 @@ create table trig_table (a int, b text,
   foreign key (a) references refd_table on update cascade on delete cascade
 );
 
+create trigger trig_table_before_trig
+  before insert or update or delete on trig_table
+  for each statement execute procedure trigger_func('trig_table');
 create trigger trig_table_insert_trig
   after insert on trig_table referencing new table as new_table
   for each statement execute procedure dump_insert();
@@ -1834,6 +1837,9 @@ drop table refd_table, trig_table;
 create table self_ref (a int primary key,
                        b int references self_ref(a) on delete cascade);
 
+create trigger self_ref_before_trig
+  before delete on self_ref
+  for each statement execute procedure trigger_func('self_ref');
 create trigger self_ref_r_trig
   after delete on self_ref referencing old table as old_table
   for each row execute procedure dump_delete();
