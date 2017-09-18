@@ -2567,17 +2567,13 @@ PHSS_30966  s700_800 ld(1) and linker tools cumulative patch
     On general principles you should be current on libc and ld/dld
     patches, as well as compiler patches if you are using HP's C
     compiler.  See HP's support sites such
-    as <ulink url="http://itrc.hp.com"></ulink> and
-    <ulink url="ftp://us-ffs.external.hp.com/"></ulink> for free
+    as <ulink url="ftp://us-ffs.external.hp.com/"></ulink> for free
     copies of their latest patches.
    </para>
 
    <para>
     If you are building on a PA-RISC 2.0 machine and want to have
-    64-bit binaries using GCC, you must use GCC 64-bit version. GCC
-    binaries for HP-UX PA-RISC and Itanium are available from
-    <ulink url="http://www.hp.com/go/gcc"></ulink>.  Don't forget to
-    get and install binutils at the same time.
+    64-bit binaries using GCC, you must use a GCC 64-bit version.
    </para>
 
    <para>
@@ -2806,8 +2802,7 @@ LIBOBJS = snprintf.o
      Yes, using DTrace is possible.  See <![%standalone-include[the
      documentation]]>
      <![%standalone-ignore[<xref linkend="dynamic-trace">]]> for further
-     information.  You can also find more information in this
-     article: <ulink url="https://blogs.oracle.com/robertlor/entry/user_level_dtrace_probes_in"></ulink>.
+     information.
     </para>
 
     <para>
