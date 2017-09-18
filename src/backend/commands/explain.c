@@ -124,10 +124,6 @@ static void ExplainCustomChildren(CustomScanState *css,
 					  List *ancestors, ExplainState *es);
 static void ExplainProperty(const char *qlabel, const char *value,
 				bool numeric, ExplainState *es);
-static void ExplainOpenGroup(const char *objtype, const char *labelname,
-				 bool labeled, ExplainState *es);
-static void ExplainCloseGroup(const char *objtype, const char *labelname,
-				  bool labeled, ExplainState *es);
 static void ExplainDummyGroup(const char *objtype, const char *labelname,
 				  ExplainState *es);
 static void ExplainXMLTag(const char *tagname, int flags, ExplainState *es);
@@ -3277,7 +3273,7 @@ ExplainPropertyBool(const char *qlabel, bool value, ExplainState *es)
  * If labeled is true, the group members will be labeled properties,
  * while if it's false, they'll be unlabeled objects.
  */
-static void
+void
 ExplainOpenGroup(const char *objtype, const char *labelname,
 				 bool labeled, ExplainState *es)
 {
@@ -3340,7 +3336,7 @@ ExplainOpenGroup(const char *objtype, const char *labelname,
  * Close a group of related objects.
  * Parameters must match the corresponding ExplainOpenGroup call.
  */
-static void
+void
 ExplainCloseGroup(const char *objtype, const char *labelname,
 				  bool labeled, ExplainState *es)
 {

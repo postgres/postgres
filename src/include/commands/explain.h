@@ -101,4 +101,9 @@ extern void ExplainPropertyFloat(const char *qlabel, double value, int ndigits,
 extern void ExplainPropertyBool(const char *qlabel, bool value,
 					ExplainState *es);
 
+extern void ExplainOpenGroup(const char *objtype, const char *labelname,
+				 bool labeled, ExplainState *es);
+extern void ExplainCloseGroup(const char *objtype, const char *labelname,
+				  bool labeled, ExplainState *es);
+
 #endif							/* EXPLAIN_H */
