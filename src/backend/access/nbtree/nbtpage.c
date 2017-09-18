@@ -162,7 +162,7 @@ _bt_getroot(Relation rel, int access)
 	metad = BTPageGetMeta(metapg);
 
 	/* sanity-check the metapage */
-	if (!(metaopaque->btpo_flags & BTP_META) ||
+	if (!P_ISMETA(metaopaque) ||
 		metad->btm_magic != BTREE_MAGIC)
 		ereport(ERROR,
 				(errcode(ERRCODE_INDEX_CORRUPTED),
@@ -365,7 +365,7 @@ _bt_gettrueroot(Relation rel)
 	metaopaque = (BTPageOpaque) PageGetSpecialPointer(metapg);
 	metad = BTPageGetMeta(metapg);
 
-	if (!(metaopaque->btpo_flags & BTP_META) ||
+	if (!P_ISMETA(metaopaque) ||
 		metad->btm_magic != BTREE_MAGIC)
 		ereport(ERROR,
 				(errcode(ERRCODE_INDEX_CORRUPTED),
@@ -452,7 +452,7 @@ _bt_getrootheight(Relation rel)
 		metad = BTPageGetMeta(metapg);
 
 		/* sanity-check the metapage */
-		if (!(metaopaque->btpo_flags & BTP_META) ||
+		if (!P_ISMETA(metaopaque) ||
 			metad->btm_magic != BTREE_MAGIC)
 			ereport(ERROR,
 					(errcode(ERRCODE_INDEX_CORRUPTED),

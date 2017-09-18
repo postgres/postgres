@@ -173,14 +173,14 @@ typedef struct BTMetaPageData
  */
 #define P_LEFTMOST(opaque)		((opaque)->btpo_prev == P_NONE)
 #define P_RIGHTMOST(opaque)		((opaque)->btpo_next == P_NONE)
-#define P_ISLEAF(opaque)		((opaque)->btpo_flags & BTP_LEAF)
-#define P_ISROOT(opaque)		((opaque)->btpo_flags & BTP_ROOT)
-#define P_ISDELETED(opaque)		((opaque)->btpo_flags & BTP_DELETED)
-#define P_ISMETA(opaque)		((opaque)->btpo_flags & BTP_META)
-#define P_ISHALFDEAD(opaque)	((opaque)->btpo_flags & BTP_HALF_DEAD)
-#define P_IGNORE(opaque)		((opaque)->btpo_flags & (BTP_DELETED|BTP_HALF_DEAD))
-#define P_HAS_GARBAGE(opaque)	((opaque)->btpo_flags & BTP_HAS_GARBAGE)
-#define P_INCOMPLETE_SPLIT(opaque)	((opaque)->btpo_flags & BTP_INCOMPLETE_SPLIT)
+#define P_ISLEAF(opaque)		(((opaque)->btpo_flags & BTP_LEAF) != 0)
+#define P_ISROOT(opaque)		(((opaque)->btpo_flags & BTP_ROOT) != 0)
+#define P_ISDELETED(opaque)		(((opaque)->btpo_flags & BTP_DELETED) != 0)
+#define P_ISMETA(opaque)		(((opaque)->btpo_flags & BTP_META) != 0)
+#define P_ISHALFDEAD(opaque)	(((opaque)->btpo_flags & BTP_HALF_DEAD) != 0)
+#define P_IGNORE(opaque)		(((opaque)->btpo_flags & (BTP_DELETED|BTP_HALF_DEAD)) != 0)
+#define P_HAS_GARBAGE(opaque)	(((opaque)->btpo_flags & BTP_HAS_GARBAGE) != 0)
+#define P_INCOMPLETE_SPLIT(opaque)	(((opaque)->btpo_flags & BTP_INCOMPLETE_SPLIT) != 0)
 
 /*
  *	Lehman and Yao's algorithm requires a ``high key'' on every non-rightmost

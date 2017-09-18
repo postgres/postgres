@@ -1195,7 +1195,7 @@ palloc_btree_page(BtreeCheckState *state, BlockNumber blocknum)
 
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 
-	if (opaque->btpo_flags & BTP_META && blocknum != BTREE_METAPAGE)
+	if (P_ISMETA(opaque) && blocknum != BTREE_METAPAGE)
 		ereport(ERROR,
 				(errcode(ERRCODE_INDEX_CORRUPTED),
 				 errmsg("invalid meta page found at block %u in index \"%s\"",
@@ -1206,7 +1206,7 @@ palloc_btree_page(BtreeCheckState *state, BlockNumber blocknum)
 	{
 		BTMetaPageData *metad = BTPageGetMeta(page);
 
-		if (!(opaque->btpo_flags & BTP_META) ||
+		if (!P_ISMETA(opaque) ||
 			metad->btm_magic != BTREE_MAGIC)
 			ereport(ERROR,
 					(errcode(ERRCODE_INDEX_CORRUPTED),
