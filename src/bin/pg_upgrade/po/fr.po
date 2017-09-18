@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-08-26 21:15+0000\n"
-"PO-Revision-Date: 2017-08-27 09:08+0200\n"
+"POT-Creation-Date: 2017-09-16 19:44+0000\n"
+"PO-Revision-Date: 2017-09-17 18:25+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: fr\n"
@@ -172,7 +172,7 @@ msgid "Creating script to analyze new cluster"
 msgstr "Création d'un script pour analyser la nouvelle instance"
 
 #: check.c:446 check.c:574 check.c:838 check.c:941 check.c:1032 function.c:253
-#: version.c:57 version.c:156 version.c:257 version.c:339
+#: option.c:480 version.c:57 version.c:156 version.c:257 version.c:339
 #, c-format
 msgid "could not open file \"%s\": %s\n"
 msgstr "n'a pas pu ouvrir le fichier « %s » : %s\n"
@@ -315,8 +315,8 @@ msgstr ""
 
 #: check.c:990
 #, c-format
-msgid "Checking for incompatible jsonb data type"
-msgstr "Vérification des types de données JSONB incompatibles"
+msgid "Checking for incompatible \"jsonb\" data type"
+msgstr "Vérification des types de données « jsonb » incompatibles"
 
 #: check.c:1056
 #, c-format
@@ -609,10 +609,10 @@ msgstr "Création de la sauvegarde des schémas des bases\n"
 msgid "could not get pg_ctl version data using %s: %s\n"
 msgstr "n'a pas pu obtenir la version de pg_ctl en utilisant %s : %s\n"
 
-#: exec.c:54 server.c:170
+#: exec.c:54
 #, c-format
-msgid "could not get version from %s\n"
-msgstr "n'a pas pu obtenir la version à partir de %s\n"
+msgid "could not get pg_ctl version output from %s\n"
+msgstr "n'a pas pu obtenir la version de pg_ctl à partir de %s\n"
 
 #: exec.c:101 exec.c:105
 #, c-format
@@ -626,8 +626,8 @@ msgstr "%s\n"
 
 #: exec.c:146 exec.c:201 option.c:101 option.c:217
 #, c-format
-msgid "cannot write to log file %s\n"
-msgstr "ne peut pas écrire dans le fichier de traces %s\n"
+msgid "could not write to log file \"%s\"\n"
+msgstr "n'a pas pu écrire dans le journal applicatif « %s »\n"
 
 #: exec.c:175
 #, c-format
@@ -679,8 +679,8 @@ msgstr "« %s » n'est pas un répertoire\n"
 
 #: exec.c:429
 #, c-format
-msgid "check for \"%s\" failed: not an executable file\n"
-msgstr "échec de la vérification de « %s » : pas un fichier exécutable\n"
+msgid "check for \"%s\" failed: not a regular file\n"
+msgstr "échec de la vérification de « %s » : pas un fichier régulier\n"
 
 #: exec.c:441
 #, c-format
@@ -736,10 +736,10 @@ msgstr "erreur lors de la copie de la relation « %s.%s » : page partielle trou
 #, c-format
 msgid ""
 "could not create hard link between old and new data directories: %s\n"
-"In link mode the old and new data directories must be on the same file system volume.\n"
+"In link mode the old and new data directories must be on the same file system.\n"
 msgstr ""
 "n'a pas pu créer le lien physique entre l'ancien et le nouveau répertoires de données : %s\n"
-"Dans le mode lien, les ancien et nouveau répertoires doivent être sur le même système de fichiers.\n"
+"Dans le mode lien, les ancien et nouveau répertoires de données doivent être sur le même système de fichiers.\n"
 
 #: function.c:110
 #, c-format
@@ -950,8 +950,8 @@ msgstr "les données de la nouvelle instance résident"
 
 #: option.c:265 option.c:462
 #, c-format
-msgid "cannot find current directory\n"
-msgstr "ne peut pas trouver le répertoire courant\n"
+msgid "could not determine current directory\n"
+msgstr "n'a pas pu déterminer le répertoire courant\n"
 
 #: option.c:268
 #, c-format
@@ -1173,20 +1173,15 @@ msgstr "Recherche du vrai répertoire des données pour l'instance cible"
 msgid "could not get data directory using %s: %s\n"
 msgstr "n'a pas pu obtenir le répertoire des données en utilisant %s : %s\n"
 
-#: option.c:480
+#: option.c:488
 #, c-format
-msgid "Cannot open file %s: %m\n"
-msgstr "Ne peut pas ouvrir le fichier %s : %m\n"
+msgid "could not read line %d from file \"%s\": %s\n"
+msgstr "n'a pas pu lire la ligne %d du fichier « %s » : %s\n"
 
-#: option.c:487
+#: option.c:506
 #, c-format
-msgid "Cannot read line %d from %s: %m\n"
-msgstr "Ne peut pas lire la ligne %d à partir de %s : %m\n"
-
-#: option.c:504
-#, c-format
-msgid "User-supplied old port number %hu corrected to %hu\n"
-msgstr "Ancien numéro de port %hu fourni par l'utilisateur corrigé en %hu\n"
+msgid "user-supplied old port number %hu corrected to %hu\n"
+msgstr "ancien numéro de port %hu fourni par l'utilisateur corrigé en %hu\n"
 
 #: parallel.c:128 parallel.c:242
 #, c-format
@@ -1265,7 +1260,7 @@ msgstr "Analyse de toutes les lignes dans la nouvelle instance"
 
 #: pg_upgrade.c:264
 #, c-format
-msgid "Freezing all rows on the new cluster"
+msgid "Freezing all rows in the new cluster"
 msgstr "Gel de toutes les lignes dans la nouvelle instance"
 
 #: pg_upgrade.c:284
@@ -1305,8 +1300,8 @@ msgstr "Configuration du prochain MultiXactId et décalage pour la nouvelle inst
 
 #: pg_upgrade.c:474
 #, c-format
-msgid "Setting oldest multixact ID on new cluster"
-msgstr "Configuration du plus ancien MultiXactId sur la nouvelle instance"
+msgid "Setting oldest multixact ID in new cluster"
+msgstr "Configuration du plus ancien identifiant multixact sur la nouvelle instance"
 
 #: pg_upgrade.c:494
 #, c-format
@@ -1388,6 +1383,11 @@ msgstr ""
 #, c-format
 msgid "could not open version file: %s\n"
 msgstr "n'a pas pu ouvrir le fichier de version : %s\n"
+
+#: server.c:170
+#, c-format
+msgid "could not parse PG_VERSION file from %s\n"
+msgstr "n'a pas pu analyser le fichier PG_VERSION à partir de %s\n"
 
 #: server.c:284
 #, c-format
@@ -1609,24 +1609,11 @@ msgstr ""
 "index invalides. Avant cela, aucun de ces index ne sera utilisé.\n"
 "\n"
 
-#~ msgid "Checking for invalid \"line\" user columns"
-#~ msgstr "Vérification des colonnes utilisateurs « line » invalides"
+#~ msgid "------------------------------------------------\n"
+#~ msgstr "------------------------------------------------\n"
 
-#~ msgid "----------------\n"
-#~ msgstr "----------------\n"
-
-#~ msgid "------------------\n"
-#~ msgstr "------------------\n"
-
-#~ msgid ""
-#~ "could not load library \"%s\":\n"
-#~ "%s\n"
-#~ msgstr ""
-#~ "n'a pas pu charger la biblothèque « %s »:\n"
-#~ "%s\n"
-
-#~ msgid "%s is not a directory\n"
-#~ msgstr "%s n'est pas un répertoire\n"
+#~ msgid "-----------------------------\n"
+#~ msgstr "-----------------------------\n"
 
 #~ msgid ""
 #~ "This utility can only upgrade to PostgreSQL version 9.0 after 2010-01-11\n"
@@ -1635,8 +1622,33 @@ msgstr ""
 #~ "Cet outil peut seulement mettre à jour à partir de la version 9.0 de PostgreSQL (après le 11 janvier 2010)\n"
 #~ "à cause de changements dans l'API du moteur fait lors du développement.\n"
 
-#~ msgid "-----------------------------\n"
-#~ msgstr "-----------------------------\n"
+#~ msgid "%s is not a directory\n"
+#~ msgstr "%s n'est pas un répertoire\n"
 
-#~ msgid "------------------------------------------------\n"
-#~ msgstr "------------------------------------------------\n"
+#~ msgid ""
+#~ "could not load library \"%s\":\n"
+#~ "%s\n"
+#~ msgstr ""
+#~ "n'a pas pu charger la biblothèque « %s »:\n"
+#~ "%s\n"
+
+#~ msgid "------------------\n"
+#~ msgstr "------------------\n"
+
+#~ msgid "----------------\n"
+#~ msgstr "----------------\n"
+
+#~ msgid "Checking for invalid \"line\" user columns"
+#~ msgstr "Vérification des colonnes utilisateurs « line » invalides"
+
+#~ msgid "Cannot read line %d from %s: %m\n"
+#~ msgstr "Ne peut pas lire la ligne %d à partir de %s : %m\n"
+
+#~ msgid "Cannot open file %s: %m\n"
+#~ msgstr "Ne peut pas ouvrir le fichier %s : %m\n"
+
+#~ msgid "cannot find current directory\n"
+#~ msgstr "ne peut pas trouver le répertoire courant\n"
+
+#~ msgid "cannot write to log file %s\n"
+#~ msgstr "ne peut pas écrire dans le fichier de traces %s\n"

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-09-09 09:14+0000\n"
-"PO-Revision-Date: 2017-09-10 20:55-0400\n"
+"POT-Creation-Date: 2017-09-14 00:14+0000\n"
+"PO-Revision-Date: 2017-09-13 22:25-0400\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "Language: de\n"
@@ -4524,8 +4524,8 @@ msgid "statistics_name"
 msgstr "Statistikname"
 
 #: sql_help.c:2346
-msgid "statistic_type"
-msgstr "Statistiktyp"
+msgid "statistics_kind"
+msgstr "Statistikart"
 
 #: sql_help.c:2360
 msgid "subscription_name"
@@ -5714,7 +5714,7 @@ msgstr ""
 
 #: variables.c:139
 #, c-format
-msgid "unrecognized value \"%s\" for \"%s\": boolean expected\n"
+msgid "unrecognized value \"%s\" for \"%s\": Boolean expected\n"
 msgstr "unbekannter Wert »%s« für »%s«: Boole'scher Wert erwartet\n"
 
 #: variables.c:176

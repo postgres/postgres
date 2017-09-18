@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_test_timing (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-08-04 02:45+0000\n"
+"POT-Creation-Date: 2017-09-16 19:44+0000\n"
 "PO-Revision-Date: 2017-07-29 21:37+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -60,20 +60,20 @@ msgstr "Décalage de temps : %d ms\n"
 msgid "Per loop time including overhead: %0.2f ns\n"
 msgstr "Durée par boucle incluant le coût : %0.2f ns\n"
 
-#: pg_test_timing.c:180
-#, c-format
-msgid "Histogram of timing durations:\n"
-msgstr "Histogramme des durées de chronométrage\n"
-
-#: pg_test_timing.c:181
-#, c-format
-msgid "% of total"
-msgstr ""
-
-#: pg_test_timing.c:181
+#: pg_test_timing.c:175
 msgid "< us"
 msgstr "< us"
 
-#: pg_test_timing.c:181
+#: pg_test_timing.c:176
+#, no-c-format
+msgid "% of total"
+msgstr ""
+
+#: pg_test_timing.c:177
 msgid "count"
 msgstr "nombre"
+
+#: pg_test_timing.c:186
+#, c-format
+msgid "Histogram of timing durations:\n"
+msgstr "Histogramme des durées de chronométrage\n"

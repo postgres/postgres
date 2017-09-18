@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: pg_basebackup (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2017-09-08 23:14+0000\n"
-"PO-Revision-Date: 2017-09-10 14:58+0200\n"
+"PO-Revision-Date: 2017-09-11 18:41+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: SWEDISH <sv@li.org>\n"
 "Language: sv\n"
@@ -712,7 +712,7 @@ msgstr "%s: bara backupper i tar-läge kan komprimeras\n"
 #: pg_basebackup.c:2319
 #, c-format
 msgid "%s: cannot stream write-ahead logs in tar mode to stdout\n"
-msgstr ""
+msgstr "%s: kan inte strömma write-ahead-logg i tar-läge till stdout\n"
 
 #: pg_basebackup.c:2329
 #, c-format
@@ -727,7 +727,7 @@ msgstr "%s: --no-slot kan inte användas tillsammans med slot-namn\n"
 #: pg_basebackup.c:2355
 #, c-format
 msgid "%s: WAL directory location can only be specified in plain mode\n"
-msgstr ""
+msgstr "%s: WAL-katalogplats kan bara anges i läget \"plain\"\n"
 
 #: pg_basebackup.c:2366
 #, c-format
@@ -943,11 +943,13 @@ msgid ""
 "  -F  --fsync-interval=SECS\n"
 "                         time between fsyncs to the output file (default: %d)\n"
 msgstr ""
+"  -F  --fsync-interval=SEK\n"
+"                         tid mellan fsync av utdatafil (standard: %d)\n"
 
 #: pg_recvlogical.c:89
 #, c-format
 msgid "  -I, --startpos=LSN     where in an existing slot should the streaming start\n"
-msgstr ""
+msgstr "  -I, --startpos=LSN     var i en existerande slot skall strömningen starta\n"
 
 #: pg_recvlogical.c:91
 #, c-format
@@ -956,16 +958,19 @@ msgid ""
 "                         pass option NAME with optional value VALUE to the\n"
 "                         output plugin\n"
 msgstr ""
+"  -o, --option=NAMN[=VÄRDE]\n"
+"                         skicka vidare flaggan NAMN med ev. värde VÄRDE till\n"
+"                         utmatnings-plugin:en\n"
 
 #: pg_recvlogical.c:94
 #, c-format
 msgid "  -P, --plugin=PLUGIN    use output plugin PLUGIN (default: %s)\n"
-msgstr ""
+msgstr "  -P, --plugin=PLUGIN    använd utmatnings-plugin:en PLUGIN (standard: %s)\n"
 
 #: pg_recvlogical.c:97
 #, c-format
 msgid "  -S, --slot=SLOTNAME    name of the logical replication slot\n"
-msgstr ""
+msgstr "  -S, --slot=SLOTNAMN    namn på den logiska replikerings-slotten\n"
 
 #: pg_recvlogical.c:102
 #, c-format
@@ -975,27 +980,27 @@ msgstr "  -d, --dbname=DBNAMN    databas att ansluta till\n"
 #: pg_recvlogical.c:135
 #, c-format
 msgid "%s: confirming write up to %X/%X, flush to %X/%X (slot %s)\n"
-msgstr ""
+msgstr "%s: bekräftar skrivning fram till %X/%X, flush till %X/%X (slot %s)\n"
 
 #: pg_recvlogical.c:160 receivelog.c:351
 #, c-format
 msgid "%s: could not send feedback packet: %s"
-msgstr ""
+msgstr "%s: kunde inte skicka feedback-paket: %s"
 
 #: pg_recvlogical.c:199
 #, c-format
 msgid "%s: could not fsync log file \"%s\": %s\n"
-msgstr ""
+msgstr "%s: kunde inte fsync:a loggfil \"%s\": %s\n"
 
 #: pg_recvlogical.c:238
 #, c-format
 msgid "%s: starting log streaming at %X/%X (slot %s)\n"
-msgstr ""
+msgstr "%s: startar logg-strömning vid %X/%X (slot %s)\n"
 
 #: pg_recvlogical.c:280
 #, c-format
 msgid "%s: streaming initiated\n"
-msgstr ""
+msgstr "%s: strömning initierad\n"
 
 #: pg_recvlogical.c:346
 #, c-format
@@ -1015,18 +1020,18 @@ msgstr "%s: select() misslyckades: %s\n"
 #: pg_recvlogical.c:439 receivelog.c:995
 #, c-format
 msgid "%s: could not receive data from WAL stream: %s"
-msgstr ""
+msgstr "%s: kunde inte ta emot data från WAL-ström: %s"
 
 #: pg_recvlogical.c:481 pg_recvlogical.c:533 receivelog.c:1040
 #: receivelog.c:1107
 #, c-format
 msgid "%s: streaming header too small: %d\n"
-msgstr ""
+msgstr "%s: strömningsheader för liten: %d\n"
 
 #: pg_recvlogical.c:517 receivelog.c:874
 #, c-format
 msgid "%s: unrecognized streaming header: \"%c\"\n"
-msgstr ""
+msgstr "%s: okänd strömningsheader: \"%c\"\n"
 
 #: pg_recvlogical.c:573 pg_recvlogical.c:587
 #, c-format
@@ -1036,7 +1041,7 @@ msgstr "%s: kunde inte skriva %u byte till loggfil \"%s\": %s\n"
 #: pg_recvlogical.c:617 receivelog.c:667 receivelog.c:705
 #, c-format
 msgid "%s: unexpected termination of replication stream: %s"
-msgstr ""
+msgstr "%s: oväntad terminering av replikeringsström: %s"
 
 #: pg_recvlogical.c:741
 #, c-format
@@ -1091,7 +1096,7 @@ msgstr "%s: --endpos får bara anges tillsammans med --start\n"
 #: pg_recvlogical.c:957
 #, c-format
 msgid "%s: could not establish database-specific replication connection\n"
-msgstr ""
+msgstr "%s: kunde inte upprätta databasspecifik replikeringsanslutning\n"
 
 #: receivelog.c:71
 #, c-format
@@ -1111,14 +1116,14 @@ msgstr "%s: kunde inte öppna existerande write-ahead-logg-fil \"%s\": %s\n"
 #: receivelog.c:139
 #, c-format
 msgid "%s: could not fsync existing write-ahead log file \"%s\": %s\n"
-msgstr ""
+msgstr "%s: kunde inte fsync:a befintlig write-ahead-logg-fil \"%s\": %s\n"
 
 #: receivelog.c:154
 #, c-format
 msgid "%s: write-ahead log file \"%s\" has %d byte, should be 0 or %d\n"
 msgid_plural "%s: write-ahead log file \"%s\" has %d bytes, should be 0 or %d\n"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%s: write-ahead-logg-fil \"%s\" har %d byte, skall vara 0 eller %d\n"
+msgstr[1] "%s: write-ahead-logg-fil \"%s\" har %d byte, skall vara 0 eller %d\n"
 
 #: receivelog.c:169
 #, c-format
@@ -1128,7 +1133,7 @@ msgstr "%s: kunde inte öppna write-ahead-logg-fil \"%s\": %s\n"
 #: receivelog.c:196
 #, c-format
 msgid "%s: could not determine seek position in file \"%s\": %s\n"
-msgstr ""
+msgstr "%s: kunde inte fastställa sökposition i fil \"%s\": %s\n"
 
 #: receivelog.c:211
 #, c-format
@@ -1138,7 +1143,7 @@ msgstr "%s: byter inte namn på \"%s%s\", segmentet är inte komplett\n"
 #: receivelog.c:280
 #, c-format
 msgid "%s: server reported unexpected history file name for timeline %u: %s\n"
-msgstr ""
+msgstr "%s: servern rapporterade oväntat historikfilnamn för tidslinje %u: %s\n"
 
 #: receivelog.c:288
 #, c-format
@@ -1153,67 +1158,67 @@ msgstr "%s: kunde inte skriva tidslinjehistorikfil \"%s\": %s\n"
 #: receivelog.c:385
 #, c-format
 msgid "%s: incompatible server version %s; client does not support streaming from server versions older than %s\n"
-msgstr ""
+msgstr "%s: inkompatibel serverversion %s; klienten stöder inte stömning från serverversioner äldre än %s\n"
 
 #: receivelog.c:395
 #, c-format
 msgid "%s: incompatible server version %s; client does not support streaming from server versions newer than %s\n"
-msgstr ""
+msgstr "%s: inkompatibel serverversion %s; klienten stöder inte stömning från serverversioner nyare än %s\n"
 
 #: receivelog.c:500 streamutil.c:265 streamutil.c:304
 #, c-format
 msgid "%s: could not identify system: got %d rows and %d fields, expected %d rows and %d or more fields\n"
-msgstr ""
+msgstr "%s: kunde inte identifiera systemet: fick %d rader och %d fält, förväntade %d rader och %d eller fler fält\n"
 
 #: receivelog.c:508
 #, c-format
 msgid "%s: system identifier does not match between base backup and streaming connection\n"
-msgstr ""
+msgstr "%s: systemidentifieraren matchar inte mellan basbackup och strömningsanslutning\n"
 
 #: receivelog.c:516
 #, c-format
 msgid "%s: starting timeline %u is not present in the server\n"
-msgstr ""
+msgstr "%s: starttidslinje %u finns inte tillgänglig i servern\n"
 
 #: receivelog.c:535
 #, c-format
 msgid "%s: could not create temporary replication slot \"%s\": %s"
-msgstr ""
+msgstr "%s: kunde inte skapa temporär replikeringsslot \"%s\": %s"
 
 #: receivelog.c:576
 #, c-format
 msgid "%s: unexpected response to TIMELINE_HISTORY command: got %d rows and %d fields, expected %d rows and %d fields\n"
-msgstr ""
+msgstr "%s: oväntat svar på TIMELINE_HISTORY-kommando: fick %d rader och %d fält, förväntade %d rader och %d fält\n"
 
 #: receivelog.c:648
 #, c-format
 msgid "%s: server reported unexpected next timeline %u, following timeline %u\n"
-msgstr ""
+msgstr "%s: servern rapporterade oväntad nästa tidslinje %u, följer på tidslinje %u\n"
 
 #: receivelog.c:655
 #, c-format
 msgid "%s: server stopped streaming timeline %u at %X/%X, but reported next timeline %u to begin at %X/%X\n"
-msgstr ""
+msgstr "%s: servern stoppade strömning av tidslinje %u vid %X/%X men rapporterade nästa tidslinje %u skulle börja vid %X/%X\n"
 
 #: receivelog.c:696
 #, c-format
 msgid "%s: replication stream was terminated before stop point\n"
-msgstr ""
+msgstr "%s: replikeringsström avslutades innan stoppunkt\n"
 
 #: receivelog.c:745
 #, c-format
 msgid "%s: unexpected result set after end-of-timeline: got %d rows and %d fields, expected %d rows and %d fields\n"
-msgstr ""
+msgstr "%s: oväntad resultatmängd efter slut-på-tidslinje: fick %d rader och %d fält, förväntade %d rader och %d fält\n"
 
 #: receivelog.c:755
 #, c-format
 msgid "%s: could not parse next timeline's starting point \"%s\"\n"
-msgstr ""
+msgstr "%s: kunde inte parsa nästa tidslinjens startpunkt \"%s\"\n"
 
 #: receivelog.c:1126
 #, c-format
 msgid "%s: received write-ahead log record for offset %u with no file open\n"
-msgstr ""
+msgstr "%s: tog emot write-ahead-logg-post för offset %u utan att ha någon öppen fil\n"
 
 #: receivelog.c:1137
 #, c-format
@@ -1228,7 +1233,7 @@ msgstr "%s: kunde inte skriva %u byte till WAL-fil \"%s\": %s\n"
 #: receivelog.c:1197 receivelog.c:1238 receivelog.c:1269
 #, c-format
 msgid "%s: could not send copy-end packet: %s"
-msgstr ""
+msgstr "%s: kunde inte skicka \"copy-end\"-paket: %s"
 
 #: streamutil.c:149
 msgid "Password: "
