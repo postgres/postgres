@@ -68,12 +68,12 @@ typedef struct
 /*
  * fmgr macros for range type objects
  */
-#define DatumGetRangeType(X)		((RangeType *) PG_DETOAST_DATUM(X))
-#define DatumGetRangeTypeCopy(X)	((RangeType *) PG_DETOAST_DATUM_COPY(X))
-#define RangeTypeGetDatum(X)		PointerGetDatum(X)
-#define PG_GETARG_RANGE(n)			DatumGetRangeType(PG_GETARG_DATUM(n))
-#define PG_GETARG_RANGE_COPY(n)		DatumGetRangeTypeCopy(PG_GETARG_DATUM(n))
-#define PG_RETURN_RANGE(x)			return RangeTypeGetDatum(x)
+#define DatumGetRangeTypeP(X)		((RangeType *) PG_DETOAST_DATUM(X))
+#define DatumGetRangeTypePCopy(X)	((RangeType *) PG_DETOAST_DATUM_COPY(X))
+#define RangeTypePGetDatum(X)		PointerGetDatum(X)
+#define PG_GETARG_RANGE_P(n)		DatumGetRangeTypeP(PG_GETARG_DATUM(n))
+#define PG_GETARG_RANGE_P_COPY(n)	DatumGetRangeTypePCopy(PG_GETARG_DATUM(n))
+#define PG_RETURN_RANGE_P(x)		return RangeTypePGetDatum(x)
 
 /* Operator strategy numbers used in the GiST and SP-GiST range opclasses */
 /* Numbers are chosen to match up operator names with existing usages */

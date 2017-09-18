@@ -149,7 +149,7 @@ ltree_in(PG_FUNCTION_ARGS)
 Datum
 ltree_out(PG_FUNCTION_ARGS)
 {
-	ltree	   *in = PG_GETARG_LTREE(0);
+	ltree	   *in = PG_GETARG_LTREE_P(0);
 	char	   *buf,
 			   *ptr;
 	int			i;
@@ -521,7 +521,7 @@ lquery_in(PG_FUNCTION_ARGS)
 Datum
 lquery_out(PG_FUNCTION_ARGS)
 {
-	lquery	   *in = PG_GETARG_LQUERY(0);
+	lquery	   *in = PG_GETARG_LQUERY_P(0);
 	char	   *buf,
 			   *ptr;
 	int			i,

@@ -86,8 +86,8 @@ checkcondition_str(void *checkval, ITEM *val)
 Datum
 ltxtq_exec(PG_FUNCTION_ARGS)
 {
-	ltree	   *val = PG_GETARG_LTREE(0);
-	ltxtquery  *query = PG_GETARG_LTXTQUERY(1);
+	ltree	   *val = PG_GETARG_LTREE_P(0);
+	ltxtquery  *query = PG_GETARG_LTXTQUERY_P(1);
 	CHKVAL		chkval;
 	bool		result;
 

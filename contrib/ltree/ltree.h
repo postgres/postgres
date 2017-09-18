@@ -165,12 +165,21 @@ bool compare_subnode(ltree_level *t, char *q, int len,
 ltree	   *lca_inner(ltree **a, int len);
 int			ltree_strncasecmp(const char *a, const char *b, size_t s);
 
-#define PG_GETARG_LTREE(x)	((ltree*)DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(x))))
-#define PG_GETARG_LTREE_COPY(x) ((ltree*)DatumGetPointer(PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(x))))
-#define PG_GETARG_LQUERY(x) ((lquery*)DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(x))))
-#define PG_GETARG_LQUERY_COPY(x) ((lquery*)DatumGetPointer(PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(x))))
-#define PG_GETARG_LTXTQUERY(x) ((ltxtquery*)DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(x))))
-#define PG_GETARG_LTXTQUERY_COPY(x) ((ltxtquery*)DatumGetPointer(PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(x))))
+/* fmgr macros for ltree objects */
+#define DatumGetLtreeP(X)			((ltree *) PG_DETOAST_DATUM(X))
+#define DatumGetLtreePCopy(X)		((ltree *) PG_DETOAST_DATUM_COPY(X))
+#define PG_GETARG_LTREE_P(n)		DatumGetLtreeP(PG_GETARG_DATUM(n))
+#define PG_GETARG_LTREE_P_COPY(n)	DatumGetLtreePCopy(PG_GETARG_DATUM(n))
+
+#define DatumGetLqueryP(X)			((lquery *) PG_DETOAST_DATUM(X))
+#define DatumGetLqueryPCopy(X)		((lquery *) PG_DETOAST_DATUM_COPY(X))
+#define PG_GETARG_LQUERY_P(n)		DatumGetLqueryP(PG_GETARG_DATUM(n))
+#define PG_GETARG_LQUERY_P_COPY(n)	DatumGetLqueryPCopy(PG_GETARG_DATUM(n))
+
+#define DatumGetLtxtqueryP(X)			((ltxtquery *) PG_DETOAST_DATUM(X))
+#define DatumGetLtxtqueryPCopy(X)		((ltxtquery *) PG_DETOAST_DATUM_COPY(X))
+#define PG_GETARG_LTXTQUERY_P(n)		DatumGetLtxtqueryP(PG_GETARG_DATUM(n))
+#define PG_GETARG_LTXTQUERY_P_COPY(n)	DatumGetLtxtqueryPCopy(PG_GETARG_DATUM(n))
 
 /* GiST support for ltree */
 

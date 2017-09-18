@@ -130,7 +130,7 @@ jsonb_recv(PG_FUNCTION_ARGS)
 Datum
 jsonb_out(PG_FUNCTION_ARGS)
 {
-	Jsonb	   *jb = PG_GETARG_JSONB(0);
+	Jsonb	   *jb = PG_GETARG_JSONB_P(0);
 	char	   *out;
 
 	out = JsonbToCString(NULL, &jb->root, VARSIZE(jb));
@@ -146,7 +146,7 @@ jsonb_out(PG_FUNCTION_ARGS)
 Datum
 jsonb_send(PG_FUNCTION_ARGS)
 {
-	Jsonb	   *jb = PG_GETARG_JSONB(0);
+	Jsonb	   *jb = PG_GETARG_JSONB_P(0);
 	StringInfoData buf;
 	StringInfo	jtext = makeStringInfo();
 	int			version = 1;
@@ -171,7 +171,7 @@ jsonb_send(PG_FUNCTION_ARGS)
 Datum
 jsonb_typeof(PG_FUNCTION_ARGS)
 {
-	Jsonb	   *in = PG_GETARG_JSONB(0);
+	Jsonb	   *in = PG_GETARG_JSONB_P(0);
 	JsonbIterator *it;
 	JsonbValue	v;
 	char	   *result;
@@ -878,7 +878,7 @@ datum_to_jsonb(Datum val, bool is_null, JsonbInState *result,
 				break;
 			case JSONBTYPE_JSONB:
 				{
-					Jsonb	   *jsonb = DatumGetJsonb(val);
+					Jsonb	   *jsonb = DatumGetJsonbP(val);
 					JsonbIterator *it;
 
 					it = JsonbIteratorInit(&jsonb->root);

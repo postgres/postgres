@@ -151,7 +151,7 @@ extern HStore *hstoreUpgrade(Datum orig);
 
 #define DatumGetHStoreP(d) hstoreUpgrade(d)
 
-#define PG_GETARG_HS(x) DatumGetHStoreP(PG_GETARG_DATUM(x))
+#define PG_GETARG_HSTORE_P(x) DatumGetHStoreP(PG_GETARG_DATUM(x))
 
 
 /*

@@ -67,65 +67,65 @@ ltree_compare(const ltree *a, const ltree *b)
 }
 
 #define RUNCMP						\
-ltree *a	= PG_GETARG_LTREE(0);			\
-ltree *b	= PG_GETARG_LTREE(1);			\
-int res = ltree_compare(a,b);				\
-PG_FREE_IF_COPY(a,0);					\
-PG_FREE_IF_COPY(b,1);					\
+ltree *a = PG_GETARG_LTREE_P(0);	\
+ltree *b = PG_GETARG_LTREE_P(1);	\
+int res = ltree_compare(a,b);		\
+PG_FREE_IF_COPY(a,0);				\
+PG_FREE_IF_COPY(b,1)
 
 Datum
 ltree_cmp(PG_FUNCTION_ARGS)
 {
-	RUNCMP
-		PG_RETURN_INT32(res);
+	RUNCMP;
+	PG_RETURN_INT32(res);
 }
 
 Datum
 ltree_lt(PG_FUNCTION_ARGS)
 {
-	RUNCMP
-		PG_RETURN_BOOL((res < 0) ? true : false);
+	RUNCMP;
+	PG_RETURN_BOOL((res < 0) ? true : false);
 }
 
 Datum
 ltree_le(PG_FUNCTION_ARGS)
 {
-	RUNCMP
-		PG_RETURN_BOOL((res <= 0) ? true : false);
+	RUNCMP;
+	PG_RETURN_BOOL((res <= 0) ? true : false);
 }
 
 Datum
 ltree_eq(PG_FUNCTION_ARGS)
 {
-	RUNCMP
-		PG_RETURN_BOOL((res == 0) ? true : false);
+	RUNCMP;
+	PG_RETURN_BOOL((res == 0) ? true : false);
 }
 
 Datum
 ltree_ge(PG_FUNCTION_ARGS)
 {
-	RUNCMP
-		PG_RETURN_BOOL((res >= 0) ? true : false);
+	RUNCMP;
+	PG_RETURN_BOOL((res >= 0) ? true : false);
 }
 
 Datum
 ltree_gt(PG_FUNCTION_ARGS)
 {
-	RUNCMP
-		PG_RETURN_BOOL((res > 0) ? true : false);
+	RUNCMP;
+	PG_RETURN_BOOL((res > 0) ? true : false);
 }
 
 Datum
 ltree_ne(PG_FUNCTION_ARGS)
 {
-	RUNCMP
-		PG_RETURN_BOOL((res != 0) ? true : false);
+	RUNCMP;
+	PG_RETURN_BOOL((res != 0) ? true : false);
 }
 
 Datum
 nlevel(PG_FUNCTION_ARGS)
 {
-	ltree	   *a = PG_GETARG_LTREE(0);
+	ltree	   *a = PG_GETARG_LTREE_P(0);
 	int			res = a->numlevel;
 
 	PG_FREE_IF_COPY(a, 0);
@@ -159,8 +159,8 @@ inner_isparent(const ltree *c, const ltree *p)
 Datum
 ltree_isparent(PG_FUNCTION_ARGS)
 {
-	ltree	   *c = PG_GETARG_LTREE(1);
-	ltree	   *p = PG_GETARG_LTREE(0);
+	ltree	   *c = PG_GETARG_LTREE_P(1);
+	ltree	   *p = PG_GETARG_LTREE_P(0);
 	bool		res = inner_isparent(c, p);
 
 	PG_FREE_IF_COPY(c, 1);
@@ -171,8 +171,8 @@ ltree_isparent(PG_FUNCTION_ARGS)
 Datum
 ltree_risparent(PG_FUNCTION_ARGS)
 {
-	ltree	   *c = PG_GETARG_LTREE(0);
-	ltree	   *p = PG_GETARG_LTREE(1);
+	ltree	   *c = PG_GETARG_LTREE_P(0);
+	ltree	   *p = PG_GETARG_LTREE_P(1);
 	bool		res = inner_isparent(c, p);
 
 	PG_FREE_IF_COPY(c, 0);
@@ -223,7 +223,7 @@ inner_subltree(ltree *t, int32 startpos, int32 endpos)
 Datum
 subltree(PG_FUNCTION_ARGS)
 {
-	ltree	   *t = PG_GETARG_LTREE(0);
+	ltree	   *t = PG_GETARG_LTREE_P(0);
 	ltree	   *res = inner_subltree(t, PG_GETARG_INT32(1), PG_GETARG_INT32(2));
 
 	PG_FREE_IF_COPY(t, 0);
@@ -233,7 +233,7 @@ subltree(PG_FUNCTION_ARGS)
 Datum
 subpath(PG_FUNCTION_ARGS)
 {
-	ltree	   *t = PG_GETARG_LTREE(0);
+	ltree	   *t = PG_GETARG_LTREE_P(0);
 	int32		start = PG_GETARG_INT32(1);
 	int32		len = (fcinfo->nargs == 3) ? PG_GETARG_INT32(2) : 0;
 	int32		end;
@@ -282,8 +282,8 @@ ltree_concat(ltree *a, ltree *b)
 Datum
 ltree_addltree(PG_FUNCTION_ARGS)
 {
-	ltree	   *a = PG_GETARG_LTREE(0);
-	ltree	   *b = PG_GETARG_LTREE(1);
+	ltree	   *a = PG_GETARG_LTREE_P(0);
+	ltree	   *b = PG_GETARG_LTREE_P(1);
 	ltree	   *r;
 
 	r = ltree_concat(a, b);
@@ -295,7 +295,7 @@ ltree_addltree(PG_FUNCTION_ARGS)
 Datum
 ltree_addtext(PG_FUNCTION_ARGS)
 {
-	ltree	   *a = PG_GETARG_LTREE(0);
+	ltree	   *a = PG_GETARG_LTREE_P(0);
 	text	   *b = PG_GETARG_TEXT_PP(1);
 	char	   *s;
 	ltree	   *r,
@@ -320,8 +320,8 @@ ltree_addtext(PG_FUNCTION_ARGS)
 Datum
 ltree_index(PG_FUNCTION_ARGS)
 {
-	ltree	   *a = PG_GETARG_LTREE(0);
-	ltree	   *b = PG_GETARG_LTREE(1);
+	ltree	   *a = PG_GETARG_LTREE_P(0);
+	ltree	   *b = PG_GETARG_LTREE_P(1);
 	int			start = (fcinfo->nargs == 3) ? PG_GETARG_INT32(2) : 0;
 	int			i,
 				j;
@@ -380,7 +380,7 @@ ltree_index(PG_FUNCTION_ARGS)
 Datum
 ltree_textadd(PG_FUNCTION_ARGS)
 {
-	ltree	   *a = PG_GETARG_LTREE(1);
+	ltree	   *a = PG_GETARG_LTREE_P(1);
 	text	   *b = PG_GETARG_TEXT_PP(0);
 	char	   *s;
 	ltree	   *r,
@@ -476,7 +476,7 @@ lca(PG_FUNCTION_ARGS)
 
 	a = (ltree **) palloc(sizeof(ltree *) * fcinfo->nargs);
 	for (i = 0; i < fcinfo->nargs; i++)
-		a[i] = PG_GETARG_LTREE(i);
+		a[i] = PG_GETARG_LTREE_P(i);
 	res = lca_inner(a, (int) fcinfo->nargs);
 	for (i = 0; i < fcinfo->nargs; i++)
 		PG_FREE_IF_COPY(a[i], i);
@@ -508,7 +508,7 @@ text2ltree(PG_FUNCTION_ARGS)
 Datum
 ltree2text(PG_FUNCTION_ARGS)
 {
-	ltree	   *in = PG_GETARG_LTREE(0);
+	ltree	   *in = PG_GETARG_LTREE_P(0);
 	char	   *ptr;
 	int			i;
 	ltree_level *curlevel;

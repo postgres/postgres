@@ -518,7 +518,7 @@ ghstore_consistent(PG_FUNCTION_ARGS)
 	if (strategy == HStoreContainsStrategyNumber ||
 		strategy == HStoreOldContainsStrategyNumber)
 	{
-		HStore	   *query = PG_GETARG_HS(1);
+		HStore	   *query = PG_GETARG_HSTORE_P(1);
 		HEntry	   *qe = ARRPTR(query);
 		char	   *qv = STRPTR(query);
 		int			count = HS_COUNT(query);

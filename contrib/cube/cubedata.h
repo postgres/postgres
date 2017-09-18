@@ -49,9 +49,9 @@ typedef struct NDBOX
 #define CUBE_SIZE(_dim)		(offsetof(NDBOX, x) + sizeof(double)*(_dim)*2)
 
 /* fmgr interface macros */
-#define DatumGetNDBOX(x)	((NDBOX *) PG_DETOAST_DATUM(x))
-#define PG_GETARG_NDBOX(x)	DatumGetNDBOX(PG_GETARG_DATUM(x))
-#define PG_RETURN_NDBOX(x)	PG_RETURN_POINTER(x)
+#define DatumGetNDBOXP(x)	((NDBOX *) PG_DETOAST_DATUM(x))
+#define PG_GETARG_NDBOX_P(x)	DatumGetNDBOXP(PG_GETARG_DATUM(x))
+#define PG_RETURN_NDBOX_P(x)	PG_RETURN_POINTER(x)
 
 /* GiST operator strategy numbers */
 #define CubeKNNDistanceCoord			15	/* ~> */

@@ -962,7 +962,7 @@ hstore_populate_record(PG_FUNCTION_ARGS)
 		tupTypmod = HeapTupleHeaderGetTypMod(rec);
 	}
 
-	hs = PG_GETARG_HS(1);
+	hs = PG_GETARG_HSTORE_P(1);
 	entries = ARRPTR(hs);
 	ptr = STRPTR(hs);
 
@@ -1127,7 +1127,7 @@ PG_FUNCTION_INFO_V1(hstore_out);
 Datum
 hstore_out(PG_FUNCTION_ARGS)
 {
-	HStore	   *in = PG_GETARG_HS(0);
+	HStore	   *in = PG_GETARG_HSTORE_P(0);
 	int			buflen,
 				i;
 	int			count = HS_COUNT(in);
@@ -1198,7 +1198,7 @@ PG_FUNCTION_INFO_V1(hstore_send);
 Datum
 hstore_send(PG_FUNCTION_ARGS)
 {
-	HStore	   *in = PG_GETARG_HS(0);
+	HStore	   *in = PG_GETARG_HSTORE_P(0);
 	int			i;
 	int			count = HS_COUNT(in);
 	char	   *base = STRPTR(in);
@@ -1244,7 +1244,7 @@ PG_FUNCTION_INFO_V1(hstore_to_json_loose);
 Datum
 hstore_to_json_loose(PG_FUNCTION_ARGS)
 {
-	HStore	   *in = PG_GETARG_HS(0);
+	HStore	   *in = PG_GETARG_HSTORE_P(0);
 	int			i;
 	int			count = HS_COUNT(in);
 	char	   *base = STRPTR(in);
@@ -1299,7 +1299,7 @@ PG_FUNCTION_INFO_V1(hstore_to_json);
 Datum
 hstore_to_json(PG_FUNCTION_ARGS)
 {
-	HStore	   *in = PG_GETARG_HS(0);
+	HStore	   *in = PG_GETARG_HSTORE_P(0);
 	int			i;
 	int			count = HS_COUNT(in);
 	char	   *base = STRPTR(in);
@@ -1344,7 +1344,7 @@ PG_FUNCTION_INFO_V1(hstore_to_jsonb);
 Datum
 hstore_to_jsonb(PG_FUNCTION_ARGS)
 {
-	HStore	   *in = PG_GETARG_HS(0);
+	HStore	   *in = PG_GETARG_HSTORE_P(0);
 	int			i;
 	int			count = HS_COUNT(in);
 	char	   *base = STRPTR(in);
@@ -1387,7 +1387,7 @@ PG_FUNCTION_INFO_V1(hstore_to_jsonb_loose);
 Datum
 hstore_to_jsonb_loose(PG_FUNCTION_ARGS)
 {
-	HStore	   *in = PG_GETARG_HS(0);
+	HStore	   *in = PG_GETARG_HSTORE_P(0);
 	int			i;
 	int			count = HS_COUNT(in);
 	char	   *base = STRPTR(in);

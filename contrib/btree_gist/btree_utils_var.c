@@ -37,7 +37,7 @@ Datum
 gbt_var_decompress(PG_FUNCTION_ARGS)
 {
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
-	GBT_VARKEY *key = (GBT_VARKEY *) DatumGetPointer(PG_DETOAST_DATUM(entry->key));
+	GBT_VARKEY *key = (GBT_VARKEY *) PG_DETOAST_DATUM(entry->key);
 
 	if (key != (GBT_VARKEY *) DatumGetPointer(entry->key))
 	{
@@ -159,7 +159,7 @@ gbt_var_node_cp_len(const GBT_VARKEY *node, const gbtree_vinfo *tinfo)
 		l--;
 		i++;
 	}
-	return ml;				/* lower == upper */
+	return ml;					/* lower == upper */
 }
 
 
@@ -307,7 +307,7 @@ Datum
 gbt_var_fetch(PG_FUNCTION_ARGS)
 {
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
-	GBT_VARKEY *key = (GBT_VARKEY *) DatumGetPointer(PG_DETOAST_DATUM(entry->key));
+	GBT_VARKEY *key = (GBT_VARKEY *) PG_DETOAST_DATUM(entry->key);
 	GBT_VARKEY_R r = gbt_var_key_readable(key);
 	GISTENTRY  *retval;
 

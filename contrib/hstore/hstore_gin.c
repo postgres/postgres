@@ -43,7 +43,7 @@ makeitem(char *str, int len, char flag)
 Datum
 gin_extract_hstore(PG_FUNCTION_ARGS)
 {
-	HStore	   *hs = PG_GETARG_HS(0);
+	HStore	   *hs = PG_GETARG_HSTORE_P(0);
 	int32	   *nentries = (int32 *) PG_GETARG_POINTER(1);
 	Datum	   *entries = NULL;
 	HEntry	   *hsent = ARRPTR(hs);
@@ -155,7 +155,7 @@ gin_consistent_hstore(PG_FUNCTION_ARGS)
 	bool	   *check = (bool *) PG_GETARG_POINTER(0);
 	StrategyNumber strategy = PG_GETARG_UINT16(1);
 
-	/* HStore	   *query = PG_GETARG_HS(2); */
+	/* HStore	   *query = PG_GETARG_HSTORE_P(2); */
 	int32		nkeys = PG_GETARG_INT32(3);
 
 	/* Pointer	   *extra_data = (Pointer *) PG_GETARG_POINTER(4); */

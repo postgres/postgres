@@ -252,7 +252,7 @@ typedef struct ArrayIteratorData *ArrayIterator;
 #define PG_RETURN_EXPANDED_ARRAY(x)  PG_RETURN_DATUM(EOHPGetRWDatum(&(x)->hdr))
 
 /* fmgr macros for AnyArrayType (ie, get either varlena or expanded form) */
-#define PG_GETARG_ANY_ARRAY(n)	DatumGetAnyArray(PG_GETARG_DATUM(n))
+#define PG_GETARG_ANY_ARRAY_P(n)	DatumGetAnyArrayP(PG_GETARG_DATUM(n))
 
 /*
  * Access macros for varlena array header fields.
@@ -440,7 +440,7 @@ extern Datum expand_array(Datum arraydatum, MemoryContext parentcontext,
 extern ExpandedArrayHeader *DatumGetExpandedArray(Datum d);
 extern ExpandedArrayHeader *DatumGetExpandedArrayX(Datum d,
 					   ArrayMetaState *metacache);
-extern AnyArrayType *DatumGetAnyArray(Datum d);
+extern AnyArrayType *DatumGetAnyArrayP(Datum d);
 extern void deconstruct_expanded_array(ExpandedArrayHeader *eah);
 
 #endif							/* ARRAY_H */

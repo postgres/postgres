@@ -65,10 +65,10 @@ typedef enum
 #define JGIN_MAXLENGTH	125		/* max length of text part before hashing */
 
 /* Convenience macros */
-#define DatumGetJsonb(d)	((Jsonb *) PG_DETOAST_DATUM(d))
-#define JsonbGetDatum(p)	PointerGetDatum(p)
-#define PG_GETARG_JSONB(x)	DatumGetJsonb(PG_GETARG_DATUM(x))
-#define PG_RETURN_JSONB(x)	PG_RETURN_POINTER(x)
+#define DatumGetJsonbP(d)	((Jsonb *) PG_DETOAST_DATUM(d))
+#define JsonbPGetDatum(p)	PointerGetDatum(p)
+#define PG_GETARG_JSONB_P(x)	DatumGetJsonbP(PG_GETARG_DATUM(x))
+#define PG_RETURN_JSONB_P(x)	PG_RETURN_POINTER(x)
 
 typedef struct JsonbPair JsonbPair;
 typedef struct JsonbValue JsonbValue;

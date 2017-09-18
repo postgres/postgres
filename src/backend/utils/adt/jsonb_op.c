@@ -21,7 +21,7 @@
 Datum
 jsonb_exists(PG_FUNCTION_ARGS)
 {
-	Jsonb	   *jb = PG_GETARG_JSONB(0);
+	Jsonb	   *jb = PG_GETARG_JSONB_P(0);
 	text	   *key = PG_GETARG_TEXT_PP(1);
 	JsonbValue	kval;
 	JsonbValue *v = NULL;
@@ -46,7 +46,7 @@ jsonb_exists(PG_FUNCTION_ARGS)
 Datum
 jsonb_exists_any(PG_FUNCTION_ARGS)
 {
-	Jsonb	   *jb = PG_GETARG_JSONB(0);
+	Jsonb	   *jb = PG_GETARG_JSONB_P(0);
 	ArrayType  *keys = PG_GETARG_ARRAYTYPE_P(1);
 	int			i;
 	Datum	   *key_datums;
@@ -79,7 +79,7 @@ jsonb_exists_any(PG_FUNCTION_ARGS)
 Datum
 jsonb_exists_all(PG_FUNCTION_ARGS)
 {
-	Jsonb	   *jb = PG_GETARG_JSONB(0);
+	Jsonb	   *jb = PG_GETARG_JSONB_P(0);
 	ArrayType  *keys = PG_GETARG_ARRAYTYPE_P(1);
 	int			i;
 	Datum	   *key_datums;
@@ -112,8 +112,8 @@ jsonb_exists_all(PG_FUNCTION_ARGS)
 Datum
 jsonb_contains(PG_FUNCTION_ARGS)
 {
-	Jsonb	   *val = PG_GETARG_JSONB(0);
-	Jsonb	   *tmpl = PG_GETARG_JSONB(1);
+	Jsonb	   *val = PG_GETARG_JSONB_P(0);
+	Jsonb	   *tmpl = PG_GETARG_JSONB_P(1);
 
 	JsonbIterator *it1,
 			   *it2;
@@ -131,8 +131,8 @@ Datum
 jsonb_contained(PG_FUNCTION_ARGS)
 {
 	/* Commutator of "contains" */
-	Jsonb	   *tmpl = PG_GETARG_JSONB(0);
-	Jsonb	   *val = PG_GETARG_JSONB(1);
+	Jsonb	   *tmpl = PG_GETARG_JSONB_P(0);
+	Jsonb	   *val = PG_GETARG_JSONB_P(1);
 
 	JsonbIterator *it1,
 			   *it2;
@@ -149,8 +149,8 @@ jsonb_contained(PG_FUNCTION_ARGS)
 Datum
 jsonb_ne(PG_FUNCTION_ARGS)
 {
-	Jsonb	   *jba = PG_GETARG_JSONB(0);
-	Jsonb	   *jbb = PG_GETARG_JSONB(1);
+	Jsonb	   *jba = PG_GETARG_JSONB_P(0);
+	Jsonb	   *jbb = PG_GETARG_JSONB_P(1);
 	bool		res;
 
 	res = (compareJsonbContainers(&jba->root, &jbb->root) != 0);
@@ -166,8 +166,8 @@ jsonb_ne(PG_FUNCTION_ARGS)
 Datum
 jsonb_lt(PG_FUNCTION_ARGS)
 {
-	Jsonb	   *jba = PG_GETARG_JSONB(0);
-	Jsonb	   *jbb = PG_GETARG_JSONB(1);
+	Jsonb	   *jba = PG_GETARG_JSONB_P(0);
+	Jsonb	   *jbb = PG_GETARG_JSONB_P(1);
 	bool		res;
 
 	res = (compareJsonbContainers(&jba->root, &jbb->root) < 0);
@@ -180,8 +180,8 @@ jsonb_lt(PG_FUNCTION_ARGS)
 Datum
 jsonb_gt(PG_FUNCTION_ARGS)
 {
-	Jsonb	   *jba = PG_GETARG_JSONB(0);
-	Jsonb	   *jbb = PG_GETARG_JSONB(1);
+	Jsonb	   *jba = PG_GETARG_JSONB_P(0);
+	Jsonb	   *jbb = PG_GETARG_JSONB_P(1);
 	bool		res;
 
 	res = (compareJsonbContainers(&jba->root, &jbb->root) > 0);
@@ -194,8 +194,8 @@ jsonb_gt(PG_FUNCTION_ARGS)
 Datum
 jsonb_le(PG_FUNCTION_ARGS)
 {
-	Jsonb	   *jba = PG_GETARG_JSONB(0);
-	Jsonb	   *jbb = PG_GETARG_JSONB(1);
+	Jsonb	   *jba = PG_GETARG_JSONB_P(0);
+	Jsonb	   *jbb = PG_GETARG_JSONB_P(1);
 	bool		res;
 
 	res = (compareJsonbContainers(&jba->root, &jbb->root) <= 0);
@@ -208,8 +208,8 @@ jsonb_le(PG_FUNCTION_ARGS)
 Datum
 jsonb_ge(PG_FUNCTION_ARGS)
 {
-	Jsonb	   *jba = PG_GETARG_JSONB(0);
-	Jsonb	   *jbb = PG_GETARG_JSONB(1);
+	Jsonb	   *jba = PG_GETARG_JSONB_P(0);
+	Jsonb	   *jbb = PG_GETARG_JSONB_P(1);
 	bool		res;
 
 	res = (compareJsonbContainers(&jba->root, &jbb->root) >= 0);
@@ -222,8 +222,8 @@ jsonb_ge(PG_FUNCTION_ARGS)
 Datum
 jsonb_eq(PG_FUNCTION_ARGS)
 {
-	Jsonb	   *jba = PG_GETARG_JSONB(0);
-	Jsonb	   *jbb = PG_GETARG_JSONB(1);
+	Jsonb	   *jba = PG_GETARG_JSONB_P(0);
+	Jsonb	   *jbb = PG_GETARG_JSONB_P(1);
 	bool		res;
 
 	res = (compareJsonbContainers(&jba->root, &jbb->root) == 0);
@@ -236,8 +236,8 @@ jsonb_eq(PG_FUNCTION_ARGS)
 Datum
 jsonb_cmp(PG_FUNCTION_ARGS)
 {
-	Jsonb	   *jba = PG_GETARG_JSONB(0);
-	Jsonb	   *jbb = PG_GETARG_JSONB(1);
+	Jsonb	   *jba = PG_GETARG_JSONB_P(0);
+	Jsonb	   *jbb = PG_GETARG_JSONB_P(1);
 	int			res;
 
 	res = compareJsonbContainers(&jba->root, &jbb->root);
@@ -253,7 +253,7 @@ jsonb_cmp(PG_FUNCTION_ARGS)
 Datum
 jsonb_hash(PG_FUNCTION_ARGS)
 {
-	Jsonb	   *jb = PG_GETARG_JSONB(0);
+	Jsonb	   *jb = PG_GETARG_JSONB_P(0);
 	JsonbIterator *it;
 	JsonbValue	v;
 	JsonbIteratorToken r;
@@ -295,7 +295,7 @@ jsonb_hash(PG_FUNCTION_ARGS)
 Datum
 jsonb_hash_extended(PG_FUNCTION_ARGS)
 {
-	Jsonb	   *jb = PG_GETARG_JSONB(0);
+	Jsonb	   *jb = PG_GETARG_JSONB_P(0);
 	uint64		seed = PG_GETARG_INT64(1);
 	JsonbIterator *it;
 	JsonbValue	v;
@@ -311,7 +311,7 @@ jsonb_hash_extended(PG_FUNCTION_ARGS)
 	{
 		switch (r)
 		{
-			/* Rotation is left to JsonbHashScalarValueExtended() */
+				/* Rotation is left to JsonbHashScalarValueExtended() */
 			case WJB_BEGIN_ARRAY:
 				hash ^= ((uint64) JB_FARRAY) << 32 | JB_FARRAY;
 				break;

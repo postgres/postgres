@@ -515,7 +515,7 @@ infix(INFIX *in, bool first)
 Datum
 ltxtq_out(PG_FUNCTION_ARGS)
 {
-	ltxtquery  *query = PG_GETARG_LTXTQUERY(0);
+	ltxtquery  *query = PG_GETARG_LTXTQUERY_P(0);
 	INFIX		nrm;
 
 	if (query->size == 0)
