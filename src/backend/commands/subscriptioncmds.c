@@ -909,9 +909,17 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 	ReleaseSysCache(tup);
 
 	/*
-	 * If we are dropping the replication slot, stop all the subscription
-	 * workers immediately, so that the slot becomes accessible.  Otherwise
-	 * just schedule the stopping for the end of the transaction.
+	 * Stop all the subscription workers immediately.
+	 *
+	 * This is necessary if we are dropping the replication slot, so that the
+	 * slot becomes accessible.
+	 *
+	 * It is also necessary if the subscription is disabled and was disabled
+	 * in the same transaction.  Then the workers haven't seen the disabling
+	 * yet and will still be running, leading to hangs later when we want to
+	 * drop the replication origin.  If the subscription was disabled before
+	 * this transaction, then there shouldn't be any workers left, so this
+	 * won't make a difference.
 	 *
 	 * New workers won't be started because we hold an exclusive lock on the
 	 * subscription till the end of the transaction.
@@ -923,10 +931,7 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 	{
 		LogicalRepWorker *w = (LogicalRepWorker *) lfirst(lc);
 
-		if (slotname)
-			logicalrep_worker_stop(w->subid, w->relid);
-		else
-			logicalrep_worker_stop_at_commit(w->subid, w->relid);
+		logicalrep_worker_stop(w->subid, w->relid);
 	}
 	list_free(subworkers);
 
