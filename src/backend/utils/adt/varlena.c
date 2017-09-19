@@ -4734,10 +4734,47 @@ string_agg_finalfn(PG_FUNCTION_ARGS)
 }
 
 /*
+ * Prepare cache with fmgr info for the output functions of the datatypes of
+ * the arguments of a concat-like function, beginning with argument "argidx".
+ * (Arguments before that will have corresponding slots in the resulting
+ * FmgrInfo array, but we don't fill those slots.)
+ */
+static FmgrInfo *
+build_concat_foutcache(FunctionCallInfo fcinfo, int argidx)
+{
+	FmgrInfo   *foutcache;
+	int			i;
+
+	/* We keep the info in fn_mcxt so it survives across calls */
+	foutcache = (FmgrInfo *) MemoryContextAlloc(fcinfo->flinfo->fn_mcxt,
+												PG_NARGS() * sizeof(FmgrInfo));
+
+	for (i = argidx; i < PG_NARGS(); i++)
+	{
+		Oid			valtype;
+		Oid			typOutput;
+		bool		typIsVarlena;
+
+		valtype = get_fn_expr_argtype(fcinfo->flinfo, i);
+		if (!OidIsValid(valtype))
+			elog(ERROR, "could not determine data type of concat() input");
+
+		getTypeOutputInfo(valtype, &typOutput, &typIsVarlena);
+		fmgr_info_cxt(typOutput, &foutcache[i], fcinfo->flinfo->fn_mcxt);
+	}
+
+	fcinfo->flinfo->fn_extra = foutcache;
+
+	return foutcache;
+}
+
+/*
  * Implementation of both concat() and concat_ws().
  *
  * sepstr is the separator string to place between values.
- * argidx identifies the first argument to concatenate (counting from zero).
+ * argidx identifies the first argument to concatenate (counting from zero);
+ * note that this must be constant across any one series of calls.
+ *
  * Returns NULL if result should be NULL, else text value.
  */
 static text *
@@ -4746,6 +4783,7 @@ concat_internal(const char *sepstr, int argidx,
 {
 	text	   *result;
 	StringInfoData str;
+	FmgrInfo   *foutcache;
 	bool		first_arg = true;
 	int			i;
 
@@ -4787,14 +4825,16 @@ concat_internal(const char *sepstr, int argidx,
 	/* Normal case without explicit VARIADIC marker */
 	initStringInfo(&str);
 
+	/* Get output function info, building it if first time through */
+	foutcache = (FmgrInfo *) fcinfo->flinfo->fn_extra;
+	if (foutcache == NULL)
+		foutcache = build_concat_foutcache(fcinfo, argidx);
+
 	for (i = argidx; i < PG_NARGS(); i++)
 	{
 		if (!PG_ARGISNULL(i))
 		{
 			Datum		value = PG_GETARG_DATUM(i);
-			Oid			valtype;
-			Oid			typOutput;
-			bool		typIsVarlena;
 
 			/* add separator if appropriate */
 			if (first_arg)
@@ -4803,12 +4843,8 @@ concat_internal(const char *sepstr, int argidx,
 				appendStringInfoString(&str, sepstr);
 
 			/* call the appropriate type output function, append the result */
-			valtype = get_fn_expr_argtype(fcinfo->flinfo, i);
-			if (!OidIsValid(valtype))
-				elog(ERROR, "could not determine data type of concat() input");
-			getTypeOutputInfo(valtype, &typOutput, &typIsVarlena);
 			appendStringInfoString(&str,
-								   OidOutputFunctionCall(typOutput, value));
+								   OutputFunctionCall(&foutcache[i], value));
 		}
 	}
 
