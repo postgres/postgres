@@ -6288,10 +6288,24 @@ pgstat_db_requested(Oid databaseid)
  * freed.
  */
 char *
-pgstat_clip_activity(const char *activity)
+pgstat_clip_activity(const char *raw_activity)
 {
-	int rawlen = strnlen(activity, pgstat_track_activity_query_size - 1);
-	int cliplen;
+	char	   *activity;
+	int			rawlen;
+	int			cliplen;
+
+	/*
+	 * Some callers, like pgstat_get_backend_current_activity(), do not
+	 * guarantee that the buffer isn't concurrently modified. We try to take
+	 * care that the buffer is always terminated by a NULL byte regardless,
+	 * but let's still be paranoid about the string's length. In those cases
+	 * the underlying buffer is guaranteed to be
+	 * pgstat_track_activity_query_size large.
+	 */
+	activity = pnstrdup(raw_activity, pgstat_track_activity_query_size - 1);
+
+	/* now double-guaranteed to be NULL terminated */
+	rawlen = strlen(activity);
 
 	/*
 	 * All supported server-encodings make it possible to determine the length
@@ -6303,5 +6317,8 @@ pgstat_clip_activity(const char *activity)
 	 */
 	cliplen = pg_mbcliplen(activity, rawlen,
 						   pgstat_track_activity_query_size - 1);
-	return pnstrdup(activity, cliplen);
+
+	activity[cliplen] = '\0';
+
+	return activity;
 }
