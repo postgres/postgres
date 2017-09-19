@@ -144,6 +144,11 @@ static bool doing_extended_query_message = false;
 static bool ignore_till_sync = false;
 
 /*
+ * Flag to keep track of whether statement timeout timer is active.
+ */
+static bool stmt_timeout_active = false;
+
+/*
  * If an unnamed prepared statement exists, it's stored here.
  * We keep it separate from the hashtable kept by commands/prepare.c
  * in order to reduce overhead for short-lived queries.
@@ -182,6 +187,8 @@ static bool IsTransactionExitStmtList(List *pstmts);
 static bool IsTransactionStmtList(List *pstmts);
 static void drop_unnamed_stmt(void);
 static void log_disconnections(int code, Datum arg);
+static void enable_statement_timeout(void);
+static void disable_statement_timeout(void);
 
 
 /* ----------------------------------------------------------------
@@ -1241,7 +1248,8 @@ exec_parse_message(const char *query_string,	/* string to execute */
 	/*
 	 * Start up a transaction command so we can run parse analysis etc. (Note
 	 * that this will normally change current memory context.) Nothing happens
-	 * if we are already in one.
+	 * if we are already in one.  This also arms the statement timeout if
+	 * necessary.
 	 */
 	start_xact_command();
 
@@ -1529,7 +1537,8 @@ exec_bind_message(StringInfo input_message)
 	/*
 	 * Start up a transaction command so we can call functions etc. (Note that
 	 * this will normally change current memory context.) Nothing happens if
-	 * we are already in one.
+	 * we are already in one.  This also arms the statement timeout if
+	 * necessary.
 	 */
 	start_xact_command();
 
@@ -2021,6 +2030,9 @@ exec_execute_message(const char *portal_name, long max_rows)
 			 * those that start or end a transaction block.
 			 */
 			CommandCounterIncrement();
+
+			/* full command has been executed, reset timeout */
+			disable_statement_timeout();
 		}
 
 		/* Send appropriate CommandComplete to client */
@@ -2450,25 +2462,27 @@ start_xact_command(void)
 	{
 		StartTransactionCommand();
 
-		/* Set statement timeout running, if any */
-		/* NB: this mustn't be enabled until we are within an xact */
-		if (StatementTimeout > 0)
-			enable_timeout_after(STATEMENT_TIMEOUT, StatementTimeout);
-		else
-			disable_timeout(STATEMENT_TIMEOUT, false);
-
 		xact_started = true;
 	}
+
+	/*
+	 * Start statement timeout if necessary.  Note that this'll intentionally
+	 * not reset the clock on an already started timeout, to avoid the timing
+	 * overhead when start_xact_command() is invoked repeatedly, without an
+	 * interceding finish_xact_command() (e.g. parse/bind/execute).  If that's
+	 * not desired, the timeout has to be disabled explicitly.
+	 */
+	enable_statement_timeout();
 }
 
 static void
 finish_xact_command(void)
 {
+	/* cancel active statement timeout after each command */
+	disable_statement_timeout();
+
 	if (xact_started)
 	{
-		/* Cancel any active statement timeout before committing */
-		disable_timeout(STATEMENT_TIMEOUT, false);
-
 		CommitTransactionCommand();
 
 #ifdef MEMORY_CONTEXT_CHECKING
@@ -4536,4 +4550,43 @@ log_disconnections(int code, Datum arg)
 					hours, minutes, seconds, msecs,
 					port->user_name, port->database_name, port->remote_host,
 					port->remote_port[0] ? " port=" : "", port->remote_port)));
+}
+
+/*
+ * Start statement timeout timer, if enabled.
+ *
+ * If there's already a timeout running, don't restart the timer.  That
+ * enables compromises between accuracy of timeouts and cost of starting a
+ * timeout.
+ */
+static void
+enable_statement_timeout(void)
+{
+	/* must be within an xact */
+	Assert(xact_started);
+
+	if (StatementTimeout > 0)
+	{
+		if (!stmt_timeout_active)
+		{
+			enable_timeout_after(STATEMENT_TIMEOUT, StatementTimeout);
+			stmt_timeout_active = true;
+		}
+	}
+	else
+		disable_timeout(STATEMENT_TIMEOUT, false);
+}
+
+/*
+ * Disable statement timeout, if active.
+ */
+static void
+disable_statement_timeout(void)
+{
+	if (stmt_timeout_active)
+	{
+		disable_timeout(STATEMENT_TIMEOUT, false);
+
+		stmt_timeout_active = false;
+	}
 }
