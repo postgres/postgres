@@ -27,6 +27,12 @@ else
 	plan tests => 12;
 }
 
+# To avoid hanging while expecting some specific input from a psql
+# instance being driven by us, add a timeout high enough that it
+# should never trigger in a normal run, but low enough to actually see
+# failures in a realistic amount of time.
+my $psql_timeout = 180;
+
 my $node = get_new_node('master');
 $node->init(allows_streaming => 1);
 $node->start();
@@ -47,7 +53,8 @@ my $killme = IPC::Run::start(
 	'>',
 	\$killme_stdout,
 	'2>',
-	\$killme_stderr);
+	\$killme_stderr,
+	IPC::Run::timeout($psql_timeout));
 
 # Need a second psql to check if crash-restart happened.
 my ($monitor_stdin, $monitor_stdout, $monitor_stderr) = ('', '', '');
@@ -59,7 +66,8 @@ my $monitor = IPC::Run::start(
 	'>',
 	\$monitor_stdout,
 	'2>',
-	\$monitor_stderr);
+	\$monitor_stderr,
+	IPC::Run::timeout($psql_timeout));
 
 #create table, insert row that should survive
 $killme_stdin .= q[
@@ -82,11 +90,13 @@ $killme_stdout = '';
 
 
 # Start longrunning query in second session, it's failure will signal
-# that crash-restart has occurred.
+# that crash-restart has occurred.  The initial wait for the trivial
+# select is to be sure that psql successfully connected to backend.
 $monitor_stdin .= q[
+SELECT $$psql-connected$$;
 SELECT pg_sleep(3600);
 ];
-$monitor->pump;
+$monitor->pump until $monitor_stdout =~ /psql-connected/;
 
 
 # kill once with QUIT - we expect psql to exit, while emitting error message first
@@ -137,18 +147,16 @@ INSERT INTO alive VALUES($$in-progress-before-sigkill$$) RETURNING status;
 $killme->pump until $killme_stdout =~ /in-progress-before-sigkill/;
 $killme_stdout = '';
 
-$monitor_stdin .= q[
-SELECT $$restart$$;
-];
-$monitor->pump until $monitor_stdout =~ /restart/;
-$monitor_stdout = '';
-
-# Re-start longrunning query in second session, it's failure will signal
-# that crash-restart has occurred.
+# Re-start longrunning query in second session, it's failure will
+# signal that crash-restart has occurred.  The initial wait for the
+# trivial select is to be sure that psql successfully connected to
+# backend.
 $monitor_stdin = q[
+SELECT $$psql-connected$$;
 SELECT pg_sleep(3600);
 ];
-$monitor->pump_nb; # don't wait for query results to come back
+$monitor->pump until $monitor_stdout =~ /psql-connected/;
+$monitor_stdout = '';
 
 
 # kill with SIGKILL this time - we expect the backend to exit, without
