@@ -840,7 +840,9 @@ postgresql:///mydb?host=localhost&amp;port=5433
 
    <para>
     Percent-encoding may be used to include symbols with special meaning in any
-    of the <acronym>URI</acronym> parts.
+    of the <acronym>URI</acronym> parts, e.g. replace <literal>=</> with
+    <literal>%3D</>.
+
    </para>
 
    <para>
