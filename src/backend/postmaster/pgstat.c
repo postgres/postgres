@@ -6297,14 +6297,14 @@ pgstat_clip_activity(const char *raw_activity)
 	/*
 	 * Some callers, like pgstat_get_backend_current_activity(), do not
 	 * guarantee that the buffer isn't concurrently modified. We try to take
-	 * care that the buffer is always terminated by a NULL byte regardless,
-	 * but let's still be paranoid about the string's length. In those cases
-	 * the underlying buffer is guaranteed to be
-	 * pgstat_track_activity_query_size large.
+	 * care that the buffer is always terminated by a NUL byte regardless, but
+	 * let's still be paranoid about the string's length. In those cases the
+	 * underlying buffer is guaranteed to be pgstat_track_activity_query_size
+	 * large.
 	 */
 	activity = pnstrdup(raw_activity, pgstat_track_activity_query_size - 1);
 
-	/* now double-guaranteed to be NULL terminated */
+	/* now double-guaranteed to be NUL terminated */
 	rawlen = strlen(activity);
 
 	/*
