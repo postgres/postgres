@@ -1,8 +1,6 @@
 --
 --  Test citext datatype
 --
---- script setup
-set client_encoding = 'utf8';
 CREATE EXTENSION citext;
 -- Check whether any of our opclasses fail amvalidate
 SELECT amname, opcname
@@ -2599,6 +2597,8 @@ SELECT citext_pattern_ge('b'::citext, 'A'::citext) AS true;
  t
 (1 row)
 
+-- Multi-byte tests below are diabled like the sanity tests above.
+-- Uncomment to run them.
 -- Test ~<~ and ~<=~
 SELECT 'a'::citext ~<~  'B'::citext AS t;
  t 
@@ -2612,12 +2612,7 @@ SELECT 'b'::citext ~<~  'A'::citext AS f;
  f
 (1 row)
 
-SELECT 'à'::citext ~<~  'À'::citext AS f;
- f 
----
- f
-(1 row)
-
+-- SELECT 'à'::citext ~<~  'À'::citext AS f;
 SELECT 'a'::citext ~<=~ 'B'::citext AS t;
  t 
 ---
@@ -2630,12 +2625,7 @@ SELECT 'a'::citext ~<=~ 'A'::citext AS t;
  t
 (1 row)
 
-SELECT 'à'::citext ~<=~ 'À'::citext AS t;
- t 
----
- t
-(1 row)
-
+-- SELECT 'à'::citext ~<=~ 'À'::citext AS t;
 -- Test ~>~ and ~>=~
 SELECT 'B'::citext ~>~  'a'::citext AS t;
  t 
@@ -2649,12 +2639,7 @@ SELECT 'b'::citext ~>~  'A'::citext AS t;
  t
 (1 row)
 
-SELECT 'à'::citext ~>~  'À'::citext AS f;
- f 
----
- f
-(1 row)
-
+-- SELECT 'à'::citext ~>~  'À'::citext AS f;
 SELECT 'B'::citext ~>~  'b'::citext AS f;
  f 
 ---
@@ -2667,12 +2652,7 @@ SELECT 'B'::citext ~>=~ 'b'::citext AS t;
  t
 (1 row)
 
-SELECT 'à'::citext ~>=~ 'À'::citext AS t;
- t 
----
- t
-(1 row)
-
+-- SELECT 'à'::citext ~>=~ 'À'::citext AS t;
 -- Test implicit casting. citext casts to text, but not vice-versa.
 SELECT 'B'::citext ~<~  'a'::text AS t;  -- text wins.
  t 
