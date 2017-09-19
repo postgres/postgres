@@ -2,6 +2,9 @@
 --  Test citext datatype
 --
 
+--- script setup
+set client_encoding = 'utf8';
+
 CREATE EXTENSION citext;
 
 -- Check whether any of our opclasses fail amvalidate
