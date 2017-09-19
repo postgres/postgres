@@ -1003,8 +1003,14 @@ typedef struct PgBackendStatus
 	/* application name; MUST be null-terminated */
 	char	   *st_appname;
 
-	/* current command string; MUST be null-terminated */
-	char	   *st_activity;
+	/*
+	 * Current command string; MUST be null-terminated. Note that this string
+	 * possibly is truncated in the middle of a multi-byte character. As
+	 * activity strings are stored more frequently than read, that allows to
+	 * move the cost of correct truncation to the display side. Use
+	 * pgstat_clip_activity() to truncate correctly.
+	 */
+	char	   *st_activity_raw;
 
 	/*
 	 * Command progress reporting.  Any command which wishes can advertise
@@ -1192,6 +1198,8 @@ extern PgStat_TableStatus *find_tabstat_entry(Oid rel_id);
 extern PgStat_BackendFunctionEntry *find_funcstat_entry(Oid func_id);
 
 extern void pgstat_initstats(Relation rel);
+
+extern char *pgstat_clip_activity(const char *activity);
 
 /* ----------
  * pgstat_report_wait_start() -

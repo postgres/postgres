@@ -2701,7 +2701,7 @@ CreateSharedBackendStatus(void)
 		buffer = BackendActivityBuffer;
 		for (i = 0; i < NumBackendStatSlots; i++)
 		{
-			BackendStatusArray[i].st_activity = buffer;
+			BackendStatusArray[i].st_activity_raw = buffer;
 			buffer += pgstat_track_activity_query_size;
 		}
 	}
@@ -2922,11 +2922,11 @@ pgstat_bestart(void)
 #endif
 	beentry->st_state = STATE_UNDEFINED;
 	beentry->st_appname[0] = '\0';
-	beentry->st_activity[0] = '\0';
+	beentry->st_activity_raw[0] = '\0';
 	/* Also make sure the last byte in each string area is always 0 */
 	beentry->st_clienthostname[NAMEDATALEN - 1] = '\0';
 	beentry->st_appname[NAMEDATALEN - 1] = '\0';
-	beentry->st_activity[pgstat_track_activity_query_size - 1] = '\0';
+	beentry->st_activity_raw[pgstat_track_activity_query_size - 1] = '\0';
 	beentry->st_progress_command = PROGRESS_COMMAND_INVALID;
 	beentry->st_progress_command_target = InvalidOid;
 
@@ -3017,7 +3017,7 @@ pgstat_report_activity(BackendState state, const char *cmd_str)
 			pgstat_increment_changecount_before(beentry);
 			beentry->st_state = STATE_DISABLED;
 			beentry->st_state_start_timestamp = 0;
-			beentry->st_activity[0] = '\0';
+			beentry->st_activity_raw[0] = '\0';
 			beentry->st_activity_start_timestamp = 0;
 			/* st_xact_start_timestamp and wait_event_info are also disabled */
 			beentry->st_xact_start_timestamp = 0;
@@ -3034,8 +3034,12 @@ pgstat_report_activity(BackendState state, const char *cmd_str)
 	start_timestamp = GetCurrentStatementStartTimestamp();
 	if (cmd_str != NULL)
 	{
-		len = pg_mbcliplen(cmd_str, strlen(cmd_str),
-						   pgstat_track_activity_query_size - 1);
+		/*
+		 * Compute length of to-be-stored string unaware of multi-byte
+		 * characters. For speed reasons that'll get corrected on read, rather
+		 * than computed every write.
+		 */
+		len = Min(strlen(cmd_str), pgstat_track_activity_query_size - 1);
 	}
 	current_timestamp = GetCurrentTimestamp();
 
@@ -3049,8 +3053,8 @@ pgstat_report_activity(BackendState state, const char *cmd_str)
 
 	if (cmd_str != NULL)
 	{
-		memcpy((char *) beentry->st_activity, cmd_str, len);
-		beentry->st_activity[len] = '\0';
+		memcpy((char *) beentry->st_activity_raw, cmd_str, len);
+		beentry->st_activity_raw[len] = '\0';
 		beentry->st_activity_start_timestamp = start_timestamp;
 	}
 
@@ -3278,8 +3282,8 @@ pgstat_read_current_status(void)
 				 */
 				strcpy(localappname, (char *) beentry->st_appname);
 				localentry->backendStatus.st_appname = localappname;
-				strcpy(localactivity, (char *) beentry->st_activity);
-				localentry->backendStatus.st_activity = localactivity;
+				strcpy(localactivity, (char *) beentry->st_activity_raw);
+				localentry->backendStatus.st_activity_raw = localactivity;
 				localentry->backendStatus.st_ssl = beentry->st_ssl;
 #ifdef USE_SSL
 				if (beentry->st_ssl)
@@ -3945,10 +3949,13 @@ pgstat_get_backend_current_activity(int pid, bool checkUser)
 			/* Now it is safe to use the non-volatile pointer */
 			if (checkUser && !superuser() && beentry->st_userid != GetUserId())
 				return "<insufficient privilege>";
-			else if (*(beentry->st_activity) == '\0')
+			else if (*(beentry->st_activity_raw) == '\0')
 				return "<command string not enabled>";
 			else
-				return beentry->st_activity;
+			{
+				/* this'll leak a bit of memory, but that seems acceptable */
+				return pgstat_clip_activity(beentry->st_activity_raw);
+			}
 		}
 
 		beentry++;
@@ -3994,7 +4001,7 @@ pgstat_get_crashed_backend_activity(int pid, char *buffer, int buflen)
 		if (beentry->st_procpid == pid)
 		{
 			/* Read pointer just once, so it can't change after validation */
-			const char *activity = beentry->st_activity;
+			const char *activity = beentry->st_activity_raw;
 			const char *activity_last;
 
 			/*
@@ -4017,7 +4024,8 @@ pgstat_get_crashed_backend_activity(int pid, char *buffer, int buflen)
 			/*
 			 * Copy only ASCII-safe characters so we don't run into encoding
 			 * problems when reporting the message; and be sure not to run off
-			 * the end of memory.
+			 * the end of memory.  As only ASCII characters are reported, it
+			 * doesn't seem necessary to perform multibyte aware clipping.
 			 */
 			ascii_safe_strlcpy(buffer, activity,
 							   Min(buflen, pgstat_track_activity_query_size));
@@ -6269,4 +6277,31 @@ pgstat_db_requested(Oid databaseid)
 		return true;
 
 	return false;
+}
+
+/*
+ * Convert a potentially unsafely truncated activity string (see
+ * PgBackendStatus.st_activity_raw's documentation) into a correctly truncated
+ * one.
+ *
+ * The returned string is allocated in the caller's memory context and may be
+ * freed.
+ */
+char *
+pgstat_clip_activity(const char *activity)
+{
+	int rawlen = strnlen(activity, pgstat_track_activity_query_size - 1);
+	int cliplen;
+
+	/*
+	 * All supported server-encodings make it possible to determine the length
+	 * of a multi-byte character from its first byte (this is not the case for
+	 * client encodings, see GB18030). As st_activity is always stored using
+	 * server encoding, this allows us to perform multi-byte aware truncation,
+	 * even if the string earlier was truncated in the middle of a multi-byte
+	 * character.
+	 */
+	cliplen = pg_mbcliplen(activity, rawlen,
+						   pgstat_track_activity_query_size - 1);
+	return pnstrdup(activity, cliplen);
 }
