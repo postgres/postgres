@@ -249,6 +249,7 @@ dshash_create(dsa_area *area, const dshash_parameters *params, void *arg)
 	}
 	hash_table->buckets = dsa_get_address(area,
 										  hash_table->control->buckets);
+	hash_table->size_log2 = hash_table->control->size_log2;
 
 	return hash_table;
 }
@@ -279,6 +280,14 @@ dshash_attach(dsa_area *area, const dshash_parameters *params,
 	hash_table->find_locked = false;
 	hash_table->find_exclusively_locked = false;
 	Assert(hash_table->control->magic == DSHASH_MAGIC);
+
+	/*
+	 * These will later be set to the correct values by
+	 * ensure_valid_bucket_pointers(), at which time we'll be holding a
+	 * partition lock for interlocking against concurrent resizing.
+	 */
+	hash_table->buckets = NULL;
+	hash_table->size_log2 = 0;
 
 	return hash_table;
 }
