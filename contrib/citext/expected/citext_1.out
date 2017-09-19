@@ -2351,3 +2351,373 @@ SELECT * FROM citext_matview ORDER BY id;
   5 | 
 (5 rows)
 
+-- test citext_pattern_cmp() function explicitly.
+SELECT citext_pattern_cmp('aardvark'::citext, 'aardvark'::citext) AS zero;
+ zero 
+------
+    0
+(1 row)
+
+SELECT citext_pattern_cmp('aardvark'::citext, 'aardVark'::citext) AS zero;
+ zero 
+------
+    0
+(1 row)
+
+SELECT citext_pattern_cmp('AARDVARK'::citext, 'AARDVARK'::citext) AS zero;
+ zero 
+------
+    0
+(1 row)
+
+SELECT citext_pattern_cmp('B'::citext, 'a'::citext) > 0 AS true;
+ true 
+------
+ t
+(1 row)
+
+SELECT citext_pattern_cmp('a'::citext, 'B'::citext) < 0 AS true;
+ true 
+------
+ t
+(1 row)
+
+SELECT citext_pattern_cmp('A'::citext, 'b'::citext) < 0 AS true;
+ true 
+------
+ t
+(1 row)
+
+SELECT citext_pattern_cmp('ABCD'::citext, 'abc'::citext) > 0 AS true;
+ true 
+------
+ t
+(1 row)
+
+SELECT citext_pattern_cmp('ABC'::citext, 'abcd'::citext) < 0 AS true;
+ true 
+------
+ t
+(1 row)
+
+-- test operator functions
+-- lt
+SELECT citext_pattern_lt('a'::citext, 'b'::citext) AS true;
+ true 
+------
+ t
+(1 row)
+
+SELECT citext_pattern_lt('A'::citext, 'b'::citext) AS true;
+ true 
+------
+ t
+(1 row)
+
+SELECT citext_pattern_lt('a'::citext, 'B'::citext) AS true;
+ true 
+------
+ t
+(1 row)
+
+SELECT citext_pattern_lt('b'::citext, 'a'::citext) AS false;
+ false 
+-------
+ f
+(1 row)
+
+SELECT citext_pattern_lt('B'::citext, 'a'::citext) AS false;
+ false 
+-------
+ f
+(1 row)
+
+SELECT citext_pattern_lt('b'::citext, 'A'::citext) AS false;
+ false 
+-------
+ f
+(1 row)
+
+-- le
+SELECT citext_pattern_le('a'::citext, 'a'::citext) AS true;
+ true 
+------
+ t
+(1 row)
+
+SELECT citext_pattern_le('a'::citext, 'A'::citext) AS true;
+ true 
+------
+ t
+(1 row)
+
+SELECT citext_pattern_le('A'::citext, 'a'::citext) AS true;
+ true 
+------
+ t
+(1 row)
+
+SELECT citext_pattern_le('A'::citext, 'A'::citext) AS true;
+ true 
+------
+ t
+(1 row)
+
+SELECT citext_pattern_le('a'::citext, 'B'::citext) AS true;
+ true 
+------
+ t
+(1 row)
+
+SELECT citext_pattern_le('A'::citext, 'b'::citext) AS true;
+ true 
+------
+ t
+(1 row)
+
+SELECT citext_pattern_le('a'::citext, 'B'::citext) AS true;
+ true 
+------
+ t
+(1 row)
+
+SELECT citext_pattern_le('b'::citext, 'a'::citext) AS false;
+ false 
+-------
+ f
+(1 row)
+
+SELECT citext_pattern_le('B'::citext, 'a'::citext) AS false;
+ false 
+-------
+ f
+(1 row)
+
+SELECT citext_pattern_le('b'::citext, 'A'::citext) AS false;
+ false 
+-------
+ f
+(1 row)
+
+-- gt
+SELECT citext_pattern_gt('a'::citext, 'b'::citext) AS false;
+ false 
+-------
+ f
+(1 row)
+
+SELECT citext_pattern_gt('A'::citext, 'b'::citext) AS false;
+ false 
+-------
+ f
+(1 row)
+
+SELECT citext_pattern_gt('a'::citext, 'B'::citext) AS false;
+ false 
+-------
+ f
+(1 row)
+
+SELECT citext_pattern_gt('b'::citext, 'a'::citext) AS true;
+ true 
+------
+ t
+(1 row)
+
+SELECT citext_pattern_gt('B'::citext, 'a'::citext) AS true;
+ true 
+------
+ t
+(1 row)
+
+SELECT citext_pattern_gt('b'::citext, 'A'::citext) AS true;
+ true 
+------
+ t
+(1 row)
+
+-- ge
+SELECT citext_pattern_ge('a'::citext, 'a'::citext) AS true;
+ true 
+------
+ t
+(1 row)
+
+SELECT citext_pattern_ge('a'::citext, 'A'::citext) AS true;
+ true 
+------
+ t
+(1 row)
+
+SELECT citext_pattern_ge('A'::citext, 'a'::citext) AS true;
+ true 
+------
+ t
+(1 row)
+
+SELECT citext_pattern_ge('A'::citext, 'A'::citext) AS true;
+ true 
+------
+ t
+(1 row)
+
+SELECT citext_pattern_ge('a'::citext, 'B'::citext) AS false;
+ false 
+-------
+ f
+(1 row)
+
+SELECT citext_pattern_ge('A'::citext, 'b'::citext) AS false;
+ false 
+-------
+ f
+(1 row)
+
+SELECT citext_pattern_ge('a'::citext, 'B'::citext) AS false;
+ false 
+-------
+ f
+(1 row)
+
+SELECT citext_pattern_ge('b'::citext, 'a'::citext) AS true;
+ true 
+------
+ t
+(1 row)
+
+SELECT citext_pattern_ge('B'::citext, 'a'::citext) AS true;
+ true 
+------
+ t
+(1 row)
+
+SELECT citext_pattern_ge('b'::citext, 'A'::citext) AS true;
+ true 
+------
+ t
+(1 row)
+
+-- Test ~<~ and ~<=~
+SELECT 'a'::citext ~<~  'B'::citext AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT 'b'::citext ~<~  'A'::citext AS f;
+ f 
+---
+ f
+(1 row)
+
+SELECT 'à'::citext ~<~  'À'::citext AS f;
+ f 
+---
+ f
+(1 row)
+
+SELECT 'a'::citext ~<=~ 'B'::citext AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT 'a'::citext ~<=~ 'A'::citext AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT 'à'::citext ~<=~ 'À'::citext AS t;
+ t 
+---
+ t
+(1 row)
+
+-- Test ~>~ and ~>=~
+SELECT 'B'::citext ~>~  'a'::citext AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT 'b'::citext ~>~  'A'::citext AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT 'à'::citext ~>~  'À'::citext AS f;
+ f 
+---
+ f
+(1 row)
+
+SELECT 'B'::citext ~>~  'b'::citext AS f;
+ f 
+---
+ f
+(1 row)
+
+SELECT 'B'::citext ~>=~ 'b'::citext AS t;
+ t 
+---
+ t
+(1 row)
+
+SELECT 'à'::citext ~>=~ 'À'::citext AS t;
+ t 
+---
+ t
+(1 row)
+
+-- Test implicit casting. citext casts to text, but not vice-versa.
+SELECT 'B'::citext ~<~  'a'::text AS t;  -- text wins.
+ t 
+---
+ t
+(1 row)
+
+SELECT 'B'::citext ~<=~ 'a'::text AS t;  -- text wins.
+ t 
+---
+ t
+(1 row)
+
+SELECT 'a'::citext ~>~  'B'::text AS t;  -- text wins.
+ t 
+---
+ t
+(1 row)
+
+SELECT 'a'::citext ~>=~ 'B'::text AS t;  -- text wins.
+ t 
+---
+ t
+(1 row)
+
+-- Test implicit casting. citext casts to varchar, but not vice-versa.
+SELECT 'B'::citext ~<~  'a'::varchar AS t;  -- varchar wins.
+ t 
+---
+ t
+(1 row)
+
+SELECT 'B'::citext ~<=~ 'a'::varchar AS t;  -- varchar wins.
+ t 
+---
+ t
+(1 row)
+
+SELECT 'a'::citext ~>~  'B'::varchar AS t;  -- varchar wins.
+ t 
+---
+ t
+(1 row)
+
+SELECT 'a'::citext ~>=~ 'B'::varchar AS t;  -- varchar wins.
+ t 
+---
+ t
+(1 row)
+

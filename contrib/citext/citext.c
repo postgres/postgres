@@ -18,6 +18,7 @@ PG_MODULE_MAGIC;
  */
 
 static int32 citextcmp(text *left, text *right, Oid collid);
+static int32 internal_citext_pattern_cmp(text *left, text *right, Oid collid);
 
 /*
  *		=================
@@ -59,6 +60,41 @@ citextcmp(text *left, text *right, Oid collid)
 }
 
 /*
+ * citext_pattern_cmp()
+ * Internal character-by-character comparison function for citext strings.
+ * Returns int32 negative, zero, or positive.
+ */
+static int32
+internal_citext_pattern_cmp(text *left, text *right, Oid collid)
+{
+	char	   *lcstr,
+			   *rcstr;
+	int			llen,
+				rlen;
+	int32		result;
+
+	lcstr = str_tolower(VARDATA_ANY(left), VARSIZE_ANY_EXHDR(left), DEFAULT_COLLATION_OID);
+	rcstr = str_tolower(VARDATA_ANY(right), VARSIZE_ANY_EXHDR(right), DEFAULT_COLLATION_OID);
+
+	llen = strlen(lcstr);
+	rlen = strlen(rcstr);
+
+	result = memcmp((void *) lcstr, (void *) rcstr, Min(llen, rlen));
+	if (result == 0)
+	{
+		if (llen < rlen)
+			result = -1;
+		else if (llen > rlen)
+			result = 1;
+	}
+
+	pfree(lcstr);
+	pfree(rcstr);
+
+	return result;
+}
+
+/*
  *		==================
  *		INDEXING FUNCTIONS
  *		==================
@@ -74,6 +110,23 @@ citext_cmp(PG_FUNCTION_ARGS)
 	int32		result;
 
 	result = citextcmp(left, right, PG_GET_COLLATION());
+
+	PG_FREE_IF_COPY(left, 0);
+	PG_FREE_IF_COPY(right, 1);
+
+	PG_RETURN_INT32(result);
+}
+
+PG_FUNCTION_INFO_V1(citext_pattern_cmp);
+
+Datum
+citext_pattern_cmp(PG_FUNCTION_ARGS)
+{
+	text	   *left = PG_GETARG_TEXT_PP(0);
+	text	   *right = PG_GETARG_TEXT_PP(1);
+	int32		result;
+
+	result = internal_citext_pattern_cmp(left, right, PG_GET_COLLATION());
 
 	PG_FREE_IF_COPY(left, 0);
 	PG_FREE_IF_COPY(right, 1);
@@ -227,6 +280,74 @@ citext_ge(PG_FUNCTION_ARGS)
 	bool		result;
 
 	result = citextcmp(left, right, PG_GET_COLLATION()) >= 0;
+
+	PG_FREE_IF_COPY(left, 0);
+	PG_FREE_IF_COPY(right, 1);
+
+	PG_RETURN_BOOL(result);
+}
+
+PG_FUNCTION_INFO_V1(citext_pattern_lt);
+
+Datum
+citext_pattern_lt(PG_FUNCTION_ARGS)
+{
+	text	   *left = PG_GETARG_TEXT_PP(0);
+	text	   *right = PG_GETARG_TEXT_PP(1);
+	bool		result;
+
+	result = internal_citext_pattern_cmp(left, right, PG_GET_COLLATION()) < 0;
+
+	PG_FREE_IF_COPY(left, 0);
+	PG_FREE_IF_COPY(right, 1);
+
+	PG_RETURN_BOOL(result);
+}
+
+PG_FUNCTION_INFO_V1(citext_pattern_le);
+
+Datum
+citext_pattern_le(PG_FUNCTION_ARGS)
+{
+	text	   *left = PG_GETARG_TEXT_PP(0);
+	text	   *right = PG_GETARG_TEXT_PP(1);
+	bool		result;
+
+	result = internal_citext_pattern_cmp(left, right, PG_GET_COLLATION()) <= 0;
+
+	PG_FREE_IF_COPY(left, 0);
+	PG_FREE_IF_COPY(right, 1);
+
+	PG_RETURN_BOOL(result);
+}
+
+PG_FUNCTION_INFO_V1(citext_pattern_gt);
+
+Datum
+citext_pattern_gt(PG_FUNCTION_ARGS)
+{
+	text	   *left = PG_GETARG_TEXT_PP(0);
+	text	   *right = PG_GETARG_TEXT_PP(1);
+	bool		result;
+
+	result = internal_citext_pattern_cmp(left, right, PG_GET_COLLATION()) > 0;
+
+	PG_FREE_IF_COPY(left, 0);
+	PG_FREE_IF_COPY(right, 1);
+
+	PG_RETURN_BOOL(result);
+}
+
+PG_FUNCTION_INFO_V1(citext_pattern_ge);
+
+Datum
+citext_pattern_ge(PG_FUNCTION_ARGS)
+{
+	text	   *left = PG_GETARG_TEXT_PP(0);
+	text	   *right = PG_GETARG_TEXT_PP(1);
+	bool		result;
+
+	result = internal_citext_pattern_cmp(left, right, PG_GET_COLLATION()) >= 0;
 
 	PG_FREE_IF_COPY(left, 0);
 	PG_FREE_IF_COPY(right, 1);
