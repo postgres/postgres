@@ -49,11 +49,11 @@
 <screen>
 $ ps auxww | grep ^postgres
 postgres  15551  0.0  0.1  57536  7132 pts/0    S    18:02   0:00 postgres -i
-postgres  15554  0.0  0.0  57536  1184 ?        Ss   18:02   0:00 postgres: writer process
-postgres  15555  0.0  0.0  57536   916 ?        Ss   18:02   0:00 postgres: checkpointer process
-postgres  15556  0.0  0.0  57536   916 ?        Ss   18:02   0:00 postgres: wal writer process
-postgres  15557  0.0  0.0  58504  2244 ?        Ss   18:02   0:00 postgres: autovacuum launcher process
-postgres  15558  0.0  0.0  17512  1068 ?        Ss   18:02   0:00 postgres: stats collector process
+postgres  15554  0.0  0.0  57536  1184 ?        Ss   18:02   0:00 postgres: background writer
+postgres  15555  0.0  0.0  57536   916 ?        Ss   18:02   0:00 postgres: checkpointer
+postgres  15556  0.0  0.0  57536   916 ?        Ss   18:02   0:00 postgres: walwriter
+postgres  15557  0.0  0.0  58504  2244 ?        Ss   18:02   0:00 postgres: autovacuum launcher
+postgres  15558  0.0  0.0  17512  1068 ?        Ss   18:02   0:00 postgres: stats collector
 postgres  15582  0.0  0.0  58772  3080 ?        Ss   18:04   0:00 postgres: joe runbug 127.0.0.1 idle
 postgres  15606  0.0  0.0  58772  3052 ?        Ss   18:07   0:00 postgres: tgl regression [local] SELECT waiting
 postgres  15610  0.0  0.0  58772  3056 ?        Ss   18:07   0:00 postgres: tgl regression [local] idle in transaction
@@ -102,7 +102,7 @@ $ psql -c 'SHOW cluster_name'
 (1 row)
 
 $ ps aux|grep server1
-postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: server1: writer process
+postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: server1: background writer
 ...
 </screen>
   </para>

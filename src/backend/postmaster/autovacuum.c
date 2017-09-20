@@ -436,7 +436,7 @@ AutoVacLauncherMain(int argc, char *argv[])
 	am_autovacuum_launcher = true;
 
 	/* Identify myself via ps */
-	init_ps_display("autovacuum launcher process", "", "", "");
+	init_ps_display(pgstat_get_backend_desc(B_AUTOVAC_LAUNCHER), "", "", "");
 
 	ereport(DEBUG1,
 			(errmsg("autovacuum launcher started")));
@@ -1519,7 +1519,7 @@ AutoVacWorkerMain(int argc, char *argv[])
 	am_autovacuum_worker = true;
 
 	/* Identify myself via ps */
-	init_ps_display("autovacuum worker process", "", "", "");
+	init_ps_display(pgstat_get_backend_desc(B_AUTOVAC_WORKER), "", "", "");
 
 	SetProcessingMode(InitProcessing);
 

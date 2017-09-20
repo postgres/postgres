@@ -236,7 +236,7 @@ PgArchiverMain(int argc, char *argv[])
 	/*
 	 * Identify myself via ps
 	 */
-	init_ps_display("archiver process", "", "", "");
+	init_ps_display("archiver", "", "", "");
 
 	pgarch_MainLoop();
 

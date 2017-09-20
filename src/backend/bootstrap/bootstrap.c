@@ -321,19 +321,19 @@ AuxiliaryProcessMain(int argc, char *argv[])
 		switch (MyAuxProcType)
 		{
 			case StartupProcess:
-				statmsg = "startup process";
+				statmsg = pgstat_get_backend_desc(B_STARTUP);
 				break;
 			case BgWriterProcess:
-				statmsg = "writer process";
+				statmsg = pgstat_get_backend_desc(B_BG_WRITER);
 				break;
 			case CheckpointerProcess:
-				statmsg = "checkpointer process";
+				statmsg = pgstat_get_backend_desc(B_CHECKPOINTER);
 				break;
 			case WalWriterProcess:
-				statmsg = "wal writer process";
+				statmsg = pgstat_get_backend_desc(B_WAL_WRITER);
 				break;
 			case WalReceiverProcess:
-				statmsg = "wal receiver process";
+				statmsg = pgstat_get_backend_desc(B_WAL_RECEIVER);
 				break;
 			default:
 				statmsg = "??? process";
