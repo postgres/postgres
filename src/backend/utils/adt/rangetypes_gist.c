@@ -216,30 +216,11 @@ range_gist_union(PG_FUNCTION_ARGS)
 	PG_RETURN_RANGE_P(result_range);
 }
 
-/* compress, decompress, fetch are no-ops */
-Datum
-range_gist_compress(PG_FUNCTION_ARGS)
-{
-	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
-
-	PG_RETURN_POINTER(entry);
-}
-
-Datum
-range_gist_decompress(PG_FUNCTION_ARGS)
-{
-	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
-
-	PG_RETURN_POINTER(entry);
-}
-
-Datum
-range_gist_fetch(PG_FUNCTION_ARGS)
-{
-	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
-
-	PG_RETURN_POINTER(entry);
-}
+/*
+ * We store ranges as ranges in GiST indexes, so we do not need
+ * compress, decompress, or fetch functions.  Note this implies a limit
+ * on the size of range values that can be indexed.
+ */
 
 /*
  * GiST page split penalty function.

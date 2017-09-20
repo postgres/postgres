@@ -43,11 +43,10 @@ gtsquery_compress(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(retval);
 }
 
-Datum
-gtsquery_decompress(PG_FUNCTION_ARGS)
-{
-	PG_RETURN_DATUM(PG_GETARG_DATUM(0));
-}
+/*
+ * We do not need a decompress function, because the other gtsquery
+ * support functions work with the compressed representation.
+ */
 
 Datum
 gtsquery_consistent(PG_FUNCTION_ARGS)

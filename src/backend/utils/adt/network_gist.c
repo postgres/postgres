@@ -576,17 +576,9 @@ inet_gist_compress(PG_FUNCTION_ARGS)
 }
 
 /*
- * The GiST decompress function
- *
- * do not do anything --- we just use the stored GistInetKey as-is.
+ * We do not need a decompress function, because the other GiST inet
+ * support functions work with the GistInetKey representation.
  */
-Datum
-inet_gist_decompress(PG_FUNCTION_ARGS)
-{
-	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
-
-	PG_RETURN_POINTER(entry);
-}
 
 /*
  * The GiST fetch function

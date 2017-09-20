@@ -185,37 +185,9 @@ gist_box_union(PG_FUNCTION_ARGS)
 }
 
 /*
- * GiST Compress methods for boxes
- *
- * do not do anything.
+ * We store boxes as boxes in GiST indexes, so we do not need
+ * compress, decompress, or fetch functions.
  */
-Datum
-gist_box_compress(PG_FUNCTION_ARGS)
-{
-	PG_RETURN_POINTER(PG_GETARG_POINTER(0));
-}
-
-/*
- * GiST DeCompress method for boxes (also used for points, polygons
- * and circles)
- *
- * do not do anything --- we just use the stored box as is.
- */
-Datum
-gist_box_decompress(PG_FUNCTION_ARGS)
-{
-	PG_RETURN_POINTER(PG_GETARG_POINTER(0));
-}
-
-/*
- * GiST Fetch method for boxes
- * do not do anything --- we just return the stored box as is.
- */
-Datum
-gist_box_fetch(PG_FUNCTION_ARGS)
-{
-	PG_RETURN_POINTER(PG_GETARG_POINTER(0));
-}
 
 /*
  * The GiST Penalty method for boxes (also used for points)

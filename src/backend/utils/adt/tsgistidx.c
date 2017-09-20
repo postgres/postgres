@@ -272,6 +272,10 @@ gtsvector_compress(PG_FUNCTION_ARGS)
 Datum
 gtsvector_decompress(PG_FUNCTION_ARGS)
 {
+	/*
+	 * We need to detoast the stored value, because the other gtsvector
+	 * support functions don't cope with toasted values.
+	 */
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
 	SignTSVector *key = (SignTSVector *) PG_DETOAST_DATUM(entry->key);
 
