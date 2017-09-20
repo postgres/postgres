@@ -1039,7 +1039,7 @@ ReplicationSlotReserveWal(void)
 		 * the new restart_lsn above, so normally we should never need to loop
 		 * more than twice.
 		 */
-		XLByteToSeg(slot->data.restart_lsn, segno);
+		XLByteToSeg(slot->data.restart_lsn, segno, wal_segment_size);
 		if (XLogGetLastRemovedSegno() < segno)
 			break;
 	}

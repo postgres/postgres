@@ -752,13 +752,12 @@
    <acronym>WAL</acronym> logs are stored in the directory
    <filename>pg_wal</filename> under the data directory, as a set of
    segment files, normally each 16 MB in size (but the size can be changed
-   by altering the <option>--with-wal-segsize</> configure option when
-   building the server).  Each segment is divided into pages, normally
-   8 kB each (this size can be changed via the <option>--with-wal-blocksize</>
-   configure option).  The log record headers are described in
-   <filename>access/xlogrecord.h</filename>; the record content is dependent
-   on the type of event that is being logged.  Segment files are given
-   ever-increasing numbers as names, starting at
+   by altering the <option>--wal-segsize</> initdb option).  Each segment is
+   divided into pages, normally 8 kB each (this size can be changed via the
+   <option>--with-wal-blocksize</> configure option).  The log record headers
+   are described in <filename>access/xlogrecord.h</filename>; the record
+   content is dependent on the type of event that is being logged.  Segment
+   files are given ever-increasing numbers as names, starting at
    <filename>000000010000000000000000</filename>.  The numbers do not wrap,
    but it will take a very, very long time to exhaust the
    available stock of numbers.

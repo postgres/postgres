@@ -99,6 +99,7 @@ main(int argc, char *argv[])
 	char		xlogfilename[MAXFNAMELEN];
 	int			c;
 	int			i;
+	int			WalSegSz;
 
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pg_controldata"));
 
@@ -164,6 +165,15 @@ main(int argc, char *argv[])
 				 "Either the file is corrupt, or it has a different layout than this program\n"
 				 "is expecting.  The results below are untrustworthy.\n\n"));
 
+	/* set wal segment size */
+	WalSegSz = ControlFile->xlog_seg_size;
+
+	if (!IsValidWalSegSize(WalSegSz))
+		fprintf(stderr,
+				_("WARNING: WAL segment size specified, %d bytes, is not a power of two between 1MB and 1GB.\n"
+				  "The file is corrupt and the results below are untrustworthy.\n"),
+				WalSegSz);
+
 	/*
 	 * This slightly-chintzy coding will work as long as the control file
 	 * timestamps are within the range of time_t; that should be the case in
@@ -184,8 +194,9 @@ main(int argc, char *argv[])
 	 * Calculate name of the WAL file containing the latest checkpoint's REDO
 	 * start point.
 	 */
-	XLByteToSeg(ControlFile->checkPointCopy.redo, segno);
-	XLogFileName(xlogfilename, ControlFile->checkPointCopy.ThisTimeLineID, segno);
+	XLByteToSeg(ControlFile->checkPointCopy.redo, segno, WalSegSz);
+	XLogFileName(xlogfilename, ControlFile->checkPointCopy.ThisTimeLineID,
+				 segno, WalSegSz);
 
 	/*
 	 * Format system_identifier and mock_authentication_nonce separately to

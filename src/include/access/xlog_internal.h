@@ -85,15 +85,27 @@ typedef XLogLongPageHeaderData *XLogLongPageHeader;
 #define XLogPageHeaderSize(hdr)		\
 	(((hdr)->xlp_info & XLP_LONG_HEADER) ? SizeOfXLogLongPHD : SizeOfXLogShortPHD)
 
-/*
- * The XLOG is split into WAL segments (physical files) of the size indicated
- * by XLOG_SEG_SIZE.
- */
-#define XLogSegSize		((uint32) XLOG_SEG_SIZE)
-#define XLogSegmentsPerXLogId	(UINT64CONST(0x100000000) / XLOG_SEG_SIZE)
+/* wal_segment_size can range from 1MB to 1GB */
+#define WalSegMinSize 1024 * 1024
+#define WalSegMaxSize 1024 * 1024 * 1024
+/* default number of min and max wal segments */
+#define DEFAULT_MIN_WAL_SEGS 5
+#define DEFAULT_MAX_WAL_SEGS 64
 
-#define XLogSegNoOffsetToRecPtr(segno, offset, dest) \
-		(dest) = (segno) * XLOG_SEG_SIZE + (offset)
+/* check that the given size is a valid wal_segment_size */
+#define IsPowerOf2(x) (x > 0 && ((x) & ((x)-1)) == 0)
+#define IsValidWalSegSize(size) \
+	 (IsPowerOf2(size) && \
+	 ((size) >= WalSegMinSize && (size) <= WalSegMaxSize))
+
+#define XLogSegmentsPerXLogId(wal_segsz_bytes)	\
+	(UINT64CONST(0x100000000) / (wal_segsz_bytes))
+
+#define XLogSegNoOffsetToRecPtr(segno, offset, dest, wal_segsz_bytes) \
+		(dest) = (segno) * (wal_segsz_bytes) + (offset)
+
+#define XLogSegmentOffset(xlogptr, wal_segsz_bytes)	\
+	((xlogptr) & ((wal_segsz_bytes) - 1))
 
 /*
  * Compute a segment number from an XLogRecPtr.
@@ -103,11 +115,11 @@ typedef XLogLongPageHeaderData *XLogLongPageHeader;
  * for deciding which segment to write given a pointer to a record end,
  * for example.
  */
-#define XLByteToSeg(xlrp, logSegNo) \
-	logSegNo = (xlrp) / XLogSegSize
+#define XLByteToSeg(xlrp, logSegNo, wal_segsz_bytes) \
+	logSegNo = (xlrp) / (wal_segsz_bytes)
 
-#define XLByteToPrevSeg(xlrp, logSegNo) \
-	logSegNo = ((xlrp) - 1) / XLogSegSize
+#define XLByteToPrevSeg(xlrp, logSegNo, wal_segsz_bytes) \
+	logSegNo = ((xlrp) - 1) / (wal_segsz_bytes)
 
 /*
  * Is an XLogRecPtr within a particular XLOG segment?
@@ -115,11 +127,11 @@ typedef XLogLongPageHeaderData *XLogLongPageHeader;
  * For XLByteInSeg, do the computation at face value.  For XLByteInPrevSeg,
  * a boundary byte is taken to be in the previous segment.
  */
-#define XLByteInSeg(xlrp, logSegNo) \
-	(((xlrp) / XLogSegSize) == (logSegNo))
+#define XLByteInSeg(xlrp, logSegNo, wal_segsz_bytes) \
+	(((xlrp) / (wal_segsz_bytes)) == (logSegNo))
 
-#define XLByteInPrevSeg(xlrp, logSegNo) \
-	((((xlrp) - 1) / XLogSegSize) == (logSegNo))
+#define XLByteInPrevSeg(xlrp, logSegNo, wal_segsz_bytes) \
+	((((xlrp) - 1) / (wal_segsz_bytes)) == (logSegNo))
 
 /* Check if an XLogRecPtr value is in a plausible range */
 #define XRecOffIsValid(xlrp) \
@@ -140,10 +152,10 @@ typedef XLogLongPageHeaderData *XLogLongPageHeader;
 /* Length of XLog file name */
 #define XLOG_FNAME_LEN	   24
 
-#define XLogFileName(fname, tli, logSegNo)	\
+#define XLogFileName(fname, tli, logSegNo, wal_segsz_bytes)	\
 	snprintf(fname, MAXFNAMELEN, "%08X%08X%08X", tli,		\
-			 (uint32) ((logSegNo) / XLogSegmentsPerXLogId), \
-			 (uint32) ((logSegNo) % XLogSegmentsPerXLogId))
+			 (uint32) ((logSegNo) / XLogSegmentsPerXLogId(wal_segsz_bytes)), \
+			 (uint32) ((logSegNo) % XLogSegmentsPerXLogId(wal_segsz_bytes)))
 
 #define XLogFileNameById(fname, tli, log, seg)	\
 	snprintf(fname, MAXFNAMELEN, "%08X%08X%08X", tli, log, seg)
@@ -162,18 +174,18 @@ typedef XLogLongPageHeaderData *XLogLongPageHeader;
 	 strspn(fname, "0123456789ABCDEF") == XLOG_FNAME_LEN &&		\
 	 strcmp((fname) + XLOG_FNAME_LEN, ".partial") == 0)
 
-#define XLogFromFileName(fname, tli, logSegNo)	\
+#define XLogFromFileName(fname, tli, logSegNo, wal_segsz_bytes)	\
 	do {												\
 		uint32 log;										\
 		uint32 seg;										\
 		sscanf(fname, "%08X%08X%08X", tli, &log, &seg); \
-		*logSegNo = (uint64) log * XLogSegmentsPerXLogId + seg; \
+		*logSegNo = (uint64) log * XLogSegmentsPerXLogId(wal_segsz_bytes) + seg; \
 	} while (0)
 
-#define XLogFilePath(path, tli, logSegNo)	\
-	snprintf(path, MAXPGPATH, XLOGDIR "/%08X%08X%08X", tli,				\
-			 (uint32) ((logSegNo) / XLogSegmentsPerXLogId),				\
-			 (uint32) ((logSegNo) % XLogSegmentsPerXLogId))
+#define XLogFilePath(path, tli, logSegNo, wal_segsz_bytes)	\
+	snprintf(path, MAXPGPATH, XLOGDIR "/%08X%08X%08X", tli,	\
+			 (uint32) ((logSegNo) / XLogSegmentsPerXLogId(wal_segsz_bytes)), \
+			 (uint32) ((logSegNo) % XLogSegmentsPerXLogId(wal_segsz_bytes)))
 
 #define TLHistoryFileName(fname, tli)	\
 	snprintf(fname, MAXFNAMELEN, "%08X.history", tli)
@@ -189,20 +201,22 @@ typedef XLogLongPageHeaderData *XLogLongPageHeader;
 #define StatusFilePath(path, xlog, suffix)	\
 	snprintf(path, MAXPGPATH, XLOGDIR "/archive_status/%s%s", xlog, suffix)
 
-#define BackupHistoryFileName(fname, tli, logSegNo, offset) \
+#define BackupHistoryFileName(fname, tli, logSegNo, startpoint, wal_segsz_bytes) \
 	snprintf(fname, MAXFNAMELEN, "%08X%08X%08X.%08X.backup", tli, \
-			 (uint32) ((logSegNo) / XLogSegmentsPerXLogId),		  \
-			 (uint32) ((logSegNo) % XLogSegmentsPerXLogId), offset)
+			 (uint32) ((logSegNo) / XLogSegmentsPerXLogId(wal_segsz_bytes)), \
+			 (uint32) ((logSegNo) % XLogSegmentsPerXLogId(wal_segsz_bytes)), \
+			 (uint32) (XLogSegmentOffset(startpoint, wal_segsz_bytes)))
 
 #define IsBackupHistoryFileName(fname) \
 	(strlen(fname) > XLOG_FNAME_LEN && \
 	 strspn(fname, "0123456789ABCDEF") == XLOG_FNAME_LEN && \
 	 strcmp((fname) + strlen(fname) - strlen(".backup"), ".backup") == 0)
 
-#define BackupHistoryFilePath(path, tli, logSegNo, offset)	\
+#define BackupHistoryFilePath(path, tli, logSegNo, startpoint, wal_segsz_bytes)	\
 	snprintf(path, MAXPGPATH, XLOGDIR "/%08X%08X%08X.%08X.backup", tli, \
-			 (uint32) ((logSegNo) / XLogSegmentsPerXLogId), \
-			 (uint32) ((logSegNo) % XLogSegmentsPerXLogId), offset)
+			 (uint32) ((logSegNo) / XLogSegmentsPerXLogId(wal_segsz_bytes)), \
+			 (uint32) ((logSegNo) % XLogSegmentsPerXLogId(wal_segsz_bytes)), \
+			 (uint32) (XLogSegmentOffset((startpoint), wal_segsz_bytes)))
 
 /*
  * Information logged when we detect a change in one of the parameters

@@ -179,8 +179,6 @@ s{PG_VERSION_STR "[^"]+"}{PG_VERSION_STR "PostgreSQL $self->{strver}$extraver, c
 		  1024, "\n";
 		print $o "#define XLOG_BLCKSZ ",
 		  1024 * $self->{options}->{wal_blocksize}, "\n";
-		print $o "#define XLOG_SEG_SIZE (", $self->{options}->{wal_segsize},
-		  " * 1024 * 1024)\n";
 
 		if ($self->{options}->{float4byval})
 		{

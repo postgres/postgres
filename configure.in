@@ -344,37 +344,6 @@ AC_DEFINE_UNQUOTED([XLOG_BLCKSZ], ${XLOG_BLCKSZ}, [
 ])
 
 #
-# WAL segment size
-#
-AC_MSG_CHECKING([for WAL segment size])
-PGAC_ARG_REQ(with, wal-segsize, [SEGSIZE], [set WAL segment size in MB [16]],
-             [wal_segsize=$withval],
-             [wal_segsize=16])
-case ${wal_segsize} in
-  1) ;;
-  2) ;;
-  4) ;;
-  8) ;;
- 16) ;;
- 32) ;;
- 64) ;;
- 128) ;;
- 256) ;;
- 512) ;;
- 1024) ;;
-  *) AC_MSG_ERROR([Invalid WAL segment size. Allowed values are 1,2,4,8,16,32,64,128,256,512,1024.])
-esac
-AC_MSG_RESULT([${wal_segsize}MB])
-
-AC_DEFINE_UNQUOTED([XLOG_SEG_SIZE], [(${wal_segsize} * 1024 * 1024)], [
- XLOG_SEG_SIZE is the size of a single WAL file.  This must be a power of 2
- and larger than XLOG_BLCKSZ (preferably, a great deal larger than
- XLOG_BLCKSZ).
-
- Changing XLOG_SEG_SIZE requires an initdb.
-])
-
-#
 # C compiler
 #
 

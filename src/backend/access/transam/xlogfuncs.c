@@ -489,8 +489,8 @@ pg_walfile_name_offset(PG_FUNCTION_ARGS)
 	/*
 	 * xlogfilename
 	 */
-	XLByteToPrevSeg(locationpoint, xlogsegno);
-	XLogFileName(xlogfilename, ThisTimeLineID, xlogsegno);
+	XLByteToPrevSeg(locationpoint, xlogsegno, wal_segment_size);
+	XLogFileName(xlogfilename, ThisTimeLineID, xlogsegno, wal_segment_size);
 
 	values[0] = CStringGetTextDatum(xlogfilename);
 	isnull[0] = false;
@@ -498,7 +498,7 @@ pg_walfile_name_offset(PG_FUNCTION_ARGS)
 	/*
 	 * offset
 	 */
-	xrecoff = locationpoint % XLogSegSize;
+	xrecoff = XLogSegmentOffset(locationpoint, wal_segment_size);
 
 	values[1] = UInt32GetDatum(xrecoff);
 	isnull[1] = false;
@@ -530,8 +530,8 @@ pg_walfile_name(PG_FUNCTION_ARGS)
 				 errmsg("recovery is in progress"),
 				 errhint("pg_walfile_name() cannot be executed during recovery.")));
 
-	XLByteToPrevSeg(locationpoint, xlogsegno);
-	XLogFileName(xlogfilename, ThisTimeLineID, xlogsegno);
+	XLByteToPrevSeg(locationpoint, xlogsegno, wal_segment_size);
+	XLogFileName(xlogfilename, ThisTimeLineID, xlogsegno, wal_segment_size);
 
 	PG_RETURN_TEXT_P(cstring_to_text(xlogfilename));
 }

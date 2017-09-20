@@ -64,7 +64,7 @@ static const char *progname;
 
 static int	secs_per_test = 5;
 static int	needs_unlink = 0;
-static char full_buf[XLOG_SEG_SIZE],
+static char full_buf[DEFAULT_XLOG_SEG_SIZE],
 		   *buf,
 		   *filename = FSYNC_FILENAME;
 static struct timeval start_t,
@@ -209,7 +209,7 @@ prepare_buf(void)
 	int			ops;
 
 	/* write random data into buffer */
-	for (ops = 0; ops < XLOG_SEG_SIZE; ops++)
+	for (ops = 0; ops < DEFAULT_XLOG_SEG_SIZE; ops++)
 		full_buf[ops] = random();
 
 	buf = (char *) TYPEALIGN(XLOG_BLCKSZ, full_buf);
@@ -226,7 +226,8 @@ test_open(void)
 	if ((tmpfile = open(filename, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR)) == -1)
 		die("could not open output file");
 	needs_unlink = 1;
-	if (write(tmpfile, full_buf, XLOG_SEG_SIZE) != XLOG_SEG_SIZE)
+	if (write(tmpfile, full_buf, DEFAULT_XLOG_SEG_SIZE) !=
+		DEFAULT_XLOG_SEG_SIZE)
 		die("write failed");
 
 	/* fsync now so that dirty buffers don't skew later tests */

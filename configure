@@ -821,7 +821,6 @@ enable_tap_tests
 with_blocksize
 with_segsize
 with_wal_blocksize
-with_wal_segsize
 with_CC
 enable_depend
 enable_cassert
@@ -1518,8 +1517,6 @@ Optional Packages:
   --with-segsize=SEGSIZE  set table segment size in GB [1]
   --with-wal-blocksize=BLOCKSIZE
                           set WAL block size in kB [8]
-  --with-wal-segsize=SEGSIZE
-                          set WAL segment size in MB [16]
   --with-CC=CMD           set compiler (deprecated)
   --with-icu              build with ICU support
   --with-tcl              build Tcl modules (PL/Tcl)
@@ -3730,57 +3727,6 @@ $as_echo "${wal_blocksize}kB" >&6; }
 
 cat >>confdefs.h <<_ACEOF
 #define XLOG_BLCKSZ ${XLOG_BLCKSZ}
-_ACEOF
-
-
-#
-# WAL segment size
-#
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for WAL segment size" >&5
-$as_echo_n "checking for WAL segment size... " >&6; }
-
-
-
-# Check whether --with-wal-segsize was given.
-if test "${with_wal_segsize+set}" = set; then :
-  withval=$with_wal_segsize;
-  case $withval in
-    yes)
-      as_fn_error $? "argument required for --with-wal-segsize option" "$LINENO" 5
-      ;;
-    no)
-      as_fn_error $? "argument required for --with-wal-segsize option" "$LINENO" 5
-      ;;
-    *)
-      wal_segsize=$withval
-      ;;
-  esac
-
-else
-  wal_segsize=16
-fi
-
-
-case ${wal_segsize} in
-  1) ;;
-  2) ;;
-  4) ;;
-  8) ;;
- 16) ;;
- 32) ;;
- 64) ;;
- 128) ;;
- 256) ;;
- 512) ;;
- 1024) ;;
-  *) as_fn_error $? "Invalid WAL segment size. Allowed values are 1,2,4,8,16,32,64,128,256,512,1024." "$LINENO" 5
-esac
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ${wal_segsize}MB" >&5
-$as_echo "${wal_segsize}MB" >&6; }
-
-
-cat >>confdefs.h <<_ACEOF
-#define XLOG_SEG_SIZE (${wal_segsize} * 1024 * 1024)
 _ACEOF
 
 

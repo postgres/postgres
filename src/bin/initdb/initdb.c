@@ -59,6 +59,7 @@
 #include "sys/mman.h"
 #endif
 
+#include "access/xlog_internal.h"
 #include "catalog/catalog.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_class.h"
@@ -141,6 +142,8 @@ static bool sync_only = false;
 static bool show_setting = false;
 static bool data_checksums = false;
 static char *xlog_dir = NULL;
+static char *str_wal_segment_size_mb = NULL;
+static int	wal_segment_size_mb;
 
 
 /* internal vars */
@@ -1000,6 +1003,23 @@ test_config_settings(void)
 }
 
 /*
+ * Calculate the default wal_size with a "pretty" unit.
+ */
+static char *
+pretty_wal_size(int segment_count)
+{
+	int			sz = wal_segment_size_mb * segment_count;
+	char	   *result = pg_malloc(10);
+
+	if ((sz % 1024) == 0)
+		snprintf(result, 10, "%dGB", sz / 1024);
+	else
+		snprintf(result, 10, "%dMB", sz);
+
+	return result;
+}
+
+/*
  * set up all the config files
  */
 static void
@@ -1042,6 +1062,15 @@ setup_config(void)
 	snprintf(repltok, sizeof(repltok), "#port = %d", DEF_PGPORT);
 	conflines = replace_token(conflines, "#port = 5432", repltok);
 #endif
+
+	/* set default max_wal_size and min_wal_size */
+	snprintf(repltok, sizeof(repltok), "min_wal_size = %s",
+			 pretty_wal_size(DEFAULT_MIN_WAL_SEGS));
+	conflines = replace_token(conflines, "#min_wal_size = 80MB", repltok);
+
+	snprintf(repltok, sizeof(repltok), "max_wal_size = %s",
+			 pretty_wal_size(DEFAULT_MAX_WAL_SEGS));
+	conflines = replace_token(conflines, "#max_wal_size = 1GB", repltok);
 
 	snprintf(repltok, sizeof(repltok), "lc_messages = '%s'",
 			 escape_quotes(lc_messages));
@@ -1352,8 +1381,9 @@ bootstrap_template1(void)
 	unsetenv("PGCLIENTENCODING");
 
 	snprintf(cmd, sizeof(cmd),
-			 "\"%s\" --boot -x1 %s %s %s",
+			 "\"%s\" --boot -x1 -X %u %s %s %s",
 			 backend_exec,
+			 wal_segment_size_mb * (1024 * 1024),
 			 data_checksums ? "-k" : "",
 			 boot_options,
 			 debug ? "-d 5" : "");
@@ -2293,6 +2323,7 @@ usage(const char *progname)
 	printf(_("  -U, --username=NAME       database superuser name\n"));
 	printf(_("  -W, --pwprompt            prompt for a password for the new superuser\n"));
 	printf(_("  -X, --waldir=WALDIR       location for the write-ahead log directory\n"));
+	printf(_("      --wal-segsize=SIZE    size of wal segment size\n"));
 	printf(_("\nLess commonly used options:\n"));
 	printf(_("  -d, --debug               generate lots of debugging output\n"));
 	printf(_("  -k, --data-checksums      use data page checksums\n"));
@@ -2983,6 +3014,7 @@ main(int argc, char *argv[])
 		{"no-sync", no_argument, NULL, 'N'},
 		{"sync-only", no_argument, NULL, 'S'},
 		{"waldir", required_argument, NULL, 'X'},
+		{"wal-segsize", required_argument, NULL, 12},
 		{"data-checksums", no_argument, NULL, 'k'},
 		{NULL, 0, NULL, 0}
 	};
@@ -3116,6 +3148,9 @@ main(int argc, char *argv[])
 			case 'X':
 				xlog_dir = pg_strdup(optarg);
 				break;
+			case 12:
+				str_wal_segment_size_mb = pg_strdup(optarg);
+				break;
 			default:
 				/* getopt_long already emitted a complaint */
 				fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
@@ -3177,6 +3212,27 @@ main(int argc, char *argv[])
 	check_authmethod_valid(authmethodhost, auth_methods_host, "host");
 
 	check_need_password(authmethodlocal, authmethodhost);
+
+	/* set wal segment size */
+	if (str_wal_segment_size_mb == NULL)
+		wal_segment_size_mb = (DEFAULT_XLOG_SEG_SIZE) / (1024 * 1024);
+	else
+	{
+		char	   *endptr;
+
+		/* check that the argument is a number */
+		wal_segment_size_mb = strtol(str_wal_segment_size_mb, &endptr, 10);
+
+		/* verify that wal segment size is valid */
+		if (*endptr != '\0' ||
+			!IsValidWalSegSize(wal_segment_size_mb * 1024 * 1024))
+		{
+			fprintf(stderr,
+					_("%s: --wal-segsize must be a power of two between 1 and 1024\n"),
+					progname);
+			exit(1);
+		}
+	}
 
 	get_restricted_token(progname);
 

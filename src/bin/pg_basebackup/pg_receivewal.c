@@ -191,7 +191,7 @@ close_destination_dir(DIR *dest_dir, char *dest_folder)
 /*
  * Determine starting location for streaming, based on any existing xlog
  * segments in the directory. We start at the end of the last one that is
- * complete (size matches XLogSegSize), on the timeline with highest ID.
+ * complete (size matches wal segment size), on the timeline with highest ID.
  *
  * If there are no WAL files in the directory, returns InvalidXLogRecPtr.
  */
@@ -242,7 +242,7 @@ FindStreamingStart(uint32 *tli)
 		/*
 		 * Looks like an xlog file. Parse its position.
 		 */
-		XLogFromFileName(dirent->d_name, &tli, &segno);
+		XLogFromFileName(dirent->d_name, &tli, &segno, WalSegSz);
 
 		/*
 		 * Check that the segment has the right size, if it's supposed to be
@@ -267,7 +267,7 @@ FindStreamingStart(uint32 *tli)
 				disconnect_and_exit(1);
 			}
 
-			if (statbuf.st_size != XLOG_SEG_SIZE)
+			if (statbuf.st_size != WalSegSz)
 			{
 				fprintf(stderr,
 						_("%s: segment file \"%s\" has incorrect size %d, skipping\n"),
@@ -308,7 +308,7 @@ FindStreamingStart(uint32 *tli)
 			bytes_out = (buf[3] << 24) | (buf[2] << 16) |
 				(buf[1] << 8) | buf[0];
 
-			if (bytes_out != XLOG_SEG_SIZE)
+			if (bytes_out != WalSegSz)
 			{
 				fprintf(stderr,
 						_("%s: compressed segment file \"%s\" has incorrect uncompressed size %d, skipping\n"),
@@ -349,7 +349,7 @@ FindStreamingStart(uint32 *tli)
 		if (!high_ispartial)
 			high_segno++;
 
-		XLogSegNoOffsetToRecPtr(high_segno, 0, high_ptr);
+		XLogSegNoOffsetToRecPtr(high_segno, 0, high_ptr, WalSegSz);
 
 		*tli = high_tli;
 		return high_ptr;
@@ -410,7 +410,7 @@ StreamLog(void)
 	/*
 	 * Always start streaming at the beginning of a segment
 	 */
-	stream.startpos -= stream.startpos % XLOG_SEG_SIZE;
+	stream.startpos -= XLogSegmentOffset(stream.startpos, WalSegSz);
 
 	/*
 	 * Start the replication
@@ -687,6 +687,10 @@ main(int argc, char **argv)
 	 * connection.
 	 */
 	if (!RunIdentifySystem(conn, NULL, NULL, NULL, &db_name))
+		disconnect_and_exit(1);
+
+	/* determine remote server's xlog segment size */
+	if (!RetrieveWalSegSize(conn))
 		disconnect_and_exit(1);
 
 	/*

@@ -14,6 +14,12 @@
  */
 
 /*
+ * This is default value for wal_segment_size to be used at intidb when run
+ * without --walsegsize option. Must be a valid segment size.
+ */
+#define DEFAULT_XLOG_SEG_SIZE	(16*1024*1024)
+
+/*
  * Maximum length for identifiers (e.g. table names, column names,
  * function names).  Names actually are limited to one less byte than this,
  * because the length must include a trailing zero byte.

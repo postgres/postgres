@@ -20,7 +20,9 @@ unset MAKELEVEL
 # Run a given "initdb" binary and overlay the regression testing
 # authentication configuration.
 standard_initdb() {
-	"$1" -N
+	# To increase coverage of non-standard segment size without
+	# increase test runtime, run these tests with a lower setting.
+	"$1" -N --wal-segsize 1
 	if [ -n "$TEMP_CONFIG" -a -r "$TEMP_CONFIG" ]
 	then
 		cat "$TEMP_CONFIG" >> "$PGDATA/postgresql.conf"

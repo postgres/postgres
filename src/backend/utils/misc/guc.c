@@ -514,7 +514,6 @@ static int	block_size;
 static int	segment_size;
 static int	wal_block_size;
 static bool data_checksums;
-static int	wal_segment_size;
 static bool integer_datetimes;
 static bool assert_enabled;
 
@@ -713,9 +712,6 @@ typedef struct
 #endif
 #if XLOG_BLCKSZ < 1024 || XLOG_BLCKSZ > (1024*1024)
 #error XLOG_BLCKSZ must be between 1KB and 1MB
-#endif
-#if XLOG_SEG_SIZE < (1024*1024) || XLOG_SEG_SIZE > (1024*1024*1024)
-#error XLOG_SEG_SIZE must be between 1MB and 1GB
 #endif
 
 static const char *memory_units_hint = gettext_noop("Valid units for this parameter are \"kB\", \"MB\", \"GB\", and \"TB\".");
@@ -2264,7 +2260,8 @@ static struct config_int ConfigureNamesInt[] =
 			GUC_UNIT_MB
 		},
 		&min_wal_size_mb,
-		5 * (XLOG_SEG_SIZE / (1024 * 1024)), 2, MAX_KILOBYTES,
+		DEFAULT_MIN_WAL_SEGS * (DEFAULT_XLOG_SEG_SIZE / (1024 * 1024)),
+		2, MAX_KILOBYTES,
 		NULL, NULL, NULL
 	},
 
@@ -2275,7 +2272,8 @@ static struct config_int ConfigureNamesInt[] =
 			GUC_UNIT_MB
 		},
 		&max_wal_size_mb,
-		64 * (XLOG_SEG_SIZE / (1024 * 1024)), 2, MAX_KILOBYTES,
+		DEFAULT_MAX_WAL_SEGS * (DEFAULT_XLOG_SEG_SIZE / (1024 * 1024)),
+		2, MAX_KILOBYTES,
 		NULL, assign_max_wal_size, NULL
 	},
 
@@ -2637,14 +2635,14 @@ static struct config_int ConfigureNamesInt[] =
 
 	{
 		{"wal_segment_size", PGC_INTERNAL, PRESET_OPTIONS,
-			gettext_noop("Shows the number of pages per write ahead log segment."),
+			gettext_noop("Shows the size of write ahead log segments."),
 			NULL,
-			GUC_UNIT_XBLOCKS | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
+			GUC_UNIT_BYTE | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
 		},
 		&wal_segment_size,
-		(XLOG_SEG_SIZE / XLOG_BLCKSZ),
-		(XLOG_SEG_SIZE / XLOG_BLCKSZ),
-		(XLOG_SEG_SIZE / XLOG_BLCKSZ),
+		DEFAULT_XLOG_SEG_SIZE,
+		WalSegMinSize,
+		WalSegMaxSize,
 		NULL, NULL, NULL
 	},
 

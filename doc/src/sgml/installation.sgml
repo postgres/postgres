@@ -1059,20 +1059,6 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
-       <term><option>--with-wal-segsize=<replaceable>SEGSIZE</replaceable></option></term>
-       <listitem>
-        <para>
-         Set the <firstterm>WAL segment size</>, in megabytes.  This is
-         the size of each individual file in the WAL log.  It may be useful
-         to adjust this size to control the granularity of WAL log shipping.
-         The default size is 16 megabytes.
-         The value must be a power of 2 between 1 and 1024 (megabytes).
-         Note that changing this value requires an initdb.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
        <term><option>--with-wal-blocksize=<replaceable>BLOCKSIZE</replaceable></option></term>
        <listitem>
         <para>
