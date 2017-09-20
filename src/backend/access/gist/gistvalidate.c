@@ -258,7 +258,8 @@ gistvalidate(Oid opclassoid)
 		if (opclassgroup &&
 			(opclassgroup->functionset & (((uint64) 1) << i)) != 0)
 			continue;			/* got it */
-		if (i == GIST_DISTANCE_PROC || i == GIST_FETCH_PROC)
+		if (i == GIST_DISTANCE_PROC || i == GIST_FETCH_PROC ||
+			i == GIST_COMPRESS_PROC || i == GIST_DECOMPRESS_PROC)
 			continue;			/* optional methods */
 		ereport(INFO,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),

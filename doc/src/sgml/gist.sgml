@@ -267,14 +267,14 @@ CREATE INDEX ON my_table USING GIST (my_inet_column inet_ops);
   </para>
 
  <para>
-   There are seven methods that an index operator class for
-   <acronym>GiST</acronym> must provide, and two that are optional.
+   There are five methods that an index operator class for
+   <acronym>GiST</acronym> must provide, and four that are optional.
    Correctness of the index is ensured
    by proper implementation of the <function>same</>, <function>consistent</>
    and <function>union</> methods, while efficiency (size and speed) of the
    index will depend on the <function>penalty</> and <function>picksplit</>
    methods.
-   The remaining two basic methods are <function>compress</> and
+   Two optional methods are <function>compress</> and
    <function>decompress</>, which allow an index to have internal tree data of
    a different type than the data it indexes. The leaves are to be of the
    indexed data type, while the other tree nodes can be of any C struct (but
@@ -285,7 +285,8 @@ CREATE INDEX ON my_table USING GIST (my_inet_column inet_ops);
    The optional eighth method is <function>distance</>, which is needed
    if the operator class wishes to support ordered scans (nearest-neighbor
    searches). The optional ninth method <function>fetch</> is needed if the
-   operator class wishes to support index-only scans.
+   operator class wishes to support index-only scans, except when the
+   <function>compress</> method is omitted.
  </para>
 
  <variablelist>
@@ -468,8 +469,10 @@ my_union(PG_FUNCTION_ARGS)
      <term><function>compress</></term>
      <listitem>
       <para>
-       Converts the data item into a format suitable for physical storage in
+       Converts a data item into a format suitable for physical storage in
        an index page.
+       If the <function>compress</> method is omitted, data items are stored
+       in the index without modification.
       </para>
 
       <para>
@@ -527,9 +530,17 @@ my_compress(PG_FUNCTION_ARGS)
      <term><function>decompress</></term>
      <listitem>
       <para>
-       The reverse of the <function>compress</function> method.  Converts the
-       index representation of the data item into a format that can be
-       manipulated by the other GiST methods in the operator class.
+       Converts the stored representation of a data item into a format that
+       can be manipulated by the other GiST methods in the operator class.
+       If the <function>decompress</> method is omitted, it is assumed that
+       the other GiST methods can work directly on the stored data format.
+       (<function>decompress</> is not necessarily the reverse of
+       the <function>compress</function> method; in particular,
+       if <function>compress</function> is lossy then it's impossible
+       for <function>decompress</> to exactly reconstruct the original
+       data.  <function>decompress</> is not necessarily equivalent
+       to <function>fetch</>, either, since the other GiST methods might not
+       require full reconstruction of the data.)
       </para>
 
       <para>
@@ -555,7 +566,8 @@ my_decompress(PG_FUNCTION_ARGS)
 </programlisting>
 
         The above skeleton is suitable for the case where no decompression
-        is needed.
+        is needed.  (But, of course, omitting the method altogether is even
+        easier, and is recommended in such cases.)
       </para>
      </listitem>
     </varlistentry>
@@ -883,7 +895,9 @@ LANGUAGE C STRICT;
         struct, whose <structfield>key</> field contains the same datum in its
         original, uncompressed form. If the opclass's compress function does
         nothing for leaf entries, the <function>fetch</> method can return the
-        argument as-is.
+        argument as-is.  Or, if the opclass does not have a compress function,
+        the <function>fetch</> method can be omitted as well, since it would
+        necessarily be a no-op.
        </para>
 
        <para>

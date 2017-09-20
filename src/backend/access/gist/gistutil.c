@@ -550,6 +550,11 @@ gistdentryinit(GISTSTATE *giststate, int nkey, GISTENTRY *e,
 		GISTENTRY  *dep;
 
 		gistentryinit(*e, k, r, pg, o, l);
+
+		/* there may not be a decompress function in opclass */
+		if (!OidIsValid(giststate->decompressFn[nkey].fn_oid))
+			return;
+
 		dep = (GISTENTRY *)
 			DatumGetPointer(FunctionCall1Coll(&giststate->decompressFn[nkey],
 											  giststate->supportCollation[nkey],
@@ -585,10 +590,14 @@ gistFormTuple(GISTSTATE *giststate, Relation r,
 
 			gistentryinit(centry, attdata[i], r, NULL, (OffsetNumber) 0,
 						  isleaf);
-			cep = (GISTENTRY *)
-				DatumGetPointer(FunctionCall1Coll(&giststate->compressFn[i],
-												  giststate->supportCollation[i],
-												  PointerGetDatum(&centry)));
+			/* there may not be a compress function in opclass */
+			if (OidIsValid(giststate->compressFn[i].fn_oid))
+				cep = (GISTENTRY *)
+					DatumGetPointer(FunctionCall1Coll(&giststate->compressFn[i],
+													  giststate->supportCollation[i],
+													  PointerGetDatum(&centry)));
+			else
+				cep = &centry;
 			compatt[i] = cep->key;
 		}
 	}
@@ -645,6 +654,17 @@ gistFetchTuple(GISTSTATE *giststate, Relation r, IndexTuple tuple)
 		{
 			if (!isnull[i])
 				fetchatt[i] = gistFetchAtt(giststate, i, datum, r);
+			else
+				fetchatt[i] = (Datum) 0;
+		}
+		else if (giststate->compressFn[i].fn_oid == InvalidOid)
+		{
+			/*
+			 * If opclass does not provide compress method that could change
+			 * original value, att is necessarily stored in original form.
+			 */
+			if (!isnull[i])
+				fetchatt[i] = datum;
 			else
 				fetchatt[i] = (Datum) 0;
 		}
@@ -934,6 +954,20 @@ gistproperty(Oid index_oid, int attno,
 								 ObjectIdGetDatum(opcintype),
 								 ObjectIdGetDatum(opcintype),
 								 Int16GetDatum(procno));
+
+	/*
+	 * Special case: even without a fetch function, AMPROP_RETURNABLE is true
+	 * if the opclass has no compress function.
+	 */
+	if (prop == AMPROP_RETURNABLE && !*res)
+	{
+		*res = !SearchSysCacheExists4(AMPROCNUM,
+									  ObjectIdGetDatum(opfamily),
+									  ObjectIdGetDatum(opcintype),
+									  ObjectIdGetDatum(opcintype),
+									  Int16GetDatum(GIST_COMPRESS_PROC));
+	}
+
 	return true;
 }
 
