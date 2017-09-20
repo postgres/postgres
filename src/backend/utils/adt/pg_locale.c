@@ -1292,7 +1292,8 @@ pg_newlocale_from_collation(Oid collid)
 		Form_pg_collation collform;
 		const char *collcollate;
 		const char *collctype pg_attribute_unused();
-		pg_locale_t result;
+		struct pg_locale_struct result;
+		pg_locale_t resultp;
 		Datum		collversion;
 		bool		isnull;
 
@@ -1304,9 +1305,9 @@ pg_newlocale_from_collation(Oid collid)
 		collcollate = NameStr(collform->collcollate);
 		collctype = NameStr(collform->collctype);
 
-		result = malloc(sizeof(*result));
-		memset(result, 0, sizeof(*result));
-		result->provider = collform->collprovider;
+		/* We'll fill in the result struct locally before allocating memory */
+		memset(&result, 0, sizeof(result));
+		result.provider = collform->collprovider;
 
 		if (collform->collprovider == COLLPROVIDER_LIBC)
 		{
@@ -1353,7 +1354,7 @@ pg_newlocale_from_collation(Oid collid)
 #endif
 			}
 
-			result->info.lt = loc;
+			result.info.lt = loc;
 #else							/* not HAVE_LOCALE_T */
 			/* platform that doesn't support locale_t */
 			ereport(ERROR,
@@ -1379,8 +1380,10 @@ pg_newlocale_from_collation(Oid collid)
 						(errmsg("could not open collator for locale \"%s\": %s",
 								collcollate, u_errorName(status))));
 
-			result->info.icu.locale = strdup(collcollate);
-			result->info.icu.ucol = collator;
+			/* We will leak this string if we get an error below :-( */
+			result.info.icu.locale = MemoryContextStrdup(TopMemoryContext,
+														 collcollate);
+			result.info.icu.ucol = collator;
 #else							/* not USE_ICU */
 			/* could get here if a collation was created by a build with ICU */
 			ereport(ERROR,
@@ -1427,7 +1430,11 @@ pg_newlocale_from_collation(Oid collid)
 
 		ReleaseSysCache(tp);
 
-		cache_entry->locale = result;
+		/* We'll keep the pg_locale_t structures in TopMemoryContext */
+		resultp = MemoryContextAlloc(TopMemoryContext, sizeof(*resultp));
+		*resultp = result;
+
+		cache_entry->locale = resultp;
 	}
 
 	return cache_entry->locale;
