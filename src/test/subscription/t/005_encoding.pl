@@ -41,6 +41,12 @@ $node_subscriber->safe_psql('postgres',
 
 wait_for_caught_up($node_publisher, $appname);
 
+# Wait for initial sync to finish as well
+my $synced_query =
+	"SELECT count(1) = 0 FROM pg_subscription_rel WHERE srsubstate NOT IN ('s', 'r');";
+$node_subscriber->poll_query_until('postgres', $synced_query)
+  or die "Timed out while waiting for subscriber to synchronize data";
+
 $node_publisher->safe_psql('postgres',
 	q{INSERT INTO test1 VALUES (1, E'Mot\xc3\xb6rhead')}); # hand-rolled UTF-8
 
