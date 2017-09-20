@@ -632,7 +632,11 @@ create_lateral_join_info(PlannerInfo *root)
 		RelOptInfo *brel = root->simple_rel_array[rti];
 		RangeTblEntry *brte = root->simple_rte_array[rti];
 
-		if (brel == NULL)
+		/*
+		 * Skip empty slots. Also skip non-simple relations i.e. dead
+		 * relations.
+		 */
+		if (brel == NULL || !IS_SIMPLE_REL(brel))
 			continue;
 
 		/*
@@ -644,7 +648,6 @@ create_lateral_join_info(PlannerInfo *root)
 		 * therefore be marked with the appropriate lateral info so that those
 		 * children eventually get marked also.
 		 */
-		Assert(IS_SIMPLE_REL(brel));
 		Assert(brte);
 		if (brel->reloptkind == RELOPT_OTHER_MEMBER_REL &&
 			(brte->rtekind != RTE_RELATION ||
