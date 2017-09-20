@@ -492,7 +492,7 @@ pg_upgrade.exe
        server:
 
 <programlisting>
-rsync --archive --delete --hard-links --size-only old_pgdata new_pgdata remote_dir
+rsync --archive --delete --hard-links --size-only --no-inc-recursive old_pgdata new_pgdata remote_dir
 </programlisting>
 
        where <option>old_pgdata</> and <option>new_pgdata</> are relative
@@ -504,7 +504,7 @@ rsync --archive --delete --hard-links --size-only old_pgdata new_pgdata remote_d
        remote directory, e.g.
 
 <programlisting>
-rsync --archive --delete --hard-links --size-only /opt/PostgreSQL/9.5/data \
+rsync --archive --delete --hard-links --size-only --no-inc-recursive /opt/PostgreSQL/9.5/data \
       /opt/PostgreSQL/9.6/data standby.example.com:/opt/PostgreSQL
 </programlisting>
 
@@ -534,7 +534,7 @@ rsync --archive --delete --hard-links --size-only /opt/PostgreSQL/9.5/data \
        <application>rsync</> command for each tablespace directory, e.g.:
 
 <programlisting>
-rsync --archive --delete --hard-links --size-only /vol1/pg_tblsp/PG_9.5_201510051 \
+rsync --archive --delete --hard-links --size-only --no-inc-recursive /vol1/pg_tblsp/PG_9.5_201510051 \
       /vol1/pg_tblsp/PG_9.6_201608131 standby.example.com:/vol1/pg_tblsp
 </programlisting>
 
