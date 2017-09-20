@@ -45,7 +45,7 @@ ALTER ROLE { <replaceable class="PARAMETER">role_specification</replaceable> | A
 
 <phrase>where <replaceable class="PARAMETER">role_specification</replaceable> can be:</phrase>
 
-    [ GROUP ] <replaceable class="PARAMETER">role_name</replaceable>
+    <replaceable class="PARAMETER">role_name</replaceable>
   | CURRENT_USER
   | SESSION_USER
 </synopsis>
