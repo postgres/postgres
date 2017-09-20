@@ -28,7 +28,7 @@ CREATE SCHEMA IF NOT EXISTS AUTHORIZATION <replaceable class="PARAMETER">role_sp
 
 <phrase>where <replaceable class="PARAMETER">role_specification</replaceable> can be:</phrase>
 
-    [ GROUP ] <replaceable class="PARAMETER">user_name</replaceable>
+    <replaceable class="PARAMETER">user_name</replaceable>
   | CURRENT_USER
   | SESSION_USER
 </synopsis>
