@@ -370,10 +370,14 @@ do_analyze_rel(Relation onerel, int options, VacuumParams *params,
 	/*
 	 * Determine which columns to analyze
 	 *
-	 * Note that system attributes are never analyzed.
+	 * Note that system attributes are never analyzed, so we just reject them
+	 * at the lookup stage.  We also reject duplicate column mentions.  (We
+	 * could alternatively ignore duplicates, but analyzing a column twice
+	 * won't work; we'd end up making a conflicting update in pg_statistic.)
 	 */
 	if (va_cols != NIL)
 	{
+		Bitmapset  *unique_cols = NULL;
 		ListCell   *le;
 
 		vacattrstats = (VacAttrStats **) palloc(list_length(va_cols) *
@@ -389,6 +393,13 @@ do_analyze_rel(Relation onerel, int options, VacuumParams *params,
 						(errcode(ERRCODE_UNDEFINED_COLUMN),
 						 errmsg("column \"%s\" of relation \"%s\" does not exist",
 								col, RelationGetRelationName(onerel))));
+			if (bms_is_member(i, unique_cols))
+				ereport(ERROR,
+						(errcode(ERRCODE_DUPLICATE_COLUMN),
+						 errmsg("column \"%s\" of relation \"%s\" is specified twice",
+								col, RelationGetRelationName(onerel))));
+			unique_cols = bms_add_member(unique_cols, i);
+
 			vacattrstats[tcnt] = examine_attribute(onerel, i, NULL);
 			if (vacattrstats[tcnt] != NULL)
 				tcnt++;
@@ -527,9 +538,9 @@ do_analyze_rel(Relation onerel, int options, VacuumParams *params,
 			stats->rows = rows;
 			stats->tupDesc = onerel->rd_att;
 			stats->compute_stats(stats,
-									 std_fetch_func,
-									 numrows,
-									 totalrows);
+								 std_fetch_func,
+								 numrows,
+								 totalrows);
 
 			/*
 			 * If the appropriate flavor of the n_distinct option is
@@ -831,9 +842,9 @@ compute_index_stats(Relation onerel, double totalrows,
 				stats->exprnulls = exprnulls + i;
 				stats->rowstride = attr_cnt;
 				stats->compute_stats(stats,
-										 ind_fetch_func,
-										 numindexrows,
-										 totalindexrows);
+									 ind_fetch_func,
+									 numindexrows,
+									 totalindexrows);
 
 				/*
 				 * If the n_distinct option is specified, it overrides the

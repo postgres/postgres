@@ -90,4 +90,9 @@ UPDATE vacparted SET b = 'b';
 VACUUM (ANALYZE) vacparted;
 VACUUM (FULL) vacparted;
 VACUUM (FREEZE) vacparted;
+-- check behavior with duplicate column mentions
+VACUUM ANALYZE vacparted(a,b,a);
+ERROR:  column "a" of relation "vacparted" is specified twice
+ANALYZE vacparted(a,b,b);
+ERROR:  column "b" of relation "vacparted" is specified twice
 DROP TABLE vacparted;

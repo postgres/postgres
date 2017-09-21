@@ -73,4 +73,9 @@ UPDATE vacparted SET b = 'b';
 VACUUM (ANALYZE) vacparted;
 VACUUM (FULL) vacparted;
 VACUUM (FREEZE) vacparted;
+
+-- check behavior with duplicate column mentions
+VACUUM ANALYZE vacparted(a,b,a);
+ANALYZE vacparted(a,b,b);
+
 DROP TABLE vacparted;
