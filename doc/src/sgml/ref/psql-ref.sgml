@@ -783,6 +783,10 @@ testdb=&gt;
     The forms <literal>:'<replaceable>variable_name</>'</literal> and
     <literal>:"<replaceable>variable_name</>"</literal> described there
     work as well.
+    The <literal>:{?<replaceable>variable_name</>}</> syntax allows
+    testing whether a variable is defined. It is substituted by
+    TRUE or FALSE.
+    Escaping the colon with a backslash protects it from substitution.
     </para>
 
     <para>
@@ -3936,6 +3940,12 @@ testdb=&gt; <userinput>INSERT INTO my_table VALUES (:'content');</userinput>
     <literal>:'name'</literal>, or <literal>:"name"</literal>) is not
     replaced unless the named variable is currently set. In any case, you
     can escape a colon with a backslash to protect it from substitution.
+    </para>
+
+    <para>
+    The <literal>:{?<replaceable>name</>}</> special syntax returns TRUE
+    or FALSE depending on whether the variable exists or not, and is thus
+    always substituted, unless the colon is backslash-escaped.
     </para>
 
     <para>

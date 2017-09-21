@@ -3014,6 +3014,32 @@ bar 'bar' "bar"
 	\echo 'should print #8-1'
 should print #8-1
 \endif
+-- :{?...} defined variable test
+\set i 1
+\if :{?i}
+  \echo '#9-1 ok, variable i is defined'
+#9-1 ok, variable i is defined
+\else
+  \echo 'should not print #9-2'
+\endif
+\if :{?no_such_variable}
+  \echo 'should not print #10-1'
+\else
+  \echo '#10-2 ok, variable no_such_variable is not defined'
+#10-2 ok, variable no_such_variable is not defined
+\endif
+SELECT :{?i} AS i_is_defined;
+ i_is_defined 
+--------------
+ t
+(1 row)
+
+SELECT NOT :{?no_such_var} AS no_such_var_is_not_defined;
+ no_such_var_is_not_defined 
+----------------------------
+ t
+(1 row)
+
 -- SHOW_CONTEXT
 \set SHOW_CONTEXT never
 do $$
