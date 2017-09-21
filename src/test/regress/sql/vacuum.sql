@@ -60,5 +60,9 @@ VACUUM FULL pg_database;
 VACUUM FULL vaccluster;
 VACUUM FULL vactst;
 
+-- check behavior with duplicate column mentions
+VACUUM ANALYZE vaccluster(i,i);
+ANALYZE vaccluster(i,i);
+
 DROP TABLE vaccluster;
 DROP TABLE vactst;
