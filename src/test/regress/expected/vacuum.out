@@ -80,5 +80,10 @@ ERROR:  ANALYZE cannot be executed from VACUUM or ANALYZE
 CONTEXT:  SQL function "do_analyze" statement 1
 SQL function "wrap_do_analyze" statement 1
 VACUUM FULL vactst;
+-- check behavior with duplicate column mentions
+VACUUM ANALYZE vaccluster(i,i);
+ERROR:  column "i" of relation "vaccluster" is specified twice
+ANALYZE vaccluster(i,i);
+ERROR:  column "i" of relation "vaccluster" is specified twice
 DROP TABLE vaccluster;
 DROP TABLE vactst;
