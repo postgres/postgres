@@ -266,6 +266,9 @@ typedef struct PlannerInfo
 	List	   *distinct_pathkeys;	/* distinctClause pathkeys, if any */
 	List	   *sort_pathkeys;	/* sortClause pathkeys, if any */
 
+	List	   *part_schemes;	/* Canonicalised partition schemes used in the
+								 * query. */
+
 	List	   *initial_rels;	/* RelOptInfos we are now trying to join */
 
 	/* Use fetch_upper_rel() to get any particular upper rel */
@@ -326,6 +329,34 @@ typedef struct PlannerInfo
 	((root)->simple_rte_array ? (root)->simple_rte_array[rti] : \
 	 rt_fetch(rti, (root)->parse->rtable))
 
+/*
+ * If multiple relations are partitioned the same way, all such partitions
+ * will have a pointer to the same PartitionScheme.  A list of PartitionScheme
+ * objects is attached to the PlannerInfo.  By design, the partition scheme
+ * incorporates only the general properties of the partition method (LIST vs.
+ * RANGE, number of partitioning columns and the type information for each)
+ * and not the specific bounds.
+ *
+ * We store the opclass-declared input data types instead of the partition key
+ * datatypes since the former rather than the latter are used to compare
+ * partition bounds. Since partition key data types and the opclass declared
+ * input data types are expected to be binary compatible (per ResolveOpClass),
+ * both of those should have same byval and length properties.
+ */
+typedef struct PartitionSchemeData
+{
+	char		strategy;		/* partition strategy */
+	int16		partnatts;		/* number of partition attributes */
+	Oid		   *partopfamily;	/* OIDs of operator families */
+	Oid		   *partopcintype;	/* OIDs of opclass declared input data types */
+	Oid		   *parttypcoll;	/* OIDs of collations of partition keys. */
+
+	/* Cached information about partition key data types. */
+	int16	   *parttyplen;
+	bool	   *parttypbyval;
+}			PartitionSchemeData;
+
+typedef struct PartitionSchemeData *PartitionScheme;
 
 /*----------
  * RelOptInfo
@@ -456,7 +487,7 @@ typedef struct PlannerInfo
  *					other rels for which we have tried and failed to prove
  *					this one unique
  *
- * The presence of the remaining fields depends on the restrictions
+ * The presence of the following fields depends on the restrictions
  * and joins that the relation participates in:
  *
  *		baserestrictinfo - List of RestrictInfo nodes, containing info about
@@ -487,6 +518,21 @@ typedef struct PlannerInfo
  * We store baserestrictcost in the RelOptInfo (for base relations) because
  * we know we will need it at least once (to price the sequential scan)
  * and may need it multiple times to price index scans.
+ *
+ * If the relation is partitioned, these fields will be set:
+ *
+ * 		part_scheme - Partitioning scheme of the relation
+ * 		boundinfo - Partition bounds
+ * 		nparts - Number of partitions
+ * 		part_rels - RelOptInfos for each partition
+ * 		partexprs - Partition key expressions
+ *
+ * Note: A base relation always has only one set of partition keys, but a join
+ * relation may have as many sets of partition keys as the number of relations
+ * being joined. partexprs is an array containing part_scheme->partnatts
+ * elements, each of which is a list of partition key expressions. For a base
+ * relation each list contains only one expression, but for a join relation
+ * there can be one per baserel.
  *----------
  */
 typedef enum RelOptKind
@@ -592,6 +638,14 @@ typedef struct RelOptInfo
 
 	/* used by "other" relations */
 	Relids		top_parent_relids;	/* Relids of topmost parents */
+
+	/* used for partitioned relations */
+	PartitionScheme part_scheme;	/* Partitioning scheme. */
+	int			nparts;			/* number of partitions */
+	struct PartitionBoundInfoData *boundinfo;	/* Partition bounds */
+	struct RelOptInfo **part_rels;	/* Array of RelOptInfos of partitions,
+									 * stored in the same order of bounds */
+	List	  **partexprs;		/* Partition key expressions. */
 } RelOptInfo;
 
 /*

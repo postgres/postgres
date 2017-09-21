@@ -146,6 +146,11 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptInfo *parent)
 	rel->baserestrict_min_security = UINT_MAX;
 	rel->joininfo = NIL;
 	rel->has_eclass_joins = false;
+	rel->part_scheme = NULL;
+	rel->nparts = 0;
+	rel->boundinfo = NULL;
+	rel->part_rels = NULL;
+	rel->partexprs = NULL;
 
 	/*
 	 * Pass top parent's relids down the inheritance hierarchy. If the parent
@@ -218,18 +223,41 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptInfo *parent)
 	if (rte->inh)
 	{
 		ListCell   *l;
+		int			nparts = rel->nparts;
+		int			cnt_parts = 0;
+
+		if (nparts > 0)
+			rel->part_rels = (RelOptInfo **)
+				palloc(sizeof(RelOptInfo *) * nparts);
 
 		foreach(l, root->append_rel_list)
 		{
 			AppendRelInfo *appinfo = (AppendRelInfo *) lfirst(l);
+			RelOptInfo *childrel;
 
 			/* append_rel_list contains all append rels; ignore others */
 			if (appinfo->parent_relid != relid)
 				continue;
 
-			(void) build_simple_rel(root, appinfo->child_relid,
-									rel);
+			childrel = build_simple_rel(root, appinfo->child_relid,
+										rel);
+
+			/* Nothing more to do for an unpartitioned table. */
+			if (!rel->part_scheme)
+				continue;
+
+			/*
+			 * The order of partition OIDs in append_rel_list is the same as
+			 * the order in the PartitionDesc, so the order of part_rels will
+			 * also match the PartitionDesc.  See expand_partitioned_rtentry.
+			 */
+			Assert(cnt_parts < nparts);
+			rel->part_rels[cnt_parts] = childrel;
+			cnt_parts++;
 		}
+
+		/* We should have seen all the child partitions. */
+		Assert(cnt_parts == nparts);
 	}
 
 	return rel;
@@ -527,6 +555,11 @@ build_join_rel(PlannerInfo *root,
 	joinrel->joininfo = NIL;
 	joinrel->has_eclass_joins = false;
 	joinrel->top_parent_relids = NULL;
+	joinrel->part_scheme = NULL;
+	joinrel->nparts = 0;
+	joinrel->boundinfo = NULL;
+	joinrel->part_rels = NULL;
+	joinrel->partexprs = NULL;
 
 	/* Compute information relevant to the foreign relations. */
 	set_foreign_rel_properties(joinrel, outer_rel, inner_rel);

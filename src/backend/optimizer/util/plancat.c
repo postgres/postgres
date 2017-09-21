@@ -68,6 +68,10 @@ static List *get_relation_constraints(PlannerInfo *root,
 static List *build_index_tlist(PlannerInfo *root, IndexOptInfo *index,
 				  Relation heapRelation);
 static List *get_relation_statistics(RelOptInfo *rel, Relation relation);
+static void set_relation_partition_info(PlannerInfo *root, RelOptInfo *rel,
+							Relation relation);
+static PartitionScheme find_partition_scheme(PlannerInfo *root, Relation rel);
+static List **build_baserel_partition_key_exprs(Relation relation, Index varno);
 
 /*
  * get_relation_info -
@@ -419,6 +423,13 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 
 	/* Collect info about relation's foreign keys, if relevant */
 	get_relation_foreign_keys(root, rel, relation, inhparent);
+
+	/*
+	 * Collect info about relation's partitioning scheme, if any. Only
+	 * inheritance parents may be partitioned.
+	 */
+	if (inhparent && relation->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
+		set_relation_partition_info(root, rel, relation);
 
 	heap_close(relation, NoLock);
 
@@ -1801,4 +1812,152 @@ has_row_triggers(PlannerInfo *root, Index rti, CmdType event)
 
 	heap_close(relation, NoLock);
 	return result;
+}
+
+/*
+ * set_relation_partition_info
+ *
+ * Set partitioning scheme and related information for a partitioned table.
+ */
+static void
+set_relation_partition_info(PlannerInfo *root, RelOptInfo *rel,
+							Relation relation)
+{
+	PartitionDesc partdesc;
+
+	Assert(relation->rd_rel->relkind == RELKIND_PARTITIONED_TABLE);
+
+	partdesc = RelationGetPartitionDesc(relation);
+	rel->part_scheme = find_partition_scheme(root, relation);
+	Assert(partdesc != NULL && rel->part_scheme != NULL);
+	rel->boundinfo = partdesc->boundinfo;
+	rel->nparts = partdesc->nparts;
+	rel->partexprs = build_baserel_partition_key_exprs(relation, rel->relid);
+}
+
+/*
+ * find_partition_scheme
+ *
+ * Find or create a PartitionScheme for this Relation.
+ */
+static PartitionScheme
+find_partition_scheme(PlannerInfo *root, Relation relation)
+{
+	PartitionKey partkey = RelationGetPartitionKey(relation);
+	ListCell   *lc;
+	int			partnatts;
+	PartitionScheme part_scheme;
+
+	/* A partitioned table should have a partition key. */
+	Assert(partkey != NULL);
+
+	partnatts = partkey->partnatts;
+
+	/* Search for a matching partition scheme and return if found one. */
+	foreach(lc, root->part_schemes)
+	{
+		part_scheme = lfirst(lc);
+
+		/* Match partitioning strategy and number of keys. */
+		if (partkey->strategy != part_scheme->strategy ||
+			partnatts != part_scheme->partnatts)
+			continue;
+
+		/* Match the partition key types. */
+		if (memcmp(partkey->partopfamily, part_scheme->partopfamily,
+				   sizeof(Oid) * partnatts) != 0 ||
+			memcmp(partkey->partopcintype, part_scheme->partopcintype,
+				   sizeof(Oid) * partnatts) != 0 ||
+			memcmp(partkey->parttypcoll, part_scheme->parttypcoll,
+				   sizeof(Oid) * partnatts) != 0)
+			continue;
+
+		/*
+		 * Length and byval information should match when partopcintype
+		 * matches.
+		 */
+		Assert(memcmp(partkey->parttyplen, part_scheme->parttyplen,
+					  sizeof(int16) * partnatts) == 0);
+		Assert(memcmp(partkey->parttypbyval, part_scheme->parttypbyval,
+					  sizeof(bool) * partnatts) == 0);
+
+		/* Found matching partition scheme. */
+		return part_scheme;
+	}
+
+	/*
+	 * Did not find matching partition scheme. Create one copying relevant
+	 * information from the relcache. Instead of copying whole arrays, copy
+	 * the pointers in relcache. It's safe to do so since
+	 * RelationClearRelation() wouldn't change it while planner is using it.
+	 */
+	part_scheme = (PartitionScheme) palloc0(sizeof(PartitionSchemeData));
+	part_scheme->strategy = partkey->strategy;
+	part_scheme->partnatts = partkey->partnatts;
+	part_scheme->partopfamily = partkey->partopfamily;
+	part_scheme->partopcintype = partkey->partopcintype;
+	part_scheme->parttypcoll = partkey->parttypcoll;
+	part_scheme->parttyplen = partkey->parttyplen;
+	part_scheme->parttypbyval = partkey->parttypbyval;
+
+	/* Add the partitioning scheme to PlannerInfo. */
+	root->part_schemes = lappend(root->part_schemes, part_scheme);
+
+	return part_scheme;
+}
+
+/*
+ * build_baserel_partition_key_exprs
+ *
+ * Collects partition key expressions for a given base relation.  Any single
+ * column partition keys are converted to Var nodes.  All Var nodes are set
+ * to the given varno.  The partition key expressions are returned as an array
+ * of single element lists to be stored in RelOptInfo of the base relation.
+ */
+static List **
+build_baserel_partition_key_exprs(Relation relation, Index varno)
+{
+	PartitionKey partkey = RelationGetPartitionKey(relation);
+	int			partnatts;
+	int			cnt;
+	List	  **partexprs;
+	ListCell   *lc;
+
+	/* A partitioned table should have a partition key. */
+	Assert(partkey != NULL);
+
+	partnatts = partkey->partnatts;
+	partexprs = (List **) palloc(sizeof(List *) * partnatts);
+	lc = list_head(partkey->partexprs);
+
+	for (cnt = 0; cnt < partnatts; cnt++)
+	{
+		Expr	   *partexpr;
+		AttrNumber	attno = partkey->partattrs[cnt];
+
+		if (attno != InvalidAttrNumber)
+		{
+			/* Single column partition key is stored as a Var node. */
+			Assert(attno > 0);
+
+			partexpr = (Expr *) makeVar(varno, attno,
+										partkey->parttypid[cnt],
+										partkey->parttypmod[cnt],
+										partkey->parttypcoll[cnt], 0);
+		}
+		else
+		{
+			if (lc == NULL)
+				elog(ERROR, "wrong number of partition key expressions");
+
+			/* Re-stamp the expression with given varno. */
+			partexpr = (Expr *) copyObject(lfirst(lc));
+			ChangeVarNodes((Node *) partexpr, 1, varno, 0);
+			lc = lnext(lc);
+		}
+
+		partexprs[cnt] = list_make1(partexpr);
+	}
+
+	return partexprs;
 }
