@@ -1379,7 +1379,7 @@ timesub(const pg_time_t *timep, int32 offset,
 	int			y;
 	const int  *ip;
 	int64		corr;
-	int			hit;
+	bool		hit;
 	int			i;
 
 	corr = 0;
