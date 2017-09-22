@@ -1263,7 +1263,7 @@ hash_mask(char *pagedata, BlockNumber blkno)
 	HashPageOpaque opaque;
 	int			pagetype;
 
-	mask_page_lsn(page);
+	mask_page_lsn_and_checksum(page);
 
 	mask_page_hint_bits(page);
 	mask_unused_space(page);

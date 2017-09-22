@@ -352,14 +352,14 @@ gist_mask(char *pagedata, BlockNumber blkno)
 {
 	Page		page = (Page) pagedata;
 
-	mask_page_lsn(page);
+	mask_page_lsn_and_checksum(page);
 
 	mask_page_hint_bits(page);
 	mask_unused_space(page);
 
 	/*
 	 * NSN is nothing but a special purpose LSN. Hence, mask it for the same
-	 * reason as mask_page_lsn.
+	 * reason as mask_page_lsn_and_checksum.
 	 */
 	GistPageSetNSN(page, (uint64) MASK_MARKER);
 
