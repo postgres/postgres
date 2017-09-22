@@ -1034,7 +1034,7 @@ spg_mask(char *pagedata, BlockNumber blkno)
 {
 	Page		page = (Page) pagedata;
 
-	mask_page_lsn(page);
+	mask_page_lsn_and_checksum(page);
 
 	mask_page_hint_bits(page);
 
