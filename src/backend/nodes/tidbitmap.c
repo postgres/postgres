@@ -45,6 +45,7 @@
 #include "nodes/tidbitmap.h"
 #include "storage/lwlock.h"
 #include "utils/dsa.h"
+#include "utils/hashutils.h"
 
 /*
  * The maximum number of tuples per page is not large (typically 256 with
@@ -237,30 +238,13 @@ static int	tbm_comparator(const void *left, const void *right);
 static int tbm_shared_comparator(const void *left, const void *right,
 					  void *arg);
 
-/*
- * Simple inline murmur hash implementation for the exact width required, for
- * performance.
- */
-static inline uint32
-hash_blockno(BlockNumber b)
-{
-	uint32		h = b;
-
-	h ^= h >> 16;
-	h *= 0x85ebca6b;
-	h ^= h >> 13;
-	h *= 0xc2b2ae35;
-	h ^= h >> 16;
-	return h;
-}
-
 /* define hashtable mapping block numbers to PagetableEntry's */
 #define SH_USE_NONDEFAULT_ALLOCATOR
 #define SH_PREFIX pagetable
 #define SH_ELEMENT_TYPE PagetableEntry
 #define SH_KEY_TYPE BlockNumber
 #define SH_KEY blockno
-#define SH_HASH_KEY(tb, key) hash_blockno(key)
+#define SH_HASH_KEY(tb, key) murmurhash32(key)
 #define SH_EQUAL(tb, a, b) a == b
 #define SH_SCOPE static inline
 #define SH_DEFINE
