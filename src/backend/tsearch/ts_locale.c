@@ -21,8 +21,6 @@
 static void tsearch_readline_callback(void *arg);
 
 
-#ifdef USE_WIDE_UPPER_LOWER
-
 int
 t_isdigit(const char *ptr)
 {
@@ -86,7 +84,6 @@ t_isprint(const char *ptr)
 
 	return iswprint((wint_t) character[0]);
 }
-#endif							/* USE_WIDE_UPPER_LOWER */
 
 
 /*
@@ -244,16 +241,11 @@ char *
 lowerstr_with_len(const char *str, int len)
 {
 	char	   *out;
-
-#ifdef USE_WIDE_UPPER_LOWER
 	Oid			collation = DEFAULT_COLLATION_OID;	/* TODO */
 	pg_locale_t mylocale = 0;	/* TODO */
-#endif
 
 	if (len == 0)
 		return pstrdup("");
-
-#ifdef USE_WIDE_UPPER_LOWER
 
 	/*
 	 * Use wide char code only when max encoding length > 1 and ctype != C.
@@ -300,7 +292,6 @@ lowerstr_with_len(const char *str, int len)
 		Assert(wlen < len);
 	}
 	else
-#endif							/* USE_WIDE_UPPER_LOWER */
 	{
 		const char *ptr = str;
 		char	   *outptr;

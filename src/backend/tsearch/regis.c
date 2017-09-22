@@ -178,7 +178,6 @@ RS_free(Regis *r)
 	r->node = NULL;
 }
 
-#ifdef USE_WIDE_UPPER_LOWER
 static bool
 mb_strchr(char *str, char *c)
 {
@@ -209,10 +208,6 @@ mb_strchr(char *str, char *c)
 
 	return res;
 }
-#else
-#define mb_strchr(s,c)	( (strchr((s),*(c)) == NULL) ? false : true )
-#endif
-
 
 bool
 RS_execute(Regis *r, char *str)

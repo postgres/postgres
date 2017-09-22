@@ -241,11 +241,9 @@ typedef struct TParser
 	/* string and position information */
 	char	   *str;			/* multibyte string */
 	int			lenstr;			/* length of mbstring */
-#ifdef USE_WIDE_UPPER_LOWER
 	wchar_t    *wstr;			/* wide character string */
 	pg_wchar   *pgwstr;			/* wide character string for C-locale */
 	bool		usewide;
-#endif
 
 	/* State of parse */
 	int			charmaxlen;
@@ -294,8 +292,6 @@ TParserInit(char *str, int len)
 	prs->str = str;
 	prs->lenstr = len;
 
-#ifdef USE_WIDE_UPPER_LOWER
-
 	/*
 	 * Use wide char code only when max encoding length > 1.
 	 */
@@ -323,7 +319,6 @@ TParserInit(char *str, int len)
 	}
 	else
 		prs->usewide = false;
-#endif
 
 	prs->state = newTParserPosition(NULL);
 	prs->state->state = TPS_Base;
@@ -360,15 +355,12 @@ TParserCopyInit(const TParser *orig)
 	prs->charmaxlen = orig->charmaxlen;
 	prs->str = orig->str + orig->state->posbyte;
 	prs->lenstr = orig->lenstr - orig->state->posbyte;
-
-#ifdef USE_WIDE_UPPER_LOWER
 	prs->usewide = orig->usewide;
 
 	if (orig->pgwstr)
 		prs->pgwstr = orig->pgwstr + orig->state->poschar;
 	if (orig->wstr)
 		prs->wstr = orig->wstr + orig->state->poschar;
-#endif
 
 	prs->state = newTParserPosition(NULL);
 	prs->state->state = TPS_Base;
@@ -393,12 +385,10 @@ TParserClose(TParser *prs)
 		prs->state = ptr;
 	}
 
-#ifdef USE_WIDE_UPPER_LOWER
 	if (prs->wstr)
 		pfree(prs->wstr);
 	if (prs->pgwstr)
 		pfree(prs->pgwstr);
-#endif
 
 #ifdef WPARSER_TRACE
 	fprintf(stderr, "closing parser\n");
@@ -436,8 +426,6 @@ TParserCopyClose(TParser *prs)
  *	  Asian languages.
  *	- if locale is C then we use pgwstr instead of wstr.
  */
-
-#ifdef USE_WIDE_UPPER_LOWER
 
 #define p_iswhat(type)														\
 static int																	\
@@ -536,31 +524,6 @@ p_iseq(TParser *prs, char c)
 	Assert(prs->state);
 	return ((prs->state->charlen == 1 && *(prs->str + prs->state->posbyte) == c)) ? 1 : 0;
 }
-#else							/* USE_WIDE_UPPER_LOWER */
-
-#define p_iswhat(type)														\
-static int																	\
-p_is##type(TParser *prs) {													\
-	Assert( prs->state );													\
-	return is##type( (unsigned char)*( prs->str + prs->state->posbyte ) );	\
-}	\
-																			\
-static int																	\
-p_isnot##type(TParser *prs) {												\
-	return !p_is##type(prs);												\
-}
-
-
-static int
-p_iseq(TParser *prs, char c)
-{
-	Assert(prs->state);
-	return (*(prs->str + prs->state->posbyte) == c) ? 1 : 0;
-}
-
-p_iswhat(alnum)
-p_iswhat(alpha)
-#endif							/* USE_WIDE_UPPER_LOWER */
 
 p_iswhat(digit)
 p_iswhat(lower)
@@ -784,8 +747,6 @@ p_isspecial(TParser *prs)
 	 */
 	if (pg_dsplen(prs->str + prs->state->posbyte) == 0)
 		return 1;
-
-#ifdef USE_WIDE_UPPER_LOWER
 
 	/*
 	 * Unicode Characters in the 'Mark, Spacing Combining' Category That
@@ -1050,7 +1011,6 @@ p_isspecial(TParser *prs)
 				StopHigh = StopMiddle;
 		}
 	}
-#endif
 
 	return 0;
 }

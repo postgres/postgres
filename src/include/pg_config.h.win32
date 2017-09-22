@@ -442,9 +442,6 @@
    `HAVE_STRUCT_TM_TM_ZONE' instead. */
 /* #undef HAVE_TM_ZONE */
 
-/* Define to 1 if you have the `towlower' function. */
-#define HAVE_TOWLOWER 1
-
 /* Define to 1 if your compiler understands `typeof' or something similar. */
 /* #undef HAVE_TYPEOF */
 
@@ -483,9 +480,6 @@
 
 /* Define to 1 if you have the <wchar.h> header file. */
 #define HAVE_WCHAR_H 1
-
-/* Define to 1 if you have the `wcstombs' function. */
-#define HAVE_WCSTOMBS 1
 
 /* Define to 1 if you have the `wcstombs_l' function. */
 #define HAVE_WCSTOMBS_L 1

@@ -1587,14 +1587,13 @@ icu_from_uchar(char **result, const UChar *buff_uchar, int32_t len_uchar)
 
 	return len_result;
 }
+
 #endif							/* USE_ICU */
 
 /*
  * These functions convert from/to libc's wchar_t, *not* pg_wchar_t.
  * Therefore we keep them here rather than with the mbutils code.
  */
-
-#ifdef USE_WIDE_UPPER_LOWER
 
 /*
  * wchar2char --- convert wide characters to multibyte format
@@ -1762,5 +1761,3 @@ char2wchar(wchar_t *to, size_t tolen, const char *from, size_t fromlen,
 
 	return result;
 }
-
-#endif							/* USE_WIDE_UPPER_LOWER */
