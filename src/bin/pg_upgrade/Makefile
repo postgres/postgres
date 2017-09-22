@@ -36,9 +36,8 @@ clean distclean maintainer-clean:
 	       pg_upgrade_dump_globals.sql \
 	       pg_upgrade_dump_*.custom pg_upgrade_*.log
 
-check: test.sh
-	$(prove_check)
+check: test.sh all
 	MAKE=$(MAKE) bindir=$(bindir) libdir=$(libdir) EXTRA_REGRESS_OPTS="$(EXTRA_REGRESS_OPTS)" $(SHELL) $< --install
 
-installcheck:
-	$(prove_installcheck)
+# installcheck is not supported because there's no meaningful way to test
+# pg_upgrade against a single already-running server
