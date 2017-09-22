@@ -259,10 +259,11 @@ The reader algorithm is:
 -- then, per read request:
 	reacquire content lock on current page
 	step to next page if necessary (no chaining of content locks, but keep
-     the pin on the primary bucket throughout the scan; we also maintain
-     a pin on the page currently being scanned)
-	get tuple
-	release content lock
+	the pin on the primary bucket throughout the scan)
+	save all the matching tuples from current index page into an items array
+	release pin and content lock (but if it is primary bucket page retain
+	its pin till the end of the scan)
+	get tuple from an item array
 -- at scan shutdown:
 	release all pins still held
 
@@ -270,15 +271,13 @@ Holding the buffer pin on the primary bucket page for the whole scan prevents
 the reader's current-tuple pointer from being invalidated by splits or
 compactions.  (Of course, other buckets can still be split or compacted.)
 
-To keep concurrency reasonably good, we require readers to cope with
-concurrent insertions, which means that they have to be able to re-find
-their current scan position after re-acquiring the buffer content lock on
-page.  Since deletion is not possible while a reader holds the pin on bucket,
-and we assume that heap tuple TIDs are unique, this can be implemented by
-searching for the same heap tuple TID previously returned.  Insertion does
-not move index entries across pages, so the previously-returned index entry
-should always be on the same page, at the same or higher offset number,
-as it was before.
+To minimize lock/unlock traffic, hash index scan always searches the entire
+hash page to identify all the matching items at once, copying their heap tuple
+IDs into backend-local storage. The heap tuple IDs are then processed while not
+holding any page lock within the index thereby, allowing concurrent insertion
+to happen on the same index page without any requirement of re-finding the
+current scan position for the reader. We do continue to hold a pin on the
+bucket page, to protect against concurrent deletions and bucket split.
 
 To allow for scans during a bucket split, if at the start of the scan, the
 bucket is marked as bucket-being-populated, it scan all the tuples in that
@@ -415,23 +414,43 @@ The fourth operation is garbage collection (bulk deletion):
 
 Note that this is designed to allow concurrent splits and scans.  If a split
 occurs, tuples relocated into the new bucket will be visited twice by the
-scan, but that does no harm.  As we release the lock on bucket page during
-cleanup scan of a bucket, it will allow concurrent scan to start on a bucket
-and ensures that scan will always be behind cleanup.  It is must to keep scans
-behind cleanup, else vacuum could decrease the TIDs that are required to
-complete the scan.  Now, as the scan that returns multiple tuples from the
-same bucket page always expect next valid TID to be greater than or equal to
-the current TID, it might miss the tuples.  This holds true for backward scans
-as well (backward scans first traverse each bucket starting from first bucket
-to last overflow page in the chain).  We must be careful about the statistics
-reported by the VACUUM operation.  What we can do is count the number of
-tuples scanned, and believe this in preference to the stored tuple count if
-the stored tuple count and number of buckets did *not* change at any time
-during the scan.  This provides a way of correcting the stored tuple count if
-it gets out of sync for some reason.  But if a split or insertion does occur
-concurrently, the scan count is untrustworthy; instead, subtract the number of
-tuples deleted from the stored tuple count and use that.
+scan, but that does no harm.  See also "Interlocking Between Scans and
+VACUUM", below.
 
+We must be careful about the statistics reported by the VACUUM operation.
+What we can do is count the number of tuples scanned, and believe this in
+preference to the stored tuple count if the stored tuple count and number of
+buckets did *not* change at any time during the scan.  This provides a way of
+correcting the stored tuple count if it gets out of sync for some reason.  But
+if a split or insertion does occur concurrently, the scan count is
+untrustworthy; instead, subtract the number of tuples deleted from the stored
+tuple count and use that.
+
+Interlocking Between Scans and VACUUM
+-------------------------------------
+
+Since we release the lock on bucket page during a cleanup scan of a bucket, a
+concurrent scan could start in that bucket before we've finished vacuuming it.
+If a scan gets ahead of cleanup, we could have the following problem: (1) the
+scan sees heap TIDs that are about to be removed before they are processed by
+VACUUM, (2) the scan decides that one or more of those TIDs are dead, (3)
+VACUUM completes, (3) one or more of the TIDs the scan decided were dead are
+reused for an unrelated tuple, and finally (5) the scan wakes up and
+erroneously kills the new tuple.
+
+Note that this requires VACUUM and a scan to be active in the same bucket at
+the same time.  If VACUUM completes before the scan starts, the scan never has
+a chance to see the dead tuples; if the scan completes before the VACUUM
+starts, the heap TIDs can't have been reused meanwhile.  Furthermore, VACUUM
+can't start on a bucket that has an active scan, because the scan holds a pin
+on the primary bucket page, and VACUUM must take a cleanup lock on that page
+in order to begin cleanup.  Therefore, the only way this problem can occur is
+for a scan to start after VACUUM has released the cleanup lock on the bucket
+but before it has processed the entire bucket and then overtake the cleanup
+operation.
+
+Currently, we prevent this using lock chaining: cleanup locks the next page
+in the chain before releasing the lock and pin on the page just processed.
 
 Free Space Management
 ---------------------

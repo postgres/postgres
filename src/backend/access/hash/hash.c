@@ -268,65 +268,20 @@ bool
 hashgettuple(IndexScanDesc scan, ScanDirection dir)
 {
 	HashScanOpaque so = (HashScanOpaque) scan->opaque;
-	Relation	rel = scan->indexRelation;
-	Buffer		buf;
-	Page		page;
-	OffsetNumber offnum;
-	ItemPointer current;
 	bool		res;
 
 	/* Hash indexes are always lossy since we store only the hash code */
 	scan->xs_recheck = true;
 
 	/*
-	 * We hold pin but not lock on current buffer while outside the hash AM.
-	 * Reacquire the read lock here.
-	 */
-	if (BufferIsValid(so->hashso_curbuf))
-		LockBuffer(so->hashso_curbuf, BUFFER_LOCK_SHARE);
-
-	/*
 	 * If we've already initialized this scan, we can just advance it in the
 	 * appropriate direction.  If we haven't done so yet, we call a routine to
 	 * get the first item in the scan.
 	 */
-	current = &(so->hashso_curpos);
-	if (ItemPointerIsValid(current))
+	if (!HashScanPosIsValid(so->currPos))
+		res = _hash_first(scan, dir);
+	else
 	{
-		/*
-		 * An insertion into the current index page could have happened while
-		 * we didn't have read lock on it.  Re-find our position by looking
-		 * for the TID we previously returned.  (Because we hold a pin on the
-		 * primary bucket page, no deletions or splits could have occurred;
-		 * therefore we can expect that the TID still exists in the current
-		 * index page, at an offset >= where we were.)
-		 */
-		OffsetNumber maxoffnum;
-
-		buf = so->hashso_curbuf;
-		Assert(BufferIsValid(buf));
-		page = BufferGetPage(buf);
-
-		/*
-		 * We don't need test for old snapshot here as the current buffer is
-		 * pinned, so vacuum can't clean the page.
-		 */
-		maxoffnum = PageGetMaxOffsetNumber(page);
-		for (offnum = ItemPointerGetOffsetNumber(current);
-			 offnum <= maxoffnum;
-			 offnum = OffsetNumberNext(offnum))
-		{
-			IndexTuple	itup;
-
-			itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, offnum));
-			if (ItemPointerEquals(&(so->hashso_heappos), &(itup->t_tid)))
-				break;
-		}
-		if (offnum > maxoffnum)
-			elog(ERROR, "failed to re-find scan position within index \"%s\"",
-				 RelationGetRelationName(rel));
-		ItemPointerSetOffsetNumber(current, offnum);
-
 		/*
 		 * Check to see if we should kill the previously-fetched tuple.
 		 */
@@ -341,16 +296,11 @@ hashgettuple(IndexScanDesc scan, ScanDirection dir)
 			 * entries.
 			 */
 			if (so->killedItems == NULL)
-				so->killedItems = palloc(MaxIndexTuplesPerPage *
-										 sizeof(HashScanPosItem));
+				so->killedItems = (int *)
+					palloc(MaxIndexTuplesPerPage * sizeof(int));
 
 			if (so->numKilled < MaxIndexTuplesPerPage)
-			{
-				so->killedItems[so->numKilled].heapTid = so->hashso_heappos;
-				so->killedItems[so->numKilled].indexOffset =
-					ItemPointerGetOffsetNumber(&(so->hashso_curpos));
-				so->numKilled++;
-			}
+				so->killedItems[so->numKilled++] = so->currPos.itemIndex;
 		}
 
 		/*
@@ -358,30 +308,6 @@ hashgettuple(IndexScanDesc scan, ScanDirection dir)
 		 */
 		res = _hash_next(scan, dir);
 	}
-	else
-		res = _hash_first(scan, dir);
-
-	/*
-	 * Skip killed tuples if asked to.
-	 */
-	if (scan->ignore_killed_tuples)
-	{
-		while (res)
-		{
-			offnum = ItemPointerGetOffsetNumber(current);
-			page = BufferGetPage(so->hashso_curbuf);
-			if (!ItemIdIsDead(PageGetItemId(page, offnum)))
-				break;
-			res = _hash_next(scan, dir);
-		}
-	}
-
-	/* Release read lock on current buffer, but keep it pinned */
-	if (BufferIsValid(so->hashso_curbuf))
-		LockBuffer(so->hashso_curbuf, BUFFER_LOCK_UNLOCK);
-
-	/* Return current heap TID on success */
-	scan->xs_ctup.t_self = so->hashso_heappos;
 
 	return res;
 }
@@ -396,35 +322,21 @@ hashgetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 	HashScanOpaque so = (HashScanOpaque) scan->opaque;
 	bool		res;
 	int64		ntids = 0;
+	HashScanPosItem *currItem;
 
 	res = _hash_first(scan, ForwardScanDirection);
 
 	while (res)
 	{
-		bool		add_tuple;
+		currItem = &so->currPos.items[so->currPos.itemIndex];
 
 		/*
-		 * Skip killed tuples if asked to.
+		 * _hash_first and _hash_next handle eliminate dead index entries
+		 * whenever scan->ignored_killed_tuples is true.  Therefore, there's
+		 * nothing to do here except add the results to the TIDBitmap.
 		 */
-		if (scan->ignore_killed_tuples)
-		{
-			Page		page;
-			OffsetNumber offnum;
-
-			offnum = ItemPointerGetOffsetNumber(&(so->hashso_curpos));
-			page = BufferGetPage(so->hashso_curbuf);
-			add_tuple = !ItemIdIsDead(PageGetItemId(page, offnum));
-		}
-		else
-			add_tuple = true;
-
-		/* Save tuple ID, and continue scanning */
-		if (add_tuple)
-		{
-			/* Note we mark the tuple ID as requiring recheck */
-			tbm_add_tuples(tbm, &(so->hashso_heappos), 1, true);
-			ntids++;
-		}
+		tbm_add_tuples(tbm, &(currItem->heapTid), 1, true);
+		ntids++;
 
 		res = _hash_next(scan, ForwardScanDirection);
 	}
@@ -448,12 +360,9 @@ hashbeginscan(Relation rel, int nkeys, int norderbys)
 	scan = RelationGetIndexScan(rel, nkeys, norderbys);
 
 	so = (HashScanOpaque) palloc(sizeof(HashScanOpaqueData));
-	so->hashso_curbuf = InvalidBuffer;
+	HashScanPosInvalidate(so->currPos);
 	so->hashso_bucket_buf = InvalidBuffer;
 	so->hashso_split_bucket_buf = InvalidBuffer;
-	/* set position invalid (this will cause _hash_first call) */
-	ItemPointerSetInvalid(&(so->hashso_curpos));
-	ItemPointerSetInvalid(&(so->hashso_heappos));
 
 	so->hashso_buc_populated = false;
 	so->hashso_buc_split = false;
@@ -476,22 +385,17 @@ hashrescan(IndexScanDesc scan, ScanKey scankey, int nscankeys,
 	HashScanOpaque so = (HashScanOpaque) scan->opaque;
 	Relation	rel = scan->indexRelation;
 
-	/*
-	 * Before leaving current page, deal with any killed items. Also, ensure
-	 * that we acquire lock on current page before calling _hash_kill_items.
-	 */
-	if (so->numKilled > 0)
+	if (HashScanPosIsValid(so->currPos))
 	{
-		LockBuffer(so->hashso_curbuf, BUFFER_LOCK_SHARE);
-		_hash_kill_items(scan);
-		LockBuffer(so->hashso_curbuf, BUFFER_LOCK_UNLOCK);
+		/* Before leaving current page, deal with any killed items */
+		if (so->numKilled > 0)
+			_hash_kill_items(scan);
 	}
 
 	_hash_dropscanbuf(rel, so);
 
 	/* set position invalid (this will cause _hash_first call) */
-	ItemPointerSetInvalid(&(so->hashso_curpos));
-	ItemPointerSetInvalid(&(so->hashso_heappos));
+	HashScanPosInvalidate(so->currPos);
 
 	/* Update scan key, if a new one is given */
 	if (scankey && scan->numberOfKeys > 0)
@@ -514,15 +418,11 @@ hashendscan(IndexScanDesc scan)
 	HashScanOpaque so = (HashScanOpaque) scan->opaque;
 	Relation	rel = scan->indexRelation;
 
-	/*
-	 * Before leaving current page, deal with any killed items. Also, ensure
-	 * that we acquire lock on current page before calling _hash_kill_items.
-	 */
-	if (so->numKilled > 0)
+	if (HashScanPosIsValid(so->currPos))
 	{
-		LockBuffer(so->hashso_curbuf, BUFFER_LOCK_SHARE);
-		_hash_kill_items(scan);
-		LockBuffer(so->hashso_curbuf, BUFFER_LOCK_UNLOCK);
+		/* Before leaving current page, deal with any killed items */
+		if (so->numKilled > 0)
+			_hash_kill_items(scan);
 	}
 
 	_hash_dropscanbuf(rel, so);
@@ -755,16 +655,15 @@ hashvacuumcleanup(IndexVacuumInfo *info, IndexBulkDeleteResult *stats)
  * primary bucket page.  The lock won't necessarily be held continuously,
  * though, because we'll release it when visiting overflow pages.
  *
- * It would be very bad if this function cleaned a page while some other
- * backend was in the midst of scanning it, because hashgettuple assumes
- * that the next valid TID will be greater than or equal to the current
- * valid TID.  There can't be any concurrent scans in progress when we first
- * enter this function because of the cleanup lock we hold on the primary
- * bucket page, but as soon as we release that lock, there might be.  We
- * handle that by conspiring to prevent those scans from passing our cleanup
- * scan.  To do that, we lock the next page in the bucket chain before
- * releasing the lock on the previous page.  (This type of lock chaining is
- * not ideal, so we might want to look for a better solution at some point.)
+ * There can't be any concurrent scans in progress when we first enter this
+ * function because of the cleanup lock we hold on the primary bucket page,
+ * but as soon as we release that lock, there might be.  If those scans got
+ * ahead of our cleanup scan, they might see a tuple before we kill it and
+ * wake up only after VACUUM has completed and the TID has been recycled for
+ * an unrelated tuple.  To avoid that calamity, we prevent scans from passing
+ * our cleanup scan by locking the next page in the bucket chain before
+ * releasing the lock on the previous page.  (This type of lock chaining is not
+ * ideal, so we might want to look for a better solution at some point.)
  *
  * We need to retain a pin on the primary bucket to ensure that no concurrent
  * split can start.

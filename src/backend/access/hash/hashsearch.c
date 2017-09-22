@@ -20,44 +20,105 @@
 #include "pgstat.h"
 #include "utils/rel.h"
 
+static bool _hash_readpage(IndexScanDesc scan, Buffer *bufP,
+			   ScanDirection dir);
+static int _hash_load_qualified_items(IndexScanDesc scan, Page page,
+						   OffsetNumber offnum, ScanDirection dir);
+static inline void _hash_saveitem(HashScanOpaque so, int itemIndex,
+			   OffsetNumber offnum, IndexTuple itup);
+static void _hash_readnext(IndexScanDesc scan, Buffer *bufp,
+			   Page *pagep, HashPageOpaque *opaquep);
 
 /*
  *	_hash_next() -- Get the next item in a scan.
  *
- *		On entry, we have a valid hashso_curpos in the scan, and a
- *		pin and read lock on the page that contains that item.
- *		We find the next item in the scan, if any.
- *		On success exit, we have the page containing the next item
- *		pinned and locked.
+ *		On entry, so->currPos describes the current page, which may
+ *		be pinned but not locked, and so->currPos.itemIndex identifies
+ *		which item was previously returned.
+ *
+ *		On successful exit, scan->xs_ctup.t_self is set to the TID
+ *		of the next heap tuple. so->currPos is updated as needed.
+ *
+ *		On failure exit (no more tuples), we return FALSE with pin
+ *		held on bucket page but no pins or locks held on overflow
+ *		page.
  */
 bool
 _hash_next(IndexScanDesc scan, ScanDirection dir)
 {
 	Relation	rel = scan->indexRelation;
 	HashScanOpaque so = (HashScanOpaque) scan->opaque;
+	HashScanPosItem *currItem;
+	BlockNumber blkno;
 	Buffer		buf;
-	Page		page;
-	OffsetNumber offnum;
-	ItemPointer current;
-	IndexTuple	itup;
-
-	/* we still have the buffer pinned and read-locked */
-	buf = so->hashso_curbuf;
-	Assert(BufferIsValid(buf));
+	bool		end_of_scan = false;
 
 	/*
-	 * step to next valid tuple.
+	 * Advance to the next tuple on the current page; or if done, try to read
+	 * data from the next or previous page based on the scan direction. Before
+	 * moving to the next or previous page make sure that we deal with all the
+	 * killed items.
 	 */
-	if (!_hash_step(scan, &buf, dir))
-		return false;
+	if (ScanDirectionIsForward(dir))
+	{
+		if (++so->currPos.itemIndex > so->currPos.lastItem)
+		{
+			if (so->numKilled > 0)
+				_hash_kill_items(scan);
 
-	/* if we're here, _hash_step found a valid tuple */
-	current = &(so->hashso_curpos);
-	offnum = ItemPointerGetOffsetNumber(current);
-	_hash_checkpage(rel, buf, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
-	page = BufferGetPage(buf);
-	itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, offnum));
-	so->hashso_heappos = itup->t_tid;
+			blkno = so->currPos.nextPage;
+			if (BlockNumberIsValid(blkno))
+			{
+				buf = _hash_getbuf(rel, blkno, HASH_READ, LH_OVERFLOW_PAGE);
+				TestForOldSnapshot(scan->xs_snapshot, rel, BufferGetPage(buf));
+				if (!_hash_readpage(scan, &buf, dir))
+					end_of_scan = true;
+			}
+			else
+				end_of_scan = true;
+		}
+	}
+	else
+	{
+		if (--so->currPos.itemIndex < so->currPos.firstItem)
+		{
+			if (so->numKilled > 0)
+				_hash_kill_items(scan);
+
+			blkno = so->currPos.prevPage;
+			if (BlockNumberIsValid(blkno))
+			{
+				buf = _hash_getbuf(rel, blkno, HASH_READ,
+								   LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
+				TestForOldSnapshot(scan->xs_snapshot, rel, BufferGetPage(buf));
+
+				/*
+				 * We always maintain the pin on bucket page for whole scan
+				 * operation, so releasing the additional pin we have acquired
+				 * here.
+				 */
+				if (buf == so->hashso_bucket_buf ||
+					buf == so->hashso_split_bucket_buf)
+					_hash_dropbuf(rel, buf);
+
+				if (!_hash_readpage(scan, &buf, dir))
+					end_of_scan = true;
+			}
+			else
+				end_of_scan = true;
+		}
+	}
+
+	if (end_of_scan)
+	{
+		_hash_dropscanbuf(rel, so);
+		HashScanPosInvalidate(so->currPos);
+		return false;
+	}
+
+	/* OK, itemIndex says what to return */
+	currItem = &so->currPos.items[so->currPos.itemIndex];
+	scan->xs_ctup.t_self = currItem->heapTid;
 
 	return true;
 }
@@ -212,11 +273,18 @@ _hash_readprev(IndexScanDesc scan,
 /*
  *	_hash_first() -- Find the first item in a scan.
  *
- *		Find the first item in the index that
- *		satisfies the qualification associated with the scan descriptor. On
- *		success, the page containing the current index tuple is read locked
- *		and pinned, and the scan's opaque data entry is updated to
- *		include the buffer.
+ *		We find the first item (or, if backward scan, the last item) in the
+ *		index that satisfies the qualification associated with the scan
+ *		descriptor.
+ *
+ *		On successful exit, if the page containing current index tuple is an
+ *		overflow page, both pin and lock are released whereas if it is a bucket
+ *		page then it is pinned but not locked and data about the matching
+ *		tuple(s) on the page has been loaded into so->currPos,
+ *		scan->xs_ctup.t_self is set to the heap TID of the current tuple.
+ *
+ *		On failure exit (no more tuples), we return FALSE, with pin held on
+ *		bucket page but no pins or locks held on overflow page.
  */
 bool
 _hash_first(IndexScanDesc scan, ScanDirection dir)
@@ -229,14 +297,9 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 	Buffer		buf;
 	Page		page;
 	HashPageOpaque opaque;
-	IndexTuple	itup;
-	ItemPointer current;
-	OffsetNumber offnum;
+	HashScanPosItem *currItem;
 
 	pgstat_count_index_scan(rel);
-
-	current = &(so->hashso_curpos);
-	ItemPointerSetInvalid(current);
 
 	/*
 	 * We do not support hash scans with no index qualification, because we
@@ -356,222 +419,308 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 			_hash_readnext(scan, &buf, &page, &opaque);
 	}
 
-	/* Now find the first tuple satisfying the qualification */
-	if (!_hash_step(scan, &buf, dir))
+	/* remember which buffer we have pinned, if any */
+	Assert(BufferIsInvalid(so->currPos.buf));
+	so->currPos.buf = buf;
+
+	/* Now find all the tuples satisfying the qualification from a page */
+	if (!_hash_readpage(scan, &buf, dir))
 		return false;
 
-	/* if we're here, _hash_step found a valid tuple */
-	offnum = ItemPointerGetOffsetNumber(current);
-	_hash_checkpage(rel, buf, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
-	page = BufferGetPage(buf);
-	itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, offnum));
-	so->hashso_heappos = itup->t_tid;
+	/* OK, itemIndex says what to return */
+	currItem = &so->currPos.items[so->currPos.itemIndex];
+	scan->xs_ctup.t_self = currItem->heapTid;
 
+	/* if we're here, _hash_readpage found a valid tuples */
 	return true;
 }
 
 /*
- *	_hash_step() -- step to the next valid item in a scan in the bucket.
+ *	_hash_readpage() -- Load data from current index page into so->currPos
  *
- *		If no valid record exists in the requested direction, return
- *		false.  Else, return true and set the hashso_curpos for the
- *		scan to the right thing.
+ *	We scan all the items in the current index page and save them into
+ *	so->currPos if it satisfies the qualification. If no matching items
+ *	are found in the current page, we move to the next or previous page
+ *	in a bucket chain as indicated by the direction.
  *
- *		Here we need to ensure that if the scan has started during split, then
- *		skip the tuples that are moved by split while scanning bucket being
- *		populated and then scan the bucket being split to cover all such
- *		tuples.  This is done to ensure that we don't miss tuples in the scans
- *		that are started during split.
- *
- *		'bufP' points to the current buffer, which is pinned and read-locked.
- *		On success exit, we have pin and read-lock on whichever page
- *		contains the right item; on failure, we have released all buffers.
+ *	Return true if any matching items are found else return false.
  */
-bool
-_hash_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
+static bool
+_hash_readpage(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 {
 	Relation	rel = scan->indexRelation;
 	HashScanOpaque so = (HashScanOpaque) scan->opaque;
-	ItemPointer current;
 	Buffer		buf;
 	Page		page;
 	HashPageOpaque opaque;
-	OffsetNumber maxoff;
 	OffsetNumber offnum;
-	BlockNumber blkno;
-	IndexTuple	itup;
-
-	current = &(so->hashso_curpos);
+	uint16		itemIndex;
 
 	buf = *bufP;
+	Assert(BufferIsValid(buf));
 	_hash_checkpage(rel, buf, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
 	page = BufferGetPage(buf);
 	opaque = (HashPageOpaque) PageGetSpecialPointer(page);
 
-	/*
-	 * If _hash_step is called from _hash_first, current will not be valid, so
-	 * we can't dereference it.  However, in that case, we presumably want to
-	 * start at the beginning/end of the page...
-	 */
-	maxoff = PageGetMaxOffsetNumber(page);
-	if (ItemPointerIsValid(current))
-		offnum = ItemPointerGetOffsetNumber(current);
-	else
-		offnum = InvalidOffsetNumber;
+	so->currPos.buf = buf;
 
 	/*
-	 * 'offnum' now points to the last tuple we examined (if any).
-	 *
-	 * continue to step through tuples until: 1) we get to the end of the
-	 * bucket chain or 2) we find a valid tuple.
+	 * We save the LSN of the page as we read it, so that we know whether it
+	 * is safe to apply LP_DEAD hints to the page later.
 	 */
-	do
+	so->currPos.lsn = PageGetLSN(page);
+	so->currPos.currPage = BufferGetBlockNumber(buf);
+
+	if (ScanDirectionIsForward(dir))
 	{
-		switch (dir)
+		BlockNumber prev_blkno = InvalidBlockNumber;
+
+		for (;;)
 		{
-			case ForwardScanDirection:
-				if (offnum != InvalidOffsetNumber)
-					offnum = OffsetNumberNext(offnum);	/* move forward */
-				else
-				{
-					/* new page, locate starting position by binary search */
-					offnum = _hash_binsearch(page, so->hashso_sk_hash);
-				}
+			/* new page, locate starting position by binary search */
+			offnum = _hash_binsearch(page, so->hashso_sk_hash);
 
-				for (;;)
-				{
-					/*
-					 * check if we're still in the range of items with the
-					 * target hash key
-					 */
-					if (offnum <= maxoff)
-					{
-						Assert(offnum >= FirstOffsetNumber);
-						itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, offnum));
+			itemIndex = _hash_load_qualified_items(scan, page, offnum, dir);
 
-						/*
-						 * skip the tuples that are moved by split operation
-						 * for the scan that has started when split was in
-						 * progress
-						 */
-						if (so->hashso_buc_populated && !so->hashso_buc_split &&
-							(itup->t_info & INDEX_MOVED_BY_SPLIT_MASK))
-						{
-							offnum = OffsetNumberNext(offnum);	/* move forward */
-							continue;
-						}
-
-						if (so->hashso_sk_hash == _hash_get_indextuple_hashkey(itup))
-							break;	/* yes, so exit for-loop */
-					}
-
-					/* Before leaving current page, deal with any killed items */
-					if (so->numKilled > 0)
-						_hash_kill_items(scan);
-
-					/*
-					 * ran off the end of this page, try the next
-					 */
-					_hash_readnext(scan, &buf, &page, &opaque);
-					if (BufferIsValid(buf))
-					{
-						maxoff = PageGetMaxOffsetNumber(page);
-						offnum = _hash_binsearch(page, so->hashso_sk_hash);
-					}
-					else
-					{
-						itup = NULL;
-						break;	/* exit for-loop */
-					}
-				}
+			if (itemIndex != 0)
 				break;
 
-			case BackwardScanDirection:
-				if (offnum != InvalidOffsetNumber)
-					offnum = OffsetNumberPrev(offnum);	/* move back */
-				else
-				{
-					/* new page, locate starting position by binary search */
-					offnum = _hash_binsearch_last(page, so->hashso_sk_hash);
-				}
-
-				for (;;)
-				{
-					/*
-					 * check if we're still in the range of items with the
-					 * target hash key
-					 */
-					if (offnum >= FirstOffsetNumber)
-					{
-						Assert(offnum <= maxoff);
-						itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, offnum));
-
-						/*
-						 * skip the tuples that are moved by split operation
-						 * for the scan that has started when split was in
-						 * progress
-						 */
-						if (so->hashso_buc_populated && !so->hashso_buc_split &&
-							(itup->t_info & INDEX_MOVED_BY_SPLIT_MASK))
-						{
-							offnum = OffsetNumberPrev(offnum);	/* move back */
-							continue;
-						}
-
-						if (so->hashso_sk_hash == _hash_get_indextuple_hashkey(itup))
-							break;	/* yes, so exit for-loop */
-					}
-
-					/* Before leaving current page, deal with any killed items */
-					if (so->numKilled > 0)
-						_hash_kill_items(scan);
-
-					/*
-					 * ran off the end of this page, try the next
-					 */
-					_hash_readprev(scan, &buf, &page, &opaque);
-					if (BufferIsValid(buf))
-					{
-						TestForOldSnapshot(scan->xs_snapshot, rel, page);
-						maxoff = PageGetMaxOffsetNumber(page);
-						offnum = _hash_binsearch_last(page, so->hashso_sk_hash);
-					}
-					else
-					{
-						itup = NULL;
-						break;	/* exit for-loop */
-					}
-				}
-				break;
-
-			default:
-				/* NoMovementScanDirection */
-				/* this should not be reached */
-				itup = NULL;
-				break;
-		}
-
-		if (itup == NULL)
-		{
 			/*
-			 * We ran off the end of the bucket without finding a match.
-			 * Release the pin on bucket buffers.  Normally, such pins are
-			 * released at end of scan, however scrolling cursors can
-			 * reacquire the bucket lock and pin in the same scan multiple
-			 * times.
+			 * Could not find any matching tuples in the current page, move to
+			 * the next page. Before leaving the current page, deal with any
+			 * killed items.
 			 */
-			*bufP = so->hashso_curbuf = InvalidBuffer;
-			ItemPointerSetInvalid(current);
-			_hash_dropscanbuf(rel, so);
-			return false;
+			if (so->numKilled > 0)
+				_hash_kill_items(scan);
+
+			/*
+			 * If this is a primary bucket page, hasho_prevblkno is not a real
+			 * block number.
+			 */
+			if (so->currPos.buf == so->hashso_bucket_buf ||
+				so->currPos.buf == so->hashso_split_bucket_buf)
+				prev_blkno = InvalidBlockNumber;
+			else
+				prev_blkno = opaque->hasho_prevblkno;
+
+			_hash_readnext(scan, &buf, &page, &opaque);
+			if (BufferIsValid(buf))
+			{
+				so->currPos.buf = buf;
+				so->currPos.currPage = BufferGetBlockNumber(buf);
+				so->currPos.lsn = PageGetLSN(page);
+			}
+			else
+			{
+				/*
+				 * Remember next and previous block numbers for scrollable
+				 * cursors to know the start position and return FALSE
+				 * indicating that no more matching tuples were found. Also,
+				 * don't reset currPage or lsn, because we expect
+				 * _hash_kill_items to be called for the old page after this
+				 * function returns.
+				 */
+				so->currPos.prevPage = prev_blkno;
+				so->currPos.nextPage = InvalidBlockNumber;
+				so->currPos.buf = buf;
+				return false;
+			}
 		}
 
-		/* check the tuple quals, loop around if not met */
-	} while (!_hash_checkqual(scan, itup));
+		so->currPos.firstItem = 0;
+		so->currPos.lastItem = itemIndex - 1;
+		so->currPos.itemIndex = 0;
+	}
+	else
+	{
+		BlockNumber next_blkno = InvalidBlockNumber;
 
-	/* if we made it to here, we've found a valid tuple */
-	blkno = BufferGetBlockNumber(buf);
-	*bufP = so->hashso_curbuf = buf;
-	ItemPointerSet(current, blkno, offnum);
+		for (;;)
+		{
+			/* new page, locate starting position by binary search */
+			offnum = _hash_binsearch_last(page, so->hashso_sk_hash);
+
+			itemIndex = _hash_load_qualified_items(scan, page, offnum, dir);
+
+			if (itemIndex != MaxIndexTuplesPerPage)
+				break;
+
+			/*
+			 * Could not find any matching tuples in the current page, move to
+			 * the previous page. Before leaving the current page, deal with
+			 * any killed items.
+			 */
+			if (so->numKilled > 0)
+				_hash_kill_items(scan);
+
+			if (so->currPos.buf == so->hashso_bucket_buf ||
+				so->currPos.buf == so->hashso_split_bucket_buf)
+				next_blkno = opaque->hasho_nextblkno;
+
+			_hash_readprev(scan, &buf, &page, &opaque);
+			if (BufferIsValid(buf))
+			{
+				so->currPos.buf = buf;
+				so->currPos.currPage = BufferGetBlockNumber(buf);
+				so->currPos.lsn = PageGetLSN(page);
+			}
+			else
+			{
+				/*
+				 * Remember next and previous block numbers for scrollable
+				 * cursors to know the start position and return FALSE
+				 * indicating that no more matching tuples were found. Also,
+				 * don't reset currPage or lsn, because we expect
+				 * _hash_kill_items to be called for the old page after this
+				 * function returns.
+				 */
+				so->currPos.prevPage = InvalidBlockNumber;
+				so->currPos.nextPage = next_blkno;
+				so->currPos.buf = buf;
+				return false;
+			}
+		}
+
+		so->currPos.firstItem = itemIndex;
+		so->currPos.lastItem = MaxIndexTuplesPerPage - 1;
+		so->currPos.itemIndex = MaxIndexTuplesPerPage - 1;
+	}
+
+	if (so->currPos.buf == so->hashso_bucket_buf ||
+		so->currPos.buf == so->hashso_split_bucket_buf)
+	{
+		so->currPos.prevPage = InvalidBlockNumber;
+		so->currPos.nextPage = opaque->hasho_nextblkno;
+		LockBuffer(so->currPos.buf, BUFFER_LOCK_UNLOCK);
+	}
+	else
+	{
+		so->currPos.prevPage = opaque->hasho_prevblkno;
+		so->currPos.nextPage = opaque->hasho_nextblkno;
+		_hash_relbuf(rel, so->currPos.buf);
+		so->currPos.buf = InvalidBuffer;
+	}
+
+	Assert(so->currPos.firstItem <= so->currPos.lastItem);
 	return true;
+}
+
+/*
+ * Load all the qualified items from a current index page
+ * into so->currPos. Helper function for _hash_readpage.
+ */
+static int
+_hash_load_qualified_items(IndexScanDesc scan, Page page,
+						   OffsetNumber offnum, ScanDirection dir)
+{
+	HashScanOpaque so = (HashScanOpaque) scan->opaque;
+	IndexTuple	itup;
+	int			itemIndex;
+	OffsetNumber maxoff;
+
+	maxoff = PageGetMaxOffsetNumber(page);
+
+	if (ScanDirectionIsForward(dir))
+	{
+		/* load items[] in ascending order */
+		itemIndex = 0;
+
+		while (offnum <= maxoff)
+		{
+			Assert(offnum >= FirstOffsetNumber);
+			itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, offnum));
+
+			/*
+			 * skip the tuples that are moved by split operation for the scan
+			 * that has started when split was in progress. Also, skip the
+			 * tuples that are marked as dead.
+			 */
+			if ((so->hashso_buc_populated && !so->hashso_buc_split &&
+				 (itup->t_info & INDEX_MOVED_BY_SPLIT_MASK)) ||
+				(scan->ignore_killed_tuples &&
+				 (ItemIdIsDead(PageGetItemId(page, offnum)))))
+			{
+				offnum = OffsetNumberNext(offnum);	/* move forward */
+				continue;
+			}
+
+			if (so->hashso_sk_hash == _hash_get_indextuple_hashkey(itup) &&
+				_hash_checkqual(scan, itup))
+			{
+				/* tuple is qualified, so remember it */
+				_hash_saveitem(so, itemIndex, offnum, itup);
+				itemIndex++;
+			}
+			else
+			{
+				/*
+				 * No more matching tuples exist in this page. so, exit while
+				 * loop.
+				 */
+				break;
+			}
+
+			offnum = OffsetNumberNext(offnum);
+		}
+
+		Assert(itemIndex <= MaxIndexTuplesPerPage);
+		return itemIndex;
+	}
+	else
+	{
+		/* load items[] in descending order */
+		itemIndex = MaxIndexTuplesPerPage;
+
+		while (offnum >= FirstOffsetNumber)
+		{
+			Assert(offnum <= maxoff);
+			itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, offnum));
+
+			/*
+			 * skip the tuples that are moved by split operation for the scan
+			 * that has started when split was in progress. Also, skip the
+			 * tuples that are marked as dead.
+			 */
+			if ((so->hashso_buc_populated && !so->hashso_buc_split &&
+				 (itup->t_info & INDEX_MOVED_BY_SPLIT_MASK)) ||
+				(scan->ignore_killed_tuples &&
+				 (ItemIdIsDead(PageGetItemId(page, offnum)))))
+			{
+				offnum = OffsetNumberPrev(offnum);	/* move back */
+				continue;
+			}
+
+			if (so->hashso_sk_hash == _hash_get_indextuple_hashkey(itup) &&
+				_hash_checkqual(scan, itup))
+			{
+				itemIndex--;
+				/* tuple is qualified, so remember it */
+				_hash_saveitem(so, itemIndex, offnum, itup);
+			}
+			else
+			{
+				/*
+				 * No more matching tuples exist in this page. so, exit while
+				 * loop.
+				 */
+				break;
+			}
+
+			offnum = OffsetNumberPrev(offnum);
+		}
+
+		Assert(itemIndex >= 0);
+		return itemIndex;
+	}
+}
+
+/* Save an index item into so->currPos.items[itemIndex] */
+static inline void
+_hash_saveitem(HashScanOpaque so, int itemIndex,
+			   OffsetNumber offnum, IndexTuple itup)
+{
+	HashScanPosItem *currItem = &so->currPos.items[itemIndex];
+
+	currItem->heapTid = itup->t_tid;
+	currItem->indexOffset = offnum;
 }

@@ -114,6 +114,53 @@ typedef struct HashScanPosItem	/* what we remember about each match */
 	OffsetNumber indexOffset;	/* index item's location within page */
 } HashScanPosItem;
 
+typedef struct HashScanPosData
+{
+	Buffer		buf;			/* if valid, the buffer is pinned */
+	XLogRecPtr	lsn;			/* pos in the WAL stream when page was read */
+	BlockNumber currPage;		/* current hash index page */
+	BlockNumber nextPage;		/* next overflow page */
+	BlockNumber prevPage;		/* prev overflow or bucket page */
+
+	/*
+	 * The items array is always ordered in index order (ie, increasing
+	 * indexoffset).  When scanning backwards it is convenient to fill the
+	 * array back-to-front, so we start at the last slot and fill downwards.
+	 * Hence we need both a first-valid-entry and a last-valid-entry counter.
+	 * itemIndex is a cursor showing which entry was last returned to caller.
+	 */
+	int			firstItem;		/* first valid index in items[] */
+	int			lastItem;		/* last valid index in items[] */
+	int			itemIndex;		/* current index in items[] */
+
+	HashScanPosItem items[MaxIndexTuplesPerPage];	/* MUST BE LAST */
+}			HashScanPosData;
+
+#define HashScanPosIsPinned(scanpos) \
+( \
+	AssertMacro(BlockNumberIsValid((scanpos).currPage) || \
+				!BufferIsValid((scanpos).buf)), \
+	BufferIsValid((scanpos).buf) \
+)
+
+#define HashScanPosIsValid(scanpos) \
+( \
+	AssertMacro(BlockNumberIsValid((scanpos).currPage) || \
+				!BufferIsValid((scanpos).buf)), \
+	BlockNumberIsValid((scanpos).currPage) \
+)
+
+#define HashScanPosInvalidate(scanpos) \
+	do { \
+		(scanpos).buf = InvalidBuffer; \
+		(scanpos).lsn = InvalidXLogRecPtr; \
+		(scanpos).currPage = InvalidBlockNumber; \
+		(scanpos).nextPage = InvalidBlockNumber; \
+		(scanpos).prevPage = InvalidBlockNumber; \
+		(scanpos).firstItem = 0; \
+		(scanpos).lastItem = 0; \
+		(scanpos).itemIndex = 0; \
+	} while (0);
 
 /*
  *	HashScanOpaqueData is private state for a hash index scan.
@@ -122,14 +169,6 @@ typedef struct HashScanOpaqueData
 {
 	/* Hash value of the scan key, ie, the hash key we seek */
 	uint32		hashso_sk_hash;
-
-	/*
-	 * We also want to remember which buffer we're currently examining in the
-	 * scan. We keep the buffer pinned (but not locked) across hashgettuple
-	 * calls, in order to avoid doing a ReadBuffer() for every tuple in the
-	 * index.
-	 */
-	Buffer		hashso_curbuf;
 
 	/* remember the buffer associated with primary bucket */
 	Buffer		hashso_bucket_buf;
@@ -141,12 +180,6 @@ typedef struct HashScanOpaqueData
 	 */
 	Buffer		hashso_split_bucket_buf;
 
-	/* Current position of the scan, as an index TID */
-	ItemPointerData hashso_curpos;
-
-	/* Current position of the scan, as a heap TID */
-	ItemPointerData hashso_heappos;
-
 	/* Whether scan starts on bucket being populated due to split */
 	bool		hashso_buc_populated;
 
@@ -156,8 +189,14 @@ typedef struct HashScanOpaqueData
 	 */
 	bool		hashso_buc_split;
 	/* info about killed items if any (killedItems is NULL if never used) */
-	HashScanPosItem *killedItems;	/* tids and offset numbers of killed items */
+	int		   *killedItems;	/* currPos.items indexes of killed items */
 	int			numKilled;		/* number of currently stored items */
+
+	/*
+	 * Identify all the matching items on a page and save them in
+	 * HashScanPosData
+	 */
+	HashScanPosData currPos;	/* current position data */
 } HashScanOpaqueData;
 
 typedef HashScanOpaqueData *HashScanOpaque;
@@ -401,7 +440,6 @@ extern void _hash_finish_split(Relation rel, Buffer metabuf, Buffer obuf,
 /* hashsearch.c */
 extern bool _hash_next(IndexScanDesc scan, ScanDirection dir);
 extern bool _hash_first(IndexScanDesc scan, ScanDirection dir);
-extern bool _hash_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir);
 
 /* hashsort.c */
 typedef struct HSpool HSpool;	/* opaque struct in hashsort.c */

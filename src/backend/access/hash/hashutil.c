@@ -522,13 +522,30 @@ _hash_get_newbucket_from_oldbucket(Relation rel, Bucket old_bucket,
  * current page and killed tuples thereon (generally, this should only be
  * called if so->numKilled > 0).
  *
+ * The caller does not have a lock on the page and may or may not have the
+ * page pinned in a buffer.  Note that read-lock is sufficient for setting
+ * LP_DEAD status (which is only a hint).
+ *
+ * The caller must have pin on bucket buffer, but may or may not have pin
+ * on overflow buffer, as indicated by HashScanPosIsPinned(so->currPos).
+ *
  * We match items by heap TID before assuming they are the right ones to
  * delete.
+ *
+ * Note that we keep the pin on the bucket page throughout the scan. Hence,
+ * there is no chance of VACUUM deleting any items from that page.  However,
+ * having pin on the overflow page doesn't guarantee that vacuum won't delete
+ * any items.
+ *
+ * See _bt_killitems() for more details.
  */
 void
 _hash_kill_items(IndexScanDesc scan)
 {
 	HashScanOpaque so = (HashScanOpaque) scan->opaque;
+	Relation	rel = scan->indexRelation;
+	BlockNumber blkno;
+	Buffer		buf;
 	Page		page;
 	HashPageOpaque opaque;
 	OffsetNumber offnum,
@@ -536,9 +553,11 @@ _hash_kill_items(IndexScanDesc scan)
 	int			numKilled = so->numKilled;
 	int			i;
 	bool		killedsomething = false;
+	bool		havePin = false;
 
 	Assert(so->numKilled > 0);
 	Assert(so->killedItems != NULL);
+	Assert(HashScanPosIsValid(so->currPos));
 
 	/*
 	 * Always reset the scan state, so we don't look for same items on other
@@ -546,20 +565,54 @@ _hash_kill_items(IndexScanDesc scan)
 	 */
 	so->numKilled = 0;
 
-	page = BufferGetPage(so->hashso_curbuf);
+	blkno = so->currPos.currPage;
+	if (HashScanPosIsPinned(so->currPos))
+	{
+		/*
+		 * We already have pin on this buffer, so, all we need to do is
+		 * acquire lock on it.
+		 */
+		havePin = true;
+		buf = so->currPos.buf;
+		LockBuffer(buf, BUFFER_LOCK_SHARE);
+	}
+	else
+		buf = _hash_getbuf(rel, blkno, HASH_READ, LH_OVERFLOW_PAGE);
+
+	/*
+	 * If page LSN differs it means that the page was modified since the last
+	 * read. killedItems could be not valid so applying LP_DEAD hints is not
+	 * safe.
+	 */
+	page = BufferGetPage(buf);
+	if (PageGetLSN(page) != so->currPos.lsn)
+	{
+		if (havePin)
+			LockBuffer(buf, BUFFER_LOCK_UNLOCK);
+		else
+			_hash_relbuf(rel, buf);
+		return;
+	}
+
 	opaque = (HashPageOpaque) PageGetSpecialPointer(page);
 	maxoff = PageGetMaxOffsetNumber(page);
 
 	for (i = 0; i < numKilled; i++)
 	{
-		offnum = so->killedItems[i].indexOffset;
+		int			itemIndex = so->killedItems[i];
+		HashScanPosItem *currItem = &so->currPos.items[itemIndex];
+
+		offnum = currItem->indexOffset;
+
+		Assert(itemIndex >= so->currPos.firstItem &&
+			   itemIndex <= so->currPos.lastItem);
 
 		while (offnum <= maxoff)
 		{
 			ItemId		iid = PageGetItemId(page, offnum);
 			IndexTuple	ituple = (IndexTuple) PageGetItem(page, iid);
 
-			if (ItemPointerEquals(&ituple->t_tid, &so->killedItems[i].heapTid))
+			if (ItemPointerEquals(&ituple->t_tid, &currItem->heapTid))
 			{
 				/* found the item */
 				ItemIdMarkDead(iid);
@@ -578,6 +631,12 @@ _hash_kill_items(IndexScanDesc scan)
 	if (killedsomething)
 	{
 		opaque->hasho_flag |= LH_PAGE_HAS_DEAD_TUPLES;
-		MarkBufferDirtyHint(so->hashso_curbuf, true);
+		MarkBufferDirtyHint(buf, true);
 	}
+
+	if (so->hashso_bucket_buf == so->currPos.buf ||
+		havePin)
+		LockBuffer(so->currPos.buf, BUFFER_LOCK_UNLOCK);
+	else
+		_hash_relbuf(rel, buf);
 }
