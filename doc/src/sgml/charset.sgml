@@ -515,7 +515,7 @@ SELECT * FROM test1 ORDER BY a || b COLLATE "fr_FR";
    <para>
     A collation object provided by <literal>libc</literal> maps to a
     combination of <symbol>LC_COLLATE</symbol> and <symbol>LC_CTYPE</symbol>
-    settings.  (As
+    settings, as accepted by the <literal>setlocale()</literal> system library call.  (As
     the name would suggest, the main purpose of a collation is to set
     <symbol>LC_COLLATE</symbol>, which controls the sort order.  But
     it is rarely necessary in practice to have an
@@ -640,21 +640,19 @@ SELECT a COLLATE "C" &lt; b COLLATE "POSIX" FROM test1;
    <title>ICU collations</title>
 
    <para>
-    Collations provided by ICU are created with names in BCP 47 language tag
+    With ICU, it is not sensible to enumerate all possible locale names.  ICU
+    uses a particular naming system for locales, but there are many more ways
+    to name a locale than there are actually distinct locales.
+    <command>initdb</command> uses the ICU APIs to extract a set of distinct
+    locales to populate the initial set of collations.  Collations provided by
+    ICU are created in the SQL environment with names in BCP 47 language tag
     format, with a <quote>private use</quote>
     extension <literal>-x-icu</literal> appended, to distinguish them from
-    libc locales.  So <literal>de-x-icu</literal> would be an example name.
+    libc locales.
    </para>
 
    <para>
-    With ICU, it is not sensible to enumerate all possible locale names.  ICU
-    uses a particular naming system for locales, but there are many more ways
-    to name a locale than there are actually distinct locales.  (In fact, any
-    string will be accepted as a locale name.)
-    See <ulink url="http://userguide.icu-project.org/locale"></ulink> for
-    information on ICU locale naming.  <command>initdb</command> uses the ICU
-    APIs to extract a set of distinct locales to populate the initial set of
-    collations.  Here are some example collations that might be created:
+    Here are some example collations that might be created:
 
     <variablelist>
      <varlistentry>
@@ -695,32 +693,104 @@ SELECT a COLLATE "C" &lt; b COLLATE "POSIX" FROM test1;
     will draw an error along the lines of <quote>collation "de-x-icu" for
     encoding "WIN874" does not exist</>.
    </para>
+  </sect4>
+  </sect3>
+
+  <sect3 id="collation-create">
+   <title>Creating New Collation Objects</title>
+
+   <para>
+    If the standard and predefined collations are not sufficient, users can
+    create their own collation objects using the SQL
+    command <xref linkend="sql-createcollation">.
+   </para>
+
+   <para>
+    The standard and predefined collations are in the
+    schema <literal>pg_catalog</literal>, like all predefined objects.
+    User-defined collations should be created in user schemas.  This also
+    ensures that they are saved by <command>pg_dump</command>.
+   </para>
+
+   <sect4>
+    <title>libc collations</title>
+
+    <para>
+     New libc collations can be created like this:
+<programlisting>
+CREATE COLLATION german (provider = libc, locale = 'de_DE');
+</programlisting>
+     The exact values that are acceptable for the <literal>locale</literal>
+     clause in this command depend on the operating system.  On Unix-like
+     systems, the command <literal>locale -a</literal> will show a list.
+    </para>
+
+    <para>
+     Since the predefined libc collations already include all collations
+     defined in the operating system when the database instance is
+     initialized, it is not often necessary to manually create new ones.
+     Reasons might be if a different naming system is desired (in which case
+     see also <xref linkend="collation-copy">) or if the operating system has
+     been upgraded to provide new locale definitions (in which case see
+     also <link linkend="functions-admin-collation"><function>pg_import_system_collations()</function></link>).
+    </para>
+   </sect4>
+
+   <sect4>
+    <title>ICU collations</title>
 
    <para>
     ICU allows collations to be customized beyond the basic language+country
     set that is preloaded by <command>initdb</command>.  Users are encouraged
     to define their own collation objects that make use of these facilities to
-    suit the sorting behavior to their requirements.  Here are some examples:
+    suit the sorting behavior to their requirements.
+    See <ulink url="http://userguide.icu-project.org/locale"></ulink>
+    and <ulink url="http://userguide.icu-project.org/collation/api"></ulink> for
+    information on ICU locale naming.  The set of acceptable names and
+    attributes depends on the particular ICU version.
+   </para>
+
+   <para>
+    Here are some examples:
 
     <variablelist>
      <varlistentry>
-      <term><literal>CREATE COLLATION "de-u-co-phonebk-x-icu" (provider = icu, locale = 'de-u-co-phonebk')</literal></term>
+      <term><literal>CREATE COLLATION "de-u-co-phonebk-x-icu" (provider = icu, locale = 'de-u-co-phonebk');</literal></term>
+      <term><literal>CREATE COLLATION "de-u-co-phonebk-x-icu" (provider = icu, locale = 'de@collation=phonebook');</literal></term>
       <listitem>
        <para>German collation with phone book collation type</para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><literal>CREATE COLLATION "und-u-co-emoji-x-icu" (provider = icu, locale = 'und-u-co-emoji')</literal></term>
-      <listitem>
        <para>
-        Root collation with Emoji collation type, per Unicode Technical Standard #51
+        The first example selects the ICU locale using a <quote>language
+        tag</quote> per BCP 47.  The second example uses the traditional
+        ICU-specific locale syntax.  The first style is preferred going
+        forward, but it is not supported by older ICU versions.
+       </para>
+       <para>
+        Note that you can name the collation objects in the SQL environment
+        anything you want.  In this example, we follow the naming style that
+        the predefined collations use, which in turn also follow BCP 47, but
+        that is not required for user-defined collations.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><literal>CREATE COLLATION digitslast (provider = icu, locale = 'en-u-kr-latn-digit')</literal></term>
+      <term><literal>CREATE COLLATION "und-u-co-emoji-x-icu" (provider = icu, locale = 'und-u-co-emoji');</literal></term>
+      <term><literal>CREATE COLLATION "und-u-co-emoji-x-icu" (provider = icu, locale = '@collation=emoji');</literal></term>
+      <listitem>
+       <para>
+        Root collation with Emoji collation type, per Unicode Technical Standard #51
+       </para>
+       <para>
+        Observe how in the traditional ICU locale naming system, the root
+        locale is selected by an empty string.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>CREATE COLLATION digitslast (provider = icu, locale = 'en-u-kr-latn-digit');</literal></term>
+      <term><literal>CREATE COLLATION digitslast (provider = icu, locale = 'en@colReorder=latn-digit');</literal></term>
       <listitem>
        <para>
         Sort digits after Latin letters.  (The default is digits before letters.)
@@ -729,7 +799,8 @@ SELECT a COLLATE "C" &lt; b COLLATE "POSIX" FROM test1;
      </varlistentry>
 
      <varlistentry>
-      <term><literal>CREATE COLLATION upperfirst (provider = icu, locale = 'en-u-kf-upper')</literal></term>
+      <term><literal>CREATE COLLATION upperfirst (provider = icu, locale = 'en-u-kf-upper');</literal></term>
+      <term><literal>CREATE COLLATION upperfirst (provider = icu, locale = 'en@colCaseFirst=upper');</literal></term>
       <listitem>
        <para>
         Sort upper-case letters before lower-case letters.  (The default is
@@ -739,7 +810,8 @@ SELECT a COLLATE "C" &lt; b COLLATE "POSIX" FROM test1;
      </varlistentry>
 
      <varlistentry>
-      <term><literal>CREATE COLLATION special (provider = icu, locale = 'en-u-kf-upper-kr-latn-digit')</literal></term>
+      <term><literal>CREATE COLLATION special (provider = icu, locale = 'en-u-kf-upper-kr-latn-digit');</literal></term>
+      <term><literal>CREATE COLLATION special (provider = icu, locale = 'en@colCaseFirst=upper;colReorder=latn-digit');</literal></term>
       <listitem>
        <para>
         Combines both of the above options.
@@ -748,7 +820,8 @@ SELECT a COLLATE "C" &lt; b COLLATE "POSIX" FROM test1;
      </varlistentry>
 
      <varlistentry>
-      <term><literal>CREATE COLLATION numeric (provider = icu, locale = 'en-u-kn-true')</literal></term>
+      <term><literal>CREATE COLLATION numeric (provider = icu, locale = 'en-u-kn-true');</literal></term>
+      <term><literal>CREATE COLLATION numeric (provider = icu, locale = 'en@colNumeric=yes');</literal></term>
       <listitem>
        <para>
         Numeric ordering, sorts sequences of digits by their numeric value,
@@ -768,7 +841,8 @@ SELECT a COLLATE "C" &lt; b COLLATE "POSIX" FROM test1;
     repository</ulink>.
     The <ulink url="https://ssl.icu-project.org/icu-bin/locexp">ICU Locale
     Explorer</ulink> can be used to check the details of a particular locale
-    definition.
+    definition.  The examples using the <literal>k*</literal> subtags require
+    at least ICU version 54.
    </para>
 
    <para>
@@ -779,10 +853,21 @@ SELECT a COLLATE "C" &lt; b COLLATE "POSIX" FROM test1;
     strings that compare equal according to the collation but are not
     byte-wise equal will be sorted according to their byte values.
    </para>
-   </sect4>
-   </sect3>
 
-   <sect3>
+   <note>
+    <para>
+     By design, ICU will accept almost any string as a locale name and match
+     it to the closet locale it can provide, using the fallback procedure
+     described in its documentation.  Thus, there will be no direct feedback
+     if a collation specification is composed using features that the given
+     ICU installation does not actually support.  It is therefore recommended
+     to create application-level test cases to check that the collation
+     definitions satisfy one's requirements.
+    </para>
+   </note>
+   </sect4>
+
+   <sect4 id="collation-copy">
    <title>Copying Collations</title>
 
    <para>
@@ -796,13 +881,7 @@ CREATE COLLATION german FROM "de_DE";
 CREATE COLLATION french FROM "fr-x-icu";
 </programlisting>
    </para>
-
-   <para>
-    The standard and predefined collations are in the
-    schema <literal>pg_catalog</literal>, like all predefined objects.
-    User-defined collations should be created in user schemas.  This also
-    ensures that they are saved by <command>pg_dump</command>.
-   </para>
+   </sect4>
    </sect3>
   </sect2>
  </sect1>
