@@ -1423,7 +1423,16 @@ BeginCopyTo(Relation rel,
 
 		cstate->filename = pstrdup(filename);
 		oumask = umask(S_IWGRP | S_IWOTH);
-		cstate->copy_file = AllocateFile(cstate->filename, PG_BINARY_W);
+		PG_TRY();
+		{
+			cstate->copy_file = AllocateFile(cstate->filename, PG_BINARY_W);
+		}
+		PG_CATCH();
+		{
+			umask(oumask);
+			PG_RE_THROW();
+		}
+		PG_END_TRY();
 		umask(oumask);
 
 		if (cstate->copy_file == NULL)
