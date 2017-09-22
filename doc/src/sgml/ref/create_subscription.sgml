@@ -49,11 +49,6 @@ CREATE SUBSCRIPTION <replaceable class="PARAMETER">subscription_name</replaceabl
   </para>
 
   <para>
-   <command>CREATE SUBSCRIPTION</command> cannot be executed inside a
-   transaction block when the parameter <literal>create_slot</literal> is specified.
-  </para>
-
-  <para>
    Additional info about subscriptions and logical replication as a whole
    can is available at <xref linkend="logical-replication-subscription"> and
    <xref linkend="logical-replication">.
@@ -225,6 +220,11 @@ CREATE SUBSCRIPTION <replaceable class="PARAMETER">subscription_name</replaceabl
    See <xref linkend="logical-replication-security"> for details on
    how to configure access control between the subscription and the
    publication instance.
+  </para>
+
+  <para>
+   When creating a replication slot (the default behavior), <command>CREATE
+   SUBSCRIPTION</command> cannot be executed inside a transaction block.
   </para>
 
   <para>

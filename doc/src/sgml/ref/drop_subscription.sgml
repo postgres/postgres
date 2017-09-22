@@ -93,6 +93,11 @@ DROP SUBSCRIPTION [ IF EXISTS ] <replaceable class="parameter">name</replaceable
    reserve WAL and might eventually cause the disk to fill up.  See
    also <xref linkend="logical-replication-subscription-slot">.
   </para>
+
+  <para>
+   If a subscription is associated with a replication slot, then <command>DROP
+   SUBSCRIPTION</command> cannot be executed inside a transaction block.
+  </para>
  </refsect1>
 
  <refsect1>

@@ -164,6 +164,10 @@ ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> RESET ALL
      <para>
       The new default tablespace of the database.
      </para>
+
+     <para>
+      This form of the command cannot be executed inside a transaction block.
+     </para>
     </listitem>
    </varlistentry>
 
