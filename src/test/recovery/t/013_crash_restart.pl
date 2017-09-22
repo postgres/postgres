@@ -115,7 +115,7 @@ is($cnt, 1, "exactly one process killed with SIGQUIT");
 $killme_stdin .= q[
 SELECT 1;
 ];
-ok(pump_until($killme, \$killme_stderr, qr/WARNING:  terminating connection because of crash of another server process/m),
+ok(pump_until($killme, \$killme_stderr, qr/WARNING:  terminating connection because of crash of another server process|server closed the connection unexpectedly/m),
    "psql query died successfully after SIGQUIT");
 $killme_stderr = '';
 $killme_stdout = '';
