@@ -538,8 +538,17 @@ be_lo_export(PG_FUNCTION_ARGS)
 	 */
 	text_to_cstring_buffer(filename, fnamebuf, sizeof(fnamebuf));
 	oumask = umask(S_IWGRP | S_IWOTH);
-	fd = OpenTransientFile(fnamebuf, O_CREAT | O_WRONLY | O_TRUNC | PG_BINARY,
-						   S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+	PG_TRY();
+	{
+		fd = OpenTransientFile(fnamebuf, O_CREAT | O_WRONLY | O_TRUNC | PG_BINARY,
+							   S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+	}
+	PG_CATCH();
+	{
+		umask(oumask);
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
 	umask(oumask);
 	if (fd < 0)
 		ereport(ERROR,
