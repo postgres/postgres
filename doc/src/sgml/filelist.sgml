@@ -110,7 +110,6 @@
 <!ENTITY bloom           SYSTEM "bloom.sgml">
 <!ENTITY btree-gin       SYSTEM "btree-gin.sgml">
 <!ENTITY btree-gist      SYSTEM "btree-gist.sgml">
-<!ENTITY chkpass         SYSTEM "chkpass.sgml">
 <!ENTITY citext          SYSTEM "citext.sgml">
 <!ENTITY cube            SYSTEM "cube.sgml">
 <!ENTITY dblink          SYSTEM "dblink.sgml">

@@ -109,7 +109,6 @@ CREATE EXTENSION <replaceable>module_name</> FROM unpackaged;
  &bloom;
  &btree-gin;
  &btree-gist;
- &chkpass;
  &citext;
  &cube;
  &dblink;
