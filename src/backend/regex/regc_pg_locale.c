@@ -29,20 +29,20 @@
  *
  * 2. In the "default" collation (which is supposed to obey LC_CTYPE):
  *
- * 2a. When working in UTF8 encoding, we use the <wctype.h> functions if
- * available.  This assumes that every platform uses Unicode codepoints
- * directly as the wchar_t representation of Unicode.  On some platforms
+ * 2a. When working in UTF8 encoding, we use the <wctype.h> functions.
+ * This assumes that every platform uses Unicode codepoints directly
+ * as the wchar_t representation of Unicode.  On some platforms
  * wchar_t is only 16 bits wide, so we have to punt for codepoints > 0xFFFF.
  *
- * 2b. In all other encodings, or on machines that lack <wctype.h>, we use
- * the <ctype.h> functions for pg_wchar values up to 255, and punt for values
- * above that.  This is only 100% correct in single-byte encodings such as
- * LATINn.  However, non-Unicode multibyte encodings are mostly Far Eastern
- * character sets for which the properties being tested here aren't very
- * relevant for higher code values anyway.  The difficulty with using the
- * <wctype.h> functions with non-Unicode multibyte encodings is that we can
- * have no certainty that the platform's wchar_t representation matches
- * what we do in pg_wchar conversions.
+ * 2b. In all other encodings, we use the <ctype.h> functions for pg_wchar
+ * values up to 255, and punt for values above that.  This is 100% correct
+ * only in single-byte encodings such as LATINn.  However, non-Unicode
+ * multibyte encodings are mostly Far Eastern character sets for which the
+ * properties being tested here aren't very relevant for higher code values
+ * anyway.  The difficulty with using the <wctype.h> functions with
+ * non-Unicode multibyte encodings is that we can have no certainty that
+ * the platform's wchar_t representation matches what we do in pg_wchar
+ * conversions.
  *
  * 3. Other collations are only supported on platforms that HAVE_LOCALE_T.
  * Here, we use the locale_t-extended forms of the <wctype.h> and <ctype.h>

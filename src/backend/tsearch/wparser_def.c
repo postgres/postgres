@@ -427,94 +427,45 @@ TParserCopyClose(TParser *prs)
  *	- if locale is C then we use pgwstr instead of wstr.
  */
 
-#define p_iswhat(type)														\
+#define p_iswhat(type, nonascii)											\
+																			\
 static int																	\
-p_is##type(TParser *prs) {													\
-	Assert( prs->state );													\
-	if ( prs->usewide )														\
+p_is##type(TParser *prs)													\
+{																			\
+	Assert(prs->state);														\
+	if (prs->usewide)														\
 	{																		\
-		if ( prs->pgwstr )													\
+		if (prs->pgwstr)													\
 		{																	\
 			unsigned int c = *(prs->pgwstr + prs->state->poschar);			\
-			if ( c > 0x7f )													\
-				return 0;													\
-			return is##type( c );											\
+			if (c > 0x7f)													\
+				return nonascii;											\
+			return is##type(c);												\
 		}																	\
-		return isw##type( *( prs->wstr + prs->state->poschar ) );			\
+		return isw##type(*(prs->wstr + prs->state->poschar));				\
 	}																		\
-																			\
-	return is##type( *(unsigned char*)( prs->str + prs->state->posbyte ) ); \
-}	\
+	return is##type(*(unsigned char *) (prs->str + prs->state->posbyte));	\
+}																			\
 																			\
 static int																	\
-p_isnot##type(TParser *prs) {												\
+p_isnot##type(TParser *prs)													\
+{																			\
 	return !p_is##type(prs);												\
 }
 
-static int
-p_isalnum(TParser *prs)
-{
-	Assert(prs->state);
-
-	if (prs->usewide)
-	{
-		if (prs->pgwstr)
-		{
-			unsigned int c = *(prs->pgwstr + prs->state->poschar);
-
-			/*
-			 * any non-ascii symbol with multibyte encoding with C-locale is
-			 * an alpha character
-			 */
-			if (c > 0x7f)
-				return 1;
-
-			return isalnum(c);
-		}
-
-		return iswalnum(*(prs->wstr + prs->state->poschar));
-	}
-
-	return isalnum(*(unsigned char *) (prs->str + prs->state->posbyte));
-}
-static int
-p_isnotalnum(TParser *prs)
-{
-	return !p_isalnum(prs);
-}
-
-static int
-p_isalpha(TParser *prs)
-{
-	Assert(prs->state);
-
-	if (prs->usewide)
-	{
-		if (prs->pgwstr)
-		{
-			unsigned int c = *(prs->pgwstr + prs->state->poschar);
-
-			/*
-			 * any non-ascii symbol with multibyte encoding with C-locale is
-			 * an alpha character
-			 */
-			if (c > 0x7f)
-				return 1;
-
-			return isalpha(c);
-		}
-
-		return iswalpha(*(prs->wstr + prs->state->poschar));
-	}
-
-	return isalpha(*(unsigned char *) (prs->str + prs->state->posbyte));
-}
-
-static int
-p_isnotalpha(TParser *prs)
-{
-	return !p_isalpha(prs);
-}
+/*
+ * In C locale with a multibyte encoding, any non-ASCII symbol is considered
+ * an alpha character, but not a member of other char classes.
+ */
+p_iswhat(alnum, 1)
+p_iswhat(alpha, 1)
+p_iswhat(digit, 0)
+p_iswhat(lower, 0)
+p_iswhat(print, 0)
+p_iswhat(punct, 0)
+p_iswhat(space, 0)
+p_iswhat(upper, 0)
+p_iswhat(xdigit, 0)
 
 /* p_iseq should be used only for ascii symbols */
 
@@ -524,14 +475,6 @@ p_iseq(TParser *prs, char c)
 	Assert(prs->state);
 	return ((prs->state->charlen == 1 && *(prs->str + prs->state->posbyte) == c)) ? 1 : 0;
 }
-
-p_iswhat(digit)
-p_iswhat(lower)
-p_iswhat(print)
-p_iswhat(punct)
-p_iswhat(space)
-p_iswhat(upper)
-p_iswhat(xdigit)
 
 static int
 p_isEOF(TParser *prs)
