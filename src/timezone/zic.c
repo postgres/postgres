@@ -11,7 +11,6 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <time.h>
-#include <unistd.h>
 
 #include "pg_getopt.h"
 
@@ -46,9 +45,12 @@ typedef int64 zic_t;
 static ptrdiff_t const PTRDIFF_MAX = MAXVAL(ptrdiff_t, TYPE_BIT(ptrdiff_t));
 #endif
 
-/* The type and printf format for line numbers.  */
+/*
+ * The type for line numbers.  In Postgres, use %d to format them; upstream
+ * uses PRIdMAX but we prefer not to rely on that, not least because it
+ * results in platform-dependent strings to be translated.
+ */
 typedef int lineno_t;
-#define PRIdLINENO "d"
 
 struct rule
 {
@@ -293,10 +295,13 @@ struct lookup
 static struct lookup const *byword(const char *string,
 	   const struct lookup *lp);
 
-static struct lookup const line_codes[] = {
+static struct lookup const zi_line_codes[] = {
 	{"Rule", LC_RULE},
 	{"Zone", LC_ZONE},
 	{"Link", LC_LINK},
+	{NULL, 0}
+};
+static struct lookup const leap_line_codes[] = {
 	{"Leap", LC_LEAP},
 	{NULL, 0}
 };
@@ -435,7 +440,8 @@ growalloc(void *ptr, size_t itemsize, ptrdiff_t nitems, ptrdiff_t *nitems_alloc)
 		return ptr;
 	else
 	{
-		ptrdiff_t	amax = PTRDIFF_MAX - WORK_AROUND_QTBUG_53071;
+		ptrdiff_t	nitems_max = PTRDIFF_MAX - WORK_AROUND_QTBUG_53071;
+		ptrdiff_t	amax = nitems_max < SIZE_MAX ? nitems_max : SIZE_MAX;
 
 		if ((amax - 1) / 3 * 2 < *nitems_alloc)
 			memory_exhausted(_("integer overflow"));
@@ -471,10 +477,10 @@ verror(const char *string, va_list args)
 	 * "*" -v on BSD systems.
 	 */
 	if (filename)
-		fprintf(stderr, _("\"%s\", line %" PRIdLINENO ": "), filename, linenum);
+		fprintf(stderr, _("\"%s\", line %d: "), filename, linenum);
 	vfprintf(stderr, string, args);
 	if (rfilename != NULL)
-		fprintf(stderr, _(" (rule from \"%s\", line %" PRIdLINENO ")"),
+		fprintf(stderr, _(" (rule from \"%s\", line %d)"),
 				rfilename, rlinenum);
 	fprintf(stderr, "\n");
 }
@@ -563,7 +569,7 @@ static const char *leapsec;
 static const char *yitcommand;
 
 int
-main(int argc, char *argv[])
+main(int argc, char **argv)
 {
 	int			c,
 				k;
@@ -572,7 +578,7 @@ main(int argc, char *argv[])
 
 #ifndef WIN32
 	umask(umask(S_IWGRP | S_IWOTH) | (S_IWGRP | S_IWOTH));
-#endif							/* !WIN32 */
+#endif
 	progname = argv[0];
 	if (TYPE_BIT(zic_t) <64)
 	{
@@ -631,7 +637,10 @@ main(int argc, char *argv[])
 				break;
 			case 'y':
 				if (yitcommand == NULL)
+				{
+					warning(_("-y is obsolescent"));
 					yitcommand = strdup(optarg);
+				}
 				else
 				{
 					fprintf(stderr,
@@ -1202,6 +1211,9 @@ infile(const char *name)
 			wantcont = inzcont(fields, nfields);
 		else
 		{
+			struct lookup const *line_codes
+			= name == leapsec ? leap_line_codes : zi_line_codes;
+
 			lp = byword(fields[0], line_codes);
 			if (lp == NULL)
 				error(_("input line of unknown type"));
@@ -1220,12 +1232,7 @@ infile(const char *name)
 						wantcont = false;
 						break;
 					case LC_LEAP:
-						if (name != leapsec)
-							warning(_("%s: Leap line in non leap"
-									  " seconds file %s"),
-									progname, name);
-						else
-							inleap(fields, nfields);
+						inleap(fields, nfields);
 						wantcont = false;
 						break;
 					default:	/* "cannot happen" */
@@ -1359,7 +1366,7 @@ inzone(char **fields, int nfields)
 			strcmp(zones[i].z_name, fields[ZF_NAME]) == 0)
 		{
 			error(_("duplicate zone name %s"
-					" (file \"%s\", line %" PRIdLINENO ")"),
+					" (file \"%s\", line %d)"),
 				  fields[ZF_NAME],
 				  zones[i].z_filename,
 				  zones[i].z_linenum);
@@ -1573,20 +1580,10 @@ inleap(char **fields, int nfields)
 			positive = false;
 			count = 1;
 		}
-		else if (strcmp(cp, "--") == 0)
-		{
-			positive = false;
-			count = 2;
-		}
 		else if (strcmp(cp, "+") == 0)
 		{
 			positive = true;
 			count = 1;
-		}
-		else if (strcmp(cp, "++") == 0)
-		{
-			positive = true;
-			count = 2;
 		}
 		else
 		{
@@ -1599,9 +1596,9 @@ inleap(char **fields, int nfields)
 			return;
 		}
 		t = tadd(t, tod);
-		if (t < early_time)
+		if (t < 0)
 		{
-			error(_("leap second precedes Big Bang"));
+			error(_("leap second precedes Epoch"));
 			return;
 		}
 		leapadd(t, positive, lp->l_value, count);
@@ -1753,11 +1750,14 @@ rulesub(struct rule *rp, const char *loyearp, const char *hiyearp,
 			error(_("typed single year"));
 			return;
 		}
+		warning(_("year type \"%s\" is obsolete; use \"-\" instead"),
+				typep);
 		rp->r_yrtype = ecpyalloc(typep);
 	}
 
 	/*
-	 * Day work. Accept things such as:  1	last-Sunday  Sun<=20  Sun>=7
+	 * Day work. Accept things such as: 1 lastSunday last-Sunday
+	 * (undocumented; warn about this) Sun<=20 Sun>=7
 	 */
 	dp = ecpyalloc(dayp);
 	if ((lp = byword(dp, lasts)) != NULL)
@@ -2850,9 +2850,10 @@ outzone(const struct zone *zpfirst, ptrdiff_t zonecount)
 				{
 					ptrdiff_t	k;
 					zic_t		jtime,
-								ktime = 0;
+								ktime;
 					zic_t		offset;
 
+					INITIALIZE(ktime);
 					if (useuntil)
 					{
 						/*
@@ -2929,7 +2930,8 @@ outzone(const struct zone *zpfirst, ptrdiff_t zonecount)
 							continue;
 						}
 						if (*startbuf == '\0' &&
-							startoff == oadd(zp->z_gmtoff, stdoff))
+							startoff == oadd(zp->z_gmtoff,
+											 stdoff))
 						{
 							doabbr(startbuf,
 								   zp,
@@ -3104,14 +3106,7 @@ leapadd(zic_t t, bool positive, int rolling, int count)
 	}
 	for (i = 0; i < leapcnt; ++i)
 		if (t <= trans[i])
-		{
-			if (t == trans[i])
-			{
-				error(_("repeated leap second moment"));
-				exit(EXIT_FAILURE);
-			}
 			break;
-		}
 	do
 	{
 		for (j = leapcnt; j > i; --j)
@@ -3132,12 +3127,19 @@ adjleap(void)
 {
 	int			i;
 	zic_t		last = 0;
+	zic_t		prevtrans = 0;
 
 	/*
 	 * propagate leap seconds forward
 	 */
 	for (i = 0; i < leapcnt; ++i)
 	{
+		if (trans[i] - prevtrans < 28 * SECSPERDAY)
+		{
+			error(_("Leap seconds too close together"));
+			exit(EXIT_FAILURE);
+		}
+		prevtrans = trans[i];
 		trans[i] = tadd(trans[i], last);
 		last = corr[i] += last;
 	}
@@ -3191,7 +3193,7 @@ yearistype(zic_t year, const char *type)
 	exit(EXIT_FAILURE);
 }
 
-/* Is A a space character in the C locale?	*/
+/* Is A a space character in the C locale?  */
 static bool
 is_space(char a)
 {
@@ -3362,6 +3364,19 @@ itsabbr(const char *abbr, const char *word)
 	return true;
 }
 
+/* Return true if ABBR is an initial prefix of WORD, ignoring ASCII case.  */
+
+static bool
+ciprefix(char const *abbr, char const *word)
+{
+	do
+		if (!*abbr)
+			return true;
+	while (lowerit(*abbr++) == lowerit(*word++));
+
+	return false;
+}
+
 static const struct lookup *
 byword(const char *word, const struct lookup *table)
 {
@@ -3370,6 +3385,23 @@ byword(const char *word, const struct lookup *table)
 
 	if (word == NULL || table == NULL)
 		return NULL;
+
+	/*
+	 * If TABLE is LASTS and the word starts with "last" followed by a
+	 * non-'-', skip the "last" and look in WDAY_NAMES instead. Warn about any
+	 * usage of the undocumented prefix "last-".
+	 */
+	if (table == lasts && ciprefix("last", word) && word[4])
+	{
+		if (word[4] == '-')
+			warning(_("\"%s\" is undocumented; use \"last%s\" instead"),
+					word, word + 5);
+		else
+		{
+			word += 4;
+			table = wday_names;
+		}
+	}
 
 	/*
 	 * Look for exact match.
@@ -3383,13 +3415,31 @@ byword(const char *word, const struct lookup *table)
 	 */
 	foundlp = NULL;
 	for (lp = table; lp->l_word != NULL; ++lp)
-		if (itsabbr(word, lp->l_word))
+		if (ciprefix(word, lp->l_word))
 		{
 			if (foundlp == NULL)
 				foundlp = lp;
 			else
 				return NULL;	/* multiple inexact matches */
 		}
+
+	/* Warn about any backward-compatibility issue with pre-2017c zic.  */
+	if (foundlp)
+	{
+		bool		pre_2017c_match = false;
+
+		for (lp = table; lp->l_word; lp++)
+			if (itsabbr(word, lp->l_word))
+			{
+				if (pre_2017c_match)
+				{
+					warning(_("\"%s\" is ambiguous in pre-2017c zic"), word);
+					break;
+				}
+				pre_2017c_match = true;
+			}
+	}
+
 	return foundlp;
 }
 
@@ -3621,11 +3671,15 @@ mkdirs(char const *argname, bool ancestors)
 
 	cp = name = ecpyalloc(argname);
 
+	/*
+	 * On MS-Windows systems, do not worry about drive letters or backslashes,
+	 * as this should suffice in practice.  Time zone names do not use drive
+	 * letters and backslashes.  If the -d option of zic does not name an
+	 * already-existing directory, it can use slashes to separate the
+	 * already-existing ancestor prefix from the to-be-created subdirectories.
+	 */
+
 	/* Do not mkdir a root directory, as it must exist.  */
-#ifdef WIN32
-	if (is_alpha(name[0]) && name[1] == ':')
-		cp += 2;
-#endif
 	while (*cp == '/')
 		cp++;
 

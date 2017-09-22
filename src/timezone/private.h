@@ -38,25 +38,8 @@
 #define EOVERFLOW EINVAL
 #endif
 
-#ifndef WIFEXITED
-#define WIFEXITED(status)	(((status) & 0xff) == 0)
-#endif							/* !defined WIFEXITED */
-#ifndef WEXITSTATUS
-#define WEXITSTATUS(status) (((status) >> 8) & 0xff)
-#endif							/* !defined WEXITSTATUS */
-
 /* Unlike <ctype.h>'s isdigit, this also works if c < 0 | c > UCHAR_MAX. */
 #define is_digit(c) ((unsigned)(c) - '0' <= 9)
-
-/*
- * SunOS 4.1.1 libraries lack remove.
- */
-
-#ifndef remove
-extern int	unlink(const char *filename);
-
-#define remove	unlink
-#endif							/* !defined remove */
 
 
 /*
@@ -78,6 +61,10 @@ extern int	unlink(const char *filename);
 #define MINVAL(t, b)						\
   ((t) (TYPE_SIGNED(t) ? - TWOS_COMPLEMENT(t) - MAXVAL(t, b) : 0))
 
+/* The extreme time values, assuming no padding.  */
+#define TIME_T_MIN MINVAL(pg_time_t, TYPE_BIT(pg_time_t))
+#define TIME_T_MAX MAXVAL(pg_time_t, TYPE_BIT(pg_time_t))
+
 /*
  * 302 / 1000 is log10(2.0) rounded up.
  * Subtract one for the sign bit if the type is signed;
@@ -91,7 +78,7 @@ extern int	unlink(const char *filename);
 /*
  * INITIALIZE(x)
  */
-#define INITIALIZE(x)  ((x) = 0)
+#define INITIALIZE(x)	((x) = 0)
 
 #undef _
 #define _(msgid) (msgid)
@@ -146,7 +133,7 @@ extern int	unlink(const char *filename);
  * or
  *	isleap(a + b) == isleap(a % 400 + b % 400)
  * This is true even if % means modulo rather than Fortran remainder
- * (which is allowed by C89 but not C99).
+ * (which is allowed by C89 but not by C99 or later).
  * We use this to avoid addition overflow problems.
  */
 
