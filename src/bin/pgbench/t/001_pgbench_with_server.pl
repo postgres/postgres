@@ -462,8 +462,9 @@ pgbench(
 	[ qr{vacuum}, qr{progress: 1\b} ],
 	'pgbench progress');
 
-# $nthreads threads, 2 seconds, sometimes only one aggregated line is written
-check_pgbench_logs('001_pgbench_log_1', $nthreads, 1, 2,
+# $nthreads threads, 2 seconds, but due to timing imprecision we might get
+# only 1 or as many as 3 progress reports per thread.
+check_pgbench_logs('001_pgbench_log_1', $nthreads, 1, 3,
 	qr{^\d+ \d{1,2} \d+ \d+ \d+ \d+ \d+ \d+ \d+ \d+ \d+$});
 
 # with sampling rate
