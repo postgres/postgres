@@ -2444,8 +2444,10 @@ do_autovacuum(void)
 		 */
 		PG_TRY();
 		{
+			/* Use PortalContext for any per-table allocations */
+			MemoryContextSwitchTo(PortalContext);
+
 			/* have at it */
-			MemoryContextSwitchTo(TopTransactionContext);
 			autovacuum_do_vac_analyze(tab, bstrategy);
 
 			/*
@@ -2481,6 +2483,9 @@ do_autovacuum(void)
 			RESUME_INTERRUPTS();
 		}
 		PG_END_TRY();
+
+		/* Make sure we're back in AutovacMemCxt */
+		MemoryContextSwitchTo(AutovacMemCxt);
 
 		did_vacuum = true;
 
@@ -2533,8 +2538,7 @@ deleted:
 		perform_work_item(workitem);
 
 		/*
-		 * Check for config changes before acquiring lock for further
-		 * jobs.
+		 * Check for config changes before acquiring lock for further jobs.
 		 */
 		CHECK_FOR_INTERRUPTS();
 		if (got_SIGHUP)
@@ -2605,6 +2609,7 @@ perform_work_item(AutoVacuumWorkItem *workitem)
 	 * must live in a long-lived memory context because we call vacuum and
 	 * analyze in different transactions.
 	 */
+	Assert(CurrentMemoryContext == AutovacMemCxt);
 
 	cur_relname = get_rel_name(workitem->avw_relation);
 	cur_nspname = get_namespace_name(get_rel_namespace(workitem->avw_relation));
@@ -2614,6 +2619,9 @@ perform_work_item(AutoVacuumWorkItem *workitem)
 
 	autovac_report_workitem(workitem, cur_nspname, cur_datname);
 
+	/* clean up memory before each work item */
+	MemoryContextResetAndDeleteChildren(PortalContext);
+
 	/*
 	 * We will abort the current work item if something errors out, and
 	 * continue with the next one; in particular, this happens if we are
@@ -2622,9 +2630,10 @@ perform_work_item(AutoVacuumWorkItem *workitem)
 	 */
 	PG_TRY();
 	{
-		/* have at it */
-		MemoryContextSwitchTo(TopTransactionContext);
+		/* Use PortalContext for any per-work-item allocations */
+		MemoryContextSwitchTo(PortalContext);
 
+		/* have at it */
 		switch (workitem->avw_type)
 		{
 			case AVW_BRINSummarizeRange:
@@ -2667,6 +2676,9 @@ perform_work_item(AutoVacuumWorkItem *workitem)
 		RESUME_INTERRUPTS();
 	}
 	PG_END_TRY();
+
+	/* Make sure we're back in AutovacMemCxt */
+	MemoryContextSwitchTo(AutovacMemCxt);
 
 	/* We intentionally do not set did_vacuum here */
 
