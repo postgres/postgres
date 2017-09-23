@@ -5051,7 +5051,7 @@ getRelationIdentity(StringInfo buffer, Oid relid, List **object)
 }
 
 /*
- * Auxiliary function to return a TEXT array out of a list of C-strings.
+ * Auxiliary function to build a TEXT array out of a list of C-strings.
  */
 ArrayType *
 strlist_to_textarray(List *list)
@@ -5063,12 +5063,14 @@ strlist_to_textarray(List *list)
 	MemoryContext memcxt;
 	MemoryContext oldcxt;
 
+	/* Work in a temp context; easier than individually pfree'ing the Datums */
 	memcxt = AllocSetContextCreate(CurrentMemoryContext,
 								   "strlist to array",
 								   ALLOCSET_DEFAULT_SIZES);
 	oldcxt = MemoryContextSwitchTo(memcxt);
 
-	datums = palloc(sizeof(text *) * list_length(list));
+	datums = (Datum *) palloc(sizeof(Datum) * list_length(list));
+
 	foreach(cell, list)
 	{
 		char	   *name = lfirst(cell);
@@ -5080,6 +5082,7 @@ strlist_to_textarray(List *list)
 
 	arr = construct_array(datums, list_length(list),
 						  TEXTOID, -1, false, 'i');
+
 	MemoryContextDelete(memcxt);
 
 	return arr;
