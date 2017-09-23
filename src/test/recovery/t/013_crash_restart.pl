@@ -29,9 +29,9 @@ else
 
 # To avoid hanging while expecting some specific input from a psql
 # instance being driven by us, add a timeout high enough that it
-# should never trigger in a normal run, but low enough to actually see
-# failures in a realistic amount of time.
-my $psql_timeout = IPC::Run::timer(10);
+# should never trigger even on very slow machines, unless something
+# is really wrong.
+my $psql_timeout = IPC::Run::timer(60);
 
 my $node = get_new_node('master');
 $node->init(allows_streaming => 1);
