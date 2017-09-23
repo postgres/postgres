@@ -244,7 +244,7 @@ parse_subscription_options(List *options, bool *connect, bool *enabled_given,
 }
 
 /*
- * Auxiliary function to return a text array out of a list of String nodes.
+ * Auxiliary function to build a text array out of a list of String nodes.
  */
 static Datum
 publicationListToArray(List *publist)
@@ -264,7 +264,8 @@ publicationListToArray(List *publist)
 								   ALLOCSET_DEFAULT_MAXSIZE);
 	oldcxt = MemoryContextSwitchTo(memcxt);
 
-	datums = palloc(sizeof(text *) * list_length(publist));
+	datums = (Datum *) palloc(sizeof(Datum) * list_length(publist));
+
 	foreach(cell, publist)
 	{
 		char	   *name = strVal(lfirst(cell));
@@ -275,7 +276,7 @@ publicationListToArray(List *publist)
 		{
 			char	   *pname = strVal(lfirst(pcell));
 
-			if (name == pname)
+			if (pcell == cell)
 				break;
 
 			if (strcmp(name, pname) == 0)
@@ -292,6 +293,7 @@ publicationListToArray(List *publist)
 
 	arr = construct_array(datums, list_length(publist),
 						  TEXTOID, -1, false, 'i');
+
 	MemoryContextDelete(memcxt);
 
 	return PointerGetDatum(arr);
