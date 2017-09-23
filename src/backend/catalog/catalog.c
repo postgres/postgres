@@ -444,7 +444,7 @@ GetNewRelFileNode(Oid reltablespace, Relation pg_class, char relpersistence)
 
 		/* Check for existing file of same name */
 		rpath = relpath(rnode, MAIN_FORKNUM);
-		fd = BasicOpenFile(rpath, O_RDONLY | PG_BINARY, 0);
+		fd = BasicOpenFile(rpath, O_RDONLY | PG_BINARY);
 
 		if (fd >= 0)
 		{

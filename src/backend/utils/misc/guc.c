@@ -7242,8 +7242,7 @@ AlterSystemSetConfigFile(AlterSystemStmt *altersysstmt)
 	 * truncate and reuse it.
 	 */
 	Tmpfd = BasicOpenFile(AutoConfTmpFileName,
-						  O_CREAT | O_RDWR | O_TRUNC,
-						  S_IRUSR | S_IWUSR);
+						  O_CREAT | O_RDWR | O_TRUNC);
 	if (Tmpfd < 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),

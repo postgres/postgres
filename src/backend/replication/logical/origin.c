@@ -546,9 +546,8 @@ CheckPointReplicationOrigin(void)
 	 * no other backend can perform this at the same time, we're protected by
 	 * CheckpointLock.
 	 */
-	tmpfd = OpenTransientFile((char *) tmppath,
-							  O_CREAT | O_EXCL | O_WRONLY | PG_BINARY,
-							  S_IRUSR | S_IWUSR);
+	tmpfd = OpenTransientFile(tmppath,
+							  O_CREAT | O_EXCL | O_WRONLY | PG_BINARY);
 	if (tmpfd < 0)
 		ereport(PANIC,
 				(errcode_for_file_access(),
@@ -660,7 +659,7 @@ StartupReplicationOrigin(void)
 
 	elog(DEBUG2, "starting up replication origin progress state");
 
-	fd = OpenTransientFile((char *) path, O_RDONLY | PG_BINARY, 0);
+	fd = OpenTransientFile(path, O_RDONLY | PG_BINARY);
 
 	/*
 	 * might have had max_replication_slots == 0 last run, or we just brought

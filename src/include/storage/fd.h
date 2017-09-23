@@ -22,7 +22,7 @@
  * Use them for all file activity...
  *
  *	File fd;
- *	fd = PathNameOpenFile("foo", O_RDONLY, 0600);
+ *	fd = PathNameOpenFile("foo", O_RDONLY);
  *
  *	AllocateFile();
  *	FreeFile();
@@ -46,8 +46,6 @@
  * FileSeek uses the standard UNIX lseek(2) flags.
  */
 
-typedef char *FileName;
-
 typedef int File;
 
 
@@ -65,7 +63,8 @@ extern int	max_safe_fds;
  */
 
 /* Operations on virtual Files --- equivalent to Unix kernel file ops */
-extern File PathNameOpenFile(FileName fileName, int fileFlags, int fileMode);
+extern File PathNameOpenFile(const char *fileName, int fileFlags);
+extern File PathNameOpenFilePerm(const char *fileName, int fileFlags, mode_t fileMode);
 extern File OpenTemporaryFile(bool interXact);
 extern void FileClose(File file);
 extern int	FilePrefetch(File file, off_t offset, int amount, uint32 wait_event_info);
@@ -78,7 +77,7 @@ extern void FileWriteback(File file, off_t offset, off_t nbytes, uint32 wait_eve
 extern char *FilePathName(File file);
 extern int	FileGetRawDesc(File file);
 extern int	FileGetRawFlags(File file);
-extern int	FileGetRawMode(File file);
+extern mode_t FileGetRawMode(File file);
 
 /* Operations that allow use of regular stdio --- USE WITH CAUTION */
 extern FILE *AllocateFile(const char *name, const char *mode);
@@ -94,11 +93,13 @@ extern struct dirent *ReadDir(DIR *dir, const char *dirname);
 extern int	FreeDir(DIR *dir);
 
 /* Operations to allow use of a plain kernel FD, with automatic cleanup */
-extern int	OpenTransientFile(FileName fileName, int fileFlags, int fileMode);
+extern int	OpenTransientFile(const char *fileName, int fileFlags);
+extern int	OpenTransientFilePerm(const char *fileName, int fileFlags, mode_t fileMode);
 extern int	CloseTransientFile(int fd);
 
 /* If you've really really gotta have a plain kernel FD, use this */
-extern int	BasicOpenFile(FileName fileName, int fileFlags, int fileMode);
+extern int	BasicOpenFile(const char *fileName, int fileFlags);
+extern int	BasicOpenFilePerm(const char *fileName, int fileFlags, mode_t fileMode);
 
 /* Miscellaneous support routines */
 extern void InitFileAccess(void);
