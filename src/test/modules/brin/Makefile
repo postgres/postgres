@@ -16,7 +16,7 @@ include $(top_builddir)/src/Makefile.global
 include $(top_srcdir)/contrib/contrib-global.mk
 endif
 
-check: isolation-check
+check: isolation-check prove-check
 
 isolation-check: | submake-isolation
 	$(MKDIR_P) isolation_output
@@ -24,7 +24,10 @@ isolation-check: | submake-isolation
 	    --outputdir=./isolation_output \
 	    $(ISOLATIONCHECKS)
 
-.PHONY: check isolation-check
+prove-check:
+	$(prove_check)
+
+.PHONY: check isolation-check prove-check
 
 submake-isolation:
 	$(MAKE) -C $(top_builddir)/src/test/isolation all
