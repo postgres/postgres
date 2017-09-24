@@ -408,16 +408,21 @@ SetWALSegSize(void)
 {
 	bool		ret_val = false;
 	int			fd;
-	char	   *buf = (char *) malloc(XLOG_BLCKSZ);
+
+	/* malloc this buffer to ensure sufficient alignment: */
+	char	   *buf = (char *) pg_malloc(XLOG_BLCKSZ);
 
 	Assert(WalSegSz == -1);
 
 	if ((fd = open(WALFilePath, O_RDWR, 0)) < 0)
 	{
-		fprintf(stderr, "%s: couldn't open WAL file \"%s\"\n",
-				progname, WALFilePath);
+		fprintf(stderr, "%s: could not open WAL file \"%s\": %s\n",
+				progname, WALFilePath, strerror(errno));
+		pg_free(buf);
 		return false;
 	}
+
+	errno = 0;
 	if (read(fd, buf, XLOG_BLCKSZ) == XLOG_BLCKSZ)
 	{
 		XLogLongPageHeader longhdr = (XLogLongPageHeader) buf;
@@ -433,7 +438,6 @@ SetWALSegSize(void)
 			fprintf(stderr,
 					"%s: WAL segment size must be a power of two between 1MB and 1GB, but the WAL file header specifies %d bytes\n",
 					progname, WalSegSz);
-		close(fd);
 	}
 	else
 	{
@@ -444,17 +448,21 @@ SetWALSegSize(void)
 		if (errno != 0)
 		{
 			if (debug)
-				fprintf(stderr, "could not read file \"%s\": %s",
+				fprintf(stderr, "could not read file \"%s\": %s\n",
 						WALFilePath, strerror(errno));
 		}
 		else
 		{
 			if (debug)
-				fprintf(stderr, "not enough data in file \"%s\"", WALFilePath);
+				fprintf(stderr, "not enough data in file \"%s\"\n",
+						WALFilePath);
 		}
 	}
 
 	fflush(stderr);
+
+	close(fd);
+	pg_free(buf);
 	return ret_val;
 }
 
