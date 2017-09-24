@@ -1184,7 +1184,7 @@
 2017-04-18 [c727f120f] Rename "scram" to "scram-sha-256" in pg_hba.conf and pas
 -->
        <para>
-        Add <link linkend="auth-pg-hba-conf"><literal>SCRAM-SHA-256</></>
+        Add <link linkend="auth-password">SCRAM-SHA-256</>
         support for password negotiation and storage (Michael Paquier,
         Heikki Linnakangas)
       </para>
