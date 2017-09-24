@@ -917,45 +917,81 @@ omicron         bryanh                  guest1
     <primary>MD5</>
    </indexterm>
    <indexterm>
+    <primary>SCRAM</>
+   </indexterm>
+   <indexterm>
     <primary>password</primary>
     <secondary>authentication</secondary>
    </indexterm>
 
    <para>
-    The password-based authentication methods are <literal>scram-sha-256</>,
-    <literal>md5</>, and <literal>password</>. These methods operate
-    similarly except for the way that the password is sent across the
+    There are several password-based authentication methods.  These methods
+    operate similarly but differ in how the users' passwords are stored on the
+    server and how the password provided by a client is sent across the
     connection.
    </para>
 
-   <para>
-    Plain <literal>password</> sends the password in clear-text, and is
-    therefore vulnerable to password <quote>sniffing</> attacks. It should
-    always be avoided if possible. If the connection is protected by SSL
-    encryption then <literal>password</> can be used safely, though.
-    (Though SSL certificate authentication might be a better choice if one
-    is depending on using SSL).
-   </para>
+   <variablelist>
+    <varlistentry>
+     <term><literal>scram-sha-256</literal></term>
+     <listitem>
+      <para>
+       The method <literal>scram-sha-256</> performs SCRAM-SHA-256
+       authentication, as described in
+       <ulink url="https://tools.ietf.org/html/rfc7677">RFC 7677</ulink>.  It
+       is a challenge-response scheme that prevents password sniffing on
+       untrusted connections and supports storing passwords on the server in a
+       cryptographically hashed form that is thought to be secure.
+      </para>
 
+      <para>
+       This is the most secure of the currently provided methods, but it is
+       not supported by older client libraries.
+      </para>
+     </listitem>
+    </varlistentry>
 
-   <para>
-    <literal>scram-sha-256</> performs SCRAM-SHA-256 authentication, as
-    described in
-    <ulink url="https://tools.ietf.org/html/rfc7677">RFC 7677</ulink>. It
-    is a challenge-response scheme, that prevents password sniffing on
-    untrusted connections. It is more secure than the <literal>md5</>
-    method, but might not be supported by older clients.
-   </para>
+    <varlistentry>
+     <term><literal>md5</literal></term>
+     <listitem>
+      <para>
+       The method <literal>md5</> uses a custom less secure challenge-response
+       mechanism.  It prevents password sniffing and avoids storing passwords
+       on the server in plain text but provides no protection if an attacker
+       manages to steal the password hash from the server.  Also, the MD5 hash
+       algorithm is nowadays no longer consider secure against determined
+       attacks.
+      </para>
 
-   <para>
-    <literal>md5</> allows falling back to a less secure challenge-response
-    mechanism for those users with an MD5 hashed password.
-    The fallback mechanism also prevents password sniffing, but provides no
-    protection if an attacker manages to steal the password hash from the
-    server, and it cannot be used with the <xref
-    linkend="guc-db-user-namespace"> feature. For all other users,
-    <literal>md5</> works the same as <literal>scram-sha-256</>.
-   </para>
+      <para>
+       The <literal>md5</literal> method cannot be used with
+       the <xref linkend="guc-db-user-namespace"> feature.
+      </para>
+
+      <para>
+       To ease transition from the <literal>md5</literal> method to the newer
+       SCRAM method, if <literal>md5</literal> is specified as a method
+       in <filename>pg_hba.conf</filename> but the user's password on the
+       server is encrypted for SCRAM (see below), then SCRAM-based
+       authentication will automatically be chosen instead.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>password</literal></term>
+     <listitem>
+      <para>
+       The method <literal>password</> sends the password in clear-text and is
+       therefore vulnerable to password <quote>sniffing</> attacks. It should
+       always be avoided if possible. If the connection is protected by SSL
+       encryption then <literal>password</> can be used safely, though.
+       (Though SSL certificate authentication might be a better choice if one
+       is depending on using SSL).
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
 
    <para>
     <productname>PostgreSQL</productname> database passwords are
@@ -964,11 +1000,44 @@ omicron         bryanh                  guest1
     catalog. Passwords can be managed with the SQL commands
     <xref linkend="sql-createuser"> and
     <xref linkend="sql-alterrole">,
-    e.g., <userinput>CREATE USER foo WITH PASSWORD 'secret'</userinput>.
+    e.g., <userinput>CREATE USER foo WITH PASSWORD 'secret'</userinput>,
+    or the <application>psql</application>
+    command <literal>\password</literal>.
     If no password has been set up for a user, the stored password
     is null and password authentication will always fail for that user.
    </para>
 
+   <para>
+    The availability of the different password-based authentication methods
+    depends on how a user's password on the server is encrypted (or hashed,
+    more accurately).  This is controlled by the configuration
+    parameter <xref linkend="guc-password-encryption"> at the time the
+    password is set.  If a password was encrypted using
+    the <literal>scram-sha-256</literal> setting, then it can be used for the
+    authentication methods <literal>scram-sha-256</literal>
+    and <literal>password</literal> (but password transmission will be in
+    plain text in the latter case).  The authentication method
+    specification <literal>md5</literal> will automatically switch to using
+    the <literal>scram-sha-256</literal> method in this case, as explained
+    above, so it will also work.  If a password was encrypted using
+    the <literal>md5</literal> setting, then it can be used only for
+    the <literal>md5</literal> and <literal>password</literal> authentication
+    method specifications (again, with the password transmitted in plain text
+    in the latter case).  (Previous PostgreSQL releases supported storing the
+    password on the server in plain text.  This is no longer possible.)  To
+    check the currently stored password hashes, see the system
+    catalog <literal>pg_authid</literal>.
+   </para>
+
+   <para>
+    To upgrade an existing installation from <literal>md5</literal>
+    to <literal>scram-sha-256</literal>, after having ensured that all client
+    libraries in use are new enough to support SCRAM,
+    set <literal>password_encryption = 'scram-sha-256'</literal>
+    in <filename>postgresql.conf</filename>, make all users set new passwords,
+    and change the authentication method specifications
+    in <filename>pg_hba.conf</filename> to <literal>scram-sha-256</literal>.
+   </para>
   </sect2>
 
   <sect2 id="gssapi-auth">

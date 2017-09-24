@@ -1198,7 +1198,7 @@ include_dir 'conf.d'
        <para>
         Note that older clients might lack support for the SCRAM authentication
         mechanism, and hence not work with passwords encrypted with
-        SCRAM-SHA-256.
+        SCRAM-SHA-256.  See <xref linkend="auth-password"> for more details.
        </para>
       </listitem>
      </varlistentry>
