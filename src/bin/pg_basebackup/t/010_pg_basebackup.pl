@@ -256,9 +256,6 @@ $node->command_ok(
 	'pg_basebackup -X stream runs with --no-slot');
 
 $node->command_fails(
-	[ 'pg_basebackup', '-D', "$tempdir/fail", '-S', 'slot1' ],
-	'pg_basebackup with replication slot fails without -X stream');
-$node->command_fails(
 	[   'pg_basebackup',             '-D',
 		"$tempdir/backupxs_sl_fail", '-X',
 		'stream',                    '-S',
@@ -271,6 +268,9 @@ my $lsn = $node->safe_psql('postgres',
 	q{SELECT restart_lsn FROM pg_replication_slots WHERE slot_name = 'slot1'}
 );
 is($lsn, '', 'restart LSN of new slot is null');
+$node->command_fails(
+	[ 'pg_basebackup', '-D', "$tempdir/fail", '-S', 'slot1', '-X', 'none' ],
+	'pg_basebackup with replication slot fails without WAL streaming');
 $node->command_ok(
 	[   'pg_basebackup', '-D', "$tempdir/backupxs_sl", '-X',
 		'stream',        '-S', 'slot1' ],
