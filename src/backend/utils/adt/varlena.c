@@ -1823,12 +1823,6 @@ varstr_sortsupport(SortSupport ssup, Oid collid, bool bpchar)
 	 * requirements of BpChar callers.  However, if LC_COLLATE = C, we can
 	 * make things quite a bit faster with varstrfastcmp_c or bpcharfastcmp_c,
 	 * both of which use memcmp() rather than strcoll().
-	 *
-	 * There is a further exception on Windows.  When the database encoding is
-	 * UTF-8 and we are not using the C collation, complex hacks are required.
-	 * We don't currently have a comparator that handles that case, so we fall
-	 * back on the slow method of having the sort code invoke bttextcmp() (in
-	 * the case of text) via the fmgr trampoline.
 	 */
 	if (lc_collate_is_c(collid))
 	{
@@ -1839,14 +1833,8 @@ varstr_sortsupport(SortSupport ssup, Oid collid, bool bpchar)
 
 		collate_c = true;
 	}
-#ifdef WIN32
-	else if (GetDatabaseEncoding() == PG_UTF8)
-		return;
-#endif
 	else
 	{
-		ssup->comparator = varstrfastcmp_locale;
-
 		/*
 		 * We need a collation-sensitive comparison.  To make things faster,
 		 * we'll figure out the collation based on the locale id and cache the
@@ -1867,6 +1855,22 @@ varstr_sortsupport(SortSupport ssup, Oid collid, bool bpchar)
 			}
 			locale = pg_newlocale_from_collation(collid);
 		}
+
+		/*
+		 * There is a further exception on Windows.  When the database
+		 * encoding is UTF-8 and we are not using the C collation, complex
+		 * hacks are required.  We don't currently have a comparator that
+		 * handles that case, so we fall back on the slow method of having the
+		 * sort code invoke bttextcmp() (in the case of text) via the fmgr
+		 * trampoline.  ICU locales work just the same on Windows, however.
+		 */
+#ifdef WIN32
+		if (GetDatabaseEncoding() == PG_UTF8 &&
+			!(locale && locale->provider == COLLPROVIDER_ICU))
+			return;
+#endif
+
+		ssup->comparator = varstrfastcmp_locale;
 	}
 
 	/*
