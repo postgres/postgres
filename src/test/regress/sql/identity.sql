@@ -14,6 +14,8 @@ SELECT sequence_name FROM information_schema.sequences WHERE sequence_name LIKE 
 
 SELECT pg_get_serial_sequence('itest1', 'a');
 
+\d itest1_a_seq
+
 CREATE TABLE itest4 (a int, b text);
 ALTER TABLE itest4 ALTER COLUMN a ADD GENERATED ALWAYS AS IDENTITY;  -- error, requires NOT NULL
 ALTER TABLE itest4 ALTER COLUMN a SET NOT NULL;

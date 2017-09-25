@@ -535,6 +535,19 @@ SELECT * FROM pg_sequence_parameters('sequence_test4'::regclass);
           -1 | -9223372036854775808 |            -1 |        -1 | f            |          1 |        20
 (1 row)
 
+\d sequence_test4
+                       Sequence "public.sequence_test4"
+  Type  | Start |       Minimum        | Maximum | Increment | Cycles? | Cache 
+--------+-------+----------------------+---------+-----------+---------+-------
+ bigint |    -1 | -9223372036854775808 |      -1 |        -1 | no      |     1
+
+\d serialtest2_f2_seq
+                 Sequence "public.serialtest2_f2_seq"
+  Type   | Start | Minimum |  Maximum   | Increment | Cycles? | Cache 
+---------+-------+---------+------------+-----------+---------+-------
+ integer |     1 |       1 | 2147483647 |         1 | no      |     1
+Owned by: public.serialtest2.f2
+
 -- Test comments
 COMMENT ON SEQUENCE asdf IS 'won''t work';
 ERROR:  relation "asdf" does not exist
