@@ -246,6 +246,10 @@ WHERE sequencename ~ ANY(ARRAY['sequence_test', 'serialtest'])
 SELECT * FROM pg_sequence_parameters('sequence_test4'::regclass);
 
 
+\d sequence_test4
+\d serialtest2_f2_seq
+
+
 -- Test comments
 COMMENT ON SEQUENCE asdf IS 'won''t work';
 COMMENT ON SEQUENCE sequence_test2 IS 'will work';

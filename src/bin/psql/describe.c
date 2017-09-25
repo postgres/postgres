@@ -1380,8 +1380,6 @@ describeOneTableDetails(const char *schemaname,
 	int			i;
 	char	   *view_def = NULL;
 	char	   *headers[11];
-	char	  **seq_values = NULL;
-	char	  **ptr;
 	PQExpBufferData title;
 	PQExpBufferData tmpbuf;
 	int			cols;
@@ -1563,27 +1561,125 @@ describeOneTableDetails(const char *schemaname,
 	res = NULL;
 
 	/*
-	 * If it's a sequence, fetch its values and store into an array that will
-	 * be used later.
+	 * If it's a sequence, deal with it here separately.
 	 */
 	if (tableinfo.relkind == RELKIND_SEQUENCE)
 	{
-		printfPQExpBuffer(&buf, "SELECT * FROM %s", fmtId(schemaname));
-		/* must be separate because fmtId isn't reentrant */
-		appendPQExpBuffer(&buf, ".%s;", fmtId(relationname));
+		PGresult   *result = NULL;
+		printQueryOpt myopt = pset.popt;
+		char	   *footers[2] = {NULL, NULL};
+
+		if (pset.sversion >= 100000)
+		{
+			printfPQExpBuffer(&buf,
+							  "SELECT pg_catalog.format_type(seqtypid, NULL) AS \"%s\",\n"
+							  "       seqstart AS \"%s\",\n"
+							  "       seqmin AS \"%s\",\n"
+							  "       seqmax AS \"%s\",\n"
+							  "       seqincrement AS \"%s\",\n"
+							  "       CASE WHEN seqcycle THEN '%s' ELSE '%s' END AS \"%s\",\n"
+							  "       seqcache AS \"%s\"\n",
+							  gettext_noop("Type"),
+							  gettext_noop("Start"),
+							  gettext_noop("Minimum"),
+							  gettext_noop("Maximum"),
+							  gettext_noop("Increment"),
+							  gettext_noop("yes"),
+							  gettext_noop("no"),
+							  gettext_noop("Cycles?"),
+							  gettext_noop("Cache"));
+			appendPQExpBuffer(&buf,
+							  "FROM pg_catalog.pg_sequence\n"
+							  "WHERE seqrelid = '%s';",
+							  oid);
+		}
+		else
+		{
+			printfPQExpBuffer(&buf,
+							  "SELECT pg_catalog.format_type('bigint'::regtype, NULL) AS \"%s\",\n"
+							  "       start_value AS \"%s\",\n"
+							  "       min_value AS \"%s\",\n"
+							  "       max_value AS \"%s\",\n"
+							  "       increment_by AS \"%s\",\n"
+							  "       CASE WHEN is_cycled THEN '%s' ELSE '%s' END AS \"%s\",\n"
+							  "       cache_value AS \"%s\"\n",
+							  gettext_noop("Type"),
+							  gettext_noop("Start"),
+							  gettext_noop("Minimum"),
+							  gettext_noop("Maximum"),
+							  gettext_noop("Increment"),
+							  gettext_noop("yes"),
+							  gettext_noop("no"),
+							  gettext_noop("Cycles?"),
+							  gettext_noop("Cache"));
+			appendPQExpBuffer(&buf, "FROM %s", fmtId(schemaname));
+			/* must be separate because fmtId isn't reentrant */
+			appendPQExpBuffer(&buf, ".%s;", fmtId(relationname));
+		}
 
 		res = PSQLexec(buf.data);
 		if (!res)
 			goto error_return;
 
-		seq_values = pg_malloc((PQnfields(res) + 1) * sizeof(*seq_values));
+		/* Footer information about a sequence */
 
-		for (i = 0; i < PQnfields(res); i++)
-			seq_values[i] = pg_strdup(PQgetvalue(res, 0, i));
-		seq_values[i] = NULL;
+		/* Get the column that owns this sequence */
+		printfPQExpBuffer(&buf, "SELECT pg_catalog.quote_ident(nspname) || '.' ||"
+						  "\n   pg_catalog.quote_ident(relname) || '.' ||"
+						  "\n   pg_catalog.quote_ident(attname),"
+						  "\n   d.deptype"
+						  "\nFROM pg_catalog.pg_class c"
+						  "\nINNER JOIN pg_catalog.pg_depend d ON c.oid=d.refobjid"
+						  "\nINNER JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace"
+						  "\nINNER JOIN pg_catalog.pg_attribute a ON ("
+						  "\n a.attrelid=c.oid AND"
+						  "\n a.attnum=d.refobjsubid)"
+						  "\nWHERE d.classid='pg_catalog.pg_class'::pg_catalog.regclass"
+						  "\n AND d.refclassid='pg_catalog.pg_class'::pg_catalog.regclass"
+						  "\n AND d.objid='%s'"
+						  "\n AND d.deptype IN ('a', 'i')",
+						  oid);
 
-		PQclear(res);
-		res = NULL;
+		result = PSQLexec(buf.data);
+
+		/*
+		 * If we get no rows back, don't show anything (obviously). We should
+		 * never get more than one row back, but if we do, just ignore it and
+		 * don't print anything.
+		 */
+		if (!result)
+			goto error_return;
+		else if (PQntuples(result) == 1)
+		{
+			switch (PQgetvalue(result, 0, 1)[0])
+			{
+				case 'a':
+					footers[0] = psprintf(_("Owned by: %s"),
+										  PQgetvalue(result, 0, 0));
+					break;
+				case 'i':
+					footers[0] = psprintf(_("Sequence for identity column: %s"),
+										  PQgetvalue(result, 0, 0));
+					break;
+			}
+		}
+		PQclear(result);
+
+		printfPQExpBuffer(&title, _("Sequence \"%s.%s\""),
+						  schemaname, relationname);
+
+		myopt.footers = footers;
+		myopt.topt.default_footer = false;
+		myopt.title = title.data;
+		myopt.translate_header = true;
+
+		printQuery(res, &myopt, pset.queryFout, false, pset.logfile);
+
+		if (footers[0])
+			free(footers[0]);
+
+		retval = true;
+		goto error_return;		/* not an error, just return early */
 	}
 
 	/*
@@ -1667,10 +1763,6 @@ describeOneTableDetails(const char *schemaname,
 				printfPQExpBuffer(&title, _("Materialized view \"%s.%s\""),
 								  schemaname, relationname);
 			break;
-		case RELKIND_SEQUENCE:
-			printfPQExpBuffer(&title, _("Sequence \"%s.%s\""),
-							  schemaname, relationname);
-			break;
 		case RELKIND_INDEX:
 			if (tableinfo.relpersistence == 'u')
 				printfPQExpBuffer(&title, _("Unlogged index \"%s.%s\""),
@@ -1728,9 +1820,6 @@ describeOneTableDetails(const char *schemaname,
 		headers[cols++] = gettext_noop("Default");
 		show_column_details = true;
 	}
-
-	if (tableinfo.relkind == RELKIND_SEQUENCE)
-		headers[cols++] = gettext_noop("Value");
 
 	if (tableinfo.relkind == RELKIND_INDEX)
 		headers[cols++] = gettext_noop("Definition");
@@ -1812,10 +1901,6 @@ describeOneTableDetails(const char *schemaname,
 
 			printTableAddCell(&cont, default_str, false, false);
 		}
-
-		/* Value: for sequences only */
-		if (tableinfo.relkind == RELKIND_SEQUENCE)
-			printTableAddCell(&cont, seq_values[i], false, false);
 
 		/* Expression for index column */
 		if (tableinfo.relkind == RELKIND_INDEX)
@@ -2025,55 +2110,6 @@ describeOneTableDetails(const char *schemaname,
 								  tableinfo.tablespace, true);
 		}
 
-		PQclear(result);
-	}
-	else if (tableinfo.relkind == RELKIND_SEQUENCE)
-	{
-		/* Footer information about a sequence */
-		PGresult   *result = NULL;
-
-		/* Get the column that owns this sequence */
-		printfPQExpBuffer(&buf, "SELECT pg_catalog.quote_ident(nspname) || '.' ||"
-						  "\n   pg_catalog.quote_ident(relname) || '.' ||"
-						  "\n   pg_catalog.quote_ident(attname),"
-						  "\n   d.deptype"
-						  "\nFROM pg_catalog.pg_class c"
-						  "\nINNER JOIN pg_catalog.pg_depend d ON c.oid=d.refobjid"
-						  "\nINNER JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace"
-						  "\nINNER JOIN pg_catalog.pg_attribute a ON ("
-						  "\n a.attrelid=c.oid AND"
-						  "\n a.attnum=d.refobjsubid)"
-						  "\nWHERE d.classid='pg_catalog.pg_class'::pg_catalog.regclass"
-						  "\n AND d.refclassid='pg_catalog.pg_class'::pg_catalog.regclass"
-						  "\n AND d.objid='%s'"
-						  "\n AND d.deptype IN ('a', 'i')",
-						  oid);
-
-		result = PSQLexec(buf.data);
-		if (!result)
-			goto error_return;
-		else if (PQntuples(result) == 1)
-		{
-			switch (PQgetvalue(result, 0, 1)[0])
-			{
-				case 'a':
-					printfPQExpBuffer(&buf, _("Owned by: %s"),
-									  PQgetvalue(result, 0, 0));
-					printTableAddFooter(&cont, buf.data);
-					break;
-				case 'i':
-					printfPQExpBuffer(&buf, _("Sequence for identity column: %s"),
-									  PQgetvalue(result, 0, 0));
-					printTableAddFooter(&cont, buf.data);
-					break;
-			}
-		}
-
-		/*
-		 * If we get no rows back, don't show anything (obviously). We should
-		 * never get more than one row back, but if we do, just ignore it and
-		 * don't print anything.
-		 */
 		PQclear(result);
 	}
 	else if (tableinfo.relkind == RELKIND_RELATION ||
@@ -2959,13 +2995,6 @@ error_return:
 	termPQExpBuffer(&buf);
 	termPQExpBuffer(&title);
 	termPQExpBuffer(&tmpbuf);
-
-	if (seq_values)
-	{
-		for (ptr = seq_values; *ptr; ptr++)
-			free(*ptr);
-		free(seq_values);
-	}
 
 	if (view_def)
 		free(view_def);
