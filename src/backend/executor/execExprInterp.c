@@ -2131,14 +2131,6 @@ ExecEvalArrayExpr(ExprState *state, ExprEvalStep *op)
 		Datum	   *dvalues = op->d.arrayexpr.elemvalues;
 		bool	   *dnulls = op->d.arrayexpr.elemnulls;
 
-		/* Shouldn't happen here, but if length is 0, return empty array */
-		if (nelems == 0)
-		{
-			*op->resvalue =
-				PointerGetDatum(construct_empty_array(element_type));
-			return;
-		}
-
 		/* setup for 1-D array of the given length */
 		ndims = 1;
 		dims[0] = nelems;

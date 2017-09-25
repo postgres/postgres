@@ -618,6 +618,17 @@ SELECT * from ts_debug('english', '5aew.werc.ewr:8100/?xx');
  url_path | URL path    | /?xx                   | {simple}     | simple     | {/?xx}
 (3 rows)
 
+SELECT token, alias,
+  dictionaries, dictionaries is null as dnull, array_dims(dictionaries) as ddims,
+  lexemes, lexemes is null as lnull, array_dims(lexemes) as ldims
+from ts_debug('english', 'a title');
+ token |   alias   |  dictionaries  | dnull | ddims | lexemes | lnull | ldims 
+-------+-----------+----------------+-------+-------+---------+-------+-------
+ a     | asciiword | {english_stem} | f     | [1:1] | {}      | f     | 
+       | blank     | {}             | f     |       |         | t     | 
+ title | asciiword | {english_stem} | f     | [1:1] | {titl}  | f     | [1:1]
+(3 rows)
+
 -- to_tsquery
 SELECT to_tsquery('english', 'qwe & sKies ');
   to_tsquery   
