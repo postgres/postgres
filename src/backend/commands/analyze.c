@@ -396,7 +396,7 @@ do_analyze_rel(Relation onerel, int options, VacuumParams *params,
 			if (bms_is_member(i, unique_cols))
 				ereport(ERROR,
 						(errcode(ERRCODE_DUPLICATE_COLUMN),
-						 errmsg("column \"%s\" of relation \"%s\" is specified twice",
+						 errmsg("column \"%s\" of relation \"%s\" appears more than once",
 								col, RelationGetRelationName(onerel))));
 			unique_cols = bms_add_member(unique_cols, i);
 

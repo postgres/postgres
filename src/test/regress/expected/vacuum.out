@@ -92,7 +92,7 @@ VACUUM (FULL) vacparted;
 VACUUM (FREEZE) vacparted;
 -- check behavior with duplicate column mentions
 VACUUM ANALYZE vacparted(a,b,a);
-ERROR:  column "a" of relation "vacparted" is specified twice
+ERROR:  column "a" of relation "vacparted" appears more than once
 ANALYZE vacparted(a,b,b);
-ERROR:  column "b" of relation "vacparted" is specified twice
+ERROR:  column "b" of relation "vacparted" appears more than once
 DROP TABLE vacparted;
