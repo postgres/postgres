@@ -21,6 +21,7 @@
 
 #include "utils/inval.h"
 #include "utils/int8.h"
+#include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/syscache.h"
 #include "utils/varlena.h"
@@ -508,6 +509,31 @@ get_rel_sync_entry(PGOutputData *data, Oid relid)
 		foreach(lc, data->publications)
 		{
 			Publication *pub = lfirst(lc);
+
+			/*
+			 * Skip tables that look like they are from a heap rewrite (see
+			 * make_new_heap()).  We need to skip them because the subscriber
+			 * won't have a table by that name to receive the data.  That
+			 * means we won't ship the new data in, say, an added column with
+			 * a DEFAULT, but if the user applies the same DDL manually on the
+			 * subscriber, then this will work out for them.
+			 *
+			 * We only need to consider the alltables case, because such a
+			 * transient heap won't be an explicit member of a publication.
+			 */
+			if (pub->alltables)
+			{
+				char	   *relname = get_rel_name(relid);
+				unsigned int u;
+				int			n;
+
+				if (sscanf(relname, "pg_temp_%u%n", &u, &n) == 1 &&
+					relname[n] == '\0')
+				{
+					if (get_rel_relkind(u) == RELKIND_RELATION)
+						break;
+				}
+			}
 
 			if (pub->alltables || list_member_oid(pubids, pub->oid))
 			{
