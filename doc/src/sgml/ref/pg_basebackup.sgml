@@ -383,6 +383,18 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>-C</option></term>
+      <term><option>--create-slot</option></term>
+      <listitem>
+       <para>
+        This option causes the replication slot specified by the
+        option <literal>--slot</literal> to be created before starting the
+        backup.  In this case, an error is raised if the slot already exists.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-l <replaceable class="parameter">label</replaceable></option></term>
       <term><option>--label=<replaceable class="parameter">label</replaceable></option></term>
       <listitem>
@@ -461,6 +473,10 @@ PostgreSQL documentation
         in <filename>recovery.conf</filename>.  That way, it is ensured that
         the server does not remove any necessary WAL data in the time between
         the end of the base backup and the start of streaming replication.
+       </para>
+       <para>
+        The specified replication slot has to exist unless the
+        option <option>-C</option> is also used.
        </para>
        <para>
         If this option is not specified and the server supports temporary

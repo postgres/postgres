@@ -398,7 +398,8 @@ RunIdentifySystem(PGconn *conn, char **sysid, TimeLineID *starttli,
  */
 bool
 CreateReplicationSlot(PGconn *conn, const char *slot_name, const char *plugin,
-					  bool is_physical, bool slot_exists_ok)
+					  bool is_temporary, bool is_physical, bool reserve_wal,
+					  bool slot_exists_ok)
 {
 	PQExpBuffer query;
 	PGresult   *res;
@@ -410,13 +411,18 @@ CreateReplicationSlot(PGconn *conn, const char *slot_name, const char *plugin,
 	Assert(slot_name != NULL);
 
 	/* Build query */
+	appendPQExpBuffer(query, "CREATE_REPLICATION_SLOT \"%s\"", slot_name);
+	if (is_temporary)
+		appendPQExpBuffer(query, " TEMPORARY");
 	if (is_physical)
-		appendPQExpBuffer(query, "CREATE_REPLICATION_SLOT \"%s\" PHYSICAL",
-						  slot_name);
+	{
+		appendPQExpBuffer(query, " PHYSICAL");
+		if (reserve_wal)
+			appendPQExpBuffer(query, " RESERVE_WAL");
+	}
 	else
 	{
-		appendPQExpBuffer(query, "CREATE_REPLICATION_SLOT \"%s\" LOGICAL \"%s\"",
-						  slot_name, plugin);
+		appendPQExpBuffer(query, " LOGICAL \"%s\"", plugin);
 		if (PQserverVersion(conn) >= 100000)
 			/* pg_recvlogical doesn't use an exported snapshot, so suppress */
 			appendPQExpBuffer(query, " NOEXPORT_SNAPSHOT");

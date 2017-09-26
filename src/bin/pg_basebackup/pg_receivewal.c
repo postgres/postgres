@@ -431,7 +431,6 @@ StreamLog(void)
 												stream.do_sync);
 	stream.partial_suffix = ".partial";
 	stream.replication_slot = replication_slot;
-	stream.temp_slot = false;
 
 	ReceiveXlogStream(conn, &stream);
 
@@ -728,7 +727,7 @@ main(int argc, char **argv)
 					_("%s: creating replication slot \"%s\"\n"),
 					progname, replication_slot);
 
-		if (!CreateReplicationSlot(conn, replication_slot, NULL, true,
+		if (!CreateReplicationSlot(conn, replication_slot, NULL, false, true, false,
 								   slot_exists_ok))
 			disconnect_and_exit(1);
 		disconnect_and_exit(0);

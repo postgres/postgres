@@ -523,24 +523,6 @@ ReceiveXlogStream(PGconn *conn, StreamCtl *stream)
 	}
 
 	/*
-	 * Create temporary replication slot if one is needed
-	 */
-	if (stream->temp_slot)
-	{
-		snprintf(query, sizeof(query),
-				 "CREATE_REPLICATION_SLOT \"%s\" TEMPORARY PHYSICAL RESERVE_WAL",
-				 stream->replication_slot);
-		res = PQexec(conn, query);
-		if (PQresultStatus(res) != PGRES_TUPLES_OK)
-		{
-			fprintf(stderr, _("%s: could not create temporary replication slot \"%s\": %s"),
-					progname, stream->replication_slot, PQerrorMessage(conn));
-			PQclear(res);
-			return false;
-		}
-	}
-
-	/*
 	 * initialize flush position to starting point, it's the caller's
 	 * responsibility that that's sane.
 	 */
