@@ -227,48 +227,6 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-S <replaceable>slotname</replaceable></option></term>
-      <term><option>--slot=<replaceable class="parameter">slotname</replaceable></option></term>
-      <listitem>
-       <para>
-        This option can only be used together with <literal>-X
-        stream</literal>.  It causes the WAL streaming to use the specified
-        replication slot.  If the base backup is intended to be used as a
-        streaming replication standby using replication slots, it should then
-        use the same replication slot name
-        in <filename>recovery.conf</filename>.  That way, it is ensured that
-        the server does not remove any necessary WAL data in the time between
-        the end of the base backup and the start of streaming replication.
-       </para>
-       <para>
-        If this option is not specified and the server supports temporary
-        replication slots (version 10 and later), then a temporary replication
-        slot is automatically used for WAL streaming.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>--no-slot</option></term>
-      <listitem>
-       <para>
-        This option prevents the creation of a temporary replication slot
-        during the backup even if it's supported by the server.
-       </para>
-       <para>
-        Temporary replication slots are created by default if no slot name
-        is given with the option <option>-S</option> when using log streaming.
-       </para>
-       <para>
-        The main purpose of this option is to allow taking a base backup when
-        the server is out of free replication slots.  Using replication slots
-        is almost always preferred, because it prevents needed WAL from being
-        removed by the server during the backup.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><option>-T <replaceable class="parameter">olddir</replaceable>=<replaceable class="parameter">newdir</replaceable></option></term>
       <term><option>--tablespace-mapping=<replaceable class="parameter">olddir</replaceable>=<replaceable class="parameter">newdir</replaceable></option></term>
       <listitem>
@@ -454,6 +412,21 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>-N</option></term>
+      <term><option>--no-sync</option></term>
+      <listitem>
+       <para>
+        By default, <command>pg_basebackup</command> will wait for all files
+        to be written safely to disk.  This option causes
+        <command>pg_basebackup</command> to return without waiting, which is
+        faster, but means that a subsequent operating system crash can leave
+        the base backup corrupt.  Generally, this option is useful for testing
+        but should not be used when creating a production installation.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-P</option></term>
       <term><option>--progress</option></term>
       <listitem>
@@ -476,16 +449,43 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-N</option></term>
-      <term><option>--no-sync</option></term>
+      <term><option>-S <replaceable>slotname</replaceable></option></term>
+      <term><option>--slot=<replaceable class="parameter">slotname</replaceable></option></term>
       <listitem>
        <para>
-        By default, <command>pg_basebackup</command> will wait for all files
-        to be written safely to disk.  This option causes
-        <command>pg_basebackup</command> to return without waiting, which is
-        faster, but means that a subsequent operating system crash can leave
-        the base backup corrupt.  Generally, this option is useful for testing
-        but should not be used when creating a production installation.
+        This option can only be used together with <literal>-X
+        stream</literal>.  It causes the WAL streaming to use the specified
+        replication slot.  If the base backup is intended to be used as a
+        streaming replication standby using replication slots, it should then
+        use the same replication slot name
+        in <filename>recovery.conf</filename>.  That way, it is ensured that
+        the server does not remove any necessary WAL data in the time between
+        the end of the base backup and the start of streaming replication.
+       </para>
+       <para>
+        If this option is not specified and the server supports temporary
+        replication slots (version 10 and later), then a temporary replication
+        slot is automatically used for WAL streaming.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--no-slot</option></term>
+      <listitem>
+       <para>
+        This option prevents the creation of a temporary replication slot
+        during the backup even if it's supported by the server.
+       </para>
+       <para>
+        Temporary replication slots are created by default if no slot name
+        is given with the option <option>-S</option> when using log streaming.
+       </para>
+       <para>
+        The main purpose of this option is to allow taking a base backup when
+        the server is out of free replication slots.  Using replication slots
+        is almost always preferred, because it prevents needed WAL from being
+        removed by the server during the backup.
        </para>
       </listitem>
      </varlistentry>
