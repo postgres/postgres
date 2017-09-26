@@ -82,8 +82,8 @@ SQL function "wrap_do_analyze" statement 1
 VACUUM FULL vactst;
 -- check behavior with duplicate column mentions
 VACUUM ANALYZE vaccluster(i,i);
-ERROR:  column "i" of relation "vaccluster" is specified twice
+ERROR:  column "i" of relation "vaccluster" appears more than once
 ANALYZE vaccluster(i,i);
-ERROR:  column "i" of relation "vaccluster" is specified twice
+ERROR:  column "i" of relation "vaccluster" appears more than once
 DROP TABLE vaccluster;
 DROP TABLE vactst;
