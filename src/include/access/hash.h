@@ -117,7 +117,6 @@ typedef struct HashScanPosItem	/* what we remember about each match */
 typedef struct HashScanPosData
 {
 	Buffer		buf;			/* if valid, the buffer is pinned */
-	XLogRecPtr	lsn;			/* pos in the WAL stream when page was read */
 	BlockNumber currPage;		/* current hash index page */
 	BlockNumber nextPage;		/* next overflow page */
 	BlockNumber prevPage;		/* prev overflow or bucket page */
@@ -153,7 +152,6 @@ typedef struct HashScanPosData
 #define HashScanPosInvalidate(scanpos) \
 	do { \
 		(scanpos).buf = InvalidBuffer; \
-		(scanpos).lsn = InvalidXLogRecPtr; \
 		(scanpos).currPage = InvalidBlockNumber; \
 		(scanpos).nextPage = InvalidBlockNumber; \
 		(scanpos).prevPage = InvalidBlockNumber; \

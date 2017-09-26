@@ -463,12 +463,6 @@ _hash_readpage(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 	opaque = (HashPageOpaque) PageGetSpecialPointer(page);
 
 	so->currPos.buf = buf;
-
-	/*
-	 * We save the LSN of the page as we read it, so that we know whether it
-	 * is safe to apply LP_DEAD hints to the page later.
-	 */
-	so->currPos.lsn = PageGetLSN(page);
 	so->currPos.currPage = BufferGetBlockNumber(buf);
 
 	if (ScanDirectionIsForward(dir))
@@ -508,7 +502,6 @@ _hash_readpage(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 			{
 				so->currPos.buf = buf;
 				so->currPos.currPage = BufferGetBlockNumber(buf);
-				so->currPos.lsn = PageGetLSN(page);
 			}
 			else
 			{
@@ -562,7 +555,6 @@ _hash_readpage(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 			{
 				so->currPos.buf = buf;
 				so->currPos.currPage = BufferGetBlockNumber(buf);
-				so->currPos.lsn = PageGetLSN(page);
 			}
 			else
 			{

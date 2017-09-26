@@ -532,12 +532,13 @@ _hash_get_newbucket_from_oldbucket(Relation rel, Bucket old_bucket,
  * We match items by heap TID before assuming they are the right ones to
  * delete.
  *
- * Note that we keep the pin on the bucket page throughout the scan. Hence,
- * there is no chance of VACUUM deleting any items from that page.  However,
- * having pin on the overflow page doesn't guarantee that vacuum won't delete
- * any items.
- *
- * See _bt_killitems() for more details.
+ * There are never any scans active in a bucket at the time VACUUM begins,
+ * because VACUUM takes a cleanup lock on the primary bucket page and scans
+ * hold a pin.  A scan can begin after VACUUM leaves the primary bucket page
+ * but before it finishes the entire bucket, but it can never pass VACUUM,
+ * because VACUUM always locks the next page before releasing the lock on
+ * the previous one.  Therefore, we don't have to worry about accidentally
+ * killing a TID that has been reused for an unrelated tuple.
  */
 void
 _hash_kill_items(IndexScanDesc scan)
@@ -579,21 +580,7 @@ _hash_kill_items(IndexScanDesc scan)
 	else
 		buf = _hash_getbuf(rel, blkno, HASH_READ, LH_OVERFLOW_PAGE);
 
-	/*
-	 * If page LSN differs it means that the page was modified since the last
-	 * read. killedItems could be not valid so applying LP_DEAD hints is not
-	 * safe.
-	 */
 	page = BufferGetPage(buf);
-	if (PageGetLSN(page) != so->currPos.lsn)
-	{
-		if (havePin)
-			LockBuffer(buf, BUFFER_LOCK_UNLOCK);
-		else
-			_hash_relbuf(rel, buf);
-		return;
-	}
-
 	opaque = (HashPageOpaque) PageGetSpecialPointer(page);
 	maxoff = PageGetMaxOffsetNumber(page);
 
