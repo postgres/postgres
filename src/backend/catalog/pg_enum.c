@@ -28,12 +28,25 @@
 #include "utils/builtins.h"
 #include "utils/catcache.h"
 #include "utils/fmgroids.h"
+#include "utils/hsearch.h"
+#include "utils/memutils.h"
 #include "utils/syscache.h"
 #include "utils/tqual.h"
 
 
 /* Potentially set by pg_upgrade_support functions */
 Oid			binary_upgrade_next_pg_enum_oid = InvalidOid;
+
+/*
+ * Hash table of enum value OIDs created during the current transaction by
+ * AddEnumLabel.  We disallow using these values until the transaction is
+ * committed; otherwise, they might get into indexes where we can't clean
+ * them up, and then if the transaction rolls back we have a broken index.
+ * (See comments for check_safe_enum_use() in enum.c.)  Values created by
+ * EnumValuesCreate are *not* blacklisted; we assume those are created during
+ * CREATE TYPE, so they can't go away unless the enum type itself does.
+ */
+static HTAB *enum_blacklist = NULL;
 
 static void RenumberEnumType(Relation pg_enum, HeapTuple *existing, int nelems);
 static int	sort_order_cmp(const void *p1, const void *p2);
@@ -460,6 +473,24 @@ restart:
 	heap_freetuple(enum_tup);
 
 	heap_close(pg_enum, RowExclusiveLock);
+
+	/* Set up the blacklist hash if not already done in this transaction */
+	if (enum_blacklist == NULL)
+	{
+		HASHCTL		hash_ctl;
+
+		memset(&hash_ctl, 0, sizeof(hash_ctl));
+		hash_ctl.keysize = sizeof(Oid);
+		hash_ctl.entrysize = sizeof(Oid);
+		hash_ctl.hcxt = TopTransactionContext;
+		enum_blacklist = hash_create("Enum value blacklist",
+									 32,
+									 &hash_ctl,
+									 HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
+	}
+
+	/* Add the new value to the blacklist */
+	(void) hash_search(enum_blacklist, &newOid, HASH_ENTER, NULL);
 }
 
 
@@ -544,6 +575,39 @@ RenameEnumLabel(Oid enumTypeOid,
 	heap_freetuple(enum_tup);
 
 	heap_close(pg_enum, RowExclusiveLock);
+}
+
+
+/*
+ * Test if the given enum value is on the blacklist
+ */
+bool
+EnumBlacklisted(Oid enum_id)
+{
+	bool		found;
+
+	/* If we've made no blacklist table, all values are safe */
+	if (enum_blacklist == NULL)
+		return false;
+
+	/* Else, is it in the table? */
+	(void) hash_search(enum_blacklist, &enum_id, HASH_FIND, &found);
+	return found;
+}
+
+
+/*
+ * Clean up enum stuff after end of top-level transaction.
+ */
+void
+AtEOXact_Enum(void)
+{
+	/*
+	 * Reset the blacklist table, as all our enum values are now committed.
+	 * The memory will go away automatically when TopTransactionContext is
+	 * freed; it's sufficient to clear our pointer.
+	 */
+	enum_blacklist = NULL;
 }
 
 
