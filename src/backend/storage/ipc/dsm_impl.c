@@ -425,17 +425,14 @@ dsm_impl_posix_resize(int fd, off_t size)
 		do
 		{
 			rc = posix_fallocate(fd, 0, size);
-		} while (rc == -1 && errno == EINTR);
+		} while (rc == EINTR);
 
-		if (rc != 0 && errno == ENOSYS)
-		{
-			/*
-			 * Kernel too old (< 2.6.23).  Rather than fail, just trust that
-			 * we won't hit the problem (it typically doesn't show up without
-			 * many-GB-sized requests, anyway).
-			 */
-			rc = 0;
-		}
+		/*
+		 * The caller expects errno to be set, but posix_fallocate() doesn't
+		 * set it.  Instead it returns error numbers directly.  So set errno,
+		 * even though we'll also return rc to indicate success or failure.
+		 */
+		errno = rc;
 	}
 #endif							/* HAVE_POSIX_FALLOCATE && __linux__ */
 
