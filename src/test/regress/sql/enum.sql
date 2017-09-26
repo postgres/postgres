@@ -300,7 +300,20 @@ ALTER TYPE bogon ADD VALUE 'bad';
 SELECT 'bad'::bogon;
 ROLLBACK;
 
+-- but a renamed value is safe to use later in same transaction
+BEGIN;
+ALTER TYPE bogus RENAME VALUE 'good' to 'bad';
+SELECT 'bad'::bogus;
+ROLLBACK;
+
 DROP TYPE bogus;
+
+-- check that values created during CREATE TYPE can be used in any case
+BEGIN;
+CREATE TYPE bogus AS ENUM('good','bad','ugly');
+ALTER TYPE bogus RENAME TO bogon;
+select enum_range(null::bogon);
+ROLLBACK;
 
 -- check that we can add new values to existing enums in a transaction
 -- and use them, if the type is new as well

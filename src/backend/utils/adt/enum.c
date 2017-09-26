@@ -76,6 +76,15 @@ check_safe_enum_use(HeapTuple enumval_tup)
 		TransactionIdDidCommit(xmin))
 		return;
 
+	/*
+	 * Check if the enum value is blacklisted.  If not, it's safe, because it
+	 * was made during CREATE TYPE AS ENUM and can't be shorter-lived than its
+	 * owning type.  (This'd also be false for values made by other
+	 * transactions; but the previous tests should have handled all of those.)
+	 */
+	if (!EnumBlacklisted(HeapTupleGetOid(enumval_tup)))
+		return;
+
 	/* It is a new enum value, so check to see if the whole enum is new */
 	en = (Form_pg_enum) GETSTRUCT(enumval_tup);
 	enumtyp_tup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(en->enumtypid));

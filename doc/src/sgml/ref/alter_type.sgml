@@ -294,8 +294,6 @@ ALTER TYPE <replaceable class="PARAMETER">name</replaceable> RENAME VALUE <repla
    an enum type) is executed inside a transaction block, the new value cannot
    be used until after the transaction has been committed, except in the case
    that the enum type itself was created earlier in the same transaction.
-   Likewise, when a pre-existing enum value is renamed, the transaction must
-   be committed before the renamed value can be used.
   </para>
 
   <para>
