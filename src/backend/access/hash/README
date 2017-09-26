@@ -434,7 +434,7 @@ concurrent scan could start in that bucket before we've finished vacuuming it.
 If a scan gets ahead of cleanup, we could have the following problem: (1) the
 scan sees heap TIDs that are about to be removed before they are processed by
 VACUUM, (2) the scan decides that one or more of those TIDs are dead, (3)
-VACUUM completes, (3) one or more of the TIDs the scan decided were dead are
+VACUUM completes, (4) one or more of the TIDs the scan decided were dead are
 reused for an unrelated tuple, and finally (5) the scan wakes up and
 erroneously kills the new tuple.
 
