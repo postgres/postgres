@@ -48,7 +48,14 @@ static ArrayType *enum_range_internal(Oid enumtypoid, Oid lower, Oid upper);
  * However, it's okay to allow use of uncommitted values belonging to enum
  * types that were themselves created in the same transaction, because then
  * any such index would also be new and would go away altogether on rollback.
- * (This case is required by pg_upgrade.)
+ * We don't implement that fully right now, but we do allow free use of enum
+ * values created during CREATE TYPE AS ENUM, which are surely of the same
+ * lifespan as the enum type.  (This case is required by "pg_restore -1".)
+ * Values added by ALTER TYPE ADD VALUE are currently restricted, but could
+ * be allowed if the enum type could be proven to have been created earlier
+ * in the same transaction.  (Note that comparing tuple xmins would not work
+ * for that, because the type tuple might have been updated in the current
+ * transaction.  Subtransactions also create hazards to be accounted for.)
  *
  * This function needs to be called (directly or indirectly) in any of the
  * functions below that could return an enum value to SQL operations.
@@ -58,7 +65,6 @@ check_safe_enum_use(HeapTuple enumval_tup)
 {
 	TransactionId xmin;
 	Form_pg_enum en;
-	HeapTuple	enumtyp_tup;
 
 	/*
 	 * If the row is hinted as committed, it's surely safe.  This provides a
@@ -85,40 +91,11 @@ check_safe_enum_use(HeapTuple enumval_tup)
 	if (!EnumBlacklisted(HeapTupleGetOid(enumval_tup)))
 		return;
 
-	/* It is a new enum value, so check to see if the whole enum is new */
-	en = (Form_pg_enum) GETSTRUCT(enumval_tup);
-	enumtyp_tup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(en->enumtypid));
-	if (!HeapTupleIsValid(enumtyp_tup))
-		elog(ERROR, "cache lookup failed for type %u", en->enumtypid);
-
-	/*
-	 * We insist that the type have been created in the same (sub)transaction
-	 * as the enum value.  It would be safe to allow the type's originating
-	 * xact to be a subcommitted child of the enum value's xact, but not vice
-	 * versa (since we might now be in a subxact of the type's originating
-	 * xact, which could roll back along with the enum value's subxact).  The
-	 * former case seems a sufficiently weird usage pattern as to not be worth
-	 * spending code for, so we're left with a simple equality check.
-	 *
-	 * We also insist that the type's pg_type row not be HEAP_UPDATED.  If it
-	 * is, we can't tell whether the row was created or only modified in the
-	 * apparent originating xact, so it might be older than that xact.  (We do
-	 * not worry whether the enum value is HEAP_UPDATED; if it is, we might
-	 * think it's too new and throw an unnecessary error, but we won't allow
-	 * an unsafe case.)
-	 */
-	if (xmin == HeapTupleHeaderGetXmin(enumtyp_tup->t_data) &&
-		!(enumtyp_tup->t_data->t_infomask & HEAP_UPDATED))
-	{
-		/* same (sub)transaction, so safe */
-		ReleaseSysCache(enumtyp_tup);
-		return;
-	}
-
 	/*
 	 * There might well be other tests we could do here to narrow down the
 	 * unsafe conditions, but for now just raise an exception.
 	 */
+	en = (Form_pg_enum) GETSTRUCT(enumval_tup);
 	ereport(ERROR,
 			(errcode(ERRCODE_UNSAFE_NEW_ENUM_VALUE_USAGE),
 			 errmsg("unsafe use of new value \"%s\" of enum type %s",

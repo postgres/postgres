@@ -315,13 +315,14 @@ ALTER TYPE bogus RENAME TO bogon;
 select enum_range(null::bogon);
 ROLLBACK;
 
--- check that we can add new values to existing enums in a transaction
--- and use them, if the type is new as well
+-- ideally, we'd allow this usage; but it requires keeping track of whether
+-- the enum type was created in the current transaction, which is expensive
 BEGIN;
 CREATE TYPE bogus AS ENUM('good');
-ALTER TYPE bogus ADD VALUE 'bad';
-ALTER TYPE bogus ADD VALUE 'ugly';
-SELECT enum_range(null::bogus);
+ALTER TYPE bogus RENAME TO bogon;
+ALTER TYPE bogon ADD VALUE 'bad';
+ALTER TYPE bogon ADD VALUE 'ugly';
+select enum_range(null::bogon);  -- fails
 ROLLBACK;
 
 --
