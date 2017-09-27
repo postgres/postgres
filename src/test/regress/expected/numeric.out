@@ -708,6 +708,27 @@ SELECT * FROM fract_only;
 (6 rows)
 
 DROP TABLE fract_only;
+-- Check inf/nan conversion behavior
+SELECT 'NaN'::float8::numeric;
+ numeric 
+---------
+     NaN
+(1 row)
+
+SELECT 'Infinity'::float8::numeric;
+ERROR:  cannot convert infinity to numeric
+SELECT '-Infinity'::float8::numeric;
+ERROR:  cannot convert infinity to numeric
+SELECT 'NaN'::float4::numeric;
+ numeric 
+---------
+     NaN
+(1 row)
+
+SELECT 'Infinity'::float4::numeric;
+ERROR:  cannot convert infinity to numeric
+SELECT '-Infinity'::float4::numeric;
+ERROR:  cannot convert infinity to numeric
 -- Simple check that ceil(), floor(), and round() work correctly
 CREATE TABLE ceil_floor_round (a numeric);
 INSERT INTO ceil_floor_round VALUES ('-5.5');
