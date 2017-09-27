@@ -73,20 +73,17 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
   <para>
    Policies can be applied for specific commands or for specific roles.  The
    default for newly created policies is that they apply for all commands and
-   roles, unless otherwise specified.  If multiple policies apply to a given
-   statement, they will be combined using OR (although <literal>ON CONFLICT DO
-   UPDATE</> and <literal>INSERT</> policies are not combined in this way, but
-   rather enforced as noted at each stage of <literal>ON CONFLICT</> execution).
+   roles, unless otherwise specified.
   </para>
 
   <para>
-   For commands that can have both <literal>USING</literal>
-   and <literal>WITH CHECK</literal> policies (<literal>ALL</literal>
+   For policies that can have both <literal>USING</literal>
+   and <literal>WITH CHECK</literal> expressions (<literal>ALL</literal>
    and <literal>UPDATE</literal>), if no <literal>WITH CHECK</literal>
-   policy is defined, then the <literal>USING</literal> policy will be used
-   both for which rows are visible (normal <literal>USING</literal> case)
-   and for which rows will be allowed to be added (<literal>WITH
-   CHECK</literal> case).
+   expression is defined, then the <literal>USING</literal> expression will be
+   used both to determine which rows are visible (normal
+   <literal>USING</literal> case) and which new rows will be allowed to be
+   added (<literal>WITH CHECK</literal> case).
   </para>
 
   <para>
@@ -143,6 +140,16 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
       restrictive policies, administrators can reduce the set of records
       which can be accessed as all restrictive policies must be passed for
       each record.
+     </para>
+
+     <para>
+      Note that there needs to be at least one permissive policy to grant
+      access to records before restrictive policies can be usefully used to
+      reduce that access. If only restrictive policies exist, then no records
+      will be accessible. When a mix of permissive and restrictive policies
+      are present, a record is only accessible if at least one of the
+      permissive policies passes, in addition to all the restrictive
+      policies.
      </para>
     </listitem>
    </varlistentry>
@@ -210,7 +217,7 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
 
   </variablelist>
 
- <refsect2>
+  <refsect2>
    <title>Per-Command Policies</title>
 
    <variablelist>
@@ -223,8 +230,7 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
          to all commands, regardless of the type of command.  If an
          <literal>ALL</literal> policy exists and more specific policies
          exist, then both the <literal>ALL</literal> policy and the more
-         specific policy (or policies) will be combined using
-         OR, as usual for overlapping policies.
+         specific policy (or policies) will be applied.
          Additionally, <literal>ALL</literal> policies will be applied to
          both the selection side of a query and the modification side, using
          the <literal>USING</literal> expression for both cases if only
@@ -293,33 +299,18 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
       <listitem>
        <para>
          Using <literal>UPDATE</literal> for a policy means that it will apply
-         to <literal>UPDATE</literal> commands (or auxiliary <literal>ON
-         CONFLICT DO UPDATE</literal> clauses of <literal>INSERT</literal>
-         commands).  Since <literal>UPDATE</literal> involves pulling an
-         existing record and then making changes to some portion (but
-         possibly not all) of the record, <literal>UPDATE</literal>
+         to <literal>UPDATE</literal>, <literal>SELECT FOR UPDATE</literal>
+         and <literal>SELECT FOR SHARE</literal> commands, as well as
+         auxiliary <literal>ON CONFLICT DO UPDATE</literal> clauses of
+         <literal>INSERT</literal> commands.  Since <literal>UPDATE</literal>
+         involves pulling an existing record and replacing it with a new
+         modified record, <literal>UPDATE</literal>
          policies accept both a <literal>USING</literal> expression and
          a <literal>WITH CHECK</literal> expression.
          The <literal>USING</literal> expression determines which records
          the <literal>UPDATE</literal> command will see to operate against,
          while the <literal>WITH CHECK</literal> expression defines which
          modified rows are allowed to be stored back into the relation.
-       </para>
-
-       <para>
-         When an <literal>UPDATE</literal> command is used with a
-         <literal>WHERE</literal> clause or a <literal>RETURNING</literal>
-         clause, <literal>SELECT</literal> rights are also required on the
-         relation being updated and the appropriate <literal>SELECT</literal>
-         and <literal>ALL</literal> policies will be combined (using OR for any
-         overlapping <literal>SELECT</literal> related policies found) with the
-         <literal>USING</literal> clause of the <literal>UPDATE</literal> policy
-         using AND.  Therefore, in order for a user to be able to
-         <literal>UPDATE</literal> specific rows, the user must have access
-         to the row(s) through a <literal>SELECT</literal>
-         or <literal>ALL</literal> policy and the row(s) must pass
-         the <literal>UPDATE</literal> policy's <literal>USING</>
-         expression.
        </para>
 
        <para>
@@ -331,21 +322,33 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
        </para>
 
        <para>
-         Note, however, that <literal>INSERT</literal> with <literal>ON CONFLICT
-         DO UPDATE</literal> requires that an <literal>UPDATE</literal> policy
-         <literal>USING</literal> expression always be enforced as a
-         <literal>WITH CHECK</literal> expression.  This
-         <literal>UPDATE</literal> policy must always pass when the
-         <literal>UPDATE</literal> path is taken.  Any existing row that
-         necessitates that the <literal>UPDATE</literal> path be taken must
-         pass the (<literal>UPDATE</literal> or <literal>ALL</literal>)
-         <literal>USING</literal> qualifications (combined using OR), which
-         are always enforced as <literal>WITH CHECK</literal>
-         options in this context.  (The <literal>UPDATE</literal> path will
-         <emphasis>never</> be silently avoided; an error will be thrown
-         instead.)  Finally, the final row appended to the relation must pass
-         any <literal>WITH CHECK</literal> options that a conventional
-         <literal>UPDATE</literal> is required to pass.
+         Typically an <literal>UPDATE</literal> command also needs to read
+         data from columns in the relation being updated (e.g., in a
+         <literal>WHERE</literal> clause or a <literal>RETURNING</literal>
+         clause, or in an expression on the right hand side of the
+         <literal>SET</literal> clause).  In this case,
+         <literal>SELECT</literal> rights are also required on the relation
+         being updated, and the appropriate <literal>SELECT</literal> or
+         <literal>ALL</literal> policies will be applied in addition to
+         the <literal>UPDATE</literal> policies.  Thus the user must have
+         access to the row(s) being updated through a <literal>SELECT</literal>
+         or <literal>ALL</literal> policy in addition to being granted
+         permission to update the row(s) via an <literal>UPDATE</literal>
+         or <literal>ALL</literal> policy.
+       </para>
+
+       <para>
+         When an <literal>INSERT</literal> command has an auxiliary
+         <literal>ON CONFLICT DO UPDATE</literal> clause, if the
+         <literal>UPDATE</literal> path is taken, the row to be updated is
+         first checked against the <literal>USING</literal> expressions of
+         any <literal>UPDATE</literal> policies, and then the new updated row
+         is checked against the <literal>WITH CHECK</literal> expressions.
+         Note, however, that unlike a standalone <literal>UPDATE</literal>
+         command, if the existing row does not pass the
+         <literal>USING</literal> expressions, an error will be thrown (the
+         <literal>UPDATE</literal> path will <emphasis>never</> be silently
+         avoided).
        </para>
       </listitem>
      </varlistentry>
@@ -364,19 +367,18 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
        </para>
 
        <para>
-         When a <literal>DELETE</literal> command is used with a
-         <literal>WHERE</literal> clause or a <literal>RETURNING</literal>
-         clause, <literal>SELECT</literal> rights are also required on the
-         relation being updated and the appropriate <literal>SELECT</literal>
-         and <literal>ALL</literal> policies will be combined (using OR for any
-         overlapping <literal>SELECT</literal> related policies found) with the
-         <literal>USING</literal> clause of the <literal>DELETE</literal> policy
-         using AND.  Therefore, in order for a user to be able to
-         <literal>DELETE</literal> specific rows, the user must have access
-         to the row(s) through a <literal>SELECT</literal>
-         or <literal>ALL</literal> policy and the row(s) must pass
-         the <literal>DELETE</literal> policy's <literal>USING</>
-         expression.
+         In most cases a <literal>DELETE</literal> command also needs to read
+         data from columns in the relation that it is deleting from (e.g.,
+         in a <literal>WHERE</literal> clause or a
+         <literal>RETURNING</literal> clause). In this case,
+         <literal>SELECT</literal> rights are also required on the relation,
+         and the appropriate <literal>SELECT</literal> or
+         <literal>ALL</literal> policies will be applied in addition to
+         the <literal>DELETE</literal> policies.  Thus the user must have
+         access to the row(s) being deleted through a <literal>SELECT</literal>
+         or <literal>ALL</literal> policy in addition to being granted
+         permission to delete the row(s) via a <literal>DELETE</literal> or
+         <literal>ALL</literal> policy.
        </para>
 
        <para>
@@ -389,6 +391,76 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
      </varlistentry>
 
    </variablelist>
+  </refsect2>
+
+  <refsect2>
+   <title>Application of Multiple Policies</title>
+
+   <para>
+    When multiple policies of different command types apply to the same command
+    (for example, <literal>SELECT</literal> and <literal>UPDATE</literal>
+    policies applied to an <literal>UPDATE</literal> command), then the user
+    must have both types of permissions (for example, permission to select rows
+    from the relation as well as permission to update them).  Thus the
+    expressions for one type of policy are combined with the expressions for
+    the other type of policy using the <literal>AND</literal> operator.
+   </para>
+
+   <para>
+    When multiple policies of the same command type apply to the same command,
+    then there must be at least one <literal>PERMISSIVE</literal> policy
+    granting access to the relation, and all of the
+    <literal>RESTRICTIVE</literal> policies must pass.  Thus all the
+    <literal>PERMISSIVE</literal> policy expressions are combined using
+    <literal>OR</literal>, all the <literal>RESTRICTIVE</literal> policy
+    expressions are combined using <literal>AND</literal>, and the results are
+    combined using <literal>AND</literal>.  If there are no
+    <literal>PERMISSIVE</literal> policies, then access is denied.
+   </para>
+
+   <para>
+    Note that, for the purposes of combining multiple policies,
+    <literal>ALL</literal> policies are treated as having the same type as
+    whichever other type of policy is being applied.
+   </para>
+
+   <para>
+    For example, in an <literal>UPDATE</literal> command requiring both
+    <literal>SELECT</literal> and <literal>UPDATE</literal> permissions, if
+    there are multiple applicable policies of each type, they will be combined
+    as follows:
+
+<programlisting>
+<replaceable>expression</replaceable> from RESTRICTIVE SELECT/ALL policy 1
+AND
+<replaceable>expression</replaceable> from RESTRICTIVE SELECT/ALL policy 2
+AND
+...
+AND
+(
+  <replaceable>expression</replaceable> from PERMISSIVE SELECT/ALL policy 1
+  OR
+  <replaceable>expression</replaceable> from PERMISSIVE SELECT/ALL policy 2
+  OR
+  ...
+)
+AND
+<replaceable>expression</replaceable> from RESTRICTIVE UPDATE/ALL policy 1
+AND
+<replaceable>expression</replaceable> from RESTRICTIVE UPDATE/ALL policy 2
+AND
+...
+AND
+(
+  <replaceable>expression</replaceable> from PERMISSIVE UPDATE/ALL policy 1
+  OR
+  <replaceable>expression</replaceable> from PERMISSIVE UPDATE/ALL policy 2
+  OR
+  ...
+)
+</programlisting>
+   </para>
+
   </refsect2>
  </refsect1>
 
@@ -416,16 +488,6 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
    delete, or update records at all which might possibly indicate a value they
    are not otherwise able to see, or by using generated values (e.g., surrogate
    keys) instead of keys with external meanings.
-  </para>
-
-  <para>
-   Note that there needs to be at least one permissive policy to grant
-   access to records before restrictive policies can be usefully used to
-   reduce that access. If only restrictive policies exist, then no records
-   will be accessible. When a mix of permissive and restrictive policies
-   are present, a record is only accessible if at least one of the
-   permissive policies passes, in addition to all the restrictive
-   policies.
   </para>
 
   <para>
