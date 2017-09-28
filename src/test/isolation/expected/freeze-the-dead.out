@@ -1,0 +1,101 @@
+Parsed test spec with 2 sessions
+
+starting permutation: s1_update s1_commit s1_vacuum s2_key_share s2_commit
+step s1_update: UPDATE tab_freeze SET x = x + 1 WHERE id = 3;
+step s1_commit: COMMIT;
+step s1_vacuum: VACUUM FREEZE tab_freeze;
+step s2_key_share: SELECT id FROM tab_freeze WHERE id = 3 FOR KEY SHARE;
+id             
+
+3              
+step s2_commit: COMMIT;
+
+starting permutation: s1_update s1_commit s2_key_share s1_vacuum s2_commit
+step s1_update: UPDATE tab_freeze SET x = x + 1 WHERE id = 3;
+step s1_commit: COMMIT;
+step s2_key_share: SELECT id FROM tab_freeze WHERE id = 3 FOR KEY SHARE;
+id             
+
+3              
+step s1_vacuum: VACUUM FREEZE tab_freeze;
+step s2_commit: COMMIT;
+
+starting permutation: s1_update s1_commit s2_key_share s2_commit s1_vacuum
+step s1_update: UPDATE tab_freeze SET x = x + 1 WHERE id = 3;
+step s1_commit: COMMIT;
+step s2_key_share: SELECT id FROM tab_freeze WHERE id = 3 FOR KEY SHARE;
+id             
+
+3              
+step s2_commit: COMMIT;
+step s1_vacuum: VACUUM FREEZE tab_freeze;
+
+starting permutation: s1_update s2_key_share s1_commit s1_vacuum s2_commit
+step s1_update: UPDATE tab_freeze SET x = x + 1 WHERE id = 3;
+step s2_key_share: SELECT id FROM tab_freeze WHERE id = 3 FOR KEY SHARE;
+id             
+
+3              
+step s1_commit: COMMIT;
+step s1_vacuum: VACUUM FREEZE tab_freeze;
+step s2_commit: COMMIT;
+
+starting permutation: s1_update s2_key_share s1_commit s2_commit s1_vacuum
+step s1_update: UPDATE tab_freeze SET x = x + 1 WHERE id = 3;
+step s2_key_share: SELECT id FROM tab_freeze WHERE id = 3 FOR KEY SHARE;
+id             
+
+3              
+step s1_commit: COMMIT;
+step s2_commit: COMMIT;
+step s1_vacuum: VACUUM FREEZE tab_freeze;
+
+starting permutation: s1_update s2_key_share s2_commit s1_commit s1_vacuum
+step s1_update: UPDATE tab_freeze SET x = x + 1 WHERE id = 3;
+step s2_key_share: SELECT id FROM tab_freeze WHERE id = 3 FOR KEY SHARE;
+id             
+
+3              
+step s2_commit: COMMIT;
+step s1_commit: COMMIT;
+step s1_vacuum: VACUUM FREEZE tab_freeze;
+
+starting permutation: s2_key_share s1_update s1_commit s1_vacuum s2_commit
+step s2_key_share: SELECT id FROM tab_freeze WHERE id = 3 FOR KEY SHARE;
+id             
+
+3              
+step s1_update: UPDATE tab_freeze SET x = x + 1 WHERE id = 3;
+step s1_commit: COMMIT;
+step s1_vacuum: VACUUM FREEZE tab_freeze;
+step s2_commit: COMMIT;
+
+starting permutation: s2_key_share s1_update s1_commit s2_commit s1_vacuum
+step s2_key_share: SELECT id FROM tab_freeze WHERE id = 3 FOR KEY SHARE;
+id             
+
+3              
+step s1_update: UPDATE tab_freeze SET x = x + 1 WHERE id = 3;
+step s1_commit: COMMIT;
+step s2_commit: COMMIT;
+step s1_vacuum: VACUUM FREEZE tab_freeze;
+
+starting permutation: s2_key_share s1_update s2_commit s1_commit s1_vacuum
+step s2_key_share: SELECT id FROM tab_freeze WHERE id = 3 FOR KEY SHARE;
+id             
+
+3              
+step s1_update: UPDATE tab_freeze SET x = x + 1 WHERE id = 3;
+step s2_commit: COMMIT;
+step s1_commit: COMMIT;
+step s1_vacuum: VACUUM FREEZE tab_freeze;
+
+starting permutation: s2_key_share s2_commit s1_update s1_commit s1_vacuum
+step s2_key_share: SELECT id FROM tab_freeze WHERE id = 3 FOR KEY SHARE;
+id             
+
+3              
+step s2_commit: COMMIT;
+step s1_update: UPDATE tab_freeze SET x = x + 1 WHERE id = 3;
+step s1_commit: COMMIT;
+step s1_vacuum: VACUUM FREEZE tab_freeze;
