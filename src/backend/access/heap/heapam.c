@@ -6405,14 +6405,23 @@ FreezeMultiXactId(MultiXactId multi, uint16 t_infomask,
 			Assert(TransactionIdIsValid(xid));
 
 			/*
-			 * If the xid is older than the cutoff, it has to have aborted,
-			 * otherwise the tuple would have gotten pruned away.
+			 * The updating transaction cannot possibly be still running, but
+			 * verify whether it has committed, and request to set the
+			 * COMMITTED flag if so.  (We normally don't see any tuples in
+			 * this state, because they are removed by page pruning before we
+			 * try to freeze the page; but this can happen if the updating
+			 * transaction commits after the page is pruned but before
+			 * HeapTupleSatisfiesVacuum).
 			 */
 			if (TransactionIdPrecedes(xid, cutoff_xid))
 			{
-				Assert(!TransactionIdDidCommit(xid));
-				*flags |= FRM_INVALIDATE_XMAX;
-				xid = InvalidTransactionId; /* not strictly necessary */
+				if (TransactionIdDidCommit(xid))
+					*flags = FRM_MARK_COMMITTED | FRM_RETURN_IS_XID;
+				else
+				{
+					*flags |= FRM_INVALIDATE_XMAX;
+					xid = InvalidTransactionId; /* not strictly necessary */
+				}
 			}
 			else
 			{
@@ -6485,13 +6494,16 @@ FreezeMultiXactId(MultiXactId multi, uint16 t_infomask,
 			/*
 			 * It's an update; should we keep it?  If the transaction is known
 			 * aborted or crashed then it's okay to ignore it, otherwise not.
-			 * Note that an updater older than cutoff_xid cannot possibly be
-			 * committed, because HeapTupleSatisfiesVacuum would have returned
-			 * HEAPTUPLE_DEAD and we would not be trying to freeze the tuple.
 			 *
 			 * As with all tuple visibility routines, it's critical to test
 			 * TransactionIdIsInProgress before TransactionIdDidCommit,
 			 * because of race conditions explained in detail in tqual.c.
+			 *
+			 * We normally don't see committed updating transactions earlier
+			 * than the cutoff xid, because they are removed by page pruning
+			 * before we try to freeze the page; but it can happen if the
+			 * updating transaction commits after the page is pruned but
+			 * before HeapTupleSatisfiesVacuum.
 			 */
 			if (TransactionIdIsCurrentTransactionId(xid) ||
 				TransactionIdIsInProgress(xid))
@@ -6515,13 +6527,6 @@ FreezeMultiXactId(MultiXactId multi, uint16 t_infomask,
 			 * Not in progress, not committed -- must be aborted or crashed;
 			 * we can ignore it.
 			 */
-
-			/*
-			 * Since the tuple wasn't marked HEAPTUPLE_DEAD by vacuum, the
-			 * update Xid cannot possibly be older than the xid cutoff.
-			 */
-			Assert(!TransactionIdIsValid(update_xid) ||
-				   !TransactionIdPrecedes(update_xid, cutoff_xid));
 
 			/*
 			 * If we determined that it's an Xid corresponding to an update
@@ -6601,7 +6606,10 @@ FreezeMultiXactId(MultiXactId multi, uint16 t_infomask,
  *
  * It is assumed that the caller has checked the tuple with
  * HeapTupleSatisfiesVacuum() and determined that it is not HEAPTUPLE_DEAD
- * (else we should be removing the tuple, not freezing it).
+ * (else we should be removing the tuple, not freezing it).  However, note
+ * that we don't remove HOT tuples even if they are dead, and it'd be incorrect
+ * to freeze them (because that would make them visible), so we mark them as
+ * update-committed, and needing further freezing later on.
  *
  * NB: cutoff_xid *must* be <= the current global xmin, to ensure that any
  * XID older than it could neither be running nor seen as running by any
@@ -6712,7 +6720,22 @@ heap_prepare_freeze_tuple(HeapTupleHeader tuple, TransactionId cutoff_xid,
 	else if (TransactionIdIsNormal(xid))
 	{
 		if (TransactionIdPrecedes(xid, cutoff_xid))
-			freeze_xmax = true;
+		{
+			/*
+			 * Must freeze regular XIDs older than the cutoff.  We must not
+			 * freeze a HOT-updated tuple, though; doing so would bring it
+			 * back to life.
+			 */
+			if (HeapTupleHeaderIsHotUpdated(tuple))
+			{
+				frz->t_infomask |= HEAP_XMAX_COMMITTED;
+				totally_frozen = false;
+				changed = true;
+				/* must not freeze */
+			}
+			else
+				freeze_xmax = true;
+		}
 		else
 			totally_frozen = false;
 	}
