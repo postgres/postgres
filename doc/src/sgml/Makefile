@@ -71,7 +71,7 @@ override SPFLAGS += -wall -wno-unused-param -wno-empty -wfully-tagged
 # to detect whether we are using OpenSP rather than the ancient
 # original SP.
 ifneq (,$(filter o%,$(notdir $(OSX))))
-override SPFLAGS += -wdata-delim
+override SPFLAGS += -wdata-delim -winstance-ignore-ms -winstance-include-ms -winstance-param-entity
 endif
 
 

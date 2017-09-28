@@ -8663,15 +8663,6 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         <entry>convert path to closed</entry>
         <entry><literal>pclose(path '[(0,0),(1,1),(2,0)]')</literal></entry>
        </row>
-<![IGNORE[
-<!-- Not defined by this name. Implements the intersection operator '#' -->
-       <row>
-        <entry><literal><function>point(<type>lseg</>, <type>lseg</>)</function></literal></entry>
-        <entry><type>point</type></entry>
-        <entry>intersection</entry>
-        <entry><literal>point(lseg '((-1,0),(1,0))',lseg '((-2,-2),(2,2))')</literal></entry>
-       </row>
-]]>
        <row>
         <entry><literal><function>popen(<type>path</>)</function></literal></entry>
         <entry><type>path</type></entry>

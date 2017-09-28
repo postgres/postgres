@@ -5275,8 +5275,6 @@ while (1)
      </listitem>
     </varlistentry>
 
-<![IGNORE[
-    <!-- disabled by #if 0 in ecpglib -->
     <varlistentry>
      <term>-216 (<symbol>ECPG_ARRAY_INSERT</symbol>)</term>
      <listitem>
@@ -5286,7 +5284,6 @@ while (1)
       </para>
      </listitem>
     </varlistentry>
-]]>
 
     <varlistentry>
      <term>-220 (<symbol>ECPG_NO_CONN</symbol>)</term>
@@ -5441,8 +5438,8 @@ while (1)
      </listitem>
     </varlistentry>
 
-<![IGNORE[
     <!-- currently not used by the code -->
+<!--
     <varlistentry>
      <term>-600 (<symbol>ECPG_WARNING_UNRECOGNIZED</symbol>)</term>
      <listitem>
@@ -5461,7 +5458,7 @@ while (1)
       </para>
      </listitem>
     </varlistentry>
-]]>
+-->
 
     <varlistentry>
      <term>-602 (<symbol>ECPG_WARNING_UNKNOWN_PORTAL</symbol>)</term>
