@@ -2194,12 +2194,8 @@ doCustom(TState *thread, CState *st, StatsData *agg)
 				{
 					if (!sendCommand(st, command))
 					{
-						/*
-						 * Failed. Stay in CSTATE_START_COMMAND state, to
-						 * retry. ??? What the point or retrying? Should
-						 * rather abort?
-						 */
-						return;
+						commandFailed(st, "SQL command send failed");
+						st->state = CSTATE_ABORTED;
 					}
 					else
 						st->state = CSTATE_WAIT_RESULT;
