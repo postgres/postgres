@@ -212,6 +212,5 @@ PLy_subtransaction_exit(PyObject *self, PyObject *args)
 	CurrentResourceOwner = subxactdata->oldowner;
 	pfree(subxactdata);
 
-	Py_INCREF(Py_None);
-	return Py_None;
+	Py_RETURN_NONE;
 }

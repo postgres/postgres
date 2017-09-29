@@ -575,6 +575,5 @@ PLy_output(volatile int level, PyObject *self, PyObject *args, PyObject *kw)
 	/*
 	 * return a legal object so the interpreter will continue on its merry way
 	 */
-	Py_INCREF(Py_None);
-	return Py_None;
+	Py_RETURN_NONE;
 }
