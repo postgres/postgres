@@ -501,15 +501,17 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 		EEO_CASE(EEOP_INNER_SYSVAR)
 		{
 			int			attnum = op->d.var.attnum;
+			Datum		d;
 
 			/* these asserts must match defenses in slot_getattr */
 			Assert(innerslot->tts_tuple != NULL);
 			Assert(innerslot->tts_tuple != &(innerslot->tts_minhdr));
-			/* heap_getsysattr has sufficient defenses against bad attnums */
 
-			*op->resvalue = heap_getsysattr(innerslot->tts_tuple, attnum,
-											innerslot->tts_tupleDescriptor,
-											op->resnull);
+			/* heap_getsysattr has sufficient defenses against bad attnums */
+			d = heap_getsysattr(innerslot->tts_tuple, attnum,
+								innerslot->tts_tupleDescriptor,
+								op->resnull);
+			*op->resvalue = d;
 
 			EEO_NEXT();
 		}
@@ -517,15 +519,17 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 		EEO_CASE(EEOP_OUTER_SYSVAR)
 		{
 			int			attnum = op->d.var.attnum;
+			Datum		d;
 
 			/* these asserts must match defenses in slot_getattr */
 			Assert(outerslot->tts_tuple != NULL);
 			Assert(outerslot->tts_tuple != &(outerslot->tts_minhdr));
 
 			/* heap_getsysattr has sufficient defenses against bad attnums */
-			*op->resvalue = heap_getsysattr(outerslot->tts_tuple, attnum,
-											outerslot->tts_tupleDescriptor,
-											op->resnull);
+			d = heap_getsysattr(outerslot->tts_tuple, attnum,
+								outerslot->tts_tupleDescriptor,
+								op->resnull);
+			*op->resvalue = d;
 
 			EEO_NEXT();
 		}
@@ -533,15 +537,17 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 		EEO_CASE(EEOP_SCAN_SYSVAR)
 		{
 			int			attnum = op->d.var.attnum;
+			Datum		d;
 
 			/* these asserts must match defenses in slot_getattr */
 			Assert(scanslot->tts_tuple != NULL);
 			Assert(scanslot->tts_tuple != &(scanslot->tts_minhdr));
-			/* heap_getsysattr has sufficient defenses against bad attnums */
 
-			*op->resvalue = heap_getsysattr(scanslot->tts_tuple, attnum,
-											scanslot->tts_tupleDescriptor,
-											op->resnull);
+			/* heap_getsysattr has sufficient defenses against bad attnums */
+			d = heap_getsysattr(scanslot->tts_tuple, attnum,
+								scanslot->tts_tupleDescriptor,
+								op->resnull);
+			*op->resvalue = d;
 
 			EEO_NEXT();
 		}
@@ -641,13 +647,22 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 		 * As both STRICT checks and function-usage are noticeable performance
 		 * wise, and function calls are a very hot-path (they also back
 		 * operators!), it's worth having so many separate opcodes.
+		 *
+		 * Note: the reason for using a temporary variable "d", here and in
+		 * other places, is that some compilers think "*op->resvalue = f();"
+		 * requires them to evaluate op->resvalue into a register before
+		 * calling f(), just in case f() is able to modify op->resvalue
+		 * somehow.  The extra line of code can save a useless register spill
+		 * and reload across the function call.
 		 */
 		EEO_CASE(EEOP_FUNCEXPR)
 		{
 			FunctionCallInfo fcinfo = op->d.func.fcinfo_data;
+			Datum		d;
 
 			fcinfo->isnull = false;
-			*op->resvalue = op->d.func.fn_addr(fcinfo);
+			d = op->d.func.fn_addr(fcinfo);
+			*op->resvalue = d;
 			*op->resnull = fcinfo->isnull;
 
 			EEO_NEXT();
@@ -658,6 +673,7 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 			FunctionCallInfo fcinfo = op->d.func.fcinfo_data;
 			bool	   *argnull = fcinfo->argnull;
 			int			argno;
+			Datum		d;
 
 			/* strict function, so check for NULL args */
 			for (argno = 0; argno < op->d.func.nargs; argno++)
@@ -669,7 +685,8 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 				}
 			}
 			fcinfo->isnull = false;
-			*op->resvalue = op->d.func.fn_addr(fcinfo);
+			d = op->d.func.fn_addr(fcinfo);
+			*op->resvalue = d;
 			*op->resnull = fcinfo->isnull;
 
 	strictfail:
@@ -680,11 +697,13 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 		{
 			FunctionCallInfo fcinfo = op->d.func.fcinfo_data;
 			PgStat_FunctionCallUsage fcusage;
+			Datum		d;
 
 			pgstat_init_function_usage(fcinfo, &fcusage);
 
 			fcinfo->isnull = false;
-			*op->resvalue = op->d.func.fn_addr(fcinfo);
+			d = op->d.func.fn_addr(fcinfo);
+			*op->resvalue = d;
 			*op->resnull = fcinfo->isnull;
 
 			pgstat_end_function_usage(&fcusage, true);
@@ -698,6 +717,7 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 			PgStat_FunctionCallUsage fcusage;
 			bool	   *argnull = fcinfo->argnull;
 			int			argno;
+			Datum		d;
 
 			/* strict function, so check for NULL args */
 			for (argno = 0; argno < op->d.func.nargs; argno++)
@@ -712,7 +732,8 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 			pgstat_init_function_usage(fcinfo, &fcusage);
 
 			fcinfo->isnull = false;
-			*op->resvalue = op->d.func.fn_addr(fcinfo);
+			d = op->d.func.fn_addr(fcinfo);
+			*op->resvalue = d;
 			*op->resnull = fcinfo->isnull;
 
 			pgstat_end_function_usage(&fcusage, true);
@@ -1113,6 +1134,7 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 			if (!op->d.iocoerce.finfo_in->fn_strict || str != NULL)
 			{
 				FunctionCallInfo fcinfo_in;
+				Datum		d;
 
 				fcinfo_in = op->d.iocoerce.fcinfo_data_in;
 				fcinfo_in->arg[0] = PointerGetDatum(str);
@@ -1120,7 +1142,8 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 				/* second and third arguments are already set up */
 
 				fcinfo_in->isnull = false;
-				*op->resvalue = FunctionCallInvoke(fcinfo_in);
+				d = FunctionCallInvoke(fcinfo_in);
+				*op->resvalue = d;
 
 				/* Should get null result if and only if str is NULL */
 				if (str == NULL)
@@ -1268,6 +1291,7 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 		EEO_CASE(EEOP_ROWCOMPARE_STEP)
 		{
 			FunctionCallInfo fcinfo = op->d.rowcompare_step.fcinfo_data;
+			Datum		d;
 
 			/* force NULL result if strict fn and NULL input */
 			if (op->d.rowcompare_step.finfo->fn_strict &&
@@ -1279,7 +1303,8 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 
 			/* Apply comparison function */
 			fcinfo->isnull = false;
-			*op->resvalue = op->d.rowcompare_step.fn_addr(fcinfo);
+			d = op->d.rowcompare_step.fn_addr(fcinfo);
+			*op->resvalue = d;
 
 			/* force NULL result if NULL function result */
 			if (fcinfo->isnull)
