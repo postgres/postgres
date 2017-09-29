@@ -182,8 +182,8 @@ uuid_2_double(const pg_uuid_t *u)
 	 * machine, byte-swap each half so we can use native uint64 arithmetic.
 	 */
 #ifndef WORDS_BIGENDIAN
-	uu[0] = BSWAP64(uu[0]);
-	uu[1] = BSWAP64(uu[1]);
+	uu[0] = pg_bswap64(uu[0]);
+	uu[1] = pg_bswap64(uu[1]);
 #endif
 
 	/*

@@ -224,6 +224,23 @@ AC_DEFINE(HAVE__BUILTIN_TYPES_COMPATIBLE_P, 1,
 fi])# PGAC_C_TYPES_COMPATIBLE
 
 
+# PGAC_C_BUILTIN_BSWAP16
+# -------------------------
+# Check if the C compiler understands __builtin_bswap16(),
+# and define HAVE__BUILTIN_BSWAP16 if so.
+AC_DEFUN([PGAC_C_BUILTIN_BSWAP16],
+[AC_CACHE_CHECK(for __builtin_bswap16, pgac_cv__builtin_bswap16,
+[AC_COMPILE_IFELSE([AC_LANG_SOURCE(
+[static unsigned long int x = __builtin_bswap16(0xaabb);]
+)],
+[pgac_cv__builtin_bswap16=yes],
+[pgac_cv__builtin_bswap16=no])])
+if test x"$pgac_cv__builtin_bswap16" = xyes ; then
+AC_DEFINE(HAVE__BUILTIN_BSWAP16, 1,
+          [Define to 1 if your compiler understands __builtin_bswap16.])
+fi])# PGAC_C_BUILTIN_BSWAP16
+
+
 
 # PGAC_C_BUILTIN_BSWAP32
 # -------------------------
