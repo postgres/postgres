@@ -1985,13 +1985,16 @@ describeOneTableDetails(const char *schemaname,
 							  partdef);
 			printTableAddFooter(&cont, tmpbuf.data);
 
-			/* If there isn't any constraint, show that explicitly */
-			if (partconstraintdef == NULL || partconstraintdef[0] == '\0')
-				printfPQExpBuffer(&tmpbuf, _("No partition constraint"));
-			else
-				printfPQExpBuffer(&tmpbuf, _("Partition constraint: %s"),
-								  partconstraintdef);
-			printTableAddFooter(&cont, tmpbuf.data);
+			if (verbose)
+			{
+				/* If there isn't any constraint, show that explicitly */
+				if (partconstraintdef == NULL || partconstraintdef[0] == '\0')
+					printfPQExpBuffer(&tmpbuf, _("No partition constraint"));
+				else
+					printfPQExpBuffer(&tmpbuf, _("Partition constraint: %s"),
+									  partconstraintdef);
+				printTableAddFooter(&cont, tmpbuf.data);
+			}
 
 			PQclear(result);
 		}
