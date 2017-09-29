@@ -128,9 +128,11 @@ ExecVacuum(VacuumStmt *vacstmt, bool isTopLevel)
  *
  * options is a bitmask of VacuumOption flags, indicating what to do.
  *
- * relid, if not InvalidOid, indicate the relation to process; otherwise,
- * the RangeVar is used.  (The latter must always be passed, because it's
- * used for error messages.)
+ * relid, if not InvalidOid, indicates the relation to process; otherwise,
+ * if a RangeVar is supplied, that's what to process; otherwise, we process
+ * all relevant tables in the database.  (If both relid and a RangeVar are
+ * supplied, the relid is what is processed, but we use the RangeVar's name
+ * to report any open/lock failure.)
  *
  * params contains a set of parameters that can be used to customize the
  * behavior.
@@ -226,8 +228,8 @@ vacuum(int options, RangeVar *relation, Oid relid, VacuumParams *params,
 	vac_strategy = bstrategy;
 
 	/*
-	 * Build list of relations to process, unless caller gave us one. (If we
-	 * build one, we put it in vac_context for safekeeping.)
+	 * Build list of relation OID(s) to process, putting it in vac_context for
+	 * safekeeping.
 	 */
 	relations = get_rel_oids(relid, relation);
 
@@ -393,22 +395,18 @@ get_rel_oids(Oid relid, const RangeVar *vacrel)
 	}
 	else if (vacrel)
 	{
-		/* Process a specific relation */
+		/* Process a specific relation, and possibly partitions thereof */
 		Oid			relid;
 		HeapTuple	tuple;
 		Form_pg_class classForm;
 		bool		include_parts;
 
 		/*
-		 * Since we don't take a lock here, the relation might be gone, or the
-		 * RangeVar might no longer refer to the OID we look up here.  In the
-		 * former case, VACUUM will do nothing; in the latter case, it will
-		 * process the OID we looked up here, rather than the new one. Neither
-		 * is ideal, but there's little practical alternative, since we're
-		 * going to commit this transaction and begin a new one between now
-		 * and then.
+		 * We transiently take AccessShareLock to protect the syscache lookup
+		 * below, as well as find_all_inheritors's expectation that the caller
+		 * holds some lock on the starting relation.
 		 */
-		relid = RangeVarGetRelid(vacrel, NoLock, false);
+		relid = RangeVarGetRelid(vacrel, AccessShareLock, false);
 
 		/*
 		 * To check whether the relation is a partitioned table, fetch its
@@ -422,10 +420,11 @@ get_rel_oids(Oid relid, const RangeVar *vacrel)
 		ReleaseSysCache(tuple);
 
 		/*
-		 * Make relation list entries for this guy and its partitions, if any.
-		 * Note that the list returned by find_all_inheritors() include the
-		 * passed-in OID at its head.  Also note that we did not request a
-		 * lock to be taken to match what would be done otherwise.
+		 * Make relation list entries for this rel and its partitions, if any.
+		 * Note that the list returned by find_all_inheritors() includes the
+		 * passed-in OID at its head.  There's no point in taking locks on the
+		 * individual partitions yet, and doing so would just add unnecessary
+		 * deadlock risk.
 		 */
 		oldcontext = MemoryContextSwitchTo(vac_context);
 		if (include_parts)
@@ -434,6 +433,19 @@ get_rel_oids(Oid relid, const RangeVar *vacrel)
 		else
 			oid_list = lappend_oid(oid_list, relid);
 		MemoryContextSwitchTo(oldcontext);
+
+		/*
+		 * Release lock again.  This means that by the time we actually try to
+		 * process the table, it might be gone or renamed.  In the former case
+		 * we'll silently ignore it; in the latter case we'll process it
+		 * anyway, but we must beware that the RangeVar doesn't necessarily
+		 * identify it anymore.  This isn't ideal, perhaps, but there's little
+		 * practical alternative, since we're typically going to commit this
+		 * transaction and begin a new one between now and then.  Moreover,
+		 * holding locks on multiple relations would create significant risk
+		 * of deadlock.
+		 */
+		UnlockRelationOid(relid, AccessShareLock);
 	}
 	else
 	{
@@ -463,7 +475,7 @@ get_rel_oids(Oid relid, const RangeVar *vacrel)
 				classForm->relkind != RELKIND_PARTITIONED_TABLE)
 				continue;
 
-			/* Make a relation list entry for this guy */
+			/* Make a relation list entry for this rel */
 			oldcontext = MemoryContextSwitchTo(vac_context);
 			oid_list = lappend_oid(oid_list, HeapTupleGetOid(tuple));
 			MemoryContextSwitchTo(oldcontext);
@@ -1212,6 +1224,11 @@ vac_truncate_clog(TransactionId frozenXID,
 /*
  *	vacuum_rel() -- vacuum one heap relation
  *
+ *		relid identifies the relation to vacuum.  If relation is supplied,
+ *		use the name therein for reporting any failure to open/lock the rel;
+ *		do not use it once we've successfully opened the rel, since it might
+ *		be stale.
+ *
  *		Doing one heap at a time incurs extra overhead, since we need to
  *		check that the heap exists again just before we vacuum it.  The
  *		reason that we do this is so that vacuuming can be spread across
@@ -1300,7 +1317,8 @@ vacuum_rel(Oid relid, RangeVar *relation, int options, VacuumParams *params)
 	else
 	{
 		onerel = NULL;
-		if (IsAutoVacuumWorkerProcess() && params->log_min_duration >= 0)
+		if (relation &&
+			IsAutoVacuumWorkerProcess() && params->log_min_duration >= 0)
 			ereport(LOG,
 					(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
 					 errmsg("skipping vacuum of \"%s\" --- lock not available",
@@ -1468,7 +1486,7 @@ vacuum_rel(Oid relid, RangeVar *relation, int options, VacuumParams *params)
 	 * totally unimportant for toast relations.
 	 */
 	if (toast_relid != InvalidOid)
-		vacuum_rel(toast_relid, relation, options, params);
+		vacuum_rel(toast_relid, NULL, options, params);
 
 	/*
 	 * Now release the session-level lock on the master table.
