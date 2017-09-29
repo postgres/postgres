@@ -22,7 +22,7 @@ hash_combine(uint32 a, uint32 b)
 
 
 /*
- * Simple inline murmur hash implementation hashing a 32 bit ingeger, for
+ * Simple inline murmur hash implementation hashing a 32 bit integer, for
  * performance.
  */
 static inline uint32
