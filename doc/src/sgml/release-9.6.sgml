@@ -5140,7 +5140,7 @@ and many others in the same vein
         The new approach makes better use of the <acronym>CPU</> cache
         for typical cache sizes and data volumes.  Where necessary,
         the behavior can be adjusted via the new configuration parameter
-        <xref linkend="guc-replacement-sort-tuples">.
+        <literal>replacement_sort_tuples</literal>.
        </para>
       </listitem>
 

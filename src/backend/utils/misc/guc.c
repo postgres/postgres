@@ -1933,16 +1933,6 @@ static struct config_int ConfigureNamesInt[] =
 		NULL, NULL, NULL
 	},
 
-	{
-		{"replacement_sort_tuples", PGC_USERSET, RESOURCES_MEM,
-			gettext_noop("Sets the maximum number of tuples to be sorted using replacement selection."),
-			gettext_noop("When more tuples than this are present, quicksort will be used.")
-		},
-		&replacement_sort_tuples,
-		150000, 0, INT_MAX,
-		NULL, NULL, NULL
-	},
-
 	/*
 	 * We use the hopefully-safely-small value of 100kB as the compiled-in
 	 * default for max_stack_depth.  InitializeGUCOptions will increase it if

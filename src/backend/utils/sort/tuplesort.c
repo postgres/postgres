@@ -13,47 +13,11 @@
  * See Knuth, volume 3, for more than you want to know about the external
  * sorting algorithm.  Historically, we divided the input into sorted runs
  * using replacement selection, in the form of a priority tree implemented
- * as a heap (essentially his Algorithm 5.2.3H), but now we only do that
- * for the first run, and only if the run would otherwise end up being very
- * short.  We merge the runs using polyphase merge, Knuth's Algorithm
- * 5.4.2D.  The logical "tapes" used by Algorithm D are implemented by
- * logtape.c, which avoids space wastage by recycling disk space as soon
- * as each block is read from its "tape".
- *
- * We do not use Knuth's recommended data structure (Algorithm 5.4.1R) for
- * the replacement selection, because it uses a fixed number of records
- * in memory at all times.  Since we are dealing with tuples that may vary
- * considerably in size, we want to be able to vary the number of records
- * kept in memory to ensure full utilization of the allowed sort memory
- * space.  So, we keep the tuples in a variable-size heap, with the next
- * record to go out at the top of the heap.  Like Algorithm 5.4.1R, each
- * record is stored with the run number that it must go into, and we use
- * (run number, key) as the ordering key for the heap.  When the run number
- * at the top of the heap changes, we know that no more records of the prior
- * run are left in the heap.  Note that there are in practice only ever two
- * distinct run numbers, because since PostgreSQL 9.6, we only use
- * replacement selection to form the first run.
- *
- * In PostgreSQL 9.6, a heap (based on Knuth's Algorithm H, with some small
- * customizations) is only used with the aim of producing just one run,
- * thereby avoiding all merging.  Only the first run can use replacement
- * selection, which is why there are now only two possible valid run
- * numbers, and why heapification is customized to not distinguish between
- * tuples in the second run (those will be quicksorted).  We generally
- * prefer a simple hybrid sort-merge strategy, where runs are sorted in much
- * the same way as the entire input of an internal sort is sorted (using
- * qsort()).  The replacement_sort_tuples GUC controls the limited remaining
- * use of replacement selection for the first run.
- *
- * There are several reasons to favor a hybrid sort-merge strategy.
- * Maintaining a priority tree/heap has poor CPU cache characteristics.
- * Furthermore, the growth in main memory sizes has greatly diminished the
- * value of having runs that are larger than available memory, even in the
- * case where there is partially sorted input and runs can be made far
- * larger by using a heap.  In most cases, a single-pass merge step is all
- * that is required even when runs are no larger than available memory.
- * Avoiding multiple merge passes was traditionally considered to be the
- * major advantage of using replacement selection.
+ * as a heap (essentially his Algorithm 5.2.3H), but now we always use
+ * quicksort for run generation.  We merge the runs using polyphase merge,
+ * Knuth's Algorithm 5.4.2D.  The logical "tapes" used by Algorithm D are
+ * implemented by logtape.c, which avoids space wastage by recycling disk
+ * space as soon as each block is read from its "tape".
  *
  * The approximate amount of memory allowed for any one sort operation
  * is specified in kilobytes by the caller (most pass work_mem).  Initially,
@@ -64,9 +28,8 @@
  * workMem, we begin to emit tuples into sorted runs in temporary tapes.
  * When tuples are dumped in batch after quicksorting, we begin a new run
  * with a new output tape (selected per Algorithm D).  After the end of the
- * input is reached, we dump out remaining tuples in memory into a final run
- * (or two, when replacement selection is still used), then merge the runs
- * using Algorithm D.
+ * input is reached, we dump out remaining tuples in memory into a final run,
+ * then merge the runs using Algorithm D.
  *
  * When merging runs, we use a heap containing just the frontmost tuple from
  * each source run; we repeatedly output the smallest tuple and replace it
@@ -188,13 +151,8 @@ bool		optimize_bounded_sort = true;
  * described above.  Accordingly, "tuple" is always used in preference to
  * datum1 as the authoritative value for pass-by-reference cases.
  *
- * While building initial runs, tupindex holds the tuple's run number.
- * Historically, the run number could meaningfully distinguish many runs, but
- * it now only distinguishes RUN_FIRST and HEAP_RUN_NEXT, since replacement
- * selection is always abandoned after the first run; no other run number
- * should be represented here.  During merge passes, we re-use it to hold the
- * input tape number that each tuple in the heap was read from.  tupindex goes
- * unused if the sort occurs entirely in memory.
+ * tupindex holds the input tape number that each tuple in the heap was read
+ * from during merge passes.
  */
 typedef struct
 {
@@ -252,15 +210,6 @@ typedef enum
 #define MAXORDER		500		/* maximum merge order */
 #define TAPE_BUFFER_OVERHEAD		BLCKSZ
 #define MERGE_BUFFER_SIZE			(BLCKSZ * 32)
-
- /*
-  * Run numbers, used during external sort operations.
-  *
-  * HEAP_RUN_NEXT is only used for SortTuple.tupindex, never state.currentRun.
-  */
-#define RUN_FIRST		0
-#define HEAP_RUN_NEXT	INT_MAX
-#define RUN_SECOND		1
 
 typedef int (*SortTupleComparator) (const SortTuple *a, const SortTuple *b,
 									Tuplesortstate *state);
@@ -381,16 +330,8 @@ struct Tuplesortstate
 	void	   *lastReturnedTuple;
 
 	/*
-	 * While building initial runs, this indicates if the replacement
-	 * selection strategy is in use.  When it isn't, then a simple hybrid
-	 * sort-merge strategy is in use instead (runs are quicksorted).
-	 */
-	bool		replaceActive;
-
-	/*
-	 * While building initial runs, this is the current output run number
-	 * (starting at RUN_FIRST).  Afterwards, it is the number of initial runs
-	 * we made.
+	 * While building initial runs, this is the current output run number.
+	 * Afterwards, it is the number of initial runs we made.
 	 */
 	int			currentRun;
 
@@ -583,7 +524,6 @@ struct Tuplesortstate
 static Tuplesortstate *tuplesort_begin_common(int workMem, bool randomAccess);
 static void puttuple_common(Tuplesortstate *state, SortTuple *tuple);
 static bool consider_abort_common(Tuplesortstate *state);
-static bool useselection(Tuplesortstate *state);
 static void inittapes(Tuplesortstate *state);
 static void selectnewtape(Tuplesortstate *state);
 static void init_slab_allocator(Tuplesortstate *state, int numSlots);
@@ -592,15 +532,12 @@ static void mergeonerun(Tuplesortstate *state);
 static void beginmerge(Tuplesortstate *state);
 static bool mergereadnext(Tuplesortstate *state, int srcTape, SortTuple *stup);
 static void dumptuples(Tuplesortstate *state, bool alltuples);
-static void dumpbatch(Tuplesortstate *state, bool alltuples);
 static void make_bounded_heap(Tuplesortstate *state);
 static void sort_bounded_heap(Tuplesortstate *state);
 static void tuplesort_sort_memtuples(Tuplesortstate *state);
-static void tuplesort_heap_insert(Tuplesortstate *state, SortTuple *tuple,
-					  bool checkIndex);
-static void tuplesort_heap_replace_top(Tuplesortstate *state, SortTuple *tuple,
-						   bool checkIndex);
-static void tuplesort_heap_delete_top(Tuplesortstate *state, bool checkIndex);
+static void tuplesort_heap_insert(Tuplesortstate *state, SortTuple *tuple);
+static void tuplesort_heap_replace_top(Tuplesortstate *state, SortTuple *tuple);
+static void tuplesort_heap_delete_top(Tuplesortstate *state);
 static void reversedirection(Tuplesortstate *state);
 static unsigned int getlen(Tuplesortstate *state, int tapenum, bool eofOK);
 static void markrunend(Tuplesortstate *state, int tapenum);
@@ -738,7 +675,7 @@ tuplesort_begin_common(int workMem, bool randomAccess)
 	if (LACKMEM(state))
 		elog(ERROR, "insufficient memory allowed for sort");
 
-	state->currentRun = RUN_FIRST;
+	state->currentRun = 0;
 
 	/*
 	 * maxTapes, tapeRange, and Algorithm D variables will be initialized by
@@ -1622,7 +1559,7 @@ puttuple_common(Tuplesortstate *state, SortTuple *tuple)
 			inittapes(state);
 
 			/*
-			 * Dump tuples until we are back under the limit.
+			 * Dump all tuples.
 			 */
 			dumptuples(state, false);
 			break;
@@ -1647,74 +1584,20 @@ puttuple_common(Tuplesortstate *state, SortTuple *tuple)
 			{
 				/* discard top of heap, replacing it with the new tuple */
 				free_sort_tuple(state, &state->memtuples[0]);
-				tuple->tupindex = 0;	/* not used */
-				tuplesort_heap_replace_top(state, tuple, false);
+				tuplesort_heap_replace_top(state, tuple);
 			}
 			break;
 
 		case TSS_BUILDRUNS:
 
 			/*
-			 * Insert the tuple into the heap, with run number currentRun if
-			 * it can go into the current run, else HEAP_RUN_NEXT.  The tuple
-			 * can go into the current run if it is >= the first
-			 * not-yet-output tuple.  (Actually, it could go into the current
-			 * run if it is >= the most recently output tuple ... but that
-			 * would require keeping around the tuple we last output, and it's
-			 * simplest to let writetup free each tuple as soon as it's
-			 * written.)
-			 *
-			 * Note that this only applies when:
-			 *
-			 * - currentRun is RUN_FIRST
-			 *
-			 * - Replacement selection is in use (typically it is never used).
-			 *
-			 * When these two conditions are not both true, all tuples are
-			 * appended indifferently, much like the TSS_INITIAL case.
-			 *
-			 * There should always be room to store the incoming tuple.
+			 * Save the tuple into the unsorted array (there must be
+			 * space)
 			 */
-			Assert(!state->replaceActive || state->memtupcount > 0);
-			if (state->replaceActive &&
-				COMPARETUP(state, tuple, &state->memtuples[0]) >= 0)
-			{
-				Assert(state->currentRun == RUN_FIRST);
-
-				/*
-				 * Insert tuple into first, fully heapified run.
-				 *
-				 * Unlike classic replacement selection, which this module was
-				 * previously based on, only RUN_FIRST tuples are fully
-				 * heapified.  Any second/next run tuples are appended
-				 * indifferently.  While HEAP_RUN_NEXT tuples may be sifted
-				 * out of the way of first run tuples, COMPARETUP() will never
-				 * be called for the run's tuples during sifting (only our
-				 * initial COMPARETUP() call is required for the tuple, to
-				 * determine that the tuple does not belong in RUN_FIRST).
-				 */
-				tuple->tupindex = state->currentRun;
-				tuplesort_heap_insert(state, tuple, true);
-			}
-			else
-			{
-				/*
-				 * Tuple was determined to not belong to heapified RUN_FIRST,
-				 * or replacement selection not in play.  Append the tuple to
-				 * memtuples indifferently.
-				 *
-				 * dumptuples() does not trust that the next run's tuples are
-				 * heapified.  Anything past the first run will always be
-				 * quicksorted even when replacement selection is initially
-				 * used.  (When it's never used, every tuple still takes this
-				 * path.)
-				 */
-				tuple->tupindex = HEAP_RUN_NEXT;
-				state->memtuples[state->memtupcount++] = *tuple;
-			}
+			state->memtuples[state->memtupcount++] = *tuple;
 
 			/*
-			 * If we are over the memory limit, dump tuples till we're under.
+			 * If we are over the memory limit, dump all tuples.
 			 */
 			dumptuples(state, false);
 			break;
@@ -2068,7 +1951,7 @@ tuplesort_gettuple_common(Tuplesortstate *state, bool forward,
 					 * If no more data, we've reached end of run on this tape.
 					 * Remove the top node from the heap.
 					 */
-					tuplesort_heap_delete_top(state, false);
+					tuplesort_heap_delete_top(state);
 
 					/*
 					 * Rewind to free the read buffer.  It'd go away at the
@@ -2079,7 +1962,7 @@ tuplesort_gettuple_common(Tuplesortstate *state, bool forward,
 					return true;
 				}
 				newtup.tupindex = srcTape;
-				tuplesort_heap_replace_top(state, &newtup, false);
+				tuplesort_heap_replace_top(state, &newtup);
 				return true;
 			}
 			return false;
@@ -2337,28 +2220,6 @@ tuplesort_merge_order(int64 allowedMem)
 }
 
 /*
- * useselection - determine algorithm to use to sort first run.
- *
- * It can sometimes be useful to use the replacement selection algorithm if it
- * results in one large run, and there is little available workMem.  See
- * remarks on RUN_SECOND optimization within dumptuples().
- */
-static bool
-useselection(Tuplesortstate *state)
-{
-	/*
-	 * memtupsize might be noticeably higher than memtupcount here in atypical
-	 * cases.  It seems slightly preferable to not allow recent outliers to
-	 * impact this determination.  Note that caller's trace_sort output
-	 * reports memtupcount instead.
-	 */
-	if (state->memtupsize <= replacement_sort_tuples)
-		return true;
-
-	return false;
-}
-
-/*
  * inittapes - initialize for tape sorting.
  *
  * This is called only if we have found we don't have room to sort in memory.
@@ -2413,44 +2274,7 @@ inittapes(Tuplesortstate *state)
 	state->tp_dummy = (int *) palloc0(maxTapes * sizeof(int));
 	state->tp_tapenum = (int *) palloc0(maxTapes * sizeof(int));
 
-	/*
-	 * Give replacement selection a try based on user setting.  There will be
-	 * a switch to a simple hybrid sort-merge strategy after the first run
-	 * (iff we could not output one long run).
-	 */
-	state->replaceActive = useselection(state);
-
-	if (state->replaceActive)
-	{
-		/*
-		 * Convert the unsorted contents of memtuples[] into a heap. Each
-		 * tuple is marked as belonging to run number zero.
-		 *
-		 * NOTE: we pass false for checkIndex since there's no point in
-		 * comparing indexes in this step, even though we do intend the
-		 * indexes to be part of the sort key...
-		 */
-		int			ntuples = state->memtupcount;
-
-#ifdef TRACE_SORT
-		if (trace_sort)
-			elog(LOG, "replacement selection will sort %d first run tuples",
-				 state->memtupcount);
-#endif
-		state->memtupcount = 0; /* make the heap empty */
-
-		for (j = 0; j < ntuples; j++)
-		{
-			/* Must copy source tuple to avoid possible overwrite */
-			SortTuple	stup = state->memtuples[j];
-
-			stup.tupindex = RUN_FIRST;
-			tuplesort_heap_insert(state, &stup, false);
-		}
-		Assert(state->memtupcount == ntuples);
-	}
-
-	state->currentRun = RUN_FIRST;
+	state->currentRun = 0;
 
 	/*
 	 * Initialize variables of Algorithm D (step D1).
@@ -2623,22 +2447,6 @@ mergeruns(Tuplesortstate *state)
 		init_slab_allocator(state, numInputTapes + 1);
 	else
 		init_slab_allocator(state, 0);
-
-	/*
-	 * If we produced only one initial run (quite likely if the total data
-	 * volume is between 1X and 2X workMem when replacement selection is used,
-	 * but something we particularly count on when input is presorted), we can
-	 * just use that tape as the finished output, rather than doing a useless
-	 * merge.  (This obvious optimization is not in Knuth's algorithm.)
-	 */
-	if (state->currentRun == RUN_SECOND)
-	{
-		state->result_tape = state->tp_tapenum[state->destTape];
-		/* must freeze and rewind the finished output tape */
-		LogicalTapeFreeze(state->tapeset, state->result_tape);
-		state->status = TSS_SORTEDONTAPE;
-		return;
-	}
 
 	/*
 	 * Allocate a new 'memtuples' array, for the heap.  It will hold one tuple
@@ -2826,11 +2634,11 @@ mergeonerun(Tuplesortstate *state)
 		if (mergereadnext(state, srcTape, &stup))
 		{
 			stup.tupindex = srcTape;
-			tuplesort_heap_replace_top(state, &stup, false);
+			tuplesort_heap_replace_top(state, &stup);
 
 		}
 		else
-			tuplesort_heap_delete_top(state, false);
+			tuplesort_heap_delete_top(state);
 	}
 
 	/*
@@ -2892,7 +2700,7 @@ beginmerge(Tuplesortstate *state)
 		if (mergereadnext(state, srcTape, &tup))
 		{
 			tup.tupindex = srcTape;
-			tuplesort_heap_insert(state, &tup, false);
+			tuplesort_heap_insert(state, &tup);
 		}
 	}
 }
@@ -2922,123 +2730,24 @@ mergereadnext(Tuplesortstate *state, int srcTape, SortTuple *stup)
 }
 
 /*
- * dumptuples - remove tuples from memtuples and write to tape
+ * dumptuples - remove tuples from memtuples and write initial run to tape
  *
- * This is used during initial-run building, but not during merging.
- *
- * When alltuples = false and replacement selection is still active, dump
- * only enough tuples to get under the availMem limit (and leave at least
- * one tuple in memtuples, since puttuple will then assume it is a heap that
- * has a tuple to compare to).  We always insist there be at least one free
- * slot in the memtuples[] array.
- *
- * When alltuples = true, dump everything currently in memory.  (This
- * case is only used at end of input data, although in practice only the
- * first run could fail to dump all tuples when we LACKMEM(), and only
- * when replacement selection is active.)
- *
- * If, when replacement selection is active, we see that the tuple run
- * number at the top of the heap has changed, start a new run.  This must be
- * the first run, because replacement selection is always abandoned for all
- * further runs.
+ * When alltuples = true, dump everything currently in memory.  (This case is
+ * only used at end of input data.)
  */
 static void
 dumptuples(Tuplesortstate *state, bool alltuples)
 {
-	while (alltuples ||
-		   (LACKMEM(state) && state->memtupcount > 1) ||
-		   state->memtupcount >= state->memtupsize)
-	{
-		if (state->replaceActive)
-		{
-			/*
-			 * Still holding out for a case favorable to replacement
-			 * selection. Still incrementally spilling using heap.
-			 *
-			 * Dump the heap's frontmost entry, and remove it from the heap.
-			 */
-			Assert(state->memtupcount > 0);
-			WRITETUP(state, state->tp_tapenum[state->destTape],
-					 &state->memtuples[0]);
-			tuplesort_heap_delete_top(state, true);
-		}
-		else
-		{
-			/*
-			 * Once committed to quicksorting runs, never incrementally spill
-			 */
-			dumpbatch(state, alltuples);
-			break;
-		}
-
-		/*
-		 * If top run number has changed, we've finished the current run (this
-		 * can only be the first run), and will no longer spill incrementally.
-		 */
-		if (state->memtupcount == 0 ||
-			state->memtuples[0].tupindex == HEAP_RUN_NEXT)
-		{
-			markrunend(state, state->tp_tapenum[state->destTape]);
-			Assert(state->currentRun == RUN_FIRST);
-			state->currentRun++;
-			state->tp_runs[state->destTape]++;
-			state->tp_dummy[state->destTape]--; /* per Alg D step D2 */
-
-#ifdef TRACE_SORT
-			if (trace_sort)
-				elog(LOG, "finished incrementally writing %s run %d to tape %d: %s",
-					 (state->memtupcount == 0) ? "only" : "first",
-					 state->currentRun, state->destTape,
-					 pg_rusage_show(&state->ru_start));
-#endif
-
-			/*
-			 * Done if heap is empty, which is possible when there is only one
-			 * long run.
-			 */
-			Assert(state->currentRun == RUN_SECOND);
-			if (state->memtupcount == 0)
-			{
-				/*
-				 * Replacement selection best case; no final merge required,
-				 * because there was only one initial run (second run has no
-				 * tuples).  See RUN_SECOND case in mergeruns().
-				 */
-				break;
-			}
-
-			/*
-			 * Abandon replacement selection for second run (as well as any
-			 * subsequent runs).
-			 */
-			state->replaceActive = false;
-
-			/*
-			 * First tuple of next run should not be heapified, and so will
-			 * bear placeholder run number.  In practice this must actually be
-			 * the second run, which just became the currentRun, so we're
-			 * clear to quicksort and dump the tuples in batch next time
-			 * memtuples becomes full.
-			 */
-			Assert(state->memtuples[0].tupindex == HEAP_RUN_NEXT);
-			selectnewtape(state);
-		}
-	}
-}
-
-/*
- * dumpbatch - sort and dump all memtuples, forming one run on tape
- *
- * Second or subsequent runs are never heapified by this module (although
- * heapification still respects run number differences between the first and
- * second runs), and a heap (replacement selection priority queue) is often
- * avoided in the first place.
- */
-static void
-dumpbatch(Tuplesortstate *state, bool alltuples)
-{
 	int			memtupwrite;
 	int			i;
+
+	/*
+	 * Nothing to do if we still fit in available memory and have array
+	 * slots, unless this is the final call during initial run generation.
+	 */
+	if (state->memtupcount < state->memtupsize && !LACKMEM(state) &&
+		!alltuples)
+		return;
 
 	/*
 	 * Final call might require no sorting, in rare cases where we just so
@@ -3308,20 +3017,7 @@ tuplesort_space_type_name(TuplesortSpaceType t)
 
 /*
  * Heap manipulation routines, per Knuth's Algorithm 5.2.3H.
- *
- * Compare two SortTuples.  If checkIndex is true, use the tuple index
- * as the front of the sort key; otherwise, no.
- *
- * Note that for checkIndex callers, the heap invariant is never
- * maintained beyond the first run, and so there are no COMPARETUP()
- * calls needed to distinguish tuples in HEAP_RUN_NEXT.
  */
-
-#define HEAPCOMPARE(tup1,tup2) \
-	(checkIndex && ((tup1)->tupindex != (tup2)->tupindex || \
-					(tup1)->tupindex == HEAP_RUN_NEXT) ? \
-	 ((tup1)->tupindex) - ((tup2)->tupindex) : \
-	 COMPARETUP(state, tup1, tup2))
 
 /*
  * Convert the existing unordered array of SortTuples to a bounded heap,
@@ -3331,10 +3027,6 @@ tuplesort_space_type_name(TuplesortSpaceType t)
  * at the root (array entry zero), instead of the smallest as in the normal
  * sort case.  This allows us to discard the largest entry cheaply.
  * Therefore, we temporarily reverse the sort direction.
- *
- * We assume that all entries in a bounded heap will always have tupindex
- * zero; it therefore doesn't matter that HEAPCOMPARE() doesn't reverse
- * the direction of comparison for tupindexes.
  */
 static void
 make_bounded_heap(Tuplesortstate *state)
@@ -3358,8 +3050,7 @@ make_bounded_heap(Tuplesortstate *state)
 			/* Must copy source tuple to avoid possible overwrite */
 			SortTuple	stup = state->memtuples[i];
 
-			stup.tupindex = 0;	/* not used */
-			tuplesort_heap_insert(state, &stup, false);
+			tuplesort_heap_insert(state, &stup);
 		}
 		else
 		{
@@ -3374,7 +3065,7 @@ make_bounded_heap(Tuplesortstate *state)
 				CHECK_FOR_INTERRUPTS();
 			}
 			else
-				tuplesort_heap_replace_top(state, &state->memtuples[i], false);
+				tuplesort_heap_replace_top(state, &state->memtuples[i]);
 		}
 	}
 
@@ -3404,7 +3095,7 @@ sort_bounded_heap(Tuplesortstate *state)
 		SortTuple	stup = state->memtuples[0];
 
 		/* this sifts-up the next-largest entry and decreases memtupcount */
-		tuplesort_heap_delete_top(state, false);
+		tuplesort_heap_delete_top(state);
 		state->memtuples[state->memtupcount] = stup;
 	}
 	state->memtupcount = tupcount;
@@ -3422,10 +3113,7 @@ sort_bounded_heap(Tuplesortstate *state)
 /*
  * Sort all memtuples using specialized qsort() routines.
  *
- * Quicksort is used for small in-memory sorts.  Quicksort is also generally
- * preferred to replacement selection for generating runs during external sort
- * operations, although replacement selection is sometimes used for the first
- * run.
+ * Quicksort is used for small in-memory sorts, and external sort runs.
  */
 static void
 tuplesort_sort_memtuples(Tuplesortstate *state)
@@ -3454,15 +3142,13 @@ tuplesort_sort_memtuples(Tuplesortstate *state)
  * is, it might get overwritten before being moved into the heap!
  */
 static void
-tuplesort_heap_insert(Tuplesortstate *state, SortTuple *tuple,
-					  bool checkIndex)
+tuplesort_heap_insert(Tuplesortstate *state, SortTuple *tuple)
 {
 	SortTuple  *memtuples;
 	int			j;
 
 	memtuples = state->memtuples;
 	Assert(state->memtupcount < state->memtupsize);
-	Assert(!checkIndex || tuple->tupindex == RUN_FIRST);
 
 	CHECK_FOR_INTERRUPTS();
 
@@ -3475,7 +3161,7 @@ tuplesort_heap_insert(Tuplesortstate *state, SortTuple *tuple,
 	{
 		int			i = (j - 1) >> 1;
 
-		if (HEAPCOMPARE(tuple, &memtuples[i]) >= 0)
+		if (COMPARETUP(state, tuple, &memtuples[i]) >= 0)
 			break;
 		memtuples[j] = memtuples[i];
 		j = i;
@@ -3491,12 +3177,11 @@ tuplesort_heap_insert(Tuplesortstate *state, SortTuple *tuple,
  * if necessary.
  */
 static void
-tuplesort_heap_delete_top(Tuplesortstate *state, bool checkIndex)
+tuplesort_heap_delete_top(Tuplesortstate *state)
 {
 	SortTuple  *memtuples = state->memtuples;
 	SortTuple  *tuple;
 
-	Assert(!checkIndex || state->currentRun == RUN_FIRST);
 	if (--state->memtupcount <= 0)
 		return;
 
@@ -3505,7 +3190,7 @@ tuplesort_heap_delete_top(Tuplesortstate *state, bool checkIndex)
 	 * current top node with it.
 	 */
 	tuple = &memtuples[state->memtupcount];
-	tuplesort_heap_replace_top(state, tuple, checkIndex);
+	tuplesort_heap_replace_top(state, tuple);
 }
 
 /*
@@ -3516,14 +3201,12 @@ tuplesort_heap_delete_top(Tuplesortstate *state, bool checkIndex)
  * Heapsort, steps H3-H8).
  */
 static void
-tuplesort_heap_replace_top(Tuplesortstate *state, SortTuple *tuple,
-						   bool checkIndex)
+tuplesort_heap_replace_top(Tuplesortstate *state, SortTuple *tuple)
 {
 	SortTuple  *memtuples = state->memtuples;
 	unsigned int i,
 				n;
 
-	Assert(!checkIndex || state->currentRun == RUN_FIRST);
 	Assert(state->memtupcount >= 1);
 
 	CHECK_FOR_INTERRUPTS();
@@ -3542,9 +3225,9 @@ tuplesort_heap_replace_top(Tuplesortstate *state, SortTuple *tuple,
 		if (j >= n)
 			break;
 		if (j + 1 < n &&
-			HEAPCOMPARE(&memtuples[j], &memtuples[j + 1]) > 0)
+			COMPARETUP(state, &memtuples[j], &memtuples[j + 1]) > 0)
 			j++;
-		if (HEAPCOMPARE(tuple, &memtuples[j]) <= 0)
+		if (COMPARETUP(state, tuple, &memtuples[j]) <= 0)
 			break;
 		memtuples[i] = memtuples[j];
 		i = j;

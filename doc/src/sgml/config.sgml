@@ -1505,45 +1505,6 @@ include_dir 'conf.d'
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-replacement-sort-tuples" xreflabel="replacement_sort_tuples">
-      <term><varname>replacement_sort_tuples</varname> (<type>integer</type>)
-      <indexterm>
-       <primary><varname>replacement_sort_tuples</> configuration parameter</primary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        When the number of tuples to be sorted is smaller than this number,
-        a sort will produce its first output run using replacement selection
-        rather than quicksort.  This may be useful in memory-constrained
-        environments where tuples that are input into larger sort operations
-        have a strong physical-to-logical correlation.  Note that this does
-        not include input tuples with an <emphasis>inverse</emphasis>
-        correlation.  It is possible for the replacement selection algorithm
-        to generate one long run that requires no merging, where use of the
-        default strategy would result in many runs that must be merged
-        to produce a final sorted output.  This may allow sort
-        operations to complete sooner.
-       </para>
-       <para>
-        The default is 150,000 tuples.  Note that higher values are typically
-        not much more effective, and may be counter-productive, since the
-        priority queue is sensitive to the size of available CPU cache, whereas
-        the default strategy sorts runs using a <firstterm>cache
-        oblivious</firstterm> algorithm.  This property allows the default sort
-        strategy to automatically and transparently make effective use
-        of available CPU cache.
-       </para>
-       <para>
-        Setting <varname>maintenance_work_mem</varname> to its default
-        value usually prevents utility command external sorts (e.g.,
-        sorts used by <command>CREATE INDEX</> to build B-Tree
-        indexes) from ever using replacement selection sort, unless the
-        input tuples are quite wide.
-       </para>
-      </listitem>
-     </varlistentry>
-
      <varlistentry id="guc-autovacuum-work-mem" xreflabel="autovacuum_work_mem">
       <term><varname>autovacuum_work_mem</varname> (<type>integer</type>)
       <indexterm>
