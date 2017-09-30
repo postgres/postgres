@@ -34,10 +34,8 @@
  *
  * For very simple instructions the overhead of the full interpreter
  * "startup", as minimal as it is, is noticeable.  Therefore
- * ExecReadyInterpretedExpr will choose to implement simple scalar Var
- * and Const expressions using special fast-path routines (ExecJust*).
- * Benchmarking shows anything more complex than those may as well use the
- * "full interpreter".
+ * ExecReadyInterpretedExpr will choose to implement certain simple
+ * opcode patterns using special fast-path routines (ExecJust*).
  *
  * Complex or uncommon instructions are not implemented in-line in
  * ExecInterpExpr(), rather we call out to a helper function appearing later
@@ -149,6 +147,7 @@ static Datum ExecJustConst(ExprState *state, ExprContext *econtext, bool *isnull
 static Datum ExecJustAssignInnerVar(ExprState *state, ExprContext *econtext, bool *isnull);
 static Datum ExecJustAssignOuterVar(ExprState *state, ExprContext *econtext, bool *isnull);
 static Datum ExecJustAssignScanVar(ExprState *state, ExprContext *econtext, bool *isnull);
+static Datum ExecJustApplyFuncToCase(ExprState *state, ExprContext *econtext, bool *isnull);
 
 
 /*
@@ -184,10 +183,8 @@ ExecReadyInterpretedExpr(ExprState *state)
 
 	/*
 	 * Select fast-path evalfuncs for very simple expressions.  "Starting up"
-	 * the full interpreter is a measurable overhead for these.  Plain Vars
-	 * and Const seem to be the only ones where the intrinsic cost is small
-	 * enough that the overhead of ExecInterpExpr matters.  For more complex
-	 * expressions it's cheaper to use ExecInterpExpr always.
+	 * the full interpreter is a measurable overhead for these, and these
+	 * patterns occur often enough to be worth optimizing.
 	 */
 	if (state->steps_len == 3)
 	{
@@ -228,6 +225,13 @@ ExecReadyInterpretedExpr(ExprState *state)
 				 step1 == EEOP_ASSIGN_SCAN_VAR)
 		{
 			state->evalfunc = ExecJustAssignScanVar;
+			return;
+		}
+		else if (step0 == EEOP_CASE_TESTVAL &&
+				 step1 == EEOP_FUNCEXPR_STRICT &&
+				 state->steps[0].d.casetest.value)
+		{
+			state->evalfunc = ExecJustApplyFuncToCase;
 			return;
 		}
 	}
@@ -1275,7 +1279,7 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 		EEO_CASE(EEOP_ARRAYCOERCE)
 		{
 			/* too complex for an inline implementation */
-			ExecEvalArrayCoerce(state, op);
+			ExecEvalArrayCoerce(state, op, econtext);
 
 			EEO_NEXT();
 		}
@@ -1809,6 +1813,43 @@ ExecJustAssignScanVar(ExprState *state, ExprContext *econtext, bool *isnull)
 	outslot->tts_values[resultnum] =
 		slot_getattr(inslot, attnum, &outslot->tts_isnull[resultnum]);
 	return 0;
+}
+
+/* Evaluate CASE_TESTVAL and apply a strict function to it */
+static Datum
+ExecJustApplyFuncToCase(ExprState *state, ExprContext *econtext, bool *isnull)
+{
+	ExprEvalStep *op = &state->steps[0];
+	FunctionCallInfo fcinfo;
+	bool	   *argnull;
+	int			argno;
+	Datum		d;
+
+	/*
+	 * XXX with some redesign of the CaseTestExpr mechanism, maybe we could
+	 * get rid of this data shuffling?
+	 */
+	*op->resvalue = *op->d.casetest.value;
+	*op->resnull = *op->d.casetest.isnull;
+
+	op++;
+
+	fcinfo = op->d.func.fcinfo_data;
+	argnull = fcinfo->argnull;
+
+	/* strict function, so check for NULL args */
+	for (argno = 0; argno < op->d.func.nargs; argno++)
+	{
+		if (argnull[argno])
+		{
+			*isnull = true;
+			return (Datum) 0;
+		}
+	}
+	fcinfo->isnull = false;
+	d = op->d.func.fn_addr(fcinfo);
+	*isnull = fcinfo->isnull;
+	return d;
 }
 
 
@@ -2345,11 +2386,9 @@ ExecEvalArrayExpr(ExprState *state, ExprEvalStep *op)
  * Source array is in step's result variable.
  */
 void
-ExecEvalArrayCoerce(ExprState *state, ExprEvalStep *op)
+ExecEvalArrayCoerce(ExprState *state, ExprEvalStep *op, ExprContext *econtext)
 {
-	ArrayCoerceExpr *acoerce = op->d.arraycoerce.coerceexpr;
 	Datum		arraydatum;
-	FunctionCallInfoData locfcinfo;
 
 	/* NULL array -> NULL result */
 	if (*op->resnull)
@@ -2361,7 +2400,7 @@ ExecEvalArrayCoerce(ExprState *state, ExprEvalStep *op)
 	 * If it's binary-compatible, modify the element type in the array header,
 	 * but otherwise leave the array as we received it.
 	 */
-	if (!OidIsValid(acoerce->elemfuncid))
+	if (op->d.arraycoerce.elemexprstate == NULL)
 	{
 		/* Detoast input array if necessary, and copy in any case */
 		ArrayType  *array = DatumGetArrayTypePCopy(arraydatum);
@@ -2372,23 +2411,12 @@ ExecEvalArrayCoerce(ExprState *state, ExprEvalStep *op)
 	}
 
 	/*
-	 * Use array_map to apply the function to each array element.
-	 *
-	 * We pass on the desttypmod and isExplicit flags whether or not the
-	 * function wants them.
-	 *
-	 * Note: coercion functions are assumed to not use collation.
+	 * Use array_map to apply the sub-expression to each array element.
 	 */
-	InitFunctionCallInfoData(locfcinfo, op->d.arraycoerce.elemfunc, 3,
-							 InvalidOid, NULL, NULL);
-	locfcinfo.arg[0] = arraydatum;
-	locfcinfo.arg[1] = Int32GetDatum(acoerce->resulttypmod);
-	locfcinfo.arg[2] = BoolGetDatum(acoerce->isExplicit);
-	locfcinfo.argnull[0] = false;
-	locfcinfo.argnull[1] = false;
-	locfcinfo.argnull[2] = false;
-
-	*op->resvalue = array_map(&locfcinfo, op->d.arraycoerce.resultelemtype,
+	*op->resvalue = array_map(arraydatum,
+							  op->d.arraycoerce.elemexprstate,
+							  econtext,
+							  op->d.arraycoerce.resultelemtype,
 							  op->d.arraycoerce.amstate);
 }
 

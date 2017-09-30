@@ -166,6 +166,49 @@ drop table dcomptable;
 drop type comptype cascade;
 
 
+-- Test arrays over domains
+
+create domain posint as int check (value > 0);
+
+create table pitable (f1 posint[]);
+insert into pitable values(array[42]);
+insert into pitable values(array[-1]);  -- fail
+insert into pitable values('{0}');  -- fail
+update pitable set f1[1] = f1[1] + 1;
+update pitable set f1[1] = 0;  -- fail
+select * from pitable;
+drop table pitable;
+
+create domain vc4 as varchar(4);
+create table vc4table (f1 vc4[]);
+insert into vc4table values(array['too long']);  -- fail
+insert into vc4table values(array['too long']::vc4[]);  -- cast truncates
+select * from vc4table;
+drop table vc4table;
+drop type vc4;
+
+-- You can sort of fake arrays-of-arrays by putting a domain in between
+create domain dposinta as posint[];
+create table dposintatable (f1 dposinta[]);
+insert into dposintatable values(array[array[42]]);  -- fail
+insert into dposintatable values(array[array[42]::posint[]]); -- still fail
+insert into dposintatable values(array[array[42]::dposinta]); -- but this works
+select f1, f1[1], (f1[1])[1] from dposintatable;
+select pg_typeof(f1) from dposintatable;
+select pg_typeof(f1[1]) from dposintatable;
+select pg_typeof(f1[1][1]) from dposintatable;
+select pg_typeof((f1[1])[1]) from dposintatable;
+update dposintatable set f1[2] = array[99];
+select f1, f1[1], (f1[2])[1] from dposintatable;
+-- it'd be nice if you could do something like this, but for now you can't:
+update dposintatable set f1[2][1] = array[97];
+-- maybe someday we can make this syntax work:
+update dposintatable set (f1[2])[1] = array[98];
+
+drop table dposintatable;
+drop domain posint cascade;
+
+
 -- Test not-null restrictions
 
 create domain dnotnull varchar(15) NOT NULL;

@@ -310,6 +310,101 @@ Rules:
 drop table dcomptable;
 drop type comptype cascade;
 NOTICE:  drop cascades to type dcomptypea
+-- Test arrays over domains
+create domain posint as int check (value > 0);
+create table pitable (f1 posint[]);
+insert into pitable values(array[42]);
+insert into pitable values(array[-1]);  -- fail
+ERROR:  value for domain posint violates check constraint "posint_check"
+insert into pitable values('{0}');  -- fail
+ERROR:  value for domain posint violates check constraint "posint_check"
+LINE 1: insert into pitable values('{0}');
+                                   ^
+update pitable set f1[1] = f1[1] + 1;
+update pitable set f1[1] = 0;  -- fail
+ERROR:  value for domain posint violates check constraint "posint_check"
+select * from pitable;
+  f1  
+------
+ {43}
+(1 row)
+
+drop table pitable;
+create domain vc4 as varchar(4);
+create table vc4table (f1 vc4[]);
+insert into vc4table values(array['too long']);  -- fail
+ERROR:  value too long for type character varying(4)
+insert into vc4table values(array['too long']::vc4[]);  -- cast truncates
+select * from vc4table;
+    f1    
+----------
+ {"too "}
+(1 row)
+
+drop table vc4table;
+drop type vc4;
+-- You can sort of fake arrays-of-arrays by putting a domain in between
+create domain dposinta as posint[];
+create table dposintatable (f1 dposinta[]);
+insert into dposintatable values(array[array[42]]);  -- fail
+ERROR:  column "f1" is of type dposinta[] but expression is of type integer[]
+LINE 1: insert into dposintatable values(array[array[42]]);
+                                         ^
+HINT:  You will need to rewrite or cast the expression.
+insert into dposintatable values(array[array[42]::posint[]]); -- still fail
+ERROR:  column "f1" is of type dposinta[] but expression is of type posint[]
+LINE 1: insert into dposintatable values(array[array[42]::posint[]])...
+                                         ^
+HINT:  You will need to rewrite or cast the expression.
+insert into dposintatable values(array[array[42]::dposinta]); -- but this works
+select f1, f1[1], (f1[1])[1] from dposintatable;
+    f1    |  f1  | f1 
+----------+------+----
+ {"{42}"} | {42} | 42
+(1 row)
+
+select pg_typeof(f1) from dposintatable;
+ pg_typeof  
+------------
+ dposinta[]
+(1 row)
+
+select pg_typeof(f1[1]) from dposintatable;
+ pg_typeof 
+-----------
+ dposinta
+(1 row)
+
+select pg_typeof(f1[1][1]) from dposintatable;
+ pg_typeof 
+-----------
+ dposinta
+(1 row)
+
+select pg_typeof((f1[1])[1]) from dposintatable;
+ pg_typeof 
+-----------
+ posint
+(1 row)
+
+update dposintatable set f1[2] = array[99];
+select f1, f1[1], (f1[2])[1] from dposintatable;
+       f1        |  f1  | f1 
+-----------------+------+----
+ {"{42}","{99}"} | {42} | 99
+(1 row)
+
+-- it'd be nice if you could do something like this, but for now you can't:
+update dposintatable set f1[2][1] = array[97];
+ERROR:  wrong number of array subscripts
+-- maybe someday we can make this syntax work:
+update dposintatable set (f1[2])[1] = array[98];
+ERROR:  syntax error at or near "["
+LINE 1: update dposintatable set (f1[2])[1] = array[98];
+                                        ^
+drop table dposintatable;
+drop domain posint cascade;
+NOTICE:  drop cascades to type dposinta
 -- Test not-null restrictions
 create domain dnotnull varchar(15) NOT NULL;
 create domain dnull    varchar(15);

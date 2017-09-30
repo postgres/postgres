@@ -64,6 +64,10 @@
 #include "fmgr.h"
 #include "utils/expandeddatum.h"
 
+/* avoid including execnodes.h here */
+struct ExprState;
+struct ExprContext;
+
 
 /*
  * Arrays are varlena objects, so must meet the varlena convention that
@@ -360,8 +364,9 @@ extern ArrayType *array_set(ArrayType *array, int nSubscripts, int *indx,
 		  Datum dataValue, bool isNull,
 		  int arraytyplen, int elmlen, bool elmbyval, char elmalign);
 
-extern Datum array_map(FunctionCallInfo fcinfo, Oid retType,
-		  ArrayMapState *amstate);
+extern Datum array_map(Datum arrayd,
+		  struct ExprState *exprstate, struct ExprContext *econtext,
+		  Oid retType, ArrayMapState *amstate);
 
 extern void array_bitmap_copy(bits8 *destbitmap, int destoffset,
 				  const bits8 *srcbitmap, int srcoffset,

@@ -3092,21 +3092,18 @@ array_set(ArrayType *array, int nSubscripts, int *indx,
 /*
  * array_map()
  *
- * Map an array through an arbitrary function.  Return a new array with
- * same dimensions and each source element transformed by fn().  Each
- * source element is passed as the first argument to fn(); additional
- * arguments to be passed to fn() can be specified by the caller.
- * The output array can have a different element type than the input.
+ * Map an array through an arbitrary expression.  Return a new array with
+ * the same dimensions and each source element transformed by the given,
+ * already-compiled expression.  Each source element is placed in the
+ * innermost_caseval/innermost_casenull fields of the ExprState.
  *
  * Parameters are:
- * * fcinfo: a function-call data structure pre-constructed by the caller
- *	 to be ready to call the desired function, with everything except the
- *	 first argument position filled in.  In particular, flinfo identifies
- *	 the function fn(), and if nargs > 1 then argument positions after the
- *	 first must be preset to the additional values to be passed.  The
- *	 first argument position initially holds the input array value.
+ * * arrayd: Datum representing array argument.
+ * * exprstate: ExprState representing the per-element transformation.
+ * * econtext: context for expression evaluation.
  * * retType: OID of element type of output array.  This must be the same as,
- *	 or binary-compatible with, the result type of fn().
+ *	 or binary-compatible with, the result type of the expression.  It might
+ *	 be different from the input array's element type.
  * * amstate: workspace for array_map.  Must be zeroed by caller before
  *	 first call, and not touched after that.
  *
@@ -3116,11 +3113,14 @@ array_set(ArrayType *array, int nSubscripts, int *indx,
  *
  * NB: caller must assure that input array is not NULL.  NULL elements in
  * the array are OK however.
+ * NB: caller should be running in econtext's per-tuple memory context.
  */
 Datum
-array_map(FunctionCallInfo fcinfo, Oid retType, ArrayMapState *amstate)
+array_map(Datum arrayd,
+		  ExprState *exprstate, ExprContext *econtext,
+		  Oid retType, ArrayMapState *amstate)
 {
-	AnyArrayType *v;
+	AnyArrayType *v = DatumGetAnyArrayP(arrayd);
 	ArrayType  *result;
 	Datum	   *values;
 	bool	   *nulls;
@@ -3141,13 +3141,8 @@ array_map(FunctionCallInfo fcinfo, Oid retType, ArrayMapState *amstate)
 	array_iter	iter;
 	ArrayMetaState *inp_extra;
 	ArrayMetaState *ret_extra;
-
-	/* Get input array */
-	if (fcinfo->nargs < 1)
-		elog(ERROR, "invalid nargs: %d", fcinfo->nargs);
-	if (PG_ARGISNULL(0))
-		elog(ERROR, "null input array");
-	v = PG_GETARG_ANY_ARRAY_P(0);
+	Datum	   *transform_source = exprstate->innermost_caseval;
+	bool	   *transform_source_isnull = exprstate->innermost_casenull;
 
 	inpType = AARR_ELEMTYPE(v);
 	ndim = AARR_NDIM(v);
@@ -3158,7 +3153,7 @@ array_map(FunctionCallInfo fcinfo, Oid retType, ArrayMapState *amstate)
 	if (nitems <= 0)
 	{
 		/* Return empty array */
-		PG_RETURN_ARRAYTYPE_P(construct_empty_array(retType));
+		return PointerGetDatum(construct_empty_array(retType));
 	}
 
 	/*
@@ -3203,39 +3198,15 @@ array_map(FunctionCallInfo fcinfo, Oid retType, ArrayMapState *amstate)
 
 	for (i = 0; i < nitems; i++)
 	{
-		bool		callit = true;
-
 		/* Get source element, checking for NULL */
-		fcinfo->arg[0] = array_iter_next(&iter, &fcinfo->argnull[0], i,
-										 inp_typlen, inp_typbyval, inp_typalign);
+		*transform_source =
+			array_iter_next(&iter, transform_source_isnull, i,
+							inp_typlen, inp_typbyval, inp_typalign);
 
-		/*
-		 * Apply the given function to source elt and extra args.
-		 */
-		if (fcinfo->flinfo->fn_strict)
-		{
-			int			j;
+		/* Apply the given expression to source element */
+		values[i] = ExecEvalExpr(exprstate, econtext, &nulls[i]);
 
-			for (j = 0; j < fcinfo->nargs; j++)
-			{
-				if (fcinfo->argnull[j])
-				{
-					callit = false;
-					break;
-				}
-			}
-		}
-
-		if (callit)
-		{
-			fcinfo->isnull = false;
-			values[i] = FunctionCallInvoke(fcinfo);
-		}
-		else
-			fcinfo->isnull = true;
-
-		nulls[i] = fcinfo->isnull;
-		if (fcinfo->isnull)
+		if (nulls[i])
 			hasnulls = true;
 		else
 		{
@@ -3254,7 +3225,7 @@ array_map(FunctionCallInfo fcinfo, Oid retType, ArrayMapState *amstate)
 		}
 	}
 
-	/* Allocate and initialize the result array */
+	/* Allocate and fill the result array */
 	if (hasnulls)
 	{
 		dataoffset = ARR_OVERHEAD_WITHNULLS(ndim, nitems);
@@ -3273,18 +3244,18 @@ array_map(FunctionCallInfo fcinfo, Oid retType, ArrayMapState *amstate)
 	memcpy(ARR_DIMS(result), AARR_DIMS(v), ndim * sizeof(int));
 	memcpy(ARR_LBOUND(result), AARR_LBOUND(v), ndim * sizeof(int));
 
-	/*
-	 * Note: do not risk trying to pfree the results of the called function
-	 */
 	CopyArrayEls(result,
 				 values, nulls, nitems,
 				 typlen, typbyval, typalign,
 				 false);
 
+	/*
+	 * Note: do not risk trying to pfree the results of the called expression
+	 */
 	pfree(values);
 	pfree(nulls);
 
-	PG_RETURN_ARRAYTYPE_P(result);
+	return PointerGetDatum(result);
 }
 
 /*

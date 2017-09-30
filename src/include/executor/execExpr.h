@@ -385,10 +385,8 @@ typedef struct ExprEvalStep
 		/* for EEOP_ARRAYCOERCE */
 		struct
 		{
-			ArrayCoerceExpr *coerceexpr;
+			ExprState  *elemexprstate;	/* null if no per-element work */
 			Oid			resultelemtype; /* element type of result array */
-			FmgrInfo   *elemfunc;	/* lookup info for element coercion
-									 * function */
 			struct ArrayMapState *amstate;	/* workspace for array_map */
 		}			arraycoerce;
 
@@ -621,7 +619,8 @@ extern void ExecEvalRowNull(ExprState *state, ExprEvalStep *op,
 extern void ExecEvalRowNotNull(ExprState *state, ExprEvalStep *op,
 				   ExprContext *econtext);
 extern void ExecEvalArrayExpr(ExprState *state, ExprEvalStep *op);
-extern void ExecEvalArrayCoerce(ExprState *state, ExprEvalStep *op);
+extern void ExecEvalArrayCoerce(ExprState *state, ExprEvalStep *op,
+					ExprContext *econtext);
 extern void ExecEvalRow(ExprState *state, ExprEvalStep *op);
 extern void ExecEvalMinMax(ExprState *state, ExprEvalStep *op);
 extern void ExecEvalFieldSelect(ExprState *state, ExprEvalStep *op,

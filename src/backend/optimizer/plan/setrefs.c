@@ -1395,12 +1395,6 @@ fix_expr_common(PlannerInfo *root, Node *node)
 		record_plan_function_dependency(root,
 										((ScalarArrayOpExpr *) node)->opfuncid);
 	}
-	else if (IsA(node, ArrayCoerceExpr))
-	{
-		if (OidIsValid(((ArrayCoerceExpr *) node)->elemfuncid))
-			record_plan_function_dependency(root,
-											((ArrayCoerceExpr *) node)->elemfuncid);
-	}
 	else if (IsA(node, Const))
 	{
 		Const	   *con = (Const *) node;

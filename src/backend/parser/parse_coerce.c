@@ -34,15 +34,16 @@
 
 static Node *coerce_type_typmod(Node *node,
 				   Oid targetTypeId, int32 targetTypMod,
-				   CoercionForm cformat, int location,
-				   bool isExplicit, bool hideInputCoercion);
+				   CoercionContext ccontext, CoercionForm cformat,
+				   int location,
+				   bool hideInputCoercion);
 static void hide_coercion_node(Node *node);
 static Node *build_coercion_expression(Node *node,
 						  CoercionPathType pathtype,
 						  Oid funcId,
 						  Oid targetTypeId, int32 targetTypMod,
-						  CoercionForm cformat, int location,
-						  bool isExplicit);
+						  CoercionContext ccontext, CoercionForm cformat,
+						  int location);
 static Node *coerce_record_to_complex(ParseState *pstate, Node *node,
 						 Oid targetTypeId,
 						 CoercionContext ccontext,
@@ -110,8 +111,7 @@ coerce_to_target_type(ParseState *pstate, Node *expr, Oid exprtype,
 	 */
 	result = coerce_type_typmod(result,
 								targettype, targettypmod,
-								cformat, location,
-								(cformat != COERCE_IMPLICIT_CAST),
+								ccontext, cformat, location,
 								(result != expr && !IsA(result, Const)));
 
 	if (expr != origexpr)
@@ -355,7 +355,8 @@ coerce_type(ParseState *pstate, Node *node,
 			result = coerce_to_domain(result,
 									  baseTypeId, baseTypeMod,
 									  targetTypeId,
-									  cformat, location, false, false);
+									  ccontext, cformat, location,
+									  false);
 
 		ReleaseSysCache(baseType);
 
@@ -370,10 +371,10 @@ coerce_type(ParseState *pstate, Node *node,
 		 * NULL to indicate we should proceed with normal coercion.
 		 */
 		result = pstate->p_coerce_param_hook(pstate,
-												 (Param *) node,
-												 targetTypeId,
-												 targetTypeMod,
-												 location);
+											 (Param *) node,
+											 targetTypeId,
+											 targetTypeMod,
+											 location);
 		if (result)
 			return result;
 	}
@@ -417,20 +418,17 @@ coerce_type(ParseState *pstate, Node *node,
 
 			result = build_coercion_expression(node, pathtype, funcId,
 											   baseTypeId, baseTypeMod,
-											   cformat, location,
-											   (cformat != COERCE_IMPLICIT_CAST));
+											   ccontext, cformat, location);
 
 			/*
 			 * If domain, coerce to the domain type and relabel with domain
-			 * type ID.  We can skip the internal length-coercion step if the
-			 * selected coercion function was a type-and-length coercion.
+			 * type ID, hiding the previous coercion node.
 			 */
 			if (targetTypeId != baseTypeId)
 				result = coerce_to_domain(result, baseTypeId, baseTypeMod,
 										  targetTypeId,
-										  cformat, location, true,
-										  exprIsLengthCoercion(result,
-															   NULL));
+										  ccontext, cformat, location,
+										  true);
 		}
 		else
 		{
@@ -444,7 +442,8 @@ coerce_type(ParseState *pstate, Node *node,
 			 * then we won't need a RelabelType node.
 			 */
 			result = coerce_to_domain(node, InvalidOid, -1, targetTypeId,
-									  cformat, location, false, false);
+									  ccontext, cformat, location,
+									  false);
 			if (result == node)
 			{
 				/*
@@ -636,19 +635,17 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *target_typeids,
  * 'baseTypeMod': base type typmod of domain, if known (pass -1 if caller
  *		has not bothered to look this up)
  * 'typeId': target type to coerce to
- * 'cformat': coercion format
+ * 'ccontext': context indicator to control coercions
+ * 'cformat': coercion display format
  * 'location': coercion request location
  * 'hideInputCoercion': if true, hide the input coercion under this one.
- * 'lengthCoercionDone': if true, caller already accounted for length,
- *		ie the input is already of baseTypMod as well as baseTypeId.
  *
  * If the target type isn't a domain, the given 'arg' is returned as-is.
  */
 Node *
 coerce_to_domain(Node *arg, Oid baseTypeId, int32 baseTypeMod, Oid typeId,
-				 CoercionForm cformat, int location,
-				 bool hideInputCoercion,
-				 bool lengthCoercionDone)
+				 CoercionContext ccontext, CoercionForm cformat, int location,
+				 bool hideInputCoercion)
 {
 	CoerceToDomain *result;
 
@@ -677,14 +674,9 @@ coerce_to_domain(Node *arg, Oid baseTypeId, int32 baseTypeMod, Oid typeId,
 	 * would be safe to do anyway, without lots of knowledge about what the
 	 * base type thinks the typmod means.
 	 */
-	if (!lengthCoercionDone)
-	{
-		if (baseTypeMod >= 0)
-			arg = coerce_type_typmod(arg, baseTypeId, baseTypeMod,
-									 COERCE_IMPLICIT_CAST, location,
-									 (cformat != COERCE_IMPLICIT_CAST),
-									 false);
-	}
+	arg = coerce_type_typmod(arg, baseTypeId, baseTypeMod,
+							 ccontext, COERCE_IMPLICIT_CAST, location,
+							 false);
 
 	/*
 	 * Now build the domain coercion node.  This represents run-time checking
@@ -714,11 +706,14 @@ coerce_to_domain(Node *arg, Oid baseTypeId, int32 baseTypeMod, Oid typeId,
  * The caller must have already ensured that the value is of the correct
  * type, typically by applying coerce_type.
  *
- * cformat determines the display properties of the generated node (if any),
- * while isExplicit may affect semantics.  If hideInputCoercion is true
- * *and* we generate a node, the input node is forced to IMPLICIT display
- * form, so that only the typmod coercion node will be visible when
- * displaying the expression.
+ * ccontext may affect semantics, depending on whether the length coercion
+ * function pays attention to the isExplicit flag it's passed.
+ *
+ * cformat determines the display properties of the generated node (if any).
+ *
+ * If hideInputCoercion is true *and* we generate a node, the input node is
+ * forced to IMPLICIT display form, so that only the typmod coercion node will
+ * be visible when displaying the expression.
  *
  * NOTE: this does not need to work on domain types, because any typmod
  * coercion for a domain is considered to be part of the type coercion
@@ -726,8 +721,9 @@ coerce_to_domain(Node *arg, Oid baseTypeId, int32 baseTypeMod, Oid typeId,
  */
 static Node *
 coerce_type_typmod(Node *node, Oid targetTypeId, int32 targetTypMod,
-				   CoercionForm cformat, int location,
-				   bool isExplicit, bool hideInputCoercion)
+				   CoercionContext ccontext, CoercionForm cformat,
+				   int location,
+				   bool hideInputCoercion)
 {
 	CoercionPathType pathtype;
 	Oid			funcId;
@@ -749,8 +745,7 @@ coerce_type_typmod(Node *node, Oid targetTypeId, int32 targetTypMod,
 
 		node = build_coercion_expression(node, pathtype, funcId,
 										 targetTypeId, targetTypMod,
-										 cformat, location,
-										 isExplicit);
+										 ccontext, cformat, location);
 	}
 
 	return node;
@@ -799,8 +794,8 @@ build_coercion_expression(Node *node,
 						  CoercionPathType pathtype,
 						  Oid funcId,
 						  Oid targetTypeId, int32 targetTypMod,
-						  CoercionForm cformat, int location,
-						  bool isExplicit)
+						  CoercionContext ccontext, CoercionForm cformat,
+						  int location)
 {
 	int			nargs = 0;
 
@@ -865,7 +860,7 @@ build_coercion_expression(Node *node,
 							 -1,
 							 InvalidOid,
 							 sizeof(bool),
-							 BoolGetDatum(isExplicit),
+							 BoolGetDatum(ccontext == COERCION_EXPLICIT),
 							 false,
 							 true);
 
@@ -881,19 +876,52 @@ build_coercion_expression(Node *node,
 	{
 		/* We need to build an ArrayCoerceExpr */
 		ArrayCoerceExpr *acoerce = makeNode(ArrayCoerceExpr);
+		CaseTestExpr *ctest = makeNode(CaseTestExpr);
+		Oid			sourceBaseTypeId;
+		int32		sourceBaseTypeMod;
+		Oid			targetElementType;
+		Node	   *elemexpr;
+
+		/*
+		 * Look through any domain over the source array type.  Note we don't
+		 * expect that the target type is a domain; it must be a plain array.
+		 * (To get to a domain target type, we'll do coerce_to_domain later.)
+		 */
+		sourceBaseTypeMod = exprTypmod(node);
+		sourceBaseTypeId = getBaseTypeAndTypmod(exprType(node),
+												&sourceBaseTypeMod);
+
+		/* Set up CaseTestExpr representing one element of source array */
+		ctest->typeId = get_element_type(sourceBaseTypeId);
+		Assert(OidIsValid(ctest->typeId));
+		ctest->typeMod = sourceBaseTypeMod;
+		ctest->collation = InvalidOid;	/* Assume coercions don't care */
+
+		/* And coerce it to the target element type */
+		targetElementType = get_element_type(targetTypeId);
+		Assert(OidIsValid(targetElementType));
+
+		elemexpr = coerce_to_target_type(NULL,
+										 (Node *) ctest,
+										 ctest->typeId,
+										 targetElementType,
+										 targetTypMod,
+										 ccontext,
+										 cformat,
+										 location);
+		if (elemexpr == NULL)	/* shouldn't happen */
+			elog(ERROR, "failed to coerce array element type as expected");
 
 		acoerce->arg = (Expr *) node;
-		acoerce->elemfuncid = funcId;
+		acoerce->elemexpr = (Expr *) elemexpr;
 		acoerce->resulttype = targetTypeId;
 
 		/*
-		 * Label the output as having a particular typmod only if we are
-		 * really invoking a length-coercion function, ie one with more than
-		 * one argument.
+		 * Label the output as having a particular element typmod only if we
+		 * ended up with a per-element expression that is labeled that way.
 		 */
-		acoerce->resulttypmod = (nargs >= 2) ? targetTypMod : -1;
+		acoerce->resulttypmod = exprTypmod(elemexpr);
 		/* resultcollid will be set by parse_collate.c */
-		acoerce->isExplicit = isExplicit;
 		acoerce->coerceformat = cformat;
 		acoerce->location = location;
 
@@ -2148,8 +2176,7 @@ IsBinaryCoercible(Oid srctype, Oid targettype)
  *	COERCION_PATH_RELABELTYPE: binary-compatible cast, no function needed
  *				*funcid is set to InvalidOid
  *	COERCION_PATH_ARRAYCOERCE: need an ArrayCoerceExpr node
- *				*funcid is set to the element cast function, or InvalidOid
- *				if the array elements are binary-compatible
+ *				*funcid is set to InvalidOid
  *	COERCION_PATH_COERCEVIAIO: need a CoerceViaIO node
  *				*funcid is set to InvalidOid
  *
@@ -2235,11 +2262,8 @@ find_coercion_pathway(Oid targetTypeId, Oid sourceTypeId,
 	{
 		/*
 		 * If there's no pg_cast entry, perhaps we are dealing with a pair of
-		 * array types.  If so, and if the element types have a suitable cast,
-		 * report that we can coerce with an ArrayCoerceExpr.
-		 *
-		 * Note that the source type can be a domain over array, but not the
-		 * target, because ArrayCoerceExpr won't check domain constraints.
+		 * array types.  If so, and if their element types have a conversion
+		 * pathway, report that we can coerce with an ArrayCoerceExpr.
 		 *
 		 * Hack: disallow coercions to oidvector and int2vector, which
 		 * otherwise tend to capture coercions that should go to "real" array
@@ -2254,7 +2278,7 @@ find_coercion_pathway(Oid targetTypeId, Oid sourceTypeId,
 			Oid			sourceElem;
 
 			if ((targetElem = get_element_type(targetTypeId)) != InvalidOid &&
-				(sourceElem = get_base_element_type(sourceTypeId)) != InvalidOid)
+				(sourceElem = get_element_type(sourceTypeId)) != InvalidOid)
 			{
 				CoercionPathType elempathtype;
 				Oid			elemfuncid;
@@ -2263,14 +2287,9 @@ find_coercion_pathway(Oid targetTypeId, Oid sourceTypeId,
 													 sourceElem,
 													 ccontext,
 													 &elemfuncid);
-				if (elempathtype != COERCION_PATH_NONE &&
-					elempathtype != COERCION_PATH_ARRAYCOERCE)
+				if (elempathtype != COERCION_PATH_NONE)
 				{
-					*funcid = elemfuncid;
-					if (elempathtype == COERCION_PATH_COERCEVIAIO)
-						result = COERCION_PATH_COERCEVIAIO;
-					else
-						result = COERCION_PATH_ARRAYCOERCE;
+					result = COERCION_PATH_ARRAYCOERCE;
 				}
 			}
 		}
@@ -2311,7 +2330,9 @@ find_coercion_pathway(Oid targetTypeId, Oid sourceTypeId,
  * If the given type is a varlena array type, we do not look for a coercion
  * function associated directly with the array type, but instead look for
  * one associated with the element type.  An ArrayCoerceExpr node must be
- * used to apply such a function.
+ * used to apply such a function.  (Note: currently, it's pointless to
+ * return the funcid in this case, because it'll just get looked up again
+ * in the recursive construction of the ArrayCoerceExpr's elemexpr.)
  *
  * We use the same result enum as find_coercion_pathway, but the only possible
  * result codes are:

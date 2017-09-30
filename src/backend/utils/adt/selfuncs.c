@@ -1816,10 +1816,19 @@ strip_array_coercion(Node *node)
 {
 	for (;;)
 	{
-		if (node && IsA(node, ArrayCoerceExpr) &&
-			((ArrayCoerceExpr *) node)->elemfuncid == InvalidOid)
+		if (node && IsA(node, ArrayCoerceExpr))
 		{
-			node = (Node *) ((ArrayCoerceExpr *) node)->arg;
+			ArrayCoerceExpr *acoerce = (ArrayCoerceExpr *) node;
+
+			/*
+			 * If the per-element expression is just a RelabelType on top of
+			 * CaseTestExpr, then we know it's a binary-compatible relabeling.
+			 */
+			if (IsA(acoerce->elemexpr, RelabelType) &&
+				IsA(((RelabelType *) acoerce->elemexpr)->arg, CaseTestExpr))
+				node = (Node *) acoerce->arg;
+			else
+				break;
 		}
 		else if (node && IsA(node, RelabelType))
 		{

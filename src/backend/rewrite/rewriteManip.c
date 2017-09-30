@@ -1429,9 +1429,9 @@ ReplaceVarsFromTargetList_callback(Var *var,
 															   var->varcollid),
 										InvalidOid, -1,
 										var->vartype,
+										COERCION_IMPLICIT,
 										COERCE_IMPLICIT_CAST,
 										-1,
-										false,
 										false);
 		}
 		elog(ERROR, "could not find replacement targetlist entry for attno %d",

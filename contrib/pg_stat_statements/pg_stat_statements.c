@@ -2630,6 +2630,7 @@ JumbleExpr(pgssJumbleState *jstate, Node *node)
 
 				APP_JUMB(acexpr->resulttype);
 				JumbleExpr(jstate, (Node *) acexpr->arg);
+				JumbleExpr(jstate, (Node *) acexpr->elemexpr);
 			}
 			break;
 		case T_ConvertRowtypeExpr:
