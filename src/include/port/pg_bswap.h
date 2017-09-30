@@ -85,8 +85,8 @@ pg_bswap32(uint32 x)
 
 #else
 
-static inline uint16
-pg_bswap64(uint16 x)
+static inline uint64
+pg_bswap64(uint64 x)
 {
 	return
 		((x << 56) & UINT64CONST(0xff00000000000000)) |
