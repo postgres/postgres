@@ -21,10 +21,10 @@
 #define PG_BSWAP_H
 
 
-/* In all supported versions msvc provides _byteswap_* functions in stdlib.h */
-#ifdef _MSC_VER
-#include <stdlib.h>
-#endif
+/*
+ * In all supported versions msvc provides _byteswap_* functions in stdlib.h,
+ * already included by c.h.
+ */
 
 
 /* implementation of uint16 pg_bswap16(uint16) */
