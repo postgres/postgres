@@ -12,4 +12,5 @@ command_fails(['pg_isready'], 'fails with no server running');
 my $tempdir = tempdir;
 start_test_server $tempdir;
 
-command_ok(['pg_isready'], 'succeeds with server running');
+# use a long timeout for the benefit of very slow buildfarm machines
+command_ok([qw(pg_isready --timeout=60)], 'succeeds with server running');
