@@ -4539,20 +4539,30 @@ threadRun(void *arg)
 		 * or it's time to print a progress report.  Update input_mask to show
 		 * which client(s) received data.
 		 */
-		if (min_usec > 0 && maxsock != -1)
+		if (min_usec > 0)
 		{
-			int			nsocks; /* return from select(2) */
+			int			nsocks = 0; /* return from select(2) if called */
 
 			if (min_usec != PG_INT64_MAX)
 			{
-				struct timeval timeout;
+				if (maxsock != -1)
+				{
+					struct timeval timeout;
 
-				timeout.tv_sec = min_usec / 1000000;
-				timeout.tv_usec = min_usec % 1000000;
-				nsocks = select(maxsock + 1, &input_mask, NULL, NULL, &timeout);
+					timeout.tv_sec = min_usec / 1000000;
+					timeout.tv_usec = min_usec % 1000000;
+					nsocks = select(maxsock + 1, &input_mask, NULL, NULL, &timeout);
+				}
+				else /* nothing active, simple sleep */
+				{
+					pg_usleep(min_usec);
+				}
 			}
-			else
+			else /* no explicit delay, select without timeout */
+			{
 				nsocks = select(maxsock + 1, &input_mask, NULL, NULL, NULL);
+			}
+
 			if (nsocks < 0)
 			{
 				if (errno == EINTR)
@@ -4565,7 +4575,7 @@ threadRun(void *arg)
 				goto done;
 			}
 		}
-		else
+		else /* min_usec == 0, i.e. something needs to be executed */
 		{
 			/* If we didn't call select(), don't try to read any data */
 			FD_ZERO(&input_mask);
