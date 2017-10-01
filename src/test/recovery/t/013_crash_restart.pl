@@ -16,16 +16,8 @@ use Test::More;
 use Config;
 use Time::HiRes qw(usleep);
 
-if ($Config{osname} eq 'MSWin32')
-{
-	# some Windows Perls at least don't like IPC::Run's
-	# start/kill_kill regime.
-	plan skip_all => "Test fails on Windows perl";
-}
-else
-{
-	plan tests => 18;
-}
+plan tests => 18;
+
 
 # To avoid hanging while expecting some specific input from a psql
 # instance being driven by us, add a timeout high enough that it
@@ -106,10 +98,10 @@ $monitor_stdout = '';
 $monitor_stderr = '';
 
 # kill once with QUIT - we expect psql to exit, while emitting error message first
-my $cnt = kill 'QUIT', $pid;
+my $ret = TestLib::system_log('pg_ctl', 'kill', 'QUIT', $pid);
 
 # Exactly process should have been alive to be killed
-is($cnt, 1, "exactly one process killed with SIGQUIT");
+is($ret, 0, "killed process with SIGQUIT");
 
 # Check that psql sees the killed backend as having been terminated
 $killme_stdin .= q[
@@ -119,14 +111,14 @@ ok(pump_until($killme, \$killme_stderr, qr/WARNING:  terminating connection beca
    "psql query died successfully after SIGQUIT");
 $killme_stderr = '';
 $killme_stdout = '';
-$killme->kill_kill;
+$killme->finish;
 
 # Wait till server restarts - we should get the WARNING here, but
 # sometimes the server is unable to send that, if interrupted while
 # sending.
 ok(pump_until($monitor, \$monitor_stderr, qr/WARNING:  terminating connection because of crash of another server process|server closed the connection unexpectedly/m),
    "psql monitor died successfully after SIGQUIT");
-$monitor->kill_kill;
+$monitor->finish;
 
 # Wait till server restarts
 is($node->poll_query_until('postgres', 'SELECT $$restarted after sigquit$$;', 'restarted after sigquit'),
@@ -179,8 +171,8 @@ $monitor_stderr = '';
 
 # kill with SIGKILL this time - we expect the backend to exit, without
 # being able to emit an error error message
-$cnt = kill 'KILL', $pid;
-is($cnt, 1, "exactly one process killed with KILL");
+$ret = TestLib::system_log('pg_ctl', 'kill', 'KILL', $pid);
+is($ret, 0, "killed process with KILL");
 
 # Check that psql sees the server as being terminated. No WARNING,
 # because signal handlers aren't being run on SIGKILL.
@@ -189,14 +181,14 @@ SELECT 1;
 ];
 ok(pump_until($killme, \$killme_stderr, qr/server closed the connection unexpectedly/m),
    "psql query died successfully after SIGKILL");
-$killme->kill_kill;
+$killme->finish;
 
 # Wait till server restarts - we should get the WARNING here, but
 # sometimes the server is unable to send that, if interrupted while
 # sending.
 ok(pump_until($monitor, \$monitor_stderr, qr/WARNING:  terminating connection because of crash of another server process|server closed the connection unexpectedly/m),
    "psql monitor died successfully after SIGKILL");
-$monitor->kill_kill;
+$monitor->finish;
 
 # Wait till server restarts
 is($node->poll_query_until('postgres', 'SELECT 1', '1'), "1", "reconnected after SIGKILL");
