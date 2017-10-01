@@ -6,7 +6,7 @@
 
   <formalpara>
    <title>Release date:</title>
-   <para>2017-??-?? (current as of 2017-09-17, commit 244b4a37e)</para>
+   <para>2017-10-05</para>
   </formalpara>
 
   <sect2>
@@ -193,6 +193,7 @@
 2016-11-18 [67dc4ccbb] Add pg_sequences view
 2017-05-15 [f8dc1985f] Fix ALTER SEQUENCE locking
 2017-06-01 [3d79013b9] Make ALTER SEQUENCE, including RESTART, fully transactio
+2017-09-29 [5cc5987ce] psql: Update \d sequence display
 -->
      <para>
       Move sequences' metadata fields into a new <link
@@ -221,6 +222,11 @@
       view <link linkend="view-pg-sequences"><structname>pg_sequences</></>
       can also be used for this purpose; it provides column names that are
       more compatible with existing code.
+     </para>
+
+     <para>
+      The output of <application>psql</>'s <command>\d</> command for a
+      sequence has been redesigned, too.
      </para>
     </listitem>
 
@@ -761,23 +767,6 @@
      <title>Locking</title>
 
      <itemizedlist>
-
-      <listitem>
-<!--
-2016-09-05 [15bc038f9] Relax transactional restrictions on ALTER TYPE ... ADD V
--->
-       <para>
-        Reduce locking required for adding values to enum types (Andrew
-        Dunstan, Tom Lane)
-       </para>
-
-       <para>
-        Previously it was impossible to run <command>ALTER TYPE ... ADD
-        VALUE</> in a transaction block unless the enum type was created
-        in the same block.  Now, only references to uncommitted enum
-        values from other transactions are prohibited.
-       </para>
-      </listitem>
 
       <listitem>
 <!--
