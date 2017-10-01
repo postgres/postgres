@@ -3169,4 +3169,341 @@
 
   </sect2>
 
+  <sect2>
+   <title>Acknowledgments</title>
+
+   <para>
+    The following individuals (in alphabetical order) have contributed to this
+    release as patch authors, committers, reviewers, testers, or reporters of
+    issues.
+   </para>
+
+   <simplelist>
+    <member>Adam Brightwell</member>
+    <member>Adam Brusselback</member>
+    <member>Adam Gomaa</member>
+    <member>Adam Sah</member>
+    <member>Adrian Klaver</member>
+    <member>Aidan Van Dyk</member>
+    <member>Aleksander Alekseev</member>
+    <member>Alexander Korotkov</member>
+    <member>Alexander Lakhin</member>
+    <member>Alexander Sosna</member>
+    <member>Alexey Bashtanov</member>
+    <member>Alexey Grishchenko</member>
+    <member>Alexey Isayko</member>
+    <member>&Aacute;lvaro Hern&aacute;ndez Tortosa</member>
+    <member>&Aacute;lvaro Herrera</member>
+    <member>Amit Kapila</member>
+    <member>Amit Khandekar</member>
+    <member>Amit Langote</member>
+    <member>Amul Sul</member>
+    <member>Anastasia Lubennikova</member>
+    <member>Andreas Joseph Krogh</member>
+    <member>Andreas Karlsson</member>
+    <member>Andreas Scherbaum</member>
+    <member>Andreas Seltenreich</member>
+    <member>Andres Freund</member>
+    <member>Andrew Dunstan</member>
+    <member>Andrew Gierth</member>
+    <member>Andrew Wheelwright</member>
+    <member>Andrey Borodin</member>
+    <member>Andrey Lizenko</member>
+    <member>Andy Abelisto</member>
+    <member>Antonin Houska</member>
+    <member>Ants Aasma</member>
+    <member>Arjen Nienhuis</member>
+    <member>Arseny Sher</member>
+    <member>Artur Zakirov</member>
+    <member>Ashutosh Bapat</member>
+    <member>Ashutosh Sharma</member>
+    <member>Ashwin Agrawal</member>
+    <member>Atsushi Torikoshi</member>
+    <member>Ayumi Ishii</member>
+    <member>Basil Bourque</member>
+    <member>Beena Emerson</member>
+    <member>Ben de Graaff</member>
+    <member>Benedikt Grundmann</member>
+    <member>Bernd Helmle</member>
+    <member>Brad DeJong</member>
+    <member>Brandur Leach</member>
+    <member>Breen Hagan</member>
+    <member>Bruce Momjian</member>
+    <member>Bruno Wolff III</member>
+    <member>Catalin Iacob</member>
+    <member>Chapman Flack</member>
+    <member>Chen Huajun</member>
+    <member>Choi Doo-Won</member>
+    <member>Chris Bandy</member>
+    <member>Chris Richards</member>
+    <member>Chris Ruprecht</member>
+    <member>Christian Ullrich</member>
+    <member>Christoph Berg</member>
+    <member>Chuanting Wang</member>
+    <member>Claudio Freire</member>
+    <member>Clinton Adams</member>
+    <member>Const Zhang</member>
+    <member>Constantin Pan</member>
+    <member>Corey Huinker</member>
+    <member>Craig Ringer</member>
+    <member>Cynthia Shang</member>
+    <member>Dagfinn Ilmari Manns&aring;ker</member>
+    <member>Daisuke Higuchi</member>
+    <member>Damian Quiroga</member>
+    <member>Dan Wood</member>
+    <member>Daniel Gustafsson</member>
+    <member>Daniel V&eacute;rit&eacute;</member>
+    <member>Daniel Westermann</member>
+    <member>Daniele Varrazzo</member>
+    <member>Danylo Hlynskyi</member>
+    <member>Darko Prelec</member>
+    <member>Dave Cramer</member>
+    <member>Dave Page</member>
+    <member>David Christensen</member>
+    <member>David Fetter</member>
+    <member>David Johnston</member>
+    <member>David Rader</member>
+    <member>David Rowley</member>
+    <member>David Steele</member>
+    <member>Dean Rasheed</member>
+    <member>Denis Smirnov</member>
+    <member>Denish Patel</member>
+    <member>Dennis Bj&ouml;rklund</member>
+    <member>Devrim G&uuml;nd&uuml;z</member>
+    <member>Dilip Kumar</member>
+    <member>Dilyan Palauzov</member>
+    <member>Dima Pavlov</member>
+    <member>Dimitry Ivanov</member>
+    <member>Dmitriy Sarafannikov</member>
+    <member>Dmitry Dolgov</member>
+    <member>Dmitry Fedin</member>
+    <member>Don Morrison</member>
+    <member>Egor Rogov</member>
+    <member>Eiji Seki</member>
+    <member>Emil Iggland</member>
+    <member>Emre Hasegeli</member>
+    <member>Enrique Meneses</member>
+    <member>Erik Nordstr&ouml;m</member>
+    <member>Erik Rijkers</member>
+    <member>Erwin Brandstetter</member>
+    <member>Etsuro Fujita</member>
+    <member>Eugen Konkov</member>
+    <member>Eugene Kazakov</member>
+    <member>Euler Taveira</member>
+    <member>Fabien Coelho</member>
+    <member>Fabr&iacute;zio de Royes Mello</member>
+    <member>Fakhroutdinov Evgenievich</member>
+    <member>Feike Steenbergen</member>
+    <member>Felix Gerzaguet</member>
+    <member>Filip Jirs&aacute;k</member>
+    <member>Fujii Masao</member>
+    <member>Gabriele Bartolini</member>
+    <member>Gabrielle Roth</member>
+    <member>Gao Zengqi</member>
+    <member>Gerdan Santos</member>
+    <member>Gianni Ciolli</member>
+    <member>Gilles Darold</member>
+    <member>Giuseppe Broccolo</member>
+    <member>Graham Dutton</member>
+    <member>Greg Atkins</member>
+    <member>Greg Burek</member>
+    <member>Grigory Smolkin</member>
+    <member>Guillaume Lelarge</member>
+    <member>Hans Buschmann</member>
+    <member>Haribabu Kommi</member>
+    <member>Heikki Linnakangas</member>
+    <member>Henry Boehlert</member>
+    <member>Huan Ruan</member>
+    <member>Huong Dangminh</member>
+    <member>Ian Barwick</member>
+    <member>Igor Korot</member>
+    <member>Ildus Kurbangaliev</member>
+    <member>Ivan Kartyshov</member>
+    <member>Jaime Casanova</member>
+    <member>Jakob Egger</member>
+    <member>James Parks</member>
+    <member>Jarred Ward</member>
+    <member>Jason Li</member>
+    <member>Jason O'Donnell</member>
+    <member>Jason Petersen</member>
+    <member>Jeevan Chalke</member>
+    <member>Jeevan Ladhe</member>
+    <member>Jeff Dafoe</member>
+    <member>Jeff Davis</member>
+    <member>Jeff Janes</member>
+    <member>Jelte Fennema</member>
+    <member>Jeremy Finzel</member>
+    <member>Jeremy Schneider</member>
+    <member>Jeroen van der Ham</member>
+    <member>Jesper Pedersen</member>
+    <member>Jim Mlodgenski</member>
+    <member>Jim Nasby</member>
+    <member>Jinyu Zhang</member>
+    <member>Joe Conway</member>
+    <member>Joel Jacobson</member>
+    <member>John Harvey</member>
+    <member>Jon Nelson</member>
+    <member>Jordan Gigov</member>
+    <member>Josh Berkus</member>
+    <member>Josh Soref</member>
+    <member>Julian Markwort</member>
+    <member>Julien Rouhaud</member>
+    <member>Junseok Yang</member>
+    <member>Justin Muise</member>
+    <member>Justin Pryzby</member>
+    <member>Kacper Zuk</member>
+    <member>KaiGai Kohei</member>
+    <member>Karen Huddleston</member>
+    <member>Karl Lehenbauer</member>
+    <member>Karl O. Pinc</member>
+    <member>Keith Fiske</member>
+    <member>Kevin Grittner</member>
+    <member>Kim Rose Carlsen</member>
+    <member>Konstantin Evteev</member>
+    <member>Konstantin Knizhnik</member>
+    <member>Kuntal Ghosh</member>
+    <member>Kurt Kartaltepe</member>
+    <member>Kyle Conroy</member>
+    <member>Kyotaro Horiguchi</member>
+    <member>Laurenz Albe</member>
+    <member>Leonardo Cecchi</member>
+    <member>Ludovic Vaugeois-Pepin</member>
+    <member>Lukas Fittl</member>
+    <member>Magnus Hagander</member>
+    <member>Maksim Milyutin</member>
+    <member>Maksym Sobolyev</member>
+    <member>Marc Rassbach</member>
+    <member>Marc-Olaf Jaschke</member>
+    <member>Marcos Castedo</member>
+    <member>Marek Cvoren</member>
+    <member>Mark Dilger</member>
+    <member>Mark Kirkwood</member>
+    <member>Mark Pether</member>
+    <member>Marko Tiikkaja</member>
+    <member>Markus Winand</member>
+    <member>Marllius Ribeiro</member>
+    <member>Marti Raudsepp</member>
+    <member>Mart&iacute;n Marqu&eacute;s</member>
+    <member>Masahiko Sawada</member>
+    <member>Matheus Oliveira</member>
+    <member>Mathieu Fenniak</member>
+    <member>Merlin Moncure</member>
+    <member>Michael Banck</member>
+    <member>Michael Day</member>
+    <member>Michael Meskes</member>
+    <member>Michael Overmeyer</member>
+    <member>Michael Paquier</member>
+    <member>Mike Palmiotto</member>
+    <member>Milos Urbanek</member>
+    <member>Mithun Cy</member>
+    <member>Moshe Jacobson</member>
+    <member>Murtuza Zabuawala</member>
+    <member>Naoki Okano</member>
+    <member>Nathan Bossart</member>
+    <member>Nathan Wagner</member>
+    <member>Neha Khatri</member>
+    <member>Neha Sharma</member>
+    <member>Neil Anderson</member>
+    <member>Nicolas Baccelli</member>
+    <member>Nicolas Guini</member>
+    <member>Nicolas Thauvin</member>
+    <member>Nikhil Sontakke</member>
+    <member>Nikita Glukhov</member>
+    <member>Nikolaus Thiel</member>
+    <member>Nikolay Nikitin</member>
+    <member>Nikolay Shaplov</member>
+    <member>Noah Misch</member>
+    <member>Noriyoshi Shinoda</member>
+    <member>Olaf Gawenda</member>
+    <member>Oleg Bartunov</member>
+    <member>Oskari Saarenmaa</member>
+    <member>Otar Shavadze</member>
+    <member>Paresh More</member>
+    <member>Paul Jungwirth</member>
+    <member>Paul Ramsey</member>
+    <member>Pavan Deolasee</member>
+    <member>Pavel Golub</member>
+    <member>Pavel Han&aacute;k</member>
+    <member>Pavel Raiskup</member>
+    <member>Pavel Stehule</member>
+    <member>Peng Sun</member>
+    <member>Peter Eisentraut</member>
+    <member>Peter Geoghegan</member>
+    <member>Petr Jel&iacute;nek</member>
+    <member>Philippe Beaudoin</member>
+    <member>Pierre-Emmanuel Andr&eacute;</member>
+    <member>Piotr Stefaniak</member>
+    <member>Prabhat Sahu</member>
+    <member>QL Zhuo</member>
+    <member>Radek Slupik</member>
+    <member>Rafa de la Torre</member>
+    <member>Rafia Sabih</member>
+    <member>Ragnar Ouchterlony</member>
+    <member>Rahila Syed</member>
+    <member>Rajkumar Raghuwanshi</member>
+    <member>Regina Obe</member>
+    <member>Richard Pistole</member>
+    <member>Robert Haas</member>
+    <member>Robins Tharakan</member>
+    <member>Rod Taylor</member>
+    <member>Roman Shaposhnik</member>
+    <member>Rushabh Lathia</member>
+    <member>Ryan Murphy</member>
+    <member>Sandeep Thakkar</member>
+    <member>Scott Milliken</member>
+    <member>Sean Farrell</member>
+    <member>Sebastian Luque</member>
+    <member>Sehrope Sarkuni</member>
+    <member>Sergey Burladyan</member>
+    <member>Sergey Koposov</member>
+    <member>Shay Rojansky</member>
+    <member>Shinichi Matsuda</member>
+    <member>Sho Kato</member>
+    <member>Simon Riggs</member>
+    <member>Simone Gotti</member>
+    <member>Spencer Thomason</member>
+    <member>Stas Kelvich</member>
+    <member>Stepan Pesternikov</member>
+    <member>Stephen Frost</member>
+    <member>Steve Randall</member>
+    <member>Steve Singer</member>
+    <member>Steven Fackler</member>
+    <member>Steven Winfield</member>
+    <member>Suraj Kharage</member>
+    <member>Sveinn Sveinsson</member>
+    <member>Sven R. Kunze</member>
+    <member>Taiki Kondo</member>
+    <member>Takayuki Tsunakawa</member>
+    <member>Takeshi Ideriha</member>
+    <member>Tatsuo Ishii</member>
+    <member>Tatsuro Yamada</member>
+    <member>Teodor Sigaev</member>
+    <member>Thom Brown</member>
+    <member>Thomas Kellerer</member>
+    <member>Thomas Munro</member>
+    <member>Tim Goodaire</member>
+    <member>Tobias Bussmann</member>
+    <member>Tom Dunstan</member>
+    <member>Tom Lane</member>
+    <member>Tom van Tilburg</member>
+    <member>Tomas Vondra</member>
+    <member>Tomonari Katsumata</member>
+    <member>Tushar Ahuja</member>
+    <member>Vaishnavi Prabakaran</member>
+    <member>Venkata Balaji Nagothi</member>
+    <member>Vicky Vergara</member>
+    <member>Victor Wagner</member>
+    <member>Vik Fearing</member>
+    <member>Vinayak Pokale</member>
+    <member>Viren Negi</member>
+    <member>Vitaly Burovoy</member>
+    <member>Vladimir Kunshchikov</member>
+    <member>Vladimir Rusinov</member>
+    <member>Yi Wen Wong</member>
+    <member>Yugo Nagata</member>
+    <member>Zhen Ming Yang</member>
+    <member>Zhou Digoal</member>
+   </simplelist>
+  </sect2>
+
  </sect1>
