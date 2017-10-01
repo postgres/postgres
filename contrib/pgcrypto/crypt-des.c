@@ -62,12 +62,9 @@
 
 #include "postgres.h"
 #include "miscadmin.h"
+#include "port/pg_bswap.h"
 
 #include "px-crypt.h"
-
-/* for ntohl/htonl */
-#include <netinet/in.h>
-#include <arpa/inet.h>
 
 #define _PASSWORD_EFMT1 '_'
 
@@ -408,8 +405,8 @@ des_setkey(const char *key)
 	if (!des_initialised)
 		des_init();
 
-	rawkey0 = ntohl(*(const uint32 *) key);
-	rawkey1 = ntohl(*(const uint32 *) (key + 4));
+	rawkey0 = pg_ntoh32(*(const uint32 *) key);
+	rawkey1 = pg_ntoh32(*(const uint32 *) (key + 4));
 
 	if ((rawkey0 | rawkey1)
 		&& rawkey0 == old_rawkey0
@@ -634,15 +631,15 @@ des_cipher(const char *in, char *out, long salt, int count)
 	/* copy data to avoid assuming input is word-aligned */
 	memcpy(buffer, in, sizeof(buffer));
 
-	rawl = ntohl(buffer[0]);
-	rawr = ntohl(buffer[1]);
+	rawl = pg_ntoh32(buffer[0]);
+	rawr = pg_ntoh32(buffer[1]);
 
 	retval = do_des(rawl, rawr, &l_out, &r_out, count);
 	if (retval)
 		return retval;
 
-	buffer[0] = htonl(l_out);
-	buffer[1] = htonl(r_out);
+	buffer[0] = pg_hton32(l_out);
+	buffer[1] = pg_hton32(r_out);
 
 	/* copy data to avoid assuming output is word-aligned */
 	memcpy(out, buffer, sizeof(buffer));

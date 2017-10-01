@@ -19,12 +19,9 @@
 #include "postgres_fe.h"
 #endif
 
-/* for htonl */
-#include <netinet/in.h>
-#include <arpa/inet.h>
-
 #include "common/base64.h"
 #include "common/scram-common.h"
+#include "port/pg_bswap.h"
 
 #define HMAC_IPAD 0x36
 #define HMAC_OPAD 0x5C
@@ -109,7 +106,7 @@ scram_SaltedPassword(const char *password,
 					 uint8 *result)
 {
 	int			password_len = strlen(password);
-	uint32		one = htonl(1);
+	uint32		one = pg_hton32(1);
 	int			i,
 				j;
 	uint8		Ui[SCRAM_KEY_LEN];

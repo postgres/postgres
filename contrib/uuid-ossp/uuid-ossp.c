@@ -14,12 +14,9 @@
 #include "postgres.h"
 
 #include "fmgr.h"
+#include "port/pg_bswap.h"
 #include "utils/builtins.h"
 #include "utils/uuid.h"
-
-/* for ntohl/htonl */
-#include <netinet/in.h>
-#include <arpa/inet.h>
 
 /*
  * It's possible that there's more than one uuid.h header file present.
@@ -90,16 +87,16 @@ typedef struct
 
 #define UUID_TO_NETWORK(uu) \
 do { \
-	uu.time_low = htonl(uu.time_low); \
-	uu.time_mid = htons(uu.time_mid); \
-	uu.time_hi_and_version = htons(uu.time_hi_and_version); \
+	uu.time_low = pg_hton32(uu.time_low); \
+	uu.time_mid = pg_hton16(uu.time_mid); \
+	uu.time_hi_and_version = pg_hton16(uu.time_hi_and_version); \
 } while (0)
 
 #define UUID_TO_LOCAL(uu) \
 do { \
-	uu.time_low = ntohl(uu.time_low); \
-	uu.time_mid = ntohs(uu.time_mid); \
-	uu.time_hi_and_version = ntohs(uu.time_hi_and_version); \
+	uu.time_low = pg_ntoh32(uu.time_low); \
+	uu.time_mid = pg_ntoh16(uu.time_mid); \
+	uu.time_hi_and_version = pg_ntoh16(uu.time_hi_and_version); \
 } while (0)
 
 #define UUID_V3_OR_V5(uu, v) \

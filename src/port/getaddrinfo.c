@@ -31,6 +31,7 @@
 
 #include "getaddrinfo.h"
 #include "libpq/pqcomm.h"		/* needed for struct sockaddr_storage */
+#include "port/pg_bsawp.h"
 
 
 #ifdef WIN32
@@ -178,7 +179,7 @@ getaddrinfo(const char *node, const char *service,
 	if (node)
 	{
 		if (node[0] == '\0')
-			sin.sin_addr.s_addr = htonl(INADDR_ANY);
+			sin.sin_addr.s_addr = pg_hton32(INADDR_ANY);
 		else if (hints.ai_flags & AI_NUMERICHOST)
 		{
 			if (!inet_aton(node, &sin.sin_addr))
@@ -221,13 +222,13 @@ getaddrinfo(const char *node, const char *service,
 	else
 	{
 		if (hints.ai_flags & AI_PASSIVE)
-			sin.sin_addr.s_addr = htonl(INADDR_ANY);
+			sin.sin_addr.s_addr = pg_hton32(INADDR_ANY);
 		else
-			sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+			sin.sin_addr.s_addr = pg_hton32(INADDR_LOOPBACK);
 	}
 
 	if (service)
-		sin.sin_port = htons((unsigned short) atoi(service));
+		sin.sin_port = pg_hton16((unsigned short) atoi(service));
 
 #ifdef HAVE_STRUCT_SOCKADDR_STORAGE_SS_LEN
 	sin.sin_len = sizeof(sin);
@@ -402,7 +403,7 @@ getnameinfo(const struct sockaddr *sa, int salen,
 		if (sa->sa_family == AF_INET)
 		{
 			ret = snprintf(service, servicelen, "%d",
-						   ntohs(((struct sockaddr_in *) sa)->sin_port));
+						   pg_ntoh16(((struct sockaddr_in *) sa)->sin_port));
 		}
 		if (ret == -1 || ret >= servicelen)
 			return EAI_MEMORY;

@@ -81,7 +81,6 @@
 #ifdef HAVE_NETINET_TCP_H
 #include <netinet/tcp.h>
 #endif
-#include <arpa/inet.h>
 #ifdef HAVE_UTIME_H
 #include <utime.h>
 #endif
@@ -92,6 +91,7 @@
 #include "common/ip.h"
 #include "libpq/libpq.h"
 #include "miscadmin.h"
+#include "port/pg_bswap.h"
 #include "storage/ipc.h"
 #include "utils/guc.h"
 #include "utils/memutils.h"
@@ -1286,7 +1286,7 @@ pq_getmessage(StringInfo s, int maxlen)
 		return EOF;
 	}
 
-	len = ntohl(len);
+	len = pg_ntoh32(len);
 
 	if (len < 4 ||
 		(maxlen > 0 && len > maxlen))
@@ -1569,7 +1569,7 @@ socket_putmessage(char msgtype, const char *s, size_t len)
 	{
 		uint32		n32;
 
-		n32 = htonl((uint32) (len + 4));
+		n32 = pg_hton32((uint32) (len + 4));
 		if (internal_putbytes((char *) &n32, 4))
 			goto fail;
 	}

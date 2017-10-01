@@ -72,12 +72,11 @@
 #include "postgres.h"
 
 #include <sys/param.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
 
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
 #include "mb/pg_wchar.h"
+#include "port/pg_bswap.h"
 
 
 /* --------------------------------
@@ -246,11 +245,11 @@ pq_sendint(StringInfo buf, int i, int b)
 			appendBinaryStringInfo(buf, (char *) &n8, 1);
 			break;
 		case 2:
-			n16 = htons((uint16) i);
+			n16 = pg_hton16((uint16) i);
 			appendBinaryStringInfo(buf, (char *) &n16, 2);
 			break;
 		case 4:
-			n32 = htonl((uint32) i);
+			n32 = pg_hton32((uint32) i);
 			appendBinaryStringInfo(buf, (char *) &n32, 4);
 			break;
 		default:
@@ -270,17 +269,9 @@ pq_sendint(StringInfo buf, int i, int b)
 void
 pq_sendint64(StringInfo buf, int64 i)
 {
-	uint32		n32;
+	uint64		n64 = pg_hton64(i);
 
-	/* High order half first, since we're doing MSB-first */
-	n32 = (uint32) (i >> 32);
-	n32 = htonl(n32);
-	appendBinaryStringInfo(buf, (char *) &n32, 4);
-
-	/* Now the low order half */
-	n32 = (uint32) i;
-	n32 = htonl(n32);
-	appendBinaryStringInfo(buf, (char *) &n32, 4);
+	appendBinaryStringInfo(buf, (char *) &n64, sizeof(n64));
 }
 
 /* --------------------------------
@@ -304,7 +295,7 @@ pq_sendfloat4(StringInfo buf, float4 f)
 	}			swap;
 
 	swap.f = f;
-	swap.i = htonl(swap.i);
+	swap.i = pg_hton32(swap.i);
 
 	appendBinaryStringInfo(buf, (char *) &swap.i, 4);
 }
@@ -460,11 +451,11 @@ pq_getmsgint(StringInfo msg, int b)
 			break;
 		case 2:
 			pq_copymsgbytes(msg, (char *) &n16, 2);
-			result = ntohs(n16);
+			result = pg_ntoh16(n16);
 			break;
 		case 4:
 			pq_copymsgbytes(msg, (char *) &n32, 4);
-			result = ntohl(n32);
+			result = pg_ntoh32(n32);
 			break;
 		default:
 			elog(ERROR, "unsupported integer size %d", b);
@@ -485,20 +476,11 @@ pq_getmsgint(StringInfo msg, int b)
 int64
 pq_getmsgint64(StringInfo msg)
 {
-	int64		result;
-	uint32		h32;
-	uint32		l32;
+	uint64		n64;
 
-	pq_copymsgbytes(msg, (char *) &h32, 4);
-	pq_copymsgbytes(msg, (char *) &l32, 4);
-	h32 = ntohl(h32);
-	l32 = ntohl(l32);
+	pq_copymsgbytes(msg, (char *) &n64, sizeof(n64));
 
-	result = h32;
-	result <<= 32;
-	result |= l32;
-
-	return result;
+	return pg_ntoh64(n64);
 }
 
 /* --------------------------------

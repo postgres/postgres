@@ -18,7 +18,6 @@
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <arpa/inet.h>
 #include <unistd.h>
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
@@ -33,6 +32,7 @@
 #include "libpq/pqformat.h"
 #include "libpq/scram.h"
 #include "miscadmin.h"
+#include "port/pg_bswap.h"
 #include "replication/walsender.h"
 #include "storage/ipc.h"
 #include "utils/backend_random.h"
@@ -2840,7 +2840,7 @@ PerformRadiusTransaction(char *server, char *secret, char *portstr, char *identi
 	radius_packet *receivepacket = &radius_recv_pack;
 	char	   *radius_buffer = (char *) &radius_send_pack;
 	char	   *receive_buffer = (char *) &radius_recv_pack;
-	int32		service = htonl(RADIUS_AUTHENTICATE_ONLY);
+	int32		service = pg_hton32(RADIUS_AUTHENTICATE_ONLY);
 	uint8	   *cryptvector;
 	int			encryptedpasswordlen;
 	uint8		encryptedpassword[RADIUS_MAX_PASSWORD_LENGTH];
@@ -2948,7 +2948,7 @@ PerformRadiusTransaction(char *server, char *secret, char *portstr, char *identi
 
 	/* Length needs to be in network order on the wire */
 	packetlength = packet->length;
-	packet->length = htons(packet->length);
+	packet->length = pg_hton16(packet->length);
 
 	sock = socket(serveraddrs[0].ai_family, SOCK_DGRAM, 0);
 	if (sock == PGINVALID_SOCKET)
@@ -3074,19 +3074,19 @@ PerformRadiusTransaction(char *server, char *secret, char *portstr, char *identi
 		}
 
 #ifdef HAVE_IPV6
-		if (remoteaddr.sin6_port != htons(port))
+		if (remoteaddr.sin6_port != pg_hton16(port))
 #else
-		if (remoteaddr.sin_port != htons(port))
+		if (remoteaddr.sin_port != pg_hton16(port))
 #endif
 		{
 #ifdef HAVE_IPV6
 			ereport(LOG,
 					(errmsg("RADIUS response from %s was sent from incorrect port: %d",
-							server, ntohs(remoteaddr.sin6_port))));
+							server, pg_ntoh16(remoteaddr.sin6_port))));
 #else
 			ereport(LOG,
 					(errmsg("RADIUS response from %s was sent from incorrect port: %d",
-							server, ntohs(remoteaddr.sin_port))));
+							server, pg_ntoh16(remoteaddr.sin_port))));
 #endif
 			continue;
 		}
@@ -3098,11 +3098,11 @@ PerformRadiusTransaction(char *server, char *secret, char *portstr, char *identi
 			continue;
 		}
 
-		if (packetlength != ntohs(receivepacket->length))
+		if (packetlength != pg_ntoh16(receivepacket->length))
 		{
 			ereport(LOG,
 					(errmsg("RADIUS response from %s has corrupt length: %d (actual length %d)",
-							server, ntohs(receivepacket->length), packetlength)));
+							server, pg_ntoh16(receivepacket->length), packetlength)));
 			continue;
 		}
 

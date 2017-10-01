@@ -43,6 +43,8 @@
 #include <netinet/in.h>
 #include <ctype.h>
 
+#include "port/pg_swap.h"
+
 /*
  * Check whether "cp" is a valid ascii representation
  * of an Internet address and convert to a binary address.
@@ -142,6 +144,6 @@ inet_aton(const char *cp, struct in_addr *addr)
 			break;
 	}
 	if (addr)
-		addr->s_addr = htonl(val);
+		addr->s_addr = pg_hton32(val);
 	return 1;
 }

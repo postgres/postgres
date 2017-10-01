@@ -33,9 +33,6 @@
 #include <signal.h>
 #include <time.h>
 
-#include <netinet/in.h>
-#include <arpa/inet.h>
-
 #ifdef WIN32
 #include "win32.h"
 #else
@@ -53,6 +50,7 @@
 #include "libpq-fe.h"
 #include "libpq-int.h"
 #include "mb/pg_wchar.h"
+#include "port/pg_bswap.h"
 #include "pg_config_paths.h"
 
 
@@ -278,14 +276,14 @@ pqGetInt(int *result, size_t bytes, PGconn *conn)
 				return EOF;
 			memcpy(&tmp2, conn->inBuffer + conn->inCursor, 2);
 			conn->inCursor += 2;
-			*result = (int) ntohs(tmp2);
+			*result = (int) pg_ntoh16(tmp2);
 			break;
 		case 4:
 			if (conn->inCursor + 4 > conn->inEnd)
 				return EOF;
 			memcpy(&tmp4, conn->inBuffer + conn->inCursor, 4);
 			conn->inCursor += 4;
-			*result = (int) ntohl(tmp4);
+			*result = (int) pg_ntoh32(tmp4);
 			break;
 		default:
 			pqInternalNotice(&conn->noticeHooks,
@@ -314,12 +312,12 @@ pqPutInt(int value, size_t bytes, PGconn *conn)
 	switch (bytes)
 	{
 		case 2:
-			tmp2 = htons((uint16) value);
+			tmp2 = pg_hton16((uint16) value);
 			if (pqPutMsgBytes((const char *) &tmp2, 2, conn))
 				return EOF;
 			break;
 		case 4:
-			tmp4 = htonl((uint32) value);
+			tmp4 = pg_hton32((uint32) value);
 			if (pqPutMsgBytes((const char *) &tmp4, 4, conn))
 				return EOF;
 			break;
@@ -597,7 +595,7 @@ pqPutMsgEnd(PGconn *conn)
 	{
 		uint32		msgLen = conn->outMsgEnd - conn->outMsgStart;
 
-		msgLen = htonl(msgLen);
+		msgLen = pg_hton32(msgLen);
 		memcpy(conn->outBuffer + conn->outMsgStart, &msgLen, 4);
 	}
 
