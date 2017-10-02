@@ -548,10 +548,10 @@
 #define PACKAGE_NAME "PostgreSQL"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "PostgreSQL 10rc1"
+#define PACKAGE_STRING "PostgreSQL 10.0"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "10rc1"
+#define PACKAGE_VERSION "10.0"
 
 /* Define to the name of a signed 128-bit integer type. */
 #undef PG_INT128_TYPE
@@ -560,7 +560,7 @@
 #define PG_INT64_TYPE long long int
 
 /* PostgreSQL version as a string */
-#define PG_VERSION "10rc1"
+#define PG_VERSION "10.0"
 
 /* PostgreSQL version as a number */
 #define PG_VERSION_NUM 100000
