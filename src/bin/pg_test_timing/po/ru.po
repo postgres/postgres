@@ -8,8 +8,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_test_timing (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-08-17 23:15+0000\n"
-"PO-Revision-Date: 2017-08-21 08:21+0300\n"
+"POT-Creation-Date: 2017-09-20 18:14+0000\n"
+"PO-Revision-Date: 2017-08-23 19:20+0300\n"
+"Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +18,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
-"Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 
 #: pg_test_timing.c:55
 #, c-format
@@ -63,19 +63,20 @@ msgstr "Сдвиг времени: %d мс\n"
 msgid "Per loop time including overhead: %0.2f ns\n"
 msgstr "Время одного цикла, включая издержки: %0.2f нс\n"
 
-#: pg_test_timing.c:180
-#, c-format
-msgid "Histogram of timing durations:\n"
-msgstr "Гистограмма длительности замеров времени:\n"
-
-#: pg_test_timing.c:181
-msgid "% of total"
-msgstr "% от общего"
-
-#: pg_test_timing.c:181
+#: pg_test_timing.c:175
 msgid "< us"
 msgstr "< мкс"
 
-#: pg_test_timing.c:181
+#: pg_test_timing.c:176
+#, no-c-format
+msgid "% of total"
+msgstr "% от общего"
+
+#: pg_test_timing.c:177
 msgid "count"
 msgstr "число"
+
+#: pg_test_timing.c:186
+#, c-format
+msgid "Histogram of timing durations:\n"
+msgstr "Гистограмма длительности замеров времени:\n"

@@ -1,13 +1,12 @@
 # Korean message translation file for psql
 # Ioseph Kim. <ioseph@uri.sarang.net>, 2004.
 #
-
 msgid ""
 msgstr ""
 "Project-Id-Version: psql (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-08-16 10:59+0900\n"
-"PO-Revision-Date: 2017-08-17 16:26+0900\n"
+"POT-Creation-Date: 2017-09-19 09:51+0900\n"
+"PO-Revision-Date: 2017-09-19 10:26+0900\n"
 "Last-Translator: Ioseph Kim <ioseph@uri.sarang.net>\n"
 "Language-Team: Korean <pgsql-translators@postgresql.org>\n"
 "Language: ko\n"
@@ -15,7 +14,6 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-
 
 #: ../../common/exec.c:127 ../../common/exec.c:241 ../../common/exec.c:284
 #, c-format
@@ -164,7 +162,8 @@ msgstr "\\%s: \"%s\" 추가 인수가 무시되었음\n"
 msgid ""
 "\\%s command ignored; use \\endif or Ctrl-C to exit current \\if block\n"
 msgstr ""
-"\\%s 명령은 무시함; 현재 \\if 블록을 중지하려면, \\endif 명령이나 Ctrl-C 키를 사용하세요.\n"
+"\\%s 명령은 무시함; 현재 \\if 블록을 중지하려면, \\endif 명령이나 Ctrl-C 키"
+"를 사용하세요.\n"
 
 #: command.c:553
 #, c-format
@@ -202,7 +201,7 @@ msgstr ""
 msgid "no query buffer\n"
 msgstr "쿼리 버퍼가 없음\n"
 
-#: command.c:948 command.c:4765
+#: command.c:948 command.c:4784
 #, c-format
 msgid "invalid line number: %s\n"
 msgstr "잘못된 줄 번호: %s\n"
@@ -226,7 +225,7 @@ msgstr "이 서버(%s 버전)는 뷰 정의 편집 기능을 제공하지 않습
 msgid "%s: invalid encoding name or conversion procedure not found\n"
 msgstr "%s: 타당치 못한 인코딩 이름 또는 문자셋 변환 프로시저 없음\n"
 
-#: command.c:1266 command.c:1888 command.c:3169 command.c:4867 common.c:173
+#: command.c:1266 command.c:1888 command.c:3169 command.c:4886 common.c:173
 #: common.c:244 common.c:541 common.c:1288 common.c:1316 common.c:1417
 #: copy.c:489 copy.c:708 large_obj.c:156 large_obj.c:191 large_obj.c:253
 #, c-format
@@ -336,20 +335,20 @@ msgstr "작업수행시간 보임"
 msgid "Timing is off."
 msgstr "작업수행시간 숨김"
 
-#: command.c:2549 command.c:2577 command.c:3518 command.c:3521 command.c:3524
-#: command.c:3530 command.c:3532 command.c:3540 command.c:3550 command.c:3559
-#: command.c:3573 command.c:3590 command.c:3648 common.c:69 copy.c:332
+#: command.c:2549 command.c:2577 command.c:3537 command.c:3540 command.c:3543
+#: command.c:3549 command.c:3551 command.c:3559 command.c:3569 command.c:3578
+#: command.c:3592 command.c:3609 command.c:3667 common.c:69 copy.c:332
 #: copy.c:392 copy.c:405 psqlscanslash.l:761 psqlscanslash.l:772
 #: psqlscanslash.l:782
 #, c-format
 msgid "%s: %s\n"
 msgstr "%s: %s\n"
 
-#: command.c:2961 startup.c:202
+#: command.c:2961 startup.c:205
 msgid "Password: "
 msgstr "암호: "
 
-#: command.c:2966 startup.c:204
+#: command.c:2966 startup.c:207
 #, c-format
 msgid "Password for user %s: "
 msgstr "%s 사용자의 암호: "
@@ -436,7 +435,7 @@ msgstr ""
 "참조\n"
 "         페이지 \"Notes for Windows users\"를 참조하십시오.\n"
 
-#: command.c:3407
+#: command.c:3426
 #, c-format
 msgid ""
 "environment variable PSQL_EDITOR_LINENUMBER_ARG must be set to specify a "
@@ -445,27 +444,27 @@ msgstr ""
 "지정한 줄번호를 사용하기 위해서는 PSQL_EDITOR_LINENUMBER_ARG 이름의 OS 환경변"
 "수가 설정되어 있어야 합니다.\n"
 
-#: command.c:3436
+#: command.c:3455
 #, c-format
 msgid "could not start editor \"%s\"\n"
 msgstr "\"%s\" 문서 편집기를 실행시킬 수 없음\n"
 
-#: command.c:3438
+#: command.c:3457
 #, c-format
 msgid "could not start /bin/sh\n"
 msgstr "/bin/sh 명령을 실행할 수 없음\n"
 
-#: command.c:3476
+#: command.c:3495
 #, c-format
 msgid "could not locate temporary directory: %s\n"
 msgstr "임시 디렉터리 경로를 알 수 없음: %s\n"
 
-#: command.c:3503
+#: command.c:3522
 #, c-format
 msgid "could not open temporary file \"%s\": %s\n"
 msgstr "\"%s\" 임시 파일을 열 수 없음: %s\n"
 
-#: command.c:3777
+#: command.c:3796
 #, c-format
 msgid ""
 "\\pset: allowed formats are unaligned, aligned, wrapped, html, asciidoc, "
@@ -474,208 +473,208 @@ msgstr ""
 "\\pset: 허용되는 출력 형식: unaligned, aligned, wrapped, html, asciidoc, "
 "latex, latex-longtable, troff-ms\n"
 
-#: command.c:3795
+#: command.c:3814
 #, c-format
 msgid "\\pset: allowed line styles are ascii, old-ascii, unicode\n"
 msgstr "\\pset: 사용할 수 있는 선 모양은 ascii, old-ascii, unicode\n"
 
-#: command.c:3810
+#: command.c:3829
 #, c-format
 msgid "\\pset: allowed Unicode border line styles are single, double\n"
 msgstr "\\pset: 사용할 수 있는 유니코드 테두리 모양은 single, double\n"
 
-#: command.c:3825
+#: command.c:3844
 #, c-format
 msgid "\\pset: allowed Unicode column line styles are single, double\n"
 msgstr "\\pset: 사용할 수 있는 유니코드 칼럼 선 모양은 single, double\n"
 
-#: command.c:3840
+#: command.c:3859
 #, c-format
 msgid "\\pset: allowed Unicode header line styles are single, double\n"
 msgstr "\\pset: 사용할 수 있는 유니코드 헤더 선 모양은 single, double\n"
 
-#: command.c:4005 command.c:4184
+#: command.c:4024 command.c:4203
 #, c-format
 msgid "\\pset: unknown option: %s\n"
 msgstr "\\pset: 알 수 없는 옵션: %s\n"
 
-#: command.c:4023
+#: command.c:4042
 #, c-format
 msgid "Border style is %d.\n"
 msgstr "html 테이블의 테두리를 %d로 지정했습니다.\n"
 
-#: command.c:4029
+#: command.c:4048
 #, c-format
 msgid "Target width is unset.\n"
 msgstr "대상 너비 미지정.\n"
 
-#: command.c:4031
+#: command.c:4050
 #, c-format
 msgid "Target width is %d.\n"
 msgstr "대상 너비는 %d입니다.\n"
 
-#: command.c:4038
+#: command.c:4057
 #, c-format
 msgid "Expanded display is on.\n"
 msgstr "칼럼 단위 보기 기능 켬.\n"
 
-#: command.c:4040
+#: command.c:4059
 #, c-format
 msgid "Expanded display is used automatically.\n"
 msgstr "칼럼 단위 보기 기능을 자동으로 지정 함.\n"
 
-#: command.c:4042
+#: command.c:4061
 #, c-format
 msgid "Expanded display is off.\n"
 msgstr "칼럼 단위 보기 기능 끔.\n"
 
-#: command.c:4049 command.c:4057
+#: command.c:4068 command.c:4076
 #, c-format
 msgid "Field separator is zero byte.\n"
 msgstr "필드 구분자가 0 바이트입니다.\n"
 
-#: command.c:4051
+#: command.c:4070
 #, c-format
 msgid "Field separator is \"%s\".\n"
 msgstr "필드 구분자 \"%s\".\n"
 
-#: command.c:4064
+#: command.c:4083
 #, c-format
 msgid "Default footer is on.\n"
 msgstr "기본 꼬릿말 보기 기능 켬.\n"
 
-#: command.c:4066
+#: command.c:4085
 #, c-format
 msgid "Default footer is off.\n"
 msgstr "기본 꼬릿말 보기 기능 끔.\n"
 
-#: command.c:4072
+#: command.c:4091
 #, c-format
 msgid "Output format is %s.\n"
 msgstr "현재 출력 형식: %s.\n"
 
-#: command.c:4078
+#: command.c:4097
 #, c-format
 msgid "Line style is %s.\n"
 msgstr "선 모양: %s.\n"
 
-#: command.c:4085
+#: command.c:4104
 #, c-format
 msgid "Null display is \"%s\".\n"
 msgstr "Null 값은 \"%s\" 문자로 보여짐.\n"
 
-#: command.c:4093
+#: command.c:4112
 #, c-format
 msgid "Locale-adjusted numeric output is on.\n"
 msgstr "로케일 맞춤 숫자 표기 기능 켬.\n"
 
-#: command.c:4095
+#: command.c:4114
 #, c-format
 msgid "Locale-adjusted numeric output is off.\n"
 msgstr "로케일 맞춤 숫자 표기 기능 끔.\n"
 
-#: command.c:4102
+#: command.c:4121
 #, c-format
 msgid "Pager is used for long output.\n"
 msgstr "긴 출력을 위해 페이저가 사용됨.\n"
 
-#: command.c:4104
+#: command.c:4123
 #, c-format
 msgid "Pager is always used.\n"
 msgstr "항상 페이저가 사용됨.\n"
 
-#: command.c:4106
+#: command.c:4125
 #, c-format
 msgid "Pager usage is off.\n"
 msgstr "화면단위 보기 기능 끔(전체 자료 모두 보여줌).\n"
 
-#: command.c:4112
+#: command.c:4131
 #, c-format
 msgid "Pager won't be used for less than %d line.\n"
 msgid_plural "Pager won't be used for less than %d lines.\n"
 msgstr[0] "%d 줄보다 적은 경우는 페이지 단위 보기가 사용되지 않음\n"
 
-#: command.c:4122 command.c:4132
+#: command.c:4141 command.c:4151
 #, c-format
 msgid "Record separator is zero byte.\n"
 msgstr "레코드 구분자가 0 바이트임.\n"
 
-#: command.c:4124
+#: command.c:4143
 #, c-format
 msgid "Record separator is <newline>.\n"
 msgstr "레코드 구분자는 줄바꿈 문자입니다.\n"
 
-#: command.c:4126
+#: command.c:4145
 #, c-format
 msgid "Record separator is \"%s\".\n"
 msgstr "레코드 구분자 \"%s\".\n"
 
-#: command.c:4139
+#: command.c:4158
 #, c-format
 msgid "Table attributes are \"%s\".\n"
 msgstr "테이블 속성: \"%s\".\n"
 
-#: command.c:4142
+#: command.c:4161
 #, c-format
 msgid "Table attributes unset.\n"
 msgstr "테이블 속성 모두 지움.\n"
 
-#: command.c:4149
+#: command.c:4168
 #, c-format
 msgid "Title is \"%s\".\n"
 msgstr "출력 테이블의 제목: \"%s\"\n"
 
-#: command.c:4151
+#: command.c:4170
 #, c-format
 msgid "Title is unset.\n"
 msgstr "출력 테이블의 제목을 지정하지 않았습니다.\n"
 
-#: command.c:4158
+#: command.c:4177
 #, c-format
 msgid "Tuples only is on.\n"
 msgstr "자료만 보기 기능 켬.\n"
 
-#: command.c:4160
+#: command.c:4179
 #, c-format
 msgid "Tuples only is off.\n"
 msgstr "자료만 보기 기능 끔.\n"
 
-#: command.c:4166
+#: command.c:4185
 #, c-format
 msgid "Unicode border line style is \"%s\".\n"
 msgstr "유니코드 테두리 선문자: \"%s\".\n"
 
-#: command.c:4172
+#: command.c:4191
 #, c-format
 msgid "Unicode column line style is \"%s\".\n"
 msgstr "유니코드 칼럼 선문자: \"%s\".\n"
 
-#: command.c:4178
+#: command.c:4197
 #, c-format
 msgid "Unicode header line style is \"%s\".\n"
 msgstr "유니코드 헤더 선문자: \"%s\".\n"
 
-#: command.c:4338
+#: command.c:4357
 #, c-format
 msgid "\\!: failed\n"
 msgstr "\\!: 실패\n"
 
-#: command.c:4363 common.c:754
+#: command.c:4382 common.c:754
 #, c-format
 msgid "\\watch cannot be used with an empty query\n"
 msgstr "\\watch 명령으로 수행할 쿼리가 없습니다.\n"
 
-#: command.c:4404
+#: command.c:4423
 #, c-format
 msgid "%s\t%s (every %gs)\n"
 msgstr "%s\t%s (%g초 간격)\n"
 
-#: command.c:4407
+#: command.c:4426
 #, c-format
 msgid "%s (every %gs)\n"
 msgstr "%s (%g초 간격)\n"
 
-#: command.c:4461 command.c:4468 common.c:654 common.c:661 common.c:1271
+#: command.c:4480 command.c:4487 common.c:654 common.c:661 common.c:1271
 #, c-format
 msgid ""
 "********* QUERY **********\n"
@@ -688,12 +687,12 @@ msgstr ""
 "**************************\n"
 "\n"
 
-#: command.c:4660
+#: command.c:4679
 #, c-format
 msgid "\"%s.%s\" is not a view\n"
 msgstr "\"%s.%s\" 뷰(view)가 아님\n"
 
-#: command.c:4676
+#: command.c:4695
 #, c-format
 msgid "could not parse reloptions array\n"
 msgstr "reloptions 배열을 분석할 수 없음\n"
@@ -871,7 +870,8 @@ msgid ""
 "End with a backslash and a period on a line by itself, or an EOF signal."
 msgstr ""
 "한 줄에 한 레코드씩 데이터를 입력하고\n"
-"자료입력이 끝나면 backslash 점 (\\.) 마지막 줄 처음에 입력하는 EOF 시그널을 보내세요."
+"자료입력이 끝나면 backslash 점 (\\.) 마지막 줄 처음에 입력하는 EOF 시그널을 "
+"보내세요."
 
 #: copy.c:670
 msgid "aborted because of read failure"
@@ -1543,7 +1543,7 @@ msgstr "파티션들"
 #: describe.c:2904
 #, c-format
 msgid "Typed table of type: %s"
-msgstr ""
+msgstr "자료형의 typed 테이블: %s"
 
 #: describe.c:2920
 msgid "Replica Identity"
@@ -1741,11 +1741,11 @@ msgstr "활성화"
 
 #: describe.c:3729
 msgid "replica"
-msgstr ""
+msgstr "replica"
 
 #: describe.c:3730
 msgid "always"
-msgstr ""
+msgstr "항상"
 
 #: describe.c:3731
 msgid "disabled"
@@ -1761,7 +1761,7 @@ msgstr "프로시져"
 
 #: describe.c:3734
 msgid "Tags"
-msgstr ""
+msgstr "태그"
 
 #: describe.c:3753
 msgid "List of event triggers"
@@ -2036,15 +2036,15 @@ msgstr "모든 테이블"
 
 #: describe.c:5108 describe.c:5220
 msgid "Inserts"
-msgstr ""
+msgstr "Inserts"
 
 #: describe.c:5109 describe.c:5221
 msgid "Updates"
-msgstr ""
+msgstr "Updates"
 
 #: describe.c:5110 describe.c:5222
 msgid "Deletes"
-msgstr ""
+msgstr "Deletes"
 
 #: describe.c:5127
 msgid "List of publications"
@@ -2104,7 +2104,7 @@ msgstr ""
 "psql은 PostgreSQL 대화식 터미널입니다.\n"
 "\n"
 
-#: help.c:74 help.c:344 help.c:378 help.c:405
+#: help.c:74 help.c:344 help.c:383 help.c:410
 #, c-format
 msgid "Usage:\n"
 msgstr "사용법:\n"
@@ -2462,7 +2462,8 @@ msgstr "  \\gset [PREFIX]         쿼리 실행 뒤 그 결과를 psql 변수로
 #: help.c:179
 #, c-format
 msgid "  \\gx [FILE]             as \\g, but forces expanded output mode\n"
-msgstr "  \\gx [FILE]             \\g 명령과 같으나, 출력을 확장 모드로 강제함\n"
+msgstr ""
+"  \\gx [FILE]             \\g 명령과 같으나, 출력을 확장 모드로 강제함\n"
 
 #: help.c:180
 #, c-format
@@ -2603,16 +2604,14 @@ msgstr "  \\if EXPR               조건문 시작\n"
 #, c-format
 msgid ""
 "  \\elif EXPR             alternative within current conditional block\n"
-msgstr ""
-"  \\elif EXPR             else if 구문 시작\n"
+msgstr "  \\elif EXPR             else if 구문 시작\n"
 
 #: help.c:216
 #, c-format
 msgid ""
 "  \\else                  final alternative within current conditional "
 "block\n"
-msgstr ""
-"  \\else                  조건문의 그 외 조건\n"
+msgstr "  \\else                  조건문의 그 외 조건\n"
 
 #: help.c:217
 #, c-format
@@ -3090,7 +3089,8 @@ msgid ""
 "                     if set to \"noexec\", just show without execution\n"
 msgstr ""
 "  ECHO_HIDDEN        지정 되면 psql 내장 명령어의 내부 쿼리를 출력함;\n"
-"                     \"noexec\" 값으로 설정하면, 실행되지 않고 쿼리만 보여줌\n"
+"                     \"noexec\" 값으로 설정하면, 실행되지 않고 쿼리만 보여"
+"줌\n"
 
 #: help.c:355
 #, c-format
@@ -3125,8 +3125,7 @@ msgstr "  HISTFILE           명령 내역을 저장할 파일 이름\n"
 #, c-format
 msgid ""
 "  HISTSIZE           max number of commands to store in the command history\n"
-msgstr ""
-"  HISTSIZE           명령 내역 최대 보관 개수\n"
+msgstr "  HISTSIZE           명령 내역 최대 보관 개수\n"
 
 #: help.c:361
 #, c-format
@@ -3138,8 +3137,7 @@ msgstr "  HOST               현재 접속한 데이터베이스 서버\n"
 msgid ""
 "  IGNOREEOF          number of EOFs needed to terminate an interactive "
 "session\n"
-msgstr ""
-"  IGNOREEOF          대화형 세션 종료를 위한 EOF 개수\n"
+msgstr "  IGNOREEOF          대화형 세션 종료를 위한 EOF 개수\n"
 
 #: help.c:363
 #, c-format
@@ -3175,15 +3173,13 @@ msgstr "  PROMPT1            기본 psql 프롬프트 정의\n"
 msgid ""
 "  PROMPT2            specifies the prompt used when a statement continues "
 "from a previous line\n"
-msgstr ""
-"  PROMPT2            아직 구문이 덜 끝난 명령행의 프롬프트\n"
+msgstr "  PROMPT2            아직 구문이 덜 끝난 명령행의 프롬프트\n"
 
 #: help.c:369
 #, c-format
 msgid ""
 "  PROMPT3            specifies the prompt used during COPY ... FROM STDIN\n"
-msgstr ""
-"  PROMPT3            COPY ... FROM STDIN 작업시 보일 프롬프트\n"
+msgstr "  PROMPT3            COPY ... FROM STDIN 작업시 보일 프롬프트\n"
 
 #: help.c:370
 #, c-format
@@ -3192,6 +3188,16 @@ msgstr "  QUIET              조용히 실행 (-q 옵션과 같음)\n"
 
 #: help.c:371
 #, c-format
+msgid "  SERVER_VERSION_NAME  server's version (short string)\n"
+msgstr ""
+
+#: help.c:372
+#, c-format
+msgid "  SERVER_VERSION_NUM   server's version (numeric format)\n"
+msgstr ""
+
+#: help.c:373
+#, c-format
 msgid ""
 "  SHOW_CONTEXT       controls display of message context fields [never, "
 "errors, always]\n"
@@ -3199,33 +3205,48 @@ msgstr ""
 "  SHOW_CONTEXT       상황별 자세한 메시지 내용 출력 제어 [never, errors,\n"
 "                     always]\n"
 
-#: help.c:372
+#: help.c:374
 #, c-format
 msgid ""
 "  SINGLELINE         end of line terminates SQL command mode (same as -S "
 "option)\n"
-msgstr ""
-"  SINGLELINE         한 줄에 하나의 SQL 명령 실행 (-S 옵션과 같음)\n"
+msgstr "  SINGLELINE         한 줄에 하나의 SQL 명령 실행 (-S 옵션과 같음)\n"
 
-#: help.c:373
+#: help.c:375
 #, c-format
 msgid "  SINGLESTEP         single-step mode (same as -s option)\n"
 msgstr "  SINGLESTEP         각 명령을 확인하며 실행 (-s 옵션과 같음)\n"
 
-#: help.c:374
+#: help.c:376
 #, c-format
 msgid "  USER               the currently connected database user\n"
 msgstr "  USER               현재 접속한 데이터베이스 사용자\n"
 
-#: help.c:375
+#: help.c:377
 #, c-format
 msgid ""
 "  VERBOSITY          controls verbosity of error reports [default, verbose, "
 "terse]\n"
 msgstr ""
-"  VERBOSITY          오류 출력시 자세히 볼 내용 범위 [default, verbose, terse]\n"
+"  VERBOSITY          오류 출력시 자세히 볼 내용 범위 [default, verbose, "
+"terse]\n"
 
-#: help.c:377
+#: help.c:378
+#, c-format
+msgid "  VERSION            psql's version (verbose string)\n"
+msgstr ""
+
+#: help.c:379
+#, c-format
+msgid "  VERSION_NAME       psql's version (short string)\n"
+msgstr ""
+
+#: help.c:380
+#, c-format
+msgid "  VERSION_NUM        psql's version (numeric format)\n"
+msgstr ""
+
+#: help.c:382
 #, c-format
 msgid ""
 "\n"
@@ -3234,7 +3255,7 @@ msgstr ""
 "\n"
 "출력 설정들:\n"
 
-#: help.c:379
+#: help.c:384
 #, c-format
 msgid ""
 "  psql --pset=NAME[=VALUE]\n"
@@ -3245,41 +3266,41 @@ msgstr ""
 "  또는 psql 명령 모드에서는 \\pset NAME [VALUE]\n"
 "\n"
 
-#: help.c:381
+#: help.c:386
 #, c-format
 msgid "  border             border style (number)\n"
 msgstr "  border             테두리 모양 (숫자)\n"
 
-#: help.c:382
+#: help.c:387
 #, c-format
 msgid "  columns            target width for the wrapped format\n"
 msgstr "  columns            줄바꿈을 위한 너비 지정\n"
 
-#: help.c:383
+#: help.c:388
 #, c-format
 msgid "  expanded (or x)    expanded output [on, off, auto]\n"
 msgstr "  expanded (또는 x)  확장된 출력 전환 [on, off, auto]\n"
 
-#: help.c:384
+#: help.c:389
 #, c-format
 msgid ""
 "  fieldsep           field separator for unaligned output (default \"%s\")\n"
 msgstr "  fieldsep           unaligned 출력용 필드 구분자 (초기값 \"%s\"')\n"
 
-#: help.c:385
+#: help.c:390
 #, c-format
 msgid ""
 "  fieldsep_zero      set field separator for unaligned output to zero byte\n"
 msgstr "  fieldsep_zero      unaligned 출력용 필드 구분자를 0 바이트로 지정\n"
 
-#: help.c:386
+#: help.c:391
 #, c-format
 msgid ""
 "  footer             enable or disable display of the table footer [on, "
 "off]\n"
 msgstr "  footer             테이블 꼬리말 보이기 전환 [on, off]\n"
 
-#: help.c:387
+#: help.c:392
 #, c-format
 msgid ""
 "  format             set output format [unaligned, aligned, wrapped, html, "
@@ -3288,23 +3309,20 @@ msgstr ""
 "  format             출력 양식 지정 [unaligned, aligned, wrapped, html, "
 "asciidoc, ...]\n"
 
-#: help.c:388
+#: help.c:393
 #, c-format
 msgid ""
 "  linestyle          set the border line drawing style [ascii, old-ascii, "
 "unicode]\n"
-msgstr ""
-"  linestyle          테두리 선 모양 지정 [ascii, old-ascii, "
-"unicode]\n"
+msgstr "  linestyle          테두리 선 모양 지정 [ascii, old-ascii, unicode]\n"
 
-#: help.c:389
+#: help.c:394
 #, c-format
 msgid ""
 "  null               set the string to be printed in place of a null value\n"
-msgstr ""
-"  null               null 값 출력 방법\n"
+msgstr "  null               null 값 출력 방법\n"
 
-#: help.c:390
+#: help.c:395
 #, c-format
 msgid ""
 "  numericlocale      enable or disable display of a locale-specific "
@@ -3314,7 +3332,7 @@ msgstr ""
 "  numericlocale      숫자 출력에서 로케일 기반 천자리 분리 문자 활성화\n"
 "                     [on, off]\n"
 
-#: help.c:392
+#: help.c:397
 #, c-format
 msgid ""
 "  pager              control when an external pager is used [yes, no, "
@@ -3322,19 +3340,19 @@ msgid ""
 msgstr ""
 "  pager              외부 페이지 단위 보기 도구 사용 여부 [yes, no, always]\n"
 
-#: help.c:393
+#: help.c:398
 #, c-format
 msgid "  recordsep          record (line) separator for unaligned output\n"
 msgstr "  recordsep          unaligned 출력용 레코드(줄) 구분자\n"
 
-#: help.c:394
+#: help.c:399
 #, c-format
 msgid ""
 "  recordsep_zero     set record separator for unaligned output to zero byte\n"
 msgstr ""
 "  recordsep_zero     unaligned 출력용 레코드 구분자를 0 바이트로 지정\n"
 
-#: help.c:395
+#: help.c:400
 #, c-format
 msgid ""
 "  tableattr (or T)   specify attributes for table tag in html format or "
@@ -3343,21 +3361,22 @@ msgid ""
 "longtable format\n"
 msgstr ""
 "  tableattr (또는 T) html 테이블 태그에 대한 속성이나,\n"
-"                     latex-longtable 양식에서 왼쪽 정렬 자료용 칼럼 넓이 지정\n"
+"                     latex-longtable 양식에서 왼쪽 정렬 자료용 칼럼 넓이 지"
+"정\n"
 
-#: help.c:397
+#: help.c:402
 #, c-format
 msgid ""
 "  title              set the table title for any subsequently printed "
 "tables\n"
 msgstr "  title              테이블 제목 지정\n"
 
-#: help.c:398
+#: help.c:403
 #, c-format
 msgid "  tuples_only        if set, only actual table data is shown\n"
 msgstr "  tuples_only        지정되면, 자료만 보임\n"
 
-#: help.c:399
+#: help.c:404
 #, c-format
 msgid ""
 "  unicode_border_linestyle\n"
@@ -3370,7 +3389,7 @@ msgstr ""
 "  unicode_header_linestyle\n"
 "                     유니코드 선 종류 [single, double]\n"
 
-#: help.c:404
+#: help.c:409
 #, c-format
 msgid ""
 "\n"
@@ -3379,77 +3398,77 @@ msgstr ""
 "\n"
 "OS 환경 변수들:\n"
 
-#: help.c:408
-#, c-format
-msgid ""
-"  NAME=VALUE [NAME=VALUE] psql ...\n"
-"  or \\setenv NAME [VALUE] inside psql\n"
-"\n"
-msgstr ""
-"  NAME=VALUE [NAME=VALUE] psql ...\n"
-"  또는 psql 명령 모드에서는 \\setenv NAME [VALUE]\n"
-"\n"
-
-#: help.c:410
-#, c-format
-msgid ""
-"  set NAME=VALUE\n"
-"  psql ...\n"
-"  or \\setenv NAME [VALUE] inside psql\n"
-"\n"
-msgstr ""
-"  set NAME=VALUE\n"
-"  psql ...\n"
-"  또는 psql 명령 모드에서는 \\setenv NAME [VALUE]\n"
-"\n"
-
 #: help.c:413
+#, c-format
+msgid ""
+"  NAME=VALUE [NAME=VALUE] psql ...\n"
+"  or \\setenv NAME [VALUE] inside psql\n"
+"\n"
+msgstr ""
+"  NAME=VALUE [NAME=VALUE] psql ...\n"
+"  또는 psql 명령 모드에서는 \\setenv NAME [VALUE]\n"
+"\n"
+
+#: help.c:415
+#, c-format
+msgid ""
+"  set NAME=VALUE\n"
+"  psql ...\n"
+"  or \\setenv NAME [VALUE] inside psql\n"
+"\n"
+msgstr ""
+"  set NAME=VALUE\n"
+"  psql ...\n"
+"  또는 psql 명령 모드에서는 \\setenv NAME [VALUE]\n"
+"\n"
+
+#: help.c:418
 #, c-format
 msgid "  COLUMNS            number of columns for wrapped format\n"
 msgstr "  COLUMNS            다음 줄로 넘어갈 칼럼 수\n"
 
-#: help.c:414
+#: help.c:419
 #, c-format
 msgid "  PAGER              name of external pager program\n"
 msgstr "  PAGER              페이지 단위 보기에서 사용할 프로그램\n"
 
-#: help.c:415
+#: help.c:420
 #, c-format
 msgid ""
 "  PGAPPNAME          same as the application_name connection parameter\n"
 msgstr "  PGAPPNAME          application_name 변수값으로 사용됨\n"
 
-#: help.c:416
+#: help.c:421
 #, c-format
 msgid "  PGDATABASE         same as the dbname connection parameter\n"
 msgstr "  PGDATABASE         접속할 데이터베이스 이름\n"
 
-#: help.c:417
+#: help.c:422
 #, c-format
 msgid "  PGHOST             same as the host connection parameter\n"
 msgstr "  PGHOST             서버 접속용 호스트 이름\n"
 
-#: help.c:418
+#: help.c:423
 #, c-format
 msgid "  PGPASSWORD         connection password (not recommended)\n"
 msgstr "  PGPASSWORD         서버 접속 비밀번호 (보안에 취약함)\n"
 
-#: help.c:419
+#: help.c:424
 #, c-format
 msgid "  PGPASSFILE         password file name\n"
 msgstr "  PGPASSFILE         서버 접속용 비밀번호가 저장된 파일 이름\n"
 
-#: help.c:420
+#: help.c:425
 #, c-format
 msgid "  PGPORT             same as the port connection parameter\n"
 msgstr "  PGPORT             서버 접속용 포트\n"
 
-#: help.c:421
+#: help.c:426
 #, c-format
 msgid "  PGUSER             same as the user connection parameter\n"
 msgstr "  PGUSER             서버 접속용 데이터베이스 사용자 이름\n"
 
-#: help.c:422
+#: help.c:427
 #, c-format
 msgid ""
 "  PSQL_EDITOR, EDITOR, VISUAL\n"
@@ -3458,7 +3477,7 @@ msgstr ""
 "  PSQL_EDITOR, EDITOR, VISUAL\n"
 "                     \\e, \\ef, \\ev 명령에서 사용할 외부 편집기 경로\n"
 
-#: help.c:424
+#: help.c:429
 #, c-format
 msgid ""
 "  PSQL_EDITOR_LINENUMBER_ARG\n"
@@ -3467,32 +3486,32 @@ msgstr ""
 "  PSQL_EDITOR_LINENUMBER_ARG\n"
 "                     외부 편집기 호출 시 사용할 줄번호 선택 옵션\n"
 
-#: help.c:426
+#: help.c:431
 #, c-format
 msgid ""
 "  PSQL_HISTORY       alternative location for the command history file\n"
 msgstr "  PSQL_HISTORY       사용자 .psql_history 파일 임의 지정\n"
 
-#: help.c:427
+#: help.c:432
 #, c-format
 msgid "  PSQLRC             alternative location for the user's .psqlrc file\n"
 msgstr "  PSQLRC             사용자 .psqlrc 파일의 임의 지정\n"
 
-#: help.c:428
+#: help.c:433
 #, c-format
 msgid "  SHELL              shell used by the \\! command\n"
 msgstr "  SHELL              \\! 명령에서 사용할 쉘\n"
 
-#: help.c:429
+#: help.c:434
 #, c-format
 msgid "  TMPDIR             directory for temporary files\n"
 msgstr "  TMPDIR             임시 파일을 사용할 디렉터리\n"
 
-#: help.c:472
+#: help.c:477
 msgid "Available help:\n"
 msgstr "사용 가능한 도움말:\n"
 
-#: help.c:556
+#: help.c:561
 #, c-format
 msgid ""
 "Command:     %s\n"
@@ -3507,7 +3526,7 @@ msgstr ""
 "%s\n"
 "\n"
 
-#: help.c:572
+#: help.c:577
 #, c-format
 msgid ""
 "No help available for \"%s\".\n"
@@ -3552,12 +3571,12 @@ msgstr "ID"
 
 #: large_obj.c:308
 msgid "Large objects"
-msgstr "Large objects"
+msgstr "대형 객체들"
 
 #: mainloop.c:136
 #, c-format
 msgid "\\if: escaped\n"
-msgstr ""
+msgstr "\\if: escaped\n"
 
 #: mainloop.c:183
 #, c-format
@@ -3595,7 +3614,8 @@ msgstr ""
 #: mainloop.c:339 mainloop.c:476
 #, c-format
 msgid "query ignored; use \\endif or Ctrl-C to exit current \\if block\n"
-msgstr "쿼리 무시됨; 현재 \\if 블록을 끝내려면 \\endif 또는 Ctrl-C 키를 사용하세요.\n"
+msgstr ""
+"쿼리 무시됨; 현재 \\if 블록을 끝내려면 \\endif 또는 Ctrl-C 키를 사용하세요.\n"
 
 #: mainloop.c:494
 #, c-format
@@ -3799,11 +3819,11 @@ msgstr "스키마이름"
 
 #: sql_help.c:200
 msgid "abbreviated_grant_or_revoke"
-msgstr ""
+msgstr "grant_또는_revoke_내용"
 
 #: sql_help.c:201
 msgid "where abbreviated_grant_or_revoke is one of:"
-msgstr ""
+msgstr "grant_또는_revoke_내용에 사용되는 구문:"
 
 #: sql_help.c:202 sql_help.c:203 sql_help.c:204 sql_help.c:205 sql_help.c:206
 #: sql_help.c:207 sql_help.c:208 sql_help.c:209 sql_help.c:210 sql_help.c:211
@@ -3860,11 +3880,11 @@ msgstr "새버전"
 
 #: sql_help.c:320 sql_help.c:322
 msgid "member_object"
-msgstr ""
+msgstr "맴버_객체"
 
 #: sql_help.c:323
 msgid "where member_object is:"
-msgstr ""
+msgstr "맴버_객체 사용법:"
 
 #: sql_help.c:324 sql_help.c:329 sql_help.c:330 sql_help.c:331 sql_help.c:332
 #: sql_help.c:333 sql_help.c:334 sql_help.c:339 sql_help.c:343 sql_help.c:345
@@ -3942,7 +3962,7 @@ msgstr "언어_이름"
 
 #: sql_help.c:360
 msgid "and aggregate_signature is:"
-msgstr ""
+msgstr "집계함수_식별구문 사용법:"
 
 #: sql_help.c:383 sql_help.c:1668 sql_help.c:1927
 msgid "handler_function"
@@ -4043,7 +4063,7 @@ msgstr "실행비용"
 
 #: sql_help.c:533 sql_help.c:2030
 msgid "result_rows"
-msgstr ""
+msgstr "반환자료수"
 
 #: sql_help.c:554 sql_help.c:556 sql_help.c:853 sql_help.c:861 sql_help.c:865
 #: sql_help.c:868 sql_help.c:871 sql_help.c:1353 sql_help.c:1361
@@ -4079,7 +4099,7 @@ msgstr "테이블스페이스이름"
 #: sql_help.c:1149 sql_help.c:2090 sql_help.c:2122 sql_help.c:2461
 #: sql_help.c:2473 sql_help.c:2486 sql_help.c:2526 sql_help.c:2548
 msgid "storage_parameter"
-msgstr ""
+msgstr "스토리지_매개변수"
 
 #: sql_help.c:608 sql_help.c:1546 sql_help.c:3820
 msgid "large_object_oid"
@@ -4100,7 +4120,7 @@ msgstr ""
 
 #: sql_help.c:748 sql_help.c:760 sql_help.c:2163
 msgid "strategy_number"
-msgstr ""
+msgstr "전략_번호"
 
 #: sql_help.c:750 sql_help.c:751 sql_help.c:754 sql_help.c:755 sql_help.c:761
 #: sql_help.c:762 sql_help.c:764 sql_help.c:765 sql_help.c:2165
@@ -4456,7 +4476,7 @@ msgstr "로케일"
 
 #: sql_help.c:1820 sql_help.c:1858
 msgid "lc_collate"
-msgstr ""
+msgstr "lc_collate"
 
 #: sql_help.c:1821 sql_help.c:1859
 msgid "lc_ctype"
@@ -4557,7 +4577,7 @@ msgstr "색인방법"
 #: sql_help.c:2089 sql_help.c:2460 sql_help.c:2472 sql_help.c:2485
 #: sql_help.c:2532 sql_help.c:3467
 msgid "opclass"
-msgstr ""
+msgstr "연산자클래스"
 
 #: sql_help.c:2093 sql_help.c:2511
 msgid "predicate"
@@ -4623,7 +4643,7 @@ msgid "statistics_name"
 msgstr "통계정보_이름"
 
 #: sql_help.c:2346
-msgid "statistic_type"
+msgid "statistics_kind"
 msgstr "통계정보_종류"
 
 #: sql_help.c:2360
@@ -4844,7 +4864,7 @@ msgstr ""
 #: sql_help.c:4349 sql_help.c:4352 sql_help.c:4356 sql_help.c:4360
 #: sql_help.c:4368
 msgid "alias"
-msgstr ""
+msgstr "별칭"
 
 #: sql_help.c:2844
 msgid "using_list"
@@ -5679,7 +5699,7 @@ msgstr "데이터베이스 롤로 권한이 부여된 데이터베이스 개체�
 
 #: sql_help.c:5157
 msgid "replace the contents of a materialized view"
-msgstr ""
+msgstr "구체화된 뷰의 내용 수정"
 
 #: sql_help.c:5162
 msgid "rebuild indexes"
@@ -5763,17 +5783,17 @@ msgstr "물리적인 자료 정리 작업 - 쓰레기값 청소"
 msgid "compute a set of rows"
 msgstr "compute a set of rows"
 
-#: startup.c:184
+#: startup.c:187
 #, c-format
 msgid "%s: -1 can only be used in non-interactive mode\n"
 msgstr "%s: -1 옵션은 비대화형 모드에서만 사용할 수 있음\n"
 
-#: startup.c:287
+#: startup.c:290
 #, c-format
 msgid "%s: could not open log file \"%s\": %s\n"
 msgstr "%s: \"%s\" 로그 파일을 열 수 없음: %s\n"
 
-#: startup.c:394
+#: startup.c:397
 #, c-format
 msgid ""
 "Type \"help\" for help.\n"
@@ -5782,22 +5802,22 @@ msgstr ""
 "도움말을 보려면 \"help\"를 입력하십시오.\n"
 "\n"
 
-#: startup.c:543
+#: startup.c:546
 #, c-format
 msgid "%s: could not set printing parameter \"%s\"\n"
 msgstr "%s: 출력 매개 변수 \"%s\" 지정할 수 없음\n"
 
-#: startup.c:645
+#: startup.c:648
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "자세한 도움말은 \"%s --help\"\n"
 
-#: startup.c:662
+#: startup.c:665
 #, c-format
 msgid "%s: warning: extra command-line argument \"%s\" ignored\n"
 msgstr "%s: 경고: 추가 명령행 인수 \"%s\" 무시됨\n"
 
-#: startup.c:711
+#: startup.c:714
 #, c-format
 msgid "%s: could not find own program executable\n"
 msgstr "%s: 실행 가능한 프로그램을 찾을 수 없습니다\n"
@@ -5815,7 +5835,7 @@ msgstr ""
 
 #: variables.c:139
 #, c-format
-msgid "unrecognized value \"%s\" for \"%s\": boolean expected\n"
+msgid "unrecognized value \"%s\" for \"%s\": Boolean expected\n"
 msgstr "잘못된 \"%s\" 값을 \"%s\" 변수값으로 사용함: 불린형이어야 함\n"
 
 #: variables.c:176
@@ -5836,3 +5856,6 @@ msgid ""
 msgstr ""
 "\"%s\" 값은 \"%s\" 변수값으로 사용할 수 없음\n"
 "사용할 수 있는 변수값: %s\n"
+
+#~ msgid "statistic_type"
+#~ msgstr "통계정보_종류"

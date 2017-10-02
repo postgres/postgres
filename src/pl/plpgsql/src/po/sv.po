@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: plpgsql (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2017-08-02 18:08+0000\n"
-"PO-Revision-Date: 2017-08-05 15:50+0200\n"
+"PO-Revision-Date: 2017-10-01 23:26+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "Language: sv\n"
@@ -512,7 +512,7 @@ msgstr "blocketikett måste anges före DECLARE, inte efter"
 #: pl_gram.y:498
 #, c-format
 msgid "collations are not supported by type %s"
-msgstr "sorteringar stöds inte för typ %s"
+msgstr "jämförelser stöds inte för typ %s"
 
 #: pl_gram.y:513
 #, c-format

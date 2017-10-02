@@ -7,8 +7,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-08-17 23:16+0000\n"
-"PO-Revision-Date: 2017-08-23 10:02+0300\n"
+"POT-Creation-Date: 2017-09-27 06:16+0000\n"
+"PO-Revision-Date: 2017-09-21 12:01+0300\n"
+"Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -16,7 +17,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
-"Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
 #: ../../common/fe_memutils.c:98 parsexlog.c:74 parsexlog.c:127 parsexlog.c:179
@@ -304,17 +304,17 @@ msgstr "получение сегментов файлов\n"
 msgid "could not set libpq connection to single row mode\n"
 msgstr "не удалось перевести подключение libpq в однострочный режим\n"
 
-#: libpq_fetch.c:286
+#: libpq_fetch.c:287
 #, c-format
 msgid "unexpected result while fetching remote files: %s"
 msgstr "неожиданный результат при получении удалённых файлов: %s"
 
-#: libpq_fetch.c:292
+#: libpq_fetch.c:293
 #, c-format
 msgid "unexpected result set size while fetching remote files\n"
 msgstr "неожиданный размер набора результатов при получении удалённых файлов\n"
 
-#: libpq_fetch.c:298
+#: libpq_fetch.c:299
 #, c-format
 msgid ""
 "unexpected data types in result set while fetching remote files: %u %u %u\n"
@@ -322,68 +322,68 @@ msgstr ""
 "неожиданные типы данных в наборе результатов при получении удалённых файлов: "
 "%u %u %u\n"
 
-#: libpq_fetch.c:306
+#: libpq_fetch.c:307
 #, c-format
 msgid "unexpected result format while fetching remote files\n"
 msgstr "неожиданный формат результата при получении удалённых файлов\n"
 
-#: libpq_fetch.c:312
+#: libpq_fetch.c:313
 #, c-format
 msgid "unexpected null values in result while fetching remote files\n"
 msgstr ""
 "неожиданные значения NULL в результате при получении удалённых файлов\n"
 
-#: libpq_fetch.c:316
+#: libpq_fetch.c:317
 #, c-format
 msgid "unexpected result length while fetching remote files\n"
 msgstr "неожиданная длина результата при получении удалённых файлов\n"
 
-#: libpq_fetch.c:338
+#: libpq_fetch.c:339
 #, c-format
 msgid "received null value for chunk for file \"%s\", file has been deleted\n"
 msgstr "для файла \"%s\" вместо сегмента получено NULL-значение, файл удалён\n"
 
-#: libpq_fetch.c:345
+#: libpq_fetch.c:351
 #, c-format
-msgid "received chunk for file \"%s\", offset "
-msgstr "получен сегмент файла \"%s\": смещение "
+msgid "received chunk for file \"%s\", offset %s, size %d\n"
+msgstr "получен сегмент файла \"%s\": смещение %s, размер %d\n"
 
-#: libpq_fetch.c:374
+#: libpq_fetch.c:380
 #, c-format
 msgid "could not fetch remote file \"%s\": %s"
 msgstr "не удалось получить удалённый файл \"%s\": %s"
 
-#: libpq_fetch.c:379
+#: libpq_fetch.c:385
 #, c-format
 msgid "unexpected result set while fetching remote file \"%s\"\n"
 msgstr "неожиданный набор результатов при получении удалённого файла \"%s\"\n"
 
-#: libpq_fetch.c:390
+#: libpq_fetch.c:396
 #, c-format
 msgid "fetched file \"%s\", length %d\n"
 msgstr "получен файл \"%s\", длина %d\n"
 
-#: libpq_fetch.c:423
+#: libpq_fetch.c:429
 #, c-format
 msgid "could not send COPY data: %s"
 msgstr "не удалось отправить данные COPY: %s"
 
-#: libpq_fetch.c:449
+#: libpq_fetch.c:455
 #, c-format
 msgid "could not create temporary table: %s"
 msgstr "не удалось создать временную таблицу: %s"
 
-#: libpq_fetch.c:457
+#: libpq_fetch.c:463
 #, c-format
 msgid "could not send file list: %s"
 msgstr "не удалось отправить список файлов: %s"
 
-#: libpq_fetch.c:499
+#: libpq_fetch.c:505
 #, c-format
 msgid "could not send end-of-COPY: %s"
 msgstr "не удалось отправить сообщение о завершении копирования: %s"
 
-#: libpq_fetch.c:505
+#: libpq_fetch.c:511
 #, c-format
 msgid "unexpected result while sending file list: %s"
 msgstr "неожиданный результат при передаче списка: %s"

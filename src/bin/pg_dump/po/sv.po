@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2017-09-07 15:45+0000\n"
-"PO-Revision-Date: 2017-09-10 11:25+0200\n"
+"PO-Revision-Date: 2017-10-01 23:26+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "Language: sv\n"
@@ -195,7 +195,7 @@ msgstr "läser standardrättigheter\n"
 #: common.c:214
 #, c-format
 msgid "reading user-defined collations\n"
-msgstr "läser användardefinierade sorteringar\n"
+msgstr "läser användardefinierade jämförelser\n"
 
 #: common.c:219
 #, c-format
@@ -2080,7 +2080,7 @@ msgstr "VARNING: ogiltig typ \"%c\" för accessmetod \"%s\"\n"
 #: pg_dump.c:13086
 #, c-format
 msgid "unrecognized collation provider: %s\n"
-msgstr "okänd soreteringsleverantör: %s\n"
+msgstr "okänd jämförelseleverantör: %s\n"
 
 #: pg_dump.c:13533
 #, c-format

@@ -5,8 +5,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgres (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-08-16 10:59+0900\n"
-"PO-Revision-Date: 2017-08-18 18:17+0900\n"
+"POT-Creation-Date: 2017-09-19 09:51+0900\n"
+"PO-Revision-Date: 2017-09-19 10:26+0900\n"
 "Last-Translator: Ioseph Kim <ioseph@uri.sarang.net>\n"
 "Language-Team: Korean Team <pgsql-kr@postgresql.kr>\n"
 "Language: ko\n"
@@ -23,7 +23,7 @@ msgstr ""
 msgid "not recorded"
 msgstr "기록되어 있지 않음"
 
-#: ../common/controldata_utils.c:57 commands/copy.c:3118
+#: ../common/controldata_utils.c:57 commands/copy.c:3124
 #: commands/extension.c:3330 utils/adt/genfile.c:135
 #, c-format
 msgid "could not open file \"%s\" for reading: %m"
@@ -437,8 +437,8 @@ msgid ""
 "operator family \"%s\" of access method %s contains function %s with invalid "
 "support number %d"
 msgstr ""
-"\"%s\" 연산자 패밀리(접근 방법: %s)에 포함된 %s 함수가 잘못된 지원 번호 %d 로 지정되었습"
-"니다."
+"\"%s\" 연산자 패밀리(접근 방법: %s)에 포함된 %s 함수가 잘못된 지원 번호 %d "
+"로 지정되었습니다."
 
 #: access/brin/brin_validate.c:132 access/gin/ginvalidate.c:161
 #: access/gist/gistvalidate.c:158 access/hash/hashvalidate.c:114
@@ -448,8 +448,8 @@ msgid ""
 "operator family \"%s\" of access method %s contains function %s with wrong "
 "signature for support number %d"
 msgstr ""
-"\"%s\" 연산자 패밀리(접근 방법: %s)에 포함된 %s 함수가 잘못된 signature 지원 번호 %d 로 "
-"지정되었습니다."
+"\"%s\" 연산자 패밀리(접근 방법: %s)에 포함된 %s 함수가 잘못된 signature 지원 "
+"번호 %d 로 지정되었습니다."
 
 #: access/brin/brin_validate.c:154 access/gin/ginvalidate.c:180
 #: access/gist/gistvalidate.c:178 access/hash/hashvalidate.c:152
@@ -459,8 +459,8 @@ msgid ""
 "operator family \"%s\" of access method %s contains operator %s with invalid "
 "strategy number %d"
 msgstr ""
-"\"%s\" 연산자 패밀리(접근 방법: %s)에 포함된 %s 연산자의 %d 번 전략 번호가 잘못되었습니"
-"다."
+"\"%s\" 연산자 패밀리(접근 방법: %s)에 포함된 %s 연산자의 %d 번 전략 번호가 잘"
+"못되었습니다."
 
 #: access/brin/brin_validate.c:183 access/gin/ginvalidate.c:193
 #: access/hash/hashvalidate.c:165 access/nbtree/nbtvalidate.c:146
@@ -470,7 +470,8 @@ msgid ""
 "operator family \"%s\" of access method %s contains invalid ORDER BY "
 "specification for operator %s"
 msgstr ""
-"\"%s\" 연산자 패밀리(접근 방법: %s)에 %s 연산자가 잘못된 ORDER BY 명세를 사용합니다."
+"\"%s\" 연산자 패밀리(접근 방법: %s)에 %s 연산자가 잘못된 ORDER BY 명세를 사용"
+"합니다."
 
 #: access/brin/brin_validate.c:196 access/gin/ginvalidate.c:206
 #: access/gist/gistvalidate.c:226 access/hash/hashvalidate.c:178
@@ -479,7 +480,8 @@ msgstr ""
 msgid ""
 "operator family \"%s\" of access method %s contains operator %s with wrong "
 "signature"
-msgstr "\"%s\" 연산자 패밀리(접근 방법: %s)에 %s 연산자가 잘못된 기호를 사용합니다."
+msgstr ""
+"\"%s\" 연산자 패밀리(접근 방법: %s)에 %s 연산자가 잘못된 기호를 사용합니다."
 
 #: access/brin/brin_validate.c:234 access/hash/hashvalidate.c:218
 #: access/nbtree/nbtvalidate.c:201 access/spgist/spgvalidate.c:201
@@ -487,14 +489,17 @@ msgstr "\"%s\" 연산자 패밀리(접근 방법: %s)에 %s 연산자가 잘못�
 msgid ""
 "operator family \"%s\" of access method %s is missing operator(s) for types "
 "%s and %s"
-msgstr "\"%s\" 연산자 패밀리(접근 방법: %s)에는 %s, %s 자료형용 연산자가 없습니다"
+msgstr ""
+"\"%s\" 연산자 패밀리(접근 방법: %s)에는 %s, %s 자료형용 연산자가 없습니다"
 
 #: access/brin/brin_validate.c:244
 #, c-format
 msgid ""
 "operator family \"%s\" of access method %s is missing support function(s) "
 "for types %s and %s"
-msgstr "\"%s\" 연산자 패밀리(접근 방법: %s)에는 %s, %s 자료형용으로 쓸 함수가 없습니다"
+msgstr ""
+"\"%s\" 연산자 패밀리(접근 방법: %s)에는 %s, %s 자료형용으로 쓸 함수가 없습니"
+"다"
 
 #: access/brin/brin_validate.c:257 access/hash/hashvalidate.c:232
 #: access/nbtree/nbtvalidate.c:225 access/spgist/spgvalidate.c:234
@@ -677,15 +682,16 @@ msgid ""
 "operator family \"%s\" of access method %s contains support procedure %s "
 "with different left and right input types"
 msgstr ""
-"\"%s\" 연산자 패밀리(접근 방법: %s)에 서로 다른 양쪽 입력 자료형 인자를 사용할 수 있는 %s 지원 프로시져가 포"
-"함되어 있습니다."
+"\"%s\" 연산자 패밀리(접근 방법: %s)에 서로 다른 양쪽 입력 자료형 인자를 사용"
+"할 수 있는 %s 지원 프로시져가 포함되어 있습니다."
 
 #: access/gin/ginvalidate.c:257
 #, c-format
 msgid ""
 "operator class \"%s\" of access method %s is missing support function %d or "
 "%d"
-msgstr "\"%s\" 연산자 클래스(접근 방법: %s)에는 %d 또는 %d 지원 함수가 빠졌습니다"
+msgstr ""
+"\"%s\" 연산자 클래스(접근 방법: %s)에는 %d 또는 %d 지원 함수가 빠졌습니다"
 
 #: access/gist/gist.c:706 access/gist/gistvacuum.c:258
 #, c-format
@@ -757,8 +763,8 @@ msgid ""
 "operator family \"%s\" of access method %s contains unsupported ORDER BY "
 "specification for operator %s"
 msgstr ""
-"\"%s\" 연산자 패밀리(접근 방법: %s)에 %s 연산자가 지원하지 않는 ORDER BY 명세를 사용합"
-"니다."
+"\"%s\" 연산자 패밀리(접근 방법: %s)에 %s 연산자가 지원하지 않는 ORDER BY 명세"
+"를 사용합니다."
 
 #: access/gist/gistvalidate.c:207
 #, c-format
@@ -766,7 +772,8 @@ msgid ""
 "operator family \"%s\" of access method %s contains incorrect ORDER BY "
 "opfamily specification for operator %s"
 msgstr ""
-"\"%s\" 연산자 패밀리(접근 방법: %s)에 %s 연산자가 잘못된 ORDER BY 명세를 사용합니다."
+"\"%s\" 연산자 패밀리(접근 방법: %s)에 %s 연산자가 잘못된 ORDER BY 명세를 사용"
+"합니다."
 
 #: access/hash/hashinsert.c:82
 #, c-format
@@ -856,7 +863,7 @@ msgid "attempted to update invisible tuple"
 msgstr "볼 수 없는 튜플을 변경하려고 함"
 
 #: access/heap/heapam.c:4938 access/heap/heapam.c:4976
-#: access/heap/heapam.c:5228 executor/execMain.c:2602
+#: access/heap/heapam.c:5228 executor/execMain.c:2630
 #, c-format
 msgid "could not obtain lock on row in relation \"%s\""
 msgstr "\"%s\" 릴레이션의 잠금 정보를 구할 수 없음"
@@ -1000,7 +1007,7 @@ msgstr ""
 "값의 MD5 해시 함수 인덱스를 고려하거나 전체 텍스트 인덱싱을 사용하십시오."
 
 #: access/nbtree/nbtpage.c:169 access/nbtree/nbtpage.c:372
-#: access/nbtree/nbtpage.c:459 parser/parse_utilcmd.c:1900
+#: access/nbtree/nbtpage.c:459 parser/parse_utilcmd.c:1901
 #, c-format
 msgid "index \"%s\" is not a btree"
 msgstr "\"%s\" 인덱스는 btree 인덱스가 아닙니다"
@@ -1031,7 +1038,8 @@ msgid ""
 "operator family \"%s\" of access method %s is missing support function for "
 "types %s and %s"
 msgstr ""
-"\"%s\" 연산자 패밀리(접근 방법: %s)에는 %s 자료형과 %s 자료형용 지원 함수가 빠졌음"
+"\"%s\" 연산자 패밀리(접근 방법: %s)에는 %s 자료형과 %s 자료형용 지원 함수가 "
+"빠졌음"
 
 #: access/spgist/spgutils.c:705
 #, c-format
@@ -1043,7 +1051,9 @@ msgstr "SP-GiST 내부 튜플 크기가 초과됨: 현재값 %zu, 최대값 %zu"
 msgid ""
 "operator family \"%s\" of access method %s is missing support function %d "
 "for type %s"
-msgstr "\"%s\" 연산자 패밀리(접근 방법: %s)에 %d 지원 함수가 %s 자료형용으로 없습니다."
+msgstr ""
+"\"%s\" 연산자 패밀리(접근 방법: %s)에 %d 지원 함수가 %s 자료형용으로 없습니"
+"다."
 
 #: access/tablesample/bernoulli.c:152 access/tablesample/system.c:156
 #, c-format
@@ -1351,7 +1361,7 @@ msgstr "타임라인 ID는 하위 타임라인 ID보다 작아야 합니다."
 
 #: access/transam/timeline.c:418 access/transam/timeline.c:498
 #: access/transam/xlog.c:3256 access/transam/xlog.c:3423
-#: access/transam/xlogfuncs.c:693 commands/copy.c:1776
+#: access/transam/xlogfuncs.c:693 commands/copy.c:1723
 #: storage/file/copydir.c:206
 #, c-format
 msgid "could not close file \"%s\": %m"
@@ -1498,33 +1508,34 @@ msgstr "공유 메모리에서 %u 준비된 트랜잭션을 복구함"
 
 #: access/transam/twophase.c:2034
 #, c-format
-msgid "removing stale two-phase state file for \"%u\""
-msgstr "\"%u\" 트랜잭션에서 사용하는 오래된 two-phase 상태정보 파일을 삭제함"
+msgid "removing stale two-phase state file for transaction %u"
+msgstr "%u 트랜잭션에서 사용하는 오래된 two-phase 상태정보 파일을 삭제함"
 
 #: access/transam/twophase.c:2041
 #, c-format
-msgid "removing stale two-phase state from shared memory for \"%u\""
-msgstr "\"%u\" 트랜잭션에서 사용하는 오래된 two-phase 상태정보를 공유 메모리에서 삭제함"
+msgid "removing stale two-phase state from memory for transaction %u"
+msgstr ""
+"%u 트랜잭션에서 사용하는 오래된 two-phase 상태정보를 공유 메모리에서 삭제함"
 
 #: access/transam/twophase.c:2054
 #, c-format
-msgid "removing future two-phase state file for \"%u\""
-msgstr "\"%u\" 트랜잭션에서 사용하는 future two-phase 상태정보 파일을 삭제함"
+msgid "removing future two-phase state file for transaction %u"
+msgstr "%u 트랜잭션에서 사용하는 future two-phase 상태정보 파일을 삭제함"
 
 #: access/transam/twophase.c:2061
 #, c-format
-msgid "removing future two-phase state from memory for \"%u\""
-msgstr "\"%u\" 트랜잭션에서 사용하는 future two-phase 상태정보를 메모리에서 삭제함"
+msgid "removing future two-phase state from memory for transaction %u"
+msgstr "%u 트랜잭션에서 사용하는 future two-phase 상태정보를 메모리에서 삭제함"
 
 #: access/transam/twophase.c:2075 access/transam/twophase.c:2094
 #, c-format
-msgid "removing corrupt two-phase state file for \"%u\""
-msgstr "\"%u\" 트랜잭션에서 사용하는 잘못된 two-phase 상태정보 파일을 삭제함"
+msgid "removing corrupt two-phase state file for transaction %u"
+msgstr "%u 트랜잭션에서 사용하는 잘못된 two-phase 상태정보 파일을 삭제함"
 
 #: access/transam/twophase.c:2101
 #, c-format
-msgid "removing corrupt two-phase state from memory for \"%u\""
-msgstr "\"%u\" 트랜잭션에서 사용하는 잘못된 two-phase 상태정보를 메모리에서 삭제함"
+msgid "removing corrupt two-phase state from memory for transaction %u"
+msgstr "%u 트랜잭션에서 사용하는 잘못된 two-phase 상태정보를 메모리에서 삭제함"
 
 #: access/transam/varsup.c:124
 #, c-format
@@ -2575,15 +2586,14 @@ msgstr "서비스를 멈추고 있습니다"
 
 #: access/transam/xlog.c:8649
 #, c-format
-msgid "checkpoint skipped due to an idle system"
+msgid "checkpoint skipped because system is idle"
 msgstr "시스템이 놀고 있어 체크포인트 작업 건너뜀"
 
 #: access/transam/xlog.c:8854
 #, c-format
 msgid ""
 "concurrent write-ahead log activity while database system is shutting down"
-msgstr ""
-"데이터베이스 시스템이 중지되는 동안 동시 트랜잭션 로그가 활성화 되었음"
+msgstr "데이터베이스 시스템이 중지되는 동안 동시 트랜잭션 로그가 활성화 되었음"
 
 #: access/transam/xlog.c:9108
 #, c-format
@@ -2734,7 +2744,7 @@ msgstr "테이블스페이스 기능은 이 플랫폼에서는 지원하지 않�
 
 #: access/transam/xlog.c:10528 access/transam/xlog.c:10566
 #: access/transam/xlog.c:10775 access/transam/xlogarchive.c:105
-#: access/transam/xlogarchive.c:264 commands/copy.c:1897 commands/copy.c:3128
+#: access/transam/xlogarchive.c:264 commands/copy.c:1844 commands/copy.c:3134
 #: commands/extension.c:3319 commands/tablespace.c:780
 #: commands/tablespace.c:871 replication/basebackup.c:480
 #: replication/basebackup.c:548 replication/logical/snapbuild.c:1518
@@ -2983,7 +2993,7 @@ msgstr "pg_stop_backup('f') 형태로 함수를 호출했나요?"
 #: commands/event_trigger.c:2022 commands/extension.c:1895
 #: commands/extension.c:2004 commands/extension.c:2228 commands/prepare.c:721
 #: executor/execExpr.c:2121 executor/execSRF.c:688 executor/functions.c:1029
-#: foreign/foreign.c:488 libpq/hba.c:2563 replication/logical/launcher.c:1019
+#: foreign/foreign.c:488 libpq/hba.c:2563 replication/logical/launcher.c:1026
 #: replication/logical/logicalfuncs.c:176 replication/logical/origin.c:1422
 #: replication/slotfuncs.c:197 replication/walsender.c:3166
 #: utils/adt/jsonfuncs.c:1689 utils/adt/jsonfuncs.c:1819
@@ -3000,7 +3010,7 @@ msgstr ""
 #: access/transam/xlogfuncs.c:209 commands/event_trigger.c:1475
 #: commands/event_trigger.c:2026 commands/extension.c:1899
 #: commands/extension.c:2008 commands/extension.c:2232 commands/prepare.c:725
-#: foreign/foreign.c:493 libpq/hba.c:2567 replication/logical/launcher.c:1023
+#: foreign/foreign.c:493 libpq/hba.c:2567 replication/logical/launcher.c:1030
 #: replication/logical/logicalfuncs.c:180 replication/logical/origin.c:1426
 #: replication/slotfuncs.c:201 replication/walsender.c:3170
 #: utils/adt/pgstatfuncs.c:460 utils/adt/pgstatfuncs.c:561
@@ -3388,7 +3398,7 @@ msgstr "%u large object 없음"
 #: commands/user.c:571 commands/user.c:579 commands/user.c:587
 #: commands/user.c:595 commands/user.c:603 commands/user.c:611
 #: commands/user.c:620 commands/user.c:628 commands/user.c:636
-#: parser/parse_utilcmd.c:395 replication/pgoutput/pgoutput.c:107
+#: parser/parse_utilcmd.c:396 replication/pgoutput/pgoutput.c:107
 #: replication/pgoutput/pgoutput.c:128 replication/walsender.c:800
 #: replication/walsender.c:811 replication/walsender.c:821
 #, c-format
@@ -3406,15 +3416,15 @@ msgid "cannot use IN SCHEMA clause when using GRANT/REVOKE ON SCHEMAS"
 msgstr ""
 
 #: catalog/aclchk.c:1521 catalog/objectaddress.c:1389 commands/analyze.c:390
-#: commands/copy.c:4747 commands/sequence.c:1700 commands/tablecmds.c:5621
+#: commands/copy.c:4753 commands/sequence.c:1700 commands/tablecmds.c:5621
 #: commands/tablecmds.c:5768 commands/tablecmds.c:5825
 #: commands/tablecmds.c:5898 commands/tablecmds.c:5992
 #: commands/tablecmds.c:6051 commands/tablecmds.c:6176
 #: commands/tablecmds.c:6230 commands/tablecmds.c:6322
 #: commands/tablecmds.c:6478 commands/tablecmds.c:8707
-#: commands/tablecmds.c:8983 commands/tablecmds.c:9418 commands/trigger.c:791
-#: parser/analyze.c:2310 parser/parse_relation.c:2699
-#: parser/parse_relation.c:2761 parser/parse_target.c:1002
+#: commands/tablecmds.c:8983 commands/tablecmds.c:9418 commands/trigger.c:817
+#: parser/analyze.c:2310 parser/parse_relation.c:2728
+#: parser/parse_relation.c:2790 parser/parse_target.c:1002
 #: parser/parse_type.c:127 utils/adt/acl.c:2823 utils/adt/ruleutils.c:2356
 #, c-format
 msgid "column \"%s\" of relation \"%s\" does not exist"
@@ -3825,7 +3835,7 @@ msgstr "OID %u 확장 모듈이 없음"
 msgid "publication with OID %u does not exist"
 msgstr "OID %u 발행 없음"
 
-#: catalog/aclchk.c:5123 commands/subscriptioncmds.c:1093
+#: catalog/aclchk.c:5123 commands/subscriptioncmds.c:1098
 #, c-format
 msgid "subscription with OID %u does not exist"
 msgstr "OID %u 구독 없음"
@@ -4078,7 +4088,7 @@ msgid "Truncate table \"%s\" at the same time, or use TRUNCATE ... CASCADE."
 msgstr ""
 "\"%s\" 테이블도 함께 자료를 지우거나, TRUNCATE ... CASCADE 구문을 사용하세요."
 
-#: catalog/index.c:213 parser/parse_utilcmd.c:1671 parser/parse_utilcmd.c:1757
+#: catalog/index.c:213 parser/parse_utilcmd.c:1672 parser/parse_utilcmd.c:1758
 #, c-format
 msgid "multiple primary keys for table \"%s\" are not allowed"
 msgstr "\"%s\" 테이블에는 이미 기본키가 있습니다"
@@ -4106,7 +4116,7 @@ msgstr ""
 "들 수 없습니다"
 
 #: catalog/index.c:798 commands/createas.c:250 commands/sequence.c:152
-#: parser/parse_utilcmd.c:201
+#: parser/parse_utilcmd.c:202
 #, c-format
 msgid "relation \"%s\" already exists, skipping"
 msgstr "\"%s\" 이름의 릴레이션(relation)이 이미 있습니다, 건너뜀"
@@ -4137,7 +4147,7 @@ msgid "index \"%s\" was reindexed"
 msgstr "\"%s\" 인덱스가 다시 만들어졌음"
 
 #: catalog/namespace.c:235 catalog/namespace.c:433 catalog/namespace.c:527
-#: commands/trigger.c:4931
+#: commands/trigger.c:5148
 #, c-format
 msgid "cross-database references are not implemented: \"%s.%s.%s\""
 msgstr "서로 다른 데이터베이스간의 참조는 구현되어있지 않습니다: \"%s.%s.%s\""
@@ -4731,11 +4741,11 @@ msgstr "하한값(%s)은 상한값(%s)과 같거나 커야 합니다"
 msgid "partition \"%s\" would overlap partition \"%s\""
 msgstr "\"%s\" 파티션이 \"%s\" 파티션과 겹칩니다."
 
-#: catalog/partition.c:927 catalog/partition.c:1105 commands/analyze.c:1446
-#: commands/copy.c:1467 commands/tablecmds.c:8885
-#: executor/execExprInterp.c:2853 executor/execMain.c:1878
-#: executor/execMain.c:1956 executor/execMain.c:2004 executor/execMain.c:2114
-#: executor/execMain.c:3294 executor/nodeModifyTable.c:1518
+#: catalog/partition.c:927 catalog/partition.c:1110 commands/analyze.c:1446
+#: commands/copy.c:2489 commands/tablecmds.c:8885
+#: executor/execExprInterp.c:2853 executor/execMain.c:1906
+#: executor/execMain.c:1984 executor/execMain.c:2032 executor/execMain.c:2142
+#: executor/execMain.c:3321 executor/nodeModifyTable.c:1533
 msgid "could not convert row type"
 msgstr "로우 자료형을 변환 할 수 없음"
 
@@ -4808,7 +4818,8 @@ msgstr "%s combine 함수의 반환 자료형이 %s 형이 아닙니다"
 #: catalog/pg_aggregate.c:436
 #, c-format
 msgid "combine function with transition type %s must not be declared STRICT"
-msgstr "%s 자료형을 전달 값으로 사용하는 조합 함수는 STRICT 속성을 가져야 합니다"
+msgstr ""
+"%s 자료형을 전달 값으로 사용하는 조합 함수는 STRICT 속성을 가져야 합니다"
 
 #: catalog/pg_aggregate.c:455
 #, c-format
@@ -5153,7 +5164,7 @@ msgstr "SQL 함수의 인자로 %s 자료형은 사용될 수 없습니다"
 msgid "SQL function \"%s\""
 msgstr "\"%s\" SQL 함수"
 
-#: catalog/pg_publication.c:57 commands/trigger.c:196
+#: catalog/pg_publication.c:57 commands/trigger.c:197
 #, c-format
 msgid "\"%s\" is a partitioned table"
 msgstr "\"%s\" 객체는 파티션된 테이블임"
@@ -5270,7 +5281,7 @@ msgstr ""
 "수 없음"
 
 #: catalog/pg_subscription.c:176 commands/subscriptioncmds.c:633
-#: commands/subscriptioncmds.c:843 commands/subscriptioncmds.c:1062
+#: commands/subscriptioncmds.c:843 commands/subscriptioncmds.c:1067
 #, c-format
 msgid "subscription \"%s\" does not exist"
 msgstr "\"%s\" 이름의 구독은 없습니다."
@@ -5513,7 +5524,7 @@ msgstr "핸들러 함수 부분이 빠졌습니다"
 
 #: commands/amcmds.c:262 commands/event_trigger.c:243
 #: commands/foreigncmds.c:487 commands/proclang.c:117 commands/proclang.c:289
-#: commands/trigger.c:590 parser/parse_clause.c:1011
+#: commands/trigger.c:616 parser/parse_clause.c:1011
 #, c-format
 msgid "function %s must return type %s"
 msgstr "%s 함수는 %s 자료형을 반환해야 함"
@@ -5776,7 +5787,7 @@ msgstr "\"%s\" 로케일 이름을 언어 태그로 변환할 수 없음: %s"
 msgid "must be superuser to import system collations"
 msgstr "시스템 정렬규칙을 가져오려면 슈퍼유저여야함"
 
-#: commands/collationcmds.c:535 commands/copy.c:1860 commands/copy.c:3103
+#: commands/collationcmds.c:535 commands/copy.c:1807 commands/copy.c:3109
 #, c-format
 msgid "could not execute command \"%s\": %m"
 msgstr "\"%s\" 명령을 실행할 수 없음: %m"
@@ -5785,11 +5796,6 @@ msgstr "\"%s\" 명령을 실행할 수 없음: %m"
 #, c-format
 msgid "no usable system locales were found"
 msgstr ""
-
-#: commands/collationcmds.c:747 commands/collationcmds.c:786
-#, c-format
-msgid "could not get keyword values for locale \"%s\": %s"
-msgstr "\"%s\" 로케일용 키워드 값을 구할 수 없음: %s"
 
 #: commands/comment.c:61 commands/dbcommands.c:808 commands/dbcommands.c:996
 #: commands/dbcommands.c:1100 commands/dbcommands.c:1290
@@ -5800,7 +5806,7 @@ msgstr "\"%s\" 로케일용 키워드 값을 구할 수 없음: %s"
 msgid "database \"%s\" does not exist"
 msgstr "\"%s\" 데이터베이스 없음"
 
-#: commands/comment.c:101 commands/seclabel.c:117 parser/parse_utilcmd.c:931
+#: commands/comment.c:101 commands/seclabel.c:117 parser/parse_utilcmd.c:932
 #, c-format
 msgid ""
 "\"%s\" is not a table, view, materialized view, composite type, or foreign "
@@ -6038,194 +6044,193 @@ msgid "table \"%s\" does not have OIDs"
 msgstr ""
 "\"%s\" 테이블은 without oids 속성으로 만들어졌기에 OID 값을 구할 수 없습니다"
 
-#: commands/copy.c:1486
+#: commands/copy.c:1433
 #, c-format
 msgid "COPY (query) WITH OIDS is not supported"
 msgstr "COPY (쿼리) WITH OIDS 지원하지 않음"
 
-#: commands/copy.c:1507
+#: commands/copy.c:1454
 #, c-format
 msgid "DO INSTEAD NOTHING rules are not supported for COPY"
 msgstr "DO INSTEAD NOTHING 룰(rule)은 COPY 구문에서 지원하지 않습니다."
 
-#: commands/copy.c:1521
+#: commands/copy.c:1468
 #, c-format
 msgid "conditional DO INSTEAD rules are not supported for COPY"
 msgstr "선택적 DO INSTEAD 룰은 COPY 구문에서 지원하지 않음"
 
-#: commands/copy.c:1525
+#: commands/copy.c:1472
 #, c-format
 msgid "DO ALSO rules are not supported for the COPY"
 msgstr "DO ALSO 룰(rule)은 COPY 구문에서 지원하지 않습니다."
 
-#: commands/copy.c:1530
+#: commands/copy.c:1477
 #, c-format
 msgid "multi-statement DO INSTEAD rules are not supported for COPY"
 msgstr "다중 구문 DO INSTEAD 룰은 COPY 구문에서 지원하지 않음"
 
-#: commands/copy.c:1540
+#: commands/copy.c:1487
 #, c-format
 msgid "COPY (SELECT INTO) is not supported"
 msgstr "COPY (SELECT INTO) 지원하지 않음"
 
-#: commands/copy.c:1557
+#: commands/copy.c:1504
 #, c-format
 msgid "COPY query must have a RETURNING clause"
 msgstr "COPY 쿼리는 RETURNING 절이 있어야 합니다"
 
-#: commands/copy.c:1585
+#: commands/copy.c:1532
 #, c-format
 msgid "relation referenced by COPY statement has changed"
 msgstr "COPY 문에 의해 참조된 릴레이션이 변경 되었음"
 
-#: commands/copy.c:1643
+#: commands/copy.c:1590
 #, c-format
 msgid "FORCE_QUOTE column \"%s\" not referenced by COPY"
 msgstr "\"%s\" FORCE_QUOTE 칼럼은 COPY에서 참조되지 않음"
 
-#: commands/copy.c:1665
+#: commands/copy.c:1612
 #, c-format
 msgid "FORCE_NOT_NULL column \"%s\" not referenced by COPY"
 msgstr "\"%s\" FORCE_NOT_NULL 칼럼은 COPY에서 참조되지 않음"
 
-#: commands/copy.c:1687
+#: commands/copy.c:1634
 #, c-format
 msgid "FORCE_NULL column \"%s\" not referenced by COPY"
 msgstr "\"%s\" FORCE_NULL 칼럼은 COPY에서 참조되지 않음"
 
-#: commands/copy.c:1752
+#: commands/copy.c:1699
 #, c-format
 msgid "could not close pipe to external command: %m"
 msgstr "외부 명령으로 파이프를 닫을 수 없음: %m"
 
-#: commands/copy.c:1756
+#: commands/copy.c:1703
 #, c-format
 msgid "program \"%s\" failed"
 msgstr "\"%s\" 프로그램 실패"
 
-#: commands/copy.c:1806
+#: commands/copy.c:1753
 #, c-format
 msgid "cannot copy from view \"%s\""
 msgstr "\"%s\" 이름의 객체는 뷰(view)입니다. 자료를 내보낼 수 없습니다"
 
-#: commands/copy.c:1808 commands/copy.c:1814 commands/copy.c:1820
-#: commands/copy.c:1831
+#: commands/copy.c:1755 commands/copy.c:1761 commands/copy.c:1767
+#: commands/copy.c:1778
 #, c-format
 msgid "Try the COPY (SELECT ...) TO variant."
 msgstr "COPY (SELECT ...) TO 변형을 시도하십시오."
 
-#: commands/copy.c:1812
+#: commands/copy.c:1759
 #, c-format
 msgid "cannot copy from materialized view \"%s\""
 msgstr "\"%s\" 이름의 객체는 구체화된 뷰입니다. 자료를 내보낼 수 없습니다"
 
-#: commands/copy.c:1818
+#: commands/copy.c:1765
 #, c-format
 msgid "cannot copy from foreign table \"%s\""
 msgstr "\"%s\" 이름의 객체는 외부 테이블입니다. 자료를 내보낼 수 없습니다"
 
-#: commands/copy.c:1824
+#: commands/copy.c:1771
 #, c-format
 msgid "cannot copy from sequence \"%s\""
 msgstr "\"%s\" 이름의 객체는 시퀀스입니다. 자료를 내보낼 수 없습니다"
 
-#: commands/copy.c:1829
+#: commands/copy.c:1776
 #, c-format
 msgid "cannot copy from partitioned table \"%s\""
 msgstr "\"%s\" 파티션 된 테이블에서 복사할 수 없음"
 
-#: commands/copy.c:1835
+#: commands/copy.c:1782
 #, c-format
 msgid "cannot copy from non-table relation \"%s\""
 msgstr ""
 "\"%s\" 객체는 테이블이 아닌 릴레이션(relation)이기에 자료를 내보낼 수 없습니"
 "다"
 
-#: commands/copy.c:1875
+#: commands/copy.c:1822
 #, c-format
 msgid "relative path not allowed for COPY to file"
 msgstr "COPY 명령에 사용할 파일 이름으로 상대경로는 사용할 수 없습니다"
 
-#: commands/copy.c:1887
+#: commands/copy.c:1834
 #, c-format
 msgid "could not open file \"%s\" for writing: %m"
 msgstr "\"%s\" 파일 열기 실패: %m"
 
-#: commands/copy.c:1890
+#: commands/copy.c:1837
 #, c-format
 msgid ""
 "COPY TO instructs the PostgreSQL server process to write a file. You may "
 "want a client-side facility such as psql's \\copy."
 msgstr ""
 
-#: commands/copy.c:1903 commands/copy.c:3134
+#: commands/copy.c:1850 commands/copy.c:3140
 #, c-format
 msgid "\"%s\" is a directory"
 msgstr "\"%s\" 디렉터리임"
 
-#: commands/copy.c:2226
+#: commands/copy.c:2173
 #, c-format
 msgid "COPY %s, line %d, column %s"
 msgstr "%s 복사, %d번째 줄, %s 열"
 
-#: commands/copy.c:2230 commands/copy.c:2277
+#: commands/copy.c:2177 commands/copy.c:2224
 #, c-format
 msgid "COPY %s, line %d"
 msgstr "%s 복사, %d번째 줄"
 
-#: commands/copy.c:2241
+#: commands/copy.c:2188
 #, c-format
 msgid "COPY %s, line %d, column %s: \"%s\""
 msgstr "%s 복사, %d번째 줄, %s 열: \"%s\""
 
-#: commands/copy.c:2249
+#: commands/copy.c:2196
 #, c-format
 msgid "COPY %s, line %d, column %s: null input"
 msgstr "COPY %s, %d행, %s 열: null 입력"
 
-#: commands/copy.c:2271
+#: commands/copy.c:2218
 #, c-format
 msgid "COPY %s, line %d: \"%s\""
 msgstr "%s 복사, %d번째 줄: \"%s\""
 
-#: commands/copy.c:2365
+#: commands/copy.c:2312
 #, c-format
 msgid "cannot copy to view \"%s\""
 msgstr "\"%s\" 뷰(view)에 복사할 수 없음"
 
-#: commands/copy.c:2367
+#: commands/copy.c:2314
 #, c-format
 msgid "To enable copying to a view, provide an INSTEAD OF INSERT trigger."
-msgstr ""
-"뷰를 통해 자료를 입력하려면, INSTEAD OF INSERT 트리거를 사용하세요"
+msgstr "뷰를 통해 자료를 입력하려면, INSTEAD OF INSERT 트리거를 사용하세요"
 
-#: commands/copy.c:2371
+#: commands/copy.c:2318
 #, c-format
 msgid "cannot copy to materialized view \"%s\""
 msgstr "\"%s\" 구체화된 뷰(view)에 복사할 수 없음"
 
-#: commands/copy.c:2376
+#: commands/copy.c:2323
 #, c-format
 msgid "cannot copy to foreign table \"%s\""
 msgstr "\"%s\" 외부 테이블에 복사할 수 없음"
 
-#: commands/copy.c:2381
+#: commands/copy.c:2328
 #, c-format
 msgid "cannot copy to sequence \"%s\""
 msgstr "\"%s\" 시퀀스에 복사할 수 없음"
 
-#: commands/copy.c:2386
+#: commands/copy.c:2333
 #, c-format
 msgid "cannot copy to non-table relation \"%s\""
 msgstr "\"%s\" 객체는 테이블이 아닌 릴레이션(relation)이기에 복사할 수 없음"
 
-#: commands/copy.c:2449
+#: commands/copy.c:2396
 #, c-format
 msgid "cannot perform FREEZE because of prior transaction activity"
 msgstr ""
 "먼저 시작한 다른 트랜잭션이 아직 활성 상태여서 FREEZE 작업은 진행할 수 없음"
 
-#: commands/copy.c:2455
+#: commands/copy.c:2402
 #, c-format
 msgid ""
 "cannot perform FREEZE because the table was not created or truncated in the "
@@ -6234,161 +6239,162 @@ msgstr ""
 "현재 하위 트랜잭션에서 만들어지거나 비워진 테이블이 아니기 때문에 FREEZE 작업"
 "을 할 수 없음"
 
-#: commands/copy.c:2618 executor/nodeModifyTable.c:311
+#: commands/copy.c:2624 executor/nodeModifyTable.c:311
 #, c-format
 msgid "cannot route inserted tuples to a foreign table"
 msgstr "외부 테이블에 자료를 입력할 수 없음"
 
-#: commands/copy.c:3121
+#: commands/copy.c:3127
 #, c-format
 msgid ""
 "COPY FROM instructs the PostgreSQL server process to read a file. You may "
 "want a client-side facility such as psql's \\copy."
 msgstr ""
-"COPY FROM 명령은 PostgreSQL 서버 프로세스가 한 파일을 읽어 처리합니다. "
-"클라이언트 쪽에 있는 파일을 읽어 처리 하려면, psql의 \\copy 내장 명령어를 사용하세요."
+"COPY FROM 명령은 PostgreSQL 서버 프로세스가 한 파일을 읽어 처리합니다. 클라이"
+"언트 쪽에 있는 파일을 읽어 처리 하려면, psql의 \\copy 내장 명령어를 사용하세"
+"요."
 
-#: commands/copy.c:3154
+#: commands/copy.c:3160
 #, c-format
 msgid "COPY file signature not recognized"
 msgstr "file signature 복사는 인식되지 않았음"
 
-#: commands/copy.c:3159
+#: commands/copy.c:3165
 #, c-format
 msgid "invalid COPY file header (missing flags)"
 msgstr "COPY 명령에서 잘못된 파일 헤더를 사용함(플래그 빠졌음)"
 
-#: commands/copy.c:3165
+#: commands/copy.c:3171
 #, c-format
 msgid "unrecognized critical flags in COPY file header"
 msgstr "_^_ 복사 파일 헤더안에 critical flags 값들을 인식할 수 없음"
 
-#: commands/copy.c:3171
+#: commands/copy.c:3177
 #, c-format
 msgid "invalid COPY file header (missing length)"
 msgstr "복사 파일 헤더에 length 값이 빠졌음"
 
-#: commands/copy.c:3178
+#: commands/copy.c:3184
 #, c-format
 msgid "invalid COPY file header (wrong length)"
 msgstr "복사 파일 헤더에 length 값이 잘못되었음"
 
-#: commands/copy.c:3311 commands/copy.c:4018 commands/copy.c:4248
+#: commands/copy.c:3317 commands/copy.c:4024 commands/copy.c:4254
 #, c-format
 msgid "extra data after last expected column"
 msgstr "마지막 칼럼을 초과해서 또 다른 데이터가 있음"
 
-#: commands/copy.c:3321
+#: commands/copy.c:3327
 #, c-format
 msgid "missing data for OID column"
 msgstr "OID 열에 자료가 없음"
 
-#: commands/copy.c:3327
+#: commands/copy.c:3333
 #, c-format
 msgid "null OID in COPY data"
 msgstr "복사 데이터에 null OID 값이 있음"
 
-#: commands/copy.c:3337 commands/copy.c:3460
+#: commands/copy.c:3343 commands/copy.c:3466
 #, c-format
 msgid "invalid OID in COPY data"
 msgstr "복사 데이터에 잘못된 OID 값이 있음"
 
-#: commands/copy.c:3352
+#: commands/copy.c:3358
 #, c-format
 msgid "missing data for column \"%s\""
 msgstr "\"%s\" 칼럼의 자료가 빠졌음"
 
-#: commands/copy.c:3435
+#: commands/copy.c:3441
 #, c-format
 msgid "received copy data after EOF marker"
 msgstr "EOF 표시 뒤에도 복사 데이터를 받았음"
 
-#: commands/copy.c:3442
+#: commands/copy.c:3448
 #, c-format
 msgid "row field count is %d, expected %d"
 msgstr "행(row) 필드 갯수가 %d 임, 예상값은 %d"
 
-#: commands/copy.c:3782 commands/copy.c:3799
+#: commands/copy.c:3788 commands/copy.c:3805
 #, c-format
 msgid "literal carriage return found in data"
 msgstr "데이터에 carriage return 값이 잘못되었음"
 
-#: commands/copy.c:3783 commands/copy.c:3800
+#: commands/copy.c:3789 commands/copy.c:3806
 #, c-format
 msgid "unquoted carriage return found in data"
 msgstr "데이터에 carriage return 값 표기가 잘못 되었음"
 
-#: commands/copy.c:3785 commands/copy.c:3802
+#: commands/copy.c:3791 commands/copy.c:3808
 #, c-format
 msgid "Use \"\\r\" to represent carriage return."
 msgstr "carriage return값으로 \"\\r\" 문자를 사용하세요"
 
-#: commands/copy.c:3786 commands/copy.c:3803
+#: commands/copy.c:3792 commands/copy.c:3809
 #, c-format
 msgid "Use quoted CSV field to represent carriage return."
 msgstr ""
 "carriage return 문자를 그대로 적용하려면, quoted CSV 필드를 사용하세요."
 
-#: commands/copy.c:3815
+#: commands/copy.c:3821
 #, c-format
 msgid "literal newline found in data"
 msgstr "데이터에 newline 값이 잘못되었음"
 
-#: commands/copy.c:3816
+#: commands/copy.c:3822
 #, c-format
 msgid "unquoted newline found in data"
 msgstr "데이터에 newline 값이 잘못 되었음"
 
-#: commands/copy.c:3818
+#: commands/copy.c:3824
 #, c-format
 msgid "Use \"\\n\" to represent newline."
 msgstr "newline 값으로 \"\\n\" 문자를 사용하세요"
 
-#: commands/copy.c:3819
+#: commands/copy.c:3825
 #, c-format
 msgid "Use quoted CSV field to represent newline."
 msgstr "newline 문자를 그대로 적용하려면, quoted CSV 필드를 사용하세요."
 
-#: commands/copy.c:3865 commands/copy.c:3901
+#: commands/copy.c:3871 commands/copy.c:3907
 #, c-format
 msgid "end-of-copy marker does not match previous newline style"
 msgstr "end-of-copy 마크는 이전 newline 모양가 틀립니다"
 
-#: commands/copy.c:3874 commands/copy.c:3890
+#: commands/copy.c:3880 commands/copy.c:3896
 #, c-format
 msgid "end-of-copy marker corrupt"
 msgstr "end-of-copy 마크가 잘못되었음"
 
-#: commands/copy.c:4332
+#: commands/copy.c:4338
 #, c-format
 msgid "unterminated CSV quoted field"
 msgstr "종료되지 않은 CSV 따옴표 필드"
 
-#: commands/copy.c:4409 commands/copy.c:4428
+#: commands/copy.c:4415 commands/copy.c:4434
 #, c-format
 msgid "unexpected EOF in COPY data"
 msgstr "복사 자료 안에 예상치 않은 EOF 발견"
 
-#: commands/copy.c:4418
+#: commands/copy.c:4424
 #, c-format
 msgid "invalid field size"
 msgstr "잘못된 필드 크기"
 
-#: commands/copy.c:4441
+#: commands/copy.c:4447
 #, c-format
 msgid "incorrect binary data format"
 msgstr "잘못된 바이너리 자료 포맷"
 
-#: commands/copy.c:4752 commands/indexcmds.c:1070 commands/tablecmds.c:1685
-#: commands/tablecmds.c:2187 commands/tablecmds.c:2613
-#: parser/parse_relation.c:3249 parser/parse_relation.c:3269
-#: utils/adt/tsvector_op.c:2561
+#: commands/copy.c:4758 commands/indexcmds.c:1070 commands/statscmds.c:183
+#: commands/tablecmds.c:1685 commands/tablecmds.c:2187
+#: commands/tablecmds.c:2613 parser/parse_relation.c:3282
+#: parser/parse_relation.c:3302 utils/adt/tsvector_op.c:2561
 #, c-format
 msgid "column \"%s\" does not exist"
 msgstr "\"%s\" 이름의 칼럼은 없습니다"
 
-#: commands/copy.c:4759 commands/tablecmds.c:1711 commands/tablecmds.c:2213
-#: commands/trigger.c:800 parser/parse_target.c:1018
+#: commands/copy.c:4765 commands/tablecmds.c:1711 commands/tablecmds.c:2213
+#: commands/trigger.c:826 parser/parse_target.c:1018
 #: parser/parse_target.c:1029
 #, c-format
 msgid "column \"%s\" specified more than once"
@@ -6703,7 +6709,7 @@ msgid "invalid argument for %s: \"%s\""
 msgstr "%s의 잘못된 인자: \"%s\""
 
 #: commands/dropcmds.c:104 commands/functioncmds.c:1201
-#: utils/adt/ruleutils.c:2452
+#: utils/adt/ruleutils.c:2453
 #, c-format
 msgid "\"%s\" is an aggregate function"
 msgstr "\"%s\" 함수는 집계 함수입니다"
@@ -7715,7 +7721,7 @@ msgid "functions in index predicate must be marked IMMUTABLE"
 msgstr ""
 "인덱스 술어(predicate)에서 사용하는 함수는 IMMUTABLE 특성이 있어야합니다"
 
-#: commands/indexcmds.c:1065 parser/parse_utilcmd.c:2076
+#: commands/indexcmds.c:1065 parser/parse_utilcmd.c:2077
 #, c-format
 msgid "column \"%s\" named in key does not exist"
 msgstr "키에서 지정한 \"%s\" 칼럼이 없습니다"
@@ -7732,7 +7738,7 @@ msgstr "해당 인덱스에서 사용할 정렬규칙(collation)을 결정할 �
 
 #: commands/indexcmds.c:1156 commands/tablecmds.c:13396
 #: commands/typecmds.c:831 parser/parse_expr.c:2763 parser/parse_type.c:549
-#: parser/parse_utilcmd.c:3112 utils/adt/misc.c:661
+#: parser/parse_utilcmd.c:3113 utils/adt/misc.c:661
 #, c-format
 msgid "collations are not supported by type %s"
 msgstr "%s 자료형은 collation 지원 안함"
@@ -8074,8 +8080,8 @@ msgstr "\"%s\" 연산자 속성 바꿀 수 없음"
 #: commands/tablecmds.c:1150 commands/tablecmds.c:1520
 #: commands/tablecmds.c:2507 commands/tablecmds.c:4704
 #: commands/tablecmds.c:7054 commands/tablecmds.c:13019
-#: commands/tablecmds.c:13054 commands/trigger.c:253 commands/trigger.c:1294
-#: commands/trigger.c:1403 rewrite/rewriteDefine.c:272
+#: commands/tablecmds.c:13054 commands/trigger.c:259 commands/trigger.c:1320
+#: commands/trigger.c:1429 rewrite/rewriteDefine.c:272
 #: rewrite/rewriteDefine.c:925
 #, c-format
 msgid "permission denied: \"%s\" is a system catalog"
@@ -8203,7 +8209,7 @@ msgstr "지원하는 언어 목록은 pg_pltemplate 시스템 카탈로그에 �
 msgid "must be superuser to create custom procedural language"
 msgstr "슈퍼유저만 사용자 지정 프로시저 언어를 만들 수 있음"
 
-#: commands/proclang.c:281 commands/trigger.c:582 commands/typecmds.c:457
+#: commands/proclang.c:281 commands/trigger.c:608 commands/typecmds.c:457
 #: commands/typecmds.c:474
 #, c-format
 msgid "changing return type of function %s from %s to %s"
@@ -8211,8 +8217,8 @@ msgstr "%s 함수의 반환 자료형을 %s에서 %s 자료형으로 바꿉니�
 
 #: commands/publicationcmds.c:106
 #, c-format
-msgid "invalid publish list"
-msgstr "잘못된 발행 목록"
+msgid "invalid list syntax for \"publish\" option"
+msgstr "\"publish\" 옵션의 목록 문법이 잘못됨"
 
 #: commands/publicationcmds.c:122
 #, c-format
@@ -8437,11 +8443,6 @@ msgstr "\"%s\" 객체는 테이블도, 외부 테이블도, 구체화된 뷰도 
 msgid "only simple column references are allowed in CREATE STATISTICS"
 msgstr "CREATE STATISTICS 명령에서는 단순 칼럼 참조만 허용합니다."
 
-#: commands/statscmds.c:183
-#, c-format
-msgid "column \"%s\" referenced in statistics does not exist"
-msgstr "해당 통계정보 객체는 \"%s\" 칼럼을 참조하지 않습니다."
-
 #: commands/statscmds.c:191
 #, c-format
 msgid "statistics creation on system columns is not supported"
@@ -8450,9 +8451,11 @@ msgstr "시스템 칼럼에 대한 통계정보 객체 만들기는 지원하지
 #: commands/statscmds.c:198
 #, c-format
 msgid ""
-"column \"%s\" cannot be used in statistics because its type has no default "
-"btree operator class"
+"column \"%s\" cannot be used in statistics because its type %s has no "
+"default btree operator class"
 msgstr ""
+"\"%s\" 칼럼은 사용자 통계정보 수집이 불가능합니다. %s 자료형은 기본 btree 연"
+"산자 클래스를 정의하지 않았습니다"
 
 #: commands/statscmds.c:205
 #, c-format
@@ -8471,8 +8474,8 @@ msgstr "통계정보 정의에서 사용하는 칼럼이 중복되었습니다"
 
 #: commands/statscmds.c:266
 #, c-format
-msgid "unrecognized statistic type \"%s\""
-msgstr "알 수 없는 통계정보 객체 형태 \"%s\""
+msgid "unrecognized statistics kind \"%s\""
+msgstr "알 수 없는 통계정보 종류 \"%s\""
 
 #: commands/subscriptioncmds.c:187
 #, c-format
@@ -8507,12 +8510,14 @@ msgstr "slot_name = NONE 옵션과 create_slot = true 옵션은 함께 사용할
 #: commands/subscriptioncmds.c:237
 #, c-format
 msgid "subscription with slot_name = NONE must also set enabled = false"
-msgstr "구독에서 slot_name = NONE 옵션은 enabled = false 옵션과 함께 사용해야 함"
+msgstr ""
+"구독에서 slot_name = NONE 옵션은 enabled = false 옵션과 함께 사용해야 함"
 
 #: commands/subscriptioncmds.c:242
 #, c-format
 msgid "subscription with slot_name = NONE must also set create_slot = false"
-msgstr "구독에서 slot_name = NONE 옵션은 create_slot = false 옵션과 함께 사용해야 함"
+msgstr ""
+"구독에서 slot_name = NONE 옵션은 create_slot = false 옵션과 함께 사용해야 함"
 
 #: commands/subscriptioncmds.c:284
 #, c-format
@@ -8584,47 +8589,47 @@ msgstr ""
 msgid "subscription \"%s\" does not exist, skipping"
 msgstr "\"%s\" 구독 없음, 건너뜀"
 
-#: commands/subscriptioncmds.c:967
+#: commands/subscriptioncmds.c:972
 #, c-format
 msgid ""
 "could not connect to publisher when attempting to drop the replication slot "
 "\"%s\""
 msgstr ""
 
-#: commands/subscriptioncmds.c:969 commands/subscriptioncmds.c:983
+#: commands/subscriptioncmds.c:974 commands/subscriptioncmds.c:988
 #: replication/logical/tablesync.c:906 replication/logical/tablesync.c:928
 #, c-format
 msgid "The error was: %s"
 msgstr "해당 오류: %s"
 
-#: commands/subscriptioncmds.c:970
+#: commands/subscriptioncmds.c:975
 #, c-format
 msgid ""
 "Use ALTER SUBSCRIPTION ... SET (slot_name = NONE) to disassociate the "
 "subscription from the slot."
 msgstr ""
 
-#: commands/subscriptioncmds.c:981
+#: commands/subscriptioncmds.c:986
 #, c-format
 msgid "could not drop the replication slot \"%s\" on publisher"
 msgstr "발행용 \"%s\" 복제 슬롯을 삭제 할 수 없음"
 
-#: commands/subscriptioncmds.c:986
+#: commands/subscriptioncmds.c:991
 #, c-format
 msgid "dropped replication slot \"%s\" on publisher"
 msgstr "발행에서 \"%s\" 복제 슬롯을 삭제했음"
 
-#: commands/subscriptioncmds.c:1027
+#: commands/subscriptioncmds.c:1032
 #, c-format
 msgid "permission denied to change owner of subscription \"%s\""
 msgstr "\"%s\" 구독 소유주를 변경할 권한이 없음"
 
-#: commands/subscriptioncmds.c:1029
+#: commands/subscriptioncmds.c:1034
 #, c-format
 msgid "The owner of a subscription must be a superuser."
 msgstr "구독 소유주는 슈퍼유저여야 합니다."
 
-#: commands/subscriptioncmds.c:1142
+#: commands/subscriptioncmds.c:1147
 #, c-format
 msgid "could not receive list of replicated tables from the publisher: %s"
 msgstr "구독에서 복제 테이블 목록을 구할 수 없음: %s"
@@ -8685,7 +8690,7 @@ msgstr "\"%s\" 구체화된 뷰 없음, 건너뜀"
 msgid "Use DROP MATERIALIZED VIEW to remove a materialized view."
 msgstr "구체화된 뷰를 삭제하려면, DROP MATERIALIZED VIEW 명령을 사용하세요."
 
-#: commands/tablecmds.c:245 parser/parse_utilcmd.c:1828
+#: commands/tablecmds.c:245 parser/parse_utilcmd.c:1829
 #, c-format
 msgid "index \"%s\" does not exist"
 msgstr "\"%s\" 인덱스 없음"
@@ -8736,10 +8741,9 @@ msgstr "보안 제한 작업 내에서 임시 테이블을 만들 수 없음"
 #: commands/tablecmds.c:662
 #, c-format
 msgid "cannot create table with OIDs as partition of table without OIDs"
-msgstr ""
-"OID 없는 테이블의 파티션 테이블로 OID 있는 테이블을 만들 수 없음"
+msgstr "OID 없는 테이블의 파티션 테이블로 OID 있는 테이블을 만들 수 없음"
 
-#: commands/tablecmds.c:783 parser/parse_utilcmd.c:3279
+#: commands/tablecmds.c:783 parser/parse_utilcmd.c:3280
 #, c-format
 msgid "\"%s\" is not partitioned"
 msgstr "\"%s\" 파티션 된 테이블 아님"
@@ -8791,7 +8795,7 @@ msgstr "\"%s\" 파티션 된 테이블로부터 상속할 수 없습니다"
 msgid "cannot inherit from partition \"%s\""
 msgstr "\"%s\" 파티션 테이블입니다, 그래서 상속 대상이 될 수 없습니다"
 
-#: commands/tablecmds.c:1774 parser/parse_utilcmd.c:2039
+#: commands/tablecmds.c:1774 parser/parse_utilcmd.c:2040
 #, c-format
 msgid "inherited relation \"%s\" is not a table or foreign table"
 msgstr "상속할 \"%s\" 릴레이션(relation)은 테이블도, 외부 테이블도 아닙니다"
@@ -8847,13 +8851,13 @@ msgid "inherited column \"%s\" has a storage parameter conflict"
 msgstr "상속 받은 \"%s\" 칼럼의 스토리지 설정값에서 충돌합니다"
 
 #: commands/tablecmds.c:2002 commands/tablecmds.c:8894
-#: parser/parse_utilcmd.c:1122 parser/parse_utilcmd.c:1473
-#: parser/parse_utilcmd.c:1549
+#: parser/parse_utilcmd.c:1123 parser/parse_utilcmd.c:1474
+#: parser/parse_utilcmd.c:1550
 #, c-format
 msgid "cannot convert whole-row table reference"
 msgstr "전체 로우 테이블 참조형으로 변환할 수 없음"
 
-#: commands/tablecmds.c:2003 parser/parse_utilcmd.c:1123
+#: commands/tablecmds.c:2003 parser/parse_utilcmd.c:1124
 #, c-format
 msgid "Constraint \"%s\" contains a whole-row reference to table \"%s\"."
 msgstr "\"%s\" 제약조건에 \"%s\" 테이블 전체 로우 참조가 있습니다"
@@ -9002,13 +9006,13 @@ msgstr "\"%s\" 체크 제약 조건을 위반하는 몇몇 자료가 이미 있�
 msgid "partition constraint is violated by some row"
 msgstr "파티션 제약 조건을 위반하는 몇몇 자료가 이미 있습니다"
 
-#: commands/tablecmds.c:4725 commands/trigger.c:247
+#: commands/tablecmds.c:4725 commands/trigger.c:253
 #: rewrite/rewriteDefine.c:266 rewrite/rewriteDefine.c:920
 #, c-format
 msgid "\"%s\" is not a table or view"
 msgstr "\"%s\" 객체는 테이블도 뷰도 아닙니다"
 
-#: commands/tablecmds.c:4728 commands/trigger.c:1288 commands/trigger.c:1394
+#: commands/tablecmds.c:4728 commands/trigger.c:1314 commands/trigger.c:1420
 #, c-format
 msgid "\"%s\" is not a table, view, or foreign table"
 msgstr "\"%s\" 객체는 테이블, 뷰, 외부 테이블 그 어느 것도 아닙니다"
@@ -9619,7 +9623,9 @@ msgstr ""
 #: commands/tablecmds.c:11040
 #, c-format
 msgid "trigger \"%s\" prevents table \"%s\" from becoming an inheritance child"
-msgstr "\"%s\" 트리거(해당 테이블 \"%s\")은 하위테이블 상속과 관련되어 보호되고 있습니다."
+msgstr ""
+"\"%s\" 트리거(해당 테이블 \"%s\")은 하위테이블 상속과 관련되어 보호되고 있습"
+"니다."
 
 #: commands/tablecmds.c:11042
 #, c-format
@@ -9755,8 +9761,7 @@ msgstr "\"%s\" 테이블은 임시 테이블이기에, 통계 정보를 변경 �
 #, c-format
 msgid ""
 "cannot change table \"%s\" to unlogged because it is part of a publication"
-msgstr ""
-"\"%s\" 테이블은 발생에 사용하고 있어,  unlogged 속성으로 바꿀 수 없음"
+msgstr "\"%s\" 테이블은 발생에 사용하고 있어,  unlogged 속성으로 바꿀 수 없음"
 
 #: commands/tablecmds.c:12368
 #, c-format
@@ -9857,8 +9862,7 @@ msgstr "파티션 표현식에 쓸 문자 정렬 규칙을 결정할 수 없습�
 #: commands/tablecmds.c:13413
 #, c-format
 msgid "data type %s has no default btree operator class"
-msgstr ""
-"%s 자료형은 기본 btree 연산자 클래스를 정의하지 않았습니다"
+msgstr "%s 자료형은 기본 btree 연산자 클래스를 정의하지 않았습니다"
 
 #: commands/tablecmds.c:13415
 #, c-format
@@ -9866,8 +9870,8 @@ msgid ""
 "You must specify a btree operator class or define a default btree operator "
 "class for the data type."
 msgstr ""
-"해당 자료형을 위한 btree 연산자 클래스를 지정하거나 기본 btree 연산"
-"자 클래스를 정의해 두어야합니다"
+"해당 자료형을 위한 btree 연산자 클래스를 지정하거나 기본 btree 연산자 클래스"
+"를 정의해 두어야합니다"
 
 #: commands/tablecmds.c:13463
 #, c-format
@@ -9928,19 +9932,21 @@ msgstr "\"%s\" 테이블의 \"%s\" 칼럼이 상위 테이블인 \"%s\"에 없�
 
 #: commands/tablecmds.c:13587
 #, c-format
-msgid "New partition should contain only the columns present in parent."
-msgstr "파티션 테이블은 상위 테이블의 칼럼과 동일해야 합니다."
+msgid "The new partition may contain only the columns present in parent."
+msgstr "새 파티션 테이블은 상위 테이블의 칼럼과 동일해야 합니다."
 
 #: commands/tablecmds.c:13599
 #, c-format
 msgid "trigger \"%s\" prevents table \"%s\" from becoming a partition"
-msgstr "\"%s\" 트리거가 \"%s\" 테이블에 있어 파티션 테이블로 포함 될 수 없습니다"
+msgstr ""
+"\"%s\" 트리거가 \"%s\" 테이블에 있어 파티션 테이블로 포함 될 수 없습니다"
 
-#: commands/tablecmds.c:13601 commands/trigger.c:387
+#: commands/tablecmds.c:13601 commands/trigger.c:393
 #, c-format
 msgid "ROW triggers with transition tables are not supported on partitions"
 msgstr ""
-"ROW 트리거들이 있는 테이블을 파티션 테이블로 포함하는 기능은 지원하지 않습니다"
+"ROW 트리거들이 있는 테이블을 파티션 테이블로 포함하는 기능은 지원하지 않습니"
+"다"
 
 #: commands/tablecmds.c:13726
 #, c-format
@@ -10078,215 +10084,219 @@ msgstr "%u OID 테이블스페이스용 디렉터리는 삭제될 수 없음"
 msgid "You can remove the directories manually if necessary."
 msgstr "필요하다면 OS 작업으로 그 디레터리를 삭제하세요"
 
-#: commands/trigger.c:189
+#: commands/trigger.c:190
 #, c-format
 msgid "\"%s\" is a table"
 msgstr "\"%s\" 객체는 테이블입니다."
 
-#: commands/trigger.c:191
+#: commands/trigger.c:192
 #, c-format
 msgid "Tables cannot have INSTEAD OF triggers."
 msgstr "테이블에 INSTEAD OF 트리거는 설정할 수 없음"
 
-#: commands/trigger.c:198
+#: commands/trigger.c:199
 #, c-format
 msgid "Partitioned tables cannot have ROW triggers."
 msgstr "파티션된 테이블은 ROW 트리거를 사용할 수 없음"
 
-#: commands/trigger.c:209 commands/trigger.c:216 commands/trigger.c:369
+#: commands/trigger.c:210 commands/trigger.c:217 commands/trigger.c:375
 #, c-format
 msgid "\"%s\" is a view"
 msgstr "\"%s\" 객체는 뷰입니다."
 
-#: commands/trigger.c:211
+#: commands/trigger.c:212
 #, c-format
 msgid "Views cannot have row-level BEFORE or AFTER triggers."
 msgstr "뷰에 로우 단위 BEFORE, AFTER 트리거는 설정할 수 없음"
 
-#: commands/trigger.c:218
+#: commands/trigger.c:219
 #, c-format
 msgid "Views cannot have TRUNCATE triggers."
 msgstr "뷰에 TRUNCATE 트리거는 설정할 수 없음"
 
-#: commands/trigger.c:226 commands/trigger.c:233 commands/trigger.c:240
-#: commands/trigger.c:362
+#: commands/trigger.c:227 commands/trigger.c:234 commands/trigger.c:246
+#: commands/trigger.c:368
 #, c-format
 msgid "\"%s\" is a foreign table"
 msgstr "\"%s\" 객체는 외부 테이블입니다."
 
-#: commands/trigger.c:228
+#: commands/trigger.c:229
 #, c-format
 msgid "Foreign tables cannot have INSTEAD OF triggers."
 msgstr "외부테이블에 INSTEAD OF 트리거는 설정할 수 없음"
 
-#: commands/trigger.c:235
+#: commands/trigger.c:236
 #, c-format
 msgid "Foreign tables cannot have TRUNCATE triggers."
 msgstr "외부 테이블에는 TRUNCATE 트리거를 사용할 수 없음"
 
-#: commands/trigger.c:242
+#: commands/trigger.c:248
 #, c-format
 msgid "Foreign tables cannot have constraint triggers."
 msgstr "외부 테이블에 제약 조건 트리거는 설정할 수 없음"
 
-#: commands/trigger.c:305
+#: commands/trigger.c:311
 #, c-format
 msgid "TRUNCATE FOR EACH ROW triggers are not supported"
 msgstr "TRUNCATE FOR EACH ROW 트리거는 지원되지 않음"
 
-#: commands/trigger.c:313
+#: commands/trigger.c:319
 #, c-format
 msgid "INSTEAD OF triggers must be FOR EACH ROW"
 msgstr "INSTEAD OF 트리거는 FOR EACH ROW 옵션으로 설정해야 함"
 
-#: commands/trigger.c:317
+#: commands/trigger.c:323
 #, c-format
 msgid "INSTEAD OF triggers cannot have WHEN conditions"
 msgstr "INSTEAD OF 트리거는 WHEN 조건을 사용할 수 없음"
 
-#: commands/trigger.c:321
+#: commands/trigger.c:327
 #, c-format
 msgid "INSTEAD OF triggers cannot have column lists"
 msgstr "INSTEAD OF 트리거는 칼럼 목록을 사용할 수 없음"
 
-#: commands/trigger.c:350
+#: commands/trigger.c:356
 #, c-format
 msgid "ROW variable naming in the REFERENCING clause is not supported"
 msgstr ""
 
-#: commands/trigger.c:351
+#: commands/trigger.c:357
 #, c-format
 msgid "Use OLD TABLE or NEW TABLE for naming transition tables."
 msgstr ""
 
-#: commands/trigger.c:364
+#: commands/trigger.c:370
 #, c-format
 msgid "Triggers on foreign tables cannot have transition tables."
 msgstr "외부 테이블의 트리거들은 전환 테이블을 가질 수 없음."
 
-#: commands/trigger.c:371
+#: commands/trigger.c:377
 #, c-format
 msgid "Triggers on views cannot have transition tables."
 msgstr "뷰에 정의한 트리거들은 전환 테이블을 가질 수 없음."
 
-#: commands/trigger.c:391
+#: commands/trigger.c:397
 #, c-format
 msgid ""
 "ROW triggers with transition tables are not supported on inheritance children"
 msgstr ""
 
-#: commands/trigger.c:397
+#: commands/trigger.c:403
 #, c-format
 msgid "transition table name can only be specified for an AFTER trigger"
 msgstr ""
 
-#: commands/trigger.c:402
+#: commands/trigger.c:408
 #, c-format
 msgid "TRUNCATE triggers with transition tables are not supported"
 msgstr "전환 테이블에서 TRUNCATE 트리거는 지원하지 않습니다"
 
-#: commands/trigger.c:419
+#: commands/trigger.c:425
 #, c-format
 msgid ""
-"Transition tables cannot be specified for triggers with more than one event"
-msgstr ""
-"전환 테이블은 하나 이상의 이벤트에 대한 트리거를 지정할 수 없습니다"
+"transition tables cannot be specified for triggers with more than one event"
+msgstr "전환 테이블은 하나 이상의 이벤트에 대한 트리거를 지정할 수 없습니다"
 
-#: commands/trigger.c:427
+#: commands/trigger.c:436
+#, c-format
+msgid "transition tables cannot be specified for triggers with column lists"
+msgstr "전환 테이블은 칼럼 목록들에 대한 트리거를 지정할 수 없습니다"
+
+#: commands/trigger.c:453
 #, c-format
 msgid "NEW TABLE can only be specified for an INSERT or UPDATE trigger"
 msgstr ""
 
-#: commands/trigger.c:432
+#: commands/trigger.c:458
 #, c-format
 msgid "NEW TABLE cannot be specified multiple times"
 msgstr ""
 
-#: commands/trigger.c:442
+#: commands/trigger.c:468
 #, c-format
 msgid "OLD TABLE can only be specified for a DELETE or UPDATE trigger"
 msgstr ""
 
-#: commands/trigger.c:447
+#: commands/trigger.c:473
 #, c-format
 msgid "OLD TABLE cannot be specified multiple times"
 msgstr ""
 
-#: commands/trigger.c:457
+#: commands/trigger.c:483
 #, c-format
 msgid "OLD TABLE name and NEW TABLE name cannot be the same"
 msgstr ""
 
-#: commands/trigger.c:514 commands/trigger.c:527
+#: commands/trigger.c:540 commands/trigger.c:553
 #, c-format
 msgid "statement trigger's WHEN condition cannot reference column values"
 msgstr "트리거의 WHEN 조건에는 칼럼 값을 참조할 수는 없음"
 
-#: commands/trigger.c:519
+#: commands/trigger.c:545
 #, c-format
 msgid "INSERT trigger's WHEN condition cannot reference OLD values"
 msgstr "INSERT 트리거에서의 WHEN 조건에는 OLD 값을 참조할 수 없음"
 
-#: commands/trigger.c:532
+#: commands/trigger.c:558
 #, c-format
 msgid "DELETE trigger's WHEN condition cannot reference NEW values"
 msgstr "DELETE 트리거에서의 WHEN 조건에는 NEW 값을 참조할 수 없음"
 
-#: commands/trigger.c:537
+#: commands/trigger.c:563
 #, c-format
 msgid "BEFORE trigger's WHEN condition cannot reference NEW system columns"
 msgstr "WHEN 조건절이 있는 BEFORE 트리거는 NEW 시스템 칼럼을 참조할 수 없음"
 
-#: commands/trigger.c:702 commands/trigger.c:1473
+#: commands/trigger.c:728 commands/trigger.c:1499
 #, c-format
 msgid "trigger \"%s\" for relation \"%s\" already exists"
 msgstr "\"%s\" 이름의 트리거가 \"%s\" 테이블에 이미 있습니다"
 
-#: commands/trigger.c:998
+#: commands/trigger.c:1024
 msgid "Found referenced table's UPDATE trigger."
 msgstr "참조된 테이블의 UPDATE 트리거를 찾았습니다."
 
-#: commands/trigger.c:999
+#: commands/trigger.c:1025
 msgid "Found referenced table's DELETE trigger."
 msgstr "참조된 테이블의 DELETE 트리거를 찾았습니다."
 
-#: commands/trigger.c:1000
+#: commands/trigger.c:1026
 msgid "Found referencing table's trigger."
 msgstr "참조 테이블의 트리거를 찾았습니다."
 
-#: commands/trigger.c:1109 commands/trigger.c:1125
+#: commands/trigger.c:1135 commands/trigger.c:1151
 #, c-format
 msgid "ignoring incomplete trigger group for constraint \"%s\" %s"
 msgstr "\"%s\" %s 제약 조건에 대한 불완전한 트리거 그룹을 무시하는 중"
 
-#: commands/trigger.c:1138
+#: commands/trigger.c:1164
 #, c-format
 msgid "converting trigger group into constraint \"%s\" %s"
 msgstr "트리거 그룹을 \"%s\" %s 제약 조건으로 변환하는 중"
 
-#: commands/trigger.c:1359 commands/trigger.c:1518 commands/trigger.c:1633
+#: commands/trigger.c:1385 commands/trigger.c:1544 commands/trigger.c:1659
 #, c-format
 msgid "trigger \"%s\" for table \"%s\" does not exist"
 msgstr "\"%s\" 트리거는 \"%s\" 테이블에 없음"
 
-#: commands/trigger.c:1601
+#: commands/trigger.c:1627
 #, c-format
 msgid "permission denied: \"%s\" is a system trigger"
 msgstr "액세스 권한 없음: \"%s\" 객체는 시스템 트리거임"
 
-#: commands/trigger.c:2270
+#: commands/trigger.c:2206
 #, c-format
 msgid "trigger function %u returned null value"
 msgstr "%u 트리거 함수가 null 값을 리턴했습니다"
 
-#: commands/trigger.c:2331 commands/trigger.c:2541 commands/trigger.c:2755
-#: commands/trigger.c:3040
+#: commands/trigger.c:2272 commands/trigger.c:2487 commands/trigger.c:2706
+#: commands/trigger.c:2991
 #, c-format
 msgid "BEFORE STATEMENT trigger cannot return a value"
 msgstr "BEFORE STATEMENT 트리거는 리턴값이 있으면 안됩니다"
 
-#: commands/trigger.c:3102 executor/nodeModifyTable.c:795
-#: executor/nodeModifyTable.c:1092
+#: commands/trigger.c:3053 executor/nodeModifyTable.c:798
+#: executor/nodeModifyTable.c:1095
 #, c-format
 msgid ""
 "tuple to be updated was already modified by an operation triggered by the "
@@ -10294,8 +10304,8 @@ msgid ""
 msgstr ""
 "현재 명령으로 실행된 트리거 작업으로 변경해야할 자료가 이미 바뀌었습니다."
 
-#: commands/trigger.c:3103 executor/nodeModifyTable.c:796
-#: executor/nodeModifyTable.c:1093
+#: commands/trigger.c:3054 executor/nodeModifyTable.c:799
+#: executor/nodeModifyTable.c:1096
 #, c-format
 msgid ""
 "Consider using an AFTER trigger instead of a BEFORE trigger to propagate "
@@ -10304,20 +10314,20 @@ msgstr ""
 "다른 로우를 변경하는 일을 BEFORE 트리거 대신에 AFTER 트리거 사용을 고려해 보"
 "십시오"
 
-#: commands/trigger.c:3117 executor/execMain.c:2667
+#: commands/trigger.c:3068 executor/execMain.c:2695
 #: executor/nodeLockRows.c:220 executor/nodeModifyTable.c:214
-#: executor/nodeModifyTable.c:808 executor/nodeModifyTable.c:1105
-#: executor/nodeModifyTable.c:1272
+#: executor/nodeModifyTable.c:811 executor/nodeModifyTable.c:1108
+#: executor/nodeModifyTable.c:1277
 #, c-format
 msgid "could not serialize access due to concurrent update"
 msgstr "동시 업데이트 때문에 순차적 액세스가 불가능합니다"
 
-#: commands/trigger.c:4983
+#: commands/trigger.c:5200
 #, c-format
 msgid "constraint \"%s\" is not deferrable"
 msgstr "\"%s\" 제약 조건은 DEFERRABLE 속성으로 만들어지지 않았습니다"
 
-#: commands/trigger.c:5006
+#: commands/trigger.c:5223
 #, c-format
 msgid "constraint \"%s\" does not exist"
 msgstr "\"%s\" 이름의 제약 조건이 없음"
@@ -10982,7 +10992,9 @@ msgstr "페이지: %u 삭제됨, %u 남음, %u 핀닝으로 건너뜀, %u 동결
 msgid ""
 "tuples: %.0f removed, %.0f remain, %.0f are dead but not yet removable, "
 "oldest xmin: %u\n"
-msgstr "튜플: %.0f 삭제됨, %.0f 남음, %.0f 삭제할 수 없는 죽은 튜플, 제일 늙은 xmin: %u\n"
+msgstr ""
+"튜플: %.0f 삭제됨, %.0f 남음, %.0f 삭제할 수 없는 죽은 튜플, 제일 늙은 xmin: "
+"%u\n"
 
 #: commands/vacuumlazy.c:393
 #, c-format
@@ -11036,6 +11048,11 @@ msgstr[0] ""
 msgid "%u page is entirely empty.\n"
 msgid_plural "%u pages are entirely empty.\n"
 msgstr[0] ""
+
+#: commands/vacuumlazy.c:1354
+#, c-format
+msgid "%s."
+msgstr "%s."
 
 #: commands/vacuumlazy.c:1357
 #, c-format
@@ -11147,7 +11164,7 @@ msgstr "쿼리보다 먼저 SET TRANSACTION ISOLATION LEVEL을 호출해야 함"
 msgid "SET TRANSACTION ISOLATION LEVEL must not be called in a subtransaction"
 msgstr "하위 트랜잭션에서 SET TRANSACTION ISOLATION LEVEL을 호출하지 않아야 함"
 
-#: commands/variable.c:571 storage/lmgr/predicate.c:1647
+#: commands/variable.c:571 storage/lmgr/predicate.c:1649
 #, c-format
 msgid "cannot use serializable mode in a hot standby"
 msgstr "읽기 전용 보조 서버 상태에서는 serializable 모드를 사용할 수 없음"
@@ -11450,22 +11467,22 @@ msgstr "%s 키가 이미 있는 %s 키와 충돌합니다."
 msgid "Key conflicts with existing key."
 msgstr "키가 기존 키와 충돌함"
 
-#: executor/execMain.c:1113
+#: executor/execMain.c:1115
 #, c-format
 msgid "cannot change sequence \"%s\""
 msgstr "\"%s\" 시퀀스를 바꿀 수 없음"
 
-#: executor/execMain.c:1119
+#: executor/execMain.c:1121
 #, c-format
 msgid "cannot change TOAST relation \"%s\""
 msgstr "\"%s\" TOAST 릴레이션을 바꿀 수 없음"
 
-#: executor/execMain.c:1137 rewrite/rewriteHandler.c:2738
+#: executor/execMain.c:1139 rewrite/rewriteHandler.c:2738
 #, c-format
 msgid "cannot insert into view \"%s\""
 msgstr "\"%s\" 뷰에 자료를 입력할 수 없습니다"
 
-#: executor/execMain.c:1139 rewrite/rewriteHandler.c:2741
+#: executor/execMain.c:1141 rewrite/rewriteHandler.c:2741
 #, c-format
 msgid ""
 "To enable inserting into the view, provide an INSTEAD OF INSERT trigger or "
@@ -11474,12 +11491,12 @@ msgstr ""
 "뷰를 통해 자료를 입력하려면, INSTEAD OF INSERT 트리거나 ON INSERT DO INSTEAD "
 "룰을 사용하세요"
 
-#: executor/execMain.c:1145 rewrite/rewriteHandler.c:2746
+#: executor/execMain.c:1147 rewrite/rewriteHandler.c:2746
 #, c-format
 msgid "cannot update view \"%s\""
 msgstr "\"%s\" 뷰로는 자료를 갱신할 수 없습니다"
 
-#: executor/execMain.c:1147 rewrite/rewriteHandler.c:2749
+#: executor/execMain.c:1149 rewrite/rewriteHandler.c:2749
 #, c-format
 msgid ""
 "To enable updating the view, provide an INSTEAD OF UPDATE trigger or an "
@@ -11488,12 +11505,12 @@ msgstr ""
 "뷰 자료 갱신 기능은 INSTEAD OF UPDATE 트리거를 사용하거나, ON UPDATE DO "
 "INSTEAD 속성으로 룰을 만들어서 사용해 보세요."
 
-#: executor/execMain.c:1153 rewrite/rewriteHandler.c:2754
+#: executor/execMain.c:1155 rewrite/rewriteHandler.c:2754
 #, c-format
 msgid "cannot delete from view \"%s\""
 msgstr "\"%s\" 뷰로는 자료를 삭제할 수 없습니다"
 
-#: executor/execMain.c:1155 rewrite/rewriteHandler.c:2757
+#: executor/execMain.c:1157 rewrite/rewriteHandler.c:2757
 #, c-format
 msgid ""
 "To enable deleting from the view, provide an INSTEAD OF DELETE trigger or an "
@@ -11502,115 +11519,115 @@ msgstr ""
 "뷰 자료 삭제 기능은 INSTEAD OF DELETE 트리거를 사용하거나, ON DELETE DO "
 "INSTEAD 속성으로 룰을 만들어서 사용해 보세요."
 
-#: executor/execMain.c:1166
+#: executor/execMain.c:1168
 #, c-format
 msgid "cannot change materialized view \"%s\""
 msgstr "\"%s\" 구체화된 뷰를 바꿀 수 없음"
 
-#: executor/execMain.c:1178
+#: executor/execMain.c:1187
 #, c-format
 msgid "cannot insert into foreign table \"%s\""
 msgstr "\"%s\" 외부 테이블에 자료를 입력할 수 없음"
 
-#: executor/execMain.c:1184
+#: executor/execMain.c:1193
 #, c-format
 msgid "foreign table \"%s\" does not allow inserts"
 msgstr "\"%s\" 외부 테이블은 자료 입력을 허용하지 않음"
 
-#: executor/execMain.c:1191
+#: executor/execMain.c:1200
 #, c-format
 msgid "cannot update foreign table \"%s\""
 msgstr "\"%s\" 외부 테이블에 자료를 변경 할 수 없음"
 
-#: executor/execMain.c:1197
+#: executor/execMain.c:1206
 #, c-format
 msgid "foreign table \"%s\" does not allow updates"
 msgstr "\"%s\" 외부 테이블은 자료 변경을 허용하지 않음"
 
-#: executor/execMain.c:1204
+#: executor/execMain.c:1213
 #, c-format
 msgid "cannot delete from foreign table \"%s\""
 msgstr "\"%s\" 외부 테이블에 자료를 삭제 할 수 없음"
 
-#: executor/execMain.c:1210
+#: executor/execMain.c:1219
 #, c-format
 msgid "foreign table \"%s\" does not allow deletes"
 msgstr "\"%s\" 외부 테이블은 자료 삭제를 허용하지 않음"
 
-#: executor/execMain.c:1221
+#: executor/execMain.c:1230
 #, c-format
 msgid "cannot change relation \"%s\""
 msgstr "\"%s\" 릴레이션을 바꿀 수 없음"
 
-#: executor/execMain.c:1248
+#: executor/execMain.c:1257
 #, c-format
 msgid "cannot lock rows in sequence \"%s\""
 msgstr "\"%s\" 시퀀스에서 로우를 잠글 수 없음"
 
-#: executor/execMain.c:1255
+#: executor/execMain.c:1264
 #, c-format
 msgid "cannot lock rows in TOAST relation \"%s\""
 msgstr "\"%s\" TOAST 릴레이션에서 로우를 잠글 수 없음"
 
-#: executor/execMain.c:1262
+#: executor/execMain.c:1271
 #, c-format
 msgid "cannot lock rows in view \"%s\""
 msgstr "\"%s\" 뷰에서 로우를 잠글 수 없음"
 
-#: executor/execMain.c:1270
+#: executor/execMain.c:1279
 #, c-format
 msgid "cannot lock rows in materialized view \"%s\""
 msgstr "\"%s\" 구체화된 뷰에서 로우를 잠글 수 없음"
 
-#: executor/execMain.c:1279 executor/execMain.c:2901
+#: executor/execMain.c:1288 executor/execMain.c:2929
 #: executor/nodeLockRows.c:136
 #, c-format
 msgid "cannot lock rows in foreign table \"%s\""
 msgstr "\"%s\" 외부 테이블에서 로우를 잠글 수 없음"
 
-#: executor/execMain.c:1285
+#: executor/execMain.c:1294
 #, c-format
 msgid "cannot lock rows in relation \"%s\""
 msgstr "\"%s\" 릴레이션에서 로우를 잠글 수 없음"
 
-#: executor/execMain.c:1897
+#: executor/execMain.c:1925
 #, c-format
 msgid "new row for relation \"%s\" violates partition constraint"
 msgstr "새 자료가 \"%s\" 릴레이션의 파티션 제약 조건을 위반했습니다"
 
-#: executor/execMain.c:1899 executor/execMain.c:1978 executor/execMain.c:2025
-#: executor/execMain.c:2136
+#: executor/execMain.c:1927 executor/execMain.c:2006 executor/execMain.c:2053
+#: executor/execMain.c:2164
 #, c-format
 msgid "Failing row contains %s."
 msgstr "실패한 자료: %s"
 
-#: executor/execMain.c:1976
+#: executor/execMain.c:2004
 #, c-format
 msgid "null value in column \"%s\" violates not-null constraint"
 msgstr "\"%s\" 칼럼의 null 값이 not null 제약조건을 위반했습니다."
 
-#: executor/execMain.c:2023
+#: executor/execMain.c:2051
 #, c-format
 msgid "new row for relation \"%s\" violates check constraint \"%s\""
 msgstr "새 자료가 \"%s\" 릴레이션의 \"%s\" 체크 제약 조건을 위반했습니다"
 
-#: executor/execMain.c:2134
+#: executor/execMain.c:2162
 #, c-format
 msgid "new row violates check option for view \"%s\""
 msgstr "새 자료가 \"%s\" 뷰의 체크 제약 조건을 위반했습니다"
 
-#: executor/execMain.c:2144
+#: executor/execMain.c:2172
 #, c-format
 msgid "new row violates row-level security policy \"%s\" for table \"%s\""
 msgstr ""
 "새 자료가 \"%s\" 로우 단위 보안 정책을 위반했습니다, 해당 테이블: \"%s\""
 
-#: executor/execMain.c:2149
+#: executor/execMain.c:2177
 #, c-format
 msgid "new row violates row-level security policy for table \"%s\""
 msgstr "새 자료가 \"%s\" 테이블의 로우 단위 보안 정책을 위반했습니다."
 
-#: executor/execMain.c:2156
+#: executor/execMain.c:2184
 #, c-format
 msgid ""
 "new row violates row-level security policy \"%s\" (USING expression) for "
@@ -11619,7 +11636,7 @@ msgstr ""
 "새 자료가 \"%s\" 로우 단위 보안 정책(USING 절 사용)을 위반했습니다, 해당 테이"
 "블: \"%s\""
 
-#: executor/execMain.c:2161
+#: executor/execMain.c:2189
 #, c-format
 msgid ""
 "new row violates row-level security policy (USING expression) for table \"%s"
@@ -11627,12 +11644,12 @@ msgid ""
 msgstr ""
 "새 자료가 \"%s\" 테이블의 로우 단위 보안 정책(USING 절 사용)을 위반했습니다."
 
-#: executor/execMain.c:3363
+#: executor/execMain.c:3398
 #, c-format
 msgid "no partition of relation \"%s\" found for row"
 msgstr "해당 로우를 위한 \"%s\" 릴레이션용 파티션이 없음"
 
-#: executor/execMain.c:3365
+#: executor/execMain.c:3400
 #, c-format
 msgid "Partition key of the failing row contains %s."
 msgstr "실패한 로우의 파티션 키 값: %s"
@@ -11654,23 +11671,24 @@ msgstr ""
 #: executor/execReplication.c:562
 #, c-format
 msgid ""
-"cannot update table \"%s\" because it does not have replica identity and "
+"cannot update table \"%s\" because it does not have a replica identity and "
 "publishes updates"
 msgstr ""
-"\"%s\" 테이블 업데이트 실패, 복제 식별자와 updates 발행을 안함"
+"\"%s\" 테이블 업데이트 실패, 이 테이블에는 복제용 식별자를 지정하지 않았거"
+"나, updates 옵션 없이 발행했습니다"
 
 #: executor/execReplication.c:564
 #, c-format
 msgid "To enable updating the table, set REPLICA IDENTITY using ALTER TABLE."
-msgstr "업데이트를 하려면, ALTER TABLE 명령어에서 REPLICA IDENTITY 옵션을 사용하세요"
+msgstr ""
+"업데이트를 하려면, ALTER TABLE 명령어에서 REPLICA IDENTITY 옵션을 사용하세요"
 
 #: executor/execReplication.c:568
 #, c-format
 msgid ""
-"cannot delete from table \"%s\" because it does not have replica identity "
+"cannot delete from table \"%s\" because it does not have a replica identity "
 "and publishes deletes"
-msgstr ""
-"\"%s\" 테이블 자료 삭제 실패, 복제 식별자와 deletes 발행을 안함"
+msgstr "\"%s\" 테이블 자료 삭제 실패, 복제 식별자와 deletes 발행을 안함"
 
 #: executor/execReplication.c:570
 #, c-format
@@ -11723,12 +11741,12 @@ msgstr[0] ""
 msgid "Returned type %s at ordinal position %d, but query expects %s."
 msgstr "반환된 형식은 %s인데(서수 위치 %d) 쿼리에는 %s이(가) 필요합니다."
 
-#: executor/execUtils.c:639
+#: executor/execUtils.c:644
 #, c-format
 msgid "materialized view \"%s\" has not been populated"
 msgstr "\"%s\" 구체화된 뷰가 아직 구체화되지 못했습니다."
 
-#: executor/execUtils.c:641
+#: executor/execUtils.c:646
 #, c-format
 msgid "Use the REFRESH MATERIALIZED VIEW command."
 msgstr "REFRESH MATERIALIZED VIEW 명령을 사용하세요."
@@ -11856,7 +11874,7 @@ msgstr "hash-join 임시 파일을 쓸 수 없습니다: %m"
 msgid "could not read from hash-join temporary file: %m"
 msgstr "해시-조인 임시 파일을 읽을 수 없음: %m"
 
-#: executor/nodeIndexonlyscan.c:236
+#: executor/nodeIndexonlyscan.c:237
 #, c-format
 msgid "lossy distance functions are not supported in index-only scans"
 msgstr "lossy distance 함수들은 인덱스 단독 탐색을 지원하지 않음"
@@ -11896,12 +11914,12 @@ msgstr "쿼리에서 서수 위치 %d에 있는 삭제된 칼럼의 값을 제�
 msgid "Query has too few columns."
 msgstr "쿼리에 칼럼이 너무 적습니다."
 
-#: executor/nodeModifyTable.c:1253
+#: executor/nodeModifyTable.c:1258
 #, c-format
 msgid "ON CONFLICT DO UPDATE command cannot affect row a second time"
 msgstr ""
 
-#: executor/nodeModifyTable.c:1254
+#: executor/nodeModifyTable.c:1259
 #, c-format
 msgid ""
 "Ensure that no rows proposed for insertion within the same command have "
@@ -12066,8 +12084,7 @@ msgstr "메시지가 비었습니다."
 #: libpq/auth-scram.c:294
 #, c-format
 msgid "Message length does not match input length."
-msgstr ""
-"메시지 길이가 입력 길이와 같지 않습니다."
+msgstr "메시지 길이가 입력 길이와 같지 않습니다."
 
 #: libpq/auth-scram.c:326
 #, c-format
@@ -12086,18 +12103,18 @@ msgstr "무작위 솔트 생성 실패"
 
 #: libpq/auth-scram.c:588
 #, c-format
-msgid "Expected attribute '%c' but found %s."
-msgstr "'%c' 속성이어야 하는데, %s 임."
+msgid "Expected attribute \"%c\" but found \"%s\"."
+msgstr "\"%c\" 속성이어야 하는데, \"%s\" 임."
 
 #: libpq/auth-scram.c:596 libpq/auth-scram.c:687
 #, c-format
-msgid "Expected character = for attribute %c."
-msgstr "%c 속성에는 = 문자가 와야합니다."
+msgid "Expected character \"=\" for attribute \"%c\"."
+msgstr "\"%c\" 속성에는 \"=\" 문자가 와야합니다."
 
 #: libpq/auth-scram.c:677
 #, c-format
-msgid "Attribute expected, but found invalid character %s."
-msgstr "속성값이 와야하는데, %s 잘못된 문자가 발견되었음."
+msgid "Attribute expected, but found invalid character \"%s\"."
+msgstr "속성값이 와야하는데, \"%s\" 잘못된 문자가 발견되었음."
 
 #: libpq/auth-scram.c:800
 #, c-format
@@ -12106,13 +12123,13 @@ msgstr ""
 
 #: libpq/auth-scram.c:805
 #, c-format
-msgid "Unexpected channel-binding flag %s."
-msgstr "예상치 못한 채널 바인딩 플래그 %s."
+msgid "Unexpected channel-binding flag \"%s\"."
+msgstr "예상치 못한 채널 바인딩 플래그 \"%s\"."
 
 #: libpq/auth-scram.c:812
 #, c-format
-msgid "Comma expected, but found character %s."
-msgstr "쉼표가 와야하는데, %s 문자가 발견되었음."
+msgid "Comma expected, but found character \"%s\"."
+msgstr "쉼표가 와야하는데, \"%s\" 문자가 발견되었음."
 
 #: libpq/auth-scram.c:822
 #, c-format
@@ -12121,7 +12138,7 @@ msgstr ""
 
 #: libpq/auth-scram.c:827
 #, c-format
-msgid "Unexpected attribute %s in client-first-message."
+msgid "Unexpected attribute \"%s\" in client-first-message."
 msgstr ""
 
 #: libpq/auth-scram.c:843
@@ -12849,7 +12866,8 @@ msgstr ""
 msgid ""
 "private key file \"%s\" cannot be reloaded because it requires a passphrase"
 msgstr ""
-"\"%s\" 개인 키 파일은 비밀번호를 입력해야 해서 자동으로 다시 불러올 수 없습니다."
+"\"%s\" 개인 키 파일은 비밀번호를 입력해야 해서 자동으로 다시 불러올 수 없습니"
+"다."
 
 #: libpq/be-secure-openssl.c:274
 #, c-format
@@ -13107,7 +13125,8 @@ msgstr "postgresql.conf 파일에 ssl = on 설정을 하세요."
 #: libpq/hba.c:1018
 #, c-format
 msgid "hostssl record cannot match because SSL is not supported by this build"
-msgstr "이 서버는 ssl 접속 기능을 지원하지 않아 hostssl 인증을 지원하지 않습니다."
+msgstr ""
+"이 서버는 ssl 접속 기능을 지원하지 않아 hostssl 인증을 지원하지 않습니다."
 
 #: libpq/hba.c:1019
 #, c-format
@@ -13262,8 +13281,8 @@ msgstr "RADIUS 비밀키 목록은 비어 있을 수 없음"
 
 #: libpq/hba.c:1611
 #, c-format
-msgid "the number of %s (%i) must be 1 or the same as the number of %s (%i)"
-msgstr "서버 목록과 키 목록이 안 맞음: %s (%i) / %s (%i)"
+msgid "the number of %s (%d) must be 1 or the same as the number of %s (%d)"
+msgstr "서버 목록과 키 목록이 안 맞음: %s (%d) / %s (%d)"
 
 #: libpq/hba.c:1645
 msgid "ident, peer, gssapi, sspi, and cert"
@@ -13905,46 +13924,46 @@ msgstr ""
 "다"
 
 #. translator: %s is a SQL row locking clause such as FOR UPDATE
-#: optimizer/plan/planner.c:1544 parser/analyze.c:1624 parser/analyze.c:1821
+#: optimizer/plan/planner.c:1550 parser/analyze.c:1624 parser/analyze.c:1821
 #: parser/analyze.c:2615
 #, c-format
 msgid "%s is not allowed with UNION/INTERSECT/EXCEPT"
 msgstr "%s 구문은 UNION/INTERSECT/EXCEPT 예약어들과 함께 사용할 수 없습니다."
 
-#: optimizer/plan/planner.c:2144 optimizer/plan/planner.c:4102
+#: optimizer/plan/planner.c:2150 optimizer/plan/planner.c:4108
 #, c-format
 msgid "could not implement GROUP BY"
 msgstr "GROUP BY를 구현할 수 없음"
 
-#: optimizer/plan/planner.c:2145 optimizer/plan/planner.c:4103
-#: optimizer/plan/planner.c:4843 optimizer/prep/prepunion.c:938
+#: optimizer/plan/planner.c:2151 optimizer/plan/planner.c:4109
+#: optimizer/plan/planner.c:4849 optimizer/prep/prepunion.c:938
 #, c-format
 msgid ""
 "Some of the datatypes only support hashing, while others only support "
 "sorting."
 msgstr "해싱만 지원하는 자료형도 있고, 정렬만 지원하는 자료형도 있습니다."
 
-#: optimizer/plan/planner.c:4842
+#: optimizer/plan/planner.c:4848
 #, c-format
 msgid "could not implement DISTINCT"
 msgstr "DISTINCT를 구현할 수 없음"
 
-#: optimizer/plan/planner.c:5522
+#: optimizer/plan/planner.c:5528
 #, c-format
 msgid "could not implement window PARTITION BY"
 msgstr "창 PARTITION BY를 구현할 수 없음"
 
-#: optimizer/plan/planner.c:5523
+#: optimizer/plan/planner.c:5529
 #, c-format
 msgid "Window partitioning columns must be of sortable datatypes."
 msgstr "창 분할 칼럼은 정렬 가능한 데이터 형식이어야 합니다."
 
-#: optimizer/plan/planner.c:5527
+#: optimizer/plan/planner.c:5533
 #, c-format
 msgid "could not implement window ORDER BY"
 msgstr "창 ORDER BY를 구현할 수 없음"
 
-#: optimizer/plan/planner.c:5528
+#: optimizer/plan/planner.c:5534
 #, c-format
 msgid "Window ordering columns must be of sortable datatypes."
 msgstr "창 순서 지정 칼럼은 정렬 가능한 데이터 형식이어야 합니다."
@@ -14812,8 +14831,8 @@ msgstr "%s 이름으로 선언된 인자가 array가 아니고, %s 자료형입�
 #, c-format
 msgid "argument declared %s is not consistent with argument declared %s"
 msgstr ""
-"%s 이름으로 선언된 인자가 %s 형으로 선언된 인자들과 일관성이 없습니다"
-"질 않습니다"
+"%s 이름으로 선언된 인자가 %s 형으로 선언된 인자들과 일관성이 없습니다질 않습"
+"니다"
 
 #: parser/parse_coerce.c:1756 parser/parse_coerce.c:1980
 #, c-format
@@ -14981,8 +15000,8 @@ msgstr "\"%s\" 쿼리에 대한 재귀 참조가 여러 번 표시되지 않아�
 msgid "DEFAULT is not allowed in this context"
 msgstr "이 영역에서는 DEFAULT를 사용할 수 없습니다"
 
-#: parser/parse_expr.c:403 parser/parse_relation.c:3248
-#: parser/parse_relation.c:3268
+#: parser/parse_expr.c:403 parser/parse_relation.c:3281
+#: parser/parse_relation.c:3301
 #, c-format
 msgid "column %s.%s does not exist"
 msgstr "%s.%s 칼럼 없음"
@@ -15523,12 +15542,12 @@ msgstr "테이블 참조 %u 가 명확하지 않습니다 (ambiguous)."
 msgid "table name \"%s\" specified more than once"
 msgstr "테이블 이름 \"%s\" 가 한번 이상 명시되어 있습니다."
 
-#: parser/parse_relation.c:446 parser/parse_relation.c:3188
+#: parser/parse_relation.c:446 parser/parse_relation.c:3221
 #, c-format
 msgid "invalid reference to FROM-clause entry for table \"%s\""
 msgstr "\"%s\" 테이블을 사용하는 FROM 절에 대한 참조가 잘못 되었습니다."
 
-#: parser/parse_relation.c:449 parser/parse_relation.c:3193
+#: parser/parse_relation.c:449 parser/parse_relation.c:3226
 #, c-format
 msgid ""
 "There is an entry for table \"%s\", but it cannot be referenced from this "
@@ -15550,7 +15569,8 @@ msgstr "제약 조건에서 참조하는 \"%s\" 시스템 칼럼이 없음"
 #: parser/parse_relation.c:1941
 #, c-format
 msgid "table \"%s\" has %d columns available but %d columns specified"
-msgstr "테이블 \"%s\" 에는 %d 개의 칼럼이 있는데, %d 개의 칼럼만 명시되었습니다."
+msgstr ""
+"테이블 \"%s\" 에는 %d 개의 칼럼이 있는데, %d 개의 칼럼만 명시되었습니다."
 
 #: parser/parse_relation.c:1179
 #, c-format
@@ -15592,7 +15612,8 @@ msgstr ""
 #, c-format
 msgid "VALUES lists \"%s\" have %d columns available but %d columns specified"
 msgstr ""
-"VALUES 뒤에 오는 \"%s\" 구문에는 %d개의 칼럼이 있는데, 지정한 칼럼은 %d개 입니다"
+"VALUES 뒤에 오는 \"%s\" 구문에는 %d개의 칼럼이 있는데, 지정한 칼럼은 %d개 입"
+"니다"
 
 #: parser/parse_relation.c:1824
 #, c-format
@@ -15604,27 +15625,28 @@ msgstr "조인에는 최대 %d개의 칼럼을 포함할 수 있음"
 msgid "WITH query \"%s\" does not have a RETURNING clause"
 msgstr ""
 
-#: parser/parse_relation.c:2809 parser/parse_relation.c:2972
+#: parser/parse_relation.c:2838 parser/parse_relation.c:2876
+#: parser/parse_relation.c:3005
 #, c-format
 msgid "column %d of relation \"%s\" does not exist"
 msgstr "%d번째 칼럼이 없습니다. 해당 릴레이션: \"%s\""
 
-#: parser/parse_relation.c:3191
+#: parser/parse_relation.c:3224
 #, c-format
 msgid "Perhaps you meant to reference the table alias \"%s\"."
 msgstr "아 \"%s\" alias를 참조해야 할 것 같습니다."
 
-#: parser/parse_relation.c:3199
+#: parser/parse_relation.c:3232
 #, c-format
 msgid "missing FROM-clause entry for table \"%s\""
 msgstr "테이블 \"%s\"에 FROM 절이 빠져 있습니다."
 
-#: parser/parse_relation.c:3251
+#: parser/parse_relation.c:3284
 #, c-format
 msgid "Perhaps you meant to reference the column \"%s.%s\"."
 msgstr "아마 \"%s.%s\" 칼럼을 참조하는 것 같습니다."
 
-#: parser/parse_relation.c:3253
+#: parser/parse_relation.c:3286
 #, c-format
 msgid ""
 "There is a column named \"%s\" in table \"%s\", but it cannot be referenced "
@@ -15633,7 +15655,7 @@ msgstr ""
 "\"%s\" 이름의 칼럼이 \"%s\" 테이블에 있지만, 이 쿼리의 이 부분에서는 참조될 "
 "수 없습니다."
 
-#: parser/parse_relation.c:3270
+#: parser/parse_relation.c:3303
 #, c-format
 msgid ""
 "Perhaps you meant to reference the column \"%s.%s\" or the column \"%s.%s\"."
@@ -15674,8 +15696,8 @@ msgid ""
 "cannot assign to field \"%s\" of column \"%s\" because there is no such "
 "column in data type %s"
 msgstr ""
-"\"%s\" 필드 (대상 열 \"%s\")를 지정할 수 없음, %s 자료형에서 그런 칼럼을 찾을 "
-"수 없음"
+"\"%s\" 필드 (대상 열 \"%s\")를 지정할 수 없음, %s 자료형에서 그런 칼럼을 찾"
+"을 수 없음"
 
 #: parser/parse_target.c:835
 #, c-format
@@ -15731,176 +15753,176 @@ msgstr "자료형 한정자는 단순 상수 또는 식별자여야 함"
 msgid "invalid type name \"%s\""
 msgstr "\"%s\" 자료형 이름은 유효하지 않은 자료형입니다."
 
-#: parser/parse_utilcmd.c:265
+#: parser/parse_utilcmd.c:266
 #, c-format
 msgid "cannot create partitioned table as inheritance child"
 msgstr "상속 하위 테이블로 파티션된 테이블을 만들 수 없음"
 
-#: parser/parse_utilcmd.c:435
+#: parser/parse_utilcmd.c:436
 #, c-format
 msgid "%s will create implicit sequence \"%s\" for serial column \"%s.%s\""
 msgstr ""
 "%s 명령으로 \"%s\" 시퀀스가 자동으로 만들어짐 (\"%s.%s\" serial 열 때문)"
 
-#: parser/parse_utilcmd.c:550
+#: parser/parse_utilcmd.c:551
 #, c-format
 msgid "array of serial is not implemented"
 msgstr "serial 배열이 구현되지 않음"
 
-#: parser/parse_utilcmd.c:626 parser/parse_utilcmd.c:638
+#: parser/parse_utilcmd.c:627 parser/parse_utilcmd.c:639
 #, c-format
 msgid ""
 "conflicting NULL/NOT NULL declarations for column \"%s\" of table \"%s\""
 msgstr "NULL/NOT NULL 선언이 서로 충돌합니다 : column \"%s\" of table \"%s\""
 
-#: parser/parse_utilcmd.c:650
+#: parser/parse_utilcmd.c:651
 #, c-format
 msgid "multiple default values specified for column \"%s\" of table \"%s\""
 msgstr "\"%s\" 칼럼(\"%s\" 테이블)에 대해 여러 개의 기본 값이 지정됨"
 
-#: parser/parse_utilcmd.c:671
+#: parser/parse_utilcmd.c:672
 #, c-format
 msgid "multiple identity specifications for column \"%s\" of table \"%s\""
 msgstr "\"%s\" 칼럼(\"%s\" 테이블)에 대해 여러 개의 식별자 지정이 사용되었음"
 
-#: parser/parse_utilcmd.c:694 parser/parse_utilcmd.c:811
+#: parser/parse_utilcmd.c:695 parser/parse_utilcmd.c:812
 #, c-format
 msgid "primary key constraints are not supported on foreign tables"
 msgstr "기본키 제약 조건을 외부 테이블에서는 사용할 수 없음"
 
-#: parser/parse_utilcmd.c:700 parser/parse_utilcmd.c:817
+#: parser/parse_utilcmd.c:701 parser/parse_utilcmd.c:818
 #, c-format
 msgid "primary key constraints are not supported on partitioned tables"
 msgstr "기본키 제약 조건은 파티션된 테이블에서는 사용할 수 없음"
 
-#: parser/parse_utilcmd.c:709 parser/parse_utilcmd.c:827
+#: parser/parse_utilcmd.c:710 parser/parse_utilcmd.c:828
 #, c-format
 msgid "unique constraints are not supported on foreign tables"
 msgstr "유니크 제약 조건은 외부 테이블에서는 사용할 수 없음"
 
-#: parser/parse_utilcmd.c:715 parser/parse_utilcmd.c:833
+#: parser/parse_utilcmd.c:716 parser/parse_utilcmd.c:834
 #, c-format
 msgid "unique constraints are not supported on partitioned tables"
 msgstr "유니크 제약 조건은 파티션된 테이블에서는 사용할 수 없음"
 
-#: parser/parse_utilcmd.c:732 parser/parse_utilcmd.c:863
+#: parser/parse_utilcmd.c:733 parser/parse_utilcmd.c:864
 #, c-format
 msgid "foreign key constraints are not supported on foreign tables"
 msgstr "참조키 제약 조건은 외부 테이블에서는 사용할 수 없음"
 
-#: parser/parse_utilcmd.c:738 parser/parse_utilcmd.c:869
+#: parser/parse_utilcmd.c:739 parser/parse_utilcmd.c:870
 #, c-format
 msgid "foreign key constraints are not supported on partitioned tables"
 msgstr "참조키 제약 조건은 파티션된 테이블에서는 사용할 수 없음"
 
-#: parser/parse_utilcmd.c:766
+#: parser/parse_utilcmd.c:767
 #, c-format
 msgid "both default and identity specified for column \"%s\" of table \"%s\""
 msgstr "\"%s\" 칼럼(\"%s\" 테이블)에 대해 default와 식별자 정의가 함께 있음"
 
-#: parser/parse_utilcmd.c:843
+#: parser/parse_utilcmd.c:844
 #, c-format
 msgid "exclusion constraints are not supported on foreign tables"
 msgstr "제외 제약 조건은 외부 테이블에서는 사용할 수 없음"
 
-#: parser/parse_utilcmd.c:849
+#: parser/parse_utilcmd.c:850
 #, c-format
 msgid "exclusion constraints are not supported on partitioned tables"
 msgstr "제외 제약 조건은 파티션된 테이블에서는 사용할 수 없음"
 
-#: parser/parse_utilcmd.c:919
+#: parser/parse_utilcmd.c:920
 #, c-format
 msgid "LIKE is not supported for creating foreign tables"
 msgstr "외부 테이블을 만들 때는 LIKE 옵션을 쓸 수 없음"
 
-#: parser/parse_utilcmd.c:1474 parser/parse_utilcmd.c:1550
+#: parser/parse_utilcmd.c:1475 parser/parse_utilcmd.c:1551
 #, c-format
 msgid "Index \"%s\" contains a whole-row table reference."
 msgstr ""
 
-#: parser/parse_utilcmd.c:1819
+#: parser/parse_utilcmd.c:1820
 #, c-format
 msgid "cannot use an existing index in CREATE TABLE"
 msgstr ""
 
-#: parser/parse_utilcmd.c:1839
+#: parser/parse_utilcmd.c:1840
 #, c-format
 msgid "index \"%s\" is already associated with a constraint"
 msgstr ""
 
-#: parser/parse_utilcmd.c:1847
+#: parser/parse_utilcmd.c:1848
 #, c-format
 msgid "index \"%s\" does not belong to table \"%s\""
 msgstr "\"%s\" 인덱스가 \"%s\" 테이블용이 아님"
 
-#: parser/parse_utilcmd.c:1854
+#: parser/parse_utilcmd.c:1855
 #, c-format
 msgid "index \"%s\" is not valid"
 msgstr "\"%s\" 인덱스는 사용가능 상태가 아님"
 
-#: parser/parse_utilcmd.c:1860
+#: parser/parse_utilcmd.c:1861
 #, c-format
 msgid "\"%s\" is not a unique index"
 msgstr "\"%s\" 객체는 유니크 인덱스가 아닙니다"
 
-#: parser/parse_utilcmd.c:1861 parser/parse_utilcmd.c:1868
-#: parser/parse_utilcmd.c:1875 parser/parse_utilcmd.c:1945
+#: parser/parse_utilcmd.c:1862 parser/parse_utilcmd.c:1869
+#: parser/parse_utilcmd.c:1876 parser/parse_utilcmd.c:1946
 #, c-format
 msgid "Cannot create a primary key or unique constraint using such an index."
 msgstr ""
 
-#: parser/parse_utilcmd.c:1867
+#: parser/parse_utilcmd.c:1868
 #, c-format
 msgid "index \"%s\" contains expressions"
 msgstr "\"%s\" 인덱스에 표현식이 포함되어 있음"
 
-#: parser/parse_utilcmd.c:1874
+#: parser/parse_utilcmd.c:1875
 #, c-format
 msgid "\"%s\" is a partial index"
 msgstr "\"%s\" 객체는 부분 인덱스임"
 
-#: parser/parse_utilcmd.c:1886
+#: parser/parse_utilcmd.c:1887
 #, c-format
 msgid "\"%s\" is a deferrable index"
 msgstr "\"%s\" 객체는 지연가능한 인덱스임"
 
-#: parser/parse_utilcmd.c:1887
+#: parser/parse_utilcmd.c:1888
 #, c-format
 msgid "Cannot create a non-deferrable constraint using a deferrable index."
 msgstr ""
 
-#: parser/parse_utilcmd.c:1944
+#: parser/parse_utilcmd.c:1945
 #, c-format
 msgid "index \"%s\" does not have default sorting behavior"
 msgstr "\"%s\" 인덱스는 기본 정렬 방법이 없음"
 
-#: parser/parse_utilcmd.c:2088
+#: parser/parse_utilcmd.c:2089
 #, c-format
 msgid "column \"%s\" appears twice in primary key constraint"
 msgstr "기본키 제약 조건에서 \"%s\" 칼럼이 두 번 지정되었습니다"
 
-#: parser/parse_utilcmd.c:2094
+#: parser/parse_utilcmd.c:2095
 #, c-format
 msgid "column \"%s\" appears twice in unique constraint"
 msgstr "고유 제약 조건에서 \"%s\" 칼럼이 두 번 지정되었습니다"
 
-#: parser/parse_utilcmd.c:2303
+#: parser/parse_utilcmd.c:2304
 #, c-format
 msgid ""
 "index expressions and predicates can refer only to the table being indexed"
 msgstr "인덱스 식 및 술어는 인덱싱되는 테이블만 참조할 수 있음"
 
-#: parser/parse_utilcmd.c:2349
+#: parser/parse_utilcmd.c:2350
 #, c-format
 msgid "rules on materialized views are not supported"
 msgstr "구체화된 뷰에서의 룰은 지원하지 않음"
 
-#: parser/parse_utilcmd.c:2410
+#: parser/parse_utilcmd.c:2411
 #, c-format
 msgid "rule WHERE condition cannot contain references to other relations"
 msgstr "룰에서 지정한 WHERE 조건에 다른 릴레이션에 대한 참조를 포함할 수 없음"
 
-#: parser/parse_utilcmd.c:2482
+#: parser/parse_utilcmd.c:2483
 #, c-format
 msgid ""
 "rules with WHERE conditions can only have SELECT, INSERT, UPDATE, or DELETE "
@@ -15909,119 +15931,129 @@ msgstr ""
 "룰에서 지정한 WHERE 조건이 있는 규칙에는 SELECT, INSERT, UPDATE 또는 DELETE "
 "작업만 포함할 수 있음"
 
-#: parser/parse_utilcmd.c:2500 parser/parse_utilcmd.c:2599
+#: parser/parse_utilcmd.c:2501 parser/parse_utilcmd.c:2600
 #: rewrite/rewriteHandler.c:500 rewrite/rewriteManip.c:1015
 #, c-format
 msgid "conditional UNION/INTERSECT/EXCEPT statements are not implemented"
 msgstr "conditional UNION/INTERSECT/EXCEPT 구문은 구현되어 있지 않다"
 
-#: parser/parse_utilcmd.c:2518
+#: parser/parse_utilcmd.c:2519
 #, c-format
 msgid "ON SELECT rule cannot use OLD"
 msgstr "ON SELECT 룰은 OLD를 사용할 수 없음"
 
-#: parser/parse_utilcmd.c:2522
+#: parser/parse_utilcmd.c:2523
 #, c-format
 msgid "ON SELECT rule cannot use NEW"
 msgstr "ON SELECT 룰은 NEW를 사용할 수 없음"
 
-#: parser/parse_utilcmd.c:2531
+#: parser/parse_utilcmd.c:2532
 #, c-format
 msgid "ON INSERT rule cannot use OLD"
 msgstr "ON INSERT 룰은 OLD를 사용할 수 없음"
 
-#: parser/parse_utilcmd.c:2537
+#: parser/parse_utilcmd.c:2538
 #, c-format
 msgid "ON DELETE rule cannot use NEW"
 msgstr "ON DELETE 룰은 NEW를 사용할 수 없음"
 
-#: parser/parse_utilcmd.c:2565
+#: parser/parse_utilcmd.c:2566
 #, c-format
 msgid "cannot refer to OLD within WITH query"
 msgstr ""
 
-#: parser/parse_utilcmd.c:2572
+#: parser/parse_utilcmd.c:2573
 #, c-format
 msgid "cannot refer to NEW within WITH query"
 msgstr ""
 
-#: parser/parse_utilcmd.c:3005
+#: parser/parse_utilcmd.c:3006
 #, c-format
 msgid "misplaced DEFERRABLE clause"
 msgstr "DEFERABLE 절이 잘못 놓여져 있습니다"
 
-#: parser/parse_utilcmd.c:3010 parser/parse_utilcmd.c:3025
+#: parser/parse_utilcmd.c:3011 parser/parse_utilcmd.c:3026
 #, c-format
 msgid "multiple DEFERRABLE/NOT DEFERRABLE clauses not allowed"
 msgstr "여러 개의 DEFERRABLE/NOT DEFERRABLE절은 사용할 수 없습니다"
 
-#: parser/parse_utilcmd.c:3020
+#: parser/parse_utilcmd.c:3021
 #, c-format
 msgid "misplaced NOT DEFERRABLE clause"
 msgstr "NOT DEFERABLE 절이 잘못 놓여 있습니다"
 
-#: parser/parse_utilcmd.c:3033 parser/parse_utilcmd.c:3059 gram.y:5363
+#: parser/parse_utilcmd.c:3034 parser/parse_utilcmd.c:3060 gram.y:5363
 #, c-format
 msgid "constraint declared INITIALLY DEFERRED must be DEFERRABLE"
 msgstr "INITIALLY DEFERRED 로 선언된 조건문은 반드시 DEFERABLE 여야만 한다"
 
-#: parser/parse_utilcmd.c:3041
+#: parser/parse_utilcmd.c:3042
 #, c-format
 msgid "misplaced INITIALLY DEFERRED clause"
 msgstr "INITIALLY DEFERRED 절이 잘못 놓여 있습니다"
 
-#: parser/parse_utilcmd.c:3046 parser/parse_utilcmd.c:3072
+#: parser/parse_utilcmd.c:3047 parser/parse_utilcmd.c:3073
 #, c-format
 msgid "multiple INITIALLY IMMEDIATE/DEFERRED clauses not allowed"
 msgstr "여러 개의 INITIALLY IMMEDIATE/DEFERRED 절은 허용되지 않습니다"
 
-#: parser/parse_utilcmd.c:3067
+#: parser/parse_utilcmd.c:3068
 #, c-format
 msgid "misplaced INITIALLY IMMEDIATE clause"
 msgstr "INITIALLY IMMEDIATE 절이 잘못 놓여 있습니다"
 
-#: parser/parse_utilcmd.c:3258
+#: parser/parse_utilcmd.c:3259
 #, c-format
 msgid ""
 "CREATE specifies a schema (%s) different from the one being created (%s)"
 msgstr "CREATE 구문에 명시된 schema (%s) 가 생성된 (%s) 의 것과 다릅니다"
 
-#: parser/parse_utilcmd.c:3317
+#: parser/parse_utilcmd.c:3318
 #, c-format
 msgid "invalid bound specification for a list partition"
 msgstr "list 파티션을 위한 범위 설정이 잘못됨"
 
-#: parser/parse_utilcmd.c:3373
+#: parser/parse_utilcmd.c:3374
 #, c-format
 msgid "invalid bound specification for a range partition"
 msgstr "range 파티션을 위한 범위 설정이 잘못됨"
 
-#: parser/parse_utilcmd.c:3379
+#: parser/parse_utilcmd.c:3380
 #, c-format
 msgid "FROM must specify exactly one value per partitioning column"
 msgstr "FROM에는 파티션 칼럼 당 딱 하나의 값만 지정해야 함"
 
-#: parser/parse_utilcmd.c:3383
+#: parser/parse_utilcmd.c:3384
 #, c-format
 msgid "TO must specify exactly one value per partitioning column"
 msgstr "TO에는 파티션 칼럼 당 딱 하나의 값만 지정해야 함"
 
-#: parser/parse_utilcmd.c:3423 parser/parse_utilcmd.c:3437
+#: parser/parse_utilcmd.c:3431 parser/parse_utilcmd.c:3445
 #, c-format
 msgid "cannot specify NULL in range bound"
 msgstr "range 범위에는 NULL 값을 사용할 수 없음"
 
-#: parser/parse_utilcmd.c:3480 parser/parse_utilcmd.c:3492
+#: parser/parse_utilcmd.c:3492
+#, c-format
+msgid "every bound following MAXVALUE must also be MAXVALUE"
+msgstr ""
+
+#: parser/parse_utilcmd.c:3498
+#, c-format
+msgid "every bound following MINVALUE must also be MINVALUE"
+msgstr ""
+
+#: parser/parse_utilcmd.c:3528 parser/parse_utilcmd.c:3540
 #, c-format
 msgid "specified value cannot be cast to type %s for column \"%s\""
 msgstr "지정된 값은 %s 형으로 형변환 할 수 없음, 해당 칼럼: \"%s\""
 
-#: parser/parse_utilcmd.c:3494
+#: parser/parse_utilcmd.c:3542
 #, c-format
 msgid "The cast requires a non-immutable conversion."
 msgstr "형변환은 non-immutable 변환이 필요함"
 
-#: parser/parse_utilcmd.c:3495
+#: parser/parse_utilcmd.c:3543
 #, c-format
 msgid "Try putting the literal value in single quotes."
 msgstr ""
@@ -16333,8 +16365,7 @@ msgstr "\"%s\" 백그라운드 작업자: 잘못된 재실행 간격"
 #, c-format
 msgid ""
 "background worker \"%s\": parallel workers may not be configured for restart"
-msgstr ""
-"\"%s\" 백그라운드 작업자: 이 병렬 작업자는 재실행 설정이 없음"
+msgstr "\"%s\" 백그라운드 작업자: 이 병렬 작업자는 재실행 설정이 없음"
 
 #: postmaster/bgworker.c:673
 #, c-format
@@ -17193,12 +17224,12 @@ msgstr "시스템 로거(logger)를 확보하질 못 했습니다: %m"
 #: postmaster/syslogger.c:632
 #, c-format
 msgid "redirecting log output to logging collector process"
-msgstr ""
+msgstr "서버 로그를 로그 수집 프로세스로 보냅니다."
 
 #: postmaster/syslogger.c:633
 #, c-format
 msgid "Future log output will appear in directory \"%s\"."
-msgstr ""
+msgstr "이제부터 서버 로그는 \"%s\" 디렉토리에 보관됩니다."
 
 #: postmaster/syslogger.c:641
 #, c-format
@@ -17406,49 +17437,50 @@ msgstr "이 쿼리 인터페이스는 데이터베이스 연결이 필요합니�
 msgid "empty query"
 msgstr "빈 쿼리"
 
-#: replication/logical/launcher.c:300
+#: replication/logical/launcher.c:298
 #, c-format
 msgid "starting logical replication worker for subscription \"%s\""
 msgstr "\"%s\" 구독을 위해 논리 복제 작업자를 시작합니다"
 
-#: replication/logical/launcher.c:307
+#: replication/logical/launcher.c:305
 #, c-format
 msgid "cannot start logical replication workers when max_replication_slots = 0"
-msgstr "max_replication_slots = 0 설정 때문에 논리 복제 작업자를 시작 할 수 없습니다"
+msgstr ""
+"max_replication_slots = 0 설정 때문에 논리 복제 작업자를 시작 할 수 없습니다"
 
-#: replication/logical/launcher.c:387
+#: replication/logical/launcher.c:385
 #, c-format
 msgid "out of logical replication worker slots"
 msgstr "더 이상의 논리 복제 작업자용 슬롯이 없습니다"
 
-#: replication/logical/launcher.c:388
+#: replication/logical/launcher.c:386
 #, c-format
 msgid "You might need to increase max_logical_replication_workers."
 msgstr "max_logical_replication_workers 값을 늘리세요."
 
-#: replication/logical/launcher.c:433
+#: replication/logical/launcher.c:440
 #, c-format
 msgid "out of background worker slots"
 msgstr "백그라운 작업자 슬롯이 모자랍니다"
 
-#: replication/logical/launcher.c:434
+#: replication/logical/launcher.c:441
 #, c-format
 msgid "You might need to increase max_worker_processes."
 msgstr "max_worker_processes 값을 늘리세요."
 
-#: replication/logical/launcher.c:617
+#: replication/logical/launcher.c:624
 #, c-format
 msgid "logical replication worker slot %d is empty, cannot attach"
 msgstr ""
 
-#: replication/logical/launcher.c:626
+#: replication/logical/launcher.c:633
 #, c-format
 msgid ""
 "logical replication worker slot %d is already used by another worker, cannot "
 "attach"
 msgstr ""
 
-#: replication/logical/launcher.c:878
+#: replication/logical/launcher.c:885
 #, c-format
 msgid "logical replication launcher started"
 msgstr "논리 복제 관리자가 시작됨"
@@ -17648,17 +17680,17 @@ msgstr ""
 
 #: replication/logical/relation.c:456
 #, c-format
-msgid "builtin type %u not found"
+msgid "built-in type %u not found"
 msgstr "%u oid 용 내장 자료형이 없습니다"
 
 #: replication/logical/relation.c:457
 #, c-format
 msgid ""
-"This can be caused by having publisher with higher major version than "
-"subscriber"
+"This can be caused by having a publisher with a higher PostgreSQL major "
+"version than the subscriber."
 msgstr ""
 
-#: replication/logical/relation.c:489
+#: replication/logical/relation.c:488
 #, c-format
 msgid "data type \"%s.%s\" required for logical replication does not exist"
 msgstr "논리 복제용 \"%s.%s\" 자료형이 없습니다"
@@ -17813,7 +17845,7 @@ msgstr ""
 #: replication/logical/worker.c:632
 #, c-format
 msgid ""
-"publisher does not send replica identity column expected by the logical "
+"publisher did not send replica identity column expected by the logical "
 "replication target relation \"%s.%s\""
 msgstr ""
 
@@ -17828,14 +17860,14 @@ msgstr ""
 #: replication/logical/worker.c:846
 #, c-format
 msgid ""
-"logical replication could not find row for delete in replication target %s"
-msgstr ""
-"논리 복제 작업으로 %s 복제 대상에서 삭제용 로우를 찾을 수 없습니다"
+"logical replication could not find row for delete in replication target "
+"relation \"%s\""
+msgstr "논리 복제 작업으로 \"%s\" 복제 대상에서 삭제용 로우를 찾을 수 없습니다"
 
 #: replication/logical/worker.c:913
 #, c-format
-msgid "invalid logical replication message type %c"
-msgstr "잘못된 논리 복제 메시지 형태 %c"
+msgid "invalid logical replication message type \"%c\""
+msgstr "잘못된 논리 복제 메시지 형태 \"%c\""
 
 #: replication/logical/worker.c:1054
 #, c-format
@@ -17920,7 +17952,7 @@ msgstr "잘못된 proto_version"
 
 #: replication/pgoutput/pgoutput.c:118
 #, c-format
-msgid "proto_verson \"%s\" out of range"
+msgid "proto_version \"%s\" out of range"
 msgstr "proto_verson \"%s\" 범위 벗어남"
 
 #: replication/pgoutput/pgoutput.c:135
@@ -18198,14 +18230,17 @@ msgstr ""
 msgid ""
 "CREATE_REPLICATION_SLOT ... EXPORT_SNAPSHOT must not be called inside a "
 "transaction"
-msgstr "CREATE_REPLICATION_SLOT ... EXPORT_SNAPSHOT 구문은 트랜잭션 안에서는 쓸 수 없습니다."
+msgstr ""
+"CREATE_REPLICATION_SLOT ... EXPORT_SNAPSHOT 구문은 트랜잭션 안에서는 쓸 수 없"
+"습니다."
 
 #: replication/walsender.c:898
 #, c-format
 msgid ""
 "CREATE_REPLICATION_SLOT ... USE_SNAPSHOT must be called inside a transaction"
-msgstr "CREATE_REPLICATION_SLOT ... USE_SNAPSHOT 구문은 트랜잭션 안에서만 "
-"쓸 수 있습니다."
+msgstr ""
+"CREATE_REPLICATION_SLOT ... USE_SNAPSHOT 구문은 트랜잭션 안에서만 쓸 수 있습"
+"니다."
 
 #: replication/walsender.c:903
 #, c-format
@@ -18213,8 +18248,8 @@ msgid ""
 "CREATE_REPLICATION_SLOT ... USE_SNAPSHOT must be called in REPEATABLE READ "
 "isolation mode transaction"
 msgstr ""
-"CREATE_REPLICATION_SLOT ... USE_SNAPSHOT 구문은 격리 수준이 REPEATABLE "
-"READ 일때만 사용할 수 있습니다."
+"CREATE_REPLICATION_SLOT ... USE_SNAPSHOT 구문은 격리 수준이 REPEATABLE READ "
+"일때만 사용할 수 있습니다."
 
 #: replication/walsender.c:908
 #, c-format
@@ -18229,8 +18264,8 @@ msgid ""
 "CREATE_REPLICATION_SLOT ... USE_SNAPSHOT must not be called in a "
 "subtransaction"
 msgstr ""
-"CREATE_REPLICATION_SLOT ... USE_SNAPSHOT 구문은 하위 트랜잭션에서는 "
-"호출 할 수 없습니다."
+"CREATE_REPLICATION_SLOT ... USE_SNAPSHOT 구문은 하위 트랜잭션에서는 호출 할 "
+"수 없습니다."
 
 #: replication/walsender.c:1059
 #, c-format
@@ -18260,8 +18295,8 @@ msgstr ""
 
 #: replication/walsender.c:1548
 #, c-format
-msgid "not connected to database"
-msgstr "접속된 데이터베이스 없음"
+msgid "cannot execute SQL commands in WAL sender for physical replication"
+msgstr "물리적 복제를 위한 WAL 송신기에서 SQL 명령을 실행할 수 없음"
 
 #: replication/walsender.c:1588 replication/walsender.c:1604
 #, c-format
@@ -18369,12 +18404,12 @@ msgstr "\"%s\" 위한 뷰 룰(view rule)의 이름은 \"%s\" 여야만합니다"
 
 #: rewrite/rewriteDefine.c:428
 #, c-format
-msgid "could not convert partitioned table \"%s\" to a view"
+msgid "cannot convert partitioned table \"%s\" to a view"
 msgstr "\"%s\" 파티션된 테이블은 뷰로 변환할 수 없습니다"
 
 #: rewrite/rewriteDefine.c:434
 #, c-format
-msgid "could not convert partition \"%s\" to a view"
+msgid "cannot convert partition \"%s\" to a view"
 msgstr "\"%s\" 파티션 테이블은 뷰로 변환할 수 없습니다"
 
 #: rewrite/rewriteDefine.c:442
@@ -18786,8 +18821,7 @@ msgstr "%s 형식의 값은 사용할 수 없음"
 #, c-format
 msgid ""
 "statistics object \"%s.%s\" could not be computed for relation \"%s.%s\""
-msgstr ""
-"\"%s.%s\" 통계정보 객체를 계산 할 수 없음: 대상 릴레이션: \"%s.%s\""
+msgstr "\"%s.%s\" 통계정보 객체를 계산 할 수 없음: 대상 릴레이션: \"%s.%s\""
 
 #: statistics/mvdistinct.c:259
 #, c-format
@@ -19033,8 +19067,8 @@ msgstr "poll() 실패: %m"
 #: storage/ipc/shm_toc.c:108 storage/ipc/shm_toc.c:190 storage/lmgr/lock.c:883
 #: storage/lmgr/lock.c:917 storage/lmgr/lock.c:2679 storage/lmgr/lock.c:4004
 #: storage/lmgr/lock.c:4069 storage/lmgr/lock.c:4361
-#: storage/lmgr/predicate.c:2399 storage/lmgr/predicate.c:2414
-#: storage/lmgr/predicate.c:3806 storage/lmgr/predicate.c:4949
+#: storage/lmgr/predicate.c:2401 storage/lmgr/predicate.c:2416
+#: storage/lmgr/predicate.c:3808 storage/lmgr/predicate.c:4951
 #: utils/hash/dynahash.c:1061
 #, c-format
 msgid "out of shared memory"
@@ -19243,91 +19277,91 @@ msgid ""
 "on the same object"
 msgstr ""
 
-#: storage/lmgr/predicate.c:684
+#: storage/lmgr/predicate.c:686
 #, c-format
 msgid "not enough elements in RWConflictPool to record a read/write conflict"
 msgstr ""
 
-#: storage/lmgr/predicate.c:685 storage/lmgr/predicate.c:713
+#: storage/lmgr/predicate.c:687 storage/lmgr/predicate.c:715
 #, c-format
 msgid ""
 "You might need to run fewer transactions at a time or increase "
 "max_connections."
 msgstr ""
 
-#: storage/lmgr/predicate.c:712
+#: storage/lmgr/predicate.c:714
 #, c-format
 msgid ""
 "not enough elements in RWConflictPool to record a potential read/write "
 "conflict"
 msgstr ""
 
-#: storage/lmgr/predicate.c:919
+#: storage/lmgr/predicate.c:921
 #, c-format
 msgid "memory for serializable conflict tracking is nearly exhausted"
 msgstr ""
 
-#: storage/lmgr/predicate.c:920
+#: storage/lmgr/predicate.c:922
 #, c-format
 msgid ""
 "There might be an idle transaction or a forgotten prepared transaction "
 "causing this."
 msgstr ""
 
-#: storage/lmgr/predicate.c:1559
+#: storage/lmgr/predicate.c:1561
 #, c-format
 msgid "deferrable snapshot was unsafe; trying a new one"
 msgstr ""
 
-#: storage/lmgr/predicate.c:1648
+#: storage/lmgr/predicate.c:1650
 #, c-format
 msgid "\"default_transaction_isolation\" is set to \"serializable\"."
 msgstr ""
 
-#: storage/lmgr/predicate.c:1649
+#: storage/lmgr/predicate.c:1651
 #, c-format
 msgid ""
 "You can use \"SET default_transaction_isolation = 'repeatable read'\" to "
 "change the default."
 msgstr ""
 
-#: storage/lmgr/predicate.c:1689
+#: storage/lmgr/predicate.c:1691
 #, c-format
 msgid "a snapshot-importing transaction must not be READ ONLY DEFERRABLE"
 msgstr ""
 
-#: storage/lmgr/predicate.c:1769 utils/time/snapmgr.c:621
+#: storage/lmgr/predicate.c:1771 utils/time/snapmgr.c:621
 #: utils/time/snapmgr.c:627
 #, c-format
 msgid "could not import the requested snapshot"
 msgstr ""
 
-#: storage/lmgr/predicate.c:1770 utils/time/snapmgr.c:628
+#: storage/lmgr/predicate.c:1772 utils/time/snapmgr.c:628
 #, c-format
-msgid "The source process with pid %d is not running anymore."
-msgstr "%d 소스 프로세스는 더이상 실행 중이지 않습니다."
+msgid "The source process with PID %d is not running anymore."
+msgstr "%d PID 소스 프로세스는 더이상 실행 중이지 않습니다."
 
-#: storage/lmgr/predicate.c:2400 storage/lmgr/predicate.c:2415
-#: storage/lmgr/predicate.c:3807
+#: storage/lmgr/predicate.c:2402 storage/lmgr/predicate.c:2417
+#: storage/lmgr/predicate.c:3809
 #, c-format
 msgid "You might need to increase max_pred_locks_per_transaction."
 msgstr "max_pred_locks_per_transaction 값을 늘려야 할 수도 있습니다."
-
-#: storage/lmgr/predicate.c:3961 storage/lmgr/predicate.c:4050
-#: storage/lmgr/predicate.c:4058 storage/lmgr/predicate.c:4097
-#: storage/lmgr/predicate.c:4336 storage/lmgr/predicate.c:4673
-#: storage/lmgr/predicate.c:4685 storage/lmgr/predicate.c:4727
-#: storage/lmgr/predicate.c:4765
-#, c-format
-msgid ""
-"could not serialize access due to read/write dependencies among transactions"
-msgstr "트랜잭션간 읽기/쓰기 의존성 때문에 serialize 접근을 할 수 없음"
 
 #: storage/lmgr/predicate.c:3963 storage/lmgr/predicate.c:4052
 #: storage/lmgr/predicate.c:4060 storage/lmgr/predicate.c:4099
 #: storage/lmgr/predicate.c:4338 storage/lmgr/predicate.c:4675
 #: storage/lmgr/predicate.c:4687 storage/lmgr/predicate.c:4729
 #: storage/lmgr/predicate.c:4767
+#, c-format
+msgid ""
+"could not serialize access due to read/write dependencies among transactions"
+msgstr "트랜잭션간 읽기/쓰기 의존성 때문에 serialize 접근을 할 수 없음"
+
+#: storage/lmgr/predicate.c:3965 storage/lmgr/predicate.c:4054
+#: storage/lmgr/predicate.c:4062 storage/lmgr/predicate.c:4101
+#: storage/lmgr/predicate.c:4340 storage/lmgr/predicate.c:4677
+#: storage/lmgr/predicate.c:4689 storage/lmgr/predicate.c:4731
+#: storage/lmgr/predicate.c:4769
 #, c-format
 msgid "The transaction might succeed if retried."
 msgstr "재시도하면 그 트랜잭션이 성공할 것입니다."
@@ -21356,8 +21390,8 @@ msgstr "단계 크기는 0일 수 없음"
 #: utils/adt/int8.c:98 utils/adt/int8.c:133 utils/adt/numutils.c:51
 #: utils/adt/numutils.c:61 utils/adt/numutils.c:105
 #, c-format
-msgid "invalid input syntax for %s: \"%s\""
-msgstr "%s 자료형 대한 잘못된 입력 구문: \"%s\""
+msgid "invalid input syntax for integer: \"%s\""
+msgstr "정수 자료형 대한 잘못된 입력 구문: \"%s\""
 
 #: utils/adt/int8.c:500 utils/adt/int8.c:529 utils/adt/int8.c:550
 #: utils/adt/int8.c:581 utils/adt/int8.c:615 utils/adt/int8.c:640
@@ -21650,17 +21684,17 @@ msgstr "예기치 않은 json 배열"
 
 #: utils/adt/jsonfuncs.c:2317
 #, c-format
-msgid "see the value of key \"%s\""
+msgid "See the value of key \"%s\"."
 msgstr "\"%s\" 키의 값을 지정하세요"
 
 #: utils/adt/jsonfuncs.c:2339
 #, c-format
-msgid "see the array element %s of key \"%s\""
+msgid "See the array element %s of key \"%s\"."
 msgstr "%s 배열 요소, 해당 키: \"%s\" 참조"
 
 #: utils/adt/jsonfuncs.c:2345
 #, c-format
-msgid "see the array element %s"
+msgid "See the array element %s."
 msgstr "배열 요소: %s 참조"
 
 #: utils/adt/jsonfuncs.c:2380
@@ -21778,8 +21812,8 @@ msgstr ""
 #: utils/adt/mac8.c:555
 #, c-format
 msgid ""
-"Only addresses that have FF and FE as values in the 4th and 5th bytes, from "
-"the left, for example: XX-XX-XX-FF-FE-XX-XX-XX, are eligible to be converted "
+"Only addresses that have FF and FE as values in the 4th and 5th bytes from "
+"the left, for example xx:xx:xx:ff:fe:xx:xx:xx, are eligible to be converted "
 "from macaddr8 to macaddr."
 msgstr ""
 
@@ -22135,8 +22169,8 @@ msgstr "이 플랫폼에서는 LIBC 문자 정렬 제공자 기능(ICU)을 지�
 msgid ""
 "collations with different collate and ctype values are not supported by ICU"
 msgstr ""
-"ICU 지원 기능에서는 서로 다른 정렬규칙(collation)과 문자집합(ctype)을 함께 쓸 수 "
-"없습니다."
+"ICU 지원 기능에서는 서로 다른 정렬규칙(collation)과 문자집합(ctype)을 함께 "
+"쓸 수 없습니다."
 
 #: utils/adt/pg_locale.c:1379 utils/adt/pg_locale.c:1461
 #, c-format
@@ -22156,8 +22190,7 @@ msgstr "--with-icu 옵션을 사용하여 PostgreSQL을 다시 빌드해야 합�
 #: utils/adt/pg_locale.c:1409
 #, c-format
 msgid "collation \"%s\" has no actual version, but a version was specified"
-msgstr ""
-"\"%s\" 정렬규칙은 분명한 버전이 없는데 버전을 지정했음"
+msgstr "\"%s\" 정렬규칙은 분명한 버전이 없는데 버전을 지정했음"
 
 #: utils/adt/pg_locale.c:1416
 #, c-format
@@ -22351,7 +22384,7 @@ msgid "Use NONE to denote the missing argument of a unary operator."
 msgstr "단항 연산자에서 인자 없음을 표시할 때는 NONE 인자를 사용하세요."
 
 #: utils/adt/regproc.c:696 utils/adt/regproc.c:737 utils/adt/regproc.c:1865
-#: utils/adt/ruleutils.c:8958 utils/adt/ruleutils.c:9126
+#: utils/adt/ruleutils.c:8959 utils/adt/ruleutils.c:9127
 #, c-format
 msgid "too many arguments"
 msgstr "인자가 너무 많습니다"
@@ -22542,7 +22575,7 @@ msgstr "서로 다른 열 형식 %s과(와) %s(레코드 열 %d)을(를) 비교�
 msgid "cannot compare record types with different numbers of columns"
 msgstr "칼럼 수가 서로 다른 레코드 자료형을 비교할 수 없음"
 
-#: utils/adt/ruleutils.c:4667
+#: utils/adt/ruleutils.c:4668
 #, c-format
 msgid "rule \"%s\" has unsupported event type %d"
 msgstr "\"%s\" 룰은 %d 이벤트 형태를 지원하지 않습니다"
@@ -22882,25 +22915,13 @@ msgstr "tsvector에 잘못된 위치 정보가 있음: \"%s\""
 
 #: utils/adt/txid.c:135
 #, c-format
-msgid "transaction ID "
-msgstr "트랜잭션 ID "
+msgid "transaction ID %s is in the future"
+msgstr "%s 트랜잭션 ID는 미래의 것입니다"
 
 #: utils/adt/txid.c:624
 #, c-format
 msgid "invalid external txid_snapshot data"
 msgstr "외부 txid_snapshot 값이 잘못됨"
-
-#: utils/adt/txid.c:758 utils/adt/txid.c:779
-msgid "in progress"
-msgstr "진행 중"
-
-#: utils/adt/txid.c:760
-msgid "committed"
-msgstr "커밋됨"
-
-#: utils/adt/txid.c:762 utils/adt/txid.c:777
-msgid "aborted"
-msgstr "취소됨"
 
 #: utils/adt/varbit.c:58 utils/adt/varchar.c:51
 #, c-format
@@ -23748,8 +23769,8 @@ msgid ""
 "The data directory was initialized by PostgreSQL version %s, which is not "
 "compatible with this version %s."
 msgstr ""
-"이 데이터 디렉터리는 PostgreSQL %s 버전으로 초기화 되어있는데, 이 서버"
-"의 %s 버전은 이 버전과 호환성이 없습니다."
+"이 데이터 디렉터리는 PostgreSQL %s 버전으로 초기화 되어있는데, 이 서버의 %s "
+"버전은 이 버전과 호환성이 없습니다."
 
 #: utils/init/miscinit.c:1474
 #, c-format
@@ -24696,8 +24717,8 @@ msgid ""
 "This applies to table columns that have not had a column-specific target set "
 "via ALTER TABLE SET STATISTICS."
 msgstr ""
-"특정 칼럼을 지정하지 않고 ALTER TABLE SET STATISTICS 명령을 사용했을 때, 통계 "
-"대상이 될 칼럼을 지정합니다."
+"특정 칼럼을 지정하지 않고 ALTER TABLE SET STATISTICS 명령을 사용했을 때, 통"
+"계 대상이 될 칼럼을 지정합니다."
 
 #: utils/misc/guc.c:1711
 msgid "Sets the FROM-list size beyond which subqueries are not collapsed."
@@ -24991,7 +25012,7 @@ msgstr "하나의 트랜잭션에서 사용할 수 있는 페이지와 튜플의
 #: utils/misc/guc.c:2203
 msgid ""
 "If more than this total of pages and tuples in the same relation are locked "
-"by a connection, those locks are replaced by a relation level lock."
+"by a connection, those locks are replaced by a relation-level lock."
 msgstr ""
 
 #: utils/misc/guc.c:2213
@@ -25001,7 +25022,7 @@ msgstr "페이지당 잠금 튜플 최대 수 지정."
 #: utils/misc/guc.c:2214
 msgid ""
 "If more than this number of tuples on the same page are locked by a "
-"connection, those locks are replaced by a page level lock."
+"connection, those locks are replaced by a page-level lock."
 msgstr ""
 
 #: utils/misc/guc.c:2224
@@ -25235,8 +25256,7 @@ msgstr "실행 노드당 최대 병렬 처리 수 지정"
 #: utils/misc/guc.c:2718
 msgid ""
 "Sets the maximum number of parallel workers than can be active at one time."
-msgstr ""
-"한번에 작업할 수 있는 병렬 작업자 최대 수 지정"
+msgstr "한번에 작업할 수 있는 병렬 작업자 최대 수 지정"
 
 #: utils/misc/guc.c:2728
 msgid "Sets the maximum memory to be used by each autovacuum worker process."
@@ -25674,7 +25694,7 @@ msgid "Sets the curve to use for ECDH."
 msgstr "ECDH에 사용할 curve 설정"
 
 #: utils/misc/guc.c:3611
-msgid "Location of the SSL DH params file."
+msgid "Location of the SSL DH parameters file."
 msgstr "SSL DH 매개 변수 파일의 위치."
 
 #: utils/misc/guc.c:3622
@@ -26688,16 +26708,16 @@ msgstr "구문 오류가 너무 많습니다. \"%s\" 파일을 무시합니다"
 msgid "could not open configuration directory \"%s\": %m"
 msgstr "\"%s\" 환경 설정 디렉터리를 열 수 없습니다: %m"
 
-#: repl_gram.y:320 repl_gram.y:352
+#: repl_gram.y:330 repl_gram.y:362
 #, c-format
 msgid "invalid timeline %u"
 msgstr "잘못된 타임라인: %u"
 
-#: repl_scanner.l:125
+#: repl_scanner.l:126
 msgid "invalid streaming start location"
 msgstr "잘못된 스트리밍 시작 위치"
 
-#: repl_scanner.l:176 scan.l:670
+#: repl_scanner.l:177 scan.l:670
 msgid "unterminated quoted string"
 msgstr "마무리 안된 따옴표 안의 문자열"
 

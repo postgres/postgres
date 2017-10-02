@@ -5,8 +5,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libpq (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-08-02 13:57+0900\n"
-"PO-Revision-Date: 2017-08-17 13:22+0900\n"
+"POT-Creation-Date: 2017-09-19 09:51+0900\n"
+"PO-Revision-Date: 2017-09-19 10:25+0900\n"
 "Last-Translator: Ioseph Kim <ioseph@uri.sarang.net>\n"
 "Language-Team: Korean <pgsql-kr@postgresql.kr>\n"
 "Language: ko\n"
@@ -14,6 +14,79 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
+
+#: fe-auth-scram.c:176
+msgid "malformed SCRAM message (empty message)\n"
+msgstr "SCRAM 메시지가 형식에 안맞음 (메시지 비었음)\n"
+
+#: fe-auth-scram.c:182
+msgid "malformed SCRAM message (length mismatch)\n"
+msgstr "SCRAM 메시지가 형식에 안맞음 (길이 불일치)\n"
+
+#: fe-auth-scram.c:231
+msgid "incorrect server signature\n"
+msgstr "잘못된 서버 서명\n"
+
+#: fe-auth-scram.c:240
+msgid "invalid SCRAM exchange state\n"
+msgstr "SCRAM 교화 상태가 바르지 않음\n"
+
+#: fe-auth-scram.c:263
+#, c-format
+msgid "malformed SCRAM message (attribute \"%c\" expected)\n"
+msgstr "SCRAM 메시지가 형식에 안맞음 (\"%c\" 속성이 예상됨)\n"
+
+#: fe-auth-scram.c:272
+#, c-format
+msgid ""
+"malformed SCRAM message (expected character \"=\" for attribute \"%c\")\n"
+msgstr "SCRAM 메시지가 형식에 안맞음 (\"%c\" 속성 예상값은 \"=\")\n"
+
+#: fe-auth-scram.c:311
+msgid "could not generate nonce\n"
+msgstr "암호화 토큰(nonce)을 만들 수 없음\n"
+
+#: fe-auth-scram.c:319 fe-auth-scram.c:336 fe-auth-scram.c:346
+#: fe-auth-scram.c:400 fe-auth-scram.c:420 fe-auth-scram.c:445
+#: fe-auth-scram.c:459 fe-auth-scram.c:501 fe-auth.c:227 fe-auth.c:362
+#: fe-auth.c:432 fe-auth.c:467 fe-auth.c:609 fe-auth.c:768 fe-auth.c:1080
+#: fe-auth.c:1228 fe-connect.c:775 fe-connect.c:1203 fe-connect.c:1379
+#: fe-connect.c:1947 fe-connect.c:2476 fe-connect.c:4062 fe-connect.c:4314
+#: fe-connect.c:4433 fe-connect.c:4673 fe-connect.c:4753 fe-connect.c:4852
+#: fe-connect.c:5108 fe-connect.c:5137 fe-connect.c:5209 fe-connect.c:5233
+#: fe-connect.c:5251 fe-connect.c:5352 fe-connect.c:5361 fe-connect.c:5717
+#: fe-connect.c:5867 fe-exec.c:2702 fe-exec.c:3449 fe-exec.c:3614
+#: fe-lobj.c:896 fe-protocol2.c:1206 fe-protocol3.c:992 fe-protocol3.c:1678
+#: fe-secure-openssl.c:514 fe-secure-openssl.c:1138
+msgid "out of memory\n"
+msgstr "메모리 부족\n"
+
+#: fe-auth-scram.c:437
+msgid "invalid SCRAM response (nonce mismatch)\n"
+msgstr "잘못된 SCRAM 응답 (토큰 불일치)\n"
+
+#: fe-auth-scram.c:476
+msgid "malformed SCRAM message (invalid iteration count)\n"
+msgstr "형식에 맞지 않은 SCRAM 메시지 (나열 숫자가 이상함)\n"
+
+#: fe-auth-scram.c:482
+msgid "malformed SCRAM message (garbage at end of server-first-message)\n"
+msgstr ""
+"형식에 맞지 않은 SCRAM 메시지 (서버 첫 메시지 끝에 쓸모 없는 값이 있음)\n"
+
+#: fe-auth-scram.c:511
+#, c-format
+msgid "error received from server in SCRAM exchange: %s\n"
+msgstr "SCRAM 교환작업에서 서버로부터 데이터를 받지 못했음: %s\n"
+
+#: fe-auth-scram.c:526
+msgid "malformed SCRAM message (garbage at end of server-final-message)\n"
+msgstr ""
+"형식에 맞지 않은 SCRAM 메시지 (서버 끝 메시지 뒤에 쓸모 없는 값이 있음)\n"
+
+#: fe-auth-scram.c:534
+msgid "malformed SCRAM message (invalid server signature)\n"
+msgstr "형식에 맞지 않은 SCRAM 메시지 (서버 사인이 이상함)\n"
 
 #: fe-auth.c:122
 #, c-format
@@ -31,19 +104,6 @@ msgstr "호스트 이름을 지정해야 함\n"
 #: fe-auth.c:214
 msgid "duplicate GSS authentication request\n"
 msgstr "중복된 GSS 인증 요청\n"
-
-#: fe-auth.c:227 fe-auth.c:362 fe-auth.c:432 fe-auth.c:467 fe-auth.c:609
-#: fe-auth.c:768 fe-auth.c:1080 fe-auth.c:1228 fe-connect.c:775
-#: fe-connect.c:1203 fe-connect.c:1379 fe-connect.c:1947 fe-connect.c:2476
-#: fe-connect.c:4062 fe-connect.c:4314 fe-connect.c:4433 fe-connect.c:4673
-#: fe-connect.c:4753 fe-connect.c:4852 fe-connect.c:5108 fe-connect.c:5137
-#: fe-connect.c:5209 fe-connect.c:5233 fe-connect.c:5251 fe-connect.c:5352
-#: fe-connect.c:5361 fe-connect.c:5717 fe-connect.c:5867 fe-exec.c:2651
-#: fe-exec.c:3398 fe-exec.c:3563 fe-lobj.c:896 fe-protocol2.c:1206
-#: fe-protocol3.c:992 fe-protocol3.c:1678 fe-secure-openssl.c:514
-#: fe-secure-openssl.c:1138
-msgid "out of memory\n"
-msgstr "메모리 부족\n"
 
 #: fe-auth.c:240
 msgid "GSSAPI name import error"
@@ -84,8 +144,7 @@ msgid ""
 "AuthenticationSASLFinal received from server, but SASL authentication was "
 "not completed\n"
 msgstr ""
-"서버에서 AuthenticationSASLFinal 응답을 받았지만, SASL 인증이 끝나지 "
-"않았음\n"
+"서버에서 AuthenticationSASLFinal 응답을 받았지만, SASL 인증이 끝나지 않았음\n"
 
 #: fe-auth.c:735
 msgid "SCM_CRED authentication method not supported\n"
@@ -514,102 +573,121 @@ msgstr ""
 msgid "password retrieved from file \"%s\"\n"
 msgstr "\"%s\" 파일에서 암호를 찾을 수 없음\n"
 
-#: fe-exec.c:826
-msgid "NOTICE"
-msgstr "알림"
-
-#: fe-exec.c:1141 fe-exec.c:1199 fe-exec.c:1245
-msgid "command string is a null pointer\n"
-msgstr "명령 문자열이 null 포인터\n"
-
-#: fe-exec.c:1205 fe-exec.c:1251 fe-exec.c:1346
-msgid "number of parameters must be between 0 and 65535\n"
-msgstr "매개변수값으로 숫자는 0에서 65535까지만 쓸 수 있음\n"
-
-#: fe-exec.c:1239 fe-exec.c:1340
-msgid "statement name is a null pointer\n"
-msgstr "실행 구문 이름이 null 포인트(값이 없음)입니다\n"
-
-#: fe-exec.c:1259 fe-exec.c:1422 fe-exec.c:2140 fe-exec.c:2339
-msgid "function requires at least protocol version 3.0\n"
-msgstr "함수는 적어도 버전 3의 프로토콜을 요구하고 있습니다\n"
-
-#: fe-exec.c:1377
-msgid "no connection to the server\n"
-msgstr "서버에 대한 연결이 없음\n"
-
-#: fe-exec.c:1384
-msgid "another command is already in progress\n"
-msgstr "처리 중에 이미 다른 명령이 존재함\n"
-
-#: fe-exec.c:1498
-msgid "length must be given for binary parameter\n"
-msgstr "바이너리 자료 매개 변수를 사용할 때는 그 길이를 지정해야 함\n"
-
-#: fe-exec.c:1770
-#, c-format
-msgid "unexpected asyncStatus: %d\n"
-msgstr "기대되지 않은 동기화상태: %d\n"
-
-#: fe-exec.c:1790
-#, c-format
-msgid "PGEventProc \"%s\" failed during PGEVT_RESULTCREATE event\n"
-msgstr "PGEVT_RESULTCREATE 이벤트 동안 PGEventProc \"%s\" 실패함\n"
-
-#: fe-exec.c:1950
-msgid "COPY terminated by new PQexec"
-msgstr "새 PQexec 호출로 COPY 작업이 중지 되었습니다"
-
-#: fe-exec.c:1958
-msgid "COPY IN state must be terminated first\n"
-msgstr "COPY IN 상태가 먼저 끝나야함\n"
-
-#: fe-exec.c:1978
-msgid "COPY OUT state must be terminated first\n"
-msgstr "COPY OUT 상태가 먼저 끝나야함\n"
-
-#: fe-exec.c:1986
-msgid "PQexec not allowed during COPY BOTH\n"
-msgstr "COPY BOTH 작업 중에는 PQexec 사용할 수 없음\n"
-
-#: fe-exec.c:2229 fe-exec.c:2296 fe-exec.c:2386 fe-protocol2.c:1352
-#: fe-protocol3.c:1817
-msgid "no COPY in progress\n"
-msgstr "처리 가운데 COPY가 없음\n"
-
-#: fe-exec.c:2576
-msgid "connection in wrong state\n"
-msgstr "잘못된 상태의 연결\n"
-
-#: fe-exec.c:2607
-msgid "invalid ExecStatusType code"
-msgstr "잘못된 ExecStatusType 코드"
-
-#: fe-exec.c:2634
-msgid "PGresult is not an error result\n"
-msgstr "PGresult가 오류 결과가 아님\n"
-
-#: fe-exec.c:2709 fe-exec.c:2732
-#, c-format
-msgid "column number %d is out of range 0..%d"
-msgstr "%d 번째 열은 0..%d 범위를 벗어났음"
-
-#: fe-exec.c:2725
+#: fe-exec.c:437 fe-exec.c:2776
 #, c-format
 msgid "row number %d is out of range 0..%d"
 msgstr "%d 번째 행(row)은 0..%d 범위를 벗어났음"
 
-#: fe-exec.c:2747
+#: fe-exec.c:498 fe-protocol2.c:503 fe-protocol2.c:538 fe-protocol2.c:1049
+#: fe-protocol3.c:209 fe-protocol3.c:236 fe-protocol3.c:253 fe-protocol3.c:333
+#: fe-protocol3.c:728 fe-protocol3.c:951
+msgid "out of memory"
+msgstr "메모리 부족"
+
+#: fe-exec.c:499 fe-protocol2.c:1395 fe-protocol3.c:1886
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: fe-exec.c:847
+msgid "NOTICE"
+msgstr "알림"
+
+#: fe-exec.c:905
+msgid "PGresult cannot support more than INT_MAX tuples"
+msgstr "PGresult 함수는 INT_MAX 튜플보다 많은 경우를 지원하지 않음"
+
+#: fe-exec.c:917
+msgid "size_t overflow"
+msgstr "size_t 초과"
+
+#: fe-exec.c:1192 fe-exec.c:1250 fe-exec.c:1296
+msgid "command string is a null pointer\n"
+msgstr "명령 문자열이 null 포인터\n"
+
+#: fe-exec.c:1256 fe-exec.c:1302 fe-exec.c:1397
+msgid "number of parameters must be between 0 and 65535\n"
+msgstr "매개변수값으로 숫자는 0에서 65535까지만 쓸 수 있음\n"
+
+#: fe-exec.c:1290 fe-exec.c:1391
+msgid "statement name is a null pointer\n"
+msgstr "실행 구문 이름이 null 포인트(값이 없음)입니다\n"
+
+#: fe-exec.c:1310 fe-exec.c:1473 fe-exec.c:2191 fe-exec.c:2390
+msgid "function requires at least protocol version 3.0\n"
+msgstr "함수는 적어도 버전 3의 프로토콜을 요구하고 있습니다\n"
+
+#: fe-exec.c:1428
+msgid "no connection to the server\n"
+msgstr "서버에 대한 연결이 없음\n"
+
+#: fe-exec.c:1435
+msgid "another command is already in progress\n"
+msgstr "처리 중에 이미 다른 명령이 존재함\n"
+
+#: fe-exec.c:1549
+msgid "length must be given for binary parameter\n"
+msgstr "바이너리 자료 매개 변수를 사용할 때는 그 길이를 지정해야 함\n"
+
+#: fe-exec.c:1821
+#, c-format
+msgid "unexpected asyncStatus: %d\n"
+msgstr "기대되지 않은 동기화상태: %d\n"
+
+#: fe-exec.c:1841
+#, c-format
+msgid "PGEventProc \"%s\" failed during PGEVT_RESULTCREATE event\n"
+msgstr "PGEVT_RESULTCREATE 이벤트 동안 PGEventProc \"%s\" 실패함\n"
+
+#: fe-exec.c:2001
+msgid "COPY terminated by new PQexec"
+msgstr "새 PQexec 호출로 COPY 작업이 중지 되었습니다"
+
+#: fe-exec.c:2009
+msgid "COPY IN state must be terminated first\n"
+msgstr "COPY IN 상태가 먼저 끝나야함\n"
+
+#: fe-exec.c:2029
+msgid "COPY OUT state must be terminated first\n"
+msgstr "COPY OUT 상태가 먼저 끝나야함\n"
+
+#: fe-exec.c:2037
+msgid "PQexec not allowed during COPY BOTH\n"
+msgstr "COPY BOTH 작업 중에는 PQexec 사용할 수 없음\n"
+
+#: fe-exec.c:2280 fe-exec.c:2347 fe-exec.c:2437 fe-protocol2.c:1352
+#: fe-protocol3.c:1817
+msgid "no COPY in progress\n"
+msgstr "처리 가운데 COPY가 없음\n"
+
+#: fe-exec.c:2627
+msgid "connection in wrong state\n"
+msgstr "잘못된 상태의 연결\n"
+
+#: fe-exec.c:2658
+msgid "invalid ExecStatusType code"
+msgstr "잘못된 ExecStatusType 코드"
+
+#: fe-exec.c:2685
+msgid "PGresult is not an error result\n"
+msgstr "PGresult가 오류 결과가 아님\n"
+
+#: fe-exec.c:2760 fe-exec.c:2783
+#, c-format
+msgid "column number %d is out of range 0..%d"
+msgstr "%d 번째 열은 0..%d 범위를 벗어났음"
+
+#: fe-exec.c:2798
 #, c-format
 msgid "parameter number %d is out of range 0..%d"
 msgstr "%d개의 매개 변수는 0..%d 범위를 벗어났음"
 
-#: fe-exec.c:3057
+#: fe-exec.c:3108
 #, c-format
 msgid "could not interpret result from server: %s"
 msgstr "서버로부터 결과처리를 중지 시킬 수 없음: %s"
 
-#: fe-exec.c:3296 fe-exec.c:3380
+#: fe-exec.c:3347 fe-exec.c:3431
 msgid "incomplete multibyte character\n"
 msgstr "완성되지 않은 멀티바이트 문자\n"
 
@@ -749,12 +827,6 @@ msgstr "잘못된 상태 %c,  메모리 손상일 가능성이 큼\n"
 msgid "message type 0x%02x arrived from server while idle"
 msgstr "휴지(idle)동안 서버로 부터 0x%02x 형태 메시지를 받았음"
 
-#: fe-protocol2.c:503 fe-protocol2.c:538 fe-protocol2.c:1049
-#: fe-protocol3.c:209 fe-protocol3.c:236 fe-protocol3.c:253 fe-protocol3.c:333
-#: fe-protocol3.c:728 fe-protocol3.c:951
-msgid "out of memory"
-msgstr "메모리 부족"
-
 #: fe-protocol2.c:529
 #, c-format
 msgid "unexpected character %c following empty query response (\"I\" message)"
@@ -785,11 +857,6 @@ msgstr "서버로부터 예상치 못한 응답을 받았음; \"%c\" 문자를 �
 #: fe-protocol2.c:762 fe-protocol2.c:937 fe-protocol3.c:627 fe-protocol3.c:854
 msgid "out of memory for query result"
 msgstr "쿼리 결과 처리를 위한 메모리 부족"
-
-#: fe-protocol2.c:1395 fe-protocol3.c:1886
-#, c-format
-msgid "%s"
-msgstr "%s"
 
 #: fe-protocol2.c:1407
 #, c-format

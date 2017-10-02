@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_basebackup (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-08-02 13:57+0900\n"
-"PO-Revision-Date: 2017-08-27 11:44-0400\n"
+"POT-Creation-Date: 2017-09-19 09:51+0900\n"
+"PO-Revision-Date: 2017-09-19 10:25+0900\n"
 "Last-Translator: Ioseph Kim <ioseph@uri.sarang.net>\n"
 "Language-Team: Korean <pgsql-kr@postgresql.kr>\n"
 "Language: ko\n"
@@ -51,7 +51,7 @@ msgid "%s: could not open file \"%s\": %s\n"
 msgstr "%s: \"%s\" 파일을 열 수 없음: %s\n"
 
 #: ../../common/file_utils.c:304 ../../common/file_utils.c:376
-#: receivelog.c:802 receivelog.c:1059
+#: receivelog.c:804 receivelog.c:1061
 #, c-format
 msgid "%s: could not fsync file \"%s\": %s\n"
 msgstr "%s: \"%s\" 파일을 fsync 할 수 없음: %s\n"
@@ -69,7 +69,7 @@ msgstr "%s: \"%s\" 디렉터리를 지우는 중\n"
 #: pg_basebackup.c:162
 #, c-format
 msgid "%s: failed to remove data directory\n"
-msgstr ""
+msgstr "%s: 데이터 디렉터리 삭제 실패\n"
 
 #: pg_basebackup.c:168
 #, c-format
@@ -211,8 +211,7 @@ msgstr "  -S, --slot=슬롯이름    지정한 복제 슬롯을 사용함\n"
 #, c-format
 msgid ""
 "      --no-slot          prevent creation of temporary replication slot\n"
-msgstr ""
-"      --no-slot          임시 복제 슬롯 만들지 않음\n"
+msgstr "      --no-slot          임시 복제 슬롯 만들지 않음\n"
 
 #: pg_basebackup.c:340
 #, c-format
@@ -281,8 +280,7 @@ msgstr "  -n, --no-clean         오류 발생 시 정리하지 않음\n"
 msgid ""
 "  -N, --no-sync          do not wait for changes to be written safely to "
 "disk\n"
-msgstr ""
-"  -N, --no-sync          디스크 쓰기 뒤 sync 작업 생략\n"
+msgstr "  -N, --no-sync          디스크 쓰기 뒤 sync 작업 생략\n"
 
 #: pg_basebackup.c:353
 #, c-format
@@ -494,14 +492,14 @@ msgstr "%s: COPY 데이터 스트림을 사용할 수 없음: %s"
 msgid "%s: could not close compressed file \"%s\": %s\n"
 msgstr "%s: \"%s\" 압축 파일 닫기 실패: %s\n"
 
-#: pg_basebackup.c:1132 pg_recvlogical.c:631 receivelog.c:221 receivelog.c:306
-#: receivelog.c:712
+#: pg_basebackup.c:1132 pg_recvlogical.c:631 receivelog.c:223 receivelog.c:308
+#: receivelog.c:714
 #, c-format
 msgid "%s: could not close file \"%s\": %s\n"
 msgstr "%s: \"%s\" 파일 닫기 실패: %s\n"
 
 #: pg_basebackup.c:1143 pg_basebackup.c:1359 pg_recvlogical.c:453
-#: receivelog.c:1007
+#: receivelog.c:1009
 #, c-format
 msgid "%s: could not read COPY data: %s"
 msgstr "%s: COPY 자료를 읽을 수 없음: %s"
@@ -550,15 +548,17 @@ msgstr "%s: 호환하지 않는 서버 버전 %s\n"
 #: pg_basebackup.c:1739
 #, c-format
 msgid "HINT: use -X none or -X fetch to disable log streaming\n"
-msgstr "힌트: 트랜잭션 로그 스트리밍을 사용하지 않으려면  -X none 또는 -X fetch 옵션을 사용하세요.\n"
+msgstr ""
+"힌트: 트랜잭션 로그 스트리밍을 사용하지 않으려면  -X none 또는 -X fetch 옵션"
+"을 사용하세요.\n"
 
 #: pg_basebackup.c:1765
 #, c-format
 msgid "%s: initiating base backup, waiting for checkpoint to complete\n"
 msgstr "%s: 베이스 백업을 초기화 중, 체크포인트 완료를 기다리는 중\n"
 
-#: pg_basebackup.c:1783 pg_recvlogical.c:270 receivelog.c:490 receivelog.c:561
-#: receivelog.c:601 streamutil.c:256 streamutil.c:364 streamutil.c:410
+#: pg_basebackup.c:1783 pg_recvlogical.c:270 receivelog.c:492 receivelog.c:563
+#: receivelog.c:603 streamutil.c:256 streamutil.c:364 streamutil.c:410
 #, c-format
 msgid "%s: could not send replication command \"%s\": %s"
 msgstr "%s: \"%s\" 복제 명령을 보낼 수 없음: %s"
@@ -691,8 +691,8 @@ msgid ""
 "%s: invalid wal-method option \"%s\", must be \"fetch\", \"stream\", or "
 "\"none\"\n"
 msgstr ""
-"%s: \"%s\" 값은 잘못된 wal-method 옵션값, \"fetch\", \"stream\" 또는 \"none\"만 사용 "
-"가능\n"
+"%s: \"%s\" 값은 잘못된 wal-method 옵션값, \"fetch\", \"stream\" 또는 \"none"
+"\"만 사용 가능\n"
 
 #: pg_basebackup.c:2218 pg_receivewal.c:556
 #, c-format
@@ -831,8 +831,7 @@ msgstr ""
 #, c-format
 msgid ""
 "      --synchronous      flush write-ahead log immediately after writing\n"
-msgstr ""
-"      --synchronous      쓰기 작업 후 즉시 트랜잭션 로그를 플러시 함\n"
+msgstr "      --synchronous      쓰기 작업 후 즉시 트랜잭션 로그를 플러시 함\n"
 
 #: pg_receivewal.c:88
 #, c-format
@@ -897,7 +896,7 @@ msgstr "%s: \"%s\" 압축 파일 열기 실패: %s\n"
 
 #: pg_receivewal.c:283
 #, c-format
-msgid "%s: could not seek compressed file \"%s\": %s\n"
+msgid "%s: could not seek in compressed file \"%s\": %s\n"
 msgstr "%s: \"%s\" 압축 파일 작업 위치 찾기 실패: %s\n"
 
 #: pg_receivewal.c:289
@@ -910,8 +909,7 @@ msgstr "%s: \"%s\" 압축 파일 읽기 실패: %s\n"
 msgid ""
 "%s: compressed segment file \"%s\" has incorrect uncompressed size %d, "
 "skipping\n"
-msgstr ""
-"%s: \"%s\" 압축 파일은 압축 풀었을 때 잘못된 크기임: %d, 무시함\n"
+msgstr "%s: \"%s\" 압축 파일은 압축 풀었을 때 잘못된 크기임: %d, 무시함\n"
 
 #: pg_receivewal.c:407
 #, c-format
@@ -1049,7 +1047,7 @@ msgstr "  -d, --dbname=디비이름  접속할 데이터베이스\n"
 msgid "%s: confirming write up to %X/%X, flush to %X/%X (slot %s)\n"
 msgstr "%s: 쓰기 확인 위치: %X/%X, 플러시 위치 %X/%X (슬롯 %s)\n"
 
-#: pg_recvlogical.c:160 receivelog.c:349
+#: pg_recvlogical.c:160 receivelog.c:351
 #, c-format
 msgid "%s: could not send feedback packet: %s"
 msgstr "%s: 피드백 패킷을 보낼 수 없음: %s"
@@ -1074,28 +1072,28 @@ msgstr "%s: 스트리밍 초기화 됨\n"
 msgid "%s: could not open log file \"%s\": %s\n"
 msgstr "%s: \"%s\" 로그 파일을 열 수 없음: %s\n"
 
-#: pg_recvlogical.c:376 receivelog.c:912
+#: pg_recvlogical.c:376 receivelog.c:914
 #, c-format
 msgid "%s: invalid socket: %s"
 msgstr "%s: 잘못된 소켓: %s"
 
-#: pg_recvlogical.c:430 receivelog.c:941
+#: pg_recvlogical.c:430 receivelog.c:943
 #, c-format
 msgid "%s: select() failed: %s\n"
 msgstr "%s: select() 실패: %s\n"
 
-#: pg_recvlogical.c:439 receivelog.c:993
+#: pg_recvlogical.c:439 receivelog.c:995
 #, c-format
 msgid "%s: could not receive data from WAL stream: %s"
 msgstr "%s: WAL 스트림에서 자료 받기 실패: %s"
 
-#: pg_recvlogical.c:481 pg_recvlogical.c:533 receivelog.c:1038
-#: receivelog.c:1105
+#: pg_recvlogical.c:481 pg_recvlogical.c:533 receivelog.c:1040
+#: receivelog.c:1107
 #, c-format
 msgid "%s: streaming header too small: %d\n"
 msgstr "%s: 스트리밍 헤더 크기가 너무 작음: %d\n"
 
-#: pg_recvlogical.c:517 receivelog.c:872
+#: pg_recvlogical.c:517 receivelog.c:874
 #, c-format
 msgid "%s: unrecognized streaming header: \"%c\"\n"
 msgstr "%s: 알 수 없는 스트리밍 헤더: \"%c\"\n"
@@ -1105,7 +1103,7 @@ msgstr "%s: 알 수 없는 스트리밍 헤더: \"%c\"\n"
 msgid "%s: could not write %u bytes to log file \"%s\": %s\n"
 msgstr "%s: %u 바이트 쓰기 실패, 로그파일 \"%s\": %s\n"
 
-#: pg_recvlogical.c:617 receivelog.c:665 receivelog.c:703
+#: pg_recvlogical.c:617 receivelog.c:667 receivelog.c:705
 #, c-format
 msgid "%s: unexpected termination of replication stream: %s"
 msgstr "%s: 복제 스트림의 예상치 못한 종료: %s"
@@ -1186,45 +1184,48 @@ msgstr "%s: 이미 있는 \"%s\" 트랜잭션 로그 파일을 열 수 없음: %
 
 #: receivelog.c:139
 #, c-format
-msgid "%s: could not sync existing write-ahead log file \"%s\": %s\n"
+msgid "%s: could not fsync existing write-ahead log file \"%s\": %s\n"
 msgstr "%s: 이미 있는 \"%s\" WAL 파일 fsync 실패: %s\n"
 
 #: receivelog.c:154
 #, c-format
-msgid "%s: write-ahead log file \"%s\" has %d bytes, should be 0 or %d\n"
-msgstr "%s: \"%s\" 트랜잭션 로그파일의 크기가 %d 바이트임, 0 또는 %d 바이트여야 함\n"
+msgid "%s: write-ahead log file \"%s\" has %d byte, should be 0 or %d\n"
+msgid_plural ""
+"%s: write-ahead log file \"%s\" has %d bytes, should be 0 or %d\n"
+msgstr[0] ""
+"%s: \"%s\" 트랜잭션 로그파일의 크기가 %d 바이트임, 0 또는 %d 바이트여야 함\n"
 
-#: receivelog.c:167
+#: receivelog.c:169
 #, c-format
 msgid "%s: could not open write-ahead log file \"%s\": %s\n"
 msgstr "%s: \"%s\" WAL 파일을 열 수 없음: %s\n"
 
-#: receivelog.c:194
+#: receivelog.c:196
 #, c-format
 msgid "%s: could not determine seek position in file \"%s\": %s\n"
 msgstr "%s: \"%s\" 파일의 시작 위치를 결정할 수 없음: %s\n"
 
-#: receivelog.c:209
+#: receivelog.c:211
 #, c-format
 msgid "%s: not renaming \"%s%s\", segment is not complete\n"
 msgstr "%s: \"%s%s\" 이름 변경 실패, 세그먼트가 완료되지 않았음\n"
 
-#: receivelog.c:278
+#: receivelog.c:280
 #, c-format
 msgid "%s: server reported unexpected history file name for timeline %u: %s\n"
 msgstr "%s: 타임라인 %u 번을 위한 내역 파일 이름이 잘못 되었음: %s\n"
 
-#: receivelog.c:286
+#: receivelog.c:288
 #, c-format
 msgid "%s: could not create timeline history file \"%s\": %s\n"
 msgstr "%s: \"%s\" 타임라인 내역 파일을 만들 수 없음: %s\n"
 
-#: receivelog.c:293
+#: receivelog.c:295
 #, c-format
 msgid "%s: could not write timeline history file \"%s\": %s\n"
 msgstr "%s: \"%s\" 타임라인 내역 파일에 쓸 수 없음: %s\n"
 
-#: receivelog.c:383
+#: receivelog.c:385
 #, c-format
 msgid ""
 "%s: incompatible server version %s; client does not support streaming from "
@@ -1233,7 +1234,7 @@ msgstr ""
 "%s: %s 서버 버전은 호환되지 않음; 클라이언트는 %s 버전 보다 오래된 서버의 스"
 "트리밍은 지원하지 않음\n"
 
-#: receivelog.c:393
+#: receivelog.c:395
 #, c-format
 msgid ""
 "%s: incompatible server version %s; client does not support streaming from "
@@ -1242,7 +1243,7 @@ msgstr ""
 "%s: %s 서버 버전은 호환되지 않음; 클라이언트는 %s 버전 보다 새로운 서버의 스"
 "트리밍은 지원하지 않음\n"
 
-#: receivelog.c:498 streamutil.c:265 streamutil.c:304
+#: receivelog.c:500 streamutil.c:265 streamutil.c:304
 #, c-format
 msgid ""
 "%s: could not identify system: got %d rows and %d fields, expected %d rows "
@@ -1251,24 +1252,24 @@ msgstr ""
 "%s: 시스템을 식별할 수 없음: 로우수 %d, 필드수 %d, 예상값: 로우수 %d, 필드수 "
 "%d 이상\n"
 
-#: receivelog.c:506
+#: receivelog.c:508
 #, c-format
 msgid ""
 "%s: system identifier does not match between base backup and streaming "
 "connection\n"
 msgstr "%s: 시스템 식별자가 베이스 백업과 스트리밍 연결에서 서로 다름\n"
 
-#: receivelog.c:514
+#: receivelog.c:516
 #, c-format
 msgid "%s: starting timeline %u is not present in the server\n"
 msgstr "%s: %u 타임라인으로 시작하는 것을 서버에서 제공 하지 않음\n"
 
-#: receivelog.c:533
+#: receivelog.c:535
 #, c-format
 msgid "%s: could not create temporary replication slot \"%s\": %s"
 msgstr "%s: \"%s\" 임시 복제 슬롯을 만들 수 없음: %s"
 
-#: receivelog.c:574
+#: receivelog.c:576
 #, c-format
 msgid ""
 "%s: unexpected response to TIMELINE_HISTORY command: got %d rows and %d "
@@ -1277,14 +1278,14 @@ msgstr ""
 "%s: TIMELINE_HISTORY 명령 결과가 잘못됨: 받은 값: 로우수 %d, 필드수 %d, 예상"
 "값: 로우수 %d, 필드수 %d\n"
 
-#: receivelog.c:646
+#: receivelog.c:648
 #, c-format
 msgid ""
 "%s: server reported unexpected next timeline %u, following timeline %u\n"
 msgstr ""
 "%s: 서버가 잘못된 다음 타임라인 번호 %u 보고함, 이전 타임라인 번호 %u\n"
 
-#: receivelog.c:653
+#: receivelog.c:655
 #, c-format
 msgid ""
 "%s: server stopped streaming timeline %u at %X/%X, but reported next "
@@ -1293,12 +1294,12 @@ msgstr ""
 "%s: 서버의 중지 위치: 타임라인 %u, 위치 %X/%X, 하지만 보고 받은 위치: 타임라"
 "인 %u 위치 %X/%X\n"
 
-#: receivelog.c:694
+#: receivelog.c:696
 #, c-format
 msgid "%s: replication stream was terminated before stop point\n"
 msgstr "%s: 복제 스트림이 중지 위치 전에 종료 되었음\n"
 
-#: receivelog.c:743
+#: receivelog.c:745
 #, c-format
 msgid ""
 "%s: unexpected result set after end-of-timeline: got %d rows and %d fields, "
@@ -1307,27 +1308,27 @@ msgstr ""
 "%s: 타임라인 끝에 잘못된 결과가 발견 됨: 로우수 %d, 필드수 %d / 예상값: 로우"
 "수 %d, 필드수 %d\n"
 
-#: receivelog.c:753
+#: receivelog.c:755
 #, c-format
 msgid "%s: could not parse next timeline's starting point \"%s\"\n"
 msgstr "%s: 다음 타임라인 시작 위치 분석 실패 \"%s\"\n"
 
-#: receivelog.c:1124
+#: receivelog.c:1126
 #, c-format
 msgid "%s: received write-ahead log record for offset %u with no file open\n"
 msgstr "%s: %u 위치의 수신된 트랜잭션 로그 레코드에 파일을 열 수 없음\n"
 
-#: receivelog.c:1135
+#: receivelog.c:1137
 #, c-format
 msgid "%s: got WAL data offset %08x, expected %08x\n"
 msgstr "%s: 잘못된 WAL 자료 위치 %08x, 기대값 %08x\n"
 
-#: receivelog.c:1170
+#: receivelog.c:1172
 #, c-format
 msgid "%s: could not write %u bytes to WAL file \"%s\": %s\n"
 msgstr "%s: %u 바이트를 \"%s\" WAL 파일에 쓸 수 없음: %s\n"
 
-#: receivelog.c:1195 receivelog.c:1236 receivelog.c:1267
+#: receivelog.c:1197 receivelog.c:1238 receivelog.c:1269
 #, c-format
 msgid "%s: could not send copy-end packet: %s"
 msgstr "%s: copy-end 패킷을 보낼 수 없음: %s"
@@ -1373,3 +1374,35 @@ msgid ""
 msgstr ""
 "%s: \"%s\" 복제 슬롯을 삭제할 수 없음: 로우수 %d, 필드수 %d, 기대값 로우수 "
 "%d, 필드수 %d\n"
+
+#: walmethods.c:435 walmethods.c:904
+msgid "could not compress data"
+msgstr "자료를 압축할 수 없음"
+
+#: walmethods.c:459
+msgid "could not reset compression stream"
+msgstr "압축 스트림을 리셋할 수 없음"
+
+#: walmethods.c:560
+msgid "could not initialize compression library"
+msgstr "압축 라이브러리를 초기화할 수 없음"
+
+#: walmethods.c:572
+msgid "implementation error: tar files can't have more than one open file"
+msgstr "구현 오류: tar 파일은 하나 이상 열 수 없음"
+
+#: walmethods.c:586
+msgid "could not create tar header"
+msgstr "tar 해더를 만들 수 없음"
+
+#: walmethods.c:600 walmethods.c:638 walmethods.c:827 walmethods.c:838
+msgid "could not change compression parameters"
+msgstr "압축 매개 변수를 바꿀 수 없음"
+
+#: walmethods.c:720
+msgid "unlink not supported with compression"
+msgstr "압축 상태에서 파일 삭제는 지원하지 않음"
+
+#: walmethods.c:920
+msgid "could not close compression stream"
+msgstr "압축 스트림을 닫을 수 없음"

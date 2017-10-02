@@ -24,8 +24,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psql (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-09-10 14:14+0000\n"
-"PO-Revision-Date: 2017-09-10 18:05+0100\n"
+"POT-Creation-Date: 2017-09-24 12:14+0000\n"
+"PO-Revision-Date: 2017-09-24 23:49+0100\n"
 "Last-Translator: Daniele Varrazzo <daniele.varrazzo@gmail.com>\n"
 "Language-Team: Gruppo traduzioni ITPUG <traduzioni@itpug.org>\n"
 "Language: it\n"
@@ -4537,7 +4537,7 @@ msgid "statistics_name"
 msgstr "nome_statistica"
 
 #: sql_help.c:2346
-msgid "statistic_type"
+msgid "statistics_kind"
 msgstr "tipo_statistica"
 
 #: sql_help.c:2360
@@ -5727,7 +5727,7 @@ msgstr ""
 
 #: variables.c:139
 #, c-format
-msgid "unrecognized value \"%s\" for \"%s\": boolean expected\n"
+msgid "unrecognized value \"%s\" for \"%s\": Boolean expected\n"
 msgstr "valore \"%s\" non valido per \"%s\": è necessario un booleano\n"
 
 #: variables.c:176

@@ -7,14 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-08-02 13:57+0900\n"
-"PO-Revision-Date: 2017-08-03 16:20+0900\n"
+"POT-Creation-Date: 2017-09-19 09:51+0900\n"
+"PO-Revision-Date: 2017-09-19 10:29+0900\n"
 "Last-Translator: Ioseph Kim <ioseph@uri.sarang.net>\n"
 "Language-Team: Korean <pgsql-kr@postgresql.kr>\n"
 "Language: ko\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
 #: ../../common/fe_memutils.c:98 parsexlog.c:74 parsexlog.c:127
@@ -298,83 +299,83 @@ msgstr "파일 청크 가져오는 중\n"
 msgid "could not set libpq connection to single row mode\n"
 msgstr "libpq 연결을 단일 로우 모드로 지정할 수 없음\n"
 
-#: libpq_fetch.c:286
+#: libpq_fetch.c:287
 #, c-format
 msgid "unexpected result while fetching remote files: %s"
 msgstr "원격 파일을 가져오는 도중 결과가 잘못됨: %s"
 
-#: libpq_fetch.c:292
+#: libpq_fetch.c:293
 #, c-format
 msgid "unexpected result set size while fetching remote files\n"
 msgstr "원격 파일을 가져오는 도중 결과 집합의 크기가 잘못 됨\n"
 
-#: libpq_fetch.c:298
+#: libpq_fetch.c:299
 #, c-format
 msgid ""
 "unexpected data types in result set while fetching remote files: %u %u %u\n"
 msgstr "원격 파일을 가져오는 도중 결과 집합의 자료형이 잘못 됨: %u %u %u\n"
 
-#: libpq_fetch.c:306
+#: libpq_fetch.c:307
 #, c-format
 msgid "unexpected result format while fetching remote files\n"
 msgstr "원격 파일을 가져오는 중 예상치 못한 결과 형식 발견\n"
 
-#: libpq_fetch.c:312
+#: libpq_fetch.c:313
 #, c-format
 msgid "unexpected null values in result while fetching remote files\n"
 msgstr "원격 파일을 가져오는 도중 결과안에 null 값이 잘못됨\n"
 
-#: libpq_fetch.c:316
+#: libpq_fetch.c:317
 #, c-format
 msgid "unexpected result length while fetching remote files\n"
 msgstr "원격 파일을 가져오는 도중 결과 길이가 잘못됨\n"
 
-#: libpq_fetch.c:338
+#: libpq_fetch.c:339
 #, c-format
 msgid "received null value for chunk for file \"%s\", file has been deleted\n"
 msgstr "\"%s\" 파일을 위한 청크에 null 값을 받음, 파일 지워짐\n"
 
-#: libpq_fetch.c:345
+#: libpq_fetch.c:351
 #, c-format
-msgid "received chunk for file \"%s\", offset "
-msgstr "\"%s\" 파일의 청크를 받음, 옵셋 "
+msgid "received chunk for file \"%s\", offset %s, size %d\n"
+msgstr "\"%s\" 파일의 청크를 받음, 옵셋 %s, 크기 %d\n"
 
-#: libpq_fetch.c:374
+#: libpq_fetch.c:380
 #, c-format
 msgid "could not fetch remote file \"%s\": %s"
 msgstr "\"%s\" 원격 파일을 가져올 수 없음: %s"
 
-#: libpq_fetch.c:379
+#: libpq_fetch.c:385
 #, c-format
 msgid "unexpected result set while fetching remote file \"%s\"\n"
 msgstr "\"%s\" 원격파일을 가져오는 도중 결과 집합이 잘못 됨\n"
 
-#: libpq_fetch.c:390
+#: libpq_fetch.c:396
 #, c-format
 msgid "fetched file \"%s\", length %d\n"
 msgstr "\"%s\" 파일을 가져옴, 길이 %d\n"
 
-#: libpq_fetch.c:423
+#: libpq_fetch.c:429
 #, c-format
 msgid "could not send COPY data: %s"
 msgstr "COPY 자료를 보낼 수 없음: %s"
 
-#: libpq_fetch.c:449
+#: libpq_fetch.c:455
 #, c-format
 msgid "could not create temporary table: %s"
 msgstr "임시 테이블을 만들 수 없음: %s"
 
-#: libpq_fetch.c:457
+#: libpq_fetch.c:463
 #, c-format
 msgid "could not send file list: %s"
 msgstr "파일 목록을 보낼 수 없음: %s"
 
-#: libpq_fetch.c:499
+#: libpq_fetch.c:505
 #, c-format
 msgid "could not send end-of-COPY: %s"
 msgstr "COPY끝을 보낼 수 없음: %s"
 
-#: libpq_fetch.c:505
+#: libpq_fetch.c:511
 #, c-format
 msgid "unexpected result while sending file list: %s"
 msgstr "파일 목록을 보내는 도중 결과가 잘못 됨: %s"
@@ -525,8 +526,7 @@ msgstr ""
 #: pg_rewind.c:167
 #, c-format
 msgid "%s: only one of --source-pgdata or --source-server can be specified\n"
-msgstr ""
-"%s: --source-pgdata 또는 --source-server 옵션 중 하나만 지정해야 함\n"
+msgstr "%s: --source-pgdata 또는 --source-server 옵션 중 하나만 지정해야 함\n"
 
 #: pg_rewind.c:174
 #, c-format

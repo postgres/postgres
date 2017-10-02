@@ -10,8 +10,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libpq (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-08-17 23:08+0000\n"
-"PO-Revision-Date: 2017-08-23 11:38+0300\n"
+"POT-Creation-Date: 2017-09-27 06:08+0000\n"
+"PO-Revision-Date: 2017-09-21 12:00+0300\n"
+"Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -19,7 +20,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
-"Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 
 #: fe-auth-scram.c:176
 msgid "malformed SCRAM message (empty message)\n"
@@ -30,8 +30,8 @@ msgid "malformed SCRAM message (length mismatch)\n"
 msgstr "неправильное сообщение SCRAM (некорректная длина)\n"
 
 #: fe-auth-scram.c:231
-msgid "invalid server signature\n"
-msgstr "неверная сигнатура сервера\n"
+msgid "incorrect server signature\n"
+msgstr "некорректная сигнатура сервера\n"
 
 #: fe-auth-scram.c:240
 msgid "invalid SCRAM exchange state\n"
@@ -39,13 +39,15 @@ msgstr "ошибочное состояние обмена SCRAM\n"
 
 #: fe-auth-scram.c:263
 #, c-format
-msgid "malformed SCRAM message (%c expected)\n"
-msgstr "неправильное сообщение SCRAM (ожидалось %c)\n"
+msgid "malformed SCRAM message (attribute \"%c\" expected)\n"
+msgstr "неправильное сообщение SCRAM (ожидался атрибут \"%c\")\n"
 
 #: fe-auth-scram.c:272
 #, c-format
-msgid "malformed SCRAM message (expected = in attr '%c')\n"
-msgstr "неправильное сообщение SCRAM (в атрибуте '%c' ожидалось =)\n"
+msgid ""
+"malformed SCRAM message (expected character \"=\" for attribute \"%c\")\n"
+msgstr ""
+"неправильное сообщение SCRAM (для атрибута \"%c\" ожидался символ \"=\")\n"
 
 #: fe-auth-scram.c:311
 msgid "could not generate nonce\n"
@@ -60,7 +62,7 @@ msgstr "не удалось сгенерировать разовый код\n"
 #: fe-connect.c:4433 fe-connect.c:4673 fe-connect.c:4753 fe-connect.c:4852
 #: fe-connect.c:5108 fe-connect.c:5137 fe-connect.c:5209 fe-connect.c:5233
 #: fe-connect.c:5251 fe-connect.c:5352 fe-connect.c:5361 fe-connect.c:5717
-#: fe-connect.c:5867 fe-exec.c:2651 fe-exec.c:3398 fe-exec.c:3563 fe-lobj.c:896
+#: fe-connect.c:5867 fe-exec.c:2702 fe-exec.c:3449 fe-exec.c:3614 fe-lobj.c:896
 #: fe-protocol2.c:1206 fe-protocol3.c:992 fe-protocol3.c:1678
 #: fe-secure-openssl.c:514 fe-secure-openssl.c:1138
 msgid "out of memory\n"
@@ -81,8 +83,8 @@ msgstr ""
 
 #: fe-auth-scram.c:511
 #, c-format
-msgid "error received from server in SASL exchange: %s\n"
-msgstr "в ходе обмена SASL от сервера получена ошибка: %s\n"
+msgid "error received from server in SCRAM exchange: %s\n"
+msgstr "в ходе обмена SCRAM от сервера получена ошибка: %s\n"
 
 #: fe-auth-scram.c:526
 msgid "malformed SCRAM message (garbage at end of server-final-message)\n"
@@ -587,102 +589,121 @@ msgstr ""
 msgid "password retrieved from file \"%s\"\n"
 msgstr "пароль получен из файла \"%s\"\n"
 
-#: fe-exec.c:826
-msgid "NOTICE"
-msgstr "ЗАМЕЧАНИЕ"
-
-#: fe-exec.c:1141 fe-exec.c:1199 fe-exec.c:1245
-msgid "command string is a null pointer\n"
-msgstr "указатель на командную строку нулевой\n"
-
-#: fe-exec.c:1205 fe-exec.c:1251 fe-exec.c:1346
-msgid "number of parameters must be between 0 and 65535\n"
-msgstr "число параметров должно быть от 0 до 65535\n"
-
-#: fe-exec.c:1239 fe-exec.c:1340
-msgid "statement name is a null pointer\n"
-msgstr "указатель на имя оператора нулевой\n"
-
-#: fe-exec.c:1259 fe-exec.c:1422 fe-exec.c:2140 fe-exec.c:2339
-msgid "function requires at least protocol version 3.0\n"
-msgstr "функция требует протокол минимум версии 3.0\n"
-
-#: fe-exec.c:1377
-msgid "no connection to the server\n"
-msgstr "нет соединения с сервером\n"
-
-#: fe-exec.c:1384
-msgid "another command is already in progress\n"
-msgstr "уже выполняется другая команда\n"
-
-#: fe-exec.c:1498
-msgid "length must be given for binary parameter\n"
-msgstr "для двоичного параметра должна быть указана длина\n"
-
-#: fe-exec.c:1770
-#, c-format
-msgid "unexpected asyncStatus: %d\n"
-msgstr "неожиданный asyncStatus: %d\n"
-
-#: fe-exec.c:1790
-#, c-format
-msgid "PGEventProc \"%s\" failed during PGEVT_RESULTCREATE event\n"
-msgstr "ошибка в PGEventProc \"%s\" при обработке события PGEVT_RESULTCREATE\n"
-
-#: fe-exec.c:1950
-msgid "COPY terminated by new PQexec"
-msgstr "операция COPY прервана вызовом PQexec"
-
-#: fe-exec.c:1958
-msgid "COPY IN state must be terminated first\n"
-msgstr "сначала должно завершиться состояние COPY IN\n"
-
-#: fe-exec.c:1978
-msgid "COPY OUT state must be terminated first\n"
-msgstr "сначала должно завершиться состояние COPY OUT\n"
-
-#: fe-exec.c:1986
-msgid "PQexec not allowed during COPY BOTH\n"
-msgstr "вызов PQexec не допускается в процессе COPY BOTH\n"
-
-#: fe-exec.c:2229 fe-exec.c:2296 fe-exec.c:2386 fe-protocol2.c:1352
-#: fe-protocol3.c:1817
-msgid "no COPY in progress\n"
-msgstr "операция COPY не выполняется\n"
-
-#: fe-exec.c:2576
-msgid "connection in wrong state\n"
-msgstr "соединение в неправильном состоянии\n"
-
-#: fe-exec.c:2607
-msgid "invalid ExecStatusType code"
-msgstr "неверный код ExecStatusType"
-
-#: fe-exec.c:2634
-msgid "PGresult is not an error result\n"
-msgstr "В PGresult не передан результат ошибки\n"
-
-#: fe-exec.c:2709 fe-exec.c:2732
-#, c-format
-msgid "column number %d is out of range 0..%d"
-msgstr "номер столбца %d вне диапазона 0..%d"
-
-#: fe-exec.c:2725
+#: fe-exec.c:437 fe-exec.c:2776
 #, c-format
 msgid "row number %d is out of range 0..%d"
 msgstr "номер записи %d вне диапазона 0..%d"
 
-#: fe-exec.c:2747
+#: fe-exec.c:498 fe-protocol2.c:503 fe-protocol2.c:538 fe-protocol2.c:1049
+#: fe-protocol3.c:209 fe-protocol3.c:236 fe-protocol3.c:253 fe-protocol3.c:333
+#: fe-protocol3.c:728 fe-protocol3.c:951
+msgid "out of memory"
+msgstr "нехватка памяти"
+
+#: fe-exec.c:499 fe-protocol2.c:1395 fe-protocol3.c:1886
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: fe-exec.c:847
+msgid "NOTICE"
+msgstr "ЗАМЕЧАНИЕ"
+
+#: fe-exec.c:905
+msgid "PGresult cannot support more than INT_MAX tuples"
+msgstr "PGresult не может вместить больше чем INT_MAX кортежей"
+
+#: fe-exec.c:917
+msgid "size_t overflow"
+msgstr "переполнение size_t"
+
+#: fe-exec.c:1192 fe-exec.c:1250 fe-exec.c:1296
+msgid "command string is a null pointer\n"
+msgstr "указатель на командную строку нулевой\n"
+
+#: fe-exec.c:1256 fe-exec.c:1302 fe-exec.c:1397
+msgid "number of parameters must be between 0 and 65535\n"
+msgstr "число параметров должно быть от 0 до 65535\n"
+
+#: fe-exec.c:1290 fe-exec.c:1391
+msgid "statement name is a null pointer\n"
+msgstr "указатель на имя оператора нулевой\n"
+
+#: fe-exec.c:1310 fe-exec.c:1473 fe-exec.c:2191 fe-exec.c:2390
+msgid "function requires at least protocol version 3.0\n"
+msgstr "функция требует протокол минимум версии 3.0\n"
+
+#: fe-exec.c:1428
+msgid "no connection to the server\n"
+msgstr "нет соединения с сервером\n"
+
+#: fe-exec.c:1435
+msgid "another command is already in progress\n"
+msgstr "уже выполняется другая команда\n"
+
+#: fe-exec.c:1549
+msgid "length must be given for binary parameter\n"
+msgstr "для двоичного параметра должна быть указана длина\n"
+
+#: fe-exec.c:1821
+#, c-format
+msgid "unexpected asyncStatus: %d\n"
+msgstr "неожиданный asyncStatus: %d\n"
+
+#: fe-exec.c:1841
+#, c-format
+msgid "PGEventProc \"%s\" failed during PGEVT_RESULTCREATE event\n"
+msgstr "ошибка в PGEventProc \"%s\" при обработке события PGEVT_RESULTCREATE\n"
+
+#: fe-exec.c:2001
+msgid "COPY terminated by new PQexec"
+msgstr "операция COPY прервана вызовом PQexec"
+
+#: fe-exec.c:2009
+msgid "COPY IN state must be terminated first\n"
+msgstr "сначала должно завершиться состояние COPY IN\n"
+
+#: fe-exec.c:2029
+msgid "COPY OUT state must be terminated first\n"
+msgstr "сначала должно завершиться состояние COPY OUT\n"
+
+#: fe-exec.c:2037
+msgid "PQexec not allowed during COPY BOTH\n"
+msgstr "вызов PQexec не допускается в процессе COPY BOTH\n"
+
+#: fe-exec.c:2280 fe-exec.c:2347 fe-exec.c:2437 fe-protocol2.c:1352
+#: fe-protocol3.c:1817
+msgid "no COPY in progress\n"
+msgstr "операция COPY не выполняется\n"
+
+#: fe-exec.c:2627
+msgid "connection in wrong state\n"
+msgstr "соединение в неправильном состоянии\n"
+
+#: fe-exec.c:2658
+msgid "invalid ExecStatusType code"
+msgstr "неверный код ExecStatusType"
+
+#: fe-exec.c:2685
+msgid "PGresult is not an error result\n"
+msgstr "В PGresult не передан результат ошибки\n"
+
+#: fe-exec.c:2760 fe-exec.c:2783
+#, c-format
+msgid "column number %d is out of range 0..%d"
+msgstr "номер столбца %d вне диапазона 0..%d"
+
+#: fe-exec.c:2798
 #, c-format
 msgid "parameter number %d is out of range 0..%d"
 msgstr "номер параметра %d вне диапазона 0..%d"
 
-#: fe-exec.c:3057
+#: fe-exec.c:3108
 #, c-format
 msgid "could not interpret result from server: %s"
 msgstr "не удалось интерпретировать ответ сервера: %s"
 
-#: fe-exec.c:3296 fe-exec.c:3380
+#: fe-exec.c:3347 fe-exec.c:3431
 msgid "incomplete multibyte character\n"
 msgstr "неполный многобайтный символ\n"
 
@@ -822,12 +843,6 @@ msgstr "неверное состояние %c - возможно разруше
 msgid "message type 0x%02x arrived from server while idle"
 msgstr "от сервера во время простоя получено сообщение типа 0x%02x"
 
-#: fe-protocol2.c:503 fe-protocol2.c:538 fe-protocol2.c:1049 fe-protocol3.c:209
-#: fe-protocol3.c:236 fe-protocol3.c:253 fe-protocol3.c:333 fe-protocol3.c:728
-#: fe-protocol3.c:951
-msgid "out of memory"
-msgstr "нехватка памяти"
-
 #: fe-protocol2.c:529
 #, c-format
 msgid "unexpected character %c following empty query response (\"I\" message)"
@@ -859,11 +874,6 @@ msgstr "неожиданный ответ сервера; первый полу�
 #: fe-protocol2.c:762 fe-protocol2.c:937 fe-protocol3.c:627 fe-protocol3.c:854
 msgid "out of memory for query result"
 msgstr "недостаточно памяти для результата запроса"
-
-#: fe-protocol2.c:1395 fe-protocol3.c:1886
-#, c-format
-msgid "%s"
-msgstr "%s"
 
 #: fe-protocol2.c:1407
 #, c-format

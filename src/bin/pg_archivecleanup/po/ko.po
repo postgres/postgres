@@ -7,14 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_archivecleanup (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-08-02 13:57+0900\n"
-"PO-Revision-Date: 2017-08-17 13:18+0900\n"
+"POT-Creation-Date: 2017-09-19 09:51+0900\n"
+"PO-Revision-Date: 2017-09-19 10:29+0900\n"
 "Last-Translator: Ioseph Kim <ioseph@uri.sarang.net>\n"
 "Language-Team: Korean <pgsql-kr@postgresql.kr>\n"
 "Language: ko\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 
 #: pg_archivecleanup.c:72
 #, c-format
@@ -53,8 +54,8 @@ msgstr "%s: \"%s\" 아카이브 위치를 열 수 없음: %s\n"
 
 #: pg_archivecleanup.c:248
 #, c-format
-msgid "%s: invalid filename input\n"
-msgstr "%s: 잘못된 파일 이름 입력\n"
+msgid "%s: invalid file name argument\n"
+msgstr "%s: 잘못된 파일 이름 매개변수\n"
 
 #: pg_archivecleanup.c:249 pg_archivecleanup.c:321 pg_archivecleanup.c:342
 #: pg_archivecleanup.c:354 pg_archivecleanup.c:361
@@ -98,7 +99,8 @@ msgstr "  -d             보다 자세한 작업 내용 출력\n"
 
 #: pg_archivecleanup.c:267
 #, c-format
-msgid "  -n             dry run, show the names of the files that would be removed\n"
+msgid ""
+"  -n             dry run, show the names of the files that would be removed\n"
 msgstr "  -n             지울 대상만 확인하고 지우지는 않음\n"
 
 #: pg_archivecleanup.c:268
@@ -121,7 +123,8 @@ msgstr "  -?, --help     도움말을 보여주고 마침\n"
 msgid ""
 "\n"
 "For use as archive_cleanup_command in recovery.conf when standby_mode = on:\n"
-"  archive_cleanup_command = 'pg_archivecleanup [OPTION]... ARCHIVELOCATION %%r'\n"
+"  archive_cleanup_command = 'pg_archivecleanup [OPTION]... ARCHIVELOCATION "
+"%%r'\n"
 "e.g.\n"
 "  archive_cleanup_command = 'pg_archivecleanup /mnt/server/archiverdir %%r'\n"
 msgstr ""
@@ -137,12 +140,14 @@ msgid ""
 "\n"
 "Or for use as a standalone archive cleaner:\n"
 "e.g.\n"
-"  pg_archivecleanup /mnt/server/archiverdir 000000010000000000000010.00000020.backup\n"
+"  pg_archivecleanup /mnt/server/archiverdir "
+"000000010000000000000010.00000020.backup\n"
 msgstr ""
 "\n"
 "또는 명령행에서 독립적으로 사용하는 경우:\n"
 "사용예:\n"
-"  pg_archivecleanup /mnt/server/archiverdir 000000010000000000000010.00000020.backup\n"
+"  pg_archivecleanup /mnt/server/archiverdir "
+"000000010000000000000010.00000020.backup\n"
 
 #: pg_archivecleanup.c:280
 #, c-format
@@ -160,15 +165,15 @@ msgstr "%s: 아카이브 위치는 지정해야 합니다.\n"
 
 #: pg_archivecleanup.c:353
 #, c-format
-msgid "%s: must specify restartfilename\n"
-msgstr "%s: 남길 가장 오래된 파일은 지정해야 합니다.\n"
+msgid "%s: must specify oldest kept WAL file\n"
+msgstr "%s: 남길 가장 오래된 WAL 파일은 지정해야 합니다.\n"
 
 #: pg_archivecleanup.c:360
 #, c-format
-msgid "%s: too many parameters\n"
-msgstr "%s: 너무 많은 인자를 지정했음.\n"
+msgid "%s: too many command-line arguments\n"
+msgstr "%s: 너무 많은 명령행 인자를 지정했음.\n"
 
 #: pg_archivecleanup.c:379
 #, c-format
-msgid "%s: keep WAL file \"%s\" and later\n"
+msgid "%s: keeping WAL file \"%s\" and later\n"
 msgstr "%s: \"%s\" 파일과 그 이후 WAL 파일을 보관함\n"
