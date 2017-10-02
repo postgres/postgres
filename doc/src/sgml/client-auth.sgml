@@ -959,7 +959,7 @@ omicron         bryanh                  guest1
        mechanism.  It prevents password sniffing and avoids storing passwords
        on the server in plain text but provides no protection if an attacker
        manages to steal the password hash from the server.  Also, the MD5 hash
-       algorithm is nowadays no longer consider secure against determined
+       algorithm is nowadays no longer considered secure against determined
        attacks.
       </para>
 
