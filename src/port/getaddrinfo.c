@@ -31,7 +31,7 @@
 
 #include "getaddrinfo.h"
 #include "libpq/pqcomm.h"		/* needed for struct sockaddr_storage */
-#include "port/pg_bsawp.h"
+#include "port/pg_bswap.h"
 
 
 #ifdef WIN32
