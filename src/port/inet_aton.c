@@ -43,7 +43,7 @@
 #include <netinet/in.h>
 #include <ctype.h>
 
-#include "port/pg_swap.h"
+#include "port/pg_bswap.h"
 
 /*
  * Check whether "cp" is a valid ascii representation
