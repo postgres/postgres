@@ -256,12 +256,13 @@ WalReceiverMain(void)
 	walrcv->lastMsgSendTime =
 		walrcv->lastMsgReceiptTime = walrcv->latestWalEndTime = now;
 
+	/* Report the latch to use to awaken this process */
+	walrcv->latch = &MyProc->procLatch;
+
 	SpinLockRelease(&walrcv->mutex);
 
 	/* Arrange to clean up at walreceiver exit */
 	on_shmem_exit(WalRcvDie, 0);
-
-	walrcv->latch = &MyProc->procLatch;
 
 	/* Properly accept or ignore signals the postmaster might send us */
 	pqsignal(SIGHUP, WalRcvSigHupHandler);	/* set flag to read config file */
@@ -777,8 +778,7 @@ WalRcvDie(int code, Datum arg)
 	/* Ensure that all WAL records received are flushed to disk */
 	XLogWalRcvFlush(true);
 
-	walrcv->latch = NULL;
-
+	/* Mark ourselves inactive in shared memory */
 	SpinLockAcquire(&walrcv->mutex);
 	Assert(walrcv->walRcvState == WALRCV_STREAMING ||
 		   walrcv->walRcvState == WALRCV_RESTARTING ||
@@ -789,6 +789,7 @@ WalRcvDie(int code, Datum arg)
 	walrcv->walRcvState = WALRCV_STOPPED;
 	walrcv->pid = 0;
 	walrcv->ready_to_display = false;
+	walrcv->latch = NULL;
 	SpinLockRelease(&walrcv->mutex);
 
 	/* Terminate the connection gracefully. */
@@ -1344,9 +1345,15 @@ ProcessWalSndrMessage(XLogRecPtr walEnd, TimestampTz sendTime)
 void
 WalRcvForceReply(void)
 {
+	Latch	   *latch;
+
 	WalRcv->force_reply = true;
-	if (WalRcv->latch)
-		SetLatch(WalRcv->latch);
+	/* fetching the latch pointer might not be atomic, so use spinlock */
+	SpinLockAcquire(&WalRcv->mutex);
+	latch = WalRcv->latch;
+	SpinLockRelease(&WalRcv->mutex);
+	if (latch)
+		SetLatch(latch);
 }
 
 /*
