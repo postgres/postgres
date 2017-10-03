@@ -80,8 +80,6 @@ CONTEXT:  SQL function "do_analyze" statement 1
 SQL function "wrap_do_analyze" statement 1
 VACUUM FULL vactst;
 VACUUM (DISABLE_PAGE_SKIPPING) vaccluster;
-DROP TABLE vaccluster;
-DROP TABLE vactst;
 -- partitioned table
 CREATE TABLE vacparted (a int, b char) PARTITION BY LIST (a);
 CREATE TABLE vacparted1 PARTITION OF vacparted FOR VALUES IN (1);
@@ -95,4 +93,25 @@ VACUUM ANALYZE vacparted(a,b,a);
 ERROR:  column "a" of relation "vacparted" appears more than once
 ANALYZE vacparted(a,b,b);
 ERROR:  column "b" of relation "vacparted" appears more than once
+-- multiple tables specified
+VACUUM vaccluster, vactst;
+VACUUM vacparted, does_not_exist;
+ERROR:  relation "does_not_exist" does not exist
+VACUUM (FREEZE) vacparted, vaccluster, vactst;
+VACUUM (FREEZE) does_not_exist, vaccluster;
+ERROR:  relation "does_not_exist" does not exist
+VACUUM ANALYZE vactst, vacparted (a);
+VACUUM ANALYZE vactst (does_not_exist), vacparted (b);
+ERROR:  column "does_not_exist" of relation "vactst" does not exist
+VACUUM FULL vacparted, vactst;
+VACUUM FULL vactst, vacparted (a, b), vaccluster (i);
+ERROR:  ANALYZE option must be specified when a column list is provided
+ANALYZE vactst, vacparted;
+ANALYZE vacparted (b), vactst;
+ANALYZE vactst, does_not_exist, vacparted;
+ERROR:  relation "does_not_exist" does not exist
+ANALYZE vactst (i), vacparted (does_not_exist);
+ERROR:  column "does_not_exist" of relation "vacparted" does not exist
+DROP TABLE vaccluster;
+DROP TABLE vactst;
 DROP TABLE vacparted;

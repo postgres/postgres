@@ -21,9 +21,20 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-VACUUM [ ( { FULL | FREEZE | VERBOSE | ANALYZE | DISABLE_PAGE_SKIPPING } [, ...] ) ] [ <replaceable class="PARAMETER">table_name</replaceable> [ (<replaceable class="PARAMETER">column_name</replaceable> [, ...] ) ] ]
-VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ <replaceable class="PARAMETER">table_name</replaceable> ]
-VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">table_name</replaceable> [ (<replaceable class="PARAMETER">column_name</replaceable> [, ...] ) ] ]
+VACUUM [ ( <replaceable class="PARAMETER">option</replaceable> [, ...] ) ] [ <replaceable class="PARAMETER">table_and_columns</replaceable> [, ...] ]
+VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ ANALYZE ] [ <replaceable class="PARAMETER">table_and_columns</replaceable> [, ...] ]
+
+<phrase>where <replaceable class="PARAMETER">option</replaceable> can be one of:</phrase>
+
+    FULL
+    FREEZE
+    VERBOSE
+    ANALYZE
+    DISABLE_PAGE_SKIPPING
+
+<phrase>and <replaceable class="PARAMETER">table_and_columns</replaceable> is:</phrase>
+
+    <replaceable class="PARAMETER">table_name</replaceable> [ ( <replaceable class="PARAMETER">column_name</replaceable> [, ...] ) ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -40,9 +51,10 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">
   </para>
 
   <para>
-   With no parameter, <command>VACUUM</command> processes every table in the
-   current database that the current user has permission to vacuum.
-   With a parameter, <command>VACUUM</command> processes only that table.
+   Without a <replaceable class="PARAMETER">table_and_columns</replaceable>
+   list, <command>VACUUM</command> processes every table and materialized view
+   in the current database that the current user has permission to vacuum.
+   With a list, <command>VACUUM</command> processes only those table(s).
   </para>
 
   <para>
@@ -141,8 +153,8 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">
       except when performing an aggressive vacuum, some pages may be skipped
       in order to avoid waiting for other sessions to finish using them.
       This option disables all page-skipping behavior, and is intended to
-      be used only the contents of the visibility map are thought to
-      be suspect, which should happen only if there is a hardware or software
+      be used only when the contents of the visibility map are
+      suspect, which should happen only if there is a hardware or software
       issue causing database corruption.
      </para>
     </listitem>
@@ -152,9 +164,8 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">
     <term><replaceable class="PARAMETER">table_name</replaceable></term>
     <listitem>
      <para>
-      The name (optionally schema-qualified) of a specific table to
-      vacuum.  If omitted, all regular tables and materialized views in the
-      current database are vacuumed.  If the specified table is a partitioned
+      The name (optionally schema-qualified) of a specific table or
+      materialized view to vacuum.  If the specified table is a partitioned
       table, all of its leaf partitions are vacuumed.
      </para>
     </listitem>
@@ -165,7 +176,8 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">
     <listitem>
      <para>
       The name of a specific column to analyze. Defaults to all columns.
-      If a column list is specified, <literal>ANALYZE</> is implied.
+      If a column list is specified, <literal>ANALYZE</> must also be
+      specified.
      </para>
     </listitem>
    </varlistentry>

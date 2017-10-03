@@ -62,9 +62,6 @@ VACUUM FULL vactst;
 
 VACUUM (DISABLE_PAGE_SKIPPING) vaccluster;
 
-DROP TABLE vaccluster;
-DROP TABLE vactst;
-
 -- partitioned table
 CREATE TABLE vacparted (a int, b char) PARTITION BY LIST (a);
 CREATE TABLE vacparted1 PARTITION OF vacparted FOR VALUES IN (1);
@@ -78,4 +75,20 @@ VACUUM (FREEZE) vacparted;
 VACUUM ANALYZE vacparted(a,b,a);
 ANALYZE vacparted(a,b,b);
 
+-- multiple tables specified
+VACUUM vaccluster, vactst;
+VACUUM vacparted, does_not_exist;
+VACUUM (FREEZE) vacparted, vaccluster, vactst;
+VACUUM (FREEZE) does_not_exist, vaccluster;
+VACUUM ANALYZE vactst, vacparted (a);
+VACUUM ANALYZE vactst (does_not_exist), vacparted (b);
+VACUUM FULL vacparted, vactst;
+VACUUM FULL vactst, vacparted (a, b), vaccluster (i);
+ANALYZE vactst, vacparted;
+ANALYZE vacparted (b), vactst;
+ANALYZE vactst, does_not_exist, vacparted;
+ANALYZE vactst (i), vacparted (does_not_exist);
+
+DROP TABLE vaccluster;
+DROP TABLE vactst;
 DROP TABLE vacparted;

@@ -21,7 +21,11 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table_name</replaceable> [ ( <replaceable class="PARAMETER">column_name</replaceable> [, ...] ) ] ]
+ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table_and_columns</replaceable> [, ...] ]
+
+<phrase>where <replaceable class="PARAMETER">table_and_columns</replaceable> is:</phrase>
+
+    <replaceable class="PARAMETER">table_name</replaceable> [ ( <replaceable class="PARAMETER">column_name</replaceable> [, ...] ) ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -38,9 +42,11 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table_name</replaceable> [ 
   </para>
 
   <para>
-   With no parameter, <command>ANALYZE</command> examines every table in the
-   current database.  With a parameter, <command>ANALYZE</command> examines
-   only that table.  It is further possible to give a list of column names,
+   Without a <replaceable class="PARAMETER">table_and_columns</replaceable>
+   list, <command>ANALYZE</command> processes every table and materialized view
+   in the current database that the current user has permission to analyze.
+   With a list, <command>ANALYZE</command> processes only those table(s).
+   It is further possible to give a list of column names for a table,
    in which case only the statistics for those columns are collected.
   </para>
  </refsect1>
