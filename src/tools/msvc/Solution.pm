@@ -269,7 +269,7 @@ s{PG_VERSION_STR "[^"]+"}{PG_VERSION_STR "PostgreSQL $self->{strver}$extraver, c
 		print "Generating fmgrtab.c, fmgroids.h, fmgrprotos.h...\n";
 		chdir('src/backend/utils');
 		system(
-"perl -I ../catalog Gen_fmgrtab.pl ../../../src/include/catalog/pg_proc.h");
+"perl -I ../catalog Gen_fmgrtab.pl -I../../../src/include/ ../../../src/include/catalog/pg_proc.h");
 		chdir('../../..');
 	}
 	if (IsNewer(
