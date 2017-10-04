@@ -19,7 +19,7 @@ use warnings;
 require Exporter;
 our @ISA       = qw(Exporter);
 our @EXPORT    = ();
-our @EXPORT_OK = qw(Catalogs SplitDataLine RenameTempFile);
+our @EXPORT_OK = qw(Catalogs SplitDataLine RenameTempFile FindDefinedSymbol);
 
 # Call this function with an array of names of header files to parse.
 # Returns a nested data structure describing the data in the headers.
@@ -251,6 +251,39 @@ sub RenameTempFile
 	print "Writing $final_name\n";
 	rename($temp_name, $final_name) || die "rename: $temp_name: $!";
 }
+
+
+# Find a symbol defined in a particular header file and extract the value.
+#
+# The include path has to be passed as a reference to an array.
+sub FindDefinedSymbol
+{
+	my ($catalog_header, $include_path, $symbol) = @_;
+
+	for my $path (@$include_path)
+	{
+
+		# Make sure include path ends in a slash.
+		if (substr($path, -1) ne '/')
+		{
+			$path .= '/';
+		}
+		my $file = $path . $catalog_header;
+		next if !-f $file;
+		open(my $find_defined_symbol, '<', $file) || die "$file: $!";
+		while (<$find_defined_symbol>)
+		{
+			if (/^#define\s+\Q$symbol\E\s+(\S+)/)
+			{
+				return $1;
+			}
+		}
+		close $find_defined_symbol;
+		die "$file: no definition found for $symbol\n";
+	}
+	die "$catalog_header: not found in any include directory\n";
+}
+
 
 # verify the number of fields in the passed-in DATA line
 sub check_natts

@@ -87,9 +87,11 @@ open my $shdescr, '>', $shdescrfile . $tmpext
 # NB: make sure that the files used here are known to be part of the .bki
 # file's dependencies by src/backend/catalog/Makefile.
 my $BOOTSTRAP_SUPERUSERID =
-  find_defined_symbol('pg_authid.h', 'BOOTSTRAP_SUPERUSERID');
+  Catalog::FindDefinedSymbol('pg_authid.h', \@include_path,
+							 'BOOTSTRAP_SUPERUSERID');
 my $PG_CATALOG_NAMESPACE =
-  find_defined_symbol('pg_namespace.h', 'PG_CATALOG_NAMESPACE');
+  Catalog::FindDefinedSymbol('pg_namespace.h', \@include_path,
+							 'PG_CATALOG_NAMESPACE');
 
 # Read all the input header files into internal data structures
 my $catalogs = Catalog::Catalogs(@input_files);
@@ -498,34 +500,6 @@ sub emit_schemapg_row
 		  :                        $row->{$attr};
 	}
 	return $row;
-}
-
-# Find a symbol defined in a particular header file and extract the value.
-sub find_defined_symbol
-{
-	my ($catalog_header, $symbol) = @_;
-	for my $path (@include_path)
-	{
-
-		# Make sure include path ends in a slash.
-		if (substr($path, -1) ne '/')
-		{
-			$path .= '/';
-		}
-		my $file = $path . $catalog_header;
-		next if !-f $file;
-		open(my $find_defined_symbol, '<', $file) || die "$file: $!";
-		while (<$find_defined_symbol>)
-		{
-			if (/^#define\s+\Q$symbol\E\s+(\S+)/)
-			{
-				return $1;
-			}
-		}
-		close $find_defined_symbol;
-		die "$file: no definition found for $symbol\n";
-	}
-	die "$catalog_header: not found in any include directory\n";
 }
 
 sub usage
