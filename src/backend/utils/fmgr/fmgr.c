@@ -70,26 +70,21 @@ static Datum fmgr_security_definer(PG_FUNCTION_ARGS);
 static const FmgrBuiltin *
 fmgr_isbuiltin(Oid id)
 {
-	int			low = 0;
-	int			high = fmgr_nbuiltins - 1;
+	uint16		index;
+
+	/* fast lookup only possible if original oid still assigned */
+	if (id >= FirstBootstrapObjectId)
+		return NULL;
 
 	/*
-	 * Loop invariant: low is the first index that could contain target entry,
-	 * and high is the last index that could contain it.
+	 * Lookup function data. If there's a miss in that range it's likely a
+	 * nonexistant function, returning NULL here will trigger an ERROR later.
 	 */
-	while (low <= high)
-	{
-		int			i = (high + low) / 2;
-		const FmgrBuiltin *ptr = &fmgr_builtins[i];
+	index = fmgr_builtin_oid_index[id];
+	if (index == InvalidOidBuiltinMapping)
+		return NULL;
 
-		if (id == ptr->foid)
-			return ptr;
-		else if (id > ptr->foid)
-			low = i + 1;
-		else
-			high = i - 1;
-	}
-	return NULL;
+	return &fmgr_builtins[index];
 }
 
 /*

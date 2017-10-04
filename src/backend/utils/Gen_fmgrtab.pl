@@ -21,6 +21,8 @@ use warnings;
 # Collect arguments
 my $infile;    # pg_proc.h
 my $output_path = '';
+my @include_path;
+
 while (@ARGV)
 {
 	my $arg = shift @ARGV;
@@ -31,6 +33,10 @@ while (@ARGV)
 	elsif ($arg =~ /^-o/)
 	{
 		$output_path = length($arg) > 2 ? substr($arg, 2) : shift @ARGV;
+	}
+	elsif ($arg =~ /^-I/)
+	{
+		push @include_path, length($arg) > 2 ? substr($arg, 2) : shift @ARGV;
 	}
 	else
 	{
@@ -43,6 +49,13 @@ if ($output_path ne '' && substr($output_path, -1) ne '/')
 {
 	$output_path .= '/';
 }
+
+# Sanity check arguments.
+die "No input files.\n"                                     if !$infile;
+die "No include path; you must specify -I at least once.\n" if !@include_path;
+
+my $FirstBootstrapObjectId =
+	Catalog::FindDefinedSymbol('access/transam.h', \@include_path, 'FirstBootstrapObjectId');
 
 # Read all the data from the include/catalog files.
 my $catalogs = Catalog::Catalogs($infile);
@@ -176,6 +189,7 @@ qq|/*-------------------------------------------------------------------------
 
 #include "postgres.h"
 
+#include "access/transam.h"
 #include "utils/fmgrtab.h"
 #include "utils/fmgrprotos.h"
 
@@ -191,31 +205,70 @@ foreach my $s (sort { $a->{oid} <=> $b->{oid} } @fmgr)
 	print $pfh "extern Datum $s->{prosrc}(PG_FUNCTION_ARGS);\n";
 }
 
-# Create the fmgr_builtins table
+# Create the fmgr_builtins table, collect data for fmgr_builtin_oid_index
 print $tfh "\nconst FmgrBuiltin fmgr_builtins[] = {\n";
 my %bmap;
 $bmap{'t'} = 'true';
 $bmap{'f'} = 'false';
+my @fmgr_builtin_oid_index;
+my $fmgr_count = 0;
 foreach my $s (sort { $a->{oid} <=> $b->{oid} } @fmgr)
 {
 	print $tfh
-"  { $s->{oid}, \"$s->{prosrc}\", $s->{nargs}, $bmap{$s->{strict}}, $bmap{$s->{retset}}, $s->{prosrc} },\n";
+"  { $s->{oid}, \"$s->{prosrc}\", $s->{nargs}, $bmap{$s->{strict}}, $bmap{$s->{retset}}, $s->{prosrc} }";
+
+	$fmgr_builtin_oid_index[$s->{oid}] = $fmgr_count++;
+
+	if ($fmgr_count <= $#fmgr)
+	{
+		print $tfh ",\n";
+	}
+	else
+	{
+		print $tfh "\n";
+	}
 }
+print $tfh "};\n";
+
+print $tfh qq|
+const int fmgr_nbuiltins = (sizeof(fmgr_builtins) / sizeof(FmgrBuiltin));
+|;
+
+
+# Create fmgr_builtins_oid_index table.
+#
+# Note that the array has to be filled up to FirstBootstrapObjectId,
+# as we can't rely on zero initialization as 0 is a valid mapping.
+print $tfh qq|
+const uint16 fmgr_builtin_oid_index[FirstBootstrapObjectId] = {
+|;
+
+for (my $i = 0; $i < $FirstBootstrapObjectId; $i++)
+{
+	my $oid = $fmgr_builtin_oid_index[$i];
+
+	# fmgr_builtin_oid_index is sparse, map nonexistant functions to
+	# InvalidOidBuiltinMapping
+	if (not defined $oid)
+	{
+		$oid = 'InvalidOidBuiltinMapping';
+	}
+
+	if ($i + 1 == $FirstBootstrapObjectId)
+	{
+		print $tfh "  $oid\n";
+	}
+	else
+	{
+		print $tfh "  $oid,\n";
+	}
+}
+print $tfh "};\n";
+
 
 # And add the file footers.
 print $ofh "\n#endif /* FMGROIDS_H */\n";
 print $pfh "\n#endif /* FMGRPROTOS_H */\n";
-
-print $tfh
-qq|  /* dummy entry is easier than getting rid of comma after last real one */
-  /* (not that there has ever been anything wrong with *having* a
-     comma after the last field in an array initializer) */
-  { 0, NULL, 0, false, false, NULL }
-};
-
-/* Note fmgr_nbuiltins excludes the dummy entry */
-const int fmgr_nbuiltins = (sizeof(fmgr_builtins) / sizeof(FmgrBuiltin)) - 1;
-|;
 
 close($ofh);
 close($pfh);

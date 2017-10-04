@@ -13,13 +13,13 @@
 #ifndef FMGRTAB_H
 #define FMGRTAB_H
 
+#include "access/transam.h"
 #include "fmgr.h"
 
 
 /*
  * This table stores info about all the built-in functions (ie, functions
- * that are compiled into the Postgres executable).  The table entries are
- * required to appear in Oid order, so that binary search can be used.
+ * that are compiled into the Postgres executable).
  */
 
 typedef struct
@@ -35,5 +35,12 @@ typedef struct
 extern const FmgrBuiltin fmgr_builtins[];
 
 extern const int fmgr_nbuiltins;	/* number of entries in table */
+
+/*
+ * Mapping from a builtin function's oid to the index in the fmgr_builtins
+ * array.
+ */
+#define InvalidOidBuiltinMapping UINT16_MAX
+extern const uint16 fmgr_builtin_oid_index[FirstBootstrapObjectId];
 
 #endif							/* FMGRTAB_H */
