@@ -102,8 +102,9 @@ my %rel_tags;
 		{
 			my $commit = $1;
 			my $tag    = $2;
-			if (   $tag =~ /^REL\d+_\d+$/
-				|| $tag =~ /^REL\d+_\d+_\d+$/)
+			if ($tag =~ /^REL_\d+_\d+$/
+			    || $tag =~ /^REL\d+_\d+$/
+			    || $tag =~ /^REL\d+_\d+_\d+$/)
 			{
 				$rel_tags{$commit} = $tag;
 			}
@@ -198,6 +199,7 @@ for my $branch (@BRANCHES)
 			$last_tag = $sprout_tags{$commit};
 
 			# normalize branch names for making sprout tags
+			$last_tag =~ s/^(REL_\d+).*/$1_BR/;
 			$last_tag =~ s/^(REL\d+_\d+).*/$1_BR/;
 		}
 		$c->{'last_tag'} = $last_tag;
