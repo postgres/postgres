@@ -40,7 +40,7 @@ extern const int fmgr_nbuiltins;	/* number of entries in table */
  * Mapping from a builtin function's oid to the index in the fmgr_builtins
  * array.
  */
-#define InvalidOidBuiltinMapping UINT16_MAX
+#define InvalidOidBuiltinMapping PG_UINT16_MAX
 extern const uint16 fmgr_builtin_oid_index[FirstBootstrapObjectId];
 
 #endif							/* FMGRTAB_H */
