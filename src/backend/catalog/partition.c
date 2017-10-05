@@ -1236,7 +1236,7 @@ RelationGetPartitionDispatchInfo(Relation rel,
  * get_partition_dispatch_recurse
  *		Recursively expand partition tree rooted at rel
  *
- * As the partition tree is expanded in a depth-first manner, we mantain two
+ * As the partition tree is expanded in a depth-first manner, we maintain two
  * global lists: of PartitionDispatch objects corresponding to partitioned
  * tables in *pds and of the leaf partition OIDs in *leaf_part_oids.
  *
