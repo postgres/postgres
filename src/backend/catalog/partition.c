@@ -953,7 +953,25 @@ check_default_allows_bound(Relation parent, Relation default_rel,
 
 		/* Lock already taken above. */
 		if (part_relid != RelationGetRelid(default_rel))
+		{
 			part_rel = heap_open(part_relid, NoLock);
+
+			/*
+			 * If the partition constraints on default partition child imply
+			 * that it will not contain any row that would belong to the new
+			 * partition, we can avoid scanning the child table.
+			 */
+			if (PartConstraintImpliedByRelConstraint(part_rel,
+													 def_part_constraints))
+			{
+				ereport(INFO,
+						(errmsg("partition constraint for table \"%s\" is implied by existing constraints",
+								RelationGetRelationName(part_rel))));
+
+				heap_close(part_rel, NoLock);
+				continue;
+			}
+		}
 		else
 			part_rel = default_rel;
 

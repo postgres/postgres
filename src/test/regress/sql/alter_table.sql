@@ -2285,9 +2285,10 @@ ALTER TABLE list_parted2 ATTACH PARTITION part_2 FOR VALUES IN (2);
 ALTER TABLE part_5 ATTACH PARTITION list_parted2 FOR VALUES IN ('b');
 ALTER TABLE list_parted2 ATTACH PARTITION list_parted2 FOR VALUES IN (0);
 
--- If the partitioned table being attached does not have a constraint that
--- would allow validation scan to be skipped, but an individual partition
--- does, then the partition's validation scan is skipped.
+-- If a partitioned table being created or an existing table being attached
+-- as a paritition does not have a constraint that would allow validation scan
+-- to be skipped, but an individual partition does, then the partition's
+-- validation scan is skipped.
 CREATE TABLE quuux (a int, b text) PARTITION BY LIST (a);
 CREATE TABLE quuux_default PARTITION OF quuux DEFAULT PARTITION BY LIST (b);
 CREATE TABLE quuux_default1 PARTITION OF quuux_default (
@@ -2297,6 +2298,10 @@ CREATE TABLE quuux1 (a int, b text);
 ALTER TABLE quuux ATTACH PARTITION quuux1 FOR VALUES IN (1); -- validate!
 CREATE TABLE quuux2 (a int, b text);
 ALTER TABLE quuux ATTACH PARTITION quuux2 FOR VALUES IN (2); -- skip validation
+DROP TABLE quuux1, quuux2;
+-- should validate for quuux1, but not for quuux2
+CREATE TABLE quuux1 PARTITION OF quuux FOR VALUES IN (1);
+CREATE TABLE quuux2 PARTITION OF quuux FOR VALUES IN (2);
 DROP TABLE quuux;
 
 --
