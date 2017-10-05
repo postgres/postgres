@@ -207,9 +207,7 @@ analyze_rel(Oid relid, RangeVar *relation, int options,
 	}
 
 	/*
-	 * Check that it's a plain table, materialized view, or foreign table; we
-	 * used to do this in get_rel_oids() but seems safer to check after we've
-	 * locked the relation.
+	 * Check that it's of an analyzable relkind, and set up appropriately.
 	 */
 	if (onerel->rd_rel->relkind == RELKIND_RELATION ||
 		onerel->rd_rel->relkind == RELKIND_MATVIEW)

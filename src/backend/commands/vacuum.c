@@ -1309,6 +1309,9 @@ vac_truncate_clog(TransactionId frozenXID,
  *		do not use it once we've successfully opened the rel, since it might
  *		be stale.
  *
+ *		Returns true if it's okay to proceed with a requested ANALYZE
+ *		operation on this table.
+ *
  *		Doing one heap at a time incurs extra overhead, since we need to
  *		check that the heap exists again just before we vacuum it.  The
  *		reason that we do this is so that vacuuming can be spread across
@@ -1444,9 +1447,7 @@ vacuum_rel(Oid relid, RangeVar *relation, int options, VacuumParams *params)
 	}
 
 	/*
-	 * Check that it's a vacuumable relation; we used to do this in
-	 * get_rel_oids() but seems safer to check after we've locked the
-	 * relation.
+	 * Check that it's of a vacuumable relkind.
 	 */
 	if (onerel->rd_rel->relkind != RELKIND_RELATION &&
 		onerel->rd_rel->relkind != RELKIND_MATVIEW &&
@@ -1478,17 +1479,16 @@ vacuum_rel(Oid relid, RangeVar *relation, int options, VacuumParams *params)
 	}
 
 	/*
-	 * Ignore partitioned tables as there is no work to be done.  Since we
-	 * release the lock here, it's possible that any partitions added from
-	 * this point on will not get processed, but that seems harmless.
+	 * Silently ignore partitioned tables as there is no work to be done.  The
+	 * useful work is on their child partitions, which have been queued up for
+	 * us separately.
 	 */
 	if (onerel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
 	{
 		relation_close(onerel, lmode);
 		PopActiveSnapshot();
 		CommitTransactionCommand();
-
-		/* It's OK for other commands to look at this table */
+		/* It's OK to proceed with ANALYZE on this table */
 		return true;
 	}
 
