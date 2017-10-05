@@ -326,8 +326,8 @@ ExecCreateTableAs(CreateTableAsStmt *stmt, const char *queryString,
 		query = linitial_node(Query, rewritten);
 		Assert(query->commandType == CMD_SELECT);
 
-		/* plan the query --- note we disallow parallelism */
-		plan = pg_plan_query(query, 0, params);
+		/* plan the query */
+		plan = pg_plan_query(query, CURSOR_OPT_PARALLEL_OK, params);
 
 		/*
 		 * Use a snapshot with an updated command ID to ensure this query sees

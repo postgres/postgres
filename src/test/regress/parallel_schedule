@@ -96,6 +96,7 @@ test: rules psql_crosstab amutils
 
 # run by itself so it can run parallel workers
 test: select_parallel
+test: write_parallel
 
 # no relation related tests can be put in this group
 test: publication subscription

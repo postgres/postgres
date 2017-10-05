@@ -151,9 +151,10 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
       <para>
         The query writes any data or locks any database rows. If a query
         contains a data-modifying operation either at the top level or within
-        a CTE, no parallel plans for that query will be generated. This is a
-        limitation of the current implementation which could be lifted in a
-        future release.
+        a CTE, no parallel plans for that query will be generated.  As an
+        exception, the commands <literal>CREATE TABLE</>, <literal>SELECT
+        INTO</>, and <literal>CREATE MATERIALIZED VIEW</> which create a new
+        table and populate it can use a parallel plan.
       </para>
     </listitem>
 
@@ -238,15 +239,6 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
         <xref linkend="guc-max-parallel-workers-per-gather"> to zero in
         sessions where it is likely, so as to avoid generating query plans
         that may be suboptimal when run serially.
-      </para>
-    </listitem>
-
-    <listitem>
-      <para>
-        A prepared statement is executed using a <literal>CREATE TABLE .. AS
-        EXECUTE ..</literal> statement.  This construct converts what otherwise
-        would have been a read-only operation into a read-write operation,
-        making it ineligible for parallel query.
       </para>
     </listitem>
 

@@ -134,6 +134,7 @@ test: stats_ext
 test: rules
 test: psql_crosstab
 test: select_parallel
+test: write_parallel
 test: publication
 test: subscription
 test: amutils
