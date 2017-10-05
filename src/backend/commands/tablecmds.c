@@ -13635,9 +13635,14 @@ ValidatePartitionConstraints(List **wqueue, Relation scanrel,
 	 */
 	if (PartConstraintImpliedByRelConstraint(scanrel, partConstraint))
 	{
-		ereport(INFO,
-				(errmsg("partition constraint for table \"%s\" is implied by existing constraints",
-						RelationGetRelationName(scanrel))));
+		if (!validate_default)
+			ereport(INFO,
+					(errmsg("partition constraint for table \"%s\" is implied by existing constraints",
+							RelationGetRelationName(scanrel))));
+		else
+			ereport(INFO,
+					(errmsg("updated partition constraint for default partition \"%s\" is implied by existing constraints",
+							RelationGetRelationName(scanrel))));
 		return;
 	}
 

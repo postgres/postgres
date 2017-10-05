@@ -3436,7 +3436,7 @@ ALTER TABLE part_7 ATTACH PARTITION part_7_a_null FOR VALUES IN ('a', null);
 INFO:  partition constraint for table "part_7_a_null" is implied by existing constraints
 ALTER TABLE list_parted2 ATTACH PARTITION part_7 FOR VALUES IN (7);
 INFO:  partition constraint for table "part_7" is implied by existing constraints
-INFO:  partition constraint for table "list_parted2_def" is implied by existing constraints
+INFO:  updated partition constraint for default partition "list_parted2_def" is implied by existing constraints
 -- Same example, but check this time that the constraint correctly detects
 -- violating rows
 ALTER TABLE list_parted2 DETACH PARTITION part_7;
@@ -3450,7 +3450,7 @@ SELECT tableoid::regclass, a, b FROM part_7 order by a;
 (2 rows)
 
 ALTER TABLE list_parted2 ATTACH PARTITION part_7 FOR VALUES IN (7);
-INFO:  partition constraint for table "list_parted2_def" is implied by existing constraints
+INFO:  updated partition constraint for default partition "list_parted2_def" is implied by existing constraints
 ERROR:  partition constraint is violated by some row
 -- check that leaf partitions of default partition are scanned when
 -- attaching a partitioned table.
