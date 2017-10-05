@@ -13683,6 +13683,21 @@ ValidatePartitionConstraints(List **wqueue, Relation scanrel,
 			/* There can never be a whole-row reference here */
 			if (found_whole_row)
 				elog(ERROR, "unexpected whole-row reference found in partition key");
+
+			/* Can we skip scanning this part_rel? */
+			if (PartConstraintImpliedByRelConstraint(part_rel, my_partconstr))
+			{
+				if (!validate_default)
+					ereport(INFO,
+							(errmsg("partition constraint for table \"%s\" is implied by existing constraints",
+									RelationGetRelationName(part_rel))));
+				else
+					ereport(INFO,
+							(errmsg("updated partition constraint for default partition \"%s\" is implied by existing constraints",
+									RelationGetRelationName(part_rel))));
+				heap_close(part_rel, NoLock);
+				continue;
+			}
 		}
 
 		/* Grab a work queue entry. */
