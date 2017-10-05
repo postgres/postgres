@@ -26,7 +26,14 @@ SELECT pg_replication_origin_drop('test_decoding: temp');
 (1 row)
 
 SELECT pg_replication_origin_drop('test_decoding: temp');
-ERROR:  cache lookup failed for replication origin 'test_decoding: temp'
+ERROR:  replication origin "test_decoding: temp" does not exist
+-- various failure checks for undefined slots
+select pg_replication_origin_advance('test_decoding: temp', '0/1');
+ERROR:  replication origin "test_decoding: temp" does not exist
+select pg_replication_origin_session_setup('test_decoding: temp');
+ERROR:  replication origin "test_decoding: temp" does not exist
+select pg_replication_origin_progress('test_decoding: temp', true);
+ERROR:  replication origin "test_decoding: temp" does not exist
 SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot', 'test_decoding');
  ?column? 
 ----------

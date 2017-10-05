@@ -13,6 +13,11 @@ SELECT pg_replication_origin_create('test_decoding: temp');
 SELECT pg_replication_origin_drop('test_decoding: temp');
 SELECT pg_replication_origin_drop('test_decoding: temp');
 
+-- various failure checks for undefined slots
+select pg_replication_origin_advance('test_decoding: temp', '0/1');
+select pg_replication_origin_session_setup('test_decoding: temp');
+select pg_replication_origin_progress('test_decoding: temp', true);
+
 SELECT 'init' FROM pg_create_logical_replication_slot('regression_slot', 'test_decoding');
 
 -- origin tx
