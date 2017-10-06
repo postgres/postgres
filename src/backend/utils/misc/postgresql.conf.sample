@@ -299,6 +299,7 @@
 #enable_seqscan = on
 #enable_sort = on
 #enable_tidscan = on
+#enable_partition_wise_join = off
 
 # - Planner Cost Constants -
 

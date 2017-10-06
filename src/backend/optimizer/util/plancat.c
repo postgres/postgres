@@ -71,7 +71,8 @@ static List *get_relation_statistics(RelOptInfo *rel, Relation relation);
 static void set_relation_partition_info(PlannerInfo *root, RelOptInfo *rel,
 							Relation relation);
 static PartitionScheme find_partition_scheme(PlannerInfo *root, Relation rel);
-static List **build_baserel_partition_key_exprs(Relation relation, Index varno);
+static void set_baserel_partition_key_exprs(Relation relation,
+								RelOptInfo *rel);
 
 /*
  * get_relation_info -
@@ -1832,7 +1833,7 @@ set_relation_partition_info(PlannerInfo *root, RelOptInfo *rel,
 	Assert(partdesc != NULL && rel->part_scheme != NULL);
 	rel->boundinfo = partdesc->boundinfo;
 	rel->nparts = partdesc->nparts;
-	rel->partexprs = build_baserel_partition_key_exprs(relation, rel->relid);
+	set_baserel_partition_key_exprs(relation, rel);
 }
 
 /*
@@ -1907,21 +1908,24 @@ find_partition_scheme(PlannerInfo *root, Relation relation)
 }
 
 /*
- * build_baserel_partition_key_exprs
+ * set_baserel_partition_key_exprs
  *
- * Collects partition key expressions for a given base relation.  Any single
- * column partition keys are converted to Var nodes.  All Var nodes are set
- * to the given varno.  The partition key expressions are returned as an array
- * of single element lists to be stored in RelOptInfo of the base relation.
+ * Builds partition key expressions for the given base relation and sets them
+ * in given RelOptInfo.  Any single column partition keys are converted to Var
+ * nodes.  All Var nodes are restamped with the relid of given relation.
  */
-static List **
-build_baserel_partition_key_exprs(Relation relation, Index varno)
+static void
+set_baserel_partition_key_exprs(Relation relation,
+								RelOptInfo *rel)
 {
 	PartitionKey partkey = RelationGetPartitionKey(relation);
 	int			partnatts;
 	int			cnt;
 	List	  **partexprs;
 	ListCell   *lc;
+	Index		varno = rel->relid;
+
+	Assert(IS_SIMPLE_REL(rel) && rel->relid > 0);
 
 	/* A partitioned table should have a partition key. */
 	Assert(partkey != NULL);
@@ -1959,5 +1963,13 @@ build_baserel_partition_key_exprs(Relation relation, Index varno)
 		partexprs[cnt] = list_make1(partexpr);
 	}
 
-	return partexprs;
+	rel->partexprs = partexprs;
+
+	/*
+	 * A base relation can not have nullable partition key expressions. We
+	 * still allocate array of empty expressions lists to keep partition key
+	 * expression handling code simple. See build_joinrel_partition_info() and
+	 * match_expr_to_partition_keys().
+	 */
+	rel->nullable_partexprs = (List **) palloc0(sizeof(List *) * partnatts);
 }

@@ -96,6 +96,9 @@ typedef struct CustomPathMethods
 									List *tlist,
 									List *clauses,
 									List *custom_plans);
+	struct List *(*ReparameterizeCustomPathByChild) (PlannerInfo *root,
+													 List *custom_private,
+													 RelOptInfo *child_rel);
 }			CustomPathMethods;
 
 /*

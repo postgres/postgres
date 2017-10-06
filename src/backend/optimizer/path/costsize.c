@@ -127,6 +127,7 @@ bool		enable_material = true;
 bool		enable_mergejoin = true;
 bool		enable_hashjoin = true;
 bool		enable_gathermerge = true;
+bool		enable_partition_wise_join = false;
 
 typedef struct
 {

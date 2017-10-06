@@ -391,6 +391,11 @@ typedef struct PartitionSchemeData *PartitionScheme;
  * handling join alias Vars.  Currently this is not needed because all join
  * alias Vars are expanded to non-aliased form during preprocess_expression.
  *
+ * We also have relations representing joins between child relations of
+ * different partitioned tables. These relations are not added to
+ * join_rel_level lists as they are not joined directly by the dynamic
+ * programming algorithm.
+ *
  * There is also a RelOptKind for "upper" relations, which are RelOptInfos
  * that describe post-scan/join processing steps, such as aggregation.
  * Many of the fields in these RelOptInfos are meaningless, but their Path
@@ -525,14 +530,18 @@ typedef struct PartitionSchemeData *PartitionScheme;
  * 		boundinfo - Partition bounds
  * 		nparts - Number of partitions
  * 		part_rels - RelOptInfos for each partition
- * 		partexprs - Partition key expressions
+ * 		partexprs, nullable_partexprs - Partition key expressions
  *
  * Note: A base relation always has only one set of partition keys, but a join
  * relation may have as many sets of partition keys as the number of relations
- * being joined. partexprs is an array containing part_scheme->partnatts
- * elements, each of which is a list of partition key expressions. For a base
- * relation each list contains only one expression, but for a join relation
- * there can be one per baserel.
+ * being joined. partexprs and nullable_partexprs are arrays containing
+ * part_scheme->partnatts elements each. Each of these elements is a list of
+ * partition key expressions.  For a base relation each list in partexprs
+ * contains only one expression and nullable_partexprs is not populated. For a
+ * join relation, partexprs and nullable_partexprs contain partition key
+ * expressions from non-nullable and nullable relations resp. Lists at any
+ * given position in those arrays together contain as many elements as the
+ * number of joining relations.
  *----------
  */
 typedef enum RelOptKind
@@ -540,6 +549,7 @@ typedef enum RelOptKind
 	RELOPT_BASEREL,
 	RELOPT_JOINREL,
 	RELOPT_OTHER_MEMBER_REL,
+	RELOPT_OTHER_JOINREL,
 	RELOPT_UPPER_REL,
 	RELOPT_DEADREL
 } RelOptKind;
@@ -553,13 +563,17 @@ typedef enum RelOptKind
 	 (rel)->reloptkind == RELOPT_OTHER_MEMBER_REL)
 
 /* Is the given relation a join relation? */
-#define IS_JOIN_REL(rel) ((rel)->reloptkind == RELOPT_JOINREL)
+#define IS_JOIN_REL(rel)	\
+	((rel)->reloptkind == RELOPT_JOINREL || \
+	 (rel)->reloptkind == RELOPT_OTHER_JOINREL)
 
 /* Is the given relation an upper relation? */
 #define IS_UPPER_REL(rel) ((rel)->reloptkind == RELOPT_UPPER_REL)
 
 /* Is the given relation an "other" relation? */
-#define IS_OTHER_REL(rel) ((rel)->reloptkind == RELOPT_OTHER_MEMBER_REL)
+#define IS_OTHER_REL(rel) \
+	((rel)->reloptkind == RELOPT_OTHER_MEMBER_REL || \
+	 (rel)->reloptkind == RELOPT_OTHER_JOINREL)
 
 typedef struct RelOptInfo
 {
@@ -645,8 +659,28 @@ typedef struct RelOptInfo
 	struct PartitionBoundInfoData *boundinfo;	/* Partition bounds */
 	struct RelOptInfo **part_rels;	/* Array of RelOptInfos of partitions,
 									 * stored in the same order of bounds */
-	List	  **partexprs;		/* Partition key expressions. */
+	List	  **partexprs;		/* Non-nullable partition key expressions. */
+	List	  **nullable_partexprs;	/* Nullable partition key expressions. */
 } RelOptInfo;
+
+/*
+ * Is given relation partitioned?
+ *
+ * A join between two partitioned relations with same partitioning scheme
+ * without any matching partitions will not have any partition in it but will
+ * have partition scheme set. So a relation is deemed to be partitioned if it
+ * has a partitioning scheme, bounds and positive number of partitions.
+ */
+#define IS_PARTITIONED_REL(rel) \
+	((rel)->part_scheme && (rel)->boundinfo && (rel)->nparts > 0)
+
+/*
+ * Convenience macro to make sure that a partitioned relation has all the
+ * required members set.
+ */
+#define REL_HAS_ALL_PART_PROPS(rel)	\
+	((rel)->part_scheme && (rel)->boundinfo && (rel)->nparts > 0 && \
+	 (rel)->part_rels && (rel)->partexprs && (rel)->nullable_partexprs)
 
 /*
  * IndexOptInfo

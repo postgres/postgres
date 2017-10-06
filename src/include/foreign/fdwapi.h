@@ -158,6 +158,9 @@ typedef void (*ShutdownForeignScan_function) (ForeignScanState *node);
 typedef bool (*IsForeignScanParallelSafe_function) (PlannerInfo *root,
 													RelOptInfo *rel,
 													RangeTblEntry *rte);
+typedef List *(*ReparameterizeForeignPathByChild_function) (PlannerInfo *root,
+															List *fdw_private,
+															RelOptInfo *child_rel);
 
 /*
  * FdwRoutine is the struct returned by a foreign-data wrapper's handler
@@ -230,6 +233,9 @@ typedef struct FdwRoutine
 	ReInitializeDSMForeignScan_function ReInitializeDSMForeignScan;
 	InitializeWorkerForeignScan_function InitializeWorkerForeignScan;
 	ShutdownForeignScan_function ShutdownForeignScan;
+
+	/* Support functions for path reparameterization. */
+	ReparameterizeForeignPathByChild_function ReparameterizeForeignPathByChild;
 } FdwRoutine;
 
 

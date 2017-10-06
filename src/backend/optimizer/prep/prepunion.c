@@ -2270,6 +2270,59 @@ adjust_child_relids(Relids relids, int nappinfos, AppendRelInfo **appinfos)
 }
 
 /*
+ * Replace any relid present in top_parent_relids with its child in
+ * child_relids. Members of child_relids can be multiple levels below top
+ * parent in the partition hierarchy.
+ */
+Relids
+adjust_child_relids_multilevel(PlannerInfo *root, Relids relids,
+							   Relids child_relids, Relids top_parent_relids)
+{
+	AppendRelInfo **appinfos;
+	int			nappinfos;
+	Relids		parent_relids = NULL;
+	Relids		result;
+	Relids		tmp_result = NULL;
+	int			cnt;
+
+	/*
+	 * If the given relids set doesn't contain any of the top parent relids,
+	 * it will remain unchanged.
+	 */
+	if (!bms_overlap(relids, top_parent_relids))
+		return relids;
+
+	appinfos = find_appinfos_by_relids(root, child_relids, &nappinfos);
+
+	/* Construct relids set for the immediate parent of the given child. */
+	for (cnt = 0; cnt < nappinfos; cnt++)
+	{
+		AppendRelInfo *appinfo = appinfos[cnt];
+
+		parent_relids = bms_add_member(parent_relids, appinfo->parent_relid);
+	}
+
+	/* Recurse if immediate parent is not the top parent. */
+	if (!bms_equal(parent_relids, top_parent_relids))
+	{
+		tmp_result = adjust_child_relids_multilevel(root, relids,
+													parent_relids,
+													top_parent_relids);
+		relids = tmp_result;
+	}
+
+	result = adjust_child_relids(relids, nappinfos, appinfos);
+
+	/* Free memory consumed by any intermediate result. */
+	if (tmp_result)
+		bms_free(tmp_result);
+	bms_free(parent_relids);
+	pfree(appinfos);
+
+	return result;
+}
+
+/*
  * Adjust the targetlist entries of an inherited UPDATE operation
  *
  * The expressions have already been fixed, but we have to make sure that
@@ -2406,6 +2459,48 @@ adjust_appendrel_attrs_multilevel(PlannerInfo *root, Node *node,
 	pfree(appinfos);
 
 	return node;
+}
+
+/*
+ * Construct the SpecialJoinInfo for a child-join by translating
+ * SpecialJoinInfo for the join between parents. left_relids and right_relids
+ * are the relids of left and right side of the join respectively.
+ */
+SpecialJoinInfo *
+build_child_join_sjinfo(PlannerInfo *root, SpecialJoinInfo *parent_sjinfo,
+						Relids left_relids, Relids right_relids)
+{
+	SpecialJoinInfo *sjinfo = makeNode(SpecialJoinInfo);
+	AppendRelInfo **left_appinfos;
+	int			left_nappinfos;
+	AppendRelInfo **right_appinfos;
+	int			right_nappinfos;
+
+	memcpy(sjinfo, parent_sjinfo, sizeof(SpecialJoinInfo));
+	left_appinfos = find_appinfos_by_relids(root, left_relids,
+											&left_nappinfos);
+	right_appinfos = find_appinfos_by_relids(root, right_relids,
+											 &right_nappinfos);
+
+	sjinfo->min_lefthand = adjust_child_relids(sjinfo->min_lefthand,
+											   left_nappinfos, left_appinfos);
+	sjinfo->min_righthand = adjust_child_relids(sjinfo->min_righthand,
+												right_nappinfos,
+												right_appinfos);
+	sjinfo->syn_lefthand = adjust_child_relids(sjinfo->syn_lefthand,
+											   left_nappinfos, left_appinfos);
+	sjinfo->syn_righthand = adjust_child_relids(sjinfo->syn_righthand,
+												right_nappinfos,
+												right_appinfos);
+	sjinfo->semi_rhs_exprs = (List *) adjust_appendrel_attrs(root,
+															 (Node *) sjinfo->semi_rhs_exprs,
+															 right_nappinfos,
+															 right_appinfos);
+
+	pfree(left_appinfos);
+	pfree(right_appinfos);
+
+	return sjinfo;
 }
 
 /*

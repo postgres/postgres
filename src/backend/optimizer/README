@@ -1075,3 +1075,29 @@ be desirable to postpone the Gather stage until as near to the top of the
 plan as possible.  Expanding the range of cases in which more work can be
 pushed below the Gather (and costing them accurately) is likely to keep us
 busy for a long time to come.
+
+Partition-wise joins
+--------------------
+A join between two similarly partitioned tables can be broken down into joins
+between their matching partitions if there exists an equi-join condition
+between the partition keys of the joining tables. The equi-join between
+partition keys implies that all join partners for a given row in one
+partitioned table must be in the corresponding partition of the other
+partitioned table. Because of this the join between partitioned tables to be
+broken into joins between the matching partitions. The resultant join is
+partitioned in the same way as the joining relations, thus allowing an N-way
+join between similarly partitioned tables having equi-join condition between
+their partition keys to be broken down into N-way joins between their matching
+partitions. This technique of breaking down a join between partition tables
+into join between their partitions is called partition-wise join. We will use
+term "partitioned relation" for either a partitioned table or a join between
+compatibly partitioned tables.
+
+The partitioning properties of a partitioned relation are stored in its
+RelOptInfo.  The information about data types of partition keys are stored in
+PartitionSchemeData structure. The planner maintains a list of canonical
+partition schemes (distinct PartitionSchemeData objects) so that RelOptInfo of
+any two partitioned relations with same partitioning scheme point to the same
+PartitionSchemeData object.  This reduces memory consumed by
+PartitionSchemeData objects and makes it easy to compare the partition schemes
+of joining relations.

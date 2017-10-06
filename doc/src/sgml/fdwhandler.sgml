@@ -1292,6 +1292,26 @@ ShutdownForeignScan(ForeignScanState *node);
    </para>
    </sect2>
 
+   <sect2 id="fdw-callbacks-reparameterize-paths">
+    <title>FDW Routines For reparameterization of paths</title>
+
+    <para>
+<programlisting>
+List *
+ReparameterizeForeignPathByChild(PlannerInfo *root, List *fdw_private,
+                                 RelOptInfo *child_rel);
+</programlisting>
+    This function is called while converting a path parameterized by the
+    top-most parent of the given child relation <literal>child_rel</> to be
+    parameterized by the child relation. The function is used to reparameterize
+    any paths or translate any expression nodes saved in the given
+    <literal>fdw_private</> member of a <structname>ForeignPath</>. The
+    callback may use <literal>reparameterize_path_by_child</>,
+    <literal>adjust_appendrel_attrs</> or
+    <literal>adjust_appendrel_attrs_multilevel</> as required.
+    </para>
+   </sect2>
+
    </sect1>
 
    <sect1 id="fdw-helpers">

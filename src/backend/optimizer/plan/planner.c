@@ -6150,3 +6150,25 @@ get_partitioned_child_rels(PlannerInfo *root, Index rti)
 
 	return result;
 }
+
+/*
+ * get_partitioned_child_rels_for_join
+ *		Build and return a list containing the RTI of every partitioned
+ *		relation which is a child of some rel included in the join.
+ */
+List *
+get_partitioned_child_rels_for_join(PlannerInfo *root, Relids join_relids)
+{
+	List	   *result = NIL;
+	ListCell   *l;
+
+	foreach(l, root->pcinfo_list)
+	{
+		PartitionedChildRelInfo *pc = lfirst(l);
+
+		if (bms_is_member(pc->parent_relid, join_relids))
+			result = list_concat(result, list_copy(pc->child_rels));
+	}
+
+	return result;
+}

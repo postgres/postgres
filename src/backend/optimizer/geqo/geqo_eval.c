@@ -264,6 +264,9 @@ merge_clump(PlannerInfo *root, List *clumps, Clump *new_clump, bool force)
 			/* Keep searching if join order is not valid */
 			if (joinrel)
 			{
+				/* Create paths for partition-wise joins. */
+				generate_partition_wise_join_paths(root, joinrel);
+
 				/* Create GatherPaths for any useful partial paths for rel */
 				generate_gather_paths(root, joinrel);
 

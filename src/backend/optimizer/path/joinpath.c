@@ -26,8 +26,18 @@
 /* Hook for plugins to get control in add_paths_to_joinrel() */
 set_join_pathlist_hook_type set_join_pathlist_hook = NULL;
 
-#define PATH_PARAM_BY_REL(path, rel)  \
+/*
+ * Paths parameterized by the parent can be considered to be parameterized by
+ * any of its child.
+ */
+#define PATH_PARAM_BY_PARENT(path, rel)	\
+	((path)->param_info && bms_overlap(PATH_REQ_OUTER(path),	\
+									   (rel)->top_parent_relids))
+#define PATH_PARAM_BY_REL_SELF(path, rel)  \
 	((path)->param_info && bms_overlap(PATH_REQ_OUTER(path), (rel)->relids))
+
+#define PATH_PARAM_BY_REL(path, rel)	\
+	(PATH_PARAM_BY_REL_SELF(path, rel) || PATH_PARAM_BY_PARENT(path, rel))
 
 static void try_partial_mergejoin_path(PlannerInfo *root,
 						   RelOptInfo *joinrel,
@@ -115,6 +125,19 @@ add_paths_to_joinrel(PlannerInfo *root,
 	JoinPathExtraData extra;
 	bool		mergejoin_allowed = true;
 	ListCell   *lc;
+	Relids		joinrelids;
+
+	/*
+	 * PlannerInfo doesn't contain the SpecialJoinInfos created for joins
+	 * between child relations, even if there is a SpecialJoinInfo node for
+	 * the join between the topmost parents. So, while calculating Relids set
+	 * representing the restriction, consider relids of topmost parent of
+	 * partitions.
+	 */
+	if (joinrel->reloptkind == RELOPT_OTHER_JOINREL)
+		joinrelids = joinrel->top_parent_relids;
+	else
+		joinrelids = joinrel->relids;
 
 	extra.restrictlist = restrictlist;
 	extra.mergeclause_list = NIL;
@@ -211,16 +234,16 @@ add_paths_to_joinrel(PlannerInfo *root,
 		 * join has already been proven legal.)  If the SJ is relevant, it
 		 * presents constraints for joining to anything not in its RHS.
 		 */
-		if (bms_overlap(joinrel->relids, sjinfo2->min_righthand) &&
-			!bms_overlap(joinrel->relids, sjinfo2->min_lefthand))
+		if (bms_overlap(joinrelids, sjinfo2->min_righthand) &&
+			!bms_overlap(joinrelids, sjinfo2->min_lefthand))
 			extra.param_source_rels = bms_join(extra.param_source_rels,
 											   bms_difference(root->all_baserels,
 															  sjinfo2->min_righthand));
 
 		/* full joins constrain both sides symmetrically */
 		if (sjinfo2->jointype == JOIN_FULL &&
-			bms_overlap(joinrel->relids, sjinfo2->min_lefthand) &&
-			!bms_overlap(joinrel->relids, sjinfo2->min_righthand))
+			bms_overlap(joinrelids, sjinfo2->min_lefthand) &&
+			!bms_overlap(joinrelids, sjinfo2->min_righthand))
 			extra.param_source_rels = bms_join(extra.param_source_rels,
 											   bms_difference(root->all_baserels,
 															  sjinfo2->min_lefthand));
@@ -347,10 +370,24 @@ try_nestloop_path(PlannerInfo *root,
 	JoinCostWorkspace workspace;
 	RelOptInfo *innerrel = inner_path->parent;
 	RelOptInfo *outerrel = outer_path->parent;
-	Relids		innerrelids = innerrel->relids;
-	Relids		outerrelids = outerrel->relids;
+	Relids		innerrelids;
+	Relids		outerrelids;
 	Relids		inner_paramrels = PATH_REQ_OUTER(inner_path);
 	Relids		outer_paramrels = PATH_REQ_OUTER(outer_path);
+
+	/*
+	 * Paths are parameterized by top-level parents, so run parameterization
+	 * tests on the parent relids.
+	 */
+	if (innerrel->top_parent_relids)
+		innerrelids = innerrel->top_parent_relids;
+	else
+		innerrelids = innerrel->relids;
+
+	if (outerrel->top_parent_relids)
+		outerrelids = outerrel->top_parent_relids;
+	else
+		outerrelids = outerrel->relids;
 
 	/*
 	 * Check to see if proposed path is still parameterized, and reject if the
@@ -387,6 +424,27 @@ try_nestloop_path(PlannerInfo *root,
 						  workspace.startup_cost, workspace.total_cost,
 						  pathkeys, required_outer))
 	{
+		/*
+		 * If the inner path is parameterized, it is parameterized by the
+		 * topmost parent of the outer rel, not the outer rel itself.  Fix
+		 * that.
+		 */
+		if (PATH_PARAM_BY_PARENT(inner_path, outer_path->parent))
+		{
+			inner_path = reparameterize_path_by_child(root, inner_path,
+													  outer_path->parent);
+
+			/*
+			 * If we could not translate the path, we can't create nest loop
+			 * path.
+			 */
+			if (!inner_path)
+			{
+				bms_free(required_outer);
+				return;
+			}
+		}
+
 		add_path(joinrel, (Path *)
 				 create_nestloop_path(root,
 									  joinrel,
@@ -432,8 +490,20 @@ try_partial_nestloop_path(PlannerInfo *root,
 	if (inner_path->param_info != NULL)
 	{
 		Relids		inner_paramrels = inner_path->param_info->ppi_req_outer;
+		RelOptInfo *outerrel = outer_path->parent;
+		Relids		outerrelids;
 
-		if (!bms_is_subset(inner_paramrels, outer_path->parent->relids))
+		/*
+		 * The inner and outer paths are parameterized, if at all, by the top
+		 * level parents, not the child relations, so we must use those relids
+		 * for our paramaterization tests.
+		 */
+		if (outerrel->top_parent_relids)
+			outerrelids = outerrel->top_parent_relids;
+		else
+			outerrelids = outerrel->relids;
+
+		if (!bms_is_subset(inner_paramrels, outerrelids))
 			return;
 	}
 
@@ -445,6 +515,22 @@ try_partial_nestloop_path(PlannerInfo *root,
 						  outer_path, inner_path, extra);
 	if (!add_partial_path_precheck(joinrel, workspace.total_cost, pathkeys))
 		return;
+
+	/*
+	 * If the inner path is parameterized, it is parameterized by the topmost
+	 * parent of the outer rel, not the outer rel itself.  Fix that.
+	 */
+	if (PATH_PARAM_BY_PARENT(inner_path, outer_path->parent))
+	{
+		inner_path = reparameterize_path_by_child(root, inner_path,
+												  outer_path->parent);
+
+		/*
+		 * If we could not translate the path, we can't create nest loop path.
+		 */
+		if (!inner_path)
+			return;
+	}
 
 	/* Might be good enough to be worth trying, so let's try it. */
 	add_partial_path(joinrel, (Path *)
