@@ -456,14 +456,19 @@ MainLoop(FILE *source)
 	}							/* while !endoffile/session */
 
 	/*
-	 * Process query at the end of file without a semicolon
+	 * If we have a non-semicolon-terminated query at the end of file, we
+	 * process it unless the input source is interactive --- in that case it
+	 * seems better to go ahead and quit.  Also skip if this is an error exit.
 	 */
 	if (query_buf->len > 0 && !pset.cur_cmd_interactive &&
 		successResult == EXIT_SUCCESS)
 	{
 		/* save query in history */
+		/* currently unneeded since we don't use this block if interactive */
+#ifdef NOT_USED
 		if (pset.cur_cmd_interactive)
 			pg_send_history(history_buf);
+#endif
 
 		/* execute query unless we're in an inactive \if branch */
 		if (conditional_active(cond_stack))
