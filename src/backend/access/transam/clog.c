@@ -241,21 +241,27 @@ set_status_by_pages(int nsubxids, TransactionId *subxids,
 	int			offset = 0;
 	int			i = 0;
 
+	Assert(nsubxids > 0);		/* else the pageno fetch above is unsafe */
+
 	while (i < nsubxids)
 	{
 		int			num_on_page = 0;
+		int			nextpageno;
 
-		while (TransactionIdToPage(subxids[i]) == pageno && i < nsubxids)
+		do
 		{
+			nextpageno = TransactionIdToPage(subxids[i]);
+			if (nextpageno != pageno)
+				break;
 			num_on_page++;
 			i++;
-		}
+		} while (i < nsubxids);
 
 		TransactionIdSetPageStatus(InvalidTransactionId,
 								   num_on_page, subxids + offset,
 								   status, lsn, pageno, false);
 		offset = i;
-		pageno = TransactionIdToPage(subxids[offset]);
+		pageno = nextpageno;
 	}
 }
 
