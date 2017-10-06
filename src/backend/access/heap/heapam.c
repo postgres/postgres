@@ -1718,8 +1718,7 @@ heap_hot_search_buffer(ItemPointer tid, Relation relation, Buffer buffer,
 		 * broken.
 		 */
 		if (TransactionIdIsValid(prev_xmax) &&
-			!TransactionIdEquals(prev_xmax,
-								 HeapTupleHeaderGetXmin(heapTuple->t_data)))
+			!HeapTupleUpdateXmaxMatchesXmin(prev_xmax, heapTuple->t_data))
 			break;
 
 		/*
@@ -1888,7 +1887,7 @@ heap_get_latest_tid(Relation relation,
 		 * tuple.  Check for XMIN match.
 		 */
 		if (TransactionIdIsValid(priorXmax) &&
-		  !TransactionIdEquals(priorXmax, HeapTupleHeaderGetXmin(tp.t_data)))
+			!HeapTupleUpdateXmaxMatchesXmin(priorXmax, tp.t_data))
 		{
 			UnlockReleaseBuffer(buffer);
 			break;
@@ -1920,6 +1919,39 @@ heap_get_latest_tid(Relation relation,
 	}							/* end of loop */
 }
 
+/*
+ * HeapTupleUpdateXmaxMatchesXmin - verify update chain xmax/xmin lineage
+ *
+ * Given the new version of a tuple after some update, verify whether the
+ * given Xmax (corresponding to the previous version) matches the tuple's
+ * Xmin, taking into account that the Xmin might have been frozen after the
+ * update.
+ */
+bool
+HeapTupleUpdateXmaxMatchesXmin(TransactionId xmax, HeapTupleHeader htup)
+{
+	TransactionId	xmin = HeapTupleHeaderGetXmin(htup);
+
+	/*
+	 * If the xmax of the old tuple is identical to the xmin of the new one,
+	 * it's a match.
+	 */
+	if (TransactionIdEquals(xmax, xmin))
+		return true;
+
+	/*
+	 * When a tuple is frozen, the original Xmin is lost, but we know it's a
+	 * committed transaction.  So unless the Xmax is InvalidXid, we don't know
+	 * for certain that there is a match, but there may be one; and we must
+	 * return true so that a HOT chain that is half-frozen can be walked
+	 * correctly.
+	 */
+	if (TransactionIdEquals(xmin, FrozenTransactionId) &&
+		TransactionIdIsValid(xmax))
+		return true;
+
+	return false;
+}
 
 /*
  * UpdateXmaxHintBits - update tuple hint bits after xmax transaction ends
@@ -5045,8 +5077,7 @@ l4:
 		 * the end of the chain, we're done, so return success.
 		 */
 		if (TransactionIdIsValid(priorXmax) &&
-			!TransactionIdEquals(HeapTupleHeaderGetXmin(mytup.t_data),
-								 priorXmax))
+			!HeapTupleUpdateXmaxMatchesXmin(priorXmax, mytup.t_data))
 		{
 			UnlockReleaseBuffer(buf);
 			return HeapTupleMayBeUpdated;
@@ -5500,7 +5531,10 @@ FreezeMultiXactId(MultiXactId multi, uint16 t_infomask,
 			if (TransactionIdPrecedes(xid, cutoff_xid))
 			{
 				if (TransactionIdDidCommit(xid))
+				{
+					xid = FrozenTransactionId;
 					*flags = FRM_MARK_COMMITTED | FRM_RETURN_IS_XID;
+				}
 				else
 				{
 					*flags |= FRM_INVALIDATE_XMAX;
