@@ -33,6 +33,9 @@ typedef struct
 	MemoryContext savedcxt;		/* context of SPI_connect's caller */
 	SubTransactionId connectSubid;	/* ID of connecting subtransaction */
 	QueryEnvironment *queryEnv; /* query environment setup for SPI level */
+
+	/* subtransaction in which current Executor call was started */
+	SubTransactionId execSubid;
 } _SPI_connection;
 
 /*
