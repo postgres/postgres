@@ -124,11 +124,15 @@ ExecProjectSRF(ProjectSetState *node, bool continuing)
 {
 	TupleTableSlot *resultSlot = node->ps.ps_ResultTupleSlot;
 	ExprContext *econtext = node->ps.ps_ExprContext;
+	MemoryContext oldcontext;
 	bool		hassrf PG_USED_FOR_ASSERTS_ONLY;
 	bool		hasresult;
 	int			argno;
 
 	ExecClearTuple(resultSlot);
+
+	/* Call SRFs, as well as plain expressions, in per-tuple context */
+	oldcontext = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
 
 	/*
 	 * Assume no further tuples are produced unless an ExprMultipleResult is
@@ -175,6 +179,8 @@ ExecProjectSRF(ProjectSetState *node, bool continuing)
 			*isdone = ExprSingleResult;
 		}
 	}
+
+	MemoryContextSwitchTo(oldcontext);
 
 	/* ProjectSet should not be used if there's no SRFs */
 	Assert(hassrf);

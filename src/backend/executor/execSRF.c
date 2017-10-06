@@ -467,6 +467,8 @@ ExecInitFunctionResultSet(Expr *expr,
  * function itself.  The argument expressions may not contain set-returning
  * functions (the planner is supposed to have separated evaluation for those).
  *
+ * This should be called in a short-lived (per-tuple) context.
+ *
  * This is used by nodeProjectSet.c.
  */
 Datum
