@@ -31,6 +31,9 @@ typedef struct
 	MemoryContext execCxt;		/* executor context */
 	MemoryContext savedcxt;		/* context of SPI_connect's caller */
 	SubTransactionId connectSubid;		/* ID of connecting subtransaction */
+
+	/* subtransaction in which current Executor call was started */
+	SubTransactionId execSubid;
 } _SPI_connection;
 
 /*
