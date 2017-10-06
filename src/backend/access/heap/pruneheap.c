@@ -474,7 +474,7 @@ heap_prune_chain(Relation relation, Buffer buffer, OffsetNumber rootoffnum,
 		 * Check the tuple XMIN against prior XMAX, if any
 		 */
 		if (TransactionIdIsValid(priorXmax) &&
-			!TransactionIdEquals(HeapTupleHeaderGetXmin(htup), priorXmax))
+			!HeapTupleUpdateXmaxMatchesXmin(priorXmax, htup))
 			break;
 
 		/*
@@ -814,7 +814,7 @@ heap_get_root_tuples(Page page, OffsetNumber *root_offsets)
 			htup = (HeapTupleHeader) PageGetItem(page, lp);
 
 			if (TransactionIdIsValid(priorXmax) &&
-				!TransactionIdEquals(priorXmax, HeapTupleHeaderGetXmin(htup)))
+				!HeapTupleUpdateXmaxMatchesXmin(priorXmax, htup))
 				break;
 
 			/* Remember the root line pointer for this item */
