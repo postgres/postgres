@@ -2243,8 +2243,7 @@ EvalPlanQualFetch(EState *estate, Relation relation, int lockmode,
 			 * atomic, and Xmin never changes in an existing tuple, except to
 			 * invalid or frozen, and neither of those can match priorXmax.)
 			 */
-			if (!TransactionIdEquals(HeapTupleHeaderGetXmin(tuple.t_data),
-									 priorXmax))
+			if (!HeapTupleUpdateXmaxMatchesXmin(priorXmax, tuple.t_data))
 			{
 				ReleaseBuffer(buffer);
 				return NULL;
@@ -2391,8 +2390,7 @@ EvalPlanQualFetch(EState *estate, Relation relation, int lockmode,
 		/*
 		 * As above, if xmin isn't what we're expecting, do nothing.
 		 */
-		if (!TransactionIdEquals(HeapTupleHeaderGetXmin(tuple.t_data),
-								 priorXmax))
+		if (!HeapTupleUpdateXmaxMatchesXmin(priorXmax, tuple.t_data))
 		{
 			ReleaseBuffer(buffer);
 			return NULL;
