@@ -702,6 +702,74 @@ partition_bounds_equal(int partnatts, int16 *parttyplen, bool *parttypbyval,
 }
 
 /*
+ * Return a copy of given PartitionBoundInfo structure. The data types of bounds
+ * are described by given partition key specificiation.
+ */
+extern PartitionBoundInfo
+partition_bounds_copy(PartitionBoundInfo src,
+					  PartitionKey key)
+{
+	PartitionBoundInfo	dest;
+	int		i;
+	int		ndatums;
+	int		partnatts;
+	int		num_indexes;
+
+	dest = (PartitionBoundInfo) palloc(sizeof(PartitionBoundInfoData));
+
+	dest->strategy = src->strategy;
+	ndatums = dest->ndatums = src->ndatums;
+	partnatts = key->partnatts;
+
+	/* Range partitioned table has an extra index. */
+	num_indexes = key->strategy == PARTITION_STRATEGY_RANGE ? ndatums + 1 : ndatums;
+
+	/* List partitioned tables have only a single partition key. */
+	Assert(key->strategy != PARTITION_STRATEGY_LIST || partnatts == 1);
+
+	dest->datums = (Datum **) palloc(sizeof(Datum *) * ndatums);
+
+	if (src->kind != NULL)
+	{
+		dest->kind = (PartitionRangeDatumKind **) palloc(ndatums *
+												sizeof(PartitionRangeDatumKind *));
+		for (i = 0; i < ndatums; i++)
+		{
+			dest->kind[i] = (PartitionRangeDatumKind *) palloc(partnatts *
+												sizeof(PartitionRangeDatumKind));
+
+			memcpy(dest->kind[i], src->kind[i],
+				   sizeof(PartitionRangeDatumKind) * key->partnatts);
+		}
+	}
+	else
+		dest->kind = NULL;
+
+	for (i = 0; i < ndatums; i++)
+	{
+		int		j;
+		dest->datums[i] = (Datum *) palloc(sizeof(Datum) * partnatts);
+
+		for (j = 0; j < partnatts; j++)
+		{
+			if (dest->kind == NULL ||
+				dest->kind[i][j] == PARTITION_RANGE_DATUM_VALUE)
+				dest->datums[i][j] = datumCopy(src->datums[i][j],
+											   key->parttypbyval[j],
+											   key->parttyplen[j]);
+		}
+	}
+
+	dest->indexes = (int *) palloc(sizeof(int) * num_indexes);
+	memcpy(dest->indexes, src->indexes, sizeof(int) * num_indexes);
+
+	dest->null_index = src->null_index;
+	dest->default_index = src->default_index;
+
+	return dest;
+}
+
+/*
  * check_new_partition_bound
  *
  * Checks if the new partition's bound overlaps any of the existing partitions

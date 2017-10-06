@@ -1825,13 +1825,15 @@ set_relation_partition_info(PlannerInfo *root, RelOptInfo *rel,
 							Relation relation)
 {
 	PartitionDesc partdesc;
+	PartitionKey  partkey;
 
 	Assert(relation->rd_rel->relkind == RELKIND_PARTITIONED_TABLE);
 
 	partdesc = RelationGetPartitionDesc(relation);
+	partkey = RelationGetPartitionKey(relation);
 	rel->part_scheme = find_partition_scheme(root, relation);
 	Assert(partdesc != NULL && rel->part_scheme != NULL);
-	rel->boundinfo = partdesc->boundinfo;
+	rel->boundinfo = partition_bounds_copy(partdesc->boundinfo, partkey);
 	rel->nparts = partdesc->nparts;
 	set_baserel_partition_key_exprs(relation, rel);
 }
@@ -1888,18 +1890,33 @@ find_partition_scheme(PlannerInfo *root, Relation relation)
 
 	/*
 	 * Did not find matching partition scheme. Create one copying relevant
-	 * information from the relcache. Instead of copying whole arrays, copy
-	 * the pointers in relcache. It's safe to do so since
-	 * RelationClearRelation() wouldn't change it while planner is using it.
+	 * information from the relcache. We need to copy the contents of the array
+	 * since the relcache entry may not survive after we have closed the
+	 * relation.
 	 */
 	part_scheme = (PartitionScheme) palloc0(sizeof(PartitionSchemeData));
 	part_scheme->strategy = partkey->strategy;
 	part_scheme->partnatts = partkey->partnatts;
-	part_scheme->partopfamily = partkey->partopfamily;
-	part_scheme->partopcintype = partkey->partopcintype;
-	part_scheme->parttypcoll = partkey->parttypcoll;
-	part_scheme->parttyplen = partkey->parttyplen;
-	part_scheme->parttypbyval = partkey->parttypbyval;
+
+	part_scheme->partopfamily = (Oid *) palloc(sizeof(Oid) * partnatts);
+	memcpy(part_scheme->partopfamily, partkey->partopfamily,
+		   sizeof(Oid) * partnatts);
+
+	part_scheme->partopcintype = (Oid *) palloc(sizeof(Oid) * partnatts);
+	memcpy(part_scheme->partopcintype, partkey->partopcintype,
+		   sizeof(Oid) * partnatts);
+
+	part_scheme->parttypcoll = (Oid *) palloc(sizeof(Oid) * partnatts);
+	memcpy(part_scheme->parttypcoll, partkey->parttypcoll,
+		   sizeof(Oid) * partnatts);
+
+	part_scheme->parttyplen = (int16 *) palloc(sizeof(int16) * partnatts);
+	memcpy(part_scheme->parttyplen, partkey->parttyplen,
+		   sizeof(int16) * partnatts);
+
+	part_scheme->parttypbyval = (bool *) palloc(sizeof(bool) * partnatts);
+	memcpy(part_scheme->parttypbyval, partkey->parttypbyval,
+		   sizeof(bool) * partnatts);
 
 	/* Add the partitioning scheme to PlannerInfo. */
 	root->part_schemes = lappend(root->part_schemes, part_scheme);

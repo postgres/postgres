@@ -74,6 +74,8 @@ extern void RelationBuildPartitionDesc(Relation relation);
 extern bool partition_bounds_equal(int partnatts, int16 *parttyplen,
 					   bool *parttypbyval, PartitionBoundInfo b1,
 					   PartitionBoundInfo b2);
+extern PartitionBoundInfo partition_bounds_copy(PartitionBoundInfo src,
+					  PartitionKey key);
 
 extern void check_new_partition_bound(char *relname, Relation parent,
 						  PartitionBoundSpec *spec);
