@@ -1593,6 +1593,7 @@ run_schedule(const char *schedule, test_function tfunc)
 	FILE	   *scf;
 	int			line_num = 0;
 
+	memset(tests, 0, sizeof(tests));
 	memset(resultfiles, 0, sizeof(resultfiles));
 	memset(expectfiles, 0, sizeof(expectfiles));
 	memset(tags, 0, sizeof(tags));
@@ -1614,16 +1615,6 @@ run_schedule(const char *schedule, test_function tfunc)
 		int			i;
 
 		line_num++;
-
-		/* clear out string lists left over from previous line */
-		for (i = 0; i < MAX_PARALLEL_TESTS; i++)
-		{
-			if (resultfiles[i] == NULL)
-				break;
-			free_stringlist(&resultfiles[i]);
-			free_stringlist(&expectfiles[i]);
-			free_stringlist(&tags[i]);
-		}
 
 		/* strip trailing whitespace, especially the newline */
 		i = strlen(scbuf);
@@ -1657,24 +1648,35 @@ run_schedule(const char *schedule, test_function tfunc)
 
 		num_tests = 0;
 		inword = false;
-		for (c = test; *c; c++)
+		for (c = test;; c++)
 		{
-			if (isspace((unsigned char) *c))
+			if (*c == '\0' || isspace((unsigned char) *c))
 			{
-				*c = '\0';
-				inword = false;
+				if (inword)
+				{
+					/* Reached end of a test name */
+					char		sav;
+
+					if (num_tests >= MAX_PARALLEL_TESTS)
+					{
+						fprintf(stderr, _("too many parallel tests (more than %d) in schedule file \"%s\" line %d: %s\n"),
+								MAX_PARALLEL_TESTS, schedule, line_num, scbuf);
+						exit(2);
+					}
+					sav = *c;
+					*c = '\0';
+					tests[num_tests] = pg_strdup(test);
+					num_tests++;
+					*c = sav;
+					inword = false;
+				}
+				if (*c == '\0')
+					break;		/* loop exit is here */
 			}
 			else if (!inword)
 			{
-				if (num_tests >= MAX_PARALLEL_TESTS)
-				{
-					/* can't print scbuf here, it's already been trashed */
-					fprintf(stderr, _("too many parallel tests (more than %d) in schedule file \"%s\" line %d\n"),
-							MAX_PARALLEL_TESTS, schedule, line_num);
-					exit(2);
-				}
-				tests[num_tests] = c;
-				num_tests++;
+				/* Start of a test name */
+				test = c;
 				inword = true;
 			}
 		}
@@ -1695,9 +1697,8 @@ run_schedule(const char *schedule, test_function tfunc)
 		}
 		else if (max_concurrent_tests > 0 && max_concurrent_tests < num_tests)
 		{
-			/* can't print scbuf here, it's already been trashed */
-			fprintf(stderr, _("too many parallel tests (more than %d) in schedule file \"%s\" line %d\n"),
-					max_concurrent_tests, schedule, line_num);
+			fprintf(stderr, _("too many parallel tests (more than %d) in schedule file \"%s\" line %d: %s\n"),
+					max_concurrent_tests, schedule, line_num, scbuf);
 			exit(2);
 		}
 		else if (max_connections > 0 && max_connections < num_tests)
@@ -1801,6 +1802,15 @@ run_schedule(const char *schedule, test_function tfunc)
 				log_child_failure(statuses[i]);
 
 			status_end();
+		}
+
+		for (i = 0; i < num_tests; i++)
+		{
+			pg_free(tests[i]);
+			tests[i] = NULL;
+			free_stringlist(&resultfiles[i]);
+			free_stringlist(&expectfiles[i]);
+			free_stringlist(&tags[i]);
 		}
 	}
 
