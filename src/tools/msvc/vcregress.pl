@@ -104,6 +104,7 @@ sub installcheck
 		"--dlpath=.",
 		"--bindir=../../../$Config/psql",
 		"--schedule=${schedule}_schedule",
+		"--max-concurrent-tests=20",
 		"--encoding=SQL_ASCII",
 		"--no-locale");
 	push(@args, $maxconn) if $maxconn;
@@ -122,6 +123,7 @@ sub check
 		"--dlpath=.",
 		"--bindir=",
 		"--schedule=${schedule}_schedule",
+		"--max-concurrent-tests=20",
 		"--encoding=SQL_ASCII",
 		"--no-locale",
 		"--temp-instance=./tmp_check");

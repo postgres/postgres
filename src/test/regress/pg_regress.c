@@ -78,6 +78,7 @@ char	   *launcher = NULL;
 static _stringlist *loadlanguage = NULL;
 static _stringlist *loadextension = NULL;
 static int	max_connections = 0;
+static int	max_concurrent_tests = 0;
 static char *encoding = NULL;
 static _stringlist *schedulelist = NULL;
 static _stringlist *extra_tests = NULL;
@@ -1592,9 +1593,9 @@ run_schedule(const char *schedule, test_function tfunc)
 	FILE	   *scf;
 	int			line_num = 0;
 
-	memset(resultfiles, 0, sizeof(_stringlist *) * MAX_PARALLEL_TESTS);
-	memset(expectfiles, 0, sizeof(_stringlist *) * MAX_PARALLEL_TESTS);
-	memset(tags, 0, sizeof(_stringlist *) * MAX_PARALLEL_TESTS);
+	memset(resultfiles, 0, sizeof(resultfiles));
+	memset(expectfiles, 0, sizeof(expectfiles));
+	memset(tags, 0, sizeof(tags));
 
 	scf = fopen(schedule, "r");
 	if (!scf)
@@ -1614,6 +1615,7 @@ run_schedule(const char *schedule, test_function tfunc)
 
 		line_num++;
 
+		/* clear out string lists left over from previous line */
 		for (i = 0; i < MAX_PARALLEL_TESTS; i++)
 		{
 			if (resultfiles[i] == NULL)
@@ -1667,8 +1669,8 @@ run_schedule(const char *schedule, test_function tfunc)
 				if (num_tests >= MAX_PARALLEL_TESTS)
 				{
 					/* can't print scbuf here, it's already been trashed */
-					fprintf(stderr, _("too many parallel tests in schedule file \"%s\", line %d\n"),
-							schedule, line_num);
+					fprintf(stderr, _("too many parallel tests (more than %d) in schedule file \"%s\" line %d\n"),
+							MAX_PARALLEL_TESTS, schedule, line_num);
 					exit(2);
 				}
 				tests[num_tests] = c;
@@ -1690,6 +1692,13 @@ run_schedule(const char *schedule, test_function tfunc)
 			pids[0] = (tfunc) (tests[0], &resultfiles[0], &expectfiles[0], &tags[0]);
 			wait_for_tests(pids, statuses, NULL, 1);
 			/* status line is finished below */
+		}
+		else if (max_concurrent_tests > 0 && max_concurrent_tests < num_tests)
+		{
+			/* can't print scbuf here, it's already been trashed */
+			fprintf(stderr, _("too many parallel tests (more than %d) in schedule file \"%s\" line %d\n"),
+					max_concurrent_tests, schedule, line_num);
+			exit(2);
 		}
 		else if (max_connections > 0 && max_connections < num_tests)
 		{
@@ -1999,6 +2008,8 @@ help(void)
 	printf(_("                            tests; can appear multiple times\n"));
 	printf(_("  --max-connections=N       maximum number of concurrent connections\n"));
 	printf(_("                            (default is 0, meaning unlimited)\n"));
+	printf(_("  --max-concurrent-tests=N  maximum number of concurrent tests in schedule\n"));
+	printf(_("                            (default is 0, meaning unlimited)\n"));
 	printf(_("  --outputdir=DIR           place output files in DIR (default \".\")\n"));
 	printf(_("  --schedule=FILE           use test ordering schedule from FILE\n"));
 	printf(_("                            (can be used multiple times to concatenate)\n"));
@@ -2048,6 +2059,7 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 		{"launcher", required_argument, NULL, 21},
 		{"load-extension", required_argument, NULL, 22},
 		{"config-auth", required_argument, NULL, 24},
+		{"max-concurrent-tests", required_argument, NULL, 25},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -2160,6 +2172,9 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 				break;
 			case 24:
 				config_auth_datadir = pg_strdup(optarg);
+				break;
+			case 25:
+				max_concurrent_tests = atoi(optarg);
 				break;
 			default:
 				/* getopt_long already emitted a complaint */

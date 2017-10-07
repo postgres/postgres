@@ -124,7 +124,7 @@ tablespace-setup:
 ## Run tests
 ##
 
-REGRESS_OPTS = --dlpath=. $(EXTRA_REGRESS_OPTS)
+REGRESS_OPTS = --dlpath=. --max-concurrent-tests=20 $(EXTRA_REGRESS_OPTS)
 
 check: all tablespace-setup
 	$(pg_regress_check) $(REGRESS_OPTS) --schedule=$(srcdir)/parallel_schedule $(MAXCONNOPT) $(EXTRA_TESTS)
