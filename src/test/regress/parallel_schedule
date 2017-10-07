@@ -104,7 +104,7 @@ test: publication subscription
 # ----------
 # Another group of parallel tests
 # ----------
-test: select_views portals_p2 foreign_key cluster dependency guc bitmapops combocid tsearch tsdicts foreign_data window xmlmap functional_deps advisory_lock json jsonb json_encoding indirect_toast equivclass partition_join
+test: select_views portals_p2 foreign_key cluster dependency guc bitmapops combocid tsearch tsdicts foreign_data window xmlmap functional_deps advisory_lock json jsonb json_encoding indirect_toast equivclass
 
 # ----------
 # Another group of parallel tests
@@ -116,7 +116,7 @@ test: plancache limit plpgsql copy2 temp domain rangefuncs prepare without_oid c
 # ----------
 # Another group of parallel tests
 # ----------
-test: identity
+test: identity partition_join
 
 # event triggers cannot run concurrently with any test that runs DDL
 test: event_trigger

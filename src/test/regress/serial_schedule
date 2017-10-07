@@ -79,6 +79,7 @@ test: updatable_views
 test: rolenames
 test: roleattributes
 test: create_am
+test: hash_func
 test: sanity_check
 test: errors
 test: select
@@ -171,13 +172,13 @@ test: conversion
 test: truncate
 test: alter_table
 test: sequence
-test: identity
 test: polymorphism
 test: rowtypes
 test: returning
 test: largeobject
 test: with
 test: xml
+test: identity
+test: partition_join
 test: event_trigger
 test: stats
-test: partition_join
