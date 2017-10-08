@@ -127,7 +127,8 @@ typedef bool (*ec_matches_callback_type) (PlannerInfo *root,
 										  EquivalenceMember *em,
 										  void *arg);
 
-extern bool process_equivalence(PlannerInfo *root, RestrictInfo *restrictinfo,
+extern bool process_equivalence(PlannerInfo *root,
+					RestrictInfo **p_restrictinfo,
 					bool below_outer_join);
 extern Expr *canonicalize_ec_expression(Expr *expr,
 						   Oid req_type, Oid req_collation);

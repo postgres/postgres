@@ -27,6 +27,7 @@
 #include "optimizer/paths.h"
 #include "optimizer/planmain.h"
 #include "optimizer/prep.h"
+#include "optimizer/restrictinfo.h"
 #include "optimizer/var.h"
 #include "utils/lsyscache.h"
 
@@ -71,8 +72,14 @@ static bool reconsider_full_join_clause(PlannerInfo *root,
  *	  any delay by an outer join, so its two sides can be considered equal
  *	  anywhere they are both computable; moreover that equality can be
  *	  extended transitively.  Record this knowledge in the EquivalenceClass
- *	  data structure.  Returns TRUE if successful, FALSE if not (in which
- *	  case caller should treat the clause as ordinary, not an equivalence).
+ *	  data structure, if applicable.  Returns TRUE if successful, FALSE if not
+ *	  (in which case caller should treat the clause as ordinary, not an
+ *	  equivalence).
+ *
+ * In some cases, although we cannot convert a clause into EquivalenceClass
+ * knowledge, we can still modify it to a more useful form than the original.
+ * Then, *p_restrictinfo will be replaced by a new RestrictInfo, which is what
+ * the caller should use for further processing.
  *
  * If below_outer_join is true, then the clause was found below the nullable
  * side of an outer join, so its sides might validly be both NULL rather than
@@ -104,9 +111,11 @@ static bool reconsider_full_join_clause(PlannerInfo *root,
  * memory context.
  */
 bool
-process_equivalence(PlannerInfo *root, RestrictInfo *restrictinfo,
+process_equivalence(PlannerInfo *root,
+					RestrictInfo **p_restrictinfo,
 					bool below_outer_join)
 {
+	RestrictInfo *restrictinfo = *p_restrictinfo;
 	Expr	   *clause = restrictinfo->clause;
 	Oid			opno,
 				collation,
@@ -154,16 +163,45 @@ process_equivalence(PlannerInfo *root, RestrictInfo *restrictinfo,
 									   collation);
 
 	/*
-	 * Reject clauses of the form X=X.  These are not as redundant as they
-	 * might seem at first glance: assuming the operator is strict, this is
-	 * really an expensive way to write X IS NOT NULL.  So we must not risk
-	 * just losing the clause, which would be possible if there is already a
-	 * single-element EquivalenceClass containing X.  The case is not common
-	 * enough to be worth contorting the EC machinery for, so just reject the
-	 * clause and let it be processed as a normal restriction clause.
+	 * Clauses of the form X=X cannot be translated into EquivalenceClasses.
+	 * We'd either end up with a single-entry EC, losing the knowledge that
+	 * the clause was present at all, or else make an EC with duplicate
+	 * entries, causing other issues.
 	 */
 	if (equal(item1, item2))
-		return false;			/* X=X is not a useful equivalence */
+	{
+		/*
+		 * If the operator is strict, then the clause can be treated as just
+		 * "X IS NOT NULL".  (Since we know we are considering a top-level
+		 * qual, we can ignore the difference between FALSE and NULL results.)
+		 * It's worth making the conversion because we'll typically get a much
+		 * better selectivity estimate than we would for X=X.
+		 *
+		 * If the operator is not strict, we can't be sure what it will do
+		 * with NULLs, so don't attempt to optimize it.
+		 */
+		set_opfuncid((OpExpr *) clause);
+		if (func_strict(((OpExpr *) clause)->opfuncid))
+		{
+			NullTest   *ntest = makeNode(NullTest);
+
+			ntest->arg = item1;
+			ntest->nulltesttype = IS_NOT_NULL;
+			ntest->argisrow = false;	/* correct even if composite arg */
+			ntest->location = -1;
+
+			*p_restrictinfo =
+				make_restrictinfo((Expr *) ntest,
+								  restrictinfo->is_pushed_down,
+								  restrictinfo->outerjoin_delayed,
+								  restrictinfo->pseudoconstant,
+								  restrictinfo->security_level,
+								  NULL,
+								  restrictinfo->outer_relids,
+								  restrictinfo->nullable_relids);
+		}
+		return false;
+	}
 
 	/*
 	 * If below outer join, check for strictness, else reject.
@@ -1741,7 +1779,7 @@ reconsider_outer_join_clause(PlannerInfo *root, RestrictInfo *rinfo,
 												   bms_copy(inner_relids),
 												   bms_copy(inner_nullable_relids),
 												   cur_ec->ec_min_security);
-			if (process_equivalence(root, newrinfo, true))
+			if (process_equivalence(root, &newrinfo, true))
 				match = true;
 		}
 
@@ -1884,7 +1922,7 @@ reconsider_full_join_clause(PlannerInfo *root, RestrictInfo *rinfo)
 													   bms_copy(left_relids),
 													   bms_copy(left_nullable_relids),
 													   cur_ec->ec_min_security);
-				if (process_equivalence(root, newrinfo, true))
+				if (process_equivalence(root, &newrinfo, true))
 					matchleft = true;
 			}
 			eq_op = select_equality_operator(cur_ec,
@@ -1899,7 +1937,7 @@ reconsider_full_join_clause(PlannerInfo *root, RestrictInfo *rinfo)
 													   bms_copy(right_relids),
 													   bms_copy(right_nullable_relids),
 													   cur_ec->ec_min_security);
-				if (process_equivalence(root, newrinfo, true))
+				if (process_equivalence(root, &newrinfo, true))
 					matchright = true;
 			}
 		}
