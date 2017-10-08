@@ -400,6 +400,7 @@ extern SetExprState *ExecInitFunctionResultSet(Expr *expr,
 						  ExprContext *econtext, PlanState *parent);
 extern Datum ExecMakeFunctionResultSet(SetExprState *fcache,
 						  ExprContext *econtext,
+						  MemoryContext argContext,
 						  bool *isNull,
 						  ExprDoneCond *isDone);
 

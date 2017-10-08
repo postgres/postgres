@@ -467,13 +467,16 @@ ExecInitFunctionResultSet(Expr *expr,
  * function itself.  The argument expressions may not contain set-returning
  * functions (the planner is supposed to have separated evaluation for those).
  *
- * This should be called in a short-lived (per-tuple) context.
+ * This should be called in a short-lived (per-tuple) context, argContext
+ * needs to live until all rows have been returned (i.e. *isDone set to
+ * ExprEndResult or ExprSingleResult).
  *
  * This is used by nodeProjectSet.c.
  */
 Datum
 ExecMakeFunctionResultSet(SetExprState *fcache,
 						  ExprContext *econtext,
+						  MemoryContext argContext,
 						  bool *isNull,
 						  ExprDoneCond *isDone)
 {
@@ -497,8 +500,21 @@ restart:
 	 */
 	if (fcache->funcResultStore)
 	{
-		if (tuplestore_gettupleslot(fcache->funcResultStore, true, false,
-									fcache->funcResultSlot))
+		TupleTableSlot *slot = fcache->funcResultSlot;
+		MemoryContext oldContext;
+		bool foundTup;
+
+		/*
+		 * Have to make sure tuple in slot lives long enough, otherwise
+		 * clearing the slot could end up trying to free something already
+		 * freed.
+		 */
+		oldContext = MemoryContextSwitchTo(slot->tts_mcxt);
+		foundTup = tuplestore_gettupleslot(fcache->funcResultStore, true, false,
+										   fcache->funcResultSlot);
+		MemoryContextSwitchTo(oldContext);
+
+		if (foundTup)
 		{
 			*isDone = ExprMultipleResult;
 			if (fcache->funcReturnsTuple)
@@ -526,11 +542,20 @@ restart:
 	 * function manager.  We skip the evaluation if it was already done in the
 	 * previous call (ie, we are continuing the evaluation of a set-valued
 	 * function).  Otherwise, collect the current argument values into fcinfo.
+	 *
+	 * The arguments have to live in a context that lives at least until all
+	 * rows from this SRF have been returned, otherwise ValuePerCall SRFs
+	 * would reference freed memory after the first returned row.
 	 */
 	fcinfo = &fcache->fcinfo_data;
 	arguments = fcache->args;
 	if (!fcache->setArgsValid)
+	{
+		MemoryContext oldContext = MemoryContextSwitchTo(argContext);
+
 		ExecEvalFuncArgs(fcinfo, arguments, econtext);
+		MemoryContextSwitchTo(oldContext);
+	}
 	else
 	{
 		/* Reset flag (we may set it again below) */

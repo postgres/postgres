@@ -946,6 +946,7 @@ typedef struct ProjectSetState
 	ExprDoneCond *elemdone;		/* array of per-SRF is-done states */
 	int			nelems;			/* length of elemdone[] array */
 	bool		pending_srf_tuples; /* still evaluating srfs in tlist? */
+	MemoryContext argcontext;	/* context for SRF arguments */
 } ProjectSetState;
 
 /* ----------------
