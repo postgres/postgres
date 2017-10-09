@@ -44,7 +44,7 @@ For new features, add links to the documentation sections.
 
   <para>
    The release notes contain the significant changes in each
-   <productname>PostgreSQL</> release, with major features and migration
+   <productname>PostgreSQL</productname> release, with major features and migration
    issues listed at the top.  The release notes do not contain changes
    that affect only a few users or changes that are internal and therefore not
    user-visible.  For example, the optimizer is improved in almost every

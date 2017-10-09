@@ -52,17 +52,17 @@ su - postgres
 
   <para>
    In general, a modern Unix-compatible platform should be able to run
-   <productname>PostgreSQL</>.
+   <productname>PostgreSQL</productname>.
    The platforms that had received specific testing at the
    time of release are listed in <xref linkend="supported-platforms">
-   below. In the <filename>doc</> subdirectory of the distribution
-   there are several platform-specific <acronym>FAQ</> documents you
+   below. In the <filename>doc</filename> subdirectory of the distribution
+   there are several platform-specific <acronym>FAQ</acronym> documents you
    might wish to consult if you are having trouble.
   </para>
 
   <para>
    The following software packages are required for building
-   <productname>PostgreSQL</>:
+   <productname>PostgreSQL</productname>:
 
    <itemizedlist>
     <listitem>
@@ -71,9 +71,9 @@ su - postgres
        <primary>make</primary>
       </indexterm>
 
-      <acronym>GNU</> <application>make</> version 3.80 or newer is required; other
-      <application>make</> programs or older <acronym>GNU</> <application>make</> versions will <emphasis>not</> work.
-      (<acronym>GNU</> <application>make</> is sometimes installed under
+      <acronym>GNU</acronym> <application>make</application> version 3.80 or newer is required; other
+      <application>make</application> programs or older <acronym>GNU</acronym> <application>make</application> versions will <emphasis>not</emphasis> work.
+      (<acronym>GNU</acronym> <application>make</application> is sometimes installed under
       the name <filename>gmake</filename>.)  To test for <acronym>GNU</acronym>
       <application>make</application> enter:
 <screen>
@@ -84,19 +84,19 @@ su - postgres
 
     <listitem>
      <para>
-      You need an <acronym>ISO</>/<acronym>ANSI</> C compiler (at least
+      You need an <acronym>ISO</acronym>/<acronym>ANSI</acronym> C compiler (at least
       C89-compliant). Recent
-      versions of <productname>GCC</> are recommended, but
-      <productname>PostgreSQL</> is known to build using a wide variety
+      versions of <productname>GCC</productname> are recommended, but
+      <productname>PostgreSQL</productname> is known to build using a wide variety
       of compilers from different vendors.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      <application>tar</> is required to unpack the source
+      <application>tar</application> is required to unpack the source
       distribution, in addition to either
-      <application>gzip</> or <application>bzip2</>.
+      <application>gzip</application> or <application>bzip2</application>.
      </para>
     </listitem>
 
@@ -109,23 +109,23 @@ su - postgres
        <primary>libedit</primary>
       </indexterm>
 
-      The <acronym>GNU</> <productname>Readline</> library is used by
+      The <acronym>GNU</acronym> <productname>Readline</productname> library is used by
       default.  It allows <application>psql</application> (the
       PostgreSQL command line SQL interpreter) to remember each
       command you type, and allows you to use arrow keys to recall and
       edit previous commands.  This is very helpful and is strongly
       recommended.  If you don't want to use it then you must specify
       the <option>--without-readline</option> option to
-      <filename>configure</>. As an alternative, you can often use the
+      <filename>configure</filename>. As an alternative, you can often use the
       BSD-licensed <filename>libedit</filename> library, originally
       developed on <productname>NetBSD</productname>. The
       <filename>libedit</filename> library is
       GNU <productname>Readline</productname>-compatible and is used if
       <filename>libreadline</filename> is not found, or if
       <option>--with-libedit-preferred</option> is used as an
-      option to <filename>configure</>. If you are using a package-based
+      option to <filename>configure</filename>. If you are using a package-based
       Linux distribution, be aware that you need both the
-      <literal>readline</> and <literal>readline-devel</> packages, if
+      <literal>readline</literal> and <literal>readline-devel</literal> packages, if
       those are separate in your distribution.
      </para>
     </listitem>
@@ -140,8 +140,8 @@ su - postgres
       used by default. If you don't want to use it then you must
       specify the <option>--without-zlib</option> option to
       <filename>configure</filename>. Using this option disables
-      support for compressed archives in <application>pg_dump</> and
-      <application>pg_restore</>.
+      support for compressed archives in <application>pg_dump</application> and
+      <application>pg_restore</application>.
      </para>
     </listitem>
    </itemizedlist>
@@ -179,14 +179,14 @@ su - postgres
       If you intend to make more than incidental use of
       <application>PL/Perl</application>, you should ensure that the
       <productname>Perl</productname> installation was built with the
-      <literal>usemultiplicity</> option enabled (<literal>perl -V</>
+      <literal>usemultiplicity</literal> option enabled (<literal>perl -V</literal>
       will show whether this is the case).
      </para>
     </listitem>
 
     <listitem>
      <para>
-      To build the <application>PL/Python</> server programming
+      To build the <application>PL/Python</application> server programming
       language, you need a <productname>Python</productname>
       installation with the header files and
       the <application>distutils</application> module.  The minimum
@@ -209,15 +209,15 @@ su - postgres
       find a shared <filename>libpython</filename>.  That might mean that you
       either have to install additional packages or rebuild (part of) your
       <productname>Python</productname> installation to provide this shared
-      library.  When building from source, run <productname>Python</>'s
-      configure with the <literal>--enable-shared</> flag.
+      library.  When building from source, run <productname>Python</productname>'s
+      configure with the <literal>--enable-shared</literal> flag.
      </para>
     </listitem>
 
     <listitem>
      <para>
       To build the <application>PL/Tcl</application>
-      procedural language, you of course need a <productname>Tcl</>
+      procedural language, you of course need a <productname>Tcl</productname>
       installation.  The minimum required version is
       <productname>Tcl</productname> 8.4.
      </para>
@@ -228,13 +228,13 @@ su - postgres
       To enable Native Language Support (<acronym>NLS</acronym>), that
       is, the ability to display a program's messages in a language
       other than English, you need an implementation of the
-      <application>Gettext</> <acronym>API</acronym>.  Some operating
+      <application>Gettext</application> <acronym>API</acronym>.  Some operating
       systems have this built-in (e.g., <systemitem
-      class="osname">Linux</>, <systemitem class="osname">NetBSD</>,
-      <systemitem class="osname">Solaris</>), for other systems you
+      class="osname">Linux</systemitem>, <systemitem class="osname">NetBSD</systemitem>,
+      <systemitem class="osname">Solaris</systemitem>), for other systems you
       can download an add-on package from <ulink
       url="http://www.gnu.org/software/gettext/"></ulink>.
-      If you are using the <application>Gettext</> implementation in
+      If you are using the <application>Gettext</application> implementation in
       the <acronym>GNU</acronym> C library then you will additionally
       need the <productname>GNU Gettext</productname> package for some
       utility programs.  For any of the other implementations you will
@@ -244,7 +244,7 @@ su - postgres
 
     <listitem>
      <para>
-      You need <productname>OpenSSL</>, if you want to support
+      You need <productname>OpenSSL</productname>, if you want to support
       encrypted client connections. The minimum required version is
       0.9.8.
      </para>
@@ -252,8 +252,8 @@ su - postgres
 
     <listitem>
      <para>
-      You need <application>Kerberos</>, <productname>OpenLDAP</>,
-      and/or <application>PAM</>, if you want to support authentication
+      You need <application>Kerberos</application>, <productname>OpenLDAP</productname>,
+      and/or <application>PAM</application>, if you want to support authentication
       using those services.
      </para>
     </listitem>
@@ -289,12 +289,12 @@ su - postgres
        <primary>yacc</primary>
       </indexterm>
 
-      GNU <application>Flex</> and <application>Bison</>
+      GNU <application>Flex</application> and <application>Bison</application>
       are needed to build from a Git checkout, or if you changed the actual
       scanner and parser definition files. If you need them, be sure
-      to get <application>Flex</> 2.5.31 or later and
-      <application>Bison</> 1.875 or later. Other <application>lex</>
-      and <application>yacc</> programs cannot be used.
+      to get <application>Flex</application> 2.5.31 or later and
+      <application>Bison</application> 1.875 or later. Other <application>lex</application>
+      and <application>yacc</application> programs cannot be used.
      </para>
     </listitem>
     <listitem>
@@ -303,10 +303,10 @@ su - postgres
        <primary>perl</primary>
       </indexterm>
 
-      <application>Perl</> 5.8.3 or later is needed to build from a Git checkout,
+      <application>Perl</application> 5.8.3 or later is needed to build from a Git checkout,
       or if you changed the input files for any of the build steps that
       use Perl scripts.  If building on Windows you will need
-      <application>Perl</> in any case.  <application>Perl</application> is
+      <application>Perl</application> in any case.  <application>Perl</application> is
       also required to run some test suites.
      </para>
     </listitem>
@@ -316,7 +316,7 @@ su - postgres
   <para>
    If you need to get a <acronym>GNU</acronym> package, you can find
    it at your local <acronym>GNU</acronym> mirror site (see <ulink
-   url="http://www.gnu.org/order/ftp.html"></>
+   url="http://www.gnu.org/order/ftp.html"></ulink>
    for a list) or at <ulink
    url="ftp://ftp.gnu.org/gnu/"></ulink>.
   </para>
@@ -337,7 +337,7 @@ su - postgres
   <title>Getting The Source</title>
 
   <para>
-   The <productname>PostgreSQL</> &version; sources can be obtained from the
+   The <productname>PostgreSQL</productname> &version; sources can be obtained from the
    download section of our
    website: <ulink url="https://www.postgresql.org/download/"></ulink>.  You
    should get a file named <filename>postgresql-&version;.tar.gz</filename>
@@ -351,7 +351,7 @@ su - postgres
    have the <filename>.bz2</filename> file.)
    This will create a directory
    <filename>postgresql-&version;</filename> under the current directory
-   with the <productname>PostgreSQL</> sources.
+   with the <productname>PostgreSQL</productname> sources.
    Change into that directory for the rest
    of the installation procedure.
   </para>
@@ -377,7 +377,7 @@ su - postgres
    <para>
     The first step of the installation procedure is to configure the
     source tree for your system and choose the options you would like.
-    This is done by running the <filename>configure</> script. For a
+    This is done by running the <filename>configure</filename> script. For a
     default installation simply enter:
 <screen>
 <userinput>./configure</userinput>
@@ -403,7 +403,7 @@ su - postgres
     The default configuration will build the server and utilities, as
     well as all client applications and interfaces that require only a
     C compiler. All files will be installed under
-    <filename>/usr/local/pgsql</> by default.
+    <filename>/usr/local/pgsql</filename> by default.
    </para>
 
    <para>
@@ -413,14 +413,14 @@ su - postgres
 
      <variablelist>
       <varlistentry>
-       <term><option>--prefix=<replaceable>PREFIX</></option></term>
+       <term><option>--prefix=<replaceable>PREFIX</replaceable></option></term>
        <listitem>
         <para>
-         Install all files under the directory <replaceable>PREFIX</>
+         Install all files under the directory <replaceable>PREFIX</replaceable>
          instead of <filename>/usr/local/pgsql</filename>. The actual
          files will be installed into various subdirectories; no files
          will ever be installed directly into the
-         <replaceable>PREFIX</> directory.
+         <replaceable>PREFIX</replaceable> directory.
         </para>
 
         <para>
@@ -428,13 +428,13 @@ su - postgres
          individual subdirectories with the following options. However,
          if you leave these with their defaults, the installation will be
          relocatable, meaning you can move the directory after
-         installation. (The <literal>man</> and <literal>doc</>
+         installation. (The <literal>man</literal> and <literal>doc</literal>
          locations are not affected by this.)
         </para>
 
         <para>
          For relocatable installs, you might want to use
-         <filename>configure</filename>'s <literal>--disable-rpath</>
+         <filename>configure</filename>'s <literal>--disable-rpath</literal>
          option.  Also, you will need to tell the operating system how
          to find the shared libraries.
         </para>
@@ -442,15 +442,15 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
-       <term><option>--exec-prefix=<replaceable>EXEC-PREFIX</></option></term>
+       <term><option>--exec-prefix=<replaceable>EXEC-PREFIX</replaceable></option></term>
        <listitem>
         <para>
          You can install architecture-dependent files under a
-         different prefix, <replaceable>EXEC-PREFIX</>, than what
-         <replaceable>PREFIX</> was set to. This can be useful to
+         different prefix, <replaceable>EXEC-PREFIX</replaceable>, than what
+         <replaceable>PREFIX</replaceable> was set to. This can be useful to
          share architecture-independent files between hosts. If you
-         omit this, then <replaceable>EXEC-PREFIX</> is set equal to
-         <replaceable>PREFIX</> and both architecture-dependent and
+         omit this, then <replaceable>EXEC-PREFIX</replaceable> is set equal to
+         <replaceable>PREFIX</replaceable> and both architecture-dependent and
          independent files will be installed under the same tree,
          which is probably what you want.
         </para>
@@ -458,114 +458,114 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
-       <term><option>--bindir=<replaceable>DIRECTORY</></option></term>
+       <term><option>--bindir=<replaceable>DIRECTORY</replaceable></option></term>
        <listitem>
         <para>
          Specifies the directory for executable programs. The default
-         is <filename><replaceable>EXEC-PREFIX</>/bin</>, which
-         normally means <filename>/usr/local/pgsql/bin</>.
+         is <filename><replaceable>EXEC-PREFIX</replaceable>/bin</filename>, which
+         normally means <filename>/usr/local/pgsql/bin</filename>.
         </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
-       <term><option>--sysconfdir=<replaceable>DIRECTORY</></option></term>
+       <term><option>--sysconfdir=<replaceable>DIRECTORY</replaceable></option></term>
        <listitem>
         <para>
          Sets the directory for various configuration files,
-         <filename><replaceable>PREFIX</>/etc</> by default.
+         <filename><replaceable>PREFIX</replaceable>/etc</filename> by default.
         </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
-       <term><option>--libdir=<replaceable>DIRECTORY</></option></term>
+       <term><option>--libdir=<replaceable>DIRECTORY</replaceable></option></term>
        <listitem>
         <para>
          Sets the location to install libraries and dynamically loadable
          modules. The default is
-         <filename><replaceable>EXEC-PREFIX</>/lib</>.
+         <filename><replaceable>EXEC-PREFIX</replaceable>/lib</filename>.
         </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
-       <term><option>--includedir=<replaceable>DIRECTORY</></option></term>
+       <term><option>--includedir=<replaceable>DIRECTORY</replaceable></option></term>
        <listitem>
         <para>
          Sets the directory for installing C and C++ header files. The
-         default is <filename><replaceable>PREFIX</>/include</>.
+         default is <filename><replaceable>PREFIX</replaceable>/include</filename>.
         </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
-       <term><option>--datarootdir=<replaceable>DIRECTORY</></option></term>
+       <term><option>--datarootdir=<replaceable>DIRECTORY</replaceable></option></term>
        <listitem>
         <para>
          Sets the root directory for various types of read-only data
          files.  This only sets the default for some of the following
          options.  The default is
-         <filename><replaceable>PREFIX</>/share</>.
+         <filename><replaceable>PREFIX</replaceable>/share</filename>.
         </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
-       <term><option>--datadir=<replaceable>DIRECTORY</></option></term>
+       <term><option>--datadir=<replaceable>DIRECTORY</replaceable></option></term>
        <listitem>
         <para>
          Sets the directory for read-only data files used by the
          installed programs. The default is
-         <filename><replaceable>DATAROOTDIR</></>. Note that this has
+         <filename><replaceable>DATAROOTDIR</replaceable></filename>. Note that this has
          nothing to do with where your database files will be placed.
         </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
-       <term><option>--localedir=<replaceable>DIRECTORY</></option></term>
+       <term><option>--localedir=<replaceable>DIRECTORY</replaceable></option></term>
        <listitem>
         <para>
          Sets the directory for installing locale data, in particular
          message translation catalog files.  The default is
-         <filename><replaceable>DATAROOTDIR</>/locale</>.
+         <filename><replaceable>DATAROOTDIR</replaceable>/locale</filename>.
         </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
-       <term><option>--mandir=<replaceable>DIRECTORY</></option></term>
+       <term><option>--mandir=<replaceable>DIRECTORY</replaceable></option></term>
        <listitem>
         <para>
-         The man pages that come with <productname>PostgreSQL</> will be installed under
+         The man pages that come with <productname>PostgreSQL</productname> will be installed under
          this directory, in their respective
-         <filename>man<replaceable>x</></> subdirectories.
-         The default is <filename><replaceable>DATAROOTDIR</>/man</>.
+         <filename>man<replaceable>x</replaceable></filename> subdirectories.
+         The default is <filename><replaceable>DATAROOTDIR</replaceable>/man</filename>.
         </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
-       <term><option>--docdir=<replaceable>DIRECTORY</></option></term>
+       <term><option>--docdir=<replaceable>DIRECTORY</replaceable></option></term>
        <listitem>
         <para>
          Sets the root directory for installing documentation files,
-         except <quote>man</> pages.  This only sets the default for
+         except <quote>man</quote> pages.  This only sets the default for
          the following options.  The default value for this option is
-         <filename><replaceable>DATAROOTDIR</>/doc/postgresql</>.
+         <filename><replaceable>DATAROOTDIR</replaceable>/doc/postgresql</filename>.
         </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
-       <term><option>--htmldir=<replaceable>DIRECTORY</></option></term>
+       <term><option>--htmldir=<replaceable>DIRECTORY</replaceable></option></term>
        <listitem>
         <para>
          The HTML-formatted documentation for
          <productname>PostgreSQL</productname> will be installed under
          this directory.  The default is
-         <filename><replaceable>DATAROOTDIR</></>.
+         <filename><replaceable>DATAROOTDIR</replaceable></filename>.
         </para>
        </listitem>
       </varlistentry>
@@ -574,15 +574,15 @@ su - postgres
      <note>
       <para>
        Care has been taken to make it possible to install
-       <productname>PostgreSQL</> into shared installation locations
+       <productname>PostgreSQL</productname> into shared installation locations
        (such as <filename>/usr/local/include</filename>) without
        interfering with the namespace of the rest of the system. First,
        the string <quote><literal>/postgresql</literal></quote> is
        automatically appended to <varname>datadir</varname>,
        <varname>sysconfdir</varname>, and <varname>docdir</varname>,
        unless the fully expanded directory name already contains the
-       string <quote><literal>postgres</></quote> or
-       <quote><literal>pgsql</></quote>. For example, if you choose
+       string <quote><literal>postgres</literal></quote> or
+       <quote><literal>pgsql</literal></quote>. For example, if you choose
        <filename>/usr/local</filename> as prefix, the documentation will
        be installed in <filename>/usr/local/doc/postgresql</filename>,
        but if the prefix is <filename>/opt/postgres</filename>, then it
@@ -602,10 +602,10 @@ su - postgres
     <para>
      <variablelist>
       <varlistentry>
-       <term><option>--with-extra-version=<replaceable>STRING</></option></term>
+       <term><option>--with-extra-version=<replaceable>STRING</replaceable></option></term>
        <listitem>
         <para>
-         Append <replaceable>STRING</> to the PostgreSQL version number.  You
+         Append <replaceable>STRING</replaceable> to the PostgreSQL version number.  You
          can use this, for example, to mark binaries built from unreleased Git
          snapshots or containing custom patches with an extra version string
          such as a <command>git describe</command> identifier or a
@@ -615,35 +615,35 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
-       <term><option>--with-includes=<replaceable>DIRECTORIES</></option></term>
+       <term><option>--with-includes=<replaceable>DIRECTORIES</replaceable></option></term>
        <listitem>
         <para>
-         <replaceable>DIRECTORIES</> is a colon-separated list of
+         <replaceable>DIRECTORIES</replaceable> is a colon-separated list of
          directories that will be added to the list the compiler
          searches for header files. If you have optional packages
-         (such as GNU <application>Readline</>) installed in a non-standard
+         (such as GNU <application>Readline</application>) installed in a non-standard
          location,
          you have to use this option and probably also the corresponding
-         <option>--with-libraries</> option.
+         <option>--with-libraries</option> option.
         </para>
         <para>
-         Example: <literal>--with-includes=/opt/gnu/include:/usr/sup/include</>.
+         Example: <literal>--with-includes=/opt/gnu/include:/usr/sup/include</literal>.
         </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
-       <term><option>--with-libraries=<replaceable>DIRECTORIES</></option></term>
+       <term><option>--with-libraries=<replaceable>DIRECTORIES</replaceable></option></term>
        <listitem>
         <para>
-         <replaceable>DIRECTORIES</> is a colon-separated list of
+         <replaceable>DIRECTORIES</replaceable> is a colon-separated list of
          directories to search for libraries. You will probably have
          to use this option (and the corresponding
-         <option>--with-includes</> option) if you have packages
+         <option>--with-includes</option> option) if you have packages
          installed in non-standard locations.
         </para>
         <para>
-         Example: <literal>--with-libraries=/opt/gnu/lib:/usr/sup/lib</>.
+         Example: <literal>--with-libraries=/opt/gnu/lib:/usr/sup/lib</literal>.
         </para>
        </listitem>
       </varlistentry>
@@ -657,7 +657,7 @@ su - postgres
          language other than English.
          <replaceable>LANGUAGES</replaceable> is an optional space-separated
          list of codes of the languages that you want supported, for
-         example <literal>--enable-nls='de fr'</>.  (The intersection
+         example <literal>--enable-nls='de fr'</literal>.  (The intersection
          between your list and the set of actually provided
          translations will be computed automatically.)  If you do not
          specify a list, then all available translations are
@@ -666,22 +666,22 @@ su - postgres
 
         <para>
          To use this option, you will need an implementation of the
-         <application>Gettext</> API; see above.
+         <application>Gettext</application> API; see above.
         </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
-       <term><option>--with-pgport=<replaceable>NUMBER</></option></term>
+       <term><option>--with-pgport=<replaceable>NUMBER</replaceable></option></term>
        <listitem>
         <para>
-         Set <replaceable>NUMBER</> as the default port number for
+         Set <replaceable>NUMBER</replaceable> as the default port number for
          server and clients. The default is 5432. The port can always
          be changed later on, but if you specify it here then both
          server and clients will have the same default compiled in,
          which can be very convenient.  Usually the only good reason
          to select a non-default value is if you intend to run multiple
-         <productname>PostgreSQL</> servers on the same machine.
+         <productname>PostgreSQL</productname> servers on the same machine.
         </para>
        </listitem>
       </varlistentry>
@@ -690,7 +690,7 @@ su - postgres
        <term><option>--with-perl</option></term>
        <listitem>
         <para>
-         Build the <application>PL/Perl</> server-side language.
+         Build the <application>PL/Perl</application> server-side language.
         </para>
        </listitem>
       </varlistentry>
@@ -699,7 +699,7 @@ su - postgres
        <term><option>--with-python</option></term>
        <listitem>
         <para>
-         Build the <application>PL/Python</> server-side language.
+         Build the <application>PL/Python</application> server-side language.
         </para>
        </listitem>
       </varlistentry>
@@ -708,7 +708,7 @@ su - postgres
        <term><option>--with-tcl</option></term>
        <listitem>
         <para>
-         Build the <application>PL/Tcl</> server-side language.
+         Build the <application>PL/Tcl</application> server-side language.
         </para>
        </listitem>
       </varlistentry>
@@ -734,10 +734,10 @@ su - postgres
          Build with support for GSSAPI authentication. On many
          systems, the GSSAPI (usually a part of the Kerberos installation)
          system is not installed in a location
-         that is searched by default (e.g., <filename>/usr/include</>,
-         <filename>/usr/lib</>), so you must use the options
-         <option>--with-includes</> and <option>--with-libraries</> in
-         addition to this option.  <filename>configure</> will check
+         that is searched by default (e.g., <filename>/usr/include</filename>,
+         <filename>/usr/lib</filename>), so you must use the options
+         <option>--with-includes</option> and <option>--with-libraries</option> in
+         addition to this option.  <filename>configure</filename> will check
          for the required header files and libraries to make sure that
          your GSSAPI installation is sufficient before proceeding.
         </para>
@@ -745,7 +745,7 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
-       <term><option>--with-krb-srvnam=<replaceable>NAME</></option></term>
+       <term><option>--with-krb-srvnam=<replaceable>NAME</replaceable></option></term>
        <listitem>
         <para>
          The default name of the Kerberos service principal used
@@ -763,7 +763,7 @@ su - postgres
        <listitem>
         <para>
          Build with support for
-         the <productname>ICU</productname><indexterm><primary>ICU</></>
+         the <productname>ICU</productname><indexterm><primary>ICU</primary></indexterm>
          library.  This requires the <productname>ICU4C</productname> package
          to be installed.  The minimum required version
          of <productname>ICU4C</productname> is currently 4.2.
@@ -771,7 +771,7 @@ su - postgres
 
         <para>
          By default,
-         <productname>pkg-config</productname><indexterm><primary>pkg-config</></>
+         <productname>pkg-config</productname><indexterm><primary>pkg-config</primary></indexterm>
          will be used to find the required compilation options.  This is
          supported for <productname>ICU4C</productname> version 4.6 and later.
          For older versions, or if <productname>pkg-config</productname> is
@@ -798,11 +798,11 @@ su - postgres
        </term>
        <listitem>
         <para>
-         Build with support for <acronym>SSL</> (encrypted)
-         connections. This requires the <productname>OpenSSL</>
-         package to be installed.  <filename>configure</> will check
+         Build with support for <acronym>SSL</acronym> (encrypted)
+         connections. This requires the <productname>OpenSSL</productname>
+         package to be installed.  <filename>configure</filename> will check
          for the required header files and libraries to make sure that
-         your <productname>OpenSSL</> installation is sufficient
+         your <productname>OpenSSL</productname> installation is sufficient
          before proceeding.
         </para>
        </listitem>
@@ -812,7 +812,7 @@ su - postgres
        <term><option>--with-pam</option></term>
        <listitem>
         <para>
-         Build with <acronym>PAM</><indexterm><primary>PAM</></>
+         Build with <acronym>PAM</acronym><indexterm><primary>PAM</primary></indexterm>
          (Pluggable Authentication Modules) support.
         </para>
        </listitem>
@@ -833,15 +833,15 @@ su - postgres
        <term><option>--with-ldap</option></term>
        <listitem>
         <para>
-         Build with <acronym>LDAP</><indexterm><primary>LDAP</></>
+         Build with <acronym>LDAP</acronym><indexterm><primary>LDAP</primary></indexterm>
          support for authentication and connection parameter lookup (see
          <phrase id="install-ldap-links"><xref linkend="libpq-ldap"> and
          <xref linkend="auth-ldap"></phrase> for more information). On Unix,
-         this requires the <productname>OpenLDAP</> package to be
-         installed. On Windows, the default <productname>WinLDAP</>
-         library is used.  <filename>configure</> will check for the required
+         this requires the <productname>OpenLDAP</productname> package to be
+         installed. On Windows, the default <productname>WinLDAP</productname>
+         library is used.  <filename>configure</filename> will check for the required
          header files and libraries to make sure that your
-         <productname>OpenLDAP</> installation is sufficient before
+         <productname>OpenLDAP</productname> installation is sufficient before
          proceeding.
         </para>
        </listitem>
@@ -867,8 +867,8 @@ su - postgres
        <term><option>--without-readline</option></term>
        <listitem>
         <para>
-         Prevents use of the <application>Readline</> library
-         (and <application>libedit</> as well).  This option disables
+         Prevents use of the <application>Readline</application> library
+         (and <application>libedit</application> as well).  This option disables
          command-line editing and history in
          <application>psql</application>, so it is not recommended.
         </para>
@@ -879,10 +879,10 @@ su - postgres
        <term><option>--with-libedit-preferred</option></term>
        <listitem>
         <para>
-         Favors the use of the BSD-licensed <application>libedit</> library
-         rather than GPL-licensed <application>Readline</>.  This option
+         Favors the use of the BSD-licensed <application>libedit</application> library
+         rather than GPL-licensed <application>Readline</application>.  This option
          is significant only if you have both libraries installed; the
-         default in that case is to use <application>Readline</>.
+         default in that case is to use <application>Readline</application>.
         </para>
        </listitem>
       </varlistentry>
@@ -909,21 +909,21 @@ su - postgres
         <itemizedlist>
          <listitem>
           <para>
-           <option>bsd</> to use the UUID functions found in FreeBSD, NetBSD,
+           <option>bsd</option> to use the UUID functions found in FreeBSD, NetBSD,
            and some other BSD-derived systems
           </para>
          </listitem>
          <listitem>
           <para>
-           <option>e2fs</> to use the UUID library created by
-           the <literal>e2fsprogs</> project; this library is present in most
+           <option>e2fs</option> to use the UUID library created by
+           the <literal>e2fsprogs</literal> project; this library is present in most
            Linux systems and in macOS, and can be obtained for other
            platforms as well
           </para>
          </listitem>
          <listitem>
           <para>
-           <option>ossp</> to use the <ulink
+           <option>ossp</option> to use the <ulink
            url="http://www.ossp.org/pkg/lib/uuid/">OSSP UUID library</ulink>
           </para>
          </listitem>
@@ -969,7 +969,7 @@ su - postgres
         <para>
          Use libxslt when building the
          <xref linkend="xml2">
-         module.  <application>xml2</> relies on this library
+         module.  <application>xml2</application> relies on this library
          to perform XSL transformations of XML.
         </para>
        </listitem>
@@ -979,13 +979,13 @@ su - postgres
        <term><option>--disable-float4-byval</option></term>
        <listitem>
         <para>
-         Disable passing float4 values <quote>by value</>, causing them
-         to be passed <quote>by reference</> instead.  This option costs
+         Disable passing float4 values <quote>by value</quote>, causing them
+         to be passed <quote>by reference</quote> instead.  This option costs
          performance, but may be needed for compatibility with old
          user-defined functions that are written in C and use the
-         <quote>version 0</> calling convention.  A better long-term
+         <quote>version 0</quote> calling convention.  A better long-term
          solution is to update any such functions to use the
-         <quote>version 1</> calling convention.
+         <quote>version 1</quote> calling convention.
         </para>
        </listitem>
       </varlistentry>
@@ -994,17 +994,17 @@ su - postgres
        <term><option>--disable-float8-byval</option></term>
        <listitem>
         <para>
-         Disable passing float8 values <quote>by value</>, causing them
-         to be passed <quote>by reference</> instead.  This option costs
+         Disable passing float8 values <quote>by value</quote>, causing them
+         to be passed <quote>by reference</quote> instead.  This option costs
          performance, but may be needed for compatibility with old
          user-defined functions that are written in C and use the
-         <quote>version 0</> calling convention.  A better long-term
+         <quote>version 0</quote> calling convention.  A better long-term
          solution is to update any such functions to use the
-         <quote>version 1</> calling convention.
+         <quote>version 1</quote> calling convention.
          Note that this option affects not only float8, but also int8 and some
          related types such as timestamp.
-         On 32-bit platforms, <option>--disable-float8-byval</> is the default
-         and it is not allowed to select <option>--enable-float8-byval</>.
+         On 32-bit platforms, <option>--disable-float8-byval</option> is the default
+         and it is not allowed to select <option>--enable-float8-byval</option>.
         </para>
        </listitem>
       </varlistentry>
@@ -1013,17 +1013,17 @@ su - postgres
        <term><option>--with-segsize=<replaceable>SEGSIZE</replaceable></option></term>
        <listitem>
         <para>
-         Set the <firstterm>segment size</>, in gigabytes.  Large tables are
+         Set the <firstterm>segment size</firstterm>, in gigabytes.  Large tables are
          divided into multiple operating-system files, each of size equal
          to the segment size.  This avoids problems with file size limits
          that exist on many platforms.  The default segment size, 1 gigabyte,
          is safe on all supported platforms.  If your operating system has
-         <quote>largefile</> support (which most do, nowadays), you can use
+         <quote>largefile</quote> support (which most do, nowadays), you can use
          a larger segment size.  This can be helpful to reduce the number of
          file descriptors consumed when working with very large tables.
          But be careful not to select a value larger than is supported
          by your platform and the file systems you intend to use.  Other
-         tools you might wish to use, such as <application>tar</>, could
+         tools you might wish to use, such as <application>tar</application>, could
          also set limits on the usable file size.
          It is recommended, though not absolutely required, that this value
          be a power of 2.
@@ -1036,7 +1036,7 @@ su - postgres
        <term><option>--with-blocksize=<replaceable>BLOCKSIZE</replaceable></option></term>
        <listitem>
         <para>
-         Set the <firstterm>block size</>, in kilobytes.  This is the unit
+         Set the <firstterm>block size</firstterm>, in kilobytes.  This is the unit
          of storage and I/O within tables.  The default, 8 kilobytes,
          is suitable for most situations; but other values may be useful
          in special cases.
@@ -1050,7 +1050,7 @@ su - postgres
        <term><option>--with-wal-blocksize=<replaceable>BLOCKSIZE</replaceable></option></term>
        <listitem>
         <para>
-         Set the <firstterm>WAL block size</>, in kilobytes.  This is the unit
+         Set the <firstterm>WAL block size</firstterm>, in kilobytes.  This is the unit
          of storage and I/O within the WAL log.  The default, 8 kilobytes,
          is suitable for most situations; but other values may be useful
          in special cases.
@@ -1064,14 +1064,14 @@ su - postgres
        <term><option>--disable-spinlocks</option></term>
        <listitem>
         <para>
-         Allow the build to succeed even if <productname>PostgreSQL</>
+         Allow the build to succeed even if <productname>PostgreSQL</productname>
          has no CPU spinlock support for the platform.  The lack of
          spinlock support will result in poor performance; therefore,
          this option should only be used if the build aborts and
          informs you that the platform lacks spinlock support. If this
-         option is required to build <productname>PostgreSQL</> on
+         option is required to build <productname>PostgreSQL</productname> on
          your platform, please report the problem to the
-         <productname>PostgreSQL</> developers.
+         <productname>PostgreSQL</productname> developers.
         </para>
        </listitem>
       </varlistentry>
@@ -1080,7 +1080,7 @@ su - postgres
        <term><option>--disable-strong-random</option></term>
        <listitem>
         <para>
-         Allow the build to succeed even if <productname>PostgreSQL</>
+         Allow the build to succeed even if <productname>PostgreSQL</productname>
          has no support for strong random numbers on the platform.
          A source of random numbers is needed for some authentication
          protocols, as well as some routines in the
@@ -1114,7 +1114,7 @@ su - postgres
        </term>
        <listitem>
         <para>
-         <productname>PostgreSQL</> includes its own time zone database,
+         <productname>PostgreSQL</productname> includes its own time zone database,
          which it requires for date and time operations.  This time zone
          database is in fact compatible with the IANA time zone
          database provided by many operating systems such as FreeBSD,
@@ -1128,7 +1128,7 @@ su - postgres
          installation routine will not detect mismatching or erroneous time
          zone data.  If you use this option, you are advised to run the
          regression tests to verify that the time zone data you have
-         pointed to works correctly with <productname>PostgreSQL</>.
+         pointed to works correctly with <productname>PostgreSQL</productname>.
         </para>
 
         <indexterm><primary>cross compilation</primary></indexterm>
@@ -1153,7 +1153,7 @@ su - postgres
          <indexterm>
           <primary>zlib</primary>
          </indexterm>
-         Prevents use of the <application>Zlib</> library.  This disables
+         Prevents use of the <application>Zlib</application> library.  This disables
          support for compressed archives in <application>pg_dump</application>
          and <application>pg_restore</application>.
          This option is only intended for those rare systems where this
@@ -1201,7 +1201,7 @@ su - postgres
         <para>
          If using GCC, all programs and libraries are compiled so they
          can be profiled.  On backend exit, a subdirectory will be created
-         that contains the <filename>gmon.out</> file for use in profiling.
+         that contains the <filename>gmon.out</filename> file for use in profiling.
          This option is for use only with GCC and when doing development work.
         </para>
        </listitem>
@@ -1211,8 +1211,8 @@ su - postgres
        <term><option>--enable-cassert</option></term>
        <listitem>
         <para>
-         Enables <firstterm>assertion</> checks in the server, which test for
-         many <quote>cannot happen</> conditions.  This is invaluable for
+         Enables <firstterm>assertion</firstterm> checks in the server, which test for
+         many <quote>cannot happen</quote> conditions.  This is invaluable for
          code development purposes, but the tests can slow down the
          server significantly.
          Also, having the tests turned on won't necessarily enhance the
@@ -1266,7 +1266,7 @@ su - postgres
          can be specified in the environment variable
          <envar>DTRACEFLAGS</envar>.  On Solaris,
          to include DTrace support in a 64-bit binary, you must specify
-         <literal>DTRACEFLAGS="-64"</> to configure.  For example,
+         <literal>DTRACEFLAGS="-64"</literal> to configure.  For example,
          using the GCC compiler:
 <screen>
 ./configure CC='gcc -m64' --enable-dtrace DTRACEFLAGS='-64' ...
@@ -1295,10 +1295,10 @@ su - postgres
     <para>
      If you prefer a C compiler different from the one
      <filename>configure</filename> picks, you can set the
-     environment variable <envar>CC</> to the program of your choice.
+     environment variable <envar>CC</envar> to the program of your choice.
      By default, <filename>configure</filename> will pick
      <filename>gcc</filename> if available, else the platform's
-     default (usually <filename>cc</>).  Similarly, you can override the
+     default (usually <filename>cc</filename>).  Similarly, you can override the
      default compiler flags if needed with the <envar>CFLAGS</envar> variable.
     </para>
 
@@ -1306,7 +1306,7 @@ su - postgres
      You can specify environment variables on the
      <filename>configure</filename> command line, for example:
 <screen>
-<userinput>./configure CC=/opt/bin/gcc CFLAGS='-O2 -pipe'</>
+<userinput>./configure CC=/opt/bin/gcc CFLAGS='-O2 -pipe'</userinput>
 </screen>
     </para>
 
@@ -1473,51 +1473,51 @@ su - postgres
 
     <para>
      Sometimes it is useful to add compiler flags after-the-fact to the set
-     that were chosen by <filename>configure</>.  An important example is
-     that <application>gcc</>'s <option>-Werror</> option cannot be included
-     in the <envar>CFLAGS</envar> passed to <filename>configure</>, because
-     it will break many of <filename>configure</>'s built-in tests.  To add
+     that were chosen by <filename>configure</filename>.  An important example is
+     that <application>gcc</application>'s <option>-Werror</option> option cannot be included
+     in the <envar>CFLAGS</envar> passed to <filename>configure</filename>, because
+     it will break many of <filename>configure</filename>'s built-in tests.  To add
      such flags, include them in the <envar>COPT</envar> environment variable
-     while running <filename>make</>.  The contents of <envar>COPT</envar>
+     while running <filename>make</filename>.  The contents of <envar>COPT</envar>
      are added to both the <envar>CFLAGS</envar> and <envar>LDFLAGS</envar>
-     options set up by <filename>configure</>.  For example, you could do
+     options set up by <filename>configure</filename>.  For example, you could do
 <screen>
-<userinput>make COPT='-Werror'</>
+<userinput>make COPT='-Werror'</userinput>
 </screen>
      or
 <screen>
-<userinput>export COPT='-Werror'</>
-<userinput>make</>
+<userinput>export COPT='-Werror'</userinput>
+<userinput>make</userinput>
 </screen>
     </para>
 
     <note>
      <para>
       When developing code inside the server, it is recommended to
-      use the configure options <option>--enable-cassert</> (which
-      turns on many run-time error checks) and <option>--enable-debug</>
+      use the configure options <option>--enable-cassert</option> (which
+      turns on many run-time error checks) and <option>--enable-debug</option>
       (which improves the usefulness of debugging tools).
      </para>
 
      <para>
       If using GCC, it is best to build with an optimization level of
-      at least <option>-O1</>, because using no optimization
-      (<option>-O0</>) disables some important compiler warnings (such
+      at least <option>-O1</option>, because using no optimization
+      (<option>-O0</option>) disables some important compiler warnings (such
       as the use of uninitialized variables).  However, non-zero
       optimization levels can complicate debugging because stepping
       through compiled code will usually not match up one-to-one with
       source code lines.  If you get confused while trying to debug
       optimized code, recompile the specific files of interest with
-      <option>-O0</>.  An easy way to do this is by passing an option
-      to <application>make</>: <command>make PROFILE=-O0 file.o</>.
+      <option>-O0</option>.  An easy way to do this is by passing an option
+      to <application>make</application>: <command>make PROFILE=-O0 file.o</command>.
      </para>
 
      <para>
-      The <envar>COPT</> and <envar>PROFILE</> environment variables are
-      actually handled identically by the <productname>PostgreSQL</>
+      The <envar>COPT</envar> and <envar>PROFILE</envar> environment variables are
+      actually handled identically by the <productname>PostgreSQL</productname>
       makefiles.  Which to use is a matter of preference, but a common habit
-      among developers is to use <envar>PROFILE</> for one-time flag
-      adjustments, while <envar>COPT</> might be kept set all the time.
+      among developers is to use <envar>PROFILE</envar> for one-time flag
+      adjustments, while <envar>COPT</envar> might be kept set all the time.
      </para>
     </note>
    </step>
@@ -1530,7 +1530,7 @@ su - postgres
 <screen>
 <userinput>make</userinput>
 </screen>
-    (Remember to use <acronym>GNU</> <application>make</>.) The build
+    (Remember to use <acronym>GNU</acronym> <application>make</application>.) The build
     will take a few minutes depending on your
     hardware. The last line displayed should be:
 <screen>
@@ -1562,7 +1562,7 @@ PostgreSQL, contrib, and documentation successfully made. Ready to install.
    <para>
     If you want to test the newly built server before you install it,
     you can run the regression tests at this point. The regression
-    tests are a test suite to verify that <productname>PostgreSQL</>
+    tests are a test suite to verify that <productname>PostgreSQL</productname>
     runs on your machine in the way the developers expected it
     to. Type:
 <screen>
@@ -1588,7 +1588,7 @@ PostgreSQL, contrib, and documentation successfully made. Ready to install.
    </note>
 
    <para>
-    To install <productname>PostgreSQL</> enter:
+    To install <productname>PostgreSQL</productname> enter:
 <screen>
 <userinput>make install</userinput>
 </screen>
@@ -1632,8 +1632,8 @@ PostgreSQL, contrib, and documentation successfully made. Ready to install.
     The standard installation provides all the header files needed for client
     application development as well as for server-side program
     development, such as custom functions or data types written in C.
-    (Prior to <productname>PostgreSQL</> 8.0, a separate <literal>make
-    install-all-headers</> command was needed for the latter, but this
+    (Prior to <productname>PostgreSQL</productname> 8.0, a separate <literal>make
+    install-all-headers</literal> command was needed for the latter, but this
     step has been folded into the standard install.)
    </para>
 
@@ -1643,12 +1643,12 @@ PostgreSQL, contrib, and documentation successfully made. Ready to install.
      If you want to install only the client applications and
      interface libraries, then you can use these commands:
 <screen>
-<userinput>make -C src/bin install</>
-<userinput>make -C src/include install</>
-<userinput>make -C src/interfaces install</>
-<userinput>make -C doc install</>
+<userinput>make -C src/bin install</userinput>
+<userinput>make -C src/include install</userinput>
+<userinput>make -C src/interfaces install</userinput>
+<userinput>make -C doc install</userinput>
 </screen>
-    <filename>src/bin</> has a few binaries for server-only use,
+    <filename>src/bin</filename> has a few binaries for server-only use,
     but they are small.
     </para>
    </formalpara>
@@ -1659,7 +1659,7 @@ PostgreSQL, contrib, and documentation successfully made. Ready to install.
    <title>Uninstallation:</title>
    <para>
     To undo the installation use the command <command>make
-    uninstall</>. However, this will not remove any created directories.
+    uninstall</command>. However, this will not remove any created directories.
    </para>
   </formalpara>
 
@@ -1669,10 +1669,10 @@ PostgreSQL, contrib, and documentation successfully made. Ready to install.
    <para>
     After the installation you can free disk space by removing the built
     files from the source tree with the command <command>make
-    clean</>. This will preserve the files made by the <command>configure</command>
-    program, so that you can rebuild everything with <command>make</>
+    clean</command>. This will preserve the files made by the <command>configure</command>
+    program, so that you can rebuild everything with <command>make</command>
     later on. To reset the source tree to the state in which it was
-    distributed, use <command>make distclean</>. If you are going to
+    distributed, use <command>make distclean</command>. If you are going to
     build for several platforms within the same source tree you must do
     this and re-configure for each platform.  (Alternatively, use
     a separate build tree for each platform, so that the source tree
@@ -1681,10 +1681,10 @@ PostgreSQL, contrib, and documentation successfully made. Ready to install.
   </formalpara>
 
   <para>
-   If you perform a build and then discover that your <command>configure</>
-   options were wrong, or if you change anything that <command>configure</>
+   If you perform a build and then discover that your <command>configure</command>
+   options were wrong, or if you change anything that <command>configure</command>
    investigates (for example, software upgrades), then it's a good
-   idea to do <command>make distclean</> before reconfiguring and
+   idea to do <command>make distclean</command> before reconfiguring and
    rebuilding.  Without this, your changes in configuration choices
    might not propagate everywhere they need to.
   </para>
@@ -1705,31 +1705,31 @@ PostgreSQL, contrib, and documentation successfully made. Ready to install.
     you need to tell the system how to find the newly installed
     shared libraries.  The systems on which this is
     <emphasis>not</emphasis> necessary include
-    <systemitem class="osname">FreeBSD</>,
-    <systemitem class="osname">HP-UX</>,
-    <systemitem class="osname">Linux</>,
-    <systemitem class="osname">NetBSD</>, <systemitem
-    class="osname">OpenBSD</>, and
-    <systemitem class="osname">Solaris</>.
+    <systemitem class="osname">FreeBSD</systemitem>,
+    <systemitem class="osname">HP-UX</systemitem>,
+    <systemitem class="osname">Linux</systemitem>,
+    <systemitem class="osname">NetBSD</systemitem>, <systemitem
+    class="osname">OpenBSD</systemitem>, and
+    <systemitem class="osname">Solaris</systemitem>.
    </para>
 
    <para>
     The method to set the shared library search path varies between
     platforms, but the most widely-used method is to set the
-    environment variable <envar>LD_LIBRARY_PATH</> like so: In Bourne
-    shells (<command>sh</>, <command>ksh</>, <command>bash</>, <command>zsh</>):
+    environment variable <envar>LD_LIBRARY_PATH</envar> like so: In Bourne
+    shells (<command>sh</command>, <command>ksh</command>, <command>bash</command>, <command>zsh</command>):
 <programlisting>
 LD_LIBRARY_PATH=/usr/local/pgsql/lib
 export LD_LIBRARY_PATH
 </programlisting>
-    or in <command>csh</> or <command>tcsh</>:
+    or in <command>csh</command> or <command>tcsh</command>:
 <programlisting>
 setenv LD_LIBRARY_PATH /usr/local/pgsql/lib
 </programlisting>
-    Replace <literal>/usr/local/pgsql/lib</> with whatever you set
-    <option><literal>--libdir</></> to in <xref linkend="configure">.
+    Replace <literal>/usr/local/pgsql/lib</literal> with whatever you set
+    <option><literal>--libdir</literal></option> to in <xref linkend="configure">.
     You should put these commands into a shell start-up file such as
-    <filename>/etc/profile</> or <filename>~/.bash_profile</>.  Some
+    <filename>/etc/profile</filename> or <filename>~/.bash_profile</filename>.  Some
     good information about the caveats associated with this method can
     be found at <ulink
     url="http://xahlee.org/UnixResource_dir/_/ldpath.html"></ulink>.
@@ -1763,17 +1763,17 @@ libpq.so.2.1: cannot open shared object file: No such file or directory
     <indexterm>
      <primary>ldconfig</primary>
     </indexterm>
-    If you are on <systemitem class="osname">Linux</> and you have root
+    If you are on <systemitem class="osname">Linux</systemitem> and you have root
     access, you can run:
 <programlisting>
 /sbin/ldconfig /usr/local/pgsql/lib
 </programlisting>
     (or equivalent directory) after installation to enable the
     run-time linker to find the shared libraries faster.  Refer to the
-    manual page of <command>ldconfig</> for more information.  On
-    <systemitem class="osname">FreeBSD</>, <systemitem
-    class="osname">NetBSD</>, and <systemitem
-    class="osname">OpenBSD</> the command is:
+    manual page of <command>ldconfig</command> for more information.  On
+    <systemitem class="osname">FreeBSD</systemitem>, <systemitem
+    class="osname">NetBSD</systemitem>, and <systemitem
+    class="osname">OpenBSD</systemitem> the command is:
 <programlisting>
 /sbin/ldconfig -m /usr/local/pgsql/lib
 </programlisting>
@@ -1790,24 +1790,24 @@ libpq.so.2.1: cannot open shared object file: No such file or directory
    </indexterm>
 
    <para>
-    If you installed into <filename>/usr/local/pgsql</> or some other
+    If you installed into <filename>/usr/local/pgsql</filename> or some other
     location that is not searched for programs by default, you should
-    add <filename>/usr/local/pgsql/bin</> (or whatever you set
-    <option><literal>--bindir</></> to in <xref linkend="configure">)
-    into your <envar>PATH</>.  Strictly speaking, this is not
-    necessary, but it will make the use of <productname>PostgreSQL</>
+    add <filename>/usr/local/pgsql/bin</filename> (or whatever you set
+    <option><literal>--bindir</literal></option> to in <xref linkend="configure">)
+    into your <envar>PATH</envar>.  Strictly speaking, this is not
+    necessary, but it will make the use of <productname>PostgreSQL</productname>
     much more convenient.
    </para>
 
    <para>
     To do this, add the following to your shell start-up file, such as
-    <filename>~/.bash_profile</> (or <filename>/etc/profile</>, if you
+    <filename>~/.bash_profile</filename> (or <filename>/etc/profile</filename>, if you
     want it to affect all users):
 <programlisting>
 PATH=/usr/local/pgsql/bin:$PATH
 export PATH
 </programlisting>
-    If you are using <command>csh</> or <command>tcsh</>, then use this command:
+    If you are using <command>csh</command> or <command>tcsh</command>, then use this command:
 <programlisting>
 set path = ( /usr/local/pgsql/bin $path )
 </programlisting>
@@ -1817,7 +1817,7 @@ set path = ( /usr/local/pgsql/bin $path )
     <indexterm>
      <primary><envar>MANPATH</envar></primary>
     </indexterm>
-    To enable your system to find the <application>man</>
+    To enable your system to find the <application>man</application>
     documentation, you need to add lines like the following to a
     shell start-up file unless you installed into a location that is
     searched by default:
@@ -1828,11 +1828,11 @@ export MANPATH
    </para>
 
    <para>
-    The environment variables <envar>PGHOST</> and <envar>PGPORT</>
+    The environment variables <envar>PGHOST</envar> and <envar>PGPORT</envar>
     specify to client applications the host and port of the database
     server, overriding the compiled-in defaults. If you are going to
     run client applications remotely then it is convenient if every
-    user that plans to use the database sets <envar>PGHOST</>.  This
+    user that plans to use the database sets <envar>PGHOST</envar>.  This
     is not required, however; the settings can be communicated via command
     line options to most client programs.
    </para>
@@ -1844,20 +1844,20 @@ export MANPATH
 
   <para>
    A platform (that is, a CPU architecture and operating system combination)
-   is considered supported by the <productname>PostgreSQL</> development
+   is considered supported by the <productname>PostgreSQL</productname> development
    community if the code contains provisions to work on that platform and
    it has recently been verified to build and pass its regression tests
    on that platform.  Currently, most testing of platform compatibility
    is done automatically by test machines in the
    <ulink url="https://buildfarm.postgresql.org/">PostgreSQL Build Farm</ulink>.
-   If you are interested in using <productname>PostgreSQL</> on a platform
+   If you are interested in using <productname>PostgreSQL</productname> on a platform
    that is not represented in the build farm, but on which the code works
    or can be made to work, you are strongly encouraged to set up a build
    farm member machine so that continued compatibility can be assured.
   </para>
 
   <para>
-   In general, <productname>PostgreSQL</> can be expected to work on
+   In general, <productname>PostgreSQL</productname> can be expected to work on
    these CPU architectures: x86, x86_64, IA64, PowerPC,
    PowerPC 64, S/390, S/390x, Sparc, Sparc 64, ARM, MIPS, MIPSEL,
    and PA-RISC.  Code support exists for M68K, M32R, and VAX, but these
@@ -1867,7 +1867,7 @@ export MANPATH
   </para>
 
   <para>
-   <productname>PostgreSQL</> can be expected to work on these operating
+   <productname>PostgreSQL</productname> can be expected to work on these operating
    systems: Linux (all recent distributions), Windows (Win2000 SP4 and later),
    FreeBSD, OpenBSD, NetBSD, macOS, AIX, HP/UX, and Solaris.
    Other Unix-like systems may also work but are not currently
@@ -1882,7 +1882,7 @@ export MANPATH
    If you have installation problems on a platform that is known
    to be supported according to recent build farm results, please report
    it to <email>pgsql-bugs@postgresql.org</email>.  If you are interested
-   in porting <productname>PostgreSQL</> to a new platform,
+   in porting <productname>PostgreSQL</productname> to a new platform,
    <email>pgsql-hackers@postgresql.org</email> is the appropriate place
    to discuss that.
   </para>
@@ -1962,7 +1962,7 @@ export MANPATH
    <para>
     Use the following <command>configure</command> flags in addition
     to your own if you have installed Readline or libz in
-    <literal>/usr/local</>:
+    <literal>/usr/local</literal>:
     <literal>--with-includes=/usr/local/include
     --with-libraries=/usr/local/lib</literal>.
    </para>
@@ -2015,9 +2015,9 @@ export MANPATH
     <title>Internet Address Issues</title>
 
     <para>
-     PostgreSQL relies on the system's <function>getaddrinfo</> function
-     to parse IP addresses in <varname>listen_addresses</>,
-     <filename>pg_hba.conf</>, etc.  Older versions of AIX have assorted
+     PostgreSQL relies on the system's <function>getaddrinfo</function> function
+     to parse IP addresses in <varname>listen_addresses</varname>,
+     <filename>pg_hba.conf</filename>, etc.  Older versions of AIX have assorted
      bugs in this function.  If you have problems related to these settings,
      updating to the appropriate AIX fix level shown above
      should take care of it.
@@ -2163,7 +2163,7 @@ ERROR:  could not load library "/opt/dbs/pgsql/lib/plperl.so": Bad address
     <command>xlc</command> might differ.)  If you omit the export of
     <envar>OBJECT_MODE</envar>, your build may fail with linker errors.  When
     <envar>OBJECT_MODE</envar> is set, it tells AIX's build utilities
-    such as <command>ar</>, <command>as</>, and <command>ld</> what
+    such as <command>ar</command>, <command>as</command>, and <command>ld</command> what
     type of objects to default to handling.
     </para>
 
@@ -2479,10 +2479,10 @@ PHSS_30849  s700_800 u2comp/be/plugin library Patch
 
     <para>
      If PostgreSQL on Windows crashes, it has the ability to generate
-     <productname>minidumps</> that can be used to track down the cause
+     <productname>minidumps</productname> that can be used to track down the cause
      for the crash, similar to core dumps on Unix. These dumps can be
-     read using the <productname>Windows Debugger Tools</> or using
-     <productname>Visual Studio</>. To enable the generation of dumps
+     read using the <productname>Windows Debugger Tools</productname> or using
+     <productname>Visual Studio</productname>. To enable the generation of dumps
      on Windows, create a subdirectory named <filename>crashdumps</filename>
      inside the cluster data directory. The dumps will then be written
      into this directory with a unique name based on the identifier of
@@ -2545,7 +2545,7 @@ PHSS_30849  s700_800 u2comp/be/plugin library Patch
 configure ... LDFLAGS="-R /usr/sfw/lib:/opt/sfw/lib:/usr/local/lib"
 </programlisting>
      See
-     the <citerefentry><refentrytitle>ld</><manvolnum>1</></citerefentry>
+     the <citerefentry><refentrytitle>ld</refentrytitle><manvolnum>1</manvolnum></citerefentry>
      man page for more information.
     </para>
    </sect3>

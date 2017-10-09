@@ -126,7 +126,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
       Multivariate statistics referencing the dropped column will also be
       removed if the removal of the column would cause the statistics to
       contain data for only a single column.
-      You will need to say <literal>CASCADE</> if anything outside the table
+      You will need to say <literal>CASCADE</literal> if anything outside the table
       depends on the column, for example, foreign key references or views.
       If <literal>IF EXISTS</literal> is specified and the column
       does not exist, no error is thrown. In this case a notice
@@ -162,7 +162,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
      <para>
       These forms set or remove the default value for a column.
       Default values only apply in subsequent <command>INSERT</command>
-      or <command>UPDATE</> commands; they do not cause rows already in the
+      or <command>UPDATE</command> commands; they do not cause rows already in the
       table to change.
      </para>
     </listitem>
@@ -174,7 +174,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
      <para>
       These forms change whether a column is marked to allow null
       values or to reject null values.  You can only use <literal>SET
-      NOT NULL</> when the column contains no null values.
+      NOT NULL</literal> when the column contains no null values.
      </para>
 
      <para>
@@ -182,7 +182,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
       on a column if it is marked <literal>NOT NULL</literal> in the parent
       table.  To drop the <literal>NOT NULL</literal> constraint from all the
       partitions, perform <literal>DROP NOT NULL</literal> on the parent
-      table.  Even if there is no <literal>NOT NULL</> constraint on the
+      table.  Even if there is no <literal>NOT NULL</literal> constraint on the
       parent, such a constraint can still be added to individual partitions,
       if desired; that is, the children can disallow nulls even if the parent
       allows them, but not the other way around.
@@ -249,17 +249,17 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
     <listitem>
      <para>
       This form sets or resets per-attribute options.  Currently, the only
-      defined per-attribute options are <literal>n_distinct</> and
-      <literal>n_distinct_inherited</>, which override the
+      defined per-attribute options are <literal>n_distinct</literal> and
+      <literal>n_distinct_inherited</literal>, which override the
       number-of-distinct-values estimates made by subsequent
       <xref linkend="sql-analyze">
-      operations.  <literal>n_distinct</> affects the statistics for the table
-      itself, while <literal>n_distinct_inherited</> affects the statistics
+      operations.  <literal>n_distinct</literal> affects the statistics for the table
+      itself, while <literal>n_distinct_inherited</literal> affects the statistics
       gathered for the table plus its inheritance children.  When set to a
-      positive value, <command>ANALYZE</> will assume that the column contains
+      positive value, <command>ANALYZE</command> will assume that the column contains
       exactly the specified number of distinct nonnull values.  When set to a
       negative value, which must be greater
-      than or equal to -1, <command>ANALYZE</> will assume that the number of
+      than or equal to -1, <command>ANALYZE</command> will assume that the number of
       distinct nonnull values in the column is linear in the size of the
       table; the exact count is to be computed by multiplying the estimated
       table size by the absolute value of the given number.  For example,
@@ -290,7 +290,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
     <listitem>
      <para>
       This form sets the storage mode for a column. This controls whether this
-      column is held inline or in a secondary <acronym>TOAST</> table, and
+      column is held inline or in a secondary <acronym>TOAST</acronym> table, and
       whether the data
       should be compressed or not. <literal>PLAIN</literal> must be used
       for fixed-length values such as <type>integer</type> and is
@@ -302,7 +302,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
       Use of <literal>EXTERNAL</literal> will make substring operations on
       very large <type>text</type> and <type>bytea</type> values run faster,
       at the penalty of increased storage space.  Note that
-      <literal>SET STORAGE</> doesn't itself change anything in the table,
+      <literal>SET STORAGE</literal> doesn't itself change anything in the table,
       it just sets the strategy to be pursued during future table updates.
       See <xref linkend="storage-toast"> for more information.
      </para>
@@ -335,7 +335,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
     <term><literal>ADD <replaceable class="parameter">table_constraint_using_index</replaceable></literal></term>
     <listitem>
      <para>
-      This form adds a new <literal>PRIMARY KEY</> or <literal>UNIQUE</>
+      This form adds a new <literal>PRIMARY KEY</literal> or <literal>UNIQUE</literal>
       constraint to a table based on an existing unique index.  All the
       columns of the index will be included in the constraint.
      </para>
@@ -344,14 +344,14 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
       The index cannot have expression columns nor be a partial index.
       Also, it must be a b-tree index with default sort ordering.  These
       restrictions ensure that the index is equivalent to one that would be
-      built by a regular <literal>ADD PRIMARY KEY</> or <literal>ADD UNIQUE</>
+      built by a regular <literal>ADD PRIMARY KEY</literal> or <literal>ADD UNIQUE</literal>
       command.
      </para>
 
      <para>
-      If <literal>PRIMARY KEY</> is specified, and the index's columns are not
-      already marked <literal>NOT NULL</>, then this command will attempt to
-      do <literal>ALTER COLUMN SET NOT NULL</> against each such column.
+      If <literal>PRIMARY KEY</literal> is specified, and the index's columns are not
+      already marked <literal>NOT NULL</literal>, then this command will attempt to
+      do <literal>ALTER COLUMN SET NOT NULL</literal> against each such column.
       That requires a full table scan to verify the column(s) contain no
       nulls.  In all other cases, this is a fast operation.
      </para>
@@ -363,9 +363,9 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
      </para>
 
      <para>
-      After this command is executed, the index is <quote>owned</> by the
+      After this command is executed, the index is <quote>owned</quote> by the
       constraint, in the same way as if the index had been built by
-      a regular <literal>ADD PRIMARY KEY</> or <literal>ADD UNIQUE</>
+      a regular <literal>ADD PRIMARY KEY</literal> or <literal>ADD UNIQUE</literal>
       command.  In particular, dropping the constraint will make the index
       disappear too.
      </para>
@@ -375,7 +375,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
        Adding a constraint using an existing index can be helpful in
        situations where a new constraint needs to be added without blocking
        table updates for a long time.  To do that, create the index using
-       <command>CREATE INDEX CONCURRENTLY</>, and then install it as an
+       <command>CREATE INDEX CONCURRENTLY</command>, and then install it as an
        official constraint using this syntax.  See the example below.
       </para>
      </note>
@@ -447,9 +447,9 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
       triggers are not executed.
       The trigger firing mechanism is also affected by the configuration
       variable <xref linkend="guc-session-replication-role">. Simply enabled
-      triggers will fire when the replication role is <quote>origin</>
-      (the default) or <quote>local</>. Triggers configured as <literal>ENABLE
-      REPLICA</literal> will only fire if the session is in <quote>replica</>
+      triggers will fire when the replication role is <quote>origin</quote>
+      (the default) or <quote>local</quote>. Triggers configured as <literal>ENABLE
+      REPLICA</literal> will only fire if the session is in <quote>replica</quote>
       mode, and triggers configured as <literal>ENABLE ALWAYS</literal> will
       fire regardless of the current replication mode.
      </para>
@@ -542,9 +542,9 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
      </para>
 
      <para>
-      Note that this is not equivalent to <literal>ADD COLUMN oid oid</>;
+      Note that this is not equivalent to <literal>ADD COLUMN oid oid</literal>;
       that would add a normal column that happened to be named
-      <literal>oid</>, not a system column.
+      <literal>oid</literal>, not a system column.
      </para>
     </listitem>
    </varlistentry>
@@ -609,8 +609,8 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
       will not be modified immediately by this command; depending on the
       parameter you might need to rewrite the table to get the desired effects.
       That can be done with <link linkend="SQL-VACUUM">VACUUM
-      FULL</>, <xref linkend="SQL-CLUSTER"> or one of the forms
-      of <command>ALTER TABLE</> that forces a table rewrite.
+      FULL</link>, <xref linkend="SQL-CLUSTER"> or one of the forms
+      of <command>ALTER TABLE</command> that forces a table rewrite.
       For planner related parameters, changes will take effect from the next
       time the table is locked so currently executing queries will not be
       affected.
@@ -620,18 +620,18 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
       <literal>SHARE UPDATE EXCLUSIVE</literal> lock will be taken for
       fillfactor and autovacuum storage parameters, as well as the
       following planner related parameters:
-      <varname>effective_io_concurrency</>, <varname>parallel_workers</>, <varname>seq_page_cost</>,
-      <varname>random_page_cost</>, <varname>n_distinct</> and <varname>n_distinct_inherited</>.
+      <varname>effective_io_concurrency</varname>, <varname>parallel_workers</varname>, <varname>seq_page_cost</varname>,
+      <varname>random_page_cost</varname>, <varname>n_distinct</varname> and <varname>n_distinct_inherited</varname>.
      </para>
 
      <note>
       <para>
-       While <command>CREATE TABLE</> allows <literal>OIDS</> to be specified
+       While <command>CREATE TABLE</command> allows <literal>OIDS</literal> to be specified
        in the <literal>WITH (<replaceable
-       class="parameter">storage_parameter</>)</literal> syntax,
-       <command>ALTER TABLE</> does not treat <literal>OIDS</> as a
-       storage parameter.  Instead use the <literal>SET WITH OIDS</>
-       and <literal>SET WITHOUT OIDS</> forms to change OID status.
+       class="parameter">storage_parameter</replaceable>)</literal> syntax,
+       <command>ALTER TABLE</command> does not treat <literal>OIDS</literal> as a
+       storage parameter.  Instead use the <literal>SET WITH OIDS</literal>
+       and <literal>SET WITHOUT OIDS</literal> forms to change OID status.
       </para>
      </note>
     </listitem>
@@ -642,7 +642,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
     <listitem>
      <para>
       This form resets one or more storage parameters to their
-      defaults.  As with <literal>SET</>, a table rewrite might be
+      defaults.  As with <literal>SET</literal>, a table rewrite might be
       needed to update the table entirely.
      </para>
     </listitem>
@@ -693,11 +693,11 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
     <listitem>
      <para>
       This form links the table to a composite type as though <command>CREATE
-      TABLE OF</> had formed it.  The table's list of column names and types
+      TABLE OF</command> had formed it.  The table's list of column names and types
       must precisely match that of the composite type; the presence of
-      an <literal>oid</> system column is permitted to differ.  The table must
+      an <literal>oid</literal> system column is permitted to differ.  The table must
       not inherit from any other table.  These restrictions ensure
-      that <command>CREATE TABLE OF</> would permit an equivalent table
+      that <command>CREATE TABLE OF</command> would permit an equivalent table
       definition.
      </para>
     </listitem>
@@ -728,13 +728,13 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
      <para>
       This form changes the information which is written to the write-ahead log
       to identify rows which are updated or deleted.  This option has no effect
-      except when logical replication is in use.  <literal>DEFAULT</>
+      except when logical replication is in use.  <literal>DEFAULT</literal>
       (the default for non-system tables) records the
-      old values of the columns of the primary key, if any.  <literal>USING INDEX</>
+      old values of the columns of the primary key, if any.  <literal>USING INDEX</literal>
       records the old values of the columns covered by the named index, which
       must be unique, not partial, not deferrable, and include only columns marked
-      <literal>NOT NULL</>.  <literal>FULL</> records the old values of all columns
-      in the row.  <literal>NOTHING</> records no information about the old row.
+      <literal>NOT NULL</literal>.  <literal>FULL</literal> records the old values of all columns
+      in the row.  <literal>NOTHING</literal> records no information about the old row.
       (This is the default for system tables.)
       In all cases, no old values are logged unless at least one of the columns
       that would be logged differs between the old and new versions of the row.
@@ -853,7 +853,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
   </para>
 
   <para>
-   You must own the table to use <command>ALTER TABLE</>.
+   You must own the table to use <command>ALTER TABLE</command>.
    To change the schema or tablespace of a table, you must also have
    <literal>CREATE</literal> privilege on the new schema or tablespace.
    To add the table as a new child of a parent table, you must own the parent
@@ -890,10 +890,10 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
       <listitem>
        <para>
         The name (optionally schema-qualified) of an existing table to
-        alter. If <literal>ONLY</> is specified before the table name, only
-        that table is altered. If <literal>ONLY</> is not specified, the table
+        alter. If <literal>ONLY</literal> is specified before the table name, only
+        that table is altered. If <literal>ONLY</literal> is not specified, the table
         and all its descendant tables (if any) are altered.  Optionally,
-        <literal>*</> can be specified after the table name to explicitly
+        <literal>*</literal> can be specified after the table name to explicitly
         indicate that descendant tables are included.
        </para>
       </listitem>
@@ -1106,28 +1106,28 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
    <para>
     When a column is added with <literal>ADD COLUMN</literal>, all existing
     rows in the table are initialized with the column's default value
-    (NULL if no <literal>DEFAULT</> clause is specified).
-    If there is no <literal>DEFAULT</> clause, this is merely a metadata
+    (NULL if no <literal>DEFAULT</literal> clause is specified).
+    If there is no <literal>DEFAULT</literal> clause, this is merely a metadata
     change and does not require any immediate update of the table's data;
     the added NULL values are supplied on readout, instead.
    </para>
 
    <para>
-    Adding a column with a <literal>DEFAULT</> clause or changing the type of
+    Adding a column with a <literal>DEFAULT</literal> clause or changing the type of
     an existing column will require the entire table and its indexes to be
     rewritten.  As an exception when changing the type of an existing column,
-    if the <literal>USING</> clause does not change the column
+    if the <literal>USING</literal> clause does not change the column
     contents and the old type is either binary coercible to the new type or
     an unconstrained domain over the new type, a table rewrite is not needed;
     but any indexes on the affected columns must still be rebuilt.  Adding or
-    removing a system <literal>oid</> column also requires rewriting the entire
+    removing a system <literal>oid</literal> column also requires rewriting the entire
     table.  Table and/or index rebuilds may take a significant amount of time
     for a large table; and will temporarily require as much as double the disk
     space.
    </para>
 
    <para>
-    Adding a <literal>CHECK</> or <literal>NOT NULL</> constraint requires
+    Adding a <literal>CHECK</literal> or <literal>NOT NULL</literal> constraint requires
     scanning the table to verify that existing rows meet the constraint,
     but does not require a table rewrite.
    </para>
@@ -1139,7 +1139,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
 
    <para>
     The main reason for providing the option to specify multiple changes
-    in a single <command>ALTER TABLE</> is that multiple table scans or
+    in a single <command>ALTER TABLE</command> is that multiple table scans or
     rewrites can thereby be combined into a single pass over the table.
    </para>
 
@@ -1151,37 +1151,37 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
     reduce the on-disk size of your table, as the space occupied
     by the dropped column is not reclaimed.  The space will be
     reclaimed over time as existing rows are updated.  (These statements do
-    not apply when dropping the system <literal>oid</> column; that is done
+    not apply when dropping the system <literal>oid</literal> column; that is done
     with an immediate rewrite.)
    </para>
 
    <para>
     To force immediate reclamation of space occupied by a dropped column,
-    you can execute one of the forms of <command>ALTER TABLE</> that
+    you can execute one of the forms of <command>ALTER TABLE</command> that
     performs a rewrite of the whole table.  This results in reconstructing
     each row with the dropped column replaced by a null value.
    </para>
 
    <para>
-    The rewriting forms of <command>ALTER TABLE</> are not MVCC-safe.
+    The rewriting forms of <command>ALTER TABLE</command> are not MVCC-safe.
     After a table rewrite, the table will appear empty to concurrent
     transactions, if they are using a snapshot taken before the rewrite
     occurred.  See <xref linkend="mvcc-caveats"> for more details.
    </para>
 
    <para>
-    The <literal>USING</literal> option of <literal>SET DATA TYPE</> can actually
+    The <literal>USING</literal> option of <literal>SET DATA TYPE</literal> can actually
     specify any expression involving the old values of the row; that is, it
     can refer to other columns as well as the one being converted.  This allows
-    very general conversions to be done with the <literal>SET DATA TYPE</>
+    very general conversions to be done with the <literal>SET DATA TYPE</literal>
     syntax.  Because of this flexibility, the <literal>USING</literal>
     expression is not applied to the column's default value (if any); the
     result might not be a constant expression as required for a default.
     This means that when there is no implicit or assignment cast from old to
-    new type, <literal>SET DATA TYPE</> might fail to convert the default even
+    new type, <literal>SET DATA TYPE</literal> might fail to convert the default even
     though a <literal>USING</literal> clause is supplied.  In such cases,
-    drop the default with <literal>DROP DEFAULT</>, perform the <literal>ALTER
-    TYPE</>, and then use <literal>SET DEFAULT</> to add a suitable new
+    drop the default with <literal>DROP DEFAULT</literal>, perform the <literal>ALTER
+    TYPE</literal>, and then use <literal>SET DEFAULT</literal> to add a suitable new
     default.  Similar considerations apply to indexes and constraints involving
     the column.
    </para>
@@ -1216,11 +1216,11 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
     The actions for identity columns (<literal>ADD
     GENERATED</literal>, <literal>SET</literal> etc., <literal>DROP
     IDENTITY</literal>), as well as the actions
-    <literal>TRIGGER</>, <literal>CLUSTER</>, <literal>OWNER</>,
-    and <literal>TABLESPACE</> never recurse to descendant tables;
-    that is, they always act as though <literal>ONLY</> were specified.
-    Adding a constraint recurses only for <literal>CHECK</> constraints
-    that are not marked <literal>NO INHERIT</>.
+    <literal>TRIGGER</literal>, <literal>CLUSTER</literal>, <literal>OWNER</literal>,
+    and <literal>TABLESPACE</literal> never recurse to descendant tables;
+    that is, they always act as though <literal>ONLY</literal> were specified.
+    Adding a constraint recurses only for <literal>CHECK</literal> constraints
+    that are not marked <literal>NO INHERIT</literal>.
    </para>
 
    <para>
@@ -1434,17 +1434,17 @@ ALTER TABLE measurement
 
   <para>
    The forms <literal>ADD</literal> (without <literal>USING INDEX</literal>),
-   <literal>DROP [COLUMN]</>, <literal>DROP IDENTITY</literal>, <literal>RESTART</literal>,
-   <literal>SET DEFAULT</>, <literal>SET DATA TYPE</literal> (without <literal>USING</literal>),
+   <literal>DROP [COLUMN]</literal>, <literal>DROP IDENTITY</literal>, <literal>RESTART</literal>,
+   <literal>SET DEFAULT</literal>, <literal>SET DATA TYPE</literal> (without <literal>USING</literal>),
    <literal>SET GENERATED</literal>, and <literal>SET <replaceable>sequence_option</replaceable></literal>
    conform with the SQL standard.  The other forms are
    <productname>PostgreSQL</productname> extensions of the SQL standard.
    Also, the ability to specify more than one manipulation in a single
-   <command>ALTER TABLE</> command is an extension.
+   <command>ALTER TABLE</command> command is an extension.
   </para>
 
   <para>
-   <command>ALTER TABLE DROP COLUMN</> can be used to drop the only
+   <command>ALTER TABLE DROP COLUMN</command> can be used to drop the only
    column of a table, leaving a zero-column table.  This is an
    extension of SQL, which disallows zero-column tables.
   </para>

@@ -46,7 +46,7 @@ REINDEX [ ( VERBOSE ) ] { INDEX | TABLE | SCHEMA | DATABASE | SYSTEM } <replacea
 
     <listitem>
      <para>
-      An index has become <quote>bloated</>, that is it contains many
+      An index has become <quote>bloated</quote>, that is it contains many
       empty or nearly-empty pages.  This can occur with B-tree indexes in
       <productname>PostgreSQL</productname> under certain uncommon access
       patterns. <command>REINDEX</command> provides a way to reduce
@@ -65,12 +65,12 @@ REINDEX [ ( VERBOSE ) ] { INDEX | TABLE | SCHEMA | DATABASE | SYSTEM } <replacea
 
     <listitem>
      <para>
-      An index build with the <literal>CONCURRENTLY</> option failed, leaving
-      an <quote>invalid</> index. Such indexes are useless but it can be
-      convenient to use <command>REINDEX</> to rebuild them. Note that
-      <command>REINDEX</> will not perform a concurrent build. To build the
+      An index build with the <literal>CONCURRENTLY</literal> option failed, leaving
+      an <quote>invalid</quote> index. Such indexes are useless but it can be
+      convenient to use <command>REINDEX</command> to rebuild them. Note that
+      <command>REINDEX</command> will not perform a concurrent build. To build the
       index without interfering with production you should drop the index and
-      reissue the <command>CREATE INDEX CONCURRENTLY</> command.
+      reissue the <command>CREATE INDEX CONCURRENTLY</command> command.
      </para>
     </listitem>
 
@@ -95,7 +95,7 @@ REINDEX [ ( VERBOSE ) ] { INDEX | TABLE | SCHEMA | DATABASE | SYSTEM } <replacea
     <listitem>
      <para>
       Recreate all indexes of the specified table.  If the table has a
-      secondary <quote>TOAST</> table, that is reindexed as well.
+      secondary <quote>TOAST</quote> table, that is reindexed as well.
      </para>
     </listitem>
    </varlistentry>
@@ -105,7 +105,7 @@ REINDEX [ ( VERBOSE ) ] { INDEX | TABLE | SCHEMA | DATABASE | SYSTEM } <replacea
     <listitem>
      <para>
       Recreate all indexes of the specified schema.  If a table of this
-      schema has a secondary <quote>TOAST</> table, that is reindexed as
+      schema has a secondary <quote>TOAST</quote> table, that is reindexed as
       well. Indexes on shared system catalogs are also processed.
       This form of <command>REINDEX</command> cannot be executed inside a
       transaction block.
@@ -144,7 +144,7 @@ REINDEX [ ( VERBOSE ) ] { INDEX | TABLE | SCHEMA | DATABASE | SYSTEM } <replacea
      <para>
       The name of the specific index, table, or database to be
       reindexed.  Index and table names can be schema-qualified.
-      Presently, <command>REINDEX DATABASE</> and <command>REINDEX SYSTEM</>
+      Presently, <command>REINDEX DATABASE</command> and <command>REINDEX SYSTEM</command>
       can only reindex the current database, so their parameter must match
       the current database's name.
      </para>
@@ -186,10 +186,10 @@ REINDEX [ ( VERBOSE ) ] { INDEX | TABLE | SCHEMA | DATABASE | SYSTEM } <replacea
    One way to do this is to shut down the server and start a single-user
    <productname>PostgreSQL</productname> server
    with the <option>-P</option> option included on its command line.
-   Then, <command>REINDEX DATABASE</>, <command>REINDEX SYSTEM</>,
-   <command>REINDEX TABLE</>, or <command>REINDEX INDEX</> can be
+   Then, <command>REINDEX DATABASE</command>, <command>REINDEX SYSTEM</command>,
+   <command>REINDEX TABLE</command>, or <command>REINDEX INDEX</command> can be
    issued, depending on how much you want to reconstruct.  If in
-   doubt, use <command>REINDEX SYSTEM</> to select
+   doubt, use <command>REINDEX SYSTEM</command> to select
    reconstruction of all system indexes in the database.  Then quit
    the single-user server session and restart the regular server.
    See the <xref linkend="app-postgres"> reference page for more
@@ -201,8 +201,8 @@ REINDEX [ ( VERBOSE ) ] { INDEX | TABLE | SCHEMA | DATABASE | SYSTEM } <replacea
    Alternatively, a regular server session can be started with
    <option>-P</option> included in its command line options.
    The method for doing this varies across clients, but in all
-   <application>libpq</>-based clients, it is possible to set
-   the <envar>PGOPTIONS</envar> environment variable to <literal>-P</>
+   <application>libpq</application>-based clients, it is possible to set
+   the <envar>PGOPTIONS</envar> environment variable to <literal>-P</literal>
    before starting the client.  Note that while this method does not
    require locking out other clients, it might still be wise to prevent
    other users from connecting to the damaged database until repairs
@@ -212,12 +212,12 @@ REINDEX [ ( VERBOSE ) ] { INDEX | TABLE | SCHEMA | DATABASE | SYSTEM } <replacea
   <para>
    <command>REINDEX</command> is similar to a drop and recreate of the index
    in that the index contents are rebuilt from scratch.  However, the locking
-   considerations are rather different.  <command>REINDEX</> locks out writes
+   considerations are rather different.  <command>REINDEX</command> locks out writes
    but not reads of the index's parent table.  It also takes an exclusive lock
    on the specific index being processed, which will block reads that attempt
-   to use that index.  In contrast, <command>DROP INDEX</> momentarily takes
+   to use that index.  In contrast, <command>DROP INDEX</command> momentarily takes
    an exclusive lock on the parent table, blocking both writes and reads.  The
-   subsequent <command>CREATE INDEX</> locks out writes but not reads; since
+   subsequent <command>CREATE INDEX</command> locks out writes but not reads; since
    the index is not there, no read will attempt to use it, meaning that there
    will be no blocking but reads might be forced into expensive sequential
    scans.

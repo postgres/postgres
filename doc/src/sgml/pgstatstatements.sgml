@@ -13,20 +13,20 @@
  </para>
 
  <para>
-  The module must be loaded by adding <literal>pg_stat_statements</> to
+  The module must be loaded by adding <literal>pg_stat_statements</literal> to
   <xref linkend="guc-shared-preload-libraries"> in
-  <filename>postgresql.conf</>, because it requires additional shared memory.
+  <filename>postgresql.conf</filename>, because it requires additional shared memory.
   This means that a server restart is needed to add or remove the module.
  </para>
 
  <para>
    When <filename>pg_stat_statements</filename> is loaded, it tracks
    statistics across all databases of the server.  To access and manipulate
-   these statistics, the module provides a view, <structname>pg_stat_statements</>,
-   and the utility functions <function>pg_stat_statements_reset</> and
-   <function>pg_stat_statements</>.  These are not available globally but
+   these statistics, the module provides a view, <structname>pg_stat_statements</structname>,
+   and the utility functions <function>pg_stat_statements_reset</function> and
+   <function>pg_stat_statements</function>.  These are not available globally but
    can be enabled for a specific database with
-   <command>CREATE EXTENSION pg_stat_statements</>.
+   <command>CREATE EXTENSION pg_stat_statements</command>.
  </para>
 
  <sect2>
@@ -34,7 +34,7 @@
 
   <para>
    The statistics gathered by the module are made available via a
-   view named <structname>pg_stat_statements</>.  This view
+   view named <structname>pg_stat_statements</structname>.  This view
    contains one row for each distinct database ID, user ID and query
    ID (up to the maximum number of distinct statements that the module
    can track).  The columns of the view are shown in
@@ -42,7 +42,7 @@
   </para>
 
   <table id="pgstatstatements-columns">
-   <title><structname>pg_stat_statements</> Columns</title>
+   <title><structname>pg_stat_statements</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -234,9 +234,9 @@
   </para>
 
   <para>
-   Plannable queries (that is, <command>SELECT</>, <command>INSERT</>,
-   <command>UPDATE</>, and <command>DELETE</>) are combined into a single
-   <structname>pg_stat_statements</> entry whenever they have identical query
+   Plannable queries (that is, <command>SELECT</command>, <command>INSERT</command>,
+   <command>UPDATE</command>, and <command>DELETE</command>) are combined into a single
+   <structname>pg_stat_statements</structname> entry whenever they have identical query
    structures according to an internal hash calculation.  Typically, two
    queries will be considered the same for this purpose if they are
    semantically equivalent except for the values of literal constants
@@ -247,16 +247,16 @@
   <para>
    When a constant's value has been ignored for purposes of matching the query
    to other queries, the constant is replaced by a parameter symbol, such
-   as <literal>$1</literal>, in the <structname>pg_stat_statements</>
+   as <literal>$1</literal>, in the <structname>pg_stat_statements</structname>
    display.
    The rest of the query text is that of the first query that had the
-   particular <structfield>queryid</> hash value associated with the
-   <structname>pg_stat_statements</> entry.
+   particular <structfield>queryid</structfield> hash value associated with the
+   <structname>pg_stat_statements</structname> entry.
   </para>
 
   <para>
    In some cases, queries with visibly different texts might get merged into a
-   single <structname>pg_stat_statements</> entry.  Normally this will happen
+   single <structname>pg_stat_statements</structname> entry.  Normally this will happen
    only for semantically equivalent queries, but there is a small chance of
    hash collisions causing unrelated queries to be merged into one entry.
    (This cannot happen for queries belonging to different users or databases,
@@ -264,41 +264,41 @@
   </para>
 
   <para>
-   Since the <structfield>queryid</> hash value is computed on the
+   Since the <structfield>queryid</structfield> hash value is computed on the
    post-parse-analysis representation of the queries, the opposite is
    also possible: queries with identical texts might appear as
    separate entries, if they have different meanings as a result of
-   factors such as different <varname>search_path</> settings.
+   factors such as different <varname>search_path</varname> settings.
   </para>
 
   <para>
-   Consumers of <structname>pg_stat_statements</> may wish to use
-   <structfield>queryid</> (perhaps in combination with
-   <structfield>dbid</> and <structfield>userid</>) as a more stable
+   Consumers of <structname>pg_stat_statements</structname> may wish to use
+   <structfield>queryid</structfield> (perhaps in combination with
+   <structfield>dbid</structfield> and <structfield>userid</structfield>) as a more stable
    and reliable identifier for each entry than its query text.
    However, it is important to understand that there are only limited
-   guarantees around the stability of the <structfield>queryid</> hash
+   guarantees around the stability of the <structfield>queryid</structfield> hash
    value.  Since the identifier is derived from the
    post-parse-analysis tree, its value is a function of, among other
    things, the internal object identifiers appearing in this representation.
    This has some counterintuitive implications.  For example,
-   <filename>pg_stat_statements</> will consider two apparently-identical
+   <filename>pg_stat_statements</filename> will consider two apparently-identical
    queries to be distinct, if they reference a table that was dropped
    and recreated between the executions of the two queries.
    The hashing process is also sensitive to differences in
    machine architecture and other facets of the platform.
-   Furthermore, it is not safe to assume that <structfield>queryid</>
-   will be stable across major versions of <productname>PostgreSQL</>.
+   Furthermore, it is not safe to assume that <structfield>queryid</structfield>
+   will be stable across major versions of <productname>PostgreSQL</productname>.
   </para>
 
   <para>
-   As a rule of thumb, <structfield>queryid</> values can be assumed to be
+   As a rule of thumb, <structfield>queryid</structfield> values can be assumed to be
    stable and comparable only so long as the underlying server version and
    catalog metadata details stay exactly the same.  Two servers
    participating in replication based on physical WAL replay can be expected
-   to have identical <structfield>queryid</> values for the same query.
+   to have identical <structfield>queryid</structfield> values for the same query.
    However, logical replication schemes do not promise to keep replicas
-   identical in all relevant details, so <structfield>queryid</> will
+   identical in all relevant details, so <structfield>queryid</structfield> will
    not be a useful identifier for accumulating costs across a set of logical
    replicas.  If in doubt, direct testing is recommended.
   </para>
@@ -306,13 +306,13 @@
   <para>
    The parameter symbols used to replace constants in
    representative query texts start from the next number after the
-   highest <literal>$</><replaceable>n</> parameter in the original query
-   text, or <literal>$1</> if there was none.  It's worth noting that in
+   highest <literal>$</literal><replaceable>n</replaceable> parameter in the original query
+   text, or <literal>$1</literal> if there was none.  It's worth noting that in
    some cases there may be hidden parameter symbols that affect this
-   numbering.  For example, <application>PL/pgSQL</> uses hidden parameter
+   numbering.  For example, <application>PL/pgSQL</application> uses hidden parameter
    symbols to insert values of function local variables into queries, so that
-   a <application>PL/pgSQL</> statement like <literal>SELECT i + 1 INTO j</>
-   would have representative text like <literal>SELECT i + $2</>.
+   a <application>PL/pgSQL</application> statement like <literal>SELECT i + 1 INTO j</literal>
+   would have representative text like <literal>SELECT i + $2</literal>.
   </para>
 
   <para>
@@ -320,11 +320,11 @@
    not consume shared memory.  Therefore, even very lengthy query texts can
    be stored successfully.  However, if many long query texts are
    accumulated, the external file might grow unmanageably large.  As a
-   recovery method if that happens, <filename>pg_stat_statements</> may
+   recovery method if that happens, <filename>pg_stat_statements</filename> may
    choose to discard the query texts, whereupon all existing entries in
-   the <structname>pg_stat_statements</> view will show
-   null <structfield>query</> fields, though the statistics associated with
-   each <structfield>queryid</> are preserved.  If this happens, consider
+   the <structname>pg_stat_statements</structname> view will show
+   null <structfield>query</structfield> fields, though the statistics associated with
+   each <structfield>queryid</structfield> are preserved.  If this happens, consider
    reducing <varname>pg_stat_statements.max</varname> to prevent
    recurrences.
   </para>
@@ -345,7 +345,7 @@
     <listitem>
      <para>
       <function>pg_stat_statements_reset</function> discards all statistics
-      gathered so far by <filename>pg_stat_statements</>.
+      gathered so far by <filename>pg_stat_statements</filename>.
       By default, this function can only be executed by superusers.
      </para>
     </listitem>
@@ -363,17 +363,17 @@
     <listitem>
      <para>
       The <structname>pg_stat_statements</structname> view is defined in
-      terms of a function also named <function>pg_stat_statements</>.
+      terms of a function also named <function>pg_stat_statements</function>.
       It is possible for clients to call
       the <function>pg_stat_statements</function> function directly, and by
       specifying <literal>showtext := false</literal> have query text be
       omitted (that is, the <literal>OUT</literal> argument that corresponds
-      to the view's <structfield>query</> column will return nulls).  This
+      to the view's <structfield>query</structfield> column will return nulls).  This
       feature is intended to support external tools that might wish to avoid
       the overhead of repeatedly retrieving query texts of indeterminate
       length.  Such tools can instead cache the first query text observed
       for each entry themselves, since that is
-      all <filename>pg_stat_statements</> itself does, and then retrieve
+      all <filename>pg_stat_statements</filename> itself does, and then retrieve
       query texts only as needed.  Since the server stores query texts in a
       file, this approach may reduce physical I/O for repeated examination
       of the <structname>pg_stat_statements</structname> data.
@@ -396,7 +396,7 @@
      <para>
       <varname>pg_stat_statements.max</varname> is the maximum number of
       statements tracked by the module (i.e., the maximum number of rows
-      in the <structname>pg_stat_statements</> view).  If more distinct
+      in the <structname>pg_stat_statements</structname> view).  If more distinct
       statements than that are observed, information about the least-executed
       statements is discarded.
       The default value is 5000.
@@ -414,11 +414,11 @@
      <para>
       <varname>pg_stat_statements.track</varname> controls which statements
       are counted by the module.
-      Specify <literal>top</> to track top-level statements (those issued
-      directly by clients), <literal>all</> to also track nested statements
-      (such as statements invoked within functions), or <literal>none</> to
+      Specify <literal>top</literal> to track top-level statements (those issued
+      directly by clients), <literal>all</literal> to also track nested statements
+      (such as statements invoked within functions), or <literal>none</literal> to
       disable statement statistics collection.
-      The default value is <literal>top</>.
+      The default value is <literal>top</literal>.
       Only superusers can change this setting.
      </para>
     </listitem>
@@ -433,9 +433,9 @@
      <para>
       <varname>pg_stat_statements.track_utility</varname> controls whether
       utility commands are tracked by the module.  Utility commands are
-      all those other than <command>SELECT</>, <command>INSERT</>,
-      <command>UPDATE</> and <command>DELETE</>.
-      The default value is <literal>on</>.
+      all those other than <command>SELECT</command>, <command>INSERT</command>,
+      <command>UPDATE</command> and <command>DELETE</command>.
+      The default value is <literal>on</literal>.
       Only superusers can change this setting.
      </para>
     </listitem>
@@ -450,10 +450,10 @@
      <para>
       <varname>pg_stat_statements.save</varname> specifies whether to
       save statement statistics across server shutdowns.
-      If it is <literal>off</> then statistics are not saved at
+      If it is <literal>off</literal> then statistics are not saved at
       shutdown nor reloaded at server start.
-      The default value is <literal>on</>.
-      This parameter can only be set in the <filename>postgresql.conf</>
+      The default value is <literal>on</literal>.
+      This parameter can only be set in the <filename>postgresql.conf</filename>
       file or on the server command line.
      </para>
     </listitem>
@@ -464,11 +464,11 @@
    The module requires additional shared memory proportional to
    <varname>pg_stat_statements.max</varname>.  Note that this
    memory is consumed whenever the module is loaded, even if
-   <varname>pg_stat_statements.track</> is set to <literal>none</>.
+   <varname>pg_stat_statements.track</varname> is set to <literal>none</literal>.
   </para>
 
   <para>
-   These parameters must be set in <filename>postgresql.conf</>.
+   These parameters must be set in <filename>postgresql.conf</filename>.
    Typical usage might be:
 
 <programlisting>

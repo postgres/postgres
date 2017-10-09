@@ -35,7 +35,7 @@ PostgreSQL documentation
   <para>
    <application>dropuser</application> removes an existing
    <productname>PostgreSQL</productname> user.
-   Only superusers and users with the <literal>CREATEROLE</> privilege can
+   Only superusers and users with the <literal>CREATEROLE</literal> privilege can
    remove <productname>PostgreSQL</productname> users.  (To remove a
    superuser, you must yourself be a superuser.)
   </para>
@@ -70,8 +70,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-e</></term>
-      <term><option>--echo</></term>
+      <term><option>-e</option></term>
+      <term><option>--echo</option></term>
       <listitem>
        <para>
         Echo the commands that <application>dropuser</application> generates
@@ -81,8 +81,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-i</></term>
-      <term><option>--interactive</></term>
+      <term><option>-i</option></term>
+      <term><option>--interactive</option></term>
       <listitem>
        <para>
         Prompt for confirmation before actually removing the user, and prompt
@@ -92,8 +92,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-       <term><option>-V</></term>
-       <term><option>--version</></term>
+       <term><option>-V</option></term>
+       <term><option>--version</option></term>
        <listitem>
        <para>
        Print the <application>dropuser</application> version and exit.
@@ -102,7 +102,7 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>--if-exists</></term>
+      <term><option>--if-exists</option></term>
       <listitem>
        <para>
         Do not throw an error if the user does not exist. A notice is
@@ -112,8 +112,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-       <term><option>-?</></term>
-       <term><option>--help</></term>
+       <term><option>-?</option></term>
+       <term><option>--help</option></term>
        <listitem>
        <para>
        Show help about <application>dropuser</application> command line
@@ -131,8 +131,8 @@ PostgreSQL documentation
 
    <variablelist>
      <varlistentry>
-      <term><option>-h <replaceable class="parameter">host</replaceable></></term>
-      <term><option>--host=<replaceable class="parameter">host</replaceable></></term>
+      <term><option>-h <replaceable class="parameter">host</replaceable></option></term>
+      <term><option>--host=<replaceable class="parameter">host</replaceable></option></term>
       <listitem>
        <para>
         Specifies the host name of the machine on which the
@@ -144,8 +144,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-p <replaceable class="parameter">port</replaceable></></term>
-      <term><option>--port=<replaceable class="parameter">port</replaceable></></term>
+      <term><option>-p <replaceable class="parameter">port</replaceable></option></term>
+      <term><option>--port=<replaceable class="parameter">port</replaceable></option></term>
       <listitem>
        <para>
         Specifies the TCP port or local Unix domain socket file
@@ -156,8 +156,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-U <replaceable class="parameter">username</replaceable></></term>
-      <term><option>--username=<replaceable class="parameter">username</replaceable></></term>
+      <term><option>-U <replaceable class="parameter">username</replaceable></option></term>
+      <term><option>--username=<replaceable class="parameter">username</replaceable></option></term>
       <listitem>
        <para>
         User name to connect as (not the user name to drop).
@@ -166,8 +166,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-w</></term>
-      <term><option>--no-password</></term>
+      <term><option>-w</option></term>
+      <term><option>--no-password</option></term>
       <listitem>
        <para>
         Never issue a password prompt.  If the server requires
@@ -181,8 +181,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-W</></term>
-      <term><option>--password</></term>
+      <term><option>-W</option></term>
+      <term><option>--password</option></term>
       <listitem>
        <para>
         Force <application>dropuser</application> to prompt for a
@@ -195,7 +195,7 @@ PostgreSQL documentation
         for a password if the server demands password authentication.
         However, <application>dropuser</application> will waste a
         connection attempt finding out that the server wants a password.
-        In some cases it is worth typing <option>-W</> to avoid the extra
+        In some cases it is worth typing <option>-W</option> to avoid the extra
         connection attempt.
        </para>
       </listitem>
@@ -223,8 +223,8 @@ PostgreSQL documentation
   </variablelist>
 
   <para>
-   This utility, like most other <productname>PostgreSQL</> utilities,
-   also uses the environment variables supported by <application>libpq</>
+   This utility, like most other <productname>PostgreSQL</productname> utilities,
+   also uses the environment variables supported by <application>libpq</application>
    (see <xref linkend="libpq-envars">).
   </para>
 

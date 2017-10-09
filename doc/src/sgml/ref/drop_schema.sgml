@@ -114,7 +114,7 @@ DROP SCHEMA mystuff CASCADE;
    <command>DROP SCHEMA</command> is fully conforming with the SQL
    standard, except that the standard only allows one schema to be
    dropped per command, and apart from the
-   <literal>IF EXISTS</> option, which is a <productname>PostgreSQL</>
+   <literal>IF EXISTS</literal> option, which is a <productname>PostgreSQL</productname>
    extension.
   </para>
  </refsect1>

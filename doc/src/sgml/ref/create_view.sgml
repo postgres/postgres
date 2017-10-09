@@ -48,7 +48,7 @@ CREATE [ OR REPLACE ] [ TEMP | TEMPORARY ] [ RECURSIVE ] VIEW <replaceable class
 
   <para>
    If a schema name is given (for example, <literal>CREATE VIEW
-   myschema.myview ...</>) then the view is created in the specified
+   myschema.myview ...</literal>) then the view is created in the specified
    schema.  Otherwise it is created in the current schema.  Temporary
    views exist in a special schema, so a schema name cannot be given
    when creating a temporary view. The name of the view must be
@@ -62,7 +62,7 @@ CREATE [ OR REPLACE ] [ TEMP | TEMPORARY ] [ RECURSIVE ] VIEW <replaceable class
 
   <variablelist>
    <varlistentry>
-    <term><literal>TEMPORARY</> or <literal>TEMP</></term>
+    <term><literal>TEMPORARY</literal> or <literal>TEMP</literal></term>
     <listitem>
      <para>
       If specified, the view is created as a temporary view.
@@ -82,16 +82,16 @@ CREATE [ OR REPLACE ] [ TEMP | TEMPORARY ] [ RECURSIVE ] VIEW <replaceable class
    </varlistentry>
 
    <varlistentry>
-    <term><literal>RECURSIVE</></term>
+    <term><literal>RECURSIVE</literal></term>
     <listitem>
      <para>
       Creates a recursive view.  The syntax
 <synopsis>
-CREATE RECURSIVE VIEW [ <replaceable>schema</> . ] <replaceable>view_name</> (<replaceable>column_names</>) AS SELECT <replaceable>...</>;
+CREATE RECURSIVE VIEW [ <replaceable>schema</replaceable> . ] <replaceable>view_name</replaceable> (<replaceable>column_names</replaceable>) AS SELECT <replaceable>...</replaceable>;
 </synopsis>
       is equivalent to
 <synopsis>
-CREATE VIEW [ <replaceable>schema</> . ] <replaceable>view_name</> AS WITH RECURSIVE <replaceable>view_name</> (<replaceable>column_names</>) AS (SELECT <replaceable>...</>) SELECT <replaceable>column_names</> FROM <replaceable>view_name</>;
+CREATE VIEW [ <replaceable>schema</replaceable> . ] <replaceable>view_name</replaceable> AS WITH RECURSIVE <replaceable>view_name</replaceable> (<replaceable>column_names</replaceable>) AS (SELECT <replaceable>...</replaceable>) SELECT <replaceable>column_names</replaceable> FROM <replaceable>view_name</replaceable>;
 </synopsis>
       A view column name list must be specified for a recursive view.
      </para>
@@ -129,9 +129,9 @@ CREATE VIEW [ <replaceable>schema</> . ] <replaceable>view_name</> AS WITH RECUR
         <term><literal>check_option</literal> (<type>string</type>)</term>
         <listitem>
          <para>
-          This parameter may be either <literal>local</> or
-          <literal>cascaded</>, and is equivalent to specifying
-          <literal>WITH [ CASCADED | LOCAL ] CHECK OPTION</> (see below).
+          This parameter may be either <literal>local</literal> or
+          <literal>cascaded</literal>, and is equivalent to specifying
+          <literal>WITH [ CASCADED | LOCAL ] CHECK OPTION</literal> (see below).
           This option can be changed on existing views using <xref
           linkend="sql-alterview">.
          </para>
@@ -175,12 +175,12 @@ CREATE VIEW [ <replaceable>schema</> . ] <replaceable>view_name</> AS WITH RECUR
     <listitem>
      <para>
       This option controls the behavior of automatically updatable views.  When
-      this option is specified, <command>INSERT</> and <command>UPDATE</>
+      this option is specified, <command>INSERT</command> and <command>UPDATE</command>
       commands on the view will be checked to ensure that new rows satisfy the
       view-defining condition (that is, the new rows are checked to ensure that
       they are visible through the view).  If they are not, the update will be
-      rejected.  If the <literal>CHECK OPTION</> is not specified,
-      <command>INSERT</> and <command>UPDATE</> commands on the view are
+      rejected.  If the <literal>CHECK OPTION</literal> is not specified,
+      <command>INSERT</command> and <command>UPDATE</command> commands on the view are
       allowed to create rows that are not visible through the view.  The
       following check options are supported:
 
@@ -191,7 +191,7 @@ CREATE VIEW [ <replaceable>schema</> . ] <replaceable>view_name</> AS WITH RECUR
          <para>
           New rows are only checked against the conditions defined directly in
           the view itself.  Any conditions defined on underlying base views are
-          not checked (unless they also specify the <literal>CHECK OPTION</>).
+          not checked (unless they also specify the <literal>CHECK OPTION</literal>).
          </para>
         </listitem>
        </varlistentry>
@@ -201,9 +201,9 @@ CREATE VIEW [ <replaceable>schema</> . ] <replaceable>view_name</> AS WITH RECUR
         <listitem>
          <para>
           New rows are checked against the conditions of the view and all
-          underlying base views.  If the <literal>CHECK OPTION</> is specified,
-          and neither <literal>LOCAL</> nor <literal>CASCADED</> is specified,
-          then <literal>CASCADED</> is assumed.
+          underlying base views.  If the <literal>CHECK OPTION</literal> is specified,
+          and neither <literal>LOCAL</literal> nor <literal>CASCADED</literal> is specified,
+          then <literal>CASCADED</literal> is assumed.
          </para>
         </listitem>
        </varlistentry>
@@ -211,26 +211,26 @@ CREATE VIEW [ <replaceable>schema</> . ] <replaceable>view_name</> AS WITH RECUR
      </para>
 
      <para>
-      The <literal>CHECK OPTION</> may not be used with <literal>RECURSIVE</>
+      The <literal>CHECK OPTION</literal> may not be used with <literal>RECURSIVE</literal>
       views.
      </para>
 
      <para>
-      Note that the <literal>CHECK OPTION</> is only supported on views that
-      are automatically updatable, and do not have <literal>INSTEAD OF</>
-      triggers or <literal>INSTEAD</> rules.  If an automatically updatable
-      view is defined on top of a base view that has <literal>INSTEAD OF</>
-      triggers, then the <literal>LOCAL CHECK OPTION</> may be used to check
+      Note that the <literal>CHECK OPTION</literal> is only supported on views that
+      are automatically updatable, and do not have <literal>INSTEAD OF</literal>
+      triggers or <literal>INSTEAD</literal> rules.  If an automatically updatable
+      view is defined on top of a base view that has <literal>INSTEAD OF</literal>
+      triggers, then the <literal>LOCAL CHECK OPTION</literal> may be used to check
       the conditions on the automatically updatable view, but the conditions
-      on the base view with <literal>INSTEAD OF</> triggers will not be
+      on the base view with <literal>INSTEAD OF</literal> triggers will not be
       checked (a cascaded check option will not cascade down to a
       trigger-updatable view, and any check options defined directly on a
       trigger-updatable view will be ignored).  If the view or any of its base
-      relations has an <literal>INSTEAD</> rule that causes the
-      <command>INSERT</> or <command>UPDATE</> command to be rewritten, then
+      relations has an <literal>INSTEAD</literal> rule that causes the
+      <command>INSERT</command> or <command>UPDATE</command> command to be rewritten, then
       all check options will be ignored in the rewritten query, including any
       checks from automatically updatable views defined on top of the relation
-      with the <literal>INSTEAD</> rule.
+      with the <literal>INSTEAD</literal> rule.
      </para>
     </listitem>
    </varlistentry>
@@ -251,8 +251,8 @@ CREATE VIEW [ <replaceable>schema</> . ] <replaceable>view_name</> AS WITH RECUR
 <programlisting>
 CREATE VIEW vista AS SELECT 'Hello World';
 </programlisting>
-    is bad form because the column name defaults to <literal>?column?</>;
-    also, the column data type defaults to <type>text</>, which might not
+    is bad form because the column name defaults to <literal>?column?</literal>;
+    also, the column data type defaults to <type>text</type>, which might not
     be what you wanted.  Better style for a string literal in a view's
     result is something like:
 <programlisting>
@@ -271,7 +271,7 @@ CREATE VIEW vista AS SELECT text 'Hello World' AS hello;
    </para>
 
    <para>
-    When <command>CREATE OR REPLACE VIEW</> is used on an
+    When <command>CREATE OR REPLACE VIEW</command> is used on an
     existing view, only the view's defining SELECT rule is changed.
     Other view properties, including ownership, permissions, and non-SELECT
     rules, remain unchanged.  You must own the view
@@ -287,30 +287,30 @@ CREATE VIEW vista AS SELECT text 'Hello World' AS hello;
 
    <para>
     Simple views are automatically updatable: the system will allow
-    <command>INSERT</>, <command>UPDATE</> and <command>DELETE</> statements
+    <command>INSERT</command>, <command>UPDATE</command> and <command>DELETE</command> statements
     to be used on the view in the same way as on a regular table.  A view is
     automatically updatable if it satisfies all of the following conditions:
 
     <itemizedlist>
      <listitem>
       <para>
-       The view must have exactly one entry in its <literal>FROM</> list,
+       The view must have exactly one entry in its <literal>FROM</literal> list,
        which must be a table or another updatable view.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       The view definition must not contain <literal>WITH</>,
-       <literal>DISTINCT</>, <literal>GROUP BY</>, <literal>HAVING</>,
-       <literal>LIMIT</>, or <literal>OFFSET</> clauses at the top level.
+       The view definition must not contain <literal>WITH</literal>,
+       <literal>DISTINCT</literal>, <literal>GROUP BY</literal>, <literal>HAVING</literal>,
+       <literal>LIMIT</literal>, or <literal>OFFSET</literal> clauses at the top level.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       The view definition must not contain set operations (<literal>UNION</>,
-       <literal>INTERSECT</> or <literal>EXCEPT</>) at the top level.
+       The view definition must not contain set operations (<literal>UNION</literal>,
+       <literal>INTERSECT</literal> or <literal>EXCEPT</literal>) at the top level.
       </para>
      </listitem>
 
@@ -327,42 +327,42 @@ CREATE VIEW vista AS SELECT text 'Hello World' AS hello;
     An automatically updatable view may contain a mix of updatable and
     non-updatable columns.  A column is updatable if it is a simple reference
     to an updatable column of the underlying base relation; otherwise the
-    column is read-only, and an error will be raised if an <command>INSERT</>
-    or <command>UPDATE</> statement attempts to assign a value to it.
+    column is read-only, and an error will be raised if an <command>INSERT</command>
+    or <command>UPDATE</command> statement attempts to assign a value to it.
    </para>
 
    <para>
     If the view is automatically updatable the system will convert any
-    <command>INSERT</>, <command>UPDATE</> or <command>DELETE</> statement
+    <command>INSERT</command>, <command>UPDATE</command> or <command>DELETE</command> statement
     on the view into the corresponding statement on the underlying base
-    relation.  <command>INSERT</> statements that have an <literal>ON
-    CONFLICT UPDATE</> clause are fully supported.
+    relation.  <command>INSERT</command> statements that have an <literal>ON
+    CONFLICT UPDATE</literal> clause are fully supported.
    </para>
 
    <para>
-    If an automatically updatable view contains a <literal>WHERE</>
+    If an automatically updatable view contains a <literal>WHERE</literal>
     condition, the condition restricts which rows of the base relation are
-    available to be modified by <command>UPDATE</> and <command>DELETE</>
-    statements on the view.  However, an <command>UPDATE</> is allowed to
-    change a row so that it no longer satisfies the <literal>WHERE</>
+    available to be modified by <command>UPDATE</command> and <command>DELETE</command>
+    statements on the view.  However, an <command>UPDATE</command> is allowed to
+    change a row so that it no longer satisfies the <literal>WHERE</literal>
     condition, and thus is no longer visible through the view.  Similarly,
-    an <command>INSERT</> command can potentially insert base-relation rows
-    that do not satisfy the <literal>WHERE</> condition and thus are not
-    visible through the view (<literal>ON CONFLICT UPDATE</> may
+    an <command>INSERT</command> command can potentially insert base-relation rows
+    that do not satisfy the <literal>WHERE</literal> condition and thus are not
+    visible through the view (<literal>ON CONFLICT UPDATE</literal> may
     similarly affect an existing row not visible through the view).
-    The <literal>CHECK OPTION</> may be used to prevent
-    <command>INSERT</> and <command>UPDATE</> commands from creating
+    The <literal>CHECK OPTION</literal> may be used to prevent
+    <command>INSERT</command> and <command>UPDATE</command> commands from creating
     such rows that are not visible through the view.
    </para>
 
    <para>
     If an automatically updatable view is marked with the
-    <literal>security_barrier</> property then all the view's <literal>WHERE</>
+    <literal>security_barrier</literal> property then all the view's <literal>WHERE</literal>
     conditions (and any conditions using operators which are marked as <literal>LEAKPROOF</literal>)
     will always be evaluated before any conditions that a user of the view has
     added.   See <xref linkend="rules-privileges"> for full details.  Note that,
     due to this, rows which are not ultimately returned (because they do not
-    pass the user's <literal>WHERE</> conditions) may still end up being locked.
+    pass the user's <literal>WHERE</literal> conditions) may still end up being locked.
     <command>EXPLAIN</command> can be used to see which conditions are
     applied at the relation level (and therefore do not lock rows) and which are
     not.
@@ -372,7 +372,7 @@ CREATE VIEW vista AS SELECT text 'Hello World' AS hello;
     A more complex view that does not satisfy all these conditions is
     read-only by default: the system will not allow an insert, update, or
     delete on the view.  You can get the effect of an updatable view by
-    creating <literal>INSTEAD OF</> triggers on the view, which must
+    creating <literal>INSTEAD OF</literal> triggers on the view, which must
     convert attempted inserts, etc. on the view into appropriate actions
     on other tables.  For more information see <xref
     linkend="sql-createtrigger">.  Another possibility is to create rules
@@ -404,13 +404,13 @@ CREATE VIEW comedies AS
     WHERE kind = 'Comedy';
 </programlisting>
    This will create a view containing the columns that are in the
-   <literal>film</> table at the time of view creation.  Though
-   <literal>*</> was used to create the view, columns added later to
+   <literal>film</literal> table at the time of view creation.  Though
+   <literal>*</literal> was used to create the view, columns added later to
    the table will not be part of the view.
   </para>
 
   <para>
-   Create a view with <literal>LOCAL CHECK OPTION</>:
+   Create a view with <literal>LOCAL CHECK OPTION</literal>:
 
 <programlisting>
 CREATE VIEW universal_comedies AS
@@ -419,16 +419,16 @@ CREATE VIEW universal_comedies AS
     WHERE classification = 'U'
     WITH LOCAL CHECK OPTION;
 </programlisting>
-   This will create a view based on the <literal>comedies</> view, showing
-   only films with <literal>kind = 'Comedy'</> and
-   <literal>classification = 'U'</>. Any attempt to <command>INSERT</> or
-   <command>UPDATE</> a row in the view will be rejected if the new row
-   doesn't have <literal>classification = 'U'</>, but the film
-   <literal>kind</> will not be checked.
+   This will create a view based on the <literal>comedies</literal> view, showing
+   only films with <literal>kind = 'Comedy'</literal> and
+   <literal>classification = 'U'</literal>. Any attempt to <command>INSERT</command> or
+   <command>UPDATE</command> a row in the view will be rejected if the new row
+   doesn't have <literal>classification = 'U'</literal>, but the film
+   <literal>kind</literal> will not be checked.
   </para>
 
   <para>
-   Create a view with <literal>CASCADED CHECK OPTION</>:
+   Create a view with <literal>CASCADED CHECK OPTION</literal>:
 
 <programlisting>
 CREATE VIEW pg_comedies AS
@@ -437,8 +437,8 @@ CREATE VIEW pg_comedies AS
     WHERE classification = 'PG'
     WITH CASCADED CHECK OPTION;
 </programlisting>
-   This will create a view that checks both the <literal>kind</> and
-   <literal>classification</> of new rows.
+   This will create a view that checks both the <literal>kind</literal> and
+   <literal>classification</literal> of new rows.
   </para>
 
   <para>
@@ -454,10 +454,10 @@ CREATE VIEW comedies AS
     FROM films f
     WHERE f.kind = 'Comedy';
 </programlisting>
-   This view will support <command>INSERT</>, <command>UPDATE</> and
-   <command>DELETE</>.  All the columns from the <literal>films</> table will
-   be updatable, whereas the computed columns <literal>country</> and
-   <literal>avg_rating</> will be read-only.
+   This view will support <command>INSERT</command>, <command>UPDATE</command> and
+   <command>DELETE</command>.  All the columns from the <literal>films</literal> table will
+   be updatable, whereas the computed columns <literal>country</literal> and
+   <literal>avg_rating</literal> will be read-only.
   </para>
 
   <para>
@@ -469,7 +469,7 @@ UNION ALL
     SELECT n+1 FROM nums_1_100 WHERE n &lt; 100;
 </programlisting>
    Notice that although the recursive view's name is schema-qualified in this
-   <command>CREATE</>, its internal self-reference is not schema-qualified.
+   <command>CREATE</command>, its internal self-reference is not schema-qualified.
    This is because the implicitly-created CTE's name cannot be
    schema-qualified.
   </para>
@@ -482,7 +482,7 @@ UNION ALL
    <command>CREATE OR REPLACE VIEW</command> is a
    <productname>PostgreSQL</productname> language extension.
    So is the concept of a temporary view.
-   The <literal>WITH ( ... )</> clause is an extension as well.
+   The <literal>WITH ( ... )</literal> clause is an extension as well.
   </para>
  </refsect1>
 

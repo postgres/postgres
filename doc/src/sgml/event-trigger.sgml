@@ -9,7 +9,7 @@
 
   <para>
    To supplement the trigger mechanism discussed in <xref linkend="triggers">,
-   <productname>PostgreSQL</> also provides event triggers.  Unlike regular
+   <productname>PostgreSQL</productname> also provides event triggers.  Unlike regular
    triggers, which are attached to a single table and capture only DML events,
    event triggers are global to a particular database and are capable of
    capturing DDL events.
@@ -28,67 +28,67 @@
      An event trigger fires whenever the event with which it is associated
      occurs in the database in which it is defined. Currently, the only
      supported events are
-     <literal>ddl_command_start</>,
-     <literal>ddl_command_end</>,
-     <literal>table_rewrite</>
-     and <literal>sql_drop</>.
+     <literal>ddl_command_start</literal>,
+     <literal>ddl_command_end</literal>,
+     <literal>table_rewrite</literal>
+     and <literal>sql_drop</literal>.
      Support for additional events may be added in future releases.
    </para>
 
    <para>
-     The <literal>ddl_command_start</> event occurs just before the
-     execution of a <literal>CREATE</>, <literal>ALTER</>, <literal>DROP</>,
-     <literal>SECURITY LABEL</>,
-     <literal>COMMENT</>, <literal>GRANT</> or <literal>REVOKE</>
+     The <literal>ddl_command_start</literal> event occurs just before the
+     execution of a <literal>CREATE</literal>, <literal>ALTER</literal>, <literal>DROP</literal>,
+     <literal>SECURITY LABEL</literal>,
+     <literal>COMMENT</literal>, <literal>GRANT</literal> or <literal>REVOKE</literal>
      command.  No check whether the affected object exists or doesn't exist is
      performed before the event trigger fires.
      As an exception, however, this event does not occur for
      DDL commands targeting shared objects &mdash; databases, roles, and tablespaces
      &mdash; or for commands targeting event triggers themselves.  The event trigger
      mechanism does not support these object types.
-     <literal>ddl_command_start</> also occurs just before the execution of a
+     <literal>ddl_command_start</literal> also occurs just before the execution of a
      <literal>SELECT INTO</literal> command, since this is equivalent to
      <literal>CREATE TABLE AS</literal>.
    </para>
 
    <para>
-    The <literal>ddl_command_end</> event occurs just after the execution of
-    this same set of commands.  To obtain more details on the <acronym>DDL</>
+    The <literal>ddl_command_end</literal> event occurs just after the execution of
+    this same set of commands.  To obtain more details on the <acronym>DDL</acronym>
     operations that took place, use the set-returning function
-    <literal>pg_event_trigger_ddl_commands()</> from the
-    <literal>ddl_command_end</> event trigger code (see
+    <literal>pg_event_trigger_ddl_commands()</literal> from the
+    <literal>ddl_command_end</literal> event trigger code (see
     <xref linkend="functions-event-triggers">).  Note that the trigger fires
     after the actions have taken place (but before the transaction commits),
     and thus the system catalogs can be read as already changed.
    </para>
 
    <para>
-    The <literal>sql_drop</> event occurs just before the
-    <literal>ddl_command_end</> event trigger for any operation that drops
+    The <literal>sql_drop</literal> event occurs just before the
+    <literal>ddl_command_end</literal> event trigger for any operation that drops
     database objects.  To list the objects that have been dropped, use the
-    set-returning function <literal>pg_event_trigger_dropped_objects()</> from the
-    <literal>sql_drop</> event trigger code (see
+    set-returning function <literal>pg_event_trigger_dropped_objects()</literal> from the
+    <literal>sql_drop</literal> event trigger code (see
     <xref linkend="functions-event-triggers">). Note that
     the trigger is executed after the objects have been deleted from the
     system catalogs, so it's not possible to look them up anymore.
    </para>
 
    <para>
-    The <literal>table_rewrite</> event occurs just before a table is
-    rewritten by some actions of the commands <literal>ALTER TABLE</> and
-    <literal>ALTER TYPE</>.  While other
+    The <literal>table_rewrite</literal> event occurs just before a table is
+    rewritten by some actions of the commands <literal>ALTER TABLE</literal> and
+    <literal>ALTER TYPE</literal>.  While other
     control statements are available to rewrite a table,
     like <literal>CLUSTER</literal> and <literal>VACUUM</literal>,
-    the <literal>table_rewrite</> event is not triggered by them.
+    the <literal>table_rewrite</literal> event is not triggered by them.
    </para>
 
    <para>
      Event triggers (like other functions) cannot be executed in an aborted
      transaction.  Thus, if a DDL command fails with an error, any associated
-     <literal>ddl_command_end</> triggers will not be executed.  Conversely,
-     if a <literal>ddl_command_start</> trigger fails with an error, no
+     <literal>ddl_command_end</literal> triggers will not be executed.  Conversely,
+     if a <literal>ddl_command_start</literal> trigger fails with an error, no
      further event triggers will fire, and no attempt will be made to execute
-     the command itself.  Similarly, if a <literal>ddl_command_end</> trigger
+     the command itself.  Similarly, if a <literal>ddl_command_end</literal> trigger
      fails with an error, the effects of the DDL statement will be rolled
      back, just as they would be in any other case where the containing
      transaction aborts.
@@ -879,14 +879,14 @@
    </para>
 
    <para>
-    Event trigger functions must use the <quote>version 1</> function
+    Event trigger functions must use the <quote>version 1</quote> function
     manager interface.
    </para>
 
    <para>
     When a function is called by the event trigger manager, it is not passed
-    any normal arguments, but it is passed a <quote>context</> pointer
-    pointing to a <structname>EventTriggerData</> structure. C functions can
+    any normal arguments, but it is passed a <quote>context</quote> pointer
+    pointing to a <structname>EventTriggerData</structname> structure. C functions can
     check whether they were called from the event trigger manager or not by
     executing the macro:
 <programlisting>
@@ -897,10 +897,10 @@ CALLED_AS_EVENT_TRIGGER(fcinfo)
 ((fcinfo)-&gt;context != NULL &amp;&amp; IsA((fcinfo)-&gt;context, EventTriggerData))
 </programlisting>
     If this returns true, then it is safe to cast
-    <literal>fcinfo-&gt;context</> to type <literal>EventTriggerData
+    <literal>fcinfo-&gt;context</literal> to type <literal>EventTriggerData
     *</literal> and make use of the pointed-to
-    <structname>EventTriggerData</> structure.  The function must
-    <emphasis>not</emphasis> alter the <structname>EventTriggerData</>
+    <structname>EventTriggerData</structname> structure.  The function must
+    <emphasis>not</emphasis> alter the <structname>EventTriggerData</structname>
     structure or any of the data it points to.
    </para>
 
@@ -922,7 +922,7 @@ typedef struct EventTriggerData
 
     <variablelist>
      <varlistentry>
-      <term><structfield>type</></term>
+      <term><structfield>type</structfield></term>
       <listitem>
        <para>
         Always <literal>T_EventTriggerData</literal>.
@@ -931,7 +931,7 @@ typedef struct EventTriggerData
      </varlistentry>
 
      <varlistentry>
-      <term><structfield>event</></term>
+      <term><structfield>event</structfield></term>
       <listitem>
        <para>
         Describes the event for which the function is called, one of
@@ -944,7 +944,7 @@ typedef struct EventTriggerData
      </varlistentry>
 
      <varlistentry>
-      <term><structfield>parsetree</></term>
+      <term><structfield>parsetree</structfield></term>
       <listitem>
        <para>
         A pointer to the parse tree of the command.  Check the PostgreSQL
@@ -955,7 +955,7 @@ typedef struct EventTriggerData
      </varlistentry>
 
      <varlistentry>
-      <term><structfield>tag</></term>
+      <term><structfield>tag</structfield></term>
       <listitem>
        <para>
         The command tag associated with the event for which the event trigger
@@ -967,8 +967,8 @@ typedef struct EventTriggerData
    </para>
 
    <para>
-    An event trigger function must return a <symbol>NULL</> pointer
-    (<emphasis>not</> an SQL null value, that is, do not
+    An event trigger function must return a <symbol>NULL</symbol> pointer
+    (<emphasis>not</emphasis> an SQL null value, that is, do not
     set <parameter>isNull</parameter> true).
    </para>
   </sect1>
@@ -983,7 +983,7 @@ typedef struct EventTriggerData
    </para>
 
    <para>
-    The function <function>noddl</> raises an exception each time it is called.
+    The function <function>noddl</function> raises an exception each time it is called.
     The event trigger definition associated the function with
     the <literal>ddl_command_start</literal> event.  The effect is that all DDL
     commands (with the exceptions mentioned
@@ -1068,7 +1068,7 @@ COMMIT;
    <title>A Table Rewrite Event Trigger Example</title>
 
    <para>
-    Thanks to the <literal>table_rewrite</> event, it is possible to implement
+    Thanks to the <literal>table_rewrite</literal> event, it is possible to implement
     a table rewriting policy only allowing the rewrite in maintenance windows.
    </para>
 

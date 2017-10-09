@@ -153,14 +153,14 @@ SET SESSION CHARACTERISTICS AS TRANSACTION <replaceable class="parameter">transa
 
   <para>
    The <literal>SET TRANSACTION SNAPSHOT</literal> command allows a new
-   transaction to run with the same <firstterm>snapshot</> as an existing
+   transaction to run with the same <firstterm>snapshot</firstterm> as an existing
    transaction.  The pre-existing transaction must have exported its snapshot
    with the <literal>pg_export_snapshot</literal> function (see <xref
    linkend="functions-snapshot-synchronization">).  That function returns a
    snapshot identifier, which must be given to <literal>SET TRANSACTION
    SNAPSHOT</literal> to specify which snapshot is to be imported.  The
    identifier must be written as a string literal in this command, for example
-   <literal>'000003A1-1'</>.
+   <literal>'000003A1-1'</literal>.
    <literal>SET TRANSACTION SNAPSHOT</literal> can only be executed at the
    start of a transaction, before the first query or
    data-modification statement (<command>SELECT</command>,
@@ -169,7 +169,7 @@ SET SESSION CHARACTERISTICS AS TRANSACTION <replaceable class="parameter">transa
    <command>COPY</command>) of the transaction.  Furthermore, the transaction
    must already be set to <literal>SERIALIZABLE</literal> or
    <literal>REPEATABLE READ</literal> isolation level (otherwise, the snapshot
-   would be discarded immediately, since <literal>READ COMMITTED</> mode takes
+   would be discarded immediately, since <literal>READ COMMITTED</literal> mode takes
    a new snapshot for each command).  If the importing transaction uses
    <literal>SERIALIZABLE</literal> isolation level, then the transaction that
    exported the snapshot must also use that isolation level.  Also, a
@@ -203,9 +203,9 @@ SET SESSION CHARACTERISTICS AS TRANSACTION <replaceable class="parameter">transa
    <xref linkend="guc-default-transaction-read-only">, and
    <xref linkend="guc-default-transaction-deferrable">.
    (In fact <command>SET SESSION CHARACTERISTICS</command> is just a
-   verbose equivalent for setting these variables with <command>SET</>.)
+   verbose equivalent for setting these variables with <command>SET</command>.)
    This means the defaults can be set in the configuration file, via
-   <command>ALTER DATABASE</>, etc.  Consult <xref linkend="runtime-config">
+   <command>ALTER DATABASE</command>, etc.  Consult <xref linkend="runtime-config">
    for more information.
   </para>
  </refsect1>
@@ -243,7 +243,7 @@ SET TRANSACTION SNAPSHOT '00000003-0000001B-1';
   <para>
    These commands are defined in the <acronym>SQL</acronym> standard,
    except for the <literal>DEFERRABLE</literal> transaction mode
-   and the <command>SET TRANSACTION SNAPSHOT</> form, which are
+   and the <command>SET TRANSACTION SNAPSHOT</command> form, which are
    <productname>PostgreSQL</productname> extensions.
   </para>
 

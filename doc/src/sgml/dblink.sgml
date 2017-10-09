@@ -8,8 +8,8 @@
  </indexterm>
 
  <para>
-  <filename>dblink</> is a module that supports connections to
-  other <productname>PostgreSQL</> databases from within a database
+  <filename>dblink</filename> is a module that supports connections to
+  other <productname>PostgreSQL</productname> databases from within a database
   session.
  </para>
 
@@ -44,9 +44,9 @@ dblink_connect(text connname, text connstr) returns text
    <title>Description</title>
 
    <para>
-    <function>dblink_connect()</> establishes a connection to a remote
-    <productname>PostgreSQL</> database.  The server and database to
-    be contacted are identified through a standard <application>libpq</>
+    <function>dblink_connect()</function> establishes a connection to a remote
+    <productname>PostgreSQL</productname> database.  The server and database to
+    be contacted are identified through a standard <application>libpq</application>
     connection string.  Optionally, a name can be assigned to the
     connection.  Multiple named connections can be open at once, but
     only one unnamed connection is permitted at a time.  The connection
@@ -81,9 +81,9 @@ dblink_connect(text connname, text connstr) returns text
     <varlistentry>
      <term><parameter>connstr</parameter></term>
      <listitem>
-      <para><application>libpq</>-style connection info string, for example
+      <para><application>libpq</application>-style connection info string, for example
        <literal>hostaddr=127.0.0.1 port=5432 dbname=mydb user=postgres
-       password=mypasswd</>.
+       password=mypasswd</literal>.
        For details see <xref linkend="libpq-connstring">.
        Alternatively, the name of a foreign server.
       </para>
@@ -96,7 +96,7 @@ dblink_connect(text connname, text connstr) returns text
    <title>Return Value</title>
 
    <para>
-    Returns status, which is always <literal>OK</> (since any error
+    Returns status, which is always <literal>OK</literal> (since any error
     causes the function to throw an error instead of returning).
    </para>
   </refsect1>
@@ -105,15 +105,15 @@ dblink_connect(text connname, text connstr) returns text
    <title>Notes</title>
 
    <para>
-    Only superusers may use <function>dblink_connect</> to create
+    Only superusers may use <function>dblink_connect</function> to create
     non-password-authenticated connections.  If non-superusers need this
-    capability, use <function>dblink_connect_u</> instead.
+    capability, use <function>dblink_connect_u</function> instead.
    </para>
 
    <para>
     It is unwise to choose connection names that contain equal signs,
     as this opens a risk of confusion with connection info strings
-    in other <filename>dblink</> functions.
+    in other <filename>dblink</filename> functions.
    </para>
   </refsect1>
 
@@ -208,8 +208,8 @@ dblink_connect_u(text connname, text connstr) returns text
    <title>Description</title>
 
    <para>
-    <function>dblink_connect_u()</> is identical to
-    <function>dblink_connect()</>, except that it will allow non-superusers
+    <function>dblink_connect_u()</function> is identical to
+    <function>dblink_connect()</function>, except that it will allow non-superusers
     to connect using any authentication method.
    </para>
 
@@ -217,24 +217,24 @@ dblink_connect_u(text connname, text connstr) returns text
     If the remote server selects an authentication method that does not
     involve a password, then impersonation and subsequent escalation of
     privileges can occur, because the session will appear to have
-    originated from the user as which the local <productname>PostgreSQL</>
+    originated from the user as which the local <productname>PostgreSQL</productname>
     server runs.  Also, even if the remote server does demand a password,
     it is possible for the password to be supplied from the server
-    environment, such as a <filename>~/.pgpass</> file belonging to the
+    environment, such as a <filename>~/.pgpass</filename> file belonging to the
     server's user.  This opens not only a risk of impersonation, but the
     possibility of exposing a password to an untrustworthy remote server.
-    Therefore, <function>dblink_connect_u()</> is initially
-    installed with all privileges revoked from <literal>PUBLIC</>,
+    Therefore, <function>dblink_connect_u()</function> is initially
+    installed with all privileges revoked from <literal>PUBLIC</literal>,
     making it un-callable except by superusers.  In some situations
-    it may be appropriate to grant <literal>EXECUTE</> permission for
-    <function>dblink_connect_u()</> to specific users who are considered
+    it may be appropriate to grant <literal>EXECUTE</literal> permission for
+    <function>dblink_connect_u()</function> to specific users who are considered
     trustworthy, but this should be done with care.  It is also recommended
-    that any <filename>~/.pgpass</> file belonging to the server's user
-    <emphasis>not</> contain any records specifying a wildcard host name.
+    that any <filename>~/.pgpass</filename> file belonging to the server's user
+    <emphasis>not</emphasis> contain any records specifying a wildcard host name.
    </para>
 
    <para>
-    For further details see <function>dblink_connect()</>.
+    For further details see <function>dblink_connect()</function>.
    </para>
   </refsect1>
  </refentry>
@@ -265,8 +265,8 @@ dblink_disconnect(text connname) returns text
    <title>Description</title>
 
    <para>
-    <function>dblink_disconnect()</> closes a connection previously opened
-    by <function>dblink_connect()</>.  The form with no arguments closes
+    <function>dblink_disconnect()</function> closes a connection previously opened
+    by <function>dblink_connect()</function>.  The form with no arguments closes
     an unnamed connection.
    </para>
   </refsect1>
@@ -290,7 +290,7 @@ dblink_disconnect(text connname) returns text
    <title>Return Value</title>
 
    <para>
-    Returns status, which is always <literal>OK</> (since any error
+    Returns status, which is always <literal>OK</literal> (since any error
     causes the function to throw an error instead of returning).
    </para>
   </refsect1>
@@ -341,15 +341,15 @@ dblink(text sql [, bool fail_on_error]) returns setof record
    <title>Description</title>
 
    <para>
-    <function>dblink</> executes a query (usually a <command>SELECT</>,
+    <function>dblink</function> executes a query (usually a <command>SELECT</command>,
     but it can be any SQL statement that returns rows) in a remote database.
    </para>
 
    <para>
-    When two <type>text</> arguments are given, the first one is first
+    When two <type>text</type> arguments are given, the first one is first
     looked up as a persistent connection's name; if found, the command
     is executed on that connection.  If not found, the first argument
-    is treated as a connection info string as for <function>dblink_connect</>,
+    is treated as a connection info string as for <function>dblink_connect</function>,
     and the indicated connection is made just for the duration of this command.
    </para>
   </refsect1>
@@ -373,7 +373,7 @@ dblink(text sql [, bool fail_on_error]) returns setof record
      <listitem>
       <para>
        A connection info string, as previously described for
-       <function>dblink_connect</>.
+       <function>dblink_connect</function>.
       </para>
      </listitem>
     </varlistentry>
@@ -383,7 +383,7 @@ dblink(text sql [, bool fail_on_error]) returns setof record
      <listitem>
       <para>
        The SQL query that you wish to execute in the remote database,
-       for example <literal>select * from foo</>.
+       for example <literal>select * from foo</literal>.
       </para>
      </listitem>
     </varlistentry>
@@ -407,11 +407,11 @@ dblink(text sql [, bool fail_on_error]) returns setof record
 
    <para>
     The function returns the row(s) produced by the query.  Since
-    <function>dblink</> can be used with any query, it is declared
-    to return <type>record</>, rather than specifying any particular
+    <function>dblink</function> can be used with any query, it is declared
+    to return <type>record</type>, rather than specifying any particular
     set of columns.  This means that you must specify the expected
     set of columns in the calling query &mdash; otherwise
-    <productname>PostgreSQL</> would not know what to expect.
+    <productname>PostgreSQL</productname> would not know what to expect.
     Here is an example:
 
 <programlisting>
@@ -421,20 +421,20 @@ SELECT *
     WHERE proname LIKE 'bytea%';
 </programlisting>
 
-    The <quote>alias</> part of the <literal>FROM</> clause must
+    The <quote>alias</quote> part of the <literal>FROM</literal> clause must
     specify the column names and types that the function will return.
     (Specifying column names in an alias is actually standard SQL
-    syntax, but specifying column types is a <productname>PostgreSQL</>
+    syntax, but specifying column types is a <productname>PostgreSQL</productname>
     extension.)  This allows the system to understand what
-    <literal>*</> should expand to, and what <structname>proname</>
-    in the <literal>WHERE</> clause refers to, in advance of trying
+    <literal>*</literal> should expand to, and what <structname>proname</structname>
+    in the <literal>WHERE</literal> clause refers to, in advance of trying
     to execute the function.  At run time, an error will be thrown
     if the actual query result from the remote database does not
-    have the same number of columns shown in the <literal>FROM</> clause.
-    The column names need not match, however, and <function>dblink</>
+    have the same number of columns shown in the <literal>FROM</literal> clause.
+    The column names need not match, however, and <function>dblink</function>
     does not insist on exact type matches either.  It will succeed
     so long as the returned data strings are valid input for the
-    column type declared in the <literal>FROM</> clause.
+    column type declared in the <literal>FROM</literal> clause.
    </para>
   </refsect1>
 
@@ -442,7 +442,7 @@ SELECT *
    <title>Notes</title>
 
    <para>
-    A convenient way to use <function>dblink</> with predetermined
+    A convenient way to use <function>dblink</function> with predetermined
     queries is to create a view.
     This allows the column type information to be buried in the view,
     instead of having to spell it out in every query.  For example,
@@ -559,15 +559,15 @@ dblink_exec(text sql [, bool fail_on_error]) returns text
    <title>Description</title>
 
    <para>
-    <function>dblink_exec</> executes a command (that is, any SQL statement
+    <function>dblink_exec</function> executes a command (that is, any SQL statement
     that doesn't return rows) in a remote database.
    </para>
 
    <para>
-    When two <type>text</> arguments are given, the first one is first
+    When two <type>text</type> arguments are given, the first one is first
     looked up as a persistent connection's name; if found, the command
     is executed on that connection.  If not found, the first argument
-    is treated as a connection info string as for <function>dblink_connect</>,
+    is treated as a connection info string as for <function>dblink_connect</function>,
     and the indicated connection is made just for the duration of this command.
    </para>
   </refsect1>
@@ -591,7 +591,7 @@ dblink_exec(text sql [, bool fail_on_error]) returns text
      <listitem>
       <para>
        A connection info string, as previously described for
-       <function>dblink_connect</>.
+       <function>dblink_connect</function>.
       </para>
      </listitem>
     </varlistentry>
@@ -602,7 +602,7 @@ dblink_exec(text sql [, bool fail_on_error]) returns text
       <para>
        The SQL command that you wish to execute in the remote database,
        for example
-       <literal>insert into foo values(0,'a','{"a0","b0","c0"}')</>.
+       <literal>insert into foo values(0,'a','{"a0","b0","c0"}')</literal>.
       </para>
      </listitem>
     </varlistentry>
@@ -614,7 +614,7 @@ dblink_exec(text sql [, bool fail_on_error]) returns text
        If true (the default when omitted) then an error thrown on the
        remote side of the connection causes an error to also be thrown
        locally. If false, the remote error is locally reported as a NOTICE,
-       and the function's return value is set to <literal>ERROR</>.
+       and the function's return value is set to <literal>ERROR</literal>.
       </para>
      </listitem>
     </varlistentry>
@@ -625,7 +625,7 @@ dblink_exec(text sql [, bool fail_on_error]) returns text
    <title>Return Value</title>
 
    <para>
-    Returns status, either the command's status string or <literal>ERROR</>.
+    Returns status, either the command's status string or <literal>ERROR</literal>.
    </para>
   </refsect1>
 
@@ -695,9 +695,9 @@ dblink_open(text connname, text cursorname, text sql [, bool fail_on_error]) ret
    <title>Description</title>
 
    <para>
-    <function>dblink_open()</> opens a cursor in a remote database.
+    <function>dblink_open()</function> opens a cursor in a remote database.
     The cursor can subsequently be manipulated with
-    <function>dblink_fetch()</> and <function>dblink_close()</>.
+    <function>dblink_fetch()</function> and <function>dblink_close()</function>.
    </para>
   </refsect1>
 
@@ -728,8 +728,8 @@ dblink_open(text connname, text cursorname, text sql [, bool fail_on_error]) ret
      <term><parameter>sql</parameter></term>
      <listitem>
       <para>
-       The <command>SELECT</> statement that you wish to execute in the remote
-       database, for example <literal>select * from pg_class</>.
+       The <command>SELECT</command> statement that you wish to execute in the remote
+       database, for example <literal>select * from pg_class</literal>.
       </para>
      </listitem>
     </varlistentry>
@@ -741,7 +741,7 @@ dblink_open(text connname, text cursorname, text sql [, bool fail_on_error]) ret
        If true (the default when omitted) then an error thrown on the
        remote side of the connection causes an error to also be thrown
        locally. If false, the remote error is locally reported as a NOTICE,
-       and the function's return value is set to <literal>ERROR</>.
+       and the function's return value is set to <literal>ERROR</literal>.
       </para>
      </listitem>
     </varlistentry>
@@ -752,7 +752,7 @@ dblink_open(text connname, text cursorname, text sql [, bool fail_on_error]) ret
    <title>Return Value</title>
 
    <para>
-    Returns status, either <literal>OK</> or <literal>ERROR</>.
+    Returns status, either <literal>OK</literal> or <literal>ERROR</literal>.
    </para>
   </refsect1>
 
@@ -761,16 +761,16 @@ dblink_open(text connname, text cursorname, text sql [, bool fail_on_error]) ret
 
    <para>
     Since a cursor can only persist within a transaction,
-    <function>dblink_open</> starts an explicit transaction block
-    (<command>BEGIN</>) on the remote side, if the remote side was
+    <function>dblink_open</function> starts an explicit transaction block
+    (<command>BEGIN</command>) on the remote side, if the remote side was
     not already within a transaction.  This transaction will be
-    closed again when the matching <function>dblink_close</> is
+    closed again when the matching <function>dblink_close</function> is
     executed.  Note that if
-    you use <function>dblink_exec</> to change data between
-    <function>dblink_open</> and <function>dblink_close</>,
-    and then an error occurs or you use <function>dblink_disconnect</> before
-    <function>dblink_close</>, your change <emphasis>will be
-    lost</> because the transaction will be aborted.
+    you use <function>dblink_exec</function> to change data between
+    <function>dblink_open</function> and <function>dblink_close</function>,
+    and then an error occurs or you use <function>dblink_disconnect</function> before
+    <function>dblink_close</function>, your change <emphasis>will be
+    lost</emphasis> because the transaction will be aborted.
    </para>
   </refsect1>
 
@@ -819,8 +819,8 @@ dblink_fetch(text connname, text cursorname, int howmany [, bool fail_on_error])
    <title>Description</title>
 
    <para>
-    <function>dblink_fetch</> fetches rows from a cursor previously
-    established by <function>dblink_open</>.
+    <function>dblink_fetch</function> fetches rows from a cursor previously
+    established by <function>dblink_open</function>.
    </para>
   </refsect1>
 
@@ -851,7 +851,7 @@ dblink_fetch(text connname, text cursorname, int howmany [, bool fail_on_error])
      <term><parameter>howmany</parameter></term>
      <listitem>
       <para>
-       The maximum number of rows to retrieve. The next <parameter>howmany</>
+       The maximum number of rows to retrieve. The next <parameter>howmany</parameter>
        rows are fetched, starting at the current cursor position, moving
        forward. Once the cursor has reached its end, no more rows are produced.
       </para>
@@ -878,7 +878,7 @@ dblink_fetch(text connname, text cursorname, int howmany [, bool fail_on_error])
    <para>
     The function returns the row(s) fetched from the cursor.  To use this
     function, you will need to specify the expected set of columns,
-    as previously discussed for <function>dblink</>.
+    as previously discussed for <function>dblink</function>.
    </para>
   </refsect1>
 
@@ -887,11 +887,11 @@ dblink_fetch(text connname, text cursorname, int howmany [, bool fail_on_error])
 
    <para>
     On a mismatch between the number of return columns specified in the
-    <literal>FROM</> clause, and the actual number of columns returned by the
+    <literal>FROM</literal> clause, and the actual number of columns returned by the
     remote cursor, an error will be thrown. In this event, the remote cursor
     is still advanced by as many rows as it would have been if the error had
     not occurred.  The same is true for any other error occurring in the local
-    query after the remote <command>FETCH</> has been done.
+    query after the remote <command>FETCH</command> has been done.
    </para>
   </refsect1>
 
@@ -972,8 +972,8 @@ dblink_close(text connname, text cursorname [, bool fail_on_error]) returns text
    <title>Description</title>
 
    <para>
-    <function>dblink_close</> closes a cursor previously opened with
-    <function>dblink_open</>.
+    <function>dblink_close</function> closes a cursor previously opened with
+    <function>dblink_open</function>.
    </para>
   </refsect1>
 
@@ -1007,7 +1007,7 @@ dblink_close(text connname, text cursorname [, bool fail_on_error]) returns text
        If true (the default when omitted) then an error thrown on the
        remote side of the connection causes an error to also be thrown
        locally. If false, the remote error is locally reported as a NOTICE,
-       and the function's return value is set to <literal>ERROR</>.
+       and the function's return value is set to <literal>ERROR</literal>.
       </para>
      </listitem>
     </varlistentry>
@@ -1018,7 +1018,7 @@ dblink_close(text connname, text cursorname [, bool fail_on_error]) returns text
    <title>Return Value</title>
 
    <para>
-    Returns status, either <literal>OK</> or <literal>ERROR</>.
+    Returns status, either <literal>OK</literal> or <literal>ERROR</literal>.
    </para>
   </refsect1>
 
@@ -1026,9 +1026,9 @@ dblink_close(text connname, text cursorname [, bool fail_on_error]) returns text
    <title>Notes</title>
 
    <para>
-    If <function>dblink_open</> started an explicit transaction block,
+    If <function>dblink_open</function> started an explicit transaction block,
     and this is the last remaining open cursor in this connection,
-    <function>dblink_close</> will issue the matching <command>COMMIT</>.
+    <function>dblink_close</function> will issue the matching <command>COMMIT</command>.
    </para>
   </refsect1>
 
@@ -1082,8 +1082,8 @@ dblink_get_connections() returns text[]
    <title>Description</title>
 
    <para>
-    <function>dblink_get_connections</> returns an array of the names
-    of all open named <filename>dblink</> connections.
+    <function>dblink_get_connections</function> returns an array of the names
+    of all open named <filename>dblink</filename> connections.
    </para>
   </refsect1>
 
@@ -1127,7 +1127,7 @@ dblink_error_message(text connname) returns text
    <title>Description</title>
 
    <para>
-    <function>dblink_error_message</> fetches the most recent remote
+    <function>dblink_error_message</function> fetches the most recent remote
     error message for a given connection.
    </para>
   </refsect1>
@@ -1190,7 +1190,7 @@ dblink_send_query(text connname, text sql) returns int
    <title>Description</title>
 
    <para>
-    <function>dblink_send_query</> sends a query to be executed
+    <function>dblink_send_query</function> sends a query to be executed
     asynchronously, that is, without immediately waiting for the result.
     There must not be an async query already in progress on the
     connection.
@@ -1198,10 +1198,10 @@ dblink_send_query(text connname, text sql) returns int
 
    <para>
     After successfully dispatching an async query, completion status
-    can be checked with <function>dblink_is_busy</>, and the results
-    are ultimately collected with <function>dblink_get_result</>.
+    can be checked with <function>dblink_is_busy</function>, and the results
+    are ultimately collected with <function>dblink_get_result</function>.
     It is also possible to attempt to cancel an active async query
-    using <function>dblink_cancel_query</>.
+    using <function>dblink_cancel_query</function>.
    </para>
   </refsect1>
 
@@ -1223,7 +1223,7 @@ dblink_send_query(text connname, text sql) returns int
      <listitem>
       <para>
        The SQL statement that you wish to execute in the remote database,
-       for example <literal>select * from pg_class</>.
+       for example <literal>select * from pg_class</literal>.
       </para>
      </listitem>
     </varlistentry>
@@ -1272,7 +1272,7 @@ dblink_is_busy(text connname) returns int
    <title>Description</title>
 
    <para>
-    <function>dblink_is_busy</> tests whether an async query is in progress.
+    <function>dblink_is_busy</function> tests whether an async query is in progress.
    </para>
   </refsect1>
 
@@ -1297,7 +1297,7 @@ dblink_is_busy(text connname) returns int
    <para>
     Returns 1 if connection is busy, 0 if it is not busy.
     If this function returns 0, it is guaranteed that
-    <function>dblink_get_result</> will not block.
+    <function>dblink_get_result</function> will not block.
    </para>
   </refsect1>
 
@@ -1336,10 +1336,10 @@ dblink_get_notify(text connname) returns setof (notify_name text, be_pid int, ex
    <title>Description</title>
 
    <para>
-    <function>dblink_get_notify</> retrieves notifications on either
+    <function>dblink_get_notify</function> retrieves notifications on either
     the unnamed connection, or on a named connection if specified.
-    To receive notifications via dblink, <function>LISTEN</> must
-    first be issued, using <function>dblink_exec</>.
+    To receive notifications via dblink, <function>LISTEN</function> must
+    first be issued, using <function>dblink_exec</function>.
     For details see <xref linkend="sql-listen"> and <xref linkend="sql-notify">.
    </para>
 
@@ -1417,9 +1417,9 @@ dblink_get_result(text connname [, bool fail_on_error]) returns setof record
    <title>Description</title>
 
    <para>
-    <function>dblink_get_result</> collects the results of an
-    asynchronous query previously sent with <function>dblink_send_query</>.
-    If the query is not already completed, <function>dblink_get_result</>
+    <function>dblink_get_result</function> collects the results of an
+    asynchronous query previously sent with <function>dblink_send_query</function>.
+    If the query is not already completed, <function>dblink_get_result</function>
     will wait until it is.
    </para>
   </refsect1>
@@ -1458,14 +1458,14 @@ dblink_get_result(text connname [, bool fail_on_error]) returns setof record
     For an async query (that is, a SQL statement returning rows),
     the function returns the row(s) produced by the query.  To use this
     function, you will need to specify the expected set of columns,
-    as previously discussed for <function>dblink</>.
+    as previously discussed for <function>dblink</function>.
    </para>
 
    <para>
     For an async command (that is, a SQL statement not returning rows),
     the function returns a single row with a single text column containing
     the command's status string.  It is still necessary to specify that
-    the result will have a single text column in the calling <literal>FROM</>
+    the result will have a single text column in the calling <literal>FROM</literal>
     clause.
    </para>
   </refsect1>
@@ -1474,22 +1474,22 @@ dblink_get_result(text connname [, bool fail_on_error]) returns setof record
    <title>Notes</title>
 
    <para>
-    This function <emphasis>must</> be called if
-    <function>dblink_send_query</> returned 1.
+    This function <emphasis>must</emphasis> be called if
+    <function>dblink_send_query</function> returned 1.
     It must be called once for each query
     sent, and one additional time to obtain an empty set result,
     before the connection can be used again.
    </para>
 
    <para>
-    When using <function>dblink_send_query</> and
-    <function>dblink_get_result</>, <application>dblink</> fetches the entire
+    When using <function>dblink_send_query</function> and
+    <function>dblink_get_result</function>, <application>dblink</application> fetches the entire
     remote query result before returning any of it to the local query
     processor.  If the query returns a large number of rows, this can result
     in transient memory bloat in the local session.  It may be better to open
-    such a query as a cursor with <function>dblink_open</> and then fetch a
+    such a query as a cursor with <function>dblink_open</function> and then fetch a
     manageable number of rows at a time.  Alternatively, use plain
-    <function>dblink()</>, which avoids memory bloat by spooling large result
+    <function>dblink()</function>, which avoids memory bloat by spooling large result
     sets to disk.
    </para>
   </refsect1>
@@ -1581,13 +1581,13 @@ dblink_cancel_query(text connname) returns text
    <title>Description</title>
 
    <para>
-    <function>dblink_cancel_query</> attempts to cancel any query that
+    <function>dblink_cancel_query</function> attempts to cancel any query that
     is in progress on the named connection.  Note that this is not
     certain to succeed (since, for example, the remote query might
     already have finished).  A cancel request simply improves the
     odds that the query will fail soon.  You must still complete the
     normal query protocol, for example by calling
-    <function>dblink_get_result</>.
+    <function>dblink_get_result</function>.
    </para>
   </refsect1>
 
@@ -1610,7 +1610,7 @@ dblink_cancel_query(text connname) returns text
    <title>Return Value</title>
 
    <para>
-    Returns <literal>OK</> if the cancel request has been sent, or
+    Returns <literal>OK</literal> if the cancel request has been sent, or
     the text of an error message on failure.
    </para>
   </refsect1>
@@ -1651,7 +1651,7 @@ dblink_get_pkey(text relname) returns setof dblink_pkey_results
    <title>Description</title>
 
    <para>
-    <function>dblink_get_pkey</> provides information about the primary
+    <function>dblink_get_pkey</function> provides information about the primary
     key of a relation in the local database.  This is sometimes useful
     in generating queries to be sent to remote databases.
    </para>
@@ -1665,10 +1665,10 @@ dblink_get_pkey(text relname) returns setof dblink_pkey_results
      <term><parameter>relname</parameter></term>
      <listitem>
       <para>
-       Name of a local relation, for example <literal>foo</> or
-       <literal>myschema.mytab</>.  Include double quotes if the
+       Name of a local relation, for example <literal>foo</literal> or
+       <literal>myschema.mytab</literal>.  Include double quotes if the
        name is mixed-case or contains special characters, for
-       example <literal>"FooBar"</>; without quotes, the string
+       example <literal>"FooBar"</literal>; without quotes, the string
        will be folded to lower case.
       </para>
      </listitem>
@@ -1687,7 +1687,7 @@ dblink_get_pkey(text relname) returns setof dblink_pkey_results
 CREATE TYPE dblink_pkey_results AS (position int, colname text);
 </programlisting>
 
-    The <literal>position</> column simply runs from 1 to <replaceable>N</>;
+    The <literal>position</literal> column simply runs from 1 to <replaceable>N</replaceable>;
     it is the number of the field within the primary key, not the number
     within the table's columns.
    </para>
@@ -1748,10 +1748,10 @@ dblink_build_sql_insert(text relname,
    <title>Description</title>
 
    <para>
-    <function>dblink_build_sql_insert</> can be useful in doing selective
+    <function>dblink_build_sql_insert</function> can be useful in doing selective
     replication of a local table to a remote database.  It selects a row
     from the local table based on primary key, and then builds a SQL
-    <command>INSERT</> command that will duplicate that row, but with
+    <command>INSERT</command> command that will duplicate that row, but with
     the primary key values replaced by the values in the last argument.
     (To make an exact copy of the row, just specify the same values for
     the last two arguments.)
@@ -1766,10 +1766,10 @@ dblink_build_sql_insert(text relname,
      <term><parameter>relname</parameter></term>
      <listitem>
       <para>
-       Name of a local relation, for example <literal>foo</> or
-       <literal>myschema.mytab</>.  Include double quotes if the
+       Name of a local relation, for example <literal>foo</literal> or
+       <literal>myschema.mytab</literal>.  Include double quotes if the
        name is mixed-case or contains special characters, for
-       example <literal>"FooBar"</>; without quotes, the string
+       example <literal>"FooBar"</literal>; without quotes, the string
        will be folded to lower case.
       </para>
      </listitem>
@@ -1780,7 +1780,7 @@ dblink_build_sql_insert(text relname,
      <listitem>
       <para>
        Attribute numbers (1-based) of the primary key fields,
-       for example <literal>1 2</>.
+       for example <literal>1 2</literal>.
       </para>
      </listitem>
     </varlistentry>
@@ -1811,7 +1811,7 @@ dblink_build_sql_insert(text relname,
      <listitem>
       <para>
        Values of the primary key fields to be placed in the resulting
-       <command>INSERT</> command.  Each field is represented in text form.
+       <command>INSERT</command> command.  Each field is represented in text form.
       </para>
      </listitem>
     </varlistentry>
@@ -1828,10 +1828,10 @@ dblink_build_sql_insert(text relname,
    <title>Notes</title>
 
    <para>
-    As of <productname>PostgreSQL</> 9.0, the attribute numbers in
+    As of <productname>PostgreSQL</productname> 9.0, the attribute numbers in
     <parameter>primary_key_attnums</parameter> are interpreted as logical
     column numbers, corresponding to the column's position in
-    <literal>SELECT * FROM relname</>.  Previous versions interpreted the
+    <literal>SELECT * FROM relname</literal>.  Previous versions interpreted the
     numbers as physical column positions.  There is a difference if any
     column(s) to the left of the indicated column have been dropped during
     the lifetime of the table.
@@ -1881,9 +1881,9 @@ dblink_build_sql_delete(text relname,
    <title>Description</title>
 
    <para>
-    <function>dblink_build_sql_delete</> can be useful in doing selective
+    <function>dblink_build_sql_delete</function> can be useful in doing selective
     replication of a local table to a remote database.  It builds a SQL
-    <command>DELETE</> command that will delete the row with the given
+    <command>DELETE</command> command that will delete the row with the given
     primary key values.
    </para>
   </refsect1>
@@ -1896,10 +1896,10 @@ dblink_build_sql_delete(text relname,
      <term><parameter>relname</parameter></term>
      <listitem>
       <para>
-       Name of a local relation, for example <literal>foo</> or
-       <literal>myschema.mytab</>.  Include double quotes if the
+       Name of a local relation, for example <literal>foo</literal> or
+       <literal>myschema.mytab</literal>.  Include double quotes if the
        name is mixed-case or contains special characters, for
-       example <literal>"FooBar"</>; without quotes, the string
+       example <literal>"FooBar"</literal>; without quotes, the string
        will be folded to lower case.
       </para>
      </listitem>
@@ -1910,7 +1910,7 @@ dblink_build_sql_delete(text relname,
      <listitem>
       <para>
        Attribute numbers (1-based) of the primary key fields,
-       for example <literal>1 2</>.
+       for example <literal>1 2</literal>.
       </para>
      </listitem>
     </varlistentry>
@@ -1929,7 +1929,7 @@ dblink_build_sql_delete(text relname,
      <listitem>
       <para>
        Values of the primary key fields to be used in the resulting
-       <command>DELETE</> command.  Each field is represented in text form.
+       <command>DELETE</command> command.  Each field is represented in text form.
       </para>
      </listitem>
     </varlistentry>
@@ -1946,10 +1946,10 @@ dblink_build_sql_delete(text relname,
    <title>Notes</title>
 
    <para>
-    As of <productname>PostgreSQL</> 9.0, the attribute numbers in
+    As of <productname>PostgreSQL</productname> 9.0, the attribute numbers in
     <parameter>primary_key_attnums</parameter> are interpreted as logical
     column numbers, corresponding to the column's position in
-    <literal>SELECT * FROM relname</>.  Previous versions interpreted the
+    <literal>SELECT * FROM relname</literal>.  Previous versions interpreted the
     numbers as physical column positions.  There is a difference if any
     column(s) to the left of the indicated column have been dropped during
     the lifetime of the table.
@@ -2000,15 +2000,15 @@ dblink_build_sql_update(text relname,
    <title>Description</title>
 
    <para>
-    <function>dblink_build_sql_update</> can be useful in doing selective
+    <function>dblink_build_sql_update</function> can be useful in doing selective
     replication of a local table to a remote database.  It selects a row
     from the local table based on primary key, and then builds a SQL
-    <command>UPDATE</> command that will duplicate that row, but with
+    <command>UPDATE</command> command that will duplicate that row, but with
     the primary key values replaced by the values in the last argument.
     (To make an exact copy of the row, just specify the same values for
-    the last two arguments.)  The <command>UPDATE</> command always assigns
+    the last two arguments.)  The <command>UPDATE</command> command always assigns
     all fields of the row &mdash; the main difference between this and
-    <function>dblink_build_sql_insert</> is that it's assumed that
+    <function>dblink_build_sql_insert</function> is that it's assumed that
     the target row already exists in the remote table.
    </para>
   </refsect1>
@@ -2021,10 +2021,10 @@ dblink_build_sql_update(text relname,
      <term><parameter>relname</parameter></term>
      <listitem>
       <para>
-       Name of a local relation, for example <literal>foo</> or
-       <literal>myschema.mytab</>.  Include double quotes if the
+       Name of a local relation, for example <literal>foo</literal> or
+       <literal>myschema.mytab</literal>.  Include double quotes if the
        name is mixed-case or contains special characters, for
-       example <literal>"FooBar"</>; without quotes, the string
+       example <literal>"FooBar"</literal>; without quotes, the string
        will be folded to lower case.
       </para>
      </listitem>
@@ -2035,7 +2035,7 @@ dblink_build_sql_update(text relname,
      <listitem>
       <para>
        Attribute numbers (1-based) of the primary key fields,
-       for example <literal>1 2</>.
+       for example <literal>1 2</literal>.
       </para>
      </listitem>
     </varlistentry>
@@ -2066,7 +2066,7 @@ dblink_build_sql_update(text relname,
      <listitem>
       <para>
        Values of the primary key fields to be placed in the resulting
-       <command>UPDATE</> command.  Each field is represented in text form.
+       <command>UPDATE</command> command.  Each field is represented in text form.
       </para>
      </listitem>
     </varlistentry>
@@ -2083,10 +2083,10 @@ dblink_build_sql_update(text relname,
    <title>Notes</title>
 
    <para>
-    As of <productname>PostgreSQL</> 9.0, the attribute numbers in
+    As of <productname>PostgreSQL</productname> 9.0, the attribute numbers in
     <parameter>primary_key_attnums</parameter> are interpreted as logical
     column numbers, corresponding to the column's position in
-    <literal>SELECT * FROM relname</>.  Previous versions interpreted the
+    <literal>SELECT * FROM relname</literal>.  Previous versions interpreted the
     numbers as physical column positions.  There is a difference if any
     column(s) to the left of the indicated column have been dropped during
     the lifetime of the table.

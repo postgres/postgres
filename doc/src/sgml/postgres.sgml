@@ -85,11 +85,11 @@
 
    <para>
     Readers of this part should know how to connect to a
-    <productname>PostgreSQL</> database and issue
+    <productname>PostgreSQL</productname> database and issue
     <acronym>SQL</acronym> commands.  Readers that are unfamiliar with
     these issues are encouraged to read <xref linkend="tutorial">
     first.  <acronym>SQL</acronym> commands are typically entered
-    using the <productname>PostgreSQL</> interactive terminal
+    using the <productname>PostgreSQL</productname> interactive terminal
     <application>psql</application>, but other programs that have
     similar functionality can be used as well.
    </para>
@@ -116,10 +116,10 @@
   <partintro>
    <para>
     This part covers topics that are of interest to a
-    <productname>PostgreSQL</> database administrator.  This includes
+    <productname>PostgreSQL</productname> database administrator.  This includes
     installation of the software, set up and configuration of the
     server, management of users and databases, and maintenance tasks.
-    Anyone who runs a <productname>PostgreSQL</> server, even for
+    Anyone who runs a <productname>PostgreSQL</productname> server, even for
     personal use, but especially in production, should be familiar
     with the topics covered in this part.
    </para>
@@ -139,7 +139,7 @@
     up their own server can begin their exploration with this part.
     The rest of this part is about tuning and management; that material
     assumes that the reader is familiar with the general use of
-    the <productname>PostgreSQL</> database system.  Readers are
+    the <productname>PostgreSQL</productname> database system.  Readers are
     encouraged to look at <xref linkend="tutorial"> and <xref
     linkend="sql"> for additional information.
    </para>
@@ -171,7 +171,7 @@
   <partintro>
    <para>
     This part describes the client programming interfaces distributed
-    with <productname>PostgreSQL</>.  Each of these chapters can be
+    with <productname>PostgreSQL</productname>.  Each of these chapters can be
     read independently.  Note that there are many other programming
     interfaces for client programs that are distributed separately and
     contain their own documentation (<xref linkend="external-projects">
@@ -197,7 +197,7 @@
     This part is about extending the server functionality with
     user-defined functions, data types, triggers, etc.  These are
     advanced topics which should probably be approached only after all
-    the other user documentation about <productname>PostgreSQL</> has
+    the other user documentation about <productname>PostgreSQL</productname> has
     been understood.  Later chapters in this part describe the server-side
     programming languages available in the
     <productname>PostgreSQL</productname> distribution as well as
@@ -234,7 +234,7 @@
   <partintro>
    <para>
     This part contains assorted information that might be of use to
-    <productname>PostgreSQL</> developers.
+    <productname>PostgreSQL</productname> developers.
    </para>
   </partintro>
 

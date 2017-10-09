@@ -75,7 +75,7 @@ COMMIT PREPARED <replaceable class="parameter">transaction_id</replaceable>
   <title id="sql-commit-prepared-examples-title">Examples</title>
   <para>
    Commit the transaction identified by the transaction
-   identifier <literal>foobar</>:
+   identifier <literal>foobar</literal>:
 
 <programlisting>
 COMMIT PREPARED 'foobar';

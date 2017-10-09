@@ -69,7 +69,7 @@ ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | A
    <xref linkend="SQL-REVOKE"> for that.)
    Attributes not mentioned in the command retain their previous settings.
    Database superusers can change any of these settings for any role.
-   Roles having <literal>CREATEROLE</> privilege can change any of these
+   Roles having <literal>CREATEROLE</literal> privilege can change any of these
    settings, but only for non-superuser and non-replication roles.
    Ordinary roles can only change their own password.
   </para>
@@ -77,13 +77,13 @@ ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | A
   <para>
    The second variant changes the name of the role.
    Database superusers can rename any role.
-   Roles having <literal>CREATEROLE</> privilege can rename non-superuser
+   Roles having <literal>CREATEROLE</literal> privilege can rename non-superuser
    roles.
    The current session user cannot be renamed.
    (Connect as a different user if you need to do that.)
-   Because <literal>MD5</>-encrypted passwords use the role name as
+   Because <literal>MD5</literal>-encrypted passwords use the role name as
    cryptographic salt, renaming a role clears its password if the
-   password is <literal>MD5</>-encrypted.
+   password is <literal>MD5</literal>-encrypted.
   </para>
 
   <para>
@@ -100,7 +100,7 @@ ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | A
    Whenever the role subsequently
    starts a new session, the specified value becomes the session
    default, overriding whatever setting is present in
-   <filename>postgresql.conf</> or has been received from the <command>postgres</command>
+   <filename>postgresql.conf</filename> or has been received from the <command>postgres</command>
    command line. This only happens at login time; executing
    <xref linkend="sql-set-role"> or
    <xref linkend="sql-set-session-authorization"> does not cause new
@@ -112,7 +112,7 @@ ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | A
 
   <para>
    Superusers can change anyone's session defaults. Roles having
-   <literal>CREATEROLE</> privilege can change defaults for non-superuser
+   <literal>CREATEROLE</literal> privilege can change defaults for non-superuser
    roles. Ordinary roles can only set defaults for themselves.
    Certain configuration variables cannot be set this way, or can only be
    set if a superuser issues the command.  Only superusers can change a setting
@@ -155,8 +155,8 @@ ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | A
      <varlistentry>
       <term><literal>SUPERUSER</literal></term>
       <term><literal>NOSUPERUSER</literal></term>
-      <term><literal>CREATEDB</></term>
-      <term><literal>NOCREATEDB</></term>
+      <term><literal>CREATEDB</literal></term>
+      <term><literal>NOCREATEDB</literal></term>
       <term><literal>CREATEROLE</literal></term>
       <term><literal>NOCREATEROLE</literal></term>
       <term><literal>INHERIT</literal></term>
@@ -168,7 +168,7 @@ ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | A
       <term><literal>BYPASSRLS</literal></term>
       <term><literal>NOBYPASSRLS</literal></term>
       <term><literal>CONNECTION LIMIT</literal> <replaceable class="parameter">connlimit</replaceable></term>
-      <term>[ <literal>ENCRYPTED</> ] <literal>PASSWORD</> <replaceable class="parameter">password</replaceable></term>
+      <term>[ <literal>ENCRYPTED</literal> ] <literal>PASSWORD</literal> <replaceable class="parameter">password</replaceable></term>
       <term><literal>VALID UNTIL</literal> '<replaceable class="parameter">timestamp</replaceable>'</term>
       <listitem>
        <para>
@@ -209,7 +209,7 @@ ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | A
         role-specific variable setting is removed, so the role will
         inherit the system-wide default setting in new sessions.  Use
         <literal>RESET ALL</literal> to clear all role-specific settings.
-        <literal>SET FROM CURRENT</> saves the session's current value of
+        <literal>SET FROM CURRENT</literal> saves the session's current value of
         the parameter as the role-specific value.
         If <literal>IN DATABASE</literal> is specified, the configuration
         parameter is set or removed for the given role and database only.
@@ -288,7 +288,7 @@ ALTER ROLE davide WITH PASSWORD NULL;
   <para>
    Change a password expiration date, specifying that the password
    should expire at midday on 4th May 2015 using
-   the time zone which is one hour ahead of <acronym>UTC</>:
+   the time zone which is one hour ahead of <acronym>UTC</acronym>:
 <programlisting>
 ALTER ROLE chris VALID UNTIL 'May 4 12:00:00 2015 +1';
 </programlisting>

@@ -62,7 +62,7 @@ END [ WORK | TRANSACTION ]
   </para>
 
   <para>
-   Issuing <command>END</> when not inside a transaction does
+   Issuing <command>END</command> when not inside a transaction does
    no harm, but it will provoke a warning message.
   </para>
  </refsect1>

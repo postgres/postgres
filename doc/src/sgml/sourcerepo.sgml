@@ -18,18 +18,18 @@
 
   <para>
    Note that building <productname>PostgreSQL</productname> from the source
-   repository requires reasonably up-to-date versions of <application>bison</>,
-   <application>flex</>, and <application>Perl</>. These tools are not needed
+   repository requires reasonably up-to-date versions of <application>bison</application>,
+   <application>flex</application>, and <application>Perl</application>. These tools are not needed
    to build from a distribution tarball, because the files that these tools
    are used to build are included in the tarball.  Other tool requirements
    are the same as shown in <xref linkend="install-requirements">.
   </para>
 
  <sect1 id="git">
-  <title>Getting The Source via <productname>Git</></title>
+  <title>Getting The Source via <productname>Git</productname></title>
 
   <para>
-   With <productname>Git</> you will make a copy of the entire code repository
+   With <productname>Git</productname> you will make a copy of the entire code repository
    on your local machine, so you will have access to all history and branches
    offline. This is the fastest and most flexible way to develop or test
    patches.
@@ -40,9 +40,9 @@
 
    <step>
     <para>
-     You will need an installed version of <productname>Git</>, which you can
+     You will need an installed version of <productname>Git</productname>, which you can
      get from <ulink url="http://git-scm.com"></ulink>. Many systems already
-     have a recent version of <application>Git</> installed by default, or
+     have a recent version of <application>Git</application> installed by default, or
      available in their package distribution system.
     </para>
    </step>
@@ -57,14 +57,14 @@ git clone git://git.postgresql.org/git/postgresql.git
 
      This will copy the full repository to your local machine, so it may take
      a while to complete, especially if you have a slow Internet connection.
-     The files will be placed in a new subdirectory <filename>postgresql</> of
+     The files will be placed in a new subdirectory <filename>postgresql</filename> of
      your current directory.
     </para>
 
     <para>
      The Git mirror can also be reached via the HTTP protocol, if for example
      a firewall is blocking access to the Git protocol. Just change the URL
-     prefix to <literal>https</>, as in:
+     prefix to <literal>https</literal>, as in:
 
 <programlisting>
 git clone https://git.postgresql.org/git/postgresql.git
@@ -77,7 +77,7 @@ git clone https://git.postgresql.org/git/postgresql.git
 
    <step>
     <para>
-     Whenever you want to get the latest updates in the system, <command>cd</>
+     Whenever you want to get the latest updates in the system, <command>cd</command>
      into the repository, and run:
 
 <programlisting>
@@ -88,9 +88,9 @@ git fetch
   </procedure>
 
   <para>
-   <productname>Git</> can do a lot more things than just fetch the source. For
-   more information, consult the <productname>Git</> man pages, or see the
-   website at <ulink url="http://git-scm.com"></>.
+   <productname>Git</productname> can do a lot more things than just fetch the source. For
+   more information, consult the <productname>Git</productname> man pages, or see the
+   website at <ulink url="http://git-scm.com"></ulink>.
   </para>
  </sect1>
 

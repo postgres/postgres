@@ -54,12 +54,12 @@ LISTEN <replaceable class="parameter">channel</replaceable>
   <para>
    The method a client application must use to detect notification events depends on
    which <productname>PostgreSQL</productname> application programming interface it
-   uses.  With the <application>libpq</> library, the application issues
+   uses.  With the <application>libpq</application> library, the application issues
    <command>LISTEN</command> as an ordinary SQL command, and then must
    periodically call the function <function>PQnotifies</function> to find out
    whether any notification events have been received.  Other interfaces such as
-   <application>libpgtcl</> provide higher-level methods for handling notify events; indeed,
-   with <application>libpgtcl</> the application programmer should not even issue
+   <application>libpgtcl</application> provide higher-level methods for handling notify events; indeed,
+   with <application>libpgtcl</application> the application programmer should not even issue
    <command>LISTEN</command> or <command>UNLISTEN</command> directly.  See the
    documentation for the interface you are using for more details.
   </para>

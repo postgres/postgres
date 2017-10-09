@@ -35,7 +35,7 @@ SHOW ALL
    <command>SET</command> statement, by editing the
    <filename>postgresql.conf</filename> configuration file, through
    the <envar>PGOPTIONS</envar> environmental variable (when using
-   <application>libpq</> or a <application>libpq</>-based
+   <application>libpq</application> or a <application>libpq</application>-based
    application), or through command-line flags when starting the
    <command>postgres</command> server.  See <xref
    linkend="runtime-config"> for details.

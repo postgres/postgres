@@ -62,7 +62,7 @@ CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ]
 
   <para>
    If a schema name is given (for example, <literal>CREATE FOREIGN TABLE
-   myschema.mytable ...</>) then the table is created in the specified
+   myschema.mytable ...</literal>) then the table is created in the specified
    schema.  Otherwise it is created in the current schema.
    The name of the foreign table must be
    distinct from the name of any other foreign table, table, sequence, index,
@@ -95,7 +95,7 @@ CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ]
   <variablelist>
 
    <varlistentry>
-    <term><literal>IF NOT EXISTS</></term>
+    <term><literal>IF NOT EXISTS</literal></term>
     <listitem>
      <para>
       Do not throw an error if a relation with the same name already exists.
@@ -140,7 +140,7 @@ CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ]
     <term><literal>COLLATE <replaceable>collation</replaceable></literal></term>
     <listitem>
      <para>
-      The <literal>COLLATE</> clause assigns a collation to
+      The <literal>COLLATE</literal> clause assigns a collation to
       the column (which must be of a collatable data type).
       If not specified, the column data type's default collation is used.
      </para>
@@ -151,7 +151,7 @@ CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ]
     <term><literal>INHERITS ( <replaceable>parent_table</replaceable> [, ... ] )</literal></term>
     <listitem>
      <para>
-      The optional <literal>INHERITS</> clause specifies a list of
+      The optional <literal>INHERITS</literal> clause specifies a list of
       tables from which the new foreign table automatically inherits
       all columns.  Parent tables can be plain tables or foreign tables.
       See the similar form of
@@ -166,7 +166,7 @@ CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ]
      <para>
       An optional name for a column or table constraint.  If the
       constraint is violated, the constraint name is present in error messages,
-      so constraint names like <literal>col must be positive</> can be used
+      so constraint names like <literal>col must be positive</literal> can be used
       to communicate helpful constraint information to client applications.
       (Double-quotes are needed to specify constraint names that contain spaces.)
       If a constraint name is not specified, the system generates a name.
@@ -175,7 +175,7 @@ CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ]
    </varlistentry>
 
    <varlistentry>
-    <term><literal>NOT NULL</></term>
+    <term><literal>NOT NULL</literal></term>
     <listitem>
      <para>
       The column is not allowed to contain null values.
@@ -184,7 +184,7 @@ CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ]
    </varlistentry>
 
    <varlistentry>
-    <term><literal>NULL</></term>
+    <term><literal>NULL</literal></term>
     <listitem>
      <para>
       The column is allowed to contain null values. This is the default.
@@ -202,7 +202,7 @@ CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ]
     <term><literal>CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ] </literal></term>
     <listitem>
      <para>
-      The <literal>CHECK</> clause specifies an expression producing a
+      The <literal>CHECK</literal> clause specifies an expression producing a
       Boolean result which each row in the foreign table is expected
       to satisfy; that is, the expression should produce TRUE or UNKNOWN,
       never FALSE, for all rows in the foreign table.
@@ -219,7 +219,7 @@ CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ]
      </para>
 
      <para>
-      A constraint marked with <literal>NO INHERIT</> will not propagate to
+      A constraint marked with <literal>NO INHERIT</literal> will not propagate to
       child tables.
      </para>
     </listitem>
@@ -230,7 +230,7 @@ CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ]
     <replaceable>default_expr</replaceable></literal></term>
     <listitem>
      <para>
-      The <literal>DEFAULT</> clause assigns a default data value for
+      The <literal>DEFAULT</literal> clause assigns a default data value for
       the column whose column definition it appears within.  The value
       is any variable-free expression (subqueries and cross-references
       to other columns in the current table are not allowed).  The
@@ -279,9 +279,9 @@ CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ]
   <title>Notes</title>
 
    <para>
-    Constraints on foreign tables (such as <literal>CHECK</>
-    or <literal>NOT NULL</> clauses) are not enforced by the
-    core <productname>PostgreSQL</> system, and most foreign data wrappers
+    Constraints on foreign tables (such as <literal>CHECK</literal>
+    or <literal>NOT NULL</literal> clauses) are not enforced by the
+    core <productname>PostgreSQL</productname> system, and most foreign data wrappers
     do not attempt to enforce them either; that is, the constraint is
     simply assumed to hold true.  There would be little point in such
     enforcement since it would only apply to rows inserted or updated via
@@ -300,7 +300,7 @@ CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ]
    </para>
 
    <para>
-    Although <productname>PostgreSQL</> does not attempt to enforce
+    Although <productname>PostgreSQL</productname> does not attempt to enforce
     constraints on foreign tables, it does assume that they are correct
     for purposes of query optimization.  If there are rows visible in the
     foreign table that do not satisfy a declared constraint, queries on
@@ -314,8 +314,8 @@ CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ]
   <title>Examples</title>
 
   <para>
-   Create foreign table <structname>films</>, which will be accessed through
-   the server <structname>film_server</>:
+   Create foreign table <structname>films</structname>, which will be accessed through
+   the server <structname>film_server</structname>:
 
 <programlisting>
 CREATE FOREIGN TABLE films (
@@ -330,9 +330,9 @@ SERVER film_server;
 </programlisting></para>
 
   <para>
-   Create foreign table <structname>measurement_y2016m07</>, which will be
-   accessed through the server <structname>server_07</>, as a partition
-   of the range partitioned table <structname>measurement</>:
+   Create foreign table <structname>measurement_y2016m07</structname>, which will be
+   accessed through the server <structname>server_07</structname>, as a partition
+   of the range partitioned table <structname>measurement</structname>:
 
 <programlisting>
 CREATE FOREIGN TABLE measurement_y2016m07
@@ -348,10 +348,10 @@ CREATE FOREIGN TABLE measurement_y2016m07
   <para>
    The <command>CREATE FOREIGN TABLE</command> command largely conforms to the
    <acronym>SQL</acronym> standard; however, much as with
-   <link linkend="sql-createtable"><command>CREATE TABLE</></link>,
-   <literal>NULL</> constraints and zero-column foreign tables are permitted.
+   <link linkend="sql-createtable"><command>CREATE TABLE</command></link>,
+   <literal>NULL</literal> constraints and zero-column foreign tables are permitted.
    The ability to specify column default values is also
-   a <productname>PostgreSQL</> extension.  Table inheritance, in the form
+   a <productname>PostgreSQL</productname> extension.  Table inheritance, in the form
    defined by <productname>PostgreSQL</productname>, is nonstandard.
   </para>
 

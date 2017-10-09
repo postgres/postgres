@@ -11,13 +11,13 @@
  <para>
   All messages emitted by the <productname>PostgreSQL</productname>
   server are assigned five-character error codes that follow the SQL
-  standard's conventions for <quote>SQLSTATE</> codes.  Applications
+  standard's conventions for <quote>SQLSTATE</quote> codes.  Applications
   that need to know which error condition has occurred should usually
   test the error code, rather than looking at the textual error
   message.  The error codes are less likely to change across
-  <productname>PostgreSQL</> releases, and also are not subject to
+  <productname>PostgreSQL</productname> releases, and also are not subject to
   change due to localization of error messages. Note that some, but
-  not all, of the error codes produced by <productname>PostgreSQL</>
+  not all, of the error codes produced by <productname>PostgreSQL</productname>
   are defined by the SQL standard; some additional error codes for
   conditions not defined by the standard have been invented or
   borrowed from other databases.
@@ -36,16 +36,16 @@
   <productname>PostgreSQL</productname> &version;.  (Some are not actually
   used at present, but are defined by the SQL standard.)
   The error classes are also shown.  For each error class there is a
-  <quote>standard</> error code having the last three characters
-  <literal>000</>.  This code is used only for error conditions that fall
+  <quote>standard</quote> error code having the last three characters
+  <literal>000</literal>.  This code is used only for error conditions that fall
   within the class but do not have any more-specific code assigned.
  </para>
 
  <para>
   The symbol shown in the column <quote>Condition Name</quote> is
-  the condition name to use in <application>PL/pgSQL</>.  Condition
+  the condition name to use in <application>PL/pgSQL</application>.  Condition
   names can be written in either upper or lower case.  (Note that
-  <application>PL/pgSQL</> does not recognize warning, as opposed to error,
+  <application>PL/pgSQL</application> does not recognize warning, as opposed to error,
   condition names; those are classes 00, 01, and 02.)
  </para>
 
@@ -53,10 +53,10 @@
   For some types of errors, the server reports the name of a database object
   (a table, table column, data type, or constraint) associated with the error;
   for example, the name of the unique constraint that caused a
-  <symbol>unique_violation</> error.  Such names are supplied in separate
+  <symbol>unique_violation</symbol> error.  Such names are supplied in separate
   fields of the error report message so that applications need not try to
   extract them from the possibly-localized human-readable text of the message.
-  As of <productname>PostgreSQL</> 9.3, complete coverage for this feature
+  As of <productname>PostgreSQL</productname> 9.3, complete coverage for this feature
   exists only for errors in SQLSTATE class 23 (integrity constraint
   violation), but this is likely to be expanded in future.
  </para>

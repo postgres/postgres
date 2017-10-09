@@ -6,17 +6,17 @@
   <para>
    This chapter defines the interface between the core
    <productname>PostgreSQL</productname> system and <firstterm>index access
-   methods</>, which manage individual index types.  The core system
+   methods</firstterm>, which manage individual index types.  The core system
    knows nothing about indexes beyond what is specified here, so it is
    possible to develop entirely new index types by writing add-on code.
   </para>
 
   <para>
    All indexes in <productname>PostgreSQL</productname> are what are known
-   technically as <firstterm>secondary indexes</>; that is, the index is
+   technically as <firstterm>secondary indexes</firstterm>; that is, the index is
    physically separate from the table file that it describes.  Each index
-   is stored as its own physical <firstterm>relation</> and so is described
-   by an entry in the <structname>pg_class</> catalog.  The contents of an
+   is stored as its own physical <firstterm>relation</firstterm> and so is described
+   by an entry in the <structname>pg_class</structname> catalog.  The contents of an
    index are entirely under the control of its index access method.  In
    practice, all index access methods divide indexes into standard-size
    pages so that they can use the regular storage manager and buffer manager
@@ -28,7 +28,7 @@
 
   <para>
    An index is effectively a mapping from some data key values to
-   <firstterm>tuple identifiers</>, or <acronym>TIDs</>, of row versions
+   <firstterm>tuple identifiers</firstterm>, or <acronym>TIDs</acronym>, of row versions
    (tuples) in the index's parent table.  A TID consists of a
    block number and an item number within that block (see <xref
    linkend="storage-page-layout">).  This is sufficient
@@ -50,7 +50,7 @@
    Each index access method is described by a row in the
    <link linkend="catalog-pg-am"><structname>pg_am</structname></link>
    system catalog.  The <structname>pg_am</structname> entry
-   specifies a name and a <firstterm>handler function</> for the access
+   specifies a name and a <firstterm>handler function</firstterm> for the access
    method.  These entries can be created and deleted using the
    <xref linkend="sql-create-access-method"> and
    <xref linkend="sql-drop-access-method"> SQL commands.
@@ -58,14 +58,14 @@
 
   <para>
    An index access method handler function must be declared to accept a
-   single argument of type <type>internal</> and to return the
-   pseudo-type <type>index_am_handler</>.  The argument is a dummy value that
+   single argument of type <type>internal</type> and to return the
+   pseudo-type <type>index_am_handler</type>.  The argument is a dummy value that
    simply serves to prevent handler functions from being called directly from
    SQL commands.  The result of the function must be a palloc'd struct of
    type <structname>IndexAmRoutine</structname>, which contains everything
    that the core code needs to know to make use of the index access method.
    The <structname>IndexAmRoutine</structname> struct, also called the access
-   method's <firstterm>API struct</>, includes fields specifying assorted
+   method's <firstterm>API struct</firstterm>, includes fields specifying assorted
    fixed properties of the access method, such as whether it can support
    multicolumn indexes.  More importantly, it contains pointers to support
    functions for the access method, which do all of the real work to access
@@ -144,8 +144,8 @@ typedef struct IndexAmRoutine
 
   <para>
    To be useful, an index access method must also have one or more
-   <firstterm>operator families</> and
-   <firstterm>operator classes</> defined in
+   <firstterm>operator families</firstterm> and
+   <firstterm>operator classes</firstterm> defined in
    <link linkend="catalog-pg-opfamily"><structname>pg_opfamily</structname></link>,
    <link linkend="catalog-pg-opclass"><structname>pg_opclass</structname></link>,
    <link linkend="catalog-pg-amop"><structname>pg_amop</structname></link>, and
@@ -170,12 +170,12 @@ typedef struct IndexAmRoutine
    key values come from (it is always handed precomputed key values) but it
    will be very interested in the operator class information in
    <structname>pg_index</structname>.  Both of these catalog entries can be
-   accessed as part of the <structname>Relation</> data structure that is
+   accessed as part of the <structname>Relation</structname> data structure that is
    passed to all operations on the index.
   </para>
 
   <para>
-   Some of the flag fields of <structname>IndexAmRoutine</> have nonobvious
+   Some of the flag fields of <structname>IndexAmRoutine</structname> have nonobvious
    implications.  The requirements of <structfield>amcanunique</structfield>
    are discussed in <xref linkend="index-unique-checks">.
    The <structfield>amcanmulticol</structfield> flag asserts that the
@@ -185,7 +185,7 @@ typedef struct IndexAmRoutine
    When <structfield>amcanmulticol</structfield> is false,
    <structfield>amoptionalkey</structfield> essentially says whether the
    access method supports full-index scans without any restriction clause.
-   Access methods that support multiple index columns <emphasis>must</>
+   Access methods that support multiple index columns <emphasis>must</emphasis>
    support scans that omit restrictions on any or all of the columns after
    the first; however they are permitted to require some restriction to
    appear for the first index column, and this is signaled by setting
@@ -201,17 +201,17 @@ typedef struct IndexAmRoutine
    indexes that have <structfield>amoptionalkey</structfield> true must
    index nulls, since the planner might decide to use such an index
    with no scan keys at all.  A related restriction is that an index
-   access method that supports multiple index columns <emphasis>must</>
+   access method that supports multiple index columns <emphasis>must</emphasis>
    support indexing null values in columns after the first, because the planner
    will assume the index can be used for queries that do not restrict
    these columns.  For example, consider an index on (a,b) and a query with
    <literal>WHERE a = 4</literal>.  The system will assume the index can be
    used to scan for rows with <literal>a = 4</literal>, which is wrong if the
-   index omits rows where <literal>b</> is null.
+   index omits rows where <literal>b</literal> is null.
    It is, however, OK to omit rows where the first indexed column is null.
    An index access method that does index nulls may also set
    <structfield>amsearchnulls</structfield>, indicating that it supports
-   <literal>IS NULL</> and <literal>IS NOT NULL</> clauses as search
+   <literal>IS NULL</literal> and <literal>IS NOT NULL</literal> clauses as search
    conditions.
   </para>
 
@@ -235,8 +235,8 @@ ambuild (Relation heapRelation,
    Build a new index.  The index relation has been physically created,
    but is empty.  It must be filled in with whatever fixed data the
    access method requires, plus entries for all tuples already existing
-   in the table.  Ordinarily the <function>ambuild</> function will call
-   <function>IndexBuildHeapScan()</> to scan the table for existing tuples
+   in the table.  Ordinarily the <function>ambuild</function> function will call
+   <function>IndexBuildHeapScan()</function> to scan the table for existing tuples
    and compute the keys that need to be inserted into the index.
    The function must return a palloc'd struct containing statistics about
    the new index.
@@ -264,22 +264,22 @@ aminsert (Relation indexRelation,
           IndexUniqueCheck checkUnique,
           IndexInfo *indexInfo);
 </programlisting>
-   Insert a new tuple into an existing index.  The <literal>values</> and
-   <literal>isnull</> arrays give the key values to be indexed, and
-   <literal>heap_tid</> is the TID to be indexed.
+   Insert a new tuple into an existing index.  The <literal>values</literal> and
+   <literal>isnull</literal> arrays give the key values to be indexed, and
+   <literal>heap_tid</literal> is the TID to be indexed.
    If the access method supports unique indexes (its
-   <structfield>amcanunique</> flag is true) then
-   <literal>checkUnique</> indicates the type of uniqueness check to
+   <structfield>amcanunique</structfield> flag is true) then
+   <literal>checkUnique</literal> indicates the type of uniqueness check to
    perform.  This varies depending on whether the unique constraint is
    deferrable; see <xref linkend="index-unique-checks"> for details.
-   Normally the access method only needs the <literal>heapRelation</>
+   Normally the access method only needs the <literal>heapRelation</literal>
    parameter when performing uniqueness checking (since then it will have to
    look into the heap to verify tuple liveness).
   </para>
 
   <para>
    The function's Boolean result value is significant only when
-   <literal>checkUnique</> is <literal>UNIQUE_CHECK_PARTIAL</>.
+   <literal>checkUnique</literal> is <literal>UNIQUE_CHECK_PARTIAL</literal>.
    In this case a TRUE result means the new entry is known unique, whereas
    FALSE means it might be non-unique (and a deferred uniqueness check must
    be scheduled).  For other cases a constant FALSE result is recommended.
@@ -287,7 +287,7 @@ aminsert (Relation indexRelation,
 
   <para>
    Some indexes might not index all tuples.  If the tuple is not to be
-   indexed, <function>aminsert</> should just return without doing anything.
+   indexed, <function>aminsert</function> should just return without doing anything.
   </para>
 
   <para>
@@ -306,26 +306,26 @@ ambulkdelete (IndexVacuumInfo *info,
               IndexBulkDeleteCallback callback,
               void *callback_state);
 </programlisting>
-   Delete tuple(s) from the index.  This is a <quote>bulk delete</> operation
+   Delete tuple(s) from the index.  This is a <quote>bulk delete</quote> operation
    that is intended to be implemented by scanning the whole index and checking
    each entry to see if it should be deleted.
-   The passed-in <literal>callback</> function must be called, in the style
-   <literal>callback(<replaceable>TID</>, callback_state) returns bool</literal>,
+   The passed-in <literal>callback</literal> function must be called, in the style
+   <literal>callback(<replaceable>TID</replaceable>, callback_state) returns bool</literal>,
    to determine whether any particular index entry, as identified by its
    referenced TID, is to be deleted.  Must return either NULL or a palloc'd
    struct containing statistics about the effects of the deletion operation.
    It is OK to return NULL if no information needs to be passed on to
-   <function>amvacuumcleanup</>.
+   <function>amvacuumcleanup</function>.
   </para>
 
   <para>
-   Because of limited <varname>maintenance_work_mem</>,
-   <function>ambulkdelete</> might need to be called more than once when many
-   tuples are to be deleted.  The <literal>stats</> argument is the result
+   Because of limited <varname>maintenance_work_mem</varname>,
+   <function>ambulkdelete</function> might need to be called more than once when many
+   tuples are to be deleted.  The <literal>stats</literal> argument is the result
    of the previous call for this index (it is NULL for the first call within a
-   <command>VACUUM</> operation).  This allows the AM to accumulate statistics
-   across the whole operation.  Typically, <function>ambulkdelete</> will
-   modify and return the same struct if the passed <literal>stats</> is not
+   <command>VACUUM</command> operation).  This allows the AM to accumulate statistics
+   across the whole operation.  Typically, <function>ambulkdelete</function> will
+   modify and return the same struct if the passed <literal>stats</literal> is not
    null.
   </para>
 
@@ -336,14 +336,14 @@ amvacuumcleanup (IndexVacuumInfo *info,
                  IndexBulkDeleteResult *stats);
 </programlisting>
    Clean up after a <command>VACUUM</command> operation (zero or more
-   <function>ambulkdelete</> calls).  This does not have to do anything
+   <function>ambulkdelete</function> calls).  This does not have to do anything
    beyond returning index statistics, but it might perform bulk cleanup
-   such as reclaiming empty index pages.  <literal>stats</> is whatever the
-   last <function>ambulkdelete</> call returned, or NULL if
-   <function>ambulkdelete</> was not called because no tuples needed to be
+   such as reclaiming empty index pages.  <literal>stats</literal> is whatever the
+   last <function>ambulkdelete</function> call returned, or NULL if
+   <function>ambulkdelete</function> was not called because no tuples needed to be
    deleted.  If the result is not NULL it must be a palloc'd struct.
-   The statistics it contains will be used to update <structname>pg_class</>,
-   and will be reported by <command>VACUUM</> if <literal>VERBOSE</> is given.
+   The statistics it contains will be used to update <structname>pg_class</structname>,
+   and will be reported by <command>VACUUM</command> if <literal>VERBOSE</literal> is given.
    It is OK to return NULL if the index was not changed at all during the
    <command>VACUUM</command> operation, but otherwise correct stats should
    be returned.
@@ -351,8 +351,8 @@ amvacuumcleanup (IndexVacuumInfo *info,
 
   <para>
    As of <productname>PostgreSQL</productname> 8.4,
-   <function>amvacuumcleanup</> will also be called at completion of an
-   <command>ANALYZE</> operation.  In this case <literal>stats</> is always
+   <function>amvacuumcleanup</function> will also be called at completion of an
+   <command>ANALYZE</command> operation.  In this case <literal>stats</literal> is always
    NULL and any return value will be ignored.  This case can be distinguished
    by checking <literal>info-&gt;analyze_only</literal>.  It is recommended
    that the access method do nothing except post-insert cleanup in such a
@@ -365,12 +365,12 @@ bool
 amcanreturn (Relation indexRelation, int attno);
 </programlisting>
    Check whether the index can support <link
-   linkend="indexes-index-only-scans"><firstterm>index-only scans</></link> on
+   linkend="indexes-index-only-scans"><firstterm>index-only scans</firstterm></link> on
    the given column, by returning the indexed column values for an index entry
    in the form of an <structname>IndexTuple</structname>.  The attribute number
    is 1-based, i.e. the first column's attno is 1. Returns TRUE if supported,
    else FALSE.  If the access method does not support index-only scans at all,
-   the <structfield>amcanreturn</> field in its <structname>IndexAmRoutine</>
+   the <structfield>amcanreturn</structfield> field in its <structname>IndexAmRoutine</structname>
    struct can be set to NULL.
   </para>
 
@@ -397,18 +397,18 @@ amoptions (ArrayType *reloptions,
 </programlisting>
    Parse and validate the reloptions array for an index.  This is called only
    when a non-null reloptions array exists for the index.
-   <parameter>reloptions</> is a <type>text</> array containing entries of the
-   form <replaceable>name</><literal>=</><replaceable>value</>.
-   The function should construct a <type>bytea</> value, which will be copied
-   into the <structfield>rd_options</> field of the index's relcache entry.
-   The data contents of the <type>bytea</> value are open for the access
+   <parameter>reloptions</parameter> is a <type>text</type> array containing entries of the
+   form <replaceable>name</replaceable><literal>=</literal><replaceable>value</replaceable>.
+   The function should construct a <type>bytea</type> value, which will be copied
+   into the <structfield>rd_options</structfield> field of the index's relcache entry.
+   The data contents of the <type>bytea</type> value are open for the access
    method to define; most of the standard access methods use struct
-   <structname>StdRdOptions</>.
-   When <parameter>validate</> is true, the function should report a suitable
+   <structname>StdRdOptions</structname>.
+   When <parameter>validate</parameter> is true, the function should report a suitable
    error message if any of the options are unrecognized or have invalid
-   values; when <parameter>validate</> is false, invalid entries should be
-   silently ignored.  (<parameter>validate</> is false when loading options
-   already stored in <structname>pg_catalog</>; an invalid entry could only
+   values; when <parameter>validate</parameter> is false, invalid entries should be
+   silently ignored.  (<parameter>validate</parameter> is false when loading options
+   already stored in <structname>pg_catalog</structname>; an invalid entry could only
    be found if the access method has changed its rules for options, and in
    that case ignoring obsolete entries is appropriate.)
    It is OK to return NULL if default behavior is wanted.
@@ -421,44 +421,44 @@ amproperty (Oid index_oid, int attno,
             IndexAMProperty prop, const char *propname,
             bool *res, bool *isnull);
 </programlisting>
-   The <function>amproperty</> method allows index access methods to override
+   The <function>amproperty</function> method allows index access methods to override
    the default behavior of <function>pg_index_column_has_property</function>
    and related functions.
    If the access method does not have any special behavior for index property
-   inquiries, the <structfield>amproperty</> field in
-   its <structname>IndexAmRoutine</> struct can be set to NULL.
-   Otherwise, the <function>amproperty</> method will be called with
-   <parameter>index_oid</> and <parameter>attno</> both zero for
+   inquiries, the <structfield>amproperty</structfield> field in
+   its <structname>IndexAmRoutine</structname> struct can be set to NULL.
+   Otherwise, the <function>amproperty</function> method will be called with
+   <parameter>index_oid</parameter> and <parameter>attno</parameter> both zero for
    <function>pg_indexam_has_property</function> calls,
-   or with <parameter>index_oid</> valid and <parameter>attno</> zero for
+   or with <parameter>index_oid</parameter> valid and <parameter>attno</parameter> zero for
    <function>pg_index_has_property</function> calls,
-   or with <parameter>index_oid</> valid and <parameter>attno</> greater than
+   or with <parameter>index_oid</parameter> valid and <parameter>attno</parameter> greater than
    zero for <function>pg_index_column_has_property</function> calls.
-   <parameter>prop</> is an enum value identifying the property being tested,
-   while <parameter>propname</> is the original property name string.
+   <parameter>prop</parameter> is an enum value identifying the property being tested,
+   while <parameter>propname</parameter> is the original property name string.
    If the core code does not recognize the property name
-   then <parameter>prop</> is <literal>AMPROP_UNKNOWN</>.
+   then <parameter>prop</parameter> is <literal>AMPROP_UNKNOWN</literal>.
    Access methods can define custom property names by
-   checking <parameter>propname</> for a match (use <function>pg_strcasecmp</>
+   checking <parameter>propname</parameter> for a match (use <function>pg_strcasecmp</function>
    to match, for consistency with the core code); for names known to the core
-   code, it's better to inspect <parameter>prop</>.
-   If the <structfield>amproperty</> method returns <literal>true</> then
-   it has determined the property test result: it must set <literal>*res</>
-   to the boolean value to return, or set <literal>*isnull</>
-   to <literal>true</> to return a NULL.  (Both of the referenced variables
-   are initialized to <literal>false</> before the call.)
-   If the <structfield>amproperty</> method returns <literal>false</> then
+   code, it's better to inspect <parameter>prop</parameter>.
+   If the <structfield>amproperty</structfield> method returns <literal>true</literal> then
+   it has determined the property test result: it must set <literal>*res</literal>
+   to the boolean value to return, or set <literal>*isnull</literal>
+   to <literal>true</literal> to return a NULL.  (Both of the referenced variables
+   are initialized to <literal>false</literal> before the call.)
+   If the <structfield>amproperty</structfield> method returns <literal>false</literal> then
    the core code will proceed with its normal logic for determining the
    property test result.
   </para>
 
   <para>
    Access methods that support ordering operators should
-   implement <literal>AMPROP_DISTANCE_ORDERABLE</> property testing, as the
+   implement <literal>AMPROP_DISTANCE_ORDERABLE</literal> property testing, as the
    core code does not know how to do that and will return NULL.  It may
-   also be advantageous to implement <literal>AMPROP_RETURNABLE</> testing,
+   also be advantageous to implement <literal>AMPROP_RETURNABLE</literal> testing,
    if that can be done more cheaply than by opening the index and calling
-   <structfield>amcanreturn</>, which is the core code's default behavior.
+   <structfield>amcanreturn</structfield>, which is the core code's default behavior.
    The default behavior should be satisfactory for all other standard
    properties.
   </para>
@@ -471,18 +471,18 @@ amvalidate (Oid opclassoid);
    Validate the catalog entries for the specified operator class, so far as
    the access method can reasonably do that.  For example, this might include
    testing that all required support functions are provided.
-   The <function>amvalidate</> function must return false if the opclass is
-   invalid.  Problems should be reported with <function>ereport</> messages.
+   The <function>amvalidate</function> function must return false if the opclass is
+   invalid.  Problems should be reported with <function>ereport</function> messages.
   </para>
 
 
   <para>
    The purpose of an index, of course, is to support scans for tuples matching
-   an indexable <literal>WHERE</> condition, often called a
-   <firstterm>qualifier</> or <firstterm>scan key</>.  The semantics of
+   an indexable <literal>WHERE</literal> condition, often called a
+   <firstterm>qualifier</firstterm> or <firstterm>scan key</firstterm>.  The semantics of
    index scanning are described more fully in <xref linkend="index-scanning">,
-   below.  An index access method can support <quote>plain</> index scans,
-   <quote>bitmap</> index scans, or both.  The scan-related functions that an
+   below.  An index access method can support <quote>plain</quote> index scans,
+   <quote>bitmap</quote> index scans, or both.  The scan-related functions that an
    index access method must or may provide are:
   </para>
 
@@ -493,17 +493,17 @@ ambeginscan (Relation indexRelation,
              int nkeys,
              int norderbys);
 </programlisting>
-   Prepare for an index scan.  The <literal>nkeys</> and <literal>norderbys</>
+   Prepare for an index scan.  The <literal>nkeys</literal> and <literal>norderbys</literal>
    parameters indicate the number of quals and ordering operators that will be
    used in the scan; these may be useful for space allocation purposes.
    Note that the actual values of the scan keys aren't provided yet.
    The result must be a palloc'd struct.
    For implementation reasons the index access method
-   <emphasis>must</> create this struct by calling
-   <function>RelationGetIndexScan()</>.  In most cases
-   <function>ambeginscan</> does little beyond making that call and perhaps
+   <emphasis>must</emphasis> create this struct by calling
+   <function>RelationGetIndexScan()</function>.  In most cases
+   <function>ambeginscan</function> does little beyond making that call and perhaps
    acquiring locks;
-   the interesting parts of index-scan startup are in <function>amrescan</>.
+   the interesting parts of index-scan startup are in <function>amrescan</function>.
   </para>
 
   <para>
@@ -516,10 +516,10 @@ amrescan (IndexScanDesc scan,
           int norderbys);
 </programlisting>
    Start or restart an index scan, possibly with new scan keys.  (To restart
-   using previously-passed keys, NULL is passed for <literal>keys</> and/or
-   <literal>orderbys</>.)  Note that it is not allowed for
+   using previously-passed keys, NULL is passed for <literal>keys</literal> and/or
+   <literal>orderbys</literal>.)  Note that it is not allowed for
    the number of keys or order-by operators to be larger than
-   what was passed to <function>ambeginscan</>.  In practice the restart
+   what was passed to <function>ambeginscan</function>.  In practice the restart
    feature is used when a new outer tuple is selected by a nested-loop join
    and so a new key comparison value is needed, but the scan key structure
    remains the same.
@@ -534,42 +534,42 @@ amgettuple (IndexScanDesc scan,
    Fetch the next tuple in the given scan, moving in the given
    direction (forward or backward in the index).  Returns TRUE if a tuple was
    obtained, FALSE if no matching tuples remain.  In the TRUE case the tuple
-   TID is stored into the <literal>scan</> structure.  Note that
-   <quote>success</> means only that the index contains an entry that matches
+   TID is stored into the <literal>scan</literal> structure.  Note that
+   <quote>success</quote> means only that the index contains an entry that matches
    the scan keys, not that the tuple necessarily still exists in the heap or
-   will pass the caller's snapshot test.  On success, <function>amgettuple</>
-   must also set <literal>scan-&gt;xs_recheck</> to TRUE or FALSE.
+   will pass the caller's snapshot test.  On success, <function>amgettuple</function>
+   must also set <literal>scan-&gt;xs_recheck</literal> to TRUE or FALSE.
    FALSE means it is certain that the index entry matches the scan keys.
    TRUE means this is not certain, and the conditions represented by the
    scan keys must be rechecked against the heap tuple after fetching it.
-   This provision supports <quote>lossy</> index operators.
+   This provision supports <quote>lossy</quote> index operators.
    Note that rechecking will extend only to the scan conditions; a partial
-   index predicate (if any) is never rechecked by <function>amgettuple</>
+   index predicate (if any) is never rechecked by <function>amgettuple</function>
    callers.
   </para>
 
   <para>
    If the index supports <link linkend="indexes-index-only-scans">index-only
    scans</link> (i.e., <function>amcanreturn</function> returns TRUE for it),
-   then on success the AM must also check <literal>scan-&gt;xs_want_itup</>,
+   then on success the AM must also check <literal>scan-&gt;xs_want_itup</literal>,
    and if that is true it must return the originally indexed data for the
    index entry.  The data can be returned in the form of an
-   <structname>IndexTuple</> pointer stored at <literal>scan-&gt;xs_itup</>,
-   with tuple descriptor <literal>scan-&gt;xs_itupdesc</>; or in the form of
-   a <structname>HeapTuple</> pointer stored at <literal>scan-&gt;xs_hitup</>,
-   with tuple descriptor <literal>scan-&gt;xs_hitupdesc</>.  (The latter
+   <structname>IndexTuple</structname> pointer stored at <literal>scan-&gt;xs_itup</literal>,
+   with tuple descriptor <literal>scan-&gt;xs_itupdesc</literal>; or in the form of
+   a <structname>HeapTuple</structname> pointer stored at <literal>scan-&gt;xs_hitup</literal>,
+   with tuple descriptor <literal>scan-&gt;xs_hitupdesc</literal>.  (The latter
    format should be used when reconstructing data that might possibly not fit
-   into an <structname>IndexTuple</>.)  In either case,
+   into an <structname>IndexTuple</structname>.)  In either case,
    management of the data referenced by the pointer is the access method's
    responsibility.  The data must remain good at least until the next
-   <function>amgettuple</>, <function>amrescan</>, or <function>amendscan</>
+   <function>amgettuple</function>, <function>amrescan</function>, or <function>amendscan</function>
    call for the scan.
   </para>
 
   <para>
-   The <function>amgettuple</> function need only be provided if the access
-   method supports <quote>plain</> index scans.  If it doesn't, the
-   <structfield>amgettuple</> field in its <structname>IndexAmRoutine</>
+   The <function>amgettuple</function> function need only be provided if the access
+   method supports <quote>plain</quote> index scans.  If it doesn't, the
+   <structfield>amgettuple</structfield> field in its <structname>IndexAmRoutine</structname>
    struct must be set to NULL.
   </para>
 
@@ -583,24 +583,24 @@ amgetbitmap (IndexScanDesc scan,
    <type>TIDBitmap</type> (that is, OR the set of tuple IDs into whatever set is already
    in the bitmap).  The number of tuples fetched is returned (this might be
    just an approximate count, for instance some AMs do not detect duplicates).
-   While inserting tuple IDs into the bitmap, <function>amgetbitmap</> can
+   While inserting tuple IDs into the bitmap, <function>amgetbitmap</function> can
    indicate that rechecking of the scan conditions is required for specific
-   tuple IDs.  This is analogous to the <literal>xs_recheck</> output parameter
-   of <function>amgettuple</>.  Note: in the current implementation, support
+   tuple IDs.  This is analogous to the <literal>xs_recheck</literal> output parameter
+   of <function>amgettuple</function>.  Note: in the current implementation, support
    for this feature is conflated with support for lossy storage of the bitmap
    itself, and therefore callers recheck both the scan conditions and the
    partial index predicate (if any) for recheckable tuples.  That might not
    always be true, however.
-   <function>amgetbitmap</> and
-   <function>amgettuple</> cannot be used in the same index scan; there
-   are other restrictions too when using <function>amgetbitmap</>, as explained
+   <function>amgetbitmap</function> and
+   <function>amgettuple</function> cannot be used in the same index scan; there
+   are other restrictions too when using <function>amgetbitmap</function>, as explained
    in <xref linkend="index-scanning">.
   </para>
 
   <para>
-   The <function>amgetbitmap</> function need only be provided if the access
-   method supports <quote>bitmap</> index scans.  If it doesn't, the
-   <structfield>amgetbitmap</> field in its <structname>IndexAmRoutine</>
+   The <function>amgetbitmap</function> function need only be provided if the access
+   method supports <quote>bitmap</quote> index scans.  If it doesn't, the
+   <structfield>amgetbitmap</structfield> field in its <structname>IndexAmRoutine</structname>
    struct must be set to NULL.
   </para>
 
@@ -609,7 +609,7 @@ amgetbitmap (IndexScanDesc scan,
 void
 amendscan (IndexScanDesc scan);
 </programlisting>
-   End a scan and release resources.  The <literal>scan</> struct itself
+   End a scan and release resources.  The <literal>scan</literal> struct itself
    should not be freed, but any locks or pins taken internally by the
    access method must be released.
   </para>
@@ -624,9 +624,9 @@ ammarkpos (IndexScanDesc scan);
   </para>
 
   <para>
-   The <function>ammarkpos</> function need only be provided if the access
+   The <function>ammarkpos</function> function need only be provided if the access
    method supports ordered scans.  If it doesn't,
-   the <structfield>ammarkpos</> field in its <structname>IndexAmRoutine</>
+   the <structfield>ammarkpos</structfield> field in its <structname>IndexAmRoutine</structname>
    struct may be set to NULL.
   </para>
 
@@ -639,15 +639,15 @@ amrestrpos (IndexScanDesc scan);
   </para>
 
   <para>
-   The <function>amrestrpos</> function need only be provided if the access
+   The <function>amrestrpos</function> function need only be provided if the access
    method supports ordered scans.  If it doesn't,
-   the <structfield>amrestrpos</> field in its <structname>IndexAmRoutine</>
+   the <structfield>amrestrpos</structfield> field in its <structname>IndexAmRoutine</structname>
    struct may be set to NULL.
   </para>
 
   <para>
    In addition to supporting ordinary index scans, some types of index
-   may wish to support <firstterm>parallel index scans</>, which allow
+   may wish to support <firstterm>parallel index scans</firstterm>, which allow
    multiple backends to cooperate in performing an index scan.  The
    index access method should arrange things so that each cooperating
    process returns a subset of the tuples that would be performed by
@@ -668,7 +668,7 @@ amestimateparallelscan (void);
    Estimate and return the number of bytes of dynamic shared memory which
    the access method will be needed to perform a parallel scan.  (This number
    is in addition to, not in lieu of, the amount of space needed for
-   AM-independent data in <structname>ParallelIndexScanDescData</>.)
+   AM-independent data in <structname>ParallelIndexScanDescData</structname>.)
   </para>
 
   <para>
@@ -683,9 +683,9 @@ void
 aminitparallelscan (void *target);
 </programlisting>
    This function will be called to initialize dynamic shared memory at the
-   beginning of a parallel scan.  <parameter>target</> will point to at least
+   beginning of a parallel scan.  <parameter>target</parameter> will point to at least
    the number of bytes previously returned by
-   <function>amestimateparallelscan</>, and this function may use that
+   <function>amestimateparallelscan</function>, and this function may use that
    amount of space to store whatever data it wishes.
   </para>
 
@@ -702,7 +702,7 @@ amparallelrescan (IndexScanDesc scan);
 </programlisting>
    This function, if implemented, will be called when a parallel index scan
    must be restarted.  It should reset any shared state set up by
-   <function>aminitparallelscan</> such that the scan will be restarted from
+   <function>aminitparallelscan</function> such that the scan will be restarted from
    the beginning.
   </para>
 
@@ -714,16 +714,16 @@ amparallelrescan (IndexScanDesc scan);
   <para>
    In an index scan, the index access method is responsible for regurgitating
    the TIDs of all the tuples it has been told about that match the
-   <firstterm>scan keys</>.  The access method is <emphasis>not</> involved in
+   <firstterm>scan keys</firstterm>.  The access method is <emphasis>not</emphasis> involved in
    actually fetching those tuples from the index's parent table, nor in
    determining whether they pass the scan's time qualification test or other
    conditions.
   </para>
 
   <para>
-   A scan key is the internal representation of a <literal>WHERE</> clause of
-   the form <replaceable>index_key</> <replaceable>operator</>
-   <replaceable>constant</>, where the index key is one of the columns of the
+   A scan key is the internal representation of a <literal>WHERE</literal> clause of
+   the form <replaceable>index_key</replaceable> <replaceable>operator</replaceable>
+   <replaceable>constant</replaceable>, where the index key is one of the columns of the
    index and the operator is one of the members of the operator family
    associated with that index column.  An index scan has zero or more scan
    keys, which are implicitly ANDed &mdash; the returned tuples are expected
@@ -731,7 +731,7 @@ amparallelrescan (IndexScanDesc scan);
   </para>
 
   <para>
-   The access method can report that the index is <firstterm>lossy</>, or
+   The access method can report that the index is <firstterm>lossy</firstterm>, or
    requires rechecks, for a particular query.  This implies that the index
    scan will return all the entries that pass the scan key, plus possibly
    additional entries that do not.  The core system's index-scan machinery
@@ -743,16 +743,16 @@ amparallelrescan (IndexScanDesc scan);
   <para>
    Note that it is entirely up to the access method to ensure that it
    correctly finds all and only the entries passing all the given scan keys.
-   Also, the core system will simply hand off all the <literal>WHERE</>
+   Also, the core system will simply hand off all the <literal>WHERE</literal>
    clauses that match the index keys and operator families, without any
    semantic analysis to determine whether they are redundant or
    contradictory.  As an example, given
-   <literal>WHERE x &gt; 4 AND x &gt; 14</> where <literal>x</> is a b-tree
-   indexed column, it is left to the b-tree <function>amrescan</> function
+   <literal>WHERE x &gt; 4 AND x &gt; 14</literal> where <literal>x</literal> is a b-tree
+   indexed column, it is left to the b-tree <function>amrescan</function> function
    to realize that the first scan key is redundant and can be discarded.
-   The extent of preprocessing needed during <function>amrescan</> will
+   The extent of preprocessing needed during <function>amrescan</function> will
    depend on the extent to which the index access method needs to reduce
-   the scan keys to a <quote>normalized</> form.
+   the scan keys to a <quote>normalized</quote> form.
   </para>
 
   <para>
@@ -765,7 +765,7 @@ amparallelrescan (IndexScanDesc scan);
       <para>
        Access methods that always return entries in the natural ordering
        of their data (such as btree) should set
-       <structfield>amcanorder</> to true.
+       <structfield>amcanorder</structfield> to true.
        Currently, such access methods must use btree-compatible strategy
        numbers for their equality and ordering operators.
       </para>
@@ -773,11 +773,11 @@ amparallelrescan (IndexScanDesc scan);
      <listitem>
       <para>
        Access methods that support ordering operators should set
-       <structfield>amcanorderbyop</> to true.
+       <structfield>amcanorderbyop</structfield> to true.
        This indicates that the index is capable of returning entries in
-       an order satisfying <literal>ORDER BY</> <replaceable>index_key</>
-       <replaceable>operator</> <replaceable>constant</>.  Scan modifiers
-       of that form can be passed to <function>amrescan</> as described
+       an order satisfying <literal>ORDER BY</literal> <replaceable>index_key</replaceable>
+       <replaceable>operator</replaceable> <replaceable>constant</replaceable>.  Scan modifiers
+       of that form can be passed to <function>amrescan</function> as described
        previously.
       </para>
      </listitem>
@@ -785,29 +785,29 @@ amparallelrescan (IndexScanDesc scan);
   </para>
 
   <para>
-   The <function>amgettuple</> function has a <literal>direction</> argument,
-   which can be either <literal>ForwardScanDirection</> (the normal case)
-   or  <literal>BackwardScanDirection</>.  If the first call after
-   <function>amrescan</> specifies <literal>BackwardScanDirection</>, then the
+   The <function>amgettuple</function> function has a <literal>direction</literal> argument,
+   which can be either <literal>ForwardScanDirection</literal> (the normal case)
+   or  <literal>BackwardScanDirection</literal>.  If the first call after
+   <function>amrescan</function> specifies <literal>BackwardScanDirection</literal>, then the
    set of matching index entries is to be scanned back-to-front rather than in
-   the normal front-to-back direction, so <function>amgettuple</> must return
+   the normal front-to-back direction, so <function>amgettuple</function> must return
    the last matching tuple in the index, rather than the first one as it
    normally would.  (This will only occur for access
-   methods that set <structfield>amcanorder</> to true.)  After the
-   first call, <function>amgettuple</> must be prepared to advance the scan in
+   methods that set <structfield>amcanorder</structfield> to true.)  After the
+   first call, <function>amgettuple</function> must be prepared to advance the scan in
    either direction from the most recently returned entry.  (But if
-   <structfield>amcanbackward</> is false, all subsequent
+   <structfield>amcanbackward</structfield> is false, all subsequent
    calls will have the same direction as the first one.)
   </para>
 
   <para>
-   Access methods that support ordered scans must support <quote>marking</> a
+   Access methods that support ordered scans must support <quote>marking</quote> a
    position in a scan and later returning to the marked position.  The same
    position might be restored multiple times.  However, only one position need
-   be remembered per scan; a new <function>ammarkpos</> call overrides the
+   be remembered per scan; a new <function>ammarkpos</function> call overrides the
    previously marked position.  An access method that does not support ordered
-   scans need not provide <function>ammarkpos</> and <function>amrestrpos</>
-   functions in <structname>IndexAmRoutine</>; set those pointers to NULL
+   scans need not provide <function>ammarkpos</function> and <function>amrestrpos</function>
+   functions in <structname>IndexAmRoutine</structname>; set those pointers to NULL
    instead.
   </para>
 
@@ -835,29 +835,29 @@ amparallelrescan (IndexScanDesc scan);
   </para>
 
   <para>
-   Instead of using <function>amgettuple</>, an index scan can be done with
-   <function>amgetbitmap</> to fetch all tuples in one call.  This can be
-   noticeably more efficient than <function>amgettuple</> because it allows
+   Instead of using <function>amgettuple</function>, an index scan can be done with
+   <function>amgetbitmap</function> to fetch all tuples in one call.  This can be
+   noticeably more efficient than <function>amgettuple</function> because it allows
    avoiding lock/unlock cycles within the access method.  In principle
-   <function>amgetbitmap</> should have the same effects as repeated
-   <function>amgettuple</> calls, but we impose several restrictions to
-   simplify matters.  First of all, <function>amgetbitmap</> returns all
+   <function>amgetbitmap</function> should have the same effects as repeated
+   <function>amgettuple</function> calls, but we impose several restrictions to
+   simplify matters.  First of all, <function>amgetbitmap</function> returns all
    tuples at once and marking or restoring scan positions isn't
    supported. Secondly, the tuples are returned in a bitmap which doesn't
-   have any specific ordering, which is why <function>amgetbitmap</> doesn't
-   take a <literal>direction</> argument.  (Ordering operators will never be
+   have any specific ordering, which is why <function>amgetbitmap</function> doesn't
+   take a <literal>direction</literal> argument.  (Ordering operators will never be
    supplied for such a scan, either.)
    Also, there is no provision for index-only scans with
-   <function>amgetbitmap</>, since there is no way to return the contents of
+   <function>amgetbitmap</function>, since there is no way to return the contents of
    index tuples.
-   Finally, <function>amgetbitmap</>
+   Finally, <function>amgetbitmap</function>
    does not guarantee any locking of the returned tuples, with implications
    spelled out in <xref linkend="index-locking">.
   </para>
 
   <para>
    Note that it is permitted for an access method to implement only
-   <function>amgetbitmap</> and not <function>amgettuple</>, or vice versa,
+   <function>amgetbitmap</function> and not <function>amgettuple</function>, or vice versa,
    if its internal implementation is unsuited to one API or the other.
   </para>
 
@@ -870,26 +870,26 @@ amparallelrescan (IndexScanDesc scan);
    Index access methods must handle concurrent updates
    of the index by multiple processes.
    The core <productname>PostgreSQL</productname> system obtains
-   <literal>AccessShareLock</> on the index during an index scan, and
-   <literal>RowExclusiveLock</> when updating the index (including plain
-   <command>VACUUM</>).  Since these lock types do not conflict, the access
+   <literal>AccessShareLock</literal> on the index during an index scan, and
+   <literal>RowExclusiveLock</literal> when updating the index (including plain
+   <command>VACUUM</command>).  Since these lock types do not conflict, the access
    method is responsible for handling any fine-grained locking it might need.
    An exclusive lock on the index as a whole will be taken only during index
-   creation, destruction, or <command>REINDEX</>.
+   creation, destruction, or <command>REINDEX</command>.
   </para>
 
   <para>
    Building an index type that supports concurrent updates usually requires
    extensive and subtle analysis of the required behavior.  For the b-tree
    and hash index types, you can read about the design decisions involved in
-   <filename>src/backend/access/nbtree/README</> and
-   <filename>src/backend/access/hash/README</>.
+   <filename>src/backend/access/nbtree/README</filename> and
+   <filename>src/backend/access/hash/README</filename>.
   </para>
 
   <para>
    Aside from the index's own internal consistency requirements, concurrent
    updates create issues about consistency between the parent table (the
-   <firstterm>heap</>) and the index.  Because
+   <firstterm>heap</firstterm>) and the index.  Because
    <productname>PostgreSQL</productname> separates accesses
    and updates of the heap from those of the index, there are windows in
    which the index might be inconsistent with the heap.  We handle this problem
@@ -906,7 +906,7 @@ amparallelrescan (IndexScanDesc scan);
      </listitem>
      <listitem>
       <para>
-       When a heap entry is to be deleted (by <command>VACUUM</>), all its
+       When a heap entry is to be deleted (by <command>VACUUM</command>), all its
        index entries must be removed first.
       </para>
      </listitem>
@@ -914,7 +914,7 @@ amparallelrescan (IndexScanDesc scan);
       <para>
        An index scan must maintain a pin
        on the index page holding the item last returned by
-       <function>amgettuple</>, and <function>ambulkdelete</> cannot delete
+       <function>amgettuple</function>, and <function>ambulkdelete</function> cannot delete
        entries from pages that are pinned by other backends.  The need
        for this rule is explained below.
       </para>
@@ -922,33 +922,33 @@ amparallelrescan (IndexScanDesc scan);
     </itemizedlist>
 
    Without the third rule, it is possible for an index reader to
-   see an index entry just before it is removed by <command>VACUUM</>, and
+   see an index entry just before it is removed by <command>VACUUM</command>, and
    then to arrive at the corresponding heap entry after that was removed by
-   <command>VACUUM</>.
+   <command>VACUUM</command>.
    This creates no serious problems if that item
    number is still unused when the reader reaches it, since an empty
-   item slot will be ignored by <function>heap_fetch()</>.  But what if a
+   item slot will be ignored by <function>heap_fetch()</function>.  But what if a
    third backend has already re-used the item slot for something else?
    When using an MVCC-compliant snapshot, there is no problem because
    the new occupant of the slot is certain to be too new to pass the
    snapshot test.  However, with a non-MVCC-compliant snapshot (such as
-   <literal>SnapshotAny</>), it would be possible to accept and return
+   <literal>SnapshotAny</literal>), it would be possible to accept and return
    a row that does not in fact match the scan keys.  We could defend
    against this scenario by requiring the scan keys to be rechecked
    against the heap row in all cases, but that is too expensive.  Instead,
    we use a pin on an index page as a proxy to indicate that the reader
-   might still be <quote>in flight</> from the index entry to the matching
-   heap entry.  Making <function>ambulkdelete</> block on such a pin ensures
-   that <command>VACUUM</> cannot delete the heap entry before the reader
+   might still be <quote>in flight</quote> from the index entry to the matching
+   heap entry.  Making <function>ambulkdelete</function> block on such a pin ensures
+   that <command>VACUUM</command> cannot delete the heap entry before the reader
    is done with it.  This solution costs little in run time, and adds blocking
    overhead only in the rare cases where there actually is a conflict.
   </para>
 
   <para>
-   This solution requires that index scans be <quote>synchronous</>: we have
+   This solution requires that index scans be <quote>synchronous</quote>: we have
    to fetch each heap tuple immediately after scanning the corresponding index
    entry.  This is expensive for a number of reasons.  An
-   <quote>asynchronous</> scan in which we collect many TIDs from the index,
+   <quote>asynchronous</quote> scan in which we collect many TIDs from the index,
    and only visit the heap tuples sometime later, requires much less index
    locking overhead and can allow a more efficient heap access pattern.
    Per the above analysis, we must use the synchronous approach for
@@ -957,13 +957,13 @@ amparallelrescan (IndexScanDesc scan);
   </para>
 
   <para>
-   In an <function>amgetbitmap</> index scan, the access method does not
+   In an <function>amgetbitmap</function> index scan, the access method does not
    keep an index pin on any of the returned tuples.  Therefore
    it is only safe to use such scans with MVCC-compliant snapshots.
   </para>
 
   <para>
-   When the <structfield>ampredlocks</> flag is not set, any scan using that
+   When the <structfield>ampredlocks</structfield> flag is not set, any scan using that
    index access method within a serializable transaction will acquire a
    nonblocking predicate lock on the full index.  This will generate a
    read-write conflict with the insert of any tuple into that index by a
@@ -982,9 +982,9 @@ amparallelrescan (IndexScanDesc scan);
 
   <para>
    <productname>PostgreSQL</productname> enforces SQL uniqueness constraints
-   using <firstterm>unique indexes</>, which are indexes that disallow
+   using <firstterm>unique indexes</firstterm>, which are indexes that disallow
    multiple entries with identical keys.  An access method that supports this
-   feature sets <structfield>amcanunique</> true.
+   feature sets <structfield>amcanunique</structfield> true.
    (At present, only b-tree supports it.)
   </para>
 
@@ -1032,7 +1032,7 @@ amparallelrescan (IndexScanDesc scan);
    no violation should be reported.  (This case cannot occur during the
    ordinary scenario of inserting a row that's just been created by
    the current transaction.  It can happen during
-   <command>CREATE UNIQUE INDEX CONCURRENTLY</>, however.)
+   <command>CREATE UNIQUE INDEX CONCURRENTLY</command>, however.)
   </para>
 
   <para>
@@ -1057,32 +1057,32 @@ amparallelrescan (IndexScanDesc scan);
    are done.  Otherwise, we schedule a recheck to occur when it is time to
    enforce the constraint.  If, at the time of the recheck, both the inserted
    tuple and some other tuple with the same key are live, then the error
-   must be reported.  (Note that for this purpose, <quote>live</> actually
-   means <quote>any tuple in the index entry's HOT chain is live</>.)
-   To implement this, the <function>aminsert</> function is passed a
-   <literal>checkUnique</> parameter having one of the following values:
+   must be reported.  (Note that for this purpose, <quote>live</quote> actually
+   means <quote>any tuple in the index entry's HOT chain is live</quote>.)
+   To implement this, the <function>aminsert</function> function is passed a
+   <literal>checkUnique</literal> parameter having one of the following values:
 
     <itemizedlist>
      <listitem>
       <para>
-       <literal>UNIQUE_CHECK_NO</> indicates that no uniqueness checking
+       <literal>UNIQUE_CHECK_NO</literal> indicates that no uniqueness checking
        should be done (this is not a unique index).
       </para>
      </listitem>
      <listitem>
       <para>
-       <literal>UNIQUE_CHECK_YES</> indicates that this is a non-deferrable
+       <literal>UNIQUE_CHECK_YES</literal> indicates that this is a non-deferrable
        unique index, and the uniqueness check must be done immediately, as
        described above.
       </para>
      </listitem>
      <listitem>
       <para>
-       <literal>UNIQUE_CHECK_PARTIAL</> indicates that the unique
+       <literal>UNIQUE_CHECK_PARTIAL</literal> indicates that the unique
        constraint is deferrable. <productname>PostgreSQL</productname>
        will use this mode to insert each row's index entry.  The access
        method must allow duplicate entries into the index, and report any
-       potential duplicates by returning FALSE from <function>aminsert</>.
+       potential duplicates by returning FALSE from <function>aminsert</function>.
        For each row for which FALSE is returned, a deferred recheck will
        be scheduled.
       </para>
@@ -1098,21 +1098,21 @@ amparallelrescan (IndexScanDesc scan);
      </listitem>
      <listitem>
       <para>
-       <literal>UNIQUE_CHECK_EXISTING</> indicates that this is a deferred
+       <literal>UNIQUE_CHECK_EXISTING</literal> indicates that this is a deferred
        recheck of a row that was reported as a potential uniqueness violation.
-       Although this is implemented by calling <function>aminsert</>, the
-       access method must <emphasis>not</> insert a new index entry in this
+       Although this is implemented by calling <function>aminsert</function>, the
+       access method must <emphasis>not</emphasis> insert a new index entry in this
        case.  The index entry is already present.  Rather, the access method
        must check to see if there is another live index entry.  If so, and
        if the target row is also still live, report error.
       </para>
 
       <para>
-       It is recommended that in a <literal>UNIQUE_CHECK_EXISTING</> call,
+       It is recommended that in a <literal>UNIQUE_CHECK_EXISTING</literal> call,
        the access method further verify that the target row actually does
        have an existing entry in the index, and report error if not.  This
        is a good idea because the index tuple values passed to
-       <function>aminsert</> will have been recomputed.  If the index
+       <function>aminsert</function> will have been recomputed.  If the index
        definition involves functions that are not really immutable, we
        might be checking the wrong area of the index.  Checking that the
        target row is found in the recheck verifies that we are scanning
@@ -1128,20 +1128,20 @@ amparallelrescan (IndexScanDesc scan);
   <title>Index Cost Estimation Functions</title>
 
   <para>
-   The <function>amcostestimate</> function is given information describing
+   The <function>amcostestimate</function> function is given information describing
    a possible index scan, including lists of WHERE and ORDER BY clauses that
    have been determined to be usable with the index.  It must return estimates
    of the cost of accessing the index and the selectivity of the WHERE
    clauses (that is, the fraction of parent-table rows that will be
    retrieved during the index scan).  For simple cases, nearly all the
    work of the cost estimator can be done by calling standard routines
-   in the optimizer; the point of having an <function>amcostestimate</> function is
+   in the optimizer; the point of having an <function>amcostestimate</function> function is
    to allow index access methods to provide index-type-specific knowledge,
    in case it is possible to improve on the standard estimates.
   </para>
 
   <para>
-   Each <function>amcostestimate</> function must have the signature:
+   Each <function>amcostestimate</function> function must have the signature:
 
 <programlisting>
 void
@@ -1158,7 +1158,7 @@ amcostestimate (PlannerInfo *root,
 
    <variablelist>
     <varlistentry>
-     <term><parameter>root</></term>
+     <term><parameter>root</parameter></term>
      <listitem>
       <para>
        The planner's information about the query being processed.
@@ -1167,7 +1167,7 @@ amcostestimate (PlannerInfo *root,
     </varlistentry>
 
     <varlistentry>
-     <term><parameter>path</></term>
+     <term><parameter>path</parameter></term>
      <listitem>
       <para>
        The index access path being considered.  All fields except cost and
@@ -1177,14 +1177,14 @@ amcostestimate (PlannerInfo *root,
     </varlistentry>
 
     <varlistentry>
-     <term><parameter>loop_count</></term>
+     <term><parameter>loop_count</parameter></term>
      <listitem>
       <para>
        The number of repetitions of the index scan that should be factored
        into the cost estimates.  This will typically be greater than one when
        considering a parameterized scan for use in the inside of a nestloop
        join.  Note that the cost estimates should still be for just one scan;
-       a larger <parameter>loop_count</> means that it may be appropriate
+       a larger <parameter>loop_count</parameter> means that it may be appropriate
        to allow for some caching effects across multiple scans.
       </para>
      </listitem>
@@ -1197,7 +1197,7 @@ amcostestimate (PlannerInfo *root,
 
    <variablelist>
     <varlistentry>
-     <term><parameter>*indexStartupCost</></term>
+     <term><parameter>*indexStartupCost</parameter></term>
      <listitem>
       <para>
        Set to cost of index start-up processing
@@ -1206,7 +1206,7 @@ amcostestimate (PlannerInfo *root,
     </varlistentry>
 
     <varlistentry>
-     <term><parameter>*indexTotalCost</></term>
+     <term><parameter>*indexTotalCost</parameter></term>
      <listitem>
       <para>
        Set to total cost of index processing
@@ -1215,7 +1215,7 @@ amcostestimate (PlannerInfo *root,
     </varlistentry>
 
     <varlistentry>
-     <term><parameter>*indexSelectivity</></term>
+     <term><parameter>*indexSelectivity</parameter></term>
      <listitem>
       <para>
        Set to index selectivity
@@ -1224,7 +1224,7 @@ amcostestimate (PlannerInfo *root,
     </varlistentry>
 
     <varlistentry>
-     <term><parameter>*indexCorrelation</></term>
+     <term><parameter>*indexCorrelation</parameter></term>
      <listitem>
       <para>
        Set to correlation coefficient between index scan order and
@@ -1244,17 +1244,17 @@ amcostestimate (PlannerInfo *root,
   <para>
    The index access costs should be computed using the parameters used by
    <filename>src/backend/optimizer/path/costsize.c</filename>: a sequential
-   disk block fetch has cost <varname>seq_page_cost</>, a nonsequential fetch
-   has cost <varname>random_page_cost</>, and the cost of processing one index
-   row should usually be taken as <varname>cpu_index_tuple_cost</>.  In
-   addition, an appropriate multiple of <varname>cpu_operator_cost</> should
+   disk block fetch has cost <varname>seq_page_cost</varname>, a nonsequential fetch
+   has cost <varname>random_page_cost</varname>, and the cost of processing one index
+   row should usually be taken as <varname>cpu_index_tuple_cost</varname>.  In
+   addition, an appropriate multiple of <varname>cpu_operator_cost</varname> should
    be charged for any comparison operators invoked during index processing
    (especially evaluation of the indexquals themselves).
   </para>
 
   <para>
    The access costs should include all disk and CPU costs associated with
-   scanning the index itself, but <emphasis>not</> the costs of retrieving or
+   scanning the index itself, but <emphasis>not</emphasis> the costs of retrieving or
    processing the parent-table rows that are identified by the index.
   </para>
 
@@ -1266,21 +1266,21 @@ amcostestimate (PlannerInfo *root,
   </para>
 
   <para>
-   The <parameter>indexSelectivity</> should be set to the estimated fraction of the parent
+   The <parameter>indexSelectivity</parameter> should be set to the estimated fraction of the parent
    table rows that will be retrieved during the index scan.  In the case
    of a lossy query, this will typically be higher than the fraction of
    rows that actually pass the given qual conditions.
   </para>
 
   <para>
-   The <parameter>indexCorrelation</> should be set to the correlation (ranging between
+   The <parameter>indexCorrelation</parameter> should be set to the correlation (ranging between
    -1.0 and 1.0) between the index order and the table order.  This is used
    to adjust the estimate for the cost of fetching rows from the parent
    table.
   </para>
 
   <para>
-   When <parameter>loop_count</> is greater than one, the returned numbers
+   When <parameter>loop_count</parameter> is greater than one, the returned numbers
    should be averages expected for any one scan of the index.
   </para>
 
@@ -1307,17 +1307,17 @@ amcostestimate (PlannerInfo *root,
    <step>
     <para>
      Estimate the number of index rows that will be visited during the
-     scan.  For many index types this is the same as <parameter>indexSelectivity</> times
+     scan.  For many index types this is the same as <parameter>indexSelectivity</parameter> times
      the number of rows in the index, but it might be more.  (Note that the
      index's size in pages and rows is available from the
-     <literal>path-&gt;indexinfo</> struct.)
+     <literal>path-&gt;indexinfo</literal> struct.)
     </para>
    </step>
 
    <step>
     <para>
      Estimate the number of index pages that will be retrieved during the scan.
-     This might be just <parameter>indexSelectivity</> times the index's size in pages.
+     This might be just <parameter>indexSelectivity</parameter> times the index's size in pages.
     </para>
    </step>
 

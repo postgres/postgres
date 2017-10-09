@@ -35,12 +35,12 @@
  <sect1 id="locale">
   <title>Locale Support</title>
 
-  <indexterm zone="locale"><primary>locale</></>
+  <indexterm zone="locale"><primary>locale</primary></indexterm>
 
   <para>
-   <firstterm>Locale</> support refers to an application respecting
+   <firstterm>Locale</firstterm> support refers to an application respecting
    cultural preferences regarding alphabets, sorting, number
-   formatting, etc.  <productname>PostgreSQL</> uses the standard ISO
+   formatting, etc.  <productname>PostgreSQL</productname> uses the standard ISO
    C and <acronym>POSIX</acronym> locale facilities provided by the server operating
    system.  For additional information refer to the documentation of your
    system.
@@ -67,14 +67,14 @@ initdb --locale=sv_SE
 
    <para>
     This example for Unix systems sets the locale to Swedish
-    (<literal>sv</>) as spoken
-    in Sweden (<literal>SE</>).  Other possibilities might include
-    <literal>en_US</> (U.S. English) and <literal>fr_CA</> (French
+    (<literal>sv</literal>) as spoken
+    in Sweden (<literal>SE</literal>).  Other possibilities might include
+    <literal>en_US</literal> (U.S. English) and <literal>fr_CA</literal> (French
     Canadian).  If more than one character set can be used for a
     locale then the specifications can take the form
-    <replaceable>language_territory.codeset</>.  For example,
-    <literal>fr_BE.UTF-8</> represents the French language (fr) as
-    spoken in Belgium (BE), with a <acronym>UTF-8</> character set
+    <replaceable>language_territory.codeset</replaceable>.  For example,
+    <literal>fr_BE.UTF-8</literal> represents the French language (fr) as
+    spoken in Belgium (BE), with a <acronym>UTF-8</acronym> character set
     encoding.
    </para>
 
@@ -82,9 +82,9 @@ initdb --locale=sv_SE
     What locales are available on your
     system under what names depends on what was provided by the operating
     system vendor and what was installed.  On most Unix systems, the command
-    <literal>locale -a</> will provide a list of available locales.
-    Windows uses more verbose locale names, such as <literal>German_Germany</>
-    or <literal>Swedish_Sweden.1252</>, but the principles are the same.
+    <literal>locale -a</literal> will provide a list of available locales.
+    Windows uses more verbose locale names, such as <literal>German_Germany</literal>
+    or <literal>Swedish_Sweden.1252</literal>, but the principles are the same.
    </para>
 
    <para>
@@ -97,28 +97,28 @@ initdb --locale=sv_SE
      <tgroup cols="2">
       <tbody>
        <row>
-        <entry><envar>LC_COLLATE</></>
-        <entry>String sort order</>
+        <entry><envar>LC_COLLATE</envar></entry>
+        <entry>String sort order</entry>
        </row>
        <row>
-        <entry><envar>LC_CTYPE</></>
-        <entry>Character classification (What is a letter? Its upper-case equivalent?)</>
+        <entry><envar>LC_CTYPE</envar></entry>
+        <entry>Character classification (What is a letter? Its upper-case equivalent?)</entry>
        </row>
        <row>
-        <entry><envar>LC_MESSAGES</></>
-        <entry>Language of messages</>
+        <entry><envar>LC_MESSAGES</envar></entry>
+        <entry>Language of messages</entry>
        </row>
        <row>
-        <entry><envar>LC_MONETARY</></>
-        <entry>Formatting of currency amounts</>
+        <entry><envar>LC_MONETARY</envar></entry>
+        <entry>Formatting of currency amounts</entry>
        </row>
        <row>
-        <entry><envar>LC_NUMERIC</></>
-        <entry>Formatting of numbers</>
+        <entry><envar>LC_NUMERIC</envar></entry>
+        <entry>Formatting of numbers</entry>
        </row>
        <row>
-        <entry><envar>LC_TIME</></>
-        <entry>Formatting of dates and times</>
+        <entry><envar>LC_TIME</envar></entry>
+        <entry>Formatting of dates and times</entry>
        </row>
       </tbody>
      </tgroup>
@@ -133,8 +133,8 @@ initdb --locale=sv_SE
 
    <para>
     If you want the system to behave as if it had no locale support,
-    use the special locale name <literal>C</>, or equivalently
-    <literal>POSIX</>.
+    use the special locale name <literal>C</literal>, or equivalently
+    <literal>POSIX</literal>.
    </para>
 
    <para>
@@ -192,14 +192,14 @@ initdb --locale=sv_SE
      settings for the purpose of setting the language of messages.  If
      in doubt, please refer to the documentation of your operating
      system, in particular the documentation about
-     <application>gettext</>.
+     <application>gettext</application>.
     </para>
    </note>
 
    <para>
     To enable messages to be translated to the user's preferred language,
     <acronym>NLS</acronym> must have been selected at build time
-    (<literal>configure --enable-nls</>).  All other locale support is
+    (<literal>configure --enable-nls</literal>).  All other locale support is
     built in automatically.
    </para>
   </sect2>
@@ -213,63 +213,63 @@ initdb --locale=sv_SE
     <itemizedlist>
      <listitem>
       <para>
-       Sort order in queries using <literal>ORDER BY</> or the standard
+       Sort order in queries using <literal>ORDER BY</literal> or the standard
        comparison operators on textual data
-       <indexterm><primary>ORDER BY</><secondary>and locales</></indexterm>
+       <indexterm><primary>ORDER BY</primary><secondary>and locales</secondary></indexterm>
       </para>
      </listitem>
 
      <listitem>
       <para>
-       The <function>upper</>, <function>lower</>, and <function>initcap</>
+       The <function>upper</function>, <function>lower</function>, and <function>initcap</function>
        functions
-       <indexterm><primary>upper</><secondary>and locales</></indexterm>
-       <indexterm><primary>lower</><secondary>and locales</></indexterm>
+       <indexterm><primary>upper</primary><secondary>and locales</secondary></indexterm>
+       <indexterm><primary>lower</primary><secondary>and locales</secondary></indexterm>
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Pattern matching operators (<literal>LIKE</>, <literal>SIMILAR TO</>,
+       Pattern matching operators (<literal>LIKE</literal>, <literal>SIMILAR TO</literal>,
        and POSIX-style regular expressions); locales affect both case
        insensitive matching and the classification of characters by
        character-class regular expressions
-       <indexterm><primary>LIKE</><secondary>and locales</></indexterm>
-       <indexterm><primary>regular expressions</><secondary>and locales</></indexterm>
+       <indexterm><primary>LIKE</primary><secondary>and locales</secondary></indexterm>
+       <indexterm><primary>regular expressions</primary><secondary>and locales</secondary></indexterm>
       </para>
      </listitem>
 
      <listitem>
       <para>
-       The <function>to_char</> family of functions
-       <indexterm><primary>to_char</><secondary>and locales</></indexterm>
+       The <function>to_char</function> family of functions
+       <indexterm><primary>to_char</primary><secondary>and locales</secondary></indexterm>
       </para>
      </listitem>
 
      <listitem>
       <para>
-       The ability to use indexes with <literal>LIKE</> clauses
+       The ability to use indexes with <literal>LIKE</literal> clauses
       </para>
      </listitem>
     </itemizedlist>
    </para>
 
    <para>
-    The drawback of using locales other than <literal>C</> or
-    <literal>POSIX</> in <productname>PostgreSQL</> is its performance
+    The drawback of using locales other than <literal>C</literal> or
+    <literal>POSIX</literal> in <productname>PostgreSQL</productname> is its performance
     impact. It slows character handling and prevents ordinary indexes
-    from being used by <literal>LIKE</>. For this reason use locales
+    from being used by <literal>LIKE</literal>. For this reason use locales
     only if you actually need them.
    </para>
 
    <para>
-    As a workaround to allow <productname>PostgreSQL</> to use indexes
-    with <literal>LIKE</> clauses under a non-C locale, several custom
+    As a workaround to allow <productname>PostgreSQL</productname> to use indexes
+    with <literal>LIKE</literal> clauses under a non-C locale, several custom
     operator classes exist. These allow the creation of an index that
     performs a strict character-by-character comparison, ignoring
     locale comparison rules. Refer to <xref linkend="indexes-opclass">
     for more information.  Another approach is to create indexes using
-    the <literal>C</> collation, as discussed in
+    the <literal>C</literal> collation, as discussed in
     <xref linkend="collation">.
    </para>
   </sect2>
@@ -286,20 +286,20 @@ initdb --locale=sv_SE
    </para>
 
    <para>
-    Check that <productname>PostgreSQL</> is actually using the locale
-    that you think it is.  The <envar>LC_COLLATE</> and <envar>LC_CTYPE</>
+    Check that <productname>PostgreSQL</productname> is actually using the locale
+    that you think it is.  The <envar>LC_COLLATE</envar> and <envar>LC_CTYPE</envar>
     settings are determined when a database is created, and cannot be
     changed except by creating a new database.  Other locale
-    settings including <envar>LC_MESSAGES</> and <envar>LC_MONETARY</>
+    settings including <envar>LC_MESSAGES</envar> and <envar>LC_MONETARY</envar>
     are initially determined by the environment the server is started
     in, but can be changed on-the-fly.  You can check the active locale
-    settings using the <command>SHOW</> command.
+    settings using the <command>SHOW</command> command.
    </para>
 
    <para>
-    The directory <filename>src/test/locale</> in the source
+    The directory <filename>src/test/locale</filename> in the source
     distribution contains a test suite for
-    <productname>PostgreSQL</>'s locale support.
+    <productname>PostgreSQL</productname>'s locale support.
    </para>
 
    <para>
@@ -313,7 +313,7 @@ initdb --locale=sv_SE
    <para>
     Maintaining catalogs of message translations requires the on-going
     efforts of many volunteers that want to see
-    <productname>PostgreSQL</> speak their preferred language well.
+    <productname>PostgreSQL</productname> speak their preferred language well.
     If messages in your language are currently not available or not fully
     translated, your assistance would be appreciated.  If you want to
     help, refer to <xref linkend="nls"> or write to the developers'
@@ -326,7 +326,7 @@ initdb --locale=sv_SE
  <sect1 id="collation">
   <title>Collation Support</title>
 
-  <indexterm zone="collation"><primary>collation</></>
+  <indexterm zone="collation"><primary>collation</primary></indexterm>
 
   <para>
    The collation feature allows specifying the sort order and character
@@ -370,9 +370,9 @@ initdb --locale=sv_SE
     function or operator call is derived from the arguments, as described
     below.  In addition to comparison operators, collations are taken into
     account by functions that convert between lower and upper case
-    letters, such as <function>lower</>, <function>upper</>, and
-    <function>initcap</>; by pattern matching operators; and by
-    <function>to_char</> and related functions.
+    letters, such as <function>lower</function>, <function>upper</function>, and
+    <function>initcap</function>; by pattern matching operators; and by
+    <function>to_char</function> and related functions.
    </para>
 
    <para>
@@ -452,7 +452,7 @@ SELECT a &lt; ('foo' COLLATE "fr_FR") FROM test1;
 SELECT a &lt; b FROM test1;
 </programlisting>
     the parser cannot determine which collation to apply, since the
-    <structfield>a</> and <structfield>b</> columns have conflicting
+    <structfield>a</structfield> and <structfield>b</structfield> columns have conflicting
     implicit collations.  Since the <literal>&lt;</literal> operator
     does need to know which collation to use, this will result in an
     error.  The error can be resolved by attaching an explicit collation
@@ -468,7 +468,7 @@ SELECT a COLLATE "de_DE" &lt; b FROM test1;
 <programlisting>
 SELECT a || b FROM test1;
 </programlisting>
-    does not result in an error, because the <literal>||</> operator
+    does not result in an error, because the <literal>||</literal> operator
     does not care about collations: its result is the same regardless
     of the collation.
    </para>
@@ -486,8 +486,8 @@ SELECT * FROM test1 ORDER BY a || 'foo';
 <programlisting>
 SELECT * FROM test1 ORDER BY a || b;
 </programlisting>
-    results in an error, because even though the <literal>||</> operator
-    doesn't need to know a collation, the <literal>ORDER BY</> clause does.
+    results in an error, because even though the <literal>||</literal> operator
+    doesn't need to know a collation, the <literal>ORDER BY</literal> clause does.
     As before, the conflict can be resolved with an explicit collation
     specifier:
 <programlisting>
@@ -508,7 +508,7 @@ SELECT * FROM test1 ORDER BY a || b COLLATE "fr_FR";
     operating system C library.  These are the locales that most tools
     provided by the operating system use.  Another provider
     is <literal>icu</literal>, which uses the external
-    ICU<indexterm><primary>ICU</></> library.  ICU locales can only be
+    ICU<indexterm><primary>ICU</primary></indexterm> library.  ICU locales can only be
     used if support for ICU was configured when PostgreSQL was built.
    </para>
 
@@ -541,14 +541,14 @@ SELECT * FROM test1 ORDER BY a || b COLLATE "fr_FR";
     <title>Standard Collations</title>
 
    <para>
-    On all platforms, the collations named <literal>default</>,
-    <literal>C</>, and <literal>POSIX</> are available.  Additional
+    On all platforms, the collations named <literal>default</literal>,
+    <literal>C</literal>, and <literal>POSIX</literal> are available.  Additional
     collations may be available depending on operating system support.
-    The <literal>default</> collation selects the <symbol>LC_COLLATE</symbol>
+    The <literal>default</literal> collation selects the <symbol>LC_COLLATE</symbol>
     and <symbol>LC_CTYPE</symbol> values specified at database creation time.
-    The <literal>C</> and <literal>POSIX</> collations both specify
-    <quote>traditional C</> behavior, in which only the ASCII letters
-    <quote><literal>A</></quote> through <quote><literal>Z</></quote>
+    The <literal>C</literal> and <literal>POSIX</literal> collations both specify
+    <quote>traditional C</quote> behavior, in which only the ASCII letters
+    <quote><literal>A</literal></quote> through <quote><literal>Z</literal></quote>
     are treated as letters, and sorting is done strictly by character
     code byte values.
    </para>
@@ -565,7 +565,7 @@ SELECT * FROM test1 ORDER BY a || b COLLATE "fr_FR";
 
    <para>
     If the operating system provides support for using multiple locales
-    within a single program (<function>newlocale</> and related functions),
+    within a single program (<function>newlocale</function> and related functions),
     or if support for ICU is configured,
     then when a database cluster is initialized, <command>initdb</command>
     populates the system catalog <literal>pg_collation</literal> with
@@ -618,8 +618,8 @@ SELECT * FROM test1 ORDER BY a || b COLLATE "fr_FR";
     within a given database even though it would not be unique globally.
     Use of the stripped collation names is recommended, since it will
     make one less thing you need to change if you decide to change to
-    another database encoding.  Note however that the <literal>default</>,
-    <literal>C</>, and <literal>POSIX</> collations can be used regardless of
+    another database encoding.  Note however that the <literal>default</literal>,
+    <literal>C</literal>, and <literal>POSIX</literal> collations can be used regardless of
     the database encoding.
    </para>
 
@@ -630,7 +630,7 @@ SELECT * FROM test1 ORDER BY a || b COLLATE "fr_FR";
 <programlisting>
 SELECT a COLLATE "C" &lt; b COLLATE "POSIX" FROM test1;
 </programlisting>
-    will draw an error even though the <literal>C</> and <literal>POSIX</>
+    will draw an error even though the <literal>C</literal> and <literal>POSIX</literal>
     collations have identical behaviors.  Mixing stripped and non-stripped
     collation names is therefore not recommended.
    </para>
@@ -691,7 +691,7 @@ SELECT a COLLATE "C" &lt; b COLLATE "POSIX" FROM test1;
     database encoding is one of these, ICU collation entries
     in <literal>pg_collation</literal> are ignored.  Attempting to use one
     will draw an error along the lines of <quote>collation "de-x-icu" for
-    encoding "WIN874" does not exist</>.
+    encoding "WIN874" does not exist</quote>.
    </para>
   </sect4>
   </sect3>
@@ -889,30 +889,30 @@ CREATE COLLATION french FROM "fr-x-icu";
  <sect1 id="multibyte">
   <title>Character Set Support</title>
 
-  <indexterm zone="multibyte"><primary>character set</></>
+  <indexterm zone="multibyte"><primary>character set</primary></indexterm>
 
   <para>
    The character set support in <productname>PostgreSQL</productname>
    allows you to store text in a variety of character sets (also called
    encodings), including
    single-byte character sets such as the ISO 8859 series and
-   multiple-byte character sets such as <acronym>EUC</> (Extended Unix
+   multiple-byte character sets such as <acronym>EUC</acronym> (Extended Unix
    Code), UTF-8, and Mule internal code.  All supported character sets
    can be used transparently by clients, but a few are not supported
    for use within the server (that is, as a server-side encoding).
    The default character set is selected while
    initializing your <productname>PostgreSQL</productname> database
-   cluster using <command>initdb</>.  It can be overridden when you
+   cluster using <command>initdb</command>.  It can be overridden when you
    create a database, so you can have multiple
    databases each with a different character set.
   </para>
 
   <para>
    An important restriction, however, is that each database's character set
-   must be compatible with the database's <envar>LC_CTYPE</> (character
-   classification) and <envar>LC_COLLATE</> (string sort order) locale
-   settings. For <literal>C</> or
-   <literal>POSIX</> locale, any character set is allowed, but for other
+   must be compatible with the database's <envar>LC_CTYPE</envar> (character
+   classification) and <envar>LC_COLLATE</envar> (string sort order) locale
+   settings. For <literal>C</literal> or
+   <literal>POSIX</literal> locale, any character set is allowed, but for other
    libc-provided locales there is only one character set that will work
    correctly.
    (On Windows, however, UTF-8 encoding can be used with any locale.)
@@ -954,7 +954,7 @@ CREATE COLLATION french FROM "fr-x-icu";
          <entry>No</entry>
          <entry>No</entry>
          <entry>1-2</entry>
-         <entry><literal>WIN950</>, <literal>Windows950</></entry>
+         <entry><literal>WIN950</literal>, <literal>Windows950</literal></entry>
         </row>
         <row>
          <entry><literal>EUC_CN</literal></entry>
@@ -1017,11 +1017,11 @@ CREATE COLLATION french FROM "fr-x-icu";
          <entry>No</entry>
          <entry>No</entry>
          <entry>1-2</entry>
-         <entry><literal>WIN936</>, <literal>Windows936</></entry>
+         <entry><literal>WIN936</literal>, <literal>Windows936</literal></entry>
         </row>
         <row>
          <entry><literal>ISO_8859_5</literal></entry>
-         <entry>ISO 8859-5, <acronym>ECMA</> 113</entry>
+         <entry>ISO 8859-5, <acronym>ECMA</acronym> 113</entry>
          <entry>Latin/Cyrillic</entry>
          <entry>Yes</entry>
          <entry>Yes</entry>
@@ -1030,7 +1030,7 @@ CREATE COLLATION french FROM "fr-x-icu";
         </row>
         <row>
          <entry><literal>ISO_8859_6</literal></entry>
-         <entry>ISO 8859-6, <acronym>ECMA</> 114</entry>
+         <entry>ISO 8859-6, <acronym>ECMA</acronym> 114</entry>
          <entry>Latin/Arabic</entry>
          <entry>Yes</entry>
          <entry>Yes</entry>
@@ -1039,7 +1039,7 @@ CREATE COLLATION french FROM "fr-x-icu";
         </row>
         <row>
          <entry><literal>ISO_8859_7</literal></entry>
-         <entry>ISO 8859-7, <acronym>ECMA</> 118</entry>
+         <entry>ISO 8859-7, <acronym>ECMA</acronym> 118</entry>
          <entry>Latin/Greek</entry>
          <entry>Yes</entry>
          <entry>Yes</entry>
@@ -1048,7 +1048,7 @@ CREATE COLLATION french FROM "fr-x-icu";
         </row>
         <row>
          <entry><literal>ISO_8859_8</literal></entry>
-         <entry>ISO 8859-8, <acronym>ECMA</> 121</entry>
+         <entry>ISO 8859-8, <acronym>ECMA</acronym> 121</entry>
          <entry>Latin/Hebrew</entry>
          <entry>Yes</entry>
          <entry>Yes</entry>
@@ -1057,7 +1057,7 @@ CREATE COLLATION french FROM "fr-x-icu";
         </row>
         <row>
          <entry><literal>JOHAB</literal></entry>
-         <entry><acronym>JOHAB</></entry>
+         <entry><acronym>JOHAB</acronym></entry>
          <entry>Korean (Hangul)</entry>
          <entry>No</entry>
          <entry>No</entry>
@@ -1071,7 +1071,7 @@ CREATE COLLATION french FROM "fr-x-icu";
          <entry>Yes</entry>
          <entry>Yes</entry>
          <entry>1</entry>
-         <entry><literal>KOI8</></entry>
+         <entry><literal>KOI8</literal></entry>
         </row>
         <row>
          <entry><literal>KOI8U</literal></entry>
@@ -1084,57 +1084,57 @@ CREATE COLLATION french FROM "fr-x-icu";
         </row>
         <row>
          <entry><literal>LATIN1</literal></entry>
-         <entry>ISO 8859-1, <acronym>ECMA</> 94</entry>
+         <entry>ISO 8859-1, <acronym>ECMA</acronym> 94</entry>
          <entry>Western European</entry>
          <entry>Yes</entry>
          <entry>Yes</entry>
          <entry>1</entry>
-         <entry><literal>ISO88591</></entry>
+         <entry><literal>ISO88591</literal></entry>
         </row>
         <row>
          <entry><literal>LATIN2</literal></entry>
-         <entry>ISO 8859-2, <acronym>ECMA</> 94</entry>
+         <entry>ISO 8859-2, <acronym>ECMA</acronym> 94</entry>
          <entry>Central European</entry>
          <entry>Yes</entry>
          <entry>Yes</entry>
          <entry>1</entry>
-         <entry><literal>ISO88592</></entry>
+         <entry><literal>ISO88592</literal></entry>
         </row>
         <row>
          <entry><literal>LATIN3</literal></entry>
-         <entry>ISO 8859-3, <acronym>ECMA</> 94</entry>
+         <entry>ISO 8859-3, <acronym>ECMA</acronym> 94</entry>
          <entry>South European</entry>
          <entry>Yes</entry>
          <entry>Yes</entry>
          <entry>1</entry>
-         <entry><literal>ISO88593</></entry>
+         <entry><literal>ISO88593</literal></entry>
         </row>
         <row>
          <entry><literal>LATIN4</literal></entry>
-         <entry>ISO 8859-4, <acronym>ECMA</> 94</entry>
+         <entry>ISO 8859-4, <acronym>ECMA</acronym> 94</entry>
          <entry>North European</entry>
          <entry>Yes</entry>
          <entry>Yes</entry>
          <entry>1</entry>
-         <entry><literal>ISO88594</></entry>
+         <entry><literal>ISO88594</literal></entry>
         </row>
         <row>
          <entry><literal>LATIN5</literal></entry>
-         <entry>ISO 8859-9, <acronym>ECMA</> 128</entry>
+         <entry>ISO 8859-9, <acronym>ECMA</acronym> 128</entry>
          <entry>Turkish</entry>
          <entry>Yes</entry>
          <entry>Yes</entry>
          <entry>1</entry>
-         <entry><literal>ISO88599</></entry>
+         <entry><literal>ISO88599</literal></entry>
         </row>
         <row>
          <entry><literal>LATIN6</literal></entry>
-         <entry>ISO 8859-10, <acronym>ECMA</> 144</entry>
+         <entry>ISO 8859-10, <acronym>ECMA</acronym> 144</entry>
          <entry>Nordic</entry>
          <entry>Yes</entry>
          <entry>Yes</entry>
          <entry>1</entry>
-         <entry><literal>ISO885910</></entry>
+         <entry><literal>ISO885910</literal></entry>
         </row>
         <row>
          <entry><literal>LATIN7</literal></entry>
@@ -1143,7 +1143,7 @@ CREATE COLLATION french FROM "fr-x-icu";
          <entry>Yes</entry>
          <entry>Yes</entry>
          <entry>1</entry>
-         <entry><literal>ISO885913</></entry>
+         <entry><literal>ISO885913</literal></entry>
         </row>
         <row>
          <entry><literal>LATIN8</literal></entry>
@@ -1152,7 +1152,7 @@ CREATE COLLATION french FROM "fr-x-icu";
          <entry>Yes</entry>
          <entry>Yes</entry>
          <entry>1</entry>
-         <entry><literal>ISO885914</></entry>
+         <entry><literal>ISO885914</literal></entry>
         </row>
         <row>
          <entry><literal>LATIN9</literal></entry>
@@ -1161,16 +1161,16 @@ CREATE COLLATION french FROM "fr-x-icu";
          <entry>Yes</entry>
          <entry>Yes</entry>
          <entry>1</entry>
-         <entry><literal>ISO885915</></entry>
+         <entry><literal>ISO885915</literal></entry>
         </row>
         <row>
          <entry><literal>LATIN10</literal></entry>
-         <entry>ISO 8859-16, <acronym>ASRO</> SR 14111</entry>
+         <entry>ISO 8859-16, <acronym>ASRO</acronym> SR 14111</entry>
          <entry>Romanian</entry>
          <entry>Yes</entry>
          <entry>No</entry>
          <entry>1</entry>
-         <entry><literal>ISO885916</></entry>
+         <entry><literal>ISO885916</literal></entry>
         </row>
         <row>
          <entry><literal>MULE_INTERNAL</literal></entry>
@@ -1188,7 +1188,7 @@ CREATE COLLATION french FROM "fr-x-icu";
          <entry>No</entry>
          <entry>No</entry>
          <entry>1-2</entry>
-         <entry><literal>Mskanji</>, <literal>ShiftJIS</>, <literal>WIN932</>, <literal>Windows932</></entry>
+         <entry><literal>Mskanji</literal>, <literal>ShiftJIS</literal>, <literal>WIN932</literal>, <literal>Windows932</literal></entry>
         </row>
         <row>
          <entry><literal>SHIFT_JIS_2004</literal></entry>
@@ -1202,7 +1202,7 @@ CREATE COLLATION french FROM "fr-x-icu";
         <row>
          <entry><literal>SQL_ASCII</literal></entry>
          <entry>unspecified (see text)</entry>
-         <entry><emphasis>any</></entry>
+         <entry><emphasis>any</emphasis></entry>
          <entry>Yes</entry>
          <entry>No</entry>
          <entry>1</entry>
@@ -1215,16 +1215,16 @@ CREATE COLLATION french FROM "fr-x-icu";
          <entry>No</entry>
          <entry>No</entry>
          <entry>1-2</entry>
-         <entry><literal>WIN949</>, <literal>Windows949</></entry>
+         <entry><literal>WIN949</literal>, <literal>Windows949</literal></entry>
         </row>
         <row>
          <entry><literal>UTF8</literal></entry>
          <entry>Unicode, 8-bit</entry>
-         <entry><emphasis>all</></entry>
+         <entry><emphasis>all</emphasis></entry>
          <entry>Yes</entry>
          <entry>Yes</entry>
          <entry>1-4</entry>
-         <entry><literal>Unicode</></entry>
+         <entry><literal>Unicode</literal></entry>
         </row>
         <row>
          <entry><literal>WIN866</literal></entry>
@@ -1233,7 +1233,7 @@ CREATE COLLATION french FROM "fr-x-icu";
          <entry>Yes</entry>
          <entry>Yes</entry>
          <entry>1</entry>
-         <entry><literal>ALT</></entry>
+         <entry><literal>ALT</literal></entry>
         </row>
         <row>
          <entry><literal>WIN874</literal></entry>
@@ -1260,7 +1260,7 @@ CREATE COLLATION french FROM "fr-x-icu";
          <entry>Yes</entry>
          <entry>Yes</entry>
          <entry>1</entry>
-         <entry><literal>WIN</></entry>
+         <entry><literal>WIN</literal></entry>
         </row>
         <row>
          <entry><literal>WIN1252</literal></entry>
@@ -1323,30 +1323,30 @@ CREATE COLLATION french FROM "fr-x-icu";
          <entry>Yes</entry>
          <entry>Yes</entry>
          <entry>1</entry>
-         <entry><literal>ABC</>, <literal>TCVN</>, <literal>TCVN5712</>, <literal>VSCII</></entry>
+         <entry><literal>ABC</literal>, <literal>TCVN</literal>, <literal>TCVN5712</literal>, <literal>VSCII</literal></entry>
         </row>
        </tbody>
       </tgroup>
      </table>
 
      <para>
-      Not all client <acronym>API</>s support all the listed character sets. For example, the
-      <productname>PostgreSQL</>
-      JDBC driver does not support <literal>MULE_INTERNAL</>, <literal>LATIN6</>,
-      <literal>LATIN8</>, and <literal>LATIN10</>.
+      Not all client <acronym>API</acronym>s support all the listed character sets. For example, the
+      <productname>PostgreSQL</productname>
+      JDBC driver does not support <literal>MULE_INTERNAL</literal>, <literal>LATIN6</literal>,
+      <literal>LATIN8</literal>, and <literal>LATIN10</literal>.
      </para>
 
      <para>
-      The <literal>SQL_ASCII</> setting behaves considerably differently
+      The <literal>SQL_ASCII</literal> setting behaves considerably differently
       from the other settings.  When the server character set is
-      <literal>SQL_ASCII</>, the server interprets byte values 0-127
+      <literal>SQL_ASCII</literal>, the server interprets byte values 0-127
       according to the ASCII standard, while byte values 128-255 are taken
       as uninterpreted characters.  No encoding conversion will be done when
-      the setting is <literal>SQL_ASCII</>.  Thus, this setting is not so
+      the setting is <literal>SQL_ASCII</literal>.  Thus, this setting is not so
       much a declaration that a specific encoding is in use, as a declaration
       of ignorance about the encoding.  In most cases, if you are
       working with any non-ASCII data, it is unwise to use the
-      <literal>SQL_ASCII</> setting because
+      <literal>SQL_ASCII</literal> setting because
       <productname>PostgreSQL</productname> will be unable to help you by
       converting or validating non-ASCII characters.
      </para>
@@ -1356,7 +1356,7 @@ CREATE COLLATION french FROM "fr-x-icu";
     <title>Setting the Character Set</title>
 
     <para>
-     <command>initdb</> defines the default character set (encoding)
+     <command>initdb</command> defines the default character set (encoding)
      for a <productname>PostgreSQL</productname> cluster. For example,
 
 <screen>
@@ -1367,8 +1367,8 @@ initdb -E EUC_JP
      <literal>EUC_JP</literal> (Extended Unix Code for Japanese).  You
      can use <option>--encoding</option> instead of
      <option>-E</option> if you prefer longer option strings.
-     If no <option>-E</> or <option>--encoding</option> option is
-     given, <command>initdb</> attempts to determine the appropriate
+     If no <option>-E</option> or <option>--encoding</option> option is
+     given, <command>initdb</command> attempts to determine the appropriate
      encoding to use based on the specified or default locale.
     </para>
 
@@ -1388,7 +1388,7 @@ createdb -E EUC_KR -T template0 --lc-collate=ko_KR.euckr --lc-ctype=ko_KR.euckr 
 CREATE DATABASE korean WITH ENCODING 'EUC_KR' LC_COLLATE='ko_KR.euckr' LC_CTYPE='ko_KR.euckr' TEMPLATE=template0;
 </programlisting>
 
-     Notice that the above commands specify copying the <literal>template0</>
+     Notice that the above commands specify copying the <literal>template0</literal>
      database.  When copying any other database, the encoding and locale
      settings cannot be changed from those of the source database, because
      that might result in corrupt data.  For more information see
@@ -1420,7 +1420,7 @@ $ <userinput>psql -l</userinput>
     <important>
      <para>
       On most modern operating systems, <productname>PostgreSQL</productname>
-      can determine which character set is implied by the <envar>LC_CTYPE</>
+      can determine which character set is implied by the <envar>LC_CTYPE</envar>
       setting, and it will enforce that only the matching database encoding is
       used.  On older systems it is your responsibility to ensure that you use
       the encoding expected by the locale you have selected.  A mistake in
@@ -1430,9 +1430,9 @@ $ <userinput>psql -l</userinput>
 
      <para>
       <productname>PostgreSQL</productname> will allow superusers to create
-      databases with <literal>SQL_ASCII</> encoding even when
-      <envar>LC_CTYPE</> is not <literal>C</> or <literal>POSIX</>.  As noted
-      above, <literal>SQL_ASCII</> does not enforce that the data stored in
+      databases with <literal>SQL_ASCII</literal> encoding even when
+      <envar>LC_CTYPE</envar> is not <literal>C</literal> or <literal>POSIX</literal>.  As noted
+      above, <literal>SQL_ASCII</literal> does not enforce that the data stored in
       the database has any particular encoding, and so this choice poses risks
       of locale-dependent misbehavior.  Using this combination of settings is
       deprecated and may someday be forbidden altogether.
@@ -1447,7 +1447,7 @@ $ <userinput>psql -l</userinput>
      <productname>PostgreSQL</productname> supports automatic
      character set conversion between server and client for certain
      character set combinations. The conversion information is stored in the
-     <literal>pg_conversion</> system catalog.  <productname>PostgreSQL</>
+     <literal>pg_conversion</literal> system catalog.  <productname>PostgreSQL</productname>
      comes with some predefined conversions, as shown in <xref
      linkend="multibyte-translation-table">. You can create a new
      conversion using the SQL command <command>CREATE CONVERSION</command>.
@@ -1763,7 +1763,7 @@ $ <userinput>psql -l</userinput>
 
       <listitem>
        <para>
-        <application>libpq</> (<xref linkend="libpq-control">) has functions to control the client encoding.
+        <application>libpq</application> (<xref linkend="libpq-control">) has functions to control the client encoding.
        </para>
       </listitem>
 
@@ -1774,14 +1774,14 @@ $ <userinput>psql -l</userinput>
         Setting the client encoding can be done with this SQL command:
 
 <programlisting>
-SET CLIENT_ENCODING TO '<replaceable>value</>';
+SET CLIENT_ENCODING TO '<replaceable>value</replaceable>';
 </programlisting>
 
         Also you can use the standard SQL syntax <literal>SET NAMES</literal>
         for this purpose:
 
 <programlisting>
-SET NAMES '<replaceable>value</>';
+SET NAMES '<replaceable>value</replaceable>';
 </programlisting>
 
         To query the current client encoding:
@@ -1813,7 +1813,7 @@ RESET client_encoding;
       <para>
        Using the configuration variable <xref
        linkend="guc-client-encoding">. If the
-       <varname>client_encoding</> variable is set, that client
+       <varname>client_encoding</varname> variable is set, that client
        encoding is automatically selected when a connection to the
        server is made.  (This can subsequently be overridden using any
        of the other methods mentioned above.)
@@ -1832,9 +1832,9 @@ RESET client_encoding;
     </para>
 
     <para>
-     If the client character set is defined as <literal>SQL_ASCII</>,
+     If the client character set is defined as <literal>SQL_ASCII</literal>,
      encoding conversion is disabled, regardless of the server's character
-     set.  Just as for the server, use of <literal>SQL_ASCII</> is unwise
+     set.  Just as for the server, use of <literal>SQL_ASCII</literal> is unwise
      unless you are working with all-ASCII data.
     </para>
    </sect2>

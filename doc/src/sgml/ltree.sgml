@@ -8,7 +8,7 @@
  </indexterm>
 
  <para>
-  This module implements a data type <type>ltree</> for representing
+  This module implements a data type <type>ltree</type> for representing
   labels of data stored in a hierarchical tree-like structure.
   Extensive facilities for searching through label trees are provided.
  </para>
@@ -19,17 +19,17 @@
   <para>
    A <firstterm>label</firstterm> is a sequence of alphanumeric characters
    and underscores (for example, in C locale the characters
-   <literal>A-Za-z0-9_</> are allowed).  Labels must be less than 256 bytes
+   <literal>A-Za-z0-9_</literal> are allowed).  Labels must be less than 256 bytes
    long.
   </para>
 
   <para>
-   Examples: <literal>42</>, <literal>Personal_Services</>
+   Examples: <literal>42</literal>, <literal>Personal_Services</literal>
   </para>
 
   <para>
    A <firstterm>label path</firstterm> is a sequence of zero or more
-   labels separated by dots, for example <literal>L1.L2.L3</>, representing
+   labels separated by dots, for example <literal>L1.L2.L3</literal>, representing
    a path from the root of a hierarchical tree to a particular node.  The
    length of a label path must be less than 65kB, but keeping it under 2kB is
    preferable.  In practice this is not a major limitation; for example,
@@ -42,7 +42,7 @@
   </para>
 
   <para>
-   The <filename>ltree</> module provides several data types:
+   The <filename>ltree</filename> module provides several data types:
   </para>
 
   <itemizedlist>
@@ -55,13 +55,13 @@
    <listitem>
     <para>
      <type>lquery</type> represents a regular-expression-like pattern
-     for matching <type>ltree</> values.  A simple word matches that
-     label within a path.  A star symbol (<literal>*</>) matches zero
+     for matching <type>ltree</type> values.  A simple word matches that
+     label within a path.  A star symbol (<literal>*</literal>) matches zero
      or more labels.  For example:
 <synopsis>
-foo         <lineannotation>Match the exact label path <literal>foo</></lineannotation>
-*.foo.*     <lineannotation>Match any label path containing the label <literal>foo</></lineannotation>
-*.foo       <lineannotation>Match any label path whose last label is <literal>foo</></lineannotation>
+foo         <lineannotation>Match the exact label path <literal>foo</literal></lineannotation>
+*.foo.*     <lineannotation>Match any label path containing the label <literal>foo</literal></lineannotation>
+*.foo       <lineannotation>Match any label path whose last label is <literal>foo</literal></lineannotation>
 </synopsis>
     </para>
 
@@ -69,34 +69,34 @@ foo         <lineannotation>Match the exact label path <literal>foo</></lineanno
      Star symbols can also be quantified to restrict how many labels
      they can match:
 <synopsis>
-*{<replaceable>n</>}        <lineannotation>Match exactly <replaceable>n</> labels</lineannotation>
-*{<replaceable>n</>,}       <lineannotation>Match at least <replaceable>n</> labels</lineannotation>
-*{<replaceable>n</>,<replaceable>m</>}      <lineannotation>Match at least <replaceable>n</> but not more than <replaceable>m</> labels</lineannotation>
-*{,<replaceable>m</>}       <lineannotation>Match at most <replaceable>m</> labels &mdash; same as </lineannotation> *{0,<replaceable>m</>}
+*{<replaceable>n</replaceable>}        <lineannotation>Match exactly <replaceable>n</replaceable> labels</lineannotation>
+*{<replaceable>n</replaceable>,}       <lineannotation>Match at least <replaceable>n</replaceable> labels</lineannotation>
+*{<replaceable>n</replaceable>,<replaceable>m</replaceable>}      <lineannotation>Match at least <replaceable>n</replaceable> but not more than <replaceable>m</replaceable> labels</lineannotation>
+*{,<replaceable>m</replaceable>}       <lineannotation>Match at most <replaceable>m</replaceable> labels &mdash; same as </lineannotation> *{0,<replaceable>m</replaceable>}
 </synopsis>
     </para>
 
     <para>
      There are several modifiers that can be put at the end of a non-star
-     label in <type>lquery</> to make it match more than just the exact match:
+     label in <type>lquery</type> to make it match more than just the exact match:
 <synopsis>
-@           <lineannotation>Match case-insensitively, for example <literal>a@</> matches <literal>A</></lineannotation>
-*           <lineannotation>Match any label with this prefix, for example <literal>foo*</> matches <literal>foobar</></lineannotation>
+@           <lineannotation>Match case-insensitively, for example <literal>a@</literal> matches <literal>A</literal></lineannotation>
+*           <lineannotation>Match any label with this prefix, for example <literal>foo*</literal> matches <literal>foobar</literal></lineannotation>
 %           <lineannotation>Match initial underscore-separated words</lineannotation>
 </synopsis>
-     The behavior of <literal>%</> is a bit complicated.  It tries to match
+     The behavior of <literal>%</literal> is a bit complicated.  It tries to match
      words rather than the entire label.  For example
-     <literal>foo_bar%</> matches <literal>foo_bar_baz</> but not
-     <literal>foo_barbaz</>.  If combined with <literal>*</>, prefix
+     <literal>foo_bar%</literal> matches <literal>foo_bar_baz</literal> but not
+     <literal>foo_barbaz</literal>.  If combined with <literal>*</literal>, prefix
      matching applies to each word separately, for example
-     <literal>foo_bar%*</> matches <literal>foo1_bar2_baz</> but
-     not <literal>foo1_br2_baz</>.
+     <literal>foo_bar%*</literal> matches <literal>foo1_bar2_baz</literal> but
+     not <literal>foo1_br2_baz</literal>.
     </para>
 
     <para>
      Also, you can write several possibly-modified labels separated with
-     <literal>|</> (OR) to match any of those labels, and you can put
-     <literal>!</> (NOT) at the start to match any label that doesn't
+     <literal>|</literal> (OR) to match any of those labels, and you can put
+     <literal>!</literal> (NOT) at the start to match any label that doesn't
      match any of the alternatives.
     </para>
 
@@ -141,14 +141,14 @@ a.  b.     c.      d.               e.
 
    <listitem>
     <para><type>ltxtquery</type> represents a full-text-search-like
-    pattern for matching <type>ltree</> values.  An
+    pattern for matching <type>ltree</type> values.  An
     <type>ltxtquery</type> value contains words, possibly with the
-    modifiers <literal>@</>, <literal>*</>, <literal>%</> at the end;
-    the modifiers have the same meanings as in <type>lquery</>.
-    Words can be combined with <literal>&amp;</> (AND),
-    <literal>|</> (OR), <literal>!</> (NOT), and parentheses.
+    modifiers <literal>@</literal>, <literal>*</literal>, <literal>%</literal> at the end;
+    the modifiers have the same meanings as in <type>lquery</type>.
+    Words can be combined with <literal>&amp;</literal> (AND),
+    <literal>|</literal> (OR), <literal>!</literal> (NOT), and parentheses.
     The key difference from
-    <type>lquery</> is that <type>ltxtquery</type> matches words without
+    <type>lquery</type> is that <type>ltxtquery</type> matches words without
     regard to their position in the label path.
     </para>
 
@@ -161,7 +161,7 @@ Europe &amp; Russia*@ &amp; !Transportation
      any label beginning with <literal>Russia</literal> (case-insensitive),
      but not paths containing the label <literal>Transportation</literal>.
      The location of these words within the path is not important.
-     Also, when <literal>%</> is used, the word can be matched to any
+     Also, when <literal>%</literal> is used, the word can be matched to any
      underscore-separated word within a label, regardless of position.
     </para>
    </listitem>
@@ -169,8 +169,8 @@ Europe &amp; Russia*@ &amp; !Transportation
   </itemizedlist>
 
   <para>
-   Note: <type>ltxtquery</> allows whitespace between symbols, but
-   <type>ltree</> and <type>lquery</> do not.
+   Note: <type>ltxtquery</type> allows whitespace between symbols, but
+   <type>ltree</type> and <type>lquery</type> do not.
   </para>
  </sect2>
 
@@ -178,16 +178,16 @@ Europe &amp; Russia*@ &amp; !Transportation
   <title>Operators and Functions</title>
 
   <para>
-   Type <type>ltree</> has the usual comparison operators
-   <literal>=</>, <literal>&lt;&gt;</literal>,
-   <literal>&lt;</>, <literal>&gt;</>, <literal>&lt;=</>, <literal>&gt;=</>.
+   Type <type>ltree</type> has the usual comparison operators
+   <literal>=</literal>, <literal>&lt;&gt;</literal>,
+   <literal>&lt;</literal>, <literal>&gt;</literal>, <literal>&lt;=</literal>, <literal>&gt;=</literal>.
    Comparison sorts in the order of a tree traversal, with the children
    of a node sorted by label text.  In addition, the specialized
    operators shown in <xref linkend="ltree-op-table"> are available.
   </para>
 
   <table id="ltree-op-table">
-   <title><type>ltree</> Operators</title>
+   <title><type>ltree</type> Operators</title>
 
    <tgroup cols="3">
     <thead>
@@ -200,153 +200,153 @@ Europe &amp; Russia*@ &amp; !Transportation
 
     <tbody>
      <row>
-      <entry><type>ltree</> <literal>@&gt;</> <type>ltree</></entry>
+      <entry><type>ltree</type> <literal>@&gt;</literal> <type>ltree</type></entry>
       <entry><type>boolean</type></entry>
       <entry>is left argument an ancestor of right (or equal)?</entry>
      </row>
 
      <row>
-      <entry><type>ltree</> <literal>&lt;@</> <type>ltree</></entry>
+      <entry><type>ltree</type> <literal>&lt;@</literal> <type>ltree</type></entry>
       <entry><type>boolean</type></entry>
       <entry>is left argument a descendant of right (or equal)?</entry>
      </row>
 
      <row>
-      <entry><type>ltree</> <literal>~</> <type>lquery</></entry>
+      <entry><type>ltree</type> <literal>~</literal> <type>lquery</type></entry>
       <entry><type>boolean</type></entry>
-      <entry>does <type>ltree</> match <type>lquery</>?</entry>
+      <entry>does <type>ltree</type> match <type>lquery</type>?</entry>
      </row>
 
      <row>
-      <entry><type>lquery</> <literal>~</> <type>ltree</></entry>
+      <entry><type>lquery</type> <literal>~</literal> <type>ltree</type></entry>
       <entry><type>boolean</type></entry>
-      <entry>does <type>ltree</> match <type>lquery</>?</entry>
+      <entry>does <type>ltree</type> match <type>lquery</type>?</entry>
      </row>
 
      <row>
-      <entry><type>ltree</> <literal>?</> <type>lquery[]</></entry>
+      <entry><type>ltree</type> <literal>?</literal> <type>lquery[]</type></entry>
       <entry><type>boolean</type></entry>
-      <entry>does <type>ltree</> match any <type>lquery</> in array?</entry>
+      <entry>does <type>ltree</type> match any <type>lquery</type> in array?</entry>
      </row>
 
      <row>
-      <entry><type>lquery[]</> <literal>?</> <type>ltree</></entry>
+      <entry><type>lquery[]</type> <literal>?</literal> <type>ltree</type></entry>
       <entry><type>boolean</type></entry>
-      <entry>does <type>ltree</> match any <type>lquery</> in array?</entry>
+      <entry>does <type>ltree</type> match any <type>lquery</type> in array?</entry>
      </row>
 
      <row>
-      <entry><type>ltree</> <literal>@</> <type>ltxtquery</></entry>
+      <entry><type>ltree</type> <literal>@</literal> <type>ltxtquery</type></entry>
       <entry><type>boolean</type></entry>
-      <entry>does <type>ltree</> match <type>ltxtquery</>?</entry>
+      <entry>does <type>ltree</type> match <type>ltxtquery</type>?</entry>
      </row>
 
      <row>
-      <entry><type>ltxtquery</> <literal>@</> <type>ltree</></entry>
+      <entry><type>ltxtquery</type> <literal>@</literal> <type>ltree</type></entry>
       <entry><type>boolean</type></entry>
-      <entry>does <type>ltree</> match <type>ltxtquery</>?</entry>
+      <entry>does <type>ltree</type> match <type>ltxtquery</type>?</entry>
      </row>
 
      <row>
-      <entry><type>ltree</> <literal>||</> <type>ltree</></entry>
+      <entry><type>ltree</type> <literal>||</literal> <type>ltree</type></entry>
       <entry><type>ltree</type></entry>
-      <entry>concatenate <type>ltree</> paths</entry>
+      <entry>concatenate <type>ltree</type> paths</entry>
      </row>
 
      <row>
-      <entry><type>ltree</> <literal>||</> <type>text</></entry>
+      <entry><type>ltree</type> <literal>||</literal> <type>text</type></entry>
       <entry><type>ltree</type></entry>
-      <entry>convert text to <type>ltree</> and concatenate</entry>
+      <entry>convert text to <type>ltree</type> and concatenate</entry>
      </row>
 
      <row>
-      <entry><type>text</> <literal>||</> <type>ltree</></entry>
+      <entry><type>text</type> <literal>||</literal> <type>ltree</type></entry>
       <entry><type>ltree</type></entry>
-      <entry>convert text to <type>ltree</> and concatenate</entry>
+      <entry>convert text to <type>ltree</type> and concatenate</entry>
      </row>
 
      <row>
-      <entry><type>ltree[]</> <literal>@&gt;</> <type>ltree</></entry>
+      <entry><type>ltree[]</type> <literal>@&gt;</literal> <type>ltree</type></entry>
       <entry><type>boolean</type></entry>
-      <entry>does array contain an ancestor of <type>ltree</>?</entry>
+      <entry>does array contain an ancestor of <type>ltree</type>?</entry>
      </row>
 
      <row>
-      <entry><type>ltree</> <literal>&lt;@</> <type>ltree[]</></entry>
+      <entry><type>ltree</type> <literal>&lt;@</literal> <type>ltree[]</type></entry>
       <entry><type>boolean</type></entry>
-      <entry>does array contain an ancestor of <type>ltree</>?</entry>
+      <entry>does array contain an ancestor of <type>ltree</type>?</entry>
      </row>
 
      <row>
-      <entry><type>ltree[]</> <literal>&lt;@</> <type>ltree</></entry>
+      <entry><type>ltree[]</type> <literal>&lt;@</literal> <type>ltree</type></entry>
       <entry><type>boolean</type></entry>
-      <entry>does array contain a descendant of <type>ltree</>?</entry>
+      <entry>does array contain a descendant of <type>ltree</type>?</entry>
      </row>
 
      <row>
-      <entry><type>ltree</> <literal>@&gt;</> <type>ltree[]</></entry>
+      <entry><type>ltree</type> <literal>@&gt;</literal> <type>ltree[]</type></entry>
       <entry><type>boolean</type></entry>
-      <entry>does array contain a descendant of <type>ltree</>?</entry>
+      <entry>does array contain a descendant of <type>ltree</type>?</entry>
      </row>
 
      <row>
-      <entry><type>ltree[]</> <literal>~</> <type>lquery</></entry>
+      <entry><type>ltree[]</type> <literal>~</literal> <type>lquery</type></entry>
       <entry><type>boolean</type></entry>
-      <entry>does array contain any path matching <type>lquery</>?</entry>
+      <entry>does array contain any path matching <type>lquery</type>?</entry>
      </row>
 
      <row>
-      <entry><type>lquery</> <literal>~</> <type>ltree[]</></entry>
+      <entry><type>lquery</type> <literal>~</literal> <type>ltree[]</type></entry>
       <entry><type>boolean</type></entry>
-      <entry>does array contain any path matching <type>lquery</>?</entry>
+      <entry>does array contain any path matching <type>lquery</type>?</entry>
      </row>
 
      <row>
-      <entry><type>ltree[]</> <literal>?</> <type>lquery[]</></entry>
+      <entry><type>ltree[]</type> <literal>?</literal> <type>lquery[]</type></entry>
       <entry><type>boolean</type></entry>
-      <entry>does <type>ltree</> array contain any path matching any <type>lquery</>?</entry>
+      <entry>does <type>ltree</type> array contain any path matching any <type>lquery</type>?</entry>
      </row>
 
      <row>
-      <entry><type>lquery[]</> <literal>?</> <type>ltree[]</></entry>
+      <entry><type>lquery[]</type> <literal>?</literal> <type>ltree[]</type></entry>
       <entry><type>boolean</type></entry>
-      <entry>does <type>ltree</> array contain any path matching any <type>lquery</>?</entry>
+      <entry>does <type>ltree</type> array contain any path matching any <type>lquery</type>?</entry>
      </row>
 
      <row>
-      <entry><type>ltree[]</> <literal>@</> <type>ltxtquery</></entry>
+      <entry><type>ltree[]</type> <literal>@</literal> <type>ltxtquery</type></entry>
       <entry><type>boolean</type></entry>
-      <entry>does array contain any path matching <type>ltxtquery</>?</entry>
+      <entry>does array contain any path matching <type>ltxtquery</type>?</entry>
      </row>
 
      <row>
-      <entry><type>ltxtquery</> <literal>@</> <type>ltree[]</></entry>
+      <entry><type>ltxtquery</type> <literal>@</literal> <type>ltree[]</type></entry>
       <entry><type>boolean</type></entry>
-      <entry>does array contain any path matching <type>ltxtquery</>?</entry>
+      <entry>does array contain any path matching <type>ltxtquery</type>?</entry>
      </row>
 
      <row>
-      <entry><type>ltree[]</> <literal>?@&gt;</> <type>ltree</></entry>
+      <entry><type>ltree[]</type> <literal>?@&gt;</literal> <type>ltree</type></entry>
       <entry><type>ltree</type></entry>
-      <entry>first array entry that is an ancestor of <type>ltree</>; NULL if none</entry>
+      <entry>first array entry that is an ancestor of <type>ltree</type>; NULL if none</entry>
      </row>
 
      <row>
-      <entry><type>ltree[]</> <literal>?&lt;@</> <type>ltree</></entry>
+      <entry><type>ltree[]</type> <literal>?&lt;@</literal> <type>ltree</type></entry>
       <entry><type>ltree</type></entry>
-      <entry>first array entry that is a descendant of <type>ltree</>; NULL if none</entry>
+      <entry>first array entry that is a descendant of <type>ltree</type>; NULL if none</entry>
      </row>
 
      <row>
-      <entry><type>ltree[]</> <literal>?~</> <type>lquery</></entry>
+      <entry><type>ltree[]</type> <literal>?~</literal> <type>lquery</type></entry>
       <entry><type>ltree</type></entry>
-      <entry>first array entry that matches <type>lquery</>; NULL if none</entry>
+      <entry>first array entry that matches <type>lquery</type>; NULL if none</entry>
      </row>
 
      <row>
-      <entry><type>ltree[]</> <literal>?@</> <type>ltxtquery</></entry>
+      <entry><type>ltree[]</type> <literal>?@</literal> <type>ltxtquery</type></entry>
       <entry><type>ltree</type></entry>
-      <entry>first array entry that matches <type>ltxtquery</>; NULL if none</entry>
+      <entry>first array entry that matches <type>ltxtquery</type>; NULL if none</entry>
      </row>
 
     </tbody>
@@ -356,7 +356,7 @@ Europe &amp; Russia*@ &amp; !Transportation
   <para>
    The operators <literal>&lt;@</literal>, <literal>@&gt;</literal>,
    <literal>@</literal> and <literal>~</literal> have analogues
-   <literal>^&lt;@</>, <literal>^@&gt;</>, <literal>^@</>,
+   <literal>^&lt;@</literal>, <literal>^@&gt;</literal>, <literal>^@</literal>,
    <literal>^~</literal>, which are the same except they do not use
    indexes.  These are useful only for testing purposes.
   </para>
@@ -366,7 +366,7 @@ Europe &amp; Russia*@ &amp; !Transportation
   </para>
 
   <table id="ltree-func-table">
-   <title><type>ltree</> Functions</title>
+   <title><type>ltree</type> Functions</title>
 
    <tgroup cols="5">
     <thead>
@@ -383,8 +383,8 @@ Europe &amp; Russia*@ &amp; !Transportation
      <row>
       <entry><function>subltree(ltree, int start, int end)</function><indexterm><primary>subltree</primary></indexterm></entry>
       <entry><type>ltree</type></entry>
-      <entry>subpath of <type>ltree</> from position <parameter>start</> to
-       position <parameter>end</>-1 (counting from 0)</entry>
+      <entry>subpath of <type>ltree</type> from position <parameter>start</parameter> to
+       position <parameter>end</parameter>-1 (counting from 0)</entry>
       <entry><literal>subltree('Top.Child1.Child2',1,2)</literal></entry>
       <entry><literal>Child1</literal></entry>
      </row>
@@ -392,10 +392,10 @@ Europe &amp; Russia*@ &amp; !Transportation
      <row>
       <entry><function>subpath(ltree, int offset, int len)</function><indexterm><primary>subpath</primary></indexterm></entry>
       <entry><type>ltree</type></entry>
-      <entry>subpath of <type>ltree</> starting at position
-       <parameter>offset</>, length <parameter>len</>.
-       If <parameter>offset</> is negative, subpath starts that far from the
-       end of the path.  If <parameter>len</> is negative, leaves that many
+      <entry>subpath of <type>ltree</type> starting at position
+       <parameter>offset</parameter>, length <parameter>len</parameter>.
+       If <parameter>offset</parameter> is negative, subpath starts that far from the
+       end of the path.  If <parameter>len</parameter> is negative, leaves that many
        labels off the end of the path.</entry>
       <entry><literal>subpath('Top.Child1.Child2',0,2)</literal></entry>
       <entry><literal>Top.Child1</literal></entry>
@@ -404,9 +404,9 @@ Europe &amp; Russia*@ &amp; !Transportation
      <row>
       <entry><function>subpath(ltree, int offset)</function></entry>
       <entry><type>ltree</type></entry>
-      <entry>subpath of <type>ltree</> starting at position
-       <parameter>offset</>, extending to end of path.
-       If <parameter>offset</> is negative, subpath starts that far from the
+      <entry>subpath of <type>ltree</type> starting at position
+       <parameter>offset</parameter>, extending to end of path.
+       If <parameter>offset</parameter> is negative, subpath starts that far from the
        end of the path.</entry>
       <entry><literal>subpath('Top.Child1.Child2',1)</literal></entry>
       <entry><literal>Child1.Child2</literal></entry>
@@ -423,8 +423,8 @@ Europe &amp; Russia*@ &amp; !Transportation
      <row>
       <entry><function>index(ltree a, ltree b)</function><indexterm><primary>index</primary></indexterm></entry>
       <entry><type>integer</type></entry>
-      <entry>position of first occurrence of <parameter>b</> in
-       <parameter>a</>; -1 if not found</entry>
+      <entry>position of first occurrence of <parameter>b</parameter> in
+       <parameter>a</parameter>; -1 if not found</entry>
       <entry><literal>index('0.1.2.3.5.4.5.6.8.5.6.8','5.6')</literal></entry>
       <entry><literal>6</literal></entry>
      </row>
@@ -432,9 +432,9 @@ Europe &amp; Russia*@ &amp; !Transportation
      <row>
       <entry><function>index(ltree a, ltree b, int offset)</function></entry>
       <entry><type>integer</type></entry>
-      <entry>position of first occurrence of <parameter>b</> in
-       <parameter>a</>, searching starting at <parameter>offset</>;
-       negative <parameter>offset</> means start <parameter>-offset</>
+      <entry>position of first occurrence of <parameter>b</parameter> in
+       <parameter>a</parameter>, searching starting at <parameter>offset</parameter>;
+       negative <parameter>offset</parameter> means start <parameter>-offset</parameter>
        labels from the end of the path</entry>
       <entry><literal>index('0.1.2.3.5.4.5.6.8.5.6.8','5.6',-4)</literal></entry>
       <entry><literal>9</literal></entry>
@@ -443,7 +443,7 @@ Europe &amp; Russia*@ &amp; !Transportation
      <row>
       <entry><function>text2ltree(text)</function><indexterm><primary>text2ltree</primary></indexterm></entry>
       <entry><type>ltree</type></entry>
-      <entry>cast <type>text</> to <type>ltree</></entry>
+      <entry>cast <type>text</type> to <type>ltree</type></entry>
       <entry><literal></literal></entry>
       <entry><literal></literal></entry>
      </row>
@@ -451,7 +451,7 @@ Europe &amp; Russia*@ &amp; !Transportation
      <row>
       <entry><function>ltree2text(ltree)</function><indexterm><primary>ltree2text</primary></indexterm></entry>
       <entry><type>text</type></entry>
-      <entry>cast <type>ltree</> to <type>text</></entry>
+      <entry>cast <type>ltree</type> to <type>text</type></entry>
       <entry><literal></literal></entry>
       <entry><literal></literal></entry>
      </row>
@@ -481,25 +481,25 @@ Europe &amp; Russia*@ &amp; !Transportation
  <sect2>
   <title>Indexes</title>
   <para>
-   <filename>ltree</> supports several types of indexes that can speed
+   <filename>ltree</filename> supports several types of indexes that can speed
    up the indicated operators:
   </para>
 
   <itemizedlist>
    <listitem>
     <para>
-     B-tree index over <type>ltree</>:
-     <literal>&lt;</>, <literal>&lt;=</>, <literal>=</>,
-     <literal>&gt;=</>, <literal>&gt;</literal>
+     B-tree index over <type>ltree</type>:
+     <literal>&lt;</literal>, <literal>&lt;=</literal>, <literal>=</literal>,
+     <literal>&gt;=</literal>, <literal>&gt;</literal>
     </para>
    </listitem>
    <listitem>
     <para>
-     GiST index over <type>ltree</>:
-     <literal>&lt;</>, <literal>&lt;=</>, <literal>=</>,
-     <literal>&gt;=</>, <literal>&gt;</>,
-     <literal>@&gt;</>, <literal>&lt;@</>,
-     <literal>@</>, <literal>~</>, <literal>?</literal>
+     GiST index over <type>ltree</type>:
+     <literal>&lt;</literal>, <literal>&lt;=</literal>, <literal>=</literal>,
+     <literal>&gt;=</literal>, <literal>&gt;</literal>,
+     <literal>@&gt;</literal>, <literal>&lt;@</literal>,
+     <literal>@</literal>, <literal>~</literal>, <literal>?</literal>
     </para>
     <para>
      Example of creating such an index:
@@ -510,9 +510,9 @@ CREATE INDEX path_gist_idx ON test USING GIST (path);
    </listitem>
    <listitem>
     <para>
-     GiST index over <type>ltree[]</>:
-     <literal>ltree[] &lt;@ ltree</>, <literal>ltree @&gt; ltree[]</>,
-     <literal>@</>, <literal>~</>, <literal>?</literal>
+     GiST index over <type>ltree[]</type>:
+     <literal>ltree[] &lt;@ ltree</literal>, <literal>ltree @&gt; ltree[]</literal>,
+     <literal>@</literal>, <literal>~</literal>, <literal>?</literal>
     </para>
     <para>
      Example of creating such an index:
@@ -532,7 +532,7 @@ CREATE INDEX path_gist_idx ON test USING GIST (array_path);
 
   <para>
    This example uses the following data (also available in file
-   <filename>contrib/ltree/ltreetest.sql</> in the source distribution):
+   <filename>contrib/ltree/ltreetest.sql</filename> in the source distribution):
   </para>
 
 <programlisting>
@@ -555,7 +555,7 @@ CREATE INDEX path_idx ON test USING BTREE (path);
 </programlisting>
 
   <para>
-   Now, we have a table <structname>test</> populated with data describing
+   Now, we have a table <structname>test</structname> populated with data describing
    the hierarchy shown below:
   </para>
 

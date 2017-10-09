@@ -46,7 +46,7 @@
    correctness.  Third, embedded <acronym>SQL</acronym> in C is
    specified in the <acronym>SQL</acronym> standard and supported by
    many other <acronym>SQL</acronym> database systems.  The
-   <productname>PostgreSQL</> implementation is designed to match this
+   <productname>PostgreSQL</productname> implementation is designed to match this
    standard as much as possible, and it is usually possible to port
    embedded <acronym>SQL</acronym> programs written for other SQL
    databases to <productname>PostgreSQL</productname> with relative
@@ -97,19 +97,19 @@ EXEC SQL CONNECT TO <replaceable>target</replaceable> <optional>AS <replaceable>
    <itemizedlist>
     <listitem>
      <simpara>
-      <literal><replaceable>dbname</><optional>@<replaceable>hostname</></optional><optional>:<replaceable>port</></optional></literal>
+      <literal><replaceable>dbname</replaceable><optional>@<replaceable>hostname</replaceable></optional><optional>:<replaceable>port</replaceable></optional></literal>
      </simpara>
     </listitem>
 
     <listitem>
      <simpara>
-      <literal>tcp:postgresql://<replaceable>hostname</><optional>:<replaceable>port</></optional><optional>/<replaceable>dbname</></optional><optional>?<replaceable>options</></optional></literal>
+      <literal>tcp:postgresql://<replaceable>hostname</replaceable><optional>:<replaceable>port</replaceable></optional><optional>/<replaceable>dbname</replaceable></optional><optional>?<replaceable>options</replaceable></optional></literal>
      </simpara>
     </listitem>
 
     <listitem>
      <simpara>
-      <literal>unix:postgresql://<replaceable>hostname</><optional>:<replaceable>port</></optional><optional>/<replaceable>dbname</></optional><optional>?<replaceable>options</></optional></literal>
+      <literal>unix:postgresql://<replaceable>hostname</replaceable><optional>:<replaceable>port</replaceable></optional><optional>/<replaceable>dbname</replaceable></optional><optional>?<replaceable>options</replaceable></optional></literal>
      </simpara>
     </listitem>
 
@@ -475,7 +475,7 @@ EXEC SQL COMMIT;
    In the default mode, statements are committed only when
    <command>EXEC SQL COMMIT</command> is issued. The embedded SQL
    interface also supports autocommit of transactions (similar to
-   <application>psql</>'s default behavior) via the <option>-t</option>
+   <application>psql</application>'s default behavior) via the <option>-t</option>
    command-line option to <command>ecpg</command> (see <xref
    linkend="app-ecpg">) or via the <literal>EXEC SQL SET AUTOCOMMIT TO
    ON</literal> statement. In autocommit mode, each command is
@@ -507,7 +507,7 @@ EXEC SQL COMMIT;
      </varlistentry>
 
      <varlistentry>
-      <term><literal>EXEC SQL PREPARE TRANSACTION </literal><replaceable class="parameter">transaction_id</></term>
+      <term><literal>EXEC SQL PREPARE TRANSACTION </literal><replaceable class="parameter">transaction_id</replaceable></term>
       <listitem>
        <para>
         Prepare the current transaction for two-phase commit.
@@ -516,7 +516,7 @@ EXEC SQL COMMIT;
      </varlistentry>
 
      <varlistentry>
-      <term><literal>EXEC SQL COMMIT PREPARED </literal><replaceable class="parameter">transaction_id</></term>
+      <term><literal>EXEC SQL COMMIT PREPARED </literal><replaceable class="parameter">transaction_id</replaceable></term>
       <listitem>
        <para>
         Commit a transaction that is in prepared state.
@@ -525,7 +525,7 @@ EXEC SQL COMMIT;
      </varlistentry>
 
      <varlistentry>
-      <term><literal>EXEC SQL ROLLBACK PREPARED </literal><replaceable class="parameter">transaction_id</></term>
+      <term><literal>EXEC SQL ROLLBACK PREPARED </literal><replaceable class="parameter">transaction_id</replaceable></term>
       <listitem>
        <para>
         Roll back a transaction that is in prepared state.
@@ -720,7 +720,7 @@ EXEC SQL int i = 4;
 
    <para>
     The definition of a structure or union also must be listed inside
-    a <literal>DECLARE</> section. Otherwise the preprocessor cannot
+    a <literal>DECLARE</literal> section. Otherwise the preprocessor cannot
     handle these types since it does not know the definition.
    </para>
   </sect2>
@@ -890,8 +890,8 @@ do
       </row>
 
       <row>
-       <entry><type>character(<replaceable>n</>)</type>, <type>varchar(<replaceable>n</>)</type>, <type>text</type></entry>
-       <entry><type>char[<replaceable>n</>+1]</type>, <type>VARCHAR[<replaceable>n</>+1]</type><footnote><para>declared in <filename>ecpglib.h</filename></para></footnote></entry>
+       <entry><type>character(<replaceable>n</replaceable>)</type>, <type>varchar(<replaceable>n</replaceable>)</type>, <type>text</type></entry>
+       <entry><type>char[<replaceable>n</replaceable>+1]</type>, <type>VARCHAR[<replaceable>n</replaceable>+1]</type><footnote><para>declared in <filename>ecpglib.h</filename></para></footnote></entry>
       </row>
 
       <row>
@@ -955,7 +955,7 @@ EXEC SQL END DECLARE SECTION;
      The other way is using the <type>VARCHAR</type> type, which is a
      special type provided by ECPG.  The definition on an array of
      type <type>VARCHAR</type> is converted into a
-     named <type>struct</> for every variable. A declaration like:
+     named <type>struct</type> for every variable. A declaration like:
 <programlisting>
 VARCHAR var[180];
 </programlisting>
@@ -994,10 +994,10 @@ struct varchar_var { int len; char arr[180]; } var;
      ECPG contains some special types that help you to interact easily
      with some special data types from the PostgreSQL server. In
      particular, it has implemented support for the
-     <type>numeric</>, <type>decimal</type>, <type>date</>, <type>timestamp</>,
-     and <type>interval</> types.  These data types cannot usefully be
+     <type>numeric</type>, <type>decimal</type>, <type>date</type>, <type>timestamp</type>,
+     and <type>interval</type> types.  These data types cannot usefully be
      mapped to primitive host variable types (such
-     as <type>int</>, <type>long long int</type>,
+     as <type>int</type>, <type>long long int</type>,
      or <type>char[]</type>), because they have a complex internal
      structure.  Applications deal with these types by declaring host
      variables in special types and accessing them using functions in
@@ -1942,10 +1942,10 @@ free(out);
    <para>
     The numeric type offers to do calculations with arbitrary precision. See
     <xref linkend="datatype-numeric"> for the equivalent type in the
-    <productname>PostgreSQL</> server. Because of the arbitrary precision this
+    <productname>PostgreSQL</productname> server. Because of the arbitrary precision this
     variable needs to be able to expand and shrink dynamically. That's why you
     can only create numeric variables on the heap, by means of the
-    <function>PGTYPESnumeric_new</> and <function>PGTYPESnumeric_free</>
+    <function>PGTYPESnumeric_new</function> and <function>PGTYPESnumeric_free</function>
     functions. The decimal type, which is similar but limited in precision,
     can be created on the stack as well as on the heap.
    </para>
@@ -2092,17 +2092,17 @@ int PGTYPESnumeric_cmp(numeric *var1, numeric *var2)
        <itemizedlist>
         <listitem>
          <para>
-          1, if <literal>var1</> is bigger than <literal>var2</>
+          1, if <literal>var1</literal> is bigger than <literal>var2</literal>
          </para>
         </listitem>
         <listitem>
          <para>
-          -1, if <literal>var1</> is smaller than <literal>var2</>
+          -1, if <literal>var1</literal> is smaller than <literal>var2</literal>
          </para>
         </listitem>
         <listitem>
          <para>
-          0, if <literal>var1</> and <literal>var2</> are equal
+          0, if <literal>var1</literal> and <literal>var2</literal> are equal
          </para>
         </listitem>
        </itemizedlist>
@@ -2119,7 +2119,7 @@ int PGTYPESnumeric_cmp(numeric *var1, numeric *var2)
 int PGTYPESnumeric_from_int(signed int int_val, numeric *var);
 </synopsis>
        This function accepts a variable of type signed int and stores it
-       in the numeric variable <literal>var</>. Upon success, 0 is returned and
+       in the numeric variable <literal>var</literal>. Upon success, 0 is returned and
        -1 in case of a failure.
       </para>
      </listitem>
@@ -2134,7 +2134,7 @@ int PGTYPESnumeric_from_int(signed int int_val, numeric *var);
 int PGTYPESnumeric_from_long(signed long int long_val, numeric *var);
 </synopsis>
        This function accepts a variable of type signed long int and stores it
-       in the numeric variable <literal>var</>. Upon success, 0 is returned and
+       in the numeric variable <literal>var</literal>. Upon success, 0 is returned and
        -1 in case of a failure.
       </para>
      </listitem>
@@ -2149,7 +2149,7 @@ int PGTYPESnumeric_from_long(signed long int long_val, numeric *var);
 int PGTYPESnumeric_copy(numeric *src, numeric *dst);
 </synopsis>
        This function copies over the value of the variable that
-       <literal>src</literal> points to into the variable that <literal>dst</>
+       <literal>src</literal> points to into the variable that <literal>dst</literal>
        points to. It returns 0 on success and -1 if an error occurs.
       </para>
      </listitem>
@@ -2164,7 +2164,7 @@ int PGTYPESnumeric_copy(numeric *src, numeric *dst);
 int  PGTYPESnumeric_from_double(double d, numeric *dst);
 </synopsis>
        This function accepts a variable of type double and stores the result
-       in the variable that <literal>dst</> points to. It returns 0 on success
+       in the variable that <literal>dst</literal> points to. It returns 0 on success
        and -1 if an error occurs.
       </para>
      </listitem>
@@ -2179,10 +2179,10 @@ int  PGTYPESnumeric_from_double(double d, numeric *dst);
 int PGTYPESnumeric_to_double(numeric *nv, double *dp)
 </synopsis>
        The function converts the numeric value from the variable that
-       <literal>nv</> points to into the double variable that <literal>dp</> points
+       <literal>nv</literal> points to into the double variable that <literal>dp</literal> points
        to. It returns 0 on success and -1 if an error occurs, including
-       overflow. On overflow, the global variable <literal>errno</> will be set
-       to <literal>PGTYPES_NUM_OVERFLOW</> additionally.
+       overflow. On overflow, the global variable <literal>errno</literal> will be set
+       to <literal>PGTYPES_NUM_OVERFLOW</literal> additionally.
       </para>
      </listitem>
     </varlistentry>
@@ -2196,10 +2196,10 @@ int PGTYPESnumeric_to_double(numeric *nv, double *dp)
 int PGTYPESnumeric_to_int(numeric *nv, int *ip);
 </synopsis>
        The function converts the numeric value from the variable that
-       <literal>nv</> points to into the integer variable that <literal>ip</>
+       <literal>nv</literal> points to into the integer variable that <literal>ip</literal>
        points to. It returns 0 on success and -1 if an error occurs, including
-       overflow. On overflow, the global variable <literal>errno</> will be set
-       to <literal>PGTYPES_NUM_OVERFLOW</> additionally.
+       overflow. On overflow, the global variable <literal>errno</literal> will be set
+       to <literal>PGTYPES_NUM_OVERFLOW</literal> additionally.
       </para>
      </listitem>
     </varlistentry>
@@ -2213,10 +2213,10 @@ int PGTYPESnumeric_to_int(numeric *nv, int *ip);
 int PGTYPESnumeric_to_long(numeric *nv, long *lp);
 </synopsis>
        The function converts the numeric value from the variable that
-       <literal>nv</> points to into the long integer variable that
-       <literal>lp</> points to. It returns 0 on success and -1 if an error
+       <literal>nv</literal> points to into the long integer variable that
+       <literal>lp</literal> points to. It returns 0 on success and -1 if an error
        occurs, including overflow. On overflow, the global variable
-       <literal>errno</> will be set to <literal>PGTYPES_NUM_OVERFLOW</>
+       <literal>errno</literal> will be set to <literal>PGTYPES_NUM_OVERFLOW</literal>
        additionally.
       </para>
      </listitem>
@@ -2231,10 +2231,10 @@ int PGTYPESnumeric_to_long(numeric *nv, long *lp);
 int PGTYPESnumeric_to_decimal(numeric *src, decimal *dst);
 </synopsis>
        The function converts the numeric value from the variable that
-       <literal>src</> points to into the decimal variable that
-       <literal>dst</> points to. It returns 0 on success and -1 if an error
+       <literal>src</literal> points to into the decimal variable that
+       <literal>dst</literal> points to. It returns 0 on success and -1 if an error
        occurs, including overflow. On overflow, the global variable
-       <literal>errno</> will be set to <literal>PGTYPES_NUM_OVERFLOW</>
+       <literal>errno</literal> will be set to <literal>PGTYPES_NUM_OVERFLOW</literal>
        additionally.
       </para>
      </listitem>
@@ -2249,8 +2249,8 @@ int PGTYPESnumeric_to_decimal(numeric *src, decimal *dst);
 int PGTYPESnumeric_from_decimal(decimal *src, numeric *dst);
 </synopsis>
        The function converts the decimal value from the variable that
-       <literal>src</> points to into the numeric variable that
-       <literal>dst</> points to. It returns 0 on success and -1 if an error
+       <literal>src</literal> points to into the numeric variable that
+       <literal>dst</literal> points to. It returns 0 on success and -1 if an error
        occurs. Since the decimal type is implemented as a limited version of
        the numeric type, overflow cannot occur with this conversion.
       </para>
@@ -2265,7 +2265,7 @@ int PGTYPESnumeric_from_decimal(decimal *src, numeric *dst);
    <para>
     The date type in C enables your programs to deal with data of the SQL type
     date. See <xref linkend="datatype-datetime"> for the equivalent type in the
-    <productname>PostgreSQL</> server.
+    <productname>PostgreSQL</productname> server.
    </para>
    <para>
     The following functions can be used to work with the date type:
@@ -2292,8 +2292,8 @@ date PGTYPESdate_from_timestamp(timestamp dt);
 <synopsis>
 date PGTYPESdate_from_asc(char *str, char **endptr);
 </synopsis>
-        The function receives a C char* string <literal>str</> and a pointer to
-        a C char* string <literal>endptr</>. At the moment ECPG always parses
+        The function receives a C char* string <literal>str</literal> and a pointer to
+        a C char* string <literal>endptr</literal>. At the moment ECPG always parses
         the complete string and so it currently does not support to store the
         address of the first invalid character in <literal>*endptr</literal>.
         You can safely set <literal>endptr</literal> to NULL.
@@ -2397,9 +2397,9 @@ date PGTYPESdate_from_asc(char *str, char **endptr);
 <synopsis>
 char *PGTYPESdate_to_asc(date dDate);
 </synopsis>
-        The function receives the date <literal>dDate</> as its only parameter.
-        It will output the date in the form <literal>1999-01-18</>, i.e., in the
-        <literal>YYYY-MM-DD</> format.
+        The function receives the date <literal>dDate</literal> as its only parameter.
+        It will output the date in the form <literal>1999-01-18</literal>, i.e., in the
+        <literal>YYYY-MM-DD</literal> format.
        </para>
       </listitem>
      </varlistentry>
@@ -2414,11 +2414,11 @@ char *PGTYPESdate_to_asc(date dDate);
 void PGTYPESdate_julmdy(date d, int *mdy);
 </synopsis>
        <!-- almost same description as for rjulmdy() -->
-        The function receives the date <literal>d</> and a pointer to an array
-        of 3 integer values <literal>mdy</>. The variable name indicates
-        the sequential order: <literal>mdy[0]</> will be set to contain the
-        number of the month, <literal>mdy[1]</> will be set to the value of the
-        day and <literal>mdy[2]</> will contain the year.
+        The function receives the date <literal>d</literal> and a pointer to an array
+        of 3 integer values <literal>mdy</literal>. The variable name indicates
+        the sequential order: <literal>mdy[0]</literal> will be set to contain the
+        number of the month, <literal>mdy[1]</literal> will be set to the value of the
+        day and <literal>mdy[2]</literal> will contain the year.
        </para>
       </listitem>
      </varlistentry>
@@ -2432,7 +2432,7 @@ void PGTYPESdate_julmdy(date d, int *mdy);
 <synopsis>
 void PGTYPESdate_mdyjul(int *mdy, date *jdate);
 </synopsis>
-        The function receives the array of the 3 integers (<literal>mdy</>) as
+        The function receives the array of the 3 integers (<literal>mdy</literal>) as
         its first argument and as its second argument a pointer to a variable
         of type date that should hold the result of the operation.
        </para>
@@ -2447,7 +2447,7 @@ void PGTYPESdate_mdyjul(int *mdy, date *jdate);
 <synopsis>
 int PGTYPESdate_dayofweek(date d);
 </synopsis>
-        The function receives the date variable <literal>d</> as its only
+        The function receives the date variable <literal>d</literal> as its only
         argument and returns an integer that indicates the day of the week for
         this date.
         <itemizedlist>
@@ -2499,7 +2499,7 @@ int PGTYPESdate_dayofweek(date d);
 <synopsis>
 void PGTYPESdate_today(date *d);
 </synopsis>
-        The function receives a pointer to a date variable (<literal>d</>)
+        The function receives a pointer to a date variable (<literal>d</literal>)
         that it sets to the current date.
        </para>
       </listitem>
@@ -2514,9 +2514,9 @@ void PGTYPESdate_today(date *d);
 <synopsis>
 int PGTYPESdate_fmt_asc(date dDate, char *fmtstring, char *outbuf);
 </synopsis>
-        The function receives the date to convert (<literal>dDate</>), the
-        format mask (<literal>fmtstring</>) and the string that will hold the
-        textual representation of the date (<literal>outbuf</>).
+        The function receives the date to convert (<literal>dDate</literal>), the
+        format mask (<literal>fmtstring</literal>) and the string that will hold the
+        textual representation of the date (<literal>outbuf</literal>).
        </para>
        <para>
         On success, 0 is returned and a negative value if an error occurred.
@@ -2637,9 +2637,9 @@ int PGTYPESdate_defmt_asc(date *d, char *fmt, char *str);
 </synopsis>
         <!-- same description as rdefmtdate -->
         The function receives a pointer to the date value that should hold the
-        result of the operation (<literal>d</>), the format mask to use for
-        parsing the date (<literal>fmt</>) and the C char* string containing
-        the textual representation of the date (<literal>str</>). The textual
+        result of the operation (<literal>d</literal>), the format mask to use for
+        parsing the date (<literal>fmt</literal>) and the C char* string containing
+        the textual representation of the date (<literal>str</literal>). The textual
         representation is expected to match the format mask. However you do not
         need to have a 1:1 mapping of the string to the format mask. The
         function only analyzes the sequential order and looks for the literals
@@ -2742,7 +2742,7 @@ int PGTYPESdate_defmt_asc(date *d, char *fmt, char *str);
    <para>
     The timestamp type in C enables your programs to deal with data of the SQL
     type timestamp. See <xref linkend="datatype-datetime"> for the equivalent
-    type in the <productname>PostgreSQL</> server.
+    type in the <productname>PostgreSQL</productname> server.
    </para>
    <para>
     The following functions can be used to work with the timestamp type:
@@ -2756,8 +2756,8 @@ int PGTYPESdate_defmt_asc(date *d, char *fmt, char *str);
 <synopsis>
 timestamp PGTYPEStimestamp_from_asc(char *str, char **endptr);
 </synopsis>
-        The function receives the string to parse (<literal>str</>) and a
-        pointer to a C char* (<literal>endptr</>).
+        The function receives the string to parse (<literal>str</literal>) and a
+        pointer to a C char* (<literal>endptr</literal>).
         At the moment ECPG always parses
         the complete string and so it currently does not support to store the
         address of the first invalid character in <literal>*endptr</literal>.
@@ -2765,15 +2765,15 @@ timestamp PGTYPEStimestamp_from_asc(char *str, char **endptr);
        </para>
        <para>
         The function returns the parsed timestamp on success. On error,
-        <literal>PGTYPESInvalidTimestamp</literal> is returned and <varname>errno</> is
-        set to <literal>PGTYPES_TS_BAD_TIMESTAMP</>. See <xref linkend="PGTYPESInvalidTimestamp"> for important notes on this value.
+        <literal>PGTYPESInvalidTimestamp</literal> is returned and <varname>errno</varname> is
+        set to <literal>PGTYPES_TS_BAD_TIMESTAMP</literal>. See <xref linkend="PGTYPESInvalidTimestamp"> for important notes on this value.
        </para>
        <para>
         In general, the input string can contain any combination of an allowed
         date specification, a whitespace character and an allowed time
         specification. Note that time zones are not supported by ECPG. It can
         parse them but does not apply any calculation as the
-        <productname>PostgreSQL</> server does for example. Timezone
+        <productname>PostgreSQL</productname> server does for example. Timezone
         specifiers are silently discarded.
        </para>
        <para>
@@ -2819,7 +2819,7 @@ timestamp PGTYPEStimestamp_from_asc(char *str, char **endptr);
 <synopsis>
 char *PGTYPEStimestamp_to_asc(timestamp tstamp);
 </synopsis>
-        The function receives the timestamp <literal>tstamp</> as
+        The function receives the timestamp <literal>tstamp</literal> as
         its only argument and returns an allocated string that contains the
         textual representation of the timestamp.
        </para>
@@ -2835,7 +2835,7 @@ char *PGTYPEStimestamp_to_asc(timestamp tstamp);
 void PGTYPEStimestamp_current(timestamp *ts);
 </synopsis>
         The function retrieves the current timestamp and saves it into the
-        timestamp variable that <literal>ts</> points to.
+        timestamp variable that <literal>ts</literal> points to.
        </para>
       </listitem>
      </varlistentry>
@@ -2849,8 +2849,8 @@ void PGTYPEStimestamp_current(timestamp *ts);
 int PGTYPEStimestamp_fmt_asc(timestamp *ts, char *output, int str_len, char *fmtstr);
 </synopsis>
         The function receives a pointer to the timestamp to convert as its
-        first argument (<literal>ts</>), a pointer to the output buffer
-        (<literal>output</>), the maximal length that has been allocated for
+        first argument (<literal>ts</literal>), a pointer to the output buffer
+        (<literal>output</literal>), the maximal length that has been allocated for
         the output buffer (<literal>str_len</literal>) and the format mask to
         use for the conversion (<literal>fmtstr</literal>).
        </para>
@@ -2861,7 +2861,7 @@ int PGTYPEStimestamp_fmt_asc(timestamp *ts, char *output, int str_len, char *fmt
        <para>
         You can use the following format specifiers for the format mask. The
         format specifiers are the same ones that are used in the
-        <function>strftime</> function in <productname>libc</productname>. Any
+        <function>strftime</function> function in <productname>libc</productname>. Any
         non-format specifier will be copied into the output buffer.
         <!-- This is from the FreeBSD man page:
              http://www.freebsd.org/cgi/man.cgi?query=strftime&apropos=0&sektion=3&manpath=FreeBSD+7.0-current&format=html
@@ -3184,9 +3184,9 @@ int PGTYPEStimestamp_fmt_asc(timestamp *ts, char *output, int str_len, char *fmt
 <synopsis>
 int PGTYPEStimestamp_sub(timestamp *ts1, timestamp *ts2, interval *iv);
 </synopsis>
-        The function will subtract the timestamp variable that <literal>ts2</>
-        points to from the timestamp variable that <literal>ts1</> points to
-        and will store the result in the interval variable that <literal>iv</>
+        The function will subtract the timestamp variable that <literal>ts2</literal>
+        points to from the timestamp variable that <literal>ts1</literal> points to
+        and will store the result in the interval variable that <literal>iv</literal>
         points to.
        </para>
        <para>
@@ -3206,12 +3206,12 @@ int PGTYPEStimestamp_sub(timestamp *ts1, timestamp *ts2, interval *iv);
 int PGTYPEStimestamp_defmt_asc(char *str, char *fmt, timestamp *d);
 </synopsis>
         The function receives the textual representation of a timestamp in the
-        variable <literal>str</> as well as the formatting mask to use in the
-        variable <literal>fmt</>. The result will be stored in the variable
-        that <literal>d</> points to.
+        variable <literal>str</literal> as well as the formatting mask to use in the
+        variable <literal>fmt</literal>. The result will be stored in the variable
+        that <literal>d</literal> points to.
        </para>
        <para>
-        If the formatting mask <literal>fmt</> is NULL, the function will fall
+        If the formatting mask <literal>fmt</literal> is NULL, the function will fall
         back to the default formatting mask which is <literal>%Y-%m-%d
         %H:%M:%S</literal>.
        </para>
@@ -3231,10 +3231,10 @@ int PGTYPEStimestamp_defmt_asc(char *str, char *fmt, timestamp *d);
 <synopsis>
 int PGTYPEStimestamp_add_interval(timestamp *tin, interval *span, timestamp *tout);
 </synopsis>
-        The function receives a pointer to a timestamp variable <literal>tin</>
-        and a pointer to an interval variable <literal>span</>. It adds the
+        The function receives a pointer to a timestamp variable <literal>tin</literal>
+        and a pointer to an interval variable <literal>span</literal>. It adds the
         interval to the timestamp and saves the resulting timestamp in the
-        variable that <literal>tout</> points to.
+        variable that <literal>tout</literal> points to.
        </para>
        <para>
         Upon success, the function returns 0 and a negative value if an
@@ -3251,9 +3251,9 @@ int PGTYPEStimestamp_add_interval(timestamp *tin, interval *span, timestamp *tou
 <synopsis>
 int PGTYPEStimestamp_sub_interval(timestamp *tin, interval *span, timestamp *tout);
 </synopsis>
-        The function subtracts the interval variable that <literal>span</>
-        points to from the timestamp variable that <literal>tin</> points to
-        and saves the result into the variable that <literal>tout</> points
+        The function subtracts the interval variable that <literal>span</literal>
+        points to from the timestamp variable that <literal>tin</literal> points to
+        and saves the result into the variable that <literal>tout</literal> points
         to.
        </para>
        <para>
@@ -3271,7 +3271,7 @@ int PGTYPEStimestamp_sub_interval(timestamp *tin, interval *span, timestamp *tou
    <para>
     The interval type in C enables your programs to deal with data of the SQL
     type interval. See <xref linkend="datatype-datetime"> for the equivalent
-    type in the <productname>PostgreSQL</> server.
+    type in the <productname>PostgreSQL</productname> server.
    </para>
    <para>
     The following functions can be used to work with the interval type:
@@ -3309,7 +3309,7 @@ void PGTYPESinterval_new(interval *intvl);
 <synopsis>
 interval *PGTYPESinterval_from_asc(char *str, char **endptr);
 </synopsis>
-        The function parses the input string <literal>str</> and returns a
+        The function parses the input string <literal>str</literal> and returns a
         pointer to an allocated interval variable.
         At the moment ECPG always parses
         the complete string and so it currently does not support to store the
@@ -3327,7 +3327,7 @@ interval *PGTYPESinterval_from_asc(char *str, char **endptr);
 <synopsis>
 char *PGTYPESinterval_to_asc(interval *span);
 </synopsis>
-        The function converts the interval variable that <literal>span</>
+        The function converts the interval variable that <literal>span</literal>
         points to into a C char*. The output looks like this example:
         <literal>@ 1 day 12 hours 59 mins 10 secs</literal>.
        </para>
@@ -3342,8 +3342,8 @@ char *PGTYPESinterval_to_asc(interval *span);
 <synopsis>
 int PGTYPESinterval_copy(interval *intvlsrc, interval *intvldest);
 </synopsis>
-        The function copies the interval variable that <literal>intvlsrc</>
-        points to into the variable that <literal>intvldest</> points to. Note
+        The function copies the interval variable that <literal>intvlsrc</literal>
+        points to into the variable that <literal>intvldest</literal> points to. Note
         that you need to allocate the memory for the destination variable
         before.
        </para>
@@ -3360,15 +3360,15 @@ int PGTYPESinterval_copy(interval *intvlsrc, interval *intvldest);
      a maximum precision of 30 significant digits. In contrast to the numeric
      type which can be created on the heap only, the decimal type can be
      created either on the stack or on the heap (by means of the functions
-     <function>PGTYPESdecimal_new</> and
-     <function>PGTYPESdecimal_free</>).
+     <function>PGTYPESdecimal_new</function> and
+     <function>PGTYPESdecimal_free</function>).
      There are a lot of other functions that deal with the decimal type in the
      <productname>Informix</productname> compatibility mode described in <xref
      linkend="ecpg-informix-compat">.
    </para>
    <para>
     The following functions can be used to work with the decimal type and are
-    not only contained in the <literal>libcompat</> library.
+    not only contained in the <literal>libcompat</literal> library.
     <variablelist>
      <varlistentry>
       <term><function>PGTYPESdecimal_new</function></term>
@@ -3548,15 +3548,15 @@ void PGTYPESdecimal_free(decimal *var);
       <listitem>
        <para>
         A value of type timestamp representing an invalid time stamp. This is
-        returned by the function <function>PGTYPEStimestamp_from_asc</> on
+        returned by the function <function>PGTYPEStimestamp_from_asc</function> on
         parse error.
         Note that due to the internal representation of the <type>timestamp</type> data type,
         <literal>PGTYPESInvalidTimestamp</literal> is also a valid timestamp at
-        the same time. It is set to <literal>1899-12-31 23:59:59</>. In order
+        the same time. It is set to <literal>1899-12-31 23:59:59</literal>. In order
         to detect errors, make sure that your application does not only test
         for <literal>PGTYPESInvalidTimestamp</literal> but also for
-        <literal>errno != 0</> after each call to
-        <function>PGTYPEStimestamp_from_asc</>.
+        <literal>errno != 0</literal> after each call to
+        <function>PGTYPEStimestamp_from_asc</function>.
        </para>
       </listitem>
      </varlistentry>
@@ -3927,7 +3927,7 @@ typedef struct sqlda_struct sqlda_t;
 
     <variablelist>
      <varlistentry>
-      <term><literal>sqldaid</></term>
+      <term><literal>sqldaid</literal></term>
       <listitem>
        <para>
         It contains the literal string <literal>"SQLDA  "</literal>.
@@ -3936,7 +3936,7 @@ typedef struct sqlda_struct sqlda_t;
      </varlistentry>
 
      <varlistentry>
-      <term><literal>sqldabc</></term>
+      <term><literal>sqldabc</literal></term>
       <listitem>
        <para>
         It contains the size of the allocated space in bytes.
@@ -3945,7 +3945,7 @@ typedef struct sqlda_struct sqlda_t;
      </varlistentry>
 
      <varlistentry>
-      <term><literal>sqln</></term>
+      <term><literal>sqln</literal></term>
       <listitem>
        <para>
         It contains the number of input parameters for a parameterized query in
@@ -3960,7 +3960,7 @@ typedef struct sqlda_struct sqlda_t;
      </varlistentry>
 
      <varlistentry>
-      <term><literal>sqld</></term>
+      <term><literal>sqld</literal></term>
       <listitem>
        <para>
         It contains the number of fields in a result set.
@@ -3969,17 +3969,17 @@ typedef struct sqlda_struct sqlda_t;
      </varlistentry>
 
      <varlistentry>
-      <term><literal>desc_next</></term>
+      <term><literal>desc_next</literal></term>
       <listitem>
        <para>
         If the query returns more than one record, multiple linked
-        SQLDA structures are returned, and <literal>desc_next</> holds
+        SQLDA structures are returned, and <literal>desc_next</literal> holds
         a pointer to the next entry in the list.
        </para>
       </listitem>
      </varlistentry>
      <varlistentry>
-      <term><literal>sqlvar</></term>
+      <term><literal>sqlvar</literal></term>
       <listitem>
        <para>
         This is the array of the columns in the result set.
@@ -4015,7 +4015,7 @@ typedef struct sqlvar_struct sqlvar_t;
 
         <variablelist>
          <varlistentry>
-         <term><literal>sqltype</></term>
+         <term><literal>sqltype</literal></term>
           <listitem>
            <para>
             Contains the type identifier of the field. For values,
@@ -4025,7 +4025,7 @@ typedef struct sqlvar_struct sqlvar_t;
          </varlistentry>
 
          <varlistentry>
-         <term><literal>sqllen</></term>
+         <term><literal>sqllen</literal></term>
           <listitem>
            <para>
             Contains the binary length of the field. e.g. 4 bytes for <type>ECPGt_int</type>.
@@ -4034,7 +4034,7 @@ typedef struct sqlvar_struct sqlvar_t;
          </varlistentry>
 
          <varlistentry>
-         <term><literal>sqldata</></term>
+         <term><literal>sqldata</literal></term>
           <listitem>
            <para>
             Points to the data.  The format of the data is described
@@ -4044,7 +4044,7 @@ typedef struct sqlvar_struct sqlvar_t;
          </varlistentry>
 
          <varlistentry>
-         <term><literal>sqlind</></term>
+         <term><literal>sqlind</literal></term>
           <listitem>
            <para>
             Points to the null indicator.  0 means not null, -1 means
@@ -4054,7 +4054,7 @@ typedef struct sqlvar_struct sqlvar_t;
          </varlistentry>
 
          <varlistentry>
-         <term><literal>sqlname</></term>
+         <term><literal>sqlname</literal></term>
           <listitem>
            <para>
             The name of the field.
@@ -4084,7 +4084,7 @@ struct sqlname
       The meaning of the fields is:
             <variablelist>
              <varlistentry>
-              <term><literal>length</></term>
+              <term><literal>length</literal></term>
                <listitem>
                 <para>
                  Contains the length of the field name.
@@ -4092,7 +4092,7 @@ struct sqlname
                </listitem>
               </varlistentry>
              <varlistentry>
-              <term><literal>data</></term>
+              <term><literal>data</literal></term>
                <listitem>
                 <para>
                  Contains the actual field name.
@@ -4113,10 +4113,10 @@ struct sqlname
       SQLDA are:
      </para>
      <step><simpara>Declare an <type>sqlda_t</type> structure to receive the result set.</simpara></step>
-     <step><simpara>Execute <command>FETCH</>/<command>EXECUTE</>/<command>DESCRIBE</> commands to process a query specifying the declared SQLDA.</simpara></step>
-     <step><simpara>Check the number of records in the result set by looking at <structfield>sqln</>, a member of the <type>sqlda_t</type> structure.</simpara></step>
-     <step><simpara>Get the values of each column from <literal>sqlvar[0]</>, <literal>sqlvar[1]</>, etc., members of the <type>sqlda_t</type> structure.</simpara></step>
-     <step><simpara>Go to next row (<type>sqlda_t</type> structure) by following the <structfield>desc_next</> pointer, a member of the <type>sqlda_t</type> structure.</simpara></step>
+     <step><simpara>Execute <command>FETCH</command>/<command>EXECUTE</command>/<command>DESCRIBE</command> commands to process a query specifying the declared SQLDA.</simpara></step>
+     <step><simpara>Check the number of records in the result set by looking at <structfield>sqln</structfield>, a member of the <type>sqlda_t</type> structure.</simpara></step>
+     <step><simpara>Get the values of each column from <literal>sqlvar[0]</literal>, <literal>sqlvar[1]</literal>, etc., members of the <type>sqlda_t</type> structure.</simpara></step>
+     <step><simpara>Go to next row (<type>sqlda_t</type> structure) by following the <structfield>desc_next</structfield> pointer, a member of the <type>sqlda_t</type> structure.</simpara></step>
      <step><simpara>Repeat above as you need.</simpara></step>
     </procedure>
 
@@ -4133,7 +4133,7 @@ sqlda_t *sqlda1;
 
     <para>
      Next, specify the SQLDA in a command.  This is
-     a <command>FETCH</> command example.
+     a <command>FETCH</command> command example.
 <programlisting>
 EXEC SQL FETCH NEXT FROM cur1 INTO DESCRIPTOR sqlda1;
 </programlisting>
@@ -4168,10 +4168,10 @@ for (i = 0; i &lt; cur_sqlda->sqld; i++)
     </para>
 
     <para>
-     To get a column value, check the <structfield>sqltype</> value,
+     To get a column value, check the <structfield>sqltype</structfield> value,
      a member of the <type>sqlvar_t</type> structure.  Then, switch
      to an appropriate way, depending on the column type, to copy
-     data from the <structfield>sqlvar</> field to a host variable.
+     data from the <structfield>sqlvar</structfield> field to a host variable.
 <programlisting>
 char var_buf[1024];
 
@@ -4225,7 +4225,7 @@ EXEC SQL PREPARE stmt1 FROM :query;
 
     <para>
      Next, allocate memory for an SQLDA, and set the number of input
-     parameters in <structfield>sqln</>, a member variable of
+     parameters in <structfield>sqln</structfield>, a member variable of
      the <type>sqlda_t</type> structure.  When two or more input
      parameters are required for the prepared query, the application
      has to allocate additional memory space which is calculated by
@@ -4386,8 +4386,8 @@ main(void)
 
     <para>
      Read each columns in the first record.  The number of columns is
-     stored in <structfield>sqld</>, the actual data of the first
-     column is stored in <literal>sqlvar[0]</>, both members of
+     stored in <structfield>sqld</structfield>, the actual data of the first
+     column is stored in <literal>sqlvar[0]</literal>, both members of
      the <type>sqlda_t</type> structure.
 
 <programlisting>
@@ -4404,9 +4404,9 @@ main(void)
     </para>
 
     <para>
-     Now, the column data is stored in the variable <varname>v</>.
+     Now, the column data is stored in the variable <varname>v</varname>.
      Copy every datum into host variables, looking
-     at <literal>v.sqltype</> for the type of the column.
+     at <literal>v.sqltype</literal> for the type of the column.
 <programlisting>
             switch (v.sqltype) {
                 int intval;
@@ -4947,7 +4947,7 @@ struct
    </para>
 
    <para>
-    Here is one example that combines the use of <literal>WHENEVER</>
+    Here is one example that combines the use of <literal>WHENEVER</literal>
     and <varname>sqlca</varname>, printing out the contents
     of <varname>sqlca</varname> when an error occurs.  This is perhaps
     useful for debugging or prototyping applications, before
@@ -5227,8 +5227,8 @@ while (1)
      <listitem>
       <para>
        This means the host variable is of type <type>bool</type> and
-       the datum in the database is neither <literal>'t'</> nor
-       <literal>'f'</>.  (SQLSTATE 42804)
+       the datum in the database is neither <literal>'t'</literal> nor
+       <literal>'f'</literal>.  (SQLSTATE 42804)
       </para>
      </listitem>
     </varlistentry>
@@ -5575,8 +5575,8 @@ EXEC SQL INCLUDE "<replaceable>filename</replaceable>";
     Similar to the directive <literal>#define</literal> that is known from C,
     embedded SQL has a similar concept:
 <programlisting>
-EXEC SQL DEFINE <replaceable>name</>;
-EXEC SQL DEFINE <replaceable>name</> <replaceable>value</>;
+EXEC SQL DEFINE <replaceable>name</replaceable>;
+EXEC SQL DEFINE <replaceable>name</replaceable> <replaceable>value</replaceable>;
 </programlisting>
     So you can define a name:
 <programlisting>
@@ -5587,7 +5587,7 @@ EXEC SQL DEFINE HAVE_FEATURE;
 EXEC SQL DEFINE MYNUMBER 12;
 EXEC SQL DEFINE MYSTRING 'abc';
 </programlisting>
-    Use <literal>undef</> to remove a previous definition:
+    Use <literal>undef</literal> to remove a previous definition:
 <programlisting>
 EXEC SQL UNDEF MYNUMBER;
 </programlisting>
@@ -5597,15 +5597,15 @@ EXEC SQL UNDEF MYNUMBER;
     Of course you can continue to use the C versions <literal>#define</literal>
     and <literal>#undef</literal> in your embedded SQL program. The difference
     is where your defined values get evaluated. If you use <literal>EXEC SQL
-    DEFINE</> then the <command>ecpg</> preprocessor evaluates the defines and substitutes
+    DEFINE</literal> then the <command>ecpg</command> preprocessor evaluates the defines and substitutes
     the values. For example if you write:
 <programlisting>
 EXEC SQL DEFINE MYNUMBER 12;
 ...
 EXEC SQL UPDATE Tbl SET col = MYNUMBER;
 </programlisting>
-    then <command>ecpg</> will already do the substitution and your C compiler will never
-    see any name or identifier <literal>MYNUMBER</>. Note that you cannot use
+    then <command>ecpg</command> will already do the substitution and your C compiler will never
+    see any name or identifier <literal>MYNUMBER</literal>. Note that you cannot use
     <literal>#define</literal> for a constant that you are going to use in an
     embedded SQL query because in this case the embedded SQL precompiler is not
     able to see this declaration.
@@ -5619,23 +5619,23 @@ EXEC SQL UPDATE Tbl SET col = MYNUMBER;
 
    <variablelist>
     <varlistentry>
-     <term><literal>EXEC SQL ifdef <replaceable>name</>;</literal></term>
+     <term><literal>EXEC SQL ifdef <replaceable>name</replaceable>;</literal></term>
      <listitem>
      <para>
-      Checks a <replaceable>name</> and processes subsequent lines if
-      <replaceable>name</> has been created with <literal>EXEC SQL define
-      <replaceable>name</></literal>.
+      Checks a <replaceable>name</replaceable> and processes subsequent lines if
+      <replaceable>name</replaceable> has been created with <literal>EXEC SQL define
+      <replaceable>name</replaceable></literal>.
      </para>
      </listitem>
     </varlistentry>
 
     <varlistentry>
-     <term><literal>EXEC SQL ifndef <replaceable>name</>;</literal></term>
+     <term><literal>EXEC SQL ifndef <replaceable>name</replaceable>;</literal></term>
      <listitem>
      <para>
-      Checks a <replaceable>name</> and processes subsequent lines if
-      <replaceable>name</> has <emphasis>not</emphasis> been created with
-      <literal>EXEC SQL define <replaceable>name</></literal>.
+      Checks a <replaceable>name</replaceable> and processes subsequent lines if
+      <replaceable>name</replaceable> has <emphasis>not</emphasis> been created with
+      <literal>EXEC SQL define <replaceable>name</replaceable></literal>.
      </para>
      </listitem>
     </varlistentry>
@@ -5645,19 +5645,19 @@ EXEC SQL UPDATE Tbl SET col = MYNUMBER;
      <listitem>
      <para>
       Starts processing an alternative section to a section introduced by
-      either <literal>EXEC SQL ifdef <replaceable>name</></literal> or
-      <literal>EXEC SQL ifndef <replaceable>name</></literal>.
+      either <literal>EXEC SQL ifdef <replaceable>name</replaceable></literal> or
+      <literal>EXEC SQL ifndef <replaceable>name</replaceable></literal>.
      </para>
      </listitem>
     </varlistentry>
 
     <varlistentry>
-     <term><literal>EXEC SQL elif <replaceable>name</>;</literal></term>
+     <term><literal>EXEC SQL elif <replaceable>name</replaceable>;</literal></term>
      <listitem>
      <para>
-      Checks <replaceable>name</> and starts an alternative section if
-      <replaceable>name</> has been created with <literal>EXEC SQL define
-      <replaceable>name</></literal>.
+      Checks <replaceable>name</replaceable> and starts an alternative section if
+      <replaceable>name</replaceable> has been created with <literal>EXEC SQL define
+      <replaceable>name</replaceable></literal>.
      </para>
      </listitem>
     </varlistentry>
@@ -5707,7 +5707,7 @@ EXEC SQL endif;
 
   <para>
    The preprocessor program is called <filename>ecpg</filename> and is
-   included in a normal <productname>PostgreSQL</> installation.
+   included in a normal <productname>PostgreSQL</productname> installation.
    Embedded SQL programs are typically named with an extension
    <filename>.pgc</filename>.  If you have a program file called
    <filename>prog1.pgc</filename>, you can preprocess it by simply
@@ -5727,8 +5727,8 @@ ecpg prog1.pgc
 cc -c prog1.c
 </programlisting>
    The generated C source files include header files from the
-   <productname>PostgreSQL</> installation, so if you installed
-   <productname>PostgreSQL</> in a location that is not searched by
+   <productname>PostgreSQL</productname> installation, so if you installed
+   <productname>PostgreSQL</productname> in a location that is not searched by
    default, you have to add an option such as
    <literal>-I/usr/local/pgsql/include</literal> to the compilation
    command line.
@@ -5803,10 +5803,10 @@ ECPG = ecpg
     </para>
     <note>
     <para>
-    On Windows, if the <application>ecpg</> libraries and an application are
+    On Windows, if the <application>ecpg</application> libraries and an application are
     compiled with different flags, this function call will crash the
     application because the internal representation of the
-    <literal>FILE</> pointers differ.  Specifically,
+    <literal>FILE</literal> pointers differ.  Specifically,
     multithreaded/single-threaded, release/debug, and static/dynamic
     flags should be the same for the library and all applications using
     that library.
@@ -5844,7 +5844,7 @@ ECPG = ecpg
      <function>ECPGstatus(int <replaceable>lineno</replaceable>,
      const char* <replaceable>connection_name</replaceable>)</function>
      returns true if you are connected to a database and false if not.
-     <replaceable>connection_name</replaceable> can be <literal>NULL</>
+     <replaceable>connection_name</replaceable> can be <literal>NULL</literal>
      if a single connection is being used.
     </para>
    </listitem>
@@ -6217,10 +6217,10 @@ main(void)
 
    <para>
     To build the application, proceed as follows.  Convert
-    <filename>test_mod.pgc</> into <filename>test_mod.c</> by
+    <filename>test_mod.pgc</filename> into <filename>test_mod.c</filename> by
     running <command>ecpg</command>, and generate
-    <filename>test_mod.o</> by compiling
-    <filename>test_mod.c</> with the C compiler:
+    <filename>test_mod.o</filename> by compiling
+    <filename>test_mod.c</filename> with the C compiler:
 <programlisting>
 ecpg -o test_mod.c test_mod.pgc
 cc -c test_mod.c -o test_mod.o
@@ -6228,16 +6228,16 @@ cc -c test_mod.c -o test_mod.o
    </para>
 
    <para>
-    Next, generate <filename>test_cpp.o</> by compiling
-    <filename>test_cpp.cpp</> with the C++ compiler:
+    Next, generate <filename>test_cpp.o</filename> by compiling
+    <filename>test_cpp.cpp</filename> with the C++ compiler:
 <programlisting>
 c++ -c test_cpp.cpp -o test_cpp.o
 </programlisting>
    </para>
 
    <para>
-    Finally, link these object files, <filename>test_cpp.o</>
-    and <filename>test_mod.o</>, into one executable, using the C++
+    Finally, link these object files, <filename>test_cpp.o</filename>
+    and <filename>test_mod.o</filename>, into one executable, using the C++
     compiler driver:
 <programlisting>
 c++ test_cpp.o test_mod.o -lecpg -o test_cpp
@@ -7101,7 +7101,7 @@ EXEC SQL GET DESCRIPTOR d VALUE 2 :d_data = DATA;
 
     <para>
      Here is an example for a whole procedure of
-     executing <literal>SELECT current_database();</> and showing the number of
+     executing <literal>SELECT current_database();</literal> and showing the number of
      columns, the column data length, and the column data:
 <programlisting>
 int
@@ -7866,10 +7866,10 @@ main(void)
  <sect1 id="ecpg-informix-compat">
   <title><productname>Informix</productname> Compatibility Mode</title>
   <para>
-   <command>ecpg</command> can be run in a so-called <firstterm>Informix compatibility mode</>. If
+   <command>ecpg</command> can be run in a so-called <firstterm>Informix compatibility mode</firstterm>. If
    this mode is active, it tries to behave as if it were the <productname>Informix</productname>
    precompiler for <productname>Informix</productname> E/SQL. Generally spoken this will allow you to use
-   the dollar sign instead of the <literal>EXEC SQL</> primitive to introduce
+   the dollar sign instead of the <literal>EXEC SQL</literal> primitive to introduce
    embedded SQL commands:
 <programlisting>
 $int j = 3;
@@ -7891,11 +7891,11 @@ $COMMIT;
   </note>
 
   <para>
-   There are two compatibility modes: <literal>INFORMIX</>, <literal>INFORMIX_SE</>
+   There are two compatibility modes: <literal>INFORMIX</literal>, <literal>INFORMIX_SE</literal>
   </para>
   <para>
    When linking programs that use this compatibility mode, remember to link
-   against <literal>libcompat</> that is shipped with ECPG.
+   against <literal>libcompat</literal> that is shipped with ECPG.
   </para>
   <para>
    Besides the previously explained syntactic sugar, the <productname>Informix</productname> compatibility
@@ -7913,7 +7913,7 @@ $COMMIT;
    no drop-in replacement if you are using <productname>Informix</productname> at the moment. Moreover,
    some of the data types are different. For example,
    <productname>PostgreSQL's</productname> datetime and interval types do not
-   know about ranges like for example <literal>YEAR TO MINUTE</> so you won't
+   know about ranges like for example <literal>YEAR TO MINUTE</literal> so you won't
    find support in ECPG for that either.
   </para>
 
@@ -7938,11 +7938,11 @@ EXEC SQL FETCH MYCUR INTO :userid;
    <para>
     <variablelist>
      <varlistentry>
-      <term><literal>CLOSE DATABASE</></term>
+      <term><literal>CLOSE DATABASE</literal></term>
       <listitem>
        <para>
         This statement closes the current connection. In fact, this is a
-        synonym for ECPG's <literal>DISCONNECT CURRENT</>:
+        synonym for ECPG's <literal>DISCONNECT CURRENT</literal>:
 <programlisting>
 $CLOSE DATABASE;                /* close the current connection */
 EXEC SQL CLOSE DATABASE;
@@ -7951,12 +7951,12 @@ EXEC SQL CLOSE DATABASE;
       </listitem>
      </varlistentry>
      <varlistentry>
-      <term><literal>FREE cursor_name</></term>
+      <term><literal>FREE cursor_name</literal></term>
       <listitem>
        <para>
         Due to the differences how ECPG works compared to Informix's ESQL/C (i.e. which steps
         are purely grammar transformations and which steps rely on the underlying run-time library)
-        there is no <literal>FREE cursor_name</> statement in ECPG. This is because in ECPG,
+        there is no <literal>FREE cursor_name</literal> statement in ECPG. This is because in ECPG,
         <literal>DECLARE CURSOR</literal> doesn't translate to a function call into
         the run-time library that uses to the cursor name. This means that there's no run-time
         bookkeeping of SQL cursors in the ECPG run-time library, only in the PostgreSQL server.
@@ -7964,10 +7964,10 @@ EXEC SQL CLOSE DATABASE;
       </listitem>
      </varlistentry>
      <varlistentry>
-      <term><literal>FREE statement_name</></term>
+      <term><literal>FREE statement_name</literal></term>
       <listitem>
        <para>
-        <literal>FREE statement_name</> is a synonym for <literal>DEALLOCATE PREPARE statement_name</>.
+        <literal>FREE statement_name</literal> is a synonym for <literal>DEALLOCATE PREPARE statement_name</literal>.
        </para>
       </listitem>
      </varlistentry>
@@ -8024,16 +8024,16 @@ typedef struct sqlda_compat     sqlda_t;
     <variablelist>
 
      <varlistentry>
-     <term><literal>sqld</></term>
+     <term><literal>sqld</literal></term>
       <listitem>
        <para>
-        The number of fields in the <literal>SQLDA</> descriptor.
+        The number of fields in the <literal>SQLDA</literal> descriptor.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-     <term><literal>sqlvar</></term>
+     <term><literal>sqlvar</literal></term>
       <listitem>
        <para>
         Pointer to the per-field properties.
@@ -8042,7 +8042,7 @@ typedef struct sqlda_compat     sqlda_t;
      </varlistentry>
 
      <varlistentry>
-     <term><literal>desc_name</></term>
+     <term><literal>desc_name</literal></term>
       <listitem>
        <para>
         Unused, filled with zero-bytes.
@@ -8051,7 +8051,7 @@ typedef struct sqlda_compat     sqlda_t;
      </varlistentry>
 
      <varlistentry>
-     <term><literal>desc_occ</></term>
+     <term><literal>desc_occ</literal></term>
       <listitem>
        <para>
         Size of the allocated structure.
@@ -8060,7 +8060,7 @@ typedef struct sqlda_compat     sqlda_t;
      </varlistentry>
 
      <varlistentry>
-     <term><literal>desc_next</></term>
+     <term><literal>desc_next</literal></term>
       <listitem>
        <para>
         Pointer to the next SQLDA structure if the result set contains more than one record.
@@ -8069,7 +8069,7 @@ typedef struct sqlda_compat     sqlda_t;
      </varlistentry>
 
      <varlistentry>
-     <term><literal>reserved</></term>
+     <term><literal>reserved</literal></term>
       <listitem>
        <para>
         Unused pointer, contains NULL. Kept for Informix-compatibility.
@@ -8084,7 +8084,7 @@ typedef struct sqlda_compat     sqlda_t;
     <variablelist>
 
      <varlistentry>
-     <term><literal>sqltype</></term>
+     <term><literal>sqltype</literal></term>
       <listitem>
        <para>
         Type of the field. Constants are in <literal>sqltypes.h</literal>
@@ -8093,7 +8093,7 @@ typedef struct sqlda_compat     sqlda_t;
      </varlistentry>
 
      <varlistentry>
-     <term><literal>sqllen</></term>
+     <term><literal>sqllen</literal></term>
       <listitem>
        <para>
         Length of the field data.
@@ -8102,7 +8102,7 @@ typedef struct sqlda_compat     sqlda_t;
      </varlistentry>
 
      <varlistentry>
-     <term><literal>sqldata</></term>
+     <term><literal>sqldata</literal></term>
       <listitem>
        <para>
         Pointer to the field data. The pointer is of <literal>char *</literal> type,
@@ -8123,7 +8123,7 @@ switch (sqldata->sqlvar[i].sqltype)
      </varlistentry>
 
      <varlistentry>
-     <term><literal>sqlind</></term>
+     <term><literal>sqlind</literal></term>
       <listitem>
        <para>
         Pointer to the NULL indicator. If returned by DESCRIBE or FETCH then it's always a valid pointer.
@@ -8139,7 +8139,7 @@ if (*(int2 *)sqldata->sqlvar[i].sqlind != 0)
      </varlistentry>
 
      <varlistentry>
-     <term><literal>sqlname</></term>
+     <term><literal>sqlname</literal></term>
       <listitem>
        <para>
         Name of the field. 0-terminated string.
@@ -8148,16 +8148,16 @@ if (*(int2 *)sqldata->sqlvar[i].sqlind != 0)
      </varlistentry>
 
      <varlistentry>
-     <term><literal>sqlformat</></term>
+     <term><literal>sqlformat</literal></term>
       <listitem>
        <para>
-        Reserved in Informix, value of <function>PQfformat()</> for the field.
+        Reserved in Informix, value of <function>PQfformat()</function> for the field.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-     <term><literal>sqlitype</></term>
+     <term><literal>sqlitype</literal></term>
       <listitem>
        <para>
         Type of the NULL indicator data. It's always SQLSMINT when returning data from the server.
@@ -8168,7 +8168,7 @@ if (*(int2 *)sqldata->sqlvar[i].sqlind != 0)
      </varlistentry>
 
      <varlistentry>
-     <term><literal>sqlilen</></term>
+     <term><literal>sqlilen</literal></term>
       <listitem>
        <para>
         Length of the NULL indicator data.
@@ -8177,23 +8177,23 @@ if (*(int2 *)sqldata->sqlvar[i].sqlind != 0)
      </varlistentry>
 
      <varlistentry>
-     <term><literal>sqlxid</></term>
+     <term><literal>sqlxid</literal></term>
       <listitem>
        <para>
-        Extended type of the field, result of <function>PQftype()</>.
+        Extended type of the field, result of <function>PQftype()</function>.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-     <term><literal>sqltypename</></term>
-     <term><literal>sqltypelen</></term>
-     <term><literal>sqlownerlen</></term>
-     <term><literal>sqlsourcetype</></term>
-     <term><literal>sqlownername</></term>
-     <term><literal>sqlsourceid</></term>
-     <term><literal>sqlflags</></term>
-     <term><literal>sqlreserved</></term>
+     <term><literal>sqltypename</literal></term>
+     <term><literal>sqltypelen</literal></term>
+     <term><literal>sqlownerlen</literal></term>
+     <term><literal>sqlsourcetype</literal></term>
+     <term><literal>sqlownername</literal></term>
+     <term><literal>sqlsourceid</literal></term>
+     <term><literal>sqlflags</literal></term>
+     <term><literal>sqlreserved</literal></term>
       <listitem>
        <para>
         Unused.
@@ -8202,7 +8202,7 @@ if (*(int2 *)sqldata->sqlvar[i].sqlind != 0)
      </varlistentry>
 
      <varlistentry>
-     <term><literal>sqlilongdata</></term>
+     <term><literal>sqlilongdata</literal></term>
       <listitem>
        <para>
         It equals to <literal>sqldata</literal> if <literal>sqllen</literal> is larger than 32kB.
@@ -8247,7 +8247,7 @@ EXEC SQL INCLUDE sqlda.h;
     free(sqlda); /* The main structure is all to be free(),
                   * sqlda and sqlda-&gt;sqlvar is in one allocated area */
 </programlisting>
-    For more information, see the <literal>sqlda.h</> header and the
+    For more information, see the <literal>sqlda.h</literal> header and the
     <literal>src/interfaces/ecpg/test/compat_informix/sqlda.pgc</literal> regression test.
    </para>
   </sect2>
@@ -8257,7 +8257,7 @@ EXEC SQL INCLUDE sqlda.h;
    <para>
     <variablelist>
      <varlistentry>
-      <term><function>decadd</></term>
+      <term><function>decadd</function></term>
       <listitem>
        <para>
         Add two decimal type values.
@@ -8265,19 +8265,19 @@ EXEC SQL INCLUDE sqlda.h;
 int decadd(decimal *arg1, decimal *arg2, decimal *sum);
 </synopsis>
         The function receives a pointer to the first operand of type decimal
-        (<literal>arg1</>), a pointer to the second operand of type decimal
-        (<literal>arg2</>) and a pointer to a value of type decimal that will
-        contain the sum (<literal>sum</>). On success, the function returns 0.
-        <symbol>ECPG_INFORMIX_NUM_OVERFLOW</> is returned in case of overflow and
-        <symbol>ECPG_INFORMIX_NUM_UNDERFLOW</> in case of underflow. -1 is returned for
-        other failures and <varname>errno</> is set to the respective <varname>errno</> number of the
+        (<literal>arg1</literal>), a pointer to the second operand of type decimal
+        (<literal>arg2</literal>) and a pointer to a value of type decimal that will
+        contain the sum (<literal>sum</literal>). On success, the function returns 0.
+        <symbol>ECPG_INFORMIX_NUM_OVERFLOW</symbol> is returned in case of overflow and
+        <symbol>ECPG_INFORMIX_NUM_UNDERFLOW</symbol> in case of underflow. -1 is returned for
+        other failures and <varname>errno</varname> is set to the respective <varname>errno</varname> number of the
         pgtypeslib.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><function>deccmp</></term>
+      <term><function>deccmp</function></term>
       <listitem>
        <para>
         Compare two variables of type decimal.
@@ -8285,25 +8285,25 @@ int decadd(decimal *arg1, decimal *arg2, decimal *sum);
 int deccmp(decimal *arg1, decimal *arg2);
 </synopsis>
         The function receives a pointer to the first decimal value
-        (<literal>arg1</>), a pointer to the second decimal value
-        (<literal>arg2</>) and returns an integer value that indicates which is
+        (<literal>arg1</literal>), a pointer to the second decimal value
+        (<literal>arg2</literal>) and returns an integer value that indicates which is
         the bigger value.
         <itemizedlist>
          <listitem>
           <para>
-           1, if the value that <literal>arg1</> points to is bigger than the
-           value that <literal>var2</> points to
+           1, if the value that <literal>arg1</literal> points to is bigger than the
+           value that <literal>var2</literal> points to
           </para>
          </listitem>
          <listitem>
           <para>
-           -1, if the value that <literal>arg1</> points to is smaller than the
-           value that <literal>arg2</> points to </para>
+           -1, if the value that <literal>arg1</literal> points to is smaller than the
+           value that <literal>arg2</literal> points to </para>
          </listitem>
          <listitem>
           <para>
-           0, if the value that <literal>arg1</> points to and the value that
-           <literal>arg2</> points to are equal
+           0, if the value that <literal>arg1</literal> points to and the value that
+           <literal>arg2</literal> points to are equal
           </para>
          </listitem>
         </itemizedlist>
@@ -8312,7 +8312,7 @@ int deccmp(decimal *arg1, decimal *arg2);
      </varlistentry>
 
      <varlistentry>
-      <term><function>deccopy</></term>
+      <term><function>deccopy</function></term>
       <listitem>
        <para>
         Copy a decimal value.
@@ -8320,15 +8320,15 @@ int deccmp(decimal *arg1, decimal *arg2);
 void deccopy(decimal *src, decimal *target);
 </synopsis>
         The function receives a pointer to the decimal value that should be
-        copied as the first argument (<literal>src</>) and a pointer to the
-        target structure of type decimal (<literal>target</>) as the second
+        copied as the first argument (<literal>src</literal>) and a pointer to the
+        target structure of type decimal (<literal>target</literal>) as the second
         argument.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><function>deccvasc</></term>
+      <term><function>deccvasc</function></term>
       <listitem>
        <para>
         Convert a value from its ASCII representation into a decimal type.
@@ -8336,8 +8336,8 @@ void deccopy(decimal *src, decimal *target);
 int deccvasc(char *cp, int len, decimal *np);
 </synopsis>
         The function receives a pointer to string that contains the string
-        representation of the number to be converted (<literal>cp</>) as well
-        as its length <literal>len</>. <literal>np</> is a pointer to the
+        representation of the number to be converted (<literal>cp</literal>) as well
+        as its length <literal>len</literal>. <literal>np</literal> is a pointer to the
         decimal value that saves the result of the operation.
        </para>
        <para>
@@ -8350,18 +8350,18 @@ int deccvasc(char *cp, int len, decimal *np);
        </para>
        <para>
         The function returns 0 on success. If overflow or underflow occurred,
-        <literal>ECPG_INFORMIX_NUM_OVERFLOW</> or
-        <literal>ECPG_INFORMIX_NUM_UNDERFLOW</> is returned. If the ASCII
+        <literal>ECPG_INFORMIX_NUM_OVERFLOW</literal> or
+        <literal>ECPG_INFORMIX_NUM_UNDERFLOW</literal> is returned. If the ASCII
         representation could not be parsed,
-        <literal>ECPG_INFORMIX_BAD_NUMERIC</> is returned or
-        <literal>ECPG_INFORMIX_BAD_EXPONENT</> if this problem occurred while
+        <literal>ECPG_INFORMIX_BAD_NUMERIC</literal> is returned or
+        <literal>ECPG_INFORMIX_BAD_EXPONENT</literal> if this problem occurred while
         parsing the exponent.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><function>deccvdbl</></term>
+      <term><function>deccvdbl</function></term>
       <listitem>
        <para>
         Convert a value of type double to a value of type decimal.
@@ -8369,8 +8369,8 @@ int deccvasc(char *cp, int len, decimal *np);
 int deccvdbl(double dbl, decimal *np);
 </synopsis>
         The function receives the variable of type double that should be
-        converted as its first argument (<literal>dbl</>). As the second
-        argument (<literal>np</>), the function receives a pointer to the
+        converted as its first argument (<literal>dbl</literal>). As the second
+        argument (<literal>np</literal>), the function receives a pointer to the
         decimal variable that should hold the result of the operation.
        </para>
        <para>
@@ -8381,7 +8381,7 @@ int deccvdbl(double dbl, decimal *np);
      </varlistentry>
 
      <varlistentry>
-      <term><function>deccvint</></term>
+      <term><function>deccvint</function></term>
       <listitem>
        <para>
         Convert a value of type int to a value of type decimal.
@@ -8389,8 +8389,8 @@ int deccvdbl(double dbl, decimal *np);
 int deccvint(int in, decimal *np);
 </synopsis>
         The function receives the variable of type int that should be
-        converted as its first argument (<literal>in</>). As the second
-        argument (<literal>np</>), the function receives a pointer to the
+        converted as its first argument (<literal>in</literal>). As the second
+        argument (<literal>np</literal>), the function receives a pointer to the
         decimal variable that should hold the result of the operation.
        </para>
        <para>
@@ -8401,7 +8401,7 @@ int deccvint(int in, decimal *np);
      </varlistentry>
 
      <varlistentry>
-      <term><function>deccvlong</></term>
+      <term><function>deccvlong</function></term>
       <listitem>
        <para>
         Convert a value of type long to a value of type decimal.
@@ -8409,8 +8409,8 @@ int deccvint(int in, decimal *np);
 int deccvlong(long lng, decimal *np);
 </synopsis>
         The function receives the variable of type long that should be
-        converted as its first argument (<literal>lng</>). As the second
-        argument (<literal>np</>), the function receives a pointer to the
+        converted as its first argument (<literal>lng</literal>). As the second
+        argument (<literal>np</literal>), the function receives a pointer to the
         decimal variable that should hold the result of the operation.
        </para>
        <para>
@@ -8421,7 +8421,7 @@ int deccvlong(long lng, decimal *np);
      </varlistentry>
 
      <varlistentry>
-      <term><function>decdiv</></term>
+      <term><function>decdiv</function></term>
       <listitem>
        <para>
         Divide two variables of type decimal.
@@ -8429,15 +8429,15 @@ int deccvlong(long lng, decimal *np);
 int decdiv(decimal *n1, decimal *n2, decimal *result);
 </synopsis>
         The function receives pointers to the variables that are the first
-        (<literal>n1</>) and the second (<literal>n2</>) operands and
-        calculates <literal>n1</>/<literal>n2</>. <literal>result</> is a
+        (<literal>n1</literal>) and the second (<literal>n2</literal>) operands and
+        calculates <literal>n1</literal>/<literal>n2</literal>. <literal>result</literal> is a
         pointer to the variable that should hold the result of the operation.
        </para>
        <para>
         On success, 0 is returned and a negative value if the division fails.
         If overflow or underflow occurred, the function returns
-        <literal>ECPG_INFORMIX_NUM_OVERFLOW</> or
-        <literal>ECPG_INFORMIX_NUM_UNDERFLOW</> respectively. If an attempt to
+        <literal>ECPG_INFORMIX_NUM_OVERFLOW</literal> or
+        <literal>ECPG_INFORMIX_NUM_UNDERFLOW</literal> respectively. If an attempt to
         divide by zero is observed, the function returns
         <literal>ECPG_INFORMIX_DIVIDE_ZERO</literal>.
        </para>
@@ -8445,7 +8445,7 @@ int decdiv(decimal *n1, decimal *n2, decimal *result);
      </varlistentry>
 
      <varlistentry>
-      <term><function>decmul</></term>
+      <term><function>decmul</function></term>
       <listitem>
        <para>
         Multiply two decimal values.
@@ -8453,21 +8453,21 @@ int decdiv(decimal *n1, decimal *n2, decimal *result);
 int decmul(decimal *n1, decimal *n2, decimal *result);
 </synopsis>
         The function receives pointers to the variables that are the first
-        (<literal>n1</>) and the second (<literal>n2</>) operands and
-        calculates <literal>n1</>*<literal>n2</>. <literal>result</> is a
+        (<literal>n1</literal>) and the second (<literal>n2</literal>) operands and
+        calculates <literal>n1</literal>*<literal>n2</literal>. <literal>result</literal> is a
         pointer to the variable that should hold the result of the operation.
        </para>
        <para>
         On success, 0 is returned and a negative value if the multiplication
         fails. If overflow or underflow occurred, the function returns
-        <literal>ECPG_INFORMIX_NUM_OVERFLOW</> or
-        <literal>ECPG_INFORMIX_NUM_UNDERFLOW</> respectively.
+        <literal>ECPG_INFORMIX_NUM_OVERFLOW</literal> or
+        <literal>ECPG_INFORMIX_NUM_UNDERFLOW</literal> respectively.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><function>decsub</></term>
+      <term><function>decsub</function></term>
       <listitem>
        <para>
         Subtract one decimal value from another.
@@ -8475,21 +8475,21 @@ int decmul(decimal *n1, decimal *n2, decimal *result);
 int decsub(decimal *n1, decimal *n2, decimal *result);
 </synopsis>
         The function receives pointers to the variables that are the first
-        (<literal>n1</>) and the second (<literal>n2</>) operands and
-        calculates <literal>n1</>-<literal>n2</>. <literal>result</> is a
+        (<literal>n1</literal>) and the second (<literal>n2</literal>) operands and
+        calculates <literal>n1</literal>-<literal>n2</literal>. <literal>result</literal> is a
         pointer to the variable that should hold the result of the operation.
        </para>
        <para>
         On success, 0 is returned and a negative value if the subtraction
         fails. If overflow or underflow occurred, the function returns
-        <literal>ECPG_INFORMIX_NUM_OVERFLOW</> or
-        <literal>ECPG_INFORMIX_NUM_UNDERFLOW</> respectively.
+        <literal>ECPG_INFORMIX_NUM_OVERFLOW</literal> or
+        <literal>ECPG_INFORMIX_NUM_UNDERFLOW</literal> respectively.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><function>dectoasc</></term>
+      <term><function>dectoasc</function></term>
       <listitem>
        <para>
         Convert a variable of type decimal to its ASCII representation in a C
@@ -8498,28 +8498,28 @@ int decsub(decimal *n1, decimal *n2, decimal *result);
 int dectoasc(decimal *np, char *cp, int len, int right)
 </synopsis>
         The function receives a pointer to a variable of type decimal
-        (<literal>np</>) that it converts to its textual representation.
-        <literal>cp</> is the buffer that should hold the result of the
-        operation. The parameter <literal>right</> specifies, how many digits
+        (<literal>np</literal>) that it converts to its textual representation.
+        <literal>cp</literal> is the buffer that should hold the result of the
+        operation. The parameter <literal>right</literal> specifies, how many digits
         right of the decimal point should be included in the output. The result
         will be rounded to this number of decimal digits. Setting
-        <literal>right</> to -1 indicates that all available decimal digits
+        <literal>right</literal> to -1 indicates that all available decimal digits
         should be included in the output. If the length of the output buffer,
-        which is indicated by <literal>len</> is not sufficient to hold the
+        which is indicated by <literal>len</literal> is not sufficient to hold the
         textual representation including the trailing zero byte, only a
-        single <literal>*</> character is stored in the result and -1 is
+        single <literal>*</literal> character is stored in the result and -1 is
         returned.
        </para>
        <para>
-        The function returns either -1 if the buffer <literal>cp</> was too
-        small or <literal>ECPG_INFORMIX_OUT_OF_MEMORY</> if memory was
+        The function returns either -1 if the buffer <literal>cp</literal> was too
+        small or <literal>ECPG_INFORMIX_OUT_OF_MEMORY</literal> if memory was
         exhausted.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><function>dectodbl</></term>
+      <term><function>dectodbl</function></term>
       <listitem>
        <para>
         Convert a variable of type decimal to a double.
@@ -8527,8 +8527,8 @@ int dectoasc(decimal *np, char *cp, int len, int right)
 int dectodbl(decimal *np, double *dblp);
 </synopsis>
         The function receives a pointer to the decimal value to convert
-        (<literal>np</>) and a pointer to the double variable that
-        should hold the result of the operation (<literal>dblp</>).
+        (<literal>np</literal>) and a pointer to the double variable that
+        should hold the result of the operation (<literal>dblp</literal>).
        </para>
        <para>
         On success, 0 is returned and a negative value if the conversion
@@ -8538,7 +8538,7 @@ int dectodbl(decimal *np, double *dblp);
      </varlistentry>
 
      <varlistentry>
-      <term><function>dectoint</></term>
+      <term><function>dectoint</function></term>
       <listitem>
        <para>
         Convert a variable to type decimal to an integer.
@@ -8546,25 +8546,25 @@ int dectodbl(decimal *np, double *dblp);
 int dectoint(decimal *np, int *ip);
 </synopsis>
         The function receives a pointer to the decimal value to convert
-        (<literal>np</>) and a pointer to the integer variable that
-        should hold the result of the operation (<literal>ip</>).
+        (<literal>np</literal>) and a pointer to the integer variable that
+        should hold the result of the operation (<literal>ip</literal>).
        </para>
        <para>
         On success, 0 is returned and a negative value if the conversion
-        failed. If an overflow occurred, <literal>ECPG_INFORMIX_NUM_OVERFLOW</>
+        failed. If an overflow occurred, <literal>ECPG_INFORMIX_NUM_OVERFLOW</literal>
         is returned.
        </para>
        <para>
         Note that the ECPG implementation differs from the <productname>Informix</productname>
         implementation. <productname>Informix</productname> limits an integer to the range from -32767 to
         32767, while the limits in the ECPG implementation depend on the
-        architecture (<literal>-INT_MAX .. INT_MAX</>).
+        architecture (<literal>-INT_MAX .. INT_MAX</literal>).
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><function>dectolong</></term>
+      <term><function>dectolong</function></term>
       <listitem>
        <para>
         Convert a variable to type decimal to a long integer.
@@ -8572,12 +8572,12 @@ int dectoint(decimal *np, int *ip);
 int dectolong(decimal *np, long *lngp);
 </synopsis>
         The function receives a pointer to the decimal value to convert
-        (<literal>np</>) and a pointer to the long variable that
-        should hold the result of the operation (<literal>lngp</>).
+        (<literal>np</literal>) and a pointer to the long variable that
+        should hold the result of the operation (<literal>lngp</literal>).
        </para>
        <para>
         On success, 0 is returned and a negative value if the conversion
-        failed. If an overflow occurred, <literal>ECPG_INFORMIX_NUM_OVERFLOW</>
+        failed. If an overflow occurred, <literal>ECPG_INFORMIX_NUM_OVERFLOW</literal>
         is returned.
        </para>
        <para>
@@ -8585,13 +8585,13 @@ int dectolong(decimal *np, long *lngp);
         implementation. <productname>Informix</productname> limits a long integer to the range from
         -2,147,483,647 to 2,147,483,647, while the limits in the ECPG
         implementation depend on the architecture (<literal>-LONG_MAX ..
-        LONG_MAX</>).
+        LONG_MAX</literal>).
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><function>rdatestr</></term>
+      <term><function>rdatestr</function></term>
       <listitem>
        <para>
         Converts a date to a C char* string.
@@ -8599,8 +8599,8 @@ int dectolong(decimal *np, long *lngp);
 int rdatestr(date d, char *str);
 </synopsis>
         The function receives two arguments, the first one is the date to
-        convert (<literal>d</>) and the second one is a pointer to the target
-        string. The output format is always <literal>yyyy-mm-dd</>, so you need
+        convert (<literal>d</literal>) and the second one is a pointer to the target
+        string. The output format is always <literal>yyyy-mm-dd</literal>, so you need
         to allocate at least 11 bytes (including the zero-byte terminator) for the
         string.
        </para>
@@ -8618,7 +8618,7 @@ int rdatestr(date d, char *str);
      </varlistentry>
 
      <varlistentry>
-      <term><function>rstrdate</></term>
+      <term><function>rstrdate</function></term>
       <listitem>
        <para>
         Parse the textual representation of a date.
@@ -8626,30 +8626,30 @@ int rdatestr(date d, char *str);
 int rstrdate(char *str, date *d);
 </synopsis>
         The function receives the textual representation of the date to convert
-        (<literal>str</>) and a pointer to a variable of type date
-        (<literal>d</>). This function does not allow you to specify a format
+        (<literal>str</literal>) and a pointer to a variable of type date
+        (<literal>d</literal>). This function does not allow you to specify a format
         mask. It uses the default format mask of <productname>Informix</productname> which is
-        <literal>mm/dd/yyyy</>. Internally, this function is implemented by
-        means of <function>rdefmtdate</>. Therefore, <function>rstrdate</> is
+        <literal>mm/dd/yyyy</literal>. Internally, this function is implemented by
+        means of <function>rdefmtdate</function>. Therefore, <function>rstrdate</function> is
         not faster and if you have the choice you should opt for
-        <function>rdefmtdate</> which allows you to specify the format mask
+        <function>rdefmtdate</function> which allows you to specify the format mask
         explicitly.
        </para>
        <para>
-        The function returns the same values as <function>rdefmtdate</>.
+        The function returns the same values as <function>rdefmtdate</function>.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><function>rtoday</></term>
+      <term><function>rtoday</function></term>
       <listitem>
        <para>
         Get the current date.
 <synopsis>
 void rtoday(date *d);
 </synopsis>
-        The function receives a pointer to a date variable (<literal>d</>)
+        The function receives a pointer to a date variable (<literal>d</literal>)
         that it sets to the current date.
        </para>
        <para>
@@ -8660,7 +8660,7 @@ void rtoday(date *d);
      </varlistentry>
 
      <varlistentry>
-      <term><function>rjulmdy</></term>
+      <term><function>rjulmdy</function></term>
       <listitem>
        <para>
         Extract the values for the day, the month and the year from a variable
@@ -8668,11 +8668,11 @@ void rtoday(date *d);
 <synopsis>
 int rjulmdy(date d, short mdy[3]);
 </synopsis>
-        The function receives the date <literal>d</> and a pointer to an array
-        of 3 short integer values <literal>mdy</>. The variable name indicates
-        the sequential order: <literal>mdy[0]</> will be set to contain the
-        number of the month, <literal>mdy[1]</> will be set to the value of the
-        day and <literal>mdy[2]</> will contain the year.
+        The function receives the date <literal>d</literal> and a pointer to an array
+        of 3 short integer values <literal>mdy</literal>. The variable name indicates
+        the sequential order: <literal>mdy[0]</literal> will be set to contain the
+        number of the month, <literal>mdy[1]</literal> will be set to the value of the
+        day and <literal>mdy[2]</literal> will contain the year.
        </para>
        <para>
         The function always returns 0 at the moment.
@@ -8685,7 +8685,7 @@ int rjulmdy(date d, short mdy[3]);
      </varlistentry>
 
      <varlistentry>
-      <term><function>rdefmtdate</></term>
+      <term><function>rdefmtdate</function></term>
       <listitem>
        <para>
         Use a format mask to convert a character string to a value of type
@@ -8694,9 +8694,9 @@ int rjulmdy(date d, short mdy[3]);
 int rdefmtdate(date *d, char *fmt, char *str);
 </synopsis>
         The function receives a pointer to the date value that should hold the
-        result of the operation (<literal>d</>), the format mask to use for
-        parsing the date (<literal>fmt</>) and the C char* string containing
-        the textual representation of the date (<literal>str</>). The textual
+        result of the operation (<literal>d</literal>), the format mask to use for
+        parsing the date (<literal>fmt</literal>) and the C char* string containing
+        the textual representation of the date (<literal>str</literal>). The textual
         representation is expected to match the format mask. However you do not
         need to have a 1:1 mapping of the string to the format mask. The
         function only analyzes the sequential order and looks for the literals
@@ -8715,32 +8715,32 @@ int rdefmtdate(date *d, char *fmt, char *str);
          </listitem>
          <listitem>
           <para>
-           <literal>ECPG_INFORMIX_ENOSHORTDATE</> - The date does not contain
+           <literal>ECPG_INFORMIX_ENOSHORTDATE</literal> - The date does not contain
            delimiters between day, month and year. In this case the input
            string must be exactly 6 or 8 bytes long but isn't.
           </para>
          </listitem>
          <listitem>
           <para>
-           <literal>ECPG_INFORMIX_ENOTDMY</> - The format string did not
+           <literal>ECPG_INFORMIX_ENOTDMY</literal> - The format string did not
            correctly indicate the sequential order of year, month and day.
           </para>
          </listitem>
          <listitem>
           <para>
-           <literal>ECPG_INFORMIX_BAD_DAY</> - The input string does not
+           <literal>ECPG_INFORMIX_BAD_DAY</literal> - The input string does not
            contain a valid day.
           </para>
          </listitem>
          <listitem>
           <para>
-           <literal>ECPG_INFORMIX_BAD_MONTH</> - The input string does not
+           <literal>ECPG_INFORMIX_BAD_MONTH</literal> - The input string does not
            contain a valid month.
           </para>
          </listitem>
          <listitem>
           <para>
-           <literal>ECPG_INFORMIX_BAD_YEAR</> - The input string does not
+           <literal>ECPG_INFORMIX_BAD_YEAR</literal> - The input string does not
            contain a valid year.
           </para>
          </listitem>
@@ -8755,7 +8755,7 @@ int rdefmtdate(date *d, char *fmt, char *str);
      </varlistentry>
 
      <varlistentry>
-      <term><function>rfmtdate</></term>
+      <term><function>rfmtdate</function></term>
       <listitem>
        <para>
         Convert a variable of type date to its textual representation using a
@@ -8763,9 +8763,9 @@ int rdefmtdate(date *d, char *fmt, char *str);
 <synopsis>
 int rfmtdate(date d, char *fmt, char *str);
 </synopsis>
-        The function receives the date to convert (<literal>d</>), the format
-        mask (<literal>fmt</>) and the string that will hold the textual
-        representation of the date (<literal>str</>).
+        The function receives the date to convert (<literal>d</literal>), the format
+        mask (<literal>fmt</literal>) and the string that will hold the textual
+        representation of the date (<literal>str</literal>).
        </para>
        <para>
         On success, 0 is returned and a negative value if an error occurred.
@@ -8778,7 +8778,7 @@ int rfmtdate(date d, char *fmt, char *str);
      </varlistentry>
 
      <varlistentry>
-      <term><function>rmdyjul</></term>
+      <term><function>rmdyjul</function></term>
       <listitem>
        <para>
         Create a date value from an array of 3 short integers that specify the
@@ -8787,7 +8787,7 @@ int rfmtdate(date d, char *fmt, char *str);
 int rmdyjul(short mdy[3], date *d);
 </synopsis>
         The function receives the array of the 3 short integers
-        (<literal>mdy</>) and a pointer to a variable of type date that should
+        (<literal>mdy</literal>) and a pointer to a variable of type date that should
         hold the result of the operation.
        </para>
        <para>
@@ -8801,14 +8801,14 @@ int rmdyjul(short mdy[3], date *d);
      </varlistentry>
 
      <varlistentry>
-      <term><function>rdayofweek</></term>
+      <term><function>rdayofweek</function></term>
       <listitem>
        <para>
         Return a number representing the day of the week for a date value.
 <synopsis>
 int rdayofweek(date d);
 </synopsis>
-        The function receives the date variable <literal>d</> as its only
+        The function receives the date variable <literal>d</literal> as its only
         argument and returns an integer that indicates the day of the week for
         this date.
         <itemizedlist>
@@ -8857,7 +8857,7 @@ int rdayofweek(date d);
      </varlistentry>
 
      <varlistentry>
-      <term><function>dtcurrent</></term>
+      <term><function>dtcurrent</function></term>
       <listitem>
        <para>
         Retrieve the current timestamp.
@@ -8865,13 +8865,13 @@ int rdayofweek(date d);
 void dtcurrent(timestamp *ts);
 </synopsis>
         The function retrieves the current timestamp and saves it into the
-        timestamp variable that <literal>ts</> points to.
+        timestamp variable that <literal>ts</literal> points to.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><function>dtcvasc</></term>
+      <term><function>dtcvasc</function></term>
       <listitem>
        <para>
         Parses a timestamp from its textual representation
@@ -8879,9 +8879,9 @@ void dtcurrent(timestamp *ts);
 <synopsis>
 int dtcvasc(char *str, timestamp *ts);
 </synopsis>
-        The function receives the string to parse (<literal>str</>) and a
+        The function receives the string to parse (<literal>str</literal>) and a
         pointer to the timestamp variable that should hold the result of the
-        operation (<literal>ts</>).
+        operation (<literal>ts</literal>).
        </para>
        <para>
         The function returns 0 on success and a negative value in case of
@@ -8896,7 +8896,7 @@ int dtcvasc(char *str, timestamp *ts);
      </varlistentry>
 
      <varlistentry>
-      <term><function>dtcvfmtasc</></term>
+      <term><function>dtcvfmtasc</function></term>
       <listitem>
        <para>
         Parses a timestamp from its textual representation
@@ -8904,10 +8904,10 @@ int dtcvasc(char *str, timestamp *ts);
 <synopsis>
 dtcvfmtasc(char *inbuf, char *fmtstr, timestamp *dtvalue)
 </synopsis>
-        The function receives the string to parse (<literal>inbuf</>), the
-        format mask to use (<literal>fmtstr</>) and a pointer to the timestamp
+        The function receives the string to parse (<literal>inbuf</literal>), the
+        format mask to use (<literal>fmtstr</literal>) and a pointer to the timestamp
         variable that should hold the result of the operation
-        (<literal>dtvalue</>).
+        (<literal>dtvalue</literal>).
        </para>
        <para>
         This function is implemented by means of the <xref
@@ -8922,7 +8922,7 @@ dtcvfmtasc(char *inbuf, char *fmtstr, timestamp *dtvalue)
      </varlistentry>
 
      <varlistentry>
-      <term><function>dtsub</></term>
+      <term><function>dtsub</function></term>
       <listitem>
        <para>
         Subtract one timestamp from another and return a variable of type
@@ -8930,9 +8930,9 @@ dtcvfmtasc(char *inbuf, char *fmtstr, timestamp *dtvalue)
 <synopsis>
 int dtsub(timestamp *ts1, timestamp *ts2, interval *iv);
 </synopsis>
-        The function will subtract the timestamp variable that <literal>ts2</>
-        points to from the timestamp variable that <literal>ts1</> points to
-        and will store the result in the interval variable that <literal>iv</>
+        The function will subtract the timestamp variable that <literal>ts2</literal>
+        points to from the timestamp variable that <literal>ts1</literal> points to
+        and will store the result in the interval variable that <literal>iv</literal>
         points to.
        </para>
        <para>
@@ -8943,7 +8943,7 @@ int dtsub(timestamp *ts1, timestamp *ts2, interval *iv);
      </varlistentry>
 
      <varlistentry>
-      <term><function>dttoasc</></term>
+      <term><function>dttoasc</function></term>
       <listitem>
        <para>
         Convert a timestamp variable to a C char* string.
@@ -8951,8 +8951,8 @@ int dtsub(timestamp *ts1, timestamp *ts2, interval *iv);
 int dttoasc(timestamp *ts, char *output);
 </synopsis>
         The function receives a pointer to the timestamp variable to convert
-        (<literal>ts</>) and the string that should hold the result of the
-        operation (<literal>output</>). It converts <literal>ts</> to its
+        (<literal>ts</literal>) and the string that should hold the result of the
+        operation (<literal>output</literal>). It converts <literal>ts</literal> to its
         textual representation according to the SQL standard, which is
         be <literal>YYYY-MM-DD HH:MM:SS</literal>.
        </para>
@@ -8964,7 +8964,7 @@ int dttoasc(timestamp *ts, char *output);
      </varlistentry>
 
      <varlistentry>
-      <term><function>dttofmtasc</></term>
+      <term><function>dttofmtasc</function></term>
       <listitem>
        <para>
         Convert a timestamp variable to a C char* using a format mask.
@@ -8972,8 +8972,8 @@ int dttoasc(timestamp *ts, char *output);
 int dttofmtasc(timestamp *ts, char *output, int str_len, char *fmtstr);
 </synopsis>
         The function receives a pointer to the timestamp to convert as its
-        first argument (<literal>ts</>), a pointer to the output buffer
-        (<literal>output</>), the maximal length that has been allocated for
+        first argument (<literal>ts</literal>), a pointer to the output buffer
+        (<literal>output</literal>), the maximal length that has been allocated for
         the output buffer (<literal>str_len</literal>) and the format mask to
         use for the conversion (<literal>fmtstr</literal>).
        </para>
@@ -8990,7 +8990,7 @@ int dttofmtasc(timestamp *ts, char *output, int str_len, char *fmtstr);
      </varlistentry>
 
      <varlistentry>
-      <term><function>intoasc</></term>
+      <term><function>intoasc</function></term>
       <listitem>
        <para>
         Convert an interval variable to a C char* string.
@@ -8998,8 +8998,8 @@ int dttofmtasc(timestamp *ts, char *output, int str_len, char *fmtstr);
 int intoasc(interval *i, char *str);
 </synopsis>
         The function receives a pointer to the interval variable to convert
-        (<literal>i</>) and the string that should hold the result of the
-        operation (<literal>str</>). It converts <literal>i</> to its
+        (<literal>i</literal>) and the string that should hold the result of the
+        operation (<literal>str</literal>). It converts <literal>i</literal> to its
         textual representation according to the SQL standard, which is
         be <literal>YYYY-MM-DD HH:MM:SS</literal>.
        </para>
@@ -9011,7 +9011,7 @@ int intoasc(interval *i, char *str);
      </varlistentry>
 
      <varlistentry>
-      <term><function>rfmtlong</></term>
+      <term><function>rfmtlong</function></term>
       <listitem>
        <para>
         Convert a long integer value to its textual representation using a
@@ -9019,9 +9019,9 @@ int intoasc(interval *i, char *str);
 <synopsis>
 int rfmtlong(long lng_val, char *fmt, char *outbuf);
 </synopsis>
-        The function receives the long value <literal>lng_val</>, the format
-        mask <literal>fmt</> and a pointer to the output buffer
-        <literal>outbuf</>. It converts the long value according to the format
+        The function receives the long value <literal>lng_val</literal>, the format
+        mask <literal>fmt</literal> and a pointer to the output buffer
+        <literal>outbuf</literal>. It converts the long value according to the format
         mask to its textual representation.
        </para>
        <para>
@@ -9097,7 +9097,7 @@ int rfmtlong(long lng_val, char *fmt, char *outbuf);
      </varlistentry>
 
      <varlistentry>
-      <term><function>rupshift</></term>
+      <term><function>rupshift</function></term>
       <listitem>
        <para>
         Convert a string to upper case.
@@ -9111,7 +9111,7 @@ void rupshift(char *str);
      </varlistentry>
 
      <varlistentry>
-      <term><function>byleng</></term>
+      <term><function>byleng</function></term>
       <listitem>
        <para>
         Return the number of characters in a string without counting trailing
@@ -9120,15 +9120,15 @@ void rupshift(char *str);
 int byleng(char *str, int len);
 </synopsis>
         The function expects a fixed-length string as its first argument
-        (<literal>str</>) and its length as its second argument
-        (<literal>len</>). It returns the number of significant characters,
+        (<literal>str</literal>) and its length as its second argument
+        (<literal>len</literal>). It returns the number of significant characters,
         that is the length of the string without trailing blanks.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><function>ldchar</></term>
+      <term><function>ldchar</function></term>
       <listitem>
        <para>
         Copy a fixed-length string into a null-terminated string.
@@ -9136,10 +9136,10 @@ int byleng(char *str, int len);
 void ldchar(char *src, int len, char *dest);
 </synopsis>
         The function receives the fixed-length string to copy
-        (<literal>src</>), its length (<literal>len</>) and a pointer to the
-        destination memory (<literal>dest</>). Note that you need to reserve at
-        least <literal>len+1</> bytes for the string that <literal>dest</>
-        points to. The function copies at most <literal>len</> bytes to the new
+        (<literal>src</literal>), its length (<literal>len</literal>) and a pointer to the
+        destination memory (<literal>dest</literal>). Note that you need to reserve at
+        least <literal>len+1</literal> bytes for the string that <literal>dest</literal>
+        points to. The function copies at most <literal>len</literal> bytes to the new
         location (less if the source string has trailing blanks) and adds the
         null-terminator.
        </para>
@@ -9147,7 +9147,7 @@ void ldchar(char *src, int len, char *dest);
      </varlistentry>
 
      <varlistentry>
-      <term><function>rgetmsg</></term>
+      <term><function>rgetmsg</function></term>
       <listitem>
        <para>
 <synopsis>
@@ -9159,7 +9159,7 @@ int rgetmsg(int msgnum, char *s, int maxsize);
      </varlistentry>
 
      <varlistentry>
-      <term><function>rtypalign</></term>
+      <term><function>rtypalign</function></term>
       <listitem>
        <para>
 <synopsis>
@@ -9171,7 +9171,7 @@ int rtypalign(int offset, int type);
      </varlistentry>
 
      <varlistentry>
-      <term><function>rtypmsize</></term>
+      <term><function>rtypmsize</function></term>
       <listitem>
        <para>
 <synopsis>
@@ -9183,7 +9183,7 @@ int rtypmsize(int type, int len);
      </varlistentry>
 
      <varlistentry>
-      <term><function>rtypwidth</></term>
+      <term><function>rtypwidth</function></term>
       <listitem>
        <para>
 <synopsis>
@@ -9195,7 +9195,7 @@ int rtypwidth(int sqltype, int sqllen);
      </varlistentry>
 
      <varlistentry id="rsetnull">
-      <term><function>rsetnull</></term>
+      <term><function>rsetnull</function></term>
       <listitem>
        <para>
         Set a variable to NULL.
@@ -9279,15 +9279,15 @@ rsetnull(CINTTYPE, (char *) &i);
      </varlistentry>
 
      <varlistentry>
-      <term><function>risnull</></term>
+      <term><function>risnull</function></term>
       <listitem>
        <para>
         Test if a variable is NULL.
 <synopsis>
 int risnull(int t, char *ptr);
 </synopsis>
-        The function receives the type of the variable to test (<literal>t</>)
-        as well a pointer to this variable (<literal>ptr</>). Note that the
+        The function receives the type of the variable to test (<literal>t</literal>)
+        as well a pointer to this variable (<literal>ptr</literal>). Note that the
         latter needs to be cast to a char*. See the function <xref
         linkend="rsetnull"> for a list of possible variable types.
        </para>
@@ -9321,7 +9321,7 @@ risnull(CINTTYPE, (char *) &i);
     values.
     <variablelist>
      <varlistentry>
-      <term><literal>ECPG_INFORMIX_NUM_OVERFLOW</></term>
+      <term><literal>ECPG_INFORMIX_NUM_OVERFLOW</literal></term>
       <listitem>
        <para>
         Functions return this value if an overflow occurred in a
@@ -9332,7 +9332,7 @@ risnull(CINTTYPE, (char *) &i);
      </varlistentry>
 
      <varlistentry>
-      <term><literal>ECPG_INFORMIX_NUM_UNDERFLOW</></term>
+      <term><literal>ECPG_INFORMIX_NUM_UNDERFLOW</literal></term>
       <listitem>
        <para>
         Functions return this value if an underflow occurred in a calculation.
@@ -9342,7 +9342,7 @@ risnull(CINTTYPE, (char *) &i);
      </varlistentry>
 
      <varlistentry>
-      <term><literal>ECPG_INFORMIX_DIVIDE_ZERO</></term>
+      <term><literal>ECPG_INFORMIX_DIVIDE_ZERO</literal></term>
       <listitem>
        <para>
         Functions return this value if an attempt to divide by zero is
@@ -9352,7 +9352,7 @@ risnull(CINTTYPE, (char *) &i);
      </varlistentry>
 
      <varlistentry>
-      <term><literal>ECPG_INFORMIX_BAD_YEAR</></term>
+      <term><literal>ECPG_INFORMIX_BAD_YEAR</literal></term>
       <listitem>
        <para>
         Functions return this value if a bad value for a year was found while
@@ -9363,7 +9363,7 @@ risnull(CINTTYPE, (char *) &i);
      </varlistentry>
 
      <varlistentry>
-      <term><literal>ECPG_INFORMIX_BAD_MONTH</></term>
+      <term><literal>ECPG_INFORMIX_BAD_MONTH</literal></term>
       <listitem>
        <para>
         Functions return this value if a bad value for a month was found while
@@ -9374,7 +9374,7 @@ risnull(CINTTYPE, (char *) &i);
      </varlistentry>
 
      <varlistentry>
-      <term><literal>ECPG_INFORMIX_BAD_DAY</></term>
+      <term><literal>ECPG_INFORMIX_BAD_DAY</literal></term>
       <listitem>
        <para>
         Functions return this value if a bad value for a day was found while
@@ -9385,7 +9385,7 @@ risnull(CINTTYPE, (char *) &i);
      </varlistentry>
 
      <varlistentry>
-      <term><literal>ECPG_INFORMIX_ENOSHORTDATE</></term>
+      <term><literal>ECPG_INFORMIX_ENOSHORTDATE</literal></term>
       <listitem>
        <para>
         Functions return this value if a parsing routine needs a short date
@@ -9396,7 +9396,7 @@ risnull(CINTTYPE, (char *) &i);
      </varlistentry>
 
      <varlistentry>
-      <term><literal>ECPG_INFORMIX_DATE_CONVERT</></term>
+      <term><literal>ECPG_INFORMIX_DATE_CONVERT</literal></term>
       <listitem>
        <para>
         Functions return this value if an error occurred during date
@@ -9407,7 +9407,7 @@ risnull(CINTTYPE, (char *) &i);
      </varlistentry>
 
      <varlistentry>
-      <term><literal>ECPG_INFORMIX_OUT_OF_MEMORY</></term>
+      <term><literal>ECPG_INFORMIX_OUT_OF_MEMORY</literal></term>
       <listitem>
        <para>
         Functions return this value if memory was exhausted during
@@ -9418,18 +9418,18 @@ risnull(CINTTYPE, (char *) &i);
      </varlistentry>
 
      <varlistentry>
-      <term><literal>ECPG_INFORMIX_ENOTDMY</></term>
+      <term><literal>ECPG_INFORMIX_ENOTDMY</literal></term>
       <listitem>
        <para>
         Functions return this value if a parsing routine was supposed to get a
-        format mask (like <literal>mmddyy</>) but not all fields were listed
+        format mask (like <literal>mmddyy</literal>) but not all fields were listed
         correctly. Internally it is defined as -1212 (the <productname>Informix</productname> definition).
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><literal>ECPG_INFORMIX_BAD_NUMERIC</></term>
+      <term><literal>ECPG_INFORMIX_BAD_NUMERIC</literal></term>
       <listitem>
        <para>
         Functions return this value either if a parsing routine cannot parse
@@ -9442,7 +9442,7 @@ risnull(CINTTYPE, (char *) &i);
      </varlistentry>
 
      <varlistentry>
-      <term><literal>ECPG_INFORMIX_BAD_EXPONENT</></term>
+      <term><literal>ECPG_INFORMIX_BAD_EXPONENT</literal></term>
       <listitem>
        <para>
         Functions return this value if a parsing routine cannot parse
@@ -9453,7 +9453,7 @@ risnull(CINTTYPE, (char *) &i);
      </varlistentry>
 
      <varlistentry>
-      <term><literal>ECPG_INFORMIX_BAD_DATE</></term>
+      <term><literal>ECPG_INFORMIX_BAD_DATE</literal></term>
       <listitem>
        <para>
         Functions return this value if a parsing routine cannot parse
@@ -9464,7 +9464,7 @@ risnull(CINTTYPE, (char *) &i);
      </varlistentry>
 
      <varlistentry>
-      <term><literal>ECPG_INFORMIX_EXTRA_CHARS</></term>
+      <term><literal>ECPG_INFORMIX_EXTRA_CHARS</literal></term>
       <listitem>
        <para>
         Functions return this value if a parsing routine is passed extra
@@ -9507,7 +9507,7 @@ risnull(CINTTYPE, (char *) &i);
     Variable substitution occurs when a symbol starts with a colon
     (<literal>:</literal>). The variable with that name is looked up
     among the variables that were previously declared within a
-    <literal>EXEC SQL DECLARE</> section.
+    <literal>EXEC SQL DECLARE</literal> section.
    </para>
 
    <para>
@@ -9555,10 +9555,10 @@ risnull(CINTTYPE, (char *) &i);
      </varlistentry>
 
      <varlistentry>
-      <term><parameter>ECPGt_EOIT</></term>
+      <term><parameter>ECPGt_EOIT</parameter></term>
       <listitem>
        <para>
-        An <type>enum</> telling that there are no more input
+        An <type>enum</type> telling that there are no more input
         variables.
        </para>
       </listitem>
@@ -9575,10 +9575,10 @@ risnull(CINTTYPE, (char *) &i);
      </varlistentry>
 
       <varlistentry>
-       <term><parameter>ECPGt_EORT</></term>
+       <term><parameter>ECPGt_EORT</parameter></term>
        <listitem>
        <para>
-        An <type>enum</> telling that there are no more variables.
+        An <type>enum</type> telling that there are no more variables.
        </para>
       </listitem>
      </varlistentry>
@@ -9660,7 +9660,7 @@ risnull(CINTTYPE, (char *) &i);
 EXEC SQL OPEN <replaceable>cursor</replaceable>;
 </programlisting>
     is not copied to the output. Instead, the cursor's
-    <command>DECLARE</> command is used at the position of the <command>OPEN</> command
+    <command>DECLARE</command> command is used at the position of the <command>OPEN</command> command
     because it indeed opens the cursor.
    </para>
 

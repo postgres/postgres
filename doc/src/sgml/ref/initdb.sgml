@@ -79,8 +79,8 @@ PostgreSQL documentation
   <para>
    <command>initdb</command> initializes the database cluster's default
    locale and character set encoding. The character set encoding,
-   collation order (<literal>LC_COLLATE</>) and character set classes
-   (<literal>LC_CTYPE</>, e.g. upper, lower, digit) can be set separately
+   collation order (<literal>LC_COLLATE</literal>) and character set classes
+   (<literal>LC_CTYPE</literal>, e.g. upper, lower, digit) can be set separately
    for a database when it is created. <command>initdb</command> determines
    those settings for the <literal>template1</literal> database, which will
    serve as the default for all other databases.
@@ -89,7 +89,7 @@ PostgreSQL documentation
   <para>
    To alter the default collation order or character set classes, use the
    <option>--lc-collate</option> and <option>--lc-ctype</option> options.
-   Collation orders other than <literal>C</> or <literal>POSIX</> also have
+   Collation orders other than <literal>C</literal> or <literal>POSIX</literal> also have
    a performance penalty.  For these reasons it is important to choose the
    right locale when running <command>initdb</command>.
   </para>
@@ -98,8 +98,8 @@ PostgreSQL documentation
    The remaining locale categories can be changed later when the server
    is started.  You can also use <option>--locale</option> to set the
    default for all locale categories, including collation order and
-   character set classes. All server locale values (<literal>lc_*</>) can
-   be displayed via <command>SHOW ALL</>.
+   character set classes. All server locale values (<literal>lc_*</literal>) can
+   be displayed via <command>SHOW ALL</command>.
    More details can be found in <xref linkend="locale">.
   </para>
 
@@ -121,7 +121,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         This option specifies the default authentication method for local
-        users used in <filename>pg_hba.conf</> (<literal>host</literal>
+        users used in <filename>pg_hba.conf</filename> (<literal>host</literal>
         and <literal>local</literal> lines).  <command>initdb</command> will
         prepopulate <filename>pg_hba.conf</filename> entries using the
         specified authentication method for non-replication as well as
@@ -129,8 +129,8 @@ PostgreSQL documentation
        </para>
 
        <para>
-        Do not use <literal>trust</> unless you trust all local users on your
-        system.  <literal>trust</> is the default for ease of installation.
+        Do not use <literal>trust</literal> unless you trust all local users on your
+        system.  <literal>trust</literal> is the default for ease of installation.
        </para>
       </listitem>
      </varlistentry>
@@ -140,7 +140,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         This option specifies the authentication method for local users via
-        TCP/IP connections used in <filename>pg_hba.conf</>
+        TCP/IP connections used in <filename>pg_hba.conf</filename>
         (<literal>host</literal> lines).
        </para>
       </listitem>
@@ -151,7 +151,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         This option specifies the authentication method for local users via
-        Unix-domain socket connections used in <filename>pg_hba.conf</>
+        Unix-domain socket connections used in <filename>pg_hba.conf</filename>
         (<literal>local</literal> lines).
        </para>
       </listitem>
@@ -255,7 +255,7 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>--pwfile=<replaceable>filename</></option></term>
+      <term><option>--pwfile=<replaceable>filename</replaceable></option></term>
       <listitem>
        <para>
         Makes <command>initdb</command> read the database superuser's password
@@ -270,14 +270,14 @@ PostgreSQL documentation
       <listitem>
        <para>
         Safely write all database files to disk and exit.  This does not
-        perform any of the normal <application>initdb</> operations.
+        perform any of the normal <application>initdb</application> operations.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><option>-T <replaceable>config</></option></term>
-      <term><option>--text-search-config=<replaceable>config</></option></term>
+      <term><option>-T <replaceable>config</replaceable></option></term>
+      <term><option>--text-search-config=<replaceable>config</replaceable></option></term>
       <listitem>
        <para>
         Sets the default text search configuration.
@@ -319,7 +319,7 @@ PostgreSQL documentation
        <term><option>--wal-segsize=<replaceable>SEGSIZE</replaceable></option></term>
        <listitem>
         <para>
-         Set the <firstterm>WAL segment size</>, in megabytes.  This is
+         Set the <firstterm>WAL segment size</firstterm>, in megabytes.  This is
          the size of each individual file in the WAL log.  It may be useful
          to adjust this size to control the granularity of WAL log shipping.
          This option can only be set during initialization, and cannot be
@@ -395,8 +395,8 @@ PostgreSQL documentation
 
     <variablelist>
      <varlistentry>
-       <term><option>-V</></term>
-       <term><option>--version</></term>
+       <term><option>-V</option></term>
+       <term><option>--version</option></term>
        <listitem>
        <para>
        Print the <application>initdb</application> version and exit.
@@ -405,8 +405,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-       <term><option>-?</></term>
-       <term><option>--help</></term>
+       <term><option>-?</option></term>
+       <term><option>--help</option></term>
        <listitem>
        <para>
        Show help about <application>initdb</application> command line
@@ -449,8 +449,8 @@ PostgreSQL documentation
   </variablelist>
 
   <para>
-   This utility, like most other <productname>PostgreSQL</> utilities,
-   also uses the environment variables supported by <application>libpq</>
+   This utility, like most other <productname>PostgreSQL</productname> utilities,
+   also uses the environment variables supported by <application>libpq</application>
    (see <xref linkend="libpq-envars">).
   </para>
 

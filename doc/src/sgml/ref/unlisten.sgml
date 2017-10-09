@@ -104,7 +104,7 @@ Asynchronous notification "virtual" received from server process with PID 8448.
   </para>
 
   <para>
-   Once <command>UNLISTEN</> has been executed, further <command>NOTIFY</>
+   Once <command>UNLISTEN</command> has been executed, further <command>NOTIFY</command>
    messages will be ignored:
 
 <programlisting>

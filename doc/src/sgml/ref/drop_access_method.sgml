@@ -85,7 +85,7 @@ DROP ACCESS METHOD [ IF EXISTS ] <replaceable class="parameter">name</replaceabl
   <title>Examples</title>
 
   <para>
-   Drop the access method <literal>heptree</>:
+   Drop the access method <literal>heptree</literal>:
 <programlisting>
 DROP ACCESS METHOD heptree;
 </programlisting></para>
@@ -96,7 +96,7 @@ DROP ACCESS METHOD heptree;
 
   <para>
    <command>DROP ACCESS METHOD</command> is a
-   <productname>PostgreSQL</> extension.
+   <productname>PostgreSQL</productname> extension.
   </para>
  </refsect1>
 

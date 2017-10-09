@@ -83,16 +83,16 @@ COMMENT ON
 
   <para>
    Only one comment string is stored for each object, so to modify a comment,
-   issue a new <command>COMMENT</> command for the same object.  To remove a
+   issue a new <command>COMMENT</command> command for the same object.  To remove a
    comment, write <literal>NULL</literal> in place of the text string.
    Comments are automatically dropped when their object is dropped.
   </para>
 
   <para>
    For most kinds of object, only the object's owner can set the comment.
-   Roles don't have owners, so the rule for <literal>COMMENT ON ROLE</> is
+   Roles don't have owners, so the rule for <literal>COMMENT ON ROLE</literal> is
    that you must be superuser to comment on a superuser role, or have the
-   <literal>CREATEROLE</> privilege to comment on non-superuser roles.
+   <literal>CREATEROLE</literal> privilege to comment on non-superuser roles.
    Likewise, access methods don't have owners either; you must be superuser
    to comment on an access method.
    Of course, a superuser can comment on anything.
@@ -103,8 +103,8 @@ COMMENT ON
     <command>\d</command> family of commands.
     Other user interfaces to retrieve comments can be built atop
     the same built-in functions that <application>psql</application> uses, namely
-    <function>obj_description</>, <function>col_description</>,
-    and <function>shobj_description</>
+    <function>obj_description</function>, <function>col_description</function>,
+    and <function>shobj_description</function>
     (see <xref linkend="functions-info-comment-table">).
   </para>
  </refsect1>
@@ -171,14 +171,14 @@ COMMENT ON
     <listitem>
      <para>
       The mode of a function or aggregate
-      argument: <literal>IN</>, <literal>OUT</>,
-      <literal>INOUT</>, or <literal>VARIADIC</>.
-      If omitted, the default is <literal>IN</>.
+      argument: <literal>IN</literal>, <literal>OUT</literal>,
+      <literal>INOUT</literal>, or <literal>VARIADIC</literal>.
+      If omitted, the default is <literal>IN</literal>.
       Note that <command>COMMENT</command> does not actually pay
-      any attention to <literal>OUT</> arguments, since only the input
+      any attention to <literal>OUT</literal> arguments, since only the input
       arguments are needed to determine the function's identity.
-      So it is sufficient to list the <literal>IN</>, <literal>INOUT</>,
-      and <literal>VARIADIC</> arguments.
+      So it is sufficient to list the <literal>IN</literal>, <literal>INOUT</literal>,
+      and <literal>VARIADIC</literal> arguments.
      </para>
     </listitem>
    </varlistentry>
@@ -219,7 +219,7 @@ COMMENT ON
     <listitem>
      <para>
       The data type(s) of the operator's arguments (optionally
-      schema-qualified).  Write <literal>NONE</> for the missing argument
+      schema-qualified).  Write <literal>NONE</literal> for the missing argument
       of a prefix or postfix operator.
      </para>
     </listitem>
@@ -258,7 +258,7 @@ COMMENT ON
     <term><replaceable class="parameter">text</replaceable></term>
     <listitem>
      <para>
-      The new comment, written as a string literal; or <literal>NULL</>
+      The new comment, written as a string literal; or <literal>NULL</literal>
       to drop the comment.
      </para>
     </listitem>

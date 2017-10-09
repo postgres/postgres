@@ -47,7 +47,7 @@ PREPARE TRANSACTION <replaceable class="parameter">transaction_id</replaceable>
 
   <para>
    From the point of view of the issuing session, <command>PREPARE
-   TRANSACTION</command> is not unlike a <command>ROLLBACK</> command:
+   TRANSACTION</command> is not unlike a <command>ROLLBACK</command> command:
    after executing it, there is no active current transaction, and the
    effects of the prepared transaction are no longer visible.  (The effects
    will become visible again if the transaction is committed.)
@@ -55,7 +55,7 @@ PREPARE TRANSACTION <replaceable class="parameter">transaction_id</replaceable>
 
   <para>
    If the <command>PREPARE TRANSACTION</command> command fails for any
-   reason, it becomes a <command>ROLLBACK</>: the current transaction
+   reason, it becomes a <command>ROLLBACK</command>: the current transaction
    is canceled.
   </para>
  </refsect1>
@@ -69,7 +69,7 @@ PREPARE TRANSACTION <replaceable class="parameter">transaction_id</replaceable>
     <listitem>
      <para>
       An arbitrary identifier that later identifies this transaction for
-      <command>COMMIT PREPARED</> or <command>ROLLBACK PREPARED</>.
+      <command>COMMIT PREPARED</command> or <command>ROLLBACK PREPARED</command>.
       The identifier must be written as a string literal, and must be
       less than 200 bytes long.  It must not be the same as the identifier
       used for any currently prepared transaction.
@@ -83,12 +83,12 @@ PREPARE TRANSACTION <replaceable class="parameter">transaction_id</replaceable>
   <title>Notes</title>
 
   <para>
-   <command>PREPARE TRANSACTION</> is not intended for use in applications
+   <command>PREPARE TRANSACTION</command> is not intended for use in applications
    or interactive sessions. Its purpose is to allow an external
    transaction manager to perform atomic global transactions across multiple
    databases or other transactional resources. Unless you're writing a
    transaction manager, you probably shouldn't be using <command>PREPARE
-   TRANSACTION</>.
+   TRANSACTION</command>.
   </para>
 
   <para>
@@ -97,22 +97,22 @@ PREPARE TRANSACTION <replaceable class="parameter">transaction_id</replaceable>
   </para>
 
   <para>
-   It is not currently allowed to <command>PREPARE</> a transaction that
+   It is not currently allowed to <command>PREPARE</command> a transaction that
    has executed any operations involving temporary tables,
-   created any cursors <literal>WITH HOLD</>, or executed
-   <command>LISTEN</> or <command>UNLISTEN</>.
+   created any cursors <literal>WITH HOLD</literal>, or executed
+   <command>LISTEN</command> or <command>UNLISTEN</command>.
    Those features are too tightly
    tied to the current session to be useful in a transaction to be prepared.
   </para>
 
   <para>
-   If the transaction modified any run-time parameters with <command>SET</>
-   (without the <literal>LOCAL</> option),
-   those effects persist after <command>PREPARE TRANSACTION</>, and will not
+   If the transaction modified any run-time parameters with <command>SET</command>
+   (without the <literal>LOCAL</literal> option),
+   those effects persist after <command>PREPARE TRANSACTION</command>, and will not
    be affected by any later <command>COMMIT PREPARED</command> or
    <command>ROLLBACK PREPARED</command>.  Thus, in this one respect
-   <command>PREPARE TRANSACTION</> acts more like <command>COMMIT</> than
-   <command>ROLLBACK</>.
+   <command>PREPARE TRANSACTION</command> acts more like <command>COMMIT</command> than
+   <command>ROLLBACK</command>.
   </para>
 
   <para>
@@ -124,7 +124,7 @@ PREPARE TRANSACTION <replaceable class="parameter">transaction_id</replaceable>
   <caution>
    <para>
     It is unwise to leave transactions in the prepared state for a long time.
-    This will interfere with the ability of <command>VACUUM</> to reclaim
+    This will interfere with the ability of <command>VACUUM</command> to reclaim
     storage, and in extreme cases could cause the database to shut down
     to prevent transaction ID wraparound (see <xref
     linkend="vacuum-for-wraparound">).  Keep in mind also that the transaction
@@ -149,7 +149,7 @@ PREPARE TRANSACTION <replaceable class="parameter">transaction_id</replaceable>
   <title id="sql-prepare-transaction-examples-title">Examples</title>
   <para>
    Prepare the current transaction for two-phase commit, using
-   <literal>foobar</> as the transaction identifier:
+   <literal>foobar</literal> as the transaction identifier:
 
 <programlisting>
 PREPARE TRANSACTION 'foobar';

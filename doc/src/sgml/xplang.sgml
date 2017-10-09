@@ -11,7 +11,7 @@
    <productname>PostgreSQL</productname> allows user-defined functions
    to be written in other languages besides SQL and C.  These other
    languages are generically called <firstterm>procedural
-   languages</firstterm> (<acronym>PL</>s).  For a function
+   languages</firstterm> (<acronym>PL</acronym>s).  For a function
    written in a procedural language, the database server has
    no built-in knowledge about how to interpret the function's source
    text. Instead, the task is passed to a special handler that knows
@@ -44,9 +44,9 @@
    <para>
     A procedural language must be <quote>installed</quote> into each
     database where it is to be used.  But procedural languages installed in
-    the database <literal>template1</> are automatically available in all
+    the database <literal>template1</literal> are automatically available in all
     subsequently created databases, since their entries in
-    <literal>template1</> will be copied by <command>CREATE DATABASE</>.
+    <literal>template1</literal> will be copied by <command>CREATE DATABASE</command>.
     So the database administrator can
     decide which languages are available in which databases and can make
     some languages available by default if desired.
@@ -54,8 +54,8 @@
 
    <para>
     For the languages supplied with the standard distribution, it is
-    only necessary to execute <command>CREATE EXTENSION</>
-    <replaceable>language_name</> to install the language into the
+    only necessary to execute <command>CREATE EXTENSION</command>
+    <replaceable>language_name</replaceable> to install the language into the
     current database.
     The manual procedure described below is only recommended for
     installing languages that have not been packaged as extensions.
@@ -70,7 +70,7 @@
      A procedural language is installed in a database in five steps,
      which must be carried out by a database superuser.  In most cases
      the required SQL commands should be packaged as the installation script
-     of an <quote>extension</>, so that <command>CREATE EXTENSION</> can be
+     of an <quote>extension</quote>, so that <command>CREATE EXTENSION</command> can be
      used to execute them.
     </para>
 
@@ -103,7 +103,7 @@ CREATE FUNCTION <replaceable>handler_function_name</replaceable>()
 
     <step performance="optional" id="xplang-install-cr3">
      <para>
-      Optionally, the language handler can provide an <quote>inline</>
+      Optionally, the language handler can provide an <quote>inline</quote>
       handler function that executes anonymous code blocks
       (<xref linkend="sql-do"> commands)
       written in this language.  If an inline handler function
@@ -119,10 +119,10 @@ CREATE FUNCTION <replaceable>inline_function_name</replaceable>(internal)
 
     <step performance="optional" id="xplang-install-cr4">
      <para>
-      Optionally, the language handler can provide a <quote>validator</>
+      Optionally, the language handler can provide a <quote>validator</quote>
       function that checks a function definition for correctness without
       actually executing it.  The validator function is called by
-      <command>CREATE FUNCTION</> if it exists.  If a validator function
+      <command>CREATE FUNCTION</command> if it exists.  If a validator function
       is provided by the language, declare it with a command like
 <synopsis>
 CREATE FUNCTION <replaceable>validator_function_name</replaceable>(oid)
@@ -217,13 +217,13 @@ CREATE TRUSTED PROCEDURAL LANGUAGE plperl
     is built and installed into the <quote>library</quote>
     directory; furthermore, the <application>PL/pgSQL</application> language
     itself is installed in all databases.
-    If <application>Tcl</> support is configured in, the handlers for
-    <application>PL/Tcl</> and <application>PL/TclU</> are built and installed
+    If <application>Tcl</application> support is configured in, the handlers for
+    <application>PL/Tcl</application> and <application>PL/TclU</application> are built and installed
     in the library directory, but the language itself is not installed in any
     database by default.
-    Likewise, the <application>PL/Perl</> and <application>PL/PerlU</>
+    Likewise, the <application>PL/Perl</application> and <application>PL/PerlU</application>
     handlers are built and installed if Perl support is configured, and the
-    <application>PL/PythonU</> handler is installed if Python support is
+    <application>PL/PythonU</application> handler is installed if Python support is
     configured, but these languages are not installed by default.
    </para>
 

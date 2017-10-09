@@ -124,9 +124,9 @@ IMPORT FOREIGN SCHEMA <replaceable class="parameter">remote_schema</replaceable>
   <title>Examples</title>
 
   <para>
-   Import table definitions from a remote schema <structname>foreign_films</>
-   on server <structname>film_server</>, creating the foreign tables in
-   local schema <structname>films</>:
+   Import table definitions from a remote schema <structname>foreign_films</structname>
+   on server <structname>film_server</structname>, creating the foreign tables in
+   local schema <structname>films</structname>:
 
 <programlisting>
 IMPORT FOREIGN SCHEMA foreign_films
@@ -135,8 +135,8 @@ IMPORT FOREIGN SCHEMA foreign_films
    </para>
 
   <para>
-   As above, but import only the two tables <structname>actors</> and
-   <literal>directors</> (if they exist):
+   As above, but import only the two tables <structname>actors</structname> and
+   <literal>directors</literal> (if they exist):
 
 <programlisting>
 IMPORT FOREIGN SCHEMA foreign_films LIMIT TO (actors, directors)
@@ -149,8 +149,8 @@ IMPORT FOREIGN SCHEMA foreign_films LIMIT TO (actors, directors)
 
   <para>
    The <command>IMPORT FOREIGN SCHEMA</command> command conforms to the
-   <acronym>SQL</acronym> standard, except that the <literal>OPTIONS</>
-   clause is a <productname>PostgreSQL</> extension.
+   <acronym>SQL</acronym> standard, except that the <literal>OPTIONS</literal>
+   clause is a <productname>PostgreSQL</productname> extension.
   </para>
 
  </refsect1>

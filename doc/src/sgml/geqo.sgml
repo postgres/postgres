@@ -88,7 +88,7 @@
    </para>
 
    <para>
-    According to the <systemitem class="resource">comp.ai.genetic</> <acronym>FAQ</acronym> it cannot be stressed too
+    According to the <systemitem class="resource">comp.ai.genetic</systemitem> <acronym>FAQ</acronym> it cannot be stressed too
     strongly that a <acronym>GA</acronym> is not a pure random search for a solution to a
     problem. A <acronym>GA</acronym> uses stochastic processes, but the result is distinctly
     non-random (better than random).
@@ -222,7 +222,7 @@
     are considered; and all the initially-determined relation scan plans
     are available.  The estimated cost is the cheapest of these
     possibilities.)  Join sequences with lower estimated cost are considered
-    <quote>more fit</> than those with higher cost.  The genetic algorithm
+    <quote>more fit</quote> than those with higher cost.  The genetic algorithm
     discards the least fit candidates.  Then new candidates are generated
     by combining genes of more-fit candidates &mdash; that is, by using
     randomly-chosen portions of known low-cost join sequences to create
@@ -235,20 +235,20 @@
    <para>
     This process is inherently nondeterministic, because of the randomized
     choices made during both the initial population selection and subsequent
-    <quote>mutation</> of the best candidates.  To avoid surprising changes
+    <quote>mutation</quote> of the best candidates.  To avoid surprising changes
     of the selected plan, each run of the GEQO algorithm restarts its
     random number generator with the current <xref linkend="guc-geqo-seed">
-    parameter setting.  As long as <varname>geqo_seed</> and the other
+    parameter setting.  As long as <varname>geqo_seed</varname> and the other
     GEQO parameters are kept fixed, the same plan will be generated for a
     given query (and other planner inputs such as statistics).  To experiment
-    with different search paths, try changing <varname>geqo_seed</>.
+    with different search paths, try changing <varname>geqo_seed</varname>.
    </para>
 
   </sect2>
 
   <sect2 id="geqo-future">
    <title>Future Implementation Tasks for
-    <productname>PostgreSQL</> <acronym>GEQO</acronym></title>
+    <productname>PostgreSQL</productname> <acronym>GEQO</acronym></title>
 
      <para>
       Work is still needed to improve the genetic algorithm parameter

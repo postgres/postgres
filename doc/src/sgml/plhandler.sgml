@@ -35,7 +35,7 @@
    <para>
     The call handler is called in the same way as any other function:
     It receives a pointer to a
-    <structname>FunctionCallInfoData</structname> <type>struct</> containing
+    <structname>FunctionCallInfoData</structname> <type>struct</type> containing
     argument values and information about the called function, and it
     is expected to return a <type>Datum</type> result (and possibly
     set the <structfield>isnull</structfield> field of the
@@ -54,7 +54,7 @@
    <para>
     It's up to the call handler to fetch the entry of the function from the
     <classname>pg_proc</classname> system catalog and to analyze the argument
-    and return types of the called function. The <literal>AS</> clause from the
+    and return types of the called function. The <literal>AS</literal> clause from the
     <command>CREATE FUNCTION</command> command for the function will be found
     in the <literal>prosrc</literal> column of the
     <classname>pg_proc</classname> row. This is commonly source
@@ -68,9 +68,9 @@
     A call handler can avoid repeated lookups of information about the
     called function by using the
     <structfield>flinfo-&gt;fn_extra</structfield> field.  This will
-    initially be <symbol>NULL</>, but can be set by the call handler to point at
+    initially be <symbol>NULL</symbol>, but can be set by the call handler to point at
     information about the called function.  On subsequent calls, if
-    <structfield>flinfo-&gt;fn_extra</structfield> is already non-<symbol>NULL</>
+    <structfield>flinfo-&gt;fn_extra</structfield> is already non-<symbol>NULL</symbol>
     then it can be used and the information lookup step skipped.  The
     call handler must make sure that
     <structfield>flinfo-&gt;fn_extra</structfield> is made to point at
@@ -90,7 +90,7 @@
     are passed in the usual way, but the
     <structname>FunctionCallInfoData</structname>'s
     <structfield>context</structfield> field points at a
-    <structname>TriggerData</structname> structure, rather than being <symbol>NULL</>
+    <structname>TriggerData</structname> structure, rather than being <symbol>NULL</symbol>
     as it is in a plain function call.  A language handler should
     provide mechanisms for procedural-language functions to get at the trigger
     information.
@@ -170,21 +170,21 @@ CREATE LANGUAGE plsample
    <para>
     If a validator is provided by a procedural language, it
     must be declared as a function taking a single parameter of type
-    <type>oid</>.  The validator's result is ignored, so it is customarily
-    declared to return <type>void</>.  The validator will be called at
-    the end of a <command>CREATE FUNCTION</> command that has created
+    <type>oid</type>.  The validator's result is ignored, so it is customarily
+    declared to return <type>void</type>.  The validator will be called at
+    the end of a <command>CREATE FUNCTION</command> command that has created
     or updated a function written in the procedural language.
-    The passed-in OID is the OID of the function's <classname>pg_proc</>
+    The passed-in OID is the OID of the function's <classname>pg_proc</classname>
     row.  The validator must fetch this row in the usual way, and do
     whatever checking is appropriate.
-    First, call <function>CheckFunctionValidatorAccess()</> to diagnose
+    First, call <function>CheckFunctionValidatorAccess()</function> to diagnose
     explicit calls to the validator that the user could not achieve through
-    <command>CREATE FUNCTION</>.  Typical checks then include verifying
+    <command>CREATE FUNCTION</command>.  Typical checks then include verifying
     that the function's argument and result types are supported by the
     language, and that the function's body is syntactically correct
     in the language.  If the validator finds the function to be okay,
     it should just return.  If it finds an error, it should report that
-    via the normal <function>ereport()</> error reporting mechanism.
+    via the normal <function>ereport()</function> error reporting mechanism.
     Throwing an error will force a transaction rollback and thus prevent
     the incorrect function definition from being committed.
    </para>
@@ -195,40 +195,40 @@ CREATE LANGUAGE plsample
     any expensive or context-sensitive checking should be skipped.  If the
     language provides for code execution at compilation time, the validator
     must suppress checks that would induce such execution.  In particular,
-    this parameter is turned off by <application>pg_dump</> so that it can
+    this parameter is turned off by <application>pg_dump</application> so that it can
     load procedural language functions without worrying about side effects or
     dependencies of the function bodies on other database objects.
     (Because of this requirement, the call handler should avoid
     assuming that the validator has fully checked the function.  The point
     of having a validator is not to let the call handler omit checks, but
     to notify the user immediately if there are obvious errors in a
-    <command>CREATE FUNCTION</> command.)
+    <command>CREATE FUNCTION</command> command.)
     While the choice of exactly what to check is mostly left to the
     discretion of the validator function, note that the core
-    <command>CREATE FUNCTION</> code only executes <literal>SET</> clauses
-    attached to a function when <varname>check_function_bodies</> is on.
+    <command>CREATE FUNCTION</command> code only executes <literal>SET</literal> clauses
+    attached to a function when <varname>check_function_bodies</varname> is on.
     Therefore, checks whose results might be affected by GUC parameters
-    definitely should be skipped when <varname>check_function_bodies</> is
+    definitely should be skipped when <varname>check_function_bodies</varname> is
     off, to avoid false failures when reloading a dump.
    </para>
 
    <para>
     If an inline handler is provided by a procedural language, it
     must be declared as a function taking a single parameter of type
-    <type>internal</>.  The inline handler's result is ignored, so it is
-    customarily declared to return <type>void</>.  The inline handler
-    will be called when a <command>DO</> statement is executed specifying
+    <type>internal</type>.  The inline handler's result is ignored, so it is
+    customarily declared to return <type>void</type>.  The inline handler
+    will be called when a <command>DO</command> statement is executed specifying
     the procedural language.  The parameter actually passed is a pointer
-    to an <structname>InlineCodeBlock</> struct, which contains information
-    about the <command>DO</> statement's parameters, in particular the
+    to an <structname>InlineCodeBlock</structname> struct, which contains information
+    about the <command>DO</command> statement's parameters, in particular the
     text of the anonymous code block to be executed.  The inline handler
     should execute this code and return.
    </para>
 
    <para>
     It's recommended that you wrap all these function declarations,
-    as well as the <command>CREATE LANGUAGE</> command itself, into
-    an <firstterm>extension</> so that a simple <command>CREATE EXTENSION</>
+    as well as the <command>CREATE LANGUAGE</command> command itself, into
+    an <firstterm>extension</firstterm> so that a simple <command>CREATE EXTENSION</command>
     command is sufficient to install the language.  See
     <xref linkend="extend-extensions"> for information about writing
     extensions.
@@ -237,7 +237,7 @@ CREATE LANGUAGE plsample
    <para>
     The procedural languages included in the standard distribution
     are good references when trying to write your own language handler.
-    Look into the <filename>src/pl</> subdirectory of the source tree.
+    Look into the <filename>src/pl</filename> subdirectory of the source tree.
     The <xref linkend="sql-createlanguage">
     reference page also has some useful details.
    </para>

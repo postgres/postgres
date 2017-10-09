@@ -38,7 +38,7 @@ ALTER COLLATION <replaceable>name</replaceable> SET SCHEMA <replaceable>new_sche
   </para>
 
   <para>
-   You must own the collation to use <command>ALTER COLLATION</>.
+   You must own the collation to use <command>ALTER COLLATION</command>.
    To alter the owner, you must also be a direct or indirect member of the new
    owning role, and that role must have <literal>CREATE</literal> privilege on
    the collation's schema.  (These restrictions enforce that altering the

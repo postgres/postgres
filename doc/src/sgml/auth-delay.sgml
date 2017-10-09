@@ -18,7 +18,7 @@
 
  <para>
   In order to function, this module must be loaded via
-  <xref linkend="guc-shared-preload-libraries"> in <filename>postgresql.conf</>.
+  <xref linkend="guc-shared-preload-libraries"> in <filename>postgresql.conf</filename>.
  </para>
 
  <sect2>
@@ -29,7 +29,7 @@
     <term>
      <varname>auth_delay.milliseconds</varname> (<type>int</type>)
      <indexterm>
-      <primary><varname>auth_delay.milliseconds</> configuration parameter</primary>
+      <primary><varname>auth_delay.milliseconds</varname> configuration parameter</primary>
      </indexterm>
     </term>
     <listitem>
@@ -42,7 +42,7 @@
   </variablelist>
 
   <para>
-   These parameters must be set in <filename>postgresql.conf</>.
+   These parameters must be set in <filename>postgresql.conf</filename>.
    Typical usage might be:
   </para>
 

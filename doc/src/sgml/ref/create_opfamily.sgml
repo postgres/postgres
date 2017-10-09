@@ -35,7 +35,7 @@ CREATE OPERATOR FAMILY <replaceable class="parameter">name</replaceable> USING <
    compatible with these operator classes but not essential for the
    functioning of any individual index.  (Operators and functions that
    are essential to indexes should be grouped within the relevant operator
-   class, rather than being <quote>loose</> in the operator family.
+   class, rather than being <quote>loose</quote> in the operator family.
    Typically, single-data-type operators are bound to operator classes,
    while cross-data-type operators can be loose in an operator family
    containing operator classes for both data types.)
@@ -45,7 +45,7 @@ CREATE OPERATOR FAMILY <replaceable class="parameter">name</replaceable> USING <
    The new operator family is initially empty.  It should be populated
    by issuing subsequent <command>CREATE OPERATOR CLASS</command> commands
    to add contained operator classes, and optionally
-   <command>ALTER OPERATOR FAMILY</command> commands to add <quote>loose</>
+   <command>ALTER OPERATOR FAMILY</command> commands to add <quote>loose</quote>
    operators and their corresponding support functions.
   </para>
 

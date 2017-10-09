@@ -92,7 +92,7 @@ DROP OWNED BY { <replaceable class="parameter">name</replaceable> | CURRENT_USER
   <para>
    The <xref linkend="sql-reassign-owned"> command is an alternative that
    reassigns the ownership of all the database objects owned by one or
-   more roles.  However, <command>REASSIGN OWNED</> does not deal with
+   more roles.  However, <command>REASSIGN OWNED</command> does not deal with
    privileges for other objects.
   </para>
 

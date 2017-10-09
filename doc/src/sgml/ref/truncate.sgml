@@ -48,9 +48,9 @@ TRUNCATE [ TABLE ] [ ONLY ] <replaceable class="parameter">name</replaceable> [ 
     <listitem>
      <para>
       The name (optionally schema-qualified) of a table to truncate.
-      If <literal>ONLY</> is specified before the table name, only that table
-      is truncated.  If <literal>ONLY</> is not specified, the table and all
-      its descendant tables (if any) are truncated.  Optionally, <literal>*</>
+      If <literal>ONLY</literal> is specified before the table name, only that table
+      is truncated.  If <literal>ONLY</literal> is not specified, the table and all
+      its descendant tables (if any) are truncated.  Optionally, <literal>*</literal>
       can be specified after the table name to explicitly indicate that
       descendant tables are included.
      </para>
@@ -108,29 +108,29 @@ TRUNCATE [ TABLE ] [ ONLY ] <replaceable class="parameter">name</replaceable> [ 
   </para>
 
   <para>
-   <command>TRUNCATE</> acquires an <literal>ACCESS EXCLUSIVE</> lock on each
+   <command>TRUNCATE</command> acquires an <literal>ACCESS EXCLUSIVE</literal> lock on each
    table it operates on, which blocks all other concurrent operations
-   on the table.  When <literal>RESTART IDENTITY</> is specified, any
+   on the table.  When <literal>RESTART IDENTITY</literal> is specified, any
    sequences that are to be restarted are likewise locked exclusively.
    If concurrent access to a table is required, then
-   the <command>DELETE</> command should be used instead.
+   the <command>DELETE</command> command should be used instead.
   </para>
 
   <para>
-   <command>TRUNCATE</> cannot be used on a table that has foreign-key
+   <command>TRUNCATE</command> cannot be used on a table that has foreign-key
    references from other tables, unless all such tables are also truncated
    in the same command.  Checking validity in such cases would require table
-   scans, and the whole point is not to do one.  The <literal>CASCADE</>
+   scans, and the whole point is not to do one.  The <literal>CASCADE</literal>
    option can be used to automatically include all dependent tables &mdash;
    but be very careful when using this option, or else you might lose data you
    did not intend to!
   </para>
 
   <para>
-   <command>TRUNCATE</> will not fire any <literal>ON DELETE</literal>
+   <command>TRUNCATE</command> will not fire any <literal>ON DELETE</literal>
    triggers that might exist for the tables.  But it will fire
    <literal>ON TRUNCATE</literal> triggers.
-   If <literal>ON TRUNCATE</> triggers are defined for any of
+   If <literal>ON TRUNCATE</literal> triggers are defined for any of
    the tables, then all <literal>BEFORE TRUNCATE</literal> triggers are
    fired before any truncation happens, and all <literal>AFTER
    TRUNCATE</literal> triggers are fired after the last truncation is
@@ -141,36 +141,36 @@ TRUNCATE [ TABLE ] [ ONLY ] <replaceable class="parameter">name</replaceable> [ 
   </para>
 
   <para>
-   <command>TRUNCATE</> is not MVCC-safe.  After truncation, the table will
+   <command>TRUNCATE</command> is not MVCC-safe.  After truncation, the table will
    appear empty to concurrent transactions, if they are using a snapshot
    taken before the truncation occurred.
    See <xref linkend="mvcc-caveats"> for more details.
   </para>
 
   <para>
-   <command>TRUNCATE</> is transaction-safe with respect to the data
+   <command>TRUNCATE</command> is transaction-safe with respect to the data
    in the tables: the truncation will be safely rolled back if the surrounding
    transaction does not commit.
   </para>
 
   <para>
-   When <literal>RESTART IDENTITY</> is specified, the implied
-   <command>ALTER SEQUENCE RESTART</> operations are also done
+   When <literal>RESTART IDENTITY</literal> is specified, the implied
+   <command>ALTER SEQUENCE RESTART</command> operations are also done
    transactionally; that is, they will be rolled back if the surrounding
    transaction does not commit.  This is unlike the normal behavior of
-   <command>ALTER SEQUENCE RESTART</>.  Be aware that if any additional
+   <command>ALTER SEQUENCE RESTART</command>.  Be aware that if any additional
    sequence operations are done on the restarted sequences before the
    transaction rolls back, the effects of these operations on the sequences
-   will be rolled back, but not their effects on <function>currval()</>;
-   that is, after the transaction <function>currval()</> will continue to
+   will be rolled back, but not their effects on <function>currval()</function>;
+   that is, after the transaction <function>currval()</function> will continue to
    reflect the last sequence value obtained inside the failed transaction,
    even though the sequence itself may no longer be consistent with that.
-   This is similar to the usual behavior of <function>currval()</> after
+   This is similar to the usual behavior of <function>currval()</function> after
    a failed transaction.
   </para>
 
   <para>
-   <command>TRUNCATE</> is not currently supported for foreign tables.
+   <command>TRUNCATE</command> is not currently supported for foreign tables.
    This implies that if a specified table has any descendant tables that are
    foreign, the command will fail.
   </para>

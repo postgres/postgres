@@ -8,7 +8,7 @@
  </indexterm>
 
  <para>
-  <filename>dict_int</> is an example of an add-on dictionary template
+  <filename>dict_int</filename> is an example of an add-on dictionary template
   for full-text search.  The motivation for this example dictionary is to
   control the indexing of integers (signed and unsigned), allowing such
   numbers to be indexed while preventing excessive growth in the number of
@@ -25,17 +25,17 @@
   <itemizedlist>
    <listitem>
     <para>
-     The <literal>maxlen</> parameter specifies the maximum number of
+     The <literal>maxlen</literal> parameter specifies the maximum number of
      digits allowed in an integer word.  The default value is 6.
     </para>
    </listitem>
    <listitem>
     <para>
-     The <literal>rejectlong</> parameter specifies whether an overlength
-     integer should be truncated or ignored.  If <literal>rejectlong</> is
-     <literal>false</> (the default), the dictionary returns the first
-     <literal>maxlen</> digits of the integer. If <literal>rejectlong</> is
-     <literal>true</>, the dictionary treats an overlength integer as a stop
+     The <literal>rejectlong</literal> parameter specifies whether an overlength
+     integer should be truncated or ignored.  If <literal>rejectlong</literal> is
+     <literal>false</literal> (the default), the dictionary returns the first
+     <literal>maxlen</literal> digits of the integer. If <literal>rejectlong</literal> is
+     <literal>true</literal>, the dictionary treats an overlength integer as a stop
      word, so that it will not be indexed.  Note that this also means that
      such an integer cannot be searched for.
     </para>
@@ -47,8 +47,8 @@
   <title>Usage</title>
 
   <para>
-   Installing the <literal>dict_int</> extension creates a text search
-   template <literal>intdict_template</> and a dictionary <literal>intdict</>
+   Installing the <literal>dict_int</literal> extension creates a text search
+   template <literal>intdict_template</literal> and a dictionary <literal>intdict</literal>
    based on it, with the default parameters.  You can alter the
    parameters, for example
 

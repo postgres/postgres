@@ -145,7 +145,7 @@ DETAIL:  Key (city)=(Berkeley) is not present in table "cities".
    </indexterm>
 
    <para>
-    <firstterm>Transactions</> are a fundamental concept of all database
+    <firstterm>Transactions</firstterm> are a fundamental concept of all database
     systems.  The essential point of a transaction is that it bundles
     multiple steps into a single, all-or-nothing operation.  The intermediate
     states between the steps are not visible to other concurrent transactions,
@@ -182,8 +182,8 @@ UPDATE branches SET balance = balance + 100.00
     remain a happy customer if she was debited without Bob being credited.
     We need a guarantee that if something goes wrong partway through the
     operation, none of the steps executed so far will take effect.  Grouping
-    the updates into a <firstterm>transaction</> gives us this guarantee.
-    A transaction is said to be <firstterm>atomic</>: from the point of
+    the updates into a <firstterm>transaction</firstterm> gives us this guarantee.
+    A transaction is said to be <firstterm>atomic</firstterm>: from the point of
     view of other transactions, it either happens completely or not at all.
    </para>
 
@@ -216,9 +216,9 @@ UPDATE branches SET balance = balance + 100.00
    </para>
 
    <para>
-    In <productname>PostgreSQL</>, a transaction is set up by surrounding
+    In <productname>PostgreSQL</productname>, a transaction is set up by surrounding
     the SQL commands of the transaction with
-    <command>BEGIN</> and <command>COMMIT</> commands.  So our banking
+    <command>BEGIN</command> and <command>COMMIT</command> commands.  So our banking
     transaction would actually look like:
 
 <programlisting>
@@ -233,23 +233,23 @@ COMMIT;
    <para>
     If, partway through the transaction, we decide we do not want to
     commit (perhaps we just noticed that Alice's balance went negative),
-    we can issue the command <command>ROLLBACK</> instead of
-    <command>COMMIT</>, and all our updates so far will be canceled.
+    we can issue the command <command>ROLLBACK</command> instead of
+    <command>COMMIT</command>, and all our updates so far will be canceled.
    </para>
 
    <para>
-    <productname>PostgreSQL</> actually treats every SQL statement as being
-    executed within a transaction.  If you do not issue a <command>BEGIN</>
+    <productname>PostgreSQL</productname> actually treats every SQL statement as being
+    executed within a transaction.  If you do not issue a <command>BEGIN</command>
     command,
-    then each individual statement has an implicit <command>BEGIN</> and
-    (if successful) <command>COMMIT</> wrapped around it.  A group of
-    statements surrounded by <command>BEGIN</> and <command>COMMIT</>
-    is sometimes called a <firstterm>transaction block</>.
+    then each individual statement has an implicit <command>BEGIN</command> and
+    (if successful) <command>COMMIT</command> wrapped around it.  A group of
+    statements surrounded by <command>BEGIN</command> and <command>COMMIT</command>
+    is sometimes called a <firstterm>transaction block</firstterm>.
    </para>
 
    <note>
     <para>
-     Some client libraries issue <command>BEGIN</> and <command>COMMIT</>
+     Some client libraries issue <command>BEGIN</command> and <command>COMMIT</command>
      commands automatically, so that you might get the effect of transaction
      blocks without asking.  Check the documentation for the interface
      you are using.
@@ -258,11 +258,11 @@ COMMIT;
 
    <para>
     It's possible to control the statements in a transaction in a more
-    granular fashion through the use of <firstterm>savepoints</>.  Savepoints
+    granular fashion through the use of <firstterm>savepoints</firstterm>.  Savepoints
     allow you to selectively discard parts of the transaction, while
     committing the rest.  After defining a savepoint with
-    <command>SAVEPOINT</>, you can if needed roll back to the savepoint
-    with <command>ROLLBACK TO</>.  All the transaction's database changes
+    <command>SAVEPOINT</command>, you can if needed roll back to the savepoint
+    with <command>ROLLBACK TO</command>.  All the transaction's database changes
     between defining the savepoint and rolling back to it are discarded, but
     changes earlier than the savepoint are kept.
    </para>
@@ -308,7 +308,7 @@ COMMIT;
    <para>
     This example is, of course, oversimplified, but there's a lot of control
     possible in a transaction block through the use of savepoints.
-    Moreover, <command>ROLLBACK TO</> is the only way to regain control of a
+    Moreover, <command>ROLLBACK TO</command> is the only way to regain control of a
     transaction block that was put in aborted state by the
     system due to an error, short of rolling it back completely and starting
     again.
@@ -325,7 +325,7 @@ COMMIT;
    </indexterm>
 
    <para>
-    A <firstterm>window function</> performs a calculation across a set of
+    A <firstterm>window function</firstterm> performs a calculation across a set of
     table rows that are somehow related to the current row.  This is comparable
     to the type of calculation that can be done with an aggregate function.
     However, window functions do not cause rows to become grouped into a single
@@ -360,31 +360,31 @@ SELECT depname, empno, salary, avg(salary) OVER (PARTITION BY depname) FROM emps
 </screen>
 
     The first three output columns come directly from the table
-    <structname>empsalary</>, and there is one output row for each row in the
+    <structname>empsalary</structname>, and there is one output row for each row in the
     table.  The fourth column represents an average taken across all the table
-    rows that have the same <structfield>depname</> value as the current row.
-    (This actually is the same function as the non-window <function>avg</>
-    aggregate, but the <literal>OVER</> clause causes it to be
+    rows that have the same <structfield>depname</structfield> value as the current row.
+    (This actually is the same function as the non-window <function>avg</function>
+    aggregate, but the <literal>OVER</literal> clause causes it to be
     treated as a window function and computed across the window frame.)
    </para>
 
    <para>
-    A window function call always contains an <literal>OVER</> clause
+    A window function call always contains an <literal>OVER</literal> clause
     directly following the window function's name and argument(s).  This is what
     syntactically distinguishes it from a normal function or non-window
-    aggregate.  The <literal>OVER</> clause determines exactly how the
+    aggregate.  The <literal>OVER</literal> clause determines exactly how the
     rows of the query are split up for processing by the window function.
-    The <literal>PARTITION BY</> clause within <literal>OVER</>
+    The <literal>PARTITION BY</literal> clause within <literal>OVER</literal>
     divides the rows into groups, or partitions, that share the same
-    values of the <literal>PARTITION BY</> expression(s).  For each row,
+    values of the <literal>PARTITION BY</literal> expression(s).  For each row,
     the window function is computed across the rows that fall into the
     same partition as the current row.
    </para>
 
    <para>
     You can also control the order in which rows are processed by
-    window functions using <literal>ORDER BY</> within <literal>OVER</>.
-    (The window <literal>ORDER BY</> does not even have to match the
+    window functions using <literal>ORDER BY</literal> within <literal>OVER</literal>.
+    (The window <literal>ORDER BY</literal> does not even have to match the
     order in which the rows are output.)  Here is an example:
 
 <programlisting>
@@ -409,39 +409,39 @@ FROM empsalary;
 (10 rows)
 </screen>
 
-    As shown here, the <function>rank</> function produces a numerical rank
-    for each distinct <literal>ORDER BY</> value in the current row's
-    partition, using the order defined by the <literal>ORDER BY</> clause.
-    <function>rank</> needs no explicit parameter, because its behavior
-    is entirely determined by the <literal>OVER</> clause.
+    As shown here, the <function>rank</function> function produces a numerical rank
+    for each distinct <literal>ORDER BY</literal> value in the current row's
+    partition, using the order defined by the <literal>ORDER BY</literal> clause.
+    <function>rank</function> needs no explicit parameter, because its behavior
+    is entirely determined by the <literal>OVER</literal> clause.
    </para>
 
    <para>
     The rows considered by a window function are those of the <quote>virtual
-    table</> produced by the query's <literal>FROM</> clause as filtered by its
-    <literal>WHERE</>, <literal>GROUP BY</>, and <literal>HAVING</> clauses
+    table</quote> produced by the query's <literal>FROM</literal> clause as filtered by its
+    <literal>WHERE</literal>, <literal>GROUP BY</literal>, and <literal>HAVING</literal> clauses
     if any.  For example, a row removed because it does not meet the
-    <literal>WHERE</> condition is not seen by any window function.
+    <literal>WHERE</literal> condition is not seen by any window function.
     A query can contain multiple window functions that slice up the data
-    in different ways using different <literal>OVER</> clauses, but
+    in different ways using different <literal>OVER</literal> clauses, but
     they all act on the same collection of rows defined by this virtual table.
    </para>
 
    <para>
-    We already saw that <literal>ORDER BY</> can be omitted if the ordering
+    We already saw that <literal>ORDER BY</literal> can be omitted if the ordering
     of rows is not important.  It is also possible to omit <literal>PARTITION
-    BY</>, in which case there is a single partition containing all rows.
+    BY</literal>, in which case there is a single partition containing all rows.
    </para>
 
    <para>
     There is another important concept associated with window functions:
     for each row, there is a set of rows within its partition called its
-    <firstterm>window frame</>.  Some window functions act only
+    <firstterm>window frame</firstterm>.  Some window functions act only
     on the rows of the window frame, rather than of the whole partition.
-    By default, if <literal>ORDER BY</> is supplied then the frame consists of
+    By default, if <literal>ORDER BY</literal> is supplied then the frame consists of
     all rows from the start of the partition up through the current row, plus
     any following rows that are equal to the current row according to the
-    <literal>ORDER BY</> clause.  When <literal>ORDER BY</> is omitted the
+    <literal>ORDER BY</literal> clause.  When <literal>ORDER BY</literal> is omitted the
     default frame consists of all rows in the partition.
      <footnote>
       <para>
@@ -450,7 +450,7 @@ FROM empsalary;
        <xref linkend="syntax-window-functions"> for details.
       </para>
      </footnote>
-    Here is an example using <function>sum</>:
+    Here is an example using <function>sum</function>:
    </para>
 
 <programlisting>
@@ -474,11 +474,11 @@ SELECT salary, sum(salary) OVER () FROM empsalary;
 </screen>
 
    <para>
-    Above, since there is no <literal>ORDER BY</> in the <literal>OVER</>
+    Above, since there is no <literal>ORDER BY</literal> in the <literal>OVER</literal>
     clause, the window frame is the same as the partition, which for lack of
-    <literal>PARTITION BY</> is the whole table; in other words each sum is
+    <literal>PARTITION BY</literal> is the whole table; in other words each sum is
     taken over the whole table and so we get the same result for each output
-    row.  But if we add an <literal>ORDER BY</> clause, we get very different
+    row.  But if we add an <literal>ORDER BY</literal> clause, we get very different
     results:
    </para>
 
@@ -510,8 +510,8 @@ SELECT salary, sum(salary) OVER (ORDER BY salary) FROM empsalary;
 
    <para>
     Window functions are permitted only in the <literal>SELECT</literal> list
-    and the <literal>ORDER BY</> clause of the query. They are forbidden
-    elsewhere, such as in <literal>GROUP BY</>, <literal>HAVING</>
+    and the <literal>ORDER BY</literal> clause of the query. They are forbidden
+    elsewhere, such as in <literal>GROUP BY</literal>, <literal>HAVING</literal>
     and <literal>WHERE</literal> clauses.  This is because they logically
     execute after the processing of those clauses.  Also, window functions
     execute after non-window aggregate functions.  This means it is valid to
@@ -534,15 +534,15 @@ WHERE pos &lt; 3;
 </programlisting>
 
     The above query only shows the rows from the inner query having
-    <literal>rank</> less than 3.
+    <literal>rank</literal> less than 3.
    </para>
 
    <para>
     When a query involves multiple window functions, it is possible to write
-    out each one with a separate <literal>OVER</> clause, but this is
+    out each one with a separate <literal>OVER</literal> clause, but this is
     duplicative and error-prone if the same windowing behavior is wanted
     for several functions.  Instead, each windowing behavior can be named
-    in a <literal>WINDOW</> clause and then referenced in <literal>OVER</>.
+    in a <literal>WINDOW</literal> clause and then referenced in <literal>OVER</literal>.
     For example:
 
 <programlisting>
@@ -623,13 +623,13 @@ CREATE TABLE capitals (
 
    <para>
     In this case, a row of <classname>capitals</classname>
-    <firstterm>inherits</firstterm> all columns (<structfield>name</>,
-    <structfield>population</>, and <structfield>altitude</>) from its
+    <firstterm>inherits</firstterm> all columns (<structfield>name</structfield>,
+    <structfield>population</structfield>, and <structfield>altitude</structfield>) from its
     <firstterm>parent</firstterm>, <classname>cities</classname>.  The
     type of the column <structfield>name</structfield> is
     <type>text</type>, a native <productname>PostgreSQL</productname>
     type for variable length character strings.  State capitals have
-    an extra column, <structfield>state</>, that shows their state.  In
+    an extra column, <structfield>state</structfield>, that shows their state.  In
     <productname>PostgreSQL</productname>, a table can inherit from
     zero or more other tables.
    </para>

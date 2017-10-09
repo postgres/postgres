@@ -8,9 +8,9 @@
  </indexterm>
 
  <para>
-  This module implements a data type <type>seg</> for
+  This module implements a data type <type>seg</type> for
   representing line segments, or floating point intervals.
-  <type>seg</> can represent uncertainty in the interval endpoints,
+  <type>seg</type> can represent uncertainty in the interval endpoints,
   making it especially useful for representing laboratory measurements.
  </para>
 
@@ -92,40 +92,40 @@ test=&gt; select '6.25 .. 6.50'::seg as "pH";
   </para>
 
   <para>
-   In <xref linkend="seg-repr-table">, <replaceable>x</>, <replaceable>y</>, and
-   <replaceable>delta</> denote
-   floating-point numbers.  <replaceable>x</> and <replaceable>y</>, but
-   not <replaceable>delta</>, can be preceded by a certainty indicator.
+   In <xref linkend="seg-repr-table">, <replaceable>x</replaceable>, <replaceable>y</replaceable>, and
+   <replaceable>delta</replaceable> denote
+   floating-point numbers.  <replaceable>x</replaceable> and <replaceable>y</replaceable>, but
+   not <replaceable>delta</replaceable>, can be preceded by a certainty indicator.
   </para>
 
   <table id="seg-repr-table">
-   <title><type>seg</> External Representations</title>
+   <title><type>seg</type> External Representations</title>
    <tgroup cols="2">
     <tbody>
      <row>
-      <entry><literal><replaceable>x</></literal></entry>
+      <entry><literal><replaceable>x</replaceable></literal></entry>
       <entry>Single value (zero-length interval)
       </entry>
      </row>
      <row>
-      <entry><literal><replaceable>x</> .. <replaceable>y</></literal></entry>
-      <entry>Interval from <replaceable>x</> to <replaceable>y</>
+      <entry><literal><replaceable>x</replaceable> .. <replaceable>y</replaceable></literal></entry>
+      <entry>Interval from <replaceable>x</replaceable> to <replaceable>y</replaceable>
       </entry>
      </row>
      <row>
-      <entry><literal><replaceable>x</> (+-) <replaceable>delta</></literal></entry>
-      <entry>Interval from <replaceable>x</> - <replaceable>delta</> to
-      <replaceable>x</> + <replaceable>delta</>
+      <entry><literal><replaceable>x</replaceable> (+-) <replaceable>delta</replaceable></literal></entry>
+      <entry>Interval from <replaceable>x</replaceable> - <replaceable>delta</replaceable> to
+      <replaceable>x</replaceable> + <replaceable>delta</replaceable>
       </entry>
      </row>
      <row>
-      <entry><literal><replaceable>x</> ..</literal></entry>
-      <entry>Open interval with lower bound <replaceable>x</>
+      <entry><literal><replaceable>x</replaceable> ..</literal></entry>
+      <entry>Open interval with lower bound <replaceable>x</replaceable>
       </entry>
      </row>
      <row>
-      <entry><literal>.. <replaceable>x</></literal></entry>
-      <entry>Open interval with upper bound <replaceable>x</>
+      <entry><literal>.. <replaceable>x</replaceable></literal></entry>
+      <entry>Open interval with upper bound <replaceable>x</replaceable>
       </entry>
      </row>
     </tbody>
@@ -133,7 +133,7 @@ test=&gt; select '6.25 .. 6.50'::seg as "pH";
   </table>
 
   <table id="seg-input-examples">
-   <title>Examples of Valid <type>seg</> Input</title>
+   <title>Examples of Valid <type>seg</type> Input</title>
    <tgroup cols="2">
     <tbody>
      <row>
@@ -146,8 +146,8 @@ test=&gt; select '6.25 .. 6.50'::seg as "pH";
       <entry><literal>~5.0</literal></entry>
       <entry>
        Creates a zero-length segment and records
-       <literal>~</> in the data.  <literal>~</literal> is ignored
-       by <type>seg</> operations, but
+       <literal>~</literal> in the data.  <literal>~</literal> is ignored
+       by <type>seg</type> operations, but
        is preserved as a comment.
       </entry>
      </row>
@@ -169,7 +169,7 @@ test=&gt; select '6.25 .. 6.50'::seg as "pH";
       <entry><literal>5(+-)0.3</literal></entry>
       <entry>
         Creates an interval <literal>4.7 .. 5.3</literal>.
-        Note that the <literal>(+-)</> notation isn't preserved.
+        Note that the <literal>(+-)</literal> notation isn't preserved.
       </entry>
      </row>
      <row>
@@ -197,17 +197,17 @@ test=&gt; select '6.25 .. 6.50'::seg as "pH";
   </table>
 
   <para>
-   Because <literal>...</> is widely used in data sources, it is allowed
-   as an alternative spelling of <literal>..</>.  Unfortunately, this
+   Because <literal>...</literal> is widely used in data sources, it is allowed
+   as an alternative spelling of <literal>..</literal>.  Unfortunately, this
    creates a parsing ambiguity: it is not clear whether the upper bound
-   in <literal>0...23</> is meant to be <literal>23</> or <literal>0.23</>.
+   in <literal>0...23</literal> is meant to be <literal>23</literal> or <literal>0.23</literal>.
    This is resolved by requiring at least one digit before the decimal
-   point in all numbers in <type>seg</> input.
+   point in all numbers in <type>seg</type> input.
   </para>
 
   <para>
-   As a sanity check, <type>seg</> rejects intervals with the lower bound
-   greater than the upper, for example <literal>5 .. 2</>.
+   As a sanity check, <type>seg</type> rejects intervals with the lower bound
+   greater than the upper, for example <literal>5 .. 2</literal>.
   </para>
 
  </sect2>
@@ -216,7 +216,7 @@ test=&gt; select '6.25 .. 6.50'::seg as "pH";
   <title>Precision</title>
 
   <para>
-   <type>seg</> values are stored internally as pairs of 32-bit floating point
+   <type>seg</type> values are stored internally as pairs of 32-bit floating point
    numbers. This means that numbers with more than 7 significant digits
    will be truncated.
   </para>
@@ -235,8 +235,8 @@ test=&gt; select '6.25 .. 6.50'::seg as "pH";
   <title>Usage</title>
 
   <para>
-   The <filename>seg</> module includes a GiST index operator class for
-   <type>seg</> values.
+   The <filename>seg</filename> module includes a GiST index operator class for
+   <type>seg</type> values.
    The operators supported by the GiST operator class are shown in <xref linkend="seg-gist-operators">.
   </para>
 
@@ -304,8 +304,8 @@ test=&gt; select '6.25 .. 6.50'::seg as "pH";
   </table>
 
   <para>
-   (Before PostgreSQL 8.2, the containment operators <literal>@&gt;</> and <literal>&lt;@</> were
-   respectively called <literal>@</> and <literal>~</>.  These names are still available, but are
+   (Before PostgreSQL 8.2, the containment operators <literal>@&gt;</literal> and <literal>&lt;@</literal> were
+   respectively called <literal>@</literal> and <literal>~</literal>.  These names are still available, but are
    deprecated and will eventually be retired.  Notice that the old names
    are reversed from the convention formerly followed by the core geometric
    data types!)
@@ -349,11 +349,11 @@ test=&gt; select '6.25 .. 6.50'::seg as "pH";
   <title>Notes</title>
 
   <para>
-   For examples of usage, see the regression test <filename>sql/seg.sql</>.
+   For examples of usage, see the regression test <filename>sql/seg.sql</filename>.
   </para>
 
   <para>
-   The mechanism that converts <literal>(+-)</> to regular ranges
+   The mechanism that converts <literal>(+-)</literal> to regular ranges
    isn't completely accurate in determining the number of significant digits
    for the boundaries.  For example, it adds an extra digit to the lower
    boundary if the resulting interval includes a power of ten:
@@ -369,7 +369,7 @@ postgres=&gt; select '10(+-)1'::seg as seg;
   <para>
    The performance of an R-tree index can largely depend on the initial
    order of input values. It may be very helpful to sort the input table
-   on the <type>seg</> column; see the script <filename>sort-segments.pl</>
+   on the <type>seg</type> column; see the script <filename>sort-segments.pl</filename>
    for an example.
   </para>
  </sect2>

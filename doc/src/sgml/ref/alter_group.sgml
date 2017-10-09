@@ -46,10 +46,10 @@ ALTER GROUP <replaceable class="parameter">group_name</replaceable> RENAME TO <r
 
   <para>
    The first two variants add users to a group or remove them from a group.
-   (Any role can play the part of either a <quote>user</> or a
-   <quote>group</> for this purpose.)  These variants are effectively
+   (Any role can play the part of either a <quote>user</quote> or a
+   <quote>group</quote> for this purpose.)  These variants are effectively
    equivalent to granting or revoking membership in the role named as the
-   <quote>group</>; so the preferred way to do this is to use
+   <quote>group</quote>; so the preferred way to do this is to use
    <xref linkend="SQL-GRANT"> or
    <xref linkend="SQL-REVOKE">.
   </para>
@@ -79,7 +79,7 @@ ALTER GROUP <replaceable class="parameter">group_name</replaceable> RENAME TO <r
     <listitem>
      <para>
       Users (roles) that are to be added to or removed from the group.
-      The users must already exist; <command>ALTER GROUP</> does not
+      The users must already exist; <command>ALTER GROUP</command> does not
       create or drop users.
      </para>
     </listitem>

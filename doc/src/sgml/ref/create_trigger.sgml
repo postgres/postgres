@@ -86,10 +86,10 @@ CREATE [ CONSTRAINT ] TRIGGER <replaceable class="parameter">name</replaceable> 
   </para>
 
   <para>
-   Triggers that are specified to fire <literal>INSTEAD OF</> the trigger
-   event must be marked <literal>FOR EACH ROW</>, and can only be defined
-   on views. <literal>BEFORE</> and <literal>AFTER</> triggers on a view
-   must be marked as <literal>FOR EACH STATEMENT</>.
+   Triggers that are specified to fire <literal>INSTEAD OF</literal> the trigger
+   event must be marked <literal>FOR EACH ROW</literal>, and can only be defined
+   on views. <literal>BEFORE</literal> and <literal>AFTER</literal> triggers on a view
+   must be marked as <literal>FOR EACH STATEMENT</literal>.
   </para>
 
   <para>
@@ -115,35 +115,35 @@ CREATE [ CONSTRAINT ] TRIGGER <replaceable class="parameter">name</replaceable> 
     </thead>
     <tbody>
      <row>
-      <entry align="center" morerows="1"><literal>BEFORE</></entry>
-      <entry align="center"><command>INSERT</>/<command>UPDATE</>/<command>DELETE</></entry>
+      <entry align="center" morerows="1"><literal>BEFORE</literal></entry>
+      <entry align="center"><command>INSERT</command>/<command>UPDATE</command>/<command>DELETE</command></entry>
       <entry align="center">Tables and foreign tables</entry>
       <entry align="center">Tables, views, and foreign tables</entry>
      </row>
      <row>
-      <entry align="center"><command>TRUNCATE</></entry>
+      <entry align="center"><command>TRUNCATE</command></entry>
       <entry align="center">&mdash;</entry>
       <entry align="center">Tables</entry>
      </row>
      <row>
-      <entry align="center" morerows="1"><literal>AFTER</></entry>
-      <entry align="center"><command>INSERT</>/<command>UPDATE</>/<command>DELETE</></entry>
+      <entry align="center" morerows="1"><literal>AFTER</literal></entry>
+      <entry align="center"><command>INSERT</command>/<command>UPDATE</command>/<command>DELETE</command></entry>
       <entry align="center">Tables and foreign tables</entry>
       <entry align="center">Tables, views, and foreign tables</entry>
      </row>
      <row>
-      <entry align="center"><command>TRUNCATE</></entry>
+      <entry align="center"><command>TRUNCATE</command></entry>
       <entry align="center">&mdash;</entry>
       <entry align="center">Tables</entry>
      </row>
      <row>
-      <entry align="center" morerows="1"><literal>INSTEAD OF</></entry>
-      <entry align="center"><command>INSERT</>/<command>UPDATE</>/<command>DELETE</></entry>
+      <entry align="center" morerows="1"><literal>INSTEAD OF</literal></entry>
+      <entry align="center"><command>INSERT</command>/<command>UPDATE</command>/<command>DELETE</command></entry>
       <entry align="center">Views</entry>
       <entry align="center">&mdash;</entry>
      </row>
      <row>
-      <entry align="center"><command>TRUNCATE</></entry>
+      <entry align="center"><command>TRUNCATE</command></entry>
       <entry align="center">&mdash;</entry>
       <entry align="center">&mdash;</entry>
      </row>
@@ -152,11 +152,11 @@ CREATE [ CONSTRAINT ] TRIGGER <replaceable class="parameter">name</replaceable> 
   </informaltable>
 
   <para>
-   Also, a trigger definition can specify a Boolean <literal>WHEN</>
+   Also, a trigger definition can specify a Boolean <literal>WHEN</literal>
    condition, which will be tested to see whether the trigger should
-   be fired.  In row-level triggers the <literal>WHEN</> condition can
+   be fired.  In row-level triggers the <literal>WHEN</literal> condition can
    examine the old and/or new values of columns of the row.  Statement-level
-   triggers can also have <literal>WHEN</> conditions, although the feature
+   triggers can also have <literal>WHEN</literal> conditions, although the feature
    is not so useful for them since the condition cannot refer to any values
    in the table.
   </para>
@@ -167,36 +167,36 @@ CREATE [ CONSTRAINT ] TRIGGER <replaceable class="parameter">name</replaceable> 
   </para>
 
   <para>
-   When the <literal>CONSTRAINT</> option is specified, this command creates a
-   <firstterm>constraint trigger</>.  This is the same as a regular trigger
+   When the <literal>CONSTRAINT</literal> option is specified, this command creates a
+   <firstterm>constraint trigger</firstterm>.  This is the same as a regular trigger
    except that the timing of the trigger firing can be adjusted using
    <xref linkend="SQL-SET-CONSTRAINTS">.
-   Constraint triggers must be <literal>AFTER ROW</> triggers on plain
+   Constraint triggers must be <literal>AFTER ROW</literal> triggers on plain
    tables (not foreign tables).  They
    can be fired either at the end of the statement causing the triggering
    event, or at the end of the containing transaction; in the latter case they
-   are said to be <firstterm>deferred</>.  A pending deferred-trigger firing
+   are said to be <firstterm>deferred</firstterm>.  A pending deferred-trigger firing
    can also be forced to happen immediately by using <command>SET
-   CONSTRAINTS</>.  Constraint triggers are expected to raise an exception
+   CONSTRAINTS</command>.  Constraint triggers are expected to raise an exception
    when the constraints they implement are violated.
   </para>
 
   <para>
-   The <literal>REFERENCING</> option enables collection
-   of <firstterm>transition relations</>, which are row sets that include all
+   The <literal>REFERENCING</literal> option enables collection
+   of <firstterm>transition relations</firstterm>, which are row sets that include all
    of the rows inserted, deleted, or modified by the current SQL statement.
    This feature lets the trigger see a global view of what the statement did,
    not just one row at a time.  This option is only allowed for
-   an <literal>AFTER</> trigger that is not a constraint trigger; also, if
-   the trigger is an <literal>UPDATE</> trigger, it must not specify
+   an <literal>AFTER</literal> trigger that is not a constraint trigger; also, if
+   the trigger is an <literal>UPDATE</literal> trigger, it must not specify
    a <replaceable class="parameter">column_name</replaceable> list.
-   <literal>OLD TABLE</> may only be specified once, and only for a trigger
-   that can fire on <literal>UPDATE</> or <literal>DELETE</>; it creates a
-   transition relation containing the <firstterm>before-images</> of all rows
+   <literal>OLD TABLE</literal> may only be specified once, and only for a trigger
+   that can fire on <literal>UPDATE</literal> or <literal>DELETE</literal>; it creates a
+   transition relation containing the <firstterm>before-images</firstterm> of all rows
    updated or deleted by the statement.
-   Similarly, <literal>NEW TABLE</> may only be specified once, and only for
-   a trigger that can fire on <literal>UPDATE</> or <literal>INSERT</>;
-   it creates a transition relation containing the <firstterm>after-images</>
+   Similarly, <literal>NEW TABLE</literal> may only be specified once, and only for
+   a trigger that can fire on <literal>UPDATE</literal> or <literal>INSERT</literal>;
+   it creates a transition relation containing the <firstterm>after-images</firstterm>
    of all rows updated or inserted by the statement.
   </para>
 
@@ -225,7 +225,7 @@ CREATE [ CONSTRAINT ] TRIGGER <replaceable class="parameter">name</replaceable> 
       The name cannot be schema-qualified &mdash; the trigger inherits the
       schema of its table.  For a constraint trigger, this is also the name to
       use when modifying the trigger's behavior using
-      <command>SET CONSTRAINTS</>.
+      <command>SET CONSTRAINTS</command>.
      </para>
     </listitem>
    </varlistentry>
@@ -238,7 +238,7 @@ CREATE [ CONSTRAINT ] TRIGGER <replaceable class="parameter">name</replaceable> 
      <para>
       Determines whether the function is called before, after, or instead of
       the event.  A constraint trigger can only be specified as
-      <literal>AFTER</>.
+      <literal>AFTER</literal>.
      </para>
     </listitem>
    </varlistentry>
@@ -261,11 +261,11 @@ CREATE [ CONSTRAINT ] TRIGGER <replaceable class="parameter">name</replaceable> 
 UPDATE OF <replaceable>column_name1</replaceable> [, <replaceable>column_name2</replaceable> ... ]
 </synopsis>
       The trigger will only fire if at least one of the listed columns
-      is mentioned as a target of the <command>UPDATE</> command.
+      is mentioned as a target of the <command>UPDATE</command> command.
      </para>
 
      <para>
-      <literal>INSTEAD OF UPDATE</> events do not allow a list of columns.
+      <literal>INSTEAD OF UPDATE</literal> events do not allow a list of columns.
       A column list cannot be specified when requesting transition relations,
       either.
      </para>
@@ -352,7 +352,7 @@ UPDATE OF <replaceable>column_name1</replaceable> [, <replaceable>column_name2</
       once for every row affected by the trigger event, or just once
       per SQL statement. If neither is specified, <literal>FOR EACH
       STATEMENT</literal> is the default.  Constraint triggers can only
-      be specified <literal>FOR EACH ROW</>.
+      be specified <literal>FOR EACH ROW</literal>.
      </para>
     </listitem>
    </varlistentry>
@@ -362,20 +362,20 @@ UPDATE OF <replaceable>column_name1</replaceable> [, <replaceable>column_name2</
     <listitem>
      <para>
       A Boolean expression that determines whether the trigger function
-      will actually be executed.  If <literal>WHEN</> is specified, the
+      will actually be executed.  If <literal>WHEN</literal> is specified, the
       function will only be called if the <replaceable
-      class="parameter">condition</replaceable> returns <literal>true</>.
-      In <literal>FOR EACH ROW</literal> triggers, the <literal>WHEN</>
+      class="parameter">condition</replaceable> returns <literal>true</literal>.
+      In <literal>FOR EACH ROW</literal> triggers, the <literal>WHEN</literal>
       condition can refer to columns of the old and/or new row values
       by writing <literal>OLD.<replaceable
       class="parameter">column_name</replaceable></literal> or
       <literal>NEW.<replaceable
       class="parameter">column_name</replaceable></literal> respectively.
-      Of course, <literal>INSERT</> triggers cannot refer to <literal>OLD</>
-      and <literal>DELETE</> triggers cannot refer to <literal>NEW</>.
+      Of course, <literal>INSERT</literal> triggers cannot refer to <literal>OLD</literal>
+      and <literal>DELETE</literal> triggers cannot refer to <literal>NEW</literal>.
      </para>
 
-     <para><literal>INSTEAD OF</> triggers do not support <literal>WHEN</>
+     <para><literal>INSTEAD OF</literal> triggers do not support <literal>WHEN</literal>
       conditions.
      </para>
 
@@ -385,7 +385,7 @@ UPDATE OF <replaceable>column_name1</replaceable> [, <replaceable>column_name2</
      </para>
 
      <para>
-      Note that for constraint triggers, evaluation of the <literal>WHEN</>
+      Note that for constraint triggers, evaluation of the <literal>WHEN</literal>
       condition is not deferred, but occurs immediately after the row update
       operation is performed. If the condition does not evaluate to true then
       the trigger is not queued for deferred execution.
@@ -398,7 +398,7 @@ UPDATE OF <replaceable>column_name1</replaceable> [, <replaceable>column_name2</
     <listitem>
      <para>
       A user-supplied function that is declared as taking no arguments
-      and returning type <literal>trigger</>, which is executed when
+      and returning type <literal>trigger</literal>, which is executed when
       the trigger fires.
      </para>
     </listitem>
@@ -438,32 +438,32 @@ UPDATE OF <replaceable>column_name1</replaceable> [, <replaceable>column_name2</
   <para>
    A column-specific trigger (one defined using the <literal>UPDATE OF
    <replaceable>column_name</replaceable></literal> syntax) will fire when any
-   of its columns are listed as targets in the <command>UPDATE</>
-   command's <literal>SET</> list.  It is possible for a column's value
+   of its columns are listed as targets in the <command>UPDATE</command>
+   command's <literal>SET</literal> list.  It is possible for a column's value
    to change even when the trigger is not fired, because changes made to the
-   row's contents by <literal>BEFORE UPDATE</> triggers are not considered.
-   Conversely, a command such as <literal>UPDATE ... SET x = x ...</>
-   will fire a trigger on column <literal>x</>, even though the column's
+   row's contents by <literal>BEFORE UPDATE</literal> triggers are not considered.
+   Conversely, a command such as <literal>UPDATE ... SET x = x ...</literal>
+   will fire a trigger on column <literal>x</literal>, even though the column's
    value did not change.
   </para>
 
   <para>
-   In a <literal>BEFORE</> trigger, the <literal>WHEN</> condition is
+   In a <literal>BEFORE</literal> trigger, the <literal>WHEN</literal> condition is
    evaluated just before the function is or would be executed, so using
-   <literal>WHEN</> is not materially different from testing the same
+   <literal>WHEN</literal> is not materially different from testing the same
    condition at the beginning of the trigger function.  Note in particular
-   that the <literal>NEW</> row seen by the condition is the current value,
-   as possibly modified by earlier triggers.  Also, a <literal>BEFORE</>
-   trigger's <literal>WHEN</> condition is not allowed to examine the
-   system columns of the <literal>NEW</> row (such as <literal>oid</>),
+   that the <literal>NEW</literal> row seen by the condition is the current value,
+   as possibly modified by earlier triggers.  Also, a <literal>BEFORE</literal>
+   trigger's <literal>WHEN</literal> condition is not allowed to examine the
+   system columns of the <literal>NEW</literal> row (such as <literal>oid</literal>),
    because those won't have been set yet.
   </para>
 
   <para>
-   In an <literal>AFTER</> trigger, the <literal>WHEN</> condition is
+   In an <literal>AFTER</literal> trigger, the <literal>WHEN</literal> condition is
    evaluated just after the row update occurs, and it determines whether an
    event is queued to fire the trigger at the end of statement.  So when an
-   <literal>AFTER</> trigger's <literal>WHEN</> condition does not return
+   <literal>AFTER</literal> trigger's <literal>WHEN</literal> condition does not return
    true, it is not necessary to queue an event nor to re-fetch the row at end
    of statement.  This can result in significant speedups in statements that
    modify many rows, if the trigger only needs to be fired for a few of the
@@ -473,7 +473,7 @@ UPDATE OF <replaceable>column_name1</replaceable> [, <replaceable>column_name2</
   <para>
    In some cases it is possible for a single SQL command to fire more than
    one kind of trigger.  For instance an <command>INSERT</command> with
-   an <literal>ON CONFLICT DO UPDATE</> clause may cause both insert and
+   an <literal>ON CONFLICT DO UPDATE</literal> clause may cause both insert and
    update operations, so it will fire both kinds of triggers as needed.
    The transition relations supplied to triggers are
    specific to their event type; thus an <command>INSERT</command> trigger
@@ -483,14 +483,14 @@ UPDATE OF <replaceable>column_name1</replaceable> [, <replaceable>column_name2</
 
   <para>
    Row updates or deletions caused by foreign-key enforcement actions, such
-   as <literal>ON UPDATE CASCADE</> or <literal>ON DELETE SET NULL</>, are
+   as <literal>ON UPDATE CASCADE</literal> or <literal>ON DELETE SET NULL</literal>, are
    treated as part of the SQL command that caused them (note that such
    actions are never deferred).  Relevant triggers on the affected table will
    be fired, so that this provides another way in which a SQL command might
    fire triggers not directly matching its type.  In simple cases, triggers
    that request transition relations will see all changes caused in their
    table by a single original SQL command as a single transition relation.
-   However, there are cases in which the presence of an <literal>AFTER ROW</>
+   However, there are cases in which the presence of an <literal>AFTER ROW</literal>
    trigger that requests transition relations will cause the foreign-key
    enforcement actions triggered by a single SQL command to be split into
    multiple steps, each with its own transition relation(s).  In such cases,
@@ -516,10 +516,10 @@ UPDATE OF <replaceable>column_name1</replaceable> [, <replaceable>column_name2</
   <para>
    In <productname>PostgreSQL</productname> versions before 7.3, it was
    necessary to declare trigger functions as returning the placeholder
-   type <type>opaque</>, rather than <type>trigger</>.  To support loading
-   of old dump files, <command>CREATE TRIGGER</> will accept a function
-   declared as returning <type>opaque</>, but it will issue a notice and
-   change the function's declared return type to <type>trigger</>.
+   type <type>opaque</type>, rather than <type>trigger</type>.  To support loading
+   of old dump files, <command>CREATE TRIGGER</command> will accept a function
+   declared as returning <type>opaque</type>, but it will issue a notice and
+   change the function's declared return type to <type>trigger</type>.
   </para>
  </refsect1>
 
@@ -527,8 +527,8 @@ UPDATE OF <replaceable>column_name1</replaceable> [, <replaceable>column_name2</
   <title>Examples</title>
 
   <para>
-   Execute the function <function>check_account_update</> whenever
-   a row of the table <literal>accounts</> is about to be updated:
+   Execute the function <function>check_account_update</function> whenever
+   a row of the table <literal>accounts</literal> is about to be updated:
 
 <programlisting>
 CREATE TRIGGER check_update
@@ -537,8 +537,8 @@ CREATE TRIGGER check_update
     EXECUTE PROCEDURE check_account_update();
 </programlisting>
 
-   The same, but only execute the function if column <literal>balance</>
-   is specified as a target in the <command>UPDATE</> command:
+   The same, but only execute the function if column <literal>balance</literal>
+   is specified as a target in the <command>UPDATE</command> command:
 
 <programlisting>
 CREATE TRIGGER check_update
@@ -547,7 +547,7 @@ CREATE TRIGGER check_update
     EXECUTE PROCEDURE check_account_update();
 </programlisting>
 
-   This form only executes the function if column <literal>balance</>
+   This form only executes the function if column <literal>balance</literal>
    has in fact changed value:
 
 <programlisting>
@@ -558,7 +558,7 @@ CREATE TRIGGER check_update
     EXECUTE PROCEDURE check_account_update();
 </programlisting>
 
-   Call a function to log updates of <literal>accounts</>, but only if
+   Call a function to log updates of <literal>accounts</literal>, but only if
    something changed:
 
 <programlisting>
@@ -569,7 +569,7 @@ CREATE TRIGGER log_update
     EXECUTE PROCEDURE log_account_update();
 </programlisting>
 
-   Execute the function <function>view_insert_row</> for each row to insert
+   Execute the function <function>view_insert_row</function> for each row to insert
    rows into the tables underlying a view:
 
 <programlisting>
@@ -579,8 +579,8 @@ CREATE TRIGGER view_insert
     EXECUTE PROCEDURE view_insert_row();
 </programlisting>
 
-   Execute the function <function>check_transfer_balances_to_zero</> for each
-   statement to confirm that the <literal>transfer</> rows offset to a net of
+   Execute the function <function>check_transfer_balances_to_zero</function> for each
+   statement to confirm that the <literal>transfer</literal> rows offset to a net of
    zero:
 
 <programlisting>
@@ -591,7 +591,7 @@ CREATE TRIGGER transfer_insert
     EXECUTE PROCEDURE check_transfer_balances_to_zero();
 </programlisting>
 
-   Execute the function <function>check_matching_pairs</> for each row to
+   Execute the function <function>check_matching_pairs</function> for each row to
    confirm that changes are made to matching pairs at the same time (by the
    same statement):
 
@@ -624,27 +624,27 @@ CREATE TRIGGER paired_items_update
   <para>
    The <command>CREATE TRIGGER</command> statement in
    <productname>PostgreSQL</productname> implements a subset of the
-   <acronym>SQL</> standard. The following functionalities are currently
+   <acronym>SQL</acronym> standard. The following functionalities are currently
    missing:
 
    <itemizedlist>
     <listitem>
      <para>
-      While transition table names for <literal>AFTER</> triggers are
-      specified using the <literal>REFERENCING</> clause in the standard way,
-      the row variables used in <literal>FOR EACH ROW</> triggers may not be
-      specified in a <literal>REFERENCING</> clause.  They are available in a
+      While transition table names for <literal>AFTER</literal> triggers are
+      specified using the <literal>REFERENCING</literal> clause in the standard way,
+      the row variables used in <literal>FOR EACH ROW</literal> triggers may not be
+      specified in a <literal>REFERENCING</literal> clause.  They are available in a
       manner that is dependent on the language in which the trigger function
       is written, but is fixed for any one language.  Some languages
-      effectively behave as though there is a <literal>REFERENCING</> clause
-      containing <literal>OLD ROW AS OLD NEW ROW AS NEW</>.
+      effectively behave as though there is a <literal>REFERENCING</literal> clause
+      containing <literal>OLD ROW AS OLD NEW ROW AS NEW</literal>.
      </para>
     </listitem>
 
     <listitem>
      <para>
       The standard allows transition tables to be used with
-      column-specific <literal>UPDATE</> triggers, but then the set of rows
+      column-specific <literal>UPDATE</literal> triggers, but then the set of rows
       that should be visible in the transition tables depends on the
       trigger's column list.  This is not currently implemented by
       <productname>PostgreSQL</productname>.
@@ -673,7 +673,7 @@ CREATE TRIGGER paired_items_update
 
   <para>
    SQL specifies that <literal>BEFORE DELETE</literal> triggers on cascaded
-   deletes fire <emphasis>after</> the cascaded <literal>DELETE</> completes.
+   deletes fire <emphasis>after</emphasis> the cascaded <literal>DELETE</literal> completes.
    The <productname>PostgreSQL</productname> behavior is for <literal>BEFORE
    DELETE</literal> to always fire before the delete action, even a cascading
    one.  This is considered more consistent.  There is also nonstandard
@@ -685,19 +685,19 @@ CREATE TRIGGER paired_items_update
 
   <para>
    The ability to specify multiple actions for a single trigger using
-   <literal>OR</literal> is a <productname>PostgreSQL</> extension of
+   <literal>OR</literal> is a <productname>PostgreSQL</productname> extension of
    the SQL standard.
   </para>
 
   <para>
    The ability to fire triggers for <command>TRUNCATE</command> is a
-   <productname>PostgreSQL</> extension of the SQL standard, as is the
+   <productname>PostgreSQL</productname> extension of the SQL standard, as is the
    ability to define statement-level triggers on views.
   </para>
 
   <para>
    <command>CREATE CONSTRAINT TRIGGER</command> is a
-   <productname>PostgreSQL</productname> extension of the <acronym>SQL</>
+   <productname>PostgreSQL</productname> extension of the <acronym>SQL</acronym>
    standard.
   </para>
 

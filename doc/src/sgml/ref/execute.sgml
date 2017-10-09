@@ -87,12 +87,12 @@ EXECUTE <replaceable class="parameter">name</replaceable> [ ( <replaceable class
   <title>Outputs</title>
    <para>
    The command tag returned by <command>EXECUTE</command>
-   is that of the prepared statement, and not <literal>EXECUTE</>.
+   is that of the prepared statement, and not <literal>EXECUTE</literal>.
   </para>
  </refsect1>
 
  <refsect1>
-  <title>Examples</>
+  <title>Examples</title>
   <para>
     Examples are given in the <xref linkend="sql-prepare-examples"
     endterm="sql-prepare-examples-title"> section of the <xref

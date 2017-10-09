@@ -160,15 +160,15 @@ ROLLBACK;
       shared blocks hit, read, dirtied, and written, the number of local blocks
       hit, read, dirtied, and written, and the number of temp blocks read and
       written.
-      A <emphasis>hit</> means that a read was avoided because the block was
+      A <emphasis>hit</emphasis> means that a read was avoided because the block was
       found already in cache when needed.
       Shared blocks contain data from regular tables and indexes;
       local blocks contain data from temporary tables and indexes;
       while temp blocks contain short-term working data used in sorts, hashes,
       Materialize plan nodes, and similar cases.
-      The number of blocks <emphasis>dirtied</> indicates the number of
+      The number of blocks <emphasis>dirtied</emphasis> indicates the number of
       previously unmodified blocks that were changed by this query; while the
-      number of blocks <emphasis>written</> indicates the number of
+      number of blocks <emphasis>written</emphasis> indicates the number of
       previously-dirtied blocks evicted from cache by this backend during
       query processing.
       The number of blocks shown for an
@@ -229,9 +229,9 @@ ROLLBACK;
     <listitem>
      <para>
       Specifies whether the selected option should be turned on or off.
-      You can write <literal>TRUE</literal>, <literal>ON</>, or
+      You can write <literal>TRUE</literal>, <literal>ON</literal>, or
       <literal>1</literal> to enable the option, and <literal>FALSE</literal>,
-      <literal>OFF</>, or <literal>0</literal> to disable it.  The
+      <literal>OFF</literal>, or <literal>0</literal> to disable it.  The
       <replaceable class="parameter">boolean</replaceable> value can also
       be omitted, in which case <literal>TRUE</literal> is assumed.
      </para>
@@ -242,10 +242,10 @@ ROLLBACK;
     <term><replaceable class="parameter">statement</replaceable></term>
     <listitem>
      <para>
-      Any <command>SELECT</>, <command>INSERT</>, <command>UPDATE</>,
-      <command>DELETE</>, <command>VALUES</>, <command>EXECUTE</>,
-      <command>DECLARE</>, <command>CREATE TABLE AS</>, or
-      <command>CREATE MATERIALIZED VIEW AS</> statement, whose execution
+      Any <command>SELECT</command>, <command>INSERT</command>, <command>UPDATE</command>,
+      <command>DELETE</command>, <command>VALUES</command>, <command>EXECUTE</command>,
+      <command>DECLARE</command>, <command>CREATE TABLE AS</command>, or
+      <command>CREATE MATERIALIZED VIEW AS</command> statement, whose execution
       plan you wish to see.
      </para>
     </listitem>

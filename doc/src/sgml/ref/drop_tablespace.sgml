@@ -39,7 +39,7 @@ DROP TABLESPACE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
    in the tablespace even if no objects in the current database are using
    the tablespace.  Also, if the tablespace is listed in the <xref
    linkend="guc-temp-tablespaces"> setting of any active session, the
-   <command>DROP</> might fail due to temporary files residing in the
+   <command>DROP</command> might fail due to temporary files residing in the
    tablespace.
   </para>
  </refsect1>
@@ -74,7 +74,7 @@ DROP TABLESPACE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
   <title>Notes</title>
 
    <para>
-    <command>DROP TABLESPACE</> cannot be executed inside a transaction block.
+    <command>DROP TABLESPACE</command> cannot be executed inside a transaction block.
    </para>
  </refsect1>
 
@@ -93,7 +93,7 @@ DROP TABLESPACE mystuff;
   <title>Compatibility</title>
 
   <para>
-   <command>DROP TABLESPACE</command> is a <productname>PostgreSQL</>
+   <command>DROP TABLESPACE</command> is a <productname>PostgreSQL</productname>
    extension.
   </para>
  </refsect1>

@@ -12,14 +12,14 @@
    The procedures described thus far let you define new types, new
    functions, and new operators. However, we cannot yet define an
    index on a column of a new data type.  To do this, we must define an
-   <firstterm>operator class</> for the new data type.  Later in this
+   <firstterm>operator class</firstterm> for the new data type.  Later in this
    section, we will illustrate this concept in an example: a new
    operator class for the B-tree index method that stores and sorts
    complex numbers in ascending absolute value order.
   </para>
 
   <para>
-   Operator classes can be grouped into <firstterm>operator families</>
+   Operator classes can be grouped into <firstterm>operator families</firstterm>
    to show the relationships between semantically compatible classes.
    When only a single data type is involved, an operator class is sufficient,
    so we'll focus on that case first and then return to operator families.
@@ -43,16 +43,16 @@
    The routines for an index method do not directly know anything
    about the data types that the index method will operate on.
    Instead, an <firstterm>operator
-   class</><indexterm><primary>operator class</></indexterm>
+   class</firstterm><indexterm><primary>operator class</primary></indexterm>
    identifies the set of operations that the index method needs to use
    to work with a particular data type.  Operator classes are so
    called because one thing they specify is the set of
-   <literal>WHERE</>-clause operators that can be used with an index
+   <literal>WHERE</literal>-clause operators that can be used with an index
    (i.e., can be converted into an index-scan qualification).  An
    operator class can also specify some <firstterm>support
-   procedures</> that are needed by the internal operations of the
+   procedures</firstterm> that are needed by the internal operations of the
    index method, but do not directly correspond to any
-   <literal>WHERE</>-clause operator that can be used with the index.
+   <literal>WHERE</literal>-clause operator that can be used with the index.
   </para>
 
   <para>
@@ -83,17 +83,17 @@
 
   <para>
    The operators associated with an operator class are identified by
-   <quote>strategy numbers</>, which serve to identify the semantics of
+   <quote>strategy numbers</quote>, which serve to identify the semantics of
    each operator within the context of its operator class.
    For example, B-trees impose a strict ordering on keys, lesser to greater,
-   and so operators like <quote>less than</> and <quote>greater than or equal
-   to</> are interesting with respect to a B-tree.
+   and so operators like <quote>less than</quote> and <quote>greater than or equal
+   to</quote> are interesting with respect to a B-tree.
    Because
    <productname>PostgreSQL</productname> allows the user to define operators,
    <productname>PostgreSQL</productname> cannot look at the name of an operator
-   (e.g., <literal>&lt;</> or <literal>&gt;=</>) and tell what kind of
+   (e.g., <literal>&lt;</literal> or <literal>&gt;=</literal>) and tell what kind of
    comparison it is.  Instead, the index method defines a set of
-   <quote>strategies</>, which can be thought of as generalized operators.
+   <quote>strategies</quote>, which can be thought of as generalized operators.
    Each operator class specifies which actual operator corresponds to each
    strategy for a particular data type and interpretation of the index
    semantics.
@@ -163,11 +163,11 @@
 
   <para>
    GiST indexes are more flexible: they do not have a fixed set of
-   strategies at all.  Instead, the <quote>consistency</> support routine
+   strategies at all.  Instead, the <quote>consistency</quote> support routine
    of each particular GiST operator class interprets the strategy numbers
    however it likes.  As an example, several of the built-in GiST index
    operator classes index two-dimensional geometric objects, providing
-   the <quote>R-tree</> strategies shown in
+   the <quote>R-tree</quote> strategies shown in
    <xref linkend="xindex-rtree-strat-table">.  Four of these are true
    two-dimensional tests (overlaps, same, contains, contained by);
    four of them consider only the X direction; and the other four
@@ -175,7 +175,7 @@
   </para>
 
    <table tocentry="1" id="xindex-rtree-strat-table">
-    <title>GiST Two-Dimensional <quote>R-tree</> Strategies</title>
+    <title>GiST Two-Dimensional <quote>R-tree</quote> Strategies</title>
     <tgroup cols="2">
      <thead>
       <row>
@@ -327,7 +327,7 @@
    don't have a fixed set of strategies either.  Instead the support routines
    of each operator class interpret the strategy numbers according to the
    operator class's definition. As an example, the strategy numbers used by
-   the built-in <literal>Minmax</> operator classes are shown in
+   the built-in <literal>Minmax</literal> operator classes are shown in
    <xref linkend="xindex-brin-minmax-strat-table">.
   </para>
 
@@ -369,8 +369,8 @@
    Notice that all the operators listed above return Boolean values.  In
    practice, all operators defined as index method search operators must
    return type <type>boolean</type>, since they must appear at the top
-   level of a <literal>WHERE</> clause to be used with an index.
-   (Some index access methods also support <firstterm>ordering operators</>,
+   level of a <literal>WHERE</literal> clause to be used with an index.
+   (Some index access methods also support <firstterm>ordering operators</firstterm>,
    which typically don't return Boolean values; that feature is discussed
    in <xref linkend="xindex-ordering-ops">.)
   </para>
@@ -396,7 +396,7 @@
    functions should play each of these roles for a given data type and
    semantic interpretation.  The index method defines the set
    of functions it needs, and the operator class identifies the correct
-   functions to use by assigning them to the <quote>support function numbers</>
+   functions to use by assigning them to the <quote>support function numbers</quote>
    specified by the index method.
   </para>
 
@@ -427,7 +427,7 @@
       <row>
        <entry>
         Return the addresses of C-callable sort support function(s),
-        as documented in <filename>utils/sortsupport.h</> (optional)
+        as documented in <filename>utils/sortsupport.h</filename> (optional)
        </entry>
        <entry>2</entry>
       </row>
@@ -485,52 +485,52 @@
      </thead>
      <tbody>
       <row>
-       <entry><function>consistent</></entry>
+       <entry><function>consistent</function></entry>
        <entry>determine whether key satisfies the
         query qualifier</entry>
        <entry>1</entry>
       </row>
       <row>
-       <entry><function>union</></entry>
+       <entry><function>union</function></entry>
        <entry>compute union of a set of keys</entry>
        <entry>2</entry>
       </row>
       <row>
-       <entry><function>compress</></entry>
+       <entry><function>compress</function></entry>
        <entry>compute a compressed representation of a key or value
         to be indexed</entry>
        <entry>3</entry>
       </row>
       <row>
-       <entry><function>decompress</></entry>
+       <entry><function>decompress</function></entry>
        <entry>compute a decompressed representation of a
         compressed key</entry>
        <entry>4</entry>
       </row>
       <row>
-       <entry><function>penalty</></entry>
+       <entry><function>penalty</function></entry>
        <entry>compute penalty for inserting new key into subtree
        with given subtree's key</entry>
        <entry>5</entry>
       </row>
       <row>
-       <entry><function>picksplit</></entry>
+       <entry><function>picksplit</function></entry>
        <entry>determine which entries of a page are to be moved
        to the new page and compute the union keys for resulting pages</entry>
        <entry>6</entry>
       </row>
       <row>
-       <entry><function>equal</></entry>
+       <entry><function>equal</function></entry>
        <entry>compare two keys and return true if they are equal</entry>
        <entry>7</entry>
       </row>
       <row>
-       <entry><function>distance</></entry>
+       <entry><function>distance</function></entry>
        <entry>determine distance from key to query value (optional)</entry>
        <entry>8</entry>
       </row>
       <row>
-       <entry><function>fetch</></entry>
+       <entry><function>fetch</function></entry>
        <entry>compute original representation of a compressed key for
        index-only scans (optional)</entry>
        <entry>9</entry>
@@ -557,28 +557,28 @@
      </thead>
      <tbody>
       <row>
-       <entry><function>config</></entry>
+       <entry><function>config</function></entry>
        <entry>provide basic information about the operator class</entry>
        <entry>1</entry>
       </row>
       <row>
-       <entry><function>choose</></entry>
+       <entry><function>choose</function></entry>
        <entry>determine how to insert a new value into an inner tuple</entry>
        <entry>2</entry>
       </row>
       <row>
-       <entry><function>picksplit</></entry>
+       <entry><function>picksplit</function></entry>
        <entry>determine how to partition a set of values</entry>
        <entry>3</entry>
       </row>
       <row>
-       <entry><function>inner_consistent</></entry>
+       <entry><function>inner_consistent</function></entry>
        <entry>determine which sub-partitions need to be searched for a
         query</entry>
        <entry>4</entry>
       </row>
       <row>
-       <entry><function>leaf_consistent</></entry>
+       <entry><function>leaf_consistent</function></entry>
        <entry>determine whether key satisfies the
         query qualifier</entry>
        <entry>5</entry>
@@ -605,7 +605,7 @@
      </thead>
      <tbody>
       <row>
-       <entry><function>compare</></entry>
+       <entry><function>compare</function></entry>
        <entry>
         compare two keys and return an integer less than zero, zero,
         or greater than zero, indicating whether the first key is less than,
@@ -614,17 +614,17 @@
        <entry>1</entry>
       </row>
       <row>
-       <entry><function>extractValue</></entry>
+       <entry><function>extractValue</function></entry>
        <entry>extract keys from a value to be indexed</entry>
        <entry>2</entry>
       </row>
       <row>
-       <entry><function>extractQuery</></entry>
+       <entry><function>extractQuery</function></entry>
        <entry>extract keys from a query condition</entry>
        <entry>3</entry>
       </row>
       <row>
-       <entry><function>consistent</></entry>
+       <entry><function>consistent</function></entry>
        <entry>
         determine whether value matches query condition (Boolean variant)
         (optional if support function 6 is present)
@@ -632,7 +632,7 @@
        <entry>4</entry>
       </row>
       <row>
-       <entry><function>comparePartial</></entry>
+       <entry><function>comparePartial</function></entry>
        <entry>
         compare partial key from
         query and key from index, and return an integer less than zero, zero,
@@ -642,7 +642,7 @@
        <entry>5</entry>
       </row>
       <row>
-       <entry><function>triConsistent</></entry>
+       <entry><function>triConsistent</function></entry>
        <entry>
         determine whether value matches query condition (ternary variant)
         (optional if support function 4 is present)
@@ -672,7 +672,7 @@
      </thead>
      <tbody>
       <row>
-       <entry><function>opcInfo</></entry>
+       <entry><function>opcInfo</function></entry>
        <entry>
         return internal information describing the indexed columns'
         summary data
@@ -680,17 +680,17 @@
        <entry>1</entry>
       </row>
       <row>
-       <entry><function>add_value</></entry>
+       <entry><function>add_value</function></entry>
        <entry>add a new value to an existing summary index tuple</entry>
        <entry>2</entry>
       </row>
       <row>
-       <entry><function>consistent</></entry>
+       <entry><function>consistent</function></entry>
        <entry>determine whether value matches query condition</entry>
        <entry>3</entry>
       </row>
       <row>
-       <entry><function>union</></entry>
+       <entry><function>union</function></entry>
        <entry>
         compute union of two summary tuples
        </entry>
@@ -730,11 +730,11 @@
    B-trees, the operators we require are:
 
    <itemizedlist spacing="compact">
-    <listitem><simpara>absolute-value less-than (strategy 1)</></>
-    <listitem><simpara>absolute-value less-than-or-equal (strategy 2)</></>
-    <listitem><simpara>absolute-value equal (strategy 3)</></>
-    <listitem><simpara>absolute-value greater-than-or-equal (strategy 4)</></>
-    <listitem><simpara>absolute-value greater-than (strategy 5)</></>
+    <listitem><simpara>absolute-value less-than (strategy 1)</simpara></listitem>
+    <listitem><simpara>absolute-value less-than-or-equal (strategy 2)</simpara></listitem>
+    <listitem><simpara>absolute-value equal (strategy 3)</simpara></listitem>
+    <listitem><simpara>absolute-value greater-than-or-equal (strategy 4)</simpara></listitem>
+    <listitem><simpara>absolute-value greater-than (strategy 5)</simpara></listitem>
    </itemizedlist>
   </para>
 
@@ -817,7 +817,7 @@ CREATE OPERATOR &lt; (
      type we'd probably want <literal>=</literal> to be the ordinary
      equality operation for complex numbers (and not the equality of
      the absolute values).  In that case, we'd need to use some other
-     operator name for <function>complex_abs_eq</>.
+     operator name for <function>complex_abs_eq</function>.
     </para>
    </listitem>
 
@@ -894,7 +894,7 @@ CREATE OPERATOR CLASS complex_abs_ops
   <para>
    The above example assumes that you want to make this new operator class the
    default B-tree operator class for the <type>complex</type> data type.
-   If you don't, just leave out the word <literal>DEFAULT</>.
+   If you don't, just leave out the word <literal>DEFAULT</literal>.
   </para>
  </sect2>
 
@@ -917,11 +917,11 @@ CREATE OPERATOR CLASS complex_abs_ops
   <para>
    To handle these needs, <productname>PostgreSQL</productname>
    uses the concept of an <firstterm>operator
-   family</><indexterm><primary>operator family</></indexterm>.
+   family</firstterm><indexterm><primary>operator family</primary></indexterm>.
    An operator family contains one or more operator classes, and can also
    contain indexable operators and corresponding support functions that
    belong to the family as a whole but not to any single class within the
-   family.  We say that such operators and functions are <quote>loose</>
+   family.  We say that such operators and functions are <quote>loose</quote>
    within the family, as opposed to being bound into a specific class.
    Typically each operator class contains single-data-type operators
    while cross-data-type operators are loose in the family.
@@ -947,10 +947,10 @@ CREATE OPERATOR CLASS complex_abs_ops
 
   <para>
    As an example, <productname>PostgreSQL</productname> has a built-in
-   B-tree operator family <literal>integer_ops</>, which includes operator
-   classes <literal>int8_ops</>, <literal>int4_ops</>, and
-   <literal>int2_ops</> for indexes on <type>bigint</> (<type>int8</>),
-   <type>integer</> (<type>int4</>), and <type>smallint</> (<type>int2</>)
+   B-tree operator family <literal>integer_ops</literal>, which includes operator
+   classes <literal>int8_ops</literal>, <literal>int4_ops</literal>, and
+   <literal>int2_ops</literal> for indexes on <type>bigint</type> (<type>int8</type>),
+   <type>integer</type> (<type>int4</type>), and <type>smallint</type> (<type>int2</type>)
    columns respectively.  The family also contains cross-data-type comparison
    operators allowing any two of these types to be compared, so that an index
    on one of these types can be searched using a comparison value of another
@@ -1043,7 +1043,7 @@ ALTER OPERATOR FAMILY integer_ops USING btree ADD
 ]]>
 </programlisting>
 
-   Notice that this definition <quote>overloads</> the operator strategy and
+   Notice that this definition <quote>overloads</quote> the operator strategy and
    support function numbers: each number occurs multiple times within the
    family.  This is allowed so long as each instance of a
    particular number has distinct input data types.  The instances that have
@@ -1056,8 +1056,8 @@ ALTER OPERATOR FAMILY integer_ops USING btree ADD
   <para>
    In a B-tree operator family, all the operators in the family must sort
    compatibly, meaning that the transitive laws hold across all the data types
-   supported by the family: <quote>if A = B and B = C, then A = C</>,
-   and <quote>if A &lt; B and B &lt; C, then A &lt; C</>.  Moreover, implicit
+   supported by the family: <quote>if A = B and B = C, then A = C</quote>,
+   and <quote>if A &lt; B and B &lt; C, then A &lt; C</quote>.  Moreover, implicit
    or binary coercion casts between types represented in the operator family
    must not change the associated sort ordering.  For each
    operator in the family there must be a support function having the same
@@ -1094,7 +1094,7 @@ ALTER OPERATOR FAMILY integer_ops USING btree ADD
 
   <para>
    In BRIN, the requirements depends on the framework that provides the
-   operator classes.  For operator classes based on <literal>minmax</>,
+   operator classes.  For operator classes based on <literal>minmax</literal>,
    the behavior required is the same as for B-tree operator families:
    all the operators in the family must sort compatibly, and casts must
    not change the associated sort ordering.
@@ -1128,14 +1128,14 @@ ALTER OPERATOR FAMILY integer_ops USING btree ADD
   </para>
 
   <para>
-   In particular, there are SQL features such as <literal>ORDER BY</> and
-   <literal>DISTINCT</> that require comparison and sorting of values.
+   In particular, there are SQL features such as <literal>ORDER BY</literal> and
+   <literal>DISTINCT</literal> that require comparison and sorting of values.
    To implement these features on a user-defined data type,
    <productname>PostgreSQL</productname> looks for the default B-tree operator
-   class for the data type.  The <quote>equals</> member of this operator
+   class for the data type.  The <quote>equals</quote> member of this operator
    class defines the system's notion of equality of values for
-   <literal>GROUP BY</> and <literal>DISTINCT</>, and the sort ordering
-   imposed by the operator class defines the default <literal>ORDER BY</>
+   <literal>GROUP BY</literal> and <literal>DISTINCT</literal>, and the sort ordering
+   imposed by the operator class defines the default <literal>ORDER BY</literal>
    ordering.
   </para>
 
@@ -1153,7 +1153,7 @@ ALTER OPERATOR FAMILY integer_ops USING btree ADD
 
   <para>
    When there is no default operator class for a data type, you will get
-   errors like <quote>could not identify an ordering operator</> if you
+   errors like <quote>could not identify an ordering operator</quote> if you
    try to use these SQL features with the data type.
   </para>
 
@@ -1161,7 +1161,7 @@ ALTER OPERATOR FAMILY integer_ops USING btree ADD
     <para>
      In <productname>PostgreSQL</productname> versions before 7.4,
      sorting and grouping operations would implicitly use operators named
-     <literal>=</>, <literal>&lt;</>, and <literal>&gt;</>.  The new
+     <literal>=</literal>, <literal>&lt;</literal>, and <literal>&gt;</literal>.  The new
      behavior of relying on default operator classes avoids having to make
      any assumption about the behavior of operators with particular names.
     </para>
@@ -1180,22 +1180,22 @@ ALTER OPERATOR FAMILY integer_ops USING btree ADD
 
   <para>
    Some index access methods (currently, only GiST) support the concept of
-   <firstterm>ordering operators</>.  What we have been discussing so far
-   are <firstterm>search operators</>.  A search operator is one for which
+   <firstterm>ordering operators</firstterm>.  What we have been discussing so far
+   are <firstterm>search operators</firstterm>.  A search operator is one for which
    the index can be searched to find all rows satisfying
-   <literal>WHERE</>
-   <replaceable>indexed_column</>
-   <replaceable>operator</>
-   <replaceable>constant</>.
+   <literal>WHERE</literal>
+   <replaceable>indexed_column</replaceable>
+   <replaceable>operator</replaceable>
+   <replaceable>constant</replaceable>.
    Note that nothing is promised about the order in which the matching rows
    will be returned.  In contrast, an ordering operator does not restrict the
    set of rows that can be returned, but instead determines their order.
    An ordering operator is one for which the index can be scanned to return
    rows in the order represented by
-   <literal>ORDER BY</>
-   <replaceable>indexed_column</>
-   <replaceable>operator</>
-   <replaceable>constant</>.
+   <literal>ORDER BY</literal>
+   <replaceable>indexed_column</replaceable>
+   <replaceable>operator</replaceable>
+   <replaceable>constant</replaceable>.
    The reason for defining ordering operators that way is that it supports
    nearest-neighbor searches, if the operator is one that measures distance.
    For example, a query like
@@ -1205,7 +1205,7 @@ SELECT * FROM places ORDER BY location <-> point '(101,456)' LIMIT 10;
 </programlisting>
    finds the ten places closest to a given target point.  A GiST index
    on the location column can do this efficiently because
-   <literal>&lt;-&gt;</> is an ordering operator.
+   <literal>&lt;-&gt;</literal> is an ordering operator.
   </para>
 
   <para>
@@ -1217,17 +1217,17 @@ SELECT * FROM places ORDER BY location <-> point '(101,456)' LIMIT 10;
    a B-tree operator family that specifies the sort ordering of the result
    data type.  As was stated in the previous section, B-tree operator families
    define <productname>PostgreSQL</productname>'s notion of ordering, so
-   this is a natural representation.  Since the point <literal>&lt;-&gt;</>
-   operator returns <type>float8</>, it could be specified in an operator
+   this is a natural representation.  Since the point <literal>&lt;-&gt;</literal>
+   operator returns <type>float8</type>, it could be specified in an operator
    class creation command like this:
 <programlisting><![CDATA[
 OPERATOR 15    <-> (point, point) FOR ORDER BY float_ops
 ]]>
 </programlisting>
-   where <literal>float_ops</> is the built-in operator family that includes
-   operations on <type>float8</>.  This declaration states that the index
+   where <literal>float_ops</literal> is the built-in operator family that includes
+   operations on <type>float8</type>.  This declaration states that the index
    is able to return rows in order of increasing values of the
-   <literal>&lt;-&gt;</> operator.
+   <literal>&lt;-&gt;</literal> operator.
   </para>
  </sect2>
 
@@ -1243,21 +1243,21 @@ OPERATOR 15    <-> (point, point) FOR ORDER BY float_ops
   <para>
    Normally, declaring an operator as a member of an operator class
    (or family) means that the index method can retrieve exactly the set of rows
-   that satisfy a <literal>WHERE</> condition using the operator.  For example:
+   that satisfy a <literal>WHERE</literal> condition using the operator.  For example:
 <programlisting>
 SELECT * FROM table WHERE integer_column &lt; 4;
 </programlisting>
    can be satisfied exactly by a B-tree index on the integer column.
    But there are cases where an index is useful as an inexact guide to
    the matching rows.  For example, if a GiST index stores only bounding boxes
-   for geometric objects, then it cannot exactly satisfy a <literal>WHERE</>
+   for geometric objects, then it cannot exactly satisfy a <literal>WHERE</literal>
    condition that tests overlap between nonrectangular objects such as
    polygons.  Yet we could use the index to find objects whose bounding
    box overlaps the bounding box of the target object, and then do the
    exact overlap test only on the objects found by the index.  If this
-   scenario applies, the index is said to be <quote>lossy</> for the
+   scenario applies, the index is said to be <quote>lossy</quote> for the
    operator.  Lossy index searches are implemented by having the index
-   method return a <firstterm>recheck</> flag when a row might or might
+   method return a <firstterm>recheck</firstterm> flag when a row might or might
    not really satisfy the query condition.  The core system will then
    test the original query condition on the retrieved row to see whether
    it should be returned as a valid match.  This approach works if
@@ -1274,8 +1274,8 @@ SELECT * FROM table WHERE integer_column &lt; 4;
    the bounding box of a complex object such as a polygon.  In this
    case there's not much value in storing the whole polygon in the index
    entry &mdash; we might as well store just a simpler object of type
-   <type>box</>.  This situation is expressed by the <literal>STORAGE</>
-   option in <command>CREATE OPERATOR CLASS</>: we'd write something like:
+   <type>box</type>.  This situation is expressed by the <literal>STORAGE</literal>
+   option in <command>CREATE OPERATOR CLASS</command>: we'd write something like:
 
 <programlisting>
 CREATE OPERATOR CLASS polygon_ops
@@ -1285,16 +1285,16 @@ CREATE OPERATOR CLASS polygon_ops
 </programlisting>
 
    At present, only the GiST, GIN and BRIN index methods support a
-   <literal>STORAGE</> type that's different from the column data type.
-   The GiST <function>compress</> and <function>decompress</> support
-   routines must deal with data-type conversion when <literal>STORAGE</>
-   is used.  In GIN, the <literal>STORAGE</> type identifies the type of
-   the <quote>key</> values, which normally is different from the type
+   <literal>STORAGE</literal> type that's different from the column data type.
+   The GiST <function>compress</function> and <function>decompress</function> support
+   routines must deal with data-type conversion when <literal>STORAGE</literal>
+   is used.  In GIN, the <literal>STORAGE</literal> type identifies the type of
+   the <quote>key</quote> values, which normally is different from the type
    of the indexed column &mdash; for example, an operator class for
    integer-array columns might have keys that are just integers.  The
-   GIN <function>extractValue</> and <function>extractQuery</> support
+   GIN <function>extractValue</function> and <function>extractQuery</function> support
    routines are responsible for extracting keys from indexed values.
-   BRIN is similar to GIN: the <literal>STORAGE</> type identifies the
+   BRIN is similar to GIN: the <literal>STORAGE</literal> type identifies the
    type of the stored summary values, and operator classes' support
    procedures are responsible for interpreting the summary values
    correctly.

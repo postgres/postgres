@@ -37,7 +37,7 @@ DROP OPERATOR CLASS [ IF EXISTS ] <replaceable class="parameter">name</replaceab
    <command>DROP OPERATOR CLASS</command> does not drop any of the operators
    or functions referenced by the class.  If there are any indexes depending
    on the operator class, you will need to specify
-   <literal>CASCADE</> for the drop to complete.
+   <literal>CASCADE</literal> for the drop to complete.
   </para>
  </refsect1>
 
@@ -101,13 +101,13 @@ DROP OPERATOR CLASS [ IF EXISTS ] <replaceable class="parameter">name</replaceab
   <title>Notes</title>
 
   <para>
-   <command>DROP OPERATOR CLASS</> will not drop the operator family
+   <command>DROP OPERATOR CLASS</command> will not drop the operator family
    containing the class, even if there is nothing else left in the
    family (in particular, in the case where the family was implicitly
-   created by <command>CREATE OPERATOR CLASS</>).  An empty operator
+   created by <command>CREATE OPERATOR CLASS</command>).  An empty operator
    family is harmless, but for the sake of tidiness you might wish to
-   remove the family with <command>DROP OPERATOR FAMILY</>; or perhaps
-   better, use <command>DROP OPERATOR FAMILY</> in the first place.
+   remove the family with <command>DROP OPERATOR FAMILY</command>; or perhaps
+   better, use <command>DROP OPERATOR FAMILY</command> in the first place.
   </para>
  </refsect1>
 
@@ -122,7 +122,7 @@ DROP OPERATOR CLASS widget_ops USING btree;
 </programlisting>
 
    This command will not succeed if there are any existing indexes
-   that use the operator class.  Add <literal>CASCADE</> to drop
+   that use the operator class.  Add <literal>CASCADE</literal> to drop
    such indexes along with the operator class.
   </para>
  </refsect1>

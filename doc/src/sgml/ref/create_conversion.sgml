@@ -29,7 +29,7 @@ CREATE [ DEFAULT ] CONVERSION <replaceable>name</replaceable>
   <para>
    <command>CREATE CONVERSION</command> defines a new conversion between
    character set encodings.  Also, conversions that
-   are marked <literal>DEFAULT</> can be used for automatic encoding
+   are marked <literal>DEFAULT</literal> can be used for automatic encoding
    conversion between
    client and server. For this purpose, two conversions, from encoding A to
    B <emphasis>and</emphasis> from encoding B to A, must be defined.
@@ -51,7 +51,7 @@ CREATE [ DEFAULT ] CONVERSION <replaceable>name</replaceable>
 
      <listitem>
       <para>
-       The <literal>DEFAULT</> clause indicates that this conversion
+       The <literal>DEFAULT</literal> clause indicates that this conversion
        is the default for this particular source to destination
        encoding. There should be only one default encoding in a schema
        for the encoding pair.
@@ -137,7 +137,7 @@ conv_proc(
 
   <para>
    To create a conversion from encoding <literal>UTF8</literal> to
-   <literal>LATIN1</literal> using <function>myfunc</>:
+   <literal>LATIN1</literal> using <function>myfunc</function>:
 <programlisting>
 CREATE CONVERSION myconv FOR 'UTF8' TO 'LATIN1' FROM myfunc;
 </programlisting></para>

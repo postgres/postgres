@@ -201,7 +201,7 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
           to <literal>false</literal>, the tables are not subscribed, and so
           after you enable the subscription nothing will be replicated.
           It is required to run
-          <literal>ALTER SUBSCRIPTION ... REFRESH PUBLICATION</> in order
+          <literal>ALTER SUBSCRIPTION ... REFRESH PUBLICATION</literal> in order
           for tables to be subscribed.
          </para>
         </listitem>
@@ -272,7 +272,7 @@ CREATE SUBSCRIPTION mysub
   <title>Compatibility</title>
 
   <para>
-   <command>CREATE SUBSCRIPTION</command> is a <productname>PostgreSQL</>
+   <command>CREATE SUBSCRIPTION</command> is a <productname>PostgreSQL</productname>
    extension.
   </para>
  </refsect1>

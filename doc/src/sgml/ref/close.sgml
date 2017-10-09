@@ -90,7 +90,7 @@ CLOSE { <replaceable class="parameter">name</replaceable> | ALL }
 
   <para>
    You can see all available cursors by querying the <link
-   linkend="view-pg-cursors"><structname>pg_cursors</></> system view.
+   linkend="view-pg-cursors"><structname>pg_cursors</structname></link> system view.
   </para>
 
   <para>
@@ -115,7 +115,7 @@ CLOSE liahona;
 
   <para>
    <command>CLOSE</command> is fully conforming with the SQL
-   standard. <command>CLOSE ALL</> is a <productname>PostgreSQL</>
+   standard. <command>CLOSE ALL</command> is a <productname>PostgreSQL</productname>
    extension.
   </para>
  </refsect1>

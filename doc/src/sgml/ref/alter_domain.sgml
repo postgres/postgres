@@ -69,7 +69,7 @@ ALTER DOMAIN <replaceable class="parameter">name</replaceable>
     <listitem>
      <para>
       These forms change whether a domain is marked to allow NULL
-      values or to reject NULL values.  You can only <literal>SET NOT NULL</>
+      values or to reject NULL values.  You can only <literal>SET NOT NULL</literal>
       when the columns using the domain contain no null values.
      </para>
     </listitem>
@@ -88,7 +88,7 @@ ALTER DOMAIN <replaceable class="parameter">name</replaceable>
       valid using <command>ALTER DOMAIN ... VALIDATE CONSTRAINT</command>.
       Newly inserted or updated rows are always checked against all
       constraints, even those marked <literal>NOT VALID</literal>.
-      <literal>NOT VALID</> is only accepted for <literal>CHECK</> constraints.
+      <literal>NOT VALID</literal> is only accepted for <literal>CHECK</literal> constraints.
      </para>
     </listitem>
    </varlistentry>
@@ -118,7 +118,7 @@ ALTER DOMAIN <replaceable class="parameter">name</replaceable>
     <listitem>
      <para>
       This form validates a constraint previously added as
-      <literal>NOT VALID</>, that is, verify that all data in columns using the
+      <literal>NOT VALID</literal>, that is, verify that all data in columns using the
       domain satisfy the specified constraint.
      </para>
     </listitem>
@@ -154,7 +154,7 @@ ALTER DOMAIN <replaceable class="parameter">name</replaceable>
   </variablelist>
 
   <para>
-   You must own the domain to use <command>ALTER DOMAIN</>.
+   You must own the domain to use <command>ALTER DOMAIN</command>.
    To change the schema of a domain, you must also have
    <literal>CREATE</literal> privilege on the new schema.
    To alter the owner, you must also be a direct or indirect member of the new
@@ -273,8 +273,8 @@ ALTER DOMAIN <replaceable class="parameter">name</replaceable>
   <title>Notes</title>
 
   <para>
-   Currently, <command>ALTER DOMAIN ADD CONSTRAINT</>, <command>ALTER
-   DOMAIN VALIDATE CONSTRAINT</>, and <command>ALTER DOMAIN SET NOT NULL</>
+   Currently, <command>ALTER DOMAIN ADD CONSTRAINT</command>, <command>ALTER
+   DOMAIN VALIDATE CONSTRAINT</command>, and <command>ALTER DOMAIN SET NOT NULL</command>
    will fail if the validated named domain or
    any derived domain is used within a composite-type column of any
    table in the database.  They should eventually be improved to be
@@ -330,10 +330,10 @@ ALTER DOMAIN zipcode SET SCHEMA customers;
 
   <para>
    <command>ALTER DOMAIN</command> conforms to the <acronym>SQL</acronym>
-   standard, except for the <literal>OWNER</>, <literal>RENAME</literal>, <literal>SET SCHEMA</>, and
-   <literal>VALIDATE CONSTRAINT</> variants, which are
-   <productname>PostgreSQL</productname> extensions.  The <literal>NOT VALID</>
-   clause of the <literal>ADD CONSTRAINT</> variant is also a
+   standard, except for the <literal>OWNER</literal>, <literal>RENAME</literal>, <literal>SET SCHEMA</literal>, and
+   <literal>VALIDATE CONSTRAINT</literal> variants, which are
+   <productname>PostgreSQL</productname> extensions.  The <literal>NOT VALID</literal>
+   clause of the <literal>ADD CONSTRAINT</literal> variant is also a
    <productname>PostgreSQL</productname> extension.
   </para>
  </refsect1>

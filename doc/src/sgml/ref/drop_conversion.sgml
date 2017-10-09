@@ -74,7 +74,7 @@ DROP CONVERSION [ IF EXISTS ] <replaceable>name</replaceable> [ CASCADE | RESTRI
   <title>Examples</title>
 
   <para>
-   To drop the conversion named <literal>myname</>:
+   To drop the conversion named <literal>myname</literal>:
 <programlisting>
 DROP CONVERSION myname;
 </programlisting></para>

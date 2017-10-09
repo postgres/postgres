@@ -37,7 +37,7 @@ pgrowlocks(text) returns setof record
   </para>
 
   <table id="pgrowlocks-columns">
-   <title><function>pgrowlocks</> Output Columns</title>
+   <title><function>pgrowlocks</function> Output Columns</title>
 
    <tgroup cols="3">
     <thead>
@@ -73,9 +73,9 @@ pgrowlocks(text) returns setof record
       <entry><structfield>lock_type</structfield></entry>
       <entry><type>text[]</type></entry>
       <entry>Lock mode of lockers (more than one if multitransaction),
-       an array of <literal>Key Share</>, <literal>Share</>,
-       <literal>For No Key Update</>, <literal>No Key Update</>,
-       <literal>For Update</>, <literal>Update</>.</entry>
+       an array of <literal>Key Share</literal>, <literal>Share</literal>,
+       <literal>For No Key Update</literal>, <literal>No Key Update</literal>,
+       <literal>For Update</literal>, <literal>Update</literal>.</entry>
      </row>
 
      <row>
@@ -89,7 +89,7 @@ pgrowlocks(text) returns setof record
   </table>
 
   <para>
-   <function>pgrowlocks</function> takes <literal>AccessShareLock</> for the
+   <function>pgrowlocks</function> takes <literal>AccessShareLock</literal> for the
    target table and reads each row one by one to collect the row locking
    information.  This is not very speedy for a large table.  Note that:
   </para>

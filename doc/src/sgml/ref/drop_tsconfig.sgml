@@ -94,8 +94,8 @@ DROP TEXT SEARCH CONFIGURATION my_english;
 </programlisting>
 
    This command will not succeed if there are any existing indexes
-   that reference the configuration in <function>to_tsvector</> calls.
-   Add <literal>CASCADE</> to
+   that reference the configuration in <function>to_tsvector</function> calls.
+   Add <literal>CASCADE</literal> to
    drop such indexes along with the text search configuration.
   </para>
  </refsect1>

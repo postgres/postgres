@@ -53,7 +53,7 @@ make check
 </screen>
    or otherwise a note about which tests failed.  See <xref
    linkend="regress-evaluation"> below before assuming that a
-   <quote>failure</> represents a serious problem.
+   <quote>failure</quote> represents a serious problem.
   </para>
 
    <para>
@@ -66,12 +66,12 @@ make check
    <para>
     If you have configured <productname>PostgreSQL</productname> to install
     into a location where an older <productname>PostgreSQL</productname>
-    installation already exists, and you perform <literal>make check</>
+    installation already exists, and you perform <literal>make check</literal>
     before installing the new version, you might find that the tests fail
     because the new programs try to use the already-installed shared
     libraries.  (Typical symptoms are complaints about undefined symbols.)
     If you wish to run the tests before overwriting the old installation,
-    you'll need to build with <literal>configure --disable-rpath</>.
+    you'll need to build with <literal>configure --disable-rpath</literal>.
     It is not recommended that you use this option for the final installation,
     however.
    </para>
@@ -80,12 +80,12 @@ make check
     The parallel regression test starts quite a few processes under your
     user ID.  Presently, the maximum concurrency is twenty parallel test
     scripts, which means forty processes: there's a server process and a
-    <application>psql</> process for each test script.
+    <application>psql</application> process for each test script.
     So if your system enforces a per-user limit on the number of processes,
     make sure this limit is at least fifty or so, else you might get
     random-seeming failures in the parallel test.  If you are not in
     a position to raise the limit, you can cut down the degree of parallelism
-    by setting the <literal>MAX_CONNECTIONS</> parameter.  For example:
+    by setting the <literal>MAX_CONNECTIONS</literal> parameter.  For example:
 <screen>
 make MAX_CONNECTIONS=10 check
 </screen>
@@ -110,14 +110,14 @@ make installcheck-parallel
    The tests will expect to contact the server at the local host and the
    default port number, unless directed otherwise by <envar>PGHOST</envar> and
    <envar>PGPORT</envar> environment variables.  The tests will be run in a
-   database named <literal>regression</>; any existing database by this name
+   database named <literal>regression</literal>; any existing database by this name
    will be dropped.
   </para>
 
   <para>
    The tests will also transiently create some cluster-wide objects, such as
    roles and tablespaces.  These objects will have names beginning with
-   <literal>regress_</literal>.  Beware of using <literal>installcheck</>
+   <literal>regress_</literal>.  Beware of using <literal>installcheck</literal>
    mode in installations that have any actual users or tablespaces named
    that way.
   </para>
@@ -127,9 +127,9 @@ make installcheck-parallel
    <title>Additional Test Suites</title>
 
   <para>
-   The <literal>make check</> and <literal>make installcheck</> commands
-   run only the <quote>core</> regression tests, which test built-in
-   functionality of the <productname>PostgreSQL</> server.  The source
+   The <literal>make check</literal> and <literal>make installcheck</literal> commands
+   run only the <quote>core</quote> regression tests, which test built-in
+   functionality of the <productname>PostgreSQL</productname> server.  The source
    distribution also contains additional test suites, most of them having
    to do with add-on functionality such as optional procedural languages.
   </para>
@@ -144,18 +144,18 @@ make installcheck-world
 </screen>
    These commands run the tests using temporary servers or an
    already-installed server, respectively, just as previously explained
-   for <literal>make check</> and <literal>make installcheck</>.  Other
+   for <literal>make check</literal> and <literal>make installcheck</literal>.  Other
    considerations are the same as previously explained for each method.
-   Note that <literal>make check-world</> builds a separate temporary
+   Note that <literal>make check-world</literal> builds a separate temporary
    installation tree for each tested module, so it requires a great deal
-   more time and disk space than <literal>make installcheck-world</>.
+   more time and disk space than <literal>make installcheck-world</literal>.
   </para>
 
   <para>
    Alternatively, you can run individual test suites by typing
-   <literal>make check</> or <literal>make installcheck</> in the appropriate
+   <literal>make check</literal> or <literal>make installcheck</literal> in the appropriate
    subdirectory of the build tree.  Keep in mind that <literal>make
-   installcheck</> assumes you've installed the relevant module(s), not
+   installcheck</literal> assumes you've installed the relevant module(s), not
    only the core server.
   </para>
 
@@ -167,27 +167,27 @@ make installcheck-world
    <listitem>
     <para>
      Regression tests for optional procedural languages (other than
-     <application>PL/pgSQL</>, which is tested by the core tests).
-     These are located under <filename>src/pl</>.
+     <application>PL/pgSQL</application>, which is tested by the core tests).
+     These are located under <filename>src/pl</filename>.
     </para>
    </listitem>
    <listitem>
     <para>
-     Regression tests for <filename>contrib</> modules,
-     located under <filename>contrib</>.
-     Not all <filename>contrib</> modules have tests.
+     Regression tests for <filename>contrib</filename> modules,
+     located under <filename>contrib</filename>.
+     Not all <filename>contrib</filename> modules have tests.
     </para>
    </listitem>
    <listitem>
     <para>
      Regression tests for the ECPG interface library,
-     located in <filename>src/interfaces/ecpg/test</>.
+     located in <filename>src/interfaces/ecpg/test</filename>.
     </para>
    </listitem>
    <listitem>
     <para>
      Tests stressing behavior of concurrent sessions,
-     located in <filename>src/test/isolation</>.
+     located in <filename>src/test/isolation</filename>.
     </para>
    </listitem>
    <listitem>
@@ -199,11 +199,11 @@ make installcheck-world
   </itemizedlist>
 
   <para>
-   When using <literal>installcheck</> mode, these tests will destroy any
-   existing databases named <literal>pl_regression</>,
-   <literal>contrib_regression</>, <literal>isolation_regression</>,
-   <literal>ecpg1_regression</>, or <literal>ecpg2_regression</>, as well as
-   <literal>regression</>.
+   When using <literal>installcheck</literal> mode, these tests will destroy any
+   existing databases named <literal>pl_regression</literal>,
+   <literal>contrib_regression</literal>, <literal>isolation_regression</literal>,
+   <literal>ecpg1_regression</literal>, or <literal>ecpg2_regression</literal>, as well as
+   <literal>regression</literal>.
   </para>
 
   <para>
@@ -272,7 +272,7 @@ make check EXTRA_TESTS=numeric_big
 <screen>
 make check EXTRA_TESTS='collate.icu.utf8 collate.linux.utf8' LANG=en_US.utf8
 </screen>
-    The <literal>collate.linux.utf8</> test works only on Linux/glibc
+    The <literal>collate.linux.utf8</literal> test works only on Linux/glibc
     platforms.  The <literal>collate.icu.utf8</literal> test only works when
     support for ICU was built.  Both tests will only succeed when run in a
     database that uses UTF-8 encoding.
@@ -294,7 +294,7 @@ make check EXTRA_TESTS='collate.icu.utf8 collate.linux.utf8' LANG=en_US.utf8
 
   <para>
    To run the Hot Standby tests, first create a database
-   called <literal>regression</> on the primary:
+   called <literal>regression</literal> on the primary:
 <screen>
 psql -h primary -c "CREATE DATABASE regression"
 </screen>
@@ -311,7 +311,7 @@ psql -h primary -f src/test/regress/sql/hs_primary_setup.sql regression
    Now arrange for the default database connection to be to the standby
    server under test (for example, by setting the <envar>PGHOST</envar> and
    <envar>PGPORT</envar> environment variables).
-   Finally, run <literal>make standbycheck</> in the regression directory:
+   Finally, run <literal>make standbycheck</literal> in the regression directory:
 <screen>
 cd src/test/regress
 make standbycheck
@@ -355,7 +355,7 @@ make standbycheck
     <filename>src/test/regress/regression.diffs</filename>.
     (When running a test suite other than the core tests, these files
     of course appear in the relevant subdirectory,
-    not <filename>src/test/regress</>.)
+    not <filename>src/test/regress</filename>.)
    </para>
 
    <para>
@@ -367,7 +367,7 @@ make standbycheck
    </para>
 
    <para>
-    If for some reason a particular platform generates a <quote>failure</>
+    If for some reason a particular platform generates a <quote>failure</quote>
     for a given test, but inspection of the output convinces you that
     the result is valid, you can add a new comparison file to silence
     the failure report in future test runs.  See
@@ -457,8 +457,8 @@ make check NO_LOCALE=1
      Some of the tests involve computing 64-bit floating-point numbers (<type>double
      precision</type>) from table columns. Differences in
      results involving mathematical functions of <type>double
-     precision</type> columns have been observed.  The <literal>float8</> and
-     <literal>geometry</> tests are particularly prone to small differences
+     precision</type> columns have been observed.  The <literal>float8</literal> and
+     <literal>geometry</literal> tests are particularly prone to small differences
      across platforms, or even with different compiler optimization settings.
      Human eyeball comparison is needed to determine the real
      significance of these differences which are usually 10 places to
@@ -466,8 +466,8 @@ make check NO_LOCALE=1
     </para>
 
     <para>
-     Some systems display minus zero as <literal>-0</>, while others
-     just show <literal>0</>.
+     Some systems display minus zero as <literal>-0</literal>, while others
+     just show <literal>0</literal>.
     </para>
 
     <para>
@@ -485,23 +485,23 @@ make check NO_LOCALE=1
 You might see differences in which the same rows are output in a
 different order than what appears in the expected file.  In most cases
 this is not, strictly speaking, a bug.  Most of the regression test
-scripts are not so pedantic as to use an <literal>ORDER BY</> for every single
-<literal>SELECT</>, and so their result row orderings are not well-defined
+scripts are not so pedantic as to use an <literal>ORDER BY</literal> for every single
+<literal>SELECT</literal>, and so their result row orderings are not well-defined
 according to the SQL specification.  In practice, since we are
 looking at the same queries being executed on the same data by the same
 software, we usually get the same result ordering on all platforms,
-so the lack of <literal>ORDER BY</> is not a problem.  Some queries do exhibit
+so the lack of <literal>ORDER BY</literal> is not a problem.  Some queries do exhibit
 cross-platform ordering differences, however.  When testing against an
 already-installed server, ordering differences can also be caused by
 non-C locale settings or non-default parameter settings, such as custom values
-of <varname>work_mem</> or the planner cost parameters.
+of <varname>work_mem</varname> or the planner cost parameters.
     </para>
 
     <para>
 Therefore, if you see an ordering difference, it's not something to
-worry about, unless the query does have an <literal>ORDER BY</> that your
+worry about, unless the query does have an <literal>ORDER BY</literal> that your
 result is violating.  However, please report it anyway, so that we can add an
-<literal>ORDER BY</> to that particular query to eliminate the bogus
+<literal>ORDER BY</literal> to that particular query to eliminate the bogus
 <quote>failure</quote> in future releases.
     </para>
 
@@ -519,18 +519,18 @@ exclusion of those that don't.
 
     <para>
      If the <literal>errors</literal> test results in a server crash
-     at the <literal>select infinite_recurse()</> command, it means that
+     at the <literal>select infinite_recurse()</literal> command, it means that
      the platform's limit on process stack size is smaller than the
      <xref linkend="guc-max-stack-depth"> parameter indicates.  This
      can be fixed by running the server under a higher stack
      size limit (4MB is recommended with the default value of
-     <varname>max_stack_depth</>).  If you are unable to do that, an
-     alternative is to reduce the value of <varname>max_stack_depth</>.
+     <varname>max_stack_depth</varname>).  If you are unable to do that, an
+     alternative is to reduce the value of <varname>max_stack_depth</varname>.
     </para>
 
     <para>
-     On platforms supporting <function>getrlimit()</>, the server should
-     automatically choose a safe value of <varname>max_stack_depth</>;
+     On platforms supporting <function>getrlimit()</function>, the server should
+     automatically choose a safe value of <varname>max_stack_depth</varname>;
      so unless you've manually overridden this setting, a failure of this
      kind is a reportable bug.
     </para>
@@ -559,7 +559,7 @@ diff results/random.out expected/random.out
      parameter settings could cause the tests to fail.  For example, changing
      parameters such as <varname>enable_seqscan</varname> or
      <varname>enable_indexscan</varname> could cause plan changes that would
-     affect the results of tests that use <command>EXPLAIN</>.
+     affect the results of tests that use <command>EXPLAIN</command>.
     </para>
    </sect2>
   </sect1>
@@ -570,7 +570,7 @@ diff results/random.out expected/random.out
 
    <para>
     Since some of the tests inherently produce environment-dependent
-    results, we have provided ways to specify alternate <quote>expected</>
+    results, we have provided ways to specify alternate <quote>expected</quote>
     result files.  Each regression test can have several comparison files
     showing possible results on different platforms.  There are two
     independent mechanisms for determining which comparison file is used
@@ -597,7 +597,7 @@ testname:output:platformpattern=comparisonfilename
     standard regression tests, this is always <literal>out</literal>. The
     value corresponds to the file extension of the output file.
     The platform pattern is a pattern in the style of the Unix
-    tool <command>expr</> (that is, a regular expression with an implicit
+    tool <command>expr</command> (that is, a regular expression with an implicit
     <literal>^</literal> anchor at the start).  It is matched against the
     platform name as printed by <command>config.guess</command>.
     The comparison file name is the base name of the substitute result
@@ -607,7 +607,7 @@ testname:output:platformpattern=comparisonfilename
    <para>
     For example: some systems interpret very small floating-point values
     as zero, rather than reporting an underflow error.  This causes a
-    few differences in the <filename>float8</> regression test.
+    few differences in the <filename>float8</filename> regression test.
     Therefore, we provide a variant comparison file,
     <filename>float8-small-is-zero.out</filename>, which includes
     the results to be expected on these systems.  To silence the bogus
@@ -619,30 +619,30 @@ float8:out:i.86-.*-openbsd=float8-small-is-zero.out
     which will trigger on any machine where the output of
     <command>config.guess</command> matches <literal>i.86-.*-openbsd</literal>.
     Other lines
-    in <filename>resultmap</> select the variant comparison file for other
+    in <filename>resultmap</filename> select the variant comparison file for other
     platforms where it's appropriate.
    </para>
 
    <para>
     The second selection mechanism for variant comparison files is
-    much more automatic: it simply uses the <quote>best match</> among
+    much more automatic: it simply uses the <quote>best match</quote> among
     several supplied comparison files.  The regression test driver
     script considers both the standard comparison file for a test,
-    <literal><replaceable>testname</>.out</>, and variant files named
-    <literal><replaceable>testname</>_<replaceable>digit</>.out</>
-    (where the <replaceable>digit</> is any single digit
-    <literal>0</>-<literal>9</>).  If any such file is an exact match,
+    <literal><replaceable>testname</replaceable>.out</literal>, and variant files named
+    <literal><replaceable>testname</replaceable>_<replaceable>digit</replaceable>.out</literal>
+    (where the <replaceable>digit</replaceable> is any single digit
+    <literal>0</literal>-<literal>9</literal>).  If any such file is an exact match,
     the test is considered to pass; otherwise, the one that generates
     the shortest diff is used to create the failure report.  (If
     <filename>resultmap</filename> includes an entry for the particular
-    test, then the base <replaceable>testname</> is the substitute
+    test, then the base <replaceable>testname</replaceable> is the substitute
     name given in <filename>resultmap</filename>.)
    </para>
 
    <para>
     For example, for the <literal>char</literal> test, the comparison file
     <filename>char.out</filename> contains results that are expected
-    in the <literal>C</> and <literal>POSIX</> locales, while
+    in the <literal>C</literal> and <literal>POSIX</literal> locales, while
     the file <filename>char_1.out</filename> contains results sorted as
     they appear in many other locales.
    </para>
@@ -652,7 +652,7 @@ float8:out:i.86-.*-openbsd=float8-small-is-zero.out
     results, but it can be used in any situation where the test results
     cannot be predicted easily from the platform name alone.  A limitation of
     this mechanism is that the test driver cannot tell which variant is
-    actually <quote>correct</> for the current environment; it will just pick
+    actually <quote>correct</quote> for the current environment; it will just pick
     the variant that seems to work best.  Therefore it is safest to use this
     mechanism only for variant results that you are willing to consider
     equally valid in all contexts.
@@ -668,7 +668,7 @@ float8:out:i.86-.*-openbsd=float8-small-is-zero.out
     under <filename>src/bin</filename>, use the Perl TAP tools and are run
     using the Perl testing program <command>prove</command>.  You can pass
     command-line options to <command>prove</command> by setting
-    the <command>make</command> variable <varname>PROVE_FLAGS</>, for example:
+    the <command>make</command> variable <varname>PROVE_FLAGS</varname>, for example:
 <programlisting>
 make -C src/bin check PROVE_FLAGS='--timer'
 </programlisting>

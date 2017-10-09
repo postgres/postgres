@@ -27,7 +27,7 @@
   <title>Description</title>
 
  <para>
-  <application>pg_test_timing</> is a tool to measure the timing overhead
+  <application>pg_test_timing</application> is a tool to measure the timing overhead
   on your system and confirm that the system time never moves backwards.
   Systems that are slow to collect timing data can give less accurate
   <command>EXPLAIN ANALYZE</command> results.
@@ -57,8 +57,8 @@
      </varlistentry>
 
      <varlistentry>
-      <term><option>-V</></term>
-      <term><option>--version</></term>
+      <term><option>-V</option></term>
+      <term><option>--version</option></term>
       <listitem>
        <para>
         Print the <application>pg_test_timing</application> version and exit.
@@ -67,8 +67,8 @@
      </varlistentry>
 
      <varlistentry>
-      <term><option>-?</></term>
-      <term><option>--help</></term>
+      <term><option>-?</option></term>
+      <term><option>--help</option></term>
       <listitem>
        <para>
         Show help about <application>pg_test_timing</application> command line

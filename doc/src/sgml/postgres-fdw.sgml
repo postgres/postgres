@@ -8,7 +8,7 @@
  </indexterm>
 
  <para>
-  The <filename>postgres_fdw</> module provides the foreign-data wrapper
+  The <filename>postgres_fdw</filename> module provides the foreign-data wrapper
   <literal>postgres_fdw</literal>, which can be used to access data
   stored in external <productname>PostgreSQL</productname> servers.
  </para>
@@ -16,17 +16,17 @@
  <para>
   The functionality provided by this module overlaps substantially
   with the functionality of the older <xref linkend="dblink"> module.
-  But <filename>postgres_fdw</> provides more transparent and
+  But <filename>postgres_fdw</filename> provides more transparent and
   standards-compliant syntax for accessing remote tables, and can give
   better performance in many cases.
  </para>
 
  <para>
-  To prepare for remote access using <filename>postgres_fdw</>:
+  To prepare for remote access using <filename>postgres_fdw</filename>:
   <orderedlist spacing="compact">
    <listitem>
     <para>
-     Install the  <filename>postgres_fdw</> extension using <xref
+     Install the  <filename>postgres_fdw</filename> extension using <xref
      linkend="sql-createextension">.
     </para>
    </listitem>
@@ -61,17 +61,17 @@
  </para>
 
  <para>
-  Now you need only <command>SELECT</> from a foreign table to access
+  Now you need only <command>SELECT</command> from a foreign table to access
   the data stored in its underlying remote table.  You can also modify
-  the remote table using <command>INSERT</>, <command>UPDATE</>, or
-  <command>DELETE</>.  (Of course, the remote user you have specified
+  the remote table using <command>INSERT</command>, <command>UPDATE</command>, or
+  <command>DELETE</command>.  (Of course, the remote user you have specified
   in your user mapping must have privileges to do these things.)
  </para>
 
  <para>
-  Note that <filename>postgres_fdw</> currently lacks support for
+  Note that <filename>postgres_fdw</filename> currently lacks support for
   <command>INSERT</command> statements with an <literal>ON CONFLICT DO
-  UPDATE</> clause.  However, the <literal>ON CONFLICT DO NOTHING</>
+  UPDATE</literal> clause.  However, the <literal>ON CONFLICT DO NOTHING</literal>
   clause is supported, provided a unique index inference specification
   is omitted.
  </para>
@@ -79,10 +79,10 @@
  <para>
   It is generally recommended that the columns of a foreign table be declared
   with exactly the same data types, and collations if applicable, as the
-  referenced columns of the remote table.  Although <filename>postgres_fdw</>
+  referenced columns of the remote table.  Although <filename>postgres_fdw</filename>
   is currently rather forgiving about performing data type conversions at
   need, surprising semantic anomalies may arise when types or collations do
-  not match, due to the remote server interpreting <literal>WHERE</> clauses
+  not match, due to the remote server interpreting <literal>WHERE</literal> clauses
   slightly differently from the local server.
  </para>
 
@@ -99,8 +99,8 @@
    <title>Connection Options</title>
 
    <para>
-    A foreign server using the <filename>postgres_fdw</> foreign data wrapper
-    can have the same options that <application>libpq</> accepts in
+    A foreign server using the <filename>postgres_fdw</filename> foreign data wrapper
+    can have the same options that <application>libpq</application> accepts in
     connection strings, as described in <xref linkend="libpq-paramkeywords">,
     except that these options are not allowed:
 
@@ -113,14 +113,14 @@
      </listitem>
      <listitem>
       <para>
-       <literal>client_encoding</> (this is automatically set from the local
+       <literal>client_encoding</literal> (this is automatically set from the local
        server encoding)
       </para>
      </listitem>
      <listitem>
       <para>
-       <literal>fallback_application_name</> (always set to
-       <literal>postgres_fdw</>)
+       <literal>fallback_application_name</literal> (always set to
+       <literal>postgres_fdw</literal>)
       </para>
      </listitem>
     </itemizedlist>
@@ -186,14 +186,14 @@
    <title>Cost Estimation Options</title>
 
    <para>
-    <filename>postgres_fdw</> retrieves remote data by executing queries
+    <filename>postgres_fdw</filename> retrieves remote data by executing queries
     against remote servers, so ideally the estimated cost of scanning a
     foreign table should be whatever it costs to be done on the remote
     server, plus some overhead for communication.  The most reliable way to
     get such an estimate is to ask the remote server and then add something
     for overhead &mdash; but for simple queries, it may not be worth the cost
     of an additional remote query to get a cost estimate.
-    So <filename>postgres_fdw</> provides the following options to control
+    So <filename>postgres_fdw</filename> provides the following options to control
     how cost estimation is done:
    </para>
 
@@ -204,7 +204,7 @@
      <listitem>
       <para>
        This option, which can be specified for a foreign table or a foreign
-       server, controls whether <filename>postgres_fdw</> issues remote
+       server, controls whether <filename>postgres_fdw</filename> issues remote
        <command>EXPLAIN</command> commands to obtain cost estimates.
        A setting for a foreign table overrides any setting for its server,
        but only for that table.
@@ -245,11 +245,11 @@
 
    <para>
     When <literal>use_remote_estimate</literal> is true,
-    <filename>postgres_fdw</> obtains row count and cost estimates from the
+    <filename>postgres_fdw</filename> obtains row count and cost estimates from the
     remote server and then adds <literal>fdw_startup_cost</literal> and
     <literal>fdw_tuple_cost</literal> to the cost estimates.  When
     <literal>use_remote_estimate</literal> is false,
-    <filename>postgres_fdw</> performs local row count and cost estimation
+    <filename>postgres_fdw</filename> performs local row count and cost estimation
     and then adds <literal>fdw_startup_cost</literal> and
     <literal>fdw_tuple_cost</literal> to the cost estimates.  This local
     estimation is unlikely to be very accurate unless local copies of the
@@ -268,12 +268,12 @@
    <title>Remote Execution Options</title>
 
    <para>
-    By default, only <literal>WHERE</> clauses using built-in operators and
+    By default, only <literal>WHERE</literal> clauses using built-in operators and
     functions will be considered for execution on the remote server.  Clauses
     involving non-built-in functions are checked locally after rows are
     fetched.  If such functions are available on the remote server and can be
     relied on to produce the same results as they do locally, performance can
-    be improved by sending such <literal>WHERE</> clauses for remote
+    be improved by sending such <literal>WHERE</literal> clauses for remote
     execution.  This behavior can be controlled using the following option:
    </para>
 
@@ -284,7 +284,7 @@
      <listitem>
       <para>
        This option is a comma-separated list of names
-       of <productname>PostgreSQL</> extensions that are installed, in
+       of <productname>PostgreSQL</productname> extensions that are installed, in
        compatible versions, on both the local and remote servers.  Functions
        and operators that are immutable and belong to a listed extension will
        be considered shippable to the remote server.
@@ -293,7 +293,7 @@
 
       <para>
        When using the <literal>extensions</literal> option, <emphasis>it is the
-       user's responsibility</> that the listed extensions exist and behave
+       user's responsibility</emphasis> that the listed extensions exist and behave
        identically on both the local and remote servers.  Otherwise, remote
        queries may fail or behave unexpectedly.
       </para>
@@ -304,11 +304,11 @@
      <term><literal>fetch_size</literal></term>
      <listitem>
       <para>
-       This option specifies the number of rows <filename>postgres_fdw</>
+       This option specifies the number of rows <filename>postgres_fdw</filename>
        should get in each fetch operation. It can be specified for a foreign
        table or a foreign server. The option specified on a table overrides
        an option specified for the server.
-       The default is <literal>100</>.
+       The default is <literal>100</literal>.
       </para>
      </listitem>
     </varlistentry>
@@ -321,7 +321,7 @@
    <title>Updatability Options</title>
 
    <para>
-    By default all foreign tables using <filename>postgres_fdw</> are assumed
+    By default all foreign tables using <filename>postgres_fdw</filename> are assumed
     to be updatable.  This may be overridden using the following option:
    </para>
 
@@ -331,20 +331,20 @@
      <term><literal>updatable</literal></term>
      <listitem>
       <para>
-       This option controls whether <filename>postgres_fdw</> allows foreign
-       tables to be modified using <command>INSERT</>, <command>UPDATE</> and
-       <command>DELETE</> commands.  It can be specified for a foreign table
+       This option controls whether <filename>postgres_fdw</filename> allows foreign
+       tables to be modified using <command>INSERT</command>, <command>UPDATE</command> and
+       <command>DELETE</command> commands.  It can be specified for a foreign table
        or a foreign server.  A table-level option overrides a server-level
        option.
-       The default is <literal>true</>.
+       The default is <literal>true</literal>.
       </para>
 
       <para>
        Of course, if the remote table is not in fact updatable, an error
        would occur anyway.  Use of this option primarily allows the error to
        be thrown locally without querying the remote server.  Note however
-       that the <literal>information_schema</> views will report a
-       <filename>postgres_fdw</> foreign table to be updatable (or not)
+       that the <literal>information_schema</literal> views will report a
+       <filename>postgres_fdw</filename> foreign table to be updatable (or not)
        according to the setting of this option, without any check of the
        remote server.
       </para>
@@ -358,7 +358,7 @@
    <title>Importing Options</title>
 
    <para>
-    <filename>postgres_fdw</> is able to import foreign table definitions
+    <filename>postgres_fdw</filename> is able to import foreign table definitions
     using <xref linkend="sql-importforeignschema">.  This command creates
     foreign table definitions on the local server that match tables or
     views present on the remote server.  If the remote tables to be imported
@@ -368,7 +368,7 @@
 
    <para>
     Importing behavior can be customized with the following options
-    (given in the <command>IMPORT FOREIGN SCHEMA</> command):
+    (given in the <command>IMPORT FOREIGN SCHEMA</command> command):
    </para>
 
    <variablelist>
@@ -376,9 +376,9 @@
      <term><literal>import_collate</literal></term>
      <listitem>
       <para>
-       This option controls whether column <literal>COLLATE</> options
+       This option controls whether column <literal>COLLATE</literal> options
        are included in the definitions of foreign tables imported
-       from a foreign server. The default is <literal>true</>.  You might
+       from a foreign server. The default is <literal>true</literal>.  You might
        need to turn this off if the remote server has a different set of
        collation names than the local server does, which is likely to be the
        case if it's running on a different operating system.
@@ -389,13 +389,13 @@
      <term><literal>import_default</literal></term>
      <listitem>
       <para>
-       This option controls whether column <literal>DEFAULT</> expressions
+       This option controls whether column <literal>DEFAULT</literal> expressions
        are included in the definitions of foreign tables imported
-       from a foreign server. The default is <literal>false</>.  If you
+       from a foreign server. The default is <literal>false</literal>.  If you
        enable this option, be wary of defaults that might get computed
        differently on the local server than they would be on the remote
-       server; <function>nextval()</> is a common source of problems.
-       The <command>IMPORT</> will fail altogether if an imported default
+       server; <function>nextval()</function> is a common source of problems.
+       The <command>IMPORT</command> will fail altogether if an imported default
        expression uses a function or operator that does not exist locally.
       </para>
      </listitem>
@@ -404,25 +404,25 @@
      <term><literal>import_not_null</literal></term>
      <listitem>
       <para>
-       This option controls whether column <literal>NOT NULL</>
+       This option controls whether column <literal>NOT NULL</literal>
        constraints are included in the definitions of foreign tables imported
-       from a foreign server. The default is <literal>true</>.
+       from a foreign server. The default is <literal>true</literal>.
       </para>
      </listitem>
     </varlistentry>
    </variablelist>
 
    <para>
-    Note that constraints other than <literal>NOT NULL</> will never be
-    imported from the remote tables.  Although <productname>PostgreSQL</>
-    does support <literal>CHECK</> constraints on foreign tables, there is no
+    Note that constraints other than <literal>NOT NULL</literal> will never be
+    imported from the remote tables.  Although <productname>PostgreSQL</productname>
+    does support <literal>CHECK</literal> constraints on foreign tables, there is no
     provision for importing them automatically, because of the risk that a
     constraint expression could evaluate differently on the local and remote
-    servers.  Any such inconsistency in the behavior of a <literal>CHECK</>
+    servers.  Any such inconsistency in the behavior of a <literal>CHECK</literal>
     constraint could lead to hard-to-detect errors in query optimization.
-    So if you wish to import <literal>CHECK</> constraints, you must do so
+    So if you wish to import <literal>CHECK</literal> constraints, you must do so
     manually, and you should verify the semantics of each one carefully.
-    For more detail about the treatment of <literal>CHECK</> constraints on
+    For more detail about the treatment of <literal>CHECK</literal> constraints on
     foreign tables, see <xref linkend="sql-createforeigntable">.
    </para>
 
@@ -464,18 +464,18 @@
   </para>
 
   <para>
-   The remote transaction uses <literal>SERIALIZABLE</>
-   isolation level when the local transaction has <literal>SERIALIZABLE</>
-   isolation level; otherwise it uses <literal>REPEATABLE READ</>
+   The remote transaction uses <literal>SERIALIZABLE</literal>
+   isolation level when the local transaction has <literal>SERIALIZABLE</literal>
+   isolation level; otherwise it uses <literal>REPEATABLE READ</literal>
    isolation level.  This choice ensures that if a query performs multiple
    table scans on the remote server, it will get snapshot-consistent results
    for all the scans.  A consequence is that successive queries within a
    single transaction will see the same data from the remote server, even if
    concurrent updates are occurring on the remote server due to other
    activities.  That behavior would be expected anyway if the local
-   transaction uses <literal>SERIALIZABLE</> or <literal>REPEATABLE READ</>
+   transaction uses <literal>SERIALIZABLE</literal> or <literal>REPEATABLE READ</literal>
    isolation level, but it might be surprising for a <literal>READ
-   COMMITTED</> local transaction.  A future
+   COMMITTED</literal> local transaction.  A future
    <productname>PostgreSQL</productname> release might modify these rules.
   </para>
  </sect2>
@@ -484,42 +484,42 @@
   <title>Remote Query Optimization</title>
 
   <para>
-   <filename>postgres_fdw</> attempts to optimize remote queries to reduce
+   <filename>postgres_fdw</filename> attempts to optimize remote queries to reduce
    the amount of data transferred from foreign servers.  This is done by
-   sending query <literal>WHERE</> clauses to the remote server for
+   sending query <literal>WHERE</literal> clauses to the remote server for
    execution, and by not retrieving table columns that are not needed for
    the current query.  To reduce the risk of misexecution of queries,
-   <literal>WHERE</> clauses are not sent to the remote server unless they use
+   <literal>WHERE</literal> clauses are not sent to the remote server unless they use
    only data types, operators, and functions that are built-in or belong to an
-   extension that's listed in the foreign server's <literal>extensions</>
+   extension that's listed in the foreign server's <literal>extensions</literal>
    option.  Operators and functions in such clauses must
-   be <literal>IMMUTABLE</> as well.
-   For an <command>UPDATE</> or <command>DELETE</> query,
-   <filename>postgres_fdw</> attempts to optimize the query execution by
+   be <literal>IMMUTABLE</literal> as well.
+   For an <command>UPDATE</command> or <command>DELETE</command> query,
+   <filename>postgres_fdw</filename> attempts to optimize the query execution by
    sending the whole query to the remote server if there are no query
-   <literal>WHERE</> clauses that cannot be sent to the remote server,
-   no local joins for the query, no row-level local <literal>BEFORE</> or
-   <literal>AFTER</> triggers on the target table, and no
-   <literal>CHECK OPTION</> constraints from parent views.
-   In <command>UPDATE</>,
+   <literal>WHERE</literal> clauses that cannot be sent to the remote server,
+   no local joins for the query, no row-level local <literal>BEFORE</literal> or
+   <literal>AFTER</literal> triggers on the target table, and no
+   <literal>CHECK OPTION</literal> constraints from parent views.
+   In <command>UPDATE</command>,
    expressions to assign to target columns must use only built-in data types,
-   <literal>IMMUTABLE</> operators, or <literal>IMMUTABLE</> functions,
+   <literal>IMMUTABLE</literal> operators, or <literal>IMMUTABLE</literal> functions,
    to reduce the risk of misexecution of the query.
   </para>
 
   <para>
-   When <filename>postgres_fdw</> encounters a join between foreign tables on
+   When <filename>postgres_fdw</filename> encounters a join between foreign tables on
    the same foreign server, it sends the entire join to the foreign server,
    unless for some reason it believes that it will be more efficient to fetch
    rows from each table individually, or unless the table references involved
-   are subject to different user mappings.  While sending the <literal>JOIN</>
+   are subject to different user mappings.  While sending the <literal>JOIN</literal>
    clauses, it takes the same precautions as mentioned above for the
-   <literal>WHERE</> clauses.
+   <literal>WHERE</literal> clauses.
   </para>
 
   <para>
    The query that is actually sent to the remote server for execution can
-   be examined using <command>EXPLAIN VERBOSE</>.
+   be examined using <command>EXPLAIN VERBOSE</command>.
   </para>
  </sect2>
 
@@ -527,55 +527,55 @@
   <title>Remote Query Execution Environment</title>
 
   <para>
-   In the remote sessions opened by <filename>postgres_fdw</>,
+   In the remote sessions opened by <filename>postgres_fdw</filename>,
    the <xref linkend="guc-search-path"> parameter is set to
-   just <literal>pg_catalog</>, so that only built-in objects are visible
+   just <literal>pg_catalog</literal>, so that only built-in objects are visible
    without schema qualification.  This is not an issue for queries
-   generated by <filename>postgres_fdw</> itself, because it always
+   generated by <filename>postgres_fdw</filename> itself, because it always
    supplies such qualification.  However, this can pose a hazard for
    functions that are executed on the remote server via triggers or rules
    on remote tables.  For example, if a remote table is actually a view,
    any functions used in that view will be executed with the restricted
    search path.  It is recommended to schema-qualify all names in such
-   functions, or else attach <literal>SET search_path</> options
+   functions, or else attach <literal>SET search_path</literal> options
    (see <xref linkend="sql-createfunction">) to such functions
    to establish their expected search path environment.
   </para>
 
   <para>
-   <filename>postgres_fdw</> likewise establishes remote session settings
+   <filename>postgres_fdw</filename> likewise establishes remote session settings
    for various parameters: 
    <itemizedlist spacing="compact">
     <listitem>
      <para>
-      <xref linkend="guc-timezone"> is set to <literal>UTC</>
+      <xref linkend="guc-timezone"> is set to <literal>UTC</literal>
      </para>
     </listitem>
     <listitem>
      <para>
-      <xref linkend="guc-datestyle"> is set to <literal>ISO</>
+      <xref linkend="guc-datestyle"> is set to <literal>ISO</literal>
      </para>
     </listitem>
     <listitem>
      <para>
-      <xref linkend="guc-intervalstyle"> is set to <literal>postgres</>
+      <xref linkend="guc-intervalstyle"> is set to <literal>postgres</literal>
      </para>
     </listitem>
     <listitem>
      <para>
-      <xref linkend="guc-extra-float-digits"> is set to <literal>3</> for remote
-      servers 9.0 and newer and is set to <literal>2</> for older versions
+      <xref linkend="guc-extra-float-digits"> is set to <literal>3</literal> for remote
+      servers 9.0 and newer and is set to <literal>2</literal> for older versions
      </para>
     </listitem>
    </itemizedlist>
-   These are less likely to be problematic than <varname>search_path</>, but
-   can be handled with function <literal>SET</> options if the need arises.
+   These are less likely to be problematic than <varname>search_path</varname>, but
+   can be handled with function <literal>SET</literal> options if the need arises.
   </para>
 
   <para>
-   It is <emphasis>not</> recommended that you override this behavior by
+   It is <emphasis>not</emphasis> recommended that you override this behavior by
    changing the session-level settings of these parameters; that is likely
-   to cause <filename>postgres_fdw</> to malfunction.
+   to cause <filename>postgres_fdw</filename> to malfunction.
   </para>
  </sect2>
 
@@ -583,19 +583,19 @@
   <title>Cross-Version Compatibility</title>
 
   <para>
-   <filename>postgres_fdw</> can be used with remote servers dating back
-   to <productname>PostgreSQL</> 8.3.  Read-only capability is available
-   back to 8.1.  A limitation however is that <filename>postgres_fdw</>
+   <filename>postgres_fdw</filename> can be used with remote servers dating back
+   to <productname>PostgreSQL</productname> 8.3.  Read-only capability is available
+   back to 8.1.  A limitation however is that <filename>postgres_fdw</filename>
    generally assumes that immutable built-in functions and operators are
    safe to send to the remote server for execution, if they appear in a
-   <literal>WHERE</> clause for a foreign table.  Thus, a built-in
+   <literal>WHERE</literal> clause for a foreign table.  Thus, a built-in
    function that was added since the remote server's release might be sent
-   to it for execution, resulting in <quote>function does not exist</> or
+   to it for execution, resulting in <quote>function does not exist</quote> or
    a similar error.  This type of failure can be worked around by
    rewriting the query, for example by embedding the foreign table
-   reference in a sub-<literal>SELECT</> with <literal>OFFSET 0</> as an
+   reference in a sub-<literal>SELECT</literal> with <literal>OFFSET 0</literal> as an
    optimization fence, and placing the problematic function or operator
-   outside the sub-<literal>SELECT</>.
+   outside the sub-<literal>SELECT</literal>.
   </para>
  </sect2>
 
@@ -604,7 +604,7 @@
 
   <para>
    Here is an example of creating a foreign table with
-   <literal>postgres_fdw</>. First install the extension:
+   <literal>postgres_fdw</literal>. First install the extension:
   </para>
 
 <programlisting>
@@ -613,7 +613,7 @@ CREATE EXTENSION postgres_fdw;
 
   <para>
    Then create a foreign server using <xref linkend="sql-createserver">.
-   In this example we wish to connect to a <productname>PostgreSQL</> server
+   In this example we wish to connect to a <productname>PostgreSQL</productname> server
    on host <literal>192.83.123.89</literal> listening on
    port <literal>5432</literal>.  The database to which the connection is made
    is named <literal>foreign_db</literal> on the remote server:
@@ -640,9 +640,9 @@ CREATE USER MAPPING FOR local_user
   <para>
    Now it is possible to create a foreign table with
    <xref linkend="sql-createforeigntable">.  In this example we
-   wish to access the table named <structname>some_schema.some_table</>
+   wish to access the table named <structname>some_schema.some_table</structname>
    on the remote server.  The local name for it will
-   be <structname>foreign_table</>:
+   be <structname>foreign_table</structname>:
 
 <programlisting>
 CREATE FOREIGN TABLE foreign_table (
@@ -654,8 +654,8 @@ CREATE FOREIGN TABLE foreign_table (
 </programlisting>
 
    It's essential that the data types and other properties of the columns
-   declared in <command>CREATE FOREIGN TABLE</> match the actual remote table.
-   Column names must match as well, unless you attach <literal>column_name</>
+   declared in <command>CREATE FOREIGN TABLE</command> match the actual remote table.
+   Column names must match as well, unless you attach <literal>column_name</literal>
    options to the individual columns to show how they are named in the remote
    table.
    In many cases, use of <xref linkend="sql-importforeignschema"> is

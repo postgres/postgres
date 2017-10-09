@@ -132,7 +132,7 @@
       (<application>psql</application>) was provided for interactive
       SQL queries, which used <acronym>GNU</acronym>
       <application>Readline</application>.  This largely superseded
-      the old <application>monitor</> program.
+      the old <application>monitor</application> program.
      </para>
     </listitem>
 
@@ -215,7 +215,7 @@
   </para>
 
   <para>
-   Details about what has happened in <productname>PostgreSQL</> since
+   Details about what has happened in <productname>PostgreSQL</productname> since
    then can be found in <xref linkend="release">.
   </para>
  </sect2>

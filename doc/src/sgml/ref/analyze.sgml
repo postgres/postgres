@@ -35,7 +35,7 @@ ANALYZE [ VERBOSE ] [ <replaceable class="parameter">table_and_columns</replacea
   <para>
    <command>ANALYZE</command> collects statistics about the contents
    of tables in the database, and stores the results in the <link
-   linkend="catalog-pg-statistic"><structname>pg_statistic</></>
+   linkend="catalog-pg-statistic"><structname>pg_statistic</structname></link>
    system catalog.  Subsequently, the query planner uses these
    statistics to help determine the most efficient execution plans for
    queries.
@@ -93,7 +93,7 @@ ANALYZE [ VERBOSE ] [ <replaceable class="parameter">table_and_columns</replacea
   <title>Outputs</title>
 
    <para>
-    When <literal>VERBOSE</> is specified, <command>ANALYZE</> emits
+    When <literal>VERBOSE</literal> is specified, <command>ANALYZE</command> emits
     progress messages to indicate which table is currently being
     processed.  Various statistics about the tables are printed as well.
    </para>
@@ -104,8 +104,8 @@ ANALYZE [ VERBOSE ] [ <replaceable class="parameter">table_and_columns</replacea
 
   <para>
    Foreign tables are analyzed only when explicitly selected.  Not all
-   foreign data wrappers support <command>ANALYZE</>.  If the table's
-   wrapper does not support <command>ANALYZE</>, the command prints a
+   foreign data wrappers support <command>ANALYZE</command>.  If the table's
+   wrapper does not support <command>ANALYZE</command>, the command prints a
    warning and does nothing.
   </para>
 
@@ -172,8 +172,8 @@ ANALYZE [ VERBOSE ] [ <replaceable class="parameter">table_and_columns</replacea
    <literal>pg_statistic</literal>.  In particular, setting the
    statistics target to zero disables collection of statistics for
    that column.  It might be useful to do that for columns that are
-   never used as part of the <literal>WHERE</>, <literal>GROUP BY</>,
-   or <literal>ORDER BY</> clauses of queries, since the planner will
+   never used as part of the <literal>WHERE</literal>, <literal>GROUP BY</literal>,
+   or <literal>ORDER BY</literal> clauses of queries, since the planner will
    have no use for statistics on such columns.
   </para>
 
@@ -191,7 +191,7 @@ ANALYZE [ VERBOSE ] [ <replaceable class="parameter">table_and_columns</replacea
    with the largest possible statistics target.  If this inaccuracy leads to
    bad query plans, a more accurate value can be determined manually and then
    installed with
-   <command>ALTER TABLE ... ALTER COLUMN ... SET (n_distinct = ...)</>
+   <command>ALTER TABLE ... ALTER COLUMN ... SET (n_distinct = ...)</command>
    (see <xref linkend="sql-altertable">).
   </para>
 
@@ -210,7 +210,7 @@ ANALYZE [ VERBOSE ] [ <replaceable class="parameter">table_and_columns</replacea
 
   <para>
     If any of the child tables are foreign tables whose foreign data wrappers
-    do not support <command>ANALYZE</>, those child tables are ignored while
+    do not support <command>ANALYZE</command>, those child tables are ignored while
     gathering inheritance statistics.
   </para>
 

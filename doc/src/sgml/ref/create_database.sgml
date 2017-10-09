@@ -44,21 +44,21 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
 
   <para>
    To create a database, you must be a superuser or have the special
-   <literal>CREATEDB</> privilege.
+   <literal>CREATEDB</literal> privilege.
    See <xref linkend="SQL-CREATEUSER">.
   </para>
 
   <para>
    By default, the new database will be created by cloning the standard
-   system database <literal>template1</>.  A different template can be
+   system database <literal>template1</literal>.  A different template can be
    specified by writing <literal>TEMPLATE
    <replaceable class="parameter">name</replaceable></literal>.  In particular,
-   by writing <literal>TEMPLATE template0</>, you can create a virgin
+   by writing <literal>TEMPLATE template0</literal>, you can create a virgin
    database containing only the standard objects predefined by your
    version of <productname>PostgreSQL</productname>.  This is useful
    if you wish to avoid copying
    any installation-local objects that might have been added to
-   <literal>template1</>.
+   <literal>template1</literal>.
   </para>
  </refsect1>
 
@@ -115,7 +115,7 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
       <term><replaceable class="parameter">lc_collate</replaceable></term>
       <listitem>
        <para>
-        Collation order (<literal>LC_COLLATE</>) to use in the new database.
+        Collation order (<literal>LC_COLLATE</literal>) to use in the new database.
         This affects the sort order applied to strings, e.g. in queries with
         ORDER BY, as well as the order used in indexes on text columns.
         The default is to use the collation order of the template database.
@@ -127,7 +127,7 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
       <term><replaceable class="parameter">lc_ctype</replaceable></term>
       <listitem>
        <para>
-        Character classification (<literal>LC_CTYPE</>) to use in the new
+        Character classification (<literal>LC_CTYPE</literal>) to use in the new
         database. This affects the categorization of characters, e.g. lower,
         upper and digit. The default is to use the character classification of
         the template database. See below for additional restrictions.
@@ -155,7 +155,7 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
         <para>
          If false then no one can connect to this database.  The default is
          true, allowing connections (except as restricted by other mechanisms,
-         such as <literal>GRANT</>/<literal>REVOKE CONNECT</>).
+         such as <literal>GRANT</literal>/<literal>REVOKE CONNECT</literal>).
         </para>
        </listitem>
       </varlistentry>
@@ -192,12 +192,12 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
   <title>Notes</title>
 
    <para>
-    <command>CREATE DATABASE</> cannot be executed inside a transaction
+    <command>CREATE DATABASE</command> cannot be executed inside a transaction
     block.
    </para>
 
    <para>
-    Errors along the line of <quote>could not initialize database directory</>
+    Errors along the line of <quote>could not initialize database directory</quote>
     are most likely related to insufficient permissions on the data
     directory, a full disk, or other file system problems.
    </para>
@@ -218,26 +218,26 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
    </para>
 
   <para>
-   Although it is possible to copy a database other than <literal>template1</>
+   Although it is possible to copy a database other than <literal>template1</literal>
    by specifying its name as the template, this is not (yet) intended as
    a general-purpose <quote><command>COPY DATABASE</command></quote> facility.
    The principal limitation is that no other sessions can be connected to
    the template database while it is being copied.  <command>CREATE
-   DATABASE</> will fail if any other connection exists when it starts;
+   DATABASE</command> will fail if any other connection exists when it starts;
    otherwise, new connections to the template database are locked out
-   until <command>CREATE DATABASE</> completes.
+   until <command>CREATE DATABASE</command> completes.
    See <xref linkend="manage-ag-templatedbs"> for more information.
   </para>
 
   <para>
    The character set encoding specified for the new database must be
-   compatible with the chosen locale settings (<literal>LC_COLLATE</> and
-   <literal>LC_CTYPE</>).  If the locale is <literal>C</> (or equivalently
-   <literal>POSIX</>), then all encodings are allowed, but for other
+   compatible with the chosen locale settings (<literal>LC_COLLATE</literal> and
+   <literal>LC_CTYPE</literal>).  If the locale is <literal>C</literal> (or equivalently
+   <literal>POSIX</literal>), then all encodings are allowed, but for other
    locale settings there is only one encoding that will work properly.
    (On Windows, however, UTF-8 encoding can be used with any locale.)
-   <command>CREATE DATABASE</> will allow superusers to specify
-   <literal>SQL_ASCII</> encoding regardless of the locale settings,
+   <command>CREATE DATABASE</command> will allow superusers to specify
+   <literal>SQL_ASCII</literal> encoding regardless of the locale settings,
    but this choice is deprecated and may result in misbehavior of
    character-string functions if data that is not encoding-compatible
    with the locale is stored in the database.
@@ -245,19 +245,19 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
 
   <para>
    The encoding and locale settings must match those of the template database,
-   except when <literal>template0</> is used as template.  This is because
+   except when <literal>template0</literal> is used as template.  This is because
    other databases might contain data that does not match the specified
    encoding, or might contain indexes whose sort ordering is affected by
-   <literal>LC_COLLATE</> and <literal>LC_CTYPE</>.  Copying such data would
+   <literal>LC_COLLATE</literal> and <literal>LC_CTYPE</literal>.  Copying such data would
    result in a database that is corrupt according to the new settings.
    <literal>template0</literal>, however, is known to not contain any data or
    indexes that would be affected.
   </para>
 
   <para>
-   The <literal>CONNECTION LIMIT</> option is only enforced approximately;
+   The <literal>CONNECTION LIMIT</literal> option is only enforced approximately;
    if two new sessions start at about the same time when just one
-   connection <quote>slot</> remains for the database, it is possible that
+   connection <quote>slot</quote> remains for the database, it is possible that
    both will fail.  Also, the limit is not enforced against superusers or
    background worker processes.
   </para>
@@ -275,8 +275,8 @@ CREATE DATABASE lusiadas;
   </para>
 
   <para>
-   To create a database <literal>sales</> owned by user <literal>salesapp</>
-   with a default tablespace of <literal>salesspace</>:
+   To create a database <literal>sales</literal> owned by user <literal>salesapp</literal>
+   with a default tablespace of <literal>salesspace</literal>:
 
 <programlisting>
 CREATE DATABASE sales OWNER salesapp TABLESPACE salesspace;
@@ -284,19 +284,19 @@ CREATE DATABASE sales OWNER salesapp TABLESPACE salesspace;
   </para>
 
   <para>
-   To create a database <literal>music</> with a different locale:
+   To create a database <literal>music</literal> with a different locale:
 <programlisting>
 CREATE DATABASE music
     LC_COLLATE 'sv_SE.utf8' LC_CTYPE 'sv_SE.utf8'
     TEMPLATE template0;
 </programlisting>
-    In this example, the <literal>TEMPLATE template0</> clause is required if
-    the specified locale is different from the one in <literal>template1</>.
+    In this example, the <literal>TEMPLATE template0</literal> clause is required if
+    the specified locale is different from the one in <literal>template1</literal>.
     (If it is not, then specifying the locale explicitly is redundant.)
   </para>
 
   <para>
-   To create a database <literal>music2</> with a different locale and a
+   To create a database <literal>music2</literal> with a different locale and a
    different character set encoding:
 <programlisting>
 CREATE DATABASE music2

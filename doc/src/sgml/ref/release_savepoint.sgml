@@ -109,7 +109,7 @@ COMMIT;
   <title>Compatibility</title>
 
   <para>
-   This command conforms to the <acronym>SQL</> standard.  The standard
+   This command conforms to the <acronym>SQL</acronym> standard.  The standard
    specifies that the key word <literal>SAVEPOINT</literal> is
    mandatory, but <productname>PostgreSQL</productname> allows it to
    be omitted.

@@ -449,7 +449,7 @@ checking for fop... fop
 
    <para>
     To produce HTML documentation with the stylesheet used on <ulink
-    url="https://www.postgresql.org/docs/current">postgresql.org</> instead of the
+    url="https://www.postgresql.org/docs/current">postgresql.org</ulink> instead of the
     default simple style use:
 <screen>
 <prompt>doc/src/sgml$ </prompt><userinput>make STYLE=website html</userinput>

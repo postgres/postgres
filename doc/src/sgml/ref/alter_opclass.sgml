@@ -41,7 +41,7 @@ ALTER OPERATOR CLASS <replaceable>name</replaceable> USING <replaceable class="p
   </para>
 
   <para>
-   You must own the operator class to use <command>ALTER OPERATOR CLASS</>.
+   You must own the operator class to use <command>ALTER OPERATOR CLASS</command>.
    To alter the owner, you must also be a direct or indirect member of the new
    owning role, and that role must have <literal>CREATE</literal> privilege on
    the operator class's schema.  (These restrictions enforce that altering the

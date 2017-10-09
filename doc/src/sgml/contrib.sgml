@@ -6,7 +6,7 @@
  <para>
   This appendix and the next one contain information regarding the modules that
   can be found in the <literal>contrib</literal> directory of the
-  <productname>PostgreSQL</> distribution.
+  <productname>PostgreSQL</productname> distribution.
   These include porting tools, analysis utilities,
   and plug-in features that are not part of the core PostgreSQL system,
   mainly because they address a limited audience or are too experimental
@@ -41,54 +41,54 @@
 <screen>
 <userinput>make installcheck</userinput>
 </screen>
-  once you have a <productname>PostgreSQL</> server running.
+  once you have a <productname>PostgreSQL</productname> server running.
  </para>
 
  <para>
-  If you are using a pre-packaged version of <productname>PostgreSQL</>,
+  If you are using a pre-packaged version of <productname>PostgreSQL</productname>,
   these modules are typically made available as a separate subpackage,
-  such as <literal>postgresql-contrib</>.
+  such as <literal>postgresql-contrib</literal>.
  </para>
 
  <para>
   Many modules supply new user-defined functions, operators, or types.
   To make use of one of these modules, after you have installed the code
   you need to register the new SQL objects in the database system.
-  In <productname>PostgreSQL</> 9.1 and later, this is done by executing
+  In <productname>PostgreSQL</productname> 9.1 and later, this is done by executing
   a <xref linkend="sql-createextension"> command.  In a fresh database,
   you can simply do
 
 <programlisting>
-CREATE EXTENSION <replaceable>module_name</>;
+CREATE EXTENSION <replaceable>module_name</replaceable>;
 </programlisting>
 
   This command must be run by a database superuser.  This registers the
   new SQL objects in the current database only, so you need to run this
   command in each database that you want
   the module's facilities to be available in.  Alternatively, run it in
-  database <literal>template1</> so that the extension will be copied into
+  database <literal>template1</literal> so that the extension will be copied into
   subsequently-created databases by default.
  </para>
 
  <para>
   Many modules allow you to install their objects in a schema of your
   choice.  To do that, add <literal>SCHEMA
-  <replaceable>schema_name</></literal> to the <command>CREATE EXTENSION</>
+  <replaceable>schema_name</replaceable></literal> to the <command>CREATE EXTENSION</command>
   command.  By default, the objects will be placed in your current creation
-  target schema, typically <literal>public</>.
+  target schema, typically <literal>public</literal>.
  </para>
 
  <para>
   If your database was brought forward by dump and reload from a pre-9.1
-  version of <productname>PostgreSQL</>, and you had been using the pre-9.1
+  version of <productname>PostgreSQL</productname>, and you had been using the pre-9.1
   version of the module in it, you should instead do
 
 <programlisting>
-CREATE EXTENSION <replaceable>module_name</> FROM unpackaged;
+CREATE EXTENSION <replaceable>module_name</replaceable> FROM unpackaged;
 </programlisting>
 
   This will update the pre-9.1 objects of the module into a proper
-  <firstterm>extension</> object.  Future updates to the module will be
+  <firstterm>extension</firstterm> object.  Future updates to the module will be
   managed by <xref linkend="sql-alterextension">.
   For more information about extension updates, see
   <xref linkend="extend-extensions">.
@@ -163,7 +163,7 @@ pages.
  <para>
   This appendix and the previous one contain information regarding the modules that
   can be found in the <literal>contrib</literal> directory of the
-  <productname>PostgreSQL</> distribution.  See <xref linkend="contrib"> for
+  <productname>PostgreSQL</productname> distribution.  See <xref linkend="contrib"> for
   more information about the <literal>contrib</literal> section in general and
   server extensions and plug-ins found in <literal>contrib</literal>
   specifically.

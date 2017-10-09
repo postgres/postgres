@@ -41,7 +41,7 @@ CREATE USER MAPPING [IF NOT EXISTS] FOR { <replaceable class="parameter">user_na
   <para>
    The owner of a foreign server can create user mappings for that
    server for any user.  Also, a user can create a user mapping for
-   their own user name if <literal>USAGE</> privilege on the server has
+   their own user name if <literal>USAGE</literal> privilege on the server has
    been granted to the user.
   </para>
  </refsect1>
@@ -51,7 +51,7 @@ CREATE USER MAPPING [IF NOT EXISTS] FOR { <replaceable class="parameter">user_na
 
   <variablelist>
   <varlistentry>
-    <term><literal>IF NOT EXISTS</></term>
+    <term><literal>IF NOT EXISTS</literal></term>
     <listitem>
      <para>
       Do not throw an error if a mapping of the given user to the given foreign
@@ -67,8 +67,8 @@ CREATE USER MAPPING [IF NOT EXISTS] FOR { <replaceable class="parameter">user_na
     <listitem>
      <para>
       The name of an existing user that is mapped to foreign server.
-      <literal>CURRENT_USER</> and <literal>USER</> match the name of
-      the current user.  When <literal>PUBLIC</> is specified, a
+      <literal>CURRENT_USER</literal> and <literal>USER</literal> match the name of
+      the current user.  When <literal>PUBLIC</literal> is specified, a
       so-called public mapping is created that is used when no
       user-specific mapping is applicable.
      </para>
@@ -103,7 +103,7 @@ CREATE USER MAPPING [IF NOT EXISTS] FOR { <replaceable class="parameter">user_na
   <title>Examples</title>
 
   <para>
-   Create a user mapping for user <literal>bob</>, server <literal>foo</>:
+   Create a user mapping for user <literal>bob</literal>, server <literal>foo</literal>:
 <programlisting>
 CREATE USER MAPPING FOR bob SERVER foo OPTIONS (user 'bob', password 'secret');
 </programlisting></para>

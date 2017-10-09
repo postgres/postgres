@@ -60,7 +60,7 @@ COMMIT [ WORK | TRANSACTION ]
   </para>
 
   <para>
-   Issuing <command>COMMIT</> when not inside a transaction does
+   Issuing <command>COMMIT</command> when not inside a transaction does
    no harm, but it will provoke a warning message.
   </para>
  </refsect1>

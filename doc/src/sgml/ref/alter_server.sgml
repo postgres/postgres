@@ -42,7 +42,7 @@ ALTER SERVER <replaceable class="parameter">name</replaceable> RENAME TO <replac
    To alter the server you must be the owner of the server.
    Additionally to alter the owner, you must own the server and also
    be a direct or indirect member of the new owning role, and you must
-   have <literal>USAGE</> privilege on the server's foreign-data
+   have <literal>USAGE</literal> privilege on the server's foreign-data
    wrapper.  (Note that superusers satisfy all these criteria
    automatically.)
   </para>
@@ -75,8 +75,8 @@ ALTER SERVER <replaceable class="parameter">name</replaceable> RENAME TO <replac
     <listitem>
      <para>
       Change options for the
-      server.  <literal>ADD</>, <literal>SET</>, and <literal>DROP</>
-      specify the action to be performed.  <literal>ADD</> is assumed
+      server.  <literal>ADD</literal>, <literal>SET</literal>, and <literal>DROP</literal>
+      specify the action to be performed.  <literal>ADD</literal> is assumed
       if no operation is explicitly specified.  Option names must be
       unique; names and values are also validated using the server's
       foreign-data wrapper library.
@@ -108,15 +108,15 @@ ALTER SERVER <replaceable class="parameter">name</replaceable> RENAME TO <replac
   <title>Examples</title>
 
   <para>
-   Alter server <literal>foo</>, add connection options:
+   Alter server <literal>foo</literal>, add connection options:
 <programlisting>
 ALTER SERVER foo OPTIONS (host 'foo', dbname 'foodb');
 </programlisting>
   </para>
 
   <para>
-   Alter server <literal>foo</>, change version,
-   change <literal>host</> option:
+   Alter server <literal>foo</literal>, change version,
+   change <literal>host</literal> option:
 <programlisting>
 ALTER SERVER foo VERSION '8.4' OPTIONS (SET host 'baz');
 </programlisting></para>

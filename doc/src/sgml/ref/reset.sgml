@@ -42,19 +42,19 @@ SET <replaceable class="parameter">configuration_parameter</replaceable> TO DEFA
 
   <para>
    The default value is defined as the value that the parameter would
-   have had, if no <command>SET</> had ever been issued for it in the
+   have had, if no <command>SET</command> had ever been issued for it in the
    current session.  The actual source of this value might be a
    compiled-in default, the configuration file, command-line options,
    or per-database or per-user default settings.  This is subtly different
    from defining it as <quote>the value that the parameter had at session
-   start</>, because if the value came from the configuration file, it
+   start</quote>, because if the value came from the configuration file, it
    will be reset to whatever is specified by the configuration file now.
    See <xref linkend="runtime-config"> for details.
   </para>
 
   <para>
-   The transactional behavior of <command>RESET</> is the same as
-   <command>SET</>: its effects will be undone by transaction rollback.
+   The transactional behavior of <command>RESET</command> is the same as
+   <command>SET</command>: its effects will be undone by transaction rollback.
   </para>
  </refsect1>
 
@@ -88,7 +88,7 @@ SET <replaceable class="parameter">configuration_parameter</replaceable> TO DEFA
   <title>Examples</title>
 
   <para>
-   Set the <varname>timezone</> configuration variable to its default value:
+   Set the <varname>timezone</varname> configuration variable to its default value:
 <screen>
 RESET timezone;
 </screen></para>

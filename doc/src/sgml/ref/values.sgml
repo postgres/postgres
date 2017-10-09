@@ -35,7 +35,7 @@ VALUES ( <replaceable class="parameter">expression</replaceable> [, ...] ) [, ..
   <para>
    <command>VALUES</command> computes a row value or set of row values
    specified by value expressions.  It is most commonly used to generate
-   a <quote>constant table</> within a larger command, but it can be
+   a <quote>constant table</quote> within a larger command, but it can be
    used on its own.
   </para>
 
@@ -43,18 +43,18 @@ VALUES ( <replaceable class="parameter">expression</replaceable> [, ...] ) [, ..
    When more than one row is specified, all the rows must have the same
    number of elements.  The data types of the resulting table's columns are
    determined by combining the explicit or inferred types of the expressions
-   appearing in that column, using the same rules as for <literal>UNION</>
+   appearing in that column, using the same rules as for <literal>UNION</literal>
    (see <xref linkend="typeconv-union-case">).
   </para>
 
   <para>
-   Within larger commands, <command>VALUES</> is syntactically allowed
-   anywhere that <command>SELECT</> is.  Because it is treated like a
-   <command>SELECT</> by the grammar, it is possible to use
-   the <literal>ORDER BY</>, <literal>LIMIT</> (or
+   Within larger commands, <command>VALUES</command> is syntactically allowed
+   anywhere that <command>SELECT</command> is.  Because it is treated like a
+   <command>SELECT</command> by the grammar, it is possible to use
+   the <literal>ORDER BY</literal>, <literal>LIMIT</literal> (or
    equivalently <literal>FETCH FIRST</literal>),
-   and <literal>OFFSET</> clauses with a
-   <command>VALUES</> command.
+   and <literal>OFFSET</literal> clauses with a
+   <command>VALUES</command> command.
   </para>
  </refsect1>
 
@@ -67,12 +67,12 @@ VALUES ( <replaceable class="parameter">expression</replaceable> [, ...] ) [, ..
     <listitem>
      <para>
       A constant or expression to compute and insert at the indicated place
-      in the resulting table (set of rows).  In a <command>VALUES</> list
-      appearing at the top level of an <command>INSERT</>, an
+      in the resulting table (set of rows).  In a <command>VALUES</command> list
+      appearing at the top level of an <command>INSERT</command>, an
       <replaceable class="parameter">expression</replaceable> can be replaced
       by <literal>DEFAULT</literal> to indicate that the destination column's
       default value should be inserted.  <literal>DEFAULT</literal> cannot
-      be used when <command>VALUES</> appears in other contexts.
+      be used when <command>VALUES</command> appears in other contexts.
      </para>
     </listitem>
    </varlistentry>
@@ -83,7 +83,7 @@ VALUES ( <replaceable class="parameter">expression</replaceable> [, ...] ) [, ..
      <para>
       An expression or integer constant indicating how to sort the result
       rows.  This expression can refer to the columns of the
-      <command>VALUES</> result as <literal>column1</>, <literal>column2</>,
+      <command>VALUES</command> result as <literal>column1</literal>, <literal>column2</literal>,
       etc.  For more details see
       <xref linkend="sql-orderby" endterm="sql-orderby-title">.
      </para>
@@ -127,11 +127,11 @@ VALUES ( <replaceable class="parameter">expression</replaceable> [, ...] ) [, ..
   <title>Notes</title>
 
   <para>
-   <command>VALUES</> lists with very large numbers of rows should be avoided,
+   <command>VALUES</command> lists with very large numbers of rows should be avoided,
    as you might encounter out-of-memory failures or poor performance.
-   <command>VALUES</> appearing within <command>INSERT</> is a special case
-   (because the desired column types are known from the <command>INSERT</>'s
-   target table, and need not be inferred by scanning the <command>VALUES</>
+   <command>VALUES</command> appearing within <command>INSERT</command> is a special case
+   (because the desired column types are known from the <command>INSERT</command>'s
+   target table, and need not be inferred by scanning the <command>VALUES</command>
    list), so it can handle larger lists than are practical in other contexts.
   </para>
  </refsect1>
@@ -140,7 +140,7 @@ VALUES ( <replaceable class="parameter">expression</replaceable> [, ...] ) [, ..
   <title>Examples</title>
 
   <para>
-   A bare <command>VALUES</> command:
+   A bare <command>VALUES</command> command:
 
 <programlisting>
 VALUES (1, 'one'), (2, 'two'), (3, 'three');
@@ -160,8 +160,8 @@ SELECT 3, 'three';
   </para>
 
   <para>
-   More usually, <command>VALUES</> is used within a larger SQL command.
-   The most common use is in <command>INSERT</>:
+   More usually, <command>VALUES</command> is used within a larger SQL command.
+   The most common use is in <command>INSERT</command>:
 
 <programlisting>
 INSERT INTO films (code, title, did, date_prod, kind)
@@ -170,7 +170,7 @@ INSERT INTO films (code, title, did, date_prod, kind)
   </para>
 
   <para>
-   In the context of <command>INSERT</>, entries of a <command>VALUES</> list
+   In the context of <command>INSERT</command>, entries of a <command>VALUES</command> list
    can be <literal>DEFAULT</literal> to indicate that the column default
    should be used here instead of specifying a value:
 
@@ -182,8 +182,8 @@ INSERT INTO films VALUES
   </para>
 
   <para>
-   <command>VALUES</> can also be used where a sub-<command>SELECT</> might
-   be written, for example in a <literal>FROM</> clause:
+   <command>VALUES</command> can also be used where a sub-<command>SELECT</command> might
+   be written, for example in a <literal>FROM</literal> clause:
 
 <programlisting>
 SELECT f.*
@@ -195,17 +195,17 @@ UPDATE employees SET salary = salary * v.increase
   WHERE employees.depno = v.depno AND employees.sales &gt;= v.target;
 </programlisting>
 
-   Note that an <literal>AS</> clause is required when <command>VALUES</>
-   is used in a <literal>FROM</> clause, just as is true for
-   <command>SELECT</>.  It is not required that the <literal>AS</> clause
+   Note that an <literal>AS</literal> clause is required when <command>VALUES</command>
+   is used in a <literal>FROM</literal> clause, just as is true for
+   <command>SELECT</command>.  It is not required that the <literal>AS</literal> clause
    specify names for all the columns, but it's good practice to do so.
-   (The default column names for <command>VALUES</> are <literal>column1</>,
-   <literal>column2</>, etc in <productname>PostgreSQL</productname>, but
+   (The default column names for <command>VALUES</command> are <literal>column1</literal>,
+   <literal>column2</literal>, etc in <productname>PostgreSQL</productname>, but
    these names might be different in other database systems.)
   </para>
 
   <para>
-   When <command>VALUES</> is used in <command>INSERT</>, the values are all
+   When <command>VALUES</command> is used in <command>INSERT</command>, the values are all
    automatically coerced to the data type of the corresponding destination
    column.  When it's used in other contexts, it might be necessary to specify
    the correct data type.  If the entries are all quoted literal constants,
@@ -218,9 +218,9 @@ WHERE ip_address IN (VALUES('192.168.0.1'::inet), ('192.168.0.10'), ('192.168.1.
 
   <tip>
    <para>
-    For simple <literal>IN</> tests, it's better to rely on the
+    For simple <literal>IN</literal> tests, it's better to rely on the
     <link linkend="functions-comparisons-in-scalar">list-of-scalars</link>
-    form of <literal>IN</> than to write a <command>VALUES</>
+    form of <literal>IN</literal> than to write a <command>VALUES</command>
     query as shown above.  The list of scalars method requires less writing
     and is often more efficient.
    </para>

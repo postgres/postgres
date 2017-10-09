@@ -279,7 +279,7 @@
     The table also shows that PostgreSQL's Repeatable Read implementation
     does not allow phantom reads.  Stricter behavior is permitted by the
     SQL standard: the four isolation levels only define which phenomena
-    must not happen, not which phenomena <emphasis>must</> happen.
+    must not happen, not which phenomena <emphasis>must</emphasis> happen.
     The behavior of the available isolation levels is detailed in the
     following subsections.
    </para>
@@ -317,7 +317,7 @@
     <firstterm>Read Committed</firstterm> is the default isolation
     level in <productname>PostgreSQL</productname>.  When a transaction
     uses this isolation level, a <command>SELECT</command> query
-    (without a <literal>FOR UPDATE/SHARE</> clause) sees only data
+    (without a <literal>FOR UPDATE/SHARE</literal> clause) sees only data
     committed before the query began; it never sees either uncommitted
     data or changes committed during query execution by concurrent
     transactions.  In effect, a <command>SELECT</command> query sees
@@ -345,7 +345,7 @@
     updating the originally found row.  If the first updater commits, the
     second updater will ignore the row if the first updater deleted it,
     otherwise it will attempt to apply its operation to the updated version of
-    the row.  The search condition of the command (the <literal>WHERE</> clause) is
+    the row.  The search condition of the command (the <literal>WHERE</literal> clause) is
     re-evaluated to see if the updated version of the row still matches the
     search condition.  If so, the second updater proceeds with its operation
     using the updated version of the row.  In the case of
@@ -355,19 +355,19 @@
    </para>
 
    <para>
-    <command>INSERT</command> with an <literal>ON CONFLICT DO UPDATE</> clause
+    <command>INSERT</command> with an <literal>ON CONFLICT DO UPDATE</literal> clause
     behaves similarly. In Read Committed mode, each row proposed for insertion
     will either insert or update. Unless there are unrelated errors, one of
     those two outcomes is guaranteed.  If a conflict originates in another
     transaction whose effects are not yet visible to the <command>INSERT
     </command>, the <command>UPDATE</command> clause will affect that row,
-    even though possibly <emphasis>no</> version of that row is
+    even though possibly <emphasis>no</emphasis> version of that row is
     conventionally visible to the command.
    </para>
 
    <para>
     <command>INSERT</command> with an <literal>ON CONFLICT DO
-    NOTHING</> clause may have insertion not proceed for a row due to
+    NOTHING</literal> clause may have insertion not proceed for a row due to
     the outcome of another transaction whose effects are not visible
     to the <command>INSERT</command> snapshot.  Again, this is only
     the case in Read Committed mode.
@@ -416,10 +416,10 @@ COMMIT;
     The <command>DELETE</command> will have no effect even though
     there is a <literal>website.hits = 10</literal> row before and
     after the <command>UPDATE</command>. This occurs because the
-    pre-update row value <literal>9</> is skipped, and when the
+    pre-update row value <literal>9</literal> is skipped, and when the
     <command>UPDATE</command> completes and <command>DELETE</command>
-    obtains a lock, the new row value is no longer <literal>10</> but
-    <literal>11</>, which no longer matches the criteria.
+    obtains a lock, the new row value is no longer <literal>10</literal> but
+    <literal>11</literal>, which no longer matches the criteria.
    </para>
 
    <para>
@@ -427,7 +427,7 @@ COMMIT;
     that includes all transactions committed up to that instant,
     subsequent commands in the same transaction will see the effects
     of the committed concurrent transaction in any case.  The point
-    at issue above is whether or not a <emphasis>single</> command
+    at issue above is whether or not a <emphasis>single</emphasis> command
     sees an absolutely consistent view of the database.
    </para>
 
@@ -472,9 +472,9 @@ COMMIT;
     This level is different from Read Committed in that a query in a
     repeatable read transaction sees a snapshot as of the start of the
     first non-transaction-control statement in the
-    <emphasis>transaction</>, not as of the start
+    <emphasis>transaction</emphasis>, not as of the start
     of the current statement within the transaction.  Thus, successive
-    <command>SELECT</command> commands within a <emphasis>single</>
+    <command>SELECT</command> commands within a <emphasis>single</emphasis>
     transaction see the same data, i.e., they do not see changes made by
     other transactions that committed after their own transaction started.
    </para>
@@ -587,7 +587,7 @@ ERROR:  could not serialize access due to concurrent update
 
    <para>
     As an example,
-    consider a table <structname>mytab</>, initially containing:
+    consider a table <structname>mytab</structname>, initially containing:
 <screen>
  class | value
 -------+-------
@@ -600,14 +600,14 @@ ERROR:  could not serialize access due to concurrent update
 <screen>
 SELECT SUM(value) FROM mytab WHERE class = 1;
 </screen>
-    and then inserts the result (30) as the <structfield>value</> in a
-    new row with <structfield>class</><literal> = 2</>.  Concurrently, serializable
+    and then inserts the result (30) as the <structfield>value</structfield> in a
+    new row with <structfield>class</structfield><literal> = 2</literal>.  Concurrently, serializable
     transaction B computes:
 <screen>
 SELECT SUM(value) FROM mytab WHERE class = 2;
 </screen>
     and obtains the result 300, which it inserts in a new row with
-    <structfield>class</><literal> = 1</>.  Then both transactions try to commit.
+    <structfield>class</structfield><literal> = 1</literal>.  Then both transactions try to commit.
     If either transaction were running at the Repeatable Read isolation level,
     both would be allowed to commit; but since there is no serial order of execution
     consistent with the result, using Serializable transactions will allow one
@@ -639,11 +639,11 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
    <para>
     To guarantee true serializability <productname>PostgreSQL</productname>
-    uses <firstterm>predicate locking</>, which means that it keeps locks
+    uses <firstterm>predicate locking</firstterm>, which means that it keeps locks
     which allow it to determine when a write would have had an impact on
     the result of a previous read from a concurrent transaction, had it run
     first.  In <productname>PostgreSQL</productname> these locks do not
-    cause any blocking and therefore can <emphasis>not</> play any part in
+    cause any blocking and therefore can <emphasis>not</emphasis> play any part in
     causing a deadlock.  They are used to identify and flag dependencies
     among concurrent Serializable transactions which in certain combinations
     can lead to serialization anomalies.  In contrast, a Read Committed or
@@ -659,20 +659,20 @@ ERROR:  could not serialize access due to read/write dependencies among transact
     other database systems, are based on data actually accessed by a
     transaction.  These will show up in the
     <link linkend="view-pg-locks"><structname>pg_locks</structname></link>
-    system view with a <literal>mode</> of <literal>SIReadLock</>.  The
+    system view with a <literal>mode</literal> of <literal>SIReadLock</literal>.  The
     particular locks
     acquired during execution of a query will depend on the plan used by
     the query, and multiple finer-grained locks (e.g., tuple locks) may be
     combined into fewer coarser-grained locks (e.g., page locks) during the
     course of the transaction to prevent exhaustion of the memory used to
-    track the locks.  A <literal>READ ONLY</> transaction may be able to
+    track the locks.  A <literal>READ ONLY</literal> transaction may be able to
     release its SIRead locks before completion, if it detects that no
     conflicts can still occur which could lead to a serialization anomaly.
-    In fact, <literal>READ ONLY</> transactions will often be able to
+    In fact, <literal>READ ONLY</literal> transactions will often be able to
     establish that fact at startup and avoid taking any predicate locks.
-    If you explicitly request a <literal>SERIALIZABLE READ ONLY DEFERRABLE</>
+    If you explicitly request a <literal>SERIALIZABLE READ ONLY DEFERRABLE</literal>
     transaction, it will block until it can establish this fact.  (This is
-    the <emphasis>only</> case where Serializable transactions block but
+    the <emphasis>only</emphasis> case where Serializable transactions block but
     Repeatable Read transactions don't.)  On the other hand, SIRead locks
     often need to be kept past transaction commit, until overlapping read
     write transactions complete.
@@ -695,13 +695,13 @@ ERROR:  could not serialize access due to read/write dependencies among transact
     anomalies.  The monitoring of read/write dependencies has a cost, as does
     the restart of transactions which are terminated with a serialization
     failure, but balanced against the cost and blocking involved in use of
-    explicit locks and <literal>SELECT FOR UPDATE</> or <literal>SELECT FOR
-    SHARE</>, Serializable transactions are the best performance choice
+    explicit locks and <literal>SELECT FOR UPDATE</literal> or <literal>SELECT FOR
+    SHARE</literal>, Serializable transactions are the best performance choice
     for some environments.
    </para>
 
    <para>
-    While <productname>PostgreSQL</>'s Serializable transaction isolation
+    While <productname>PostgreSQL</productname>'s Serializable transaction isolation
     level only allows concurrent transactions to commit if it can prove there
     is a serial order of execution that would produce the same effect, it
     doesn't always prevent errors from being raised that would not occur in
@@ -709,7 +709,7 @@ ERROR:  could not serialize access due to read/write dependencies among transact
     constraint violations caused by conflicts with overlapping Serializable
     transactions even after explicitly checking that the key isn't present
     before attempting to insert it.  This can be avoided by making sure
-    that <emphasis>all</> Serializable transactions that insert potentially
+    that <emphasis>all</emphasis> Serializable transactions that insert potentially
     conflicting keys explicitly check if they can do so first.  For example,
     imagine an application that asks the user for a new key and then checks
     that it doesn't exist already by trying to select it first, or generates
@@ -727,7 +727,7 @@ ERROR:  could not serialize access due to read/write dependencies among transact
     <itemizedlist>
      <listitem>
       <para>
-       Declare transactions as <literal>READ ONLY</> when possible.
+       Declare transactions as <literal>READ ONLY</literal> when possible.
       </para>
      </listitem>
      <listitem>
@@ -754,8 +754,8 @@ ERROR:  could not serialize access due to read/write dependencies among transact
      </listitem>
      <listitem>
       <para>
-       Eliminate explicit locks, <literal>SELECT FOR UPDATE</>, and
-       <literal>SELECT FOR SHARE</> where no longer needed due to the
+       Eliminate explicit locks, <literal>SELECT FOR UPDATE</literal>, and
+       <literal>SELECT FOR SHARE</literal> where no longer needed due to the
        protections automatically provided by Serializable transactions.
       </para>
      </listitem>
@@ -801,7 +801,7 @@ ERROR:  could not serialize access due to read/write dependencies among transact
     most <productname>PostgreSQL</productname> commands automatically
     acquire locks of appropriate modes to ensure that referenced
     tables are not dropped or modified in incompatible ways while the
-    command executes.  (For example, <command>TRUNCATE</> cannot safely be
+    command executes.  (For example, <command>TRUNCATE</command> cannot safely be
     executed concurrently with other operations on the same table, so it
     obtains an exclusive lock on the table to enforce that.)
    </para>
@@ -860,7 +860,7 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
         <para>
          The <command>SELECT</command> command acquires a lock of this mode on
-         referenced tables.  In general, any query that only <emphasis>reads</> a table
+         referenced tables.  In general, any query that only <emphasis>reads</emphasis> a table
          and does not modify it will acquire this lock mode.
         </para>
        </listitem>
@@ -904,7 +904,7 @@ ERROR:  could not serialize access due to read/write dependencies among transact
          acquire this lock mode on the target table (in addition to
          <literal>ACCESS SHARE</literal> locks on any other referenced
          tables).  In general, this lock mode will be acquired by any
-         command that <emphasis>modifies data</> in a table.
+         command that <emphasis>modifies data</emphasis> in a table.
         </para>
        </listitem>
       </varlistentry>
@@ -920,13 +920,13 @@ ERROR:  could not serialize access due to read/write dependencies among transact
          EXCLUSIVE</literal>, <literal>EXCLUSIVE</literal>, and
          <literal>ACCESS EXCLUSIVE</literal> lock modes.
          This mode protects a table against
-         concurrent schema changes and <command>VACUUM</> runs.
+         concurrent schema changes and <command>VACUUM</command> runs.
         </para>
 
         <para>
          Acquired by <command>VACUUM</command> (without <option>FULL</option>),
-         <command>ANALYZE</>, <command>CREATE INDEX CONCURRENTLY</>,
-         <command>CREATE STATISTICS</> and
+         <command>ANALYZE</command>, <command>CREATE INDEX CONCURRENTLY</command>,
+         <command>CREATE STATISTICS</command> and
          <command>ALTER TABLE VALIDATE</command> and other
          <command>ALTER TABLE</command> variants (for full details see
          <xref linkend="SQL-ALTERTABLE">).
@@ -1016,12 +1016,12 @@ ERROR:  could not serialize access due to read/write dependencies among transact
         </para>
 
         <para>
-         Acquired by the <command>DROP TABLE</>,
+         Acquired by the <command>DROP TABLE</command>,
          <command>TRUNCATE</command>, <command>REINDEX</command>,
          <command>CLUSTER</command>, <command>VACUUM FULL</command>,
          and <command>REFRESH MATERIALIZED VIEW</command> (without
          <option>CONCURRENTLY</option>)
-         commands. Many forms of <command>ALTER TABLE</> also acquire
+         commands. Many forms of <command>ALTER TABLE</command> also acquire
          a lock at this level. This is also the default lock mode for
          <command>LOCK TABLE</command> statements that do not specify
          a mode explicitly.
@@ -1042,9 +1042,9 @@ ERROR:  could not serialize access due to read/write dependencies among transact
     Once acquired, a lock is normally held till end of transaction.  But if a
     lock is acquired after establishing a savepoint, the lock is released
     immediately if the savepoint is rolled back to.  This is consistent with
-    the principle that <command>ROLLBACK</> cancels all effects of the
+    the principle that <command>ROLLBACK</command> cancels all effects of the
     commands since the savepoint.  The same holds for locks acquired within a
-    <application>PL/pgSQL</> exception block: an error escape from the block
+    <application>PL/pgSQL</application> exception block: an error escape from the block
     releases locks acquired within it.
    </para>
 
@@ -1204,17 +1204,17 @@ ERROR:  could not serialize access due to read/write dependencies among transact
          concurrent transaction that has run any of those commands on the
          same row,
          and will then lock and return the updated row (or no row, if the
-         row was deleted).  Within a <literal>REPEATABLE READ</> or
-         <literal>SERIALIZABLE</> transaction,
+         row was deleted).  Within a <literal>REPEATABLE READ</literal> or
+         <literal>SERIALIZABLE</literal> transaction,
          however, an error will be thrown if a row to be locked has changed
          since the transaction started.  For further discussion see
          <xref linkend="applevel-consistency">.
         </para>
         <para>
-         The <literal>FOR UPDATE</> lock mode
-         is also acquired by any <command>DELETE</> on a row, and also by an
-         <command>UPDATE</> that modifies the values on certain columns.  Currently,
-         the set of columns considered for the <command>UPDATE</> case are those that
+         The <literal>FOR UPDATE</literal> lock mode
+         is also acquired by any <command>DELETE</command> on a row, and also by an
+         <command>UPDATE</command> that modifies the values on certain columns.  Currently,
+         the set of columns considered for the <command>UPDATE</command> case are those that
          have a unique index on them that can be used in a foreign key (so partial
          indexes and expressional indexes are not considered), but this may change
          in the future.
@@ -1228,11 +1228,11 @@ ERROR:  could not serialize access due to read/write dependencies among transact
        </term>
        <listitem>
         <para>
-         Behaves similarly to <literal>FOR UPDATE</>, except that the lock
+         Behaves similarly to <literal>FOR UPDATE</literal>, except that the lock
          acquired is weaker: this lock will not block
-         <literal>SELECT FOR KEY SHARE</> commands that attempt to acquire
+         <literal>SELECT FOR KEY SHARE</literal> commands that attempt to acquire
          a lock on the same rows. This lock mode is also acquired by any
-         <command>UPDATE</> that does not acquire a <literal>FOR UPDATE</> lock.
+         <command>UPDATE</command> that does not acquire a <literal>FOR UPDATE</literal> lock.
         </para>
        </listitem>
       </varlistentry>
@@ -1243,12 +1243,12 @@ ERROR:  could not serialize access due to read/write dependencies among transact
        </term>
        <listitem>
         <para>
-         Behaves similarly to <literal>FOR NO KEY UPDATE</>, except that it
+         Behaves similarly to <literal>FOR NO KEY UPDATE</literal>, except that it
          acquires a shared lock rather than exclusive lock on each retrieved
          row.  A shared lock blocks other transactions from performing
          <command>UPDATE</command>, <command>DELETE</command>,
          <command>SELECT FOR UPDATE</command> or
-         <command>SELECT FOR NO KEY UPDATE</> on these rows, but it does not
+         <command>SELECT FOR NO KEY UPDATE</command> on these rows, but it does not
          prevent them from performing <command>SELECT FOR SHARE</command> or
          <command>SELECT FOR KEY SHARE</command>.
         </para>
@@ -1262,13 +1262,13 @@ ERROR:  could not serialize access due to read/write dependencies among transact
        <listitem>
         <para>
          Behaves similarly to <literal>FOR SHARE</literal>, except that the
-         lock is weaker: <literal>SELECT FOR UPDATE</> is blocked, but not
-         <literal>SELECT FOR NO KEY UPDATE</>.  A key-shared lock blocks
+         lock is weaker: <literal>SELECT FOR UPDATE</literal> is blocked, but not
+         <literal>SELECT FOR NO KEY UPDATE</literal>.  A key-shared lock blocks
          other transactions from performing <command>DELETE</command> or
          any <command>UPDATE</command> that changes the key values, but not
-         other <command>UPDATE</>, and neither does it prevent
-         <command>SELECT FOR NO KEY UPDATE</>, <command>SELECT FOR SHARE</>,
-         or <command>SELECT FOR KEY SHARE</>.
+         other <command>UPDATE</command>, and neither does it prevent
+         <command>SELECT FOR NO KEY UPDATE</command>, <command>SELECT FOR SHARE</command>,
+         or <command>SELECT FOR KEY SHARE</command>.
         </para>
        </listitem>
       </varlistentry>
@@ -1357,7 +1357,7 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
     <para>
      The use of explicit locking can increase the likelihood of
-     <firstterm>deadlocks</>, wherein two (or more) transactions each
+     <firstterm>deadlocks</firstterm>, wherein two (or more) transactions each
      hold locks that the other wants.  For example, if transaction 1
      acquires an exclusive lock on table A and then tries to acquire
      an exclusive lock on table B, while transaction 2 has already
@@ -1447,12 +1447,12 @@ UPDATE accounts SET balance = balance - 100.00 WHERE acctnum = 22222;
     <para>
      <productname>PostgreSQL</productname> provides a means for
      creating locks that have application-defined meanings.  These are
-     called <firstterm>advisory locks</>, because the system does not
+     called <firstterm>advisory locks</firstterm>, because the system does not
      enforce their use &mdash; it is up to the application to use them
      correctly.  Advisory locks can be useful for locking strategies
      that are an awkward fit for the MVCC model.
      For example, a common use of advisory locks is to emulate pessimistic
-     locking strategies typical of so-called <quote>flat file</> data
+     locking strategies typical of so-called <quote>flat file</quote> data
      management systems.
      While a flag stored in a table could be used for the same purpose,
      advisory locks are faster, avoid table bloat, and are automatically
@@ -1506,7 +1506,7 @@ UPDATE accounts SET balance = balance - 100.00 WHERE acctnum = 22222;
 
     <para>
      In certain cases using advisory locking methods, especially in queries
-     involving explicit ordering and <literal>LIMIT</> clauses, care must be
+     involving explicit ordering and <literal>LIMIT</literal> clauses, care must be
      taken to control the locks acquired because of the order in which SQL
      expressions are evaluated.  For example:
 <screen>
@@ -1518,7 +1518,7 @@ SELECT pg_advisory_lock(q.id) FROM
 ) q; -- ok
 </screen>
      In the above queries, the second form is dangerous because the
-     <literal>LIMIT</> is not guaranteed to be applied before the locking
+     <literal>LIMIT</literal> is not guaranteed to be applied before the locking
      function is executed.  This might cause some locks to be acquired
      that the application was not expecting, and hence would fail to release
      (until it ends the session).
@@ -1590,7 +1590,7 @@ SELECT pg_advisory_lock(q.id) FROM
      for application programmers if the application software goes through a
      framework which automatically retries transactions which are rolled
      back with a serialization failure.  It may be a good idea to set
-     <literal>default_transaction_isolation</> to <literal>serializable</>.
+     <literal>default_transaction_isolation</literal> to <literal>serializable</literal>.
      It would also be wise to take some action to ensure that no other
      transaction isolation level is used, either inadvertently or to
      subvert integrity checks, through checks of the transaction isolation
@@ -1660,7 +1660,7 @@ SELECT pg_advisory_lock(q.id) FROM
      includes some but not all post-transaction-start changes.  In such cases
      a careful person might wish to lock all tables needed for the check,
      in order to get an indisputable picture of current reality.  A
-     <literal>SHARE</> mode (or higher) lock guarantees that there are no
+     <literal>SHARE</literal> mode (or higher) lock guarantees that there are no
      uncommitted changes in the locked table, other than those of the current
      transaction.
     </para>
@@ -1675,8 +1675,8 @@ SELECT pg_advisory_lock(q.id) FROM
      transaction predates obtaining the lock, it might predate some now-committed
      changes in the table.  A repeatable read transaction's snapshot is actually
      frozen at the start of its first query or data-modification command
-     (<literal>SELECT</>, <literal>INSERT</>,
-     <literal>UPDATE</>, or <literal>DELETE</>), so
+     (<literal>SELECT</literal>, <literal>INSERT</literal>,
+     <literal>UPDATE</literal>, or <literal>DELETE</literal>), so
      it is possible to obtain locks explicitly before the snapshot is
      frozen.
     </para>

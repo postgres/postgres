@@ -43,7 +43,7 @@ CREATE OPERATOR <replaceable>name</replaceable> (
   </para>
 
   <para>
-   The operator name is a sequence of up to <symbol>NAMEDATALEN</>-1
+   The operator name is a sequence of up to <symbol>NAMEDATALEN</symbol>-1
    (63 by default) characters from the following list:
 <literallayout>
 + - * / &lt; &gt; = ~ ! @ # % ^ &amp; | ` ?
@@ -72,7 +72,7 @@ CREATE OPERATOR <replaceable>name</replaceable> (
     </listitem>
     <listitem>
      <para>
-     The use of <literal>=&gt;</> as an operator name is deprecated.  It may
+     The use of <literal>=&gt;</literal> as an operator name is deprecated.  It may
      be disallowed altogether in a future release.
      </para>
     </listitem>
@@ -86,10 +86,10 @@ CREATE OPERATOR <replaceable>name</replaceable> (
   </para>
 
   <para>
-   At least one of <literal>LEFTARG</> and <literal>RIGHTARG</> must be defined.  For
+   At least one of <literal>LEFTARG</literal> and <literal>RIGHTARG</literal> must be defined.  For
    binary operators, both must be defined. For right  unary
-   operators, only <literal>LEFTARG</> should be defined, while for left
-   unary operators only <literal>RIGHTARG</> should be defined.
+   operators, only <literal>LEFTARG</literal> should be defined, while for left
+   unary operators only <literal>RIGHTARG</literal> should be defined.
   </para>
 
   <para>
@@ -122,11 +122,11 @@ CREATE OPERATOR <replaceable>name</replaceable> (
        <para>
         The name of the operator to be defined. See above for allowable
         characters.  The name can be schema-qualified, for example
-        <literal>CREATE OPERATOR myschema.+ (...)</>.  If not, then
+        <literal>CREATE OPERATOR myschema.+ (...)</literal>.  If not, then
         the operator is created in the current schema.  Two operators
         in the same schema can have the same name if they operate on
         different data types.  This is called
-        <firstterm>overloading</>.
+        <firstterm>overloading</firstterm>.
        </para>
       </listitem>
      </varlistentry>
@@ -218,7 +218,7 @@ CREATE OPERATOR <replaceable>name</replaceable> (
   <para>
    To give a schema-qualified operator name in <replaceable
    class="parameter">com_op</replaceable> or the other optional
-   arguments, use the <literal>OPERATOR()</> syntax, for example:
+   arguments, use the <literal>OPERATOR()</literal> syntax, for example:
 <programlisting>
 COMMUTATOR = OPERATOR(myschema.===) ,
 </programlisting></para>
@@ -233,18 +233,18 @@ COMMUTATOR = OPERATOR(myschema.===) ,
 
   <para>
    It is not possible to specify an operator's lexical precedence in
-   <command>CREATE OPERATOR</>, because the parser's precedence behavior
+   <command>CREATE OPERATOR</command>, because the parser's precedence behavior
    is hard-wired.  See <xref linkend="sql-precedence"> for precedence details.
   </para>
 
   <para>
-   The obsolete options <literal>SORT1</>, <literal>SORT2</>,
-   <literal>LTCMP</>, and <literal>GTCMP</> were formerly used to
+   The obsolete options <literal>SORT1</literal>, <literal>SORT2</literal>,
+   <literal>LTCMP</literal>, and <literal>GTCMP</literal> were formerly used to
    specify the names of sort operators associated with a merge-joinable
    operator.  This is no longer necessary, since information about
    associated operators is found by looking at B-tree operator families
    instead.  If one of these options is given, it is ignored except
-   for implicitly setting <literal>MERGES</> true.
+   for implicitly setting <literal>MERGES</literal> true.
   </para>
 
   <para>

@@ -32,7 +32,7 @@
      <xref linkend="sql"> documents the <acronym>SQL</acronym> query
      language environment, including data types and functions, as well
      as user-level performance tuning.  Every
-     <productname>PostgreSQL</> user should read this.
+     <productname>PostgreSQL</productname> user should read this.
     </para>
    </listitem>
 
@@ -75,7 +75,7 @@
    <listitem>
     <para>
      <xref linkend="internals"> contains assorted information that might be of
-     use to <productname>PostgreSQL</> developers.
+     use to <productname>PostgreSQL</productname> developers.
     </para>
    </listitem>
   </itemizedlist>

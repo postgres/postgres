@@ -48,9 +48,9 @@ CREATE SCHEMA IF NOT EXISTS AUTHORIZATION <replaceable class="parameter">role_sp
    A schema is essentially a namespace:
    it contains named objects (tables, data types, functions, and operators)
    whose names can duplicate those of other objects existing in other
-   schemas.  Named objects are accessed either by <quote>qualifying</>
+   schemas.  Named objects are accessed either by <quote>qualifying</quote>
    their names with the schema name as a prefix, or by setting a search
-   path that includes the desired schema(s).  A <literal>CREATE</> command
+   path that includes the desired schema(s).  A <literal>CREATE</literal> command
    specifying an unqualified object name creates the object
    in the current schema (the one at the front of the search path,
    which can be determined with the function <function>current_schema</function>).
@@ -60,7 +60,7 @@ CREATE SCHEMA IF NOT EXISTS AUTHORIZATION <replaceable class="parameter">role_sp
    Optionally, <command>CREATE SCHEMA</command> can include subcommands
    to create objects within the new schema.  The subcommands are treated
    essentially the same as separate commands issued after creating the
-   schema, except that if the <literal>AUTHORIZATION</> clause is used,
+   schema, except that if the <literal>AUTHORIZATION</literal> clause is used,
    all the created objects will be owned by that user.
   </para>
  </refsect1>
@@ -100,10 +100,10 @@ CREATE SCHEMA IF NOT EXISTS AUTHORIZATION <replaceable class="parameter">role_sp
        <para>
         An SQL statement defining an object to be created within the
         schema. Currently, only <command>CREATE
-        TABLE</>, <command>CREATE VIEW</>, <command>CREATE
-        INDEX</>, <command>CREATE SEQUENCE</>, <command>CREATE
-        TRIGGER</> and <command>GRANT</> are accepted as clauses
-        within <command>CREATE SCHEMA</>. Other kinds of objects may
+        TABLE</command>, <command>CREATE VIEW</command>, <command>CREATE
+        INDEX</command>, <command>CREATE SEQUENCE</command>, <command>CREATE
+        TRIGGER</command> and <command>GRANT</command> are accepted as clauses
+        within <command>CREATE SCHEMA</command>. Other kinds of objects may
         be created in separate commands after the schema is created.
        </para>
       </listitem>
@@ -114,7 +114,7 @@ CREATE SCHEMA IF NOT EXISTS AUTHORIZATION <replaceable class="parameter">role_sp
       <listitem>
        <para>
         Do nothing (except issuing a notice) if a schema with the same name
-        already exists.  <replaceable class="parameter">schema_element</>
+        already exists.  <replaceable class="parameter">schema_element</replaceable>
         subcommands cannot be included when this option is used.
        </para>
       </listitem>
@@ -127,7 +127,7 @@ CREATE SCHEMA IF NOT EXISTS AUTHORIZATION <replaceable class="parameter">role_sp
 
   <para>
    To create a schema, the invoking user must have the
-   <literal>CREATE</> privilege for the current database.
+   <literal>CREATE</literal> privilege for the current database.
    (Of course, superusers bypass this check.)
   </para>
  </refsect1>
@@ -143,17 +143,17 @@ CREATE SCHEMA myschema;
   </para>
 
   <para>
-   Create a schema for user <literal>joe</>; the schema will also be
-   named <literal>joe</>:
+   Create a schema for user <literal>joe</literal>; the schema will also be
+   named <literal>joe</literal>:
 <programlisting>
 CREATE SCHEMA AUTHORIZATION joe;
 </programlisting>
   </para>
 
   <para>
-   Create a schema named <literal>test</> that will be owned by user
-   <literal>joe</>, unless there already is a schema named <literal>test</>.
-   (It does not matter whether <literal>joe</> owns the pre-existing schema.)
+   Create a schema named <literal>test</literal> that will be owned by user
+   <literal>joe</literal>, unless there already is a schema named <literal>test</literal>.
+   (It does not matter whether <literal>joe</literal> owns the pre-existing schema.)
 <programlisting>
 CREATE SCHEMA IF NOT EXISTS test AUTHORIZATION joe;
 </programlisting>
@@ -185,7 +185,7 @@ CREATE VIEW hollywood.winners AS
   <title>Compatibility</title>
 
   <para>
-   The SQL standard allows a <literal>DEFAULT CHARACTER SET</> clause
+   The SQL standard allows a <literal>DEFAULT CHARACTER SET</literal> clause
    in <command>CREATE SCHEMA</command>, as well as more subcommand
    types than are presently accepted by
    <productname>PostgreSQL</productname>.
@@ -205,7 +205,7 @@ CREATE VIEW hollywood.winners AS
    all objects within it.  <productname>PostgreSQL</productname>
    allows schemas to contain objects owned by users other than the
    schema owner.  This can happen only if the schema owner grants the
-   <literal>CREATE</> privilege on their schema to someone else, or a
+   <literal>CREATE</literal> privilege on their schema to someone else, or a
    superuser chooses to create objects in it.
   </para>
 

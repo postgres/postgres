@@ -8,7 +8,7 @@
  </indexterm>
 
  <para>
-  <filename>dict_xsyn</> (Extended Synonym Dictionary) is an example of an
+  <filename>dict_xsyn</filename> (Extended Synonym Dictionary) is an example of an
   add-on dictionary template for full-text search.  This dictionary type
   replaces words with groups of their synonyms, and so makes it possible to
   search for a word using any of its synonyms.
@@ -18,41 +18,41 @@
   <title>Configuration</title>
 
   <para>
-   A <literal>dict_xsyn</> dictionary accepts the following options:
+   A <literal>dict_xsyn</literal> dictionary accepts the following options:
   </para>
   <itemizedlist>
    <listitem>
     <para>
-     <literal>matchorig</> controls whether the original word is accepted by
-     the dictionary. Default is <literal>true</>.
+     <literal>matchorig</literal> controls whether the original word is accepted by
+     the dictionary. Default is <literal>true</literal>.
     </para>
    </listitem>
    <listitem>
     <para>
-     <literal>matchsynonyms</> controls whether the synonyms are
-     accepted by the dictionary. Default is <literal>false</>.
+     <literal>matchsynonyms</literal> controls whether the synonyms are
+     accepted by the dictionary. Default is <literal>false</literal>.
     </para>
    </listitem>
    <listitem>
     <para>
-     <literal>keeporig</> controls whether the original word is included in
-     the dictionary's output. Default is <literal>true</>.
+     <literal>keeporig</literal> controls whether the original word is included in
+     the dictionary's output. Default is <literal>true</literal>.
     </para>
    </listitem>
    <listitem>
     <para>
-     <literal>keepsynonyms</> controls whether the synonyms are included in
-     the dictionary's output. Default is <literal>true</>.
+     <literal>keepsynonyms</literal> controls whether the synonyms are included in
+     the dictionary's output. Default is <literal>true</literal>.
     </para>
    </listitem>
    <listitem>
     <para>
-     <literal>rules</> is the base name of the file containing the list of
+     <literal>rules</literal> is the base name of the file containing the list of
      synonyms.  This file must be stored in
-     <filename>$SHAREDIR/tsearch_data/</> (where <literal>$SHAREDIR</> means
-     the <productname>PostgreSQL</> installation's shared-data directory).
-     Its name must end in <literal>.rules</> (which is not to be included in
-     the <literal>rules</> parameter).
+     <filename>$SHAREDIR/tsearch_data/</filename> (where <literal>$SHAREDIR</literal> means
+     the <productname>PostgreSQL</productname> installation's shared-data directory).
+     Its name must end in <literal>.rules</literal> (which is not to be included in
+     the <literal>rules</literal> parameter).
     </para>
    </listitem>
   </itemizedlist>
@@ -71,15 +71,15 @@ word syn1 syn2 syn3
    </listitem>
    <listitem>
     <para>
-     The sharp (<literal>#</>) sign is a comment delimiter. It may appear at
+     The sharp (<literal>#</literal>) sign is a comment delimiter. It may appear at
      any position in a line.  The rest of the line will be skipped.
     </para>
    </listitem>
   </itemizedlist>
 
   <para>
-   Look at <filename>xsyn_sample.rules</>, which is installed in
-   <filename>$SHAREDIR/tsearch_data/</>, for an example.
+   Look at <filename>xsyn_sample.rules</filename>, which is installed in
+   <filename>$SHAREDIR/tsearch_data/</filename>, for an example.
   </para>
  </sect2>
 
@@ -87,8 +87,8 @@ word syn1 syn2 syn3
   <title>Usage</title>
 
   <para>
-   Installing the <literal>dict_xsyn</> extension creates a text search
-   template <literal>xsyn_template</> and a dictionary <literal>xsyn</>
+   Installing the <literal>dict_xsyn</literal> extension creates a text search
+   template <literal>xsyn_template</literal> and a dictionary <literal>xsyn</literal>
    based on it, with default parameters.  You can alter the
    parameters, for example
 

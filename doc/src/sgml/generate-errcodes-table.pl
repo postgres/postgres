@@ -30,12 +30,12 @@ while (<$errcodes>)
 		s/-/&mdash;/;
 
 		# Wrap PostgreSQL in <productname/>
-		s/PostgreSQL/<productname>PostgreSQL<\/>/g;
+		s/PostgreSQL/<productname>PostgreSQL<\/productname>/g;
 
 		print "\n\n";
 		print "<row>\n";
 		print "<entry spanname=\"span12\">";
-		print "<emphasis role=\"bold\">$_</></entry>\n";
+		print "<emphasis role=\"bold\">$_</emphasis></entry>\n";
 		print "</row>\n";
 
 		next;

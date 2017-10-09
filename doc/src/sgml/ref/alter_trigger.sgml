@@ -91,7 +91,7 @@ ALTER TRIGGER <replaceable class="parameter">name</replaceable> ON <replaceable 
    <para>
     The ability to temporarily enable or disable a trigger is provided by
     <xref linkend="SQL-ALTERTABLE">, not by
-    <command>ALTER TRIGGER</>, because <command>ALTER TRIGGER</> has no
+    <command>ALTER TRIGGER</command>, because <command>ALTER TRIGGER</command> has no
     convenient way to express the option of enabling or disabling all of
     a table's triggers at once.
    </para>
@@ -117,7 +117,7 @@ ALTER TRIGGER emp_stamp ON emp DEPENDS ON EXTENSION emplib;
   <title>Compatibility</title>
 
   <para>
-   <command>ALTER TRIGGER</command> is a <productname>PostgreSQL</>
+   <command>ALTER TRIGGER</command> is a <productname>PostgreSQL</productname>
    extension of the SQL standard.
   </para>
  </refsect1>

@@ -11,11 +11,11 @@
   The <filename>pg_prewarm</filename> module provides a convenient way
   to load relation data into either the operating system buffer cache
   or the <productname>PostgreSQL</productname> buffer cache.  Prewarming
-  can be performed manually using the <filename>pg_prewarm</> function,
-  or can be performed automatically by including <literal>pg_prewarm</> in
+  can be performed manually using the <filename>pg_prewarm</filename> function,
+  or can be performed automatically by including <literal>pg_prewarm</literal> in
   <xref linkend="guc-shared-preload-libraries">.  In the latter case, the
   system will run a background worker which periodically records the contents
-  of shared buffers in a file called <filename>autoprewarm.blocks</> and
+  of shared buffers in a file called <filename>autoprewarm.blocks</filename> and
   will, using 2 background workers, reload those same blocks after a restart.
  </para>
 
@@ -77,10 +77,10 @@ autoprewarm_dump_now() RETURNS int8
 </synopsis>
 
   <para>
-   Update <filename>autoprewarm.blocks</> immediately.  This may be useful
+   Update <filename>autoprewarm.blocks</filename> immediately.  This may be useful
    if the autoprewarm worker is not running but you anticipate running it
    after the next restart.  The return value is the number of records written
-   to <filename>autoprewarm.blocks</>.
+   to <filename>autoprewarm.blocks</filename>.
   </para>
  </sect2>
 
@@ -92,7 +92,7 @@ autoprewarm_dump_now() RETURNS int8
     <term>
      <varname>pg_prewarm.autoprewarm</varname> (<type>boolean</type>)
      <indexterm>
-      <primary><varname>pg_prewarm.autoprewarm</> configuration parameter</primary>
+      <primary><varname>pg_prewarm.autoprewarm</varname> configuration parameter</primary>
      </indexterm>
     </term>
     <listitem>
@@ -109,12 +109,12 @@ autoprewarm_dump_now() RETURNS int8
    <term>
      <varname>pg_prewarm.autoprewarm_interval</varname> (<type>int</type>)
      <indexterm>
-      <primary><varname>pg_prewarm.autoprewarm_interval</> configuration parameter</primary>
+      <primary><varname>pg_prewarm.autoprewarm_interval</varname> configuration parameter</primary>
      </indexterm>
     </term>
     <listitem>
      <para>
-      This is the interval between updates to <literal>autoprewarm.blocks</>.
+      This is the interval between updates to <literal>autoprewarm.blocks</literal>.
       The default is 300 seconds. If set to 0, the file will not be
       dumped at regular intervals, but only when the server is shut down.
      </para>

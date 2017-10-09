@@ -47,8 +47,8 @@ ALTER SEQUENCE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> S
   </para>
 
   <para>
-   You must own the sequence to use <command>ALTER SEQUENCE</>.
-   To change a sequence's schema, you must also have <literal>CREATE</>
+   You must own the sequence to use <command>ALTER SEQUENCE</command>.
+   To change a sequence's schema, you must also have <literal>CREATE</literal>
    privilege on the new schema.
    To alter the owner, you must also be a direct or indirect member of the new
    owning role, and that role must have <literal>CREATE</literal> privilege on
@@ -159,8 +159,8 @@ ALTER SEQUENCE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> S
         The optional clause <literal>START WITH <replaceable
         class="parameter">start</replaceable></literal> changes the
         recorded start value of the sequence.  This has no effect on the
-        <emphasis>current</> sequence value; it simply sets the value
-        that future <command>ALTER SEQUENCE RESTART</> commands will use.
+        <emphasis>current</emphasis> sequence value; it simply sets the value
+        that future <command>ALTER SEQUENCE RESTART</command> commands will use.
        </para>
       </listitem>
      </varlistentry>
@@ -172,13 +172,13 @@ ALTER SEQUENCE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> S
         The optional clause <literal>RESTART [ WITH <replaceable
         class="parameter">restart</replaceable> ]</literal> changes the
         current value of the sequence.  This is similar to calling the
-        <function>setval</> function with <literal>is_called</literal> =
-        <literal>false</>: the specified value will be returned by the
-        <emphasis>next</> call of <function>nextval</>.
-        Writing <literal>RESTART</> with no <replaceable
-        class="parameter">restart</> value is equivalent to supplying
-        the start value that was recorded by <command>CREATE SEQUENCE</>
-        or last set by <command>ALTER SEQUENCE START WITH</>.
+        <function>setval</function> function with <literal>is_called</literal> =
+        <literal>false</literal>: the specified value will be returned by the
+        <emphasis>next</emphasis> call of <function>nextval</function>.
+        Writing <literal>RESTART</literal> with no <replaceable
+        class="parameter">restart</replaceable> value is equivalent to supplying
+        the start value that was recorded by <command>CREATE SEQUENCE</command>
+        or last set by <command>ALTER SEQUENCE START WITH</command>.
        </para>
 
        <para>
@@ -186,7 +186,7 @@ ALTER SEQUENCE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> S
         a <literal>RESTART</literal> operation on a sequence is transactional
         and blocks concurrent transactions from obtaining numbers from the
         same sequence. If that's not the desired mode of
-        operation, <function>setval</> should be used.
+        operation, <function>setval</function> should be used.
        </para>
       </listitem>
      </varlistentry>
@@ -250,7 +250,7 @@ ALTER SEQUENCE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> S
       table must have the same owner and be in the same schema as the
       sequence.
       Specifying <literal>OWNED BY NONE</literal> removes any existing
-      association, making the sequence <quote>free-standing</>.
+      association, making the sequence <quote>free-standing</quote>.
      </para>
     </listitem>
    </varlistentry>
@@ -291,7 +291,7 @@ ALTER SEQUENCE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> S
 
   <para>
    <command>ALTER SEQUENCE</command> will not immediately affect
-   <function>nextval</> results in backends,
+   <function>nextval</function> results in backends,
    other than the current one, that have preallocated (cached) sequence
    values. They will use up all cached values prior to noticing the changed
    sequence generation parameters.  The current backend will be affected
@@ -299,7 +299,7 @@ ALTER SEQUENCE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> S
   </para>
 
   <para>
-   <command>ALTER SEQUENCE</command> does not affect the <function>currval</>
+   <command>ALTER SEQUENCE</command> does not affect the <function>currval</function>
    status for the sequence.  (Before <productname>PostgreSQL</productname>
    8.3, it sometimes did.)
   </para>
@@ -332,8 +332,8 @@ ALTER SEQUENCE serial RESTART WITH 105;
 
   <para>
    <command>ALTER SEQUENCE</command> conforms to the <acronym>SQL</acronym>
-   standard, except for the <literal>AS</literal>, <literal>START WITH</>,
-   <literal>OWNED BY</>, <literal>OWNER TO</>, <literal>RENAME TO</>, and
+   standard, except for the <literal>AS</literal>, <literal>START WITH</literal>,
+   <literal>OWNED BY</literal>, <literal>OWNER TO</literal>, <literal>RENAME TO</literal>, and
    <literal>SET SCHEMA</literal> clauses, which are
    <productname>PostgreSQL</productname> extensions.
   </para>

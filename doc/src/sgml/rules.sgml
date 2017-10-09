@@ -99,7 +99,7 @@
     <varlistentry>
     <term>
         the range table
-      <indexterm><primary>range table</></>
+      <indexterm><primary>range table</primary></indexterm>
     </term>
     <listitem>
     <para>
@@ -150,7 +150,7 @@
     <varlistentry>
     <term>
         the target list
-    <indexterm><primary>target list</></>
+    <indexterm><primary>target list</primary></indexterm>
     </term>
     <listitem>
     <para>
@@ -168,9 +168,9 @@
     <para>
         <command>DELETE</command> commands don't need a normal target list
         because they don't produce any result.  Instead, the rule system
-        adds a special <acronym>CTID</> entry to the empty target list,
+        adds a special <acronym>CTID</acronym> entry to the empty target list,
         to allow the executor to find the row to be deleted.
-        (<acronym>CTID</> is added when the result relation is an ordinary
+        (<acronym>CTID</acronym> is added when the result relation is an ordinary
         table.  If it is a view, a whole-row variable is added instead,
         as described in <xref linkend="rules-views-update">.)
     </para>
@@ -178,7 +178,7 @@
     <para>
         For <command>INSERT</command> commands, the target list describes
         the new rows that should go into the result relation. It consists of the
-        expressions in the <literal>VALUES</> clause or the ones from the
+        expressions in the <literal>VALUES</literal> clause or the ones from the
         <command>SELECT</command> clause in <literal>INSERT
         ... SELECT</literal>.  The first step of the rewrite process adds
         target list entries for any columns that were not assigned to by
@@ -193,8 +193,8 @@
         rule system, it contains just the expressions from the <literal>SET
         column = expression</literal> part of the command.  The planner will
         handle missing columns by inserting expressions that copy the values
-        from the old row into the new one.  Just as for <command>DELETE</>,
-        the rule system adds a <acronym>CTID</> or whole-row variable so that
+        from the old row into the new one.  Just as for <command>DELETE</command>,
+        the rule system adds a <acronym>CTID</acronym> or whole-row variable so that
         the executor can identify the old row to be updated.
     </para>
 
@@ -218,7 +218,7 @@
         this expression is a Boolean that tells whether the operation
         (<command>INSERT</command>, <command>UPDATE</command>,
         <command>DELETE</command>, or <command>SELECT</command>) for the
-        final result row should be executed or not. It corresponds to the <literal>WHERE</> clause
+        final result row should be executed or not. It corresponds to the <literal>WHERE</literal> clause
         of an <acronym>SQL</acronym> statement.
     </para>
     </listitem>
@@ -230,18 +230,18 @@
     </term>
     <listitem>
     <para>
-        The query's join tree shows the structure of the <literal>FROM</> clause.
+        The query's join tree shows the structure of the <literal>FROM</literal> clause.
         For a simple query like <literal>SELECT ... FROM a, b, c</literal>, the join tree is just
-        a list of the <literal>FROM</> items, because we are allowed to join them in
-        any order.  But when <literal>JOIN</> expressions, particularly outer joins,
+        a list of the <literal>FROM</literal> items, because we are allowed to join them in
+        any order.  But when <literal>JOIN</literal> expressions, particularly outer joins,
         are used, we have to join in the order shown by the joins.
-        In that case, the join tree shows the structure of the <literal>JOIN</> expressions.  The
-        restrictions associated with particular <literal>JOIN</> clauses (from <literal>ON</> or
-        <literal>USING</> expressions) are stored as qualification expressions attached
+        In that case, the join tree shows the structure of the <literal>JOIN</literal> expressions.  The
+        restrictions associated with particular <literal>JOIN</literal> clauses (from <literal>ON</literal> or
+        <literal>USING</literal> expressions) are stored as qualification expressions attached
         to those join-tree nodes.  It turns out to be convenient to store
-        the top-level <literal>WHERE</> expression as a qualification attached to the
+        the top-level <literal>WHERE</literal> expression as a qualification attached to the
         top-level join-tree item, too.  So really the join tree represents
-        both the <literal>FROM</> and <literal>WHERE</> clauses of a <command>SELECT</command>.
+        both the <literal>FROM</literal> and <literal>WHERE</literal> clauses of a <command>SELECT</command>.
     </para>
     </listitem>
     </varlistentry>
@@ -252,7 +252,7 @@
     </term>
     <listitem>
     <para>
-        The other parts of the query tree like the <literal>ORDER BY</>
+        The other parts of the query tree like the <literal>ORDER BY</literal>
         clause aren't of interest here. The rule system
         substitutes some entries there while applying rules, but that
         doesn't have much to do with the fundamentals of the rule
@@ -274,8 +274,8 @@
 </indexterm>
 
 <indexterm zone="rules-views">
- <primary>view</>
- <secondary>implementation through rules</>
+ <primary>view</primary>
+ <secondary>implementation through rules</secondary>
 </indexterm>
 
 <para>
@@ -313,7 +313,7 @@ CREATE RULE "_RETURN" AS ON SELECT TO myview DO INSTEAD
 </indexterm>
 
 <para>
-    Rules <literal>ON SELECT</> are applied to all queries as the last step, even
+    Rules <literal>ON SELECT</literal> are applied to all queries as the last step, even
     if the command given is an <command>INSERT</command>,
     <command>UPDATE</command> or <command>DELETE</command>. And they
     have different semantics from rules on the other command types in that they modify the
@@ -322,10 +322,10 @@ CREATE RULE "_RETURN" AS ON SELECT TO myview DO INSTEAD
 </para>
 
 <para>
-    Currently, there can be only one action in an <literal>ON SELECT</> rule, and it must
-    be an unconditional <command>SELECT</> action that is <literal>INSTEAD</>. This restriction was
+    Currently, there can be only one action in an <literal>ON SELECT</literal> rule, and it must
+    be an unconditional <command>SELECT</command> action that is <literal>INSTEAD</literal>. This restriction was
     required to make rules safe enough to open them for ordinary users, and
-    it restricts <literal>ON SELECT</> rules to act like views.
+    it restricts <literal>ON SELECT</literal> rules to act like views.
 </para>
 
 <para>
@@ -423,12 +423,12 @@ CREATE VIEW shoe_ready AS
 
     The <command>CREATE VIEW</command> command for the
     <literal>shoelace</literal> view (which is the simplest one we
-    have) will create a relation <literal>shoelace</> and an entry in
+    have) will create a relation <literal>shoelace</literal> and an entry in
     <structname>pg_rewrite</structname> that tells that there is a
-    rewrite rule that must be applied whenever the relation <literal>shoelace</>
+    rewrite rule that must be applied whenever the relation <literal>shoelace</literal>
     is referenced in a query's range table.  The rule has no rule
-    qualification (discussed later, with the non-<command>SELECT</> rules, since
-    <command>SELECT</> rules currently cannot have them) and it is <literal>INSTEAD</>. Note
+    qualification (discussed later, with the non-<command>SELECT</command> rules, since
+    <command>SELECT</command> rules currently cannot have them) and it is <literal>INSTEAD</literal>. Note
     that rule qualifications are not the same as query qualifications.
     The action of our rule has a query qualification.
     The action of the rule is one query tree that is a copy of the
@@ -438,7 +438,7 @@ CREATE VIEW shoe_ready AS
     <note>
     <para>
     The two extra range
-    table entries for <literal>NEW</> and <literal>OLD</> that you can see in
+    table entries for <literal>NEW</literal> and <literal>OLD</literal> that you can see in
     the <structname>pg_rewrite</structname> entry aren't of interest
     for <command>SELECT</command> rules.
     </para>
@@ -533,7 +533,7 @@ SELECT shoelace.sl_name, shoelace.sl_avail,
 </programlisting>
 
      There is one difference however: the subquery's range table has two
-     extra entries <literal>shoelace old</> and <literal>shoelace new</>.  These entries don't
+     extra entries <literal>shoelace old</literal> and <literal>shoelace new</literal>.  These entries don't
      participate directly in the query, since they aren't referenced by
      the subquery's join tree or target list.  The rewriter uses them
      to store the access privilege check information that was originally present
@@ -548,8 +548,8 @@ SELECT shoelace.sl_name, shoelace.sl_avail,
     the remaining range-table entries in the top query (in this example there
     are no more), and it will recursively check the range-table entries in
     the added subquery to see if any of them reference views.  (But it
-    won't expand <literal>old</> or <literal>new</> &mdash; otherwise we'd have infinite recursion!)
-    In this example, there are no rewrite rules for <literal>shoelace_data</> or <literal>unit</>,
+    won't expand <literal>old</literal> or <literal>new</literal> &mdash; otherwise we'd have infinite recursion!)
+    In this example, there are no rewrite rules for <literal>shoelace_data</literal> or <literal>unit</literal>,
     so rewriting is complete and the above is the final result given to
     the planner.
 </para>
@@ -671,8 +671,8 @@ SELECT shoe_ready.shoename, shoe_ready.sh_avail,
     command other than a <command>SELECT</command>, the result
     relation points to the range-table entry where the result should
     go.  Everything else is absolutely the same.  So having two tables
-    <literal>t1</> and <literal>t2</> with columns <literal>a</> and
-    <literal>b</>, the query trees for the two statements:
+    <literal>t1</literal> and <literal>t2</literal> with columns <literal>a</literal> and
+    <literal>b</literal>, the query trees for the two statements:
 
 <programlisting>
 SELECT t2.b FROM t1, t2 WHERE t1.a = t2.a;
@@ -685,27 +685,27 @@ UPDATE t1 SET b = t2.b FROM t2 WHERE t1.a = t2.a;
     <itemizedlist>
         <listitem>
         <para>
-            The range tables contain entries for the tables <literal>t1</> and <literal>t2</>.
+            The range tables contain entries for the tables <literal>t1</literal> and <literal>t2</literal>.
         </para>
         </listitem>
 
         <listitem>
         <para>
             The target lists contain one variable that points to column
-            <literal>b</> of the range table entry for table <literal>t2</>.
+            <literal>b</literal> of the range table entry for table <literal>t2</literal>.
         </para>
         </listitem>
 
         <listitem>
         <para>
-            The qualification expressions compare the columns <literal>a</> of both
+            The qualification expressions compare the columns <literal>a</literal> of both
             range-table entries for equality.
         </para>
         </listitem>
 
         <listitem>
         <para>
-            The join trees show a simple join between <literal>t1</> and <literal>t2</>.
+            The join trees show a simple join between <literal>t1</literal> and <literal>t2</literal>.
         </para>
         </listitem>
     </itemizedlist>
@@ -714,7 +714,7 @@ UPDATE t1 SET b = t2.b FROM t2 WHERE t1.a = t2.a;
    <para>
     The consequence is, that both query trees result in similar
     execution plans: They are both joins over the two tables. For the
-    <command>UPDATE</command> the missing columns from <literal>t1</> are added to
+    <command>UPDATE</command> the missing columns from <literal>t1</literal> are added to
     the target list by the planner and the final query tree will read
     as:
 
@@ -736,7 +736,7 @@ SELECT t1.a, t2.b FROM t1, t2 WHERE t1.a = t2.a;
     one is a <command>SELECT</command> command and the other is an
     <command>UPDATE</command> is handled higher up in the executor, where
     it knows that this is an <command>UPDATE</command>, and it knows that
-    this result should go into table <literal>t1</>. But which of the rows
+    this result should go into table <literal>t1</literal>. But which of the rows
     that are there has to be replaced by the new row?
 </para>
 
@@ -744,12 +744,12 @@ SELECT t1.a, t2.b FROM t1, t2 WHERE t1.a = t2.a;
     To resolve this problem, another entry is added to the target list
     in <command>UPDATE</command> (and also in
     <command>DELETE</command>) statements: the current tuple ID
-    (<acronym>CTID</>).<indexterm><primary>CTID</></>
+    (<acronym>CTID</acronym>).<indexterm><primary>CTID</primary></indexterm>
     This is a system column containing the
     file block number and position in the block for the row. Knowing
-    the table, the <acronym>CTID</> can be used to retrieve the
-    original row of <literal>t1</> to be updated.  After adding the
-    <acronym>CTID</> to the target list, the query actually looks like:
+    the table, the <acronym>CTID</acronym> can be used to retrieve the
+    original row of <literal>t1</literal> to be updated.  After adding the
+    <acronym>CTID</acronym> to the target list, the query actually looks like:
 
 <programlisting>
 SELECT t1.a, t2.b, t1.ctid FROM t1, t2 WHERE t1.a = t2.a;
@@ -759,9 +759,9 @@ SELECT t1.a, t2.b, t1.ctid FROM t1, t2 WHERE t1.a = t2.a;
     the stage. Old table rows aren't overwritten, and this
     is why <command>ROLLBACK</command> is fast. In an <command>UPDATE</command>,
     the new result row is inserted into the table (after stripping the
-    <acronym>CTID</>) and in the row header of the old row, which the
-    <acronym>CTID</> pointed to, the <literal>cmax</> and
-    <literal>xmax</> entries are set to the current command counter
+    <acronym>CTID</acronym>) and in the row header of the old row, which the
+    <acronym>CTID</acronym> pointed to, the <literal>cmax</literal> and
+    <literal>xmax</literal> entries are set to the current command counter
     and current transaction ID. Thus the old row is hidden, and after
     the transaction commits the vacuum cleaner can eventually remove
     the dead row.
@@ -780,7 +780,7 @@ SELECT t1.a, t2.b, t1.ctid FROM t1, t2 WHERE t1.a = t2.a;
     The above demonstrates how the rule system incorporates view
     definitions into the original query tree. In the second example, a
     simple <command>SELECT</command> from one view created a final
-    query tree that is a join of 4 tables (<literal>unit</> was used twice with
+    query tree that is a join of 4 tables (<literal>unit</literal> was used twice with
     different names).
 </para>
 
@@ -811,7 +811,7 @@ SELECT t1.a, t2.b, t1.ctid FROM t1, t2 WHERE t1.a = t2.a;
     <command>DELETE</command>?  Doing the substitutions
     described above would give a query tree in which the result
     relation points at a subquery range-table entry, which will not
-    work.  There are several ways in which <productname>PostgreSQL</>
+    work.  There are several ways in which <productname>PostgreSQL</productname>
     can support the appearance of updating a view, however.
 </para>
 
@@ -821,20 +821,20 @@ SELECT t1.a, t2.b, t1.ctid FROM t1, t2 WHERE t1.a = t2.a;
     underlying base relation so that the <command>INSERT</command>,
     <command>UPDATE</command>, or <command>DELETE</command> is applied to
     the base relation in the appropriate way.  Views that are
-    <quote>simple enough</> for this are called <firstterm>automatically
-    updatable</>.  For detailed information on the kinds of view that can
+    <quote>simple enough</quote> for this are called <firstterm>automatically
+    updatable</firstterm>.  For detailed information on the kinds of view that can
     be automatically updated, see <xref linkend="sql-createview">.
 </para>
 
 <para>
     Alternatively, the operation may be handled by a user-provided
-    <literal>INSTEAD OF</> trigger on the view.
+    <literal>INSTEAD OF</literal> trigger on the view.
     Rewriting works slightly differently
     in this case.  For <command>INSERT</command>, the rewriter does
     nothing at all with the view, leaving it as the result relation
     for the query.  For <command>UPDATE</command> and
     <command>DELETE</command>, it's still necessary to expand the
-    view query to produce the <quote>old</> rows that the command will
+    view query to produce the <quote>old</quote> rows that the command will
     attempt to update or delete.  So the view is expanded as normal,
     but another unexpanded range-table entry is added to the query
     to represent the view in its capacity as the result relation.
@@ -843,21 +843,21 @@ SELECT t1.a, t2.b, t1.ctid FROM t1, t2 WHERE t1.a = t2.a;
 <para>
     The problem that now arises is how to identify the rows to be
     updated in the view. Recall that when the result relation
-    is a table, a special <acronym>CTID</> entry is added to the target
+    is a table, a special <acronym>CTID</acronym> entry is added to the target
     list to identify the physical locations of the rows to be updated.
     This does not work if the result relation is a view, because a view
-    does not have any <acronym>CTID</>, since its rows do not have
+    does not have any <acronym>CTID</acronym>, since its rows do not have
     actual physical locations. Instead, for an <command>UPDATE</command>
-    or <command>DELETE</command> operation, a special <literal>wholerow</>
+    or <command>DELETE</command> operation, a special <literal>wholerow</literal>
     entry is added to the target list, which expands to include all
     columns from the view. The executor uses this value to supply the
-    <quote>old</> row to the <literal>INSTEAD OF</> trigger.  It is
+    <quote>old</quote> row to the <literal>INSTEAD OF</literal> trigger.  It is
     up to the trigger to work out what to update based on the old and
     new row values.
 </para>
 
 <para>
-    Another possibility is for the user to define <literal>INSTEAD</>
+    Another possibility is for the user to define <literal>INSTEAD</literal>
     rules that specify substitute actions for <command>INSERT</command>,
     <command>UPDATE</command>, and <command>DELETE</command> commands on
     a view. These rules will rewrite the command, typically into a command
@@ -868,8 +868,8 @@ SELECT t1.a, t2.b, t1.ctid FROM t1, t2 WHERE t1.a = t2.a;
 <para>
     Note that rules are evaluated first, rewriting the original query
     before it is planned and executed. Therefore, if a view has
-    <literal>INSTEAD OF</> triggers as well as rules on <command>INSERT</>,
-    <command>UPDATE</>, or <command>DELETE</>, then the rules will be
+    <literal>INSTEAD OF</literal> triggers as well as rules on <command>INSERT</command>,
+    <command>UPDATE</command>, or <command>DELETE</command>, then the rules will be
     evaluated first, and depending on the result, the triggers may not be
     used at all.
 </para>
@@ -883,7 +883,7 @@ SELECT t1.a, t2.b, t1.ctid FROM t1, t2 WHERE t1.a = t2.a;
 </para>
 
 <para>
-    If there are no <literal>INSTEAD</> rules or <literal>INSTEAD OF</>
+    If there are no <literal>INSTEAD</literal> rules or <literal>INSTEAD OF</literal>
     triggers for the view, and the rewriter cannot automatically rewrite
     the query as an update on the underlying base relation, an error will
     be thrown because the executor cannot update a view as such.
@@ -902,13 +902,13 @@ SELECT t1.a, t2.b, t1.ctid FROM t1, t2 WHERE t1.a = t2.a;
 </indexterm>
 
 <indexterm zone="rules-materializedviews">
- <primary>materialized view</>
- <secondary>implementation through rules</>
+ <primary>materialized view</primary>
+ <secondary>implementation through rules</secondary>
 </indexterm>
 
 <indexterm zone="rules-materializedviews">
- <primary>view</>
- <secondary>materialized</>
+ <primary>view</primary>
+ <secondary>materialized</secondary>
 </indexterm>
 
 <para>
@@ -1030,7 +1030,7 @@ SELECT count(*) FROM words WHERE word = 'caterpiler';
 (1 row)
 </programlisting>
 
-    With <command>EXPLAIN ANALYZE</>, we see:
+    With <command>EXPLAIN ANALYZE</command>, we see:
 
 <programlisting>
  Aggregate  (cost=21763.99..21764.00 rows=1 width=0) (actual time=188.180..188.181 rows=1 loops=1)
@@ -1104,7 +1104,7 @@ SELECT word FROM words ORDER BY word &lt;-&gt; 'caterpiler' LIMIT 10;
 </sect1>
 
 <sect1 id="rules-update">
-<title>Rules on <command>INSERT</>, <command>UPDATE</>, and <command>DELETE</></title>
+<title>Rules on <command>INSERT</command>, <command>UPDATE</command>, and <command>DELETE</command></title>
 
 <indexterm zone="rules-update">
  <primary>rule</primary>
@@ -1122,8 +1122,8 @@ SELECT word FROM words ORDER BY word &lt;-&gt; 'caterpiler' LIMIT 10;
 </indexterm>
 
 <para>
-    Rules that are defined on <command>INSERT</>, <command>UPDATE</>,
-    and <command>DELETE</> are significantly different from the view rules
+    Rules that are defined on <command>INSERT</command>, <command>UPDATE</command>,
+    and <command>DELETE</command> are significantly different from the view rules
     described in the previous section. First, their <command>CREATE
     RULE</command> command allows more:
 
@@ -1142,13 +1142,13 @@ SELECT word FROM words ORDER BY word &lt;-&gt; 'caterpiler' LIMIT 10;
 
         <listitem>
         <para>
-            They can be <literal>INSTEAD</> or <literal>ALSO</> (the default).
+            They can be <literal>INSTEAD</literal> or <literal>ALSO</literal> (the default).
         </para>
         </listitem>
 
         <listitem>
         <para>
-            The pseudorelations <literal>NEW</> and <literal>OLD</> become useful.
+            The pseudorelations <literal>NEW</literal> and <literal>OLD</literal> become useful.
         </para>
         </listitem>
 
@@ -1167,7 +1167,7 @@ SELECT word FROM words ORDER BY word &lt;-&gt; 'caterpiler' LIMIT 10;
 <caution>
  <para>
   In many cases, tasks that could be performed by rules
-  on <command>INSERT</>/<command>UPDATE</>/<command>DELETE</> are better done
+  on <command>INSERT</command>/<command>UPDATE</command>/<command>DELETE</command> are better done
   with triggers.  Triggers are notationally a bit more complicated, but their
   semantics are much simpler to understand.  Rules tend to have surprising
   results when the original query contains volatile functions: volatile
@@ -1177,9 +1177,9 @@ SELECT word FROM words ORDER BY word &lt;-&gt; 'caterpiler' LIMIT 10;
 
  <para>
   Also, there are some cases that are not supported by these types of rules at
-  all, notably including <literal>WITH</> clauses in the original query and
-  multiple-assignment sub-<literal>SELECT</>s in the <literal>SET</> list
-  of <command>UPDATE</> queries.  This is because copying these constructs
+  all, notably including <literal>WITH</literal> clauses in the original query and
+  multiple-assignment sub-<literal>SELECT</literal>s in the <literal>SET</literal> list
+  of <command>UPDATE</command> queries.  This is because copying these constructs
   into a rule query would result in multiple evaluations of the sub-query,
   contrary to the express intent of the query's author.
  </para>
@@ -1198,8 +1198,8 @@ CREATE [ OR REPLACE ] RULE <replaceable class="parameter">name</replaceable> AS 
 </programlisting>
 
     in mind.
-    In the following, <firstterm>update rules</> means rules that are defined
-    on <command>INSERT</>, <command>UPDATE</>, or <command>DELETE</>.
+    In the following, <firstterm>update rules</firstterm> means rules that are defined
+    on <command>INSERT</command>, <command>UPDATE</command>, or <command>DELETE</command>.
 </para>
 
 <para>
@@ -1208,16 +1208,16 @@ CREATE [ OR REPLACE ] RULE <replaceable class="parameter">name</replaceable> AS 
     object and event given in the <command>CREATE RULE</command> command.
     For update rules, the rule system creates a list of query trees.
     Initially the query-tree list is empty.
-    There can be zero (<literal>NOTHING</> key word), one, or multiple actions.
+    There can be zero (<literal>NOTHING</literal> key word), one, or multiple actions.
     To simplify, we will look at a rule with one action. This rule
-    can have a qualification or not and it can be <literal>INSTEAD</> or
-    <literal>ALSO</> (the default).
+    can have a qualification or not and it can be <literal>INSTEAD</literal> or
+    <literal>ALSO</literal> (the default).
 </para>
 
 <para>
     What is a rule qualification? It is a restriction that tells
     when the actions of the rule should be done and when not. This
-    qualification can only reference the pseudorelations <literal>NEW</> and/or <literal>OLD</>,
+    qualification can only reference the pseudorelations <literal>NEW</literal> and/or <literal>OLD</literal>,
     which basically represent the relation that was given as object (but with a
     special meaning).
 </para>
@@ -1228,8 +1228,8 @@ CREATE [ OR REPLACE ] RULE <replaceable class="parameter">name</replaceable> AS 
 
     <variablelist>
      <varlistentry>
-      <term>No qualification, with either <literal>ALSO</> or
-      <literal>INSTEAD</></term>
+      <term>No qualification, with either <literal>ALSO</literal> or
+      <literal>INSTEAD</literal></term>
       <listitem>
        <para>
         the query tree from the rule action with the original query
@@ -1239,7 +1239,7 @@ CREATE [ OR REPLACE ] RULE <replaceable class="parameter">name</replaceable> AS 
      </varlistentry>
 
      <varlistentry>
-      <term>Qualification given and <literal>ALSO</></term>
+      <term>Qualification given and <literal>ALSO</literal></term>
       <listitem>
        <para>
         the query tree from the rule action with the rule
@@ -1250,7 +1250,7 @@ CREATE [ OR REPLACE ] RULE <replaceable class="parameter">name</replaceable> AS 
      </varlistentry>
 
      <varlistentry>
-      <term>Qualification given and <literal>INSTEAD</></term>
+      <term>Qualification given and <literal>INSTEAD</literal></term>
       <listitem>
        <para>
         the query tree from the rule action with the rule
@@ -1262,17 +1262,17 @@ CREATE [ OR REPLACE ] RULE <replaceable class="parameter">name</replaceable> AS 
      </varlistentry>
     </variablelist>
 
-    Finally, if the rule is <literal>ALSO</>, the unchanged original query tree is
-    added to the list. Since only qualified <literal>INSTEAD</> rules already add the
+    Finally, if the rule is <literal>ALSO</literal>, the unchanged original query tree is
+    added to the list. Since only qualified <literal>INSTEAD</literal> rules already add the
     original query tree, we end up with either one or two output query trees
     for a rule with one action.
 </para>
 
 <para>
-    For <literal>ON INSERT</> rules, the original query (if not suppressed by <literal>INSTEAD</>)
+    For <literal>ON INSERT</literal> rules, the original query (if not suppressed by <literal>INSTEAD</literal>)
     is done before any actions added by rules.  This allows the actions to
-    see the inserted row(s).  But for <literal>ON UPDATE</> and <literal>ON
-    DELETE</> rules, the original query is done after the actions added by rules.
+    see the inserted row(s).  But for <literal>ON UPDATE</literal> and <literal>ON
+    DELETE</literal> rules, the original query is done after the actions added by rules.
     This ensures that the actions can see the to-be-updated or to-be-deleted
     rows; otherwise, the actions might do nothing because they find no rows
     matching their qualifications.
@@ -1293,12 +1293,12 @@ CREATE [ OR REPLACE ] RULE <replaceable class="parameter">name</replaceable> AS 
     The query trees found in the actions of the
     <structname>pg_rewrite</structname> system catalog are only
     templates. Since they can reference the range-table entries for
-    <literal>NEW</> and <literal>OLD</>, some substitutions have to be made before they can be
-    used. For any reference to <literal>NEW</>, the target list of the original
+    <literal>NEW</literal> and <literal>OLD</literal>, some substitutions have to be made before they can be
+    used. For any reference to <literal>NEW</literal>, the target list of the original
     query is searched for a corresponding entry. If found, that
-    entry's expression replaces the reference. Otherwise, <literal>NEW</> means the
-    same as <literal>OLD</> (for an <command>UPDATE</command>) or is replaced by
-    a null value (for an <command>INSERT</command>). Any reference to <literal>OLD</> is
+    entry's expression replaces the reference. Otherwise, <literal>NEW</literal> means the
+    same as <literal>OLD</literal> (for an <command>UPDATE</command>) or is replaced by
+    a null value (for an <command>INSERT</command>). Any reference to <literal>OLD</literal> is
     replaced by a reference to the range-table entry that is the
     result relation.
 </para>
@@ -1313,7 +1313,7 @@ CREATE [ OR REPLACE ] RULE <replaceable class="parameter">name</replaceable> AS 
 <title>A First Rule Step by Step</title>
 
 <para>
-    Say we want to trace changes to the <literal>sl_avail</> column in the
+    Say we want to trace changes to the <literal>sl_avail</literal> column in the
     <literal>shoelace_data</literal> relation. So we set up a log table
     and a rule that conditionally writes a log entry when an
     <command>UPDATE</command> is performed on
@@ -1367,7 +1367,7 @@ UPDATE shoelace_data SET sl_avail = 6
  WHERE shoelace_data.sl_name = 'sl7';
 </programlisting>
 
-    There is a rule <literal>log_shoelace</literal> that is <literal>ON UPDATE</> with the rule
+    There is a rule <literal>log_shoelace</literal> that is <literal>ON UPDATE</literal> with the rule
     qualification expression:
 
 <programlisting>
@@ -1384,15 +1384,15 @@ INSERT INTO shoelace_log VALUES (
 </programlisting>
 
     (This looks a little strange since you cannot normally write
-    <literal>INSERT ... VALUES ... FROM</>.  The <literal>FROM</>
+    <literal>INSERT ... VALUES ... FROM</literal>.  The <literal>FROM</literal>
     clause here is just to indicate that there are range-table entries
-    in the query tree for <literal>new</> and <literal>old</>.
+    in the query tree for <literal>new</literal> and <literal>old</literal>.
     These are needed so that they can be referenced by variables in
     the <command>INSERT</command> command's query tree.)
 </para>
 
 <para>
-    The rule is a qualified <literal>ALSO</> rule, so the rule system
+    The rule is a qualified <literal>ALSO</literal> rule, so the rule system
     has to return two query trees: the modified rule action and the original
     query tree. In step 1, the range table of the original query is
     incorporated into the rule's action query tree. This results in:
@@ -1406,7 +1406,7 @@ INSERT INTO shoelace_log VALUES (
 </programlisting>
 
     In step 2, the rule qualification is added to it, so the result set
-    is restricted to rows where <literal>sl_avail</> changes:
+    is restricted to rows where <literal>sl_avail</literal> changes:
 
 <programlisting>
 INSERT INTO shoelace_log VALUES (
@@ -1417,10 +1417,10 @@ INSERT INTO shoelace_log VALUES (
  <emphasis>WHERE new.sl_avail &lt;&gt; old.sl_avail</emphasis>;
 </programlisting>
 
-    (This looks even stranger, since <literal>INSERT ... VALUES</> doesn't have
-    a <literal>WHERE</> clause either, but the planner and executor will have no
+    (This looks even stranger, since <literal>INSERT ... VALUES</literal> doesn't have
+    a <literal>WHERE</literal> clause either, but the planner and executor will have no
     difficulty with it.  They need to support this same functionality
-    anyway for <literal>INSERT ... SELECT</>.)
+    anyway for <literal>INSERT ... SELECT</literal>.)
    </para>
 
    <para>
@@ -1440,7 +1440,7 @@ INSERT INTO shoelace_log VALUES (
    </para>
 
    <para>
-    Step 4 replaces references to <literal>NEW</> by the target list entries from the
+    Step 4 replaces references to <literal>NEW</literal> by the target list entries from the
     original query tree or by the matching variable references
     from the result relation:
 
@@ -1457,7 +1457,7 @@ INSERT INTO shoelace_log VALUES (
    </para>
 
    <para>
-    Step 5 changes <literal>OLD</> references into result relation references:
+    Step 5 changes <literal>OLD</literal> references into result relation references:
 
 <programlisting>
 INSERT INTO shoelace_log VALUES (
@@ -1471,7 +1471,7 @@ INSERT INTO shoelace_log VALUES (
    </para>
 
    <para>
-    That's it.  Since the rule is <literal>ALSO</>, we also output the
+    That's it.  Since the rule is <literal>ALSO</literal>, we also output the
     original query tree.  In short, the output from the rule system
     is a list of two query trees that correspond to these statements:
 
@@ -1502,8 +1502,8 @@ UPDATE shoelace_data SET sl_color = 'green'
 
     no log entry would get written.  In that case, the original query
     tree does not contain a target list entry for
-    <literal>sl_avail</>, so <literal>NEW.sl_avail</> will get
-    replaced by <literal>shoelace_data.sl_avail</>.  Thus, the extra
+    <literal>sl_avail</literal>, so <literal>NEW.sl_avail</literal> will get
+    replaced by <literal>shoelace_data.sl_avail</literal>.  Thus, the extra
     command generated by the rule is:
 
 <programlisting>
@@ -1527,8 +1527,8 @@ UPDATE shoelace_data SET sl_avail = 0
  WHERE sl_color = 'black';
 </programlisting>
 
-    four rows in fact get updated (<literal>sl1</>, <literal>sl2</>, <literal>sl3</>, and <literal>sl4</>).
-    But <literal>sl3</> already has <literal>sl_avail = 0</>.   In this case, the original
+    four rows in fact get updated (<literal>sl1</literal>, <literal>sl2</literal>, <literal>sl3</literal>, and <literal>sl4</literal>).
+    But <literal>sl3</literal> already has <literal>sl_avail = 0</literal>.   In this case, the original
     query trees qualification is different and that results
     in the extra query tree:
 
@@ -1559,7 +1559,7 @@ SELECT shoelace_data.sl_name, 0,
 <sect2 id="rules-update-views">
 <title>Cooperation with Views</title>
 
-<indexterm zone="rules-update-views"><primary>view</><secondary>updating</></>
+<indexterm zone="rules-update-views"><primary>view</primary><secondary>updating</secondary></indexterm>
 
 <para>
     A simple way to protect view relations from the mentioned
@@ -1579,7 +1579,7 @@ CREATE RULE shoe_del_protect AS ON DELETE TO shoe
     If someone now tries to do any of these operations on the view
     relation <literal>shoe</literal>, the rule system will
     apply these rules. Since the rules have
-    no actions and are <literal>INSTEAD</>, the resulting list of
+    no actions and are <literal>INSTEAD</literal>, the resulting list of
     query trees will be empty and the whole query will become
     nothing because there is nothing left to be optimized or
     executed after the rule system is done with it.
@@ -1621,8 +1621,8 @@ CREATE RULE shoelace_del AS ON DELETE TO shoelace
    </para>
 
    <para>
-    If you want to support <literal>RETURNING</> queries on the view,
-    you need to make the rules include <literal>RETURNING</> clauses that
+    If you want to support <literal>RETURNING</literal> queries on the view,
+    you need to make the rules include <literal>RETURNING</literal> clauses that
     compute the view rows.  This is usually pretty trivial for views on a
     single table, but it's a bit tedious for join views such as
     <literal>shoelace</literal>.  An example for the insert case is:
@@ -1643,9 +1643,9 @@ CREATE RULE shoelace_ins AS ON INSERT TO shoelace
             FROM unit u WHERE shoelace_data.sl_unit = u.un_name);
 </programlisting>
 
-    Note that this one rule supports both <command>INSERT</> and
-    <command>INSERT RETURNING</> queries on the view &mdash; the
-    <literal>RETURNING</> clause is simply ignored for <command>INSERT</>.
+    Note that this one rule supports both <command>INSERT</command> and
+    <command>INSERT RETURNING</command> queries on the view &mdash; the
+    <literal>RETURNING</literal> clause is simply ignored for <command>INSERT</command>.
    </para>
 
    <para>
@@ -1785,7 +1785,7 @@ UPDATE shoelace_data
    AND shoelace_data.sl_name = shoelace.sl_name;
 </programlisting>
 
-    Again it's an <literal>INSTEAD</> rule and the previous query tree is trashed.
+    Again it's an <literal>INSTEAD</literal> rule and the previous query tree is trashed.
     Note that this query still uses the view <literal>shoelace</literal>.
     But the rule system isn't finished with this step, so it continues
     and applies the <literal>_RETURN</literal> rule on it, and we get:
@@ -2041,16 +2041,16 @@ GRANT SELECT ON phone_number TO assistant;
 </programlisting>
 
     Nobody except that user (and the database superusers) can access the
-    <literal>phone_data</> table. But because of the <command>GRANT</>,
+    <literal>phone_data</literal> table. But because of the <command>GRANT</command>,
     the assistant can run a <command>SELECT</command> on the
-    <literal>phone_number</> view. The rule system will rewrite the
-    <command>SELECT</command> from <literal>phone_number</> into a
-    <command>SELECT</command> from <literal>phone_data</>.
+    <literal>phone_number</literal> view. The rule system will rewrite the
+    <command>SELECT</command> from <literal>phone_number</literal> into a
+    <command>SELECT</command> from <literal>phone_data</literal>.
     Since the user is the owner of
-    <literal>phone_number</> and therefore the owner of the rule, the
-    read access to <literal>phone_data</> is now checked against the user's
+    <literal>phone_number</literal> and therefore the owner of the rule, the
+    read access to <literal>phone_data</literal> is now checked against the user's
     privileges and the query is permitted. The check for accessing
-    <literal>phone_number</> is also performed, but this is done
+    <literal>phone_number</literal> is also performed, but this is done
     against the invoking user, so nobody but the user and the
     assistant can use it.
 </para>
@@ -2059,19 +2059,19 @@ GRANT SELECT ON phone_number TO assistant;
     The privileges are checked rule by rule. So the assistant is for now the
     only one who can see the public phone numbers. But the assistant can set up
     another view and grant access to that to the public. Then, anyone
-    can see the <literal>phone_number</> data through the assistant's view.
+    can see the <literal>phone_number</literal> data through the assistant's view.
     What the assistant cannot do is to create a view that directly
-    accesses <literal>phone_data</>.  (Actually the assistant can, but it will not work since
+    accesses <literal>phone_data</literal>.  (Actually the assistant can, but it will not work since
     every access will be denied during the permission checks.)
     And as soon as the user notices that the assistant opened
-    their <literal>phone_number</> view, the user can revoke the assistant's access. Immediately, any
+    their <literal>phone_number</literal> view, the user can revoke the assistant's access. Immediately, any
     access to the assistant's view would fail.
 </para>
 
 <para>
     One might think that this rule-by-rule checking is a security
     hole, but in fact it isn't.   But if it did not work this way, the assistant
-    could set up a table with the same columns as <literal>phone_number</> and
+    could set up a table with the same columns as <literal>phone_number</literal> and
     copy the data to there once per day. Then it's the assistant's own data and
     the assistant can grant access to everyone they want. A
     <command>GRANT</command> command means, <quote>I trust you</quote>.
@@ -2090,9 +2090,9 @@ CREATE VIEW phone_number AS
     SELECT person, phone FROM phone_data WHERE phone NOT LIKE '412%';
 </programlisting>
     This view might seem secure, since the rule system will rewrite any
-    <command>SELECT</command> from <literal>phone_number</> into a
-    <command>SELECT</command> from <literal>phone_data</> and add the
-    qualification that only entries where <literal>phone</> does not begin
+    <command>SELECT</command> from <literal>phone_number</literal> into a
+    <command>SELECT</command> from <literal>phone_data</literal> and add the
+    qualification that only entries where <literal>phone</literal> does not begin
     with 412 are wanted.  But if the user can create their own functions,
     it is not difficult to convince the planner to execute the user-defined
     function prior to the <function>NOT LIKE</function> expression.
@@ -2107,7 +2107,7 @@ $$ LANGUAGE plpgsql COST 0.0000000000000000000001;
 
 SELECT * FROM phone_number WHERE tricky(person, phone);
 </programlisting>
-    Every person and phone number in the <literal>phone_data</> table will be
+    Every person and phone number in the <literal>phone_data</literal> table will be
     printed as a <literal>NOTICE</literal>, because the planner will choose to
     execute the inexpensive <function>tricky</function> function before the
     more expensive <function>NOT LIKE</function>.  Even if the user is
@@ -2119,17 +2119,17 @@ SELECT * FROM phone_number WHERE tricky(person, phone);
 <para>
     Similar considerations apply to update rules. In the examples of
     the previous section, the owner of the tables in the example
-    database could grant the privileges <literal>SELECT</>,
-    <literal>INSERT</>, <literal>UPDATE</>, and <literal>DELETE</> on
-    the <literal>shoelace</> view to someone else, but only
-    <literal>SELECT</> on <literal>shoelace_log</>. The rule action to
+    database could grant the privileges <literal>SELECT</literal>,
+    <literal>INSERT</literal>, <literal>UPDATE</literal>, and <literal>DELETE</literal> on
+    the <literal>shoelace</literal> view to someone else, but only
+    <literal>SELECT</literal> on <literal>shoelace_log</literal>. The rule action to
     write log entries will still be executed successfully, and that
     other user could see the log entries.  But they could not create fake
     entries, nor could they manipulate or remove existing ones.  In this
     case, there is no possibility of subverting the rules by convincing
     the planner to alter the order of operations, because the only rule
-    which references <literal>shoelace_log</> is an unqualified
-    <literal>INSERT</>.  This might not be true in more complex scenarios.
+    which references <literal>shoelace_log</literal> is an unqualified
+    <literal>INSERT</literal>.  This might not be true in more complex scenarios.
 </para>
 
 <para>
@@ -2189,7 +2189,7 @@ CREATE VIEW phone_number WITH (security_barrier) AS
 
 <para>
     The <productname>PostgreSQL</productname> server returns a command
-    status string, such as <literal>INSERT 149592 1</>, for each
+    status string, such as <literal>INSERT 149592 1</literal>, for each
     command it receives.  This is simple enough when there are no rules
     involved, but what happens when the query is rewritten by rules?
 </para>
@@ -2200,10 +2200,10 @@ CREATE VIEW phone_number WITH (security_barrier) AS
     <itemizedlist>
      <listitem>
       <para>
-       If there is no unconditional <literal>INSTEAD</> rule for the query, then
+       If there is no unconditional <literal>INSTEAD</literal> rule for the query, then
        the originally given query will be executed, and its command
        status will be returned as usual.  (But note that if there were
-       any conditional <literal>INSTEAD</> rules, the negation of their qualifications
+       any conditional <literal>INSTEAD</literal> rules, the negation of their qualifications
        will have been added to the original query.  This might reduce the
        number of rows it processes, and if so the reported status will
        be affected.)
@@ -2212,10 +2212,10 @@ CREATE VIEW phone_number WITH (security_barrier) AS
 
      <listitem>
       <para>
-       If there is any unconditional <literal>INSTEAD</> rule for the query, then
+       If there is any unconditional <literal>INSTEAD</literal> rule for the query, then
        the original query will not be executed at all.  In this case,
        the server will return the command status for the last query
-       that was inserted by an <literal>INSTEAD</> rule (conditional or
+       that was inserted by an <literal>INSTEAD</literal> rule (conditional or
        unconditional) and is of the same command type
        (<command>INSERT</command>, <command>UPDATE</command>, or
        <command>DELETE</command>) as the original query.  If no query
@@ -2228,7 +2228,7 @@ CREATE VIEW phone_number WITH (security_barrier) AS
 </para>
 
 <para>
-    The programmer can ensure that any desired <literal>INSTEAD</> rule is the one
+    The programmer can ensure that any desired <literal>INSTEAD</literal> rule is the one
     that sets the command status in the second case, by giving it the
     alphabetically last rule name among the active rules, so that it
     gets applied last.
@@ -2253,7 +2253,7 @@ CREATE VIEW phone_number WITH (security_barrier) AS
     implemented using the <productname>PostgreSQL</productname>
     rule system.  One of the things that cannot be implemented by
     rules are some kinds of constraints, especially foreign keys. It is possible
-    to place a qualified rule that rewrites a command to <literal>NOTHING</>
+    to place a qualified rule that rewrites a command to <literal>NOTHING</literal>
     if the value of a column does not appear in another table.
     But then the data is silently thrown away and that's
     not a good idea. If checks for valid values are required,
@@ -2264,7 +2264,7 @@ CREATE VIEW phone_number WITH (security_barrier) AS
 <para>
     In this chapter, we focused on using rules to update views. All of
     the update rule examples in this chapter can also be implemented
-    using <literal>INSTEAD OF</> triggers on the views.  Writing such
+    using <literal>INSTEAD OF</literal> triggers on the views.  Writing such
     triggers is often easier than writing rules, particularly if complex
     logic is required to perform the update.
 </para>
@@ -2298,8 +2298,8 @@ CREATE TABLE software (
 </programlisting>
 
     Both tables have many thousands of rows and the indexes on
-    <structfield>hostname</> are unique.  The rule or trigger should
-    implement a constraint that deletes rows from <literal>software</>
+    <structfield>hostname</structfield> are unique.  The rule or trigger should
+    implement a constraint that deletes rows from <literal>software</literal>
     that reference a deleted computer.  The trigger would use this command:
 
 <programlisting>
@@ -2307,8 +2307,8 @@ DELETE FROM software WHERE hostname = $1;
 </programlisting>
 
     Since the trigger is called for each individual row deleted from
-    <literal>computer</>, it can prepare and save the plan for this
-    command and pass the <structfield>hostname</> value in the
+    <literal>computer</literal>, it can prepare and save the plan for this
+    command and pass the <structfield>hostname</structfield> value in the
     parameter.  The rule would be written as:
 
 <programlisting>
@@ -2324,7 +2324,7 @@ CREATE RULE computer_del AS ON DELETE TO computer
 DELETE FROM computer WHERE hostname = 'mypc.local.net';
 </programlisting>
 
-    the table <literal>computer</> is scanned by index (fast), and the
+    the table <literal>computer</literal> is scanned by index (fast), and the
     command issued by the trigger would also use an index scan (also fast).
     The extra command from the rule would be:
 
@@ -2348,8 +2348,8 @@ Nestloop
 
    <para>
     With the next delete we want to get rid of all the 2000 computers
-    where the <structfield>hostname</> starts with
-    <literal>old</>. There are two possible commands to do that. One
+    where the <structfield>hostname</structfield> starts with
+    <literal>old</literal>. There are two possible commands to do that. One
     is:
 
 <programlisting>
@@ -2389,17 +2389,17 @@ Nestloop
 </literallayout>
 
     This shows, that the planner does not realize that the
-    qualification for <structfield>hostname</> in
-    <literal>computer</> could also be used for an index scan on
-    <literal>software</> when there are multiple qualification
-    expressions combined with <literal>AND</>, which is what it does
+    qualification for <structfield>hostname</structfield> in
+    <literal>computer</literal> could also be used for an index scan on
+    <literal>software</literal> when there are multiple qualification
+    expressions combined with <literal>AND</literal>, which is what it does
     in the regular-expression version of the command. The trigger will
     get invoked once for each of the 2000 old computers that have to be
     deleted, and that will result in one index scan over
-    <literal>computer</> and 2000 index scans over
-    <literal>software</>. The rule implementation will do it with two
+    <literal>computer</literal> and 2000 index scans over
+    <literal>software</literal>. The rule implementation will do it with two
     commands that use indexes.  And it depends on the overall size of
-    the table <literal>software</> whether the rule will still be faster in the
+    the table <literal>software</literal> whether the rule will still be faster in the
     sequential scan situation. 2000 command executions from the trigger over the SPI
     manager take some time, even if all the index blocks will soon be in the cache.
 </para>
@@ -2412,7 +2412,7 @@ DELETE FROM computer WHERE manufacturer = 'bim';
 </programlisting>
 
     Again this could result in many rows to be deleted from
-    <literal>computer</>. So the trigger will again run many commands
+    <literal>computer</literal>. So the trigger will again run many commands
     through the executor.  The command generated by the rule will be:
 
 <programlisting>
@@ -2421,7 +2421,7 @@ DELETE FROM software WHERE computer.manufacturer = 'bim'
 </programlisting>
 
     The plan for that command will again be the nested loop over two
-    index scans, only using a different index on <literal>computer</>:
+    index scans, only using a different index on <literal>computer</literal>:
 
 <programlisting>
 Nestloop

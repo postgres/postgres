@@ -32,7 +32,7 @@ PostgreSQL documentation
 
   <para>
    <application>pg_dumpall</application> is a utility for writing out
-   (<quote>dumping</quote>) all <productname>PostgreSQL</> databases
+   (<quote>dumping</quote>) all <productname>PostgreSQL</productname> databases
    of a cluster into one script file.  The script file contains
    <acronym>SQL</acronym> commands that can be used as input to <xref
    linkend="app-psql"> to restore the databases.  It does this by
@@ -63,7 +63,7 @@ PostgreSQL documentation
   times to the <productname>PostgreSQL</productname> server (once per
   database).  If you use password authentication it will ask for
   a password each time. It is convenient to have a
-  <filename>~/.pgpass</> file in such cases. See <xref
+  <filename>~/.pgpass</filename> file in such cases. See <xref
   linkend="libpq-pgpass"> for more information.
   </para>
 
@@ -78,8 +78,8 @@ PostgreSQL documentation
 
     <variablelist>
      <varlistentry>
-      <term><option>-a</></term>
-      <term><option>--data-only</></term>
+      <term><option>-a</option></term>
+      <term><option>--data-only</option></term>
       <listitem>
        <para>
         Dump only the data, not the schema (data definitions).
@@ -93,7 +93,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         Include SQL commands to clean (drop) databases before
-        recreating them.  <command>DROP</> commands for roles and
+        recreating them.  <command>DROP</command> commands for roles and
         tablespaces are added as well.
        </para>
       </listitem>
@@ -134,13 +134,13 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-o</></term>
-      <term><option>--oids</></term>
+      <term><option>-o</option></term>
+      <term><option>--oids</option></term>
       <listitem>
        <para>
         Dump object identifiers (<acronym>OID</acronym>s) as part of the
         data for every table.  Use this option if your application references
-        the <acronym>OID</>
+        the <acronym>OID</acronym>
         columns in some way (e.g., in a foreign key constraint).
         Otherwise, this option should not be used.
        </para>
@@ -148,21 +148,21 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-O</></term>
+      <term><option>-O</option></term>
       <term><option>--no-owner</option></term>
       <listitem>
        <para>
         Do not output commands to set
         ownership of objects to match the original database.
         By default, <application>pg_dumpall</application> issues
-        <command>ALTER OWNER</> or
+        <command>ALTER OWNER</command> or
         <command>SET SESSION AUTHORIZATION</command>
         statements to set ownership of created schema elements.
         These statements
         will fail when the script is run unless it is started by a superuser
         (or the same user that owns all of the objects in the script).
         To make a script that can be restored by any user, but will give
-        that user ownership of all the objects, specify <option>-O</>.
+        that user ownership of all the objects, specify <option>-O</option>.
        </para>
       </listitem>
      </varlistentry>
@@ -193,7 +193,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         Specify the superuser user name to use when disabling triggers.
-        This is relevant only if <option>--disable-triggers</> is used.
+        This is relevant only if <option>--disable-triggers</option> is used.
         (Usually, it's better to leave this out, and instead start the
         resulting script as superuser.)
        </para>
@@ -211,21 +211,21 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-v</></term>
-      <term><option>--verbose</></term>
+      <term><option>-v</option></term>
+      <term><option>--verbose</option></term>
       <listitem>
        <para>
         Specifies verbose mode.  This will cause
         <application>pg_dumpall</application> to output start/stop
         times to the dump file, and progress messages to standard error.
-        It will also enable verbose output in <application>pg_dump</>.
+        It will also enable verbose output in <application>pg_dump</application>.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-       <term><option>-V</></term>
-       <term><option>--version</></term>
+       <term><option>-V</option></term>
+       <term><option>--version</option></term>
        <listitem>
        <para>
        Print the <application>pg_dumpall</application> version and exit.
@@ -234,9 +234,9 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-x</></term>
-      <term><option>--no-privileges</></term>
-      <term><option>--no-acl</></term>
+      <term><option>-x</option></term>
+      <term><option>--no-privileges</option></term>
+      <term><option>--no-acl</option></term>
       <listitem>
        <para>
         Prevent dumping of access privileges (grant/revoke commands).
@@ -273,7 +273,7 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>--disable-dollar-quoting</></term>
+      <term><option>--disable-dollar-quoting</option></term>
       <listitem>
        <para>
         This option disables the use of dollar quoting for function bodies,
@@ -283,7 +283,7 @@ PostgreSQL documentation
     </varlistentry>
 
      <varlistentry>
-      <term><option>--disable-triggers</></term>
+      <term><option>--disable-triggers</option></term>
       <listitem>
        <para>
         This option is relevant only when creating a data-only dump.
@@ -295,9 +295,9 @@ PostgreSQL documentation
        </para>
 
        <para>
-        Presently, the commands emitted for <option>--disable-triggers</>
+        Presently, the commands emitted for <option>--disable-triggers</option>
         must be done as superuser.  So, you should also specify
-        a superuser name with <option>-S</>, or preferably be careful to
+        a superuser name with <option>-S</option>, or preferably be careful to
         start the resulting script as a superuser.
        </para>
       </listitem>
@@ -309,7 +309,7 @@ PostgreSQL documentation
        <para>
         Use conditional commands (i.e. add an <literal>IF EXISTS</literal>
         clause) to clean databases and other objects.  This option is not valid
-        unless <option>--clean</> is also specified.
+        unless <option>--clean</option> is also specified.
        </para>
       </listitem>
      </varlistentry>
@@ -335,9 +335,9 @@ PostgreSQL documentation
        <para>
         Do not wait forever to acquire shared table locks at the beginning of
         the dump. Instead, fail if unable to lock a table within the specified
-        <replaceable class="parameter">timeout</>. The timeout may be
+        <replaceable class="parameter">timeout</replaceable>. The timeout may be
         specified in any of the formats accepted by <command>SET
-        statement_timeout</>.  Allowed values vary depending on the server
+        statement_timeout</command>.  Allowed values vary depending on the server
         version you are dumping from, but an integer number of milliseconds
         is accepted by all versions since 7.3.  This option is ignored when
         dumping from a pre-7.3 server.
@@ -426,25 +426,25 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>--quote-all-identifiers</></term>
+      <term><option>--quote-all-identifiers</option></term>
       <listitem>
        <para>
         Force quoting of all identifiers.  This option is recommended when
-        dumping a database from a server whose <productname>PostgreSQL</>
-        major version is different from <application>pg_dumpall</>'s, or when
+        dumping a database from a server whose <productname>PostgreSQL</productname>
+        major version is different from <application>pg_dumpall</application>'s, or when
         the output is intended to be loaded into a server of a different
-        major version.  By default, <application>pg_dumpall</> quotes only
+        major version.  By default, <application>pg_dumpall</application> quotes only
         identifiers that are reserved words in its own major version.
         This sometimes results in compatibility issues when dealing with
         servers of other versions that may have slightly different sets
-        of reserved words.  Using <option>--quote-all-identifiers</> prevents
+        of reserved words.  Using <option>--quote-all-identifiers</option> prevents
         such issues, at the price of a harder-to-read dump script.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><option>--load-via-partition-root</></term>
+      <term><option>--load-via-partition-root</option></term>
       <listitem>
        <para>
         When dumping a COPY or INSERT statement for a partitioned table,
@@ -459,11 +459,11 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>--use-set-session-authorization</></term>
+      <term><option>--use-set-session-authorization</option></term>
       <listitem>
        <para>
-        Output SQL-standard <command>SET SESSION AUTHORIZATION</> commands
-        instead of <command>ALTER OWNER</> commands to determine object
+        Output SQL-standard <command>SET SESSION AUTHORIZATION</command> commands
+        instead of <command>ALTER OWNER</command> commands to determine object
         ownership.  This makes the dump more standards compatible, but
         depending on the history of the objects in the dump, might not restore
         properly.
@@ -472,8 +472,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-       <term><option>-?</></term>
-       <term><option>--help</></term>
+       <term><option>-?</option></term>
+       <term><option>--help</option></term>
        <listitem>
        <para>
        Show help about <application>pg_dumpall</application> command line
@@ -498,7 +498,7 @@ PostgreSQL documentation
         string. See <xref linkend="libpq-connstring"> for more information.
        </para>
        <para>
-        The option is called <literal>--dbname</> for consistency with other
+        The option is called <literal>--dbname</literal> for consistency with other
         client applications, but because <application>pg_dumpall</application>
         needs to connect to many databases, database name in the connection
         string will be ignored. Use <literal>-l</literal> option to specify
@@ -559,8 +559,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-w</></term>
-      <term><option>--no-password</></term>
+      <term><option>-w</option></term>
+      <term><option>--no-password</option></term>
       <listitem>
        <para>
         Never issue a password prompt.  If the server requires
@@ -588,14 +588,14 @@ PostgreSQL documentation
         for a password if the server demands password authentication.
         However, <application>pg_dumpall</application> will waste a
         connection attempt finding out that the server wants a password.
-        In some cases it is worth typing <option>-W</> to avoid the extra
+        In some cases it is worth typing <option>-W</option> to avoid the extra
         connection attempt.
        </para>
 
        <para>
         Note that the password prompt will occur again for each database
         to be dumped.  Usually, it's better to set up a
-        <filename>~/.pgpass</> file than to rely on manual password entry.
+        <filename>~/.pgpass</filename> file than to rely on manual password entry.
        </para>
       </listitem>
      </varlistentry>
@@ -605,11 +605,11 @@ PostgreSQL documentation
       <listitem>
        <para>
         Specifies a role name to be used to create the dump.
-        This option causes <application>pg_dumpall</> to issue a
-        <command>SET ROLE</> <replaceable class="parameter">rolename</>
+        This option causes <application>pg_dumpall</application> to issue a
+        <command>SET ROLE</command> <replaceable class="parameter">rolename</replaceable>
         command after connecting to the database. It is useful when the
-        authenticated user (specified by <option>-U</>) lacks privileges
-        needed by <application>pg_dumpall</>, but can switch to a role with
+        authenticated user (specified by <option>-U</option>) lacks privileges
+        needed by <application>pg_dumpall</application>, but can switch to a role with
         the required rights.  Some installations have a policy against
         logging in directly as a superuser, and use of this option allows
         dumps to be made without violating the policy.
@@ -640,8 +640,8 @@ PostgreSQL documentation
   </variablelist>
 
   <para>
-   This utility, like most other <productname>PostgreSQL</> utilities,
-   also uses the environment variables supported by <application>libpq</>
+   This utility, like most other <productname>PostgreSQL</productname> utilities,
+   also uses the environment variables supported by <application>libpq</application>
    (see <xref linkend="libpq-envars">).
   </para>
 
@@ -658,9 +658,9 @@ PostgreSQL documentation
   </para>
 
   <para>
-   Once restored, it is wise to run <command>ANALYZE</> on each
+   Once restored, it is wise to run <command>ANALYZE</command> on each
    database so the optimizer has useful statistics. You
-   can also run <command>vacuumdb -a -z</> to analyze all
+   can also run <command>vacuumdb -a -z</command> to analyze all
    databases.
   </para>
 

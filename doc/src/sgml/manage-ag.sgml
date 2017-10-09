@@ -3,7 +3,7 @@
 <chapter id="managing-databases">
  <title>Managing Databases</title>
 
- <indexterm zone="managing-databases"><primary>database</></>
+ <indexterm zone="managing-databases"><primary>database</primary></indexterm>
 
  <para>
   Every instance of a running <productname>PostgreSQL</productname>
@@ -26,7 +26,7 @@
    (<quote>database objects</quote>).  Generally, every database
    object (tables, functions, etc.) belongs to one and only one
    database.  (However there are a few system catalogs, for example
-   <literal>pg_database</>, that belong to a whole cluster and
+   <literal>pg_database</literal>, that belong to a whole cluster and
    are accessible from each database within the cluster.)  More
    accurately, a database is a collection of schemas and the schemas
    contain the tables, functions, etc.  So the full hierarchy is:
@@ -41,7 +41,7 @@
    connection. However, an application is not restricted in the number of
    connections it opens to the same or other databases.  Databases are
    physically separated and access control is managed at the
-   connection level.  If one <productname>PostgreSQL</> server
+   connection level.  If one <productname>PostgreSQL</productname> server
    instance is to house projects or users that should be separate and
    for the most part unaware of each other, it is therefore
    recommended to put them into separate databases.  If the projects
@@ -53,23 +53,23 @@
   </para>
 
   <para>
-   Databases are created with the <command>CREATE DATABASE</> command
+   Databases are created with the <command>CREATE DATABASE</command> command
    (see <xref linkend="manage-ag-createdb">) and destroyed with the
-   <command>DROP DATABASE</> command
+   <command>DROP DATABASE</command> command
    (see <xref linkend="manage-ag-dropdb">).
    To determine the set of existing databases, examine the
-   <structname>pg_database</> system catalog, for example
+   <structname>pg_database</structname> system catalog, for example
 <synopsis>
 SELECT datname FROM pg_database;
 </synopsis>
-   The <xref linkend="app-psql"> program's <literal>\l</> meta-command
-   and <option>-l</> command-line option are also useful for listing the
+   The <xref linkend="app-psql"> program's <literal>\l</literal> meta-command
+   and <option>-l</option> command-line option are also useful for listing the
    existing databases.
   </para>
 
   <note>
    <para>
-    The <acronym>SQL</> standard calls databases <quote>catalogs</>, but there
+    The <acronym>SQL</acronym> standard calls databases <quote>catalogs</quote>, but there
     is no difference in practice.
    </para>
   </note>
@@ -78,10 +78,10 @@ SELECT datname FROM pg_database;
  <sect1 id="manage-ag-createdb">
   <title>Creating a Database</title>
 
-  <indexterm><primary>CREATE DATABASE</></>
+  <indexterm><primary>CREATE DATABASE</primary></indexterm>
 
   <para>
-   In order to create a database, the <productname>PostgreSQL</>
+   In order to create a database, the <productname>PostgreSQL</productname>
    server must be up and running (see <xref
    linkend="server-start">).
   </para>
@@ -90,9 +90,9 @@ SELECT datname FROM pg_database;
    Databases are created with the SQL command
    <xref linkend="sql-createdatabase">:
 <synopsis>
-CREATE DATABASE <replaceable>name</>;
+CREATE DATABASE <replaceable>name</replaceable>;
 </synopsis>
-   where <replaceable>name</> follows the usual rules for
+   where <replaceable>name</replaceable> follows the usual rules for
    <acronym>SQL</acronym> identifiers.  The current role automatically
    becomes the owner of the new database. It is the privilege of the
    owner of a database to remove it later (which also removes all
@@ -107,25 +107,25 @@ CREATE DATABASE <replaceable>name</>;
   <para>
    Since you need to be connected to the database server in order to
    execute the <command>CREATE DATABASE</command> command, the
-   question remains how the <emphasis>first</> database at any given
+   question remains how the <emphasis>first</emphasis> database at any given
    site can be created. The first database is always created by the
-   <command>initdb</> command when the data storage area is
+   <command>initdb</command> command when the data storage area is
    initialized. (See <xref linkend="creating-cluster">.)  This
    database is called
-   <literal>postgres</>.<indexterm><primary>postgres</></> So to
-   create the first <quote>ordinary</> database you can connect to
-   <literal>postgres</>.
+   <literal>postgres</literal>.<indexterm><primary>postgres</primary></indexterm> So to
+   create the first <quote>ordinary</quote> database you can connect to
+   <literal>postgres</literal>.
   </para>
 
   <para>
    A second database,
-   <literal>template1</literal>,<indexterm><primary>template1</></>
+   <literal>template1</literal>,<indexterm><primary>template1</primary></indexterm>
    is also created during database cluster initialization.  Whenever a
    new database is created within the
    cluster, <literal>template1</literal> is essentially cloned.
-   This means that any changes you make in <literal>template1</> are
+   This means that any changes you make in <literal>template1</literal> are
    propagated to all subsequently created databases. Because of this,
-   avoid creating objects in <literal>template1</> unless you want them
+   avoid creating objects in <literal>template1</literal> unless you want them
    propagated to every newly created database.  More details
    appear in <xref linkend="manage-ag-templatedbs">.
   </para>
@@ -133,17 +133,17 @@ CREATE DATABASE <replaceable>name</>;
   <para>
    As a convenience, there is a program you can
    execute from the shell to create new databases,
-   <command>createdb</>.<indexterm><primary>createdb</></>
+   <command>createdb</command>.<indexterm><primary>createdb</primary></indexterm>
 
 <synopsis>
 createdb <replaceable class="parameter">dbname</replaceable>
 </synopsis>
 
-   <command>createdb</> does no magic. It connects to the <literal>postgres</>
-   database and issues the <command>CREATE DATABASE</> command,
+   <command>createdb</command> does no magic. It connects to the <literal>postgres</literal>
+   database and issues the <command>CREATE DATABASE</command> command,
    exactly as described above.
    The <xref linkend="app-createdb"> reference page contains the invocation
-   details. Note that <command>createdb</> without any arguments will create
+   details. Note that <command>createdb</command> without any arguments will create
    a database with the current user name.
   </para>
 
@@ -160,11 +160,11 @@ createdb <replaceable class="parameter">dbname</replaceable>
    configure and manage it themselves.  To achieve that, use one of the
    following commands:
 <programlisting>
-CREATE DATABASE <replaceable>dbname</> OWNER <replaceable>rolename</>;
+CREATE DATABASE <replaceable>dbname</replaceable> OWNER <replaceable>rolename</replaceable>;
 </programlisting>
    from the SQL environment, or:
 <programlisting>
-createdb -O <replaceable>rolename</> <replaceable>dbname</>
+createdb -O <replaceable>rolename</replaceable> <replaceable>dbname</replaceable>
 </programlisting>
    from the shell.
    Only the superuser is allowed to create a database for
@@ -176,55 +176,55 @@ createdb -O <replaceable>rolename</> <replaceable>dbname</>
   <title>Template Databases</title>
 
   <para>
-   <command>CREATE DATABASE</> actually works by copying an existing
+   <command>CREATE DATABASE</command> actually works by copying an existing
    database.  By default, it copies the standard system database named
-   <literal>template1</>.<indexterm><primary>template1</></> Thus that
-   database is the <quote>template</> from which new databases are
-   made.  If you add objects to <literal>template1</>, these objects
+   <literal>template1</literal>.<indexterm><primary>template1</primary></indexterm> Thus that
+   database is the <quote>template</quote> from which new databases are
+   made.  If you add objects to <literal>template1</literal>, these objects
    will be copied into subsequently created user databases.  This
    behavior allows site-local modifications to the standard set of
    objects in databases.  For example, if you install the procedural
-   language <application>PL/Perl</> in <literal>template1</>, it will
+   language <application>PL/Perl</application> in <literal>template1</literal>, it will
    automatically be available in user databases without any extra
    action being taken when those databases are created.
   </para>
 
   <para>
    There is a second standard system database named
-   <literal>template0</>.<indexterm><primary>template0</></> This
+   <literal>template0</literal>.<indexterm><primary>template0</primary></indexterm> This
    database contains the same data as the initial contents of
-   <literal>template1</>, that is, only the standard objects
+   <literal>template1</literal>, that is, only the standard objects
    predefined by your version of
-   <productname>PostgreSQL</productname>.  <literal>template0</>
+   <productname>PostgreSQL</productname>.  <literal>template0</literal>
    should never be changed after the database cluster has been
    initialized.  By instructing
-   <command>CREATE DATABASE</> to copy <literal>template0</> instead
-   of <literal>template1</>, you can create a <quote>virgin</> user
+   <command>CREATE DATABASE</command> to copy <literal>template0</literal> instead
+   of <literal>template1</literal>, you can create a <quote>virgin</quote> user
    database that contains none of the site-local additions in
-   <literal>template1</>.  This is particularly handy when restoring a
-   <literal>pg_dump</> dump: the dump script should be restored in a
+   <literal>template1</literal>.  This is particularly handy when restoring a
+   <literal>pg_dump</literal> dump: the dump script should be restored in a
    virgin database to ensure that one recreates the correct contents
    of the dumped database, without conflicting with objects that
-   might have been added to <literal>template1</> later on.
+   might have been added to <literal>template1</literal> later on.
   </para>
 
   <para>
-   Another common reason for copying <literal>template0</> instead
-   of <literal>template1</> is that new encoding and locale settings
-   can be specified when copying <literal>template0</>, whereas a copy
-   of <literal>template1</> must use the same settings it does.
-   This is because <literal>template1</> might contain encoding-specific
-   or locale-specific data, while <literal>template0</> is known not to.
+   Another common reason for copying <literal>template0</literal> instead
+   of <literal>template1</literal> is that new encoding and locale settings
+   can be specified when copying <literal>template0</literal>, whereas a copy
+   of <literal>template1</literal> must use the same settings it does.
+   This is because <literal>template1</literal> might contain encoding-specific
+   or locale-specific data, while <literal>template0</literal> is known not to.
   </para>
 
   <para>
    To create a database by copying <literal>template0</literal>, use:
 <programlisting>
-CREATE DATABASE <replaceable>dbname</> TEMPLATE template0;
+CREATE DATABASE <replaceable>dbname</replaceable> TEMPLATE template0;
 </programlisting>
    from the SQL environment, or:
 <programlisting>
-createdb -T template0 <replaceable>dbname</>
+createdb -T template0 <replaceable>dbname</replaceable>
 </programlisting>
    from the shell.
   </para>
@@ -232,49 +232,49 @@ createdb -T template0 <replaceable>dbname</>
   <para>
    It is possible to create additional template databases, and indeed
    one can copy any database in a cluster by specifying its name
-   as the template for <command>CREATE DATABASE</>.  It is important to
+   as the template for <command>CREATE DATABASE</command>.  It is important to
    understand, however, that this is not (yet) intended as
    a general-purpose <quote><command>COPY DATABASE</command></quote> facility.
    The principal limitation is that no other sessions can be connected to
    the source database while it is being copied.  <command>CREATE
-   DATABASE</> will fail if any other connection exists when it starts;
+   DATABASE</command> will fail if any other connection exists when it starts;
    during the copy operation, new connections to the source database
    are prevented.
   </para>
 
   <para>
-   Two useful flags exist in <literal>pg_database</literal><indexterm><primary>pg_database</></> for each
+   Two useful flags exist in <literal>pg_database</literal><indexterm><primary>pg_database</primary></indexterm> for each
    database: the columns <literal>datistemplate</literal> and
    <literal>datallowconn</literal>.  <literal>datistemplate</literal>
    can be set to indicate that a database is intended as a template for
-   <command>CREATE DATABASE</>.  If this flag is set, the database can be
-   cloned by any user with <literal>CREATEDB</> privileges; if it is not set,
+   <command>CREATE DATABASE</command>.  If this flag is set, the database can be
+   cloned by any user with <literal>CREATEDB</literal> privileges; if it is not set,
    only superusers and the owner of the database can clone it.
    If <literal>datallowconn</literal> is false, then no new connections
    to that database will be allowed (but existing sessions are not terminated
    simply by setting the flag false).  The <literal>template0</literal>
-   database is normally marked <literal>datallowconn = false</> to prevent its modification.
+   database is normally marked <literal>datallowconn = false</literal> to prevent its modification.
    Both <literal>template0</literal> and <literal>template1</literal>
-   should always be marked with <literal>datistemplate = true</>.
+   should always be marked with <literal>datistemplate = true</literal>.
   </para>
 
   <note>
    <para>
-    <literal>template1</> and <literal>template0</> do not have any special
-    status beyond the fact that the name <literal>template1</> is the default
-    source database name for <command>CREATE DATABASE</>.
-    For example, one could drop <literal>template1</> and recreate it from
-    <literal>template0</> without any ill effects.  This course of action
+    <literal>template1</literal> and <literal>template0</literal> do not have any special
+    status beyond the fact that the name <literal>template1</literal> is the default
+    source database name for <command>CREATE DATABASE</command>.
+    For example, one could drop <literal>template1</literal> and recreate it from
+    <literal>template0</literal> without any ill effects.  This course of action
     might be advisable if one has carelessly added a bunch of junk in
-    <literal>template1</>. (To delete <literal>template1</literal>,
-    it must have <literal>pg_database.datistemplate = false</>.)
+    <literal>template1</literal>. (To delete <literal>template1</literal>,
+    it must have <literal>pg_database.datistemplate = false</literal>.)
    </para>
 
    <para>
-    The <literal>postgres</> database is also created when a database
+    The <literal>postgres</literal> database is also created when a database
     cluster is initialized.  This database is meant as a default database for
     users and applications to connect to. It is simply a copy of
-    <literal>template1</> and can be dropped and recreated if necessary.
+    <literal>template1</literal> and can be dropped and recreated if necessary.
    </para>
   </note>
  </sect1>
@@ -284,7 +284,7 @@ createdb -T template0 <replaceable>dbname</>
 
   <para>
    Recall from <xref linkend="runtime-config"> that the
-   <productname>PostgreSQL</> server provides a large number of
+   <productname>PostgreSQL</productname> server provides a large number of
    run-time configuration variables.  You can set database-specific
    default values for many of these settings.
   </para>
@@ -305,8 +305,8 @@ ALTER DATABASE mydb SET geqo TO off;
    session started.
    Note that users can still alter this setting during their sessions; it
    will only be the default.  To undo any such setting, use
-   <literal>ALTER DATABASE <replaceable>dbname</> RESET
-   <replaceable>varname</></literal>.
+   <literal>ALTER DATABASE <replaceable>dbname</replaceable> RESET
+   <replaceable>varname</replaceable></literal>.
   </para>
  </sect1>
 
@@ -315,9 +315,9 @@ ALTER DATABASE mydb SET geqo TO off;
 
   <para>
    Databases are destroyed with the command
-   <xref linkend="sql-dropdatabase">:<indexterm><primary>DROP DATABASE</></>
+   <xref linkend="sql-dropdatabase">:<indexterm><primary>DROP DATABASE</primary></indexterm>
 <synopsis>
-DROP DATABASE <replaceable>name</>;
+DROP DATABASE <replaceable>name</replaceable>;
 </synopsis>
    Only the owner of the database, or
    a superuser, can drop a database. Dropping a database removes all objects
@@ -329,19 +329,19 @@ DROP DATABASE <replaceable>name</>;
   <para>
    You cannot execute the <command>DROP DATABASE</command> command
    while connected to the victim database. You can, however, be
-   connected to any other database, including the <literal>template1</>
+   connected to any other database, including the <literal>template1</literal>
    database.
-   <literal>template1</> would be the only option for dropping the last user database of a
+   <literal>template1</literal> would be the only option for dropping the last user database of a
    given cluster.
   </para>
 
   <para>
    For convenience, there is also a shell program to drop
-   databases, <xref linkend="app-dropdb">:<indexterm><primary>dropdb</></>
+   databases, <xref linkend="app-dropdb">:<indexterm><primary>dropdb</primary></indexterm>
 <synopsis>
 dropdb <replaceable class="parameter">dbname</replaceable>
 </synopsis>
-   (Unlike <command>createdb</>, it is not the default action to drop
+   (Unlike <command>createdb</command>, it is not the default action to drop
    the database with the current user name.)
   </para>
  </sect1>
@@ -354,7 +354,7 @@ dropdb <replaceable class="parameter">dbname</replaceable>
   </indexterm>
 
   <para>
-   Tablespaces in <productname>PostgreSQL</> allow database administrators to
+   Tablespaces in <productname>PostgreSQL</productname> allow database administrators to
    define locations in the file system where the files representing
    database objects can be stored. Once created, a tablespace can be referred
    to by name when creating database objects.
@@ -362,7 +362,7 @@ dropdb <replaceable class="parameter">dbname</replaceable>
 
   <para>
    By using tablespaces, an administrator can control the disk layout
-   of a <productname>PostgreSQL</> installation. This is useful in at
+   of a <productname>PostgreSQL</productname> installation. This is useful in at
    least two ways. First, if the partition or volume on which the
    cluster was initialized runs out of space and cannot be extended,
    a tablespace can be created on a different partition and used
@@ -397,12 +397,12 @@ dropdb <replaceable class="parameter">dbname</replaceable>
   <para>
    To define a tablespace, use the <xref
    linkend="sql-createtablespace">
-   command, for example:<indexterm><primary>CREATE TABLESPACE</></>:
+   command, for example:<indexterm><primary>CREATE TABLESPACE</primary></indexterm>:
 <programlisting>
 CREATE TABLESPACE fastspace LOCATION '/ssd1/postgresql/data';
 </programlisting>
    The location must be an existing, empty directory that is owned by
-   the <productname>PostgreSQL</> operating system user.  All objects subsequently
+   the <productname>PostgreSQL</productname> operating system user.  All objects subsequently
    created within the tablespace will be stored in files underneath this
    directory.  The location must not be on removable or transient storage,
    as the cluster might fail to function if the tablespace is missing
@@ -414,7 +414,7 @@ CREATE TABLESPACE fastspace LOCATION '/ssd1/postgresql/data';
     There is usually not much point in making more than one
     tablespace per logical file system, since you cannot control the location
     of individual files within a logical file system.  However,
-    <productname>PostgreSQL</> does not enforce any such limitation, and
+    <productname>PostgreSQL</productname> does not enforce any such limitation, and
     indeed it is not directly aware of the file system boundaries on your
     system.  It just stores files in the directories you tell it to use.
    </para>
@@ -423,15 +423,15 @@ CREATE TABLESPACE fastspace LOCATION '/ssd1/postgresql/data';
   <para>
    Creation of the tablespace itself must be done as a database superuser,
    but after that you can allow ordinary database users to use it.
-   To do that, grant them the <literal>CREATE</> privilege on it.
+   To do that, grant them the <literal>CREATE</literal> privilege on it.
   </para>
 
   <para>
    Tables, indexes, and entire databases can be assigned to
-   particular tablespaces. To do so, a user with the <literal>CREATE</>
+   particular tablespaces. To do so, a user with the <literal>CREATE</literal>
    privilege on a given tablespace must pass the tablespace name as a
    parameter to the relevant command. For example, the following creates
-   a table in the tablespace <literal>space1</>:
+   a table in the tablespace <literal>space1</literal>:
 <programlisting>
 CREATE TABLE foo(i int) TABLESPACE space1;
 </programlisting>
@@ -443,9 +443,9 @@ CREATE TABLE foo(i int) TABLESPACE space1;
 SET default_tablespace = space1;
 CREATE TABLE foo(i int);
 </programlisting>
-   When <varname>default_tablespace</> is set to anything but an empty
-   string, it supplies an implicit <literal>TABLESPACE</> clause for
-   <command>CREATE TABLE</> and <command>CREATE INDEX</> commands that
+   When <varname>default_tablespace</varname> is set to anything but an empty
+   string, it supplies an implicit <literal>TABLESPACE</literal> clause for
+   <command>CREATE TABLE</command> and <command>CREATE INDEX</command> commands that
    do not have an explicit one.
   </para>
 
@@ -463,9 +463,9 @@ CREATE TABLE foo(i int);
    The tablespace associated with a database is used to store the system
    catalogs of that database.  Furthermore, it is the default tablespace
    used for tables, indexes, and temporary files created within the database,
-   if no <literal>TABLESPACE</> clause is given and no other selection is
-   specified by <varname>default_tablespace</> or
-   <varname>temp_tablespaces</> (as appropriate).
+   if no <literal>TABLESPACE</literal> clause is given and no other selection is
+   specified by <varname>default_tablespace</varname> or
+   <varname>temp_tablespaces</varname> (as appropriate).
    If a database is created without specifying a tablespace for it,
    it uses the same tablespace as the template database it is copied from.
   </para>
@@ -473,12 +473,12 @@ CREATE TABLE foo(i int);
   <para>
    Two tablespaces are automatically created when the database cluster
    is initialized.  The
-   <literal>pg_global</> tablespace is used for shared system catalogs. The
-   <literal>pg_default</> tablespace is the default tablespace of the
-   <literal>template1</> and <literal>template0</> databases (and, therefore,
+   <literal>pg_global</literal> tablespace is used for shared system catalogs. The
+   <literal>pg_default</literal> tablespace is the default tablespace of the
+   <literal>template1</literal> and <literal>template0</literal> databases (and, therefore,
    will be the default tablespace for other databases as well, unless
-   overridden by a <literal>TABLESPACE</> clause in <command>CREATE
-   DATABASE</>).
+   overridden by a <literal>TABLESPACE</literal> clause in <command>CREATE
+   DATABASE</command>).
   </para>
 
   <para>
@@ -501,25 +501,25 @@ CREATE TABLE foo(i int);
 <synopsis>
 SELECT spcname FROM pg_tablespace;
 </synopsis>
-   The <xref linkend="app-psql"> program's <literal>\db</> meta-command
+   The <xref linkend="app-psql"> program's <literal>\db</literal> meta-command
    is also useful for listing the existing tablespaces.
   </para>
 
   <para>
-   <productname>PostgreSQL</> makes use of symbolic links
+   <productname>PostgreSQL</productname> makes use of symbolic links
    to simplify the implementation of tablespaces. This
-   means that tablespaces can be used <emphasis>only</> on systems
+   means that tablespaces can be used <emphasis>only</emphasis> on systems
    that support symbolic links.
   </para>
 
   <para>
-   The directory <filename>$PGDATA/pg_tblspc</> contains symbolic links that
+   The directory <filename>$PGDATA/pg_tblspc</filename> contains symbolic links that
    point to each of the non-built-in tablespaces defined in the cluster.
    Although not recommended, it is possible to adjust the tablespace
    layout by hand by redefining these links. Under no circumstances perform
    this operation while the server is running. Note that in PostgreSQL 9.1
-   and earlier you will also need to update the <structname>pg_tablespace</>
-   catalog with the new locations. (If you do not, <literal>pg_dump</> will
+   and earlier you will also need to update the <structname>pg_tablespace</structname>
+   catalog with the new locations. (If you do not, <literal>pg_dump</literal> will
    continue to output the old tablespace locations.)
   </para>
 

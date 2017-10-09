@@ -285,42 +285,42 @@ DELETE FROM products;
 
   <para>
    Sometimes it is useful to obtain data from modified rows while they are
-   being manipulated.  The <command>INSERT</>, <command>UPDATE</>,
-   and <command>DELETE</> commands all have an
-   optional <literal>RETURNING</> clause that supports this.  Use
-   of <literal>RETURNING</> avoids performing an extra database query to
+   being manipulated.  The <command>INSERT</command>, <command>UPDATE</command>,
+   and <command>DELETE</command> commands all have an
+   optional <literal>RETURNING</literal> clause that supports this.  Use
+   of <literal>RETURNING</literal> avoids performing an extra database query to
    collect the data, and is especially valuable when it would otherwise be
    difficult to identify the modified rows reliably.
   </para>
 
   <para>
-   The allowed contents of a <literal>RETURNING</> clause are the same as
-   a <command>SELECT</> command's output list
+   The allowed contents of a <literal>RETURNING</literal> clause are the same as
+   a <command>SELECT</command> command's output list
    (see <xref linkend="queries-select-lists">).  It can contain column
    names of the command's target table, or value expressions using those
-   columns.  A common shorthand is <literal>RETURNING *</>, which selects
+   columns.  A common shorthand is <literal>RETURNING *</literal>, which selects
    all columns of the target table in order.
   </para>
 
   <para>
-   In an <command>INSERT</>, the data available to <literal>RETURNING</> is
+   In an <command>INSERT</command>, the data available to <literal>RETURNING</literal> is
    the row as it was inserted.  This is not so useful in trivial inserts,
    since it would just repeat the data provided by the client.  But it can
    be very handy when relying on computed default values.  For example,
-   when using a <link linkend="datatype-serial"><type>serial</></link>
-   column to provide unique identifiers, <literal>RETURNING</> can return
+   when using a <link linkend="datatype-serial"><type>serial</type></link>
+   column to provide unique identifiers, <literal>RETURNING</literal> can return
    the ID assigned to a new row:
 <programlisting>
 CREATE TABLE users (firstname text, lastname text, id serial primary key);
 
 INSERT INTO users (firstname, lastname) VALUES ('Joe', 'Cool') RETURNING id;
 </programlisting>
-   The <literal>RETURNING</> clause is also very useful
-   with <literal>INSERT ... SELECT</>.
+   The <literal>RETURNING</literal> clause is also very useful
+   with <literal>INSERT ... SELECT</literal>.
   </para>
 
   <para>
-   In an <command>UPDATE</>, the data available to <literal>RETURNING</> is
+   In an <command>UPDATE</command>, the data available to <literal>RETURNING</literal> is
    the new content of the modified row.  For example:
 <programlisting>
 UPDATE products SET price = price * 1.10
@@ -330,7 +330,7 @@ UPDATE products SET price = price * 1.10
   </para>
 
   <para>
-   In a <command>DELETE</>, the data available to <literal>RETURNING</> is
+   In a <command>DELETE</command>, the data available to <literal>RETURNING</literal> is
    the content of the deleted row.  For example:
 <programlisting>
 DELETE FROM products
@@ -341,9 +341,9 @@ DELETE FROM products
 
   <para>
    If there are triggers (<xref linkend="triggers">) on the target table,
-   the data available to <literal>RETURNING</> is the row as modified by
+   the data available to <literal>RETURNING</literal> is the row as modified by
    the triggers.  Thus, inspecting columns computed by triggers is another
-   common use-case for <literal>RETURNING</>.
+   common use-case for <literal>RETURNING</literal>.
   </para>
 
  </sect1>

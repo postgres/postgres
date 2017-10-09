@@ -8,14 +8,14 @@
  </indexterm>
 
  <para>
-  The <filename>fuzzystrmatch</> module provides several
+  The <filename>fuzzystrmatch</filename> module provides several
   functions to determine similarities and distance between strings.
  </para>
 
  <caution>
   <para>
-   At present, the <function>soundex</>, <function>metaphone</>,
-   <function>dmetaphone</>, and <function>dmetaphone_alt</> functions do
+   At present, the <function>soundex</function>, <function>metaphone</function>,
+   <function>dmetaphone</function>, and <function>dmetaphone_alt</function> functions do
    not work well with multibyte encodings (such as UTF-8).
   </para>
  </caution>
@@ -31,7 +31,7 @@
   </para>
 
   <para>
-   The <filename>fuzzystrmatch</> module provides two functions
+   The <filename>fuzzystrmatch</filename> module provides two functions
    for working with Soundex codes:
   </para>
 
@@ -49,12 +49,12 @@ difference(text, text) returns int
 </synopsis>
 
   <para>
-   The <function>soundex</> function converts a string to its Soundex code.
-   The <function>difference</> function converts two strings to their Soundex
+   The <function>soundex</function> function converts a string to its Soundex code.
+   The <function>difference</function> function converts two strings to their Soundex
    codes and then reports the number of matching code positions.  Since
    Soundex codes have four characters, the result ranges from zero to four,
    with zero being no match and four being an exact match.  (Thus, the
-   function is misnamed &mdash; <function>similarity</> would have been
+   function is misnamed &mdash; <function>similarity</function> would have been
    a better name.)
   </para>
 
@@ -115,10 +115,10 @@ levenshtein_less_equal(text source, text target, int max_d) returns int
   <para>
    <function>levenshtein_less_equal</function> is an accelerated version of the
    Levenshtein function for use when only small distances are of interest.
-   If the actual distance is less than or equal to <literal>max_d</>,
+   If the actual distance is less than or equal to <literal>max_d</literal>,
    then <function>levenshtein_less_equal</function> returns the correct
-   distance; otherwise it returns some value greater than <literal>max_d</>.
-   If <literal>max_d</> is negative then the behavior is the same as
+   distance; otherwise it returns some value greater than <literal>max_d</literal>.
+   If <literal>max_d</literal> is negative then the behavior is the same as
    <function>levenshtein</function>.
   </para>
 
@@ -198,9 +198,9 @@ test=# SELECT metaphone('GUMBO', 4);
   <title>Double Metaphone</title>
 
   <para>
-   The Double Metaphone system computes two <quote>sounds like</> strings
-   for a given input string &mdash; a <quote>primary</> and an
-   <quote>alternate</>.  In most cases they are the same, but for non-English
+   The Double Metaphone system computes two <quote>sounds like</quote> strings
+   for a given input string &mdash; a <quote>primary</quote> and an
+   <quote>alternate</quote>.  In most cases they are the same, but for non-English
    names especially they can be a bit different, depending on pronunciation.
    These functions compute the primary and alternate codes:
   </para>

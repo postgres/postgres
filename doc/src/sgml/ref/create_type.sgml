@@ -81,8 +81,8 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
   <para>
    There are five forms of <command>CREATE TYPE</command>, as shown in the
    syntax synopsis above.  They respectively create a <firstterm>composite
-   type</>, an <firstterm>enum type</>, a <firstterm>range type</>, a
-   <firstterm>base type</>, or a <firstterm>shell type</>.  The first four
+   type</firstterm>, an <firstterm>enum type</firstterm>, a <firstterm>range type</firstterm>, a
+   <firstterm>base type</firstterm>, or a <firstterm>shell type</firstterm>.  The first four
    of these are discussed in turn below.  A shell type is simply a placeholder
    for a type to be defined later; it is created by issuing <command>CREATE
    TYPE</command> with no parameters except for the type name.  Shell types
@@ -154,7 +154,7 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
     declared.  To do this, you must first create a shell type, which is a
     placeholder type that has no properties except a name and an
     owner.  This is done by issuing the command <literal>CREATE TYPE
-    <replaceable>name</></literal>, with no additional parameters.  Then
+    <replaceable>name</replaceable></literal>, with no additional parameters.  Then
     the function can be declared using the shell type as argument and result,
     and finally the range type can be declared using the same name.  This
     automatically replaces the shell type entry with a valid range type.
@@ -211,7 +211,7 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
    The first argument is the input text as a C string, the second
    argument is the type's own OID (except for array types, which instead
    receive their element type's OID),
-   and the third is the <literal>typmod</> of the destination column, if known
+   and the third is the <literal>typmod</literal> of the destination column, if known
    (-1 will be passed if not).
    The input function must return a value of the data type itself.
    Usually, an input function should be declared STRICT; if it is not,
@@ -264,12 +264,12 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
    You should at this point be wondering how the input and output functions
    can be declared to have results or arguments of the new type, when they
    have to be created before the new type can be created.  The answer is that
-   the type should first be defined as a <firstterm>shell type</>, which is a
+   the type should first be defined as a <firstterm>shell type</firstterm>, which is a
    placeholder type that has no properties except a name and an owner.  This
    is done by issuing the command <literal>CREATE TYPE
-   <replaceable>name</></literal>, with no additional parameters.  Then the
+   <replaceable>name</replaceable></literal>, with no additional parameters.  Then the
    C I/O functions can be defined referencing the shell type.  Finally,
-   <command>CREATE TYPE</> with a full definition replaces the shell entry
+   <command>CREATE TYPE</command> with a full definition replaces the shell entry
    with a complete, valid type definition, after which the new type can be
    used normally.
   </para>
@@ -279,23 +279,23 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
    <replaceable class="parameter">type_modifier_input_function</replaceable>
    and <replaceable class="parameter">type_modifier_output_function</replaceable>
    are needed if the type supports modifiers, that is optional constraints
-   attached to a type declaration, such as <literal>char(5)</> or
-   <literal>numeric(30,2)</>.  <productname>PostgreSQL</productname> allows
+   attached to a type declaration, such as <literal>char(5)</literal> or
+   <literal>numeric(30,2)</literal>.  <productname>PostgreSQL</productname> allows
    user-defined types to take one or more simple constants or identifiers as
    modifiers.  However, this information must be capable of being packed into a
    single non-negative integer value for storage in the system catalogs.  The
    <replaceable class="parameter">type_modifier_input_function</replaceable>
-   is passed the declared modifier(s) in the form of a <type>cstring</>
+   is passed the declared modifier(s) in the form of a <type>cstring</type>
    array.  It must check the values for validity (throwing an error if they
    are wrong), and if they are correct, return a single non-negative
-   <type>integer</> value that will be stored as the column <quote>typmod</>.
+   <type>integer</type> value that will be stored as the column <quote>typmod</quote>.
    Type modifiers will be rejected if the type does not have a
    <replaceable class="parameter">type_modifier_input_function</replaceable>.
    The <replaceable class="parameter">type_modifier_output_function</replaceable>
    converts the internal integer typmod value back to the correct form for
-   user display.  It must return a <type>cstring</> value that is the exact
-   string to append to the type name; for example <type>numeric</>'s
-   function might return <literal>(30,2)</>.
+   user display.  It must return a <type>cstring</type> value that is the exact
+   string to append to the type name; for example <type>numeric</type>'s
+   function might return <literal>(30,2)</literal>.
    It is allowed to omit the
    <replaceable class="parameter">type_modifier_output_function</replaceable>,
    in which case the default display format is just the stored typmod integer
@@ -305,14 +305,14 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
   <para>
    The optional <replaceable class="parameter">analyze_function</replaceable>
    performs type-specific statistics collection for columns of the data type.
-   By default, <command>ANALYZE</> will attempt to gather statistics using
-   the type's <quote>equals</> and <quote>less-than</> operators, if there
+   By default, <command>ANALYZE</command> will attempt to gather statistics using
+   the type's <quote>equals</quote> and <quote>less-than</quote> operators, if there
    is a default b-tree operator class for the type.  For non-scalar types
    this behavior is likely to be unsuitable, so it can be overridden by
    specifying a custom analysis function.  The analysis function must be
-   declared to take a single argument of type <type>internal</>, and return
-   a <type>boolean</> result.  The detailed API for analysis functions appears
-   in <filename>src/include/commands/vacuum.h</>.
+   declared to take a single argument of type <type>internal</type>, and return
+   a <type>boolean</type> result.  The detailed API for analysis functions appears
+   in <filename>src/include/commands/vacuum.h</filename>.
   </para>
 
   <para>
@@ -327,7 +327,7 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
    positive integer, or variable-length, indicated by setting
    <replaceable class="parameter">internallength</replaceable>
    to <literal>VARIABLE</literal>.  (Internally, this is represented
-   by setting <literal>typlen</> to -1.)  The internal representation of all
+   by setting <literal>typlen</literal> to -1.)  The internal representation of all
    variable-length types must start with a 4-byte integer giving the total
    length of this value of the type.  (Note that the length field is often
    encoded, as described in <xref linkend="storage-toast">; it's unwise
@@ -338,7 +338,7 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
    The optional flag <literal>PASSEDBYVALUE</literal> indicates that
    values of this data type are passed by value, rather than by
    reference.  Types passed by value must be fixed-length, and their internal
-   representation cannot be larger than the size of the <type>Datum</> type
+   representation cannot be larger than the size of the <type>Datum</type> type
    (4 bytes on some machines, 8 bytes on others).
   </para>
 
@@ -347,7 +347,7 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
    specifies the storage alignment required for the data type.  The
    allowed values equate to alignment on 1, 2, 4, or 8 byte boundaries.
    Note that variable-length types must have an alignment of at least
-   4, since they necessarily contain an <type>int4</> as their first component.
+   4, since they necessarily contain an <type>int4</type> as their first component.
   </para>
 
   <para>
@@ -372,12 +372,12 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
   <para>
    All <replaceable class="parameter">storage</replaceable> values other
    than <literal>plain</literal> imply that the functions of the data type
-   can handle values that have been <firstterm>toasted</>, as described
+   can handle values that have been <firstterm>toasted</firstterm>, as described
    in <xref linkend="storage-toast"> and <xref linkend="xtypes-toast">.
    The specific other value given merely determines the default TOAST
    storage strategy for columns of a toastable data type; users can pick
    other strategies for individual columns using <literal>ALTER TABLE
-   SET STORAGE</>.
+   SET STORAGE</literal>.
   </para>
 
   <para>
@@ -389,9 +389,9 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
    <replaceable class="parameter">alignment</replaceable>, and
    <replaceable class="parameter">storage</replaceable> are copied from the
    named type.  (It is possible, though usually undesirable, to override
-   some of these values by specifying them along with the <literal>LIKE</>
+   some of these values by specifying them along with the <literal>LIKE</literal>
    clause.)  Specifying representation this way is especially useful when
-   the low-level implementation of the new type <quote>piggybacks</> on an
+   the low-level implementation of the new type <quote>piggybacks</quote> on an
    existing type in some fashion.
   </para>
 
@@ -400,7 +400,7 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
    <replaceable class="parameter">preferred</replaceable> parameters can be
    used to help control which implicit cast will be applied in ambiguous
    situations.  Each data type belongs to a category named by a single ASCII
-   character, and each type is either <quote>preferred</> or not within its
+   character, and each type is either <quote>preferred</quote> or not within its
    category.  The parser will prefer casting to preferred types (but only from
    other types within the same category) when this rule is helpful in
    resolving overloaded functions or operators.  For more details see <xref
@@ -408,7 +408,7 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
    other types, it is sufficient to leave these settings at the defaults.
    However, for a group of related types that have implicit casts, it is often
    helpful to mark them all as belonging to a category and select one or two
-   of the <quote>most general</> types as being preferred within the category.
+   of the <quote>most general</quote> types as being preferred within the category.
    The <replaceable class="parameter">category</replaceable> parameter is
    especially useful when adding a user-defined type to an existing built-in
    category, such as the numeric or string types.  However, it is also
@@ -426,7 +426,7 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
 
   <para>
    To indicate that a type is an array, specify the type of the array
-   elements using the <literal>ELEMENT</> key word.  For example, to
+   elements using the <literal>ELEMENT</literal> key word.  For example, to
    define an array of 4-byte integers (<type>int4</type>), specify
    <literal>ELEMENT = int4</literal>. More details about array types
    appear below.
@@ -465,26 +465,26 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
     so generated collides with an existing type name, the process is
     repeated until a non-colliding name is found.)
     This implicitly-created array type is variable length and uses the
-    built-in input and output functions <literal>array_in</> and
-    <literal>array_out</>.  The array type tracks any changes in its
+    built-in input and output functions <literal>array_in</literal> and
+    <literal>array_out</literal>.  The array type tracks any changes in its
     element type's owner or schema, and is dropped if the element type is.
    </para>
 
    <para>
-    You might reasonably ask why there is an <option>ELEMENT</>
+    You might reasonably ask why there is an <option>ELEMENT</option>
     option, if the system makes the correct array type automatically.
-    The only case where it's useful to use <option>ELEMENT</> is when you are
+    The only case where it's useful to use <option>ELEMENT</option> is when you are
     making a fixed-length type that happens to be internally an array of a number of
     identical things, and you want to allow these things to be accessed
     directly by subscripting, in addition to whatever operations you plan
-    to provide for the type as a whole.  For example, type <type>point</>
+    to provide for the type as a whole.  For example, type <type>point</type>
     is represented as just two floating-point numbers, which can be accessed
-    using <literal>point[0]</> and <literal>point[1]</>.
+    using <literal>point[0]</literal> and <literal>point[1]</literal>.
     Note that
     this facility only works for fixed-length types whose internal form
     is exactly a sequence of identical fixed-length fields.  A subscriptable
     variable-length type must have the generalized internal representation
-    used by <literal>array_in</> and <literal>array_out</>.
+    used by <literal>array_in</literal> and <literal>array_out</literal>.
     For historical reasons (i.e., this is clearly wrong but it's far too
     late to change it), subscripting of fixed-length array types starts from
     zero, rather than from one as for variable-length arrays.
@@ -697,7 +697,7 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
       <replaceable class="parameter">alignment</replaceable>, and
       <replaceable class="parameter">storage</replaceable>
       are copied from that type, unless overridden by explicit
-      specification elsewhere in this <command>CREATE TYPE</> command.
+      specification elsewhere in this <command>CREATE TYPE</command> command.
      </para>
     </listitem>
    </varlistentry>
@@ -707,7 +707,7 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
     <listitem>
      <para>
       The category code (a single ASCII character) for this type.
-      The default is <literal>'U'</> for <quote>user-defined type</>.
+      The default is <literal>'U'</literal> for <quote>user-defined type</quote>.
       Other standard category codes can be found in
       <xref linkend="catalog-typcategory-table">.  You may also choose
       other ASCII characters in order to create custom categories.
@@ -779,7 +779,7 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
    This is usually
    not an issue for the sorts of functions that are useful in a type
    definition.  But you might want to think twice before designing a type
-   in a way that would require <quote>secret</> information to be used
+   in a way that would require <quote>secret</quote> information to be used
    while converting it to or from external form.
   </para>
 
@@ -792,7 +792,7 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
    this in case of maximum-length names or collisions with user type names
    that begin with underscore.  Writing code that depends on this convention
    is therefore deprecated.  Instead, use
-   <structname>pg_type</>.<structfield>typarray</> to locate the array type
+   <structname>pg_type</structname>.<structfield>typarray</structfield> to locate the array type
    associated with a given type.
   </para>
 
@@ -807,7 +807,7 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
   <para>
    Before <productname>PostgreSQL</productname> version 8.2, the shell-type
    creation syntax
-   <literal>CREATE TYPE <replaceable>name</></literal> did not exist.
+   <literal>CREATE TYPE <replaceable>name</replaceable></literal> did not exist.
    The way to create a new base type was to create its input function first.
    In this approach, <productname>PostgreSQL</productname> will first see
    the name of the new data type as the return type of the input function.
@@ -824,10 +824,10 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
    In <productname>PostgreSQL</productname> versions before 7.3, it
    was customary to avoid creating a shell type at all, by replacing the
    functions' forward references to the type name with the placeholder
-   pseudo-type <type>opaque</>.  The <type>cstring</> arguments and
-   results also had to be declared as <type>opaque</> before 7.3.  To
-   support loading of old dump files, <command>CREATE TYPE</> will
-   accept I/O functions declared using <type>opaque</>, but it will issue
+   pseudo-type <type>opaque</type>.  The <type>cstring</type> arguments and
+   results also had to be declared as <type>opaque</type> before 7.3.  To
+   support loading of old dump files, <command>CREATE TYPE</command> will
+   accept I/O functions declared using <type>opaque</type>, but it will issue
    a notice and change the function declarations to use the correct
    types.
   </para>
@@ -894,7 +894,7 @@ CREATE TABLE myboxes (
 
   <para>
    If the internal structure of <type>box</type> were an array of four
-   <type>float4</> elements, we might instead use:
+   <type>float4</type> elements, we might instead use:
 <programlisting>
 CREATE TYPE box (
     INTERNALLENGTH = 16,
@@ -933,11 +933,11 @@ CREATE TABLE big_objs (
 
   <para>
    The first form of the <command>CREATE TYPE</command> command, which
-   creates a composite type, conforms to the <acronym>SQL</> standard.
+   creates a composite type, conforms to the <acronym>SQL</acronym> standard.
    The other forms are <productname>PostgreSQL</productname>
    extensions.  The <command>CREATE TYPE</command> statement in
-   the <acronym>SQL</> standard also defines other forms that are not
-   implemented in <productname>PostgreSQL</>.
+   the <acronym>SQL</acronym> standard also defines other forms that are not
+   implemented in <productname>PostgreSQL</productname>.
   </para>
 
   <para>

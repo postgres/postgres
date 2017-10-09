@@ -123,7 +123,7 @@
    </listitem>
    <listitem>
     <para>UPC numbers are a subset of the EAN13 numbers (they are basically
-    EAN13 without the first <literal>0</> digit).</para>
+    EAN13 without the first <literal>0</literal> digit).</para>
    </listitem>
    <listitem>
     <para>All UPC, ISBN, ISMN and ISSN numbers can be represented as EAN13
@@ -139,7 +139,7 @@
   </para>
 
   <para>
-   The <type>ISBN</>, <type>ISMN</>, and <type>ISSN</> types will display the
+   The <type>ISBN</type>, <type>ISMN</type>, and <type>ISSN</type> types will display the
    short version of the number (ISxN 10) whenever it's possible, and will show
    ISxN 13 format for numbers that do not fit in the short version.
    The <type>EAN13</type>, <type>ISBN13</type>, <type>ISMN13</type> and
@@ -152,7 +152,7 @@
   <title>Casts</title>
 
   <para>
-   The <filename>isn</> module provides the following pairs of type casts:
+   The <filename>isn</filename> module provides the following pairs of type casts:
   </para>
 
   <itemizedlist>
@@ -209,7 +209,7 @@
   </itemizedlist>
 
   <para>
-   When casting from <type>EAN13</> to another type, there is a run-time
+   When casting from <type>EAN13</type> to another type, there is a run-time
    check that the value is within the domain of the other type, and an error
    is thrown if not.  The other casts are simply relabelings that will
    always succeed.
@@ -220,15 +220,15 @@
   <title>Functions and Operators</title>
 
   <para>
-   The <filename>isn</> module provides the standard comparison operators,
+   The <filename>isn</filename> module provides the standard comparison operators,
    plus B-tree and hash indexing support for all these data types.  In
    addition there are several specialized functions; shown in <xref linkend="isn-functions">.
    In this table,
-   <type>isn</> means any one of the module's data types.
+   <type>isn</type> means any one of the module's data types.
   </para>
 
   <table id="isn-functions">
-   <title><filename>isn</> Functions</title>
+   <title><filename>isn</filename> Functions</title>
    <tgroup cols="3">
     <thead>
      <row>
@@ -285,21 +285,21 @@
   <para>
    When you insert invalid numbers in a table using the weak mode, the number
    will be inserted with the corrected check digit, but it will be displayed
-   with an exclamation mark (<literal>!</>) at the end, for example
-   <literal>0-11-000322-5!</>.  This invalid marker can be checked with
-   the <function>is_valid</> function and cleared with the
-   <function>make_valid</> function.
+   with an exclamation mark (<literal>!</literal>) at the end, for example
+   <literal>0-11-000322-5!</literal>.  This invalid marker can be checked with
+   the <function>is_valid</function> function and cleared with the
+   <function>make_valid</function> function.
   </para>
 
   <para>
    You can also force the insertion of invalid numbers even when not in the
-   weak mode, by appending the <literal>!</> character at the end of the
+   weak mode, by appending the <literal>!</literal> character at the end of the
    number.
   </para>
 
   <para>
    Another special feature is that during input, you can write
-   <literal>?</> in place of the check digit, and the correct check digit
+   <literal>?</literal> in place of the check digit, and the correct check digit
    will be inserted automatically.
   </para>
  </sect2>
@@ -384,7 +384,7 @@ SELECT isbn13(id) FROM test;
 
   <para>
    This module was inspired by Garrett A. Wollman's
-   <filename>isbn_issn</> code.
+   <filename>isbn_issn</filename> code.
   </para>
  </sect2>
 

@@ -94,7 +94,7 @@ DROP TEXT SEARCH DICTIONARY english;
 </programlisting>
 
    This command will not succeed if there are any existing text search
-   configurations that use the dictionary.  Add <literal>CASCADE</> to
+   configurations that use the dictionary.  Add <literal>CASCADE</literal> to
    drop such configurations along with the dictionary.
   </para>
  </refsect1>

@@ -47,7 +47,7 @@ CREATE SERVER [IF NOT EXISTS] <replaceable class="parameter">server_name</replac
   </para>
 
   <para>
-   Creating a server requires <literal>USAGE</> privilege on the
+   Creating a server requires <literal>USAGE</literal> privilege on the
    foreign-data wrapper being used.
   </para>
  </refsect1>
@@ -57,7 +57,7 @@ CREATE SERVER [IF NOT EXISTS] <replaceable class="parameter">server_name</replac
 
   <variablelist>
   <varlistentry>
-    <term><literal>IF NOT EXISTS</></term>
+    <term><literal>IF NOT EXISTS</literal></term>
     <listitem>
      <para>
       Do not throw an error if a server with the same name already exists.
@@ -135,8 +135,8 @@ CREATE SERVER [IF NOT EXISTS] <replaceable class="parameter">server_name</replac
   <title>Examples</title>
 
   <para>
-   Create a server <literal>myserver</> that uses the
-   foreign-data wrapper <literal>postgres_fdw</>:
+   Create a server <literal>myserver</literal> that uses the
+   foreign-data wrapper <literal>postgres_fdw</literal>:
 <programlisting>
 CREATE SERVER myserver FOREIGN DATA WRAPPER postgres_fdw OPTIONS (host 'foo', dbname 'foodb', port '5432');
 </programlisting>

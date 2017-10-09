@@ -118,7 +118,7 @@
 
    <para>
     <productname>PostgreSQL</productname> is implemented using a
-    simple <quote>process per user</> client/server model.  In this model
+    simple <quote>process per user</quote> client/server model.  In this model
     there is one <firstterm>client process</firstterm> connected to
     exactly one <firstterm>server process</firstterm>.  As we do not
     know ahead of time how many connections will be made, we have to
@@ -137,9 +137,9 @@
     The client process can be any program that understands the
     <productname>PostgreSQL</productname> protocol described in
     <xref linkend="protocol">.  Many clients are based on the
-    C-language library <application>libpq</>, but several independent
+    C-language library <application>libpq</application>, but several independent
     implementations of the protocol exist, such as the Java
-    <application>JDBC</> driver.
+    <application>JDBC</application> driver.
    </para>
 
    <para>
@@ -184,8 +184,8 @@
      text) for valid syntax. If the syntax is correct a
      <firstterm>parse tree</firstterm> is built up and handed back;
      otherwise an error is returned. The parser and lexer are
-     implemented using the well-known Unix tools <application>bison</>
-     and <application>flex</>.
+     implemented using the well-known Unix tools <application>bison</application>
+     and <application>flex</application>.
     </para>
 
     <para>
@@ -251,7 +251,7 @@
      back by the parser as input and does the semantic interpretation needed
      to understand which tables, functions, and operators are referenced by
      the query.  The data structure that is built to represent this
-     information is called the <firstterm>query tree</>.
+     information is called the <firstterm>query tree</firstterm>.
     </para>
 
     <para>
@@ -259,10 +259,10 @@
      system catalog lookups can only be done within a transaction, and we
      do not wish to start a transaction immediately upon receiving a query
      string.  The raw parsing stage is sufficient to identify the transaction
-     control commands (<command>BEGIN</>, <command>ROLLBACK</>, etc), and
+     control commands (<command>BEGIN</command>, <command>ROLLBACK</command>, etc), and
      these can then be correctly executed without any further analysis.
      Once we know that we are dealing with an actual query (such as
-     <command>SELECT</> or <command>UPDATE</>), it is okay to
+     <command>SELECT</command> or <command>UPDATE</command>), it is okay to
      start a transaction if we're not already in one.  Only then can the
      transformation process be invoked.
     </para>
@@ -270,10 +270,10 @@
     <para>
      The query tree created by the transformation process is structurally
      similar to the raw parse tree in most places, but it has many differences
-     in detail.  For example, a <structname>FuncCall</> node in the
+     in detail.  For example, a <structname>FuncCall</structname> node in the
      parse tree represents something that looks syntactically like a function
-     call.  This might be transformed to either a <structname>FuncExpr</>
-     or <structname>Aggref</> node depending on whether the referenced
+     call.  This might be transformed to either a <structname>FuncExpr</structname>
+     or <structname>Aggref</structname> node depending on whether the referenced
      name turns out to be an ordinary function or an aggregate function.
      Also, information about the actual data types of columns and expression
      results is added to the query tree.
@@ -354,10 +354,10 @@
 
    <para>
     The planner's search procedure actually works with data structures
-    called <firstterm>paths</>, which are simply cut-down representations of
+    called <firstterm>paths</firstterm>, which are simply cut-down representations of
     plans containing only as much information as the planner needs to make
     its decisions. After the cheapest path is determined, a full-fledged
-    <firstterm>plan tree</> is built to pass to the executor.  This represents
+    <firstterm>plan tree</firstterm> is built to pass to the executor.  This represents
     the desired execution plan in sufficient detail for the executor to run it.
     In the rest of this section we'll ignore the distinction between paths
     and plans.
@@ -378,12 +378,12 @@
      <literal>relation.attribute OPR constant</literal>. If
      <literal>relation.attribute</literal> happens to match the key of the B-tree
      index and <literal>OPR</literal> is one of the operators listed in
-     the index's <firstterm>operator class</>, another plan is created using
+     the index's <firstterm>operator class</firstterm>, another plan is created using
      the B-tree index to scan the relation. If there are further indexes
      present and the restrictions in the query happen to match a key of an
      index, further plans will be considered.  Index scan plans are also
      generated for indexes that have a sort ordering that can match the
-     query's <literal>ORDER BY</> clause (if any), or a sort ordering that
+     query's <literal>ORDER BY</literal> clause (if any), or a sort ordering that
      might be useful for merge joining (see below).
     </para>
 
@@ -462,9 +462,9 @@
      the base relations, plus nested-loop, merge, or hash join nodes as
      needed, plus any auxiliary steps needed, such as sort nodes or
      aggregate-function calculation nodes.  Most of these plan node
-     types have the additional ability to do <firstterm>selection</>
+     types have the additional ability to do <firstterm>selection</firstterm>
      (discarding rows that do not meet a specified Boolean condition)
-     and <firstterm>projection</> (computation of a derived column set
+     and <firstterm>projection</firstterm> (computation of a derived column set
      based on given column values, that is, evaluation of scalar
      expressions where needed).  One of the responsibilities of the
      planner is to attach selection conditions from the
@@ -496,7 +496,7 @@
     subplan) is, let's say, a
     <literal>Sort</literal> node and again recursion is needed to obtain
     an input row.  The child node of the <literal>Sort</literal> might
-    be a <literal>SeqScan</> node, representing actual reading of a table.
+    be a <literal>SeqScan</literal> node, representing actual reading of a table.
     Execution of this node causes the executor to fetch a row from the
     table and return it up to the calling node.  The <literal>Sort</literal>
     node will repeatedly call its child to obtain all the rows to be sorted.
@@ -529,24 +529,24 @@
 
    <para>
     The executor mechanism is used to evaluate all four basic SQL query types:
-    <command>SELECT</>, <command>INSERT</>, <command>UPDATE</>, and
-    <command>DELETE</>.  For <command>SELECT</>, the top-level executor
+    <command>SELECT</command>, <command>INSERT</command>, <command>UPDATE</command>, and
+    <command>DELETE</command>.  For <command>SELECT</command>, the top-level executor
     code only needs to send each row returned by the query plan tree off
-    to the client.  For <command>INSERT</>, each returned row is inserted
-    into the target table specified for the <command>INSERT</>.  This is
-    done in a special top-level plan node called <literal>ModifyTable</>.
+    to the client.  For <command>INSERT</command>, each returned row is inserted
+    into the target table specified for the <command>INSERT</command>.  This is
+    done in a special top-level plan node called <literal>ModifyTable</literal>.
     (A simple
-    <command>INSERT ... VALUES</> command creates a trivial plan tree
-    consisting of a single <literal>Result</> node, which computes just one
-    result row, and <literal>ModifyTable</> above it to perform the insertion.
-    But <command>INSERT ... SELECT</> can demand the full power
-    of the executor mechanism.)  For <command>UPDATE</>, the planner arranges
+    <command>INSERT ... VALUES</command> command creates a trivial plan tree
+    consisting of a single <literal>Result</literal> node, which computes just one
+    result row, and <literal>ModifyTable</literal> above it to perform the insertion.
+    But <command>INSERT ... SELECT</command> can demand the full power
+    of the executor mechanism.)  For <command>UPDATE</command>, the planner arranges
     that each computed row includes all the updated column values, plus
-    the <firstterm>TID</> (tuple ID, or row ID) of the original target row;
-    this data is fed into a <literal>ModifyTable</> node, which uses the
+    the <firstterm>TID</firstterm> (tuple ID, or row ID) of the original target row;
+    this data is fed into a <literal>ModifyTable</literal> node, which uses the
     information to create a new updated row and mark the old row deleted.
-    For <command>DELETE</>, the only column that is actually returned by the
-    plan is the TID, and the <literal>ModifyTable</> node simply uses the TID
+    For <command>DELETE</command>, the only column that is actually returned by the
+    plan is the TID, and the <literal>ModifyTable</literal> node simply uses the TID
     to visit each target row and mark it deleted.
    </para>
 

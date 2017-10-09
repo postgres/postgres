@@ -13,7 +13,7 @@
    <title>Overview</title>
 
    <para>
-    Major enhancements in <productname>PostgreSQL</> 10 include:
+    Major enhancements in <productname>PostgreSQL</productname> 10 include:
    </para>
 
    <!-- Items in this list summarize one or more items below -->
@@ -58,14 +58,14 @@
 2017-08-04 [620b49a16] hash: Increase the number of possible overflow bitmaps b
 -->
      <para>
-      Hash indexes must be rebuilt after <application>pg_upgrade</>-ing
-      from any previous major <productname>PostgreSQL</> version (Mithun
+      Hash indexes must be rebuilt after <application>pg_upgrade</application>-ing
+      from any previous major <productname>PostgreSQL</productname> version (Mithun
       Cy, Robert Haas, Amit Kapila)
      </para>
 
      <para>
       Major hash index improvements necessitated this requirement.
-      <application>pg_upgrade</> will create a script to assist with this.
+      <application>pg_upgrade</application> will create a script to assist with this.
      </para>
     </listitem>
 
@@ -75,9 +75,9 @@
 2017-03-17 [88e66d193] Rename "pg_clog" directory to "pg_xact".
 -->
      <para>
-      Rename write-ahead log directory <filename>pg_xlog</>
-      to <link linkend="wal"><filename>pg_wal</></>, and rename transaction
-      status directory <filename>pg_clog</> to <filename>pg_xact</>
+      Rename write-ahead log directory <filename>pg_xlog</filename>
+      to <link linkend="wal"><filename>pg_wal</filename></link>, and rename transaction
+      status directory <filename>pg_clog</filename> to <filename>pg_xact</filename>
       (Michael Paquier)
      </para>
 
@@ -98,17 +98,17 @@
 2017-02-15 [0dfa89ba2] Replace reference to "xlog-method" with "wal-method" in
 -->
      <para>
-      Rename <acronym>SQL</> functions, tools, and options that reference
-      <quote>xlog</> to <quote>wal</> (Robert Haas)
+      Rename <acronym>SQL</acronym> functions, tools, and options that reference
+      <quote>xlog</quote> to <quote>wal</quote> (Robert Haas)
      </para>
 
      <para>
-      For example, <function>pg_switch_xlog()</> becomes
-      <function>pg_switch_wal()</>, <application>pg_receivexlog</>
-      becomes <application>pg_receivewal</>, and <option>--xlogdir</>
-      becomes <option>--waldir</>.  This is for consistency with the
-      change of the <filename>pg_xlog</> directory name; in general,
-      the <quote>xlog</> terminology is no longer used in any user-facing
+      For example, <function>pg_switch_xlog()</function> becomes
+      <function>pg_switch_wal()</function>, <application>pg_receivexlog</application>
+      becomes <application>pg_receivewal</application>, and <option>--xlogdir</option>
+      becomes <option>--waldir</option>.  This is for consistency with the
+      change of the <filename>pg_xlog</filename> directory name; in general,
+      the <quote>xlog</quote> terminology is no longer used in any user-facing
       places.
      </para>
     </listitem>
@@ -118,8 +118,8 @@
 2017-05-11 [d10c626de] Rename WAL-related functions and views to use "lsn" not
 -->
      <para>
-      Rename <acronym>WAL</>-related functions and views to use <literal>lsn</>
-      instead of <literal>location</> (David Rowley)
+      Rename <acronym>WAL</acronym>-related functions and views to use <literal>lsn</literal>
+      instead of <literal>location</literal> (David Rowley)
      </para>
 
      <para>
@@ -136,20 +136,20 @@
 -->
      <para>
       Change the implementation of set-returning functions appearing in
-      a query's <literal>SELECT</> list (Andres Freund)
+      a query's <literal>SELECT</literal> list (Andres Freund)
      </para>
 
      <para>
       Set-returning functions are now evaluated before evaluation of scalar
-      expressions in the <literal>SELECT</> list, much as though they had
-      been placed in a <literal>LATERAL FROM</>-clause item.  This allows
+      expressions in the <literal>SELECT</literal> list, much as though they had
+      been placed in a <literal>LATERAL FROM</literal>-clause item.  This allows
       saner semantics for cases where multiple set-returning functions are
       present.  If they return different numbers of rows, the shorter results
       are extended to match the longest result by adding nulls.  Previously
       the results were cycled until they all terminated at the same time,
       producing a number of rows equal to the least common multiple of the
       functions' periods.  In addition, set-returning functions are now
-      disallowed within <literal>CASE</> and <literal>COALESCE</> constructs.
+      disallowed within <literal>CASE</literal> and <literal>COALESCE</literal> constructs.
       For more information
       see <xref linkend="xfunc-sql-functions-returning-set">.
      </para>
@@ -160,8 +160,8 @@
 2017-08-04 [c30f1770a] Apply ALTER ... SET NOT NULL recursively in ALTER ... AD
 -->
      <para>
-      When <command>ALTER TABLE ... ADD PRIMARY KEY</> marks
-      columns <literal>NOT NULL</>, that change now propagates to
+      When <command>ALTER TABLE ... ADD PRIMARY KEY</command> marks
+      columns <literal>NOT NULL</literal>, that change now propagates to
       inheritance child tables as well (Michael Paquier)
      </para>
     </listitem>
@@ -179,9 +179,9 @@
      <para>
       Cases involving writable CTEs updating the same table updated by the
       containing statement, or by another writable CTE, fired <literal>BEFORE
-      STATEMENT</> or <literal>AFTER STATEMENT</> triggers more than once.
+      STATEMENT</literal> or <literal>AFTER STATEMENT</literal> triggers more than once.
       Also, if there were statement-level triggers on a table affected by a
-      foreign key enforcement action (such as <literal>ON DELETE CASCADE</>),
+      foreign key enforcement action (such as <literal>ON DELETE CASCADE</literal>),
       they could fire more than once per outer SQL statement.  This is
       contrary to the SQL standard, so change it.
      </para>
@@ -197,20 +197,20 @@
 -->
      <para>
       Move sequences' metadata fields into a new <link
-      linkend="catalog-pg-sequence"><structname>pg_sequence</></>
+      linkend="catalog-pg-sequence"><structname>pg_sequence</structname></link>
       system catalog (Peter Eisentraut)
      </para>
 
      <para>
       A sequence relation now stores only the fields that can be modified
-      by <function>nextval()</>, that
-      is <structfield>last_value</>, <structfield>log_cnt</>,
-      and <structfield>is_called</>.  Other sequence properties, such as
+      by <function>nextval()</function>, that
+      is <structfield>last_value</structfield>, <structfield>log_cnt</structfield>,
+      and <structfield>is_called</structfield>.  Other sequence properties, such as
       the starting value and increment, are kept in a corresponding row of
-      the <structname>pg_sequence</> catalog.
-      <command>ALTER SEQUENCE</> updates are now fully transactional,
+      the <structname>pg_sequence</structname> catalog.
+      <command>ALTER SEQUENCE</command> updates are now fully transactional,
       implying that the sequence is locked until commit.
-      The <function>nextval()</> and <function>setval()</> functions
+      The <function>nextval()</function> and <function>setval()</function> functions
       remain nontransactional.
      </para>
 
@@ -218,14 +218,14 @@
       The main incompatibility introduced by this change is that selecting
       from a sequence relation now returns only the three fields named
       above.  To obtain the sequence's other properties, applications must
-      look into <structname>pg_sequence</>.  The new system
-      view <link linkend="view-pg-sequences"><structname>pg_sequences</></>
+      look into <structname>pg_sequence</structname>.  The new system
+      view <link linkend="view-pg-sequences"><structname>pg_sequences</structname></link>
       can also be used for this purpose; it provides column names that are
       more compatible with existing code.
      </para>
 
      <para>
-      The output of <application>psql</>'s <command>\d</> command for a
+      The output of <application>psql</application>'s <command>\d</command> command for a
       sequence has been redesigned, too.
      </para>
     </listitem>
@@ -235,17 +235,17 @@
 2017-01-04 [9a4d51077] Make wal streaming the default mode for pg_basebackup
 -->
      <para>
-      Make <application><xref linkend="app-pgbasebackup"></> stream the
-      <acronym>WAL</> needed to restore the backup by default (Magnus
+      Make <application><xref linkend="app-pgbasebackup"></application> stream the
+      <acronym>WAL</acronym> needed to restore the backup by default (Magnus
       Hagander)
      </para>
 
      <para>
-      This changes <application>pg_basebackup</>'s
-      <option>-X</>/<option>--xlog-method</> default to <literal>stream</>.
-      An option value <literal>none</> has been added to reproduce the old
-      behavior.  The <application>pg_basebackup</> option <option>-x</>
-      has been removed (instead, use <literal>-X fetch</>).
+      This changes <application>pg_basebackup</application>'s
+      <option>-X</option>/<option>--xlog-method</option> default to <literal>stream</literal>.
+      An option value <literal>none</literal> has been added to reproduce the old
+      behavior.  The <application>pg_basebackup</application> option <option>-x</option>
+      has been removed (instead, use <literal>-X fetch</literal>).
      </para>
     </listitem>
 
@@ -275,13 +275,13 @@
 2017-01-14 [05cd12ed5] pg_ctl: Change default to wait for all actions
 -->
     <para>
-     Make all <application><xref linkend="app-pg-ctl"></> actions wait
+     Make all <application><xref linkend="app-pg-ctl"></application> actions wait
      for completion by default (Peter Eisentraut)
     </para>
 
     <para>
-     Previously some <application>pg_ctl</> actions didn't wait for
-     completion, and required the use of <option>-w</> to do so.
+     Previously some <application>pg_ctl</application> actions didn't wait for
+     completion, and required the use of <option>-w</option> to do so.
     </para>
     </listitem>
 
@@ -291,7 +291,7 @@
 -->
      <para>
       Change the default value of the <xref linkend="guc-log-directory">
-      server parameter from <filename>pg_log</> to <filename>log</>
+      server parameter from <filename>pg_log</filename> to <filename>log</filename>
       (Andreas Karlsson)
      </para>
     </listitem>
@@ -307,7 +307,7 @@
 
      <para>
       This replaces the hardcoded, undocumented file
-      name <filename>dh1024.pem</>.  Note that <filename>dh1024.pem</> is
+      name <filename>dh1024.pem</filename>.  Note that <filename>dh1024.pem</filename> is
       no longer examined by default; you must set this option if you want
       to use custom DH parameters.
      </para>
@@ -345,14 +345,14 @@
 
     <para>
      The <xref linkend="guc-password-encryption"> server parameter
-     no longer supports <literal>off</> or <literal>plain</>.
-     The <literal>UNENCRYPTED</> option is no longer supported in
-     <command>CREATE/ALTER USER ... PASSSWORD</>.  Similarly, the
-     <option>--unencrypted</> option has been removed
-     from <application>createuser</>.  Unencrypted passwords migrated from
+     no longer supports <literal>off</literal> or <literal>plain</literal>.
+     The <literal>UNENCRYPTED</literal> option is no longer supported in
+     <command>CREATE/ALTER USER ... PASSSWORD</command>.  Similarly, the
+     <option>--unencrypted</option> option has been removed
+     from <application>createuser</application>.  Unencrypted passwords migrated from
      older versions will be stored encrypted in this release.  The default
-     setting for <varname>password_encryption</> is still
-     <literal>md5</>.
+     setting for <varname>password_encryption</varname> is still
+     <literal>md5</literal>.
     </para>
     </listitem>
 
@@ -367,7 +367,7 @@
     </para>
 
     <para>
-     These replace <varname>min_parallel_relation_size</>, which was
+     These replace <varname>min_parallel_relation_size</varname>, which was
      found to be too generic.
     </para>
     </listitem>
@@ -394,14 +394,14 @@
 2016-12-23 [e13486eba] Remove sql_inheritance GUC.
 -->
     <para>
-     Remove <varname>sql_inheritance</> server parameter (Robert Haas)
+     Remove <varname>sql_inheritance</varname> server parameter (Robert Haas)
     </para>
 
     <para>
      Changing this setting from the default value caused queries referencing
-     parent tables to not include child tables.  The <acronym>SQL</>
+     parent tables to not include child tables.  The <acronym>SQL</acronym>
      standard requires them to be included, however, and this has been the
-     default since <productname>PostgreSQL</> 7.1.
+     default since <productname>PostgreSQL</productname> 7.1.
     </para>
     </listitem>
 
@@ -420,10 +420,10 @@
      This feature requires a backwards-incompatible change to the handling
      of arrays of composite types in PL/Python.  Previously, you could
      return an array of composite values by writing, e.g., <literal>[[col1,
-     col2], [col1, col2]]</>; but now that is interpreted as a
+     col2], [col1, col2]]</literal>; but now that is interpreted as a
      two-dimensional array.  Composite types in arrays must now be written
      as Python tuples, not lists, to resolve the ambiguity; that is,
-     write <literal>[(col1, col2), (col1, col2)]</> instead.
+     write <literal>[(col1, col2), (col1, col2)]</literal> instead.
     </para>
     </listitem>
 
@@ -432,7 +432,7 @@
 2017-02-27 [817f2a586] Remove PL/Tcl's "module" facility.
 -->
     <para>
-     Remove PL/Tcl's <quote>module</> auto-loading facility (Tom Lane)
+     Remove PL/Tcl's <quote>module</quote> auto-loading facility (Tom Lane)
     </para>
 
     <para>
@@ -448,13 +448,13 @@
 2016-10-12 [64f3524e2] Remove pg_dump/pg_dumpall support for dumping from pre-8
 -->
     <para>
-     Remove <application>pg_dump</>/<application>pg_dumpall</> support
+     Remove <application>pg_dump</application>/<application>pg_dumpall</application> support
      for dumping from pre-8.0 servers (Tom Lane)
     </para>
 
      <para>
       Users needing to dump from pre-8.0 servers will need to use dump
-      programs from <productname>PostgreSQL</> 9.6 or earlier.  The
+      programs from <productname>PostgreSQL</productname> 9.6 or earlier.  The
       resulting output should still load successfully into newer servers.
      </para>
     </listitem>
@@ -468,9 +468,9 @@
      </para>
 
      <para>
-      This removes configure's <option>--disable-integer-datetimes</>
+      This removes configure's <option>--disable-integer-datetimes</option>
       option.  Floating-point timestamps have few advantages and have not
-      been the default since <productname>PostgreSQL</> 8.3.
+      been the default since <productname>PostgreSQL</productname> 8.3.
      </para>
     </listitem>
 
@@ -484,7 +484,7 @@
 
      <para>
       This protocol hasn't had client support
-      since <productname>PostgreSQL</> 6.3.
+      since <productname>PostgreSQL</productname> 6.3.
      </para>
     </listitem>
 
@@ -493,12 +493,12 @@
 2017-02-13 [7ada2d31f] Remove contrib/tsearch2.
 -->
      <para>
-      Remove <filename>contrib/tsearch2</> module (Robert Haas)
+      Remove <filename>contrib/tsearch2</filename> module (Robert Haas)
      </para>
 
      <para>
       This module provided compatibility with the version of full text
-      search that shipped in pre-8.3 <productname>PostgreSQL</> releases.
+      search that shipped in pre-8.3 <productname>PostgreSQL</productname> releases.
      </para>
     </listitem>
 
@@ -507,14 +507,14 @@
 2017-03-23 [50c956add] Remove createlang and droplang
 -->
      <para>
-      Remove <application>createlang</> and <application>droplang</>
+      Remove <application>createlang</application> and <application>droplang</application>
       command-line applications (Peter Eisentraut)
      </para>
 
      <para>
-      These had been deprecated since <productname>PostgreSQL</> 9.1.
-      Instead, use <command>CREATE EXTENSION</> and <command>DROP
-      EXTENSION</> directly.
+      These had been deprecated since <productname>PostgreSQL</productname> 9.1.
+      Instead, use <command>CREATE EXTENSION</command> and <command>DROP
+      EXTENSION</command> directly.
      </para>
     </listitem>
 
@@ -686,8 +686,8 @@
 2016-08-23 [77e290682] Create an SP-GiST opclass for inet/cidr.
 -->
        <para>
-        Add <acronym>SP-GiST</> index support for <type>INET</> and
-        <type>CIDR</> data types (Emre Hasegeli)
+        Add <acronym>SP-GiST</acronym> index support for <type>INET</type> and
+        <type>CIDR</type> data types (Emre Hasegeli)
        </para>
       </listitem>
 
@@ -696,14 +696,14 @@
 2017-04-01 [7526e1022] BRIN auto-summarization
 -->
        <para>
-        Add option to allow <acronym>BRIN</> index summarization to happen
+        Add option to allow <acronym>BRIN</acronym> index summarization to happen
         more aggressively (&Aacute;lvaro Herrera)
        </para>
 
        <para>
         A new <link linkend="SQL-CREATEINDEX"><command>CREATE
-        INDEX</></> option enables auto-summarization of the
-        previous <acronym>BRIN</> page range when a new page
+        INDEX</command></link> option enables auto-summarization of the
+        previous <acronym>BRIN</acronym> page range when a new page
         range is created.
        </para>
       </listitem>
@@ -713,18 +713,18 @@
 2017-04-01 [c655899ba] BRIN de-summarization
 -->
        <para>
-        Add functions to remove and re-add <acronym>BRIN</>
-        summarization for <acronym>BRIN</> index ranges (&Aacute;lvaro
+        Add functions to remove and re-add <acronym>BRIN</acronym>
+        summarization for <acronym>BRIN</acronym> index ranges (&Aacute;lvaro
         Herrera)
        </para>
 
        <para>
-        The new <acronym>SQL</> function <link
-        linkend="functions-admin-index-table"><function>brin_summarize_range()</></>
-        updates <acronym>BRIN</> index summarization for a specified
-        range and <function>brin_desummarize_range()</> removes it.
+        The new <acronym>SQL</acronym> function <link
+        linkend="functions-admin-index-table"><function>brin_summarize_range()</function></link>
+        updates <acronym>BRIN</acronym> index summarization for a specified
+        range and <function>brin_desummarize_range()</function> removes it.
         This is helpful to update summarization of a range that is now
-        smaller due to <command>UPDATE</>s and <command>DELETE</>s.
+        smaller due to <command>UPDATE</command>s and <command>DELETE</command>s.
        </para>
       </listitem>
 
@@ -733,7 +733,7 @@
 2017-04-06 [7e534adcd] Fix BRIN cost estimation
 -->
        <para>
-        Improve accuracy in determining if a <acronym>BRIN</> index scan
+        Improve accuracy in determining if a <acronym>BRIN</acronym> index scan
         is beneficial (David Rowley, Emre Hasegeli)
        </para>
       </listitem>
@@ -743,7 +743,7 @@
 2016-09-09 [b1328d78f] Invent PageIndexTupleOverwrite, and teach BRIN and GiST
 -->
        <para>
-        Allow faster <acronym>GiST</> inserts and updates by reusing
+        Allow faster <acronym>GiST</acronym> inserts and updates by reusing
         index space more efficiently (Andrey Borodin)
        </para>
       </listitem>
@@ -753,7 +753,7 @@
 2017-03-23 [218f51584] Reduce page locking in GIN vacuum
 -->
        <para>
-        Reduce page locking during vacuuming of <acronym>GIN</> indexes
+        Reduce page locking during vacuuming of <acronym>GIN</acronym> indexes
         (Andrey Borodin)
        </para>
       </listitem>
@@ -825,9 +825,9 @@
 
       <para>
        New commands are <link
-       linkend="SQL-CREATESTATISTICS"><command>CREATE STATISTICS</></>,
-       <link linkend="SQL-ALTERSTATISTICS"><command>ALTER STATISTICS</></>, and
-       <link linkend="SQL-DROPSTATISTICS"><command>DROP STATISTICS</></>.
+       linkend="SQL-CREATESTATISTICS"><command>CREATE STATISTICS</command></link>,
+       <link linkend="SQL-ALTERSTATISTICS"><command>ALTER STATISTICS</command></link>, and
+       <link linkend="SQL-DROPSTATISTICS"><command>DROP STATISTICS</command></link>.
        This feature is helpful in estimating query memory usage and when
        combining the statistics from individual columns.
       </para>
@@ -864,9 +864,9 @@
 -->
        <para>
         Speed up aggregate functions that calculate a running sum
-        using <type>numeric</>-type arithmetic, including some variants
-        of <function>SUM()</>, <function>AVG()</>,
-        and <function>STDDEV()</> (Heikki Linnakangas)
+        using <type>numeric</type>-type arithmetic, including some variants
+        of <function>SUM()</function>, <function>AVG()</function>,
+        and <function>STDDEV()</function> (Heikki Linnakangas)
        </para>
       </listitem>
 
@@ -950,14 +950,14 @@
 -->
        <para>
         Allow explicit control
-        over <link linkend="SQL-EXPLAIN"><command>EXPLAIN</></>'s display
+        over <link linkend="SQL-EXPLAIN"><command>EXPLAIN</command></link>'s display
         of planning and execution time (Ashutosh Bapat)
        </para>
 
        <para>
         By default planning and execution time are displayed by
-        <command>EXPLAIN ANALYZE</> and are not displayed in other cases.
-        The new <command>EXPLAIN</> option <literal>SUMMARY</> allows
+        <command>EXPLAIN ANALYZE</command> and are not displayed in other cases.
+        The new <command>EXPLAIN</command> option <literal>SUMMARY</literal> allows
         explicit control of this.
        </para>
       </listitem>
@@ -971,8 +971,8 @@
        </para>
 
        <para>
-        New roles <literal>pg_monitor</>, <literal>pg_read_all_settings</>,
-        <literal>pg_read_all_stats</>, and <literal>pg_stat_scan_tables</>
+        New roles <literal>pg_monitor</literal>, <literal>pg_read_all_settings</literal>,
+        <literal>pg_read_all_stats</literal>, and <literal>pg_stat_scan_tables</literal>
         allow simplified permission configuration.
        </para>
       </listitem>
@@ -984,7 +984,7 @@
        <para>
         Properly update the statistics collector during <link
         linkend="SQL-REFRESHMATERIALIZEDVIEW"><command>REFRESH MATERIALIZED
-        VIEW</></> (Jim Mlodgenski)
+        VIEW</command></link> (Jim Mlodgenski)
        </para>
       </listitem>
 
@@ -1015,14 +1015,14 @@
 2017-03-16 [befd73c50] Add pg_ls_logdir() and pg_ls_waldir() functions.
 -->
         <para>
-         Add functions to return the log and <acronym>WAL</> directory
+         Add functions to return the log and <acronym>WAL</acronym> directory
          contents (Dave Page)
         </para>
 
         <para>
          The new functions
-         are <link linkend="functions-admin-genfile-table"><function>pg_ls_logdir()</></>
-         and <link linkend="functions-admin-genfile-table"><function>pg_ls_waldir()</></>
+         are <link linkend="functions-admin-genfile-table"><function>pg_ls_logdir()</function></link>
+         and <link linkend="functions-admin-genfile-table"><function>pg_ls_waldir()</function></link>
          and can be executed by non-superusers with the proper
          permissions.
         </para>
@@ -1034,7 +1034,7 @@
 -->
         <para>
          Add function <link
-         linkend="functions-info-session-table"><function>pg_current_logfile()</></>
+         linkend="functions-info-session-table"><function>pg_current_logfile()</function></link>
          to read logging collector's current stderr and csvlog output file names
          (Gilles Darold)
         </para>
@@ -1066,7 +1066,7 @@
         </para>
 
         <para>
-         These are now <literal>DEBUG1</>-level messages.
+         These are now <literal>DEBUG1</literal>-level messages.
         </para>
        </listitem>
 
@@ -1091,7 +1091,7 @@
      </sect5>
 
      <sect5>
-      <title><link linkend="pg-stat-activity-view"><structname>pg_stat_activity</></link></title>
+      <title><link linkend="pg-stat-activity-view"><structname>pg_stat_activity</structname></link></title>
 
       <itemizedlist>
 
@@ -1101,7 +1101,7 @@
 2017-03-18 [249cf070e] Create and use wait events for read, write, and fsync op
 -->
         <para>
-         Add <structname>pg_stat_activity</> reporting of low-level wait
+         Add <structname>pg_stat_activity</structname> reporting of low-level wait
          states (Michael Paquier, Robert Haas, Rushabh Lathia)
         </para>
 
@@ -1119,13 +1119,13 @@
 -->
         <para>
          Show auxiliary processes, background workers, and walsender
-         processes in <structname>pg_stat_activity</> (Kuntal Ghosh,
+         processes in <structname>pg_stat_activity</structname> (Kuntal Ghosh,
          Michael Paquier)
         </para>
 
         <para>
          This simplifies monitoring.  A new
-         column <structfield>backend_type</> identifies the process type.
+         column <structfield>backend_type</structfield> identifies the process type.
         </para>
        </listitem>
 
@@ -1134,7 +1134,7 @@
 2017-02-22 [4c728f382] Pass the source text for a parallel query to the workers
 -->
         <para>
-         Allow <structname>pg_stat_activity</> to show the SQL query
+         Allow <structname>pg_stat_activity</structname> to show the SQL query
          being executed by parallel workers (Rafia Sabih)
         </para>
        </listitem>
@@ -1145,9 +1145,9 @@
 -->
         <para>
          Rename
-         <structname>pg_stat_activity</>.<structfield>wait_event_type</>
-         values <literal>LWLockTranche</> and
-         <literal>LWLockNamed</> to <literal>LWLock</> (Robert Haas)
+         <structname>pg_stat_activity</structname>.<structfield>wait_event_type</structfield>
+         values <literal>LWLockTranche</literal> and
+         <literal>LWLockNamed</literal> to <literal>LWLock</literal> (Robert Haas)
         </para>
 
         <para>
@@ -1161,7 +1161,7 @@
     </sect4>
 
     <sect4>
-     <title><acronym>Authentication</></title>
+     <title><acronym>Authentication</acronym></title>
 
      <itemizedlist>
 
@@ -1173,13 +1173,13 @@
 2017-04-18 [c727f120f] Rename "scram" to "scram-sha-256" in pg_hba.conf and pas
 -->
        <para>
-        Add <link linkend="auth-password">SCRAM-SHA-256</>
+        Add <link linkend="auth-password">SCRAM-SHA-256</link>
         support for password negotiation and storage (Michael Paquier,
         Heikki Linnakangas)
       </para>
 
        <para>
-        This provides better security than the existing <literal>md5</>
+        This provides better security than the existing <literal>md5</literal>
         negotiation and storage method.
        </para>
       </listitem>
@@ -1190,7 +1190,7 @@
 -->
        <para>
         Change the <xref linkend="guc-password-encryption"> server parameter
-        from <type>boolean</> to <type>enum</> (Michael Paquier)
+        from <type>boolean</type> to <type>enum</type> (Michael Paquier)
        </para>
 
        <para>
@@ -1204,8 +1204,8 @@
 -->
        <para>
         Add view <link
-        linkend="view-pg-hba-file-rules"><structname>pg_hba_file_rules</></>
-        to display the contents of <filename>pg_hba.conf</> (Haribabu
+        linkend="view-pg-hba-file-rules"><structname>pg_hba_file_rules</structname></link>
+        to display the contents of <filename>pg_hba.conf</filename> (Haribabu
         Kommi)
        </para>
 
@@ -1219,11 +1219,11 @@
 2017-03-22 [6b76f1bb5] Support multiple RADIUS servers
 -->
        <para>
-        Support multiple <acronym>RADIUS</> servers (Magnus Hagander)
+        Support multiple <acronym>RADIUS</acronym> servers (Magnus Hagander)
        </para>
 
        <para>
-        All the <acronym>RADIUS</> related parameters are now plural and
+        All the <acronym>RADIUS</acronym> related parameters are now plural and
         support a comma-separated list of servers.
        </para>
       </listitem>
@@ -1244,16 +1244,16 @@
 2017-01-04 [6667d9a6d] Re-allow SSL passphrase prompt at server start, but not
 -->
        <para>
-        Allow <acronym>SSL</> configuration to be updated during
+        Allow <acronym>SSL</acronym> configuration to be updated during
         configuration reload (Andreas Karlsson, Tom Lane)
        </para>
 
        <para>
-        This allows <acronym>SSL</> to be reconfigured without a server
-        restart, by using <command>pg_ctl reload</>, <command>SELECT
-        pg_reload_conf()</>, or sending a <literal>SIGHUP</> signal.
-        However, reloading the <acronym>SSL</> configuration does not work
-        if the server's <acronym>SSL</> key requires a passphrase, as there
+        This allows <acronym>SSL</acronym> to be reconfigured without a server
+        restart, by using <command>pg_ctl reload</command>, <command>SELECT
+        pg_reload_conf()</command>, or sending a <literal>SIGHUP</literal> signal.
+        However, reloading the <acronym>SSL</acronym> configuration does not work
+        if the server's <acronym>SSL</acronym> key requires a passphrase, as there
         is no way to re-prompt for the passphrase.  The original
         configuration will apply for the life of the postmaster in that
         case.
@@ -1297,7 +1297,7 @@
      </itemizedlist>
 
      <sect5>
-      <title><link linkend="wal">Write-Ahead Log</> (<acronym>WAL</>)</title>
+      <title><link linkend="wal">Write-Ahead Log</link> (<acronym>WAL</acronym>)</title>
 
       <itemizedlist>
 
@@ -1306,7 +1306,7 @@
 2016-12-22 [6ef2eba3f] Skip checkpoints, archiving on idle systems.
 -->
         <para>
-         Prevent unnecessary checkpoints and <acronym>WAL</> archiving on
+         Prevent unnecessary checkpoints and <acronym>WAL</acronym> archiving on
          otherwise-idle systems (Michael Paquier)
         </para>
        </listitem>
@@ -1318,7 +1318,7 @@
 -->
         <para>
          Add <xref linkend="guc-wal-consistency-checking"> server parameter
-         to add details to <acronym>WAL</> that can be sanity-checked on
+         to add details to <acronym>WAL</acronym> that can be sanity-checked on
          the standby (Kuntal Ghosh, Robert Haas)
         </para>
 
@@ -1332,14 +1332,14 @@
 2017-04-05 [00b6b6feb] Allow -\-with-wal-segsize=n up to n=1024MB
 -->
         <para>
-         Increase the maximum configurable <acronym>WAL</> segment size
+         Increase the maximum configurable <acronym>WAL</acronym> segment size
          to one gigabyte (Beena Emerson)
         </para>
 
         <para>
-         A larger <acronym>WAL</> segment size allows for fewer
+         A larger <acronym>WAL</acronym> segment size allows for fewer
          <xref linkend="guc-archive-command"> invocations and fewer
-         <acronym>WAL</> files to manage.
+         <acronym>WAL</acronym> files to manage.
         </para>
        </listitem>
 
@@ -1364,13 +1364,13 @@
 -->
       <para>
        Add the ability to <link linkend="logical-replication">logically
-       replicate</> tables to standby servers (Petr Jelinek)
+       replicate</link> tables to standby servers (Petr Jelinek)
       </para>
 
       <para>
        Logical replication allows more flexibility than physical
        replication does, including replication between different major
-       versions of <productname>PostgreSQL</> and selective
+       versions of <productname>PostgreSQL</productname> and selective
        replication.
       </para>
      </listitem>
@@ -1387,8 +1387,8 @@
 
       <para>
        Previously the server always waited for the active standbys that
-       appeared first in <varname>synchronous_standby_names</>.  The new
-       <varname>synchronous_standby_names</> keyword <literal>ANY</> allows
+       appeared first in <varname>synchronous_standby_names</varname>.  The new
+       <varname>synchronous_standby_names</varname> keyword <literal>ANY</literal> allows
        waiting for any number of standbys irrespective of their ordering.
        This is known as quorum commit.
       </para>
@@ -1419,14 +1419,14 @@
 -->
       <para>
        Enable replication from localhost connections by default in
-       <link linkend="auth-pg-hba-conf"><filename>pg_hba.conf</></>
+       <link linkend="auth-pg-hba-conf"><filename>pg_hba.conf</filename></link>
        (Michael Paquier)
       </para>
 
       <para>
-       Previously <filename>pg_hba.conf</>'s replication connection
+       Previously <filename>pg_hba.conf</filename>'s replication connection
        lines were commented out by default.  This is particularly useful for
-       <application><xref linkend="app-pgbasebackup"></>.
+       <application><xref linkend="app-pgbasebackup"></application>.
       </para>
      </listitem>
 
@@ -1436,13 +1436,13 @@
 -->
       <para>
        Add columns to <link
-       linkend="monitoring-stats-views-table"><structname>pg_stat_replication</></>
+       linkend="monitoring-stats-views-table"><structname>pg_stat_replication</structname></link>
        to report replication delay times (Thomas Munro)
       </para>
 
       <para>
-       The new columns are <structfield>write_lag</>,
-       <structfield>flush_lag</>, and <structfield>replay_lag</>.
+       The new columns are <structfield>write_lag</structfield>,
+       <structfield>flush_lag</structfield>, and <structfield>replay_lag</structfield>.
       </para>
      </listitem>
 
@@ -1452,8 +1452,8 @@
 -->
       <para>
        Allow specification of the recovery stopping point by Log Sequence
-       Number (<acronym>LSN</>) in
-       <link linkend="recovery-config"><filename>recovery.conf</></>
+       Number (<acronym>LSN</acronym>) in
+       <link linkend="recovery-config"><filename>recovery.conf</filename></link>
        (Michael Paquier)
       </para>
 
@@ -1470,12 +1470,12 @@
 -->
       <para>
        Allow users to disable <link
-       linkend="functions-admin"><function>pg_stop_backup()</></>'s
-       waiting for all <acronym>WAL</> to be archived (David Steele)
+       linkend="functions-admin"><function>pg_stop_backup()</function></link>'s
+       waiting for all <acronym>WAL</acronym> to be archived (David Steele)
       </para>
 
       <para>
-       An optional second argument to <function>pg_stop_backup()</>
+       An optional second argument to <function>pg_stop_backup()</function>
        controls that behavior.
       </para>
      </listitem>
@@ -1486,7 +1486,7 @@
 -->
       <para>
        Allow creation of <link
-       linkend="functions-replication-table">temporary replication slots</>
+       linkend="functions-replication-table">temporary replication slots</link>
        (Petr Jelinek)
       </para>
 
@@ -1530,8 +1530,8 @@
 -->
       <para>
        Add <link
-       linkend="functions-xml-processing-xmltable"><function>XMLTABLE</></>
-       function that converts <type>XML</>-formatted data into a row set
+       linkend="functions-xml-processing-xmltable"><function>XMLTABLE</function></link>
+       function that converts <type>XML</type>-formatted data into a row set
        (Pavel Stehule, &Aacute;lvaro Herrera)
       </para>
      </listitem>
@@ -1542,17 +1542,17 @@
 -->
       <para>
        Allow standard row constructor syntax in <literal>UPDATE ... SET
-       (<replaceable>column_list</>) = <replaceable>row_constructor</></literal>
+       (<replaceable>column_list</replaceable>) = <replaceable>row_constructor</replaceable></literal>
        (Tom Lane)
       </para>
 
       <para>
-       The <replaceable>row_constructor</> can now begin with the
-       keyword <literal>ROW</>; previously that had to be omitted.  Also,
-       an occurrence of <literal><replaceable>table_name</>.*</literal>
-       within the <replaceable>row_constructor</> is now expanded into
+       The <replaceable>row_constructor</replaceable> can now begin with the
+       keyword <literal>ROW</literal>; previously that had to be omitted.  Also,
+       an occurrence of <literal><replaceable>table_name</replaceable>.*</literal>
+       within the <replaceable>row_constructor</replaceable> is now expanded into
        multiple columns, as in other uses
-       of <replaceable>row_constructor</>s.
+       of <replaceable>row_constructor</replaceable>s.
       </para>
      </listitem>
 
@@ -1562,13 +1562,13 @@
 -->
       <para>
        Fix regular expressions' character class handling for large character
-       codes, particularly Unicode characters above <literal>U+7FF</>
+       codes, particularly Unicode characters above <literal>U+7FF</literal>
        (Tom Lane)
       </para>
 
       <para>
        Previously, such characters were never recognized as belonging to
-       locale-dependent character classes such as <literal>[[:alpha:]]</>.
+       locale-dependent character classes such as <literal>[[:alpha:]]</literal>.
       </para>
      </listitem>
 
@@ -1587,7 +1587,7 @@
 -->
       <para>
        Add table <link linkend="SQL-CREATETABLE-PARTITION">partitioning
-       syntax</> that automatically creates partition constraints and
+       syntax</link> that automatically creates partition constraints and
        handles routing of tuple insertions and updates (Amit Langote)
       </para>
 
@@ -1603,7 +1603,7 @@
 2017-03-31 [597027163] Add transition table support to plpgsql.
 -->
       <para>
-       Add <link linkend="SQL-CREATETRIGGER"><literal>AFTER</> trigger</>
+       Add <link linkend="SQL-CREATETRIGGER"><literal>AFTER</literal> trigger</link>
        transition tables to record changed rows (Kevin Grittner, Thomas
        Munro)
       </para>
@@ -1620,7 +1620,7 @@
 -->
       <para>
        Allow <link linkend="SQL-CREATEPOLICY">restrictive row-level
-       security policies</> (Stephen Frost)
+       security policies</link> (Stephen Frost)
       </para>
 
       <para>
@@ -1636,16 +1636,16 @@
 -->
        <para>
         When creating a foreign-key constraint, check
-        for <literal>REFERENCES</> permission on only the referenced table
+        for <literal>REFERENCES</literal> permission on only the referenced table
         (Tom Lane)
        </para>
 
        <para>
-        Previously <literal>REFERENCES</> permission on the referencing
+        Previously <literal>REFERENCES</literal> permission on the referencing
         table was also required.  This appears to have stemmed from a
         misreading of the SQL standard.  Since creating a foreign key (or
         any other type of) constraint requires ownership privilege on the
-        constrained table, additionally requiring <literal>REFERENCES</>
+        constrained table, additionally requiring <literal>REFERENCES</literal>
         permission seems rather pointless.
        </para>
       </listitem>
@@ -1656,11 +1656,11 @@
 -->
       <para>
        Allow <link linkend="SQL-ALTERDEFAULTPRIVILEGES">default
-       permissions</> on schemas (Matheus Oliveira)
+       permissions</link> on schemas (Matheus Oliveira)
       </para>
 
       <para>
-       This is done using the <literal>ALTER DEFAULT PRIVILEGES</> command.
+       This is done using the <literal>ALTER DEFAULT PRIVILEGES</literal> command.
       </para>
      </listitem>
 
@@ -1670,7 +1670,7 @@
 -->
       <para>
        Add <link linkend="SQL-CREATESEQUENCE"><command>CREATE SEQUENCE
-       AS</></> command to create a sequence matching an integer data type
+       AS</command></link> command to create a sequence matching an integer data type
        (Peter Eisentraut)
       </para>
 
@@ -1685,13 +1685,13 @@
 2016-11-10 [279c439c7] Support "COPY view FROM" for views with INSTEAD OF INSER
 -->
       <para>
-       Allow <literal>COPY <replaceable>view</>
-       FROM <replaceable>source</></> on views with <literal>INSTEAD
-       INSERT</> triggers (Haribabu Kommi)
+       Allow <literal>COPY <replaceable>view</replaceable>
+       FROM <replaceable>source</replaceable></literal> on views with <literal>INSTEAD
+       INSERT</literal> triggers (Haribabu Kommi)
       </para>
 
       <para>
-       The triggers are fed the data rows read by <command>COPY</>.
+       The triggers are fed the data rows read by <command>COPY</command>.
       </para>
      </listitem>
 
@@ -1701,14 +1701,14 @@
 -->
       <para>
        Allow the specification of a function name without arguments in
-       <acronym>DDL</> commands, if it is unique (Peter Eisentraut)
+       <acronym>DDL</acronym> commands, if it is unique (Peter Eisentraut)
       </para>
 
       <para>
        For example, allow <link linkend="SQL-DROPFUNCTION"><command>DROP
-       FUNCTION</></> on a function name without arguments if there
+       FUNCTION</command></link> on a function name without arguments if there
        is only one function with that name.  This behavior is required by the
-       <acronym>SQL</> standard.
+       <acronym>SQL</acronym> standard.
       </para>
      </listitem>
 
@@ -1718,7 +1718,7 @@
 -->
       <para>
        Allow multiple functions, operators, and aggregates to be dropped
-       with a single <command>DROP</> command (Peter Eisentraut)
+       with a single <command>DROP</command> command (Peter Eisentraut)
       </para>
      </listitem>
 
@@ -1728,10 +1728,10 @@
 2017-03-20 [b6fb534f1] Add IF NOT EXISTS for CREATE SERVER and CREATE USER MAPP
 -->
       <para>
-       Support <literal>IF NOT EXISTS</>
-       in <link linkend="SQL-CREATESERVER"><command>CREATE SERVER</></>,
-       <link linkend="SQL-CREATEUSERMAPPING"><command>CREATE USER MAPPING</></>,
-       and <link linkend="SQL-CREATECOLLATION"><command>CREATE COLLATION</></>
+       Support <literal>IF NOT EXISTS</literal>
+       in <link linkend="SQL-CREATESERVER"><command>CREATE SERVER</command></link>,
+       <link linkend="SQL-CREATEUSERMAPPING"><command>CREATE USER MAPPING</command></link>,
+       and <link linkend="SQL-CREATECOLLATION"><command>CREATE COLLATION</command></link>
        (Anastasia Lubennikova, Peter Eisentraut)
       </para>
      </listitem>
@@ -1742,7 +1742,7 @@
 2017-03-03 [9eb344faf] Allow vacuums to report oldestxmin
 -->
       <para>
-       Make <link linkend="SQL-VACUUM"><command>VACUUM VERBOSE</></> report
+       Make <link linkend="SQL-VACUUM"><command>VACUUM VERBOSE</command></link> report
        the number of skipped frozen pages and oldest xmin (Masahiko
        Sawada, Simon Riggs)
       </para>
@@ -1758,7 +1758,7 @@
 2017-01-23 [7e26e02ee] Prefetch blocks during lazy vacuum's truncation scan
 -->
       <para>
-       Improve speed of <command>VACUUM</>'s removal of trailing empty
+       Improve speed of <command>VACUUM</command>'s removal of trailing empty
        heap pages (Claudio Freire, &Aacute;lvaro Herrera)
       </para>
      </listitem>
@@ -1777,13 +1777,13 @@
 2017-03-31 [e306df7f9] Full Text Search support for JSON and JSONB
 -->
        <para>
-        Add full text search support for <type>JSON</> and <type>JSONB</>
+        Add full text search support for <type>JSON</type> and <type>JSONB</type>
         (Dmitry Dolgov)
        </para>
 
        <para>
-        The functions <function>ts_headline()</> and
-        <function>to_tsvector()</> can now be used on these data types.
+        The functions <function>ts_headline()</function> and
+        <function>to_tsvector()</function> can now be used on these data types.
        </para>
       </listitem>
 
@@ -1792,15 +1792,15 @@
 2017-03-15 [c7a9fa399] Add support for EUI-64 MAC addresses as macaddr8
 -->
       <para>
-       Add support for <acronym>EUI-64</> <acronym>MAC</> addresses, as a
-       new data type <link linkend="datatype-macaddr8"><type>macaddr8</></>
+       Add support for <acronym>EUI-64</acronym> <acronym>MAC</acronym> addresses, as a
+       new data type <link linkend="datatype-macaddr8"><type>macaddr8</type></link>
        (Haribabu Kommi)
       </para>
 
       <para>
        This complements the existing support
-       for <acronym>EUI-48</> <acronym>MAC</> addresses
-       (type <type>macaddr</>).
+       for <acronym>EUI-48</acronym> <acronym>MAC</acronym> addresses
+       (type <type>macaddr</type>).
       </para>
      </listitem>
 
@@ -1809,13 +1809,13 @@
 2017-04-06 [321732705] Identity columns
 -->
       <para>
-       Add <link linkend="SQL-CREATETABLE">identity columns</> for
+       Add <link linkend="SQL-CREATETABLE">identity columns</link> for
        assigning a numeric value to columns on insert (Peter Eisentraut)
       </para>
 
       <para>
-       These are similar to <type>SERIAL</> columns, but are
-       <acronym>SQL</> standard compliant.
+       These are similar to <type>SERIAL</type> columns, but are
+       <acronym>SQL</acronym> standard compliant.
       </para>
      </listitem>
 
@@ -1824,13 +1824,13 @@
 2016-09-07 [0ab9c56d0] Support renaming an existing value of an enum type.
 -->
       <para>
-       Allow <link linkend="datatype-enum"><type>ENUM</></> values to be
+       Allow <link linkend="datatype-enum"><type>ENUM</type></link> values to be
        renamed (Dagfinn Ilmari Manns&aring;ker)
       </para>
 
       <para>
        This uses the syntax <link linkend="SQL-ALTERTYPE"><command>ALTER
-       TYPE ... RENAME VALUE</></>.
+       TYPE ... RENAME VALUE</command></link>.
       </para>
      </listitem>
 
@@ -1840,14 +1840,14 @@
 -->
       <para>
        Properly treat array pseudotypes
-       (<type>anyarray</>) as arrays in <link
-       linkend="functions-json-creation-table"><function>to_json()</></>
-       and <function>to_jsonb()</> (Andrew Dunstan)
+       (<type>anyarray</type>) as arrays in <link
+       linkend="functions-json-creation-table"><function>to_json()</function></link>
+       and <function>to_jsonb()</function> (Andrew Dunstan)
       </para>
 
       <para>
-       Previously columns declared as <type>anyarray</> (particularly those
-       in the <structname>pg_stats</> view) were converted to <type>JSON</>
+       Previously columns declared as <type>anyarray</type> (particularly those
+       in the <structname>pg_stats</structname> view) were converted to <type>JSON</type>
        strings rather than arrays.
       </para>
      </listitem>
@@ -1858,16 +1858,16 @@
 -->
       <para>
        Add operators for multiplication and division
-       of <link linkend="datatype-money"><type>money</></link> values
-       with <type>int8</> values (Peter Eisentraut)
+       of <link linkend="datatype-money"><type>money</type></link> values
+       with <type>int8</type> values (Peter Eisentraut)
       </para>
 
       <para>
-       Previously such cases would result in converting the <type>int8</>
-       values to <type>float8</> and then using
-       the <type>money</>-and-<type>float8</> operators.  The new behavior
+       Previously such cases would result in converting the <type>int8</type>
+       values to <type>float8</type> and then using
+       the <type>money</type>-and-<type>float8</type> operators.  The new behavior
        avoids possible precision loss.  But note that division
-       of <type>money</> by <type>int8</> now truncates the quotient, like
+       of <type>money</type> by <type>int8</type> now truncates the quotient, like
        other integer-division cases, while the previous behavior would have
        rounded.
       </para>
@@ -1878,7 +1878,7 @@
 2016-09-14 [656df624c] Add overflow checks to money type input function
 -->
       <para>
-       Check for overflow in the <type>money</> type's input function
+       Check for overflow in the <type>money</type> type's input function
        (Peter Eisentraut)
       </para>
      </listitem>
@@ -1898,12 +1898,12 @@
 -->
       <para>
        Add simplified <link
-       linkend="functions-posix-regexp"><function>regexp_match()</></>
+       linkend="functions-posix-regexp"><function>regexp_match()</function></link>
        function (Emre Hasegeli)
       </para>
 
       <para>
-       This is similar to <function>regexp_matches()</>, but it only
+       This is similar to <function>regexp_matches()</function>, but it only
        returns results from the first match so it does not need to return a
        set, making it easier to use for simple cases.
       </para>
@@ -1914,8 +1914,8 @@
 2017-01-18 [d00ca333c] Implement array version of jsonb_delete and operator
 -->
       <para>
-       Add a version of <type>jsonb</>'s <link
-       linkend="functions-jsonb-op-table">delete operator</> that takes
+       Add a version of <type>jsonb</type>'s <link
+       linkend="functions-jsonb-op-table">delete operator</link> that takes
        an array of keys to delete (Magnus Hagander)
       </para>
      </listitem>
@@ -1925,7 +1925,7 @@
 2017-04-06 [cf35346e8] Make json_populate_record and friends operate recursivel
 -->
       <para>
-       Make <link linkend="functions-json-processing-table"><function>json_populate_record()</></>
+       Make <link linkend="functions-json-processing-table"><function>json_populate_record()</function></link>
        and related functions process JSON arrays and objects recursively
        (Nikita Glukhov)
       </para>
@@ -1935,7 +1935,7 @@
        properly converted from JSON arrays, and composite-type fields are
        properly converted from JSON objects.  Previously, such cases would
        fail because the text representation of the JSON value would be fed
-       to <function>array_in()</> or <function>record_in()</>, and its
+       to <function>array_in()</function> or <function>record_in()</function>, and its
        syntax would not match what those input functions expect.
       </para>
      </listitem>
@@ -1946,14 +1946,14 @@
 -->
       <para>
        Add function <link
-       linkend="functions-txid-snapshot"><function>txid_current_if_assigned()</></>
-       to return the current transaction ID or <literal>NULL</> if no
+       linkend="functions-txid-snapshot"><function>txid_current_if_assigned()</function></link>
+       to return the current transaction ID or <literal>NULL</literal> if no
        transaction ID has been assigned (Craig Ringer)
       </para>
 
       <para>
        This is different from <link
-       linkend="functions-txid-snapshot"><function>txid_current()</></>,
+       linkend="functions-txid-snapshot"><function>txid_current()</function></link>,
        which always returns a transaction ID, assigning one if necessary.
        Unlike that function, this function can be run on standby servers.
       </para>
@@ -1965,7 +1965,7 @@
 -->
       <para>
        Add function <link
-       linkend="functions-txid-snapshot"><function>txid_status()</></>
+       linkend="functions-txid-snapshot"><function>txid_status()</function></link>
        to check if a transaction was committed (Craig Ringer)
       </para>
 
@@ -1982,8 +1982,8 @@
 -->
       <para>
        Allow <link
-       linkend="functions-formatting-table"><function>make_date()</></>
-       to interpret negative years as <acronym>BC</> years (&Aacute;lvaro
+       linkend="functions-formatting-table"><function>make_date()</function></link>
+       to interpret negative years as <acronym>BC</acronym> years (&Aacute;lvaro
        Herrera)
       </para>
      </listitem>
@@ -1993,14 +1993,14 @@
 2016-09-28 [d3cd36a13] Make to_timestamp() and to_date() range-check fields of
 -->
       <para>
-       Make <function>to_timestamp()</> and <function>to_date()</> reject
+       Make <function>to_timestamp()</function> and <function>to_date()</function> reject
        out-of-range input fields (Artur Zakirov)
       </para>
 
       <para>
        For example,
-       previously <literal>to_date('2009-06-40','YYYY-MM-DD')</> was
-       accepted and returned <literal>2009-07-10</>.  It will now generate
+       previously <literal>to_date('2009-06-40','YYYY-MM-DD')</literal> was
+       accepted and returned <literal>2009-07-10</literal>.  It will now generate
        an error.
       </para>
      </listitem>
@@ -2019,7 +2019,7 @@
 2017-03-27 [70ec3f1f8] PL/Python: Add cursor and execute methods to plan object
 -->
       <para>
-       Allow PL/Python's <function>cursor()</> and <function>execute()</>
+       Allow PL/Python's <function>cursor()</function> and <function>execute()</function>
        functions to be called as methods of their plan-object arguments
        (Peter Eisentraut)
       </para>
@@ -2034,7 +2034,7 @@
 2016-12-13 [55caaaeba] Improve handling of array elements as getdiag_targets an
 -->
       <para>
-       Allow PL/pgSQL's <command>GET DIAGNOSTICS</> statement to retrieve
+       Allow PL/pgSQL's <command>GET DIAGNOSTICS</command> statement to retrieve
        values into array elements (Tom Lane)
       </para>
 
@@ -2047,7 +2047,7 @@
     </itemizedlist>
 
     <sect4>
-     <title><link linkend="pltcl">PL/Tcl</></title>
+     <title><link linkend="pltcl">PL/Tcl</link></title>
 
      <itemizedlist>
 
@@ -2104,7 +2104,7 @@
 -->
       <para>
        Allow specification of <link linkend="libpq-connect-host">multiple
-       host names or addresses</> in libpq connection strings and URIs
+       host names or addresses</link> in libpq connection strings and URIs
        (Robert Haas, Heikki Linnakangas)
       </para>
 
@@ -2119,7 +2119,7 @@
 -->
       <para>
        Allow libpq connection strings and URIs to request a <link
-       linkend="libpq-connect-target-session-attrs">read/write host</>,
+       linkend="libpq-connect-target-session-attrs">read/write host</link>,
        that is a master server rather than a standby server
        (Victor Wagner, Mithun Cy)
       </para>
@@ -2127,7 +2127,7 @@
       <para>
        This is useful when multiple host names are
        specified.  It is controlled by libpq connection parameter
-       <option>target_session_attrs</>.
+       <option>target_session_attrs</option>.
       </para>
      </listitem>
 
@@ -2136,7 +2136,7 @@
 2017-01-24 [ba005f193] Allow password file name to be specified as a libpq conn
 -->
       <para>
-       Allow the <link linkend="libpq-connect-passfile">password file name</>
+       Allow the <link linkend="libpq-connect-passfile">password file name</link>
        to be specified as a libpq connection parameter (Julian Markwort)
       </para>
 
@@ -2151,17 +2151,17 @@
 -->
       <para>
        Add function <link
-       linkend="libpq-pqencryptpasswordconn"><function>PQencryptPasswordConn()</></>
+       linkend="libpq-pqencryptpasswordconn"><function>PQencryptPasswordConn()</function></link>
        to allow creation of more types of encrypted passwords on the
        client side (Michael Paquier, Heikki Linnakangas)
       </para>
 
       <para>
-       Previously only <literal>MD5</>-encrypted passwords could be created
+       Previously only <literal>MD5</literal>-encrypted passwords could be created
        using <link
-       linkend="libpq-pqencryptpassword"><function>PQencryptPassword()</></>.
+       linkend="libpq-pqencryptpassword"><function>PQencryptPassword()</function></link>.
        This new function can also create <link
-       linkend="auth-pg-hba-conf"><literal>SCRAM-SHA-256</></>-encrypted
+       linkend="auth-pg-hba-conf"><literal>SCRAM-SHA-256</literal></link>-encrypted
        passwords.
       </para>
      </listitem>
@@ -2171,13 +2171,13 @@
 2016-08-16 [a7b5573d6] Remove separate version numbering for ecpg preprocessor.
 -->
       <para>
-       Change <application>ecpg</> preprocessor version from 4.12 to 10
+       Change <application>ecpg</application> preprocessor version from 4.12 to 10
        (Tom Lane)
       </para>
 
       <para>
-       Henceforth the <application>ecpg</> version will match
-       the <productname>PostgreSQL</> distribution version number.
+       Henceforth the <application>ecpg</application> version will match
+       the <productname>PostgreSQL</productname> distribution version number.
       </para>
      </listitem>
 
@@ -2200,14 +2200,14 @@
 2017-04-02 [68dba97a4] Document psql's behavior of recalling the previously exe
 -->
        <para>
-        Add conditional branch support to <application>psql</> (Corey
+        Add conditional branch support to <application>psql</application> (Corey
         Huinker)
        </para>
 
        <para>
-        This feature adds <application>psql</>
-        meta-commands <command>\if</>, <command>\elif</>, <command>\else</>,
-        and <command>\endif</>.  This is primarily helpful for scripting.
+        This feature adds <application>psql</application>
+        meta-commands <command>\if</command>, <command>\elif</command>, <command>\else</command>,
+        and <command>\endif</command>.  This is primarily helpful for scripting.
        </para>
       </listitem>
 
@@ -2216,8 +2216,8 @@
 2017-03-07 [b2678efd4] psql: Add \gx command
 -->
        <para>
-        Add <application>psql</> <command>\gx</> meta-command to execute
-        (<command>\g</>) a query in expanded mode (<command>\x</>)
+        Add <application>psql</application> <command>\gx</command> meta-command to execute
+        (<command>\g</command>) a query in expanded mode (<command>\x</command>)
         (Christoph Berg)
        </para>
       </listitem>
@@ -2227,12 +2227,12 @@
 2017-04-01 [f833c847b] Allow psql variable substitution to occur in backtick co
 -->
        <para>
-        Expand <application>psql</> variable references in
+        Expand <application>psql</application> variable references in
         backtick-executed strings (Tom Lane)
        </para>
 
        <para>
-        This is particularly useful in the new <application>psql</>
+        This is particularly useful in the new <application>psql</application>
         conditional branch commands.
        </para>
       </listitem>
@@ -2244,23 +2244,23 @@
 2017-02-02 [fd6cd6980] Clean up psql's behavior for a few more control variable
 -->
        <para>
-        Prevent <application>psql</>'s special variables from being set to
+        Prevent <application>psql</application>'s special variables from being set to
         invalid values (Daniel V&eacute;rit&eacute;, Tom Lane)
        </para>
 
        <para>
-        Previously, setting one of <application>psql</>'s special variables
+        Previously, setting one of <application>psql</application>'s special variables
         to an invalid value silently resulted in the default behavior.
-        <command>\set</> on a special variable now fails if the proposed
-        new value is invalid.  As a special exception, <command>\set</>
+        <command>\set</command> on a special variable now fails if the proposed
+        new value is invalid.  As a special exception, <command>\set</command>
         with an empty or omitted new value, on a boolean-valued special
         variable, still has the effect of setting the variable
-        to <literal>on</>; but now it actually acquires that value rather
-        than an empty string.  <command>\unset</> on a special variable now
+        to <literal>on</literal>; but now it actually acquires that value rather
+        than an empty string.  <command>\unset</command> on a special variable now
         explicitly sets the variable to its default value, which is also
         the value it acquires at startup.  In sum, a control variable now
         always has a displayable value that reflects
-        what <application>psql</> is actually doing.
+        what <application>psql</application> is actually doing.
        </para>
       </listitem>
 
@@ -2269,7 +2269,7 @@
 2017-09-06 [a6c678f01] Add psql variables showing server version and psql versi
 -->
        <para>
-        Add variables showing server version and <application>psql</> version
+        Add variables showing server version and <application>psql</application> version
         (Fabien Coelho)
        </para>
       </listitem>
@@ -2279,14 +2279,14 @@
 2016-11-03 [a0f357e57] psql: Split up "Modifiers" column in \d and \dD
 -->
        <para>
-        Improve <application>psql</>'s <command>\d</> (display relation)
-        and <command>\dD</> (display domain) commands to show collation,
+        Improve <application>psql</application>'s <command>\d</command> (display relation)
+        and <command>\dD</command> (display domain) commands to show collation,
         nullable, and default properties in separate columns (Peter
         Eisentraut)
        </para>
 
        <para>
-        Previously they were shown in a single <quote>Modifiers</> column.
+        Previously they were shown in a single <quote>Modifiers</quote> column.
        </para>
       </listitem>
 
@@ -2295,7 +2295,7 @@
 2017-07-27 [77cb4a1d6] Standardize describe.c's behavior for no-matching-object
 -->
        <para>
-        Make the various <command>\d</> commands handle no-matching-object
+        Make the various <command>\d</command> commands handle no-matching-object
         cases more consistently (Daniel Gustafsson)
        </para>
 
@@ -2319,7 +2319,7 @@
 2017-03-16 [d7d77f382] psql: Add completion for \help DROP|ALTER
 -->
        <para>
-        Improve <application>psql</>'s tab completion (Jeff Janes,
+        Improve <application>psql</application>'s tab completion (Jeff Janes,
         Ian Barwick, Andreas Karlsson, Sehrope Sarkuni, Thomas Munro,
         Kevin Grittner, Dagfinn Ilmari Manns&aring;ker)
        </para>
@@ -2339,7 +2339,7 @@
 2016-11-09 [41124a91e] pgbench: Allow the transaction log file prefix to be cha
 -->
        <para>
-        Add <application>pgbench</> option <option>--log-prefix</> to
+        Add <application>pgbench</application> option <option>--log-prefix</option> to
         control the log file prefix (Masahiko Sawada)
        </para>
       </listitem>
@@ -2349,7 +2349,7 @@
 2017-01-20 [cdc2a7047] Allow backslash line continuations in pgbench's meta com
 -->
        <para>
-        Allow <application>pgbench</>'s meta-commands to span multiple
+        Allow <application>pgbench</application>'s meta-commands to span multiple
         lines (Fabien Coelho)
        </para>
 
@@ -2364,7 +2364,7 @@
 2017-08-11 [796818442] Remove pgbench's restriction on placement of -M switch.
 -->
        <para>
-        Remove restriction on placement of <option>-M</> option relative to
+        Remove restriction on placement of <option>-M</option> option relative to
         other command line options (Tom Lane)
        </para>
       </listitem>
@@ -2386,8 +2386,8 @@
 -->
       <para>
        Add <link
-       linkend="app-pgreceivewal"><application>pg_receivewal</></>
-       option <option>-Z</>/<option>--compress</> to specify compression
+       linkend="app-pgreceivewal"><application>pg_receivewal</application></link>
+       option <option>-Z</option>/<option>--compress</option> to specify compression
        (Michael Paquier)
       </para>
      </listitem>
@@ -2398,12 +2398,12 @@
 -->
       <para>
        Add <link
-       linkend="app-pgrecvlogical"><application>pg_recvlogical</></> option
-       <option>--endpos</> to specify the ending position (Craig Ringer)
+       linkend="app-pgrecvlogical"><application>pg_recvlogical</application></link> option
+       <option>--endpos</option> to specify the ending position (Craig Ringer)
       </para>
 
       <para>
-       This complements the existing <option>--startpos</> option.
+       This complements the existing <option>--startpos</option> option.
       </para>
      </listitem>
 
@@ -2412,9 +2412,9 @@
 2016-10-19 [5d58c07a4] initdb pg_basebackup: Rename -\-noxxx options to -\-no-x
 -->
       <para>
-       Rename <link linkend="APP-INITDB"><application>initdb</></>
-       options <option>--noclean</> and <option>--nosync</> to be spelled
-       <option>--no-clean</> and <option>--no-sync</> (Vik Fearing,
+       Rename <link linkend="APP-INITDB"><application>initdb</application></link>
+       options <option>--noclean</option> and <option>--nosync</option> to be spelled
+       <option>--no-clean</option> and <option>--no-sync</option> (Vik Fearing,
        Peter Eisentraut)
       </para>
 
@@ -2426,9 +2426,9 @@
     </itemizedlist>
 
     <sect4>
-     <title><link linkend="APP-PGDUMP"><application>pg_dump</></>,
-     <link linkend="APP-PG-DUMPALL"><application>pg_dumpall</></>,
-     <link linkend="APP-PGRESTORE"><application>pg_restore</></></title>
+     <title><link linkend="APP-PGDUMP"><application>pg_dump</application></link>,
+     <link linkend="APP-PG-DUMPALL"><application>pg_dumpall</application></link>,
+     <link linkend="APP-PGRESTORE"><application>pg_restore</application></link></title>
 
      <itemizedlist>
 
@@ -2437,11 +2437,11 @@
 2016-09-20 [46b55e7f8] pg_restore: Add -N option to exclude schemas
 -->
        <para>
-        Allow <application>pg_restore</> to exclude schemas (Michael Banck)
+        Allow <application>pg_restore</application> to exclude schemas (Michael Banck)
        </para>
 
        <para>
-        This adds a new <option>-N</>/<option>--exclude-schema</> option.
+        This adds a new <option>-N</option>/<option>--exclude-schema</option> option.
        </para>
       </listitem>
 
@@ -2450,8 +2450,8 @@
 2016-11-29 [4fafa579b] Add -\-no-blobs option to pg_dump
 -->
        <para>
-        Add <option>--no-blobs</> option to
-        <application>pg_dump</> (Guillaume Lelarge)
+        Add <option>--no-blobs</option> option to
+        <application>pg_dump</application> (Guillaume Lelarge)
        </para>
 
        <para>
@@ -2464,13 +2464,13 @@
 2017-03-07 [9a83d56b3] Allow pg_dumpall to dump roles w/o user passwords
 -->
        <para>
-        Add <application>pg_dumpall</> option
-        <option>--no-role-passwords</> to omit role passwords
+        Add <application>pg_dumpall</application> option
+        <option>--no-role-passwords</option> to omit role passwords
         (Robins Tharakan, Simon Riggs)
        </para>
 
        <para>
-        This allows use of <application>pg_dumpall</> by non-superusers;
+        This allows use of <application>pg_dumpall</application> by non-superusers;
         without this option, it fails due to inability to read passwords.
        </para>
       </listitem>
@@ -2490,15 +2490,15 @@
 2017-03-22 [96a7128b7] Sync pg_dump and pg_dumpall output
 -->
        <para>
-        Issue <function>fsync()</> on the output files generated by
-        <application>pg_dump</> and
-        <application>pg_dumpall</> (Michael Paquier)
+        Issue <function>fsync()</function> on the output files generated by
+        <application>pg_dump</application> and
+        <application>pg_dumpall</application> (Michael Paquier)
        </para>
 
        <para>
         This provides more security that the output is safely stored on
         disk before the program exits.  This can be disabled with
-        the new <option>--no-sync</> option.
+        the new <option>--no-sync</option> option.
        </para>
       </listitem>
 
@@ -2518,12 +2518,12 @@
 2016-12-21 [ecbdc4c55] Forbid invalid combination of options in pg_basebackup.
 -->
        <para>
-        Allow <application>pg_basebackup</> to stream write-ahead log in
+        Allow <application>pg_basebackup</application> to stream write-ahead log in
         tar mode (Magnus Hagander)
        </para>
 
        <para>
-        The <acronym>WAL</> will be stored in a separate tar file from
+        The <acronym>WAL</acronym> will be stored in a separate tar file from
         the base backup.
        </para>
       </listitem>
@@ -2533,13 +2533,13 @@
 2017-01-16 [e7b020f78] Make pg_basebackup use temporary replication slots
 -->
        <para>
-        Make <application>pg_basebackup</> use temporary replication slots
+        Make <application>pg_basebackup</application> use temporary replication slots
         (Magnus Hagander)
        </para>
 
        <para>
         Temporary replication slots will be used by default when
-        <application>pg_basebackup</> uses WAL streaming with default
+        <application>pg_basebackup</application> uses WAL streaming with default
         options.
        </para>
       </listitem>
@@ -2550,8 +2550,8 @@
 -->
        <para>
         Be more careful about fsync'ing in all required places
-        in <application>pg_basebackup</> and
-        <application>pg_receivewal</> (Michael Paquier)
+        in <application>pg_basebackup</application> and
+        <application>pg_receivewal</application> (Michael Paquier)
        </para>
       </listitem>
 
@@ -2561,7 +2561,7 @@
 2016-10-19 [5d58c07a4] initdb pg_basebackup: Rename -\-noxxx options to -\-no-x
 -->
        <para>
-        Add <application>pg_basebackup</> option <option>--no-sync</> to
+        Add <application>pg_basebackup</application> option <option>--no-sync</option> to
         disable fsync (Michael Paquier)
        </para>
       </listitem>
@@ -2571,7 +2571,7 @@
 2016-09-28 [6ad8ac602] Exclude additional directories in pg_basebackup
 -->
        <para>
-        Improve <application>pg_basebackup</>'s handling of which
+        Improve <application>pg_basebackup</application>'s handling of which
         directories to skip (David Steele)
        </para>
       </listitem>
@@ -2581,7 +2581,7 @@
     </sect4>
 
     <sect4>
-     <title><application><xref linkend="app-pg-ctl"></></title>
+     <title><application><xref linkend="app-pg-ctl"></application></title>
 
      <itemizedlist>
 
@@ -2590,7 +2590,7 @@
 2016-09-21 [e7010ce47] pg_ctl: Add wait option to promote action
 -->
        <para>
-        Add wait option for <application><xref linkend="app-pg-ctl"></>'s
+        Add wait option for <application><xref linkend="app-pg-ctl"></application>'s
         promote operation (Peter Eisentraut)
        </para>
       </listitem>
@@ -2600,8 +2600,8 @@
 2016-10-19 [0be22457d] pg_ctl: Add long options for -w and -W
 -->
        <para>
-        Add long options for <application>pg_ctl</> wait (<option>--wait</>)
-        and no-wait (<option>--no-wait</>) (Vik Fearing)
+        Add long options for <application>pg_ctl</application> wait (<option>--wait</option>)
+        and no-wait (<option>--no-wait</option>) (Vik Fearing)
        </para>
       </listitem>
 
@@ -2610,8 +2610,8 @@
 2016-10-19 [caf936b09] pg_ctl: Add long option for -o
 -->
        <para>
-        Add long option for <application>pg_ctl</> server options
-        (<option>--options</>) (Peter Eisentraut)
+        Add long option for <application>pg_ctl</application> server options
+        (<option>--options</option>) (Peter Eisentraut)
        </para>
       </listitem>
 
@@ -2620,14 +2620,14 @@
 2017-06-28 [f13ea95f9] Change pg_ctl to detect server-ready by watching status
 -->
        <para>
-        Make <literal>pg_ctl start --wait</> detect server-ready by
-        watching <filename>postmaster.pid</>, not by attempting connections
+        Make <literal>pg_ctl start --wait</literal> detect server-ready by
+        watching <filename>postmaster.pid</filename>, not by attempting connections
         (Tom Lane)
        </para>
 
        <para>
         The postmaster has been changed to report its ready-for-connections
-        status in <filename>postmaster.pid</>, and <application>pg_ctl</>
+        status in <filename>postmaster.pid</filename>, and <application>pg_ctl</application>
         now examines that file to detect whether startup is complete.
         This is more efficient and reliable than the old method, and it
         eliminates postmaster log entries about rejected connection
@@ -2640,12 +2640,12 @@
 2017-06-26 [c61559ec3] Reduce pg_ctl's reaction time when waiting for postmaste
 -->
        <para>
-        Reduce <application>pg_ctl</>'s reaction time when waiting for
+        Reduce <application>pg_ctl</application>'s reaction time when waiting for
         postmaster start/stop (Tom Lane)
        </para>
 
        <para>
-        <application>pg_ctl</> now probes ten times per second when waiting
+        <application>pg_ctl</application> now probes ten times per second when waiting
         for a postmaster state change, rather than once per second.
        </para>
       </listitem>
@@ -2655,14 +2655,14 @@
 2017-07-05 [1bac5f552] pg_ctl: Make failure to complete operation a nonzero exi
 -->
        <para>
-        Ensure that <application>pg_ctl</> exits with nonzero status if an
+        Ensure that <application>pg_ctl</application> exits with nonzero status if an
         operation being waited for does not complete within the timeout
         (Peter Eisentraut)
        </para>
 
        <para>
-        The <literal>start</> and <literal>promote</> operations now return
-        exit status 1, not 0, in such cases.  The <literal>stop</> operation
+        The <literal>start</literal> and <literal>promote</literal> operations now return
+        exit status 1, not 0, in such cases.  The <literal>stop</literal> operation
         has always done that.
        </para>
       </listitem>
@@ -2687,14 +2687,14 @@
       </para>
 
       <para>
-       Release numbers will now have two parts (e.g., <literal>10.1</>)
-       rather than three (e.g., <literal>9.6.3</>).
+       Release numbers will now have two parts (e.g., <literal>10.1</literal>)
+       rather than three (e.g., <literal>9.6.3</literal>).
        Major versions will now increase just the first number, and minor
        releases will increase just the second number.
        Release branches will be referred to by single numbers
-       (e.g., <literal>10</> rather than <literal>9.6</>).
+       (e.g., <literal>10</literal> rather than <literal>9.6</literal>).
        This change is intended to reduce user confusion about what is a
-       major or minor release of <productname>PostgreSQL</>.
+       major or minor release of <productname>PostgreSQL</productname>.
       </para>
      </listitem>
 
@@ -2708,12 +2708,12 @@
 2017-06-21 [81f056c72] Remove entab and associated detritus.
 -->
       <para>
-       Improve behavior of <application>pgindent</>
+       Improve behavior of <application>pgindent</application>
        (Piotr Stefaniak, Tom Lane)
       </para>
 
       <para>
-       We have switched to a new version of <application>pg_bsd_indent</>
+       We have switched to a new version of <application>pg_bsd_indent</application>
        based on recent improvements made by the FreeBSD project.  This
        fixes numerous small bugs that led to odd C code formatting
        decisions.  Most notably, lines within parentheses (such as in a
@@ -2728,14 +2728,14 @@
 2017-03-23 [eccfef81e] ICU support
 -->
       <para>
-       Allow the <link linkend="configure"><acronym>ICU</></> library to
+       Allow the <link linkend="configure"><acronym>ICU</acronym></link> library to
        optionally be used for collation support (Peter Eisentraut)
       </para>
 
       <para>
-       The <acronym>ICU</> library has versioning that allows detection
+       The <acronym>ICU</acronym> library has versioning that allows detection
        of collation changes between versions.  It is enabled via configure
-       option <option>--with-icu</>.  The default still uses the operating
+       option <option>--with-icu</option>.  The default still uses the operating
        system's native collation library.
       </para>
      </listitem>
@@ -2746,14 +2746,14 @@
 -->
       <para>
        Automatically mark all <link
-       linkend="xfunc-c"><function>PG_FUNCTION_INFO_V1</></> functions
-       as <literal>DLLEXPORT</>-ed on
-      <systemitem class="osname">Windows</> (Laurenz Albe)
+       linkend="xfunc-c"><function>PG_FUNCTION_INFO_V1</function></link> functions
+       as <literal>DLLEXPORT</literal>-ed on
+      <systemitem class="osname">Windows</systemitem> (Laurenz Albe)
       </para>
 
       <para>
-       If third-party code is using <literal>extern</> function
-       declarations, they should also add <literal>DLLEXPORT</> markers
+       If third-party code is using <literal>extern</literal> function
+       declarations, they should also add <literal>DLLEXPORT</literal> markers
        to those declarations.
       </para>
      </listitem>
@@ -2763,10 +2763,10 @@
 2016-11-08 [1833f1a1c] Simplify code by getting rid of SPI_push, SPI_pop, SPI_r
 -->
       <para>
-       Remove <acronym>SPI</> functions <function>SPI_push()</>,
-       <function>SPI_pop()</>, <function>SPI_push_conditional()</>,
-       <function>SPI_pop_conditional()</>,
-       and <function>SPI_restore_connection()</> as unnecessary (Tom Lane)
+       Remove <acronym>SPI</acronym> functions <function>SPI_push()</function>,
+       <function>SPI_pop()</function>, <function>SPI_push_conditional()</function>,
+       <function>SPI_pop_conditional()</function>,
+       and <function>SPI_restore_connection()</function> as unnecessary (Tom Lane)
       </para>
 
       <para>
@@ -2776,9 +2776,9 @@
       </para>
 
       <para>
-       A side effect of this change is that <function>SPI_palloc()</> and
+       A side effect of this change is that <function>SPI_palloc()</function> and
        allied functions now require an active SPI connection; they do not
-       degenerate to simple <function>palloc()</> if there is none.  That
+       degenerate to simple <function>palloc()</function> if there is none.  That
        previous behavior was not very useful and posed risks of unexpected
        memory leaks.
       </para>
@@ -2811,9 +2811,9 @@
 2016-10-09 [ecb0d20a9] Use unnamed POSIX semaphores, if available, on Linux and
 -->
       <para>
-       Use <acronym>POSIX</> semaphores rather than SysV semaphores
-       on <systemitem class="osname">Linux</> and <systemitem
-       class="osname">FreeBSD</> (Tom Lane)
+       Use <acronym>POSIX</acronym> semaphores rather than SysV semaphores
+       on <systemitem class="osname">Linux</systemitem> and <systemitem
+       class="osname">FreeBSD</systemitem> (Tom Lane)
       </para>
 
       <para>
@@ -2835,7 +2835,7 @@
 2017-03-10 [f8f1430ae] Enable 64 bit atomics on ARM64.
 -->
       <para>
-       Enable 64-bit atomic operations on <acronym>ARM64</> (Roman
+       Enable 64-bit atomic operations on <acronym>ARM64</acronym> (Roman
        Shaposhnik)
       </para>
      </listitem>
@@ -2845,13 +2845,13 @@
 2017-01-02 [1d63f7d2d] Use clock_gettime(), if available, in instr_time measure
 -->
       <para>
-       Switch to using <function>clock_gettime()</>, if available, for
+       Switch to using <function>clock_gettime()</function>, if available, for
        duration measurements (Tom Lane)
       </para>
 
       <para>
-       <function>gettimeofday()</> is still used
-       if <function>clock_gettime()</> is not available.
+       <function>gettimeofday()</function> is still used
+       if <function>clock_gettime()</function> is not available.
       </para>
      </listitem>
 
@@ -2868,9 +2868,9 @@
 
       <para>
        If no strong random number generator can be
-       found, <link linkend="configure">configure</> will fail unless
-       the <option>--disable-strong-random</> option is used.  However, with
-       this option, <link linkend="pgcrypto"><application>pgcrypto</></>
+       found, <link linkend="configure">configure</link> will fail unless
+       the <option>--disable-strong-random</option> option is used.  However, with
+       this option, <link linkend="pgcrypto"><application>pgcrypto</application></link>
        functions requiring a strong random number generator will be disabled.
       </para>
      </listitem>
@@ -2880,7 +2880,7 @@
 2017-08-15 [d7ab908fb] Distinguish wait-for-connection from wait-for-write-read
 -->
       <para>
-       Allow <function>WaitLatchOrSocket()</> to wait for socket
+       Allow <function>WaitLatchOrSocket()</function> to wait for socket
        connection on Windows (Andres Freund)
       </para>
      </listitem>
@@ -2890,7 +2890,7 @@
 2017-04-06 [3f902354b] Clean up after insufficiently-researched optimization of
 -->
       <para>
-       <filename>tupconvert.c</> functions no longer convert tuples just to
+       <filename>tupconvert.c</filename> functions no longer convert tuples just to
        embed a different composite-type OID in them (Ashutosh Bapat, Tom Lane)
       </para>
 
@@ -2906,8 +2906,8 @@
 2016-10-11 [2b860f52e] Remove "sco" and "unixware" ports.
 -->
      <para>
-      Remove <systemitem class="osname">SCO</> and <systemitem
-      class="osname">Unixware</> ports (Tom Lane)
+      Remove <systemitem class="osname">SCO</systemitem> and <systemitem
+      class="osname">Unixware</systemitem> ports (Tom Lane)
      </para>
     </listitem>
 
@@ -2918,7 +2918,7 @@
 -->
       <para>
        Overhaul documentation <link linkend="docguide-toolsets">build
-       process</> (Alexander Lakhin)
+       process</link> (Alexander Lakhin)
       </para>
      </listitem>
 
@@ -2927,13 +2927,13 @@
 2017-04-06 [510074f9f] Remove use of Jade and DSSSL
 -->
       <para>
-       Use <acronym>XSLT</> to build the <productname>PostgreSQL</>
+       Use <acronym>XSLT</acronym> to build the <productname>PostgreSQL</productname>
        documentation (Peter Eisentraut)
       </para>
 
       <para>
-       Previously <application>Jade</>, <acronym>DSSSL</>, and
-       <application>JadeTex</> were used.
+       Previously <application>Jade</application>, <acronym>DSSSL</acronym>, and
+       <application>JadeTex</application> were used.
       </para>
      </listitem>
 
@@ -2942,7 +2942,7 @@
 2016-11-15 [e36ddab11] Build HTML documentation using XSLT stylesheets by defau
 -->
       <para>
-       Build <acronym>HTML</> documentation using <acronym>XSLT</>
+       Build <acronym>HTML</acronym> documentation using <acronym>XSLT</acronym>
        stylesheets by default (Peter Eisentraut)
       </para>
      </listitem>
@@ -2961,7 +2961,7 @@
 2016-09-29 [8e91e12bc] Allow contrib/file_fdw to read from a program, like COPY
 -->
       <para>
-       Allow <link linkend="file-fdw"><application>file_fdw</></> to read
+       Allow <link linkend="file-fdw"><application>file_fdw</application></link> to read
        from program output as well as files (Corey Huinker, Adam Gomaa)
       </para>
      </listitem>
@@ -2971,7 +2971,7 @@
 2016-10-21 [7012b132d] postgres_fdw: Push down aggregates to remote servers.
 -->
       <para>
-       In <link linkend="postgres-fdw"><application>postgres_fdw</></>,
+       In <link linkend="postgres-fdw"><application>postgres_fdw</application></link>,
        push aggregate functions to the remote server, when possible
        (Jeevan Chalke, Ashutosh Bapat)
       </para>
@@ -2988,7 +2988,7 @@
 2017-04-24 [332bec1e6] postgres_fdw: Fix join push down with extensions
 -->
       <para>
-       In <application>postgres_fdw</>, push joins to the remote server in
+       In <application>postgres_fdw</application>, push joins to the remote server in
        more cases (David Rowley, Ashutosh Bapat, Etsuro Fujita)
       </para>
      </listitem>
@@ -2998,12 +2998,12 @@
 2016-08-26 [ae025a159] Support OID system column in postgres_fdw.
 -->
       <para>
-       Properly support <type>OID</> columns in
-       <application>postgres_fdw</> tables (Etsuro Fujita)
+       Properly support <type>OID</type> columns in
+       <application>postgres_fdw</application> tables (Etsuro Fujita)
       </para>
 
       <para>
-       Previously <type>OID</> columns always returned zeros.
+       Previously <type>OID</type> columns always returned zeros.
       </para>
      </listitem>
 
@@ -3012,8 +3012,8 @@
 2017-03-21 [f7946a92b] Add btree_gist support for enum types.
 -->
       <para>
-       Allow <link linkend="btree-gist"><application>btree_gist</></>
-       and <link linkend="btree-gin"><application>btree_gin</></> to
+       Allow <link linkend="btree-gist"><application>btree_gist</application></link>
+       and <link linkend="btree-gin"><application>btree_gin</application></link> to
        index enum types (Andrew Dunstan)
       </para>
 
@@ -3027,8 +3027,8 @@
 2016-11-29 [11da83a0e] Add uuid to the set of types supported by contrib/btree_
 -->
       <para>
-       Add indexing support to <application>btree_gist</> for the
-       <type>UUID</> data type (Paul Jungwirth)
+       Add indexing support to <application>btree_gist</application> for the
+       <type>UUID</type> data type (Paul Jungwirth)
       </para>
      </listitem>
 
@@ -3037,7 +3037,7 @@
 2017-03-09 [3717dc149] Add amcheck extension to contrib.
 -->
       <para>
-       Add <link linkend="amcheck"><application>amcheck</></> which can
+       Add <link linkend="amcheck"><application>amcheck</application></link> which can
        check the validity of B-tree indexes (Peter Geoghegan)
       </para>
      </listitem>
@@ -3047,10 +3047,10 @@
 2017-03-27 [a6f22e835] Show ignored constants as "$N" rather than "?" in pg_sta
 -->
       <para>
-       Show ignored constants as <literal>$N</> rather than <literal>?</>
+       Show ignored constants as <literal>$N</literal> rather than <literal>?</literal>
        in
       <link
-      linkend="pgstatstatements"><application>pg_stat_statements</></>
+      linkend="pgstatstatements"><application>pg_stat_statements</application></link>
       (Lukas Fittl)
       </para>
      </listitem>
@@ -3060,13 +3060,13 @@
 2016-09-27 [f31a931fa] Improve contrib/cube's handling of zero-D cubes, infinit
 -->
       <para>
-       Improve <link linkend="cube"><application>cube</></>'s handling
+       Improve <link linkend="cube"><application>cube</application></link>'s handling
        of zero-dimensional cubes (Tom Lane)
       </para>
 
       <para>
-       This also improves handling of <literal>infinite</> and
-       <literal>NaN</> values.
+       This also improves handling of <literal>infinite</literal> and
+       <literal>NaN</literal> values.
       </para>
      </listitem>
 
@@ -3076,7 +3076,7 @@
 -->
       <para>
        Allow <link
-       linkend="pgbuffercache"><application>pg_buffercache</></> to run
+       linkend="pgbuffercache"><application>pg_buffercache</application></link> to run
        with fewer locks (Ivan Kartyshov)
       </para>
 
@@ -3090,8 +3090,8 @@
 2017-02-03 [e759854a0] pgstattuple: Add pgstathashindex.
 -->
       <para>
-       Add <link linkend="pgstattuple"><application>pgstattuple</></>
-       function <function>pgstathashindex()</> to view hash index
+       Add <link linkend="pgstattuple"><application>pgstattuple</application></link>
+       function <function>pgstathashindex()</function> to view hash index
        statistics (Ashutosh Sharma)
       </para>
      </listitem>
@@ -3101,8 +3101,8 @@
 2016-09-29 [fd321a1df] Remove superuser checks in pgstattuple
 -->
       <para>
-       Use <command>GRANT</> permissions to
-       control <application>pgstattuple</> function usage (Stephen Frost)
+       Use <command>GRANT</command> permissions to
+       control <application>pgstattuple</application> function usage (Stephen Frost)
       </para>
 
       <para>
@@ -3115,7 +3115,7 @@
 2016-10-28 [d4b5d4cad] pgstattuple: Don't take heavyweight locks when examining
 -->
       <para>
-       Reduce locking when <application>pgstattuple</> examines hash
+       Reduce locking when <application>pgstattuple</application> examines hash
        indexes (Amit Kapila)
       </para>
      </listitem>
@@ -3125,8 +3125,8 @@
 2017-03-17 [fef2bcdcb] pageinspect: Add page_checksum function
 -->
       <para>
-       Add <link linkend="pageinspect"><application>pageinspect</></>
-       function <function>page_checksum()</> to show a page's checksum
+       Add <link linkend="pageinspect"><application>pageinspect</application></link>
+       function <function>page_checksum()</function> to show a page's checksum
        (Tomas Vondra)
       </para>
      </listitem>
@@ -3136,8 +3136,8 @@
 2017-04-04 [193f5f9e9] pageinspect: Add bt_page_items function with bytea argum
 -->
       <para>
-       Add <application>pageinspect</>
-       function <function>bt_page_items()</> to print page items from a
+       Add <application>pageinspect</application>
+       function <function>bt_page_items()</function> to print page items from a
        page image (Tomas Vondra)
       </para>
      </listitem>
@@ -3147,7 +3147,7 @@
 2017-02-02 [08bf6e529] pageinspect: Support hash indexes.
 -->
       <para>
-       Add hash index support to <application>pageinspect</> (Jesper
+       Add hash index support to <application>pageinspect</application> (Jesper
        Pedersen, Ashutosh Sharma)
       </para>
      </listitem>

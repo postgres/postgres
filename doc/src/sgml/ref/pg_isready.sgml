@@ -43,8 +43,8 @@ PostgreSQL documentation
     <variablelist>
 
     <varlistentry>
-      <term><option>-d <replaceable class="parameter">dbname</replaceable></></term>
-      <term><option>--dbname=<replaceable class="parameter">dbname</replaceable></></term>
+      <term><option>-d <replaceable class="parameter">dbname</replaceable></option></term>
+      <term><option>--dbname=<replaceable class="parameter">dbname</replaceable></option></term>
       <listitem>
       <para>
        Specifies the name of the database to connect to.
@@ -61,8 +61,8 @@ PostgreSQL documentation
     </varlistentry>
 
      <varlistentry>
-       <term><option>-h <replaceable class="parameter">hostname</replaceable></></term>
-       <term><option>--host=<replaceable class="parameter">hostname</replaceable></></term>
+       <term><option>-h <replaceable class="parameter">hostname</replaceable></option></term>
+       <term><option>--host=<replaceable class="parameter">hostname</replaceable></option></term>
        <listitem>
        <para>
        Specifies the host name of the machine on which the
@@ -74,8 +74,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-       <term><option>-p <replaceable class="parameter">port</replaceable></></term>
-       <term><option>--port=<replaceable class="parameter">port</replaceable></></term>
+       <term><option>-p <replaceable class="parameter">port</replaceable></option></term>
+       <term><option>--port=<replaceable class="parameter">port</replaceable></option></term>
        <listitem>
        <para>
        Specifies the TCP port or the local Unix-domain
@@ -98,8 +98,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-       <term><option>-t <replaceable class="parameter">seconds</replaceable></></term>
-       <term><option>--timeout=<replaceable class="parameter">seconds</replaceable></></term>
+       <term><option>-t <replaceable class="parameter">seconds</replaceable></option></term>
+       <term><option>--timeout=<replaceable class="parameter">seconds</replaceable></option></term>
        <listitem>
        <para>
         The maximum number of seconds to wait when attempting connection before
@@ -110,8 +110,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-       <term><option>-U <replaceable class="parameter">username</replaceable></></term>
-       <term><option>--username=<replaceable class="parameter">username</replaceable></></term>
+       <term><option>-U <replaceable class="parameter">username</replaceable></option></term>
+       <term><option>--username=<replaceable class="parameter">username</replaceable></option></term>
        <listitem>
        <para>
        Connect to the database as the user <replaceable
@@ -121,8 +121,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-V</></term>
-      <term><option>--version</></term>
+      <term><option>-V</option></term>
+      <term><option>--version</option></term>
        <listitem>
         <para>
          Print the <application>pg_isready</application> version and exit.
@@ -131,8 +131,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-?</></term>
-      <term><option>--help</></term>
+      <term><option>-?</option></term>
+      <term><option>--help</option></term>
       <listitem>
        <para>
         Show help about <application>pg_isready</application> command line
@@ -159,9 +159,9 @@ PostgreSQL documentation
   <title>Environment</title>
 
   <para>
-   <command>pg_isready</command>, like most other <productname>PostgreSQL</>
+   <command>pg_isready</command>, like most other <productname>PostgreSQL</productname>
    utilities,
-   also uses the environment variables supported by <application>libpq</>
+   also uses the environment variables supported by <application>libpq</application>
    (see <xref linkend="libpq-envars">).
   </para>
  </refsect1>

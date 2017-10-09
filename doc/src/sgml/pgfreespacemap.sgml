@@ -8,7 +8,7 @@
  </indexterm>
 
  <para>
-  The <filename>pg_freespacemap</> module provides a means for examining the
+  The <filename>pg_freespacemap</filename> module provides a means for examining the
   free space map (FSM). It provides a function called
   <function>pg_freespace</function>, or two overloaded functions, to be
   precise. The functions show the value recorded in the free space map for
@@ -36,7 +36,7 @@
     <listitem>
      <para>
       Returns the amount of free space on the page of the relation, specified
-      by <literal>blkno</>, according to the FSM.
+      by <literal>blkno</literal>, according to the FSM.
      </para>
     </listitem>
    </varlistentry>
@@ -50,7 +50,7 @@
     <listitem>
      <para>
       Displays the amount of free space on each page of the relation,
-      according to the FSM. A set of <literal>(blkno bigint, avail int2)</>
+      according to the FSM. A set of <literal>(blkno bigint, avail int2)</literal>
       tuples is returned, one tuple for each page in the relation.
      </para>
     </listitem>
@@ -59,7 +59,7 @@
 
   <para>
    The values stored in the free space map are not exact. They're rounded
-   to precision of 1/256th of <symbol>BLCKSZ</> (32 bytes with default <symbol>BLCKSZ</>), and
+   to precision of 1/256th of <symbol>BLCKSZ</symbol> (32 bytes with default <symbol>BLCKSZ</symbol>), and
    they're not kept fully up-to-date as tuples are inserted and updated.
   </para>
 

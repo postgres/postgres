@@ -41,7 +41,7 @@ PostgreSQL documentation
   <title>Description</title>
 
   <para>
-   <application>pg_rewind</> is a tool for synchronizing a PostgreSQL cluster
+   <application>pg_rewind</application> is a tool for synchronizing a PostgreSQL cluster
    with another copy of the same cluster, after the clusters' timelines have
    diverged. A typical scenario is to bring an old master server back online
    after failover as a standby that follows the new master.
@@ -51,49 +51,49 @@ PostgreSQL documentation
    The result is equivalent to replacing the target data directory with the
    source one. Only changed blocks from relation files are copied;
    all other files are copied in full, including configuration files. The
-   advantage of <application>pg_rewind</> over taking a new base backup, or
-   tools like <application>rsync</>, is that <application>pg_rewind</> does
+   advantage of <application>pg_rewind</application> over taking a new base backup, or
+   tools like <application>rsync</application>, is that <application>pg_rewind</application> does
    not require reading through unchanged blocks in the cluster. This makes
    it a lot faster when the database is large and only a small
    fraction of blocks differ between the clusters.
   </para>
 
   <para>
-   <application>pg_rewind</> examines the timeline histories of the source
+   <application>pg_rewind</application> examines the timeline histories of the source
    and target clusters to determine the point where they diverged, and
-   expects to find WAL in the target cluster's <filename>pg_wal</> directory
+   expects to find WAL in the target cluster's <filename>pg_wal</filename> directory
    reaching all the way back to the point of divergence. The point of divergence
    can be found either on the target timeline, the source timeline, or their common
    ancestor. In the typical failover scenario where the target cluster was
    shut down soon after the divergence, this is not a problem, but if the
    target cluster ran for a long time after the divergence, the old WAL
    files might no longer be present. In that case, they can be manually
-   copied from the WAL archive to the <filename>pg_wal</> directory, or
-   fetched on startup by configuring <filename>recovery.conf</>.  The use of
-   <application>pg_rewind</> is not limited to failover, e.g.  a standby
+   copied from the WAL archive to the <filename>pg_wal</filename> directory, or
+   fetched on startup by configuring <filename>recovery.conf</filename>.  The use of
+   <application>pg_rewind</application> is not limited to failover, e.g.  a standby
    server can be promoted, run some write transactions, and then rewinded
    to become a standby again.
   </para>
 
   <para>
    When the target server is started for the first time after running
-   <application>pg_rewind</>, it will go into recovery mode and replay all
+   <application>pg_rewind</application>, it will go into recovery mode and replay all
    WAL generated in the source server after the point of divergence.
    If some of the WAL was no longer available in the source server when
-   <application>pg_rewind</> was run, and therefore could not be copied by the
-   <application>pg_rewind</> session, it must be made available when the
+   <application>pg_rewind</application> was run, and therefore could not be copied by the
+   <application>pg_rewind</application> session, it must be made available when the
    target server is started. This can be done by creating a
-   <filename>recovery.conf</> file in the target data directory with a
-   suitable <varname>restore_command</>.
+   <filename>recovery.conf</filename> file in the target data directory with a
+   suitable <varname>restore_command</varname>.
   </para>
 
   <para>
-   <application>pg_rewind</> requires that the target server either has
+   <application>pg_rewind</application> requires that the target server either has
    the <xref linkend="guc-wal-log-hints"> option enabled
-   in <filename>postgresql.conf</> or data checksums enabled when
-   the cluster was initialized with <application>initdb</>.  Neither of these
+   in <filename>postgresql.conf</filename> or data checksums enabled when
+   the cluster was initialized with <application>initdb</application>.  Neither of these
    are currently on by default.  <xref linkend="guc-full-page-writes">
-   must also be set to <literal>on</>, but is enabled by default.
+   must also be set to <literal>on</literal>, but is enabled by default.
   </para>
  </refsect1>
 
@@ -133,7 +133,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         Specifies a libpq connection string to connect to the source
-        <productname>PostgreSQL</> server to synchronize the target with.
+        <productname>PostgreSQL</productname> server to synchronize the target with.
         The connection must be a normal (non-replication) connection
         with superuser access. This option requires the source
         server to be running and not in recovery mode.
@@ -167,7 +167,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         Print verbose debugging output that is mostly useful for developers
-        debugging <application>pg_rewind</>.
+        debugging <application>pg_rewind</application>.
        </para>
       </listitem>
      </varlistentry>
@@ -192,9 +192,9 @@ PostgreSQL documentation
   <title>Environment</title>
 
   <para>
-   When <option>--source-server</> option is used,
+   When <option>--source-server</option> option is used,
    <application>pg_rewind</application> also uses the environment variables
-   supported by <application>libpq</> (see <xref linkend="libpq-envars">).
+   supported by <application>libpq</application> (see <xref linkend="libpq-envars">).
   </para>
  </refsect1>
 
@@ -224,7 +224,7 @@ PostgreSQL documentation
      <para>
       Copy all those changed blocks from the source cluster to
       the target cluster, either using direct file system access
-      (<option>--source-pgdata</>) or SQL (<option>--source-server</>).
+      (<option>--source-pgdata</option>) or SQL (<option>--source-server</option>).
      </para>
     </step>
     <step>
@@ -237,9 +237,9 @@ PostgreSQL documentation
     <step>
      <para>
       Apply the WAL from the source cluster, starting from the checkpoint
-      created at failover. (Strictly speaking, <application>pg_rewind</>
+      created at failover. (Strictly speaking, <application>pg_rewind</application>
       doesn't apply the WAL, it just creates a backup label file that
-      makes <productname>PostgreSQL</> start by replaying all WAL from
+      makes <productname>PostgreSQL</productname> start by replaying all WAL from
       that checkpoint forward.)
      </para>
     </step>

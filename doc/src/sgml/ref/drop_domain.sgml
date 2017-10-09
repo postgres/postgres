@@ -58,7 +58,7 @@ DROP DOMAIN [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [, .
    </varlistentry>
 
    <varlistentry>
-    <term><literal>CASCADE</></term>
+    <term><literal>CASCADE</literal></term>
     <listitem>
      <para>
       Automatically drop objects that depend on the domain (such as
@@ -70,7 +70,7 @@ DROP DOMAIN [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [, .
    </varlistentry>
 
    <varlistentry>
-    <term><literal>RESTRICT</></term>
+    <term><literal>RESTRICT</literal></term>
     <listitem>
      <para>
       Refuse to drop the domain if any objects depend on it.  This is
@@ -97,7 +97,7 @@ DROP DOMAIN box;
 
   <para>
    This command conforms to the SQL standard, except for the
-   <literal>IF EXISTS</> option, which is a <productname>PostgreSQL</>
+   <literal>IF EXISTS</literal> option, which is a <productname>PostgreSQL</productname>
    extension.
   </para>
  </refsect1>

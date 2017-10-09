@@ -5,7 +5,7 @@
 
  <para>
   This chapter discusses how to monitor the disk usage of a
-  <productname>PostgreSQL</> database system.
+  <productname>PostgreSQL</productname> database system.
  </para>
 
  <sect1 id="disk-usage">
@@ -18,10 +18,10 @@
   <para>
    Each table has a primary heap disk file where most of the data is
    stored. If the table has any columns with potentially-wide values,
-   there also might be a <acronym>TOAST</> file associated with the table,
+   there also might be a <acronym>TOAST</acronym> file associated with the table,
    which is used to store values too wide to fit comfortably in the main
    table (see <xref linkend="storage-toast">).  There will be one valid index
-   on the <acronym>TOAST</> table, if present. There also might be indexes
+   on the <acronym>TOAST</acronym> table, if present. There also might be indexes
    associated with the base table.  Each table and index is stored in a
    separate disk file &mdash; possibly more than one file, if the file would
    exceed one gigabyte.  Naming conventions for these files are described
@@ -39,7 +39,7 @@
   </para>
 
   <para>
-   Using <application>psql</> on a recently vacuumed or analyzed database,
+   Using <application>psql</application> on a recently vacuumed or analyzed database,
    you can issue queries to see the disk usage of any table:
 <programlisting>
 SELECT pg_relation_filepath(oid), relpages FROM pg_class WHERE relname = 'customer';
@@ -49,14 +49,14 @@ SELECT pg_relation_filepath(oid), relpages FROM pg_class WHERE relname = 'custom
  base/16384/16806     |       60
 (1 row)
 </programlisting>
-   Each page is typically 8 kilobytes. (Remember, <structfield>relpages</>
-   is only updated by <command>VACUUM</>, <command>ANALYZE</>, and
-   a few DDL commands such as <command>CREATE INDEX</>.)  The file path name
+   Each page is typically 8 kilobytes. (Remember, <structfield>relpages</structfield>
+   is only updated by <command>VACUUM</command>, <command>ANALYZE</command>, and
+   a few DDL commands such as <command>CREATE INDEX</command>.)  The file path name
    is of interest if you want to examine the table's disk file directly.
   </para>
 
   <para>
-   To show the space used by <acronym>TOAST</> tables, use a query
+   To show the space used by <acronym>TOAST</acronym> tables, use a query
    like the following:
 <programlisting>
 SELECT relname, relpages

@@ -7,12 +7,12 @@
   <title>For the Translator</title>
 
   <para>
-   <productname>PostgreSQL</>
+   <productname>PostgreSQL</productname>
    programs (server and client) can issue their messages in
    your favorite language &mdash; if the messages have been translated.
    Creating and maintaining translated message sets needs the help of
    people who speak their own language well and want to contribute to
-   the <productname>PostgreSQL</> effort.  You do not have to be a
+   the <productname>PostgreSQL</productname> effort.  You do not have to be a
    programmer at all
    to do this.  This section explains how to help.
   </para>
@@ -170,8 +170,8 @@ make init-po
     This will create a file
     <filename><replaceable>progname</replaceable>.pot</filename>.
     (<filename>.pot</filename> to distinguish it from PO files that
-    are <quote>in production</quote>. The <literal>T</> stands for
-    <quote>template</>.)
+    are <quote>in production</quote>. The <literal>T</literal> stands for
+    <quote>template</quote>.)
     Copy this file to
     <filename><replaceable>language</replaceable>.po</filename> and
     edit it.  To make it known that the new language is available,
@@ -234,7 +234,7 @@ make update-po
 
      <listitem>
       <para>
-       If the original is a <function>printf</> format string, the translation
+       If the original is a <function>printf</function> format string, the translation
        also needs to be.  The translation also needs to have the same
        format specifiers in the same order.  Sometimes the natural
        rules of the language make this impossible or at least awkward.
@@ -301,7 +301,7 @@ msgstr "Die Datei %2$s hat %1$u Zeichen."
   <para>
    This section describes how to implement native language support in a
    program or library that is part of the
-   <productname>PostgreSQL</> distribution.
+   <productname>PostgreSQL</productname> distribution.
    Currently, it only applies to C programs.
   </para>
 
@@ -447,7 +447,7 @@ fprintf(stderr, gettext("panic level %d\n"), lvl);
 printf("Files were %s.\n", flag ? "copied" : "removed");
 </programlisting>
       The word order within the sentence might be different in other
-      languages.  Also, even if you remember to call <function>gettext()</> on
+      languages.  Also, even if you remember to call <function>gettext()</function> on
       each fragment, the fragments might not translate well separately.  It's
       better to duplicate a little code so that each message to be
       translated is a coherent whole.  Only numbers, file names, and
@@ -481,7 +481,7 @@ printf("number of copied files: %d", n);
      <para>
       If you really want to construct a properly pluralized message,
       there is support for this, but it's a bit awkward.  When generating
-      a primary or detail error message in <function>ereport()</>, you can
+      a primary or detail error message in <function>ereport()</function>, you can
       write something like this:
 <programlisting>
 errmsg_plural("copied %d file",
@@ -496,17 +496,17 @@ errmsg_plural("copied %d file",
       are formatted per the format string as usual.  (Normally, the
       pluralization control value will also be one of the values to be
       formatted, so it has to be written twice.)  In English it only
-      matters whether <replaceable>n</> is 1 or not 1, but in other
+      matters whether <replaceable>n</replaceable> is 1 or not 1, but in other
       languages there can be many different plural forms.  The translator
       sees the two English forms as a group and has the opportunity to
       supply multiple substitute strings, with the appropriate one being
-      selected based on the run-time value of <replaceable>n</>.
+      selected based on the run-time value of <replaceable>n</replaceable>.
      </para>
 
      <para>
       If you need to pluralize a message that isn't going directly to an
-      <function>errmsg</> or <function>errdetail</> report, you have to use
-      the underlying function <function>ngettext</>.  See the gettext
+      <function>errmsg</function> or <function>errdetail</function> report, you have to use
+      the underlying function <function>ngettext</function>.  See the gettext
       documentation.
      </para>
     </listitem>

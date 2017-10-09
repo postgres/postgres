@@ -39,12 +39,12 @@ DO [ LANGUAGE <replaceable class="parameter">lang_name</replaceable> ] <replacea
 
   <para>
    The code block is treated as though it were the body of a function
-   with no parameters, returning <type>void</>.  It is parsed and
+   with no parameters, returning <type>void</type>.  It is parsed and
    executed a single time.
   </para>
 
   <para>
-   The optional <literal>LANGUAGE</> clause can be written either
+   The optional <literal>LANGUAGE</literal> clause can be written either
    before or after the code block.
   </para>
  </refsect1>
@@ -58,7 +58,7 @@ DO [ LANGUAGE <replaceable class="parameter">lang_name</replaceable> ] <replacea
     <listitem>
      <para>
       The procedural language code to be executed.  This must be specified
-      as a string literal, just as in <command>CREATE FUNCTION</>.
+      as a string literal, just as in <command>CREATE FUNCTION</command>.
       Use of a dollar-quoted literal is recommended.
      </para>
     </listitem>
@@ -69,7 +69,7 @@ DO [ LANGUAGE <replaceable class="parameter">lang_name</replaceable> ] <replacea
     <listitem>
      <para>
       The name of the procedural language the code is written in.
-      If omitted, the default is <literal>plpgsql</>.
+      If omitted, the default is <literal>plpgsql</literal>.
      </para>
     </listitem>
    </varlistentry>
@@ -81,12 +81,12 @@ DO [ LANGUAGE <replaceable class="parameter">lang_name</replaceable> ] <replacea
 
   <para>
    The procedural language to be used must already have been installed
-   into the current database by means of <command>CREATE LANGUAGE</>.
-   <literal>plpgsql</> is installed by default, but other languages are not.
+   into the current database by means of <command>CREATE LANGUAGE</command>.
+   <literal>plpgsql</literal> is installed by default, but other languages are not.
   </para>
 
   <para>
-   The user must have <literal>USAGE</> privilege for the procedural
+   The user must have <literal>USAGE</literal> privilege for the procedural
    language, or must be a superuser if the language is untrusted.
    This is the same privilege requirement as for creating a function
    in the language.
@@ -96,8 +96,8 @@ DO [ LANGUAGE <replaceable class="parameter">lang_name</replaceable> ] <replacea
  <refsect1 id="sql-do-examples">
   <title id="sql-do-examples-title">Examples</title>
   <para>
-   Grant all privileges on all views in schema <literal>public</> to
-   role <literal>webuser</>:
+   Grant all privileges on all views in schema <literal>public</literal> to
+   role <literal>webuser</literal>:
 <programlisting>
 DO $$DECLARE r record;
 BEGIN

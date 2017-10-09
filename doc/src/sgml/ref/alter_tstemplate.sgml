@@ -36,7 +36,7 @@ ALTER TEXT SEARCH TEMPLATE <replaceable>name</replaceable> SET SCHEMA <replaceab
   </para>
 
   <para>
-   You must be a superuser to use <command>ALTER TEXT SEARCH TEMPLATE</>.
+   You must be a superuser to use <command>ALTER TEXT SEARCH TEMPLATE</command>.
   </para>
  </refsect1>
 

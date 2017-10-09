@@ -8,7 +8,7 @@
  </indexterm>
 
  <para>
-  The <filename>intarray</> module provides a number of useful functions
+  The <filename>intarray</filename> module provides a number of useful functions
   and operators for manipulating null-free arrays of integers.
   There is also support for indexed searches using some of the operators.
  </para>
@@ -25,7 +25,7 @@
  </para>
 
  <sect2>
-  <title><filename>intarray</> Functions and Operators</title>
+  <title><filename>intarray</filename> Functions and Operators</title>
 
   <para>
    The functions provided by the <filename>intarray</filename> module
@@ -34,7 +34,7 @@
   </para>
 
   <table id="intarray-func-table">
-   <title><filename>intarray</> Functions</title>
+   <title><filename>intarray</filename> Functions</title>
 
    <tgroup cols="5">
     <thead>
@@ -59,7 +59,7 @@
      <row>
       <entry><function>sort(int[], text dir)</function><indexterm><primary>sort</primary></indexterm></entry>
       <entry><type>int[]</type></entry>
-      <entry>sort array &mdash; <parameter>dir</> must be <literal>asc</> or <literal>desc</></entry>
+      <entry>sort array &mdash; <parameter>dir</parameter> must be <literal>asc</literal> or <literal>desc</literal></entry>
       <entry><literal>sort('{1,2,3}'::int[], 'desc')</literal></entry>
       <entry><literal>{3,2,1}</literal></entry>
      </row>
@@ -99,7 +99,7 @@
      <row>
       <entry><function>idx(int[], int item)</function><indexterm><primary>idx</primary></indexterm></entry>
       <entry><type>int</type></entry>
-      <entry>index of first element matching <parameter>item</> (0 if none)</entry>
+      <entry>index of first element matching <parameter>item</parameter> (0 if none)</entry>
       <entry><literal>idx(array[11,22,33,22,11], 22)</literal></entry>
       <entry><literal>2</literal></entry>
      </row>
@@ -107,7 +107,7 @@
      <row>
       <entry><function>subarray(int[], int start, int len)</function><indexterm><primary>subarray</primary></indexterm></entry>
       <entry><type>int[]</type></entry>
-      <entry>portion of array starting at position <parameter>start</>, <parameter>len</> elements</entry>
+      <entry>portion of array starting at position <parameter>start</parameter>, <parameter>len</parameter> elements</entry>
       <entry><literal>subarray('{1,2,3,2,1}'::int[], 2, 3)</literal></entry>
       <entry><literal>{2,3,2}</literal></entry>
      </row>
@@ -115,7 +115,7 @@
      <row>
       <entry><function>subarray(int[], int start)</function></entry>
       <entry><type>int[]</type></entry>
-      <entry>portion of array starting at position <parameter>start</></entry>
+      <entry>portion of array starting at position <parameter>start</parameter></entry>
       <entry><literal>subarray('{1,2,3,2,1}'::int[], 2)</literal></entry>
       <entry><literal>{2,3,2,1}</literal></entry>
      </row>
@@ -133,7 +133,7 @@
   </table>
 
   <table id="intarray-op-table">
-   <title><filename>intarray</> Operators</title>
+   <title><filename>intarray</filename> Operators</title>
 
    <tgroup cols="3">
     <thead>
@@ -148,17 +148,17 @@
      <row>
       <entry><literal>int[] &amp;&amp; int[]</literal></entry>
       <entry><type>boolean</type></entry>
-      <entry>overlap &mdash; <literal>true</> if arrays have at least one common element</entry>
+      <entry>overlap &mdash; <literal>true</literal> if arrays have at least one common element</entry>
      </row>
      <row>
       <entry><literal>int[] @&gt; int[]</literal></entry>
       <entry><type>boolean</type></entry>
-      <entry>contains &mdash; <literal>true</> if left array contains right array</entry>
+      <entry>contains &mdash; <literal>true</literal> if left array contains right array</entry>
      </row>
      <row>
       <entry><literal>int[] &lt;@ int[]</literal></entry>
       <entry><type>boolean</type></entry>
-      <entry>contained &mdash; <literal>true</> if left array is contained in right array</entry>
+      <entry>contained &mdash; <literal>true</literal> if left array is contained in right array</entry>
      </row>
      <row>
       <entry><literal># int[]</literal></entry>
@@ -168,7 +168,7 @@
      <row>
       <entry><literal>int[] # int</literal></entry>
       <entry><type>int</type></entry>
-      <entry>index (same as <function>idx</> function)</entry>
+      <entry>index (same as <function>idx</function> function)</entry>
      </row>
      <row>
       <entry><literal>int[] + int</literal></entry>
@@ -208,28 +208,28 @@
      <row>
       <entry><literal>int[] @@ query_int</literal></entry>
       <entry><type>boolean</type></entry>
-      <entry><literal>true</> if array satisfies query (see below)</entry>
+      <entry><literal>true</literal> if array satisfies query (see below)</entry>
      </row>
      <row>
       <entry><literal>query_int ~~ int[]</literal></entry>
       <entry><type>boolean</type></entry>
-      <entry><literal>true</> if array satisfies query (commutator of <literal>@@</>)</entry>
+      <entry><literal>true</literal> if array satisfies query (commutator of <literal>@@</literal>)</entry>
      </row>
     </tbody>
    </tgroup>
   </table>
 
   <para>
-   (Before PostgreSQL 8.2, the containment operators <literal>@&gt;</> and
-   <literal>&lt;@</> were respectively called <literal>@</> and <literal>~</>.
+   (Before PostgreSQL 8.2, the containment operators <literal>@&gt;</literal> and
+   <literal>&lt;@</literal> were respectively called <literal>@</literal> and <literal>~</literal>.
    These names are still available, but are deprecated and will eventually be
    retired.  Notice that the old names are reversed from the convention
    formerly followed by the core geometric data types!)
   </para>
 
   <para>
-   The operators <literal>&amp;&amp;</>, <literal>@&gt;</> and
-   <literal>&lt;@</> are equivalent to <productname>PostgreSQL</>'s built-in
+   The operators <literal>&amp;&amp;</literal>, <literal>@&gt;</literal> and
+   <literal>&lt;@</literal> are equivalent to <productname>PostgreSQL</productname>'s built-in
    operators of the same names, except that they work only on integer arrays
    that do not contain nulls, while the built-in operators work for any array
    type.  This restriction makes them faster than the built-in operators
@@ -237,14 +237,14 @@
   </para>
 
   <para>
-   The <literal>@@</> and <literal>~~</> operators test whether an array
-   satisfies a <firstterm>query</>, which is expressed as a value of a
-   specialized data type <type>query_int</>.  A <firstterm>query</>
+   The <literal>@@</literal> and <literal>~~</literal> operators test whether an array
+   satisfies a <firstterm>query</firstterm>, which is expressed as a value of a
+   specialized data type <type>query_int</type>.  A <firstterm>query</firstterm>
    consists of integer values that are checked against the elements of
-   the array, possibly combined using the operators <literal>&amp;</>
-   (AND), <literal>|</> (OR), and <literal>!</> (NOT).  Parentheses
+   the array, possibly combined using the operators <literal>&amp;</literal>
+   (AND), <literal>|</literal> (OR), and <literal>!</literal> (NOT).  Parentheses
    can be used as needed.  For example,
-   the query <literal>1&amp;(2|3)</> matches arrays that contain 1
+   the query <literal>1&amp;(2|3)</literal> matches arrays that contain 1
    and also contain either 2 or 3.
   </para>
  </sect2>
@@ -253,16 +253,16 @@
   <title>Index Support</title>
 
   <para>
-   <filename>intarray</> provides index support for the
-   <literal>&amp;&amp;</>, <literal>@&gt;</>, <literal>&lt;@</>,
-   and <literal>@@</> operators, as well as regular array equality.
+   <filename>intarray</filename> provides index support for the
+   <literal>&amp;&amp;</literal>, <literal>@&gt;</literal>, <literal>&lt;@</literal>,
+   and <literal>@@</literal> operators, as well as regular array equality.
   </para>
 
   <para>
    Two GiST index operator classes are provided:
-   <literal>gist__int_ops</> (used by default) is suitable for
+   <literal>gist__int_ops</literal> (used by default) is suitable for
    small- to medium-size data sets, while
-   <literal>gist__intbig_ops</> uses a larger signature and is more
+   <literal>gist__intbig_ops</literal> uses a larger signature and is more
    suitable for indexing large data sets (i.e., columns containing
    a large number of distinct array values).
    The implementation uses an RD-tree data structure with
@@ -271,7 +271,7 @@
 
   <para>
    There is also a non-default GIN operator class
-   <literal>gin__int_ops</> supporting the same operators.
+   <literal>gin__int_ops</literal> supporting the same operators.
   </para>
 
   <para>
@@ -284,7 +284,7 @@
   <title>Example</title>
 
 <programlisting>
--- a message can be in one or more <quote>sections</>
+-- a message can be in one or more <quote>sections</quote>
 CREATE TABLE message (mid INT PRIMARY KEY, sections INT[], ...);
 
 -- create specialized index
@@ -305,9 +305,9 @@ SELECT message.mid FROM message WHERE message.sections @@ '1&amp;2'::query_int;
   <title>Benchmark</title>
 
   <para>
-   The source directory <filename>contrib/intarray/bench</> contains a
+   The source directory <filename>contrib/intarray/bench</filename> contains a
    benchmark test suite, which can be run against an installed
-   <productname>PostgreSQL</> server.  (It also requires <filename>DBD::Pg</>
+   <productname>PostgreSQL</productname> server.  (It also requires <filename>DBD::Pg</filename>
    to be installed.)  To run:
   </para>
 
@@ -320,7 +320,7 @@ psql -c "CREATE EXTENSION intarray" TEST
 </programlisting>
 
   <para>
-   The <filename>bench.pl</> script has numerous options, which
+   The <filename>bench.pl</filename> script has numerous options, which
    are displayed when it is run without any arguments.
   </para>
  </sect2>

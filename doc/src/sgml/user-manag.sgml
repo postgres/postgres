@@ -5,18 +5,18 @@
 
  <para>
   <productname>PostgreSQL</productname> manages database access permissions
-  using the concept of <firstterm>roles</>.  A role can be thought of as
+  using the concept of <firstterm>roles</firstterm>.  A role can be thought of as
   either a database user, or a group of database users, depending on how
   the role is set up.  Roles can own database objects (for example, tables
   and functions) and can assign privileges on those objects to other roles to
   control who has access to which objects.  Furthermore, it is possible
-  to grant <firstterm>membership</> in a role to another role, thus
+  to grant <firstterm>membership</firstterm> in a role to another role, thus
   allowing the member role to use privileges assigned to another role.
  </para>
 
  <para>
-  The concept of roles subsumes the concepts of <quote>users</> and
-  <quote>groups</>.  In <productname>PostgreSQL</productname> versions
+  The concept of roles subsumes the concepts of <quote>users</quote> and
+  <quote>groups</quote>.  In <productname>PostgreSQL</productname> versions
   before 8.1, users and groups were distinct kinds of entities, but now
   there are only roles.  Any role can act as a user, a group, or both.
  </para>
@@ -59,7 +59,7 @@ CREATE ROLE <replaceable>name</replaceable>;
    <replaceable>name</replaceable> follows the rules for SQL
    identifiers: either unadorned without special characters, or
    double-quoted.  (In practice, you will usually want to add additional
-   options, such as <literal>LOGIN</>, to the command.  More details appear
+   options, such as <literal>LOGIN</literal>, to the command.  More details appear
    below.)  To remove an existing role, use the analogous
    <xref linkend="sql-droprole"> command:
 <synopsis>
@@ -87,19 +87,19 @@ dropuser <replaceable>name</replaceable>
   </para>
 
   <para>
-   To determine the set of existing roles, examine the <structname>pg_roles</>
+   To determine the set of existing roles, examine the <structname>pg_roles</structname>
    system catalog, for example
 <synopsis>
 SELECT rolname FROM pg_roles;
 </synopsis>
-   The <xref linkend="app-psql"> program's <literal>\du</> meta-command
+   The <xref linkend="app-psql"> program's <literal>\du</literal> meta-command
    is also useful for listing the existing roles.
   </para>
 
   <para>
    In order to bootstrap the database system, a freshly initialized
    system always contains one predefined role. This role is always
-   a <quote>superuser</>, and by default (unless altered when running
+   a <quote>superuser</quote>, and by default (unless altered when running
    <command>initdb</command>) it will have the same name as the
    operating system user that initialized the database
    cluster. Customarily, this role will be named
@@ -118,7 +118,7 @@ SELECT rolname FROM pg_roles;
    <option>-U</option> command line option to indicate the role to
    connect as.  Many applications assume the name of the current
    operating system user by default (including
-   <command>createuser</> and <command>psql</>).  Therefore it
+   <command>createuser</command> and <command>psql</command>).  Therefore it
    is often convenient to maintain a naming correspondence between
    roles and operating system users.
   </para>
@@ -145,27 +145,27 @@ SELECT rolname FROM pg_roles;
 
     <variablelist>
      <varlistentry>
-      <term>login privilege<indexterm><primary>login privilege</></></term>
+      <term>login privilege<indexterm><primary>login privilege</primary></indexterm></term>
       <listitem>
        <para>
-        Only roles that have the <literal>LOGIN</> attribute can be used
+        Only roles that have the <literal>LOGIN</literal> attribute can be used
         as the initial role name for a database connection.  A role with
-        the <literal>LOGIN</> attribute can be considered the same
-        as a <quote>database user</>.  To create a role with login privilege,
+        the <literal>LOGIN</literal> attribute can be considered the same
+        as a <quote>database user</quote>.  To create a role with login privilege,
         use either:
 <programlisting>
 CREATE ROLE <replaceable>name</replaceable> LOGIN;
 CREATE USER <replaceable>name</replaceable>;
 </programlisting>
-        (<command>CREATE USER</> is equivalent to <command>CREATE ROLE</>
-        except that <command>CREATE USER</> assumes <literal>LOGIN</> by
-        default, while <command>CREATE ROLE</> does not.)
+        (<command>CREATE USER</command> is equivalent to <command>CREATE ROLE</command>
+        except that <command>CREATE USER</command> assumes <literal>LOGIN</literal> by
+        default, while <command>CREATE ROLE</command> does not.)
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term>superuser status<indexterm><primary>superuser</></></term>
+      <term>superuser status<indexterm><primary>superuser</primary></indexterm></term>
       <listitem>
        <para>
         A database superuser bypasses all permission checks, except the right
@@ -179,7 +179,7 @@ CREATE USER <replaceable>name</replaceable>;
      </varlistentry>
 
      <varlistentry>
-      <term>database creation<indexterm><primary>database</><secondary>privilege to create</></></term>
+      <term>database creation<indexterm><primary>database</primary><secondary>privilege to create</secondary></indexterm></term>
       <listitem>
        <para>
         A role must be explicitly given permission to create databases
@@ -191,30 +191,30 @@ CREATE USER <replaceable>name</replaceable>;
      </varlistentry>
 
      <varlistentry>
-      <term>role creation<indexterm><primary>role</><secondary>privilege to create</></></term>
+      <term>role creation<indexterm><primary>role</primary><secondary>privilege to create</secondary></indexterm></term>
       <listitem>
        <para>
         A role must be explicitly given permission to create more roles
         (except for superusers, since those bypass all permission
         checks). To create such a role, use <literal>CREATE ROLE
         <replaceable>name</replaceable> CREATEROLE</literal>.
-        A role with <literal>CREATEROLE</> privilege can alter and drop
+        A role with <literal>CREATEROLE</literal> privilege can alter and drop
         other roles, too, as well as grant or revoke membership in them.
         However, to create, alter, drop, or change membership of a
         superuser role, superuser status is required;
-        <literal>CREATEROLE</> is insufficient for that.
+        <literal>CREATEROLE</literal> is insufficient for that.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term>initiating replication<indexterm><primary>role</><secondary>privilege to initiate replication</></></term>
+      <term>initiating replication<indexterm><primary>role</primary><secondary>privilege to initiate replication</secondary></indexterm></term>
       <listitem>
        <para>
         A role must explicitly be given permission to initiate streaming
         replication (except for superusers, since those bypass all permission
         checks). A role used for streaming replication must
-        have <literal>LOGIN</> permission as well. To create such a role, use
+        have <literal>LOGIN</literal> permission as well. To create such a role, use
         <literal>CREATE ROLE <replaceable>name</replaceable> REPLICATION
         LOGIN</literal>.
        </para>
@@ -222,32 +222,32 @@ CREATE USER <replaceable>name</replaceable>;
      </varlistentry>
 
      <varlistentry>
-      <term>password<indexterm><primary>password</></></term>
+      <term>password<indexterm><primary>password</primary></indexterm></term>
       <listitem>
        <para>
         A password is only significant if the client authentication
         method requires the user to supply a password when connecting
-        to the database. The <option>password</> and
-        <option>md5</> authentication methods
+        to the database. The <option>password</option> and
+        <option>md5</option> authentication methods
         make use of passwords. Database passwords are separate from
         operating system passwords. Specify a password upon role
         creation with <literal>CREATE ROLE
-        <replaceable>name</replaceable> PASSWORD '<replaceable>string</>'</literal>.
+        <replaceable>name</replaceable> PASSWORD '<replaceable>string</replaceable>'</literal>.
        </para>
       </listitem>
      </varlistentry>
     </variablelist>
 
     A role's attributes can be modified after creation with
-    <command>ALTER ROLE</command>.<indexterm><primary>ALTER ROLE</></>
+    <command>ALTER ROLE</command>.<indexterm><primary>ALTER ROLE</primary></indexterm>
     See the reference pages for the <xref linkend="sql-createrole">
     and <xref linkend="sql-alterrole"> commands for details.
    </para>
 
   <tip>
    <para>
-    It is good practice to create a role that has the <literal>CREATEDB</>
-    and <literal>CREATEROLE</> privileges, but is not a superuser, and then
+    It is good practice to create a role that has the <literal>CREATEDB</literal>
+    and <literal>CREATEROLE</literal> privileges, but is not a superuser, and then
     use this role for all routine management of databases and roles.  This
     approach avoids the dangers of operating as a superuser for tasks that
     do not really require it.
@@ -269,9 +269,9 @@ ALTER ROLE myname SET enable_indexscan TO off;
    just before the session started.
    You can still alter this setting during the session; it will only
    be the default. To remove a role-specific default setting, use
-   <literal>ALTER ROLE <replaceable>rolename</> RESET <replaceable>varname</></literal>.
+   <literal>ALTER ROLE <replaceable>rolename</replaceable> RESET <replaceable>varname</replaceable></literal>.
    Note that role-specific defaults attached to roles without
-   <literal>LOGIN</> privilege are fairly useless, since they will never
+   <literal>LOGIN</literal> privilege are fairly useless, since they will never
    be invoked.
   </para>
  </sect1>
@@ -280,7 +280,7 @@ ALTER ROLE myname SET enable_indexscan TO off;
   <title>Role Membership</title>
 
   <indexterm zone="role-membership">
-   <primary>role</><secondary>membership in</>
+   <primary>role</primary><secondary>membership in</secondary>
   </indexterm>
 
   <para>
@@ -288,7 +288,7 @@ ALTER ROLE myname SET enable_indexscan TO off;
    management of privileges: that way, privileges can be granted to, or
    revoked from, a group as a whole.  In <productname>PostgreSQL</productname>
    this is done by creating a role that represents the group, and then
-   granting <firstterm>membership</> in the group role to individual user
+   granting <firstterm>membership</firstterm> in the group role to individual user
    roles.
   </para>
 
@@ -297,7 +297,7 @@ ALTER ROLE myname SET enable_indexscan TO off;
 <synopsis>
 CREATE ROLE <replaceable>name</replaceable>;
 </synopsis>
-   Typically a role being used as a group would not have the <literal>LOGIN</>
+   Typically a role being used as a group would not have the <literal>LOGIN</literal>
    attribute, though you can set it if you wish.
   </para>
 
@@ -320,11 +320,11 @@ REVOKE <replaceable>group_role</replaceable> FROM <replaceable>role1</replaceabl
    The members of a group role can use the privileges of the role in two
    ways.  First, every member of a group can explicitly do
    <xref linkend="sql-set-role"> to
-   temporarily <quote>become</> the group role.  In this state, the
+   temporarily <quote>become</quote> the group role.  In this state, the
    database session has access to the privileges of the group role rather
    than the original login role, and any database objects created are
    considered owned by the group role not the login role.  Second, member
-   roles that have the <literal>INHERIT</> attribute automatically have use
+   roles that have the <literal>INHERIT</literal> attribute automatically have use
    of the privileges of roles of which they are members, including any
    privileges inherited by those roles.
    As an example, suppose we have done:
@@ -335,25 +335,25 @@ CREATE ROLE wheel NOINHERIT;
 GRANT admin TO joe;
 GRANT wheel TO admin;
 </programlisting>
-   Immediately after connecting as role <literal>joe</>, a database
-   session will have use of privileges granted directly to <literal>joe</>
-   plus any privileges granted to <literal>admin</>, because <literal>joe</>
-   <quote>inherits</> <literal>admin</>'s privileges.  However, privileges
-   granted to <literal>wheel</> are not available, because even though
-   <literal>joe</> is indirectly a member of <literal>wheel</>, the
-   membership is via <literal>admin</> which has the <literal>NOINHERIT</>
+   Immediately after connecting as role <literal>joe</literal>, a database
+   session will have use of privileges granted directly to <literal>joe</literal>
+   plus any privileges granted to <literal>admin</literal>, because <literal>joe</literal>
+   <quote>inherits</quote> <literal>admin</literal>'s privileges.  However, privileges
+   granted to <literal>wheel</literal> are not available, because even though
+   <literal>joe</literal> is indirectly a member of <literal>wheel</literal>, the
+   membership is via <literal>admin</literal> which has the <literal>NOINHERIT</literal>
    attribute.  After:
 <programlisting>
 SET ROLE admin;
 </programlisting>
    the session would have use of only those privileges granted to
-   <literal>admin</>, and not those granted to <literal>joe</>.  After:
+   <literal>admin</literal>, and not those granted to <literal>joe</literal>.  After:
 <programlisting>
 SET ROLE wheel;
 </programlisting>
    the session would have use of only those privileges granted to
-   <literal>wheel</>, and not those granted to either <literal>joe</>
-   or <literal>admin</>.  The original privilege state can be restored
+   <literal>wheel</literal>, and not those granted to either <literal>joe</literal>
+   or <literal>admin</literal>.  The original privilege state can be restored
    with any of:
 <programlisting>
 SET ROLE joe;
@@ -364,10 +364,10 @@ RESET ROLE;
 
   <note>
    <para>
-    The <command>SET ROLE</> command always allows selecting any role
+    The <command>SET ROLE</command> command always allows selecting any role
     that the original login role is directly or indirectly a member of.
     Thus, in the above example, it is not necessary to become
-    <literal>admin</> before becoming <literal>wheel</>.
+    <literal>admin</literal> before becoming <literal>wheel</literal>.
    </para>
   </note>
 
@@ -376,26 +376,26 @@ RESET ROLE;
     In the SQL standard, there is a clear distinction between users and roles,
     and users do not automatically inherit privileges while roles do.  This
     behavior can be obtained in <productname>PostgreSQL</productname> by giving
-    roles being used as SQL roles the <literal>INHERIT</> attribute, while
-    giving roles being used as SQL users the <literal>NOINHERIT</> attribute.
+    roles being used as SQL roles the <literal>INHERIT</literal> attribute, while
+    giving roles being used as SQL users the <literal>NOINHERIT</literal> attribute.
     However, <productname>PostgreSQL</productname> defaults to giving all roles
-    the <literal>INHERIT</> attribute, for backward compatibility with pre-8.1
+    the <literal>INHERIT</literal> attribute, for backward compatibility with pre-8.1
     releases in which users always had use of permissions granted to groups
     they were members of.
    </para>
   </note>
 
   <para>
-   The role attributes <literal>LOGIN</>, <literal>SUPERUSER</>,
-   <literal>CREATEDB</>, and <literal>CREATEROLE</> can be thought of as
+   The role attributes <literal>LOGIN</literal>, <literal>SUPERUSER</literal>,
+   <literal>CREATEDB</literal>, and <literal>CREATEROLE</literal> can be thought of as
    special privileges, but they are never inherited as ordinary privileges
-   on database objects are.  You must actually <command>SET ROLE</> to a
+   on database objects are.  You must actually <command>SET ROLE</command> to a
    specific role having one of these attributes in order to make use of
    the attribute.  Continuing the above example, we might choose to
-   grant <literal>CREATEDB</> and <literal>CREATEROLE</> to the
-   <literal>admin</> role.  Then a session connecting as role <literal>joe</>
+   grant <literal>CREATEDB</literal> and <literal>CREATEROLE</literal> to the
+   <literal>admin</literal> role.  Then a session connecting as role <literal>joe</literal>
    would not have these privileges immediately, only after doing
-   <command>SET ROLE admin</>.
+   <command>SET ROLE admin</command>.
   </para>
 
   <para>
@@ -425,16 +425,16 @@ DROP ROLE <replaceable>name</replaceable>;
 
   <para>
    Ownership of objects can be transferred one at a time
-   using <command>ALTER</> commands, for example:
+   using <command>ALTER</command> commands, for example:
 <programlisting>
 ALTER TABLE bobs_table OWNER TO alice;
 </programlisting>
    Alternatively, the <xref linkend="sql-reassign-owned"> command can be
    used to reassign ownership of all objects owned by the role-to-be-dropped
-   to a single other role.  Because <command>REASSIGN OWNED</> cannot access
+   to a single other role.  Because <command>REASSIGN OWNED</command> cannot access
    objects in other databases, it is necessary to run it in each database
    that contains objects owned by the role.  (Note that the first
-   such <command>REASSIGN OWNED</> will change the ownership of any
+   such <command>REASSIGN OWNED</command> will change the ownership of any
    shared-across-databases objects, that is databases or tablespaces, that
    are owned by the role-to-be-dropped.)
   </para>
@@ -445,17 +445,17 @@ ALTER TABLE bobs_table OWNER TO alice;
    the <xref linkend="sql-drop-owned"> command.  Again, this command cannot
    access objects in other databases, so it is necessary to run it in each
    database that contains objects owned by the role.  Also, <command>DROP
-   OWNED</> will not drop entire databases or tablespaces, so it is
+   OWNED</command> will not drop entire databases or tablespaces, so it is
    necessary to do that manually if the role owns any databases or
    tablespaces that have not been transferred to new owners.
   </para>
 
   <para>
-   <command>DROP OWNED</> also takes care of removing any privileges granted
+   <command>DROP OWNED</command> also takes care of removing any privileges granted
    to the target role for objects that do not belong to it.
-   Because <command>REASSIGN OWNED</> does not touch such objects, it's
-   typically necessary to run both <command>REASSIGN OWNED</>
-   and <command>DROP OWNED</> (in that order!) to fully remove the
+   Because <command>REASSIGN OWNED</command> does not touch such objects, it's
+   typically necessary to run both <command>REASSIGN OWNED</command>
+   and <command>DROP OWNED</command> (in that order!) to fully remove the
    dependencies of a role to be dropped.
   </para>
 
@@ -477,7 +477,7 @@ DROP ROLE doomed_role;
   </para>
 
   <para>
-   If <command>DROP ROLE</> is attempted while dependent objects still
+   If <command>DROP ROLE</command> is attempted while dependent objects still
    remain, it will issue messages identifying which objects need to be
    reassigned or dropped.
   </para>
@@ -487,7 +487,7 @@ DROP ROLE doomed_role;
   <title>Default Roles</title>
 
   <indexterm zone="default-roles">
-   <primary>role</>
+   <primary>role</primary>
   </indexterm>
 
   <para>
@@ -589,7 +589,7 @@ GRANT pg_signal_backend TO admin_user;
    possible to change the server's internal data structures.
    Hence, among many other things, such functions can circumvent any
    system access controls.  Function languages that allow such access
-   are considered <quote>untrusted</>, and
+   are considered <quote>untrusted</quote>, and
    <productname>PostgreSQL</productname> allows only superusers to
    create functions written in those languages.
   </para>

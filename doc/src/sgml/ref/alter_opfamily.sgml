@@ -57,7 +57,7 @@ ALTER OPERATOR FAMILY <replaceable>name</replaceable> USING <replaceable class="
   <para>
    When operators and support functions are added to a family with
    <command>ALTER OPERATOR FAMILY</command>, they are not part of any
-   specific operator class within the family, but are just <quote>loose</>
+   specific operator class within the family, but are just <quote>loose</quote>
    within the family.  This indicates that these operators and functions
    are compatible with the family's semantics, but are not required for
    correct functioning of any specific index.  (Operators and functions
@@ -74,7 +74,7 @@ ALTER OPERATOR FAMILY <replaceable>name</replaceable> USING <replaceable class="
   </para>
 
   <para>
-   You must be a superuser to use <command>ALTER OPERATOR FAMILY</>.
+   You must be a superuser to use <command>ALTER OPERATOR FAMILY</command>.
    (This restriction is made because an erroneous operator family definition
    could confuse or even crash the server.)
   </para>
@@ -139,15 +139,15 @@ ALTER OPERATOR FAMILY <replaceable>name</replaceable> USING <replaceable class="
     <term><replaceable class="parameter">op_type</replaceable></term>
     <listitem>
      <para>
-      In an <literal>OPERATOR</> clause,
-      the operand data type(s) of the operator, or <literal>NONE</> to
+      In an <literal>OPERATOR</literal> clause,
+      the operand data type(s) of the operator, or <literal>NONE</literal> to
       signify a left-unary or right-unary operator.  Unlike the comparable
-      syntax in <command>CREATE OPERATOR CLASS</>, the operand data types
+      syntax in <command>CREATE OPERATOR CLASS</command>, the operand data types
       must always be specified.
      </para>
 
      <para>
-      In an <literal>ADD FUNCTION</> clause, the operand data type(s) the
+      In an <literal>ADD FUNCTION</literal> clause, the operand data type(s) the
       function is intended to support, if different from
       the input data type(s) of the function.  For B-tree comparison functions
       and hash functions it is not necessary to specify <replaceable
@@ -159,7 +159,7 @@ ALTER OPERATOR FAMILY <replaceable>name</replaceable> USING <replaceable class="
      </para>
 
      <para>
-      In a <literal>DROP FUNCTION</> clause, the operand data type(s) the
+      In a <literal>DROP FUNCTION</literal> clause, the operand data type(s) the
       function is intended to support must be specified.
      </para>
     </listitem>
@@ -175,8 +175,8 @@ ALTER OPERATOR FAMILY <replaceable>name</replaceable> USING <replaceable class="
      </para>
 
      <para>
-      If neither <literal>FOR SEARCH</> nor <literal>FOR ORDER BY</> is
-      specified, <literal>FOR SEARCH</> is the default.
+      If neither <literal>FOR SEARCH</literal> nor <literal>FOR ORDER BY</literal> is
+      specified, <literal>FOR SEARCH</literal> is the default.
      </para>
     </listitem>
    </varlistentry>
@@ -240,7 +240,7 @@ ALTER OPERATOR FAMILY <replaceable>name</replaceable> USING <replaceable class="
  </variablelist>
 
   <para>
-   The <literal>OPERATOR</> and <literal>FUNCTION</>
+   The <literal>OPERATOR</literal> and <literal>FUNCTION</literal>
    clauses can appear in any order.
   </para>
 
@@ -250,10 +250,10 @@ ALTER OPERATOR FAMILY <replaceable>name</replaceable> USING <replaceable class="
   <title>Notes</title>
 
   <para>
-   Notice that the <literal>DROP</> syntax only specifies the <quote>slot</>
+   Notice that the <literal>DROP</literal> syntax only specifies the <quote>slot</quote>
    in the operator family, by strategy or support number and input data
    type(s).  The name of the operator or function occupying the slot is not
-   mentioned.  Also, for <literal>DROP FUNCTION</> the type(s) to specify
+   mentioned.  Also, for <literal>DROP FUNCTION</literal> the type(s) to specify
    are the input data type(s) the function is intended to support; for
    GiST, SP-GiST and GIN indexes this might have nothing to do with the actual
    input argument types of the function.
@@ -274,9 +274,9 @@ ALTER OPERATOR FAMILY <replaceable>name</replaceable> USING <replaceable class="
   </para>
 
   <para>
-   Before <productname>PostgreSQL</productname> 8.4, the <literal>OPERATOR</>
-   clause could include a <literal>RECHECK</> option.  This is no longer
-   supported because whether an index operator is <quote>lossy</> is now
+   Before <productname>PostgreSQL</productname> 8.4, the <literal>OPERATOR</literal>
+   clause could include a <literal>RECHECK</literal> option.  This is no longer
+   supported because whether an index operator is <quote>lossy</quote> is now
    determined on-the-fly at run time.  This allows efficient handling of
    cases where an operator might or might not be lossy.
   </para>
@@ -288,7 +288,7 @@ ALTER OPERATOR FAMILY <replaceable>name</replaceable> USING <replaceable class="
   <para>
    The following example command adds cross-data-type operators and
    support functions to an operator family that already contains B-tree
-   operator classes for data types <type>int4</> and <type>int2</>.
+   operator classes for data types <type>int4</type> and <type>int2</type>.
   </para>
 
 <programlisting>

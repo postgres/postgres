@@ -43,7 +43,7 @@ ALTER AGGREGATE <replaceable>name</replaceable> ( <replaceable>aggregate_signatu
   </para>
 
   <para>
-   You must own the aggregate function to use <command>ALTER AGGREGATE</>.
+   You must own the aggregate function to use <command>ALTER AGGREGATE</command>.
    To change the schema of an aggregate function, you must also have
    <literal>CREATE</literal> privilege on the new schema.
    To alter the owner, you must also be a direct or indirect member of the new
@@ -73,8 +73,8 @@ ALTER AGGREGATE <replaceable>name</replaceable> ( <replaceable>aggregate_signatu
 
     <listitem>
      <para>
-      The mode of an argument: <literal>IN</> or <literal>VARIADIC</>.
-      If omitted, the default is <literal>IN</>.
+      The mode of an argument: <literal>IN</literal> or <literal>VARIADIC</literal>.
+      If omitted, the default is <literal>IN</literal>.
      </para>
     </listitem>
    </varlistentry>
@@ -97,10 +97,10 @@ ALTER AGGREGATE <replaceable>name</replaceable> ( <replaceable>aggregate_signatu
     <listitem>
      <para>
       An input data type on which the aggregate function operates.
-      To reference a zero-argument aggregate function, write <literal>*</>
+      To reference a zero-argument aggregate function, write <literal>*</literal>
       in place of the list of argument specifications.
       To reference an ordered-set aggregate function, write
-      <literal>ORDER BY</> between the direct and aggregated argument
+      <literal>ORDER BY</literal> between the direct and aggregated argument
       specifications.
      </para>
     </listitem>
@@ -140,13 +140,13 @@ ALTER AGGREGATE <replaceable>name</replaceable> ( <replaceable>aggregate_signatu
 
    <para>
     The recommended syntax for referencing an ordered-set aggregate
-    is to write <literal>ORDER BY</> between the direct and aggregated
+    is to write <literal>ORDER BY</literal> between the direct and aggregated
     argument specifications, in the same style as in
     <xref linkend="sql-createaggregate">.  However, it will also work to
-    omit <literal>ORDER BY</> and just run the direct and aggregated
+    omit <literal>ORDER BY</literal> and just run the direct and aggregated
     argument specifications into a single list.  In this abbreviated form,
-    if <literal>VARIADIC "any"</> was used in both the direct and
-    aggregated argument lists, write <literal>VARIADIC "any"</> only once.
+    if <literal>VARIADIC "any"</literal> was used in both the direct and
+    aggregated argument lists, write <literal>VARIADIC "any"</literal> only once.
    </para>
  </refsect1>
 

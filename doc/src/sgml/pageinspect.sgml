@@ -8,7 +8,7 @@
  </indexterm>
 
  <para>
-  The <filename>pageinspect</> module provides functions that allow you to
+  The <filename>pageinspect</filename> module provides functions that allow you to
   inspect the contents of database pages at a low level, which is useful for
   debugging purposes.  All of these functions may be used only by superusers.
  </para>
@@ -28,7 +28,7 @@
     <listitem>
      <para>
       <function>get_raw_page</function> reads the specified block of the named
-      relation and returns a copy as a <type>bytea</> value.  This allows a
+      relation and returns a copy as a <type>bytea</type> value.  This allows a
       single time-consistent copy of the block to be obtained.
       <replaceable>fork</replaceable> should be <literal>'main'</literal> for
       the main data fork, <literal>'fsm'</literal> for the free space map,
@@ -63,7 +63,7 @@
     <listitem>
      <para>
       <function>page_header</function> shows fields that are common to all
-      <productname>PostgreSQL</> heap and index pages.
+      <productname>PostgreSQL</productname> heap and index pages.
      </para>
 
      <para>
@@ -76,8 +76,8 @@ test=# SELECT * FROM page_header(get_raw_page('pg_class', 0));
  0/24A1B50 |        0 |      1 |   232 |   368 |    8192 |     8192 |       4 |         0
 </screen>
       The returned columns correspond to the fields in the
-      <structname>PageHeaderData</> struct.
-      See <filename>src/include/storage/bufpage.h</> for details.
+      <structname>PageHeaderData</structname> struct.
+      See <filename>src/include/storage/bufpage.h</filename> for details.
      </para>
 
      <para>
@@ -147,8 +147,8 @@ test=# SELECT page_checksum(get_raw_page('pg_class', 0), 0);
 <screen>
 test=# SELECT * FROM heap_page_items(get_raw_page('pg_class', 0));
 </screen>
-      See <filename>src/include/storage/itemid.h</> and
-      <filename>src/include/access/htup_details.h</> for explanations of the fields
+      See <filename>src/include/storage/itemid.h</filename> and
+      <filename>src/include/access/htup_details.h</filename> for explanations of the fields
       returned.
      </para>
     </listitem>
@@ -221,7 +221,7 @@ test=# SELECT * FROM heap_page_item_attrs(get_raw_page('pg_class', 0), 'pg_class
       next slot to be returned from the page, is also printed.
      </para>
      <para>
-      See <filename>src/backend/storage/freespace/README</> for more
+      See <filename>src/backend/storage/freespace/README</filename> for more
       information on the structure of an FSM page.
      </para>
     </listitem>
@@ -315,21 +315,21 @@ test=# SELECT * FROM bt_page_items('pg_cast_oid_index', 1);
           7 | (0,7)   |      12 | f     | f    | 29 27 00 00
           8 | (0,8)   |      12 | f     | f    | 2a 27 00 00
 </screen>
-      In a B-tree leaf page, <structfield>ctid</> points to a heap tuple.
-      In an internal page, the block number part of <structfield>ctid</>
+      In a B-tree leaf page, <structfield>ctid</structfield> points to a heap tuple.
+      In an internal page, the block number part of <structfield>ctid</structfield>
       points to another page in the index itself, while the offset part
       (the second number) is ignored and is usually 1.
      </para>
      <para>
       Note that the first item on any non-rightmost page (any page with
-      a non-zero value in the <structfield>btpo_next</> field) is the
-      page's <quote>high key</quote>, meaning its <structfield>data</>
+      a non-zero value in the <structfield>btpo_next</structfield> field) is the
+      page's <quote>high key</quote>, meaning its <structfield>data</structfield>
       serves as an upper bound on all items appearing on the page, while
-      its <structfield>ctid</> field is meaningless.  Also, on non-leaf
+      its <structfield>ctid</structfield> field is meaningless.  Also, on non-leaf
       pages, the first real data item (the first item that is not a high
       key) is a <quote>minus infinity</quote> item, with no actual value
-      in its <structfield>data</> field.  Such an item does have a valid
-      downlink in its <structfield>ctid</> field, however.
+      in its <structfield>data</structfield> field.  Such an item does have a valid
+      downlink in its <structfield>ctid</structfield> field, however.
      </para>
     </listitem>
    </varlistentry>
@@ -345,7 +345,7 @@ test=# SELECT * FROM bt_page_items('pg_cast_oid_index', 1);
     <listitem>
      <para>
       It is also possible to pass a page to <function>bt_page_items</function>
-      as a <type>bytea</> value.  A page image obtained
+      as a <type>bytea</type> value.  A page image obtained
       with <function>get_raw_page</function> should be passed as argument.  So
       the last example could also be rewritten like this:
 <screen>
@@ -470,8 +470,8 @@ test=# SELECT * FROM brin_page_items(get_raw_page('brinidx', 5),
         139 |      8 |      2 | f        | f        | f           | {177 .. 264}
 </screen>
       The returned columns correspond to the fields in the
-      <structname>BrinMemTuple</> and <structname>BrinValues</> structs.
-      See <filename>src/include/access/brin_tuple.h</> for details.
+      <structname>BrinMemTuple</structname> and <structname>BrinValues</structname> structs.
+      See <filename>src/include/access/brin_tuple.h</filename> for details.
      </para>
     </listitem>
    </varlistentry>

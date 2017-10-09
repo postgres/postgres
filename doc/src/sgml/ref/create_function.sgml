@@ -58,7 +58,7 @@ CREATE [ OR REPLACE ] FUNCTION
    The name of the new function must not match any existing function
    with the same input argument types in the same schema.  However,
    functions of different argument types can share a name (this is
-   called <firstterm>overloading</>).
+   called <firstterm>overloading</firstterm>).
   </para>
 
   <para>
@@ -68,13 +68,13 @@ CREATE [ OR REPLACE ] FUNCTION
    tried, you would actually be creating a new, distinct function).
    Also, <command>CREATE OR REPLACE FUNCTION</command> will not let
    you change the return type of an existing function.  To do that,
-   you must drop and recreate the function.  (When using <literal>OUT</>
+   you must drop and recreate the function.  (When using <literal>OUT</literal>
    parameters, that means you cannot change the types of any
-   <literal>OUT</> parameters except by dropping the function.)
+   <literal>OUT</literal> parameters except by dropping the function.)
   </para>
 
   <para>
-   When <command>CREATE OR REPLACE FUNCTION</> is used to replace an
+   When <command>CREATE OR REPLACE FUNCTION</command> is used to replace an
    existing function, the ownership and permissions of the function
    do not change.  All other function properties are assigned the
    values specified or implied in the command.  You must own the function
@@ -87,7 +87,7 @@ CREATE [ OR REPLACE ] FUNCTION
    triggers, etc. that refer to the old function.  Use
    <command>CREATE OR REPLACE FUNCTION</command> to change a function
    definition without breaking objects that refer to the function.
-   Also, <command>ALTER FUNCTION</> can be used to change most of the
+   Also, <command>ALTER FUNCTION</command> can be used to change most of the
    auxiliary properties of an existing function.
   </para>
 
@@ -121,12 +121,12 @@ CREATE [ OR REPLACE ] FUNCTION
 
      <listitem>
       <para>
-       The mode of an argument: <literal>IN</>, <literal>OUT</>,
-       <literal>INOUT</>, or <literal>VARIADIC</>.
-       If omitted, the default is <literal>IN</>.
-       Only <literal>OUT</> arguments can follow a <literal>VARIADIC</> one.
-       Also, <literal>OUT</> and <literal>INOUT</> arguments cannot be used
-       together with the <literal>RETURNS TABLE</> notation.
+       The mode of an argument: <literal>IN</literal>, <literal>OUT</literal>,
+       <literal>INOUT</literal>, or <literal>VARIADIC</literal>.
+       If omitted, the default is <literal>IN</literal>.
+       Only <literal>OUT</literal> arguments can follow a <literal>VARIADIC</literal> one.
+       Also, <literal>OUT</literal> and <literal>INOUT</literal> arguments cannot be used
+       together with the <literal>RETURNS TABLE</literal> notation.
       </para>
      </listitem>
     </varlistentry>
@@ -160,7 +160,7 @@ CREATE [ OR REPLACE ] FUNCTION
       </para>
       <para>
        Depending on the implementation language it might also be allowed
-       to specify <quote>pseudo-types</> such as <type>cstring</>.
+       to specify <quote>pseudo-types</quote> such as <type>cstring</type>.
        Pseudo-types indicate that the actual argument type is either
        incompletely specified, or outside the set of ordinary SQL data types.
       </para>
@@ -183,7 +183,7 @@ CREATE [ OR REPLACE ] FUNCTION
        An expression to be used as default value if the parameter is
        not specified.  The expression has to be coercible to the
        argument type of the parameter.
-       Only input (including <literal>INOUT</>) parameters can have a default
+       Only input (including <literal>INOUT</literal>) parameters can have a default
         value.  All input parameters following a
        parameter with a default value must have default values as well.
       </para>
@@ -199,15 +199,15 @@ CREATE [ OR REPLACE ] FUNCTION
        can be a base, composite, or domain type,
        or can reference the type of a table column.
        Depending on the implementation language it might also be allowed
-       to specify <quote>pseudo-types</> such as <type>cstring</>.
+       to specify <quote>pseudo-types</quote> such as <type>cstring</type>.
        If the function is not supposed to return a value, specify
-       <type>void</> as the return type.
+       <type>void</type> as the return type.
       </para>
       <para>
-       When there are <literal>OUT</> or <literal>INOUT</> parameters,
-       the <literal>RETURNS</> clause can be omitted.  If present, it
+       When there are <literal>OUT</literal> or <literal>INOUT</literal> parameters,
+       the <literal>RETURNS</literal> clause can be omitted.  If present, it
        must agree with the result type implied by the output parameters:
-       <literal>RECORD</> if there are multiple output parameters, or
+       <literal>RECORD</literal> if there are multiple output parameters, or
        the same type as the single output parameter.
       </para>
       <para>
@@ -229,10 +229,10 @@ CREATE [ OR REPLACE ] FUNCTION
 
      <listitem>
       <para>
-       The name of an output column in the <literal>RETURNS TABLE</>
+       The name of an output column in the <literal>RETURNS TABLE</literal>
        syntax.  This is effectively another way of declaring a named
-       <literal>OUT</> parameter, except that <literal>RETURNS TABLE</>
-       also implies <literal>RETURNS SETOF</>.
+       <literal>OUT</literal> parameter, except that <literal>RETURNS TABLE</literal>
+       also implies <literal>RETURNS SETOF</literal>.
       </para>
      </listitem>
     </varlistentry>
@@ -242,7 +242,7 @@ CREATE [ OR REPLACE ] FUNCTION
 
      <listitem>
       <para>
-       The data type of an output column in the <literal>RETURNS TABLE</>
+       The data type of an output column in the <literal>RETURNS TABLE</literal>
        syntax.
       </para>
      </listitem>
@@ -284,9 +284,9 @@ CREATE [ OR REPLACE ] FUNCTION
 
      <listitem>
       <para><literal>WINDOW</literal> indicates that the function is a
-       <firstterm>window function</> rather than a plain function.
+       <firstterm>window function</firstterm> rather than a plain function.
        This is currently only useful for functions written in C.
-       The <literal>WINDOW</> attribute cannot be changed when
+       The <literal>WINDOW</literal> attribute cannot be changed when
        replacing an existing function definition.
       </para>
      </listitem>
@@ -321,20 +321,20 @@ CREATE [ OR REPLACE ] FUNCTION
        result could change across SQL statements.  This is the appropriate
        selection for functions whose results depend on database lookups,
        parameter variables (such as the current time zone), etc.  (It is
-       inappropriate for <literal>AFTER</> triggers that wish to
+       inappropriate for <literal>AFTER</literal> triggers that wish to
        query rows modified by the current command.)  Also note
-       that the <function>current_timestamp</> family of functions qualify
+       that the <function>current_timestamp</function> family of functions qualify
        as stable, since their values do not change within a transaction.
       </para>
 
       <para><literal>VOLATILE</literal> indicates that the function value can
        change even within a single table scan, so no optimizations can be
        made.  Relatively few database functions are volatile in this sense;
-       some examples are <literal>random()</>, <literal>currval()</>,
-       <literal>timeofday()</>.  But note that any function that has
+       some examples are <literal>random()</literal>, <literal>currval()</literal>,
+       <literal>timeofday()</literal>.  But note that any function that has
        side-effects must be classified volatile, even if its result is quite
        predictable, to prevent calls from being optimized away; an example is
-       <literal>setval()</>.
+       <literal>setval()</literal>.
       </para>
 
       <para>
@@ -430,11 +430,11 @@ CREATE [ OR REPLACE ] FUNCTION
       Functions should be labeled parallel unsafe if they modify any database
       state, or if they make changes to the transaction such as using
       sub-transactions, or if they access sequences or attempt to make
-      persistent changes to settings (e.g. <literal>setval</>).  They should
+      persistent changes to settings (e.g. <literal>setval</literal>).  They should
       be labeled as parallel restricted if they access temporary tables,
       client connection state, cursors, prepared statements, or miscellaneous
       backend-local state which the system cannot synchronize in parallel mode
-      (e.g.  <literal>setseed</> cannot be executed other than by the group
+      (e.g.  <literal>setseed</literal> cannot be executed other than by the group
       leader because a change made by another process would not be reflected
       in the leader).  In general, if a function is labeled as being safe when
       it is restricted or unsafe, or if it is labeled as being restricted when
@@ -443,7 +443,7 @@ CREATE [ OR REPLACE ] FUNCTION
       exhibit totally undefined behavior if mislabeled, since there is no way
       for the system to protect itself against arbitrary C code, but in most
       likely cases the result will be no worse than for any other function.
-      If in doubt, functions should be labeled as <literal>UNSAFE</>, which is
+      If in doubt, functions should be labeled as <literal>UNSAFE</literal>, which is
       the default.
      </para>
     </listitem>
@@ -483,23 +483,23 @@ CREATE [ OR REPLACE ] FUNCTION
      <term><replaceable>value</replaceable></term>
      <listitem>
       <para>
-       The <literal>SET</> clause causes the specified configuration
+       The <literal>SET</literal> clause causes the specified configuration
        parameter to be set to the specified value when the function is
        entered, and then restored to its prior value when the function exits.
-       <literal>SET FROM CURRENT</> saves the value of the parameter that
-       is current when <command>CREATE FUNCTION</> is executed as the value
+       <literal>SET FROM CURRENT</literal> saves the value of the parameter that
+       is current when <command>CREATE FUNCTION</command> is executed as the value
        to be applied when the function is entered.
       </para>
 
       <para>
-       If a <literal>SET</> clause is attached to a function, then
-       the effects of a <command>SET LOCAL</> command executed inside the
+       If a <literal>SET</literal> clause is attached to a function, then
+       the effects of a <command>SET LOCAL</command> command executed inside the
        function for the same variable are restricted to the function: the
        configuration parameter's prior value is still restored at function exit.
        However, an ordinary
-       <command>SET</> command (without <literal>LOCAL</>) overrides the
-       <literal>SET</> clause, much as it would do for a previous <command>SET
-       LOCAL</> command: the effects of such a command will persist after
+       <command>SET</command> command (without <literal>LOCAL</literal>) overrides the
+       <literal>SET</literal> clause, much as it would do for a previous <command>SET
+       LOCAL</command> command: the effects of such a command will persist after
        function exit, unless the current transaction is rolled back.
       </para>
 
@@ -570,7 +570,7 @@ CREATE [ OR REPLACE ] FUNCTION
 
       <variablelist>
        <varlistentry>
-        <term><literal>isStrict</></term>
+        <term><literal>isStrict</literal></term>
         <listitem>
          <para>
           Equivalent to <literal>STRICT</literal> or <literal>RETURNS NULL ON NULL INPUT</literal>.
@@ -579,7 +579,7 @@ CREATE [ OR REPLACE ] FUNCTION
        </varlistentry>
 
        <varlistentry>
-        <term><literal>isCachable</></term>
+        <term><literal>isCachable</literal></term>
         <listitem>
          <para><literal>isCachable</literal> is an obsolete equivalent of
           <literal>IMMUTABLE</literal>; it's still accepted for
@@ -619,7 +619,7 @@ CREATE [ OR REPLACE ] FUNCTION
 
    <para>
     Two functions are considered the same if they have the same names and
-    <emphasis>input</> argument types, ignoring any <literal>OUT</>
+    <emphasis>input</emphasis> argument types, ignoring any <literal>OUT</literal>
     parameters.  Thus for example these declarations conflict:
 <programlisting>
 CREATE FUNCTION foo(int) ...
@@ -635,7 +635,7 @@ CREATE FUNCTION foo(int, out text) ...
 CREATE FUNCTION foo(int) ...
 CREATE FUNCTION foo(int, int default 42) ...
 </programlisting>
-    A call <literal>foo(10)</> will fail due to the ambiguity about which
+    A call <literal>foo(10)</literal> will fail due to the ambiguity about which
     function should be called.
    </para>
 
@@ -648,16 +648,16 @@ CREATE FUNCTION foo(int, int default 42) ...
     The full <acronym>SQL</acronym> type syntax is allowed for
     declaring a function's arguments and return value.  However,
     parenthesized type modifiers (e.g., the precision field for
-    type <type>numeric</type>) are discarded by <command>CREATE FUNCTION</>.
+    type <type>numeric</type>) are discarded by <command>CREATE FUNCTION</command>.
     Thus for example
-    <literal>CREATE FUNCTION foo (varchar(10)) ...</>
+    <literal>CREATE FUNCTION foo (varchar(10)) ...</literal>
     is exactly the same as
-    <literal>CREATE FUNCTION foo (varchar) ...</>.
+    <literal>CREATE FUNCTION foo (varchar) ...</literal>.
    </para>
 
    <para>
     When replacing an existing function with <command>CREATE OR REPLACE
-    FUNCTION</>, there are restrictions on changing parameter names.
+    FUNCTION</command>, there are restrictions on changing parameter names.
     You cannot change the name already assigned to any input parameter
     (although you can add names to parameters that had none before).
     If there is more than one output parameter, you cannot change the
@@ -668,9 +668,9 @@ CREATE FUNCTION foo(int, int default 42) ...
    </para>
 
    <para>
-    If a function is declared <literal>STRICT</> with a <literal>VARIADIC</>
+    If a function is declared <literal>STRICT</literal> with a <literal>VARIADIC</literal>
     argument, the strictness check tests that the variadic array <emphasis>as
-    a whole</> is non-null.  The function will still be called if the
+    a whole</emphasis> is non-null.  The function will still be called if the
     array has null elements.
    </para>
 
@@ -723,7 +723,7 @@ CREATE FUNCTION dup(int) RETURNS dup_result
 
 SELECT * FROM dup(42);
 </programlisting>
-   Another way to return multiple columns is to use a <literal>TABLE</>
+   Another way to return multiple columns is to use a <literal>TABLE</literal>
    function:
 <programlisting>
 CREATE FUNCTION dup(int) RETURNS TABLE(f1 int, f2 text)
@@ -732,8 +732,8 @@ CREATE FUNCTION dup(int) RETURNS TABLE(f1 int, f2 text)
 
 SELECT * FROM dup(42);
 </programlisting>
-   However, a <literal>TABLE</> function is different from the
-   preceding examples, because it actually returns a <emphasis>set</>
+   However, a <literal>TABLE</literal> function is different from the
+   preceding examples, because it actually returns a <emphasis>set</emphasis>
    of records, not just one record.
   </para>
  </refsect1>
@@ -742,8 +742,8 @@ SELECT * FROM dup(42);
   <title>Writing <literal>SECURITY DEFINER</literal> Functions Safely</title>
 
   <indexterm>
-   <primary><varname>search_path</varname> configuration parameter</>
-   <secondary>use in securing functions</>
+   <primary><varname>search_path</varname> configuration parameter</primary>
+   <secondary>use in securing functions</secondary>
   </indexterm>
 
    <para>
@@ -758,7 +758,7 @@ SELECT * FROM dup(42);
     temporary-table schema, which is searched first by default, and
     is normally writable by anyone.  A secure arrangement can be obtained
     by forcing the temporary schema to be searched last.  To do this,
-    write <literal>pg_temp</><indexterm><primary>pg_temp</><secondary>securing functions</></> as the last entry in <varname>search_path</>.
+    write <literal>pg_temp</literal><indexterm><primary>pg_temp</primary><secondary>securing functions</secondary></indexterm> as the last entry in <varname>search_path</varname>.
     This function illustrates safe usage:
 
 <programlisting>
@@ -778,27 +778,27 @@ $$  LANGUAGE plpgsql
     SET search_path = admin, pg_temp;
 </programlisting>
 
-    This function's intention is to access a table <literal>admin.pwds</>.
-    But without the <literal>SET</> clause, or with a <literal>SET</> clause
-    mentioning only <literal>admin</>, the function could be subverted by
-    creating a temporary table named <literal>pwds</>.
+    This function's intention is to access a table <literal>admin.pwds</literal>.
+    But without the <literal>SET</literal> clause, or with a <literal>SET</literal> clause
+    mentioning only <literal>admin</literal>, the function could be subverted by
+    creating a temporary table named <literal>pwds</literal>.
    </para>
 
    <para>
     Before <productname>PostgreSQL</productname> version 8.3, the
-    <literal>SET</> clause was not available, and so older functions may
+    <literal>SET</literal> clause was not available, and so older functions may
     contain rather complicated logic to save, set, and restore
-    <varname>search_path</>.  The <literal>SET</> clause is far easier
+    <varname>search_path</varname>.  The <literal>SET</literal> clause is far easier
     to use for this purpose.
    </para>
 
    <para>
     Another point to keep in mind is that by default, execute privilege
-    is granted to <literal>PUBLIC</> for newly created functions
+    is granted to <literal>PUBLIC</literal> for newly created functions
     (see <xref linkend="sql-grant"> for more
     information).  Frequently you will wish to restrict use of a security
     definer function to only some users.  To do that, you must revoke
-    the default <literal>PUBLIC</> privileges and then grant execute
+    the default <literal>PUBLIC</literal> privileges and then grant execute
     privilege selectively.  To avoid having a window where the new function
     is accessible to all, create it and set the privileges within a single
     transaction.  For example:

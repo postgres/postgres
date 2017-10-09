@@ -27,7 +27,7 @@
   <title>Description</title>
 
  <para>
-  <application>oid2name</> is a utility program that helps administrators to
+  <application>oid2name</application> is a utility program that helps administrators to
   examine the file structure used by PostgreSQL.  To make use of it, you need
   to be familiar with the database file structure, which is described in
   <xref linkend="storage">.
@@ -35,7 +35,7 @@
 
  <note>
   <para>
-   The name <quote>oid2name</> is historical, and is actually rather
+   The name <quote>oid2name</quote> is historical, and is actually rather
    misleading, since most of the time when you use it, you will really
    be concerned with tables' filenode numbers (which are the file names
    visible in the database directories).  Be sure you understand the
@@ -60,8 +60,8 @@
    <variablelist>
 
     <varlistentry>
-     <term><option>-f</option> <replaceable>filenode</></term>
-     <listitem><para>show info for table with filenode <replaceable>filenode</></para></listitem>
+     <term><option>-f</option> <replaceable>filenode</replaceable></term>
+     <listitem><para>show info for table with filenode <replaceable>filenode</replaceable></para></listitem>
     </varlistentry>
 
     <varlistentry>
@@ -70,8 +70,8 @@
     </varlistentry>
 
     <varlistentry>
-     <term><option>-o</option> <replaceable>oid</></term>
-     <listitem><para>show info for table with OID <replaceable>oid</></para></listitem>
+     <term><option>-o</option> <replaceable>oid</replaceable></term>
+     <listitem><para>show info for table with OID <replaceable>oid</replaceable></para></listitem>
     </varlistentry>
 
     <varlistentry>
@@ -93,13 +93,13 @@
     </varlistentry>
 
     <varlistentry>
-     <term><option>-t</option> <replaceable>tablename_pattern</></term>
-     <listitem><para>show info for table(s) matching <replaceable>tablename_pattern</></para></listitem>
+     <term><option>-t</option> <replaceable>tablename_pattern</replaceable></term>
+     <listitem><para>show info for table(s) matching <replaceable>tablename_pattern</replaceable></para></listitem>
     </varlistentry>
 
     <varlistentry>
-     <term><option>-V</></term>
-     <term><option>--version</></term>
+     <term><option>-V</option></term>
+     <term><option>--version</option></term>
      <listitem>
       <para>
        Print the <application>oid2name</application> version and exit.
@@ -115,8 +115,8 @@
     </varlistentry>
 
     <varlistentry>
-     <term><option>-?</></term>
-     <term><option>--help</></term>
+     <term><option>-?</option></term>
+     <term><option>--help</option></term>
      <listitem>
       <para>
        Show help about <application>oid2name</application> command line
@@ -133,27 +133,27 @@
 
    <variablelist>
     <varlistentry>
-     <term><option>-d</option> <replaceable>database</></term>
+     <term><option>-d</option> <replaceable>database</replaceable></term>
      <listitem><para>database to connect to</para></listitem>
     </varlistentry>
 
     <varlistentry>
-     <term><option>-H</option> <replaceable>host</></term>
+     <term><option>-H</option> <replaceable>host</replaceable></term>
      <listitem><para>database server's host</para></listitem>
     </varlistentry>
 
     <varlistentry>
-     <term><option>-p</option> <replaceable>port</></term>
+     <term><option>-p</option> <replaceable>port</replaceable></term>
      <listitem><para>database server's port</para></listitem>
     </varlistentry>
 
     <varlistentry>
-     <term><option>-U</option> <replaceable>username</></term>
+     <term><option>-U</option> <replaceable>username</replaceable></term>
      <listitem><para>user name to connect as</para></listitem>
     </varlistentry>
 
     <varlistentry>
-     <term><option>-P</option> <replaceable>password</></term>
+     <term><option>-P</option> <replaceable>password</replaceable></term>
      <listitem><para>password (deprecated &mdash; putting this on the command line
       is a security hazard)</para></listitem>
     </varlistentry>
@@ -163,27 +163,27 @@
 
   <para>
    To display specific tables, select which tables to show by
-   using <option>-o</>, <option>-f</> and/or <option>-t</>.
-   <option>-o</> takes an OID,
-   <option>-f</> takes a filenode,
-   and <option>-t</> takes a table name (actually, it's a <literal>LIKE</>
-   pattern, so you can use things like <literal>foo%</>).
+   using <option>-o</option>, <option>-f</option> and/or <option>-t</option>.
+   <option>-o</option> takes an OID,
+   <option>-f</option> takes a filenode,
+   and <option>-t</option> takes a table name (actually, it's a <literal>LIKE</literal>
+   pattern, so you can use things like <literal>foo%</literal>).
    You can use as many
    of these options as you like, and the listing will include all objects
    matched by any of the options.  But note that these options can only
-   show objects in the database given by <option>-d</>.
+   show objects in the database given by <option>-d</option>.
   </para>
 
   <para>
-   If you don't give any of <option>-o</>, <option>-f</> or <option>-t</>,
-   but do give <option>-d</>, it will list all tables in the database
-   named by <option>-d</>.  In this mode, the <option>-S</> and
-   <option>-i</> options control what gets listed.
+   If you don't give any of <option>-o</option>, <option>-f</option> or <option>-t</option>,
+   but do give <option>-d</option>, it will list all tables in the database
+   named by <option>-d</option>.  In this mode, the <option>-S</option> and
+   <option>-i</option> options control what gets listed.
   </para>
 
   <para>
-   If you don't give <option>-d</> either, it will show a listing of database
-   OIDs.  Alternatively you can give <option>-s</> to get a tablespace
+   If you don't give <option>-d</option> either, it will show a listing of database
+   OIDs.  Alternatively you can give <option>-s</option> to get a tablespace
    listing.
   </para>
  </refsect1>
@@ -192,7 +192,7 @@
   <title>Notes</title>
 
   <para>
-   <application>oid2name</> requires a running database server with
+   <application>oid2name</application> requires a running database server with
    non-corrupt system catalogs.  It is therefore of only limited use
    for recovering from catastrophic database corruption situations.
   </para>

@@ -8,7 +8,7 @@
  </indexterm>
 
  <para>
-  The <filename>uuid-ossp</> module provides functions to generate universally
+  The <filename>uuid-ossp</filename> module provides functions to generate universally
   unique identifiers (UUIDs) using one of several standard algorithms.  There
   are also functions to produce certain special UUID constants.
  </para>
@@ -63,7 +63,7 @@
        <para>
         This function generates a version 3 UUID in the given namespace using
         the specified input name.  The namespace should be one of the special
-        constants produced by the <function>uuid_ns_*()</> functions shown
+        constants produced by the <function>uuid_ns_*()</function> functions shown
         in <xref linkend="uuid-ossp-constants">.  (It could be any UUID in theory.)  The name is an identifier
         in the selected namespace.
        </para>
@@ -114,7 +114,7 @@ SELECT uuid_generate_v3(uuid_ns_url(), 'http://www.postgresql.org');
       <entry><literal>uuid_nil()</literal></entry>
       <entry>
        <para>
-        A <quote>nil</> UUID constant, which does not occur as a real UUID.
+        A <quote>nil</quote> UUID constant, which does not occur as a real UUID.
        </para>
       </entry>
      </row>
@@ -140,7 +140,7 @@ SELECT uuid_generate_v3(uuid_ns_url(), 'http://www.postgresql.org');
        <para>
         Constant designating the ISO object identifier (OID) namespace for
         UUIDs.  (This pertains to ASN.1 OIDs, which are unrelated to the OIDs
-        used in <productname>PostgreSQL</>.)
+        used in <productname>PostgreSQL</productname>.)
        </para>
       </entry>
      </row>
@@ -159,33 +159,33 @@ SELECT uuid_generate_v3(uuid_ns_url(), 'http://www.postgresql.org');
  </sect2>
 
  <sect2>
-  <title>Building <filename>uuid-ossp</></title>
+  <title>Building <filename>uuid-ossp</filename></title>
 
   <para>
    Historically this module depended on the OSSP UUID library, which accounts
    for the module's name.  While the OSSP UUID library can still be found
    at <ulink url="http://www.ossp.org/pkg/lib/uuid/"></ulink>, it is not well
    maintained, and is becoming increasingly difficult to port to newer
-   platforms.  <filename>uuid-ossp</> can now be built without the OSSP
+   platforms.  <filename>uuid-ossp</filename> can now be built without the OSSP
    library on some platforms.  On FreeBSD, NetBSD, and some other BSD-derived
    platforms, suitable UUID creation functions are included in the
-   core <filename>libc</> library.  On Linux, macOS, and some other
-   platforms, suitable functions are provided in the <filename>libuuid</>
-   library, which originally came from the <literal>e2fsprogs</> project
+   core <filename>libc</filename> library.  On Linux, macOS, and some other
+   platforms, suitable functions are provided in the <filename>libuuid</filename>
+   library, which originally came from the <literal>e2fsprogs</literal> project
    (though on modern Linux it is considered part
-   of <literal>util-linux-ng</>).  When invoking <filename>configure</>,
+   of <literal>util-linux-ng</literal>).  When invoking <filename>configure</filename>,
    specify <option>--with-uuid=bsd</option> to use the BSD functions,
    or <option>--with-uuid=e2fs</option> to
-   use <literal>e2fsprogs</>' <filename>libuuid</>, or
+   use <literal>e2fsprogs</literal>' <filename>libuuid</filename>, or
    <option>--with-uuid=ossp</option> to use the OSSP UUID library.
    More than one of these libraries might be available on a particular
-   machine, so <filename>configure</> does not automatically choose one.
+   machine, so <filename>configure</filename> does not automatically choose one.
   </para>
 
   <note>
    <para>
     If you only need randomly-generated (version 4) UUIDs,
-    consider using the <function>gen_random_uuid()</> function
+    consider using the <function>gen_random_uuid()</function> function
     from the <xref linkend="pgcrypto"> module instead.
    </para>
   </note>

@@ -130,13 +130,13 @@ REVOKE [ ADMIN OPTION FOR ]
    Note that any particular role will have the sum
    of privileges granted directly to it, privileges granted to any role it
    is presently a member of, and privileges granted to
-   <literal>PUBLIC</literal>.  Thus, for example, revoking <literal>SELECT</> privilege
+   <literal>PUBLIC</literal>.  Thus, for example, revoking <literal>SELECT</literal> privilege
    from <literal>PUBLIC</literal> does not necessarily mean that all roles
-   have lost <literal>SELECT</> privilege on the object: those who have it granted
+   have lost <literal>SELECT</literal> privilege on the object: those who have it granted
    directly or via another role will still have it.  Similarly, revoking
-   <literal>SELECT</> from a user might not prevent that user from using
-   <literal>SELECT</> if <literal>PUBLIC</literal> or another membership
-   role still has <literal>SELECT</> rights.
+   <literal>SELECT</literal> from a user might not prevent that user from using
+   <literal>SELECT</literal> if <literal>PUBLIC</literal> or another membership
+   role still has <literal>SELECT</literal> rights.
   </para>
 
   <para>
@@ -167,10 +167,10 @@ REVOKE [ ADMIN OPTION FOR ]
   </para>
 
   <para>
-   When revoking membership in a role, <literal>GRANT OPTION</> is instead
-   called <literal>ADMIN OPTION</>, but the behavior is similar.
+   When revoking membership in a role, <literal>GRANT OPTION</literal> is instead
+   called <literal>ADMIN OPTION</literal>, but the behavior is similar.
    Note also that this form of the command does not
-   allow the noise word <literal>GROUP</>.
+   allow the noise word <literal>GROUP</literal>.
   </para>
  </refsect1>
 
@@ -181,7 +181,7 @@ REVOKE [ ADMIN OPTION FOR ]
    Use <xref linkend="app-psql">'s <command>\dp</command> command to
    display the privileges granted on existing tables and columns.  See <xref
    linkend="sql-grant"> for information about the
-   format.  For non-table objects there are other <command>\d</> commands
+   format.  For non-table objects there are other <command>\d</command> commands
    that can display their privileges.
   </para>
 
@@ -198,12 +198,12 @@ REVOKE [ ADMIN OPTION FOR ]
   </para>
 
    <para>
-    When a non-owner of an object attempts to <command>REVOKE</> privileges
+    When a non-owner of an object attempts to <command>REVOKE</command> privileges
     on the object, the command will fail outright if the user has no
     privileges whatsoever on the object.  As long as some privilege is
     available, the command will proceed, but it will revoke only those
     privileges for which the user has grant options.  The <command>REVOKE ALL
-    PRIVILEGES</> forms will issue a warning message if no grant options are
+    PRIVILEGES</command> forms will issue a warning message if no grant options are
     held, while the other forms will issue a warning if grant options for
     any of the privileges specifically named in the command are not held.
     (In principle these statements apply to the object owner as well, but
@@ -212,7 +212,7 @@ REVOKE [ ADMIN OPTION FOR ]
    </para>
 
    <para>
-    If a superuser chooses to issue a <command>GRANT</> or <command>REVOKE</>
+    If a superuser chooses to issue a <command>GRANT</command> or <command>REVOKE</command>
     command, the command is performed as though it were issued by the
     owner of the affected object.  Since all privileges ultimately come
     from the object owner (possibly indirectly via chains of grant options),
@@ -221,26 +221,26 @@ REVOKE [ ADMIN OPTION FOR ]
    </para>
 
    <para>
-    <command>REVOKE</> can also be done by a role
+    <command>REVOKE</command> can also be done by a role
     that is not the owner of the affected object, but is a member of the role
     that owns the object, or is a member of a role that holds privileges
     <literal>WITH GRANT OPTION</literal> on the object.  In this case the
     command is performed as though it were issued by the containing role that
     actually owns the object or holds the privileges
     <literal>WITH GRANT OPTION</literal>.  For example, if table
-    <literal>t1</> is owned by role <literal>g1</>, of which role
-    <literal>u1</> is a member, then <literal>u1</> can revoke privileges
-    on <literal>t1</> that are recorded as being granted by <literal>g1</>.
-    This would include grants made by <literal>u1</> as well as by other
-    members of role <literal>g1</>.
+    <literal>t1</literal> is owned by role <literal>g1</literal>, of which role
+    <literal>u1</literal> is a member, then <literal>u1</literal> can revoke privileges
+    on <literal>t1</literal> that are recorded as being granted by <literal>g1</literal>.
+    This would include grants made by <literal>u1</literal> as well as by other
+    members of role <literal>g1</literal>.
    </para>
 
    <para>
-    If the role executing <command>REVOKE</> holds privileges
+    If the role executing <command>REVOKE</command> holds privileges
     indirectly via more than one role membership path, it is unspecified
     which containing role will be used to perform the command.  In such cases
-    it is best practice to use <command>SET ROLE</> to become the specific
-    role you want to do the <command>REVOKE</> as.  Failure to do so might
+    it is best practice to use <command>SET ROLE</command> to become the specific
+    role you want to do the <command>REVOKE</command> as.  Failure to do so might
     lead to revoking privileges other than the ones you intended, or not
     revoking anything at all.
    </para>
@@ -267,11 +267,11 @@ REVOKE ALL PRIVILEGES ON kinds FROM manuel;
 </programlisting>
 
    Note that this actually means <quote>revoke all privileges that I
-   granted</>.
+   granted</quote>.
   </para>
 
   <para>
-   Revoke membership in role <literal>admins</> from user <literal>joe</>:
+   Revoke membership in role <literal>admins</literal> from user <literal>joe</literal>:
 
 <programlisting>
 REVOKE admins FROM joe;
@@ -285,7 +285,7 @@ REVOKE admins FROM joe;
     The compatibility notes of the <xref linkend="sql-grant"> command
     apply analogously to <command>REVOKE</command>.
     The keyword <literal>RESTRICT</literal> or <literal>CASCADE</literal>
-    is required according to the standard, but <productname>PostgreSQL</>
+    is required according to the standard, but <productname>PostgreSQL</productname>
     assumes <literal>RESTRICT</literal> by default.
    </para>
  </refsect1>

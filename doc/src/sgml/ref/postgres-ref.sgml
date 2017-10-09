@@ -22,7 +22,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
   <cmdsynopsis>
    <command>postgres</command>
-   <arg rep="repeat"><replaceable>option</></arg>
+   <arg rep="repeat"><replaceable>option</replaceable></arg>
   </cmdsynopsis>
  </refsynopsisdiv>
 
@@ -92,7 +92,7 @@ PostgreSQL documentation
     can also be set from the connecting client in an
     application-dependent way to apply only for that session.  For
     example, if the environment variable <envar>PGOPTIONS</envar> is
-    set, then <application>libpq</>-based clients will pass that
+    set, then <application>libpq</application>-based clients will pass that
     string to the server, which will interpret it as
     <command>postgres</command> command-line options.
    </para>
@@ -122,7 +122,7 @@ PostgreSQL documentation
         supported by <productname>PostgreSQL</productname> are
         described in <xref linkend="runtime-config">. Most of the
         other command line options are in fact short forms of such a
-        parameter assignment.  <option>-c</> can appear multiple times
+        parameter assignment.  <option>-c</option> can appear multiple times
         to set multiple parameters.
        </para>
       </listitem>
@@ -133,9 +133,9 @@ PostgreSQL documentation
       <listitem>
        <para>
         Prints the value of the named run-time parameter, and exits.
-        (See the <option>-c</> option above for details.)  This can
+        (See the <option>-c</option> option above for details.)  This can
         be used on a running server, and returns values from
-        <filename>postgresql.conf</>, modified by any parameters
+        <filename>postgresql.conf</filename>, modified by any parameters
         supplied in this invocation.  It does not reflect parameters
         supplied when the cluster was started.
        </para>
@@ -157,7 +157,7 @@ PostgreSQL documentation
         debugging output is written to the server log.  Values are
         from 1 to 5.  It is also possible to pass <literal>-d
         0</literal> for a specific session, which will prevent the
-        server log level of the parent <command>postgres</> process from being
+        server log level of the parent <command>postgres</command> process from being
         propagated to this session.
        </para>
       </listitem>
@@ -179,7 +179,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         Sets the default date style to <quote>European</quote>, that is
-        <literal>DMY</> ordering of input date fields.  This also causes
+        <literal>DMY</literal> ordering of input date fields.  This also causes
         the day to be printed before the month in certain date output formats.
         See <xref linkend="datatype-datetime"> for more information.
        </para>
@@ -206,7 +206,7 @@ PostgreSQL documentation
         Specifies the IP host name or address on which
         <command>postgres</command> is to listen for TCP/IP
         connections from client applications.  The value can also be a
-        comma-separated list of addresses, or <literal>*</> to specify
+        comma-separated list of addresses, or <literal>*</literal> to specify
         listening on all available interfaces.  An empty value
         specifies not listening on any IP addresses, in which case
         only Unix-domain sockets can be used to connect to the
@@ -225,13 +225,13 @@ PostgreSQL documentation
         Allows remote clients to connect via TCP/IP (Internet domain)
         connections.  Without this option, only local connections are
         accepted.  This option is equivalent to setting
-        <varname>listen_addresses</> to <literal>*</> in
-        <filename>postgresql.conf</> or via <option>-h</>.
+        <varname>listen_addresses</varname> to <literal>*</literal> in
+        <filename>postgresql.conf</filename> or via <option>-h</option>.
        </para>
        <para>
         This option is deprecated since it does not allow access to the
         full functionality of <xref linkend="guc-listen-addresses">.
-        It's usually better to set <varname>listen_addresses</> directly.
+        It's usually better to set <varname>listen_addresses</varname> directly.
        </para>
       </listitem>
      </varlistentry>
@@ -291,11 +291,11 @@ PostgreSQL documentation
        </para>
 
        <para>
-        Spaces within <replaceable class="parameter">extra-options</> are
+        Spaces within <replaceable class="parameter">extra-options</replaceable> are
         considered to separate arguments, unless escaped with a backslash
-        (<literal>\</>); write <literal>\\</> to represent a literal
+        (<literal>\</literal>); write <literal>\\</literal> to represent a literal
         backslash.  Multiple arguments can also be specified via multiple
-        uses of <option>-o</>.
+        uses of <option>-o</option>.
        </para>
 
        <para>
@@ -340,15 +340,15 @@ PostgreSQL documentation
        <para>
         Specifies the amount of memory to be used by internal sorts and hashes
         before resorting to temporary disk files.  See the description of the
-        <varname>work_mem</> configuration parameter in <xref
+        <varname>work_mem</varname> configuration parameter in <xref
         linkend="runtime-config-resource-memory">.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><option>-V</></term>
-      <term><option>--version</></term>
+      <term><option>-V</option></term>
+      <term><option>--version</option></term>
       <listitem>
        <para>
         Print the <application>postgres</application> version and exit.
@@ -361,7 +361,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         Sets a named run-time parameter; a shorter form of
-        <option>-c</>.
+        <option>-c</option>.
        </para>
       </listitem>
      </varlistentry>
@@ -371,15 +371,15 @@ PostgreSQL documentation
       <listitem>
        <para>
         This option dumps out the server's internal configuration variables,
-        descriptions, and defaults in tab-delimited <command>COPY</> format.
+        descriptions, and defaults in tab-delimited <command>COPY</command> format.
         It is designed primarily for use by administration tools.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><option>-?</></term>
-      <term><option>--help</></term>
+      <term><option>-?</option></term>
+      <term><option>--help</option></term>
       <listitem>
        <para>
         Show help about <application>postgres</application> command line
@@ -643,13 +643,13 @@ PostgreSQL documentation
    <title>Diagnostics</title>
 
    <para>
-    A failure message mentioning <literal>semget</> or
-    <literal>shmget</> probably indicates you need to configure your
+    A failure message mentioning <literal>semget</literal> or
+    <literal>shmget</literal> probably indicates you need to configure your
     kernel to provide adequate shared memory and semaphores.  For more
     discussion see <xref linkend="kernel-resources">.  You might be able
     to postpone reconfiguring your kernel by decreasing <xref
     linkend="guc-shared-buffers"> to reduce the shared memory
-    consumption of <productname>PostgreSQL</>, and/or by reducing
+    consumption of <productname>PostgreSQL</productname>, and/or by reducing
     <xref linkend="guc-max-connections"> to reduce the semaphore
     consumption.
    </para>
@@ -725,7 +725,7 @@ PostgreSQL documentation
    To cancel a running query, send the <literal>SIGINT</literal> signal
    to the process running that command. To terminate a backend process
    cleanly, send <literal>SIGTERM</literal> to that process. See
-   also <function>pg_cancel_backend</> and <function>pg_terminate_backend</>
+   also <function>pg_cancel_backend</function> and <function>pg_terminate_backend</function>
    in <xref linkend="functions-admin-signal"> for the SQL-callable equivalents
    of these two actions.
   </para>
@@ -745,9 +745,9 @@ PostgreSQL documentation
  <refsect1 id="app-postgres-bugs">
   <title>Bugs</title>
   <para>
-   The <option>--</> options will not work on <systemitem
-   class="osname">FreeBSD</> or <systemitem class="osname">OpenBSD</>.
-   Use <option>-c</> instead. This is a bug in the affected operating
+   The <option>--</option> options will not work on <systemitem
+   class="osname">FreeBSD</systemitem> or <systemitem class="osname">OpenBSD</systemitem>.
+   Use <option>-c</option> instead. This is a bug in the affected operating
    systems; a future release of <productname>PostgreSQL</productname>
    will provide a workaround if this is not fixed.
   </para>
@@ -759,17 +759,17 @@ PostgreSQL documentation
    <para>
     To start a single-user mode server, use a command like
 <screen>
-<userinput>postgres --single -D /usr/local/pgsql/data <replaceable>other-options</> my_database</userinput>
+<userinput>postgres --single -D /usr/local/pgsql/data <replaceable>other-options</replaceable> my_database</userinput>
 </screen>
-    Provide the correct path to the database directory with <option>-D</>, or
-    make sure that the environment variable <envar>PGDATA</> is set.
+    Provide the correct path to the database directory with <option>-D</option>, or
+    make sure that the environment variable <envar>PGDATA</envar> is set.
     Also specify the name of the particular database you want to work in.
    </para>
 
    <para>
     Normally, the single-user mode server treats newline as the command
     entry terminator; there is no intelligence about semicolons,
-    as there is in <application>psql</>.  To continue a command
+    as there is in <application>psql</application>.  To continue a command
     across multiple lines, you must type backslash just before each
     newline except the last one.  The backslash and adjacent newline are
     both dropped from the input command.  Note that this will happen even
@@ -777,7 +777,7 @@ PostgreSQL documentation
    </para>
 
    <para>
-    But if you use the <option>-j</> command line switch, a single newline
+    But if you use the <option>-j</option> command line switch, a single newline
     does not terminate command entry; instead, the sequence
     semicolon-newline-newline does.  That is, type a semicolon immediately
     followed by a completely empty line.  Backslash-newline is not
@@ -794,10 +794,10 @@ PostgreSQL documentation
 
    <para>
     To quit the session, type <acronym>EOF</acronym>
-    (<keycombo action="simul"><keycap>Control</><keycap>D</></>, usually).
+    (<keycombo action="simul"><keycap>Control</keycap><keycap>D</keycap></keycombo>, usually).
     If you've entered any text since the last command entry terminator,
     then <acronym>EOF</acronym> will be taken as a command entry terminator,
-    and another <acronym>EOF</> will be needed to exit.
+    and another <acronym>EOF</acronym> will be needed to exit.
    </para>
 
    <para>
@@ -826,7 +826,7 @@ PostgreSQL documentation
 <screen>
 <prompt>$</prompt> <userinput>postgres -p 1234</userinput>
 </screen>
-   To connect to this server using <application>psql</>, specify this port with the -p option:
+   To connect to this server using <application>psql</application>, specify this port with the -p option:
 <screen>
 <prompt>$</prompt> <userinput>psql -p 1234</userinput>
 </screen>
@@ -844,11 +844,11 @@ PostgreSQL documentation
 <prompt>$</prompt> <userinput>postgres --work-mem=1234</userinput>
 </screen>
    Either form overrides whatever setting might exist for
-   <varname>work_mem</> in <filename>postgresql.conf</>.  Notice that
+   <varname>work_mem</varname> in <filename>postgresql.conf</filename>.  Notice that
    underscores in parameter names can be written as either underscore
    or dash on the command line.  Except for short-term experiments,
    it's probably better practice to edit the setting in
-   <filename>postgresql.conf</> than to rely on a command-line switch
+   <filename>postgresql.conf</filename> than to rely on a command-line switch
    to set a parameter.
   </para>
  </refsect1>

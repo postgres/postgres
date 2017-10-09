@@ -83,7 +83,7 @@ DROP COLLATION [ IF EXISTS ] <replaceable>name</replaceable> [ CASCADE | RESTRIC
   <title>Examples</title>
 
   <para>
-   To drop the collation named <literal>german</>:
+   To drop the collation named <literal>german</literal>:
 <programlisting>
 DROP COLLATION german;
 </programlisting></para>
@@ -95,7 +95,7 @@ DROP COLLATION german;
   <para>
    The <command>DROP COLLATION</command> command conforms to the
    <acronym>SQL</acronym> standard, apart from the <literal>IF
-   EXISTS</> option, which is a <productname>PostgreSQL</> extension.
+   EXISTS</literal> option, which is a <productname>PostgreSQL</productname> extension.
   </para>
  </refsect1>
 

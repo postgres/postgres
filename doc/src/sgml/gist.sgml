@@ -44,7 +44,7 @@
  <title>Built-in Operator Classes</title>
 
  <para>
-  The core <productname>PostgreSQL</> distribution
+  The core <productname>PostgreSQL</productname> distribution
   includes the <acronym>GiST</acronym> operator classes shown in
   <xref linkend="gist-builtin-opclasses-table">.
   (Some of the optional modules described in <xref linkend="contrib">
@@ -64,142 +64,142 @@
     </thead>
     <tbody>
      <row>
-      <entry><literal>box_ops</></entry>
-      <entry><type>box</></entry>
+      <entry><literal>box_ops</literal></entry>
+      <entry><type>box</type></entry>
       <entry>
-       <literal>&amp;&amp;</>
-       <literal>&amp;&gt;</>
-       <literal>&amp;&lt;</>
-       <literal>&amp;&lt;|</>
-       <literal>&gt;&gt;</>
-       <literal>&lt;&lt;</>
-       <literal>&lt;&lt;|</>
-       <literal>&lt;@</>
-       <literal>@&gt;</>
-       <literal>@</>
-       <literal>|&amp;&gt;</>
-       <literal>|&gt;&gt;</>
-       <literal>~</>
-       <literal>~=</>
+       <literal>&amp;&amp;</literal>
+       <literal>&amp;&gt;</literal>
+       <literal>&amp;&lt;</literal>
+       <literal>&amp;&lt;|</literal>
+       <literal>&gt;&gt;</literal>
+       <literal>&lt;&lt;</literal>
+       <literal>&lt;&lt;|</literal>
+       <literal>&lt;@</literal>
+       <literal>@&gt;</literal>
+       <literal>@</literal>
+       <literal>|&amp;&gt;</literal>
+       <literal>|&gt;&gt;</literal>
+       <literal>~</literal>
+       <literal>~=</literal>
       </entry>
       <entry>
       </entry>
      </row>
      <row>
-      <entry><literal>circle_ops</></entry>
-      <entry><type>circle</></entry>
+      <entry><literal>circle_ops</literal></entry>
+      <entry><type>circle</type></entry>
       <entry>
-       <literal>&amp;&amp;</>
-       <literal>&amp;&gt;</>
-       <literal>&amp;&lt;</>
-       <literal>&amp;&lt;|</>
-       <literal>&gt;&gt;</>
-       <literal>&lt;&lt;</>
-       <literal>&lt;&lt;|</>
-       <literal>&lt;@</>
-       <literal>@&gt;</>
-       <literal>@</>
-       <literal>|&amp;&gt;</>
-       <literal>|&gt;&gt;</>
-       <literal>~</>
-       <literal>~=</>
+       <literal>&amp;&amp;</literal>
+       <literal>&amp;&gt;</literal>
+       <literal>&amp;&lt;</literal>
+       <literal>&amp;&lt;|</literal>
+       <literal>&gt;&gt;</literal>
+       <literal>&lt;&lt;</literal>
+       <literal>&lt;&lt;|</literal>
+       <literal>&lt;@</literal>
+       <literal>@&gt;</literal>
+       <literal>@</literal>
+       <literal>|&amp;&gt;</literal>
+       <literal>|&gt;&gt;</literal>
+       <literal>~</literal>
+       <literal>~=</literal>
       </entry>
       <entry>
-       <literal>&lt;-&gt;</>
-      </entry>
-     </row>
-     <row>
-      <entry><literal>inet_ops</></entry>
-      <entry><type>inet</>, <type>cidr</></entry>
-      <entry>
-       <literal>&amp;&amp;</>
-       <literal>&gt;&gt;</>
-       <literal>&gt;&gt;=</>
-       <literal>&gt;</>
-       <literal>&gt;=</>
-       <literal>&lt;&gt;</>
-       <literal>&lt;&lt;</>
-       <literal>&lt;&lt;=</>
-       <literal>&lt;</>
-       <literal>&lt;=</>
-       <literal>=</>
-      </entry>
-      <entry>
+       <literal>&lt;-&gt;</literal>
       </entry>
      </row>
      <row>
-      <entry><literal>point_ops</></entry>
-      <entry><type>point</></entry>
+      <entry><literal>inet_ops</literal></entry>
+      <entry><type>inet</type>, <type>cidr</type></entry>
       <entry>
-       <literal>&gt;&gt;</>
-       <literal>&gt;^</>
-       <literal>&lt;&lt;</>
-       <literal>&lt;@</>
-       <literal>&lt;@</>
-       <literal>&lt;@</>
-       <literal>&lt;^</>
-       <literal>~=</>
+       <literal>&amp;&amp;</literal>
+       <literal>&gt;&gt;</literal>
+       <literal>&gt;&gt;=</literal>
+       <literal>&gt;</literal>
+       <literal>&gt;=</literal>
+       <literal>&lt;&gt;</literal>
+       <literal>&lt;&lt;</literal>
+       <literal>&lt;&lt;=</literal>
+       <literal>&lt;</literal>
+       <literal>&lt;=</literal>
+       <literal>=</literal>
       </entry>
       <entry>
-       <literal>&lt;-&gt;</>
-      </entry>
-     </row>
-     <row>
-      <entry><literal>poly_ops</></entry>
-      <entry><type>polygon</></entry>
-      <entry>
-       <literal>&amp;&amp;</>
-       <literal>&amp;&gt;</>
-       <literal>&amp;&lt;</>
-       <literal>&amp;&lt;|</>
-       <literal>&gt;&gt;</>
-       <literal>&lt;&lt;</>
-       <literal>&lt;&lt;|</>
-       <literal>&lt;@</>
-       <literal>@&gt;</>
-       <literal>@</>
-       <literal>|&amp;&gt;</>
-       <literal>|&gt;&gt;</>
-       <literal>~</>
-       <literal>~=</>
-      </entry>
-      <entry>
-       <literal>&lt;-&gt;</>
       </entry>
      </row>
      <row>
-      <entry><literal>range_ops</></entry>
+      <entry><literal>point_ops</literal></entry>
+      <entry><type>point</type></entry>
+      <entry>
+       <literal>&gt;&gt;</literal>
+       <literal>&gt;^</literal>
+       <literal>&lt;&lt;</literal>
+       <literal>&lt;@</literal>
+       <literal>&lt;@</literal>
+       <literal>&lt;@</literal>
+       <literal>&lt;^</literal>
+       <literal>~=</literal>
+      </entry>
+      <entry>
+       <literal>&lt;-&gt;</literal>
+      </entry>
+     </row>
+     <row>
+      <entry><literal>poly_ops</literal></entry>
+      <entry><type>polygon</type></entry>
+      <entry>
+       <literal>&amp;&amp;</literal>
+       <literal>&amp;&gt;</literal>
+       <literal>&amp;&lt;</literal>
+       <literal>&amp;&lt;|</literal>
+       <literal>&gt;&gt;</literal>
+       <literal>&lt;&lt;</literal>
+       <literal>&lt;&lt;|</literal>
+       <literal>&lt;@</literal>
+       <literal>@&gt;</literal>
+       <literal>@</literal>
+       <literal>|&amp;&gt;</literal>
+       <literal>|&gt;&gt;</literal>
+       <literal>~</literal>
+       <literal>~=</literal>
+      </entry>
+      <entry>
+       <literal>&lt;-&gt;</literal>
+      </entry>
+     </row>
+     <row>
+      <entry><literal>range_ops</literal></entry>
       <entry>any range type</entry>
       <entry>
-       <literal>&amp;&amp;</>
-       <literal>&amp;&gt;</>
-       <literal>&amp;&lt;</>
-       <literal>&gt;&gt;</>
-       <literal>&lt;&lt;</>
-       <literal>&lt;@</>
-       <literal>-|-</>
-       <literal>=</>
-       <literal>@&gt;</>
-       <literal>@&gt;</>
+       <literal>&amp;&amp;</literal>
+       <literal>&amp;&gt;</literal>
+       <literal>&amp;&lt;</literal>
+       <literal>&gt;&gt;</literal>
+       <literal>&lt;&lt;</literal>
+       <literal>&lt;@</literal>
+       <literal>-|-</literal>
+       <literal>=</literal>
+       <literal>@&gt;</literal>
+       <literal>@&gt;</literal>
       </entry>
       <entry>
       </entry>
      </row>
      <row>
-      <entry><literal>tsquery_ops</></entry>
-      <entry><type>tsquery</></entry>
+      <entry><literal>tsquery_ops</literal></entry>
+      <entry><type>tsquery</type></entry>
       <entry>
-       <literal>&lt;@</>
-       <literal>@&gt;</>
+       <literal>&lt;@</literal>
+       <literal>@&gt;</literal>
       </entry>
       <entry>
       </entry>
      </row>
      <row>
-      <entry><literal>tsvector_ops</></entry>
-      <entry><type>tsvector</></entry>
+      <entry><literal>tsvector_ops</literal></entry>
+      <entry><type>tsvector</type></entry>
       <entry>
-       <literal>@@</>
+       <literal>@@</literal>
       </entry>
       <entry>
       </entry>
@@ -209,9 +209,9 @@
   </table>
 
  <para>
-  For historical reasons, the <literal>inet_ops</> operator class is
-  not the default class for types <type>inet</> and <type>cidr</>.
-  To use it, mention the class name in <command>CREATE INDEX</>,
+  For historical reasons, the <literal>inet_ops</literal> operator class is
+  not the default class for types <type>inet</type> and <type>cidr</type>.
+  To use it, mention the class name in <command>CREATE INDEX</command>,
   for example
 <programlisting>
 CREATE INDEX ON my_table USING GIST (my_inet_column inet_ops);
@@ -270,53 +270,53 @@ CREATE INDEX ON my_table USING GIST (my_inet_column inet_ops);
    There are five methods that an index operator class for
    <acronym>GiST</acronym> must provide, and four that are optional.
    Correctness of the index is ensured
-   by proper implementation of the <function>same</>, <function>consistent</>
-   and <function>union</> methods, while efficiency (size and speed) of the
-   index will depend on the <function>penalty</> and <function>picksplit</>
+   by proper implementation of the <function>same</function>, <function>consistent</function>
+   and <function>union</function> methods, while efficiency (size and speed) of the
+   index will depend on the <function>penalty</function> and <function>picksplit</function>
    methods.
-   Two optional methods are <function>compress</> and
-   <function>decompress</>, which allow an index to have internal tree data of
+   Two optional methods are <function>compress</function> and
+   <function>decompress</function>, which allow an index to have internal tree data of
    a different type than the data it indexes. The leaves are to be of the
    indexed data type, while the other tree nodes can be of any C struct (but
-   you still have to follow <productname>PostgreSQL</> data type rules here,
-   see about <literal>varlena</> for variable sized data). If the tree's
-   internal data type exists at the SQL level, the <literal>STORAGE</> option
-   of the <command>CREATE OPERATOR CLASS</> command can be used.
-   The optional eighth method is <function>distance</>, which is needed
+   you still have to follow <productname>PostgreSQL</productname> data type rules here,
+   see about <literal>varlena</literal> for variable sized data). If the tree's
+   internal data type exists at the SQL level, the <literal>STORAGE</literal> option
+   of the <command>CREATE OPERATOR CLASS</command> command can be used.
+   The optional eighth method is <function>distance</function>, which is needed
    if the operator class wishes to support ordered scans (nearest-neighbor
-   searches). The optional ninth method <function>fetch</> is needed if the
+   searches). The optional ninth method <function>fetch</function> is needed if the
    operator class wishes to support index-only scans, except when the
-   <function>compress</> method is omitted.
+   <function>compress</function> method is omitted.
  </para>
 
  <variablelist>
     <varlistentry>
-     <term><function>consistent</></term>
+     <term><function>consistent</function></term>
      <listitem>
       <para>
-       Given an index entry <literal>p</> and a query value <literal>q</>,
+       Given an index entry <literal>p</literal> and a query value <literal>q</literal>,
        this function determines whether the index entry is
-       <quote>consistent</> with the query; that is, could the predicate
-       <quote><replaceable>indexed_column</>
-       <replaceable>indexable_operator</> <literal>q</></quote> be true for
+       <quote>consistent</quote> with the query; that is, could the predicate
+       <quote><replaceable>indexed_column</replaceable>
+       <replaceable>indexable_operator</replaceable> <literal>q</literal></quote> be true for
        any row represented by the index entry?  For a leaf index entry this is
        equivalent to testing the indexable condition, while for an internal
        tree node this determines whether it is necessary to scan the subtree
        of the index represented by the tree node.  When the result is
-       <literal>true</>, a <literal>recheck</> flag must also be returned.
+       <literal>true</literal>, a <literal>recheck</literal> flag must also be returned.
        This indicates whether the predicate is certainly true or only possibly
-       true.  If <literal>recheck</> = <literal>false</> then the index has
-       tested the predicate condition exactly, whereas if <literal>recheck</>
-       = <literal>true</> the row is only a candidate match.  In that case the
+       true.  If <literal>recheck</literal> = <literal>false</literal> then the index has
+       tested the predicate condition exactly, whereas if <literal>recheck</literal>
+       = <literal>true</literal> the row is only a candidate match.  In that case the
        system will automatically evaluate the
-       <replaceable>indexable_operator</> against the actual row value to see
+       <replaceable>indexable_operator</replaceable> against the actual row value to see
        if it is really a match.  This convention allows
        <acronym>GiST</acronym> to support both lossless and lossy index
        structures.
       </para>
 
       <para>
-        The <acronym>SQL</> declaration of the function must look like this:
+        The <acronym>SQL</acronym> declaration of the function must look like this:
 
 <programlisting>
 CREATE OR REPLACE FUNCTION my_consistent(internal, data_type, smallint, oid, internal)
@@ -356,23 +356,23 @@ my_consistent(PG_FUNCTION_ARGS)
 }
 </programlisting>
 
-       Here, <varname>key</> is an element in the index and <varname>query</>
-       the value being looked up in the index. The <literal>StrategyNumber</>
+       Here, <varname>key</varname> is an element in the index and <varname>query</varname>
+       the value being looked up in the index. The <literal>StrategyNumber</literal>
        parameter indicates which operator of your operator class is being
        applied &mdash; it matches one of the operator numbers in the
-       <command>CREATE OPERATOR CLASS</> command.
+       <command>CREATE OPERATOR CLASS</command> command.
       </para>
 
       <para>
        Depending on which operators you have included in the class, the data
-       type of <varname>query</> could vary with the operator, since it will
+       type of <varname>query</varname> could vary with the operator, since it will
        be whatever type is on the righthand side of the operator, which might
        be different from the indexed data type appearing on the lefthand side.
        (The above code skeleton assumes that only one type is possible; if
-       not, fetching the <varname>query</> argument value would have to depend
+       not, fetching the <varname>query</varname> argument value would have to depend
        on the operator.)  It is recommended that the SQL declaration of
-       the <function>consistent</> function use the opclass's indexed data
-       type for the <varname>query</> argument, even though the actual type
+       the <function>consistent</function> function use the opclass's indexed data
+       type for the <varname>query</varname> argument, even though the actual type
        might be something else depending on the operator.
       </para>
 
@@ -380,7 +380,7 @@ my_consistent(PG_FUNCTION_ARGS)
     </varlistentry>
 
     <varlistentry>
-     <term><function>union</></term>
+     <term><function>union</function></term>
      <listitem>
       <para>
        This method consolidates information in the tree.  Given a set of
@@ -389,7 +389,7 @@ my_consistent(PG_FUNCTION_ARGS)
       </para>
 
       <para>
-        The <acronym>SQL</> declaration of the function must look like this:
+        The <acronym>SQL</acronym> declaration of the function must look like this:
 
 <programlisting>
 CREATE OR REPLACE FUNCTION my_union(internal, internal)
@@ -439,44 +439,44 @@ my_union(PG_FUNCTION_ARGS)
 
       <para>
         As you can see, in this skeleton we're dealing with a data type
-        where <literal>union(X, Y, Z) = union(union(X, Y), Z)</>. It's easy
+        where <literal>union(X, Y, Z) = union(union(X, Y), Z)</literal>. It's easy
         enough to support data types where this is not the case, by
         implementing the proper union algorithm in this
-        <acronym>GiST</> support method.
+        <acronym>GiST</acronym> support method.
       </para>
 
       <para>
-        The result of the <function>union</> function must be a value of the
+        The result of the <function>union</function> function must be a value of the
         index's storage type, whatever that is (it might or might not be
-        different from the indexed column's type).  The <function>union</>
-        function should return a pointer to newly <function>palloc()</>ed
+        different from the indexed column's type).  The <function>union</function>
+        function should return a pointer to newly <function>palloc()</function>ed
         memory. You can't just return the input value as-is, even if there is
         no type change.
       </para>
 
       <para>
-       As shown above, the <function>union</> function's
-       first <type>internal</> argument is actually
-       a <structname>GistEntryVector</> pointer.  The second argument is a
+       As shown above, the <function>union</function> function's
+       first <type>internal</type> argument is actually
+       a <structname>GistEntryVector</structname> pointer.  The second argument is a
        pointer to an integer variable, which can be ignored.  (It used to be
-       required that the <function>union</> function store the size of its
+       required that the <function>union</function> function store the size of its
        result value into that variable, but this is no longer necessary.)
       </para>
      </listitem>
     </varlistentry>
 
     <varlistentry>
-     <term><function>compress</></term>
+     <term><function>compress</function></term>
      <listitem>
       <para>
        Converts a data item into a format suitable for physical storage in
        an index page.
-       If the <function>compress</> method is omitted, data items are stored
+       If the <function>compress</function> method is omitted, data items are stored
        in the index without modification.
       </para>
 
       <para>
-        The <acronym>SQL</> declaration of the function must look like this:
+        The <acronym>SQL</acronym> declaration of the function must look like this:
 
 <programlisting>
 CREATE OR REPLACE FUNCTION my_compress(internal)
@@ -519,7 +519,7 @@ my_compress(PG_FUNCTION_ARGS)
       </para>
 
       <para>
-       You have to adapt <replaceable>compressed_data_type</> to the specific
+       You have to adapt <replaceable>compressed_data_type</replaceable> to the specific
        type you're converting to in order to compress your leaf nodes, of
        course.
       </para>
@@ -527,24 +527,24 @@ my_compress(PG_FUNCTION_ARGS)
     </varlistentry>
 
     <varlistentry>
-     <term><function>decompress</></term>
+     <term><function>decompress</function></term>
      <listitem>
       <para>
        Converts the stored representation of a data item into a format that
        can be manipulated by the other GiST methods in the operator class.
-       If the <function>decompress</> method is omitted, it is assumed that
+       If the <function>decompress</function> method is omitted, it is assumed that
        the other GiST methods can work directly on the stored data format.
-       (<function>decompress</> is not necessarily the reverse of
+       (<function>decompress</function> is not necessarily the reverse of
        the <function>compress</function> method; in particular,
        if <function>compress</function> is lossy then it's impossible
-       for <function>decompress</> to exactly reconstruct the original
-       data.  <function>decompress</> is not necessarily equivalent
-       to <function>fetch</>, either, since the other GiST methods might not
+       for <function>decompress</function> to exactly reconstruct the original
+       data.  <function>decompress</function> is not necessarily equivalent
+       to <function>fetch</function>, either, since the other GiST methods might not
        require full reconstruction of the data.)
       </para>
 
       <para>
-        The <acronym>SQL</> declaration of the function must look like this:
+        The <acronym>SQL</acronym> declaration of the function must look like this:
 
 <programlisting>
 CREATE OR REPLACE FUNCTION my_decompress(internal)
@@ -573,7 +573,7 @@ my_decompress(PG_FUNCTION_ARGS)
     </varlistentry>
 
     <varlistentry>
-     <term><function>penalty</></term>
+     <term><function>penalty</function></term>
      <listitem>
       <para>
        Returns a value indicating the <quote>cost</quote> of inserting the new
@@ -584,7 +584,7 @@ my_decompress(PG_FUNCTION_ARGS)
       </para>
 
       <para>
-        The <acronym>SQL</> declaration of the function must look like this:
+        The <acronym>SQL</acronym> declaration of the function must look like this:
 
 <programlisting>
 CREATE OR REPLACE FUNCTION my_penalty(internal, internal, internal)
@@ -612,15 +612,15 @@ my_penalty(PG_FUNCTION_ARGS)
 }
 </programlisting>
 
-        For historical reasons, the <function>penalty</> function doesn't
-        just return a <type>float</> result; instead it has to store the value
+        For historical reasons, the <function>penalty</function> function doesn't
+        just return a <type>float</type> result; instead it has to store the value
         at the location indicated by the third argument.  The return
         value per se is ignored, though it's conventional to pass back the
         address of that argument.
       </para>
 
       <para>
-        The <function>penalty</> function is crucial to good performance of
+        The <function>penalty</function> function is crucial to good performance of
         the index. It'll get used at insertion time to determine which branch
         to follow when choosing where to add the new entry in the tree. At
         query time, the more balanced the index, the quicker the lookup.
@@ -629,7 +629,7 @@ my_penalty(PG_FUNCTION_ARGS)
     </varlistentry>
 
     <varlistentry>
-     <term><function>picksplit</></term>
+     <term><function>picksplit</function></term>
      <listitem>
       <para>
        When an index page split is necessary, this function decides which
@@ -638,7 +638,7 @@ my_penalty(PG_FUNCTION_ARGS)
       </para>
 
       <para>
-        The <acronym>SQL</> declaration of the function must look like this:
+        The <acronym>SQL</acronym> declaration of the function must look like this:
 
 <programlisting>
 CREATE OR REPLACE FUNCTION my_picksplit(internal, internal)
@@ -725,33 +725,33 @@ my_picksplit(PG_FUNCTION_ARGS)
 }
 </programlisting>
 
-       Notice that the <function>picksplit</> function's result is delivered
-       by modifying the passed-in <structname>v</> structure.  The return
+       Notice that the <function>picksplit</function> function's result is delivered
+       by modifying the passed-in <structname>v</structname> structure.  The return
        value per se is ignored, though it's conventional to pass back the
-       address of <structname>v</>.
+       address of <structname>v</structname>.
       </para>
 
       <para>
-        Like <function>penalty</>, the <function>picksplit</> function
+        Like <function>penalty</function>, the <function>picksplit</function> function
         is crucial to good performance of the index.  Designing suitable
-        <function>penalty</> and <function>picksplit</> implementations
+        <function>penalty</function> and <function>picksplit</function> implementations
         is where the challenge of implementing well-performing
-        <acronym>GiST</> indexes lies.
+        <acronym>GiST</acronym> indexes lies.
       </para>
      </listitem>
     </varlistentry>
 
     <varlistentry>
-     <term><function>same</></term>
+     <term><function>same</function></term>
      <listitem>
       <para>
        Returns true if two index entries are identical, false otherwise.
-       (An <quote>index entry</> is a value of the index's storage type,
+       (An <quote>index entry</quote> is a value of the index's storage type,
        not necessarily the original indexed column's type.)
       </para>
 
       <para>
-        The <acronym>SQL</> declaration of the function must look like this:
+        The <acronym>SQL</acronym> declaration of the function must look like this:
 
 <programlisting>
 CREATE OR REPLACE FUNCTION my_same(storage_type, storage_type, internal)
@@ -777,7 +777,7 @@ my_same(PG_FUNCTION_ARGS)
 }
 </programlisting>
 
-        For historical reasons, the <function>same</> function doesn't
+        For historical reasons, the <function>same</function> function doesn't
         just return a Boolean result; instead it has to store the flag
         at the location indicated by the third argument.  The return
         value per se is ignored, though it's conventional to pass back the
@@ -787,15 +787,15 @@ my_same(PG_FUNCTION_ARGS)
     </varlistentry>
 
     <varlistentry>
-     <term><function>distance</></term>
+     <term><function>distance</function></term>
      <listitem>
       <para>
-       Given an index entry <literal>p</> and a query value <literal>q</>,
+       Given an index entry <literal>p</literal> and a query value <literal>q</literal>,
        this function determines the index entry's
-       <quote>distance</> from the query value.  This function must be
+       <quote>distance</quote> from the query value.  This function must be
        supplied if the operator class contains any ordering operators.
        A query using the ordering operator will be implemented by returning
-       index entries with the smallest <quote>distance</> values first,
+       index entries with the smallest <quote>distance</quote> values first,
        so the results must be consistent with the operator's semantics.
        For a leaf index entry the result just represents the distance to
        the index entry; for an internal tree node, the result must be the
@@ -803,7 +803,7 @@ my_same(PG_FUNCTION_ARGS)
       </para>
 
       <para>
-        The <acronym>SQL</> declaration of the function must look like this:
+        The <acronym>SQL</acronym> declaration of the function must look like this:
 
 <programlisting>
 CREATE OR REPLACE FUNCTION my_distance(internal, data_type, smallint, oid, internal)
@@ -836,8 +836,8 @@ my_distance(PG_FUNCTION_ARGS)
 }
 </programlisting>
 
-       The arguments to the <function>distance</> function are identical to
-       the arguments of the <function>consistent</> function.
+       The arguments to the <function>distance</function> function are identical to
+       the arguments of the <function>consistent</function> function.
       </para>
 
       <para>
@@ -847,31 +847,31 @@ my_distance(PG_FUNCTION_ARGS)
        geometric applications.  For an internal tree node, the distance
        returned must not be greater than the distance to any of the child
        nodes. If the returned distance is not exact, the function must set
-       <literal>*recheck</> to true. (This is not necessary for internal tree
+       <literal>*recheck</literal> to true. (This is not necessary for internal tree
        nodes; for them, the calculation is always assumed to be inexact.) In
        this case the executor will calculate the accurate distance after
        fetching the tuple from the heap, and reorder the tuples if necessary.
       </para>
 
       <para>
-       If the distance function returns <literal>*recheck = true</> for any
+       If the distance function returns <literal>*recheck = true</literal> for any
        leaf node, the original ordering operator's return type must
-       be <type>float8</> or <type>float4</>, and the distance function's
+       be <type>float8</type> or <type>float4</type>, and the distance function's
        result values must be comparable to those of the original ordering
        operator, since the executor will sort using both distance function
        results and recalculated ordering-operator results.  Otherwise, the
-       distance function's result values can be any finite <type>float8</>
+       distance function's result values can be any finite <type>float8</type>
        values, so long as the relative order of the result values matches the
        order returned by the ordering operator.  (Infinity and minus infinity
        are used internally to handle cases such as nulls, so it is not
-       recommended that <function>distance</> functions return these values.)
+       recommended that <function>distance</function> functions return these values.)
       </para>
 
      </listitem>
     </varlistentry>
 
     <varlistentry>
-     <term><function>fetch</></term>
+     <term><function>fetch</function></term>
      <listitem>
       <para>
        Converts the compressed index representation of a data item into the
@@ -880,7 +880,7 @@ my_distance(PG_FUNCTION_ARGS)
       </para>
 
       <para>
-        The <acronym>SQL</> declaration of the function must look like this:
+        The <acronym>SQL</acronym> declaration of the function must look like this:
 
 <programlisting>
 CREATE OR REPLACE FUNCTION my_fetch(internal)
@@ -889,14 +889,14 @@ AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT;
 </programlisting>
 
-        The argument is a pointer to a <structname>GISTENTRY</> struct. On
-        entry, its <structfield>key</> field contains a non-NULL leaf datum in
-        compressed form. The return value is another <structname>GISTENTRY</>
-        struct, whose <structfield>key</> field contains the same datum in its
+        The argument is a pointer to a <structname>GISTENTRY</structname> struct. On
+        entry, its <structfield>key</structfield> field contains a non-NULL leaf datum in
+        compressed form. The return value is another <structname>GISTENTRY</structname>
+        struct, whose <structfield>key</structfield> field contains the same datum in its
         original, uncompressed form. If the opclass's compress function does
-        nothing for leaf entries, the <function>fetch</> method can return the
+        nothing for leaf entries, the <function>fetch</function> method can return the
         argument as-is.  Or, if the opclass does not have a compress function,
-        the <function>fetch</> method can be omitted as well, since it would
+        the <function>fetch</function> method can be omitted as well, since it would
         necessarily be a no-op.
        </para>
 
@@ -933,7 +933,7 @@ my_fetch(PG_FUNCTION_ARGS)
       <para>
        If the compress method is lossy for leaf entries, the operator class
        cannot support index-only scans, and must not define
-       a <function>fetch</> function.
+       a <function>fetch</function> function.
       </para>
 
      </listitem>
@@ -942,15 +942,15 @@ my_fetch(PG_FUNCTION_ARGS)
 
   <para>
    All the GiST support methods are normally called in short-lived memory
-   contexts; that is, <varname>CurrentMemoryContext</> will get reset after
+   contexts; that is, <varname>CurrentMemoryContext</varname> will get reset after
    each tuple is processed.  It is therefore not very important to worry about
    pfree'ing everything you palloc.  However, in some cases it's useful for a
    support method to cache data across repeated calls.  To do that, allocate
-   the longer-lived data in <literal>fcinfo-&gt;flinfo-&gt;fn_mcxt</>, and
-   keep a pointer to it in <literal>fcinfo-&gt;flinfo-&gt;fn_extra</>.  Such
+   the longer-lived data in <literal>fcinfo-&gt;flinfo-&gt;fn_mcxt</literal>, and
+   keep a pointer to it in <literal>fcinfo-&gt;flinfo-&gt;fn_extra</literal>.  Such
    data will survive for the life of the index operation (e.g., a single GiST
    index scan, index build, or index tuple insertion).  Be careful to pfree
-   the previous value when replacing a <literal>fn_extra</> value, or the leak
+   the previous value when replacing a <literal>fn_extra</literal> value, or the leak
    will accumulate for the duration of the operation.
   </para>
 
@@ -974,7 +974,7 @@ my_fetch(PG_FUNCTION_ARGS)
   </para>
 
   <para>
-   However, buffering index build needs to call the <function>penalty</>
+   However, buffering index build needs to call the <function>penalty</function>
    function more often, which consumes some extra CPU resources. Also, the
    buffers used in the buffering build need temporary disk space, up to
    the size of the resulting index. Buffering can also influence the quality
@@ -1002,57 +1002,57 @@ my_fetch(PG_FUNCTION_ARGS)
   The <productname>PostgreSQL</productname> source distribution includes
   several examples of index methods implemented using
   <acronym>GiST</acronym>.  The core system currently provides text search
-  support (indexing for <type>tsvector</> and <type>tsquery</>) as well as
+  support (indexing for <type>tsvector</type> and <type>tsquery</type>) as well as
   R-Tree equivalent functionality for some of the built-in geometric data types
-  (see <filename>src/backend/access/gist/gistproc.c</>).  The following
-  <filename>contrib</> modules also contain <acronym>GiST</acronym>
+  (see <filename>src/backend/access/gist/gistproc.c</filename>).  The following
+  <filename>contrib</filename> modules also contain <acronym>GiST</acronym>
   operator classes:
 
  <variablelist>
   <varlistentry>
-   <term><filename>btree_gist</></term>
+   <term><filename>btree_gist</filename></term>
    <listitem>
     <para>B-tree equivalent functionality for several data types</para>
    </listitem>
   </varlistentry>
 
   <varlistentry>
-   <term><filename>cube</></term>
+   <term><filename>cube</filename></term>
    <listitem>
     <para>Indexing for multidimensional cubes</para>
    </listitem>
   </varlistentry>
 
   <varlistentry>
-   <term><filename>hstore</></term>
+   <term><filename>hstore</filename></term>
    <listitem>
     <para>Module for storing (key, value) pairs</para>
    </listitem>
   </varlistentry>
 
   <varlistentry>
-   <term><filename>intarray</></term>
+   <term><filename>intarray</filename></term>
    <listitem>
     <para>RD-Tree for one-dimensional array of int4 values</para>
    </listitem>
   </varlistentry>
 
   <varlistentry>
-   <term><filename>ltree</></term>
+   <term><filename>ltree</filename></term>
    <listitem>
     <para>Indexing for tree-like structures</para>
    </listitem>
   </varlistentry>
 
   <varlistentry>
-   <term><filename>pg_trgm</></term>
+   <term><filename>pg_trgm</filename></term>
    <listitem>
     <para>Text similarity using trigram matching</para>
    </listitem>
   </varlistentry>
 
   <varlistentry>
-   <term><filename>seg</></term>
+   <term><filename>seg</filename></term>
    <listitem>
     <para>Indexing for <quote>float ranges</quote></para>
    </listitem>

@@ -35,7 +35,7 @@ RESET ROLE
    identifier of the current SQL session to be <replaceable
    class="parameter">role_name</replaceable>.  The role name can be
    written as either an identifier or a string literal.
-   After <command>SET ROLE</>, permissions checking for SQL commands
+   After <command>SET ROLE</command>, permissions checking for SQL commands
    is carried out as though the named role were the one that had logged
    in originally.
   </para>
@@ -47,13 +47,13 @@ RESET ROLE
   </para>
 
   <para>
-   The <literal>SESSION</> and <literal>LOCAL</> modifiers act the same
+   The <literal>SESSION</literal> and <literal>LOCAL</literal> modifiers act the same
    as for the regular <xref linkend="SQL-SET">
    command.
   </para>
 
   <para>
-   The <literal>NONE</> and <literal>RESET</> forms reset the current
+   The <literal>NONE</literal> and <literal>RESET</literal> forms reset the current
    user identifier to be the current session user identifier.
    These forms can be executed by any user.
   </para>
@@ -64,41 +64,41 @@ RESET ROLE
 
   <para>
    Using this command, it is possible to either add privileges or restrict
-   one's privileges.  If the session user role has the <literal>INHERITS</>
+   one's privileges.  If the session user role has the <literal>INHERITS</literal>
    attribute, then it automatically has all the privileges of every role that
-   it could <command>SET ROLE</> to; in this case <command>SET ROLE</>
+   it could <command>SET ROLE</command> to; in this case <command>SET ROLE</command>
    effectively drops all the privileges assigned directly to the session user
    and to the other roles it is a member of, leaving only the privileges
    available to the named role.  On the other hand, if the session user role
-   has the <literal>NOINHERITS</> attribute, <command>SET ROLE</> drops the
+   has the <literal>NOINHERITS</literal> attribute, <command>SET ROLE</command> drops the
    privileges assigned directly to the session user and instead acquires the
    privileges available to the named role.
   </para>
 
   <para>
-   In particular, when a superuser chooses to <command>SET ROLE</> to a
+   In particular, when a superuser chooses to <command>SET ROLE</command> to a
    non-superuser role, they lose their superuser privileges.
   </para>
 
   <para>
-   <command>SET ROLE</> has effects comparable to
+   <command>SET ROLE</command> has effects comparable to
    <xref linkend="sql-set-session-authorization">, but the privilege
    checks involved are quite different.  Also,
-   <command>SET SESSION AUTHORIZATION</> determines which roles are
-   allowable for later <command>SET ROLE</> commands, whereas changing
-   roles with <command>SET ROLE</> does not change the set of roles
-   allowed to a later <command>SET ROLE</>.
+   <command>SET SESSION AUTHORIZATION</command> determines which roles are
+   allowable for later <command>SET ROLE</command> commands, whereas changing
+   roles with <command>SET ROLE</command> does not change the set of roles
+   allowed to a later <command>SET ROLE</command>.
   </para>
 
   <para>
-   <command>SET ROLE</> does not process session variables as specified by
+   <command>SET ROLE</command> does not process session variables as specified by
    the role's <xref linkend="sql-alterrole"> settings;  this only happens during
    login.
   </para>
 
   <para>
-   <command>SET ROLE</> cannot be used within a
-   <literal>SECURITY DEFINER</> function.
+   <command>SET ROLE</command> cannot be used within a
+   <literal>SECURITY DEFINER</literal> function.
   </para>
  </refsect1>
 
@@ -127,14 +127,14 @@ SELECT SESSION_USER, CURRENT_USER;
 
   <para>
    <productname>PostgreSQL</productname>
-   allows identifier syntax (<literal>"<replaceable>rolename</>"</literal>), while
+   allows identifier syntax (<literal>"<replaceable>rolename</replaceable>"</literal>), while
    the SQL standard requires the role name to be written as a string
    literal.  SQL does not allow this command during a transaction;
    <productname>PostgreSQL</productname> does not make this
    restriction because there is no reason to.
-   The <literal>SESSION</> and <literal>LOCAL</> modifiers are a
+   The <literal>SESSION</literal> and <literal>LOCAL</literal> modifiers are a
    <productname>PostgreSQL</productname> extension, as is the
-   <literal>RESET</> syntax.
+   <literal>RESET</literal> syntax.
   </para>
  </refsect1>
 

@@ -42,7 +42,7 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
   </para>
 
   <para>
-   You must own the subscription to use <command>ALTER SUBSCRIPTION</>.
+   You must own the subscription to use <command>ALTER SUBSCRIPTION</command>.
    To alter the owner, you must also be a direct or indirect member of the
    new owning role. The new owner has to be a superuser.
    (Currently, all subscription owners must be superusers, so the owner checks
@@ -211,7 +211,7 @@ ALTER SUBSCRIPTION mysub DISABLE;
   <title>Compatibility</title>
 
   <para>
-   <command>ALTER SUBSCRIPTION</command> is a <productname>PostgreSQL</>
+   <command>ALTER SUBSCRIPTION</command> is a <productname>PostgreSQL</productname>
    extension.
   </para>
  </refsect1>

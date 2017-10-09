@@ -69,7 +69,7 @@ MOVE [ <replaceable class="parameter">direction</replaceable> [ FROM | IN ] ] <r
   <title>Outputs</title>
 
   <para>
-   On successful completion, a <command>MOVE</> command returns a command
+   On successful completion, a <command>MOVE</command> command returns a command
    tag of the form
 <screen>
 MOVE <replaceable class="parameter">count</replaceable>

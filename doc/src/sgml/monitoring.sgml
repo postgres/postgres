@@ -24,11 +24,11 @@
    analyzing performance.  Most of this chapter is devoted to describing
    <productname>PostgreSQL</productname>'s statistics collector,
    but one should not neglect regular Unix monitoring programs such as
-   <command>ps</>, <command>top</>, <command>iostat</>, and <command>vmstat</>.
+   <command>ps</command>, <command>top</command>, <command>iostat</command>, and <command>vmstat</command>.
    Also, once one has identified a
    poorly-performing query, further investigation might be needed using
    <productname>PostgreSQL</productname>'s <xref linkend="sql-explain"> command.
-   <xref linkend="using-explain"> discusses <command>EXPLAIN</>
+   <xref linkend="using-explain"> discusses <command>EXPLAIN</command>
    and other methods for understanding the behavior of an individual
    query.
   </para>
@@ -43,7 +43,7 @@
 
   <para>
    On most Unix platforms, <productname>PostgreSQL</productname> modifies its
-   command title as reported by <command>ps</>, so that individual server
+   command title as reported by <command>ps</command>, so that individual server
    processes can readily be identified.  A sample display is
 
 <screen>
@@ -59,29 +59,29 @@ postgres  15606  0.0  0.0  58772  3052 ?        Ss   18:07   0:00 postgres: tgl 
 postgres  15610  0.0  0.0  58772  3056 ?        Ss   18:07   0:00 postgres: tgl regression [local] idle in transaction
 </screen>
 
-   (The appropriate invocation of <command>ps</> varies across different
+   (The appropriate invocation of <command>ps</command> varies across different
    platforms, as do the details of what is shown.  This example is from a
    recent Linux system.)  The first process listed here is the
    master server process.  The command arguments
    shown for it are the same ones used when it was launched.  The next five
    processes are background worker processes automatically launched by the
-   master process.  (The <quote>stats collector</> process will not be present
+   master process.  (The <quote>stats collector</quote> process will not be present
    if you have set the system not to start the statistics collector; likewise
-   the <quote>autovacuum launcher</> process can be disabled.)
+   the <quote>autovacuum launcher</quote> process can be disabled.)
    Each of the remaining
    processes is a server process handling one client connection.  Each such
    process sets its command line display in the form
 
 <screen>
-postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <replaceable>activity</>
+postgres: <replaceable>user</replaceable> <replaceable>database</replaceable> <replaceable>host</replaceable> <replaceable>activity</replaceable>
 </screen>
 
   The user, database, and (client) host items remain the same for
   the life of the client connection, but the activity indicator changes.
-  The activity can be <literal>idle</> (i.e., waiting for a client command),
-  <literal>idle in transaction</> (waiting for client inside a <command>BEGIN</> block),
-  or a command type name such as <literal>SELECT</>.  Also,
-  <literal>waiting</> is appended if the server process is presently waiting
+  The activity can be <literal>idle</literal> (i.e., waiting for a client command),
+  <literal>idle in transaction</literal> (waiting for client inside a <command>BEGIN</command> block),
+  or a command type name such as <literal>SELECT</literal>.  Also,
+  <literal>waiting</literal> is appended if the server process is presently waiting
   on a lock held by another session.  In the above example we can infer
   that process 15606 is waiting for process 15610 to complete its transaction
   and thereby release some lock.  (Process 15610 must be the blocker, because
@@ -93,7 +93,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
 
   <para>
    If <xref linkend="guc-cluster-name"> has been configured the
-   cluster name will also be shown in <command>ps</> output:
+   cluster name will also be shown in <command>ps</command> output:
 <screen>
 $ psql -c 'SHOW cluster_name'
  cluster_name
@@ -122,8 +122,8 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
   flags, not just one. In addition, your original invocation of the
   <command>postgres</command> command must have a shorter
   <command>ps</command> status display than that provided by each
-  server process.  If you fail to do all three things, the <command>ps</>
-  output for each server process will be the original <command>postgres</>
+  server process.  If you fail to do all three things, the <command>ps</command>
+  output for each server process will be the original <command>postgres</command>
   command line.
   </para>
   </tip>
@@ -137,7 +137,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
   </indexterm>
 
   <para>
-   <productname>PostgreSQL</productname>'s <firstterm>statistics collector</>
+   <productname>PostgreSQL</productname>'s <firstterm>statistics collector</firstterm>
    is a subsystem that supports collection and reporting of information about
    server activity.  Presently, the collector can count accesses to tables
    and indexes in both disk-block and individual-row terms.  It also tracks
@@ -161,7 +161,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
    Since collection of statistics adds some overhead to query execution,
    the system can be configured to collect or not collect information.
    This is controlled by configuration parameters that are normally set in
-   <filename>postgresql.conf</>.  (See <xref linkend="runtime-config"> for
+   <filename>postgresql.conf</filename>.  (See <xref linkend="runtime-config"> for
    details about setting configuration parameters.)
   </para>
 
@@ -186,13 +186,13 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
   </para>
 
   <para>
-   Normally these parameters are set in <filename>postgresql.conf</> so
+   Normally these parameters are set in <filename>postgresql.conf</filename> so
    that they apply to all server processes, but it is possible to turn
    them on or off in individual sessions using the <xref
    linkend="sql-set"> command. (To prevent
    ordinary users from hiding their activity from the administrator,
    only superusers are allowed to change these parameters with
-   <command>SET</>.)
+   <command>SET</command>.)
   </para>
 
   <para>
@@ -201,7 +201,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
    These files are stored in the directory named by the
    <xref linkend="guc-stats-temp-directory"> parameter,
    <filename>pg_stat_tmp</filename> by default.
-   For better performance, <varname>stats_temp_directory</> can be
+   For better performance, <varname>stats_temp_directory</varname> can be
    pointed at a RAM-based file system, decreasing physical I/O requirements.
    When the server shuts down cleanly, a permanent copy of the statistics
    data is stored in the <filename>pg_stat</filename> subdirectory, so that
@@ -261,10 +261,10 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
 
   <para>
    A transaction can also see its own statistics (as yet untransmitted to the
-   collector) in the views <structname>pg_stat_xact_all_tables</>,
-   <structname>pg_stat_xact_sys_tables</>,
-   <structname>pg_stat_xact_user_tables</>, and
-   <structname>pg_stat_xact_user_functions</>.  These numbers do not act as
+   collector) in the views <structname>pg_stat_xact_all_tables</structname>,
+   <structname>pg_stat_xact_sys_tables</structname>,
+   <structname>pg_stat_xact_user_tables</structname>, and
+   <structname>pg_stat_xact_user_functions</structname>.  These numbers do not act as
    stated above; instead they update continuously throughout the transaction.
   </para>
 
@@ -293,7 +293,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </row>
 
      <row>
-      <entry><structname>pg_stat_replication</><indexterm><primary>pg_stat_replication</primary></indexterm></entry>
+      <entry><structname>pg_stat_replication</structname><indexterm><primary>pg_stat_replication</primary></indexterm></entry>
       <entry>One row per WAL sender process, showing statistics about
        replication to that sender's connected standby server.
        See <xref linkend="pg-stat-replication-view"> for details.
@@ -301,7 +301,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </row>
 
      <row>
-      <entry><structname>pg_stat_wal_receiver</><indexterm><primary>pg_stat_wal_receiver</primary></indexterm></entry>
+      <entry><structname>pg_stat_wal_receiver</structname><indexterm><primary>pg_stat_wal_receiver</primary></indexterm></entry>
       <entry>Only one row, showing statistics about the WAL receiver from
        that receiver's connected server.
        See <xref linkend="pg-stat-wal-receiver-view"> for details.
@@ -309,7 +309,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </row>
 
      <row>
-      <entry><structname>pg_stat_subscription</><indexterm><primary>pg_stat_subscription</primary></indexterm></entry>
+      <entry><structname>pg_stat_subscription</structname><indexterm><primary>pg_stat_subscription</primary></indexterm></entry>
       <entry>At least one row per subscription, showing information about
        the subscription workers.
        See <xref linkend="pg-stat-subscription"> for details.
@@ -317,7 +317,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </row>
 
      <row>
-      <entry><structname>pg_stat_ssl</><indexterm><primary>pg_stat_ssl</primary></indexterm></entry>
+      <entry><structname>pg_stat_ssl</structname><indexterm><primary>pg_stat_ssl</primary></indexterm></entry>
       <entry>One row per connection (regular and replication), showing information about
        SSL used on this connection.
        See <xref linkend="pg-stat-ssl-view"> for details.
@@ -325,9 +325,9 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </row>
 
      <row>
-      <entry><structname>pg_stat_progress_vacuum</><indexterm><primary>pg_stat_progress_vacuum</primary></indexterm></entry>
+      <entry><structname>pg_stat_progress_vacuum</structname><indexterm><primary>pg_stat_progress_vacuum</primary></indexterm></entry>
       <entry>One row for each backend (including autovacuum worker processes) running
-       <command>VACUUM</>, showing current progress.
+       <command>VACUUM</command>, showing current progress.
        See <xref linkend='vacuum-progress-reporting'>.
       </entry>
      </row>
@@ -349,7 +349,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
 
     <tbody>
      <row>
-      <entry><structname>pg_stat_archiver</><indexterm><primary>pg_stat_archiver</primary></indexterm></entry>
+      <entry><structname>pg_stat_archiver</structname><indexterm><primary>pg_stat_archiver</primary></indexterm></entry>
       <entry>One row only, showing statistics about the
        WAL archiver process's activity. See
        <xref linkend="pg-stat-archiver-view"> for details.
@@ -357,7 +357,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </row>
 
      <row>
-      <entry><structname>pg_stat_bgwriter</><indexterm><primary>pg_stat_bgwriter</primary></indexterm></entry>
+      <entry><structname>pg_stat_bgwriter</structname><indexterm><primary>pg_stat_bgwriter</primary></indexterm></entry>
       <entry>One row only, showing statistics about the
        background writer process's activity. See
        <xref linkend="pg-stat-bgwriter-view"> for details.
@@ -365,14 +365,14 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </row>
 
      <row>
-      <entry><structname>pg_stat_database</><indexterm><primary>pg_stat_database</primary></indexterm></entry>
+      <entry><structname>pg_stat_database</structname><indexterm><primary>pg_stat_database</primary></indexterm></entry>
       <entry>One row per database, showing database-wide statistics. See
        <xref linkend="pg-stat-database-view"> for details.
       </entry>
      </row>
 
      <row>
-      <entry><structname>pg_stat_database_conflicts</><indexterm><primary>pg_stat_database_conflicts</primary></indexterm></entry>
+      <entry><structname>pg_stat_database_conflicts</structname><indexterm><primary>pg_stat_database_conflicts</primary></indexterm></entry>
       <entry>
        One row per database, showing database-wide statistics about
        query cancels due to conflict with recovery on standby servers.
@@ -381,7 +381,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </row>
 
      <row>
-      <entry><structname>pg_stat_all_tables</><indexterm><primary>pg_stat_all_tables</primary></indexterm></entry>
+      <entry><structname>pg_stat_all_tables</structname><indexterm><primary>pg_stat_all_tables</primary></indexterm></entry>
       <entry>
        One row for each table in the current database, showing statistics
        about accesses to that specific table.
@@ -390,40 +390,40 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </row>
 
      <row>
-      <entry><structname>pg_stat_sys_tables</><indexterm><primary>pg_stat_sys_tables</primary></indexterm></entry>
-      <entry>Same as <structname>pg_stat_all_tables</>, except that only
+      <entry><structname>pg_stat_sys_tables</structname><indexterm><primary>pg_stat_sys_tables</primary></indexterm></entry>
+      <entry>Same as <structname>pg_stat_all_tables</structname>, except that only
       system tables are shown.</entry>
      </row>
 
      <row>
-      <entry><structname>pg_stat_user_tables</><indexterm><primary>pg_stat_user_tables</primary></indexterm></entry>
-      <entry>Same as <structname>pg_stat_all_tables</>, except that only user
+      <entry><structname>pg_stat_user_tables</structname><indexterm><primary>pg_stat_user_tables</primary></indexterm></entry>
+      <entry>Same as <structname>pg_stat_all_tables</structname>, except that only user
       tables are shown.</entry>
      </row>
 
      <row>
-      <entry><structname>pg_stat_xact_all_tables</><indexterm><primary>pg_stat_xact_all_tables</primary></indexterm></entry>
-      <entry>Similar to <structname>pg_stat_all_tables</>, but counts actions
-      taken so far within the current transaction (which are <emphasis>not</>
-      yet included in <structname>pg_stat_all_tables</> and related views).
+      <entry><structname>pg_stat_xact_all_tables</structname><indexterm><primary>pg_stat_xact_all_tables</primary></indexterm></entry>
+      <entry>Similar to <structname>pg_stat_all_tables</structname>, but counts actions
+      taken so far within the current transaction (which are <emphasis>not</emphasis>
+      yet included in <structname>pg_stat_all_tables</structname> and related views).
       The columns for numbers of live and dead rows and vacuum and
       analyze actions are not present in this view.</entry>
      </row>
 
      <row>
-      <entry><structname>pg_stat_xact_sys_tables</><indexterm><primary>pg_stat_xact_sys_tables</primary></indexterm></entry>
-      <entry>Same as <structname>pg_stat_xact_all_tables</>, except that only
+      <entry><structname>pg_stat_xact_sys_tables</structname><indexterm><primary>pg_stat_xact_sys_tables</primary></indexterm></entry>
+      <entry>Same as <structname>pg_stat_xact_all_tables</structname>, except that only
       system tables are shown.</entry>
      </row>
 
      <row>
-      <entry><structname>pg_stat_xact_user_tables</><indexterm><primary>pg_stat_xact_user_tables</primary></indexterm></entry>
-      <entry>Same as <structname>pg_stat_xact_all_tables</>, except that only
+      <entry><structname>pg_stat_xact_user_tables</structname><indexterm><primary>pg_stat_xact_user_tables</primary></indexterm></entry>
+      <entry>Same as <structname>pg_stat_xact_all_tables</structname>, except that only
       user tables are shown.</entry>
      </row>
 
      <row>
-      <entry><structname>pg_stat_all_indexes</><indexterm><primary>pg_stat_all_indexes</primary></indexterm></entry>
+      <entry><structname>pg_stat_all_indexes</structname><indexterm><primary>pg_stat_all_indexes</primary></indexterm></entry>
       <entry>
        One row for each index in the current database, showing statistics
        about accesses to that specific index.
@@ -432,19 +432,19 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </row>
 
      <row>
-      <entry><structname>pg_stat_sys_indexes</><indexterm><primary>pg_stat_sys_indexes</primary></indexterm></entry>
-      <entry>Same as <structname>pg_stat_all_indexes</>, except that only
+      <entry><structname>pg_stat_sys_indexes</structname><indexterm><primary>pg_stat_sys_indexes</primary></indexterm></entry>
+      <entry>Same as <structname>pg_stat_all_indexes</structname>, except that only
       indexes on system tables are shown.</entry>
      </row>
 
      <row>
-      <entry><structname>pg_stat_user_indexes</><indexterm><primary>pg_stat_user_indexes</primary></indexterm></entry>
-      <entry>Same as <structname>pg_stat_all_indexes</>, except that only
+      <entry><structname>pg_stat_user_indexes</structname><indexterm><primary>pg_stat_user_indexes</primary></indexterm></entry>
+      <entry>Same as <structname>pg_stat_all_indexes</structname>, except that only
       indexes on user tables are shown.</entry>
      </row>
 
      <row>
-      <entry><structname>pg_statio_all_tables</><indexterm><primary>pg_statio_all_tables</primary></indexterm></entry>
+      <entry><structname>pg_statio_all_tables</structname><indexterm><primary>pg_statio_all_tables</primary></indexterm></entry>
       <entry>
        One row for each table in the current database, showing statistics
        about I/O on that specific table.
@@ -453,19 +453,19 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </row>
 
      <row>
-      <entry><structname>pg_statio_sys_tables</><indexterm><primary>pg_statio_sys_tables</primary></indexterm></entry>
-      <entry>Same as <structname>pg_statio_all_tables</>, except that only
+      <entry><structname>pg_statio_sys_tables</structname><indexterm><primary>pg_statio_sys_tables</primary></indexterm></entry>
+      <entry>Same as <structname>pg_statio_all_tables</structname>, except that only
       system tables are shown.</entry>
      </row>
 
      <row>
-      <entry><structname>pg_statio_user_tables</><indexterm><primary>pg_statio_user_tables</primary></indexterm></entry>
-      <entry>Same as <structname>pg_statio_all_tables</>, except that only
+      <entry><structname>pg_statio_user_tables</structname><indexterm><primary>pg_statio_user_tables</primary></indexterm></entry>
+      <entry>Same as <structname>pg_statio_all_tables</structname>, except that only
       user tables are shown.</entry>
      </row>
 
      <row>
-      <entry><structname>pg_statio_all_indexes</><indexterm><primary>pg_statio_all_indexes</primary></indexterm></entry>
+      <entry><structname>pg_statio_all_indexes</structname><indexterm><primary>pg_statio_all_indexes</primary></indexterm></entry>
       <entry>
        One row for each index in the current database,
        showing statistics about I/O on that specific index.
@@ -474,19 +474,19 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </row>
 
      <row>
-      <entry><structname>pg_statio_sys_indexes</><indexterm><primary>pg_statio_sys_indexes</primary></indexterm></entry>
-      <entry>Same as <structname>pg_statio_all_indexes</>, except that only
+      <entry><structname>pg_statio_sys_indexes</structname><indexterm><primary>pg_statio_sys_indexes</primary></indexterm></entry>
+      <entry>Same as <structname>pg_statio_all_indexes</structname>, except that only
       indexes on system tables are shown.</entry>
      </row>
 
      <row>
-      <entry><structname>pg_statio_user_indexes</><indexterm><primary>pg_statio_user_indexes</primary></indexterm></entry>
-      <entry>Same as <structname>pg_statio_all_indexes</>, except that only
+      <entry><structname>pg_statio_user_indexes</structname><indexterm><primary>pg_statio_user_indexes</primary></indexterm></entry>
+      <entry>Same as <structname>pg_statio_all_indexes</structname>, except that only
       indexes on user tables are shown.</entry>
      </row>
 
      <row>
-      <entry><structname>pg_statio_all_sequences</><indexterm><primary>pg_statio_all_sequences</primary></indexterm></entry>
+      <entry><structname>pg_statio_all_sequences</structname><indexterm><primary>pg_statio_all_sequences</primary></indexterm></entry>
      <entry>
        One row for each sequence in the current database,
        showing statistics about I/O on that specific sequence.
@@ -495,20 +495,20 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </row>
 
      <row>
-      <entry><structname>pg_statio_sys_sequences</><indexterm><primary>pg_statio_sys_sequences</primary></indexterm></entry>
-      <entry>Same as <structname>pg_statio_all_sequences</>, except that only
+      <entry><structname>pg_statio_sys_sequences</structname><indexterm><primary>pg_statio_sys_sequences</primary></indexterm></entry>
+      <entry>Same as <structname>pg_statio_all_sequences</structname>, except that only
       system sequences are shown.  (Presently, no system sequences are defined,
       so this view is always empty.)</entry>
      </row>
 
      <row>
-      <entry><structname>pg_statio_user_sequences</><indexterm><primary>pg_statio_user_sequences</primary></indexterm></entry>
-      <entry>Same as <structname>pg_statio_all_sequences</>, except that only
+      <entry><structname>pg_statio_user_sequences</structname><indexterm><primary>pg_statio_user_sequences</primary></indexterm></entry>
+      <entry>Same as <structname>pg_statio_all_sequences</structname>, except that only
       user sequences are shown.</entry>
      </row>
 
      <row>
-      <entry><structname>pg_stat_user_functions</><indexterm><primary>pg_stat_user_functions</primary></indexterm></entry>
+      <entry><structname>pg_stat_user_functions</structname><indexterm><primary>pg_stat_user_functions</primary></indexterm></entry>
       <entry>
        One row for each tracked function, showing statistics
        about executions of that function. See
@@ -517,10 +517,10 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </row>
 
      <row>
-      <entry><structname>pg_stat_xact_user_functions</><indexterm><primary>pg_stat_xact_user_functions</primary></indexterm></entry>
-      <entry>Similar to <structname>pg_stat_user_functions</>, but counts only
-      calls during the current transaction (which are <emphasis>not</>
-      yet included in <structname>pg_stat_user_functions</>).</entry>
+      <entry><structname>pg_stat_xact_user_functions</structname><indexterm><primary>pg_stat_xact_user_functions</primary></indexterm></entry>
+      <entry>Similar to <structname>pg_stat_user_functions</structname>, but counts only
+      calls during the current transaction (which are <emphasis>not</emphasis>
+      yet included in <structname>pg_stat_user_functions</structname>).</entry>
      </row>
 
     </tbody>
@@ -533,18 +533,18 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
   </para>
 
   <para>
-   The <structname>pg_statio_</> views are primarily useful to
+   The <structname>pg_statio_</structname> views are primarily useful to
    determine the effectiveness of the buffer cache.  When the number
    of actual disk reads is much smaller than the number of buffer
    hits, then the cache is satisfying most read requests without
    invoking a kernel call. However, these statistics do not give the
-   entire story: due to the way in which <productname>PostgreSQL</>
+   entire story: due to the way in which <productname>PostgreSQL</productname>
    handles disk I/O, data that is not in the
-   <productname>PostgreSQL</> buffer cache might still reside in the
+   <productname>PostgreSQL</productname> buffer cache might still reside in the
    kernel's I/O cache, and might therefore still be fetched without
    requiring a physical read. Users interested in obtaining more
-   detailed information on <productname>PostgreSQL</> I/O behavior are
-   advised to use the <productname>PostgreSQL</> statistics collector
+   detailed information on <productname>PostgreSQL</productname> I/O behavior are
+   advised to use the <productname>PostgreSQL</productname> statistics collector
    in combination with operating system utilities that allow insight
    into the kernel's handling of I/O.
   </para>
@@ -564,39 +564,39 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
 
    <tbody>
     <row>
-     <entry><structfield>datid</></entry>
-     <entry><type>oid</></entry>
+     <entry><structfield>datid</structfield></entry>
+     <entry><type>oid</type></entry>
      <entry>OID of the database this backend is connected to</entry>
     </row>
     <row>
-     <entry><structfield>datname</></entry>
-     <entry><type>name</></entry>
+     <entry><structfield>datname</structfield></entry>
+     <entry><type>name</type></entry>
      <entry>Name of the database this backend is connected to</entry>
     </row>
     <row>
-     <entry><structfield>pid</></entry>
-     <entry><type>integer</></entry>
+     <entry><structfield>pid</structfield></entry>
+     <entry><type>integer</type></entry>
      <entry>Process ID of this backend</entry>
     </row>
     <row>
-     <entry><structfield>usesysid</></entry>
-     <entry><type>oid</></entry>
+     <entry><structfield>usesysid</structfield></entry>
+     <entry><type>oid</type></entry>
      <entry>OID of the user logged into this backend</entry>
     </row>
     <row>
-     <entry><structfield>usename</></entry>
-     <entry><type>name</></entry>
+     <entry><structfield>usename</structfield></entry>
+     <entry><type>name</type></entry>
      <entry>Name of the user logged into this backend</entry>
     </row>
     <row>
-     <entry><structfield>application_name</></entry>
-     <entry><type>text</></entry>
+     <entry><structfield>application_name</structfield></entry>
+     <entry><type>text</type></entry>
      <entry>Name of the application that is connected
       to this backend</entry>
     </row>
     <row>
-     <entry><structfield>client_addr</></entry>
-     <entry><type>inet</></entry>
+     <entry><structfield>client_addr</structfield></entry>
+     <entry><type>inet</type></entry>
      <entry>IP address of the client connected to this backend.
       If this field is null, it indicates either that the client is
       connected via a Unix socket on the server machine or that this is an
@@ -604,78 +604,78 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </entry>
     </row>
     <row>
-     <entry><structfield>client_hostname</></entry>
-     <entry><type>text</></entry>
+     <entry><structfield>client_hostname</structfield></entry>
+     <entry><type>text</type></entry>
      <entry>Host name of the connected client, as reported by a
-      reverse DNS lookup of <structfield>client_addr</>. This field will
+      reverse DNS lookup of <structfield>client_addr</structfield>. This field will
       only be non-null for IP connections, and only when <xref
       linkend="guc-log-hostname"> is enabled.
      </entry>
     </row>
     <row>
-     <entry><structfield>client_port</></entry>
-     <entry><type>integer</></entry>
+     <entry><structfield>client_port</structfield></entry>
+     <entry><type>integer</type></entry>
      <entry>TCP port number that the client is using for communication
-      with this backend, or <literal>-1</> if a Unix socket is used
+      with this backend, or <literal>-1</literal> if a Unix socket is used
      </entry>
     </row>
     <row>
-     <entry><structfield>backend_start</></entry>
-     <entry><type>timestamp with time zone</></entry>
+     <entry><structfield>backend_start</structfield></entry>
+     <entry><type>timestamp with time zone</type></entry>
      <entry>Time when this process was started.  For client backends,
       this is the time the client connected to the server.
      </entry>
     </row>
     <row>
-     <entry><structfield>xact_start</></entry>
-     <entry><type>timestamp with time zone</></entry>
+     <entry><structfield>xact_start</structfield></entry>
+     <entry><type>timestamp with time zone</type></entry>
      <entry>Time when this process' current transaction was started, or null
       if no transaction is active. If the current
       query is the first of its transaction, this column is equal to the
-      <structfield>query_start</> column.
+      <structfield>query_start</structfield> column.
      </entry>
     </row>
     <row>
-     <entry><structfield>query_start</></entry>
-     <entry><type>timestamp with time zone</></entry>
+     <entry><structfield>query_start</structfield></entry>
+     <entry><type>timestamp with time zone</type></entry>
      <entry>Time when the currently active query was started, or if
-      <structfield>state</> is not <literal>active</>, when the last query
+      <structfield>state</structfield> is not <literal>active</literal>, when the last query
       was started
      </entry>
     </row>
     <row>
-     <entry><structfield>state_change</></entry>
-     <entry><type>timestamp with time zone</></entry>
-     <entry>Time when the <structfield>state</> was last changed</entry>
+     <entry><structfield>state_change</structfield></entry>
+     <entry><type>timestamp with time zone</type></entry>
+     <entry>Time when the <structfield>state</structfield> was last changed</entry>
     </row>
      <row>
-      <entry><structfield>wait_event_type</></entry>
-      <entry><type>text</></entry>
+      <entry><structfield>wait_event_type</structfield></entry>
+      <entry><type>text</type></entry>
       <entry>The type of event for which the backend is waiting, if any;
        otherwise NULL. Possible values are:
        <itemizedlist>
         <listitem>
          <para>
-          <literal>LWLock</>: The backend is waiting for a lightweight lock.
+          <literal>LWLock</literal>: The backend is waiting for a lightweight lock.
           Each such lock protects a particular data structure in shared memory.
-          <literal>wait_event</> will contain a name identifying the purpose
+          <literal>wait_event</literal> will contain a name identifying the purpose
           of the lightweight lock.  (Some locks have specific names; others
           are part of a group of locks each with a similar purpose.)
          </para>
         </listitem>
         <listitem>
          <para>
-          <literal>Lock</>: The backend is waiting for a heavyweight lock.
+          <literal>Lock</literal>: The backend is waiting for a heavyweight lock.
           Heavyweight locks, also known as lock manager locks or simply locks,
           primarily protect SQL-visible objects such as tables.  However,
           they are also used to ensure mutual exclusion for certain internal
-          operations such as relation extension.  <literal>wait_event</> will
+          operations such as relation extension.  <literal>wait_event</literal> will
           identify the type of lock awaited.
          </para>
         </listitem>
         <listitem>
          <para>
-          <literal>BufferPin</>: The server process is waiting to access to
+          <literal>BufferPin</literal>: The server process is waiting to access to
           a data buffer during a period when no other process can be
           examining that buffer.  Buffer pin waits can be protracted if
           another process holds an open cursor which last read data from the
@@ -684,94 +684,94 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
         </listitem>
         <listitem>
          <para>
-          <literal>Activity</>: The server process is idle.  This is used by
+          <literal>Activity</literal>: The server process is idle.  This is used by
           system processes waiting for activity in their main processing loop.
-          <literal>wait_event</> will identify the specific wait point.
+          <literal>wait_event</literal> will identify the specific wait point.
          </para>
         </listitem>
         <listitem>
          <para>
-          <literal>Extension</>: The server process is waiting for activity
+          <literal>Extension</literal>: The server process is waiting for activity
           in an extension module.  This category is useful for modules to
           track custom waiting points.
          </para>
         </listitem>
         <listitem>
          <para>
-          <literal>Client</>: The server process is waiting for some activity
+          <literal>Client</literal>: The server process is waiting for some activity
           on a socket from user applications, and that the server expects
           something to happen that is independent from its internal processes.
-          <literal>wait_event</> will identify the specific wait point.
+          <literal>wait_event</literal> will identify the specific wait point.
          </para>
         </listitem>
         <listitem>
          <para>
-          <literal>IPC</>: The server process is waiting for some activity
-          from another process in the server.  <literal>wait_event</> will
+          <literal>IPC</literal>: The server process is waiting for some activity
+          from another process in the server.  <literal>wait_event</literal> will
           identify the specific wait point.
          </para>
         </listitem>
         <listitem>
          <para>
-          <literal>Timeout</>: The server process is waiting for a timeout
-          to expire.  <literal>wait_event</> will identify the specific wait
+          <literal>Timeout</literal>: The server process is waiting for a timeout
+          to expire.  <literal>wait_event</literal> will identify the specific wait
           point.
          </para>
         </listitem>
         <listitem>
          <para>
-          <literal>IO</>: The server process is waiting for a IO to complete.
-          <literal>wait_event</> will identify the specific wait point.
+          <literal>IO</literal>: The server process is waiting for a IO to complete.
+          <literal>wait_event</literal> will identify the specific wait point.
          </para>
         </listitem>
        </itemizedlist>
       </entry>
      </row>
     <row>
-     <entry><structfield>wait_event</></entry>
-     <entry><type>text</></entry>
+     <entry><structfield>wait_event</structfield></entry>
+     <entry><type>text</type></entry>
      <entry>Wait event name if backend is currently waiting, otherwise NULL.
      See <xref linkend="wait-event-table"> for details.
      </entry>
     </row>
     <row>
-     <entry><structfield>state</></entry>
-     <entry><type>text</></entry>
+     <entry><structfield>state</structfield></entry>
+     <entry><type>text</type></entry>
      <entry>Current overall state of this backend.
        Possible values are:
        <itemizedlist>
          <listitem>
           <para>
-           <literal>active</>: The backend is executing a query.
+           <literal>active</literal>: The backend is executing a query.
           </para>
          </listitem>
          <listitem>
           <para>
-           <literal>idle</>: The backend is waiting for a new client command.
+           <literal>idle</literal>: The backend is waiting for a new client command.
           </para>
          </listitem>
          <listitem>
           <para>
-           <literal>idle in transaction</>: The backend is in a transaction,
+           <literal>idle in transaction</literal>: The backend is in a transaction,
            but is not currently executing a query.
           </para>
          </listitem>
          <listitem>
           <para>
-           <literal>idle in transaction (aborted)</>: This state is similar to
-           <literal>idle in transaction</>, except one of the statements in
+           <literal>idle in transaction (aborted)</literal>: This state is similar to
+           <literal>idle in transaction</literal>, except one of the statements in
            the transaction caused an error.
           </para>
          </listitem>
          <listitem>
           <para>
-           <literal>fastpath function call</>: The backend is executing a
+           <literal>fastpath function call</literal>: The backend is executing a
            fast-path function.
           </para>
          </listitem>
          <listitem>
            <para>
-           <literal>disabled</>: This state is reported if <xref
+           <literal>disabled</literal>: This state is reported if <xref
            linkend="guc-track-activities"> is disabled in this backend.
           </para>
          </listitem>
@@ -786,13 +786,13 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
     <row>
      <entry><structfield>backend_xmin</structfield></entry>
      <entry><type>xid</type></entry>
-     <entry>The current backend's <literal>xmin</> horizon.</entry>
+     <entry>The current backend's <literal>xmin</literal> horizon.</entry>
     </row>
     <row>
-     <entry><structfield>query</></entry>
-     <entry><type>text</></entry>
+     <entry><structfield>query</structfield></entry>
+     <entry><type>text</type></entry>
      <entry>Text of this backend's most recent query. If
-      <structfield>state</> is <literal>active</> this field shows the
+      <structfield>state</structfield> is <literal>active</literal> this field shows the
       currently executing query. In all other states, it shows the last query
       that was executed. By default the query text is truncated at 1024
       characters; this value can be changed via the parameter
@@ -803,11 +803,11 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      <entry><structfield>backend_type</structfield></entry>
      <entry><type>text</type></entry>
      <entry>Type of current backend. Possible types are
-      <literal>autovacuum launcher</>, <literal>autovacuum worker</>,
-      <literal>background worker</>, <literal>background writer</>,
-      <literal>client backend</>, <literal>checkpointer</>,
-      <literal>startup</>, <literal>walreceiver</>,
-      <literal>walsender</> and <literal>walwriter</>.
+      <literal>autovacuum launcher</literal>, <literal>autovacuum worker</literal>,
+      <literal>background worker</literal>, <literal>background writer</literal>,
+      <literal>client backend</literal>, <literal>checkpointer</literal>,
+      <literal>startup</literal>, <literal>walreceiver</literal>,
+      <literal>walsender</literal> and <literal>walwriter</literal>.
      </entry>
     </row>
    </tbody>
@@ -822,10 +822,10 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
 
   <note>
    <para>
-    The <structfield>wait_event</> and <structfield>state</> columns are
-    independent.  If a backend is in the <literal>active</> state,
-    it may or may not be <literal>waiting</> on some event.  If the state
-    is <literal>active</> and <structfield>wait_event</> is non-null, it
+    The <structfield>wait_event</structfield> and <structfield>state</structfield> columns are
+    independent.  If a backend is in the <literal>active</literal> state,
+    it may or may not be <literal>waiting</literal> on some event.  If the state
+    is <literal>active</literal> and <structfield>wait_event</structfield> is non-null, it
     means that a query is being executed, but is being blocked somewhere
     in the system.
    </para>
@@ -845,767 +845,767 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
 
       <tbody>
        <row>
-        <entry morerows="62"><literal>LWLock</></entry>
-        <entry><literal>ShmemIndexLock</></entry>
+        <entry morerows="62"><literal>LWLock</literal></entry>
+        <entry><literal>ShmemIndexLock</literal></entry>
         <entry>Waiting to find or allocate space in shared memory.</entry>
        </row>
        <row>
-        <entry><literal>OidGenLock</></entry>
+        <entry><literal>OidGenLock</literal></entry>
         <entry>Waiting to allocate or assign an OID.</entry>
        </row>
         <row>
-         <entry><literal>XidGenLock</></entry>
+         <entry><literal>XidGenLock</literal></entry>
          <entry>Waiting to allocate or assign a transaction id.</entry>
         </row>
         <row>
-         <entry><literal>ProcArrayLock</></entry>
+         <entry><literal>ProcArrayLock</literal></entry>
          <entry>Waiting to get a snapshot or clearing a transaction id at
          transaction end.</entry>
         </row>
         <row>
-         <entry><literal>SInvalReadLock</></entry>
+         <entry><literal>SInvalReadLock</literal></entry>
          <entry>Waiting to retrieve or remove messages from shared invalidation
          queue.</entry>
         </row>
         <row>
-         <entry><literal>SInvalWriteLock</></entry>
+         <entry><literal>SInvalWriteLock</literal></entry>
          <entry>Waiting to add a message in shared invalidation queue.</entry>
         </row>
         <row>
-         <entry><literal>WALBufMappingLock</></entry>
+         <entry><literal>WALBufMappingLock</literal></entry>
          <entry>Waiting to replace a page in WAL buffers.</entry>
         </row>
         <row>
-         <entry><literal>WALWriteLock</></entry>
+         <entry><literal>WALWriteLock</literal></entry>
          <entry>Waiting for WAL buffers to be written to disk.</entry>
         </row>
         <row>
-         <entry><literal>ControlFileLock</></entry>
+         <entry><literal>ControlFileLock</literal></entry>
          <entry>Waiting to read or update the control file or creation of a
          new WAL file.</entry>
         </row>
         <row>
-         <entry><literal>CheckpointLock</></entry>
+         <entry><literal>CheckpointLock</literal></entry>
          <entry>Waiting to perform checkpoint.</entry>
         </row>
         <row>
-         <entry><literal>CLogControlLock</></entry>
+         <entry><literal>CLogControlLock</literal></entry>
          <entry>Waiting to read or update transaction status.</entry>
         </row>
         <row>
-         <entry><literal>SubtransControlLock</></entry>
+         <entry><literal>SubtransControlLock</literal></entry>
          <entry>Waiting to read or update sub-transaction information.</entry>
         </row>
         <row>
-         <entry><literal>MultiXactGenLock</></entry>
+         <entry><literal>MultiXactGenLock</literal></entry>
          <entry>Waiting to read or update shared multixact state.</entry>
         </row>
         <row>
-         <entry><literal>MultiXactOffsetControlLock</></entry>
+         <entry><literal>MultiXactOffsetControlLock</literal></entry>
          <entry>Waiting to read or update multixact offset mappings.</entry>
         </row>
         <row>
-         <entry><literal>MultiXactMemberControlLock</></entry>
+         <entry><literal>MultiXactMemberControlLock</literal></entry>
          <entry>Waiting to read or update multixact member mappings.</entry>
         </row>
         <row>
-         <entry><literal>RelCacheInitLock</></entry>
+         <entry><literal>RelCacheInitLock</literal></entry>
          <entry>Waiting to read or write relation cache initialization
          file.</entry>
         </row>
         <row>
-         <entry><literal>CheckpointerCommLock</></entry>
+         <entry><literal>CheckpointerCommLock</literal></entry>
          <entry>Waiting to manage fsync requests.</entry>
         </row>
         <row>
-         <entry><literal>TwoPhaseStateLock</></entry>
+         <entry><literal>TwoPhaseStateLock</literal></entry>
          <entry>Waiting to read or update the state of prepared transactions.</entry>
         </row>
         <row>
-         <entry><literal>TablespaceCreateLock</></entry>
+         <entry><literal>TablespaceCreateLock</literal></entry>
          <entry>Waiting to create or drop the tablespace.</entry>
         </row>
         <row>
-         <entry><literal>BtreeVacuumLock</></entry>
+         <entry><literal>BtreeVacuumLock</literal></entry>
           <entry>Waiting to read or update vacuum-related information for a
           B-tree index.</entry>
         </row>
         <row>
-         <entry><literal>AddinShmemInitLock</></entry>
+         <entry><literal>AddinShmemInitLock</literal></entry>
          <entry>Waiting to manage space allocation in shared memory.</entry>
         </row>
         <row>
-         <entry><literal>AutovacuumLock</></entry>
+         <entry><literal>AutovacuumLock</literal></entry>
          <entry>Autovacuum worker or launcher waiting to update or
          read the current state of autovacuum workers.</entry>
         </row>
         <row>
-         <entry><literal>AutovacuumScheduleLock</></entry>
+         <entry><literal>AutovacuumScheduleLock</literal></entry>
          <entry>Waiting to ensure that the table it has selected for a vacuum
          still needs vacuuming.
          </entry>
         </row>
         <row>
-         <entry><literal>SyncScanLock</></entry>
+         <entry><literal>SyncScanLock</literal></entry>
          <entry>Waiting to get the start location of a scan on a table for
          synchronized scans.</entry>
         </row>
         <row>
-         <entry><literal>RelationMappingLock</></entry>
+         <entry><literal>RelationMappingLock</literal></entry>
          <entry>Waiting to update the relation map file used to store catalog
          to filenode mapping.
          </entry>
         </row>
         <row>
-         <entry><literal>AsyncCtlLock</></entry>
+         <entry><literal>AsyncCtlLock</literal></entry>
          <entry>Waiting to read or update shared notification state.</entry>
         </row>
         <row>
-         <entry><literal>AsyncQueueLock</></entry>
+         <entry><literal>AsyncQueueLock</literal></entry>
           <entry>Waiting to read or update notification messages.</entry>
         </row>
         <row>
-         <entry><literal>SerializableXactHashLock</></entry>
+         <entry><literal>SerializableXactHashLock</literal></entry>
          <entry>Waiting to retrieve or store information about serializable
          transactions.</entry>
         </row>
         <row>
-         <entry><literal>SerializableFinishedListLock</></entry>
+         <entry><literal>SerializableFinishedListLock</literal></entry>
          <entry>Waiting to access the list of finished serializable
          transactions.</entry>
         </row>
         <row>
-         <entry><literal>SerializablePredicateLockListLock</></entry>
+         <entry><literal>SerializablePredicateLockListLock</literal></entry>
          <entry>Waiting to perform an operation on a list of locks held by
          serializable transactions.</entry>
         </row>
         <row>
-         <entry><literal>OldSerXidLock</></entry>
+         <entry><literal>OldSerXidLock</literal></entry>
          <entry>Waiting to read or record conflicting serializable
          transactions.</entry>
         </row>
         <row>
-         <entry><literal>SyncRepLock</></entry>
+         <entry><literal>SyncRepLock</literal></entry>
          <entry>Waiting to read or update information about synchronous
          replicas.</entry>
         </row>
         <row>
-         <entry><literal>BackgroundWorkerLock</></entry>
+         <entry><literal>BackgroundWorkerLock</literal></entry>
          <entry>Waiting to read or update background worker state.</entry>
         </row>
         <row>
-         <entry><literal>DynamicSharedMemoryControlLock</></entry>
+         <entry><literal>DynamicSharedMemoryControlLock</literal></entry>
          <entry>Waiting to read or update dynamic shared memory state.</entry>
         </row>
         <row>
-         <entry><literal>AutoFileLock</></entry>
-         <entry>Waiting to update the <filename>postgresql.auto.conf</> file.</entry>
+         <entry><literal>AutoFileLock</literal></entry>
+         <entry>Waiting to update the <filename>postgresql.auto.conf</filename> file.</entry>
         </row>
         <row>
-         <entry><literal>ReplicationSlotAllocationLock</></entry>
+         <entry><literal>ReplicationSlotAllocationLock</literal></entry>
          <entry>Waiting to allocate or free a replication slot.</entry>
         </row>
         <row>
-         <entry><literal>ReplicationSlotControlLock</></entry>
+         <entry><literal>ReplicationSlotControlLock</literal></entry>
          <entry>Waiting to read or update replication slot state.</entry>
         </row>
         <row>
-         <entry><literal>CommitTsControlLock</></entry>
+         <entry><literal>CommitTsControlLock</literal></entry>
          <entry>Waiting to read or update transaction commit timestamps.</entry>
         </row>
         <row>
-         <entry><literal>CommitTsLock</></entry>
+         <entry><literal>CommitTsLock</literal></entry>
          <entry>Waiting to read or update the last value set for the
          transaction timestamp.</entry>
         </row>
         <row>
-         <entry><literal>ReplicationOriginLock</></entry>
+         <entry><literal>ReplicationOriginLock</literal></entry>
          <entry>Waiting to setup, drop or use replication origin.</entry>
         </row>
         <row>
-         <entry><literal>MultiXactTruncationLock</></entry>
+         <entry><literal>MultiXactTruncationLock</literal></entry>
          <entry>Waiting to read or truncate multixact information.</entry>
         </row>
         <row>
-         <entry><literal>OldSnapshotTimeMapLock</></entry>
+         <entry><literal>OldSnapshotTimeMapLock</literal></entry>
          <entry>Waiting to read or update old snapshot control information.</entry>
         </row>
         <row>
-         <entry><literal>BackendRandomLock</></entry>
+         <entry><literal>BackendRandomLock</literal></entry>
          <entry>Waiting to generate a random number.</entry>
         </row>
         <row>
-         <entry><literal>LogicalRepWorkerLock</></entry>
+         <entry><literal>LogicalRepWorkerLock</literal></entry>
          <entry>Waiting for action on logical replication worker to finish.</entry>
         </row>
         <row>
-         <entry><literal>CLogTruncationLock</></entry>
+         <entry><literal>CLogTruncationLock</literal></entry>
          <entry>Waiting to truncate the write-ahead log or waiting for write-ahead log truncation to finish.</entry>
         </row>
         <row>
-         <entry><literal>clog</></entry>
+         <entry><literal>clog</literal></entry>
          <entry>Waiting for I/O on a clog (transaction status) buffer.</entry>
         </row>
         <row>
-         <entry><literal>commit_timestamp</></entry>
+         <entry><literal>commit_timestamp</literal></entry>
          <entry>Waiting for I/O on commit timestamp buffer.</entry>
         </row>
         <row>
-         <entry><literal>subtrans</></entry>
+         <entry><literal>subtrans</literal></entry>
          <entry>Waiting for I/O a subtransaction buffer.</entry>
         </row>
         <row>
-         <entry><literal>multixact_offset</></entry>
+         <entry><literal>multixact_offset</literal></entry>
          <entry>Waiting for I/O on a multixact offset buffer.</entry>
         </row>
         <row>
-         <entry><literal>multixact_member</></entry>
+         <entry><literal>multixact_member</literal></entry>
          <entry>Waiting for I/O on a multixact_member buffer.</entry>
         </row>
         <row>
-         <entry><literal>async</></entry>
+         <entry><literal>async</literal></entry>
          <entry>Waiting for I/O on an async (notify) buffer.</entry>
         </row>
         <row>
-         <entry><literal>oldserxid</></entry>
+         <entry><literal>oldserxid</literal></entry>
          <entry>Waiting to I/O on an oldserxid buffer.</entry>
         </row>
         <row>
-         <entry><literal>wal_insert</></entry>
+         <entry><literal>wal_insert</literal></entry>
          <entry>Waiting to insert WAL into a memory buffer.</entry>
         </row>
         <row>
-         <entry><literal>buffer_content</></entry>
+         <entry><literal>buffer_content</literal></entry>
          <entry>Waiting to read or write a data page in memory.</entry>
         </row>
         <row>
-         <entry><literal>buffer_io</></entry>
+         <entry><literal>buffer_io</literal></entry>
          <entry>Waiting for I/O on a data page.</entry>
         </row>
         <row>
-         <entry><literal>replication_origin</></entry>
+         <entry><literal>replication_origin</literal></entry>
          <entry>Waiting to read or update the replication progress.</entry>
         </row>
         <row>
-         <entry><literal>replication_slot_io</></entry>
+         <entry><literal>replication_slot_io</literal></entry>
          <entry>Waiting for I/O on a replication slot.</entry>
         </row>
         <row>
-         <entry><literal>proc</></entry>
+         <entry><literal>proc</literal></entry>
          <entry>Waiting to read or update the fast-path lock information.</entry>
         </row>
         <row>
-         <entry><literal>buffer_mapping</></entry>
+         <entry><literal>buffer_mapping</literal></entry>
          <entry>Waiting to associate a data block with a buffer in the buffer
          pool.</entry>
         </row>
         <row>
-         <entry><literal>lock_manager</></entry>
+         <entry><literal>lock_manager</literal></entry>
          <entry>Waiting to add or examine locks for backends, or waiting to
          join or exit a locking group (used by parallel query).</entry>
         </row>
         <row>
-         <entry><literal>predicate_lock_manager</></entry>
+         <entry><literal>predicate_lock_manager</literal></entry>
          <entry>Waiting to add or examine predicate lock information.</entry>
         </row>
         <row>
-         <entry><literal>parallel_query_dsa</></entry>
+         <entry><literal>parallel_query_dsa</literal></entry>
          <entry>Waiting for parallel query dynamic shared memory allocation lock.</entry>
         </row>
         <row>
-         <entry><literal>tbm</></entry>
+         <entry><literal>tbm</literal></entry>
          <entry>Waiting for TBM shared iterator lock.</entry>
         </row>
         <row>
-         <entry morerows="9"><literal>Lock</></entry>
-         <entry><literal>relation</></entry>
+         <entry morerows="9"><literal>Lock</literal></entry>
+         <entry><literal>relation</literal></entry>
          <entry>Waiting to acquire a lock on a relation.</entry>
         </row>
         <row>
-         <entry><literal>extend</></entry>
+         <entry><literal>extend</literal></entry>
          <entry>Waiting to extend a relation.</entry>
         </row>
         <row>
-         <entry><literal>page</></entry>
+         <entry><literal>page</literal></entry>
          <entry>Waiting to acquire a lock on page of a relation.</entry>
         </row>
         <row>
-         <entry><literal>tuple</></entry>
+         <entry><literal>tuple</literal></entry>
          <entry>Waiting to acquire a lock on a tuple.</entry>
         </row>
         <row>
-         <entry><literal>transactionid</></entry>
+         <entry><literal>transactionid</literal></entry>
          <entry>Waiting for a transaction to finish.</entry>
         </row>
         <row>
-         <entry><literal>virtualxid</></entry>
+         <entry><literal>virtualxid</literal></entry>
          <entry>Waiting to acquire a virtual xid lock.</entry>
         </row>
         <row>
-         <entry><literal>speculative token</></entry>
+         <entry><literal>speculative token</literal></entry>
          <entry>Waiting to acquire a speculative insertion lock.</entry>
         </row>
         <row>
-         <entry><literal>object</></entry>
+         <entry><literal>object</literal></entry>
          <entry>Waiting to acquire a lock on a non-relation database object.</entry>
         </row>
         <row>
-         <entry><literal>userlock</></entry>
+         <entry><literal>userlock</literal></entry>
          <entry>Waiting to acquire a user lock.</entry>
         </row>
         <row>
-         <entry><literal>advisory</></entry>
+         <entry><literal>advisory</literal></entry>
          <entry>Waiting to acquire an advisory user lock.</entry>
         </row>
         <row>
-         <entry><literal>BufferPin</></entry>
-         <entry><literal>BufferPin</></entry>
+         <entry><literal>BufferPin</literal></entry>
+         <entry><literal>BufferPin</literal></entry>
          <entry>Waiting to acquire a pin on a buffer.</entry>
         </row>
         <row>
-         <entry morerows="13"><literal>Activity</></entry>
-         <entry><literal>ArchiverMain</></entry>
+         <entry morerows="13"><literal>Activity</literal></entry>
+         <entry><literal>ArchiverMain</literal></entry>
          <entry>Waiting in main loop of the archiver process.</entry>
         </row>
         <row>
-         <entry><literal>AutoVacuumMain</></entry>
+         <entry><literal>AutoVacuumMain</literal></entry>
          <entry>Waiting in main loop of autovacuum launcher process.</entry>
         </row>
         <row>
-         <entry><literal>BgWriterHibernate</></entry>
+         <entry><literal>BgWriterHibernate</literal></entry>
          <entry>Waiting in background writer process, hibernating.</entry>
         </row>
         <row>
-         <entry><literal>BgWriterMain</></entry>
+         <entry><literal>BgWriterMain</literal></entry>
          <entry>Waiting in main loop of background writer process background worker.</entry>
         </row>
         <row>
-         <entry><literal>CheckpointerMain</></entry>
+         <entry><literal>CheckpointerMain</literal></entry>
          <entry>Waiting in main loop of checkpointer process.</entry>
         </row>
         <row>
-         <entry><literal>LogicalLauncherMain</></entry>
+         <entry><literal>LogicalLauncherMain</literal></entry>
          <entry>Waiting in main loop of logical launcher process.</entry>
         </row>
         <row>
-         <entry><literal>LogicalApplyMain</></entry>
+         <entry><literal>LogicalApplyMain</literal></entry>
          <entry>Waiting in main loop of logical apply process.</entry>
         </row>
         <row>
-         <entry><literal>PgStatMain</></entry>
+         <entry><literal>PgStatMain</literal></entry>
          <entry>Waiting in main loop of the statistics collector process.</entry>
         </row>
         <row>
-         <entry><literal>RecoveryWalAll</></entry>
+         <entry><literal>RecoveryWalAll</literal></entry>
          <entry>Waiting for WAL from any kind of source (local, archive or stream) at recovery.</entry>
         </row>
         <row>
-         <entry><literal>RecoveryWalStream</></entry>
+         <entry><literal>RecoveryWalStream</literal></entry>
          <entry>Waiting for WAL from a stream at recovery.</entry>
         </row>
         <row>
-         <entry><literal>SysLoggerMain</></entry>
+         <entry><literal>SysLoggerMain</literal></entry>
          <entry>Waiting in main loop of syslogger process.</entry>
         </row>
         <row>
-         <entry><literal>WalReceiverMain</></entry>
+         <entry><literal>WalReceiverMain</literal></entry>
          <entry>Waiting in main loop of WAL receiver process.</entry>
         </row>
         <row>
-         <entry><literal>WalSenderMain</></entry>
+         <entry><literal>WalSenderMain</literal></entry>
          <entry>Waiting in main loop of WAL sender process.</entry>
         </row>
         <row>
-         <entry><literal>WalWriterMain</></entry>
+         <entry><literal>WalWriterMain</literal></entry>
          <entry>Waiting in main loop of WAL writer process.</entry>
         </row>
         <row>
-         <entry morerows="7"><literal>Client</></entry>
-         <entry><literal>ClientRead</></entry>
+         <entry morerows="7"><literal>Client</literal></entry>
+         <entry><literal>ClientRead</literal></entry>
          <entry>Waiting to read data from the client.</entry>
         </row>
         <row>
-         <entry><literal>ClientWrite</></entry>
+         <entry><literal>ClientWrite</literal></entry>
          <entry>Waiting to write data from the client.</entry>
         </row>
         <row>
-         <entry><literal>LibPQWalReceiverConnect</></entry>
+         <entry><literal>LibPQWalReceiverConnect</literal></entry>
          <entry>Waiting in WAL receiver to establish connection to remote server.</entry>
         </row>
         <row>
-         <entry><literal>LibPQWalReceiverReceive</></entry>
+         <entry><literal>LibPQWalReceiverReceive</literal></entry>
          <entry>Waiting in WAL receiver to receive data from remote server.</entry>
         </row>
         <row>
-         <entry><literal>SSLOpenServer</></entry>
+         <entry><literal>SSLOpenServer</literal></entry>
          <entry>Waiting for SSL while attempting connection.</entry>
         </row>
         <row>
-         <entry><literal>WalReceiverWaitStart</></entry>
+         <entry><literal>WalReceiverWaitStart</literal></entry>
          <entry>Waiting for startup process to send initial data for streaming replication.</entry>
         </row>
         <row>
-         <entry><literal>WalSenderWaitForWAL</></entry>
+         <entry><literal>WalSenderWaitForWAL</literal></entry>
          <entry>Waiting for WAL to be flushed in WAL sender process.</entry>
         </row>
         <row>
-         <entry><literal>WalSenderWriteData</></entry>
+         <entry><literal>WalSenderWriteData</literal></entry>
          <entry>Waiting for any activity when processing replies from WAL receiver in WAL sender process.</entry>
         </row>
         <row>
-         <entry><literal>Extension</></entry>
-         <entry><literal>Extension</></entry>
+         <entry><literal>Extension</literal></entry>
+         <entry><literal>Extension</literal></entry>
          <entry>Waiting in an extension.</entry>
         </row>
         <row>
-         <entry morerows="17"><literal>IPC</></entry>
-         <entry><literal>BgWorkerShutdown</></entry>
+         <entry morerows="17"><literal>IPC</literal></entry>
+         <entry><literal>BgWorkerShutdown</literal></entry>
          <entry>Waiting for background worker to shut down.</entry>
         </row>
         <row>
-         <entry><literal>BgWorkerStartup</></entry>
+         <entry><literal>BgWorkerStartup</literal></entry>
          <entry>Waiting for background worker to start up.</entry>
         </row>
         <row>
-         <entry><literal>BtreePage</></entry>
+         <entry><literal>BtreePage</literal></entry>
          <entry>Waiting for the page number needed to continue a parallel B-tree scan to become available.</entry>
         </row>
         <row>
-         <entry><literal>ExecuteGather</></entry>
-         <entry>Waiting for activity from child process when executing <literal>Gather</> node.</entry>
+         <entry><literal>ExecuteGather</literal></entry>
+         <entry>Waiting for activity from child process when executing <literal>Gather</literal> node.</entry>
         </row>
         <row>
-         <entry><literal>LogicalSyncData</></entry>
+         <entry><literal>LogicalSyncData</literal></entry>
          <entry>Waiting for logical replication remote server to send data for initial table synchronization.</entry>
         </row>
         <row>
-         <entry><literal>LogicalSyncStateChange</></entry>
+         <entry><literal>LogicalSyncStateChange</literal></entry>
          <entry>Waiting for logical replication remote server to change state.</entry>
         </row>
         <row>
-         <entry><literal>MessageQueueInternal</></entry>
+         <entry><literal>MessageQueueInternal</literal></entry>
          <entry>Waiting for other process to be attached in shared message queue.</entry>
         </row>
         <row>
-         <entry><literal>MessageQueuePutMessage</></entry>
+         <entry><literal>MessageQueuePutMessage</literal></entry>
          <entry>Waiting to write a protocol message to a shared message queue.</entry>
         </row>
         <row>
-         <entry><literal>MessageQueueReceive</></entry>
+         <entry><literal>MessageQueueReceive</literal></entry>
          <entry>Waiting to receive bytes from a shared message queue.</entry>
         </row>
         <row>
-         <entry><literal>MessageQueueSend</></entry>
+         <entry><literal>MessageQueueSend</literal></entry>
          <entry>Waiting to send bytes to a shared message queue.</entry>
         </row>
         <row>
-         <entry><literal>ParallelFinish</></entry>
+         <entry><literal>ParallelFinish</literal></entry>
          <entry>Waiting for parallel workers to finish computing.</entry>
         </row>
         <row>
-         <entry><literal>ParallelBitmapScan</></entry>
+         <entry><literal>ParallelBitmapScan</literal></entry>
          <entry>Waiting for parallel bitmap scan to become initialized.</entry>
         </row>
         <row>
-         <entry><literal>ProcArrayGroupUpdate</></entry>
+         <entry><literal>ProcArrayGroupUpdate</literal></entry>
          <entry>Waiting for group leader to clear transaction id at transaction end.</entry>
         </row>
         <row>
-         <entry><literal>ClogGroupUpdate</></entry>
+         <entry><literal>ClogGroupUpdate</literal></entry>
          <entry>Waiting for group leader to update transaction status at transaction end.</entry>
         </row>
         <row>
-         <entry><literal>ReplicationOriginDrop</></entry>
+         <entry><literal>ReplicationOriginDrop</literal></entry>
          <entry>Waiting for a replication origin to become inactive to be dropped.</entry>
         </row>
         <row>
-         <entry><literal>ReplicationSlotDrop</></entry>
+         <entry><literal>ReplicationSlotDrop</literal></entry>
          <entry>Waiting for a replication slot to become inactive to be dropped.</entry>
         </row>
         <row>
-         <entry><literal>SafeSnapshot</></entry>
-         <entry>Waiting for a snapshot for a <literal>READ ONLY DEFERRABLE</> transaction.</entry>
+         <entry><literal>SafeSnapshot</literal></entry>
+         <entry>Waiting for a snapshot for a <literal>READ ONLY DEFERRABLE</literal> transaction.</entry>
         </row>
         <row>
-         <entry><literal>SyncRep</></entry>
+         <entry><literal>SyncRep</literal></entry>
          <entry>Waiting for confirmation from remote server during synchronous replication.</entry>
         </row>
         <row>
-         <entry morerows="2"><literal>Timeout</></entry>
-         <entry><literal>BaseBackupThrottle</></entry>
+         <entry morerows="2"><literal>Timeout</literal></entry>
+         <entry><literal>BaseBackupThrottle</literal></entry>
          <entry>Waiting during base backup when throttling activity.</entry>
         </row>
         <row>
-         <entry><literal>PgSleep</></entry>
-         <entry>Waiting in process that called <function>pg_sleep</>.</entry>
+         <entry><literal>PgSleep</literal></entry>
+         <entry>Waiting in process that called <function>pg_sleep</function>.</entry>
         </row>
         <row>
-         <entry><literal>RecoveryApplyDelay</></entry>
+         <entry><literal>RecoveryApplyDelay</literal></entry>
          <entry>Waiting to apply WAL at recovery because it is delayed.</entry>
         </row>
         <row>
-         <entry morerows="65"><literal>IO</></entry>
-         <entry><literal>BufFileRead</></entry>
+         <entry morerows="65"><literal>IO</literal></entry>
+         <entry><literal>BufFileRead</literal></entry>
          <entry>Waiting for a read from a buffered file.</entry>
         </row>
         <row>
-         <entry><literal>BufFileWrite</></entry>
+         <entry><literal>BufFileWrite</literal></entry>
          <entry>Waiting for a write to a buffered file.</entry>
         </row>
         <row>
-         <entry><literal>ControlFileRead</></entry>
+         <entry><literal>ControlFileRead</literal></entry>
          <entry>Waiting for a read from the control file.</entry>
         </row>
         <row>
-         <entry><literal>ControlFileSync</></entry>
+         <entry><literal>ControlFileSync</literal></entry>
          <entry>Waiting for the control file to reach stable storage.</entry>
         </row>
         <row>
-         <entry><literal>ControlFileSyncUpdate</></entry>
+         <entry><literal>ControlFileSyncUpdate</literal></entry>
          <entry>Waiting for an update to the control file to reach stable storage.</entry>
         </row>
         <row>
-         <entry><literal>ControlFileWrite</></entry>
+         <entry><literal>ControlFileWrite</literal></entry>
          <entry>Waiting for a write to the control file.</entry>
         </row>
         <row>
-         <entry><literal>ControlFileWriteUpdate</></entry>
+         <entry><literal>ControlFileWriteUpdate</literal></entry>
          <entry>Waiting for a write to update the control file.</entry>
         </row>
         <row>
-         <entry><literal>CopyFileRead</></entry>
+         <entry><literal>CopyFileRead</literal></entry>
          <entry>Waiting for a read during a file copy operation.</entry>
         </row>
         <row>
-         <entry><literal>CopyFileWrite</></entry>
+         <entry><literal>CopyFileWrite</literal></entry>
          <entry>Waiting for a write during a file copy operation.</entry>
         </row>
         <row>
-         <entry><literal>DataFileExtend</></entry>
+         <entry><literal>DataFileExtend</literal></entry>
          <entry>Waiting for a relation data file to be extended.</entry>
         </row>
         <row>
-         <entry><literal>DataFileFlush</></entry>
+         <entry><literal>DataFileFlush</literal></entry>
          <entry>Waiting for a relation data file to reach stable storage.</entry>
         </row>
         <row>
-         <entry><literal>DataFileImmediateSync</></entry>
+         <entry><literal>DataFileImmediateSync</literal></entry>
          <entry>Waiting for an immediate synchronization of a relation data file to stable storage.</entry>
         </row>
         <row>
-         <entry><literal>DataFilePrefetch</></entry>
+         <entry><literal>DataFilePrefetch</literal></entry>
          <entry>Waiting for an asynchronous prefetch from a relation data file.</entry>
         </row>
         <row>
-         <entry><literal>DataFileRead</></entry>
+         <entry><literal>DataFileRead</literal></entry>
          <entry>Waiting for a read from a relation data file.</entry>
         </row>
         <row>
-         <entry><literal>DataFileSync</></entry>
+         <entry><literal>DataFileSync</literal></entry>
          <entry>Waiting for changes to a relation data file to reach stable storage.</entry>
         </row>
         <row>
-         <entry><literal>DataFileTruncate</></entry>
+         <entry><literal>DataFileTruncate</literal></entry>
          <entry>Waiting for a relation data file to be truncated.</entry>
         </row>
         <row>
-         <entry><literal>DataFileWrite</></entry>
+         <entry><literal>DataFileWrite</literal></entry>
          <entry>Waiting for a write to a relation data file.</entry>
         </row>
         <row>
-         <entry><literal>DSMFillZeroWrite</></entry>
+         <entry><literal>DSMFillZeroWrite</literal></entry>
          <entry>Waiting to write zero bytes to a dynamic shared memory backing file.</entry>
         </row>
         <row>
-         <entry><literal>LockFileAddToDataDirRead</></entry>
+         <entry><literal>LockFileAddToDataDirRead</literal></entry>
          <entry>Waiting for a read while adding a line to the data directory lock file.</entry>
         </row>
         <row>
-         <entry><literal>LockFileAddToDataDirSync</></entry>
+         <entry><literal>LockFileAddToDataDirSync</literal></entry>
          <entry>Waiting for data to reach stable storage while adding a line to the data directory lock file.</entry>
         </row>
         <row>
-         <entry><literal>LockFileAddToDataDirWrite</></entry>
+         <entry><literal>LockFileAddToDataDirWrite</literal></entry>
          <entry>Waiting for a write while adding a line to the data directory lock file.</entry>
         </row>
         <row>
-         <entry><literal>LockFileCreateRead</></entry>
+         <entry><literal>LockFileCreateRead</literal></entry>
          <entry>Waiting to read while creating the data directory lock file.</entry>
         </row>
         <row>
-         <entry><literal>LockFileCreateSync</></entry>
+         <entry><literal>LockFileCreateSync</literal></entry>
          <entry>Waiting for data to reach stable storage while creating the data directory lock file.</entry>
         </row>
         <row>
-         <entry><literal>LockFileCreateWrite</></entry>
+         <entry><literal>LockFileCreateWrite</literal></entry>
          <entry>Waiting for a write while creating the data directory lock file.</entry>
         </row>
         <row>
-         <entry><literal>LockFileReCheckDataDirRead</></entry>
+         <entry><literal>LockFileReCheckDataDirRead</literal></entry>
          <entry>Waiting for a read during recheck of the data directory lock file.</entry>
         </row>
         <row>
-         <entry><literal>LogicalRewriteCheckpointSync</></entry>
+         <entry><literal>LogicalRewriteCheckpointSync</literal></entry>
          <entry>Waiting for logical rewrite mappings to reach stable storage during a checkpoint.</entry>
         </row>
         <row>
-         <entry><literal>LogicalRewriteMappingSync</></entry>
+         <entry><literal>LogicalRewriteMappingSync</literal></entry>
          <entry>Waiting for mapping data to reach stable storage during a logical rewrite.</entry>
         </row>
         <row>
-         <entry><literal>LogicalRewriteMappingWrite</></entry>
+         <entry><literal>LogicalRewriteMappingWrite</literal></entry>
          <entry>Waiting for a write of mapping data during a logical rewrite.</entry>
         </row>
         <row>
-         <entry><literal>LogicalRewriteSync</></entry>
+         <entry><literal>LogicalRewriteSync</literal></entry>
          <entry>Waiting for logical rewrite mappings to reach stable storage.</entry>
         </row>
         <row>
-         <entry><literal>LogicalRewriteWrite</></entry>
+         <entry><literal>LogicalRewriteWrite</literal></entry>
          <entry>Waiting for a write of logical rewrite mappings.</entry>
         </row>
         <row>
-         <entry><literal>RelationMapRead</></entry>
+         <entry><literal>RelationMapRead</literal></entry>
          <entry>Waiting for a read of the relation map file.</entry>
         </row>
         <row>
-         <entry><literal>RelationMapSync</></entry>
+         <entry><literal>RelationMapSync</literal></entry>
          <entry>Waiting for the relation map file to reach stable storage.</entry>
         </row>
         <row>
-         <entry><literal>RelationMapWrite</></entry>
+         <entry><literal>RelationMapWrite</literal></entry>
          <entry>Waiting for a write to the relation map file.</entry>
         </row>
         <row>
-         <entry><literal>ReorderBufferRead</></entry>
+         <entry><literal>ReorderBufferRead</literal></entry>
          <entry>Waiting for a read during reorder buffer management.</entry>
         </row>
         <row>
-         <entry><literal>ReorderBufferWrite</></entry>
+         <entry><literal>ReorderBufferWrite</literal></entry>
          <entry>Waiting for a write during reorder buffer management.</entry>
         </row>
         <row>
-         <entry><literal>ReorderLogicalMappingRead</></entry>
+         <entry><literal>ReorderLogicalMappingRead</literal></entry>
          <entry>Waiting for a read of a logical mapping during reorder buffer management.</entry>
         </row>
         <row>
-         <entry><literal>ReplicationSlotRead</></entry>
+         <entry><literal>ReplicationSlotRead</literal></entry>
          <entry>Waiting for a read from a replication slot control file.</entry>
         </row>
         <row>
-         <entry><literal>ReplicationSlotRestoreSync</></entry>
+         <entry><literal>ReplicationSlotRestoreSync</literal></entry>
          <entry>Waiting for a replication slot control file to reach stable storage while restoring it to memory.</entry>
         </row>
         <row>
-         <entry><literal>ReplicationSlotSync</></entry>
+         <entry><literal>ReplicationSlotSync</literal></entry>
          <entry>Waiting for a replication slot control file to reach stable storage.</entry>
         </row>
         <row>
-         <entry><literal>ReplicationSlotWrite</></entry>
+         <entry><literal>ReplicationSlotWrite</literal></entry>
          <entry>Waiting for a write to a replication slot control file.</entry>
         </row>
         <row>
-         <entry><literal>SLRUFlushSync</></entry>
+         <entry><literal>SLRUFlushSync</literal></entry>
          <entry>Waiting for SLRU data to reach stable storage during a checkpoint or database shutdown.</entry>
         </row>
         <row>
-         <entry><literal>SLRURead</></entry>
+         <entry><literal>SLRURead</literal></entry>
          <entry>Waiting for a read of an SLRU page.</entry>
         </row>
         <row>
-         <entry><literal>SLRUSync</></entry>
+         <entry><literal>SLRUSync</literal></entry>
          <entry>Waiting for SLRU data to reach stable storage following a page write.</entry>
         </row>
         <row>
-         <entry><literal>SLRUWrite</></entry>
+         <entry><literal>SLRUWrite</literal></entry>
          <entry>Waiting for a write of an SLRU page.</entry>
         </row>
         <row>
-         <entry><literal>SnapbuildRead</></entry>
+         <entry><literal>SnapbuildRead</literal></entry>
          <entry>Waiting for a read of a serialized historical catalog snapshot.</entry>
         </row>
         <row>
-         <entry><literal>SnapbuildSync</></entry>
+         <entry><literal>SnapbuildSync</literal></entry>
          <entry>Waiting for a serialized historical catalog snapshot to reach stable storage.</entry>
         </row>
         <row>
-         <entry><literal>SnapbuildWrite</></entry>
+         <entry><literal>SnapbuildWrite</literal></entry>
          <entry>Waiting for a write of a serialized historical catalog snapshot.</entry>
         </row>
         <row>
-         <entry><literal>TimelineHistoryFileSync</></entry>
+         <entry><literal>TimelineHistoryFileSync</literal></entry>
          <entry>Waiting for a timeline history file received via streaming replication to reach stable storage.</entry>
         </row>
         <row>
-         <entry><literal>TimelineHistoryFileWrite</></entry>
+         <entry><literal>TimelineHistoryFileWrite</literal></entry>
          <entry>Waiting for a write of a timeline history file received via streaming replication.</entry>
         </row>
         <row>
-         <entry><literal>TimelineHistoryRead</></entry>
+         <entry><literal>TimelineHistoryRead</literal></entry>
          <entry>Waiting for a read of a timeline history file.</entry>
         </row>
         <row>
-         <entry><literal>TimelineHistorySync</></entry>
+         <entry><literal>TimelineHistorySync</literal></entry>
          <entry>Waiting for a newly created timeline history file to reach stable storage.</entry>
         </row>
         <row>
-         <entry><literal>TimelineHistoryWrite</></entry>
+         <entry><literal>TimelineHistoryWrite</literal></entry>
          <entry>Waiting for a write of a newly created timeline history file.</entry>
         </row>
         <row>
-         <entry><literal>TwophaseFileRead</></entry>
+         <entry><literal>TwophaseFileRead</literal></entry>
          <entry>Waiting for a read of a two phase state file.</entry>
         </row>
         <row>
-         <entry><literal>TwophaseFileSync</></entry>
+         <entry><literal>TwophaseFileSync</literal></entry>
          <entry>Waiting for a two phase state file to reach stable storage.</entry>
         </row>
         <row>
-         <entry><literal>TwophaseFileWrite</></entry>
+         <entry><literal>TwophaseFileWrite</literal></entry>
          <entry>Waiting for a write of a two phase state file.</entry>
         </row>
         <row>
-         <entry><literal>WALBootstrapSync</></entry>
+         <entry><literal>WALBootstrapSync</literal></entry>
          <entry>Waiting for WAL to reach stable storage during bootstrapping.</entry>
         </row>
         <row>
-         <entry><literal>WALBootstrapWrite</></entry>
+         <entry><literal>WALBootstrapWrite</literal></entry>
          <entry>Waiting for a write of a WAL page during bootstrapping.</entry>
         </row>
         <row>
-         <entry><literal>WALCopyRead</></entry>
+         <entry><literal>WALCopyRead</literal></entry>
          <entry>Waiting for a read when creating a new WAL segment by copying an existing one.</entry>
         </row>
         <row>
-         <entry><literal>WALCopySync</></entry>
+         <entry><literal>WALCopySync</literal></entry>
          <entry>Waiting a new WAL segment created by copying an existing one to reach stable storage.</entry>
         </row>
         <row>
-         <entry><literal>WALCopyWrite</></entry>
+         <entry><literal>WALCopyWrite</literal></entry>
          <entry>Waiting for a write when creating a new WAL segment by copying an existing one.</entry>
         </row>
         <row>
-         <entry><literal>WALInitSync</></entry>
+         <entry><literal>WALInitSync</literal></entry>
          <entry>Waiting for a newly initialized WAL file to reach stable storage.</entry>
         </row>
         <row>
-         <entry><literal>WALInitWrite</></entry>
+         <entry><literal>WALInitWrite</literal></entry>
          <entry>Waiting for a write while initializing a new WAL file.</entry>
         </row>
         <row>
-         <entry><literal>WALRead</></entry>
+         <entry><literal>WALRead</literal></entry>
          <entry>Waiting for a read from a WAL file.</entry>
         </row>
         <row>
-         <entry><literal>WALSenderTimelineHistoryRead</></entry>
+         <entry><literal>WALSenderTimelineHistoryRead</literal></entry>
          <entry>Waiting for a read from a timeline history file during walsender timeline command.</entry>
         </row>
         <row>
-         <entry><literal>WALSyncMethodAssign</></entry>
+         <entry><literal>WALSyncMethodAssign</literal></entry>
          <entry>Waiting for data to reach stable storage while assigning WAL sync method.</entry>
         </row>
         <row>
-         <entry><literal>WALWrite</></entry>
+         <entry><literal>WALWrite</literal></entry>
          <entry>Waiting for a write to a WAL file.</entry>
         </row>
       </tbody>
@@ -1615,10 +1615,10 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
    <note>
     <para>
      For tranches registered by extensions, the name is specified by extension
-     and this will be displayed as <structfield>wait_event</>.  It is quite
+     and this will be displayed as <structfield>wait_event</structfield>.  It is quite
      possible that user has registered the tranche in one of the backends (by
      having allocation in dynamic shared memory) in which case other backends
-     won't have that information, so we display <literal>extension</> for such
+     won't have that information, so we display <literal>extension</literal> for such
      cases.
     </para>
    </note>
@@ -1649,53 +1649,53 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
 
    <tbody>
     <row>
-     <entry><structfield>pid</></entry>
-     <entry><type>integer</></entry>
+     <entry><structfield>pid</structfield></entry>
+     <entry><type>integer</type></entry>
      <entry>Process ID of a WAL sender process</entry>
     </row>
     <row>
-     <entry><structfield>usesysid</></entry>
-     <entry><type>oid</></entry>
+     <entry><structfield>usesysid</structfield></entry>
+     <entry><type>oid</type></entry>
      <entry>OID of the user logged into this WAL sender process</entry>
     </row>
     <row>
-     <entry><structfield>usename</></entry>
-     <entry><type>name</></entry>
+     <entry><structfield>usename</structfield></entry>
+     <entry><type>name</type></entry>
      <entry>Name of the user logged into this WAL sender process</entry>
     </row>
     <row>
-     <entry><structfield>application_name</></entry>
-     <entry><type>text</></entry>
+     <entry><structfield>application_name</structfield></entry>
+     <entry><type>text</type></entry>
      <entry>Name of the application that is connected
       to this WAL sender</entry>
     </row>
     <row>
-     <entry><structfield>client_addr</></entry>
-     <entry><type>inet</></entry>
+     <entry><structfield>client_addr</structfield></entry>
+     <entry><type>inet</type></entry>
      <entry>IP address of the client connected to this WAL sender.
       If this field is null, it indicates that the client is
       connected via a Unix socket on the server machine.
      </entry>
     </row>
     <row>
-     <entry><structfield>client_hostname</></entry>
-     <entry><type>text</></entry>
+     <entry><structfield>client_hostname</structfield></entry>
+     <entry><type>text</type></entry>
      <entry>Host name of the connected client, as reported by a
-      reverse DNS lookup of <structfield>client_addr</>. This field will
+      reverse DNS lookup of <structfield>client_addr</structfield>. This field will
       only be non-null for IP connections, and only when <xref
       linkend="guc-log-hostname"> is enabled.
      </entry>
     </row>
     <row>
-     <entry><structfield>client_port</></entry>
-     <entry><type>integer</></entry>
+     <entry><structfield>client_port</structfield></entry>
+     <entry><type>integer</type></entry>
      <entry>TCP port number that the client is using for communication
-      with this WAL sender, or <literal>-1</> if a Unix socket is used
+      with this WAL sender, or <literal>-1</literal> if a Unix socket is used
      </entry>
     </row>
     <row>
-     <entry><structfield>backend_start</></entry>
-     <entry><type>timestamp with time zone</></entry>
+     <entry><structfield>backend_start</structfield></entry>
+     <entry><type>timestamp with time zone</type></entry>
      <entry>Time when this process was started, i.e., when the
       client connected to this WAL sender
      </entry>
@@ -1703,71 +1703,71 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
     <row>
      <entry><structfield>backend_xmin</structfield></entry>
      <entry><type>xid</type></entry>
-     <entry>This standby's <literal>xmin</> horizon reported
+     <entry>This standby's <literal>xmin</literal> horizon reported
      by <xref linkend="guc-hot-standby-feedback">.</entry>
     </row>
     <row>
-     <entry><structfield>state</></entry>
-     <entry><type>text</></entry>
+     <entry><structfield>state</structfield></entry>
+     <entry><type>text</type></entry>
      <entry>Current WAL sender state.
        Possible values are:
        <itemizedlist>
          <listitem>
           <para>
-           <literal>startup</>: This WAL sender is starting up.
+           <literal>startup</literal>: This WAL sender is starting up.
           </para>
          </listitem>
          <listitem>
           <para>
-           <literal>catchup</>: This WAL sender's connected standby is
+           <literal>catchup</literal>: This WAL sender's connected standby is
            catching up with the primary.
           </para>
          </listitem>
          <listitem>
           <para>
-           <literal>streaming</>: This WAL sender is streaming changes
+           <literal>streaming</literal>: This WAL sender is streaming changes
            after its connected standby server has caught up with the primary.
           </para>
          </listitem>
          <listitem>
           <para>
-           <literal>backup</>: This WAL sender is sending a backup.
+           <literal>backup</literal>: This WAL sender is sending a backup.
           </para>
          </listitem>
          <listitem>
           <para>
-           <literal>stopping</>: This WAL sender is stopping.
+           <literal>stopping</literal>: This WAL sender is stopping.
           </para>
          </listitem>
        </itemizedlist>
      </entry>
     </row>
     <row>
-     <entry><structfield>sent_lsn</></entry>
-     <entry><type>pg_lsn</></entry>
+     <entry><structfield>sent_lsn</structfield></entry>
+     <entry><type>pg_lsn</type></entry>
      <entry>Last write-ahead log location sent on this connection</entry>
     </row>
     <row>
-     <entry><structfield>write_lsn</></entry>
-     <entry><type>pg_lsn</></entry>
+     <entry><structfield>write_lsn</structfield></entry>
+     <entry><type>pg_lsn</type></entry>
      <entry>Last write-ahead log location written to disk by this standby
       server</entry>
     </row>
     <row>
-     <entry><structfield>flush_lsn</></entry>
-     <entry><type>pg_lsn</></entry>
+     <entry><structfield>flush_lsn</structfield></entry>
+     <entry><type>pg_lsn</type></entry>
      <entry>Last write-ahead log location flushed to disk by this standby
       server</entry>
     </row>
     <row>
-     <entry><structfield>replay_lsn</></entry>
-     <entry><type>pg_lsn</></entry>
+     <entry><structfield>replay_lsn</structfield></entry>
+     <entry><type>pg_lsn</type></entry>
      <entry>Last write-ahead log location replayed into the database on this
       standby server</entry>
     </row>
     <row>
-     <entry><structfield>write_lag</></entry>
-     <entry><type>interval</></entry>
+     <entry><structfield>write_lag</structfield></entry>
+     <entry><type>interval</type></entry>
      <entry>Time elapsed between flushing recent WAL locally and receiving
       notification that this standby server has written it (but not yet
       flushed it or applied it).  This can be used to gauge the delay that
@@ -1776,8 +1776,8 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
       server was configured as a synchronous standby.</entry>
     </row>
     <row>
-     <entry><structfield>flush_lag</></entry>
-     <entry><type>interval</></entry>
+     <entry><structfield>flush_lag</structfield></entry>
+     <entry><type>interval</type></entry>
      <entry>Time elapsed between flushing recent WAL locally and receiving
       notification that this standby server has written and flushed it
       (but not yet applied it).  This can be used to gauge the delay that
@@ -1786,8 +1786,8 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
       server was configured as a synchronous standby.</entry>
     </row>
     <row>
-     <entry><structfield>replay_lag</></entry>
-     <entry><type>interval</></entry>
+     <entry><structfield>replay_lag</structfield></entry>
+     <entry><type>interval</type></entry>
      <entry>Time elapsed between flushing recent WAL locally and receiving
       notification that this standby server has written, flushed and
       applied it.  This can be used to gauge the delay that
@@ -1796,38 +1796,38 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
       server was configured as a synchronous standby.</entry>
     </row>
     <row>
-     <entry><structfield>sync_priority</></entry>
-     <entry><type>integer</></entry>
+     <entry><structfield>sync_priority</structfield></entry>
+     <entry><type>integer</type></entry>
      <entry>Priority of this standby server for being chosen as the
       synchronous standby in a priority-based synchronous replication.
       This has no effect in a quorum-based synchronous replication.</entry>
     </row>
     <row>
-     <entry><structfield>sync_state</></entry>
-     <entry><type>text</></entry>
+     <entry><structfield>sync_state</structfield></entry>
+     <entry><type>text</type></entry>
      <entry>Synchronous state of this standby server.
        Possible values are:
        <itemizedlist>
          <listitem>
           <para>
-           <literal>async</>: This standby server is asynchronous.
+           <literal>async</literal>: This standby server is asynchronous.
           </para>
          </listitem>
          <listitem>
           <para>
-           <literal>potential</>: This standby server is now asynchronous,
+           <literal>potential</literal>: This standby server is now asynchronous,
            but can potentially become synchronous if one of current
            synchronous ones fails.
           </para>
          </listitem>
          <listitem>
           <para>
-           <literal>sync</>: This standby server is synchronous.
+           <literal>sync</literal>: This standby server is synchronous.
           </para>
          </listitem>
          <listitem>
           <para>
-           <literal>quorum</>: This standby server is considered as a candidate
+           <literal>quorum</literal>: This standby server is considered as a candidate
            for quorum standbys.
           </para>
          </listitem>
@@ -1897,69 +1897,69 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
 
    <tbody>
     <row>
-     <entry><structfield>pid</></entry>
-     <entry><type>integer</></entry>
+     <entry><structfield>pid</structfield></entry>
+     <entry><type>integer</type></entry>
      <entry>Process ID of the WAL receiver process</entry>
     </row>
     <row>
-     <entry><structfield>status</></entry>
-     <entry><type>text</></entry>
+     <entry><structfield>status</structfield></entry>
+     <entry><type>text</type></entry>
      <entry>Activity status of the WAL receiver process</entry>
     </row>
     <row>
-     <entry><structfield>receive_start_lsn</></entry>
-     <entry><type>pg_lsn</></entry>
+     <entry><structfield>receive_start_lsn</structfield></entry>
+     <entry><type>pg_lsn</type></entry>
      <entry>First write-ahead log location used when WAL receiver is
       started</entry>
     </row>
     <row>
-     <entry><structfield>receive_start_tli</></entry>
-     <entry><type>integer</></entry>
+     <entry><structfield>receive_start_tli</structfield></entry>
+     <entry><type>integer</type></entry>
      <entry>First timeline number used when WAL receiver is started</entry>
     </row>
     <row>
-     <entry><structfield>received_lsn</></entry>
-     <entry><type>pg_lsn</></entry>
+     <entry><structfield>received_lsn</structfield></entry>
+     <entry><type>pg_lsn</type></entry>
      <entry>Last write-ahead log location already received and flushed to
       disk, the initial value of this field being the first log location used
       when WAL receiver is started</entry>
     </row>
     <row>
-     <entry><structfield>received_tli</></entry>
-     <entry><type>integer</></entry>
+     <entry><structfield>received_tli</structfield></entry>
+     <entry><type>integer</type></entry>
      <entry>Timeline number of last write-ahead log location received and
       flushed to disk, the initial value of this field being the timeline
       number of the first log location used when WAL receiver is started
      </entry>
     </row>
     <row>
-     <entry><structfield>last_msg_send_time</></entry>
-     <entry><type>timestamp with time zone</></entry>
+     <entry><structfield>last_msg_send_time</structfield></entry>
+     <entry><type>timestamp with time zone</type></entry>
      <entry>Send time of last message received from origin WAL sender</entry>
     </row>
     <row>
-     <entry><structfield>last_msg_receipt_time</></entry>
-     <entry><type>timestamp with time zone</></entry>
+     <entry><structfield>last_msg_receipt_time</structfield></entry>
+     <entry><type>timestamp with time zone</type></entry>
      <entry>Receipt time of last message received from origin WAL sender</entry>
     </row>
     <row>
-     <entry><structfield>latest_end_lsn</></entry>
-     <entry><type>pg_lsn</></entry>
+     <entry><structfield>latest_end_lsn</structfield></entry>
+     <entry><type>pg_lsn</type></entry>
      <entry>Last write-ahead log location reported to origin WAL sender</entry>
     </row>
     <row>
-     <entry><structfield>latest_end_time</></entry>
-     <entry><type>timestamp with time zone</></entry>
+     <entry><structfield>latest_end_time</structfield></entry>
+     <entry><type>timestamp with time zone</type></entry>
      <entry>Time of last write-ahead log location reported to origin WAL sender</entry>
     </row>
     <row>
-     <entry><structfield>slot_name</></entry>
-     <entry><type>text</></entry>
+     <entry><structfield>slot_name</structfield></entry>
+     <entry><type>text</type></entry>
      <entry>Replication slot name used by this WAL receiver</entry>
     </row>
     <row>
-     <entry><structfield>conninfo</></entry>
-     <entry><type>text</></entry>
+     <entry><structfield>conninfo</structfield></entry>
+     <entry><type>text</type></entry>
      <entry>
       Connection string used by this WAL receiver,
       with security-sensitive fields obfuscated.
@@ -1988,52 +1988,52 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
 
    <tbody>
     <row>
-     <entry><structfield>subid</></entry>
-     <entry><type>oid</></entry>
+     <entry><structfield>subid</structfield></entry>
+     <entry><type>oid</type></entry>
      <entry>OID of the subscription</entry>
     </row>
     <row>
-     <entry><structfield>subname</></entry>
-     <entry><type>text</></entry>
+     <entry><structfield>subname</structfield></entry>
+     <entry><type>text</type></entry>
      <entry>Name of the subscription</entry>
     </row>
     <row>
-     <entry><structfield>pid</></entry>
-     <entry><type>integer</></entry>
+     <entry><structfield>pid</structfield></entry>
+     <entry><type>integer</type></entry>
      <entry>Process ID of the subscription worker process</entry>
     </row>
     <row>
-     <entry><structfield>relid</></entry>
-     <entry><type>Oid</></entry>
+     <entry><structfield>relid</structfield></entry>
+     <entry><type>Oid</type></entry>
      <entry>OID of the relation that the worker is synchronizing; null for the
      main apply worker</entry>
     </row>
     <row>
-     <entry><structfield>received_lsn</></entry>
-     <entry><type>pg_lsn</></entry>
+     <entry><structfield>received_lsn</structfield></entry>
+     <entry><type>pg_lsn</type></entry>
      <entry>Last write-ahead log location received, the initial value of
       this field being 0</entry>
     </row>
     <row>
-     <entry><structfield>last_msg_send_time</></entry>
-     <entry><type>timestamp with time zone</></entry>
+     <entry><structfield>last_msg_send_time</structfield></entry>
+     <entry><type>timestamp with time zone</type></entry>
      <entry>Send time of last message received from origin WAL sender</entry>
     </row>
     <row>
-     <entry><structfield>last_msg_receipt_time</></entry>
-     <entry><type>timestamp with time zone</></entry>
+     <entry><structfield>last_msg_receipt_time</structfield></entry>
+     <entry><type>timestamp with time zone</type></entry>
      <entry>Receipt time of last message received from origin WAL sender
      </entry>
     </row>
     <row>
-     <entry><structfield>latest_end_lsn</></entry>
-     <entry><type>pg_lsn</></entry>
+     <entry><structfield>latest_end_lsn</structfield></entry>
+     <entry><type>pg_lsn</type></entry>
      <entry>Last write-ahead log location reported to origin WAL sender
      </entry>
     </row>
     <row>
-     <entry><structfield>latest_end_time</></entry>
-     <entry><type>timestamp with time zone</></entry>
+     <entry><structfield>latest_end_time</structfield></entry>
+     <entry><type>timestamp with time zone</type></entry>
      <entry>Time of last write-ahead log location reported to origin WAL
       sender</entry>
     </row>
@@ -2061,42 +2061,42 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
 
    <tbody>
     <row>
-     <entry><structfield>pid</></entry>
-     <entry><type>integer</></entry>
+     <entry><structfield>pid</structfield></entry>
+     <entry><type>integer</type></entry>
      <entry>Process ID of a backend or WAL sender process</entry>
     </row>
     <row>
-     <entry><structfield>ssl</></entry>
-     <entry><type>boolean</></entry>
+     <entry><structfield>ssl</structfield></entry>
+     <entry><type>boolean</type></entry>
      <entry>True if SSL is used on this connection</entry>
     </row>
     <row>
-     <entry><structfield>version</></entry>
-     <entry><type>text</></entry>
+     <entry><structfield>version</structfield></entry>
+     <entry><type>text</type></entry>
      <entry>Version of SSL in use, or NULL if SSL is not in use
       on this connection</entry>
     </row>
     <row>
-     <entry><structfield>cipher</></entry>
-     <entry><type>text</></entry>
+     <entry><structfield>cipher</structfield></entry>
+     <entry><type>text</type></entry>
      <entry>Name of SSL cipher in use, or NULL if SSL is not in use
       on this connection</entry>
     </row>
     <row>
-     <entry><structfield>bits</></entry>
-     <entry><type>integer</></entry>
+     <entry><structfield>bits</structfield></entry>
+     <entry><type>integer</type></entry>
      <entry>Number of bits in the encryption algorithm used, or NULL
      if SSL is not used on this connection</entry>
     </row>
     <row>
-     <entry><structfield>compression</></entry>
-     <entry><type>boolean</></entry>
+     <entry><structfield>compression</structfield></entry>
+     <entry><type>boolean</type></entry>
      <entry>True if SSL compression is in use, false if not,
       or NULL if SSL is not in use on this connection</entry>
     </row>
     <row>
-     <entry><structfield>clientdn</></entry>
-     <entry><type>text</></entry>
+     <entry><structfield>clientdn</structfield></entry>
+     <entry><type>text</type></entry>
      <entry>Distinguished Name (DN) field from the client certificate
       used, or NULL if no client certificate was supplied or if SSL
       is not in use on this connection. This field is truncated if the
@@ -2132,37 +2132,37 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
 
     <tbody>
      <row>
-      <entry><structfield>archived_count</></entry>
+      <entry><structfield>archived_count</structfield></entry>
       <entry><type>bigint</type></entry>
       <entry>Number of WAL files that have been successfully archived</entry>
      </row>
      <row>
-      <entry><structfield>last_archived_wal</></entry>
+      <entry><structfield>last_archived_wal</structfield></entry>
       <entry><type>text</type></entry>
       <entry>Name of the last WAL file successfully archived</entry>
      </row>
      <row>
-      <entry><structfield>last_archived_time</></entry>
+      <entry><structfield>last_archived_time</structfield></entry>
       <entry><type>timestamp with time zone</type></entry>
       <entry>Time of the last successful archive operation</entry>
      </row>
      <row>
-      <entry><structfield>failed_count</></entry>
+      <entry><structfield>failed_count</structfield></entry>
       <entry><type>bigint</type></entry>
       <entry>Number of failed attempts for archiving WAL files</entry>
      </row>
      <row>
-      <entry><structfield>last_failed_wal</></entry>
+      <entry><structfield>last_failed_wal</structfield></entry>
       <entry><type>text</type></entry>
       <entry>Name of the WAL file of the last failed archival operation</entry>
      </row>
      <row>
-      <entry><structfield>last_failed_time</></entry>
+      <entry><structfield>last_failed_time</structfield></entry>
       <entry><type>timestamp with time zone</type></entry>
       <entry>Time of the last failed archival operation</entry>
      </row>
      <row>
-      <entry><structfield>stats_reset</></entry>
+      <entry><structfield>stats_reset</structfield></entry>
       <entry><type>timestamp with time zone</type></entry>
       <entry>Time at which these statistics were last reset</entry>
      </row>
@@ -2189,17 +2189,17 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
 
     <tbody>
      <row>
-      <entry><structfield>checkpoints_timed</></entry>
+      <entry><structfield>checkpoints_timed</structfield></entry>
       <entry><type>bigint</type></entry>
       <entry>Number of scheduled checkpoints that have been performed</entry>
      </row>
      <row>
-      <entry><structfield>checkpoints_req</></entry>
+      <entry><structfield>checkpoints_req</structfield></entry>
       <entry><type>bigint</type></entry>
       <entry>Number of requested checkpoints that have been performed</entry>
      </row>
      <row>
-      <entry><structfield>checkpoint_write_time</></entry>
+      <entry><structfield>checkpoint_write_time</structfield></entry>
       <entry><type>double precision</type></entry>
       <entry>
         Total amount of time that has been spent in the portion of
@@ -2207,7 +2207,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
       </entry>
      </row>
      <row>
-      <entry><structfield>checkpoint_sync_time</></entry>
+      <entry><structfield>checkpoint_sync_time</structfield></entry>
       <entry><type>double precision</type></entry>
       <entry>
         Total amount of time that has been spent in the portion of
@@ -2216,40 +2216,40 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
       </entry>
      </row>
      <row>
-      <entry><structfield>buffers_checkpoint</></entry>
+      <entry><structfield>buffers_checkpoint</structfield></entry>
       <entry><type>bigint</type></entry>
       <entry>Number of buffers written during checkpoints</entry>
      </row>
      <row>
-      <entry><structfield>buffers_clean</></entry>
+      <entry><structfield>buffers_clean</structfield></entry>
       <entry><type>bigint</type></entry>
       <entry>Number of buffers written by the background writer</entry>
      </row>
      <row>
-      <entry><structfield>maxwritten_clean</></entry>
+      <entry><structfield>maxwritten_clean</structfield></entry>
       <entry><type>bigint</type></entry>
       <entry>Number of times the background writer stopped a cleaning
        scan because it had written too many buffers</entry>
      </row>
      <row>
-      <entry><structfield>buffers_backend</></entry>
+      <entry><structfield>buffers_backend</structfield></entry>
       <entry><type>bigint</type></entry>
       <entry>Number of buffers written directly by a backend</entry>
      </row>
      <row>
-      <entry><structfield>buffers_backend_fsync</></entry>
+      <entry><structfield>buffers_backend_fsync</structfield></entry>
       <entry><type>bigint</type></entry>
       <entry>Number of times a backend had to execute its own
-       <function>fsync</> call (normally the background writer handles those
+       <function>fsync</function> call (normally the background writer handles those
        even when the backend does its own write)</entry>
      </row>
      <row>
-      <entry><structfield>buffers_alloc</></entry>
+      <entry><structfield>buffers_alloc</structfield></entry>
       <entry><type>bigint</type></entry>
       <entry>Number of buffers allocated</entry>
      </row>
      <row>
-      <entry><structfield>stats_reset</></entry>
+      <entry><structfield>stats_reset</structfield></entry>
       <entry><type>timestamp with time zone</type></entry>
       <entry>Time at which these statistics were last reset</entry>
      </row>
@@ -2275,84 +2275,84 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
 
    <tbody>
     <row>
-     <entry><structfield>datid</></entry>
-     <entry><type>oid</></entry>
+     <entry><structfield>datid</structfield></entry>
+     <entry><type>oid</type></entry>
      <entry>OID of a database</entry>
     </row>
     <row>
-     <entry><structfield>datname</></entry>
-     <entry><type>name</></entry>
+     <entry><structfield>datname</structfield></entry>
+     <entry><type>name</type></entry>
      <entry>Name of this database</entry>
     </row>
     <row>
-     <entry><structfield>numbackends</></entry>
-     <entry><type>integer</></entry>
+     <entry><structfield>numbackends</structfield></entry>
+     <entry><type>integer</type></entry>
      <entry>Number of backends currently connected to this database.
      This is the only column in this view that returns a value reflecting
      current state; all other columns return the accumulated values since
      the last reset.</entry>
     </row>
     <row>
-     <entry><structfield>xact_commit</></entry>
-     <entry><type>bigint</></entry>
+     <entry><structfield>xact_commit</structfield></entry>
+     <entry><type>bigint</type></entry>
      <entry>Number of transactions in this database that have been
       committed</entry>
     </row>
     <row>
-     <entry><structfield>xact_rollback</></entry>
-     <entry><type>bigint</></entry>
+     <entry><structfield>xact_rollback</structfield></entry>
+     <entry><type>bigint</type></entry>
      <entry>Number of transactions in this database that have been
       rolled back</entry>
     </row>
     <row>
-     <entry><structfield>blks_read</></entry>
-     <entry><type>bigint</></entry>
+     <entry><structfield>blks_read</structfield></entry>
+     <entry><type>bigint</type></entry>
      <entry>Number of disk blocks read in this database</entry>
     </row>
     <row>
-     <entry><structfield>blks_hit</></entry>
-     <entry><type>bigint</></entry>
+     <entry><structfield>blks_hit</structfield></entry>
+     <entry><type>bigint</type></entry>
      <entry>Number of times disk blocks were found already in the buffer
       cache, so that a read was not necessary (this only includes hits in the
       PostgreSQL buffer cache, not the operating system's file system cache)
      </entry>
     </row>
     <row>
-     <entry><structfield>tup_returned</></entry>
-     <entry><type>bigint</></entry>
+     <entry><structfield>tup_returned</structfield></entry>
+     <entry><type>bigint</type></entry>
      <entry>Number of rows returned by queries in this database</entry>
     </row>
     <row>
-     <entry><structfield>tup_fetched</></entry>
-     <entry><type>bigint</></entry>
+     <entry><structfield>tup_fetched</structfield></entry>
+     <entry><type>bigint</type></entry>
      <entry>Number of rows fetched by queries in this database</entry>
     </row>
     <row>
-     <entry><structfield>tup_inserted</></entry>
-     <entry><type>bigint</></entry>
+     <entry><structfield>tup_inserted</structfield></entry>
+     <entry><type>bigint</type></entry>
      <entry>Number of rows inserted by queries in this database</entry>
     </row>
     <row>
-     <entry><structfield>tup_updated</></entry>
-     <entry><type>bigint</></entry>
+     <entry><structfield>tup_updated</structfield></entry>
+     <entry><type>bigint</type></entry>
      <entry>Number of rows updated by queries in this database</entry>
     </row>
     <row>
-     <entry><structfield>tup_deleted</></entry>
-     <entry><type>bigint</></entry>
+     <entry><structfield>tup_deleted</structfield></entry>
+     <entry><type>bigint</type></entry>
      <entry>Number of rows deleted by queries in this database</entry>
     </row>
     <row>
-     <entry><structfield>conflicts</></entry>
-     <entry><type>bigint</></entry>
+     <entry><structfield>conflicts</structfield></entry>
+     <entry><type>bigint</type></entry>
      <entry>Number of queries canceled due to conflicts with recovery
       in this database. (Conflicts occur only on standby servers; see
       <xref linkend="pg-stat-database-conflicts-view"> for details.)
      </entry>
     </row>
     <row>
-     <entry><structfield>temp_files</></entry>
-     <entry><type>bigint</></entry>
+     <entry><structfield>temp_files</structfield></entry>
+     <entry><type>bigint</type></entry>
      <entry>Number of temporary files created by queries in this database.
       All temporary files are counted, regardless of why the temporary file
       was created (e.g., sorting or hashing), and regardless of the
@@ -2360,8 +2360,8 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
      </entry>
     </row>
     <row>
-     <entry><structfield>temp_bytes</></entry>
-     <entry><type>bigint</></entry>
+     <entry><structfield>temp_bytes</structfield></entry>
+     <entry><type>bigint</type></entry>
      <entry>Total amount of data written to temporary files by queries in
       this database. All temporary files are counted, regardless of why
       the temporary file was created, and
@@ -2369,25 +2369,25 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
      </entry>
     </row>
     <row>
-     <entry><structfield>deadlocks</></entry>
-     <entry><type>bigint</></entry>
+     <entry><structfield>deadlocks</structfield></entry>
+     <entry><type>bigint</type></entry>
      <entry>Number of deadlocks detected in this database</entry>
     </row>
     <row>
-     <entry><structfield>blk_read_time</></entry>
-     <entry><type>double precision</></entry>
+     <entry><structfield>blk_read_time</structfield></entry>
+     <entry><type>double precision</type></entry>
      <entry>Time spent reading data file blocks by backends in this database,
       in milliseconds</entry>
     </row>
     <row>
-     <entry><structfield>blk_write_time</></entry>
-     <entry><type>double precision</></entry>
+     <entry><structfield>blk_write_time</structfield></entry>
+     <entry><type>double precision</type></entry>
      <entry>Time spent writing data file blocks by backends in this database,
       in milliseconds</entry>
     </row>
     <row>
-     <entry><structfield>stats_reset</></entry>
-     <entry><type>timestamp with time zone</></entry>
+     <entry><structfield>stats_reset</structfield></entry>
+     <entry><type>timestamp with time zone</type></entry>
      <entry>Time at which these statistics were last reset</entry>
     </row>
    </tbody>
@@ -2412,42 +2412,42 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
 
    <tbody>
     <row>
-     <entry><structfield>datid</></entry>
-     <entry><type>oid</></entry>
+     <entry><structfield>datid</structfield></entry>
+     <entry><type>oid</type></entry>
      <entry>OID of a database</entry>
     </row>
     <row>
-     <entry><structfield>datname</></entry>
-     <entry><type>name</></entry>
+     <entry><structfield>datname</structfield></entry>
+     <entry><type>name</type></entry>
      <entry>Name of this database</entry>
     </row>
     <row>
-     <entry><structfield>confl_tablespace</></entry>
-     <entry><type>bigint</></entry>
+     <entry><structfield>confl_tablespace</structfield></entry>
+     <entry><type>bigint</type></entry>
      <entry>Number of queries in this database that have been canceled due to
       dropped tablespaces</entry>
     </row>
     <row>
-     <entry><structfield>confl_lock</></entry>
-     <entry><type>bigint</></entry>
+     <entry><structfield>confl_lock</structfield></entry>
+     <entry><type>bigint</type></entry>
      <entry>Number of queries in this database that have been canceled due to
       lock timeouts</entry>
     </row>
     <row>
-     <entry><structfield>confl_snapshot</></entry>
-     <entry><type>bigint</></entry>
+     <entry><structfield>confl_snapshot</structfield></entry>
+     <entry><type>bigint</type></entry>
      <entry>Number of queries in this database that have been canceled due to
       old snapshots</entry>
     </row>
     <row>
-     <entry><structfield>confl_bufferpin</></entry>
-     <entry><type>bigint</></entry>
+     <entry><structfield>confl_bufferpin</structfield></entry>
+     <entry><type>bigint</type></entry>
      <entry>Number of queries in this database that have been canceled due to
       pinned buffers</entry>
     </row>
     <row>
-     <entry><structfield>confl_deadlock</></entry>
-     <entry><type>bigint</></entry>
+     <entry><structfield>confl_deadlock</structfield></entry>
+     <entry><type>bigint</type></entry>
      <entry>Number of queries in this database that have been canceled due to
       deadlocks</entry>
     </row>
@@ -2476,119 +2476,119 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
 
    <tbody>
     <row>
-     <entry><structfield>relid</></entry>
-     <entry><type>oid</></entry>
+     <entry><structfield>relid</structfield></entry>
+     <entry><type>oid</type></entry>
      <entry>OID of a table</entry>
     </row>
     <row>
-     <entry><structfield>schemaname</></entry>
-     <entry><type>name</></entry>
+     <entry><structfield>schemaname</structfield></entry>
+     <entry><type>name</type></entry>
      <entry>Name of the schema that this table is in</entry>
     </row>
     <row>
-     <entry><structfield>relname</></entry>
-     <entry><type>name</></entry>
+     <entry><structfield>relname</structfield></entry>
+     <entry><type>name</type></entry>
      <entry>Name of this table</entry>
     </row>
     <row>
-     <entry><structfield>seq_scan</></entry>
-     <entry><type>bigint</></entry>
+     <entry><structfield>seq_scan</structfield></entry>
+     <entry><type>bigint</type></entry>
      <entry>Number of sequential scans initiated on this table</entry>
     </row>
     <row>
-     <entry><structfield>seq_tup_read</></entry>
-     <entry><type>bigint</></entry>
+     <entry><structfield>seq_tup_read</structfield></entry>
+     <entry><type>bigint</type></entry>
      <entry>Number of live rows fetched by sequential scans</entry>
     </row>
     <row>
-     <entry><structfield>idx_scan</></entry>
-     <entry><type>bigint</></entry>
+     <entry><structfield>idx_scan</structfield></entry>
+     <entry><type>bigint</type></entry>
      <entry>Number of index scans initiated on this table</entry>
     </row>
     <row>
-     <entry><structfield>idx_tup_fetch</></entry>
-     <entry><type>bigint</></entry>
+     <entry><structfield>idx_tup_fetch</structfield></entry>
+     <entry><type>bigint</type></entry>
      <entry>Number of live rows fetched by index scans</entry>
     </row>
     <row>
-     <entry><structfield>n_tup_ins</></entry>
-     <entry><type>bigint</></entry>
+     <entry><structfield>n_tup_ins</structfield></entry>
+     <entry><type>bigint</type></entry>
      <entry>Number of rows inserted</entry>
     </row>
     <row>
-     <entry><structfield>n_tup_upd</></entry>
-     <entry><type>bigint</></entry>
+     <entry><structfield>n_tup_upd</structfield></entry>
+     <entry><type>bigint</type></entry>
      <entry>Number of rows updated (includes HOT updated rows)</entry>
     </row>
     <row>
-     <entry><structfield>n_tup_del</></entry>
-     <entry><type>bigint</></entry>
+     <entry><structfield>n_tup_del</structfield></entry>
+     <entry><type>bigint</type></entry>
      <entry>Number of rows deleted</entry>
     </row>
     <row>
-     <entry><structfield>n_tup_hot_upd</></entry>
-     <entry><type>bigint</></entry>
+     <entry><structfield>n_tup_hot_upd</structfield></entry>
+     <entry><type>bigint</type></entry>
      <entry>Number of rows HOT updated (i.e., with no separate index
       update required)</entry>
     </row>
     <row>
-     <entry><structfield>n_live_tup</></entry>
-     <entry><type>bigint</></entry>
+     <entry><structfield>n_live_tup</structfield></entry>
+     <entry><type>bigint</type></entry>
      <entry>Estimated number of live rows</entry>
     </row>
     <row>
-     <entry><structfield>n_dead_tup</></entry>
-     <entry><type>bigint</></entry>
+     <entry><structfield>n_dead_tup</structfield></entry>
+     <entry><type>bigint</type></entry>
      <entry>Estimated number of dead rows</entry>
     </row>
     <row>
-     <entry><structfield>n_mod_since_analyze</></entry>
-     <entry><type>bigint</></entry>
+     <entry><structfield>n_mod_since_analyze</structfield></entry>
+     <entry><type>bigint</type></entry>
      <entry>Estimated number of rows modified since this table was last analyzed</entry>
     </row>
     <row>
-     <entry><structfield>last_vacuum</></entry>
-     <entry><type>timestamp with time zone</></entry>
+     <entry><structfield>last_vacuum</structfield></entry>
+     <entry><type>timestamp with time zone</type></entry>
      <entry>Last time at which this table was manually vacuumed
-      (not counting <command>VACUUM FULL</>)</entry>
+      (not counting <command>VACUUM FULL</command>)</entry>
     </row>
     <row>
-     <entry><structfield>last_autovacuum</></entry>
-     <entry><type>timestamp with time zone</></entry>
+     <entry><structfield>last_autovacuum</structfield></entry>
+     <entry><type>timestamp with time zone</type></entry>
      <entry>Last time at which this table was vacuumed by the autovacuum
       daemon</entry>
     </row>
     <row>
-     <entry><structfield>last_analyze</></entry>
-     <entry><type>timestamp with time zone</></entry>
+     <entry><structfield>last_analyze</structfield></entry>
+     <entry><type>timestamp with time zone</type></entry>
      <entry>Last time at which this table was manually analyzed</entry>
     </row>
     <row>
-     <entry><structfield>last_autoanalyze</></entry>
-     <entry><type>timestamp with time zone</></entry>
+     <entry><structfield>last_autoanalyze</structfield></entry>
+     <entry><type>timestamp with time zone</type></entry>
      <entry>Last time at which this table was analyzed by the autovacuum
       daemon</entry>
     </row>
     <row>
-     <entry><structfield>vacuum_count</></entry>
-     <entry><type>bigint</></entry>
+     <entry><structfield>vacuum_count</structfield></entry>
+     <entry><type>bigint</type></entry>
      <entry>Number of times this table has been manually vacuumed
-      (not counting <command>VACUUM FULL</>)</entry>
+      (not counting <command>VACUUM FULL</command>)</entry>
     </row>
     <row>
-     <entry><structfield>autovacuum_count</></entry>
-     <entry><type>bigint</></entry>
+     <entry><structfield>autovacuum_count</structfield></entry>
+     <entry><type>bigint</type></entry>
      <entry>Number of times this table has been vacuumed by the autovacuum
       daemon</entry>
     </row>
     <row>
-     <entry><structfield>analyze_count</></entry>
-     <entry><type>bigint</></entry>
+     <entry><structfield>analyze_count</structfield></entry>
+     <entry><type>bigint</type></entry>
      <entry>Number of times this table has been manually analyzed</entry>
     </row>
     <row>
-     <entry><structfield>autoanalyze_count</></entry>
-     <entry><type>bigint</></entry>
+     <entry><structfield>autoanalyze_count</structfield></entry>
+     <entry><type>bigint</type></entry>
      <entry>Number of times this table has been analyzed by the autovacuum
       daemon</entry>
     </row>
@@ -2619,43 +2619,43 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
 
    <tbody>
     <row>
-     <entry><structfield>relid</></entry>
-     <entry><type>oid</></entry>
+     <entry><structfield>relid</structfield></entry>
+     <entry><type>oid</type></entry>
      <entry>OID of the table for this index</entry>
     </row>
     <row>
-     <entry><structfield>indexrelid</></entry>
-     <entry><type>oid</></entry>
+     <entry><structfield>indexrelid</structfield></entry>
+     <entry><type>oid</type></entry>
      <entry>OID of this index</entry>
     </row>
     <row>
-     <entry><structfield>schemaname</></entry>
-     <entry><type>name</></entry>
+     <entry><structfield>schemaname</structfield></entry>
+     <entry><type>name</type></entry>
      <entry>Name of the schema this index is in</entry>
     </row>
     <row>
-     <entry><structfield>relname</></entry>
-     <entry><type>name</></entry>
+     <entry><structfield>relname</structfield></entry>
+     <entry><type>name</type></entry>
      <entry>Name of the table for this index</entry>
     </row>
     <row>
-     <entry><structfield>indexrelname</></entry>
-     <entry><type>name</></entry>
+     <entry><structfield>indexrelname</structfield></entry>
+     <entry><type>name</type></entry>
      <entry>Name of this index</entry>
     </row>
     <row>
-     <entry><structfield>idx_scan</></entry>
-     <entry><type>bigint</></entry>
+     <entry><structfield>idx_scan</structfield></entry>
+     <entry><type>bigint</type></entry>
      <entry>Number of index scans initiated on this index</entry>
     </row>
     <row>
-     <entry><structfield>idx_tup_read</></entry>
-     <entry><type>bigint</></entry>
+     <entry><structfield>idx_tup_read</structfield></entry>
+     <entry><type>bigint</type></entry>
      <entry>Number of index entries returned by scans on this index</entry>
     </row>
     <row>
-     <entry><structfield>idx_tup_fetch</></entry>
-     <entry><type>bigint</></entry>
+     <entry><structfield>idx_tup_fetch</structfield></entry>
+     <entry><type>bigint</type></entry>
      <entry>Number of live table rows fetched by simple index scans using this
       index</entry>
     </row>
@@ -2674,17 +2674,17 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
   </para>
 
   <para>
-   Indexes can be used by simple index scans, <quote>bitmap</> index scans,
+   Indexes can be used by simple index scans, <quote>bitmap</quote> index scans,
    and the optimizer.  In a bitmap scan
    the output of several indexes can be combined via AND or OR rules,
    so it is difficult to associate individual heap row fetches
    with specific indexes when a bitmap scan is used.  Therefore, a bitmap
    scan increments the
-   <structname>pg_stat_all_indexes</>.<structfield>idx_tup_read</>
+   <structname>pg_stat_all_indexes</structname>.<structfield>idx_tup_read</structfield>
    count(s) for the index(es) it uses, and it increments the
-   <structname>pg_stat_all_tables</>.<structfield>idx_tup_fetch</>
+   <structname>pg_stat_all_tables</structname>.<structfield>idx_tup_fetch</structfield>
    count for the table, but it does not affect
-   <structname>pg_stat_all_indexes</>.<structfield>idx_tup_fetch</>.
+   <structname>pg_stat_all_indexes</structname>.<structfield>idx_tup_fetch</structfield>.
    The optimizer also accesses indexes to check for supplied constants
    whose values are outside the recorded range of the optimizer statistics
    because the optimizer statistics might be stale.
@@ -2692,10 +2692,10 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
 
   <note>
    <para>
-    The <structfield>idx_tup_read</> and <structfield>idx_tup_fetch</> counts
+    The <structfield>idx_tup_read</structfield> and <structfield>idx_tup_fetch</structfield> counts
     can be different even without any use of bitmap scans,
-    because <structfield>idx_tup_read</> counts
-    index entries retrieved from the index while <structfield>idx_tup_fetch</>
+    because <structfield>idx_tup_read</structfield> counts
+    index entries retrieved from the index while <structfield>idx_tup_fetch</structfield>
     counts live rows fetched from the table.  The latter will be less if any
     dead or not-yet-committed rows are fetched using the index, or if any
     heap fetches are avoided by means of an index-only scan.
@@ -2715,58 +2715,58 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
 
    <tbody>
     <row>
-     <entry><structfield>relid</></entry>
-     <entry><type>oid</></entry>
+     <entry><structfield>relid</structfield></entry>
+     <entry><type>oid</type></entry>
      <entry>OID of a table</entry>
     </row>
     <row>
-     <entry><structfield>schemaname</></entry>
-     <entry><type>name</></entry>
+     <entry><structfield>schemaname</structfield></entry>
+     <entry><type>name</type></entry>
      <entry>Name of the schema that this table is in</entry>
     </row>
     <row>
-     <entry><structfield>relname</></entry>
-     <entry><type>name</></entry>
+     <entry><structfield>relname</structfield></entry>
+     <entry><type>name</type></entry>
      <entry>Name of this table</entry>
     </row>
     <row>
-     <entry><structfield>heap_blks_read</></entry>
-     <entry><type>bigint</></entry>
+     <entry><structfield>heap_blks_read</structfield></entry>
+     <entry><type>bigint</type></entry>
      <entry>Number of disk blocks read from this table</entry>
     </row>
     <row>
-     <entry><structfield>heap_blks_hit</></entry>
-     <entry><type>bigint</></entry>
+     <entry><structfield>heap_blks_hit</structfield></entry>
+     <entry><type>bigint</type></entry>
      <entry>Number of buffer hits in this table</entry>
     </row>
     <row>
-     <entry><structfield>idx_blks_read</></entry>
-     <entry><type>bigint</></entry>
+     <entry><structfield>idx_blks_read</structfield></entry>
+     <entry><type>bigint</type></entry>
      <entry>Number of disk blocks read from all indexes on this table</entry>
     </row>
     <row>
-     <entry><structfield>idx_blks_hit</></entry>
-     <entry><type>bigint</></entry>
+     <entry><structfield>idx_blks_hit</structfield></entry>
+     <entry><type>bigint</type></entry>
      <entry>Number of buffer hits in all indexes on this table</entry>
     </row>
     <row>
-     <entry><structfield>toast_blks_read</></entry>
-     <entry><type>bigint</></entry>
+     <entry><structfield>toast_blks_read</structfield></entry>
+     <entry><type>bigint</type></entry>
      <entry>Number of disk blocks read from this table's TOAST table (if any)</entry>
     </row>
     <row>
-     <entry><structfield>toast_blks_hit</></entry>
-     <entry><type>bigint</></entry>
+     <entry><structfield>toast_blks_hit</structfield></entry>
+     <entry><type>bigint</type></entry>
      <entry>Number of buffer hits in this table's TOAST table (if any)</entry>
     </row>
     <row>
-     <entry><structfield>tidx_blks_read</></entry>
-     <entry><type>bigint</></entry>
+     <entry><structfield>tidx_blks_read</structfield></entry>
+     <entry><type>bigint</type></entry>
      <entry>Number of disk blocks read from this table's TOAST table indexes (if any)</entry>
     </row>
     <row>
-     <entry><structfield>tidx_blks_hit</></entry>
-     <entry><type>bigint</></entry>
+     <entry><structfield>tidx_blks_hit</structfield></entry>
+     <entry><type>bigint</type></entry>
      <entry>Number of buffer hits in this table's TOAST table indexes (if any)</entry>
     </row>
    </tbody>
@@ -2796,38 +2796,38 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
 
    <tbody>
     <row>
-     <entry><structfield>relid</></entry>
-     <entry><type>oid</></entry>
+     <entry><structfield>relid</structfield></entry>
+     <entry><type>oid</type></entry>
      <entry>OID of the table for this index</entry>
     </row>
     <row>
-     <entry><structfield>indexrelid</></entry>
-     <entry><type>oid</></entry>
+     <entry><structfield>indexrelid</structfield></entry>
+     <entry><type>oid</type></entry>
      <entry>OID of this index</entry>
     </row>
     <row>
-     <entry><structfield>schemaname</></entry>
-     <entry><type>name</></entry>
+     <entry><structfield>schemaname</structfield></entry>
+     <entry><type>name</type></entry>
      <entry>Name of the schema this index is in</entry>
     </row>
     <row>
-     <entry><structfield>relname</></entry>
-     <entry><type>name</></entry>
+     <entry><structfield>relname</structfield></entry>
+     <entry><type>name</type></entry>
      <entry>Name of the table for this index</entry>
     </row>
     <row>
-     <entry><structfield>indexrelname</></entry>
-     <entry><type>name</></entry>
+     <entry><structfield>indexrelname</structfield></entry>
+     <entry><type>name</type></entry>
      <entry>Name of this index</entry>
     </row>
     <row>
-     <entry><structfield>idx_blks_read</></entry>
-     <entry><type>bigint</></entry>
+     <entry><structfield>idx_blks_read</structfield></entry>
+     <entry><type>bigint</type></entry>
      <entry>Number of disk blocks read from this index</entry>
     </row>
     <row>
-     <entry><structfield>idx_blks_hit</></entry>
-     <entry><type>bigint</></entry>
+     <entry><structfield>idx_blks_hit</structfield></entry>
+     <entry><type>bigint</type></entry>
      <entry>Number of buffer hits in this index</entry>
     </row>
    </tbody>
@@ -2857,28 +2857,28 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
 
    <tbody>
     <row>
-     <entry><structfield>relid</></entry>
-     <entry><type>oid</></entry>
+     <entry><structfield>relid</structfield></entry>
+     <entry><type>oid</type></entry>
      <entry>OID of a sequence</entry>
     </row>
     <row>
-     <entry><structfield>schemaname</></entry>
-     <entry><type>name</></entry>
+     <entry><structfield>schemaname</structfield></entry>
+     <entry><type>name</type></entry>
      <entry>Name of the schema this sequence is in</entry>
     </row>
     <row>
-     <entry><structfield>relname</></entry>
-     <entry><type>name</></entry>
+     <entry><structfield>relname</structfield></entry>
+     <entry><type>name</type></entry>
      <entry>Name of this sequence</entry>
     </row>
     <row>
-     <entry><structfield>blks_read</></entry>
-     <entry><type>bigint</></entry>
+     <entry><structfield>blks_read</structfield></entry>
+     <entry><type>bigint</type></entry>
      <entry>Number of disk blocks read from this sequence</entry>
     </row>
     <row>
-     <entry><structfield>blks_hit</></entry>
-     <entry><type>bigint</></entry>
+     <entry><structfield>blks_hit</structfield></entry>
+     <entry><type>bigint</type></entry>
      <entry>Number of buffer hits in this sequence</entry>
     </row>
    </tbody>
@@ -2904,34 +2904,34 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
 
    <tbody>
     <row>
-     <entry><structfield>funcid</></entry>
-     <entry><type>oid</></entry>
+     <entry><structfield>funcid</structfield></entry>
+     <entry><type>oid</type></entry>
      <entry>OID of a function</entry>
     </row>
     <row>
-     <entry><structfield>schemaname</></entry>
-     <entry><type>name</></entry>
+     <entry><structfield>schemaname</structfield></entry>
+     <entry><type>name</type></entry>
      <entry>Name of the schema this function is in</entry>
     </row>
     <row>
-     <entry><structfield>funcname</></entry>
-     <entry><type>name</></entry>
+     <entry><structfield>funcname</structfield></entry>
+     <entry><type>name</type></entry>
      <entry>Name of this function</entry>
     </row>
     <row>
-     <entry><structfield>calls</></entry>
-     <entry><type>bigint</></entry>
+     <entry><structfield>calls</structfield></entry>
+     <entry><type>bigint</type></entry>
      <entry>Number of times this function has been called</entry>
     </row>
     <row>
-     <entry><structfield>total_time</></entry>
-     <entry><type>double precision</></entry>
+     <entry><structfield>total_time</structfield></entry>
+     <entry><type>double precision</type></entry>
      <entry>Total time spent in this function and all other functions
      called by it, in milliseconds</entry>
     </row>
     <row>
-     <entry><structfield>self_time</></entry>
-     <entry><type>double precision</></entry>
+     <entry><structfield>self_time</structfield></entry>
+     <entry><type>double precision</type></entry>
      <entry>Total time spent in this function itself, not including
      other functions called by it, in milliseconds</entry>
     </row>
@@ -2956,7 +2956,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
    queries that use the same underlying statistics access functions used by
    the standard views shown above.  For details such as the functions' names,
    consult the definitions of the standard views.  (For example, in
-   <application>psql</> you could issue <literal>\d+ pg_stat_activity</>.)
+   <application>psql</application> you could issue <literal>\d+ pg_stat_activity</literal>.)
    The access functions for per-database statistics take a database OID as an
    argument to identify which database to report on.
    The per-table and per-index functions take a table or index OID.
@@ -3037,10 +3037,10 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
        Reset some cluster-wide statistics counters to zero, depending on the
        argument (requires superuser privileges by default, but EXECUTE for
        this function can be granted to others).
-       Calling <literal>pg_stat_reset_shared('bgwriter')</> will zero all the
-       counters shown in the <structname>pg_stat_bgwriter</> view.
-       Calling <literal>pg_stat_reset_shared('archiver')</> will zero all the
-       counters shown in the <structname>pg_stat_archiver</> view.
+       Calling <literal>pg_stat_reset_shared('bgwriter')</literal> will zero all the
+       counters shown in the <structname>pg_stat_bgwriter</structname> view.
+       Calling <literal>pg_stat_reset_shared('archiver')</literal> will zero all the
+       counters shown in the <structname>pg_stat_archiver</structname> view.
       </entry>
      </row>
 
@@ -3069,7 +3069,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
 
   <para>
    <function>pg_stat_get_activity</function>, the underlying function of
-   the <structname>pg_stat_activity</> view, returns a set of records
+   the <structname>pg_stat_activity</structname> view, returns a set of records
    containing all the available information about each backend process.
    Sometimes it may be more convenient to obtain just a subset of this
    information.  In such cases, an older set of per-backend statistics
@@ -3079,7 +3079,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
    to the number of currently active backends.
    The function <function>pg_stat_get_backend_idset</function> provides a
    convenient way to generate one row for each active backend for
-   invoking these functions.  For example, to show the <acronym>PID</>s and
+   invoking these functions.  For example, to show the <acronym>PID</acronym>s and
    current queries of all backends:
 
 <programlisting>
@@ -3113,7 +3113,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
      <row>
       <entry><literal><function>pg_stat_get_backend_activity(integer)</function></literal></entry>
       <entry><type>text</type></entry>
-      <entry>Text of this backend's most recent query</>
+      <entry>Text of this backend's most recent query</entry>
      </row>
 
      <row>
@@ -3240,9 +3240,9 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
   <title>Progress Reporting</title>
 
   <para>
-   <productname>PostgreSQL</> has the ability to report the progress of
+   <productname>PostgreSQL</productname> has the ability to report the progress of
    certain commands during command execution.  Currently, the only command
-   which supports progress reporting is <command>VACUUM</>.  This may be
+   which supports progress reporting is <command>VACUUM</command>.  This may be
    expanded in the future.
   </para>
 
@@ -3250,13 +3250,13 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
   <title>VACUUM Progress Reporting</title>
 
   <para>
-   Whenever <command>VACUUM</> is running, the
+   Whenever <command>VACUUM</command> is running, the
    <structname>pg_stat_progress_vacuum</structname> view will contain
    one row for each backend (including autovacuum worker processes) that is
    currently vacuuming.  The tables below describe the information
    that will be reported and provide information about how to interpret it.
-   Progress reporting is not currently supported for <command>VACUUM FULL</>
-   and backends running <command>VACUUM FULL</> will not be listed in this
+   Progress reporting is not currently supported for <command>VACUUM FULL</command>
+   and backends running <command>VACUUM FULL</command> will not be listed in this
    view.
   </para>
 
@@ -3273,73 +3273,73 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
 
    <tbody>
     <row>
-     <entry><structfield>pid</></entry>
-     <entry><type>integer</></entry>
+     <entry><structfield>pid</structfield></entry>
+     <entry><type>integer</type></entry>
      <entry>Process ID of backend.</entry>
     </row>
     <row>
-     <entry><structfield>datid</></entry>
-     <entry><type>oid</></entry>
+     <entry><structfield>datid</structfield></entry>
+     <entry><type>oid</type></entry>
      <entry>OID of the database to which this backend is connected.</entry>
     </row>
     <row>
-     <entry><structfield>datname</></entry>
-     <entry><type>name</></entry>
+     <entry><structfield>datname</structfield></entry>
+     <entry><type>name</type></entry>
      <entry>Name of the database to which this backend is connected.</entry>
     </row>
     <row>
-     <entry><structfield>relid</></entry>
-     <entry><type>oid</></entry>
+     <entry><structfield>relid</structfield></entry>
+     <entry><type>oid</type></entry>
      <entry>OID of the table being vacuumed.</entry>
     </row>
     <row>
-     <entry><structfield>phase</></entry>
-     <entry><type>text</></entry>
+     <entry><structfield>phase</structfield></entry>
+     <entry><type>text</type></entry>
      <entry>
        Current processing phase of vacuum.  See <xref linkend='vacuum-phases'>.
      </entry>
     </row>
     <row>
-     <entry><structfield>heap_blks_total</></entry>
-     <entry><type>bigint</></entry>
+     <entry><structfield>heap_blks_total</structfield></entry>
+     <entry><type>bigint</type></entry>
      <entry>
        Total number of heap blocks in the table.  This number is reported
        as of the beginning of the scan; blocks added later will not be (and
-       need not be) visited by this <command>VACUUM</>.
+       need not be) visited by this <command>VACUUM</command>.
      </entry>
     </row>
     <row>
-     <entry><structfield>heap_blks_scanned</></entry>
-     <entry><type>bigint</></entry>
+     <entry><structfield>heap_blks_scanned</structfield></entry>
+     <entry><type>bigint</type></entry>
      <entry>
        Number of heap blocks scanned.  Because the
-       <link linkend="storage-vm">visibility map</> is used to optimize scans,
+       <link linkend="storage-vm">visibility map</link> is used to optimize scans,
        some blocks will be skipped without inspection; skipped blocks are
        included in this total, so that this number will eventually become
-       equal to <structfield>heap_blks_total</> when the vacuum is complete.
-       This counter only advances when the phase is <literal>scanning heap</>.
+       equal to <structfield>heap_blks_total</structfield> when the vacuum is complete.
+       This counter only advances when the phase is <literal>scanning heap</literal>.
      </entry>
     </row>
     <row>
-     <entry><structfield>heap_blks_vacuumed</></entry>
-     <entry><type>bigint</></entry>
+     <entry><structfield>heap_blks_vacuumed</structfield></entry>
+     <entry><type>bigint</type></entry>
      <entry>
        Number of heap blocks vacuumed.  Unless the table has no indexes, this
-       counter only advances when the phase is <literal>vacuuming heap</>.
+       counter only advances when the phase is <literal>vacuuming heap</literal>.
        Blocks that contain no dead tuples are skipped, so the counter may
        sometimes skip forward in large increments.
      </entry>
     </row>
     <row>
-     <entry><structfield>index_vacuum_count</></entry>
-     <entry><type>bigint</></entry>
+     <entry><structfield>index_vacuum_count</structfield></entry>
+     <entry><type>bigint</type></entry>
      <entry>
        Number of completed index vacuum cycles.
      </entry>
     </row>
     <row>
-     <entry><structfield>max_dead_tuples</></entry>
-     <entry><type>bigint</></entry>
+     <entry><structfield>max_dead_tuples</structfield></entry>
+     <entry><type>bigint</type></entry>
      <entry>
       Number of dead tuples that we can store before needing to perform
       an index vacuum cycle, based on
@@ -3347,8 +3347,8 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
      </entry>
     </row>
     <row>
-     <entry><structfield>num_dead_tuples</></entry>
-     <entry><type>bigint</></entry>
+     <entry><structfield>num_dead_tuples</structfield></entry>
+     <entry><type>bigint</type></entry>
      <entry>
        Number of dead tuples collected since the last index vacuum cycle.
      </entry>
@@ -3371,23 +3371,23 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
     <row>
      <entry><literal>initializing</literal></entry>
      <entry>
-       <command>VACUUM</> is preparing to begin scanning the heap.  This
+       <command>VACUUM</command> is preparing to begin scanning the heap.  This
        phase is expected to be very brief.
      </entry>
     </row>
     <row>
      <entry><literal>scanning heap</literal></entry>
      <entry>
-       <command>VACUUM</> is currently scanning the heap.  It will prune and
+       <command>VACUUM</command> is currently scanning the heap.  It will prune and
        defragment each page if required, and possibly perform freezing
-       activity.  The <structfield>heap_blks_scanned</> column can be used
+       activity.  The <structfield>heap_blks_scanned</structfield> column can be used
        to monitor the progress of the scan.
      </entry>
     </row>
     <row>
      <entry><literal>vacuuming indexes</literal></entry>
      <entry>
-       <command>VACUUM</> is currently vacuuming the indexes.  If a table has
+       <command>VACUUM</command> is currently vacuuming the indexes.  If a table has
        any indexes, this will happen at least once per vacuum, after the heap
        has been completely scanned.  It may happen multiple times per vacuum
        if <xref linkend="guc-maintenance-work-mem"> is insufficient to
@@ -3397,10 +3397,10 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
     <row>
      <entry><literal>vacuuming heap</literal></entry>
      <entry>
-       <command>VACUUM</> is currently vacuuming the heap.  Vacuuming the heap
+       <command>VACUUM</command> is currently vacuuming the heap.  Vacuuming the heap
        is distinct from scanning the heap, and occurs after each instance of
-       vacuuming indexes.  If <structfield>heap_blks_scanned</> is less than
-       <structfield>heap_blks_total</>, the system will return to scanning
+       vacuuming indexes.  If <structfield>heap_blks_scanned</structfield> is less than
+       <structfield>heap_blks_total</structfield>, the system will return to scanning
        the heap after this phase is completed; otherwise, it will begin
        cleaning up indexes after this phase is completed.
      </entry>
@@ -3408,7 +3408,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
     <row>
      <entry><literal>cleaning up indexes</literal></entry>
      <entry>
-       <command>VACUUM</> is currently cleaning up indexes.  This occurs after
+       <command>VACUUM</command> is currently cleaning up indexes.  This occurs after
        the heap has been completely scanned and all vacuuming of the indexes
        and the heap has been completed.
      </entry>
@@ -3416,7 +3416,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
     <row>
      <entry><literal>truncating heap</literal></entry>
      <entry>
-       <command>VACUUM</> is currently truncating the heap so as to return
+       <command>VACUUM</command> is currently truncating the heap so as to return
        empty pages at the end of the relation to the operating system.  This
        occurs after cleaning up indexes.
      </entry>
@@ -3424,10 +3424,10 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
     <row>
      <entry><literal>performing final cleanup</literal></entry>
      <entry>
-       <command>VACUUM</> is performing final cleanup.  During this phase,
-       <command>VACUUM</> will vacuum the free space map, update statistics
-       in <literal>pg_class</>, and report statistics to the statistics
-       collector.  When this phase is completed, <command>VACUUM</> will end.
+       <command>VACUUM</command> is performing final cleanup.  During this phase,
+       <command>VACUUM</command> will vacuum the free space map, update statistics
+       in <literal>pg_class</literal>, and report statistics to the statistics
+       collector.  When this phase is completed, <command>VACUUM</command> will end.
      </entry>
     </row>
    </tbody>
@@ -3467,7 +3467,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
    <ulink url="http://sourceware.org/systemtap/">SystemTap</ulink> project
    for Linux provides a DTrace equivalent and can also be used.  Supporting other dynamic
    tracing utilities is theoretically possible by changing the definitions for
-   the macros in <filename>src/include/utils/probes.h</>.
+   the macros in <filename>src/include/utils/probes.h</filename>.
   </para>
 
   <sect2 id="compiling-for-trace">
@@ -3477,7 +3477,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
    By default, probes are not available, so you will need to
    explicitly tell the configure script to make the probes available
    in <productname>PostgreSQL</productname>. To include DTrace support
-   specify <option>--enable-dtrace</> to configure.  See <xref
+   specify <option>--enable-dtrace</option> to configure.  See <xref
    linkend="install-procedure"> for further information.
   </para>
   </sect2>
@@ -3490,7 +3490,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
    as shown in <xref linkend="dtrace-probe-point-table">;
    <xref linkend="typedefs-table">
    shows the types used in the probes.  More probes can certainly be
-   added to enhance <productname>PostgreSQL</>'s observability.
+   added to enhance <productname>PostgreSQL</productname>'s observability.
   </para>
 
  <table id="dtrace-probe-point-table">
@@ -3584,7 +3584,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
      <entry><literal>statement-status</literal></entry>
      <entry><literal>(const char *)</literal></entry>
      <entry>Probe that fires anytime the server process updates its
-      <structname>pg_stat_activity</>.<structfield>status</>.
+      <structname>pg_stat_activity</structname>.<structfield>status</structfield>.
       arg0 is the new status string.</entry>
     </row>
     <row>
@@ -3978,7 +3978,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
   <para>
    The example below shows a DTrace script for analyzing transaction
    counts in the system, as an alternative to snapshotting
-   <structname>pg_stat_database</> before and after a performance test:
+   <structname>pg_stat_database</structname> before and after a performance test:
 <programlisting>
 #!/usr/sbin/dtrace -qs
 
@@ -4050,15 +4050,15 @@ Total time (ns)                        2312105013
 
    <step>
     <para>
-     Add the probe definitions to <filename>src/backend/utils/probes.d</>
+     Add the probe definitions to <filename>src/backend/utils/probes.d</filename>
     </para>
    </step>
 
    <step>
     <para>
-     Include <filename>pg_trace.h</> if it is not already present in the
+     Include <filename>pg_trace.h</filename> if it is not already present in the
      module(s) containing the probe points, and insert
-     <literal>TRACE_POSTGRESQL</> probe macros at the desired locations
+     <literal>TRACE_POSTGRESQL</literal> probe macros at the desired locations
      in the source code
     </para>
    </step>
@@ -4081,30 +4081,30 @@ Total time (ns)                        2312105013
   <procedure>
    <step>
     <para>
-     Decide that the probe will be named <literal>transaction-start</> and
+     Decide that the probe will be named <literal>transaction-start</literal> and
      requires a parameter of type <type>LocalTransactionId</type>
     </para>
    </step>
 
    <step>
     <para>
-     Add the probe definition to <filename>src/backend/utils/probes.d</>:
+     Add the probe definition to <filename>src/backend/utils/probes.d</filename>:
 <programlisting>
 probe transaction__start(LocalTransactionId);
 </programlisting>
      Note the use of the double underline in the probe name. In a DTrace
      script using the probe, the double underline needs to be replaced with a
-     hyphen, so <literal>transaction-start</> is the name to document for
+     hyphen, so <literal>transaction-start</literal> is the name to document for
      users.
     </para>
    </step>
 
    <step>
     <para>
-     At compile time, <literal>transaction__start</> is converted to a macro
-     called <literal>TRACE_POSTGRESQL_TRANSACTION_START</> (notice the
+     At compile time, <literal>transaction__start</literal> is converted to a macro
+     called <literal>TRACE_POSTGRESQL_TRANSACTION_START</literal> (notice the
      underscores are single here), which is available by including
-     <filename>pg_trace.h</>.  Add the macro call to the appropriate location
+     <filename>pg_trace.h</filename>.  Add the macro call to the appropriate location
      in the source code.  In this case, it looks like the following:
 
 <programlisting>
@@ -4148,9 +4148,9 @@ TRACE_POSTGRESQL_TRANSACTION_START(vxid.localTransactionId);
     <listitem>
      <para>
       On most platforms, if <productname>PostgreSQL</productname> is
-      built with <option>--enable-dtrace</>, the arguments to a trace
+      built with <option>--enable-dtrace</option>, the arguments to a trace
       macro will be evaluated whenever control passes through the
-      macro, <emphasis>even if no tracing is being done</>.  This is
+      macro, <emphasis>even if no tracing is being done</emphasis>.  This is
       usually not worth worrying about if you are just reporting the
       values of a few local variables.  But beware of putting expensive
       function calls into the arguments.  If you need to do that,
@@ -4162,7 +4162,7 @@ if (TRACE_POSTGRESQL_TRANSACTION_START_ENABLED())
     TRACE_POSTGRESQL_TRANSACTION_START(some_function(...));
 </programlisting>
 
-      Each trace macro has a corresponding <literal>ENABLED</> macro.
+      Each trace macro has a corresponding <literal>ENABLED</literal> macro.
      </para>
     </listitem>
    </itemizedlist>

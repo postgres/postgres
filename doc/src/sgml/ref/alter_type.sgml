@@ -147,7 +147,7 @@ ALTER TYPE <replaceable class="parameter">name</replaceable> RENAME VALUE <repla
   </para>
 
   <para>
-   You must own the type to use <command>ALTER TYPE</>.
+   You must own the type to use <command>ALTER TYPE</command>.
    To change the schema of a type, you must also have
    <literal>CREATE</literal> privilege on the new schema.
    To alter the owner, you must also be a direct or indirect member of the new
@@ -290,7 +290,7 @@ ALTER TYPE <replaceable class="parameter">name</replaceable> RENAME VALUE <repla
   <title>Notes</title>
 
   <para>
-   <command>ALTER TYPE ... ADD VALUE</> (the form that adds a new value to an
+   <command>ALTER TYPE ... ADD VALUE</command> (the form that adds a new value to an
    enum type) cannot be executed inside a transaction block.
   </para>
 
@@ -301,7 +301,7 @@ ALTER TYPE <replaceable class="parameter">name</replaceable> RENAME VALUE <repla
    is used to set the new value's sort position somewhere other than at the
    end of the list.  However, sometimes it will happen even though the new
    value is added at the end (this occurs if the OID counter <quote>wrapped
-   around</> since the original creation of the enum type).  The slowdown is
+   around</quote> since the original creation of the enum type).  The slowdown is
    usually insignificant; but if it matters, optimal performance can be
    regained by dropping and recreating the enum type, or by dumping and
    reloading the database.

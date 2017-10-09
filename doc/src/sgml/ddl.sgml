@@ -149,7 +149,7 @@ DROP TABLE products;
    Nevertheless, it is common in SQL script files to unconditionally
    try to drop each table before creating it, ignoring any error
    messages, so that the script works whether or not the table exists.
-   (If you like, you can use the <literal>DROP TABLE IF EXISTS</> variant
+   (If you like, you can use the <literal>DROP TABLE IF EXISTS</literal> variant
    to avoid the error messages, but this is not standard SQL.)
   </para>
 
@@ -207,9 +207,9 @@ CREATE TABLE products (
    The default value can be an expression, which will be
    evaluated whenever the default value is inserted
    (<emphasis>not</emphasis> when the table is created).  A common example
-   is for a <type>timestamp</type> column to have a default of <literal>CURRENT_TIMESTAMP</>,
+   is for a <type>timestamp</type> column to have a default of <literal>CURRENT_TIMESTAMP</literal>,
    so that it gets set to the time of row insertion.  Another common
-   example is generating a <quote>serial number</> for each row.
+   example is generating a <quote>serial number</quote> for each row.
    In <productname>PostgreSQL</productname> this is typically done by
    something like:
 <programlisting>
@@ -218,8 +218,8 @@ CREATE TABLE products (
     ...
 );
 </programlisting>
-   where the <literal>nextval()</> function supplies successive values
-   from a <firstterm>sequence object</> (see <xref
+   where the <literal>nextval()</literal> function supplies successive values
+   from a <firstterm>sequence object</firstterm> (see <xref
    linkend="functions-sequence">). This arrangement is sufficiently common
    that there's a special shorthand for it:
 <programlisting>
@@ -228,7 +228,7 @@ CREATE TABLE products (
     ...
 );
 </programlisting>
-   The <literal>SERIAL</> shorthand is discussed further in <xref
+   The <literal>SERIAL</literal> shorthand is discussed further in <xref
    linkend="datatype-serial">.
   </para>
  </sect1>
@@ -385,7 +385,7 @@ CREATE TABLE products (
     CHECK (price &gt; 0),
     discounted_price numeric,
     CHECK (discounted_price &gt; 0),
-    <emphasis>CONSTRAINT valid_discount</> CHECK (price &gt; discounted_price)
+    <emphasis>CONSTRAINT valid_discount</emphasis> CHECK (price &gt; discounted_price)
 );
 </programlisting>
    </para>
@@ -623,7 +623,7 @@ CREATE TABLE example (
    <para>
     Adding a primary key will automatically create a unique B-tree index
     on the column or group of columns listed in the primary key, and will
-    force the column(s) to be marked <literal>NOT NULL</>.
+    force the column(s) to be marked <literal>NOT NULL</literal>.
    </para>
 
    <para>
@@ -828,7 +828,7 @@ CREATE TABLE order_items (
     (The essential difference between these two choices is that
     <literal>NO ACTION</literal> allows the check to be deferred until
     later in the transaction, whereas <literal>RESTRICT</literal> does not.)
-    <literal>CASCADE</> specifies that when a referenced row is deleted,
+    <literal>CASCADE</literal> specifies that when a referenced row is deleted,
     row(s) referencing it should be automatically deleted as well.
     There are two other options:
     <literal>SET NULL</literal> and <literal>SET DEFAULT</literal>.
@@ -845,19 +845,19 @@ CREATE TABLE order_items (
     Analogous to <literal>ON DELETE</literal> there is also
     <literal>ON UPDATE</literal> which is invoked when a referenced
     column is changed (updated).  The possible actions are the same.
-    In this case, <literal>CASCADE</> means that the updated values of the
+    In this case, <literal>CASCADE</literal> means that the updated values of the
     referenced column(s) should be copied into the referencing row(s).
    </para>
 
    <para>
     Normally, a referencing row need not satisfy the foreign key constraint
-    if any of its referencing columns are null.  If <literal>MATCH FULL</>
+    if any of its referencing columns are null.  If <literal>MATCH FULL</literal>
     is added to the foreign key declaration, a referencing row escapes
     satisfying the constraint only if all its referencing columns are null
     (so a mix of null and non-null values is guaranteed to fail a
-    <literal>MATCH FULL</> constraint).  If you don't want referencing rows
+    <literal>MATCH FULL</literal> constraint).  If you don't want referencing rows
     to be able to avoid satisfying the foreign key constraint, declare the
-    referencing column(s) as <literal>NOT NULL</>.
+    referencing column(s) as <literal>NOT NULL</literal>.
    </para>
 
    <para>
@@ -909,7 +909,7 @@ CREATE TABLE circles (
 
    <para>
     See also <link linkend="SQL-CREATETABLE-EXCLUDE"><command>CREATE
-    TABLE ... CONSTRAINT ... EXCLUDE</></link> for details.
+    TABLE ... CONSTRAINT ... EXCLUDE</command></link> for details.
    </para>
 
    <para>
@@ -923,7 +923,7 @@ CREATE TABLE circles (
   <title>System Columns</title>
 
   <para>
-   Every table has several <firstterm>system columns</> that are
+   Every table has several <firstterm>system columns</firstterm> that are
    implicitly defined by the system.  Therefore, these names cannot be
    used as names of user-defined columns.  (Note that these
    restrictions are separate from whether the name is a key word or
@@ -939,7 +939,7 @@ CREATE TABLE circles (
 
   <variablelist>
    <varlistentry>
-    <term><structfield>oid</></term>
+    <term><structfield>oid</structfield></term>
     <listitem>
      <para>
       <indexterm>
@@ -957,7 +957,7 @@ CREATE TABLE circles (
    </varlistentry>
 
    <varlistentry>
-    <term><structfield>tableoid</></term>
+    <term><structfield>tableoid</structfield></term>
     <listitem>
      <indexterm>
       <primary>tableoid</primary>
@@ -976,7 +976,7 @@ CREATE TABLE circles (
    </varlistentry>
 
    <varlistentry>
-    <term><structfield>xmin</></term>
+    <term><structfield>xmin</structfield></term>
     <listitem>
      <indexterm>
       <primary>xmin</primary>
@@ -992,7 +992,7 @@ CREATE TABLE circles (
    </varlistentry>
 
    <varlistentry>
-    <term><structfield>cmin</></term>
+    <term><structfield>cmin</structfield></term>
     <listitem>
      <indexterm>
       <primary>cmin</primary>
@@ -1006,7 +1006,7 @@ CREATE TABLE circles (
    </varlistentry>
 
    <varlistentry>
-    <term><structfield>xmax</></term>
+    <term><structfield>xmax</structfield></term>
     <listitem>
      <indexterm>
       <primary>xmax</primary>
@@ -1023,7 +1023,7 @@ CREATE TABLE circles (
    </varlistentry>
 
    <varlistentry>
-    <term><structfield>cmax</></term>
+    <term><structfield>cmax</structfield></term>
     <listitem>
      <indexterm>
       <primary>cmax</primary>
@@ -1036,7 +1036,7 @@ CREATE TABLE circles (
    </varlistentry>
 
    <varlistentry>
-    <term><structfield>ctid</></term>
+    <term><structfield>ctid</structfield></term>
     <listitem>
      <indexterm>
       <primary>ctid</primary>
@@ -1047,7 +1047,7 @@ CREATE TABLE circles (
       although the <structfield>ctid</structfield> can be used to
       locate the row version very quickly, a row's
       <structfield>ctid</structfield> will change if it is
-      updated or moved by <command>VACUUM FULL</>.  Therefore
+      updated or moved by <command>VACUUM FULL</command>.  Therefore
       <structfield>ctid</structfield> is useless as a long-term row
       identifier.  The OID, or even better a user-defined serial
       number, should be used to identify logical rows.
@@ -1074,7 +1074,7 @@ CREATE TABLE circles (
        a unique constraint (or unique index) exists, the system takes
        care not to generate an OID matching an already-existing row.
        (Of course, this is only possible if the table contains fewer
-       than 2<superscript>32</> (4 billion) rows, and in practice the
+       than 2<superscript>32</superscript> (4 billion) rows, and in practice the
        table size had better be much less than that, or performance
        might suffer.)
       </para>
@@ -1082,7 +1082,7 @@ CREATE TABLE circles (
      <listitem>
       <para>
        OIDs should never be assumed to be unique across tables; use
-       the combination of <structfield>tableoid</> and row OID if you
+       the combination of <structfield>tableoid</structfield> and row OID if you
        need a database-wide identifier.
       </para>
      </listitem>
@@ -1090,7 +1090,7 @@ CREATE TABLE circles (
       <para>
        Of course, the tables in question must be created <literal>WITH
        OIDS</literal>.  As of <productname>PostgreSQL</productname> 8.1,
-       <literal>WITHOUT OIDS</> is the default.
+       <literal>WITHOUT OIDS</literal> is the default.
       </para>
      </listitem>
     </itemizedlist>
@@ -1107,7 +1107,7 @@ CREATE TABLE circles (
 
    <para>
     Command identifiers are also 32-bit quantities.  This creates a hard limit
-    of 2<superscript>32</> (4 billion) <acronym>SQL</acronym> commands
+    of 2<superscript>32</superscript> (4 billion) <acronym>SQL</acronym> commands
     within a single transaction.  In practice this limit is not a
     problem &mdash; note that the limit is on the number of
     <acronym>SQL</acronym> commands, not the number of rows processed.
@@ -1186,7 +1186,7 @@ CREATE TABLE circles (
 ALTER TABLE products ADD COLUMN description text;
 </programlisting>
     The new column is initially filled with whatever default
-    value is given (null if you don't specify a <literal>DEFAULT</> clause).
+    value is given (null if you don't specify a <literal>DEFAULT</literal> clause).
    </para>
 
    <para>
@@ -1196,9 +1196,9 @@ ALTER TABLE products ADD COLUMN description text;
 ALTER TABLE products ADD COLUMN description text CHECK (description &lt;&gt; '');
 </programlisting>
     In fact all the options that can be applied to a column description
-    in <command>CREATE TABLE</> can be used here.  Keep in mind however
+    in <command>CREATE TABLE</command> can be used here.  Keep in mind however
     that the default value must satisfy the given constraints, or the
-    <literal>ADD</> will fail.  Alternatively, you can add
+    <literal>ADD</literal> will fail.  Alternatively, you can add
     constraints later (see below) after you've filled in the new column
     correctly.
    </para>
@@ -1210,7 +1210,7 @@ ALTER TABLE products ADD COLUMN description text CHECK (description &lt;&gt; '')
     specified, <productname>PostgreSQL</productname> is able to avoid
     the physical update.  So if you intend to fill the column with
     mostly nondefault values, it's best to add the column with no default,
-    insert the correct values using <command>UPDATE</>, and then add any
+    insert the correct values using <command>UPDATE</command>, and then add any
     desired default as described below.
    </para>
   </tip>
@@ -1234,7 +1234,7 @@ ALTER TABLE products DROP COLUMN description;
     foreign key constraint of another table,
     <productname>PostgreSQL</productname> will not silently drop that
     constraint.  You can authorize dropping everything that depends on
-    the column by adding <literal>CASCADE</>:
+    the column by adding <literal>CASCADE</literal>:
 <programlisting>
 ALTER TABLE products DROP COLUMN description CASCADE;
 </programlisting>
@@ -1290,13 +1290,13 @@ ALTER TABLE products ALTER COLUMN product_no SET NOT NULL;
 <programlisting>
 ALTER TABLE products DROP CONSTRAINT some_name;
 </programlisting>
-    (If you are dealing with a generated constraint name like <literal>$2</>,
+    (If you are dealing with a generated constraint name like <literal>$2</literal>,
     don't forget that you'll need to double-quote it to make it a valid
     identifier.)
    </para>
 
    <para>
-    As with dropping a column, you need to add <literal>CASCADE</> if you
+    As with dropping a column, you need to add <literal>CASCADE</literal> if you
     want to drop a constraint that something else depends on.  An example
     is that a foreign key constraint depends on a unique or primary key
     constraint on the referenced column(s).
@@ -1326,7 +1326,7 @@ ALTER TABLE products ALTER COLUMN product_no DROP NOT NULL;
 ALTER TABLE products ALTER COLUMN price SET DEFAULT 7.77;
 </programlisting>
     Note that this doesn't affect any existing rows in the table, it
-    just changes the default for future <command>INSERT</> commands.
+    just changes the default for future <command>INSERT</command> commands.
    </para>
 
    <para>
@@ -1356,12 +1356,12 @@ ALTER TABLE products ALTER COLUMN price TYPE numeric(10,2);
 </programlisting>
     This will succeed only if each existing entry in the column can be
     converted to the new type by an implicit cast.  If a more complex
-    conversion is needed, you can add a <literal>USING</> clause that
+    conversion is needed, you can add a <literal>USING</literal> clause that
     specifies how to compute the new values from the old.
    </para>
 
    <para>
-    <productname>PostgreSQL</> will attempt to convert the column's
+    <productname>PostgreSQL</productname> will attempt to convert the column's
     default value (if any) to the new type, as well as any constraints
     that involve the column.  But these conversions might fail, or might
     produce surprising results.  It's often best to drop any constraints
@@ -1437,11 +1437,11 @@ ALTER TABLE products RENAME TO items;
   </para>
 
   <para>
-   There are different kinds of privileges: <literal>SELECT</>,
-   <literal>INSERT</>, <literal>UPDATE</>, <literal>DELETE</>,
-   <literal>TRUNCATE</>, <literal>REFERENCES</>, <literal>TRIGGER</>,
-   <literal>CREATE</>, <literal>CONNECT</>, <literal>TEMPORARY</>,
-   <literal>EXECUTE</>, and <literal>USAGE</>.
+   There are different kinds of privileges: <literal>SELECT</literal>,
+   <literal>INSERT</literal>, <literal>UPDATE</literal>, <literal>DELETE</literal>,
+   <literal>TRUNCATE</literal>, <literal>REFERENCES</literal>, <literal>TRIGGER</literal>,
+   <literal>CREATE</literal>, <literal>CONNECT</literal>, <literal>TEMPORARY</literal>,
+   <literal>EXECUTE</literal>, and <literal>USAGE</literal>.
    The privileges applicable to a particular
    object vary depending on the object's type (table, function, etc).
    For complete information on the different types of privileges
@@ -1480,7 +1480,7 @@ GRANT UPDATE ON accounts TO joe;
   <para>
    The special <quote>role</quote> name <literal>PUBLIC</literal> can
    be used to grant a privilege to every role on the system.  Also,
-   <quote>group</> roles can be set up to help manage privileges when
+   <quote>group</quote> roles can be set up to help manage privileges when
    there are many users of a database &mdash; for details see
    <xref linkend="user-manag">.
   </para>
@@ -1492,7 +1492,7 @@ GRANT UPDATE ON accounts TO joe;
 REVOKE ALL ON accounts FROM PUBLIC;
 </programlisting>
    The special privileges of the object owner (i.e., the right to do
-   <command>DROP</>, <command>GRANT</>, <command>REVOKE</>, etc.)
+   <command>DROP</command>, <command>GRANT</command>, <command>REVOKE</command>, etc.)
    are always implicit in being the owner,
    and cannot be granted or revoked.  But the object owner can choose
    to revoke their own ordinary privileges, for example to make a
@@ -1502,7 +1502,7 @@ REVOKE ALL ON accounts FROM PUBLIC;
   <para>
    Ordinarily, only the object's owner (or a superuser) can grant or
    revoke privileges on an object.  However, it is possible to grant a
-   privilege <quote>with grant option</>, which gives the recipient
+   privilege <quote>with grant option</quote>, which gives the recipient
    the right to grant it in turn to others.  If the grant option is
    subsequently revoked then all who received the privilege from that
    recipient (directly or through a chain of grants) will lose the
@@ -1525,10 +1525,10 @@ REVOKE ALL ON accounts FROM PUBLIC;
   <para>
    In addition to the SQL-standard <link linkend="ddl-priv">privilege
    system</link> available through <xref linkend="sql-grant">,
-   tables can have <firstterm>row security policies</> that restrict,
+   tables can have <firstterm>row security policies</firstterm> that restrict,
    on a per-user basis, which rows can be returned by normal queries
    or inserted, updated, or deleted by data modification commands.
-   This feature is also known as <firstterm>Row-Level Security</>.
+   This feature is also known as <firstterm>Row-Level Security</firstterm>.
    By default, tables do not have any policies, so that if a user has
    access privileges to a table according to the SQL privilege system,
    all rows within it are equally available for querying or updating.
@@ -1537,20 +1537,20 @@ REVOKE ALL ON accounts FROM PUBLIC;
   <para>
    When row security is enabled on a table (with
    <link linkend="sql-altertable">ALTER TABLE ... ENABLE ROW LEVEL
-   SECURITY</>), all normal access to the table for selecting rows or
+   SECURITY</link>), all normal access to the table for selecting rows or
    modifying rows must be allowed by a row security policy.  (However, the
    table's owner is typically not subject to row security policies.)  If no
    policy exists for the table, a default-deny policy is used, meaning that
    no rows are visible or can be modified.  Operations that apply to the
-   whole table, such as <command>TRUNCATE</> and <literal>REFERENCES</>,
+   whole table, such as <command>TRUNCATE</command> and <literal>REFERENCES</literal>,
    are not subject to row security.
   </para>
 
   <para>
    Row security policies can be specific to commands, or to roles, or to
    both.  A policy can be specified to apply to <literal>ALL</literal>
-   commands, or to <literal>SELECT</>, <literal>INSERT</>, <literal>UPDATE</>,
-   or <literal>DELETE</>.  Multiple roles can be assigned to a given
+   commands, or to <literal>SELECT</literal>, <literal>INSERT</literal>, <literal>UPDATE</literal>,
+   or <literal>DELETE</literal>.  Multiple roles can be assigned to a given
    policy, and normal role membership and inheritance rules apply.
   </para>
 
@@ -1562,7 +1562,7 @@ REVOKE ALL ON accounts FROM PUBLIC;
    rule are <literal>leakproof</literal> functions, which are guaranteed to
    not leak information; the optimizer may choose to apply such functions
    ahead of the row-security check.)  Rows for which the expression does
-   not return <literal>true</> will not be processed.  Separate expressions
+   not return <literal>true</literal> will not be processed.  Separate expressions
    may be specified to provide independent control over the rows which are
    visible and the rows which are allowed to be modified.  Policy
    expressions are run as part of the query and with the privileges of the
@@ -1571,11 +1571,11 @@ REVOKE ALL ON accounts FROM PUBLIC;
   </para>
 
   <para>
-   Superusers and roles with the <literal>BYPASSRLS</> attribute always
+   Superusers and roles with the <literal>BYPASSRLS</literal> attribute always
    bypass the row security system when accessing a table.  Table owners
    normally bypass row security as well, though a table owner can choose to
    be subject to row security with <link linkend="sql-altertable">ALTER
-   TABLE ... FORCE ROW LEVEL SECURITY</>.
+   TABLE ... FORCE ROW LEVEL SECURITY</link>.
   </para>
 
   <para>
@@ -1609,8 +1609,8 @@ REVOKE ALL ON accounts FROM PUBLIC;
 
   <para>
    As a simple example, here is how to create a policy on
-   the <literal>account</> relation to allow only members of
-   the <literal>managers</> role to access rows, and only rows of their
+   the <literal>account</literal> relation to allow only members of
+   the <literal>managers</literal> role to access rows, and only rows of their
    accounts:
   </para>
 
@@ -1627,7 +1627,7 @@ CREATE POLICY account_managers ON accounts TO managers
    If no role is specified, or the special user name
    <literal>PUBLIC</literal> is used, then the policy applies to all
    users on the system.  To allow all users to access their own row in
-   a <literal>users</> table, a simple policy can be used:
+   a <literal>users</literal> table, a simple policy can be used:
   </para>
 
 <programlisting>
@@ -1637,9 +1637,9 @@ CREATE POLICY user_policy ON users
 
   <para>
    To use a different policy for rows that are being added to the table
-   compared to those rows that are visible, the <literal>WITH CHECK</>
+   compared to those rows that are visible, the <literal>WITH CHECK</literal>
    clause can be used.  This policy would allow all users to view all rows
-   in the <literal>users</> table, but only modify their own:
+   in the <literal>users</literal> table, but only modify their own:
   </para>
 
 <programlisting>
@@ -1649,7 +1649,7 @@ CREATE POLICY user_policy ON users
 </programlisting>
 
   <para>
-   Row security can also be disabled with the <command>ALTER TABLE</>
+   Row security can also be disabled with the <command>ALTER TABLE</command>
    command.  Disabling row security does not remove any policies that are
    defined on the table; they are simply ignored.  Then all rows in the
    table are visible and modifiable, subject to the standard SQL privileges
@@ -1658,7 +1658,7 @@ CREATE POLICY user_policy ON users
 
   <para>
    Below is a larger example of how this feature can be used in production
-   environments.  The table <literal>passwd</> emulates a Unix password
+   environments.  The table <literal>passwd</literal> emulates a Unix password
    file:
   </para>
 
@@ -1820,7 +1820,7 @@ UPDATE 0
    Referential integrity checks, such as unique or primary key constraints
    and foreign key references, always bypass row security to ensure that
    data integrity is maintained.  Care must be taken when developing
-   schemas and row level policies to avoid <quote>covert channel</> leaks of
+   schemas and row level policies to avoid <quote>covert channel</quote> leaks of
    information through such referential integrity checks.
   </para>
 
@@ -1830,7 +1830,7 @@ UPDATE 0
    disastrous if row security silently caused some rows to be omitted
    from the backup.  In such a situation, you can set the
    <xref linkend="guc-row-security"> configuration parameter
-   to <literal>off</>.  This does not in itself bypass row security;
+   to <literal>off</literal>.  This does not in itself bypass row security;
    what it does is throw an error if any query's results would get filtered
    by a policy.  The reason for the error can then be investigated and
    fixed.
@@ -1842,7 +1842,7 @@ UPDATE 0
    best-performing case; when possible, it's best to design row security
    applications to work this way.  If it is necessary to consult other rows
    or other tables to make a policy decision, that can be accomplished using
-   sub-<command>SELECT</>s, or functions that contain <command>SELECT</>s,
+   sub-<command>SELECT</command>s, or functions that contain <command>SELECT</command>s,
    in the policy expressions.  Be aware however that such accesses can
    create race conditions that could allow information leakage if care is
    not taken.  As an example, consider the following table design:
@@ -1896,8 +1896,8 @@ GRANT ALL ON information TO public;
 </programlisting>
 
   <para>
-   Now suppose that <literal>alice</> wishes to change the <quote>slightly
-   secret</> information, but decides that <literal>mallory</> should not
+   Now suppose that <literal>alice</literal> wishes to change the <quote>slightly
+   secret</quote> information, but decides that <literal>mallory</literal> should not
    be trusted with the new content of that row, so she does:
   </para>
 
@@ -1909,36 +1909,36 @@ COMMIT;
 </programlisting>
 
   <para>
-   That looks safe; there is no window wherein <literal>mallory</> should be
-   able to see the <quote>secret from mallory</> string.  However, there is
-   a race condition here.  If <literal>mallory</> is concurrently doing,
+   That looks safe; there is no window wherein <literal>mallory</literal> should be
+   able to see the <quote>secret from mallory</quote> string.  However, there is
+   a race condition here.  If <literal>mallory</literal> is concurrently doing,
    say,
 <programlisting>
 SELECT * FROM information WHERE group_id = 2 FOR UPDATE;
 </programlisting>
-   and her transaction is in <literal>READ COMMITTED</> mode, it is possible
-   for her to see <quote>secret from mallory</>.  That happens if her
-   transaction reaches the <structname>information</> row just
-   after <literal>alice</>'s does.  It blocks waiting
-   for <literal>alice</>'s transaction to commit, then fetches the updated
-   row contents thanks to the <literal>FOR UPDATE</> clause.  However, it
-   does <emphasis>not</> fetch an updated row for the
-   implicit <command>SELECT</> from <structname>users</>, because that
-   sub-<command>SELECT</> did not have <literal>FOR UPDATE</>; instead
-   the <structname>users</> row is read with the snapshot taken at the start
+   and her transaction is in <literal>READ COMMITTED</literal> mode, it is possible
+   for her to see <quote>secret from mallory</quote>.  That happens if her
+   transaction reaches the <structname>information</structname> row just
+   after <literal>alice</literal>'s does.  It blocks waiting
+   for <literal>alice</literal>'s transaction to commit, then fetches the updated
+   row contents thanks to the <literal>FOR UPDATE</literal> clause.  However, it
+   does <emphasis>not</emphasis> fetch an updated row for the
+   implicit <command>SELECT</command> from <structname>users</structname>, because that
+   sub-<command>SELECT</command> did not have <literal>FOR UPDATE</literal>; instead
+   the <structname>users</structname> row is read with the snapshot taken at the start
    of the query.  Therefore, the policy expression tests the old value
-   of <literal>mallory</>'s privilege level and allows her to see the
+   of <literal>mallory</literal>'s privilege level and allows her to see the
    updated row.
   </para>
 
   <para>
    There are several ways around this problem.  One simple answer is to use
-   <literal>SELECT ... FOR SHARE</> in sub-<command>SELECT</>s in row
-   security policies.  However, that requires granting <literal>UPDATE</>
-   privilege on the referenced table (here <structname>users</>) to the
+   <literal>SELECT ... FOR SHARE</literal> in sub-<command>SELECT</command>s in row
+   security policies.  However, that requires granting <literal>UPDATE</literal>
+   privilege on the referenced table (here <structname>users</structname>) to the
    affected users, which might be undesirable.  (But another row security
    policy could be applied to prevent them from actually exercising that
-   privilege; or the sub-<command>SELECT</> could be embedded into a security
+   privilege; or the sub-<command>SELECT</command> could be embedded into a security
    definer function.)  Also, heavy concurrent use of row share locks on the
    referenced table could pose a performance problem, especially if updates
    of it are frequent.  Another solution, practical if updates of the
@@ -1977,19 +1977,19 @@ SELECT * FROM information WHERE group_id = 2 FOR UPDATE;
    <para>
     Users of a cluster do not necessarily have the privilege to access every
     database in the cluster.  Sharing of user names means that there
-    cannot be different users named, say, <literal>joe</> in two databases
+    cannot be different users named, say, <literal>joe</literal> in two databases
     in the same cluster; but the system can be configured to allow
-    <literal>joe</> access to only some of the databases.
+    <literal>joe</literal> access to only some of the databases.
    </para>
   </note>
 
   <para>
-   A database contains one or more named <firstterm>schemas</>, which
+   A database contains one or more named <firstterm>schemas</firstterm>, which
    in turn contain tables.  Schemas also contain other kinds of named
    objects, including data types, functions, and operators.  The same
    object name can be used in different schemas without conflict; for
-   example, both <literal>schema1</> and <literal>myschema</> can
-   contain tables named <literal>mytable</>.  Unlike databases,
+   example, both <literal>schema1</literal> and <literal>myschema</literal> can
+   contain tables named <literal>mytable</literal>.  Unlike databases,
    schemas are not rigidly separated: a user can access objects in any
    of the schemas in the database they are connected to, if they have
    privileges to do so.
@@ -2053,10 +2053,10 @@ CREATE SCHEMA myschema;
 
    <para>
     To create or access objects in a schema, write a
-    <firstterm>qualified name</> consisting of the schema name and
+    <firstterm>qualified name</firstterm> consisting of the schema name and
     table name separated by a dot:
 <synopsis>
-<replaceable>schema</><literal>.</><replaceable>table</>
+<replaceable>schema</replaceable><literal>.</literal><replaceable>table</replaceable>
 </synopsis>
     This works anywhere a table name is expected, including the table
     modification commands and the data access commands discussed in
@@ -2068,10 +2068,10 @@ CREATE SCHEMA myschema;
    <para>
     Actually, the even more general syntax
 <synopsis>
-<replaceable>database</><literal>.</><replaceable>schema</><literal>.</><replaceable>table</>
+<replaceable>database</replaceable><literal>.</literal><replaceable>schema</replaceable><literal>.</literal><replaceable>table</replaceable>
 </synopsis>
     can be used too, but at present this is just for <foreignphrase>pro
-    forma</> compliance with the SQL standard.  If you write a database name,
+    forma</foreignphrase> compliance with the SQL standard.  If you write a database name,
     it must be the same as the database you are connected to.
    </para>
 
@@ -2116,7 +2116,7 @@ CREATE SCHEMA <replaceable>schema_name</replaceable> AUTHORIZATION <replaceable>
    </para>
 
    <para>
-    Schema names beginning with <literal>pg_</> are reserved for
+    Schema names beginning with <literal>pg_</literal> are reserved for
     system purposes and cannot be created by users.
    </para>
   </sect2>
@@ -2163,9 +2163,9 @@ CREATE TABLE public.products ( ... );
    <para>
     Qualified names are tedious to write, and it's often best not to
     wire a particular schema name into applications anyway.  Therefore
-    tables are often referred to by <firstterm>unqualified names</>,
+    tables are often referred to by <firstterm>unqualified names</firstterm>,
     which consist of just the table name.  The system determines which table
-    is meant by following a <firstterm>search path</>, which is a list
+    is meant by following a <firstterm>search path</firstterm>, which is a list
     of schemas to look in.  The first matching table in the search path
     is taken to be the one wanted.  If there is no match in the search
     path, an error is reported, even if matching table names exist
@@ -2180,7 +2180,7 @@ CREATE TABLE public.products ( ... );
    <para>
     The first schema named in the search path is called the current schema.
     Aside from being the first schema searched, it is also the schema in
-    which new tables will be created if the <command>CREATE TABLE</>
+    which new tables will be created if the <command>CREATE TABLE</command>
     command does not specify a schema name.
    </para>
 
@@ -2253,7 +2253,7 @@ SET search_path TO myschema;
     need to write a qualified operator name in an expression, there is a
     special provision: you must write
 <synopsis>
-<literal>OPERATOR(</><replaceable>schema</><literal>.</><replaceable>operator</><literal>)</>
+<literal>OPERATOR(</literal><replaceable>schema</replaceable><literal>.</literal><replaceable>operator</replaceable><literal>)</literal>
 </synopsis>
     This is needed to avoid syntactic ambiguity.  An example is:
 <programlisting>
@@ -2310,28 +2310,28 @@ REVOKE CREATE ON SCHEMA public FROM PUBLIC;
    </indexterm>
 
    <para>
-    In addition to <literal>public</> and user-created schemas, each
-    database contains a <literal>pg_catalog</> schema, which contains
+    In addition to <literal>public</literal> and user-created schemas, each
+    database contains a <literal>pg_catalog</literal> schema, which contains
     the system tables and all the built-in data types, functions, and
-    operators.  <literal>pg_catalog</> is always effectively part of
+    operators.  <literal>pg_catalog</literal> is always effectively part of
     the search path.  If it is not named explicitly in the path then
-    it is implicitly searched <emphasis>before</> searching the path's
+    it is implicitly searched <emphasis>before</emphasis> searching the path's
     schemas.  This ensures that built-in names will always be
     findable.  However, you can explicitly place
-    <literal>pg_catalog</> at the end of your search path if you
+    <literal>pg_catalog</literal> at the end of your search path if you
     prefer to have user-defined names override built-in names.
    </para>
 
    <para>
-    Since system table names begin with <literal>pg_</>, it is best to
+    Since system table names begin with <literal>pg_</literal>, it is best to
     avoid such names to ensure that you won't suffer a conflict if some
     future version defines a system table named the same as your
     table.  (With the default search path, an unqualified reference to
     your table name would then be resolved as the system table instead.)
     System tables will continue to follow the convention of having
-    names beginning with <literal>pg_</>, so that they will not
+    names beginning with <literal>pg_</literal>, so that they will not
     conflict with unqualified user-table names so long as users avoid
-    the <literal>pg_</> prefix.
+    the <literal>pg_</literal> prefix.
    </para>
   </sect2>
 
@@ -2397,15 +2397,15 @@ REVOKE CREATE ON SCHEMA public FROM PUBLIC;
     implements only the basic schema support specified in the
     standard.  Therefore, many users consider qualified names to
     really consist of
-    <literal><replaceable>user_name</>.<replaceable>table_name</></literal>.
+    <literal><replaceable>user_name</replaceable>.<replaceable>table_name</replaceable></literal>.
     This is how <productname>PostgreSQL</productname> will effectively
     behave if you create a per-user schema for every user.
    </para>
 
    <para>
-    Also, there is no concept of a <literal>public</> schema in the
+    Also, there is no concept of a <literal>public</literal> schema in the
     SQL standard.  For maximum conformance to the standard, you should
-    not use (perhaps even remove) the <literal>public</> schema.
+    not use (perhaps even remove) the <literal>public</literal> schema.
    </para>
 
    <para>
@@ -2461,9 +2461,9 @@ CREATE TABLE capitals (
 ) INHERITS (cities);
 </programlisting>
 
-   In this case, the <structname>capitals</> table <firstterm>inherits</>
-   all the columns of its parent table, <structname>cities</>. State
-   capitals also have an extra column, <structfield>state</>, that shows
+   In this case, the <structname>capitals</structname> table <firstterm>inherits</firstterm>
+   all the columns of its parent table, <structname>cities</structname>. State
+   capitals also have an extra column, <structfield>state</structfield>, that shows
    their state.
   </para>
 
@@ -2521,7 +2521,7 @@ SELECT name, altitude
   </para>
 
   <para>
-   You can also write the table name with a trailing <literal>*</>
+   You can also write the table name with a trailing <literal>*</literal>
    to explicitly specify that descendant tables are included:
 
 <programlisting>
@@ -2530,7 +2530,7 @@ SELECT name, altitude
     WHERE altitude &gt; 500;
 </programlisting>
 
-   Writing <literal>*</> is not necessary, since this behavior is always
+   Writing <literal>*</literal> is not necessary, since this behavior is always
    the default.  However, this syntax is still supported for
    compatibility with older releases where the default could be changed.
   </para>
@@ -2559,7 +2559,7 @@ WHERE c.altitude &gt; 500;
 
    (If you try to reproduce this example, you will probably get
    different numeric OIDs.)  By doing a join with
-   <structname>pg_class</> you can see the actual table names:
+   <structname>pg_class</structname> you can see the actual table names:
 
 <programlisting>
 SELECT p.relname, c.name, c.altitude
@@ -2579,7 +2579,7 @@ WHERE c.altitude &gt; 500 AND c.tableoid = p.oid;
   </para>
 
   <para>
-   Another way to get the same effect is to use the <type>regclass</>
+   Another way to get the same effect is to use the <type>regclass</type>
    alias type, which will print the table OID symbolically:
 
 <programlisting>
@@ -2603,15 +2603,15 @@ VALUES ('Albany', NULL, NULL, 'NY');
    <command>INSERT</command> always inserts into exactly the table
    specified.  In some cases it is possible to redirect the insertion
    using a rule (see <xref linkend="rules">).  However that does not
-   help for the above case because the <structname>cities</> table
-   does not contain the column <structfield>state</>, and so the
+   help for the above case because the <structname>cities</structname> table
+   does not contain the column <structfield>state</structfield>, and so the
    command will be rejected before the rule can be applied.
   </para>
 
   <para>
    All check constraints and not-null constraints on a parent table are
    automatically inherited by its children, unless explicitly specified
-   otherwise with <literal>NO INHERIT</> clauses.  Other types of constraints
+   otherwise with <literal>NO INHERIT</literal> clauses.  Other types of constraints
    (unique, primary key, and foreign key constraints) are not inherited.
   </para>
 
@@ -2620,7 +2620,7 @@ VALUES ('Albany', NULL, NULL, 'NY');
    the union of the columns defined by the parent tables.  Any columns
    declared in the child table's definition are added to these.  If the
    same column name appears in multiple parent tables, or in both a parent
-   table and the child's definition, then these columns are <quote>merged</>
+   table and the child's definition, then these columns are <quote>merged</quote>
    so that there is only one such column in the child table.  To be merged,
    columns must have the same data types, else an error is raised.
    Inheritable check constraints and not-null constraints are merged in a
@@ -2632,7 +2632,7 @@ VALUES ('Albany', NULL, NULL, 'NY');
 
   <para>
    Table inheritance is typically established when the child table is
-   created, using the <literal>INHERITS</> clause of the
+   created, using the <literal>INHERITS</literal> clause of the
    <xref linkend="sql-createtable">
    statement.
    Alternatively, a table which is already defined in a compatible way can
@@ -2642,7 +2642,7 @@ VALUES ('Albany', NULL, NULL, 'NY');
    the same names and types as the columns of the parent. It must also include
    check constraints with the same names and check expressions as those of the
    parent. Similarly an inheritance link can be removed from a child using the
-   <literal>NO INHERIT</literal> variant of <command>ALTER TABLE</>.
+   <literal>NO INHERIT</literal> variant of <command>ALTER TABLE</command>.
    Dynamically adding and removing inheritance links like this can be useful
    when the inheritance relationship is being used for table
    partitioning (see <xref linkend="ddl-partitioning">).
@@ -2680,10 +2680,10 @@ VALUES ('Albany', NULL, NULL, 'NY');
 
   <para>
    Inherited queries perform access permission checks on the parent table
-   only.  Thus, for example, granting <literal>UPDATE</> permission on
-   the <structname>cities</> table implies permission to update rows in
+   only.  Thus, for example, granting <literal>UPDATE</literal> permission on
+   the <structname>cities</structname> table implies permission to update rows in
    the <structname>capitals</structname> table as well, when they are
-   accessed through <structname>cities</>.  This preserves the appearance
+   accessed through <structname>cities</structname>.  This preserves the appearance
    that the data is (also) in the parent table.  But
    the <structname>capitals</structname> table could not be updated directly
    without an additional grant.  In a similar way, the parent table's row
@@ -2732,33 +2732,33 @@ VALUES ('Albany', NULL, NULL, 'NY');
    <itemizedlist>
     <listitem>
      <para>
-      If we declared <structname>cities</>.<structfield>name</> to be
-      <literal>UNIQUE</> or a <literal>PRIMARY KEY</>, this would not stop the
-      <structname>capitals</> table from having rows with names duplicating
-      rows in <structname>cities</>.  And those duplicate rows would by
-      default show up in queries from <structname>cities</>.  In fact, by
-      default <structname>capitals</> would have no unique constraint at all,
+      If we declared <structname>cities</structname>.<structfield>name</structfield> to be
+      <literal>UNIQUE</literal> or a <literal>PRIMARY KEY</literal>, this would not stop the
+      <structname>capitals</structname> table from having rows with names duplicating
+      rows in <structname>cities</structname>.  And those duplicate rows would by
+      default show up in queries from <structname>cities</structname>.  In fact, by
+      default <structname>capitals</structname> would have no unique constraint at all,
       and so could contain multiple rows with the same name.
-      You could add a unique constraint to <structname>capitals</>, but this
-      would not prevent duplication compared to <structname>cities</>.
+      You could add a unique constraint to <structname>capitals</structname>, but this
+      would not prevent duplication compared to <structname>cities</structname>.
      </para>
     </listitem>
 
     <listitem>
      <para>
       Similarly, if we were to specify that
-      <structname>cities</>.<structfield>name</> <literal>REFERENCES</> some
+      <structname>cities</structname>.<structfield>name</structfield> <literal>REFERENCES</literal> some
       other table, this constraint would not automatically propagate to
-      <structname>capitals</>.  In this case you could work around it by
-      manually adding the same <literal>REFERENCES</> constraint to
-      <structname>capitals</>.
+      <structname>capitals</structname>.  In this case you could work around it by
+      manually adding the same <literal>REFERENCES</literal> constraint to
+      <structname>capitals</structname>.
      </para>
     </listitem>
 
     <listitem>
      <para>
       Specifying that another table's column <literal>REFERENCES
-      cities(name)</> would allow the other table to contain city names, but
+      cities(name)</literal> would allow the other table to contain city names, but
       not capital names.  There is no good workaround for this case.
      </para>
     </listitem>
@@ -2825,10 +2825,10 @@ VALUES ('Albany', NULL, NULL, 'NY');
       <para>
        Bulk loads and deletes can be accomplished by adding or removing
        partitions, if that requirement is planned into the partitioning design.
-       Doing <command>ALTER TABLE DETACH PARTITION</> or dropping an individual
-       partition using <command>DROP TABLE</> is far faster than a bulk
+       Doing <command>ALTER TABLE DETACH PARTITION</command> or dropping an individual
+       partition using <command>DROP TABLE</command> is far faster than a bulk
        operation.  These commands also entirely avoid the
-       <command>VACUUM</command> overhead caused by a bulk <command>DELETE</>.
+       <command>VACUUM</command> overhead caused by a bulk <command>DELETE</command>.
       </para>
      </listitem>
 
@@ -2921,7 +2921,7 @@ VALUES ('Albany', NULL, NULL, 'NY');
     containing data as a partition of a partitioned table, or remove a
     partition from a partitioned table turning it into a standalone table;
     see <xref linkend="sql-altertable"> to learn more about the
-    <command>ATTACH PARTITION</> and <command>DETACH PARTITION</>
+    <command>ATTACH PARTITION</command> and <command>DETACH PARTITION</command>
     sub-commands.
    </para>
 
@@ -2968,9 +2968,9 @@ VALUES ('Albany', NULL, NULL, 'NY');
       <para>
        Partitions cannot have columns that are not present in the parent.  It
        is neither possible to specify columns when creating partitions with
-       <command>CREATE TABLE</> nor is it possible to add columns to
-       partitions after-the-fact using <command>ALTER TABLE</>.  Tables may be
-       added as a partition with <command>ALTER TABLE ... ATTACH PARTITION</>
+       <command>CREATE TABLE</command> nor is it possible to add columns to
+       partitions after-the-fact using <command>ALTER TABLE</command>.  Tables may be
+       added as a partition with <command>ALTER TABLE ... ATTACH PARTITION</command>
        only if their columns exactly match the parent, including any
        <literal>oid</literal> column.
       </para>
@@ -3049,7 +3049,7 @@ CREATE TABLE measurement (
        accessing the partitioned table will have to scan fewer partitions if
        the conditions involve some or all of these columns.
        For example, consider a table range partitioned using columns
-       <structfield>lastname</> and <structfield>firstname</> (in that order)
+       <structfield>lastname</structfield> and <structfield>firstname</structfield> (in that order)
        as the partition key.
       </para>
      </listitem>
@@ -3067,7 +3067,7 @@ CREATE TABLE measurement (
 
       <para>
        Partitions thus created are in every way normal
-       <productname>PostgreSQL</>
+       <productname>PostgreSQL</productname>
        tables (or, possibly, foreign tables).  It is possible to specify a
        tablespace and storage parameters for each partition separately.
       </para>
@@ -3111,12 +3111,12 @@ CREATE TABLE measurement_y2006m02 PARTITION OF measurement
     PARTITION BY RANGE (peaktemp);
 </programlisting>
 
-       After creating partitions of <structname>measurement_y2006m02</>,
-       any data inserted into <structname>measurement</> that is mapped to
-       <structname>measurement_y2006m02</> (or data that is directly inserted
-       into <structname>measurement_y2006m02</>, provided it satisfies its
+       After creating partitions of <structname>measurement_y2006m02</structname>,
+       any data inserted into <structname>measurement</structname> that is mapped to
+       <structname>measurement_y2006m02</structname> (or data that is directly inserted
+       into <structname>measurement_y2006m02</structname>, provided it satisfies its
        partition constraint) will be further redirected to one of its
-       partitions based on the <structfield>peaktemp</> column.  The partition
+       partitions based on the <structfield>peaktemp</structfield> column.  The partition
        key specified may overlap with the parent's partition key, although
        care should be taken when specifying the bounds of a sub-partition
        such that the set of data it accepts constitutes a subset of what
@@ -3147,7 +3147,7 @@ CREATE INDEX ON measurement_y2008m01 (logdate);
       <listitem>
        <para>
         Ensure that the <xref linkend="guc-constraint-exclusion">
-        configuration parameter is not disabled in <filename>postgresql.conf</>.
+        configuration parameter is not disabled in <filename>postgresql.conf</filename>.
         If it is, queries will not be optimized as desired.
        </para>
       </listitem>
@@ -3197,7 +3197,7 @@ ALTER TABLE measurement DETACH PARTITION measurement_y2006m02;
 
      This allows further operations to be performed on the data before
      it is dropped. For example, this is often a useful time to back up
-     the data using <command>COPY</>, <application>pg_dump</>, or
+     the data using <command>COPY</command>, <application>pg_dump</application>, or
      similar tools. It might also be a useful time to aggregate data
      into smaller formats, perform other data manipulations, or run
      reports.
@@ -3236,14 +3236,14 @@ ALTER TABLE measurement ATTACH PARTITION measurement_y2008m02
     </para>
 
     <para>
-     Before running the <command>ATTACH PARTITION</> command, it is
-     recommended to create a <literal>CHECK</> constraint on the table to
+     Before running the <command>ATTACH PARTITION</command> command, it is
+     recommended to create a <literal>CHECK</literal> constraint on the table to
      be attached describing the desired partition constraint.  That way,
      the system will be able to skip the scan to validate the implicit
      partition constraint. Without such a constraint, the table will be
      scanned to validate the partition constraint while holding an
      <literal>ACCESS EXCLUSIVE</literal> lock on the parent table.
-     One may then drop the constraint after <command>ATTACH PARTITION</>
+     One may then drop the constraint after <command>ATTACH PARTITION</command>
      is finished, because it is no longer necessary.
     </para>
    </sect3>
@@ -3285,7 +3285,7 @@ ALTER TABLE measurement ATTACH PARTITION measurement_y2008m02
 
      <listitem>
       <para>
-       An <command>UPDATE</> that causes a row to move from one partition to
+       An <command>UPDATE</command> that causes a row to move from one partition to
        another fails, because the new value of the row fails to satisfy the
        implicit partition constraint of the original partition.
       </para>
@@ -3376,7 +3376,7 @@ ALTER TABLE measurement ATTACH PARTITION measurement_y2008m02
          the master table.  Normally, these tables will not add any columns
          to the set inherited from the master.  Just as with declarative
          partitioning, these partitions are in every way normal
-         <productname>PostgreSQL</> tables (or foreign tables).
+         <productname>PostgreSQL</productname> tables (or foreign tables).
         </para>
 
         <para>
@@ -3460,7 +3460,7 @@ CREATE INDEX measurement_y2008m01_logdate ON measurement_y2008m01 (logdate);
        <listitem>
         <para>
          We want our application to be able to say <literal>INSERT INTO
-         measurement ...</> and have the data be redirected into the
+         measurement ...</literal> and have the data be redirected into the
          appropriate partition table.  We can arrange that by attaching
          a suitable trigger function to the master table.
          If data will be added only to the latest partition, we can
@@ -3567,9 +3567,9 @@ DO INSTEAD
         </para>
 
         <para>
-         Be aware that <command>COPY</> ignores rules.  If you want to
-         use <command>COPY</> to insert data, you'll need to copy into the
-         correct partition table rather than into the master. <command>COPY</>
+         Be aware that <command>COPY</command> ignores rules.  If you want to
+         use <command>COPY</command> to insert data, you'll need to copy into the
+         correct partition table rather than into the master. <command>COPY</command>
          does fire triggers, so you can use it normally if you use the trigger
          approach.
         </para>
@@ -3585,7 +3585,7 @@ DO INSTEAD
         <para>
          Ensure that the <xref linkend="guc-constraint-exclusion">
          configuration parameter is not disabled in
-         <filename>postgresql.conf</>.
+         <filename>postgresql.conf</filename>.
          If it is, queries will not be optimized as desired.
         </para>
        </listitem>
@@ -3666,8 +3666,8 @@ ALTER TABLE measurement_y2008m02 INHERIT measurement;
        <para>
         The schemes shown here assume that the partition key column(s)
         of a row never change, or at least do not change enough to require
-        it to move to another partition.  An <command>UPDATE</> that attempts
-        to do that will fail because of the <literal>CHECK</> constraints.
+        it to move to another partition.  An <command>UPDATE</command> that attempts
+        to do that will fail because of the <literal>CHECK</literal> constraints.
         If you need to handle such cases, you can put suitable update triggers
         on the partition tables, but it makes management of the structure
         much more complicated.
@@ -3688,8 +3688,8 @@ ANALYZE measurement;
 
       <listitem>
        <para>
-        <command>INSERT</command> statements with <literal>ON CONFLICT</>
-        clauses are unlikely to work as expected, as the <literal>ON CONFLICT</>
+        <command>INSERT</command> statements with <literal>ON CONFLICT</literal>
+        clauses are unlikely to work as expected, as the <literal>ON CONFLICT</literal>
         action is only taken in case of unique violations on the specified
         target relation, not its child relations.
        </para>
@@ -3717,7 +3717,7 @@ ANALYZE measurement;
    </indexterm>
 
    <para>
-    <firstterm>Constraint exclusion</> is a query optimization technique
+    <firstterm>Constraint exclusion</firstterm> is a query optimization technique
     that improves performance for partitioned tables defined in the
     fashion described above (both declaratively partitioned tables and those
     implemented using inheritance).  As an example:
@@ -3728,17 +3728,17 @@ SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2008-01-01';
 </programlisting>
 
     Without constraint exclusion, the above query would scan each of
-    the partitions of the <structname>measurement</> table. With constraint
+    the partitions of the <structname>measurement</structname> table. With constraint
     exclusion enabled, the planner will examine the constraints of each
     partition and try to prove that the partition need not
     be scanned because it could not contain any rows meeting the query's
-    <literal>WHERE</> clause.  When the planner can prove this, it
+    <literal>WHERE</literal> clause.  When the planner can prove this, it
     excludes the partition from the query plan.
    </para>
 
    <para>
-    You can use the <command>EXPLAIN</> command to show the difference
-    between a plan with <varname>constraint_exclusion</> on and a plan
+    You can use the <command>EXPLAIN</command> command to show the difference
+    between a plan with <varname>constraint_exclusion</varname> on and a plan
     with it off.  A typical unoptimized plan for this type of table setup is:
 
 <programlisting>
@@ -3783,7 +3783,7 @@ EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2008-01-01';
    </para>
 
    <para>
-    Note that constraint exclusion is driven only by <literal>CHECK</>
+    Note that constraint exclusion is driven only by <literal>CHECK</literal>
     constraints, not by the presence of indexes.  Therefore it isn't
     necessary to define indexes on the key columns.  Whether an index
     needs to be created for a given partition depends on whether you
@@ -3795,11 +3795,11 @@ EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2008-01-01';
    <para>
     The default (and recommended) setting of
     <xref linkend="guc-constraint-exclusion"> is actually neither
-    <literal>on</> nor <literal>off</>, but an intermediate setting
-    called <literal>partition</>, which causes the technique to be
+    <literal>on</literal> nor <literal>off</literal>, but an intermediate setting
+    called <literal>partition</literal>, which causes the technique to be
     applied only to queries that are likely to be working on partitioned
-    tables.  The <literal>on</> setting causes the planner to examine
-    <literal>CHECK</> constraints in all queries, even simple ones that
+    tables.  The <literal>on</literal> setting causes the planner to examine
+    <literal>CHECK</literal> constraints in all queries, even simple ones that
     are unlikely to benefit.
    </para>
 
@@ -3810,7 +3810,7 @@ EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2008-01-01';
    <itemizedlist>
     <listitem>
      <para>
-      Constraint exclusion only works when the query's <literal>WHERE</>
+      Constraint exclusion only works when the query's <literal>WHERE</literal>
       clause contains constants (or externally supplied parameters).
       For example, a comparison against a non-immutable function such as
       <function>CURRENT_TIMESTAMP</function> cannot be optimized, since the
@@ -3867,7 +3867,7 @@ EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2008-01-01';
     <productname>PostgreSQL</productname> implements portions of the SQL/MED
     specification, allowing you to access data that resides outside
     PostgreSQL using regular SQL queries.  Such data is referred to as
-    <firstterm>foreign data</>.  (Note that this usage is not to be confused
+    <firstterm>foreign data</firstterm>.  (Note that this usage is not to be confused
     with foreign keys, which are a type of constraint within the database.)
    </para>
 
@@ -3876,7 +3876,7 @@ EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2008-01-01';
     <firstterm>foreign data wrapper</firstterm>. A foreign data wrapper is a
     library that can communicate with an external data source, hiding the
     details of connecting to the data source and obtaining data from it.
-    There are some foreign data wrappers available as <filename>contrib</>
+    There are some foreign data wrappers available as <filename>contrib</filename>
     modules; see <xref linkend="contrib">.  Other kinds of foreign data
     wrappers might be found as third party products.  If none of the existing
     foreign data wrappers suit your needs, you can write your own; see <xref
@@ -3884,7 +3884,7 @@ EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2008-01-01';
    </para>
 
    <para>
-    To access foreign data, you need to create a <firstterm>foreign server</>
+    To access foreign data, you need to create a <firstterm>foreign server</firstterm>
     object, which defines how to connect to a particular external data source
     according to the set of options used by its supporting foreign data
     wrapper. Then you need to create one or more <firstterm>foreign
@@ -3899,7 +3899,7 @@ EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2008-01-01';
    <para>
     Accessing remote data may require authenticating to the external
     data source.  This information can be provided by a
-    <firstterm>user mapping</>, which can provide additional data
+    <firstterm>user mapping</firstterm>, which can provide additional data
     such as user names and passwords based
     on the current <productname>PostgreSQL</productname> role.
    </para>
@@ -4002,13 +4002,13 @@ DROP TABLE products CASCADE;
    that depend on them, recursively.  In this case, it doesn't remove
    the orders table, it only removes the foreign key constraint.
    It stops there because nothing depends on the foreign key constraint.
-   (If you want to check what <command>DROP ... CASCADE</> will do,
-   run <command>DROP</> without <literal>CASCADE</> and read the
-   <literal>DETAIL</> output.)
+   (If you want to check what <command>DROP ... CASCADE</command> will do,
+   run <command>DROP</command> without <literal>CASCADE</literal> and read the
+   <literal>DETAIL</literal> output.)
   </para>
 
   <para>
-   Almost all <command>DROP</> commands in <productname>PostgreSQL</> support
+   Almost all <command>DROP</command> commands in <productname>PostgreSQL</productname> support
    specifying <literal>CASCADE</literal>.  Of course, the nature of
    the possible dependencies varies with the type of the object.  You
    can also write <literal>RESTRICT</literal> instead of
@@ -4020,7 +4020,7 @@ DROP TABLE products CASCADE;
    <para>
     According to the SQL standard, specifying either
     <literal>RESTRICT</literal> or <literal>CASCADE</literal> is
-    required in a <command>DROP</> command.  No database system actually
+    required in a <command>DROP</command> command.  No database system actually
     enforces that rule, but whether the default behavior
     is <literal>RESTRICT</literal> or <literal>CASCADE</literal> varies
     across systems.
@@ -4028,18 +4028,18 @@ DROP TABLE products CASCADE;
   </note>
 
   <para>
-   If a <command>DROP</> command lists multiple
+   If a <command>DROP</command> command lists multiple
    objects, <literal>CASCADE</literal> is only required when there are
    dependencies outside the specified group.  For example, when saying
    <literal>DROP TABLE tab1, tab2</literal> the existence of a foreign
-   key referencing <literal>tab1</> from <literal>tab2</> would not mean
+   key referencing <literal>tab1</literal> from <literal>tab2</literal> would not mean
    that <literal>CASCADE</literal> is needed to succeed.
   </para>
 
   <para>
    For user-defined functions, <productname>PostgreSQL</productname> tracks
    dependencies associated with a function's externally-visible properties,
-   such as its argument and result types, but <emphasis>not</> dependencies
+   such as its argument and result types, but <emphasis>not</emphasis> dependencies
    that could only be known by examining the function body.  As an example,
    consider this situation:
 
@@ -4056,11 +4056,11 @@ CREATE FUNCTION get_color_note (rainbow) RETURNS text AS
 
    (See <xref linkend="xfunc-sql"> for an explanation of SQL-language
    functions.)  <productname>PostgreSQL</productname> will be aware that
-   the <function>get_color_note</> function depends on the <type>rainbow</>
+   the <function>get_color_note</function> function depends on the <type>rainbow</type>
    type: dropping the type would force dropping the function, because its
-   argument type would no longer be defined.  But <productname>PostgreSQL</>
-   will not consider <function>get_color_note</> to depend on
-   the <structname>my_colors</> table, and so will not drop the function if
+   argument type would no longer be defined.  But <productname>PostgreSQL</productname>
+   will not consider <function>get_color_note</function> to depend on
+   the <structname>my_colors</structname> table, and so will not drop the function if
    the table is dropped.  While there are disadvantages to this approach,
    there are also benefits.  The function is still valid in some sense if the
    table is missing, though executing it would cause an error; creating a new

@@ -159,13 +159,13 @@ PostgreSQL documentation
   <para>
    <option>start</option> mode launches a new server.  The
    server is started in the background, and its standard input is attached
-   to <filename>/dev/null</filename> (or <literal>nul</> on Windows).
+   to <filename>/dev/null</filename> (or <literal>nul</literal> on Windows).
    On Unix-like systems, by default, the server's standard output and
    standard error are sent to <application>pg_ctl</application>'s
    standard output (not standard error).  The standard output of
    <application>pg_ctl</application> should then be redirected to a
    file or piped to another process such as a log rotating program
-   like <application>rotatelogs</>; otherwise <command>postgres</command>
+   like <application>rotatelogs</application>; otherwise <command>postgres</command>
    will write its output to the controlling terminal (from the
    background) and will not leave the shell's process group.  On
    Windows, by default the server's standard output and standard error
@@ -203,7 +203,7 @@ PostgreSQL documentation
 
   <para>
    <option>reload</option> mode simply sends the
-   <command>postgres</command> server process a <systemitem>SIGHUP</>
+   <command>postgres</command> server process a <systemitem>SIGHUP</systemitem>
    signal, causing it to reread its configuration files
    (<filename>postgresql.conf</filename>,
    <filename>pg_hba.conf</filename>, etc.).  This allows changing
@@ -228,14 +228,14 @@ PostgreSQL documentation
 
   <para>
    <option>kill</option> mode sends a signal to a specified process.
-   This is primarily valuable on <productname>Microsoft Windows</>
-   which does not have a built-in <application>kill</> command.  Use
-   <literal>--help</> to see a list of supported signal names.
+   This is primarily valuable on <productname>Microsoft Windows</productname>
+   which does not have a built-in <application>kill</application> command.  Use
+   <literal>--help</literal> to see a list of supported signal names.
   </para>
 
   <para>
-   <option>register</option> mode registers the <productname>PostgreSQL</>
-   server as a system service on <productname>Microsoft Windows</>.
+   <option>register</option> mode registers the <productname>PostgreSQL</productname>
+   server as a system service on <productname>Microsoft Windows</productname>.
    The <option>-S</option> option allows selection of service start type,
    either <quote>auto</quote> (start service automatically on system startup)
    or <quote>demand</quote> (start service on demand).
@@ -243,7 +243,7 @@ PostgreSQL documentation
 
   <para>
    <option>unregister</option> mode unregisters a system service
-   on <productname>Microsoft Windows</>.  This undoes the effects of the
+   on <productname>Microsoft Windows</productname>.  This undoes the effects of the
    <option>register</option> command.
   </para>
  </refsect1>
@@ -286,7 +286,7 @@ PostgreSQL documentation
        <para>
         Append the server log output to
         <replaceable>filename</replaceable>.  If the file does not
-        exist, it is created.  The <systemitem>umask</> is set to 077,
+        exist, it is created.  The <systemitem>umask</systemitem> is set to 077,
         so access to the log file is disallowed to other users by default.
        </para>
       </listitem>
@@ -313,11 +313,11 @@ PostgreSQL documentation
        <para>
         Specifies options to be passed directly to the
         <command>postgres</command> command.
-        <option>-o</> can be specified multiple times, with all the given
+        <option>-o</option> can be specified multiple times, with all the given
         options being passed through.
        </para>
        <para>
-        The <replaceable>options</> should usually be surrounded by single or
+        The <replaceable>options</replaceable> should usually be surrounded by single or
         double quotes to ensure that they are passed through as a group.
        </para>
       </listitem>
@@ -330,11 +330,11 @@ PostgreSQL documentation
        <para>
         Specifies options to be passed directly to the
         <command>initdb</command> command.
-        <option>-o</> can be specified multiple times, with all the given
+        <option>-o</option> can be specified multiple times, with all the given
         options being passed through.
        </para>
        <para>
-        The <replaceable>options</> should usually be surrounded by single or
+        The <replaceable>options</replaceable> should usually be surrounded by single or
         double quotes to ensure that they are passed through as a group.
        </para>
       </listitem>
@@ -377,15 +377,15 @@ PostgreSQL documentation
        <para>
         Specifies the maximum number of seconds to wait when waiting for an
         operation to complete (see option <option>-w</option>).  Defaults to
-        the value of the <envar>PGCTLTIMEOUT</> environment variable or, if
+        the value of the <envar>PGCTLTIMEOUT</envar> environment variable or, if
         not set, to 60 seconds.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><option>-V</></term>
-      <term><option>--version</></term>
+      <term><option>-V</option></term>
+      <term><option>--version</option></term>
        <listitem>
         <para>
          Print the <application>pg_ctl</application> version and exit.
@@ -446,8 +446,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-?</></term>
-      <term><option>--help</></term>
+      <term><option>-?</option></term>
+      <term><option>--help</option></term>
       <listitem>
        <para>
         Show help about <application>pg_ctl</application> command line
@@ -507,7 +507,7 @@ PostgreSQL documentation
      <term><option>-S <replaceable class="parameter">start-type</replaceable></option></term>
      <listitem>
       <para>
-       Start type of the system service.  <replaceable>start-type</> can
+       Start type of the system service.  <replaceable>start-type</replaceable> can
        be <literal>auto</literal>, or <literal>demand</literal>, or
        the first letter of one of these two. If this option is omitted,
        <literal>auto</literal> is the default.
@@ -559,14 +559,14 @@ PostgreSQL documentation
 
   <para>
    Most <command>pg_ctl</command> modes require knowing the data directory
-   location; therefore, the <option>-D</> option is required
+   location; therefore, the <option>-D</option> option is required
    unless <envar>PGDATA</envar> is set.
   </para>
 
   <para>
-   <command>pg_ctl</command>, like most other <productname>PostgreSQL</>
+   <command>pg_ctl</command>, like most other <productname>PostgreSQL</productname>
    utilities,
-   also uses the environment variables supported by <application>libpq</>
+   also uses the environment variables supported by <application>libpq</application>
    (see <xref linkend="libpq-envars">).
   </para>
 
@@ -661,8 +661,8 @@ PostgreSQL documentation
    </para>
 
    <para>
-    But if <option>-o</> is specified, that replaces any previous options.
-    To restart using port 5433, disabling <function>fsync</> upon restart:
+    But if <option>-o</option> is specified, that replaces any previous options.
+    To restart using port 5433, disabling <function>fsync</function> upon restart:
 <screen>
 <prompt>$</prompt> <userinput>pg_ctl -o "-F -p 5433" restart</userinput>
 </screen></para>

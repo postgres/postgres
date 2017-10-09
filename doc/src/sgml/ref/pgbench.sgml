@@ -34,12 +34,12 @@
   <title>Description</title>
  <para>
   <application>pgbench</application> is a simple program for running benchmark
-  tests on <productname>PostgreSQL</>.  It runs the same sequence of SQL
+  tests on <productname>PostgreSQL</productname>.  It runs the same sequence of SQL
   commands over and over, possibly in multiple concurrent database sessions,
   and then calculates the average transaction rate (transactions per second).
   By default, <application>pgbench</application> tests a scenario that is
-  loosely based on TPC-B, involving five <command>SELECT</>,
-  <command>UPDATE</>, and <command>INSERT</> commands per transaction.
+  loosely based on TPC-B, involving five <command>SELECT</command>,
+  <command>UPDATE</command>, and <command>INSERT</command> commands per transaction.
   However, it is easy to test other cases by writing your own transaction
   script files.
  </para>
@@ -63,7 +63,7 @@ tps = 85.296346 (excluding connections establishing)
   settings.  The next line reports the number of transactions completed
   and intended (the latter being just the product of number of clients
   and number of transactions per client); these will be equal unless the run
-  failed before completion.  (In <option>-T</> mode, only the actual
+  failed before completion.  (In <option>-T</option> mode, only the actual
   number of transactions is printed.)
   The last two lines report the number of transactions per second,
   figured with and without counting the time to start database sessions.
@@ -71,27 +71,27 @@ tps = 85.296346 (excluding connections establishing)
 
   <para>
    The default TPC-B-like transaction test requires specific tables to be
-   set up beforehand.  <application>pgbench</> should be invoked with
-   the <option>-i</> (initialize) option to create and populate these
+   set up beforehand.  <application>pgbench</application> should be invoked with
+   the <option>-i</option> (initialize) option to create and populate these
    tables.  (When you are testing a custom script, you don't need this
    step, but will instead need to do whatever setup your test needs.)
    Initialization looks like:
 
 <programlisting>
-pgbench -i <optional> <replaceable>other-options</> </optional> <replaceable>dbname</>
+pgbench -i <optional> <replaceable>other-options</replaceable> </optional> <replaceable>dbname</replaceable>
 </programlisting>
 
-   where <replaceable>dbname</> is the name of the already-created
-   database to test in.  (You may also need <option>-h</>,
-   <option>-p</>, and/or <option>-U</> options to specify how to
+   where <replaceable>dbname</replaceable> is the name of the already-created
+   database to test in.  (You may also need <option>-h</option>,
+   <option>-p</option>, and/or <option>-U</option> options to specify how to
    connect to the database server.)
   </para>
 
   <caution>
    <para>
-    <literal>pgbench -i</> creates four tables <structname>pgbench_accounts</>,
-    <structname>pgbench_branches</>, <structname>pgbench_history</>, and
-    <structname>pgbench_tellers</>,
+    <literal>pgbench -i</literal> creates four tables <structname>pgbench_accounts</structname>,
+    <structname>pgbench_branches</structname>, <structname>pgbench_history</structname>, and
+    <structname>pgbench_tellers</structname>,
     destroying any existing tables of these names.
     Be very careful to use another database if you have tables having these
     names!
@@ -99,7 +99,7 @@ pgbench -i <optional> <replaceable>other-options</> </optional> <replaceable>dbn
   </caution>
 
   <para>
-   At the default <quote>scale factor</> of 1, the tables initially
+   At the default <quote>scale factor</quote> of 1, the tables initially
    contain this many rows:
 <screen>
 table                   # of rows
@@ -110,22 +110,22 @@ pgbench_accounts        100000
 pgbench_history         0
 </screen>
    You can (and, for most purposes, probably should) increase the number
-   of rows by using the <option>-s</> (scale factor) option.  The
-   <option>-F</> (fillfactor) option might also be used at this point.
+   of rows by using the <option>-s</option> (scale factor) option.  The
+   <option>-F</option> (fillfactor) option might also be used at this point.
   </para>
 
   <para>
    Once you have done the necessary setup, you can run your benchmark
-   with a command that doesn't include <option>-i</>, that is
+   with a command that doesn't include <option>-i</option>, that is
 
 <programlisting>
-pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
+pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>dbname</replaceable>
 </programlisting>
 
    In nearly all cases, you'll need some options to make a useful test.
-   The most important options are <option>-c</> (number of clients),
-   <option>-t</> (number of transactions), <option>-T</> (time limit),
-   and <option>-f</> (specify a custom script file).
+   The most important options are <option>-c</option> (number of clients),
+   <option>-t</option> (number of transactions), <option>-T</option> (time limit),
+   and <option>-f</option> (specify a custom script file).
    See below for a full list.
   </para>
  </refsect1>
@@ -159,13 +159,13 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
      </varlistentry>
 
      <varlistentry>
-      <term><option>-F</option> <replaceable>fillfactor</></term>
-      <term><option>--fillfactor=</option><replaceable>fillfactor</></term>
+      <term><option>-F</option> <replaceable>fillfactor</replaceable></term>
+      <term><option>--fillfactor=</option><replaceable>fillfactor</replaceable></term>
       <listitem>
        <para>
-        Create the <structname>pgbench_accounts</>,
-        <structname>pgbench_tellers</> and
-        <structname>pgbench_branches</> tables with the given fillfactor.
+        Create the <structname>pgbench_accounts</structname>,
+        <structname>pgbench_tellers</structname> and
+        <structname>pgbench_branches</structname> tables with the given fillfactor.
         Default is 100.
        </para>
       </listitem>
@@ -194,13 +194,13 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
      </varlistentry>
 
      <varlistentry>
-      <term><option>-s</option> <replaceable>scale_factor</></term>
-      <term><option>--scale=</option><replaceable>scale_factor</></term>
+      <term><option>-s</option> <replaceable>scale_factor</replaceable></term>
+      <term><option>--scale=</option><replaceable>scale_factor</replaceable></term>
       <listitem>
        <para>
         Multiply the number of rows generated by the scale factor.
-        For example, <literal>-s 100</> will create 10,000,000 rows
-        in the <structname>pgbench_accounts</> table. Default is 1.
+        For example, <literal>-s 100</literal> will create 10,000,000 rows
+        in the <structname>pgbench_accounts</structname> table. Default is 1.
         When the scale is 20,000 or larger, the columns used to
         hold account identifiers (<structfield>aid</structfield> columns)
         will switch to using larger integers (<type>bigint</type>),
@@ -262,17 +262,17 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
 
     <variablelist>
      <varlistentry>
-      <term><option>-b</> <replaceable>scriptname[@weight]</></term>
-      <term><option>--builtin</>=<replaceable>scriptname[@weight]</></term>
+      <term><option>-b</option> <replaceable>scriptname[@weight]</replaceable></term>
+      <term><option>--builtin</option>=<replaceable>scriptname[@weight]</replaceable></term>
       <listitem>
        <para>
         Add the specified built-in script to the list of executed scripts.
-        An optional integer weight after <literal>@</> allows to adjust the
+        An optional integer weight after <literal>@</literal> allows to adjust the
         probability of drawing the script.  If not specified, it is set to 1.
-        Available built-in scripts are: <literal>tpcb-like</>,
-        <literal>simple-update</> and <literal>select-only</>.
+        Available built-in scripts are: <literal>tpcb-like</literal>,
+        <literal>simple-update</literal> and <literal>select-only</literal>.
         Unambiguous prefixes of built-in names are accepted.
-        With special name <literal>list</>, show the list of built-in scripts
+        With special name <literal>list</literal>, show the list of built-in scripts
         and exit immediately.
        </para>
       </listitem>
@@ -280,8 +280,8 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
 
 
      <varlistentry>
-      <term><option>-c</option> <replaceable>clients</></term>
-      <term><option>--client=</option><replaceable>clients</></term>
+      <term><option>-c</option> <replaceable>clients</replaceable></term>
+      <term><option>--client=</option><replaceable>clients</replaceable></term>
       <listitem>
        <para>
         Number of clients simulated, that is, number of concurrent database
@@ -313,24 +313,24 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
      </varlistentry>
 
      <varlistentry>
-      <term><option>-D</option> <replaceable>varname</><literal>=</><replaceable>value</></term>
-      <term><option>--define=</option><replaceable>varname</><literal>=</><replaceable>value</></term>
+      <term><option>-D</option> <replaceable>varname</replaceable><literal>=</literal><replaceable>value</replaceable></term>
+      <term><option>--define=</option><replaceable>varname</replaceable><literal>=</literal><replaceable>value</replaceable></term>
       <listitem>
        <para>
         Define a variable for use by a custom script (see below).
-        Multiple <option>-D</> options are allowed.
+        Multiple <option>-D</option> options are allowed.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><option>-f</> <replaceable>filename[@weight]</></term>
-      <term><option>--file=</><replaceable>filename[@weight]</></term>
+      <term><option>-f</option> <replaceable>filename[@weight]</replaceable></term>
+      <term><option>--file=</option><replaceable>filename[@weight]</replaceable></term>
       <listitem>
        <para>
-        Add a transaction script read from <replaceable>filename</> to
+        Add a transaction script read from <replaceable>filename</replaceable> to
         the list of executed scripts.
-        An optional integer weight after <literal>@</> allows to adjust the
+        An optional integer weight after <literal>@</literal> allows to adjust the
         probability of drawing the test.
         See below for details.
        </para>
@@ -338,8 +338,8 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
      </varlistentry>
 
      <varlistentry>
-      <term><option>-j</option> <replaceable>threads</></term>
-      <term><option>--jobs=</option><replaceable>threads</></term>
+      <term><option>-j</option> <replaceable>threads</replaceable></term>
+      <term><option>--jobs=</option><replaceable>threads</replaceable></term>
       <listitem>
        <para>
         Number of worker threads within <application>pgbench</application>.
@@ -362,38 +362,38 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
      </varlistentry>
 
      <varlistentry>
-      <term><option>-L</option> <replaceable>limit</></term>
-      <term><option>--latency-limit=</option><replaceable>limit</></term>
+      <term><option>-L</option> <replaceable>limit</replaceable></term>
+      <term><option>--latency-limit=</option><replaceable>limit</replaceable></term>
       <listitem>
        <para>
-        Transaction which last more than <replaceable>limit</> milliseconds
-        are counted and reported separately, as <firstterm>late</>.
+        Transaction which last more than <replaceable>limit</replaceable> milliseconds
+        are counted and reported separately, as <firstterm>late</firstterm>.
        </para>
        <para>
-        When throttling is used (<option>--rate=...</>), transactions that
-        lag behind schedule by more than <replaceable>limit</> ms, and thus
+        When throttling is used (<option>--rate=...</option>), transactions that
+        lag behind schedule by more than <replaceable>limit</replaceable> ms, and thus
         have no hope of meeting the latency limit, are not sent to the server
         at all. They are counted and reported separately as
-        <firstterm>skipped</>.
+        <firstterm>skipped</firstterm>.
        </para>
        </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><option>-M</option> <replaceable>querymode</></term>
-      <term><option>--protocol=</option><replaceable>querymode</></term>
+      <term><option>-M</option> <replaceable>querymode</replaceable></term>
+      <term><option>--protocol=</option><replaceable>querymode</replaceable></term>
       <listitem>
        <para>
         Protocol to use for submitting queries to the server:
           <itemizedlist>
            <listitem>
-            <para><literal>simple</>: use simple query protocol.</para>
+            <para><literal>simple</literal>: use simple query protocol.</para>
            </listitem>
            <listitem>
-            <para><literal>extended</>: use extended query protocol.</para>
+            <para><literal>extended</literal>: use extended query protocol.</para>
            </listitem>
            <listitem>
-            <para><literal>prepared</>: use extended query protocol with prepared statements.</para>
+            <para><literal>prepared</literal>: use extended query protocol with prepared statements.</para>
            </listitem>
           </itemizedlist>
         The default is simple query protocol.  (See <xref linkend="protocol">
@@ -408,11 +408,11 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
       <listitem>
        <para>
         Perform no vacuuming before running the test.
-        This option is <emphasis>necessary</>
+        This option is <emphasis>necessary</emphasis>
         if you are running a custom test scenario that does not include
-        the standard tables <structname>pgbench_accounts</>,
-        <structname>pgbench_branches</>, <structname>pgbench_history</>, and
-        <structname>pgbench_tellers</>.
+        the standard tables <structname>pgbench_accounts</structname>,
+        <structname>pgbench_branches</structname>, <structname>pgbench_history</structname>, and
+        <structname>pgbench_tellers</structname>.
        </para>
       </listitem>
      </varlistentry>
@@ -423,20 +423,20 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
       <listitem>
        <para>
         Run built-in simple-update script.
-        Shorthand for <option>-b simple-update</>.
+        Shorthand for <option>-b simple-update</option>.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><option>-P</option> <replaceable>sec</></term>
-      <term><option>--progress=</option><replaceable>sec</></term>
+      <term><option>-P</option> <replaceable>sec</replaceable></term>
+      <term><option>--progress=</option><replaceable>sec</replaceable></term>
       <listitem>
        <para>
-        Show progress report every <replaceable>sec</> seconds.  The report
+        Show progress report every <replaceable>sec</replaceable> seconds.  The report
         includes the time since the beginning of the run, the tps since the
         last report, and the transaction latency average and standard
-        deviation since the last report.  Under throttling (<option>-R</>),
+        deviation since the last report.  Under throttling (<option>-R</option>),
         the latency is computed with respect to the transaction scheduled
         start time, not the actual transaction beginning time, thus it also
         includes the average schedule lag time.
@@ -457,8 +457,8 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
      </varlistentry>
 
      <varlistentry>
-      <term><option>-R</option> <replaceable>rate</></term>
-      <term><option>--rate=</option><replaceable>rate</></term>
+      <term><option>-R</option> <replaceable>rate</replaceable></term>
+      <term><option>--rate=</option><replaceable>rate</replaceable></term>
       <listitem>
        <para>
         Execute transactions targeting the specified rate instead of running
@@ -487,7 +487,7 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
        </para>
 
        <para>
-        If <option>--latency-limit</> is used together with <option>--rate</>,
+        If <option>--latency-limit</option> is used together with <option>--rate</option>,
         a transaction can lag behind so much that it is already over the
         latency limit when the previous transaction ends, because the latency
         is calculated from the scheduled start time. Such transactions are
@@ -508,15 +508,15 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
      </varlistentry>
 
      <varlistentry>
-      <term><option>-s</option> <replaceable>scale_factor</></term>
-      <term><option>--scale=</option><replaceable>scale_factor</></term>
+      <term><option>-s</option> <replaceable>scale_factor</replaceable></term>
+      <term><option>--scale=</option><replaceable>scale_factor</replaceable></term>
       <listitem>
        <para>
-        Report the specified scale factor in <application>pgbench</>'s
+        Report the specified scale factor in <application>pgbench</application>'s
         output.  With the built-in tests, this is not necessary; the
         correct scale factor will be detected by counting the number of
-        rows in the <structname>pgbench_branches</> table.
-        However, when testing only custom benchmarks (<option>-f</> option),
+        rows in the <structname>pgbench_branches</structname> table.
+        However, when testing only custom benchmarks (<option>-f</option> option),
         the scale factor will be reported as 1 unless this option is used.
        </para>
       </listitem>
@@ -528,14 +528,14 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
       <listitem>
        <para>
         Run built-in select-only script.
-        Shorthand for <option>-b select-only</>.
+        Shorthand for <option>-b select-only</option>.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><option>-t</option> <replaceable>transactions</></term>
-      <term><option>--transactions=</option><replaceable>transactions</></term>
+      <term><option>-t</option> <replaceable>transactions</replaceable></term>
+      <term><option>--transactions=</option><replaceable>transactions</replaceable></term>
       <listitem>
        <para>
         Number of transactions each client runs.  Default is 10.
@@ -544,8 +544,8 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
      </varlistentry>
 
      <varlistentry>
-      <term><option>-T</option> <replaceable>seconds</></term>
-      <term><option>--time=</option><replaceable>seconds</></term>
+      <term><option>-T</option> <replaceable>seconds</replaceable></term>
+      <term><option>--time=</option><replaceable>seconds</replaceable></term>
       <listitem>
        <para>
         Run the test for this many seconds, rather than a fixed number of
@@ -561,15 +561,15 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
       <listitem>
        <para>
         Vacuum all four standard tables before running the test.
-        With neither <option>-n</> nor <option>-v</>, <application>pgbench</application> will vacuum the
-        <structname>pgbench_tellers</> and <structname>pgbench_branches</>
-        tables, and will truncate <structname>pgbench_history</>.
+        With neither <option>-n</option> nor <option>-v</option>, <application>pgbench</application> will vacuum the
+        <structname>pgbench_tellers</structname> and <structname>pgbench_branches</structname>
+        tables, and will truncate <structname>pgbench_history</structname>.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><option>--aggregate-interval=<replaceable>seconds</></option></term>
+      <term><option>--aggregate-interval=<replaceable>seconds</replaceable></option></term>
       <listitem>
        <para>
         Length of aggregation interval (in seconds).  May be used only
@@ -580,11 +580,11 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
      </varlistentry>
 
      <varlistentry>
-      <term><option>--log-prefix=<replaceable>prefix</></option></term>
+      <term><option>--log-prefix=<replaceable>prefix</replaceable></option></term>
       <listitem>
        <para>
         Set the filename prefix for the log files created by
-        <option>--log</>.  The default is <literal>pgbench_log</>.
+        <option>--log</option>.  The default is <literal>pgbench_log</literal>.
        </para>
       </listitem>
      </varlistentry>
@@ -593,7 +593,7 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
       <term><option>--progress-timestamp</option></term>
       <listitem>
        <para>
-        When showing progress (option <option>-P</>), use a timestamp
+        When showing progress (option <option>-P</option>), use a timestamp
         (Unix epoch) instead of the number of seconds since the
         beginning of the run.  The unit is in seconds, with millisecond
         precision after the dot.
@@ -603,7 +603,7 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
      </varlistentry>
 
      <varlistentry>
-      <term><option>--sampling-rate=<replaceable>rate</></option></term>
+      <term><option>--sampling-rate=<replaceable>rate</replaceable></option></term>
       <listitem>
        <para>
         Sampling rate, used when writing data into the log, to reduce the
@@ -635,8 +635,8 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
     <variablelist>
 
      <varlistentry>
-      <term><option>-h</option> <replaceable>hostname</></term>
-      <term><option>--host=</option><replaceable>hostname</></term>
+      <term><option>-h</option> <replaceable>hostname</replaceable></term>
+      <term><option>--host=</option><replaceable>hostname</replaceable></term>
       <listitem>
        <para>
         The database server's host name
@@ -645,8 +645,8 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
      </varlistentry>
 
      <varlistentry>
-      <term><option>-p</option> <replaceable>port</></term>
-      <term><option>--port=</option><replaceable>port</></term>
+      <term><option>-p</option> <replaceable>port</replaceable></term>
+      <term><option>--port=</option><replaceable>port</replaceable></term>
       <listitem>
        <para>
         The database server's port number
@@ -655,8 +655,8 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
      </varlistentry>
 
      <varlistentry>
-      <term><option>-U</option> <replaceable>login</></term>
-      <term><option>--username=</option><replaceable>login</></term>
+      <term><option>-U</option> <replaceable>login</replaceable></term>
+      <term><option>--username=</option><replaceable>login</replaceable></term>
       <listitem>
        <para>
         The user name to connect as
@@ -665,8 +665,8 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
      </varlistentry>
 
      <varlistentry>
-      <term><option>-V</></term>
-      <term><option>--version</></term>
+      <term><option>-V</option></term>
+      <term><option>--version</option></term>
       <listitem>
        <para>
         Print the <application>pgbench</application> version and exit.
@@ -675,8 +675,8 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
      </varlistentry>
 
      <varlistentry>
-      <term><option>-?</></term>
-      <term><option>--help</></term>
+      <term><option>-?</option></term>
+      <term><option>--help</option></term>
       <listitem>
        <para>
         Show help about <application>pgbench</application> command line
@@ -694,23 +694,23 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
   <title>Notes</title>
 
  <refsect2>
-  <title>What is the <quote>Transaction</> Actually Performed in <application>pgbench</application>?</title>
+  <title>What is the <quote>Transaction</quote> Actually Performed in <application>pgbench</application>?</title>
 
   <para>
-   <application>pgbench</> executes test scripts chosen randomly
+   <application>pgbench</application> executes test scripts chosen randomly
    from a specified list.
-   They include built-in scripts with <option>-b</> and
-   user-provided custom scripts with <option>-f</>.
+   They include built-in scripts with <option>-b</option> and
+   user-provided custom scripts with <option>-f</option>.
    Each script may be given a relative weight specified after a
-   <literal>@</> so as to change its drawing probability.
-   The default weight is <literal>1</>.
-   Scripts with a weight of <literal>0</> are ignored.
+   <literal>@</literal> so as to change its drawing probability.
+   The default weight is <literal>1</literal>.
+   Scripts with a weight of <literal>0</literal> are ignored.
  </para>
 
   <para>
-   The default built-in transaction script (also invoked with <option>-b tpcb-like</>)
-   issues seven commands per transaction over randomly chosen <literal>aid</>,
-   <literal>tid</>, <literal>bid</> and <literal>balance</>.
+   The default built-in transaction script (also invoked with <option>-b tpcb-like</option>)
+   issues seven commands per transaction over randomly chosen <literal>aid</literal>,
+   <literal>tid</literal>, <literal>bid</literal> and <literal>balance</literal>.
    The scenario is inspired by the TPC-B benchmark, but is not actually TPC-B,
    hence the name.
   </para>
@@ -726,15 +726,15 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
   </orderedlist>
 
   <para>
-   If you select the <literal>simple-update</> built-in (also <option>-N</>),
+   If you select the <literal>simple-update</literal> built-in (also <option>-N</option>),
    steps 4 and 5 aren't included in the transaction.
    This will avoid update contention on these tables, but
    it makes the test case even less like TPC-B.
   </para>
 
   <para>
-   If you select the <literal>select-only</> built-in (also <option>-S</>),
-   only the <command>SELECT</> is issued.
+   If you select the <literal>select-only</literal> built-in (also <option>-S</option>),
+   only the <command>SELECT</command> is issued.
   </para>
  </refsect2>
 
@@ -745,26 +745,26 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
    <application>pgbench</application> has support for running custom
    benchmark scenarios by replacing the default transaction script
    (described above) with a transaction script read from a file
-   (<option>-f</option> option).  In this case a <quote>transaction</>
+   (<option>-f</option> option).  In this case a <quote>transaction</quote>
    counts as one execution of a script file.
   </para>
 
   <para>
    A script file contains one or more SQL commands terminated by
    semicolons.  Empty lines and lines beginning with
-   <literal>--</> are ignored.  Script files can also contain
-   <quote>meta commands</>, which are interpreted by <application>pgbench</>
+   <literal>--</literal> are ignored.  Script files can also contain
+   <quote>meta commands</quote>, which are interpreted by <application>pgbench</application>
    itself, as described below.
   </para>
 
   <note>
    <para>
-    Before <productname>PostgreSQL</> 9.6, SQL commands in script files
+    Before <productname>PostgreSQL</productname> 9.6, SQL commands in script files
     were terminated by newlines, and so they could not be continued across
-    lines.  Now a semicolon is <emphasis>required</> to separate consecutive
+    lines.  Now a semicolon is <emphasis>required</emphasis> to separate consecutive
     SQL commands (though a SQL command does not need one if it is followed
     by a meta command).  If you need to create a script file that works with
-    both old and new versions of <application>pgbench</>, be sure to write
+    both old and new versions of <application>pgbench</application>, be sure to write
     each SQL command on a single line ending with a semicolon.
    </para>
   </note>
@@ -773,15 +773,15 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
    There is a simple variable-substitution facility for script files.
    Variable names must consist of letters (including non-Latin letters),
    digits, and underscores.
-   Variables can be set by the command-line <option>-D</> option,
+   Variables can be set by the command-line <option>-D</option> option,
    explained above, or by the meta commands explained below.
-   In addition to any variables preset by <option>-D</> command-line options,
+   In addition to any variables preset by <option>-D</option> command-line options,
    there are a few variables that are preset automatically, listed in
    <xref linkend="pgbench-automatic-variables">. A value specified for these
-   variables using <option>-D</> takes precedence over the automatic presets.
+   variables using <option>-D</option> takes precedence over the automatic presets.
    Once set, a variable's
    value can be inserted into a SQL command by writing
-   <literal>:</><replaceable>variablename</>.  When running more than
+   <literal>:</literal><replaceable>variablename</replaceable>.  When running more than
    one client session, each session has its own set of variables.
   </para>
 
@@ -810,7 +810,7 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
    </table>
 
   <para>
-   Script file meta commands begin with a backslash (<literal>\</>) and
+   Script file meta commands begin with a backslash (<literal>\</literal>) and
    normally extend to the end of the line, although they can be continued
    to additional lines by writing backslash-return.
    Arguments to a meta command are separated by white space.
@@ -820,20 +820,20 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
   <variablelist>
    <varlistentry id='pgbench-metacommand-set'>
     <term>
-     <literal>\set <replaceable>varname</> <replaceable>expression</></literal>
+     <literal>\set <replaceable>varname</replaceable> <replaceable>expression</replaceable></literal>
     </term>
 
     <listitem>
      <para>
-      Sets variable <replaceable>varname</> to a value calculated
-      from <replaceable>expression</>.
-      The expression may contain integer constants such as <literal>5432</>,
-      double constants such as <literal>3.14159</>,
-      references to variables <literal>:</><replaceable>variablename</>,
-      unary operators (<literal>+</>, <literal>-</>) and binary operators
-      (<literal>+</>, <literal>-</>, <literal>*</>, <literal>/</>,
-      <literal>%</>) with their usual precedence and associativity,
-      <link linkend="pgbench-builtin-functions">function calls</>, and
+      Sets variable <replaceable>varname</replaceable> to a value calculated
+      from <replaceable>expression</replaceable>.
+      The expression may contain integer constants such as <literal>5432</literal>,
+      double constants such as <literal>3.14159</literal>,
+      references to variables <literal>:</literal><replaceable>variablename</replaceable>,
+      unary operators (<literal>+</literal>, <literal>-</literal>) and binary operators
+      (<literal>+</literal>, <literal>-</literal>, <literal>*</literal>, <literal>/</literal>,
+      <literal>%</literal>) with their usual precedence and associativity,
+      <link linkend="pgbench-builtin-functions">function calls</link>, and
       parentheses.
      </para>
 
@@ -849,16 +849,16 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
 
    <varlistentry>
     <term>
-     <literal>\sleep <replaceable>number</> [ us | ms | s ]</literal>
+     <literal>\sleep <replaceable>number</replaceable> [ us | ms | s ]</literal>
     </term>
 
     <listitem>
      <para>
       Causes script execution to sleep for the specified duration in
-      microseconds (<literal>us</>), milliseconds (<literal>ms</>) or seconds
-      (<literal>s</>).  If the unit is omitted then seconds are the default.
-      <replaceable>number</> can be either an integer constant or a
-      <literal>:</><replaceable>variablename</> reference to a variable
+      microseconds (<literal>us</literal>), milliseconds (<literal>ms</literal>) or seconds
+      (<literal>s</literal>).  If the unit is omitted then seconds are the default.
+      <replaceable>number</replaceable> can be either an integer constant or a
+      <literal>:</literal><replaceable>variablename</replaceable> reference to a variable
       having an integer value.
      </para>
 
@@ -872,22 +872,22 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
 
    <varlistentry>
     <term>
-     <literal>\setshell <replaceable>varname</> <replaceable>command</> [ <replaceable>argument</> ... ]</literal>
+     <literal>\setshell <replaceable>varname</replaceable> <replaceable>command</replaceable> [ <replaceable>argument</replaceable> ... ]</literal>
     </term>
 
     <listitem>
      <para>
-      Sets variable <replaceable>varname</> to the result of the shell command
-      <replaceable>command</> with the given <replaceable>argument</>(s).
+      Sets variable <replaceable>varname</replaceable> to the result of the shell command
+      <replaceable>command</replaceable> with the given <replaceable>argument</replaceable>(s).
       The command must return an integer value through its standard output.
      </para>
 
      <para>
-      <replaceable>command</> and each <replaceable>argument</> can be either
-      a text constant or a <literal>:</><replaceable>variablename</> reference
-      to a variable. If you want to use an <replaceable>argument</> starting
+      <replaceable>command</replaceable> and each <replaceable>argument</replaceable> can be either
+      a text constant or a <literal>:</literal><replaceable>variablename</replaceable> reference
+      to a variable. If you want to use an <replaceable>argument</replaceable> starting
       with a colon, write an additional colon at the beginning of
-      <replaceable>argument</>.
+      <replaceable>argument</replaceable>.
      </para>
 
      <para>
@@ -900,7 +900,7 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
 
    <varlistentry>
     <term>
-     <literal>\shell <replaceable>command</> [ <replaceable>argument</> ... ]</literal>
+     <literal>\shell <replaceable>command</replaceable> [ <replaceable>argument</replaceable> ... ]</literal>
     </term>
 
     <listitem>
@@ -924,7 +924,7 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
 
   <para>
    The functions listed in <xref linkend="pgbench-functions"> are built
-   into <application>pgbench</> and may be used in expressions appearing in
+   into <application>pgbench</application> and may be used in expressions appearing in
    <link linkend="pgbench-metacommand-set"><literal>\set</literal></link>.
   </para>
 
@@ -943,123 +943,123 @@ pgbench <optional> <replaceable>options</> </optional> <replaceable>dbname</>
      </thead>
      <tbody>
       <row>
-       <entry><literal><function>abs(<replaceable>a</>)</></></>
-       <entry>same as <replaceable>a</></>
-       <entry>absolute value</>
-       <entry><literal>abs(-17)</></>
-       <entry><literal>17</></>
+       <entry><literal><function>abs(<replaceable>a</replaceable>)</function></literal></entry>
+       <entry>same as <replaceable>a</replaceable></entry>
+       <entry>absolute value</entry>
+       <entry><literal>abs(-17)</literal></entry>
+       <entry><literal>17</literal></entry>
       </row>
       <row>
-       <entry><literal><function>debug(<replaceable>a</>)</></></>
-       <entry>same as <replaceable>a</> </>
-       <entry>print <replaceable>a</> to <systemitem>stderr</systemitem>,
-        and return <replaceable>a</></>
-       <entry><literal>debug(5432.1)</></>
-       <entry><literal>5432.1</></>
+       <entry><literal><function>debug(<replaceable>a</replaceable>)</function></literal></entry>
+       <entry>same as <replaceable>a</replaceable> </entry>
+       <entry>print <replaceable>a</replaceable> to <systemitem>stderr</systemitem>,
+        and return <replaceable>a</replaceable></entry>
+       <entry><literal>debug(5432.1)</literal></entry>
+       <entry><literal>5432.1</literal></entry>
       </row>
       <row>
-       <entry><literal><function>double(<replaceable>i</>)</></></>
-       <entry>double</>
-       <entry>cast to double</>
-       <entry><literal>double(5432)</></>
-       <entry><literal>5432.0</></>
+       <entry><literal><function>double(<replaceable>i</replaceable>)</function></literal></entry>
+       <entry>double</entry>
+       <entry>cast to double</entry>
+       <entry><literal>double(5432)</literal></entry>
+       <entry><literal>5432.0</literal></entry>
       </row>
       <row>
-       <entry><literal><function>greatest(<replaceable>a</> [, <replaceable>...</> ] )</></></>
-       <entry>double if any <replaceable>a</> is double, else integer</>
-       <entry>largest value among arguments</>
-       <entry><literal>greatest(5, 4, 3, 2)</></>
-       <entry><literal>5</></>
+       <entry><literal><function>greatest(<replaceable>a</replaceable> [, <replaceable>...</replaceable> ] )</function></literal></entry>
+       <entry>double if any <replaceable>a</replaceable> is double, else integer</entry>
+       <entry>largest value among arguments</entry>
+       <entry><literal>greatest(5, 4, 3, 2)</literal></entry>
+       <entry><literal>5</literal></entry>
       </row>
       <row>
-       <entry><literal><function>int(<replaceable>x</>)</></></>
-       <entry>integer</>
-       <entry>cast to int</>
-       <entry><literal>int(5.4 + 3.8)</></>
-       <entry><literal>9</></>
+       <entry><literal><function>int(<replaceable>x</replaceable>)</function></literal></entry>
+       <entry>integer</entry>
+       <entry>cast to int</entry>
+       <entry><literal>int(5.4 + 3.8)</literal></entry>
+       <entry><literal>9</literal></entry>
       </row>
       <row>
-       <entry><literal><function>least(<replaceable>a</> [, <replaceable>...</> ] )</></></>
-       <entry>double if any <replaceable>a</> is double, else integer</>
-       <entry>smallest value among arguments</>
-       <entry><literal>least(5, 4, 3, 2.1)</></>
-       <entry><literal>2.1</></>
+       <entry><literal><function>least(<replaceable>a</replaceable> [, <replaceable>...</replaceable> ] )</function></literal></entry>
+       <entry>double if any <replaceable>a</replaceable> is double, else integer</entry>
+       <entry>smallest value among arguments</entry>
+       <entry><literal>least(5, 4, 3, 2.1)</literal></entry>
+       <entry><literal>2.1</literal></entry>
       </row>
       <row>
-       <entry><literal><function>pi()</></></>
-       <entry>double</>
-       <entry>value of the constant PI</>
-       <entry><literal>pi()</></>
-       <entry><literal>3.14159265358979323846</></>
+       <entry><literal><function>pi()</function></literal></entry>
+       <entry>double</entry>
+       <entry>value of the constant PI</entry>
+       <entry><literal>pi()</literal></entry>
+       <entry><literal>3.14159265358979323846</literal></entry>
       </row>
       <row>
-       <entry><literal><function>random(<replaceable>lb</>, <replaceable>ub</>)</></></>
-       <entry>integer</>
-       <entry>uniformly-distributed random integer in <literal>[lb, ub]</></>
-       <entry><literal>random(1, 10)</></>
-       <entry>an integer between <literal>1</> and <literal>10</></>
+       <entry><literal><function>random(<replaceable>lb</replaceable>, <replaceable>ub</replaceable>)</function></literal></entry>
+       <entry>integer</entry>
+       <entry>uniformly-distributed random integer in <literal>[lb, ub]</literal></entry>
+       <entry><literal>random(1, 10)</literal></entry>
+       <entry>an integer between <literal>1</literal> and <literal>10</literal></entry>
       </row>
       <row>
-       <entry><literal><function>random_exponential(<replaceable>lb</>, <replaceable>ub</>, <replaceable>parameter</>)</></></>
-       <entry>integer</>
-       <entry>exponentially-distributed random integer in <literal>[lb, ub]</>,
-              see below</>
-       <entry><literal>random_exponential(1, 10, 3.0)</></>
-       <entry>an integer between <literal>1</> and <literal>10</></>
+       <entry><literal><function>random_exponential(<replaceable>lb</replaceable>, <replaceable>ub</replaceable>, <replaceable>parameter</replaceable>)</function></literal></entry>
+       <entry>integer</entry>
+       <entry>exponentially-distributed random integer in <literal>[lb, ub]</literal>,
+              see below</entry>
+       <entry><literal>random_exponential(1, 10, 3.0)</literal></entry>
+       <entry>an integer between <literal>1</literal> and <literal>10</literal></entry>
       </row>
       <row>
-       <entry><literal><function>random_gaussian(<replaceable>lb</>, <replaceable>ub</>, <replaceable>parameter</>)</></></>
-       <entry>integer</>
-       <entry>Gaussian-distributed random integer in <literal>[lb, ub]</>,
-              see below</>
-       <entry><literal>random_gaussian(1, 10, 2.5)</></>
-       <entry>an integer between <literal>1</> and <literal>10</></>
+       <entry><literal><function>random_gaussian(<replaceable>lb</replaceable>, <replaceable>ub</replaceable>, <replaceable>parameter</replaceable>)</function></literal></entry>
+       <entry>integer</entry>
+       <entry>Gaussian-distributed random integer in <literal>[lb, ub]</literal>,
+              see below</entry>
+       <entry><literal>random_gaussian(1, 10, 2.5)</literal></entry>
+       <entry>an integer between <literal>1</literal> and <literal>10</literal></entry>
       </row>
       <row>
-       <entry><literal><function>sqrt(<replaceable>x</>)</></></>
-       <entry>double</>
-       <entry>square root</>
-       <entry><literal>sqrt(2.0)</></>
-       <entry><literal>1.414213562</></>
+       <entry><literal><function>sqrt(<replaceable>x</replaceable>)</function></literal></entry>
+       <entry>double</entry>
+       <entry>square root</entry>
+       <entry><literal>sqrt(2.0)</literal></entry>
+       <entry><literal>1.414213562</literal></entry>
       </row>
      </tbody>
      </tgroup>
    </table>
 
    <para>
-    The <literal>random</> function generates values using a uniform
+    The <literal>random</literal> function generates values using a uniform
     distribution, that is all the values are drawn within the specified
-    range with equal probability. The <literal>random_exponential</> and
-    <literal>random_gaussian</> functions require an additional double
+    range with equal probability. The <literal>random_exponential</literal> and
+    <literal>random_gaussian</literal> functions require an additional double
     parameter which determines the precise shape of the distribution.
    </para>
 
    <itemizedlist>
     <listitem>
      <para>
-      For an exponential distribution, <replaceable>parameter</>
+      For an exponential distribution, <replaceable>parameter</replaceable>
       controls the distribution by truncating a quickly-decreasing
-      exponential distribution at <replaceable>parameter</>, and then
+      exponential distribution at <replaceable>parameter</replaceable>, and then
       projecting onto integers between the bounds.
       To be precise, with
 <literallayout>
 f(x) = exp(-parameter * (x - min) / (max - min + 1)) / (1 - exp(-parameter))
 </literallayout>
-      Then value <replaceable>i</> between <replaceable>min</> and
-      <replaceable>max</> inclusive is drawn with probability:
-      <literal>f(i) - f(i + 1)</>.
+      Then value <replaceable>i</replaceable> between <replaceable>min</replaceable> and
+      <replaceable>max</replaceable> inclusive is drawn with probability:
+      <literal>f(i) - f(i + 1)</literal>.
      </para>
 
      <para>
-      Intuitively, the larger the <replaceable>parameter</>, the more
-      frequently values close to <replaceable>min</> are accessed, and the
-      less frequently values close to <replaceable>max</> are accessed.
-      The closer to 0 <replaceable>parameter</> is, the flatter (more
+      Intuitively, the larger the <replaceable>parameter</replaceable>, the more
+      frequently values close to <replaceable>min</replaceable> are accessed, and the
+      less frequently values close to <replaceable>max</replaceable> are accessed.
+      The closer to 0 <replaceable>parameter</replaceable> is, the flatter (more
       uniform) the access distribution.
       A crude approximation of the distribution is that the most frequent 1%
-      values in the range, close to <replaceable>min</>, are drawn
-      <replaceable>parameter</>% of the time.
-      The <replaceable>parameter</> value must be strictly positive.
+      values in the range, close to <replaceable>min</replaceable>, are drawn
+      <replaceable>parameter</replaceable>% of the time.
+      The <replaceable>parameter</replaceable> value must be strictly positive.
      </para>
     </listitem>
 
@@ -1067,32 +1067,32 @@ f(x) = exp(-parameter * (x - min) / (max - min + 1)) / (1 - exp(-parameter))
      <para>
       For a Gaussian distribution, the interval is mapped onto a standard
       normal distribution (the classical bell-shaped Gaussian curve) truncated
-      at <literal>-parameter</> on the left and <literal>+parameter</>
+      at <literal>-parameter</literal> on the left and <literal>+parameter</literal>
       on the right.
       Values in the middle of the interval are more likely to be drawn.
-      To be precise, if <literal>PHI(x)</> is the cumulative distribution
-      function of the standard normal distribution, with mean <literal>mu</>
-      defined as <literal>(max + min) / 2.0</>, with
+      To be precise, if <literal>PHI(x)</literal> is the cumulative distribution
+      function of the standard normal distribution, with mean <literal>mu</literal>
+      defined as <literal>(max + min) / 2.0</literal>, with
 <literallayout>
 f(x) = PHI(2.0 * parameter * (x - mu) / (max - min + 1)) /
        (2.0 * PHI(parameter) - 1)
 </literallayout>
-      then value <replaceable>i</> between <replaceable>min</> and
-      <replaceable>max</> inclusive is drawn with probability:
-      <literal>f(i + 0.5) - f(i - 0.5)</>.
-      Intuitively, the larger the <replaceable>parameter</>, the more
+      then value <replaceable>i</replaceable> between <replaceable>min</replaceable> and
+      <replaceable>max</replaceable> inclusive is drawn with probability:
+      <literal>f(i + 0.5) - f(i - 0.5)</literal>.
+      Intuitively, the larger the <replaceable>parameter</replaceable>, the more
       frequently values close to the middle of the interval are drawn, and the
-      less frequently values close to the <replaceable>min</> and
-      <replaceable>max</> bounds. About 67% of values are drawn from the
-      middle <literal>1.0 / parameter</>, that is a relative
-      <literal>0.5 / parameter</> around the mean, and 95% in the middle
-      <literal>2.0 / parameter</>, that is a relative
-      <literal>1.0 / parameter</> around the mean; for instance, if
-      <replaceable>parameter</> is 4.0, 67% of values are drawn from the
+      less frequently values close to the <replaceable>min</replaceable> and
+      <replaceable>max</replaceable> bounds. About 67% of values are drawn from the
+      middle <literal>1.0 / parameter</literal>, that is a relative
+      <literal>0.5 / parameter</literal> around the mean, and 95% in the middle
+      <literal>2.0 / parameter</literal>, that is a relative
+      <literal>1.0 / parameter</literal> around the mean; for instance, if
+      <replaceable>parameter</replaceable> is 4.0, 67% of values are drawn from the
       middle quarter (1.0 / 4.0) of the interval (i.e. from
-      <literal>3.0 / 8.0</> to <literal>5.0 / 8.0</>) and 95% from
-      the middle half (<literal>2.0 / 4.0</>) of the interval (second and third
-      quartiles). The minimum <replaceable>parameter</> is 2.0 for performance
+      <literal>3.0 / 8.0</literal> to <literal>5.0 / 8.0</literal>) and 95% from
+      the middle half (<literal>2.0 / 4.0</literal>) of the interval (second and third
+      quartiles). The minimum <replaceable>parameter</replaceable> is 2.0 for performance
       of the Box-Muller transform.
      </para>
     </listitem>
@@ -1128,21 +1128,21 @@ END;
   <title>Per-Transaction Logging</title>
 
   <para>
-   With the <option>-l</> option (but without
+   With the <option>-l</option> option (but without
    the <option>--aggregate-interval</option> option),
-   <application>pgbench</> writes information about each transaction
+   <application>pgbench</application> writes information about each transaction
    to a log file.  The log file will be named
-   <filename><replaceable>prefix</>.<replaceable>nnn</></filename>,
-   where <replaceable>prefix</> defaults to <literal>pgbench_log</>, and
-   <replaceable>nnn</> is the PID of the
+   <filename><replaceable>prefix</replaceable>.<replaceable>nnn</replaceable></filename>,
+   where <replaceable>prefix</replaceable> defaults to <literal>pgbench_log</literal>, and
+   <replaceable>nnn</replaceable> is the PID of the
    <application>pgbench</application> process.
-   The prefix can be changed by using the <option>--log-prefix</> option.
-   If the <option>-j</> option is 2 or higher, so that there are multiple
+   The prefix can be changed by using the <option>--log-prefix</option> option.
+   If the <option>-j</option> option is 2 or higher, so that there are multiple
    worker threads, each will have its own log file. The first worker will
    use the same name for its log file as in the standard single worker case.
    The additional log files for the other workers will be named
-   <filename><replaceable>prefix</>.<replaceable>nnn</>.<replaceable>mmm</></filename>,
-   where <replaceable>mmm</> is a sequential number for each worker starting
+   <filename><replaceable>prefix</replaceable>.<replaceable>nnn</replaceable>.<replaceable>mmm</replaceable></filename>,
+   where <replaceable>mmm</replaceable> is a sequential number for each worker starting
    with 1.
   </para>
 
@@ -1150,27 +1150,27 @@ END;
    The format of the log is:
 
 <synopsis>
-<replaceable>client_id</> <replaceable>transaction_no</> <replaceable>time</> <replaceable>script_no</> <replaceable>time_epoch</> <replaceable>time_us</> <optional> <replaceable>schedule_lag</replaceable> </optional>
+<replaceable>client_id</replaceable> <replaceable>transaction_no</replaceable> <replaceable>time</replaceable> <replaceable>script_no</replaceable> <replaceable>time_epoch</replaceable> <replaceable>time_us</replaceable> <optional> <replaceable>schedule_lag</replaceable> </optional>
 </synopsis>
 
    where
-   <replaceable>client_id</> indicates which client session ran the transaction,
-   <replaceable>transaction_no</> counts how many transactions have been
+   <replaceable>client_id</replaceable> indicates which client session ran the transaction,
+   <replaceable>transaction_no</replaceable> counts how many transactions have been
    run by that session,
-   <replaceable>time</> is the total elapsed transaction time in microseconds,
-   <replaceable>script_no</> identifies which script file was used (useful when
-   multiple scripts were specified with <option>-f</> or <option>-b</>),
-   and <replaceable>time_epoch</>/<replaceable>time_us</> are a
+   <replaceable>time</replaceable> is the total elapsed transaction time in microseconds,
+   <replaceable>script_no</replaceable> identifies which script file was used (useful when
+   multiple scripts were specified with <option>-f</option> or <option>-b</option>),
+   and <replaceable>time_epoch</replaceable>/<replaceable>time_us</replaceable> are a
    Unix-epoch time stamp and an offset
    in microseconds (suitable for creating an ISO 8601
    time stamp with fractional seconds) showing when
    the transaction completed.
-   The <replaceable>schedule_lag</> field is the difference between the
+   The <replaceable>schedule_lag</replaceable> field is the difference between the
    transaction's scheduled start time, and the time it actually started, in
-   microseconds. It is only present when the <option>--rate</> option is used.
-   When both <option>--rate</> and <option>--latency-limit</> are used,
-   the <replaceable>time</> for a skipped transaction will be reported as
-   <literal>skipped</>.
+   microseconds. It is only present when the <option>--rate</option> option is used.
+   When both <option>--rate</option> and <option>--latency-limit</option> are used,
+   the <replaceable>time</replaceable> for a skipped transaction will be reported as
+   <literal>skipped</literal>.
   </para>
 
   <para>
@@ -1182,9 +1182,9 @@ END;
 0 202 2038 0 1175850569 2663
 </screen>
 
-   Another example with <literal>--rate=100</>
-   and <literal>--latency-limit=5</> (note the additional
-   <replaceable>schedule_lag</> column):
+   Another example with <literal>--rate=100</literal>
+   and <literal>--latency-limit=5</literal> (note the additional
+   <replaceable>schedule_lag</replaceable> column):
 <screen>
 0 81 4621 0 1412881037 912698 3005
 0 82 6173 0 1412881037 914578 4304
@@ -1201,7 +1201,7 @@ END;
 
   <para>
    When running a long test on hardware that can handle a lot of transactions,
-   the log files can become very large.  The <option>--sampling-rate</> option
+   the log files can become very large.  The <option>--sampling-rate</option> option
    can be used to log only a random sample of transactions.
   </para>
  </refsect2>
@@ -1214,30 +1214,30 @@ END;
    format is used for the log files:
 
 <synopsis>
-<replaceable>interval_start</> <replaceable>num_transactions</> <replaceable>sum_latency</> <replaceable>sum_latency_2</> <replaceable>min_latency</> <replaceable>max_latency</> <optional> <replaceable>sum_lag</> <replaceable>sum_lag_2</> <replaceable>min_lag</> <replaceable>max_lag</> <optional> <replaceable>skipped</> </optional> </optional>
+<replaceable>interval_start</replaceable> <replaceable>num_transactions</replaceable> <replaceable>sum_latency</replaceable> <replaceable>sum_latency_2</replaceable> <replaceable>min_latency</replaceable> <replaceable>max_latency</replaceable> <optional> <replaceable>sum_lag</replaceable> <replaceable>sum_lag_2</replaceable> <replaceable>min_lag</replaceable> <replaceable>max_lag</replaceable> <optional> <replaceable>skipped</replaceable> </optional> </optional>
 </synopsis>
 
    where
-   <replaceable>interval_start</> is the start of the interval (as a Unix
+   <replaceable>interval_start</replaceable> is the start of the interval (as a Unix
    epoch time stamp),
-   <replaceable>num_transactions</> is the number of transactions
+   <replaceable>num_transactions</replaceable> is the number of transactions
    within the interval,
    <replaceable>sum_latency</replaceable> is the sum of the transaction
    latencies within the interval,
    <replaceable>sum_latency_2</replaceable> is the sum of squares of the
    transaction latencies within the interval,
-   <replaceable>min_latency</> is the minimum latency within the interval,
+   <replaceable>min_latency</replaceable> is the minimum latency within the interval,
    and
-   <replaceable>max_latency</> is the maximum latency within the interval.
+   <replaceable>max_latency</replaceable> is the maximum latency within the interval.
    The next fields,
-   <replaceable>sum_lag</>, <replaceable>sum_lag_2</>, <replaceable>min_lag</>,
-   and <replaceable>max_lag</>, are only present if the <option>--rate</>
+   <replaceable>sum_lag</replaceable>, <replaceable>sum_lag_2</replaceable>, <replaceable>min_lag</replaceable>,
+   and <replaceable>max_lag</replaceable>, are only present if the <option>--rate</option>
    option is used.
    They provide statistics about the time each transaction had to wait for the
    previous one to finish, i.e. the difference between each transaction's
    scheduled start time and the time it actually started.
-   The very last field, <replaceable>skipped</>,
-   is only present if the <option>--latency-limit</> option is used, too.
+   The very last field, <replaceable>skipped</replaceable>,
+   is only present if the <option>--latency-limit</option> option is used, too.
    It counts the number of transactions skipped because they would have
    started too late.
    Each transaction is counted in the interval when it was committed.
@@ -1265,7 +1265,7 @@ END;
   <title>Per-Statement Latencies</title>
 
   <para>
-   With the <option>-r</> option, <application>pgbench</> collects
+   With the <option>-r</option> option, <application>pgbench</application> collects
    the elapsed transaction time of each statement executed by every
    client.  It then reports an average of those values, referred to
    as the latency for each statement, after the benchmark has finished.
@@ -1321,14 +1321,14 @@ script statistics:
   <title>Good Practices</title>
 
   <para>
-   It is very easy to use <application>pgbench</> to produce completely
+   It is very easy to use <application>pgbench</application> to produce completely
    meaningless numbers.  Here are some guidelines to help you get useful
    results.
   </para>
 
   <para>
-   In the first place, <emphasis>never</> believe any test that runs
-   for only a few seconds.  Use the <option>-t</> or <option>-T</> option
+   In the first place, <emphasis>never</emphasis> believe any test that runs
+   for only a few seconds.  Use the <option>-t</option> or <option>-T</option> option
    to make the run last at least a few minutes, so as to average out noise.
    In some cases you could need hours to get numbers that are reproducible.
    It's a good idea to try the test run a few times, to find out if your
@@ -1337,11 +1337,11 @@ script statistics:
 
   <para>
    For the default TPC-B-like test scenario, the initialization scale factor
-   (<option>-s</>) should be at least as large as the largest number of
-   clients you intend to test (<option>-c</>); else you'll mostly be
-   measuring update contention.  There are only <option>-s</> rows in
-   the <structname>pgbench_branches</> table, and every transaction wants to
-   update one of them, so <option>-c</> values in excess of <option>-s</>
+   (<option>-s</option>) should be at least as large as the largest number of
+   clients you intend to test (<option>-c</option>); else you'll mostly be
+   measuring update contention.  There are only <option>-s</option> rows in
+   the <structname>pgbench_branches</structname> table, and every transaction wants to
+   update one of them, so <option>-c</option> values in excess of <option>-s</option>
    will undoubtedly result in lots of transactions blocked waiting for
    other transactions.
   </para>
@@ -1356,11 +1356,11 @@ script statistics:
   </para>
 
   <para>
-   A limitation of <application>pgbench</> is that it can itself become
+   A limitation of <application>pgbench</application> is that it can itself become
    the bottleneck when trying to test a large number of client sessions.
-   This can be alleviated by running <application>pgbench</> on a different
+   This can be alleviated by running <application>pgbench</application> on a different
    machine from the database server, although low network latency will be
-   essential.  It might even be useful to run several <application>pgbench</>
+   essential.  It might even be useful to run several <application>pgbench</application>
    instances concurrently, on several client machines, against the same
    database server.
   </para>

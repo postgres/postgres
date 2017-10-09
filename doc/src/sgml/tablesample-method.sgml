@@ -12,11 +12,11 @@
  </indexterm>
 
  <para>
-  <productname>PostgreSQL</>'s implementation of the <literal>TABLESAMPLE</>
+  <productname>PostgreSQL</productname>'s implementation of the <literal>TABLESAMPLE</literal>
   clause supports custom table sampling methods, in addition to
-  the <literal>BERNOULLI</> and <literal>SYSTEM</> methods that are required
+  the <literal>BERNOULLI</literal> and <literal>SYSTEM</literal> methods that are required
   by the SQL standard.  The sampling method determines which rows of the
-  table will be selected when the <literal>TABLESAMPLE</> clause is used.
+  table will be selected when the <literal>TABLESAMPLE</literal> clause is used.
  </para>
 
  <para>
@@ -26,18 +26,18 @@
 method_name(internal) RETURNS tsm_handler
 </programlisting>
   The name of the function is the same method name appearing in the
-  <literal>TABLESAMPLE</> clause.  The <type>internal</> argument is a dummy
+  <literal>TABLESAMPLE</literal> clause.  The <type>internal</type> argument is a dummy
   (always having value zero) that simply serves to prevent this function from
   being called directly from a SQL command.
   The result of the function must be a palloc'd struct of
-  type <type>TsmRoutine</>, which contains pointers to support functions for
+  type <type>TsmRoutine</type>, which contains pointers to support functions for
   the sampling method.  These support functions are plain C functions and
   are not visible or callable at the SQL level.  The support functions are
   described in <xref linkend="tablesample-support-functions">.
  </para>
 
  <para>
-  In addition to function pointers, the <type>TsmRoutine</> struct must
+  In addition to function pointers, the <type>TsmRoutine</type> struct must
   provide these additional fields:
  </para>
 
@@ -47,9 +47,9 @@ method_name(internal) RETURNS tsm_handler
    <listitem>
     <para>
      This is an OID list containing the data type OIDs of the parameter(s)
-     that will be accepted by the <literal>TABLESAMPLE</> clause when this
+     that will be accepted by the <literal>TABLESAMPLE</literal> clause when this
      sampling method is used.  For example, for the built-in methods, this
-     list contains a single item with value <literal>FLOAT4OID</>, which
+     list contains a single item with value <literal>FLOAT4OID</literal>, which
      represents the sampling percentage.  Custom sampling methods can have
      more or different parameters.
     </para>
@@ -60,11 +60,11 @@ method_name(internal) RETURNS tsm_handler
    <term><literal>bool repeatable_across_queries</literal></term>
    <listitem>
     <para>
-     If <literal>true</>, the sampling method can deliver identical samples
+     If <literal>true</literal>, the sampling method can deliver identical samples
      across successive queries, if the same parameters
-     and <literal>REPEATABLE</> seed value are supplied each time and the
-     table contents have not changed.  When this is <literal>false</>,
-     the <literal>REPEATABLE</> clause is not accepted for use with the
+     and <literal>REPEATABLE</literal> seed value are supplied each time and the
+     table contents have not changed.  When this is <literal>false</literal>,
+     the <literal>REPEATABLE</literal> clause is not accepted for use with the
      sampling method.
     </para>
    </listitem>
@@ -74,10 +74,10 @@ method_name(internal) RETURNS tsm_handler
    <term><literal>bool repeatable_across_scans</literal></term>
    <listitem>
     <para>
-     If <literal>true</>, the sampling method can deliver identical samples
+     If <literal>true</literal>, the sampling method can deliver identical samples
      across successive scans in the same query (assuming unchanging
      parameters, seed value, and snapshot).
-     When this is <literal>false</>, the planner will not select plans that
+     When this is <literal>false</literal>, the planner will not select plans that
      would require scanning the sampled table more than once, since that
      might result in inconsistent query output.
     </para>
@@ -86,16 +86,16 @@ method_name(internal) RETURNS tsm_handler
  </variablelist>
 
  <para>
-  The <type>TsmRoutine</> struct type is declared
-  in <filename>src/include/access/tsmapi.h</>, which see for additional
+  The <type>TsmRoutine</type> struct type is declared
+  in <filename>src/include/access/tsmapi.h</filename>, which see for additional
   details.
  </para>
 
  <para>
   The table sampling methods included in the standard distribution are good
   references when trying to write your own.  Look into
-  the <filename>src/backend/access/tablesample</> subdirectory of the source
-  tree for the built-in sampling methods, and into the <filename>contrib</>
+  the <filename>src/backend/access/tablesample</filename> subdirectory of the source
+  tree for the built-in sampling methods, and into the <filename>contrib</filename>
   subdirectory for add-on methods.
  </para>
 
@@ -103,7 +103,7 @@ method_name(internal) RETURNS tsm_handler
   <title>Sampling Method Support Functions</title>
 
   <para>
-   The TSM handler function returns a palloc'd <type>TsmRoutine</> struct
+   The TSM handler function returns a palloc'd <type>TsmRoutine</type> struct
    containing pointers to the support functions described below.  Most of
    the functions are required, but some are optional, and those pointers can
    be NULL.
@@ -123,16 +123,16 @@ SampleScanGetSampleSize (PlannerInfo *root,
    relation pages that will be read during a sample scan, and the number of
    tuples that will be selected by the scan.  (For example, these might be
    determined by estimating the sampling fraction, and then multiplying
-   the <literal>baserel-&gt;pages</> and <literal>baserel-&gt;tuples</>
+   the <literal>baserel-&gt;pages</literal> and <literal>baserel-&gt;tuples</literal>
    numbers by that, being sure to round the results to integral values.)
-   The <literal>paramexprs</> list holds the expression(s) that are
-   parameters to the <literal>TABLESAMPLE</> clause.  It is recommended to
-   use <function>estimate_expression_value()</> to try to reduce these
+   The <literal>paramexprs</literal> list holds the expression(s) that are
+   parameters to the <literal>TABLESAMPLE</literal> clause.  It is recommended to
+   use <function>estimate_expression_value()</function> to try to reduce these
    expressions to constants, if their values are needed for estimation
    purposes; but the function must provide size estimates even if they cannot
    be reduced, and it should not fail even if the values appear invalid
    (remember that they're only estimates of what the run-time values will be).
-   The <literal>pages</> and <literal>tuples</> parameters are outputs.
+   The <literal>pages</literal> and <literal>tuples</literal> parameters are outputs.
   </para>
 
   <para>
@@ -145,29 +145,29 @@ InitSampleScan (SampleScanState *node,
    Initialize for execution of a SampleScan plan node.
    This is called during executor startup.
    It should perform any initialization needed before processing can start.
-   The <structname>SampleScanState</> node has already been created, but
-   its <structfield>tsm_state</> field is NULL.
-   The <function>InitSampleScan</> function can palloc whatever internal
+   The <structname>SampleScanState</structname> node has already been created, but
+   its <structfield>tsm_state</structfield> field is NULL.
+   The <function>InitSampleScan</function> function can palloc whatever internal
    state data is needed by the sampling method, and store a pointer to
-   it in <literal>node-&gt;tsm_state</>.
+   it in <literal>node-&gt;tsm_state</literal>.
    Information about the table to scan is accessible through other fields
-   of the <structname>SampleScanState</> node (but note that the
-   <literal>node-&gt;ss.ss_currentScanDesc</> scan descriptor is not set
+   of the <structname>SampleScanState</structname> node (but note that the
+   <literal>node-&gt;ss.ss_currentScanDesc</literal> scan descriptor is not set
    up yet).
-   <literal>eflags</> contains flag bits describing the executor's
+   <literal>eflags</literal> contains flag bits describing the executor's
    operating mode for this plan node.
   </para>
 
   <para>
-   When <literal>(eflags &amp; EXEC_FLAG_EXPLAIN_ONLY)</> is true,
+   When <literal>(eflags &amp; EXEC_FLAG_EXPLAIN_ONLY)</literal> is true,
    the scan will not actually be performed, so this function should only do
-   the minimum required to make the node state valid for <command>EXPLAIN</>
-   and <function>EndSampleScan</>.
+   the minimum required to make the node state valid for <command>EXPLAIN</command>
+   and <function>EndSampleScan</function>.
   </para>
 
   <para>
    This function can be omitted (set the pointer to NULL), in which case
-   <function>BeginSampleScan</> must perform all initialization needed
+   <function>BeginSampleScan</function> must perform all initialization needed
    by the sampling method.
   </para>
 
@@ -184,32 +184,32 @@ BeginSampleScan (SampleScanState *node,
    This is called just before the first attempt to fetch a tuple, and
    may be called again if the scan needs to be restarted.
    Information about the table to scan is accessible through fields
-   of the <structname>SampleScanState</> node (but note that the
-   <literal>node-&gt;ss.ss_currentScanDesc</> scan descriptor is not set
+   of the <structname>SampleScanState</structname> node (but note that the
+   <literal>node-&gt;ss.ss_currentScanDesc</literal> scan descriptor is not set
    up yet).
-   The <literal>params</> array, of length <literal>nparams</>, contains the
-   values of the parameters supplied in the <literal>TABLESAMPLE</> clause.
+   The <literal>params</literal> array, of length <literal>nparams</literal>, contains the
+   values of the parameters supplied in the <literal>TABLESAMPLE</literal> clause.
    These will have the number and types specified in the sampling
    method's <literal>parameterTypes</literal> list, and have been checked
    to not be null.
-   <literal>seed</> contains a seed to use for any random numbers generated
+   <literal>seed</literal> contains a seed to use for any random numbers generated
    within the sampling method; it is either a hash derived from the
-   <literal>REPEATABLE</> value if one was given, or the result
-   of <literal>random()</> if not.
+   <literal>REPEATABLE</literal> value if one was given, or the result
+   of <literal>random()</literal> if not.
   </para>
 
   <para>
-   This function may adjust the fields <literal>node-&gt;use_bulkread</>
-   and <literal>node-&gt;use_pagemode</>.
-   If <literal>node-&gt;use_bulkread</> is <literal>true</>, which it is by
+   This function may adjust the fields <literal>node-&gt;use_bulkread</literal>
+   and <literal>node-&gt;use_pagemode</literal>.
+   If <literal>node-&gt;use_bulkread</literal> is <literal>true</literal>, which it is by
    default, the scan will use a buffer access strategy that encourages
    recycling buffers after use.  It might be reasonable to set this
-   to <literal>false</> if the scan will visit only a small fraction of the
+   to <literal>false</literal> if the scan will visit only a small fraction of the
    table's pages.
-   If <literal>node-&gt;use_pagemode</> is <literal>true</>, which it is by
+   If <literal>node-&gt;use_pagemode</literal> is <literal>true</literal>, which it is by
    default, the scan will perform visibility checking in a single pass for
    all tuples on each visited page.  It might be reasonable to set this
-   to <literal>false</> if the scan will select only a small fraction of the
+   to <literal>false</literal> if the scan will select only a small fraction of the
    tuples on each visited page.  That will result in fewer tuple visibility
    checks being performed, though each one will be more expensive because it
    will require more locking.
@@ -219,8 +219,8 @@ BeginSampleScan (SampleScanState *node,
    If the sampling method is
    marked <literal>repeatable_across_scans</literal>, it must be able to
    select the same set of tuples during a rescan as it did originally, that is
-   a fresh call of <function>BeginSampleScan</> must lead to selecting the
-   same tuples as before (if the <literal>TABLESAMPLE</> parameters
+   a fresh call of <function>BeginSampleScan</function> must lead to selecting the
+   same tuples as before (if the <literal>TABLESAMPLE</literal> parameters
    and seed don't change).
   </para>
 
@@ -231,7 +231,7 @@ NextSampleBlock (SampleScanState *node);
 </programlisting>
 
    Returns the block number of the next page to be scanned, or
-   <literal>InvalidBlockNumber</> if no pages remain to be scanned.
+   <literal>InvalidBlockNumber</literal> if no pages remain to be scanned.
   </para>
 
   <para>
@@ -251,34 +251,34 @@ NextSampleTuple (SampleScanState *node,
 </programlisting>
 
    Returns the offset number of the next tuple to be sampled on the
-   specified page, or <literal>InvalidOffsetNumber</> if no tuples remain to
-   be sampled.  <literal>maxoffset</> is the largest offset number in use
+   specified page, or <literal>InvalidOffsetNumber</literal> if no tuples remain to
+   be sampled.  <literal>maxoffset</literal> is the largest offset number in use
    on the page.
   </para>
 
   <note>
    <para>
-    <function>NextSampleTuple</> is not explicitly told which of the offset
-    numbers in the range <literal>1 .. maxoffset</> actually contain valid
+    <function>NextSampleTuple</function> is not explicitly told which of the offset
+    numbers in the range <literal>1 .. maxoffset</literal> actually contain valid
     tuples.  This is not normally a problem since the core code ignores
     requests to sample missing or invisible tuples; that should not result in
     any bias in the sample.  However, if necessary, the function can
-    examine <literal>node-&gt;ss.ss_currentScanDesc-&gt;rs_vistuples[]</>
+    examine <literal>node-&gt;ss.ss_currentScanDesc-&gt;rs_vistuples[]</literal>
     to identify which tuples are valid and visible.  (This
-    requires <literal>node-&gt;use_pagemode</> to be <literal>true</>.)
+    requires <literal>node-&gt;use_pagemode</literal> to be <literal>true</literal>.)
    </para>
   </note>
 
   <note>
    <para>
-    <function>NextSampleTuple</> must <emphasis>not</> assume
-    that <literal>blockno</> is the same page number returned by the most
-    recent <function>NextSampleBlock</> call.  It was returned by some
-    previous <function>NextSampleBlock</> call, but the core code is allowed
-    to call <function>NextSampleBlock</> in advance of actually scanning
+    <function>NextSampleTuple</function> must <emphasis>not</emphasis> assume
+    that <literal>blockno</literal> is the same page number returned by the most
+    recent <function>NextSampleBlock</function> call.  It was returned by some
+    previous <function>NextSampleBlock</function> call, but the core code is allowed
+    to call <function>NextSampleBlock</function> in advance of actually scanning
     pages, so as to support prefetching.  It is OK to assume that once
-    sampling of a given page begins, successive <function>NextSampleTuple</>
-    calls all refer to the same page until <literal>InvalidOffsetNumber</> is
+    sampling of a given page begins, successive <function>NextSampleTuple</function>
+    calls all refer to the same page until <literal>InvalidOffsetNumber</literal> is
     returned.
    </para>
   </note>

@@ -88,7 +88,7 @@ REVOKE [ GRANT OPTION FOR ]
   <title>Description</title>
 
   <para>
-   <command>ALTER DEFAULT PRIVILEGES</> allows you to set the privileges
+   <command>ALTER DEFAULT PRIVILEGES</command> allows you to set the privileges
    that will be applied to objects created in the future.  (It does not
    affect privileges assigned to already-existing objects.)  Currently,
    only the privileges for schemas, tables (including views and foreign
@@ -109,9 +109,9 @@ REVOKE [ GRANT OPTION FOR ]
    As explained under <xref linkend="sql-grant">,
    the default privileges for any object type normally grant all grantable
    permissions to the object owner, and may grant some privileges to
-   <literal>PUBLIC</> as well.  However, this behavior can be changed by
+   <literal>PUBLIC</literal> as well.  However, this behavior can be changed by
    altering the global default privileges with
-   <command>ALTER DEFAULT PRIVILEGES</>.
+   <command>ALTER DEFAULT PRIVILEGES</command>.
   </para>
 
  <refsect2>
@@ -123,7 +123,7 @@ REVOKE [ GRANT OPTION FOR ]
     <listitem>
      <para>
       The name of an existing role of which the current role is a member.
-      If <literal>FOR ROLE</> is omitted, the current role is assumed.
+      If <literal>FOR ROLE</literal> is omitted, the current role is assumed.
      </para>
     </listitem>
    </varlistentry>
@@ -134,9 +134,9 @@ REVOKE [ GRANT OPTION FOR ]
      <para>
       The name of an existing schema.  If specified, the default privileges
       are altered for objects later created in that schema.
-      If <literal>IN SCHEMA</> is omitted, the global default privileges
+      If <literal>IN SCHEMA</literal> is omitted, the global default privileges
       are altered.
-      <literal>IN SCHEMA</> is not allowed when using <literal>ON SCHEMAS</>
+      <literal>IN SCHEMA</literal> is not allowed when using <literal>ON SCHEMAS</literal>
       as schemas can't be nested.
      </para>
     </listitem>
@@ -148,7 +148,7 @@ REVOKE [ GRANT OPTION FOR ]
      <para>
       The name of an existing role to grant or revoke privileges for.
       This parameter, and all the other parameters in
-      <replaceable class="parameter">abbreviated_grant_or_revoke</>,
+      <replaceable class="parameter">abbreviated_grant_or_revoke</replaceable>,
       act as described under
       <xref linkend="sql-grant"> or
       <xref linkend="sql-revoke">,
@@ -175,7 +175,7 @@ REVOKE [ GRANT OPTION FOR ]
   <para>
    If you wish to drop a role for which the default privileges have been
    altered, it is necessary to reverse the changes in its default privileges
-   or use <command>DROP OWNED BY</> to get rid of the default privileges entry
+   or use <command>DROP OWNED BY</command> to get rid of the default privileges entry
    for the role.
   </para>
  </refsect1>
@@ -186,7 +186,7 @@ REVOKE [ GRANT OPTION FOR ]
   <para>
    Grant SELECT privilege to everyone for all tables (and views) you
    subsequently create in schema <literal>myschema</literal>, and allow
-   role <literal>webuser</> to INSERT into them too:
+   role <literal>webuser</literal> to INSERT into them too:
 
 <programlisting>
 ALTER DEFAULT PRIVILEGES IN SCHEMA myschema GRANT SELECT ON TABLES TO PUBLIC;
@@ -206,7 +206,7 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA myschema REVOKE INSERT ON TABLES FROM webuser
 
   <para>
    Remove the public EXECUTE permission that is normally granted on functions,
-   for all functions subsequently created by role <literal>admin</>:
+   for all functions subsequently created by role <literal>admin</literal>:
 
 <programlisting>
 ALTER DEFAULT PRIVILEGES FOR ROLE admin REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC;

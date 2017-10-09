@@ -387,7 +387,7 @@
   </para>
 
   <table>
-   <title><structname>pg_aggregate</> Columns</title>
+   <title><structname>pg_aggregate</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -410,9 +410,9 @@
       <entry><type>char</type></entry>
       <entry></entry>
       <entry>Aggregate kind:
-       <literal>n</literal> for <quote>normal</> aggregates,
-       <literal>o</literal> for <quote>ordered-set</> aggregates, or
-       <literal>h</literal> for <quote>hypothetical-set</> aggregates
+       <literal>n</literal> for <quote>normal</quote> aggregates,
+       <literal>o</literal> for <quote>ordered-set</quote> aggregates, or
+       <literal>h</literal> for <quote>hypothetical-set</quote> aggregates
       </entry>
      </row>
      <row>
@@ -421,7 +421,7 @@
       <entry></entry>
       <entry>Number of direct (non-aggregated) arguments of an ordered-set or
        hypothetical-set aggregate, counting a variadic array as one argument.
-       If equal to <structfield>pronargs</>, the aggregate must be variadic
+       If equal to <structfield>pronargs</structfield>, the aggregate must be variadic
        and the variadic array describes the aggregated arguments as well as
        the final direct arguments.
        Always zero for normal aggregates.</entry>
@@ -592,7 +592,7 @@
   </para>
 
   <table>
-   <title><structname>pg_am</> Columns</title>
+   <title><structname>pg_am</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -644,7 +644,7 @@
 
   <note>
    <para>
-    Before <productname>PostgreSQL</> 9.6, <structname>pg_am</structname>
+    Before <productname>PostgreSQL</productname> 9.6, <structname>pg_am</structname>
     contained many additional columns representing properties of index access
     methods.  That data is now only directly visible at the C code level.
     However, <function>pg_index_column_has_property()</function> and related
@@ -667,8 +667,8 @@
    The catalog <structname>pg_amop</structname> stores information about
    operators associated with access method operator families.  There is one
    row for each operator that is a member of an operator family.  A family
-   member can be either a <firstterm>search</> operator or an
-   <firstterm>ordering</> operator.  An operator
+   member can be either a <firstterm>search</firstterm> operator or an
+   <firstterm>ordering</firstterm> operator.  An operator
    can appear in more than one family, but cannot appear in more than one
    search position nor more than one ordering position within a family.
    (It is allowed, though unlikely, for an operator to be used for both
@@ -676,7 +676,7 @@
   </para>
 
   <table>
-   <title><structname>pg_amop</> Columns</title>
+   <title><structname>pg_amop</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -728,8 +728,8 @@
       <entry><structfield>amoppurpose</structfield></entry>
       <entry><type>char</type></entry>
       <entry></entry>
-      <entry>Operator purpose, either <literal>s</> for search or
-       <literal>o</> for ordering</entry>
+      <entry>Operator purpose, either <literal>s</literal> for search or
+       <literal>o</literal> for ordering</entry>
      </row>
 
      <row>
@@ -759,26 +759,26 @@
   </table>
 
   <para>
-   A <quote>search</> operator entry indicates that an index of this operator
+   A <quote>search</quote> operator entry indicates that an index of this operator
    family can be searched to find all rows satisfying
-   <literal>WHERE</>
-   <replaceable>indexed_column</>
-   <replaceable>operator</>
-   <replaceable>constant</>.
+   <literal>WHERE</literal>
+   <replaceable>indexed_column</replaceable>
+   <replaceable>operator</replaceable>
+   <replaceable>constant</replaceable>.
    Obviously, such an operator must return <type>boolean</type>, and its left-hand input
    type must match the index's column data type.
   </para>
 
   <para>
-   An <quote>ordering</> operator entry indicates that an index of this
+   An <quote>ordering</quote> operator entry indicates that an index of this
    operator family can be scanned to return rows in the order represented by
-   <literal>ORDER BY</>
-   <replaceable>indexed_column</>
-   <replaceable>operator</>
-   <replaceable>constant</>.
+   <literal>ORDER BY</literal>
+   <replaceable>indexed_column</replaceable>
+   <replaceable>operator</replaceable>
+   <replaceable>constant</replaceable>.
    Such an operator could return any sortable data type, though again
    its left-hand input type must match the index's column data type.
-   The exact semantics of the <literal>ORDER BY</> are specified by the
+   The exact semantics of the <literal>ORDER BY</literal> are specified by the
    <structfield>amopsortfamily</structfield> column, which must reference
    a B-tree operator family for the operator's result type.
   </para>
@@ -787,19 +787,19 @@
    <para>
     At present, it's assumed that the sort order for an ordering operator
     is the default for the referenced operator family, i.e., <literal>ASC NULLS
-    LAST</>.  This might someday be relaxed by adding additional columns
+    LAST</literal>.  This might someday be relaxed by adding additional columns
     to specify sort options explicitly.
    </para>
   </note>
 
   <para>
-   An entry's <structfield>amopmethod</> must match the
-   <structname>opfmethod</> of its containing operator family (including
-   <structfield>amopmethod</> here is an intentional denormalization of the
+   An entry's <structfield>amopmethod</structfield> must match the
+   <structname>opfmethod</structname> of its containing operator family (including
+   <structfield>amopmethod</structfield> here is an intentional denormalization of the
    catalog structure for performance reasons).  Also,
-   <structfield>amoplefttype</> and <structfield>amoprighttype</> must match
-   the <structfield>oprleft</> and <structfield>oprright</> fields of the
-   referenced <structname>pg_operator</> entry.
+   <structfield>amoplefttype</structfield> and <structfield>amoprighttype</structfield> must match
+   the <structfield>oprleft</structfield> and <structfield>oprright</structfield> fields of the
+   referenced <structname>pg_operator</structname> entry.
   </para>
 
  </sect1>
@@ -880,14 +880,14 @@
 
   <para>
    The usual interpretation of the
-   <structfield>amproclefttype</> and <structfield>amprocrighttype</> fields
+   <structfield>amproclefttype</structfield> and <structfield>amprocrighttype</structfield> fields
    is that they identify the left and right input types of the operator(s)
    that a particular support procedure supports.  For some access methods
    these match the input data type(s) of the support procedure itself, for
-   others not.  There is a notion of <quote>default</> support procedures for
-   an index, which are those with <structfield>amproclefttype</> and
-   <structfield>amprocrighttype</> both equal to the index operator class's
-   <structfield>opcintype</>.
+   others not.  There is a notion of <quote>default</quote> support procedures for
+   an index, which are those with <structfield>amproclefttype</structfield> and
+   <structfield>amprocrighttype</structfield> both equal to the index operator class's
+   <structfield>opcintype</structfield>.
   </para>
 
  </sect1>
@@ -909,7 +909,7 @@
   </para>
 
   <table>
-   <title><structname>pg_attrdef</> Columns</title>
+   <title><structname>pg_attrdef</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -964,7 +964,7 @@
     The <structfield>adsrc</structfield> field is historical, and is best
     not used, because it does not track outside changes that might affect
     the representation of the default value.  Reverse-compiling the
-    <structfield>adbin</structfield> field (with <function>pg_get_expr</> for
+    <structfield>adbin</structfield> field (with <function>pg_get_expr</function> for
     example) is a better way to display the default value.
    </para>
 
@@ -993,7 +993,7 @@
   </para>
 
   <table>
-   <title><structname>pg_attribute</> Columns</title>
+   <title><structname>pg_attribute</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -1072,7 +1072,7 @@
       <entry>
        Number of dimensions, if the column is an array type; otherwise 0.
        (Presently, the number of dimensions of an array is not enforced,
-       so any nonzero value effectively means <quote>it's an array</>.)
+       so any nonzero value effectively means <quote>it's an array</quote>.)
       </entry>
      </row>
 
@@ -1096,7 +1096,7 @@
        supplied at table creation time (for example, the maximum
        length of a <type>varchar</type> column).  It is passed to
        type-specific input functions and length coercion functions.
-       The value will generally be -1 for types that do not need <structfield>atttypmod</>.
+       The value will generally be -1 for types that do not need <structfield>atttypmod</structfield>.
       </entry>
      </row>
 
@@ -1105,7 +1105,7 @@
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>
-       A copy of <literal>pg_type.typbyval</> of this column's type
+       A copy of <literal>pg_type.typbyval</literal> of this column's type
       </entry>
      </row>
 
@@ -1114,7 +1114,7 @@
       <entry><type>char</type></entry>
       <entry></entry>
       <entry>
-       Normally a copy of <literal>pg_type.typstorage</> of this
+       Normally a copy of <literal>pg_type.typstorage</literal> of this
        column's type.  For TOAST-able data types, this can be altered
        after column creation to control storage policy.
       </entry>
@@ -1125,7 +1125,7 @@
       <entry><type>char</type></entry>
       <entry></entry>
       <entry>
-       A copy of <literal>pg_type.typalign</> of this column's type
+       A copy of <literal>pg_type.typalign</literal> of this column's type
       </entry>
      </row>
 
@@ -1216,7 +1216,7 @@
       <entry><type>text[]</type></entry>
       <entry></entry>
       <entry>
-       Attribute-level options, as <quote>keyword=value</> strings
+       Attribute-level options, as <quote>keyword=value</quote> strings
       </entry>
      </row>
 
@@ -1225,7 +1225,7 @@
       <entry><type>text[]</type></entry>
       <entry></entry>
       <entry>
-       Attribute-level foreign data wrapper options, as <quote>keyword=value</> strings
+       Attribute-level foreign data wrapper options, as <quote>keyword=value</quote> strings
       </entry>
      </row>
 
@@ -1237,9 +1237,9 @@
    In a dropped column's <structname>pg_attribute</structname> entry,
    <structfield>atttypid</structfield> is reset to zero, but
    <structfield>attlen</structfield> and the other fields copied from
-   <structname>pg_type</> are still valid.  This arrangement is needed
+   <structname>pg_type</structname> are still valid.  This arrangement is needed
    to cope with the situation where the dropped column's data type was
-   later dropped, and so there is no <structname>pg_type</> row anymore.
+   later dropped, and so there is no <structname>pg_type</structname> row anymore.
    <structfield>attlen</structfield> and the other fields can be used
    to interpret the contents of a row of the table.
   </para>
@@ -1256,9 +1256,9 @@
   <para>
    The catalog <structname>pg_authid</structname> contains information about
    database authorization identifiers (roles).  A role subsumes the concepts
-   of <quote>users</> and <quote>groups</>.  A user is essentially just a
-   role with the <structfield>rolcanlogin</> flag set.  Any role (with or
-   without <structfield>rolcanlogin</>) can have other roles as members; see
+   of <quote>users</quote> and <quote>groups</quote>.  A user is essentially just a
+   role with the <structfield>rolcanlogin</structfield> flag set.  Any role (with or
+   without <structfield>rolcanlogin</structfield>) can have other roles as members; see
    <link linkend="catalog-pg-auth-members"><structname>pg_auth_members</structname></link>.
   </para>
 
@@ -1283,7 +1283,7 @@
   </para>
 
   <table>
-   <title><structname>pg_authid</> Columns</title>
+   <title><structname>pg_authid</structname> Columns</title>
 
    <tgroup cols="3">
     <thead>
@@ -1390,20 +1390,20 @@
 
   <para>
    For an MD5 encrypted password, <structfield>rolpassword</structfield>
-   column will begin with the string <literal>md5</> followed by a
+   column will begin with the string <literal>md5</literal> followed by a
    32-character hexadecimal MD5 hash. The MD5 hash will be of the user's
    password concatenated to their user name. For example, if user
-   <literal>joe</> has password <literal>xyzzy</>, <productname>PostgreSQL</>
-   will store the md5 hash of <literal>xyzzyjoe</>.
+   <literal>joe</literal> has password <literal>xyzzy</literal>, <productname>PostgreSQL</productname>
+   will store the md5 hash of <literal>xyzzyjoe</literal>.
   </para>
 
   <para>
    If the password is encrypted with SCRAM-SHA-256, it has the format:
 <synopsis>
-SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;</>$<replaceable>&lt;StoredKey&gt;</>:<replaceable>&lt;ServerKey&gt;</>
+SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&lt;salt&gt;</replaceable>$<replaceable>&lt;StoredKey&gt;</replaceable>:<replaceable>&lt;ServerKey&gt;</replaceable>
 </synopsis>
-   where <replaceable>salt</>, <replaceable>StoredKey</> and
-   <replaceable>ServerKey</> are in Base64 encoded format. This format is
+   where <replaceable>salt</replaceable>, <replaceable>StoredKey</replaceable> and
+   <replaceable>ServerKey</replaceable> are in Base64 encoded format. This format is
    the same as that specified by RFC 5803.
   </para>
 
@@ -1435,7 +1435,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </para>
 
   <table>
-   <title><structname>pg_auth_members</> Columns</title>
+   <title><structname>pg_auth_members</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -1459,7 +1459,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry><structfield>member</structfield></entry>
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.oid</literal></entry>
-      <entry>ID of a role that is a member of <structfield>roleid</></entry>
+      <entry>ID of a role that is a member of <structfield>roleid</structfield></entry>
      </row>
 
      <row>
@@ -1473,8 +1473,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry><structfield>admin_option</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
-      <entry>True if <structfield>member</> can grant membership in
-       <structfield>roleid</> to others</entry>
+      <entry>True if <structfield>member</structfield> can grant membership in
+       <structfield>roleid</structfield> to others</entry>
      </row>
     </tbody>
    </tgroup>
@@ -1501,14 +1501,14 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
    cannot be deduced from some generic rule.  For example, casting between a
    domain and its base type is not explicitly represented in
    <structname>pg_cast</structname>.  Another important exception is that
-   <quote>automatic I/O conversion casts</>, those performed using a data
-   type's own I/O functions to convert to or from <type>text</> or other
+   <quote>automatic I/O conversion casts</quote>, those performed using a data
+   type's own I/O functions to convert to or from <type>text</type> or other
    string types, are not explicitly represented in
    <structname>pg_cast</structname>.
   </para>
 
   <table>
-   <title><structname>pg_cast</> Columns</title>
+   <title><structname>pg_cast</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -1558,11 +1558,11 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry></entry>
       <entry>
        Indicates what contexts the cast can be invoked in.
-       <literal>e</> means only as an explicit cast (using
-       <literal>CAST</> or <literal>::</> syntax).
-       <literal>a</> means implicitly in assignment
+       <literal>e</literal> means only as an explicit cast (using
+       <literal>CAST</literal> or <literal>::</literal> syntax).
+       <literal>a</literal> means implicitly in assignment
        to a target column, as well as explicitly.
-       <literal>i</> means implicitly in expressions, as well as the
+       <literal>i</literal> means implicitly in expressions, as well as the
        other cases.
       </entry>
      </row>
@@ -1572,9 +1572,9 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry></entry>
       <entry>
        Indicates how the cast is performed.
-       <literal>f</> means that the function specified in the <structfield>castfunc</> field is used.
-       <literal>i</> means that the input/output functions are used.
-       <literal>b</> means that the types are binary-coercible, thus no conversion is required.
+       <literal>f</literal> means that the function specified in the <structfield>castfunc</structfield> field is used.
+       <literal>i</literal> means that the input/output functions are used.
+       <literal>b</literal> means that the types are binary-coercible, thus no conversion is required.
       </entry>
      </row>
     </tbody>
@@ -1586,18 +1586,18 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
    always take the cast source type as their first argument type, and
    return the cast destination type as their result type.  A cast
    function can have up to three arguments.  The second argument,
-   if present, must be type <type>integer</>; it receives the type
+   if present, must be type <type>integer</type>; it receives the type
    modifier associated with the destination type, or -1
    if there is none.  The third argument,
-   if present, must be type <type>boolean</>; it receives <literal>true</>
-   if the cast is an explicit cast, <literal>false</> otherwise.
+   if present, must be type <type>boolean</type>; it receives <literal>true</literal>
+   if the cast is an explicit cast, <literal>false</literal> otherwise.
   </para>
 
   <para>
    It is legitimate to create a <structname>pg_cast</structname> entry
    in which the source and target types are the same, if the associated
    function takes more than one argument.  Such entries represent
-   <quote>length coercion functions</> that coerce values of the type
+   <quote>length coercion functions</quote> that coerce values of the type
    to be legal for a particular type modifier value.
   </para>
 
@@ -1624,14 +1624,14 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
    table.  This includes indexes (but see also
    <structname>pg_index</structname>), sequences (but see also
    <structname>pg_sequence</structname>), views, materialized
-   views, composite types, and TOAST tables; see <structfield>relkind</>.
+   views, composite types, and TOAST tables; see <structfield>relkind</structfield>.
    Below, when we mean all of these
    kinds of objects we speak of <quote>relations</quote>.  Not all
    columns are meaningful for all relation types.
   </para>
 
   <table>
-   <title><structname>pg_class</> Columns</title>
+   <title><structname>pg_class</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -1673,7 +1673,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
       <entry>
        The OID of the data type that corresponds to this table's row type,
-       if any (zero for indexes, which have no <structname>pg_type</> entry)
+       if any (zero for indexes, which have no <structname>pg_type</structname> entry)
       </entry>
      </row>
 
@@ -1706,7 +1706,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry><type>oid</type></entry>
       <entry></entry>
       <entry>Name of the on-disk file of this relation; zero means this
-       is a <quote>mapped</> relation whose disk file name is determined
+       is a <quote>mapped</quote> relation whose disk file name is determined
        by low-level state</entry>
      </row>
 
@@ -1795,8 +1795,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry><type>char</type></entry>
       <entry></entry>
       <entry>
-       <literal>p</> = permanent table, <literal>u</> = unlogged table,
-       <literal>t</> = temporary table
+       <literal>p</literal> = permanent table, <literal>u</literal> = unlogged table,
+       <literal>t</literal> = temporary table
       </entry>
      </row>
 
@@ -1805,15 +1805,15 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry><type>char</type></entry>
       <entry></entry>
       <entry>
-       <literal>r</> = ordinary table,
-       <literal>i</> = index,
-       <literal>S</> = sequence,
-       <literal>t</> = TOAST table,
-       <literal>v</> = view,
-       <literal>m</> = materialized view,
-       <literal>c</> = composite type,
-       <literal>f</> = foreign table,
-       <literal>p</> = partitioned table
+       <literal>r</literal> = ordinary table,
+       <literal>i</literal> = index,
+       <literal>S</literal> = sequence,
+       <literal>t</literal> = TOAST table,
+       <literal>v</literal> = view,
+       <literal>m</literal> = materialized view,
+       <literal>c</literal> = composite type,
+       <literal>f</literal> = foreign table,
+       <literal>p</literal> = partitioned table
       </entry>
      </row>
 
@@ -1834,7 +1834,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry><type>int2</type></entry>
       <entry></entry>
       <entry>
-       Number of <literal>CHECK</> constraints on the table; see
+       Number of <literal>CHECK</literal> constraints on the table; see
        <link linkend="catalog-pg-constraint"><structname>pg_constraint</structname></link> catalog
       </entry>
      </row>
@@ -1917,11 +1917,11 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry><type>char</type></entry>
       <entry></entry>
       <entry>
-       Columns used to form <quote>replica identity</> for rows:
-       <literal>d</> = default (primary key, if any),
-       <literal>n</> = nothing,
-       <literal>f</> = all columns
-       <literal>i</> = index with <structfield>indisreplident</structfield> set, or default
+       Columns used to form <quote>replica identity</quote> for rows:
+       <literal>d</literal> = default (primary key, if any),
+       <literal>n</literal> = nothing,
+       <literal>f</literal> = all columns
+       <literal>i</literal> = index with <structfield>indisreplident</structfield> set, or default
       </entry>
      </row>
 
@@ -1938,9 +1938,9 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry></entry>
       <entry>
        All transaction IDs before this one have been replaced with a permanent
-       (<quote>frozen</>) transaction ID in this table.  This is used to track
+       (<quote>frozen</quote>) transaction ID in this table.  This is used to track
        whether the table needs to be vacuumed in order to prevent transaction
-       ID wraparound or to allow <literal>pg_xact</> to be shrunk.  Zero
+       ID wraparound or to allow <literal>pg_xact</literal> to be shrunk.  Zero
        (<symbol>InvalidTransactionId</symbol>) if the relation is not a table.
       </entry>
      </row>
@@ -1953,7 +1953,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
        All multixact IDs before this one have been replaced by a
        transaction ID in this table.  This is used to track
        whether the table needs to be vacuumed in order to prevent multixact ID
-       wraparound or to allow <literal>pg_multixact</> to be shrunk.  Zero
+       wraparound or to allow <literal>pg_multixact</literal> to be shrunk.  Zero
        (<symbol>InvalidMultiXactId</symbol>) if the relation is not a table.
       </entry>
      </row>
@@ -1975,7 +1975,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry><type>text[]</type></entry>
       <entry></entry>
       <entry>
-       Access-method-specific options, as <quote>keyword=value</> strings
+       Access-method-specific options, as <quote>keyword=value</quote> strings
       </entry>
      </row>
 
@@ -1993,13 +1993,13 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </table>
 
   <para>
-   Several of the Boolean flags in <structname>pg_class</> are maintained
+   Several of the Boolean flags in <structname>pg_class</structname> are maintained
    lazily: they are guaranteed to be true if that's the correct state, but
    may not be reset to false immediately when the condition is no longer
-   true.  For example, <structfield>relhasindex</> is set by
+   true.  For example, <structfield>relhasindex</structfield> is set by
    <command>CREATE INDEX</command>, but it is never cleared by
    <command>DROP INDEX</command>.  Instead, <command>VACUUM</command> clears
-   <structfield>relhasindex</> if it finds the table has no indexes.  This
+   <structfield>relhasindex</structfield> if it finds the table has no indexes.  This
    arrangement avoids race conditions and improves concurrency.
   </para>
  </sect1>
@@ -2019,7 +2019,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </para>
 
   <table>
-   <title><structname>pg_collation</> Columns</title>
+   <title><structname>pg_collation</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -2082,14 +2082,14 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry><structfield>collcollate</structfield></entry>
       <entry><type>name</type></entry>
       <entry></entry>
-      <entry><symbol>LC_COLLATE</> for this collation object</entry>
+      <entry><symbol>LC_COLLATE</symbol> for this collation object</entry>
      </row>
 
      <row>
       <entry><structfield>collctype</structfield></entry>
       <entry><type>name</type></entry>
       <entry></entry>
-      <entry><symbol>LC_CTYPE</> for this collation object</entry>
+      <entry><symbol>LC_CTYPE</symbol> for this collation object</entry>
      </row>
 
      <row>
@@ -2107,27 +2107,27 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </table>
 
   <para>
-   Note that the unique key on this catalog is (<structfield>collname</>,
-   <structfield>collencoding</>, <structfield>collnamespace</>) not just
-   (<structfield>collname</>, <structfield>collnamespace</>).
+   Note that the unique key on this catalog is (<structfield>collname</structfield>,
+   <structfield>collencoding</structfield>, <structfield>collnamespace</structfield>) not just
+   (<structfield>collname</structfield>, <structfield>collnamespace</structfield>).
    <productname>PostgreSQL</productname> generally ignores all
-   collations that do not have <structfield>collencoding</> equal to
+   collations that do not have <structfield>collencoding</structfield> equal to
    either the current database's encoding or -1, and creation of new entries
-   with the same name as an entry with <structfield>collencoding</> = -1
+   with the same name as an entry with <structfield>collencoding</structfield> = -1
    is forbidden.  Therefore it is sufficient to use a qualified SQL name
-   (<replaceable>schema</>.<replaceable>name</>) to identify a collation,
+   (<replaceable>schema</replaceable>.<replaceable>name</replaceable>) to identify a collation,
    even though this is not unique according to the catalog definition.
    The reason for defining the catalog this way is that
-   <application>initdb</> fills it in at cluster initialization time with
+   <application>initdb</application> fills it in at cluster initialization time with
    entries for all locales available on the system, so it must be able to
    hold entries for all encodings that might ever be used in the cluster.
   </para>
 
   <para>
-   In the <literal>template0</> database, it could be useful to create
+   In the <literal>template0</literal> database, it could be useful to create
    collations whose encoding does not match the database encoding,
    since they could match the encodings of databases later cloned from
-   <literal>template0</>.  This would currently have to be done manually.
+   <literal>template0</literal>.  This would currently have to be done manually.
   </para>
  </sect1>
 
@@ -2143,13 +2143,13 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
    key, unique, foreign key, and exclusion constraints on tables.
    (Column constraints are not treated specially.  Every column constraint is
    equivalent to some table constraint.)
-   Not-null constraints are represented in the <structname>pg_attribute</>
+   Not-null constraints are represented in the <structname>pg_attribute</structname>
    catalog, not here.
   </para>
 
   <para>
    User-defined constraint triggers (created with <command>CREATE CONSTRAINT
-   TRIGGER</>) also give rise to an entry in this table.
+   TRIGGER</command>) also give rise to an entry in this table.
   </para>
 
   <para>
@@ -2157,7 +2157,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </para>
 
   <table>
-   <title><structname>pg_constraint</> Columns</title>
+   <title><structname>pg_constraint</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -2198,12 +2198,12 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry><type>char</type></entry>
       <entry></entry>
       <entry>
-        <literal>c</> = check constraint,
-        <literal>f</> = foreign key constraint,
-        <literal>p</> = primary key constraint,
-        <literal>u</> = unique constraint,
-        <literal>t</> = constraint trigger,
-        <literal>x</> = exclusion constraint
+        <literal>c</literal> = check constraint,
+        <literal>f</literal> = foreign key constraint,
+        <literal>p</literal> = primary key constraint,
+        <literal>u</literal> = unique constraint,
+        <literal>t</literal> = constraint trigger,
+        <literal>x</literal> = exclusion constraint
       </entry>
      </row>
 
@@ -2263,11 +2263,11 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry><type>char</type></entry>
       <entry></entry>
       <entry>Foreign key update action code:
-            <literal>a</> = no action,
-            <literal>r</> = restrict,
-            <literal>c</> = cascade,
-            <literal>n</> = set null,
-            <literal>d</> = set default
+            <literal>a</literal> = no action,
+            <literal>r</literal> = restrict,
+            <literal>c</literal> = cascade,
+            <literal>n</literal> = set null,
+            <literal>d</literal> = set default
           </entry>
      </row>
 
@@ -2276,11 +2276,11 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry><type>char</type></entry>
       <entry></entry>
       <entry>Foreign key deletion action code:
-            <literal>a</> = no action,
-            <literal>r</> = restrict,
-            <literal>c</> = cascade,
-            <literal>n</> = set null,
-            <literal>d</> = set default
+            <literal>a</literal> = no action,
+            <literal>r</literal> = restrict,
+            <literal>c</literal> = cascade,
+            <literal>n</literal> = set null,
+            <literal>d</literal> = set default
           </entry>
      </row>
 
@@ -2289,9 +2289,9 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry><type>char</type></entry>
       <entry></entry>
       <entry>Foreign key match type:
-            <literal>f</> = full,
-            <literal>p</> = partial,
-            <literal>s</> = simple
+            <literal>f</literal> = full,
+            <literal>p</literal> = partial,
+            <literal>s</literal> = simple
           </entry>
      </row>
 
@@ -2329,7 +2329,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
      <row>
       <entry><structfield>conkey</structfield></entry>
       <entry><type>int2[]</type></entry>
-      <entry><literal><link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>.attnum</></entry>
+      <entry><literal><link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>.attnum</literal></entry>
       <entry>If a table constraint (including foreign keys, but not constraint
        triggers), list of the constrained columns</entry>
      </row>
@@ -2337,35 +2337,35 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
      <row>
       <entry><structfield>confkey</structfield></entry>
       <entry><type>int2[]</type></entry>
-      <entry><literal><link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>.attnum</></entry>
+      <entry><literal><link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>.attnum</literal></entry>
       <entry>If a foreign key, list of the referenced columns</entry>
      </row>
 
      <row>
       <entry><structfield>conpfeqop</structfield></entry>
       <entry><type>oid[]</type></entry>
-      <entry><literal><link linkend="catalog-pg-operator"><structname>pg_operator</structname></link>.oid</></entry>
+      <entry><literal><link linkend="catalog-pg-operator"><structname>pg_operator</structname></link>.oid</literal></entry>
       <entry>If a foreign key, list of the equality operators for PK = FK comparisons</entry>
      </row>
 
      <row>
       <entry><structfield>conppeqop</structfield></entry>
       <entry><type>oid[]</type></entry>
-      <entry><literal><link linkend="catalog-pg-operator"><structname>pg_operator</structname></link>.oid</></entry>
+      <entry><literal><link linkend="catalog-pg-operator"><structname>pg_operator</structname></link>.oid</literal></entry>
       <entry>If a foreign key, list of the equality operators for PK = PK comparisons</entry>
      </row>
 
      <row>
       <entry><structfield>conffeqop</structfield></entry>
       <entry><type>oid[]</type></entry>
-      <entry><literal><link linkend="catalog-pg-operator"><structname>pg_operator</structname></link>.oid</></entry>
+      <entry><literal><link linkend="catalog-pg-operator"><structname>pg_operator</structname></link>.oid</literal></entry>
       <entry>If a foreign key, list of the equality operators for FK = FK comparisons</entry>
      </row>
 
      <row>
       <entry><structfield>conexclop</structfield></entry>
       <entry><type>oid[]</type></entry>
-      <entry><literal><link linkend="catalog-pg-operator"><structname>pg_operator</structname></link>.oid</></entry>
+      <entry><literal><link linkend="catalog-pg-operator"><structname>pg_operator</structname></link>.oid</literal></entry>
       <entry>If an exclusion constraint, list of the per-column exclusion operators</entry>
      </row>
 
@@ -2392,7 +2392,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
    For other cases, a zero appears in <structfield>conkey</structfield>
    and the associated index must be consulted to discover the expression
    that is constrained.  (<structfield>conkey</structfield> thus has the
-   same contents as <structname>pg_index</>.<structfield>indkey</> for the
+   same contents as <structname>pg_index</structname>.<structfield>indkey</structfield> for the
    index.)
   </para>
 
@@ -2400,7 +2400,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
    <para>
     <structfield>consrc</structfield> is not updated when referenced objects
     change; for example, it won't track renaming of columns.  Rather than
-    relying on this field, it's best to use <function>pg_get_constraintdef()</>
+    relying on this field, it's best to use <function>pg_get_constraintdef()</function>
     to extract the definition of a check constraint.
    </para>
   </note>
@@ -2429,7 +2429,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </para>
 
   <table>
-   <title><structname>pg_conversion</> Columns</title>
+   <title><structname>pg_conversion</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -2529,7 +2529,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </para>
 
   <table>
-   <title><structname>pg_database</> Columns</title>
+   <title><structname>pg_database</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -2592,7 +2592,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry></entry>
       <entry>
        If true, then this database can be cloned by
-       any user with <literal>CREATEDB</> privileges;
+       any user with <literal>CREATEDB</literal> privileges;
        if false, then only superusers or the owner of
        the database can clone it.
       </entry>
@@ -2604,7 +2604,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry></entry>
       <entry>
        If false then no one can connect to this database.  This is
-       used to protect the <literal>template0</> database from being altered.
+       used to protect the <literal>template0</literal> database from being altered.
       </entry>
      </row>
 
@@ -2634,11 +2634,11 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry></entry>
       <entry>
        All transaction IDs before this one have been replaced with a permanent
-       (<quote>frozen</>) transaction ID in this database.  This is used to
+       (<quote>frozen</quote>) transaction ID in this database.  This is used to
        track whether the database needs to be vacuumed in order to prevent
-       transaction ID wraparound or to allow <literal>pg_xact</> to be shrunk.
+       transaction ID wraparound or to allow <literal>pg_xact</literal> to be shrunk.
        It is the minimum of the per-table
-       <structname>pg_class</>.<structfield>relfrozenxid</> values.
+       <structname>pg_class</structname>.<structfield>relfrozenxid</structfield> values.
       </entry>
      </row>
 
@@ -2650,9 +2650,9 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
        All multixact IDs before this one have been replaced with a
        transaction ID in this database.  This is used to
        track whether the database needs to be vacuumed in order to prevent
-       multixact ID wraparound or to allow <literal>pg_multixact</> to be shrunk.
+       multixact ID wraparound or to allow <literal>pg_multixact</literal> to be shrunk.
        It is the minimum of the per-table
-       <structname>pg_class</>.<structfield>relminmxid</> values.
+       <structname>pg_class</structname>.<structfield>relminmxid</structfield> values.
       </entry>
      </row>
 
@@ -2663,7 +2663,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry>
        The default tablespace for the database.
        Within this database, all tables for which
-       <structname>pg_class</>.<structfield>reltablespace</> is zero
+       <structname>pg_class</structname>.<structfield>reltablespace</structfield> is zero
        will be stored in this tablespace; in particular, all the non-shared
        system catalogs will be there.
       </entry>
@@ -2707,7 +2707,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </para>
 
   <table>
-   <title><structname>pg_db_role_setting</> Columns</title>
+   <title><structname>pg_db_role_setting</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -2754,12 +2754,12 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </indexterm>
 
   <para>
-   The catalog <structname>pg_default_acl</> stores initial
+   The catalog <structname>pg_default_acl</structname> stores initial
    privileges to be assigned to newly created objects.
   </para>
 
   <table>
-   <title><structname>pg_default_acl</> Columns</title>
+   <title><structname>pg_default_acl</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -2800,10 +2800,10 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry></entry>
       <entry>
        Type of object this entry is for:
-       <literal>r</> = relation (table, view),
-       <literal>S</> = sequence,
-       <literal>f</> = function,
-       <literal>T</> = type
+       <literal>r</literal> = relation (table, view),
+       <literal>S</literal> = sequence,
+       <literal>f</literal> = function,
+       <literal>T</literal> = type
       </entry>
      </row>
 
@@ -2820,21 +2820,21 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </table>
 
   <para>
-   A <structname>pg_default_acl</> entry shows the initial privileges to
+   A <structname>pg_default_acl</structname> entry shows the initial privileges to
    be assigned to an object belonging to the indicated user.  There are
-   currently two types of entry: <quote>global</> entries with
-   <structfield>defaclnamespace</> = 0, and <quote>per-schema</> entries
+   currently two types of entry: <quote>global</quote> entries with
+   <structfield>defaclnamespace</structfield> = 0, and <quote>per-schema</quote> entries
    that reference a particular schema.  If a global entry is present then
-   it <emphasis>overrides</> the normal hard-wired default privileges
+   it <emphasis>overrides</emphasis> the normal hard-wired default privileges
    for the object type.  A per-schema entry, if present, represents privileges
-   to be <emphasis>added to</> the global or hard-wired default privileges.
+   to be <emphasis>added to</emphasis> the global or hard-wired default privileges.
   </para>
 
   <para>
    Note that when an ACL entry in another catalog is null, it is taken
    to represent the hard-wired default privileges for its object,
-   <emphasis>not</> whatever might be in <structname>pg_default_acl</>
-   at the moment.  <structname>pg_default_acl</> is only consulted during
+   <emphasis>not</emphasis> whatever might be in <structname>pg_default_acl</structname>
+   at the moment.  <structname>pg_default_acl</structname> is only consulted during
    object creation.
   </para>
 
@@ -2851,9 +2851,9 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   <para>
    The catalog <structname>pg_depend</structname> records the dependency
    relationships between database objects.  This information allows
-   <command>DROP</> commands to find which other objects must be dropped
-   by <command>DROP CASCADE</> or prevent dropping in the <command>DROP
-   RESTRICT</> case.
+   <command>DROP</command> commands to find which other objects must be dropped
+   by <command>DROP CASCADE</command> or prevent dropping in the <command>DROP
+   RESTRICT</command> case.
   </para>
 
   <para>
@@ -2863,7 +2863,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </para>
 
   <table>
-   <title><structname>pg_depend</> Columns</title>
+   <title><structname>pg_depend</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -2896,7 +2896,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry></entry>
       <entry>
        For a table column, this is the column number (the
-       <structfield>objid</> and <structfield>classid</> refer to the
+       <structfield>objid</structfield> and <structfield>classid</structfield> refer to the
        table itself).  For all other object types, this column is
        zero.
       </entry>
@@ -2922,7 +2922,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry></entry>
       <entry>
        For a table column, this is the column number (the
-       <structfield>refobjid</> and <structfield>refclassid</> refer
+       <structfield>refobjid</structfield> and <structfield>refclassid</structfield> refer
        to the table itself).  For all other object types, this column
        is zero.
       </entry>
@@ -2945,17 +2945,17 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
    In all cases, a <structname>pg_depend</structname> entry indicates that the
    referenced object cannot be dropped without also dropping the dependent
    object.  However, there are several subflavors identified by
-   <structfield>deptype</>:
+   <structfield>deptype</structfield>:
 
    <variablelist>
     <varlistentry>
-     <term><symbol>DEPENDENCY_NORMAL</> (<literal>n</>)</term>
+     <term><symbol>DEPENDENCY_NORMAL</symbol> (<literal>n</literal>)</term>
      <listitem>
       <para>
        A normal relationship between separately-created objects.  The
        dependent object can be dropped without affecting the
        referenced object.  The referenced object can only be dropped
-       by specifying <literal>CASCADE</>, in which case the dependent
+       by specifying <literal>CASCADE</literal>, in which case the dependent
        object is dropped, too.  Example: a table column has a normal
        dependency on its data type.
       </para>
@@ -2963,12 +2963,12 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
     </varlistentry>
 
     <varlistentry>
-     <term><symbol>DEPENDENCY_AUTO</> (<literal>a</>)</term>
+     <term><symbol>DEPENDENCY_AUTO</symbol> (<literal>a</literal>)</term>
      <listitem>
       <para>
        The dependent object can be dropped separately from the
        referenced object, and should be automatically dropped
-       (regardless of <literal>RESTRICT</> or <literal>CASCADE</>
+       (regardless of <literal>RESTRICT</literal> or <literal>CASCADE</literal>
        mode) if the referenced object is dropped.  Example: a named
        constraint on a table is made autodependent on the table, so
        that it will go away if the table is dropped.
@@ -2977,41 +2977,41 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
     </varlistentry>
 
     <varlistentry>
-     <term><symbol>DEPENDENCY_INTERNAL</> (<literal>i</>)</term>
+     <term><symbol>DEPENDENCY_INTERNAL</symbol> (<literal>i</literal>)</term>
      <listitem>
       <para>
        The dependent object was created as part of creation of the
        referenced object, and is really just a part of its internal
-       implementation.  A <command>DROP</> of the dependent object
+       implementation.  A <command>DROP</command> of the dependent object
        will be disallowed outright (we'll tell the user to issue a
-       <command>DROP</> against the referenced object, instead).  A
-       <command>DROP</> of the referenced object will be propagated
+       <command>DROP</command> against the referenced object, instead).  A
+       <command>DROP</command> of the referenced object will be propagated
        through to drop the dependent object whether
-       <command>CASCADE</> is specified or not.  Example: a trigger
+       <command>CASCADE</command> is specified or not.  Example: a trigger
        that's created to enforce a foreign-key constraint is made
        internally dependent on the constraint's
-       <structname>pg_constraint</> entry.
+       <structname>pg_constraint</structname> entry.
       </para>
      </listitem>
     </varlistentry>
 
     <varlistentry>
-     <term><symbol>DEPENDENCY_EXTENSION</> (<literal>e</>)</term>
+     <term><symbol>DEPENDENCY_EXTENSION</symbol> (<literal>e</literal>)</term>
      <listitem>
       <para>
-       The dependent object is a member of the <firstterm>extension</> that is
+       The dependent object is a member of the <firstterm>extension</firstterm> that is
        the referenced object (see
        <link linkend="catalog-pg-extension"><structname>pg_extension</structname></link>).
        The dependent object can be dropped only via
-       <command>DROP EXTENSION</> on the referenced object.  Functionally
+       <command>DROP EXTENSION</command> on the referenced object.  Functionally
        this dependency type acts the same as an internal dependency, but
-       it's kept separate for clarity and to simplify <application>pg_dump</>.
+       it's kept separate for clarity and to simplify <application>pg_dump</application>.
       </para>
      </listitem>
     </varlistentry>
 
     <varlistentry>
-     <term><symbol>DEPENDENCY_AUTO_EXTENSION</> (<literal>x</>)</term>
+     <term><symbol>DEPENDENCY_AUTO_EXTENSION</symbol> (<literal>x</literal>)</term>
      <listitem>
       <para>
        The dependent object is not a member of the extension that is the
@@ -3024,7 +3024,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
     </varlistentry>
 
     <varlistentry>
-     <term><symbol>DEPENDENCY_PIN</> (<literal>p</>)</term>
+     <term><symbol>DEPENDENCY_PIN</symbol> (<literal>p</literal>)</term>
      <listitem>
       <para>
        There is no dependent object; this type of entry is a signal
@@ -3051,7 +3051,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </indexterm>
 
   <para>
-   The catalog <structname>pg_description</> stores optional descriptions
+   The catalog <structname>pg_description</structname> stores optional descriptions
    (comments) for each database object.  Descriptions can be manipulated
    with the <xref linkend="sql-comment"> command and viewed with
    <application>psql</application>'s <literal>\d</literal> commands.
@@ -3066,7 +3066,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </para>
 
   <table>
-   <title><structname>pg_description</> Columns</title>
+   <title><structname>pg_description</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -3099,7 +3099,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry></entry>
       <entry>
        For a comment on a table column, this is the column number (the
-       <structfield>objoid</> and <structfield>classoid</> refer to
+       <structfield>objoid</structfield> and <structfield>classoid</structfield> refer to
        the table itself).  For all other object types, this column is
        zero.
       </entry>
@@ -3133,7 +3133,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </para>
 
   <table>
-   <title><structname>pg_enum</> Columns</title>
+   <title><structname>pg_enum</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -3157,7 +3157,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry><structfield>enumtypid</structfield></entry>
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
-      <entry>The OID of the <structname>pg_type</> entry owning this enum value</entry>
+      <entry>The OID of the <structname>pg_type</structname> entry owning this enum value</entry>
      </row>
 
      <row>
@@ -3191,7 +3191,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
 
   <para>
    When an enum type is created, its members are assigned sort-order
-   positions 1..<replaceable>n</>.  But members added later might be given
+   positions 1..<replaceable>n</replaceable>.  But members added later might be given
    negative or fractional values of <structfield>enumsortorder</structfield>.
    The only requirement on these values is that they be correctly
    ordered and unique within each enum type.
@@ -3212,7 +3212,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </para>
 
   <table>
-   <title><structname>pg_event_trigger</> Columns</title>
+   <title><structname>pg_event_trigger</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -3260,10 +3260,10 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry>
        Controls in which <xref linkend="guc-session-replication-role"> modes
        the event trigger fires.
-       <literal>O</> = trigger fires in <quote>origin</> and <quote>local</> modes,
-       <literal>D</> = trigger is disabled,
-       <literal>R</> = trigger fires in <quote>replica</> mode,
-       <literal>A</> = trigger fires always.
+       <literal>O</literal> = trigger fires in <quote>origin</quote> and <quote>local</quote> modes,
+       <literal>D</literal> = trigger is disabled,
+       <literal>R</literal> = trigger fires in <quote>replica</quote> mode,
+       <literal>A</literal> = trigger fires always.
       </entry>
      </row>
 
@@ -3296,7 +3296,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </para>
 
   <table>
-   <title><structname>pg_extension</> Columns</title>
+   <title><structname>pg_extension</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -3355,16 +3355,16 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry><structfield>extconfig</structfield></entry>
       <entry><type>oid[]</type></entry>
       <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
-      <entry>Array of <type>regclass</> OIDs for the extension's configuration
-       table(s), or <literal>NULL</> if none</entry>
+      <entry>Array of <type>regclass</type> OIDs for the extension's configuration
+       table(s), or <literal>NULL</literal> if none</entry>
      </row>
 
      <row>
       <entry><structfield>extcondition</structfield></entry>
       <entry><type>text[]</type></entry>
       <entry></entry>
-      <entry>Array of <literal>WHERE</>-clause filter conditions for the
-       extension's configuration table(s), or <literal>NULL</> if none</entry>
+      <entry>Array of <literal>WHERE</literal>-clause filter conditions for the
+       extension's configuration table(s), or <literal>NULL</literal> if none</entry>
      </row>
 
     </tbody>
@@ -3372,7 +3372,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </table>
 
   <para>
-   Note that unlike most catalogs with a <quote>namespace</> column,
+   Note that unlike most catalogs with a <quote>namespace</quote> column,
    <structfield>extnamespace</structfield> is not meant to imply
    that the extension belongs to that schema.  Extension names are never
    schema-qualified.  Rather, <structfield>extnamespace</structfield>
@@ -3399,7 +3399,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </para>
 
   <table>
-   <title><structname>pg_foreign_data_wrapper</> Columns</title>
+   <title><structname>pg_foreign_data_wrapper</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -3474,7 +3474,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry><type>text[]</type></entry>
       <entry></entry>
       <entry>
-       Foreign-data wrapper specific options, as <quote>keyword=value</> strings
+       Foreign-data wrapper specific options, as <quote>keyword=value</quote> strings
       </entry>
      </row>
     </tbody>
@@ -3498,7 +3498,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </para>
 
   <table>
-   <title><structname>pg_foreign_server</> Columns</title>
+   <title><structname>pg_foreign_server</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -3570,7 +3570,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry><type>text[]</type></entry>
       <entry></entry>
       <entry>
-       Foreign server specific options, as <quote>keyword=value</> strings
+       Foreign server specific options, as <quote>keyword=value</quote> strings
       </entry>
      </row>
     </tbody>
@@ -3596,7 +3596,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </para>
 
   <table>
-   <title><structname>pg_foreign_table</> Columns</title>
+   <title><structname>pg_foreign_table</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -3613,7 +3613,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry><structfield>ftrelid</structfield></entry>
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
-      <entry>OID of the <structname>pg_class</> entry for this foreign table</entry>
+      <entry>OID of the <structname>pg_class</structname> entry for this foreign table</entry>
      </row>
 
      <row>
@@ -3628,7 +3628,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry><type>text[]</type></entry>
       <entry></entry>
       <entry>
-       Foreign table options, as <quote>keyword=value</> strings
+       Foreign table options, as <quote>keyword=value</quote> strings
       </entry>
      </row>
     </tbody>
@@ -3651,7 +3651,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </para>
 
   <table>
-   <title><structname>pg_index</> Columns</title>
+   <title><structname>pg_index</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -3668,14 +3668,14 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry><structfield>indexrelid</structfield></entry>
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
-      <entry>The OID of the <structname>pg_class</> entry for this index</entry>
+      <entry>The OID of the <structname>pg_class</structname> entry for this index</entry>
      </row>
 
      <row>
       <entry><structfield>indrelid</structfield></entry>
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
-      <entry>The OID of the <structname>pg_class</> entry for the table this index is for</entry>
+      <entry>The OID of the <structname>pg_class</structname> entry for the table this index is for</entry>
      </row>
 
      <row>
@@ -3698,7 +3698,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>If true, this index represents the primary key of the table
-      (<structfield>indisunique</> should always be true when this is true)</entry>
+      (<structfield>indisunique</structfield> should always be true when this is true)</entry>
      </row>
 
      <row>
@@ -3714,7 +3714,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry></entry>
       <entry>If true, the uniqueness check is enforced immediately on
        insertion
-       (irrelevant if <structfield>indisunique</> is not true)</entry>
+       (irrelevant if <structfield>indisunique</structfield> is not true)</entry>
      </row>
 
      <row>
@@ -3731,7 +3731,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry>
        If true, the index is currently valid for queries.  False means the
        index is possibly incomplete: it must still be modified by
-       <command>INSERT</>/<command>UPDATE</> operations, but it cannot safely
+       <command>INSERT</command>/<command>UPDATE</command> operations, but it cannot safely
        be used for queries. If it is unique, the uniqueness property is not
        guaranteed true either.
       </entry>
@@ -3742,8 +3742,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>
-       If true, queries must not use the index until the <structfield>xmin</>
-       of this <structname>pg_index</> row is below their <symbol>TransactionXmin</symbol>
+       If true, queries must not use the index until the <structfield>xmin</structfield>
+       of this <structname>pg_index</structname> row is below their <symbol>TransactionXmin</symbol>
        event horizon, because the table may contain broken HOT chains with
        incompatible rows that they can see
       </entry>
@@ -3755,7 +3755,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry></entry>
       <entry>
        If true, the index is currently ready for inserts.  False means the
-       index must be ignored by <command>INSERT</>/<command>UPDATE</>
+       index must be ignored by <command>INSERT</command>/<command>UPDATE</command>
        operations.
       </entry>
      </row>
@@ -3775,9 +3775,9 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>
-       If true this index has been chosen as <quote>replica identity</>
+       If true this index has been chosen as <quote>replica identity</quote>
        using <command>ALTER TABLE ... REPLICA IDENTITY USING INDEX
-       ...</>
+       ...</command>
       </entry>
      </row>
 
@@ -3836,7 +3836,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
        Expression trees (in <function>nodeToString()</function>
        representation) for index attributes that are not simple column
        references.  This is a list with one element for each zero
-       entry in <structfield>indkey</>.  Null if all index attributes
+       entry in <structfield>indkey</structfield>.  Null if all index attributes
        are simple references.
       </entry>
      </row>
@@ -3866,14 +3866,14 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </indexterm>
 
   <para>
-   The catalog <structname>pg_inherits</> records information about
+   The catalog <structname>pg_inherits</structname> records information about
    table inheritance hierarchies.  There is one entry for each direct
    parent-child table relationship in the database.  (Indirect inheritance can be determined
    by following chains of entries.)
   </para>
 
   <table>
-   <title><structname>pg_inherits</> Columns</title>
+   <title><structname>pg_inherits</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -3928,7 +3928,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </indexterm>
 
   <para>
-   The catalog <structname>pg_init_privs</> records information about
+   The catalog <structname>pg_init_privs</structname> records information about
    the initial privileges of objects in the system.  There is one entry
    for each object in the database which has a non-default (non-NULL)
    initial set of privileges.
@@ -3936,7 +3936,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
 
   <para>
    Objects can have initial privileges either by having those privileges set
-   when the system is initialized (by <application>initdb</>) or when the
+   when the system is initialized (by <application>initdb</application>) or when the
    object is created during a <command>CREATE EXTENSION</command> and the
    extension script sets initial privileges using the <command>GRANT</command>
    system.  Note that the system will automatically handle recording of the
@@ -3944,12 +3944,12 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
    only use the <command>GRANT</command> and <command>REVOKE</command>
    statements in their script to have the privileges recorded.  The
    <literal>privtype</literal> column indicates if the initial privilege was
-   set by <application>initdb</> or during a
+   set by <application>initdb</application> or during a
    <command>CREATE EXTENSION</command> command.
   </para>
 
   <para>
-   Objects which have initial privileges set by <application>initdb</> will
+   Objects which have initial privileges set by <application>initdb</application> will
    have entries where <literal>privtype</literal> is
    <literal>'i'</literal>, while objects which have initial privileges set
    by <command>CREATE EXTENSION</command> will have entries where
@@ -3957,7 +3957,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </para>
 
   <table>
-   <title><structname>pg_init_privs</> Columns</title>
+   <title><structname>pg_init_privs</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -3990,7 +3990,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry></entry>
       <entry>
        For a table column, this is the column number (the
-       <structfield>objoid</> and <structfield>classoid</> refer to the
+       <structfield>objoid</structfield> and <structfield>classoid</structfield> refer to the
        table itself).  For all other object types, this column is
        zero.
       </entry>
@@ -4039,7 +4039,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </para>
 
   <table>
-   <title><structname>pg_language</> Columns</title>
+   <title><structname>pg_language</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -4116,7 +4116,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
       <entry>
        This references a function that is responsible for executing
-       <quote>inline</> anonymous code blocks
+       <quote>inline</quote> anonymous code blocks
        (<xref linkend="sql-do"> blocks).
        Zero if inline blocks are not supported.
       </entry>
@@ -4162,24 +4162,24 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
    The catalog <structname>pg_largeobject</structname> holds the data making up
    <quote>large objects</quote>.  A large object is identified by an OID
    assigned when it is created.  Each large object is broken into
-   segments or <quote>pages</> small enough to be conveniently stored as rows
+   segments or <quote>pages</quote> small enough to be conveniently stored as rows
    in <structname>pg_largeobject</structname>.
-   The amount of data per page is defined to be <symbol>LOBLKSIZE</> (which is currently
-   <literal>BLCKSZ/4</>, or typically 2 kB).
+   The amount of data per page is defined to be <symbol>LOBLKSIZE</symbol> (which is currently
+   <literal>BLCKSZ/4</literal>, or typically 2 kB).
   </para>
 
   <para>
-   Prior to <productname>PostgreSQL</> 9.0, there was no permission structure
+   Prior to <productname>PostgreSQL</productname> 9.0, there was no permission structure
    associated with large objects.  As a result,
    <structname>pg_largeobject</structname> was publicly readable and could be
    used to obtain the OIDs (and contents) of all large objects in the system.
    This is no longer the case; use
-   <link linkend="catalog-pg-largeobject-metadata"><structname>pg_largeobject_metadata</></link>
+   <link linkend="catalog-pg-largeobject-metadata"><structname>pg_largeobject_metadata</structname></link>
    to obtain a list of large object OIDs.
   </para>
 
   <table>
-   <title><structname>pg_largeobject</> Columns</title>
+   <title><structname>pg_largeobject</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -4213,7 +4213,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry></entry>
       <entry>
        Actual data stored in the large object.
-       This will never be more than <symbol>LOBLKSIZE</> bytes and might be less.
+       This will never be more than <symbol>LOBLKSIZE</symbol> bytes and might be less.
       </entry>
      </row>
     </tbody>
@@ -4223,9 +4223,9 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   <para>
    Each row of <structname>pg_largeobject</structname> holds data
    for one page of a large object, beginning at
-   byte offset (<literal>pageno * LOBLKSIZE</>) within the object.  The implementation
+   byte offset (<literal>pageno * LOBLKSIZE</literal>) within the object.  The implementation
    allows sparse storage: pages might be missing, and might be shorter than
-   <literal>LOBLKSIZE</> bytes even if they are not the last page of the object.
+   <literal>LOBLKSIZE</literal> bytes even if they are not the last page of the object.
    Missing regions within a large object read as zeroes.
   </para>
 
@@ -4242,11 +4242,11 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
    The catalog <structname>pg_largeobject_metadata</structname>
    holds metadata associated with large objects.  The actual large object
    data is stored in
-   <link linkend="catalog-pg-largeobject"><structname>pg_largeobject</></link>.
+   <link linkend="catalog-pg-largeobject"><structname>pg_largeobject</structname></link>.
   </para>
 
   <table>
-   <title><structname>pg_largeobject_metadata</> Columns</title>
+   <title><structname>pg_largeobject_metadata</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -4299,14 +4299,14 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </indexterm>
 
   <para>
-   The catalog <structname>pg_namespace</> stores namespaces.
+   The catalog <structname>pg_namespace</structname> stores namespaces.
    A namespace is the structure underlying SQL schemas: each namespace
    can have a separate collection of relations, types, etc. without name
    conflicts.
   </para>
 
   <table>
-   <title><structname>pg_namespace</> Columns</title>
+   <title><structname>pg_namespace</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -4381,7 +4381,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </para>
 
   <table>
-   <title><structname>pg_opclass</> Columns</title>
+   <title><structname>pg_opclass</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -4447,14 +4447,14 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry><structfield>opcdefault</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
-      <entry>True if this operator class is the default for <structfield>opcintype</></entry>
+      <entry>True if this operator class is the default for <structfield>opcintype</structfield></entry>
      </row>
 
      <row>
       <entry><structfield>opckeytype</structfield></entry>
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
-      <entry>Type of data stored in index, or zero if same as <structfield>opcintype</></entry>
+      <entry>Type of data stored in index, or zero if same as <structfield>opcintype</structfield></entry>
      </row>
 
     </tbody>
@@ -4462,11 +4462,11 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </table>
 
   <para>
-   An operator class's <structfield>opcmethod</> must match the
-   <structname>opfmethod</> of its containing operator family.
+   An operator class's <structfield>opcmethod</structfield> must match the
+   <structname>opfmethod</structname> of its containing operator family.
    Also, there must be no more than one <structname>pg_opclass</structname>
-   row having <structname>opcdefault</> true for any given combination of
-   <structname>opcmethod</> and <structname>opcintype</>.
+   row having <structname>opcdefault</structname> true for any given combination of
+   <structname>opcmethod</structname> and <structname>opcintype</structname>.
   </para>
 
  </sect1>
@@ -4480,13 +4480,13 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </indexterm>
 
   <para>
-   The catalog <structname>pg_operator</> stores information about operators.
+   The catalog <structname>pg_operator</structname> stores information about operators.
    See <xref linkend="sql-createoperator">
    and <xref linkend="xoper"> for more information.
   </para>
 
   <table>
-   <title><structname>pg_operator</> Columns</title>
+   <title><structname>pg_operator</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -4534,8 +4534,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry><type>char</type></entry>
       <entry></entry>
       <entry>
-       <literal>b</> = infix (<quote>both</quote>), <literal>l</> = prefix
-       (<quote>left</quote>), <literal>r</> = postfix (<quote>right</quote>)
+       <literal>b</literal> = infix (<quote>both</quote>), <literal>l</literal> = prefix
+       (<quote>left</quote>), <literal>r</literal> = postfix (<quote>right</quote>)
       </entry>
      </row>
 
@@ -4632,7 +4632,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
    Each operator family is a collection of operators and associated
    support routines that implement the semantics specified for a particular
    index access method.  Furthermore, the operators in a family are all
-   <quote>compatible</>, in a way that is specified by the access method.
+   <quote>compatible</quote>, in a way that is specified by the access method.
    The operator family concept allows cross-data-type operators to be used
    with indexes and to be reasoned about using knowledge of access method
    semantics.
@@ -4643,7 +4643,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </para>
 
   <table>
-   <title><structname>pg_opfamily</> Columns</title>
+   <title><structname>pg_opfamily</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -4720,7 +4720,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </para>
 
   <table>
-   <title><structname>pg_partitioned_table</> Columns</title>
+   <title><structname>pg_partitioned_table</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -4738,7 +4738,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry><structfield>partrelid</structfield></entry>
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
-      <entry>The OID of the <structname>pg_class</> entry for this partitioned table</entry>
+      <entry>The OID of the <structname>pg_class</structname> entry for this partitioned table</entry>
      </row>
 
      <row>
@@ -4746,8 +4746,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry><type>char</type></entry>
       <entry></entry>
       <entry>
-       Partitioning strategy; <literal>l</> = list partitioned table,
-       <literal>r</> = range partitioned table
+       Partitioning strategy; <literal>l</literal> = list partitioned table,
+       <literal>r</literal> = range partitioned table
       </entry>
      </row>
 
@@ -4763,7 +4763,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
       <entry>
-       The OID of the <structname>pg_class</> entry for the default partition
+       The OID of the <structname>pg_class</structname> entry for the default partition
        of this partitioned table, or zero if this partitioned table does not
        have a default partition.
      </entry>
@@ -4813,7 +4813,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
        Expression trees (in <function>nodeToString()</function>
        representation) for partition key columns that are not simple column
        references.  This is a list with one element for each zero
-       entry in <structfield>partattrs</>.  Null if all partition key columns
+       entry in <structfield>partattrs</structfield>.  Null if all partition key columns
        are simple references.
       </entry>
      </row>
@@ -4833,9 +4833,9 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
 
   <para>
    The catalog <structname>pg_pltemplate</structname> stores
-   <quote>template</> information for procedural languages.
+   <quote>template</quote> information for procedural languages.
    A template for a language allows the language to be created in a
-   particular database by a simple <command>CREATE LANGUAGE</> command,
+   particular database by a simple <command>CREATE LANGUAGE</command> command,
    with no need to specify implementation details.
   </para>
 
@@ -4848,7 +4848,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </para>
 
   <table>
-   <title><structname>pg_pltemplate</> Columns</title>
+   <title><structname>pg_pltemplate</structname> Columns</title>
 
    <tgroup cols="3">
     <thead>
@@ -4921,7 +4921,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
 
   <note>
    <para>
-    It is likely that <structname>pg_pltemplate</> will be removed in some
+    It is likely that <structname>pg_pltemplate</structname> will be removed in some
     future release of <productname>PostgreSQL</productname>, in favor of
     keeping this knowledge about procedural languages in their respective
     extension installation scripts.
@@ -4944,7 +4944,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
    command that it applies to (possibly all commands), the roles that it
    applies to, the expression to be added as a security-barrier
    qualification to queries that include the table, and the expression
-   to be added as a <literal>WITH CHECK</> option for queries that attempt to
+   to be added as a <literal>WITH CHECK</literal> option for queries that attempt to
    add new records to the table.
   </para>
 
@@ -4982,11 +4982,11 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry><type>char</type></entry>
       <entry></entry>
       <entry>The command type to which the policy is applied:
-       <literal>r</> for <command>SELECT</>,
-       <literal>a</> for <command>INSERT</>,
-       <literal>w</> for <command>UPDATE</>,
-       <literal>d</> for <command>DELETE</>,
-       or <literal>*</> for all</entry>
+       <literal>r</literal> for <command>SELECT</command>,
+       <literal>a</literal> for <command>INSERT</command>,
+       <literal>w</literal> for <command>UPDATE</command>,
+       <literal>d</literal> for <command>DELETE</command>,
+       or <literal>*</literal> for all</entry>
      </row>
 
      <row>
@@ -5023,8 +5023,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
 
   <note>
    <para>
-    Policies stored in <structname>pg_policy</> are applied only when
-    <structname>pg_class</>.<structfield>relrowsecurity</> is set for
+    Policies stored in <structname>pg_policy</structname> are applied only when
+    <structname>pg_class</structname>.<structfield>relrowsecurity</structfield> is set for
     their table.
    </para>
   </note>
@@ -5039,7 +5039,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </indexterm>
 
   <para>
-   The catalog <structname>pg_proc</> stores information about functions (or procedures).
+   The catalog <structname>pg_proc</structname> stores information about functions (or procedures).
    See <xref linkend="sql-createfunction">
    and <xref linkend="xfunc"> for more information.
   </para>
@@ -5051,7 +5051,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </para>
 
   <table>
-   <title><structname>pg_proc</> Columns</title>
+   <title><structname>pg_proc</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -5106,7 +5106,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry><type>float4</type></entry>
       <entry></entry>
       <entry>Estimated execution cost (in units of
-       <xref linkend="guc-cpu-operator-cost">); if <structfield>proretset</>,
+       <xref linkend="guc-cpu-operator-cost">); if <structfield>proretset</structfield>,
        this is cost per row returned</entry>
      </row>
 
@@ -5114,7 +5114,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry><structfield>prorows</structfield></entry>
       <entry><type>float4</type></entry>
       <entry></entry>
-      <entry>Estimated number of result rows (zero if not <structfield>proretset</>)</entry>
+      <entry>Estimated number of result rows (zero if not <structfield>proretset</structfield>)</entry>
      </row>
 
      <row>
@@ -5151,7 +5151,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry><structfield>prosecdef</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
-      <entry>Function is a security definer (i.e., a <quote>setuid</>
+      <entry>Function is a security definer (i.e., a <quote>setuid</quote>
       function)</entry>
      </row>
 
@@ -5195,11 +5195,11 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
        <structfield>provolatile</structfield> tells whether the function's
        result depends only on its input arguments, or is affected by outside
        factors.
-       It is <literal>i</literal> for <quote>immutable</> functions,
+       It is <literal>i</literal> for <quote>immutable</quote> functions,
        which always deliver the same result for the same inputs.
-       It is <literal>s</literal> for <quote>stable</> functions,
+       It is <literal>s</literal> for <quote>stable</quote> functions,
        whose results (for fixed inputs) do not change within a scan.
-       It is <literal>v</literal> for <quote>volatile</> functions,
+       It is <literal>v</literal> for <quote>volatile</quote> functions,
        whose results might change at any time.  (Use <literal>v</literal> also
        for functions with side-effects, so that calls to them cannot get
        optimized away.)
@@ -5251,7 +5251,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry>
        An array with the data types of the function arguments.  This includes
        only input arguments (including <literal>INOUT</literal> and
-       <literal>VARIADIC</> arguments), and thus represents
+       <literal>VARIADIC</literal> arguments), and thus represents
        the call signature of the function.
       </entry>
      </row>
@@ -5266,7 +5266,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
        <literal>INOUT</literal> arguments); however, if all the
        arguments are <literal>IN</literal> arguments, this field will be null.
        Note that subscripting is 1-based, whereas for historical reasons
-       <structfield>proargtypes</> is subscripted from 0.
+       <structfield>proargtypes</structfield> is subscripted from 0.
       </entry>
      </row>
 
@@ -5276,15 +5276,15 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry></entry>
       <entry>
         An array with the modes of the function arguments, encoded as
-        <literal>i</literal> for <literal>IN</> arguments,
-        <literal>o</literal> for <literal>OUT</> arguments,
-        <literal>b</literal> for <literal>INOUT</> arguments,
-        <literal>v</literal> for <literal>VARIADIC</> arguments,
-        <literal>t</literal> for <literal>TABLE</> arguments.
+        <literal>i</literal> for <literal>IN</literal> arguments,
+        <literal>o</literal> for <literal>OUT</literal> arguments,
+        <literal>b</literal> for <literal>INOUT</literal> arguments,
+        <literal>v</literal> for <literal>VARIADIC</literal> arguments,
+        <literal>t</literal> for <literal>TABLE</literal> arguments.
         If all the arguments are <literal>IN</literal> arguments,
         this field will be null.
         Note that subscripts correspond to positions of
-        <structfield>proallargtypes</> not <structfield>proargtypes</>.
+        <structfield>proallargtypes</structfield> not <structfield>proargtypes</structfield>.
       </entry>
      </row>
 
@@ -5297,7 +5297,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
         Arguments without a name are set to empty strings in the array.
         If none of the arguments have a name, this field will be null.
         Note that subscripts correspond to positions of
-        <structfield>proallargtypes</> not <structfield>proargtypes</>.
+        <structfield>proallargtypes</structfield> not <structfield>proargtypes</structfield>.
       </entry>
      </row>
 
@@ -5308,9 +5308,9 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry>
        Expression trees (in <function>nodeToString()</function> representation)
        for default values.  This is a list with
-       <structfield>pronargdefaults</> elements, corresponding to the last
-       <replaceable>N</> <emphasis>input</> arguments (i.e., the last
-       <replaceable>N</> <structfield>proargtypes</> positions).
+       <structfield>pronargdefaults</structfield> elements, corresponding to the last
+       <replaceable>N</replaceable> <emphasis>input</emphasis> arguments (i.e., the last
+       <replaceable>N</replaceable> <structfield>proargtypes</structfield> positions).
        If none of the arguments have defaults, this field will be null.
       </entry>
      </row>
@@ -5525,7 +5525,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </para>
 
   <table>
-   <title><structname>pg_range</> Columns</title>
+   <title><structname>pg_range</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -5586,10 +5586,10 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </table>
 
   <para>
-   <structfield>rngsubopc</> (plus <structfield>rngcollation</>, if the
+   <structfield>rngsubopc</structfield> (plus <structfield>rngcollation</structfield>, if the
    element type is collatable) determines the sort ordering used by the range
-   type.  <structfield>rngcanonical</> is used when the element type is
-   discrete.  <structfield>rngsubdiff</> is optional but should be supplied to
+   type.  <structfield>rngcanonical</structfield> is used when the element type is
+   discrete.  <structfield>rngsubdiff</structfield> is optional but should be supplied to
    improve performance of GiST indexes on the range type.
   </para>
 
@@ -5655,7 +5655,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </para>
 
   <table>
-   <title><structname>pg_rewrite</> Columns</title>
+   <title><structname>pg_rewrite</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -5694,9 +5694,9 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry><type>char</type></entry>
       <entry></entry>
       <entry>
-       Event type that the rule is for: 1 = <command>SELECT</>, 2 =
-       <command>UPDATE</>, 3 = <command>INSERT</>, 4 =
-       <command>DELETE</>
+       Event type that the rule is for: 1 = <command>SELECT</command>, 2 =
+       <command>UPDATE</command>, 3 = <command>INSERT</command>, 4 =
+       <command>DELETE</command>
       </entry>
      </row>
 
@@ -5707,10 +5707,10 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry>
        Controls in which <xref linkend="guc-session-replication-role"> modes
        the rule fires.
-       <literal>O</> = rule fires in <quote>origin</> and <quote>local</> modes,
-       <literal>D</> = rule is disabled,
-       <literal>R</> = rule fires in <quote>replica</> mode,
-       <literal>A</> = rule fires always.
+       <literal>O</literal> = rule fires in <quote>origin</quote> and <quote>local</quote> modes,
+       <literal>D</literal> = rule is disabled,
+       <literal>R</literal> = rule fires in <quote>replica</quote> mode,
+       <literal>A</literal> = rule fires always.
       </entry>
      </row>
 
@@ -5809,7 +5809,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry></entry>
       <entry>
        For a security label on a table column, this is the column number (the
-       <structfield>objoid</> and <structfield>classoid</> refer to
+       <structfield>objoid</structfield> and <structfield>classoid</structfield> refer to
        the table itself).  For all other object types, this column is
        zero.
       </entry>
@@ -5847,7 +5847,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </para>
 
   <table>
-   <title><structname>pg_sequence</> Columns</title>
+   <title><structname>pg_sequence</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -5864,7 +5864,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry><structfield>seqrelid</structfield></entry>
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
-      <entry>The OID of the <structname>pg_class</> entry for this sequence</entry>
+      <entry>The OID of the <structname>pg_class</structname> entry for this sequence</entry>
      </row>
 
      <row>
@@ -5949,7 +5949,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </para>
 
   <table>
-   <title><structname>pg_shdepend</> Columns</title>
+   <title><structname>pg_shdepend</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -5990,7 +5990,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry></entry>
       <entry>
        For a table column, this is the column number (the
-       <structfield>objid</> and <structfield>classid</> refer to the
+       <structfield>objid</structfield> and <structfield>classid</structfield> refer to the
        table itself).  For all other object types, this column is zero.
       </entry>
      </row>
@@ -6027,11 +6027,11 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
    In all cases, a <structname>pg_shdepend</structname> entry indicates that
    the referenced object cannot be dropped without also dropping the dependent
    object.  However, there are several subflavors identified by
-   <structfield>deptype</>:
+   <structfield>deptype</structfield>:
 
    <variablelist>
     <varlistentry>
-     <term><symbol>SHARED_DEPENDENCY_OWNER</> (<literal>o</>)</term>
+     <term><symbol>SHARED_DEPENDENCY_OWNER</symbol> (<literal>o</literal>)</term>
      <listitem>
       <para>
        The referenced object (which must be a role) is the owner of the
@@ -6041,20 +6041,20 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
     </varlistentry>
 
     <varlistentry>
-     <term><symbol>SHARED_DEPENDENCY_ACL</> (<literal>a</>)</term>
+     <term><symbol>SHARED_DEPENDENCY_ACL</symbol> (<literal>a</literal>)</term>
      <listitem>
       <para>
        The referenced object (which must be a role) is mentioned in the
        ACL (access control list, i.e., privileges list) of the
-       dependent object.  (A <symbol>SHARED_DEPENDENCY_ACL</> entry is
+       dependent object.  (A <symbol>SHARED_DEPENDENCY_ACL</symbol> entry is
        not made for the owner of the object, since the owner will have
-       a <symbol>SHARED_DEPENDENCY_OWNER</> entry anyway.)
+       a <symbol>SHARED_DEPENDENCY_OWNER</symbol> entry anyway.)
       </para>
      </listitem>
     </varlistentry>
 
     <varlistentry>
-     <term><symbol>SHARED_DEPENDENCY_POLICY</> (<literal>r</>)</term>
+     <term><symbol>SHARED_DEPENDENCY_POLICY</symbol> (<literal>r</literal>)</term>
      <listitem>
       <para>
        The referenced object (which must be a role) is mentioned as the
@@ -6064,7 +6064,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
     </varlistentry>
 
     <varlistentry>
-     <term><symbol>SHARED_DEPENDENCY_PIN</> (<literal>p</>)</term>
+     <term><symbol>SHARED_DEPENDENCY_PIN</symbol> (<literal>p</literal>)</term>
      <listitem>
       <para>
        There is no dependent object; this type of entry is a signal
@@ -6111,7 +6111,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </para>
 
   <table>
-   <title><structname>pg_shdescription</> Columns</title>
+   <title><structname>pg_shdescription</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -6235,16 +6235,16 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </para>
 
   <para>
-   Normally there is one entry, with <structfield>stainherit</> =
-   <literal>false</>, for each table column that has been analyzed.
+   Normally there is one entry, with <structfield>stainherit</structfield> =
+   <literal>false</literal>, for each table column that has been analyzed.
    If the table has inheritance children, a second entry with
-   <structfield>stainherit</> = <literal>true</> is also created.  This row
+   <structfield>stainherit</structfield> = <literal>true</literal> is also created.  This row
    represents the column's statistics over the inheritance tree, i.e.,
    statistics for the data you'd see with
-   <literal>SELECT <replaceable>column</> FROM <replaceable>table</>*</literal>,
-   whereas the <structfield>stainherit</> = <literal>false</> row represents
+   <literal>SELECT <replaceable>column</replaceable> FROM <replaceable>table</replaceable>*</literal>,
+   whereas the <structfield>stainherit</structfield> = <literal>false</literal> row represents
    the results of
-   <literal>SELECT <replaceable>column</> FROM ONLY <replaceable>table</></literal>.
+   <literal>SELECT <replaceable>column</replaceable> FROM ONLY <replaceable>table</replaceable></literal>.
   </para>
 
   <para>
@@ -6254,7 +6254,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
    references the index.  No entry is made for an ordinary non-expression
    index column, however, since it would be redundant with the entry
    for the underlying table column.  Currently, entries for index expressions
-   always have <structfield>stainherit</> = <literal>false</>.
+   always have <structfield>stainherit</structfield> = <literal>false</literal>.
   </para>
 
   <para>
@@ -6281,7 +6281,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </para>
 
   <table>
-   <title><structname>pg_statistic</> Columns</title>
+   <title><structname>pg_statistic</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -6339,56 +6339,56 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       A value less than zero is the negative of a multiplier for the number
       of rows in the table; for example, a column in which about 80% of the
       values are nonnull and each nonnull value appears about twice on
-      average could be represented by <structfield>stadistinct</> = -0.4.
+      average could be represented by <structfield>stadistinct</structfield> = -0.4.
       A zero value means the number of distinct values is unknown.
       </entry>
      </row>
 
      <row>
-      <entry><structfield>stakind<replaceable>N</></structfield></entry>
+      <entry><structfield>stakind<replaceable>N</replaceable></structfield></entry>
       <entry><type>int2</type></entry>
       <entry></entry>
       <entry>
        A code number indicating the kind of statistics stored in the
-       <replaceable>N</>th <quote>slot</quote> of the
+       <replaceable>N</replaceable>th <quote>slot</quote> of the
        <structname>pg_statistic</structname> row.
       </entry>
      </row>
 
      <row>
-      <entry><structfield>staop<replaceable>N</></structfield></entry>
+      <entry><structfield>staop<replaceable>N</replaceable></structfield></entry>
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-operator"><structname>pg_operator</structname></link>.oid</literal></entry>
       <entry>
        An operator used to derive the statistics stored in the
-       <replaceable>N</>th <quote>slot</quote>.  For example, a
+       <replaceable>N</replaceable>th <quote>slot</quote>.  For example, a
        histogram slot would show the <literal>&lt;</literal> operator
        that defines the sort order of the data.
       </entry>
      </row>
 
      <row>
-      <entry><structfield>stanumbers<replaceable>N</></structfield></entry>
+      <entry><structfield>stanumbers<replaceable>N</replaceable></structfield></entry>
       <entry><type>float4[]</type></entry>
       <entry></entry>
       <entry>
        Numerical statistics of the appropriate kind for the
-       <replaceable>N</>th <quote>slot</quote>, or null if the slot
+       <replaceable>N</replaceable>th <quote>slot</quote>, or null if the slot
        kind does not involve numerical values
       </entry>
      </row>
 
      <row>
-      <entry><structfield>stavalues<replaceable>N</></structfield></entry>
+      <entry><structfield>stavalues<replaceable>N</replaceable></structfield></entry>
       <entry><type>anyarray</type></entry>
       <entry></entry>
       <entry>
        Column data values of the appropriate kind for the
-       <replaceable>N</>th <quote>slot</quote>, or null if the slot
+       <replaceable>N</replaceable>th <quote>slot</quote>, or null if the slot
        kind does not store any data values.  Each array's element
        values are actually of the specific column's data type, or a related
        type such as an array's element type, so there is no way to define
-       these columns' type more specifically than <type>anyarray</>.
+       these columns' type more specifically than <type>anyarray</type>.
       </entry>
      </row>
     </tbody>
@@ -6407,12 +6407,12 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   <para>
    The catalog <structname>pg_statistic_ext</structname>
    holds extended planner statistics.
-   Each row in this catalog corresponds to a <firstterm>statistics object</>
+   Each row in this catalog corresponds to a <firstterm>statistics object</firstterm>
    created with <xref linkend="sql-createstatistics">.
   </para>
 
   <table>
-   <title><structname>pg_statistic_ext</> Columns</title>
+   <title><structname>pg_statistic_ext</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -6485,7 +6485,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry><type>pg_ndistinct</type></entry>
       <entry></entry>
       <entry>
-       N-distinct counts, serialized as <structname>pg_ndistinct</> type
+       N-distinct counts, serialized as <structname>pg_ndistinct</structname> type
       </entry>
      </row>
 
@@ -6495,7 +6495,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry></entry>
       <entry>
        Functional dependency statistics, serialized
-       as <structname>pg_dependencies</> type
+       as <structname>pg_dependencies</structname> type
       </entry>
      </row>
 
@@ -6507,7 +6507,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
    The <structfield>stxkind</structfield> field is filled at creation of the
    statistics object, indicating which statistic type(s) are desired.
    The fields after it are initially NULL and are filled only when the
-   corresponding statistic has been computed by <command>ANALYZE</>.
+   corresponding statistic has been computed by <command>ANALYZE</command>.
   </para>
  </sect1>
 
@@ -6677,10 +6677,10 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry></entry>
       <entry>
        State code:
-       <literal>i</> = initialize,
-       <literal>d</> = data is being copied,
-       <literal>s</> = synchronized,
-       <literal>r</> = ready (normal replication)
+       <literal>i</literal> = initialize,
+       <literal>d</literal> = data is being copied,
+       <literal>s</literal> = synchronized,
+       <literal>r</literal> = ready (normal replication)
       </entry>
      </row>
 
@@ -6689,7 +6689,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry><type>pg_lsn</type></entry>
       <entry></entry>
       <entry>
-       End LSN for <literal>s</> and <literal>r</> states.
+       End LSN for <literal>s</literal> and <literal>r</literal> states.
       </entry>
      </row>
     </tbody>
@@ -6718,7 +6718,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </para>
 
   <table>
-   <title><structname>pg_tablespace</> Columns</title>
+   <title><structname>pg_tablespace</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -6769,7 +6769,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry><type>text[]</type></entry>
       <entry></entry>
       <entry>
-       Tablespace-level options, as <quote>keyword=value</> strings
+       Tablespace-level options, as <quote>keyword=value</quote> strings
       </entry>
      </row>
     </tbody>
@@ -6792,7 +6792,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </para>
 
   <table>
-   <title><structname>pg_transform</> Columns</title>
+   <title><structname>pg_transform</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -6861,7 +6861,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </para>
 
   <table>
-   <title><structname>pg_trigger</> Columns</title>
+   <title><structname>pg_trigger</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -6916,10 +6916,10 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry>
        Controls in which <xref linkend="guc-session-replication-role"> modes
        the trigger fires.
-       <literal>O</> = trigger fires in <quote>origin</> and <quote>local</> modes,
-       <literal>D</> = trigger is disabled,
-       <literal>R</> = trigger fires in <quote>replica</> mode,
-       <literal>A</> = trigger fires always.
+       <literal>O</literal> = trigger fires in <quote>origin</quote> and <quote>local</quote> modes,
+       <literal>D</literal> = trigger is disabled,
+       <literal>R</literal> = trigger fires in <quote>replica</quote> mode,
+       <literal>A</literal> = trigger fires always.
       </entry>
      </row>
 
@@ -6928,7 +6928,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>True if trigger is internally generated (usually, to enforce
-       the constraint identified by <structfield>tgconstraint</>)</entry>
+       the constraint identified by <structfield>tgconstraint</structfield>)</entry>
      </row>
 
      <row>
@@ -6950,7 +6950,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry><structfield>tgconstraint</structfield></entry>
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-constraint"><structname>pg_constraint</structname></link>.oid</literal></entry>
-      <entry>The <structname>pg_constraint</> entry associated with the trigger, if any</entry>
+      <entry>The <structname>pg_constraint</structname> entry associated with the trigger, if any</entry>
      </row>
 
      <row>
@@ -6994,7 +6994,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry><type>pg_node_tree</type></entry>
       <entry></entry>
       <entry>Expression tree (in <function>nodeToString()</function>
-       representation) for the trigger's <literal>WHEN</> condition, or null
+       representation) for the trigger's <literal>WHEN</literal> condition, or null
        if none</entry>
      </row>
 
@@ -7002,7 +7002,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry><structfield>tgoldtable</structfield></entry>
       <entry><type>name</type></entry>
       <entry></entry>
-      <entry><literal>REFERENCING</> clause name for <literal>OLD TABLE</>,
+      <entry><literal>REFERENCING</literal> clause name for <literal>OLD TABLE</literal>,
        or null if none</entry>
      </row>
 
@@ -7010,7 +7010,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry><structfield>tgnewtable</structfield></entry>
       <entry><type>name</type></entry>
       <entry></entry>
-      <entry><literal>REFERENCING</> clause name for <literal>NEW TABLE</>,
+      <entry><literal>REFERENCING</literal> clause name for <literal>NEW TABLE</literal>,
        or null if none</entry>
      </row>
     </tbody>
@@ -7019,18 +7019,18 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
 
   <para>
    Currently, column-specific triggering is supported only for
-   <literal>UPDATE</> events, and so <structfield>tgattr</> is relevant
+   <literal>UPDATE</literal> events, and so <structfield>tgattr</structfield> is relevant
    only for that event type.  <structfield>tgtype</structfield> might
    contain bits for other event types as well, but those are presumed
-   to be table-wide regardless of what is in <structfield>tgattr</>.
+   to be table-wide regardless of what is in <structfield>tgattr</structfield>.
   </para>
 
   <note>
    <para>
-    When <structfield>tgconstraint</> is nonzero,
-    <structfield>tgconstrrelid</>, <structfield>tgconstrindid</>,
-    <structfield>tgdeferrable</>, and <structfield>tginitdeferred</> are
-    largely redundant with the referenced <structname>pg_constraint</> entry.
+    When <structfield>tgconstraint</structfield> is nonzero,
+    <structfield>tgconstrrelid</structfield>, <structfield>tgconstrindid</structfield>,
+    <structfield>tgdeferrable</structfield>, and <structfield>tginitdeferred</structfield> are
+    largely redundant with the referenced <structname>pg_constraint</structname> entry.
     However, it is possible for a non-deferrable trigger to be associated
     with a deferrable constraint: foreign key constraints can have some
     deferrable and some non-deferrable triggers.
@@ -7070,7 +7070,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </para>
 
   <table>
-   <title><structname>pg_ts_config</> Columns</title>
+   <title><structname>pg_ts_config</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -7145,7 +7145,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </para>
 
   <table>
-   <title><structname>pg_ts_config_map</> Columns</title>
+   <title><structname>pg_ts_config_map</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -7162,7 +7162,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry><structfield>mapcfg</structfield></entry>
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-ts-config"><structname>pg_ts_config</structname></link>.oid</literal></entry>
-      <entry>The OID of the <structname>pg_ts_config</> entry owning this map entry</entry>
+      <entry>The OID of the <structname>pg_ts_config</structname> entry owning this map entry</entry>
      </row>
 
      <row>
@@ -7177,7 +7177,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry><type>integer</type></entry>
       <entry></entry>
       <entry>Order in which to consult this entry (lower
-       <structfield>mapseqno</>s first)</entry>
+       <structfield>mapseqno</structfield>s first)</entry>
      </row>
 
      <row>
@@ -7206,7 +7206,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
    needed; the dictionary itself provides values for the user-settable
    parameters supported by the template.  This division of labor allows
    dictionaries to be created by unprivileged users.  The parameters
-   are specified by a text string <structfield>dictinitoption</>,
+   are specified by a text string <structfield>dictinitoption</structfield>,
    whose format and meaning vary depending on the template.
   </para>
 
@@ -7216,7 +7216,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </para>
 
   <table>
-   <title><structname>pg_ts_dict</> Columns</title>
+   <title><structname>pg_ts_dict</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -7299,7 +7299,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </para>
 
   <table>
-   <title><structname>pg_ts_parser</> Columns</title>
+   <title><structname>pg_ts_parser</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -7396,7 +7396,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </para>
 
   <table>
-   <title><structname>pg_ts_template</> Columns</title>
+   <title><structname>pg_ts_template</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -7470,7 +7470,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </para>
 
   <table>
-   <title><structname>pg_type</> Columns</title>
+   <title><structname>pg_type</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -7521,7 +7521,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
        For a fixed-size type, <structfield>typlen</structfield> is the number
        of bytes in the internal representation of the type.  But for a
        variable-length type, <structfield>typlen</structfield> is negative.
-       -1 indicates a <quote>varlena</> type (one that has a length word),
+       -1 indicates a <quote>varlena</quote> type (one that has a length word),
        -2 indicates a null-terminated C string.
       </entry>
      </row>
@@ -7566,7 +7566,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry>
        <structfield>typcategory</structfield> is an arbitrary classification
        of data types that is used by the parser to determine which implicit
-       casts should be <quote>preferred</>.
+       casts should be <quote>preferred</quote>.
        See <xref linkend="catalog-typcategory-table">.
       </entry>
      </row>
@@ -7711,7 +7711,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
        <structfield>typalign</structfield> is the alignment required
        when storing a value of this type.  It applies to storage on
        disk as well as most representations of the value inside
-       <productname>PostgreSQL</>.
+       <productname>PostgreSQL</productname>.
        When multiple values are stored consecutively, such
        as in the representation of a complete row on disk, padding is
        inserted before a datum of this type so that it begins on the
@@ -7723,16 +7723,16 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
        Possible values are:
        <itemizedlist>
         <listitem>
-         <para><literal>c</> = <type>char</type> alignment, i.e., no alignment needed.</para>
+         <para><literal>c</literal> = <type>char</type> alignment, i.e., no alignment needed.</para>
         </listitem>
         <listitem>
-         <para><literal>s</> = <type>short</type> alignment (2 bytes on most machines).</para>
+         <para><literal>s</literal> = <type>short</type> alignment (2 bytes on most machines).</para>
         </listitem>
         <listitem>
-         <para><literal>i</> = <type>int</type> alignment (4 bytes on most machines).</para>
+         <para><literal>i</literal> = <type>int</type> alignment (4 bytes on most machines).</para>
         </listitem>
         <listitem>
-         <para><literal>d</> = <type>double</type> alignment (8 bytes on many machines, but by no means all).</para>
+         <para><literal>d</literal> = <type>double</type> alignment (8 bytes on many machines, but by no means all).</para>
         </listitem>
        </itemizedlist>
       </para><note>
@@ -7757,24 +7757,24 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
        Possible values are
        <itemizedlist>
         <listitem>
-         <para><literal>p</>: Value must always be stored plain.</para>
+         <para><literal>p</literal>: Value must always be stored plain.</para>
         </listitem>
         <listitem>
          <para>
-          <literal>e</>: Value can be stored in a <quote>secondary</quote>
+          <literal>e</literal>: Value can be stored in a <quote>secondary</quote>
           relation (if relation has one, see
           <literal>pg_class.reltoastrelid</literal>).
          </para>
         </listitem>
         <listitem>
-         <para><literal>m</>: Value can be stored compressed inline.</para>
+         <para><literal>m</literal>: Value can be stored compressed inline.</para>
         </listitem>
         <listitem>
-         <para><literal>x</>: Value can be stored compressed inline or stored in <quote>secondary</quote> storage.</para>
+         <para><literal>x</literal>: Value can be stored compressed inline or stored in <quote>secondary</quote> storage.</para>
         </listitem>
        </itemizedlist>
-       Note that <literal>m</> columns can also be moved out to secondary
-       storage, but only as a last resort (<literal>e</> and <literal>x</> columns are
+       Note that <literal>m</literal> columns can also be moved out to secondary
+       storage, but only as a last resort (<literal>e</literal> and <literal>x</literal> columns are
        moved first).
       </para></entry>
      </row>
@@ -7805,9 +7805,9 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry><type>int4</type></entry>
       <entry></entry>
       <entry><para>
-       Domains use <structfield>typtypmod</structfield> to record the <literal>typmod</>
+       Domains use <structfield>typtypmod</structfield> to record the <literal>typmod</literal>
        to be applied to their base type (-1 if base type does not use a
-       <literal>typmod</>).  -1 if this type is not a domain.
+       <literal>typmod</literal>).  -1 if this type is not a domain.
       </para></entry>
      </row>
 
@@ -7817,7 +7817,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry></entry>
       <entry><para>
        <structfield>typndims</structfield> is the number of array dimensions
-       for a domain over an array (that is, <structfield>typbasetype</> is
+       for a domain over an array (that is, <structfield>typbasetype</structfield> is
        an array type).
        Zero for types other than domains over array types.
        </para></entry>
@@ -7842,7 +7842,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry><type>pg_node_tree</type></entry>
       <entry></entry>
       <entry><para>
-       If <structfield>typdefaultbin</> is not null, it is the
+       If <structfield>typdefaultbin</structfield> is not null, it is the
        <function>nodeToString()</function>
        representation of a default expression for the type.  This is
        only used for domains.
@@ -7854,12 +7854,12 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry><type>text</type></entry>
       <entry></entry>
       <entry><para>
-       <structfield>typdefault</> is null if the type has no associated
-       default value. If <structfield>typdefaultbin</> is not null,
-       <structfield>typdefault</> must contain a human-readable version of the
-       default expression represented by <structfield>typdefaultbin</>.  If
-       <structfield>typdefaultbin</> is null and <structfield>typdefault</> is
-       not, then <structfield>typdefault</> is the external representation of
+       <structfield>typdefault</structfield> is null if the type has no associated
+       default value. If <structfield>typdefaultbin</structfield> is not null,
+       <structfield>typdefault</structfield> must contain a human-readable version of the
+       default expression represented by <structfield>typdefaultbin</structfield>.  If
+       <structfield>typdefaultbin</structfield> is null and <structfield>typdefault</structfield> is
+       not, then <structfield>typdefault</structfield> is the external representation of
        the type's default value, which can be fed to the type's input
        converter to produce a constant.
       </para></entry>
@@ -7882,13 +7882,13 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
 
   <para>
    <xref linkend="catalog-typcategory-table"> lists the system-defined values
-   of <structfield>typcategory</>.  Any future additions to this list will
+   of <structfield>typcategory</structfield>.  Any future additions to this list will
    also be upper-case ASCII letters.  All other ASCII characters are reserved
    for user-defined categories.
   </para>
 
   <table id="catalog-typcategory-table">
-   <title><structfield>typcategory</> Codes</title>
+   <title><structfield>typcategory</structfield> Codes</title>
 
    <tgroup cols="2">
     <thead>
@@ -7957,7 +7957,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
      </row>
      <row>
       <entry><literal>X</literal></entry>
-      <entry><type>unknown</> type</entry>
+      <entry><type>unknown</type> type</entry>
      </row>
     </tbody>
    </tgroup>
@@ -7982,7 +7982,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </para>
 
   <table>
-   <title><structname>pg_user_mapping</> Columns</title>
+   <title><structname>pg_user_mapping</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -8023,7 +8023,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry><type>text[]</type></entry>
       <entry></entry>
       <entry>
-       User mapping specific options, as <quote>keyword=value</> strings
+       User mapping specific options, as <quote>keyword=value</quote> strings
       </entry>
      </row>
     </tbody>
@@ -8241,7 +8241,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </para>
 
   <table>
-   <title><structname>pg_available_extensions</> Columns</title>
+   <title><structname>pg_available_extensions</structname> Columns</title>
 
    <tgroup cols="3">
     <thead>
@@ -8303,7 +8303,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </para>
 
   <table>
-   <title><structname>pg_available_extension_versions</> Columns</title>
+   <title><structname>pg_available_extension_versions</structname> Columns</title>
 
    <tgroup cols="3">
     <thead>
@@ -8385,11 +8385,11 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   <para>
    The view <structname>pg_config</structname> describes the
    compile-time configuration parameters of the currently installed
-   version of <productname>PostgreSQL</>. It is intended, for example, to
+   version of <productname>PostgreSQL</productname>. It is intended, for example, to
    be used by software packages that want to interface to
-   <productname>PostgreSQL</> to facilitate finding the required header
+   <productname>PostgreSQL</productname> to facilitate finding the required header
    files and libraries. It provides the same basic information as the
-   <xref linkend="app-pgconfig"> <productname>PostgreSQL</> client
+   <xref linkend="app-pgconfig"> <productname>PostgreSQL</productname> client
    application.
   </para>
 
@@ -8399,7 +8399,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </para>
 
   <table>
-   <title><structname>pg_config</> Columns</title>
+   <title><structname>pg_config</structname> Columns</title>
    <tgroup cols="3">
     <thead>
      <row>
@@ -8470,15 +8470,15 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
    <note>
     <para>
      Cursors are used internally to implement some of the components
-     of <productname>PostgreSQL</>, such as procedural languages.
-     Therefore, the <structname>pg_cursors</> view might include cursors
+     of <productname>PostgreSQL</productname>, such as procedural languages.
+     Therefore, the <structname>pg_cursors</structname> view might include cursors
      that have not been explicitly created by the user.
     </para>
    </note>
   </para>
 
   <table>
-   <title><structname>pg_cursors</> Columns</title>
+   <title><structname>pg_cursors</structname> Columns</title>
 
    <tgroup cols="3">
     <thead>
@@ -8526,7 +8526,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry><structfield>is_scrollable</structfield></entry>
       <entry><type>boolean</type></entry>
       <entry>
-       <literal>true</> if the cursor is scrollable (that is, it
+       <literal>true</literal> if the cursor is scrollable (that is, it
        allows rows to be retrieved in a nonsequential manner);
        <literal>false</literal> otherwise
        </entry>
@@ -8557,16 +8557,16 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   <para>
    The view <structname>pg_file_settings</structname> provides a summary of
    the contents of the server's configuration file(s).  A row appears in
-   this view for each <quote>name = value</> entry appearing in the files,
+   this view for each <quote>name = value</quote> entry appearing in the files,
    with annotations indicating whether the value could be applied
    successfully.  Additional row(s) may appear for problems not linked to
-   a <quote>name = value</> entry, such as syntax errors in the files.
+   a <quote>name = value</quote> entry, such as syntax errors in the files.
   </para>
 
   <para>
    This view is helpful for checking whether planned changes in the
    configuration files will work, or for diagnosing a previous failure.
-   Note that this view reports on the <emphasis>current</> contents of the
+   Note that this view reports on the <emphasis>current</emphasis> contents of the
    files, not on what was last applied by the server.  (The
    <link linkend="view-pg-settings"><structname>pg_settings</structname></link>
    view is usually sufficient to determine that.)
@@ -8578,7 +8578,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </para>
 
   <table>
-   <title><structname>pg_file_settings</> Columns</title>
+   <title><structname>pg_file_settings</structname> Columns</title>
 
   <tgroup cols="3">
    <thead>
@@ -8604,7 +8604,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
     <row>
      <entry><structfield>seqno</structfield></entry>
      <entry><structfield>integer</structfield></entry>
-     <entry>Order in which the entries are processed (1..<replaceable>n</>)</entry>
+     <entry>Order in which the entries are processed (1..<replaceable>n</replaceable>)</entry>
     </row>
     <row>
      <entry><structfield>name</structfield></entry>
@@ -8634,14 +8634,14 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   <para>
    If the configuration file contains syntax errors or invalid parameter
    names, the server will not attempt to apply any settings from it, and
-   therefore all the <structfield>applied</> fields will read as false.
+   therefore all the <structfield>applied</structfield> fields will read as false.
    In such a case there will be one or more rows with
    non-null <structfield>error</structfield> fields indicating the
    problem(s).  Otherwise, individual settings will be applied if possible.
    If an individual setting cannot be applied (e.g., invalid value, or the
    setting cannot be changed after server start) it will have an appropriate
    message in the <structfield>error</structfield> field.  Another way that
-   an entry might have <structfield>applied</> = false is that it is
+   an entry might have <structfield>applied</structfield> = false is that it is
    overridden by a later entry for the same parameter name; this case is not
    considered an error so nothing appears in
    the <structfield>error</structfield> field.
@@ -8666,12 +8666,12 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
    compatibility: it emulates a catalog that existed in
    <productname>PostgreSQL</productname> before version 8.1.
    It shows the names and members of all roles that are marked as not
-   <structfield>rolcanlogin</>, which is an approximation to the set
+   <structfield>rolcanlogin</structfield>, which is an approximation to the set
    of roles that are being used as groups.
   </para>
 
   <table>
-   <title><structname>pg_group</> Columns</title>
+   <title><structname>pg_group</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -8720,7 +8720,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   <para>
    The view <structname>pg_hba_file_rules</structname> provides a summary of
    the contents of the client authentication configuration
-   file, <filename>pg_hba.conf</>.  A row appears in this view for each
+   file, <filename>pg_hba.conf</filename>.  A row appears in this view for each
    non-empty, non-comment line in the file, with annotations indicating
    whether the rule could be applied successfully.
   </para>
@@ -8728,7 +8728,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   <para>
    This view can be helpful for checking whether planned changes in the
    authentication configuration file will work, or for diagnosing a previous
-   failure.  Note that this view reports on the <emphasis>current</> contents
+   failure.  Note that this view reports on the <emphasis>current</emphasis> contents
    of the file, not on what was last loaded by the server.
   </para>
 
@@ -8738,7 +8738,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </para>
 
   <table>
-   <title><structname>pg_hba_file_rules</> Columns</title>
+   <title><structname>pg_hba_file_rules</structname> Columns</title>
 
   <tgroup cols="3">
    <thead>
@@ -8753,7 +8753,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
      <entry><structfield>line_number</structfield></entry>
      <entry><structfield>integer</structfield></entry>
      <entry>
-      Line number of this rule in <filename>pg_hba.conf</>
+      Line number of this rule in <filename>pg_hba.conf</filename>
      </entry>
     </row>
     <row>
@@ -8809,7 +8809,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
 
   <para>
    Usually, a row reflecting an incorrect entry will have values for only
-   the <structfield>line_number</> and <structfield>error</> fields.
+   the <structfield>line_number</structfield> and <structfield>error</structfield> fields.
   </para>
 
   <para>
@@ -8831,7 +8831,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
   </para>
 
   <table>
-   <title><structname>pg_indexes</> Columns</title>
+   <title><structname>pg_indexes</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -8912,12 +8912,12 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
    in the same way as in <structname>pg_description</structname> or
    <structname>pg_depend</structname>).  Also, the right to extend a
    relation is represented as a separate lockable object.
-   Also, <quote>advisory</> locks can be taken on numbers that have
+   Also, <quote>advisory</quote> locks can be taken on numbers that have
    user-defined meanings.
   </para>
 
   <table>
-   <title><structname>pg_locks</> Columns</title>
+   <title><structname>pg_locks</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -8935,15 +8935,15 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry></entry>
       <entry>
        Type of the lockable object:
-       <literal>relation</>,
-       <literal>extend</>,
-       <literal>page</>,
-       <literal>tuple</>,
-       <literal>transactionid</>,
-       <literal>virtualxid</>,
-       <literal>object</>,
-       <literal>userlock</>, or
-       <literal>advisory</>
+       <literal>relation</literal>,
+       <literal>extend</literal>,
+       <literal>page</literal>,
+       <literal>tuple</literal>,
+       <literal>transactionid</literal>,
+       <literal>virtualxid</literal>,
+       <literal>object</literal>,
+       <literal>userlock</literal>, or
+       <literal>advisory</literal>
       </entry>
      </row>
      <row>
@@ -9025,7 +9025,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
       <entry></entry>
       <entry>
        Column number targeted by the lock (the
-       <structfield>classid</> and <structfield>objid</> refer to the
+       <structfield>classid</structfield> and <structfield>objid</structfield> refer to the
        table itself),
        or zero if the target is some other general database object,
        or null if the target is not a general database object
@@ -9107,23 +9107,23 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</>:<replaceable>&lt;salt&gt;<
    Advisory locks can be acquired on keys consisting of either a single
    <type>bigint</type> value or two integer values.
    A <type>bigint</type> key is displayed with its
-   high-order half in the <structfield>classid</> column, its low-order half
-   in the <structfield>objid</> column, and <structfield>objsubid</> equal
+   high-order half in the <structfield>classid</structfield> column, its low-order half
+   in the <structfield>objid</structfield> column, and <structfield>objsubid</structfield> equal
    to 1. The original <type>bigint</type> value can be reassembled with the
    expression <literal>(classid::bigint &lt;&lt; 32) |
    objid::bigint</literal>. Integer keys are displayed with the
    first key in the
-   <structfield>classid</> column, the second key in the <structfield>objid</>
-   column, and <structfield>objsubid</> equal to 2.  The actual meaning of
+   <structfield>classid</structfield> column, the second key in the <structfield>objid</structfield>
+   column, and <structfield>objsubid</structfield> equal to 2.  The actual meaning of
    the keys is up to the user.  Advisory locks are local to each database,
-   so the <structfield>database</> column is meaningful for an advisory lock.
+   so the <structfield>database</structfield> column is meaningful for an advisory lock.
   </para>
 
   <para>
    <structname>pg_locks</structname> provides a global view of all locks
    in the database cluster, not only those relevant to the current database.
    Although its <structfield>relation</structfield> column can be joined
-   against <structname>pg_class</>.<structfield>oid</> to identify locked
+   against <structname>pg_class</structname>.<structfield>oid</structfield> to identify locked
    relations, this will only work correctly for relations in the current
    database (those for which the <structfield>database</structfield> column
    is either the current database's OID or zero).
@@ -9141,7 +9141,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_stat_activity psa
     ON pl.pid = psa.pid;
 </programlisting>
    Also, if you are using prepared transactions, the
-   <structfield>virtualtransaction</> column can be joined to the
+   <structfield>virtualtransaction</structfield> column can be joined to the
    <structfield>transaction</structfield> column of the <link
    linkend="view-pg-prepared-xacts"><structname>pg_prepared_xacts</structname></link>
    view to get more information on prepared transactions that hold locks.
@@ -9163,7 +9163,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
    information about which processes are ahead of which others in lock wait
    queues, nor information about which processes are parallel workers running
    on behalf of which other client sessions.  It is better to use
-   the <function>pg_blocking_pids()</> function
+   the <function>pg_blocking_pids()</function> function
    (see <xref linkend="functions-info-session-table">) to identify which
    process(es) a waiting process is blocked behind.
   </para>
@@ -9172,10 +9172,10 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
    The <structname>pg_locks</structname> view displays data from both the
    regular lock manager and the predicate lock manager, which are
    separate systems; in addition, the regular lock manager subdivides its
-   locks into regular and <firstterm>fast-path</> locks.
+   locks into regular and <firstterm>fast-path</firstterm> locks.
    This data is not guaranteed to be entirely consistent.
    When the view is queried,
-   data on fast-path locks (with <structfield>fastpath</> = <literal>true</>)
+   data on fast-path locks (with <structfield>fastpath</structfield> = <literal>true</literal>)
    is gathered from each backend one at a time, without freezing the state of
    the entire lock manager, so it is possible for locks to be taken or
    released while information is gathered.  Note, however, that these locks are
@@ -9218,7 +9218,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
   </para>
 
   <table>
-   <title><structname>pg_matviews</> Columns</title>
+   <title><structname>pg_matviews</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -9291,7 +9291,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
   </para>
 
   <table>
-   <title><structname>pg_policies</> Columns</title>
+   <title><structname>pg_policies</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -9381,7 +9381,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
   </para>
 
   <table>
-   <title><structname>pg_prepared_statements</> Columns</title>
+   <title><structname>pg_prepared_statements</structname> Columns</title>
 
    <tgroup cols="3">
     <thead>
@@ -9467,7 +9467,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
   </para>
 
   <table>
-   <title><structname>pg_prepared_xacts</> Columns</title>
+   <title><structname>pg_prepared_xacts</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -9706,7 +9706,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       <entry><structfield>slot_type</structfield></entry>
       <entry><type>text</type></entry>
       <entry></entry>
-      <entry>The slot type - <literal>physical</> or <literal>logical</></entry>
+      <entry>The slot type - <literal>physical</literal> or <literal>logical</literal></entry>
      </row>
 
      <row>
@@ -9787,7 +9787,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       <entry></entry>
       <entry>The address (<literal>LSN</literal>) up to which the logical
       slot's consumer has confirmed receiving data. Data older than this is
-      not available anymore. <literal>NULL</> for physical slots.
+      not available anymore. <literal>NULL</literal> for physical slots.
       </entry>
      </row>
 
@@ -9817,7 +9817,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
   </para>
 
   <table>
-   <title><structname>pg_roles</> Columns</title>
+   <title><structname>pg_roles</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -9900,7 +9900,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       <entry><structfield>rolpassword</structfield></entry>
       <entry><type>text</type></entry>
       <entry></entry>
-      <entry>Not the password (always reads as <literal>********</>)</entry>
+      <entry>Not the password (always reads as <literal>********</literal>)</entry>
      </row>
 
      <row>
@@ -9953,7 +9953,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
   </para>
 
   <table>
-   <title><structname>pg_rules</> Columns</title>
+   <title><structname>pg_rules</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -9994,9 +9994,9 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
   </table>
 
   <para>
-   The <structname>pg_rules</> view excludes the <literal>ON SELECT</> rules
+   The <structname>pg_rules</structname> view excludes the <literal>ON SELECT</literal> rules
    of views and materialized views; those can be seen in
-   <structname>pg_views</> and <structname>pg_matviews</>.
+   <structname>pg_views</structname> and <structname>pg_matviews</structname>.
   </para>
 
  </sect1>
@@ -10011,11 +10011,11 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
   <para>
    The view <structname>pg_seclabels</structname> provides information about
    security labels.  It as an easier-to-query version of the
-   <link linkend="catalog-pg-seclabel"><structname>pg_seclabel</></> catalog.
+   <link linkend="catalog-pg-seclabel"><structname>pg_seclabel</structname></link> catalog.
   </para>
 
   <table>
-   <title><structname>pg_seclabels</> Columns</title>
+   <title><structname>pg_seclabels</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -10045,7 +10045,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       <entry></entry>
       <entry>
        For a security label on a table column, this is the column number (the
-       <structfield>objoid</> and <structfield>classoid</> refer to
+       <structfield>objoid</structfield> and <structfield>classoid</structfield> refer to
        the table itself).  For all other object types, this column is
        zero.
       </entry>
@@ -10105,7 +10105,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
   </para>
 
   <table>
-   <title><structname>pg_sequences</> Columns</title>
+   <title><structname>pg_sequences</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -10206,12 +10206,12 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
    interface to the <xref linkend="sql-show">
    and <xref linkend="sql-set"> commands.
    It also provides access to some facts about each parameter that are
-   not directly available from <command>SHOW</>, such as minimum and
+   not directly available from <command>SHOW</command>, such as minimum and
    maximum values.
   </para>
 
   <table>
-   <title><structname>pg_settings</> Columns</title>
+   <title><structname>pg_settings</structname> Columns</title>
 
    <tgroup cols="3">
     <thead>
@@ -10260,8 +10260,8 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
      <row>
       <entry><structfield>vartype</structfield></entry>
       <entry><type>text</type></entry>
-      <entry>Parameter type (<literal>bool</>, <literal>enum</>,
-       <literal>integer</>, <literal>real</>, or <literal>string</>)
+      <entry>Parameter type (<literal>bool</literal>, <literal>enum</literal>,
+       <literal>integer</literal>, <literal>real</literal>, or <literal>string</literal>)
       </entry>
      </row>
      <row>
@@ -10306,7 +10306,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       values set from sources other than configuration files, or when
       examined by a user who is neither a superuser or a member of
       <literal>pg_read_all_settings</literal>); helpful when using
-      <literal>include</> directives in configuration files</entry>
+      <literal>include</literal> directives in configuration files</entry>
      </row>
      <row>
       <entry><structfield>sourceline</structfield></entry>
@@ -10384,7 +10384,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       Changes to these settings can be made in
       <filename>postgresql.conf</filename> without restarting the server.
       They can also be set for a particular session in the connection request
-      packet (for example, via <application>libpq</>'s <literal>PGOPTIONS</>
+      packet (for example, via <application>libpq</application>'s <literal>PGOPTIONS</literal>
       environment variable), but only if the connecting user is a superuser.
       However, these settings never change in a session after it is started.
       If you change them in <filename>postgresql.conf</filename>, send a
@@ -10402,7 +10402,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       Changes to these settings can be made in
       <filename>postgresql.conf</filename> without restarting the server.
       They can also be set for a particular session in the connection request
-      packet (for example, via <application>libpq</>'s <literal>PGOPTIONS</>
+      packet (for example, via <application>libpq</application>'s <literal>PGOPTIONS</literal>
       environment variable); any user can make such a change for their session.
       However, these settings never change in a session after it is started.
       If you change them in <filename>postgresql.conf</filename>, send a
@@ -10418,10 +10418,10 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
     <listitem>
      <para>
       These settings can be set from <filename>postgresql.conf</filename>,
-      or within a session via the <command>SET</> command; but only superusers
-      can change them via <command>SET</>.  Changes in
+      or within a session via the <command>SET</command> command; but only superusers
+      can change them via <command>SET</command>.  Changes in
       <filename>postgresql.conf</filename> will affect existing sessions
-      only if no session-local value has been established with <command>SET</>.
+      only if no session-local value has been established with <command>SET</command>.
      </para>
     </listitem>
    </varlistentry>
@@ -10431,10 +10431,10 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
     <listitem>
      <para>
       These settings can be set from <filename>postgresql.conf</filename>,
-      or within a session via the <command>SET</> command.  Any user is
+      or within a session via the <command>SET</command> command.  Any user is
       allowed to change their session-local value.  Changes in
       <filename>postgresql.conf</filename> will affect existing sessions
-      only if no session-local value has been established with <command>SET</>.
+      only if no session-local value has been established with <command>SET</command>.
      </para>
     </listitem>
    </varlistentry>
@@ -10473,7 +10473,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
    compatibility: it emulates a catalog that existed in
    <productname>PostgreSQL</productname> before version 8.1.
    It shows properties of all roles that are marked as
-   <structfield>rolcanlogin</> in
+   <structfield>rolcanlogin</structfield> in
    <link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.
   </para>
 
@@ -10486,7 +10486,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
   </para>
 
   <table>
-   <title><structname>pg_shadow</> Columns</title>
+   <title><structname>pg_shadow</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -10600,7 +10600,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
   </para>
 
   <table>
-   <title><structname>pg_stats</> Columns</title>
+   <title><structname>pg_stats</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -10663,7 +10663,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
        If greater than zero, the estimated number of distinct values in the
        column.  If less than zero, the negative of the number of distinct
        values divided by the number of rows.  (The negated form is used when
-       <command>ANALYZE</> believes that the number of distinct values is
+       <command>ANALYZE</command> believes that the number of distinct values is
        likely to increase as the table grows; the positive form is used when
        the column seems to have a fixed number of possible values.)  For
        example, -1 indicates a unique column in which the number of distinct
@@ -10699,10 +10699,10 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       <entry>
        A list of values that divide the column's values into groups of
        approximately equal population.  The values in
-       <structfield>most_common_vals</>, if present, are omitted from this
+       <structfield>most_common_vals</structfield>, if present, are omitted from this
        histogram calculation.  (This column is null if the column data type
-       does not have a <literal>&lt;</> operator or if the
-       <structfield>most_common_vals</> list accounts for the entire
+       does not have a <literal>&lt;</literal> operator or if the
+       <structfield>most_common_vals</structfield> list accounts for the entire
        population.)
       </entry>
      </row>
@@ -10717,7 +10717,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
        When the value is near -1 or +1, an index scan on the column will
        be estimated to be cheaper than when it is near zero, due to reduction
        of random access to the disk.  (This column is null if the column data
-       type does not have a <literal>&lt;</> operator.)
+       type does not have a <literal>&lt;</literal> operator.)
       </entry>
      </row>
 
@@ -10761,7 +10761,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
 
   <para>
    The maximum number of entries in the array fields can be controlled on a
-   column-by-column basis using the <command>ALTER TABLE SET STATISTICS</>
+   column-by-column basis using the <command>ALTER TABLE SET STATISTICS</command>
    command, or globally by setting the
    <xref linkend="guc-default-statistics-target"> run-time parameter.
   </para>
@@ -10781,7 +10781,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
   </para>
 
   <table>
-   <title><structname>pg_tables</> Columns</title>
+   <title><structname>pg_tables</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -10862,7 +10862,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
   </para>
 
   <table>
-   <title><structname>pg_timezone_abbrevs</> Columns</title>
+   <title><structname>pg_timezone_abbrevs</structname> Columns</title>
 
    <tgroup cols="3">
     <thead>
@@ -10910,7 +10910,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
 
   <para>
    The view <structname>pg_timezone_names</structname> provides a list
-   of time zone names that are recognized by <command>SET TIMEZONE</>,
+   of time zone names that are recognized by <command>SET TIMEZONE</command>,
    along with their associated abbreviations, UTC offsets,
    and daylight-savings status.  (Technically,
    <productname>PostgreSQL</productname> does not use UTC because leap
@@ -10919,11 +10919,11 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
    linkend="view-pg-timezone-abbrevs"><structname>pg_timezone_abbrevs</structname></link>, many of these names imply a set of daylight-savings transition
    date rules.  Therefore, the associated information changes across local DST
    boundaries.  The displayed information is computed based on the current
-   value of <function>CURRENT_TIMESTAMP</>.
+   value of <function>CURRENT_TIMESTAMP</function>.
   </para>
 
   <table>
-   <title><structname>pg_timezone_names</> Columns</title>
+   <title><structname>pg_timezone_names</structname> Columns</title>
 
    <tgroup cols="3">
     <thead>
@@ -10976,7 +10976,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
   </para>
 
   <table>
-   <title><structname>pg_user</> Columns</title>
+   <title><structname>pg_user</structname> Columns</title>
 
    <tgroup cols="3">
     <thead>
@@ -11032,7 +11032,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
      <row>
       <entry><structfield>passwd</structfield></entry>
       <entry><type>text</type></entry>
-      <entry>Not the password (always reads as <literal>********</>)</entry>
+      <entry>Not the password (always reads as <literal>********</literal>)</entry>
      </row>
 
      <row>
@@ -11069,7 +11069,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
   </para>
 
   <table>
-   <title><structname>pg_user_mappings</> Columns</title>
+   <title><structname>pg_user_mappings</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>
@@ -11126,7 +11126,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       <entry><type>text[]</type></entry>
       <entry></entry>
       <entry>
-       User mapping specific options, as <quote>keyword=value</> strings
+       User mapping specific options, as <quote>keyword=value</quote> strings
       </entry>
      </row>
     </tbody>
@@ -11141,12 +11141,12 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
     <listitem>
      <para>
       current user is the user being mapped, and owns the server or
-      holds <literal>USAGE</> privilege on it
+      holds <literal>USAGE</literal> privilege on it
      </para>
     </listitem>
     <listitem>
      <para>
-      current user is the server owner and mapping is for <literal>PUBLIC</>
+      current user is the server owner and mapping is for <literal>PUBLIC</literal>
      </para>
     </listitem>
     <listitem>
@@ -11173,7 +11173,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
   </para>
 
   <table>
-   <title><structname>pg_views</> Columns</title>
+   <title><structname>pg_views</structname> Columns</title>
 
    <tgroup cols="4">
     <thead>

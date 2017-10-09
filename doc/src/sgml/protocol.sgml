@@ -30,12 +30,12 @@
 
   <para>
    In order to serve multiple clients efficiently, the server launches
-   a new <quote>backend</> process for each client.
+   a new <quote>backend</quote> process for each client.
    In the current implementation, a new child
    process is created immediately after an incoming connection is detected.
    This is transparent to the protocol, however.  For purposes of the
-   protocol, the terms <quote>backend</> and <quote>server</> are
-   interchangeable; likewise <quote>frontend</> and <quote>client</>
+   protocol, the terms <quote>backend</quote> and <quote>server</quote> are
+   interchangeable; likewise <quote>frontend</quote> and <quote>client</quote>
    are interchangeable.
   </para>
 
@@ -56,7 +56,7 @@
   <para>
    During normal operation, the frontend sends queries and
    other commands to the backend, and the backend sends back query results
-   and other responses.  There are a few cases (such as <command>NOTIFY</>)
+   and other responses.  There are a few cases (such as <command>NOTIFY</command>)
    wherein the
    backend will send unsolicited messages, but for the most part this portion
    of a session is driven by frontend requests.
@@ -71,9 +71,9 @@
 
   <para>
    Within normal operation, SQL commands can be executed through either of
-   two sub-protocols.  In the <quote>simple query</> protocol, the frontend
+   two sub-protocols.  In the <quote>simple query</quote> protocol, the frontend
    just sends a textual query string, which is parsed and immediately
-   executed by the backend.  In the <quote>extended query</> protocol,
+   executed by the backend.  In the <quote>extended query</quote> protocol,
    processing of queries is separated into multiple steps: parsing,
    binding of parameter values, and execution.  This offers flexibility
    and performance benefits, at the cost of extra complexity.
@@ -81,7 +81,7 @@
 
   <para>
    Normal operation has additional sub-protocols for special operations
-   such as <command>COPY</>.
+   such as <command>COPY</command>.
   </para>
 
  <sect2 id="protocol-message-concepts">
@@ -123,24 +123,24 @@
    <para>
     In the extended-query protocol, execution of SQL commands is divided
     into multiple steps.  The state retained between steps is represented
-    by two types of objects: <firstterm>prepared statements</> and
-    <firstterm>portals</>.  A prepared statement represents the result of
+    by two types of objects: <firstterm>prepared statements</firstterm> and
+    <firstterm>portals</firstterm>.  A prepared statement represents the result of
     parsing and semantic analysis of a textual query string.
     A prepared statement is not in itself ready to execute, because it might
-    lack specific values for <firstterm>parameters</>.  A portal represents
+    lack specific values for <firstterm>parameters</firstterm>.  A portal represents
     a ready-to-execute or already-partially-executed statement, with any
-    missing parameter values filled in.  (For <command>SELECT</> statements,
+    missing parameter values filled in.  (For <command>SELECT</command> statements,
     a portal is equivalent to an open cursor, but we choose to use a different
-    term since cursors don't handle non-<command>SELECT</> statements.)
+    term since cursors don't handle non-<command>SELECT</command> statements.)
    </para>
 
    <para>
-    The overall execution cycle consists of a <firstterm>parse</> step,
+    The overall execution cycle consists of a <firstterm>parse</firstterm> step,
     which creates a prepared statement from a textual query string; a
-    <firstterm>bind</> step, which creates a portal given a prepared
+    <firstterm>bind</firstterm> step, which creates a portal given a prepared
     statement and values for any needed parameters; and an
-    <firstterm>execute</> step that runs a portal's query.  In the case of
-    a query that returns rows (<command>SELECT</>, <command>SHOW</>, etc),
+    <firstterm>execute</firstterm> step that runs a portal's query.  In the case of
+    a query that returns rows (<command>SELECT</command>, <command>SHOW</command>, etc),
     the execute step can be told to fetch only
     a limited number of rows, so that multiple execute steps might be needed
     to complete the operation.
@@ -151,7 +151,7 @@
     (but note that these exist only within a session, and are never shared
     across sessions).  Existing prepared statements and portals are
     referenced by names assigned when they were created.  In addition,
-    an <quote>unnamed</> prepared statement and portal exist.  Although these
+    an <quote>unnamed</quote> prepared statement and portal exist.  Although these
     behave largely the same as named objects, operations on them are optimized
     for the case of executing a query only once and then discarding it,
     whereas operations on named objects are optimized on the expectation
@@ -164,10 +164,10 @@
 
    <para>
     Data of a particular data type might be transmitted in any of several
-    different <firstterm>formats</>.  As of <productname>PostgreSQL</> 7.4
-    the only supported formats are <quote>text</> and <quote>binary</>,
+    different <firstterm>formats</firstterm>.  As of <productname>PostgreSQL</productname> 7.4
+    the only supported formats are <quote>text</quote> and <quote>binary</quote>,
     but the protocol makes provision for future extensions.  The desired
-    format for any value is specified by a <firstterm>format code</>.
+    format for any value is specified by a <firstterm>format code</firstterm>.
     Clients can specify a format code for each transmitted parameter value
     and for each column of a query result.  Text has format code zero,
     binary has format code one, and all other format codes are reserved
@@ -300,8 +300,8 @@
         password, the server responds with an AuthenticationOk,
         otherwise it responds with an ErrorResponse.  The actual
         PasswordMessage can be computed in SQL as <literal>concat('md5',
-        md5(concat(md5(concat(password, username)), random-salt)))</>.
-        (Keep in mind the <function>md5()</> function returns its
+        md5(concat(md5(concat(password, username)), random-salt)))</literal>.
+        (Keep in mind the <function>md5()</function> function returns its
         result as a hex string.)
        </para>
       </listitem>
@@ -624,11 +624,11 @@
    </para>
 
    <para>
-    The response to a <command>SELECT</> query (or other queries that
-    return row sets, such as <command>EXPLAIN</> or <command>SHOW</>)
+    The response to a <command>SELECT</command> query (or other queries that
+    return row sets, such as <command>EXPLAIN</command> or <command>SHOW</command>)
     normally consists of RowDescription, zero or more
     DataRow messages, and then CommandComplete.
-    <command>COPY</> to or from the frontend invokes special protocol
+    <command>COPY</command> to or from the frontend invokes special protocol
     as described in <xref linkend="protocol-copy">.
     All other query types normally produce only
     a CommandComplete message.
@@ -657,8 +657,8 @@
 
    <para>
     In simple Query mode, the format of retrieved values is always text,
-    except when the given command is a <command>FETCH</> from a cursor
-    declared with the <literal>BINARY</> option.  In that case, the
+    except when the given command is a <command>FETCH</command> from a cursor
+    declared with the <literal>BINARY</literal> option.  In that case, the
     retrieved values are in binary format.  The format codes given in
     the RowDescription message tell which format is being used.
    </para>
@@ -689,10 +689,10 @@ INSERT INTO mytable VALUES(1);
 SELECT 1/0;
 INSERT INTO mytable VALUES(2);
 </programlisting>
-     then the divide-by-zero failure in the <command>SELECT</> will force
-     rollback of the first <command>INSERT</>.  Furthermore, because
+     then the divide-by-zero failure in the <command>SELECT</command> will force
+     rollback of the first <command>INSERT</command>.  Furthermore, because
      execution of the message is abandoned at the first error, the second
-     <command>INSERT</> is never attempted at all.
+     <command>INSERT</command> is never attempted at all.
     </para>
 
     <para>
@@ -704,17 +704,17 @@ COMMIT;
 INSERT INTO mytable VALUES(2);
 SELECT 1/0;
 </programlisting>
-     then the first <command>INSERT</> is committed by the
-     explicit <command>COMMIT</> command.  The second <command>INSERT</>
-     and the <command>SELECT</> are still treated as a single transaction,
+     then the first <command>INSERT</command> is committed by the
+     explicit <command>COMMIT</command> command.  The second <command>INSERT</command>
+     and the <command>SELECT</command> are still treated as a single transaction,
      so that the divide-by-zero failure will roll back the
-     second <command>INSERT</>, but not the first one.
+     second <command>INSERT</command>, but not the first one.
     </para>
 
     <para>
      This behavior is implemented by running the statements in a
      multi-statement Query message in an <firstterm>implicit transaction
-     block</> unless there is some explicit transaction block for them to
+     block</firstterm> unless there is some explicit transaction block for them to
      run in.  The main difference between an implicit transaction block and
      a regular one is that an implicit block is closed automatically at the
      end of the Query message, either by an implicit commit if there was no
@@ -725,27 +725,27 @@ SELECT 1/0;
 
     <para>
      If the session is already in a transaction block, as a result of
-     a <command>BEGIN</> in some previous message, then the Query message
+     a <command>BEGIN</command> in some previous message, then the Query message
      simply continues that transaction block, whether the message contains
      one statement or several.  However, if the Query message contains
-     a <command>COMMIT</> or <command>ROLLBACK</> closing the existing
+     a <command>COMMIT</command> or <command>ROLLBACK</command> closing the existing
      transaction block, then any following statements are executed in an
      implicit transaction block.
-     Conversely, if a <command>BEGIN</> appears in a multi-statement Query
+     Conversely, if a <command>BEGIN</command> appears in a multi-statement Query
      message, then it starts a regular transaction block that will only be
-     terminated by an explicit <command>COMMIT</> or <command>ROLLBACK</>,
+     terminated by an explicit <command>COMMIT</command> or <command>ROLLBACK</command>,
      whether that appears in this Query message or a later one.
-     If the <command>BEGIN</> follows some statements that were executed as
+     If the <command>BEGIN</command> follows some statements that were executed as
      an implicit transaction block, those statements are not immediately
      committed; in effect, they are retroactively included into the new
      regular transaction block.
     </para>
 
     <para>
-     A <command>COMMIT</> or <command>ROLLBACK</> appearing in an implicit
+     A <command>COMMIT</command> or <command>ROLLBACK</command> appearing in an implicit
      transaction block is executed as normal, closing the implicit block;
-     however, a warning will be issued since a <command>COMMIT</>
-     or <command>ROLLBACK</> without a previous <command>BEGIN</> might
+     however, a warning will be issued since a <command>COMMIT</command>
+     or <command>ROLLBACK</command> without a previous <command>BEGIN</command> might
      represent a mistake.  If more statements follow, a new implicit
      transaction block will be started for them.
     </para>
@@ -766,8 +766,8 @@ SELECT 1/0;
 ROLLBACK;
 </programlisting>
      in a single Query message, the session will be left inside a failed
-     regular transaction block, since the <command>ROLLBACK</> is not
-     reached after the divide-by-zero error.  Another <command>ROLLBACK</>
+     regular transaction block, since the <command>ROLLBACK</command> is not
+     reached after the divide-by-zero error.  Another <command>ROLLBACK</command>
      will be needed to restore the session to a usable state.
     </para>
 
@@ -789,7 +789,7 @@ INSERT INTO mytable VALUES(2);
 SELCT 1/0;
 </programlisting>
      then none of the statements would get run, resulting in the visible
-     difference that the first <command>INSERT</> is not committed.
+     difference that the first <command>INSERT</command> is not committed.
      Errors detected at semantic analysis or later, such as a misspelled
      table or column name, do not have this effect.
     </para>
@@ -824,17 +824,17 @@ SELCT 1/0;
     <para>
      A parameter data type can be left unspecified by setting it to zero,
      or by making the array of parameter type OIDs shorter than the
-     number of parameter symbols (<literal>$</><replaceable>n</>)
+     number of parameter symbols (<literal>$</literal><replaceable>n</replaceable>)
      used in the query string.  Another special case is that a parameter's
-     type can be specified as <type>void</> (that is, the OID of the
-     <type>void</> pseudo-type).  This is meant to allow parameter symbols
+     type can be specified as <type>void</type> (that is, the OID of the
+     <type>void</type> pseudo-type).  This is meant to allow parameter symbols
      to be used for function parameters that are actually OUT parameters.
-     Ordinarily there is no context in which a <type>void</> parameter
+     Ordinarily there is no context in which a <type>void</type> parameter
      could be used, but if such a parameter symbol appears in a function's
      parameter list, it is effectively ignored.  For example, a function
-     call such as <literal>foo($1,$2,$3,$4)</> could match a function with
-     two IN and two OUT arguments, if <literal>$3</> and <literal>$4</>
-     are specified as having type <type>void</>.
+     call such as <literal>foo($1,$2,$3,$4)</literal> could match a function with
+     two IN and two OUT arguments, if <literal>$3</literal> and <literal>$4</literal>
+     are specified as having type <type>void</type>.
     </para>
    </note>
 
@@ -858,7 +858,7 @@ SELCT 1/0;
     statements must be explicitly closed before they can be redefined by
     another Parse message, but this is not required for the unnamed statement.
     Named prepared statements can also be created and accessed at the SQL
-    command level, using <command>PREPARE</> and <command>EXECUTE</>.
+    command level, using <command>PREPARE</command> and <command>EXECUTE</command>.
    </para>
 
    <para>
@@ -869,7 +869,7 @@ SELCT 1/0;
     the values to use for any parameter placeholders present in the prepared
     statement.  The
     supplied parameter set must match those needed by the prepared statement.
-    (If you declared any <type>void</> parameters in the Parse message,
+    (If you declared any <type>void</type> parameters in the Parse message,
     pass NULL values for them in the Bind message.)
     Bind also specifies the format to use for any data returned
     by the query; the format can be specified overall, or per-column.
@@ -880,7 +880,7 @@ SELCT 1/0;
     <para>
      The choice between text and binary output is determined by the format
      codes given in Bind, regardless of the SQL command involved.  The
-     <literal>BINARY</> attribute in cursor declarations is irrelevant when
+     <literal>BINARY</literal> attribute in cursor declarations is irrelevant when
      using extended query protocol.
     </para>
    </note>
@@ -904,14 +904,14 @@ SELCT 1/0;
     portals must be explicitly closed before they can be redefined by another
     Bind message, but this is not required for the unnamed portal.
     Named portals can also be created and accessed at the SQL
-    command level, using <command>DECLARE CURSOR</> and <command>FETCH</>.
+    command level, using <command>DECLARE CURSOR</command> and <command>FETCH</command>.
    </para>
 
    <para>
     Once a portal exists, it can be executed using an Execute message.
     The Execute message specifies the portal name (empty string denotes the
     unnamed portal) and
-    a maximum result-row count (zero meaning <quote>fetch all rows</>).
+    a maximum result-row count (zero meaning <quote>fetch all rows</quote>).
     The result-row count is only meaningful for portals
     containing commands that return row sets; in other cases the command is
     always executed to completion, and the row count is ignored.
@@ -938,7 +938,7 @@ SELCT 1/0;
     At completion of each series of extended-query messages, the frontend
     should issue a Sync message.  This parameterless message causes the
     backend to close the current transaction if it's not inside a
-    <command>BEGIN</>/<command>COMMIT</> transaction block (<quote>close</>
+    <command>BEGIN</command>/<command>COMMIT</command> transaction block (<quote>close</quote>
     meaning to commit if no error, or roll back if error).  Then a
     ReadyForQuery response is issued.  The purpose of Sync is to provide
     a resynchronization point for error recovery.  When an error is detected
@@ -946,13 +946,13 @@ SELCT 1/0;
     ErrorResponse, then reads and discards messages until a Sync is reached,
     then issues ReadyForQuery and returns to normal message processing.
     (But note that no skipping occurs if an error is detected
-    <emphasis>while</> processing Sync &mdash; this ensures that there is one
+    <emphasis>while</emphasis> processing Sync &mdash; this ensures that there is one
     and only one ReadyForQuery sent for each Sync.)
    </para>
 
    <note>
     <para>
-     Sync does not cause a transaction block opened with <command>BEGIN</>
+     Sync does not cause a transaction block opened with <command>BEGIN</command>
      to be closed.  It is possible to detect this situation since the
      ReadyForQuery message includes transaction status information.
     </para>
@@ -1039,7 +1039,7 @@ SELCT 1/0;
     <para>
      The Function Call sub-protocol is a legacy feature that is probably best
      avoided in new code.  Similar results can be accomplished by setting up
-     a prepared statement that does <literal>SELECT function($1, ...)</>.
+     a prepared statement that does <literal>SELECT function($1, ...)</literal>.
      The Function Call cycle can then be replaced with Bind/Execute.
     </para>
    </note>
@@ -1107,7 +1107,7 @@ SELCT 1/0;
    <title>COPY Operations</title>
 
    <para>
-    The <command>COPY</> command allows high-speed bulk data transfer
+    The <command>COPY</command> command allows high-speed bulk data transfer
     to or from the server.  Copy-in and copy-out operations each switch
     the connection into a distinct sub-protocol, which lasts until the
     operation is completed.
@@ -1115,16 +1115,16 @@ SELCT 1/0;
 
    <para>
     Copy-in mode (data transfer to the server) is initiated when the
-    backend executes a <command>COPY FROM STDIN</> SQL statement.  The backend
+    backend executes a <command>COPY FROM STDIN</command> SQL statement.  The backend
     sends a CopyInResponse message to the frontend.  The frontend should
     then send zero or more CopyData messages, forming a stream of input
     data.  (The message boundaries are not required to have anything to do
     with row boundaries, although that is often a reasonable choice.)
     The frontend can terminate the copy-in mode by sending either a CopyDone
     message (allowing successful termination) or a CopyFail message (which
-    will cause the <command>COPY</> SQL statement to fail with an
+    will cause the <command>COPY</command> SQL statement to fail with an
     error).  The backend then reverts to the command-processing mode it was
-    in before the <command>COPY</> started, which will be either simple or
+    in before the <command>COPY</command> started, which will be either simple or
     extended query protocol.  It will next send either CommandComplete
     (if successful) or ErrorResponse (if not).
    </para>
@@ -1132,10 +1132,10 @@ SELCT 1/0;
    <para>
     In the event of a backend-detected error during copy-in mode (including
     receipt of a CopyFail message), the backend will issue an ErrorResponse
-    message.  If the <command>COPY</> command was issued via an extended-query
+    message.  If the <command>COPY</command> command was issued via an extended-query
     message, the backend will now discard frontend messages until a Sync
     message is received, then it will issue ReadyForQuery and return to normal
-    processing.  If the <command>COPY</> command was issued in a simple
+    processing.  If the <command>COPY</command> command was issued in a simple
     Query message, the rest of that message is discarded and ReadyForQuery
     is issued.  In either case, any subsequent CopyData, CopyDone, or CopyFail
     messages issued by the frontend will simply be dropped.
@@ -1147,16 +1147,16 @@ SELCT 1/0;
     that will abort the copy-in state as described above.  (The exception for
     Flush and Sync is for the convenience of client libraries that always
     send Flush or Sync after an Execute message, without checking whether
-    the command to be executed is a <command>COPY FROM STDIN</>.)
+    the command to be executed is a <command>COPY FROM STDIN</command>.)
    </para>
 
    <para>
     Copy-out mode (data transfer from the server) is initiated when the
-    backend executes a <command>COPY TO STDOUT</> SQL statement.  The backend
+    backend executes a <command>COPY TO STDOUT</command> SQL statement.  The backend
     sends a CopyOutResponse message to the frontend, followed by
     zero or more CopyData messages (always one per row), followed by CopyDone.
     The backend then reverts to the command-processing mode it was
-    in before the <command>COPY</> started, and sends CommandComplete.
+    in before the <command>COPY</command> started, and sends CommandComplete.
     The frontend cannot abort the transfer (except by closing the connection
     or issuing a Cancel request),
     but it can discard unwanted CopyData and CopyDone messages.
@@ -1179,7 +1179,7 @@ SELCT 1/0;
 
    <para>
     There is another Copy-related mode called copy-both, which allows
-    high-speed bulk data transfer to <emphasis>and</> from the server.
+    high-speed bulk data transfer to <emphasis>and</emphasis> from the server.
     Copy-both mode is initiated when a backend in walsender mode
     executes a <command>START_REPLICATION</command> statement.  The
     backend sends a CopyBothResponse message to the frontend.  Both
@@ -1204,7 +1204,7 @@ SELCT 1/0;
     The CopyInResponse, CopyOutResponse and CopyBothResponse messages
     include fields that inform the frontend of the number of columns
     per row and the format codes being used for each column.  (As of
-    the present implementation, all columns in a given <command>COPY</>
+    the present implementation, all columns in a given <command>COPY</command>
     operation will use the same format, but the message design does not
     assume this.)
    </para>
@@ -1226,7 +1226,7 @@ SELCT 1/0;
    <para>
     It is possible for NoticeResponse messages to be generated due to
     outside activity; for example, if the database administrator commands
-    a <quote>fast</> database shutdown, the backend will send a NoticeResponse
+    a <quote>fast</quote> database shutdown, the backend will send a NoticeResponse
     indicating this fact before closing the connection.  Accordingly,
     frontends should always be prepared to accept and display NoticeResponse
     messages, even when the connection is nominally idle.
@@ -1236,7 +1236,7 @@ SELCT 1/0;
     ParameterStatus messages will be generated whenever the active
     value changes for any of the parameters the backend believes the
     frontend should know about.  Most commonly this occurs in response
-    to a <command>SET</> SQL command executed by the frontend, and
+    to a <command>SET</command> SQL command executed by the frontend, and
     this case is effectively synchronous &mdash; but it is also possible
     for parameter status changes to occur because the administrator
     changed a configuration file and then sent the
@@ -1249,27 +1249,27 @@ SELCT 1/0;
    <para>
     At present there is a hard-wired set of parameters for which
     ParameterStatus will be generated: they are
-    <varname>server_version</>,
-    <varname>server_encoding</>,
-    <varname>client_encoding</>,
-    <varname>application_name</>,
-    <varname>is_superuser</>,
-    <varname>session_authorization</>,
-    <varname>DateStyle</>,
-    <varname>IntervalStyle</>,
-    <varname>TimeZone</>,
-    <varname>integer_datetimes</>, and
-    <varname>standard_conforming_strings</>.
-    (<varname>server_encoding</>, <varname>TimeZone</>, and
-    <varname>integer_datetimes</> were not reported by releases before 8.0;
-    <varname>standard_conforming_strings</> was not reported by releases
+    <varname>server_version</varname>,
+    <varname>server_encoding</varname>,
+    <varname>client_encoding</varname>,
+    <varname>application_name</varname>,
+    <varname>is_superuser</varname>,
+    <varname>session_authorization</varname>,
+    <varname>DateStyle</varname>,
+    <varname>IntervalStyle</varname>,
+    <varname>TimeZone</varname>,
+    <varname>integer_datetimes</varname>, and
+    <varname>standard_conforming_strings</varname>.
+    (<varname>server_encoding</varname>, <varname>TimeZone</varname>, and
+    <varname>integer_datetimes</varname> were not reported by releases before 8.0;
+    <varname>standard_conforming_strings</varname> was not reported by releases
     before 8.1;
-    <varname>IntervalStyle</> was not reported by releases before 8.4;
-    <varname>application_name</> was not reported by releases before 9.0.)
+    <varname>IntervalStyle</varname> was not reported by releases before 8.4;
+    <varname>application_name</varname> was not reported by releases before 9.0.)
     Note that
-    <varname>server_version</>,
-    <varname>server_encoding</> and
-    <varname>integer_datetimes</>
+    <varname>server_version</varname>,
+    <varname>server_encoding</varname> and
+    <varname>integer_datetimes</varname>
     are pseudo-parameters that cannot change after startup.
     This set might change in the future, or even become configurable.
     Accordingly, a frontend should simply ignore ParameterStatus for
@@ -1394,7 +1394,7 @@ SELCT 1/0;
     frontend disconnects while a non-<command>SELECT</command> query
     is being processed, the backend will probably finish the query
     before noticing the disconnection.  If the query is outside any
-    transaction block (<command>BEGIN</> ... <command>COMMIT</>
+    transaction block (<command>BEGIN</command> ... <command>COMMIT</command>
     sequence) then its results might be committed before the
     disconnection is recognized.
    </para>
@@ -1404,7 +1404,7 @@ SELCT 1/0;
    <title><acronym>SSL</acronym> Session Encryption</title>
 
    <para>
-    If <productname>PostgreSQL</> was built with
+    If <productname>PostgreSQL</productname> was built with
     <acronym>SSL</acronym> support, frontend/backend communications
     can be encrypted using <acronym>SSL</acronym>.  This provides
     communication security in environments where attackers might be
@@ -1417,17 +1417,17 @@ SELCT 1/0;
     To initiate an <acronym>SSL</acronym>-encrypted connection, the
     frontend initially sends an SSLRequest message rather than a
     StartupMessage.  The server then responds with a single byte
-    containing <literal>S</> or <literal>N</>, indicating that it is
+    containing <literal>S</literal> or <literal>N</literal>, indicating that it is
     willing or unwilling to perform <acronym>SSL</acronym>,
     respectively.  The frontend might close the connection at this point
     if it is dissatisfied with the response.  To continue after
-    <literal>S</>, perform an <acronym>SSL</acronym> startup handshake
+    <literal>S</literal>, perform an <acronym>SSL</acronym> startup handshake
     (not described here, part of the <acronym>SSL</acronym>
     specification) with the server.  If this is successful, continue
     with sending the usual StartupMessage.  In this case the
     StartupMessage and all subsequent data will be
     <acronym>SSL</acronym>-encrypted.  To continue after
-    <literal>N</>, send the usual StartupMessage and proceed without
+    <literal>N</literal>, send the usual StartupMessage and proceed without
     encryption.
    </para>
 
@@ -1435,7 +1435,7 @@ SELCT 1/0;
     The frontend should also be prepared to handle an ErrorMessage
     response to SSLRequest from the server.  This would only occur if
     the server predates the addition of <acronym>SSL</acronym> support
-    to <productname>PostgreSQL</>.  (Such servers are now very ancient,
+    to <productname>PostgreSQL</productname>.  (Such servers are now very ancient,
     and likely do not exist in the wild anymore.)
     In this case the connection must
     be closed, but the frontend might choose to open a fresh connection
@@ -1460,8 +1460,8 @@ SELCT 1/0;
 <title>SASL Authentication</title>
 
 <para>
-<firstterm>SASL</> is a framework for authentication in connection-oriented
-protocols. At the moment, <productname>PostgreSQL</> implements only one SASL
+<firstterm>SASL</firstterm> is a framework for authentication in connection-oriented
+protocols. At the moment, <productname>PostgreSQL</productname> implements only one SASL
 authentication mechanism, SCRAM-SHA-256, but more might be added in the
 future. The below steps illustrate how SASL authentication is performed in
 general, while the next subsection gives more details on SCRAM-SHA-256.
@@ -1518,24 +1518,24 @@ ErrorMessage.
   <title>SCRAM-SHA-256 authentication</title>
 
   <para>
-    <firstterm>SCRAM-SHA-256</> (called just <firstterm>SCRAM</> from now on) is
+    <firstterm>SCRAM-SHA-256</firstterm> (called just <firstterm>SCRAM</firstterm> from now on) is
     the only implemented SASL mechanism, at the moment. It is described in detail
     in RFC 7677 and RFC 5802.
   </para>
 
   <para>
 When SCRAM-SHA-256 is used in PostgreSQL, the server will ignore the user name
-that the client sends in the <structname>client-first-message</>. The user name
+that the client sends in the <structname>client-first-message</structname>. The user name
 that was already sent in the startup message is used instead.
-<productname>PostgreSQL</> supports multiple character encodings, while SCRAM
+<productname>PostgreSQL</productname> supports multiple character encodings, while SCRAM
 dictates UTF-8 to be used for the user name, so it might be impossible to
 represent the PostgreSQL user name in UTF-8.
   </para>
 
   <para>
 The SCRAM specification dictates that the password is also in UTF-8, and is
-processed with the <firstterm>SASLprep</> algorithm.
-<productname>PostgreSQL</>, however, does not require UTF-8 to be used for
+processed with the <firstterm>SASLprep</firstterm> algorithm.
+<productname>PostgreSQL</productname>, however, does not require UTF-8 to be used for
 the password. When a user's password is set, it is processed with SASLprep
 as if it was in UTF-8, regardless of the actual encoding used. However, if
 it is not a legal UTF-8 byte sequence, or it contains UTF-8 byte sequences
@@ -1547,7 +1547,7 @@ the password is in.
   </para>
 
   <para>
-<firstterm>Channel binding</> has not been implemented yet.
+<firstterm>Channel binding</firstterm> has not been implemented yet.
   </para>
 
 <procedure>
@@ -1561,27 +1561,27 @@ the password is in.
 <step id="scram-client-first">
 <para>
   The client responds by sending a SASLInitialResponse message, which
-  indicates the chosen mechanism, <literal>SCRAM-SHA-256</>. In the Initial
+  indicates the chosen mechanism, <literal>SCRAM-SHA-256</literal>. In the Initial
   Client response field, the message contains the SCRAM
-  <structname>client-first-message</>.
+  <structname>client-first-message</structname>.
 </para>
 </step>
 <step id="scram-server-first">
 <para>
   Server sends an AuthenticationSASLContinue message, with a SCRAM
-  <structname>server-first message</> as the content.
+  <structname>server-first message</structname> as the content.
 </para>
 </step>
 <step id="scram-client-final">
 <para>
   Client sends a SASLResponse message, with SCRAM
-  <structname>client-final-message</> as the content.
+  <structname>client-final-message</structname> as the content.
 </para>
 </step>
 <step id="scram-server-final">
 <para>
   Server sends an AuthenticationSASLFinal message, with the SCRAM
-  <structname>server-final-message</>, followed immediately by
+  <structname>server-final-message</structname>, followed immediately by
   an AuthenticationOk message.
 </para>
 </step>
@@ -1594,14 +1594,14 @@ the password is in.
 
 <para>
 To initiate streaming replication, the frontend sends the
-<literal>replication</> parameter in the startup message. A Boolean value
-of <literal>true</> tells the backend to go into walsender mode, wherein a
+<literal>replication</literal> parameter in the startup message. A Boolean value
+of <literal>true</literal> tells the backend to go into walsender mode, wherein a
 small set of replication commands can be issued instead of SQL statements. Only
 the simple query protocol can be used in walsender mode.
 Replication commands are logged in the server log when
 <xref linkend="guc-log-replication-commands"> is enabled.
-Passing <literal>database</> as the value instructs walsender to connect to
-the database specified in the <literal>dbname</> parameter, which will allow
+Passing <literal>database</literal> as the value instructs walsender to connect to
+the database specified in the <literal>dbname</literal> parameter, which will allow
 the connection to be used for logical replication from that database.
 </para>
 <para>
@@ -1697,7 +1697,7 @@ The commands accepted in walsender mode are:
 
      <variablelist>
       <varlistentry>
-       <term><replaceable class="parameter">name</></term>
+       <term><replaceable class="parameter">name</replaceable></term>
        <listitem>
          <para>
           The name of a run-time parameter. Available parameters are documented
@@ -1728,7 +1728,7 @@ The commands accepted in walsender mode are:
       </term>
       <listitem>
       <para>
-       File name of the timeline history file, e.g., <filename>00000002.history</>.
+       File name of the timeline history file, e.g., <filename>00000002.history</filename>.
       </para>
       </listitem>
       </varlistentry>
@@ -1750,7 +1750,7 @@ The commands accepted in walsender mode are:
   </varlistentry>
 
   <varlistentry id="protocol-replication-create-slot" xreflabel="CREATE_REPLICATION_SLOT">
-   <term><literal>CREATE_REPLICATION_SLOT</literal> <replaceable class="parameter">slot_name</> [ <literal>TEMPORARY</> ] { <literal>PHYSICAL</> [ <literal>RESERVE_WAL</> ] | <literal>LOGICAL</> <replaceable class="parameter">output_plugin</> [ <literal>EXPORT_SNAPSHOT</> | <literal>NOEXPORT_SNAPSHOT</> | <literal>USE_SNAPSHOT</> ] }
+   <term><literal>CREATE_REPLICATION_SLOT</literal> <replaceable class="parameter">slot_name</replaceable> [ <literal>TEMPORARY</literal> ] { <literal>PHYSICAL</literal> [ <literal>RESERVE_WAL</literal> ] | <literal>LOGICAL</literal> <replaceable class="parameter">output_plugin</replaceable> [ <literal>EXPORT_SNAPSHOT</literal> | <literal>NOEXPORT_SNAPSHOT</literal> | <literal>USE_SNAPSHOT</literal> ] }
      <indexterm><primary>CREATE_REPLICATION_SLOT</primary></indexterm>
     </term>
     <listitem>
@@ -1761,7 +1761,7 @@ The commands accepted in walsender mode are:
      </para>
      <variablelist>
       <varlistentry>
-       <term><replaceable class="parameter">slot_name</></term>
+       <term><replaceable class="parameter">slot_name</replaceable></term>
        <listitem>
          <para>
           The name of the slot to create. Must be a valid replication slot
@@ -1771,7 +1771,7 @@ The commands accepted in walsender mode are:
       </varlistentry>
 
       <varlistentry>
-       <term><replaceable class="parameter">output_plugin</></term>
+       <term><replaceable class="parameter">output_plugin</replaceable></term>
        <listitem>
          <para>
           The name of the output plugin used for logical decoding
@@ -1781,7 +1781,7 @@ The commands accepted in walsender mode are:
       </varlistentry>
 
       <varlistentry>
-       <term><literal>TEMPORARY</></term>
+       <term><literal>TEMPORARY</literal></term>
        <listitem>
         <para>
          Specify that this replication slot is a temporary one. Temporary
@@ -1792,30 +1792,30 @@ The commands accepted in walsender mode are:
       </varlistentry>
 
       <varlistentry>
-       <term><literal>RESERVE_WAL</></term>
+       <term><literal>RESERVE_WAL</literal></term>
        <listitem>
         <para>
-         Specify that this physical replication slot reserves <acronym>WAL</>
-         immediately.  Otherwise, <acronym>WAL</> is only reserved upon
+         Specify that this physical replication slot reserves <acronym>WAL</acronym>
+         immediately.  Otherwise, <acronym>WAL</acronym> is only reserved upon
          connection from a streaming replication client.
         </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
-       <term><literal>EXPORT_SNAPSHOT</></term>
-       <term><literal>NOEXPORT_SNAPSHOT</></term>
-       <term><literal>USE_SNAPSHOT</></term>
+       <term><literal>EXPORT_SNAPSHOT</literal></term>
+       <term><literal>NOEXPORT_SNAPSHOT</literal></term>
+       <term><literal>USE_SNAPSHOT</literal></term>
        <listitem>
         <para>
          Decides what to do with the snapshot created during logical slot
-         initialization. <literal>EXPORT_SNAPSHOT</>, which is the default,
+         initialization. <literal>EXPORT_SNAPSHOT</literal>, which is the default,
          will export the snapshot for use in other sessions. This option can't
-         be used inside a transaction.  <literal>USE_SNAPSHOT</> will use the
+         be used inside a transaction.  <literal>USE_SNAPSHOT</literal> will use the
          snapshot for the current transaction executing the command. This
          option must be used in a transaction, and
          <literal>CREATE_REPLICATION_SLOT</literal> must be the first command
-         run in that transaction.  Finally, <literal>NOEXPORT_SNAPSHOT</> will
+         run in that transaction.  Finally, <literal>NOEXPORT_SNAPSHOT</literal> will
          just use the snapshot for logical decoding as normal but won't do
          anything else with it.
         </para>
@@ -1875,15 +1875,15 @@ The commands accepted in walsender mode are:
   </varlistentry>
 
   <varlistentry>
-    <term><literal>START_REPLICATION</literal> [ <literal>SLOT</literal> <replaceable class="parameter">slot_name</> ] [ <literal>PHYSICAL</literal> ] <replaceable class="parameter">XXX/XXX</> [ <literal>TIMELINE</literal> <replaceable class="parameter">tli</> ]
+    <term><literal>START_REPLICATION</literal> [ <literal>SLOT</literal> <replaceable class="parameter">slot_name</replaceable> ] [ <literal>PHYSICAL</literal> ] <replaceable class="parameter">XXX/XXX</replaceable> [ <literal>TIMELINE</literal> <replaceable class="parameter">tli</replaceable> ]
      <indexterm><primary>START_REPLICATION</primary></indexterm>
     </term>
     <listitem>
      <para>
       Instructs server to start streaming WAL, starting at
-      WAL location <replaceable class="parameter">XXX/XXX</>.
+      WAL location <replaceable class="parameter">XXX/XXX</replaceable>.
       If <literal>TIMELINE</literal> option is specified,
-      streaming starts on timeline <replaceable class="parameter">tli</>;
+      streaming starts on timeline <replaceable class="parameter">tli</replaceable>;
       otherwise, the server's current timeline is selected. The server can
       reply with an error, for example if the requested section of WAL has already
       been recycled. On success, server responds with a CopyBothResponse
@@ -1892,9 +1892,9 @@ The commands accepted in walsender mode are:
 
      <para>
       If a slot's name is provided
-      via <replaceable class="parameter">slot_name</>, it will be updated
+      via <replaceable class="parameter">slot_name</replaceable>, it will be updated
       as replication progresses so that the server knows which WAL segments,
-      and if <varname>hot_standby_feedback</> is on which transactions,
+      and if <varname>hot_standby_feedback</varname> is on which transactions,
       are still needed by the standby.
      </para>
 
@@ -2228,11 +2228,11 @@ The commands accepted in walsender mode are:
     </listitem>
   </varlistentry>
   <varlistentry>
-    <term><literal>START_REPLICATION</literal> <literal>SLOT</literal> <replaceable class="parameter">slot_name</> <literal>LOGICAL</literal> <replaceable class="parameter">XXX/XXX</> [ ( <replaceable>option_name</replaceable> [ <replaceable>option_value</replaceable> ] [, ...] ) ]</term>
+    <term><literal>START_REPLICATION</literal> <literal>SLOT</literal> <replaceable class="parameter">slot_name</replaceable> <literal>LOGICAL</literal> <replaceable class="parameter">XXX/XXX</replaceable> [ ( <replaceable>option_name</replaceable> [ <replaceable>option_value</replaceable> ] [, ...] ) ]</term>
     <listitem>
      <para>
       Instructs server to start streaming WAL for logical replication, starting
-      at WAL location <replaceable class="parameter">XXX/XXX</>. The server can
+      at WAL location <replaceable class="parameter">XXX/XXX</replaceable>. The server can
       reply with an error, for example if the requested section of WAL has already
       been recycled. On success, server responds with a CopyBothResponse
       message, and then starts to stream WAL to the frontend.
@@ -2250,7 +2250,7 @@ The commands accepted in walsender mode are:
 
      <variablelist>
       <varlistentry>
-       <term><literal>SLOT</literal> <replaceable class="parameter">slot_name</></term>
+       <term><literal>SLOT</literal> <replaceable class="parameter">slot_name</replaceable></term>
        <listitem>
          <para>
           The name of the slot to stream changes from. This parameter is required,
@@ -2261,7 +2261,7 @@ The commands accepted in walsender mode are:
        </listitem>
       </varlistentry>
       <varlistentry>
-       <term><replaceable class="parameter">XXX/XXX</></term>
+       <term><replaceable class="parameter">XXX/XXX</replaceable></term>
        <listitem>
         <para>
          The WAL location to begin streaming at.
@@ -2269,7 +2269,7 @@ The commands accepted in walsender mode are:
        </listitem>
       </varlistentry>
       <varlistentry>
-       <term><replaceable class="parameter">option_name</></term>
+       <term><replaceable class="parameter">option_name</replaceable></term>
        <listitem>
         <para>
          The name of an option passed to the slot's logical decoding plugin.
@@ -2277,7 +2277,7 @@ The commands accepted in walsender mode are:
        </listitem>
       </varlistentry>
       <varlistentry>
-       <term><replaceable class="parameter">option_value</></term>
+       <term><replaceable class="parameter">option_value</replaceable></term>
        <listitem>
         <para>
          Optional value, in the form of a string constant, associated with the
@@ -2291,7 +2291,7 @@ The commands accepted in walsender mode are:
 
   <varlistentry>
     <term>
-     <literal>DROP_REPLICATION_SLOT</literal> <replaceable class="parameter">slot_name</> <optional> <literal>WAIT</> </optional>
+     <literal>DROP_REPLICATION_SLOT</literal> <replaceable class="parameter">slot_name</replaceable> <optional> <literal>WAIT</literal> </optional>
      <indexterm><primary>DROP_REPLICATION_SLOT</primary></indexterm>
     </term>
     <listitem>
@@ -2302,7 +2302,7 @@ The commands accepted in walsender mode are:
      </para>
      <variablelist>
       <varlistentry>
-       <term><replaceable class="parameter">slot_name</></term>
+       <term><replaceable class="parameter">slot_name</replaceable></term>
        <listitem>
          <para>
           The name of the slot to drop.
@@ -2348,7 +2348,7 @@ The commands accepted in walsender mode are:
        </varlistentry>
 
        <varlistentry>
-        <term><literal>PROGRESS</></term>
+        <term><literal>PROGRESS</literal></term>
         <listitem>
          <para>
           Request information required to generate a progress report. This will
@@ -2365,7 +2365,7 @@ The commands accepted in walsender mode are:
        </varlistentry>
 
        <varlistentry>
-        <term><literal>FAST</></term>
+        <term><literal>FAST</literal></term>
         <listitem>
          <para>
           Request a fast checkpoint.
@@ -2399,7 +2399,7 @@ The commands accepted in walsender mode are:
        </varlistentry>
 
        <varlistentry>
-        <term><literal>MAX_RATE</literal> <replaceable>rate</></term>
+        <term><literal>MAX_RATE</literal> <replaceable>rate</replaceable></term>
         <listitem>
          <para>
           Limit (throttle) the maximum amount of data transferred from server
@@ -2420,7 +2420,7 @@ The commands accepted in walsender mode are:
           <filename>pg_tblspc</filename> in a file named
           <filename>tablespace_map</filename>. The tablespace map file includes
           each symbolic link name as it exists in the directory
-          <filename>pg_tblspc/</> and the full path of that symbolic link.
+          <filename>pg_tblspc/</filename> and the full path of that symbolic link.
          </para>
         </listitem>
        </varlistentry>
@@ -2473,9 +2473,9 @@ The commands accepted in walsender mode are:
      <para>
       After the second regular result set, one or more CopyResponse results
       will be sent, one for the main data directory and one for each additional tablespace other
-      than <literal>pg_default</> and <literal>pg_global</>. The data in
+      than <literal>pg_default</literal> and <literal>pg_global</literal>. The data in
       the CopyResponse results will be a tar format (following the
-      <quote>ustar interchange format</> specified in the POSIX 1003.1-2008
+      <quote>ustar interchange format</quote> specified in the POSIX 1003.1-2008
       standard) dump of the tablespace contents, except that the two trailing
       blocks of zeroes specified in the standard are omitted.
       After the tar data is complete, a final ordinary result set will be sent,
@@ -2486,29 +2486,29 @@ The commands accepted in walsender mode are:
      <para>
       The tar archive for the data directory and each tablespace will contain
       all files in the directories, regardless of whether they are
-      <productname>PostgreSQL</> files or other files added to the same
+      <productname>PostgreSQL</productname> files or other files added to the same
       directory. The only excluded files are:
       <itemizedlist spacing="compact" mark="bullet">
        <listitem>
         <para>
-         <filename>postmaster.pid</>
+         <filename>postmaster.pid</filename>
         </para>
        </listitem>
        <listitem>
         <para>
-         <filename>postmaster.opts</>
+         <filename>postmaster.opts</filename>
         </para>
        </listitem>
        <listitem>
         <para>
          Various temporary files and directories created during the operation
          of the PostgreSQL server, such as any file or directory beginning
-         with <filename>pgsql_tmp</>.
+         with <filename>pgsql_tmp</filename>.
         </para>
        </listitem>
        <listitem>
         <para>
-         <filename>pg_wal</>, including subdirectories. If the backup is run
+         <filename>pg_wal</filename>, including subdirectories. If the backup is run
          with WAL files included, a synthesized version of <filename>pg_wal</filename> will be
          included, but it will only contain the files necessary for the
          backup to work, not the rest of the contents.
@@ -2516,10 +2516,10 @@ The commands accepted in walsender mode are:
        </listitem>
        <listitem>
         <para>
-         <filename>pg_dynshmem</>, <filename>pg_notify</>,
-         <filename>pg_replslot</>, <filename>pg_serial</>,
-         <filename>pg_snapshots</>, <filename>pg_stat_tmp</>, and
-         <filename>pg_subtrans</> are copied as empty directories (even if
+         <filename>pg_dynshmem</filename>, <filename>pg_notify</filename>,
+         <filename>pg_replslot</filename>, <filename>pg_serial</filename>,
+         <filename>pg_snapshots</filename>, <filename>pg_stat_tmp</filename>, and
+         <filename>pg_subtrans</filename> are copied as empty directories (even if
          they are symbolic links).
         </para>
        </listitem>
@@ -2549,7 +2549,7 @@ The commands accepted in walsender mode are:
  <para>
   This section describes the logical replication protocol, which is the message
   flow started by the <literal>START_REPLICATION</literal>
-  <literal>SLOT</literal> <replaceable class="parameter">slot_name</>
+  <literal>SLOT</literal> <replaceable class="parameter">slot_name</replaceable>
   <literal>LOGICAL</literal> replication command.
  </para>
 
@@ -3419,7 +3419,7 @@ Bind (F)
 <listitem>
 <para>
                 The number of parameter format codes that follow
-                (denoted <replaceable>C</> below).
+                (denoted <replaceable>C</replaceable> below).
                 This can be zero to indicate that there are no parameters
                 or that the parameters all use the default format (text);
                 or one, in which case the specified format code is applied
@@ -3430,7 +3430,7 @@ Bind (F)
 </varlistentry>
 <varlistentry>
 <term>
-        Int16[<replaceable>C</>]
+        Int16[<replaceable>C</replaceable>]
 </term>
 <listitem>
 <para>
@@ -3488,7 +3488,7 @@ Bind (F)
 <listitem>
 <para>
                 The number of result-column format codes that follow
-                (denoted <replaceable>R</> below).
+                (denoted <replaceable>R</replaceable> below).
                 This can be zero to indicate that there are no result columns
                 or that the result columns should all use the default format
                 (text);
@@ -3500,7 +3500,7 @@ Bind (F)
 </varlistentry>
 <varlistentry>
 <term>
-        Int16[<replaceable>R</>]
+        Int16[<replaceable>R</replaceable>]
 </term>
 <listitem>
 <para>
@@ -3575,7 +3575,7 @@ CancelRequest (F)
 <listitem>
 <para>
                 The cancel request code.  The value is chosen to contain
-                <literal>1234</> in the most significant 16 bits, and <literal>5678</> in the
+                <literal>1234</literal> in the most significant 16 bits, and <literal>5678</literal> in the
                 least significant 16 bits.  (To avoid confusion, this code
                 must not be the same as any protocol version number.)
 </para>
@@ -3642,8 +3642,8 @@ Close (F)
 </term>
 <listitem>
 <para>
-                '<literal>S</>' to close a prepared statement; or
-                '<literal>P</>' to close a portal.
+                '<literal>S</literal>' to close a prepared statement; or
+                '<literal>P</literal>' to close a portal.
 </para>
 </listitem>
 </varlistentry>
@@ -3977,13 +3977,13 @@ CopyInResponse (B)
 <listitem>
 <para>
                 The number of columns in the data to be copied
-                (denoted <replaceable>N</> below).
+                (denoted <replaceable>N</replaceable> below).
 </para>
 </listitem>
 </varlistentry>
 <varlistentry>
 <term>
-        Int16[<replaceable>N</>]
+        Int16[<replaceable>N</replaceable>]
 </term>
 <listitem>
 <para>
@@ -4050,13 +4050,13 @@ CopyOutResponse (B)
 <listitem>
 <para>
                 The number of columns in the data to be copied
-                (denoted <replaceable>N</> below).
+                (denoted <replaceable>N</replaceable> below).
 </para>
 </listitem>
 </varlistentry>
 <varlistentry>
 <term>
-        Int16[<replaceable>N</>]
+        Int16[<replaceable>N</replaceable>]
 </term>
 <listitem>
 <para>
@@ -4123,13 +4123,13 @@ CopyBothResponse (B)
 <listitem>
 <para>
                 The number of columns in the data to be copied
-                (denoted <replaceable>N</> below).
+                (denoted <replaceable>N</replaceable> below).
 </para>
 </listitem>
 </varlistentry>
 <varlistentry>
 <term>
-        Int16[<replaceable>N</>]
+        Int16[<replaceable>N</replaceable>]
 </term>
 <listitem>
 <para>
@@ -4252,8 +4252,8 @@ Describe (F)
 </term>
 <listitem>
 <para>
-                '<literal>S</>' to describe a prepared statement; or
-                '<literal>P</>' to describe a portal.
+                '<literal>S</literal>' to describe a prepared statement; or
+                '<literal>P</literal>' to describe a portal.
 </para>
 </listitem>
 </varlistentry>
@@ -4424,7 +4424,7 @@ Execute (F)
 <para>
                 Maximum number of rows to return, if portal contains
                 a query that returns rows (ignored otherwise).  Zero
-                denotes <quote>no limit</>.
+                denotes <quote>no limit</quote>.
 </para>
 </listitem>
 </varlistentry>
@@ -4514,7 +4514,7 @@ FunctionCall (F)
 <listitem>
 <para>
                 The number of argument format codes that follow
-                (denoted <replaceable>C</> below).
+                (denoted <replaceable>C</replaceable> below).
                 This can be zero to indicate that there are no arguments
                 or that the arguments all use the default format (text);
                 or one, in which case the specified format code is applied
@@ -4525,7 +4525,7 @@ FunctionCall (F)
 </varlistentry>
 <varlistentry>
 <term>
-        Int16[<replaceable>C</>]
+        Int16[<replaceable>C</replaceable>]
 </term>
 <listitem>
 <para>
@@ -4855,7 +4855,7 @@ NotificationResponse (B)
 </term>
 <listitem>
 <para>
-                The <quote>payload</> string passed from the notifying process.
+                The <quote>payload</quote> string passed from the notifying process.
 </para>
 </listitem>
 </varlistentry>
@@ -5261,9 +5261,9 @@ ReadyForQuery (B)
 <listitem>
 <para>
                 Current backend transaction status indicator.
-                Possible values are '<literal>I</>' if idle (not in
-                a transaction block); '<literal>T</>' if in a transaction
-                block; or '<literal>E</>' if in a failed transaction
+                Possible values are '<literal>I</literal>' if idle (not in
+                a transaction block); '<literal>T</literal>' if in a transaction
+                block; or '<literal>E</literal>' if in a failed transaction
                 block (queries will be rejected until block is ended).
 </para>
 </listitem>
@@ -5364,7 +5364,7 @@ RowDescription (B)
 </term>
 <listitem>
 <para>
-                The data type size (see <varname>pg_type.typlen</>).
+                The data type size (see <varname>pg_type.typlen</varname>).
                 Note that negative values denote variable-width types.
 </para>
 </listitem>
@@ -5375,7 +5375,7 @@ RowDescription (B)
 </term>
 <listitem>
 <para>
-                The type modifier (see <varname>pg_attribute.atttypmod</>).
+                The type modifier (see <varname>pg_attribute.atttypmod</varname>).
                 The meaning of the modifier is type-specific.
 </para>
 </listitem>
@@ -5539,7 +5539,7 @@ SSLRequest (F)
 <listitem>
 <para>
                 The <acronym>SSL</acronym> request code.  The value is chosen to contain
-                <literal>1234</> in the most significant 16 bits, and <literal>5679</> in the
+                <literal>1234</literal> in the most significant 16 bits, and <literal>5679</literal> in the
                 least significant 16 bits.  (To avoid confusion, this code
                 must not be the same as any protocol version number.)
 </para>
@@ -5588,7 +5588,7 @@ StartupMessage (F)
         parameter name and value strings.  A zero byte is required as a
         terminator after the last name/value pair.
         Parameters can appear in any
-        order.  <literal>user</> is required, others are optional.
+        order.  <literal>user</literal> is required, others are optional.
         Each parameter is specified as:
 <variablelist>
 <varlistentry>
@@ -5602,7 +5602,7 @@ StartupMessage (F)
 <variablelist>
 <varlistentry>
 <term>
-                <literal>user</>
+                <literal>user</literal>
 </term>
 <listitem>
 <para>
@@ -5613,7 +5613,7 @@ StartupMessage (F)
 </varlistentry>
 <varlistentry>
 <term>
-                <literal>database</>
+                <literal>database</literal>
 </term>
 <listitem>
 <para>
@@ -5623,7 +5623,7 @@ StartupMessage (F)
 </varlistentry>
 <varlistentry>
 <term>
-                <literal>options</>
+                <literal>options</literal>
 </term>
 <listitem>
 <para>
@@ -5631,23 +5631,23 @@ StartupMessage (F)
                         deprecated in favor of setting individual run-time
                         parameters.)  Spaces within this string are
                         considered to separate arguments, unless escaped with
-                        a backslash (<literal>\</>); write <literal>\\</> to
+                        a backslash (<literal>\</literal>); write <literal>\\</literal> to
                         represent a literal backslash.
 </para>
 </listitem>
 </varlistentry>
 <varlistentry>
 <term>
-                <literal>replication</>
+                <literal>replication</literal>
 </term>
 <listitem>
 <para>
                         Used to connect in streaming replication mode, where
                         a small set of replication commands can be issued
                         instead of SQL statements. Value can be
-                        <literal>true</>, <literal>false</>, or
-                        <literal>database</>, and the default is
-                        <literal>false</>. See
+                        <literal>true</literal>, <literal>false</literal>, or
+                        <literal>database</literal>, and the default is
+                        <literal>false</literal>. See
                         <xref linkend="protocol-replication"> for details.
 </para>
 </listitem>
@@ -5768,15 +5768,15 @@ message.
 
 <varlistentry>
 <term>
-<literal>S</>
+<literal>S</literal>
 </term>
 <listitem>
 <para>
         Severity: the field contents are
-        <literal>ERROR</>, <literal>FATAL</>, or
-        <literal>PANIC</> (in an error message), or
-        <literal>WARNING</>, <literal>NOTICE</>, <literal>DEBUG</>,
-        <literal>INFO</>, or <literal>LOG</> (in a notice message),
+        <literal>ERROR</literal>, <literal>FATAL</literal>, or
+        <literal>PANIC</literal> (in an error message), or
+        <literal>WARNING</literal>, <literal>NOTICE</literal>, <literal>DEBUG</literal>,
+        <literal>INFO</literal>, or <literal>LOG</literal> (in a notice message),
         or a localized translation of one of these.  Always present.
 </para>
 </listitem>
@@ -5784,18 +5784,18 @@ message.
 
 <varlistentry>
 <term>
-<literal>V</>
+<literal>V</literal>
 </term>
 <listitem>
 <para>
         Severity: the field contents are
-        <literal>ERROR</>, <literal>FATAL</>, or
-        <literal>PANIC</> (in an error message), or
-        <literal>WARNING</>, <literal>NOTICE</>, <literal>DEBUG</>,
-        <literal>INFO</>, or <literal>LOG</> (in a notice message).
-        This is identical to the <literal>S</> field except
+        <literal>ERROR</literal>, <literal>FATAL</literal>, or
+        <literal>PANIC</literal> (in an error message), or
+        <literal>WARNING</literal>, <literal>NOTICE</literal>, <literal>DEBUG</literal>,
+        <literal>INFO</literal>, or <literal>LOG</literal> (in a notice message).
+        This is identical to the <literal>S</literal> field except
         that the contents are never localized.  This is present only in
-        messages generated by <productname>PostgreSQL</> versions 9.6
+        messages generated by <productname>PostgreSQL</productname> versions 9.6
         and later.
 </para>
 </listitem>
@@ -5803,7 +5803,7 @@ message.
 
 <varlistentry>
 <term>
-<literal>C</>
+<literal>C</literal>
 </term>
 <listitem>
 <para>
@@ -5815,7 +5815,7 @@ message.
 
 <varlistentry>
 <term>
-<literal>M</>
+<literal>M</literal>
 </term>
 <listitem>
 <para>
@@ -5828,7 +5828,7 @@ message.
 
 <varlistentry>
 <term>
-<literal>D</>
+<literal>D</literal>
 </term>
 <listitem>
 <para>
@@ -5840,7 +5840,7 @@ message.
 
 <varlistentry>
 <term>
-<literal>H</>
+<literal>H</literal>
 </term>
 <listitem>
 <para>
@@ -5854,7 +5854,7 @@ message.
 
 <varlistentry>
 <term>
-<literal>P</>
+<literal>P</literal>
 </term>
 <listitem>
 <para>
@@ -5868,21 +5868,21 @@ message.
 
 <varlistentry>
 <term>
-<literal>p</>
+<literal>p</literal>
 </term>
 <listitem>
 <para>
-        Internal position: this is defined the same as the <literal>P</>
+        Internal position: this is defined the same as the <literal>P</literal>
         field, but it is used when the cursor position refers to an internally
         generated command rather than the one submitted by the client.
-        The <literal>q</> field will always appear when this field appears.
+        The <literal>q</literal> field will always appear when this field appears.
 </para>
 </listitem>
 </varlistentry>
 
 <varlistentry>
 <term>
-<literal>q</>
+<literal>q</literal>
 </term>
 <listitem>
 <para>
@@ -5894,7 +5894,7 @@ message.
 
 <varlistentry>
 <term>
-<literal>W</>
+<literal>W</literal>
 </term>
 <listitem>
 <para>
@@ -5908,7 +5908,7 @@ message.
 
 <varlistentry>
 <term>
-<literal>s</>
+<literal>s</literal>
 </term>
 <listitem>
 <para>
@@ -5920,7 +5920,7 @@ message.
 
 <varlistentry>
 <term>
-<literal>t</>
+<literal>t</literal>
 </term>
 <listitem>
 <para>
@@ -5933,7 +5933,7 @@ message.
 
 <varlistentry>
 <term>
-<literal>c</>
+<literal>c</literal>
 </term>
 <listitem>
 <para>
@@ -5946,7 +5946,7 @@ message.
 
 <varlistentry>
 <term>
-<literal>d</>
+<literal>d</literal>
 </term>
 <listitem>
 <para>
@@ -5959,7 +5959,7 @@ message.
 
 <varlistentry>
 <term>
-<literal>n</>
+<literal>n</literal>
 </term>
 <listitem>
 <para>
@@ -5974,7 +5974,7 @@ message.
 
 <varlistentry>
 <term>
-<literal>F</>
+<literal>F</literal>
 </term>
 <listitem>
 <para>
@@ -5986,7 +5986,7 @@ message.
 
 <varlistentry>
 <term>
-<literal>L</>
+<literal>L</literal>
 </term>
 <listitem>
 <para>
@@ -5998,7 +5998,7 @@ message.
 
 <varlistentry>
 <term>
-<literal>R</>
+<literal>R</literal>
 </term>
 <listitem>
 <para>
@@ -6738,8 +6738,8 @@ developers trying to update existing client libraries to protocol 3.0.
 The initial startup packet uses a flexible list-of-strings format
 instead of a fixed format.  Notice that session default values for run-time
 parameters can now be specified directly in the startup packet.  (Actually,
-you could do that before using the <literal>options</> field, but given the
-limited width of <literal>options</> and the lack of any way to quote
+you could do that before using the <literal>options</literal> field, but given the
+limited width of <literal>options</literal> and the lack of any way to quote
 whitespace in the values, it wasn't a very safe technique.)
 </para>
 
@@ -6750,7 +6750,7 @@ PasswordMessage now has a type byte.
 </para>
 
 <para>
-ErrorResponse and NoticeResponse ('<literal>E</>' and '<literal>N</>')
+ErrorResponse and NoticeResponse ('<literal>E</literal>' and '<literal>N</literal>')
 messages now contain multiple fields, from which the client code can
 assemble an error message of the desired level of verbosity.  Note that
 individual fields will typically not end with a newline, whereas the single
@@ -6758,7 +6758,7 @@ string sent in the older protocol always did.
 </para>
 
 <para>
-The ReadyForQuery ('<literal>Z</>') message includes a transaction status
+The ReadyForQuery ('<literal>Z</literal>') message includes a transaction status
 indicator.
 </para>
 
@@ -6771,7 +6771,7 @@ directly tied to the server's internal representation.
 </para>
 
 <para>
-There is a new <quote>extended query</> sub-protocol, which adds the frontend
+There is a new <quote>extended query</quote> sub-protocol, which adds the frontend
 message types Parse, Bind, Execute, Describe, Close, Flush, and Sync, and the
 backend message types ParseComplete, BindComplete, PortalSuspended,
 ParameterDescription, NoData, and CloseComplete.  Existing clients do not
@@ -6782,7 +6782,7 @@ might allow improvements in performance or functionality.
 <para>
 <command>COPY</command> data is now encapsulated into CopyData and CopyDone messages.  There
 is a well-defined way to recover from errors during <command>COPY</command>.  The special
-<quote><literal>\.</></quote> last line is not needed anymore, and is not sent
+<quote><literal>\.</literal></quote> last line is not needed anymore, and is not sent
 during <command>COPY OUT</command>.
 (It is still recognized as a terminator during <command>COPY IN</command>, but its use is
 deprecated and will eventually be removed.)  Binary <command>COPY</command> is supported.
@@ -6800,31 +6800,31 @@ server data representations.
 </para>
 
 <para>
-The backend sends ParameterStatus ('<literal>S</>') messages during connection
+The backend sends ParameterStatus ('<literal>S</literal>') messages during connection
 startup for all parameters it considers interesting to the client library.
 Subsequently, a ParameterStatus message is sent whenever the active value
 changes for any of these parameters.
 </para>
 
 <para>
-The RowDescription ('<literal>T</>') message carries new table OID and column
+The RowDescription ('<literal>T</literal>') message carries new table OID and column
 number fields for each column of the described row.  It also shows the format
 code for each column.
 </para>
 
 <para>
-The CursorResponse ('<literal>P</>') message is no longer generated by
+The CursorResponse ('<literal>P</literal>') message is no longer generated by
 the backend.
 </para>
 
 <para>
-The NotificationResponse ('<literal>A</>') message has an additional string
-field, which can carry a <quote>payload</> string passed
+The NotificationResponse ('<literal>A</literal>') message has an additional string
+field, which can carry a <quote>payload</quote> string passed
 from the <command>NOTIFY</command> event sender.
 </para>
 
 <para>
-The EmptyQueryResponse ('<literal>I</>') message used to include an empty
+The EmptyQueryResponse ('<literal>I</literal>') message used to include an empty
 string parameter; this has been removed.
 </para>
 

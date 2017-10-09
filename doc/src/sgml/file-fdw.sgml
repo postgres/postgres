@@ -8,7 +8,7 @@
  </indexterm>
 
  <para>
-  The <filename>file_fdw</> module provides the foreign-data wrapper
+  The <filename>file_fdw</filename> module provides the foreign-data wrapper
   <function>file_fdw</function>, which can be used to access data
   files in the server's file system, or to execute programs on the server
   and read their output.  The data file or program output must be in a format
@@ -41,7 +41,7 @@
    <listitem>
     <para>
      Specifies the command to be executed.  The standard output of this
-     command will be read as though <command>COPY FROM PROGRAM</> were used.
+     command will be read as though <command>COPY FROM PROGRAM</command> were used.
      Either <literal>program</literal> or <literal>filename</literal> must be
      specified, but not both.
     </para>
@@ -54,7 +54,7 @@
    <listitem>
     <para>
      Specifies the data format,
-     the same as <command>COPY</>'s <literal>FORMAT</literal> option.
+     the same as <command>COPY</command>'s <literal>FORMAT</literal> option.
     </para>
    </listitem>
   </varlistentry>
@@ -65,7 +65,7 @@
    <listitem>
     <para>
      Specifies whether the data has a header line,
-     the same as <command>COPY</>'s <literal>HEADER</literal> option.
+     the same as <command>COPY</command>'s <literal>HEADER</literal> option.
     </para>
    </listitem>
   </varlistentry>
@@ -76,7 +76,7 @@
    <listitem>
     <para>
      Specifies the data delimiter character,
-     the same as <command>COPY</>'s <literal>DELIMITER</literal> option.
+     the same as <command>COPY</command>'s <literal>DELIMITER</literal> option.
     </para>
    </listitem>
   </varlistentry>
@@ -87,7 +87,7 @@
    <listitem>
     <para>
      Specifies the data quote character,
-     the same as <command>COPY</>'s <literal>QUOTE</literal> option.
+     the same as <command>COPY</command>'s <literal>QUOTE</literal> option.
     </para>
    </listitem>
   </varlistentry>
@@ -98,7 +98,7 @@
    <listitem>
     <para>
      Specifies the data escape character,
-     the same as <command>COPY</>'s <literal>ESCAPE</literal> option.
+     the same as <command>COPY</command>'s <literal>ESCAPE</literal> option.
     </para>
    </listitem>
   </varlistentry>
@@ -109,7 +109,7 @@
    <listitem>
     <para>
      Specifies the data null string,
-     the same as <command>COPY</>'s <literal>NULL</literal> option.
+     the same as <command>COPY</command>'s <literal>NULL</literal> option.
     </para>
    </listitem>
   </varlistentry>
@@ -120,7 +120,7 @@
    <listitem>
     <para>
      Specifies the data encoding,
-     the same as <command>COPY</>'s <literal>ENCODING</literal> option.
+     the same as <command>COPY</command>'s <literal>ENCODING</literal> option.
     </para>
    </listitem>
   </varlistentry>
@@ -128,10 +128,10 @@
  </variablelist>
 
  <para>
-  Note that while <command>COPY</> allows options such as <literal>HEADER</>
+  Note that while <command>COPY</command> allows options such as <literal>HEADER</literal>
   to be specified without a corresponding value, the foreign table option
   syntax requires a value to be present in all cases.  To activate
-  <command>COPY</> options typically written without a value, you can pass
+  <command>COPY</command> options typically written without a value, you can pass
   the value TRUE, since all such options are Booleans.
  </para>
 
@@ -150,7 +150,7 @@
      This is a Boolean option.  If true, it specifies that values of the
      column should not be matched against the null string (that is, the
      table-level <literal>null</literal> option).  This has the same effect
-     as listing the column in <command>COPY</>'s
+     as listing the column in <command>COPY</command>'s
      <literal>FORCE_NOT_NULL</literal> option.
     </para>
    </listitem>
@@ -162,11 +162,11 @@
    <listitem>
     <para>
      This is a Boolean option.  If true, it specifies that values of the
-     column which match the null string are returned as <literal>NULL</>
+     column which match the null string are returned as <literal>NULL</literal>
      even if the value is quoted. Without this option, only unquoted
-     values matching the null string are returned as <literal>NULL</>.
+     values matching the null string are returned as <literal>NULL</literal>.
      This has the same effect  as listing the column in
-     <command>COPY</>'s <literal>FORCE_NULL</literal> option.
+     <command>COPY</command>'s <literal>FORCE_NULL</literal> option.
     </para>
    </listitem>
   </varlistentry>
@@ -174,14 +174,14 @@
  </variablelist>
 
  <para>
-  <command>COPY</>'s <literal>OIDS</literal> and
+  <command>COPY</command>'s <literal>OIDS</literal> and
   <literal>FORCE_QUOTE</literal> options are currently not supported by
-  <literal>file_fdw</>.
+  <literal>file_fdw</literal>.
  </para>
 
  <para>
   These options can only be specified for a foreign table or its columns, not
-  in the options of the <literal>file_fdw</> foreign-data wrapper, nor in the
+  in the options of the <literal>file_fdw</literal> foreign-data wrapper, nor in the
   options of a server or user mapping using the wrapper.
  </para>
 
@@ -193,7 +193,7 @@
  </para>
 
  <para>
-  When specifying the <literal>program</> option, keep in mind that the option
+  When specifying the <literal>program</literal> option, keep in mind that the option
   string is executed by the shell.  If you need to pass any arguments to the
   command that come from an untrusted source, you must be careful to strip or
   escape any characters that might have special meaning to the shell.
@@ -202,9 +202,9 @@
  </para>
 
  <para>
-  For a foreign table using <literal>file_fdw</>, <command>EXPLAIN</> shows
+  For a foreign table using <literal>file_fdw</literal>, <command>EXPLAIN</command> shows
   the name of the file to be read or program to be run.
-  For a file, unless <literal>COSTS OFF</> is
+  For a file, unless <literal>COSTS OFF</literal> is
   specified, the file size (in bytes) is shown as well.
  </para>
 
@@ -212,10 +212,10 @@
  <title id="csvlog-fdw">Create a Foreign Table for PostgreSQL CSV Logs</title>
 
   <para>
-   One of the obvious uses for <literal>file_fdw</> is to make
+   One of the obvious uses for <literal>file_fdw</literal> is to make
    the PostgreSQL activity log available as a table for querying.  To
    do this, first you must be logging to a CSV file, which here we
-   will call <literal>pglog.csv</>.  First, install <literal>file_fdw</>
+   will call <literal>pglog.csv</literal>.  First, install <literal>file_fdw</literal>
    as an extension:
   </para>
 
@@ -233,7 +233,7 @@ CREATE SERVER pglog FOREIGN DATA WRAPPER file_fdw;
 
   <para>
    Now you are ready to create the foreign data table.  Using the
-   <command>CREATE FOREIGN TABLE</> command, you will need to define
+   <command>CREATE FOREIGN TABLE</command> command, you will need to define
    the columns for the table, the CSV file name, and its format:
 
 <programlisting>

@@ -24,10 +24,10 @@ LOAD 'auto_explain';
 </programlisting>
 
   (You must be superuser to do that.)  More typical usage is to preload
-  it into some or all sessions by including <literal>auto_explain</> in
+  it into some or all sessions by including <literal>auto_explain</literal> in
   <xref linkend="guc-session-preload-libraries"> or
   <xref linkend="guc-shared-preload-libraries"> in
-  <filename>postgresql.conf</>.  Then you can track unexpectedly slow queries
+  <filename>postgresql.conf</filename>.  Then you can track unexpectedly slow queries
   no matter when they happen.  Of course there is a price in overhead for
   that.
  </para>
@@ -47,7 +47,7 @@ LOAD 'auto_explain';
     <term>
      <varname>auto_explain.log_min_duration</varname> (<type>integer</type>)
      <indexterm>
-      <primary><varname>auto_explain.log_min_duration</> configuration parameter</primary>
+      <primary><varname>auto_explain.log_min_duration</varname> configuration parameter</primary>
      </indexterm>
     </term>
     <listitem>
@@ -66,13 +66,13 @@ LOAD 'auto_explain';
     <term>
      <varname>auto_explain.log_analyze</varname> (<type>boolean</type>)
      <indexterm>
-      <primary><varname>auto_explain.log_analyze</> configuration parameter</primary>
+      <primary><varname>auto_explain.log_analyze</varname> configuration parameter</primary>
      </indexterm>
     </term>
     <listitem>
      <para>
-      <varname>auto_explain.log_analyze</varname> causes <command>EXPLAIN ANALYZE</>
-      output, rather than just <command>EXPLAIN</> output, to be printed
+      <varname>auto_explain.log_analyze</varname> causes <command>EXPLAIN ANALYZE</command>
+      output, rather than just <command>EXPLAIN</command> output, to be printed
       when an execution plan is logged. This parameter is off by default.
       Only superusers can change this setting.
      </para>
@@ -92,14 +92,14 @@ LOAD 'auto_explain';
     <term>
      <varname>auto_explain.log_buffers</varname> (<type>boolean</type>)
      <indexterm>
-      <primary><varname>auto_explain.log_buffers</> configuration parameter</primary>
+      <primary><varname>auto_explain.log_buffers</varname> configuration parameter</primary>
      </indexterm>
     </term>
     <listitem>
      <para>
       <varname>auto_explain.log_buffers</varname> controls whether buffer
       usage statistics are printed when an execution plan is logged; it's
-      equivalent to the <literal>BUFFERS</> option of <command>EXPLAIN</>.
+      equivalent to the <literal>BUFFERS</literal> option of <command>EXPLAIN</command>.
       This parameter has no effect
       unless <varname>auto_explain.log_analyze</varname> is enabled.
       This parameter is off by default.
@@ -112,14 +112,14 @@ LOAD 'auto_explain';
     <term>
      <varname>auto_explain.log_timing</varname> (<type>boolean</type>)
      <indexterm>
-      <primary><varname>auto_explain.log_timing</> configuration parameter</primary>
+      <primary><varname>auto_explain.log_timing</varname> configuration parameter</primary>
      </indexterm>
     </term>
     <listitem>
      <para>
       <varname>auto_explain.log_timing</varname> controls whether per-node
       timing information is printed when an execution plan is logged; it's
-      equivalent to the <literal>TIMING</> option of <command>EXPLAIN</>.
+      equivalent to the <literal>TIMING</literal> option of <command>EXPLAIN</command>.
       The overhead of repeatedly reading the system clock can slow down
       queries significantly on some systems, so it may be useful to set this
       parameter to off when only actual row counts, and not exact times, are
@@ -136,7 +136,7 @@ LOAD 'auto_explain';
     <term>
      <varname>auto_explain.log_triggers</varname> (<type>boolean</type>)
      <indexterm>
-      <primary><varname>auto_explain.log_triggers</> configuration parameter</primary>
+      <primary><varname>auto_explain.log_triggers</varname> configuration parameter</primary>
      </indexterm>
     </term>
     <listitem>
@@ -155,14 +155,14 @@ LOAD 'auto_explain';
     <term>
      <varname>auto_explain.log_verbose</varname> (<type>boolean</type>)
      <indexterm>
-      <primary><varname>auto_explain.log_verbose</> configuration parameter</primary>
+      <primary><varname>auto_explain.log_verbose</varname> configuration parameter</primary>
      </indexterm>
     </term>
     <listitem>
      <para>
       <varname>auto_explain.log_verbose</varname> controls whether verbose
       details are printed when an execution plan is logged; it's
-      equivalent to the <literal>VERBOSE</> option of <command>EXPLAIN</>.
+      equivalent to the <literal>VERBOSE</literal> option of <command>EXPLAIN</command>.
       This parameter is off by default.
       Only superusers can change this setting.
      </para>
@@ -173,13 +173,13 @@ LOAD 'auto_explain';
     <term>
      <varname>auto_explain.log_format</varname> (<type>enum</type>)
      <indexterm>
-      <primary><varname>auto_explain.log_format</> configuration parameter</primary>
+      <primary><varname>auto_explain.log_format</varname> configuration parameter</primary>
      </indexterm>
     </term>
     <listitem>
      <para>
       <varname>auto_explain.log_format</varname> selects the
-      <command>EXPLAIN</> output format to be used.
+      <command>EXPLAIN</command> output format to be used.
       The allowed values are <literal>text</literal>, <literal>xml</literal>,
       <literal>json</literal>, and <literal>yaml</literal>.  The default is text.
       Only superusers can change this setting.
@@ -191,7 +191,7 @@ LOAD 'auto_explain';
     <term>
      <varname>auto_explain.log_nested_statements</varname> (<type>boolean</type>)
      <indexterm>
-      <primary><varname>auto_explain.log_nested_statements</> configuration parameter</primary>
+      <primary><varname>auto_explain.log_nested_statements</varname> configuration parameter</primary>
      </indexterm>
     </term>
     <listitem>
@@ -208,7 +208,7 @@ LOAD 'auto_explain';
     <term>
      <varname>auto_explain.sample_rate</varname> (<type>real</type>)
      <indexterm>
-      <primary><varname>auto_explain.sample_rate</> configuration parameter</primary>
+      <primary><varname>auto_explain.sample_rate</varname> configuration parameter</primary>
      </indexterm>
     </term>
     <listitem>
@@ -224,7 +224,7 @@ LOAD 'auto_explain';
 
   <para>
    In ordinary usage, these parameters are set
-   in <filename>postgresql.conf</>, although superusers can alter them
+   in <filename>postgresql.conf</filename>, although superusers can alter them
    on-the-fly within their own sessions.
    Typical usage might be:
   </para>

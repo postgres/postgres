@@ -3,8 +3,8 @@
 <chapter id="plpython">
  <title>PL/Python - Python Procedural Language</title>
 
- <indexterm zone="plpython"><primary>PL/Python</></>
- <indexterm zone="plpython"><primary>Python</></>
+ <indexterm zone="plpython"><primary>PL/Python</primary></indexterm>
+ <indexterm zone="plpython"><primary>Python</primary></indexterm>
 
  <para>
   The <application>PL/Python</application> procedural language allows
@@ -14,22 +14,22 @@
 
  <para>
   To install PL/Python in a particular database, use
-  <literal>CREATE EXTENSION plpythonu</> (but
+  <literal>CREATE EXTENSION plpythonu</literal> (but
   see also <xref linkend="plpython-python23">).
  </para>
 
   <tip>
    <para>
-    If a language is installed into <literal>template1</>, all subsequently
+    If a language is installed into <literal>template1</literal>, all subsequently
     created databases will have the language installed automatically.
    </para>
   </tip>
 
  <para>
-  PL/Python is only available as an <quote>untrusted</> language, meaning
+  PL/Python is only available as an <quote>untrusted</quote> language, meaning
   it does not offer any way of restricting what users can do in it and
-  is therefore named <literal>plpythonu</>.  A trusted
-  variant <literal>plpython</> might become available in the future
+  is therefore named <literal>plpythonu</literal>.  A trusted
+  variant <literal>plpython</literal> might become available in the future
   if a secure execution mechanism is developed in Python.  The
   writer of a function in untrusted PL/Python must take care that the
   function cannot be used to do anything unwanted, since it will be
@@ -383,8 +383,8 @@ $$ LANGUAGE plpythonu;
        For all other PostgreSQL return types, the return value is converted
        to a string using the Python built-in <literal>str</literal>, and the
        result is passed to the input function of the PostgreSQL data type.
-       (If the Python value is a <type>float</>, it is converted using
-       the <literal>repr</> built-in instead of <literal>str</literal>, to
+       (If the Python value is a <type>float</type>, it is converted using
+       the <literal>repr</literal> built-in instead of <literal>str</literal>, to
        avoid loss of precision.)
       </para>
 
@@ -756,8 +756,8 @@ SELECT * FROM multiout_simple_setof(3);
    data between function calls.  This variable is private static data.
    The global dictionary <varname>GD</varname> is public data,
    available to all Python functions within a session.  Use with
-   care.<indexterm><primary>global data</>
-   <secondary>in PL/Python</></indexterm>
+   care.<indexterm><primary>global data</primary>
+   <secondary>in PL/Python</secondary></indexterm>
   </para>
 
   <para>
@@ -800,38 +800,38 @@ $$ LANGUAGE plpythonu;
    <literal>TD</literal> contains trigger-related values:
    <variablelist>
     <varlistentry>
-     <term><literal>TD["event"]</></term>
+     <term><literal>TD["event"]</literal></term>
      <listitem>
       <para>
        contains the event as a string:
-       <literal>INSERT</>, <literal>UPDATE</>,
-       <literal>DELETE</>, or <literal>TRUNCATE</>.
+       <literal>INSERT</literal>, <literal>UPDATE</literal>,
+       <literal>DELETE</literal>, or <literal>TRUNCATE</literal>.
       </para>
      </listitem>
     </varlistentry>
 
     <varlistentry>
-     <term><literal>TD["when"]</></term>
+     <term><literal>TD["when"]</literal></term>
      <listitem>
       <para>
-       contains one of <literal>BEFORE</>, <literal>AFTER</>, or
-       <literal>INSTEAD OF</>.
+       contains one of <literal>BEFORE</literal>, <literal>AFTER</literal>, or
+       <literal>INSTEAD OF</literal>.
       </para>
      </listitem>
     </varlistentry>
 
     <varlistentry>
-     <term><literal>TD["level"]</></term>
+     <term><literal>TD["level"]</literal></term>
      <listitem>
       <para>
-       contains <literal>ROW</> or <literal>STATEMENT</>.
+       contains <literal>ROW</literal> or <literal>STATEMENT</literal>.
       </para>
      </listitem>
     </varlistentry>
 
     <varlistentry>
-     <term><literal>TD["new"]</></term>
-     <term><literal>TD["old"]</></term>
+     <term><literal>TD["new"]</literal></term>
+     <term><literal>TD["old"]</literal></term>
      <listitem>
       <para>
        For a row-level trigger, one or both of these fields contain
@@ -841,7 +841,7 @@ $$ LANGUAGE plpythonu;
     </varlistentry>
 
     <varlistentry>
-     <term><literal>TD["name"]</></term>
+     <term><literal>TD["name"]</literal></term>
      <listitem>
       <para>
        contains the trigger name.
@@ -850,7 +850,7 @@ $$ LANGUAGE plpythonu;
     </varlistentry>
 
     <varlistentry>
-     <term><literal>TD["table_name"]</></term>
+     <term><literal>TD["table_name"]</literal></term>
      <listitem>
       <para>
        contains the name of the table on which the trigger occurred.
@@ -859,7 +859,7 @@ $$ LANGUAGE plpythonu;
     </varlistentry>
 
     <varlistentry>
-     <term><literal>TD["table_schema"]</></term>
+     <term><literal>TD["table_schema"]</literal></term>
      <listitem>
       <para>
        contains the schema of the table on which the trigger occurred.
@@ -868,7 +868,7 @@ $$ LANGUAGE plpythonu;
     </varlistentry>
 
     <varlistentry>
-     <term><literal>TD["relid"]</></term>
+     <term><literal>TD["relid"]</literal></term>
      <listitem>
       <para>
        contains the OID of the table on which the trigger occurred.
@@ -877,12 +877,12 @@ $$ LANGUAGE plpythonu;
     </varlistentry>
 
     <varlistentry>
-     <term><literal>TD["args"]</></term>
+     <term><literal>TD["args"]</literal></term>
      <listitem>
       <para>
-       If the <command>CREATE TRIGGER</> command
-       included arguments, they are available in <literal>TD["args"][0]</> to
-       <literal>TD["args"][<replaceable>n</>-1]</>.
+       If the <command>CREATE TRIGGER</command> command
+       included arguments, they are available in <literal>TD["args"][0]</literal> to
+       <literal>TD["args"][<replaceable>n</replaceable>-1]</literal>.
       </para>
      </listitem>
     </varlistentry>
@@ -890,14 +890,14 @@ $$ LANGUAGE plpythonu;
   </para>
 
   <para>
-   If <literal>TD["when"]</literal> is <literal>BEFORE</> or
-   <literal>INSTEAD OF</> and
-   <literal>TD["level"]</literal> is <literal>ROW</>, you can
+   If <literal>TD["when"]</literal> is <literal>BEFORE</literal> or
+   <literal>INSTEAD OF</literal> and
+   <literal>TD["level"]</literal> is <literal>ROW</literal>, you can
    return <literal>None</literal> or <literal>"OK"</literal> from the
    Python function to indicate the row is unmodified,
-   <literal>"SKIP"</> to abort the event, or if <literal>TD["event"]</>
-   is <command>INSERT</> or <command>UPDATE</> you can return
-   <literal>"MODIFY"</> to indicate you've modified the new row.
+   <literal>"SKIP"</literal> to abort the event, or if <literal>TD["event"]</literal>
+   is <command>INSERT</command> or <command>UPDATE</command> you can return
+   <literal>"MODIFY"</literal> to indicate you've modified the new row.
    Otherwise the return value is ignored.
   </para>
  </sect1>
@@ -1023,7 +1023,7 @@ foo = rv[i]["my_column"]
     <term><literal>plpy.<function>execute</function>(<replaceable>plan</replaceable> [, <replaceable>arguments</replaceable> [, <replaceable>max-rows</replaceable>]])</literal></term>
     <listitem>
      <para>
-      <indexterm><primary>preparing a query</><secondary>in PL/Python</></indexterm>
+      <indexterm><primary>preparing a query</primary><secondary>in PL/Python</secondary></indexterm>
       <function>plpy.prepare</function> prepares the execution plan for a
       query.  It is called with a query string and a list of parameter types,
       if you have parameter references in the query.  For example:
@@ -1371,22 +1371,22 @@ $$ LANGUAGE plpythonu;
   <para>
    The <literal>plpy</literal> module also provides the functions
    <simplelist>
-    <member><literal>plpy.debug(<replaceable>msg, **kwargs</>)</literal></member>
-    <member><literal>plpy.log(<replaceable>msg, **kwargs</>)</literal></member>
-    <member><literal>plpy.info(<replaceable>msg, **kwargs</>)</literal></member>
-    <member><literal>plpy.notice(<replaceable>msg, **kwargs</>)</literal></member>
-    <member><literal>plpy.warning(<replaceable>msg, **kwargs</>)</literal></member>
-    <member><literal>plpy.error(<replaceable>msg, **kwargs</>)</literal></member>
-    <member><literal>plpy.fatal(<replaceable>msg, **kwargs</>)</literal></member>
+    <member><literal>plpy.debug(<replaceable>msg, **kwargs</replaceable>)</literal></member>
+    <member><literal>plpy.log(<replaceable>msg, **kwargs</replaceable>)</literal></member>
+    <member><literal>plpy.info(<replaceable>msg, **kwargs</replaceable>)</literal></member>
+    <member><literal>plpy.notice(<replaceable>msg, **kwargs</replaceable>)</literal></member>
+    <member><literal>plpy.warning(<replaceable>msg, **kwargs</replaceable>)</literal></member>
+    <member><literal>plpy.error(<replaceable>msg, **kwargs</replaceable>)</literal></member>
+    <member><literal>plpy.fatal(<replaceable>msg, **kwargs</replaceable>)</literal></member>
    </simplelist>
-   <indexterm><primary>elog</><secondary>in PL/Python</></indexterm>
+   <indexterm><primary>elog</primary><secondary>in PL/Python</secondary></indexterm>
    <function>plpy.error</function> and <function>plpy.fatal</function>
    actually raise a Python exception which, if uncaught, propagates out to
    the calling query, causing the current transaction or subtransaction to
-   be aborted.  <literal>raise plpy.Error(<replaceable>msg</>)</literal> and
-   <literal>raise plpy.Fatal(<replaceable>msg</>)</literal> are
-   equivalent to calling <literal>plpy.error(<replaceable>msg</>)</literal> and
-   <literal>plpy.fatal(<replaceable>msg</>)</literal>, respectively but
+   be aborted.  <literal>raise plpy.Error(<replaceable>msg</replaceable>)</literal> and
+   <literal>raise plpy.Fatal(<replaceable>msg</replaceable>)</literal> are
+   equivalent to calling <literal>plpy.error(<replaceable>msg</replaceable>)</literal> and
+   <literal>plpy.fatal(<replaceable>msg</replaceable>)</literal>, respectively but
    the <literal>raise</literal> form does not allow passing keyword arguments.
    The other functions only generate messages of different priority levels.
    Whether messages of a particular priority are reported to the client,
@@ -1397,7 +1397,7 @@ $$ LANGUAGE plpythonu;
   </para>
 
   <para>
-   The <replaceable>msg</> argument is given as a positional argument.  For
+   The <replaceable>msg</replaceable> argument is given as a positional argument.  For
    backward compatibility, more than one positional argument can be given. In
    that case, the string representation of the tuple of positional arguments
    becomes the message reported to the client.
@@ -1438,9 +1438,9 @@ PL/Python function "raise_custom_exception"
 
   <para>
    Another set of utility functions are
-   <literal>plpy.quote_literal(<replaceable>string</>)</literal>,
-   <literal>plpy.quote_nullable(<replaceable>string</>)</literal>, and
-   <literal>plpy.quote_ident(<replaceable>string</>)</literal>.  They
+   <literal>plpy.quote_literal(<replaceable>string</replaceable>)</literal>,
+   <literal>plpy.quote_nullable(<replaceable>string</replaceable>)</literal>, and
+   <literal>plpy.quote_ident(<replaceable>string</replaceable>)</literal>.  They
    are equivalent to the built-in quoting functions described in <xref
    linkend="functions-string">.  They are useful when constructing
    ad-hoc queries.  A PL/Python equivalent of dynamic SQL from <xref

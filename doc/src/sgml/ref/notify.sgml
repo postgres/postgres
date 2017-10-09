@@ -30,9 +30,9 @@ NOTIFY <replaceable class="parameter">channel</replaceable> [ , <replaceable cla
 
   <para>
    The <command>NOTIFY</command> command sends a notification event together
-   with an optional <quote>payload</> string to each client application that
+   with an optional <quote>payload</quote> string to each client application that
    has previously executed
-   <command>LISTEN <replaceable class="parameter">channel</></command>
+   <command>LISTEN <replaceable class="parameter">channel</replaceable></command>
    for the specified channel name in the current database.
    Notifications are visible to all users.
   </para>
@@ -49,7 +49,7 @@ NOTIFY <replaceable class="parameter">channel</replaceable> [ , <replaceable cla
   <para>
    The information passed to the client for a notification event includes the
    notification channel
-   name, the notifying session's server process <acronym>PID</>, and the
+   name, the notifying session's server process <acronym>PID</acronym>, and the
    payload string, which is an empty string if it has not been specified.
   </para>
 
@@ -115,9 +115,9 @@ NOTIFY <replaceable class="parameter">channel</replaceable> [ , <replaceable cla
    result in useless work, for example, reading a database table to
    find the same updates that that session just wrote out.  It is
    possible to avoid such extra work by noticing whether the notifying
-   session's server process <acronym>PID</> (supplied in the
+   session's server process <acronym>PID</acronym> (supplied in the
    notification event message) is the same as one's own session's
-   <acronym>PID</> (available from <application>libpq</>).  When they
+   <acronym>PID</acronym> (available from <application>libpq</application>).  When they
    are the same, the notification event is one's own work bouncing
    back, and can be ignored.
   </para>
@@ -139,7 +139,7 @@ NOTIFY <replaceable class="parameter">channel</replaceable> [ , <replaceable cla
     <term><replaceable class="parameter">payload</replaceable></term>
     <listitem>
      <para>
-      The <quote>payload</> string to be communicated along with the
+      The <quote>payload</quote> string to be communicated along with the
       notification.  This must be specified as a simple string literal.
       In the default configuration it must be shorter than 8000 bytes.
       (If binary data or large amounts of information need to be communicated,

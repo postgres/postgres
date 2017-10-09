@@ -114,7 +114,7 @@ DROP SUBSCRIPTION mysub;
   <title>Compatibility</title>
 
   <para>
-   <command>DROP SUBSCRIPTION</command> is a <productname>PostgreSQL</>
+   <command>DROP SUBSCRIPTION</command> is a <productname>PostgreSQL</productname>
    extension.
   </para>
  </refsect1>

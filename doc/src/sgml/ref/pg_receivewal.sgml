@@ -22,7 +22,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
   <cmdsynopsis>
    <command>pg_receivewal</command>
-   <arg rep="repeat"><replaceable>option</></arg>
+   <arg rep="repeat"><replaceable>option</replaceable></arg>
   </cmdsynopsis>
  </refsynopsisdiv>
 
@@ -49,9 +49,9 @@ PostgreSQL documentation
   </para>
 
   <para>
-   Unlike the WAL receiver of a PostgreSQL standby server, <application>pg_receivewal</>
+   Unlike the WAL receiver of a PostgreSQL standby server, <application>pg_receivewal</application>
    by default flushes WAL data only when a WAL file is closed.
-   The option <option>--synchronous</> must be specified to flush WAL data
+   The option <option>--synchronous</option> must be specified to flush WAL data
    in real time.
   </para>
 
@@ -77,7 +77,7 @@ PostgreSQL documentation
   <para>
    In the absence of fatal errors, <application>pg_receivewal</application>
    will run until terminated by the <systemitem>SIGINT</systemitem> signal
-   (<keycombo action="simul"><keycap>Control</><keycap>C</></>).
+   (<keycombo action="simul"><keycap>Control</keycap><keycap>C</keycap></keycombo>).
   </para>
  </refsect1>
 
@@ -108,7 +108,7 @@ PostgreSQL documentation
        </para>
 
        <para>
-        If there is a record with LSN exactly equal to <replaceable>lsn</>,
+        If there is a record with LSN exactly equal to <replaceable>lsn</replaceable>,
         the record will be processed.
        </para>
       </listitem>
@@ -156,7 +156,7 @@ PostgreSQL documentation
         <para>
          Require <application>pg_receivewal</application> to use an existing
          replication slot (see <xref linkend="streaming-replication-slots">).
-         When this option is used, <application>pg_receivewal</> will report
+         When this option is used, <application>pg_receivewal</application> will report
          a flush position to the server, indicating when each segment has been
          synchronized to disk so that the server can remove that segment if it
          is not otherwise needed.
@@ -181,7 +181,7 @@ PostgreSQL documentation
        <para>
         Flush the WAL data to disk immediately after it has been received. Also
         send a status packet back to the server immediately after flushing,
-        regardless of <literal>--status-interval</>.
+        regardless of <literal>--status-interval</literal>.
        </para>
 
        <para>
@@ -230,7 +230,7 @@ PostgreSQL documentation
         string. See <xref linkend="libpq-connstring"> for more information.
        </para>
        <para>
-        The option is called <literal>--dbname</> for consistency with other
+        The option is called <literal>--dbname</literal> for consistency with other
         client applications, but because <application>pg_receivewal</application>
         doesn't connect to any particular database in the cluster, database
         name in the connection string will be ignored.
@@ -276,8 +276,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-w</></term>
-      <term><option>--no-password</></term>
+      <term><option>-w</option></term>
+      <term><option>--no-password</option></term>
       <listitem>
        <para>
         Never issue a password prompt.  If the server requires
@@ -305,7 +305,7 @@ PostgreSQL documentation
         for a password if the server demands password authentication.
         However, <application>pg_receivewal</application> will waste a
         connection attempt finding out that the server wants a password.
-        In some cases it is worth typing <option>-W</> to avoid the extra
+        In some cases it is worth typing <option>-W</option> to avoid the extra
         connection attempt.
        </para>
       </listitem>
@@ -345,8 +345,8 @@ PostgreSQL documentation
 
     <variablelist>
      <varlistentry>
-       <term><option>-V</></term>
-       <term><option>--version</></term>
+       <term><option>-V</option></term>
+       <term><option>--version</option></term>
        <listitem>
        <para>
        Print the <application>pg_receivewal</application> version and exit.
@@ -355,8 +355,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-       <term><option>-?</></term>
-       <term><option>--help</></term>
+       <term><option>-?</option></term>
+       <term><option>--help</option></term>
        <listitem>
        <para>
        Show help about <application>pg_receivewal</application> command line
@@ -386,8 +386,8 @@ PostgreSQL documentation
   <title>Environment</title>
 
   <para>
-   This utility, like most other <productname>PostgreSQL</> utilities,
-   uses the environment variables supported by <application>libpq</>
+   This utility, like most other <productname>PostgreSQL</productname> utilities,
+   uses the environment variables supported by <application>libpq</application>
    (see <xref linkend="libpq-envars">).
   </para>
 

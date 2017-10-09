@@ -92,7 +92,7 @@ DROP TEXT SEARCH PARSER my_parser;
 </programlisting>
 
    This command will not succeed if there are any existing text search
-   configurations that use the parser.  Add <literal>CASCADE</> to
+   configurations that use the parser.  Add <literal>CASCADE</literal> to
    drop such configurations along with the parser.
   </para>
  </refsect1>

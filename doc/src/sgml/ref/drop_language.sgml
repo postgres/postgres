@@ -31,13 +31,13 @@ DROP [ PROCEDURAL ] LANGUAGE [ IF EXISTS ] <replaceable class="parameter">name</
   <para>
    <command>DROP LANGUAGE</command> removes the definition of a
    previously registered procedural language.  You must be a superuser
-   or the owner of the language to use <command>DROP LANGUAGE</>.
+   or the owner of the language to use <command>DROP LANGUAGE</command>.
   </para>
 
   <note>
    <para>
     As of <productname>PostgreSQL</productname> 9.1, most procedural
-    languages have been made into <quote>extensions</>, and should
+    languages have been made into <quote>extensions</quote>, and should
     therefore be removed with <xref linkend="sql-dropextension">
     not <command>DROP LANGUAGE</command>.
    </para>

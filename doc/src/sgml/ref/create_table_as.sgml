@@ -71,7 +71,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
 
   <variablelist>
    <varlistentry>
-    <term><literal>TEMPORARY</> or <literal>TEMP</></term>
+    <term><literal>TEMPORARY</literal> or <literal>TEMP</literal></term>
     <listitem>
      <para>
       If specified, the table is created as a temporary table.
@@ -81,7 +81,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
    </varlistentry>
 
    <varlistentry>
-    <term><literal>UNLOGGED</></term>
+    <term><literal>UNLOGGED</literal></term>
     <listitem>
      <para>
       If specified, the table is created as an unlogged table.
@@ -91,7 +91,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
    </varlistentry>
 
    <varlistentry>
-    <term><literal>IF NOT EXISTS</></term>
+    <term><literal>IF NOT EXISTS</literal></term>
     <listitem>
      <para>
       Do not throw an error if a relation with the same name already exists.
@@ -127,25 +127,25 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
       This clause specifies optional storage parameters for the new table;
       see <xref linkend="sql-createtable-storage-parameters"
       endterm="sql-createtable-storage-parameters-title"> for more
-      information.  The <literal>WITH</> clause
-      can also include <literal>OIDS=TRUE</> (or just <literal>OIDS</>)
+      information.  The <literal>WITH</literal> clause
+      can also include <literal>OIDS=TRUE</literal> (or just <literal>OIDS</literal>)
       to specify that rows of the new table
       should have OIDs (object identifiers) assigned to them, or
-      <literal>OIDS=FALSE</> to specify that the rows should not have OIDs.
+      <literal>OIDS=FALSE</literal> to specify that the rows should not have OIDs.
       See <xref linkend="sql-createtable"> for more information.
      </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-    <term><literal>WITH OIDS</></term>
-    <term><literal>WITHOUT OIDS</></term>
+    <term><literal>WITH OIDS</literal></term>
+    <term><literal>WITHOUT OIDS</literal></term>
     <listitem>
      <para>
-      These are obsolescent syntaxes equivalent to <literal>WITH (OIDS)</>
-      and <literal>WITH (OIDS=FALSE)</>, respectively.  If you wish to give
-      both an <literal>OIDS</> setting and storage parameters, you must use
-      the <literal>WITH ( ... )</> syntax; see above.
+      These are obsolescent syntaxes equivalent to <literal>WITH (OIDS)</literal>
+      and <literal>WITH (OIDS=FALSE)</literal>, respectively.  If you wish to give
+      both an <literal>OIDS</literal> setting and storage parameters, you must use
+      the <literal>WITH ( ... )</literal> syntax; see above.
      </para>
     </listitem>
    </varlistentry>
@@ -214,14 +214,14 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
       A <xref linkend="sql-select">, <link
       linkend="sql-table">TABLE</link>, or <xref linkend="sql-values">
       command, or an <xref linkend="sql-execute"> command that runs a
-      prepared <command>SELECT</>, <command>TABLE</>, or
-      <command>VALUES</> query.
+      prepared <command>SELECT</command>, <command>TABLE</command>, or
+      <command>VALUES</command> query.
      </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-    <term><literal>WITH [ NO ] DATA</></term>
+    <term><literal>WITH [ NO ] DATA</literal></term>
     <listitem>
      <para>
       This clause specifies whether or not the data produced by the query
@@ -241,7 +241,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
    This command is functionally similar to <xref
    linkend="sql-selectinto">, but it is
    preferred since it is less likely to be confused with other uses of
-   the <command>SELECT INTO</> syntax. Furthermore, <command>CREATE
+   the <command>SELECT INTO</command> syntax. Furthermore, <command>CREATE
    TABLE AS</command> offers a superset of the functionality offered
    by <command>SELECT INTO</command>.
   </para>
@@ -315,7 +315,7 @@ CREATE TEMP TABLE films_recent WITH (OIDS) ON COMMIT DROP AS
     </listitem>
 
     <listitem>
-     <para><productname>PostgreSQL</> handles temporary tables in a way
+     <para><productname>PostgreSQL</productname> handles temporary tables in a way
       rather different from the standard; see
       <xref linkend="sql-createtable">
       for details.
@@ -324,7 +324,7 @@ CREATE TEMP TABLE films_recent WITH (OIDS) ON COMMIT DROP AS
 
     <listitem>
      <para>
-      The <literal>WITH</> clause is a <productname>PostgreSQL</productname>
+      The <literal>WITH</literal> clause is a <productname>PostgreSQL</productname>
       extension; neither storage parameters nor OIDs are in the standard.
      </para>
     </listitem>

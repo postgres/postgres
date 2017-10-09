@@ -28,13 +28,13 @@
   </indexterm>
 
   <para>
-   The examples shown below use tables in the <productname>PostgreSQL</>
+   The examples shown below use tables in the <productname>PostgreSQL</productname>
    regression test database.
    The outputs shown are taken from version 8.3.
    The behavior of earlier (or later) versions might vary.
-   Note also that since <command>ANALYZE</> uses random sampling
+   Note also that since <command>ANALYZE</command> uses random sampling
    while producing statistics, the results will change slightly after
-   any new <command>ANALYZE</>.
+   any new <command>ANALYZE</command>.
   </para>
 
   <para>
@@ -61,8 +61,8 @@ SELECT relpages, reltuples FROM pg_class WHERE relname = 'tenk1';
       358 |     10000
 </programlisting>
 
-    These numbers are current as of the last <command>VACUUM</> or
-    <command>ANALYZE</> on the table.  The planner then fetches the
+    These numbers are current as of the last <command>VACUUM</command> or
+    <command>ANALYZE</command> on the table.  The planner then fetches the
     actual current number of pages in the table (this is a cheap operation,
     not requiring a table scan).  If that is different from
     <structfield>relpages</structfield> then
@@ -150,7 +150,7 @@ EXPLAIN SELECT * FROM tenk1 WHERE stringu1 = 'CRAAAA';
    and looks up the selectivity function for <literal>=</literal>, which is
    <function>eqsel</function>.  For equality estimation the histogram is
    not useful; instead the list of <firstterm>most
-   common values</> (<acronym>MCV</acronym>s) is used to determine the
+   common values</firstterm> (<acronym>MCV</acronym>s) is used to determine the
    selectivity. Let's have a look at the MCVs, with some additional columns
    that will be useful later:
 
@@ -165,7 +165,7 @@ most_common_freqs | {0.00333333,0.003,0.003,0.003,0.003,0.003,0.003,0.003,0.003,
 
 </programlisting>
 
-   Since <literal>CRAAAA</> appears in the list of MCVs, the selectivity is
+   Since <literal>CRAAAA</literal> appears in the list of MCVs, the selectivity is
    merely the corresponding entry in the list of most common frequencies
    (<acronym>MCF</acronym>s):
 
@@ -225,18 +225,18 @@ rows = 10000 * 0.0014559
   </para>
 
   <para>
-   The previous example with <literal>unique1 &lt; 1000</> was an
+   The previous example with <literal>unique1 &lt; 1000</literal> was an
    oversimplification of what <function>scalarltsel</function> really does;
    now that we have seen an example of the use of MCVs, we can fill in some
    more detail.  The example was correct as far as it went, because since
-   <structfield>unique1</> is a unique column it has no MCVs (obviously, no
+   <structfield>unique1</structfield> is a unique column it has no MCVs (obviously, no
    value is any more common than any other value).  For a non-unique
    column, there will normally be both a histogram and an MCV list, and
    <emphasis>the histogram does not include the portion of the column
-   population represented by the MCVs</>.  We do things this way because
+   population represented by the MCVs</emphasis>.  We do things this way because
    it allows more precise estimation.  In this situation
    <function>scalarltsel</function> directly applies the condition (e.g.,
-   <quote>&lt; 1000</>) to each value of the MCV list, and adds up the
+   <quote>&lt; 1000</quote>) to each value of the MCV list, and adds up the
    frequencies of the MCVs for which the condition is true.  This gives
    an exact estimate of the selectivity within the portion of the table
    that is MCVs.  The histogram is then used in the same way as above
@@ -253,7 +253,7 @@ EXPLAIN SELECT * FROM tenk1 WHERE stringu1 &lt; 'IAAAAA';
    Filter: (stringu1 &lt; 'IAAAAA'::name)
 </programlisting>
 
-   We already saw the MCV information for <structfield>stringu1</>,
+   We already saw the MCV information for <structfield>stringu1</structfield>,
    and here is its histogram:
 
 <programlisting>
@@ -266,7 +266,7 @@ WHERE tablename='tenk1' AND attname='stringu1';
 </programlisting>
 
    Checking the MCV list, we find that the condition <literal>stringu1 &lt;
-   'IAAAAA'</> is satisfied by the first six entries and not the last four,
+   'IAAAAA'</literal> is satisfied by the first six entries and not the last four,
    so the selectivity within the MCV part of the population is
 
 <programlisting>
@@ -279,11 +279,11 @@ selectivity = sum(relevant mvfs)
    population represented by MCVs is 0.03033333, and therefore the
    fraction represented by the histogram is 0.96966667 (again, there
    are no nulls, else we'd have to exclude them here).  We can see
-   that the value <literal>IAAAAA</> falls nearly at the end of the
+   that the value <literal>IAAAAA</literal> falls nearly at the end of the
    third histogram bucket.  Using some rather cheesy assumptions
    about the frequency of different characters, the planner arrives
    at the estimate 0.298387 for the portion of the histogram population
-   that is less than <literal>IAAAAA</>.  We then combine the estimates
+   that is less than <literal>IAAAAA</literal>.  We then combine the estimates
    for the MCV and non-MCV populations:
 
 <programlisting>
@@ -372,7 +372,7 @@ rows        = 10000 * 0.005035
             = 50  (rounding off)
 </programlisting>
 
-   The restriction for the join is <literal>t2.unique2 = t1.unique2</>.
+   The restriction for the join is <literal>t2.unique2 = t1.unique2</literal>.
    The operator is just
    our familiar <literal>=</literal>, however the selectivity function is
    obtained from the <structfield>oprjoin</structfield> column of
@@ -424,12 +424,12 @@ rows = (outer_cardinality * inner_cardinality) * selectivity
   </para>
 
   <para>
-   Notice that we showed <literal>inner_cardinality</> as 10000, that is,
-   the unmodified size of <structname>tenk2</>.  It might appear from
-   inspection of the <command>EXPLAIN</> output that the estimate of
+   Notice that we showed <literal>inner_cardinality</literal> as 10000, that is,
+   the unmodified size of <structname>tenk2</structname>.  It might appear from
+   inspection of the <command>EXPLAIN</command> output that the estimate of
    join rows comes from 50 * 1, that is, the number of outer rows times
    the estimated number of rows obtained by each inner index scan on
-   <structname>tenk2</>.  But this is not the case: the join relation size
+   <structname>tenk2</structname>.  But this is not the case: the join relation size
    is estimated before any particular join plan has been considered.  If
    everything is working well then the two ways of estimating the join
    size will produce about the same answer, but due to round-off error and
@@ -438,7 +438,7 @@ rows = (outer_cardinality * inner_cardinality) * selectivity
 
   <para>
    For those interested in further details, estimation of the size of
-   a table (before any <literal>WHERE</> clauses) is done in
+   a table (before any <literal>WHERE</literal> clauses) is done in
    <filename>src/backend/optimizer/util/plancat.c</filename>. The generic
    logic for clause selectivities is in
    <filename>src/backend/optimizer/path/clausesel.c</filename>.  The
@@ -485,8 +485,8 @@ SELECT relpages, reltuples FROM pg_class WHERE relname = 't';
    </para>
 
    <para>
-    The following example shows the result of estimating a <literal>WHERE</>
-    condition on the <structfield>a</> column:
+    The following example shows the result of estimating a <literal>WHERE</literal>
+    condition on the <structfield>a</structfield> column:
 
 <programlisting>
 EXPLAIN (ANALYZE, TIMING OFF) SELECT * FROM t WHERE a = 1;
@@ -501,9 +501,9 @@ EXPLAIN (ANALYZE, TIMING OFF) SELECT * FROM t WHERE a = 1;
     of this clause to be 1%.  By comparing this estimate and the actual
     number of rows, we see that the estimate is very accurate
     (in fact exact, as the table is very small).  Changing the
-    <literal>WHERE</> condition to use the <structfield>b</> column, an
+    <literal>WHERE</literal> condition to use the <structfield>b</structfield> column, an
     identical plan is generated.  But observe what happens if we apply the same
-    condition on both columns, combining them with <literal>AND</>:
+    condition on both columns, combining them with <literal>AND</literal>:
 
 <programlisting>
 EXPLAIN (ANALYZE, TIMING OFF) SELECT * FROM t WHERE a = 1 AND b = 1;
@@ -524,7 +524,7 @@ EXPLAIN (ANALYZE, TIMING OFF) SELECT * FROM t WHERE a = 1 AND b = 1;
 
    <para>
     This problem can be fixed by creating a statistics object that
-    directs <command>ANALYZE</> to calculate functional-dependency
+    directs <command>ANALYZE</command> to calculate functional-dependency
     multivariate statistics on the two columns:
 
 <programlisting>

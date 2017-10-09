@@ -39,7 +39,7 @@ CREATE EXTENSION [ IF NOT EXISTS ] <replaceable class="parameter">extension_name
 
   <para>
    Loading an extension essentially amounts to running the extension's script
-   file.  The script will typically create new <acronym>SQL</> objects such as
+   file.  The script will typically create new <acronym>SQL</acronym> objects such as
    functions, data types, operators and index support methods.
    <command>CREATE EXTENSION</command> additionally records the identities
    of all the created objects, so that they can be dropped again if
@@ -62,7 +62,7 @@ CREATE EXTENSION [ IF NOT EXISTS ] <replaceable class="parameter">extension_name
 
     <variablelist>
      <varlistentry>
-      <term><literal>IF NOT EXISTS</></term>
+      <term><literal>IF NOT EXISTS</literal></term>
       <listitem>
        <para>
         Do not throw an error if an extension with the same name already
@@ -97,17 +97,17 @@ CREATE EXTENSION [ IF NOT EXISTS ] <replaceable class="parameter">extension_name
        </para>
 
        <para>
-        If the extension specifies a <literal>schema</> parameter in its
+        If the extension specifies a <literal>schema</literal> parameter in its
         control file, then that schema cannot be overridden with
-        a <literal>SCHEMA</> clause.  Normally, an error will be raised if
-        a <literal>SCHEMA</> clause is given and it conflicts with the
-        extension's <literal>schema</> parameter.  However, if
-        the <literal>CASCADE</> clause is also given,
+        a <literal>SCHEMA</literal> clause.  Normally, an error will be raised if
+        a <literal>SCHEMA</literal> clause is given and it conflicts with the
+        extension's <literal>schema</literal> parameter.  However, if
+        the <literal>CASCADE</literal> clause is also given,
         then <replaceable class="parameter">schema_name</replaceable> is
         ignored when it conflicts.  The
         given <replaceable class="parameter">schema_name</replaceable> will be
         used for installation of any needed extensions that do not
-        specify <literal>schema</> in their control files.
+        specify <literal>schema</literal> in their control files.
        </para>
 
        <para>
@@ -134,13 +134,13 @@ CREATE EXTENSION [ IF NOT EXISTS ] <replaceable class="parameter">extension_name
       <term><replaceable class="parameter">old_version</replaceable></term>
       <listitem>
        <para>
-        <literal>FROM</> <replaceable class="parameter">old_version</>
+        <literal>FROM</literal> <replaceable class="parameter">old_version</replaceable>
         must be specified when, and only when, you are attempting to install
-        an extension that replaces an <quote>old style</> module that is just
+        an extension that replaces an <quote>old style</quote> module that is just
         a collection of objects not packaged into an extension.  This option
-        causes <command>CREATE EXTENSION</> to run an alternative installation
+        causes <command>CREATE EXTENSION</command> to run an alternative installation
         script that absorbs the existing objects into the extension, instead
-        of creating new objects.  Be careful that <literal>SCHEMA</> specifies
+        of creating new objects.  Be careful that <literal>SCHEMA</literal> specifies
         the schema containing these pre-existing objects.
        </para>
 
@@ -150,7 +150,7 @@ CREATE EXTENSION [ IF NOT EXISTS ] <replaceable class="parameter">extension_name
         extension's author, and might vary if there is more than one version
         of the old-style module that can be upgraded into an extension.
         For the standard additional modules supplied with pre-9.1
-        <productname>PostgreSQL</productname>, use <literal>unpackaged</>
+        <productname>PostgreSQL</productname>, use <literal>unpackaged</literal>
         for <replaceable class="parameter">old_version</replaceable> when
         updating a module to extension style.
        </para>
@@ -158,12 +158,12 @@ CREATE EXTENSION [ IF NOT EXISTS ] <replaceable class="parameter">extension_name
      </varlistentry>
 
      <varlistentry>
-      <term><literal>CASCADE</></term>
+      <term><literal>CASCADE</literal></term>
       <listitem>
        <para>
         Automatically install any extensions that this extension depends on
         that are not already installed.  Their dependencies are likewise
-        automatically installed, recursively.  The <literal>SCHEMA</> clause,
+        automatically installed, recursively.  The <literal>SCHEMA</literal> clause,
         if given, applies to all extensions that get installed this way.
         Other options of the statement are not applied to
         automatically-installed extensions; in particular, their default
@@ -178,7 +178,7 @@ CREATE EXTENSION [ IF NOT EXISTS ] <replaceable class="parameter">extension_name
   <title>Notes</title>
 
   <para>
-   Before you can use <command>CREATE EXTENSION</> to load an extension
+   Before you can use <command>CREATE EXTENSION</command> to load an extension
    into a database, the extension's supporting files must be installed.
    Information about installing the extensions supplied with
    <productname>PostgreSQL</productname> can be found in
@@ -211,13 +211,13 @@ CREATE EXTENSION hstore;
   </para>
 
   <para>
-   Update a pre-9.1 installation of <literal>hstore</> into
+   Update a pre-9.1 installation of <literal>hstore</literal> into
    extension style:
 <programlisting>
 CREATE EXTENSION hstore SCHEMA public FROM unpackaged;
 </programlisting>
    Be careful to specify the schema in which you installed the existing
-   <literal>hstore</> objects.
+   <literal>hstore</literal> objects.
   </para>
  </refsect1>
 
@@ -225,7 +225,7 @@ CREATE EXTENSION hstore SCHEMA public FROM unpackaged;
   <title>Compatibility</title>
 
   <para>
-   <command>CREATE EXTENSION</command> is a <productname>PostgreSQL</>
+   <command>CREATE EXTENSION</command> is a <productname>PostgreSQL</productname>
    extension.
   </para>
  </refsect1>

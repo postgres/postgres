@@ -86,7 +86,7 @@ DROP FOREIGN DATA WRAPPER [ IF EXISTS ] <replaceable class="parameter">name</rep
   <title>Examples</title>
 
   <para>
-   Drop the foreign-data wrapper <literal>dbi</>:
+   Drop the foreign-data wrapper <literal>dbi</literal>:
 <programlisting>
 DROP FOREIGN DATA WRAPPER dbi;
 </programlisting></para>
@@ -97,8 +97,8 @@ DROP FOREIGN DATA WRAPPER dbi;
 
   <para>
    <command>DROP FOREIGN DATA WRAPPER</command> conforms to ISO/IEC
-   9075-9 (SQL/MED).  The <literal>IF EXISTS</> clause is
-   a <productname>PostgreSQL</> extension.
+   9075-9 (SQL/MED).  The <literal>IF EXISTS</literal> clause is
+   a <productname>PostgreSQL</productname> extension.
   </para>
  </refsect1>
 

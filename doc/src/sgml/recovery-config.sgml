@@ -11,23 +11,23 @@
 
    <para>
     This chapter describes the settings available in the
-    <filename>recovery.conf</><indexterm><primary>recovery.conf</></>
+    <filename>recovery.conf</filename><indexterm><primary>recovery.conf</primary></indexterm>
     file. They apply only for the duration of the
     recovery.  They must be reset for any subsequent recovery you wish to
     perform.  They cannot be changed once recovery has begun.
    </para>
 
    <para>
-     Settings in <filename>recovery.conf</> are specified in the format
-     <literal>name = 'value'</>. One parameter is specified per line.
+     Settings in <filename>recovery.conf</filename> are specified in the format
+     <literal>name = 'value'</literal>. One parameter is specified per line.
      Hash marks (<literal>#</literal>) designate the rest of the
      line as a comment.  To embed a single quote in a parameter
-     value, write two quotes (<literal>''</>).
+     value, write two quotes (<literal>''</literal>).
    </para>
 
    <para>
-    A sample file, <filename>share/recovery.conf.sample</>,
-    is provided in the installation's <filename>share/</> directory.
+    A sample file, <filename>share/recovery.conf.sample</filename>,
+    is provided in the installation's <filename>share/</filename> directory.
    </para>
 
   <sect1 id="archive-recovery-settings">
@@ -38,7 +38,7 @@
      <varlistentry id="restore-command" xreflabel="restore_command">
       <term><varname>restore_command</varname> (<type>string</type>)
       <indexterm>
-        <primary><varname>restore_command</> recovery parameter</primary>
+        <primary><varname>restore_command</varname> recovery parameter</primary>
       </indexterm>
       </term>
       <listitem>
@@ -46,25 +46,25 @@
         The local shell command to execute to retrieve an archived segment of
         the WAL file series. This parameter is required for archive recovery,
         but optional for streaming replication.
-        Any <literal>%f</> in the string is
+        Any <literal>%f</literal> in the string is
         replaced by the name of the file to retrieve from the archive,
-        and any <literal>%p</> is replaced by the copy destination path name
+        and any <literal>%p</literal> is replaced by the copy destination path name
         on the server.
         (The path name is relative to the current working directory,
         i.e., the cluster's data directory.)
-        Any <literal>%r</> is replaced by the name of the file containing the
+        Any <literal>%r</literal> is replaced by the name of the file containing the
         last valid restart point. That is the earliest file that must be kept
         to allow a restore to be restartable, so this information can be used
         to truncate the archive to just the minimum required to support
-        restarting from the current restore. <literal>%r</> is typically only
+        restarting from the current restore. <literal>%r</literal> is typically only
         used by warm-standby configurations
         (see <xref linkend="warm-standby">).
-        Write <literal>%%</> to embed an actual <literal>%</> character.
+        Write <literal>%%</literal> to embed an actual <literal>%</literal> character.
        </para>
 
        <para>
         It is important for the command to return a zero exit status
-        only if it succeeds.  The command <emphasis>will</> be asked for file
+        only if it succeeds.  The command <emphasis>will</emphasis> be asked for file
         names that are not present in the archive; it must return nonzero
         when so asked.  Examples:
 <programlisting>
@@ -82,33 +82,33 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
      <varlistentry id="archive-cleanup-command" xreflabel="archive_cleanup_command">
       <term><varname>archive_cleanup_command</varname> (<type>string</type>)
       <indexterm>
-        <primary><varname>archive_cleanup_command</> recovery parameter</primary>
+        <primary><varname>archive_cleanup_command</varname> recovery parameter</primary>
       </indexterm>
       </term>
       <listitem>
        <para>
         This optional parameter specifies a shell command that will be executed
         at every restartpoint.  The purpose of
-        <varname>archive_cleanup_command</> is to provide a mechanism for
+        <varname>archive_cleanup_command</varname> is to provide a mechanism for
         cleaning up old archived WAL files that are no longer needed by the
         standby server.
-        Any <literal>%r</> is replaced by the name of the file containing the
+        Any <literal>%r</literal> is replaced by the name of the file containing the
         last valid restart point.
-        That is the earliest file that must be <emphasis>kept</> to allow a
-        restore to be restartable, and so all files earlier than <literal>%r</>
+        That is the earliest file that must be <emphasis>kept</emphasis> to allow a
+        restore to be restartable, and so all files earlier than <literal>%r</literal>
         may be safely removed.
         This information can be used to truncate the archive to just the
         minimum required to support restart from the current restore.
         The <xref linkend="pgarchivecleanup"> module
-        is often used in <varname>archive_cleanup_command</> for
+        is often used in <varname>archive_cleanup_command</varname> for
         single-standby configurations, for example:
 <programlisting>archive_cleanup_command = 'pg_archivecleanup /mnt/server/archivedir %r'</programlisting>
         Note however that if multiple standby servers are restoring from the
         same archive directory, you will need to ensure that you do not delete
         WAL files until they are no longer needed by any of the servers.
-        <varname>archive_cleanup_command</> would typically be used in a
+        <varname>archive_cleanup_command</varname> would typically be used in a
         warm-standby configuration (see <xref linkend="warm-standby">).
-        Write <literal>%%</> to embed an actual <literal>%</> character in the
+        Write <literal>%%</literal> to embed an actual <literal>%</literal> character in the
         command.
        </para>
        <para>
@@ -123,16 +123,16 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
      <varlistentry id="recovery-end-command" xreflabel="recovery_end_command">
       <term><varname>recovery_end_command</varname> (<type>string</type>)
       <indexterm>
-        <primary><varname>recovery_end_command</> recovery parameter</primary>
+        <primary><varname>recovery_end_command</varname> recovery parameter</primary>
       </indexterm>
       </term>
       <listitem>
        <para>
         This parameter specifies a shell command that will be executed once only
         at the end of recovery. This parameter is optional. The purpose of the
-        <varname>recovery_end_command</> is to provide a mechanism for cleanup
+        <varname>recovery_end_command</varname> is to provide a mechanism for cleanup
         following replication or recovery.
-        Any <literal>%r</> is replaced by the name of the file containing the
+        Any <literal>%r</literal> is replaced by the name of the file containing the
         last valid restart point, like in <xref linkend="archive-cleanup-command">.
        </para>
        <para>
@@ -156,9 +156,9 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
      <para>
       By default, recovery will recover to the end of the WAL log. The
       following parameters can be used to specify an earlier stopping point.
-      At most one of <varname>recovery_target</>,
-      <varname>recovery_target_lsn</>, <varname>recovery_target_name</>,
-      <varname>recovery_target_time</>, or <varname>recovery_target_xid</>
+      At most one of <varname>recovery_target</varname>,
+      <varname>recovery_target_lsn</varname>, <varname>recovery_target_name</varname>,
+      <varname>recovery_target_time</varname>, or <varname>recovery_target_xid</varname>
       can be used; if more than one of these is specified in the configuration
       file, the last entry will be used.
      </para>
@@ -167,7 +167,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
      <varlistentry id="recovery-target" xreflabel="recovery_target">
       <term><varname>recovery_target</varname><literal> = 'immediate'</literal>
       <indexterm>
-        <primary><varname>recovery_target</> recovery parameter</primary>
+        <primary><varname>recovery_target</varname> recovery parameter</primary>
       </indexterm>
       </term>
       <listitem>
@@ -178,7 +178,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
         ended.
        </para>
        <para>
-        Technically, this is a string parameter, but <literal>'immediate'</>
+        Technically, this is a string parameter, but <literal>'immediate'</literal>
         is currently the only allowed value.
        </para>
       </listitem>
@@ -187,13 +187,13 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
      <varlistentry id="recovery-target-name" xreflabel="recovery_target_name">
       <term><varname>recovery_target_name</varname> (<type>string</type>)
       <indexterm>
-        <primary><varname>recovery_target_name</> recovery parameter</primary>
+        <primary><varname>recovery_target_name</varname> recovery parameter</primary>
       </indexterm>
       </term>
       <listitem>
        <para>
         This parameter specifies the named restore point (created with
-        <function>pg_create_restore_point()</>) to which recovery will proceed.
+        <function>pg_create_restore_point()</function>) to which recovery will proceed.
        </para>
       </listitem>
      </varlistentry>
@@ -201,7 +201,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
      <varlistentry id="recovery-target-time" xreflabel="recovery_target_time">
       <term><varname>recovery_target_time</varname> (<type>timestamp</type>)
       <indexterm>
-        <primary><varname>recovery_target_time</> recovery parameter</primary>
+        <primary><varname>recovery_target_time</varname> recovery parameter</primary>
       </indexterm>
       </term>
       <listitem>
@@ -217,7 +217,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
      <varlistentry id="recovery-target-xid" xreflabel="recovery_target_xid">
       <term><varname>recovery_target_xid</varname> (<type>string</type>)
       <indexterm>
-        <primary><varname>recovery_target_xid</> recovery parameter</primary>
+        <primary><varname>recovery_target_xid</varname> recovery parameter</primary>
       </indexterm>
       </term>
       <listitem>
@@ -237,7 +237,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
      <varlistentry id="recovery-target-lsn" xreflabel="recovery_target_lsn">
       <term><varname>recovery_target_lsn</varname> (<type>pg_lsn</type>)
       <indexterm>
-        <primary><varname>recovery_target_lsn</> recovery parameter</primary>
+        <primary><varname>recovery_target_lsn</varname> recovery parameter</primary>
       </indexterm>
       </term>
       <listitem>
@@ -246,7 +246,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
         to which recovery will proceed. The precise stopping point is also
         influenced by <xref linkend="recovery-target-inclusive">. This
         parameter is parsed using the system data type
-        <link linkend="datatype-pg-lsn"><type>pg_lsn</></link>.
+        <link linkend="datatype-pg-lsn"><type>pg_lsn</type></link>.
        </para>
       </listitem>
      </varlistentry>
@@ -262,7 +262,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
                    xreflabel="recovery_target_inclusive">
       <term><varname>recovery_target_inclusive</varname> (<type>boolean</type>)
       <indexterm>
-        <primary><varname>recovery_target_inclusive</> recovery parameter</primary>
+        <primary><varname>recovery_target_inclusive</varname> recovery parameter</primary>
       </indexterm>
       </term>
       <listitem>
@@ -274,7 +274,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
         or <xref linkend="recovery-target-xid"> is specified.
         This setting controls whether transactions
         having exactly the target commit time or ID, respectively, will
-        be included in the recovery.  Default is <literal>true</>.
+        be included in the recovery.  Default is <literal>true</literal>.
        </para>
       </listitem>
      </varlistentry>
@@ -283,14 +283,14 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
                    xreflabel="recovery_target_timeline">
       <term><varname>recovery_target_timeline</varname> (<type>string</type>)
       <indexterm>
-        <primary><varname>recovery_target_timeline</> recovery parameter</primary>
+        <primary><varname>recovery_target_timeline</varname> recovery parameter</primary>
       </indexterm>
       </term>
       <listitem>
        <para>
         Specifies recovering into a particular timeline.  The default is
         to recover along the same timeline that was current when the
-        base backup was taken. Setting this to <literal>latest</> recovers
+        base backup was taken. Setting this to <literal>latest</literal> recovers
         to the latest timeline found in the archive, which is useful in
         a standby server. Other than that you only need to set this parameter
         in complex re-recovery situations, where you need to return to
@@ -304,24 +304,24 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
                    xreflabel="recovery_target_action">
       <term><varname>recovery_target_action</varname> (<type>enum</type>)
       <indexterm>
-        <primary><varname>recovery_target_action</> recovery parameter</primary>
+        <primary><varname>recovery_target_action</varname> recovery parameter</primary>
       </indexterm>
       </term>
       <listitem>
        <para>
         Specifies what action the server should take once the recovery target is
-        reached. The default is <literal>pause</>, which means recovery will
-        be paused. <literal>promote</> means the recovery process will finish
+        reached. The default is <literal>pause</literal>, which means recovery will
+        be paused. <literal>promote</literal> means the recovery process will finish
         and the server will start to accept connections.
-        Finally <literal>shutdown</> will stop the server after reaching the
+        Finally <literal>shutdown</literal> will stop the server after reaching the
         recovery target.
        </para>
        <para>
-        The intended use of the <literal>pause</> setting is to allow queries
+        The intended use of the <literal>pause</literal> setting is to allow queries
         to be executed against the database to check if this recovery target
         is the most desirable point for recovery.
         The paused state can be resumed by
-        using <function>pg_wal_replay_resume()</> (see
+        using <function>pg_wal_replay_resume()</function> (see
         <xref linkend="functions-recovery-control-table">), which then
         causes recovery to end. If this recovery target is not the
         desired stopping point, then shut down the server, change the
@@ -329,22 +329,22 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
         continue recovery.
        </para>
        <para>
-        The <literal>shutdown</> setting is useful to have the instance ready
+        The <literal>shutdown</literal> setting is useful to have the instance ready
         at the exact replay point desired.  The instance will still be able to
         replay more WAL records (and in fact will have to replay WAL records
         since the last checkpoint next time it is started).
        </para>
        <para>
-        Note that because <filename>recovery.conf</> will not be renamed when
-        <varname>recovery_target_action</> is set to <literal>shutdown</>,
+        Note that because <filename>recovery.conf</filename> will not be renamed when
+        <varname>recovery_target_action</varname> is set to <literal>shutdown</literal>,
         any subsequent start will end with immediate shutdown unless the
-        configuration is changed or the <filename>recovery.conf</> file is
+        configuration is changed or the <filename>recovery.conf</filename> file is
         removed manually.
        </para>
        <para>
         This setting has no effect if no recovery target is set.
         If <xref linkend="guc-hot-standby"> is not enabled, a setting of
-        <literal>pause</> will act the same as <literal>shutdown</>.
+        <literal>pause</literal> will act the same as <literal>shutdown</literal>.
        </para>
       </listitem>
      </varlistentry>
@@ -360,25 +360,25 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
        <varlistentry id="standby-mode" xreflabel="standby_mode">
         <term><varname>standby_mode</varname> (<type>boolean</type>)
         <indexterm>
-          <primary><varname>standby_mode</> recovery parameter</primary>
+          <primary><varname>standby_mode</varname> recovery parameter</primary>
         </indexterm>
         </term>
         <listitem>
          <para>
-          Specifies whether to start the <productname>PostgreSQL</> server as
-          a standby. If this parameter is <literal>on</>, the server will
+          Specifies whether to start the <productname>PostgreSQL</productname> server as
+          a standby. If this parameter is <literal>on</literal>, the server will
           not stop recovery when the end of archived WAL is reached, but
           will keep trying to continue recovery by fetching new WAL segments
-          using <varname>restore_command</>
+          using <varname>restore_command</varname>
           and/or by connecting to the primary server as specified by the
-          <varname>primary_conninfo</> setting.
+          <varname>primary_conninfo</varname> setting.
          </para>
         </listitem>
        </varlistentry>
        <varlistentry id="primary-conninfo" xreflabel="primary_conninfo">
         <term><varname>primary_conninfo</varname> (<type>string</type>)
         <indexterm>
-          <primary><varname>primary_conninfo</> recovery parameter</primary>
+          <primary><varname>primary_conninfo</varname> recovery parameter</primary>
         </indexterm>
         </term>
         <listitem>
@@ -401,20 +401,20 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
           A password needs to be provided too, if the primary demands password
           authentication.  It can be provided in the
           <varname>primary_conninfo</varname> string, or in a separate
-          <filename>~/.pgpass</> file on the standby server (use
-          <literal>replication</> as the database name).
+          <filename>~/.pgpass</filename> file on the standby server (use
+          <literal>replication</literal> as the database name).
           Do not specify a database name in the
           <varname>primary_conninfo</varname> string.
          </para>
          <para>
-          This setting has no effect if <varname>standby_mode</> is <literal>off</>.
+          This setting has no effect if <varname>standby_mode</varname> is <literal>off</literal>.
          </para>
         </listitem>
        </varlistentry>
        <varlistentry id="primary-slot-name" xreflabel="primary_slot_name">
         <term><varname>primary_slot_name</varname> (<type>string</type>)
         <indexterm>
-          <primary><varname>primary_slot_name</> recovery parameter</primary>
+          <primary><varname>primary_slot_name</varname> recovery parameter</primary>
         </indexterm>
         </term>
         <listitem>
@@ -423,7 +423,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
           connecting to the primary via streaming replication to control
           resource removal on the upstream node
           (see <xref linkend="streaming-replication-slots">).
-          This setting has no effect if <varname>primary_conninfo</> is not
+          This setting has no effect if <varname>primary_conninfo</varname> is not
           set.
          </para>
         </listitem>
@@ -431,15 +431,15 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
        <varlistentry id="trigger-file" xreflabel="trigger_file">
         <term><varname>trigger_file</varname> (<type>string</type>)
         <indexterm>
-          <primary><varname>trigger_file</> recovery parameter</primary>
+          <primary><varname>trigger_file</varname> recovery parameter</primary>
         </indexterm>
         </term>
         <listitem>
          <para>
           Specifies a trigger file whose presence ends recovery in the
           standby.  Even if this value is not set, you can still promote
-          the standby using <command>pg_ctl promote</>.
-          This setting has no effect if <varname>standby_mode</> is <literal>off</>.
+          the standby using <command>pg_ctl promote</command>.
+          This setting has no effect if <varname>standby_mode</varname> is <literal>off</literal>.
          </para>
         </listitem>
        </varlistentry>
@@ -447,7 +447,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
      <varlistentry id="recovery-min-apply-delay" xreflabel="recovery_min_apply_delay">
       <term><varname>recovery_min_apply_delay</varname> (<type>integer</type>)
       <indexterm>
-        <primary><varname>recovery_min_apply_delay</> recovery parameter</primary>
+        <primary><varname>recovery_min_apply_delay</varname> recovery parameter</primary>
       </indexterm>
       </term>
       <listitem>
@@ -488,7 +488,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
         This parameter is intended for use with streaming replication deployments;
         however, if the parameter is specified it will be honored in all cases.
 
-        <varname>hot_standby_feedback</> will be delayed by use of this feature
+        <varname>hot_standby_feedback</varname> will be delayed by use of this feature
         which could lead to bloat on the master; use both together with care.
 
         <warning>

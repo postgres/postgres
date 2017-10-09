@@ -97,7 +97,7 @@ DROP VIEW kinds;
   <para>
    This command conforms to the SQL standard, except that the standard only
    allows one view to be dropped per command, and apart from the
-   <literal>IF EXISTS</> option, which is a <productname>PostgreSQL</>
+   <literal>IF EXISTS</literal> option, which is a <productname>PostgreSQL</productname>
    extension.
   </para>
  </refsect1>

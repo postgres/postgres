@@ -36,7 +36,7 @@ ALTER CONVERSION <replaceable>name</replaceable> SET SCHEMA <replaceable>new_sch
   </para>
 
   <para>
-   You must own the conversion to use <command>ALTER CONVERSION</>.
+   You must own the conversion to use <command>ALTER CONVERSION</command>.
    To alter the owner, you must also be a direct or indirect member of the new
    owning role, and that role must have <literal>CREATE</literal> privilege on
    the conversion's schema.  (These restrictions enforce that altering the

@@ -36,7 +36,7 @@ ALTER TEXT SEARCH PARSER <replaceable>name</replaceable> SET SCHEMA <replaceable
   </para>
 
   <para>
-   You must be a superuser to use <command>ALTER TEXT SEARCH PARSER</>.
+   You must be a superuser to use <command>ALTER TEXT SEARCH PARSER</command>.
   </para>
  </refsect1>
 

@@ -8,15 +8,15 @@
  </indexterm>
 
  <para>
-  The <filename>sslinfo</> module provides information about the SSL
+  The <filename>sslinfo</filename> module provides information about the SSL
   certificate that the current client provided when connecting to
-  <productname>PostgreSQL</>.  The module is useless (most functions
+  <productname>PostgreSQL</productname>.  The module is useless (most functions
   will return NULL) if the current connection does not use SSL.
  </para>
 
  <para>
   This extension won't build at all unless the installation was
-  configured with <literal>--with-openssl</>.
+  configured with <literal>--with-openssl</literal>.
  </para>
 
  <sect2>
@@ -126,7 +126,7 @@
     </para>
 
     <para>
-     The result looks like <literal>/CN=Somebody /C=Some country/O=Some organization</>.
+     The result looks like <literal>/CN=Somebody /C=Some country/O=Some organization</literal>.
     </para>
     </listitem>
    </varlistentry>
@@ -142,7 +142,7 @@
     <para>
      Returns the full issuer name of the current client certificate, converting
      character data into the current database encoding.  Encoding conversions
-     are handled the same as for <function>ssl_client_dn</>.
+     are handled the same as for <function>ssl_client_dn</function>.
     </para>
     <para>
      The combination of the return value of this function with the
@@ -195,7 +195,7 @@ role
 emailAddress
 </literallayout>
     <para>
-     All of these fields are optional, except <structfield>commonName</>.
+     All of these fields are optional, except <structfield>commonName</structfield>.
      It depends
      entirely on your CA's policy which of them would be included and which
      wouldn't.  The meaning of these fields, however, is strictly defined by
@@ -214,7 +214,7 @@ emailAddress
     </term>
     <listitem>
     <para>
-     Same as <function>ssl_client_dn_field</>, but for the certificate issuer
+     Same as <function>ssl_client_dn_field</function>, but for the certificate issuer
      rather than the certificate subject.
     </para>
     </listitem>

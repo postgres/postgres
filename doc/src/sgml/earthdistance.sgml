@@ -8,18 +8,18 @@
  </indexterm>
 
  <para>
-  The <filename>earthdistance</> module provides two different approaches to
+  The <filename>earthdistance</filename> module provides two different approaches to
   calculating great circle distances on the surface of the Earth. The one
-  described first depends on the <filename>cube</> module (which
-  <emphasis>must</> be installed before <filename>earthdistance</> can be
-  installed). The second one is based on the built-in <type>point</> data type,
+  described first depends on the <filename>cube</filename> module (which
+  <emphasis>must</emphasis> be installed before <filename>earthdistance</filename> can be
+  installed). The second one is based on the built-in <type>point</type> data type,
   using longitude and latitude for the coordinates.
  </para>
 
  <para>
   In this module, the Earth is assumed to be perfectly spherical.
   (If that's too inaccurate for you, you might want to look at the
-  <application><ulink url="http://postgis.net/">PostGIS</ulink></>
+  <application><ulink url="http://postgis.net/">PostGIS</ulink></application>
   project.)
  </para>
 
@@ -29,13 +29,13 @@
   <para>
    Data is stored in cubes that are points (both corners are the same) using 3
    coordinates representing the x, y, and z distance from the center of the
-   Earth.  A domain <type>earth</> over <type>cube</> is provided, which
+   Earth.  A domain <type>earth</type> over <type>cube</type> is provided, which
    includes constraint checks that the value meets these restrictions and
    is reasonably close to the actual surface of the Earth.
   </para>
 
   <para>
-   The radius of the Earth is obtained from the <function>earth()</>
+   The radius of the Earth is obtained from the <function>earth()</function>
    function. It is given in meters. But by changing this one function you can
    change the module to use some other units, or to use a different value of
    the radius that you feel is more appropriate.
@@ -43,8 +43,8 @@
 
   <para>
    This package has applications to astronomical databases as well.
-   Astronomers will probably want to change <function>earth()</> to return a
-   radius of <literal>180/pi()</> so that distances are in degrees.
+   Astronomers will probably want to change <function>earth()</function> to return a
+   radius of <literal>180/pi()</literal> so that distances are in degrees.
   </para>
 
   <para>
@@ -123,11 +123,11 @@
       <entry><function>earth_box(earth, float8)</function><indexterm><primary>earth_box</primary></indexterm></entry>
       <entry><type>cube</type></entry>
       <entry>Returns a box suitable for an indexed search using the cube
-       <literal>@&gt;</>
+       <literal>@&gt;</literal>
        operator for points within a given great circle distance of a location.
        Some points in this box are further than the specified great circle
        distance from the location, so a second check using
-       <function>earth_distance</> should be included in the query.
+       <function>earth_distance</function> should be included in the query.
       </entry>
      </row>
     </tbody>
@@ -141,7 +141,7 @@
 
   <para>
    The second part of the module relies on representing Earth locations as
-   values of type <type>point</>, in which the first component is taken to
+   values of type <type>point</type>, in which the first component is taken to
    represent longitude in degrees, and the second component is taken to
    represent latitude in degrees.  Points are taken as (longitude, latitude)
    and not vice versa because longitude is closer to the intuitive idea of
@@ -165,7 +165,7 @@
     </thead>
     <tbody>
      <row>
-      <entry><type>point</> <literal>&lt;@&gt;</literal> <type>point</></entry>
+      <entry><type>point</type> <literal>&lt;@&gt;</literal> <type>point</type></entry>
       <entry><type>float8</type></entry>
       <entry>Gives the distance in statute miles between
        two points on the Earth's surface.
@@ -176,15 +176,15 @@
   </table>
 
   <para>
-   Note that unlike the <type>cube</>-based part of the module, units
-   are hardwired here: changing the <function>earth()</> function will
+   Note that unlike the <type>cube</type>-based part of the module, units
+   are hardwired here: changing the <function>earth()</function> function will
    not affect the results of this operator.
   </para>
 
   <para>
    One disadvantage of the longitude/latitude representation is that
    you need to be careful about the edge conditions near the poles
-   and near +/- 180 degrees of longitude.  The <type>cube</>-based
+   and near +/- 180 degrees of longitude.  The <type>cube</type>-based
    representation avoids these discontinuities.
   </para>
 

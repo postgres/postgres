@@ -8,7 +8,7 @@
   </indexterm>
 
   <para>
-   <productname>PostgreSQL</> can devise query plans which can leverage
+   <productname>PostgreSQL</productname> can devise query plans which can leverage
    multiple CPUs in order to answer queries faster.  This feature is known
    as parallel query.  Many queries cannot benefit from parallel query, either
    due to limitations of the current implementation or because there is no
@@ -47,18 +47,18 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
     In all cases, the <literal>Gather</literal> or
     <literal>Gather Merge</literal> node will have exactly one
     child plan, which is the portion of the plan that will be executed in
-    parallel.  If the <literal>Gather</> or <literal>Gather Merge</> node is
+    parallel.  If the <literal>Gather</literal> or <literal>Gather Merge</literal> node is
     at the very top of the plan tree, then the entire query will execute in
     parallel.  If it is somewhere else in the plan tree, then only the portion
     of the plan below it will run in parallel.  In the example above, the
     query accesses only one table, so there is only one plan node other than
-    the <literal>Gather</> node itself; since that plan node is a child of the
-    <literal>Gather</> node, it will run in parallel.
+    the <literal>Gather</literal> node itself; since that plan node is a child of the
+    <literal>Gather</literal> node, it will run in parallel.
    </para>
 
    <para>
-    <link linkend="using-explain">Using EXPLAIN</>, you can see the number of
-    workers chosen by the planner.  When the <literal>Gather</> node is reached
+    <link linkend="using-explain">Using EXPLAIN</link>, you can see the number of
+    workers chosen by the planner.  When the <literal>Gather</literal> node is reached
     during query execution, the process which is implementing the user's
     session will request a number of <link linkend="bgworker">background
     worker processes</link> equal to the number
@@ -72,7 +72,7 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
     no workers at all.  The optimal plan may depend on the number of workers
     that are available, so this can result in poor query performance.  If this
     occurrence is frequent, consider increasing
-    <varname>max_worker_processes</> and <varname>max_parallel_workers</>
+    <varname>max_worker_processes</varname> and <varname>max_parallel_workers</varname>
     so that more workers can be run simultaneously or alternatively reducing
     <varname>max_parallel_workers_per_gather</varname> so that the planner
     requests fewer workers.
@@ -96,10 +96,10 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
 
    <para>
     When the node at the top of the parallel portion of the plan is
-    <literal>Gather Merge</> rather than <literal>Gather</>, it indicates that
+    <literal>Gather Merge</literal> rather than <literal>Gather</literal>, it indicates that
     each process executing the parallel portion of the plan is producing
     tuples in sorted order, and that the leader is performing an
-    order-preserving merge.  In contrast, <literal>Gather</> reads tuples
+    order-preserving merge.  In contrast, <literal>Gather</literal> reads tuples
     from the workers in whatever order is convenient, destroying any sort
     order that may have existed.
    </para>   
@@ -128,7 +128,7 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
     <listitem>
       <para>
         <xref linkend="guc-dynamic-shared-memory-type"> must be set to a
-        value other than <literal>none</>.  Parallel query requires dynamic
+        value other than <literal>none</literal>.  Parallel query requires dynamic
         shared memory in order to pass data between cooperating processes.
       </para>
     </listitem>
@@ -152,8 +152,8 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
         The query writes any data or locks any database rows. If a query
         contains a data-modifying operation either at the top level or within
         a CTE, no parallel plans for that query will be generated.  As an
-        exception, the commands <literal>CREATE TABLE</>, <literal>SELECT
-        INTO</>, and <literal>CREATE MATERIALIZED VIEW</> which create a new
+        exception, the commands <literal>CREATE TABLE</literal>, <literal>SELECT
+        INTO</literal>, and <literal>CREATE MATERIALIZED VIEW</literal> which create a new
         table and populate it can use a parallel plan.
       </para>
     </listitem>
@@ -205,8 +205,8 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
     Even when parallel query plan is generated for a particular query, there
     are several circumstances under which it will be impossible to execute
     that plan in parallel at execution time.  If this occurs, the leader
-    will execute the portion of the plan below the <literal>Gather</>
-    node entirely by itself, almost as if the <literal>Gather</> node were
+    will execute the portion of the plan below the <literal>Gather</literal>
+    node entirely by itself, almost as if the <literal>Gather</literal> node were
     not present.  This will happen if any of the following conditions are met:
   </para>
 
@@ -264,7 +264,7 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
     copy of the output result set, so the query would not run any faster
     than normal but would produce incorrect results.  Instead, the parallel
     portion of the plan must be what is known internally to the query
-    optimizer as a <firstterm>partial plan</>; that is, it must be constructed
+    optimizer as a <firstterm>partial plan</firstterm>; that is, it must be constructed
     so that each process which executes the plan will generate only a
     subset of the output rows in such a way that each required output row
     is guaranteed to be generated by exactly one of the cooperating processes.
@@ -281,14 +281,14 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
   <itemizedlist>
     <listitem>
       <para>
-        In a <emphasis>parallel sequential scan</>, the table's blocks will
+        In a <emphasis>parallel sequential scan</emphasis>, the table's blocks will
         be divided among the cooperating processes.  Blocks are handed out one
         at a time, so that access to the table remains sequential.
       </para>
     </listitem>
     <listitem>
       <para>
-        In a <emphasis>parallel bitmap heap scan</>, one process is chosen
+        In a <emphasis>parallel bitmap heap scan</emphasis>, one process is chosen
         as the leader.  That process performs a scan of one or more indexes
         and builds a bitmap indicating which table blocks need to be visited.
         These blocks are then divided among the cooperating processes as in
@@ -298,8 +298,8 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
     </listitem>
     <listitem>
       <para>
-        In a <emphasis>parallel index scan</> or <emphasis>parallel index-only
-        scan</>, the cooperating processes take turns reading data from the
+        In a <emphasis>parallel index scan</emphasis> or <emphasis>parallel index-only
+        scan</emphasis>, the cooperating processes take turns reading data from the
         index.  Currently, parallel index scans are supported only for
         btree indexes.  Each process will claim a single index block and will
         scan and return all tuples referenced by that block; other process can
@@ -345,25 +345,25 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
  <sect2 id="parallel-aggregation">
   <title>Parallel Aggregation</title>
   <para>
-    <productname>PostgreSQL</> supports parallel aggregation by aggregating in
+    <productname>PostgreSQL</productname> supports parallel aggregation by aggregating in
     two stages.  First, each process participating in the parallel portion of
     the query performs an aggregation step, producing a partial result for
     each group of which that process is aware.  This is reflected in the plan
-    as a <literal>Partial Aggregate</> node.  Second, the partial results are
-    transferred to the leader via <literal>Gather</> or <literal>Gather
-    Merge</>.  Finally, the leader re-aggregates the results across all
+    as a <literal>Partial Aggregate</literal> node.  Second, the partial results are
+    transferred to the leader via <literal>Gather</literal> or <literal>Gather
+    Merge</literal>.  Finally, the leader re-aggregates the results across all
     workers in order to produce the final result.  This is reflected in the
-    plan as a <literal>Finalize Aggregate</> node.
+    plan as a <literal>Finalize Aggregate</literal> node.
   </para>
   
   <para>
-    Because the <literal>Finalize Aggregate</> node runs on the leader
+    Because the <literal>Finalize Aggregate</literal> node runs on the leader
     process, queries which produce a relatively large number of groups in
     comparison to the number of input rows will appear less favorable to the
     query planner. For example, in the worst-case scenario the number of
-    groups seen by the <literal>Finalize Aggregate</> node could be as many as
+    groups seen by the <literal>Finalize Aggregate</literal> node could be as many as
     the number of input rows which were seen by all worker processes in the
-    <literal>Partial Aggregate</> stage. For such cases, there is clearly
+    <literal>Partial Aggregate</literal> stage. For such cases, there is clearly
     going to be no performance benefit to using parallel aggregation. The
     query planner takes this into account during the planning process and is
     unlikely to choose parallel aggregate in this scenario.
@@ -371,14 +371,14 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
 
   <para>
     Parallel aggregation is not supported in all situations.  Each aggregate
-    must be <link linkend="parallel-safety">safe</> for parallelism and must
+    must be <link linkend="parallel-safety">safe</link> for parallelism and must
     have a combine function.  If the aggregate has a transition state of type
-    <literal>internal</>, it must have serialization and deserialization
+    <literal>internal</literal>, it must have serialization and deserialization
     functions.  See <xref linkend="sql-createaggregate"> for more details.
     Parallel aggregation is not supported if any aggregate function call
-    contains <literal>DISTINCT</> or <literal>ORDER BY</> clause and is also
+    contains <literal>DISTINCT</literal> or <literal>ORDER BY</literal> clause and is also
     not supported for ordered set aggregates or when  the query involves
-    <literal>GROUPING SETS</>.  It can only be used when all joins involved in
+    <literal>GROUPING SETS</literal>.  It can only be used when all joins involved in
     the query are also part of the parallel portion of the plan.
   </para>
 
@@ -417,13 +417,13 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
 
   <para>
     The planner classifies operations involved in a query as either
-    <firstterm>parallel safe</>, <firstterm>parallel restricted</>,
-    or <firstterm>parallel unsafe</>.  A parallel safe operation is one which
+    <firstterm>parallel safe</firstterm>, <firstterm>parallel restricted</firstterm>,
+    or <firstterm>parallel unsafe</firstterm>.  A parallel safe operation is one which
     does not conflict with the use of parallel query.  A parallel restricted
     operation is one which cannot be performed in a parallel worker, but which
     can be performed in the leader while parallel query is in use.  Therefore,
-    parallel restricted operations can never occur below a <literal>Gather</>
-    or <literal>Gather Merge</> node, but can occur elsewhere in a plan which
+    parallel restricted operations can never occur below a <literal>Gather</literal>
+    or <literal>Gather Merge</literal> node, but can occur elsewhere in a plan which
     contains such a node.  A parallel unsafe operation is one which cannot
     be performed while parallel query is in use, not even in the leader.
     When a query contains anything which is parallel unsafe, parallel query
@@ -450,13 +450,13 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
     <listitem>
       <para>
         Scans of foreign tables, unless the foreign data wrapper has
-        an <literal>IsForeignScanParallelSafe</> API which indicates otherwise.
+        an <literal>IsForeignScanParallelSafe</literal> API which indicates otherwise.
       </para>
     </listitem>
 
     <listitem>
       <para>
-        Access to an <literal>InitPlan</> or correlated <literal>SubPlan</>.
+        Access to an <literal>InitPlan</literal> or correlated <literal>SubPlan</literal>.
       </para>
     </listitem>
   </itemizedlist>
@@ -475,23 +475,23 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
     be parallel unsafe unless otherwise marked.  When using
     <xref linkend="sql-createfunction"> or
     <xref linkend="sql-alterfunction">, markings can be set by specifying
-    <literal>PARALLEL SAFE</>, <literal>PARALLEL RESTRICTED</>, or
-    <literal>PARALLEL UNSAFE</> as appropriate.  When using
+    <literal>PARALLEL SAFE</literal>, <literal>PARALLEL RESTRICTED</literal>, or
+    <literal>PARALLEL UNSAFE</literal> as appropriate.  When using
     <xref linkend="sql-createaggregate">, the
-    <literal>PARALLEL</> option can be specified with <literal>SAFE</>,
-    <literal>RESTRICTED</>, or <literal>UNSAFE</> as the corresponding value.
+    <literal>PARALLEL</literal> option can be specified with <literal>SAFE</literal>,
+    <literal>RESTRICTED</literal>, or <literal>UNSAFE</literal> as the corresponding value.
   </para>
 
   <para>
-    Functions and aggregates must be marked <literal>PARALLEL UNSAFE</> if
+    Functions and aggregates must be marked <literal>PARALLEL UNSAFE</literal> if
     they write to the database, access sequences, change the transaction state
     even temporarily (e.g. a PL/pgSQL function which establishes an
-    <literal>EXCEPTION</> block to catch errors), or make persistent changes to
+    <literal>EXCEPTION</literal> block to catch errors), or make persistent changes to
     settings.  Similarly, functions must be marked <literal>PARALLEL
-    RESTRICTED</> if they access temporary tables, client connection state,
+    RESTRICTED</literal> if they access temporary tables, client connection state,
     cursors, prepared statements, or miscellaneous backend-local state which
     the system cannot synchronize across workers. For example,
-    <literal>setseed</> and <literal>random</> are parallel restricted for
+    <literal>setseed</literal> and <literal>random</literal> are parallel restricted for
     this last reason.
   </para>
 
@@ -503,7 +503,7 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
     mislabeled, since there is no way for the system to protect itself against
     arbitrary C code, but in most likely cases the result will be no worse than
     for any other function. If in doubt, it is probably best to label functions
-    as <literal>UNSAFE</>.
+    as <literal>UNSAFE</literal>.
   </para>
 
   <para>
@@ -519,13 +519,13 @@ EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
   <para>
     Note that the query planner does not consider deferring the evaluation of
     parallel-restricted functions or aggregates involved in the query in
-    order to obtain a superior plan.  So, for example, if a <literal>WHERE</>
+    order to obtain a superior plan.  So, for example, if a <literal>WHERE</literal>
     clause applied to a particular table is parallel restricted, the query
     planner will not consider performing a scan of that table in the parallel
     portion of a plan.  In some cases, it would be
     possible (and perhaps even efficient) to include the scan of that table in
     the parallel portion of the query and defer the evaluation of the
-    <literal>WHERE</> clause so that it happens above the <literal>Gather</>
+    <literal>WHERE</literal> clause so that it happens above the <literal>Gather</literal>
     node.  However, the planner does not do this.
   </para>
 

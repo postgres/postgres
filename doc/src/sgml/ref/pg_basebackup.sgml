@@ -22,7 +22,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
   <cmdsynopsis>
    <command>pg_basebackup</command>
-   <arg rep="repeat"><replaceable>option</></arg>
+   <arg rep="repeat"><replaceable>option</replaceable></arg>
   </cmdsynopsis>
  </refsynopsisdiv>
 
@@ -69,7 +69,7 @@ PostgreSQL documentation
    <application>pg_basebackup</application> can make a base backup from
    not only the master but also the standby. To take a backup from the standby,
    set up the standby so that it can accept replication connections (that is, set
-   <varname>max_wal_senders</> and <xref linkend="guc-hot-standby">,
+   <varname>max_wal_senders</varname> and <xref linkend="guc-hot-standby">,
    and configure <link linkend="auth-pg-hba-conf">host-based authentication</link>).
    You will also need to enable <xref linkend="guc-full-page-writes"> on the master.
   </para>
@@ -85,7 +85,7 @@ PostgreSQL documentation
     </listitem>
     <listitem>
      <para>
-      If you are using <literal>-X none</>, there is no guarantee that all
+      If you are using <literal>-X none</literal>, there is no guarantee that all
       WAL files required for the backup are archived at the end of backup.
      </para>
     </listitem>
@@ -97,9 +97,9 @@ PostgreSQL documentation
     <listitem>
      <para>
       All WAL records required for the backup must contain sufficient full-page writes,
-      which requires you to enable <varname>full_page_writes</> on the master and
-      not to use a tool like <application>pg_compresslog</> as
-      <varname>archive_command</> to remove full-page writes from WAL files.
+      which requires you to enable <varname>full_page_writes</varname> on the master and
+      not to use a tool like <application>pg_compresslog</application> as
+      <varname>archive_command</varname> to remove full-page writes from WAL files.
      </para>
     </listitem>
    </itemizedlist>
@@ -193,8 +193,8 @@ PostgreSQL documentation
       <listitem>
        <para>
         The maximum transfer rate of data transferred from the server.  Values are
-        in kilobytes per second.  Use a suffix of <literal>M</> to indicate megabytes
-        per second.  A suffix of <literal>k</> is also accepted, and has no effect.
+        in kilobytes per second.  Use a suffix of <literal>M</literal> to indicate megabytes
+        per second.  A suffix of <literal>k</literal> is also accepted, and has no effect.
         Valid values are between 32 kilobytes per second and 1024 megabytes per second.
        </para>
        <para>
@@ -534,7 +534,7 @@ PostgreSQL documentation
         string. See <xref linkend="libpq-connstring"> for more information.
        </para>
        <para>
-        The option is called <literal>--dbname</> for consistency with other
+        The option is called <literal>--dbname</literal> for consistency with other
         client applications, but because <application>pg_basebackup</application>
         doesn't connect to any particular database in the cluster, database
         name in the connection string will be ignored.
@@ -594,8 +594,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-w</></term>
-      <term><option>--no-password</></term>
+      <term><option>-w</option></term>
+      <term><option>--no-password</option></term>
       <listitem>
        <para>
         Never issue a password prompt.  If the server requires
@@ -623,7 +623,7 @@ PostgreSQL documentation
         for a password if the server demands password authentication.
         However, <application>pg_basebackup</application> will waste a
         connection attempt finding out that the server wants a password.
-        In some cases it is worth typing <option>-W</> to avoid the extra
+        In some cases it is worth typing <option>-W</option> to avoid the extra
         connection attempt.
        </para>
       </listitem>
@@ -636,8 +636,8 @@ PostgreSQL documentation
 
     <variablelist>
      <varlistentry>
-       <term><option>-V</></term>
-       <term><option>--version</></term>
+       <term><option>-V</option></term>
+       <term><option>--version</option></term>
        <listitem>
        <para>
        Print the <application>pg_basebackup</application> version and exit.
@@ -646,8 +646,8 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-       <term><option>-?</></term>
-       <term><option>--help</></term>
+       <term><option>-?</option></term>
+       <term><option>--help</option></term>
        <listitem>
        <para>
        Show help about <application>pg_basebackup</application> command line
@@ -665,8 +665,8 @@ PostgreSQL documentation
   <title>Environment</title>
 
   <para>
-   This utility, like most other <productname>PostgreSQL</> utilities,
-   uses the environment variables supported by <application>libpq</>
+   This utility, like most other <productname>PostgreSQL</productname> utilities,
+   uses the environment variables supported by <application>libpq</application>
    (see <xref linkend="libpq-envars">).
   </para>
 
@@ -709,8 +709,8 @@ PostgreSQL documentation
    tar file before starting the PostgreSQL server. If there are additional tablespaces, the
    tar files for them need to be unpacked in the correct locations. In this
    case the symbolic links for those tablespaces will be created by the server
-   according to the contents of the <filename>tablespace_map</> file that is
-   included in the <filename>base.tar</> file.
+   according to the contents of the <filename>tablespace_map</filename> file that is
+   included in the <filename>base.tar</filename> file.
   </para>
 
   <para>

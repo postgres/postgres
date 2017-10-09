@@ -4,8 +4,8 @@
  <title>Acronyms</title>
 
  <para>
-  This is a list of acronyms commonly used in the <productname>PostgreSQL</>
-  documentation and in discussions about <productname>PostgreSQL</>.
+  This is a list of acronyms commonly used in the <productname>PostgreSQL</productname>
+  documentation and in discussions about <productname>PostgreSQL</productname>.
 
   <variablelist>
 
@@ -153,7 +153,7 @@
       <ulink
       url="http://en.wikipedia.org/wiki/Data_Definition_Language">Data
       Definition Language</ulink>, SQL commands such as <command>CREATE
-      TABLE</>, <command>ALTER USER</>
+      TABLE</command>, <command>ALTER USER</command>
      </para>
     </listitem>
    </varlistentry>
@@ -164,8 +164,8 @@
      <para>
       <ulink
       url="http://en.wikipedia.org/wiki/Data_Manipulation_Language">Data
-      Manipulation Language</ulink>, SQL commands such as <command>INSERT</>,
-      <command>UPDATE</>, <command>DELETE</>
+      Manipulation Language</ulink>, SQL commands such as <command>INSERT</command>,
+      <command>UPDATE</command>, <command>DELETE</command>
      </para>
     </listitem>
    </varlistentry>
@@ -281,7 +281,7 @@
     <listitem>
      <para>
       <link linkend="config-setting">Grand Unified Configuration</link>,
-      the <productname>PostgreSQL</> subsystem that handles server configuration
+      the <productname>PostgreSQL</productname> subsystem that handles server configuration
      </para>
     </listitem>
    </varlistentry>
@@ -384,7 +384,7 @@
     <term><acronym>LSN</acronym></term>
     <listitem>
      <para>
-      Log Sequence Number, see <link linkend="datatype-pg-lsn"><type>pg_lsn</></link>
+      Log Sequence Number, see <link linkend="datatype-pg-lsn"><type>pg_lsn</type></link>
       and <link linkend="wal-internals">WAL Internals</link>.
      </para>
     </listitem>
@@ -486,7 +486,7 @@
     <term><acronym>PGSQL</acronym></term>
     <listitem>
      <para>
-      <link linkend="postgres"><productname>PostgreSQL</></link>
+      <link linkend="postgres"><productname>PostgreSQL</productname></link>
      </para>
     </listitem>
    </varlistentry>
@@ -495,7 +495,7 @@
     <term><acronym>PGXS</acronym></term>
     <listitem>
      <para>
-      <link linkend="extend-pgxs"><productname>PostgreSQL</> Extension System</link>
+      <link linkend="extend-pgxs"><productname>PostgreSQL</productname> Extension System</link>
      </para>
     </listitem>
    </varlistentry>

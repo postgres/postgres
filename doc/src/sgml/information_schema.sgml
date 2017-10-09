@@ -35,12 +35,12 @@
 
   <para>
    This problem can appear when querying information schema views such
-   as <literal>check_constraint_routine_usage</>,
-   <literal>check_constraints</>, <literal>domain_constraints</>, and
-   <literal>referential_constraints</>.  Some other views have similar
+   as <literal>check_constraint_routine_usage</literal>,
+   <literal>check_constraints</literal>, <literal>domain_constraints</literal>, and
+   <literal>referential_constraints</literal>.  Some other views have similar
    issues but contain the table name to help distinguish duplicate
-   rows, e.g., <literal>constraint_column_usage</>,
-   <literal>constraint_table_usage</>, <literal>table_constraints</>.
+   rows, e.g., <literal>constraint_column_usage</literal>,
+   <literal>constraint_table_usage</literal>, <literal>table_constraints</literal>.
   </para>
  </note>
 
@@ -384,19 +384,19 @@
      <row>
       <entry><literal>character_set_catalog</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>character_set_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>character_set_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
@@ -535,25 +535,25 @@
      <row>
       <entry><literal>scope_catalog</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>scope_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>scope_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>maximum_cardinality</literal></entry>
       <entry><type>cardinal_number</type></entry>
-      <entry>Always null, because arrays always have unlimited maximum cardinality in <productname>PostgreSQL</></entry>
+      <entry>Always null, because arrays always have unlimited maximum cardinality in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
@@ -572,7 +572,7 @@
      <row>
       <entry><literal>is_derived_reference_attribute</literal></entry>
       <entry><type>yes_or_no</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
     </tbody>
    </tgroup>
@@ -1256,7 +1256,7 @@
   <para>
    The view <literal>columns</literal> contains information about all
    table columns (or view columns) in the database.  System columns
-   (<literal>oid</>, etc.) are not included.  Only those columns are
+   (<literal>oid</literal>, etc.) are not included.  Only those columns are
    shown that the current user has access to (by way of being the
    owner or having some privilege).
   </para>
@@ -1441,19 +1441,19 @@
      <row>
       <entry><literal>character_set_catalog</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>character_set_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>character_set_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
@@ -1540,25 +1540,25 @@
      <row>
       <entry><literal>scope_catalog</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>scope_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>scope_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>maximum_cardinality</literal></entry>
       <entry><type>cardinal_number</type></entry>
-      <entry>Always null, because arrays always have unlimited maximum cardinality in <productname>PostgreSQL</></entry>
+      <entry>Always null, because arrays always have unlimited maximum cardinality in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
@@ -1577,7 +1577,7 @@
      <row>
       <entry><literal>is_self_referencing</literal></entry>
       <entry><type>yes_or_no</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
@@ -1648,13 +1648,13 @@
      <row>
       <entry><literal>is_generated</literal></entry>
       <entry><type>character_data</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>generation_expression</literal></entry>
       <entry><type>character_data</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
@@ -2152,19 +2152,19 @@
      <row>
       <entry><literal>character_set_catalog</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>character_set_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>character_set_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
@@ -2300,25 +2300,25 @@
      <row>
       <entry><literal>scope_catalog</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>scope_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>scope_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>maximum_cardinality</literal></entry>
       <entry><type>cardinal_number</type></entry>
-      <entry>Always null, because arrays always have unlimited maximum cardinality in <productname>PostgreSQL</></entry>
+      <entry>Always null, because arrays always have unlimited maximum cardinality in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
@@ -2442,31 +2442,31 @@ ORDER BY c.ordinal_position;
      <row>
       <entry><literal>character_maximum_length</literal></entry>
       <entry><type>cardinal_number</type></entry>
-      <entry>Always null, since this information is not applied to array element data types in <productname>PostgreSQL</></entry>
+      <entry>Always null, since this information is not applied to array element data types in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>character_octet_length</literal></entry>
       <entry><type>cardinal_number</type></entry>
-      <entry>Always null, since this information is not applied to array element data types in <productname>PostgreSQL</></entry>
+      <entry>Always null, since this information is not applied to array element data types in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>character_set_catalog</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>character_set_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>character_set_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
@@ -2501,37 +2501,37 @@ ORDER BY c.ordinal_position;
      <row>
       <entry><literal>numeric_precision</literal></entry>
       <entry><type>cardinal_number</type></entry>
-      <entry>Always null, since this information is not applied to array element data types in <productname>PostgreSQL</></entry>
+      <entry>Always null, since this information is not applied to array element data types in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>numeric_precision_radix</literal></entry>
       <entry><type>cardinal_number</type></entry>
-      <entry>Always null, since this information is not applied to array element data types in <productname>PostgreSQL</></entry>
+      <entry>Always null, since this information is not applied to array element data types in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>numeric_scale</literal></entry>
       <entry><type>cardinal_number</type></entry>
-      <entry>Always null, since this information is not applied to array element data types in <productname>PostgreSQL</></entry>
+      <entry>Always null, since this information is not applied to array element data types in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>datetime_precision</literal></entry>
       <entry><type>cardinal_number</type></entry>
-      <entry>Always null, since this information is not applied to array element data types in <productname>PostgreSQL</></entry>
+      <entry>Always null, since this information is not applied to array element data types in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>interval_type</literal></entry>
       <entry><type>character_data</type></entry>
-      <entry>Always null, since this information is not applied to array element data types in <productname>PostgreSQL</></entry>
+      <entry>Always null, since this information is not applied to array element data types in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>interval_precision</literal></entry>
       <entry><type>cardinal_number</type></entry>
-      <entry>Always null, since this information is not applied to array element data types in <productname>PostgreSQL</></entry>
+      <entry>Always null, since this information is not applied to array element data types in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
@@ -2569,25 +2569,25 @@ ORDER BY c.ordinal_position;
      <row>
       <entry><literal>scope_catalog</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>scope_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>scope_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>maximum_cardinality</literal></entry>
       <entry><type>cardinal_number</type></entry>
-      <entry>Always null, because arrays always have unlimited maximum cardinality in <productname>PostgreSQL</></entry>
+      <entry>Always null, because arrays always have unlimited maximum cardinality in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
@@ -3160,13 +3160,13 @@ ORDER BY c.ordinal_position;
      <row>
       <entry><literal>is_result</literal></entry>
       <entry><type>yes_or_no</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>as_locator</literal></entry>
       <entry><type>yes_or_no</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
@@ -3191,85 +3191,85 @@ ORDER BY c.ordinal_position;
      <row>
       <entry><literal>character_maximum_length</literal></entry>
       <entry><type>cardinal_number</type></entry>
-      <entry>Always null, since this information is not applied to parameter data types in <productname>PostgreSQL</></entry>
+      <entry>Always null, since this information is not applied to parameter data types in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>character_octet_length</literal></entry>
       <entry><type>cardinal_number</type></entry>
-      <entry>Always null, since this information is not applied to parameter data types in <productname>PostgreSQL</></entry>
+      <entry>Always null, since this information is not applied to parameter data types in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>character_set_catalog</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>character_set_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>character_set_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>collation_catalog</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Always null, since this information is not applied to parameter data types in <productname>PostgreSQL</></entry>
+      <entry>Always null, since this information is not applied to parameter data types in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>collation_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Always null, since this information is not applied to parameter data types in <productname>PostgreSQL</></entry>
+      <entry>Always null, since this information is not applied to parameter data types in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>collation_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Always null, since this information is not applied to parameter data types in <productname>PostgreSQL</></entry>
+      <entry>Always null, since this information is not applied to parameter data types in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>numeric_precision</literal></entry>
       <entry><type>cardinal_number</type></entry>
-      <entry>Always null, since this information is not applied to parameter data types in <productname>PostgreSQL</></entry>
+      <entry>Always null, since this information is not applied to parameter data types in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>numeric_precision_radix</literal></entry>
       <entry><type>cardinal_number</type></entry>
-      <entry>Always null, since this information is not applied to parameter data types in <productname>PostgreSQL</></entry>
+      <entry>Always null, since this information is not applied to parameter data types in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>numeric_scale</literal></entry>
       <entry><type>cardinal_number</type></entry>
-      <entry>Always null, since this information is not applied to parameter data types in <productname>PostgreSQL</></entry>
+      <entry>Always null, since this information is not applied to parameter data types in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>datetime_precision</literal></entry>
       <entry><type>cardinal_number</type></entry>
-      <entry>Always null, since this information is not applied to parameter data types in <productname>PostgreSQL</></entry>
+      <entry>Always null, since this information is not applied to parameter data types in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>interval_type</literal></entry>
       <entry><type>character_data</type></entry>
-      <entry>Always null, since this information is not applied to parameter data types in <productname>PostgreSQL</></entry>
+      <entry>Always null, since this information is not applied to parameter data types in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>interval_precision</literal></entry>
       <entry><type>cardinal_number</type></entry>
-      <entry>Always null, since this information is not applied to parameter data types in <productname>PostgreSQL</></entry>
+      <entry>Always null, since this information is not applied to parameter data types in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
@@ -3301,25 +3301,25 @@ ORDER BY c.ordinal_position;
      <row>
       <entry><literal>scope_catalog</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>scope_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>scope_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>maximum_cardinality</literal></entry>
       <entry><type>cardinal_number</type></entry>
-      <entry>Always null, because arrays always have unlimited maximum cardinality in <productname>PostgreSQL</></entry>
+      <entry>Always null, because arrays always have unlimited maximum cardinality in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
@@ -4045,37 +4045,37 @@ ORDER BY c.ordinal_position;
      <row>
       <entry><literal>module_catalog</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>module_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>module_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>udt_catalog</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>udt_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>udt_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
@@ -4094,85 +4094,85 @@ ORDER BY c.ordinal_position;
      <row>
       <entry><literal>character_maximum_length</literal></entry>
       <entry><type>cardinal_number</type></entry>
-      <entry>Always null, since this information is not applied to return data types in <productname>PostgreSQL</></entry>
+      <entry>Always null, since this information is not applied to return data types in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>character_octet_length</literal></entry>
       <entry><type>cardinal_number</type></entry>
-      <entry>Always null, since this information is not applied to return data types in <productname>PostgreSQL</></entry>
+      <entry>Always null, since this information is not applied to return data types in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>character_set_catalog</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>character_set_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>character_set_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>collation_catalog</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Always null, since this information is not applied to return data types in <productname>PostgreSQL</></entry>
+      <entry>Always null, since this information is not applied to return data types in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>collation_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Always null, since this information is not applied to return data types in <productname>PostgreSQL</></entry>
+      <entry>Always null, since this information is not applied to return data types in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>collation_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Always null, since this information is not applied to return data types in <productname>PostgreSQL</></entry>
+      <entry>Always null, since this information is not applied to return data types in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>numeric_precision</literal></entry>
       <entry><type>cardinal_number</type></entry>
-      <entry>Always null, since this information is not applied to return data types in <productname>PostgreSQL</></entry>
+      <entry>Always null, since this information is not applied to return data types in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>numeric_precision_radix</literal></entry>
       <entry><type>cardinal_number</type></entry>
-      <entry>Always null, since this information is not applied to return data types in <productname>PostgreSQL</></entry>
+      <entry>Always null, since this information is not applied to return data types in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>numeric_scale</literal></entry>
       <entry><type>cardinal_number</type></entry>
-      <entry>Always null, since this information is not applied to return data types in <productname>PostgreSQL</></entry>
+      <entry>Always null, since this information is not applied to return data types in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>datetime_precision</literal></entry>
       <entry><type>cardinal_number</type></entry>
-      <entry>Always null, since this information is not applied to return data types in <productname>PostgreSQL</></entry>
+      <entry>Always null, since this information is not applied to return data types in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>interval_type</literal></entry>
       <entry><type>character_data</type></entry>
-      <entry>Always null, since this information is not applied to return data types in <productname>PostgreSQL</></entry>
+      <entry>Always null, since this information is not applied to return data types in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>interval_precision</literal></entry>
       <entry><type>cardinal_number</type></entry>
-      <entry>Always null, since this information is not applied to return data types in <productname>PostgreSQL</></entry>
+      <entry>Always null, since this information is not applied to return data types in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
@@ -4204,25 +4204,25 @@ ORDER BY c.ordinal_position;
      <row>
       <entry><literal>scope_catalog</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>scope_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>scope_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>maximum_cardinality</literal></entry>
       <entry><type>cardinal_number</type></entry>
-      <entry>Always null, because arrays always have unlimited maximum cardinality in <productname>PostgreSQL</></entry>
+      <entry>Always null, because arrays always have unlimited maximum cardinality in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
@@ -4283,7 +4283,7 @@ ORDER BY c.ordinal_position;
       <entry><type>character_data</type></entry>
       <entry>
        Always <literal>GENERAL</literal> (The SQL standard defines
-       other parameter styles, which are not available in <productname>PostgreSQL</>.)
+       other parameter styles, which are not available in <productname>PostgreSQL</productname>.)
       </entry>
      </row>
 
@@ -4294,7 +4294,7 @@ ORDER BY c.ordinal_position;
        If the function is declared immutable (called deterministic in
        the SQL standard), then <literal>YES</literal>, else
        <literal>NO</literal>.  (You cannot query the other volatility
-       levels available in <productname>PostgreSQL</> through the information schema.)
+       levels available in <productname>PostgreSQL</productname> through the information schema.)
       </entry>
      </row>
 
@@ -4304,7 +4304,7 @@ ORDER BY c.ordinal_position;
       <entry>
        Always <literal>MODIFIES</literal>, meaning that the function
        possibly modifies SQL data.  This information is not useful for
-       <productname>PostgreSQL</>.
+       <productname>PostgreSQL</productname>.
       </entry>
      </row>
 
@@ -4321,7 +4321,7 @@ ORDER BY c.ordinal_position;
      <row>
       <entry><literal>sql_path</literal></entry>
       <entry><type>character_data</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
@@ -4330,26 +4330,26 @@ ORDER BY c.ordinal_position;
       <entry>
        Always <literal>YES</literal> (The opposite would be a method
        of a user-defined type, which is a feature not available in
-       <productname>PostgreSQL</>.)
+       <productname>PostgreSQL</productname>.)
       </entry>
      </row>
 
      <row>
       <entry><literal>max_dynamic_result_sets</literal></entry>
       <entry><type>cardinal_number</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>is_user_defined_cast</literal></entry>
       <entry><type>yes_or_no</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>is_implicitly_invocable</literal></entry>
       <entry><type>yes_or_no</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
@@ -4366,43 +4366,43 @@ ORDER BY c.ordinal_position;
      <row>
       <entry><literal>to_sql_specific_catalog</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>to_sql_specific_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>to_sql_specific_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>as_locator</literal></entry>
       <entry><type>yes_or_no</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>created</literal></entry>
       <entry><type>time_stamp</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>last_altered</literal></entry>
       <entry><type>time_stamp</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>new_savepoint_level</literal></entry>
       <entry><type>yes_or_no</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
@@ -4411,152 +4411,152 @@ ORDER BY c.ordinal_position;
       <entry>
        Currently always <literal>NO</literal>.  The alternative
        <literal>YES</literal> applies to a feature not available in
-       <productname>PostgreSQL</>.
+       <productname>PostgreSQL</productname>.
       </entry>
      </row>
 
      <row>
       <entry><literal>result_cast_from_data_type</literal></entry>
       <entry><type>character_data</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>result_cast_as_locator</literal></entry>
       <entry><type>yes_or_no</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>result_cast_char_max_length</literal></entry>
       <entry><type>cardinal_number</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>result_cast_char_octet_length</literal></entry>
       <entry><type>character_data</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>result_cast_char_set_catalog</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>result_cast_char_set_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>result_cast_char_set_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>result_cast_collation_catalog</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>result_cast_collation_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>result_cast_collation_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>result_cast_numeric_precision</literal></entry>
       <entry><type>cardinal_number</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>result_cast_numeric_precision_radix</literal></entry>
       <entry><type>cardinal_number</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>result_cast_numeric_scale</literal></entry>
       <entry><type>cardinal_number</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>result_cast_datetime_precision</literal></entry>
       <entry><type>character_data</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>result_cast_interval_type</literal></entry>
       <entry><type>character_data</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>result_cast_interval_precision</literal></entry>
       <entry><type>cardinal_number</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>result_cast_type_udt_catalog</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>result_cast_type_udt_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>result_cast_type_udt_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>result_cast_scope_catalog</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>result_cast_scope_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>result_cast_scope_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>result_cast_maximum_cardinality</literal></entry>
       <entry><type>cardinal_number</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>result_cast_dtd_identifier</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
     </tbody>
    </tgroup>
@@ -4606,25 +4606,25 @@ ORDER BY c.ordinal_position;
      <row>
       <entry><literal>default_character_set_catalog</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>default_character_set_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>default_character_set_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>sql_path</literal></entry>
       <entry><type>character_data</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
     </tbody>
    </tgroup>
@@ -4808,7 +4808,7 @@ ORDER BY c.ordinal_position;
       <entry><type>yes_or_no</type></entry>
       <entry>
        <literal>YES</literal> if the feature is fully supported by the
-       current version of <productname>PostgreSQL</>, <literal>NO</literal> if not
+       current version of <productname>PostgreSQL</productname>, <literal>NO</literal> if not
       </entry>
      </row>
 
@@ -4816,7 +4816,7 @@ ORDER BY c.ordinal_position;
       <entry><literal>is_verified_by</literal></entry>
       <entry><type>character_data</type></entry>
       <entry>
-       Always null, since the <productname>PostgreSQL</> development group does not
+       Always null, since the <productname>PostgreSQL</productname> development group does not
        perform formal testing of feature conformance
       </entry>
      </row>
@@ -4982,7 +4982,7 @@ ORDER BY c.ordinal_position;
       <entry><type>character_data</type></entry>
       <entry>
        The programming language, if the binding style is
-       <literal>EMBEDDED</literal>, else null.  <productname>PostgreSQL</> only
+       <literal>EMBEDDED</literal>, else null.  <productname>PostgreSQL</productname> only
        supports the language C.
       </entry>
      </row>
@@ -5031,7 +5031,7 @@ ORDER BY c.ordinal_position;
       <entry><type>yes_or_no</type></entry>
       <entry>
        <literal>YES</literal> if the package is fully supported by the
-       current version of <productname>PostgreSQL</>, <literal>NO</literal> if not
+       current version of <productname>PostgreSQL</productname>, <literal>NO</literal> if not
       </entry>
      </row>
 
@@ -5039,7 +5039,7 @@ ORDER BY c.ordinal_position;
       <entry><literal>is_verified_by</literal></entry>
       <entry><type>character_data</type></entry>
       <entry>
-       Always null, since the <productname>PostgreSQL</> development group does not
+       Always null, since the <productname>PostgreSQL</productname> development group does not
        perform formal testing of feature conformance
       </entry>
      </row>
@@ -5093,7 +5093,7 @@ ORDER BY c.ordinal_position;
       <entry><type>yes_or_no</type></entry>
       <entry>
        <literal>YES</literal> if the part is fully supported by the
-       current version of <productname>PostgreSQL</>,
+       current version of <productname>PostgreSQL</productname>,
        <literal>NO</literal> if not
       </entry>
      </row>
@@ -5102,7 +5102,7 @@ ORDER BY c.ordinal_position;
       <entry><literal>is_verified_by</literal></entry>
       <entry><type>character_data</type></entry>
       <entry>
-       Always null, since the <productname>PostgreSQL</> development group does not
+       Always null, since the <productname>PostgreSQL</productname> development group does not
        perform formal testing of feature conformance
       </entry>
      </row>
@@ -5182,7 +5182,7 @@ ORDER BY c.ordinal_position;
   <para>
    The table <literal>sql_sizing_profiles</literal> contains
    information about the <literal>sql_sizing</literal> values that are
-   required by various profiles of the SQL standard.  <productname>PostgreSQL</> does
+   required by various profiles of the SQL standard.  <productname>PostgreSQL</productname> does
    not track any SQL profiles, so this table is empty.
   </para>
 
@@ -5465,13 +5465,13 @@ ORDER BY c.ordinal_position;
      <row>
       <entry><literal>self_referencing_column_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>reference_generation</literal></entry>
       <entry><type>character_data</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
@@ -5806,31 +5806,31 @@ ORDER BY c.ordinal_position;
      <row>
       <entry><literal>action_reference_old_table</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>action_reference_new_table</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>action_reference_old_row</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>action_reference_new_row</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>created</literal></entry>
       <entry><type>time_stamp</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
     </tbody>
    </tgroup>
@@ -5864,7 +5864,7 @@ ORDER BY c.ordinal_position;
 
   <note>
    <para>
-    Prior to <productname>PostgreSQL</> 9.1, this view's columns
+    Prior to <productname>PostgreSQL</productname> 9.1, this view's columns
     <structfield>action_timing</structfield>,
     <structfield>action_reference_old_table</structfield>,
     <structfield>action_reference_new_table</structfield>,
@@ -6113,151 +6113,151 @@ ORDER BY c.ordinal_position;
      <row>
       <entry><literal>is_instantiable</literal></entry>
       <entry><type>yes_or_no</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>is_final</literal></entry>
       <entry><type>yes_or_no</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>ordering_form</literal></entry>
       <entry><type>character_data</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>ordering_category</literal></entry>
       <entry><type>character_data</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>ordering_routine_catalog</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>ordering_routine_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>ordering_routine_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>reference_type</literal></entry>
       <entry><type>character_data</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>data_type</literal></entry>
       <entry><type>character_data</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>character_maximum_length</literal></entry>
       <entry><type>cardinal_number</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>character_octet_length</literal></entry>
       <entry><type>cardinal_number</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>character_set_catalog</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>character_set_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>character_set_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>collation_catalog</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>collation_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>collation_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>numeric_precision</literal></entry>
       <entry><type>cardinal_number</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>numeric_precision_radix</literal></entry>
       <entry><type>cardinal_number</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>numeric_scale</literal></entry>
       <entry><type>cardinal_number</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>datetime_precision</literal></entry>
       <entry><type>cardinal_number</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>interval_type</literal></entry>
       <entry><type>character_data</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>interval_precision</literal></entry>
       <entry><type>cardinal_number</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>source_dtd_identifier</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
       <entry><literal>ref_dtd_identifier</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
     </tbody>
    </tgroup>
@@ -6660,7 +6660,7 @@ ORDER BY c.ordinal_position;
      <row>
       <entry><literal>check_option</literal></entry>
       <entry><type>character_data</type></entry>
-      <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
+      <entry>Applies to a feature not available in <productname>PostgreSQL</productname></entry>
      </row>
 
      <row>
@@ -6686,8 +6686,8 @@ ORDER BY c.ordinal_position;
       <entry><literal>is_trigger_updatable</literal></entry>
       <entry><type>yes_or_no</type></entry>
       <entry>
-       <literal>YES</> if the view has an <literal>INSTEAD OF</>
-       <command>UPDATE</> trigger defined on it, <literal>NO</> if not
+       <literal>YES</literal> if the view has an <literal>INSTEAD OF</literal>
+       <command>UPDATE</command> trigger defined on it, <literal>NO</literal> if not
       </entry>
      </row>
 
@@ -6695,8 +6695,8 @@ ORDER BY c.ordinal_position;
       <entry><literal>is_trigger_deletable</literal></entry>
       <entry><type>yes_or_no</type></entry>
       <entry>
-       <literal>YES</> if the view has an <literal>INSTEAD OF</>
-       <command>DELETE</> trigger defined on it, <literal>NO</> if not
+       <literal>YES</literal> if the view has an <literal>INSTEAD OF</literal>
+       <command>DELETE</command> trigger defined on it, <literal>NO</literal> if not
       </entry>
      </row>
 
@@ -6704,8 +6704,8 @@ ORDER BY c.ordinal_position;
       <entry><literal>is_trigger_insertable_into</literal></entry>
       <entry><type>yes_or_no</type></entry>
       <entry>
-       <literal>YES</> if the view has an <literal>INSTEAD OF</>
-       <command>INSERT</> trigger defined on it, <literal>NO</> if not
+       <literal>YES</literal> if the view has an <literal>INSTEAD OF</literal>
+       <command>INSERT</command> trigger defined on it, <literal>NO</literal> if not
       </entry>
      </row>
     </tbody>

@@ -41,7 +41,7 @@ ALTER TEXT SEARCH DICTIONARY <replaceable>name</replaceable> SET SCHEMA <replace
 
   <para>
    You must be the owner of the dictionary to use
-   <command>ALTER TEXT SEARCH DICTIONARY</>.
+   <command>ALTER TEXT SEARCH DICTIONARY</command>.
   </para>
  </refsect1>
 
@@ -126,7 +126,7 @@ ALTER TEXT SEARCH DICTIONARY my_dict ( StopWords = newrussian );
 </programlisting>
 
   <para>
-   The following example command changes the language option to <literal>dutch</>,
+   The following example command changes the language option to <literal>dutch</literal>,
    and removes the stopword option entirely.
   </para>
 
@@ -135,7 +135,7 @@ ALTER TEXT SEARCH DICTIONARY my_dict ( language = dutch, StopWords );
 </programlisting>
 
   <para>
-   The following example command <quote>updates</> the dictionary's
+   The following example command <quote>updates</quote> the dictionary's
    definition without actually changing anything.
 
 <programlisting>
@@ -144,7 +144,7 @@ ALTER TEXT SEARCH DICTIONARY my_dict ( dummy );
 
    (The reason this works is that the option removal code doesn't complain
    if there is no such option.)  This trick is useful when changing
-   configuration files for the dictionary: the <command>ALTER</> will
+   configuration files for the dictionary: the <command>ALTER</command> will
    force existing database sessions to re-read the configuration files,
    which otherwise they would never do if they had read them earlier.
   </para>

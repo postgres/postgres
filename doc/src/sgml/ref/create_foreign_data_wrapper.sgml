@@ -117,7 +117,7 @@ CREATE FOREIGN DATA WRAPPER <replaceable class="parameter">name</replaceable>
   <title>Notes</title>
 
   <para>
-   <productname>PostgreSQL</>'s foreign-data functionality is still under
+   <productname>PostgreSQL</productname>'s foreign-data functionality is still under
    active development.  Optimization of queries is primitive (and mostly left
    to the wrapper, too).  Thus, there is considerable room for future
    performance improvements.
@@ -128,22 +128,22 @@ CREATE FOREIGN DATA WRAPPER <replaceable class="parameter">name</replaceable>
   <title>Examples</title>
 
   <para>
-   Create a useless foreign-data wrapper <literal>dummy</>:
+   Create a useless foreign-data wrapper <literal>dummy</literal>:
 <programlisting>
 CREATE FOREIGN DATA WRAPPER dummy;
 </programlisting>
   </para>
 
   <para>
-   Create a foreign-data wrapper <literal>file</> with
-   handler function <literal>file_fdw_handler</>:
+   Create a foreign-data wrapper <literal>file</literal> with
+   handler function <literal>file_fdw_handler</literal>:
 <programlisting>
 CREATE FOREIGN DATA WRAPPER file HANDLER file_fdw_handler;
 </programlisting>
   </para>
 
   <para>
-   Create a foreign-data wrapper <literal>mywrapper</> with some
+   Create a foreign-data wrapper <literal>mywrapper</literal> with some
    options:
 <programlisting>
 CREATE FOREIGN DATA WRAPPER mywrapper
@@ -159,7 +159,7 @@ CREATE FOREIGN DATA WRAPPER mywrapper
    9075-9 (SQL/MED), with the exception that the <literal>HANDLER</literal>
    and <literal>VALIDATOR</literal> clauses are extensions and the standard
    clauses <literal>LIBRARY</literal> and <literal>LANGUAGE</literal>
-   are not implemented in <productname>PostgreSQL</>.
+   are not implemented in <productname>PostgreSQL</productname>.
   </para>
 
   <para>

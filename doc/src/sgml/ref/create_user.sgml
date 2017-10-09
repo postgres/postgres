@@ -51,8 +51,8 @@ CREATE USER <replaceable class="parameter">name</replaceable> [ [ WITH ] <replac
    <command>CREATE USER</command> is now an alias for
    <xref linkend="sql-createrole">.
    The only difference is that when the command is spelled
-   <command>CREATE USER</command>, <literal>LOGIN</> is assumed
-   by default, whereas <literal>NOLOGIN</> is assumed when
+   <command>CREATE USER</command>, <literal>LOGIN</literal> is assumed
+   by default, whereas <literal>NOLOGIN</literal> is assumed when
    the command is spelled
    <command>CREATE ROLE</command>.
   </para>

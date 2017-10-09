@@ -55,12 +55,12 @@ DELETE FROM [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ *
   </para>
 
   <para>
-   The optional <literal>RETURNING</> clause causes <command>DELETE</>
+   The optional <literal>RETURNING</literal> clause causes <command>DELETE</command>
    to compute and return value(s) based on each row actually deleted.
    Any expression using the table's columns, and/or columns of other
    tables mentioned in <literal>USING</literal>, can be computed.
-   The syntax of the <literal>RETURNING</> list is identical to that of the
-   output list of <command>SELECT</>.
+   The syntax of the <literal>RETURNING</literal> list is identical to that of the
+   output list of <command>SELECT</command>.
   </para>
 
   <para>
@@ -81,7 +81,7 @@ DELETE FROM [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ *
     <listitem>
      <para>
       The <literal>WITH</literal> clause allows you to specify one or more
-      subqueries that can be referenced by name in the <command>DELETE</>
+      subqueries that can be referenced by name in the <command>DELETE</command>
       query. See <xref linkend="queries-with"> and <xref linkend="sql-select">
       for details.
      </para>
@@ -93,11 +93,11 @@ DELETE FROM [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ *
     <listitem>
      <para>
       The name (optionally schema-qualified) of the table to delete rows
-      from.  If <literal>ONLY</> is specified before the table name,
+      from.  If <literal>ONLY</literal> is specified before the table name,
       matching rows are deleted from the named table only.  If
-      <literal>ONLY</> is not specified, matching rows are also deleted
+      <literal>ONLY</literal> is not specified, matching rows are also deleted
       from any tables inheriting from the named table.  Optionally,
-      <literal>*</> can be specified after the table name to explicitly
+      <literal>*</literal> can be specified after the table name to explicitly
       indicate that descendant tables are included.
      </para>
     </listitem>
@@ -109,9 +109,9 @@ DELETE FROM [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ *
      <para>
       A substitute name for the target table. When an alias is
       provided, it completely hides the actual name of the table.  For
-      example, given <literal>DELETE FROM foo AS f</>, the remainder
+      example, given <literal>DELETE FROM foo AS f</literal>, the remainder
       of the <command>DELETE</command> statement must refer to this
-      table as <literal>f</> not <literal>foo</>.
+      table as <literal>f</literal> not <literal>foo</literal>.
      </para>
     </listitem>
    </varlistentry>
@@ -121,7 +121,7 @@ DELETE FROM [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ *
     <listitem>
      <para>
       A list of table expressions, allowing columns from other tables
-      to appear in the <literal>WHERE</> condition.  This is similar
+      to appear in the <literal>WHERE</literal> condition.  This is similar
       to the list of tables that can be specified in the <xref
       linkend="sql-from" endterm="sql-from-title"> of a
       <command>SELECT</command> statement; for example, an alias for
@@ -137,7 +137,7 @@ DELETE FROM [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ *
     <listitem>
      <para>
       An expression that returns a value of type <type>boolean</type>.
-      Only rows for which this expression returns <literal>true</>
+      Only rows for which this expression returns <literal>true</literal>
       will be deleted.
      </para>
     </listitem>
@@ -147,15 +147,15 @@ DELETE FROM [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ *
     <term><replaceable class="parameter">cursor_name</replaceable></term>
     <listitem>
      <para>
-      The name of the cursor to use in a <literal>WHERE CURRENT OF</>
+      The name of the cursor to use in a <literal>WHERE CURRENT OF</literal>
       condition.  The row to be deleted is the one most recently fetched
       from this cursor.  The cursor must be a non-grouping
-      query on the <command>DELETE</>'s target table.
-      Note that <literal>WHERE CURRENT OF</> cannot be
+      query on the <command>DELETE</command>'s target table.
+      Note that <literal>WHERE CURRENT OF</literal> cannot be
       specified together with a Boolean condition.  See
       <xref linkend="sql-declare">
       for more information about using cursors with
-      <literal>WHERE CURRENT OF</>.
+      <literal>WHERE CURRENT OF</literal>.
      </para>
     </listitem>
    </varlistentry>
@@ -164,11 +164,11 @@ DELETE FROM [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ *
     <term><replaceable class="parameter">output_expression</replaceable></term>
     <listitem>
      <para>
-      An expression to be computed and returned by the <command>DELETE</>
+      An expression to be computed and returned by the <command>DELETE</command>
       command after each row is deleted.  The expression can use any
       column names of the table named by <replaceable class="parameter">table_name</replaceable>
-      or table(s) listed in <literal>USING</>.
-      Write <literal>*</> to return all columns.
+      or table(s) listed in <literal>USING</literal>.
+      Write <literal>*</literal> to return all columns.
      </para>
     </listitem>
    </varlistentry>
@@ -188,7 +188,7 @@ DELETE FROM [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ *
   <title>Outputs</title>
 
   <para>
-   On successful completion, a <command>DELETE</> command returns a command
+   On successful completion, a <command>DELETE</command> command returns a command
    tag of the form
 <screen>
 DELETE <replaceable class="parameter">count</replaceable>
@@ -197,16 +197,16 @@ DELETE <replaceable class="parameter">count</replaceable>
    of rows deleted.  Note that the number may be less than the number of
    rows that matched the <replaceable
    class="parameter">condition</replaceable> when deletes were
-   suppressed by a <literal>BEFORE DELETE</> trigger.  If <replaceable
+   suppressed by a <literal>BEFORE DELETE</literal> trigger.  If <replaceable
    class="parameter">count</replaceable> is 0, no rows were deleted by
    the query (this is not considered an error).
   </para>
 
   <para>
-   If the <command>DELETE</> command contains a <literal>RETURNING</>
-   clause, the result will be similar to that of a <command>SELECT</>
+   If the <command>DELETE</command> command contains a <literal>RETURNING</literal>
+   clause, the result will be similar to that of a <command>SELECT</command>
    statement containing the columns and values defined in the
-   <literal>RETURNING</> list, computed over the row(s) deleted by the
+   <literal>RETURNING</literal> list, computed over the row(s) deleted by the
    command.
   </para>
  </refsect1>
@@ -216,16 +216,16 @@ DELETE <replaceable class="parameter">count</replaceable>
 
   <para>
    <productname>PostgreSQL</productname> lets you reference columns of
-   other tables in the <literal>WHERE</> condition by specifying the
+   other tables in the <literal>WHERE</literal> condition by specifying the
    other tables in the <literal>USING</literal> clause.  For example,
    to delete all films produced by a given producer, one can do:
 <programlisting>
 DELETE FROM films USING producers
   WHERE producer_id = producers.id AND producers.name = 'foo';
 </programlisting>
-   What is essentially happening here is a join between <structname>films</>
-   and <structname>producers</>, with all successfully joined
-   <structname>films</> rows being marked for deletion.
+   What is essentially happening here is a join between <structname>films</structname>
+   and <structname>producers</structname>, with all successfully joined
+   <structname>films</structname> rows being marked for deletion.
    This syntax is not standard.  A more standard way to do it is:
 <programlisting>
 DELETE FROM films
@@ -261,8 +261,8 @@ DELETE FROM tasks WHERE status = 'DONE' RETURNING *;
   </para>
 
    <para>
-   Delete the row of <structname>tasks</> on which the cursor
-   <literal>c_tasks</> is currently positioned:
+   Delete the row of <structname>tasks</structname> on which the cursor
+   <literal>c_tasks</literal> is currently positioned:
 <programlisting>
 DELETE FROM tasks WHERE CURRENT OF c_tasks;
 </programlisting></para>
@@ -273,9 +273,9 @@ DELETE FROM tasks WHERE CURRENT OF c_tasks;
 
   <para>
    This command conforms to the <acronym>SQL</acronym> standard, except
-   that the <literal>USING</literal> and <literal>RETURNING</> clauses
+   that the <literal>USING</literal> and <literal>RETURNING</literal> clauses
    are <productname>PostgreSQL</productname> extensions, as is the ability
-   to use <literal>WITH</> with <command>DELETE</>.
+   to use <literal>WITH</literal> with <command>DELETE</command>.
   </para>
  </refsect1>
 

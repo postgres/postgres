@@ -36,7 +36,7 @@ DROP USER MAPPING [ IF EXISTS ] FOR { <replaceable class="parameter">user_name</
   <para>
    The owner of a foreign server can drop user mappings for that server
    for any user.  Also, a user can drop a user mapping for their own
-   user name if <literal>USAGE</> privilege on the server has been
+   user name if <literal>USAGE</literal> privilege on the server has been
    granted to the user.
   </para>
  </refsect1>
@@ -59,9 +59,9 @@ DROP USER MAPPING [ IF EXISTS ] FOR { <replaceable class="parameter">user_name</
     <term><replaceable class="parameter">user_name</replaceable></term>
     <listitem>
      <para>
-      User name of the mapping.  <literal>CURRENT_USER</>
-      and <literal>USER</> match the name of the current
-      user.  <literal>PUBLIC</> is used to match all present and
+      User name of the mapping.  <literal>CURRENT_USER</literal>
+      and <literal>USER</literal> match the name of the current
+      user.  <literal>PUBLIC</literal> is used to match all present and
       future user names in the system.
      </para>
     </listitem>
@@ -82,7 +82,7 @@ DROP USER MAPPING [ IF EXISTS ] FOR { <replaceable class="parameter">user_name</
   <title>Examples</title>
 
   <para>
-   Drop a user mapping <literal>bob</>, server <literal>foo</> if it exists:
+   Drop a user mapping <literal>bob</literal>, server <literal>foo</literal> if it exists:
 <programlisting>
 DROP USER MAPPING IF EXISTS FOR bob SERVER foo;
 </programlisting></para>
@@ -93,8 +93,8 @@ DROP USER MAPPING IF EXISTS FOR bob SERVER foo;
 
   <para>
    <command>DROP USER MAPPING</command> conforms to ISO/IEC 9075-9
-   (SQL/MED).  The <literal>IF EXISTS</> clause is
-   a <productname>PostgreSQL</> extension.
+   (SQL/MED).  The <literal>IF EXISTS</literal> clause is
+   a <productname>PostgreSQL</productname> extension.
   </para>
  </refsect1>
 

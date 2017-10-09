@@ -27,12 +27,12 @@
 
   <para>
    To install PL/Perl in a particular database, use
-   <literal>CREATE EXTENSION plperl</>.
+   <literal>CREATE EXTENSION plperl</literal>.
   </para>
 
   <tip>
    <para>
-    If a language is installed into <literal>template1</>, all subsequently
+    If a language is installed into <literal>template1</literal>, all subsequently
     created databases will have the language installed automatically.
    </para>
   </tip>
@@ -90,8 +90,8 @@ $$ LANGUAGE plperl;
     subroutines which you call via a coderef. For more information, see the
     entries for <literal>Variable "%s" will not stay shared</literal> and
     <literal>Variable "%s" is not available</literal> in the
-    <citerefentry><refentrytitle>perldiag</></citerefentry> man page, or
-    search the Internet for <quote>perl nested named subroutine</>.
+    <citerefentry><refentrytitle>perldiag</refentrytitle></citerefentry> man page, or
+    search the Internet for <quote>perl nested named subroutine</quote>.
    </para>
   </note>
 
@@ -100,16 +100,16 @@ $$ LANGUAGE plperl;
    the function body to be written as a string constant.  It is usually
    most convenient to use dollar quoting (see <xref
    linkend="sql-syntax-dollar-quoting">) for the string constant.
-   If you choose to use escape string syntax <literal>E''</>,
-   you must double any single quote marks (<literal>'</>) and backslashes
-   (<literal>\</>) used in the body of the function
+   If you choose to use escape string syntax <literal>E''</literal>,
+   you must double any single quote marks (<literal>'</literal>) and backslashes
+   (<literal>\</literal>) used in the body of the function
    (see <xref linkend="sql-syntax-strings">).
   </para>
 
   <para>
    Arguments and results are handled as in any other Perl subroutine:
    arguments are passed in <varname>@_</varname>, and a result value
-   is returned with <literal>return</> or as the last expression
+   is returned with <literal>return</literal> or as the last expression
    evaluated in the function.
   </para>
 
@@ -134,12 +134,12 @@ $$ LANGUAGE plperl;
   </note>
 
   <para>
-   If an SQL null value<indexterm><primary>null value</><secondary
-   sortas="PL/Perl">in PL/Perl</></indexterm> is passed to a function,
-   the argument value will appear as <quote>undefined</> in Perl.  The
+   If an SQL null value<indexterm><primary>null value</primary><secondary
+   sortas="PL/Perl">in PL/Perl</secondary></indexterm> is passed to a function,
+   the argument value will appear as <quote>undefined</quote> in Perl.  The
    above function definition will not behave very nicely with null
    inputs (in fact, it will act as though they are zeroes).  We could
-   add <literal>STRICT</> to the function definition to make
+   add <literal>STRICT</literal> to the function definition to make
    <productname>PostgreSQL</productname> do something more reasonable:
    if a null value is passed, the function will not be called at all,
    but will just return a null result automatically.  Alternatively,
@@ -174,14 +174,14 @@ $$ LANGUAGE plperl;
    other cases the argument will need to be converted into a form that is
    more usable in Perl. For example, the <function>decode_bytea</function>
    function can be used to convert an argument of
-   type <type>bytea</> into unescaped binary.
+   type <type>bytea</type> into unescaped binary.
   </para>
 
   <para>
    Similarly, values passed back to <productname>PostgreSQL</productname>
    must be in the external text representation format. For example, the
    <function>encode_bytea</function> function can be used to
-   escape binary data for a return value of type <type>bytea</>.
+   escape binary data for a return value of type <type>bytea</type>.
   </para>
 
   <para>
@@ -330,10 +330,10 @@ SELECT * FROM perl_set();
   </para>
 
   <para>
-   If you wish to use the <literal>strict</> pragma with your code you
-   have a few options. For temporary global use you can <command>SET</>
+   If you wish to use the <literal>strict</literal> pragma with your code you
+   have a few options. For temporary global use you can <command>SET</command>
    <literal>plperl.use_strict</literal> to true.
-   This will affect subsequent compilations of <application>PL/Perl</>
+   This will affect subsequent compilations of <application>PL/Perl</application>
    functions, but not functions already compiled in the current session.
    For permanent global use you can set <literal>plperl.use_strict</literal>
    to true in the <filename>postgresql.conf</filename> file.
@@ -348,7 +348,7 @@ use strict;
   </para>
 
   <para>
-  The <literal>feature</> pragma is also available to <function>use</> if your Perl is version 5.10.0 or higher.
+  The <literal>feature</literal> pragma is also available to <function>use</function> if your Perl is version 5.10.0 or higher.
   </para>
 
  </sect1>
@@ -380,7 +380,7 @@ use strict;
    <variablelist>
     <varlistentry>
      <term>
-      <literal><function>spi_exec_query</>(<replaceable>query</replaceable> [, <replaceable>max-rows</replaceable>])</literal>
+      <literal><function>spi_exec_query</function>(<replaceable>query</replaceable> [, <replaceable>max-rows</replaceable>])</literal>
       <indexterm>
        <primary>spi_exec_query</primary>
        <secondary>in PL/Perl</secondary>
@@ -524,13 +524,13 @@ SELECT * from lotsa_md5(500);
     </para>
 
     <para>
-     Normally, <function>spi_fetchrow</> should be repeated until it
+     Normally, <function>spi_fetchrow</function> should be repeated until it
      returns <literal>undef</literal>, indicating that there are no more
      rows to read.  The cursor returned by <literal>spi_query</literal>
      is automatically freed when
-     <function>spi_fetchrow</> returns <literal>undef</literal>.
+     <function>spi_fetchrow</function> returns <literal>undef</literal>.
      If you do not wish to read all the rows, instead call
-     <function>spi_cursor_close</> to free the cursor.
+     <function>spi_cursor_close</function> to free the cursor.
      Failure to do so will result in memory leaks.
     </para>
 
@@ -675,13 +675,13 @@ SELECT release_hosts_query();
      <listitem>
       <para>
        Emit a log or error message. Possible levels are
-       <literal>DEBUG</>, <literal>LOG</>, <literal>INFO</>,
-       <literal>NOTICE</>, <literal>WARNING</>, and <literal>ERROR</>.
-       <literal>ERROR</>
+       <literal>DEBUG</literal>, <literal>LOG</literal>, <literal>INFO</literal>,
+       <literal>NOTICE</literal>, <literal>WARNING</literal>, and <literal>ERROR</literal>.
+       <literal>ERROR</literal>
         raises an error condition; if this is not trapped by the surrounding
         Perl code, the error propagates out to the calling query, causing
         the current transaction or subtransaction to be aborted.  This
-        is effectively the same as the Perl <literal>die</> command.
+        is effectively the same as the Perl <literal>die</literal> command.
         The other levels only generate messages of different
         priority levels.
         Whether messages of a particular priority are reported to the client,
@@ -706,8 +706,8 @@ SELECT release_hosts_query();
       <para>
         Return the given string suitably quoted to be used as a string literal in an SQL
         statement string. Embedded single-quotes and backslashes are properly doubled.
-        Note that <function>quote_literal</> returns undef on undef input; if the argument
-        might be undef, <function>quote_nullable</> is often more suitable.
+        Note that <function>quote_literal</function> returns undef on undef input; if the argument
+        might be undef, <function>quote_nullable</function> is often more suitable.
       </para>
      </listitem>
     </varlistentry>
@@ -849,7 +849,7 @@ SELECT release_hosts_query();
         Returns a true value if the content of the given string looks like a
         number, according to Perl, returns false otherwise.
         Returns undef if the argument is undef.  Leading and trailing space is
-        ignored. <literal>Inf</> and <literal>Infinity</> are regarded as numbers.
+        ignored. <literal>Inf</literal> and <literal>Infinity</literal> are regarded as numbers.
         </para>
      </listitem>
     </varlistentry>
@@ -865,8 +865,8 @@ SELECT release_hosts_query();
      <listitem>
       <para>
         Returns a true value if the given argument may be treated as an
-        array reference, that is, if ref of the argument is <literal>ARRAY</> or
-        <literal>PostgreSQL::InServer::ARRAY</>.  Returns false otherwise.
+        array reference, that is, if ref of the argument is <literal>ARRAY</literal> or
+        <literal>PostgreSQL::InServer::ARRAY</literal>.  Returns false otherwise.
       </para>
      </listitem>
     </varlistentry>
@@ -941,11 +941,11 @@ $$ LANGUAGE plperl;
    PL/Perl functions will share the same value of <varname>%_SHARED</varname>
    if and only if they are executed by the same SQL role.  In an application
    wherein a single session executes code under multiple SQL roles (via
-   <literal>SECURITY DEFINER</> functions, use of <command>SET ROLE</>, etc)
+   <literal>SECURITY DEFINER</literal> functions, use of <command>SET ROLE</command>, etc)
    you may need to take explicit steps to ensure that PL/Perl functions can
    share data via <varname>%_SHARED</varname>.  To do that, make sure that
    functions that should communicate are owned by the same user, and mark
-   them <literal>SECURITY DEFINER</>.  You must of course take care that
+   them <literal>SECURITY DEFINER</literal>.  You must of course take care that
    such functions can't be used to do anything unintended.
   </para>
  </sect1>
@@ -959,8 +959,8 @@ $$ LANGUAGE plperl;
   </indexterm>
 
   <para>
-   Normally, PL/Perl is installed as a <quote>trusted</> programming
-   language named <literal>plperl</>.  In this setup, certain Perl
+   Normally, PL/Perl is installed as a <quote>trusted</quote> programming
+   language named <literal>plperl</literal>.  In this setup, certain Perl
    operations are disabled to preserve security.  In general, the
    operations that are restricted are those that interact with the
    environment. This includes file handle operations,
@@ -993,15 +993,15 @@ $$ LANGUAGE plperl;
    Sometimes it is desirable to write Perl functions that are not
    restricted.  For example, one might want a Perl function that sends
    mail.  To handle these cases, PL/Perl can also be installed as an
-   <quote>untrusted</> language (usually called
-   <application>PL/PerlU</application><indexterm><primary>PL/PerlU</></indexterm>).
+   <quote>untrusted</quote> language (usually called
+   <application>PL/PerlU</application><indexterm><primary>PL/PerlU</primary></indexterm>).
    In this case the full Perl language is available.  When installing the
    language, the language name <literal>plperlu</literal> will select
    the untrusted PL/Perl variant.
   </para>
 
   <para>
-   The writer of a <application>PL/PerlU</> function must take care that the function
+   The writer of a <application>PL/PerlU</application> function must take care that the function
    cannot be used to do anything unwanted, since it will be able to do
    anything that could be done by a user logged in as the database
    administrator.  Note that the database system allows only database
@@ -1010,25 +1010,25 @@ $$ LANGUAGE plperl;
 
   <para>
    If the above function was created by a superuser using the language
-   <literal>plperlu</>, execution would succeed.
+   <literal>plperlu</literal>, execution would succeed.
   </para>
 
   <para>
    In the same way, anonymous code blocks written in Perl can use
    restricted operations if the language is specified as
-   <literal>plperlu</> rather than <literal>plperl</>, but the caller
+   <literal>plperlu</literal> rather than <literal>plperl</literal>, but the caller
    must be a superuser.
   </para>
 
   <note>
    <para>
-    While <application>PL/Perl</> functions run in a separate Perl
-    interpreter for each SQL role, all <application>PL/PerlU</> functions
+    While <application>PL/Perl</application> functions run in a separate Perl
+    interpreter for each SQL role, all <application>PL/PerlU</application> functions
     executed in a given session run in a single Perl interpreter (which is
-    not any of the ones used for <application>PL/Perl</> functions).
-    This allows <application>PL/PerlU</> functions to share data freely,
-    but no communication can occur between <application>PL/Perl</> and
-    <application>PL/PerlU</> functions.
+    not any of the ones used for <application>PL/Perl</application> functions).
+    This allows <application>PL/PerlU</application> functions to share data freely,
+    but no communication can occur between <application>PL/Perl</application> and
+    <application>PL/PerlU</application> functions.
    </para>
   </note>
 
@@ -1036,14 +1036,14 @@ $$ LANGUAGE plperl;
    <para>
     Perl cannot support multiple interpreters within one process unless
     it was built with the appropriate flags, namely either
-    <literal>usemultiplicity</> or <literal>useithreads</>.
-    (<literal>usemultiplicity</> is preferred unless you actually need
+    <literal>usemultiplicity</literal> or <literal>useithreads</literal>.
+    (<literal>usemultiplicity</literal> is preferred unless you actually need
     to use threads.  For more details, see the
-    <citerefentry><refentrytitle>perlembed</></citerefentry> man page.)
-    If <application>PL/Perl</> is used with a copy of Perl that was not built
+    <citerefentry><refentrytitle>perlembed</refentrytitle></citerefentry> man page.)
+    If <application>PL/Perl</application> is used with a copy of Perl that was not built
     this way, then it is only possible to have one Perl interpreter per
     session, and so any one session can only execute either
-    <application>PL/PerlU</> functions, or <application>PL/Perl</> functions
+    <application>PL/PerlU</application> functions, or <application>PL/Perl</application> functions
     that are all called by the same SQL role.
    </para>
   </note>
@@ -1056,7 +1056,7 @@ $$ LANGUAGE plperl;
   <para>
    PL/Perl can be used to write trigger functions.  In a trigger function,
    the hash reference <varname>$_TD</varname> contains information about the
-   current trigger event. <varname>$_TD</> is a global variable,
+   current trigger event. <varname>$_TD</varname> is a global variable,
    which gets a separate local value for each invocation of the trigger.
    The fields of the <varname>$_TD</varname> hash reference are:
 
@@ -1092,8 +1092,8 @@ $$ LANGUAGE plperl;
      <term><literal>$_TD-&gt;{event}</literal></term>
      <listitem>
       <para>
-       Trigger event: <literal>INSERT</>, <literal>UPDATE</>,
-       <literal>DELETE</>, <literal>TRUNCATE</>, or <literal>UNKNOWN</>
+       Trigger event: <literal>INSERT</literal>, <literal>UPDATE</literal>,
+       <literal>DELETE</literal>, <literal>TRUNCATE</literal>, or <literal>UNKNOWN</literal>
       </para>
      </listitem>
     </varlistentry>
@@ -1244,7 +1244,7 @@ CREATE TRIGGER test_valid_id_trig
   <para>
    PL/Perl can be used to write event trigger functions.  In an event trigger
    function, the hash reference <varname>$_TD</varname> contains information
-   about the current trigger event.  <varname>$_TD</> is a global variable,
+   about the current trigger event.  <varname>$_TD</varname> is a global variable,
    which gets a separate local value for each invocation of the trigger.  The
    fields of the <varname>$_TD</varname> hash reference are:
 
@@ -1295,7 +1295,7 @@ CREATE EVENT TRIGGER perl_a_snitch
   <title>Configuration</title>
 
   <para>
-  This section lists configuration parameters that affect <application>PL/Perl</>.
+  This section lists configuration parameters that affect <application>PL/Perl</application>.
   </para>
 
   <variablelist>
@@ -1304,14 +1304,14 @@ CREATE EVENT TRIGGER perl_a_snitch
       <term>
        <varname>plperl.on_init</varname> (<type>string</type>)
       <indexterm>
-       <primary><varname>plperl.on_init</> configuration parameter</primary>
+       <primary><varname>plperl.on_init</varname> configuration parameter</primary>
       </indexterm>
       </term>
       <listitem>
        <para>
         Specifies Perl code to be executed when a Perl interpreter is first
-        initialized, before it is specialized for use by <literal>plperl</> or
-        <literal>plperlu</>.
+        initialized, before it is specialized for use by <literal>plperl</literal> or
+        <literal>plperlu</literal>.
         The SPI functions are not available when this code is executed.
         If the code fails with an error it will abort the initialization of
         the interpreter and propagate out to the calling query, causing the
@@ -1319,7 +1319,7 @@ CREATE EVENT TRIGGER perl_a_snitch
        </para>
        <para>
        The Perl code is limited to a single string. Longer code can be placed
-       into a module and loaded by the <literal>on_init</> string.
+       into a module and loaded by the <literal>on_init</literal> string.
        Examples:
 <programlisting>
 plperl.on_init = 'require "plperlinit.pl"'
@@ -1327,8 +1327,8 @@ plperl.on_init = 'use lib "/my/app"; use MyApp::PgInit;'
 </programlisting>
        </para>
        <para>
-       Any modules loaded by <literal>plperl.on_init</>, either directly or
-       indirectly, will be available for use by <literal>plperl</>.  This may
+       Any modules loaded by <literal>plperl.on_init</literal>, either directly or
+       indirectly, will be available for use by <literal>plperl</literal>.  This may
        create a security risk. To see what modules have been loaded you can use:
 <programlisting>
 DO 'elog(WARNING, join ", ", sort keys %INC)' LANGUAGE plperl;
@@ -1339,14 +1339,14 @@ DO 'elog(WARNING, join ", ", sort keys %INC)' LANGUAGE plperl;
         included in <xref linkend="guc-shared-preload-libraries">, in which
         case extra consideration should be given to the risk of destabilizing
         the postmaster.  The principal reason for making use of this feature
-        is that Perl modules loaded by <literal>plperl.on_init</> need be
+        is that Perl modules loaded by <literal>plperl.on_init</literal> need be
         loaded only at postmaster start, and will be instantly available
         without loading overhead in individual database sessions.  However,
         keep in mind that the overhead is avoided only for the first Perl
         interpreter used by a database session &mdash; either PL/PerlU, or
         PL/Perl for the first SQL role that calls a PL/Perl function.  Any
         additional Perl interpreters created in a database session will have
-        to execute <literal>plperl.on_init</> afresh.  Also, on Windows there
+        to execute <literal>plperl.on_init</literal> afresh.  Also, on Windows there
         will be no savings whatsoever from preloading, since the Perl
         interpreter created in the postmaster process does not propagate to
         child processes.
@@ -1361,27 +1361,27 @@ DO 'elog(WARNING, join ", ", sort keys %INC)' LANGUAGE plperl;
       <term>
        <varname>plperl.on_plperl_init</varname> (<type>string</type>)
        <indexterm>
-        <primary><varname>plperl.on_plperl_init</> configuration parameter</primary>
+        <primary><varname>plperl.on_plperl_init</varname> configuration parameter</primary>
        </indexterm>
       </term>
       <term>
        <varname>plperl.on_plperlu_init</varname> (<type>string</type>)
        <indexterm>
-        <primary><varname>plperl.on_plperlu_init</> configuration parameter</primary>
+        <primary><varname>plperl.on_plperlu_init</varname> configuration parameter</primary>
        </indexterm>
       </term>
       <listitem>
        <para>
         These parameters specify Perl code to be executed when a Perl
-        interpreter is specialized for <literal>plperl</> or
-        <literal>plperlu</> respectively.  This will happen when a PL/Perl or
+        interpreter is specialized for <literal>plperl</literal> or
+        <literal>plperlu</literal> respectively.  This will happen when a PL/Perl or
         PL/PerlU function is first executed in a database session, or when
         an additional interpreter has to be created because the other language
         is called or a PL/Perl function is called by a new SQL role.  This
-        follows any initialization done by <literal>plperl.on_init</>.
+        follows any initialization done by <literal>plperl.on_init</literal>.
         The SPI functions are not available when this code is executed.
-        The Perl code in <literal>plperl.on_plperl_init</> is executed after
-        <quote>locking down</> the interpreter, and thus it can only perform
+        The Perl code in <literal>plperl.on_plperl_init</literal> is executed after
+        <quote>locking down</quote> the interpreter, and thus it can only perform
         trusted operations.
        </para>
        <para>
@@ -1404,13 +1404,13 @@ DO 'elog(WARNING, join ", ", sort keys %INC)' LANGUAGE plperl;
       <term>
        <varname>plperl.use_strict</varname> (<type>boolean</type>)
        <indexterm>
-        <primary><varname>plperl.use_strict</> configuration parameter</primary>
+        <primary><varname>plperl.use_strict</varname> configuration parameter</primary>
        </indexterm>
       </term>
       <listitem>
        <para>
         When set true subsequent compilations of PL/Perl functions will have
-        the <literal>strict</> pragma enabled.  This parameter does not affect
+        the <literal>strict</literal> pragma enabled.  This parameter does not affect
         functions already compiled in the current session.
        </para>
       </listitem>
@@ -1459,7 +1459,7 @@ DO 'elog(WARNING, join ", ", sort keys %INC)' LANGUAGE plperl;
      <listitem>
       <para>
         When a session ends normally, not due to a fatal error, any
-        <literal>END</> blocks that have been defined are executed.
+        <literal>END</literal> blocks that have been defined are executed.
         Currently no other actions are performed. Specifically,
         file handles are not automatically flushed and objects are
         not automatically destroyed.

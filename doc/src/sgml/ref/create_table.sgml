@@ -113,7 +113,7 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
 
   <para>
    If a schema name is given (for example, <literal>CREATE TABLE
-   myschema.mytable ...</>) then the table is created in the specified
+   myschema.mytable ...</literal>) then the table is created in the specified
    schema.  Otherwise it is created in the current schema.  Temporary
    tables exist in a special schema, so a schema name cannot be given
    when creating a temporary table.  The name of the table must be
@@ -158,7 +158,7 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
   <variablelist>
 
    <varlistentry id="SQL-CREATETABLE-TEMPORARY">
-    <term><literal>TEMPORARY</> or <literal>TEMP</></term>
+    <term><literal>TEMPORARY</literal> or <literal>TEMP</literal></term>
     <listitem>
      <para>
       If specified, the table is created as a temporary table.
@@ -177,13 +177,13 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
       For this reason, appropriate vacuum and analyze operations should be
       performed via session SQL commands.  For example, if a temporary
       table is going to be used in complex queries, it is wise to run
-      <command>ANALYZE</> on the temporary table after it is populated.
+      <command>ANALYZE</command> on the temporary table after it is populated.
      </para>
 
      <para>
       Optionally, <literal>GLOBAL</literal> or <literal>LOCAL</literal>
-      can be written before <literal>TEMPORARY</> or <literal>TEMP</>.
-      This presently makes no difference in <productname>PostgreSQL</>
+      can be written before <literal>TEMPORARY</literal> or <literal>TEMP</literal>.
+      This presently makes no difference in <productname>PostgreSQL</productname>
       and is deprecated; see
       <xref linkend="sql-createtable-compatibility"
       endterm="sql-createtable-compatibility-title">.
@@ -192,7 +192,7 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
    </varlistentry>
 
    <varlistentry id="SQL-CREATETABLE-UNLOGGED">
-    <term><literal>UNLOGGED</></term>
+    <term><literal>UNLOGGED</literal></term>
     <listitem>
      <para>
       If specified, the table is created as an unlogged table.  Data written
@@ -208,7 +208,7 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
    </varlistentry>
 
    <varlistentry>
-    <term><literal>IF NOT EXISTS</></term>
+    <term><literal>IF NOT EXISTS</literal></term>
     <listitem>
      <para>
       Do not throw an error if a relation with the same name already exists.
@@ -263,14 +263,14 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
       The <replaceable class="parameter">partition_bound_spec</replaceable>
       must correspond to the partitioning method and partition key of the
       parent table, and must not overlap with any existing partition of that
-      parent.  The form with <literal>IN</> is used for list partitioning,
-      while the form with <literal>FROM</> and <literal>TO</> is used for
+      parent.  The form with <literal>IN</literal> is used for list partitioning,
+      while the form with <literal>FROM</literal> and <literal>TO</literal> is used for
       range partitioning.
      </para>
 
      <para>
       Each of the values specified in
-      the <replaceable class="parameter">partition_bound_spec</> is
+      the <replaceable class="parameter">partition_bound_spec</replaceable> is
       a literal, <literal>NULL</literal>, <literal>MINVALUE</literal>, or
       <literal>MAXVALUE</literal>.  Each literal value must be either a
       numeric constant that is coercible to the corresponding partition key
@@ -294,52 +294,52 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
       partition, whereas those in the <literal>TO</literal> list are
       not.  Note that this statement must be understood according to the
       rules of row-wise comparison (<xref linkend="row-wise-comparison">).
-      For example, given <literal>PARTITION BY RANGE (x,y)</>, a partition
+      For example, given <literal>PARTITION BY RANGE (x,y)</literal>, a partition
       bound <literal>FROM (1, 2) TO (3, 4)</literal>
-      allows <literal>x=1</> with any <literal>y&gt;=2</>,
-      <literal>x=2</> with any non-null <literal>y</>,
-      and <literal>x=3</> with any <literal>y&lt;4</>.
+      allows <literal>x=1</literal> with any <literal>y&gt;=2</literal>,
+      <literal>x=2</literal> with any non-null <literal>y</literal>,
+      and <literal>x=3</literal> with any <literal>y&lt;4</literal>.
      </para>
 
      <para>
-      The special values <literal>MINVALUE</> and <literal>MAXVALUE</>
+      The special values <literal>MINVALUE</literal> and <literal>MAXVALUE</literal>
       may be used when creating a range partition to indicate that there
       is no lower or upper bound on the column's value. For example, a
-      partition defined using <literal>FROM (MINVALUE) TO (10)</> allows
+      partition defined using <literal>FROM (MINVALUE) TO (10)</literal> allows
       any values less than 10, and a partition defined using
-      <literal>FROM (10) TO (MAXVALUE)</> allows any values greater than
+      <literal>FROM (10) TO (MAXVALUE)</literal> allows any values greater than
       or equal to 10.
      </para>
 
      <para>
       When creating a range partition involving more than one column, it
-      can also make sense to use <literal>MAXVALUE</> as part of the lower
-      bound, and <literal>MINVALUE</> as part of the upper bound. For
+      can also make sense to use <literal>MAXVALUE</literal> as part of the lower
+      bound, and <literal>MINVALUE</literal> as part of the upper bound. For
       example, a partition defined using
-      <literal>FROM (0, MAXVALUE) TO (10, MAXVALUE)</> allows any rows
+      <literal>FROM (0, MAXVALUE) TO (10, MAXVALUE)</literal> allows any rows
       where the first partition key column is greater than 0 and less than
       or equal to 10. Similarly, a partition defined using
-      <literal>FROM ('a', MINVALUE) TO ('b', MINVALUE)</> allows any rows
+      <literal>FROM ('a', MINVALUE) TO ('b', MINVALUE)</literal> allows any rows
       where the first partition key column starts with "a".
      </para>
 
      <para>
-      Note that if <literal>MINVALUE</> or <literal>MAXVALUE</> is used for
+      Note that if <literal>MINVALUE</literal> or <literal>MAXVALUE</literal> is used for
       one column of a partitioning bound, the same value must be used for all
-      subsequent columns.  For example, <literal>(10, MINVALUE, 0)</> is not
-      a valid bound; you should write <literal>(10, MINVALUE, MINVALUE)</>.
+      subsequent columns.  For example, <literal>(10, MINVALUE, 0)</literal> is not
+      a valid bound; you should write <literal>(10, MINVALUE, MINVALUE)</literal>.
      </para>
 
      <para>
-      Also note that some element types, such as <literal>timestamp</>,
+      Also note that some element types, such as <literal>timestamp</literal>,
       have a notion of "infinity", which is just another value that can
-      be stored. This is different from <literal>MINVALUE</> and
-      <literal>MAXVALUE</>, which are not real values that can be stored,
+      be stored. This is different from <literal>MINVALUE</literal> and
+      <literal>MAXVALUE</literal>, which are not real values that can be stored,
       but rather they are ways of saying that the value is unbounded.
-      <literal>MAXVALUE</> can be thought of as being greater than any
-      other value, including "infinity" and <literal>MINVALUE</> as being
+      <literal>MAXVALUE</literal> can be thought of as being greater than any
+      other value, including "infinity" and <literal>MINVALUE</literal> as being
       less than any other value, including "minus infinity". Thus the range
-      <literal>FROM ('infinity') TO (MAXVALUE)</> is not an empty range; it
+      <literal>FROM ('infinity') TO (MAXVALUE)</literal> is not an empty range; it
       allows precisely one value to be stored &mdash; "infinity".
      </para>
 
@@ -370,9 +370,9 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
       column will be inherited by all partitions just like any other column.
       Modifications to the column names or types of a partitioned table, or
       the addition or removal of an OID column, will automatically propagate
-      to all partitions.  <literal>CHECK</> constraints will be inherited
+      to all partitions.  <literal>CHECK</literal> constraints will be inherited
       automatically by every partition, but an individual partition may specify
-      additional <literal>CHECK</> constraints; additional constraints with
+      additional <literal>CHECK</literal> constraints; additional constraints with
       the same name and condition as in the parent will be merged with the
       parent constraint.  Defaults may be specified separately for each
       partition.
@@ -421,7 +421,7 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
     <term><literal>COLLATE <replaceable>collation</replaceable></literal></term>
     <listitem>
      <para>
-      The <literal>COLLATE</> clause assigns a collation to
+      The <literal>COLLATE</literal> clause assigns a collation to
       the column (which must be of a collatable data type).
       If not specified, the column data type's default collation is used.
      </para>
@@ -432,13 +432,13 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
     <term><literal>INHERITS ( <replaceable>parent_table</replaceable> [, ... ] )</literal></term>
     <listitem>
      <para>
-      The optional <literal>INHERITS</> clause specifies a list of
+      The optional <literal>INHERITS</literal> clause specifies a list of
       tables from which the new table automatically inherits all
       columns.  Parent tables can be plain tables or foreign tables.
      </para>
 
      <para>
-      Use of <literal>INHERITS</> creates a persistent relationship
+      Use of <literal>INHERITS</literal> creates a persistent relationship
       between the new child table and its parent table(s).  Schema
       modifications to the parent(s) normally propagate to children
       as well, and by default the data of the child table is included in
@@ -462,19 +462,19 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
      </para>
 
      <para>
-      <literal>CHECK</> constraints are merged in essentially the same way as
+      <literal>CHECK</literal> constraints are merged in essentially the same way as
       columns: if multiple parent tables and/or the new table definition
-      contain identically-named <literal>CHECK</> constraints, these
+      contain identically-named <literal>CHECK</literal> constraints, these
       constraints must all have the same check expression, or an error will be
       reported.  Constraints having the same name and expression will
-      be merged into one copy.  A constraint marked <literal>NO INHERIT</> in a
-      parent will not be considered.  Notice that an unnamed <literal>CHECK</>
+      be merged into one copy.  A constraint marked <literal>NO INHERIT</literal> in a
+      parent will not be considered.  Notice that an unnamed <literal>CHECK</literal>
       constraint in the new table will never be merged, since a unique name
       will always be chosen for it.
      </para>
 
      <para>
-      Column <literal>STORAGE</> settings are also copied from parent tables.
+      Column <literal>STORAGE</literal> settings are also copied from parent tables.
      </para>
 
      <para>
@@ -504,7 +504,7 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
 
      <para>
       A partitioned table is divided into sub-tables (called partitions),
-      which are created using separate <literal>CREATE TABLE</> commands.
+      which are created using separate <literal>CREATE TABLE</literal> commands.
       The partitioned table is itself empty.  A data row inserted into the
       table is routed to a partition based on the value of columns or
       expressions in the partition key.  If no existing partition matches
@@ -542,7 +542,7 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
       default behavior is to exclude default expressions, resulting in the
       copied columns in the new table having null defaults.
       Note that copying defaults that call database-modification functions,
-      such as <function>nextval</>, may create a functional linkage between
+      such as <function>nextval</function>, may create a functional linkage between
       the original and new tables.
      </para>
      <para>
@@ -559,8 +559,8 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
       constraints.
      </para>
      <para>
-      Indexes, <literal>PRIMARY KEY</>, <literal>UNIQUE</>,
-      and <literal>EXCLUDE</> constraints on the original table will be
+      Indexes, <literal>PRIMARY KEY</literal>, <literal>UNIQUE</literal>,
+      and <literal>EXCLUDE</literal> constraints on the original table will be
       created on the new table only if <literal>INCLUDING INDEXES</literal>
       is specified.  Names for the new indexes and constraints are
       chosen according to the default rules, regardless of how the originals
@@ -568,11 +568,11 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
       the new indexes.)
      </para>
      <para>
-      <literal>STORAGE</> settings for the copied column definitions will be
+      <literal>STORAGE</literal> settings for the copied column definitions will be
       copied only if <literal>INCLUDING STORAGE</literal> is specified.  The
-      default behavior is to exclude <literal>STORAGE</> settings, resulting
+      default behavior is to exclude <literal>STORAGE</literal> settings, resulting
       in the copied columns in the new table having type-specific default
-      settings.  For more on <literal>STORAGE</> settings, see
+      settings.  For more on <literal>STORAGE</literal> settings, see
       <xref linkend="storage-toast">.
      </para>
      <para>
@@ -587,7 +587,7 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
      </para>
      <para>
       Note that unlike <literal>INHERITS</literal>, columns and
-      constraints copied by <literal>LIKE</> are not merged with similarly
+      constraints copied by <literal>LIKE</literal> are not merged with similarly
       named columns and constraints.
       If the same name is specified explicitly or in another
       <literal>LIKE</literal> clause, an error is signaled.
@@ -607,7 +607,7 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
      <para>
       An optional name for a column or table constraint.  If the
       constraint is violated, the constraint name is present in error messages,
-      so constraint names like <literal>col must be positive</> can be used
+      so constraint names like <literal>col must be positive</literal> can be used
       to communicate helpful constraint information to client applications.
       (Double-quotes are needed to specify constraint names that contain spaces.)
       If a constraint name is not specified, the system generates a name.
@@ -616,7 +616,7 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
    </varlistentry>
 
    <varlistentry>
-    <term><literal>NOT NULL</></term>
+    <term><literal>NOT NULL</literal></term>
     <listitem>
      <para>
       The column is not allowed to contain null values.
@@ -625,7 +625,7 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
    </varlistentry>
 
    <varlistentry>
-    <term><literal>NULL</></term>
+    <term><literal>NULL</literal></term>
     <listitem>
      <para>
       The column is allowed to contain null values. This is the default.
@@ -643,7 +643,7 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
     <term><literal>CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ] </literal></term>
     <listitem>
      <para>
-      The <literal>CHECK</> clause specifies an expression producing a
+      The <literal>CHECK</literal> clause specifies an expression producing a
       Boolean result which new or updated rows must satisfy for an
       insert or update operation to succeed.  Expressions evaluating
       to TRUE or UNKNOWN succeed.  Should any row of an insert or
@@ -662,15 +662,15 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
      </para>
 
      <para>
-      A constraint marked with <literal>NO INHERIT</> will not propagate to
+      A constraint marked with <literal>NO INHERIT</literal> will not propagate to
       child tables.
      </para>
 
      <para>
       When a table has multiple <literal>CHECK</literal> constraints,
       they will be tested for each row in alphabetical order by name,
-      after checking <literal>NOT NULL</> constraints.
-      (<productname>PostgreSQL</> versions before 9.5 did not honor any
+      after checking <literal>NOT NULL</literal> constraints.
+      (<productname>PostgreSQL</productname> versions before 9.5 did not honor any
       particular firing order for <literal>CHECK</literal> constraints.)
      </para>
     </listitem>
@@ -681,7 +681,7 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
     <replaceable>default_expr</replaceable></literal></term>
     <listitem>
      <para>
-      The <literal>DEFAULT</> clause assigns a default data value for
+      The <literal>DEFAULT</literal> clause assigns a default data value for
       the column whose column definition it appears within.  The value
       is any variable-free expression (subqueries and cross-references
       to other columns in the current table are not allowed).  The
@@ -729,8 +729,8 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
    </varlistentry>
 
    <varlistentry>
-    <term><literal>UNIQUE</> (column constraint)</term>
-    <term><literal>UNIQUE ( <replaceable class="parameter">column_name</replaceable> [, ... ] )</> (table constraint)</term>
+    <term><literal>UNIQUE</literal> (column constraint)</term>
+    <term><literal>UNIQUE ( <replaceable class="parameter">column_name</replaceable> [, ... ] )</literal> (table constraint)</term>
 
     <listitem>
      <para>
@@ -756,11 +756,11 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
    </varlistentry>
 
    <varlistentry>
-    <term><literal>PRIMARY KEY</> (column constraint)</term>
-    <term><literal>PRIMARY KEY ( <replaceable class="parameter">column_name</replaceable> [, ... ] )</> (table constraint)</term>
+    <term><literal>PRIMARY KEY</literal> (column constraint)</term>
+    <term><literal>PRIMARY KEY ( <replaceable class="parameter">column_name</replaceable> [, ... ] )</literal> (table constraint)</term>
     <listitem>
      <para>
-      The <literal>PRIMARY KEY</> constraint specifies that a column or
+      The <literal>PRIMARY KEY</literal> constraint specifies that a column or
       columns of a table can contain only unique (non-duplicate), nonnull
       values. Only one primary key can be specified for a table, whether as a
       column constraint or a table constraint.
@@ -775,7 +775,7 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
 
      <para>
       <literal>PRIMARY KEY</literal> enforces the same data constraints as
-      a combination of <literal>UNIQUE</> and <literal>NOT NULL</>, but
+      a combination of <literal>UNIQUE</literal> and <literal>NOT NULL</literal>, but
       identifying a set of columns as the primary key also provides metadata
       about the design of the schema, since a primary key implies that other
       tables can rely on this set of columns as a unique identifier for rows.
@@ -787,19 +787,19 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
     <term><literal>EXCLUDE [ USING <replaceable class="parameter">index_method</replaceable> ] ( <replaceable class="parameter">exclude_element</replaceable> WITH <replaceable class="parameter">operator</replaceable> [, ... ] ) <replaceable class="parameter">index_parameters</replaceable> [ WHERE ( <replaceable class="parameter">predicate</replaceable> ) ]</literal></term>
     <listitem>
      <para>
-      The <literal>EXCLUDE</> clause defines an exclusion
+      The <literal>EXCLUDE</literal> clause defines an exclusion
       constraint, which guarantees that if
       any two rows are compared on the specified column(s) or
       expression(s) using the specified operator(s), not all of these
-      comparisons will return <literal>TRUE</>.  If all of the
+      comparisons will return <literal>TRUE</literal>.  If all of the
       specified operators test for equality, this is equivalent to a
-      <literal>UNIQUE</> constraint, although an ordinary unique constraint
+      <literal>UNIQUE</literal> constraint, although an ordinary unique constraint
       will be faster.  However, exclusion constraints can specify
       constraints that are more general than simple equality.
       For example, you can specify a constraint that
       no two rows in the table contain overlapping circles
       (see <xref linkend="datatype-geometric">) by using the
-      <literal>&amp;&amp;</> operator.
+      <literal>&amp;&amp;</literal> operator.
      </para>
 
      <para>
@@ -807,7 +807,7 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
       an index, so each specified operator must be associated with an
       appropriate operator class
       (see <xref linkend="indexes-opclass">) for the index access
-      method <replaceable>index_method</>.
+      method <replaceable>index_method</replaceable>.
       The operators are required to be commutative.
       Each <replaceable class="parameter">exclude_element</replaceable>
       can optionally specify an operator class and/or ordering options;
@@ -816,17 +816,17 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
      </para>
 
      <para>
-      The access method must support <literal>amgettuple</> (see <xref
-      linkend="indexam">); at present this means <acronym>GIN</>
+      The access method must support <literal>amgettuple</literal> (see <xref
+      linkend="indexam">); at present this means <acronym>GIN</acronym>
       cannot be used.  Although it's allowed, there is little point in using
       B-tree or hash indexes with an exclusion constraint, because this
       does nothing that an ordinary unique constraint doesn't do better.
-      So in practice the access method will always be <acronym>GiST</> or
-      <acronym>SP-GiST</>.
+      So in practice the access method will always be <acronym>GiST</acronym> or
+      <acronym>SP-GiST</acronym>.
      </para>
 
      <para>
-      The <replaceable class="parameter">predicate</> allows you to specify an
+      The <replaceable class="parameter">predicate</replaceable> allows you to specify an
       exclusion constraint on a subset of the table; internally this creates a
       partial index. Note that parentheses are required around the predicate.
      </para>
@@ -853,7 +853,7 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
       primary key of the <replaceable class="parameter">reftable</replaceable>
       is used.  The referenced columns must be the columns of a non-deferrable
       unique or primary key constraint in the referenced table.  The user
-      must have <literal>REFERENCES</> permission on the referenced table
+      must have <literal>REFERENCES</literal> permission on the referenced table
       (either the whole table, or the specific referenced columns).
       Note that foreign key constraints cannot be defined between temporary
       tables and permanent tables.
@@ -863,16 +863,16 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
       A value inserted into the referencing column(s) is matched against the
       values of the referenced table and referenced columns using the
       given match type.  There are three match types: <literal>MATCH
-      FULL</>, <literal>MATCH PARTIAL</>, and <literal>MATCH
+      FULL</literal>, <literal>MATCH PARTIAL</literal>, and <literal>MATCH
       SIMPLE</literal> (which is the default).  <literal>MATCH
-      FULL</> will not allow one column of a multicolumn foreign key
+      FULL</literal> will not allow one column of a multicolumn foreign key
       to be null unless all foreign key columns are null; if they are all
       null, the row is not required to have a match in the referenced table.
       <literal>MATCH SIMPLE</literal> allows any of the foreign key columns
       to be null; if any of them are null, the row is not required to have a
       match in the referenced table.
-      <literal>MATCH PARTIAL</> is not yet implemented.
-      (Of course, <literal>NOT NULL</> constraints can be applied to the
+      <literal>MATCH PARTIAL</literal> is not yet implemented.
+      (Of course, <literal>NOT NULL</literal> constraints can be applied to the
       referencing column(s) to prevent these cases from arising.)
      </para>
 
@@ -969,13 +969,13 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
       deferrable can be postponed until the end of the transaction
       (using the <xref linkend="sql-set-constraints"> command).
       <literal>NOT DEFERRABLE</literal> is the default.
-      Currently, only <literal>UNIQUE</>, <literal>PRIMARY KEY</>,
-      <literal>EXCLUDE</>, and
-      <literal>REFERENCES</> (foreign key) constraints accept this
-      clause.  <literal>NOT NULL</> and <literal>CHECK</> constraints are not
+      Currently, only <literal>UNIQUE</literal>, <literal>PRIMARY KEY</literal>,
+      <literal>EXCLUDE</literal>, and
+      <literal>REFERENCES</literal> (foreign key) constraints accept this
+      clause.  <literal>NOT NULL</literal> and <literal>CHECK</literal> constraints are not
       deferrable.  Note that deferrable constraints cannot be used as
       conflict arbitrators in an <command>INSERT</command> statement that
-      includes an <literal>ON CONFLICT DO UPDATE</> clause.
+      includes an <literal>ON CONFLICT DO UPDATE</literal> clause.
      </para>
     </listitem>
    </varlistentry>
@@ -1003,16 +1003,16 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
       This clause specifies optional storage parameters for a table or index;
       see <xref linkend="sql-createtable-storage-parameters"
       endterm="sql-createtable-storage-parameters-title"> for more
-      information.  The <literal>WITH</> clause for a
-      table can also include <literal>OIDS=TRUE</> (or just <literal>OIDS</>)
+      information.  The <literal>WITH</literal> clause for a
+      table can also include <literal>OIDS=TRUE</literal> (or just <literal>OIDS</literal>)
       to specify that rows of the new table
       should have OIDs (object identifiers) assigned to them, or
-      <literal>OIDS=FALSE</> to specify that the rows should not have OIDs.
-      If <literal>OIDS</> is not specified, the default setting depends upon
+      <literal>OIDS=FALSE</literal> to specify that the rows should not have OIDs.
+      If <literal>OIDS</literal> is not specified, the default setting depends upon
       the <xref linkend="guc-default-with-oids"> configuration parameter.
       (If the new table inherits from any tables that have OIDs, then
-      <literal>OIDS=TRUE</> is forced even if the command says
-      <literal>OIDS=FALSE</>.)
+      <literal>OIDS=TRUE</literal> is forced even if the command says
+      <literal>OIDS=FALSE</literal>.)
      </para>
 
      <para>
@@ -1035,14 +1035,14 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
    </varlistentry>
 
    <varlistentry>
-    <term><literal>WITH OIDS</></term>
-    <term><literal>WITHOUT OIDS</></term>
+    <term><literal>WITH OIDS</literal></term>
+    <term><literal>WITHOUT OIDS</literal></term>
     <listitem>
      <para>
-      These are obsolescent syntaxes equivalent to <literal>WITH (OIDS)</>
-      and <literal>WITH (OIDS=FALSE)</>, respectively.  If you wish to give
-      both an <literal>OIDS</> setting and storage parameters, you must use
-      the <literal>WITH ( ... )</> syntax; see above.
+      These are obsolescent syntaxes equivalent to <literal>WITH (OIDS)</literal>
+      and <literal>WITH (OIDS=FALSE)</literal>, respectively.  If you wish to give
+      both an <literal>OIDS</literal> setting and storage parameters, you must use
+      the <literal>WITH ( ... )</literal> syntax; see above.
      </para>
     </listitem>
    </varlistentry>
@@ -1110,7 +1110,7 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
      <para>
       This clause allows selection of the tablespace in which the index
       associated with a <literal>UNIQUE</literal>, <literal>PRIMARY
-      KEY</literal>, or <literal>EXCLUDE</> constraint will be created.
+      KEY</literal>, or <literal>EXCLUDE</literal> constraint will be created.
       If not specified,
       <xref linkend="guc-default-tablespace"> is consulted, or
       <xref linkend="guc-temp-tablespaces"> if the table is temporary.
@@ -1128,16 +1128,16 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
  </indexterm>
 
    <para>
-    The <literal>WITH</> clause can specify <firstterm>storage parameters</>
+    The <literal>WITH</literal> clause can specify <firstterm>storage parameters</firstterm>
     for tables, and for indexes associated with a <literal>UNIQUE</literal>,
-    <literal>PRIMARY KEY</literal>, or <literal>EXCLUDE</> constraint.
+    <literal>PRIMARY KEY</literal>, or <literal>EXCLUDE</literal> constraint.
     Storage parameters for
     indexes are documented in <xref linkend="SQL-CREATEINDEX">.
     The storage parameters currently
     available for tables are listed below.  For many of these parameters, as
     shown, there is an additional parameter with the same name prefixed with
     <literal>toast.</literal>, which controls the behavior of the
-    table's secondary <acronym>TOAST</> table, if any
+    table's secondary <acronym>TOAST</acronym> table, if any
     (see <xref linkend="storage-toast"> for more information about TOAST).
     If a table parameter value is set and the
     equivalent <literal>toast.</literal> parameter is not, the TOAST table
@@ -1149,14 +1149,14 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
    <variablelist>
 
    <varlistentry>
-    <term><literal>fillfactor</> (<type>integer</>)</term>
+    <term><literal>fillfactor</literal> (<type>integer</type>)</term>
     <listitem>
      <para>
       The fillfactor for a table is a percentage between 10 and 100.
       100 (complete packing) is the default.  When a smaller fillfactor
-      is specified, <command>INSERT</> operations pack table pages only
+      is specified, <command>INSERT</command> operations pack table pages only
       to the indicated percentage; the remaining space on each page is
-      reserved for updating rows on that page.  This gives <command>UPDATE</>
+      reserved for updating rows on that page.  This gives <command>UPDATE</command>
       a chance to place the updated copy of a row on the same page as the
       original, which is more efficient than placing it on a different page.
       For a table whose entries are never updated, complete packing is the
@@ -1167,7 +1167,7 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
    </varlistentry>
 
    <varlistentry>
-    <term><literal>parallel_workers</> (<type>integer</>)</term>
+    <term><literal>parallel_workers</literal> (<type>integer</type>)</term>
     <listitem>
      <para>
       This sets the number of workers that should be used to assist a parallel
@@ -1180,12 +1180,12 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
    </varlistentry>
 
    <varlistentry>
-    <term><literal>autovacuum_enabled</>, <literal>toast.autovacuum_enabled</literal> (<type>boolean</>)</term>
+    <term><literal>autovacuum_enabled</literal>, <literal>toast.autovacuum_enabled</literal> (<type>boolean</type>)</term>
     <listitem>
      <para>
      Enables or disables the autovacuum daemon for a particular table.
-     If true, the autovacuum daemon will perform automatic <command>VACUUM</>
-     and/or <command>ANALYZE</> operations on this table following the rules
+     If true, the autovacuum daemon will perform automatic <command>VACUUM</command>
+     and/or <command>ANALYZE</command> operations on this table following the rules
      discussed in <xref linkend="autovacuum">.
      If false, this table will not be autovacuumed, except to prevent
      transaction ID wraparound. See <xref linkend="vacuum-for-wraparound"> for
@@ -1194,14 +1194,14 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
      transaction ID wraparound) if the <xref linkend="guc-autovacuum">
      parameter is false; setting individual tables' storage parameters does
      not override that.  Therefore there is seldom much point in explicitly
-     setting this storage parameter to <literal>true</>, only
-     to <literal>false</>.
+     setting this storage parameter to <literal>true</literal>, only
+     to <literal>false</literal>.
      </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-    <term><literal>autovacuum_vacuum_threshold</>, <literal>toast.autovacuum_vacuum_threshold</literal> (<type>integer</>)</term>
+    <term><literal>autovacuum_vacuum_threshold</literal>, <literal>toast.autovacuum_vacuum_threshold</literal> (<type>integer</type>)</term>
     <listitem>
      <para>
       Per-table value for <xref linkend="guc-autovacuum-vacuum-threshold">
@@ -1211,7 +1211,7 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
    </varlistentry>
 
    <varlistentry>
-    <term><literal>autovacuum_vacuum_scale_factor</>, <literal>toast.autovacuum_vacuum_scale_factor</literal> (<type>float4</>)</term>
+    <term><literal>autovacuum_vacuum_scale_factor</literal>, <literal>toast.autovacuum_vacuum_scale_factor</literal> (<type>float4</type>)</term>
     <listitem>
      <para>
       Per-table value for <xref linkend="guc-autovacuum-vacuum-scale-factor">
@@ -1221,7 +1221,7 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
    </varlistentry>
 
    <varlistentry>
-    <term><literal>autovacuum_analyze_threshold</> (<type>integer</>)</term>
+    <term><literal>autovacuum_analyze_threshold</literal> (<type>integer</type>)</term>
     <listitem>
      <para>
       Per-table value for <xref linkend="guc-autovacuum-analyze-threshold">
@@ -1231,7 +1231,7 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
    </varlistentry>
 
    <varlistentry>
-    <term><literal>autovacuum_analyze_scale_factor</> (<type>float4</>)</term>
+    <term><literal>autovacuum_analyze_scale_factor</literal> (<type>float4</type>)</term>
     <listitem>
      <para>
       Per-table value for <xref linkend="guc-autovacuum-analyze-scale-factor">
@@ -1241,7 +1241,7 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
    </varlistentry>
 
    <varlistentry>
-    <term><literal>autovacuum_vacuum_cost_delay</>, <literal>toast.autovacuum_vacuum_cost_delay</literal> (<type>integer</>)</term>
+    <term><literal>autovacuum_vacuum_cost_delay</literal>, <literal>toast.autovacuum_vacuum_cost_delay</literal> (<type>integer</type>)</term>
     <listitem>
      <para>
       Per-table value for <xref linkend="guc-autovacuum-vacuum-cost-delay">
@@ -1251,7 +1251,7 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
    </varlistentry>
 
    <varlistentry>
-    <term><literal>autovacuum_vacuum_cost_limit</>, <literal>toast.autovacuum_vacuum_cost_limit</literal> (<type>integer</>)</term>
+    <term><literal>autovacuum_vacuum_cost_limit</literal>, <literal>toast.autovacuum_vacuum_cost_limit</literal> (<type>integer</type>)</term>
     <listitem>
      <para>
       Per-table value for <xref linkend="guc-autovacuum-vacuum-cost-limit">
@@ -1261,12 +1261,12 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
    </varlistentry>
 
    <varlistentry>
-    <term><literal>autovacuum_freeze_min_age</>, <literal>toast.autovacuum_freeze_min_age</literal> (<type>integer</>)</term>
+    <term><literal>autovacuum_freeze_min_age</literal>, <literal>toast.autovacuum_freeze_min_age</literal> (<type>integer</type>)</term>
     <listitem>
      <para>
       Per-table value for <xref linkend="guc-vacuum-freeze-min-age">
       parameter.  Note that autovacuum will ignore
-      per-table <literal>autovacuum_freeze_min_age</> parameters that are
+      per-table <literal>autovacuum_freeze_min_age</literal> parameters that are
       larger than half the
       system-wide <xref linkend="guc-autovacuum-freeze-max-age"> setting.
      </para>
@@ -1274,12 +1274,12 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
    </varlistentry>
 
    <varlistentry>
-    <term><literal>autovacuum_freeze_max_age</>, <literal>toast.autovacuum_freeze_max_age</literal> (<type>integer</>)</term>
+    <term><literal>autovacuum_freeze_max_age</literal>, <literal>toast.autovacuum_freeze_max_age</literal> (<type>integer</type>)</term>
     <listitem>
      <para>
       Per-table value for <xref linkend="guc-autovacuum-freeze-max-age">
       parameter.  Note that autovacuum will ignore
-      per-table <literal>autovacuum_freeze_max_age</> parameters that are
+      per-table <literal>autovacuum_freeze_max_age</literal> parameters that are
       larger than the system-wide setting (it can only be set smaller).
      </para>
     </listitem>
@@ -1301,7 +1301,7 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
      <para>
       Per-table value for <xref linkend="guc-vacuum-multixact-freeze-min-age">
       parameter.  Note that autovacuum will ignore
-      per-table <literal>autovacuum_multixact_freeze_min_age</> parameters
+      per-table <literal>autovacuum_multixact_freeze_min_age</literal> parameters
       that are larger than half the
       system-wide <xref linkend="guc-autovacuum-multixact-freeze-max-age">
       setting.
@@ -1316,7 +1316,7 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
       Per-table value
       for <xref linkend="guc-autovacuum-multixact-freeze-max-age"> parameter.
       Note that autovacuum will ignore
-      per-table <literal>autovacuum_multixact_freeze_max_age</> parameters
+      per-table <literal>autovacuum_multixact_freeze_max_age</literal> parameters
       that are larger than the system-wide setting (it can only be set
       smaller).
      </para>
@@ -1369,11 +1369,11 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
      generator as the table's primary key is preferred. However, if
      your application does make use of OIDs to identify specific
      rows of a table, it is recommended to create a unique constraint
-     on the <structfield>oid</> column of that table, to ensure that
+     on the <structfield>oid</structfield> column of that table, to ensure that
      OIDs in the table will indeed uniquely identify rows even after
      counter wraparound.  Avoid assuming that OIDs are unique across
      tables; if you need a database-wide unique identifier, use the
-     combination of <structfield>tableoid</> and row OID for the
+     combination of <structfield>tableoid</structfield> and row OID for the
      purpose.
     </para>
 
@@ -1411,8 +1411,8 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
   <title>Examples</title>
 
   <para>
-   Create table <structname>films</> and table
-   <structname>distributors</>:
+   Create table <structname>films</structname> and table
+   <structname>distributors</structname>:
 
 <programlisting>
 CREATE TABLE films (
@@ -1484,7 +1484,7 @@ CREATE TABLE distributors (
 
   <para>
    Define a primary key table constraint for the table
-   <structname>films</>:
+   <structname>films</structname>:
 
 <programlisting>
 CREATE TABLE films (
@@ -1501,7 +1501,7 @@ CREATE TABLE films (
 
   <para>
    Define a primary key constraint for table
-   <structname>distributors</>.  The following two examples are
+   <structname>distributors</structname>.  The following two examples are
    equivalent, the first using the table constraint syntax, the second
    the column constraint syntax:
 
@@ -1537,7 +1537,7 @@ CREATE TABLE distributors (
   </para>
 
   <para>
-   Define two <literal>NOT NULL</> column constraints on the table
+   Define two <literal>NOT NULL</literal> column constraints on the table
    <classname>distributors</classname>, one of which is explicitly
    given a name:
 
@@ -1585,7 +1585,7 @@ WITH (fillfactor=70);
   </para>
 
   <para>
-   Create table <structname>circles</> with an exclusion
+   Create table <structname>circles</structname> with an exclusion
    constraint that prevents any two circles from overlapping:
 
 <programlisting>
@@ -1597,7 +1597,7 @@ CREATE TABLE circles (
   </para>
 
   <para>
-   Create table <structname>cinemas</> in tablespace <structname>diskvol1</>:
+   Create table <structname>cinemas</structname> in tablespace <structname>diskvol1</structname>:
 
 <programlisting>
 CREATE TABLE cinemas (
@@ -1761,8 +1761,8 @@ CREATE TABLE cities_partdef
    <para>
     The <literal>ON COMMIT</literal> clause for temporary tables
     also resembles the SQL standard, but has some differences.
-    If the <literal>ON COMMIT</> clause is omitted, SQL specifies that the
-    default behavior is <literal>ON COMMIT DELETE ROWS</>.  However, the
+    If the <literal>ON COMMIT</literal> clause is omitted, SQL specifies that the
+    default behavior is <literal>ON COMMIT DELETE ROWS</literal>.  However, the
     default behavior in <productname>PostgreSQL</productname> is
     <literal>ON COMMIT PRESERVE ROWS</literal>.  The <literal>ON COMMIT
     DROP</literal> option does not exist in SQL.
@@ -1773,15 +1773,15 @@ CREATE TABLE cities_partdef
    <title>Non-deferred Uniqueness Constraints</title>
 
    <para>
-    When a <literal>UNIQUE</> or <literal>PRIMARY KEY</> constraint is
+    When a <literal>UNIQUE</literal> or <literal>PRIMARY KEY</literal> constraint is
     not deferrable, <productname>PostgreSQL</productname> checks for
     uniqueness immediately whenever a row is inserted or modified.
     The SQL standard says that uniqueness should be enforced only at
     the end of the statement; this makes a difference when, for example,
     a single command updates multiple key values.  To obtain
     standard-compliant behavior, declare the constraint as
-    <literal>DEFERRABLE</> but not deferred (i.e., <literal>INITIALLY
-    IMMEDIATE</>).  Be aware that this can be significantly slower than
+    <literal>DEFERRABLE</literal> but not deferred (i.e., <literal>INITIALLY
+    IMMEDIATE</literal>).  Be aware that this can be significantly slower than
     immediate uniqueness checking.
    </para>
   </refsect2>
@@ -1790,8 +1790,8 @@ CREATE TABLE cities_partdef
    <title>Column Check Constraints</title>
 
    <para>
-    The SQL standard says that <literal>CHECK</> column constraints
-    can only refer to the column they apply to; only <literal>CHECK</>
+    The SQL standard says that <literal>CHECK</literal> column constraints
+    can only refer to the column they apply to; only <literal>CHECK</literal>
     table constraints can refer to multiple columns.
     <productname>PostgreSQL</productname> does not enforce this
     restriction; it treats column and table check constraints alike.
@@ -1802,7 +1802,7 @@ CREATE TABLE cities_partdef
    <title><literal>EXCLUDE</literal> Constraint</title>
 
    <para>
-    The <literal>EXCLUDE</> constraint type is a
+    The <literal>EXCLUDE</literal> constraint type is a
     <productname>PostgreSQL</productname> extension.
    </para>
   </refsect2>
@@ -1811,7 +1811,7 @@ CREATE TABLE cities_partdef
    <title><literal>NULL</literal> <quote>Constraint</quote></title>
 
    <para>
-    The <literal>NULL</> <quote>constraint</quote> (actually a
+    The <literal>NULL</literal> <quote>constraint</quote> (actually a
     non-constraint) is a <productname>PostgreSQL</productname>
     extension to the SQL standard that is included for compatibility with some
     other database systems (and for symmetry with the <literal>NOT
@@ -1838,11 +1838,11 @@ CREATE TABLE cities_partdef
 
    <para>
     <productname>PostgreSQL</productname> allows a table of no columns
-    to be created (for example, <literal>CREATE TABLE foo();</>).  This
+    to be created (for example, <literal>CREATE TABLE foo();</literal>).  This
     is an extension from the SQL standard, which does not allow zero-column
     tables.  Zero-column tables are not in themselves very useful, but
     disallowing them creates odd special cases for <command>ALTER TABLE
-    DROP COLUMN</>, so it seems cleaner to ignore this spec restriction.
+    DROP COLUMN</command>, so it seems cleaner to ignore this spec restriction.
    </para>
   </refsect2>
 
@@ -1861,10 +1861,10 @@ CREATE TABLE cities_partdef
   </refsect2>
 
   <refsect2>
-   <title><literal>LIKE</> Clause</title>
+   <title><literal>LIKE</literal> Clause</title>
 
    <para>
-    While a <literal>LIKE</> clause exists in the SQL standard, many of the
+    While a <literal>LIKE</literal> clause exists in the SQL standard, many of the
     options that <productname>PostgreSQL</productname> accepts for it are not
     in the standard, and some of the standard's options are not implemented
     by <productname>PostgreSQL</productname>.
@@ -1872,10 +1872,10 @@ CREATE TABLE cities_partdef
   </refsect2>
 
   <refsect2>
-   <title><literal>WITH</> Clause</title>
+   <title><literal>WITH</literal> Clause</title>
 
    <para>
-    The <literal>WITH</> clause is a <productname>PostgreSQL</productname>
+    The <literal>WITH</literal> clause is a <productname>PostgreSQL</productname>
     extension; neither storage parameters nor OIDs are in the standard.
    </para>
   </refsect2>
@@ -1904,19 +1904,19 @@ CREATE TABLE cities_partdef
   </refsect2>
 
   <refsect2>
-   <title><literal>PARTITION BY</> Clause</title>
+   <title><literal>PARTITION BY</literal> Clause</title>
 
    <para>
-    The <literal>PARTITION BY</> clause is a
+    The <literal>PARTITION BY</literal> clause is a
     <productname>PostgreSQL</productname> extension.
    </para>
   </refsect2>
 
   <refsect2>
-   <title><literal>PARTITION OF</> Clause</title>
+   <title><literal>PARTITION OF</literal> Clause</title>
 
    <para>
-    The <literal>PARTITION OF</> clause is a
+    The <literal>PARTITION OF</literal> clause is a
     <productname>PostgreSQL</productname> extension.
    </para>
   </refsect2>

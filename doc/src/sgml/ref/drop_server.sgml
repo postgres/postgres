@@ -86,7 +86,7 @@ DROP SERVER [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [, .
   <title>Examples</title>
 
   <para>
-   Drop a server <literal>foo</> if it exists:
+   Drop a server <literal>foo</literal> if it exists:
 <programlisting>
 DROP SERVER IF EXISTS foo;
 </programlisting></para>
@@ -97,8 +97,8 @@ DROP SERVER IF EXISTS foo;
 
   <para>
    <command>DROP SERVER</command> conforms to ISO/IEC 9075-9
-   (SQL/MED).  The <literal>IF EXISTS</> clause is
-   a <productname>PostgreSQL</> extension.
+   (SQL/MED).  The <literal>IF EXISTS</literal> clause is
+   a <productname>PostgreSQL</productname> extension.
   </para>
  </refsect1>
 

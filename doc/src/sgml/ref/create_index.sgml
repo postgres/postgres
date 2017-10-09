@@ -51,8 +51,8 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
    one or more columns of the table row.  This feature can be used
    to obtain fast access to data based on some transformation of
    the basic data. For example, an index computed on
-   <literal>upper(col)</> would allow the clause
-   <literal>WHERE upper(col) = 'JIM'</> to use an index.
+   <literal>upper(col)</literal> would allow the clause
+   <literal>WHERE upper(col) = 'JIM'</literal> to use an index.
   </para>
 
   <para>
@@ -85,7 +85,7 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
 
   <para>
    All functions and operators used in an index definition must be
-   <quote>immutable</>, that is, their results must depend only on
+   <quote>immutable</quote>, that is, their results must depend only on
    their arguments and never on any outside influence (such as
    the contents of another table or the current time).  This restriction
    ensures that the behavior of the index is well-defined.  To use a
@@ -115,7 +115,7 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
       <term><literal>CONCURRENTLY</literal></term>
       <listitem>
        <para>
-        When this option is used, <productname>PostgreSQL</> will build the
+        When this option is used, <productname>PostgreSQL</productname> will build the
         index without taking any locks that prevent concurrent inserts,
         updates, or deletes on the table; whereas a standard index build
         locks out writes (but not reads) on the table until it's done.
@@ -144,7 +144,7 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
        <para>
         The name of the index to be created.  No schema name can be included
         here; the index is always created in the same schema as its parent
-        table.  If the name is omitted, <productname>PostgreSQL</> chooses a
+        table.  If the name is omitted, <productname>PostgreSQL</productname> chooses a
         suitable name based on the parent table's name and the indexed column
         name(s).
        </para>
@@ -166,8 +166,8 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
        <para>
         The name of the index method to be used.  Choices are
         <literal>btree</literal>, <literal>hash</literal>,
-        <literal>gist</literal>, <literal>spgist</>, <literal>gin</>, and
-        <literal>brin</>.
+        <literal>gist</literal>, <literal>spgist</literal>, <literal>gin</literal>, and
+        <literal>brin</literal>.
         The default method is <literal>btree</literal>.
        </para>
       </listitem>
@@ -217,7 +217,7 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
      </varlistentry>
 
      <varlistentry>
-      <term><literal>ASC</></term>
+      <term><literal>ASC</literal></term>
       <listitem>
        <para>
         Specifies ascending sort order (which is the default).
@@ -226,7 +226,7 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
      </varlistentry>
 
      <varlistentry>
-      <term><literal>DESC</></term>
+      <term><literal>DESC</literal></term>
       <listitem>
        <para>
         Specifies descending sort order.
@@ -235,21 +235,21 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
      </varlistentry>
 
      <varlistentry>
-      <term><literal>NULLS FIRST</></term>
+      <term><literal>NULLS FIRST</literal></term>
       <listitem>
        <para>
         Specifies that nulls sort before non-nulls.  This is the default
-        when <literal>DESC</> is specified.
+        when <literal>DESC</literal> is specified.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><literal>NULLS LAST</></term>
+      <term><literal>NULLS LAST</literal></term>
       <listitem>
        <para>
         Specifies that nulls sort after non-nulls.  This is the default
-        when <literal>DESC</> is not specified.
+        when <literal>DESC</literal> is not specified.
        </para>
       </listitem>
      </varlistentry>
@@ -292,15 +292,15 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
    <title id="SQL-CREATEINDEX-storage-parameters-title">Index Storage Parameters</title>
 
    <para>
-    The optional <literal>WITH</> clause specifies <firstterm>storage
-    parameters</> for the index.  Each index method has its own set of allowed
+    The optional <literal>WITH</literal> clause specifies <firstterm>storage
+    parameters</firstterm> for the index.  Each index method has its own set of allowed
     storage parameters.  The B-tree, hash, GiST and SP-GiST index methods all
     accept this parameter:
    </para>
 
    <variablelist>
    <varlistentry>
-    <term><literal>fillfactor</></term>
+    <term><literal>fillfactor</literal></term>
     <listitem>
      <para>
       The fillfactor for an index is a percentage that determines how full
@@ -327,14 +327,14 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
 
    <variablelist>
    <varlistentry>
-    <term><literal>buffering</></term>
+    <term><literal>buffering</literal></term>
     <listitem>
     <para>
      Determines whether the buffering build technique described in
      <xref linkend="gist-buffering-build"> is used to build the index. With
-     <literal>OFF</> it is disabled, with <literal>ON</> it is enabled, and
-     with <literal>AUTO</> it is initially disabled, but turned on
-     on-the-fly once the index size reaches <xref linkend="guc-effective-cache-size">. The default is <literal>AUTO</>.
+     <literal>OFF</literal> it is disabled, with <literal>ON</literal> it is enabled, and
+     with <literal>AUTO</literal> it is initially disabled, but turned on
+     on-the-fly once the index size reaches <xref linkend="guc-effective-cache-size">. The default is <literal>AUTO</literal>.
     </para>
     </listitem>
    </varlistentry>
@@ -346,23 +346,23 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
 
    <variablelist>
    <varlistentry>
-    <term><literal>fastupdate</></term>
+    <term><literal>fastupdate</literal></term>
     <listitem>
     <para>
      This setting controls usage of the fast update technique described in
      <xref linkend="gin-fast-update">.  It is a Boolean parameter:
-     <literal>ON</> enables fast update, <literal>OFF</> disables it.
-     (Alternative spellings of <literal>ON</> and <literal>OFF</> are
+     <literal>ON</literal> enables fast update, <literal>OFF</literal> disables it.
+     (Alternative spellings of <literal>ON</literal> and <literal>OFF</literal> are
      allowed as described in <xref linkend="config-setting">.)  The
-     default is <literal>ON</>.
+     default is <literal>ON</literal>.
     </para>
 
     <note>
      <para>
-      Turning <literal>fastupdate</> off via <command>ALTER INDEX</> prevents
+      Turning <literal>fastupdate</literal> off via <command>ALTER INDEX</command> prevents
       future insertions from going into the list of pending index entries,
       but does not in itself flush previous entries.  You might want to
-      <command>VACUUM</> the table or call <function>gin_clean_pending_list</>
+      <command>VACUUM</command> the table or call <function>gin_clean_pending_list</function>
       function afterward to ensure the pending list is emptied.
      </para>
     </note>
@@ -371,7 +371,7 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
    </variablelist>
    <variablelist>
    <varlistentry>
-    <term><literal>gin_pending_list_limit</></term>
+    <term><literal>gin_pending_list_limit</literal></term>
     <listitem>
     <para>
      Custom <xref linkend="guc-gin-pending-list-limit"> parameter.
@@ -382,23 +382,23 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
    </variablelist>
 
    <para>
-    <acronym>BRIN</> indexes accept different parameters:
+    <acronym>BRIN</acronym> indexes accept different parameters:
    </para>
 
    <variablelist>
    <varlistentry>
-    <term><literal>pages_per_range</></term>
+    <term><literal>pages_per_range</literal></term>
     <listitem>
     <para>
      Defines the number of table blocks that make up one block range for
-     each entry of a <acronym>BRIN</> index (see <xref linkend="brin-intro">
-     for more details).  The default is <literal>128</>.
+     each entry of a <acronym>BRIN</acronym> index (see <xref linkend="brin-intro">
+     for more details).  The default is <literal>128</literal>.
     </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-    <term><literal>autosummarize</></term>
+    <term><literal>autosummarize</literal></term>
     <listitem>
     <para>
      Defines whether a summarization run is invoked for the previous page
@@ -419,7 +419,7 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
 
    <para>
     Creating an index can interfere with regular operation of a database.
-    Normally <productname>PostgreSQL</> locks the table to be indexed against
+    Normally <productname>PostgreSQL</productname> locks the table to be indexed against
     writes and performs the entire index build with a single scan of the
     table. Other transactions can still read the table, but if they try to
     insert, update, or delete rows in the table they will block until the
@@ -430,11 +430,11 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
    </para>
 
    <para>
-    <productname>PostgreSQL</> supports building indexes without locking
+    <productname>PostgreSQL</productname> supports building indexes without locking
     out writes.  This method is invoked by specifying the
-    <literal>CONCURRENTLY</> option of <command>CREATE INDEX</>.
+    <literal>CONCURRENTLY</literal> option of <command>CREATE INDEX</command>.
     When this option is used,
-    <productname>PostgreSQL</> must perform two scans of the table, and in
+    <productname>PostgreSQL</productname> must perform two scans of the table, and in
     addition it must wait for all existing transactions that could potentially
     modify or use the index to terminate.  Thus
     this method requires more total work than a standard index build and takes
@@ -452,7 +452,7 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
     After the second scan, the index build must wait for any transactions
     that have a snapshot (see <xref linkend="mvcc">) predating the second
     scan to terminate.  Then finally the index can be marked ready for use,
-    and the <command>CREATE INDEX</> command terminates.
+    and the <command>CREATE INDEX</command> command terminates.
     Even then, however, the index may not be immediately usable for queries:
     in the worst case, it cannot be used as long as transactions exist that
     predate the start of the index build.
@@ -460,11 +460,11 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
 
    <para>
     If a problem arises while scanning the table, such as a deadlock or a
-    uniqueness violation in a unique index, the <command>CREATE INDEX</>
-    command will fail but leave behind an <quote>invalid</> index. This index
+    uniqueness violation in a unique index, the <command>CREATE INDEX</command>
+    command will fail but leave behind an <quote>invalid</quote> index. This index
     will be ignored for querying purposes because it might be incomplete;
-    however it will still consume update overhead. The <application>psql</>
-    <command>\d</> command will report such an index as <literal>INVALID</>:
+    however it will still consume update overhead. The <application>psql</application>
+    <command>\d</command> command will report such an index as <literal>INVALID</literal>:
 
 <programlisting>
 postgres=# \d tab
@@ -478,8 +478,8 @@ Indexes:
 
     The recommended recovery
     method in such cases is to drop the index and try again to perform
-    <command>CREATE INDEX CONCURRENTLY</>.  (Another possibility is to rebuild
-    the index with <command>REINDEX</>.  However, since <command>REINDEX</>
+    <command>CREATE INDEX CONCURRENTLY</command>.  (Another possibility is to rebuild
+    the index with <command>REINDEX</command>.  However, since <command>REINDEX</command>
     does not support concurrent builds, this option is unlikely to seem
     attractive.)
    </para>
@@ -490,7 +490,7 @@ Indexes:
     when the second table scan begins.  This means that constraint violations
     could be reported in other queries prior to the index becoming available
     for use, or even in cases where the index build eventually fails.  Also,
-    if a failure does occur in the second scan, the <quote>invalid</> index
+    if a failure does occur in the second scan, the <quote>invalid</quote> index
     continues to enforce its uniqueness constraint afterwards.
    </para>
 
@@ -505,8 +505,8 @@ Indexes:
     same table to occur in parallel, but only one concurrent index build
     can occur on a table at a time.  In both cases, no other types of schema
     modification on the table are allowed meanwhile.  Another difference
-    is that a regular <command>CREATE INDEX</> command can be performed within
-    a transaction block, but <command>CREATE INDEX CONCURRENTLY</> cannot.
+    is that a regular <command>CREATE INDEX</command> command can be performed within
+    a transaction block, but <command>CREATE INDEX CONCURRENTLY</command> cannot.
    </para>
   </refsect2>
  </refsect1>
@@ -547,17 +547,17 @@ Indexes:
 
   <para>
    For index methods that support ordered scans (currently, only B-tree),
-   the optional clauses <literal>ASC</>, <literal>DESC</>, <literal>NULLS
-   FIRST</>, and/or <literal>NULLS LAST</> can be specified to modify
+   the optional clauses <literal>ASC</literal>, <literal>DESC</literal>, <literal>NULLS
+   FIRST</literal>, and/or <literal>NULLS LAST</literal> can be specified to modify
    the sort ordering of the index.  Since an ordered index can be
    scanned either forward or backward, it is not normally useful to create a
-   single-column <literal>DESC</> index &mdash; that sort ordering is already
+   single-column <literal>DESC</literal> index &mdash; that sort ordering is already
    available with a regular index.  The value of these options is that
    multicolumn indexes can be created that match the sort ordering requested
    by a mixed-ordering query, such as <literal>SELECT ... ORDER BY x ASC, y
-   DESC</>.  The <literal>NULLS</> options are useful if you need to support
-   <quote>nulls sort low</> behavior, rather than the default <quote>nulls
-   sort high</>, in queries that depend on indexes to avoid sorting steps.
+   DESC</literal>.  The <literal>NULLS</literal> options are useful if you need to support
+   <quote>nulls sort low</quote> behavior, rather than the default <quote>nulls
+   sort high</quote>, in queries that depend on indexes to avoid sorting steps.
   </para>
 
   <para>
@@ -577,8 +577,8 @@ Indexes:
    Prior releases of <productname>PostgreSQL</productname> also had an
    R-tree index method.  This method has been removed because
    it had no significant advantages over the GiST method.
-   If <literal>USING rtree</> is specified, <command>CREATE INDEX</>
-   will interpret it as <literal>USING gist</>, to simplify conversion
+   If <literal>USING rtree</literal> is specified, <command>CREATE INDEX</command>
+   will interpret it as <literal>USING gist</literal>, to simplify conversion
    of old databases to GiST.
   </para>
  </refsect1>
@@ -595,13 +595,13 @@ CREATE UNIQUE INDEX title_idx ON films (title);
   </para>
 
   <para>
-   To create an index on the expression <literal>lower(title)</>,
+   To create an index on the expression <literal>lower(title)</literal>,
    allowing efficient case-insensitive searches:
 <programlisting>
 CREATE INDEX ON films ((lower(title)));
 </programlisting>
    (In this example we have chosen to omit the index name, so the system
-   will choose a name, typically <literal>films_lower_idx</>.)
+   will choose a name, typically <literal>films_lower_idx</literal>.)
   </para>
 
   <para>
@@ -626,16 +626,16 @@ CREATE UNIQUE INDEX title_idx ON films (title) WITH (fillfactor = 70);
   </para>
 
   <para>
-   To create a <acronym>GIN</> index with fast updates disabled:
+   To create a <acronym>GIN</acronym> index with fast updates disabled:
 <programlisting>
 CREATE INDEX gin_idx ON documents_table USING GIN (locations) WITH (fastupdate = off);
 </programlisting>
   </para>
 
   <para>
-   To create an index on the column <literal>code</> in the table
-   <literal>films</> and have the index reside in the tablespace
-   <literal>indexspace</>:
+   To create an index on the column <literal>code</literal> in the table
+   <literal>films</literal> and have the index reside in the tablespace
+   <literal>indexspace</literal>:
 <programlisting>
 CREATE INDEX code_idx ON films (code) TABLESPACE indexspace;
 </programlisting>

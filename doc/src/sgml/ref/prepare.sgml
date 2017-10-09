@@ -48,7 +48,7 @@ PREPARE <replaceable class="parameter">name</replaceable> [ ( <replaceable class
    Prepared statements can take parameters: values that are
    substituted into the statement when it is executed. When creating
    the prepared statement, refer to parameters by position, using
-   <literal>$1</>, <literal>$2</>, etc. A corresponding list of
+   <literal>$1</literal>, <literal>$2</literal>, etc. A corresponding list of
    parameter data types can optionally be specified. When a
    parameter's data type is not specified or is declared as
    <literal>unknown</literal>, the type is inferred from the context
@@ -115,8 +115,8 @@ PREPARE <replaceable class="parameter">name</replaceable> [ ( <replaceable class
     <term><replaceable class="parameter">statement</replaceable></term>
     <listitem>
      <para>
-      Any <command>SELECT</>, <command>INSERT</>, <command>UPDATE</>,
-      <command>DELETE</>, or <command>VALUES</> statement.
+      Any <command>SELECT</command>, <command>INSERT</command>, <command>UPDATE</command>,
+      <command>DELETE</command>, or <command>VALUES</command> statement.
      </para>
     </listitem>
    </varlistentry>
@@ -155,9 +155,9 @@ PREPARE <replaceable class="parameter">name</replaceable> [ ( <replaceable class
   <para>
    To examine the query plan <productname>PostgreSQL</productname> is using
    for a prepared statement, use <xref linkend="sql-explain">, e.g.
-   <command>EXPLAIN EXECUTE</>.
+   <command>EXPLAIN EXECUTE</command>.
    If a generic plan is in use, it will contain parameter symbols
-   <literal>$<replaceable>n</></literal>, while a custom plan will have the
+   <literal>$<replaceable>n</replaceable></literal>, while a custom plan will have the
    supplied parameter values substituted into it.
    The row estimates in the generic plan reflect the selectivity
    computed for the parameters.
@@ -172,13 +172,13 @@ PREPARE <replaceable class="parameter">name</replaceable> [ ( <replaceable class
 
   <para>
    Although the main point of a prepared statement is to avoid repeated parse
-   analysis and planning of the statement, <productname>PostgreSQL</> will
+   analysis and planning of the statement, <productname>PostgreSQL</productname> will
    force re-analysis and re-planning of the statement before using it
    whenever database objects used in the statement have undergone
    definitional (DDL) changes since the previous use of the prepared
    statement.  Also, if the value of <xref linkend="guc-search-path"> changes
    from one use to the next, the statement will be re-parsed using the new
-   <varname>search_path</>.  (This latter behavior is new as of
+   <varname>search_path</varname>.  (This latter behavior is new as of
    <productname>PostgreSQL</productname> 9.3.)  These rules make use of a
    prepared statement semantically almost equivalent to re-submitting the
    same query text over and over, but with a performance benefit if no object
@@ -186,7 +186,7 @@ PREPARE <replaceable class="parameter">name</replaceable> [ ( <replaceable class
    across uses.  An example of a case where the semantic equivalence is not
    perfect is that if the statement refers to a table by an unqualified name,
    and then a new table of the same name is created in a schema appearing
-   earlier in the <varname>search_path</>, no automatic re-parse will occur
+   earlier in the <varname>search_path</varname>, no automatic re-parse will occur
    since no object used in the statement changed.  However, if some other
    change forces a re-parse, the new table will be referenced in subsequent
    uses.
@@ -222,7 +222,7 @@ EXECUTE usrrptplan(1, current_date);
 </programlisting>
 
    Note that the data type of the second parameter is not specified,
-   so it is inferred from the context in which <literal>$2</> is used.
+   so it is inferred from the context in which <literal>$2</literal> is used.
   </para>
  </refsect1>
  <refsect1>

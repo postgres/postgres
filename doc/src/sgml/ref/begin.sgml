@@ -91,7 +91,7 @@ BEGIN [ WORK | TRANSACTION ] [ <replaceable class="parameter">transaction_mode</
 
   <para>
    <xref linkend="sql-start-transaction"> has the same functionality
-   as <command>BEGIN</>.
+   as <command>BEGIN</command>.
   </para>
 
   <para>
@@ -101,7 +101,7 @@ BEGIN [ WORK | TRANSACTION ] [ <replaceable class="parameter">transaction_mode</
   </para>
 
   <para>
-   Issuing <command>BEGIN</> when already inside a transaction block will
+   Issuing <command>BEGIN</command> when already inside a transaction block will
    provoke a warning message.  The state of the transaction is not affected.
    To nest transactions within a transaction block, use savepoints
    (see <xref linkend="sql-savepoint">).

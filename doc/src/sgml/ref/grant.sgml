@@ -116,7 +116,7 @@ GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replace
    There is also an option to grant privileges on all objects of the same
    type within one or more schemas.  This functionality is currently supported
    only for tables, sequences, and functions (but note that <literal>ALL
-   TABLES</> is considered to include views and foreign tables).
+   TABLES</literal> is considered to include views and foreign tables).
   </para>
 
   <para>
@@ -174,7 +174,7 @@ GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replace
    (including domains).
    The object owner can, of course, <command>REVOKE</command>
    both default and  expressly granted privileges. (For maximum
-   security, issue the <command>REVOKE</> in the same transaction that
+   security, issue the <command>REVOKE</command> in the same transaction that
    creates the object; then there is no window in which another user
    can use the object.)
    Also, these initial default privilege settings can be changed using the
@@ -211,7 +211,7 @@ GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replace
       <para>
        Allows <xref linkend="sql-insert"> of a new
        row into the specified table.  If specific columns are listed,
-       only those columns may be assigned to in the <command>INSERT</>
+       only those columns may be assigned to in the <command>INSERT</command>
        command (other columns will therefore receive default values).
        Also allows <xref linkend="sql-copy"> FROM.
       </para>
@@ -224,8 +224,8 @@ GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replace
       <para>
        Allows <xref linkend="sql-update"> of any
        column, or the specific columns listed, of the specified table.
-       (In practice, any nontrivial <command>UPDATE</> command will require
-       <literal>SELECT</> privilege as well, since it must reference table
+       (In practice, any nontrivial <command>UPDATE</command> command will require
+       <literal>SELECT</literal> privilege as well, since it must reference table
        columns to determine which rows to update, and/or to compute new
        values for columns.)
        <literal>SELECT ... FOR UPDATE</literal>
@@ -246,8 +246,8 @@ GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replace
       <para>
        Allows <xref linkend="sql-delete"> of a row
        from the specified table.
-       (In practice, any nontrivial <command>DELETE</> command will require
-       <literal>SELECT</> privilege as well, since it must reference table
+       (In practice, any nontrivial <command>DELETE</command> command will require
+       <literal>SELECT</literal> privilege as well, since it must reference table
        columns to determine which rows to delete.)
       </para>
      </listitem>
@@ -292,7 +292,7 @@ GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replace
       </para>
       <para>
        For schemas, allows new objects to be created within the schema.
-       To rename an existing object, you must own the object <emphasis>and</>
+       To rename an existing object, you must own the object <emphasis>and</emphasis>
        have this privilege for the containing schema.
       </para>
       <para>
@@ -310,7 +310,7 @@ GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replace
       <para>
        Allows the user to connect to the specified database.  This
        privilege is checked at connection startup (in addition to checking
-       any restrictions imposed by <filename>pg_hba.conf</>).
+       any restrictions imposed by <filename>pg_hba.conf</filename>).
       </para>
      </listitem>
     </varlistentry>
@@ -348,7 +348,7 @@ GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replace
       <para>
        For schemas, allows access to objects contained in the specified
        schema (assuming that the objects' own privilege requirements are
-       also met).  Essentially this allows the grantee to <quote>look up</>
+       also met).  Essentially this allows the grantee to <quote>look up</quote>
        objects within the schema.  Without this permission, it is still
        possible to see the object names, e.g. by querying the system tables.
        Also, after revoking this permission, existing backends might have
@@ -416,14 +416,14 @@ GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replace
    OPTION</literal> on itself, but it may grant or revoke membership in
    itself from a database session where the session user matches the
    role.  Database superusers can grant or revoke membership in any role
-   to anyone.  Roles having <literal>CREATEROLE</> privilege can grant
+   to anyone.  Roles having <literal>CREATEROLE</literal> privilege can grant
    or revoke membership in any role that is not a superuser.
   </para>
 
   <para>
    Unlike the case with privileges, membership in a role cannot be granted
-   to <literal>PUBLIC</>.  Note also that this form of the command does not
-   allow the noise word <literal>GROUP</>.
+   to <literal>PUBLIC</literal>.  Note also that this form of the command does not
+   allow the noise word <literal>GROUP</literal>.
   </para>
  </refsect2>
  </refsect1>
@@ -440,13 +440,13 @@ GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replace
    <para>
     Since <productname>PostgreSQL</productname> 8.1, the concepts of users and
     groups have been unified into a single kind of entity called a role.
-    It is therefore no longer necessary to use the keyword <literal>GROUP</>
-    to identify whether a grantee is a user or a group.  <literal>GROUP</>
+    It is therefore no longer necessary to use the keyword <literal>GROUP</literal>
+    to identify whether a grantee is a user or a group.  <literal>GROUP</literal>
     is still allowed in the command, but it is a noise word.
    </para>
 
    <para>
-    A user may perform <command>SELECT</>, <command>INSERT</>, etc. on a
+    A user may perform <command>SELECT</command>, <command>INSERT</command>, etc. on a
     column if they hold that privilege for either the specific column or
     its whole table.  Granting the privilege at the table level and then
     revoking it for one column will not do what one might wish: the
@@ -454,12 +454,12 @@ GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replace
    </para>
 
    <para>
-    When a non-owner of an object attempts to <command>GRANT</> privileges
+    When a non-owner of an object attempts to <command>GRANT</command> privileges
     on the object, the command will fail outright if the user has no
     privileges whatsoever on the object.  As long as some privilege is
     available, the command will proceed, but it will grant only those
     privileges for which the user has grant options.  The <command>GRANT ALL
-    PRIVILEGES</> forms will issue a warning message if no grant options are
+    PRIVILEGES</command> forms will issue a warning message if no grant options are
     held, while the other forms will issue a warning if grant options for
     any of the privileges specifically named in the command are not held.
     (In principle these statements apply to the object owner as well, but
@@ -470,13 +470,13 @@ GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replace
    <para>
     It should be noted that database superusers can access
     all objects regardless of object privilege settings.  This
-    is comparable to the rights of <literal>root</> in a Unix system.
-    As with <literal>root</>, it's unwise to operate as a superuser
+    is comparable to the rights of <literal>root</literal> in a Unix system.
+    As with <literal>root</literal>, it's unwise to operate as a superuser
     except when absolutely necessary.
    </para>
 
    <para>
-    If a superuser chooses to issue a <command>GRANT</> or <command>REVOKE</>
+    If a superuser chooses to issue a <command>GRANT</command> or <command>REVOKE</command>
     command, the command is performed as though it were issued by the
     owner of the affected object.  In particular, privileges granted via
     such a command will appear to have been granted by the object owner.
@@ -485,32 +485,32 @@ GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replace
    </para>
 
    <para>
-    <command>GRANT</> and <command>REVOKE</> can also be done by a role
+    <command>GRANT</command> and <command>REVOKE</command> can also be done by a role
     that is not the owner of the affected object, but is a member of the role
     that owns the object, or is a member of a role that holds privileges
     <literal>WITH GRANT OPTION</literal> on the object.  In this case the
     privileges will be recorded as having been granted by the role that
     actually owns the object or holds the privileges
     <literal>WITH GRANT OPTION</literal>.  For example, if table
-    <literal>t1</> is owned by role <literal>g1</>, of which role
-    <literal>u1</> is a member, then <literal>u1</> can grant privileges
-    on <literal>t1</> to <literal>u2</>, but those privileges will appear
-    to have been granted directly by <literal>g1</>.  Any other member
-    of role <literal>g1</> could revoke them later.
+    <literal>t1</literal> is owned by role <literal>g1</literal>, of which role
+    <literal>u1</literal> is a member, then <literal>u1</literal> can grant privileges
+    on <literal>t1</literal> to <literal>u2</literal>, but those privileges will appear
+    to have been granted directly by <literal>g1</literal>.  Any other member
+    of role <literal>g1</literal> could revoke them later.
    </para>
 
    <para>
-    If the role executing <command>GRANT</> holds the required privileges
+    If the role executing <command>GRANT</command> holds the required privileges
     indirectly via more than one role membership path, it is unspecified
     which containing role will be recorded as having done the grant.  In such
-    cases it is best practice to use <command>SET ROLE</> to become the
-    specific role you want to do the <command>GRANT</> as.
+    cases it is best practice to use <command>SET ROLE</command> to become the
+    specific role you want to do the <command>GRANT</command> as.
    </para>
 
    <para>
     Granting permission on a table does not automatically extend
     permissions to any sequences used by the table, including
-    sequences tied to <type>SERIAL</> columns.  Permissions on
+    sequences tied to <type>SERIAL</type> columns.  Permissions on
     sequences must be set separately.
    </para>
 
@@ -551,8 +551,8 @@ rolename=xxxx -- privileges granted to a role
         /yyyy -- role that granted this privilege
 </literallayout>
 
-    The above example display would be seen by user <literal>miriam</> after
-    creating table <literal>mytable</> and doing:
+    The above example display would be seen by user <literal>miriam</literal> after
+    creating table <literal>mytable</literal> and doing:
 
 <programlisting>
 GRANT SELECT ON mytable TO PUBLIC;
@@ -562,31 +562,31 @@ GRANT SELECT (col1), UPDATE (col1) ON mytable TO miriam_rw;
    </para>
 
    <para>
-    For non-table objects there are other <command>\d</> commands
+    For non-table objects there are other <command>\d</command> commands
     that can display their privileges.
    </para>
 
    <para>
-    If the <quote>Access privileges</> column is empty for a given object,
+    If the <quote>Access privileges</quote> column is empty for a given object,
     it means the object has default privileges (that is, its privileges column
     is null).  Default privileges always include all privileges for the owner,
-    and can include some privileges for <literal>PUBLIC</> depending on the
-    object type, as explained above.  The first <command>GRANT</> or
-    <command>REVOKE</> on an object
+    and can include some privileges for <literal>PUBLIC</literal> depending on the
+    object type, as explained above.  The first <command>GRANT</command> or
+    <command>REVOKE</command> on an object
     will instantiate the default privileges (producing, for example,
-    <literal>{miriam=arwdDxt/miriam}</>) and then modify them per the
+    <literal>{miriam=arwdDxt/miriam}</literal>) and then modify them per the
     specified request.  Similarly, entries are shown in <quote>Column access
-    privileges</> only for columns with nondefault privileges.
-    (Note: for this purpose, <quote>default privileges</> always means the
+    privileges</quote> only for columns with nondefault privileges.
+    (Note: for this purpose, <quote>default privileges</quote> always means the
     built-in default privileges for the object's type.  An object whose
-    privileges have been affected by an <command>ALTER DEFAULT PRIVILEGES</>
+    privileges have been affected by an <command>ALTER DEFAULT PRIVILEGES</command>
     command will always be shown with an explicit privilege entry that
-    includes the effects of the <command>ALTER</>.)
+    includes the effects of the <command>ALTER</command>.)
    </para>
 
    <para>
     Notice that the owner's implicit grant options are not marked in the
-    access privileges display.  A <literal>*</> will appear only when
+    access privileges display.  A <literal>*</literal> will appear only when
     grant options have been explicitly granted to someone.
    </para>
  </refsect1>
@@ -617,7 +617,7 @@ GRANT ALL PRIVILEGES ON kinds TO manuel;
   </para>
 
   <para>
-   Grant membership in role <literal>admins</> to user <literal>joe</>:
+   Grant membership in role <literal>admins</literal> to user <literal>joe</literal>:
 
 <programlisting>
 GRANT admins TO joe;
@@ -637,14 +637,14 @@ GRANT admins TO joe;
    <para>
     <productname>PostgreSQL</productname> allows an object owner to revoke their
     own ordinary privileges: for example, a table owner can make the table
-    read-only to themselves by revoking their own <literal>INSERT</>,
-    <literal>UPDATE</>, <literal>DELETE</>, and <literal>TRUNCATE</>
+    read-only to themselves by revoking their own <literal>INSERT</literal>,
+    <literal>UPDATE</literal>, <literal>DELETE</literal>, and <literal>TRUNCATE</literal>
     privileges.  This is not possible according to the SQL standard.  The
     reason is that <productname>PostgreSQL</productname> treats the owner's
     privileges as having been granted by the owner to themselves; therefore they
     can revoke them too.  In the SQL standard, the owner's privileges are
-    granted by an assumed entity <quote>_SYSTEM</>.  Not being
-    <quote>_SYSTEM</>, the owner cannot revoke these rights.
+    granted by an assumed entity <quote>_SYSTEM</quote>.  Not being
+    <quote>_SYSTEM</quote>, the owner cannot revoke these rights.
    </para>
 
    <para>

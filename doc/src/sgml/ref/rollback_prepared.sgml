@@ -75,7 +75,7 @@ ROLLBACK PREPARED <replaceable class="parameter">transaction_id</replaceable>
   <title id="sql-rollback-prepared-examples-title">Examples</title>
   <para>
    Roll back the transaction identified by the transaction
-   identifier <literal>foobar</>:
+   identifier <literal>foobar</literal>:
 
 <programlisting>
 ROLLBACK PREPARED 'foobar';

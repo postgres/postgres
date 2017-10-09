@@ -42,7 +42,7 @@
    All other language interfaces are external projects and are distributed
    separately. <xref linkend="language-interface-table"> includes a list of
    some of these projects. Note that some of these packages might not be
-   released under the same license as <productname>PostgreSQL</>. For more
+   released under the same license as <productname>PostgreSQL</productname>. For more
    information on each language interface, including licensing terms, refer to
    its website and documentation.
   </para>
@@ -145,8 +145,8 @@
 
   <para>
    There are several administration tools available for
-   <productname>PostgreSQL</>. The most popular is
-   <application><ulink url="http://www.pgadmin.org/">pgAdmin III</ulink></>,
+   <productname>PostgreSQL</productname>. The most popular is
+   <application><ulink url="http://www.pgadmin.org/">pgAdmin III</ulink></application>,
    and there are several commercially available ones as well.
   </para>
  </sect1>
@@ -172,7 +172,7 @@
    and maintained outside the core <productname>PostgreSQL</productname>
    distribution. <xref linkend="pl-language-table"> lists some of these
    packages. Note that some of these projects might not be released under the same
-   license as <productname>PostgreSQL</>. For more information on each
+   license as <productname>PostgreSQL</productname>. For more information on each
    procedural language, including licensing information, refer to its website
    and documentation.
   </para>
@@ -233,17 +233,17 @@
   </indexterm>
 
   <para>
-   <productname>PostgreSQL</> is designed to be easily extensible. For
+   <productname>PostgreSQL</productname> is designed to be easily extensible. For
    this reason, extensions loaded into the database can function
    just like features that are built in. The
-   <filename>contrib/</> directory shipped with the source code
+   <filename>contrib/</filename> directory shipped with the source code
    contains several extensions, which are described in
    <xref linkend="contrib">.  Other extensions are developed
    independently, like <application><ulink
-   url="http://postgis.net/">PostGIS</ulink></>.  Even
-   <productname>PostgreSQL</> replication solutions can be developed
+   url="http://postgis.net/">PostGIS</ulink></application>.  Even
+   <productname>PostgreSQL</productname> replication solutions can be developed
    externally. For example, <application> <ulink
-   url="http://www.slony.info">Slony-I</ulink></> is a popular
+   url="http://www.slony.info">Slony-I</ulink></application> is a popular
    master/standby replication solution that is developed independently
    from the core project.
   </para>

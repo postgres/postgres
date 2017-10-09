@@ -55,12 +55,12 @@ START TRANSACTION [ <replaceable class="parameter">transaction_mode</replaceable
   <title>Compatibility</title>
 
   <para>
-   In the standard, it is not necessary to issue <command>START TRANSACTION</>
+   In the standard, it is not necessary to issue <command>START TRANSACTION</command>
    to start a transaction block: any SQL command implicitly begins a block.
    <productname>PostgreSQL</productname>'s behavior can be seen as implicitly
    issuing a <command>COMMIT</command> after each command that does not
-   follow <command>START TRANSACTION</> (or <command>BEGIN</command>),
-   and it is therefore often called <quote>autocommit</>.
+   follow <command>START TRANSACTION</command> (or <command>BEGIN</command>),
+   and it is therefore often called <quote>autocommit</quote>.
    Other relational database systems might offer an autocommit feature
    as a convenience.
   </para>

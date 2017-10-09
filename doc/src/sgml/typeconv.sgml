@@ -40,7 +40,7 @@ has an associated data type which determines its behavior and allowed usage.
 <productname>PostgreSQL</productname> has an extensible type system that is
 more general and flexible than other <acronym>SQL</acronym> implementations.
 Hence, most type conversion behavior in <productname>PostgreSQL</productname>
-is governed by general rules rather than by <foreignphrase>ad hoc</>
+is governed by general rules rather than by <foreignphrase>ad hoc</foreignphrase>
 heuristics.  This allows the use of mixed-type expressions even with
 user-defined types.
 </para>
@@ -124,11 +124,11 @@ with, and perhaps converted to, the types of the target columns.
 <para>
 Since all query results from a unionized <command>SELECT</command> statement
 must appear in a single set of columns, the types of the results of each
-<command>SELECT</> clause must be matched up and converted to a uniform set.
-Similarly, the result expressions of a <literal>CASE</> construct must be
-converted to a common type so that the <literal>CASE</> expression as a whole
-has a known output type.  The same holds for <literal>ARRAY</> constructs,
-and for the <function>GREATEST</> and <function>LEAST</> functions.
+<command>SELECT</command> clause must be matched up and converted to a uniform set.
+Similarly, the result expressions of a <literal>CASE</literal> construct must be
+converted to a common type so that the <literal>CASE</literal> expression as a whole
+has a known output type.  The same holds for <literal>ARRAY</literal> constructs,
+and for the <function>GREATEST</function> and <function>LEAST</function> functions.
 </para>
 </listitem>
 </varlistentry>
@@ -345,7 +345,7 @@ Some examples follow.
 <title>Factorial Operator Type Resolution</title>
 
 <para>
-There is only one factorial operator (postfix <literal>!</>)
+There is only one factorial operator (postfix <literal>!</literal>)
 defined in the standard catalog, and it takes an argument of type
 <type>bigint</type>.
 The scanner assigns an initial type of <type>integer</type> to the argument
@@ -423,11 +423,11 @@ type to resolve the unknown-type literals as.
 
 <para>
 The <productname>PostgreSQL</productname> operator catalog has several
-entries for the prefix operator <literal>@</>, all of which implement
+entries for the prefix operator <literal>@</literal>, all of which implement
 absolute-value operations for various numeric data types.  One of these
 entries is for type <type>float8</type>, which is the preferred type in
 the numeric category.  Therefore, <productname>PostgreSQL</productname>
-will use that entry when faced with an <type>unknown</> input:
+will use that entry when faced with an <type>unknown</type> input:
 <screen>
 SELECT @ '-4.5' AS "abs";
  abs
@@ -446,9 +446,9 @@ ERROR:  "-4.5e500" is out of range for type double precision
 </para>
 
 <para>
-On the other hand, the prefix operator <literal>~</> (bitwise negation)
+On the other hand, the prefix operator <literal>~</literal> (bitwise negation)
 is defined only for integer data types, not for <type>float8</type>.  So, if we
-try a similar case with <literal>~</>, we get:
+try a similar case with <literal>~</literal>, we get:
 <screen>
 SELECT ~ '20' AS "negation";
 
@@ -457,7 +457,7 @@ HINT:  Could not choose a best candidate operator. You might need to add
 explicit type casts.
 </screen>
 This happens because the system cannot decide which of the several
-possible <literal>~</> operators should be preferred.  We can help
+possible <literal>~</literal> operators should be preferred.  We can help
 it out with an explicit cast:
 <screen>
 SELECT ~ CAST('20' AS int8) AS "negation";
@@ -485,10 +485,10 @@ SELECT array[1,2] &lt;@ '{1,2,3}' as "is subset";
 (1 row)
 </screen>
 The <productname>PostgreSQL</productname> operator catalog has several
-entries for the infix operator <literal>&lt;@</>, but the only two that
+entries for the infix operator <literal>&lt;@</literal>, but the only two that
 could possibly accept an integer array on the left-hand side are
-array inclusion (<type>anyarray</> <literal>&lt;@</> <type>anyarray</>)
-and range inclusion (<type>anyelement</> <literal>&lt;@</> <type>anyrange</>).
+array inclusion (<type>anyarray</type> <literal>&lt;@</literal> <type>anyarray</type>)
+and range inclusion (<type>anyelement</type> <literal>&lt;@</literal> <type>anyrange</type>).
 Since none of these polymorphic pseudo-types (see <xref
 linkend="datatype-pseudo">) are considered preferred, the parser cannot
 resolve the ambiguity on that basis.
@@ -518,19 +518,19 @@ CREATE TABLE mytable (val mytext);
 SELECT * FROM mytable WHERE val = 'foo';
 </screen>
 This query will not use the custom operator.  The parser will first see if
-there is a <type>mytext</> <literal>=</> <type>mytext</> operator
+there is a <type>mytext</type> <literal>=</literal> <type>mytext</type> operator
 (<xref linkend="op-resol-exact-unknown">), which there is not;
-then it will consider the domain's base type <type>text</>, and see if
-there is a <type>text</> <literal>=</> <type>text</> operator
+then it will consider the domain's base type <type>text</type>, and see if
+there is a <type>text</type> <literal>=</literal> <type>text</type> operator
 (<xref linkend="op-resol-exact-domain">), which there is;
-so it resolves the <type>unknown</>-type literal as <type>text</> and
-uses the <type>text</> <literal>=</> <type>text</> operator.
+so it resolves the <type>unknown</type>-type literal as <type>text</type> and
+uses the <type>text</type> <literal>=</literal> <type>text</type> operator.
 The only way to get the custom operator to be used is to explicitly cast
 the literal:
 <screen>
 SELECT * FROM mytable WHERE val = text 'foo';
 </screen>
-so that the <type>mytext</> <literal>=</> <type>text</> operator is found
+so that the <type>mytext</type> <literal>=</literal> <type>text</type> operator is found
 immediately according to the exact-match rule.  If the best-match rules
 are reached, they actively discriminate against operators on domain types.
 If they did not, such an operator would create too many ambiguous-operator
@@ -580,8 +580,8 @@ search path position.
 </step>
 <step performance="optional">
 <para>
-If a function is declared with a <literal>VARIADIC</> array parameter, and
-the call does not use the <literal>VARIADIC</> keyword, then the function
+If a function is declared with a <literal>VARIADIC</literal> array parameter, and
+the call does not use the <literal>VARIADIC</literal> keyword, then the function
 is treated as if the array parameter were replaced by one or more occurrences
 of its element type, as needed to match the call.  After such expansion the
 function might have effective argument types identical to some non-variadic
@@ -599,7 +599,7 @@ search path is used.  If there are two or more such functions in the same
 schema with identical parameter types in the non-defaulted positions (which is
 possible if they have different sets of defaultable parameters), the system
 will not be able to determine which to prefer, and so an <quote>ambiguous
-function call</> error will result if no better match to the call can be
+function call</quote> error will result if no better match to the call can be
 found.
 </para>
 </step>
@@ -626,7 +626,7 @@ an unknown-type literal, or a type that is binary-coercible to the named
 data type, or a type that could be converted to the named data type by
 applying that type's I/O functions (that is, the conversion is either to or
 from one of the standard string types).  When these conditions are met,
-the function call is treated as a form of <literal>CAST</> specification.
+the function call is treated as a form of <literal>CAST</literal> specification.
   <footnote>
    <para>
     The reason for this step is to support function-style cast specifications
@@ -709,7 +709,7 @@ Otherwise, fail.
 </procedure>
 
 <para>
-Note that the <quote>best match</> rules are identical for operator and
+Note that the <quote>best match</quote> rules are identical for operator and
 function type resolution.
 Some examples follow.
 </para>
@@ -790,7 +790,7 @@ SELECT substr(CAST (varchar '1234' AS text), 3);
 <para>
 <note>
 <para>
-The parser learns from the <structname>pg_cast</> catalog that
+The parser learns from the <structname>pg_cast</structname> catalog that
 <type>text</type> and <type>varchar</type>
 are binary-compatible, meaning that one can be passed to a function that
 accepts the other without doing any physical conversion.  Therefore, no
@@ -809,8 +809,8 @@ HINT:  No function matches the given name and argument types. You might need
 to add explicit type casts.
 </screen>
 
-This does not work because <type>integer</> does not have an implicit cast
-to <type>text</>.  An explicit cast will work, however:
+This does not work because <type>integer</type> does not have an implicit cast
+to <type>text</type>.  An explicit cast will work, however:
 <screen>
 SELECT substr(CAST (1234 AS text), 3);
 
@@ -845,8 +845,8 @@ Check for an exact match with the target.
 <step performance="required">
 <para>
 Otherwise, try to convert the expression to the target type.  This is possible
-if an <firstterm>assignment cast</> between the two types is registered in the
-<structname>pg_cast</> catalog (see <xref linkend="sql-createcast">).
+if an <firstterm>assignment cast</firstterm> between the two types is registered in the
+<structname>pg_cast</structname> catalog (see <xref linkend="sql-createcast">).
 Alternatively, if the expression is an unknown-type literal, the contents of
 the literal string will be fed to the input conversion routine for the target
 type.
@@ -857,12 +857,12 @@ type.
 <para>
 Check to see if there is a sizing cast for the target type.  A sizing
 cast is a cast from that type to itself.  If one is found in the
-<structname>pg_cast</> catalog, apply it to the expression before storing
+<structname>pg_cast</structname> catalog, apply it to the expression before storing
 into the destination column.  The implementation function for such a cast
 always takes an extra parameter of type <type>integer</type>, which receives
-the destination column's <structfield>atttypmod</> value (typically its
-declared length, although the interpretation of <structfield>atttypmod</>
-varies for different data types), and it may take a third <type>boolean</>
+the destination column's <structfield>atttypmod</structfield> value (typically its
+declared length, although the interpretation of <structfield>atttypmod</structfield>
+varies for different data types), and it may take a third <type>boolean</type>
 parameter that says whether the cast is explicit or implicit.  The cast
 function
 is responsible for applying any length-dependent semantics such as size
@@ -896,11 +896,11 @@ What has really happened here is that the two unknown literals are resolved
 to <type>text</type> by default, allowing the <literal>||</literal> operator
 to be resolved as <type>text</type> concatenation.  Then the <type>text</type>
 result of the operator is converted to <type>bpchar</type> (<quote>blank-padded
-char</>, the internal name of the <type>character</type> data type) to match the target
+char</quote>, the internal name of the <type>character</type> data type) to match the target
 column type.  (Since the conversion from <type>text</type> to
 <type>bpchar</type> is binary-coercible, this conversion does
 not insert any real function call.)  Finally, the sizing function
-<literal>bpchar(bpchar, integer, boolean)</> is found in the system catalog
+<literal>bpchar(bpchar, integer, boolean)</literal> is found in the system catalog
 and applied to the operator's result and the stored column length.  This
 type-specific function performs the required length check and addition of
 padding spaces.
@@ -942,13 +942,13 @@ padding spaces.
 </indexterm>
 
 <para>
-SQL <literal>UNION</> constructs must match up possibly dissimilar
+SQL <literal>UNION</literal> constructs must match up possibly dissimilar
 types to become a single result set.  The resolution algorithm is
 applied separately to each output column of a union query.  The
-<literal>INTERSECT</> and <literal>EXCEPT</> constructs resolve
-dissimilar types in the same way as <literal>UNION</>.  The
-<literal>CASE</>, <literal>ARRAY</>, <literal>VALUES</>,
-<function>GREATEST</> and <function>LEAST</> constructs use the identical
+<literal>INTERSECT</literal> and <literal>EXCEPT</literal> constructs resolve
+dissimilar types in the same way as <literal>UNION</literal>.  The
+<literal>CASE</literal>, <literal>ARRAY</literal>, <literal>VALUES</literal>,
+<function>GREATEST</function> and <function>LEAST</function> constructs use the identical
 algorithm to match up their component expressions and select a result
 data type.
 </para>
@@ -972,7 +972,7 @@ domain's base type for all subsequent steps.
    <para>
     Somewhat like the treatment of domain inputs for operators and
     functions, this behavior allows a domain type to be preserved through
-    a <literal>UNION</> or similar construct, so long as the user is
+    a <literal>UNION</literal> or similar construct, so long as the user is
     careful to ensure that all inputs are implicitly or explicitly of that
     exact type.  Otherwise the domain's base type will be preferred.
    </para>
@@ -1053,9 +1053,9 @@ SELECT 1.2 AS "numeric" UNION SELECT 1;
      1.2
 (2 rows)
 </screen>
-The literal <literal>1.2</> is of type <type>numeric</>,
-and the <type>integer</type> value <literal>1</> can be cast implicitly to
-<type>numeric</>, so that type is used.
+The literal <literal>1.2</literal> is of type <type>numeric</type>,
+and the <type>integer</type> value <literal>1</literal> can be cast implicitly to
+<type>numeric</type>, so that type is used.
 </para>
 </example>
 
@@ -1072,9 +1072,9 @@ SELECT 1 AS "real" UNION SELECT CAST('2.2' AS REAL);
   2.2
 (2 rows)
 </screen>
-Here, since type <type>real</> cannot be implicitly cast to <type>integer</>,
-but <type>integer</> can be implicitly cast to <type>real</>, the union
-result type is resolved as <type>real</>.
+Here, since type <type>real</type> cannot be implicitly cast to <type>integer</type>,
+but <type>integer</type> can be implicitly cast to <type>real</type>, the union
+result type is resolved as <type>real</type>.
 </para>
 </example>
 </sect1>
@@ -1089,38 +1089,38 @@ result type is resolved as <type>real</>.
 
 <para>
 The rules given in the preceding sections will result in assignment
-of non-<type>unknown</> data types to all expressions in a SQL query,
+of non-<type>unknown</type> data types to all expressions in a SQL query,
 except for unspecified-type literals that appear as simple output
-columns of a <command>SELECT</> command.  For example, in
+columns of a <command>SELECT</command> command.  For example, in
 
 <screen>
 SELECT 'Hello World';
 </screen>
 
 there is nothing to identify what type the string literal should be
-taken as.  In this situation <productname>PostgreSQL</> will fall back
-to resolving the literal's type as <type>text</>.
+taken as.  In this situation <productname>PostgreSQL</productname> will fall back
+to resolving the literal's type as <type>text</type>.
 </para>
 
 <para>
-When the <command>SELECT</> is one arm of a <literal>UNION</>
-(or <literal>INTERSECT</> or <literal>EXCEPT</>) construct, or when it
-appears within <command>INSERT ... SELECT</>, this rule is not applied
+When the <command>SELECT</command> is one arm of a <literal>UNION</literal>
+(or <literal>INTERSECT</literal> or <literal>EXCEPT</literal>) construct, or when it
+appears within <command>INSERT ... SELECT</command>, this rule is not applied
 since rules given in preceding sections take precedence.  The type of an
-unspecified-type literal can be taken from the other <literal>UNION</> arm
+unspecified-type literal can be taken from the other <literal>UNION</literal> arm
 in the first case, or from the destination column in the second case.
 </para>
 
 <para>
-<literal>RETURNING</> lists are treated the same as <command>SELECT</>
+<literal>RETURNING</literal> lists are treated the same as <command>SELECT</command>
 output lists for this purpose.
 </para>
 
 <note>
  <para>
-  Prior to <productname>PostgreSQL</> 10, this rule did not exist, and
-  unspecified-type literals in a <command>SELECT</> output list were
-  left as type <type>unknown</>.  That had assorted bad consequences,
+  Prior to <productname>PostgreSQL</productname> 10, this rule did not exist, and
+  unspecified-type literals in a <command>SELECT</command> output list were
+  left as type <type>unknown</type>.  That had assorted bad consequences,
   so it's been changed.
  </para>
 </note>

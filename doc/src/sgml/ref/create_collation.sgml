@@ -116,7 +116,7 @@ CREATE COLLATION [ IF NOT EXISTS ] <replaceable>name</replaceable> FROM <replace
       <para>
        Specifies the provider to use for locale services associated with this
        collation.  Possible values
-       are: <literal>icu</literal>,<indexterm><primary>ICU</></>
+       are: <literal>icu</literal>,<indexterm><primary>ICU</primary></indexterm>
        <literal>libc</literal>.
        <literal>libc</literal> is the default.
        The available choices depend on the operating system and build options.

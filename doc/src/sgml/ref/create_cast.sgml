@@ -44,7 +44,7 @@ SELECT CAST(42 AS float8);
 </programlisting>
    converts the integer constant 42 to type <type>float8</type> by
    invoking a previously specified function, in this case
-   <literal>float8(int4)</>. (If no suitable cast has been defined, the
+   <literal>float8(int4)</literal>. (If no suitable cast has been defined, the
    conversion fails.)
   </para>
 
@@ -64,7 +64,7 @@ SELECT CAST(42 AS float8);
   </para>
 
   <para>
-   You can define a cast as an <firstterm>I/O conversion cast</> by using
+   You can define a cast as an <firstterm>I/O conversion cast</firstterm> by using
    the <literal>WITH INOUT</literal> syntax. An I/O conversion cast is
    performed by invoking the output function of the source data type, and
    passing the resulting string to the input function of the target data type.
@@ -75,14 +75,14 @@ SELECT CAST(42 AS float8);
 
   <para>
    By default, a cast can be invoked only by an explicit cast request,
-   that is an explicit <literal>CAST(<replaceable>x</> AS
-   <replaceable>typename</>)</literal> or
-   <replaceable>x</><literal>::</><replaceable>typename</>
+   that is an explicit <literal>CAST(<replaceable>x</replaceable> AS
+   <replaceable>typename</replaceable>)</literal> or
+   <replaceable>x</replaceable><literal>::</literal><replaceable>typename</replaceable>
    construct.
   </para>
 
   <para>
-   If the cast is marked <literal>AS ASSIGNMENT</> then it can be invoked
+   If the cast is marked <literal>AS ASSIGNMENT</literal> then it can be invoked
    implicitly when assigning a value to a column of the target data type.
    For example, supposing that <literal>foo.f1</literal> is a column of
    type <type>text</type>, then:
@@ -90,13 +90,13 @@ SELECT CAST(42 AS float8);
 INSERT INTO foo (f1) VALUES (42);
 </programlisting>
    will be allowed if the cast from type <type>integer</type> to type
-   <type>text</type> is marked <literal>AS ASSIGNMENT</>, otherwise not.
+   <type>text</type> is marked <literal>AS ASSIGNMENT</literal>, otherwise not.
    (We generally use the term <firstterm>assignment
    cast</firstterm> to describe this kind of cast.)
   </para>
 
   <para>
-   If the cast is marked <literal>AS IMPLICIT</> then it can be invoked
+   If the cast is marked <literal>AS IMPLICIT</literal> then it can be invoked
    implicitly in any context, whether assignment or internally in an
    expression.  (We generally use the term <firstterm>implicit
    cast</firstterm> to describe this kind of cast.)
@@ -104,12 +104,12 @@ INSERT INTO foo (f1) VALUES (42);
 <programlisting>
 SELECT 2 + 4.0;
 </programlisting>
-   The parser initially marks the constants as being of type <type>integer</>
-   and <type>numeric</> respectively.  There is no <type>integer</>
-   <literal>+</> <type>numeric</> operator in the system catalogs,
-   but there is a <type>numeric</> <literal>+</> <type>numeric</> operator.
-   The query will therefore succeed if a cast from <type>integer</> to
-   <type>numeric</> is available and is marked <literal>AS IMPLICIT</> &mdash;
+   The parser initially marks the constants as being of type <type>integer</type>
+   and <type>numeric</type> respectively.  There is no <type>integer</type>
+   <literal>+</literal> <type>numeric</type> operator in the system catalogs,
+   but there is a <type>numeric</type> <literal>+</literal> <type>numeric</type> operator.
+   The query will therefore succeed if a cast from <type>integer</type> to
+   <type>numeric</type> is available and is marked <literal>AS IMPLICIT</literal> &mdash;
    which in fact it is.  The parser will apply the implicit cast and resolve
    the query as if it had been written
 <programlisting>
@@ -118,17 +118,17 @@ SELECT CAST ( 2 AS numeric ) + 4.0;
   </para>
 
   <para>
-   Now, the catalogs also provide a cast from <type>numeric</> to
-   <type>integer</>.  If that cast were marked <literal>AS IMPLICIT</> &mdash;
+   Now, the catalogs also provide a cast from <type>numeric</type> to
+   <type>integer</type>.  If that cast were marked <literal>AS IMPLICIT</literal> &mdash;
    which it is not &mdash; then the parser would be faced with choosing
    between the above interpretation and the alternative of casting the
-   <type>numeric</> constant to <type>integer</> and applying the
-   <type>integer</> <literal>+</> <type>integer</> operator.  Lacking any
+   <type>numeric</type> constant to <type>integer</type> and applying the
+   <type>integer</type> <literal>+</literal> <type>integer</type> operator.  Lacking any
    knowledge of which choice to prefer, it would give up and declare the
    query ambiguous.  The fact that only one of the two casts is
    implicit is the way in which we teach the parser to prefer resolution
-   of a mixed <type>numeric</>-and-<type>integer</> expression as
-   <type>numeric</>; there is no built-in knowledge about that.
+   of a mixed <type>numeric</type>-and-<type>integer</type> expression as
+   <type>numeric</type>; there is no built-in knowledge about that.
   </para>
 
   <para>
@@ -142,8 +142,8 @@ SELECT CAST ( 2 AS numeric ) + 4.0;
    general type category.  For example, the cast from <type>int2</type> to
    <type>int4</type> can reasonably be implicit, but the cast from
    <type>float8</type> to <type>int4</type> should probably be
-   assignment-only.  Cross-type-category casts, such as <type>text</>
-   to <type>int4</>, are best made explicit-only.
+   assignment-only.  Cross-type-category casts, such as <type>text</type>
+   to <type>int4</type>, are best made explicit-only.
   </para>
 
   <note>
@@ -151,8 +151,8 @@ SELECT CAST ( 2 AS numeric ) + 4.0;
     Sometimes it is necessary for usability or standards-compliance reasons
     to provide multiple implicit casts among a set of types, resulting in
     ambiguity that cannot be avoided as above.  The parser has a fallback
-    heuristic based on <firstterm>type categories</> and <firstterm>preferred
-    types</> that can help to provide desired behavior in such cases.  See
+    heuristic based on <firstterm>type categories</firstterm> and <firstterm>preferred
+    types</firstterm> that can help to provide desired behavior in such cases.  See
     <xref linkend="sql-createtype"> for
     more information.
    </para>
@@ -255,11 +255,11 @@ SELECT CAST ( 2 AS numeric ) + 4.0;
    Cast implementation functions can have one to three arguments.
    The first argument type must be identical to or binary-coercible from
    the cast's source type.  The second argument,
-   if present, must be type <type>integer</>; it receives the type
-   modifier associated with the destination type, or <literal>-1</>
+   if present, must be type <type>integer</type>; it receives the type
+   modifier associated with the destination type, or <literal>-1</literal>
    if there is none.  The third argument,
-   if present, must be type <type>boolean</>; it receives <literal>true</>
-   if the cast is an explicit cast, <literal>false</> otherwise.
+   if present, must be type <type>boolean</type>; it receives <literal>true</literal>
+   if the cast is an explicit cast, <literal>false</literal> otherwise.
    (Bizarrely, the SQL standard demands different behaviors for explicit and
    implicit casts in some cases.  This argument is supplied for functions
    that must implement such casts.  It is not recommended that you design
@@ -316,9 +316,9 @@ SELECT CAST ( 2 AS numeric ) + 4.0;
 
   <para>
    It is normally not necessary to create casts between user-defined types
-   and the standard string types (<type>text</>, <type>varchar</>, and
-   <type>char(<replaceable>n</>)</type>, as well as user-defined types that
-   are defined to be in the string category).  <productname>PostgreSQL</>
+   and the standard string types (<type>text</type>, <type>varchar</type>, and
+   <type>char(<replaceable>n</replaceable>)</type>, as well as user-defined types that
+   are defined to be in the string category).  <productname>PostgreSQL</productname>
    provides automatic I/O conversion casts for that. The automatic casts to
    string types are treated as assignment casts, while the automatic casts
    from string types are
@@ -338,11 +338,11 @@ SELECT CAST ( 2 AS numeric ) + 4.0;
    convention of naming cast implementation functions after the target data
    type.  Many users are used to being able to cast data types using a
    function-style notation, that is
-   <replaceable>typename</>(<replaceable>x</>).  This notation is in fact
+   <replaceable>typename</replaceable>(<replaceable>x</replaceable>).  This notation is in fact
    nothing more nor less than a call of the cast implementation function; it
    is not specially treated as a cast.  If your conversion functions are not
    named to support this convention then you will have surprised users.
-   Since <productname>PostgreSQL</> allows overloading of the same function
+   Since <productname>PostgreSQL</productname> allows overloading of the same function
    name with different argument types, there is no difficulty in having
    multiple conversion functions from different types that all use the
    target type's name.
@@ -353,14 +353,14 @@ SELECT CAST ( 2 AS numeric ) + 4.0;
     Actually the preceding paragraph is an oversimplification: there are
     two cases in which a function-call construct will be treated as a cast
     request without having matched it to an actual function.
-    If a function call <replaceable>name</>(<replaceable>x</>) does not
-    exactly match any existing function, but <replaceable>name</> is the name
-    of a data type and <structname>pg_cast</> provides a binary-coercible cast
-    to this type from the type of <replaceable>x</>, then the call will be
+    If a function call <replaceable>name</replaceable>(<replaceable>x</replaceable>) does not
+    exactly match any existing function, but <replaceable>name</replaceable> is the name
+    of a data type and <structname>pg_cast</structname> provides a binary-coercible cast
+    to this type from the type of <replaceable>x</replaceable>, then the call will be
     construed as a binary-coercible cast.  This exception is made so that
     binary-coercible casts can be invoked using functional syntax, even
     though they lack any function.  Likewise, if there is no
-    <structname>pg_cast</> entry but the cast would be to or from a string
+    <structname>pg_cast</structname> entry but the cast would be to or from a string
     type, the call will be construed as an I/O conversion cast.  This
     exception allows I/O conversion casts to be invoked using functional
     syntax.
@@ -372,7 +372,7 @@ SELECT CAST ( 2 AS numeric ) + 4.0;
     There is also an exception to the exception: I/O conversion casts from
     composite types to string types cannot be invoked using functional
     syntax, but must be written in explicit cast syntax (either
-    <literal>CAST</> or <literal>::</> notation).  This exception was added
+    <literal>CAST</literal> or <literal>::</literal> notation).  This exception was added
     because after the introduction of automatically-provided I/O conversion
     casts, it was found too easy to accidentally invoke such a cast when
     a function or column reference was intended.
@@ -402,7 +402,7 @@ CREATE CAST (bigint AS int4) WITH FUNCTION int4(bigint) AS ASSIGNMENT;
    <acronym>SQL</acronym> standard,
    except that SQL does not make provisions for binary-coercible
    types or extra arguments to implementation functions.
-   <literal>AS IMPLICIT</> is a <productname>PostgreSQL</productname>
+   <literal>AS IMPLICIT</literal> is a <productname>PostgreSQL</productname>
    extension, too.
   </para>
  </refsect1>

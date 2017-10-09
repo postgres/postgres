@@ -93,7 +93,7 @@ DROP TEXT SEARCH TEMPLATE thesaurus;
 </programlisting>
 
    This command will not succeed if there are any existing text search
-   dictionaries that use the template.  Add <literal>CASCADE</> to
+   dictionaries that use the template.  Add <literal>CASCADE</literal> to
    drop such dictionaries along with the template.
   </para>
  </refsect1>

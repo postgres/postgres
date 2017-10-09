@@ -128,7 +128,7 @@ CLUSTER [VERBOSE]
    </para>
 
    <para>
-    <command>CLUSTER</> can re-sort the table using either an index scan
+    <command>CLUSTER</command> can re-sort the table using either an index scan
     on the specified index, or (if the index is a b-tree) a sequential
     scan followed by sorting.  It will attempt to choose the method that
     will be faster, based on planner cost parameters and available statistical
@@ -148,13 +148,13 @@ CLUSTER [VERBOSE]
     as double the table size, plus the index sizes.  This method is often
     faster than the index scan method, but if the disk space requirement is
     intolerable, you can disable this choice by temporarily setting <xref
-    linkend="guc-enable-sort"> to <literal>off</>.
+    linkend="guc-enable-sort"> to <literal>off</literal>.
    </para>
 
    <para>
     It is advisable to set <xref linkend="guc-maintenance-work-mem"> to
     a reasonably large value (but not more than the amount of RAM you can
-    dedicate to the <command>CLUSTER</> operation) before clustering.
+    dedicate to the <command>CLUSTER</command> operation) before clustering.
    </para>
 
    <para>
@@ -168,7 +168,7 @@ CLUSTER [VERBOSE]
     Because <command>CLUSTER</command> remembers which indexes are clustered,
     one can cluster the tables one wants clustered manually the first time,
     then set up a periodic maintenance script that executes
-    <command>CLUSTER</> without any parameters, so that the desired tables
+    <command>CLUSTER</command> without any parameters, so that the desired tables
     are periodically reclustered.
    </para>
 
@@ -212,7 +212,7 @@ CLUSTER;
 <synopsis>
 CLUSTER <replaceable class="parameter">index_name</replaceable> ON <replaceable class="parameter">table_name</replaceable>
 </synopsis>
-  is also supported for compatibility with pre-8.3 <productname>PostgreSQL</>
+  is also supported for compatibility with pre-8.3 <productname>PostgreSQL</productname>
   versions.
   </para>
  </refsect1>

@@ -156,13 +156,13 @@ postgres=# SELECT pg_drop_replication_slot('regression_slot');
 <programlisting>
 $ pg_recvlogical -d postgres --slot test --create-slot
 $ pg_recvlogical -d postgres --slot test --start -f -
-<keycombo action="simul"><keycap>Control</><keycap>Z</></>
+<keycombo action="simul"><keycap>Control</keycap><keycap>Z</keycap></keycombo>
 $ psql -d postgres -c "INSERT INTO data(data) VALUES('4');"
 $ fg
 BEGIN 693
 table public.data: INSERT: id[integer]:4 data[text]:'4'
 COMMIT 693
-<keycombo action="simul"><keycap>Control</><keycap>C</></>
+<keycombo action="simul"><keycap>Control</keycap><keycap>C</keycap></keycombo>
 $ pg_recvlogical -d postgres --slot test --drop-slot
 </programlisting>
   </sect1>
@@ -286,7 +286,7 @@ $ pg_recvlogical -d postgres --slot test --drop-slot
     <para>
      Creation of a snapshot is not always possible.  In particular, it will
      fail when connected to a hot standby.  Applications that do not require
-     snapshot export may suppress it with the <literal>NOEXPORT_SNAPSHOT</>
+     snapshot export may suppress it with the <literal>NOEXPORT_SNAPSHOT</literal>
      option.
     </para>
    </sect2>
@@ -303,7 +303,7 @@ $ pg_recvlogical -d postgres --slot test --drop-slot
      </listitem>
 
      <listitem>
-      <para><literal>DROP_REPLICATION_SLOT <replaceable>slot_name</replaceable></literal> <optional> <literal>WAIT</> </></para>
+      <para><literal>DROP_REPLICATION_SLOT <replaceable>slot_name</replaceable></literal> <optional> <literal>WAIT</literal> </optional></para>
      </listitem>
 
      <listitem>
@@ -426,12 +426,12 @@ CREATE TABLE another_catalog_table(data text) WITH (user_catalog_table = true);
      data in a data type that can contain arbitrary data (e.g., <type>bytea</type>) is
      cumbersome. If the output plugin only outputs textual data in the
      server's encoding, it can declare that by
-     setting <literal>OutputPluginOptions.output_type</>
-     to <literal>OUTPUT_PLUGIN_TEXTUAL_OUTPUT</> instead
-     of <literal>OUTPUT_PLUGIN_BINARY_OUTPUT</> in
+     setting <literal>OutputPluginOptions.output_type</literal>
+     to <literal>OUTPUT_PLUGIN_TEXTUAL_OUTPUT</literal> instead
+     of <literal>OUTPUT_PLUGIN_BINARY_OUTPUT</literal> in
      the <link linkend="logicaldecoding-output-plugin-startup">startup
-     callback</>. In that case, all the data has to be in the server's encoding
-     so that a <type>text</> datum can contain it. This is checked in assertion-enabled
+     callback</link>. In that case, all the data has to be in the server's encoding
+     so that a <type>text</type> datum can contain it. This is checked in assertion-enabled
      builds.
     </para>
    </sect2>

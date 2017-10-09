@@ -106,7 +106,7 @@ ALTER INDEX ALL IN TABLESPACE <replaceable class="parameter">name</replaceable> 
     <listitem>
      <para>
       This form resets one or more index-method-specific storage parameters to
-      their defaults.  As with <literal>SET</>, a <literal>REINDEX</literal>
+      their defaults.  As with <literal>SET</literal>, a <literal>REINDEX</literal>
       might be needed to update the index entirely.
      </para>
     </listitem>
@@ -226,12 +226,12 @@ ALTER INDEX ALL IN TABLESPACE <replaceable class="parameter">name</replaceable> 
    <para>
     These operations are also possible using
     <xref linkend="SQL-ALTERTABLE">.
-    <command>ALTER INDEX</> is in fact just an alias for the forms
-    of <command>ALTER TABLE</> that apply to indexes.
+    <command>ALTER INDEX</command> is in fact just an alias for the forms
+    of <command>ALTER TABLE</command> that apply to indexes.
    </para>
 
    <para>
-    There was formerly an <command>ALTER INDEX OWNER</> variant, but
+    There was formerly an <command>ALTER INDEX OWNER</command> variant, but
     this is now ignored (with a warning).  An index cannot have an owner
     different from its table's owner.  Changing the table's owner
     automatically changes the index as well.
@@ -280,7 +280,7 @@ ALTER INDEX coord_idx ALTER COLUMN 3 SET STATISTICS 1000;
   <title>Compatibility</title>
 
   <para>
-   <command>ALTER INDEX</> is a <productname>PostgreSQL</productname>
+   <command>ALTER INDEX</command> is a <productname>PostgreSQL</productname>
    extension.
   </para>
  </refsect1>

@@ -116,7 +116,7 @@
 
     <para>
      Base types are those, like <type>int4</type>, that are
-     implemented below the level of the <acronym>SQL</> language
+     implemented below the level of the <acronym>SQL</acronym> language
      (typically in a low-level language such as C).  They generally
      correspond to what are often known as abstract data types.
      <productname>PostgreSQL</productname> can only operate on such
@@ -136,11 +136,11 @@
      Composite types, or row types, are created whenever the user
      creates a table. It is also possible to use <xref
      linkend="sql-createtype"> to
-     define a <quote>stand-alone</> composite type with no associated
+     define a <quote>stand-alone</quote> composite type with no associated
      table.  A composite type is simply a list of types with
      associated field names.  A value of a composite type is a row or
      record of field values.  The user can access the component fields
-     from <acronym>SQL</> queries. Refer to <xref linkend="rowtypes">
+     from <acronym>SQL</acronym> queries. Refer to <xref linkend="rowtypes">
      for more information on composite types.
     </para>
    </sect2>
@@ -156,7 +156,7 @@
     </para>
 
     <para>
-     Domains can be created using the <acronym>SQL</> command
+     Domains can be created using the <acronym>SQL</acronym> command
      <xref linkend="sql-createdomain">.
      Their creation and use is not discussed in this chapter.
     </para>
@@ -166,7 +166,7 @@
     <title>Pseudo-Types</title>
 
     <para>
-     There are a few <quote>pseudo-types</> for special purposes.
+     There are a few <quote>pseudo-types</quote> for special purposes.
      Pseudo-types cannot appear as columns of tables or attributes of
      composite types, but they can be used to declare the argument and
      result types of functions.  This provides a mechanism within the
@@ -198,12 +198,12 @@
    </indexterm>
 
     <para>
-     Five pseudo-types of special interest are <type>anyelement</>,
-     <type>anyarray</>, <type>anynonarray</>, <type>anyenum</>,
-     and <type>anyrange</>,
-     which are collectively called <firstterm>polymorphic types</>.
+     Five pseudo-types of special interest are <type>anyelement</type>,
+     <type>anyarray</type>, <type>anynonarray</type>, <type>anyenum</type>,
+     and <type>anyrange</type>,
+     which are collectively called <firstterm>polymorphic types</firstterm>.
      Any function declared using these types is said to be
-     a <firstterm>polymorphic function</>.  A polymorphic function can
+     a <firstterm>polymorphic function</firstterm>.  A polymorphic function can
      operate on many different data types, with the specific data type(s)
      being determined by the data types actually passed to it in a particular
      call.
@@ -228,10 +228,10 @@
      and others declared <type>anyelement</type>, the actual range type in
      the <type>anyrange</type> positions must be a range whose subtype is
      the same type appearing in the <type>anyelement</type> positions.
-     <type>anynonarray</> is treated exactly the same as <type>anyelement</>,
+     <type>anynonarray</type> is treated exactly the same as <type>anyelement</type>,
      but adds the additional constraint that the actual type must not be
      an array type.
-     <type>anyenum</> is treated exactly the same as <type>anyelement</>,
+     <type>anyenum</type> is treated exactly the same as <type>anyelement</type>,
      but adds the additional constraint that the actual type must
      be an enum type.
     </para>
@@ -240,7 +240,7 @@
      Thus, when more than one argument position is declared with a polymorphic
      type, the net effect is that only certain combinations of actual argument
      types are allowed.  For example, a function declared as
-     <literal>equal(anyelement, anyelement)</> will take any two input values,
+     <literal>equal(anyelement, anyelement)</literal> will take any two input values,
      so long as they are of the same data type.
     </para>
 
@@ -251,19 +251,19 @@
      result type for that call.  For example, if there were not already
      an array subscripting mechanism, one could define a function that
      implements subscripting as <literal>subscript(anyarray, integer)
-     returns anyelement</>.  This declaration constrains the actual first
+     returns anyelement</literal>.  This declaration constrains the actual first
      argument to be an array type, and allows the parser to infer the correct
      result type from the actual first argument's type.  Another example
-     is that a function declared as <literal>f(anyarray) returns anyenum</>
+     is that a function declared as <literal>f(anyarray) returns anyenum</literal>
      will only accept arrays of enum types.
     </para>
 
     <para>
-     Note that <type>anynonarray</> and <type>anyenum</> do not represent
+     Note that <type>anynonarray</type> and <type>anyenum</type> do not represent
      separate type variables; they are the same type as
      <type>anyelement</type>, just with an additional constraint.  For
-     example, declaring a function as <literal>f(anyelement, anyenum)</>
-     is equivalent to declaring it as <literal>f(anyenum, anyenum)</>:
+     example, declaring a function as <literal>f(anyelement, anyenum)</literal>
+     is equivalent to declaring it as <literal>f(anyenum, anyenum)</literal>:
      both actual arguments have to be the same enum type.
     </para>
 
@@ -271,10 +271,10 @@
      A variadic function (one taking a variable number of arguments, as in
      <xref linkend="xfunc-sql-variadic-functions">) can be
      polymorphic: this is accomplished by declaring its last parameter as
-     <literal>VARIADIC</> <type>anyarray</>.  For purposes of argument
+     <literal>VARIADIC</literal> <type>anyarray</type>.  For purposes of argument
      matching and determining the actual result type, such a function behaves
      the same as if you had written the appropriate number of
-     <type>anynonarray</> parameters.
+     <type>anynonarray</type> parameters.
     </para>
    </sect2>
   </sect1>
@@ -294,15 +294,15 @@
    </indexterm>
 
    <para>
-    A useful extension to <productname>PostgreSQL</> typically includes
+    A useful extension to <productname>PostgreSQL</productname> typically includes
     multiple SQL objects; for example, a new data type will require new
     functions, new operators, and probably new index operator classes.
     It is helpful to collect all these objects into a single package
-    to simplify database management.  <productname>PostgreSQL</> calls
-    such a package an <firstterm>extension</>.  To define an extension,
-    you need at least a <firstterm>script file</> that contains the
-    <acronym>SQL</> commands to create the extension's objects, and a
-    <firstterm>control file</> that specifies a few basic properties
+    to simplify database management.  <productname>PostgreSQL</productname> calls
+    such a package an <firstterm>extension</firstterm>.  To define an extension,
+    you need at least a <firstterm>script file</firstterm> that contains the
+    <acronym>SQL</acronym> commands to create the extension's objects, and a
+    <firstterm>control file</firstterm> that specifies a few basic properties
     of the extension itself.  If the extension includes C code, there
     will typically also be a shared library file into which the C code
     has been built.  Once you have these files, a simple
@@ -312,14 +312,14 @@
 
    <para>
     The main advantage of using an extension, rather than just running the
-    <acronym>SQL</> script to load a bunch of <quote>loose</> objects
-    into your database, is that <productname>PostgreSQL</> will then
+    <acronym>SQL</acronym> script to load a bunch of <quote>loose</quote> objects
+    into your database, is that <productname>PostgreSQL</productname> will then
     understand that the objects of the extension go together.  You can
     drop all the objects with a single <xref linkend="sql-dropextension">
-    command (no need to maintain a separate <quote>uninstall</> script).
-    Even more useful, <application>pg_dump</> knows that it should not
+    command (no need to maintain a separate <quote>uninstall</quote> script).
+    Even more useful, <application>pg_dump</application> knows that it should not
     dump the individual member objects of the extension &mdash; it will
-    just include a <command>CREATE EXTENSION</> command in dumps, instead.
+    just include a <command>CREATE EXTENSION</command> command in dumps, instead.
     This vastly simplifies migration to a new version of the extension
     that might contain more or different objects than the old version.
     Note however that you must have the extension's control, script, and
@@ -327,12 +327,12 @@
    </para>
 
    <para>
-    <productname>PostgreSQL</> will not let you drop an individual object
+    <productname>PostgreSQL</productname> will not let you drop an individual object
     contained in an extension, except by dropping the whole extension.
     Also, while you can change the definition of an extension member object
     (for example, via <command>CREATE OR REPLACE FUNCTION</command> for a
     function), bear in mind that the modified definition will not be dumped
-    by <application>pg_dump</>.  Such a change is usually only sensible if
+    by <application>pg_dump</application>.  Such a change is usually only sensible if
     you concurrently make the same change in the extension's script file.
     (But there are special provisions for tables containing configuration
     data; see <xref linkend="extend-extensions-config-tables">.)
@@ -346,19 +346,19 @@
     statements.  The final set of privileges for each object (if any are set)
     will be stored in the
     <link linkend="catalog-pg-init-privs"><structname>pg_init_privs</structname></link>
-    system catalog.  When <application>pg_dump</> is used, the
-    <command>CREATE EXTENSION</> command will be included in the dump, followed
+    system catalog.  When <application>pg_dump</application> is used, the
+    <command>CREATE EXTENSION</command> command will be included in the dump, followed
     by the set of <command>GRANT</command> and <command>REVOKE</command>
     statements necessary to set the privileges on the objects to what they were
     at the time the dump was taken.
    </para>
 
    <para>
-    <productname>PostgreSQL</> does not currently support extension scripts
+    <productname>PostgreSQL</productname> does not currently support extension scripts
     issuing <command>CREATE POLICY</command> or <command>SECURITY LABEL</command>
     statements.  These are expected to be set after the extension has been
     created.  All RLS policies and security labels on extension objects will be
-    included in dumps created by <application>pg_dump</>.
+    included in dumps created by <application>pg_dump</application>.
    </para>
 
    <para>
@@ -366,8 +366,8 @@
     scripts that adjust the definitions of the SQL objects contained in an
     extension.  For example, if version 1.1 of an extension adds one function
     and changes the body of another function compared to 1.0, the extension
-    author can provide an <firstterm>update script</> that makes just those
-    two changes.  The <command>ALTER EXTENSION UPDATE</> command can then
+    author can provide an <firstterm>update script</firstterm> that makes just those
+    two changes.  The <command>ALTER EXTENSION UPDATE</command> command can then
     be used to apply these changes and track which version of the extension
     is actually installed in a given database.
    </para>
@@ -384,7 +384,7 @@
     considered members of the extension.
     Another important point is that schemas can belong to extensions, but not
     vice versa: an extension as such has an unqualified name and does not
-    exist <quote>within</> any schema.  The extension's member objects,
+    exist <quote>within</quote> any schema.  The extension's member objects,
     however, will belong to schemas whenever appropriate for their object
     types.  It may or may not be appropriate for an extension to own the
     schema(s) its member objects are within.
@@ -409,23 +409,23 @@
     <para>
      The <xref linkend="sql-createextension"> command relies on a control
      file for each extension, which must be named the same as the extension
-     with a suffix of <literal>.control</>, and must be placed in the
+     with a suffix of <literal>.control</literal>, and must be placed in the
      installation's <literal>SHAREDIR/extension</literal> directory.  There
-     must also be at least one <acronym>SQL</> script file, which follows the
+     must also be at least one <acronym>SQL</acronym> script file, which follows the
      naming pattern
-     <literal><replaceable>extension</>--<replaceable>version</>.sql</literal>
-     (for example, <literal>foo--1.0.sql</> for version <literal>1.0</> of
-     extension <literal>foo</>).  By default, the script file(s) are also
+     <literal><replaceable>extension</replaceable>--<replaceable>version</replaceable>.sql</literal>
+     (for example, <literal>foo--1.0.sql</literal> for version <literal>1.0</literal> of
+     extension <literal>foo</literal>).  By default, the script file(s) are also
      placed in the <literal>SHAREDIR/extension</literal> directory; but the
      control file can specify a different directory for the script file(s).
     </para>
 
     <para>
      The file format for an extension control file is the same as for the
-     <filename>postgresql.conf</> file, namely a list of
-     <replaceable>parameter_name</> <literal>=</> <replaceable>value</>
+     <filename>postgresql.conf</filename> file, namely a list of
+     <replaceable>parameter_name</replaceable> <literal>=</literal> <replaceable>value</replaceable>
      assignments, one per line.  Blank lines and comments introduced by
-     <literal>#</> are allowed.  Be sure to quote any value that is not
+     <literal>#</literal> are allowed.  Be sure to quote any value that is not
      a single word or number.
     </para>
 
@@ -438,11 +438,11 @@
       <term><varname>directory</varname> (<type>string</type>)</term>
       <listitem>
        <para>
-        The directory containing the extension's <acronym>SQL</> script
+        The directory containing the extension's <acronym>SQL</acronym> script
         file(s).  Unless an absolute path is given, the name is relative to
         the installation's <literal>SHAREDIR</literal> directory.  The
         default behavior is equivalent to specifying
-        <literal>directory = 'extension'</>.
+        <literal>directory = 'extension'</literal>.
        </para>
       </listitem>
      </varlistentry>
@@ -452,9 +452,9 @@
       <listitem>
        <para>
         The default version of the extension (the one that will be installed
-        if no version is specified in <command>CREATE EXTENSION</>).  Although
-        this can be omitted, that will result in <command>CREATE EXTENSION</>
-        failing if no <literal>VERSION</> option appears, so you generally
+        if no version is specified in <command>CREATE EXTENSION</command>).  Although
+        this can be omitted, that will result in <command>CREATE EXTENSION</command>
+        failing if no <literal>VERSION</literal> option appears, so you generally
         don't want to do that.
        </para>
       </listitem>
@@ -489,11 +489,11 @@
       <listitem>
        <para>
         The value of this parameter will be substituted for each occurrence
-        of <literal>MODULE_PATHNAME</> in the script file(s).  If it is not
+        of <literal>MODULE_PATHNAME</literal> in the script file(s).  If it is not
         set, no substitution is made.  Typically, this is set to
-        <literal>$libdir/<replaceable>shared_library_name</></literal> and
-        then <literal>MODULE_PATHNAME</> is used in <command>CREATE
-        FUNCTION</> commands for C-language functions, so that the script
+        <literal>$libdir/<replaceable>shared_library_name</replaceable></literal> and
+        then <literal>MODULE_PATHNAME</literal> is used in <command>CREATE
+        FUNCTION</command> commands for C-language functions, so that the script
         files do not need to hard-wire the name of the shared library.
        </para>
       </listitem>
@@ -514,9 +514,9 @@
       <term><varname>superuser</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
-        If this parameter is <literal>true</> (which is the default),
+        If this parameter is <literal>true</literal> (which is the default),
         only superusers can create the extension or update it to a new
-        version.  If it is set to <literal>false</>, just the privileges
+        version.  If it is set to <literal>false</literal>, just the privileges
         required to execute the commands in the installation or update script
         are required.
        </para>
@@ -527,9 +527,9 @@
       <term><varname>relocatable</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
-        An extension is <firstterm>relocatable</> if it is possible to move
+        An extension is <firstterm>relocatable</firstterm> if it is possible to move
         its contained objects into a different schema after initial creation
-        of the extension.  The default is <literal>false</>, i.e. the
+        of the extension.  The default is <literal>false</literal>, i.e. the
         extension is not relocatable.
         See <xref linkend="extend-extensions-relocation"> for more information.
        </para>
@@ -553,45 +553,45 @@
 
     <para>
      In addition to the primary control file
-     <literal><replaceable>extension</>.control</literal>,
+     <literal><replaceable>extension</replaceable>.control</literal>,
      an extension can have secondary control files named in the style
-     <literal><replaceable>extension</>--<replaceable>version</>.control</literal>.
+     <literal><replaceable>extension</replaceable>--<replaceable>version</replaceable>.control</literal>.
      If supplied, these must be located in the script file directory.
      Secondary control files follow the same format as the primary control
      file.  Any parameters set in a secondary control file override the
      primary control file when installing or updating to that version of
-     the extension.  However, the parameters <varname>directory</> and
-     <varname>default_version</> cannot be set in a secondary control file.
+     the extension.  However, the parameters <varname>directory</varname> and
+     <varname>default_version</varname> cannot be set in a secondary control file.
     </para>
 
     <para>
-     An extension's <acronym>SQL</> script files can contain any SQL commands,
-     except for transaction control commands (<command>BEGIN</>,
-     <command>COMMIT</>, etc) and commands that cannot be executed inside a
-     transaction block (such as <command>VACUUM</>).  This is because the
+     An extension's <acronym>SQL</acronym> script files can contain any SQL commands,
+     except for transaction control commands (<command>BEGIN</command>,
+     <command>COMMIT</command>, etc) and commands that cannot be executed inside a
+     transaction block (such as <command>VACUUM</command>).  This is because the
      script files are implicitly executed within a transaction block.
     </para>
 
     <para>
-     An extension's <acronym>SQL</> script files can also contain lines
-     beginning with <literal>\echo</>, which will be ignored (treated as
+     An extension's <acronym>SQL</acronym> script files can also contain lines
+     beginning with <literal>\echo</literal>, which will be ignored (treated as
      comments) by the extension mechanism.  This provision is commonly used
-     to throw an error if the script file is fed to <application>psql</>
-     rather than being loaded via <command>CREATE EXTENSION</> (see example
+     to throw an error if the script file is fed to <application>psql</application>
+     rather than being loaded via <command>CREATE EXTENSION</command> (see example
      script in <xref linkend="extend-extensions-example">).
      Without that, users might accidentally load the
-     extension's contents as <quote>loose</> objects rather than as an
+     extension's contents as <quote>loose</quote> objects rather than as an
      extension, a state of affairs that's a bit tedious to recover from.
     </para>
 
     <para>
      While the script files can contain any characters allowed by the specified
      encoding, control files should contain only plain ASCII, because there
-     is no way for <productname>PostgreSQL</> to know what encoding a
+     is no way for <productname>PostgreSQL</productname> to know what encoding a
      control file is in.  In practice this is only an issue if you want to
      use non-ASCII characters in the extension's comment.  Recommended
-     practice in that case is to not use the control file <varname>comment</>
-     parameter, but instead use <command>COMMENT ON EXTENSION</>
+     practice in that case is to not use the control file <varname>comment</varname>
+     parameter, but instead use <command>COMMENT ON EXTENSION</command>
      within a script file to set the comment.
     </para>
 
@@ -611,14 +611,14 @@
       <para>
        A fully relocatable extension can be moved into another schema
        at any time, even after it's been loaded into a database.
-       This is done with the <command>ALTER EXTENSION SET SCHEMA</>
+       This is done with the <command>ALTER EXTENSION SET SCHEMA</command>
        command, which automatically renames all the member objects into
        the new schema.  Normally, this is only possible if the extension
        contains no internal assumptions about what schema any of its
        objects are in.  Also, the extension's objects must all be in one
        schema to begin with (ignoring objects that do not belong to any
        schema, such as procedural languages).  Mark a fully relocatable
-       extension by setting <literal>relocatable = true</> in its control
+       extension by setting <literal>relocatable = true</literal> in its control
        file.
       </para>
      </listitem>
@@ -628,26 +628,26 @@
        An extension might be relocatable during installation but not
        afterwards.  This is typically the case if the extension's script
        file needs to reference the target schema explicitly, for example
-       in setting <literal>search_path</> properties for SQL functions.
-       For such an extension, set <literal>relocatable = false</> in its
-       control file, and use <literal>@extschema@</> to refer to the target
+       in setting <literal>search_path</literal> properties for SQL functions.
+       For such an extension, set <literal>relocatable = false</literal> in its
+       control file, and use <literal>@extschema@</literal> to refer to the target
        schema in the script file.  All occurrences of this string will be
        replaced by the actual target schema's name before the script is
        executed.  The user can set the target schema using the
-       <literal>SCHEMA</> option of <command>CREATE EXTENSION</>.
+       <literal>SCHEMA</literal> option of <command>CREATE EXTENSION</command>.
       </para>
      </listitem>
 
      <listitem>
       <para>
        If the extension does not support relocation at all, set
-       <literal>relocatable = false</> in its control file, and also set
-       <literal>schema</> to the name of the intended target schema.  This
-       will prevent use of the <literal>SCHEMA</> option of <command>CREATE
-       EXTENSION</>, unless it specifies the same schema named in the control
+       <literal>relocatable = false</literal> in its control file, and also set
+       <literal>schema</literal> to the name of the intended target schema.  This
+       will prevent use of the <literal>SCHEMA</literal> option of <command>CREATE
+       EXTENSION</command>, unless it specifies the same schema named in the control
        file.  This choice is typically necessary if the extension contains
        internal assumptions about schema names that can't be replaced by
-       uses of <literal>@extschema@</>.  The <literal>@extschema@</>
+       uses of <literal>@extschema@</literal>.  The <literal>@extschema@</literal>
        substitution mechanism is available in this case too, although it is
        of limited use since the schema name is determined by the control file.
       </para>
@@ -657,23 +657,23 @@
     <para>
      In all cases, the script file will be executed with
      <xref linkend="guc-search-path"> initially set to point to the target
-     schema; that is, <command>CREATE EXTENSION</> does the equivalent of
+     schema; that is, <command>CREATE EXTENSION</command> does the equivalent of
      this:
 <programlisting>
 SET LOCAL search_path TO @extschema@;
 </programlisting>
      This allows the objects created by the script file to go into the target
-     schema.  The script file can change <varname>search_path</> if it wishes,
-     but that is generally undesirable.  <varname>search_path</> is restored
-     to its previous setting upon completion of <command>CREATE EXTENSION</>.
+     schema.  The script file can change <varname>search_path</varname> if it wishes,
+     but that is generally undesirable.  <varname>search_path</varname> is restored
+     to its previous setting upon completion of <command>CREATE EXTENSION</command>.
     </para>
 
     <para>
-     The target schema is determined by the <varname>schema</> parameter in
-     the control file if that is given, otherwise by the <literal>SCHEMA</>
-     option of <command>CREATE EXTENSION</> if that is given, otherwise the
+     The target schema is determined by the <varname>schema</varname> parameter in
+     the control file if that is given, otherwise by the <literal>SCHEMA</literal>
+     option of <command>CREATE EXTENSION</command> if that is given, otherwise the
      current default object creation schema (the first one in the caller's
-     <varname>search_path</>).  When the control file <varname>schema</>
+     <varname>search_path</varname>).  When the control file <varname>schema</varname>
      parameter is used, the target schema will be created if it doesn't
      already exist, but in the other two cases it must already exist.
     </para>
@@ -681,7 +681,7 @@ SET LOCAL search_path TO @extschema@;
     <para>
      If any prerequisite extensions are listed in <varname>requires</varname>
      in the control file, their target schemas are appended to the initial
-     setting of <varname>search_path</>.  This allows their objects to be
+     setting of <varname>search_path</varname>.  This allows their objects to be
      visible to the new extension's script file.
     </para>
 
@@ -690,7 +690,7 @@ SET LOCAL search_path TO @extschema@;
      multiple schemas, it is usually desirable to place all the objects meant
      for external use into a single schema, which is considered the extension's
      target schema.  Such an arrangement works conveniently with the default
-     setting of <varname>search_path</> during creation of dependent
+     setting of <varname>search_path</varname> during creation of dependent
      extensions.
     </para>
    </sect2>
@@ -703,7 +703,7 @@ SET LOCAL search_path TO @extschema@;
      might be added or changed by the user after installation of the
      extension.  Ordinarily, if a table is part of an extension, neither
      the table's definition nor its content will be dumped by
-     <application>pg_dump</>.  But that behavior is undesirable for a
+     <application>pg_dump</application>.  But that behavior is undesirable for a
      configuration table; any data changes made by the user need to be
      included in dumps, or the extension will behave differently after a dump
      and reload.
@@ -716,9 +716,9 @@ SET LOCAL search_path TO @extschema@;
     <para>
      To solve this problem, an extension's script file can mark a table
      or a sequence it has created as a configuration relation, which will
-     cause <application>pg_dump</> to include the table's or the sequence's
+     cause <application>pg_dump</application> to include the table's or the sequence's
      contents (not its definition) in dumps.  To do that, call the function
-     <function>pg_extension_config_dump(regclass, text)</> after creating the
+     <function>pg_extension_config_dump(regclass, text)</function> after creating the
      table or the sequence, for example
 <programlisting>
 CREATE TABLE my_config (key text, value text);
@@ -728,30 +728,30 @@ SELECT pg_catalog.pg_extension_config_dump('my_config', '');
 SELECT pg_catalog.pg_extension_config_dump('my_config_seq', '');
 </programlisting>
      Any number of tables or sequences can be marked this way. Sequences
-     associated with <type>serial</> or <type>bigserial</> columns can
+     associated with <type>serial</type> or <type>bigserial</type> columns can
      be marked as well.
     </para>
 
     <para>
-     When the second argument of <function>pg_extension_config_dump</> is
+     When the second argument of <function>pg_extension_config_dump</function> is
      an empty string, the entire contents of the table are dumped by
-     <application>pg_dump</>.  This is usually only correct if the table
+     <application>pg_dump</application>.  This is usually only correct if the table
      is initially empty as created by the extension script.  If there is
      a mixture of initial data and user-provided data in the table,
-     the second argument of <function>pg_extension_config_dump</> provides
-     a <literal>WHERE</> condition that selects the data to be dumped.
+     the second argument of <function>pg_extension_config_dump</function> provides
+     a <literal>WHERE</literal> condition that selects the data to be dumped.
      For example, you might do
 <programlisting>
 CREATE TABLE my_config (key text, value text, standard_entry boolean);
 
 SELECT pg_catalog.pg_extension_config_dump('my_config', 'WHERE NOT standard_entry');
 </programlisting>
-     and then make sure that <structfield>standard_entry</> is true only
+     and then make sure that <structfield>standard_entry</structfield> is true only
      in the rows created by the extension's script.
     </para>
 
     <para>
-     For sequences, the second argument of <function>pg_extension_config_dump</>
+     For sequences, the second argument of <function>pg_extension_config_dump</function>
      has no effect.
     </para>
 
@@ -763,10 +763,10 @@ SELECT pg_catalog.pg_extension_config_dump('my_config', 'WHERE NOT standard_entr
 
     <para>
      You can alter the filter condition associated with a configuration table
-     by calling <function>pg_extension_config_dump</> again.  (This would
+     by calling <function>pg_extension_config_dump</function> again.  (This would
      typically be useful in an extension update script.)  The only way to mark
      a table as no longer a configuration table is to dissociate it from the
-     extension with <command>ALTER EXTENSION ... DROP TABLE</>.
+     extension with <command>ALTER EXTENSION ... DROP TABLE</command>.
     </para>
 
     <para>
@@ -781,7 +781,7 @@ SELECT pg_catalog.pg_extension_config_dump('my_config', 'WHERE NOT standard_entr
     </para>
 
     <para>
-     Sequences associated with <type>serial</> or <type>bigserial</> columns
+     Sequences associated with <type>serial</type> or <type>bigserial</type> columns
      need to be directly marked to dump their state. Marking their parent
      relation is not enough for this purpose.
     </para>
@@ -797,20 +797,20 @@ SELECT pg_catalog.pg_extension_config_dump('my_config', 'WHERE NOT standard_entr
      each released version of the extension's installation script.
      In addition, if you want users to be able to update their databases
      dynamically from one version to the next, you should provide
-     <firstterm>update scripts</> that make the necessary changes to go from
+     <firstterm>update scripts</firstterm> that make the necessary changes to go from
      one version to the next.  Update scripts have names following the pattern
-     <literal><replaceable>extension</>--<replaceable>oldversion</>--<replaceable>newversion</>.sql</literal>
-     (for example, <literal>foo--1.0--1.1.sql</> contains the commands to modify
-     version <literal>1.0</> of extension <literal>foo</> into version
-     <literal>1.1</>).
+     <literal><replaceable>extension</replaceable>--<replaceable>oldversion</replaceable>--<replaceable>newversion</replaceable>.sql</literal>
+     (for example, <literal>foo--1.0--1.1.sql</literal> contains the commands to modify
+     version <literal>1.0</literal> of extension <literal>foo</literal> into version
+     <literal>1.1</literal>).
     </para>
 
     <para>
      Given that a suitable update script is available, the command
-     <command>ALTER EXTENSION UPDATE</> will update an installed extension
+     <command>ALTER EXTENSION UPDATE</command> will update an installed extension
      to the specified new version.  The update script is run in the same
-     environment that <command>CREATE EXTENSION</> provides for installation
-     scripts: in particular, <varname>search_path</> is set up in the same
+     environment that <command>CREATE EXTENSION</command> provides for installation
+     scripts: in particular, <varname>search_path</varname> is set up in the same
      way, and any new objects created by the script are automatically added
      to the extension.  Also, if the script chooses to drop extension member
      objects, they are automatically dissociated from the extension.
@@ -824,56 +824,56 @@ SELECT pg_catalog.pg_extension_config_dump('my_config', 'WHERE NOT standard_entr
 
     <para>
      The update mechanism can be used to solve an important special case:
-     converting a <quote>loose</> collection of objects into an extension.
+     converting a <quote>loose</quote> collection of objects into an extension.
      Before the extension mechanism was added to
      <productname>PostgreSQL</productname> (in 9.1), many people wrote
      extension modules that simply created assorted unpackaged objects.
      Given an existing database containing such objects, how can we convert
      the objects into a properly packaged extension?  Dropping them and then
-     doing a plain <command>CREATE EXTENSION</> is one way, but it's not
+     doing a plain <command>CREATE EXTENSION</command> is one way, but it's not
      desirable if the objects have dependencies (for example, if there are
      table columns of a data type created by the extension).  The way to fix
      this situation is to create an empty extension, then use <command>ALTER
-     EXTENSION ADD</> to attach each pre-existing object to the extension,
+     EXTENSION ADD</command> to attach each pre-existing object to the extension,
      then finally create any new objects that are in the current extension
      version but were not in the unpackaged release.  <command>CREATE
-     EXTENSION</> supports this case with its <literal>FROM</> <replaceable
-     class="parameter">old_version</> option, which causes it to not run the
+     EXTENSION</command> supports this case with its <literal>FROM</literal> <replaceable
+     class="parameter">old_version</replaceable> option, which causes it to not run the
      normal installation script for the target version, but instead the update
      script named
-     <literal><replaceable>extension</>--<replaceable>old_version</>--<replaceable>target_version</>.sql</literal>.
+     <literal><replaceable>extension</replaceable>--<replaceable>old_version</replaceable>--<replaceable>target_version</replaceable>.sql</literal>.
      The choice of the dummy version name to use as <replaceable
-     class="parameter">old_version</> is up to the extension author, though
-     <literal>unpackaged</> is a common convention.  If you have multiple
+     class="parameter">old_version</replaceable> is up to the extension author, though
+     <literal>unpackaged</literal> is a common convention.  If you have multiple
      prior versions you need to be able to update into extension style, use
      multiple dummy version names to identify them.
     </para>
 
     <para>
-     <command>ALTER EXTENSION</> is able to execute sequences of update
+     <command>ALTER EXTENSION</command> is able to execute sequences of update
      script files to achieve a requested update.  For example, if only
-     <literal>foo--1.0--1.1.sql</> and <literal>foo--1.1--2.0.sql</> are
-     available, <command>ALTER EXTENSION</> will apply them in sequence if an
-     update to version <literal>2.0</> is requested when <literal>1.0</> is
+     <literal>foo--1.0--1.1.sql</literal> and <literal>foo--1.1--2.0.sql</literal> are
+     available, <command>ALTER EXTENSION</command> will apply them in sequence if an
+     update to version <literal>2.0</literal> is requested when <literal>1.0</literal> is
      currently installed.
     </para>
 
     <para>
-     <productname>PostgreSQL</> doesn't assume anything about the properties
-     of version names: for example, it does not know whether <literal>1.1</>
-     follows <literal>1.0</>.  It just matches up the available version names
+     <productname>PostgreSQL</productname> doesn't assume anything about the properties
+     of version names: for example, it does not know whether <literal>1.1</literal>
+     follows <literal>1.0</literal>.  It just matches up the available version names
      and follows the path that requires applying the fewest update scripts.
      (A version name can actually be any string that doesn't contain
-     <literal>--</> or leading or trailing <literal>-</>.)
+     <literal>--</literal> or leading or trailing <literal>-</literal>.)
     </para>
 
     <para>
-     Sometimes it is useful to provide <quote>downgrade</> scripts, for
-     example <literal>foo--1.1--1.0.sql</> to allow reverting the changes
-     associated with version <literal>1.1</>.  If you do that, be careful
+     Sometimes it is useful to provide <quote>downgrade</quote> scripts, for
+     example <literal>foo--1.1--1.0.sql</literal> to allow reverting the changes
+     associated with version <literal>1.1</literal>.  If you do that, be careful
      of the possibility that a downgrade script might unexpectedly
      get applied because it yields a shorter path.  The risky case is where
-     there is a <quote>fast path</> update script that jumps ahead several
+     there is a <quote>fast path</quote> update script that jumps ahead several
      versions as well as a downgrade script to the fast path's start point.
      It might take fewer steps to apply the downgrade and then the fast
      path than to move ahead one version at a time.  If the downgrade script
@@ -883,14 +883,14 @@ SELECT pg_catalog.pg_extension_config_dump('my_config', 'WHERE NOT standard_entr
     <para>
      To check for unexpected update paths, use this command:
 <programlisting>
-SELECT * FROM pg_extension_update_paths('<replaceable>extension_name</>');
+SELECT * FROM pg_extension_update_paths('<replaceable>extension_name</replaceable>');
 </programlisting>
      This shows each pair of distinct known version names for the specified
      extension, together with the update path sequence that would be taken to
-     get from the source version to the target version, or <literal>NULL</> if
+     get from the source version to the target version, or <literal>NULL</literal> if
      there is no available update path.  The path is shown in textual form
-     with <literal>--</> separators.  You can use
-     <literal>regexp_split_to_array(path,'--')</> if you prefer an array
+     with <literal>--</literal> separators.  You can use
+     <literal>regexp_split_to_array(path,'--')</literal> if you prefer an array
      format.
     </para>
    </sect2>
@@ -901,24 +901,24 @@ SELECT * FROM pg_extension_update_paths('<replaceable>extension_name</>');
     <para>
      An extension that has been around for awhile will probably exist in
      several versions, for which the author will need to write update scripts.
-     For example, if you have released a <literal>foo</> extension in
-     versions <literal>1.0</>, <literal>1.1</>, and <literal>1.2</>, there
-     should be update scripts <filename>foo--1.0--1.1.sql</>
-     and <filename>foo--1.1--1.2.sql</>.
-     Before <productname>PostgreSQL</> 10, it was necessary to also create
-     new script files <filename>foo--1.1.sql</> and <filename>foo--1.2.sql</>
+     For example, if you have released a <literal>foo</literal> extension in
+     versions <literal>1.0</literal>, <literal>1.1</literal>, and <literal>1.2</literal>, there
+     should be update scripts <filename>foo--1.0--1.1.sql</filename>
+     and <filename>foo--1.1--1.2.sql</filename>.
+     Before <productname>PostgreSQL</productname> 10, it was necessary to also create
+     new script files <filename>foo--1.1.sql</filename> and <filename>foo--1.2.sql</filename>
      that directly build the newer extension versions, or else the newer
      versions could not be installed directly, only by
-     installing <literal>1.0</> and then updating.  That was tedious and
+     installing <literal>1.0</literal> and then updating.  That was tedious and
      duplicative, but now it's unnecessary, because <command>CREATE
-     EXTENSION</> can follow update chains automatically.
+     EXTENSION</command> can follow update chains automatically.
      For example, if only the script
-     files <filename>foo--1.0.sql</>, <filename>foo--1.0--1.1.sql</>,
-     and <filename>foo--1.1--1.2.sql</> are available then a request to
-     install version <literal>1.2</> is honored by running those three
+     files <filename>foo--1.0.sql</filename>, <filename>foo--1.0--1.1.sql</filename>,
+     and <filename>foo--1.1--1.2.sql</filename> are available then a request to
+     install version <literal>1.2</literal> is honored by running those three
      scripts in sequence.  The processing is the same as if you'd first
-     installed <literal>1.0</> and then updated to <literal>1.2</>.
-     (As with <command>ALTER EXTENSION UPDATE</>, if multiple pathways are
+     installed <literal>1.0</literal> and then updated to <literal>1.2</literal>.
+     (As with <command>ALTER EXTENSION UPDATE</command>, if multiple pathways are
      available then the shortest is preferred.)  Arranging an extension's
      script files in this style can reduce the amount of maintenance effort
      needed to produce small updates.
@@ -929,10 +929,10 @@ SELECT * FROM pg_extension_update_paths('<replaceable>extension_name</>');
      maintained in this style, keep in mind that each version needs a control
      file even if it has no stand-alone installation script, as that control
      file will determine how the implicit update to that version is performed.
-     For example, if <filename>foo--1.0.control</> specifies <literal>requires
-     = 'bar'</> but <literal>foo</>'s other control files do not, the
-     extension's dependency on <literal>bar</> will be dropped when updating
-     from <literal>1.0</> to another version.
+     For example, if <filename>foo--1.0.control</filename> specifies <literal>requires
+     = 'bar'</literal> but <literal>foo</literal>'s other control files do not, the
+     extension's dependency on <literal>bar</literal> will be dropped when updating
+     from <literal>1.0</literal> to another version.
     </para>
    </sect2>
 
@@ -940,14 +940,14 @@ SELECT * FROM pg_extension_update_paths('<replaceable>extension_name</>');
     <title>Extension Example</title>
 
     <para>
-     Here is a complete example of an <acronym>SQL</>-only
+     Here is a complete example of an <acronym>SQL</acronym>-only
      extension, a two-element composite type that can store any type of value
-     in its slots, which are named <quote>k</> and <quote>v</>.  Non-text
+     in its slots, which are named <quote>k</quote> and <quote>v</quote>.  Non-text
      values are automatically coerced to text for storage.
     </para>
 
     <para>
-     The script file <filename>pair--1.0.sql</> looks like this:
+     The script file <filename>pair--1.0.sql</filename> looks like this:
 
 <programlisting><![CDATA[
 -- complain if script is sourced in psql, rather than via CREATE EXTENSION
@@ -976,7 +976,7 @@ CREATE OPERATOR ~> (LEFTARG = text, RIGHTARG = text, PROCEDURE = pair);
     </para>
 
     <para>
-     The control file <filename>pair.control</> looks like this:
+     The control file <filename>pair.control</filename> looks like this:
 
 <programlisting>
 # pair extension
@@ -988,7 +988,7 @@ relocatable = true
 
     <para>
      While you hardly need a makefile to install these two files into the
-     correct directory, you could use a <filename>Makefile</> containing this:
+     correct directory, you could use a <filename>Makefile</filename> containing this:
 
 <programlisting>
 EXTENSION = pair
@@ -1000,9 +1000,9 @@ include $(PGXS)
 </programlisting>
 
      This makefile relies on <acronym>PGXS</acronym>, which is described
-     in <xref linkend="extend-pgxs">.  The command <literal>make install</>
+     in <xref linkend="extend-pgxs">.  The command <literal>make install</literal>
      will install the control and script files into the correct
-     directory as reported by <application>pg_config</>.
+     directory as reported by <application>pg_config</application>.
     </para>
 
     <para>
@@ -1022,16 +1022,16 @@ include $(PGXS)
 
    <para>
     If you are thinking about distributing your
-    <productname>PostgreSQL</> extension modules, setting up a
+    <productname>PostgreSQL</productname> extension modules, setting up a
     portable build system for them can be fairly difficult.  Therefore
-    the <productname>PostgreSQL</> installation provides a build
+    the <productname>PostgreSQL</productname> installation provides a build
     infrastructure for extensions, called <acronym>PGXS</acronym>, so
     that simple extension modules can be built simply against an
     already installed server.  <acronym>PGXS</acronym> is mainly intended
     for extensions that include C code, although it can be used for
     pure-SQL extensions too.  Note that <acronym>PGXS</acronym> is not
     intended to be a universal build system framework that can be used
-    to build any software interfacing to <productname>PostgreSQL</>;
+    to build any software interfacing to <productname>PostgreSQL</productname>;
     it simply automates common build rules for simple server extension
     modules.  For more complicated packages, you might need to write your
     own build system.
@@ -1115,7 +1115,7 @@ include $(PGXS)
       <term><varname>MODULEDIR</varname></term>
       <listitem>
        <para>
-        subdirectory of <literal><replaceable>prefix</>/share</literal>
+        subdirectory of <literal><replaceable>prefix</replaceable>/share</literal>
         into which DATA and DOCS files should be installed
         (if not set, default is <literal>extension</literal> if
         <varname>EXTENSION</varname> is set,
@@ -1198,7 +1198,7 @@ include $(PGXS)
       <term><varname>REGRESS_OPTS</varname></term>
       <listitem>
        <para>
-        additional switches to pass to <application>pg_regress</>
+        additional switches to pass to <application>pg_regress</application>
        </para>
       </listitem>
      </varlistentry>
@@ -1252,10 +1252,10 @@ include $(PGXS)
       <term><varname>PG_CONFIG</varname></term>
       <listitem>
        <para>
-        path to <application>pg_config</> program for the
+        path to <application>pg_config</application> program for the
         <productname>PostgreSQL</productname> installation to build against
-        (typically just <literal>pg_config</> to use the first one in your
-        <varname>PATH</>)
+        (typically just <literal>pg_config</literal> to use the first one in your
+        <varname>PATH</varname>)
        </para>
       </listitem>
      </varlistentry>
@@ -1270,7 +1270,7 @@ include $(PGXS)
     compiled and installed for the
     <productname>PostgreSQL</productname> installation that
     corresponds to the first <command>pg_config</command> program
-    found in your <varname>PATH</>.  You can use a different installation by
+    found in your <varname>PATH</varname>.  You can use a different installation by
     setting <varname>PG_CONFIG</varname> to point to its
     <command>pg_config</command> program, either within the makefile
     or on the <literal>make</literal> command line.
@@ -1293,7 +1293,7 @@ make -f /path/to/extension/source/tree/Makefile install
    <para>
     Alternatively, you can set up a directory for a VPATH build in a similar
     way to how it is done for the core code. One way to do this is using the
-    core script <filename>config/prep_buildtree</>. Once this has been done
+    core script <filename>config/prep_buildtree</filename>. Once this has been done
     you can build by setting the <literal>make</literal> variable
     <varname>VPATH</varname> like this:
 <programlisting>
@@ -1304,18 +1304,18 @@ make VPATH=/path/to/extension/source/tree install
    </para>
 
    <para>
-    The scripts listed in the <varname>REGRESS</> variable are used for
+    The scripts listed in the <varname>REGRESS</varname> variable are used for
     regression testing of your module, which can be invoked by <literal>make
-    installcheck</literal> after doing <literal>make install</>.  For this to
+    installcheck</literal> after doing <literal>make install</literal>.  For this to
     work you must have a running <productname>PostgreSQL</productname> server.
-    The script files listed in <varname>REGRESS</> must appear in a
+    The script files listed in <varname>REGRESS</varname> must appear in a
     subdirectory named <literal>sql/</literal> in your extension's directory.
     These files must have extension <literal>.sql</literal>, which must not be
     included in the <varname>REGRESS</varname> list in the makefile.  For each
     test there should also be a file containing the expected output in a
     subdirectory named <literal>expected/</literal>, with the same stem and
     extension <literal>.out</literal>.  <literal>make installcheck</literal>
-    executes each test script with <application>psql</>, and compares the
+    executes each test script with <application>psql</application>, and compares the
     resulting output to the matching expected file.  Any differences will be
     written to the file <literal>regression.diffs</literal> in <command>diff
     -c</command> format.  Note that trying to run a test that is missing its

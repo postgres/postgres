@@ -54,10 +54,10 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
    <command>COPY</command> moves data between
    <productname>PostgreSQL</productname> tables and standard file-system
    files. <command>COPY TO</command> copies the contents of a table
-   <emphasis>to</> a file, while <command>COPY FROM</command> copies
-   data <emphasis>from</> a file to a table (appending the data to
+   <emphasis>to</emphasis> a file, while <command>COPY FROM</command> copies
+   data <emphasis>from</emphasis> a file to a table (appending the data to
    whatever is in the table already).  <command>COPY TO</command>
-   can also copy the results of a <command>SELECT</> query.
+   can also copy the results of a <command>SELECT</command> query.
   </para>
 
   <para>
@@ -118,10 +118,10 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
       copied.  Note that parentheses are required around the query.
      </para>
      <para>
-      For <command>INSERT</>, <command>UPDATE</> and
-      <command>DELETE</> queries a RETURNING clause must be provided,
+      For <command>INSERT</command>, <command>UPDATE</command> and
+      <command>DELETE</command> queries a RETURNING clause must be provided,
       and the target relation must not have a conditional rule, nor
-      an <literal>ALSO</> rule, nor an <literal>INSTEAD</> rule
+      an <literal>ALSO</literal> rule, nor an <literal>INSTEAD</literal> rule
       that expands to multiple statements.
      </para>
     </listitem>
@@ -133,7 +133,7 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
      <para>
       The path name of the input or output file.  An input file name can be
       an absolute or relative path, but an output file name must be an absolute
-      path.  Windows users might need to use an <literal>E''</> string and
+      path.  Windows users might need to use an <literal>E''</literal> string and
       double any backslashes used in the path name.
      </para>
     </listitem>
@@ -144,7 +144,7 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
     <listitem>
      <para>
       A command to execute. In <command>COPY FROM</command>, the input is
-      read from standard output of the command, and in <command>COPY TO</>,
+      read from standard output of the command, and in <command>COPY TO</command>,
       the output is written to the standard input of the command.
      </para>
      <para>
@@ -181,9 +181,9 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
     <listitem>
      <para>
       Specifies whether the selected option should be turned on or off.
-      You can write <literal>TRUE</literal>, <literal>ON</>, or
+      You can write <literal>TRUE</literal>, <literal>ON</literal>, or
       <literal>1</literal> to enable the option, and <literal>FALSE</literal>,
-      <literal>OFF</>, or <literal>0</literal> to disable it.  The
+      <literal>OFF</literal>, or <literal>0</literal> to disable it.  The
       <replaceable class="parameter">boolean</replaceable> value can also
       be omitted, in which case <literal>TRUE</literal> is assumed.
      </para>
@@ -195,10 +195,10 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
     <listitem>
      <para>
       Selects the data format to be read or written:
-      <literal>text</>,
-      <literal>csv</> (Comma Separated Values),
-      or <literal>binary</>.
-      The default is <literal>text</>.
+      <literal>text</literal>,
+      <literal>csv</literal> (Comma Separated Values),
+      or <literal>binary</literal>.
+      The default is <literal>text</literal>.
      </para>
     </listitem>
    </varlistentry>
@@ -220,7 +220,7 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
     <listitem>
      <para>
       Requests copying the data with rows already frozen, just as they
-      would be after running the <command>VACUUM FREEZE</> command.
+      would be after running the <command>VACUUM FREEZE</command> command.
       This is intended as a performance option for initial data loading.
       Rows will be frozen only if the table being loaded has been created
       or truncated in the current subtransaction, there are no cursors
@@ -241,9 +241,9 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
      <para>
       Specifies the character that separates columns within each row
       (line) of the file.  The default is a tab character in text format,
-      a comma in <literal>CSV</> format.
+      a comma in <literal>CSV</literal> format.
       This must be a single one-byte character.
-      This option is not allowed when using <literal>binary</> format.
+      This option is not allowed when using <literal>binary</literal> format.
      </para>
     </listitem>
    </varlistentry>
@@ -254,10 +254,10 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
      <para>
       Specifies the string that represents a null value. The default is
       <literal>\N</literal> (backslash-N) in text format, and an unquoted empty
-      string in <literal>CSV</> format. You might prefer an
+      string in <literal>CSV</literal> format. You might prefer an
       empty string even in text format for cases where you don't want to
       distinguish nulls from empty strings.
-      This option is not allowed when using <literal>binary</> format.
+      This option is not allowed when using <literal>binary</literal> format.
      </para>
 
      <note>
@@ -279,7 +279,7 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
       Specifies that the file contains a header line with the names of each
       column in the file.  On output, the first line contains the column
       names from the table, and on input, the first line is ignored.
-      This option is allowed only when using <literal>CSV</> format.
+      This option is allowed only when using <literal>CSV</literal> format.
      </para>
     </listitem>
    </varlistentry>
@@ -291,7 +291,7 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
       Specifies the quoting character to be used when a data value is quoted.
       The default is double-quote.
       This must be a single one-byte character.
-      This option is allowed only when using <literal>CSV</> format.
+      This option is allowed only when using <literal>CSV</literal> format.
      </para>
     </listitem>
    </varlistentry>
@@ -301,59 +301,59 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
     <listitem>
      <para>
       Specifies the character that should appear before a
-      data character that matches the <literal>QUOTE</> value.
-      The default is the same as the <literal>QUOTE</> value (so that
+      data character that matches the <literal>QUOTE</literal> value.
+      The default is the same as the <literal>QUOTE</literal> value (so that
       the quoting character is doubled if it appears in the data).
       This must be a single one-byte character.
-      This option is allowed only when using <literal>CSV</> format.
+      This option is allowed only when using <literal>CSV</literal> format.
      </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-    <term><literal>FORCE_QUOTE</></term>
+    <term><literal>FORCE_QUOTE</literal></term>
     <listitem>
      <para>
       Forces quoting to be
-      used for all non-<literal>NULL</> values in each specified column.
-      <literal>NULL</> output is never quoted. If <literal>*</> is specified,
-      non-<literal>NULL</> values will be quoted in all columns.
-      This option is allowed only in <command>COPY TO</>, and only when
-      using <literal>CSV</> format.
+      used for all non-<literal>NULL</literal> values in each specified column.
+      <literal>NULL</literal> output is never quoted. If <literal>*</literal> is specified,
+      non-<literal>NULL</literal> values will be quoted in all columns.
+      This option is allowed only in <command>COPY TO</command>, and only when
+      using <literal>CSV</literal> format.
      </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-    <term><literal>FORCE_NOT_NULL</></term>
+    <term><literal>FORCE_NOT_NULL</literal></term>
     <listitem>
      <para>
       Do not match the specified columns' values against the null string.
       In the default case where the null string is empty, this means that
       empty values will be read as zero-length strings rather than nulls,
       even when they are not quoted.
-      This option is allowed only in <command>COPY FROM</>, and only when
-      using <literal>CSV</> format.
+      This option is allowed only in <command>COPY FROM</command>, and only when
+      using <literal>CSV</literal> format.
      </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-    <term><literal>FORCE_NULL</></term>
+    <term><literal>FORCE_NULL</literal></term>
     <listitem>
      <para>
       Match the specified columns' values against the null string, even
       if it has been quoted, and if a match is found set the value to
-      <literal>NULL</>. In the default case where the null string is empty,
+      <literal>NULL</literal>. In the default case where the null string is empty,
       this converts a quoted empty string into NULL.
-      This option is allowed only in <command>COPY FROM</>, and only when
-      using <literal>CSV</> format.
+      This option is allowed only in <command>COPY FROM</command>, and only when
+      using <literal>CSV</literal> format.
      </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-    <term><literal>ENCODING</></term>
+    <term><literal>ENCODING</literal></term>
     <listitem>
      <para>
       Specifies that the file is encoded in the <replaceable
@@ -371,7 +371,7 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
   <title>Outputs</title>
 
   <para>
-   On successful completion, a <command>COPY</> command returns a command
+   On successful completion, a <command>COPY</command> command returns a command
    tag of the form
 <screen>
 COPY <replaceable class="parameter">count</replaceable>
@@ -382,10 +382,10 @@ COPY <replaceable class="parameter">count</replaceable>
 
   <note>
    <para>
-    <application>psql</> will print this command tag only if the command
-    was not <literal>COPY ... TO STDOUT</>, or the
-    equivalent <application>psql</> meta-command
-    <literal>\copy ... to stdout</>.  This is to prevent confusing the
+    <application>psql</application> will print this command tag only if the command
+    was not <literal>COPY ... TO STDOUT</literal>, or the
+    equivalent <application>psql</application> meta-command
+    <literal>\copy ... to stdout</literal>.  This is to prevent confusing the
     command tag with the data that was just printed.
    </para>
   </note>
@@ -403,16 +403,16 @@ COPY <replaceable class="parameter">count</replaceable>
 
    <para>
     <command>COPY FROM</command> can be used with plain tables and with views
-    that have <literal>INSTEAD OF INSERT</> triggers.
+    that have <literal>INSTEAD OF INSERT</literal> triggers.
    </para>
 
    <para>
     <command>COPY</command> only deals with the specific table named;
     it does not copy data to or from child tables.  Thus for example
-    <literal>COPY <replaceable class="parameter">table</> TO</literal>
+    <literal>COPY <replaceable class="parameter">table</replaceable> TO</literal>
     shows the same data as <literal>SELECT * FROM ONLY <replaceable
-    class="parameter">table</></literal>.  But <literal>COPY
-    (SELECT * FROM <replaceable class="parameter">table</>) TO ...</literal>
+    class="parameter">table</replaceable></literal>.  But <literal>COPY
+    (SELECT * FROM <replaceable class="parameter">table</replaceable>) TO ...</literal>
     can be used to dump all of the data in an inheritance hierarchy.
    </para>
 
@@ -427,7 +427,7 @@ COPY <replaceable class="parameter">count</replaceable>
    <para>
     If row-level security is enabled for the table, the relevant
     <command>SELECT</command> policies will apply to <literal>COPY
-    <replaceable class="parameter">table</> TO</literal> statements.
+    <replaceable class="parameter">table</replaceable> TO</literal> statements.
     Currently, <command>COPY FROM</command> is not supported for tables
     with row-level security. Use equivalent <command>INSERT</command>
     statements instead.
@@ -491,10 +491,10 @@ COPY <replaceable class="parameter">count</replaceable>
     <varname>DateStyle</varname>. To ensure portability to other
     <productname>PostgreSQL</productname> installations that might use
     non-default <varname>DateStyle</varname> settings,
-    <varname>DateStyle</varname> should be set to <literal>ISO</> before
-    using <command>COPY TO</>.  It is also a good idea to avoid dumping
+    <varname>DateStyle</varname> should be set to <literal>ISO</literal> before
+    using <command>COPY TO</command>.  It is also a good idea to avoid dumping
     data with <varname>IntervalStyle</varname> set to
-    <literal>sql_standard</>, because negative interval values might be
+    <literal>sql_standard</literal>, because negative interval values might be
     misinterpreted by a server that has a different setting for
     <varname>IntervalStyle</varname>.
    </para>
@@ -519,7 +519,7 @@ COPY <replaceable class="parameter">count</replaceable>
    </para>
 
    <para>
-    <literal>FORCE_NULL</> and <literal>FORCE_NOT_NULL</> can be used
+    <literal>FORCE_NULL</literal> and <literal>FORCE_NOT_NULL</literal> can be used
     simultaneously on the same column. This results in converting quoted
     null strings to null values and unquoted null strings to empty strings.
    </para>
@@ -533,7 +533,7 @@ COPY <replaceable class="parameter">count</replaceable>
    <title>Text Format</title>
 
    <para>
-    When the <literal>text</> format is used,
+    When the <literal>text</literal> format is used,
     the data read or written is a text file with one line per table row.
     Columns in a row are separated by the delimiter character.
     The column values themselves are strings generated by the
@@ -548,17 +548,17 @@ COPY <replaceable class="parameter">count</replaceable>
 
    <para>
     End of data can be represented by a single line containing just
-    backslash-period (<literal>\.</>).  An end-of-data marker is
+    backslash-period (<literal>\.</literal>).  An end-of-data marker is
     not necessary when reading from a file, since the end of file
     serves perfectly well; it is needed only when copying data to or from
     client applications using pre-3.0 client protocol.
    </para>
 
    <para>
-    Backslash characters (<literal>\</>) can be used in the
+    Backslash characters (<literal>\</literal>) can be used in the
     <command>COPY</command> data to quote data characters that might
     otherwise be taken as row or column delimiters. In particular, the
-    following characters <emphasis>must</> be preceded by a backslash if
+    following characters <emphasis>must</emphasis> be preceded by a backslash if
     they appear as part of a column value: backslash itself,
     newline, carriage return, and the current delimiter character.
    </para>
@@ -587,37 +587,37 @@ COPY <replaceable class="parameter">count</replaceable>
 
      <tbody>
       <row>
-       <entry><literal>\b</></entry>
+       <entry><literal>\b</literal></entry>
        <entry>Backspace (ASCII 8)</entry>
       </row>
       <row>
-       <entry><literal>\f</></entry>
+       <entry><literal>\f</literal></entry>
        <entry>Form feed (ASCII 12)</entry>
       </row>
       <row>
-       <entry><literal>\n</></entry>
+       <entry><literal>\n</literal></entry>
        <entry>Newline (ASCII 10)</entry>
       </row>
       <row>
-       <entry><literal>\r</></entry>
+       <entry><literal>\r</literal></entry>
        <entry>Carriage return (ASCII 13)</entry>
       </row>
       <row>
-       <entry><literal>\t</></entry>
+       <entry><literal>\t</literal></entry>
        <entry>Tab (ASCII 9)</entry>
       </row>
       <row>
-       <entry><literal>\v</></entry>
+       <entry><literal>\v</literal></entry>
        <entry>Vertical tab (ASCII 11)</entry>
       </row>
       <row>
-       <entry><literal>\</><replaceable>digits</></entry>
+       <entry><literal>\</literal><replaceable>digits</replaceable></entry>
        <entry>Backslash followed by one to three octal digits specifies
        the character with that numeric code</entry>
       </row>
       <row>
-       <entry><literal>\x</><replaceable>digits</></entry>
-       <entry>Backslash <literal>x</> followed by one or two hex digits specifies
+       <entry><literal>\x</literal><replaceable>digits</replaceable></entry>
+       <entry>Backslash <literal>x</literal> followed by one or two hex digits specifies
        the character with that numeric code</entry>
       </row>
      </tbody>
@@ -633,15 +633,15 @@ COPY <replaceable class="parameter">count</replaceable>
     Any other backslashed character that is not mentioned in the above table
     will be taken to represent itself.  However, beware of adding backslashes
     unnecessarily, since that might accidentally produce a string matching the
-    end-of-data marker (<literal>\.</>) or the null string (<literal>\N</> by
+    end-of-data marker (<literal>\.</literal>) or the null string (<literal>\N</literal> by
     default).  These strings will be recognized before any other backslash
     processing is done.
    </para>
 
    <para>
     It is strongly recommended that applications generating <command>COPY</command> data convert
-    data newlines and carriage returns to the <literal>\n</> and
-    <literal>\r</> sequences respectively.  At present it is
+    data newlines and carriage returns to the <literal>\n</literal> and
+    <literal>\r</literal> sequences respectively.  At present it is
     possible to represent a data carriage return by a backslash and carriage
     return, and to represent a data newline by a backslash and newline.
     However, these representations might not be accepted in future releases.
@@ -652,10 +652,10 @@ COPY <replaceable class="parameter">count</replaceable>
 
    <para>
     <command>COPY TO</command> will terminate each row with a Unix-style
-    newline (<quote><literal>\n</></>).  Servers running on Microsoft Windows instead
-    output carriage return/newline (<quote><literal>\r\n</></>), but only for
-    <command>COPY</> to a server file; for consistency across platforms,
-    <command>COPY TO STDOUT</> always sends <quote><literal>\n</></>
+    newline (<quote><literal>\n</literal></quote>).  Servers running on Microsoft Windows instead
+    output carriage return/newline (<quote><literal>\r\n</literal></quote>), but only for
+    <command>COPY</command> to a server file; for consistency across platforms,
+    <command>COPY TO STDOUT</command> always sends <quote><literal>\n</literal></quote>
     regardless of server platform.
     <command>COPY FROM</command> can handle lines ending with newlines,
     carriage returns, or carriage return/newlines.  To reduce the risk of
@@ -670,62 +670,62 @@ COPY <replaceable class="parameter">count</replaceable>
 
    <para>
     This format option is used for importing and exporting the Comma
-    Separated Value (<literal>CSV</>) file format used by many other
+    Separated Value (<literal>CSV</literal>) file format used by many other
     programs, such as spreadsheets. Instead of the escaping rules used by
     <productname>PostgreSQL</productname>'s standard text format, it
     produces and recognizes the common CSV escaping mechanism.
    </para>
 
    <para>
-    The values in each record are separated by the <literal>DELIMITER</>
+    The values in each record are separated by the <literal>DELIMITER</literal>
     character. If the value contains the delimiter character, the
-    <literal>QUOTE</> character, the <literal>NULL</> string, a carriage
+    <literal>QUOTE</literal> character, the <literal>NULL</literal> string, a carriage
     return, or line feed character, then the whole value is prefixed and
-    suffixed by the <literal>QUOTE</> character, and any occurrence
-    within the value of a <literal>QUOTE</> character or the
-    <literal>ESCAPE</> character is preceded by the escape character.
-    You can also use <literal>FORCE_QUOTE</> to force quotes when outputting
-    non-<literal>NULL</> values in specific columns.
+    suffixed by the <literal>QUOTE</literal> character, and any occurrence
+    within the value of a <literal>QUOTE</literal> character or the
+    <literal>ESCAPE</literal> character is preceded by the escape character.
+    You can also use <literal>FORCE_QUOTE</literal> to force quotes when outputting
+    non-<literal>NULL</literal> values in specific columns.
    </para>
 
    <para>
-    The <literal>CSV</> format has no standard way to distinguish a
-    <literal>NULL</> value from an empty string.
-    <productname>PostgreSQL</>'s <command>COPY</> handles this by quoting.
-    A <literal>NULL</> is output as the <literal>NULL</> parameter string
-    and is not quoted, while a non-<literal>NULL</> value matching the
-    <literal>NULL</> parameter string is quoted.  For example, with the
-    default settings, a <literal>NULL</> is written as an unquoted empty
+    The <literal>CSV</literal> format has no standard way to distinguish a
+    <literal>NULL</literal> value from an empty string.
+    <productname>PostgreSQL</productname>'s <command>COPY</command> handles this by quoting.
+    A <literal>NULL</literal> is output as the <literal>NULL</literal> parameter string
+    and is not quoted, while a non-<literal>NULL</literal> value matching the
+    <literal>NULL</literal> parameter string is quoted.  For example, with the
+    default settings, a <literal>NULL</literal> is written as an unquoted empty
     string, while an empty string data value is written with double quotes
-    (<literal>""</>). Reading values follows similar rules. You can
-    use <literal>FORCE_NOT_NULL</> to prevent <literal>NULL</> input
+    (<literal>""</literal>). Reading values follows similar rules. You can
+    use <literal>FORCE_NOT_NULL</literal> to prevent <literal>NULL</literal> input
     comparisons for specific columns. You can also use
-    <literal>FORCE_NULL</> to convert quoted null string data values to
-    <literal>NULL</>.
+    <literal>FORCE_NULL</literal> to convert quoted null string data values to
+    <literal>NULL</literal>.
    </para>
 
    <para>
-    Because backslash is not a special character in the <literal>CSV</>
-    format, <literal>\.</>, the end-of-data marker, could also appear
-    as a data value.  To avoid any misinterpretation, a <literal>\.</>
+    Because backslash is not a special character in the <literal>CSV</literal>
+    format, <literal>\.</literal>, the end-of-data marker, could also appear
+    as a data value.  To avoid any misinterpretation, a <literal>\.</literal>
     data value appearing as a lone entry on a line is automatically
     quoted on output, and on input, if quoted, is not interpreted as the
     end-of-data marker.  If you are loading a file created by another
     application that has a single unquoted column and might have a
-    value of <literal>\.</>, you might need to quote that value in the
+    value of <literal>\.</literal>, you might need to quote that value in the
     input file.
    </para>
 
    <note>
     <para>
-     In <literal>CSV</> format, all characters are significant. A quoted value
+     In <literal>CSV</literal> format, all characters are significant. A quoted value
      surrounded by white space, or any characters other than
-     <literal>DELIMITER</>, will include those characters. This can cause
-     errors if you import data from a system that pads <literal>CSV</>
+     <literal>DELIMITER</literal>, will include those characters. This can cause
+     errors if you import data from a system that pads <literal>CSV</literal>
      lines with white space out to some fixed width. If such a situation
-     arises you might need to preprocess the <literal>CSV</> file to remove
+     arises you might need to preprocess the <literal>CSV</literal> file to remove
      the trailing white space, before importing the data into
-     <productname>PostgreSQL</>.
+     <productname>PostgreSQL</productname>.
     </para>
    </note>
 
@@ -743,7 +743,7 @@ COPY <replaceable class="parameter">count</replaceable>
      Many programs produce strange and occasionally perverse CSV files,
      so the file format is more a convention than a standard. Thus you
      might encounter some files that cannot be imported using this
-     mechanism, and <command>COPY</> might produce files that other
+     mechanism, and <command>COPY</command> might produce files that other
      programs cannot process.
     </para>
    </note>
@@ -756,17 +756,17 @@ COPY <replaceable class="parameter">count</replaceable>
    <para>
     The <literal>binary</literal> format option causes all data to be
     stored/read as binary format rather than as text.  It is
-    somewhat faster than the text and <literal>CSV</> formats,
+    somewhat faster than the text and <literal>CSV</literal> formats,
     but a binary-format file is less portable across machine architectures and
     <productname>PostgreSQL</productname> versions.
     Also, the binary format is very data type specific; for example
-    it will not work to output binary data from a <type>smallint</> column
-    and read it into an <type>integer</> column, even though that would work
+    it will not work to output binary data from a <type>smallint</type> column
+    and read it into an <type>integer</type> column, even though that would work
     fine in text format.
    </para>
 
    <para>
-    The <literal>binary</> file format consists
+    The <literal>binary</literal> file format consists
     of a file header, zero or more tuples containing the row data, and
     a file trailer.  Headers and data are in network byte order.
    </para>
@@ -790,7 +790,7 @@ COPY <replaceable class="parameter">count</replaceable>
       <term>Signature</term>
       <listitem>
        <para>
-11-byte sequence <literal>PGCOPY\n\377\r\n\0</> &mdash; note that the zero byte
+11-byte sequence <literal>PGCOPY\n\377\r\n\0</literal> &mdash; note that the zero byte
 is a required part of the signature.  (The signature is designed to allow
 easy identification of files that have been munged by a non-8-bit-clean
 transfer.  This signature will be changed by end-of-line-translation
@@ -804,7 +804,7 @@ filters, dropped zero bytes, dropped high bits, or parity changes.)
       <listitem>
        <para>
 32-bit integer bit mask to denote important aspects of the file format. Bits
-are numbered from 0 (<acronym>LSB</>) to 31 (<acronym>MSB</>).  Note that
+are numbered from 0 (<acronym>LSB</acronym>) to 31 (<acronym>MSB</acronym>).  Note that
 this field is stored in network byte order (most significant byte first),
 as are all the integer fields used in the file format.  Bits
 16-31 are reserved to denote critical file format issues; a reader
@@ -880,7 +880,7 @@ to be specified.
     <para>
 To determine the appropriate binary format for the actual tuple data you
 should consult the <productname>PostgreSQL</productname> source, in
-particular the <function>*send</> and <function>*recv</> functions for
+particular the <function>*send</function> and <function>*recv</function> functions for
 each column's data type (typically these functions are found in the
 <filename>src/backend/utils/adt/</filename> directory of the source
 distribution).
@@ -924,7 +924,7 @@ COPY country TO STDOUT (DELIMITER '|');
   </para>
 
   <para>
-   To copy data from a file into the <literal>country</> table:
+   To copy data from a file into the <literal>country</literal> table:
 <programlisting>
 COPY country FROM '/usr1/proj/bray/sql/country_data';
 </programlisting>
@@ -986,7 +986,7 @@ ZW      ZIMBABWE
   </para>
 
   <para>
-   The following syntax was used before <productname>PostgreSQL</>
+   The following syntax was used before <productname>PostgreSQL</productname>
    version 9.0 and is still supported:
 
 <synopsis>
@@ -1015,13 +1015,13 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
                 [ FORCE QUOTE { <replaceable class="parameter">column_name</replaceable> [, ...] | * } ] ] ]
 </synopsis>
 
-   Note that in this syntax, <literal>BINARY</> and <literal>CSV</> are
-   treated as independent keywords, not as arguments of a <literal>FORMAT</>
+   Note that in this syntax, <literal>BINARY</literal> and <literal>CSV</literal> are
+   treated as independent keywords, not as arguments of a <literal>FORMAT</literal>
    option.
   </para>
 
   <para>
-   The following syntax was used before <productname>PostgreSQL</>
+   The following syntax was used before <productname>PostgreSQL</productname>
    version 7.3 and is still supported:
 
 <synopsis>

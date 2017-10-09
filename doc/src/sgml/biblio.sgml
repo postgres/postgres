@@ -171,7 +171,7 @@ ssimkovi@ag.or.at
     <abstract>
      <para>
       Discusses SQL history and syntax, and describes the addition of
-      <literal>INTERSECT</> and <literal>EXCEPT</> constructs into
+      <literal>INTERSECT</literal> and <literal>EXCEPT</literal> constructs into
       <productname>PostgreSQL</productname>.  Prepared as a Master's
       Thesis with the support of O. Univ. Prof. Dr. Georg Gottlob and
       Univ. Ass. Mag. Katrin Seyr at Vienna University of Technology.

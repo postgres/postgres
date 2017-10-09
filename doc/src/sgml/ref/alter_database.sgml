@@ -89,7 +89,7 @@ ALTER DATABASE <replaceable class="parameter">name</replaceable> RESET ALL
    database. Whenever a new session is subsequently started in that
    database, the specified value becomes the session default value.
    The database-specific default overrides whatever setting is present
-   in <filename>postgresql.conf</> or has been received from the
+   in <filename>postgresql.conf</filename> or has been received from the
    <command>postgres</command> command line.  Only the database
    owner or a superuser can change the session defaults for a
    database.  Certain variables cannot be set this way, or can only be
@@ -183,7 +183,7 @@ ALTER DATABASE <replaceable class="parameter">name</replaceable> RESET ALL
         database-specific setting is removed, so the system-wide default
         setting will be inherited in new sessions.  Use <literal>RESET
         ALL</literal> to clear all database-specific settings.
-        <literal>SET FROM CURRENT</> saves the session's current value of
+        <literal>SET FROM CURRENT</literal> saves the session's current value of
         the parameter as the database-specific value.
        </para>
 

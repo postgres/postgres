@@ -65,12 +65,12 @@ SELECT (a + b) AS c FROM test_complex;
 
   <para>
    We've shown how to create a binary operator here.  To create unary
-   operators, just omit one of <literal>leftarg</> (for left unary) or
-   <literal>rightarg</> (for right unary).  The <literal>procedure</>
+   operators, just omit one of <literal>leftarg</literal> (for left unary) or
+   <literal>rightarg</literal> (for right unary).  The <literal>procedure</literal>
    clause and the argument clauses are the only required items in
-   <command>CREATE OPERATOR</command>.  The <literal>commutator</>
+   <command>CREATE OPERATOR</command>.  The <literal>commutator</literal>
    clause shown in the example is an optional hint to the query
-   optimizer.  Further details about <literal>commutator</> and other
+   optimizer.  Further details about <literal>commutator</literal> and other
    optimizer hints appear in the next section.
   </para>
  </sect1>
@@ -98,16 +98,16 @@ SELECT (a + b) AS c FROM test_complex;
    </para>
 
    <sect2>
-    <title><literal>COMMUTATOR</></title>
+    <title><literal>COMMUTATOR</literal></title>
 
     <para>
-     The <literal>COMMUTATOR</> clause, if provided, names an operator that is the
+     The <literal>COMMUTATOR</literal> clause, if provided, names an operator that is the
      commutator of the operator being defined.  We say that operator A is the
      commutator of operator B if (x A y) equals (y B x) for all possible input
      values x, y.  Notice that B is also the commutator of A.  For example,
-     operators <literal>&lt;</> and <literal>&gt;</> for a particular data type are usually each others'
-     commutators, and operator <literal>+</> is usually commutative with itself.
-     But operator <literal>-</> is usually not commutative with anything.
+     operators <literal>&lt;</literal> and <literal>&gt;</literal> for a particular data type are usually each others'
+     commutators, and operator <literal>+</literal> is usually commutative with itself.
+     But operator <literal>-</literal> is usually not commutative with anything.
     </para>
 
     <para>
@@ -115,23 +115,23 @@ SELECT (a + b) AS c FROM test_complex;
      right operand type of its commutator, and vice versa.  So the name of
      the commutator operator is all that <productname>PostgreSQL</productname>
      needs to be given to look up the commutator, and that's all that needs to
-     be provided in the <literal>COMMUTATOR</> clause.
+     be provided in the <literal>COMMUTATOR</literal> clause.
     </para>
 
     <para>
      It's critical to provide commutator information for operators that
      will be used in indexes and join clauses, because this allows the
-     query optimizer to <quote>flip around</> such a clause to the forms
+     query optimizer to <quote>flip around</quote> such a clause to the forms
      needed for different plan types.  For example, consider a query with
-     a WHERE clause like <literal>tab1.x = tab2.y</>, where <literal>tab1.x</>
-     and <literal>tab2.y</> are of a user-defined type, and suppose that
-     <literal>tab2.y</> is indexed.  The optimizer cannot generate an
+     a WHERE clause like <literal>tab1.x = tab2.y</literal>, where <literal>tab1.x</literal>
+     and <literal>tab2.y</literal> are of a user-defined type, and suppose that
+     <literal>tab2.y</literal> is indexed.  The optimizer cannot generate an
      index scan unless it can determine how to flip the clause around to
-     <literal>tab2.y = tab1.x</>, because the index-scan machinery expects
+     <literal>tab2.y = tab1.x</literal>, because the index-scan machinery expects
      to see the indexed column on the left of the operator it is given.
-     <productname>PostgreSQL</productname> will <emphasis>not</> simply
+     <productname>PostgreSQL</productname> will <emphasis>not</emphasis> simply
      assume that this is a valid transformation &mdash; the creator of the
-     <literal>=</> operator must specify that it is valid, by marking the
+     <literal>=</literal> operator must specify that it is valid, by marking the
      operator with commutator information.
     </para>
 
@@ -145,20 +145,20 @@ SELECT (a + b) AS c FROM test_complex;
      <itemizedlist>
       <listitem>
        <para>
-        One way is to omit the <literal>COMMUTATOR</> clause in the first operator that
+        One way is to omit the <literal>COMMUTATOR</literal> clause in the first operator that
         you define, and then provide one in the second operator's definition.
         Since <productname>PostgreSQL</productname> knows that commutative
         operators come in pairs, when it sees the second definition it will
-        automatically go back and fill in the missing <literal>COMMUTATOR</> clause in
+        automatically go back and fill in the missing <literal>COMMUTATOR</literal> clause in
         the first definition.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        The other, more straightforward way is just to include <literal>COMMUTATOR</> clauses
+        The other, more straightforward way is just to include <literal>COMMUTATOR</literal> clauses
         in both definitions.  When <productname>PostgreSQL</productname> processes
-        the first definition and realizes that <literal>COMMUTATOR</> refers to a nonexistent
+        the first definition and realizes that <literal>COMMUTATOR</literal> refers to a nonexistent
         operator, the system will make a dummy entry for that operator in the
         system catalog.  This dummy entry will have valid data only
         for the operator name, left and right operand types, and result type,
@@ -175,15 +175,15 @@ SELECT (a + b) AS c FROM test_complex;
    </sect2>
 
    <sect2>
-    <title><literal>NEGATOR</></title>
+    <title><literal>NEGATOR</literal></title>
 
     <para>
-     The <literal>NEGATOR</> clause, if provided, names an operator that is the
+     The <literal>NEGATOR</literal> clause, if provided, names an operator that is the
      negator of the operator being defined.  We say that operator A
      is the negator of operator B if both return Boolean results and
      (x A y) equals NOT (x B y) for all possible inputs x, y.
      Notice that B is also the negator of A.
-     For example, <literal>&lt;</> and <literal>&gt;=</> are a negator pair for most data types.
+     For example, <literal>&lt;</literal> and <literal>&gt;=</literal> are a negator pair for most data types.
      An operator can never validly be its own negator.
     </para>
 
@@ -195,15 +195,15 @@ SELECT (a + b) AS c FROM test_complex;
 
    <para>
     An operator's negator must have the same left and/or right operand types
-    as the operator to be defined, so just as with <literal>COMMUTATOR</>, only the operator
-    name need be given in the <literal>NEGATOR</> clause.
+    as the operator to be defined, so just as with <literal>COMMUTATOR</literal>, only the operator
+    name need be given in the <literal>NEGATOR</literal> clause.
    </para>
 
    <para>
     Providing a negator is very helpful to the query optimizer since
-    it allows expressions like <literal>NOT (x = y)</> to be simplified into
-    <literal>x &lt;&gt; y</>.  This comes up more often than you might think, because
-    <literal>NOT</> operations can be inserted as a consequence of other rearrangements.
+    it allows expressions like <literal>NOT (x = y)</literal> to be simplified into
+    <literal>x &lt;&gt; y</literal>.  This comes up more often than you might think, because
+    <literal>NOT</literal> operations can be inserted as a consequence of other rearrangements.
    </para>
 
    <para>
@@ -214,13 +214,13 @@ SELECT (a + b) AS c FROM test_complex;
   </sect2>
 
   <sect2>
-   <title><literal>RESTRICT</></title>
+   <title><literal>RESTRICT</literal></title>
 
    <para>
-    The <literal>RESTRICT</> clause, if provided, names a restriction selectivity
+    The <literal>RESTRICT</literal> clause, if provided, names a restriction selectivity
     estimation function for the operator.  (Note that this is a function
-    name, not an operator name.)  <literal>RESTRICT</> clauses only make sense for
-    binary operators that return <type>boolean</>.  The idea behind a restriction
+    name, not an operator name.)  <literal>RESTRICT</literal> clauses only make sense for
+    binary operators that return <type>boolean</type>.  The idea behind a restriction
     selectivity estimator is to guess what fraction of the rows in a
     table will satisfy a <literal>WHERE</literal>-clause condition of the form:
 <programlisting>
@@ -228,10 +228,10 @@ column OP constant
 </programlisting>
     for the current operator and a particular constant value.
     This assists the optimizer by
-    giving it some idea of how many rows will be eliminated by <literal>WHERE</>
+    giving it some idea of how many rows will be eliminated by <literal>WHERE</literal>
     clauses that have this form.  (What happens if the constant is on
     the left, you might be wondering?  Well, that's one of the things that
-    <literal>COMMUTATOR</> is for...)
+    <literal>COMMUTATOR</literal> is for...)
    </para>
 
    <para>
@@ -240,12 +240,12 @@ column OP constant
     one of the system's standard estimators for many of your own operators.
     These are the standard restriction estimators:
     <simplelist>
-     <member><function>eqsel</> for <literal>=</></member>
-     <member><function>neqsel</> for <literal>&lt;&gt;</></member>
-     <member><function>scalarltsel</> for <literal>&lt;</></member>
-     <member><function>scalarlesel</> for <literal>&lt;=</></member>
-     <member><function>scalargtsel</> for <literal>&gt;</></member>
-     <member><function>scalargesel</> for <literal>&gt;=</></member>
+     <member><function>eqsel</function> for <literal>=</literal></member>
+     <member><function>neqsel</function> for <literal>&lt;&gt;</literal></member>
+     <member><function>scalarltsel</function> for <literal>&lt;</literal></member>
+     <member><function>scalarlesel</function> for <literal>&lt;=</literal></member>
+     <member><function>scalargtsel</function> for <literal>&gt;</literal></member>
+     <member><function>scalargesel</function> for <literal>&gt;=</literal></member>
     </simplelist>
    </para>
 
@@ -258,14 +258,14 @@ column OP constant
    </para>
 
    <para>
-    You can use <function>scalarltsel</>, <function>scalarlesel</>,
-    <function>scalargtsel</> and <function>scalargesel</> for comparisons on
+    You can use <function>scalarltsel</function>, <function>scalarlesel</function>,
+    <function>scalargtsel</function> and <function>scalargesel</function> for comparisons on
     data types that have some sensible means of being converted into numeric
     scalars for range comparisons.  If possible, add the data type to those
     understood by the function <function>convert_to_scalar()</function> in
     <filename>src/backend/utils/adt/selfuncs.c</filename>.
     (Eventually, this function should be replaced by per-data-type functions
-    identified through a column of the <classname>pg_type</> system catalog; but that hasn't happened
+    identified through a column of the <classname>pg_type</classname> system catalog; but that hasn't happened
     yet.)  If you do not do this, things will still work, but the optimizer's
     estimates won't be as good as they could be.
    </para>
@@ -279,15 +279,15 @@ column OP constant
    </sect2>
 
    <sect2>
-    <title><literal>JOIN</></title>
+    <title><literal>JOIN</literal></title>
 
     <para>
-     The <literal>JOIN</> clause, if provided, names a join selectivity
+     The <literal>JOIN</literal> clause, if provided, names a join selectivity
      estimation function for the operator.  (Note that this is a function
-     name, not an operator name.)  <literal>JOIN</> clauses only make sense for
+     name, not an operator name.)  <literal>JOIN</literal> clauses only make sense for
      binary operators that return <type>boolean</type>.  The idea behind a join
      selectivity estimator is to guess what fraction of the rows in a
-     pair of tables will satisfy a <literal>WHERE</>-clause condition of the form:
+     pair of tables will satisfy a <literal>WHERE</literal>-clause condition of the form:
 <programlisting>
 table1.column1 OP table2.column2
 </programlisting>
@@ -301,27 +301,27 @@ table1.column1 OP table2.column2
      a join selectivity estimator function, but will just suggest that
      you use one of the standard estimators if one is applicable:
      <simplelist>
-      <member><function>eqjoinsel</> for <literal>=</></member>
-      <member><function>neqjoinsel</> for <literal>&lt;&gt;</></member>
-      <member><function>scalarltjoinsel</> for <literal>&lt;</></member>
-      <member><function>scalarlejoinsel</> for <literal>&lt;=</></member>
-      <member><function>scalargtjoinsel</> for <literal>&gt;</></member>
-      <member><function>scalargejoinsel</> for <literal>&gt;=</></member>
-      <member><function>areajoinsel</> for 2D area-based comparisons</member>
-      <member><function>positionjoinsel</> for 2D position-based comparisons</member>
-      <member><function>contjoinsel</> for 2D containment-based comparisons</member>
+      <member><function>eqjoinsel</function> for <literal>=</literal></member>
+      <member><function>neqjoinsel</function> for <literal>&lt;&gt;</literal></member>
+      <member><function>scalarltjoinsel</function> for <literal>&lt;</literal></member>
+      <member><function>scalarlejoinsel</function> for <literal>&lt;=</literal></member>
+      <member><function>scalargtjoinsel</function> for <literal>&gt;</literal></member>
+      <member><function>scalargejoinsel</function> for <literal>&gt;=</literal></member>
+      <member><function>areajoinsel</function> for 2D area-based comparisons</member>
+      <member><function>positionjoinsel</function> for 2D position-based comparisons</member>
+      <member><function>contjoinsel</function> for 2D containment-based comparisons</member>
      </simplelist>
     </para>
    </sect2>
 
    <sect2>
-    <title><literal>HASHES</></title>
+    <title><literal>HASHES</literal></title>
 
     <para>
      The <literal>HASHES</literal> clause, if present, tells the system that
      it is permissible to use the hash join method for a join based on this
-     operator.  <literal>HASHES</> only makes sense for a binary operator that
-     returns <literal>boolean</>, and in practice the operator must represent
+     operator.  <literal>HASHES</literal> only makes sense for a binary operator that
+     returns <literal>boolean</literal>, and in practice the operator must represent
      equality for some data type or pair of data types.
     </para>
 
@@ -336,7 +336,7 @@ table1.column1 OP table2.column2
      hashing for operators that take the same data type on both sides.
      However, sometimes it is possible to design compatible hash functions
      for two or more data types; that is, functions that will generate the
-     same hash codes for <quote>equal</> values, even though the values
+     same hash codes for <quote>equal</quote> values, even though the values
      have different representations.  For example, it's fairly simple
      to arrange this property when hashing integers of different widths.
     </para>
@@ -357,10 +357,10 @@ table1.column1 OP table2.column2
      are machine-dependent ways in which it might fail to do the right thing.
      For example, if your data type is a structure in which there might be
      uninteresting pad bits, you cannot simply pass the whole structure to
-     <function>hash_any</>.  (Unless you write your other operators and
+     <function>hash_any</function>.  (Unless you write your other operators and
      functions to ensure that the unused bits are always zero, which is the
      recommended strategy.)
-     Another example is that on machines that meet the <acronym>IEEE</>
+     Another example is that on machines that meet the <acronym>IEEE</acronym>
      floating-point standard, negative zero and positive zero are different
      values (different bit patterns) but they are defined to compare equal.
      If a float value might contain negative zero then extra steps are needed
@@ -392,8 +392,8 @@ table1.column1 OP table2.column2
      strict, the
      function must also be complete: that is, it should return true or
      false, never null, for any two nonnull inputs.  If this rule is
-     not followed, hash-optimization of <literal>IN</> operations might
-     generate wrong results.  (Specifically, <literal>IN</> might return
+     not followed, hash-optimization of <literal>IN</literal> operations might
+     generate wrong results.  (Specifically, <literal>IN</literal> might return
      false where the correct answer according to the standard would be null;
      or it might yield an error complaining that it wasn't prepared for a
      null result.)
@@ -403,13 +403,13 @@ table1.column1 OP table2.column2
    </sect2>
 
    <sect2>
-    <title><literal>MERGES</></title>
+    <title><literal>MERGES</literal></title>
 
     <para>
      The <literal>MERGES</literal> clause, if present, tells the system that
      it is permissible to use the merge-join method for a join based on this
-     operator.  <literal>MERGES</> only makes sense for a binary operator that
-     returns <literal>boolean</>, and in practice the operator must represent
+     operator.  <literal>MERGES</literal> only makes sense for a binary operator that
+     returns <literal>boolean</literal>, and in practice the operator must represent
      equality for some data type or pair of data types.
     </para>
 
@@ -418,7 +418,7 @@ table1.column1 OP table2.column2
      into order and then scanning them in parallel.  So, both data types must
      be capable of being fully ordered, and the join operator must be one
      that can only succeed for pairs of values that fall at the
-     <quote>same place</>
+     <quote>same place</quote>
      in the sort order.  In practice this means that the join operator must
      behave like equality.  But it is possible to merge-join two
      distinct data types so long as they are logically compatible.  For
@@ -430,7 +430,7 @@ table1.column1 OP table2.column2
 
     <para>
      To be marked <literal>MERGES</literal>, the join operator must appear
-     as an equality member of a <literal>btree</> index operator family.
+     as an equality member of a <literal>btree</literal> index operator family.
      This is not enforced when you create
      the operator, since of course the referencing operator family couldn't
      exist yet.  But the operator will not actually be used for merge joins
@@ -445,7 +445,7 @@ table1.column1 OP table2.column2
      if they are different) that appears in the same operator family.
      If this is not the case, planner errors might occur when the operator
      is used.  Also, it is a good idea (but not strictly required) for
-     a <literal>btree</> operator family that supports multiple data types to provide
+     a <literal>btree</literal> operator family that supports multiple data types to provide
      equality operators for every combination of the data types; this
      allows better optimization.
     </para>

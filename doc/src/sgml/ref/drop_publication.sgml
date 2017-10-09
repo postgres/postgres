@@ -89,7 +89,7 @@ DROP PUBLICATION mypublication;
   <title>Compatibility</title>
 
   <para>
-   <command>DROP PUBLICATION</command> is a <productname>PostgreSQL</>
+   <command>DROP PUBLICATION</command> is a <productname>PostgreSQL</productname>
    extension.
   </para>
  </refsect1>

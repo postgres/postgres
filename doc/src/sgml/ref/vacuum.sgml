@@ -66,7 +66,7 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ ANALYZE ] [ <replaceable class="paramet
   </para>
 
   <para>
-   Plain <command>VACUUM</command> (without <literal>FULL</>) simply reclaims
+   Plain <command>VACUUM</command> (without <literal>FULL</literal>) simply reclaims
    space and makes it
    available for re-use.  This form of the command can operate in parallel
    with normal reading and writing of the table, as an exclusive lock
@@ -116,7 +116,7 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ ANALYZE ] [ <replaceable class="paramet
       <xref linkend="guc-vacuum-freeze-min-age"> and
       <xref linkend="guc-vacuum-freeze-table-age"> parameters
       set to zero.  Aggressive freezing is always performed when the
-      table is rewritten, so this option is redundant when <literal>FULL</>
+      table is rewritten, so this option is redundant when <literal>FULL</literal>
       is specified.
      </para>
     </listitem>
@@ -145,8 +145,8 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ ANALYZE ] [ <replaceable class="paramet
     <term><literal>DISABLE_PAGE_SKIPPING</literal></term>
     <listitem>
      <para>
-      Normally, <command>VACUUM</> will skip pages based on the <link
-      linkend="vacuum-for-visibility-map">visibility map</>.  Pages where
+      Normally, <command>VACUUM</command> will skip pages based on the <link
+      linkend="vacuum-for-visibility-map">visibility map</link>.  Pages where
       all tuples are known to be frozen can always be skipped, and those
       where all tuples are known to be visible to all transactions may be
       skipped except when performing an aggressive vacuum.  Furthermore,
@@ -176,7 +176,7 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ ANALYZE ] [ <replaceable class="paramet
     <listitem>
      <para>
       The name of a specific column to analyze. Defaults to all columns.
-      If a column list is specified, <literal>ANALYZE</> must also be
+      If a column list is specified, <literal>ANALYZE</literal> must also be
       specified.
      </para>
     </listitem>
@@ -188,7 +188,7 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ ANALYZE ] [ <replaceable class="paramet
   <title>Outputs</title>
 
    <para>
-    When <literal>VERBOSE</> is specified, <command>VACUUM</> emits
+    When <literal>VERBOSE</literal> is specified, <command>VACUUM</command> emits
     progress messages to indicate which table is currently being
     processed.  Various statistics about the tables are printed as well.
    </para>
@@ -202,19 +202,19 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ ANALYZE ] [ <replaceable class="paramet
     superuser.  However, database owners are allowed to
     vacuum all tables in their databases, except shared catalogs.
     (The restriction for shared catalogs means that a true database-wide
-    <command>VACUUM</> can only be performed by a superuser.)
-    <command>VACUUM</> will skip over any tables that the calling user
+    <command>VACUUM</command> can only be performed by a superuser.)
+    <command>VACUUM</command> will skip over any tables that the calling user
     does not have permission to vacuum.
    </para>
 
    <para>
-    <command>VACUUM</> cannot be executed inside a transaction block.
+    <command>VACUUM</command> cannot be executed inside a transaction block.
    </para>
 
    <para>
-    For tables with <acronym>GIN</> indexes, <command>VACUUM</command> (in
+    For tables with <acronym>GIN</acronym> indexes, <command>VACUUM</command> (in
     any form) also completes any pending index insertions, by moving pending
-    index entries to the appropriate places in the main <acronym>GIN</> index
+    index entries to the appropriate places in the main <acronym>GIN</acronym> index
     structure.  See <xref linkend="gin-fast-update"> for details.
    </para>
 
@@ -247,7 +247,7 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ ANALYZE ] [ <replaceable class="paramet
    </para>
 
    <para>
-    <productname>PostgreSQL</productname> includes an <quote>autovacuum</>
+    <productname>PostgreSQL</productname> includes an <quote>autovacuum</quote>
     facility which can automate routine vacuum maintenance.  For more
     information about automatic and manual vacuuming, see
     <xref linkend="routine-vacuuming">.

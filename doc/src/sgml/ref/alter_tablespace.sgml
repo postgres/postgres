@@ -83,8 +83,8 @@ ALTER TABLESPACE <replaceable>name</replaceable> RESET ( <replaceable class="par
     <listitem>
      <para>
       A tablespace parameter to be set or reset.  Currently, the only
-      available parameters are <varname>seq_page_cost</>,
-      <varname>random_page_cost</> and <varname>effective_io_concurrency</>.
+      available parameters are <varname>seq_page_cost</varname>,
+      <varname>random_page_cost</varname> and <varname>effective_io_concurrency</varname>.
       Setting either value for a particular tablespace will override the
       planner's usual estimate of the cost of reading pages from tables in
       that tablespace, as established by the configuration parameters of the

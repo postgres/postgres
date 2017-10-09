@@ -44,19 +44,19 @@ DROP INDEX [ CONCURRENTLY ] [ IF EXISTS ] <replaceable class="parameter">name</r
     <listitem>
      <para>
       Drop the index without locking out concurrent selects, inserts, updates,
-      and deletes on the index's table.  A normal <command>DROP INDEX</>
+      and deletes on the index's table.  A normal <command>DROP INDEX</command>
       acquires exclusive lock on the table, blocking other accesses until the
       index drop can be completed.  With this option, the command instead
       waits until conflicting transactions have completed.
      </para>
      <para>
       There are several caveats to be aware of when using this option.
-      Only one index name can be specified, and the <literal>CASCADE</> option
-      is not supported.  (Thus, an index that supports a <literal>UNIQUE</> or
-      <literal>PRIMARY KEY</> constraint cannot be dropped this way.)
-      Also, regular <command>DROP INDEX</> commands can be
+      Only one index name can be specified, and the <literal>CASCADE</literal> option
+      is not supported.  (Thus, an index that supports a <literal>UNIQUE</literal> or
+      <literal>PRIMARY KEY</literal> constraint cannot be dropped this way.)
+      Also, regular <command>DROP INDEX</command> commands can be
       performed within a transaction block, but
-      <command>DROP INDEX CONCURRENTLY</> cannot.
+      <command>DROP INDEX CONCURRENTLY</command> cannot.
      </para>
     </listitem>
    </varlistentry>

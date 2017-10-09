@@ -76,13 +76,13 @@ CREATE [ OR REPLACE ] RULE <replaceable class="parameter">name</replaceable> AS 
    <literal>ON DELETE</literal> rules (or any subset of those that's
    sufficient for your purposes) to replace update actions on the view
    with appropriate updates on other tables.  If you want to support
-   <command>INSERT RETURNING</> and so on, then be sure to put a suitable
-   <literal>RETURNING</> clause into each of these rules.
+   <command>INSERT RETURNING</command> and so on, then be sure to put a suitable
+   <literal>RETURNING</literal> clause into each of these rules.
   </para>
 
   <para>
    There is a catch if you try to use conditional rules for complex view
-   updates: there <emphasis>must</> be an unconditional
+   updates: there <emphasis>must</emphasis> be an unconditional
    <literal>INSTEAD</literal> rule for each action you wish to allow
    on the view.  If the rule is conditional, or is not
    <literal>INSTEAD</literal>, then the system will still reject
@@ -95,7 +95,7 @@ CREATE [ OR REPLACE ] RULE <replaceable class="parameter">name</replaceable> AS 
    Then make the conditional rules non-<literal>INSTEAD</literal>; in
    the cases where they are applied, they add to the default
    <literal>INSTEAD NOTHING</literal> action.  (This method does not
-   currently work to support <literal>RETURNING</> queries, however.)
+   currently work to support <literal>RETURNING</literal> queries, however.)
   </para>
 
   <note>
@@ -108,7 +108,7 @@ CREATE [ OR REPLACE ] RULE <replaceable class="parameter">name</replaceable> AS 
    </para>
 
    <para>
-    Another alternative worth considering is to use <literal>INSTEAD OF</>
+    Another alternative worth considering is to use <literal>INSTEAD OF</literal>
     triggers (see <xref linkend="sql-createtrigger">) in place of rules.
    </para>
   </note>
@@ -161,7 +161,7 @@ CREATE [ OR REPLACE ] RULE <replaceable class="parameter">name</replaceable> AS 
      <para>
       Any <acronym>SQL</acronym> conditional expression (returning
       <type>boolean</type>).  The condition expression cannot refer
-      to any tables except <literal>NEW</> and <literal>OLD</>, and
+      to any tables except <literal>NEW</literal> and <literal>OLD</literal>, and
       cannot contain aggregate functions.
      </para>
     </listitem>
@@ -171,7 +171,7 @@ CREATE [ OR REPLACE ] RULE <replaceable class="parameter">name</replaceable> AS 
     <term><option>INSTEAD</option></term>
     <listitem>
      <para><literal>INSTEAD</literal> indicates that the commands should be
-      executed <emphasis>instead of</> the original command.
+      executed <emphasis>instead of</emphasis> the original command.
      </para>
     </listitem>
    </varlistentry>
@@ -227,19 +227,19 @@ CREATE [ OR REPLACE ] RULE <replaceable class="parameter">name</replaceable> AS 
 
   <para>
    In a rule for <literal>INSERT</literal>, <literal>UPDATE</literal>, or
-   <literal>DELETE</literal> on a view, you can add a <literal>RETURNING</>
+   <literal>DELETE</literal> on a view, you can add a <literal>RETURNING</literal>
    clause that emits the view's columns.  This clause will be used to compute
-   the outputs if the rule is triggered by an <command>INSERT RETURNING</>,
-   <command>UPDATE RETURNING</>, or <command>DELETE RETURNING</> command
+   the outputs if the rule is triggered by an <command>INSERT RETURNING</command>,
+   <command>UPDATE RETURNING</command>, or <command>DELETE RETURNING</command> command
    respectively.  When the rule is triggered by a command without
-   <literal>RETURNING</>, the rule's <literal>RETURNING</> clause will be
+   <literal>RETURNING</literal>, the rule's <literal>RETURNING</literal> clause will be
    ignored.  The current implementation allows only unconditional
-   <literal>INSTEAD</> rules to contain <literal>RETURNING</>; furthermore
-   there can be at most one <literal>RETURNING</> clause among all the rules
+   <literal>INSTEAD</literal> rules to contain <literal>RETURNING</literal>; furthermore
+   there can be at most one <literal>RETURNING</literal> clause among all the rules
    for the same event.  (This ensures that there is only one candidate
-   <literal>RETURNING</> clause to be used to compute the results.)
-   <literal>RETURNING</> queries on the view will be rejected if
-   there is no <literal>RETURNING</> clause in any available rule.
+   <literal>RETURNING</literal> clause to be used to compute the results.)
+   <literal>RETURNING</literal> queries on the view will be rejected if
+   there is no <literal>RETURNING</literal> clause in any available rule.
   </para>
 
   <para>

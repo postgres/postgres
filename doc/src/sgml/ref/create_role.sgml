@@ -51,11 +51,11 @@ CREATE ROLE <replaceable class="parameter">name</replaceable> [ [ WITH ] <replac
    <command>CREATE ROLE</command> adds a new role to a
    <productname>PostgreSQL</productname> database cluster.  A role is
    an entity that can own database objects and have database privileges;
-   a role can be considered a <quote>user</>, a <quote>group</>, or both
+   a role can be considered a <quote>user</quote>, a <quote>group</quote>, or both
    depending on how it is used.  Refer to
    <xref linkend="user-manag"> and <xref
    linkend="client-authentication"> for information about managing
-   users and authentication.  You must have <literal>CREATEROLE</>
+   users and authentication.  You must have <literal>CREATEROLE</literal>
    privilege or be a database superuser to use this command.
   </para>
 
@@ -83,7 +83,7 @@ CREATE ROLE <replaceable class="parameter">name</replaceable> [ [ WITH ] <replac
       <term><literal>NOSUPERUSER</literal></term>
       <listitem>
        <para>
-        These clauses determine whether the new role is a <quote>superuser</>,
+        These clauses determine whether the new role is a <quote>superuser</quote>,
         who can override all access restrictions within the database.
         Superuser status is dangerous and should be used only when really
         needed.  You must yourself be a superuser to create a new superuser.
@@ -94,8 +94,8 @@ CREATE ROLE <replaceable class="parameter">name</replaceable> [ [ WITH ] <replac
      </varlistentry>
 
      <varlistentry>
-      <term><literal>CREATEDB</></term>
-      <term><literal>NOCREATEDB</></term>
+      <term><literal>CREATEDB</literal></term>
+      <term><literal>NOCREATEDB</literal></term>
       <listitem>
        <para>
         These clauses define a role's ability to create databases.  If
@@ -128,13 +128,13 @@ CREATE ROLE <replaceable class="parameter">name</replaceable> [ [ WITH ] <replac
       <term><literal>NOINHERIT</literal></term>
       <listitem>
        <para>
-        These clauses determine whether a role <quote>inherits</> the
+        These clauses determine whether a role <quote>inherits</quote> the
         privileges of roles it is a member of.
         A role with the <literal>INHERIT</literal> attribute can automatically
         use whatever database privileges have been granted to all roles
         it is directly or indirectly a member of.
         Without <literal>INHERIT</literal>, membership in another role
-        only grants the ability to <command>SET ROLE</> to that other role;
+        only grants the ability to <command>SET ROLE</command> to that other role;
         the privileges of the other role are only available after having
         done so.
         If not specified,
@@ -156,7 +156,7 @@ CREATE ROLE <replaceable class="parameter">name</replaceable> [ [ WITH ] <replac
         privileges, but are not users in the usual sense of the word.
         If not specified,
         <literal>NOLOGIN</literal> is the default, except when
-        <command>CREATE ROLE</> is invoked through its alternative spelling
+        <command>CREATE ROLE</command> is invoked through its alternative spelling
         <xref linkend="sql-createuser">.
        </para>
       </listitem>
@@ -172,7 +172,7 @@ CREATE ROLE <replaceable class="parameter">name</replaceable> [ [ WITH ] <replac
         connect to the server in replication mode (physical or logical
         replication) and in order to be able to create or drop replication
         slots.
-        A role having the <literal>REPLICATION</> attribute is a very
+        A role having the <literal>REPLICATION</literal> attribute is a very
         highly privileged role, and should only be used on roles actually
         used for replication. If not specified,
         <literal>NOREPLICATION</literal> is the default.
@@ -210,7 +210,7 @@ CREATE ROLE <replaceable class="parameter">name</replaceable> [ [ WITH ] <replac
      </varlistentry>
 
      <varlistentry>
-      <term>[ <literal>ENCRYPTED</> ] <literal>PASSWORD</> <replaceable class="parameter">password</replaceable></term>
+      <term>[ <literal>ENCRYPTED</literal> ] <literal>PASSWORD</literal> <replaceable class="parameter">password</replaceable></term>
       <listitem>
        <para>
         Sets the role's password.  (A password is only of use for
@@ -225,7 +225,7 @@ CREATE ROLE <replaceable class="parameter">name</replaceable> [ [ WITH ] <replac
        <note>
          <para>
            Specifying an empty string will also set the password to null,
-           but that was not the case before <productname>PostgreSQL</>
+           but that was not the case before <productname>PostgreSQL</productname>
            version 10. In earlier versions, an empty string could be used,
            or not, depending on the authentication method and the exact
            version, and libpq would refuse to use it in any case.
@@ -235,12 +235,12 @@ CREATE ROLE <replaceable class="parameter">name</replaceable> [ [ WITH ] <replac
        </note>
        <para>
         The password is always stored encrypted in the system catalogs. The
-        <literal>ENCRYPTED</> keyword has no effect, but is accepted for
+        <literal>ENCRYPTED</literal> keyword has no effect, but is accepted for
         backwards compatibility. The method of encryption is determined
         by the configuration parameter <xref linkend="guc-password-encryption">.
         If the presented password string is already in MD5-encrypted or
         SCRAM-encrypted format, then it is stored as-is regardless of
-        <varname>password_encryption</> (since the system cannot decrypt
+        <varname>password_encryption</varname> (since the system cannot decrypt
         the specified encrypted password string, to encrypt it in a
         different format).  This allows reloading of encrypted passwords
         during dump/restore.
@@ -260,61 +260,61 @@ CREATE ROLE <replaceable class="parameter">name</replaceable> [ [ WITH ] <replac
      </varlistentry>
 
      <varlistentry>
-      <term><literal>IN ROLE</> <replaceable class="parameter">role_name</replaceable></term>
+      <term><literal>IN ROLE</literal> <replaceable class="parameter">role_name</replaceable></term>
       <listitem>
        <para>
         The <literal>IN ROLE</literal> clause lists one or more existing
         roles to which the new role will be immediately added as a new
         member.  (Note that there is no option to add the new role as an
-        administrator; use a separate <command>GRANT</> command to do that.)
+        administrator; use a separate <command>GRANT</command> command to do that.)
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><literal>IN GROUP</> <replaceable class="parameter">role_name</replaceable></term>
+      <term><literal>IN GROUP</literal> <replaceable class="parameter">role_name</replaceable></term>
       <listitem>
        <para><literal>IN GROUP</literal> is an obsolete spelling of
-        <literal>IN ROLE</>.
+        <literal>IN ROLE</literal>.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><literal>ROLE</> <replaceable class="parameter">role_name</replaceable></term>
+      <term><literal>ROLE</literal> <replaceable class="parameter">role_name</replaceable></term>
       <listitem>
        <para>
         The <literal>ROLE</literal> clause lists one or more existing
         roles which are automatically added as members of the new role.
-        (This in effect makes the new role a <quote>group</>.)
+        (This in effect makes the new role a <quote>group</quote>.)
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><literal>ADMIN</> <replaceable class="parameter">role_name</replaceable></term>
+      <term><literal>ADMIN</literal> <replaceable class="parameter">role_name</replaceable></term>
       <listitem>
        <para>
         The <literal>ADMIN</literal> clause is like <literal>ROLE</literal>,
         but the named roles are added to the new role <literal>WITH ADMIN
-        OPTION</>, giving them the right to grant membership in this role
+        OPTION</literal>, giving them the right to grant membership in this role
         to others.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><literal>USER</> <replaceable class="parameter">role_name</replaceable></term>
+      <term><literal>USER</literal> <replaceable class="parameter">role_name</replaceable></term>
       <listitem>
        <para>
         The <literal>USER</literal> clause is an obsolete spelling of
-        the <literal>ROLE</> clause.
+        the <literal>ROLE</literal> clause.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><literal>SYSID</> <replaceable class="parameter">uid</replaceable></term>
+      <term><literal>SYSID</literal> <replaceable class="parameter">uid</replaceable></term>
       <listitem>
        <para>
         The <literal>SYSID</literal> clause is ignored, but is accepted
@@ -332,8 +332,8 @@ CREATE ROLE <replaceable class="parameter">name</replaceable> [ [ WITH ] <replac
    Use <xref linkend="SQL-ALTERROLE"> to
    change the attributes of a role, and <xref linkend="SQL-DROPROLE">
    to remove a role.  All the attributes
-   specified by <command>CREATE ROLE</> can be modified by later
-   <command>ALTER ROLE</> commands.
+   specified by <command>CREATE ROLE</command> can be modified by later
+   <command>ALTER ROLE</command> commands.
   </para>
 
   <para>
@@ -344,42 +344,42 @@ CREATE ROLE <replaceable class="parameter">name</replaceable> [ [ WITH ] <replac
   </para>
 
   <para>
-   The <literal>VALID UNTIL</> clause defines an expiration time for a
-   password only, not for the role <foreignphrase>per se</>.  In
+   The <literal>VALID UNTIL</literal> clause defines an expiration time for a
+   password only, not for the role <foreignphrase>per se</foreignphrase>.  In
    particular, the expiration time is not enforced when logging in using
    a non-password-based authentication method.
   </para>
 
   <para>
-   The <literal>INHERIT</> attribute governs inheritance of grantable
+   The <literal>INHERIT</literal> attribute governs inheritance of grantable
    privileges (that is, access privileges for database objects and role
    memberships).  It does not apply to the special role attributes set by
-   <command>CREATE ROLE</> and <command>ALTER ROLE</>.  For example, being
-   a member of a role with <literal>CREATEDB</> privilege does not immediately
-   grant the ability to create databases, even if <literal>INHERIT</> is set;
+   <command>CREATE ROLE</command> and <command>ALTER ROLE</command>.  For example, being
+   a member of a role with <literal>CREATEDB</literal> privilege does not immediately
+   grant the ability to create databases, even if <literal>INHERIT</literal> is set;
    it would be necessary to become that role via
    <xref linkend="SQL-SET-ROLE"> before
    creating a database.
   </para>
 
   <para>
-   The <literal>INHERIT</> attribute is the default for reasons of backwards
+   The <literal>INHERIT</literal> attribute is the default for reasons of backwards
    compatibility: in prior releases of <productname>PostgreSQL</productname>,
    users always had access to all privileges of groups they were members of.
-   However, <literal>NOINHERIT</> provides a closer match to the semantics
+   However, <literal>NOINHERIT</literal> provides a closer match to the semantics
    specified in the SQL standard.
   </para>
 
   <para>
-   Be careful with the <literal>CREATEROLE</> privilege. There is no concept of
-   inheritance for the privileges of a <literal>CREATEROLE</>-role. That
+   Be careful with the <literal>CREATEROLE</literal> privilege. There is no concept of
+   inheritance for the privileges of a <literal>CREATEROLE</literal>-role. That
    means that even if a role does not have a certain privilege but is allowed
    to create other roles, it can easily create another role with different
    privileges than its own (except for creating roles with superuser
-   privileges). For example, if the role <quote>user</> has the
-   <literal>CREATEROLE</> privilege but not the <literal>CREATEDB</> privilege,
-   nonetheless it can create a new role with the <literal>CREATEDB</>
-   privilege. Therefore, regard roles that have the <literal>CREATEROLE</>
+   privileges). For example, if the role <quote>user</quote> has the
+   <literal>CREATEROLE</literal> privilege but not the <literal>CREATEDB</literal> privilege,
+   nonetheless it can create a new role with the <literal>CREATEDB</literal>
+   privilege. Therefore, regard roles that have the <literal>CREATEROLE</literal>
    privilege as almost-superuser-roles.
   </para>
 
@@ -391,9 +391,9 @@ CREATE ROLE <replaceable class="parameter">name</replaceable> [ [ WITH ] <replac
   </para>
 
   <para>
-   The <literal>CONNECTION LIMIT</> option is only enforced approximately;
+   The <literal>CONNECTION LIMIT</literal> option is only enforced approximately;
    if two new sessions start at about the same time when just one
-   connection <quote>slot</> remains for the role, it is possible that
+   connection <quote>slot</quote> remains for the role, it is possible that
    both will fail.  Also, the limit is never enforced for superusers.
   </para>
 
@@ -425,8 +425,8 @@ CREATE ROLE jonathan LOGIN;
 <programlisting>
 CREATE USER davide WITH PASSWORD 'jw8s0F4';
 </programlisting>
-   (<command>CREATE USER</> is the same as <command>CREATE ROLE</> except
-   that it implies <literal>LOGIN</>.)
+   (<command>CREATE USER</command> is the same as <command>CREATE ROLE</command> except
+   that it implies <literal>LOGIN</literal>.)
   </para>
 
   <para>
@@ -453,7 +453,7 @@ CREATE ROLE admin WITH CREATEDB CREATEROLE;
    The <command>CREATE ROLE</command> statement is in the SQL standard,
    but the standard only requires the syntax
 <synopsis>
-CREATE ROLE <replaceable class="parameter">name</> [ WITH ADMIN <replaceable class="parameter">role_name</> ]
+CREATE ROLE <replaceable class="parameter">name</replaceable> [ WITH ADMIN <replaceable class="parameter">role_name</replaceable> ]
 </synopsis>
    Multiple initial administrators, and all the other options of
    <command>CREATE ROLE</command>, are
@@ -471,8 +471,8 @@ CREATE ROLE <replaceable class="parameter">name</> [ WITH ADMIN <replaceable cla
 
   <para>
    The behavior specified by the SQL standard is most closely approximated
-   by giving users the <literal>NOINHERIT</> attribute, while roles are
-   given the <literal>INHERIT</> attribute.
+   by giving users the <literal>NOINHERIT</literal> attribute, while roles are
+   given the <literal>INHERIT</literal> attribute.
   </para>
  </refsect1>
 

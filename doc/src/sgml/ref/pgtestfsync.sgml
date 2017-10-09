@@ -27,7 +27,7 @@
   <title>Description</title>
 
  <para>
-  <application>pg_test_fsync</> is intended to give you a reasonable
+  <application>pg_test_fsync</application> is intended to give you a reasonable
   idea of what the fastest <xref linkend="guc-wal-sync-method"> is on your
   specific system,
   as well as supplying diagnostic information in the event of an identified I/O
@@ -57,9 +57,9 @@
        <para>
         Specifies the file name to write test data in.
         This file should be in the same file system that the
-        <filename>pg_wal</> directory is or will be placed in.
-        (<filename>pg_wal</> contains the <acronym>WAL</> files.)
-        The default is <filename>pg_test_fsync.out</> in the current
+        <filename>pg_wal</filename> directory is or will be placed in.
+        (<filename>pg_wal</filename> contains the <acronym>WAL</acronym> files.)
+        The default is <filename>pg_test_fsync.out</filename> in the current
         directory.
        </para>
       </listitem>
@@ -79,8 +79,8 @@
      </varlistentry>
 
      <varlistentry>
-      <term><option>-V</></term>
-      <term><option>--version</></term>
+      <term><option>-V</option></term>
+      <term><option>--version</option></term>
       <listitem>
        <para>
         Print the <application>pg_test_fsync</application> version and exit.
@@ -89,8 +89,8 @@
      </varlistentry>
 
      <varlistentry>
-      <term><option>-?</></term>
-      <term><option>--help</></term>
+      <term><option>-?</option></term>
+      <term><option>--help</option></term>
       <listitem>
        <para>
         Show help about <application>pg_test_fsync</application> command line

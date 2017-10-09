@@ -38,7 +38,7 @@ DROP OPERATOR FAMILY [ IF EXISTS ] <replaceable class="parameter">name</replacea
    classes contained in the family, but it does not drop any of the operators
    or functions referenced by the family.  If there are any indexes depending
    on operator classes within the family, you will need to specify
-   <literal>CASCADE</> for the drop to complete.
+   <literal>CASCADE</literal> for the drop to complete.
   </para>
  </refsect1>
 
@@ -109,7 +109,7 @@ DROP OPERATOR FAMILY float_ops USING btree;
 </programlisting>
 
    This command will not succeed if there are any existing indexes
-   that use operator classes within the family.  Add <literal>CASCADE</> to
+   that use operator classes within the family.  Add <literal>CASCADE</literal> to
    drop such indexes along with the operator family.
   </para>
  </refsect1>

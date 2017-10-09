@@ -50,8 +50,8 @@ ALTER SYSTEM RESET ALL
    the next server configuration reload, or after the next server restart
    in the case of parameters that can only be changed at server start.
    A server configuration reload can be commanded by calling the SQL
-   function <function>pg_reload_conf()</>, running <literal>pg_ctl reload</>,
-   or sending a <systemitem>SIGHUP</> signal to the main server process.
+   function <function>pg_reload_conf()</function>, running <literal>pg_ctl reload</literal>,
+   or sending a <systemitem>SIGHUP</systemitem> signal to the main server process.
   </para>
 
   <para>
@@ -95,8 +95,8 @@ ALTER SYSTEM RESET ALL
 
   <para>
    This command can't be used to set <xref linkend="guc-data-directory">,
-   nor parameters that are not allowed in <filename>postgresql.conf</>
-   (e.g., <link linkend="runtime-config-preset">preset options</>).
+   nor parameters that are not allowed in <filename>postgresql.conf</filename>
+   (e.g., <link linkend="runtime-config-preset">preset options</link>).
   </para>
 
   <para>
@@ -108,7 +108,7 @@ ALTER SYSTEM RESET ALL
   <title>Examples</title>
 
   <para>
-   Set the <literal>wal_level</>:
+   Set the <literal>wal_level</literal>:
 <programlisting>
 ALTER SYSTEM SET wal_level = replica;
 </programlisting>
@@ -116,7 +116,7 @@ ALTER SYSTEM SET wal_level = replica;
 
   <para>
    Undo that, restoring whatever setting was effective
-   in <filename>postgresql.conf</>:
+   in <filename>postgresql.conf</filename>:
 <programlisting>
 ALTER SYSTEM RESET wal_level;
 </programlisting></para>

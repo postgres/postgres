@@ -71,7 +71,7 @@ DROP DATABASE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
   <title>Notes</title>
 
    <para>
-    <command>DROP DATABASE</> cannot be executed inside a transaction
+    <command>DROP DATABASE</command> cannot be executed inside a transaction
     block.
    </para>
 

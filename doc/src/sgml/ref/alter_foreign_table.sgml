@@ -85,7 +85,7 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceab
     <listitem>
      <para>
       This form drops a column from a foreign table.
-      You will need to say <literal>CASCADE</> if
+      You will need to say <literal>CASCADE</literal> if
       anything outside the table depends on the column; for example,
       views.
       If <literal>IF EXISTS</literal> is specified and the column
@@ -101,7 +101,7 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceab
      <para>
       This form changes the type of a column of a foreign table.
       Again, this has no effect on any underlying storage: this action simply
-      changes the type that <productname>PostgreSQL</> believes the column to
+      changes the type that <productname>PostgreSQL</productname> believes the column to
       have.
      </para>
     </listitem>
@@ -113,7 +113,7 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceab
      <para>
       These forms set or remove the default value for a column.
       Default values only apply in subsequent <command>INSERT</command>
-      or <command>UPDATE</> commands; they do not cause rows already in the
+      or <command>UPDATE</command> commands; they do not cause rows already in the
       table to change.
      </para>
     </listitem>
@@ -174,7 +174,7 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceab
      <para>
       This form adds a new constraint to a foreign table, using the same
       syntax as <xref linkend="SQL-CREATEFOREIGNTABLE">.
-      Currently only <literal>CHECK</> constraints are supported.
+      Currently only <literal>CHECK</literal> constraints are supported.
      </para>
 
      <para>
@@ -183,7 +183,7 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceab
       declares that some new condition should be assumed to hold for all rows
       in the foreign table.  (See the discussion
       in <xref linkend="SQL-CREATEFOREIGNTABLE">.)
-      If the constraint is marked <literal>NOT VALID</>, then it isn't
+      If the constraint is marked <literal>NOT VALID</literal>, then it isn't
       assumed to hold, but is only recorded for possible future use.
      </para>
     </listitem>
@@ -235,9 +235,9 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceab
      </para>
 
      <para>
-      Note that this is not equivalent to <literal>ADD COLUMN oid oid</>;
+      Note that this is not equivalent to <literal>ADD COLUMN oid oid</literal>;
       that would add a normal column that happened to be named
-      <literal>oid</>, not a system column.
+      <literal>oid</literal>, not a system column.
      </para>
     </listitem>
    </varlistentry>
@@ -292,8 +292,8 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceab
     <listitem>
      <para>
       Change options for the foreign table or one of its columns.
-      <literal>ADD</>, <literal>SET</>, and <literal>DROP</>
-      specify the action to be performed.  <literal>ADD</> is assumed
+      <literal>ADD</literal>, <literal>SET</literal>, and <literal>DROP</literal>
+      specify the action to be performed.  <literal>ADD</literal> is assumed
       if no operation is explicitly specified.  Duplicate option names are not
       allowed (although it's OK for a table option and a column option to have
       the same name).  Option names and values are also validated using the
@@ -325,7 +325,7 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceab
   </para>
 
   <para>
-   All the actions except <literal>RENAME</literal> and <literal>SET SCHEMA</>
+   All the actions except <literal>RENAME</literal> and <literal>SET SCHEMA</literal>
    can be combined into
    a list of multiple alterations to apply in parallel.  For example, it
    is possible to add several columns and/or alter the type of several
@@ -333,13 +333,13 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceab
   </para>
 
   <para>
-   If the command is written as <literal>ALTER FOREIGN TABLE IF EXISTS ...</>
+   If the command is written as <literal>ALTER FOREIGN TABLE IF EXISTS ...</literal>
    and the foreign table does not exist, no error is thrown. A notice is
    issued in this case.
   </para>
 
   <para>
-   You must own the table to use <command>ALTER FOREIGN TABLE</>.
+   You must own the table to use <command>ALTER FOREIGN TABLE</command>.
    To change the schema of a foreign table, you must also have
    <literal>CREATE</literal> privilege on the new schema.
    To alter the owner, you must also be a direct or indirect member of the new
@@ -362,10 +362,10 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceab
       <listitem>
        <para>
         The name (possibly schema-qualified) of an existing foreign table to
-        alter. If <literal>ONLY</> is specified before the table name, only
-        that table is altered. If <literal>ONLY</> is not specified, the table
+        alter. If <literal>ONLY</literal> is specified before the table name, only
+        that table is altered. If <literal>ONLY</literal> is not specified, the table
         and all its descendant tables (if any) are altered.  Optionally,
-        <literal>*</> can be specified after the table name to explicitly
+        <literal>*</literal> can be specified after the table name to explicitly
         indicate that descendant tables are included.
        </para>
       </listitem>
@@ -518,9 +518,9 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceab
    <para>
     Consistency with the foreign server is not checked when a column is added
     or removed with <literal>ADD COLUMN</literal> or
-    <literal>DROP COLUMN</literal>, a <literal>NOT NULL</>
-    or <literal>CHECK</> constraint is added, or a column type is changed
-    with <literal>SET DATA TYPE</>.  It is the user's responsibility to ensure
+    <literal>DROP COLUMN</literal>, a <literal>NOT NULL</literal>
+    or <literal>CHECK</literal> constraint is added, or a column type is changed
+    with <literal>SET DATA TYPE</literal>.  It is the user's responsibility to ensure
     that the table definition matches the remote side.
    </para>
 
@@ -552,16 +552,16 @@ ALTER FOREIGN TABLE myschema.distributors OPTIONS (ADD opt1 'value', SET opt2 'v
   <title>Compatibility</title>
 
   <para>
-   The forms <literal>ADD</literal>, <literal>DROP</>,
+   The forms <literal>ADD</literal>, <literal>DROP</literal>,
    and <literal>SET DATA TYPE</literal>
    conform with the SQL standard.  The other forms are
    <productname>PostgreSQL</productname> extensions of the SQL standard.
    Also, the ability to specify more than one manipulation in a single
-   <command>ALTER FOREIGN TABLE</> command is an extension.
+   <command>ALTER FOREIGN TABLE</command> command is an extension.
   </para>
 
   <para>
-   <command>ALTER FOREIGN TABLE DROP COLUMN</> can be used to drop the only
+   <command>ALTER FOREIGN TABLE DROP COLUMN</command> can be used to drop the only
    column of a foreign table, leaving a zero-column table.  This is an
    extension of SQL, which disallows zero-column foreign tables.
   </para>

@@ -37,7 +37,7 @@ CREATE OPERATOR CLASS <replaceable class="parameter">name</replaceable> [ DEFAUL
    <command>CREATE OPERATOR CLASS</command> creates a new operator class.
    An operator class defines how a particular data type can be used with
    an index.  The operator class specifies that certain operators will fill
-   particular roles or <quote>strategies</> for this data type and this
+   particular roles or <quote>strategies</quote> for this data type and this
    index method.  The operator class also specifies the support procedures to
    be used by
    the index method when the operator class is selected for an
@@ -69,8 +69,8 @@ CREATE OPERATOR CLASS <replaceable class="parameter">name</replaceable> [ DEFAUL
 
   <para>
    Related operator classes can be grouped into <firstterm>operator
-   families</>.  To add a new operator class to an existing family,
-   specify the <literal>FAMILY</> option in <command>CREATE OPERATOR
+   families</firstterm>.  To add a new operator class to an existing family,
+   specify the <literal>FAMILY</literal> option in <command>CREATE OPERATOR
    CLASS</command>.  Without this option, the new class is placed into
    a family named the same as the new class (creating that family if
    it doesn't already exist).
@@ -96,7 +96,7 @@ CREATE OPERATOR CLASS <replaceable class="parameter">name</replaceable> [ DEFAUL
    </varlistentry>
 
    <varlistentry>
-    <term><literal>DEFAULT</></term>
+    <term><literal>DEFAULT</literal></term>
     <listitem>
      <para>
       If present, the operator class will become the default
@@ -159,15 +159,15 @@ CREATE OPERATOR CLASS <replaceable class="parameter">name</replaceable> [ DEFAUL
     <term><replaceable class="parameter">op_type</replaceable></term>
     <listitem>
      <para>
-      In an <literal>OPERATOR</> clause,
-      the operand data type(s) of the operator, or <literal>NONE</> to
+      In an <literal>OPERATOR</literal> clause,
+      the operand data type(s) of the operator, or <literal>NONE</literal> to
       signify a left-unary or right-unary operator.  The operand data
       types can be omitted in the normal case where they are the same
       as the operator class's data type.
      </para>
 
      <para>
-      In a <literal>FUNCTION</> clause, the operand data type(s) the
+      In a <literal>FUNCTION</literal> clause, the operand data type(s) the
       function is intended to support, if different from
       the input data type(s) of the function (for B-tree comparison functions
       and hash functions)
@@ -175,7 +175,7 @@ CREATE OPERATOR CLASS <replaceable class="parameter">name</replaceable> [ DEFAUL
       functions in GiST, SP-GiST, GIN and BRIN operator classes).  These defaults
       are correct, and so <replaceable
       class="parameter">op_type</replaceable> need not be specified in
-      <literal>FUNCTION</> clauses, except for the case of a B-tree sort
+      <literal>FUNCTION</literal> clauses, except for the case of a B-tree sort
       support function that is meant to support cross-data-type comparisons.
      </para>
     </listitem>
@@ -191,8 +191,8 @@ CREATE OPERATOR CLASS <replaceable class="parameter">name</replaceable> [ DEFAUL
      </para>
 
      <para>
-      If neither <literal>FOR SEARCH</> nor <literal>FOR ORDER BY</> is
-      specified, <literal>FOR SEARCH</> is the default.
+      If neither <literal>FOR SEARCH</literal> nor <literal>FOR ORDER BY</literal> is
+      specified, <literal>FOR SEARCH</literal> is the default.
      </para>
     </listitem>
    </varlistentry>
@@ -233,11 +233,11 @@ CREATE OPERATOR CLASS <replaceable class="parameter">name</replaceable> [ DEFAUL
       The data type actually stored in the index.  Normally this is
       the same as the column data type, but some index methods
       (currently GiST, GIN and BRIN) allow it to be different.  The
-      <literal>STORAGE</> clause must be omitted unless the index
+      <literal>STORAGE</literal> clause must be omitted unless the index
       method allows a different type to be used.
-      If the column <replaceable class="parameter">data_type</> is specified
-      as <type>anyarray</>, the <replaceable class="parameter">storage_type</>
-      can be declared as <type>anyelement</> to indicate that the index
+      If the column <replaceable class="parameter">data_type</replaceable> is specified
+      as <type>anyarray</type>, the <replaceable class="parameter">storage_type</replaceable>
+      can be declared as <type>anyelement</type> to indicate that the index
       entries are members of the element type belonging to the actual array
       type that each particular index is created for.
      </para>
@@ -246,7 +246,7 @@ CREATE OPERATOR CLASS <replaceable class="parameter">name</replaceable> [ DEFAUL
   </variablelist>
 
   <para>
-   The <literal>OPERATOR</>, <literal>FUNCTION</>, and <literal>STORAGE</>
+   The <literal>OPERATOR</literal>, <literal>FUNCTION</literal>, and <literal>STORAGE</literal>
    clauses can appear in any order.
   </para>
  </refsect1>
@@ -269,9 +269,9 @@ CREATE OPERATOR CLASS <replaceable class="parameter">name</replaceable> [ DEFAUL
   </para>
 
   <para>
-   Before <productname>PostgreSQL</productname> 8.4, the <literal>OPERATOR</>
-   clause could include a <literal>RECHECK</> option.  This is no longer
-   supported because whether an index operator is <quote>lossy</> is now
+   Before <productname>PostgreSQL</productname> 8.4, the <literal>OPERATOR</literal>
+   clause could include a <literal>RECHECK</literal> option.  This is no longer
+   supported because whether an index operator is <quote>lossy</quote> is now
    determined on-the-fly at run time.  This allows efficient handling of
    cases where an operator might or might not be lossy.
   </para>
@@ -282,7 +282,7 @@ CREATE OPERATOR CLASS <replaceable class="parameter">name</replaceable> [ DEFAUL
 
   <para>
    The following example command defines a GiST index operator class
-   for the data type <literal>_int4</> (array of <type>int4</type>).  See the
+   for the data type <literal>_int4</literal> (array of <type>int4</type>).  See the
    <xref linkend="intarray"> module for the complete example.
   </para>
 

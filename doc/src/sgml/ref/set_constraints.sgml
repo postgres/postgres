@@ -67,18 +67,18 @@ SET CONSTRAINTS { ALL | <replaceable class="parameter">name</replaceable> [, ...
   </para>
 
   <para>
-   Currently, only <literal>UNIQUE</>, <literal>PRIMARY KEY</>,
-   <literal>REFERENCES</> (foreign key), and <literal>EXCLUDE</>
+   Currently, only <literal>UNIQUE</literal>, <literal>PRIMARY KEY</literal>,
+   <literal>REFERENCES</literal> (foreign key), and <literal>EXCLUDE</literal>
    constraints are affected by this setting.
-   <literal>NOT NULL</> and <literal>CHECK</> constraints are
+   <literal>NOT NULL</literal> and <literal>CHECK</literal> constraints are
    always checked immediately when a row is inserted or modified
-   (<emphasis>not</> at the end of the statement).
+   (<emphasis>not</emphasis> at the end of the statement).
    Uniqueness and exclusion constraints that have not been declared
-   <literal>DEFERRABLE</> are also checked immediately.
+   <literal>DEFERRABLE</literal> are also checked immediately.
   </para>
 
   <para>
-   The firing of triggers that are declared as <quote>constraint triggers</>
+   The firing of triggers that are declared as <quote>constraint triggers</quote>
    is also controlled by this setting &mdash; they fire at the same time
    that the associated constraint should be checked.
   </para>
@@ -111,7 +111,7 @@ SET CONSTRAINTS { ALL | <replaceable class="parameter">name</replaceable> [, ...
    This command complies with the behavior defined in the SQL
    standard, except for the limitation that, in
    <productname>PostgreSQL</productname>, it does not apply to
-   <literal>NOT NULL</> and <literal>CHECK</> constraints.
+   <literal>NOT NULL</literal> and <literal>CHECK</literal> constraints.
    Also, <productname>PostgreSQL</productname> checks non-deferrable
    uniqueness constraints immediately, not at end of statement as the
    standard would suggest.

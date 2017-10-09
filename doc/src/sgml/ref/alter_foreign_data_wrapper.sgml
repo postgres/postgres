@@ -93,11 +93,11 @@ ALTER FOREIGN DATA WRAPPER <replaceable class="parameter">name</replaceable> REN
      <para>
       Note that it is possible that pre-existing options of the foreign-data
       wrapper, or of dependent servers, user mappings, or foreign tables, are
-      invalid according to the new validator.  <productname>PostgreSQL</> does
+      invalid according to the new validator.  <productname>PostgreSQL</productname> does
       not check for this.  It is up to the user to make sure that these
       options are correct before using the modified foreign-data wrapper.
       However, any options specified in this <command>ALTER FOREIGN DATA
-      WRAPPER</> command will be checked using the new validator.
+      WRAPPER</command> command will be checked using the new validator.
      </para>
     </listitem>
    </varlistentry>
@@ -117,8 +117,8 @@ ALTER FOREIGN DATA WRAPPER <replaceable class="parameter">name</replaceable> REN
     <listitem>
      <para>
       Change options for the foreign-data
-      wrapper.  <literal>ADD</>, <literal>SET</>, and <literal>DROP</>
-      specify the action to be performed.  <literal>ADD</> is assumed
+      wrapper.  <literal>ADD</literal>, <literal>SET</literal>, and <literal>DROP</literal>
+      specify the action to be performed.  <literal>ADD</literal> is assumed
       if no operation is explicitly specified.  Option names must be
       unique; names and values are also validated using the foreign
       data wrapper's validator function, if any.
@@ -150,16 +150,16 @@ ALTER FOREIGN DATA WRAPPER <replaceable class="parameter">name</replaceable> REN
   <title>Examples</title>
 
   <para>
-   Change a foreign-data wrapper <literal>dbi</>, add
-   option <literal>foo</>, drop <literal>bar</>:
+   Change a foreign-data wrapper <literal>dbi</literal>, add
+   option <literal>foo</literal>, drop <literal>bar</literal>:
 <programlisting>
 ALTER FOREIGN DATA WRAPPER dbi OPTIONS (ADD foo '1', DROP 'bar');
 </programlisting>
   </para>
 
   <para>
-   Change the foreign-data wrapper <literal>dbi</> validator
-   to <literal>bob.myvalidator</>:
+   Change the foreign-data wrapper <literal>dbi</literal> validator
+   to <literal>bob.myvalidator</literal>:
 <programlisting>
 ALTER FOREIGN DATA WRAPPER dbi VALIDATOR bob.myvalidator;
 </programlisting></para>
@@ -171,7 +171,7 @@ ALTER FOREIGN DATA WRAPPER dbi VALIDATOR bob.myvalidator;
   <para>
    <command>ALTER FOREIGN DATA WRAPPER</command> conforms to ISO/IEC
    9075-9 (SQL/MED), except that the <literal>HANDLER</literal>,
-   <literal>VALIDATOR</>, <literal>OWNER TO</>, and <literal>RENAME</literal>
+   <literal>VALIDATOR</literal>, <literal>OWNER TO</literal>, and <literal>RENAME</literal>
    clauses are extensions.
   </para>
  </refsect1>

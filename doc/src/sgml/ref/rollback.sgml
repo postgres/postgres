@@ -59,7 +59,7 @@ ROLLBACK [ WORK | TRANSACTION ]
   </para>
 
   <para>
-   Issuing <command>ROLLBACK</> outside of a transaction
+   Issuing <command>ROLLBACK</command> outside of a transaction
    block emits a warning and otherwise has no effect.
   </para>
  </refsect1>

@@ -32,7 +32,7 @@ CREATE TABLE sal_emp (
 );
 </programlisting>
   As shown, an array data type is named by appending square brackets
-  (<literal>[]</>) to the data type name of the array elements.  The
+  (<literal>[]</literal>) to the data type name of the array elements.  The
   above command will create a table named
   <structname>sal_emp</structname> with a column of type
   <type>text</type> (<structfield>name</structfield>), a
@@ -69,7 +69,7 @@ CREATE TABLE tictactoe (
 
  <para>
   An alternative syntax, which conforms to the SQL standard by using
-  the keyword <literal>ARRAY</>, can be used for one-dimensional arrays.
+  the keyword <literal>ARRAY</literal>, can be used for one-dimensional arrays.
   <structfield>pay_by_quarter</structfield> could have been defined
   as:
 <programlisting>
@@ -79,7 +79,7 @@ CREATE TABLE tictactoe (
 <programlisting>
     pay_by_quarter  integer ARRAY,
 </programlisting>
-  As before, however, <productname>PostgreSQL</> does not enforce the
+  As before, however, <productname>PostgreSQL</productname> does not enforce the
   size restriction in any case.
  </para>
  </sect2>
@@ -107,8 +107,8 @@ CREATE TABLE tictactoe (
    for the type, as recorded in its <literal>pg_type</literal> entry.
    Among the standard data types provided in the
    <productname>PostgreSQL</productname> distribution, all use a comma
-   (<literal>,</>), except for type <type>box</> which uses a semicolon
-   (<literal>;</>). Each <replaceable>val</replaceable> is
+   (<literal>,</literal>), except for type <type>box</type> which uses a semicolon
+   (<literal>;</literal>). Each <replaceable>val</replaceable> is
    either a constant of the array element type, or a subarray. An example
    of an array constant is:
 <programlisting>
@@ -119,10 +119,10 @@ CREATE TABLE tictactoe (
   </para>
 
   <para>
-   To set an element of an array constant to NULL, write <literal>NULL</>
+   To set an element of an array constant to NULL, write <literal>NULL</literal>
    for the element value.  (Any upper- or lower-case variant of
-   <literal>NULL</> will do.)  If you want an actual string value
-   <quote>NULL</>, you must put double quotes around it.
+   <literal>NULL</literal> will do.)  If you want an actual string value
+   <quote>NULL</quote>, you must put double quotes around it.
   </para>
 
   <para>
@@ -176,7 +176,7 @@ ERROR:  multidimensional arrays must have array expressions with matching dimens
  </para>
 
  <para>
-  The <literal>ARRAY</> constructor syntax can also be used:
+  The <literal>ARRAY</literal> constructor syntax can also be used:
 <programlisting>
 INSERT INTO sal_emp
     VALUES ('Bill',
@@ -190,7 +190,7 @@ INSERT INTO sal_emp
 </programlisting>
   Notice that the array elements are ordinary SQL constants or
   expressions; for instance, string literals are single quoted, instead of
-  double quoted as they would be in an array literal.  The <literal>ARRAY</>
+  double quoted as they would be in an array literal.  The <literal>ARRAY</literal>
   constructor syntax is discussed in more detail in
   <xref linkend="sql-syntax-array-constructors">.
  </para>
@@ -222,8 +222,8 @@ SELECT name FROM sal_emp WHERE pay_by_quarter[1] &lt;&gt; pay_by_quarter[2];
   The array subscript numbers are written within square brackets.
   By default <productname>PostgreSQL</productname> uses a
   one-based numbering convention for arrays, that is,
-  an array of <replaceable>n</> elements starts with <literal>array[1]</literal> and
-  ends with <literal>array[<replaceable>n</>]</literal>.
+  an array of <replaceable>n</replaceable> elements starts with <literal>array[1]</literal> and
+  ends with <literal>array[<replaceable>n</replaceable>]</literal>.
  </para>
 
  <para>
@@ -259,8 +259,8 @@ SELECT schedule[1:2][1:1] FROM sal_emp WHERE name = 'Bill';
   If any dimension is written as a slice, i.e., contains a colon, then all
   dimensions are treated as slices.  Any dimension that has only a single
   number (no colon) is treated as being from 1
-  to the number specified.  For example, <literal>[2]</> is treated as
-  <literal>[1:2]</>, as in this example:
+  to the number specified.  For example, <literal>[2]</literal> is treated as
+  <literal>[1:2]</literal>, as in this example:
 
 <programlisting>
 SELECT schedule[1:2][2] FROM sal_emp WHERE name = 'Bill';
@@ -272,7 +272,7 @@ SELECT schedule[1:2][2] FROM sal_emp WHERE name = 'Bill';
 </programlisting>
 
   To avoid confusion with the non-slice case, it's best to use slice syntax
-  for all dimensions, e.g., <literal>[1:2][1:1]</>, not <literal>[2][1:1]</>.
+  for all dimensions, e.g., <literal>[1:2][1:1]</literal>, not <literal>[2][1:1]</literal>.
  </para>
 
  <para>
@@ -302,9 +302,9 @@ SELECT schedule[:][1:1] FROM sal_emp WHERE name = 'Bill';
   An array subscript expression will return null if either the array itself or
   any of the subscript expressions are null.  Also, null is returned if a
   subscript is outside the array bounds (this case does not raise an error).
-  For example, if <literal>schedule</>
-  currently has the dimensions <literal>[1:3][1:2]</> then referencing
-  <literal>schedule[3][3]</> yields NULL.  Similarly, an array reference
+  For example, if <literal>schedule</literal>
+  currently has the dimensions <literal>[1:3][1:2]</literal> then referencing
+  <literal>schedule[3][3]</literal> yields NULL.  Similarly, an array reference
   with the wrong number of subscripts yields a null rather than an error.
  </para>
 
@@ -423,16 +423,16 @@ UPDATE sal_emp SET pay_by_quarter[1:2] = '{27000,27000}'
   A stored array value can be enlarged by assigning to elements not already
   present.  Any positions between those previously present and the newly
   assigned elements will be filled with nulls.  For example, if array
-  <literal>myarray</> currently has 4 elements, it will have six
-  elements after an update that assigns to <literal>myarray[6]</>;
-  <literal>myarray[5]</> will contain null.
+  <literal>myarray</literal> currently has 4 elements, it will have six
+  elements after an update that assigns to <literal>myarray[6]</literal>;
+  <literal>myarray[5]</literal> will contain null.
   Currently, enlargement in this fashion is only allowed for one-dimensional
   arrays, not multidimensional arrays.
  </para>
 
  <para>
   Subscripted assignment allows creation of arrays that do not use one-based
-  subscripts.  For example one might assign to <literal>myarray[-2:7]</> to
+  subscripts.  For example one might assign to <literal>myarray[-2:7]</literal> to
   create an array with subscript values from -2 to 7.
  </para>
 
@@ -457,8 +457,8 @@ SELECT ARRAY[5,6] || ARRAY[[1,2],[3,4]];
  <para>
   The concatenation operator allows a single element to be pushed onto the
   beginning or end of a one-dimensional array. It also accepts two
-  <replaceable>N</>-dimensional arrays, or an <replaceable>N</>-dimensional
-  and an <replaceable>N+1</>-dimensional array.
+  <replaceable>N</replaceable>-dimensional arrays, or an <replaceable>N</replaceable>-dimensional
+  and an <replaceable>N+1</replaceable>-dimensional array.
  </para>
 
  <para>
@@ -501,10 +501,10 @@ SELECT array_dims(ARRAY[[1,2],[3,4]] || ARRAY[[5,6],[7,8],[9,0]]);
  </para>
 
  <para>
-  When an <replaceable>N</>-dimensional array is pushed onto the beginning
-  or end of an <replaceable>N+1</>-dimensional array, the result is
-  analogous to the element-array case above. Each <replaceable>N</>-dimensional
-  sub-array is essentially an element of the <replaceable>N+1</>-dimensional
+  When an <replaceable>N</replaceable>-dimensional array is pushed onto the beginning
+  or end of an <replaceable>N+1</replaceable>-dimensional array, the result is
+  analogous to the element-array case above. Each <replaceable>N</replaceable>-dimensional
+  sub-array is essentially an element of the <replaceable>N+1</replaceable>-dimensional
   array's outer dimension. For example:
 <programlisting>
 SELECT array_dims(ARRAY[1,2] || ARRAY[[3,4],[5,6]]);
@@ -587,9 +587,9 @@ SELECT array_append(ARRAY[1, 2], NULL);    -- this might have been meant
   The heuristic it uses to resolve the constant's type is to assume it's of
   the same type as the operator's other input &mdash; in this case,
   integer array.  So the concatenation operator is presumed to
-  represent <function>array_cat</>, not <function>array_append</>.  When
+  represent <function>array_cat</function>, not <function>array_append</function>.  When
   that's the wrong choice, it could be fixed by casting the constant to the
-  array's element type; but explicit use of <function>array_append</> might
+  array's element type; but explicit use of <function>array_append</function> might
   be a preferable solution.
  </para>
  </sect2>
@@ -633,7 +633,7 @@ SELECT * FROM sal_emp WHERE 10000 = ALL (pay_by_quarter);
  </para>
 
  <para>
-  Alternatively, the <function>generate_subscripts</> function can be used.
+  Alternatively, the <function>generate_subscripts</function> function can be used.
   For example:
 
 <programlisting>
@@ -648,7 +648,7 @@ SELECT * FROM
  </para>
 
  <para>
-  You can also search an array using the <literal>&amp;&amp;</> operator,
+  You can also search an array using the <literal>&amp;&amp;</literal> operator,
   which checks whether the left operand overlaps with the right operand.
   For instance:
 
@@ -662,8 +662,8 @@ SELECT * FROM sal_emp WHERE pay_by_quarter &amp;&amp; ARRAY[10000];
  </para>
 
  <para>
-  You can also search for specific values in an array using the <function>array_position</>
-  and <function>array_positions</> functions. The former returns the subscript of
+  You can also search for specific values in an array using the <function>array_position</function>
+  and <function>array_positions</function> functions. The former returns the subscript of
   the first occurrence of a value in an array; the latter returns an array with the
   subscripts of all occurrences of the value in the array.  For example:
 
@@ -703,13 +703,13 @@ SELECT array_positions(ARRAY[1, 4, 3, 1, 3, 4, 2, 1], 1);
    The external text representation of an array value consists of items that
    are interpreted according to the I/O conversion rules for the array's
    element type, plus decoration that indicates the array structure.
-   The decoration consists of curly braces (<literal>{</> and <literal>}</>)
+   The decoration consists of curly braces (<literal>{</literal> and <literal>}</literal>)
    around the array value plus delimiter characters between adjacent items.
-   The delimiter character is usually a comma (<literal>,</>) but can be
-   something else: it is determined by the <literal>typdelim</> setting
+   The delimiter character is usually a comma (<literal>,</literal>) but can be
+   something else: it is determined by the <literal>typdelim</literal> setting
    for the array's element type.  Among the standard data types provided
    in the <productname>PostgreSQL</productname> distribution, all use a comma,
-   except for type <type>box</>, which uses a semicolon (<literal>;</>).
+   except for type <type>box</type>, which uses a semicolon (<literal>;</literal>).
    In a multidimensional array, each dimension (row, plane,
    cube, etc.) gets its own level of curly braces, and delimiters
    must be written between adjacent curly-braced entities of the same level.
@@ -719,7 +719,7 @@ SELECT array_positions(ARRAY[1, 4, 3, 1, 3, 4, 2, 1], 1);
    The array output routine will put double quotes around element values
    if they are empty strings, contain curly braces, delimiter characters,
    double quotes, backslashes, or white space, or match the word
-   <literal>NULL</>.  Double quotes and backslashes
+   <literal>NULL</literal>.  Double quotes and backslashes
    embedded in element values will be backslash-escaped.  For numeric
    data types it is safe to assume that double quotes will never appear, but
    for textual data types one should be prepared to cope with either the presence
@@ -731,10 +731,10 @@ SELECT array_positions(ARRAY[1, 4, 3, 1, 3, 4, 2, 1], 1);
    set to one.  To represent arrays with other lower bounds, the array
    subscript ranges can be specified explicitly before writing the
    array contents.
-   This decoration consists of square brackets (<literal>[]</>)
+   This decoration consists of square brackets (<literal>[]</literal>)
    around each array dimension's lower and upper bounds, with
-   a colon (<literal>:</>) delimiter character in between. The
-   array dimension decoration is followed by an equal sign (<literal>=</>).
+   a colon (<literal>:</literal>) delimiter character in between. The
+   array dimension decoration is followed by an equal sign (<literal>=</literal>).
    For example:
 <programlisting>
 SELECT f1[1][-2][3] AS e1, f1[1][-1][5] AS e2
@@ -750,23 +750,23 @@ SELECT f1[1][-2][3] AS e1, f1[1][-1][5] AS e2
   </para>
 
   <para>
-   If the value written for an element is <literal>NULL</> (in any case
+   If the value written for an element is <literal>NULL</literal> (in any case
    variant), the element is taken to be NULL.  The presence of any quotes
    or backslashes disables this and allows the literal string value
-   <quote>NULL</> to be entered.  Also, for backward compatibility with
-   pre-8.2 versions of <productname>PostgreSQL</>, the <xref
+   <quote>NULL</quote> to be entered.  Also, for backward compatibility with
+   pre-8.2 versions of <productname>PostgreSQL</productname>, the <xref
    linkend="guc-array-nulls"> configuration parameter can be turned
-   <literal>off</> to suppress recognition of <literal>NULL</> as a NULL.
+   <literal>off</literal> to suppress recognition of <literal>NULL</literal> as a NULL.
   </para>
 
   <para>
    As shown previously, when writing an array value you can use double
-   quotes around any individual array element. You <emphasis>must</> do so
+   quotes around any individual array element. You <emphasis>must</emphasis> do so
    if the element value would otherwise confuse the array-value parser.
    For example, elements containing curly braces, commas (or the data type's
    delimiter character), double quotes, backslashes, or leading or trailing
    whitespace must be double-quoted.  Empty strings and strings matching the
-   word <literal>NULL</> must be quoted, too.  To put a double quote or
+   word <literal>NULL</literal> must be quoted, too.  To put a double quote or
    backslash in a quoted array element value, use escape string syntax
    and precede it with a backslash. Alternatively, you can avoid quotes and use
    backslash-escaping to protect all data characters that would otherwise
@@ -785,17 +785,17 @@ SELECT f1[1][-2][3] AS e1, f1[1][-1][5] AS e2
   <para>
    Remember that what you write in an SQL command will first be interpreted
    as a string literal, and then as an array.  This doubles the number of
-   backslashes you need.  For example, to insert a <type>text</> array
+   backslashes you need.  For example, to insert a <type>text</type> array
    value containing a backslash and a double quote, you'd need to write:
 <programlisting>
 INSERT ... VALUES (E'{"\\\\","\\""}');
 </programlisting>
    The escape string processor removes one level of backslashes, so that
-   what arrives at the array-value parser looks like <literal>{"\\","\""}</>.
-   In turn, the strings fed to the <type>text</> data type's input routine
-   become <literal>\</> and <literal>"</> respectively.  (If we were working
+   what arrives at the array-value parser looks like <literal>{"\\","\""}</literal>.
+   In turn, the strings fed to the <type>text</type> data type's input routine
+   become <literal>\</literal> and <literal>"</literal> respectively.  (If we were working
    with a data type whose input routine also treated backslashes specially,
-   <type>bytea</> for example, we might need as many as eight backslashes
+   <type>bytea</type> for example, we might need as many as eight backslashes
    in the command to get one backslash into the stored array element.)
    Dollar quoting (see <xref linkend="sql-syntax-dollar-quoting">) can be
    used to avoid the need to double backslashes.
@@ -804,10 +804,10 @@ INSERT ... VALUES (E'{"\\\\","\\""}');
 
  <tip>
   <para>
-   The <literal>ARRAY</> constructor syntax (see
+   The <literal>ARRAY</literal> constructor syntax (see
    <xref linkend="sql-syntax-array-constructors">) is often easier to work
    with than the array-literal syntax when writing array values in SQL
-   commands. In <literal>ARRAY</>, individual element values are written the
+   commands. In <literal>ARRAY</literal>, individual element values are written the
    same way they would be written when not members of an array.
   </para>
  </tip>

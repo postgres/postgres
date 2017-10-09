@@ -21,9 +21,9 @@
   <para>
    As explained in <xref linkend="user-manag">,
    <productname>PostgreSQL</productname> actually does privilege
-   management in terms of <quote>roles</>.  In this chapter, we
-   consistently use <firstterm>database user</> to mean <quote>role with the
-   <literal>LOGIN</> privilege</quote>.
+   management in terms of <quote>roles</quote>.  In this chapter, we
+   consistently use <firstterm>database user</firstterm> to mean <quote>role with the
+   <literal>LOGIN</literal> privilege</quote>.
   </para>
  </note>
 
@@ -66,7 +66,7 @@
    which traditionally is named
    <filename>pg_hba.conf</filename> and is stored in the database
    cluster's data directory.
-   (<acronym>HBA</> stands for host-based authentication.) A default
+   (<acronym>HBA</acronym> stands for host-based authentication.) A default
    <filename>pg_hba.conf</filename> file is installed when the data
    directory is initialized by <command>initdb</command>.  It is
    possible to place the authentication configuration file elsewhere,
@@ -82,7 +82,7 @@
    up of a number of fields which are separated by spaces and/or tabs.
    Fields can contain white space if the field value is double-quoted.
    Quoting one of the keywords in a database, user, or address field (e.g.,
-   <literal>all</> or <literal>replication</>) makes the word lose its special
+   <literal>all</literal> or <literal>replication</literal>) makes the word lose its special
    meaning, and just match a database, user, or host with that name.
   </para>
 
@@ -92,8 +92,8 @@
    and the authentication method to be used for connections matching
    these parameters. The first record with a matching connection type,
    client address, requested database, and user name is used to perform
-   authentication. There is no <quote>fall-through</> or
-   <quote>backup</>: if one record is chosen and the authentication
+   authentication. There is no <quote>fall-through</quote> or
+   <quote>backup</quote>: if one record is chosen and the authentication
    fails, subsequent records are not considered. If no record matches,
    access is denied.
   </para>
@@ -138,7 +138,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
        the server is started with an appropriate value for the
        <xref linkend="guc-listen-addresses"> configuration parameter,
        since the default behavior is to listen for TCP/IP connections
-       only on the local loopback address <literal>localhost</>.
+       only on the local loopback address <literal>localhost</literal>.
       </para>
      </note>
      </listitem>
@@ -169,7 +169,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
      <term><literal>hostnossl</literal></term>
      <listitem>
       <para>
-       This record type has the opposite behavior of <literal>hostssl</>;
+       This record type has the opposite behavior of <literal>hostssl</literal>;
        it only matches connection attempts made over
        TCP/IP that do not use <acronym>SSL</acronym>.
       </para>
@@ -182,24 +182,24 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
       <para>
        Specifies which database name(s) this record matches.  The value
        <literal>all</literal> specifies that it matches all databases.
-       The value <literal>sameuser</> specifies that the record
+       The value <literal>sameuser</literal> specifies that the record
        matches if the requested database has the same name as the
-       requested user.  The value <literal>samerole</> specifies that
+       requested user.  The value <literal>samerole</literal> specifies that
        the requested user must be a member of the role with the same
-       name as the requested database.  (<literal>samegroup</> is an
-       obsolete but still accepted spelling of <literal>samerole</>.)
+       name as the requested database.  (<literal>samegroup</literal> is an
+       obsolete but still accepted spelling of <literal>samerole</literal>.)
        Superusers are not considered to be members of a role for the
-       purposes of <literal>samerole</> unless they are explicitly
+       purposes of <literal>samerole</literal> unless they are explicitly
        members of the role, directly or indirectly, and not just by
        virtue of being a superuser.
-       The value <literal>replication</> specifies that the record
+       The value <literal>replication</literal> specifies that the record
        matches if a physical replication connection is requested (note that
        replication connections do not specify any particular database).
        Otherwise, this is the name of
        a specific <productname>PostgreSQL</productname> database.
        Multiple database names can be supplied by separating them with
        commas.  A separate file containing database names can be specified by
-       preceding the file name with <literal>@</>.
+       preceding the file name with <literal>@</literal>.
       </para>
      </listitem>
     </varlistentry>
@@ -211,18 +211,18 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
        Specifies which database user name(s) this record
        matches. The value <literal>all</literal> specifies that it
        matches all users.  Otherwise, this is either the name of a specific
-       database user, or a group name preceded by <literal>+</>.
+       database user, or a group name preceded by <literal>+</literal>.
        (Recall that there is no real distinction between users and groups
-       in <productname>PostgreSQL</>; a <literal>+</> mark really means
+       in <productname>PostgreSQL</productname>; a <literal>+</literal> mark really means
        <quote>match any of the roles that are directly or indirectly members
-       of this role</>, while a name without a <literal>+</> mark matches
+       of this role</quote>, while a name without a <literal>+</literal> mark matches
        only that specific role.) For this purpose, a superuser is only
        considered to be a member of a role if they are explicitly a member
        of the role, directly or indirectly, and not just by virtue of
        being a superuser.
        Multiple user names can be supplied by separating them with commas.
        A separate file containing user names can be specified by preceding the
-       file name with <literal>@</>.
+       file name with <literal>@</literal>.
       </para>
      </listitem>
     </varlistentry>
@@ -239,7 +239,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
       <para>
        An IP address range is specified using standard numeric notation
        for the range's starting address, then a slash (<literal>/</literal>)
-       and a <acronym>CIDR</> mask length.  The mask
+       and a <acronym>CIDR</acronym> mask length.  The mask
        length indicates the number of high-order bits of the client
        IP address that must match.  Bits to the right of this should
        be zero in the given IP address.
@@ -317,7 +317,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
 
       <para>
        This field only applies to <literal>host</literal>,
-       <literal>hostssl</literal>, and <literal>hostnossl</> records.
+       <literal>hostssl</literal>, and <literal>hostnossl</literal> records.
       </para>
 
       <note>
@@ -360,17 +360,17 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
      <listitem>
       <para>
        These two fields can be used as an alternative to the
-       <replaceable>IP-address</><literal>/</><replaceable>mask-length</>
+       <replaceable>IP-address</replaceable><literal>/</literal><replaceable>mask-length</replaceable>
        notation.  Instead of
        specifying the mask length, the actual mask is specified in a
-       separate column. For example, <literal>255.0.0.0</> represents an IPv4
-       CIDR mask length of 8, and <literal>255.255.255.255</> represents a
+       separate column. For example, <literal>255.0.0.0</literal> represents an IPv4
+       CIDR mask length of 8, and <literal>255.255.255.255</literal> represents a
        CIDR mask length of 32.
       </para>
 
       <para>
        These fields only apply to <literal>host</literal>,
-       <literal>hostssl</literal>, and <literal>hostnossl</> records.
+       <literal>hostssl</literal>, and <literal>hostnossl</literal> records.
       </para>
      </listitem>
     </varlistentry>
@@ -385,7 +385,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
 
        <variablelist>
         <varlistentry>
-         <term><literal>trust</></term>
+         <term><literal>trust</literal></term>
          <listitem>
          <para>
           Allow the connection unconditionally. This method
@@ -399,12 +399,12 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
        </varlistentry>
 
        <varlistentry>
-        <term><literal>reject</></term>
+        <term><literal>reject</literal></term>
         <listitem>
          <para>
           Reject the connection unconditionally. This is useful for
-          <quote>filtering out</> certain hosts from a group, for example a
-          <literal>reject</> line could block a specific host from connecting,
+          <quote>filtering out</quote> certain hosts from a group, for example a
+          <literal>reject</literal> line could block a specific host from connecting,
           while a later line allows the remaining hosts in a specific
           network to connect.
          </para>
@@ -412,7 +412,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
        </varlistentry>
 
        <varlistentry>
-        <term><literal>scram-sha-256</></term>
+        <term><literal>scram-sha-256</literal></term>
         <listitem>
          <para>
           Perform SCRAM-SHA-256 authentication to verify the user's
@@ -422,7 +422,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
        </varlistentry>
 
        <varlistentry>
-        <term><literal>md5</></term>
+        <term><literal>md5</literal></term>
         <listitem>
          <para>
           Perform SCRAM-SHA-256 or MD5 authentication to verify the
@@ -433,7 +433,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
        </varlistentry>
 
        <varlistentry>
-        <term><literal>password</></term>
+        <term><literal>password</literal></term>
         <listitem>
          <para>
           Require the client to supply an unencrypted password for
@@ -446,7 +446,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
        </varlistentry>
 
        <varlistentry>
-        <term><literal>gss</></term>
+        <term><literal>gss</literal></term>
         <listitem>
          <para>
           Use GSSAPI to authenticate the user. This is only
@@ -457,7 +457,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
        </varlistentry>
 
        <varlistentry>
-        <term><literal>sspi</></term>
+        <term><literal>sspi</literal></term>
         <listitem>
          <para>
           Use SSPI to authenticate the user. This is only
@@ -468,7 +468,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
        </varlistentry>
 
        <varlistentry>
-        <term><literal>ident</></term>
+        <term><literal>ident</literal></term>
         <listitem>
          <para>
           Obtain the operating system user name of the client
@@ -483,7 +483,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
        </varlistentry>
 
        <varlistentry>
-        <term><literal>peer</></term>
+        <term><literal>peer</literal></term>
         <listitem>
          <para>
           Obtain the client's operating system user name from the operating
@@ -495,17 +495,17 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
        </varlistentry>
 
        <varlistentry>
-        <term><literal>ldap</></term>
+        <term><literal>ldap</literal></term>
         <listitem>
          <para>
-          Authenticate using an <acronym>LDAP</> server. See <xref
+          Authenticate using an <acronym>LDAP</acronym> server. See <xref
           linkend="auth-ldap"> for details.
          </para>
         </listitem>
        </varlistentry>
 
        <varlistentry>
-        <term><literal>radius</></term>
+        <term><literal>radius</literal></term>
         <listitem>
          <para>
           Authenticate using a RADIUS server. See <xref
@@ -515,7 +515,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
        </varlistentry>
 
        <varlistentry>
-        <term><literal>cert</></term>
+        <term><literal>cert</literal></term>
         <listitem>
          <para>
           Authenticate using SSL client certificates. See
@@ -525,7 +525,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
        </varlistentry>
 
        <varlistentry>
-        <term><literal>pam</></term>
+        <term><literal>pam</literal></term>
         <listitem>
          <para>
           Authenticate using the Pluggable Authentication Modules
@@ -536,7 +536,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
        </varlistentry>
 
        <varlistentry>
-        <term><literal>bsd</></term>
+        <term><literal>bsd</literal></term>
         <listitem>
          <para>
           Authenticate using the BSD Authentication service provided by the
@@ -554,17 +554,17 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
      <term><replaceable>auth-options</replaceable></term>
      <listitem>
       <para>
-       After the <replaceable>auth-method</> field, there can be field(s) of
-       the form <replaceable>name</><literal>=</><replaceable>value</> that
+       After the <replaceable>auth-method</replaceable> field, there can be field(s) of
+       the form <replaceable>name</replaceable><literal>=</literal><replaceable>value</replaceable> that
        specify options for the authentication method. Details about which
        options are available for which authentication methods appear below.
       </para>
 
       <para>
        In addition to the method-specific options listed below, there is one
-       method-independent authentication option <literal>clientcert</>, which
-       can be specified in any <literal>hostssl</> record.  When set
-       to <literal>1</>, this option requires the client to present a valid
+       method-independent authentication option <literal>clientcert</literal>, which
+       can be specified in any <literal>hostssl</literal> record.  When set
+       to <literal>1</literal>, this option requires the client to present a valid
        (trusted) SSL certificate, in addition to the other requirements of the
        authentication method.
       </para>
@@ -574,11 +574,11 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
   </para>
 
   <para>
-   Files included by <literal>@</> constructs are read as lists of names,
+   Files included by <literal>@</literal> constructs are read as lists of names,
    which can be separated by either whitespace or commas.  Comments are
    introduced by <literal>#</literal>, just as in
-   <filename>pg_hba.conf</filename>, and nested <literal>@</> constructs are
-   allowed.  Unless the file name following <literal>@</> is an absolute
+   <filename>pg_hba.conf</filename>, and nested <literal>@</literal> constructs are
+   allowed.  Unless the file name following <literal>@</literal> is an absolute
    path, it is taken to be relative to the directory containing the
    referencing file.
   </para>
@@ -589,10 +589,10 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
    significant. Typically, earlier records will have tight connection
    match parameters and weaker authentication methods, while later
    records will have looser match parameters and stronger authentication
-   methods. For example, one might wish to use <literal>trust</>
+   methods. For example, one might wish to use <literal>trust</literal>
    authentication for local TCP/IP connections but require a password for
    remote TCP/IP connections. In this case a record specifying
-   <literal>trust</> authentication for connections from 127.0.0.1 would
+   <literal>trust</literal> authentication for connections from 127.0.0.1 would
    appear before a record specifying password authentication for a wider
    range of allowed client IP addresses.
   </para>
@@ -603,7 +603,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
    <systemitem>SIGHUP</systemitem><indexterm><primary>SIGHUP</primary></indexterm>
    signal. If you edit the file on an
    active system, you will need to signal the postmaster
-   (using <literal>pg_ctl reload</> or <literal>kill -HUP</>) to make it
+   (using <literal>pg_ctl reload</literal> or <literal>kill -HUP</literal>) to make it
    re-read the file.
   </para>
 
@@ -618,7 +618,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
   <para>
    The system view
    <link linkend="view-pg-hba-file-rules"><structname>pg_hba_file_rules</structname></link>
-   can be helpful for pre-testing changes to the <filename>pg_hba.conf</>
+   can be helpful for pre-testing changes to the <filename>pg_hba.conf</filename>
    file, or for diagnosing problems if loading of the file did not have the
    desired effects.  Rows in the view with
    non-null <structfield>error</structfield> fields indicate problems in the
@@ -629,9 +629,9 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
    <para>
     To connect to a particular database, a user must not only pass the
     <filename>pg_hba.conf</filename> checks, but must have the
-    <literal>CONNECT</> privilege for the database.  If you wish to
+    <literal>CONNECT</literal> privilege for the database.  If you wish to
     restrict which users can connect to which databases, it's usually
-    easier to control this by granting/revoking <literal>CONNECT</> privilege
+    easier to control this by granting/revoking <literal>CONNECT</literal> privilege
     than to put the rules in <filename>pg_hba.conf</filename> entries.
    </para>
   </tip>
@@ -760,21 +760,21 @@ local   db1,db2,@demodbs  all                                   md5
 
   <para>
    User name maps are defined in the ident map file, which by default is named
-   <filename>pg_ident.conf</><indexterm><primary>pg_ident.conf</primary></indexterm>
+   <filename>pg_ident.conf</filename><indexterm><primary>pg_ident.conf</primary></indexterm>
    and is stored in the
    cluster's data directory.  (It is possible to place the map file
    elsewhere, however; see the <xref linkend="guc-ident-file">
    configuration parameter.)
    The ident map file contains lines of the general form:
 <synopsis>
-<replaceable>map-name</> <replaceable>system-username</> <replaceable>database-username</>
+<replaceable>map-name</replaceable> <replaceable>system-username</replaceable> <replaceable>database-username</replaceable>
 </synopsis>
    Comments and whitespace are handled in the same way as in
-   <filename>pg_hba.conf</>.  The
-   <replaceable>map-name</> is an arbitrary name that will be used to
+   <filename>pg_hba.conf</filename>.  The
+   <replaceable>map-name</replaceable> is an arbitrary name that will be used to
    refer to this mapping in <filename>pg_hba.conf</filename>. The other
    two fields specify an operating system user name and a matching
-   database user name. The same <replaceable>map-name</> can be
+   database user name. The same <replaceable>map-name</replaceable> can be
    used repeatedly to specify multiple user-mappings within a single map.
   </para>
   <para>
@@ -788,13 +788,13 @@ local   db1,db2,@demodbs  all                                   md5
    user has requested to connect as.
   </para>
   <para>
-   If the <replaceable>system-username</> field starts with a slash (<literal>/</>),
+   If the <replaceable>system-username</replaceable> field starts with a slash (<literal>/</literal>),
    the remainder of the field is treated as a regular expression.
    (See <xref linkend="posix-syntax-details"> for details of
-   <productname>PostgreSQL</>'s regular expression syntax.)  The regular
+   <productname>PostgreSQL</productname>'s regular expression syntax.)  The regular
    expression can include a single capture, or parenthesized subexpression,
-   which can then be referenced in the <replaceable>database-username</>
-   field as <literal>\1</> (backslash-one).  This allows the mapping of
+   which can then be referenced in the <replaceable>database-username</replaceable>
+   field as <literal>\1</literal> (backslash-one).  This allows the mapping of
    multiple user names in a single line, which is particularly useful for
    simple syntax substitutions.  For example, these entries
 <programlisting>
@@ -802,14 +802,14 @@ mymap   /^(.*)@mydomain\.com$      \1
 mymap   /^(.*)@otherdomain\.com$   guest
 </programlisting>
    will remove the domain part for users with system user names that end with
-   <literal>@mydomain.com</>, and allow any user whose system name ends with
-   <literal>@otherdomain.com</> to log in as <literal>guest</>.
+   <literal>@mydomain.com</literal>, and allow any user whose system name ends with
+   <literal>@otherdomain.com</literal> to log in as <literal>guest</literal>.
   </para>
 
   <tip>
    <para>
     Keep in mind that by default, a regular expression can match just part of
-    a string.  It's usually wise to use <literal>^</> and <literal>$</>, as
+    a string.  It's usually wise to use <literal>^</literal> and <literal>$</literal>, as
     shown in the above example, to force the match to be to the entire
     system user name.
    </para>
@@ -821,28 +821,28 @@ mymap   /^(.*)@otherdomain\.com$   guest
    <systemitem>SIGHUP</systemitem><indexterm><primary>SIGHUP</primary></indexterm>
    signal. If you edit the file on an
    active system, you will need to signal the postmaster
-   (using <literal>pg_ctl reload</> or <literal>kill -HUP</>) to make it
+   (using <literal>pg_ctl reload</literal> or <literal>kill -HUP</literal>) to make it
    re-read the file.
   </para>
 
   <para>
    A <filename>pg_ident.conf</filename> file that could be used in
-   conjunction with the <filename>pg_hba.conf</> file in <xref
+   conjunction with the <filename>pg_hba.conf</filename> file in <xref
    linkend="example-pg-hba.conf"> is shown in <xref
    linkend="example-pg-ident.conf">. In this example, anyone
    logged in to a machine on the 192.168 network that does not have the
-   operating system user name <literal>bryanh</>, <literal>ann</>, or
-   <literal>robert</> would not be granted access. Unix user
-   <literal>robert</> would only be allowed access when he tries to
-   connect as <productname>PostgreSQL</> user <literal>bob</>, not
-   as <literal>robert</> or anyone else. <literal>ann</> would
-   only be allowed to connect as <literal>ann</>. User
-   <literal>bryanh</> would be allowed to connect as either
-   <literal>bryanh</> or as <literal>guest1</>.
+   operating system user name <literal>bryanh</literal>, <literal>ann</literal>, or
+   <literal>robert</literal> would not be granted access. Unix user
+   <literal>robert</literal> would only be allowed access when he tries to
+   connect as <productname>PostgreSQL</productname> user <literal>bob</literal>, not
+   as <literal>robert</literal> or anyone else. <literal>ann</literal> would
+   only be allowed to connect as <literal>ann</literal>. User
+   <literal>bryanh</literal> would be allowed to connect as either
+   <literal>bryanh</literal> or as <literal>guest1</literal>.
   </para>
 
   <example id="example-pg-ident.conf">
-   <title>An Example <filename>pg_ident.conf</> File</title>
+   <title>An Example <filename>pg_ident.conf</filename> File</title>
 <programlisting>
 # MAPNAME       SYSTEM-USERNAME         PG-USERNAME
 
@@ -866,21 +866,21 @@ omicron         bryanh                  guest1
    <title>Trust Authentication</title>
 
    <para>
-    When <literal>trust</> authentication is specified,
+    When <literal>trust</literal> authentication is specified,
     <productname>PostgreSQL</productname> assumes that anyone who can
     connect to the server is authorized to access the database with
     whatever database user name they specify (even superuser names).
-    Of course, restrictions made in the <literal>database</> and
-    <literal>user</> columns still apply.
+    Of course, restrictions made in the <literal>database</literal> and
+    <literal>user</literal> columns still apply.
     This method should only be used when there is adequate
     operating-system-level protection on connections to the server.
    </para>
 
    <para>
-    <literal>trust</> authentication is appropriate and very
+    <literal>trust</literal> authentication is appropriate and very
     convenient for local connections on a single-user workstation.  It
-    is usually <emphasis>not</> appropriate by itself on a multiuser
-    machine.  However, you might be able to use <literal>trust</> even
+    is usually <emphasis>not</emphasis> appropriate by itself on a multiuser
+    machine.  However, you might be able to use <literal>trust</literal> even
     on a multiuser machine, if you restrict access to the server's
     Unix-domain socket file using file-system permissions.  To do this, set the
     <varname>unix_socket_permissions</varname> (and possibly
@@ -895,17 +895,17 @@ omicron         bryanh                  guest1
     Setting file-system permissions only helps for Unix-socket connections.
     Local TCP/IP connections are not restricted by file-system permissions.
     Therefore, if you want to use file-system permissions for local security,
-    remove the <literal>host ... 127.0.0.1 ...</> line from
-    <filename>pg_hba.conf</>, or change it to a
-    non-<literal>trust</> authentication method.
+    remove the <literal>host ... 127.0.0.1 ...</literal> line from
+    <filename>pg_hba.conf</filename>, or change it to a
+    non-<literal>trust</literal> authentication method.
    </para>
 
    <para>
-    <literal>trust</> authentication is only suitable for TCP/IP connections
+    <literal>trust</literal> authentication is only suitable for TCP/IP connections
     if you trust every user on every machine that is allowed to connect
-    to the server by the <filename>pg_hba.conf</> lines that specify
-    <literal>trust</>.  It is seldom reasonable to use <literal>trust</>
-    for any TCP/IP connections other than those from <systemitem>localhost</> (127.0.0.1).
+    to the server by the <filename>pg_hba.conf</filename> lines that specify
+    <literal>trust</literal>.  It is seldom reasonable to use <literal>trust</literal>
+    for any TCP/IP connections other than those from <systemitem>localhost</systemitem> (127.0.0.1).
    </para>
 
   </sect2>
@@ -914,10 +914,10 @@ omicron         bryanh                  guest1
    <title>Password Authentication</title>
 
    <indexterm>
-    <primary>MD5</>
+    <primary>MD5</primary>
    </indexterm>
    <indexterm>
-    <primary>SCRAM</>
+    <primary>SCRAM</primary>
    </indexterm>
    <indexterm>
     <primary>password</primary>
@@ -936,7 +936,7 @@ omicron         bryanh                  guest1
      <term><literal>scram-sha-256</literal></term>
      <listitem>
       <para>
-       The method <literal>scram-sha-256</> performs SCRAM-SHA-256
+       The method <literal>scram-sha-256</literal> performs SCRAM-SHA-256
        authentication, as described in
        <ulink url="https://tools.ietf.org/html/rfc7677">RFC 7677</ulink>.  It
        is a challenge-response scheme that prevents password sniffing on
@@ -955,7 +955,7 @@ omicron         bryanh                  guest1
      <term><literal>md5</literal></term>
      <listitem>
       <para>
-       The method <literal>md5</> uses a custom less secure challenge-response
+       The method <literal>md5</literal> uses a custom less secure challenge-response
        mechanism.  It prevents password sniffing and avoids storing passwords
        on the server in plain text but provides no protection if an attacker
        manages to steal the password hash from the server.  Also, the MD5 hash
@@ -982,10 +982,10 @@ omicron         bryanh                  guest1
      <term><literal>password</literal></term>
      <listitem>
       <para>
-       The method <literal>password</> sends the password in clear-text and is
-       therefore vulnerable to password <quote>sniffing</> attacks. It should
+       The method <literal>password</literal> sends the password in clear-text and is
+       therefore vulnerable to password <quote>sniffing</quote> attacks. It should
        always be avoided if possible. If the connection is protected by SSL
-       encryption then <literal>password</> can be used safely, though.
+       encryption then <literal>password</literal> can be used safely, though.
        (Though SSL certificate authentication might be a better choice if one
        is depending on using SSL).
       </para>
@@ -996,7 +996,7 @@ omicron         bryanh                  guest1
    <para>
     <productname>PostgreSQL</productname> database passwords are
     separate from operating system user passwords. The password for
-    each database user is stored in the <literal>pg_authid</> system
+    each database user is stored in the <literal>pg_authid</literal> system
     catalog. Passwords can be managed with the SQL commands
     <xref linkend="sql-createuser"> and
     <xref linkend="sql-alterrole">,
@@ -1060,7 +1060,7 @@ omicron         bryanh                  guest1
    </para>
 
    <para>
-    GSSAPI support has to be enabled when <productname>PostgreSQL</> is built;
+    GSSAPI support has to be enabled when <productname>PostgreSQL</productname> is built;
     see <xref linkend="installation"> for more information.
    </para>
 
@@ -1068,13 +1068,13 @@ omicron         bryanh                  guest1
     When <productname>GSSAPI</productname> uses
     <productname>Kerberos</productname>, it uses a standard principal
     in the format
-    <literal><replaceable>servicename</>/<replaceable>hostname</>@<replaceable>realm</></literal>.
+    <literal><replaceable>servicename</replaceable>/<replaceable>hostname</replaceable>@<replaceable>realm</replaceable></literal>.
     The PostgreSQL server will accept any principal that is included in the keytab used by
     the server, but care needs to be taken to specify the correct principal details when
-    making the connection from the client using the <literal>krbsrvname</> connection parameter. (See
+    making the connection from the client using the <literal>krbsrvname</literal> connection parameter. (See
     also <xref linkend="libpq-paramkeywords">.) The installation default can be
     changed from the default <literal>postgres</literal> at build time using
-    <literal>./configure --with-krb-srvnam=</><replaceable>whatever</>.
+    <literal>./configure --with-krb-srvnam=</literal><replaceable>whatever</replaceable>.
     In most environments,
     this parameter never needs to be changed.
     Some Kerberos implementations might require a different service name,
@@ -1082,31 +1082,31 @@ omicron         bryanh                  guest1
     to be in upper case (<literal>POSTGRES</literal>).
    </para>
    <para>
-    <replaceable>hostname</> is the fully qualified host name of the
+    <replaceable>hostname</replaceable> is the fully qualified host name of the
     server machine. The service principal's realm is the preferred realm
     of the server machine.
    </para>
 
    <para>
-    Client principals can be mapped to different <productname>PostgreSQL</>
-    database user names with <filename>pg_ident.conf</>.  For example,
-    <literal>pgusername@realm</> could be mapped to just <literal>pgusername</>.
-    Alternatively, you can use the full <literal>username@realm</> principal as
-    the role name in <productname>PostgreSQL</> without any mapping.
+    Client principals can be mapped to different <productname>PostgreSQL</productname>
+    database user names with <filename>pg_ident.conf</filename>.  For example,
+    <literal>pgusername@realm</literal> could be mapped to just <literal>pgusername</literal>.
+    Alternatively, you can use the full <literal>username@realm</literal> principal as
+    the role name in <productname>PostgreSQL</productname> without any mapping.
    </para>
 
    <para>
-    <productname>PostgreSQL</> also supports a parameter to strip the realm from
+    <productname>PostgreSQL</productname> also supports a parameter to strip the realm from
     the principal.  This method is supported for backwards compatibility and is
     strongly discouraged as it is then impossible to distinguish different users
     with the same user name but coming from different realms.  To enable this,
-    set <literal>include_realm</> to 0.  For simple single-realm
+    set <literal>include_realm</literal> to 0.  For simple single-realm
     installations, doing that combined with setting the
-    <literal>krb_realm</> parameter (which checks that the principal's realm
+    <literal>krb_realm</literal> parameter (which checks that the principal's realm
     matches exactly what is in the <literal>krb_realm</literal> parameter)
     is still secure; but this is a
     less capable approach compared to specifying an explicit mapping in
-    <filename>pg_ident.conf</>.
+    <filename>pg_ident.conf</filename>.
    </para>
 
    <para>
@@ -1116,8 +1116,8 @@ omicron         bryanh                  guest1
     of the key file is specified by the <xref
     linkend="guc-krb-server-keyfile"> configuration
     parameter. The default is
-    <filename>/usr/local/pgsql/etc/krb5.keytab</> (or whatever
-    directory was specified as <varname>sysconfdir</> at build time).
+    <filename>/usr/local/pgsql/etc/krb5.keytab</filename> (or whatever
+    directory was specified as <varname>sysconfdir</varname> at build time).
     For security reasons, it is recommended to use a separate keytab
     just for the <productname>PostgreSQL</productname> server rather
     than opening up permissions on the system keytab file.
@@ -1127,17 +1127,17 @@ omicron         bryanh                  guest1
     Kerberos documentation for details. The following example is
    for MIT-compatible Kerberos 5 implementations:
 <screen>
-<prompt>kadmin% </><userinput>ank -randkey postgres/server.my.domain.org</>
-<prompt>kadmin% </><userinput>ktadd -k krb5.keytab postgres/server.my.domain.org</>
+<prompt>kadmin% </prompt><userinput>ank -randkey postgres/server.my.domain.org</userinput>
+<prompt>kadmin% </prompt><userinput>ktadd -k krb5.keytab postgres/server.my.domain.org</userinput>
 </screen>
    </para>
 
    <para>
     When connecting to the database make sure you have a ticket for a
     principal matching the requested database user name. For example, for
-    database user name <literal>fred</>, principal
-    <literal>fred@EXAMPLE.COM</> would be able to connect. To also allow
-    principal <literal>fred/users.example.com@EXAMPLE.COM</>, use a user name
+    database user name <literal>fred</literal>, principal
+    <literal>fred@EXAMPLE.COM</literal> would be able to connect. To also allow
+    principal <literal>fred/users.example.com@EXAMPLE.COM</literal>, use a user name
     map, as described in <xref linkend="auth-username-maps">.
    </para>
 
@@ -1155,8 +1155,8 @@ omicron         bryanh                  guest1
         in multi-realm environments unless <literal>krb_realm</literal> is
         also used.  It is recommended to
         leave <literal>include_realm</literal> set to the default (1) and to
-        provide an explicit mapping in <filename>pg_ident.conf</> to convert
-        principal names to <productname>PostgreSQL</> user names.
+        provide an explicit mapping in <filename>pg_ident.conf</filename> to convert
+        principal names to <productname>PostgreSQL</productname> user names.
        </para>
       </listitem>
      </varlistentry>
@@ -1236,8 +1236,8 @@ omicron         bryanh                  guest1
         in multi-realm environments unless <literal>krb_realm</literal> is
         also used.  It is recommended to
         leave <literal>include_realm</literal> set to the default (1) and to
-        provide an explicit mapping in <filename>pg_ident.conf</> to convert
-        principal names to <productname>PostgreSQL</> user names.
+        provide an explicit mapping in <filename>pg_ident.conf</filename> to convert
+        principal names to <productname>PostgreSQL</productname> user names.
        </para>
       </listitem>
      </varlistentry>
@@ -1270,9 +1270,9 @@ omicron         bryanh                  guest1
         By default, these two names are identical for new user accounts.
        </para>
        <para>
-        Note that <application>libpq</> uses the SAM-compatible name if no
+        Note that <application>libpq</application> uses the SAM-compatible name if no
         explicit user name is specified. If you use
-        <application>libpq</> or a driver based on it, you should
+        <application>libpq</application> or a driver based on it, you should
         leave this option disabled or explicitly specify user name in the
         connection string.
        </para>
@@ -1357,8 +1357,8 @@ omicron         bryanh                  guest1
     is to answer questions like <quote>What user initiated the
     connection that goes out of your port <replaceable>X</replaceable>
     and connects to my port <replaceable>Y</replaceable>?</quote>.
-    Since <productname>PostgreSQL</> knows both <replaceable>X</> and
-    <replaceable>Y</> when a physical connection is established, it
+    Since <productname>PostgreSQL</productname> knows both <replaceable>X</replaceable> and
+    <replaceable>Y</replaceable> when a physical connection is established, it
     can interrogate the ident server on the host of the connecting
     client and can theoretically determine the operating system user
     for any given connection.
@@ -1386,9 +1386,9 @@ omicron         bryanh                  guest1
    <para>
     Some ident servers have a nonstandard option that causes the returned
     user name to be encrypted, using a key that only the originating
-    machine's administrator knows.  This option <emphasis>must not</> be
-    used when using the ident server with <productname>PostgreSQL</>,
-    since <productname>PostgreSQL</> does not have any way to decrypt the
+    machine's administrator knows.  This option <emphasis>must not</emphasis> be
+    used when using the ident server with <productname>PostgreSQL</productname>,
+    since <productname>PostgreSQL</productname> does not have any way to decrypt the
     returned string to determine the actual user name.
    </para>
   </sect2>
@@ -1424,11 +1424,11 @@ omicron         bryanh                  guest1
 
    <para>
     Peer authentication is only available on operating systems providing
-    the <function>getpeereid()</> function, the <symbol>SO_PEERCRED</symbol>
+    the <function>getpeereid()</function> function, the <symbol>SO_PEERCRED</symbol>
     socket parameter, or similar mechanisms.  Currently that includes
-    <systemitem class="osname">Linux</>,
-    most flavors of <systemitem class="osname">BSD</> including
-    <systemitem class="osname">macOS</>,
+    <systemitem class="osname">Linux</systemitem>,
+    most flavors of <systemitem class="osname">BSD</systemitem> including
+    <systemitem class="osname">macOS</systemitem>,
     and <systemitem class="osname">Solaris</systemitem>.
    </para>
 
@@ -1454,23 +1454,23 @@ omicron         bryanh                  guest1
     LDAP authentication can operate in two modes. In the first mode,
     which we will call the simple bind mode,
     the server will bind to the distinguished name constructed as
-    <replaceable>prefix</> <replaceable>username</> <replaceable>suffix</>.
-    Typically, the <replaceable>prefix</> parameter is used to specify
-    <literal>cn=</>, or <replaceable>DOMAIN</><literal>\</> in an Active
-    Directory environment.  <replaceable>suffix</> is used to specify the
+    <replaceable>prefix</replaceable> <replaceable>username</replaceable> <replaceable>suffix</replaceable>.
+    Typically, the <replaceable>prefix</replaceable> parameter is used to specify
+    <literal>cn=</literal>, or <replaceable>DOMAIN</replaceable><literal>\</literal> in an Active
+    Directory environment.  <replaceable>suffix</replaceable> is used to specify the
     remaining part of the DN in a non-Active Directory environment.
    </para>
 
    <para>
     In the second mode, which we will call the search+bind mode,
     the server first binds to the LDAP directory with
-    a fixed user name and password, specified with <replaceable>ldapbinddn</>
-    and <replaceable>ldapbindpasswd</>, and performs a search for the user trying
+    a fixed user name and password, specified with <replaceable>ldapbinddn</replaceable>
+    and <replaceable>ldapbindpasswd</replaceable>, and performs a search for the user trying
     to log in to the database. If no user and password is configured, an
     anonymous bind will be attempted to the directory. The search will be
-    performed over the subtree at <replaceable>ldapbasedn</>, and will try to
+    performed over the subtree at <replaceable>ldapbasedn</replaceable>, and will try to
     do an exact match of the attribute specified in
-    <replaceable>ldapsearchattribute</>.
+    <replaceable>ldapsearchattribute</replaceable>.
     Once the user has been found in
     this search, the server disconnects and re-binds to the directory as
     this user, using the password specified by the client, to verify that the
@@ -1572,7 +1572,7 @@ omicron         bryanh                  guest1
         <para>
          Attribute to match against the user name in the search when doing
          search+bind authentication.  If no attribute is specified, the
-         <literal>uid</> attribute will be used.
+         <literal>uid</literal> attribute will be used.
         </para>
        </listitem>
       </varlistentry>
@@ -1719,11 +1719,11 @@ host ... ldap ldapserver=ldap.example.net ldapbasedn="dc=example, dc=net" ldapse
     When using RADIUS authentication, an Access Request message will be sent
     to the configured RADIUS server. This request will be of type
     <literal>Authenticate Only</literal>, and include parameters for
-    <literal>user name</>, <literal>password</> (encrypted) and
-    <literal>NAS Identifier</>. The request will be encrypted using
+    <literal>user name</literal>, <literal>password</literal> (encrypted) and
+    <literal>NAS Identifier</literal>. The request will be encrypted using
     a secret shared with the server. The RADIUS server will respond to
-    this server with either <literal>Access Accept</> or
-    <literal>Access Reject</>. There is no support for RADIUS accounting.
+    this server with either <literal>Access Accept</literal> or
+    <literal>Access Reject</literal>. There is no support for RADIUS accounting.
    </para>
 
    <para>
@@ -1762,8 +1762,8 @@ host ... ldap ldapserver=ldap.example.net ldapbasedn="dc=example, dc=net" ldapse
          <note>
          <para>
           The encryption vector used will only be cryptographically
-          strong if <productname>PostgreSQL</> is built with support for
-          <productname>OpenSSL</>. In other cases, the transmission to the
+          strong if <productname>PostgreSQL</productname> is built with support for
+          <productname>OpenSSL</productname>. In other cases, the transmission to the
           RADIUS server should only be considered obfuscated, not secured, and
           external security measures should be applied if necessary.
          </para>
@@ -1777,7 +1777,7 @@ host ... ldap ldapserver=ldap.example.net ldapbasedn="dc=example, dc=net" ldapse
        <listitem>
         <para>
          The port number on the RADIUS servers to connect to. If no port
-         is specified, the default port <literal>1812</> will be used.
+         is specified, the default port <literal>1812</literal> will be used.
         </para>
        </listitem>
       </varlistentry>
@@ -1786,12 +1786,12 @@ host ... ldap ldapserver=ldap.example.net ldapbasedn="dc=example, dc=net" ldapse
        <term><literal>radiusidentifiers</literal></term>
        <listitem>
         <para>
-         The string used as <literal>NAS Identifier</> in the RADIUS
+         The string used as <literal>NAS Identifier</literal> in the RADIUS
          requests. This parameter can be used as a second parameter
          identifying for example which database user the user is attempting
          to authenticate as, which can be used for policy matching on
          the RADIUS server. If no identifier is specified, the default
-         <literal>postgresql</> will be used.
+         <literal>postgresql</literal> will be used.
         </para>
        </listitem>
       </varlistentry>
@@ -1836,11 +1836,11 @@ host ... ldap ldapserver=ldap.example.net ldapbasedn="dc=example, dc=net" ldapse
    </para>
 
    <para>
-    In a <filename>pg_hba.conf</> record specifying certificate
-    authentication, the authentication option <literal>clientcert</> is
-    assumed to be <literal>1</>, and it cannot be turned off since a client
-    certificate is necessary for this method.  What the <literal>cert</>
-    method adds to the basic <literal>clientcert</> certificate validity test
+    In a <filename>pg_hba.conf</filename> record specifying certificate
+    authentication, the authentication option <literal>clientcert</literal> is
+    assumed to be <literal>1</literal>, and it cannot be turned off since a client
+    certificate is necessary for this method.  What the <literal>cert</literal>
+    method adds to the basic <literal>clientcert</literal> certificate validity test
     is a check that the <literal>cn</literal> attribute matches the database
     user name.
    </para>
@@ -1863,7 +1863,7 @@ host ... ldap ldapserver=ldap.example.net ldapbasedn="dc=example, dc=net" ldapse
     exist in the database before PAM can be used for authentication.  For more
     information about PAM, please read the
     <ulink url="http://www.kernel.org/pub/linux/libs/pam/">
-    <productname>Linux-PAM</> Page</ulink>.
+    <productname>Linux-PAM</productname> Page</ulink>.
    </para>
 
    <para>
@@ -1896,7 +1896,7 @@ host ... ldap ldapserver=ldap.example.net ldapbasedn="dc=example, dc=net" ldapse
 
    <note>
     <para>
-     If PAM is set up to read <filename>/etc/shadow</>, authentication
+     If PAM is set up to read <filename>/etc/shadow</filename>, authentication
      will fail because the PostgreSQL server is started by a non-root
      user.  However, this is not an issue when PAM is configured to use
      LDAP or other authentication methods.
@@ -1922,11 +1922,11 @@ host ... ldap ldapserver=ldap.example.net ldapbasedn="dc=example, dc=net" ldapse
    </para>
 
    <para>
-    BSD Authentication in <productname>PostgreSQL</> uses
+    BSD Authentication in <productname>PostgreSQL</productname> uses
     the <literal>auth-postgresql</literal> login type and authenticates with
     the <literal>postgresql</literal> login class if that's defined
     in <filename>login.conf</filename>. By default that login class does not
-    exist, and <productname>PostgreSQL</> will use the default login class.
+    exist, and <productname>PostgreSQL</productname> will use the default login class.
    </para>
 
    <note>

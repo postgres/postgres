@@ -40,8 +40,8 @@ DROP TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [, ..
    <command>DROP TABLE</command> always removes any indexes, rules,
    triggers, and constraints that exist for the target table.
    However, to drop a table that is referenced by a view or a foreign-key
-   constraint of another table, <literal>CASCADE</> must be
-   specified. (<literal>CASCADE</> will remove a dependent view entirely,
+   constraint of another table, <literal>CASCADE</literal> must be
+   specified. (<literal>CASCADE</literal> will remove a dependent view entirely,
    but in the foreign-key case it will only remove the foreign-key
    constraint, not the other table entirely.)
   </para>
@@ -112,7 +112,7 @@ DROP TABLE films, distributors;
   <para>
    This command conforms to the SQL standard, except that the standard only
    allows one table to be dropped per command, and apart from the
-   <literal>IF EXISTS</> option, which is a <productname>PostgreSQL</>
+   <literal>IF EXISTS</literal> option, which is a <productname>PostgreSQL</productname>
    extension.
   </para>
  </refsect1>

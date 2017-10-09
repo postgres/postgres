@@ -40,7 +40,7 @@ ROLLBACK [ WORK | TRANSACTION ] TO [ SAVEPOINT ] <replaceable>savepoint_name</re
   </para>
 
   <para>
-   <command>ROLLBACK TO SAVEPOINT</> implicitly destroys all savepoints that
+   <command>ROLLBACK TO SAVEPOINT</command> implicitly destroys all savepoints that
    were established after the named savepoint.
   </para>
  </refsect1>
@@ -50,7 +50,7 @@ ROLLBACK [ WORK | TRANSACTION ] TO [ SAVEPOINT ] <replaceable>savepoint_name</re
 
   <variablelist>
    <varlistentry>
-    <term><replaceable class="parameter">savepoint_name</></term>
+    <term><replaceable class="parameter">savepoint_name</replaceable></term>
     <listitem>
      <para>
       The savepoint to roll back to.
@@ -77,17 +77,17 @@ ROLLBACK [ WORK | TRANSACTION ] TO [ SAVEPOINT ] <replaceable>savepoint_name</re
    Cursors have somewhat non-transactional behavior with respect to
    savepoints.  Any cursor that is opened inside a savepoint will be closed
    when the savepoint is rolled back.  If a previously opened cursor is
-   affected by a <command>FETCH</> or <command>MOVE</> command inside a
+   affected by a <command>FETCH</command> or <command>MOVE</command> command inside a
    savepoint that is later rolled back, the cursor remains at the
-   position that <command>FETCH</> left it pointing to (that is, the cursor
-   motion caused by <command>FETCH</> is not rolled back).
+   position that <command>FETCH</command> left it pointing to (that is, the cursor
+   motion caused by <command>FETCH</command> is not rolled back).
    Closing a cursor is not undone by rolling back, either.
    However, other side-effects caused by the cursor's query (such as
-   side-effects of volatile functions called by the query) <emphasis>are</>
+   side-effects of volatile functions called by the query) <emphasis>are</emphasis>
    rolled back if they occur during a savepoint that is later rolled back.
    A cursor whose execution causes a transaction to abort is put in a
    cannot-execute state, so while the transaction can be restored using
-   <command>ROLLBACK TO SAVEPOINT</>, the cursor can no longer be used.
+   <command>ROLLBACK TO SAVEPOINT</command>, the cursor can no longer be used.
   </para>
  </refsect1>
 
@@ -133,13 +133,13 @@ COMMIT;
   <title>Compatibility</title>
 
   <para>
-   The <acronym>SQL</> standard specifies that the key word
-   <literal>SAVEPOINT</> is mandatory, but <productname>PostgreSQL</>
-   and <productname>Oracle</> allow it to be omitted.  SQL allows
-   only <literal>WORK</>, not <literal>TRANSACTION</>, as a noise word
-   after <literal>ROLLBACK</>.  Also, SQL has an optional clause
-   <literal>AND [ NO ] CHAIN</> which is not currently supported by
-   <productname>PostgreSQL</>.  Otherwise, this command conforms to
+   The <acronym>SQL</acronym> standard specifies that the key word
+   <literal>SAVEPOINT</literal> is mandatory, but <productname>PostgreSQL</productname>
+   and <productname>Oracle</productname> allow it to be omitted.  SQL allows
+   only <literal>WORK</literal>, not <literal>TRANSACTION</literal>, as a noise word
+   after <literal>ROLLBACK</literal>.  Also, SQL has an optional clause
+   <literal>AND [ NO ] CHAIN</literal> which is not currently supported by
+   <productname>PostgreSQL</productname>.  Otherwise, this command conforms to
    the SQL standard.
   </para>
  </refsect1>

@@ -28,12 +28,12 @@ LOAD '<replaceable class="parameter">filename</replaceable>'
   <title>Description</title>
 
   <para>
-   This command loads a shared library file into the <productname>PostgreSQL</>
+   This command loads a shared library file into the <productname>PostgreSQL</productname>
    server's address space.  If the file has been loaded already,
    the command does nothing.  Shared library files that contain C functions
    are automatically loaded whenever one of their functions is called.
-   Therefore, an explicit <command>LOAD</> is usually only needed to
-   load a library that modifies the server's behavior through <quote>hooks</>
+   Therefore, an explicit <command>LOAD</command> is usually only needed to
+   load a library that modifies the server's behavior through <quote>hooks</quote>
    rather than providing a set of functions.
   </para>
 
@@ -47,15 +47,15 @@ LOAD '<replaceable class="parameter">filename</replaceable>'
   </para>
 
   <indexterm>
-   <primary><filename>$libdir/plugins</></primary>
+   <primary><filename>$libdir/plugins</filename></primary>
   </indexterm>
 
   <para>
-   Non-superusers can only apply <command>LOAD</> to library files
-   located in <filename>$libdir/plugins/</> &mdash; the specified
+   Non-superusers can only apply <command>LOAD</command> to library files
+   located in <filename>$libdir/plugins/</filename> &mdash; the specified
    <replaceable class="parameter">filename</replaceable> must begin
    with exactly that string.  (It is the database administrator's
-   responsibility to ensure that only <quote>safe</> libraries
+   responsibility to ensure that only <quote>safe</quote> libraries
    are installed there.)
   </para>
  </refsect1>

@@ -13,7 +13,7 @@
 
   <para>
    Reliability is an important property of any serious database
-   system, and <productname>PostgreSQL</> does everything possible to
+   system, and <productname>PostgreSQL</productname> does everything possible to
    guarantee reliable operation. One aspect of reliable operation is
    that all data recorded by a committed transaction should be stored
    in a nonvolatile area that is safe from power loss, operating
@@ -34,21 +34,21 @@
    First, there is the operating system's buffer cache, which caches
    frequently requested disk blocks and combines disk writes. Fortunately,
    all operating systems give applications a way to force writes from
-   the buffer cache to disk, and <productname>PostgreSQL</> uses those
+   the buffer cache to disk, and <productname>PostgreSQL</productname> uses those
    features.  (See the <xref linkend="guc-wal-sync-method"> parameter
    to adjust how this is done.)
   </para>
 
   <para>
    Next, there might be a cache in the disk drive controller; this is
-   particularly common on <acronym>RAID</> controller cards. Some of
-   these caches are <firstterm>write-through</>, meaning writes are sent
+   particularly common on <acronym>RAID</acronym> controller cards. Some of
+   these caches are <firstterm>write-through</firstterm>, meaning writes are sent
    to the drive as soon as they arrive. Others are
-   <firstterm>write-back</>, meaning data is sent to the drive at
+   <firstterm>write-back</firstterm>, meaning data is sent to the drive at
    some later time. Such caches can be a reliability hazard because the
    memory in the disk controller cache is volatile, and will lose its
    contents in a power failure.  Better controller cards have
-   <firstterm>battery-backup units</> (<acronym>BBU</>s), meaning
+   <firstterm>battery-backup units</firstterm> (<acronym>BBU</acronym>s), meaning
    the card has a battery that
    maintains power to the cache in case of system power loss.  After power
    is restored the data will be written to the disk drives.
@@ -71,22 +71,22 @@
   <itemizedlist>
     <listitem>
       <para>
-        On <productname>Linux</>, IDE and SATA drives can be queried using
+        On <productname>Linux</productname>, IDE and SATA drives can be queried using
         <command>hdparm -I</command>; write caching is enabled if there is
-        a <literal>*</> next to <literal>Write cache</>.  <command>hdparm -W 0</>
+        a <literal>*</literal> next to <literal>Write cache</literal>.  <command>hdparm -W 0</command>
         can be used to turn off write caching.  SCSI drives can be queried
-        using <ulink url="http://sg.danny.cz/sg/sdparm.html"><application>sdparm</></ulink>.
+        using <ulink url="http://sg.danny.cz/sg/sdparm.html"><application>sdparm</application></ulink>.
         Use <command>sdparm --get=WCE</command> to check
-        whether the write cache is enabled and <command>sdparm --clear=WCE</>
+        whether the write cache is enabled and <command>sdparm --clear=WCE</command>
         to disable it.
       </para>
     </listitem>
 
     <listitem>
       <para>
-        On <productname>FreeBSD</>, IDE drives can be queried using
+        On <productname>FreeBSD</productname>, IDE drives can be queried using
         <command>atacontrol</command> and write caching turned off using
-        <literal>hw.ata.wc=0</> in <filename>/boot/loader.conf</>;
+        <literal>hw.ata.wc=0</literal> in <filename>/boot/loader.conf</filename>;
         SCSI drives can be queried using <command>camcontrol identify</command>,
         and the write cache both queried and changed using
         <command>sdparm</command> when available.
@@ -95,20 +95,20 @@
 
     <listitem>
       <para>
-        On <productname>Solaris</>, the disk write cache is controlled by
-        <command>format -e</>.
-        (The Solaris <acronym>ZFS</> file system is safe with disk write-cache
+        On <productname>Solaris</productname>, the disk write cache is controlled by
+        <command>format -e</command>.
+        (The Solaris <acronym>ZFS</acronym> file system is safe with disk write-cache
         enabled because it issues its own disk cache flush commands.)
       </para>
     </listitem>
 
     <listitem>
       <para>
-        On <productname>Windows</>, if <varname>wal_sync_method</> is
-        <literal>open_datasync</> (the default), write caching can be disabled
-        by unchecking <literal>My Computer\Open\<replaceable>disk drive</>\Properties\Hardware\Properties\Policies\Enable write caching on the disk</>.
+        On <productname>Windows</productname>, if <varname>wal_sync_method</varname> is
+        <literal>open_datasync</literal> (the default), write caching can be disabled
+        by unchecking <literal>My Computer\Open\<replaceable>disk drive</replaceable>\Properties\Hardware\Properties\Policies\Enable write caching on the disk</literal>.
         Alternatively, set <varname>wal_sync_method</varname> to
-        <literal>fsync</> or <literal>fsync_writethrough</>, which prevent
+        <literal>fsync</literal> or <literal>fsync_writethrough</literal>, which prevent
         write caching.
       </para>
     </listitem>
@@ -116,21 +116,21 @@
     <listitem>
       <para>
         On <productname>macOS</productname>, write caching can be prevented by
-        setting <varname>wal_sync_method</> to <literal>fsync_writethrough</>.
+        setting <varname>wal_sync_method</varname> to <literal>fsync_writethrough</literal>.
       </para>
     </listitem>
   </itemizedlist>
 
   <para>
-   Recent SATA drives (those following <acronym>ATAPI-6</> or later)
-   offer a drive cache flush command (<command>FLUSH CACHE EXT</>),
+   Recent SATA drives (those following <acronym>ATAPI-6</acronym> or later)
+   offer a drive cache flush command (<command>FLUSH CACHE EXT</command>),
    while SCSI drives have long supported a similar command
-   <command>SYNCHRONIZE CACHE</>.  These commands are not directly
-   accessible to <productname>PostgreSQL</>, but some file systems
-   (e.g., <acronym>ZFS</>, <acronym>ext4</>) can use them to flush
+   <command>SYNCHRONIZE CACHE</command>.  These commands are not directly
+   accessible to <productname>PostgreSQL</productname>, but some file systems
+   (e.g., <acronym>ZFS</acronym>, <acronym>ext4</acronym>) can use them to flush
    data to the platters on write-back-enabled drives.  Unfortunately, such
    file systems behave suboptimally when combined with battery-backup unit
-   (<acronym>BBU</>) disk controllers.  In such setups, the synchronize
+   (<acronym>BBU</acronym>) disk controllers.  In such setups, the synchronize
    command forces all data from the controller cache to the disks,
    eliminating much of the benefit of the BBU.  You can run the
    <xref linkend="pgtestfsync"> program to see
@@ -164,13 +164,13 @@
    commonly 512 bytes each.  Every physical read or write operation
    processes a whole sector.
    When a write request arrives at the drive, it might be for some multiple
-   of 512 bytes (<productname>PostgreSQL</> typically writes 8192 bytes, or
+   of 512 bytes (<productname>PostgreSQL</productname> typically writes 8192 bytes, or
    16 sectors, at a time), and the process of writing could fail due
    to power loss at any time, meaning some of the 512-byte sectors were
    written while others were not.  To guard against such failures,
-   <productname>PostgreSQL</> periodically writes full page images to
-   permanent WAL storage <emphasis>before</> modifying the actual page on
-   disk. By doing this, during crash recovery <productname>PostgreSQL</> can
+   <productname>PostgreSQL</productname> periodically writes full page images to
+   permanent WAL storage <emphasis>before</emphasis> modifying the actual page on
+   disk. By doing this, during crash recovery <productname>PostgreSQL</productname> can
    restore partially-written pages from WAL.  If you have file-system software
    that prevents partial page writes (e.g., ZFS),  you can turn off
    this page imaging by turning off the <xref
@@ -179,7 +179,7 @@
    they guarantee that data is written to the BBU as full (8kB) pages.
   </para>
   <para>
-   <productname>PostgreSQL</> also protects against some kinds of data corruption
+   <productname>PostgreSQL</productname> also protects against some kinds of data corruption
    on storage devices that may occur because of hardware errors or media failure over time,
    such as reading/writing garbage data.
    <itemizedlist>
@@ -195,7 +195,7 @@
      <para>
       Data pages are not currently checksummed by default, though full page images
       recorded in WAL records will be protected; see <link
-      linkend="app-initdb-data-checksums"><application>initdb</></link>
+      linkend="app-initdb-data-checksums"><application>initdb</application></link>
       for details about enabling data page checksums.
      </para>
     </listitem>
@@ -224,7 +224,7 @@
    </itemizedlist>
   </para>
   <para>
-   <productname>PostgreSQL</> does not protect against correctable memory errors
+   <productname>PostgreSQL</productname> does not protect against correctable memory errors
    and it is assumed you will operate using RAM that uses industry standard
    Error Correcting Codes (ECC) or better protection.
   </para>
@@ -267,7 +267,7 @@
      causes file system <emphasis>data</emphasis> to be flushed
      to disk.  Fortunately, data flushing during journaling can
      often be disabled with a file system mount option, e.g.
-     <literal>data=writeback</> on a Linux ext3 file system.
+     <literal>data=writeback</literal> on a Linux ext3 file system.
      Journaled file systems do improve boot speed after a crash.
     </para>
    </tip>
@@ -313,7 +313,7 @@
    </indexterm>
 
   <para>
-   <firstterm>Asynchronous commit</> is an option that allows transactions
+   <firstterm>Asynchronous commit</firstterm> is an option that allows transactions
    to complete more quickly, at the cost that the most recent transactions may
    be lost if the database should crash.  In many applications this is an
    acceptable trade-off.
@@ -321,7 +321,7 @@
 
   <para>
    As described in the previous section, transaction commit is normally
-   <firstterm>synchronous</>: the server waits for the transaction's
+   <firstterm>synchronous</firstterm>: the server waits for the transaction's
    <acronym>WAL</acronym> records to be flushed to permanent storage
    before returning a success indication to the client.  The client is
    therefore guaranteed that a transaction reported to be committed will
@@ -374,22 +374,22 @@
   </para>
 
   <para>
-   Certain utility commands, for instance <command>DROP TABLE</>, are
+   Certain utility commands, for instance <command>DROP TABLE</command>, are
    forced to commit synchronously regardless of the setting of
    <varname>synchronous_commit</varname>.  This is to ensure consistency
    between the server's file system and the logical state of the database.
    The commands supporting two-phase commit, such as <command>PREPARE
-   TRANSACTION</>, are also always synchronous.
+   TRANSACTION</command>, are also always synchronous.
   </para>
 
   <para>
    If the database crashes during the risk window between an
    asynchronous commit and the writing of the transaction's
    <acronym>WAL</acronym> records,
-   then changes made during that transaction <emphasis>will</> be lost.
+   then changes made during that transaction <emphasis>will</emphasis> be lost.
    The duration of the
    risk window is limited because a background process (the <quote>WAL
-   writer</>) flushes unwritten <acronym>WAL</acronym> records to disk
+   writer</quote>) flushes unwritten <acronym>WAL</acronym> records to disk
    every <xref linkend="guc-wal-writer-delay"> milliseconds.
    The actual maximum duration of the risk window is three times
    <varname>wal_writer_delay</varname> because the WAL writer is
@@ -408,10 +408,10 @@
    <xref linkend="guc-fsync"> = off.
    <varname>fsync</varname> is a server-wide
    setting that will alter the behavior of all transactions.  It disables
-   all logic within <productname>PostgreSQL</> that attempts to synchronize
+   all logic within <productname>PostgreSQL</productname> that attempts to synchronize
    writes to different portions of the database, and therefore a system
    crash (that is, a hardware or operating system crash, not a failure of
-   <productname>PostgreSQL</> itself) could result in arbitrarily bad
+   <productname>PostgreSQL</productname> itself) could result in arbitrarily bad
    corruption of the database state.  In many scenarios, asynchronous
    commit provides most of the performance improvement that could be
    obtained by turning off <varname>fsync</varname>, but without the risk
@@ -437,14 +437,14 @@
   <title><acronym>WAL</acronym> Configuration</title>
 
   <para>
-   There are several <acronym>WAL</>-related configuration parameters that
+   There are several <acronym>WAL</acronym>-related configuration parameters that
    affect database performance. This section explains their use.
    Consult <xref linkend="runtime-config"> for general information about
    setting server configuration parameters.
   </para>
 
   <para>
-   <firstterm>Checkpoints</firstterm><indexterm><primary>checkpoint</></>
+   <firstterm>Checkpoints</firstterm><indexterm><primary>checkpoint</primary></indexterm>
    are points in the sequence of transactions at which it is guaranteed
    that the heap and index data files have been updated with all
    information written before that checkpoint.  At checkpoint time, all
@@ -477,7 +477,7 @@
    whichever comes first.
    The default settings are 5 minutes and 1 GB, respectively.
    If no WAL has been written since the previous checkpoint, new checkpoints
-   will be skipped even if <varname>checkpoint_timeout</> has passed.
+   will be skipped even if <varname>checkpoint_timeout</varname> has passed.
    (If WAL archiving is being used and you want to put a lower limit on how
    often files are archived in order to bound potential data loss, you should
    adjust the <xref linkend="guc-archive-timeout"> parameter rather than the
@@ -509,13 +509,13 @@
    don't happen too often.  As a simple sanity check on your checkpointing
    parameters, you can set the <xref linkend="guc-checkpoint-warning">
    parameter.  If checkpoints happen closer together than
-   <varname>checkpoint_warning</> seconds,
+   <varname>checkpoint_warning</varname> seconds,
    a message will be output to the server log recommending increasing
    <varname>max_wal_size</varname>.  Occasional appearance of such
    a message is not cause for alarm, but if it appears often then the
    checkpoint control parameters should be increased. Bulk operations such
-   as large <command>COPY</> transfers might cause a number of such warnings
-   to appear if you have not set <varname>max_wal_size</> high
+   as large <command>COPY</command> transfers might cause a number of such warnings
+   to appear if you have not set <varname>max_wal_size</varname> high
    enough.
   </para>
 
@@ -530,7 +530,7 @@
    <varname>checkpoint_timeout</varname> seconds have elapsed, or before
    <varname>max_wal_size</varname> is exceeded, whichever is sooner.
    With the default value of 0.5,
-   <productname>PostgreSQL</> can be expected to complete each checkpoint
+   <productname>PostgreSQL</productname> can be expected to complete each checkpoint
    in about half the time before the next checkpoint starts.  On a system
    that's very close to maximum I/O throughput during normal operation,
    you might want to increase <varname>checkpoint_completion_target</varname>
@@ -550,19 +550,19 @@
    allows to force the OS that pages written by the checkpoint should be
    flushed to disk after a configurable number of bytes.  Otherwise, these
    pages may be kept in the OS's page cache, inducing a stall when
-   <literal>fsync</> is issued at the end of a checkpoint.  This setting will
+   <literal>fsync</literal> is issued at the end of a checkpoint.  This setting will
    often help to reduce transaction latency, but it also can an adverse effect
    on performance; particularly for workloads that are bigger than
    <xref linkend="guc-shared-buffers">, but smaller than the OS's page cache.
   </para>
 
   <para>
-   The number of WAL segment files in <filename>pg_wal</> directory depends on
-   <varname>min_wal_size</>, <varname>max_wal_size</> and
+   The number of WAL segment files in <filename>pg_wal</filename> directory depends on
+   <varname>min_wal_size</varname>, <varname>max_wal_size</varname> and
    the amount of WAL generated in previous checkpoint cycles. When old log
    segment files are no longer needed, they are removed or recycled (that is,
    renamed to become future segments in the numbered sequence). If, due to a
-   short-term peak of log output rate, <varname>max_wal_size</> is
+   short-term peak of log output rate, <varname>max_wal_size</varname> is
    exceeded, the unneeded segment files will be removed until the system
    gets back under this limit. Below that limit, the system recycles enough
    WAL files to cover the estimated need until the next checkpoint, and
@@ -570,7 +570,7 @@
    of WAL files used in previous checkpoint cycles. The moving average
    is increased immediately if the actual usage exceeds the estimate, so it
    accommodates peak usage rather than average usage to some extent.
-   <varname>min_wal_size</> puts a minimum on the amount of WAL files
+   <varname>min_wal_size</varname> puts a minimum on the amount of WAL files
    recycled for future usage; that much WAL is always recycled for future use,
    even if the system is idle and the WAL usage estimate suggests that little
    WAL is needed.
@@ -582,7 +582,7 @@
    kept at all times. Also, if WAL archiving is used, old segments can not be
    removed or recycled until they are archived. If WAL archiving cannot keep up
    with the pace that WAL is generated, or if <varname>archive_command</varname>
-   fails repeatedly, old WAL files will accumulate in <filename>pg_wal</>
+   fails repeatedly, old WAL files will accumulate in <filename>pg_wal</filename>
    until the situation is resolved. A slow or failed standby server that
    uses a replication slot will have the same effect (see
    <xref linkend="streaming-replication-slots">).
@@ -590,21 +590,21 @@
 
   <para>
    In archive recovery or standby mode, the server periodically performs
-   <firstterm>restartpoints</>,<indexterm><primary>restartpoint</></>
+   <firstterm>restartpoints</firstterm>,<indexterm><primary>restartpoint</primary></indexterm>
    which are similar to checkpoints in normal operation: the server forces
-   all its state to disk, updates the <filename>pg_control</> file to
+   all its state to disk, updates the <filename>pg_control</filename> file to
    indicate that the already-processed WAL data need not be scanned again,
-   and then recycles any old log segment files in the <filename>pg_wal</>
+   and then recycles any old log segment files in the <filename>pg_wal</filename>
    directory.
    Restartpoints can't be performed more frequently than checkpoints in the
    master because restartpoints can only be performed at checkpoint records.
    A restartpoint is triggered when a checkpoint record is reached if at
-   least <varname>checkpoint_timeout</> seconds have passed since the last
+   least <varname>checkpoint_timeout</varname> seconds have passed since the last
    restartpoint, or if WAL size is about to exceed
-   <varname>max_wal_size</>. However, because of limitations on when a
-   restartpoint can be performed, <varname>max_wal_size</> is often exceeded
+   <varname>max_wal_size</varname>. However, because of limitations on when a
+   restartpoint can be performed, <varname>max_wal_size</varname> is often exceeded
    during recovery, by up to one checkpoint cycle's worth of WAL.
-   (<varname>max_wal_size</> is never a hard limit anyway, so you should
+   (<varname>max_wal_size</varname> is never a hard limit anyway, so you should
    always leave plenty of headroom to avoid running out of disk space.)
   </para>
 
@@ -631,7 +631,7 @@
    one should increase the number of <acronym>WAL</acronym> buffers by
    modifying the <xref linkend="guc-wal-buffers"> parameter.  When
    <xref linkend="guc-full-page-writes"> is set and the system is very busy,
-   setting <varname>wal_buffers</> higher will help smooth response times
+   setting <varname>wal_buffers</varname> higher will help smooth response times
    during the period immediately following each checkpoint.
   </para>
 
@@ -686,7 +686,7 @@
    will consist only of sessions that reach the point where they need to
    flush their commit records during the window in which the previous
    flush operation (if any) is occurring.  At higher client counts a
-   <quote>gangway effect</> tends to occur, so that the effects of group
+   <quote>gangway effect</quote> tends to occur, so that the effects of group
    commit become significant even when <varname>commit_delay</varname> is
    zero, and thus explicitly setting <varname>commit_delay</varname> tends
    to help less.  Setting <varname>commit_delay</varname> can only help
@@ -702,7 +702,7 @@
    <productname>PostgreSQL</productname> will ask the kernel to force
    <acronym>WAL</acronym> updates out to disk.
    All the options should be the same in terms of reliability, with
-   the exception of <literal>fsync_writethrough</>, which can sometimes
+   the exception of <literal>fsync_writethrough</literal>, which can sometimes
    force a flush of the disk cache even when other options do not do so.
    However, it's quite platform-specific which one will be the fastest.
    You can test the speeds of different options using the <xref
@@ -742,7 +742,7 @@
    a Log Sequence Number (<acronym>LSN</acronym>) that is a byte offset into
    the logs, increasing monotonically with each new record.
    <acronym>LSN</acronym> values are returned as the datatype
-   <link linkend="datatype-pg-lsn"><type>pg_lsn</></link>. Values can be
+   <link linkend="datatype-pg-lsn"><type>pg_lsn</type></link>. Values can be
    compared to calculate the volume of <acronym>WAL</acronym> data that
    separates them, so they are used to measure the progress of replication
    and recovery.
@@ -752,9 +752,9 @@
    <acronym>WAL</acronym> logs are stored in the directory
    <filename>pg_wal</filename> under the data directory, as a set of
    segment files, normally each 16 MB in size (but the size can be changed
-   by altering the <option>--wal-segsize</> initdb option).  Each segment is
+   by altering the <option>--wal-segsize</option> initdb option).  Each segment is
    divided into pages, normally 8 kB each (this size can be changed via the
-   <option>--with-wal-blocksize</> configure option).  The log record headers
+   <option>--with-wal-blocksize</option> configure option).  The log record headers
    are described in <filename>access/xlogrecord.h</filename>; the record
    content is dependent on the type of event that is being logged.  Segment
    files are given ever-increasing numbers as names, starting at
@@ -774,7 +774,7 @@
   <para>
    The aim of <acronym>WAL</acronym> is to ensure that the log is
    written before database records are altered, but this can be subverted by
-   disk drives<indexterm><primary>disk drive</></> that falsely report a
+   disk drives<indexterm><primary>disk drive</primary></indexterm> that falsely report a
    successful write to the kernel,
    when in fact they have only cached the data and not yet stored it
    on the disk.  A power failure in such a situation might lead to

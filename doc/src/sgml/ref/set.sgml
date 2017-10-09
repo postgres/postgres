@@ -66,15 +66,15 @@ SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="parameter">timezone</rep
 
   <para>
    If <command>SET LOCAL</command> is used within a function that has a
-   <literal>SET</> option for the same variable (see
+   <literal>SET</literal> option for the same variable (see
    <xref linkend="sql-createfunction">),
    the effects of the <command>SET LOCAL</command> command disappear at
    function exit; that is, the value in effect when the function was called is
    restored anyway.  This allows <command>SET LOCAL</command> to be used for
    dynamic or repeated changes of a parameter within a function, while still
-   having the convenience of using the <literal>SET</> option to save and
-   restore the caller's value.  However, a regular <command>SET</> command
-   overrides any surrounding function's <literal>SET</> option; its effects
+   having the convenience of using the <literal>SET</literal> option to save and
+   restore the caller's value.  However, a regular <command>SET</command> command
+   overrides any surrounding function's <literal>SET</literal> option; its effects
    will persist unless rolled back.
   </para>
 
@@ -94,22 +94,22 @@ SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="parameter">timezone</rep
 
   <variablelist>
    <varlistentry>
-    <term><literal>SESSION</></term>
+    <term><literal>SESSION</literal></term>
     <listitem>
      <para>
       Specifies that the command takes effect for the current session.
-      (This is the default if neither <literal>SESSION</> nor
-      <literal>LOCAL</> appears.)
+      (This is the default if neither <literal>SESSION</literal> nor
+      <literal>LOCAL</literal> appears.)
      </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-    <term><literal>LOCAL</></term>
+    <term><literal>LOCAL</literal></term>
     <listitem>
      <para>
       Specifies that the command takes effect for only the current
-      transaction.  After <command>COMMIT</> or <command>ROLLBACK</>,
+      transaction.  After <command>COMMIT</command> or <command>ROLLBACK</command>,
       the session-level setting takes effect again.  Issuing this
       outside of a transaction block emits a warning and otherwise has
       no effect.
@@ -136,7 +136,7 @@ SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="parameter">timezone</rep
       these, as appropriate for the particular parameter.
       <literal>DEFAULT</literal> can be written to specify
       resetting the parameter to its default value (that is, whatever
-      value it would have had if no <command>SET</> had been executed
+      value it would have had if no <command>SET</command> had been executed
       in the current session).
      </para>
     </listitem>
@@ -153,8 +153,8 @@ SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="parameter">timezone</rep
     <varlistentry>
      <term><literal>SCHEMA</literal></term>
      <listitem>
-      <para><literal>SET SCHEMA '<replaceable>value</>'</> is an alias for
-       <literal>SET search_path TO <replaceable>value</></>.  Only one
+      <para><literal>SET SCHEMA '<replaceable>value</replaceable>'</literal> is an alias for
+       <literal>SET search_path TO <replaceable>value</replaceable></literal>.  Only one
        schema can be specified using this syntax.
       </para>
      </listitem>
@@ -163,8 +163,8 @@ SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="parameter">timezone</rep
     <varlistentry>
      <term><literal>NAMES</literal></term>
      <listitem>
-      <para><literal>SET NAMES <replaceable>value</></> is an alias for
-       <literal>SET client_encoding TO <replaceable>value</></>.
+      <para><literal>SET NAMES <replaceable>value</replaceable></literal> is an alias for
+       <literal>SET client_encoding TO <replaceable>value</replaceable></literal>.
       </para>
      </listitem>
     </varlistentry>
@@ -176,7 +176,7 @@ SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="parameter">timezone</rep
        Sets the internal seed for the random number generator (the
        function <function>random</function>).  Allowed values are
        floating-point numbers between -1 and 1, which are then
-       multiplied by 2<superscript>31</>-1.
+       multiplied by 2<superscript>31</superscript>-1.
       </para>
 
       <para>
@@ -191,8 +191,8 @@ SELECT setseed(<replaceable>value</replaceable>);
     <varlistentry>
      <term><literal>TIME ZONE</literal></term>
      <listitem>
-      <para><literal>SET TIME ZONE <replaceable>value</></> is an alias
-       for <literal>SET timezone TO <replaceable>value</></>.  The
+      <para><literal>SET TIME ZONE <replaceable>value</replaceable></literal> is an alias
+       for <literal>SET timezone TO <replaceable>value</replaceable></literal>.  The
        syntax <literal>SET TIME ZONE</literal> allows special syntax
        for the time zone specification.  Here are examples of valid
        values:
@@ -238,7 +238,7 @@ SELECT setseed(<replaceable>value</replaceable>);
          <listitem>
           <para>
            Set the time zone to your local time zone (that is, the
-           server's default value of <varname>timezone</>).
+           server's default value of <varname>timezone</varname>).
           </para>
          </listitem>
         </varlistentry>
@@ -248,8 +248,8 @@ SELECT setseed(<replaceable>value</replaceable>);
       <para>
        Timezone settings given as numbers or intervals are internally
        translated to POSIX timezone syntax.  For example, after
-       <literal>SET TIME ZONE -7</>, <command>SHOW TIME ZONE</> would
-       report <literal>&lt;-07&gt;+07</>.
+       <literal>SET TIME ZONE -7</literal>, <command>SHOW TIME ZONE</command> would
+       report <literal>&lt;-07&gt;+07</literal>.
       </para>
 
       <para>
@@ -270,7 +270,7 @@ SELECT setseed(<replaceable>value</replaceable>);
    functionality; see <xref linkend="functions-admin">.
    Also, it is possible to UPDATE the
    <link linkend="view-pg-settings"><structname>pg_settings</structname></link>
-   system view to perform the equivalent of <command>SET</>.
+   system view to perform the equivalent of <command>SET</command>.
   </para>
  </refsect1>
 
@@ -286,7 +286,7 @@ SET search_path TO my_schema, public;
 
   <para>
    Set the style of date to traditional
-   <productname>POSTGRES</productname> with <quote>day before month</>
+   <productname>POSTGRES</productname> with <quote>day before month</quote>
    input convention:
 <screen>
 SET datestyle TO postgres, dmy;

@@ -162,7 +162,7 @@
 <screen>
 createdb: command not found
 </screen>
-    then <productname>PostgreSQL</> was not installed properly.  Either it was not
+    then <productname>PostgreSQL</productname> was not installed properly.  Either it was not
     installed at all or your shell's search path was not set to include it.
     Try calling the command with an absolute path instead:
 <screen>
@@ -191,17 +191,17 @@ createdb: could not connect to database postgres: could not connect to server: N
 createdb: could not connect to database postgres: FATAL:  role "joe" does not exist
 </screen>
     where your own login name is mentioned.  This will happen if the
-    administrator has not created a <productname>PostgreSQL</> user account
-    for you.  (<productname>PostgreSQL</> user accounts are distinct from
+    administrator has not created a <productname>PostgreSQL</productname> user account
+    for you.  (<productname>PostgreSQL</productname> user accounts are distinct from
     operating system user accounts.)  If you are the administrator, see
     <xref linkend="user-manag"> for help creating accounts.  You will need to
-    become the operating system user under which <productname>PostgreSQL</>
-    was installed (usually <literal>postgres</>) to create the first user
+    become the operating system user under which <productname>PostgreSQL</productname>
+    was installed (usually <literal>postgres</literal>) to create the first user
     account.  It could also be that you were assigned a
-    <productname>PostgreSQL</> user name that is different from your
-    operating system user name; in that case you need to use the <option>-U</>
-    switch or set the <envar>PGUSER</> environment variable to specify your
-    <productname>PostgreSQL</> user name.
+    <productname>PostgreSQL</productname> user name that is different from your
+    operating system user name; in that case you need to use the <option>-U</option>
+    switch or set the <envar>PGUSER</envar> environment variable to specify your
+    <productname>PostgreSQL</productname> user name.
    </para>
 
    <para>
@@ -288,7 +288,7 @@ createdb: database creation failed: ERROR:  permission denied to create database
      <listitem>
       <para>
        Running the <productname>PostgreSQL</productname> interactive
-       terminal program, called <application><firstterm>psql</></application>, which allows you
+       terminal program, called <application><firstterm>psql</firstterm></application>, which allows you
        to interactively enter, edit, and execute
        <acronym>SQL</acronym> commands.
       </para>
@@ -298,7 +298,7 @@ createdb: database creation failed: ERROR:  permission denied to create database
       <para>
        Using an existing graphical frontend tool like
        <application>pgAdmin</application> or an office suite with
-       <acronym>ODBC</> or <acronym>JDBC</> support to create and manipulate a
+       <acronym>ODBC</acronym> or <acronym>JDBC</acronym> support to create and manipulate a
        database.  These possibilities are not covered in this
        tutorial.
       </para>

@@ -36,13 +36,13 @@ CREATE MATERIALIZED VIEW [ IF NOT EXISTS ] <replaceable>table_name</replaceable>
   <para>
    <command>CREATE MATERIALIZED VIEW</command> defines a materialized view of
    a query.  The query is executed and used to populate the view at the time
-   the command is issued (unless <command>WITH NO DATA</> is used) and may be
+   the command is issued (unless <command>WITH NO DATA</command> is used) and may be
    refreshed later using <command>REFRESH MATERIALIZED VIEW</command>.
   </para>
 
   <para>
    <command>CREATE MATERIALIZED VIEW</command> is similar to
-   <command>CREATE TABLE AS</>, except that it also remembers the query used
+   <command>CREATE TABLE AS</command>, except that it also remembers the query used
    to initialize the view, so that it can be refreshed later upon demand.
    A materialized view has many of the same properties as a table, but there
    is no support for temporary materialized views or automatic generation of
@@ -55,7 +55,7 @@ CREATE MATERIALIZED VIEW [ IF NOT EXISTS ] <replaceable>table_name</replaceable>
 
   <variablelist>
    <varlistentry>
-    <term><literal>IF NOT EXISTS</></term>
+    <term><literal>IF NOT EXISTS</literal></term>
     <listitem>
      <para>
       Do not throw an error if a materialized view with the same name already
@@ -125,13 +125,13 @@ CREATE MATERIALIZED VIEW [ IF NOT EXISTS ] <replaceable>table_name</replaceable>
    </varlistentry>
 
    <varlistentry>
-    <term><literal>WITH [ NO ] DATA</></term>
+    <term><literal>WITH [ NO ] DATA</literal></term>
     <listitem>
      <para>
       This clause specifies whether or not the materialized view should be
       populated at creation time.  If not, the materialized view will be
       flagged as unscannable and cannot be queried until <command>REFRESH
-      MATERIALIZED VIEW</> is used.
+      MATERIALIZED VIEW</command> is used.
      </para>
     </listitem>
    </varlistentry>

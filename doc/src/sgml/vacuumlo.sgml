@@ -28,17 +28,17 @@
   <title>Description</title>
 
  <para>
-  <application>vacuumlo</> is a simple utility program that will remove any
-  <quote>orphaned</> large objects from a
-  <productname>PostgreSQL</> database.  An orphaned large object (LO) is
-  considered to be any LO whose OID does not appear in any <type>oid</> or
-  <type>lo</> data column of the database.
+  <application>vacuumlo</application> is a simple utility program that will remove any
+  <quote>orphaned</quote> large objects from a
+  <productname>PostgreSQL</productname> database.  An orphaned large object (LO) is
+  considered to be any LO whose OID does not appear in any <type>oid</type> or
+  <type>lo</type> data column of the database.
  </para>
 
  <para>
-  If you use this, you may also be interested in the <function>lo_manage</>
+  If you use this, you may also be interested in the <function>lo_manage</function>
   trigger in the <xref linkend="lo"> module.
-  <function>lo_manage</> is useful to try
+  <function>lo_manage</function> is useful to try
   to avoid creating orphaned LOs in the first place.
  </para>
 
@@ -55,10 +55,10 @@
 
   <variablelist>
    <varlistentry>
-    <term><option>-l</option> <replaceable>limit</></term>
+    <term><option>-l</option> <replaceable>limit</replaceable></term>
     <listitem>
      <para>
-      Remove no more than <replaceable>limit</> large objects per
+      Remove no more than <replaceable>limit</replaceable> large objects per
       transaction (default 1000).  Since the server acquires a lock per LO
       removed, removing too many LOs in one transaction risks exceeding
       <xref linkend="guc-max-locks-per-transaction">.  Set the limit to
@@ -82,8 +82,8 @@
    </varlistentry>
 
    <varlistentry>
-    <term><option>-V</></term>
-    <term><option>--version</></term>
+    <term><option>-V</option></term>
+    <term><option>--version</option></term>
     <listitem>
      <para>
       Print the <application>vacuumlo</application> version and exit.
@@ -92,8 +92,8 @@
    </varlistentry>
 
    <varlistentry>
-    <term><option>-?</></term>
-    <term><option>--help</></term>
+    <term><option>-?</option></term>
+    <term><option>--help</option></term>
     <listitem>
      <para>
       Show help about <application>vacuumlo</application> command line
@@ -110,29 +110,29 @@
 
   <variablelist>
    <varlistentry>
-    <term><option>-h</option> <replaceable>hostname</></term>
+    <term><option>-h</option> <replaceable>hostname</replaceable></term>
     <listitem>
      <para>Database server's host.</para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-    <term><option>-p</option> <replaceable>port</></term>
+    <term><option>-p</option> <replaceable>port</replaceable></term>
     <listitem>
      <para>Database server's port.</para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-    <term><option>-U</option> <replaceable>username</></term>
+    <term><option>-U</option> <replaceable>username</replaceable></term>
     <listitem>
      <para>User name to connect as.</para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-    <term><option>-w</></term>
-    <term><option>--no-password</></term>
+    <term><option>-w</option></term>
+    <term><option>--no-password</option></term>
     <listitem>
      <para>
       Never issue a password prompt.  If the server requires password
@@ -158,7 +158,7 @@
       for a password if the server demands password authentication.
       However, <application>vacuumlo</application> will waste a
       connection attempt finding out that the server wants a password.
-      In some cases it is worth typing <option>-W</> to avoid the extra
+      In some cases it is worth typing <option>-W</option> to avoid the extra
       connection attempt.
      </para>
     </listitem>
@@ -172,10 +172,10 @@
 
   <para>
    <application>vacuumlo</application> works by the following method:
-   First, <application>vacuumlo</> builds a temporary table which contains all
+   First, <application>vacuumlo</application> builds a temporary table which contains all
    of the OIDs of the large objects in the selected database.  It then scans
    through all columns in the database that are of type
-   <type>oid</> or <type>lo</>, and removes matching entries from the temporary
+   <type>oid</type> or <type>lo</type>, and removes matching entries from the temporary
    table.  (Note: Only types with these names are considered; in particular,
    domains over them are not considered.)  The remaining entries in the
    temporary table identify orphaned LOs.  These are removed.

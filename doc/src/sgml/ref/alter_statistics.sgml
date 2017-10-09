@@ -39,9 +39,9 @@ ALTER STATISTICS <replaceable class="parameter">name</replaceable> SET SCHEMA <r
   </para>
 
   <para>
-   You must own the statistics object to use <command>ALTER STATISTICS</>.
+   You must own the statistics object to use <command>ALTER STATISTICS</command>.
    To change a statistics object's schema, you must also
-   have <literal>CREATE</> privilege on the new schema.
+   have <literal>CREATE</literal> privilege on the new schema.
    To alter the owner, you must also be a direct or indirect member of the new
    owning role, and that role must have <literal>CREATE</literal> privilege on
    the statistics object's schema.  (These restrictions enforce that altering

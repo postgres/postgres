@@ -33,7 +33,7 @@ CREATE EVENT TRIGGER <replaceable class="parameter">name</replaceable>
 
   <para>
    <command>CREATE EVENT TRIGGER</command> creates a new event trigger.
-   Whenever the designated event occurs and the <literal>WHEN</> condition
+   Whenever the designated event occurs and the <literal>WHEN</literal> condition
    associated with the trigger, if any, is satisfied, the trigger function
    will be executed.  For a general introduction to event triggers, see
    <xref linkend="event-triggers">.  The user who creates an event trigger
@@ -85,8 +85,8 @@ CREATE EVENT TRIGGER <replaceable class="parameter">name</replaceable>
      <para>
       A list of values for the
       associated <replaceable class="parameter">filter_variable</replaceable>
-      for which the trigger should fire.  For <literal>TAG</>, this means a
-      list of command tags (e.g. <literal>'DROP FUNCTION'</>).
+      for which the trigger should fire.  For <literal>TAG</literal>, this means a
+      list of command tags (e.g. <literal>'DROP FUNCTION'</literal>).
      </para>
     </listitem>
    </varlistentry>

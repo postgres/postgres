@@ -64,10 +64,10 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
     <listitem>
      <para>
       Specifies a list of tables to add to the publication.  If
-      <literal>ONLY</> is specified before the table name, only
-      that table is added to the publication.  If <literal>ONLY</> is not
+      <literal>ONLY</literal> is specified before the table name, only
+      that table is added to the publication.  If <literal>ONLY</literal> is not
       specified, the table and all its descendant tables (if any) are added.
-      Optionally, <literal>*</> can be specified after the table name to
+      Optionally, <literal>*</literal> can be specified after the table name to
       explicitly indicate that descendant tables are included.
      </para>
 
@@ -138,7 +138,7 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
 
   <para>
    To create a publication, the invoking user must have the
-   <literal>CREATE</> privilege for the current database.
+   <literal>CREATE</literal> privilege for the current database.
    (Of course, superusers bypass this check.)
   </para>
 
@@ -151,12 +151,12 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
   <para>
    The tables added to a publication that publishes <command>UPDATE</command>
    and/or <command>DELETE</command> operations must have
-   <literal>REPLICA IDENTITY</> defined.  Otherwise those operations will be
+   <literal>REPLICA IDENTITY</literal> defined.  Otherwise those operations will be
    disallowed on those tables.
   </para>
 
   <para>
-   For an <command>INSERT ... ON CONFLICT</> command, the publication will
+   For an <command>INSERT ... ON CONFLICT</command> command, the publication will
    publish the operation that actually results from the command.  So depending
    of the outcome, it may be published as either <command>INSERT</command> or
    <command>UPDATE</command>, or it may not be published at all.
@@ -203,7 +203,7 @@ CREATE PUBLICATION insert_only FOR TABLE mydata
   <title>Compatibility</title>
 
   <para>
-   <command>CREATE PUBLICATION</command> is a <productname>PostgreSQL</>
+   <command>CREATE PUBLICATION</command> is a <productname>PostgreSQL</productname>
    extension.
   </para>
  </refsect1>

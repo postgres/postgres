@@ -8,9 +8,9 @@
  </indexterm>
 
  <para>
-  The <filename>lo</> module provides support for managing Large Objects
-  (also called LOs or BLOBs).  This includes a data type <type>lo</>
-  and a trigger <function>lo_manage</>.
+  The <filename>lo</filename> module provides support for managing Large Objects
+  (also called LOs or BLOBs).  This includes a data type <type>lo</type>
+  and a trigger <function>lo_manage</function>.
  </para>
 
  <sect2>
@@ -24,7 +24,7 @@
   </para>
 
   <para>
-   As <productname>PostgreSQL</> stands, this doesn't occur.  Large objects
+   As <productname>PostgreSQL</productname> stands, this doesn't occur.  Large objects
    are treated as objects in their own right; a table entry can reference a
    large object by OID, but there can be multiple table entries referencing
    the same large object OID, so the system doesn't delete the large object
@@ -32,30 +32,30 @@
   </para>
 
   <para>
-   Now this is fine for <productname>PostgreSQL</>-specific applications, but
+   Now this is fine for <productname>PostgreSQL</productname>-specific applications, but
    standard code using JDBC or ODBC won't delete the objects, resulting in
    orphan objects &mdash; objects that are not referenced by anything, and
    simply occupy disk space.
   </para>
 
   <para>
-   The <filename>lo</> module allows fixing this by attaching a trigger
+   The <filename>lo</filename> module allows fixing this by attaching a trigger
    to tables that contain LO reference columns.  The trigger essentially just
-   does a <function>lo_unlink</> whenever you delete or modify a value
+   does a <function>lo_unlink</function> whenever you delete or modify a value
    referencing a large object.  When you use this trigger, you are assuming
    that there is only one database reference to any large object that is
    referenced in a trigger-controlled column!
   </para>
 
   <para>
-   The module also provides a data type <type>lo</>, which is really just
-   a domain of the <type>oid</> type.  This is useful for differentiating
+   The module also provides a data type <type>lo</type>, which is really just
+   a domain of the <type>oid</type> type.  This is useful for differentiating
    database columns that hold large object references from those that are
-   OIDs of other things.  You don't have to use the <type>lo</> type to
+   OIDs of other things.  You don't have to use the <type>lo</type> type to
    use the trigger, but it may be convenient to use it to keep track of which
    columns in your database represent large objects that you are managing with
    the trigger.  It is also rumored that the ODBC driver gets confused if you
-   don't use <type>lo</> for BLOB columns.
+   don't use <type>lo</type> for BLOB columns.
   </para>
  </sect2>
 
@@ -75,11 +75,11 @@ CREATE TRIGGER t_raster BEFORE UPDATE OR DELETE ON image
 
   <para>
    For each column that will contain unique references to large objects,
-   create a <literal>BEFORE UPDATE OR DELETE</> trigger, and give the column
+   create a <literal>BEFORE UPDATE OR DELETE</literal> trigger, and give the column
    name as the sole trigger argument.  You can also restrict the trigger
    to only execute on updates to the column by using <literal>BEFORE UPDATE
    OF</literal> <replaceable class="parameter">column_name</replaceable>.
-   If you need multiple <type>lo</>
+   If you need multiple <type>lo</type>
    columns in the same table, create a separate trigger for each one,
    remembering to give a different name to each trigger on the same table.
   </para>
@@ -93,18 +93,18 @@ CREATE TRIGGER t_raster BEFORE UPDATE OR DELETE ON image
     <para>
      Dropping a table will still orphan any objects it contains, as the trigger
      is not executed.  You can avoid this by preceding the <command>DROP
-     TABLE</> with <command>DELETE FROM <replaceable>table</></command>.
+     TABLE</command> with <command>DELETE FROM <replaceable>table</replaceable></command>.
     </para>
 
     <para>
-     <command>TRUNCATE</> has the same hazard.
+     <command>TRUNCATE</command> has the same hazard.
     </para>
 
     <para>
      If you already have, or suspect you have, orphaned large objects, see the
      <xref linkend="vacuumlo"> module to help
-     you clean them up.  It's a good idea to run <application>vacuumlo</>
-     occasionally as a back-stop to the <function>lo_manage</> trigger.
+     you clean them up.  It's a good idea to run <application>vacuumlo</application>
+     occasionally as a back-stop to the <function>lo_manage</function> trigger.
     </para>
    </listitem>
 

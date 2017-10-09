@@ -147,14 +147,14 @@ CREATE INDEX test1_id_index ON test1 (id);
    </simplelist>
 
    Constructs equivalent to combinations of these operators, such as
-   <literal>BETWEEN</> and <literal>IN</>, can also be implemented with
-   a B-tree index search.  Also, an <literal>IS NULL</> or <literal>IS NOT
-   NULL</> condition on an index column can be used with a B-tree index.
+   <literal>BETWEEN</literal> and <literal>IN</literal>, can also be implemented with
+   a B-tree index search.  Also, an <literal>IS NULL</literal> or <literal>IS NOT
+   NULL</literal> condition on an index column can be used with a B-tree index.
   </para>
 
   <para>
    The optimizer can also use a B-tree index for queries involving the
-   pattern matching operators <literal>LIKE</> and <literal>~</literal>
+   pattern matching operators <literal>LIKE</literal> and <literal>~</literal>
    <emphasis>if</emphasis> the pattern is a constant and is anchored to
    the beginning of the string &mdash; for example, <literal>col LIKE
    'foo%'</literal> or <literal>col ~ '^foo'</literal>, but not
@@ -206,7 +206,7 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
    within which many different indexing strategies can be implemented.
    Accordingly, the particular operators with which a GiST index can be
    used vary depending on the indexing strategy (the <firstterm>operator
-   class</>).  As an example, the standard distribution of
+   class</firstterm>).  As an example, the standard distribution of
    <productname>PostgreSQL</productname> includes GiST operator classes
    for several two-dimensional geometric data types, which support indexed
    queries using these operators:
@@ -231,12 +231,12 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
    The GiST operator classes included in the standard distribution are
    documented in <xref linkend="gist-builtin-opclasses-table">.
    Many other GiST operator
-   classes are available in the <literal>contrib</> collection or as separate
+   classes are available in the <literal>contrib</literal> collection or as separate
    projects.  For more information see <xref linkend="GiST">.
   </para>
 
   <para>
-   GiST indexes are also capable of optimizing <quote>nearest-neighbor</>
+   GiST indexes are also capable of optimizing <quote>nearest-neighbor</quote>
    searches, such as
 <programlisting><![CDATA[
 SELECT * FROM places ORDER BY location <-> point '(101,456)' LIMIT 10;
@@ -245,7 +245,7 @@ SELECT * FROM places ORDER BY location <-> point '(101,456)' LIMIT 10;
    which finds the ten places closest to a given target point.  The ability
    to do this is again dependent on the particular operator class being used.
    In <xref linkend="gist-builtin-opclasses-table">, operators that can be
-   used in this way are listed in the column <quote>Ordering Operators</>.
+   used in this way are listed in the column <quote>Ordering Operators</quote>.
   </para>
 
   <para>
@@ -290,7 +290,7 @@ SELECT * FROM places ORDER BY location <-> point '(101,456)' LIMIT 10;
     <primary>GIN</primary>
     <see>index</see>
    </indexterm>
-   GIN indexes are <quote>inverted indexes</> which are appropriate for
+   GIN indexes are <quote>inverted indexes</quote> which are appropriate for
    data values that contain multiple component values, such as arrays.  An
    inverted index contains a separate entry for each component value, and
    can efficiently handle queries that test for the presence of specific
@@ -318,7 +318,7 @@ SELECT * FROM places ORDER BY location <-> point '(101,456)' LIMIT 10;
    The GIN operator classes included in the standard distribution are
    documented in <xref linkend="gin-builtin-opclasses-table">.
    Many other GIN operator
-   classes are available in the <literal>contrib</> collection or as separate
+   classes are available in the <literal>contrib</literal> collection or as separate
    projects.  For more information see <xref linkend="GIN">.
   </para>
 
@@ -407,13 +407,13 @@ CREATE INDEX test2_mm_idx ON test2 (major, minor);
    are checked in the index, so they save visits to the table proper, but
    they do not reduce the portion of the index that has to be scanned.
    For example, given an index on <literal>(a, b, c)</literal> and a
-   query condition <literal>WHERE a = 5 AND b &gt;= 42 AND c &lt; 77</>,
+   query condition <literal>WHERE a = 5 AND b &gt;= 42 AND c &lt; 77</literal>,
    the index would have to be scanned from the first entry with
-   <literal>a</> = 5 and <literal>b</> = 42 up through the last entry with
-   <literal>a</> = 5.  Index entries with <literal>c</> &gt;= 77 would be
+   <literal>a</literal> = 5 and <literal>b</literal> = 42 up through the last entry with
+   <literal>a</literal> = 5.  Index entries with <literal>c</literal> &gt;= 77 would be
    skipped, but they'd still have to be scanned through.
    This index could in principle be used for queries that have constraints
-   on <literal>b</> and/or <literal>c</> with no constraint on <literal>a</>
+   on <literal>b</literal> and/or <literal>c</literal> with no constraint on <literal>a</literal>
    &mdash; but the entire index would have to be scanned, so in most cases
    the planner would prefer a sequential table scan over using the index.
   </para>
@@ -462,17 +462,17 @@ CREATE INDEX test2_mm_idx ON test2 (major, minor);
 
 
  <sect1 id="indexes-ordering">
-  <title>Indexes and <literal>ORDER BY</></title>
+  <title>Indexes and <literal>ORDER BY</literal></title>
 
   <indexterm zone="indexes-ordering">
    <primary>index</primary>
-   <secondary>and <literal>ORDER BY</></secondary>
+   <secondary>and <literal>ORDER BY</literal></secondary>
   </indexterm>
 
   <para>
    In addition to simply finding the rows to be returned by a query,
    an index may be able to deliver them in a specific sorted order.
-   This allows a query's <literal>ORDER BY</> specification to be honored
+   This allows a query's <literal>ORDER BY</literal> specification to be honored
    without a separate sorting step.  Of the index types currently
    supported by <productname>PostgreSQL</productname>, only B-tree
    can produce sorted output &mdash; the other index types return
@@ -480,7 +480,7 @@ CREATE INDEX test2_mm_idx ON test2 (major, minor);
   </para>
 
   <para>
-   The planner will consider satisfying an <literal>ORDER BY</> specification
+   The planner will consider satisfying an <literal>ORDER BY</literal> specification
    either by scanning an available index that matches the specification,
    or by scanning the table in physical order and doing an explicit
    sort.  For a query that requires scanning a large fraction of the
@@ -488,50 +488,50 @@ CREATE INDEX test2_mm_idx ON test2 (major, minor);
    because it requires
    less disk I/O due to following a sequential access pattern.  Indexes are
    more useful when only a few rows need be fetched.  An important
-   special case is <literal>ORDER BY</> in combination with
-   <literal>LIMIT</> <replaceable>n</>: an explicit sort will have to process
-   all the data to identify the first <replaceable>n</> rows, but if there is
-   an index matching the <literal>ORDER BY</>, the first <replaceable>n</>
+   special case is <literal>ORDER BY</literal> in combination with
+   <literal>LIMIT</literal> <replaceable>n</replaceable>: an explicit sort will have to process
+   all the data to identify the first <replaceable>n</replaceable> rows, but if there is
+   an index matching the <literal>ORDER BY</literal>, the first <replaceable>n</replaceable>
    rows can be retrieved directly, without scanning the remainder at all.
   </para>
 
   <para>
    By default, B-tree indexes store their entries in ascending order
    with nulls last.  This means that a forward scan of an index on
-   column <literal>x</> produces output satisfying <literal>ORDER BY x</>
-   (or more verbosely, <literal>ORDER BY x ASC NULLS LAST</>).  The
+   column <literal>x</literal> produces output satisfying <literal>ORDER BY x</literal>
+   (or more verbosely, <literal>ORDER BY x ASC NULLS LAST</literal>).  The
    index can also be scanned backward, producing output satisfying
-   <literal>ORDER BY x DESC</>
-   (or more verbosely, <literal>ORDER BY x DESC NULLS FIRST</>, since
-   <literal>NULLS FIRST</> is the default for <literal>ORDER BY DESC</>).
+   <literal>ORDER BY x DESC</literal>
+   (or more verbosely, <literal>ORDER BY x DESC NULLS FIRST</literal>, since
+   <literal>NULLS FIRST</literal> is the default for <literal>ORDER BY DESC</literal>).
   </para>
 
   <para>
    You can adjust the ordering of a B-tree index by including the
-   options <literal>ASC</>, <literal>DESC</>, <literal>NULLS FIRST</>,
-   and/or <literal>NULLS LAST</> when creating the index; for example:
+   options <literal>ASC</literal>, <literal>DESC</literal>, <literal>NULLS FIRST</literal>,
+   and/or <literal>NULLS LAST</literal> when creating the index; for example:
 <programlisting>
 CREATE INDEX test2_info_nulls_low ON test2 (info NULLS FIRST);
 CREATE INDEX test3_desc_index ON test3 (id DESC NULLS LAST);
 </programlisting>
    An index stored in ascending order with nulls first can satisfy
-   either <literal>ORDER BY x ASC NULLS FIRST</> or
-   <literal>ORDER BY x DESC NULLS LAST</> depending on which direction
+   either <literal>ORDER BY x ASC NULLS FIRST</literal> or
+   <literal>ORDER BY x DESC NULLS LAST</literal> depending on which direction
    it is scanned in.
   </para>
 
   <para>
    You might wonder why bother providing all four options, when two
    options together with the possibility of backward scan would cover
-   all the variants of <literal>ORDER BY</>.  In single-column indexes
+   all the variants of <literal>ORDER BY</literal>.  In single-column indexes
    the options are indeed redundant, but in multicolumn indexes they can be
-   useful.  Consider a two-column index on <literal>(x, y)</>: this can
-   satisfy <literal>ORDER BY x, y</> if we scan forward, or
-   <literal>ORDER BY x DESC, y DESC</> if we scan backward.
+   useful.  Consider a two-column index on <literal>(x, y)</literal>: this can
+   satisfy <literal>ORDER BY x, y</literal> if we scan forward, or
+   <literal>ORDER BY x DESC, y DESC</literal> if we scan backward.
    But it might be that the application frequently needs to use
-   <literal>ORDER BY x ASC, y DESC</>.  There is no way to get that
+   <literal>ORDER BY x ASC, y DESC</literal>.  There is no way to get that
    ordering from a plain index, but it is possible if the index is defined
-   as <literal>(x ASC, y DESC)</> or <literal>(x DESC, y ASC)</>.
+   as <literal>(x ASC, y DESC)</literal> or <literal>(x DESC, y ASC)</literal>.
   </para>
 
   <para>
@@ -559,38 +559,38 @@ CREATE INDEX test3_desc_index ON test3 (id DESC NULLS LAST);
   <para>
    A single index scan can only use query clauses that use the index's
    columns with operators of its operator class and are joined with
-   <literal>AND</>.  For example, given an index on <literal>(a, b)</literal>
-   a query condition like <literal>WHERE a = 5 AND b = 6</> could
-   use the index, but a query like <literal>WHERE a = 5 OR b = 6</> could not
+   <literal>AND</literal>.  For example, given an index on <literal>(a, b)</literal>
+   a query condition like <literal>WHERE a = 5 AND b = 6</literal> could
+   use the index, but a query like <literal>WHERE a = 5 OR b = 6</literal> could not
    directly use the index.
   </para>
 
   <para>
    Fortunately,
-   <productname>PostgreSQL</> has the ability to combine multiple indexes
+   <productname>PostgreSQL</productname> has the ability to combine multiple indexes
    (including multiple uses of the same index) to handle cases that cannot
-   be implemented by single index scans.  The system can form <literal>AND</>
-   and <literal>OR</> conditions across several index scans.  For example,
-   a query like <literal>WHERE x = 42 OR x = 47 OR x = 53 OR x = 99</>
-   could be broken down into four separate scans of an index on <literal>x</>,
+   be implemented by single index scans.  The system can form <literal>AND</literal>
+   and <literal>OR</literal> conditions across several index scans.  For example,
+   a query like <literal>WHERE x = 42 OR x = 47 OR x = 53 OR x = 99</literal>
+   could be broken down into four separate scans of an index on <literal>x</literal>,
    each scan using one of the query clauses.  The results of these scans are
    then ORed together to produce the result.  Another example is that if we
-   have separate indexes on <literal>x</> and <literal>y</>, one possible
-   implementation of a query like <literal>WHERE x = 5 AND y = 6</> is to
+   have separate indexes on <literal>x</literal> and <literal>y</literal>, one possible
+   implementation of a query like <literal>WHERE x = 5 AND y = 6</literal> is to
    use each index with the appropriate query clause and then AND together
    the index results to identify the result rows.
   </para>
 
   <para>
    To combine multiple indexes, the system scans each needed index and
-   prepares a <firstterm>bitmap</> in memory giving the locations of
+   prepares a <firstterm>bitmap</firstterm> in memory giving the locations of
    table rows that are reported as matching that index's conditions.
    The bitmaps are then ANDed and ORed together as needed by the query.
    Finally, the actual table rows are visited and returned.  The table rows
    are visited in physical order, because that is how the bitmap is laid
    out; this means that any ordering of the original indexes is lost, and
    so a separate sort step will be needed if the query has an <literal>ORDER
-   BY</> clause.  For this reason, and because each additional index scan
+   BY</literal> clause.  For this reason, and because each additional index scan
    adds extra time, the planner will sometimes choose to use a simple index
    scan even though additional indexes are available that could have been
    used as well.
@@ -603,19 +603,19 @@ CREATE INDEX test3_desc_index ON test3 (id DESC NULLS LAST);
    indexes are best, but sometimes it's better to create separate indexes
    and rely on the index-combination feature.  For example, if your
    workload includes a mix of queries that sometimes involve only column
-   <literal>x</>, sometimes only column <literal>y</>, and sometimes both
+   <literal>x</literal>, sometimes only column <literal>y</literal>, and sometimes both
    columns, you might choose to create two separate indexes on
-   <literal>x</> and <literal>y</>, relying on index combination to
+   <literal>x</literal> and <literal>y</literal>, relying on index combination to
    process the queries that use both columns.  You could also create a
-   multicolumn index on <literal>(x, y)</>.  This index would typically be
+   multicolumn index on <literal>(x, y)</literal>.  This index would typically be
    more efficient than index combination for queries involving both
    columns, but as discussed in <xref linkend="indexes-multicolumn">, it
-   would be almost useless for queries involving only <literal>y</>, so it
+   would be almost useless for queries involving only <literal>y</literal>, so it
    should not be the only index.  A combination of the multicolumn index
-   and a separate index on <literal>y</> would serve reasonably well.  For
-   queries involving only <literal>x</>, the multicolumn index could be
+   and a separate index on <literal>y</literal> would serve reasonably well.  For
+   queries involving only <literal>x</literal>, the multicolumn index could be
    used, though it would be larger and hence slower than an index on
-   <literal>x</> alone.  The last alternative is to create all three
+   <literal>x</literal> alone.  The last alternative is to create all three
    indexes, but this is probably only reasonable if the table is searched
    much more often than it is updated and all three types of query are
    common.  If one of the types of query is much less common than the
@@ -698,9 +698,9 @@ CREATE INDEX test1_lower_col1_idx ON test1 (lower(col1));
   </para>
 
   <para>
-   If we were to declare this index <literal>UNIQUE</>, it would prevent
-   creation of rows whose <literal>col1</> values differ only in case,
-   as well as rows whose <literal>col1</> values are actually identical.
+   If we were to declare this index <literal>UNIQUE</literal>, it would prevent
+   creation of rows whose <literal>col1</literal> values differ only in case,
+   as well as rows whose <literal>col1</literal> values are actually identical.
    Thus, indexes on expressions can be used to enforce constraints that
    are not definable as simple unique constraints.
   </para>
@@ -717,7 +717,7 @@ CREATE INDEX people_names ON people ((first_name || ' ' || last_name));
   </para>
 
   <para>
-   The syntax of the <command>CREATE INDEX</> command normally requires
+   The syntax of the <command>CREATE INDEX</command> command normally requires
    writing parentheses around index expressions, as shown in the second
    example.  The parentheses can be omitted when the expression is just
    a function call, as in the first example.
@@ -727,9 +727,9 @@ CREATE INDEX people_names ON people ((first_name || ' ' || last_name));
    Index expressions are relatively expensive to maintain, because the
    derived expression(s) must be computed for each row upon insertion
    and whenever it is updated.  However, the index expressions are
-   <emphasis>not</> recomputed during an indexed search, since they are
+   <emphasis>not</emphasis> recomputed during an indexed search, since they are
    already stored in the index.  In both examples above, the system
-   sees the query as just <literal>WHERE indexedcolumn = 'constant'</>
+   sees the query as just <literal>WHERE indexedcolumn = 'constant'</literal>
    and so the speed of the search is equivalent to any other simple index
    query.  Thus, indexes on expressions are useful when retrieval speed
    is more important than insertion and update speed.
@@ -856,12 +856,12 @@ CREATE INDEX orders_unbilled_index ON orders (order_nr)
 SELECT * FROM orders WHERE billed is not true AND order_nr &lt; 10000;
 </programlisting>
     However, the index can also be used in queries that do not involve
-    <structfield>order_nr</> at all, e.g.:
+    <structfield>order_nr</structfield> at all, e.g.:
 <programlisting>
 SELECT * FROM orders WHERE billed is not true AND amount &gt; 5000.00;
 </programlisting>
     This is not as efficient as a partial index on the
-    <structfield>amount</> column would be, since the system has to
+    <structfield>amount</structfield> column would be, since the system has to
     scan the entire index.  Yet, if there are relatively few unbilled
     orders, using this partial index just to find the unbilled orders
     could be a win.
@@ -886,7 +886,7 @@ SELECT * FROM orders WHERE order_nr = 3501;
    predicate must match the conditions used in the queries that
    are supposed to benefit from the index.  To be precise, a partial
    index can be used in a query only if the system can recognize that
-   the <literal>WHERE</> condition of the query mathematically implies
+   the <literal>WHERE</literal> condition of the query mathematically implies
    the predicate of the index.
    <productname>PostgreSQL</productname> does not have a sophisticated
    theorem prover that can recognize mathematically equivalent
@@ -896,7 +896,7 @@ SELECT * FROM orders WHERE order_nr = 3501;
    The system can recognize simple inequality implications, for example
    <quote>x &lt; 1</quote> implies <quote>x &lt; 2</quote>; otherwise
    the predicate condition must exactly match part of the query's
-   <literal>WHERE</> condition
+   <literal>WHERE</literal> condition
    or the index will not be recognized as usable. Matching takes
    place at query planning time, not at run time. As a result,
    parameterized query clauses do not work with a partial index. For
@@ -919,9 +919,9 @@ SELECT * FROM orders WHERE order_nr = 3501;
 
    <para>
     Suppose that we have a table describing test outcomes.  We wish
-    to ensure that there is only one <quote>successful</> entry for
+    to ensure that there is only one <quote>successful</quote> entry for
     a given subject and target combination, but there might be any number of
-    <quote>unsuccessful</> entries.  Here is one way to do it:
+    <quote>unsuccessful</quote> entries.  Here is one way to do it:
 <programlisting>
 CREATE TABLE tests (
     subject text,
@@ -944,7 +944,7 @@ CREATE UNIQUE INDEX tests_success_constraint ON tests (subject, target)
    distributions might cause the system to use an index when it really
    should not.  In that case the index can be set up so that it is not
    available for the offending query.  Normally,
-   <productname>PostgreSQL</> makes reasonable choices about index
+   <productname>PostgreSQL</productname> makes reasonable choices about index
    usage (e.g., it avoids them when retrieving common values, so the
    earlier example really only saves index size, it is not required to
    avoid index usage), and grossly incorrect plan choices are cause
@@ -956,7 +956,7 @@ CREATE UNIQUE INDEX tests_success_constraint ON tests (subject, target)
    know at least as much as the query planner knows, in particular you
    know when an index might be profitable.  Forming this knowledge
    requires experience and understanding of how indexes in
-   <productname>PostgreSQL</> work.  In most cases, the advantage of a
+   <productname>PostgreSQL</productname> work.  In most cases, the advantage of a
    partial index over a regular index will be minimal.
   </para>
 
@@ -998,8 +998,8 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
    the proper class when making an index.  The operator class determines
    the basic sort ordering (which can then be modified by adding sort options
    <literal>COLLATE</literal>,
-   <literal>ASC</>/<literal>DESC</> and/or
-   <literal>NULLS FIRST</>/<literal>NULLS LAST</>).
+   <literal>ASC</literal>/<literal>DESC</literal> and/or
+   <literal>NULLS FIRST</literal>/<literal>NULLS LAST</literal>).
   </para>
 
   <para>
@@ -1025,8 +1025,8 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
 CREATE INDEX test_index ON test_table (col varchar_pattern_ops);
 </programlisting>
       Note that you should also create an index with the default operator
-      class if you want queries involving ordinary <literal>&lt;</>,
-      <literal>&lt;=</>, <literal>&gt;</>, or <literal>&gt;=</> comparisons
+      class if you want queries involving ordinary <literal>&lt;</literal>,
+      <literal>&lt;=</literal>, <literal>&gt;</literal>, or <literal>&gt;=</literal> comparisons
       to use an index.  Such queries cannot use the
       <literal><replaceable>xxx</replaceable>_pattern_ops</literal>
       operator classes.  (Ordinary equality comparisons can use these
@@ -1057,7 +1057,7 @@ SELECT am.amname AS index_method,
 
   <para>
    An operator class is actually just a subset of a larger structure called an
-   <firstterm>operator family</>.  In cases where several data types have
+   <firstterm>operator family</firstterm>.  In cases where several data types have
    similar behaviors, it is frequently useful to define cross-data-type
    operators and allow these to work with indexes.  To do this, the operator
    classes for each of the types must be grouped into the same operator
@@ -1147,13 +1147,13 @@ CREATE INDEX test1c_content_y_index ON test1c (content COLLATE "y");
   </indexterm>
 
   <para>
-   All indexes in <productname>PostgreSQL</> are <firstterm>secondary</>
+   All indexes in <productname>PostgreSQL</productname> are <firstterm>secondary</firstterm>
    indexes, meaning that each index is stored separately from the table's
-   main data area (which is called the table's <firstterm>heap</>
-   in <productname>PostgreSQL</> terminology).  This means that in an
+   main data area (which is called the table's <firstterm>heap</firstterm>
+   in <productname>PostgreSQL</productname> terminology).  This means that in an
    ordinary index scan, each row retrieval requires fetching data from both
    the index and the heap.  Furthermore, while the index entries that match a
-   given indexable <literal>WHERE</> condition are usually close together in
+   given indexable <literal>WHERE</literal> condition are usually close together in
    the index, the table rows they reference might be anywhere in the heap.
    The heap-access portion of an index scan thus involves a lot of random
    access into the heap, which can be slow, particularly on traditional
@@ -1163,8 +1163,8 @@ CREATE INDEX test1c_content_y_index ON test1c (content COLLATE "y");
   </para>
 
   <para>
-   To solve this performance problem, <productname>PostgreSQL</>
-   supports <firstterm>index-only scans</>, which can answer queries from an
+   To solve this performance problem, <productname>PostgreSQL</productname>
+   supports <firstterm>index-only scans</firstterm>, which can answer queries from an
    index alone without any heap access.  The basic idea is to return values
    directly out of each index entry instead of consulting the associated heap
    entry.  There are two fundamental restrictions on when this method can be
@@ -1187,8 +1187,8 @@ CREATE INDEX test1c_content_y_index ON test1c (content COLLATE "y");
     <listitem>
      <para>
       The query must reference only columns stored in the index.  For
-      example, given an index on columns <literal>x</> and <literal>y</> of a
-      table that also has a column <literal>z</>, these queries could use
+      example, given an index on columns <literal>x</literal> and <literal>y</literal> of a
+      table that also has a column <literal>z</literal>, these queries could use
       index-only scans:
 <programlisting>
 SELECT x, y FROM tab WHERE x = 'key';
@@ -1210,17 +1210,17 @@ SELECT x FROM tab WHERE x = 'key' AND z &lt; 42;
    If these two fundamental requirements are met, then all the data values
    required by the query are available from the index, so an index-only scan
    is physically possible.  But there is an additional requirement for any
-   table scan in <productname>PostgreSQL</>: it must verify that each
-   retrieved row be <quote>visible</> to the query's MVCC snapshot, as
+   table scan in <productname>PostgreSQL</productname>: it must verify that each
+   retrieved row be <quote>visible</quote> to the query's MVCC snapshot, as
    discussed in <xref linkend="mvcc">.  Visibility information is not stored
    in index entries, only in heap entries; so at first glance it would seem
    that every row retrieval would require a heap access anyway.  And this is
    indeed the case, if the table row has been modified recently.  However,
    for seldom-changing data there is a way around this
-   problem.  <productname>PostgreSQL</> tracks, for each page in a table's
+   problem.  <productname>PostgreSQL</productname> tracks, for each page in a table's
    heap, whether all rows stored in that page are old enough to be visible to
    all current and future transactions.  This information is stored in a bit
-   in the table's <firstterm>visibility map</>.  An index-only scan, after
+   in the table's <firstterm>visibility map</firstterm>.  An index-only scan, after
    finding a candidate index entry, checks the visibility map bit for the
    corresponding heap page.  If it's set, the row is known visible and so the
    data can be returned with no further work.  If it's not set, the heap
@@ -1243,48 +1243,48 @@ SELECT x FROM tab WHERE x = 'key' AND z &lt; 42;
   <para>
    To make effective use of the index-only scan feature, you might choose to
    create indexes in which only the leading columns are meant to
-   match <literal>WHERE</> clauses, while the trailing columns
-   hold <quote>payload</> data to be returned by a query.  For example, if
+   match <literal>WHERE</literal> clauses, while the trailing columns
+   hold <quote>payload</quote> data to be returned by a query.  For example, if
    you commonly run queries like
 <programlisting>
 SELECT y FROM tab WHERE x = 'key';
 </programlisting>
    the traditional approach to speeding up such queries would be to create an
-   index on <literal>x</> only.  However, an index on <literal>(x, y)</>
+   index on <literal>x</literal> only.  However, an index on <literal>(x, y)</literal>
    would offer the possibility of implementing this query as an index-only
    scan.  As previously discussed, such an index would be larger and hence
-   more expensive than an index on <literal>x</> alone, so this is attractive
+   more expensive than an index on <literal>x</literal> alone, so this is attractive
    only if the table is known to be mostly static.  Note it's important that
-   the index be declared on <literal>(x, y)</> not <literal>(y, x)</>, as for
+   the index be declared on <literal>(x, y)</literal> not <literal>(y, x)</literal>, as for
    most index types (particularly B-trees) searches that do not constrain the
    leading index columns are not very efficient.
   </para>
 
   <para>
    In principle, index-only scans can be used with expression indexes.
-   For example, given an index on <literal>f(x)</> where <literal>x</> is a
+   For example, given an index on <literal>f(x)</literal> where <literal>x</literal> is a
    table column, it should be possible to execute
 <programlisting>
 SELECT f(x) FROM tab WHERE f(x) &lt; 1;
 </programlisting>
-   as an index-only scan; and this is very attractive if <literal>f()</> is
-   an expensive-to-compute function.  However, <productname>PostgreSQL</>'s
+   as an index-only scan; and this is very attractive if <literal>f()</literal> is
+   an expensive-to-compute function.  However, <productname>PostgreSQL</productname>'s
    planner is currently not very smart about such cases.  It considers a
    query to be potentially executable by index-only scan only when
-   all <emphasis>columns</> needed by the query are available from the index.
-   In this example, <literal>x</> is not needed except in the
-   context <literal>f(x)</>, but the planner does not notice that and
+   all <emphasis>columns</emphasis> needed by the query are available from the index.
+   In this example, <literal>x</literal> is not needed except in the
+   context <literal>f(x)</literal>, but the planner does not notice that and
    concludes that an index-only scan is not possible.  If an index-only scan
    seems sufficiently worthwhile, this can be worked around by declaring the
-   index to be on <literal>(f(x), x)</>, where the second column is not
+   index to be on <literal>(f(x), x)</literal>, where the second column is not
    expected to be used in practice but is just there to convince the planner
    that an index-only scan is possible.  An additional caveat, if the goal is
-   to avoid recalculating <literal>f(x)</>, is that the planner won't
-   necessarily match uses of <literal>f(x)</> that aren't in
-   indexable <literal>WHERE</> clauses to the index column.  It will usually
+   to avoid recalculating <literal>f(x)</literal>, is that the planner won't
+   necessarily match uses of <literal>f(x)</literal> that aren't in
+   indexable <literal>WHERE</literal> clauses to the index column.  It will usually
    get this right in simple queries such as shown above, but not in queries
    that involve joins.  These deficiencies may be remedied in future versions
-   of <productname>PostgreSQL</>.
+   of <productname>PostgreSQL</productname>.
   </para>
 
   <para>
@@ -1299,13 +1299,13 @@ CREATE UNIQUE INDEX tests_success_constraint ON tests (subject, target)
 <programlisting>
 SELECT target FROM tests WHERE subject = 'some-subject' AND success;
 </programlisting>
-   But there's a problem: the <literal>WHERE</> clause refers
-   to <literal>success</> which is not available as a result column of the
+   But there's a problem: the <literal>WHERE</literal> clause refers
+   to <literal>success</literal> which is not available as a result column of the
    index.  Nonetheless, an index-only scan is possible because the plan does
-   not need to recheck that part of the <literal>WHERE</> clause at run time:
-   all entries found in the index necessarily have <literal>success = true</>
+   not need to recheck that part of the <literal>WHERE</literal> clause at run time:
+   all entries found in the index necessarily have <literal>success = true</literal>
    so this need not be explicitly checked in the
-   plan.  <productname>PostgreSQL</> versions 9.6 and later will recognize
+   plan.  <productname>PostgreSQL</productname> versions 9.6 and later will recognize
    such cases and allow index-only scans to be generated, but older versions
    will not.
   </para>
@@ -1321,7 +1321,7 @@ SELECT target FROM tests WHERE subject = 'some-subject' AND success;
   </indexterm>
 
   <para>
-   Although indexes in <productname>PostgreSQL</> do not need
+   Although indexes in <productname>PostgreSQL</productname> do not need
    maintenance or tuning, it is still important to check
    which indexes are actually used by the real-life query workload.
    Examining index usage for an individual query is done with the
@@ -1388,8 +1388,8 @@ SELECT target FROM tests WHERE subject = 'some-subject' AND success;
      their use.  There are run-time parameters that can turn off
      various plan types (see <xref linkend="runtime-config-query-enable">).
      For instance, turning off sequential scans
-     (<varname>enable_seqscan</>) and nested-loop joins
-     (<varname>enable_nestloop</>), which are the most basic plans,
+     (<varname>enable_seqscan</varname>) and nested-loop joins
+     (<varname>enable_nestloop</varname>), which are the most basic plans,
      will force the system to use a different plan.  If the system
      still chooses a sequential scan or nested-loop join then there is
      probably a more fundamental reason why the index is not being
@@ -1428,7 +1428,7 @@ SELECT target FROM tests WHERE subject = 'some-subject' AND success;
      If you do not succeed in adjusting the costs to be more
      appropriate, then you might have to resort to forcing index usage
      explicitly.  You might also want to contact the
-     <productname>PostgreSQL</> developers to examine the issue.
+     <productname>PostgreSQL</productname> developers to examine the issue.
     </para>
    </listitem>
   </itemizedlist>

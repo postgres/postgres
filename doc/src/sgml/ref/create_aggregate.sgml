@@ -98,7 +98,7 @@ CREATE AGGREGATE <replaceable class="parameter">name</replaceable> (
 
   <para>
    If a schema name is given (for example, <literal>CREATE AGGREGATE
-   myschema.myagg ...</>) then the aggregate function is created in the
+   myschema.myagg ...</literal>) then the aggregate function is created in the
    specified schema.  Otherwise it is created in the current schema.
   </para>
 
@@ -191,57 +191,57 @@ CREATE AGGREGATE <replaceable class="parameter">name</replaceable> (
    is polymorphic and the state value's data type would be inadequate to
    pin down the result type.  These extra parameters are always passed as
    NULL (and so the final function must not be strict when
-   the <literal>FINALFUNC_EXTRA</> option is used), but nonetheless they
+   the <literal>FINALFUNC_EXTRA</literal> option is used), but nonetheless they
    are valid parameters.  The final function could for example make use
-   of <function>get_fn_expr_argtype</> to identify the actual argument type
+   of <function>get_fn_expr_argtype</function> to identify the actual argument type
    in the current call.
   </para>
 
   <para>
-   An aggregate can optionally support <firstterm>moving-aggregate mode</>,
+   An aggregate can optionally support <firstterm>moving-aggregate mode</firstterm>,
    as described in <xref linkend="xaggr-moving-aggregates">.  This requires
-   specifying the <literal>MSFUNC</>, <literal>MINVFUNC</>,
-   and <literal>MSTYPE</> parameters, and optionally
-   the <literal>MSPACE</>, <literal>MFINALFUNC</>,
-   <literal>MFINALFUNC_EXTRA</>, <literal>MFINALFUNC_MODIFY</>,
-   and <literal>MINITCOND</> parameters.  Except for <literal>MINVFUNC</>,
+   specifying the <literal>MSFUNC</literal>, <literal>MINVFUNC</literal>,
+   and <literal>MSTYPE</literal> parameters, and optionally
+   the <literal>MSPACE</literal>, <literal>MFINALFUNC</literal>,
+   <literal>MFINALFUNC_EXTRA</literal>, <literal>MFINALFUNC_MODIFY</literal>,
+   and <literal>MINITCOND</literal> parameters.  Except for <literal>MINVFUNC</literal>,
    these parameters work like the corresponding simple-aggregate parameters
-   without <literal>M</>; they define a separate implementation of the
+   without <literal>M</literal>; they define a separate implementation of the
    aggregate that includes an inverse transition function.
   </para>
 
   <para>
    The syntax with <literal>ORDER BY</literal> in the parameter list creates
    a special type of aggregate called an <firstterm>ordered-set
-   aggregate</firstterm>; or if <literal>HYPOTHETICAL</> is specified, then
+   aggregate</firstterm>; or if <literal>HYPOTHETICAL</literal> is specified, then
    a <firstterm>hypothetical-set aggregate</firstterm> is created.  These
    aggregates operate over groups of sorted values in order-dependent ways,
    so that specification of an input sort order is an essential part of a
-   call.  Also, they can have <firstterm>direct</> arguments, which are
+   call.  Also, they can have <firstterm>direct</firstterm> arguments, which are
    arguments that are evaluated only once per aggregation rather than once
    per input row.  Hypothetical-set aggregates are a subclass of ordered-set
    aggregates in which some of the direct arguments are required to match,
    in number and data types, the aggregated argument columns.  This allows
    the values of those direct arguments to be added to the collection of
-   aggregate-input rows as an additional <quote>hypothetical</> row.
+   aggregate-input rows as an additional <quote>hypothetical</quote> row.
   </para>
 
   <para>
-   An aggregate can optionally support <firstterm>partial aggregation</>,
+   An aggregate can optionally support <firstterm>partial aggregation</firstterm>,
    as described in <xref linkend="xaggr-partial-aggregates">.
-   This requires specifying the <literal>COMBINEFUNC</> parameter.
+   This requires specifying the <literal>COMBINEFUNC</literal> parameter.
    If the <replaceable class="parameter">state_data_type</replaceable>
-   is <type>internal</>, it's usually also appropriate to provide the
-   <literal>SERIALFUNC</> and <literal>DESERIALFUNC</> parameters so that
+   is <type>internal</type>, it's usually also appropriate to provide the
+   <literal>SERIALFUNC</literal> and <literal>DESERIALFUNC</literal> parameters so that
    parallel aggregation is possible.  Note that the aggregate must also be
-   marked <literal>PARALLEL SAFE</> to enable parallel aggregation.
+   marked <literal>PARALLEL SAFE</literal> to enable parallel aggregation.
   </para>
 
   <para>
-   Aggregates that behave like <function>MIN</> or <function>MAX</> can
+   Aggregates that behave like <function>MIN</function> or <function>MAX</function> can
    sometimes be optimized by looking into an index instead of scanning every
    input row.  If this aggregate can be so optimized, indicate it by
-   specifying a <firstterm>sort operator</>.  The basic requirement is that
+   specifying a <firstterm>sort operator</firstterm>.  The basic requirement is that
    the aggregate must yield the first element in the sort ordering induced by
    the operator; in other words:
 <programlisting>
@@ -253,9 +253,9 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
 </programlisting>
    Further assumptions are that the aggregate ignores null inputs, and that
    it delivers a null result if and only if there were no non-null inputs.
-   Ordinarily, a data type's <literal>&lt;</> operator is the proper sort
-   operator for <function>MIN</>, and <literal>&gt;</> is the proper sort
-   operator for <function>MAX</>.  Note that the optimization will never
+   Ordinarily, a data type's <literal>&lt;</literal> operator is the proper sort
+   operator for <function>MIN</function>, and <literal>&gt;</literal> is the proper sort
+   operator for <function>MAX</function>.  Note that the optimization will never
    actually take effect unless the specified operator is the <quote>less
    than</quote> or <quote>greater than</quote> strategy member of a B-tree
    index operator class.
@@ -288,10 +288,10 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
 
     <listitem>
      <para>
-      The mode of an argument: <literal>IN</> or <literal>VARIADIC</>.
-      (Aggregate functions do not support <literal>OUT</> arguments.)
-      If omitted, the default is <literal>IN</>.  Only the last argument
-      can be marked <literal>VARIADIC</>.
+      The mode of an argument: <literal>IN</literal> or <literal>VARIADIC</literal>.
+      (Aggregate functions do not support <literal>OUT</literal> arguments.)
+      If omitted, the default is <literal>IN</literal>.  Only the last argument
+      can be marked <literal>VARIADIC</literal>.
      </para>
     </listitem>
    </varlistentry>
@@ -312,7 +312,7 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
     <listitem>
      <para>
       An input data type on which this aggregate function operates.
-      To create a zero-argument aggregate function, write <literal>*</>
+      To create a zero-argument aggregate function, write <literal>*</literal>
       in place of the list of argument specifications.  (An example of such an
       aggregate is <function>count(*)</function>.)
      </para>
@@ -323,12 +323,12 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
     <term><replaceable class="parameter">base_type</replaceable></term>
     <listitem>
      <para>
-      In the old syntax for <command>CREATE AGGREGATE</>, the input data type
-      is specified by a <literal>basetype</> parameter rather than being
+      In the old syntax for <command>CREATE AGGREGATE</command>, the input data type
+      is specified by a <literal>basetype</literal> parameter rather than being
       written next to the aggregate name.  Note that this syntax allows
       only one input parameter.  To define a zero-argument aggregate function
-      with this syntax, specify the <literal>basetype</> as
-      <literal>"ANY"</> (not <literal>*</>).
+      with this syntax, specify the <literal>basetype</literal> as
+      <literal>"ANY"</literal> (not <literal>*</literal>).
       Ordered-set aggregates cannot be defined with the old syntax.
      </para>
     </listitem>
@@ -339,9 +339,9 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
     <listitem>
      <para>
       The name of the state transition function to be called for each
-      input row.  For a normal <replaceable class="parameter">N</>-argument
-      aggregate function, the <replaceable class="parameter">sfunc</>
-      must take <replaceable class="parameter">N</>+1 arguments,
+      input row.  For a normal <replaceable class="parameter">N</replaceable>-argument
+      aggregate function, the <replaceable class="parameter">sfunc</replaceable>
+      must take <replaceable class="parameter">N</replaceable>+1 arguments,
       the first being of type <replaceable
       class="parameter">state_data_type</replaceable> and the rest
       matching the declared input data type(s) of the aggregate.
@@ -375,7 +375,7 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
      <para>
       The approximate average size (in bytes) of the aggregate's state value.
       If this parameter is omitted or is zero, a default estimate is used
-      based on the <replaceable>state_data_type</>.
+      based on the <replaceable>state_data_type</replaceable>.
       The planner uses this value to estimate the memory required for a
       grouped aggregate query.  The planner will consider using hash
       aggregation for such a query only if the hash table is estimated to fit
@@ -408,7 +408,7 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
      </para>
 
      <para>
-      If <literal>FINALFUNC_EXTRA</> is specified, then in addition to the
+      If <literal>FINALFUNC_EXTRA</literal> is specified, then in addition to the
       final state value and any direct arguments, the final function
       receives extra NULL values corresponding to the aggregate's regular
       (aggregated) arguments.  This is mainly useful to allow correct
@@ -419,16 +419,16 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
    </varlistentry>
 
    <varlistentry>
-    <term><literal>FINALFUNC_MODIFY</> = { <literal>READ_ONLY</> | <literal>SHARABLE</> | <literal>READ_WRITE</> }</term>
+    <term><literal>FINALFUNC_MODIFY</literal> = { <literal>READ_ONLY</literal> | <literal>SHARABLE</literal> | <literal>READ_WRITE</literal> }</term>
     <listitem>
      <para>
       This option specifies whether the final function is a pure function
-      that does not modify its arguments.  <literal>READ_ONLY</> indicates
+      that does not modify its arguments.  <literal>READ_ONLY</literal> indicates
       it does not; the other two values indicate that it may change the
       transition state value.  See <xref linkend="sql-createaggregate-notes"
       endterm="sql-createaggregate-notes-title"> below for more detail.  The
-      default is <literal>READ_ONLY</>, except for ordered-set aggregates,
-      for which the default is <literal>READ_WRITE</>.
+      default is <literal>READ_ONLY</literal>, except for ordered-set aggregates,
+      for which the default is <literal>READ_WRITE</literal>.
      </para>
     </listitem>
    </varlistentry>
@@ -482,11 +482,11 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
      <para>
       An aggregate function
       whose <replaceable class="parameter">state_data_type</replaceable>
-      is <type>internal</> can participate in parallel aggregation only if it
+      is <type>internal</type> can participate in parallel aggregation only if it
       has a <replaceable class="parameter">serialfunc</replaceable> function,
-      which must serialize the aggregate state into a <type>bytea</> value for
+      which must serialize the aggregate state into a <type>bytea</type> value for
       transmission to another process.  This function must take a single
-      argument of type <type>internal</> and return type <type>bytea</>.  A
+      argument of type <type>internal</type> and return type <type>bytea</type>.  A
       corresponding <replaceable class="parameter">deserialfunc</replaceable>
       is also required.
      </para>
@@ -499,9 +499,9 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
      <para>
       Deserialize a previously serialized aggregate state back into
       <replaceable class="parameter">state_data_type</replaceable>. This
-      function must take two arguments of types <type>bytea</>
-      and <type>internal</>, and produce a result of type <type>internal</>.
-      (Note: the second, <type>internal</> argument is unused, but is required
+      function must take two arguments of types <type>bytea</type>
+      and <type>internal</type>, and produce a result of type <type>internal</type>.
+      (Note: the second, <type>internal</type> argument is unused, but is required
       for type safety reasons.)
      </para>
     </listitem>
@@ -526,8 +526,8 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
       The name of the forward state transition function to be called for each
       input row in moving-aggregate mode.  This is exactly like the regular
       transition function, except that its first argument and result are of
-      type <replaceable>mstate_data_type</>, which might be different
-      from <replaceable>state_data_type</>.
+      type <replaceable>mstate_data_type</replaceable>, which might be different
+      from <replaceable>state_data_type</replaceable>.
      </para>
     </listitem>
    </varlistentry>
@@ -538,7 +538,7 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
      <para>
       The name of the inverse state transition function to be used in
       moving-aggregate mode.  This function has the same argument and
-      result types as <replaceable>msfunc</>, but it is used to remove
+      result types as <replaceable>msfunc</replaceable>, but it is used to remove
       a value from the current aggregate state, rather than add a value to
       it.  The inverse transition function must have the same strictness
       attribute as the forward state transition function.
@@ -562,7 +562,7 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
      <para>
       The approximate average size (in bytes) of the aggregate's state
       value, when using moving-aggregate mode.  This works the same as
-      <replaceable>state_data_size</>.
+      <replaceable>state_data_size</replaceable>.
      </para>
     </listitem>
    </varlistentry>
@@ -573,22 +573,22 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
      <para>
       The name of the final function called to compute the aggregate's
       result after all input rows have been traversed, when using
-      moving-aggregate mode.  This works the same as <replaceable>ffunc</>,
+      moving-aggregate mode.  This works the same as <replaceable>ffunc</replaceable>,
       except that its first argument's type
-      is <replaceable>mstate_data_type</> and extra dummy arguments are
-      specified by writing <literal>MFINALFUNC_EXTRA</>.
-      The aggregate result type determined by <replaceable>mffunc</>
-      or <replaceable>mstate_data_type</> must match that determined by the
+      is <replaceable>mstate_data_type</replaceable> and extra dummy arguments are
+      specified by writing <literal>MFINALFUNC_EXTRA</literal>.
+      The aggregate result type determined by <replaceable>mffunc</replaceable>
+      or <replaceable>mstate_data_type</replaceable> must match that determined by the
       aggregate's regular implementation.
      </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-    <term><literal>MFINALFUNC_MODIFY</> = { <literal>READ_ONLY</> | <literal>SHARABLE</> | <literal>READ_WRITE</> }</term>
+    <term><literal>MFINALFUNC_MODIFY</literal> = { <literal>READ_ONLY</literal> | <literal>SHARABLE</literal> | <literal>READ_WRITE</literal> }</term>
     <listitem>
      <para>
-      This option is like <literal>FINALFUNC_MODIFY</>, but it describes
+      This option is like <literal>FINALFUNC_MODIFY</literal>, but it describes
       the behavior of the moving-aggregate final function.
      </para>
     </listitem>
@@ -599,7 +599,7 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
     <listitem>
      <para>
       The initial setting for the state value, when using moving-aggregate
-      mode.  This works the same as <replaceable>initial_condition</>.
+      mode.  This works the same as <replaceable>initial_condition</replaceable>.
      </para>
     </listitem>
    </varlistentry>
@@ -608,8 +608,8 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
     <term><replaceable class="parameter">sort_operator</replaceable></term>
     <listitem>
      <para>
-      The associated sort operator for a <function>MIN</>- or
-      <function>MAX</>-like aggregate.
+      The associated sort operator for a <function>MIN</function>- or
+      <function>MAX</function>-like aggregate.
       This is just an operator name (possibly schema-qualified).
       The operator is assumed to have the same input data types as
       the aggregate (which must be a single-argument normal aggregate).
@@ -618,14 +618,14 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
    </varlistentry>
 
    <varlistentry>
-    <term><literal>PARALLEL =</> { <literal>SAFE</> | <literal>RESTRICTED</> | <literal>UNSAFE</> }</term>
+    <term><literal>PARALLEL =</literal> { <literal>SAFE</literal> | <literal>RESTRICTED</literal> | <literal>UNSAFE</literal> }</term>
     <listitem>
      <para>
-      The meanings of <literal>PARALLEL SAFE</>, <literal>PARALLEL
-      RESTRICTED</>, and <literal>PARALLEL UNSAFE</> are the same as
+      The meanings of <literal>PARALLEL SAFE</literal>, <literal>PARALLEL
+      RESTRICTED</literal>, and <literal>PARALLEL UNSAFE</literal> are the same as
       in <xref linkend="sql-createfunction">.  An aggregate will not be
       considered for parallelization if it is marked <literal>PARALLEL
-      UNSAFE</> (which is the default!) or <literal>PARALLEL RESTRICTED</>.
+      UNSAFE</literal> (which is the default!) or <literal>PARALLEL RESTRICTED</literal>.
       Note that the parallel-safety markings of the aggregate's support
       functions are not consulted by the planner, only the marking of the
       aggregate itself.
@@ -640,7 +640,7 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
       For ordered-set aggregates only, this flag specifies that the aggregate
       arguments are to be processed according to the requirements for
       hypothetical-set aggregates: that is, the last few direct arguments must
-      match the data types of the aggregated (<literal>WITHIN GROUP</>)
+      match the data types of the aggregated (<literal>WITHIN GROUP</literal>)
       arguments.  The <literal>HYPOTHETICAL</literal> flag has no effect on
       run-time behavior, only on parse-time resolution of the data types and
       collations of the aggregate's arguments.
@@ -660,7 +660,7 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
 
    <para>
     In parameters that specify support function names, you can write
-    a schema name if needed, for example <literal>SFUNC = public.sum</>.
+    a schema name if needed, for example <literal>SFUNC = public.sum</literal>.
     Do not write argument types there, however &mdash; the argument types
     of the support functions are determined from other parameters.
    </para>
@@ -668,7 +668,7 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
    <para>
     Ordinarily, PostgreSQL functions are expected to be true functions that
     do not modify their input values.  However, an aggregate transition
-    function, <emphasis>when used in the context of an aggregate</>,
+    function, <emphasis>when used in the context of an aggregate</emphasis>,
     is allowed to cheat and modify its transition-state argument in place.
     This can provide substantial performance benefits compared to making
     a fresh copy of the transition state each time.
@@ -678,26 +678,26 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
     Likewise, while an aggregate final function is normally expected not to
     modify its input values, sometimes it is impractical to avoid modifying
     the transition-state argument.  Such behavior must be declared using
-    the <literal>FINALFUNC_MODIFY</> parameter.  The <literal>READ_WRITE</>
+    the <literal>FINALFUNC_MODIFY</literal> parameter.  The <literal>READ_WRITE</literal>
     value indicates that the final function modifies the transition state in
     unspecified ways.  This value prevents use of the aggregate as a window
     function, and it also prevents merging of transition states for aggregate
     calls that share the same input values and transition functions.
-    The <literal>SHARABLE</> value indicates that the transition function
+    The <literal>SHARABLE</literal> value indicates that the transition function
     cannot be applied after the final function, but multiple final-function
     calls can be performed on the ending transition state value.  This value
     prevents use of the aggregate as a window function, but it allows merging
     of transition states.  (That is, the optimization of interest here is not
     applying the same final function repeatedly, but applying different final
     functions to the same ending transition state value.  This is allowed as
-    long as none of the final functions are marked <literal>READ_WRITE</>.)
+    long as none of the final functions are marked <literal>READ_WRITE</literal>.)
    </para>
 
    <para>
     If an aggregate supports moving-aggregate mode, it will improve
     calculation efficiency when the aggregate is used as a window function
     for a window with moving frame start (that is, a frame start mode other
-    than <literal>UNBOUNDED PRECEDING</>).  Conceptually, the forward
+    than <literal>UNBOUNDED PRECEDING</literal>).  Conceptually, the forward
     transition function adds input values to the aggregate's state when
     they enter the window frame from the bottom, and the inverse transition
     function removes them again when they leave the frame at the top.  So,
@@ -738,20 +738,20 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
    </para>
 
    <para>
-    The syntax for ordered-set aggregates allows <literal>VARIADIC</>
+    The syntax for ordered-set aggregates allows <literal>VARIADIC</literal>
     to be specified for both the last direct parameter and the last
-    aggregated (<literal>WITHIN GROUP</>) parameter.  However, the
-    current implementation restricts use of <literal>VARIADIC</>
+    aggregated (<literal>WITHIN GROUP</literal>) parameter.  However, the
+    current implementation restricts use of <literal>VARIADIC</literal>
     in two ways.  First, ordered-set aggregates can only use
-    <literal>VARIADIC "any"</>, not other variadic array types.
-    Second, if the last direct parameter is <literal>VARIADIC "any"</>,
+    <literal>VARIADIC "any"</literal>, not other variadic array types.
+    Second, if the last direct parameter is <literal>VARIADIC "any"</literal>,
     then there can be only one aggregated parameter and it must also
-    be <literal>VARIADIC "any"</>.  (In the representation used in the
+    be <literal>VARIADIC "any"</literal>.  (In the representation used in the
     system catalogs, these two parameters are merged into a single
-    <literal>VARIADIC "any"</> item, since <structname>pg_proc</> cannot
-    represent functions with more than one <literal>VARIADIC</> parameter.)
+    <literal>VARIADIC "any"</literal> item, since <structname>pg_proc</structname> cannot
+    represent functions with more than one <literal>VARIADIC</literal> parameter.)
     If the aggregate is a hypothetical-set aggregate, the direct arguments
-    that match the <literal>VARIADIC "any"</> parameter are the hypothetical
+    that match the <literal>VARIADIC "any"</literal> parameter are the hypothetical
     ones; any preceding parameters represent additional direct arguments
     that are not constrained to match the aggregated arguments.
    </para>
@@ -764,7 +764,7 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
    <para>
     Partial (including parallel) aggregation is currently not supported for
     ordered-set aggregates.  Also, it will never be used for aggregate calls
-    that include <literal>DISTINCT</> or <literal>ORDER BY</> clauses, since
+    that include <literal>DISTINCT</literal> or <literal>ORDER BY</literal> clauses, since
     those semantics cannot be supported during partial aggregation.
   </para>
  </refsect1>

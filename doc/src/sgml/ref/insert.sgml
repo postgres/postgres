@@ -56,10 +56,10 @@ INSERT INTO <replaceable class="parameter">table_name</replaceable> [ AS <replac
   <para>
    The target column names can be listed in any order.  If no list of
    column names is given at all, the default is all the columns of the
-   table in their declared order; or the first <replaceable>N</> column
-   names, if there are only <replaceable>N</> columns supplied by the
-   <literal>VALUES</> clause or <replaceable>query</>.  The values
-   supplied by the <literal>VALUES</> clause or <replaceable>query</> are
+   table in their declared order; or the first <replaceable>N</replaceable> column
+   names, if there are only <replaceable>N</replaceable> columns supplied by the
+   <literal>VALUES</literal> clause or <replaceable>query</replaceable>.  The values
+   supplied by the <literal>VALUES</literal> clause or <replaceable>query</replaceable> are
    associated with the explicit or implicit column list left-to-right.
   </para>
 
@@ -75,21 +75,21 @@ INSERT INTO <replaceable class="parameter">table_name</replaceable> [ AS <replac
   </para>
 
   <para>
-   <literal>ON CONFLICT</> can be used to specify an alternative
+   <literal>ON CONFLICT</literal> can be used to specify an alternative
    action to raising a unique constraint or exclusion constraint
    violation error. (See <xref linkend="sql-on-conflict"
    endterm="sql-on-conflict-title"> below.)
   </para>
 
   <para>
-   The optional <literal>RETURNING</> clause causes <command>INSERT</>
+   The optional <literal>RETURNING</literal> clause causes <command>INSERT</command>
    to compute and return value(s) based on each row actually inserted
-   (or updated, if an <literal>ON CONFLICT DO UPDATE</> clause was
+   (or updated, if an <literal>ON CONFLICT DO UPDATE</literal> clause was
    used).  This is primarily useful for obtaining values that were
    supplied by defaults, such as a serial sequence number.  However,
    any expression using the table's columns is allowed.  The syntax of
-   the <literal>RETURNING</> list is identical to that of the output
-   list of <command>SELECT</>.  Only rows that were successfully
+   the <literal>RETURNING</literal> list is identical to that of the output
+   list of <command>SELECT</command>.  Only rows that were successfully
    inserted or updated will be returned.  For example, if a row was
    locked but not updated because an <literal>ON CONFLICT DO UPDATE
    ... WHERE</literal> clause <replaceable
@@ -99,7 +99,7 @@ INSERT INTO <replaceable class="parameter">table_name</replaceable> [ AS <replac
 
   <para>
    You must have <literal>INSERT</literal> privilege on a table in
-   order to insert into it.  If <literal>ON CONFLICT DO UPDATE</> is
+   order to insert into it.  If <literal>ON CONFLICT DO UPDATE</literal> is
    present, <literal>UPDATE</literal> privilege on the table is also
    required.
   </para>
@@ -107,17 +107,17 @@ INSERT INTO <replaceable class="parameter">table_name</replaceable> [ AS <replac
   <para>
    If a column list is specified, you only need
    <literal>INSERT</literal> privilege on the listed columns.
-   Similarly, when <literal>ON CONFLICT DO UPDATE</> is specified, you
-   only need <literal>UPDATE</> privilege on the column(s) that are
-   listed to be updated.  However, <literal>ON CONFLICT DO UPDATE</>
-   also requires <literal>SELECT</> privilege on any column whose
-   values are read in the <literal>ON CONFLICT DO UPDATE</>
-   expressions or <replaceable>condition</>.
+   Similarly, when <literal>ON CONFLICT DO UPDATE</literal> is specified, you
+   only need <literal>UPDATE</literal> privilege on the column(s) that are
+   listed to be updated.  However, <literal>ON CONFLICT DO UPDATE</literal>
+   also requires <literal>SELECT</literal> privilege on any column whose
+   values are read in the <literal>ON CONFLICT DO UPDATE</literal>
+   expressions or <replaceable>condition</replaceable>.
   </para>
 
   <para>
-   Use of the <literal>RETURNING</> clause requires <literal>SELECT</>
-   privilege on all columns mentioned in <literal>RETURNING</>.
+   Use of the <literal>RETURNING</literal> clause requires <literal>SELECT</literal>
+   privilege on all columns mentioned in <literal>RETURNING</literal>.
    If you use the <replaceable
    class="parameter">query</replaceable> clause to insert rows from a
    query, you of course need to have <literal>SELECT</literal> privilege on
@@ -144,7 +144,7 @@ INSERT INTO <replaceable class="parameter">table_name</replaceable> [ AS <replac
       <listitem>
        <para>
         The <literal>WITH</literal> clause allows you to specify one or more
-        subqueries that can be referenced by name in the <command>INSERT</>
+        subqueries that can be referenced by name in the <command>INSERT</command>
         query. See <xref linkend="queries-with"> and <xref linkend="sql-select">
         for details.
        </para>
@@ -175,8 +175,8 @@ INSERT INTO <replaceable class="parameter">table_name</replaceable> [ AS <replac
         A substitute name for <replaceable
         class="parameter">table_name</replaceable>.  When an alias is
         provided, it completely hides the actual name of the table.
-        This is particularly useful when <literal>ON CONFLICT DO UPDATE</>
-        targets a table named <varname>excluded</>, since that will otherwise
+        This is particularly useful when <literal>ON CONFLICT DO UPDATE</literal>
+        targets a table named <varname>excluded</varname>, since that will otherwise
         be taken as the name of the special table representing rows proposed
         for insertion.
        </para>
@@ -193,11 +193,11 @@ INSERT INTO <replaceable class="parameter">table_name</replaceable> [ AS <replac
         can be qualified with a subfield name or array subscript, if
         needed.  (Inserting into only some fields of a composite
         column leaves the other fields null.)  When referencing a
-        column with <literal>ON CONFLICT DO UPDATE</>, do not include
+        column with <literal>ON CONFLICT DO UPDATE</literal>, do not include
         the table's name in the specification of a target column.  For
         example, <literal>INSERT INTO table_name ... ON CONFLICT DO UPDATE
-        SET table_name.col = 1</> is invalid (this follows the general
-        behavior for <command>UPDATE</>).
+        SET table_name.col = 1</literal> is invalid (this follows the general
+        behavior for <command>UPDATE</command>).
        </para>
       </listitem>
      </varlistentry>
@@ -281,11 +281,11 @@ INSERT INTO <replaceable class="parameter">table_name</replaceable> [ AS <replac
       <listitem>
        <para>
         An expression to be computed and returned by the
-        <command>INSERT</> command after each row is inserted or
+        <command>INSERT</command> command after each row is inserted or
         updated. The expression can use any column names of the table
         named by <replaceable
         class="parameter">table_name</replaceable>.  Write
-        <literal>*</> to return all columns of the inserted or updated
+        <literal>*</literal> to return all columns of the inserted or updated
         row(s).
        </para>
       </listitem>
@@ -386,7 +386,7 @@ INSERT INTO <replaceable class="parameter">table_name</replaceable> [ AS <replac
         UPDATE</literal> have access to the existing row using the
         table's name (or an alias), and to rows proposed for insertion
         using the special <varname>excluded</varname> table.
-        <literal>SELECT</> privilege is required on any column in the
+        <literal>SELECT</literal> privilege is required on any column in the
         target table where corresponding <varname>excluded</varname>
         columns are read.
        </para>
@@ -406,7 +406,7 @@ INSERT INTO <replaceable class="parameter">table_name</replaceable> [ AS <replac
         The name of a <replaceable
         class="parameter">table_name</replaceable> column.  Used to
         infer arbiter indexes.  Follows <command>CREATE
-        INDEX</command> format.  <literal>SELECT</> privilege on
+        INDEX</command> format.  <literal>SELECT</literal> privilege on
         <replaceable class="parameter">index_column_name</replaceable>
         is required.
        </para>
@@ -422,7 +422,7 @@ INSERT INTO <replaceable class="parameter">table_name</replaceable> [ AS <replac
         infer expressions on <replaceable
         class="parameter">table_name</replaceable> columns appearing
         within index definitions (not simple columns).  Follows
-        <command>CREATE INDEX</command> format.  <literal>SELECT</>
+        <command>CREATE INDEX</command> format.  <literal>SELECT</literal>
         privilege on any column appearing within <replaceable
         class="parameter">index_expression</replaceable> is required.
        </para>
@@ -469,7 +469,7 @@ INSERT INTO <replaceable class="parameter">table_name</replaceable> [ AS <replac
         Used to allow inference of partial unique indexes.  Any
         indexes that satisfy the predicate (which need not actually be
         partial indexes) can be inferred.  Follows <command>CREATE
-        INDEX</command> format.  <literal>SELECT</> privilege on any
+        INDEX</command> format.  <literal>SELECT</literal> privilege on any
         column appearing within <replaceable
         class="parameter">index_predicate</replaceable> is required.
        </para>
@@ -494,7 +494,7 @@ INSERT INTO <replaceable class="parameter">table_name</replaceable> [ AS <replac
         An expression that returns a value of type
         <type>boolean</type>.  Only rows for which this expression
         returns <literal>true</literal> will be updated, although all
-        rows will be locked when the <literal>ON CONFLICT DO UPDATE</>
+        rows will be locked when the <literal>ON CONFLICT DO UPDATE</literal>
         action is taken.  Note that
         <replaceable>condition</replaceable> is evaluated last, after
         a conflict has been identified as a candidate to update.
@@ -510,7 +510,7 @@ INSERT INTO <replaceable class="parameter">table_name</replaceable> [ AS <replac
    </para>
 
    <para>
-    <command>INSERT</command> with an <literal>ON CONFLICT DO UPDATE</>
+    <command>INSERT</command> with an <literal>ON CONFLICT DO UPDATE</literal>
     clause is a <quote>deterministic</quote> statement.  This means
     that the command will not be allowed to affect any single existing
     row more than once; a cardinality violation error will be raised
@@ -538,7 +538,7 @@ INSERT INTO <replaceable class="parameter">table_name</replaceable> [ AS <replac
   <title>Outputs</title>
 
   <para>
-   On successful completion, an <command>INSERT</> command returns a command
+   On successful completion, an <command>INSERT</command> command returns a command
    tag of the form
 <screen>
 INSERT <replaceable>oid</replaceable> <replaceable class="parameter">count</replaceable>
@@ -554,10 +554,10 @@ INSERT <replaceable>oid</replaceable> <replaceable class="parameter">count</repl
   </para>
 
   <para>
-   If the <command>INSERT</> command contains a <literal>RETURNING</>
-   clause, the result will be similar to that of a <command>SELECT</>
+   If the <command>INSERT</command> command contains a <literal>RETURNING</literal>
+   clause, the result will be similar to that of a <command>SELECT</command>
    statement containing the columns and values defined in the
-   <literal>RETURNING</> list, computed over the row(s) inserted or
+   <literal>RETURNING</literal> list, computed over the row(s) inserted or
    updated by the command.
   </para>
  </refsect1>
@@ -616,7 +616,7 @@ INSERT INTO films DEFAULT VALUES;
   </para>
 
   <para>
-   To insert multiple rows using the multirow <command>VALUES</> syntax:
+   To insert multiple rows using the multirow <command>VALUES</command> syntax:
 
 <programlisting>
 INSERT INTO films (code, title, did, date_prod, kind) VALUES
@@ -675,7 +675,7 @@ INSERT INTO employees_log SELECT *, current_timestamp FROM upd;
    Insert or update new distributors as appropriate.  Assumes a unique
    index has been defined that constrains values appearing in the
    <literal>did</literal> column.  Note that the special
-   <varname>excluded</> table is used to reference values originally
+   <varname>excluded</varname> table is used to reference values originally
    proposed for insertion:
 <programlisting>
 INSERT INTO distributors (did, dname)
@@ -697,7 +697,7 @@ INSERT INTO distributors (did, dname) VALUES (7, 'Redline GmbH')
   <para>
    Insert or update new distributors as appropriate.  Example assumes
    a unique index has been defined that constrains values appearing in
-   the <literal>did</literal> column.  <literal>WHERE</> clause is
+   the <literal>did</literal> column.  <literal>WHERE</literal> clause is
    used to limit the rows actually updated (any existing row not
    updated will still be locked, though):
 <programlisting>
@@ -734,13 +734,13 @@ INSERT INTO distributors (did, dname) VALUES (10, 'Conrad International')
 
   <para>
    <command>INSERT</command> conforms to the SQL standard, except that
-   the <literal>RETURNING</> clause is a
+   the <literal>RETURNING</literal> clause is a
    <productname>PostgreSQL</productname> extension, as is the ability
-   to use <literal>WITH</> with <command>INSERT</>, and the ability to
-   specify an alternative action with <literal>ON CONFLICT</>.
+   to use <literal>WITH</literal> with <command>INSERT</command>, and the ability to
+   specify an alternative action with <literal>ON CONFLICT</literal>.
    Also, the case in
    which a column name list is omitted, but not all the columns are
-   filled from the <literal>VALUES</> clause or <replaceable>query</>,
+   filled from the <literal>VALUES</literal> clause or <replaceable>query</replaceable>,
    is disallowed by the standard.
   </para>
 
