@@ -43,6 +43,8 @@
 #endif
 #include <sys/param.h>
 
+#include "common/string.h"
+
 #ifndef NL_ARGMAX
 #define NL_ARGMAX 16
 #endif
@@ -788,16 +790,6 @@ nextch2:
 bad_format:
 	errno = EINVAL;
 	target->failed = true;
-}
-
-static size_t
-pg_strnlen(const char *str, size_t maxlen)
-{
-	const char *p = str;
-
-	while (maxlen-- > 0 && *p)
-		p++;
-	return p - str;
 }
 
 static void
