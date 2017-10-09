@@ -156,7 +156,6 @@
 <!ENTITY xml2            SYSTEM "xml2.sgml">
 
 <!-- appendixes -->
-<!ENTITY contacts   SYSTEM "contacts.sgml">
 <!ENTITY datetime   SYSTEM "datetime.sgml">
 <!ENTITY docguide   SYSTEM "docguide.sgml">
 <!ENTITY errcodes   SYSTEM "errcodes.sgml">
