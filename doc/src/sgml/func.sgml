@@ -9491,7 +9491,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
          <indexterm>
           <primary>plainto_tsquery</primary>
          </indexterm>
-         <literal><function>plainto_tsquery(<optional> <replaceable class="PARAMETER">config</> <type>regconfig</> , </optional> <replaceable class="PARAMETER">query</> <type>text</type>)</function></literal>
+         <literal><function>plainto_tsquery(<optional> <replaceable class="parameter">config</> <type>regconfig</> , </optional> <replaceable class="parameter">query</> <type>text</type>)</function></literal>
         </entry>
         <entry><type>tsquery</type></entry>
         <entry>produce <type>tsquery</> ignoring punctuation</entry>
@@ -9503,7 +9503,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
          <indexterm>
           <primary>phraseto_tsquery</primary>
          </indexterm>
-         <literal><function>phraseto_tsquery(<optional> <replaceable class="PARAMETER">config</> <type>regconfig</> , </optional> <replaceable class="PARAMETER">query</> <type>text</type>)</function></literal>
+         <literal><function>phraseto_tsquery(<optional> <replaceable class="parameter">config</> <type>regconfig</> , </optional> <replaceable class="parameter">query</> <type>text</type>)</function></literal>
         </entry>
         <entry><type>tsquery</type></entry>
         <entry>produce <type>tsquery</> that searches for a phrase,
@@ -9516,7 +9516,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
          <indexterm>
           <primary>querytree</primary>
          </indexterm>
-         <literal><function>querytree(<replaceable class="PARAMETER">query</replaceable> <type>tsquery</>)</function></literal>
+         <literal><function>querytree(<replaceable class="parameter">query</replaceable> <type>tsquery</>)</function></literal>
         </entry>
         <entry><type>text</type></entry>
         <entry>get indexable part of a <type>tsquery</></entry>
@@ -9528,10 +9528,10 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
          <indexterm>
           <primary>setweight</primary>
          </indexterm>
-         <literal><function>setweight(<replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>, <replaceable class="PARAMETER">weight</replaceable> <type>"char"</>)</function></literal>
+         <literal><function>setweight(<replaceable class="parameter">vector</replaceable> <type>tsvector</>, <replaceable class="parameter">weight</replaceable> <type>"char"</>)</function></literal>
         </entry>
         <entry><type>tsvector</type></entry>
-        <entry>assign <replaceable class="PARAMETER">weight</replaceable> to each element of <replaceable class="PARAMETER">vector</replaceable></entry>
+        <entry>assign <replaceable class="parameter">weight</replaceable> to each element of <replaceable class="parameter">vector</replaceable></entry>
         <entry><literal>setweight('fat:2,4 cat:3 rat:5B'::tsvector, 'A')</literal></entry>
         <entry><literal>'cat':3A 'fat':2A,4A 'rat':5A</literal></entry>
        </row>
@@ -9541,10 +9541,10 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
           <primary>setweight</primary>
           <secondary>setweight for specific lexeme(s)</secondary>
          </indexterm>
-         <literal><function>setweight(<replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>, <replaceable class="PARAMETER">weight</replaceable> <type>"char"</>, <replaceable class="PARAMETER">lexemes</replaceable> <type>text[]</>)</function></literal>
+         <literal><function>setweight(<replaceable class="parameter">vector</replaceable> <type>tsvector</>, <replaceable class="parameter">weight</replaceable> <type>"char"</>, <replaceable class="parameter">lexemes</replaceable> <type>text[]</>)</function></literal>
         </entry>
         <entry><type>tsvector</type></entry>
-        <entry>assign <replaceable class="PARAMETER">weight</replaceable> to elements of <replaceable class="PARAMETER">vector</replaceable> that are listed in <replaceable class="PARAMETER">lexemes</replaceable></entry>
+        <entry>assign <replaceable class="parameter">weight</replaceable> to elements of <replaceable class="parameter">vector</replaceable> that are listed in <replaceable class="parameter">lexemes</replaceable></entry>
         <entry><literal>setweight('fat:2,4 cat:3 rat:5B'::tsvector, 'A', '{cat,rat}')</literal></entry>
         <entry><literal>'cat':3A 'fat':2,4 'rat':5A</literal></entry>
        </row>
@@ -9565,7 +9565,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
          <indexterm>
           <primary>to_tsquery</primary>
          </indexterm>
-         <literal><function>to_tsquery(<optional> <replaceable class="PARAMETER">config</> <type>regconfig</> , </optional> <replaceable class="PARAMETER">query</> <type>text</type>)</function></literal>
+         <literal><function>to_tsquery(<optional> <replaceable class="parameter">config</> <type>regconfig</> , </optional> <replaceable class="parameter">query</> <type>text</type>)</function></literal>
         </entry>
         <entry><type>tsquery</type></entry>
         <entry>normalize words and convert to <type>tsquery</></entry>
@@ -9577,7 +9577,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
          <indexterm>
           <primary>to_tsvector</primary>
          </indexterm>
-         <literal><function>to_tsvector(<optional> <replaceable class="PARAMETER">config</> <type>regconfig</> , </optional> <replaceable class="PARAMETER">document</> <type>text</type>)</function></literal>
+         <literal><function>to_tsvector(<optional> <replaceable class="parameter">config</> <type>regconfig</> , </optional> <replaceable class="parameter">document</> <type>text</type>)</function></literal>
         </entry>
         <entry><type>tsvector</type></entry>
         <entry>reduce document text to <type>tsvector</></entry>
@@ -9586,7 +9586,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
        </row>
        <row>
         <entry>
-         <literal><function>to_tsvector(<optional> <replaceable class="PARAMETER">config</> <type>regconfig</> , </optional> <replaceable class="PARAMETER">document</> <type>json(b)</type>)</function></literal>
+         <literal><function>to_tsvector(<optional> <replaceable class="parameter">config</> <type>regconfig</> , </optional> <replaceable class="parameter">document</> <type>json(b)</type>)</function></literal>
         </entry>
         <entry><type>tsvector</type></entry>
         <entry>
@@ -9601,20 +9601,20 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
          <indexterm>
           <primary>ts_delete</primary>
          </indexterm>
-         <literal><function>ts_delete(<replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>, <replaceable class="PARAMETER">lexeme</replaceable> <type>text</>)</function></literal>
+         <literal><function>ts_delete(<replaceable class="parameter">vector</replaceable> <type>tsvector</>, <replaceable class="parameter">lexeme</replaceable> <type>text</>)</function></literal>
         </entry>
         <entry><type>tsvector</type></entry>
-        <entry>remove given <replaceable class="PARAMETER">lexeme</replaceable> from <replaceable class="PARAMETER">vector</replaceable></entry>
+        <entry>remove given <replaceable class="parameter">lexeme</replaceable> from <replaceable class="parameter">vector</replaceable></entry>
         <entry><literal>ts_delete('fat:2,4 cat:3 rat:5A'::tsvector, 'fat')</literal></entry>
         <entry><literal>'cat':3 'rat':5A</literal></entry>
        </row>
        <row>
         <entry>
          <!-- previous indexterm entry covers this too -->
-         <literal><function>ts_delete(<replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>, <replaceable class="PARAMETER">lexemes</replaceable> <type>text[]</>)</function></literal>
+         <literal><function>ts_delete(<replaceable class="parameter">vector</replaceable> <type>tsvector</>, <replaceable class="parameter">lexemes</replaceable> <type>text[]</>)</function></literal>
         </entry>
         <entry><type>tsvector</type></entry>
-        <entry>remove any occurrence of lexemes in <replaceable class="PARAMETER">lexemes</replaceable> from <replaceable class="PARAMETER">vector</replaceable></entry>
+        <entry>remove any occurrence of lexemes in <replaceable class="parameter">lexemes</replaceable> from <replaceable class="parameter">vector</replaceable></entry>
         <entry><literal>ts_delete('fat:2,4 cat:3 rat:5A'::tsvector, ARRAY['fat','rat'])</literal></entry>
         <entry><literal>'cat':3</literal></entry>
        </row>
@@ -9623,10 +9623,10 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
          <indexterm>
           <primary>ts_filter</primary>
          </indexterm>
-         <literal><function>ts_filter(<replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>, <replaceable class="PARAMETER">weights</replaceable> <type>"char"[]</>)</function></literal>
+         <literal><function>ts_filter(<replaceable class="parameter">vector</replaceable> <type>tsvector</>, <replaceable class="parameter">weights</replaceable> <type>"char"[]</>)</function></literal>
         </entry>
         <entry><type>tsvector</type></entry>
-        <entry>select only elements with given <replaceable class="PARAMETER">weights</replaceable> from <replaceable class="PARAMETER">vector</replaceable></entry>
+        <entry>select only elements with given <replaceable class="parameter">weights</replaceable> from <replaceable class="parameter">vector</replaceable></entry>
         <entry><literal>ts_filter('fat:2,4 cat:3b rat:5A'::tsvector, '{a,b}')</literal></entry>
         <entry><literal>'cat':3B 'rat':5A</literal></entry>
        </row>
@@ -9635,7 +9635,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
          <indexterm>
           <primary>ts_headline</primary>
          </indexterm>
-         <literal><function>ts_headline(<optional> <replaceable class="PARAMETER">config</replaceable> <type>regconfig</>, </optional> <replaceable class="PARAMETER">document</replaceable> <type>text</>, <replaceable class="PARAMETER">query</replaceable> <type>tsquery</> <optional>, <replaceable class="PARAMETER">options</replaceable> <type>text</> </optional>)</function></literal>
+         <literal><function>ts_headline(<optional> <replaceable class="parameter">config</replaceable> <type>regconfig</>, </optional> <replaceable class="parameter">document</replaceable> <type>text</>, <replaceable class="parameter">query</replaceable> <type>tsquery</> <optional>, <replaceable class="parameter">options</replaceable> <type>text</> </optional>)</function></literal>
         </entry>
         <entry><type>text</type></entry>
         <entry>display a query match</entry>
@@ -9644,7 +9644,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
        </row>
        <row>
         <entry>
-         <literal><function>ts_headline(<optional> <replaceable class="PARAMETER">config</replaceable> <type>regconfig</>, </optional> <replaceable class="PARAMETER">document</replaceable> <type>json(b)</>, <replaceable class="PARAMETER">query</replaceable> <type>tsquery</> <optional>, <replaceable class="PARAMETER">options</replaceable> <type>text</> </optional>)</function></literal>
+         <literal><function>ts_headline(<optional> <replaceable class="parameter">config</replaceable> <type>regconfig</>, </optional> <replaceable class="parameter">document</replaceable> <type>json(b)</>, <replaceable class="parameter">query</replaceable> <type>tsquery</> <optional>, <replaceable class="parameter">options</replaceable> <type>text</> </optional>)</function></literal>
         </entry>
         <entry><type>text</type></entry>
         <entry>display a query match</entry>
@@ -9656,7 +9656,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
          <indexterm>
           <primary>ts_rank</primary>
          </indexterm>
-         <literal><function>ts_rank(<optional> <replaceable class="PARAMETER">weights</replaceable> <type>float4[]</>, </optional> <replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>, <replaceable class="PARAMETER">query</replaceable> <type>tsquery</> <optional>, <replaceable class="PARAMETER">normalization</replaceable> <type>integer</> </optional>)</function></literal>
+         <literal><function>ts_rank(<optional> <replaceable class="parameter">weights</replaceable> <type>float4[]</>, </optional> <replaceable class="parameter">vector</replaceable> <type>tsvector</>, <replaceable class="parameter">query</replaceable> <type>tsquery</> <optional>, <replaceable class="parameter">normalization</replaceable> <type>integer</> </optional>)</function></literal>
         </entry>
         <entry><type>float4</type></entry>
         <entry>rank document for query</entry>
@@ -9668,7 +9668,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
          <indexterm>
           <primary>ts_rank_cd</primary>
          </indexterm>
-         <literal><function>ts_rank_cd(<optional> <replaceable class="PARAMETER">weights</replaceable> <type>float4[]</>, </optional> <replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>, <replaceable class="PARAMETER">query</replaceable> <type>tsquery</> <optional>, <replaceable class="PARAMETER">normalization</replaceable> <type>integer</> </optional>)</function></literal>
+         <literal><function>ts_rank_cd(<optional> <replaceable class="parameter">weights</replaceable> <type>float4[]</>, </optional> <replaceable class="parameter">vector</replaceable> <type>tsvector</>, <replaceable class="parameter">query</replaceable> <type>tsquery</> <optional>, <replaceable class="parameter">normalization</replaceable> <type>integer</> </optional>)</function></literal>
         </entry>
         <entry><type>float4</type></entry>
         <entry>rank document for query using cover density</entry>
@@ -9680,7 +9680,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
          <indexterm>
           <primary>ts_rewrite</primary>
          </indexterm>
-         <literal><function>ts_rewrite(<replaceable class="PARAMETER">query</replaceable> <type>tsquery</>, <replaceable class="PARAMETER">target</replaceable> <type>tsquery</>, <replaceable class="PARAMETER">substitute</replaceable> <type>tsquery</>)</function></literal>
+         <literal><function>ts_rewrite(<replaceable class="parameter">query</replaceable> <type>tsquery</>, <replaceable class="parameter">target</replaceable> <type>tsquery</>, <replaceable class="parameter">substitute</replaceable> <type>tsquery</>)</function></literal>
         </entry>
         <entry><type>tsquery</type></entry>
         <entry>replace <replaceable>target</> with <replaceable>substitute</>
@@ -9689,7 +9689,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         <entry><literal>'b' &amp; ( 'foo' | 'bar' )</literal></entry>
        </row>
        <row>
-        <entry><literal><function>ts_rewrite(<replaceable class="PARAMETER">query</replaceable> <type>tsquery</>, <replaceable class="PARAMETER">select</replaceable> <type>text</>)</function></literal></entry>
+        <entry><literal><function>ts_rewrite(<replaceable class="parameter">query</replaceable> <type>tsquery</>, <replaceable class="parameter">select</replaceable> <type>text</>)</function></literal></entry>
         <entry><type>tsquery</type></entry>
         <entry>replace using targets and substitutes from a <command>SELECT</> command</entry>
         <entry><literal>SELECT ts_rewrite('a &amp; b'::tsquery, 'SELECT t,s FROM aliases')</literal></entry>
@@ -9700,7 +9700,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
          <indexterm>
           <primary>tsquery_phrase</primary>
          </indexterm>
-         <literal><function>tsquery_phrase(<replaceable class="PARAMETER">query1</replaceable> <type>tsquery</>, <replaceable class="PARAMETER">query2</replaceable> <type>tsquery</>)</function></literal>
+         <literal><function>tsquery_phrase(<replaceable class="parameter">query1</replaceable> <type>tsquery</>, <replaceable class="parameter">query2</replaceable> <type>tsquery</>)</function></literal>
         </entry>
         <entry><type>tsquery</type></entry>
         <entry>make query that searches for <replaceable>query1</> followed
@@ -9711,7 +9711,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
        </row>
        <row>
         <entry>
-         <literal><function>tsquery_phrase(<replaceable class="PARAMETER">query1</replaceable> <type>tsquery</>, <replaceable class="PARAMETER">query2</replaceable> <type>tsquery</>, <replaceable class="PARAMETER">distance</replaceable> <type>integer</>)</function></literal>
+         <literal><function>tsquery_phrase(<replaceable class="parameter">query1</replaceable> <type>tsquery</>, <replaceable class="parameter">query2</replaceable> <type>tsquery</>, <replaceable class="parameter">distance</replaceable> <type>integer</>)</function></literal>
         </entry>
         <entry><type>tsquery</type></entry>
         <entry>make query that searches for <replaceable>query1</> followed by
@@ -9761,7 +9761,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
           <primary>unnest</primary>
           <secondary>for tsvector</secondary>
          </indexterm>
-         <literal><function>unnest(<type>tsvector</>, OUT <replaceable class="PARAMETER">lexeme</> <type>text</>, OUT <replaceable class="PARAMETER">positions</> <type>smallint[]</>, OUT <replaceable class="PARAMETER">weights</> <type>text</>)</function></literal>
+         <literal><function>unnest(<type>tsvector</>, OUT <replaceable class="parameter">lexeme</> <type>text</>, OUT <replaceable class="parameter">positions</> <type>smallint[]</>, OUT <replaceable class="parameter">weights</> <type>text</>)</function></literal>
         </entry>
         <entry><type>setof record</type></entry>
         <entry>expand a <type>tsvector</type> to a set of rows</entry>
@@ -9807,7 +9807,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
          <indexterm>
           <primary>ts_debug</primary>
          </indexterm>
-         <literal><function>ts_debug(<optional> <replaceable class="PARAMETER">config</replaceable> <type>regconfig</>, </optional> <replaceable class="PARAMETER">document</replaceable> <type>text</>, OUT <replaceable class="PARAMETER">alias</> <type>text</>, OUT <replaceable class="PARAMETER">description</> <type>text</>, OUT <replaceable class="PARAMETER">token</> <type>text</>, OUT <replaceable class="PARAMETER">dictionaries</> <type>regdictionary[]</>, OUT <replaceable class="PARAMETER">dictionary</> <type>regdictionary</>, OUT <replaceable class="PARAMETER">lexemes</> <type>text[]</>)</function></literal>
+         <literal><function>ts_debug(<optional> <replaceable class="parameter">config</replaceable> <type>regconfig</>, </optional> <replaceable class="parameter">document</replaceable> <type>text</>, OUT <replaceable class="parameter">alias</> <type>text</>, OUT <replaceable class="parameter">description</> <type>text</>, OUT <replaceable class="parameter">token</> <type>text</>, OUT <replaceable class="parameter">dictionaries</> <type>regdictionary[]</>, OUT <replaceable class="parameter">dictionary</> <type>regdictionary</>, OUT <replaceable class="parameter">lexemes</> <type>text[]</>)</function></literal>
         </entry>
         <entry><type>setof record</type></entry>
         <entry>test a configuration</entry>
@@ -9819,7 +9819,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
          <indexterm>
           <primary>ts_lexize</primary>
          </indexterm>
-         <literal><function>ts_lexize(<replaceable class="PARAMETER">dict</replaceable> <type>regdictionary</>, <replaceable class="PARAMETER">token</replaceable> <type>text</>)</function></literal>
+         <literal><function>ts_lexize(<replaceable class="parameter">dict</replaceable> <type>regdictionary</>, <replaceable class="parameter">token</replaceable> <type>text</>)</function></literal>
         </entry>
         <entry><type>text[]</type></entry>
         <entry>test a dictionary</entry>
@@ -9831,7 +9831,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
          <indexterm>
           <primary>ts_parse</primary>
          </indexterm>
-         <literal><function>ts_parse(<replaceable class="PARAMETER">parser_name</replaceable> <type>text</>, <replaceable class="PARAMETER">document</replaceable> <type>text</>, OUT <replaceable class="PARAMETER">tokid</> <type>integer</>, OUT <replaceable class="PARAMETER">token</> <type>text</>)</function></literal>
+         <literal><function>ts_parse(<replaceable class="parameter">parser_name</replaceable> <type>text</>, <replaceable class="parameter">document</replaceable> <type>text</>, OUT <replaceable class="parameter">tokid</> <type>integer</>, OUT <replaceable class="parameter">token</> <type>text</>)</function></literal>
         </entry>
         <entry><type>setof record</type></entry>
         <entry>test a parser</entry>
@@ -9839,7 +9839,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         <entry><literal>(1,foo) ...</literal></entry>
        </row>
        <row>
-        <entry><literal><function>ts_parse(<replaceable class="PARAMETER">parser_oid</replaceable> <type>oid</>, <replaceable class="PARAMETER">document</replaceable> <type>text</>, OUT <replaceable class="PARAMETER">tokid</> <type>integer</>, OUT <replaceable class="PARAMETER">token</> <type>text</>)</function></literal></entry>
+        <entry><literal><function>ts_parse(<replaceable class="parameter">parser_oid</replaceable> <type>oid</>, <replaceable class="parameter">document</replaceable> <type>text</>, OUT <replaceable class="parameter">tokid</> <type>integer</>, OUT <replaceable class="parameter">token</> <type>text</>)</function></literal></entry>
         <entry><type>setof record</type></entry>
         <entry>test a parser</entry>
         <entry><literal>ts_parse(3722, 'foo - bar')</literal></entry>
@@ -9850,7 +9850,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
          <indexterm>
           <primary>ts_token_type</primary>
          </indexterm>
-         <literal><function>ts_token_type(<replaceable class="PARAMETER">parser_name</> <type>text</>, OUT <replaceable class="PARAMETER">tokid</> <type>integer</>, OUT <replaceable class="PARAMETER">alias</> <type>text</>, OUT <replaceable class="PARAMETER">description</> <type>text</>)</function></literal>
+         <literal><function>ts_token_type(<replaceable class="parameter">parser_name</> <type>text</>, OUT <replaceable class="parameter">tokid</> <type>integer</>, OUT <replaceable class="parameter">alias</> <type>text</>, OUT <replaceable class="parameter">description</> <type>text</>)</function></literal>
         </entry>
         <entry><type>setof record</type></entry>
         <entry>get token types defined by parser</entry>
@@ -9858,7 +9858,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
         <entry><literal>(1,asciiword,"Word, all ASCII") ...</literal></entry>
        </row>
        <row>
-        <entry><literal><function>ts_token_type(<replaceable class="PARAMETER">parser_oid</> <type>oid</>, OUT <replaceable class="PARAMETER">tokid</> <type>integer</>, OUT <replaceable class="PARAMETER">alias</> <type>text</>, OUT <replaceable class="PARAMETER">description</> <type>text</>)</function></literal></entry>
+        <entry><literal><function>ts_token_type(<replaceable class="parameter">parser_oid</> <type>oid</>, OUT <replaceable class="parameter">tokid</> <type>integer</>, OUT <replaceable class="parameter">alias</> <type>text</>, OUT <replaceable class="parameter">description</> <type>text</>)</function></literal></entry>
         <entry><type>setof record</type></entry>
         <entry>get token types defined by parser</entry>
         <entry><literal>ts_token_type(3722)</literal></entry>
@@ -9869,7 +9869,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
          <indexterm>
           <primary>ts_stat</primary>
          </indexterm>
-         <literal><function>ts_stat(<replaceable class="PARAMETER">sqlquery</replaceable> <type>text</>, <optional> <replaceable class="PARAMETER">weights</replaceable> <type>text</>, </optional> OUT <replaceable class="PARAMETER">word</replaceable> <type>text</>, OUT <replaceable class="PARAMETER">ndoc</replaceable> <type>integer</>, OUT <replaceable class="PARAMETER">nentry</replaceable> <type>integer</>)</function></literal>
+         <literal><function>ts_stat(<replaceable class="parameter">sqlquery</replaceable> <type>text</>, <optional> <replaceable class="parameter">weights</replaceable> <type>text</>, </optional> OUT <replaceable class="parameter">word</replaceable> <type>text</>, OUT <replaceable class="parameter">ndoc</replaceable> <type>integer</>, OUT <replaceable class="parameter">nentry</replaceable> <type>integer</>)</function></literal>
         </entry>
         <entry><type>setof record</type></entry>
         <entry>get statistics of a <type>tsvector</> column</entry>

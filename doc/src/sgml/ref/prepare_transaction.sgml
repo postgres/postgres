@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-PREPARE TRANSACTION <replaceable class="PARAMETER">transaction_id</replaceable>
+PREPARE TRANSACTION <replaceable class="parameter">transaction_id</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -65,7 +65,7 @@ PREPARE TRANSACTION <replaceable class="PARAMETER">transaction_id</replaceable>
 
   <variablelist>
    <varlistentry>
-    <term><replaceable class="PARAMETER">transaction_id</replaceable></term>
+    <term><replaceable class="parameter">transaction_id</replaceable></term>
     <listitem>
      <para>
       An arbitrary identifier that later identifies this transaction for

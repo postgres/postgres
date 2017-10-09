@@ -26,7 +26,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-PREPARE <replaceable class="PARAMETER">name</replaceable> [ ( <replaceable class="PARAMETER">data_type</replaceable> [, ...] ) ] AS <replaceable class="PARAMETER">statement</replaceable>
+PREPARE <replaceable class="parameter">name</replaceable> [ ( <replaceable class="parameter">data_type</replaceable> [, ...] ) ] AS <replaceable class="parameter">statement</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -86,7 +86,7 @@ PREPARE <replaceable class="PARAMETER">name</replaceable> [ ( <replaceable class
 
   <variablelist>
    <varlistentry>
-    <term><replaceable class="PARAMETER">name</replaceable></term>
+    <term><replaceable class="parameter">name</replaceable></term>
     <listitem>
      <para>
       An arbitrary name given to this particular prepared
@@ -98,7 +98,7 @@ PREPARE <replaceable class="PARAMETER">name</replaceable> [ ( <replaceable class
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">data_type</replaceable></term>
+    <term><replaceable class="parameter">data_type</replaceable></term>
     <listitem>
      <para>
       The data type of a parameter to the prepared statement.  If the
@@ -112,7 +112,7 @@ PREPARE <replaceable class="PARAMETER">name</replaceable> [ ( <replaceable class
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">statement</replaceable></term>
+    <term><replaceable class="parameter">statement</replaceable></term>
     <listitem>
      <para>
       Any <command>SELECT</>, <command>INSERT</>, <command>UPDATE</>,

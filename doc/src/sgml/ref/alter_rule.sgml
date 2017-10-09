@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ALTER RULE <replaceable class="PARAMETER">name</replaceable> ON <replaceable class="PARAMETER">table_name</replaceable> RENAME TO <replaceable class="PARAMETER">new_name</replaceable>
+ALTER RULE <replaceable class="parameter">name</replaceable> ON <replaceable class="parameter">table_name</replaceable> RENAME TO <replaceable class="parameter">new_name</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -44,7 +44,7 @@ ALTER RULE <replaceable class="PARAMETER">name</replaceable> ON <replaceable cla
 
   <variablelist>
    <varlistentry>
-    <term><replaceable class="PARAMETER">name</replaceable></term>
+    <term><replaceable class="parameter">name</replaceable></term>
     <listitem>
      <para>
       The name of an existing rule to alter.
@@ -53,7 +53,7 @@ ALTER RULE <replaceable class="PARAMETER">name</replaceable> ON <replaceable cla
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">table_name</replaceable></term>
+    <term><replaceable class="parameter">table_name</replaceable></term>
     <listitem>
      <para>
       The name (optionally schema-qualified) of the table or view that the
@@ -63,7 +63,7 @@ ALTER RULE <replaceable class="PARAMETER">name</replaceable> ON <replaceable cla
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">new_name</replaceable></term>
+    <term><replaceable class="parameter">new_name</replaceable></term>
     <listitem>
      <para>
       The new name for the rule.

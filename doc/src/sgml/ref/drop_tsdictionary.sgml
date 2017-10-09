@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP TEXT SEARCH DICTIONARY [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [ CASCADE | RESTRICT ]
+DROP TEXT SEARCH DICTIONARY [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
 

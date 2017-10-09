@@ -26,7 +26,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-EXECUTE <replaceable class="PARAMETER">name</replaceable> [ ( <replaceable class="PARAMETER">parameter</replaceable> [, ...] ) ]
+EXECUTE <replaceable class="parameter">name</replaceable> [ ( <replaceable class="parameter">parameter</replaceable> [, ...] ) ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -61,7 +61,7 @@ EXECUTE <replaceable class="PARAMETER">name</replaceable> [ ( <replaceable class
 
   <variablelist>
    <varlistentry>
-    <term><replaceable class="PARAMETER">name</replaceable></term>
+    <term><replaceable class="parameter">name</replaceable></term>
     <listitem>
      <para>
       The name of the prepared statement to execute.
@@ -70,7 +70,7 @@ EXECUTE <replaceable class="PARAMETER">name</replaceable> [ ( <replaceable class
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">parameter</replaceable></term>
+    <term><replaceable class="parameter">parameter</replaceable></term>
     <listitem>
      <para>
       The actual value of a parameter to the prepared statement.  This

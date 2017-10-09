@@ -18,36 +18,36 @@
 
  <refsynopsisdiv>
 <synopsis>
-CREATE FOREIGN TABLE [ IF NOT EXISTS ] <replaceable class="PARAMETER">table_name</replaceable> ( [
-  { <replaceable class="PARAMETER">column_name</replaceable> <replaceable class="PARAMETER">data_type</replaceable> [ OPTIONS ( <replaceable class="PARAMETER">option</replaceable> '<replaceable class="PARAMETER">value</replaceable>' [, ... ] ) ] [ COLLATE <replaceable>collation</replaceable> ] [ <replaceable class="PARAMETER">column_constraint</replaceable> [ ... ] ]
+CREATE FOREIGN TABLE [ IF NOT EXISTS ] <replaceable class="parameter">table_name</replaceable> ( [
+  { <replaceable class="parameter">column_name</replaceable> <replaceable class="parameter">data_type</replaceable> [ OPTIONS ( <replaceable class="parameter">option</replaceable> '<replaceable class="parameter">value</replaceable>' [, ... ] ) ] [ COLLATE <replaceable>collation</replaceable> ] [ <replaceable class="parameter">column_constraint</replaceable> [ ... ] ]
     | <replaceable>table_constraint</replaceable> }
     [, ... ]
 ] )
 [ INHERITS ( <replaceable>parent_table</replaceable> [, ... ] ) ]
   SERVER <replaceable class="parameter">server_name</replaceable>
-[ OPTIONS ( <replaceable class="PARAMETER">option</replaceable> '<replaceable class="PARAMETER">value</replaceable>' [, ... ] ) ]
+[ OPTIONS ( <replaceable class="parameter">option</replaceable> '<replaceable class="parameter">value</replaceable>' [, ... ] ) ]
 
-CREATE FOREIGN TABLE [ IF NOT EXISTS ] <replaceable class="PARAMETER">table_name</replaceable>
-  PARTITION OF <replaceable class="PARAMETER">parent_table</replaceable> [ (
-  { <replaceable class="PARAMETER">column_name</replaceable> [ WITH OPTIONS ] [ <replaceable class="PARAMETER">column_constraint</replaceable> [ ... ] ]
+CREATE FOREIGN TABLE [ IF NOT EXISTS ] <replaceable class="parameter">table_name</replaceable>
+  PARTITION OF <replaceable class="parameter">parent_table</replaceable> [ (
+  { <replaceable class="parameter">column_name</replaceable> [ WITH OPTIONS ] [ <replaceable class="parameter">column_constraint</replaceable> [ ... ] ]
     | <replaceable>table_constraint</replaceable> }
     [, ... ]
-) ] <replaceable class="PARAMETER">partition_bound_spec</replaceable>
+) ] <replaceable class="parameter">partition_bound_spec</replaceable>
   SERVER <replaceable class="parameter">server_name</replaceable>
-[ OPTIONS ( <replaceable class="PARAMETER">option</replaceable> '<replaceable class="PARAMETER">value</replaceable>' [, ... ] ) ]
+[ OPTIONS ( <replaceable class="parameter">option</replaceable> '<replaceable class="parameter">value</replaceable>' [, ... ] ) ]
 
-<phrase>where <replaceable class="PARAMETER">column_constraint</replaceable> is:</phrase>
+<phrase>where <replaceable class="parameter">column_constraint</replaceable> is:</phrase>
 
-[ CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> ]
+[ CONSTRAINT <replaceable class="parameter">constraint_name</replaceable> ]
 { NOT NULL |
   NULL |
-  CHECK ( <replaceable class="PARAMETER">expression</replaceable> ) [ NO INHERIT ] |
+  CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ] |
   DEFAULT <replaceable>default_expr</replaceable> }
 
-<phrase>and <replaceable class="PARAMETER">table_constraint</replaceable> is:</phrase>
+<phrase>and <replaceable class="parameter">table_constraint</replaceable> is:</phrase>
 
-[ CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> ]
-CHECK ( <replaceable class="PARAMETER">expression</replaceable> ) [ NO INHERIT ]
+[ CONSTRAINT <replaceable class="parameter">constraint_name</replaceable> ]
+CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -107,7 +107,7 @@ CHECK ( <replaceable class="PARAMETER">expression</replaceable> ) [ NO INHERIT ]
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">table_name</replaceable></term>
+    <term><replaceable class="parameter">table_name</replaceable></term>
     <listitem>
      <para>
       The name (optionally schema-qualified) of the table to be created.
@@ -116,7 +116,7 @@ CHECK ( <replaceable class="PARAMETER">expression</replaceable> ) [ NO INHERIT ]
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">column_name</replaceable></term>
+    <term><replaceable class="parameter">column_name</replaceable></term>
     <listitem>
      <para>
       The name of a column to be created in the new table.
@@ -125,7 +125,7 @@ CHECK ( <replaceable class="PARAMETER">expression</replaceable> ) [ NO INHERIT ]
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">data_type</replaceable></term>
+    <term><replaceable class="parameter">data_type</replaceable></term>
     <listitem>
      <para>
       The data type of the column. This can include array
@@ -161,7 +161,7 @@ CHECK ( <replaceable class="PARAMETER">expression</replaceable> ) [ NO INHERIT ]
    </varlistentry>
 
    <varlistentry>
-    <term><literal>CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable></literal></term>
+    <term><literal>CONSTRAINT <replaceable class="parameter">constraint_name</replaceable></literal></term>
     <listitem>
      <para>
       An optional name for a column or table constraint.  If the
@@ -199,7 +199,7 @@ CHECK ( <replaceable class="PARAMETER">expression</replaceable> ) [ NO INHERIT ]
    </varlistentry>
 
    <varlistentry>
-    <term><literal>CHECK ( <replaceable class="PARAMETER">expression</replaceable> ) [ NO INHERIT ] </literal></term>
+    <term><literal>CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ] </literal></term>
     <listitem>
      <para>
       The <literal>CHECK</> clause specifies an expression producing a
@@ -247,7 +247,7 @@ CHECK ( <replaceable class="PARAMETER">expression</replaceable> ) [ NO INHERIT ]
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">server_name</replaceable></term>
+    <term><replaceable class="parameter">server_name</replaceable></term>
     <listitem>
      <para>
       The name of an existing foreign server to use for the foreign table.
@@ -258,7 +258,7 @@ CHECK ( <replaceable class="PARAMETER">expression</replaceable> ) [ NO INHERIT ]
    </varlistentry>
 
    <varlistentry>
-    <term><literal>OPTIONS ( <replaceable class="PARAMETER">option</replaceable> '<replaceable class="PARAMETER">value</replaceable>' [, ...] )</literal></term>
+    <term><literal>OPTIONS ( <replaceable class="parameter">option</replaceable> '<replaceable class="parameter">value</replaceable>' [, ...] )</literal></term>
     <listitem>
      <para>
       Options to be associated with the new foreign table or one of its

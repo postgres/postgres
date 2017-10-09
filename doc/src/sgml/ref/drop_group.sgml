@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP GROUP [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ...]
+DROP GROUP [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [, ...]
 </synopsis>
  </refsynopsisdiv>
 

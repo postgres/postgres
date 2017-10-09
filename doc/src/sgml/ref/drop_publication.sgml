@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP PUBLICATION [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ...] [ CASCADE | RESTRICT ]
+DROP PUBLICATION [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [, ...] [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
 

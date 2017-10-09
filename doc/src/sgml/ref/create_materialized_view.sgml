@@ -23,8 +23,8 @@ PostgreSQL documentation
 <synopsis>
 CREATE MATERIALIZED VIEW [ IF NOT EXISTS ] <replaceable>table_name</replaceable>
     [ (<replaceable>column_name</replaceable> [, ...] ) ]
-    [ WITH ( <replaceable class="PARAMETER">storage_parameter</replaceable> [= <replaceable class="PARAMETER">value</replaceable>] [, ... ] ) ]
-    [ TABLESPACE <replaceable class="PARAMETER">tablespace_name</replaceable> ]
+    [ WITH ( <replaceable class="parameter">storage_parameter</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] ) ]
+    [ TABLESPACE <replaceable class="parameter">tablespace_name</replaceable> ]
     AS <replaceable>query</replaceable>
     [ WITH [ NO ] DATA ]
 </synopsis>
@@ -87,7 +87,7 @@ CREATE MATERIALIZED VIEW [ IF NOT EXISTS ] <replaceable>table_name</replaceable>
    </varlistentry>
 
    <varlistentry>
-    <term><literal>WITH ( <replaceable class="PARAMETER">storage_parameter</replaceable> [= <replaceable class="PARAMETER">value</replaceable>] [, ... ] )</literal></term>
+    <term><literal>WITH ( <replaceable class="parameter">storage_parameter</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] )</literal></term>
     <listitem>
      <para>
       This clause specifies optional storage parameters for the new
@@ -102,10 +102,10 @@ CREATE MATERIALIZED VIEW [ IF NOT EXISTS ] <replaceable>table_name</replaceable>
    </varlistentry>
 
    <varlistentry>
-    <term><literal>TABLESPACE <replaceable class="PARAMETER">tablespace_name</replaceable></literal></term>
+    <term><literal>TABLESPACE <replaceable class="parameter">tablespace_name</replaceable></literal></term>
     <listitem>
      <para>
-      The <replaceable class="PARAMETER">tablespace_name</replaceable> is the name
+      The <replaceable class="parameter">tablespace_name</replaceable> is the name
       of the tablespace in which the new materialized view is to be created.
       If not specified, <xref linkend="guc-default-tablespace"> is consulted.
      </para>

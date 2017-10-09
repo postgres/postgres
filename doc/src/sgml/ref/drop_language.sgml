@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP [ PROCEDURAL ] LANGUAGE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [ CASCADE | RESTRICT ]
+DROP [ PROCEDURAL ] LANGUAGE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -60,7 +60,7 @@ DROP [ PROCEDURAL ] LANGUAGE [ IF EXISTS ] <replaceable class="PARAMETER">name</
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">name</replaceable></term>
+    <term><replaceable class="parameter">name</replaceable></term>
     <listitem>
      <para>
       The name of an existing procedural language.  For backward

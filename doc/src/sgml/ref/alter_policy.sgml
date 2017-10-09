@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ALTER POLICY <replaceable class="parameter">name</replaceable> ON <replaceable class="parameter">table_name</replaceable> RENAME TO <replaceable class="PARAMETER">new_name</replaceable>
+ALTER POLICY <replaceable class="parameter">name</replaceable> ON <replaceable class="parameter">table_name</replaceable> RENAME TO <replaceable class="parameter">new_name</replaceable>
 
 ALTER POLICY <replaceable class="parameter">name</replaceable> ON <replaceable class="parameter">table_name</replaceable>
     [ TO { <replaceable class="parameter">role_name</replaceable> | PUBLIC | CURRENT_USER | SESSION_USER } [, ...] ]

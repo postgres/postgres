@@ -21,8 +21,8 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-SET [ SESSION | LOCAL ] <replaceable class="PARAMETER">configuration_parameter</replaceable> { TO | = } { <replaceable class="PARAMETER">value</replaceable> | '<replaceable class="PARAMETER">value</replaceable>' | DEFAULT }
-SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="PARAMETER">timezone</replaceable> | LOCAL | DEFAULT }
+SET [ SESSION | LOCAL ] <replaceable class="parameter">configuration_parameter</replaceable> { TO | = } { <replaceable class="parameter">value</replaceable> | '<replaceable class="parameter">value</replaceable>' | DEFAULT }
+SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="parameter">timezone</replaceable> | LOCAL | DEFAULT }
 </synopsis>
  </refsynopsisdiv>
 
@@ -118,7 +118,7 @@ SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="PARAMETER">timezone</rep
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">configuration_parameter</replaceable></term>
+    <term><replaceable class="parameter">configuration_parameter</replaceable></term>
     <listitem>
      <para>
       Name of a settable run-time parameter.  Available parameters are
@@ -128,7 +128,7 @@ SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="PARAMETER">timezone</rep
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">value</replaceable></term>
+    <term><replaceable class="parameter">value</replaceable></term>
     <listitem>
      <para>
       New value of parameter.  Values can be specified as string

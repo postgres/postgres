@@ -21,15 +21,15 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ALTER INDEX [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> RENAME TO <replaceable class="PARAMETER">new_name</replaceable>
-ALTER INDEX [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> SET TABLESPACE <replaceable class="PARAMETER">tablespace_name</replaceable>
-ALTER INDEX <replaceable class="PARAMETER">name</replaceable> DEPENDS ON EXTENSION <replaceable class="PARAMETER">extension_name</replaceable>
-ALTER INDEX [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> SET ( <replaceable class="PARAMETER">storage_parameter</replaceable> = <replaceable class="PARAMETER">value</replaceable> [, ... ] )
-ALTER INDEX [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> RESET ( <replaceable class="PARAMETER">storage_parameter</replaceable> [, ... ] )
-ALTER INDEX [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> ALTER [ COLUMN ] <replaceable class="PARAMETER">column_number</replaceable>
-    SET STATISTICS <replaceable class="PARAMETER">integer</replaceable>
-ALTER INDEX ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> [ OWNED BY <replaceable class="PARAMETER">role_name</replaceable> [, ... ] ]
-    SET TABLESPACE <replaceable class="PARAMETER">new_tablespace</replaceable> [ NOWAIT ]
+ALTER INDEX [ IF EXISTS ] <replaceable class="parameter">name</replaceable> RENAME TO <replaceable class="parameter">new_name</replaceable>
+ALTER INDEX [ IF EXISTS ] <replaceable class="parameter">name</replaceable> SET TABLESPACE <replaceable class="parameter">tablespace_name</replaceable>
+ALTER INDEX <replaceable class="parameter">name</replaceable> DEPENDS ON EXTENSION <replaceable class="parameter">extension_name</replaceable>
+ALTER INDEX [ IF EXISTS ] <replaceable class="parameter">name</replaceable> SET ( <replaceable class="parameter">storage_parameter</replaceable> = <replaceable class="parameter">value</replaceable> [, ... ] )
+ALTER INDEX [ IF EXISTS ] <replaceable class="parameter">name</replaceable> RESET ( <replaceable class="parameter">storage_parameter</replaceable> [, ... ] )
+ALTER INDEX [ IF EXISTS ] <replaceable class="parameter">name</replaceable> ALTER [ COLUMN ] <replaceable class="parameter">column_number</replaceable>
+    SET STATISTICS <replaceable class="parameter">integer</replaceable>
+ALTER INDEX ALL IN TABLESPACE <replaceable class="parameter">name</replaceable> [ OWNED BY <replaceable class="parameter">role_name</replaceable> [, ... ] ]
+    SET TABLESPACE <replaceable class="parameter">new_tablespace</replaceable> [ NOWAIT ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -86,7 +86,7 @@ ALTER INDEX ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> 
    </varlistentry>
 
    <varlistentry>
-    <term><literal>SET ( <replaceable class="PARAMETER">storage_parameter</replaceable> = <replaceable class="PARAMETER">value</replaceable> [, ... ] )</literal></term>
+    <term><literal>SET ( <replaceable class="parameter">storage_parameter</replaceable> = <replaceable class="parameter">value</replaceable> [, ... ] )</literal></term>
     <listitem>
      <para>
       This form changes one or more index-method-specific storage parameters
@@ -102,7 +102,7 @@ ALTER INDEX ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> 
    </varlistentry>
 
    <varlistentry>
-    <term><literal>RESET ( <replaceable class="PARAMETER">storage_parameter</replaceable> [, ... ] )</literal></term>
+    <term><literal>RESET ( <replaceable class="parameter">storage_parameter</replaceable> [, ... ] )</literal></term>
     <listitem>
      <para>
       This form resets one or more index-method-specific storage parameters to
@@ -113,7 +113,7 @@ ALTER INDEX ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> 
    </varlistentry>
 
    <varlistentry>
-    <term><literal>ALTER [ COLUMN ] <replaceable class="PARAMETER">column_number</replaceable> SET STATISTICS <replaceable class="PARAMETER">integer</replaceable></literal></term>
+    <term><literal>ALTER [ COLUMN ] <replaceable class="parameter">column_number</replaceable> SET STATISTICS <replaceable class="parameter">integer</replaceable></literal></term>
     <listitem>
      <para>
       This form sets the per-column statistics-gathering target for
@@ -152,7 +152,7 @@ ALTER INDEX ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> 
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">column_number</replaceable></term>
+      <term><replaceable class="parameter">column_number</replaceable></term>
       <listitem>
        <para>
         The ordinal number refers to the ordinal (left-to-right) position
@@ -162,7 +162,7 @@ ALTER INDEX ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> 
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">name</replaceable></term>
+      <term><replaceable class="parameter">name</replaceable></term>
       <listitem>
        <para>
         The name (possibly schema-qualified) of an existing index to
@@ -172,7 +172,7 @@ ALTER INDEX ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> 
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">new_name</replaceable></term>
+      <term><replaceable class="parameter">new_name</replaceable></term>
       <listitem>
        <para>
         The new name for the index.
@@ -181,7 +181,7 @@ ALTER INDEX ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> 
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">tablespace_name</replaceable></term>
+      <term><replaceable class="parameter">tablespace_name</replaceable></term>
       <listitem>
        <para>
         The tablespace to which the index will be moved.
@@ -190,7 +190,7 @@ ALTER INDEX ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> 
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">extension_name</replaceable></term>
+      <term><replaceable class="parameter">extension_name</replaceable></term>
       <listitem>
        <para>
         The name of the extension that the index is to depend on.
@@ -199,7 +199,7 @@ ALTER INDEX ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> 
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">storage_parameter</replaceable></term>
+      <term><replaceable class="parameter">storage_parameter</replaceable></term>
       <listitem>
        <para>
         The name of an index-method-specific storage parameter.
@@ -208,7 +208,7 @@ ALTER INDEX ALL IN TABLESPACE <replaceable class="PARAMETER">name</replaceable> 
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">value</replaceable></term>
+      <term><replaceable class="parameter">value</replaceable></term>
       <listitem>
        <para>
         The new value for an index-method-specific storage parameter.

@@ -21,11 +21,11 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table_and_columns</replaceable> [, ...] ]
+ANALYZE [ VERBOSE ] [ <replaceable class="parameter">table_and_columns</replaceable> [, ...] ]
 
-<phrase>where <replaceable class="PARAMETER">table_and_columns</replaceable> is:</phrase>
+<phrase>where <replaceable class="parameter">table_and_columns</replaceable> is:</phrase>
 
-    <replaceable class="PARAMETER">table_name</replaceable> [ ( <replaceable class="PARAMETER">column_name</replaceable> [, ...] ) ]
+    <replaceable class="parameter">table_name</replaceable> [ ( <replaceable class="parameter">column_name</replaceable> [, ...] ) ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -42,7 +42,7 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table_and_columns</replacea
   </para>
 
   <para>
-   Without a <replaceable class="PARAMETER">table_and_columns</replaceable>
+   Without a <replaceable class="parameter">table_and_columns</replaceable>
    list, <command>ANALYZE</command> processes every table and materialized view
    in the current database that the current user has permission to analyze.
    With a list, <command>ANALYZE</command> processes only those table(s).
@@ -65,7 +65,7 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table_and_columns</replacea
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">table_name</replaceable></term>
+    <term><replaceable class="parameter">table_name</replaceable></term>
     <listitem>
      <para>
       The name (possibly schema-qualified) of a specific table to
@@ -79,7 +79,7 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table_and_columns</replacea
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">column_name</replaceable></term>
+    <term><replaceable class="parameter">column_name</replaceable></term>
     <listitem>
      <para>
       The name of a specific column to analyze. Defaults to all columns.

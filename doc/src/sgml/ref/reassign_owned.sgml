@@ -21,8 +21,8 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-REASSIGN OWNED BY { <replaceable class="PARAMETER">old_role</replaceable> | CURRENT_USER | SESSION_USER } [, ...]
-               TO { <replaceable class="PARAMETER">new_role</replaceable> | CURRENT_USER | SESSION_USER }
+REASSIGN OWNED BY { <replaceable class="parameter">old_role</replaceable> | CURRENT_USER | SESSION_USER } [, ...]
+               TO { <replaceable class="parameter">new_role</replaceable> | CURRENT_USER | SESSION_USER }
 </synopsis>
  </refsynopsisdiv>
 
@@ -32,8 +32,8 @@ REASSIGN OWNED BY { <replaceable class="PARAMETER">old_role</replaceable> | CURR
   <para>
    <command>REASSIGN OWNED</command> instructs the system to change
    the ownership of database objects owned by any of the
-   <replaceable class="PARAMETER">old_roles</replaceable> to
-   <replaceable class="PARAMETER">new_role</replaceable>.
+   <replaceable class="parameter">old_roles</replaceable> to
+   <replaceable class="parameter">new_role</replaceable>.
   </para>
  </refsect1>
 
@@ -42,19 +42,19 @@ REASSIGN OWNED BY { <replaceable class="PARAMETER">old_role</replaceable> | CURR
 
   <variablelist>
    <varlistentry>
-    <term><replaceable class="PARAMETER">old_role</replaceable></term>
+    <term><replaceable class="parameter">old_role</replaceable></term>
     <listitem>
      <para>
       The name of a role. The ownership of all the objects within the
       current database, and of all shared objects (databases, tablespaces),
       owned by this role will be reassigned to
-      <replaceable class="PARAMETER">new_role</replaceable>.
+      <replaceable class="parameter">new_role</replaceable>.
      </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">new_role</replaceable></term>
+    <term><replaceable class="parameter">new_role</replaceable></term>
     <listitem>
      <para>
       The name of the role that will be made the new owner of the
@@ -88,7 +88,7 @@ REASSIGN OWNED BY { <replaceable class="PARAMETER">old_role</replaceable> | CURR
 
   <para>
    The <command>REASSIGN OWNED</command> command does not affect any
-   privileges granted to the <replaceable class="PARAMETER">old_roles</> for
+   privileges granted to the <replaceable class="parameter">old_roles</> for
    objects that are not owned by them.  Use <command>DROP OWNED</command> to
    revoke such privileges.
   </para>

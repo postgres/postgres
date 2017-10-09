@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-NOTIFY <replaceable class="PARAMETER">channel</replaceable> [ , <replaceable class="PARAMETER">payload</replaceable> ]
+NOTIFY <replaceable class="parameter">channel</replaceable> [ , <replaceable class="parameter">payload</replaceable> ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -128,7 +128,7 @@ NOTIFY <replaceable class="PARAMETER">channel</replaceable> [ , <replaceable cla
 
   <variablelist>
    <varlistentry>
-    <term><replaceable class="PARAMETER">channel</replaceable></term>
+    <term><replaceable class="parameter">channel</replaceable></term>
     <listitem>
      <para>
       Name of the notification channel to be signaled (any identifier).
@@ -136,7 +136,7 @@ NOTIFY <replaceable class="PARAMETER">channel</replaceable> [ , <replaceable cla
     </listitem>
    </varlistentry>
    <varlistentry>
-    <term><replaceable class="PARAMETER">payload</replaceable></term>
+    <term><replaceable class="parameter">payload</replaceable></term>
     <listitem>
      <para>
       The <quote>payload</> string to be communicated along with the

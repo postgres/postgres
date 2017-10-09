@@ -23,39 +23,39 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ALTER EXTENSION <replaceable class="PARAMETER">name</replaceable> UPDATE [ TO <replaceable class="PARAMETER">new_version</replaceable> ]
-ALTER EXTENSION <replaceable class="PARAMETER">name</replaceable> SET SCHEMA <replaceable class="PARAMETER">new_schema</replaceable>
-ALTER EXTENSION <replaceable class="PARAMETER">name</replaceable> ADD <replaceable class="PARAMETER">member_object</replaceable>
-ALTER EXTENSION <replaceable class="PARAMETER">name</replaceable> DROP <replaceable class="PARAMETER">member_object</replaceable>
+ALTER EXTENSION <replaceable class="parameter">name</replaceable> UPDATE [ TO <replaceable class="parameter">new_version</replaceable> ]
+ALTER EXTENSION <replaceable class="parameter">name</replaceable> SET SCHEMA <replaceable class="parameter">new_schema</replaceable>
+ALTER EXTENSION <replaceable class="parameter">name</replaceable> ADD <replaceable class="parameter">member_object</replaceable>
+ALTER EXTENSION <replaceable class="parameter">name</replaceable> DROP <replaceable class="parameter">member_object</replaceable>
 
-<phrase>where <replaceable class="PARAMETER">member_object</replaceable> is:</phrase>
+<phrase>where <replaceable class="parameter">member_object</replaceable> is:</phrase>
 
-  ACCESS METHOD <replaceable class="PARAMETER">object_name</replaceable> |
-  AGGREGATE <replaceable class="PARAMETER">aggregate_name</replaceable> ( <replaceable>aggregate_signature</replaceable> ) |
+  ACCESS METHOD <replaceable class="parameter">object_name</replaceable> |
+  AGGREGATE <replaceable class="parameter">aggregate_name</replaceable> ( <replaceable>aggregate_signature</replaceable> ) |
   CAST (<replaceable>source_type</replaceable> AS <replaceable>target_type</replaceable>) |
-  COLLATION <replaceable class="PARAMETER">object_name</replaceable> |
-  CONVERSION <replaceable class="PARAMETER">object_name</replaceable> |
-  DOMAIN <replaceable class="PARAMETER">object_name</replaceable> |
-  EVENT TRIGGER <replaceable class="PARAMETER">object_name</replaceable> |
-  FOREIGN DATA WRAPPER <replaceable class="PARAMETER">object_name</replaceable> |
-  FOREIGN TABLE <replaceable class="PARAMETER">object_name</replaceable> |
-  FUNCTION <replaceable class="PARAMETER">function_name</replaceable> [ ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) ] |
-  MATERIALIZED VIEW <replaceable class="PARAMETER">object_name</replaceable> |
-  OPERATOR <replaceable class="PARAMETER">operator_name</replaceable> (<replaceable class="PARAMETER">left_type</replaceable>, <replaceable class="PARAMETER">right_type</replaceable>) |
-  OPERATOR CLASS <replaceable class="PARAMETER">object_name</replaceable> USING <replaceable class="parameter">index_method</replaceable> |
-  OPERATOR FAMILY <replaceable class="PARAMETER">object_name</replaceable> USING <replaceable class="parameter">index_method</replaceable> |
-  [ PROCEDURAL ] LANGUAGE <replaceable class="PARAMETER">object_name</replaceable> |
-  SCHEMA <replaceable class="PARAMETER">object_name</replaceable> |
-  SEQUENCE <replaceable class="PARAMETER">object_name</replaceable> |
-  SERVER <replaceable class="PARAMETER">object_name</replaceable> |
-  TABLE <replaceable class="PARAMETER">object_name</replaceable> |
-  TEXT SEARCH CONFIGURATION <replaceable class="PARAMETER">object_name</replaceable> |
-  TEXT SEARCH DICTIONARY <replaceable class="PARAMETER">object_name</replaceable> |
-  TEXT SEARCH PARSER <replaceable class="PARAMETER">object_name</replaceable> |
-  TEXT SEARCH TEMPLATE <replaceable class="PARAMETER">object_name</replaceable> |
+  COLLATION <replaceable class="parameter">object_name</replaceable> |
+  CONVERSION <replaceable class="parameter">object_name</replaceable> |
+  DOMAIN <replaceable class="parameter">object_name</replaceable> |
+  EVENT TRIGGER <replaceable class="parameter">object_name</replaceable> |
+  FOREIGN DATA WRAPPER <replaceable class="parameter">object_name</replaceable> |
+  FOREIGN TABLE <replaceable class="parameter">object_name</replaceable> |
+  FUNCTION <replaceable class="parameter">function_name</replaceable> [ ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) ] |
+  MATERIALIZED VIEW <replaceable class="parameter">object_name</replaceable> |
+  OPERATOR <replaceable class="parameter">operator_name</replaceable> (<replaceable class="parameter">left_type</replaceable>, <replaceable class="parameter">right_type</replaceable>) |
+  OPERATOR CLASS <replaceable class="parameter">object_name</replaceable> USING <replaceable class="parameter">index_method</replaceable> |
+  OPERATOR FAMILY <replaceable class="parameter">object_name</replaceable> USING <replaceable class="parameter">index_method</replaceable> |
+  [ PROCEDURAL ] LANGUAGE <replaceable class="parameter">object_name</replaceable> |
+  SCHEMA <replaceable class="parameter">object_name</replaceable> |
+  SEQUENCE <replaceable class="parameter">object_name</replaceable> |
+  SERVER <replaceable class="parameter">object_name</replaceable> |
+  TABLE <replaceable class="parameter">object_name</replaceable> |
+  TEXT SEARCH CONFIGURATION <replaceable class="parameter">object_name</replaceable> |
+  TEXT SEARCH DICTIONARY <replaceable class="parameter">object_name</replaceable> |
+  TEXT SEARCH PARSER <replaceable class="parameter">object_name</replaceable> |
+  TEXT SEARCH TEMPLATE <replaceable class="parameter">object_name</replaceable> |
   TRANSFORM FOR <replaceable>type_name</replaceable> LANGUAGE <replaceable>lang_name</replaceable> |
-  TYPE <replaceable class="PARAMETER">object_name</replaceable> |
-  VIEW <replaceable class="PARAMETER">object_name</replaceable>
+  TYPE <replaceable class="parameter">object_name</replaceable> |
+  VIEW <replaceable class="parameter">object_name</replaceable>
 
 <phrase>and <replaceable>aggregate_signature</replaceable> is:</phrase>
 
@@ -96,7 +96,7 @@ ALTER EXTENSION <replaceable class="PARAMETER">name</replaceable> DROP <replacea
    </varlistentry>
 
    <varlistentry>
-    <term><literal>ADD <replaceable class="PARAMETER">member_object</replaceable></literal></term>
+    <term><literal>ADD <replaceable class="parameter">member_object</replaceable></literal></term>
     <listitem>
      <para>
       This form adds an existing object to the extension.  This is mainly
@@ -108,7 +108,7 @@ ALTER EXTENSION <replaceable class="PARAMETER">name</replaceable> DROP <replacea
    </varlistentry>
 
    <varlistentry>
-    <term><literal>DROP <replaceable class="PARAMETER">member_object</replaceable></literal></term>
+    <term><literal>DROP <replaceable class="parameter">member_object</replaceable></literal></term>
     <listitem>
      <para>
       This form removes a member object from the extension.  This is mainly
@@ -136,7 +136,7 @@ ALTER EXTENSION <replaceable class="PARAMETER">name</replaceable> DROP <replacea
   <para>
    <variablelist>
     <varlistentry>
-     <term><replaceable class="PARAMETER">name</replaceable></term>
+     <term><replaceable class="parameter">name</replaceable></term>
      <listitem>
       <para>
        The name of an installed extension.
@@ -145,7 +145,7 @@ ALTER EXTENSION <replaceable class="PARAMETER">name</replaceable> DROP <replacea
     </varlistentry>
 
     <varlistentry>
-     <term><replaceable class="PARAMETER">new_version</replaceable></term>
+     <term><replaceable class="parameter">new_version</replaceable></term>
      <listitem>
       <para>
        The desired new version of the extension.  This can be written as
@@ -157,7 +157,7 @@ ALTER EXTENSION <replaceable class="PARAMETER">name</replaceable> DROP <replacea
     </varlistentry>
 
     <varlistentry>
-     <term><replaceable class="PARAMETER">new_schema</replaceable></term>
+     <term><replaceable class="parameter">new_schema</replaceable></term>
      <listitem>
       <para>
        The new schema for the extension.

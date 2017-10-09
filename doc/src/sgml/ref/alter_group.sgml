@@ -21,16 +21,16 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ALTER GROUP <replaceable class="PARAMETER">role_specification</replaceable> ADD USER <replaceable class="PARAMETER">user_name</replaceable> [, ... ]
-ALTER GROUP <replaceable class="PARAMETER">role_specification</replaceable> DROP USER <replaceable class="PARAMETER">user_name</replaceable> [, ... ]
+ALTER GROUP <replaceable class="parameter">role_specification</replaceable> ADD USER <replaceable class="parameter">user_name</replaceable> [, ... ]
+ALTER GROUP <replaceable class="parameter">role_specification</replaceable> DROP USER <replaceable class="parameter">user_name</replaceable> [, ... ]
 
-<phrase>where <replaceable class="PARAMETER">role_specification</replaceable> can be:</phrase>
+<phrase>where <replaceable class="parameter">role_specification</replaceable> can be:</phrase>
 
-    <replaceable class="PARAMETER">role_name</replaceable>
+    <replaceable class="parameter">role_name</replaceable>
   | CURRENT_USER
   | SESSION_USER
 
-ALTER GROUP <replaceable class="PARAMETER">group_name</replaceable> RENAME TO <replaceable>new_name</replaceable>
+ALTER GROUP <replaceable class="parameter">group_name</replaceable> RENAME TO <replaceable>new_name</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -66,7 +66,7 @@ ALTER GROUP <replaceable class="PARAMETER">group_name</replaceable> RENAME TO <r
 
   <variablelist>
    <varlistentry>
-    <term><replaceable class="PARAMETER">group_name</replaceable></term>
+    <term><replaceable class="parameter">group_name</replaceable></term>
     <listitem>
      <para>
       The name of the group (role) to modify.
@@ -75,7 +75,7 @@ ALTER GROUP <replaceable class="PARAMETER">group_name</replaceable> RENAME TO <r
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">user_name</replaceable></term>
+    <term><replaceable class="parameter">user_name</replaceable></term>
     <listitem>
      <para>
       Users (roles) that are to be added to or removed from the group.

@@ -22,13 +22,13 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 [ WITH [ RECURSIVE ] <replaceable class="parameter">with_query</replaceable> [, ...] ]
-UPDATE [ ONLY ] <replaceable class="PARAMETER">table_name</replaceable> [ * ] [ [ AS ] <replaceable class="parameter">alias</replaceable> ]
-    SET { <replaceable class="PARAMETER">column_name</replaceable> = { <replaceable class="PARAMETER">expression</replaceable> | DEFAULT } |
-          ( <replaceable class="PARAMETER">column_name</replaceable> [, ...] ) = [ ROW ] ( { <replaceable class="PARAMETER">expression</replaceable> | DEFAULT } [, ...] ) |
-          ( <replaceable class="PARAMETER">column_name</replaceable> [, ...] ) = ( <replaceable class="PARAMETER">sub-SELECT</replaceable> )
+UPDATE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] [ [ AS ] <replaceable class="parameter">alias</replaceable> ]
+    SET { <replaceable class="parameter">column_name</replaceable> = { <replaceable class="parameter">expression</replaceable> | DEFAULT } |
+          ( <replaceable class="parameter">column_name</replaceable> [, ...] ) = [ ROW ] ( { <replaceable class="parameter">expression</replaceable> | DEFAULT } [, ...] ) |
+          ( <replaceable class="parameter">column_name</replaceable> [, ...] ) = ( <replaceable class="parameter">sub-SELECT</replaceable> )
         } [, ...]
-    [ FROM <replaceable class="PARAMETER">from_list</replaceable> ]
-    [ WHERE <replaceable class="PARAMETER">condition</replaceable> | WHERE CURRENT OF <replaceable class="PARAMETER">cursor_name</replaceable> ]
+    [ FROM <replaceable class="parameter">from_list</replaceable> ]
+    [ WHERE <replaceable class="parameter">condition</replaceable> | WHERE CURRENT OF <replaceable class="parameter">cursor_name</replaceable> ]
     [ RETURNING * | <replaceable class="parameter">output_expression</replaceable> [ [ AS ] <replaceable class="parameter">output_name</replaceable> ] [, ...] ]
 </synopsis>
  </refsynopsisdiv>
@@ -88,7 +88,7 @@ UPDATE [ ONLY ] <replaceable class="PARAMETER">table_name</replaceable> [ * ] [ 
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">table_name</replaceable></term>
+    <term><replaceable class="parameter">table_name</replaceable></term>
     <listitem>
      <para>
       The name (optionally schema-qualified) of the table to update.
@@ -115,11 +115,11 @@ UPDATE [ ONLY ] <replaceable class="PARAMETER">table_name</replaceable> [ * ] [ 
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">column_name</replaceable></term>
+    <term><replaceable class="parameter">column_name</replaceable></term>
     <listitem>
      <para>
       The name of a column in the table named by <replaceable
-      class="PARAMETER">table_name</replaceable>.
+      class="parameter">table_name</replaceable>.
       The column name can be qualified with a subfield name or array
       subscript, if needed.  Do not include the table's name in the
       specification of a target column &mdash; for example,
@@ -129,7 +129,7 @@ UPDATE [ ONLY ] <replaceable class="PARAMETER">table_name</replaceable> [ * ] [ 
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">expression</replaceable></term>
+    <term><replaceable class="parameter">expression</replaceable></term>
     <listitem>
      <para>
       An expression to assign to the column.  The expression can use the
@@ -149,7 +149,7 @@ UPDATE [ ONLY ] <replaceable class="PARAMETER">table_name</replaceable> [ * ] [ 
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">sub-SELECT</replaceable></term>
+    <term><replaceable class="parameter">sub-SELECT</replaceable></term>
     <listitem>
      <para>
       A <literal>SELECT</> sub-query that produces as many output columns
@@ -164,7 +164,7 @@ UPDATE [ ONLY ] <replaceable class="PARAMETER">table_name</replaceable> [ * ] [ 
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">from_list</replaceable></term>
+    <term><replaceable class="parameter">from_list</replaceable></term>
     <listitem>
      <para>
       A list of table expressions, allowing columns from other tables
@@ -180,7 +180,7 @@ UPDATE [ ONLY ] <replaceable class="PARAMETER">table_name</replaceable> [ * ] [ 
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">condition</replaceable></term>
+    <term><replaceable class="parameter">condition</replaceable></term>
     <listitem>
      <para>
       An expression that returns a value of type <type>boolean</type>.
@@ -191,7 +191,7 @@ UPDATE [ ONLY ] <replaceable class="PARAMETER">table_name</replaceable> [ * ] [ 
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">cursor_name</replaceable></term>
+    <term><replaceable class="parameter">cursor_name</replaceable></term>
     <listitem>
      <para>
       The name of the cursor to use in a <literal>WHERE CURRENT OF</>
@@ -208,12 +208,12 @@ UPDATE [ ONLY ] <replaceable class="PARAMETER">table_name</replaceable> [ * ] [ 
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">output_expression</replaceable></term>
+    <term><replaceable class="parameter">output_expression</replaceable></term>
     <listitem>
      <para>
       An expression to be computed and returned by the <command>UPDATE</>
       command after each row is updated.  The expression can use any
-      column names of the table named by <replaceable class="PARAMETER">table_name</replaceable>
+      column names of the table named by <replaceable class="parameter">table_name</replaceable>
       or table(s) listed in <literal>FROM</>.
       Write <literal>*</> to return all columns.
      </para>
@@ -221,7 +221,7 @@ UPDATE [ ONLY ] <replaceable class="PARAMETER">table_name</replaceable> [ * ] [ 
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">output_name</replaceable></term>
+    <term><replaceable class="parameter">output_name</replaceable></term>
     <listitem>
      <para>
       A name to use for a returned column.

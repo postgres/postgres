@@ -21,10 +21,10 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CREATE STATISTICS [ IF NOT EXISTS ] <replaceable class="PARAMETER">statistics_name</replaceable>
-    [ ( <replaceable class="PARAMETER">statistics_kind</replaceable> [, ... ] ) ]
-    ON <replaceable class="PARAMETER">column_name</replaceable>, <replaceable class="PARAMETER">column_name</replaceable> [, ...]
-    FROM <replaceable class="PARAMETER">table_name</replaceable>
+CREATE STATISTICS [ IF NOT EXISTS ] <replaceable class="parameter">statistics_name</replaceable>
+    [ ( <replaceable class="parameter">statistics_kind</replaceable> [, ... ] ) ]
+    ON <replaceable class="parameter">column_name</replaceable>, <replaceable class="parameter">column_name</replaceable> [, ...]
+    FROM <replaceable class="parameter">table_name</replaceable>
 </synopsis>
 
  </refsynopsisdiv>
@@ -66,7 +66,7 @@ CREATE STATISTICS [ IF NOT EXISTS ] <replaceable class="PARAMETER">statistics_na
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">statistics_name</replaceable></term>
+    <term><replaceable class="parameter">statistics_name</replaceable></term>
     <listitem>
      <para>
       The name (optionally schema-qualified) of the statistics object to be
@@ -76,7 +76,7 @@ CREATE STATISTICS [ IF NOT EXISTS ] <replaceable class="PARAMETER">statistics_na
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">statistics_kind</replaceable></term>
+    <term><replaceable class="parameter">statistics_kind</replaceable></term>
     <listitem>
      <para>
       A statistics kind to be computed in this statistics object.
@@ -93,7 +93,7 @@ CREATE STATISTICS [ IF NOT EXISTS ] <replaceable class="PARAMETER">statistics_na
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">column_name</replaceable></term>
+    <term><replaceable class="parameter">column_name</replaceable></term>
     <listitem>
      <para>
       The name of a table column to be covered by the computed statistics.
@@ -103,7 +103,7 @@ CREATE STATISTICS [ IF NOT EXISTS ] <replaceable class="PARAMETER">statistics_na
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">table_name</replaceable></term>
+    <term><replaceable class="parameter">table_name</replaceable></term>
     <listitem>
      <para>
       The name (optionally schema-qualified) of the table containing the

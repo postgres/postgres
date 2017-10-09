@@ -23,24 +23,24 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
-    { SET DEFAULT <replaceable class="PARAMETER">expression</replaceable> | DROP DEFAULT }
-ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
+ALTER DOMAIN <replaceable class="parameter">name</replaceable>
+    { SET DEFAULT <replaceable class="parameter">expression</replaceable> | DROP DEFAULT }
+ALTER DOMAIN <replaceable class="parameter">name</replaceable>
     { SET | DROP } NOT NULL
-ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
-    ADD <replaceable class="PARAMETER">domain_constraint</replaceable> [ NOT VALID ]
-ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
-    DROP CONSTRAINT [ IF EXISTS ] <replaceable class="PARAMETER">constraint_name</replaceable> [ RESTRICT | CASCADE ]
-ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
-     RENAME CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> TO <replaceable class="PARAMETER">new_constraint_name</replaceable>
-ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
-    VALIDATE CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable>
-ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
-    OWNER TO { <replaceable class="PARAMETER">new_owner</replaceable> | CURRENT_USER | SESSION_USER }
-ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
-    RENAME TO <replaceable class="PARAMETER">new_name</replaceable>
-ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
-    SET SCHEMA <replaceable class="PARAMETER">new_schema</replaceable>
+ALTER DOMAIN <replaceable class="parameter">name</replaceable>
+    ADD <replaceable class="parameter">domain_constraint</replaceable> [ NOT VALID ]
+ALTER DOMAIN <replaceable class="parameter">name</replaceable>
+    DROP CONSTRAINT [ IF EXISTS ] <replaceable class="parameter">constraint_name</replaceable> [ RESTRICT | CASCADE ]
+ALTER DOMAIN <replaceable class="parameter">name</replaceable>
+     RENAME CONSTRAINT <replaceable class="parameter">constraint_name</replaceable> TO <replaceable class="parameter">new_constraint_name</replaceable>
+ALTER DOMAIN <replaceable class="parameter">name</replaceable>
+    VALIDATE CONSTRAINT <replaceable class="parameter">constraint_name</replaceable>
+ALTER DOMAIN <replaceable class="parameter">name</replaceable>
+    OWNER TO { <replaceable class="parameter">new_owner</replaceable> | CURRENT_USER | SESSION_USER }
+ALTER DOMAIN <replaceable class="parameter">name</replaceable>
+    RENAME TO <replaceable class="parameter">new_name</replaceable>
+ALTER DOMAIN <replaceable class="parameter">name</replaceable>
+    SET SCHEMA <replaceable class="parameter">new_schema</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -76,7 +76,7 @@ ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
    </varlistentry>
 
    <varlistentry>
-    <term><literal>ADD <replaceable class="PARAMETER">domain_constraint</replaceable> [ NOT VALID ]</literal></term>
+    <term><literal>ADD <replaceable class="parameter">domain_constraint</replaceable> [ NOT VALID ]</literal></term>
     <listitem>
      <para>
       This form adds a new constraint to a domain using the same syntax as
@@ -171,7 +171,7 @@ ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
    <para>
     <variablelist>
      <varlistentry>
-      <term><replaceable class="PARAMETER">name</replaceable></term>
+      <term><replaceable class="parameter">name</replaceable></term>
       <listitem>
        <para>
         The name (possibly schema-qualified) of an existing domain to
@@ -181,7 +181,7 @@ ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">domain_constraint</replaceable></term>
+      <term><replaceable class="parameter">domain_constraint</replaceable></term>
       <listitem>
        <para>
         New domain constraint for the domain.
@@ -190,7 +190,7 @@ ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">constraint_name</replaceable></term>
+      <term><replaceable class="parameter">constraint_name</replaceable></term>
       <listitem>
        <para>
         Name of an existing constraint to drop or rename.
@@ -199,7 +199,7 @@ ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">NOT VALID</replaceable></term>
+      <term><replaceable class="parameter">NOT VALID</replaceable></term>
       <listitem>
        <para>
         Do not verify existing column data for constraint validity.
@@ -230,7 +230,7 @@ ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">new_name</replaceable></term>
+      <term><replaceable class="parameter">new_name</replaceable></term>
       <listitem>
        <para>
         The new name for the domain.
@@ -239,7 +239,7 @@ ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">new_constraint_name</replaceable></term>
+      <term><replaceable class="parameter">new_constraint_name</replaceable></term>
       <listitem>
        <para>
         The new name for the constraint.
@@ -248,7 +248,7 @@ ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">new_owner</replaceable></term>
+      <term><replaceable class="parameter">new_owner</replaceable></term>
       <listitem>
        <para>
         The user name of the new owner of the domain.
@@ -257,7 +257,7 @@ ALTER DOMAIN <replaceable class="PARAMETER">name</replaceable>
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">new_schema</replaceable></term>
+      <term><replaceable class="parameter">new_schema</replaceable></term>
       <listitem>
        <para>
         The new schema for the domain.

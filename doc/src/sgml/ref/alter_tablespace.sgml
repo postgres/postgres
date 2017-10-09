@@ -23,8 +23,8 @@ PostgreSQL documentation
 <synopsis>
 ALTER TABLESPACE <replaceable>name</replaceable> RENAME TO <replaceable>new_name</replaceable>
 ALTER TABLESPACE <replaceable>name</replaceable> OWNER TO { <replaceable>new_owner</replaceable> | CURRENT_USER | SESSION_USER }
-ALTER TABLESPACE <replaceable>name</replaceable> SET ( <replaceable class="PARAMETER">tablespace_option</replaceable> = <replaceable class="PARAMETER">value</replaceable> [, ... ] )
-ALTER TABLESPACE <replaceable>name</replaceable> RESET ( <replaceable class="PARAMETER">tablespace_option</replaceable> [, ... ] )
+ALTER TABLESPACE <replaceable>name</replaceable> SET ( <replaceable class="parameter">tablespace_option</replaceable> = <replaceable class="parameter">value</replaceable> [, ... ] )
+ALTER TABLESPACE <replaceable>name</replaceable> RESET ( <replaceable class="parameter">tablespace_option</replaceable> [, ... ] )
 </synopsis>
  </refsynopsisdiv>
 

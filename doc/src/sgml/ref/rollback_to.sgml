@@ -50,7 +50,7 @@ ROLLBACK [ WORK | TRANSACTION ] TO [ SAVEPOINT ] <replaceable>savepoint_name</re
 
   <variablelist>
    <varlistentry>
-    <term><replaceable class="PARAMETER">savepoint_name</></term>
+    <term><replaceable class="parameter">savepoint_name</></term>
     <listitem>
      <para>
       The savepoint to roll back to.

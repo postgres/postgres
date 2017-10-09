@@ -27,23 +27,23 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <!-- Note the "direction" bit is also in ref/fetch.sgml -->
 <synopsis>
-MOVE [ <replaceable class="PARAMETER">direction</replaceable> [ FROM | IN ] ] <replaceable class="PARAMETER">cursor_name</replaceable>
+MOVE [ <replaceable class="parameter">direction</replaceable> [ FROM | IN ] ] <replaceable class="parameter">cursor_name</replaceable>
 
-<phrase>where <replaceable class="PARAMETER">direction</replaceable> can be empty or one of:</phrase>
+<phrase>where <replaceable class="parameter">direction</replaceable> can be empty or one of:</phrase>
 
     NEXT
     PRIOR
     FIRST
     LAST
-    ABSOLUTE <replaceable class="PARAMETER">count</replaceable>
-    RELATIVE <replaceable class="PARAMETER">count</replaceable>
-    <replaceable class="PARAMETER">count</replaceable>
+    ABSOLUTE <replaceable class="parameter">count</replaceable>
+    RELATIVE <replaceable class="parameter">count</replaceable>
+    <replaceable class="parameter">count</replaceable>
     ALL
     FORWARD
-    FORWARD <replaceable class="PARAMETER">count</replaceable>
+    FORWARD <replaceable class="parameter">count</replaceable>
     FORWARD ALL
     BACKWARD
-    BACKWARD <replaceable class="PARAMETER">count</replaceable>
+    BACKWARD <replaceable class="parameter">count</replaceable>
     BACKWARD ALL
 </synopsis>
  </refsynopsisdiv>

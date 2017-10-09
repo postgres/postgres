@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-REFRESH MATERIALIZED VIEW [ CONCURRENTLY ] <replaceable class="PARAMETER">name</replaceable>
+REFRESH MATERIALIZED VIEW [ CONCURRENTLY ] <replaceable class="parameter">name</replaceable>
     [ WITH [ NO ] DATA ]
 </synopsis>
  </refsynopsisdiv>
@@ -77,7 +77,7 @@ REFRESH MATERIALIZED VIEW [ CONCURRENTLY ] <replaceable class="PARAMETER">name</
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">name</replaceable></term>
+    <term><replaceable class="parameter">name</replaceable></term>
     <listitem>
      <para>
       The name (optionally schema-qualified) of the materialized view to

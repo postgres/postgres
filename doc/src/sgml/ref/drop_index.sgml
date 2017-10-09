@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP INDEX [ CONCURRENTLY ] [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ...] [ CASCADE | RESTRICT ]
+DROP INDEX [ CONCURRENTLY ] [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [, ...] [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -72,7 +72,7 @@ DROP INDEX [ CONCURRENTLY ] [ IF EXISTS ] <replaceable class="PARAMETER">name</r
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">name</replaceable></term>
+    <term><replaceable class="parameter">name</replaceable></term>
     <listitem>
      <para>
       The name (optionally schema-qualified) of an index to remove.

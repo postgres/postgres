@@ -287,12 +287,12 @@
       <listitem>
        <para>
         Restore only those archive elements that are listed in <replaceable
-        class="PARAMETER">list-file</replaceable>, and restore them in the
+        class="parameter">list-file</replaceable>, and restore them in the
         order they appear in the file.  Note that
         if filtering switches such as <option>-n</> or <option>-t</> are
         used with <option>-L</>, they will further restrict the items restored.
        </para>
-       <para><replaceable class="PARAMETER">list-file</> is normally created by
+       <para><replaceable class="parameter">list-file</> is normally created by
         editing the output of a previous <option>-l</> operation.
         Lines can be moved or removed, and can also
         be commented out by placing a semicolon (<literal>;</literal>) at the

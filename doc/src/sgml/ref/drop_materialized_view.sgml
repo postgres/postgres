@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP MATERIALIZED VIEW [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ...] [ CASCADE | RESTRICT ]
+DROP MATERIALIZED VIEW [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [, ...] [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -50,7 +50,7 @@ DROP MATERIALIZED VIEW [ IF EXISTS ] <replaceable class="PARAMETER">name</replac
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">name</replaceable></term>
+    <term><replaceable class="parameter">name</replaceable></term>
     <listitem>
      <para>
       The name (optionally schema-qualified) of the materialized view to

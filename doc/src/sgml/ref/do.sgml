@@ -25,7 +25,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DO [ LANGUAGE <replaceable class="PARAMETER">lang_name</replaceable> ] <replaceable class="PARAMETER">code</replaceable>
+DO [ LANGUAGE <replaceable class="parameter">lang_name</replaceable> ] <replaceable class="parameter">code</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -54,7 +54,7 @@ DO [ LANGUAGE <replaceable class="PARAMETER">lang_name</replaceable> ] <replacea
 
   <variablelist>
    <varlistentry>
-    <term><replaceable class="PARAMETER">code</replaceable></term>
+    <term><replaceable class="parameter">code</replaceable></term>
     <listitem>
      <para>
       The procedural language code to be executed.  This must be specified
@@ -65,7 +65,7 @@ DO [ LANGUAGE <replaceable class="PARAMETER">lang_name</replaceable> ] <replacea
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">lang_name</replaceable></term>
+    <term><replaceable class="parameter">lang_name</replaceable></term>
     <listitem>
      <para>
       The name of the procedural language the code is written in.

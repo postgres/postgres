@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP DATABASE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
+DROP DATABASE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -57,7 +57,7 @@ DROP DATABASE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">name</replaceable></term>
+    <term><replaceable class="parameter">name</replaceable></term>
     <listitem>
      <para>
       The name of the database to remove.

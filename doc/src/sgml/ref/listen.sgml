@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-LISTEN <replaceable class="PARAMETER">channel</replaceable>
+LISTEN <replaceable class="parameter">channel</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -31,14 +31,14 @@ LISTEN <replaceable class="PARAMETER">channel</replaceable>
   <para>
    <command>LISTEN</command> registers the current session as a
    listener on the notification channel named <replaceable
-   class="PARAMETER">channel</replaceable>.
+   class="parameter">channel</replaceable>.
    If the current session is already registered as a listener for
    this notification channel, nothing is done.
   </para>
 
   <para>
    Whenever the command <command>NOTIFY <replaceable
-   class="PARAMETER">channel</replaceable></command> is invoked, either
+   class="parameter">channel</replaceable></command> is invoked, either
    by this session or another one connected to the same database, all
    the sessions currently listening on that notification channel are
    notified, and each will in turn notify its connected client
@@ -77,7 +77,7 @@ LISTEN <replaceable class="PARAMETER">channel</replaceable>
 
   <variablelist>
    <varlistentry>
-    <term><replaceable class="PARAMETER">channel</replaceable></term>
+    <term><replaceable class="parameter">channel</replaceable></term>
     <listitem>
      <para>
       Name of a notification channel (any identifier).

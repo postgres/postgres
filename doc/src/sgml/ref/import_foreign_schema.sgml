@@ -21,11 +21,11 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-IMPORT FOREIGN SCHEMA <replaceable class="PARAMETER">remote_schema</replaceable>
-    [ { LIMIT TO | EXCEPT } ( <replaceable class="PARAMETER">table_name</replaceable> [, ...] ) ]
-    FROM SERVER <replaceable class="PARAMETER">server_name</replaceable>
-    INTO <replaceable class="PARAMETER">local_schema</replaceable>
-    [ OPTIONS ( <replaceable class="PARAMETER">option</replaceable> '<replaceable class="PARAMETER">value</replaceable>' [, ... ] ) ]
+IMPORT FOREIGN SCHEMA <replaceable class="parameter">remote_schema</replaceable>
+    [ { LIMIT TO | EXCEPT } ( <replaceable class="parameter">table_name</replaceable> [, ...] ) ]
+    FROM SERVER <replaceable class="parameter">server_name</replaceable>
+    INTO <replaceable class="parameter">local_schema</replaceable>
+    [ OPTIONS ( <replaceable class="parameter">option</replaceable> '<replaceable class="parameter">value</replaceable>' [, ... ] ) ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -59,7 +59,7 @@ IMPORT FOREIGN SCHEMA <replaceable class="PARAMETER">remote_schema</replaceable>
   <variablelist>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">remote_schema</replaceable></term>
+    <term><replaceable class="parameter">remote_schema</replaceable></term>
     <listitem>
      <para>
       The remote schema to import from. The specific meaning of a remote schema
@@ -69,7 +69,7 @@ IMPORT FOREIGN SCHEMA <replaceable class="PARAMETER">remote_schema</replaceable>
    </varlistentry>
 
    <varlistentry>
-    <term><literal>LIMIT TO ( <replaceable class="PARAMETER">table_name</replaceable> [, ...] )</literal></term>
+    <term><literal>LIMIT TO ( <replaceable class="parameter">table_name</replaceable> [, ...] )</literal></term>
     <listitem>
      <para>
       Import only foreign tables matching one of the given table names.
@@ -79,7 +79,7 @@ IMPORT FOREIGN SCHEMA <replaceable class="PARAMETER">remote_schema</replaceable>
    </varlistentry>
 
    <varlistentry>
-    <term><literal>EXCEPT ( <replaceable class="PARAMETER">table_name</replaceable> [, ...] )</literal></term>
+    <term><literal>EXCEPT ( <replaceable class="parameter">table_name</replaceable> [, ...] )</literal></term>
     <listitem>
      <para>
       Exclude specified foreign tables from the import.  All tables
@@ -90,7 +90,7 @@ IMPORT FOREIGN SCHEMA <replaceable class="PARAMETER">remote_schema</replaceable>
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">server_name</replaceable></term>
+    <term><replaceable class="parameter">server_name</replaceable></term>
     <listitem>
      <para>
       The foreign server to import from.
@@ -99,7 +99,7 @@ IMPORT FOREIGN SCHEMA <replaceable class="PARAMETER">remote_schema</replaceable>
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">local_schema</replaceable></term>
+    <term><replaceable class="parameter">local_schema</replaceable></term>
     <listitem>
      <para>
       The schema in which the imported foreign tables will be created.
@@ -108,7 +108,7 @@ IMPORT FOREIGN SCHEMA <replaceable class="PARAMETER">remote_schema</replaceable>
    </varlistentry>
 
    <varlistentry>
-    <term><literal>OPTIONS ( <replaceable class="PARAMETER">option</replaceable> '<replaceable class="PARAMETER">value</replaceable>' [, ...] )</literal></term>
+    <term><literal>OPTIONS ( <replaceable class="parameter">option</replaceable> '<replaceable class="parameter">value</replaceable>' [, ...] )</literal></term>
     <listitem>
      <para>
       Options to be used during the import.

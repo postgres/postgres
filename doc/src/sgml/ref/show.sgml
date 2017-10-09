@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-SHOW <replaceable class="PARAMETER">name</replaceable>
+SHOW <replaceable class="parameter">name</replaceable>
 SHOW ALL
 </synopsis>
  </refsynopsisdiv>
@@ -47,7 +47,7 @@ SHOW ALL
 
   <variablelist>
    <varlistentry>
-    <term><replaceable class="PARAMETER">name</replaceable></term>
+    <term><replaceable class="parameter">name</replaceable></term>
     <listitem>
      <para>
       The name of a run-time parameter.  Available parameters are

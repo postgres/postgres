@@ -701,7 +701,7 @@ LIMIT 10;
    </indexterm>
 
 <synopsis>
-to_tsvector(<optional> <replaceable class="PARAMETER">config</replaceable> <type>regconfig</>, </optional> <replaceable class="PARAMETER">document</replaceable> <type>text</>) returns <type>tsvector</>
+to_tsvector(<optional> <replaceable class="parameter">config</replaceable> <type>regconfig</>, </optional> <replaceable class="parameter">document</replaceable> <type>text</>) returns <type>tsvector</>
 </synopsis>
 
    <para>
@@ -811,7 +811,7 @@ UPDATE tt SET ti =
    </indexterm>
 
 <synopsis>
-to_tsquery(<optional> <replaceable class="PARAMETER">config</replaceable> <type>regconfig</>, </optional> <replaceable class="PARAMETER">querytext</replaceable> <type>text</>) returns <type>tsquery</>
+to_tsquery(<optional> <replaceable class="parameter">config</replaceable> <type>regconfig</>, </optional> <replaceable class="parameter">querytext</replaceable> <type>text</>) returns <type>tsquery</>
 </synopsis>
 
    <para>
@@ -884,7 +884,7 @@ SELECT to_tsquery('''supernovae stars'' &amp; !crab');
    </indexterm>
 
 <synopsis>
-plainto_tsquery(<optional> <replaceable class="PARAMETER">config</replaceable> <type>regconfig</>, </optional> <replaceable class="PARAMETER">querytext</replaceable> <type>text</>) returns <type>tsquery</>
+plainto_tsquery(<optional> <replaceable class="parameter">config</replaceable> <type>regconfig</>, </optional> <replaceable class="parameter">querytext</replaceable> <type>text</>) returns <type>tsquery</>
 </synopsis>
 
    <para>
@@ -924,7 +924,7 @@ SELECT plainto_tsquery('english', 'The Fat &amp; Rats:C');
    </indexterm>
 
 <synopsis>
-phraseto_tsquery(<optional> <replaceable class="PARAMETER">config</replaceable> <type>regconfig</>, </optional> <replaceable class="PARAMETER">querytext</replaceable> <type>text</>) returns <type>tsquery</>
+phraseto_tsquery(<optional> <replaceable class="parameter">config</replaceable> <type>regconfig</>, </optional> <replaceable class="parameter">querytext</replaceable> <type>text</>) returns <type>tsquery</>
 </synopsis>
 
    <para>
@@ -994,7 +994,7 @@ SELECT phraseto_tsquery('english', 'The Fat &amp; Rats:C');
         <primary>ts_rank</primary>
        </indexterm>
 
-       <literal>ts_rank(<optional> <replaceable class="PARAMETER">weights</replaceable> <type>float4[]</>, </optional> <replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>, <replaceable class="PARAMETER">query</replaceable> <type>tsquery</> <optional>, <replaceable class="PARAMETER">normalization</replaceable> <type>integer</> </optional>) returns <type>float4</></literal>
+       <literal>ts_rank(<optional> <replaceable class="parameter">weights</replaceable> <type>float4[]</>, </optional> <replaceable class="parameter">vector</replaceable> <type>tsvector</>, <replaceable class="parameter">query</replaceable> <type>tsquery</> <optional>, <replaceable class="parameter">normalization</replaceable> <type>integer</> </optional>) returns <type>float4</></literal>
       </term>
 
       <listitem>
@@ -1011,7 +1011,7 @@ SELECT phraseto_tsquery('english', 'The Fat &amp; Rats:C');
        <primary>ts_rank_cd</primary>
       </indexterm>
 
-       <literal>ts_rank_cd(<optional> <replaceable class="PARAMETER">weights</replaceable> <type>float4[]</>, </optional> <replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>, <replaceable class="PARAMETER">query</replaceable> <type>tsquery</> <optional>, <replaceable class="PARAMETER">normalization</replaceable> <type>integer</> </optional>) returns <type>float4</></literal>
+       <literal>ts_rank_cd(<optional> <replaceable class="parameter">weights</replaceable> <type>float4[]</>, </optional> <replaceable class="parameter">vector</replaceable> <type>tsvector</>, <replaceable class="parameter">query</replaceable> <type>tsquery</> <optional>, <replaceable class="parameter">normalization</replaceable> <type>integer</> </optional>) returns <type>float4</></literal>
       </term>
 
       <listitem>
@@ -1043,7 +1043,7 @@ SELECT phraseto_tsquery('english', 'The Fat &amp; Rats:C');
 
    <para>
     For both these functions,
-    the optional <replaceable class="PARAMETER">weights</replaceable>
+    the optional <replaceable class="parameter">weights</replaceable>
     argument offers the ability to weigh word instances more or less
     heavily depending on how they are labeled.  The weight arrays specify
     how heavily to weigh each category of word, in the order:
@@ -1052,7 +1052,7 @@ SELECT phraseto_tsquery('english', 'The Fat &amp; Rats:C');
 {D-weight, C-weight, B-weight, A-weight}
 </synopsis>
 
-    If no <replaceable class="PARAMETER">weights</replaceable> are provided,
+    If no <replaceable class="parameter">weights</replaceable> are provided,
     then these defaults are used:
 
 <programlisting>
@@ -1199,7 +1199,7 @@ LIMIT 10;
    </indexterm>
 
 <synopsis>
-ts_headline(<optional> <replaceable class="PARAMETER">config</replaceable> <type>regconfig</>, </optional> <replaceable class="PARAMETER">document</replaceable> <type>text</>, <replaceable class="PARAMETER">query</replaceable> <type>tsquery</> <optional>, <replaceable class="PARAMETER">options</replaceable> <type>text</> </optional>) returns <type>text</>
+ts_headline(<optional> <replaceable class="parameter">config</replaceable> <type>regconfig</>, </optional> <replaceable class="parameter">document</replaceable> <type>text</>, <replaceable class="parameter">query</replaceable> <type>tsquery</> <optional>, <replaceable class="parameter">options</replaceable> <type>text</> </optional>) returns <type>text</>
 </synopsis>
 
    <para>
@@ -1388,7 +1388,7 @@ query.',
       <primary>setweight</primary>
      </indexterm>
 
-      <literal>setweight(<replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>, <replaceable class="PARAMETER">weight</replaceable> <type>"char"</>) returns <type>tsvector</></literal>
+      <literal>setweight(<replaceable class="parameter">vector</replaceable> <type>tsvector</>, <replaceable class="parameter">weight</replaceable> <type>"char"</>) returns <type>tsvector</></literal>
      </term>
 
      <listitem>
@@ -1416,7 +1416,7 @@ query.',
       <primary>length(tsvector)</primary>
      </indexterm>
 
-      <literal>length(<replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>) returns <type>integer</></literal>
+      <literal>length(<replaceable class="parameter">vector</replaceable> <type>tsvector</>) returns <type>integer</></literal>
      </term>
 
      <listitem>
@@ -1433,7 +1433,7 @@ query.',
       <primary>strip</primary>
      </indexterm>
 
-      <literal>strip(<replaceable class="PARAMETER">vector</replaceable> <type>tsvector</>) returns <type>tsvector</></literal>
+      <literal>strip(<replaceable class="parameter">vector</replaceable> <type>tsvector</>) returns <type>tsvector</></literal>
      </term>
 
      <listitem>
@@ -1546,7 +1546,7 @@ SELECT to_tsquery('fat') &lt;-&gt; to_tsquery('cat | rat');
       <primary>tsquery_phrase</primary>
      </indexterm>
 
-      <literal>tsquery_phrase(<replaceable class="PARAMETER">query1</replaceable> <type>tsquery</>, <replaceable class="PARAMETER">query2</replaceable> <type>tsquery</> [, <replaceable class="PARAMETER">distance</replaceable> <type>integer</> ]) returns <type>tsquery</></literal>
+      <literal>tsquery_phrase(<replaceable class="parameter">query1</replaceable> <type>tsquery</>, <replaceable class="parameter">query2</replaceable> <type>tsquery</> [, <replaceable class="parameter">distance</replaceable> <type>integer</> ]) returns <type>tsquery</></literal>
      </term>
 
      <listitem>
@@ -1575,7 +1575,7 @@ SELECT tsquery_phrase(to_tsquery('fat'), to_tsquery('cat'), 10);
       <primary>numnode</primary>
      </indexterm>
 
-      <literal>numnode(<replaceable class="PARAMETER">query</replaceable> <type>tsquery</>) returns <type>integer</></literal>
+      <literal>numnode(<replaceable class="parameter">query</replaceable> <type>tsquery</>) returns <type>integer</></literal>
      </term>
 
      <listitem>
@@ -1609,7 +1609,7 @@ SELECT numnode('foo &amp; bar'::tsquery);
       <primary>querytree</primary>
      </indexterm>
 
-      <literal>querytree(<replaceable class="PARAMETER">query</replaceable> <type>tsquery</>) returns <type>text</></literal>
+      <literal>querytree(<replaceable class="parameter">query</replaceable> <type>tsquery</>) returns <type>text</></literal>
      </term>
 
      <listitem>
@@ -1662,16 +1662,16 @@ SELECT querytree(to_tsquery('!defined'));
      <varlistentry>
 
       <term>
-       <literal>ts_rewrite (<replaceable class="PARAMETER">query</replaceable> <type>tsquery</>, <replaceable class="PARAMETER">target</replaceable> <type>tsquery</>, <replaceable class="PARAMETER">substitute</replaceable> <type>tsquery</>) returns <type>tsquery</></literal>
+       <literal>ts_rewrite (<replaceable class="parameter">query</replaceable> <type>tsquery</>, <replaceable class="parameter">target</replaceable> <type>tsquery</>, <replaceable class="parameter">substitute</replaceable> <type>tsquery</>) returns <type>tsquery</></literal>
       </term>
 
       <listitem>
        <para>
         This form of <function>ts_rewrite</> simply applies a single
-        rewrite rule: <replaceable class="PARAMETER">target</replaceable>
-        is replaced by <replaceable class="PARAMETER">substitute</replaceable>
+        rewrite rule: <replaceable class="parameter">target</replaceable>
+        is replaced by <replaceable class="parameter">substitute</replaceable>
         wherever it appears in <replaceable
-        class="PARAMETER">query</replaceable>.  For example:
+        class="parameter">query</replaceable>.  For example:
 
 <screen>
 SELECT ts_rewrite('a &amp; b'::tsquery, 'a'::tsquery, 'c'::tsquery);
@@ -1686,7 +1686,7 @@ SELECT ts_rewrite('a &amp; b'::tsquery, 'a'::tsquery, 'c'::tsquery);
      <varlistentry>
 
       <term>
-       <literal>ts_rewrite (<replaceable class="PARAMETER">query</> <type>tsquery</>, <replaceable class="PARAMETER">select</> <type>text</>) returns <type>tsquery</></literal>
+       <literal>ts_rewrite (<replaceable class="parameter">query</> <type>tsquery</>, <replaceable class="parameter">select</> <type>text</>) returns <type>tsquery</></literal>
       </term>
 
       <listitem>
@@ -1785,8 +1785,8 @@ SELECT ts_rewrite('a &amp; b'::tsquery,
    </para>
 
 <synopsis>
-tsvector_update_trigger(<replaceable class="PARAMETER">tsvector_column_name</replaceable>, <replaceable class="PARAMETER">config_name</replaceable>, <replaceable class="PARAMETER">text_column_name</replaceable> <optional>, ... </optional>)
-tsvector_update_trigger_column(<replaceable class="PARAMETER">tsvector_column_name</replaceable>, <replaceable class="PARAMETER">config_column_name</replaceable>, <replaceable class="PARAMETER">text_column_name</replaceable> <optional>, ... </optional>)
+tsvector_update_trigger(<replaceable class="parameter">tsvector_column_name</replaceable>, <replaceable class="parameter">config_name</replaceable>, <replaceable class="parameter">text_column_name</replaceable> <optional>, ... </optional>)
+tsvector_update_trigger_column(<replaceable class="parameter">tsvector_column_name</replaceable>, <replaceable class="parameter">config_column_name</replaceable>, <replaceable class="parameter">text_column_name</replaceable> <optional>, ... </optional>)
 </synopsis>
 
    <para>
@@ -1886,9 +1886,9 @@ CREATE TRIGGER tsvectorupdate BEFORE INSERT OR UPDATE
    </para>
 
 <synopsis>
-ts_stat(<replaceable class="PARAMETER">sqlquery</replaceable> <type>text</>, <optional> <replaceable class="PARAMETER">weights</replaceable> <type>text</>, </optional>
-        OUT <replaceable class="PARAMETER">word</replaceable> <type>text</>, OUT <replaceable class="PARAMETER">ndoc</replaceable> <type>integer</>,
-        OUT <replaceable class="PARAMETER">nentry</replaceable> <type>integer</>) returns <type>setof record</>
+ts_stat(<replaceable class="parameter">sqlquery</replaceable> <type>text</>, <optional> <replaceable class="parameter">weights</replaceable> <type>text</>, </optional>
+        OUT <replaceable class="parameter">word</replaceable> <type>text</>, OUT <replaceable class="parameter">ndoc</replaceable> <type>integer</>,
+        OUT <replaceable class="parameter">nentry</replaceable> <type>integer</>) returns <type>setof record</>
 </synopsis>
 
    <para>
@@ -3177,22 +3177,22 @@ SHOW default_text_search_config;
   </indexterm>
 
 <synopsis>
-ts_debug(<optional> <replaceable class="PARAMETER">config</replaceable> <type>regconfig</>, </optional> <replaceable class="PARAMETER">document</replaceable> <type>text</>,
-         OUT <replaceable class="PARAMETER">alias</> <type>text</>,
-         OUT <replaceable class="PARAMETER">description</> <type>text</>,
-         OUT <replaceable class="PARAMETER">token</> <type>text</>,
-         OUT <replaceable class="PARAMETER">dictionaries</> <type>regdictionary[]</>,
-         OUT <replaceable class="PARAMETER">dictionary</> <type>regdictionary</>,
-         OUT <replaceable class="PARAMETER">lexemes</> <type>text[]</>)
+ts_debug(<optional> <replaceable class="parameter">config</replaceable> <type>regconfig</>, </optional> <replaceable class="parameter">document</replaceable> <type>text</>,
+         OUT <replaceable class="parameter">alias</> <type>text</>,
+         OUT <replaceable class="parameter">description</> <type>text</>,
+         OUT <replaceable class="parameter">token</> <type>text</>,
+         OUT <replaceable class="parameter">dictionaries</> <type>regdictionary[]</>,
+         OUT <replaceable class="parameter">dictionary</> <type>regdictionary</>,
+         OUT <replaceable class="parameter">lexemes</> <type>text[]</>)
          returns setof record
 </synopsis>
 
   <para>
    <function>ts_debug</> displays information about every token of
-   <replaceable class="PARAMETER">document</replaceable> as produced by the
+   <replaceable class="parameter">document</replaceable> as produced by the
    parser and processed by the configured dictionaries.  It uses the
    configuration specified by <replaceable
-   class="PARAMETER">config</replaceable>,
+   class="parameter">config</replaceable>,
    or <varname>default_text_search_config</varname> if that argument is
    omitted.
   </para>
@@ -3360,10 +3360,10 @@ FROM ts_debug('public.english','The Brightest supernovaes');
   </indexterm>
 
 <synopsis>
-ts_parse(<replaceable class="PARAMETER">parser_name</replaceable> <type>text</>, <replaceable class="PARAMETER">document</replaceable> <type>text</>,
-         OUT <replaceable class="PARAMETER">tokid</> <type>integer</>, OUT <replaceable class="PARAMETER">token</> <type>text</>) returns <type>setof record</>
-ts_parse(<replaceable class="PARAMETER">parser_oid</replaceable> <type>oid</>, <replaceable class="PARAMETER">document</replaceable> <type>text</>,
-         OUT <replaceable class="PARAMETER">tokid</> <type>integer</>, OUT <replaceable class="PARAMETER">token</> <type>text</>) returns <type>setof record</>
+ts_parse(<replaceable class="parameter">parser_name</replaceable> <type>text</>, <replaceable class="parameter">document</replaceable> <type>text</>,
+         OUT <replaceable class="parameter">tokid</> <type>integer</>, OUT <replaceable class="parameter">token</> <type>text</>) returns <type>setof record</>
+ts_parse(<replaceable class="parameter">parser_oid</replaceable> <type>oid</>, <replaceable class="parameter">document</replaceable> <type>text</>,
+         OUT <replaceable class="parameter">tokid</> <type>integer</>, OUT <replaceable class="parameter">token</> <type>text</>) returns <type>setof record</>
 </synopsis>
 
   <para>
@@ -3391,10 +3391,10 @@ SELECT * FROM ts_parse('default', '123 - a number');
   </indexterm>
 
 <synopsis>
-ts_token_type(<replaceable class="PARAMETER">parser_name</> <type>text</>, OUT <replaceable class="PARAMETER">tokid</> <type>integer</>,
-              OUT <replaceable class="PARAMETER">alias</> <type>text</>, OUT <replaceable class="PARAMETER">description</> <type>text</>) returns <type>setof record</>
-ts_token_type(<replaceable class="PARAMETER">parser_oid</> <type>oid</>, OUT <replaceable class="PARAMETER">tokid</> <type>integer</>,
-              OUT <replaceable class="PARAMETER">alias</> <type>text</>, OUT <replaceable class="PARAMETER">description</> <type>text</>) returns <type>setof record</>
+ts_token_type(<replaceable class="parameter">parser_name</> <type>text</>, OUT <replaceable class="parameter">tokid</> <type>integer</>,
+              OUT <replaceable class="parameter">alias</> <type>text</>, OUT <replaceable class="parameter">description</> <type>text</>) returns <type>setof record</>
+ts_token_type(<replaceable class="parameter">parser_oid</> <type>oid</>, OUT <replaceable class="parameter">tokid</> <type>integer</>,
+              OUT <replaceable class="parameter">alias</> <type>text</>, OUT <replaceable class="parameter">description</> <type>text</>) returns <type>setof record</>
 </synopsis>
 
   <para>
@@ -3449,7 +3449,7 @@ SELECT * FROM ts_token_type('default');
    </indexterm>
 
 <synopsis>
-ts_lexize(<replaceable class="PARAMETER">dict</replaceable> <type>regdictionary</>, <replaceable class="PARAMETER">token</replaceable> <type>text</>) returns <type>text[]</>
+ts_lexize(<replaceable class="parameter">dict</replaceable> <type>regdictionary</>, <replaceable class="parameter">token</replaceable> <type>text</>) returns <type>text[]</>
 </synopsis>
 
    <para>

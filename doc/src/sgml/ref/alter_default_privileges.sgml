@@ -31,55 +31,55 @@ ALTER DEFAULT PRIVILEGES
 GRANT { { SELECT | INSERT | UPDATE | DELETE | TRUNCATE | REFERENCES | TRIGGER }
     [, ...] | ALL [ PRIVILEGES ] }
     ON TABLES
-    TO { [ GROUP ] <replaceable class="PARAMETER">role_name</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
+    TO { [ GROUP ] <replaceable class="parameter">role_name</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 
 GRANT { { USAGE | SELECT | UPDATE }
     [, ...] | ALL [ PRIVILEGES ] }
     ON SEQUENCES
-    TO { [ GROUP ] <replaceable class="PARAMETER">role_name</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
+    TO { [ GROUP ] <replaceable class="parameter">role_name</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 
 GRANT { EXECUTE | ALL [ PRIVILEGES ] }
     ON FUNCTIONS
-    TO { [ GROUP ] <replaceable class="PARAMETER">role_name</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
+    TO { [ GROUP ] <replaceable class="parameter">role_name</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 
 GRANT { USAGE | ALL [ PRIVILEGES ] }
     ON TYPES
-    TO { [ GROUP ] <replaceable class="PARAMETER">role_name</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
+    TO { [ GROUP ] <replaceable class="parameter">role_name</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 
 GRANT { USAGE | CREATE | ALL [ PRIVILEGES ] }
     ON SCHEMAS
-    TO { [ GROUP ] <replaceable class="PARAMETER">role_name</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
+    TO { [ GROUP ] <replaceable class="parameter">role_name</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 
 REVOKE [ GRANT OPTION FOR ]
     { { SELECT | INSERT | UPDATE | DELETE | TRUNCATE | REFERENCES | TRIGGER }
     [, ...] | ALL [ PRIVILEGES ] }
     ON TABLES
-    FROM { [ GROUP ] <replaceable class="PARAMETER">role_name</replaceable> | PUBLIC } [, ...]
+    FROM { [ GROUP ] <replaceable class="parameter">role_name</replaceable> | PUBLIC } [, ...]
     [ CASCADE | RESTRICT ]
 
 REVOKE [ GRANT OPTION FOR ]
     { { USAGE | SELECT | UPDATE }
     [, ...] | ALL [ PRIVILEGES ] }
     ON SEQUENCES
-    FROM { [ GROUP ] <replaceable class="PARAMETER">role_name</replaceable> | PUBLIC } [, ...]
+    FROM { [ GROUP ] <replaceable class="parameter">role_name</replaceable> | PUBLIC } [, ...]
     [ CASCADE | RESTRICT ]
 
 REVOKE [ GRANT OPTION FOR ]
     { EXECUTE | ALL [ PRIVILEGES ] }
     ON FUNCTIONS
-    FROM { [ GROUP ] <replaceable class="PARAMETER">role_name</replaceable> | PUBLIC } [, ...]
+    FROM { [ GROUP ] <replaceable class="parameter">role_name</replaceable> | PUBLIC } [, ...]
     [ CASCADE | RESTRICT ]
 
 REVOKE [ GRANT OPTION FOR ]
     { USAGE | ALL [ PRIVILEGES ] }
     ON TYPES
-    FROM { [ GROUP ] <replaceable class="PARAMETER">role_name</replaceable> | PUBLIC } [, ...]
+    FROM { [ GROUP ] <replaceable class="parameter">role_name</replaceable> | PUBLIC } [, ...]
     [ CASCADE | RESTRICT ]
 
 REVOKE [ GRANT OPTION FOR ]
     { USAGE | CREATE | ALL [ PRIVILEGES ] }
     ON SCHEMAS
-    FROM { [ GROUP ] <replaceable class="PARAMETER">role_name</replaceable> | PUBLIC } [, ...]
+    FROM { [ GROUP ] <replaceable class="parameter">role_name</replaceable> | PUBLIC } [, ...]
     [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>

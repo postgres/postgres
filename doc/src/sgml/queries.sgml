@@ -1854,7 +1854,7 @@ SELECT <replaceable>select_list</replaceable>
    that can be used in a query without having to actually create and populate
    a table on-disk.  The syntax is
 <synopsis>
-VALUES ( <replaceable class="PARAMETER">expression</replaceable> [, ...] ) [, ...]
+VALUES ( <replaceable class="parameter">expression</replaceable> [, ...] ) [, ...]
 </synopsis>
    Each parenthesized list of expressions generates a row in the table.
    The lists must all have the same number of elements (i.e., the number

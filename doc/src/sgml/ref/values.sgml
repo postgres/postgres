@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-VALUES ( <replaceable class="PARAMETER">expression</replaceable> [, ...] ) [, ...]
+VALUES ( <replaceable class="parameter">expression</replaceable> [, ...] ) [, ...]
     [ ORDER BY <replaceable class="parameter">sort_expression</replaceable> [ ASC | DESC | USING <replaceable class="parameter">operator</replaceable> ] [, ...] ]
     [ LIMIT { <replaceable class="parameter">count</replaceable> | ALL } ]
     [ OFFSET <replaceable class="parameter">start</replaceable> [ ROW | ROWS ] ]
@@ -63,13 +63,13 @@ VALUES ( <replaceable class="PARAMETER">expression</replaceable> [, ...] ) [, ..
 
   <variablelist>
    <varlistentry>
-    <term><replaceable class="PARAMETER">expression</replaceable></term>
+    <term><replaceable class="parameter">expression</replaceable></term>
     <listitem>
      <para>
       A constant or expression to compute and insert at the indicated place
       in the resulting table (set of rows).  In a <command>VALUES</> list
       appearing at the top level of an <command>INSERT</>, an
-      <replaceable class="PARAMETER">expression</replaceable> can be replaced
+      <replaceable class="parameter">expression</replaceable> can be replaced
       by <literal>DEFAULT</literal> to indicate that the destination column's
       default value should be inserted.  <literal>DEFAULT</literal> cannot
       be used when <command>VALUES</> appears in other contexts.

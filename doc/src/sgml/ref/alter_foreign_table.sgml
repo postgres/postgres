@@ -21,41 +21,41 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ALTER FOREIGN TABLE [ IF EXISTS ] [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [ * ]
-    <replaceable class="PARAMETER">action</replaceable> [, ... ]
-ALTER FOREIGN TABLE [ IF EXISTS ] [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [ * ]
-    RENAME [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> TO <replaceable class="PARAMETER">new_column_name</replaceable>
-ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
-    RENAME TO <replaceable class="PARAMETER">new_name</replaceable>
-ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
-    SET SCHEMA <replaceable class="PARAMETER">new_schema</replaceable>
+ALTER FOREIGN TABLE [ IF EXISTS ] [ ONLY ] <replaceable class="parameter">name</replaceable> [ * ]
+    <replaceable class="parameter">action</replaceable> [, ... ]
+ALTER FOREIGN TABLE [ IF EXISTS ] [ ONLY ] <replaceable class="parameter">name</replaceable> [ * ]
+    RENAME [ COLUMN ] <replaceable class="parameter">column_name</replaceable> TO <replaceable class="parameter">new_column_name</replaceable>
+ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
+    RENAME TO <replaceable class="parameter">new_name</replaceable>
+ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
+    SET SCHEMA <replaceable class="parameter">new_schema</replaceable>
 
-<phrase>where <replaceable class="PARAMETER">action</replaceable> is one of:</phrase>
+<phrase>where <replaceable class="parameter">action</replaceable> is one of:</phrase>
 
-    ADD [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> <replaceable class="PARAMETER">data_type</replaceable> [ COLLATE <replaceable class="PARAMETER">collation</replaceable> ] [ <replaceable class="PARAMETER">column_constraint</replaceable> [ ... ] ]
-    DROP [ COLUMN ] [ IF EXISTS ] <replaceable class="PARAMETER">column_name</replaceable> [ RESTRICT | CASCADE ]
-    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> [ SET DATA ] TYPE <replaceable class="PARAMETER">data_type</replaceable> [ COLLATE <replaceable class="PARAMETER">collation</replaceable> ]
-    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> SET DEFAULT <replaceable class="PARAMETER">expression</replaceable>
-    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> DROP DEFAULT
-    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> { SET | DROP } NOT NULL
-    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> SET STATISTICS <replaceable class="PARAMETER">integer</replaceable>
-    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> SET ( <replaceable class="PARAMETER">attribute_option</replaceable> = <replaceable class="PARAMETER">value</replaceable> [, ... ] )
-    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> RESET ( <replaceable class="PARAMETER">attribute_option</replaceable> [, ... ] )
-    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> SET STORAGE { PLAIN | EXTERNAL | EXTENDED | MAIN }
-    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> OPTIONS ( [ ADD | SET | DROP ] <replaceable class="PARAMETER">option</replaceable> ['<replaceable class="PARAMETER">value</replaceable>'] [, ... ])
-    ADD <replaceable class="PARAMETER">table_constraint</replaceable> [ NOT VALID ]
-    VALIDATE CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable>
-    DROP CONSTRAINT [ IF EXISTS ]  <replaceable class="PARAMETER">constraint_name</replaceable> [ RESTRICT | CASCADE ]
-    DISABLE TRIGGER [ <replaceable class="PARAMETER">trigger_name</replaceable> | ALL | USER ]
-    ENABLE TRIGGER [ <replaceable class="PARAMETER">trigger_name</replaceable> | ALL | USER ]
-    ENABLE REPLICA TRIGGER <replaceable class="PARAMETER">trigger_name</replaceable>
-    ENABLE ALWAYS TRIGGER <replaceable class="PARAMETER">trigger_name</replaceable>
+    ADD [ COLUMN ] <replaceable class="parameter">column_name</replaceable> <replaceable class="parameter">data_type</replaceable> [ COLLATE <replaceable class="parameter">collation</replaceable> ] [ <replaceable class="parameter">column_constraint</replaceable> [ ... ] ]
+    DROP [ COLUMN ] [ IF EXISTS ] <replaceable class="parameter">column_name</replaceable> [ RESTRICT | CASCADE ]
+    ALTER [ COLUMN ] <replaceable class="parameter">column_name</replaceable> [ SET DATA ] TYPE <replaceable class="parameter">data_type</replaceable> [ COLLATE <replaceable class="parameter">collation</replaceable> ]
+    ALTER [ COLUMN ] <replaceable class="parameter">column_name</replaceable> SET DEFAULT <replaceable class="parameter">expression</replaceable>
+    ALTER [ COLUMN ] <replaceable class="parameter">column_name</replaceable> DROP DEFAULT
+    ALTER [ COLUMN ] <replaceable class="parameter">column_name</replaceable> { SET | DROP } NOT NULL
+    ALTER [ COLUMN ] <replaceable class="parameter">column_name</replaceable> SET STATISTICS <replaceable class="parameter">integer</replaceable>
+    ALTER [ COLUMN ] <replaceable class="parameter">column_name</replaceable> SET ( <replaceable class="parameter">attribute_option</replaceable> = <replaceable class="parameter">value</replaceable> [, ... ] )
+    ALTER [ COLUMN ] <replaceable class="parameter">column_name</replaceable> RESET ( <replaceable class="parameter">attribute_option</replaceable> [, ... ] )
+    ALTER [ COLUMN ] <replaceable class="parameter">column_name</replaceable> SET STORAGE { PLAIN | EXTERNAL | EXTENDED | MAIN }
+    ALTER [ COLUMN ] <replaceable class="parameter">column_name</replaceable> OPTIONS ( [ ADD | SET | DROP ] <replaceable class="parameter">option</replaceable> ['<replaceable class="parameter">value</replaceable>'] [, ... ])
+    ADD <replaceable class="parameter">table_constraint</replaceable> [ NOT VALID ]
+    VALIDATE CONSTRAINT <replaceable class="parameter">constraint_name</replaceable>
+    DROP CONSTRAINT [ IF EXISTS ]  <replaceable class="parameter">constraint_name</replaceable> [ RESTRICT | CASCADE ]
+    DISABLE TRIGGER [ <replaceable class="parameter">trigger_name</replaceable> | ALL | USER ]
+    ENABLE TRIGGER [ <replaceable class="parameter">trigger_name</replaceable> | ALL | USER ]
+    ENABLE REPLICA TRIGGER <replaceable class="parameter">trigger_name</replaceable>
+    ENABLE ALWAYS TRIGGER <replaceable class="parameter">trigger_name</replaceable>
     SET WITH OIDS
     SET WITHOUT OIDS
-    INHERIT <replaceable class="PARAMETER">parent_table</replaceable>
-    NO INHERIT <replaceable class="PARAMETER">parent_table</replaceable>
-    OWNER TO { <replaceable class="PARAMETER">new_owner</replaceable> | CURRENT_USER | SESSION_USER }
-    OPTIONS ( [ ADD | SET | DROP ] <replaceable class="PARAMETER">option</replaceable> ['<replaceable class="PARAMETER">value</replaceable>'] [, ... ])
+    INHERIT <replaceable class="parameter">parent_table</replaceable>
+    NO INHERIT <replaceable class="parameter">parent_table</replaceable>
+    OWNER TO { <replaceable class="parameter">new_owner</replaceable> | CURRENT_USER | SESSION_USER }
+    OPTIONS ( [ ADD | SET | DROP ] <replaceable class="parameter">option</replaceable> ['<replaceable class="parameter">value</replaceable>'] [, ... ])
 </synopsis>
  </refsynopsisdiv>
 
@@ -142,8 +142,8 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceab
    </varlistentry>
 
    <varlistentry>
-    <term><literal>SET ( <replaceable class="PARAMETER">attribute_option</replaceable> = <replaceable class="PARAMETER">value</replaceable> [, ... ] )</literal></term>
-    <term><literal>RESET ( <replaceable class="PARAMETER">attribute_option</replaceable> [, ... ] )</literal></term>
+    <term><literal>SET ( <replaceable class="parameter">attribute_option</replaceable> = <replaceable class="parameter">value</replaceable> [, ... ] )</literal></term>
+    <term><literal>RESET ( <replaceable class="parameter">attribute_option</replaceable> [, ... ] )</literal></term>
     <listitem>
      <para>
       This form sets or resets per-attribute options.
@@ -169,7 +169,7 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceab
    </varlistentry>
 
    <varlistentry>
-    <term><literal>ADD <replaceable class="PARAMETER">table_constraint</replaceable> [ NOT VALID ]</literal></term>
+    <term><literal>ADD <replaceable class="parameter">table_constraint</replaceable> [ NOT VALID ]</literal></term>
     <listitem>
      <para>
       This form adds a new constraint to a foreign table, using the same
@@ -256,7 +256,7 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceab
    </varlistentry>
 
    <varlistentry>
-    <term><literal>INHERIT <replaceable class="PARAMETER">parent_table</replaceable></literal></term>
+    <term><literal>INHERIT <replaceable class="parameter">parent_table</replaceable></literal></term>
     <listitem>
      <para>
       This form adds the target foreign table as a new child of the specified
@@ -268,7 +268,7 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceab
    </varlistentry>
 
    <varlistentry>
-    <term><literal>NO INHERIT <replaceable class="PARAMETER">parent_table</replaceable></literal></term>
+    <term><literal>NO INHERIT <replaceable class="parameter">parent_table</replaceable></literal></term>
     <listitem>
      <para>
       This form removes the target foreign table from the list of children of
@@ -288,7 +288,7 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceab
    </varlistentry>
 
    <varlistentry>
-    <term><literal>OPTIONS ( [ ADD | SET | DROP ] <replaceable class="PARAMETER">option</replaceable> ['<replaceable class="PARAMETER">value</replaceable>'] [, ... ] )</literal></term>
+    <term><literal>OPTIONS ( [ ADD | SET | DROP ] <replaceable class="parameter">option</replaceable> ['<replaceable class="parameter">value</replaceable>'] [, ... ] )</literal></term>
     <listitem>
      <para>
       Change options for the foreign table or one of its columns.
@@ -358,7 +358,7 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceab
     <variablelist>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">name</replaceable></term>
+      <term><replaceable class="parameter">name</replaceable></term>
       <listitem>
        <para>
         The name (possibly schema-qualified) of an existing foreign table to
@@ -372,7 +372,7 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceab
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">column_name</replaceable></term>
+      <term><replaceable class="parameter">column_name</replaceable></term>
       <listitem>
        <para>
         Name of a new or existing column.
@@ -381,7 +381,7 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceab
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">new_column_name</replaceable></term>
+      <term><replaceable class="parameter">new_column_name</replaceable></term>
       <listitem>
        <para>
         New name for an existing column.
@@ -390,7 +390,7 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceab
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">new_name</replaceable></term>
+      <term><replaceable class="parameter">new_name</replaceable></term>
       <listitem>
        <para>
         New name for the table.
@@ -399,7 +399,7 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceab
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">data_type</replaceable></term>
+      <term><replaceable class="parameter">data_type</replaceable></term>
       <listitem>
        <para>
         Data type of the new column, or new data type for an existing
@@ -409,7 +409,7 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceab
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">table_constraint</replaceable></term>
+      <term><replaceable class="parameter">table_constraint</replaceable></term>
       <listitem>
        <para>
         New table constraint for the foreign table.
@@ -418,7 +418,7 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceab
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">constraint_name</replaceable></term>
+      <term><replaceable class="parameter">constraint_name</replaceable></term>
       <listitem>
        <para>
         Name of an existing constraint to drop.
@@ -449,7 +449,7 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceab
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">trigger_name</replaceable></term>
+      <term><replaceable class="parameter">trigger_name</replaceable></term>
       <listitem>
        <para>
         Name of a single trigger to disable or enable.
@@ -480,7 +480,7 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceab
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">parent_table</replaceable></term>
+      <term><replaceable class="parameter">parent_table</replaceable></term>
       <listitem>
        <para>
         A parent table to associate or de-associate with this foreign table.
@@ -489,7 +489,7 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceab
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">new_owner</replaceable></term>
+      <term><replaceable class="parameter">new_owner</replaceable></term>
       <listitem>
        <para>
         The user name of the new owner of the table.
@@ -498,7 +498,7 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceab
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">new_schema</replaceable></term>
+      <term><replaceable class="parameter">new_schema</replaceable></term>
       <listitem>
        <para>
         The name of the schema to which the table will be moved.

@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP STATISTICS [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ...]
+DROP STATISTICS [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [, ...]
 </synopsis>
  </refsynopsisdiv>
 
@@ -51,7 +51,7 @@ DROP STATISTICS [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> 
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">name</replaceable></term>
+    <term><replaceable class="parameter">name</replaceable></term>
     <listitem>
      <para>
       The name (optionally schema-qualified) of the statistics object to drop.

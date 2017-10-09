@@ -31,7 +31,7 @@ ALTER SEQUENCE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
     [ RESTART [ [ WITH ] <replaceable class="parameter">restart</replaceable> ] ]
     [ CACHE <replaceable class="parameter">cache</replaceable> ] [ [ NO ] CYCLE ]
     [ OWNED BY { <replaceable class="parameter">table_name</replaceable>.<replaceable class="parameter">column_name</replaceable> | NONE } ]
-ALTER SEQUENCE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> OWNER TO { <replaceable class="PARAMETER">new_owner</replaceable> | CURRENT_USER | SESSION_USER }
+ALTER SEQUENCE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> OWNER TO { <replaceable class="parameter">new_owner</replaceable> | CURRENT_USER | SESSION_USER }
 ALTER SEQUENCE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> RENAME TO <replaceable class="parameter">new_name</replaceable>
 ALTER SEQUENCE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> SET SCHEMA <replaceable class="parameter">new_schema</replaceable>
 </synopsis>
@@ -256,7 +256,7 @@ ALTER SEQUENCE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> S
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">new_owner</replaceable></term>
+    <term><replaceable class="parameter">new_owner</replaceable></term>
     <listitem>
      <para>
       The user name of the new owner of the sequence.

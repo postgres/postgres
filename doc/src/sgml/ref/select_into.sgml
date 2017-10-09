@@ -76,7 +76,7 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="parameter">expression</replac
   </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">new_table</replaceable></term>
+    <term><replaceable class="parameter">new_table</replaceable></term>
     <listitem>
      <para>
       The name (optionally schema-qualified) of the table to be created.

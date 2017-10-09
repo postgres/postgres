@@ -23,7 +23,7 @@ PostgreSQL documentation
 <synopsis>
 CREATE SERVER [IF NOT EXISTS] <replaceable class="parameter">server_name</replaceable> [ TYPE '<replaceable class="parameter">server_type</replaceable>' ] [ VERSION '<replaceable class="parameter">server_version</replaceable>' ]
     FOREIGN DATA WRAPPER <replaceable class="parameter">fdw_name</replaceable>
-    [ OPTIONS ( <replaceable class="PARAMETER">option</replaceable> '<replaceable class="PARAMETER">value</replaceable>' [, ... ] ) ]
+    [ OPTIONS ( <replaceable class="parameter">option</replaceable> '<replaceable class="parameter">value</replaceable>' [, ... ] ) ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -105,7 +105,7 @@ CREATE SERVER [IF NOT EXISTS] <replaceable class="parameter">server_name</replac
    </varlistentry>
 
    <varlistentry>
-    <term><literal>OPTIONS ( <replaceable class="PARAMETER">option</replaceable> '<replaceable class="PARAMETER">value</replaceable>' [, ... ] )</literal></term>
+    <term><literal>OPTIONS ( <replaceable class="parameter">option</replaceable> '<replaceable class="parameter">value</replaceable>' [, ... ] )</literal></term>
     <listitem>
      <para>
       This clause specifies the options for the server.  The options

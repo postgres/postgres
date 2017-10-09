@@ -22,59 +22,59 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 CREATE AGGREGATE <replaceable class="parameter">name</replaceable> ( [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">arg_data_type</replaceable> [ , ... ] ) (
-    SFUNC = <replaceable class="PARAMETER">sfunc</replaceable>,
-    STYPE = <replaceable class="PARAMETER">state_data_type</replaceable>
-    [ , SSPACE = <replaceable class="PARAMETER">state_data_size</replaceable> ]
-    [ , FINALFUNC = <replaceable class="PARAMETER">ffunc</replaceable> ]
+    SFUNC = <replaceable class="parameter">sfunc</replaceable>,
+    STYPE = <replaceable class="parameter">state_data_type</replaceable>
+    [ , SSPACE = <replaceable class="parameter">state_data_size</replaceable> ]
+    [ , FINALFUNC = <replaceable class="parameter">ffunc</replaceable> ]
     [ , FINALFUNC_EXTRA ]
-    [ , COMBINEFUNC = <replaceable class="PARAMETER">combinefunc</replaceable> ]
-    [ , SERIALFUNC = <replaceable class="PARAMETER">serialfunc</replaceable> ]
-    [ , DESERIALFUNC = <replaceable class="PARAMETER">deserialfunc</replaceable> ]
-    [ , INITCOND = <replaceable class="PARAMETER">initial_condition</replaceable> ]
-    [ , MSFUNC = <replaceable class="PARAMETER">msfunc</replaceable> ]
-    [ , MINVFUNC = <replaceable class="PARAMETER">minvfunc</replaceable> ]
-    [ , MSTYPE = <replaceable class="PARAMETER">mstate_data_type</replaceable> ]
-    [ , MSSPACE = <replaceable class="PARAMETER">mstate_data_size</replaceable> ]
-    [ , MFINALFUNC = <replaceable class="PARAMETER">mffunc</replaceable> ]
+    [ , COMBINEFUNC = <replaceable class="parameter">combinefunc</replaceable> ]
+    [ , SERIALFUNC = <replaceable class="parameter">serialfunc</replaceable> ]
+    [ , DESERIALFUNC = <replaceable class="parameter">deserialfunc</replaceable> ]
+    [ , INITCOND = <replaceable class="parameter">initial_condition</replaceable> ]
+    [ , MSFUNC = <replaceable class="parameter">msfunc</replaceable> ]
+    [ , MINVFUNC = <replaceable class="parameter">minvfunc</replaceable> ]
+    [ , MSTYPE = <replaceable class="parameter">mstate_data_type</replaceable> ]
+    [ , MSSPACE = <replaceable class="parameter">mstate_data_size</replaceable> ]
+    [ , MFINALFUNC = <replaceable class="parameter">mffunc</replaceable> ]
     [ , MFINALFUNC_EXTRA ]
-    [ , MINITCOND = <replaceable class="PARAMETER">minitial_condition</replaceable> ]
-    [ , SORTOP = <replaceable class="PARAMETER">sort_operator</replaceable> ]
+    [ , MINITCOND = <replaceable class="parameter">minitial_condition</replaceable> ]
+    [ , SORTOP = <replaceable class="parameter">sort_operator</replaceable> ]
     [ , PARALLEL = { SAFE | RESTRICTED | UNSAFE } ]
 )
 
 CREATE AGGREGATE <replaceable class="parameter">name</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">arg_data_type</replaceable> [ , ... ] ]
                         ORDER BY [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">arg_data_type</replaceable> [ , ... ] ) (
-    SFUNC = <replaceable class="PARAMETER">sfunc</replaceable>,
-    STYPE = <replaceable class="PARAMETER">state_data_type</replaceable>
-    [ , SSPACE = <replaceable class="PARAMETER">state_data_size</replaceable> ]
-    [ , FINALFUNC = <replaceable class="PARAMETER">ffunc</replaceable> ]
+    SFUNC = <replaceable class="parameter">sfunc</replaceable>,
+    STYPE = <replaceable class="parameter">state_data_type</replaceable>
+    [ , SSPACE = <replaceable class="parameter">state_data_size</replaceable> ]
+    [ , FINALFUNC = <replaceable class="parameter">ffunc</replaceable> ]
     [ , FINALFUNC_EXTRA ]
-    [ , INITCOND = <replaceable class="PARAMETER">initial_condition</replaceable> ]
+    [ , INITCOND = <replaceable class="parameter">initial_condition</replaceable> ]
     [ , PARALLEL = { SAFE | RESTRICTED | UNSAFE } ]
     [ , HYPOTHETICAL ]
 )
 
 <phrase>or the old syntax</phrase>
 
-CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> (
-    BASETYPE = <replaceable class="PARAMETER">base_type</replaceable>,
-    SFUNC = <replaceable class="PARAMETER">sfunc</replaceable>,
-    STYPE = <replaceable class="PARAMETER">state_data_type</replaceable>
-    [ , SSPACE = <replaceable class="PARAMETER">state_data_size</replaceable> ]
-    [ , FINALFUNC = <replaceable class="PARAMETER">ffunc</replaceable> ]
+CREATE AGGREGATE <replaceable class="parameter">name</replaceable> (
+    BASETYPE = <replaceable class="parameter">base_type</replaceable>,
+    SFUNC = <replaceable class="parameter">sfunc</replaceable>,
+    STYPE = <replaceable class="parameter">state_data_type</replaceable>
+    [ , SSPACE = <replaceable class="parameter">state_data_size</replaceable> ]
+    [ , FINALFUNC = <replaceable class="parameter">ffunc</replaceable> ]
     [ , FINALFUNC_EXTRA ]
-    [ , COMBINEFUNC = <replaceable class="PARAMETER">combinefunc</replaceable> ]
-    [ , SERIALFUNC = <replaceable class="PARAMETER">serialfunc</replaceable> ]
-    [ , DESERIALFUNC = <replaceable class="PARAMETER">deserialfunc</replaceable> ]
-    [ , INITCOND = <replaceable class="PARAMETER">initial_condition</replaceable> ]
-    [ , MSFUNC = <replaceable class="PARAMETER">msfunc</replaceable> ]
-    [ , MINVFUNC = <replaceable class="PARAMETER">minvfunc</replaceable> ]
-    [ , MSTYPE = <replaceable class="PARAMETER">mstate_data_type</replaceable> ]
-    [ , MSSPACE = <replaceable class="PARAMETER">mstate_data_size</replaceable> ]
-    [ , MFINALFUNC = <replaceable class="PARAMETER">mffunc</replaceable> ]
+    [ , COMBINEFUNC = <replaceable class="parameter">combinefunc</replaceable> ]
+    [ , SERIALFUNC = <replaceable class="parameter">serialfunc</replaceable> ]
+    [ , DESERIALFUNC = <replaceable class="parameter">deserialfunc</replaceable> ]
+    [ , INITCOND = <replaceable class="parameter">initial_condition</replaceable> ]
+    [ , MSFUNC = <replaceable class="parameter">msfunc</replaceable> ]
+    [ , MINVFUNC = <replaceable class="parameter">minvfunc</replaceable> ]
+    [ , MSTYPE = <replaceable class="parameter">mstate_data_type</replaceable> ]
+    [ , MSSPACE = <replaceable class="parameter">mstate_data_size</replaceable> ]
+    [ , MFINALFUNC = <replaceable class="parameter">mffunc</replaceable> ]
     [ , MFINALFUNC_EXTRA ]
-    [ , MINITCOND = <replaceable class="PARAMETER">minitial_condition</replaceable> ]
-    [ , SORTOP = <replaceable class="PARAMETER">sort_operator</replaceable> ]
+    [ , MINITCOND = <replaceable class="parameter">minitial_condition</replaceable> ]
+    [ , SORTOP = <replaceable class="parameter">sort_operator</replaceable> ]
 )
 </synopsis>
  </refsynopsisdiv>
@@ -112,19 +112,19 @@ CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> (
    A simple aggregate function is made from one or two ordinary
    functions:
    a state transition function
-   <replaceable class="PARAMETER">sfunc</replaceable>,
+   <replaceable class="parameter">sfunc</replaceable>,
    and an optional final calculation function
-   <replaceable class="PARAMETER">ffunc</replaceable>.
+   <replaceable class="parameter">ffunc</replaceable>.
    These are used as follows:
 <programlisting>
-<replaceable class="PARAMETER">sfunc</replaceable>( internal-state, next-data-values ) ---> next-internal-state
-<replaceable class="PARAMETER">ffunc</replaceable>( internal-state ) ---> aggregate-value
+<replaceable class="parameter">sfunc</replaceable>( internal-state, next-data-values ) ---> next-internal-state
+<replaceable class="parameter">ffunc</replaceable>( internal-state ) ---> aggregate-value
 </programlisting>
   </para>
 
   <para>
    <productname>PostgreSQL</productname> creates a temporary variable
-   of data type <replaceable class="PARAMETER">stype</replaceable>
+   of data type <replaceable class="parameter">stype</replaceable>
    to hold the current internal state of the aggregate.  At each input row,
    the aggregate argument value(s) are calculated and
    the state transition function is invoked with the current state value
@@ -155,9 +155,9 @@ CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> (
    all-nonnull input values.
    This is handy for implementing aggregates like <function>max</function>.
    Note that this behavior is only available when
-   <replaceable class="PARAMETER">state_data_type</replaceable>
+   <replaceable class="parameter">state_data_type</replaceable>
    is the same as the first
-   <replaceable class="PARAMETER">arg_data_type</replaceable>.
+   <replaceable class="parameter">arg_data_type</replaceable>.
    When these types are different, you must supply a nonnull initial
    condition or use a nonstrict transition function.
   </para>
@@ -224,7 +224,7 @@ CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> (
    An aggregate can optionally support <firstterm>partial aggregation</>,
    as described in <xref linkend="xaggr-partial-aggregates">.
    This requires specifying the <literal>COMBINEFUNC</> parameter.
-   If the <replaceable class="PARAMETER">state_data_type</replaceable>
+   If the <replaceable class="parameter">state_data_type</replaceable>
    is <type>internal</>, it's usually also appropriate to provide the
    <literal>SERIALFUNC</> and <literal>DESERIALFUNC</> parameters so that
    parallel aggregation is possible.  Note that the aggregate must also be
@@ -268,7 +268,7 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
 
   <variablelist>
    <varlistentry>
-    <term><replaceable class="PARAMETER">name</replaceable></term>
+    <term><replaceable class="parameter">name</replaceable></term>
     <listitem>
      <para>
       The name (optionally schema-qualified) of the aggregate function
@@ -302,7 +302,7 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">arg_data_type</replaceable></term>
+    <term><replaceable class="parameter">arg_data_type</replaceable></term>
     <listitem>
      <para>
       An input data type on which this aggregate function operates.
@@ -314,7 +314,7 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">base_type</replaceable></term>
+    <term><replaceable class="parameter">base_type</replaceable></term>
     <listitem>
      <para>
       In the old syntax for <command>CREATE AGGREGATE</>, the input data type
@@ -329,18 +329,18 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">sfunc</replaceable></term>
+    <term><replaceable class="parameter">sfunc</replaceable></term>
     <listitem>
      <para>
       The name of the state transition function to be called for each
-      input row.  For a normal <replaceable class="PARAMETER">N</>-argument
-      aggregate function, the <replaceable class="PARAMETER">sfunc</>
-      must take <replaceable class="PARAMETER">N</>+1 arguments,
+      input row.  For a normal <replaceable class="parameter">N</>-argument
+      aggregate function, the <replaceable class="parameter">sfunc</>
+      must take <replaceable class="parameter">N</>+1 arguments,
       the first being of type <replaceable
-      class="PARAMETER">state_data_type</replaceable> and the rest
+      class="parameter">state_data_type</replaceable> and the rest
       matching the declared input data type(s) of the aggregate.
       The function must return a value of type <replaceable
-      class="PARAMETER">state_data_type</replaceable>.  This function
+      class="parameter">state_data_type</replaceable>.  This function
       takes the current state value and the current input data value(s),
       and returns the next state value.
      </para>
@@ -355,7 +355,7 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">state_data_type</replaceable></term>
+    <term><replaceable class="parameter">state_data_type</replaceable></term>
     <listitem>
      <para>
       The data type for the aggregate's state value.
@@ -364,7 +364,7 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">state_data_size</replaceable></term>
+    <term><replaceable class="parameter">state_data_size</replaceable></term>
     <listitem>
      <para>
       The approximate average size (in bytes) of the aggregate's state value.
@@ -380,19 +380,19 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">ffunc</replaceable></term>
+    <term><replaceable class="parameter">ffunc</replaceable></term>
     <listitem>
      <para>
       The name of the final function called to compute the aggregate's
       result after all input rows have been traversed.
       For a normal aggregate, this function
       must take a single argument of type <replaceable
-      class="PARAMETER">state_data_type</replaceable>.  The return
+      class="parameter">state_data_type</replaceable>.  The return
       data type of the aggregate is defined as the return type of this
-      function.  If <replaceable class="PARAMETER">ffunc</replaceable>
+      function.  If <replaceable class="parameter">ffunc</replaceable>
       is not specified, then the ending state value is used as the
       aggregate's result, and the return type is <replaceable
-      class="PARAMETER">state_data_type</replaceable>.
+      class="parameter">state_data_type</replaceable>.
      </para>
 
      <para>
@@ -413,30 +413,30 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">combinefunc</replaceable></term>
+    <term><replaceable class="parameter">combinefunc</replaceable></term>
     <listitem>
      <para>
-      The <replaceable class="PARAMETER">combinefunc</replaceable> function
+      The <replaceable class="parameter">combinefunc</replaceable> function
       may optionally be specified to allow the aggregate function to support
       partial aggregation.  If provided,
-      the <replaceable class="PARAMETER">combinefunc</replaceable> must
-      combine two <replaceable class="PARAMETER">state_data_type</replaceable>
+      the <replaceable class="parameter">combinefunc</replaceable> must
+      combine two <replaceable class="parameter">state_data_type</replaceable>
       values, each containing the result of aggregation over some subset of
       the input values, to produce a
-      new <replaceable class="PARAMETER">state_data_type</replaceable> that
+      new <replaceable class="parameter">state_data_type</replaceable> that
       represents the result of aggregating over both sets of inputs.  This
       function can be thought of as
-      an <replaceable class="PARAMETER">sfunc</replaceable>, where instead of
+      an <replaceable class="parameter">sfunc</replaceable>, where instead of
       acting upon an individual input row and adding it to the running
       aggregate state, it adds another aggregate state to the running state.
      </para>
 
      <para>
-      The <replaceable class="PARAMETER">combinefunc</replaceable> must be
+      The <replaceable class="parameter">combinefunc</replaceable> must be
       declared as taking two arguments of
-      the <replaceable class="PARAMETER">state_data_type</replaceable> and
+      the <replaceable class="parameter">state_data_type</replaceable> and
       returning a value of
-      the <replaceable class="PARAMETER">state_data_type</replaceable>.
+      the <replaceable class="parameter">state_data_type</replaceable>.
       Optionally this function may be <quote>strict</quote>. In this case the
       function will not be called when either of the input states are null;
       the other state will be taken as the correct result.
@@ -444,11 +444,11 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
 
      <para>
       For aggregate functions
-      whose <replaceable class="PARAMETER">state_data_type</replaceable>
+      whose <replaceable class="parameter">state_data_type</replaceable>
       is <type>internal</type>,
-      the <replaceable class="PARAMETER">combinefunc</replaceable> must not
+      the <replaceable class="parameter">combinefunc</replaceable> must not
       be strict. In this case
-      the <replaceable class="PARAMETER">combinefunc</replaceable> must
+      the <replaceable class="parameter">combinefunc</replaceable> must
       ensure that null states are handled correctly and that the state being
       returned is properly stored in the aggregate memory context.
      </para>
@@ -456,28 +456,28 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">serialfunc</replaceable></term>
+    <term><replaceable class="parameter">serialfunc</replaceable></term>
     <listitem>
      <para>
       An aggregate function
-      whose <replaceable class="PARAMETER">state_data_type</replaceable>
+      whose <replaceable class="parameter">state_data_type</replaceable>
       is <type>internal</> can participate in parallel aggregation only if it
-      has a <replaceable class="PARAMETER">serialfunc</replaceable> function,
+      has a <replaceable class="parameter">serialfunc</replaceable> function,
       which must serialize the aggregate state into a <type>bytea</> value for
       transmission to another process.  This function must take a single
       argument of type <type>internal</> and return type <type>bytea</>.  A
-      corresponding <replaceable class="PARAMETER">deserialfunc</replaceable>
+      corresponding <replaceable class="parameter">deserialfunc</replaceable>
       is also required.
      </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">deserialfunc</replaceable></term>
+    <term><replaceable class="parameter">deserialfunc</replaceable></term>
     <listitem>
      <para>
       Deserialize a previously serialized aggregate state back into
-      <replaceable class="PARAMETER">state_data_type</replaceable>. This
+      <replaceable class="parameter">state_data_type</replaceable>. This
       function must take two arguments of types <type>bytea</>
       and <type>internal</>, and produce a result of type <type>internal</>.
       (Note: the second, <type>internal</> argument is unused, but is required
@@ -487,19 +487,19 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">initial_condition</replaceable></term>
+    <term><replaceable class="parameter">initial_condition</replaceable></term>
     <listitem>
      <para>
       The initial setting for the state value.  This must be a string
       constant in the form accepted for the data type <replaceable
-      class="PARAMETER">state_data_type</replaceable>.  If not
+      class="parameter">state_data_type</replaceable>.  If not
       specified, the state value starts out null.
      </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">msfunc</replaceable></term>
+    <term><replaceable class="parameter">msfunc</replaceable></term>
     <listitem>
      <para>
       The name of the forward state transition function to be called for each
@@ -512,7 +512,7 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">minvfunc</replaceable></term>
+    <term><replaceable class="parameter">minvfunc</replaceable></term>
     <listitem>
      <para>
       The name of the inverse state transition function to be used in
@@ -526,7 +526,7 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">mstate_data_type</replaceable></term>
+    <term><replaceable class="parameter">mstate_data_type</replaceable></term>
     <listitem>
      <para>
       The data type for the aggregate's state value, when using
@@ -536,7 +536,7 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">mstate_data_size</replaceable></term>
+    <term><replaceable class="parameter">mstate_data_size</replaceable></term>
     <listitem>
      <para>
       The approximate average size (in bytes) of the aggregate's state
@@ -547,7 +547,7 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">mffunc</replaceable></term>
+    <term><replaceable class="parameter">mffunc</replaceable></term>
     <listitem>
      <para>
       The name of the final function called to compute the aggregate's
@@ -564,7 +564,7 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">minitial_condition</replaceable></term>
+    <term><replaceable class="parameter">minitial_condition</replaceable></term>
     <listitem>
      <para>
       The initial setting for the state value, when using moving-aggregate
@@ -574,7 +574,7 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">sort_operator</replaceable></term>
+    <term><replaceable class="parameter">sort_operator</replaceable></term>
     <listitem>
      <para>
       The associated sort operator for a <function>MIN</>- or

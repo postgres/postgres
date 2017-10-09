@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP TABLESPACE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
+DROP TABLESPACE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -60,7 +60,7 @@ DROP TABLESPACE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">name</replaceable></term>
+    <term><replaceable class="parameter">name</replaceable></term>
     <listitem>
      <para>
       The name of a tablespace.

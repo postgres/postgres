@@ -24,7 +24,7 @@ PostgreSQL documentation
 CREATE FOREIGN DATA WRAPPER <replaceable class="parameter">name</replaceable>
     [ HANDLER <replaceable class="parameter">handler_function</replaceable> | NO HANDLER ]
     [ VALIDATOR <replaceable class="parameter">validator_function</replaceable> | NO VALIDATOR ]
-    [ OPTIONS ( <replaceable class="PARAMETER">option</replaceable> '<replaceable class="PARAMETER">value</replaceable>' [, ... ] ) ]
+    [ OPTIONS ( <replaceable class="parameter">option</replaceable> '<replaceable class="parameter">value</replaceable>' [, ... ] ) ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -100,7 +100,7 @@ CREATE FOREIGN DATA WRAPPER <replaceable class="parameter">name</replaceable>
    </varlistentry>
 
    <varlistentry>
-    <term><literal>OPTIONS ( <replaceable class="PARAMETER">option</replaceable> '<replaceable class="PARAMETER">value</replaceable>' [, ... ] )</literal></term>
+    <term><literal>OPTIONS ( <replaceable class="parameter">option</replaceable> '<replaceable class="parameter">value</replaceable>' [, ... ] )</literal></term>
     <listitem>
      <para>
       This clause specifies options for the new foreign-data wrapper.

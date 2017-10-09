@@ -23,7 +23,7 @@ PostgreSQL documentation
 <synopsis>
 CREATE USER MAPPING [IF NOT EXISTS] FOR { <replaceable class="parameter">user_name</replaceable> | USER | CURRENT_USER | PUBLIC }
     SERVER <replaceable class="parameter">server_name</replaceable>
-    [ OPTIONS ( <replaceable class="PARAMETER">option</replaceable> '<replaceable class="PARAMETER">value</replaceable>' [ , ... ] ) ]
+    [ OPTIONS ( <replaceable class="parameter">option</replaceable> '<replaceable class="parameter">value</replaceable>' [ , ... ] ) ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -86,7 +86,7 @@ CREATE USER MAPPING [IF NOT EXISTS] FOR { <replaceable class="parameter">user_na
    </varlistentry>
 
    <varlistentry>
-    <term><literal>OPTIONS ( <replaceable class="PARAMETER">option</replaceable> '<replaceable class="PARAMETER">value</replaceable>' [, ... ] )</literal></term>
+    <term><literal>OPTIONS ( <replaceable class="parameter">option</replaceable> '<replaceable class="parameter">value</replaceable>' [, ... ] )</literal></term>
     <listitem>
      <para>
       This clause specifies the options of the user mapping.  The

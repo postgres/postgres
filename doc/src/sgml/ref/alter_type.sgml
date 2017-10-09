@@ -23,19 +23,19 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ALTER TYPE <replaceable class="PARAMETER">name</replaceable> <replaceable class="PARAMETER">action</replaceable> [, ... ]
-ALTER TYPE <replaceable class="PARAMETER">name</replaceable> OWNER TO { <replaceable class="PARAMETER">new_owner</replaceable> | CURRENT_USER | SESSION_USER }
-ALTER TYPE <replaceable class="PARAMETER">name</replaceable> RENAME ATTRIBUTE <replaceable class="PARAMETER">attribute_name</replaceable> TO <replaceable class="PARAMETER">new_attribute_name</replaceable> [ CASCADE | RESTRICT ]
-ALTER TYPE <replaceable class="PARAMETER">name</replaceable> RENAME TO <replaceable class="PARAMETER">new_name</replaceable>
-ALTER TYPE <replaceable class="PARAMETER">name</replaceable> SET SCHEMA <replaceable class="PARAMETER">new_schema</replaceable>
-ALTER TYPE <replaceable class="PARAMETER">name</replaceable> ADD VALUE [ IF NOT EXISTS ] <replaceable class="PARAMETER">new_enum_value</replaceable> [ { BEFORE | AFTER } <replaceable class="PARAMETER">neighbor_enum_value</replaceable> ]
-ALTER TYPE <replaceable class="PARAMETER">name</replaceable> RENAME VALUE <replaceable class="PARAMETER">existing_enum_value</replaceable> TO <replaceable class="PARAMETER">new_enum_value</replaceable>
+ALTER TYPE <replaceable class="parameter">name</replaceable> <replaceable class="parameter">action</replaceable> [, ... ]
+ALTER TYPE <replaceable class="parameter">name</replaceable> OWNER TO { <replaceable class="parameter">new_owner</replaceable> | CURRENT_USER | SESSION_USER }
+ALTER TYPE <replaceable class="parameter">name</replaceable> RENAME ATTRIBUTE <replaceable class="parameter">attribute_name</replaceable> TO <replaceable class="parameter">new_attribute_name</replaceable> [ CASCADE | RESTRICT ]
+ALTER TYPE <replaceable class="parameter">name</replaceable> RENAME TO <replaceable class="parameter">new_name</replaceable>
+ALTER TYPE <replaceable class="parameter">name</replaceable> SET SCHEMA <replaceable class="parameter">new_schema</replaceable>
+ALTER TYPE <replaceable class="parameter">name</replaceable> ADD VALUE [ IF NOT EXISTS ] <replaceable class="parameter">new_enum_value</replaceable> [ { BEFORE | AFTER } <replaceable class="parameter">neighbor_enum_value</replaceable> ]
+ALTER TYPE <replaceable class="parameter">name</replaceable> RENAME VALUE <replaceable class="parameter">existing_enum_value</replaceable> TO <replaceable class="parameter">new_enum_value</replaceable>
 
-<phrase>where <replaceable class="PARAMETER">action</replaceable> is one of:</phrase>
+<phrase>where <replaceable class="parameter">action</replaceable> is one of:</phrase>
 
-    ADD ATTRIBUTE <replaceable class="PARAMETER">attribute_name</replaceable> <replaceable class="PARAMETER">data_type</replaceable> [ COLLATE <replaceable class="PARAMETER">collation</replaceable> ] [ CASCADE | RESTRICT ]
-    DROP ATTRIBUTE [ IF EXISTS ] <replaceable class="PARAMETER">attribute_name</replaceable> [ CASCADE | RESTRICT ]
-    ALTER ATTRIBUTE <replaceable class="PARAMETER">attribute_name</replaceable> [ SET DATA ] TYPE <replaceable class="PARAMETER">data_type</replaceable> [ COLLATE <replaceable class="PARAMETER">collation</replaceable> ] [ CASCADE | RESTRICT ]
+    ADD ATTRIBUTE <replaceable class="parameter">attribute_name</replaceable> <replaceable class="parameter">data_type</replaceable> [ COLLATE <replaceable class="parameter">collation</replaceable> ] [ CASCADE | RESTRICT ]
+    DROP ATTRIBUTE [ IF EXISTS ] <replaceable class="parameter">attribute_name</replaceable> [ CASCADE | RESTRICT ]
+    ALTER ATTRIBUTE <replaceable class="parameter">attribute_name</replaceable> [ SET DATA ] TYPE <replaceable class="parameter">data_type</replaceable> [ COLLATE <replaceable class="parameter">collation</replaceable> ] [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -166,7 +166,7 @@ ALTER TYPE <replaceable class="PARAMETER">name</replaceable> RENAME VALUE <repla
    <para>
     <variablelist>
      <varlistentry>
-      <term><replaceable class="PARAMETER">name</replaceable></term>
+      <term><replaceable class="parameter">name</replaceable></term>
       <listitem>
        <para>
         The name (possibly schema-qualified) of an existing type to
@@ -176,7 +176,7 @@ ALTER TYPE <replaceable class="PARAMETER">name</replaceable> RENAME VALUE <repla
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">new_name</replaceable></term>
+      <term><replaceable class="parameter">new_name</replaceable></term>
       <listitem>
        <para>
         The new name for the type.
@@ -185,7 +185,7 @@ ALTER TYPE <replaceable class="PARAMETER">name</replaceable> RENAME VALUE <repla
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">new_owner</replaceable></term>
+      <term><replaceable class="parameter">new_owner</replaceable></term>
       <listitem>
        <para>
         The user name of the new owner of the type.
@@ -194,7 +194,7 @@ ALTER TYPE <replaceable class="PARAMETER">name</replaceable> RENAME VALUE <repla
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">new_schema</replaceable></term>
+      <term><replaceable class="parameter">new_schema</replaceable></term>
       <listitem>
        <para>
         The new schema for the type.
@@ -203,7 +203,7 @@ ALTER TYPE <replaceable class="PARAMETER">name</replaceable> RENAME VALUE <repla
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">attribute_name</replaceable></term>
+      <term><replaceable class="parameter">attribute_name</replaceable></term>
       <listitem>
        <para>
         The name of the attribute to add, alter, or drop.
@@ -212,7 +212,7 @@ ALTER TYPE <replaceable class="PARAMETER">name</replaceable> RENAME VALUE <repla
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">new_attribute_name</replaceable></term>
+      <term><replaceable class="parameter">new_attribute_name</replaceable></term>
       <listitem>
        <para>
         The new name of the attribute to be renamed.
@@ -221,7 +221,7 @@ ALTER TYPE <replaceable class="PARAMETER">name</replaceable> RENAME VALUE <repla
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">data_type</replaceable></term>
+      <term><replaceable class="parameter">data_type</replaceable></term>
       <listitem>
        <para>
         The data type of the attribute to add, or the new type of the
@@ -231,7 +231,7 @@ ALTER TYPE <replaceable class="PARAMETER">name</replaceable> RENAME VALUE <repla
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">new_enum_value</replaceable></term>
+      <term><replaceable class="parameter">new_enum_value</replaceable></term>
       <listitem>
        <para>
         The new value to be added to an enum type's list of values,
@@ -242,7 +242,7 @@ ALTER TYPE <replaceable class="PARAMETER">name</replaceable> RENAME VALUE <repla
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">neighbor_enum_value</replaceable></term>
+      <term><replaceable class="parameter">neighbor_enum_value</replaceable></term>
       <listitem>
        <para>
         The existing enum value that the new value should be added immediately
@@ -253,7 +253,7 @@ ALTER TYPE <replaceable class="PARAMETER">name</replaceable> RENAME VALUE <repla
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">existing_enum_value</replaceable></term>
+      <term><replaceable class="parameter">existing_enum_value</replaceable></term>
       <listitem>
        <para>
         The existing enum value that should be renamed.

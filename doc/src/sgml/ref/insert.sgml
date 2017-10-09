@@ -22,25 +22,25 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 [ WITH [ RECURSIVE ] <replaceable class="parameter">with_query</replaceable> [, ...] ]
-INSERT INTO <replaceable class="PARAMETER">table_name</replaceable> [ AS <replaceable class="parameter">alias</replaceable> ] [ ( <replaceable class="PARAMETER">column_name</replaceable> [, ...] ) ]
+INSERT INTO <replaceable class="parameter">table_name</replaceable> [ AS <replaceable class="parameter">alias</replaceable> ] [ ( <replaceable class="parameter">column_name</replaceable> [, ...] ) ]
     [ OVERRIDING { SYSTEM | USER} VALUE ]
-    { DEFAULT VALUES | VALUES ( { <replaceable class="PARAMETER">expression</replaceable> | DEFAULT } [, ...] ) [, ...] | <replaceable class="PARAMETER">query</replaceable> }
+    { DEFAULT VALUES | VALUES ( { <replaceable class="parameter">expression</replaceable> | DEFAULT } [, ...] ) [, ...] | <replaceable class="parameter">query</replaceable> }
     [ ON CONFLICT [ <replaceable class="parameter">conflict_target</replaceable> ] <replaceable class="parameter">conflict_action</replaceable> ]
     [ RETURNING * | <replaceable class="parameter">output_expression</replaceable> [ [ AS ] <replaceable class="parameter">output_name</replaceable> ] [, ...] ]
 
 <phrase>where <replaceable class="parameter">conflict_target</replaceable> can be one of:</phrase>
 
-    ( { <replaceable class="parameter">index_column_name</replaceable> | ( <replaceable class="parameter">index_expression</replaceable> ) } [ COLLATE <replaceable class="parameter">collation</replaceable> ] [ <replaceable class="parameter">opclass</replaceable> ] [, ...] ) [ WHERE <replaceable class="PARAMETER">index_predicate</replaceable> ]
-    ON CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable>
+    ( { <replaceable class="parameter">index_column_name</replaceable> | ( <replaceable class="parameter">index_expression</replaceable> ) } [ COLLATE <replaceable class="parameter">collation</replaceable> ] [ <replaceable class="parameter">opclass</replaceable> ] [, ...] ) [ WHERE <replaceable class="parameter">index_predicate</replaceable> ]
+    ON CONSTRAINT <replaceable class="parameter">constraint_name</replaceable>
 
 <phrase>and <replaceable class="parameter">conflict_action</replaceable> is one of:</phrase>
 
     DO NOTHING
-    DO UPDATE SET { <replaceable class="PARAMETER">column_name</replaceable> = { <replaceable class="PARAMETER">expression</replaceable> | DEFAULT } |
-                    ( <replaceable class="PARAMETER">column_name</replaceable> [, ...] ) = [ ROW ] ( { <replaceable class="PARAMETER">expression</replaceable> | DEFAULT } [, ...] ) |
-                    ( <replaceable class="PARAMETER">column_name</replaceable> [, ...] ) = ( <replaceable class="PARAMETER">sub-SELECT</replaceable> )
+    DO UPDATE SET { <replaceable class="parameter">column_name</replaceable> = { <replaceable class="parameter">expression</replaceable> | DEFAULT } |
+                    ( <replaceable class="parameter">column_name</replaceable> [, ...] ) = [ ROW ] ( { <replaceable class="parameter">expression</replaceable> | DEFAULT } [, ...] ) |
+                    ( <replaceable class="parameter">column_name</replaceable> [, ...] ) = ( <replaceable class="parameter">sub-SELECT</replaceable> )
                   } [, ...]
-              [ WHERE <replaceable class="PARAMETER">condition</replaceable> ]
+              [ WHERE <replaceable class="parameter">condition</replaceable> ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -93,7 +93,7 @@ INSERT INTO <replaceable class="PARAMETER">table_name</replaceable> [ AS <replac
    inserted or updated will be returned.  For example, if a row was
    locked but not updated because an <literal>ON CONFLICT DO UPDATE
    ... WHERE</literal> clause <replaceable
-   class="PARAMETER">condition</replaceable> was not satisfied, the
+   class="parameter">condition</replaceable> was not satisfied, the
    row will not be returned.
   </para>
 
@@ -119,7 +119,7 @@ INSERT INTO <replaceable class="PARAMETER">table_name</replaceable> [ AS <replac
    Use of the <literal>RETURNING</> clause requires <literal>SELECT</>
    privilege on all columns mentioned in <literal>RETURNING</>.
    If you use the <replaceable
-   class="PARAMETER">query</replaceable> clause to insert rows from a
+   class="parameter">query</replaceable> clause to insert rows from a
    query, you of course need to have <literal>SELECT</literal> privilege on
    any table or column used in the query.
   </para>
@@ -160,7 +160,7 @@ INSERT INTO <replaceable class="PARAMETER">table_name</replaceable> [ AS <replac
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">table_name</replaceable></term>
+      <term><replaceable class="parameter">table_name</replaceable></term>
       <listitem>
        <para>
         The name (optionally schema-qualified) of an existing table.
@@ -173,7 +173,7 @@ INSERT INTO <replaceable class="PARAMETER">table_name</replaceable> [ AS <replac
       <listitem>
        <para>
         A substitute name for <replaceable
-        class="PARAMETER">table_name</replaceable>.  When an alias is
+        class="parameter">table_name</replaceable>.  When an alias is
         provided, it completely hides the actual name of the table.
         This is particularly useful when <literal>ON CONFLICT DO UPDATE</>
         targets a table named <varname>excluded</>, since that will otherwise
@@ -185,11 +185,11 @@ INSERT INTO <replaceable class="PARAMETER">table_name</replaceable> [ AS <replac
 
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">column_name</replaceable></term>
+      <term><replaceable class="parameter">column_name</replaceable></term>
       <listitem>
        <para>
         The name of a column in the table named by <replaceable
-        class="PARAMETER">table_name</replaceable>.  The column name
+        class="parameter">table_name</replaceable>.  The column name
         can be qualified with a subfield name or array subscript, if
         needed.  (Inserting into only some fields of a composite
         column leaves the other fields null.)  When referencing a
@@ -246,7 +246,7 @@ INSERT INTO <replaceable class="PARAMETER">table_name</replaceable> [ AS <replac
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">expression</replaceable></term>
+      <term><replaceable class="parameter">expression</replaceable></term>
       <listitem>
        <para>
         An expression or value to assign to the corresponding column.
@@ -265,7 +265,7 @@ INSERT INTO <replaceable class="PARAMETER">table_name</replaceable> [ AS <replac
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">query</replaceable></term>
+      <term><replaceable class="parameter">query</replaceable></term>
       <listitem>
        <para>
         A query (<command>SELECT</command> statement) that supplies the
@@ -277,14 +277,14 @@ INSERT INTO <replaceable class="PARAMETER">table_name</replaceable> [ AS <replac
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">output_expression</replaceable></term>
+      <term><replaceable class="parameter">output_expression</replaceable></term>
       <listitem>
        <para>
         An expression to be computed and returned by the
         <command>INSERT</> command after each row is inserted or
         updated. The expression can use any column names of the table
         named by <replaceable
-        class="PARAMETER">table_name</replaceable>.  Write
+        class="parameter">table_name</replaceable>.  Write
         <literal>*</> to return all columns of the inserted or updated
         row(s).
        </para>
@@ -292,7 +292,7 @@ INSERT INTO <replaceable class="PARAMETER">table_name</replaceable> [ AS <replac
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">output_name</replaceable></term>
+      <term><replaceable class="parameter">output_name</replaceable></term>
       <listitem>
        <para>
         A name to use for a returned column.
@@ -328,14 +328,14 @@ INSERT INTO <replaceable class="PARAMETER">table_name</replaceable> [ AS <replac
     <parameter>conflict_target</parameter> can perform
     <emphasis>unique index inference</emphasis>.  When performing
     inference, it consists of one or more <replaceable
-    class="PARAMETER">index_column_name</replaceable> columns and/or
-    <replaceable class="PARAMETER">index_expression</replaceable>
-    expressions, and an optional <replaceable class="PARAMETER">index_predicate</replaceable>.  All <replaceable
-    class="PARAMETER">table_name</replaceable> unique indexes that,
+    class="parameter">index_column_name</replaceable> columns and/or
+    <replaceable class="parameter">index_expression</replaceable>
+    expressions, and an optional <replaceable class="parameter">index_predicate</replaceable>.  All <replaceable
+    class="parameter">table_name</replaceable> unique indexes that,
     without regard to order, contain exactly the
     <parameter>conflict_target</parameter>-specified
     columns/expressions are inferred (chosen) as arbiter indexes.  If
-    an <replaceable class="PARAMETER">index_predicate</replaceable> is
+    an <replaceable class="parameter">index_predicate</replaceable> is
     specified, it must, as a further requirement for inference,
     satisfy arbiter indexes.  Note that this means a non-partial
     unique index (a unique index without a predicate) will be inferred
@@ -400,42 +400,42 @@ INSERT INTO <replaceable class="PARAMETER">table_name</replaceable> [ AS <replac
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">index_column_name</replaceable></term>
+      <term><replaceable class="parameter">index_column_name</replaceable></term>
       <listitem>
        <para>
         The name of a <replaceable
-        class="PARAMETER">table_name</replaceable> column.  Used to
+        class="parameter">table_name</replaceable> column.  Used to
         infer arbiter indexes.  Follows <command>CREATE
         INDEX</command> format.  <literal>SELECT</> privilege on
-        <replaceable class="PARAMETER">index_column_name</replaceable>
+        <replaceable class="parameter">index_column_name</replaceable>
         is required.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">index_expression</replaceable></term>
+      <term><replaceable class="parameter">index_expression</replaceable></term>
       <listitem>
        <para>
         Similar to <replaceable
-        class="PARAMETER">index_column_name</replaceable>, but used to
+        class="parameter">index_column_name</replaceable>, but used to
         infer expressions on <replaceable
-        class="PARAMETER">table_name</replaceable> columns appearing
+        class="parameter">table_name</replaceable> columns appearing
         within index definitions (not simple columns).  Follows
         <command>CREATE INDEX</command> format.  <literal>SELECT</>
         privilege on any column appearing within <replaceable
-        class="PARAMETER">index_expression</replaceable> is required.
+        class="parameter">index_expression</replaceable> is required.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">collation</replaceable></term>
+      <term><replaceable class="parameter">collation</replaceable></term>
       <listitem>
        <para>
         When specified, mandates that corresponding <replaceable
-        class="PARAMETER">index_column_name</replaceable> or
-        <replaceable class="PARAMETER">index_expression</replaceable>
+        class="parameter">index_column_name</replaceable> or
+        <replaceable class="parameter">index_expression</replaceable>
         use a particular collation in order to be matched during
         inference.  Typically this is omitted, as collations usually
         do not affect whether or not a constraint violation occurs.
@@ -445,12 +445,12 @@ INSERT INTO <replaceable class="PARAMETER">table_name</replaceable> [ AS <replac
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">opclass</replaceable></term>
+      <term><replaceable class="parameter">opclass</replaceable></term>
       <listitem>
        <para>
         When specified, mandates that corresponding <replaceable
-        class="PARAMETER">index_column_name</replaceable> or
-        <replaceable class="PARAMETER">index_expression</replaceable>
+        class="parameter">index_column_name</replaceable> or
+        <replaceable class="parameter">index_expression</replaceable>
         use particular operator class in order to be matched during
         inference.  Typically this is omitted,  as the
         <emphasis>equality</emphasis> semantics are often equivalent
@@ -463,7 +463,7 @@ INSERT INTO <replaceable class="PARAMETER">table_name</replaceable> [ AS <replac
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">index_predicate</replaceable></term>
+      <term><replaceable class="parameter">index_predicate</replaceable></term>
       <listitem>
        <para>
         Used to allow inference of partial unique indexes.  Any
@@ -471,13 +471,13 @@ INSERT INTO <replaceable class="PARAMETER">table_name</replaceable> [ AS <replac
         partial indexes) can be inferred.  Follows <command>CREATE
         INDEX</command> format.  <literal>SELECT</> privilege on any
         column appearing within <replaceable
-        class="PARAMETER">index_predicate</replaceable> is required.
+        class="parameter">index_predicate</replaceable> is required.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">constraint_name</replaceable></term>
+      <term><replaceable class="parameter">constraint_name</replaceable></term>
       <listitem>
        <para>
         Explicitly specifies an arbiter
@@ -488,7 +488,7 @@ INSERT INTO <replaceable class="PARAMETER">table_name</replaceable> [ AS <replac
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">condition</replaceable></term>
+      <term><replaceable class="parameter">condition</replaceable></term>
       <listitem>
        <para>
         An expression that returns a value of type
@@ -522,7 +522,7 @@ INSERT INTO <replaceable class="PARAMETER">table_name</replaceable> [ AS <replac
     <para>
      It is often preferable to use unique index inference rather than
      naming a constraint directly using <literal>ON CONFLICT ON
-     CONSTRAINT</literal> <replaceable class="PARAMETER">
+     CONSTRAINT</literal> <replaceable class="parameter">
      constraint_name</replaceable>.  Inference will continue to work
      correctly when the underlying index is replaced by another more
      or less equivalent index in an overlapping way, for example when
@@ -753,7 +753,7 @@ INSERT INTO distributors (did, dname) VALUES (10, 'Conrad International')
 
   <para>
    Possible limitations of the <replaceable
-   class="PARAMETER">query</replaceable> clause are documented under
+   class="parameter">query</replaceable> clause are documented under
    <xref linkend="sql-select">.
   </para>
  </refsect1>

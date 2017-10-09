@@ -26,14 +26,14 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CREATE [ CONSTRAINT ] TRIGGER <replaceable class="PARAMETER">name</replaceable> { BEFORE | AFTER | INSTEAD OF } { <replaceable class="PARAMETER">event</replaceable> [ OR ... ] }
-    ON <replaceable class="PARAMETER">table_name</replaceable>
+CREATE [ CONSTRAINT ] TRIGGER <replaceable class="parameter">name</replaceable> { BEFORE | AFTER | INSTEAD OF } { <replaceable class="parameter">event</replaceable> [ OR ... ] }
+    ON <replaceable class="parameter">table_name</replaceable>
     [ FROM <replaceable class="parameter">referenced_table_name</replaceable> ]
     [ NOT DEFERRABLE | [ DEFERRABLE ] [ INITIALLY IMMEDIATE | INITIALLY DEFERRED ] ]
-    [ REFERENCING { { OLD | NEW } TABLE [ AS ] <replaceable class="PARAMETER">transition_relation_name</replaceable> } [ ... ] ]
+    [ REFERENCING { { OLD | NEW } TABLE [ AS ] <replaceable class="parameter">transition_relation_name</replaceable> } [ ... ] ]
     [ FOR [ EACH ] { ROW | STATEMENT } ]
     [ WHEN ( <replaceable class="parameter">condition</replaceable> ) ]
-    EXECUTE PROCEDURE <replaceable class="PARAMETER">function_name</replaceable> ( <replaceable class="PARAMETER">arguments</replaceable> )
+    EXECUTE PROCEDURE <replaceable class="parameter">function_name</replaceable> ( <replaceable class="parameter">arguments</replaceable> )
 
 <phrase>where <replaceable class="parameter">event</replaceable> can be one of:</phrase>
 
@@ -283,7 +283,7 @@ UPDATE OF <replaceable>column_name1</replaceable> [, <replaceable>column_name2</
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">referenced_table_name</replaceable></term>
+    <term><replaceable class="parameter">referenced_table_name</replaceable></term>
     <listitem>
      <para>
       The (possibly schema-qualified) name of another table referenced by the
@@ -333,7 +333,7 @@ UPDATE OF <replaceable>column_name1</replaceable> [, <replaceable>column_name2</
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">transition_relation_name</replaceable></term>
+    <term><replaceable class="parameter">transition_relation_name</replaceable></term>
     <listitem>
      <para>
       The (unqualified) name to be used within the trigger for this

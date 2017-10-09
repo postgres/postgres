@@ -23,7 +23,7 @@ PostgreSQL documentation
 <synopsis>
 ALTER USER MAPPING FOR { <replaceable class="parameter">user_name</replaceable> | USER | CURRENT_USER | SESSION_USER | PUBLIC }
     SERVER <replaceable class="parameter">server_name</replaceable>
-    OPTIONS ( [ ADD | SET | DROP ] <replaceable class="PARAMETER">option</replaceable> ['<replaceable class="PARAMETER">value</replaceable>'] [, ... ] )
+    OPTIONS ( [ ADD | SET | DROP ] <replaceable class="parameter">option</replaceable> ['<replaceable class="parameter">value</replaceable>'] [, ... ] )
 </synopsis>
  </refsynopsisdiv>
 
@@ -69,7 +69,7 @@ ALTER USER MAPPING FOR { <replaceable class="parameter">user_name</replaceable> 
    </varlistentry>
 
    <varlistentry>
-    <term><literal>OPTIONS ( [ ADD | SET | DROP ] <replaceable class="PARAMETER">option</replaceable> ['<replaceable class="PARAMETER">value</replaceable>'] [, ... ] )</literal></term>
+    <term><literal>OPTIONS ( [ ADD | SET | DROP ] <replaceable class="parameter">option</replaceable> ['<replaceable class="parameter">value</replaceable>'] [, ... ] )</literal></term>
     <listitem>
      <para>
       Change options for the user mapping. The new options override

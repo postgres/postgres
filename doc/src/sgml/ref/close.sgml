@@ -26,7 +26,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CLOSE { <replaceable class="PARAMETER">name</replaceable> | ALL }
+CLOSE { <replaceable class="parameter">name</replaceable> | ALL }
 </synopsis>
  </refsynopsisdiv>
 
@@ -57,7 +57,7 @@ CLOSE { <replaceable class="PARAMETER">name</replaceable> | ALL }
 
   <variablelist>
    <varlistentry>
-    <term><replaceable class="PARAMETER">name</replaceable></term>
+    <term><replaceable class="parameter">name</replaceable></term>
     <listitem>
      <para>
       The name of an open cursor to close.

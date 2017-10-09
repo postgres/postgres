@@ -507,7 +507,7 @@ EXEC SQL COMMIT;
      </varlistentry>
 
      <varlistentry>
-      <term><literal>EXEC SQL PREPARE TRANSACTION </literal><replaceable class="PARAMETER">transaction_id</></term>
+      <term><literal>EXEC SQL PREPARE TRANSACTION </literal><replaceable class="parameter">transaction_id</></term>
       <listitem>
        <para>
         Prepare the current transaction for two-phase commit.
@@ -516,7 +516,7 @@ EXEC SQL COMMIT;
      </varlistentry>
 
      <varlistentry>
-      <term><literal>EXEC SQL COMMIT PREPARED </literal><replaceable class="PARAMETER">transaction_id</></term>
+      <term><literal>EXEC SQL COMMIT PREPARED </literal><replaceable class="parameter">transaction_id</></term>
       <listitem>
        <para>
         Commit a transaction that is in prepared state.
@@ -525,7 +525,7 @@ EXEC SQL COMMIT;
      </varlistentry>
 
      <varlistentry>
-      <term><literal>EXEC SQL ROLLBACK PREPARED </literal><replaceable class="PARAMETER">transaction_id</></term>
+      <term><literal>EXEC SQL ROLLBACK PREPARED </literal><replaceable class="parameter">transaction_id</></term>
       <listitem>
        <para>
         Roll back a transaction that is in prepared state.
@@ -6264,7 +6264,7 @@ c++ test_cpp.o test_mod.o -lecpg -o test_cpp
 
    <refsynopsisdiv>
 <synopsis>
-ALLOCATE DESCRIPTOR <replaceable class="PARAMETER">name</replaceable>
+ALLOCATE DESCRIPTOR <replaceable class="parameter">name</replaceable>
 </synopsis>
    </refsynopsisdiv>
 
@@ -6288,7 +6288,7 @@ ALLOCATE DESCRIPTOR <replaceable class="PARAMETER">name</replaceable>
 
     <variablelist>
      <varlistentry>
-      <term><replaceable class="PARAMETER">name</replaceable></term>
+      <term><replaceable class="parameter">name</replaceable></term>
       <listitem>
        <para>
         A name of SQL descriptor, case sensitive.  This can be an SQL
@@ -6356,10 +6356,10 @@ DATABASE <replaceable>connection_target</replaceable>
 
     <variablelist>
      <varlistentry>
-      <term><replaceable class="PARAMETER">connection_target</replaceable></term>
+      <term><replaceable class="parameter">connection_target</replaceable></term>
       <listitem>
        <para>
-        <replaceable class="PARAMETER">connection_target</replaceable>
+        <replaceable class="parameter">connection_target</replaceable>
         specifies the target server of the connection on one of
         several forms.
 
@@ -6416,7 +6416,7 @@ DATABASE <replaceable>connection_target</replaceable>
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">connection_object</replaceable></term>
+      <term><replaceable class="parameter">connection_object</replaceable></term>
       <listitem>
        <para>
         An optional identifier for the connection, so that it can be
@@ -6427,7 +6427,7 @@ DATABASE <replaceable>connection_target</replaceable>
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">connection_user</replaceable></term>
+      <term><replaceable class="parameter">connection_user</replaceable></term>
       <listitem>
        <para>
         The user name for the database connection.
@@ -6553,7 +6553,7 @@ EXEC SQL END DECLARE SECTION;
 
    <refsynopsisdiv>
 <synopsis>
-DEALLOCATE DESCRIPTOR <replaceable class="PARAMETER">name</replaceable>
+DEALLOCATE DESCRIPTOR <replaceable class="parameter">name</replaceable>
 </synopsis>
    </refsynopsisdiv>
 
@@ -6571,7 +6571,7 @@ DEALLOCATE DESCRIPTOR <replaceable class="PARAMETER">name</replaceable>
 
     <variablelist>
      <varlistentry>
-      <term><replaceable class="PARAMETER">name</replaceable></term>
+      <term><replaceable class="parameter">name</replaceable></term>
       <listitem>
        <para>
         The name of the descriptor which is going to be deallocated.
@@ -6619,8 +6619,8 @@ EXEC SQL DEALLOCATE DESCRIPTOR mydesc;
 
    <refsynopsisdiv>
 <synopsis>
-DECLARE <replaceable class="PARAMETER">cursor_name</replaceable> [ BINARY ] [ INSENSITIVE ] [ [ NO ] SCROLL ] CURSOR [ { WITH | WITHOUT } HOLD ] FOR <replaceable class="PARAMETER">prepared_name</replaceable>
-DECLARE <replaceable class="PARAMETER">cursor_name</replaceable> [ BINARY ] [ INSENSITIVE ] [ [ NO ] SCROLL ] CURSOR [ { WITH | WITHOUT } HOLD ] FOR <replaceable class="PARAMETER">query</replaceable>
+DECLARE <replaceable class="parameter">cursor_name</replaceable> [ BINARY ] [ INSENSITIVE ] [ [ NO ] SCROLL ] CURSOR [ { WITH | WITHOUT } HOLD ] FOR <replaceable class="parameter">prepared_name</replaceable>
+DECLARE <replaceable class="parameter">cursor_name</replaceable> [ BINARY ] [ INSENSITIVE ] [ [ NO ] SCROLL ] CURSOR [ { WITH | WITHOUT } HOLD ] FOR <replaceable class="parameter">query</replaceable>
 </synopsis>
    </refsynopsisdiv>
 
@@ -6645,7 +6645,7 @@ DECLARE <replaceable class="PARAMETER">cursor_name</replaceable> [ BINARY ] [ IN
     <variablelist>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">cursor_name</replaceable></term>
+      <term><replaceable class="parameter">cursor_name</replaceable></term>
       <listitem>
        <para>
         A cursor name, case sensitive.  This can be an SQL identifier
@@ -6655,7 +6655,7 @@ DECLARE <replaceable class="PARAMETER">cursor_name</replaceable> [ BINARY ] [ IN
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">prepared_name</replaceable></term>
+      <term><replaceable class="parameter">prepared_name</replaceable></term>
       <listitem>
        <para>
         The name of a prepared query, either as an SQL identifier or a
@@ -6730,9 +6730,9 @@ EXEC SQL DECLARE cur1 CURSOR FOR stmt1;
 
    <refsynopsisdiv>
 <synopsis>
-DESCRIBE [ OUTPUT ] <replaceable class="PARAMETER">prepared_name</replaceable> USING [ SQL ] DESCRIPTOR <replaceable class="PARAMETER">descriptor_name</replaceable>
-DESCRIBE [ OUTPUT ] <replaceable class="PARAMETER">prepared_name</replaceable> INTO [ SQL ] DESCRIPTOR <replaceable class="PARAMETER">descriptor_name</replaceable>
-DESCRIBE [ OUTPUT ] <replaceable class="PARAMETER">prepared_name</replaceable> INTO <replaceable class="PARAMETER">sqlda_name</replaceable>
+DESCRIBE [ OUTPUT ] <replaceable class="parameter">prepared_name</replaceable> USING [ SQL ] DESCRIPTOR <replaceable class="parameter">descriptor_name</replaceable>
+DESCRIBE [ OUTPUT ] <replaceable class="parameter">prepared_name</replaceable> INTO [ SQL ] DESCRIPTOR <replaceable class="parameter">descriptor_name</replaceable>
+DESCRIBE [ OUTPUT ] <replaceable class="parameter">prepared_name</replaceable> INTO <replaceable class="parameter">sqlda_name</replaceable>
 </synopsis>
    </refsynopsisdiv>
 
@@ -6751,7 +6751,7 @@ DESCRIBE [ OUTPUT ] <replaceable class="PARAMETER">prepared_name</replaceable> I
 
     <variablelist>
      <varlistentry>
-      <term><replaceable class="PARAMETER">prepared_name</replaceable></term>
+      <term><replaceable class="parameter">prepared_name</replaceable></term>
       <listitem>
        <para>
         The name of a prepared statement.  This can be an SQL
@@ -6761,7 +6761,7 @@ DESCRIBE [ OUTPUT ] <replaceable class="PARAMETER">prepared_name</replaceable> I
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">descriptor_name</replaceable></term>
+      <term><replaceable class="parameter">descriptor_name</replaceable></term>
       <listitem>
        <para>
         A descriptor name. It is case sensitive.  It can be an SQL
@@ -6771,7 +6771,7 @@ DESCRIBE [ OUTPUT ] <replaceable class="PARAMETER">prepared_name</replaceable> I
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">sqlda_name</replaceable></term>
+      <term><replaceable class="parameter">sqlda_name</replaceable></term>
       <listitem>
        <para>
         The name of an SQLDA variable.
@@ -6819,7 +6819,7 @@ EXEC SQL DEALLOCATE DESCRIPTOR mydesc;
 
    <refsynopsisdiv>
 <synopsis>
-DISCONNECT <replaceable class="PARAMETER">connection_name</replaceable>
+DISCONNECT <replaceable class="parameter">connection_name</replaceable>
 DISCONNECT [ CURRENT ]
 DISCONNECT DEFAULT
 DISCONNECT ALL
@@ -6840,7 +6840,7 @@ DISCONNECT ALL
 
     <variablelist>
      <varlistentry>
-      <term><replaceable class="PARAMETER">connection_name</replaceable></term>
+      <term><replaceable class="parameter">connection_name</replaceable></term>
       <listitem>
        <para>
         A database connection name established by
@@ -6929,7 +6929,7 @@ main(void)
 
    <refsynopsisdiv>
 <synopsis>
-EXECUTE IMMEDIATE <replaceable class="PARAMETER">string</replaceable>
+EXECUTE IMMEDIATE <replaceable class="parameter">string</replaceable>
 </synopsis>
    </refsynopsisdiv>
 
@@ -6948,7 +6948,7 @@ EXECUTE IMMEDIATE <replaceable class="PARAMETER">string</replaceable>
 
     <variablelist>
      <varlistentry>
-      <term><replaceable class="PARAMETER">string</replaceable></term>
+      <term><replaceable class="parameter">string</replaceable></term>
       <listitem>
        <para>
         A literal C string or a host variable containing the SQL
@@ -6990,8 +6990,8 @@ EXEC SQL EXECUTE IMMEDIATE :command;
 
    <refsynopsisdiv>
 <synopsis>
-GET DESCRIPTOR <replaceable class="PARAMETER">descriptor_name</replaceable> <replaceable class="PARAMETER">:cvariable</replaceable> = <replaceable class="PARAMETER">descriptor_header_item</replaceable> [, ... ]
-GET DESCRIPTOR <replaceable class="PARAMETER">descriptor_name</replaceable> VALUE <replaceable class="PARAMETER">column_number</replaceable> <replaceable class="PARAMETER">:cvariable</replaceable> = <replaceable class="PARAMETER">descriptor_item</replaceable> [, ... ]
+GET DESCRIPTOR <replaceable class="parameter">descriptor_name</replaceable> <replaceable class="parameter">:cvariable</replaceable> = <replaceable class="parameter">descriptor_header_item</replaceable> [, ... ]
+GET DESCRIPTOR <replaceable class="parameter">descriptor_name</replaceable> VALUE <replaceable class="parameter">column_number</replaceable> <replaceable class="parameter">:cvariable</replaceable> = <replaceable class="parameter">descriptor_item</replaceable> [, ... ]
 </synopsis>
    </refsynopsisdiv>
 
@@ -7022,7 +7022,7 @@ GET DESCRIPTOR <replaceable class="PARAMETER">descriptor_name</replaceable> VALU
 
     <variablelist>
      <varlistentry>
-      <term><replaceable class="PARAMETER">descriptor_name</replaceable></term>
+      <term><replaceable class="parameter">descriptor_name</replaceable></term>
       <listitem>
        <para>
         A descriptor name.
@@ -7031,7 +7031,7 @@ GET DESCRIPTOR <replaceable class="PARAMETER">descriptor_name</replaceable> VALU
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">descriptor_header_item</replaceable></term>
+      <term><replaceable class="parameter">descriptor_header_item</replaceable></term>
       <listitem>
        <para>
         A token identifying which header information item to retrieve.
@@ -7042,7 +7042,7 @@ GET DESCRIPTOR <replaceable class="PARAMETER">descriptor_name</replaceable> VALU
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">column_number</replaceable></term>
+      <term><replaceable class="parameter">column_number</replaceable></term>
       <listitem>
        <para>
         The number of the column about which information is to be
@@ -7052,7 +7052,7 @@ GET DESCRIPTOR <replaceable class="PARAMETER">descriptor_name</replaceable> VALU
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">descriptor_item</replaceable></term>
+      <term><replaceable class="parameter">descriptor_item</replaceable></term>
       <listitem>
        <para>
         A token identifying which item of information about a column
@@ -7063,7 +7063,7 @@ GET DESCRIPTOR <replaceable class="PARAMETER">descriptor_name</replaceable> VALU
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">cvariable</replaceable></term>
+      <term><replaceable class="parameter">cvariable</replaceable></term>
       <listitem>
        <para>
         A host variable that will receive the data retrieved from the
@@ -7178,9 +7178,9 @@ d_data                  = testdb
 
    <refsynopsisdiv>
 <synopsis>
-OPEN <replaceable class="PARAMETER">cursor_name</replaceable>
-OPEN <replaceable class="PARAMETER">cursor_name</replaceable> USING <replaceable class="PARAMETER">value</replaceable> [, ... ]
-OPEN <replaceable class="PARAMETER">cursor_name</replaceable> USING SQL DESCRIPTOR <replaceable class="PARAMETER">descriptor_name</replaceable>
+OPEN <replaceable class="parameter">cursor_name</replaceable>
+OPEN <replaceable class="parameter">cursor_name</replaceable> USING <replaceable class="parameter">value</replaceable> [, ... ]
+OPEN <replaceable class="parameter">cursor_name</replaceable> USING SQL DESCRIPTOR <replaceable class="parameter">descriptor_name</replaceable>
 </synopsis>
    </refsynopsisdiv>
 
@@ -7202,7 +7202,7 @@ OPEN <replaceable class="PARAMETER">cursor_name</replaceable> USING SQL DESCRIPT
 
     <variablelist>
      <varlistentry>
-      <term><replaceable class="PARAMETER">cursor_name</replaceable></term>
+      <term><replaceable class="parameter">cursor_name</replaceable></term>
       <listitem>
        <para>
         The name of the cursor to be opened.  This can be an SQL
@@ -7212,7 +7212,7 @@ OPEN <replaceable class="PARAMETER">cursor_name</replaceable> USING SQL DESCRIPT
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">value</replaceable></term>
+      <term><replaceable class="parameter">value</replaceable></term>
       <listitem>
        <para>
         A value to be bound to a placeholder in the cursor.  This can
@@ -7223,7 +7223,7 @@ OPEN <replaceable class="PARAMETER">cursor_name</replaceable> USING SQL DESCRIPT
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">descriptor_name</replaceable></term>
+      <term><replaceable class="parameter">descriptor_name</replaceable></term>
       <listitem>
        <para>
         The name of a descriptor containing values to be bound to the
@@ -7272,7 +7272,7 @@ EXEC SQL OPEN :curname1;
 
    <refsynopsisdiv>
 <synopsis>
-PREPARE <replaceable class="PARAMETER">name</replaceable> FROM <replaceable class="PARAMETER">string</replaceable>
+PREPARE <replaceable class="parameter">name</replaceable> FROM <replaceable class="parameter">string</replaceable>
 </synopsis>
    </refsynopsisdiv>
 
@@ -7293,7 +7293,7 @@ PREPARE <replaceable class="PARAMETER">name</replaceable> FROM <replaceable clas
 
     <variablelist>
      <varlistentry>
-      <term><replaceable class="PARAMETER">prepared_name</replaceable></term>
+      <term><replaceable class="parameter">prepared_name</replaceable></term>
       <listitem>
        <para>
         An identifier for the prepared query.
@@ -7302,7 +7302,7 @@ PREPARE <replaceable class="PARAMETER">name</replaceable> FROM <replaceable clas
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">string</replaceable></term>
+      <term><replaceable class="parameter">string</replaceable></term>
       <listitem>
        <para>
         A literal C string or a host variable containing a preparable
@@ -7385,7 +7385,7 @@ SET AUTOCOMMIT { = | TO } { ON | OFF }
 
    <refsynopsisdiv>
 <synopsis>
-SET CONNECTION [ TO | = ] <replaceable class="PARAMETER">connection_name</replaceable>
+SET CONNECTION [ TO | = ] <replaceable class="parameter">connection_name</replaceable>
 </synopsis>
    </refsynopsisdiv>
 
@@ -7404,7 +7404,7 @@ SET CONNECTION [ TO | = ] <replaceable class="PARAMETER">connection_name</replac
 
     <variablelist>
      <varlistentry>
-      <term><replaceable class="PARAMETER">connection_name</replaceable></term>
+      <term><replaceable class="parameter">connection_name</replaceable></term>
       <listitem>
        <para>
         A database connection name established by
@@ -7459,8 +7459,8 @@ EXEC SQL SET CONNECTION = con1;
 
    <refsynopsisdiv>
 <synopsis>
-SET DESCRIPTOR <replaceable class="PARAMETER">descriptor_name</replaceable> <replaceable class="PARAMETER">descriptor_header_item</replaceable> = <replaceable>value</replaceable> [, ... ]
-SET DESCRIPTOR <replaceable class="PARAMETER">descriptor_name</replaceable> VALUE <replaceable class="PARAMETER">number</replaceable> <replaceable class="PARAMETER">descriptor_item</replaceable> = <replaceable>value</replaceable> [, ...]
+SET DESCRIPTOR <replaceable class="parameter">descriptor_name</replaceable> <replaceable class="parameter">descriptor_header_item</replaceable> = <replaceable>value</replaceable> [, ... ]
+SET DESCRIPTOR <replaceable class="parameter">descriptor_name</replaceable> VALUE <replaceable class="parameter">number</replaceable> <replaceable class="parameter">descriptor_item</replaceable> = <replaceable>value</replaceable> [, ...]
 </synopsis>
    </refsynopsisdiv>
 
@@ -7486,7 +7486,7 @@ SET DESCRIPTOR <replaceable class="PARAMETER">descriptor_name</replaceable> VALU
 
     <variablelist>
      <varlistentry>
-      <term><replaceable class="PARAMETER">descriptor_name</replaceable></term>
+      <term><replaceable class="parameter">descriptor_name</replaceable></term>
       <listitem>
        <para>
         A descriptor name.
@@ -7495,7 +7495,7 @@ SET DESCRIPTOR <replaceable class="PARAMETER">descriptor_name</replaceable> VALU
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">descriptor_header_item</replaceable></term>
+      <term><replaceable class="parameter">descriptor_header_item</replaceable></term>
       <listitem>
        <para>
         A token identifying which header information item to set.
@@ -7506,7 +7506,7 @@ SET DESCRIPTOR <replaceable class="PARAMETER">descriptor_name</replaceable> VALU
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">number</replaceable></term>
+      <term><replaceable class="parameter">number</replaceable></term>
       <listitem>
        <para>
         The number of the descriptor item to set.  The count starts at
@@ -7516,7 +7516,7 @@ SET DESCRIPTOR <replaceable class="PARAMETER">descriptor_name</replaceable> VALU
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">descriptor_item</replaceable></term>
+      <term><replaceable class="parameter">descriptor_item</replaceable></term>
       <listitem>
        <para>
         A token identifying which item of information to set in the
@@ -7527,7 +7527,7 @@ SET DESCRIPTOR <replaceable class="PARAMETER">descriptor_name</replaceable> VALU
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">value</replaceable></term>
+      <term><replaceable class="parameter">value</replaceable></term>
       <listitem>
        <para>
         A value to store into the descriptor item.  This can be an SQL
@@ -7575,7 +7575,7 @@ EXEC SQL SET DESCRIPTOR indesc VALUE 2 INDICATOR = :val2null, DATA = :val2;
 
    <refsynopsisdiv>
 <synopsis>
-TYPE <replaceable class="PARAMETER">type_name</replaceable> IS <replaceable class="PARAMETER">ctype</replaceable>
+TYPE <replaceable class="parameter">type_name</replaceable> IS <replaceable class="parameter">ctype</replaceable>
 </synopsis>
    </refsynopsisdiv>
 
@@ -7599,7 +7599,7 @@ TYPE <replaceable class="PARAMETER">type_name</replaceable> IS <replaceable clas
 
     <variablelist>
      <varlistentry>
-      <term><replaceable class="PARAMETER">type_name</replaceable></term>
+      <term><replaceable class="parameter">type_name</replaceable></term>
       <listitem>
        <para>
         The name for the new type.  It must be a valid C type name.
@@ -7608,7 +7608,7 @@ TYPE <replaceable class="PARAMETER">type_name</replaceable> IS <replaceable clas
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">ctype</replaceable></term>
+      <term><replaceable class="parameter">ctype</replaceable></term>
       <listitem>
        <para>
         A C type specification.
@@ -7732,7 +7732,7 @@ VAR <replaceable>varname</replaceable> IS <replaceable>ctype</replaceable>
 
     <variablelist>
      <varlistentry>
-      <term><replaceable class="PARAMETER">varname</replaceable></term>
+      <term><replaceable class="parameter">varname</replaceable></term>
       <listitem>
        <para>
         A C variable name.
@@ -7741,7 +7741,7 @@ VAR <replaceable>varname</replaceable> IS <replaceable>ctype</replaceable>
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">ctype</replaceable></term>
+      <term><replaceable class="parameter">ctype</replaceable></term>
       <listitem>
        <para>
         A C type specification.
@@ -7779,7 +7779,7 @@ EXEC SQL VAR a IS int;
 
    <refsynopsisdiv>
 <synopsis>
-WHENEVER { NOT FOUND | SQLERROR | SQLWARNING } <replaceable class="PARAMETER">action</replaceable>
+WHENEVER { NOT FOUND | SQLERROR | SQLWARNING } <replaceable class="parameter">action</replaceable>
 </synopsis>
    </refsynopsisdiv>
 

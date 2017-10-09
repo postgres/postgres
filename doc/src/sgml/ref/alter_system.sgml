@@ -21,9 +21,9 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ALTER SYSTEM SET <replaceable class="PARAMETER">configuration_parameter</replaceable> { TO | = } { <replaceable class="PARAMETER">value</replaceable> | '<replaceable class="PARAMETER">value</replaceable>' | DEFAULT }
+ALTER SYSTEM SET <replaceable class="parameter">configuration_parameter</replaceable> { TO | = } { <replaceable class="parameter">value</replaceable> | '<replaceable class="parameter">value</replaceable>' | DEFAULT }
 
-ALTER SYSTEM RESET <replaceable class="PARAMETER">configuration_parameter</replaceable>
+ALTER SYSTEM RESET <replaceable class="parameter">configuration_parameter</replaceable>
 ALTER SYSTEM RESET ALL
 </synopsis>
  </refsynopsisdiv>

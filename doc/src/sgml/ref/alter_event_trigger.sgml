@@ -21,10 +21,10 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ALTER EVENT TRIGGER <replaceable class="PARAMETER">name</replaceable> DISABLE
-ALTER EVENT TRIGGER <replaceable class="PARAMETER">name</replaceable> ENABLE [ REPLICA | ALWAYS ]
-ALTER EVENT TRIGGER <replaceable class="PARAMETER">name</replaceable> OWNER TO { <replaceable class="PARAMETER">new_owner</replaceable> | CURRENT_USER | SESSION_USER }
-ALTER EVENT TRIGGER <replaceable class="PARAMETER">name</replaceable> RENAME TO <replaceable class="PARAMETER">new_name</replaceable>
+ALTER EVENT TRIGGER <replaceable class="parameter">name</replaceable> DISABLE
+ALTER EVENT TRIGGER <replaceable class="parameter">name</replaceable> ENABLE [ REPLICA | ALWAYS ]
+ALTER EVENT TRIGGER <replaceable class="parameter">name</replaceable> OWNER TO { <replaceable class="parameter">new_owner</replaceable> | CURRENT_USER | SESSION_USER }
+ALTER EVENT TRIGGER <replaceable class="parameter">name</replaceable> RENAME TO <replaceable class="parameter">new_name</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -46,7 +46,7 @@ ALTER EVENT TRIGGER <replaceable class="PARAMETER">name</replaceable> RENAME TO 
 
   <variablelist>
    <varlistentry>
-    <term><replaceable class="PARAMETER">name</replaceable></term>
+    <term><replaceable class="parameter">name</replaceable></term>
     <listitem>
      <para>
       The name of an existing trigger to alter.
@@ -55,7 +55,7 @@ ALTER EVENT TRIGGER <replaceable class="PARAMETER">name</replaceable> RENAME TO 
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">new_owner</replaceable></term>
+    <term><replaceable class="parameter">new_owner</replaceable></term>
     <listitem>
      <para>
       The user name of the new owner of the event trigger.
@@ -64,7 +64,7 @@ ALTER EVENT TRIGGER <replaceable class="PARAMETER">name</replaceable> RENAME TO 
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">new_name</replaceable></term>
+    <term><replaceable class="parameter">new_name</replaceable></term>
     <listitem>
      <para>
       The new name of the event trigger.

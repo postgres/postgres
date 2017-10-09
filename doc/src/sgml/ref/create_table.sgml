@@ -21,81 +21,81 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXISTS ] <replaceable class="PARAMETER">table_name</replaceable> ( [
-  { <replaceable class="PARAMETER">column_name</replaceable> <replaceable class="PARAMETER">data_type</replaceable> [ COLLATE <replaceable>collation</replaceable> ] [ <replaceable class="PARAMETER">column_constraint</replaceable> [ ... ] ]
+CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXISTS ] <replaceable class="parameter">table_name</replaceable> ( [
+  { <replaceable class="parameter">column_name</replaceable> <replaceable class="parameter">data_type</replaceable> [ COLLATE <replaceable>collation</replaceable> ] [ <replaceable class="parameter">column_constraint</replaceable> [ ... ] ]
     | <replaceable>table_constraint</replaceable>
     | LIKE <replaceable>source_table</replaceable> [ <replaceable>like_option</replaceable> ... ] }
     [, ... ]
 ] )
 [ INHERITS ( <replaceable>parent_table</replaceable> [, ... ] ) ]
 [ PARTITION BY { RANGE | LIST } ( { <replaceable class="parameter">column_name</replaceable> | ( <replaceable class="parameter">expression</replaceable> ) } [ COLLATE <replaceable class="parameter">collation</replaceable> ] [ <replaceable class="parameter">opclass</replaceable> ] [, ... ] ) ]
-[ WITH ( <replaceable class="PARAMETER">storage_parameter</replaceable> [= <replaceable class="PARAMETER">value</replaceable>] [, ... ] ) | WITH OIDS | WITHOUT OIDS ]
+[ WITH ( <replaceable class="parameter">storage_parameter</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] ) | WITH OIDS | WITHOUT OIDS ]
 [ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]
-[ TABLESPACE <replaceable class="PARAMETER">tablespace_name</replaceable> ]
+[ TABLESPACE <replaceable class="parameter">tablespace_name</replaceable> ]
 
-CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXISTS ] <replaceable class="PARAMETER">table_name</replaceable>
-    OF <replaceable class="PARAMETER">type_name</replaceable> [ (
-  { <replaceable class="PARAMETER">column_name</replaceable> [ WITH OPTIONS ] [ <replaceable class="PARAMETER">column_constraint</replaceable> [ ... ] ]
+CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXISTS ] <replaceable class="parameter">table_name</replaceable>
+    OF <replaceable class="parameter">type_name</replaceable> [ (
+  { <replaceable class="parameter">column_name</replaceable> [ WITH OPTIONS ] [ <replaceable class="parameter">column_constraint</replaceable> [ ... ] ]
     | <replaceable>table_constraint</replaceable> }
     [, ... ]
 ) ]
 [ PARTITION BY { RANGE | LIST } ( { <replaceable class="parameter">column_name</replaceable> | ( <replaceable class="parameter">expression</replaceable> ) } [ COLLATE <replaceable class="parameter">collation</replaceable> ] [ <replaceable class="parameter">opclass</replaceable> ] [, ... ] ) ]
-[ WITH ( <replaceable class="PARAMETER">storage_parameter</replaceable> [= <replaceable class="PARAMETER">value</replaceable>] [, ... ] ) | WITH OIDS | WITHOUT OIDS ]
+[ WITH ( <replaceable class="parameter">storage_parameter</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] ) | WITH OIDS | WITHOUT OIDS ]
 [ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]
-[ TABLESPACE <replaceable class="PARAMETER">tablespace_name</replaceable> ]
+[ TABLESPACE <replaceable class="parameter">tablespace_name</replaceable> ]
 
-CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXISTS ] <replaceable class="PARAMETER">table_name</replaceable>
-    PARTITION OF <replaceable class="PARAMETER">parent_table</replaceable> [ (
-  { <replaceable class="PARAMETER">column_name</replaceable> [ WITH OPTIONS ] [ <replaceable class="PARAMETER">column_constraint</replaceable> [ ... ] ]
+CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXISTS ] <replaceable class="parameter">table_name</replaceable>
+    PARTITION OF <replaceable class="parameter">parent_table</replaceable> [ (
+  { <replaceable class="parameter">column_name</replaceable> [ WITH OPTIONS ] [ <replaceable class="parameter">column_constraint</replaceable> [ ... ] ]
     | <replaceable>table_constraint</replaceable> }
     [, ... ]
-) ] { FOR VALUES <replaceable class="PARAMETER">partition_bound_spec</replaceable> | DEFAULT }
+) ] { FOR VALUES <replaceable class="parameter">partition_bound_spec</replaceable> | DEFAULT }
 [ PARTITION BY { RANGE | LIST } ( { <replaceable class="parameter">column_name</replaceable> | ( <replaceable class="parameter">expression</replaceable> ) } [ COLLATE <replaceable class="parameter">collation</replaceable> ] [ <replaceable class="parameter">opclass</replaceable> ] [, ... ] ) ]
-[ WITH ( <replaceable class="PARAMETER">storage_parameter</replaceable> [= <replaceable class="PARAMETER">value</replaceable>] [, ... ] ) | WITH OIDS | WITHOUT OIDS ]
+[ WITH ( <replaceable class="parameter">storage_parameter</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] ) | WITH OIDS | WITHOUT OIDS ]
 [ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]
-[ TABLESPACE <replaceable class="PARAMETER">tablespace_name</replaceable> ]
+[ TABLESPACE <replaceable class="parameter">tablespace_name</replaceable> ]
 
-<phrase>where <replaceable class="PARAMETER">column_constraint</replaceable> is:</phrase>
+<phrase>where <replaceable class="parameter">column_constraint</replaceable> is:</phrase>
 
-[ CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> ]
+[ CONSTRAINT <replaceable class="parameter">constraint_name</replaceable> ]
 { NOT NULL |
   NULL |
-  CHECK ( <replaceable class="PARAMETER">expression</replaceable> ) [ NO INHERIT ] |
+  CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ] |
   DEFAULT <replaceable>default_expr</replaceable> |
   GENERATED { ALWAYS | BY DEFAULT } AS IDENTITY [ ( <replaceable>sequence_options</replaceable> ) ] |
-  UNIQUE <replaceable class="PARAMETER">index_parameters</replaceable> |
-  PRIMARY KEY <replaceable class="PARAMETER">index_parameters</replaceable> |
-  REFERENCES <replaceable class="PARAMETER">reftable</replaceable> [ ( <replaceable class="PARAMETER">refcolumn</replaceable> ) ] [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ]
+  UNIQUE <replaceable class="parameter">index_parameters</replaceable> |
+  PRIMARY KEY <replaceable class="parameter">index_parameters</replaceable> |
+  REFERENCES <replaceable class="parameter">reftable</replaceable> [ ( <replaceable class="parameter">refcolumn</replaceable> ) ] [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ]
     [ ON DELETE <replaceable class="parameter">action</replaceable> ] [ ON UPDATE <replaceable class="parameter">action</replaceable> ] }
 [ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]
 
-<phrase>and <replaceable class="PARAMETER">table_constraint</replaceable> is:</phrase>
+<phrase>and <replaceable class="parameter">table_constraint</replaceable> is:</phrase>
 
-[ CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> ]
-{ CHECK ( <replaceable class="PARAMETER">expression</replaceable> ) [ NO INHERIT ] |
-  UNIQUE ( <replaceable class="PARAMETER">column_name</replaceable> [, ... ] ) <replaceable class="PARAMETER">index_parameters</replaceable> |
-  PRIMARY KEY ( <replaceable class="PARAMETER">column_name</replaceable> [, ... ] ) <replaceable class="PARAMETER">index_parameters</replaceable> |
+[ CONSTRAINT <replaceable class="parameter">constraint_name</replaceable> ]
+{ CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ] |
+  UNIQUE ( <replaceable class="parameter">column_name</replaceable> [, ... ] ) <replaceable class="parameter">index_parameters</replaceable> |
+  PRIMARY KEY ( <replaceable class="parameter">column_name</replaceable> [, ... ] ) <replaceable class="parameter">index_parameters</replaceable> |
   EXCLUDE [ USING <replaceable class="parameter">index_method</replaceable> ] ( <replaceable class="parameter">exclude_element</replaceable> WITH <replaceable class="parameter">operator</replaceable> [, ... ] ) <replaceable class="parameter">index_parameters</replaceable> [ WHERE ( <replaceable class="parameter">predicate</replaceable> ) ] |
-  FOREIGN KEY ( <replaceable class="PARAMETER">column_name</replaceable> [, ... ] ) REFERENCES <replaceable class="PARAMETER">reftable</replaceable> [ ( <replaceable class="PARAMETER">refcolumn</replaceable> [, ... ] ) ]
+  FOREIGN KEY ( <replaceable class="parameter">column_name</replaceable> [, ... ] ) REFERENCES <replaceable class="parameter">reftable</replaceable> [ ( <replaceable class="parameter">refcolumn</replaceable> [, ... ] ) ]
     [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ] [ ON DELETE <replaceable class="parameter">action</replaceable> ] [ ON UPDATE <replaceable class="parameter">action</replaceable> ] }
 [ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]
 
-<phrase>and <replaceable class="PARAMETER">like_option</replaceable> is:</phrase>
+<phrase>and <replaceable class="parameter">like_option</replaceable> is:</phrase>
 
 { INCLUDING | EXCLUDING } { DEFAULTS | CONSTRAINTS | IDENTITY | INDEXES | STORAGE | COMMENTS | ALL }
 
-<phrase>and <replaceable class="PARAMETER">partition_bound_spec</replaceable> is:</phrase>
+<phrase>and <replaceable class="parameter">partition_bound_spec</replaceable> is:</phrase>
 
-IN ( { <replaceable class="PARAMETER">numeric_literal</replaceable> | <replaceable class="PARAMETER">string_literal</replaceable> | NULL } [, ...] ) |
-FROM ( { <replaceable class="PARAMETER">numeric_literal</replaceable> | <replaceable class="PARAMETER">string_literal</replaceable> | MINVALUE | MAXVALUE } [, ...] )
-  TO ( { <replaceable class="PARAMETER">numeric_literal</replaceable> | <replaceable class="PARAMETER">string_literal</replaceable> | MINVALUE | MAXVALUE } [, ...] )
+IN ( { <replaceable class="parameter">numeric_literal</replaceable> | <replaceable class="parameter">string_literal</replaceable> | NULL } [, ...] ) |
+FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replaceable class="parameter">string_literal</replaceable> | MINVALUE | MAXVALUE } [, ...] )
+  TO ( { <replaceable class="parameter">numeric_literal</replaceable> | <replaceable class="parameter">string_literal</replaceable> | MINVALUE | MAXVALUE } [, ...] )
 
-<phrase><replaceable class="PARAMETER">index_parameters</replaceable> in <literal>UNIQUE</literal>, <literal>PRIMARY KEY</literal>, and <literal>EXCLUDE</literal> constraints are:</phrase>
+<phrase><replaceable class="parameter">index_parameters</replaceable> in <literal>UNIQUE</literal>, <literal>PRIMARY KEY</literal>, and <literal>EXCLUDE</literal> constraints are:</phrase>
 
-[ WITH ( <replaceable class="PARAMETER">storage_parameter</replaceable> [= <replaceable class="PARAMETER">value</replaceable>] [, ... ] ) ]
-[ USING INDEX TABLESPACE <replaceable class="PARAMETER">tablespace_name</replaceable> ]
+[ WITH ( <replaceable class="parameter">storage_parameter</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] ) ]
+[ USING INDEX TABLESPACE <replaceable class="parameter">tablespace_name</replaceable> ]
 
-<phrase><replaceable class="PARAMETER">exclude_element</replaceable> in an <literal>EXCLUDE</literal> constraint is:</phrase>
+<phrase><replaceable class="parameter">exclude_element</replaceable> in an <literal>EXCLUDE</literal> constraint is:</phrase>
 
 { <replaceable class="parameter">column_name</replaceable> | ( <replaceable class="parameter">expression</replaceable> ) } [ <replaceable class="parameter">opclass</replaceable> ] [ ASC | DESC ] [ NULLS { FIRST | LAST } ]
 </synopsis>
@@ -220,7 +220,7 @@ FROM ( { <replaceable class="PARAMETER">numeric_literal</replaceable> | <replace
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">table_name</replaceable></term>
+    <term><replaceable class="parameter">table_name</replaceable></term>
     <listitem>
      <para>
       The name (optionally schema-qualified) of the table to be created.
@@ -229,7 +229,7 @@ FROM ( { <replaceable class="PARAMETER">numeric_literal</replaceable> | <replace
    </varlistentry>
 
    <varlistentry>
-    <term><literal>OF <replaceable class="PARAMETER">type_name</replaceable></literal></term>
+    <term><literal>OF <replaceable class="parameter">type_name</replaceable></literal></term>
     <listitem>
      <para>
       Creates a <firstterm>typed table</firstterm>, which takes its
@@ -250,7 +250,7 @@ FROM ( { <replaceable class="PARAMETER">numeric_literal</replaceable> | <replace
    </varlistentry>
 
    <varlistentry id="SQL-CREATETABLE-PARTITION">
-    <term><literal>PARTITION OF <replaceable class="PARAMETER">parent_table</replaceable> { FOR VALUES <replaceable class="PARAMETER">partition_bound_spec</replaceable> | DEFAULT }</literal></term>
+    <term><literal>PARTITION OF <replaceable class="parameter">parent_table</replaceable> { FOR VALUES <replaceable class="parameter">partition_bound_spec</replaceable> | DEFAULT }</literal></term>
     <listitem>
      <para>
       Creates the table as a <firstterm>partition</firstterm> of the specified
@@ -260,7 +260,7 @@ FROM ( { <replaceable class="PARAMETER">numeric_literal</replaceable> | <replace
      </para>
 
      <para>
-      The <replaceable class="PARAMETER">partition_bound_spec</replaceable>
+      The <replaceable class="parameter">partition_bound_spec</replaceable>
       must correspond to the partitioning method and partition key of the
       parent table, and must not overlap with any existing partition of that
       parent.  The form with <literal>IN</> is used for list partitioning,
@@ -270,7 +270,7 @@ FROM ( { <replaceable class="PARAMETER">numeric_literal</replaceable> | <replace
 
      <para>
       Each of the values specified in
-      the <replaceable class="PARAMETER">partition_bound_spec</> is
+      the <replaceable class="parameter">partition_bound_spec</> is
       a literal, <literal>NULL</literal>, <literal>MINVALUE</literal>, or
       <literal>MAXVALUE</literal>.  Each literal value must be either a
       numeric constant that is coercible to the corresponding partition key
@@ -397,7 +397,7 @@ FROM ( { <replaceable class="PARAMETER">numeric_literal</replaceable> | <replace
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">column_name</replaceable></term>
+    <term><replaceable class="parameter">column_name</replaceable></term>
     <listitem>
      <para>
       The name of a column to be created in the new table.
@@ -406,7 +406,7 @@ FROM ( { <replaceable class="PARAMETER">numeric_literal</replaceable> | <replace
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">data_type</replaceable></term>
+    <term><replaceable class="parameter">data_type</replaceable></term>
     <listitem>
      <para>
       The data type of the column. This can include array
@@ -602,7 +602,7 @@ FROM ( { <replaceable class="PARAMETER">numeric_literal</replaceable> | <replace
    </varlistentry>
 
    <varlistentry>
-    <term><literal>CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable></literal></term>
+    <term><literal>CONSTRAINT <replaceable class="parameter">constraint_name</replaceable></literal></term>
     <listitem>
      <para>
       An optional name for a column or table constraint.  If the
@@ -640,7 +640,7 @@ FROM ( { <replaceable class="PARAMETER">numeric_literal</replaceable> | <replace
    </varlistentry>
 
    <varlistentry>
-    <term><literal>CHECK ( <replaceable class="PARAMETER">expression</replaceable> ) [ NO INHERIT ] </literal></term>
+    <term><literal>CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ] </literal></term>
     <listitem>
      <para>
       The <literal>CHECK</> clause specifies an expression producing a
@@ -730,7 +730,7 @@ FROM ( { <replaceable class="PARAMETER">numeric_literal</replaceable> | <replace
 
    <varlistentry>
     <term><literal>UNIQUE</> (column constraint)</term>
-    <term><literal>UNIQUE ( <replaceable class="PARAMETER">column_name</replaceable> [, ... ] )</> (table constraint)</term>
+    <term><literal>UNIQUE ( <replaceable class="parameter">column_name</replaceable> [, ... ] )</> (table constraint)</term>
 
     <listitem>
      <para>
@@ -757,7 +757,7 @@ FROM ( { <replaceable class="PARAMETER">numeric_literal</replaceable> | <replace
 
    <varlistentry>
     <term><literal>PRIMARY KEY</> (column constraint)</term>
-    <term><literal>PRIMARY KEY ( <replaceable class="PARAMETER">column_name</replaceable> [, ... ] )</> (table constraint)</term>
+    <term><literal>PRIMARY KEY ( <replaceable class="parameter">column_name</replaceable> [, ... ] )</> (table constraint)</term>
     <listitem>
      <para>
       The <literal>PRIMARY KEY</> constraint specifies that a column or
@@ -997,7 +997,7 @@ FROM ( { <replaceable class="PARAMETER">numeric_literal</replaceable> | <replace
    </varlistentry>
 
    <varlistentry>
-    <term><literal>WITH ( <replaceable class="PARAMETER">storage_parameter</replaceable> [= <replaceable class="PARAMETER">value</replaceable>] [, ... ] )</literal></term>
+    <term><literal>WITH ( <replaceable class="parameter">storage_parameter</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] )</literal></term>
     <listitem>
      <para>
       This clause specifies optional storage parameters for a table or index;
@@ -1092,10 +1092,10 @@ FROM ( { <replaceable class="PARAMETER">numeric_literal</replaceable> | <replace
    </varlistentry>
 
    <varlistentry>
-    <term><literal>TABLESPACE <replaceable class="PARAMETER">tablespace_name</replaceable></literal></term>
+    <term><literal>TABLESPACE <replaceable class="parameter">tablespace_name</replaceable></literal></term>
     <listitem>
      <para>
-      The <replaceable class="PARAMETER">tablespace_name</replaceable> is the name
+      The <replaceable class="parameter">tablespace_name</replaceable> is the name
       of the tablespace in which the new table is to be created.
       If not specified,
       <xref linkend="guc-default-tablespace"> is consulted, or
@@ -1105,7 +1105,7 @@ FROM ( { <replaceable class="PARAMETER">numeric_literal</replaceable> | <replace
    </varlistentry>
 
    <varlistentry>
-    <term><literal>USING INDEX TABLESPACE <replaceable class="PARAMETER">tablespace_name</replaceable></literal></term>
+    <term><literal>USING INDEX TABLESPACE <replaceable class="parameter">tablespace_name</replaceable></literal></term>
     <listitem>
      <para>
       This clause allows selection of the tablespace in which the index

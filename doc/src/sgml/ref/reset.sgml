@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-RESET <replaceable class="PARAMETER">configuration_parameter</replaceable>
+RESET <replaceable class="parameter">configuration_parameter</replaceable>
 RESET ALL
 </synopsis>
  </refsynopsisdiv>
@@ -63,7 +63,7 @@ SET <replaceable class="parameter">configuration_parameter</replaceable> TO DEFA
 
   <variablelist>
    <varlistentry>
-    <term><replaceable class="PARAMETER">configuration_parameter</replaceable></term>
+    <term><replaceable class="parameter">configuration_parameter</replaceable></term>
     <listitem>
      <para>
       Name of a settable run-time parameter.  Available parameters are

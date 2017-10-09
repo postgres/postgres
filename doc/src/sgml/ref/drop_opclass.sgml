@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP OPERATOR CLASS [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> USING <replaceable class="PARAMETER">index_method</replaceable> [ CASCADE | RESTRICT ]
+DROP OPERATOR CLASS [ IF EXISTS ] <replaceable class="parameter">name</replaceable> USING <replaceable class="parameter">index_method</replaceable> [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
 

@@ -21,14 +21,14 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CREATE SCHEMA <replaceable class="parameter">schema_name</replaceable> [ AUTHORIZATION <replaceable class="PARAMETER">role_specification</replaceable> ] [ <replaceable class="parameter">schema_element</replaceable> [ ... ] ]
-CREATE SCHEMA AUTHORIZATION <replaceable class="PARAMETER">role_specification</replaceable> [ <replaceable class="parameter">schema_element</replaceable> [ ... ] ]
-CREATE SCHEMA IF NOT EXISTS <replaceable class="parameter">schema_name</replaceable> [ AUTHORIZATION <replaceable class="PARAMETER">role_specification</replaceable> ]
-CREATE SCHEMA IF NOT EXISTS AUTHORIZATION <replaceable class="PARAMETER">role_specification</replaceable>
+CREATE SCHEMA <replaceable class="parameter">schema_name</replaceable> [ AUTHORIZATION <replaceable class="parameter">role_specification</replaceable> ] [ <replaceable class="parameter">schema_element</replaceable> [ ... ] ]
+CREATE SCHEMA AUTHORIZATION <replaceable class="parameter">role_specification</replaceable> [ <replaceable class="parameter">schema_element</replaceable> [ ... ] ]
+CREATE SCHEMA IF NOT EXISTS <replaceable class="parameter">schema_name</replaceable> [ AUTHORIZATION <replaceable class="parameter">role_specification</replaceable> ]
+CREATE SCHEMA IF NOT EXISTS AUTHORIZATION <replaceable class="parameter">role_specification</replaceable>
 
-<phrase>where <replaceable class="PARAMETER">role_specification</replaceable> can be:</phrase>
+<phrase>where <replaceable class="parameter">role_specification</replaceable> can be:</phrase>
 
-    <replaceable class="PARAMETER">user_name</replaceable>
+    <replaceable class="parameter">user_name</replaceable>
   | CURRENT_USER
   | SESSION_USER
 </synopsis>

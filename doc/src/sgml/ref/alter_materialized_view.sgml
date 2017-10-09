@@ -21,30 +21,30 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ALTER MATERIALIZED VIEW [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
-    <replaceable class="PARAMETER">action</replaceable> [, ... ]
-ALTER MATERIALIZED VIEW <replaceable class="PARAMETER">name</replaceable>
-    DEPENDS ON EXTENSION <replaceable class="PARAMETER">extension_name</replaceable>
-ALTER MATERIALIZED VIEW [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable>
-    RENAME [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> TO <replaceable class="PARAMETER">new_column_name</replaceable>
+ALTER MATERIALIZED VIEW [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
+    <replaceable class="parameter">action</replaceable> [, ... ]
+ALTER MATERIALIZED VIEW <replaceable class="parameter">name</replaceable>
+    DEPENDS ON EXTENSION <replaceable class="parameter">extension_name</replaceable>
+ALTER MATERIALIZED VIEW [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
+    RENAME [ COLUMN ] <replaceable class="parameter">column_name</replaceable> TO <replaceable class="parameter">new_column_name</replaceable>
 ALTER MATERIALIZED VIEW [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
     RENAME TO <replaceable class="parameter">new_name</replaceable>
 ALTER MATERIALIZED VIEW [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
     SET SCHEMA <replaceable class="parameter">new_schema</replaceable>
-ALTER MATERIALIZED VIEW ALL IN TABLESPACE <replaceable class="parameter">name</replaceable> [ OWNED BY <replaceable class="PARAMETER">role_name</replaceable> [, ... ] ]
-    SET TABLESPACE <replaceable class="PARAMETER">new_tablespace</replaceable> [ NOWAIT ]
+ALTER MATERIALIZED VIEW ALL IN TABLESPACE <replaceable class="parameter">name</replaceable> [ OWNED BY <replaceable class="parameter">role_name</replaceable> [, ... ] ]
+    SET TABLESPACE <replaceable class="parameter">new_tablespace</replaceable> [ NOWAIT ]
 
-<phrase>where <replaceable class="PARAMETER">action</replaceable> is one of:</phrase>
+<phrase>where <replaceable class="parameter">action</replaceable> is one of:</phrase>
 
-    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> SET STATISTICS <replaceable class="PARAMETER">integer</replaceable>
-    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> SET ( <replaceable class="PARAMETER">attribute_option</replaceable> = <replaceable class="PARAMETER">value</replaceable> [, ... ] )
-    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> RESET ( <replaceable class="PARAMETER">attribute_option</replaceable> [, ... ] )
-    ALTER [ COLUMN ] <replaceable class="PARAMETER">column_name</replaceable> SET STORAGE { PLAIN | EXTERNAL | EXTENDED | MAIN }
-    CLUSTER ON <replaceable class="PARAMETER">index_name</replaceable>
+    ALTER [ COLUMN ] <replaceable class="parameter">column_name</replaceable> SET STATISTICS <replaceable class="parameter">integer</replaceable>
+    ALTER [ COLUMN ] <replaceable class="parameter">column_name</replaceable> SET ( <replaceable class="parameter">attribute_option</replaceable> = <replaceable class="parameter">value</replaceable> [, ... ] )
+    ALTER [ COLUMN ] <replaceable class="parameter">column_name</replaceable> RESET ( <replaceable class="parameter">attribute_option</replaceable> [, ... ] )
+    ALTER [ COLUMN ] <replaceable class="parameter">column_name</replaceable> SET STORAGE { PLAIN | EXTERNAL | EXTENDED | MAIN }
+    CLUSTER ON <replaceable class="parameter">index_name</replaceable>
     SET WITHOUT CLUSTER
-    SET ( <replaceable class="PARAMETER">storage_parameter</replaceable> = <replaceable class="PARAMETER">value</replaceable> [, ... ] )
-    RESET ( <replaceable class="PARAMETER">storage_parameter</replaceable> [, ... ] )
-    OWNER TO { <replaceable class="PARAMETER">new_owner</replaceable> | CURRENT_USER | SESSION_USER }
+    SET ( <replaceable class="parameter">storage_parameter</replaceable> = <replaceable class="parameter">value</replaceable> [, ... ] )
+    RESET ( <replaceable class="parameter">storage_parameter</replaceable> [, ... ] )
+    OWNER TO { <replaceable class="parameter">new_owner</replaceable> | CURRENT_USER | SESSION_USER }
 </synopsis>
  </refsynopsisdiv>
 
@@ -98,7 +98,7 @@ ALTER MATERIALIZED VIEW ALL IN TABLESPACE <replaceable class="parameter">name</r
     </varlistentry>
 
     <varlistentry>
-     <term><replaceable class="PARAMETER">column_name</replaceable></term>
+     <term><replaceable class="parameter">column_name</replaceable></term>
      <listitem>
       <para>
        Name of a new or existing column.
@@ -107,7 +107,7 @@ ALTER MATERIALIZED VIEW ALL IN TABLESPACE <replaceable class="parameter">name</r
     </varlistentry>
 
     <varlistentry>
-     <term><replaceable class="PARAMETER">extension_name</replaceable></term>
+     <term><replaceable class="parameter">extension_name</replaceable></term>
      <listitem>
       <para>
        The name of the extension that the materialized view is to depend on.
@@ -116,7 +116,7 @@ ALTER MATERIALIZED VIEW ALL IN TABLESPACE <replaceable class="parameter">name</r
     </varlistentry>
 
     <varlistentry>
-     <term><replaceable class="PARAMETER">new_column_name</replaceable></term>
+     <term><replaceable class="parameter">new_column_name</replaceable></term>
      <listitem>
       <para>
        New name for an existing column.
@@ -125,7 +125,7 @@ ALTER MATERIALIZED VIEW ALL IN TABLESPACE <replaceable class="parameter">name</r
     </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">new_owner</replaceable></term>
+    <term><replaceable class="parameter">new_owner</replaceable></term>
     <listitem>
      <para>
       The user name of the new owner of the materialized view.

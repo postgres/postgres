@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP OPERATOR [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> ( { <replaceable class="PARAMETER">left_type</replaceable> | NONE } , { <replaceable class="PARAMETER">right_type</replaceable> | NONE } ) [, ...] [ CASCADE | RESTRICT ]
+DROP OPERATOR [ IF EXISTS ] <replaceable class="parameter">name</replaceable> ( { <replaceable class="parameter">left_type</replaceable> | NONE } , { <replaceable class="parameter">right_type</replaceable> | NONE } ) [, ...] [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
 

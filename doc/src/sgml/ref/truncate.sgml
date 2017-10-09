@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-TRUNCATE [ TABLE ] [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [ * ] [, ... ]
+TRUNCATE [ TABLE ] [ ONLY ] <replaceable class="parameter">name</replaceable> [ * ] [, ... ]
     [ RESTART IDENTITY | CONTINUE IDENTITY ] [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
@@ -44,7 +44,7 @@ TRUNCATE [ TABLE ] [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [ 
 
   <variablelist>
    <varlistentry>
-    <term><replaceable class="PARAMETER">name</replaceable></term>
+    <term><replaceable class="parameter">name</replaceable></term>
     <listitem>
      <para>
       The name (optionally schema-qualified) of a table to truncate.

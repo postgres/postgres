@@ -21,9 +21,9 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CREATE ROLE <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replaceable class="PARAMETER">option</replaceable> [ ... ] ]
+CREATE ROLE <replaceable class="parameter">name</replaceable> [ [ WITH ] <replaceable class="parameter">option</replaceable> [ ... ] ]
 
-<phrase>where <replaceable class="PARAMETER">option</replaceable> can be:</phrase>
+<phrase>where <replaceable class="parameter">option</replaceable> can be:</phrase>
 
       SUPERUSER | NOSUPERUSER
     | CREATEDB | NOCREATEDB
@@ -32,15 +32,15 @@ CREATE ROLE <replaceable class="PARAMETER">name</replaceable> [ [ WITH ] <replac
     | LOGIN | NOLOGIN
     | REPLICATION | NOREPLICATION
     | BYPASSRLS | NOBYPASSRLS
-    | CONNECTION LIMIT <replaceable class="PARAMETER">connlimit</replaceable>
-    | [ ENCRYPTED ] PASSWORD '<replaceable class="PARAMETER">password</replaceable>'
-    | VALID UNTIL '<replaceable class="PARAMETER">timestamp</replaceable>'
-    | IN ROLE <replaceable class="PARAMETER">role_name</replaceable> [, ...]
-    | IN GROUP <replaceable class="PARAMETER">role_name</replaceable> [, ...]
-    | ROLE <replaceable class="PARAMETER">role_name</replaceable> [, ...]
-    | ADMIN <replaceable class="PARAMETER">role_name</replaceable> [, ...]
-    | USER <replaceable class="PARAMETER">role_name</replaceable> [, ...]
-    | SYSID <replaceable class="PARAMETER">uid</replaceable>
+    | CONNECTION LIMIT <replaceable class="parameter">connlimit</replaceable>
+    | [ ENCRYPTED ] PASSWORD '<replaceable class="parameter">password</replaceable>'
+    | VALID UNTIL '<replaceable class="parameter">timestamp</replaceable>'
+    | IN ROLE <replaceable class="parameter">role_name</replaceable> [, ...]
+    | IN GROUP <replaceable class="parameter">role_name</replaceable> [, ...]
+    | ROLE <replaceable class="parameter">role_name</replaceable> [, ...]
+    | ADMIN <replaceable class="parameter">role_name</replaceable> [, ...]
+    | USER <replaceable class="parameter">role_name</replaceable> [, ...]
+    | SYSID <replaceable class="parameter">uid</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -453,7 +453,7 @@ CREATE ROLE admin WITH CREATEDB CREATEROLE;
    The <command>CREATE ROLE</command> statement is in the SQL standard,
    but the standard only requires the syntax
 <synopsis>
-CREATE ROLE <replaceable class="PARAMETER">name</> [ WITH ADMIN <replaceable class="PARAMETER">role_name</> ]
+CREATE ROLE <replaceable class="parameter">name</> [ WITH ADMIN <replaceable class="parameter">role_name</> ]
 </synopsis>
    Multiple initial administrators, and all the other options of
    <command>CREATE ROLE</command>, are

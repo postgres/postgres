@@ -21,14 +21,14 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> CONNECTION '<replaceable>conninfo</replaceable>'
-ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> SET PUBLICATION <replaceable class="PARAMETER">publication_name</replaceable> [, ...] [ WITH ( <replaceable class="PARAMETER">set_publication_option</replaceable> [= <replaceable class="PARAMETER">value</replaceable>] [, ... ] ) ]
-ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> REFRESH PUBLICATION [ WITH ( <replaceable class="PARAMETER">refresh_option</replaceable> [= <replaceable class="PARAMETER">value</replaceable>] [, ... ] ) ]
-ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> ENABLE
-ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> DISABLE
-ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> SET ( <replaceable class="parameter">subscription_parameter</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] )
-ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> OWNER TO { <replaceable>new_owner</replaceable> | CURRENT_USER | SESSION_USER }
-ALTER SUBSCRIPTION <replaceable class="PARAMETER">name</replaceable> RENAME TO <replaceable>new_name</replaceable>
+ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> CONNECTION '<replaceable>conninfo</replaceable>'
+ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> SET PUBLICATION <replaceable class="parameter">publication_name</replaceable> [, ...] [ WITH ( <replaceable class="parameter">set_publication_option</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] ) ]
+ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> REFRESH PUBLICATION [ WITH ( <replaceable class="parameter">refresh_option</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] ) ]
+ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> ENABLE
+ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> DISABLE
+ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> SET ( <replaceable class="parameter">subscription_parameter</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] )
+ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> OWNER TO { <replaceable>new_owner</replaceable> | CURRENT_USER | SESSION_USER }
+ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <replaceable>new_name</replaceable>
 </synopsis>
  </refsynopsisdiv>
 

@@ -21,28 +21,28 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-SECURITY LABEL [ FOR <replaceable class="PARAMETER">provider</replaceable> ] ON
+SECURITY LABEL [ FOR <replaceable class="parameter">provider</replaceable> ] ON
 {
-  TABLE <replaceable class="PARAMETER">object_name</replaceable> |
-  COLUMN <replaceable class="PARAMETER">table_name</replaceable>.<replaceable class="PARAMETER">column_name</replaceable> |
-  AGGREGATE <replaceable class="PARAMETER">aggregate_name</replaceable> ( <replaceable>aggregate_signature</replaceable> ) |
-  DATABASE <replaceable class="PARAMETER">object_name</replaceable> |
-  DOMAIN <replaceable class="PARAMETER">object_name</replaceable> |
-  EVENT TRIGGER <replaceable class="PARAMETER">object_name</replaceable> |
-  FOREIGN TABLE <replaceable class="PARAMETER">object_name</replaceable>
-  FUNCTION <replaceable class="PARAMETER">function_name</replaceable> [ ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) ] |
-  LARGE OBJECT <replaceable class="PARAMETER">large_object_oid</replaceable> |
-  MATERIALIZED VIEW <replaceable class="PARAMETER">object_name</replaceable> |
-  [ PROCEDURAL ] LANGUAGE <replaceable class="PARAMETER">object_name</replaceable> |
-  PUBLICATION <replaceable class="PARAMETER">object_name</replaceable> |
-  ROLE <replaceable class="PARAMETER">object_name</replaceable> |
-  SCHEMA <replaceable class="PARAMETER">object_name</replaceable> |
-  SEQUENCE <replaceable class="PARAMETER">object_name</replaceable> |
-  SUBSCRIPTION <replaceable class="PARAMETER">object_name</replaceable> |
-  TABLESPACE <replaceable class="PARAMETER">object_name</replaceable> |
-  TYPE <replaceable class="PARAMETER">object_name</replaceable> |
-  VIEW <replaceable class="PARAMETER">object_name</replaceable>
-} IS '<replaceable class="PARAMETER">label</replaceable>'
+  TABLE <replaceable class="parameter">object_name</replaceable> |
+  COLUMN <replaceable class="parameter">table_name</replaceable>.<replaceable class="parameter">column_name</replaceable> |
+  AGGREGATE <replaceable class="parameter">aggregate_name</replaceable> ( <replaceable>aggregate_signature</replaceable> ) |
+  DATABASE <replaceable class="parameter">object_name</replaceable> |
+  DOMAIN <replaceable class="parameter">object_name</replaceable> |
+  EVENT TRIGGER <replaceable class="parameter">object_name</replaceable> |
+  FOREIGN TABLE <replaceable class="parameter">object_name</replaceable>
+  FUNCTION <replaceable class="parameter">function_name</replaceable> [ ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) ] |
+  LARGE OBJECT <replaceable class="parameter">large_object_oid</replaceable> |
+  MATERIALIZED VIEW <replaceable class="parameter">object_name</replaceable> |
+  [ PROCEDURAL ] LANGUAGE <replaceable class="parameter">object_name</replaceable> |
+  PUBLICATION <replaceable class="parameter">object_name</replaceable> |
+  ROLE <replaceable class="parameter">object_name</replaceable> |
+  SCHEMA <replaceable class="parameter">object_name</replaceable> |
+  SEQUENCE <replaceable class="parameter">object_name</replaceable> |
+  SUBSCRIPTION <replaceable class="parameter">object_name</replaceable> |
+  TABLESPACE <replaceable class="parameter">object_name</replaceable> |
+  TYPE <replaceable class="parameter">object_name</replaceable> |
+  VIEW <replaceable class="parameter">object_name</replaceable>
+} IS '<replaceable class="parameter">label</replaceable>'
 
 <phrase>where <replaceable>aggregate_signature</replaceable> is:</phrase>
 

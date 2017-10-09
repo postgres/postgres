@@ -23,7 +23,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ALTER STATISTICS <replaceable class="parameter">name</replaceable> OWNER TO { <replaceable class="PARAMETER">new_owner</replaceable> | CURRENT_USER | SESSION_USER }
+ALTER STATISTICS <replaceable class="parameter">name</replaceable> OWNER TO { <replaceable class="parameter">new_owner</replaceable> | CURRENT_USER | SESSION_USER }
 ALTER STATISTICS <replaceable class="parameter">name</replaceable> RENAME TO <replaceable class="parameter">new_name</replaceable>
 ALTER STATISTICS <replaceable class="parameter">name</replaceable> SET SCHEMA <replaceable class="parameter">new_schema</replaceable>
 </synopsis>
@@ -67,7 +67,7 @@ ALTER STATISTICS <replaceable class="parameter">name</replaceable> SET SCHEMA <r
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">new_owner</replaceable></term>
+      <term><replaceable class="parameter">new_owner</replaceable></term>
       <listitem>
        <para>
         The user name of the new owner of the statistics object.

@@ -22,9 +22,9 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 [ WITH [ RECURSIVE ] <replaceable class="parameter">with_query</replaceable> [, ...] ]
-DELETE FROM [ ONLY ] <replaceable class="PARAMETER">table_name</replaceable> [ * ] [ [ AS ] <replaceable class="parameter">alias</replaceable> ]
-    [ USING <replaceable class="PARAMETER">using_list</replaceable> ]
-    [ WHERE <replaceable class="PARAMETER">condition</replaceable> | WHERE CURRENT OF <replaceable class="PARAMETER">cursor_name</replaceable> ]
+DELETE FROM [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] [ [ AS ] <replaceable class="parameter">alias</replaceable> ]
+    [ USING <replaceable class="parameter">using_list</replaceable> ]
+    [ WHERE <replaceable class="parameter">condition</replaceable> | WHERE CURRENT OF <replaceable class="parameter">cursor_name</replaceable> ]
     [ RETURNING * | <replaceable class="parameter">output_expression</replaceable> [ [ AS ] <replaceable class="parameter">output_name</replaceable> ] [, ...] ]
 </synopsis>
  </refsynopsisdiv>
@@ -117,7 +117,7 @@ DELETE FROM [ ONLY ] <replaceable class="PARAMETER">table_name</replaceable> [ *
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">using_list</replaceable></term>
+    <term><replaceable class="parameter">using_list</replaceable></term>
     <listitem>
      <para>
       A list of table expressions, allowing columns from other tables
@@ -126,7 +126,7 @@ DELETE FROM [ ONLY ] <replaceable class="PARAMETER">table_name</replaceable> [ *
       linkend="sql-from" endterm="sql-from-title"> of a
       <command>SELECT</command> statement; for example, an alias for
       the table name can be specified.  Do not repeat the target table
-      in the <replaceable class="PARAMETER">using_list</replaceable>,
+      in the <replaceable class="parameter">using_list</replaceable>,
       unless you wish to set up a self-join.
      </para>
     </listitem>
@@ -144,7 +144,7 @@ DELETE FROM [ ONLY ] <replaceable class="PARAMETER">table_name</replaceable> [ *
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">cursor_name</replaceable></term>
+    <term><replaceable class="parameter">cursor_name</replaceable></term>
     <listitem>
      <para>
       The name of the cursor to use in a <literal>WHERE CURRENT OF</>
@@ -161,12 +161,12 @@ DELETE FROM [ ONLY ] <replaceable class="PARAMETER">table_name</replaceable> [ *
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">output_expression</replaceable></term>
+    <term><replaceable class="parameter">output_expression</replaceable></term>
     <listitem>
      <para>
       An expression to be computed and returned by the <command>DELETE</>
       command after each row is deleted.  The expression can use any
-      column names of the table named by <replaceable class="PARAMETER">table_name</replaceable>
+      column names of the table named by <replaceable class="parameter">table_name</replaceable>
       or table(s) listed in <literal>USING</>.
       Write <literal>*</> to return all columns.
      </para>
@@ -174,7 +174,7 @@ DELETE FROM [ ONLY ] <replaceable class="PARAMETER">table_name</replaceable> [ *
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">output_name</replaceable></term>
+    <term><replaceable class="parameter">output_name</replaceable></term>
     <listitem>
      <para>
       A name to use for a returned column.

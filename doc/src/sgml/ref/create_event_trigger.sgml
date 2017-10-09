@@ -21,10 +21,10 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CREATE EVENT TRIGGER <replaceable class="PARAMETER">name</replaceable>
-    ON <replaceable class="PARAMETER">event</replaceable>
-    [ WHEN <replaceable class="PARAMETER">filter_variable</replaceable> IN (filter_value [, ... ]) [ AND ... ] ]
-    EXECUTE PROCEDURE <replaceable class="PARAMETER">function_name</replaceable>()
+CREATE EVENT TRIGGER <replaceable class="parameter">name</replaceable>
+    ON <replaceable class="parameter">event</replaceable>
+    [ WHEN <replaceable class="parameter">filter_variable</replaceable> IN (filter_value [, ... ]) [ AND ... ] ]
+    EXECUTE PROCEDURE <replaceable class="parameter">function_name</replaceable>()
 </synopsis>
  </refsynopsisdiv>
 

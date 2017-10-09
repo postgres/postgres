@@ -21,9 +21,9 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-LOCK [ TABLE ] [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [ * ] [, ...] [ IN <replaceable class="PARAMETER">lockmode</replaceable> MODE ] [ NOWAIT ]
+LOCK [ TABLE ] [ ONLY ] <replaceable class="parameter">name</replaceable> [ * ] [, ...] [ IN <replaceable class="parameter">lockmode</replaceable> MODE ] [ NOWAIT ]
 
-<phrase>where <replaceable class="PARAMETER">lockmode</replaceable> is one of:</phrase>
+<phrase>where <replaceable class="parameter">lockmode</replaceable> is one of:</phrase>
 
     ACCESS SHARE | ROW SHARE | ROW EXCLUSIVE | SHARE UPDATE EXCLUSIVE
     | SHARE | SHARE ROW EXCLUSIVE | EXCLUSIVE | ACCESS EXCLUSIVE
@@ -59,7 +59,7 @@ LOCK [ TABLE ] [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [ * ] 
    committed data, because <literal>SHARE</> lock mode conflicts with
    the <literal>ROW EXCLUSIVE</> lock acquired by writers, and your
    <command>LOCK TABLE <replaceable
-   class="PARAMETER">name</replaceable> IN SHARE MODE</command>
+   class="parameter">name</replaceable> IN SHARE MODE</command>
    statement will wait until any concurrent holders of <literal>ROW
    EXCLUSIVE</literal> mode locks commit or roll back. Thus, once you
    obtain the lock, there are no uncommitted writes outstanding;
@@ -107,7 +107,7 @@ LOCK [ TABLE ] [ ONLY ] <replaceable class="PARAMETER">name</replaceable> [ * ] 
 
   <variablelist>
    <varlistentry>
-    <term><replaceable class="PARAMETER">name</replaceable></term>
+    <term><replaceable class="parameter">name</replaceable></term>
     <listitem>
      <para>
       The name (optionally schema-qualified) of an existing table to

@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ROLLBACK PREPARED <replaceable class="PARAMETER">transaction_id</replaceable>
+ROLLBACK PREPARED <replaceable class="parameter">transaction_id</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -39,7 +39,7 @@ ROLLBACK PREPARED <replaceable class="PARAMETER">transaction_id</replaceable>
 
   <variablelist>
    <varlistentry>
-    <term><replaceable class="PARAMETER">transaction_id</replaceable></term>
+    <term><replaceable class="parameter">transaction_id</replaceable></term>
     <listitem>
      <para>
       The transaction identifier of the transaction that is to be

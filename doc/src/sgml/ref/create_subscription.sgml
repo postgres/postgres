@@ -21,9 +21,9 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CREATE SUBSCRIPTION <replaceable class="PARAMETER">subscription_name</replaceable>
-    CONNECTION '<replaceable class="PARAMETER">conninfo</replaceable>'
-    PUBLICATION <replaceable class="PARAMETER">publication_name</replaceable> [, ...]
+CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceable>
+    CONNECTION '<replaceable class="parameter">conninfo</replaceable>'
+    PUBLICATION <replaceable class="parameter">publication_name</replaceable> [, ...]
     [ WITH ( <replaceable class="parameter">subscription_parameter</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] ) ]
 </synopsis>
  </refsynopsisdiv>

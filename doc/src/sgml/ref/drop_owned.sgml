@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP OWNED BY { <replaceable class="PARAMETER">name</replaceable> | CURRENT_USER | SESSION_USER } [, ...] [ CASCADE | RESTRICT ]
+DROP OWNED BY { <replaceable class="parameter">name</replaceable> | CURRENT_USER | SESSION_USER } [, ...] [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -42,7 +42,7 @@ DROP OWNED BY { <replaceable class="PARAMETER">name</replaceable> | CURRENT_USER
 
   <variablelist>
    <varlistentry>
-    <term><replaceable class="PARAMETER">name</replaceable></term>
+    <term><replaceable class="parameter">name</replaceable></term>
     <listitem>
      <para>
       The name of a role whose objects will be dropped, and whose

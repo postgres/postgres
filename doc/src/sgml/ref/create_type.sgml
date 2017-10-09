@@ -22,7 +22,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 CREATE TYPE <replaceable class="parameter">name</replaceable> AS
-    ( [ <replaceable class="PARAMETER">attribute_name</replaceable> <replaceable class="PARAMETER">data_type</replaceable> [ COLLATE <replaceable>collation</replaceable> ] [, ... ] ] )
+    ( [ <replaceable class="parameter">attribute_name</replaceable> <replaceable class="parameter">data_type</replaceable> [ COLLATE <replaceable>collation</replaceable> ] [, ... ] ] )
 
 CREATE TYPE <replaceable class="parameter">name</replaceable> AS ENUM
     ( [ '<replaceable class="parameter">label</replaceable>' [, ... ] ] )

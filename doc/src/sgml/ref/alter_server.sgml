@@ -22,9 +22,9 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 ALTER SERVER <replaceable class="parameter">name</replaceable> [ VERSION '<replaceable class="parameter">new_version</replaceable>' ]
-    [ OPTIONS ( [ ADD | SET | DROP ] <replaceable class="PARAMETER">option</replaceable> ['<replaceable class="PARAMETER">value</replaceable>'] [, ... ] ) ]
-ALTER SERVER <replaceable class="PARAMETER">name</replaceable> OWNER TO { <replaceable>new_owner</replaceable> | CURRENT_USER | SESSION_USER }
-ALTER SERVER <replaceable class="PARAMETER">name</replaceable> RENAME TO <replaceable>new_name</replaceable>
+    [ OPTIONS ( [ ADD | SET | DROP ] <replaceable class="parameter">option</replaceable> ['<replaceable class="parameter">value</replaceable>'] [, ... ] ) ]
+ALTER SERVER <replaceable class="parameter">name</replaceable> OWNER TO { <replaceable>new_owner</replaceable> | CURRENT_USER | SESSION_USER }
+ALTER SERVER <replaceable class="parameter">name</replaceable> RENAME TO <replaceable>new_name</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -71,7 +71,7 @@ ALTER SERVER <replaceable class="PARAMETER">name</replaceable> RENAME TO <replac
    </varlistentry>
 
    <varlistentry>
-    <term><literal>OPTIONS ( [ ADD | SET | DROP ] <replaceable class="PARAMETER">option</replaceable> ['<replaceable class="PARAMETER">value</replaceable>'] [, ... ] )</literal></term>
+    <term><literal>OPTIONS ( [ ADD | SET | DROP ] <replaceable class="parameter">option</replaceable> ['<replaceable class="parameter">value</replaceable>'] [, ... ] )</literal></term>
     <listitem>
      <para>
       Change options for the
@@ -85,7 +85,7 @@ ALTER SERVER <replaceable class="PARAMETER">name</replaceable> RENAME TO <replac
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">new_owner</replaceable></term>
+    <term><replaceable class="parameter">new_owner</replaceable></term>
     <listitem>
      <para>
       The user name of the new owner of the foreign server.

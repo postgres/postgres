@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP USER [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ...]
+DROP USER [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [, ...]
 </synopsis>
  </refsynopsisdiv>
 

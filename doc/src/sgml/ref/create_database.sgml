@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
+CREATE DATABASE <replaceable class="parameter">name</replaceable>
     [ [ WITH ] [ OWNER [=] <replaceable class="parameter">user_name</replaceable> ]
            [ TEMPLATE [=] <replaceable class="parameter">template</replaceable> ]
            [ ENCODING [=] <replaceable class="parameter">encoding</replaceable> ]

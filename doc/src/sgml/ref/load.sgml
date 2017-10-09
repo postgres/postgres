@@ -20,7 +20,7 @@ doc/src/sgml/ref/load.sgml
 
  <refsynopsisdiv>
 <synopsis>
-LOAD '<replaceable class="PARAMETER">filename</replaceable>'
+LOAD '<replaceable class="parameter">filename</replaceable>'
 </synopsis>
  </refsynopsisdiv>
 
@@ -53,7 +53,7 @@ LOAD '<replaceable class="PARAMETER">filename</replaceable>'
   <para>
    Non-superusers can only apply <command>LOAD</> to library files
    located in <filename>$libdir/plugins/</> &mdash; the specified
-   <replaceable class="PARAMETER">filename</replaceable> must begin
+   <replaceable class="parameter">filename</replaceable> must begin
    with exactly that string.  (It is the database administrator's
    responsibility to ensure that only <quote>safe</> libraries
    are installed there.)

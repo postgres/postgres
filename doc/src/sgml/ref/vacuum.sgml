@@ -21,10 +21,10 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-VACUUM [ ( <replaceable class="PARAMETER">option</replaceable> [, ...] ) ] [ <replaceable class="PARAMETER">table_and_columns</replaceable> [, ...] ]
-VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ ANALYZE ] [ <replaceable class="PARAMETER">table_and_columns</replaceable> [, ...] ]
+VACUUM [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] [ <replaceable class="parameter">table_and_columns</replaceable> [, ...] ]
+VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ ANALYZE ] [ <replaceable class="parameter">table_and_columns</replaceable> [, ...] ]
 
-<phrase>where <replaceable class="PARAMETER">option</replaceable> can be one of:</phrase>
+<phrase>where <replaceable class="parameter">option</replaceable> can be one of:</phrase>
 
     FULL
     FREEZE
@@ -32,9 +32,9 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ ANALYZE ] [ <replaceable class="PARAMET
     ANALYZE
     DISABLE_PAGE_SKIPPING
 
-<phrase>and <replaceable class="PARAMETER">table_and_columns</replaceable> is:</phrase>
+<phrase>and <replaceable class="parameter">table_and_columns</replaceable> is:</phrase>
 
-    <replaceable class="PARAMETER">table_name</replaceable> [ ( <replaceable class="PARAMETER">column_name</replaceable> [, ...] ) ]
+    <replaceable class="parameter">table_name</replaceable> [ ( <replaceable class="parameter">column_name</replaceable> [, ...] ) ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -51,7 +51,7 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ ANALYZE ] [ <replaceable class="PARAMET
   </para>
 
   <para>
-   Without a <replaceable class="PARAMETER">table_and_columns</replaceable>
+   Without a <replaceable class="parameter">table_and_columns</replaceable>
    list, <command>VACUUM</command> processes every table and materialized view
    in the current database that the current user has permission to vacuum.
    With a list, <command>VACUUM</command> processes only those table(s).
@@ -161,7 +161,7 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ ANALYZE ] [ <replaceable class="PARAMET
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">table_name</replaceable></term>
+    <term><replaceable class="parameter">table_name</replaceable></term>
     <listitem>
      <para>
       The name (optionally schema-qualified) of a specific table or
@@ -172,7 +172,7 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ ANALYZE ] [ <replaceable class="PARAMET
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">column_name</replaceable></term>
+    <term><replaceable class="parameter">column_name</replaceable></term>
     <listitem>
      <para>
       The name of a specific column to analyze. Defaults to all columns.
