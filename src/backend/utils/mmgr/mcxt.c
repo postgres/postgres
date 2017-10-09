@@ -21,6 +21,7 @@
 
 #include "postgres.h"
 
+#include "common/string.h"
 #include "miscadmin.h"
 #include "utils/memdebug.h"
 #include "utils/memutils.h"
@@ -1086,10 +1087,14 @@ pstrdup(const char *in)
 char *
 pnstrdup(const char *in, Size len)
 {
-	char	   *out = palloc(len + 1);
+	char	   *out;
 
+	len = pg_strnlen(in, len);
+
+	out = palloc(len + 1);
 	memcpy(out, in, len);
 	out[len] = '\0';
+
 	return out;
 }
 
