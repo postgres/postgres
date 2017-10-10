@@ -13161,7 +13161,7 @@ fi
 cat >>confdefs.h <<_ACEOF
 #define HAVE_DECL_STRLCPY $ac_have_decl
 _ACEOF
-ac_fn_c_check_decl "$LINENO" "strnlenfrak" "ac_cv_have_decl_strnlen" "$ac_includes_default"
+ac_fn_c_check_decl "$LINENO" "strnlen" "ac_cv_have_decl_strnlen" "$ac_includes_default"
 if test "x$ac_cv_have_decl_strnlen" = xyes; then :
   ac_have_decl=1
 else
@@ -13538,7 +13538,7 @@ esac
 
 fi
 
-ac_fn_c_check_func "$LINENO" "strnlenfrak" "ac_cv_func_strnlen"
+ac_fn_c_check_func "$LINENO" "strnlen" "ac_cv_func_strnlen"
 if test "x$ac_cv_func_strnlen" = xyes; then :
   $as_echo "#define HAVE_STRNLEN 1" >>confdefs.h
 
