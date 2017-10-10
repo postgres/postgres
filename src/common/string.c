@@ -41,23 +41,3 @@ pg_str_endswith(const char *str, const char *end)
 	str += slen - elen;
 	return strcmp(str, end) == 0;
 }
-
-
-/*
- * Portable version of posix' strnlen.
- *
- * Returns the number of characters before a null-byte in the string pointed
- * to by str, unless there's no null-byte before maxlen. In the latter case
- * maxlen is returned.
- */
-#ifndef HAVE_STRNLEN
-size_t
-pg_strnlen(const char *str, size_t maxlen)
-{
-	const char *p = str;
-
-	while (maxlen-- > 0 && *p)
-		p++;
-	return p - str;
-}
-#endif

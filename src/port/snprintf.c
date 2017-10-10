@@ -43,8 +43,6 @@
 #endif
 #include <sys/param.h>
 
-#include "common/string.h"
-
 #ifndef NL_ARGMAX
 #define NL_ARGMAX 16
 #endif
@@ -804,7 +802,7 @@ fmtstr(char *value, int leftjust, int minlen, int maxwidth,
 	 * than that.
 	 */
 	if (pointflag)
-		vallen = pg_strnlen(value, maxwidth);
+		vallen = strnlen(value, maxwidth);
 	else
 		vallen = strlen(value);
 
