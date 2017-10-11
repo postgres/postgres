@@ -144,6 +144,14 @@ extern void appendBinaryStringInfo(StringInfo str,
 					   const char *data, int datalen);
 
 /*------------------------
+ * appendBinaryStringInfoNT
+ * Append arbitrary binary data to a StringInfo, allocating more space
+ * if necessary. Does not ensure a trailing null-byte exists.
+ */
+extern void appendBinaryStringInfoNT(StringInfo str,
+					   const char *data, int datalen);
+
+/*------------------------
  * enlargeStringInfo
  * Make sure a StringInfo's buffer can hold at least 'needed' more bytes.
  */

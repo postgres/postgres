@@ -138,13 +138,13 @@ pq_sendcountedtext(StringInfo buf, const char *str, int slen,
 	{
 		slen = strlen(p);
 		pq_sendint(buf, slen + extra, 4);
-		appendBinaryStringInfo(buf, p, slen);
+		appendBinaryStringInfoNT(buf, p, slen);
 		pfree(p);
 	}
 	else
 	{
 		pq_sendint(buf, slen + extra, 4);
-		appendBinaryStringInfo(buf, str, slen);
+		appendBinaryStringInfoNT(buf, str, slen);
 	}
 }
 
@@ -191,11 +191,11 @@ pq_sendstring(StringInfo buf, const char *str)
 	if (p != str)				/* actual conversion has been done? */
 	{
 		slen = strlen(p);
-		appendBinaryStringInfo(buf, p, slen + 1);
+		appendBinaryStringInfoNT(buf, p, slen + 1);
 		pfree(p);
 	}
 	else
-		appendBinaryStringInfo(buf, str, slen + 1);
+		appendBinaryStringInfoNT(buf, str, slen + 1);
 }
 
 /* --------------------------------
@@ -242,15 +242,15 @@ pq_sendint(StringInfo buf, int i, int b)
 	{
 		case 1:
 			n8 = (unsigned char) i;
-			appendBinaryStringInfo(buf, (char *) &n8, 1);
+			appendBinaryStringInfoNT(buf, (char *) &n8, 1);
 			break;
 		case 2:
 			n16 = pg_hton16((uint16) i);
-			appendBinaryStringInfo(buf, (char *) &n16, 2);
+			appendBinaryStringInfoNT(buf, (char *) &n16, 2);
 			break;
 		case 4:
 			n32 = pg_hton32((uint32) i);
-			appendBinaryStringInfo(buf, (char *) &n32, 4);
+			appendBinaryStringInfoNT(buf, (char *) &n32, 4);
 			break;
 		default:
 			elog(ERROR, "unsupported integer size %d", b);
@@ -271,7 +271,7 @@ pq_sendint64(StringInfo buf, int64 i)
 {
 	uint64		n64 = pg_hton64(i);
 
-	appendBinaryStringInfo(buf, (char *) &n64, sizeof(n64));
+	appendBinaryStringInfoNT(buf, (char *) &n64, sizeof(n64));
 }
 
 /* --------------------------------
@@ -297,7 +297,7 @@ pq_sendfloat4(StringInfo buf, float4 f)
 	swap.f = f;
 	swap.i = pg_hton32(swap.i);
 
-	appendBinaryStringInfo(buf, (char *) &swap.i, 4);
+	appendBinaryStringInfoNT(buf, (char *) &swap.i, 4);
 }
 
 /* --------------------------------

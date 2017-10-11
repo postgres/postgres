@@ -202,7 +202,7 @@ appendStringInfoSpaces(StringInfo str, int count)
  * appendBinaryStringInfo
  *
  * Append arbitrary binary data to a StringInfo, allocating more space
- * if necessary.
+ * if necessary. Ensures that a trailing null byte is present.
  */
 void
 appendBinaryStringInfo(StringInfo str, const char *data, int datalen)
@@ -222,6 +222,25 @@ appendBinaryStringInfo(StringInfo str, const char *data, int datalen)
 	 * their input isn't null-terminated.)
 	 */
 	str->data[str->len] = '\0';
+}
+
+/*
+ * appendBinaryStringInfoNT
+ *
+ * Append arbitrary binary data to a StringInfo, allocating more space
+ * if necessary. Does not ensure a trailing null-byte exists.
+ */
+void
+appendBinaryStringInfoNT(StringInfo str, const char *data, int datalen)
+{
+	Assert(str != NULL);
+
+	/* Make more room if needed */
+	enlargeStringInfo(str, datalen);
+
+	/* OK, append the data */
+	memcpy(str->data + str->len, data, datalen);
+	str->len += datalen;
 }
 
 /*
