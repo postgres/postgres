@@ -448,7 +448,7 @@ ExecSimpleRelationUpdate(EState *estate, EPQState *epqstate,
 
 	CheckCmdReplicaIdentity(rel, CMD_UPDATE);
 
-	/* BEFORE ROW INSERT Triggers */
+	/* BEFORE ROW UPDATE Triggers */
 	if (resultRelInfo->ri_TrigDesc &&
 		resultRelInfo->ri_TrigDesc->trig_update_before_row)
 	{
@@ -509,7 +509,7 @@ ExecSimpleRelationDelete(EState *estate, EPQState *epqstate,
 
 	CheckCmdReplicaIdentity(rel, CMD_DELETE);
 
-	/* BEFORE ROW INSERT Triggers */
+	/* BEFORE ROW DELETE Triggers */
 	if (resultRelInfo->ri_TrigDesc &&
 		resultRelInfo->ri_TrigDesc->trig_update_before_row)
 	{
