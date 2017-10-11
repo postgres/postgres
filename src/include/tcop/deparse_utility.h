@@ -97,7 +97,7 @@ typedef struct CollectedCommand
 		/* ALTER DEFAULT PRIVILEGES */
 		struct
 		{
-			GrantObjectType objtype;
+			ObjectType	objtype;
 		}			defprivs;
 	}			d;
 } CollectedCommand;

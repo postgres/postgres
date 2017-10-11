@@ -380,7 +380,7 @@ TypeCreate(Oid newTypeOid,
 	else
 		nulls[Anum_pg_type_typdefault - 1] = true;
 
-	typacl = get_user_default_acl(ACL_OBJECT_TYPE, ownerId,
+	typacl = get_user_default_acl(OBJECT_TYPE, ownerId,
 								  typeNamespace);
 	if (typacl != NULL)
 		values[Anum_pg_type_typacl - 1] = PointerGetDatum(typacl);

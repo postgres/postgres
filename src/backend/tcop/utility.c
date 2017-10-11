@@ -828,7 +828,7 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 			{
 				GrantStmt  *stmt = (GrantStmt *) parsetree;
 
-				if (EventTriggerSupportsGrantObjectType(stmt->objtype))
+				if (EventTriggerSupportsObjectType(stmt->objtype))
 					ProcessUtilitySlow(pstate, pstmt, queryString,
 									   context, params, queryEnv,
 									   dest, completionTag);

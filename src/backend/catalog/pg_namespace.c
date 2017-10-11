@@ -63,7 +63,7 @@ NamespaceCreate(const char *nspName, Oid ownerId, bool isTemp)
 				 errmsg("schema \"%s\" already exists", nspName)));
 
 	if (!isTemp)
-		nspacl = get_user_default_acl(ACL_OBJECT_NAMESPACE, ownerId,
+		nspacl = get_user_default_acl(OBJECT_SCHEMA, ownerId,
 									  InvalidOid);
 	else
 		nspacl = NULL;

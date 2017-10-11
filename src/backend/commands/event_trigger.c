@@ -159,8 +159,8 @@ static Oid insert_event_trigger_tuple(const char *trigname, const char *eventnam
 static void validate_ddl_tags(const char *filtervar, List *taglist);
 static void validate_table_rewrite_tags(const char *filtervar, List *taglist);
 static void EventTriggerInvoke(List *fn_oid_list, EventTriggerData *trigdata);
-static const char *stringify_grantobjtype(GrantObjectType objtype);
-static const char *stringify_adefprivs_objtype(GrantObjectType objtype);
+static const char *stringify_grant_objtype(ObjectType objtype);
+static const char *stringify_adefprivs_objtype(ObjectType objtype);
 
 /*
  * Create an event trigger.
@@ -1199,41 +1199,6 @@ EventTriggerSupportsObjectClass(ObjectClass objclass)
 	return false;
 }
 
-bool
-EventTriggerSupportsGrantObjectType(GrantObjectType objtype)
-{
-	switch (objtype)
-	{
-		case ACL_OBJECT_DATABASE:
-		case ACL_OBJECT_TABLESPACE:
-			/* no support for global objects */
-			return false;
-
-		case ACL_OBJECT_COLUMN:
-		case ACL_OBJECT_RELATION:
-		case ACL_OBJECT_SEQUENCE:
-		case ACL_OBJECT_DOMAIN:
-		case ACL_OBJECT_FDW:
-		case ACL_OBJECT_FOREIGN_SERVER:
-		case ACL_OBJECT_FUNCTION:
-		case ACL_OBJECT_LANGUAGE:
-		case ACL_OBJECT_LARGEOBJECT:
-		case ACL_OBJECT_NAMESPACE:
-		case ACL_OBJECT_PROCEDURE:
-		case ACL_OBJECT_ROUTINE:
-		case ACL_OBJECT_TYPE:
-			return true;
-
-			/*
-			 * There's intentionally no default: case here; we want the
-			 * compiler to warn if a new ACL class hasn't been handled above.
-			 */
-	}
-
-	/* Shouldn't get here, but if we do, say "no support" */
-	return false;
-}
-
 /*
  * Prepare event trigger state for a new complete query to run, if necessary;
  * returns whether this was done.  If it was, EventTriggerEndCompleteQuery must
@@ -2196,7 +2161,7 @@ pg_event_trigger_ddl_commands(PG_FUNCTION_ARGS)
 				values[i++] = CStringGetTextDatum(cmd->d.grant.istmt->is_grant ?
 												  "GRANT" : "REVOKE");
 				/* object_type */
-				values[i++] = CStringGetTextDatum(stringify_grantobjtype(
+				values[i++] = CStringGetTextDatum(stringify_grant_objtype(
 																		 cmd->d.grant.istmt->objtype));
 				/* schema */
 				nulls[i++] = true;
@@ -2219,92 +2184,164 @@ pg_event_trigger_ddl_commands(PG_FUNCTION_ARGS)
 }
 
 /*
- * Return the GrantObjectType as a string, as it would appear in GRANT and
+ * Return the ObjectType as a string, as it would appear in GRANT and
  * REVOKE commands.
  */
 static const char *
-stringify_grantobjtype(GrantObjectType objtype)
+stringify_grant_objtype(ObjectType objtype)
 {
 	switch (objtype)
 	{
-		case ACL_OBJECT_COLUMN:
+		case OBJECT_COLUMN:
 			return "COLUMN";
-		case ACL_OBJECT_RELATION:
+		case OBJECT_TABLE:
 			return "TABLE";
-		case ACL_OBJECT_SEQUENCE:
+		case OBJECT_SEQUENCE:
 			return "SEQUENCE";
-		case ACL_OBJECT_DATABASE:
+		case OBJECT_DATABASE:
 			return "DATABASE";
-		case ACL_OBJECT_DOMAIN:
+		case OBJECT_DOMAIN:
 			return "DOMAIN";
-		case ACL_OBJECT_FDW:
+		case OBJECT_FDW:
 			return "FOREIGN DATA WRAPPER";
-		case ACL_OBJECT_FOREIGN_SERVER:
+		case OBJECT_FOREIGN_SERVER:
 			return "FOREIGN SERVER";
-		case ACL_OBJECT_FUNCTION:
+		case OBJECT_FUNCTION:
 			return "FUNCTION";
-		case ACL_OBJECT_LANGUAGE:
+		case OBJECT_LANGUAGE:
 			return "LANGUAGE";
-		case ACL_OBJECT_LARGEOBJECT:
+		case OBJECT_LARGEOBJECT:
 			return "LARGE OBJECT";
-		case ACL_OBJECT_NAMESPACE:
+		case OBJECT_SCHEMA:
 			return "SCHEMA";
-		case ACL_OBJECT_PROCEDURE:
+		case OBJECT_PROCEDURE:
 			return "PROCEDURE";
-		case ACL_OBJECT_ROUTINE:
+		case OBJECT_ROUTINE:
 			return "ROUTINE";
-		case ACL_OBJECT_TABLESPACE:
+		case OBJECT_TABLESPACE:
 			return "TABLESPACE";
-		case ACL_OBJECT_TYPE:
+		case OBJECT_TYPE:
 			return "TYPE";
+		/* these currently aren't used */
+		case OBJECT_ACCESS_METHOD:
+		case OBJECT_AGGREGATE:
+		case OBJECT_AMOP:
+		case OBJECT_AMPROC:
+		case OBJECT_ATTRIBUTE:
+		case OBJECT_CAST:
+		case OBJECT_COLLATION:
+		case OBJECT_CONVERSION:
+		case OBJECT_DEFAULT:
+		case OBJECT_DEFACL:
+		case OBJECT_DOMCONSTRAINT:
+		case OBJECT_EVENT_TRIGGER:
+		case OBJECT_EXTENSION:
+		case OBJECT_FOREIGN_TABLE:
+		case OBJECT_INDEX:
+		case OBJECT_MATVIEW:
+		case OBJECT_OPCLASS:
+		case OBJECT_OPERATOR:
+		case OBJECT_OPFAMILY:
+		case OBJECT_POLICY:
+		case OBJECT_PUBLICATION:
+		case OBJECT_PUBLICATION_REL:
+		case OBJECT_ROLE:
+		case OBJECT_RULE:
+		case OBJECT_STATISTIC_EXT:
+		case OBJECT_SUBSCRIPTION:
+		case OBJECT_TABCONSTRAINT:
+		case OBJECT_TRANSFORM:
+		case OBJECT_TRIGGER:
+		case OBJECT_TSCONFIGURATION:
+		case OBJECT_TSDICTIONARY:
+		case OBJECT_TSPARSER:
+		case OBJECT_TSTEMPLATE:
+		case OBJECT_USER_MAPPING:
+		case OBJECT_VIEW:
+			elog(ERROR, "unsupported object type: %d", (int) objtype);
 	}
 
-	elog(ERROR, "unrecognized grant object type: %d", (int) objtype);
 	return "???";				/* keep compiler quiet */
 }
 
 /*
- * Return the GrantObjectType as a string; as above, but use the spelling
+ * Return the ObjectType as a string; as above, but use the spelling
  * in ALTER DEFAULT PRIVILEGES commands instead.  Generally this is just
  * the plural.
  */
 static const char *
-stringify_adefprivs_objtype(GrantObjectType objtype)
+stringify_adefprivs_objtype(ObjectType objtype)
 {
 	switch (objtype)
 	{
-		case ACL_OBJECT_COLUMN:
+		case OBJECT_COLUMN:
 			return "COLUMNS";
-		case ACL_OBJECT_RELATION:
+		case OBJECT_TABLE:
 			return "TABLES";
-		case ACL_OBJECT_SEQUENCE:
+		case OBJECT_SEQUENCE:
 			return "SEQUENCES";
-		case ACL_OBJECT_DATABASE:
+		case OBJECT_DATABASE:
 			return "DATABASES";
-		case ACL_OBJECT_DOMAIN:
+		case OBJECT_DOMAIN:
 			return "DOMAINS";
-		case ACL_OBJECT_FDW:
+		case OBJECT_FDW:
 			return "FOREIGN DATA WRAPPERS";
-		case ACL_OBJECT_FOREIGN_SERVER:
+		case OBJECT_FOREIGN_SERVER:
 			return "FOREIGN SERVERS";
-		case ACL_OBJECT_FUNCTION:
+		case OBJECT_FUNCTION:
 			return "FUNCTIONS";
-		case ACL_OBJECT_LANGUAGE:
+		case OBJECT_LANGUAGE:
 			return "LANGUAGES";
-		case ACL_OBJECT_LARGEOBJECT:
+		case OBJECT_LARGEOBJECT:
 			return "LARGE OBJECTS";
-		case ACL_OBJECT_NAMESPACE:
+		case OBJECT_SCHEMA:
 			return "SCHEMAS";
-		case ACL_OBJECT_PROCEDURE:
+		case OBJECT_PROCEDURE:
 			return "PROCEDURES";
-		case ACL_OBJECT_ROUTINE:
+		case OBJECT_ROUTINE:
 			return "ROUTINES";
-		case ACL_OBJECT_TABLESPACE:
+		case OBJECT_TABLESPACE:
 			return "TABLESPACES";
-		case ACL_OBJECT_TYPE:
+		case OBJECT_TYPE:
 			return "TYPES";
+		/* these currently aren't used */
+		case OBJECT_ACCESS_METHOD:
+		case OBJECT_AGGREGATE:
+		case OBJECT_AMOP:
+		case OBJECT_AMPROC:
+		case OBJECT_ATTRIBUTE:
+		case OBJECT_CAST:
+		case OBJECT_COLLATION:
+		case OBJECT_CONVERSION:
+		case OBJECT_DEFAULT:
+		case OBJECT_DEFACL:
+		case OBJECT_DOMCONSTRAINT:
+		case OBJECT_EVENT_TRIGGER:
+		case OBJECT_EXTENSION:
+		case OBJECT_FOREIGN_TABLE:
+		case OBJECT_INDEX:
+		case OBJECT_MATVIEW:
+		case OBJECT_OPCLASS:
+		case OBJECT_OPERATOR:
+		case OBJECT_OPFAMILY:
+		case OBJECT_POLICY:
+		case OBJECT_PUBLICATION:
+		case OBJECT_PUBLICATION_REL:
+		case OBJECT_ROLE:
+		case OBJECT_RULE:
+		case OBJECT_STATISTIC_EXT:
+		case OBJECT_SUBSCRIPTION:
+		case OBJECT_TABCONSTRAINT:
+		case OBJECT_TRANSFORM:
+		case OBJECT_TRIGGER:
+		case OBJECT_TSCONFIGURATION:
+		case OBJECT_TSDICTIONARY:
+		case OBJECT_TSPARSER:
+		case OBJECT_TSTEMPLATE:
+		case OBJECT_USER_MAPPING:
+		case OBJECT_VIEW:
+			elog(ERROR, "unsupported object type: %d", (int) objtype);
 	}
 
-	elog(ERROR, "unrecognized grant object type: %d", (int) objtype);
 	return "???";				/* keep compiler quiet */
 }

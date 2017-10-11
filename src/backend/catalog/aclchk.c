@@ -86,7 +86,7 @@ typedef struct
 	Oid			nspid;			/* namespace, or InvalidOid if none */
 	/* remaining fields are same as in InternalGrant: */
 	bool		is_grant;
-	GrantObjectType objtype;
+	ObjectType	objtype;
 	bool		all_privs;
 	AclMode		privileges;
 	List	   *grantees;
@@ -116,8 +116,8 @@ static void ExecGrant_Type(InternalGrant *grantStmt);
 static void SetDefaultACLsInSchemas(InternalDefaultACL *iacls, List *nspnames);
 static void SetDefaultACL(InternalDefaultACL *iacls);
 
-static List *objectNamesToOids(GrantObjectType objtype, List *objnames);
-static List *objectsInSchemaToOids(GrantObjectType objtype, List *nspnames);
+static List *objectNamesToOids(ObjectType objtype, List *objnames);
+static List *objectsInSchemaToOids(ObjectType objtype, List *nspnames);
 static List *getRelationsInNamespace(Oid namespaceId, char relkind);
 static void expand_col_privileges(List *colnames, Oid table_oid,
 					  AclMode this_privileges,
@@ -266,7 +266,7 @@ restrict_and_check_grant(bool is_grant, AclMode avail_goptions, bool all_privs,
 			whole_mask = ACL_ALL_RIGHTS_LARGEOBJECT;
 			break;
 		case ACL_KIND_NAMESPACE:
-			whole_mask = ACL_ALL_RIGHTS_NAMESPACE;
+			whole_mask = ACL_ALL_RIGHTS_SCHEMA;
 			break;
 		case ACL_KIND_TABLESPACE:
 			whole_mask = ACL_ALL_RIGHTS_TABLESPACE;
@@ -441,68 +441,68 @@ ExecuteGrantStmt(GrantStmt *stmt)
 
 	/*
 	 * Convert stmt->privileges, a list of AccessPriv nodes, into an AclMode
-	 * bitmask.  Note: objtype can't be ACL_OBJECT_COLUMN.
+	 * bitmask.  Note: objtype can't be OBJECT_COLUMN.
 	 */
 	switch (stmt->objtype)
 	{
+		case OBJECT_TABLE:
 			/*
 			 * Because this might be a sequence, we test both relation and
 			 * sequence bits, and later do a more limited test when we know
 			 * the object type.
 			 */
-		case ACL_OBJECT_RELATION:
 			all_privileges = ACL_ALL_RIGHTS_RELATION | ACL_ALL_RIGHTS_SEQUENCE;
 			errormsg = gettext_noop("invalid privilege type %s for relation");
 			break;
-		case ACL_OBJECT_SEQUENCE:
+		case OBJECT_SEQUENCE:
 			all_privileges = ACL_ALL_RIGHTS_SEQUENCE;
 			errormsg = gettext_noop("invalid privilege type %s for sequence");
 			break;
-		case ACL_OBJECT_DATABASE:
+		case OBJECT_DATABASE:
 			all_privileges = ACL_ALL_RIGHTS_DATABASE;
 			errormsg = gettext_noop("invalid privilege type %s for database");
 			break;
-		case ACL_OBJECT_DOMAIN:
+		case OBJECT_DOMAIN:
 			all_privileges = ACL_ALL_RIGHTS_TYPE;
 			errormsg = gettext_noop("invalid privilege type %s for domain");
 			break;
-		case ACL_OBJECT_FUNCTION:
+		case OBJECT_FUNCTION:
 			all_privileges = ACL_ALL_RIGHTS_FUNCTION;
 			errormsg = gettext_noop("invalid privilege type %s for function");
 			break;
-		case ACL_OBJECT_LANGUAGE:
+		case OBJECT_LANGUAGE:
 			all_privileges = ACL_ALL_RIGHTS_LANGUAGE;
 			errormsg = gettext_noop("invalid privilege type %s for language");
 			break;
-		case ACL_OBJECT_LARGEOBJECT:
+		case OBJECT_LARGEOBJECT:
 			all_privileges = ACL_ALL_RIGHTS_LARGEOBJECT;
 			errormsg = gettext_noop("invalid privilege type %s for large object");
 			break;
-		case ACL_OBJECT_NAMESPACE:
-			all_privileges = ACL_ALL_RIGHTS_NAMESPACE;
+		case OBJECT_SCHEMA:
+			all_privileges = ACL_ALL_RIGHTS_SCHEMA;
 			errormsg = gettext_noop("invalid privilege type %s for schema");
 			break;
-		case ACL_OBJECT_PROCEDURE:
+		case OBJECT_PROCEDURE:
 			all_privileges = ACL_ALL_RIGHTS_FUNCTION;
 			errormsg = gettext_noop("invalid privilege type %s for procedure");
 			break;
-		case ACL_OBJECT_ROUTINE:
+		case OBJECT_ROUTINE:
 			all_privileges = ACL_ALL_RIGHTS_FUNCTION;
 			errormsg = gettext_noop("invalid privilege type %s for routine");
 			break;
-		case ACL_OBJECT_TABLESPACE:
+		case OBJECT_TABLESPACE:
 			all_privileges = ACL_ALL_RIGHTS_TABLESPACE;
 			errormsg = gettext_noop("invalid privilege type %s for tablespace");
 			break;
-		case ACL_OBJECT_TYPE:
+		case OBJECT_TYPE:
 			all_privileges = ACL_ALL_RIGHTS_TYPE;
 			errormsg = gettext_noop("invalid privilege type %s for type");
 			break;
-		case ACL_OBJECT_FDW:
+		case OBJECT_FDW:
 			all_privileges = ACL_ALL_RIGHTS_FDW;
 			errormsg = gettext_noop("invalid privilege type %s for foreign-data wrapper");
 			break;
-		case ACL_OBJECT_FOREIGN_SERVER:
+		case OBJECT_FOREIGN_SERVER:
 			all_privileges = ACL_ALL_RIGHTS_FOREIGN_SERVER;
 			errormsg = gettext_noop("invalid privilege type %s for foreign server");
 			break;
@@ -540,7 +540,7 @@ ExecuteGrantStmt(GrantStmt *stmt)
 			 */
 			if (privnode->cols)
 			{
-				if (stmt->objtype != ACL_OBJECT_RELATION)
+				if (stmt->objtype != OBJECT_TABLE)
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_GRANT_OPERATION),
 							 errmsg("column privileges are only valid for relations")));
@@ -574,38 +574,38 @@ ExecGrantStmt_oids(InternalGrant *istmt)
 {
 	switch (istmt->objtype)
 	{
-		case ACL_OBJECT_RELATION:
-		case ACL_OBJECT_SEQUENCE:
+		case OBJECT_TABLE:
+		case OBJECT_SEQUENCE:
 			ExecGrant_Relation(istmt);
 			break;
-		case ACL_OBJECT_DATABASE:
+		case OBJECT_DATABASE:
 			ExecGrant_Database(istmt);
 			break;
-		case ACL_OBJECT_DOMAIN:
-		case ACL_OBJECT_TYPE:
+		case OBJECT_DOMAIN:
+		case OBJECT_TYPE:
 			ExecGrant_Type(istmt);
 			break;
-		case ACL_OBJECT_FDW:
+		case OBJECT_FDW:
 			ExecGrant_Fdw(istmt);
 			break;
-		case ACL_OBJECT_FOREIGN_SERVER:
+		case OBJECT_FOREIGN_SERVER:
 			ExecGrant_ForeignServer(istmt);
 			break;
-		case ACL_OBJECT_FUNCTION:
-		case ACL_OBJECT_PROCEDURE:
-		case ACL_OBJECT_ROUTINE:
+		case OBJECT_FUNCTION:
+		case OBJECT_PROCEDURE:
+		case OBJECT_ROUTINE:
 			ExecGrant_Function(istmt);
 			break;
-		case ACL_OBJECT_LANGUAGE:
+		case OBJECT_LANGUAGE:
 			ExecGrant_Language(istmt);
 			break;
-		case ACL_OBJECT_LARGEOBJECT:
+		case OBJECT_LARGEOBJECT:
 			ExecGrant_Largeobject(istmt);
 			break;
-		case ACL_OBJECT_NAMESPACE:
+		case OBJECT_SCHEMA:
 			ExecGrant_Namespace(istmt);
 			break;
-		case ACL_OBJECT_TABLESPACE:
+		case OBJECT_TABLESPACE:
 			ExecGrant_Tablespace(istmt);
 			break;
 		default:
@@ -619,7 +619,7 @@ ExecGrantStmt_oids(InternalGrant *istmt)
 	 * the functions a chance to adjust the istmt with privileges actually
 	 * granted.
 	 */
-	if (EventTriggerSupportsGrantObjectType(istmt->objtype))
+	if (EventTriggerSupportsObjectType(istmt->objtype))
 		EventTriggerCollectGrant(istmt);
 }
 
@@ -634,7 +634,7 @@ ExecGrantStmt_oids(InternalGrant *istmt)
  * to fail.
  */
 static List *
-objectNamesToOids(GrantObjectType objtype, List *objnames)
+objectNamesToOids(ObjectType objtype, List *objnames)
 {
 	List	   *objects = NIL;
 	ListCell   *cell;
@@ -643,8 +643,8 @@ objectNamesToOids(GrantObjectType objtype, List *objnames)
 
 	switch (objtype)
 	{
-		case ACL_OBJECT_RELATION:
-		case ACL_OBJECT_SEQUENCE:
+		case OBJECT_TABLE:
+		case OBJECT_SEQUENCE:
 			foreach(cell, objnames)
 			{
 				RangeVar   *relvar = (RangeVar *) lfirst(cell);
@@ -654,7 +654,7 @@ objectNamesToOids(GrantObjectType objtype, List *objnames)
 				objects = lappend_oid(objects, relOid);
 			}
 			break;
-		case ACL_OBJECT_DATABASE:
+		case OBJECT_DATABASE:
 			foreach(cell, objnames)
 			{
 				char	   *dbname = strVal(lfirst(cell));
@@ -664,8 +664,8 @@ objectNamesToOids(GrantObjectType objtype, List *objnames)
 				objects = lappend_oid(objects, dbid);
 			}
 			break;
-		case ACL_OBJECT_DOMAIN:
-		case ACL_OBJECT_TYPE:
+		case OBJECT_DOMAIN:
+		case OBJECT_TYPE:
 			foreach(cell, objnames)
 			{
 				List	   *typname = (List *) lfirst(cell);
@@ -675,7 +675,7 @@ objectNamesToOids(GrantObjectType objtype, List *objnames)
 				objects = lappend_oid(objects, oid);
 			}
 			break;
-		case ACL_OBJECT_FUNCTION:
+		case OBJECT_FUNCTION:
 			foreach(cell, objnames)
 			{
 				ObjectWithArgs *func = (ObjectWithArgs *) lfirst(cell);
@@ -685,7 +685,7 @@ objectNamesToOids(GrantObjectType objtype, List *objnames)
 				objects = lappend_oid(objects, funcid);
 			}
 			break;
-		case ACL_OBJECT_LANGUAGE:
+		case OBJECT_LANGUAGE:
 			foreach(cell, objnames)
 			{
 				char	   *langname = strVal(lfirst(cell));
@@ -695,7 +695,7 @@ objectNamesToOids(GrantObjectType objtype, List *objnames)
 				objects = lappend_oid(objects, oid);
 			}
 			break;
-		case ACL_OBJECT_LARGEOBJECT:
+		case OBJECT_LARGEOBJECT:
 			foreach(cell, objnames)
 			{
 				Oid			lobjOid = oidparse(lfirst(cell));
@@ -709,7 +709,7 @@ objectNamesToOids(GrantObjectType objtype, List *objnames)
 				objects = lappend_oid(objects, lobjOid);
 			}
 			break;
-		case ACL_OBJECT_NAMESPACE:
+		case OBJECT_SCHEMA:
 			foreach(cell, objnames)
 			{
 				char	   *nspname = strVal(lfirst(cell));
@@ -719,7 +719,7 @@ objectNamesToOids(GrantObjectType objtype, List *objnames)
 				objects = lappend_oid(objects, oid);
 			}
 			break;
-		case ACL_OBJECT_PROCEDURE:
+		case OBJECT_PROCEDURE:
 			foreach(cell, objnames)
 			{
 				ObjectWithArgs *func = (ObjectWithArgs *) lfirst(cell);
@@ -729,7 +729,7 @@ objectNamesToOids(GrantObjectType objtype, List *objnames)
 				objects = lappend_oid(objects, procid);
 			}
 			break;
-		case ACL_OBJECT_ROUTINE:
+		case OBJECT_ROUTINE:
 			foreach(cell, objnames)
 			{
 				ObjectWithArgs *func = (ObjectWithArgs *) lfirst(cell);
@@ -739,7 +739,7 @@ objectNamesToOids(GrantObjectType objtype, List *objnames)
 				objects = lappend_oid(objects, routid);
 			}
 			break;
-		case ACL_OBJECT_TABLESPACE:
+		case OBJECT_TABLESPACE:
 			foreach(cell, objnames)
 			{
 				char	   *spcname = strVal(lfirst(cell));
@@ -749,7 +749,7 @@ objectNamesToOids(GrantObjectType objtype, List *objnames)
 				objects = lappend_oid(objects, spcoid);
 			}
 			break;
-		case ACL_OBJECT_FDW:
+		case OBJECT_FDW:
 			foreach(cell, objnames)
 			{
 				char	   *fdwname = strVal(lfirst(cell));
@@ -758,7 +758,7 @@ objectNamesToOids(GrantObjectType objtype, List *objnames)
 				objects = lappend_oid(objects, fdwid);
 			}
 			break;
-		case ACL_OBJECT_FOREIGN_SERVER:
+		case OBJECT_FOREIGN_SERVER:
 			foreach(cell, objnames)
 			{
 				char	   *srvname = strVal(lfirst(cell));
@@ -783,7 +783,7 @@ objectNamesToOids(GrantObjectType objtype, List *objnames)
  * no privilege checking on the individual objects here.
  */
 static List *
-objectsInSchemaToOids(GrantObjectType objtype, List *nspnames)
+objectsInSchemaToOids(ObjectType objtype, List *nspnames)
 {
 	List	   *objects = NIL;
 	ListCell   *cell;
@@ -798,7 +798,7 @@ objectsInSchemaToOids(GrantObjectType objtype, List *nspnames)
 
 		switch (objtype)
 		{
-			case ACL_OBJECT_RELATION:
+			case OBJECT_TABLE:
 				objs = getRelationsInNamespace(namespaceId, RELKIND_RELATION);
 				objects = list_concat(objects, objs);
 				objs = getRelationsInNamespace(namespaceId, RELKIND_VIEW);
@@ -810,13 +810,13 @@ objectsInSchemaToOids(GrantObjectType objtype, List *nspnames)
 				objs = getRelationsInNamespace(namespaceId, RELKIND_PARTITIONED_TABLE);
 				objects = list_concat(objects, objs);
 				break;
-			case ACL_OBJECT_SEQUENCE:
+			case OBJECT_SEQUENCE:
 				objs = getRelationsInNamespace(namespaceId, RELKIND_SEQUENCE);
 				objects = list_concat(objects, objs);
 				break;
-			case ACL_OBJECT_FUNCTION:
-			case ACL_OBJECT_PROCEDURE:
-			case ACL_OBJECT_ROUTINE:
+			case OBJECT_FUNCTION:
+			case OBJECT_PROCEDURE:
+			case OBJECT_ROUTINE:
 				{
 					ScanKeyData key[2];
 					int			keycount;
@@ -835,12 +835,12 @@ objectsInSchemaToOids(GrantObjectType objtype, List *nspnames)
 					 * When looking for procedures, check for return type ==0.
 					 * When looking for routines, don't check the return type.
 					 */
-					if (objtype == ACL_OBJECT_FUNCTION)
+					if (objtype == OBJECT_FUNCTION)
 						ScanKeyInit(&key[keycount++],
 									Anum_pg_proc_prorettype,
 									BTEqualStrategyNumber, F_OIDNE,
 									InvalidOid);
-					else if (objtype == ACL_OBJECT_PROCEDURE)
+					else if (objtype == OBJECT_PROCEDURE)
 						ScanKeyInit(&key[keycount++],
 									Anum_pg_proc_prorettype,
 									BTEqualStrategyNumber, F_OIDEQ,
@@ -993,32 +993,32 @@ ExecAlterDefaultPrivilegesStmt(ParseState *pstate, AlterDefaultPrivilegesStmt *s
 	 */
 	switch (action->objtype)
 	{
-		case ACL_OBJECT_RELATION:
+		case OBJECT_TABLE:
 			all_privileges = ACL_ALL_RIGHTS_RELATION;
 			errormsg = gettext_noop("invalid privilege type %s for relation");
 			break;
-		case ACL_OBJECT_SEQUENCE:
+		case OBJECT_SEQUENCE:
 			all_privileges = ACL_ALL_RIGHTS_SEQUENCE;
 			errormsg = gettext_noop("invalid privilege type %s for sequence");
 			break;
-		case ACL_OBJECT_FUNCTION:
+		case OBJECT_FUNCTION:
 			all_privileges = ACL_ALL_RIGHTS_FUNCTION;
 			errormsg = gettext_noop("invalid privilege type %s for function");
 			break;
-		case ACL_OBJECT_PROCEDURE:
+		case OBJECT_PROCEDURE:
 			all_privileges = ACL_ALL_RIGHTS_FUNCTION;
 			errormsg = gettext_noop("invalid privilege type %s for procedure");
 			break;
-		case ACL_OBJECT_ROUTINE:
+		case OBJECT_ROUTINE:
 			all_privileges = ACL_ALL_RIGHTS_FUNCTION;
 			errormsg = gettext_noop("invalid privilege type %s for routine");
 			break;
-		case ACL_OBJECT_TYPE:
+		case OBJECT_TYPE:
 			all_privileges = ACL_ALL_RIGHTS_TYPE;
 			errormsg = gettext_noop("invalid privilege type %s for type");
 			break;
-		case ACL_OBJECT_NAMESPACE:
-			all_privileges = ACL_ALL_RIGHTS_NAMESPACE;
+		case OBJECT_SCHEMA:
+			all_privileges = ACL_ALL_RIGHTS_SCHEMA;
 			errormsg = gettext_noop("invalid privilege type %s for schema");
 			break;
 		default:
@@ -1184,38 +1184,38 @@ SetDefaultACL(InternalDefaultACL *iacls)
 	 */
 	switch (iacls->objtype)
 	{
-		case ACL_OBJECT_RELATION:
+		case OBJECT_TABLE:
 			objtype = DEFACLOBJ_RELATION;
 			if (iacls->all_privs && this_privileges == ACL_NO_RIGHTS)
 				this_privileges = ACL_ALL_RIGHTS_RELATION;
 			break;
 
-		case ACL_OBJECT_SEQUENCE:
+		case OBJECT_SEQUENCE:
 			objtype = DEFACLOBJ_SEQUENCE;
 			if (iacls->all_privs && this_privileges == ACL_NO_RIGHTS)
 				this_privileges = ACL_ALL_RIGHTS_SEQUENCE;
 			break;
 
-		case ACL_OBJECT_FUNCTION:
+		case OBJECT_FUNCTION:
 			objtype = DEFACLOBJ_FUNCTION;
 			if (iacls->all_privs && this_privileges == ACL_NO_RIGHTS)
 				this_privileges = ACL_ALL_RIGHTS_FUNCTION;
 			break;
 
-		case ACL_OBJECT_TYPE:
+		case OBJECT_TYPE:
 			objtype = DEFACLOBJ_TYPE;
 			if (iacls->all_privs && this_privileges == ACL_NO_RIGHTS)
 				this_privileges = ACL_ALL_RIGHTS_TYPE;
 			break;
 
-		case ACL_OBJECT_NAMESPACE:
+		case OBJECT_SCHEMA:
 			if (OidIsValid(iacls->nspid))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_GRANT_OPERATION),
 						 errmsg("cannot use IN SCHEMA clause when using GRANT/REVOKE ON SCHEMAS")));
 			objtype = DEFACLOBJ_NAMESPACE;
 			if (iacls->all_privs && this_privileges == ACL_NO_RIGHTS)
-				this_privileges = ACL_ALL_RIGHTS_NAMESPACE;
+				this_privileges = ACL_ALL_RIGHTS_SCHEMA;
 			break;
 
 		default:
@@ -1430,19 +1430,19 @@ RemoveRoleFromObjectACL(Oid roleid, Oid classid, Oid objid)
 		switch (pg_default_acl_tuple->defaclobjtype)
 		{
 			case DEFACLOBJ_RELATION:
-				iacls.objtype = ACL_OBJECT_RELATION;
+				iacls.objtype = OBJECT_TABLE;
 				break;
 			case DEFACLOBJ_SEQUENCE:
-				iacls.objtype = ACL_OBJECT_SEQUENCE;
+				iacls.objtype = OBJECT_SEQUENCE;
 				break;
 			case DEFACLOBJ_FUNCTION:
-				iacls.objtype = ACL_OBJECT_FUNCTION;
+				iacls.objtype = OBJECT_FUNCTION;
 				break;
 			case DEFACLOBJ_TYPE:
-				iacls.objtype = ACL_OBJECT_TYPE;
+				iacls.objtype = OBJECT_TYPE;
 				break;
 			case DEFACLOBJ_NAMESPACE:
-				iacls.objtype = ACL_OBJECT_NAMESPACE;
+				iacls.objtype = OBJECT_SCHEMA;
 				break;
 			default:
 				/* Shouldn't get here */
@@ -1471,35 +1471,35 @@ RemoveRoleFromObjectACL(Oid roleid, Oid classid, Oid objid)
 		switch (classid)
 		{
 			case RelationRelationId:
-				/* it's OK to use RELATION for a sequence */
-				istmt.objtype = ACL_OBJECT_RELATION;
+				/* it's OK to use TABLE for a sequence */
+				istmt.objtype = OBJECT_TABLE;
 				break;
 			case DatabaseRelationId:
-				istmt.objtype = ACL_OBJECT_DATABASE;
+				istmt.objtype = OBJECT_DATABASE;
 				break;
 			case TypeRelationId:
-				istmt.objtype = ACL_OBJECT_TYPE;
+				istmt.objtype = OBJECT_TYPE;
 				break;
 			case ProcedureRelationId:
-				istmt.objtype = ACL_OBJECT_ROUTINE;
+				istmt.objtype = OBJECT_ROUTINE;
 				break;
 			case LanguageRelationId:
-				istmt.objtype = ACL_OBJECT_LANGUAGE;
+				istmt.objtype = OBJECT_LANGUAGE;
 				break;
 			case LargeObjectRelationId:
-				istmt.objtype = ACL_OBJECT_LARGEOBJECT;
+				istmt.objtype = OBJECT_LARGEOBJECT;
 				break;
 			case NamespaceRelationId:
-				istmt.objtype = ACL_OBJECT_NAMESPACE;
+				istmt.objtype = OBJECT_SCHEMA;
 				break;
 			case TableSpaceRelationId:
-				istmt.objtype = ACL_OBJECT_TABLESPACE;
+				istmt.objtype = OBJECT_TABLESPACE;
 				break;
 			case ForeignServerRelationId:
-				istmt.objtype = ACL_OBJECT_FOREIGN_SERVER;
+				istmt.objtype = OBJECT_FOREIGN_SERVER;
 				break;
 			case ForeignDataWrapperRelationId:
-				istmt.objtype = ACL_OBJECT_FDW;
+				istmt.objtype = OBJECT_FDW;
 				break;
 			default:
 				elog(ERROR, "unexpected object class %u", classid);
@@ -1682,7 +1682,7 @@ ExecGrant_Attribute(InternalGrant *istmt, Oid relOid, const char *relname,
 							   &isNull);
 	if (isNull)
 	{
-		old_acl = acldefault(ACL_OBJECT_COLUMN, ownerId);
+		old_acl = acldefault(OBJECT_COLUMN, ownerId);
 		/* There are no old member roles according to the catalogs */
 		noldmembers = 0;
 		oldmembers = NULL;
@@ -1839,7 +1839,7 @@ ExecGrant_Relation(InternalGrant *istmt)
 							NameStr(pg_class_tuple->relname))));
 
 		/* Used GRANT SEQUENCE on a non-sequence? */
-		if (istmt->objtype == ACL_OBJECT_SEQUENCE &&
+		if (istmt->objtype == OBJECT_SEQUENCE &&
 			pg_class_tuple->relkind != RELKIND_SEQUENCE)
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
@@ -1863,7 +1863,7 @@ ExecGrant_Relation(InternalGrant *istmt)
 		 * permissions.  The OR of table and sequence permissions were already
 		 * checked.
 		 */
-		if (istmt->objtype == ACL_OBJECT_RELATION)
+		if (istmt->objtype == OBJECT_TABLE)
 		{
 			if (pg_class_tuple->relkind == RELKIND_SEQUENCE)
 			{
@@ -1942,10 +1942,10 @@ ExecGrant_Relation(InternalGrant *istmt)
 			switch (pg_class_tuple->relkind)
 			{
 				case RELKIND_SEQUENCE:
-					old_acl = acldefault(ACL_OBJECT_SEQUENCE, ownerId);
+					old_acl = acldefault(OBJECT_SEQUENCE, ownerId);
 					break;
 				default:
-					old_acl = acldefault(ACL_OBJECT_RELATION, ownerId);
+					old_acl = acldefault(OBJECT_TABLE, ownerId);
 					break;
 			}
 			/* There are no old member roles according to the catalogs */
@@ -2170,7 +2170,7 @@ ExecGrant_Database(InternalGrant *istmt)
 								RelationGetDescr(relation), &isNull);
 		if (isNull)
 		{
-			old_acl = acldefault(ACL_OBJECT_DATABASE, ownerId);
+			old_acl = acldefault(OBJECT_DATABASE, ownerId);
 			/* There are no old member roles according to the catalogs */
 			noldmembers = 0;
 			oldmembers = NULL;
@@ -2292,7 +2292,7 @@ ExecGrant_Fdw(InternalGrant *istmt)
 								   &isNull);
 		if (isNull)
 		{
-			old_acl = acldefault(ACL_OBJECT_FDW, ownerId);
+			old_acl = acldefault(OBJECT_FDW, ownerId);
 			/* There are no old member roles according to the catalogs */
 			noldmembers = 0;
 			oldmembers = NULL;
@@ -2418,7 +2418,7 @@ ExecGrant_ForeignServer(InternalGrant *istmt)
 								   &isNull);
 		if (isNull)
 		{
-			old_acl = acldefault(ACL_OBJECT_FOREIGN_SERVER, ownerId);
+			old_acl = acldefault(OBJECT_FOREIGN_SERVER, ownerId);
 			/* There are no old member roles according to the catalogs */
 			noldmembers = 0;
 			oldmembers = NULL;
@@ -2542,7 +2542,7 @@ ExecGrant_Function(InternalGrant *istmt)
 								   &isNull);
 		if (isNull)
 		{
-			old_acl = acldefault(ACL_OBJECT_FUNCTION, ownerId);
+			old_acl = acldefault(OBJECT_FUNCTION, ownerId);
 			/* There are no old member roles according to the catalogs */
 			noldmembers = 0;
 			oldmembers = NULL;
@@ -2673,7 +2673,7 @@ ExecGrant_Language(InternalGrant *istmt)
 								   &isNull);
 		if (isNull)
 		{
-			old_acl = acldefault(ACL_OBJECT_LANGUAGE, ownerId);
+			old_acl = acldefault(OBJECT_LANGUAGE, ownerId);
 			/* There are no old member roles according to the catalogs */
 			noldmembers = 0;
 			oldmembers = NULL;
@@ -2811,7 +2811,7 @@ ExecGrant_Largeobject(InternalGrant *istmt)
 								RelationGetDescr(relation), &isNull);
 		if (isNull)
 		{
-			old_acl = acldefault(ACL_OBJECT_LARGEOBJECT, ownerId);
+			old_acl = acldefault(OBJECT_LARGEOBJECT, ownerId);
 			/* There are no old member roles according to the catalogs */
 			noldmembers = 0;
 			oldmembers = NULL;
@@ -2895,7 +2895,7 @@ ExecGrant_Namespace(InternalGrant *istmt)
 	ListCell   *cell;
 
 	if (istmt->all_privs && istmt->privileges == ACL_NO_RIGHTS)
-		istmt->privileges = ACL_ALL_RIGHTS_NAMESPACE;
+		istmt->privileges = ACL_ALL_RIGHTS_SCHEMA;
 
 	relation = heap_open(NamespaceRelationId, RowExclusiveLock);
 
@@ -2937,7 +2937,7 @@ ExecGrant_Namespace(InternalGrant *istmt)
 								   &isNull);
 		if (isNull)
 		{
-			old_acl = acldefault(ACL_OBJECT_NAMESPACE, ownerId);
+			old_acl = acldefault(OBJECT_SCHEMA, ownerId);
 			/* There are no old member roles according to the catalogs */
 			noldmembers = 0;
 			oldmembers = NULL;
@@ -3061,7 +3061,7 @@ ExecGrant_Tablespace(InternalGrant *istmt)
 								RelationGetDescr(relation), &isNull);
 		if (isNull)
 		{
-			old_acl = acldefault(ACL_OBJECT_TABLESPACE, ownerId);
+			old_acl = acldefault(OBJECT_TABLESPACE, ownerId);
 			/* There are no old member roles according to the catalogs */
 			noldmembers = 0;
 			oldmembers = NULL;
@@ -3179,7 +3179,7 @@ ExecGrant_Type(InternalGrant *istmt)
 					 errhint("Set the privileges of the element type instead.")));
 
 		/* Used GRANT DOMAIN on a non-domain? */
-		if (istmt->objtype == ACL_OBJECT_DOMAIN &&
+		if (istmt->objtype == OBJECT_DOMAIN &&
 			pg_type_tuple->typtype != TYPTYPE_DOMAIN)
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
@@ -3745,10 +3745,10 @@ pg_class_aclmask(Oid table_oid, Oid roleid,
 		switch (classForm->relkind)
 		{
 			case RELKIND_SEQUENCE:
-				acl = acldefault(ACL_OBJECT_SEQUENCE, ownerId);
+				acl = acldefault(OBJECT_SEQUENCE, ownerId);
 				break;
 			default:
-				acl = acldefault(ACL_OBJECT_RELATION, ownerId);
+				acl = acldefault(OBJECT_TABLE, ownerId);
 				break;
 		}
 		aclDatum = (Datum) 0;
@@ -3804,7 +3804,7 @@ pg_database_aclmask(Oid db_oid, Oid roleid,
 	if (isNull)
 	{
 		/* No ACL, so build default ACL */
-		acl = acldefault(ACL_OBJECT_DATABASE, ownerId);
+		acl = acldefault(OBJECT_DATABASE, ownerId);
 		aclDatum = (Datum) 0;
 	}
 	else
@@ -3858,7 +3858,7 @@ pg_proc_aclmask(Oid proc_oid, Oid roleid,
 	if (isNull)
 	{
 		/* No ACL, so build default ACL */
-		acl = acldefault(ACL_OBJECT_FUNCTION, ownerId);
+		acl = acldefault(OBJECT_FUNCTION, ownerId);
 		aclDatum = (Datum) 0;
 	}
 	else
@@ -3912,7 +3912,7 @@ pg_language_aclmask(Oid lang_oid, Oid roleid,
 	if (isNull)
 	{
 		/* No ACL, so build default ACL */
-		acl = acldefault(ACL_OBJECT_LANGUAGE, ownerId);
+		acl = acldefault(OBJECT_LANGUAGE, ownerId);
 		aclDatum = (Datum) 0;
 	}
 	else
@@ -3992,7 +3992,7 @@ pg_largeobject_aclmask_snapshot(Oid lobj_oid, Oid roleid,
 	if (isNull)
 	{
 		/* No ACL, so build default ACL */
-		acl = acldefault(ACL_OBJECT_LARGEOBJECT, ownerId);
+		acl = acldefault(OBJECT_LARGEOBJECT, ownerId);
 		aclDatum = (Datum) 0;
 	}
 	else
@@ -4055,7 +4055,7 @@ pg_namespace_aclmask(Oid nsp_oid, Oid roleid,
 	{
 		if (pg_database_aclcheck(MyDatabaseId, roleid,
 								 ACL_CREATE_TEMP) == ACLCHECK_OK)
-			return mask & ACL_ALL_RIGHTS_NAMESPACE;
+			return mask & ACL_ALL_RIGHTS_SCHEMA;
 		else
 			return mask & ACL_USAGE;
 	}
@@ -4076,7 +4076,7 @@ pg_namespace_aclmask(Oid nsp_oid, Oid roleid,
 	if (isNull)
 	{
 		/* No ACL, so build default ACL */
-		acl = acldefault(ACL_OBJECT_NAMESPACE, ownerId);
+		acl = acldefault(OBJECT_SCHEMA, ownerId);
 		aclDatum = (Datum) 0;
 	}
 	else
@@ -4132,7 +4132,7 @@ pg_tablespace_aclmask(Oid spc_oid, Oid roleid,
 	if (isNull)
 	{
 		/* No ACL, so build default ACL */
-		acl = acldefault(ACL_OBJECT_TABLESPACE, ownerId);
+		acl = acldefault(OBJECT_TABLESPACE, ownerId);
 		aclDatum = (Datum) 0;
 	}
 	else
@@ -4194,7 +4194,7 @@ pg_foreign_data_wrapper_aclmask(Oid fdw_oid, Oid roleid,
 	if (isNull)
 	{
 		/* No ACL, so build default ACL */
-		acl = acldefault(ACL_OBJECT_FDW, ownerId);
+		acl = acldefault(OBJECT_FDW, ownerId);
 		aclDatum = (Datum) 0;
 	}
 	else
@@ -4256,7 +4256,7 @@ pg_foreign_server_aclmask(Oid srv_oid, Oid roleid,
 	if (isNull)
 	{
 		/* No ACL, so build default ACL */
-		acl = acldefault(ACL_OBJECT_FOREIGN_SERVER, ownerId);
+		acl = acldefault(OBJECT_FOREIGN_SERVER, ownerId);
 		aclDatum = (Datum) 0;
 	}
 	else
@@ -4333,7 +4333,7 @@ pg_type_aclmask(Oid type_oid, Oid roleid, AclMode mask, AclMaskHow how)
 	if (isNull)
 	{
 		/* No ACL, so build default ACL */
-		acl = acldefault(ACL_OBJECT_TYPE, ownerId);
+		acl = acldefault(OBJECT_TYPE, ownerId);
 		aclDatum = (Datum) 0;
 	}
 	else
@@ -5302,7 +5302,7 @@ get_default_acl_internal(Oid roleId, Oid nsp_oid, char objtype)
  * Returns NULL if built-in system defaults should be used
  */
 Acl *
-get_user_default_acl(GrantObjectType objtype, Oid ownerId, Oid nsp_oid)
+get_user_default_acl(ObjectType objtype, Oid ownerId, Oid nsp_oid)
 {
 	Acl		   *result;
 	Acl		   *glob_acl;
@@ -5320,23 +5320,23 @@ get_user_default_acl(GrantObjectType objtype, Oid ownerId, Oid nsp_oid)
 	/* Check if object type is supported in pg_default_acl */
 	switch (objtype)
 	{
-		case ACL_OBJECT_RELATION:
+		case OBJECT_TABLE:
 			defaclobjtype = DEFACLOBJ_RELATION;
 			break;
 
-		case ACL_OBJECT_SEQUENCE:
+		case OBJECT_SEQUENCE:
 			defaclobjtype = DEFACLOBJ_SEQUENCE;
 			break;
 
-		case ACL_OBJECT_FUNCTION:
+		case OBJECT_FUNCTION:
 			defaclobjtype = DEFACLOBJ_FUNCTION;
 			break;
 
-		case ACL_OBJECT_TYPE:
+		case OBJECT_TYPE:
 			defaclobjtype = DEFACLOBJ_TYPE;
 			break;
 
-		case ACL_OBJECT_NAMESPACE:
+		case OBJECT_SCHEMA:
 			defaclobjtype = DEFACLOBJ_NAMESPACE;
 			break;
 
