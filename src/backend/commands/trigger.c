@@ -3639,17 +3639,10 @@ GetCurrentFDWTuplestore(void)
 		 */
 		oldcxt = MemoryContextSwitchTo(CurTransactionContext);
 		saveResourceOwner = CurrentResourceOwner;
-		PG_TRY();
-		{
-			CurrentResourceOwner = CurTransactionResourceOwner;
-			ret = tuplestore_begin_heap(false, false, work_mem);
-		}
-		PG_CATCH();
-		{
-			CurrentResourceOwner = saveResourceOwner;
-			PG_RE_THROW();
-		}
-		PG_END_TRY();
+		CurrentResourceOwner = CurTransactionResourceOwner;
+
+		ret = tuplestore_begin_heap(false, false, work_mem);
+
 		CurrentResourceOwner = saveResourceOwner;
 		MemoryContextSwitchTo(oldcxt);
 
@@ -4468,20 +4461,13 @@ MakeTransitionCaptureState(TriggerDesc *trigdesc, Oid relid, CmdType cmdType)
 	/* Now create required tuplestore(s), if we don't have them already. */
 	oldcxt = MemoryContextSwitchTo(CurTransactionContext);
 	saveResourceOwner = CurrentResourceOwner;
-	PG_TRY();
-	{
-		CurrentResourceOwner = CurTransactionResourceOwner;
-		if (need_old && table->old_tuplestore == NULL)
-			table->old_tuplestore = tuplestore_begin_heap(false, false, work_mem);
-		if (need_new && table->new_tuplestore == NULL)
-			table->new_tuplestore = tuplestore_begin_heap(false, false, work_mem);
-	}
-	PG_CATCH();
-	{
-		CurrentResourceOwner = saveResourceOwner;
-		PG_RE_THROW();
-	}
-	PG_END_TRY();
+	CurrentResourceOwner = CurTransactionResourceOwner;
+
+	if (need_old && table->old_tuplestore == NULL)
+		table->old_tuplestore = tuplestore_begin_heap(false, false, work_mem);
+	if (need_new && table->new_tuplestore == NULL)
+		table->new_tuplestore = tuplestore_begin_heap(false, false, work_mem);
+
 	CurrentResourceOwner = saveResourceOwner;
 	MemoryContextSwitchTo(oldcxt);
 

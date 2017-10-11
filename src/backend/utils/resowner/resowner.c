@@ -473,21 +473,8 @@ ResourceOwnerRelease(ResourceOwner owner,
 					 bool isCommit,
 					 bool isTopLevel)
 {
-	/* Rather than PG_TRY at every level of recursion, set it up once */
-	ResourceOwner save;
-
-	save = CurrentResourceOwner;
-	PG_TRY();
-	{
-		ResourceOwnerReleaseInternal(owner, phase, isCommit, isTopLevel);
-	}
-	PG_CATCH();
-	{
-		CurrentResourceOwner = save;
-		PG_RE_THROW();
-	}
-	PG_END_TRY();
-	CurrentResourceOwner = save;
+	/* There's not currently any setup needed before recursing */
+	ResourceOwnerReleaseInternal(owner, phase, isCommit, isTopLevel);
 }
 
 static void
@@ -507,8 +494,7 @@ ResourceOwnerReleaseInternal(ResourceOwner owner,
 
 	/*
 	 * Make CurrentResourceOwner point to me, so that ReleaseBuffer etc don't
-	 * get confused.  We needn't PG_TRY here because the outermost level will
-	 * fix it on error abort.
+	 * get confused.
 	 */
 	save = CurrentResourceOwner;
 	CurrentResourceOwner = owner;

@@ -575,18 +575,10 @@ AssignTransactionId(TransactionState s)
 	 * ResourceOwner.
 	 */
 	currentOwner = CurrentResourceOwner;
-	PG_TRY();
-	{
-		CurrentResourceOwner = s->curTransactionOwner;
-		XactLockTableInsert(s->transactionId);
-	}
-	PG_CATCH();
-	{
-		/* Ensure CurrentResourceOwner is restored on error */
-		CurrentResourceOwner = currentOwner;
-		PG_RE_THROW();
-	}
-	PG_END_TRY();
+	CurrentResourceOwner = s->curTransactionOwner;
+
+	XactLockTableInsert(s->transactionId);
+
 	CurrentResourceOwner = currentOwner;
 
 	/*

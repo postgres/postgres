@@ -75,23 +75,14 @@ open_lo_relation(void)
 
 	/* Arrange for the top xact to own these relation references */
 	currentOwner = CurrentResourceOwner;
-	PG_TRY();
-	{
-		CurrentResourceOwner = TopTransactionResourceOwner;
+	CurrentResourceOwner = TopTransactionResourceOwner;
 
-		/* Use RowExclusiveLock since we might either read or write */
-		if (lo_heap_r == NULL)
-			lo_heap_r = heap_open(LargeObjectRelationId, RowExclusiveLock);
-		if (lo_index_r == NULL)
-			lo_index_r = index_open(LargeObjectLOidPNIndexId, RowExclusiveLock);
-	}
-	PG_CATCH();
-	{
-		/* Ensure CurrentResourceOwner is restored on error */
-		CurrentResourceOwner = currentOwner;
-		PG_RE_THROW();
-	}
-	PG_END_TRY();
+	/* Use RowExclusiveLock since we might either read or write */
+	if (lo_heap_r == NULL)
+		lo_heap_r = heap_open(LargeObjectRelationId, RowExclusiveLock);
+	if (lo_index_r == NULL)
+		lo_index_r = index_open(LargeObjectLOidPNIndexId, RowExclusiveLock);
+
 	CurrentResourceOwner = currentOwner;
 }
 
@@ -112,22 +103,13 @@ close_lo_relation(bool isCommit)
 			ResourceOwner currentOwner;
 
 			currentOwner = CurrentResourceOwner;
-			PG_TRY();
-			{
-				CurrentResourceOwner = TopTransactionResourceOwner;
+			CurrentResourceOwner = TopTransactionResourceOwner;
 
-				if (lo_index_r)
-					index_close(lo_index_r, NoLock);
-				if (lo_heap_r)
-					heap_close(lo_heap_r, NoLock);
-			}
-			PG_CATCH();
-			{
-				/* Ensure CurrentResourceOwner is restored on error */
-				CurrentResourceOwner = currentOwner;
-				PG_RE_THROW();
-			}
-			PG_END_TRY();
+			if (lo_index_r)
+				index_close(lo_index_r, NoLock);
+			if (lo_heap_r)
+				heap_close(lo_heap_r, NoLock);
+
 			CurrentResourceOwner = currentOwner;
 		}
 		lo_heap_r = NULL;

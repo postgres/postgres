@@ -1055,18 +1055,10 @@ lock_and_open_sequence(SeqTable seq)
 		ResourceOwner currentOwner;
 
 		currentOwner = CurrentResourceOwner;
-		PG_TRY();
-		{
-			CurrentResourceOwner = TopTransactionResourceOwner;
-			LockRelationOid(seq->relid, RowExclusiveLock);
-		}
-		PG_CATCH();
-		{
-			/* Ensure CurrentResourceOwner is restored on error */
-			CurrentResourceOwner = currentOwner;
-			PG_RE_THROW();
-		}
-		PG_END_TRY();
+		CurrentResourceOwner = TopTransactionResourceOwner;
+
+		LockRelationOid(seq->relid, RowExclusiveLock);
+
 		CurrentResourceOwner = currentOwner;
 
 		/* Flag that we have a lock in the current xact */
