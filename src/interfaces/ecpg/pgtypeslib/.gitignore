@@ -4,3 +4,4 @@
 /pgstrcasecmp.c
 /rint.c
 /snprintf.c
+/strnlen.c
