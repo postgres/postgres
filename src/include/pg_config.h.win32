@@ -681,6 +681,17 @@
 #define inline __inline
 #endif
 
+/* Define to the equivalent of the C99 'restrict' keyword, or to
+   nothing if this is not supported.  Do not define if restrict is
+   supported directly.  */
+/* Visual Studio 2008 and upwards */
+#if (_MSC_VER >= 1500)
+/* works for C and C++ in msvc */
+#define restrict __restrict
+#else
+#define restrict
+#endif
+
 /* Define to empty if the C compiler does not understand signed types. */
 /* #undef signed */
 
