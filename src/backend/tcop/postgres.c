@@ -165,6 +165,10 @@ static bool RecoveryConflictPending = false;
 static bool RecoveryConflictRetryable = true;
 static ProcSignalReason RecoveryConflictReason;
 
+/* reused buffer to pass to SendRowDescriptionMessage() */
+static MemoryContext row_description_context = NULL;
+static StringInfoData row_description_buf;
+
 /* ----------------------------------------------------------------
  *		decls for routines only used in this file
  * ----------------------------------------------------------------
@@ -2315,7 +2319,6 @@ static void
 exec_describe_statement_message(const char *stmt_name)
 {
 	CachedPlanSource *psrc;
-	StringInfoData buf;
 	int			i;
 
 	/*
@@ -2371,16 +2374,17 @@ exec_describe_statement_message(const char *stmt_name)
 	/*
 	 * First describe the parameters...
 	 */
-	pq_beginmessage(&buf, 't'); /* parameter description message type */
-	pq_sendint(&buf, psrc->num_params, 2);
+	pq_beginmessage_reuse(&row_description_buf, 't'); /* parameter description
+													   * message type */
+	pq_sendint(&row_description_buf, psrc->num_params, 2);
 
 	for (i = 0; i < psrc->num_params; i++)
 	{
 		Oid			ptype = psrc->param_types[i];
 
-		pq_sendint(&buf, (int) ptype, 4);
+		pq_sendint(&row_description_buf, (int) ptype, 4);
 	}
-	pq_endmessage(&buf);
+	pq_endmessage_reuse(&row_description_buf);
 
 	/*
 	 * Next send RowDescription or NoData to describe the result...
@@ -2392,7 +2396,10 @@ exec_describe_statement_message(const char *stmt_name)
 		/* Get the plan's primary targetlist */
 		tlist = CachedPlanGetTargetList(psrc, NULL);
 
-		SendRowDescriptionMessage(psrc->resultDesc, tlist, NULL);
+		SendRowDescriptionMessage(&row_description_buf,
+								  psrc->resultDesc,
+								  tlist,
+								  NULL);
 	}
 	else
 		pq_putemptymessage('n');	/* NoData */
@@ -2444,7 +2451,8 @@ exec_describe_portal_message(const char *portal_name)
 		return;					/* can't actually do anything... */
 
 	if (portal->tupDesc)
-		SendRowDescriptionMessage(portal->tupDesc,
+		SendRowDescriptionMessage(&row_description_buf,
+								  portal->tupDesc,
 								  FetchPortalTargetList(portal),
 								  portal->formats);
 	else
@@ -3829,6 +3837,19 @@ PostgresMain(int argc, char *argv[],
 	MessageContext = AllocSetContextCreate(TopMemoryContext,
 										   "MessageContext",
 										   ALLOCSET_DEFAULT_SIZES);
+
+	/*
+	 * Create memory context and buffer used for RowDescription messages. As
+	 * SendRowDescriptionMessage(), via exec_describe_statement_message(), is
+	 * frequently executed for ever single statement, we don't want to
+	 * allocate a separate buffer every time.
+	 */
+	row_description_context = AllocSetContextCreate(TopMemoryContext,
+													"RowDescriptionContext",
+													ALLOCSET_DEFAULT_SIZES);
+	MemoryContextSwitchTo(row_description_context);
+	initStringInfo(&row_description_buf);
+	MemoryContextSwitchTo(TopMemoryContext);
 
 	/*
 	 * Remember stand-alone backend startup time

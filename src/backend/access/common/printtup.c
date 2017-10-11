@@ -32,6 +32,10 @@ static bool printtup_internal_20(TupleTableSlot *slot, DestReceiver *self);
 static void printtup_shutdown(DestReceiver *self);
 static void printtup_destroy(DestReceiver *self);
 
+static void SendRowDescriptionCols_2(StringInfo buf, TupleDesc typeinfo,
+						 List *targetlist, int16 *formats);
+static void SendRowDescriptionCols_3(StringInfo buf, TupleDesc typeinfo,
+						 List *targetlist, int16 *formats);
 
 /* ----------------------------------------------------------------
  *		printtup / debugtup support
@@ -161,7 +165,8 @@ printtup_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 	 * descriptor of the tuples.
 	 */
 	if (myState->sendDescrip)
-		SendRowDescriptionMessage(typeinfo,
+		SendRowDescriptionMessage(&myState->buf,
+								  typeinfo,
 								  FetchPortalTargetList(portal),
 								  portal->formats);
 
@@ -189,16 +194,109 @@ printtup_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
  * send zeroes for the format codes in that case.
  */
 void
-SendRowDescriptionMessage(TupleDesc typeinfo, List *targetlist, int16 *formats)
+SendRowDescriptionMessage(StringInfo buf, TupleDesc typeinfo,
+						  List *targetlist, int16 *formats)
 {
 	int			natts = typeinfo->natts;
 	int			proto = PG_PROTOCOL_MAJOR(FrontendProtocol);
+
+	/* tuple descriptor message type */
+	pq_beginmessage_reuse(buf, 'T');
+	/* # of attrs in tuples */
+	pq_sendint16(buf, natts);
+
+	if (proto >= 3)
+		SendRowDescriptionCols_3(buf, typeinfo, targetlist, formats);
+	else
+		SendRowDescriptionCols_2(buf, typeinfo, targetlist, formats);
+
+	pq_endmessage_reuse(buf);
+}
+
+/*
+ * Send description for each column when using v3+ protocol
+ */
+static void
+SendRowDescriptionCols_3(StringInfo buf, TupleDesc typeinfo, List *targetlist, int16 *formats)
+{
+	int			natts = typeinfo->natts;
 	int			i;
-	StringInfoData buf;
 	ListCell   *tlist_item = list_head(targetlist);
 
-	pq_beginmessage(&buf, 'T'); /* tuple descriptor message type */
-	pq_sendint(&buf, natts, 2); /* # of attrs in tuples */
+	/*
+	 * Preallocate memory for the entire message to be sent. That allows to
+	 * use the significantly faster inline pqformat.h functions and to avoid
+	 * reallocations.
+	 *
+	 * Have to overestimate the size of the column-names, to account for
+	 * character set overhead.
+	 */
+	enlargeStringInfo(buf, (NAMEDATALEN * MAX_CONVERSION_GROWTH /* attname */
+							+ sizeof(Oid)	/* resorigtbl */
+							+ sizeof(AttrNumber)	/* resorigcol */
+							+ sizeof(Oid)	/* atttypid */
+							+ sizeof(int16) /* attlen */
+							+ sizeof(int32) /* attypmod */
+							+ sizeof(int16) /* format */
+							) * natts);
+
+	for (i = 0; i < natts; ++i)
+	{
+		Form_pg_attribute att = TupleDescAttr(typeinfo, i);
+		Oid			atttypid = att->atttypid;
+		int32		atttypmod = att->atttypmod;
+		Oid			resorigtbl;
+		AttrNumber	resorigcol;
+		int16		format;
+
+		/*
+		 * If column is a domain, send the base type and typmod instead.
+		 * Lookup before sending any ints, for efficiency.
+		 */
+		atttypid = getBaseTypeAndTypmod(atttypid, &atttypmod);
+
+		/* Do we have a non-resjunk tlist item? */
+		while (tlist_item &&
+			   ((TargetEntry *) lfirst(tlist_item))->resjunk)
+			tlist_item = lnext(tlist_item);
+		if (tlist_item)
+		{
+			TargetEntry *tle = (TargetEntry *) lfirst(tlist_item);
+
+			resorigtbl = tle->resorigtbl;
+			resorigcol = tle->resorigcol;
+			tlist_item = lnext(tlist_item);
+		}
+		else
+		{
+			/* No info available, so send zeroes */
+			resorigtbl = 0;
+			resorigcol = 0;
+		}
+
+		if (formats)
+			format = formats[i];
+		else
+			format = 0;
+
+		pq_writestring(buf, NameStr(att->attname));
+		pq_writeint32(buf, resorigtbl);
+		pq_writeint16(buf, resorigcol);
+		pq_writeint32(buf, atttypid);
+		pq_writeint16(buf, att->attlen);
+		pq_writeint32(buf, atttypmod);
+		pq_writeint16(buf, format);
+	}
+}
+
+/*
+ * Send description for each column when using v2 protocol
+ */
+static void
+SendRowDescriptionCols_2(StringInfo buf, TupleDesc typeinfo, List *targetlist, int16 *formats)
+{
+	int			natts = typeinfo->natts;
+	int			i;
 
 	for (i = 0; i < natts; ++i)
 	{
@@ -206,44 +304,16 @@ SendRowDescriptionMessage(TupleDesc typeinfo, List *targetlist, int16 *formats)
 		Oid			atttypid = att->atttypid;
 		int32		atttypmod = att->atttypmod;
 
-		pq_sendstring(&buf, NameStr(att->attname));
-		/* column ID info appears in protocol 3.0 and up */
-		if (proto >= 3)
-		{
-			/* Do we have a non-resjunk tlist item? */
-			while (tlist_item &&
-				   ((TargetEntry *) lfirst(tlist_item))->resjunk)
-				tlist_item = lnext(tlist_item);
-			if (tlist_item)
-			{
-				TargetEntry *tle = (TargetEntry *) lfirst(tlist_item);
-
-				pq_sendint(&buf, tle->resorigtbl, 4);
-				pq_sendint(&buf, tle->resorigcol, 2);
-				tlist_item = lnext(tlist_item);
-			}
-			else
-			{
-				/* No info available, so send zeroes */
-				pq_sendint(&buf, 0, 4);
-				pq_sendint(&buf, 0, 2);
-			}
-		}
 		/* If column is a domain, send the base type and typmod instead */
 		atttypid = getBaseTypeAndTypmod(atttypid, &atttypmod);
-		pq_sendint(&buf, (int) atttypid, sizeof(atttypid));
-		pq_sendint(&buf, att->attlen, sizeof(att->attlen));
-		pq_sendint(&buf, atttypmod, sizeof(atttypmod));
-		/* format info appears in protocol 3.0 and up */
-		if (proto >= 3)
-		{
-			if (formats)
-				pq_sendint(&buf, formats[i], 2);
-			else
-				pq_sendint(&buf, 0, 2);
-		}
+
+		pq_sendstring(buf, NameStr(att->attname));
+		/* column ID only info appears in protocol 3.0 and up */
+		pq_sendint32(buf, atttypid);
+		pq_sendint16(buf, att->attlen);
+		pq_sendint32(buf, atttypmod);
+		/* format info only appears in protocol 3.0 and up */
 	}
-	pq_endmessage(&buf);
 }
 
 /*
