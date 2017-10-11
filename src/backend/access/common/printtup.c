@@ -57,6 +57,7 @@ typedef struct
 typedef struct
 {
 	DestReceiver pub;			/* publicly-known function pointers */
+	StringInfoData buf;			/* output buffer */
 	Portal		portal;			/* the Portal we are printing from */
 	bool		sendDescrip;	/* send RowDescription at startup? */
 	TupleDesc	attrinfo;		/* The attr info we are set up for */
@@ -126,6 +127,9 @@ printtup_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 {
 	DR_printtup *myState = (DR_printtup *) self;
 	Portal		portal = myState->portal;
+
+	/* create buffer to be used for all messages */
+	initStringInfo(&myState->buf);
 
 	/*
 	 * Create a temporary memory context that we can reset once per row to
@@ -302,7 +306,7 @@ printtup(TupleTableSlot *slot, DestReceiver *self)
 	TupleDesc	typeinfo = slot->tts_tupleDescriptor;
 	DR_printtup *myState = (DR_printtup *) self;
 	MemoryContext oldcontext;
-	StringInfoData buf;
+	StringInfo	buf = &myState->buf;
 	int			natts = typeinfo->natts;
 	int			i;
 
@@ -319,9 +323,9 @@ printtup(TupleTableSlot *slot, DestReceiver *self)
 	/*
 	 * Prepare a DataRow message (note buffer is in per-row context)
 	 */
-	pq_beginmessage(&buf, 'D');
+	pq_beginmessage_reuse(buf, 'D');
 
-	pq_sendint(&buf, natts, 2);
+	pq_sendint(buf, natts, 2);
 
 	/*
 	 * send the attributes of this tuple
@@ -333,7 +337,7 @@ printtup(TupleTableSlot *slot, DestReceiver *self)
 
 		if (slot->tts_isnull[i])
 		{
-			pq_sendint(&buf, -1, 4);
+			pq_sendint(buf, -1, 4);
 			continue;
 		}
 
@@ -354,7 +358,7 @@ printtup(TupleTableSlot *slot, DestReceiver *self)
 			char	   *outputstr;
 
 			outputstr = OutputFunctionCall(&thisState->finfo, attr);
-			pq_sendcountedtext(&buf, outputstr, strlen(outputstr), false);
+			pq_sendcountedtext(buf, outputstr, strlen(outputstr), false);
 		}
 		else
 		{
@@ -362,13 +366,13 @@ printtup(TupleTableSlot *slot, DestReceiver *self)
 			bytea	   *outputbytes;
 
 			outputbytes = SendFunctionCall(&thisState->finfo, attr);
-			pq_sendint(&buf, VARSIZE(outputbytes) - VARHDRSZ, 4);
-			pq_sendbytes(&buf, VARDATA(outputbytes),
+			pq_sendint(buf, VARSIZE(outputbytes) - VARHDRSZ, 4);
+			pq_sendbytes(buf, VARDATA(outputbytes),
 						 VARSIZE(outputbytes) - VARHDRSZ);
 		}
 	}
 
-	pq_endmessage(&buf);
+	pq_endmessage_reuse(buf);
 
 	/* Return to caller's context, and flush row's temporary memory */
 	MemoryContextSwitchTo(oldcontext);
@@ -387,7 +391,7 @@ printtup_20(TupleTableSlot *slot, DestReceiver *self)
 	TupleDesc	typeinfo = slot->tts_tupleDescriptor;
 	DR_printtup *myState = (DR_printtup *) self;
 	MemoryContext oldcontext;
-	StringInfoData buf;
+	StringInfo	buf = &myState->buf;
 	int			natts = typeinfo->natts;
 	int			i,
 				j,
@@ -406,7 +410,7 @@ printtup_20(TupleTableSlot *slot, DestReceiver *self)
 	/*
 	 * tell the frontend to expect new tuple data (in ASCII style)
 	 */
-	pq_beginmessage(&buf, 'D');
+	pq_beginmessage_reuse(buf, 'D');
 
 	/*
 	 * send a bitmap of which attributes are not null
@@ -420,13 +424,13 @@ printtup_20(TupleTableSlot *slot, DestReceiver *self)
 		k >>= 1;
 		if (k == 0)				/* end of byte? */
 		{
-			pq_sendint(&buf, j, 1);
+			pq_sendint(buf, j, 1);
 			j = 0;
 			k = 1 << 7;
 		}
 	}
 	if (k != (1 << 7))			/* flush last partial byte */
-		pq_sendint(&buf, j, 1);
+		pq_sendint(buf, j, 1);
 
 	/*
 	 * send the attributes of this tuple
@@ -443,10 +447,10 @@ printtup_20(TupleTableSlot *slot, DestReceiver *self)
 		Assert(thisState->format == 0);
 
 		outputstr = OutputFunctionCall(&thisState->finfo, attr);
-		pq_sendcountedtext(&buf, outputstr, strlen(outputstr), true);
+		pq_sendcountedtext(buf, outputstr, strlen(outputstr), true);
 	}
 
-	pq_endmessage(&buf);
+	pq_endmessage_reuse(buf);
 
 	/* Return to caller's context, and flush row's temporary memory */
 	MemoryContextSwitchTo(oldcontext);
@@ -572,7 +576,7 @@ printtup_internal_20(TupleTableSlot *slot, DestReceiver *self)
 	TupleDesc	typeinfo = slot->tts_tupleDescriptor;
 	DR_printtup *myState = (DR_printtup *) self;
 	MemoryContext oldcontext;
-	StringInfoData buf;
+	StringInfo	buf = &myState->buf;
 	int			natts = typeinfo->natts;
 	int			i,
 				j,
@@ -591,7 +595,7 @@ printtup_internal_20(TupleTableSlot *slot, DestReceiver *self)
 	/*
 	 * tell the frontend to expect new tuple data (in binary style)
 	 */
-	pq_beginmessage(&buf, 'B');
+	pq_beginmessage_reuse(buf, 'B');
 
 	/*
 	 * send a bitmap of which attributes are not null
@@ -605,13 +609,13 @@ printtup_internal_20(TupleTableSlot *slot, DestReceiver *self)
 		k >>= 1;
 		if (k == 0)				/* end of byte? */
 		{
-			pq_sendint(&buf, j, 1);
+			pq_sendint(buf, j, 1);
 			j = 0;
 			k = 1 << 7;
 		}
 	}
 	if (k != (1 << 7))			/* flush last partial byte */
-		pq_sendint(&buf, j, 1);
+		pq_sendint(buf, j, 1);
 
 	/*
 	 * send the attributes of this tuple
@@ -628,12 +632,12 @@ printtup_internal_20(TupleTableSlot *slot, DestReceiver *self)
 		Assert(thisState->format == 1);
 
 		outputbytes = SendFunctionCall(&thisState->finfo, attr);
-		pq_sendint(&buf, VARSIZE(outputbytes) - VARHDRSZ, 4);
-		pq_sendbytes(&buf, VARDATA(outputbytes),
+		pq_sendint(buf, VARSIZE(outputbytes) - VARHDRSZ, 4);
+		pq_sendbytes(buf, VARDATA(outputbytes),
 					 VARSIZE(outputbytes) - VARHDRSZ);
 	}
 
-	pq_endmessage(&buf);
+	pq_endmessage_reuse(buf);
 
 	/* Return to caller's context, and flush row's temporary memory */
 	MemoryContextSwitchTo(oldcontext);
