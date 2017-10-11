@@ -2914,26 +2914,24 @@ ProcessInterrupts(void)
 						 " database and repeat your command.")));
 	}
 
-	if (QueryCancelPending)
+	/*
+	 * Don't allow query cancel interrupts while reading input from the
+	 * client, because we might lose sync in the FE/BE protocol.  (Die
+	 * interrupts are OK, because we won't read any further messages from
+	 * the client in that case.)
+	 */
+	if (QueryCancelPending && QueryCancelHoldoffCount != 0)
+	{
+		/*
+		 * Re-arm InterruptPending so that we process the cancel request
+		 * as soon as we're done reading the message.
+		 */
+		InterruptPending = true;
+	}
+	else if (QueryCancelPending)
 	{
 		bool		lock_timeout_occurred;
 		bool		stmt_timeout_occurred;
-
-		/*
-		 * Don't allow query cancel interrupts while reading input from the
-		 * client, because we might lose sync in the FE/BE protocol.  (Die
-		 * interrupts are OK, because we won't read any further messages from
-		 * the client in that case.)
-		 */
-		if (QueryCancelHoldoffCount != 0)
-		{
-			/*
-			 * Re-arm InterruptPending so that we process the cancel request
-			 * as soon as we're done reading the message.
-			 */
-			InterruptPending = true;
-			return;
-		}
 
 		QueryCancelPending = false;
 
