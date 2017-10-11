@@ -97,13 +97,24 @@ pq_beginmessage(StringInfo buf, char msgtype)
 }
 
 /* --------------------------------
- *		pq_sendbyte		- append a raw byte to a StringInfo buffer
+
+ *		pq_beginmessage_reuse - initialize for sending a message, reuse buffer
+ *
+ * This requires the buffer to be allocated in an sufficiently long-lived
+ * memory context.
  * --------------------------------
  */
 void
-pq_sendbyte(StringInfo buf, int byt)
+pq_beginmessage_reuse(StringInfo buf, char msgtype)
 {
-	appendStringInfoCharMacro(buf, byt);
+	resetStringInfo(buf);
+
+	/*
+	 * We stash the message type into the buffer's cursor field, expecting
+	 * that the pq_sendXXX routines won't touch it.  We could alternatively
+	 * make it the first byte of the buffer contents, but this seems easier.
+	 */
+	buf->cursor = msgtype;
 }
 
 /* --------------------------------
@@ -113,6 +124,7 @@ pq_sendbyte(StringInfo buf, int byt)
 void
 pq_sendbytes(StringInfo buf, const char *data, int datalen)
 {
+	/* use variant that maintains a trailing null-byte, out of caution */
 	appendBinaryStringInfo(buf, data, datalen);
 }
 
@@ -137,13 +149,13 @@ pq_sendcountedtext(StringInfo buf, const char *str, int slen,
 	if (p != str)				/* actual conversion has been done? */
 	{
 		slen = strlen(p);
-		pq_sendint(buf, slen + extra, 4);
+		pq_sendint32(buf, slen + extra);
 		appendBinaryStringInfoNT(buf, p, slen);
 		pfree(p);
 	}
 	else
 	{
-		pq_sendint(buf, slen + extra, 4);
+		pq_sendint32(buf, slen + extra);
 		appendBinaryStringInfoNT(buf, str, slen);
 	}
 }
@@ -228,53 +240,6 @@ pq_send_ascii_string(StringInfo buf, const char *str)
 }
 
 /* --------------------------------
- *		pq_sendint		- append a binary integer to a StringInfo buffer
- * --------------------------------
- */
-void
-pq_sendint(StringInfo buf, int i, int b)
-{
-	unsigned char n8;
-	uint16		n16;
-	uint32		n32;
-
-	switch (b)
-	{
-		case 1:
-			n8 = (unsigned char) i;
-			appendBinaryStringInfoNT(buf, (char *) &n8, 1);
-			break;
-		case 2:
-			n16 = pg_hton16((uint16) i);
-			appendBinaryStringInfoNT(buf, (char *) &n16, 2);
-			break;
-		case 4:
-			n32 = pg_hton32((uint32) i);
-			appendBinaryStringInfoNT(buf, (char *) &n32, 4);
-			break;
-		default:
-			elog(ERROR, "unsupported integer size %d", b);
-			break;
-	}
-}
-
-/* --------------------------------
- *		pq_sendint64	- append a binary 8-byte int to a StringInfo buffer
- *
- * It is tempting to merge this with pq_sendint, but we'd have to make the
- * argument int64 for all data widths --- that could be a big performance
- * hit on machines where int64 isn't efficient.
- * --------------------------------
- */
-void
-pq_sendint64(StringInfo buf, int64 i)
-{
-	uint64		n64 = pg_hton64(i);
-
-	appendBinaryStringInfoNT(buf, (char *) &n64, sizeof(n64));
-}
-
-/* --------------------------------
  *		pq_sendfloat4	- append a float4 to a StringInfo buffer
  *
  * The point of this routine is to localize knowledge of the external binary
@@ -295,9 +260,7 @@ pq_sendfloat4(StringInfo buf, float4 f)
 	}			swap;
 
 	swap.f = f;
-	swap.i = pg_hton32(swap.i);
-
-	appendBinaryStringInfoNT(buf, (char *) &swap.i, 4);
+	pq_sendint32(buf, swap.i);
 }
 
 /* --------------------------------
@@ -339,6 +302,21 @@ pq_endmessage(StringInfo buf)
 	/* no need to complain about any failure, since pqcomm.c already did */
 	pfree(buf->data);
 	buf->data = NULL;
+}
+
+/* --------------------------------
+ *		pq_endmessage_reuse	- send the completed message to the frontend
+ *
+ * The data buffer is *not* freed, allowing to reuse the buffer with
+ * pg_beginmessage_reuse.
+ --------------------------------
+ */
+
+void
+pq_endmessage_reuse(StringInfo buf)
+{
+	/* msgtype was saved in cursor field */
+	(void) pq_putmessage(buf->cursor, buf->data, buf->len);
 }
 
 

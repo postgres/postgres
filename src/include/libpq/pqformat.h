@@ -14,20 +14,180 @@
 #define PQFORMAT_H
 
 #include "lib/stringinfo.h"
+#include "mb/pg_wchar.h"
+#include "port/pg_bswap.h"
 
 extern void pq_beginmessage(StringInfo buf, char msgtype);
-extern void pq_sendbyte(StringInfo buf, int byt);
+extern void pq_beginmessage_reuse(StringInfo buf, char msgtype);
+extern void pq_endmessage(StringInfo buf);
+extern void pq_endmessage_reuse(StringInfo buf);
+
 extern void pq_sendbytes(StringInfo buf, const char *data, int datalen);
 extern void pq_sendcountedtext(StringInfo buf, const char *str, int slen,
 				   bool countincludesself);
 extern void pq_sendtext(StringInfo buf, const char *str, int slen);
 extern void pq_sendstring(StringInfo buf, const char *str);
 extern void pq_send_ascii_string(StringInfo buf, const char *str);
-extern void pq_sendint(StringInfo buf, int i, int b);
-extern void pq_sendint64(StringInfo buf, int64 i);
 extern void pq_sendfloat4(StringInfo buf, float4 f);
 extern void pq_sendfloat8(StringInfo buf, float8 f);
-extern void pq_endmessage(StringInfo buf);
+
+extern void pq_sendfloat4(StringInfo buf, float4 f);
+extern void pq_sendfloat8(StringInfo buf, float8 f);
+
+/*
+ * Append a int8 to a StringInfo buffer, which already has enough space
+ * preallocated.
+ *
+ * The use of restrict allows the compiler to optimize the code based on the
+ * assumption that buf, buf->len, buf->data and *buf->data don't
+ * overlap. Without the annotation buf->len etc cannot be kept in a register
+ * over subsequent pq_writeint* calls.
+ */
+static inline void
+pq_writeint8(StringInfo restrict buf, int8 i)
+{
+	int8		ni = i;
+
+	Assert(buf->len + sizeof(i) <= buf->maxlen);
+	memcpy((char *restrict) (buf->data + buf->len), &ni, sizeof(ni));
+	buf->len += sizeof(i);
+}
+
+/*
+ * Append a int16 to a StringInfo buffer, which already has enough space
+ * preallocated.
+ */
+static inline void
+pq_writeint16(StringInfo restrict buf, int16 i)
+{
+	int16		ni = pg_hton16(i);
+
+	Assert(buf->len + sizeof(ni) <= buf->maxlen);
+	memcpy((char *restrict) (buf->data + buf->len), &ni, sizeof(i));
+	buf->len += sizeof(i);
+}
+
+/*
+ * Append a int32 to a StringInfo buffer, which already has enough space
+ * preallocated.
+ */
+static inline void
+pq_writeint32(StringInfo restrict buf, int32 i)
+{
+	int32		ni = pg_hton32(i);
+
+	Assert(buf->len + sizeof(i) <= buf->maxlen);
+	memcpy((char *restrict) (buf->data + buf->len), &ni, sizeof(i));
+	buf->len += sizeof(i);
+}
+
+/*
+ * Append a int64 to a StringInfo buffer, which already has enough space
+ * preallocated.
+ */
+static inline void
+pq_writeint64(StringInfo restrict buf, int64 i)
+{
+	int64		ni = pg_hton64(i);
+
+	Assert(buf->len + sizeof(i) <= buf->maxlen);
+	memcpy((char *restrict) (buf->data + buf->len), &ni, sizeof(i));
+	buf->len += sizeof(i);
+}
+
+/*
+ * Append a null-terminated text string (with conversion) to a buffer with
+ * preallocated space.
+ *
+ * NB: The pre-allocated space needs to be sufficient for the string after
+ * converting to client encoding.
+ *
+ * NB: passed text string must be null-terminated, and so is the data
+ * sent to the frontend.
+ */
+static inline void
+pq_writestring(StringInfo restrict buf, const char *restrict str)
+{
+	int			slen = strlen(str);
+	char	   *p;
+
+	p = pg_server_to_client(str, slen);
+	if (p != str)				/* actual conversion has been done? */
+		slen = strlen(p);
+
+	Assert(buf->len + slen + 1 <= buf->maxlen);
+
+	memcpy(((char *restrict) buf->data + buf->len), p, slen + 1);
+	buf->len += slen + 1;
+
+	if (p != str)
+		pfree(p);
+}
+
+/* append a binary int8 to a StringInfo buffer */
+static inline void
+pq_sendint8(StringInfo buf, int8 i)
+{
+	enlargeStringInfo(buf, sizeof(i));
+	pq_writeint8(buf, i);
+}
+
+/* append a binary int16 to a StringInfo buffer */
+static inline void
+pq_sendint16(StringInfo buf, int16 i)
+{
+	enlargeStringInfo(buf, sizeof(i));
+	pq_writeint16(buf, i);
+}
+
+/* append a binary int32 to a StringInfo buffer */
+static inline void
+pq_sendint32(StringInfo buf, int32 i)
+{
+	enlargeStringInfo(buf, sizeof(i));
+	pq_writeint32(buf, i);
+}
+
+/* append a binary int64 to a StringInfo buffer */
+static inline void
+pq_sendint64(StringInfo buf, int64 i)
+{
+	enlargeStringInfo(buf, sizeof(i));
+	pq_writeint64(buf, i);
+}
+
+/* append a binary byte to a StringInfo buffer */
+static inline void
+pq_sendbyte(StringInfo buf, int8 byt)
+{
+	pq_sendint8(buf, byt);
+}
+
+/*
+ * Append a binary integer to a StringInfo buffer
+ *
+ * This function is deprecated.
+ */
+static inline void
+pq_sendint(StringInfo buf, int i, int b)
+{
+	switch (b)
+	{
+		case 1:
+			pq_sendint8(buf, (int8) i);
+			break;
+		case 2:
+			pq_sendint16(buf, (int16) i);
+			break;
+		case 4:
+			pq_sendint32(buf, (int32) i);
+			break;
+		default:
+			elog(ERROR, "unsupported integer size %d", b);
+			break;
+	}
+}
+
 
 extern void pq_begintypsend(StringInfo buf);
 extern bytea *pq_endtypsend(StringInfo buf);
