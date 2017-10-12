@@ -1946,7 +1946,7 @@
 -->
       <para>
        Add function <link
-       linkend="functions-txid-snapshot"><function>txid_current_ifassigned()</></>
+       linkend="functions-txid-snapshot"><function>txid_current_if_assigned()</></>
        to return the current transaction ID or <literal>NULL</> if no
        transaction ID has been assigned (Craig Ringer)
       </para>
