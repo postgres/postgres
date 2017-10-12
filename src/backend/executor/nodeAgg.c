@@ -1524,8 +1524,8 @@ finalize_aggregate(AggState *aggstate,
 	{
 		int			numFinalArgs = peragg->numFinalArgs;
 
-		/* set up aggstate->curpertrans for AggGetAggref() */
-		aggstate->curpertrans = pertrans;
+		/* set up aggstate->curperagg for AggGetAggref() */
+		aggstate->curperagg = peragg;
 
 		InitFunctionCallInfoData(fcinfo, &peragg->finalfn,
 								 numFinalArgs,
@@ -1558,7 +1558,7 @@ finalize_aggregate(AggState *aggstate,
 			*resultVal = FunctionCallInvoke(&fcinfo);
 			*resultIsNull = fcinfo.isnull;
 		}
-		aggstate->curpertrans = NULL;
+		aggstate->curperagg = NULL;
 	}
 	else
 	{
@@ -2708,6 +2708,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 	aggstate->current_set = 0;
 	aggstate->peragg = NULL;
 	aggstate->pertrans = NULL;
+	aggstate->curperagg = NULL;
 	aggstate->curpertrans = NULL;
 	aggstate->input_done = false;
 	aggstate->agg_done = false;
@@ -3056,27 +3057,29 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 	 *
 	 * Scenarios:
 	 *
-	 * 1. An aggregate function appears more than once in query:
+	 * 1. Identical aggregate function calls appear in the query:
 	 *
 	 *	  SELECT SUM(x) FROM ... HAVING SUM(x) > 0
 	 *
-	 *	  Since the aggregates are the identical, we only need to calculate
-	 *	  the calculate it once. Both aggregates will share the same 'aggno'
-	 *	  value.
+	 *	  Since these aggregates are identical, we only need to calculate
+	 *	  the value once. Both aggregates will share the same 'aggno' value.
 	 *
 	 * 2. Two different aggregate functions appear in the query, but the
-	 *	  aggregates have the same transition function and initial value, but
-	 *	  different final function:
+	 *	  aggregates have the same arguments, transition functions and
+	 *	  initial values (and, presumably, different final functions):
 	 *
-	 *	  SELECT SUM(x), AVG(x) FROM ...
+	 *	  SELECT AVG(x), STDDEV(x) FROM ...
 	 *
 	 *	  In this case we must create a new peragg for the varying aggregate,
-	 *	  and need to call the final functions separately, but can share the
-	 *	  same transition state.
+	 *	  and we need to call the final functions separately, but we need
+	 *	  only run the transition function once.  (This requires that the
+	 *	  final functions be nondestructive of the transition state, but
+	 *	  that's required anyway for other reasons.)
 	 *
-	 * For either of these optimizations to be valid, the aggregate's
-	 * arguments must be the same, including any modifiers such as ORDER BY,
-	 * DISTINCT and FILTER, and they mustn't contain any volatile functions.
+	 * For either of these optimizations to be valid, all aggregate properties
+	 * used in the transition phase must be the same, including any modifiers
+	 * such as ORDER BY, DISTINCT and FILTER, and the arguments mustn't
+	 * contain any volatile functions.
 	 * -----------------
 	 */
 	aggno = -1;
@@ -3719,7 +3722,7 @@ GetAggInitVal(Datum textInitVal, Oid transtype)
  *
  * As a side-effect, this also collects a list of existing per-Trans structs
  * with matching inputs. If no identical Aggref is found, the list is passed
- * later to find_compatible_perstate, to see if we can at least reuse the
+ * later to find_compatible_pertrans, to see if we can at least reuse the
  * state value of another aggregate.
  */
 static int
@@ -3739,11 +3742,12 @@ find_compatible_peragg(Aggref *newagg, AggState *aggstate,
 
 	/*
 	 * Search through the list of already seen aggregates. If we find an
-	 * existing aggregate with the same aggregate function and input
-	 * parameters as an existing one, then we can re-use that one. While
+	 * existing identical aggregate call, then we can re-use that one. While
 	 * searching, we'll also collect a list of Aggrefs with the same input
 	 * parameters. If no matching Aggref is found, the caller can potentially
-	 * still re-use the transition state of one of them.
+	 * still re-use the transition state of one of them.  (At this stage we
+	 * just compare the parsetrees; whether different aggregates share the
+	 * same transition function will be checked later.)
 	 */
 	for (aggno = 0; aggno <= lastaggno; aggno++)
 	{
@@ -3792,7 +3796,7 @@ find_compatible_peragg(Aggref *newagg, AggState *aggstate,
  * struct
  *
  * Searches the list of transnos for a per-Trans struct with the same
- * transition state and initial condition. (The inputs have already been
+ * transition function and initial condition. (The inputs have already been
  * verified to match.)
  */
 static int
@@ -3838,16 +3842,16 @@ find_compatible_pertrans(AggState *aggstate, Aggref *newagg,
 			aggdeserialfn != pertrans->deserialfn_oid)
 			continue;
 
-		/* Check that the initial condition matches, too. */
+		/*
+		 * Check that the initial condition matches, too.
+		 */
 		if (initValueIsNull && pertrans->initValueIsNull)
 			return transno;
 
 		if (!initValueIsNull && !pertrans->initValueIsNull &&
 			datumIsEqual(initValue, pertrans->initValue,
 						 pertrans->transtypeByVal, pertrans->transtypeLen))
-		{
 			return transno;
-		}
 	}
 	return -1;
 }
@@ -4066,6 +4070,13 @@ AggCheckCallContext(FunctionCallInfo fcinfo, MemoryContext *aggcontext)
  * If the function is being called as an aggregate support function,
  * return the Aggref node for the aggregate call.  Otherwise, return NULL.
  *
+ * Aggregates sharing the same inputs and transition functions can get
+ * merged into a single transition calculation.  If the transition function
+ * calls AggGetAggref, it will get some one of the Aggrefs for which it is
+ * executing.  It must therefore not pay attention to the Aggref fields that
+ * relate to the final function, as those are indeterminate.  But if a final
+ * function calls AggGetAggref, it will get a precise result.
+ *
  * Note that if an aggregate is being used as a window function, this will
  * return NULL.  We could provide a similar function to return the relevant
  * WindowFunc node in such cases, but it's not needed yet.
@@ -4075,8 +4086,16 @@ AggGetAggref(FunctionCallInfo fcinfo)
 {
 	if (fcinfo->context && IsA(fcinfo->context, AggState))
 	{
+		AggStatePerAgg curperagg;
 		AggStatePerTrans curpertrans;
 
+		/* check curperagg (valid when in a final function) */
+		curperagg = ((AggState *) fcinfo->context)->curperagg;
+
+		if (curperagg)
+			return curperagg->aggref;
+
+		/* check curpertrans (valid when in a transition function) */
 		curpertrans = ((AggState *) fcinfo->context)->curpertrans;
 
 		if (curpertrans)
