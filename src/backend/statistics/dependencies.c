@@ -792,6 +792,14 @@ dependency_is_compatible_clause(Node *clause, Index relid, AttrNumber *attnum)
 
 		var = (varonleft) ? linitial(expr->args) : lsecond(expr->args);
 
+		/*
+		 * We may ignore any RelabelType node above the operand.  (There won't
+		 * be more than one, since eval_const_expressions() has been applied
+		 * already.)
+		 */
+		if (IsA(var, RelabelType))
+			var = (Var *) ((RelabelType *) var)->arg;
+
 		/* We only support plain Vars for now */
 		if (!IsA(var, Var))
 			return false;
