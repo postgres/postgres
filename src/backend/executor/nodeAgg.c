@@ -3808,6 +3808,16 @@ find_compatible_pertrans(AggState *aggstate, Aggref *newagg,
 {
 	ListCell   *lc;
 
+	/*
+	 * For the moment, never try to share transition states between different
+	 * ordered-set aggregates.  This is necessary because the finalfns of the
+	 * built-in OSAs (see orderedsetaggs.c) are destructive of their
+	 * transition states.  We should fix them so we can allow this, but not
+	 * losing performance in the normal non-shared case will take some work.
+	 */
+	if (AGGKIND_IS_ORDERED_SET(newagg->aggkind))
+		return -1;
+
 	foreach(lc, transnos)
 	{
 		int			transno = lfirst_int(lc);

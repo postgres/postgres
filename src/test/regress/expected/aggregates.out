@@ -1860,6 +1860,25 @@ NOTICE:  avg_transfn called with 3
       2 |      6
 (1 row)
 
+-- ideally these would share state, but we have to fix the OSAs first.
+select
+  percentile_cont(0.5) within group (order by a),
+  percentile_disc(0.5) within group (order by a)
+from (values(1::float8),(3),(5),(7)) t(a);
+ percentile_cont | percentile_disc 
+-----------------+-----------------
+               4 |               3
+(1 row)
+
+select
+  rank(4) within group (order by a),
+  dense_rank(4) within group (order by a)
+from (values(1),(3),(5),(7)) t(a);
+ rank | dense_rank 
+------+------------
+    3 |          3
+(1 row)
+
 -- test that aggs with the same sfunc and initcond share the same agg state
 create aggregate my_sum_init(int4)
 (
