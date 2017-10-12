@@ -42,9 +42,12 @@ extern void pq_sendfloat8(StringInfo buf, float8 f);
  * assumption that buf, buf->len, buf->data and *buf->data don't
  * overlap. Without the annotation buf->len etc cannot be kept in a register
  * over subsequent pq_writeint* calls.
+ *
+ * The use of StringInfoData * rather than StringInfo is due to MSVC being
+ * overly picky and demanding a * before a restrict.
  */
 static inline void
-pq_writeint8(StringInfo restrict buf, int8 i)
+pq_writeint8(StringInfoData * restrict buf, int8 i)
 {
 	int8		ni = i;
 
@@ -58,7 +61,7 @@ pq_writeint8(StringInfo restrict buf, int8 i)
  * preallocated.
  */
 static inline void
-pq_writeint16(StringInfo restrict buf, int16 i)
+pq_writeint16(StringInfoData * restrict buf, int16 i)
 {
 	int16		ni = pg_hton16(i);
 
@@ -72,7 +75,7 @@ pq_writeint16(StringInfo restrict buf, int16 i)
  * preallocated.
  */
 static inline void
-pq_writeint32(StringInfo restrict buf, int32 i)
+pq_writeint32(StringInfoData * restrict buf, int32 i)
 {
 	int32		ni = pg_hton32(i);
 
@@ -86,7 +89,7 @@ pq_writeint32(StringInfo restrict buf, int32 i)
  * preallocated.
  */
 static inline void
-pq_writeint64(StringInfo restrict buf, int64 i)
+pq_writeint64(StringInfoData * restrict buf, int64 i)
 {
 	int64		ni = pg_hton64(i);
 
@@ -106,7 +109,7 @@ pq_writeint64(StringInfo restrict buf, int64 i)
  * sent to the frontend.
  */
 static inline void
-pq_writestring(StringInfo restrict buf, const char *restrict str)
+pq_writestring(StringInfoData * restrict buf, const char *restrict str)
 {
 	int			slen = strlen(str);
 	char	   *p;
