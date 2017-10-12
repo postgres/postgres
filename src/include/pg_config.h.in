@@ -923,6 +923,10 @@
    if such a type exists, and if the system does not define it. */
 #undef intptr_t
 
+/* Define to keyword to use for C99 restrict support, or to nothing if not
+   supported */
+#undef pg_restrict
+
 /* Define to the equivalent of the C99 'restrict' keyword, or to
    nothing if this is not supported.  Do not define if restrict is
    supported directly.  */

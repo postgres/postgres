@@ -38,8 +38,8 @@ extern void pq_sendfloat8(StringInfo buf, float8 f);
  * Append a int8 to a StringInfo buffer, which already has enough space
  * preallocated.
  *
- * The use of restrict allows the compiler to optimize the code based on the
- * assumption that buf, buf->len, buf->data and *buf->data don't
+ * The use of pg_restrict allows the compiler to optimize the code based on
+ * the assumption that buf, buf->len, buf->data and *buf->data don't
  * overlap. Without the annotation buf->len etc cannot be kept in a register
  * over subsequent pq_writeint* calls.
  *
@@ -47,12 +47,12 @@ extern void pq_sendfloat8(StringInfo buf, float8 f);
  * overly picky and demanding a * before a restrict.
  */
 static inline void
-pq_writeint8(StringInfoData * restrict buf, int8 i)
+pq_writeint8(StringInfoData *pg_restrict buf, int8 i)
 {
 	int8		ni = i;
 
 	Assert(buf->len + sizeof(i) <= buf->maxlen);
-	memcpy((char *restrict) (buf->data + buf->len), &ni, sizeof(ni));
+	memcpy((char *pg_restrict) (buf->data + buf->len), &ni, sizeof(ni));
 	buf->len += sizeof(i);
 }
 
@@ -61,12 +61,12 @@ pq_writeint8(StringInfoData * restrict buf, int8 i)
  * preallocated.
  */
 static inline void
-pq_writeint16(StringInfoData * restrict buf, int16 i)
+pq_writeint16(StringInfoData *pg_restrict buf, int16 i)
 {
 	int16		ni = pg_hton16(i);
 
 	Assert(buf->len + sizeof(ni) <= buf->maxlen);
-	memcpy((char *restrict) (buf->data + buf->len), &ni, sizeof(i));
+	memcpy((char *pg_restrict) (buf->data + buf->len), &ni, sizeof(i));
 	buf->len += sizeof(i);
 }
 
@@ -75,12 +75,12 @@ pq_writeint16(StringInfoData * restrict buf, int16 i)
  * preallocated.
  */
 static inline void
-pq_writeint32(StringInfoData * restrict buf, int32 i)
+pq_writeint32(StringInfoData *pg_restrict buf, int32 i)
 {
 	int32		ni = pg_hton32(i);
 
 	Assert(buf->len + sizeof(i) <= buf->maxlen);
-	memcpy((char *restrict) (buf->data + buf->len), &ni, sizeof(i));
+	memcpy((char *pg_restrict) (buf->data + buf->len), &ni, sizeof(i));
 	buf->len += sizeof(i);
 }
 
@@ -89,12 +89,12 @@ pq_writeint32(StringInfoData * restrict buf, int32 i)
  * preallocated.
  */
 static inline void
-pq_writeint64(StringInfoData * restrict buf, int64 i)
+pq_writeint64(StringInfoData *pg_restrict buf, int64 i)
 {
 	int64		ni = pg_hton64(i);
 
 	Assert(buf->len + sizeof(i) <= buf->maxlen);
-	memcpy((char *restrict) (buf->data + buf->len), &ni, sizeof(i));
+	memcpy((char *pg_restrict) (buf->data + buf->len), &ni, sizeof(i));
 	buf->len += sizeof(i);
 }
 
@@ -109,7 +109,7 @@ pq_writeint64(StringInfoData * restrict buf, int64 i)
  * sent to the frontend.
  */
 static inline void
-pq_writestring(StringInfoData * restrict buf, const char *restrict str)
+pq_writestring(StringInfoData *pg_restrict buf, const char *pg_restrict str)
 {
 	int			slen = strlen(str);
 	char	   *p;
@@ -120,7 +120,7 @@ pq_writestring(StringInfoData * restrict buf, const char *restrict str)
 
 	Assert(buf->len + slen + 1 <= buf->maxlen);
 
-	memcpy(((char *restrict) buf->data + buf->len), p, slen + 1);
+	memcpy(((char *pg_restrict) buf->data + buf->len), p, slen + 1);
 	buf->len += slen + 1;
 
 	if (p != str)

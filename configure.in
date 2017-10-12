@@ -1299,7 +1299,6 @@ fi
 m4_defun([AC_PROG_CC_STDC], []) dnl We don't want that.
 AC_C_BIGENDIAN
 AC_C_INLINE
-AC_C_RESTRICT
 PGAC_PRINTF_ARCHETYPE
 AC_C_FLEXIBLE_ARRAY_MEMBER
 PGAC_C_SIGNED
@@ -1325,6 +1324,20 @@ AC_TYPE_UINTPTR_T
 AC_TYPE_LONG_LONG_INT
 
 PGAC_TYPE_LOCALE_T
+
+# MSVC doesn't cope well with defining restrict to __restrict, the
+# spelling it understands, because it conflicts with
+# __declspec(restrict). Therefore we define pg_restrict to the
+# appropriate definition, which presumably won't conflict.
+AC_C_RESTRICT
+if test "$ac_cv_c_restrict" = "no" ; then
+  pg_restrict=""
+else
+  pg_restrict="$ac_cv_c_restrict"
+fi
+AC_DEFINE_UNQUOTED([pg_restrict], [$pg_restrict],
+[Define to keyword to use for C99 restrict support, or to nothing if not
+supported])
 
 AC_CHECK_TYPES([struct cmsgcred], [], [],
 [#include <sys/socket.h>
