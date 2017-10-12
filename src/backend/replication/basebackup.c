@@ -274,7 +274,7 @@ perform_base_backup(basebackup_options *opt, DIR *tblspcdir)
 			/* Send CopyOutResponse message */
 			pq_beginmessage(&buf, 'H');
 			pq_sendbyte(&buf, 0);	/* overall format */
-			pq_sendint(&buf, 0, 2); /* natts */
+			pq_sendint16(&buf, 0); /* natts */
 			pq_endmessage(&buf);
 
 			if (ti->path == NULL)
@@ -722,7 +722,7 @@ send_int8_string(StringInfoData *buf, int64 intval)
 	char		is[32];
 
 	sprintf(is, INT64_FORMAT, intval);
-	pq_sendint(buf, strlen(is), 4);
+	pq_sendint32(buf, strlen(is));
 	pq_sendbytes(buf, is, strlen(is));
 }
 
@@ -734,34 +734,34 @@ SendBackupHeader(List *tablespaces)
 
 	/* Construct and send the directory information */
 	pq_beginmessage(&buf, 'T'); /* RowDescription */
-	pq_sendint(&buf, 3, 2);		/* 3 fields */
+	pq_sendint16(&buf, 3);		/* 3 fields */
 
 	/* First field - spcoid */
 	pq_sendstring(&buf, "spcoid");
-	pq_sendint(&buf, 0, 4);		/* table oid */
-	pq_sendint(&buf, 0, 2);		/* attnum */
-	pq_sendint(&buf, OIDOID, 4);	/* type oid */
-	pq_sendint(&buf, 4, 2);		/* typlen */
-	pq_sendint(&buf, 0, 4);		/* typmod */
-	pq_sendint(&buf, 0, 2);		/* format code */
+	pq_sendint32(&buf, 0);		/* table oid */
+	pq_sendint16(&buf, 0);		/* attnum */
+	pq_sendint32(&buf, OIDOID);	/* type oid */
+	pq_sendint16(&buf, 4);		/* typlen */
+	pq_sendint32(&buf, 0);		/* typmod */
+	pq_sendint16(&buf, 0);		/* format code */
 
 	/* Second field - spcpath */
 	pq_sendstring(&buf, "spclocation");
-	pq_sendint(&buf, 0, 4);
-	pq_sendint(&buf, 0, 2);
-	pq_sendint(&buf, TEXTOID, 4);
-	pq_sendint(&buf, -1, 2);
-	pq_sendint(&buf, 0, 4);
-	pq_sendint(&buf, 0, 2);
+	pq_sendint32(&buf, 0);
+	pq_sendint16(&buf, 0);
+	pq_sendint32(&buf, TEXTOID);
+	pq_sendint16(&buf, -1);
+	pq_sendint32(&buf, 0);
+	pq_sendint16(&buf, 0);
 
 	/* Third field - size */
 	pq_sendstring(&buf, "size");
-	pq_sendint(&buf, 0, 4);
-	pq_sendint(&buf, 0, 2);
-	pq_sendint(&buf, INT8OID, 4);
-	pq_sendint(&buf, 8, 2);
-	pq_sendint(&buf, 0, 4);
-	pq_sendint(&buf, 0, 2);
+	pq_sendint32(&buf, 0);
+	pq_sendint16(&buf, 0);
+	pq_sendint32(&buf, INT8OID);
+	pq_sendint16(&buf, 8);
+	pq_sendint32(&buf, 0);
+	pq_sendint16(&buf, 0);
 	pq_endmessage(&buf);
 
 	foreach(lc, tablespaces)
@@ -770,28 +770,28 @@ SendBackupHeader(List *tablespaces)
 
 		/* Send one datarow message */
 		pq_beginmessage(&buf, 'D');
-		pq_sendint(&buf, 3, 2); /* number of columns */
+		pq_sendint16(&buf, 3); /* number of columns */
 		if (ti->path == NULL)
 		{
-			pq_sendint(&buf, -1, 4);	/* Length = -1 ==> NULL */
-			pq_sendint(&buf, -1, 4);
+			pq_sendint32(&buf, -1);	/* Length = -1 ==> NULL */
+			pq_sendint32(&buf, -1);
 		}
 		else
 		{
 			Size		len;
 
 			len = strlen(ti->oid);
-			pq_sendint(&buf, len, 4);
+			pq_sendint32(&buf, len);
 			pq_sendbytes(&buf, ti->oid, len);
 
 			len = strlen(ti->path);
-			pq_sendint(&buf, len, 4);
+			pq_sendint32(&buf, len);
 			pq_sendbytes(&buf, ti->path, len);
 		}
 		if (ti->size >= 0)
 			send_int8_string(&buf, ti->size / 1024);
 		else
-			pq_sendint(&buf, -1, 4);	/* NULL */
+			pq_sendint32(&buf, -1);	/* NULL */
 
 		pq_endmessage(&buf);
 	}
@@ -812,42 +812,42 @@ SendXlogRecPtrResult(XLogRecPtr ptr, TimeLineID tli)
 	Size		len;
 
 	pq_beginmessage(&buf, 'T'); /* RowDescription */
-	pq_sendint(&buf, 2, 2);		/* 2 fields */
+	pq_sendint16(&buf, 2);		/* 2 fields */
 
 	/* Field headers */
 	pq_sendstring(&buf, "recptr");
-	pq_sendint(&buf, 0, 4);		/* table oid */
-	pq_sendint(&buf, 0, 2);		/* attnum */
-	pq_sendint(&buf, TEXTOID, 4);	/* type oid */
-	pq_sendint(&buf, -1, 2);
-	pq_sendint(&buf, 0, 4);
-	pq_sendint(&buf, 0, 2);
+	pq_sendint32(&buf, 0);		/* table oid */
+	pq_sendint16(&buf, 0);		/* attnum */
+	pq_sendint32(&buf, TEXTOID);	/* type oid */
+	pq_sendint16(&buf, -1);
+	pq_sendint32(&buf, 0);
+	pq_sendint16(&buf, 0);
 
 	pq_sendstring(&buf, "tli");
-	pq_sendint(&buf, 0, 4);		/* table oid */
-	pq_sendint(&buf, 0, 2);		/* attnum */
+	pq_sendint32(&buf, 0);		/* table oid */
+	pq_sendint16(&buf, 0);		/* attnum */
 
 	/*
 	 * int8 may seem like a surprising data type for this, but in theory int4
 	 * would not be wide enough for this, as TimeLineID is unsigned.
 	 */
-	pq_sendint(&buf, INT8OID, 4);	/* type oid */
-	pq_sendint(&buf, -1, 2);
-	pq_sendint(&buf, 0, 4);
-	pq_sendint(&buf, 0, 2);
+	pq_sendint32(&buf, INT8OID);	/* type oid */
+	pq_sendint16(&buf, -1);
+	pq_sendint32(&buf, 0);
+	pq_sendint16(&buf, 0);
 	pq_endmessage(&buf);
 
 	/* Data row */
 	pq_beginmessage(&buf, 'D');
-	pq_sendint(&buf, 2, 2);		/* number of columns */
+	pq_sendint16(&buf, 2);		/* number of columns */
 
 	len = snprintf(str, sizeof(str),
 				   "%X/%X", (uint32) (ptr >> 32), (uint32) ptr);
-	pq_sendint(&buf, len, 4);
+	pq_sendint32(&buf, len);
 	pq_sendbytes(&buf, str, len);
 
 	len = snprintf(str, sizeof(str), "%u", tli);
-	pq_sendint(&buf, len, 4);
+	pq_sendint32(&buf, len);
 	pq_sendbytes(&buf, str, len);
 
 	pq_endmessage(&buf);

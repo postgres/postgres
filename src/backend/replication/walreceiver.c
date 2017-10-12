@@ -1272,10 +1272,10 @@ XLogWalRcvSendHSFeedback(bool immed)
 	resetStringInfo(&reply_message);
 	pq_sendbyte(&reply_message, 'h');
 	pq_sendint64(&reply_message, GetCurrentTimestamp());
-	pq_sendint(&reply_message, xmin, 4);
-	pq_sendint(&reply_message, xmin_epoch, 4);
-	pq_sendint(&reply_message, catalog_xmin, 4);
-	pq_sendint(&reply_message, catalog_xmin_epoch, 4);
+	pq_sendint32(&reply_message, xmin);
+	pq_sendint32(&reply_message, xmin_epoch);
+	pq_sendint32(&reply_message, catalog_xmin);
+	pq_sendint32(&reply_message, catalog_xmin_epoch);
 	walrcv_send(wrconn, reply_message.data, reply_message.len);
 	if (TransactionIdIsValid(xmin) || TransactionIdIsValid(catalog_xmin))
 		master_has_standby_xmin = true;

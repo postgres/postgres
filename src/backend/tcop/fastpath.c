@@ -143,7 +143,7 @@ SendFunctionResult(Datum retval, bool isnull, Oid rettype, int16 format)
 	if (isnull)
 	{
 		if (newstyle)
-			pq_sendint(&buf, -1, 4);
+			pq_sendint32(&buf, -1);
 	}
 	else
 	{
@@ -169,7 +169,7 @@ SendFunctionResult(Datum retval, bool isnull, Oid rettype, int16 format)
 
 			getTypeBinaryOutputInfo(rettype, &typsend, &typisvarlena);
 			outputbytes = OidSendFunctionCall(typsend, retval);
-			pq_sendint(&buf, VARSIZE(outputbytes) - VARHDRSZ, 4);
+			pq_sendint32(&buf, VARSIZE(outputbytes) - VARHDRSZ);
 			pq_sendbytes(&buf, VARDATA(outputbytes),
 						 VARSIZE(outputbytes) - VARHDRSZ);
 			pfree(outputbytes);

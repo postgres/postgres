@@ -154,7 +154,7 @@ jsonb_send(PG_FUNCTION_ARGS)
 	(void) JsonbToCString(jtext, &jb->root, VARSIZE(jb));
 
 	pq_begintypsend(&buf);
-	pq_sendint(&buf, version, 1);
+	pq_sendint8(&buf, version);
 	pq_sendtext(&buf, jtext->data, jtext->len);
 	pfree(jtext->data);
 	pfree(jtext);

@@ -718,7 +718,7 @@ record_send(PG_FUNCTION_ARGS)
 		if (!TupleDescAttr(tupdesc, i)->attisdropped)
 			validcols++;
 	}
-	pq_sendint(&buf, validcols, 4);
+	pq_sendint32(&buf, validcols);
 
 	for (i = 0; i < ncolumns; i++)
 	{
@@ -732,12 +732,12 @@ record_send(PG_FUNCTION_ARGS)
 		if (att->attisdropped)
 			continue;
 
-		pq_sendint(&buf, column_type, sizeof(Oid));
+		pq_sendint32(&buf, column_type);
 
 		if (nulls[i])
 		{
 			/* emit -1 data length to signify a NULL */
-			pq_sendint(&buf, -1, 4);
+			pq_sendint32(&buf, -1);
 			continue;
 		}
 
@@ -756,7 +756,7 @@ record_send(PG_FUNCTION_ARGS)
 
 		attr = values[i];
 		outputbytes = SendFunctionCall(&column_info->proc, attr);
-		pq_sendint(&buf, VARSIZE(outputbytes) - VARHDRSZ, 4);
+		pq_sendint32(&buf, VARSIZE(outputbytes) - VARHDRSZ);
 		pq_sendbytes(&buf, VARDATA(outputbytes),
 					 VARSIZE(outputbytes) - VARHDRSZ);
 	}

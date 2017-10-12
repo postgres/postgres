@@ -1433,7 +1433,7 @@ path_send(PG_FUNCTION_ARGS)
 
 	pq_begintypsend(&buf);
 	pq_sendbyte(&buf, path->closed ? 1 : 0);
-	pq_sendint(&buf, path->npts, sizeof(int32));
+	pq_sendint32(&buf, path->npts);
 	for (i = 0; i < path->npts; i++)
 	{
 		pq_sendfloat8(&buf, path->p[i].x);
@@ -3514,7 +3514,7 @@ poly_send(PG_FUNCTION_ARGS)
 	int32		i;
 
 	pq_begintypsend(&buf);
-	pq_sendint(&buf, poly->npts, sizeof(int32));
+	pq_sendint32(&buf, poly->npts);
 	for (i = 0; i < poly->npts; i++)
 	{
 		pq_sendfloat8(&buf, poly->p[i].x);

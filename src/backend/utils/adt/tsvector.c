@@ -410,7 +410,7 @@ tsvectorsend(PG_FUNCTION_ARGS)
 
 	pq_begintypsend(&buf);
 
-	pq_sendint(&buf, vec->size, sizeof(int32));
+	pq_sendint32(&buf, vec->size);
 	for (i = 0; i < vec->size; i++)
 	{
 		uint16		npos;
@@ -423,14 +423,14 @@ tsvectorsend(PG_FUNCTION_ARGS)
 		pq_sendbyte(&buf, '\0');
 
 		npos = POSDATALEN(vec, weptr);
-		pq_sendint(&buf, npos, sizeof(uint16));
+		pq_sendint16(&buf, npos);
 
 		if (npos > 0)
 		{
 			WordEntryPos *wepptr = POSDATAPTR(vec, weptr);
 
 			for (j = 0; j < npos; j++)
-				pq_sendint(&buf, wepptr[j], sizeof(WordEntryPos));
+				pq_sendint16(&buf, wepptr[j]);
 		}
 		weptr++;
 	}

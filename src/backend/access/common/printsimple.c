@@ -34,19 +34,19 @@ printsimple_startup(DestReceiver *self, int operation, TupleDesc tupdesc)
 	int			i;
 
 	pq_beginmessage(&buf, 'T'); /* RowDescription */
-	pq_sendint(&buf, tupdesc->natts, 2);
+	pq_sendint16(&buf, tupdesc->natts);
 
 	for (i = 0; i < tupdesc->natts; ++i)
 	{
 		Form_pg_attribute attr = TupleDescAttr(tupdesc, i);
 
 		pq_sendstring(&buf, NameStr(attr->attname));
-		pq_sendint(&buf, 0, 4); /* table oid */
-		pq_sendint(&buf, 0, 2); /* attnum */
-		pq_sendint(&buf, (int) attr->atttypid, 4);
-		pq_sendint(&buf, attr->attlen, 2);
-		pq_sendint(&buf, attr->atttypmod, 4);
-		pq_sendint(&buf, 0, 2); /* format code */
+		pq_sendint32(&buf, 0); /* table oid */
+		pq_sendint16(&buf, 0); /* attnum */
+		pq_sendint32(&buf, (int) attr->atttypid);
+		pq_sendint16(&buf, attr->attlen);
+		pq_sendint32(&buf, attr->atttypmod);
+		pq_sendint16(&buf, 0); /* format code */
 	}
 
 	pq_endmessage(&buf);
@@ -67,7 +67,7 @@ printsimple(TupleTableSlot *slot, DestReceiver *self)
 
 	/* Prepare and send message */
 	pq_beginmessage(&buf, 'D');
-	pq_sendint(&buf, tupdesc->natts, 2);
+	pq_sendint16(&buf, tupdesc->natts);
 
 	for (i = 0; i < tupdesc->natts; ++i)
 	{
@@ -76,7 +76,7 @@ printsimple(TupleTableSlot *slot, DestReceiver *self)
 
 		if (slot->tts_isnull[i])
 		{
-			pq_sendint(&buf, -1, 4);
+			pq_sendint32(&buf, -1);
 			continue;
 		}
 

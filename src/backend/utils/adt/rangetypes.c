@@ -272,7 +272,7 @@ range_send(PG_FUNCTION_ARGS)
 		uint32		bound_len = VARSIZE(bound) - VARHDRSZ;
 		char	   *bound_data = VARDATA(bound);
 
-		pq_sendint(buf, bound_len, 4);
+		pq_sendint32(buf, bound_len);
 		pq_sendbytes(buf, bound_data, bound_len);
 	}
 
@@ -283,7 +283,7 @@ range_send(PG_FUNCTION_ARGS)
 		uint32		bound_len = VARSIZE(bound) - VARHDRSZ;
 		char	   *bound_data = VARDATA(bound);
 
-		pq_sendint(buf, bound_len, 4);
+		pq_sendint32(buf, bound_len);
 		pq_sendbytes(buf, bound_data, bound_len);
 	}
 

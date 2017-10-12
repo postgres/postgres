@@ -1009,8 +1009,8 @@ interval_send(PG_FUNCTION_ARGS)
 
 	pq_begintypsend(&buf);
 	pq_sendint64(&buf, interval->time);
-	pq_sendint(&buf, interval->day, sizeof(interval->day));
-	pq_sendint(&buf, interval->month, sizeof(interval->month));
+	pq_sendint32(&buf, interval->day);
+	pq_sendint32(&buf, interval->month);
 	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }
 

@@ -2100,7 +2100,7 @@ NotifyMyFrontEnd(const char *channel, const char *payload, int32 srcPid)
 		StringInfoData buf;
 
 		pq_beginmessage(&buf, 'A');
-		pq_sendint(&buf, srcPid, sizeof(int32));
+		pq_sendint32(&buf, srcPid);
 		pq_sendstring(&buf, channel);
 		if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 3)
 			pq_sendstring(&buf, payload);

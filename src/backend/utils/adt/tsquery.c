@@ -952,23 +952,22 @@ tsquerysend(PG_FUNCTION_ARGS)
 
 	pq_begintypsend(&buf);
 
-	pq_sendint(&buf, query->size, sizeof(uint32));
+	pq_sendint32(&buf, query->size);
 	for (i = 0; i < query->size; i++)
 	{
-		pq_sendint(&buf, item->type, sizeof(item->type));
+		pq_sendint8(&buf, item->type);
 
 		switch (item->type)
 		{
 			case QI_VAL:
-				pq_sendint(&buf, item->qoperand.weight, sizeof(uint8));
-				pq_sendint(&buf, item->qoperand.prefix, sizeof(uint8));
+				pq_sendint8(&buf, item->qoperand.weight);
+				pq_sendint8(&buf, item->qoperand.prefix);
 				pq_sendstring(&buf, GETOPERAND(query) + item->qoperand.distance);
 				break;
 			case QI_OPR:
-				pq_sendint(&buf, item->qoperator.oper, sizeof(item->qoperator.oper));
+				pq_sendint8(&buf, item->qoperator.oper);
 				if (item->qoperator.oper == OP_PHRASE)
-					pq_sendint(&buf, item->qoperator.distance,
-							   sizeof(item->qoperator.distance));
+					pq_sendint16(&buf, item->qoperator.distance);
 				break;
 			default:
 				elog(ERROR, "unrecognized tsquery node type: %d", item->type);

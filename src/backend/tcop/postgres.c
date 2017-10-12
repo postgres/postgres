@@ -2376,13 +2376,13 @@ exec_describe_statement_message(const char *stmt_name)
 	 */
 	pq_beginmessage_reuse(&row_description_buf, 't'); /* parameter description
 													   * message type */
-	pq_sendint(&row_description_buf, psrc->num_params, 2);
+	pq_sendint16(&row_description_buf, psrc->num_params);
 
 	for (i = 0; i < psrc->num_params; i++)
 	{
 		Oid			ptype = psrc->param_types[i];
 
-		pq_sendint(&row_description_buf, (int) ptype, 4);
+		pq_sendint32(&row_description_buf, (int) ptype);
 	}
 	pq_endmessage_reuse(&row_description_buf);
 
@@ -3818,8 +3818,8 @@ PostgresMain(int argc, char *argv[],
 		StringInfoData buf;
 
 		pq_beginmessage(&buf, 'K');
-		pq_sendint(&buf, (int32) MyProcPid, sizeof(int32));
-		pq_sendint(&buf, (int32) MyCancelKey, sizeof(int32));
+		pq_sendint32(&buf, (int32) MyProcPid);
+		pq_sendint32(&buf, (int32) MyCancelKey);
 		pq_endmessage(&buf);
 		/* Need not flush since ReadyForQuery will do it. */
 	}

@@ -47,7 +47,7 @@ logicalrep_write_begin(StringInfo out, ReorderBufferTXN *txn)
 	/* fixed fields */
 	pq_sendint64(out, txn->final_lsn);
 	pq_sendint64(out, txn->commit_time);
-	pq_sendint(out, txn->xid, 4);
+	pq_sendint32(out, txn->xid);
 }
 
 /*
@@ -145,7 +145,7 @@ logicalrep_write_insert(StringInfo out, Relation rel, HeapTuple newtuple)
 		   rel->rd_rel->relreplident == REPLICA_IDENTITY_INDEX);
 
 	/* use Oid as relation identifier */
-	pq_sendint(out, RelationGetRelid(rel), 4);
+	pq_sendint32(out, RelationGetRelid(rel));
 
 	pq_sendbyte(out, 'N');		/* new tuple follows */
 	logicalrep_write_tuple(out, rel, newtuple);
@@ -189,7 +189,7 @@ logicalrep_write_update(StringInfo out, Relation rel, HeapTuple oldtuple,
 		   rel->rd_rel->relreplident == REPLICA_IDENTITY_INDEX);
 
 	/* use Oid as relation identifier */
-	pq_sendint(out, RelationGetRelid(rel), 4);
+	pq_sendint32(out, RelationGetRelid(rel));
 
 	if (oldtuple != NULL)
 	{
@@ -258,7 +258,7 @@ logicalrep_write_delete(StringInfo out, Relation rel, HeapTuple oldtuple)
 	pq_sendbyte(out, 'D');		/* action DELETE */
 
 	/* use Oid as relation identifier */
-	pq_sendint(out, RelationGetRelid(rel), 4);
+	pq_sendint32(out, RelationGetRelid(rel));
 
 	if (rel->rd_rel->relreplident == REPLICA_IDENTITY_FULL)
 		pq_sendbyte(out, 'O');	/* old tuple follows */
@@ -303,7 +303,7 @@ logicalrep_write_rel(StringInfo out, Relation rel)
 	pq_sendbyte(out, 'R');		/* sending RELATION */
 
 	/* use Oid as relation identifier */
-	pq_sendint(out, RelationGetRelid(rel), 4);
+	pq_sendint32(out, RelationGetRelid(rel));
 
 	/* send qualified relation name */
 	logicalrep_write_namespace(out, RelationGetNamespace(rel));
@@ -360,7 +360,7 @@ logicalrep_write_typ(StringInfo out, Oid typoid)
 	typtup = (Form_pg_type) GETSTRUCT(tup);
 
 	/* use Oid as relation identifier */
-	pq_sendint(out, typoid, 4);
+	pq_sendint32(out, typoid);
 
 	/* send qualified type name */
 	logicalrep_write_namespace(out, typtup->typnamespace);
@@ -402,7 +402,7 @@ logicalrep_write_tuple(StringInfo out, Relation rel, HeapTuple tuple)
 			continue;
 		nliveatts++;
 	}
-	pq_sendint(out, nliveatts, 2);
+	pq_sendint16(out, nliveatts);
 
 	/* try to allocate enough memory from the get-go */
 	enlargeStringInfo(out, tuple->t_len +
@@ -522,7 +522,7 @@ logicalrep_write_attrs(StringInfo out, Relation rel)
 			continue;
 		nliveatts++;
 	}
-	pq_sendint(out, nliveatts, 2);
+	pq_sendint16(out, nliveatts);
 
 	/* fetch bitmap of REPLICATION IDENTITY attributes */
 	replidentfull = (rel->rd_rel->relreplident == REPLICA_IDENTITY_FULL);
@@ -551,10 +551,10 @@ logicalrep_write_attrs(StringInfo out, Relation rel)
 		pq_sendstring(out, NameStr(att->attname));
 
 		/* attribute type id */
-		pq_sendint(out, (int) att->atttypid, sizeof(att->atttypid));
+		pq_sendint32(out, (int) att->atttypid);
 
 		/* attribute mode */
-		pq_sendint(out, att->atttypmod, sizeof(att->atttypmod));
+		pq_sendint32(out, att->atttypmod);
 	}
 
 	bms_free(idattrs);

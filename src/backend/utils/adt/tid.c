@@ -149,10 +149,8 @@ tidsend(PG_FUNCTION_ARGS)
 	StringInfoData buf;
 
 	pq_begintypsend(&buf);
-	pq_sendint(&buf, ItemPointerGetBlockNumberNoCheck(itemPtr),
-			   sizeof(BlockNumber));
-	pq_sendint(&buf, ItemPointerGetOffsetNumberNoCheck(itemPtr),
-			   sizeof(OffsetNumber));
+	pq_sendint32(&buf, ItemPointerGetBlockNumberNoCheck(itemPtr));
+	pq_sendint16(&buf, ItemPointerGetOffsetNumberNoCheck(itemPtr));
 	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }
 

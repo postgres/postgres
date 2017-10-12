@@ -395,7 +395,7 @@ printtup(TupleTableSlot *slot, DestReceiver *self)
 	 */
 	pq_beginmessage_reuse(buf, 'D');
 
-	pq_sendint(buf, natts, 2);
+	pq_sendint16(buf, natts);
 
 	/*
 	 * send the attributes of this tuple
@@ -407,7 +407,7 @@ printtup(TupleTableSlot *slot, DestReceiver *self)
 
 		if (slot->tts_isnull[i])
 		{
-			pq_sendint(buf, -1, 4);
+			pq_sendint32(buf, -1);
 			continue;
 		}
 
@@ -436,7 +436,7 @@ printtup(TupleTableSlot *slot, DestReceiver *self)
 			bytea	   *outputbytes;
 
 			outputbytes = SendFunctionCall(&thisState->finfo, attr);
-			pq_sendint(buf, VARSIZE(outputbytes) - VARHDRSZ, 4);
+			pq_sendint32(buf, VARSIZE(outputbytes) - VARHDRSZ);
 			pq_sendbytes(buf, VARDATA(outputbytes),
 						 VARSIZE(outputbytes) - VARHDRSZ);
 		}
@@ -494,13 +494,13 @@ printtup_20(TupleTableSlot *slot, DestReceiver *self)
 		k >>= 1;
 		if (k == 0)				/* end of byte? */
 		{
-			pq_sendint(buf, j, 1);
+			pq_sendint8(buf, j);
 			j = 0;
 			k = 1 << 7;
 		}
 	}
 	if (k != (1 << 7))			/* flush last partial byte */
-		pq_sendint(buf, j, 1);
+		pq_sendint8(buf, j);
 
 	/*
 	 * send the attributes of this tuple
@@ -679,13 +679,13 @@ printtup_internal_20(TupleTableSlot *slot, DestReceiver *self)
 		k >>= 1;
 		if (k == 0)				/* end of byte? */
 		{
-			pq_sendint(buf, j, 1);
+			pq_sendint8(buf, j);
 			j = 0;
 			k = 1 << 7;
 		}
 	}
 	if (k != (1 << 7))			/* flush last partial byte */
-		pq_sendint(buf, j, 1);
+		pq_sendint8(buf, j);
 
 	/*
 	 * send the attributes of this tuple
@@ -702,7 +702,7 @@ printtup_internal_20(TupleTableSlot *slot, DestReceiver *self)
 		Assert(thisState->format == 1);
 
 		outputbytes = SendFunctionCall(&thisState->finfo, attr);
-		pq_sendint(buf, VARSIZE(outputbytes) - VARHDRSZ, 4);
+		pq_sendint32(buf, VARSIZE(outputbytes) - VARHDRSZ);
 		pq_sendbytes(buf, VARDATA(outputbytes),
 					 VARSIZE(outputbytes) - VARHDRSZ);
 	}

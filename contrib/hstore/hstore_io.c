@@ -1207,23 +1207,23 @@ hstore_send(PG_FUNCTION_ARGS)
 
 	pq_begintypsend(&buf);
 
-	pq_sendint(&buf, count, 4);
+	pq_sendint32(&buf, count);
 
 	for (i = 0; i < count; i++)
 	{
 		int32		keylen = HSTORE_KEYLEN(entries, i);
 
-		pq_sendint(&buf, keylen, 4);
+		pq_sendint32(&buf, keylen);
 		pq_sendtext(&buf, HSTORE_KEY(entries, base, i), keylen);
 		if (HSTORE_VALISNULL(entries, i))
 		{
-			pq_sendint(&buf, -1, 4);
+			pq_sendint32(&buf, -1);
 		}
 		else
 		{
 			int32		vallen = HSTORE_VALLEN(entries, i);
 
-			pq_sendint(&buf, vallen, 4);
+			pq_sendint32(&buf, vallen);
 			pq_sendtext(&buf, HSTORE_VAL(entries, base, i), vallen);
 		}
 	}

@@ -357,9 +357,9 @@ SendCopyBegin(CopyState cstate)
 
 		pq_beginmessage(&buf, 'H');
 		pq_sendbyte(&buf, format);	/* overall format */
-		pq_sendint(&buf, natts, 2);
+		pq_sendint16(&buf, natts);
 		for (i = 0; i < natts; i++)
-			pq_sendint(&buf, format, 2);	/* per-column formats */
+			pq_sendint16(&buf, format);	/* per-column formats */
 		pq_endmessage(&buf);
 		cstate->copy_dest = COPY_NEW_FE;
 	}
@@ -390,9 +390,9 @@ ReceiveCopyBegin(CopyState cstate)
 
 		pq_beginmessage(&buf, 'G');
 		pq_sendbyte(&buf, format);	/* overall format */
-		pq_sendint(&buf, natts, 2);
+		pq_sendint16(&buf, natts);
 		for (i = 0; i < natts; i++)
-			pq_sendint(&buf, format, 2);	/* per-column formats */
+			pq_sendint16(&buf, format);	/* per-column formats */
 		pq_endmessage(&buf);
 		cstate->copy_dest = COPY_NEW_FE;
 		cstate->fe_msgbuf = makeStringInfo();
