@@ -1224,6 +1224,7 @@ typedef struct
 	/* Target type when converting whole-row vars */
 	Oid			to_rowtype;
 	bool	   *found_whole_row;	/* output flag */
+	bool		coerced_var;	/* var is under ConvertRowTypeExpr */
 } map_variable_attnos_context;
 
 static Node *
@@ -1267,28 +1268,57 @@ map_variable_attnos_mutator(Node *node,
 					/* Don't convert unless necessary. */
 					if (context->to_rowtype != var->vartype)
 					{
-						ConvertRowtypeExpr *r;
-
 						/* Var itself is converted to the requested type. */
 						newvar->vartype = context->to_rowtype;
 
 						/*
-						 * And a conversion node on top to convert back to the
-						 * original type.
+						 * If this var is already under a ConvertRowtypeExpr,
+						 * we don't have to add another one.
 						 */
-						r = makeNode(ConvertRowtypeExpr);
-						r->arg = (Expr *) newvar;
-						r->resulttype = var->vartype;
-						r->convertformat = COERCE_IMPLICIT_CAST;
-						r->location = -1;
+						if (!context->coerced_var)
+						{
+							ConvertRowtypeExpr *r;
 
-						return (Node *) r;
+							/*
+							 * And a conversion node on top to convert back to
+							 * the original type.
+							 */
+							r = makeNode(ConvertRowtypeExpr);
+							r->arg = (Expr *) newvar;
+							r->resulttype = var->vartype;
+							r->convertformat = COERCE_IMPLICIT_CAST;
+							r->location = -1;
+
+							return (Node *) r;
+						}
 					}
 				}
 			}
 			return (Node *) newvar;
 		}
 		/* otherwise fall through to copy the var normally */
+	}
+	else if (IsA(node, ConvertRowtypeExpr))
+	{
+		ConvertRowtypeExpr *r = (ConvertRowtypeExpr *) node;
+
+		/*
+		 * If this is coercing a var (which is typical), convert only the var,
+		 * as against adding another ConvertRowtypeExpr over it.
+		 */
+		if (IsA(r->arg, Var))
+		{
+			ConvertRowtypeExpr *newnode;
+
+			newnode = (ConvertRowtypeExpr *) palloc(sizeof(ConvertRowtypeExpr));
+			*newnode = *r;
+			context->coerced_var = true;
+			newnode->arg = (Expr *) map_variable_attnos_mutator((Node *) r->arg, context);
+			context->coerced_var = false;
+
+			return (Node *) newnode;
+		}
+		/* Else fall through the expression tree mutator */
 	}
 	else if (IsA(node, Query))
 	{
@@ -1321,6 +1351,7 @@ map_variable_attnos(Node *node,
 	context.map_length = map_length;
 	context.to_rowtype = to_rowtype;
 	context.found_whole_row = found_whole_row;
+	context.coerced_var = false;
 
 	*found_whole_row = false;
 
