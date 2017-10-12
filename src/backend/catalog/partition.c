@@ -988,7 +988,7 @@ check_default_allows_bound(Relation parent, Relation default_rel,
 	if (PartConstraintImpliedByRelConstraint(default_rel, def_part_constraints))
 	{
 		ereport(INFO,
-				(errmsg("partition constraint for table \"%s\" is implied by existing constraints",
+				(errmsg("updated partition constraint for default partition \"%s\" is implied by existing constraints",
 						RelationGetRelationName(default_rel))));
 		return;
 	}
@@ -1033,7 +1033,7 @@ check_default_allows_bound(Relation parent, Relation default_rel,
 													 def_part_constraints))
 			{
 				ereport(INFO,
-						(errmsg("partition constraint for table \"%s\" is implied by existing constraints",
+						(errmsg("updated partition constraint for default partition \"%s\" is implied by existing constraints",
 								RelationGetRelationName(part_rel))));
 
 				heap_close(part_rel, NoLock);
