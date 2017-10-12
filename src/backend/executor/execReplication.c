@@ -511,7 +511,7 @@ ExecSimpleRelationDelete(EState *estate, EPQState *epqstate,
 
 	/* BEFORE ROW DELETE Triggers */
 	if (resultRelInfo->ri_TrigDesc &&
-		resultRelInfo->ri_TrigDesc->trig_update_before_row)
+		resultRelInfo->ri_TrigDesc->trig_delete_before_row)
 	{
 		skip_tuple = !ExecBRDeleteTriggers(estate, epqstate, resultRelInfo,
 										   &searchslot->tts_tuple->t_self,
