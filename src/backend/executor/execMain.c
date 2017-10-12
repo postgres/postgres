@@ -3242,7 +3242,7 @@ EvalPlanQualEnd(EPQState *epqstate)
  * Output arguments:
  * 'pd' receives an array of PartitionDispatch objects with one entry for
  *		every partitioned table in the partition tree
- * 'partitions' receives an array of ResultRelInfo objects with one entry for
+ * 'partitions' receives an array of ResultRelInfo* objects with one entry for
  *		every leaf partition in the partition tree
  * 'tup_conv_maps' receives an array of TupleConversionMap objects with one
  *		entry for every leaf partition (required to convert input tuple based
@@ -3265,7 +3265,7 @@ ExecSetupPartitionTupleRouting(Relation rel,
 							   Index resultRTindex,
 							   EState *estate,
 							   PartitionDispatch **pd,
-							   ResultRelInfo **partitions,
+							   ResultRelInfo ***partitions,
 							   TupleConversionMap ***tup_conv_maps,
 							   TupleTableSlot **partition_tuple_slot,
 							   int *num_parted, int *num_partitions)
@@ -3283,8 +3283,8 @@ ExecSetupPartitionTupleRouting(Relation rel,
 	(void) find_all_inheritors(RelationGetRelid(rel), RowExclusiveLock, NULL);
 	*pd = RelationGetPartitionDispatchInfo(rel, num_parted, &leaf_parts);
 	*num_partitions = list_length(leaf_parts);
-	*partitions = (ResultRelInfo *) palloc(*num_partitions *
-										   sizeof(ResultRelInfo));
+	*partitions = (ResultRelInfo **) palloc(*num_partitions *
+											sizeof(ResultRelInfo *));
 	*tup_conv_maps = (TupleConversionMap **) palloc0(*num_partitions *
 													 sizeof(TupleConversionMap *));
 
@@ -3296,7 +3296,8 @@ ExecSetupPartitionTupleRouting(Relation rel,
 	 */
 	*partition_tuple_slot = MakeTupleTableSlot();
 
-	leaf_part_rri = *partitions;
+	leaf_part_rri = (ResultRelInfo *) palloc0(*num_partitions *
+											  sizeof(ResultRelInfo));
 	i = 0;
 	foreach(cell, leaf_parts)
 	{
@@ -3341,7 +3342,7 @@ ExecSetupPartitionTupleRouting(Relation rel,
 		estate->es_leaf_result_relations =
 			lappend(estate->es_leaf_result_relations, leaf_part_rri);
 
-		leaf_part_rri++;
+		(*partitions)[i] = leaf_part_rri++;
 		i++;
 	}
 }

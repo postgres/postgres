@@ -979,7 +979,7 @@ typedef struct ModifyTableState
 	int			mt_num_dispatch;	/* Number of entries in the above array */
 	int			mt_num_partitions;	/* Number of members in the following
 									 * arrays */
-	ResultRelInfo *mt_partitions;	/* Per partition result relation */
+	ResultRelInfo **mt_partitions;	/* Per partition result relation pointers */
 	TupleConversionMap **mt_partition_tupconv_maps;
 	/* Per partition tuple conversion map */
 	TupleTableSlot *mt_partition_tuple_slot;
