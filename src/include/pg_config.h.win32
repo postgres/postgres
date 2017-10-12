@@ -687,6 +687,11 @@
 /* Visual Studio 2008 and upwards */
 #if (_MSC_VER >= 1500)
 /* works for C and C++ in msvc */
+/*
+ * Temporary attempt at a workaround for stdlib.h's use of
+ * declspec(restrict), conflicting with below define.
+ */
+#include <stdlib.h>
 #define restrict __restrict
 #else
 #define restrict
