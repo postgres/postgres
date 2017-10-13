@@ -2,7 +2,7 @@ use strict;
 use warnings;
 use TestLib;
 use PostgresNode;
-use Test::More tests => 14;
+use Test::More tests => 15;
 
 my ($slapd, $ldap_bin_dir, $ldap_schema_dir);
 
@@ -175,3 +175,12 @@ $node->reload;
 
 $ENV{"PGPASSWORD"} = 'secret1';
 test_access($node, 'test1', 0, 'combined LDAP URL and search filter');
+
+note "diagnostic message";
+
+unlink($node->data_dir . '/pg_hba.conf');
+$node->append_conf('pg_hba.conf', qq{local all all ldap ldapserver=$ldap_server ldapport=$ldap_port ldapprefix="uid=" ldapsuffix=",dc=example,dc=net" ldaptls=1});
+$node->reload;
+
+$ENV{"PGPASSWORD"} = 'secret1';
+test_access($node, 'test1', 2, 'any attempt fails due to unsupported TLS');
