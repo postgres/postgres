@@ -1329,8 +1329,12 @@ PGAC_TYPE_LOCALE_T
 # spelling it understands, because it conflicts with
 # __declspec(restrict). Therefore we define pg_restrict to the
 # appropriate definition, which presumably won't conflict.
+#
+# Allow platforms with buggy compilers to force restrict to not be
+# used by setting $FORCE_DISABLE_RESTRICT=yes in the relevant
+# template.
 AC_C_RESTRICT
-if test "$ac_cv_c_restrict" = "no" ; then
+if test "$ac_cv_c_restrict" = "no" -o "x$FORCE_DISABLE_RESTRICT" = "xyes"; then
   pg_restrict=""
 else
   pg_restrict="$ac_cv_c_restrict"
