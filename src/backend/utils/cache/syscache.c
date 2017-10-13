@@ -1102,11 +1102,54 @@ SearchSysCache(int cacheId,
 			   Datum key3,
 			   Datum key4)
 {
-	if (cacheId < 0 || cacheId >= SysCacheSize ||
-		!PointerIsValid(SysCache[cacheId]))
-		elog(ERROR, "invalid cache ID: %d", cacheId);
+	Assert(cacheId >= 0 && cacheId < SysCacheSize &&
+		   PointerIsValid(SysCache[cacheId]));
 
 	return SearchCatCache(SysCache[cacheId], key1, key2, key3, key4);
+}
+
+HeapTuple
+SearchSysCache1(int cacheId,
+				Datum key1)
+{
+	Assert(cacheId >= 0 && cacheId < SysCacheSize &&
+		   PointerIsValid(SysCache[cacheId]));
+	Assert(SysCache[cacheId]->cc_nkeys == 1);
+
+	return SearchCatCache1(SysCache[cacheId], key1);
+}
+
+HeapTuple
+SearchSysCache2(int cacheId,
+				Datum key1, Datum key2)
+{
+	Assert(cacheId >= 0 && cacheId < SysCacheSize &&
+		   PointerIsValid(SysCache[cacheId]));
+	Assert(SysCache[cacheId]->cc_nkeys == 2);
+
+	return SearchCatCache2(SysCache[cacheId], key1, key2);
+}
+
+HeapTuple
+SearchSysCache3(int cacheId,
+				Datum key1, Datum key2, Datum key3)
+{
+	Assert(cacheId >= 0 && cacheId < SysCacheSize &&
+		   PointerIsValid(SysCache[cacheId]));
+	Assert(SysCache[cacheId]->cc_nkeys == 3);
+
+	return SearchCatCache3(SysCache[cacheId], key1, key2, key3);
+}
+
+HeapTuple
+SearchSysCache4(int cacheId,
+				Datum key1, Datum key2, Datum key3, Datum key4)
+{
+	Assert(cacheId >= 0 && cacheId < SysCacheSize &&
+		   PointerIsValid(SysCache[cacheId]));
+	Assert(SysCache[cacheId]->cc_nkeys == 4);
+
+	return SearchCatCache4(SysCache[cacheId], key1, key2, key3, key4);
 }
 
 /*

@@ -302,6 +302,8 @@ CatCache
 CatCacheHeader
 CatalogId
 CatalogIndexState
+CCHashFN
+CCFastEqualFN
 ChangeVarNodes_context
 CheckPoint
 CheckPointStmt

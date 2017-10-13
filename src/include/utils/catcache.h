@@ -34,25 +34,33 @@
 
 #define CATCACHE_MAXKEYS		4
 
+
+/* function computing a datum's hash */
+typedef uint32 (*CCHashFN) (Datum datum);
+
+/* function computing equality of two datums */
+typedef bool (*CCFastEqualFN) (Datum a, Datum b);
+
 typedef struct catcache
 {
 	int			id;				/* cache identifier --- see syscache.h */
-	slist_node	cc_next;		/* list link */
+	int			cc_nbuckets;	/* # of hash buckets in this cache */
+	TupleDesc	cc_tupdesc;		/* tuple descriptor (copied from reldesc) */
+	dlist_head *cc_bucket;		/* hash buckets */
+	CCHashFN	cc_hashfunc[CATCACHE_MAXKEYS];	/* hash function for each key */
+	CCFastEqualFN cc_fastequal[CATCACHE_MAXKEYS];	/* fast equal function for
+													 * each key */
+	int			cc_keyno[CATCACHE_MAXKEYS]; /* AttrNumber of each key */
+	dlist_head	cc_lists;		/* list of CatCList structs */
+	int			cc_ntup;		/* # of tuples currently in this cache */
+	int			cc_nkeys;		/* # of keys (1..CATCACHE_MAXKEYS) */
 	const char *cc_relname;		/* name of relation the tuples come from */
 	Oid			cc_reloid;		/* OID of relation the tuples come from */
 	Oid			cc_indexoid;	/* OID of index matching cache keys */
 	bool		cc_relisshared; /* is relation shared across databases? */
-	TupleDesc	cc_tupdesc;		/* tuple descriptor (copied from reldesc) */
-	int			cc_ntup;		/* # of tuples currently in this cache */
-	int			cc_nbuckets;	/* # of hash buckets in this cache */
-	int			cc_nkeys;		/* # of keys (1..CATCACHE_MAXKEYS) */
-	int			cc_key[CATCACHE_MAXKEYS];	/* AttrNumber of each key */
-	PGFunction	cc_hashfunc[CATCACHE_MAXKEYS];	/* hash function for each key */
+	slist_node	cc_next;		/* list link */
 	ScanKeyData cc_skey[CATCACHE_MAXKEYS];	/* precomputed key info for heap
 											 * scans */
-	bool		cc_isname[CATCACHE_MAXKEYS];	/* flag "name" key columns */
-	dlist_head	cc_lists;		/* list of CatCList structs */
-	dlist_head *cc_bucket;		/* hash buckets */
 
 	/*
 	 * Keep these at the end, so that compiling catcache.c with CATCACHE_STATS
@@ -79,7 +87,14 @@ typedef struct catctup
 {
 	int			ct_magic;		/* for identifying CatCTup entries */
 #define CT_MAGIC   0x57261502
-	CatCache   *my_cache;		/* link to owning catcache */
+
+	uint32		hash_value;		/* hash value for this tuple's keys */
+
+	/*
+	 * Lookup keys for the entry. By-reference datums point into the tuple for
+	 * positive cache entries, and are separately allocated for negative ones.
+	 */
+	Datum		keys[CATCACHE_MAXKEYS];
 
 	/*
 	 * Each tuple in a cache is a member of a dlist that stores the elements
@@ -87,15 +102,6 @@ typedef struct catctup
 	 * lookups.
 	 */
 	dlist_node	cache_elem;		/* list member of per-bucket list */
-
-	/*
-	 * The tuple may also be a member of at most one CatCList.  (If a single
-	 * catcache is list-searched with varying numbers of keys, we may have to
-	 * make multiple entries for the same tuple because of this restriction.
-	 * Currently, that's not expected to be common, so we accept the potential
-	 * inefficiency.)
-	 */
-	struct catclist *c_list;	/* containing CatCList, or NULL if none */
 
 	/*
 	 * A tuple marked "dead" must not be returned by subsequent searches.
@@ -112,46 +118,63 @@ typedef struct catctup
 	int			refcount;		/* number of active references */
 	bool		dead;			/* dead but not yet removed? */
 	bool		negative;		/* negative cache entry? */
-	uint32		hash_value;		/* hash value for this tuple's keys */
 	HeapTupleData tuple;		/* tuple management header */
+
+	/*
+	 * The tuple may also be a member of at most one CatCList.  (If a single
+	 * catcache is list-searched with varying numbers of keys, we may have to
+	 * make multiple entries for the same tuple because of this restriction.
+	 * Currently, that's not expected to be common, so we accept the potential
+	 * inefficiency.)
+	 */
+	struct catclist *c_list;	/* containing CatCList, or NULL if none */
+
+	CatCache   *my_cache;		/* link to owning catcache */
+	/* properly aligned tuple data follows, unless a negative entry */
 } CatCTup;
 
 
+/*
+ * A CatCList describes the result of a partial search, ie, a search using
+ * only the first K key columns of an N-key cache.  We store the keys used
+ * into the keys attribute to represent the stored key set.  The CatCList
+ * object contains links to cache entries for all the table rows satisfying
+ * the partial key.  (Note: none of these will be negative cache entries.)
+ *
+ * A CatCList is only a member of a per-cache list; we do not currently
+ * divide them into hash buckets.
+ *
+ * A list marked "dead" must not be returned by subsequent searches.
+ * However, it won't be physically deleted from the cache until its
+ * refcount goes to zero.  (A list should be marked dead if any of its
+ * member entries are dead.)
+ *
+ * If "ordered" is true then the member tuples appear in the order of the
+ * cache's underlying index.  This will be true in normal operation, but
+ * might not be true during bootstrap or recovery operations. (namespace.c
+ * is able to save some cycles when it is true.)
+ */
 typedef struct catclist
 {
 	int			cl_magic;		/* for identifying CatCList entries */
 #define CL_MAGIC   0x52765103
-	CatCache   *my_cache;		/* link to owning catcache */
+
+	uint32		hash_value;		/* hash value for lookup keys */
+
+	dlist_node	cache_elem;		/* list member of per-catcache list */
 
 	/*
-	 * A CatCList describes the result of a partial search, ie, a search using
-	 * only the first K key columns of an N-key cache.  We form the keys used
-	 * into a tuple (with other attributes NULL) to represent the stored key
-	 * set.  The CatCList object contains links to cache entries for all the
-	 * table rows satisfying the partial key.  (Note: none of these will be
-	 * negative cache entries.)
-	 *
-	 * A CatCList is only a member of a per-cache list; we do not currently
-	 * divide them into hash buckets.
-	 *
-	 * A list marked "dead" must not be returned by subsequent searches.
-	 * However, it won't be physically deleted from the cache until its
-	 * refcount goes to zero.  (A list should be marked dead if any of its
-	 * member entries are dead.)
-	 *
-	 * If "ordered" is true then the member tuples appear in the order of the
-	 * cache's underlying index.  This will be true in normal operation, but
-	 * might not be true during bootstrap or recovery operations. (namespace.c
-	 * is able to save some cycles when it is true.)
+	 * Lookup keys for the entry, with the first nkeys elements being valid.
+	 * All by-reference are separately allocated.
 	 */
-	dlist_node	cache_elem;		/* list member of per-catcache list */
+	Datum		keys[CATCACHE_MAXKEYS];
+
 	int			refcount;		/* number of active references */
 	bool		dead;			/* dead but not yet removed? */
 	bool		ordered;		/* members listed in index order? */
 	short		nkeys;			/* number of lookup keys specified */
-	uint32		hash_value;		/* hash value for lookup keys */
-	HeapTupleData tuple;		/* header for tuple holding keys */
 	int			n_members;		/* number of member tuples */
+	CatCache   *my_cache;		/* link to owning catcache */
 	CatCTup    *members[FLEXIBLE_ARRAY_MEMBER]; /* members */
 } CatCList;
 
@@ -174,8 +197,15 @@ extern CatCache *InitCatCache(int id, Oid reloid, Oid indexoid,
 extern void InitCatCachePhase2(CatCache *cache, bool touch_index);
 
 extern HeapTuple SearchCatCache(CatCache *cache,
-			   Datum v1, Datum v2,
-			   Datum v3, Datum v4);
+			   Datum v1, Datum v2, Datum v3, Datum v4);
+extern HeapTuple SearchCatCache1(CatCache *cache,
+				Datum v1);
+extern HeapTuple SearchCatCache2(CatCache *cache,
+				Datum v1, Datum v2);
+extern HeapTuple SearchCatCache3(CatCache *cache,
+				Datum v1, Datum v2, Datum v3);
+extern HeapTuple SearchCatCache4(CatCache *cache,
+				Datum v1, Datum v2, Datum v3, Datum v4);
 extern void ReleaseCatCache(HeapTuple tuple);
 
 extern uint32 GetCatCacheHashValue(CatCache *cache,
