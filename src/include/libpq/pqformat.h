@@ -35,13 +35,13 @@ extern void pq_sendfloat4(StringInfo buf, float4 f);
 extern void pq_sendfloat8(StringInfo buf, float8 f);
 
 /*
- * Append a int8 to a StringInfo buffer, which already has enough space
+ * Append an int8 to a StringInfo buffer, which already has enough space
  * preallocated.
  *
  * The use of pg_restrict allows the compiler to optimize the code based on
  * the assumption that buf, buf->len, buf->data and *buf->data don't
  * overlap. Without the annotation buf->len etc cannot be kept in a register
- * over subsequent pq_writeint* calls.
+ * over subsequent pq_writeintN calls.
  *
  * The use of StringInfoData * rather than StringInfo is due to MSVC being
  * overly picky and demanding a * before a restrict.
@@ -51,13 +51,13 @@ pq_writeint8(StringInfoData *pg_restrict buf, int8 i)
 {
 	int8		ni = i;
 
-	Assert(buf->len + sizeof(i) <= buf->maxlen);
-	memcpy((char *pg_restrict) (buf->data + buf->len), &ni, sizeof(ni));
-	buf->len += sizeof(i);
+	Assert(buf->len + sizeof(int8) <= buf->maxlen);
+	memcpy((char *pg_restrict) (buf->data + buf->len), &ni, sizeof(int8));
+	buf->len += sizeof(int8);
 }
 
 /*
- * Append a int16 to a StringInfo buffer, which already has enough space
+ * Append an int16 to a StringInfo buffer, which already has enough space
  * preallocated.
  */
 static inline void
@@ -65,13 +65,13 @@ pq_writeint16(StringInfoData *pg_restrict buf, int16 i)
 {
 	int16		ni = pg_hton16(i);
 
-	Assert(buf->len + sizeof(ni) <= buf->maxlen);
-	memcpy((char *pg_restrict) (buf->data + buf->len), &ni, sizeof(i));
-	buf->len += sizeof(i);
+	Assert(buf->len + sizeof(int16) <= buf->maxlen);
+	memcpy((char *pg_restrict) (buf->data + buf->len), &ni, sizeof(int16));
+	buf->len += sizeof(int16);
 }
 
 /*
- * Append a int32 to a StringInfo buffer, which already has enough space
+ * Append an int32 to a StringInfo buffer, which already has enough space
  * preallocated.
  */
 static inline void
@@ -79,13 +79,13 @@ pq_writeint32(StringInfoData *pg_restrict buf, int32 i)
 {
 	int32		ni = pg_hton32(i);
 
-	Assert(buf->len + sizeof(i) <= buf->maxlen);
-	memcpy((char *pg_restrict) (buf->data + buf->len), &ni, sizeof(i));
-	buf->len += sizeof(i);
+	Assert(buf->len + sizeof(int32) <= buf->maxlen);
+	memcpy((char *pg_restrict) (buf->data + buf->len), &ni, sizeof(int32));
+	buf->len += sizeof(int32);
 }
 
 /*
- * Append a int64 to a StringInfo buffer, which already has enough space
+ * Append an int64 to a StringInfo buffer, which already has enough space
  * preallocated.
  */
 static inline void
@@ -93,9 +93,9 @@ pq_writeint64(StringInfoData *pg_restrict buf, int64 i)
 {
 	int64		ni = pg_hton64(i);
 
-	Assert(buf->len + sizeof(i) <= buf->maxlen);
-	memcpy((char *pg_restrict) (buf->data + buf->len), &ni, sizeof(i));
-	buf->len += sizeof(i);
+	Assert(buf->len + sizeof(int64) <= buf->maxlen);
+	memcpy((char *pg_restrict) (buf->data + buf->len), &ni, sizeof(int64));
+	buf->len += sizeof(int64);
 }
 
 /*
@@ -131,7 +131,7 @@ pq_writestring(StringInfoData *pg_restrict buf, const char *pg_restrict str)
 static inline void
 pq_sendint8(StringInfo buf, int8 i)
 {
-	enlargeStringInfo(buf, sizeof(i));
+	enlargeStringInfo(buf, sizeof(int8));
 	pq_writeint8(buf, i);
 }
 
@@ -139,7 +139,7 @@ pq_sendint8(StringInfo buf, int8 i)
 static inline void
 pq_sendint16(StringInfo buf, int16 i)
 {
-	enlargeStringInfo(buf, sizeof(i));
+	enlargeStringInfo(buf, sizeof(int16));
 	pq_writeint16(buf, i);
 }
 
@@ -147,7 +147,7 @@ pq_sendint16(StringInfo buf, int16 i)
 static inline void
 pq_sendint32(StringInfo buf, int32 i)
 {
-	enlargeStringInfo(buf, sizeof(i));
+	enlargeStringInfo(buf, sizeof(int32));
 	pq_writeint32(buf, i);
 }
 
@@ -155,7 +155,7 @@ pq_sendint32(StringInfo buf, int32 i)
 static inline void
 pq_sendint64(StringInfo buf, int64 i)
 {
-	enlargeStringInfo(buf, sizeof(i));
+	enlargeStringInfo(buf, sizeof(int64));
 	pq_writeint64(buf, i);
 }
 
@@ -169,7 +169,7 @@ pq_sendbyte(StringInfo buf, int8 byt)
 /*
  * Append a binary integer to a StringInfo buffer
  *
- * This function is deprecated.
+ * This function is deprecated; prefer use of the functions above.
  */
 static inline void
 pq_sendint(StringInfo buf, int i, int b)
