@@ -141,6 +141,12 @@ ULONG		(*__ldap_start_tls_sA) (
 #endif
 
 static int	CheckLDAPAuth(Port *port);
+
+/* LDAP_OPT_DIAGNOSTIC_MESSAGE is the newer spelling */
+#ifndef LDAP_OPT_DIAGNOSTIC_MESSAGE
+#define LDAP_OPT_DIAGNOSTIC_MESSAGE LDAP_OPT_ERROR_STRING
+#endif
+
 #endif							/* USE_LDAP */
 
 /*----------------------------------------------------------------
