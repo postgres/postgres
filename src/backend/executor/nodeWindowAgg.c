@@ -49,6 +49,7 @@
 #include "utils/datum.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
+#include "utils/regproc.h"
 #include "utils/syscache.h"
 #include "windowapi.h"
 
@@ -2096,10 +2097,12 @@ initialize_peragg(WindowAggState *winstate, WindowFunc *wfunc,
 	Oid			aggtranstype;
 	AttrNumber	initvalAttNo;
 	AclResult	aclresult;
+	bool		use_ma_code;
 	Oid			transfn_oid,
 				invtransfn_oid,
 				finalfn_oid;
 	bool		finalextra;
+	char		finalmodify;
 	Expr	   *transfnexpr,
 			   *invtransfnexpr,
 			   *finalfnexpr;
@@ -2125,20 +2128,32 @@ initialize_peragg(WindowAggState *winstate, WindowFunc *wfunc,
 	 * Figure out whether we want to use the moving-aggregate implementation,
 	 * and collect the right set of fields from the pg_attribute entry.
 	 *
-	 * If the frame head can't move, we don't need moving-aggregate code. Even
-	 * if we'd like to use it, don't do so if the aggregate's arguments (and
-	 * FILTER clause if any) contain any calls to volatile functions.
-	 * Otherwise, the difference between restarting and not restarting the
-	 * aggregation would be user-visible.
+	 * It's possible that an aggregate would supply a safe moving-aggregate
+	 * implementation and an unsafe normal one, in which case our hand is
+	 * forced.  Otherwise, if the frame head can't move, we don't need
+	 * moving-aggregate code.  Even if we'd like to use it, don't do so if the
+	 * aggregate's arguments (and FILTER clause if any) contain any calls to
+	 * volatile functions.  Otherwise, the difference between restarting and
+	 * not restarting the aggregation would be user-visible.
 	 */
-	if (OidIsValid(aggform->aggminvtransfn) &&
-		!(winstate->frameOptions & FRAMEOPTION_START_UNBOUNDED_PRECEDING) &&
-		!contain_volatile_functions((Node *) wfunc))
+	if (!OidIsValid(aggform->aggminvtransfn))
+		use_ma_code = false;	/* sine qua non */
+	else if (aggform->aggmfinalmodify == AGGMODIFY_READ_ONLY &&
+			 aggform->aggfinalmodify != AGGMODIFY_READ_ONLY)
+		use_ma_code = true;		/* decision forced by safety */
+	else if (winstate->frameOptions & FRAMEOPTION_START_UNBOUNDED_PRECEDING)
+		use_ma_code = false;	/* non-moving frame head */
+	else if (contain_volatile_functions((Node *) wfunc))
+		use_ma_code = false;	/* avoid possible behavioral change */
+	else
+		use_ma_code = true;		/* yes, let's use it */
+	if (use_ma_code)
 	{
 		peraggstate->transfn_oid = transfn_oid = aggform->aggmtransfn;
 		peraggstate->invtransfn_oid = invtransfn_oid = aggform->aggminvtransfn;
 		peraggstate->finalfn_oid = finalfn_oid = aggform->aggmfinalfn;
 		finalextra = aggform->aggmfinalextra;
+		finalmodify = aggform->aggmfinalmodify;
 		aggtranstype = aggform->aggmtranstype;
 		initvalAttNo = Anum_pg_aggregate_aggminitval;
 	}
@@ -2148,6 +2163,7 @@ initialize_peragg(WindowAggState *winstate, WindowFunc *wfunc,
 		peraggstate->invtransfn_oid = invtransfn_oid = InvalidOid;
 		peraggstate->finalfn_oid = finalfn_oid = aggform->aggfinalfn;
 		finalextra = aggform->aggfinalextra;
+		finalmodify = aggform->aggfinalmodify;
 		aggtranstype = aggform->aggtranstype;
 		initvalAttNo = Anum_pg_aggregate_agginitval;
 	}
@@ -2197,6 +2213,17 @@ initialize_peragg(WindowAggState *winstate, WindowFunc *wfunc,
 			InvokeFunctionExecuteHook(finalfn_oid);
 		}
 	}
+
+	/*
+	 * If the selected finalfn isn't read-only, we can't run this aggregate as
+	 * a window function.  This is a user-facing error, so we take a bit more
+	 * care with the error message than elsewhere in this function.
+	 */
+	if (finalmodify != AGGMODIFY_READ_ONLY)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("aggregate function %s does not support use as a window function",
+						format_procedure(wfunc->winfnoid))));
 
 	/* Detect how many arguments to pass to the finalfn */
 	if (finalextra)

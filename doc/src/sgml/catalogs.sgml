@@ -487,6 +487,26 @@
       <entry>True to pass extra dummy arguments to <structfield>aggmfinalfn</structfield></entry>
      </row>
      <row>
+      <entry><structfield>aggfinalmodify</structfield></entry>
+      <entry><type>char</type></entry>
+      <entry></entry>
+      <entry>Whether <structfield>aggfinalfn</structfield> modifies the
+       transition state value:
+       <literal>r</literal> if it is read-only,
+       <literal>s</literal> if the <structfield>aggtransfn</structfield>
+       cannot be applied after the <structfield>aggfinalfn</structfield>, or
+       <literal>w</literal> if it writes on the value
+      </entry>
+     </row>
+     <row>
+      <entry><structfield>aggmfinalmodify</structfield></entry>
+      <entry><type>char</type></entry>
+      <entry></entry>
+      <entry>Like <structfield>aggfinalmodify</structfield>, but for
+       the <structfield>aggmfinalfn</structfield>
+      </entry>
+     </row>
+     <row>
       <entry><structfield>aggsortop</structfield></entry>
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-operator"><structname>pg_operator</structname></link>.oid</literal></entry>

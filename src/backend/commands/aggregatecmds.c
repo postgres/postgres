@@ -26,6 +26,7 @@
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_aggregate.h"
+#include "catalog/pg_aggregate_fn.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "commands/alter.h"
@@ -37,6 +38,9 @@
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
+
+
+static char extractModify(DefElem *defel);
 
 
 /*
@@ -67,6 +71,8 @@ DefineAggregate(ParseState *pstate, List *name, List *args, bool oldstyle, List 
 	List	   *mfinalfuncName = NIL;
 	bool		finalfuncExtraArgs = false;
 	bool		mfinalfuncExtraArgs = false;
+	char		finalfuncModify = 0;
+	char		mfinalfuncModify = 0;
 	List	   *sortoperatorName = NIL;
 	TypeName   *baseType = NULL;
 	TypeName   *transType = NULL;
@@ -143,6 +149,10 @@ DefineAggregate(ParseState *pstate, List *name, List *args, bool oldstyle, List 
 			finalfuncExtraArgs = defGetBoolean(defel);
 		else if (pg_strcasecmp(defel->defname, "mfinalfunc_extra") == 0)
 			mfinalfuncExtraArgs = defGetBoolean(defel);
+		else if (pg_strcasecmp(defel->defname, "finalfunc_modify") == 0)
+			finalfuncModify = extractModify(defel);
+		else if (pg_strcasecmp(defel->defname, "mfinalfunc_modify") == 0)
+			mfinalfuncModify = extractModify(defel);
 		else if (pg_strcasecmp(defel->defname, "sortop") == 0)
 			sortoperatorName = defGetQualifiedName(defel);
 		else if (pg_strcasecmp(defel->defname, "basetype") == 0)
@@ -234,6 +244,15 @@ DefineAggregate(ParseState *pstate, List *name, List *args, bool oldstyle, List 
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 					 errmsg("aggregate minitcond must not be specified without mstype")));
 	}
+
+	/*
+	 * Default values for modify flags can only be determined once we know the
+	 * aggKind.
+	 */
+	if (finalfuncModify == 0)
+		finalfuncModify = (aggKind == AGGKIND_NORMAL) ? AGGMODIFY_READ_ONLY : AGGMODIFY_READ_WRITE;
+	if (mfinalfuncModify == 0)
+		mfinalfuncModify = (aggKind == AGGKIND_NORMAL) ? AGGMODIFY_READ_ONLY : AGGMODIFY_READ_WRITE;
 
 	/*
 	 * look up the aggregate's input datatype(s).
@@ -437,6 +456,8 @@ DefineAggregate(ParseState *pstate, List *name, List *args, bool oldstyle, List 
 						   mfinalfuncName,	/* final function name */
 						   finalfuncExtraArgs,
 						   mfinalfuncExtraArgs,
+						   finalfuncModify,
+						   mfinalfuncModify,
 						   sortoperatorName,	/* sort operator name */
 						   transTypeId, /* transition data type */
 						   transSpace,	/* transition space */
@@ -445,4 +466,25 @@ DefineAggregate(ParseState *pstate, List *name, List *args, bool oldstyle, List 
 						   initval, /* initial condition */
 						   minitval,	/* initial condition */
 						   proparallel);	/* parallel safe? */
+}
+
+/*
+ * Convert the string form of [m]finalfunc_modify to the catalog representation
+ */
+static char
+extractModify(DefElem *defel)
+{
+	char	   *val = defGetString(defel);
+
+	if (strcmp(val, "read_only") == 0)
+		return AGGMODIFY_READ_ONLY;
+	if (strcmp(val, "sharable") == 0)
+		return AGGMODIFY_SHARABLE;
+	if (strcmp(val, "read_write") == 0)
+		return AGGMODIFY_READ_WRITE;
+	ereport(ERROR,
+			(errcode(ERRCODE_SYNTAX_ERROR),
+			 errmsg("parameter \"%s\" must be READ_ONLY, SHARABLE, or READ_WRITE",
+					defel->defname)));
+	return 0;					/* keep compiler quiet */
 }

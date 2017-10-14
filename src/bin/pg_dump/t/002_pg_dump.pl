@@ -2784,6 +2784,7 @@ qr/CREATE CAST \(timestamp with time zone AS interval\) WITH FUNCTION pg_catalog
 						  basetype = int4,
 						  stype = _int8,
 						  finalfunc = int8_avg,
+						  finalfunc_modify = sharable,
 						  initcond1 = \'{0,0}\'
 					   );',
 		regexp => qr/^
@@ -2791,7 +2792,8 @@ qr/CREATE CAST \(timestamp with time zone AS interval\) WITH FUNCTION pg_catalog
 			\n\s+\QSFUNC = int4_avg_accum,\E
 			\n\s+\QSTYPE = bigint[],\E
 			\n\s+\QINITCOND = '{0,0}',\E
-			\n\s+\QFINALFUNC = int8_avg\E
+			\n\s+\QFINALFUNC = int8_avg,\E
+			\n\s+\QFINALFUNC_MODIFY = SHARABLE\E
 			\n\);/xm,
 		like => {
 			binary_upgrade          => 1,

@@ -27,6 +27,7 @@ CREATE AGGREGATE <replaceable class="parameter">name</replaceable> ( [ <replacea
     [ , SSPACE = <replaceable class="parameter">state_data_size</replaceable> ]
     [ , FINALFUNC = <replaceable class="parameter">ffunc</replaceable> ]
     [ , FINALFUNC_EXTRA ]
+    [ , FINALFUNC_MODIFY = { READ_ONLY | SHARABLE | READ_WRITE } ]
     [ , COMBINEFUNC = <replaceable class="parameter">combinefunc</replaceable> ]
     [ , SERIALFUNC = <replaceable class="parameter">serialfunc</replaceable> ]
     [ , DESERIALFUNC = <replaceable class="parameter">deserialfunc</replaceable> ]
@@ -37,6 +38,7 @@ CREATE AGGREGATE <replaceable class="parameter">name</replaceable> ( [ <replacea
     [ , MSSPACE = <replaceable class="parameter">mstate_data_size</replaceable> ]
     [ , MFINALFUNC = <replaceable class="parameter">mffunc</replaceable> ]
     [ , MFINALFUNC_EXTRA ]
+    [ , MFINALFUNC_MODIFY = { READ_ONLY | SHARABLE | READ_WRITE } ]
     [ , MINITCOND = <replaceable class="parameter">minitial_condition</replaceable> ]
     [ , SORTOP = <replaceable class="parameter">sort_operator</replaceable> ]
     [ , PARALLEL = { SAFE | RESTRICTED | UNSAFE } ]
@@ -49,6 +51,7 @@ CREATE AGGREGATE <replaceable class="parameter">name</replaceable> ( [ [ <replac
     [ , SSPACE = <replaceable class="parameter">state_data_size</replaceable> ]
     [ , FINALFUNC = <replaceable class="parameter">ffunc</replaceable> ]
     [ , FINALFUNC_EXTRA ]
+    [ , FINALFUNC_MODIFY = { READ_ONLY | SHARABLE | READ_WRITE } ]
     [ , INITCOND = <replaceable class="parameter">initial_condition</replaceable> ]
     [ , PARALLEL = { SAFE | RESTRICTED | UNSAFE } ]
     [ , HYPOTHETICAL ]
@@ -63,6 +66,7 @@ CREATE AGGREGATE <replaceable class="parameter">name</replaceable> (
     [ , SSPACE = <replaceable class="parameter">state_data_size</replaceable> ]
     [ , FINALFUNC = <replaceable class="parameter">ffunc</replaceable> ]
     [ , FINALFUNC_EXTRA ]
+    [ , FINALFUNC_MODIFY = { READ_ONLY | SHARABLE | READ_WRITE } ]
     [ , COMBINEFUNC = <replaceable class="parameter">combinefunc</replaceable> ]
     [ , SERIALFUNC = <replaceable class="parameter">serialfunc</replaceable> ]
     [ , DESERIALFUNC = <replaceable class="parameter">deserialfunc</replaceable> ]
@@ -73,6 +77,7 @@ CREATE AGGREGATE <replaceable class="parameter">name</replaceable> (
     [ , MSSPACE = <replaceable class="parameter">mstate_data_size</replaceable> ]
     [ , MFINALFUNC = <replaceable class="parameter">mffunc</replaceable> ]
     [ , MFINALFUNC_EXTRA ]
+    [ , MFINALFUNC_MODIFY = { READ_ONLY | SHARABLE | READ_WRITE } ]
     [ , MINITCOND = <replaceable class="parameter">minitial_condition</replaceable> ]
     [ , SORTOP = <replaceable class="parameter">sort_operator</replaceable> ]
 )
@@ -197,7 +202,8 @@ CREATE AGGREGATE <replaceable class="parameter">name</replaceable> (
    as described in <xref linkend="xaggr-moving-aggregates">.  This requires
    specifying the <literal>MSFUNC</>, <literal>MINVFUNC</>,
    and <literal>MSTYPE</> parameters, and optionally
-   the <literal>MSPACE</>, <literal>MFINALFUNC</>, <literal>MFINALFUNC_EXTRA</>,
+   the <literal>MSPACE</>, <literal>MFINALFUNC</>,
+   <literal>MFINALFUNC_EXTRA</>, <literal>MFINALFUNC_MODIFY</>,
    and <literal>MINITCOND</> parameters.  Except for <literal>MINVFUNC</>,
    these parameters work like the corresponding simple-aggregate parameters
    without <literal>M</>; they define a separate implementation of the
@@ -413,6 +419,21 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
    </varlistentry>
 
    <varlistentry>
+    <term><literal>FINALFUNC_MODIFY</> = { <literal>READ_ONLY</> | <literal>SHARABLE</> | <literal>READ_WRITE</> }</term>
+    <listitem>
+     <para>
+      This option specifies whether the final function is a pure function
+      that does not modify its arguments.  <literal>READ_ONLY</> indicates
+      it does not; the other two values indicate that it may change the
+      transition state value.  See <xref linkend="sql-createaggregate-notes"
+      endterm="sql-createaggregate-notes-title"> below for more detail.  The
+      default is <literal>READ_ONLY</>, except for ordered-set aggregates,
+      for which the default is <literal>READ_WRITE</>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><replaceable class="parameter">combinefunc</replaceable></term>
     <listitem>
      <para>
@@ -564,6 +585,16 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
    </varlistentry>
 
    <varlistentry>
+    <term><literal>MFINALFUNC_MODIFY</> = { <literal>READ_ONLY</> | <literal>SHARABLE</> | <literal>READ_WRITE</> }</term>
+    <listitem>
+     <para>
+      This option is like <literal>FINALFUNC_MODIFY</>, but it describes
+      the behavior of the moving-aggregate final function.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><replaceable class="parameter">minitial_condition</replaceable></term>
     <listitem>
      <para>
@@ -587,12 +618,12 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
    </varlistentry>
 
    <varlistentry>
-    <term><literal>PARALLEL</literal></term>
+    <term><literal>PARALLEL =</> { <literal>SAFE</> | <literal>RESTRICTED</> | <literal>UNSAFE</> }</term>
     <listitem>
      <para>
       The meanings of <literal>PARALLEL SAFE</>, <literal>PARALLEL
       RESTRICTED</>, and <literal>PARALLEL UNSAFE</> are the same as
-      for <xref linkend="sql-createfunction">.  An aggregate will not be
+      in <xref linkend="sql-createfunction">.  An aggregate will not be
       considered for parallelization if it is marked <literal>PARALLEL
       UNSAFE</> (which is the default!) or <literal>PARALLEL RESTRICTED</>.
       Note that the parallel-safety markings of the aggregate's support
@@ -624,14 +655,42 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
   </para>
  </refsect1>
 
- <refsect1>
-  <title>Notes</title>
+ <refsect1 id="sql-createaggregate-notes">
+  <title id="sql-createaggregate-notes-title">Notes</title>
 
    <para>
     In parameters that specify support function names, you can write
     a schema name if needed, for example <literal>SFUNC = public.sum</>.
     Do not write argument types there, however &mdash; the argument types
     of the support functions are determined from other parameters.
+   </para>
+
+   <para>
+    Ordinarily, Postgres functions are expected to be true functions that
+    do not modify their input values.  However, an aggregate transition
+    function, <emphasis>when used in the context of an aggregate</>,
+    is allowed to cheat and modify its transition-state argument in place.
+    This can provide substantial performance benefits compared to making
+    a fresh copy of the transition state each time.
+   </para>
+
+   <para>
+    Likewise, while an aggregate final function is normally expected not to
+    modify its input values, sometimes it is impractical to avoid modifying
+    the transition-state argument.  Such behavior must be declared using
+    the <literal>FINALFUNC_MODIFY</> parameter.  The <literal>READ_WRITE</>
+    value indicates that the final function modifies the transition state in
+    unspecified ways.  This value prevents use of the aggregate as a window
+    function, and it also prevents merging of transition states for aggregate
+    calls that share the same input values and transition functions.
+    The <literal>SHARABLE</> value indicates that the transition function
+    cannot be applied after the final function, but multiple final-function
+    calls can be performed on the ending transition state value.  This value
+    prevents use of the aggregate as a window function, but it allows merging
+    of transition states.  (That is, the optimization of interest here is not
+    applying the same final function repeatedly, but applying different final
+    functions to the same ending transition state value.  This is allowed as
+    long as none of the final functions are marked <literal>READ_WRITE</>.)
    </para>
 
    <para>
@@ -671,7 +730,8 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
     Note that whether or not the aggregate supports moving-aggregate
     mode, <productname>PostgreSQL</productname> can handle a moving frame
     end without recalculation; this is done by continuing to add new values
-    to the aggregate's state.  It is assumed that the final function does
+    to the aggregate's state.  This is why use of an aggregate as a window
+    function requires that the final function be read-only: it must
     not damage the aggregate's state value, so that the aggregation can be
     continued even after an aggregate result value has been obtained for
     one set of frame boundaries.

@@ -487,6 +487,13 @@ SELECT percentile_disc(0.5) WITHIN GROUP (ORDER BY income) FROM households;
    C, since their state values aren't definable as any SQL data type.
    (In the above example, notice that the state value is declared as
    type <type>internal</> &mdash; this is typical.)
+   Also, because the final function performs the sort, it is not possible
+   to continue adding input rows by executing the transition function again
+   later.  This means the final function is not <literal>READ_ONLY</>;
+   it must be declared in <xref linkend="sql-createaggregate">
+   as <literal>READ_WRITE</>, or as <literal>SHARABLE</> if it's
+   possible for additional final-function calls to make use of the
+   already-sorted state.
   </para>
 
   <para>
@@ -622,16 +629,15 @@ SELECT percentile_disc(0.5) WITHIN GROUP (ORDER BY income) FROM households;
 <programlisting>
 if (AggCheckCallContext(fcinfo, NULL))
 </programlisting>
-   One reason for checking this is that when it is true for a transition
-   function, the first input
+   One reason for checking this is that when it is true, the first input
    must be a temporary state value and can therefore safely be modified
    in-place rather than allocating a new copy.
    See <function>int8inc()</> for an example.
-   (This is the <emphasis>only</>
-   case where it is safe for a function to modify a pass-by-reference input.
-   In particular, final functions for normal aggregates must not
-   modify their inputs in any case, because in some cases they will be
-   re-executed on the same final state value.)
+   (While aggregate transition functions are always allowed to modify
+   the transition value in-place, aggregate final functions are generally
+   discouraged from doing so; if they do so, the behavior must be declared
+   when creating the aggregate.  See <xref linkend="sql-createaggregate">
+   for more detail.)
   </para>
 
   <para>

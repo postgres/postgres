@@ -19,6 +19,7 @@
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_aggregate.h"
+#include "catalog/pg_aggregate_fn.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
@@ -65,6 +66,8 @@ AggregateCreate(const char *aggName,
 				List *aggmfinalfnName,
 				bool finalfnExtraArgs,
 				bool mfinalfnExtraArgs,
+				char finalfnModify,
+				char mfinalfnModify,
 				List *aggsortopName,
 				Oid aggTransType,
 				int32 aggTransSpace,
@@ -656,6 +659,8 @@ AggregateCreate(const char *aggName,
 	values[Anum_pg_aggregate_aggmfinalfn - 1] = ObjectIdGetDatum(mfinalfn);
 	values[Anum_pg_aggregate_aggfinalextra - 1] = BoolGetDatum(finalfnExtraArgs);
 	values[Anum_pg_aggregate_aggmfinalextra - 1] = BoolGetDatum(mfinalfnExtraArgs);
+	values[Anum_pg_aggregate_aggfinalmodify - 1] = CharGetDatum(finalfnModify);
+	values[Anum_pg_aggregate_aggmfinalmodify - 1] = CharGetDatum(mfinalfnModify);
 	values[Anum_pg_aggregate_aggsortop - 1] = ObjectIdGetDatum(sortop);
 	values[Anum_pg_aggregate_aggtranstype - 1] = ObjectIdGetDatum(aggTransType);
 	values[Anum_pg_aggregate_aggtransspace - 1] = Int32GetDatum(aggTransSpace);
