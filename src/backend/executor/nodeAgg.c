@@ -268,7 +268,12 @@ typedef struct AggStatePerTransData
 	 */
 	int			numInputs;
 
-	/* offset of input columns in AggState->evalslot */
+	/*
+	 * At each input row, we evaluate all argument expressions needed for all
+	 * the aggregates in this Agg node in a single ExecProject call.  inputoff
+	 * is the starting index of this aggregate's argument expressions in the
+	 * resulting tuple (in AggState->evalslot).
+	 */
 	int			inputoff;
 
 	/*
@@ -2809,10 +2814,11 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 	/*
 	 * initialize child expressions
 	 *
-	 * We rely on the parser to have checked that no aggs contain other agg
-	 * calls in their arguments.  This would make no sense under SQL semantics
-	 * (and it's forbidden by the spec).  Because it is true, we don't need to
-	 * worry about evaluating the aggs in any particular order.
+	 * We expect the parser to have checked that no aggs contain other agg
+	 * calls in their arguments (and just to be sure, we verify it again while
+	 * initializing the plan node).  This would make no sense under SQL
+	 * semantics, and it's forbidden by the spec.  Because it is true, we
+	 * don't need to worry about evaluating the aggs in any particular order.
 	 *
 	 * Note: execExpr.c finds Aggrefs for us, and adds their AggrefExprState
 	 * nodes to aggstate->aggs.  Aggrefs in the qual are found here; Aggrefs
@@ -2851,17 +2857,6 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 	 */
 	numaggs = aggstate->numaggs;
 	Assert(numaggs == list_length(aggstate->aggs));
-	if (numaggs <= 0)
-	{
-		/*
-		 * This is not an error condition: we might be using the Agg node just
-		 * to do hash-based grouping.  Even in the regular case,
-		 * constant-expression simplification could optimize away all of the
-		 * Aggrefs in the targetlist and qual.  So keep going, but force local
-		 * copy of numaggs positive so that palloc()s below don't choke.
-		 */
-		numaggs = 1;
-	}
 
 	/*
 	 * For each phase, prepare grouping set data and fmgr lookup data for
@@ -3364,19 +3359,19 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 	}
 
 	/*
-	 * Update numaggs to match the number of unique aggregates found. Also set
-	 * numstates to the number of unique aggregate states found.
+	 * Update aggstate->numaggs to be the number of unique aggregates found.
+	 * Also set numstates to the number of unique transition states found.
 	 */
 	aggstate->numaggs = aggno + 1;
 	aggstate->numtrans = transno + 1;
 
 	/*
 	 * Build a single projection computing the aggregate arguments for all
-	 * aggregates at once, that's considerably faster than doing it separately
-	 * for each.
+	 * aggregates at once; if there's more than one, that's considerably
+	 * faster than doing it separately for each.
 	 *
-	 * First create a targetlist combining the targetlist of all the
-	 * transitions.
+	 * First create a targetlist combining the targetlists of all the
+	 * per-trans states.
 	 */
 	combined_inputeval = NIL;
 	column_offset = 0;
@@ -3385,10 +3380,14 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		AggStatePerTrans pertrans = &pertransstates[transno];
 		ListCell   *arg;
 
+		/*
+		 * Mark this per-trans state with its starting column in the combined
+		 * slot.
+		 */
 		pertrans->inputoff = column_offset;
 
 		/*
-		 * Adjust resno in a copied target entries, to point into the combined
+		 * Adjust resnos in the copied target entries to match the combined
 		 * slot.
 		 */
 		foreach(arg, pertrans->aggref->args)
@@ -3405,7 +3404,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		column_offset += list_length(pertrans->aggref->args);
 	}
 
-	/* and then create a projection for that targetlist */
+	/* Now create a projection for the combined targetlist */
 	aggstate->evaldesc = ExecTypeFromTL(combined_inputeval, false);
 	aggstate->evalslot = ExecInitExtraTupleSlot(estate);
 	aggstate->evalproj = ExecBuildProjectionInfo(combined_inputeval,
@@ -3414,6 +3413,21 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 												 &aggstate->ss.ps,
 												 NULL);
 	ExecSetSlotDescriptor(aggstate->evalslot, aggstate->evaldesc);
+
+	/*
+	 * Last, check whether any more aggregates got added onto the node while
+	 * we processed the expressions for the aggregate arguments (including not
+	 * only the regular arguments handled immediately above, but any FILTER
+	 * expressions and direct arguments we might've handled earlier).  If so,
+	 * we have nested aggregate functions, which is semantically nonsensical,
+	 * so complain.  (This should have been caught by the parser, so we don't
+	 * need to work hard on a helpful error message; but we defend against it
+	 * here anyway, just to be sure.)
+	 */
+	if (numaggs != list_length(aggstate->aggs))
+		ereport(ERROR,
+				(errcode(ERRCODE_GROUPING_ERROR),
+				 errmsg("aggregate function calls cannot be nested")));
 
 	return aggstate;
 }
@@ -3444,7 +3458,6 @@ build_pertrans_for_aggref(AggStatePerTrans pertrans,
 	List	   *sortlist;
 	int			numSortCols;
 	int			numDistinctCols;
-	int			naggs;
 	int			i;
 
 	/* Begin filling in the pertrans data */
@@ -3586,21 +3599,10 @@ build_pertrans_for_aggref(AggStatePerTrans pertrans,
 	}
 
 	/* Initialize the input and FILTER expressions */
-	naggs = aggstate->numaggs;
 	pertrans->aggfilter = ExecInitExpr(aggref->aggfilter,
 									   (PlanState *) aggstate);
 	pertrans->aggdirectargs = ExecInitExprList(aggref->aggdirectargs,
 											   (PlanState *) aggstate);
-
-	/*
-	 * Complain if the aggregate's arguments contain any aggregates; nested
-	 * agg functions are semantically nonsensical.  (This should have been
-	 * caught earlier, but we defend against it here anyway.)
-	 */
-	if (naggs != aggstate->numaggs)
-		ereport(ERROR,
-				(errcode(ERRCODE_GROUPING_ERROR),
-				 errmsg("aggregate function calls cannot be nested")));
 
 	/*
 	 * If we're doing either DISTINCT or ORDER BY for a plain agg, then we
