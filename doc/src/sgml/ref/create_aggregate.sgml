@@ -666,7 +666,7 @@ SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
    </para>
 
    <para>
-    Ordinarily, Postgres functions are expected to be true functions that
+    Ordinarily, PostgreSQL functions are expected to be true functions that
     do not modify their input values.  However, an aggregate transition
     function, <emphasis>when used in the context of an aggregate</>,
     is allowed to cheat and modify its transition-state argument in place.
