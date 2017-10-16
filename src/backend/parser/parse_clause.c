@@ -62,9 +62,6 @@ static Node *transformJoinOnClause(ParseState *pstate, JoinExpr *j,
 static RangeTblEntry *getRTEForSpecialRelationTypes(ParseState *pstate,
 							  RangeVar *rv);
 static RangeTblEntry *transformTableEntry(ParseState *pstate, RangeVar *r);
-static RangeTblEntry *transformCTEReference(ParseState *pstate, RangeVar *r,
-					  CommonTableExpr *cte, Index levelsup);
-static RangeTblEntry *transformENRReference(ParseState *pstate, RangeVar *r);
 static RangeTblEntry *transformRangeSubselect(ParseState *pstate,
 						RangeSubselect *r);
 static RangeTblEntry *transformRangeFunction(ParseState *pstate,
@@ -184,9 +181,12 @@ setTargetTable(ParseState *pstate, RangeVar *relation,
 	RangeTblEntry *rte;
 	int			rtindex;
 
-	/* So far special relations are immutable; so they cannot be targets. */
-	rte = getRTEForSpecialRelationTypes(pstate, relation);
-	if (rte != NULL)
+	/*
+	 * ENRs hide tables of the same name, so we need to check for them first.
+	 * In contrast, CTEs don't hide tables (for this purpose).
+	 */
+	if (relation->schemaname == NULL &&
+		scanNameSpaceForENR(pstate, relation->relname))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("relation \"%s\" cannot be the target of a modifying statement",
@@ -426,35 +426,6 @@ transformTableEntry(ParseState *pstate, RangeVar *r)
 
 	/* We need only build a range table entry */
 	rte = addRangeTableEntry(pstate, r, r->alias, r->inh, true);
-
-	return rte;
-}
-
-/*
- * transformCTEReference --- transform a RangeVar that references a common
- * table expression (ie, a sub-SELECT defined in a WITH clause)
- */
-static RangeTblEntry *
-transformCTEReference(ParseState *pstate, RangeVar *r,
-					  CommonTableExpr *cte, Index levelsup)
-{
-	RangeTblEntry *rte;
-
-	rte = addRangeTableEntryForCTE(pstate, cte, levelsup, r, true);
-
-	return rte;
-}
-
-/*
- * transformENRReference --- transform a RangeVar that references an ephemeral
- * named relation
- */
-static RangeTblEntry *
-transformENRReference(ParseState *pstate, RangeVar *r)
-{
-	RangeTblEntry *rte;
-
-	rte = addRangeTableEntryForENR(pstate, r, true);
 
 	return rte;
 }
@@ -1071,19 +1042,32 @@ transformRangeTableSample(ParseState *pstate, RangeTableSample *rts)
 	return tablesample;
 }
 
-
+/*
+ * getRTEForSpecialRelationTypes
+ *
+ * If given RangeVar refers to a CTE or an EphemeralNamedRelation,
+ * build and return an appropriate RTE, otherwise return NULL
+ */
 static RangeTblEntry *
 getRTEForSpecialRelationTypes(ParseState *pstate, RangeVar *rv)
 {
 	CommonTableExpr *cte;
 	Index		levelsup;
-	RangeTblEntry *rte = NULL;
+	RangeTblEntry *rte;
+
+	/*
+	 * if it is a qualified name, it can't be a CTE or tuplestore reference
+	 */
+	if (rv->schemaname)
+		return NULL;
 
 	cte = scanNameSpaceForCTE(pstate, rv->relname, &levelsup);
 	if (cte)
-		rte = transformCTEReference(pstate, rv, cte, levelsup);
-	if (!rte && scanNameSpaceForENR(pstate, rv->relname))
-		rte = transformENRReference(pstate, rv);
+		rte = addRangeTableEntryForCTE(pstate, cte, levelsup, rv, true);
+	else if (scanNameSpaceForENR(pstate, rv->relname))
+		rte = addRangeTableEntryForENR(pstate, rv, true);
+	else
+		rte = NULL;
 
 	return rte;
 }
@@ -1119,15 +1103,11 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 		/* Plain relation reference, or perhaps a CTE reference */
 		RangeVar   *rv = (RangeVar *) n;
 		RangeTblRef *rtr;
-		RangeTblEntry *rte = NULL;
+		RangeTblEntry *rte;
 		int			rtindex;
 
-		/*
-		 * if it is an unqualified name, it might be a CTE or tuplestore
-		 * reference
-		 */
-		if (!rv->schemaname)
-			rte = getRTEForSpecialRelationTypes(pstate, rv);
+		/* Check if it's a CTE or tuplestore reference */
+		rte = getRTEForSpecialRelationTypes(pstate, rv);
 
 		/* if not found above, must be a table reference */
 		if (!rte)
