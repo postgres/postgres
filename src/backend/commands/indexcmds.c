@@ -375,25 +375,24 @@ DefineIndex(Oid relationId,
 	relationId = RelationGetRelid(rel);
 	namespaceId = RelationGetNamespace(rel);
 
-	if (rel->rd_rel->relkind != RELKIND_RELATION &&
-		rel->rd_rel->relkind != RELKIND_MATVIEW)
+	/* Ensure that it makes sense to index this kind of relation */
+	switch (rel->rd_rel->relkind)
 	{
-		if (rel->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
-
-			/*
-			 * Custom error message for FOREIGN TABLE since the term is close
-			 * to a regular table and can confuse the user.
-			 */
+		case RELKIND_RELATION:
+		case RELKIND_MATVIEW:
+			/* OK */
+			break;
+		case RELKIND_FOREIGN_TABLE:
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("cannot create index on foreign table \"%s\"",
 							RelationGetRelationName(rel))));
-		else if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
+		case RELKIND_PARTITIONED_TABLE:
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("cannot create index on partitioned table \"%s\"",
 							RelationGetRelationName(rel))));
-		else
+		default:
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("\"%s\" is not a table or materialized view",
