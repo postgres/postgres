@@ -260,13 +260,6 @@ typedef struct AggStatePerTransData
 	bool		aggshared;
 
 	/*
-	 * Nominal number of arguments for aggregate function.  For plain aggs,
-	 * this excludes any ORDER BY expressions.  For ordered-set aggs, this
-	 * counts both the direct and aggregated (ORDER BY) arguments.
-	 */
-	int			numArguments;
-
-	/*
 	 * Number of aggregated input columns.  This includes ORDER BY expressions
 	 * in both the plain-agg and ordered-set cases.  Ordered-set direct args
 	 * are not counted, though.
@@ -301,9 +294,6 @@ typedef struct AggStatePerTransData
 
 	/* Oid of state value's datatype */
 	Oid			aggtranstype;
-
-	/* ExprStates for any direct-argument expressions */
-	List	   *aggdirectargs;
 
 	/*
 	 * fmgr lookup data for transition function or combine function.  Note in
@@ -443,6 +433,9 @@ typedef struct AggStatePerAggData
 	 * aggregated input columns.
 	 */
 	int			numFinalArgs;
+
+	/* ExprStates for any direct-argument expressions */
+	List	   *aggdirectargs;
 
 	/*
 	 * We need the len and byval info for the agg's result data type in order
@@ -1544,7 +1537,7 @@ finalize_aggregate(AggState *aggstate,
 	 * for the transition state value.
 	 */
 	i = 1;
-	foreach(lc, pertrans->aggdirectargs)
+	foreach(lc, peragg->aggdirectargs)
 	{
 		ExprState  *expr = (ExprState *) lfirst(lc);
 
@@ -3313,6 +3306,10 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		else
 			peragg->numFinalArgs = numDirectArgs + 1;
 
+		/* Initialize any direct-argument expressions */
+		peragg->aggdirectargs = ExecInitExprList(aggref->aggdirectargs,
+												 (PlanState *) aggstate);
+
 		/*
 		 * build expression trees using actual argument & result types for the
 		 * finalfn, if it exists and is required.
@@ -3657,10 +3654,6 @@ build_pertrans_for_aggref(AggStatePerTrans pertrans,
 
 	}
 
-	/* Initialize any direct-argument expressions */
-	pertrans->aggdirectargs = ExecInitExprList(aggref->aggdirectargs,
-											   (PlanState *) aggstate);
-
 	/*
 	 * If we're doing either DISTINCT or ORDER BY for a plain agg, then we
 	 * have a list of SortGroupClause nodes; fish out the data in them and
@@ -3847,7 +3840,6 @@ find_compatible_peragg(Aggref *newagg, AggState *aggstate,
 			newagg->aggstar != existingRef->aggstar ||
 			newagg->aggvariadic != existingRef->aggvariadic ||
 			newagg->aggkind != existingRef->aggkind ||
-			!equal(newagg->aggdirectargs, existingRef->aggdirectargs) ||
 			!equal(newagg->args, existingRef->args) ||
 			!equal(newagg->aggorder, existingRef->aggorder) ||
 			!equal(newagg->aggdistinct, existingRef->aggdistinct) ||
@@ -3857,7 +3849,8 @@ find_compatible_peragg(Aggref *newagg, AggState *aggstate,
 		/* if it's the same aggregate function then report exact match */
 		if (newagg->aggfnoid == existingRef->aggfnoid &&
 			newagg->aggtype == existingRef->aggtype &&
-			newagg->aggcollid == existingRef->aggcollid)
+			newagg->aggcollid == existingRef->aggcollid &&
+			equal(newagg->aggdirectargs, existingRef->aggdirectargs))
 		{
 			list_free(*same_input_transnos);
 			*same_input_transnos = NIL;
