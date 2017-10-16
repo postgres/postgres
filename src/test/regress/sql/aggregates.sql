@@ -524,6 +524,8 @@ drop table bytea_test_table;
 
 select min(unique1) filter (where unique1 > 100) from tenk1;
 
+select sum(1/ten) filter (where ten > 0) from tenk1;
+
 select ten, sum(distinct four) filter (where four::text ~ '123') from onek a
 group by ten;
 
