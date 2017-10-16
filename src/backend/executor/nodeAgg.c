@@ -255,6 +255,11 @@ typedef struct AggStatePerTransData
 	Aggref	   *aggref;
 
 	/*
+	 * Is this state value actually being shared by more than one Aggref?
+	 */
+	bool		aggshared;
+
+	/*
 	 * Nominal number of arguments for aggregate function.  For plain aggs,
 	 * this excludes any ORDER BY expressions.  For ordered-set aggs, this
 	 * counts both the direct and aggregated (ORDER BY) arguments.
@@ -3360,9 +3365,10 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		{
 			/*
 			 * Existing compatible trans found, so just point the 'peragg' to
-			 * the same per-trans struct.
+			 * the same per-trans struct, and mark the trans state as shared.
 			 */
 			pertrans = &pertransstates[existing_transno];
+			pertrans->aggshared = true;
 			peragg->transno = existing_transno;
 		}
 		else
@@ -3512,6 +3518,7 @@ build_pertrans_for_aggref(AggStatePerTrans pertrans,
 
 	/* Begin filling in the pertrans data */
 	pertrans->aggref = aggref;
+	pertrans->aggshared = false;
 	pertrans->aggCollation = aggref->inputcollid;
 	pertrans->transfn_oid = aggtransfn;
 	pertrans->serialfn_oid = aggserialfn;
@@ -4161,17 +4168,18 @@ AggGetAggref(FunctionCallInfo fcinfo)
 {
 	if (fcinfo->context && IsA(fcinfo->context, AggState))
 	{
+		AggState   *aggstate = (AggState *) fcinfo->context;
 		AggStatePerAgg curperagg;
 		AggStatePerTrans curpertrans;
 
 		/* check curperagg (valid when in a final function) */
-		curperagg = ((AggState *) fcinfo->context)->curperagg;
+		curperagg = aggstate->curperagg;
 
 		if (curperagg)
 			return curperagg->aggref;
 
 		/* check curpertrans (valid when in a transition function) */
-		curpertrans = ((AggState *) fcinfo->context)->curpertrans;
+		curpertrans = aggstate->curpertrans;
 
 		if (curpertrans)
 			return curpertrans->aggref;
@@ -4199,6 +4207,44 @@ AggGetTempMemoryContext(FunctionCallInfo fcinfo)
 		return aggstate->tmpcontext->ecxt_per_tuple_memory;
 	}
 	return NULL;
+}
+
+/*
+ * AggStateIsShared - find out whether transition state is shared
+ *
+ * If the function is being called as an aggregate support function,
+ * return TRUE if the aggregate's transition state is shared across
+ * multiple aggregates, FALSE if it is not.
+ *
+ * Returns TRUE if not called as an aggregate support function.
+ * This is intended as a conservative answer, ie "no you'd better not
+ * scribble on your input".  In particular, will return TRUE if the
+ * aggregate is being used as a window function, which is a scenario
+ * in which changing the transition state is a bad idea.  We might
+ * want to refine the behavior for the window case in future.
+ */
+bool
+AggStateIsShared(FunctionCallInfo fcinfo)
+{
+	if (fcinfo->context && IsA(fcinfo->context, AggState))
+	{
+		AggState   *aggstate = (AggState *) fcinfo->context;
+		AggStatePerAgg curperagg;
+		AggStatePerTrans curpertrans;
+
+		/* check curperagg (valid when in a final function) */
+		curperagg = aggstate->curperagg;
+
+		if (curperagg)
+			return aggstate->pertrans[curperagg->transno].aggshared;
+
+		/* check curpertrans (valid when in a transition function) */
+		curpertrans = aggstate->curpertrans;
+
+		if (curpertrans)
+			return curpertrans->aggshared;
+	}
+	return true;
 }
 
 /*

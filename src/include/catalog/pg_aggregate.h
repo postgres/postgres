@@ -318,13 +318,13 @@ DATA(insert ( 3267	n 0 jsonb_agg_transfn	jsonb_agg_finalfn				-	-	-	-				-				-	
 DATA(insert ( 3270	n 0 jsonb_object_agg_transfn jsonb_object_agg_finalfn	-	-	-	-				-				-			f f r r 0	2281	0	0		0	_null_ _null_ ));
 
 /* ordered-set and hypothetical-set aggregates */
-DATA(insert ( 3972	o 1 ordered_set_transition			percentile_disc_final					-	-	-	-		-		-		t f w w 0	2281	0	0		0	_null_ _null_ ));
-DATA(insert ( 3974	o 1 ordered_set_transition			percentile_cont_float8_final			-	-	-	-		-		-		f f w w 0	2281	0	0		0	_null_ _null_ ));
-DATA(insert ( 3976	o 1 ordered_set_transition			percentile_cont_interval_final			-	-	-	-		-		-		f f w w 0	2281	0	0		0	_null_ _null_ ));
-DATA(insert ( 3978	o 1 ordered_set_transition			percentile_disc_multi_final				-	-	-	-		-		-		t f w w 0	2281	0	0		0	_null_ _null_ ));
-DATA(insert ( 3980	o 1 ordered_set_transition			percentile_cont_float8_multi_final		-	-	-	-		-		-		f f w w 0	2281	0	0		0	_null_ _null_ ));
-DATA(insert ( 3982	o 1 ordered_set_transition			percentile_cont_interval_multi_final	-	-	-	-		-		-		f f w w 0	2281	0	0		0	_null_ _null_ ));
-DATA(insert ( 3984	o 0 ordered_set_transition			mode_final								-	-	-	-		-		-		t f w w 0	2281	0	0		0	_null_ _null_ ));
+DATA(insert ( 3972	o 1 ordered_set_transition			percentile_disc_final					-	-	-	-		-		-		t f s s 0	2281	0	0		0	_null_ _null_ ));
+DATA(insert ( 3974	o 1 ordered_set_transition			percentile_cont_float8_final			-	-	-	-		-		-		f f s s 0	2281	0	0		0	_null_ _null_ ));
+DATA(insert ( 3976	o 1 ordered_set_transition			percentile_cont_interval_final			-	-	-	-		-		-		f f s s 0	2281	0	0		0	_null_ _null_ ));
+DATA(insert ( 3978	o 1 ordered_set_transition			percentile_disc_multi_final				-	-	-	-		-		-		t f s s 0	2281	0	0		0	_null_ _null_ ));
+DATA(insert ( 3980	o 1 ordered_set_transition			percentile_cont_float8_multi_final		-	-	-	-		-		-		f f s s 0	2281	0	0		0	_null_ _null_ ));
+DATA(insert ( 3982	o 1 ordered_set_transition			percentile_cont_interval_multi_final	-	-	-	-		-		-		f f s s 0	2281	0	0		0	_null_ _null_ ));
+DATA(insert ( 3984	o 0 ordered_set_transition			mode_final								-	-	-	-		-		-		t f s s 0	2281	0	0		0	_null_ _null_ ));
 DATA(insert ( 3986	h 1 ordered_set_transition_multi	rank_final								-	-	-	-		-		-		t f w w 0	2281	0	0		0	_null_ _null_ ));
 DATA(insert ( 3988	h 1 ordered_set_transition_multi	percent_rank_final						-	-	-	-		-		-		t f w w 0	2281	0	0		0	_null_ _null_ ));
 DATA(insert ( 3990	h 1 ordered_set_transition_multi	cume_dist_final							-	-	-	-		-		-		t f w w 0	2281	0	0		0	_null_ _null_ ));

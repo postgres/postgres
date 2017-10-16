@@ -40,14 +40,22 @@
  * create just once per query because they will not change across groups.
  * The per-query struct and subsidiary data live in the executor's per-query
  * memory context, and go away implicitly at ExecutorEnd().
+ *
+ * These structs are set up during the first call of the transition function.
+ * Because we allow nodeAgg.c to merge ordered-set aggregates (but not
+ * hypothetical aggregates) with identical inputs and transition functions,
+ * this info must not depend on the particular aggregate (ie, particular
+ * final-function), nor on the direct argument(s) of the aggregate.
  */
 
 typedef struct OSAPerQueryState
 {
-	/* Aggref for this aggregate: */
+	/* Representative Aggref for this aggregate: */
 	Aggref	   *aggref;
 	/* Memory context containing this struct and other per-query data: */
 	MemoryContext qcontext;
+	/* Do we expect multiple final-function calls within one group? */
+	bool		rescan_needed;
 
 	/* These fields are used only when accumulating tuples: */
 
@@ -91,6 +99,8 @@ typedef struct OSAPerGroupState
 	Tuplesortstate *sortstate;
 	/* Number of normal rows inserted into sortstate: */
 	int64		number_of_rows;
+	/* Have we already done tuplesort_performsort? */
+	bool		sort_done;
 } OSAPerGroupState;
 
 static void ordered_set_shutdown(Datum arg);
@@ -145,6 +155,9 @@ ordered_set_startup(FunctionCallInfo fcinfo, bool use_tuples)
 		qstate = (OSAPerQueryState *) palloc0(sizeof(OSAPerQueryState));
 		qstate->aggref = aggref;
 		qstate->qcontext = qcontext;
+
+		/* We need to support rescans if the trans state is shared */
+		qstate->rescan_needed = AggStateIsShared(fcinfo);
 
 		/* Extract the sort information */
 		sortlist = aggref->aggorder;
@@ -277,15 +290,18 @@ ordered_set_startup(FunctionCallInfo fcinfo, bool use_tuples)
 												   qstate->sortOperators,
 												   qstate->sortCollations,
 												   qstate->sortNullsFirsts,
-												   work_mem, false);
+												   work_mem,
+												   qstate->rescan_needed);
 	else
 		osastate->sortstate = tuplesort_begin_datum(qstate->sortColType,
 													qstate->sortOperator,
 													qstate->sortCollation,
 													qstate->sortNullsFirst,
-													work_mem, false);
+													work_mem,
+													qstate->rescan_needed);
 
 	osastate->number_of_rows = 0;
+	osastate->sort_done = false;
 
 	/* Now register a shutdown callback to clean things up at end of group */
 	AggRegisterCallback(fcinfo,
@@ -306,14 +322,12 @@ ordered_set_startup(FunctionCallInfo fcinfo, bool use_tuples)
  * group) by ExecutorEnd.  But we must take care to release any potential
  * non-memory resources.
  *
- * This callback is arguably unnecessary, since we don't support use of
- * ordered-set aggs in AGG_HASHED mode and there is currently no non-error
- * code path in non-hashed modes wherein nodeAgg.c won't call the finalfn
- * after calling the transfn one or more times.  So in principle we could rely
- * on the finalfn to delete the tuplestore etc.  However, it's possible that
- * such a code path might exist in future, and in any case it'd be
- * notationally tedious and sometimes require extra data copying to ensure
- * we always delete the tuplestore in the finalfn.
+ * In the case where we're not expecting multiple finalfn calls, we could
+ * arguably rely on the finalfn to clean up; but it's easier and more testable
+ * if we just do it the same way in either case.  Note that many of the
+ * finalfns could *not* free the tuplesort object, at least not without extra
+ * data copying, because what they return is a pointer to a datum inside the
+ * tuplesort object.
  */
 static void
 ordered_set_shutdown(Datum arg)
@@ -436,8 +450,14 @@ percentile_disc_final(PG_FUNCTION_ARGS)
 	if (osastate->number_of_rows == 0)
 		PG_RETURN_NULL();
 
-	/* Finish the sort */
-	tuplesort_performsort(osastate->sortstate);
+	/* Finish the sort, or rescan if we already did */
+	if (!osastate->sort_done)
+	{
+		tuplesort_performsort(osastate->sortstate);
+		osastate->sort_done = true;
+	}
+	else
+		tuplesort_rescan(osastate->sortstate);
 
 	/*----------
 	 * We need the smallest K such that (K/N) >= percentile.
@@ -456,13 +476,6 @@ percentile_disc_final(PG_FUNCTION_ARGS)
 
 	if (!tuplesort_getdatum(osastate->sortstate, true, &val, &isnull, NULL))
 		elog(ERROR, "missing row in percentile_disc");
-
-	/*
-	 * Note: we *cannot* clean up the tuplesort object here, because the value
-	 * to be returned is allocated inside its sortcontext.  We could use
-	 * datumCopy to copy it out of there, but it doesn't seem worth the
-	 * trouble, since the cleanup callback will clear the tuplesort later.
-	 */
 
 	/* We shouldn't have stored any nulls, but do the right thing anyway */
 	if (isnull)
@@ -543,8 +556,14 @@ percentile_cont_final_common(FunctionCallInfo fcinfo,
 
 	Assert(expect_type == osastate->qstate->sortColType);
 
-	/* Finish the sort */
-	tuplesort_performsort(osastate->sortstate);
+	/* Finish the sort, or rescan if we already did */
+	if (!osastate->sort_done)
+	{
+		tuplesort_performsort(osastate->sortstate);
+		osastate->sort_done = true;
+	}
+	else
+		tuplesort_rescan(osastate->sortstate);
 
 	first_row = floor(percentile * (osastate->number_of_rows - 1));
 	second_row = ceil(percentile * (osastate->number_of_rows - 1));
@@ -574,13 +593,6 @@ percentile_cont_final_common(FunctionCallInfo fcinfo,
 		proportion = (percentile * (osastate->number_of_rows - 1)) - first_row;
 		val = lerpfunc(first_val, second_val, proportion);
 	}
-
-	/*
-	 * Note: we *cannot* clean up the tuplesort object here, because the value
-	 * to be returned may be allocated inside its sortcontext.  We could use
-	 * datumCopy to copy it out of there, but it doesn't seem worth the
-	 * trouble, since the cleanup callback will clear the tuplesort later.
-	 */
 
 	PG_RETURN_DATUM(val);
 }
@@ -779,8 +791,14 @@ percentile_disc_multi_final(PG_FUNCTION_ARGS)
 	 */
 	if (i < num_percentiles)
 	{
-		/* Finish the sort */
-		tuplesort_performsort(osastate->sortstate);
+		/* Finish the sort, or rescan if we already did */
+		if (!osastate->sort_done)
+		{
+			tuplesort_performsort(osastate->sortstate);
+			osastate->sort_done = true;
+		}
+		else
+			tuplesort_rescan(osastate->sortstate);
 
 		for (; i < num_percentiles; i++)
 		{
@@ -803,11 +821,6 @@ percentile_disc_multi_final(PG_FUNCTION_ARGS)
 			result_isnull[idx] = isnull;
 		}
 	}
-
-	/*
-	 * We could clean up the tuplesort object after forming the array, but
-	 * probably not worth the trouble.
-	 */
 
 	/* We make the output array the same shape as the input */
 	PG_RETURN_POINTER(construct_md_array(result_datum, result_isnull,
@@ -902,8 +915,14 @@ percentile_cont_multi_final_common(FunctionCallInfo fcinfo,
 	 */
 	if (i < num_percentiles)
 	{
-		/* Finish the sort */
-		tuplesort_performsort(osastate->sortstate);
+		/* Finish the sort, or rescan if we already did */
+		if (!osastate->sort_done)
+		{
+			tuplesort_performsort(osastate->sortstate);
+			osastate->sort_done = true;
+		}
+		else
+			tuplesort_rescan(osastate->sortstate);
 
 		for (; i < num_percentiles; i++)
 		{
@@ -961,11 +980,6 @@ percentile_cont_multi_final_common(FunctionCallInfo fcinfo,
 			result_isnull[idx] = false;
 		}
 	}
-
-	/*
-	 * We could clean up the tuplesort object after forming the array, but
-	 * probably not worth the trouble.
-	 */
 
 	/* We make the output array the same shape as the input */
 	PG_RETURN_POINTER(construct_md_array(result_datum, result_isnull,
@@ -1043,8 +1057,14 @@ mode_final(PG_FUNCTION_ARGS)
 
 	shouldfree = !(osastate->qstate->typByVal);
 
-	/* Finish the sort */
-	tuplesort_performsort(osastate->sortstate);
+	/* Finish the sort, or rescan if we already did */
+	if (!osastate->sort_done)
+	{
+		tuplesort_performsort(osastate->sortstate);
+		osastate->sort_done = true;
+	}
+	else
+		tuplesort_rescan(osastate->sortstate);
 
 	/* Scan tuples and count frequencies */
 	while (tuplesort_getdatum(osastate->sortstate, true, &val, &isnull, &abbrev_val))
@@ -1096,13 +1116,6 @@ mode_final(PG_FUNCTION_ARGS)
 
 	if (shouldfree && !last_val_is_mode)
 		pfree(DatumGetPointer(last_val));
-
-	/*
-	 * Note: we *cannot* clean up the tuplesort object here, because the value
-	 * to be returned is allocated inside its sortcontext.  We could use
-	 * datumCopy to copy it out of there, but it doesn't seem worth the
-	 * trouble, since the cleanup callback will clear the tuplesort later.
-	 */
 
 	if (mode_freq)
 		PG_RETURN_DATUM(mode_val);
@@ -1174,6 +1187,9 @@ hypothetical_rank_common(FunctionCallInfo fcinfo, int flag,
 
 	hypothetical_check_argtypes(fcinfo, nargs, osastate->qstate->tupdesc);
 
+	/* because we need a hypothetical row, we can't share transition state */
+	Assert(!osastate->sort_done);
+
 	/* insert the hypothetical row into the sort */
 	slot = osastate->qstate->tupslot;
 	ExecClearTuple(slot);
@@ -1190,6 +1206,7 @@ hypothetical_rank_common(FunctionCallInfo fcinfo, int flag,
 
 	/* finish the sort */
 	tuplesort_performsort(osastate->sortstate);
+	osastate->sort_done = true;
 
 	/* iterate till we find the hypothetical row */
 	while (tuplesort_gettupleslot(osastate->sortstate, true, true, slot, NULL))
@@ -1206,10 +1223,6 @@ hypothetical_rank_common(FunctionCallInfo fcinfo, int flag,
 	}
 
 	ExecClearTuple(slot);
-
-	/* Might as well clean up the tuplesort object immediately */
-	tuplesort_end(osastate->sortstate);
-	osastate->sortstate = NULL;
 
 	return rank;
 }
@@ -1329,6 +1342,9 @@ hypothetical_dense_rank_final(PG_FUNCTION_ARGS)
 	/* Get short-term context we can use for execTuplesMatch */
 	tmpcontext = AggGetTempMemoryContext(fcinfo);
 
+	/* because we need a hypothetical row, we can't share transition state */
+	Assert(!osastate->sort_done);
+
 	/* insert the hypothetical row into the sort */
 	slot = osastate->qstate->tupslot;
 	ExecClearTuple(slot);
@@ -1345,6 +1361,7 @@ hypothetical_dense_rank_final(PG_FUNCTION_ARGS)
 
 	/* finish the sort */
 	tuplesort_performsort(osastate->sortstate);
+	osastate->sort_done = true;
 
 	/*
 	 * We alternate fetching into tupslot and extraslot so that we have the
@@ -1390,10 +1407,6 @@ hypothetical_dense_rank_final(PG_FUNCTION_ARGS)
 	ExecClearTuple(slot2);
 
 	ExecDropSingleTupleTableSlot(extraslot);
-
-	/* Might as well clean up the tuplesort object immediately */
-	tuplesort_end(osastate->sortstate);
-	osastate->sortstate = NULL;
 
 	rank = rank - duplicate_count;
 

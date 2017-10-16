@@ -1866,7 +1866,7 @@ NOTICE:  avg_transfn called with 3
       2 |      6
 (1 row)
 
--- ideally these would share state, but we have to fix the OSAs first.
+-- exercise cases where OSAs share state
 select
   percentile_cont(0.5) within group (order by a),
   percentile_disc(0.5) within group (order by a)
@@ -1876,6 +1876,16 @@ from (values(1::float8),(3),(5),(7)) t(a);
                4 |               3
 (1 row)
 
+select
+  percentile_cont(0.25) within group (order by a),
+  percentile_disc(0.5) within group (order by a)
+from (values(1::float8),(3),(5),(7)) t(a);
+ percentile_cont | percentile_disc 
+-----------------+-----------------
+             2.5 |               3
+(1 row)
+
+-- these can't share state currently
 select
   rank(4) within group (order by a),
   dense_rank(4) within group (order by a)
