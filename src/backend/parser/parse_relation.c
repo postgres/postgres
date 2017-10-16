@@ -1160,18 +1160,12 @@ parserOpenTable(ParseState *pstate, const RangeVar *relation, int lockmode)
 		else
 		{
 			/*
-			 * An unqualified name might be a named ephemeral relation.
-			 */
-			if (get_visible_ENR_metadata(pstate->p_queryEnv, relation->relname))
-				rel = NULL;
-
-			/*
 			 * An unqualified name might have been meant as a reference to
 			 * some not-yet-in-scope CTE.  The bare "does not exist" message
 			 * has proven remarkably unhelpful for figuring out such problems,
 			 * so we take pains to offer a specific hint.
 			 */
-			else if (isFutureCTE(pstate, relation->relname))
+			if (isFutureCTE(pstate, relation->relname))
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_TABLE),
 						 errmsg("relation \"%s\" does not exist",
