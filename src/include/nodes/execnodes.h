@@ -1816,10 +1816,8 @@ typedef struct AggState
 	int			num_hashes;
 	AggStatePerHash perhash;
 	AggStatePerGroup *hash_pergroup;	/* array of per-group pointers */
-	/* support for evaluation of agg inputs */
-	TupleTableSlot *evalslot;	/* slot for agg inputs */
-	ProjectionInfo *evalproj;	/* projection machinery */
-	TupleDesc	evaldesc;		/* descriptor of input tuples */
+	/* support for evaluation of agg input expressions: */
+	ProjectionInfo *combinedproj;	/* projection machinery */
 	AggStatePerAgg curperagg;	/* currently active aggregate, if any */
 } AggState;
 
