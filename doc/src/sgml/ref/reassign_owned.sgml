@@ -77,7 +77,7 @@ REASSIGN OWNED BY { <replaceable class="parameter">old_role</replaceable> | CURR
   </para>
 
   <para>
-   <command>REASSIGN OWNED</command> requires privileges on both the
+   <command>REASSIGN OWNED</command> requires membership on both the
    source role(s) and the target role.
   </para>
 
