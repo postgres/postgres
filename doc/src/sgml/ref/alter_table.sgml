@@ -713,7 +713,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
    </varlistentry>
 
    <varlistentry>
-    <term><literal>OWNER</literal></term>
+    <term><literal>OWNER TO</literal></term>
     <listitem>
      <para>
       This form changes the owner of the table, sequence, view, materialized view,
