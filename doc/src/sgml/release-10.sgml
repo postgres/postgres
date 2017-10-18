@@ -242,7 +242,7 @@
 
      <para>
       This changes <application>pg_basebackup</application>'s
-      <option>-X</option>/<option>--xlog-method</option> default to <literal>stream</literal>.
+      <option>-X</option>/<option>--wal-method</option> default to <literal>stream</literal>.
       An option value <literal>none</literal> has been added to reproduce the old
       behavior.  The <application>pg_basebackup</application> option <option>-x</option>
       has been removed (instead, use <literal>-X fetch</literal>).
