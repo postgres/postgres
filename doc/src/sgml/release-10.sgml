@@ -347,7 +347,7 @@
      The <xref linkend="guc-password-encryption"> server parameter
      no longer supports <literal>off</> or <literal>plain</>.
      The <literal>UNENCRYPTED</> option is no longer supported in
-     <command>CREATE/ALTER USER ... PASSSWORD</>.  Similarly, the
+     <command>CREATE/ALTER USER ... PASSWORD</>.  Similarly, the
      <option>--unencrypted</> option has been removed
      from <application>createuser</>.  Unencrypted passwords migrated from
      older versions will be stored encrypted in this release.  The default
