@@ -1353,7 +1353,7 @@ add_paths_to_append_rel(PlannerInfo *root, RelOptInfo *rel,
 				build_partitioned_rels = true;
 				break;
 			default:
-				elog(ERROR, "unexpcted rtekind: %d", (int) rte->rtekind);
+				elog(ERROR, "unexpected rtekind: %d", (int) rte->rtekind);
 		}
 	}
 	else if (rel->reloptkind == RELOPT_JOINREL && rel->part_scheme)
@@ -3262,10 +3262,10 @@ generate_partition_wise_join_paths(PlannerInfo *root, RelOptInfo *rel)
 		return;
 
 	/*
-	 * Nothing to do if the relation is not partitioned. An outer join
-	 * relation which had empty inner relation in every pair will have rest of
-	 * the partitioning properties set except the child-join RelOptInfos. See
-	 * try_partition_wise_join() for more explanation.
+	 * We've nothing to do if the relation is not partitioned. An outer join
+	 * relation which had an empty inner relation in every pair will have the
+	 * rest of the partitioning properties set except the child-join
+	 * RelOptInfos. See try_partition_wise_join() for more details.
 	 */
 	if (rel->nparts <= 0 || rel->part_rels == NULL)
 		return;
@@ -3284,7 +3284,7 @@ generate_partition_wise_join_paths(PlannerInfo *root, RelOptInfo *rel)
 		/* Add partition-wise join paths for partitioned child-joins. */
 		generate_partition_wise_join_paths(root, child_rel);
 
-		/* Dummy children will not be scanned, so ingore those. */
+		/* Dummy children will not be scanned, so ignore those. */
 		if (IS_DUMMY_REL(child_rel))
 			continue;
 
