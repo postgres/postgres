@@ -1982,7 +1982,7 @@
 -->
       <para>
        Allow <link
-       linkend="functions-formatting-table"><function>make_date()</function></link>
+       linkend="functions-datetime-table"><function>make_date()</function></link>
        to interpret negative years as <acronym>BC</acronym> years (&Aacute;lvaro
        Herrera)
       </para>
@@ -1993,7 +1993,9 @@
 2016-09-28 [d3cd36a13] Make to_timestamp() and to_date() range-check fields of
 -->
       <para>
-       Make <function>to_timestamp()</function> and <function>to_date()</function> reject
+       Make <link
+       linkend="functions-formatting-table"><function>to_timestamp()</function></link>
+       and <function>to_date()</function> reject
        out-of-range input fields (Artur Zakirov)
       </para>
 
