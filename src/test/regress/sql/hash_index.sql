@@ -178,6 +178,10 @@ INSERT INTO hash_split_heap SELECT a/2 FROM generate_series(1, 25000) a;
 
 VACUUM hash_split_heap;
 
+-- Rebuild the index using a different fillfactor
+ALTER INDEX hash_split_index SET (fillfactor = 10);
+REINDEX INDEX hash_split_index;
+
 -- Clean up.
 DROP TABLE hash_split_heap;
 
@@ -192,3 +196,9 @@ CREATE TABLE hash_heap_float4 (x float4, y int);
 INSERT INTO hash_heap_float4 VALUES (1.1,1);
 CREATE INDEX hash_idx ON hash_heap_float4 USING hash (x);
 DROP TABLE hash_heap_float4 CASCADE;
+
+-- Test out-of-range fillfactor values
+CREATE INDEX hash_f8_index2 ON hash_f8_heap USING hash (random float8_ops)
+	WITH (fillfactor=9);
+CREATE INDEX hash_f8_index2 ON hash_f8_heap USING hash (random float8_ops)
+	WITH (fillfactor=101);

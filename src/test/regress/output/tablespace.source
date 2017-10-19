@@ -14,12 +14,12 @@ DROP TABLESPACE regress_tblspacewith;
 -- create a tablespace we can use
 CREATE TABLESPACE regress_tblspace LOCATION '@testtablespace@';
 -- try setting and resetting some properties for the new tablespace
-ALTER TABLESPACE regress_tblspace SET (random_page_cost = 1.0);
+ALTER TABLESPACE regress_tblspace SET (random_page_cost = 1.0, seq_page_cost = 1.1);
 ALTER TABLESPACE regress_tblspace SET (some_nonexistent_parameter = true);  -- fail
 ERROR:  unrecognized parameter "some_nonexistent_parameter"
 ALTER TABLESPACE regress_tblspace RESET (random_page_cost = 2.0); -- fail
 ERROR:  RESET must not include values for parameters
-ALTER TABLESPACE regress_tblspace RESET (random_page_cost, seq_page_cost); -- ok
+ALTER TABLESPACE regress_tblspace RESET (random_page_cost, effective_io_concurrency); -- ok
 -- create a schema we can use
 CREATE SCHEMA testschema;
 -- try a table

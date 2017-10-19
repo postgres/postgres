@@ -682,7 +682,7 @@ CREATE INDEX hash_name_index ON hash_name_heap USING hash (random name_ops);
 
 CREATE INDEX hash_txt_index ON hash_txt_heap USING hash (random text_ops);
 
-CREATE INDEX hash_f8_index ON hash_f8_heap USING hash (random float8_ops);
+CREATE INDEX hash_f8_index ON hash_f8_heap USING hash (random float8_ops) WITH (fillfactor=60);
 
 CREATE UNLOGGED TABLE unlogged_hash_table (id int4);
 CREATE INDEX unlogged_hash_index ON unlogged_hash_table USING hash (id int4_ops);

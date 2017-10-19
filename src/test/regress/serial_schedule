@@ -180,5 +180,6 @@ test: with
 test: xml
 test: identity
 test: partition_join
+test: reloptions
 test: event_trigger
 test: stats

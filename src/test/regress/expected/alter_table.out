@@ -3644,3 +3644,10 @@ create table parted_validate_test_1 partition of parted_validate_test for values
 alter table parted_validate_test add constraint parted_validate_test_chka check (a > 0) not valid;
 alter table parted_validate_test validate constraint parted_validate_test_chka;
 drop table parted_validate_test;
+-- test alter column options
+CREATE TABLE tmp(i integer);
+INSERT INTO tmp VALUES (1);
+ALTER TABLE tmp ALTER COLUMN i SET (n_distinct = 1, n_distinct_inherited = 2);
+ALTER TABLE tmp ALTER COLUMN i RESET (n_distinct_inherited);
+ANALYZE tmp;
+DROP TABLE tmp;
