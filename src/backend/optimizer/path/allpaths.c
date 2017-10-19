@@ -1314,7 +1314,7 @@ add_paths_to_append_rel(PlannerInfo *root, RelOptInfo *rel,
 			build_partitioned_rels = true;
 			break;
 		default:
-			elog(ERROR, "unexpcted rtekind: %d", (int) rte->rtekind);
+			elog(ERROR, "unexpected rtekind: %d", (int) rte->rtekind);
 	}
 
 	/*
