@@ -125,6 +125,11 @@ typedef enum pgssVersion
 /*
  * Hashtable key that defines the identity of a hashtable entry.  We separate
  * queries by user and by database even if they are otherwise identical.
+ *
+ * Right now, this structure contains no padding.  If you add any, make sure
+ * to teach pgss_store() to zero the padding bytes.  Otherwise, things will
+ * break, because pgss_hash is created using HASH_BLOBS, and thus tag_hash
+ * is used to hash this.
  */
 typedef struct pgssHashKey
 {
