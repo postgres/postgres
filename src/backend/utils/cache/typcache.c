@@ -168,6 +168,8 @@ static void cache_array_element_properties(TypeCacheEntry *typentry);
 static bool record_fields_have_equality(TypeCacheEntry *typentry);
 static bool record_fields_have_compare(TypeCacheEntry *typentry);
 static void cache_record_field_properties(TypeCacheEntry *typentry);
+static bool range_element_has_hashing(TypeCacheEntry *typentry);
+static void cache_range_element_properties(TypeCacheEntry *typentry);
 static void TypeCacheRelCallback(Datum arg, Oid relid);
 static void TypeCacheOpcCallback(Datum arg, int cacheid, uint32 hashvalue);
 static void TypeCacheConstrCallback(Datum arg, int cacheid, uint32 hashvalue);
@@ -483,6 +485,13 @@ lookup_type_cache(Oid type_id, int flags)
 		 */
 		if (hash_proc == F_HASH_ARRAY &&
 			!array_element_has_hashing(typentry))
+			hash_proc = InvalidOid;
+
+		/*
+		 * Likewise for hash_range.
+		 */
+		if (hash_proc == F_HASH_RANGE &&
+			!range_element_has_hashing(typentry))
 			hash_proc = InvalidOid;
 
 		/* Force update of hash_proc_finfo only if we're changing state */
@@ -1129,6 +1138,10 @@ cache_array_element_properties(TypeCacheEntry *typentry)
 	typentry->flags |= TCFLAGS_CHECKED_ELEM_PROPERTIES;
 }
 
+/*
+ * Likewise, some helper functions for composite types.
+ */
+
 static bool
 record_fields_have_equality(TypeCacheEntry *typentry)
 {
@@ -1197,6 +1210,43 @@ cache_record_field_properties(TypeCacheEntry *typentry)
 		DecrTupleDescRefCount(tupdesc);
 	}
 	typentry->flags |= TCFLAGS_CHECKED_FIELD_PROPERTIES;
+}
+
+/*
+ * Likewise, some helper functions for range types.
+ *
+ * We can borrow the flag bits for array element properties to use for range
+ * element properties, since those flag bits otherwise have no use in a
+ * range type's typcache entry.
+ */
+
+static bool
+range_element_has_hashing(TypeCacheEntry *typentry)
+{
+	if (!(typentry->flags & TCFLAGS_CHECKED_ELEM_PROPERTIES))
+		cache_range_element_properties(typentry);
+	return (typentry->flags & TCFLAGS_HAVE_ELEM_HASHING) != 0;
+}
+
+static void
+cache_range_element_properties(TypeCacheEntry *typentry)
+{
+	/* load up subtype link if we didn't already */
+	if (typentry->rngelemtype == NULL &&
+		typentry->typtype == TYPTYPE_RANGE)
+		load_rangetype_info(typentry);
+
+	if (typentry->rngelemtype != NULL)
+	{
+		TypeCacheEntry *elementry;
+
+		/* might need to calculate subtype's hash function properties */
+		elementry = lookup_type_cache(typentry->rngelemtype->type_id,
+									  TYPECACHE_HASH_PROC);
+		if (OidIsValid(elementry->hash_proc))
+			typentry->flags |= TCFLAGS_HAVE_ELEM_HASHING;
+	}
+	typentry->flags |= TCFLAGS_CHECKED_ELEM_PROPERTIES;
 }
 
 
