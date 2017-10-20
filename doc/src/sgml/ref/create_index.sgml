@@ -3,7 +3,7 @@ doc/src/sgml/ref/create_index.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-CREATEINDEX">
+<refentry id="sql-createindex">
  <indexterm zone="sql-createindex">
   <primary>CREATE INDEX</primary>
  </indexterm>
@@ -120,8 +120,8 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
         updates, or deletes on the table; whereas a standard index build
         locks out writes (but not reads) on the table until it's done.
         There are several caveats to be aware of when using this option
-        &mdash; see <xref linkend="SQL-CREATEINDEX-CONCURRENTLY"
-        endterm="SQL-CREATEINDEX-CONCURRENTLY-title">.
+        &mdash; see <xref linkend="sql-createindex-concurrently"
+        endterm="sql-createindex-concurrently-title">.
        </para>
       </listitem>
      </varlistentry>
@@ -288,8 +288,8 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
 
     </variablelist>
 
-  <refsect2 id="SQL-CREATEINDEX-storage-parameters">
-   <title id="SQL-CREATEINDEX-storage-parameters-title">Index Storage Parameters</title>
+  <refsect2 id="sql-createindex-storage-parameters">
+   <title id="sql-createindex-storage-parameters-title">Index Storage Parameters</title>
 
    <para>
     The optional <literal>WITH</literal> clause specifies <firstterm>storage
@@ -409,10 +409,10 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
    </variablelist>
   </refsect2>
 
-  <refsect2 id="SQL-CREATEINDEX-CONCURRENTLY">
-   <title id="SQL-CREATEINDEX-CONCURRENTLY-title">Building Indexes Concurrently</title>
+  <refsect2 id="sql-createindex-concurrently">
+   <title id="sql-createindex-concurrently-title">Building Indexes Concurrently</title>
 
-   <indexterm zone="SQL-CREATEINDEX-CONCURRENTLY">
+   <indexterm zone="sql-createindex-concurrently">
    <primary>index</primary>
    <secondary>building concurrently</secondary>
    </indexterm>

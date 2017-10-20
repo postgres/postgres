@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/ref/create_conversion.sgml -->
 
-<refentry id="SQL-CREATECONVERSION">
+<refentry id="sql-createconversion">
  <indexterm zone="sql-createconversion">
   <primary>CREATE CONVERSION</primary>
  </indexterm>

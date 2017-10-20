@@ -3,7 +3,7 @@ doc/src/sgml/ref/create_tablespace.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-CREATETABLESPACE">
+<refentry id="sql-createtablespace">
  <indexterm zone="sql-createtablespace">
   <primary>CREATE TABLESPACE</primary>
  </indexterm>

@@ -7867,7 +7867,7 @@ current_date &lt; 2017-11-17
    </sect3>
 
    <sect3>
-    <title><link linkend="APP-PSQL"><application>psql</application></link></title>
+    <title><link linkend="app-psql"><application>psql</application></link></title>
     <itemizedlist>
 
      <listitem>
@@ -7956,7 +7956,7 @@ current_date &lt; 2017-11-17
    </sect3>
 
    <sect3>
-    <title><link linkend="APP-PGDUMP"><application>pg_dump</application></link></title>
+    <title><link linkend="app-pgdump"><application>pg_dump</application></link></title>
     <itemizedlist>
 
      <listitem>

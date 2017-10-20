@@ -3,7 +3,7 @@ doc/src/sgml/ref/select_into.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-SELECTINTO">
+<refentry id="sql-selectinto">
  <indexterm zone="sql-selectinto">
   <primary>SELECT INTO</primary>
  </indexterm>

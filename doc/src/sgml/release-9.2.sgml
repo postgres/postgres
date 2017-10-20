@@ -9091,7 +9091,7 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
 
       <listitem>
        <para>
-        Add the <link linkend="SPGiST">SP-GiST</link> (Space-Partitioned
+        Add the <link linkend="spgist">SP-GiST</link> (Space-Partitioned
         GiST) index access method
        </para>
       </listitem>
@@ -9112,7 +9112,7 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
       <listitem>
        <para>
         Add a <link
-        linkend="SQL-CREATEVIEW"><literal>security_barrier</literal></link>
+        linkend="sql-createview"><literal>security_barrier</literal></link>
         option for views
        </para>
       </listitem>
@@ -9300,7 +9300,7 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
 
       <listitem>
        <para>
-        Prevent  <link linkend="SQL-ALTERDOMAIN"><command>ALTER
+        Prevent  <link linkend="sql-alterdomain"><command>ALTER
         DOMAIN</command></link> from working on non-domain types (Peter
         Eisentraut)
        </para>
@@ -9314,7 +9314,7 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
       <listitem>
        <para>
         No longer forcibly lowercase procedural language names in <link
-        linkend="SQL-CREATEFUNCTION"><command>CREATE FUNCTION</command></link>
+        linkend="sql-createfunction"><command>CREATE FUNCTION</command></link>
         (Robert Haas)
        </para>
 
@@ -9352,7 +9352,7 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
        <para>
         Provide consistent backquote, variable
         expansion, and quoted substring behavior in <link
-        linkend="APP-PSQL"><application>psql</application></link> meta-command
+        linkend="app-psql"><application>psql</application></link> meta-command
         arguments (Tom Lane)
        </para>
 
@@ -9368,9 +9368,9 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
       <listitem>
        <para>
         No longer treat <link
-        linkend="APP-CLUSTERDB"><application>clusterdb</application></link>
+        linkend="app-clusterdb"><application>clusterdb</application></link>
         table names as double-quoted; no longer treat <link
-        linkend="APP-REINDEXDB"><application>reindexdb</application></link> table
+        linkend="app-reindexdb"><application>reindexdb</application></link> table
         and index names as double-quoted (Bruce Momjian)
        </para>
 
@@ -9382,7 +9382,7 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
 
       <listitem>
        <para>
-        <link linkend="APP-CREATEUSER"><application>createuser</application></link>
+        <link linkend="app-createuser"><application>createuser</application></link>
         no longer prompts for option settings by default (Peter Eisentraut)
        </para>
 
@@ -9394,7 +9394,7 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
       <listitem>
        <para>
         Disable prompting for the user name in <link
-        linkend="APP-DROPUSER"><application>dropuser</application></link> unless
+        linkend="app-dropuser"><application>dropuser</application></link> unless
         <option>--interactive</option> is specified (Peter Eisentraut)
        </para>
       </listitem>
@@ -9556,7 +9556,7 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
 
       <listitem>
        <para>
-        Add the <link linkend="SPGiST">SP-GiST</link> (Space-Partitioned
+        Add the <link linkend="spgist">SP-GiST</link> (Space-Partitioned
         GiST) index access method (Teodor Sigaev, Oleg Bartunov, Tom
         Lane)
        </para>
@@ -10385,7 +10385,7 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
       <listitem>
        <para>
         Add <literal>CONCURRENTLY</literal> option to <link
-        linkend="SQL-DROPINDEX"><command>DROP INDEX</command></link>
+        linkend="sql-dropindex"><command>DROP INDEX</command></link>
         (Simon Riggs)
        </para>
 
@@ -10450,7 +10450,7 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
 
       <listitem>
        <para>
-        Add the ability to <link linkend="SQL-ALTERTABLE">rename</link>
+        Add the ability to <link linkend="sql-altertable">rename</link>
         constraints (Peter Eisentraut)
        </para>
       </listitem>
@@ -10466,7 +10466,7 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
       <listitem>
        <para>
         Reduce need to rebuild tables and indexes for certain <link
-        linkend="SQL-ALTERTABLE"><command>ALTER TABLE</command></link>
+        linkend="sql-altertable"><command>ALTER TABLE</command></link>
         ... <literal>ALTER COLUMN TYPE</literal> operations (Noah Misch)
        </para>
 
@@ -10484,7 +10484,7 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
 
       <listitem>
        <para>
-        Avoid having <link linkend="SQL-ALTERTABLE"><command>ALTER
+        Avoid having <link linkend="sql-altertable"><command>ALTER
         TABLE</command></link> revalidate foreign key constraints in some
         cases where it is not necessary (Noah Misch)
        </para>
@@ -10504,16 +10504,16 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
 
       <listitem>
        <para>
-        Add <link linkend="SQL-ALTERFOREIGNDATAWRAPPER"><command>ALTER
+        Add <link linkend="sql-alterforeigndatawrapper"><command>ALTER
         FOREIGN DATA WRAPPER</command></link> ... <literal>RENAME</literal>
-        and <link linkend="SQL-ALTERSERVER"><command>ALTER
+        and <link linkend="sql-alterserver"><command>ALTER
         SERVER</command></link> ... <literal>RENAME</literal> (Peter Eisentraut)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Add <link linkend="SQL-ALTERDOMAIN"><command>ALTER
+        Add <link linkend="sql-alterdomain"><command>ALTER
         DOMAIN</command></link> ... <literal>RENAME</literal> (Peter Eisentraut)
        </para>
 
@@ -10540,7 +10540,7 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
     </sect4>
 
     <sect4>
-     <title><link linkend="SQL-CREATETABLE"><command>CREATE TABLE</command></link></title>
+     <title><link linkend="sql-createtable"><command>CREATE TABLE</command></link></title>
 
      <itemizedlist>
 
@@ -10583,7 +10583,7 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
       <listitem>
        <para>
         Add a <link
-        linkend="SQL-CREATEVIEW"><literal>security_barrier</literal></link>
+        linkend="sql-createview"><literal>security_barrier</literal></link>
         option for views (KaiGai Kohei, Robert Haas)
        </para>
 
@@ -10599,7 +10599,7 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
       <listitem>
        <para>
         Add a new <link
-        linkend="SQL-CREATEFUNCTION"><literal>LEAKPROOF</literal></link> function
+        linkend="sql-createfunction"><literal>LEAKPROOF</literal></link> function
         attribute to mark functions that can safely be pushed down
         into <literal>security_barrier</literal> views (KaiGai Kohei)
        </para>
@@ -10646,7 +10646,7 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
 
       <listitem>
        <para>
-        Allow <link linkend="SQL-VACUUM"><command>VACUUM</command></link> to more
+        Allow <link linkend="sql-vacuum"><command>VACUUM</command></link> to more
         easily skip pages that cannot be locked (Simon Riggs, Robert Haas)
        </para>
 
@@ -10658,7 +10658,7 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
 
       <listitem>
        <para>
-        Make <link linkend="SQL-EXPLAIN"><command>EXPLAIN</command></link>
+        Make <link linkend="sql-explain"><command>EXPLAIN</command></link>
         <literal>(BUFFERS)</literal> count blocks dirtied and written (Robert Haas)
        </para>
       </listitem>
@@ -10738,7 +10738,7 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
 
       <listitem>
        <para>
-        Allow <link linkend="SQL-CREATEDOMAIN">domains</link> to be
+        Allow <link linkend="sql-createdomain">domains</link> to be
         declared <literal>NOT VALID</literal> (&Aacute;lvaro Herrera)
        </para>
 
@@ -10828,7 +10828,7 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
         database state.
         Snapshots are exported via <link
         linkend="functions-snapshot-synchronization"><function>pg_export_snapshot()</function></link>
-        and imported via <link linkend="SQL-SET-TRANSACTION"><command>SET
+        and imported via <link linkend="sql-set-transaction"><command>SET
         TRANSACTION SNAPSHOT</command></link>.  Only snapshots from
         currently-running transactions can be imported.
        </para>
@@ -11083,7 +11083,7 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
 
       <listitem>
        <para>
-        Add <link linkend="APP-INITDB"><application>initdb</application></link>
+        Add <link linkend="app-initdb"><application>initdb</application></link>
         options <option>--auth-local</option> and <option>--auth-host</option>
         (Peter Eisentraut)
        </para>
@@ -11098,7 +11098,7 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
       <listitem>
        <para>
         Add <option>--replication</option>/<option>--no-replication</option> flags to
-        <link linkend="APP-CREATEUSER"><application>createuser</application></link>
+        <link linkend="app-createuser"><application>createuser</application></link>
         to control replication permission (Fujii Masao)
        </para>
       </listitem>
@@ -11106,8 +11106,8 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
       <listitem>
        <para>
         Add the <option>--if-exists</option> option to <link
-        linkend="APP-DROPDB"><application>dropdb</application></link> and <link
-        linkend="APP-DROPUSER"><application>dropuser</application></link> (Josh
+        linkend="app-dropdb"><application>dropdb</application></link> and <link
+        linkend="app-dropuser"><application>dropuser</application></link> (Josh
         Kupershmidt)
        </para>
       </listitem>
@@ -11123,7 +11123,7 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
     </itemizedlist>
 
     <sect4>
-     <title><link linkend="APP-PSQL"><application>psql</application></link></title>
+     <title><link linkend="app-psql"><application>psql</application></link></title>
 
      <itemizedlist>
 
@@ -11309,7 +11309,7 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
        <para>
         In <application>psql</application> tab completion, complete <acronym>SQL</acronym>
         keywords in either upper or lower case according to the new <link
-        linkend="APP-PSQL-variables"><literal>COMP_KEYWORD_CASE</literal></link>
+        linkend="app-psql-variables"><literal>COMP_KEYWORD_CASE</literal></link>
         setting (Peter Eisentraut)
        </para>
       </listitem>
@@ -11348,7 +11348,7 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
     </sect4>
 
     <sect4>
-     <title><link linkend="APP-PGDUMP"><application>pg_dump</application></link></title>
+     <title><link linkend="app-pgdump"><application>pg_dump</application></link></title>
 
      <itemizedlist>
 
@@ -11380,7 +11380,7 @@ Branch: REL9_2_STABLE [6b700301c] 2015-02-17 16:03:00 +0100
       <listitem>
        <para>
         Make <link
-        linkend="APP-PG-DUMPALL"><application>pg_dumpall</application></link> dump all
+        linkend="app-pg-dumpall"><application>pg_dumpall</application></link> dump all
         roles first, then all configuration settings on roles (Phil Sorber)
        </para>
 

@@ -3,7 +3,7 @@ doc/src/sgml/ref/drop_operator.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-DROPOPERATOR">
+<refentry id="sql-dropoperator">
  <indexterm zone="sql-dropoperator">
   <primary>DROP OPERATOR</primary>
  </indexterm>

@@ -3,7 +3,7 @@ doc/src/sgml/ref/pg_controldata.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="APP-PGCONTROLDATA">
+<refentry id="app-pgcontroldata">
  <indexterm zone="app-pgcontroldata">
   <primary>pg_controldata</primary>
  </indexterm>
@@ -27,7 +27,7 @@ PostgreSQL documentation
   </cmdsynopsis>
  </refsynopsisdiv>
 
- <refsect1 id="R1-APP-PGCONTROLDATA-1">
+ <refsect1 id="r1-app-pgcontroldata-1">
   <title>Description</title>
   <para>
    <command>pg_controldata</command> prints information initialized during

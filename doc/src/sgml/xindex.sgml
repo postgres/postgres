@@ -470,7 +470,7 @@
   <para>
    GiST indexes have nine support functions, two of which are optional,
    as shown in <xref linkend="xindex-gist-support-table">.
-   (For more information see <xref linkend="GiST">.)
+   (For more information see <xref linkend="gist">.)
   </para>
 
    <table tocentry="1" id="xindex-gist-support-table">
@@ -542,7 +542,7 @@
   <para>
    SP-GiST indexes require five support functions, as
    shown in <xref linkend="xindex-spgist-support-table">.
-   (For more information see <xref linkend="SPGiST">.)
+   (For more information see <xref linkend="spgist">.)
   </para>
 
    <table tocentry="1" id="xindex-spgist-support-table">
@@ -590,7 +590,7 @@
   <para>
    GIN indexes have six support functions, three of which are optional,
    as shown in <xref linkend="xindex-gin-support-table">.
-   (For more information see <xref linkend="GIN">.)
+   (For more information see <xref linkend="gin">.)
   </para>
 
    <table tocentry="1" id="xindex-gin-support-table">

@@ -3,7 +3,7 @@ doc/src/sgml/ref/create_sequence.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-CREATESEQUENCE">
+<refentry id="sql-createsequence">
  <indexterm zone="sql-createsequence">
   <primary>CREATE SEQUENCE</primary>
  </indexterm>

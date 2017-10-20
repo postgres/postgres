@@ -98,8 +98,8 @@ CREATE INDEX test1_id_index ON test1 (id);
    In production environments this is often unacceptable.
    It is possible to allow writes to occur in parallel with index
    creation, but there are several caveats to be aware of &mdash;
-   for more information see <xref linkend="SQL-CREATEINDEX-CONCURRENTLY"
-   endterm="SQL-CREATEINDEX-CONCURRENTLY-title">.
+   for more information see <xref linkend="sql-createindex-concurrently"
+   endterm="sql-createindex-concurrently-title">.
   </para>
 
   <para>
@@ -232,7 +232,7 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
    documented in <xref linkend="gist-builtin-opclasses-table">.
    Many other GiST operator
    classes are available in the <literal>contrib</literal> collection or as separate
-   projects.  For more information see <xref linkend="GiST">.
+   projects.  For more information see <xref linkend="gist">.
   </para>
 
   <para>
@@ -278,7 +278,7 @@ SELECT * FROM places ORDER BY location <-> point '(101,456)' LIMIT 10;
    these operators.)
    The SP-GiST operator classes included in the standard distribution are
    documented in <xref linkend="spgist-builtin-opclasses-table">.
-   For more information see <xref linkend="SPGiST">.
+   For more information see <xref linkend="spgist">.
   </para>
 
   <para>
@@ -319,7 +319,7 @@ SELECT * FROM places ORDER BY location <-> point '(101,456)' LIMIT 10;
    documented in <xref linkend="gin-builtin-opclasses-table">.
    Many other GIN operator
    classes are available in the <literal>contrib</literal> collection or as separate
-   projects.  For more information see <xref linkend="GIN">.
+   projects.  For more information see <xref linkend="gin">.
   </para>
 
   <para>
@@ -352,7 +352,7 @@ SELECT * FROM places ORDER BY location <-> point '(101,456)' LIMIT 10;
 
    The BRIN operator classes included in the standard distribution are
    documented in <xref linkend="brin-builtin-opclasses-table">.
-   For more information see <xref linkend="BRIN">.
+   For more information see <xref linkend="brin">.
   </para>
  </sect1>
 
@@ -962,8 +962,8 @@ CREATE UNIQUE INDEX tests_success_constraint ON tests (subject, target)
 
   <para>
    More information about partial indexes can be found in <xref
-   linkend="STON89b">, <xref linkend="OLSON93">, and <xref
-   linkend="SESHADRI95">.
+   linkend="ston89b">, <xref linkend="olson93">, and <xref
+   linkend="seshadri95">.
   </para>
  </sect1>
 

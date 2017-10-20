@@ -3,7 +3,7 @@ doc/src/sgml/ref/alter_server.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-ALTERSERVER">
+<refentry id="sql-alterserver">
  <indexterm zone="sql-alterserver">
   <primary>ALTER SERVER</primary>
  </indexterm>

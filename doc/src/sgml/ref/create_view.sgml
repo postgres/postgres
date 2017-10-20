@@ -3,7 +3,7 @@ doc/src/sgml/ref/create_view.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-CREATEVIEW">
+<refentry id="sql-createview">
  <indexterm zone="sql-createview">
   <primary>CREATE VIEW</primary>
  </indexterm>
@@ -165,10 +165,10 @@ CREATE VIEW [ <replaceable>schema</replaceable> . ] <replaceable>view_name</repl
 
    <varlistentry>
     <term><literal>WITH [ CASCADED | LOCAL ] CHECK OPTION</literal>
-      <indexterm zone="SQL-CREATEVIEW">
+      <indexterm zone="sql-createview">
        <primary>CHECK OPTION</primary>
       </indexterm>
-      <indexterm zone="SQL-CREATEVIEW">
+      <indexterm zone="sql-createview">
        <primary>WITH CHECK OPTION</primary>
       </indexterm>
     </term>
@@ -278,8 +278,8 @@ CREATE VIEW vista AS SELECT text 'Hello World' AS hello;
     to replace it (this includes being a member of the owning role).
    </para>
 
-  <refsect2 id="SQL-CREATEVIEW-updatable-views">
-   <title id="SQL-CREATEVIEW-updatable-views-title">Updatable Views</title>
+  <refsect2 id="sql-createview-updatable-views">
+   <title id="sql-createview-updatable-views-title">Updatable Views</title>
 
    <indexterm zone="sql-createview-updatable-views">
     <primary>updatable views</primary>

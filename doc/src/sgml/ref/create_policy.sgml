@@ -3,7 +3,7 @@ doc/src/sgml/ref/create_policy.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-CREATEPOLICY">
+<refentry id="sql-createpolicy">
  <indexterm zone="sql-createpolicy">
   <primary>CREATE POLICY</primary>
  </indexterm>
@@ -222,7 +222,7 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
 
    <variablelist>
 
-     <varlistentry id="SQL-CREATEPOLICY-ALL">
+     <varlistentry id="sql-createpolicy-all">
       <term><literal>ALL</literal></term>
       <listitem>
        <para>
@@ -253,7 +253,7 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
       </listitem>
      </varlistentry>
 
-     <varlistentry id="SQL-CREATEPOLICY-SELECT">
+     <varlistentry id="sql-createpolicy-select">
       <term><literal>SELECT</literal></term>
       <listitem>
        <para>
@@ -273,7 +273,7 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
       </listitem>
      </varlistentry>
 
-     <varlistentry id="SQL-CREATEPOLICY-INSERT">
+     <varlistentry id="sql-createpolicy-insert">
       <term><literal>INSERT</literal></term>
       <listitem>
        <para>
@@ -294,7 +294,7 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
       </listitem>
      </varlistentry>
 
-     <varlistentry id="SQL-CREATEPOLICY-UPDATE">
+     <varlistentry id="sql-createpolicy-update">
       <term><literal>UPDATE</literal></term>
       <listitem>
        <para>
@@ -353,7 +353,7 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
       </listitem>
      </varlistentry>
 
-     <varlistentry id="SQL-CREATEPOLICY-DELETE">
+     <varlistentry id="sql-createpolicy-delete">
       <term><literal>DELETE</literal></term>
       <listitem>
        <para>

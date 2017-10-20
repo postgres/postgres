@@ -3,7 +3,7 @@ doc/src/sgml/ref/alter_opclass.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-ALTEROPCLASS">
+<refentry id="sql-alteropclass">
  <indexterm zone="sql-alteropclass">
   <primary>ALTER OPERATOR CLASS</primary>
  </indexterm>

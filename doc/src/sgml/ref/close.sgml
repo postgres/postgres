@@ -3,7 +3,7 @@ doc/src/sgml/ref/close.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-CLOSE">
+<refentry id="sql-close">
  <indexterm zone="sql-close">
   <primary>CLOSE</primary>
  </indexterm>

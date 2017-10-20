@@ -295,7 +295,7 @@ AS ct(row_name text, category_1 text, category_2 text, category_3 text);
 
    <note>
     <para>
-     See also the <command><link linkend="APP-PSQL-meta-commands-crosstabview">\crosstabview</link></command>
+     See also the <command><link linkend="app-psql-meta-commands-crosstabview">\crosstabview</link></command>
      command in <application>psql</application>, which provides functionality similar
      to <function>crosstab()</function>.
     </para>

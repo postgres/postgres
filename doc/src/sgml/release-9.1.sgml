@@ -8816,7 +8816,7 @@ Branch: REL9_0_STABLE [9d6af7367] 2015-08-15 11:02:34 -0400
 
     <listitem>
      <para>
-      Add support for <link linkend="SQL-CREATEFOREIGNTABLE">foreign
+      Add support for <link linkend="sql-createforeigntable">foreign
       tables</link>
      </para>
     </listitem>
@@ -8845,7 +8845,7 @@ Branch: REL9_0_STABLE [9d6af7367] 2015-08-15 11:02:34 -0400
     <listitem>
      <para>
       Support unlogged tables using the <literal>UNLOGGED</literal>
-      option in <link linkend="SQL-CREATETABLE"><command>CREATE
+      option in <link linkend="sql-createtable"><command>CREATE
       TABLE</command></link>
      </para>
     </listitem>
@@ -8861,13 +8861,13 @@ Branch: REL9_0_STABLE [9d6af7367] 2015-08-15 11:02:34 -0400
     <listitem>
      <para>
       Add nearest-neighbor (order-by-operator) searching to <link
-      linkend="GiST"><acronym>GiST</acronym> indexes</link>
+      linkend="gist"><acronym>GiST</acronym> indexes</link>
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Add a <link linkend="SQL-SECURITY-LABEL"><command>SECURITY
+      Add a <link linkend="sql-security-label"><command>SECURITY
       LABEL</command></link> command and support for
       <link linkend="sepgsql"><acronym>SELinux</acronym> permissions control</link>
      </para>
@@ -9154,7 +9154,7 @@ Branch: REL9_0_STABLE [9d6af7367] 2015-08-15 11:02:34 -0400
      <listitem>
       <para>
        All contrib modules are now installed with <link
-       linkend="SQL-CREATEEXTENSION"><command>CREATE EXTENSION</command></link>
+       linkend="sql-createextension"><command>CREATE EXTENSION</command></link>
        rather than by manually invoking their SQL scripts
        (Dimitri Fontaine, Tom Lane)
       </para>
@@ -9229,7 +9229,7 @@ Branch: REL9_0_STABLE [9d6af7367] 2015-08-15 11:02:34 -0400
       <listitem>
        <para>
         Support unlogged tables using the <literal>UNLOGGED</literal>
-        option in <link linkend="SQL-CREATETABLE"><command>CREATE
+        option in <link linkend="sql-createtable"><command>CREATE
         TABLE</command></link> (Robert Haas)
        </para>
 
@@ -9643,7 +9643,7 @@ Branch: REL9_0_STABLE [9d6af7367] 2015-08-15 11:02:34 -0400
 
      <listitem>
       <para>
-       Add a <link linkend="SQL-CREATEROLE">replication permission</link>
+       Add a <link linkend="sql-createrole">replication permission</link>
        for roles (Magnus Hagander)
       </para>
 
@@ -9986,9 +9986,9 @@ Branch: REL9_0_STABLE [9d6af7367] 2015-08-15 11:02:34 -0400
 
        <para>
         Extensions are controlled by the new <link
-        linkend="SQL-CREATEEXTENSION"><command>CREATE</command></link>/<link
-        linkend="SQL-ALTEREXTENSION"><command>ALTER</command></link>/<link
-        linkend="SQL-DROPEXTENSION"><command>DROP EXTENSION</command></link>
+        linkend="sql-createextension"><command>CREATE</command></link>/<link
+        linkend="sql-alterextension"><command>ALTER</command></link>/<link
+        linkend="sql-dropextension"><command>DROP EXTENSION</command></link>
         commands.  This replaces ad-hoc methods of grouping objects that
         are added to a <productname>PostgreSQL</productname> installation.
        </para>
@@ -9996,7 +9996,7 @@ Branch: REL9_0_STABLE [9d6af7367] 2015-08-15 11:02:34 -0400
 
       <listitem>
        <para>
-        Add support for <link linkend="SQL-CREATEFOREIGNTABLE">foreign
+        Add support for <link linkend="sql-createforeigntable">foreign
         tables</link> (Shigeru Hanada, Robert Haas, Jan Urbanski,
         Heikki Linnakangas)
        </para>
@@ -10011,14 +10011,14 @@ Branch: REL9_0_STABLE [9d6af7367] 2015-08-15 11:02:34 -0400
      <listitem>
       <para>
          Allow new values to be added to an existing enum type via
-         <link linkend="SQL-ALTERTYPE"><command>ALTER TYPE</command></link> (Andrew
+         <link linkend="sql-altertype"><command>ALTER TYPE</command></link> (Andrew
          Dunstan)
       </para>
      </listitem>
 
       <listitem>
        <para>
-        Add <link linkend="SQL-ALTERTYPE"><command>ALTER TYPE ...
+        Add <link linkend="sql-altertype"><command>ALTER TYPE ...
         ADD/DROP/ALTER/RENAME ATTRIBUTE</command></link> (Peter Eisentraut)
        </para>
 
@@ -10037,7 +10037,7 @@ Branch: REL9_0_STABLE [9d6af7367] 2015-08-15 11:02:34 -0400
       <listitem>
        <para>
         Add <literal>RESTRICT</literal>/<literal>CASCADE</literal> to <link
-        linkend="SQL-ALTERTYPE"><command>ALTER TYPE</command></link> operations
+        linkend="sql-altertype"><command>ALTER TYPE</command></link> operations
         on typed tables (Peter Eisentraut)
        </para>
 
@@ -10079,7 +10079,7 @@ Branch: REL9_0_STABLE [9d6af7367] 2015-08-15 11:02:34 -0400
     </sect4>
 
     <sect4>
-     <title><link linkend="SQL-CREATETABLE"><command>CREATE/ALTER TABLE</command></link></title>
+     <title><link linkend="sql-createtable"><command>CREATE/ALTER TABLE</command></link></title>
 
      <itemizedlist>
 
@@ -10112,7 +10112,7 @@ Branch: REL9_0_STABLE [9d6af7367] 2015-08-15 11:02:34 -0400
 
       <listitem>
        <para>
-        Allow <link linkend="SQL-ALTERTABLE"><command>ALTER TABLE
+        Allow <link linkend="sql-altertable"><command>ALTER TABLE
         ... SET DATA TYPE</command></link> to avoid table rewrites in
         appropriate cases (Noah Misch, Robert Haas)
        </para>
@@ -10127,7 +10127,7 @@ Branch: REL9_0_STABLE [9d6af7367] 2015-08-15 11:02:34 -0400
 
       <listitem>
        <para>
-        Add <link linkend="SQL-CREATETABLE"><command>CREATE TABLE IF
+        Add <link linkend="sql-createtable"><command>CREATE TABLE IF
         NOT EXISTS</command></link> syntax (Robert Haas)
        </para>
 
@@ -10162,7 +10162,7 @@ Branch: REL9_0_STABLE [9d6af7367] 2015-08-15 11:02:34 -0400
 
       <listitem>
        <para>
-        Add a <link linkend="SQL-SECURITY-LABEL"><command>SECURITY
+        Add a <link linkend="sql-security-label"><command>SECURITY
         LABEL</command></link> command (KaiGai Kohei)
        </para>
 
@@ -10196,7 +10196,7 @@ Branch: REL9_0_STABLE [9d6af7367] 2015-08-15 11:02:34 -0400
 
      <listitem>
       <para>
-       Make <link linkend="SQL-TRUNCATE"><command>TRUNCATE ... RESTART
+       Make <link linkend="sql-truncate"><command>TRUNCATE ... RESTART
        IDENTITY</command></link> restart sequences transactionally (Steve
        Singer)
       </para>
@@ -10211,14 +10211,14 @@ Branch: REL9_0_STABLE [9d6af7367] 2015-08-15 11:02:34 -0400
     </itemizedlist>
 
     <sect4>
-     <title><link linkend="SQL-COPY"><command>COPY</command></link></title>
+     <title><link linkend="sql-copy"><command>COPY</command></link></title>
 
      <itemizedlist>
 
       <listitem>
        <para>
         Add <literal>ENCODING</literal> option to <link
-        linkend="SQL-COPY"><command>COPY TO/FROM</command></link> (Hitoshi
+        linkend="sql-copy"><command>COPY TO/FROM</command></link> (Hitoshi
         Harada, Itagaki Takahiro)
        </para>
 
@@ -10230,7 +10230,7 @@ Branch: REL9_0_STABLE [9d6af7367] 2015-08-15 11:02:34 -0400
 
       <listitem>
        <para>
-        Add bidirectional <link linkend="SQL-COPY"><command>COPY</command></link>
+        Add bidirectional <link linkend="sql-copy"><command>COPY</command></link>
         protocol support (Fujii Masao)
        </para>
 
@@ -10244,7 +10244,7 @@ Branch: REL9_0_STABLE [9d6af7367] 2015-08-15 11:02:34 -0400
     </sect4>
 
     <sect4>
-     <title><link linkend="SQL-EXPLAIN"><command>EXPLAIN</command></link></title>
+     <title><link linkend="sql-explain"><command>EXPLAIN</command></link></title>
 
       <itemizedlist>
 
@@ -10260,15 +10260,15 @@ Branch: REL9_0_STABLE [9d6af7367] 2015-08-15 11:02:34 -0400
     </sect4>
 
     <sect4>
-     <title><link linkend="SQL-VACUUM"><command>VACUUM</command></link></title>
+     <title><link linkend="sql-vacuum"><command>VACUUM</command></link></title>
 
      <itemizedlist>
 
       <listitem>
        <para>
         Add additional details to the output of <link
-        linkend="SQL-VACUUM"><command>VACUUM FULL VERBOSE</command></link>
-        and <link linkend="SQL-CLUSTER"><command>CLUSTER VERBOSE</command></link>
+        linkend="sql-vacuum"><command>VACUUM FULL VERBOSE</command></link>
+        and <link linkend="sql-cluster"><command>CLUSTER VERBOSE</command></link>
         (Itagaki Takahiro)
        </para>
 
@@ -10294,7 +10294,7 @@ Branch: REL9_0_STABLE [9d6af7367] 2015-08-15 11:02:34 -0400
     </sect4>
 
     <sect4>
-     <title><link linkend="SQL-CLUSTER"><command>CLUSTER</command></link></title>
+     <title><link linkend="sql-cluster"><command>CLUSTER</command></link></title>
 
      <itemizedlist>
 
@@ -10317,7 +10317,7 @@ Branch: REL9_0_STABLE [9d6af7367] 2015-08-15 11:02:34 -0400
       <listitem>
        <para>
         Add nearest-neighbor (order-by-operator) searching to <link
-        linkend="GiST"><acronym>GiST</acronym> indexes</link> (Teodor Sigaev, Tom Lane)
+        linkend="gist"><acronym>GiST</acronym> indexes</link> (Teodor Sigaev, Tom Lane)
        </para>
 
        <para>
@@ -10334,7 +10334,7 @@ SELECT * FROM places ORDER BY location <-> point '(101,456)' LIMIT 10;
 
       <listitem>
        <para>
-        Allow <link linkend="GIN"><acronym>GIN</acronym> indexes</link> to index null
+        Allow <link linkend="gin"><acronym>GIN</acronym> indexes</link> to index null
         and empty values (Tom Lane)
        </para>
 
@@ -10346,7 +10346,7 @@ SELECT * FROM places ORDER BY location <-> point '(101,456)' LIMIT 10;
 
       <listitem>
        <para>
-        Allow <link linkend="GIN"><acronym>GIN</acronym> indexes</link> to
+        Allow <link linkend="gin"><acronym>GIN</acronym> indexes</link> to
         better recognize duplicate search entries (Tom Lane)
        </para>
 
@@ -10358,7 +10358,7 @@ SELECT * FROM places ORDER BY location <-> point '(101,456)' LIMIT 10;
 
       <listitem>
        <para>
-        Fix <link linkend="GiST"><acronym>GiST</acronym> indexes</link> to be fully
+        Fix <link linkend="gist"><acronym>GiST</acronym> indexes</link> to be fully
         crash-safe (Heikki Linnakangas)
        </para>
 
@@ -10668,7 +10668,7 @@ SELECT * FROM places ORDER BY location <-> point '(101,456)' LIMIT 10;
 
       <listitem>
        <para>
-        Support <link linkend="SQL-CREATETRIGGER"><literal>INSTEAD
+        Support <link linkend="sql-createtrigger"><literal>INSTEAD
         OF</literal></link> triggers on views (Dean Rasheed)
        </para>
 
@@ -10869,7 +10869,7 @@ SELECT * FROM places ORDER BY location <-> point '(101,456)' LIMIT 10;
     </itemizedlist>
 
     <sect4>
-     <title><link linkend="APP-PSQL"><application>psql</application></link></title>
+     <title><link linkend="app-psql"><application>psql</application></link></title>
 
      <itemizedlist>
 
@@ -10963,15 +10963,15 @@ SELECT * FROM places ORDER BY location <-> point '(101,456)' LIMIT 10;
     </sect4>
 
     <sect4>
-     <title><link linkend="APP-PGDUMP"><application>pg_dump</application></link></title>
+     <title><link linkend="app-pgdump"><application>pg_dump</application></link></title>
 
      <itemizedlist>
 
       <listitem>
        <para>
-         Add <link linkend="APP-PGDUMP"><application>pg_dump</application></link>
+         Add <link linkend="app-pgdump"><application>pg_dump</application></link>
          and <link
-         linkend="APP-PG-DUMPALL"><application>pg_dumpall</application></link>
+         linkend="app-pg-dumpall"><application>pg_dumpall</application></link>
          option <option>--quote-all-identifiers</option> to force quoting
          of all identifiers (Robert Haas)
        </para>
@@ -10994,7 +10994,7 @@ SELECT * FROM places ORDER BY location <-> point '(101,456)' LIMIT 10;
     </sect4>
 
     <sect4>
-     <title><link linkend="APP-PG-CTL"><application>pg_ctl</application></link></title>
+     <title><link linkend="app-pg-ctl"><application>pg_ctl</application></link></title>
 
      <itemizedlist>
 
@@ -11528,7 +11528,7 @@ SELECT * FROM places ORDER BY location <-> point '(101,456)' LIMIT 10;
 
        <para>
         This uses the new <link
-        linkend="SQL-SECURITY-LABEL"><command>SECURITY LABEL</command></link>
+        linkend="sql-security-label"><command>SECURITY LABEL</command></link>
         facility.
        </para>
       </listitem>
@@ -11716,7 +11716,7 @@ SELECT * FROM places ORDER BY location <-> point '(101,456)' LIMIT 10;
      <listitem>
       <para>
        Merge documentation for <command>CREATE CONSTRAINT TRIGGER</command> and <link
-       linkend="SQL-CREATETRIGGER"><command>CREATE TRIGGER</command></link>
+       linkend="sql-createtrigger"><command>CREATE TRIGGER</command></link>
        (Alvaro Herrera)
       </para>
      </listitem>

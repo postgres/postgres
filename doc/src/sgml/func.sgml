@@ -17866,7 +17866,7 @@ SELECT collation for ('foo' COLLATE "de_DE");
     logging and checkpoint processing. This information is cluster-wide,
     and not specific to any one database. They provide most of the same
     information, from the same source, as
-    <xref linkend="APP-PGCONTROLDATA">, although in a form better suited
+    <xref linkend="app-pgcontroldata">, although in a form better suited
     to <acronym>SQL</acronym> functions.
    </para>
 
@@ -20376,7 +20376,7 @@ FOR EACH ROW EXECUTE PROCEDURE suppress_redundant_updates_trigger();
     </para>
     <para>
        For more information about creating triggers, see
-        <xref linkend="SQL-CREATETRIGGER">.
+        <xref linkend="sql-createtrigger">.
     </para>
   </sect1>
 

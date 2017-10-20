@@ -3,7 +3,7 @@ doc/src/sgml/ref/alter_statistics.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-ALTERSTATISTICS">
+<refentry id="sql-alterstatistics">
  <indexterm zone="sql-alterstatistics">
   <primary>ALTER STATISTICS</primary>
  </indexterm>

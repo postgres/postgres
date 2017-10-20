@@ -3,7 +3,7 @@ doc/src/sgml/ref/drop_tsconfig.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-DROPTSCONFIG">
+<refentry id="sql-droptsconfig">
  <indexterm zone="sql-droptsconfig">
   <primary>DROP TEXT SEARCH CONFIGURATION</primary>
  </indexterm>

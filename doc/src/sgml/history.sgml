@@ -31,12 +31,12 @@
    Office (<acronym>ARO</acronym>), the National Science Foundation
    (<acronym>NSF</acronym>), and ESL, Inc.  The implementation of
    <productname>POSTGRES</productname> began in 1986.  The initial
-   concepts for the system were presented in <xref linkend="STON86">,
+   concepts for the system were presented in <xref linkend="ston86">,
    and the definition of the initial data model appeared in <xref
-   linkend="ROWE87">.  The design of the rule system at that time was
-   described in <xref linkend="STON87a">.  The rationale and
+   linkend="rowe87">.  The design of the rule system at that time was
+   described in <xref linkend="ston87a">.  The rationale and
    architecture of the storage manager were detailed in <xref
-   linkend="STON87b">.
+   linkend="ston87b">.
   </para>
 
   <para>
@@ -44,10 +44,10 @@
    releases since then.  The first <quote>demoware</quote> system
    became operational in 1987 and was shown at the 1988
    <acronym>ACM-SIGMOD</acronym> Conference.  Version 1, described in
-   <xref linkend="STON90a">, was released to a few external users in
+   <xref linkend="ston90a">, was released to a few external users in
    June 1989.  In response to a critique of the first rule system
-   (<xref linkend="STON89">), the rule system was redesigned (<xref
-   linkend="STON90b">), and Version 2 was released in June 1990 with
+   (<xref linkend="ston89">), the rule system was redesigned (<xref
+   linkend="ston90b">), and Version 2 was released in June 1990 with
    the new rule system.  Version 3 appeared in 1991 and added support
    for multiple storage managers, an improved query executor, and a
    rewritten rule system.  For the most part, subsequent releases

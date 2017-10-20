@@ -3,7 +3,7 @@ doc/src/sgml/ref/drop_aggregate.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-DROPAGGREGATE">
+<refentry id="sql-dropaggregate">
  <indexterm zone="sql-dropaggregate">
   <primary>DROP AGGREGATE</primary>
  </indexterm>

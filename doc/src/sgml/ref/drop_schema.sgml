@@ -3,7 +3,7 @@ doc/src/sgml/ref/drop_schema.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-DROPSCHEMA">
+<refentry id="sql-dropschema">
  <indexterm zone="sql-dropschema">
   <primary>DROP SCHEMA</primary>
  </indexterm>

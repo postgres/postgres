@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/ref/create_transform.sgml -->
 
-<refentry id="SQL-CREATETRANSFORM">
+<refentry id="sql-createtransform">
  <indexterm zone="sql-createtransform">
   <primary>CREATE TRANSFORM</primary>
  </indexterm>

@@ -3,7 +3,7 @@ doc/src/sgml/ref/prepare_transaction.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-PREPARE-TRANSACTION">
+<refentry id="sql-prepare-transaction">
  <indexterm zone="sql-prepare-transaction">
   <primary>PREPARE TRANSACTION</primary>
  </indexterm>

@@ -3,7 +3,7 @@ doc/src/sgml/ref/start_transaction.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-START-TRANSACTION">
+<refentry id="sql-start-transaction">
  <indexterm zone="sql-start-transaction">
   <primary>START TRANSACTION</primary>
  </indexterm>

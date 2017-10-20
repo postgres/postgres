@@ -29,8 +29,8 @@
      execution.  It is very powerful, and can be used for many things
      such as query language procedures, views, and versions.  The
      theoretical foundations and the power of this rule system are
-     also discussed in <xref linkend="STON90b"> and <xref
-     linkend="ONG90">.
+     also discussed in <xref linkend="ston90b"> and <xref
+     linkend="ong90">.
 </para>
 
 <sect1 id="querytree">

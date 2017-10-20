@@ -3,7 +3,7 @@ doc/src/sgml/ref/drop_server.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-DROPSERVER">
+<refentry id="sql-dropserver">
  <indexterm zone="sql-dropserver">
   <primary>DROP SERVER</primary>
  </indexterm>

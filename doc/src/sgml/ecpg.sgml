@@ -2270,7 +2270,7 @@ int PGTYPESnumeric_from_decimal(decimal *src, numeric *dst);
    <para>
     The following functions can be used to work with the date type:
     <variablelist>
-     <varlistentry id="PGTYPESdatefromtimestamp">
+     <varlistentry id="pgtypesdatefromtimestamp">
       <term><function>PGTYPESdate_from_timestamp</function></term>
       <listitem>
        <para>
@@ -2284,7 +2284,7 @@ date PGTYPESdate_from_timestamp(timestamp dt);
       </listitem>
      </varlistentry>
 
-     <varlistentry id="PGTYPESdatefromasc">
+     <varlistentry id="pgtypesdatefromasc">
       <term><function>PGTYPESdate_from_asc</function></term>
       <listitem>
        <para>
@@ -2389,7 +2389,7 @@ date PGTYPESdate_from_asc(char *str, char **endptr);
       </listitem>
      </varlistentry>
 
-     <varlistentry id="PGTYPESdatetoasc">
+     <varlistentry id="pgtypesdatetoasc">
       <term><function>PGTYPESdate_to_asc</function></term>
       <listitem>
        <para>
@@ -2404,7 +2404,7 @@ char *PGTYPESdate_to_asc(date dDate);
       </listitem>
      </varlistentry>
 
-     <varlistentry id="PGTYPESdatejulmdy">
+     <varlistentry id="pgtypesdatejulmdy">
       <term><function>PGTYPESdate_julmdy</function></term>
       <listitem>
        <para>
@@ -2423,7 +2423,7 @@ void PGTYPESdate_julmdy(date d, int *mdy);
       </listitem>
      </varlistentry>
 
-     <varlistentry id="PGTYPESdatemdyjul">
+     <varlistentry id="pgtypesdatemdyjul">
       <term><function>PGTYPESdate_mdyjul</function></term>
       <listitem>
        <para>
@@ -2439,7 +2439,7 @@ void PGTYPESdate_mdyjul(int *mdy, date *jdate);
       </listitem>
      </varlistentry>
 
-     <varlistentry id="PGTYPESdatedayofweek">
+     <varlistentry id="pgtypesdatedayofweek">
       <term><function>PGTYPESdate_dayofweek</function></term>
       <listitem>
        <para>
@@ -2491,7 +2491,7 @@ int PGTYPESdate_dayofweek(date d);
       </listitem>
      </varlistentry>
 
-     <varlistentry id="PGTYPESdatetoday">
+     <varlistentry id="pgtypesdatetoday">
       <term><function>PGTYPESdate_today</function></term>
       <listitem>
        <para>
@@ -2505,7 +2505,7 @@ void PGTYPESdate_today(date *d);
       </listitem>
      </varlistentry>
 
-     <varlistentry id="PGTYPESdatefmtasc">
+     <varlistentry id="pgtypesdatefmtasc">
       <term><function>PGTYPESdate_fmt_asc</function></term>
       <listitem>
        <para>
@@ -2626,7 +2626,7 @@ int PGTYPESdate_fmt_asc(date dDate, char *fmtstring, char *outbuf);
       </listitem>
      </varlistentry>
 
-     <varlistentry id="PGTYPESdatedefmtasc">
+     <varlistentry id="pgtypesdatedefmtasc">
       <term><function>PGTYPESdate_defmt_asc</function></term>
       <listitem>
        <para>
@@ -2747,7 +2747,7 @@ int PGTYPESdate_defmt_asc(date *d, char *fmt, char *str);
    <para>
     The following functions can be used to work with the timestamp type:
     <variablelist>
-     <varlistentry id="PGTYPEStimestampfromasc">
+     <varlistentry id="pgtypestimestampfromasc">
       <term><function>PGTYPEStimestamp_from_asc</function></term>
       <listitem>
        <para>
@@ -2766,7 +2766,7 @@ timestamp PGTYPEStimestamp_from_asc(char *str, char **endptr);
        <para>
         The function returns the parsed timestamp on success. On error,
         <literal>PGTYPESInvalidTimestamp</literal> is returned and <varname>errno</varname> is
-        set to <literal>PGTYPES_TS_BAD_TIMESTAMP</literal>. See <xref linkend="PGTYPESInvalidTimestamp"> for important notes on this value.
+        set to <literal>PGTYPES_TS_BAD_TIMESTAMP</literal>. See <xref linkend="pgtypesinvalidtimestamp"> for important notes on this value.
        </para>
        <para>
         In general, the input string can contain any combination of an allowed
@@ -2811,7 +2811,7 @@ timestamp PGTYPEStimestamp_from_asc(char *str, char **endptr);
       </listitem>
      </varlistentry>
 
-     <varlistentry id="PGTYPEStimestamptoasc">
+     <varlistentry id="pgtypestimestamptoasc">
       <term><function>PGTYPEStimestamp_to_asc</function></term>
       <listitem>
        <para>
@@ -2826,7 +2826,7 @@ char *PGTYPEStimestamp_to_asc(timestamp tstamp);
       </listitem>
      </varlistentry>
 
-     <varlistentry id="PGTYPEStimestampcurrent">
+     <varlistentry id="pgtypestimestampcurrent">
       <term><function>PGTYPEStimestamp_current</function></term>
       <listitem>
        <para>
@@ -2840,7 +2840,7 @@ void PGTYPEStimestamp_current(timestamp *ts);
       </listitem>
      </varlistentry>
 
-     <varlistentry id="PGTYPEStimestampfmtasc">
+     <varlistentry id="pgtypestimestampfmtasc">
       <term><function>PGTYPEStimestamp_fmt_asc</function></term>
       <listitem>
        <para>
@@ -3175,7 +3175,7 @@ int PGTYPEStimestamp_fmt_asc(timestamp *ts, char *output, int str_len, char *fmt
       </listitem>
      </varlistentry>
 
-     <varlistentry id="PGTYPEStimestampsub">
+     <varlistentry id="pgtypestimestampsub">
       <term><function>PGTYPEStimestamp_sub</function></term>
       <listitem>
        <para>
@@ -3196,7 +3196,7 @@ int PGTYPEStimestamp_sub(timestamp *ts1, timestamp *ts2, interval *iv);
       </listitem>
      </varlistentry>
 
-     <varlistentry id="PGTYPEStimestampdefmtasc">
+     <varlistentry id="pgtypestimestampdefmtasc">
       <term><function>PGTYPEStimestamp_defmt_asc</function></term>
       <listitem>
        <para>
@@ -3217,13 +3217,13 @@ int PGTYPEStimestamp_defmt_asc(char *str, char *fmt, timestamp *d);
        </para>
        <para>
         This is the reverse function to <xref
-        linkend="PGTYPEStimestampfmtasc">.  See the documentation there in
+        linkend="pgtypestimestampfmtasc">.  See the documentation there in
         order to find out about the possible formatting mask entries.
        </para>
       </listitem>
      </varlistentry>
 
-     <varlistentry id="PGTYPEStimestampaddinterval">
+     <varlistentry id="pgtypestimestampaddinterval">
       <term><function>PGTYPEStimestamp_add_interval</function></term>
       <listitem>
        <para>
@@ -3243,7 +3243,7 @@ int PGTYPEStimestamp_add_interval(timestamp *tin, interval *span, timestamp *tou
       </listitem>
      </varlistentry>
 
-     <varlistentry id="PGTYPEStimestampsubinterval">
+     <varlistentry id="pgtypestimestampsubinterval">
       <term><function>PGTYPEStimestamp_sub_interval</function></term>
       <listitem>
        <para>
@@ -3277,7 +3277,7 @@ int PGTYPEStimestamp_sub_interval(timestamp *tin, interval *span, timestamp *tou
     The following functions can be used to work with the interval type:
     <variablelist>
 
-     <varlistentry id="PGTYPESintervalnew">
+     <varlistentry id="pgtypesintervalnew">
       <term><function>PGTYPESinterval_new</function></term>
       <listitem>
        <para>
@@ -3289,7 +3289,7 @@ interval *PGTYPESinterval_new(void);
       </listitem>
      </varlistentry>
 
-     <varlistentry id="PGTYPESintervalfree">
+     <varlistentry id="pgtypesintervalfree">
       <term><function>PGTYPESinterval_free</function></term>
       <listitem>
        <para>
@@ -3301,7 +3301,7 @@ void PGTYPESinterval_new(interval *intvl);
       </listitem>
      </varlistentry>
 
-     <varlistentry id="PGTYPESintervalfromasc">
+     <varlistentry id="pgtypesintervalfromasc">
       <term><function>PGTYPESinterval_from_asc</function></term>
       <listitem>
        <para>
@@ -3319,7 +3319,7 @@ interval *PGTYPESinterval_from_asc(char *str, char **endptr);
       </listitem>
      </varlistentry>
 
-     <varlistentry id="PGTYPESintervaltoasc">
+     <varlistentry id="pgtypesintervaltoasc">
       <term><function>PGTYPESinterval_to_asc</function></term>
       <listitem>
        <para>
@@ -3334,7 +3334,7 @@ char *PGTYPESinterval_to_asc(interval *span);
       </listitem>
      </varlistentry>
 
-     <varlistentry id="PGTYPESintervalcopy">
+     <varlistentry id="pgtypesintervalcopy">
       <term><function>PGTYPESinterval_copy</function></term>
       <listitem>
        <para>
@@ -3543,7 +3543,7 @@ void PGTYPESdecimal_free(decimal *var);
     <title>Special Constants of pgtypeslib</title>
    <para>
     <variablelist>
-     <varlistentry id="PGTYPESInvalidTimestamp">
+     <varlistentry id="pgtypesinvalidtimestamp">
       <term><literal>PGTYPESInvalidTimestamp</literal></term>
       <listitem>
        <para>
@@ -5868,7 +5868,7 @@ ECPG = ecpg
   <para>
    For more details about the <function>ECPGget_PGconn()</function>, see
    <xref linkend="ecpg-library">.  For information about the large
-   object function interface, see <xref linkend="largeObjects">.
+   object function interface, see <xref linkend="largeobjects">.
   </para>
 
   <para>
@@ -8653,7 +8653,7 @@ void rtoday(date *d);
         that it sets to the current date.
        </para>
        <para>
-        Internally this function uses the <xref linkend="PGTYPESdatetoday">
+        Internally this function uses the <xref linkend="pgtypesdatetoday">
         function.
        </para>
       </listitem>
@@ -8678,7 +8678,7 @@ int rjulmdy(date d, short mdy[3]);
         The function always returns 0 at the moment.
        </para>
        <para>
-        Internally the function uses the <xref linkend="PGTYPESdatejulmdy">
+        Internally the function uses the <xref linkend="pgtypesdatejulmdy">
         function.
        </para>
       </listitem>
@@ -8748,7 +8748,7 @@ int rdefmtdate(date *d, char *fmt, char *str);
        </para>
        <para>
         Internally this function is implemented to use the <xref
-        linkend="PGTYPESdatedefmtasc"> function. See the reference there for a
+        linkend="pgtypesdatedefmtasc"> function. See the reference there for a
         table of example input.
        </para>
       </listitem>
@@ -8771,7 +8771,7 @@ int rfmtdate(date d, char *fmt, char *str);
         On success, 0 is returned and a negative value if an error occurred.
        </para>
        <para>
-        Internally this function uses the <xref linkend="PGTYPESdatefmtasc">
+        Internally this function uses the <xref linkend="pgtypesdatefmtasc">
         function, see the reference there for examples.
        </para>
       </listitem>
@@ -8795,7 +8795,7 @@ int rmdyjul(short mdy[3], date *d);
        </para>
        <para>
         Internally the function is implemented to use the function <xref
-        linkend="PGTYPESdatemdyjul">.
+        linkend="pgtypesdatemdyjul">.
        </para>
       </listitem>
      </varlistentry>
@@ -8851,7 +8851,7 @@ int rdayofweek(date d);
        </para>
        <para>
         Internally the function is implemented to use the function <xref
-        linkend="PGTYPESdatedayofweek">.
+        linkend="pgtypesdatedayofweek">.
        </para>
       </listitem>
      </varlistentry>
@@ -8889,7 +8889,7 @@ int dtcvasc(char *str, timestamp *ts);
        </para>
        <para>
         Internally this function uses the <xref
-        linkend="PGTYPEStimestampfromasc"> function. See the reference there
+        linkend="pgtypestimestampfromasc"> function. See the reference there
         for a table with example inputs.
        </para>
       </listitem>
@@ -8911,7 +8911,7 @@ dtcvfmtasc(char *inbuf, char *fmtstr, timestamp *dtvalue)
        </para>
        <para>
         This function is implemented by means of the <xref
-        linkend="PGTYPEStimestampdefmtasc"> function. See the documentation
+        linkend="pgtypestimestampdefmtasc"> function. See the documentation
         there for a list of format specifiers that can be used.
        </para>
        <para>
@@ -8983,7 +8983,7 @@ int dttofmtasc(timestamp *ts, char *output, int str_len, char *fmtstr);
        </para>
        <para>
         Internally, this function uses the <xref
-        linkend="PGTYPEStimestampfmtasc"> function. See the reference there for
+        linkend="pgtypestimestampfmtasc"> function. See the reference there for
         information on what format mask specifiers can be used.
        </para>
       </listitem>

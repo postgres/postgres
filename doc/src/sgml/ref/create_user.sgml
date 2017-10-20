@@ -3,7 +3,7 @@ doc/src/sgml/ref/create_user.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-CREATEUSER">
+<refentry id="sql-createuser">
  <indexterm zone="sql-createuser">
   <primary>CREATE USER</primary>
  </indexterm>

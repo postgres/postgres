@@ -3,7 +3,7 @@ doc/src/sgml/ref/alter_domain.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-ALTERDOMAIN">
+<refentry id="sql-alterdomain">
  <indexterm zone="sql-alterdomain">
   <primary>ALTER DOMAIN</primary>
  </indexterm>
@@ -80,7 +80,7 @@ ALTER DOMAIN <replaceable class="parameter">name</replaceable>
     <listitem>
      <para>
       This form adds a new constraint to a domain using the same syntax as
-      <xref linkend="SQL-CREATEDOMAIN">.
+      <xref linkend="sql-createdomain">.
       When a new constraint is added to a domain, all columns using that
       domain will be checked against the newly added constraint.  These
       checks can be suppressed by adding the new constraint using the
@@ -325,7 +325,7 @@ ALTER DOMAIN zipcode SET SCHEMA customers;
 </programlisting></para>
  </refsect1>
 
- <refsect1 id="SQL-ALTERDOMAIN-compatibility">
+ <refsect1 id="sql-alterdomain-compatibility">
   <title>Compatibility</title>
 
   <para>
@@ -338,7 +338,7 @@ ALTER DOMAIN zipcode SET SCHEMA customers;
   </para>
  </refsect1>
 
- <refsect1 id="SQL-ALTERDOMAIN-see-also">
+ <refsect1 id="sql-alterdomain-see-also">
   <title>See Also</title>
 
   <simplelist type="inline">

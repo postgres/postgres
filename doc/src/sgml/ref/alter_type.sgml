@@ -3,7 +3,7 @@ doc/src/sgml/ref/alter_type.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-ALTERTYPE">
+<refentry id="sql-altertype">
  <indexterm zone="sql-altertype">
   <primary>ALTER TYPE</primary>
  </indexterm>
@@ -52,7 +52,7 @@ ALTER TYPE <replaceable class="parameter">name</replaceable> RENAME VALUE <repla
     <listitem>
      <para>
       This form adds a new attribute to a composite type, using the same syntax as
-      <xref linkend="SQL-CREATETYPE">.
+      <xref linkend="sql-createtype">.
      </para>
     </listitem>
    </varlistentry>
@@ -364,7 +364,7 @@ ALTER TYPE colors RENAME VALUE 'purple' TO 'mauve';
   </para>
  </refsect1>
 
- <refsect1 id="SQL-ALTERTYPE-see-also">
+ <refsect1 id="sql-altertype-see-also">
   <title>See Also</title>
 
   <simplelist type="inline">

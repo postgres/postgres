@@ -3,7 +3,7 @@ doc/src/sgml/ref/lock.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-LOCK">
+<refentry id="sql-lock">
  <indexterm zone="sql-lock">
   <primary>LOCK</primary>
  </indexterm>
@@ -236,7 +236,7 @@ COMMIT WORK;
    There is no <command>LOCK TABLE</command> in the SQL standard,
    which instead uses <command>SET TRANSACTION</command> to specify
    concurrency levels on transactions.  <productname>PostgreSQL</productname> supports that too;
-   see <xref linkend="SQL-SET-TRANSACTION"> for details.
+   see <xref linkend="sql-set-transaction"> for details.
   </para>
 
   <para>

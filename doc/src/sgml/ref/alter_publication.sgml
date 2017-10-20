@@ -3,7 +3,7 @@ doc/src/sgml/ref/alter_publication.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-ALTERPUBLICATION">
+<refentry id="sql-alterpublication">
  <indexterm zone="sql-alterpublication">
   <primary>ALTER PUBLICATION</primary>
  </indexterm>
@@ -101,7 +101,7 @@ ALTER PUBLICATION <replaceable class="parameter">name</replaceable> RENAME TO <r
     <listitem>
      <para>
       This clause alters publication parameters originally set by
-      <xref linkend="SQL-CREATEPUBLICATION">.  See there for more information.
+      <xref linkend="sql-createpublication">.  See there for more information.
      </para>
     </listitem>
    </varlistentry>

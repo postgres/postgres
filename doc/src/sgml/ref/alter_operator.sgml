@@ -3,7 +3,7 @@ doc/src/sgml/ref/alter_operator.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-ALTEROPERATOR">
+<refentry id="sql-alteroperator">
  <indexterm zone="sql-alteroperator">
   <primary>ALTER OPERATOR</primary>
  </indexterm>

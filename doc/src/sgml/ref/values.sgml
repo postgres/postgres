@@ -3,7 +3,7 @@ doc/src/sgml/ref/values.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-VALUES">
+<refentry id="sql-values">
  <indexterm zone="sql-values">
   <primary>VALUES</primary>
  </indexterm>

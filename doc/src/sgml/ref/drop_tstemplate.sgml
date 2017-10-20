@@ -3,7 +3,7 @@ doc/src/sgml/ref/drop_tstemplate.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-DROPTSTEMPLATE">
+<refentry id="sql-droptstemplate">
  <indexterm zone="sql-droptstemplate">
   <primary>DROP TEXT SEARCH TEMPLATE</primary>
  </indexterm>

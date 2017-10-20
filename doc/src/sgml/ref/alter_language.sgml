@@ -3,7 +3,7 @@ doc/src/sgml/ref/alter_language.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-ALTERLANGUAGE">
+<refentry id="sql-alterlanguage">
  <indexterm zone="sql-alterlanguage">
   <primary>ALTER LANGUAGE</primary>
  </indexterm>

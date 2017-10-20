@@ -45,7 +45,7 @@ PostgreSQL documentation
    out of backup mode automatically. Backups are always taken of the entire
    database cluster; it is not possible to back up individual databases or
    database objects. For individual database backups, a tool such as
-   <xref linkend="APP-PGDUMP"> must be used.
+   <xref linkend="app-pgdump"> must be used.
   </para>
 
   <para>
@@ -768,7 +768,7 @@ PostgreSQL documentation
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="APP-PGDUMP"></member>
+   <member><xref linkend="app-pgdump"></member>
   </simplelist>
  </refsect1>
 

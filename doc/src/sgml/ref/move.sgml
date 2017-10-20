@@ -3,7 +3,7 @@ doc/src/sgml/ref/move.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-MOVE">
+<refentry id="sql-move">
  <indexterm zone="sql-move">
   <primary>MOVE</primary>
  </indexterm>

@@ -3,7 +3,7 @@ doc/src/sgml/ref/alter_trigger.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-ALTERTRIGGER">
+<refentry id="sql-altertrigger">
  <indexterm zone="sql-altertrigger">
   <primary>ALTER TRIGGER</primary>
  </indexterm>
@@ -90,7 +90,7 @@ ALTER TRIGGER <replaceable class="parameter">name</replaceable> ON <replaceable 
 
    <para>
     The ability to temporarily enable or disable a trigger is provided by
-    <xref linkend="SQL-ALTERTABLE">, not by
+    <xref linkend="sql-altertable">, not by
     <command>ALTER TRIGGER</command>, because <command>ALTER TRIGGER</command> has no
     convenient way to express the option of enabling or disabling all of
     a table's triggers at once.

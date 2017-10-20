@@ -3,7 +3,7 @@ doc/src/sgml/ref/create_foreign_data_wrapper.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-CREATEFOREIGNDATAWRAPPER">
+<refentry id="sql-createforeigndatawrapper">
  <indexterm zone="sql-createforeigndatawrapper">
   <primary>CREATE FOREIGN DATA WRAPPER</primary>
  </indexterm>

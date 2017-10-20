@@ -2,7 +2,7 @@
 doc/src/sgml/ref/load.sgml
 -->
 
-<refentry id="SQL-LOAD">
+<refentry id="sql-load">
  <indexterm zone="sql-load">
   <primary>LOAD</primary>
  </indexterm>

@@ -3,7 +3,7 @@ doc/src/sgml/ref/alter_index.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-ALTERINDEX">
+<refentry id="sql-alterindex">
  <indexterm zone="sql-alterindex">
   <primary>ALTER INDEX</primary>
  </indexterm>
@@ -70,7 +70,7 @@ ALTER INDEX ALL IN TABLESPACE <replaceable class="parameter">name</replaceable> 
       this command, use <command>ALTER DATABASE</command> or explicit
       <command>ALTER INDEX</command> invocations instead if desired.
       See also
-      <xref linkend="SQL-CREATETABLESPACE">.
+      <xref linkend="sql-createtablespace">.
      </para>
     </listitem>
    </varlistentry>
@@ -91,11 +91,11 @@ ALTER INDEX ALL IN TABLESPACE <replaceable class="parameter">name</replaceable> 
      <para>
       This form changes one or more index-method-specific storage parameters
       for the index.  See
-      <xref linkend="SQL-CREATEINDEX">
+      <xref linkend="sql-createindex">
       for details on the available parameters.  Note that the index contents
       will not be modified immediately by this command; depending on the
       parameter you might need to rebuild the index with
-      <xref linkend="SQL-REINDEX">
+      <xref linkend="sql-reindex">
       to get the desired effects.
      </para>
     </listitem>
@@ -225,7 +225,7 @@ ALTER INDEX ALL IN TABLESPACE <replaceable class="parameter">name</replaceable> 
 
    <para>
     These operations are also possible using
-    <xref linkend="SQL-ALTERTABLE">.
+    <xref linkend="sql-altertable">.
     <command>ALTER INDEX</command> is in fact just an alias for the forms
     of <command>ALTER TABLE</command> that apply to indexes.
    </para>

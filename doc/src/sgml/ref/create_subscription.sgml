@@ -3,7 +3,7 @@ doc/src/sgml/ref/create_subscription.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-CREATESUBSCRIPTION">
+<refentry id="sql-createsubscription">
  <indexterm zone="sql-createsubscription">
   <primary>CREATE SUBSCRIPTION</primary>
  </indexterm>

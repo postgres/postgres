@@ -3,7 +3,7 @@ doc/src/sgml/ref/alter_large_object.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-ALTERLARGEOBJECT">
+<refentry id="sql-alterlargeobject">
  <indexterm zone="sql-alterlargeobject">
   <primary>ALTER LARGE OBJECT</primary>
  </indexterm>

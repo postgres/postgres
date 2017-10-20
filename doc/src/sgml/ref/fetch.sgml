@@ -3,7 +3,7 @@ doc/src/sgml/ref/fetch.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-FETCH">
+<refentry id="sql-fetch">
 
  <indexterm zone="sql-fetch">
   <primary>FETCH</primary>

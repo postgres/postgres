@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/ref/pg_restore.sgml -->
 
-<refentry id="APP-PGRESTORE">
+<refentry id="app-pgrestore">
  <indexterm zone="app-pgrestore">
   <primary>pg_restore</primary>
  </indexterm>

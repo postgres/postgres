@@ -3,7 +3,7 @@ doc/src/sgml/ref/drop_table.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-DROPTABLE">
+<refentry id="sql-droptable">
  <indexterm zone="sql-droptable">
   <primary>DROP TABLE</primary>
  </indexterm>

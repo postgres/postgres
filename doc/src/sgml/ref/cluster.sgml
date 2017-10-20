@@ -3,7 +3,7 @@ doc/src/sgml/ref/cluster.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-CLUSTER">
+<refentry id="sql-cluster">
  <indexterm zone="sql-cluster">
   <primary>CLUSTER</primary>
  </indexterm>
@@ -57,7 +57,7 @@ CLUSTER [VERBOSE]
    <command>CLUSTER <replaceable class="parameter">table_name</replaceable></command>
    reclusters the table using the same index as before.  You can also
    use the <literal>CLUSTER</literal> or <literal>SET WITHOUT CLUSTER</literal>
-   forms of <xref linkend="SQL-ALTERTABLE"> to set the index to be used for
+   forms of <xref linkend="sql-altertable"> to set the index to be used for
    future cluster operations, or to clear any previous setting.
   </para>
 

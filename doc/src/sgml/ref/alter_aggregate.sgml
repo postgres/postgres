@@ -3,7 +3,7 @@ doc/src/sgml/ref/alter_aggregate.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-ALTERAGGREGATE">
+<refentry id="sql-alteraggregate">
  <indexterm zone="sql-alteraggregate">
   <primary>ALTER AGGREGATE</primary>
  </indexterm>

@@ -3,7 +3,7 @@ doc/src/sgml/ref/create_table_as.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-CREATETABLEAS">
+<refentry id="sql-createtableas">
  <indexterm zone="sql-createtableas">
   <primary>CREATE TABLE AS</primary>
  </indexterm>

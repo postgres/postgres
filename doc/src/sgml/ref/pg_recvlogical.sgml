@@ -279,7 +279,7 @@ PostgreSQL documentation
         <para>
          The database to connect to.  See the description of the actions for
          what this means in detail.  This can be a <application>libpq</application> connection string;
-         see <xref linkend="LIBPQ-CONNSTRING"> for more information.  Defaults
+         see <xref linkend="libpq-connstring"> for more information.  Defaults
          to user name.
         </para>
        </listitem>

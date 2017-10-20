@@ -3,7 +3,7 @@ doc/src/sgml/ref/alter_user.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-ALTERUSER">
+<refentry id="sql-alteruser">
  <indexterm zone="sql-alteruser">
   <primary>ALTER USER</primary>
  </indexterm>

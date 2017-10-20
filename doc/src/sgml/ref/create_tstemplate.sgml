@@ -3,7 +3,7 @@ doc/src/sgml/ref/create_tstemplate.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-CREATETSTEMPLATE">
+<refentry id="sql-createtstemplate">
  <indexterm zone="sql-createtstemplate">
   <primary>CREATE TEXT SEARCH TEMPLATE</primary>
  </indexterm>

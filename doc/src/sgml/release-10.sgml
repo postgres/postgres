@@ -701,7 +701,7 @@
        </para>
 
        <para>
-        A new <link linkend="SQL-CREATEINDEX"><command>CREATE
+        A new <link linkend="sql-createindex"><command>CREATE
         INDEX</command></link> option enables auto-summarization of the
         previous <acronym>BRIN</acronym> page range when a new page
         range is created.
@@ -825,9 +825,9 @@
 
       <para>
        New commands are <link
-       linkend="SQL-CREATESTATISTICS"><command>CREATE STATISTICS</command></link>,
-       <link linkend="SQL-ALTERSTATISTICS"><command>ALTER STATISTICS</command></link>, and
-       <link linkend="SQL-DROPSTATISTICS"><command>DROP STATISTICS</command></link>.
+       linkend="sql-createstatistics"><command>CREATE STATISTICS</command></link>,
+       <link linkend="sql-alterstatistics"><command>ALTER STATISTICS</command></link>, and
+       <link linkend="sql-dropstatistics"><command>DROP STATISTICS</command></link>.
        This feature is helpful in estimating query memory usage and when
        combining the statistics from individual columns.
       </para>
@@ -950,7 +950,7 @@
 -->
        <para>
         Allow explicit control
-        over <link linkend="SQL-EXPLAIN"><command>EXPLAIN</command></link>'s display
+        over <link linkend="sql-explain"><command>EXPLAIN</command></link>'s display
         of planning and execution time (Ashutosh Bapat)
        </para>
 
@@ -983,7 +983,7 @@
 -->
        <para>
         Properly update the statistics collector during <link
-        linkend="SQL-REFRESHMATERIALIZEDVIEW"><command>REFRESH MATERIALIZED
+        linkend="sql-refreshmaterializedview"><command>REFRESH MATERIALIZED
         VIEW</command></link> (Jim Mlodgenski)
        </para>
       </listitem>
@@ -1586,7 +1586,7 @@
 2016-12-07 [f0e44751d] Implement table partitioning.
 -->
       <para>
-       Add table <link linkend="SQL-CREATETABLE-PARTITION">partitioning
+       Add table <link linkend="sql-createtable-partition">partitioning
        syntax</link> that automatically creates partition constraints and
        handles routing of tuple insertions and updates (Amit Langote)
       </para>
@@ -1603,7 +1603,7 @@
 2017-03-31 [597027163] Add transition table support to plpgsql.
 -->
       <para>
-       Add <link linkend="SQL-CREATETRIGGER"><literal>AFTER</literal> trigger</link>
+       Add <link linkend="sql-createtrigger"><literal>AFTER</literal> trigger</link>
        transition tables to record changed rows (Kevin Grittner, Thomas
        Munro)
       </para>
@@ -1619,7 +1619,7 @@
 2016-12-05 [093129c9d] Add support for restrictive RLS policies
 -->
       <para>
-       Allow <link linkend="SQL-CREATEPOLICY">restrictive row-level
+       Allow <link linkend="sql-createpolicy">restrictive row-level
        security policies</link> (Stephen Frost)
       </para>
 
@@ -1655,7 +1655,7 @@
 2017-03-28 [ab89e465c] Altering default privileges on schemas
 -->
       <para>
-       Allow <link linkend="SQL-ALTERDEFAULTPRIVILEGES">default
+       Allow <link linkend="sql-alterdefaultprivileges">default
        permissions</link> on schemas (Matheus Oliveira)
       </para>
 
@@ -1669,7 +1669,7 @@
 2017-02-10 [2ea5b06c7] Add CREATE SEQUENCE AS <data type> clause
 -->
       <para>
-       Add <link linkend="SQL-CREATESEQUENCE"><command>CREATE SEQUENCE
+       Add <link linkend="sql-createsequence"><command>CREATE SEQUENCE
        AS</command></link> command to create a sequence matching an integer data type
        (Peter Eisentraut)
       </para>
@@ -1705,7 +1705,7 @@
       </para>
 
       <para>
-       For example, allow <link linkend="SQL-DROPFUNCTION"><command>DROP
+       For example, allow <link linkend="sql-dropfunction"><command>DROP
        FUNCTION</command></link> on a function name without arguments if there
        is only one function with that name.  This behavior is required by the
        <acronym>SQL</acronym> standard.
@@ -1729,9 +1729,9 @@
 -->
       <para>
        Support <literal>IF NOT EXISTS</literal>
-       in <link linkend="SQL-CREATESERVER"><command>CREATE SERVER</command></link>,
-       <link linkend="SQL-CREATEUSERMAPPING"><command>CREATE USER MAPPING</command></link>,
-       and <link linkend="SQL-CREATECOLLATION"><command>CREATE COLLATION</command></link>
+       in <link linkend="sql-createserver"><command>CREATE SERVER</command></link>,
+       <link linkend="sql-createusermapping"><command>CREATE USER MAPPING</command></link>,
+       and <link linkend="sql-createcollation"><command>CREATE COLLATION</command></link>
        (Anastasia Lubennikova, Peter Eisentraut)
       </para>
      </listitem>
@@ -1742,7 +1742,7 @@
 2017-03-03 [9eb344faf] Allow vacuums to report oldestxmin
 -->
       <para>
-       Make <link linkend="SQL-VACUUM"><command>VACUUM VERBOSE</command></link> report
+       Make <link linkend="sql-vacuum"><command>VACUUM VERBOSE</command></link> report
        the number of skipped frozen pages and oldest xmin (Masahiko
        Sawada, Simon Riggs)
       </para>
@@ -1809,7 +1809,7 @@
 2017-04-06 [321732705] Identity columns
 -->
       <para>
-       Add <link linkend="SQL-CREATETABLE">identity columns</link> for
+       Add <link linkend="sql-createtable">identity columns</link> for
        assigning a numeric value to columns on insert (Peter Eisentraut)
       </para>
 
@@ -1829,7 +1829,7 @@
       </para>
 
       <para>
-       This uses the syntax <link linkend="SQL-ALTERTYPE"><command>ALTER
+       This uses the syntax <link linkend="sql-altertype"><command>ALTER
        TYPE ... RENAME VALUE</command></link>.
       </para>
      </listitem>
@@ -2191,7 +2191,7 @@
     <title>Client Applications</title>
 
     <sect4>
-     <title><xref linkend="APP-PSQL"></title>
+     <title><xref linkend="app-psql"></title>
 
      <itemizedlist>
 
@@ -2414,7 +2414,7 @@
 2016-10-19 [5d58c07a4] initdb pg_basebackup: Rename -\-noxxx options to -\-no-x
 -->
       <para>
-       Rename <link linkend="APP-INITDB"><application>initdb</application></link>
+       Rename <link linkend="app-initdb"><application>initdb</application></link>
        options <option>--noclean</option> and <option>--nosync</option> to be spelled
        <option>--no-clean</option> and <option>--no-sync</option> (Vik Fearing,
        Peter Eisentraut)
@@ -2428,9 +2428,9 @@
     </itemizedlist>
 
     <sect4>
-     <title><link linkend="APP-PGDUMP"><application>pg_dump</application></link>,
-     <link linkend="APP-PG-DUMPALL"><application>pg_dumpall</application></link>,
-     <link linkend="APP-PGRESTORE"><application>pg_restore</application></link></title>
+     <title><link linkend="app-pgdump"><application>pg_dump</application></link>,
+     <link linkend="app-pg-dumpall"><application>pg_dumpall</application></link>,
+     <link linkend="app-pgrestore"><application>pg_restore</application></link></title>
 
      <itemizedlist>
 

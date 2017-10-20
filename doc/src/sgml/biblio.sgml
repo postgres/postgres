@@ -18,7 +18,7 @@
   <bibliodiv>
    <title><acronym>SQL</acronym> Reference Books</title>
 
-   <biblioentry id="BOWMAN01">
+   <biblioentry id="bowman01">
     <title>The Practical <acronym>SQL</acronym> Handbook</title>
     <subtitle>Using SQL Variants</subtitle>
     <edition>Fourth Edition</edition>
@@ -43,7 +43,7 @@
     <pubdate>2001</pubdate>
    </biblioentry>
 
-   <biblioentry id="DATE97">
+   <biblioentry id="date97">
     <title>A Guide to the <acronym>SQL</acronym> Standard</title>
     <subtitle>A user's guide to the standard database language <acronym>SQL</acronym></subtitle>
     <edition>Fourth Edition</edition>
@@ -64,7 +64,7 @@
     <pubdate>1997</pubdate>
    </biblioentry>
 
-   <biblioentry id="DATE04">
+   <biblioentry id="date04">
     <title>An Introduction to Database Systems</title>
     <edition>Eighth Edition</edition>
     <authorgroup>
@@ -80,7 +80,7 @@
     <pubdate>2003</pubdate>
    </biblioentry>
 
-  <biblioentry id="ELMA04">
+  <biblioentry id="elma04">
    <title>Fundamentals of Database Systems</title>
    <edition>Fourth Edition</edition>
    <authorgroup>
@@ -100,7 +100,7 @@
    <pubdate>2003</pubdate>
   </biblioentry>
 
-   <biblioentry id="MELT93">
+   <biblioentry id="melt93">
     <title>Understanding the New <acronym>SQL</acronym></title>
     <subtitle>A complete guide</subtitle>
     <authorgroup>
@@ -120,7 +120,7 @@
     <pubdate>1993</pubdate>
    </biblioentry>
 
-   <biblioentry id="ULL88">
+   <biblioentry id="ull88">
     <title>Principles of Database and Knowledge</title>
     <subtitle>Base Systems</subtitle>
     <authorgroup>
@@ -141,7 +141,7 @@
   <bibliodiv>
    <title>PostgreSQL-specific Documentation</title>
 
-   <biblioentry id="SIM98">
+   <biblioentry id="sim98">
     <title>Enhancement of the ANSI SQL Implementation of PostgreSQL</title>
     <authorgroup>
      <author>
@@ -185,7 +185,7 @@ ssimkovi@ag.or.at
     <pubdate>November 29, 1998</pubdate>
    </biblioentry>
 
-   <biblioentry id="YU95">
+   <biblioentry id="yu95">
     <title>The <productname>Postgres95</productname> User Manual</title>
     <authorgroup>
      <author>
@@ -204,7 +204,7 @@ ssimkovi@ag.or.at
     <pubdate>Sept. 5, 1995</pubdate>
    </biblioentry>
 
-  <biblioentry id="FONG">
+  <biblioentry id="fong">
    <title><ulink url="http://db.cs.berkeley.edu/papers/UCB-MS-zfong.pdf">The
    design and implementation of the <productname>POSTGRES</productname> query
    optimizer</ulink></title>
@@ -222,7 +222,7 @@ ssimkovi@ag.or.at
   <bibliodiv>
    <title>Proceedings and Articles</title>
 
-   <biblioentry id="OLSON93">
+   <biblioentry id="olson93">
     <title>Partial indexing in POSTGRES: research project</title>
     <authorgroup>
      <author>
@@ -238,7 +238,7 @@ ssimkovi@ag.or.at
     <pubdate>1993</pubdate>
    </biblioentry>
 
-   <biblioentry id="ONG90">
+   <biblioentry id="ong90">
    <biblioset relation="article">
     <title>A Unified Framework for Version Modeling Using Production Rules in a Database System</title>
     <authorgroup>
@@ -262,7 +262,7 @@ ssimkovi@ag.or.at
    </biblioset>
    </biblioentry>
 
-   <biblioentry id="ROWE87">
+   <biblioentry id="rowe87">
    <biblioset relation="article">
     <title><ulink url="http://db.cs.berkeley.edu/papers/ERL-M87-13.pdf">The <productname>POSTGRES</productname>
     data model</ulink></title>
@@ -284,7 +284,7 @@ ssimkovi@ag.or.at
     </confgroup>
    </biblioentry>
 
-   <biblioentry id="SESHADRI95">
+   <biblioentry id="seshadri95">
    <biblioset relation="article">
     <title><ulink url="http://citeseer.ist.psu.edu/seshadri95generalized.html">Generalized
     Partial Indexes</ulink></title>
@@ -313,7 +313,7 @@ ssimkovi@ag.or.at
     <pagenums>420-7</pagenums>
    </biblioentry>
 
-   <biblioentry id="STON86">
+   <biblioentry id="ston86">
    <biblioset relation="article">
     <title><ulink url="http://db.cs.berkeley.edu/papers/ERL-M85-95.pdf">The
     design of <productname>POSTGRES</productname></ulink></title>
@@ -335,7 +335,7 @@ ssimkovi@ag.or.at
     </confgroup>
    </biblioentry>
 
-   <biblioentry id="STON87a">
+   <biblioentry id="ston87a">
    <biblioset relation="article">
     <title>The design of the <productname>POSTGRES</productname> rules system</title>
     <authorgroup>
@@ -360,7 +360,7 @@ ssimkovi@ag.or.at
     </confgroup>
    </biblioentry>
 
-   <biblioentry id="STON87b">
+   <biblioentry id="ston87b">
    <biblioset relation="article">
     <title><ulink url="http://db.cs.berkeley.edu/papers/ERL-M87-06.pdf">The
     design of the <productname>POSTGRES</productname> storage
@@ -379,7 +379,7 @@ ssimkovi@ag.or.at
     </confgroup>
    </biblioentry>
 
-   <biblioentry id="STON89">
+   <biblioentry id="ston89">
    <biblioset relation="article">
     <title><ulink url="http://db.cs.berkeley.edu/papers/ERL-M89-82.pdf">A
     commentary on the <productname>POSTGRES</productname> rules
@@ -405,7 +405,7 @@ ssimkovi@ag.or.at
    </biblioset>
    </biblioentry>
 
-   <biblioentry id="STON89b">
+   <biblioentry id="ston89b">
    <biblioset relation="article">
     <title><ulink url="http://db.cs.berkeley.edu/papers/ERL-M89-17.pdf">The
     case for partial indexes</ulink></title>
@@ -423,7 +423,7 @@ ssimkovi@ag.or.at
    </biblioset>
    </biblioentry>
 
-   <biblioentry id="STON90a">
+   <biblioentry id="ston90a">
    <biblioset relation="article">
     <title><ulink url="http://db.cs.berkeley.edu/papers/ERL-M90-34.pdf">The
     implementation of <productname>POSTGRES</productname></ulink></title>
@@ -451,7 +451,7 @@ ssimkovi@ag.or.at
    </biblioset>
    </biblioentry>
 
-   <biblioentry id="STON90b">
+   <biblioentry id="ston90b">
    <biblioset relation="article">
     <title><ulink url="http://db.cs.berkeley.edu/papers/ERL-M90-36.pdf">On
     Rules, Procedures, Caching and Views in Database Systems</ulink></title>

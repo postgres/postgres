@@ -3,7 +3,7 @@ doc/src/sgml/ref/drop_owned.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-DROP-OWNED">
+<refentry id="sql-drop-owned">
  <indexterm zone="sql-drop-owned">
   <primary>DROP OWNED</primary>
  </indexterm>

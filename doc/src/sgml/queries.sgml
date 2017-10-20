@@ -795,7 +795,7 @@ SELECT *
       AS t1(proname name, prosrc text)
     WHERE proname LIKE 'bytea%';
 </programlisting>
-     The <xref linkend="CONTRIB-DBLINK-FUNCTION"> function
+     The <xref linkend="contrib-dblink-function"> function
      (part of the <xref linkend="dblink"> module) executes
      a remote query.  It is declared to return
      <type>record</type> since it might be used for any kind of query.

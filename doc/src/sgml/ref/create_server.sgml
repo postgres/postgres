@@ -3,7 +3,7 @@ doc/src/sgml/ref/create_server.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-CREATESERVER">
+<refentry id="sql-createserver">
  <indexterm zone="sql-createserver">
   <primary>CREATE SERVER</primary>
  </indexterm>

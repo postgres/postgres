@@ -3,7 +3,7 @@ doc/src/sgml/ref/create_schema.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-CREATESCHEMA">
+<refentry id="sql-createschema">
  <indexterm zone="sql-createschema">
   <primary>CREATE SCHEMA</primary>
  </indexterm>

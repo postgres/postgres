@@ -3,7 +3,7 @@ doc/src/sgml/ref/alter_schema.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-ALTERSCHEMA">
+<refentry id="sql-alterschema">
  <indexterm zone="sql-alterschema">
   <primary>ALTER SCHEMA</primary>
  </indexterm>

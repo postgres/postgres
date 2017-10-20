@@ -3,7 +3,7 @@ doc/src/sgml/ref/alter_tsparser.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-ALTERTSPARSER">
+<refentry id="sql-altertsparser">
  <indexterm zone="sql-altertsparser">
   <primary>ALTER TEXT SEARCH PARSER</primary>
  </indexterm>

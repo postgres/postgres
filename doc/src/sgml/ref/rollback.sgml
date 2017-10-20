@@ -3,7 +3,7 @@ doc/src/sgml/ref/rollback.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-ROLLBACK">
+<refentry id="sql-rollback">
  <indexterm zone="sql-rollback">
   <primary>ROLLBACK</primary>
  </indexterm>
@@ -54,7 +54,7 @@ ROLLBACK [ WORK | TRANSACTION ]
   <title>Notes</title>
 
   <para>
-   Use <xref linkend="SQL-COMMIT"> to
+   Use <xref linkend="sql-commit"> to
    successfully terminate a transaction.
   </para>
 

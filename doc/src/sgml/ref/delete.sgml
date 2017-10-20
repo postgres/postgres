@@ -3,7 +3,7 @@ doc/src/sgml/ref/delete.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-DELETE">
+<refentry id="sql-delete">
  <indexterm zone="sql-delete">
   <primary>DELETE</primary>
  </indexterm>

@@ -3,7 +3,7 @@ doc/src/sgml/ref/create_table.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-CREATETABLE">
+<refentry id="sql-createtable">
  <indexterm zone="sql-createtable">
   <primary>CREATE TABLE</primary>
  </indexterm>
@@ -102,7 +102,7 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
 
  </refsynopsisdiv>
 
- <refsect1 id="SQL-CREATETABLE-description">
+ <refsect1 id="sql-createtable-description">
   <title>Description</title>
 
   <para>
@@ -157,7 +157,7 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
 
   <variablelist>
 
-   <varlistentry id="SQL-CREATETABLE-TEMPORARY">
+   <varlistentry id="sql-createtable-temporary">
     <term><literal>TEMPORARY</literal> or <literal>TEMP</literal></term>
     <listitem>
      <para>
@@ -191,7 +191,7 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
     </listitem>
    </varlistentry>
 
-   <varlistentry id="SQL-CREATETABLE-UNLOGGED">
+   <varlistentry id="sql-createtable-unlogged">
     <term><literal>UNLOGGED</literal></term>
     <listitem>
      <para>
@@ -249,7 +249,7 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
     </listitem>
    </varlistentry>
 
-   <varlistentry id="SQL-CREATETABLE-PARTITION">
+   <varlistentry id="sql-createtable-partition">
     <term><literal>PARTITION OF <replaceable class="parameter">parent_table</replaceable> { FOR VALUES <replaceable class="parameter">partition_bound_spec</replaceable> | DEFAULT }</literal></term>
     <listitem>
      <para>
@@ -783,7 +783,7 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
     </listitem>
    </varlistentry>
 
-   <varlistentry id="SQL-CREATETABLE-EXCLUDE">
+   <varlistentry id="sql-createtable-exclude">
     <term><literal>EXCLUDE [ USING <replaceable class="parameter">index_method</replaceable> ] ( <replaceable class="parameter">exclude_element</replaceable> WITH <replaceable class="parameter">operator</replaceable> [, ... ] ) <replaceable class="parameter">index_parameters</replaceable> [ WHERE ( <replaceable class="parameter">predicate</replaceable> ) ]</literal></term>
     <listitem>
      <para>
@@ -1120,8 +1120,8 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
 
   </variablelist>
 
-  <refsect2 id="SQL-CREATETABLE-storage-parameters">
-   <title id="SQL-CREATETABLE-storage-parameters-title">Storage Parameters</title>
+  <refsect2 id="sql-createtable-storage-parameters">
+   <title id="sql-createtable-storage-parameters-title">Storage Parameters</title>
 
  <indexterm zone="sql-createtable-storage-parameters">
   <primary>storage parameters</primary>
@@ -1132,7 +1132,7 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
     for tables, and for indexes associated with a <literal>UNIQUE</literal>,
     <literal>PRIMARY KEY</literal>, or <literal>EXCLUDE</literal> constraint.
     Storage parameters for
-    indexes are documented in <xref linkend="SQL-CREATEINDEX">.
+    indexes are documented in <xref linkend="sql-createindex">.
     The storage parameters currently
     available for tables are listed below.  For many of these parameters, as
     shown, there is an additional parameter with the same name prefixed with
@@ -1360,7 +1360,7 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
   </refsect2>
  </refsect1>
 
- <refsect1 id="SQL-CREATETABLE-notes">
+ <refsect1 id="sql-createtable-notes">
   <title>Notes</title>
 
     <para>
@@ -1407,7 +1407,7 @@ FROM ( { <replaceable class="parameter">numeric_literal</replaceable> | <replace
  </refsect1>
 
 
- <refsect1 id="SQL-CREATETABLE-examples">
+ <refsect1 id="sql-createtable-examples">
   <title>Examples</title>
 
   <para>
@@ -1709,8 +1709,8 @@ CREATE TABLE cities_partdef
 </programlisting></para>
  </refsect1>
 
- <refsect1 id="SQL-CREATETABLE-compatibility">
-  <title id="SQL-CREATETABLE-compatibility-title">Compatibility</title>
+ <refsect1 id="sql-createtable-compatibility">
+  <title id="sql-createtable-compatibility-title">Compatibility</title>
 
   <para>
    The <command>CREATE TABLE</command> command conforms to the

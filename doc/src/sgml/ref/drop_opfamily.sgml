@@ -3,7 +3,7 @@ doc/src/sgml/ref/drop_opfamily.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-DROPOPFAMILY">
+<refentry id="sql-dropopfamily">
  <indexterm zone="sql-dropopfamily">
   <primary>DROP OPERATOR FAMILY</primary>
  </indexterm>

@@ -3,7 +3,7 @@ doc/src/sgml/ref/drop_subscription.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-DROPSUBSCRIPTION">
+<refentry id="sql-dropsubscription">
  <indexterm zone="sql-dropsubscription">
   <primary>DROP SUBSCRIPTION</primary>
  </indexterm>

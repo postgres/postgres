@@ -3,7 +3,7 @@ doc/src/sgml/ref/drop_sequence.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-DROPSEQUENCE">
+<refentry id="sql-dropsequence">
  <indexterm zone="sql-dropsequence">
   <primary>DROP SEQUENCE</primary>
  </indexterm>

@@ -3,7 +3,7 @@ doc/src/sgml/ref/drop_tsdictionary.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-DROPTSDICTIONARY">
+<refentry id="sql-droptsdictionary">
  <indexterm zone="sql-droptsdictionary">
   <primary>DROP TEXT SEARCH DICTIONARY</primary>
  </indexterm>

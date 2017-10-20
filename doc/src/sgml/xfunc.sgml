@@ -3277,10 +3277,10 @@ if (!ptr)
     </para>
    </sect2>
 
-   <sect2 id="extend-Cpp">
+   <sect2 id="extend-cpp">
     <title>Using C++ for Extensibility</title>
 
-    <indexterm zone="extend-Cpp">
+    <indexterm zone="extend-cpp">
      <primary>C++</primary>
     </indexterm>
 

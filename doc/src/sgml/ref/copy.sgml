@@ -4,7 +4,7 @@ PostgreSQL documentation
 -->
 
 
-<refentry id="SQL-COPY">
+<refentry id="sql-copy">
  <indexterm zone="sql-copy">
   <primary>COPY</primary>
  </indexterm>
@@ -451,7 +451,7 @@ COPY <replaceable class="parameter">count</replaceable>
    <para>
     Do not confuse <command>COPY</command> with the
     <application>psql</application> instruction
-    <command><link linkend="APP-PSQL-meta-commands-copy">\copy</link></command>. <command>\copy</command> invokes
+    <command><link linkend="app-psql-meta-commands-copy">\copy</link></command>. <command>\copy</command> invokes
     <command>COPY FROM STDIN</command> or <command>COPY TO
     STDOUT</command>, and then fetches/stores the data in a file
     accessible to the <application>psql</application> client. Thus,

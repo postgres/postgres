@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/ref/create_foreign_table.sgml -->
 
-<refentry id="SQL-CREATEFOREIGNTABLE">
+<refentry id="sql-createforeigntable">
  <indexterm zone="sql-createforeigntable">
   <primary>CREATE FOREIGN TABLE</primary>
  </indexterm>
@@ -51,7 +51,7 @@ CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ]
 </synopsis>
  </refsynopsisdiv>
 
- <refsect1 id="SQL-CREATEFOREIGNTABLE-description">
+ <refsect1 id="sql-createforeigntable-description">
   <title>Description</title>
 
   <para>
@@ -252,7 +252,7 @@ CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ]
      <para>
       The name of an existing foreign server to use for the foreign table.
       For details on defining a server, see <xref
-      linkend="SQL-CREATESERVER">.
+      linkend="sql-createserver">.
      </para>
     </listitem>
    </varlistentry>
@@ -310,7 +310,7 @@ CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ]
    </para>
  </refsect1>
 
- <refsect1 id="SQL-CREATEFOREIGNTABLE-examples">
+ <refsect1 id="sql-createforeigntable-examples">
   <title>Examples</title>
 
   <para>
@@ -342,8 +342,8 @@ CREATE FOREIGN TABLE measurement_y2016m07
 
  </refsect1>
 
- <refsect1 id="SQL-CREATEFOREIGNTABLE-compatibility">
-  <title id="SQL-CREATEFOREIGNTABLE-compatibility-title">Compatibility</title>
+ <refsect1 id="sql-createforeigntable-compatibility">
+  <title id="sql-createforeigntable-compatibility-title">Compatibility</title>
 
   <para>
    The <command>CREATE FOREIGN TABLE</command> command largely conforms to the

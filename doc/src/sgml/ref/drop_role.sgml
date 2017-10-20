@@ -3,7 +3,7 @@ doc/src/sgml/ref/drop_role.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-DROPROLE">
+<refentry id="sql-droprole">
  <indexterm zone="sql-droprole">
   <primary>DROP ROLE</primary>
  </indexterm>
@@ -83,7 +83,7 @@ DROP ROLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [, ...
 
   <para>
    <productname>PostgreSQL</productname> includes a program <xref
-   linkend="APP-DROPUSER"> that has the
+   linkend="app-dropuser"> that has the
    same functionality as this command (in fact, it calls this command)
    but can be run from the command shell.
   </para>

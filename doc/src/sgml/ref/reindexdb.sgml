@@ -3,7 +3,7 @@ doc/src/sgml/ref/reindexdb.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="APP-REINDEXDB">
+<refentry id="app-reindexdb">
  <indexterm zone="app-reindexdb">
   <primary>reindexdb</primary>
  </indexterm>
@@ -93,7 +93,7 @@ PostgreSQL documentation
 
   <para>
    <application>reindexdb</application> is a wrapper around the SQL
-   command <xref linkend="SQL-REINDEX">.
+   command <xref linkend="sql-reindex">.
    There is no effective difference between reindexing databases via
    this utility and via other methods for accessing the server.
   </para>
@@ -357,8 +357,8 @@ PostgreSQL documentation
   <title>Diagnostics</title>
 
   <para>
-   In case of difficulty, see <xref linkend="SQL-REINDEX">
-   and <xref linkend="APP-PSQL"> for
+   In case of difficulty, see <xref linkend="sql-reindex">
+   and <xref linkend="app-psql"> for
    discussions of potential problems and error messages.
    The database server must be running at the
    targeted host.  Also, any default connection settings and environment

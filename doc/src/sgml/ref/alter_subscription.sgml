@@ -3,7 +3,7 @@ doc/src/sgml/ref/alter_subscription.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-ALTERSUBSCRIPTION">
+<refentry id="sql-altersubscription">
  <indexterm zone="sql-altersubscription">
   <primary>ALTER SUBSCRIPTION</primary>
  </indexterm>
@@ -68,7 +68,7 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
     <listitem>
      <para>
       This clause alters the connection property originally set by
-      <xref linkend="SQL-CREATESUBSCRIPTION">.  See there for more
+      <xref linkend="sql-createsubscription">.  See there for more
       information.
      </para>
     </listitem>
@@ -79,7 +79,7 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
     <listitem>
      <para>
       Changes list of subscribed publications. See
-      <xref linkend="SQL-CREATESUBSCRIPTION"> for more information.
+      <xref linkend="sql-createsubscription"> for more information.
       By default this command will also act like <literal>REFRESH
       PUBLICATION</literal>.
      </para>
@@ -162,7 +162,7 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
     <listitem>
      <para>
       This clause alters parameters originally set by
-      <xref linkend="SQL-CREATESUBSCRIPTION">.  See there for more
+      <xref linkend="sql-createsubscription">.  See there for more
       information.  The allowed options are <literal>slot_name</literal> and
       <literal>synchronous_commit</literal>
      </para>

@@ -3,7 +3,7 @@ doc/src/sgml/ref/create_operator.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-CREATEOPERATOR">
+<refentry id="sql-createoperator">
  <indexterm zone="sql-createoperator">
   <primary>CREATE OPERATOR</primary>
  </indexterm>

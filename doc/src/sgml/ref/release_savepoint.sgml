@@ -3,7 +3,7 @@ doc/src/sgml/ref/release_savepoint.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-RELEASE-SAVEPOINT">
+<refentry id="sql-release-savepoint">
  <indexterm zone="sql-release-savepoint">
   <primary>RELEASE SAVEPOINT</primary>
  </indexterm>

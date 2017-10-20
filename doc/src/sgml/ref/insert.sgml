@@ -3,7 +3,7 @@ doc/src/sgml/ref/insert.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-INSERT">
+<refentry id="sql-insert">
  <indexterm zone="sql-insert">
   <primary>INSERT</primary>
  </indexterm>
@@ -128,7 +128,7 @@ INSERT INTO <replaceable class="parameter">table_name</replaceable> [ AS <replac
  <refsect1>
   <title>Parameters</title>
 
-  <refsect2 id="SQL-INSERTING-PARAMS">
+  <refsect2 id="sql-inserting-params">
    <title id="sql-inserting-params-title">Inserting</title>
 
    <para>
@@ -304,10 +304,10 @@ INSERT INTO <replaceable class="parameter">table_name</replaceable> [ AS <replac
 
   <refsect2 id="sql-on-conflict">
    <title id="sql-on-conflict-title"><literal>ON CONFLICT</literal> Clause</title>
-   <indexterm zone="SQL-INSERT">
+   <indexterm zone="sql-insert">
     <primary>UPSERT</primary>
    </indexterm>
-   <indexterm zone="SQL-INSERT">
+   <indexterm zone="sql-insert">
     <primary>ON CONFLICT</primary>
    </indexterm>
    <para>

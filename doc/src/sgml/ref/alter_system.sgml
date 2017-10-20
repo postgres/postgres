@@ -3,7 +3,7 @@ doc/src/sgml/ref/alter_system.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-ALTERSYSTEM">
+<refentry id="sql-altersystem">
  <indexterm zone="sql-altersystem">
   <primary>ALTER SYSTEM</primary>
  </indexterm>
@@ -135,8 +135,8 @@ ALTER SYSTEM RESET wal_level;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="SQL-SET"></member>
-   <member><xref linkend="SQL-SHOW"></member>
+   <member><xref linkend="sql-set"></member>
+   <member><xref linkend="sql-show"></member>
   </simplelist>
  </refsect1>
 

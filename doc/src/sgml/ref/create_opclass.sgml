@@ -3,7 +3,7 @@ doc/src/sgml/ref/create_opclass.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-CREATEOPCLASS">
+<refentry id="sql-createopclass">
  <indexterm zone="sql-createopclass">
   <primary>CREATE OPERATOR CLASS</primary>
  </indexterm>

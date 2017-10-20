@@ -3,7 +3,7 @@ doc/src/sgml/ref/refresh_materialized_view.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-REFRESHMATERIALIZEDVIEW">
+<refentry id="sql-refreshmaterializedview">
  <indexterm zone="sql-refreshmaterializedview">
   <primary>REFRESH MATERIALIZED VIEW</primary>
  </indexterm>
@@ -93,7 +93,7 @@ REFRESH MATERIALIZED VIEW [ CONCURRENTLY ] <replaceable class="parameter">name</
 
   <para>
    While the default index for future
-   <xref linkend="SQL-CLUSTER">
+   <xref linkend="sql-cluster">
    operations is retained, <command>REFRESH MATERIALIZED VIEW</command> does not
    order the generated rows based on this property. If you want the data
    to be ordered upon generation, you must use an <literal>ORDER BY</literal>

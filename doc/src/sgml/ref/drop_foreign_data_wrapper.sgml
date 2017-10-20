@@ -3,7 +3,7 @@ doc/src/sgml/ref/drop_foreign_data_wrapper.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-DROPFOREIGNDATAWRAPPER">
+<refentry id="sql-dropforeigndatawrapper">
  <indexterm zone="sql-dropforeigndatawrapper">
   <primary>DROP FOREIGN DATA WRAPPER</primary>
  </indexterm>

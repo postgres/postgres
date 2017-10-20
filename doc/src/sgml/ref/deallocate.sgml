@@ -3,7 +3,7 @@ doc/src/sgml/ref/deallocate.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-DEALLOCATE">
+<refentry id="sql-deallocate">
  <indexterm zone="sql-deallocate">
   <primary>DEALLOCATE</primary>
  </indexterm>

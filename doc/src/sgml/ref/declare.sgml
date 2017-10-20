@@ -3,7 +3,7 @@ doc/src/sgml/ref/declare.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-DECLARE">
+<refentry id="sql-declare">
  <indexterm zone="sql-declare">
   <primary>DECLARE</primary>
  </indexterm>

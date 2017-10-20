@@ -3,7 +3,7 @@ doc/src/sgml/ref/create_opfamily.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-CREATEOPFAMILY">
+<refentry id="sql-createopfamily">
  <indexterm zone="sql-createopfamily">
   <primary>CREATE OPERATOR FAMILY</primary>
  </indexterm>

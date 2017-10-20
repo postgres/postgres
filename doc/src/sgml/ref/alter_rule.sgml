@@ -3,7 +3,7 @@ doc/src/sgml/ref/alter_rule.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-ALTERRULE">
+<refentry id="sql-alterrule">
  <indexterm zone="sql-alterrule">
   <primary>ALTER RULE</primary>
  </indexterm>

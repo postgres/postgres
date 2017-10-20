@@ -3,7 +3,7 @@ doc/src/sgml/ref/alter_user_mapping.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-ALTERUSERMAPPING">
+<refentry id="sql-alterusermapping">
  <indexterm zone="sql-alterusermapping">
   <primary>ALTER USER MAPPING</primary>
  </indexterm>

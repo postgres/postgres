@@ -3,7 +3,7 @@ doc/src/sgml/ref/alter_opfamily.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-ALTEROPFAMILY">
+<refentry id="sql-alteropfamily">
  <indexterm zone="sql-alteropfamily">
   <primary>ALTER OPERATOR FAMILY</primary>
  </indexterm>

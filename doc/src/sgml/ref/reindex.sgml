@@ -3,7 +3,7 @@ doc/src/sgml/ref/reindex.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-REINDEX">
+<refentry id="sql-reindex">
  <indexterm zone="sql-reindex">
   <primary>REINDEX</primary>
  </indexterm>

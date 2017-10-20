@@ -3,7 +3,7 @@ doc/src/sgml/ref/create_aggregate.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-CREATEAGGREGATE">
+<refentry id="sql-createaggregate">
  <indexterm zone="sql-createaggregate">
   <primary>CREATE AGGREGATE</primary>
  </indexterm>

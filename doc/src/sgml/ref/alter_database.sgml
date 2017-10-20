@@ -3,7 +3,7 @@ doc/src/sgml/ref/alter_database.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-ALTERDATABASE">
+<refentry id="sql-alterdatabase">
  <indexterm zone="sql-alterdatabase">
   <primary>ALTER DATABASE</primary>
  </indexterm>

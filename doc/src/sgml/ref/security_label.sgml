@@ -3,7 +3,7 @@ doc/src/sgml/ref/security_label.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-SECURITY-LABEL">
+<refentry id="sql-security-label">
  <indexterm zone="sql-security-label">
   <primary>SECURITY LABEL</primary>
  </indexterm>

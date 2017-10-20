@@ -232,7 +232,7 @@
     <term><acronym>GIN</acronym></term>
     <listitem>
      <para>
-      <link linkend="GIN">Generalized Inverted Index</link>
+      <link linkend="gin">Generalized Inverted Index</link>
      </para>
     </listitem>
    </varlistentry>
@@ -241,7 +241,7 @@
     <term><acronym>GiST</acronym></term>
     <listitem>
      <para>
-      <link linkend="GiST">Generalized Search Tree</link>
+      <link linkend="gist">Generalized Search Tree</link>
      </para>
     </listitem>
    </varlistentry>
@@ -583,7 +583,7 @@
     <term><acronym>SP-GiST</acronym></term>
     <listitem>
      <para>
-      <link linkend="SPGiST">Space-Partitioned Generalized Search Tree</link>
+      <link linkend="spgist">Space-Partitioned Generalized Search Tree</link>
      </para>
     </listitem>
    </varlistentry>

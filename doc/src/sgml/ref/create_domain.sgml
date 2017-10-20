@@ -3,7 +3,7 @@ doc/src/sgml/ref/create_domain.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-CREATEDOMAIN">
+<refentry id="sql-createdomain">
  <indexterm zone="sql-createdomain">
   <primary>CREATE DOMAIN</primary>
  </indexterm>
@@ -242,7 +242,7 @@ CREATE TABLE us_snail_addy (
 </programlisting></para>
  </refsect1>
 
- <refsect1 id="SQL-CREATEDOMAIN-compatibility">
+ <refsect1 id="sql-createdomain-compatibility">
   <title>Compatibility</title>
 
   <para>
@@ -251,7 +251,7 @@ CREATE TABLE us_snail_addy (
   </para>
  </refsect1>
 
- <refsect1 id="SQL-CREATEDOMAIN-see-also">
+ <refsect1 id="sql-createdomain-see-also">
   <title>See Also</title>
 
   <simplelist type="inline">

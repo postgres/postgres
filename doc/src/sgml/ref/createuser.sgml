@@ -3,7 +3,7 @@ doc/src/sgml/ref/createuser.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="APP-CREATEUSER">
+<refentry id="app-createuser">
  <indexterm zone="app-createuser">
   <primary>createuser</primary>
  </indexterm>
@@ -49,7 +49,7 @@ PostgreSQL documentation
 
   <para>
    <application>createuser</application> is a wrapper around the
-   <acronym>SQL</acronym> command <xref linkend="SQL-CREATEROLE">.
+   <acronym>SQL</acronym> command <xref linkend="sql-createrole">.
    There is no effective difference between creating users via
    this utility and via other methods for accessing the server.
   </para>
@@ -415,8 +415,8 @@ PostgreSQL documentation
   <title>Diagnostics</title>
 
   <para>
-   In case of difficulty, see <xref linkend="SQL-CREATEROLE">
-   and <xref linkend="APP-PSQL"> for
+   In case of difficulty, see <xref linkend="sql-createrole">
+   and <xref linkend="app-psql"> for
    discussions of potential problems and error messages.
    The database server must be running at the
    targeted host.  Also, any default connection settings and environment

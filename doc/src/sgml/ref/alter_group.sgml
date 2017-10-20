@@ -3,7 +3,7 @@ doc/src/sgml/ref/alter_group.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-ALTERGROUP">
+<refentry id="sql-altergroup">
  <indexterm zone="sql-altergroup">
   <primary>ALTER GROUP</primary>
  </indexterm>
@@ -50,8 +50,8 @@ ALTER GROUP <replaceable class="parameter">group_name</replaceable> RENAME TO <r
    <quote>group</quote> for this purpose.)  These variants are effectively
    equivalent to granting or revoking membership in the role named as the
    <quote>group</quote>; so the preferred way to do this is to use
-   <xref linkend="SQL-GRANT"> or
-   <xref linkend="SQL-REVOKE">.
+   <xref linkend="sql-grant"> or
+   <xref linkend="sql-revoke">.
   </para>
 
   <para>

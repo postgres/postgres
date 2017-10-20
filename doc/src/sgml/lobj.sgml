@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/lobj.sgml -->
 
- <chapter id="largeObjects">
+ <chapter id="largeobjects">
   <title>Large Objects</title>
 
   <indexterm zone="largeobjects"><primary>large object</primary></indexterm>

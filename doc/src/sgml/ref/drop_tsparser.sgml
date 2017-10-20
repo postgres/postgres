@@ -3,7 +3,7 @@ doc/src/sgml/ref/drop_tsparser.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-DROPTSPARSER">
+<refentry id="sql-droptsparser">
  <indexterm zone="sql-droptsparser">
   <primary>DROP TEXT SEARCH PARSER</primary>
  </indexterm>

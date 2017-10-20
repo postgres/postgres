@@ -3,7 +3,7 @@ doc/src/sgml/ref/prepare.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-PREPARE">
+<refentry id="sql-prepare">
  <indexterm zone="sql-prepare">
   <primary>PREPARE</primary>
  </indexterm>
@@ -123,7 +123,7 @@ PREPARE <replaceable class="parameter">name</replaceable> [ ( <replaceable class
   </variablelist>
  </refsect1>
 
- <refsect1 id="SQL-PREPARE-notes">
+ <refsect1 id="sql-prepare-notes">
   <title>Notes</title>
 
   <para>

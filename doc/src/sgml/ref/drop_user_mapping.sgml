@@ -3,7 +3,7 @@ doc/src/sgml/ref/drop_user_mapping.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-DROPUSERMAPPING">
+<refentry id="sql-dropusermapping">
  <indexterm zone="sql-dropusermapping">
   <primary>DROP USER MAPPING</primary>
  </indexterm>

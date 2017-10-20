@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/ref/drop_foreign_table.sgml -->
 
-<refentry id="SQL-DROPFOREIGNTABLE">
+<refentry id="sql-dropforeigntable">
  <indexterm zone="sql-dropforeigntable">
   <primary>DROP FOREIGN TABLE</primary>
  </indexterm>

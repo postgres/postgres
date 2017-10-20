@@ -3,7 +3,7 @@ doc/src/sgml/ref/alter_view.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-ALTERVIEW">
+<refentry id="sql-alterview">
  <indexterm zone="sql-alterview">
   <primary>ALTER VIEW</primary>
  </indexterm>

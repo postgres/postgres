@@ -3,7 +3,7 @@ doc/src/sgml/ref/pg_resetwal.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="APP-PGRESETWAL">
+<refentry id="app-pgresetwal">
  <indexterm zone="app-pgresetwal">
   <primary>pg_resetwal</primary>
  </indexterm>
@@ -29,7 +29,7 @@ PostgreSQL documentation
   </cmdsynopsis>
  </refsynopsisdiv>
 
- <refsect1 id="R1-APP-PGRESETWAL-1">
+ <refsect1 id="r1-app-pgresetwal-1">
   <title>Description</title>
   <para>
    <command>pg_resetwal</command> clears the write-ahead log (WAL) and

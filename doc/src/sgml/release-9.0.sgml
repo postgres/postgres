@@ -7742,9 +7742,9 @@
     <listitem>
      <para>
       Easier database object permissions management. <link
-      linkend="SQL-GRANT"><command>GRANT</command>/<command>REVOKE IN
+      linkend="sql-grant"><command>GRANT</command>/<command>REVOKE IN
       SCHEMA</command></link> supports mass permissions changes on existing objects,
-      while <link linkend="SQL-ALTERDEFAULTPRIVILEGES"><command>ALTER DEFAULT
+      while <link linkend="sql-alterdefaultprivileges"><command>ALTER DEFAULT
       PRIVILEGES</command></link> allows control of privileges for objects created in
       the future.  Large objects (BLOBs) now support permissions management as
       well.
@@ -7754,7 +7754,7 @@
     <listitem>
      <para>
       Broadly enhanced stored procedure support.
-      The <link linkend="SQL-DO"><command>DO</command></link> statement supports
+      The <link linkend="sql-do"><command>DO</command></link> statement supports
       ad-hoc or <quote>anonymous</quote> code blocks.
       Functions can now be called using named parameters.
       <link linkend="plpgsql">PL/pgSQL</link> is now installed by default, and
@@ -7783,14 +7783,14 @@
      <para>
       New trigger features, including
       SQL-standard-compliant <link
-      linkend="SQL-CREATETRIGGER">per-column triggers</link> and
+      linkend="sql-createtrigger">per-column triggers</link> and
       conditional trigger execution.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      <link linkend="SQL-CREATETABLE-compatibility">Deferrable
+      <link linkend="sql-createtable-compatibility">Deferrable
       unique constraints</link>. Mass updates to unique keys are now possible
       without trickery.
      </para>
@@ -7816,8 +7816,8 @@
     <listitem>
      <para>
       New high-performance implementation of the
-      <link linkend="SQL-LISTEN"><command>LISTEN</command></link>/<link
-      linkend="SQL-NOTIFY"><command>NOTIFY</command></link> feature.
+      <link linkend="sql-listen"><command>LISTEN</command></link>/<link
+      linkend="sql-notify"><command>NOTIFY</command></link> feature.
       Pending events are now stored in a memory-based queue rather than
       a table.  Also, a <quote>payload</quote> string can be sent with each
       event, rather than transmitting just an event name as before.
@@ -7827,7 +7827,7 @@
     <listitem>
      <para>
       New implementation of
-      <link linkend="SQL-VACUUM"><command>VACUUM FULL</command></link>.
+      <link linkend="sql-vacuum"><command>VACUUM FULL</command></link>.
       This command now rewrites the entire table and indexes, rather than
       moving individual rows to compact space.  It is substantially faster
       in most cases, and no longer results in index bloat.
@@ -8287,7 +8287,7 @@
       <para>
        Allow per-tablespace values to be set for sequential and random page
        cost estimates (<varname>seq_page_cost</varname>/<varname>random_page_cost</varname>)
-       via <link linkend="SQL-ALTERTABLESPACE"><command>ALTER TABLESPACE
+       via <link linkend="sql-altertablespace"><command>ALTER TABLESPACE
        ... SET/RESET</command></link> (Robert Haas)
       </para>
      </listitem>
@@ -8308,7 +8308,7 @@
      <listitem>
       <para>
        Improve performance of <link
-       linkend="SQL-TRUNCATE"><command>TRUNCATE</command></link> when
+       linkend="sql-truncate"><command>TRUNCATE</command></link> when
        the table was created or truncated earlier in the same transaction
        (Tom Lane)
       </para>
@@ -8414,7 +8414,7 @@
 
      <listitem>
       <para>
-       Improve <link linkend="SQL-ANALYZE"><command>ANALYZE</command></link>
+       Improve <link linkend="sql-analyze"><command>ANALYZE</command></link>
        to support inheritance-tree statistics (Tom Lane)
       </para>
 
@@ -8451,7 +8451,7 @@
      <listitem>
       <para>
        Allow setting of number-of-distinct-values statistics using <link
-       linkend="SQL-ALTERTABLE"><command>ALTER TABLE</command></link>
+       linkend="sql-altertable"><command>ALTER TABLE</command></link>
        (Robert Haas)
       </para>
 
@@ -8707,7 +8707,7 @@
 
     <listitem>
      <para>
-      Perform <link linkend="SQL-FOR-UPDATE-SHARE"><command>SELECT
+      Perform <link linkend="sql-for-update-share"><command>SELECT
       FOR UPDATE</command>/<literal>SHARE</literal></link> processing after
       applying <literal>LIMIT</literal>, so the number of rows returned
       is always predictable (Tom Lane)
@@ -8725,7 +8725,7 @@
     <listitem>
      <para>
       Allow mixing of traditional and SQL-standard <link
-      linkend="SQL-LIMIT"><literal>LIMIT</literal>/<literal>OFFSET</literal></link>
+      linkend="sql-limit"><literal>LIMIT</literal>/<literal>OFFSET</literal></link>
       syntax (Tom Lane)
      </para>
     </listitem>
@@ -8733,7 +8733,7 @@
     <listitem>
      <para>
       Extend the supported frame options in <link
-      linkend="SQL-WINDOW">window functions</link> (Hitoshi
+      linkend="sql-window">window functions</link> (Hitoshi
       Harada)
      </para>
 
@@ -8795,7 +8795,7 @@
 
     <listitem>
      <para>
-      Speed up <link linkend="SQL-CREATEDATABASE"><command>CREATE
+      Speed up <link linkend="sql-createdatabase"><command>CREATE
       DATABASE</command></link> by deferring flushes to disk (Andres
       Freund, Greg Stark)
      </para>
@@ -8803,7 +8803,7 @@
 
     <listitem>
      <para>
-      Allow <link linkend="SQL-COMMENT">comments</link> on
+      Allow <link linkend="sql-comment">comments</link> on
       columns of tables, views, and composite types only, not other
       relation types such as indexes and <acronym>TOAST</acronym> tables (Tom Lane)
      </para>
@@ -8812,7 +8812,7 @@
     <listitem>
      <para>
       Allow the creation of <link
-      linkend="SQL-CREATETYPE-enum">enumerated types</link> containing
+      linkend="sql-createtype-enum">enumerated types</link> containing
       no values (Bruce Momjian)
      </para>
     </listitem>
@@ -8870,7 +8870,7 @@
    </sect4>
 
    <sect4>
-    <title><link linkend="SQL-CREATETABLE"><command>CREATE TABLE</command></link></title>
+    <title><link linkend="sql-createtable"><command>CREATE TABLE</command></link></title>
 
     <itemizedlist>
 
@@ -8914,7 +8914,7 @@
 
      <listitem>
       <para>
-       Add <link linkend="SQL-CREATETABLE-compatibility">deferrable
+       Add <link linkend="sql-createtable-compatibility">deferrable
        unique constraints</link> (Dean Rasheed)
       </para>
 
@@ -8941,7 +8941,7 @@
       <para>
        Exclusion constraints generalize uniqueness constraints by allowing
        arbitrary comparison operators, not just equality.  They are created
-       with the <link linkend="SQL-CREATETABLE-EXCLUDE"><command>CREATE
+       with the <link linkend="sql-createtable-exclude"><command>CREATE
        TABLE CONSTRAINT ... EXCLUDE</command></link> clause.
        The most common use of exclusion constraints is to specify that column
        entries must not overlap, rather than simply not be equal.  This is
@@ -8976,7 +8976,7 @@
       <para>
        Add the ability to make mass permission changes across a whole
        schema using the new <link
-       linkend="SQL-GRANT"><command>GRANT</command>/<command>REVOKE
+       linkend="sql-grant"><command>GRANT</command>/<command>REVOKE
        IN SCHEMA</command></link> clause (Petr Jelinek)
       </para>
 
@@ -8989,7 +8989,7 @@
 
      <listitem>
       <para>
-       Add <link linkend="SQL-ALTERDEFAULTPRIVILEGES"><command>ALTER
+       Add <link linkend="sql-alterdefaultprivileges"><command>ALTER
        DEFAULT PRIVILEGES</command></link> command to control privileges
        of objects created later (Petr Jelinek)
       </para>
@@ -9028,8 +9028,8 @@
 
     <listitem>
      <para>
-      Make <link linkend="SQL-LISTEN"><command>LISTEN</command></link>/<link
-      linkend="SQL-NOTIFY"><command>NOTIFY</command></link> store pending events
+      Make <link linkend="sql-listen"><command>LISTEN</command></link>/<link
+      linkend="sql-notify"><command>NOTIFY</command></link> store pending events
       in a memory queue, rather than in a system table (Joachim
       Wieland)
      </para>
@@ -9042,7 +9042,7 @@
 
     <listitem>
      <para>
-      Allow <link linkend="SQL-NOTIFY"><command>NOTIFY</command></link>
+      Allow <link linkend="sql-notify"><command>NOTIFY</command></link>
       to pass an optional <quote>payload</quote> string to listeners
       (Joachim Wieland)
      </para>
@@ -9056,7 +9056,7 @@
 
     <listitem>
      <para>
-      Allow <link linkend="SQL-CLUSTER"><command>CLUSTER</command></link>
+      Allow <link linkend="sql-cluster"><command>CLUSTER</command></link>
       on all per-database system catalogs (Tom Lane)
      </para>
 
@@ -9068,7 +9068,7 @@
    </itemizedlist>
 
    <sect4>
-    <title><link linkend="SQL-COPY"><command>COPY</command></link></title>
+    <title><link linkend="sql-copy"><command>COPY</command></link></title>
 
     <itemizedlist>
 
@@ -9101,7 +9101,7 @@
    </sect4>
 
    <sect4>
-    <title><link linkend="SQL-EXPLAIN"><command>EXPLAIN</command></link></title>
+    <title><link linkend="sql-explain"><command>EXPLAIN</command></link></title>
 
     <itemizedlist>
 
@@ -9156,7 +9156,7 @@
    </sect4>
 
    <sect4>
-    <title><link linkend="SQL-VACUUM"><command>VACUUM</command></link></title>
+    <title><link linkend="sql-vacuum"><command>VACUUM</command></link></title>
 
     <itemizedlist>
 
@@ -9200,7 +9200,7 @@
      <listitem>
       <para>
        Allow an index to be named automatically by omitting the index name in
-       <link linkend="SQL-CREATEINDEX"><command>CREATE INDEX</command></link>
+       <link linkend="sql-createindex"><command>CREATE INDEX</command></link>
        (Tom Lane)
       </para>
      </listitem>
@@ -9581,7 +9581,7 @@
      <listitem>
       <para>
        Support execution of anonymous code blocks using the <link
-       linkend="SQL-DO"><command>DO</command></link> statement
+       linkend="sql-do"><command>DO</command></link> statement
        (Petr Jelinek, Joshua Tolley, Hannu Valtonen)
       </para>
 
@@ -9595,7 +9595,7 @@
      <listitem>
       <para>
        Implement SQL-standard-compliant <link
-       linkend="SQL-CREATETRIGGER">per-column triggers</link>
+       linkend="sql-createtrigger">per-column triggers</link>
        (Itagaki Takahiro)
       </para>
 
@@ -9609,7 +9609,7 @@
      <listitem>
       <para>
        Add the <literal>WHEN</literal> clause to <link
-       linkend="SQL-CREATETRIGGER"><command>CREATE TRIGGER</command></link>
+       linkend="sql-createtrigger"><command>CREATE TRIGGER</command></link>
        to allow control over whether a trigger is fired (Itagaki
        Takahiro)
       </para>
@@ -9635,7 +9635,7 @@
     <listitem>
      <para>
       Add the <literal>OR REPLACE</literal> clause to <link
-      linkend="SQL-CREATELANGUAGE"><command>CREATE LANGUAGE</command></link>
+      linkend="sql-createlanguage"><command>CREATE LANGUAGE</command></link>
       (Tom Lane)
      </para>
 
@@ -9937,7 +9937,7 @@ if TG_OP = 'INSERT' and NEW.col1 = ... then
     <listitem>
     <para>
      Add an <option>--analyze-only</option> option to <link
-     linkend="APP-VACUUMDB"><command>vacuumdb</command></link>, to analyze without
+     linkend="app-vacuumdb"><command>vacuumdb</command></link>, to analyze without
      vacuuming (Bruce Momjian)
      </para>
     </listitem>
@@ -9945,14 +9945,14 @@ if TG_OP = 'INSERT' and NEW.col1 = ... then
    </itemizedlist>
 
    <sect4>
-    <title><link linkend="APP-PSQL"><application>psql</application></link></title>
+    <title><link linkend="app-psql"><application>psql</application></link></title>
 
     <itemizedlist>
 
      <listitem>
       <para>
        Add support for quoting/escaping the values of <application>psql</application>
-       <link linkend="APP-PSQL-variables">variables</link> as SQL strings or
+       <link linkend="app-psql-variables">variables</link> as SQL strings or
        identifiers (Pavel Stehule, Robert Haas)
       </para>
 
@@ -9980,7 +9980,7 @@ if TG_OP = 'INSERT' and NEW.col1 = ... then
      <listitem>
       <para>
        Fix <command>psql --file -</command> to properly honor <link
-       linkend="R1-APP-PSQL-3"><option>--single-transaction</option></link>
+       linkend="r1-app-psql-3"><option>--single-transaction</option></link>
        (Bruce Momjian)
       </para>
      </listitem>
@@ -10039,7 +10039,7 @@ if TG_OP = 'INSERT' and NEW.col1 = ... then
 
     <sect5>
      <title><application>psql</application> <link
-     linkend="APP-PSQL-meta-commands"><command>\d</command></link>
+     linkend="app-psql-meta-commands"><command>\d</command></link>
      Commands</title>
 
      <itemizedlist>
@@ -10084,7 +10084,7 @@ if TG_OP = 'INSERT' and NEW.col1 = ... then
    </sect4>
 
    <sect4>
-    <title><link linkend="APP-PGDUMP"><application>pg_dump</application></link></title>
+    <title><link linkend="app-pgdump"><application>pg_dump</application></link></title>
 
     <itemizedlist>
 
@@ -10990,7 +10990,7 @@ if TG_OP = 'INSERT' and NEW.col1 = ... then
     <listitem>
      <para>
       Add <link
-      linkend="CONTRIB-DBLINK-GET-NOTIFY"><function>dblink_get_notify()</function></link>
+      linkend="contrib-dblink-get-notify"><function>dblink_get_notify()</function></link>
       to <filename>contrib/dblink</filename> (Marcus Kempe)
      </para>
 
@@ -11007,7 +11007,7 @@ if TG_OP = 'INSERT' and NEW.col1 = ... then
 
      <para>
       This affects <link
-      linkend="CONTRIB-DBLINK-BUILD-SQL-INSERT"><function>dblink_build_sql_insert()</function></link>
+      linkend="contrib-dblink-build-sql-insert"><function>dblink_build_sql_insert()</function></link>
       and related functions.  These functions now number columns according
       to logical not physical column numbers.
      </para>

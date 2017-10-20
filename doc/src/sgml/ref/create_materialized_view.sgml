@@ -3,7 +3,7 @@ doc/src/sgml/ref/create_materialized_view.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-CREATEMATERIALIZEDVIEW">
+<refentry id="sql-creatematerializedview">
  <indexterm zone="sql-creatematerializedview">
   <primary>CREATE MATERIALIZED VIEW</primary>
  </indexterm>

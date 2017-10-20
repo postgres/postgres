@@ -3,7 +3,7 @@ doc/src/sgml/ref/alter_extension.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-ALTEREXTENSION">
+<refentry id="sql-alterextension">
  <indexterm zone="sql-alterextension">
   <primary>ALTER EXTENSION</primary>
  </indexterm>
@@ -319,7 +319,7 @@ ALTER EXTENSION hstore ADD FUNCTION populate_record(anyelement, hstore);
   </para>
  </refsect1>
 
- <refsect1 id="SQL-ALTEREXTENSION-see-also">
+ <refsect1 id="sql-alterextension-see-also">
   <title>See Also</title>
 
   <simplelist type="inline">

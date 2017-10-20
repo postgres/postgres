@@ -3,7 +3,7 @@ doc/src/sgml/ref/create_database.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-CREATEDATABASE">
+<refentry id="sql-createdatabase">
  <indexterm zone="sql-createdatabase">
   <primary>CREATE DATABASE</primary>
  </indexterm>
@@ -45,7 +45,7 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
   <para>
    To create a database, you must be a superuser or have the special
    <literal>CREATEDB</literal> privilege.
-   See <xref linkend="SQL-CREATEUSER">.
+   See <xref linkend="sql-createuser">.
   </para>
 
   <para>
@@ -203,11 +203,11 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
    </para>
 
    <para>
-    Use <xref linkend="SQL-DROPDATABASE"> to remove a database.
+    Use <xref linkend="sql-dropdatabase"> to remove a database.
    </para>
 
    <para>
-    The program <xref linkend="APP-CREATEDB"> is a
+    The program <xref linkend="app-createdb"> is a
     wrapper program around this command, provided for convenience.
    </para>
 

@@ -3,7 +3,7 @@ doc/src/sgml/ref/create_statistics.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-CREATESTATISTICS">
+<refentry id="sql-createstatistics">
  <indexterm zone="sql-createstatistics">
   <primary>CREATE STATISTICS</primary>
  </indexterm>
@@ -29,7 +29,7 @@ CREATE STATISTICS [ IF NOT EXISTS ] <replaceable class="parameter">statistics_na
 
  </refsynopsisdiv>
 
- <refsect1 id="SQL-CREATESTATISTICS-description">
+ <refsect1 id="sql-createstatistics-description">
   <title>Description</title>
 
   <para>
@@ -125,7 +125,7 @@ CREATE STATISTICS [ IF NOT EXISTS ] <replaceable class="parameter">statistics_na
   </para>
  </refsect1>
 
- <refsect1 id="SQL-CREATESTATISTICS-examples">
+ <refsect1 id="sql-createstatistics-examples">
   <title>Examples</title>
 
   <para>

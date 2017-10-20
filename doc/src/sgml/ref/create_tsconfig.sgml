@@ -3,7 +3,7 @@ doc/src/sgml/ref/create_tsconfig.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-CREATETSCONFIG">
+<refentry id="sql-createtsconfig">
  <indexterm zone="sql-createtsconfig">
   <primary>CREATE TEXT SEARCH CONFIGURATION</primary>
  </indexterm>

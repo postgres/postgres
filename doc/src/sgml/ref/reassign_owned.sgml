@@ -3,7 +3,7 @@ doc/src/sgml/ref/reassign_owned.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-REASSIGN-OWNED">
+<refentry id="sql-reassign-owned">
  <indexterm zone="sql-reassign-owned">
   <primary>REASSIGN OWNED</primary>
  </indexterm>

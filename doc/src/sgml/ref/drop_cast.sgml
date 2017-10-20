@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/ref/drop_cast.sgml -->
 
-<refentry id="SQL-DROPCAST">
+<refentry id="sql-dropcast">
  <indexterm zone="sql-dropcast">
   <primary>DROP CAST</primary>
  </indexterm>

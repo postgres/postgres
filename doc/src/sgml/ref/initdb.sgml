@@ -3,7 +3,7 @@ doc/src/sgml/ref/initdb.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="APP-INITDB">
+<refentry id="app-initdb">
  <indexterm zone="app-initdb">
   <primary>initdb</primary>
  </indexterm>
@@ -33,7 +33,7 @@ PostgreSQL documentation
   </cmdsynopsis>
  </refsynopsisdiv>
 
- <refsect1 id="R1-APP-INITDB-1">
+ <refsect1 id="r1-app-initdb-1">
   <title>
    Description
   </title>

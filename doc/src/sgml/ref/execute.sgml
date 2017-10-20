@@ -3,7 +3,7 @@ doc/src/sgml/ref/execute.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-EXECUTE">
+<refentry id="sql-execute">
  <indexterm zone="sql-execute">
   <primary>EXECUTE</primary>
  </indexterm>

@@ -3,7 +3,7 @@ doc/src/sgml/ref/create_user_mapping.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-CREATEUSERMAPPING">
+<refentry id="sql-createusermapping">
  <indexterm zone="sql-createusermapping">
   <primary>CREATE USER MAPPING</primary>
  </indexterm>

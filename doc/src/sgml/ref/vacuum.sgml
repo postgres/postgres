@@ -3,7 +3,7 @@ doc/src/sgml/ref/vacuum.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-VACUUM">
+<refentry id="sql-vacuum">
  <indexterm zone="sql-vacuum">
   <primary>VACUUM</primary>
  </indexterm>

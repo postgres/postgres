@@ -3,7 +3,7 @@ doc/src/sgml/ref/grant.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-GRANT">
+<refentry id="sql-grant">
  <indexterm zone="sql-grant">
   <primary>GRANT</primary>
  </indexterm>
@@ -429,7 +429,7 @@ GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replace
  </refsect1>
 
 
- <refsect1 id="SQL-GRANT-notes">
+ <refsect1 id="sql-grant-notes">
   <title>Notes</title>
 
    <para>

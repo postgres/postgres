@@ -3,7 +3,7 @@ doc/src/sgml/ref/alter_conversion.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-ALTERCONVERSION">
+<refentry id="sql-alterconversion">
  <indexterm zone="sql-alterconversion">
   <primary>ALTER CONVERSION</primary>
  </indexterm>

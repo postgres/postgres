@@ -3,7 +3,7 @@ doc/src/sgml/ref/alter_table.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-ALTERTABLE">
+<refentry id="sql-altertable">
  <indexterm zone="sql-altertable">
   <primary>ALTER TABLE</primary>
  </indexterm>
@@ -109,7 +109,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
     <listitem>
      <para>
       This form adds a new column to the table, using the same syntax as
-      <xref linkend="SQL-CREATETABLE">. If <literal>IF NOT EXISTS</literal>
+      <xref linkend="sql-createtable">. If <literal>IF NOT EXISTS</literal>
       is specified and a column already exists with this name,
       no error is thrown.
      </para>
@@ -314,7 +314,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
     <listitem>
      <para>
       This form adds a new constraint to a table using the same syntax as
-      <xref linkend="SQL-CREATETABLE">, plus the option <literal>NOT
+      <xref linkend="sql-createtable">, plus the option <literal>NOT
       VALID</literal>, which is currently only allowed for foreign key
       and CHECK constraints.
       If the constraint is marked <literal>NOT VALID</literal>, the
@@ -483,7 +483,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
       even if row level security is disabled - in this case, the policies will
       NOT be applied and the policies will be ignored.
       See also
-      <xref linkend="SQL-CREATEPOLICY">.
+      <xref linkend="sql-createpolicy">.
      </para>
     </listitem>
    </varlistentry>
@@ -498,7 +498,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
       disabled (the default) then row level security will not be applied when
       the user is the table owner.
       See also
-      <xref linkend="SQL-CREATEPOLICY">.
+      <xref linkend="sql-createpolicy">.
      </para>
     </listitem>
    </varlistentry>
@@ -508,7 +508,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
     <listitem>
      <para>
       This form selects the default index for future
-      <xref linkend="SQL-CLUSTER">
+      <xref linkend="sql-cluster">
       operations.  It does not actually re-cluster the table.
      </para>
      <para>
@@ -522,7 +522,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
     <listitem>
      <para>
       This form removes the most recently used
-      <xref linkend="SQL-CLUSTER">
+      <xref linkend="sql-cluster">
       index specification from the table.  This affects
       future cluster operations that don't specify an index.
      </para>
@@ -582,7 +582,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
       <literal>information_schema</literal> relations are not considered part
       of the system catalogs and will be moved.
       See also
-      <xref linkend="SQL-CREATETABLESPACE">.
+      <xref linkend="sql-createtablespace">.
      </para>
     </listitem>
    </varlistentry>
@@ -592,7 +592,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
     <listitem>
      <para>
       This form changes the table from unlogged to logged or vice-versa
-      (see <xref linkend="SQL-CREATETABLE-UNLOGGED">).  It cannot be applied
+      (see <xref linkend="sql-createtable-unlogged">).  It cannot be applied
       to a temporary table.
      </para>
     </listitem>
@@ -603,13 +603,13 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
     <listitem>
      <para>
       This form changes one or more storage parameters for the table.  See
-      <xref linkend="SQL-CREATETABLE-storage-parameters"
-      endterm="SQL-CREATETABLE-storage-parameters-title">
+      <xref linkend="sql-createtable-storage-parameters"
+      endterm="sql-createtable-storage-parameters-title">
       for details on the available parameters.  Note that the table contents
       will not be modified immediately by this command; depending on the
       parameter you might need to rewrite the table to get the desired effects.
-      That can be done with <link linkend="SQL-VACUUM">VACUUM
-      FULL</link>, <xref linkend="SQL-CLUSTER"> or one of the forms
+      That can be done with <link linkend="sql-vacuum">VACUUM
+      FULL</link>, <xref linkend="sql-cluster"> or one of the forms
       of <command>ALTER TABLE</command> that forces a table rewrite.
       For planner related parameters, changes will take effect from the next
       time the table is locked so currently executing queries will not be
@@ -722,7 +722,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
     </listitem>
    </varlistentry>
 
-   <varlistentry id="SQL-CREATETABLE-REPLICA-IDENTITY">
+   <varlistentry id="sql-createtable-replica-identity">
     <term><literal>REPLICA IDENTITY</literal></term>
     <listitem>
      <para>
@@ -810,7 +810,7 @@ ALTER TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
      <para>
       If the new partition is a foreign table, nothing is done to verify
       that all the rows in the foreign table obey the partition constraint.
-      (See the discussion in <xref linkend="SQL-CREATEFOREIGNTABLE"> about
+      (See the discussion in <xref linkend="sql-createforeigntable"> about
       constraints on the foreign table.)
      </para>
 

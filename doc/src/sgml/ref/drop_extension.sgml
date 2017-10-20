@@ -3,7 +3,7 @@ doc/src/sgml/ref/drop_extension.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-DROPEXTENSION">
+<refentry id="sql-dropextension">
  <indexterm zone="sql-dropextension">
   <primary>DROP EXTENSION</primary>
  </indexterm>

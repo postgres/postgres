@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/ref/create_collation.sgml -->
 
-<refentry id="SQL-CREATECOLLATION">
+<refentry id="sql-createcollation">
  <indexterm zone="sql-createcollation">
   <primary>CREATE COLLATION</primary>
  </indexterm>

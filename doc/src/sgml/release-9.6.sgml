@@ -5048,7 +5048,7 @@ and many others in the same vein
 2015-09-02 [30bb26b5e] Allow usage of huge maintenance_work_mem for GIN build.
 -->
        <para>
-        Allow <link linkend="GIN"><acronym>GIN</acronym></link> index builds to
+        Allow <link linkend="gin"><acronym>GIN</acronym></link> index builds to
         make effective use of <xref linkend="guc-maintenance-work-mem">
         settings larger than 1 GB (Robert Abraham, Teodor Sigaev)
        </para>
@@ -5094,7 +5094,7 @@ and many others in the same vein
 -->
        <para>
         Improve handling of dead index tuples in <link
-        linkend="GiST">GiST</link> indexes (Anastasia Lubennikova)
+        linkend="gist">GiST</link> indexes (Anastasia Lubennikova)
        </para>
 
        <para>
@@ -5110,7 +5110,7 @@ and many others in the same vein
 2016-03-30 [acdf2a8b3] Introduce SP-GiST operator class over box.
 -->
        <para>
-        Add an <link linkend="SPGiST">SP-GiST</link> operator class for
+        Add an <link linkend="spgist">SP-GiST</link> operator class for
         type <type>box</type> (Alexander Lebedev)
        </para>
       </listitem>
@@ -7228,8 +7228,8 @@ This commit is also listed under psql and PL/pgSQL
 -->
        <para>
         Add a <option>--strict-names</option> option
-        to <link linkend="APP-PGDUMP"><application>pg_dump</application></link>
-        and <link linkend="APP-PGRESTORE"><application>pg_restore</application></link>
+        to <link linkend="app-pgdump"><application>pg_dump</application></link>
+        and <link linkend="app-pgrestore"><application>pg_restore</application></link>
         (Pavel Stehule)
        </para>
 
@@ -7292,7 +7292,7 @@ This commit is also listed under psql and PL/pgSQL
     </itemizedlist>
 
      <sect4>
-      <title><xref linkend="APP-PSQL"></title>
+      <title><xref linkend="app-psql"></title>
 
       <itemizedlist>
 

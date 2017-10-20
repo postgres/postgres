@@ -3,7 +3,7 @@ doc/src/sgml/ref/drop_function.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-DROPFUNCTION">
+<refentry id="sql-dropfunction">
  <indexterm zone="sql-dropfunction">
   <primary>DROP FUNCTION</primary>
  </indexterm>
@@ -127,7 +127,7 @@ DROP FUNCTION [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [ 
   </variablelist>
  </refsect1>
 
- <refsect1 id="SQL-DROPFUNCTION-examples">
+ <refsect1 id="sql-dropfunction-examples">
   <title>Examples</title>
 
   <para>
@@ -159,7 +159,7 @@ DROP FUNCTION update_employee_salaries();
   </para>
  </refsect1>
 
- <refsect1 id="SQL-DROPFUNCTION-compatibility">
+ <refsect1 id="sql-dropfunction-compatibility">
   <title>Compatibility</title>
 
   <para>

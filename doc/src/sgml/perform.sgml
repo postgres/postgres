@@ -1848,7 +1848,7 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
 
      <listitem>
       <para>
-       Create <link linkend="SQL-CREATETABLE-UNLOGGED">unlogged
+       Create <link linkend="sql-createtable-unlogged">unlogged
        tables</link> to avoid <acronym>WAL</acronym> writes, though it
        makes the tables non-crash-safe.
       </para>

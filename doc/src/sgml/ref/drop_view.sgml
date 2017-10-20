@@ -3,7 +3,7 @@ doc/src/sgml/ref/drop_view.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-DROPVIEW">
+<refentry id="sql-dropview">
  <indexterm zone="sql-dropview">
   <primary>DROP VIEW</primary>
  </indexterm>

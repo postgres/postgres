@@ -3,7 +3,7 @@ doc/src/sgml/ref/drop_publication.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-DROPPUBLICATION">
+<refentry id="sql-droppublication">
  <indexterm zone="sql-droppublication">
   <primary>DROP PUBLICATION</primary>
  </indexterm>

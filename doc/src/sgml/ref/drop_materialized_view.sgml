@@ -3,7 +3,7 @@ doc/src/sgml/ref/drop_materialized_view.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-DROPMATERIALIZEDVIEW">
+<refentry id="sql-dropmaterializedview">
  <indexterm zone="sql-dropmaterializedview">
   <primary>DROP MATERIALIZED VIEW</primary>
  </indexterm>

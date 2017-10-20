@@ -3,7 +3,7 @@ doc/src/sgml/ref/import_foreign_schema.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-IMPORTFOREIGNSCHEMA">
+<refentry id="sql-importforeignschema">
  <indexterm zone="sql-importforeignschema">
   <primary>IMPORT FOREIGN SCHEMA</primary>
  </indexterm>
@@ -29,7 +29,7 @@ IMPORT FOREIGN SCHEMA <replaceable class="parameter">remote_schema</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
- <refsect1 id="SQL-IMPORTFOREIGNSCHEMA-description">
+ <refsect1 id="sql-importforeignschema-description">
   <title>Description</title>
 
   <para>
@@ -120,7 +120,7 @@ IMPORT FOREIGN SCHEMA <replaceable class="parameter">remote_schema</replaceable>
   </variablelist>
  </refsect1>
 
- <refsect1 id="SQL-IMPORTFOREIGNSCHEMA-examples">
+ <refsect1 id="sql-importforeignschema-examples">
   <title>Examples</title>
 
   <para>
@@ -144,7 +144,7 @@ IMPORT FOREIGN SCHEMA foreign_films LIMIT TO (actors, directors)
 </programlisting></para>
  </refsect1>
 
- <refsect1 id="SQL-IMPORTFOREIGNSCHEMA-compatibility">
+ <refsect1 id="sql-importforeignschema-compatibility">
   <title>Compatibility</title>
 
   <para>

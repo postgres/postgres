@@ -3,7 +3,7 @@ doc/src/sgml/ref/create_event_trigger.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-CREATEEVENTTRIGGER">
+<refentry id="sql-createeventtrigger">
  <indexterm zone="sql-createeventtrigger">
   <primary>CREATE EVENT TRIGGER</primary>
  </indexterm>

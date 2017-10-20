@@ -3,7 +3,7 @@ doc/src/sgml/ref/createdb.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="APP-CREATEDB">
+<refentry id="app-createdb">
  <indexterm zone="app-createdb">
   <primary>createdb</primary>
  </indexterm>
@@ -30,7 +30,7 @@ PostgreSQL documentation
  </refsynopsisdiv>
 
 
- <refsect1 id="R1-APP-CREATEDB-1">
+ <refsect1 id="r1-app-createdb-1">
   <title>
    Description
   </title>
@@ -48,7 +48,7 @@ PostgreSQL documentation
 
   <para>
    <application>createdb</application> is a wrapper around the
-   <acronym>SQL</acronym> command <xref linkend="SQL-CREATEDATABASE">.
+   <acronym>SQL</acronym> command <xref linkend="sql-createdatabase">.
    There is no effective difference between creating databases via
    this utility and via other methods for accessing the server.
   </para>
@@ -199,7 +199,7 @@ PostgreSQL documentation
     The options <option>-D</option>, <option>-l</option>, <option>-E</option>,
     <option>-O</option>, and
     <option>-T</option> correspond to options of the underlying
-    SQL command <xref linkend="SQL-CREATEDATABASE">; see there for more information
+    SQL command <xref linkend="sql-createdatabase">; see there for more information
     about them.
    </para>
 
@@ -337,8 +337,8 @@ PostgreSQL documentation
   <title>Diagnostics</title>
 
   <para>
-   In case of difficulty, see <xref linkend="SQL-CREATEDATABASE">
-   and <xref linkend="APP-PSQL"> for
+   In case of difficulty, see <xref linkend="sql-createdatabase">
+   and <xref linkend="app-psql"> for
    discussions of potential problems and error messages.
    The database server must be running at the
    targeted host.  Also, any default connection settings and environment

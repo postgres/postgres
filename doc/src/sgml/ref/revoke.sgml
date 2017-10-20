@@ -3,7 +3,7 @@ doc/src/sgml/ref/revoke.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-REVOKE">
+<refentry id="sql-revoke">
  <indexterm zone="sql-revoke">
   <primary>REVOKE</primary>
  </indexterm>
@@ -111,7 +111,7 @@ REVOKE [ ADMIN OPTION FOR ]
 </synopsis>
  </refsynopsisdiv>
 
- <refsect1 id="SQL-REVOKE-description">
+ <refsect1 id="sql-revoke-description">
   <title>Description</title>
 
   <para>
@@ -174,7 +174,7 @@ REVOKE [ ADMIN OPTION FOR ]
   </para>
  </refsect1>
 
- <refsect1 id="SQL-REVOKE-notes">
+ <refsect1 id="sql-revoke-notes">
   <title>Notes</title>
 
   <para>
@@ -246,7 +246,7 @@ REVOKE [ ADMIN OPTION FOR ]
    </para>
  </refsect1>
 
- <refsect1 id="SQL-REVOKE-examples">
+ <refsect1 id="sql-revoke-examples">
   <title>Examples</title>
 
   <para>
@@ -278,7 +278,7 @@ REVOKE admins FROM joe;
 </programlisting></para>
  </refsect1>
 
- <refsect1 id="SQL-REVOKE-compatibility">
+ <refsect1 id="sql-revoke-compatibility">
   <title>Compatibility</title>
 
    <para>

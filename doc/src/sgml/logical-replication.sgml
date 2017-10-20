@@ -126,7 +126,7 @@
    fallback if no other solution is possible.  If a replica identity other
    than <quote>full</quote> is set on the publisher side, a replica identity
    comprising the same or fewer columns must also be set on the subscriber
-   side.  See <xref linkend="SQL-CREATETABLE-REPLICA-IDENTITY"> for details on
+   side.  See <xref linkend="sql-createtable-replica-identity"> for details on
    how to set the replica identity.  If a table without a replica identity is
    added to a publication that replicates <command>UPDATE</command>
    or <command>DELETE</command> operations then

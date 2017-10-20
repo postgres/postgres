@@ -3,7 +3,7 @@ doc/src/sgml/ref/alter_function.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-ALTERFUNCTION">
+<refentry id="sql-alterfunction">
  <indexterm zone="sql-alterfunction">
   <primary>ALTER FUNCTION</primary>
  </indexterm>

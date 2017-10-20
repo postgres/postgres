@@ -3,7 +3,7 @@ doc/src/sgml/ref/select.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-SELECT">
+<refentry id="sql-select">
  <indexterm zone="sql-select">
   <primary>SELECT</primary>
  </indexterm>
@@ -218,7 +218,7 @@ TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
  <refsect1>
   <title>Parameters</title>
 
-  <refsect2 id="SQL-WITH">
+  <refsect2 id="sql-with">
    <title id="sql-with-title"><literal>WITH</literal> Clause</title>
 
    <para>
@@ -295,7 +295,7 @@ TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
    </para>
   </refsect2>
 
-  <refsect2 id="SQL-FROM">
+  <refsect2 id="sql-from">
    <title id="sql-from-title"><literal>FROM</literal> Clause</title>
 
    <para>
@@ -666,7 +666,7 @@ TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
    </para>
   </refsect2>
 
-  <refsect2 id="SQL-WHERE">
+  <refsect2 id="sql-where">
    <title id="sql-where-title"><literal>WHERE</literal> Clause</title>
 
    <para>
@@ -683,7 +683,7 @@ WHERE <replaceable class="parameter">condition</replaceable>
    </para>
   </refsect2>
 
-  <refsect2 id="SQL-GROUPBY">
+  <refsect2 id="sql-groupby">
    <title id="sql-groupby-title"><literal>GROUP BY</literal> Clause</title>
 
    <para>
@@ -757,7 +757,7 @@ GROUP BY <replaceable class="parameter">grouping_element</replaceable> [, ...]
    </para>
   </refsect2>
 
-  <refsect2 id="SQL-HAVING">
+  <refsect2 id="sql-having">
    <title id="sql-having-title"><literal>HAVING</literal> Clause</title>
 
    <para>
@@ -800,7 +800,7 @@ HAVING <replaceable class="parameter">condition</replaceable>
    </para>
   </refsect2>
 
-  <refsect2 id="SQL-WINDOW">
+  <refsect2 id="sql-window">
    <title id="sql-window-title"><literal>WINDOW</literal> Clause</title>
 
    <para>
@@ -1073,7 +1073,7 @@ SELECT DISTINCT ON (location) location, time, report
    </para>
   </refsect2>
 
-  <refsect2 id="SQL-UNION">
+  <refsect2 id="sql-union">
    <title id="sql-union-title"><literal>UNION</literal> Clause</title>
 
    <para>
@@ -1126,7 +1126,7 @@ SELECT DISTINCT ON (location) location, time, report
    </para>
   </refsect2>
 
-  <refsect2 id="SQL-INTERSECT">
+  <refsect2 id="sql-intersect">
    <title id="sql-intersect-title"><literal>INTERSECT</literal> Clause</title>
 
    <para>
@@ -1174,7 +1174,7 @@ SELECT DISTINCT ON (location) location, time, report
    </para>
   </refsect2>
 
-  <refsect2 id="SQL-EXCEPT">
+  <refsect2 id="sql-except">
    <title id="sql-except-title"><literal>EXCEPT</literal> Clause</title>
 
    <para>
@@ -1218,7 +1218,7 @@ SELECT DISTINCT ON (location) location, time, report
    </para>
   </refsect2>
 
-  <refsect2 id="SQL-ORDERBY">
+  <refsect2 id="sql-orderby">
    <title id="sql-orderby-title"><literal>ORDER BY</literal> Clause</title>
 
    <para>
@@ -1316,7 +1316,7 @@ SELECT name FROM distributors ORDER BY code;
    </para>
   </refsect2>
 
-  <refsect2 id="SQL-LIMIT">
+  <refsect2 id="sql-limit">
    <title id="sql-limit-title"><literal>LIMIT</literal> Clause</title>
 
    <para>
@@ -1396,7 +1396,7 @@ FETCH { FIRST | NEXT } [ <replaceable class="parameter">count</replaceable> ] { 
    </para>
   </refsect2>
 
-  <refsect2 id="SQL-FOR-UPDATE-SHARE">
+  <refsect2 id="sql-for-update-share">
    <title id="sql-for-update-share-title">The Locking Clause</title>
 
    <para>
@@ -1560,7 +1560,7 @@ SELECT * FROM (SELECT * FROM mytable FOR UPDATE) ss ORDER BY column1;
   </caution>
   </refsect2>
 
-  <refsect2 id="SQL-TABLE">
+  <refsect2 id="sql-table">
    <title><literal>TABLE</literal> Command</title>
 
    <para>

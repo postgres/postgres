@@ -3,7 +3,7 @@ doc/src/sgml/ref/analyze.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-ANALYZE">
+<refentry id="sql-analyze">
  <indexterm zone="sql-analyze">
   <primary>ANALYZE</primary>
  </indexterm>

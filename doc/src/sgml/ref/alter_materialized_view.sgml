@@ -3,7 +3,7 @@ doc/src/sgml/ref/alter_materialized_view.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-ALTERMATERIALIZEDVIEW">
+<refentry id="sql-altermaterializedview">
  <indexterm zone="sql-altermaterializedview">
   <primary>ALTER MATERIALIZED VIEW</primary>
  </indexterm>

@@ -3,7 +3,7 @@ doc/src/sgml/ref/create_rule.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-CREATERULE">
+<refentry id="sql-createrule">
  <indexterm zone="sql-createrule">
   <primary>CREATE RULE</primary>
  </indexterm>

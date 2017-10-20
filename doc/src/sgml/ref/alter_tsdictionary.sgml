@@ -3,7 +3,7 @@ doc/src/sgml/ref/alter_tsdictionary.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-ALTERTSDICTIONARY">
+<refentry id="sql-altertsdictionary">
  <indexterm zone="sql-altertsdictionary">
   <primary>ALTER TEXT SEARCH DICTIONARY</primary>
  </indexterm>

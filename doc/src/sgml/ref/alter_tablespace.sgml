@@ -3,7 +3,7 @@ doc/src/sgml/ref/alter_tablespace.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-ALTERTABLESPACE">
+<refentry id="sql-altertablespace">
  <indexterm zone="sql-altertablespace">
   <primary>ALTER TABLESPACE</primary>
  </indexterm>

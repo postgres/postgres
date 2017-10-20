@@ -929,7 +929,7 @@ ERROR:  could not serialize access due to read/write dependencies among transact
          <command>CREATE STATISTICS</command> and
          <command>ALTER TABLE VALIDATE</command> and other
          <command>ALTER TABLE</command> variants (for full details see
-         <xref linkend="SQL-ALTERTABLE">).
+         <xref linkend="sql-altertable">).
         </para>
        </listitem>
       </varlistentry>
@@ -972,7 +972,7 @@ ERROR:  could not serialize access due to read/write dependencies among transact
         <para>
          Acquired by <command>CREATE COLLATION</command>,
          <command>CREATE TRIGGER</command>, and many forms of
-         <command>ALTER TABLE</command> (see <xref linkend="SQL-ALTERTABLE">).
+         <command>ALTER TABLE</command> (see <xref linkend="sql-altertable">).
         </para>
        </listitem>
       </varlistentry>

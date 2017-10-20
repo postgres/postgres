@@ -3,7 +3,7 @@ doc/src/sgml/ref/rollback_to.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-ROLLBACK-TO">
+<refentry id="sql-rollback-to">
  <indexterm zone="sql-rollback-to">
   <primary>ROLLBACK TO SAVEPOINT</primary>
  </indexterm>
@@ -64,7 +64,7 @@ ROLLBACK [ WORK | TRANSACTION ] TO [ SAVEPOINT ] <replaceable>savepoint_name</re
   <title>Notes</title>
 
   <para>
-   Use <xref linkend="SQL-RELEASE-SAVEPOINT"> to destroy a savepoint
+   Use <xref linkend="sql-release-savepoint"> to destroy a savepoint
    without discarding the effects of commands executed after it was
    established.
   </para>

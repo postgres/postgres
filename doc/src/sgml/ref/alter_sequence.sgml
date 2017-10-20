@@ -3,7 +3,7 @@ doc/src/sgml/ref/alter_sequence.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-ALTERSEQUENCE">
+<refentry id="sql-altersequence">
  <indexterm zone="sql-altersequence">
   <primary>ALTER SEQUENCE</primary>
  </indexterm>

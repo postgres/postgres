@@ -908,7 +908,7 @@ CREATE TABLE circles (
    </para>
 
    <para>
-    See also <link linkend="SQL-CREATETABLE-EXCLUDE"><command>CREATE
+    See also <link linkend="sql-createtable-exclude"><command>CREATE
     TABLE ... CONSTRAINT ... EXCLUDE</command></link> for details.
    </para>
 

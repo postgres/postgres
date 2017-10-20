@@ -3,7 +3,7 @@ doc/src/sgml/ref/explain.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-EXPLAIN">
+<refentry id="sql-explain">
  <indexterm zone="sql-explain">
   <primary>EXPLAIN</primary>
  </indexterm>

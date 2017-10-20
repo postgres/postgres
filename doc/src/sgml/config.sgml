@@ -170,7 +170,7 @@ shared_buffers = 128MB
      <filename>postgresql.auto.conf</filename><indexterm><primary>postgresql.auto.conf</primary></indexterm>,
      which has the same format as <filename>postgresql.conf</filename> but should
      never be edited manually.  This file holds settings provided through
-     the <xref linkend="SQL-ALTERSYSTEM"> command.  This file is automatically
+     the <xref linkend="sql-altersystem"> command.  This file is automatically
      read whenever <filename>postgresql.conf</filename> is, and its settings take
      effect in the same way.  Settings in <filename>postgresql.auto.conf</filename>
      override those in <filename>postgresql.conf</filename>.
@@ -191,7 +191,7 @@ shared_buffers = 128MB
      <para>
       <productname>PostgreSQL</productname> provides three SQL
       commands to establish configuration defaults.
-      The already-mentioned <xref linkend="SQL-ALTERSYSTEM"> command
+      The already-mentioned <xref linkend="sql-altersystem"> command
       provides a SQL-accessible means of changing global defaults; it is
       functionally equivalent to editing <filename>postgresql.conf</filename>.
       In addition, there are two commands that allow setting of defaults
@@ -232,7 +232,7 @@ shared_buffers = 128MB
     <itemizedlist>
      <listitem>
      <para>
-      The <xref linkend="SQL-SHOW"> command allows inspection of the
+      The <xref linkend="sql-show"> command allows inspection of the
       current value of all parameters.  The corresponding function is
       <function>current_setting(setting_name text)</function>.
      </para>
@@ -240,7 +240,7 @@ shared_buffers = 128MB
 
      <listitem>
       <para>
-       The <xref linkend="SQL-SET"> command allows modification of the
+       The <xref linkend="sql-set"> command allows modification of the
        current value of those parameters that can be set locally to a
        session; it has no effect on other sessions.
        The corresponding function is
@@ -266,7 +266,7 @@ shared_buffers = 128MB
 
      <listitem>
       <para>
-       Using <xref linkend="SQL-UPDATE"> on this view, specifically
+       Using <xref linkend="sql-update"> on this view, specifically
        updating the <structname>setting</structname> column, is the equivalent
        of issuing <command>SET</command> commands.  For example, the equivalent of
 <programlisting>
@@ -6237,7 +6237,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
 
        <para>
         For more information on row security policies,
-        see <xref linkend="SQL-CREATEPOLICY">.
+        see <xref linkend="sql-createpolicy">.
        </para>
       </listitem>
      </varlistentry>
@@ -7040,7 +7040,7 @@ SET XML OPTION { DOCUMENT | CONTENT };
         This variable specifies one or more shared libraries that are to be
         preloaded at connection start.
         It contains a comma-separated list of library names, where each name
-        is interpreted as for the <xref linkend="SQL-LOAD"> command.
+        is interpreted as for the <xref linkend="sql-load"> command.
         Whitespace between entries is ignored; surround a library name with
         double quotes if you need to include whitespace or commas in the name.
         The parameter value only takes effect at the start of the connection.
@@ -7091,7 +7091,7 @@ SET XML OPTION { DOCUMENT | CONTENT };
         This variable specifies one or more shared libraries that are to be
         preloaded at connection start.
         It contains a comma-separated list of library names, where each name
-        is interpreted as for the <xref linkend="SQL-LOAD"> command.
+        is interpreted as for the <xref linkend="sql-load"> command.
         Whitespace between entries is ignored; surround a library name with
         double quotes if you need to include whitespace or commas in the name.
         The parameter value only takes effect at the start of the connection.
@@ -7133,7 +7133,7 @@ SET XML OPTION { DOCUMENT | CONTENT };
         This variable specifies one or more shared libraries to be preloaded at
         server start.
         It contains a comma-separated list of library names, where each name
-        is interpreted as for the <xref linkend="SQL-LOAD"> command.
+        is interpreted as for the <xref linkend="sql-load"> command.
         Whitespace between entries is ignored; surround a library name with
         double quotes if you need to include whitespace or commas in the name.
         This parameter can only be set at server start.  If a specified

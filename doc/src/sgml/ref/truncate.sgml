@@ -3,7 +3,7 @@ doc/src/sgml/ref/truncate.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-TRUNCATE">
+<refentry id="sql-truncate">
  <indexterm zone="sql-truncate">
   <primary>TRUNCATE</primary>
  </indexterm>

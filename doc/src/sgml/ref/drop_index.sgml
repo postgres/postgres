@@ -3,7 +3,7 @@ doc/src/sgml/ref/drop_index.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-DROPINDEX">
+<refentry id="sql-dropindex">
  <indexterm zone="sql-dropindex">
   <primary>DROP INDEX</primary>
  </indexterm>

@@ -3,7 +3,7 @@ doc/src/sgml/ref/create_trigger.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-CREATETRIGGER">
+<refentry id="sql-createtrigger">
  <indexterm zone="sql-createtrigger">
   <primary>CREATE TRIGGER</primary>
  </indexterm>
@@ -170,7 +170,7 @@ CREATE [ CONSTRAINT ] TRIGGER <replaceable class="parameter">name</replaceable> 
    When the <literal>CONSTRAINT</literal> option is specified, this command creates a
    <firstterm>constraint trigger</firstterm>.  This is the same as a regular trigger
    except that the timing of the trigger firing can be adjusted using
-   <xref linkend="SQL-SET-CONSTRAINTS">.
+   <xref linkend="sql-set-constraints">.
    Constraint triggers must be <literal>AFTER ROW</literal> triggers on plain
    tables (not foreign tables).  They
    can be fired either at the end of the statement causing the triggering
@@ -302,7 +302,7 @@ UPDATE OF <replaceable>column_name1</replaceable> [, <replaceable>column_name2</
     <listitem>
      <para>
       The default timing of the trigger.
-      See the <xref linkend="SQL-CREATETABLE"> documentation for details of
+      See the <xref linkend="sql-createtable"> documentation for details of
       these constraint options.  This can only be specified for constraint
       triggers.
      </para>
@@ -422,7 +422,7 @@ UPDATE OF <replaceable>column_name1</replaceable> [, <replaceable>column_name2</
   </variablelist>
  </refsect1>
 
- <refsect1 id="SQL-CREATETRIGGER-notes">
+ <refsect1 id="sql-createtrigger-notes">
   <title>Notes</title>
 
   <para>
@@ -523,7 +523,7 @@ UPDATE OF <replaceable>column_name1</replaceable> [, <replaceable>column_name2</
   </para>
  </refsect1>
 
- <refsect1 id="SQL-CREATETRIGGER-examples">
+ <refsect1 id="sql-createtrigger-examples">
   <title>Examples</title>
 
   <para>
@@ -610,7 +610,7 @@ CREATE TRIGGER paired_items_update
   </para>
  </refsect1>
 
- <refsect1 id="SQL-CREATETRIGGER-compatibility">
+ <refsect1 id="sql-createtrigger-compatibility">
   <title>Compatibility</title>
 
   <!--

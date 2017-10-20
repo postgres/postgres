@@ -426,7 +426,7 @@ PostgreSQL documentation
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="APP-PGBASEBACKUP"></member>
+   <member><xref linkend="app-pgbasebackup"></member>
   </simplelist>
  </refsect1>
 

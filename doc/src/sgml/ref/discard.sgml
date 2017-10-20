@@ -3,7 +3,7 @@ doc/src/sgml/ref/discard.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-DISCARD">
+<refentry id="sql-discard">
  <indexterm zone="sql-discard">
   <primary>DISCARD</primary>
  </indexterm>

@@ -268,7 +268,7 @@ createdb: database creation failed: ERROR:  permission denied to create database
 
    <para>
     More about <command>createdb</command> and <command>dropdb</command> can
-    be found in <xref linkend="APP-CREATEDB"> and <xref linkend="APP-DROPDB">
+    be found in <xref linkend="app-createdb"> and <xref linkend="app-dropdb">
     respectively.
    </para>
   </sect1>

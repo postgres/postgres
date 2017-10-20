@@ -3,7 +3,7 @@ doc/src/sgml/ref/show.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-SHOW">
+<refentry id="sql-show">
  <indexterm zone="sql-show">
   <primary>SHOW</primary>
  </indexterm>
@@ -52,7 +52,7 @@ SHOW ALL
      <para>
       The name of a run-time parameter.  Available parameters are
       documented in <xref linkend="runtime-config"> and on the <xref
-      linkend="SQL-SET"> reference page.  In
+      linkend="sql-set"> reference page.  In
       addition, there are a few parameters that can be shown but not
       set:
 
@@ -192,8 +192,8 @@ SHOW ALL;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="SQL-SET"></member>
-   <member><xref linkend="SQL-RESET"></member>
+   <member><xref linkend="sql-set"></member>
+   <member><xref linkend="sql-reset"></member>
   </simplelist>
  </refsect1>
 

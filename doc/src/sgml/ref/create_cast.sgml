@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/ref/create_cast.sgml -->
 
-<refentry id="SQL-CREATECAST">
+<refentry id="sql-createcast">
  <indexterm zone="sql-createcast">
   <primary>CREATE CAST</primary>
  </indexterm>

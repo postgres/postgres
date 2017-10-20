@@ -3,7 +3,7 @@ doc/src/sgml/ref/alter_foreign_data_wrapper.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-ALTERFOREIGNDATAWRAPPER">
+<refentry id="sql-alterforeigndatawrapper">
  <indexterm zone="sql-alterforeigndatawrapper">
   <primary>ALTER FOREIGN DATA WRAPPER</primary>
  </indexterm>

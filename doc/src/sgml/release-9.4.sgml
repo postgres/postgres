@@ -8490,14 +8490,14 @@ Branch: REL9_4_STABLE [c2b06ab17] 2015-01-30 22:45:58 -0500
 
      <listitem>
       <para>
-       Add new <acronym>SQL</acronym> command <xref linkend="SQL-ALTERSYSTEM">
+       Add new <acronym>SQL</acronym> command <xref linkend="sql-altersystem">
        for changing <filename>postgresql.conf</filename> configuration file entries
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Reduce lock strength for some <xref linkend="SQL-ALTERTABLE">
+       Reduce lock strength for some <xref linkend="sql-altertable">
        commands
       </para>
      </listitem>
@@ -8686,7 +8686,7 @@ Branch: REL9_4_STABLE [c2b06ab17] 2015-01-30 22:45:58 -0500
 
     <listitem>
      <para>
-      Rename <link linkend="SQL-EXPLAIN"><command>EXPLAIN
+      Rename <link linkend="sql-explain"><command>EXPLAIN
       ANALYZE</command></link>'s <quote>total runtime</quote> output
       to <quote>execution time</quote> (Tom Lane)
      </para>
@@ -8699,7 +8699,7 @@ Branch: REL9_4_STABLE [c2b06ab17] 2015-01-30 22:45:58 -0500
 
     <listitem>
      <para>
-      <link linkend="SQL-SHOW"><command>SHOW TIME ZONE</command></link> now
+      <link linkend="sql-show"><command>SHOW TIME ZONE</command></link> now
       outputs simple numeric UTC offsets in <acronym>POSIX</acronym> timezone
       format (Tom Lane)
      </para>
@@ -8924,7 +8924,7 @@ Branch: REL9_4_STABLE [c2b06ab17] 2015-01-30 22:45:58 -0500
 
       <listitem>
        <para>
-        Make <xref linkend="SQL-VACUUM"> properly report dead but
+        Make <xref linkend="sql-vacuum"> properly report dead but
         not-yet-removable rows to the statistics collector (Hari Babu)
        </para>
 
@@ -8942,14 +8942,14 @@ Branch: REL9_4_STABLE [c2b06ab17] 2015-01-30 22:45:58 -0500
 
       <listitem>
        <para>
-        Reduce <link linkend="GIN"><acronym>GIN</acronym></link> index size
+        Reduce <link linkend="gin"><acronym>GIN</acronym></link> index size
         (Alexander Korotkov, Heikki Linnakangas)
        </para>
 
        <para>
         Indexes upgraded via <xref linkend="pgupgrade"> will work fine
         but will still be in the old, larger <acronym>GIN</acronym> format.
-        Use <xref linkend="SQL-REINDEX"> to recreate old GIN indexes in the
+        Use <xref linkend="sql-reindex"> to recreate old GIN indexes in the
         new format.
        </para>
       </listitem>
@@ -8957,14 +8957,14 @@ Branch: REL9_4_STABLE [c2b06ab17] 2015-01-30 22:45:58 -0500
       <listitem>
        <para>
         Improve speed of multi-key <link
-        linkend="GIN"><acronym>GIN</acronym></link> lookups (Alexander Korotkov,
+        linkend="gin"><acronym>GIN</acronym></link> lookups (Alexander Korotkov,
         Heikki Linnakangas)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Add <link linkend="GiST"><acronym>GiST</acronym></link> index support
+        Add <link linkend="gist"><acronym>GiST</acronym></link> index support
         for <link linkend="datatype-inet"><type>inet</type></link> and
         <link linkend="datatype-cidr"><type>cidr</type></link> data types
         (Emre Hasegeli)
@@ -9038,8 +9038,8 @@ Branch: REL9_4_STABLE [c2b06ab17] 2015-01-30 22:45:58 -0500
        <para>
         Attempt to <link linkend="vacuum-for-wraparound">freeze</link>
         tuples when tables are rewritten with <xref
-        linkend="SQL-CLUSTER"> or <link
-        linkend="SQL-VACUUM"><command>VACUUM FULL</command></link> (Robert Haas,
+        linkend="sql-cluster"> or <link
+        linkend="sql-vacuum"><command>VACUUM FULL</command></link> (Robert Haas,
         Andres Freund)
        </para>
 
@@ -9050,7 +9050,7 @@ Branch: REL9_4_STABLE [c2b06ab17] 2015-01-30 22:45:58 -0500
 
       <listitem>
        <para>
-        Improve speed of <xref linkend="SQL-COPY"> with default <link
+        Improve speed of <xref linkend="sql-copy"> with default <link
         linkend="functions-sequence-table"><function>nextval()</function></link>
         columns (Simon Riggs)
        </para>
@@ -9059,7 +9059,7 @@ Branch: REL9_4_STABLE [c2b06ab17] 2015-01-30 22:45:58 -0500
       <listitem>
        <para>
         Improve speed of accessing many different <link
-        linkend="SQL-CREATESEQUENCE">sequences</link> in the same session
+        linkend="sql-createsequence">sequences</link> in the same session
         (David Rowley)
        </para>
       </listitem>
@@ -9074,7 +9074,7 @@ Branch: REL9_4_STABLE [c2b06ab17] 2015-01-30 22:45:58 -0500
       <listitem>
        <para>
         Reduce memory allocated by <application>PL/pgSQL</application>
-        <xref linkend="SQL-DO"> blocks (Tom Lane)
+        <xref linkend="sql-do"> blocks (Tom Lane)
        </para>
       </listitem>
 
@@ -9222,7 +9222,7 @@ Branch: REL9_4_STABLE [c2b06ab17] 2015-01-30 22:45:58 -0500
 
       <listitem>
        <para>
-        Add new <acronym>SQL</acronym> command <xref linkend="SQL-ALTERSYSTEM">
+        Add new <acronym>SQL</acronym> command <xref linkend="sql-altersystem">
         for changing <filename>postgresql.conf</filename> configuration file entries
         (Amit Kapila)
        </para>
@@ -9503,7 +9503,7 @@ Branch: REL9_4_STABLE [c2b06ab17] 2015-01-30 22:45:58 -0500
        <listitem>
         <para>
          Add relation option <link
-         linkend="SQL-CREATETABLE-storage-parameters"><option>user_catalog_table</option></link>
+         linkend="sql-createtable-storage-parameters"><option>user_catalog_table</option></link>
          to identify user-created tables involved in logical change-set
          encoding (Andres Freund)
         </para>
@@ -9558,7 +9558,7 @@ Branch: REL9_4_STABLE [c2b06ab17] 2015-01-30 22:45:58 -0500
 
       <listitem>
        <para>
-        Allow <xref linkend="SQL-SELECT"> to have
+        Allow <xref linkend="sql-select"> to have
         an empty target list (Tom Lane)
        </para>
 
@@ -9570,7 +9570,7 @@ Branch: REL9_4_STABLE [c2b06ab17] 2015-01-30 22:45:58 -0500
 
       <listitem>
        <para>
-        Ensure that <link linkend="SQL-SELECT"><literal>SELECT ... FOR UPDATE
+        Ensure that <link linkend="sql-select"><literal>SELECT ... FOR UPDATE
         NOWAIT</literal></link> does not wait in corner cases involving
         already-concurrently-updated tuples (Craig Ringer and Thomas Munro)
        </para>
@@ -9587,7 +9587,7 @@ Branch: REL9_4_STABLE [c2b06ab17] 2015-01-30 22:45:58 -0500
 
       <listitem>
        <para>
-        Add <link linkend="SQL-DISCARD"><command>DISCARD
+        Add <link linkend="sql-discard"><command>DISCARD
         SEQUENCES</command></link> command to discard cached sequence-related state
         (Fabr&iacute;zio de Royes Mello, Robert Haas)
        </para>
@@ -9600,7 +9600,7 @@ Branch: REL9_4_STABLE [c2b06ab17] 2015-01-30 22:45:58 -0500
        <listitem>
         <para>
          Add <literal>FORCE NULL</literal> option
-         to <link linkend="SQL-COPY"><command>COPY FROM</command></link>, which
+         to <link linkend="sql-copy"><command>COPY FROM</command></link>, which
          causes quoted strings matching the specified null string to be
          converted to NULLs in <literal>CSV</literal> mode (Ian Barwick, Michael
          Paquier)
@@ -9628,7 +9628,7 @@ Branch: REL9_4_STABLE [c2b06ab17] 2015-01-30 22:45:58 -0500
      </itemizedlist>
 
      <sect4>
-      <title><xref linkend="SQL-EXPLAIN"></title>
+      <title><xref linkend="sql-explain"></title>
 
       <itemizedlist>
 
@@ -9671,7 +9671,7 @@ Branch: REL9_4_STABLE [c2b06ab17] 2015-01-30 22:45:58 -0500
 
        <para>
         This is done with <link
-        linkend="SQL-REFRESHMATERIALIZEDVIEW"><command>REFRESH MATERIALIZED
+        linkend="sql-refreshmaterializedview"><command>REFRESH MATERIALIZED
         VIEW CONCURRENTLY</command></link>.
        </para>
       </listitem>
@@ -9679,7 +9679,7 @@ Branch: REL9_4_STABLE [c2b06ab17] 2015-01-30 22:45:58 -0500
       <listitem>
        <para>
         Allow views to be <link
-        linkend="SQL-CREATEVIEW-updatable-views">automatically
+        linkend="sql-createview-updatable-views">automatically
         updated</link> even if they contain some non-updatable columns
         (Dean Rasheed)
        </para>
@@ -9701,7 +9701,7 @@ Branch: REL9_4_STABLE [c2b06ab17] 2015-01-30 22:45:58 -0500
        </para>
 
        <para>
-        This is controlled with the new <xref linkend="SQL-CREATEVIEW">
+        This is controlled with the new <xref linkend="sql-createview">
         clause <literal>WITH CHECK OPTION</literal>.
        </para>
       </listitem>
@@ -9726,7 +9726,7 @@ Branch: REL9_4_STABLE [c2b06ab17] 2015-01-30 22:45:58 -0500
 
       <listitem>
        <para>
-        Support triggers on <link linkend="SQL-CREATEFOREIGNTABLE">foreign
+        Support triggers on <link linkend="sql-createforeigntable">foreign
         tables</link> (Ronan Dunklau)
        </para>
       </listitem>
@@ -9735,22 +9735,22 @@ Branch: REL9_4_STABLE [c2b06ab17] 2015-01-30 22:45:58 -0500
        <para>
         Allow moving groups of objects from one tablespace to another
         using the <literal>ALL IN TABLESPACE ... SET TABLESPACE</literal> form of
-        <xref linkend="SQL-ALTERTABLE">, <xref linkend="SQL-ALTERINDEX">, or
-        <xref linkend="SQL-ALTERMATERIALIZEDVIEW"> (Stephen Frost)
+        <xref linkend="sql-altertable">, <xref linkend="sql-alterindex">, or
+        <xref linkend="sql-altermaterializedview"> (Stephen Frost)
        </para>
       </listitem>
 
       <listitem>
        <para>
         Allow changing foreign key constraint deferrability
-        via <xref linkend="SQL-ALTERTABLE"> ... <literal>ALTER
+        via <xref linkend="sql-altertable"> ... <literal>ALTER
         CONSTRAINT</literal> (Simon Riggs)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Reduce lock strength for some <xref linkend="SQL-ALTERTABLE">
+        Reduce lock strength for some <xref linkend="sql-altertable">
         commands
         (Simon Riggs, Noah Misch, Robert Haas)
        </para>
@@ -9768,18 +9768,18 @@ Branch: REL9_4_STABLE [c2b06ab17] 2015-01-30 22:45:58 -0500
       <listitem>
        <para>
         Allow tablespace options to be set
-        in <xref linkend="SQL-CREATETABLESPACE"> (Vik Fearing)
+        in <xref linkend="sql-createtablespace"> (Vik Fearing)
        </para>
 
        <para>
         Formerly these options could only be set
-        via <xref linkend="SQL-ALTERTABLESPACE">.
+        via <xref linkend="sql-altertablespace">.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Allow <xref linkend="SQL-CREATEAGGREGATE"> to define the estimated
+        Allow <xref linkend="sql-createaggregate"> to define the estimated
         size of the aggregate's transition state data (Hadi Moshayedi)
        </para>
 
@@ -10266,14 +10266,14 @@ Branch: REL9_4_STABLE [c2b06ab17] 2015-01-30 22:45:58 -0500
 
       <listitem>
        <para>
-        Add <xref linkend="APP-CREATEUSER"> option <option>-g</option>
+        Add <xref linkend="app-createuser"> option <option>-g</option>
         to specify role membership (Christopher Browne)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Add <xref linkend="APP-VACUUMDB">
+        Add <xref linkend="app-vacuumdb">
         option <option>--analyze-in-stages</option> to analyze in stages of
         increasing granularity (Peter Eisentraut)
        </para>
@@ -10343,14 +10343,14 @@ Branch: REL9_4_STABLE [c2b06ab17] 2015-01-30 22:45:58 -0500
     </itemizedlist>
 
     <sect4>
-     <title><xref linkend="APP-PSQL"></title>
+     <title><xref linkend="app-psql"></title>
 
      <itemizedlist>
 
       <listitem>
        <para>
         Suppress <quote>No rows</quote> output in <application>psql</application> <link
-        linkend="APP-PSQL-meta-commands"><option>expanded</option></link>
+        linkend="app-psql-meta-commands"><option>expanded</option></link>
         mode when the footer is disabled (Bruce Momjian)
        </para>
       </listitem>
@@ -10365,7 +10365,7 @@ Branch: REL9_4_STABLE [c2b06ab17] 2015-01-30 22:45:58 -0500
      </itemizedlist>
 
      <sect5>
-      <title><link linkend="APP-PSQL-meta-commands">Backslash Commands</link></title>
+      <title><link linkend="app-psql-meta-commands">Backslash Commands</link></title>
 
       <itemizedlist>
 
@@ -10475,13 +10475,13 @@ Branch: REL9_4_STABLE [c2b06ab17] 2015-01-30 22:45:58 -0500
     </sect4>
 
     <sect4>
-     <title><xref linkend="APP-PGDUMP"></title>
+     <title><xref linkend="app-pgdump"></title>
 
      <itemizedlist>
 
       <listitem>
        <para>
-        Allow <xref linkend="APP-PGRESTORE"> options
+        Allow <xref linkend="app-pgrestore"> options
         <option>-I</option>, <option>-P</option>, <option>-T</option> and <option>-n</option>
         to be specified multiple times (Heikki Linnakangas)
        </para>
@@ -10501,8 +10501,8 @@ Branch: REL9_4_STABLE [c2b06ab17] 2015-01-30 22:45:58 -0500
        <para>
         This change prevents unnecessary errors when removing old objects.
         The new <option>--if-exists</option> option
-        for <xref linkend="APP-PGDUMP">, <xref linkend="APP-PG-DUMPALL">,
-        and <xref linkend="APP-PGRESTORE"> is only available
+        for <xref linkend="app-pgdump">, <xref linkend="app-pg-dumpall">,
+        and <xref linkend="app-pgrestore"> is only available
         when <option>--clean</option> is also specified.
        </para>
       </listitem>

@@ -3,7 +3,7 @@ doc/src/sgml/ref/unlisten.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-UNLISTEN">
+<refentry id="sql-unlisten">
  <indexterm zone="sql-unlisten">
   <primary>UNLISTEN</primary>
  </indexterm>

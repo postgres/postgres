@@ -3,7 +3,7 @@ doc/src/sgml/ref/drop_group.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-DROPGROUP">
+<refentry id="sql-dropgroup">
  <indexterm zone="sql-dropgroup">
   <primary>DROP GROUP</primary>
  </indexterm>

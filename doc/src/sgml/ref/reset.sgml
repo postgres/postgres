@@ -3,7 +3,7 @@ doc/src/sgml/ref/reset.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-RESET">
+<refentry id="sql-reset">
  <indexterm zone="sql-reset">
   <primary>RESET</primary>
  </indexterm>
@@ -106,8 +106,8 @@ RESET timezone;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="SQL-SET"></member>
-   <member><xref linkend="SQL-SHOW"></member>
+   <member><xref linkend="sql-set"></member>
+   <member><xref linkend="sql-show"></member>
   </simplelist>
  </refsect1>
 </refentry>

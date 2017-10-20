@@ -3,7 +3,7 @@ doc/src/sgml/ref/begin.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-BEGIN">
+<refentry id="sql-begin">
  <indexterm zone="sql-begin">
   <primary>BEGIN</primary>
  </indexterm>
@@ -95,8 +95,8 @@ BEGIN [ WORK | TRANSACTION ] [ <replaceable class="parameter">transaction_mode</
   </para>
 
   <para>
-   Use <xref linkend="SQL-COMMIT"> or
-   <xref linkend="SQL-ROLLBACK">
+   Use <xref linkend="sql-commit"> or
+   <xref linkend="sql-rollback">
    to terminate a transaction block.
   </para>
 

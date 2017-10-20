@@ -3,7 +3,7 @@ doc/src/sgml/ref/pg_dumpall.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="APP-PG-DUMPALL">
+<refentry id="app-pg-dumpall">
  <indexterm zone="app-pg-dumpall">
   <primary>pg_dumpall</primary>
  </indexterm>

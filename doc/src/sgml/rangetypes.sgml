@@ -65,7 +65,7 @@
     </listitem>
   </itemizedlist>
   In addition, you can define your own range types;
-  see <xref linkend="SQL-CREATETYPE"> for more information.
+  see <xref linkend="sql-createtype"> for more information.
  </para>
  </sect2>
 
@@ -406,7 +406,7 @@ SELECT '[11:10, 23:00]'::timerange;
 </programlisting>
 
   <para>
-   See <xref linkend="SQL-CREATETYPE"> for more information about creating
+   See <xref linkend="sql-createtype"> for more information about creating
    range types.
   </para>
  </sect2>
@@ -462,7 +462,7 @@ CREATE INDEX reservation_idx ON reservation USING GIST (during);
    While <literal>UNIQUE</literal> is a natural constraint for scalar
    values, it is usually unsuitable for range types. Instead, an
    exclusion constraint is often more appropriate
-   (see <link linkend="SQL-CREATETABLE-EXCLUDE">CREATE TABLE
+   (see <link linkend="sql-createtable-exclude">CREATE TABLE
    ... CONSTRAINT ... EXCLUDE</link>). Exclusion constraints allow the
    specification of constraints such as <quote>non-overlapping</quote> on a
    range type. For example:

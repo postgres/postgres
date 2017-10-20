@@ -10497,7 +10497,7 @@ ALTER EXTENSION hstore UPDATE;
 
     <listitem>
      <para>
-      Add <link linkend="SQL-CREATEMATERIALIZEDVIEW">materialized
+      Add <link linkend="sql-creatematerializedview">materialized
       views</link>
      </para>
     </listitem>
@@ -10505,7 +10505,7 @@ ALTER EXTENSION hstore UPDATE;
     <listitem>
      <para>
       Make simple views <link
-      linkend="SQL-CREATEVIEW-updatable-views">auto-updatable</link>
+      linkend="sql-createview-updatable-views">auto-updatable</link>
      </para>
     </listitem>
 
@@ -10527,7 +10527,7 @@ ALTER EXTENSION hstore UPDATE;
 
     <listitem>
      <para>
-      Allow <link linkend="SQL-CREATEFOREIGNDATAWRAPPER">foreign data
+      Allow <link linkend="sql-createforeigndatawrapper">foreign data
       wrappers</link> to support writes (inserts/updates/deletes) on foreign
       tables
      </para>
@@ -10582,7 +10582,7 @@ ALTER EXTENSION hstore UPDATE;
 
    <para>
     A dump/restore using <link
-    linkend="APP-PG-DUMPALL"><application>pg_dumpall</application></link>, or use
+    linkend="app-pg-dumpall"><application>pg_dumpall</application></link>, or use
     of <link linkend="pgupgrade"><application>pg_upgrade</application></link>, is
     required for those wishing to migrate data from any previous release.
    </para>
@@ -10664,7 +10664,7 @@ ALTER EXTENSION hstore UPDATE;
 
       <listitem>
        <para>
-        Change multicolumn <link linkend="SQL-CREATETABLE"><literal>ON UPDATE
+        Change multicolumn <link linkend="sql-createtable"><literal>ON UPDATE
         SET NULL/SET DEFAULT</literal></link> foreign key actions to affect
         all columns of the constraint, not just those changed in the
         <command>UPDATE</command> (Tom Lane)
@@ -10818,7 +10818,7 @@ ALTER EXTENSION hstore UPDATE;
 
       <listitem>
        <para>
-        Allow <link linkend="GiST"><acronym>GiST</acronym></link> indexes to be
+        Allow <link linkend="gist"><acronym>GiST</acronym></link> indexes to be
         unlogged (Jeevan Chalke)
        </para>
       </listitem>
@@ -10893,7 +10893,7 @@ ALTER EXTENSION hstore UPDATE;
 
       <listitem>
        <para>
-        Add <link linkend="SQL-COPY"><command>COPY FREEZE</command></link>
+        Add <link linkend="sql-copy"><command>COPY FREEZE</command></link>
         option to avoid the overhead of marking tuples as frozen later
         (Simon Riggs, Jeff Davis)
        </para>
@@ -10922,7 +10922,7 @@ ALTER EXTENSION hstore UPDATE;
       <listitem>
        <para>
         Improve performance of the <link
-        linkend="SQL-CREATETABLE"><command>CREATE TEMPORARY TABLE ... ON
+        linkend="sql-createtable"><command>CREATE TEMPORARY TABLE ... ON
         COMMIT DELETE ROWS</command></link> option by not truncating such temporary
         tables in transactions that haven't touched any temporary tables
         (Heikki Linnakangas)
@@ -10989,7 +10989,7 @@ ALTER EXTENSION hstore UPDATE;
 
        <para>
         The checksum option can be set during <link
-        linkend="APP-INITDB">initdb</link>.
+        linkend="app-initdb">initdb</link>.
        </para>
       </listitem>
 
@@ -11139,7 +11139,7 @@ ALTER EXTENSION hstore UPDATE;
       <listitem>
        <para>
         Increase the maximum <link
-        linkend="APP-INITDB">initdb</link>-configured value for <link
+        linkend="app-initdb">initdb</link>-configured value for <link
         linkend="guc-shared-buffers"><varname>shared_buffers</varname></link>
         to 128MB (Robert Haas)
        </para>
@@ -11216,7 +11216,7 @@ ALTER EXTENSION hstore UPDATE;
       <listitem>
        <para>
         Add the last checkpoint's redo location to <link
-        linkend="APP-PGCONTROLDATA"><application>pg_controldata</application></link>'s
+        linkend="app-pgcontroldata"><application>pg_controldata</application></link>'s
         output (Fujii Masao)
        </para>
 
@@ -11318,8 +11318,8 @@ ALTER EXTENSION hstore UPDATE;
       <listitem>
        <para>
         Add support for piping <link
-        linkend="SQL-COPY"><command>COPY</command></link> and <link
-        linkend="APP-PSQL"><application>psql</application></link> <command>\copy</command>
+        linkend="sql-copy"><command>COPY</command></link> and <link
+        linkend="app-psql"><application>psql</application></link> <command>\copy</command>
         data to/from an external program (Etsuro Fujita)
        </para>
       </listitem>
@@ -11327,7 +11327,7 @@ ALTER EXTENSION hstore UPDATE;
       <listitem>
        <para>
         Allow a multirow <link
-        linkend="SQL-VALUES"><literal>VALUES</literal></link> clause in a rule
+        linkend="sql-values"><literal>VALUES</literal></link> clause in a rule
         to reference <literal>OLD</literal>/<literal>NEW</literal> (Tom Lane)
        </para>
       </listitem>
@@ -11355,7 +11355,7 @@ ALTER EXTENSION hstore UPDATE;
 
       <listitem>
        <para>
-        Allow <link linkend="SQL-CREATEFOREIGNDATAWRAPPER">foreign data
+        Allow <link linkend="sql-createforeigndatawrapper">foreign data
         wrappers</link> to support writes (inserts/updates/deletes) on foreign
         tables (KaiGai Kohei)
        </para>
@@ -11363,14 +11363,14 @@ ALTER EXTENSION hstore UPDATE;
 
       <listitem>
        <para>
-        Add <link linkend="SQL-CREATESCHEMA"><command>CREATE SCHEMA ... IF
+        Add <link linkend="sql-createschema"><command>CREATE SCHEMA ... IF
         NOT EXISTS</command></link> clause (Fabr&iacute;zio de Royes Mello)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Make <link linkend="SQL-REASSIGN-OWNED"><command>REASSIGN
+        Make <link linkend="sql-reassign-owned"><command>REASSIGN
         OWNED</command></link> also change ownership of shared objects
         (&Aacute;lvaro Herrera)
        </para>
@@ -11386,7 +11386,7 @@ ALTER EXTENSION hstore UPDATE;
 
       <listitem>
        <para>
-        Suppress <link linkend="SQL-CREATETABLE"><command>CREATE
+        Suppress <link linkend="sql-createtable"><command>CREATE
         TABLE</command></link>'s messages about implicit index and sequence creation
         (Robert Haas)
        </para>
@@ -11399,7 +11399,7 @@ ALTER EXTENSION hstore UPDATE;
 
       <listitem>
        <para>
-        Allow <link linkend="SQL-DROPTABLE"><command>DROP TABLE IF
+        Allow <link linkend="sql-droptable"><command>DROP TABLE IF
         EXISTS</command></link> to succeed when a non-existent schema is specified
         in the table name (Bruce Momjian)
        </para>
@@ -11434,7 +11434,7 @@ ALTER EXTENSION hstore UPDATE;
       <listitem>
        <para>
         Support <literal>IF NOT EXISTS</literal> option in <link
-        linkend="SQL-ALTERTYPE"><command>ALTER TYPE ... ADD VALUE</command></link>
+        linkend="sql-altertype"><command>ALTER TYPE ... ADD VALUE</command></link>
         (Andrew Dunstan)
        </para>
 
@@ -11445,13 +11445,13 @@ ALTER EXTENSION hstore UPDATE;
 
       <listitem>
        <para>
-        Add <link linkend="SQL-ALTERROLE"><command>ALTER ROLE ALL
+        Add <link linkend="sql-alterrole"><command>ALTER ROLE ALL
         SET</command></link> to establish settings for all users (Peter Eisentraut)
        </para>
 
        <para>
         This allows settings to apply to all users in all databases. <link
-        linkend="SQL-ALTERDATABASE"><command>ALTER DATABASE SET</command></link>
+        linkend="sql-alterdatabase"><command>ALTER DATABASE SET</command></link>
         already allowed addition of settings for all users in a single
         database.  <filename>postgresql.conf</filename> has a similar effect.
        </para>
@@ -11459,7 +11459,7 @@ ALTER EXTENSION hstore UPDATE;
 
       <listitem>
        <para>
-        Add support for <link linkend="SQL-ALTERRULE"><command>ALTER RULE
+        Add support for <link linkend="sql-alterrule"><command>ALTER RULE
         ... RENAME</command></link> (Ali Dar)
        </para>
       </listitem>
@@ -11475,7 +11475,7 @@ ALTER EXTENSION hstore UPDATE;
 
       <listitem>
        <para>
-        Add <link linkend="SQL-CREATEMATERIALIZEDVIEW">materialized
+        Add <link linkend="sql-creatematerializedview">materialized
         views</link> (Kevin Grittner)
        </para>
 
@@ -11491,7 +11491,7 @@ ALTER EXTENSION hstore UPDATE;
       <listitem>
        <para>
         Make simple views <link
-        linkend="SQL-CREATEVIEW-updatable-views">auto-updatable</link>
+        linkend="sql-createview-updatable-views">auto-updatable</link>
         (Dean Rasheed)
        </para>
 
@@ -11499,14 +11499,14 @@ ALTER EXTENSION hstore UPDATE;
         Simple views that reference some or all columns from a
         single base table are now updatable by default. More
         complex views can be made updatable using <link
-        linkend="SQL-CREATETRIGGER"><literal>INSTEAD OF</literal></link> triggers
-        or <link linkend="SQL-CREATERULE"><literal>INSTEAD</literal></link> rules.
+        linkend="sql-createtrigger"><literal>INSTEAD OF</literal></link> triggers
+        or <link linkend="sql-createrule"><literal>INSTEAD</literal></link> rules.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Add <link linkend="SQL-CREATEVIEW"><command>CREATE RECURSIVE
+        Add <link linkend="sql-createview"><command>CREATE RECURSIVE
         VIEW</command></link> syntax (Peter Eisentraut)
        </para>
 
@@ -11545,7 +11545,7 @@ ALTER EXTENSION hstore UPDATE;
 
       <listitem>
        <para>
-        Increase the maximum size of <link linkend="largeObjects">large
+        Increase the maximum size of <link linkend="largeobjects">large
         objects</link> from 2GB to 4TB (Nozomi Anzai, Yugo Nagata)
        </para>
 
@@ -11675,7 +11675,7 @@ ALTER EXTENSION hstore UPDATE;
 
        <para>
         This reduces line length in view printing, for instance in <link
-        linkend="APP-PGDUMP"><application>pg_dump</application></link> output.
+        linkend="app-pgdump"><application>pg_dump</application></link> output.
        </para>
       </listitem>
 
@@ -11728,7 +11728,7 @@ ALTER EXTENSION hstore UPDATE;
       <listitem>
        <para>
         Allow PL/pgSQL to access the number of rows processed by
-        <link linkend="SQL-COPY"><command>COPY</command></link> (Pavel Stehule)
+        <link linkend="sql-copy"><command>COPY</command></link> (Pavel Stehule)
        </para>
 
        <para>
@@ -11818,7 +11818,7 @@ ALTER EXTENSION hstore UPDATE;
       <listitem>
        <para>
         Allow <acronym>SPI</acronym> functions to access the number of rows processed
-        by <link linkend="SQL-COPY"><command>COPY</command></link> (Pavel Stehule)
+        by <link linkend="sql-copy"><command>COPY</command></link> (Pavel Stehule)
        </para>
       </listitem>
 
@@ -11842,16 +11842,16 @@ ALTER EXTENSION hstore UPDATE;
       <listitem>
        <para>
         Support multiple <option>--table</option> arguments for <link
-        linkend="APP-PGRESTORE"><application>pg_restore</application></link>,
-        <link linkend="APP-CLUSTERDB"><application>clusterdb</application></link>,
-        <link linkend="APP-REINDEXDB"><application>reindexdb</application></link>,
-        and <link linkend="APP-VACUUMDB"><application>vacuumdb</application></link>
+        linkend="app-pgrestore"><application>pg_restore</application></link>,
+        <link linkend="app-clusterdb"><application>clusterdb</application></link>,
+        <link linkend="app-reindexdb"><application>reindexdb</application></link>,
+        and <link linkend="app-vacuumdb"><application>vacuumdb</application></link>
         (Josh Kupershmidt)
        </para>
 
        <para>
         This is similar to the way <link
-        linkend="APP-PGDUMP"><application>pg_dump</application></link>'s
+        linkend="app-pgdump"><application>pg_dump</application></link>'s
         <option>--table</option> option works.
        </para>
       </listitem>
@@ -11859,7 +11859,7 @@ ALTER EXTENSION hstore UPDATE;
       <listitem>
        <para>
         Add <option>--dbname</option> option to <link
-        linkend="APP-PG-DUMPALL"><application>pg_dumpall</application></link>, <link
+        linkend="app-pg-dumpall"><application>pg_dumpall</application></link>, <link
         linkend="app-pgbasebackup"><application>pg_basebackup</application></link>, and
         <link
         linkend="app-pgreceivewal"><application>pg_receivexlog</application></link>
@@ -11879,7 +11879,7 @@ ALTER EXTENSION hstore UPDATE;
     </itemizedlist>
 
     <sect4>
-     <title><link linkend="APP-PSQL"><application>psql</application></link></title>
+     <title><link linkend="app-psql"><application>psql</application></link></title>
 
      <itemizedlist>
 
@@ -11924,7 +11924,7 @@ ALTER EXTENSION hstore UPDATE;
      </itemizedlist>
 
     <sect5>
-     <title><link linkend="APP-PSQL-meta-commands">Backslash Commands</link></title>
+     <title><link linkend="app-psql-meta-commands">Backslash Commands</link></title>
 
      <itemizedlist>
 
@@ -12035,7 +12035,7 @@ ALTER EXTENSION hstore UPDATE;
     </sect4>
 
     <sect4>
-     <title><link linkend="APP-PGDUMP"><application>pg_dump</application></link></title>
+     <title><link linkend="app-pgdump"><application>pg_dump</application></link></title>
 
      <itemizedlist>
 
@@ -12076,7 +12076,7 @@ ALTER EXTENSION hstore UPDATE;
     </sect4>
 
     <sect4>
-     <title><link linkend="APP-INITDB"><application>initdb</application></link></title>
+     <title><link linkend="app-initdb"><application>initdb</application></link></title>
 
      <itemizedlist>
 
@@ -12208,7 +12208,7 @@ ALTER EXTENSION hstore UPDATE;
       <listitem>
        <para>
         Add isolation tests for <link
-        linkend="SQL-CREATEINDEX"><command>CREATE INDEX
+        linkend="sql-createindex"><command>CREATE INDEX
         CONCURRENTLY</command></link> (Abhijit Menon-Sen)
        </para>
       </listitem>

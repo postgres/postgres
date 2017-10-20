@@ -3,7 +3,7 @@ doc/src/sgml/rel/alter_foreign_table.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-ALTERFOREIGNTABLE">
+<refentry id="sql-alterforeigntable">
  <indexterm zone="sql-alterforeigntable">
   <primary>ALTER FOREIGN TABLE</primary>
  </indexterm>
@@ -72,7 +72,7 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceab
     <listitem>
      <para>
       This form adds a new column to the foreign table, using the same syntax as
-      <xref linkend="SQL-CREATEFOREIGNTABLE">.
+      <xref linkend="sql-createforeigntable">.
       Unlike the case when adding a column to a regular table, nothing happens
       to the underlying storage: this action simply declares that
       some new column is now accessible through the foreign table.
@@ -173,7 +173,7 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceab
     <listitem>
      <para>
       This form adds a new constraint to a foreign table, using the same
-      syntax as <xref linkend="SQL-CREATEFOREIGNTABLE">.
+      syntax as <xref linkend="sql-createforeigntable">.
       Currently only <literal>CHECK</literal> constraints are supported.
      </para>
 
@@ -182,7 +182,7 @@ ALTER FOREIGN TABLE [ IF EXISTS ] <replaceable class="parameter">name</replaceab
       done to verify the constraint is correct; rather, this action simply
       declares that some new condition should be assumed to hold for all rows
       in the foreign table.  (See the discussion
-      in <xref linkend="SQL-CREATEFOREIGNTABLE">.)
+      in <xref linkend="sql-createforeigntable">.)
       If the constraint is marked <literal>NOT VALID</literal>, then it isn't
       assumed to hold, but is only recorded for possible future use.
      </para>

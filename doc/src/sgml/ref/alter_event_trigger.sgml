@@ -3,7 +3,7 @@ doc/src/sgml/ref/alter_event_trigger.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-ALTEREVENTTRIGGER">
+<refentry id="sql-altereventtrigger">
  <indexterm zone="sql-altereventtrigger">
   <primary>ALTER EVENT TRIGGER</primary>
  </indexterm>

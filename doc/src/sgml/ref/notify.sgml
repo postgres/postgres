@@ -3,7 +3,7 @@ doc/src/sgml/ref/notify.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-NOTIFY">
+<refentry id="sql-notify">
  <indexterm zone="sql-notify">
   <primary>NOTIFY</primary>
  </indexterm>

@@ -18,7 +18,7 @@
   functionality using a more modern and standards-compliant infrastructure.
  </para>
 
- <refentry id="CONTRIB-DBLINK-CONNECT">
+ <refentry id="contrib-dblink-connect">
   <indexterm>
    <primary>dblink_connect</primary>
   </indexterm>
@@ -182,7 +182,7 @@ DROP SERVER fdtest;
   </refsect1>
  </refentry>
 
- <refentry id="CONTRIB-DBLINK-CONNECT-U">
+ <refentry id="contrib-dblink-connect-u">
   <indexterm>
    <primary>dblink_connect_u</primary>
   </indexterm>
@@ -239,7 +239,7 @@ dblink_connect_u(text connname, text connstr) returns text
   </refsect1>
  </refentry>
 
- <refentry id="CONTRIB-DBLINK-DISCONNECT">
+ <refentry id="contrib-dblink-disconnect">
   <indexterm>
    <primary>dblink_disconnect</primary>
   </indexterm>
@@ -314,7 +314,7 @@ SELECT dblink_disconnect('myconn');
   </refsect1>
  </refentry>
 
- <refentry id="CONTRIB-DBLINK-FUNCTION">
+ <refentry id="contrib-dblink-function">
   <indexterm>
    <primary>dblink</primary>
   </indexterm>
@@ -532,7 +532,7 @@ SELECT * FROM dblink('myconn', 'select proname, prosrc from pg_proc')
   </refsect1>
  </refentry>
 
- <refentry id="CONTRIB-DBLINK-EXEC">
+ <refentry id="contrib-dblink-exec">
   <indexterm>
    <primary>dblink_exec</primary>
   </indexterm>
@@ -669,7 +669,7 @@ DETAIL:  ERROR:  null value in column "relnamespace" violates not-null constrain
   </refsect1>
  </refentry>
 
- <refentry id="CONTRIB-DBLINK-OPEN">
+ <refentry id="contrib-dblink-open">
   <indexterm>
    <primary>dblink_open</primary>
   </indexterm>
@@ -793,7 +793,7 @@ SELECT dblink_open('foo', 'select proname, prosrc from pg_proc');
   </refsect1>
  </refentry>
 
- <refentry id="CONTRIB-DBLINK-FETCH">
+ <refentry id="contrib-dblink-fetch">
   <indexterm>
    <primary>dblink_fetch</primary>
   </indexterm>
@@ -946,7 +946,7 @@ SELECT * FROM dblink_fetch('foo', 5) AS (funcname name, source text);
   </refsect1>
  </refentry>
 
- <refentry id="CONTRIB-DBLINK-CLOSE">
+ <refentry id="contrib-dblink-close">
   <indexterm>
    <primary>dblink_close</primary>
   </indexterm>
@@ -1057,7 +1057,7 @@ SELECT dblink_close('foo');
   </refsect1>
  </refentry>
 
- <refentry id="CONTRIB-DBLINK-GET-CONNECTIONS">
+ <refentry id="contrib-dblink-get-connections">
   <indexterm>
    <primary>dblink_get_connections</primary>
   </indexterm>
@@ -1102,7 +1102,7 @@ SELECT dblink_get_connections();
   </refsect1>
  </refentry>
 
- <refentry id="CONTRIB-DBLINK-ERROR-MESSAGE">
+ <refentry id="contrib-dblink-error-message">
   <indexterm>
    <primary>dblink_error_message</primary>
   </indexterm>
@@ -1165,7 +1165,7 @@ SELECT dblink_error_message('dtest1');
   </refsect1>
  </refentry>
 
- <refentry id="CONTRIB-DBLINK-SEND-QUERY">
+ <refentry id="contrib-dblink-send-query">
   <indexterm>
    <primary>dblink_send_query</primary>
   </indexterm>
@@ -1247,7 +1247,7 @@ SELECT dblink_send_query('dtest1', 'SELECT * FROM foo WHERE f1 &lt; 3');
   </refsect1>
  </refentry>
 
- <refentry id="CONTRIB-DBLINK-IS-BUSY">
+ <refentry id="contrib-dblink-is-busy">
   <indexterm>
    <primary>dblink_is_busy</primary>
   </indexterm>
@@ -1310,7 +1310,7 @@ SELECT dblink_is_busy('dtest1');
   </refsect1>
  </refentry>
 
- <refentry id="CONTRIB-DBLINK-GET-NOTIFY">
+ <refentry id="contrib-dblink-get-notify">
   <indexterm>
    <primary>dblink_get_notify</primary>
   </indexterm>
@@ -1392,7 +1392,7 @@ SELECT * FROM dblink_get_notify();
   </refsect1>
  </refentry>
 
- <refentry id="CONTRIB-DBLINK-GET-RESULT">
+ <refentry id="contrib-dblink-get-result">
   <indexterm>
    <primary>dblink_get_result</primary>
   </indexterm>
@@ -1556,7 +1556,7 @@ contrib_regression=# SELECT * FROM dblink_get_result('dtest1') AS t1(f1 int, f2 
   </refsect1>
  </refentry>
 
- <refentry id="CONTRIB-DBLINK-CANCEL-QUERY">
+ <refentry id="contrib-dblink-cancel-query">
   <indexterm>
    <primary>dblink_cancel_query</primary>
   </indexterm>
@@ -1624,7 +1624,7 @@ SELECT dblink_cancel_query('dtest1');
   </refsect1>
  </refentry>
 
- <refentry id="CONTRIB-DBLINK-GET-PKEY">
+ <refentry id="contrib-dblink-get-pkey">
   <indexterm>
    <primary>dblink_get_pkey</primary>
   </indexterm>
@@ -1716,7 +1716,7 @@ SELECT * FROM dblink_get_pkey('foobar');
   </refsect1>
  </refentry>
 
- <refentry id="CONTRIB-DBLINK-BUILD-SQL-INSERT">
+ <refentry id="contrib-dblink-build-sql-insert">
   <indexterm>
    <primary>dblink_build_sql_insert</primary>
   </indexterm>
@@ -1851,7 +1851,7 @@ SELECT dblink_build_sql_insert('foo', '1 2', 2, '{"1", "a"}', '{"1", "b''a"}');
   </refsect1>
  </refentry>
 
- <refentry id="CONTRIB-DBLINK-BUILD-SQL-DELETE">
+ <refentry id="contrib-dblink-build-sql-delete">
   <indexterm>
    <primary>dblink_build_sql_delete</primary>
   </indexterm>
@@ -1969,7 +1969,7 @@ SELECT dblink_build_sql_delete('"MyFoo"', '1 2', 2, '{"1", "b"}');
   </refsect1>
  </refentry>
 
- <refentry id="CONTRIB-DBLINK-BUILD-SQL-UPDATE">
+ <refentry id="contrib-dblink-build-sql-update">
   <indexterm>
    <primary>dblink_build_sql_update</primary>
   </indexterm>

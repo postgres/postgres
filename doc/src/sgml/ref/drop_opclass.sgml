@@ -3,7 +3,7 @@ doc/src/sgml/ref/drop_opclass.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-DROPOPCLASS">
+<refentry id="sql-dropopclass">
  <indexterm zone="sql-dropopclass">
   <primary>DROP OPERATOR CLASS</primary>
  </indexterm>

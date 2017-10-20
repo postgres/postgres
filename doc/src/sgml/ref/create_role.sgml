@@ -3,7 +3,7 @@ doc/src/sgml/ref/create_role.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-CREATEROLE">
+<refentry id="sql-createrole">
  <indexterm zone="sql-createrole">
   <primary>CREATE ROLE</primary>
  </indexterm>
@@ -329,8 +329,8 @@ CREATE ROLE <replaceable class="parameter">name</replaceable> [ [ WITH ] <replac
   <title>Notes</title>
 
   <para>
-   Use <xref linkend="SQL-ALTERROLE"> to
-   change the attributes of a role, and <xref linkend="SQL-DROPROLE">
+   Use <xref linkend="sql-alterrole"> to
+   change the attributes of a role, and <xref linkend="sql-droprole">
    to remove a role.  All the attributes
    specified by <command>CREATE ROLE</command> can be modified by later
    <command>ALTER ROLE</command> commands.
@@ -339,8 +339,8 @@ CREATE ROLE <replaceable class="parameter">name</replaceable> [ [ WITH ] <replac
   <para>
    The preferred way to add and remove members of roles that are being
    used as groups is to use
-   <xref linkend="SQL-GRANT"> and
-   <xref linkend="SQL-REVOKE">.
+   <xref linkend="sql-grant"> and
+   <xref linkend="sql-revoke">.
   </para>
 
   <para>
@@ -358,7 +358,7 @@ CREATE ROLE <replaceable class="parameter">name</replaceable> [ [ WITH ] <replac
    a member of a role with <literal>CREATEDB</literal> privilege does not immediately
    grant the ability to create databases, even if <literal>INHERIT</literal> is set;
    it would be necessary to become that role via
-   <xref linkend="SQL-SET-ROLE"> before
+   <xref linkend="sql-set-role"> before
    creating a database.
   </para>
 
@@ -385,7 +385,7 @@ CREATE ROLE <replaceable class="parameter">name</replaceable> [ [ WITH ] <replac
 
   <para>
    <productname>PostgreSQL</productname> includes a program <xref
-   linkend="APP-CREATEUSER"> that has
+   linkend="app-createuser"> that has
    the same functionality as <command>CREATE ROLE</command> (in fact,
    it calls this command) but can be run from the command shell.
   </para>
@@ -402,7 +402,7 @@ CREATE ROLE <replaceable class="parameter">name</replaceable> [ [ WITH ] <replac
    with this command.  The password will be transmitted to the server
    in cleartext, and it might also be logged in the client's command
    history or the server log.  The command <xref
-   linkend="APP-CREATEUSER">, however, transmits
+   linkend="app-createuser">, however, transmits
    the password encrypted.  Also, <xref linkend="app-psql">
    contains a command
    <command>\password</command> that can be used to safely change the

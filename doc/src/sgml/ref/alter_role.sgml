@@ -3,7 +3,7 @@ doc/src/sgml/ref/alter_role.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-ALTERROLE">
+<refentry id="sql-alterrole">
  <indexterm zone="sql-alterrole">
   <primary>ALTER ROLE</primary>
  </indexterm>
@@ -65,8 +65,8 @@ ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | A
    <xref linkend="sql-createrole">.
    (All the possible attributes are covered,
    except that there are no options for adding or removing memberships; use
-   <xref linkend="SQL-GRANT"> and
-   <xref linkend="SQL-REVOKE"> for that.)
+   <xref linkend="sql-grant"> and
+   <xref linkend="sql-revoke"> for that.)
    Attributes not mentioned in the command retain their previous settings.
    Database superusers can change any of these settings for any role.
    Roles having <literal>CREATEROLE</literal> privilege can change any of these
@@ -173,7 +173,7 @@ ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | A
       <listitem>
        <para>
         These clauses alter attributes originally set by
-        <xref linkend="SQL-CREATEROLE">. For more information, see the
+        <xref linkend="sql-createrole">. For more information, see the
         <command>CREATE ROLE</command> reference page.
        </para>
       </listitem>
@@ -236,14 +236,14 @@ ALTER ROLE { <replaceable class="parameter">role_specification</replaceable> | A
   <title>Notes</title>
 
   <para>
-   Use <xref linkend="SQL-CREATEROLE">
-   to add new roles, and <xref linkend="SQL-DROPROLE"> to remove a role.
+   Use <xref linkend="sql-createrole">
+   to add new roles, and <xref linkend="sql-droprole"> to remove a role.
   </para>
 
   <para>
    <command>ALTER ROLE</command> cannot change a role's memberships.
-   Use <xref linkend="SQL-GRANT"> and
-   <xref linkend="SQL-REVOKE">
+   Use <xref linkend="sql-grant"> and
+   <xref linkend="sql-revoke">
    to do that.
   </para>
 

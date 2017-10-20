@@ -3,7 +3,7 @@ doc/src/sgml/ref/vacuumdb.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="APP-VACUUMDB">
+<refentry id="app-vacuumdb">
  <indexterm zone="app-vacuumdb">
   <primary>vacuumdb</primary>
  </indexterm>
@@ -62,7 +62,7 @@ PostgreSQL documentation
 
   <para>
    <application>vacuumdb</application> is a wrapper around the SQL
-   command <xref linkend="SQL-VACUUM">.
+   command <xref linkend="sql-vacuum">.
    There is no effective difference between vacuuming and analyzing
    databases via this utility and via other methods for accessing the
    server.
@@ -382,8 +382,8 @@ PostgreSQL documentation
   <title>Diagnostics</title>
 
   <para>
-   In case of difficulty, see <xref linkend="SQL-VACUUM">
-   and <xref linkend="APP-PSQL"> for
+   In case of difficulty, see <xref linkend="sql-vacuum">
+   and <xref linkend="app-psql"> for
    discussions of potential problems and error messages.
    The database server must be running at the
    targeted host.  Also, any default connection settings and environment

@@ -3,7 +3,7 @@ doc/src/sgml/ref/create_extension.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-CREATEEXTENSION">
+<refentry id="sql-createextension">
  <indexterm zone="sql-createextension">
   <primary>CREATE EXTENSION</primary>
  </indexterm>

@@ -3,7 +3,7 @@ doc/src/sgml/ref/create_tsparser.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-CREATETSPARSER">
+<refentry id="sql-createtsparser">
  <indexterm zone="sql-createtsparser">
   <primary>CREATE TEXT SEARCH PARSER</primary>
  </indexterm>

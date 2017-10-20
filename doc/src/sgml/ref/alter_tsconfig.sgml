@@ -3,7 +3,7 @@ doc/src/sgml/ref/alter_tsconfig.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-ALTERTSCONFIG">
+<refentry id="sql-altertsconfig">
  <indexterm zone="sql-altertsconfig">
   <primary>ALTER TEXT SEARCH CONFIGURATION</primary>
  </indexterm>

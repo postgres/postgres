@@ -3,7 +3,7 @@ doc/src/sgml/ref/create_publication.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-CREATEPUBLICATION">
+<refentry id="sql-createpublication">
  <indexterm zone="sql-createpublication">
   <primary>CREATE PUBLICATION</primary>
  </indexterm>

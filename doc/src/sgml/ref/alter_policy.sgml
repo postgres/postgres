@@ -3,7 +3,7 @@ doc/src/sgml/ref/alter_policy.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-ALTERPOLICY">
+<refentry id="sql-alterpolicy">
  <indexterm zone="sql-alterpolicy">
   <primary>ALTER POLICY</primary>
  </indexterm>

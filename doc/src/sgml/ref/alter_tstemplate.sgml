@@ -3,7 +3,7 @@ doc/src/sgml/ref/alter_tstemplate.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-ALTERTSTEMPLATE">
+<refentry id="sql-altertstemplate">
  <indexterm zone="sql-altertstemplate">
   <primary>ALTER TEXT SEARCH TEMPLATE</primary>
  </indexterm>

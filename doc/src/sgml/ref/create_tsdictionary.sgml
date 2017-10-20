@@ -3,7 +3,7 @@ doc/src/sgml/ref/create_tsdictionary.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-CREATETSDICTIONARY">
+<refentry id="sql-createtsdictionary">
  <indexterm zone="sql-createtsdictionary">
   <primary>CREATE TEXT SEARCH DICTIONARY</primary>
  </indexterm>

@@ -3,7 +3,7 @@ doc/src/sgml/ref/do.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-DO">
+<refentry id="sql-do">
  <indexterm zone="sql-do">
   <primary>DO</primary>
  </indexterm>

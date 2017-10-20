@@ -3,7 +3,7 @@ doc/src/sgml/ref/set_role.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-SET-ROLE">
+<refentry id="sql-set-role">
  <indexterm zone="sql-set-role">
   <primary>SET ROLE</primary>
  </indexterm>
@@ -48,7 +48,7 @@ RESET ROLE
 
   <para>
    The <literal>SESSION</literal> and <literal>LOCAL</literal> modifiers act the same
-   as for the regular <xref linkend="SQL-SET">
+   as for the regular <xref linkend="sql-set">
    command.
   </para>
 

@@ -3,7 +3,7 @@ doc/src/sgml/ref/commit.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-COMMIT">
+<refentry id="sql-commit">
  <indexterm zone="sql-commit">
   <primary>COMMIT</primary>
  </indexterm>
@@ -55,7 +55,7 @@ COMMIT [ WORK | TRANSACTION ]
   <title>Notes</title>
 
   <para>
-   Use <xref linkend="SQL-ROLLBACK"> to
+   Use <xref linkend="sql-rollback"> to
    abort a transaction.
   </para>
 

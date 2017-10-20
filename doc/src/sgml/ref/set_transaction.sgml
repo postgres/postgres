@@ -1,5 +1,5 @@
 <!-- doc/src/sgml/ref/set_transaction.sgml -->
-<refentry id="SQL-SET-TRANSACTION">
+<refentry id="sql-set-transaction">
  <indexterm zone="sql-set-transaction">
   <primary>SET TRANSACTION</primary>
  </indexterm>
@@ -237,7 +237,7 @@ SET TRANSACTION SNAPSHOT '00000003-0000001B-1';
 </programlisting></para>
  </refsect1>
 
- <refsect1 id="R1-SQL-SET-TRANSACTION-3">
+ <refsect1 id="r1-sql-set-transaction-3">
   <title>Compatibility</title>
 
   <para>

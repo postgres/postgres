@@ -3,7 +3,7 @@ doc/src/sgml/ref/rollback_prepared.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-ROLLBACK-PREPARED">
+<refentry id="sql-rollback-prepared">
  <indexterm zone="sql-rollback-prepared">
   <primary>ROLLBACK PREPARED</primary>
  </indexterm>

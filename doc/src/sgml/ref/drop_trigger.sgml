@@ -3,7 +3,7 @@ doc/src/sgml/ref/drop_trigger.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-DROPTRIGGER">
+<refentry id="sql-droptrigger">
  <indexterm zone="sql-droptrigger">
   <primary>DROP TRIGGER</primary>
  </indexterm>
@@ -92,7 +92,7 @@ DROP TRIGGER [ IF EXISTS ] <replaceable class="parameter">name</replaceable> ON 
   </variablelist>
  </refsect1>
 
- <refsect1 id="SQL-DROPTRIGGER-examples">
+ <refsect1 id="sql-droptrigger-examples">
   <title>Examples</title>
 
   <para>
@@ -104,7 +104,7 @@ DROP TRIGGER if_dist_exists ON films;
 </programlisting></para>
  </refsect1>
 
- <refsect1 id="SQL-DROPTRIGGER-compatibility">
+ <refsect1 id="sql-droptrigger-compatibility">
   <title>Compatibility</title>
 
   <para>

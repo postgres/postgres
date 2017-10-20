@@ -3,7 +3,7 @@ doc/src/sgml/ref/comment.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-COMMENT">
+<refentry id="sql-comment">
  <indexterm zone="sql-comment">
   <primary>COMMENT</primary>
  </indexterm>

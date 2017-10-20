@@ -3,7 +3,7 @@ doc/src/sgml/ref/drop_policy.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-DROPPOLICY">
+<refentry id="sql-droppolicy">
  <indexterm zone="sql-droppolicy">
   <primary>DROP POLICY</primary>
  </indexterm>

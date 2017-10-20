@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/ref/drop_collation.sgml -->
 
-<refentry id="SQL-DROPCOLLATION">
+<refentry id="sql-dropcollation">
  <indexterm zone="sql-dropcollation">
   <primary>DROP COLLATION</primary>
  </indexterm>

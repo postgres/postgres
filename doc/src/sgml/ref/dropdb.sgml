@@ -3,7 +3,7 @@ doc/src/sgml/ref/dropdb.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="APP-DROPDB">
+<refentry id="app-dropdb">
  <indexterm zone="app-dropdb">
   <primary>dropdb</primary>
  </indexterm>
@@ -41,7 +41,7 @@ PostgreSQL documentation
 
   <para>
    <application>dropdb</application> is a wrapper around the
-   <acronym>SQL</acronym> command <xref linkend="SQL-DROPDATABASE">.
+   <acronym>SQL</acronym> command <xref linkend="sql-dropdatabase">.
    There is no effective difference between dropping databases via
    this utility and via other methods for accessing the server.
   </para>
@@ -243,8 +243,8 @@ PostgreSQL documentation
   <title>Diagnostics</title>
 
   <para>
-   In case of difficulty, see <xref linkend="SQL-DROPDATABASE">
-   and <xref linkend="APP-PSQL"> for
+   In case of difficulty, see <xref linkend="sql-dropdatabase">
+   and <xref linkend="app-psql"> for
    discussions of potential problems and error messages.
    The database server must be running at the
    targeted host.  Also, any default connection settings and environment

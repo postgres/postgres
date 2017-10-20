@@ -3,7 +3,7 @@ doc/src/sgml/ref/alter_collation.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-ALTERCOLLATION">
+<refentry id="sql-altercollation">
  <indexterm zone="sql-altercollation">
   <primary>ALTER COLLATION</primary>
  </indexterm>

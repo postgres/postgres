@@ -3,7 +3,7 @@ doc/src/sgml/ref/create_group.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-CREATEGROUP">
+<refentry id="sql-creategroup">
  <indexterm zone="sql-creategroup">
   <primary>CREATE GROUP</primary>
  </indexterm>

@@ -24,7 +24,7 @@
    by <command>INSERT</command> and the new row version created
    by <command>UPDATE</command>.  Availability of old row versions for
    <command>UPDATE</command> and <command>DELETE</command> depends on
-   the configured replica identity (see <xref linkend="SQL-CREATETABLE-REPLICA-IDENTITY">).
+   the configured replica identity (see <xref linkend="sql-createtable-replica-identity">).
   </para>
 
   <para>
@@ -576,8 +576,8 @@ typedef void (*LogicalDecodeChangeCB) (struct LogicalDecodingContext *ctx,
      <note>
       <para>
        Only changes in user defined tables that are not unlogged
-       (see <xref linkend="SQL-CREATETABLE-UNLOGGED">) and not temporary
-       (see <xref linkend="SQL-CREATETABLE-TEMPORARY">) can be extracted using
+       (see <xref linkend="sql-createtable-unlogged">) and not temporary
+       (see <xref linkend="sql-createtable-temporary">) can be extracted using
        logical decoding.
       </para>
      </note>

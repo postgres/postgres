@@ -12,7 +12,7 @@
     tutorial is only intended to give you an introduction and is in no
     way a complete tutorial on <acronym>SQL</acronym>.  Numerous books
     have been written on <acronym>SQL</acronym>, including <xref
-    linkend="MELT93"> and <xref linkend="DATE97">.
+    linkend="melt93"> and <xref linkend="date97">.
     You should be aware that some <productname>PostgreSQL</productname>
     language features are extensions to the standard.
    </para>

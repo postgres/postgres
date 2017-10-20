@@ -3,7 +3,7 @@ doc/src/sgml/ref/listen.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-LISTEN">
+<refentry id="sql-listen">
  <indexterm zone="sql-listen">
   <primary>LISTEN</primary>
  </indexterm>

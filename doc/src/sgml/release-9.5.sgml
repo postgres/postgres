@@ -5726,7 +5726,7 @@ Branch: REL9_1_STABLE [6887d72d0] 2016-02-05 10:59:39 -0500
 
     <listitem>
      <para>
-      Add <link linkend="BRIN">Block Range Indexes</link> (<acronym>BRIN</acronym>)
+      Add <link linkend="brin">Block Range Indexes</link> (<acronym>BRIN</acronym>)
      </para>
     </listitem>
 
@@ -5999,7 +5999,7 @@ max_wal_size = (3 * checkpoint_segments) * 16MB
 2015-05-15 [b0b7be6] Alvaro..: Add BRIN infrastructure for "inclusion" opclasses
 -->
        <para>
-        Add <link linkend="BRIN">Block Range Indexes</link> (<acronym>BRIN</acronym>)
+        Add <link linkend="brin">Block Range Indexes</link> (<acronym>BRIN</acronym>)
         (&Aacute;lvaro Herrera)
        </para>
 
@@ -6018,7 +6018,7 @@ max_wal_size = (3 * checkpoint_segments) * 16MB
        <para>
         Allow queries to perform accurate distance filtering of
         bounding-box-indexed objects (polygons, circles) using <link
-        linkend="GiST">GiST</link> indexes (Alexander Korotkov, Heikki
+        linkend="gist">GiST</link> indexes (Alexander Korotkov, Heikki
         Linnakangas)
        </para>
 
@@ -6038,7 +6038,7 @@ max_wal_size = (3 * checkpoint_segments) * 16MB
 2015-03-30 [0633a60] Heikki..: Add index-only scan support to range type GiST ..
 -->
        <para>
-        Allow <link linkend="GiST">GiST</link> indexes to perform index-only
+        Allow <link linkend="gist">GiST</link> indexes to perform index-only
         scans (Anastasia Lubennikova, Heikki Linnakangas, Andreas Karlsson)
        </para>
       </listitem>
@@ -6540,7 +6540,7 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
 2014-09-02 [bd3b7a9] Fujii ..: Support ALTER SYSTEM RESET command.
 -->
        <para>
-        Allow <link linkend="SQL-ALTERSYSTEM"><command>ALTER SYSTEM</command></link>
+        Allow <link linkend="sql-altersystem"><command>ALTER SYSTEM</command></link>
         values to be reset with <command>ALTER SYSTEM RESET</command> (Vik
         Fearing)
        </para>
@@ -6757,7 +6757,7 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
 -->
        <para>
         Allow setting multiple target columns in
-        an <link linkend="SQL-UPDATE"><command>UPDATE</command></link> from the result of
+        an <link linkend="sql-update"><command>UPDATE</command></link> from the result of
         a single sub-SELECT (Tom Lane)
        </para>
 
@@ -6772,7 +6772,7 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
 2014-10-07 [df630b0] Alvaro..: Implement SKIP LOCKED for row-level locks
 -->
        <para>
-        Add <link linkend="SQL-SELECT"><command>SELECT</command></link> option
+        Add <link linkend="sql-select"><command>SELECT</command></link> option
         <literal>SKIP LOCKED</literal> to skip locked rows (Thomas Munro)
        </para>
 
@@ -6787,7 +6787,7 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
 2015-05-15 [f6d208d] Simon ..: TABLESAMPLE, SQL Standard and extensible
 -->
        <para>
-        Add <link linkend="SQL-SELECT"><command>SELECT</command></link> option
+        Add <link linkend="sql-select"><command>SELECT</command></link> option
         <literal>TABLESAMPLE</literal> to return a subset of a table (Petr
         Jel&iacute;nek)
        </para>
@@ -6825,7 +6825,7 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
 -->
        <para>
         Add more details about sort ordering in <link
-        linkend="SQL-EXPLAIN"><command>EXPLAIN</command></link> output (Marius Timmer,
+        linkend="sql-explain"><command>EXPLAIN</command></link> output (Marius Timmer,
         Lukas Kreft, Arne Scheffer)
        </para>
 
@@ -6840,7 +6840,7 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
 2014-12-18 [35192f0] Alvaro..: Have VACUUM log number of skipped pages due to ..
 -->
        <para>
-        Make <link linkend="SQL-VACUUM"><command>VACUUM</command></link> log the
+        Make <link linkend="sql-vacuum"><command>VACUUM</command></link> log the
         number of pages skipped due to pins (Jim Nasby)
        </para>
       </listitem>
@@ -6850,7 +6850,7 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
 2015-02-20 [d42358e] Alvaro..: Have TRUNCATE update pgstat tuple counters
 -->
        <para>
-        Make <link linkend="SQL-TRUNCATE"><command>TRUNCATE</command></link> properly
+        Make <link linkend="sql-truncate"><command>TRUNCATE</command></link> properly
         update the <literal>pg_stat</literal>* tuple counters (Alexander Shulgin)
        </para>
       </listitem>
@@ -6858,7 +6858,7 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
        </itemizedlist>
 
        <sect4>
-        <title><xref linkend="SQL-REINDEX"></title>
+        <title><xref linkend="sql-reindex"></title>
 
         <itemizedlist>
 
@@ -6926,10 +6926,10 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
        <para>
         This feature allows row-by-row control over which users can add,
         modify, or even see rows in a table.  This is controlled by new
-        commands <link linkend="SQL-CREATEPOLICY"><command>CREATE</command></link>/<link
-        linkend="SQL-ALTERPOLICY"><command>ALTER</command></link>/<link
-        linkend="SQL-DROPPOLICY"><command>DROP POLICY</command></link> and <link
-        linkend="SQL-ALTERTABLE"><command>ALTER TABLE ... ENABLE/DISABLE
+        commands <link linkend="sql-createpolicy"><command>CREATE</command></link>/<link
+        linkend="sql-alterpolicy"><command>ALTER</command></link>/<link
+        linkend="sql-droppolicy"><command>DROP POLICY</command></link> and <link
+        linkend="sql-altertable"><command>ALTER TABLE ... ENABLE/DISABLE
         ROW SECURITY</command></link>.
        </para>
       </listitem>
@@ -6941,7 +6941,7 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
        <para>
         Allow changing of the <acronym>WAL</acronym>
         logging status of a table after creation with <link
-        linkend="SQL-ALTERTABLE"><command>ALTER TABLE ... SET LOGGED /
+        linkend="sql-altertable"><command>ALTER TABLE ... SET LOGGED /
         UNLOGGED</command></link> (Fabr&iacute;zio de Royes Mello)
        </para>
       </listitem>
@@ -6954,10 +6954,10 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
 -->
        <para>
         Add <literal>IF NOT EXISTS</literal> clause to <link
-        linkend="SQL-CREATETABLEAS"><command>CREATE TABLE AS</command></link>,
-        <link linkend="SQL-CREATEINDEX"><command>CREATE INDEX</command></link>,
-        <link linkend="SQL-CREATESEQUENCE"><command>CREATE SEQUENCE</command></link>,
-        and <link linkend="SQL-CREATEMATERIALIZEDVIEW"><command>CREATE
+        linkend="sql-createtableas"><command>CREATE TABLE AS</command></link>,
+        <link linkend="sql-createindex"><command>CREATE INDEX</command></link>,
+        <link linkend="sql-createsequence"><command>CREATE SEQUENCE</command></link>,
+        and <link linkend="sql-creatematerializedview"><command>CREATE
         MATERIALIZED VIEW</command></link> (Fabr&iacute;zio de Royes Mello)
        </para>
       </listitem>
@@ -6968,7 +6968,7 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
 -->
        <para>
         Add support for <literal>IF EXISTS</literal> to <link
-        linkend="SQL-ALTERTABLE"><command>ALTER TABLE ... RENAME
+        linkend="sql-altertable"><command>ALTER TABLE ... RENAME
         CONSTRAINT</command></link> (Bruce Momjian)
        </para>
       </listitem>
@@ -6986,8 +6986,8 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
 
        <para>
         This feature is now supported in
-        <xref linkend="SQL-ALTERUSER">, <xref linkend="SQL-ALTERGROUP">,
-        <xref linkend="SQL-ALTERROLE">, <xref linkend="SQL-GRANT">,
+        <xref linkend="sql-alteruser">, <xref linkend="sql-altergroup">,
+        <xref linkend="sql-alterrole">, <xref linkend="sql-grant">,
         and <command>ALTER <replaceable>object</replaceable> OWNER TO</command> commands.
        </para>
       </listitem>
@@ -6997,7 +6997,7 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
 2014-12-23 [7eca575] Alvaro..: get_object_address: separate domain constraints..
 -->
        <para>
-        Support comments on <link linkend="SQL-CREATEDOMAIN">domain
+        Support comments on <link linkend="sql-createdomain">domain
         constraints</link> (&Aacute;lvaro Herrera)
        </para>
       </listitem>
@@ -7017,7 +7017,7 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
 2015-05-11 [fa26424] Stephe..: Allow LOCK TABLE .. ROW EXCLUSIVE MODE with IN..
 -->
        <para>
-        Allow <link linkend="SQL-LOCK"><command>LOCK TABLE ... ROW EXCLUSIVE
+        Allow <link linkend="sql-lock"><command>LOCK TABLE ... ROW EXCLUSIVE
         MODE</command></link> for those with <command>INSERT</command> privileges on the
         target table (Stephen Frost)
        </para>
@@ -7049,8 +7049,8 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
 -->
        <para>
         Allow <link
-        linkend="SQL-CREATEDATABASE"><command>CREATE</command></link>/<link
-        linkend="SQL-ALTERDATABASE"><command>ALTER DATABASE</command></link>
+        linkend="sql-createdatabase"><command>CREATE</command></link>/<link
+        linkend="sql-alterdatabase"><command>ALTER DATABASE</command></link>
         to manipulate <structname>datistemplate</structname> and
         <structname>datallowconn</structname> (Vik Fearing)
        </para>
@@ -7075,7 +7075,7 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
 2014-07-10 [59efda3] Tom Lane: Implement IMPORT FOREIGN SCHEMA.
 -->
        <para>
-        Add support for <xref linkend="SQL-IMPORTFOREIGNSCHEMA">
+        Add support for <xref linkend="sql-importforeignschema">
         (Ronan Dunklau, Michael Paquier, Tom Lane)
        </para>
 
@@ -7164,7 +7164,7 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
 -->
         <para>
          Allow event triggers on table rewrites caused by <link
-         linkend="SQL-ALTERTABLE"><command>ALTER TABLE</command></link> (Dimitri
+         linkend="sql-altertable"><command>ALTER TABLE</command></link> (Dimitri
          Fontaine)
         </para>
        </listitem>
@@ -7175,10 +7175,10 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
 -->
         <para>
          Add event trigger support for database-level <link
-         linkend="SQL-COMMENT"><command>COMMENT</command></link>, <link
-         linkend="SQL-SECURITY-LABEL"><command>SECURITY LABEL</command></link>,
-         and <link linkend="SQL-GRANT"><command>GRANT</command></link>/<link
-         linkend="SQL-REVOKE"><command>REVOKE</command></link> (&Aacute;lvaro Herrera)
+         linkend="sql-comment"><command>COMMENT</command></link>, <link
+         linkend="sql-security-label"><command>SECURITY LABEL</command></link>,
+         and <link linkend="sql-grant"><command>GRANT</command></link>/<link
+         linkend="sql-revoke"><command>REVOKE</command></link> (&Aacute;lvaro Herrera)
         </para>
        </listitem>
 
@@ -7645,8 +7645,8 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
 
       <para>
        This change adds new commands <link
-       linkend="SQL-CREATETRANSFORM"><command>CREATE</command></link>/<link
-       linkend="SQL-DROPTRANSFORM"><command>DROP TRANSFORM</command></link>.
+       linkend="sql-createtransform"><command>CREATE</command></link>/<link
+       linkend="sql-droptransform"><command>DROP TRANSFORM</command></link>.
        This also adds optional transformations between the <link
        linkend="hstore"><application>hstore</application></link> and <link
        linkend="ltree"><application>ltree</application></link> types to/from <link
@@ -7776,7 +7776,7 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
 2015-01-23 [a179232] Alvaro..: vacuumdb: enable parallel mode
 -->
       <para>
-       Allow <link linkend="APP-VACUUMDB"><application>vacuumdb</application></link> to
+       Allow <link linkend="app-vacuumdb"><application>vacuumdb</application></link> to
        vacuum in parallel using new <option>--jobs</option> option (Dilip Kumar)
       </para>
      </listitem>
@@ -7786,7 +7786,7 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
 2015-11-12 [5094da9] Alvaro..: vacuumdb: don't prompt for passwords over and ..
 -->
       <para>
-       In <link linkend="APP-VACUUMDB"><application>vacuumdb</application></link>, do not
+       In <link linkend="app-vacuumdb"><application>vacuumdb</application></link>, do not
        prompt for the same password repeatedly when multiple connections
        are necessary (Haribabu Kommi, Michael Paquier)
       </para>
@@ -7798,7 +7798,7 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
 -->
       <para>
        Add <option>--verbose</option> option to <link
-       linkend="APP-REINDEXDB"><application>reindexdb</application></link> (Sawada
+       linkend="app-reindexdb"><application>reindexdb</application></link> (Sawada
        Masahiko)
       </para>
      </listitem>
@@ -7829,7 +7829,7 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
     </itemizedlist>
 
      <sect4>
-      <title><xref linkend="APP-PSQL"></title>
+      <title><xref linkend="app-psql"></title>
 
       <itemizedlist>
 
@@ -7879,7 +7879,7 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
 -->
         <para>
          Add new option <literal>%l</literal> in <application>psql</application>'s <link
-         linkend="APP-PSQL-variables"><envar>PROMPT</envar></link> variables
+         linkend="app-psql-variables"><envar>PROMPT</envar></link> variables
          to display the current multiline statement line number
          (Sawada Masahiko)
         </para>
@@ -7891,7 +7891,7 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
 -->
         <para>
          Add <literal>\pset</literal> option <link
-         linkend="APP-PSQL-meta-commands"><varname>pager_min_lines</varname></link>
+         linkend="app-psql-meta-commands"><varname>pager_min_lines</varname></link>
          to control pager invocation (Andrew Dunstan)
         </para>
        </listitem>
@@ -7949,7 +7949,7 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
       </itemizedlist>
 
      <sect5>
-      <title><link linkend="APP-PSQL-meta-commands">Backslash Commands</link></title>
+      <title><link linkend="app-psql-meta-commands">Backslash Commands</link></title>
 
       <itemizedlist>
 
@@ -8045,7 +8045,7 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
     </sect4>
 
     <sect4>
-     <title><xref linkend="APP-PGDUMP"></title>
+     <title><xref linkend="app-pgdump"></title>
 
      <itemizedlist>
 
@@ -8640,7 +8640,7 @@ Add GUC and storage parameter to set the maximum size of GIN pending list.
 2014-11-21 [3a82bc6] Heikki..: Add pageinspect functions for inspecting GIN in..
 -->
       <para>
-       Add <link linkend="GIN"><acronym>GIN</acronym></link>
+       Add <link linkend="gin"><acronym>GIN</acronym></link>
        index inspection functions to <link
        linkend="pageinspect"><application>pageinspect</application></link> (Heikki
        Linnakangas, Peter Geoghegan, Michael Paquier)

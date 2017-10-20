@@ -3,7 +3,7 @@ doc/src/sgml/ref/drop_event_trigger.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-DROPEVENTTRIGGER">
+<refentry id="sql-dropeventtrigger">
  <indexterm zone="sql-dropeventtrigger">
   <primary>DROP EVENT TRIGGER</primary>
  </indexterm>

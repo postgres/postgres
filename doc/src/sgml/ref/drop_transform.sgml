@@ -1,6 +1,6 @@
 <!-- doc/src/sgml/ref/drop_transform.sgml -->
 
-<refentry id="SQL-DROPTRANSFORM">
+<refentry id="sql-droptransform">
  <indexterm zone="sql-droptransform">
   <primary>DROP TRANSFORM</primary>
  </indexterm>

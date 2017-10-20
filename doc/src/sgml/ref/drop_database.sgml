@@ -3,7 +3,7 @@ doc/src/sgml/ref/drop_database.sgml
 PostgreSQL documentation
 -->
 
-<refentry id="SQL-DROPDATABASE">
+<refentry id="sql-dropdatabase">
  <indexterm zone="sql-dropdatabase">
   <primary>DROP DATABASE</primary>
  </indexterm>

@@ -1,5 +1,5 @@
 <!-- doc/src/sgml/ref/set_session_auth.sgml -->
-<refentry id="SQL-SET-SESSION-AUTHORIZATION">
+<refentry id="sql-set-session-authorization">
  <indexterm zone="sql-set-session-authorization">
   <primary>SET SESSION AUTHORIZATION</primary>
  </indexterm>
@@ -54,7 +54,7 @@ RESET SESSION AUTHORIZATION
 
   <para>
    The <literal>SESSION</literal> and <literal>LOCAL</literal> modifiers act the same
-   as for the regular <xref linkend="SQL-SET">
+   as for the regular <xref linkend="sql-set">
    command.
   </para>
 

@@ -2447,7 +2447,7 @@ PGresult *PQprepare(PGconn *conn,
         <function>PQprepare</function> creates a prepared statement for later
         execution with <function>PQexecPrepared</function>.  This feature allows
         commands to be executed repeatedly without being parsed and
-        planned each time;  see <xref linkend="SQL-PREPARE"> for details.
+        planned each time;  see <xref linkend="sql-prepare"> for details.
         <function>PQprepare</function> is supported only in protocol 3.0 and later
         connections; it will fail when using protocol 2.0.
        </para>

@@ -36,7 +36,7 @@
   In addition to the typical B-tree search operators, <filename>btree_gist</filename>
   also provides index support for <literal>&lt;&gt;</literal> (<quote>not
   equals</quote>). This may be useful in combination with an
-  <link linkend="SQL-CREATETABLE-EXCLUDE">exclusion constraint</link>,
+  <link linkend="sql-createtable-exclude">exclusion constraint</link>,
   as described below.
  </para>
 
@@ -70,7 +70,7 @@ SELECT *, a &lt;-&gt; 42 AS dist FROM test ORDER BY a &lt;-&gt; 42 LIMIT 10;
 </programlisting>
 
   <para>
-   Use an <link linkend="SQL-CREATETABLE-EXCLUDE">exclusion
+   Use an <link linkend="sql-createtable-exclude">exclusion
    constraint</link> to enforce the rule that a cage at a zoo
    can contain only one kind of animal:
   </para>

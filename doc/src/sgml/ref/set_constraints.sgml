@@ -1,5 +1,5 @@
 <!-- doc/src/sgml/ref/set_constraints.sgml -->
-<refentry id="SQL-SET-CONSTRAINTS">
+<refentry id="sql-set-constraints">
  <indexterm zone="sql-set-constraints">
   <primary>SET CONSTRAINTS</primary>
  </indexterm>
