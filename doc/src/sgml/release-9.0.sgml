@@ -7853,7 +7853,7 @@
 
     <listitem>
      <para>
-      <link linkend="SQL-EXPLAIN "><command>EXPLAIN</command></link> enhancements.
+      <link linkend="sql-explain"><command>EXPLAIN</command></link> enhancements.
       The output is now available in JSON, XML, or YAML format, and includes
       buffer utilization and other data not previously available.
      </para>
