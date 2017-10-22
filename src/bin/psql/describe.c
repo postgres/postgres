@@ -2417,8 +2417,8 @@ describeOneTableDetails(const char *schemaname,
 							  "   FROM pg_catalog.unnest(stxkeys) s(attnum)\n"
 							  "   JOIN pg_catalog.pg_attribute a ON (stxrelid = a.attrelid AND\n"
 							  "        a.attnum = s.attnum AND NOT attisdropped)) AS columns,\n"
-							  "  (stxkind @> '{d}') AS ndist_enabled,\n"
-							  "  (stxkind @> '{f}') AS deps_enabled\n"
+							  "  'd' = any(stxkind) AS ndist_enabled,\n"
+							  "  'f' = any(stxkind) AS deps_enabled\n"
 							  "FROM pg_catalog.pg_statistic_ext stat "
 							  "WHERE stxrelid = '%s'\n"
 							  "ORDER BY 1;",
