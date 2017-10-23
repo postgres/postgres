@@ -802,8 +802,8 @@ transtime(int year, const struct rule *rulep,
 {
 	bool		leapyear;
 	int32		value;
-	int			i,
-				d,
+	int			i;
+	int			d,
 				m1,
 				yy0,
 				yy1,
