@@ -50,8 +50,8 @@ struct tzhead
  *	tzh_timecnt (unsigned char)s	types of local time starting at above
  *	tzh_typecnt repetitions of
  *		one (char [4])		coded UT offset in seconds
- *		one (unsigned char) used to set tm_isdst
- *		one (unsigned char) that's an abbreviation list index
+ *		one (unsigned char)	used to set tm_isdst
+ *		one (unsigned char)	that's an abbreviation list index
  *	tzh_charcnt (char)s		'\0'-terminated zone abbreviations
  *	tzh_leapcnt repetitions of
  *		one (char [4])		coded leap second transition times
