@@ -119,8 +119,7 @@ static char *_yconv(int, int, bool, bool, char *, const char *);
 
 
 size_t
-pg_strftime(char *s, size_t maxsize, const char *format,
-			const struct pg_tm *t)
+pg_strftime(char *s, size_t maxsize, const char *format, const struct pg_tm *t)
 {
 	char	   *p;
 	enum warn	warn = IN_NONE;
@@ -228,9 +227,9 @@ _fmt(const char *format, const struct pg_tm *t, char *pt,
 				case 'k':
 
 					/*
-					 * This used to be...  _conv(t->tm_hour % 12 ? t->tm_hour
-					 * % 12 : 12, 2, ' '); ...and has been changed to the
-					 * below to match SunOS 4.1.1 and Arnold Robbins' strftime
+					 * This used to be... _conv(t->tm_hour % 12 ? t->tm_hour %
+					 * 12 : 12, 2, ' '); ...and has been changed to the below
+					 * to match SunOS 4.1.1 and Arnold Robbins' strftime
 					 * version 3.0. That is, "%k" and "%l" have been swapped.
 					 * (ado, 1993-05-24)
 					 */
@@ -248,7 +247,7 @@ _fmt(const char *format, const struct pg_tm *t, char *pt,
 				case 'l':
 
 					/*
-					 * This used to be...  _conv(t->tm_hour, 2, ' '); ...and
+					 * This used to be... _conv(t->tm_hour, 2, ' '); ...and
 					 * has been changed to the below to match SunOS 4.1.1 and
 					 * Arnold Robbin's strftime version 3.0. That is, "%k" and
 					 * "%l" have been swapped. (ado, 1993-05-24)
@@ -312,7 +311,7 @@ _fmt(const char *format, const struct pg_tm *t, char *pt,
  * (01-53)."
  * (ado, 1993-05-24)
  *
- * From <http://www.ft.uni-erlangen.de/~mskuhn/iso-time.html> by Markus Kuhn:
+ * From <https://www.cl.cam.ac.uk/~mgk25/iso-time.html> by Markus Kuhn:
  * "Week 01 of a year is per definition the first week which has the
  * Thursday in this year, which is equivalent to the week which contains
  * the fourth day of January. In other words, the first week of a new year
@@ -482,7 +481,7 @@ _fmt(const char *format, const struct pg_tm *t, char *pt,
 
 					/*
 					 * X311J/88-090 (4.12.3.5): if conversion char is
-					 * undefined, behavior is undefined.  Print out the
+					 * undefined, behavior is undefined. Print out the
 					 * character itself as printf(3) also does.
 					 */
 				default:
