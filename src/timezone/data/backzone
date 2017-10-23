@@ -181,7 +181,7 @@ Zone	Africa/Lome	0:04:52 -	LMT	1893
 # with the date that it took effect, namely 1912-01-01.
 #
 Zone	Africa/Luanda	0:52:56	-	LMT	1892
-			0:52:04	-	+005204	1912 Jan  1
+			0:52:04	-	LMT	1912 Jan  1 # Luanda Mean Time?
 			1:00	-	WAT
 
 # Democratic Republic of the Congo (east)
@@ -540,10 +540,10 @@ Zone	Europe/Belfast	-0:23:40 -	LMT	1880 Aug  2
 
 # Guernsey
 # Data from Joseph S. Myers
-# http://mm.icann.org/pipermail/tz/2013-September/019883.html
+# https://mm.icann.org/pipermail/tz/2013-September/019883.html
 # References to be added
-# LMT Location - 49.27N -2.33E - St.Peter Port
-Zone	Europe/Guernsey	-0:09:19 -	LMT	1913 Jun 18
+# LMT is for Town Church, St. Peter Port, 49 degrees 27'17"N 2 degrees 32'10"W
+Zone	Europe/Guernsey	-0:10:09 -	LMT	1913 Jun 18
 			 0:00	GB-Eire	%s	1940 Jul  2
 			 1:00	C-Eur	CE%sT	1945 May  8
 			 0:00	GB-Eire	%s	1968 Oct 27
@@ -555,11 +555,11 @@ Zone	Europe/Guernsey	-0:09:19 -	LMT	1913 Jun 18
 #
 # From Lester Caine (2013-09-04):
 # The Isle of Man legislation is now on-line at
-# <http://www.legislation.gov.im>, starting with the original Statutory
+# <https://www.legislation.gov.im>, starting with the original Statutory
 # Time Act in 1883 and including additional confirmation of some of
 # the dates of the 'Summer Time' orders originating at
 # Westminster.  There is a little uncertainty as to the starting date
-# of the first summer time in 1916 which may have be announced a
+# of the first summer time in 1916 which may have been announced a
 # couple of days late.  There is still a substantial number of
 # documents to work through, but it is thought that every GB change
 # was also implemented on the island.
@@ -574,10 +574,10 @@ Zone Europe/Isle_of_Man	-0:17:55 -	LMT	1883 Mar 30  0:00s
 
 # Jersey
 # Data from Joseph S. Myers
-# http://mm.icann.org/pipermail/tz/2013-September/019883.html
+# https://mm.icann.org/pipermail/tz/2013-September/019883.html
 # References to be added
-# LMT Location - 49.187N -2.107E - St. Helier
-Zone	Europe/Jersey	-0:08:25 -	LMT	1898 Jun 11 16:00u
+# LMT is for Parish Church, St. Helier, 49 degrees 11'0.57"N 2 degrees 6'24.33"W
+Zone	Europe/Jersey	-0:08:26 -	LMT	1898 Jun 11 16:00u
 			 0:00	GB-Eire	%s	1940 Jul  2
 			 1:00	C-Eur	CE%sT	1945 May  8
 			 0:00	GB-Eire	%s	1968 Oct 27
