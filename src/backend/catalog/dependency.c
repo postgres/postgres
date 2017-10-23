@@ -1713,6 +1713,27 @@ find_expr_references_walker(Node *node,
 		/* Extra work needed here if we ever need this case */
 		elog(ERROR, "already-planned subqueries not supported");
 	}
+	else if (IsA(node, FieldSelect))
+	{
+		FieldSelect *fselect = (FieldSelect *) node;
+
+		/* result type might not appear anywhere else in expression */
+		add_object_address(OCLASS_TYPE, fselect->resulttype, 0,
+						   context->addrs);
+		/* the collation might not be referenced anywhere else, either */
+		if (OidIsValid(fselect->resultcollid) &&
+			fselect->resultcollid != DEFAULT_COLLATION_OID)
+			add_object_address(OCLASS_COLLATION, fselect->resultcollid, 0,
+							   context->addrs);
+	}
+	else if (IsA(node, FieldStore))
+	{
+		FieldStore *fstore = (FieldStore *) node;
+
+		/* result type might not appear anywhere else in expression */
+		add_object_address(OCLASS_TYPE, fstore->resulttype, 0,
+						   context->addrs);
+	}
 	else if (IsA(node, RelabelType))
 	{
 		RelabelType *relab = (RelabelType *) node;
@@ -1733,6 +1754,11 @@ find_expr_references_walker(Node *node,
 		/* since there is no exposed function, need to depend on type */
 		add_object_address(OCLASS_TYPE, iocoerce->resulttype, 0,
 						   context->addrs);
+		/* the collation might not be referenced anywhere else, either */
+		if (OidIsValid(iocoerce->resultcollid) &&
+			iocoerce->resultcollid != DEFAULT_COLLATION_OID)
+			add_object_address(OCLASS_COLLATION, iocoerce->resultcollid, 0,
+							   context->addrs);
 	}
 	else if (IsA(node, ArrayCoerceExpr))
 	{
