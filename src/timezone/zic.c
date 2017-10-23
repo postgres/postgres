@@ -17,15 +17,15 @@
 #include "private.h"
 #include "tzfile.h"
 
-#define ZIC_VERSION_PRE_2013 '2'
-#define ZIC_VERSION '3'
+#define	ZIC_VERSION_PRE_2013 '2'
+#define	ZIC_VERSION	'3'
 
 typedef int64 zic_t;
 #define ZIC_MIN PG_INT64_MIN
 #define ZIC_MAX PG_INT64_MAX
 
 #ifndef ZIC_MAX_ABBR_LEN_WO_WARN
-#define ZIC_MAX_ABBR_LEN_WO_WARN	  6
+#define ZIC_MAX_ABBR_LEN_WO_WARN	6
 #endif							/* !defined ZIC_MAX_ABBR_LEN_WO_WARN */
 
 #ifndef WIN32
@@ -473,7 +473,7 @@ static void
 verror(const char *string, va_list args)
 {
 	/*
-	 * Match the format of "cc" to allow sh users to  zic ... 2>&1 | error -t
+	 * Match the format of "cc" to allow sh users to zic ... 2>&1 | error -t
 	 * "*" -v on BSD systems.
 	 */
 	if (filename)
@@ -969,7 +969,7 @@ dolink(char const *fromfield, char const *tofield, bool staysymlink)
 	}
 }
 
-#define TIME_T_BITS_IN_FILE 64
+#define TIME_T_BITS_IN_FILE	64
 
 static zic_t const min_time = MINVAL(zic_t, TIME_T_BITS_IN_FILE);
 static zic_t const max_time = MAXVAL(zic_t, TIME_T_BITS_IN_FILE);
@@ -984,7 +984,7 @@ static zic_t const max_time = MAXVAL(zic_t, TIME_T_BITS_IN_FILE);
  * Ade PAR, Aghanim N, Armitage-Caplan C et al.  Planck 2013 results.
  * I. Overview of products and scientific results.
  * arXiv:1303.5062 2013-03-20 20:10:01 UTC
- * <http://arxiv.org/pdf/1303.5062v1> [PDF]
+ * <https://arxiv.org/pdf/1303.5062v1> [PDF]
  *
  * Page 36, Table 9, row Age/Gyr, column Planck+WP+highL+BAO 68% limits
  * gives the value 13.798 plus-or-minus 0.037 billion years.
@@ -1208,7 +1208,9 @@ infile(const char *name)
 			/* nothing to do */
 		}
 		else if (wantcont)
+		{
 			wantcont = inzcont(fields, nfields);
+		}
 		else
 		{
 			struct lookup const *line_codes
