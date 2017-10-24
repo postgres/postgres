@@ -679,6 +679,20 @@ with q as (select max(f1) from int4_tbl group by f1 order by f1)
 (5 rows)
 
 --
+-- Test case for sublinks pulled up into joinaliasvars lists in an
+-- inherited update/delete query
+--
+begin;  --  this shouldn't delete anything, but be safe
+delete from road
+where exists (
+  select 1
+  from
+    int4_tbl cross join
+    ( select f1, array(select q1 from int8_tbl) as arr
+      from text_tbl ) ss
+  where road.name = ss.f1 );
+rollback;
+--
 -- Test case for sublinks pushed down into subselects via join alias expansion
 --
 select
