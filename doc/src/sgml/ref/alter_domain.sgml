@@ -199,7 +199,7 @@ ALTER DOMAIN <replaceable class="parameter">name</replaceable>
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="parameter">NOT VALID</replaceable></term>
+      <term><literal>NOT VALID</literal></term>
       <listitem>
        <para>
         Do not verify existing column data for constraint validity.
@@ -274,11 +274,11 @@ ALTER DOMAIN <replaceable class="parameter">name</replaceable>
 
   <para>
    Currently, <command>ALTER DOMAIN ADD CONSTRAINT</command>, <command>ALTER
-   DOMAIN VALIDATE CONSTRAINT</command>, and <command>ALTER DOMAIN SET NOT NULL</command>
-   will fail if the validated named domain or
-   any derived domain is used within a composite-type column of any
-   table in the database.  They should eventually be improved to be
-   able to verify the new constraint for such nested columns.
+   DOMAIN VALIDATE CONSTRAINT</command>, and <command>ALTER DOMAIN SET NOT
+   NULL</command> will fail if the named domain or any derived domain is used
+   within a container-type column (a composite, array, or range column) in
+   any table in the database.  They should eventually be improved to be able
+   to verify the new constraint for such nested values.
   </para>
 
  </refsect1>

@@ -328,11 +328,16 @@ SELECT (myfunc(x)).a, (myfunc(x)).b, (myfunc(x)).c FROM some_table;
     with either syntax.  If it's an expensive function you may wish to
     avoid that, which you can do with a query like:
 <programlisting>
-SELECT (m).* FROM (SELECT myfunc(x) AS m FROM some_table OFFSET 0) ss;
+SELECT m.* FROM some_table, LATERAL myfunc(x) AS m;
 </programlisting>
-    The <literal>OFFSET 0</literal> clause keeps the optimizer
-    from <quote>flattening</quote> the sub-select to arrive at the form with
-    multiple calls of <function>myfunc()</function>.
+    Placing the function in
+    a <literal>LATERAL</literal> <literal>FROM</literal> item keeps it from
+    being invoked more than once per row.  <literal>m.*</literal> is still
+    expanded into <literal>m.a, m.b, m.c</literal>, but now those variables
+    are just references to the output of the <literal>FROM</literal> item.
+    (The <literal>LATERAL</literal> keyword is optional here, but we show it
+    to clarify that the function is getting <structfield>x</structfield>
+    from <structname>some_table</structname>.)
    </para>
   </tip>
 

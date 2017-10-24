@@ -4359,6 +4359,60 @@ SET xmloption TO { DOCUMENT | CONTENT };
 
   &rangetypes;
 
+  <sect1 id="domains">
+   <title>Domain Types</title>
+
+   <indexterm zone="domains">
+    <primary>domain</primary>
+   </indexterm>
+
+   <indexterm zone="domains">
+    <primary>data type</primary>
+    <secondary>domain</secondary>
+   </indexterm>
+
+   <para>
+    A <firstterm>domain</firstterm> is a user-defined data type that is
+    based on another <firstterm>underlying type</firstterm>.  Optionally,
+    it can have constraints that restrict its valid values to a subset of
+    what the underlying type would allow.  Otherwise it behaves like the
+    underlying type &mdash; for example, any operator or function that
+    can be applied to the underlying type will work on the domain type.
+    The underlying type can be any built-in or user-defined base type,
+    enum type, array or range type, or another domain.  (Currently, domains
+    over composite types are not implemented.)
+   </para>
+
+   <para>
+    For example, we could create a domain over integers that accepts only
+    positive integers:
+<programlisting>
+CREATE DOMAIN posint AS integer CHECK (VALUE &gt; 0);
+CREATE TABLE mytable (id posint);
+INSERT INTO mytable VALUES(1);   -- works
+INSERT INTO mytable VALUES(-1);  -- fails
+</programlisting>
+   </para>
+
+   <para>
+    When an operator or function of the underlying type is applied to a
+    domain value, the domain is automatically down-cast to the underlying
+    type.  Thus, for example, the result of <literal>mytable.id - 1</literal>
+    is considered to be of type <type>integer</type> not <type>posint</type>.
+    We could write <literal>(mytable.id - 1)::posint</literal> to cast the
+    result back to <type>posint</type>, causing the domain's constraints
+    to be rechecked.  In this case, that would result in an error if the
+    expression had been applied to an <structfield>id</structfield> value of
+    1.  Assigning a value of the underlying type to a field or variable of
+    the domain type is allowed without writing an explicit cast, but the
+    domain's constraints will be checked.
+   </para>
+
+   <para>
+    For additional information see <xref linkend="sql-createdomain">.
+   </para>
+  </sect1>
+
   <sect1 id="datatype-oid">
    <title>Object Identifier Types</title>
 

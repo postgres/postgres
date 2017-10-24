@@ -106,31 +106,60 @@
     <secondary>composite</secondary>
    </indexterm>
 
+   <indexterm zone="extend-type-system">
+    <primary>container type</primary>
+   </indexterm>
+
+   <indexterm zone="extend-type-system">
+    <primary>data type</primary>
+    <secondary>container</secondary>
+   </indexterm>
+
    <para>
-    <productname>PostgreSQL</productname> data types are divided into base
-    types, composite types, domains, and pseudo-types.
+    <productname>PostgreSQL</productname> data types can be divided into base
+    types, container types, domains, and pseudo-types.
    </para>
 
    <sect2>
     <title>Base Types</title>
 
     <para>
-     Base types are those, like <type>int4</type>, that are
+     Base types are those, like <type>integer</type>, that are
      implemented below the level of the <acronym>SQL</acronym> language
      (typically in a low-level language such as C).  They generally
      correspond to what are often known as abstract data types.
      <productname>PostgreSQL</productname> can only operate on such
      types through functions provided by the user and only understands
      the behavior of such types to the extent that the user describes
-     them.  Base types are further subdivided into scalar and array
-     types.  For each scalar type, a corresponding array type is
-     automatically created that can hold variable-size arrays of that
-     scalar type.
+     them.
+     The built-in base types are described in <xref linkend="datatype">.
+    </para>
+
+    <para>
+     Enumerated (enum) types can be considered as a subcategory of base
+     types.  The main difference is that they can be created using
+     just <acronym>SQL</acronym> commands, without any low-level programming.
+     Refer to <xref linkend="datatype-enum"> for more information.
     </para>
    </sect2>
 
    <sect2>
-    <title>Composite Types</title>
+    <title>Container Types</title>
+
+    <para>
+     <productname>PostgreSQL</productname> has three kinds
+     of <quote>container</quote> types, which are types that contain multiple
+     values of other types.  These are arrays, composites, and ranges.
+    </para>
+
+    <para>
+     Arrays can hold multiple values that are all of the same type.  An array
+     type is automatically created for each base type, composite type, range
+     type, and domain type.  But there are no arrays of arrays.  So far as
+     the type system is concerned, multi-dimensional arrays are the same as
+     one-dimensional arrays.  Refer to <xref linkend="arrays"> for more
+     information.
+    </para>
 
     <para>
      Composite types, or row types, are created whenever the user
@@ -139,9 +168,15 @@
      define a <quote>stand-alone</quote> composite type with no associated
      table.  A composite type is simply a list of types with
      associated field names.  A value of a composite type is a row or
-     record of field values.  The user can access the component fields
-     from <acronym>SQL</acronym> queries. Refer to <xref linkend="rowtypes">
-     for more information on composite types.
+     record of field values.  Refer to <xref linkend="rowtypes">
+     for more information.
+    </para>
+
+    <para>
+     A range type can hold two values of the same type, which are the lower
+     and upper bounds of the range.  Range types are user-created, although
+     a few built-in ones exist.  Refer to <xref linkend="rangetypes">
+     for more information.
     </para>
    </sect2>
 
@@ -149,16 +184,12 @@
     <title>Domains</title>
 
     <para>
-     A domain is based on a particular base type and for many purposes
-     is interchangeable with its base type.  However, a domain can
-     have constraints that restrict its valid values to a subset of
-     what the underlying base type would allow.
-    </para>
-
-    <para>
-     Domains can be created using the <acronym>SQL</acronym> command
-     <xref linkend="sql-createdomain">.
-     Their creation and use is not discussed in this chapter.
+     A domain is based on a particular underlying type and for many purposes
+     is interchangeable with its underlying type.  However, a domain can have
+     constraints that restrict its valid values to a subset of what the
+     underlying type would allow.  Domains are created using
+     the <acronym>SQL</acronym> command <xref linkend="sql-createdomain">.
+     Refer to <xref linkend="domains"> for more information.
     </para>
    </sect2>
 
@@ -167,8 +198,8 @@
 
     <para>
      There are a few <quote>pseudo-types</quote> for special purposes.
-     Pseudo-types cannot appear as columns of tables or attributes of
-     composite types, but they can be used to declare the argument and
+     Pseudo-types cannot appear as columns of tables or components of
+     container types, but they can be used to declare the argument and
      result types of functions.  This provides a mechanism within the
      type system to identify special classes of functions.  <xref
      linkend="datatype-pseudotypes-table"> lists the existing
@@ -188,7 +219,7 @@
    </indexterm>
 
    <indexterm zone="extend-types-polymorphic">
-    <primary>type</primary>
+    <primary>data type</primary>
     <secondary>polymorphic</secondary>
    </indexterm>
 
