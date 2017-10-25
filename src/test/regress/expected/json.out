@@ -1864,6 +1864,54 @@ SELECT json_build_array('a',1,'b',1.2,'c',true,'d',null,'e',json '{"x": 3, "y": 
  ["a", 1, "b", 1.2, "c", true, "d", null, "e", {"x": 3, "y": [1,2,3]}]
 (1 row)
 
+SELECT json_build_array('a', NULL); -- ok
+ json_build_array 
+------------------
+ ["a", null]
+(1 row)
+
+SELECT json_build_array(VARIADIC NULL::text[]); -- ok
+ json_build_array 
+------------------
+ 
+(1 row)
+
+SELECT json_build_array(VARIADIC '{}'::text[]); -- ok
+ json_build_array 
+------------------
+ []
+(1 row)
+
+SELECT json_build_array(VARIADIC '{a,b,c}'::text[]); -- ok
+ json_build_array 
+------------------
+ ["a", "b", "c"]
+(1 row)
+
+SELECT json_build_array(VARIADIC ARRAY['a', NULL]::text[]); -- ok
+ json_build_array 
+------------------
+ ["a", null]
+(1 row)
+
+SELECT json_build_array(VARIADIC '{1,2,3,4}'::text[]); -- ok
+   json_build_array   
+----------------------
+ ["1", "2", "3", "4"]
+(1 row)
+
+SELECT json_build_array(VARIADIC '{1,2,3,4}'::int[]); -- ok
+ json_build_array 
+------------------
+ [1, 2, 3, 4]
+(1 row)
+
+SELECT json_build_array(VARIADIC '{{1,4},{2,5},{3,6}}'::int[][]); -- ok
+  json_build_array  
+--------------------
+ [1, 4, 2, 5, 3, 6]
+(1 row)
+
 SELECT json_build_object('a',1,'b',1.2,'c',true,'d',null,'e',json '{"x": 3, "y": [1,2,3]}');
                              json_build_object                              
 ----------------------------------------------------------------------------
@@ -1877,6 +1925,65 @@ SELECT json_build_object(
                                         json_build_object                                        
 -------------------------------------------------------------------------------------------------
  {"a" : {"b" : false, "c" : 99}, "d" : {"e" : [9,8,7], "f" : {"relkind":"r","name":"pg_class"}}}
+(1 row)
+
+SELECT json_build_object('{a,b,c}'::text[]); -- error
+ERROR:  argument list must have even number of elements
+HINT:  The arguments of json_build_object() must consist of alternating keys and values.
+SELECT json_build_object('{a,b,c}'::text[], '{d,e,f}'::text[]); -- error, key cannot be array
+ERROR:  key value must be scalar, not array, composite, or json
+SELECT json_build_object('a', 'b', 'c'); -- error
+ERROR:  argument list must have even number of elements
+HINT:  The arguments of json_build_object() must consist of alternating keys and values.
+SELECT json_build_object(NULL, 'a'); -- error, key cannot be NULL
+ERROR:  argument 1 cannot be null
+HINT:  Object keys should be text.
+SELECT json_build_object('a', NULL); -- ok
+ json_build_object 
+-------------------
+ {"a" : null}
+(1 row)
+
+SELECT json_build_object(VARIADIC NULL::text[]); -- ok
+ json_build_object 
+-------------------
+ 
+(1 row)
+
+SELECT json_build_object(VARIADIC '{}'::text[]); -- ok
+ json_build_object 
+-------------------
+ {}
+(1 row)
+
+SELECT json_build_object(VARIADIC '{a,b,c}'::text[]); -- error
+ERROR:  argument list must have even number of elements
+HINT:  The arguments of json_build_object() must consist of alternating keys and values.
+SELECT json_build_object(VARIADIC ARRAY['a', NULL]::text[]); -- ok
+ json_build_object 
+-------------------
+ {"a" : null}
+(1 row)
+
+SELECT json_build_object(VARIADIC ARRAY[NULL, 'a']::text[]); -- error, key cannot be NULL
+ERROR:  argument 1 cannot be null
+HINT:  Object keys should be text.
+SELECT json_build_object(VARIADIC '{1,2,3,4}'::text[]); -- ok
+   json_build_object    
+------------------------
+ {"1" : "2", "3" : "4"}
+(1 row)
+
+SELECT json_build_object(VARIADIC '{1,2,3,4}'::int[]); -- ok
+ json_build_object  
+--------------------
+ {"1" : 2, "3" : 4}
+(1 row)
+
+SELECT json_build_object(VARIADIC '{{1,4},{2,5},{3,6}}'::int[][]); -- ok
+      json_build_object      
+-----------------------------
+ {"1" : 4, "2" : 5, "3" : 6}
 (1 row)
 
 -- empty objects/arrays
