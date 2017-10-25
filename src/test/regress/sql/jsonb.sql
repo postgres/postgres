@@ -313,6 +313,14 @@ SELECT jsonb_typeof('"1.0"') AS string;
 -- jsonb_build_array, jsonb_build_object, jsonb_object_agg
 
 SELECT jsonb_build_array('a',1,'b',1.2,'c',true,'d',null,'e',json '{"x": 3, "y": [1,2,3]}');
+SELECT jsonb_build_array('a', NULL); -- ok
+SELECT jsonb_build_array(VARIADIC NULL::text[]); -- ok
+SELECT jsonb_build_array(VARIADIC '{}'::text[]); -- ok
+SELECT jsonb_build_array(VARIADIC '{a,b,c}'::text[]); -- ok
+SELECT jsonb_build_array(VARIADIC ARRAY['a', NULL]::text[]); -- ok
+SELECT jsonb_build_array(VARIADIC '{1,2,3,4}'::text[]); -- ok
+SELECT jsonb_build_array(VARIADIC '{1,2,3,4}'::int[]); -- ok
+SELECT jsonb_build_array(VARIADIC '{{1,4},{2,5},{3,6}}'::int[][]); -- ok
 
 SELECT jsonb_build_object('a',1,'b',1.2,'c',true,'d',null,'e',json '{"x": 3, "y": [1,2,3]}');
 
@@ -320,7 +328,19 @@ SELECT jsonb_build_object(
        'a', jsonb_build_object('b',false,'c',99),
        'd', jsonb_build_object('e',array[9,8,7]::int[],
            'f', (select row_to_json(r) from ( select relkind, oid::regclass as name from pg_class where relname = 'pg_class') r)));
-
+SELECT jsonb_build_object('{a,b,c}'::text[]); -- error
+SELECT jsonb_build_object('{a,b,c}'::text[], '{d,e,f}'::text[]); -- error, key cannot be array
+SELECT jsonb_build_object('a', 'b', 'c'); -- error
+SELECT jsonb_build_object(NULL, 'a'); -- error, key cannot be NULL
+SELECT jsonb_build_object('a', NULL); -- ok
+SELECT jsonb_build_object(VARIADIC NULL::text[]); -- ok
+SELECT jsonb_build_object(VARIADIC '{}'::text[]); -- ok
+SELECT jsonb_build_object(VARIADIC '{a,b,c}'::text[]); -- error
+SELECT jsonb_build_object(VARIADIC ARRAY['a', NULL]::text[]); -- ok
+SELECT jsonb_build_object(VARIADIC ARRAY[NULL, 'a']::text[]); -- error, key cannot be NULL
+SELECT jsonb_build_object(VARIADIC '{1,2,3,4}'::text[]); -- ok
+SELECT jsonb_build_object(VARIADIC '{1,2,3,4}'::int[]); -- ok
+SELECT jsonb_build_object(VARIADIC '{{1,4},{2,5},{3,6}}'::int[][]); -- ok
 
 -- empty objects/arrays
 SELECT jsonb_build_array();

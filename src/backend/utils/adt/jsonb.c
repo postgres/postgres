@@ -3,7 +3,7 @@
  * jsonb.c
  *		I/O routines for jsonb type
  *
- * Copyright (c) 2014-2017, PostgreSQL Global Development Group
+ * COPYRIGHT (c) 2014-2017, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/utils/adt/jsonb.c
@@ -16,6 +16,7 @@
 #include "access/htup_details.h"
 #include "access/transam.h"
 #include "catalog/pg_type.h"
+#include "funcapi.h"
 #include "libpq/pqformat.h"
 #include "parser/parse_coerce.h"
 #include "utils/builtins.h"
@@ -1171,16 +1172,24 @@ to_jsonb(PG_FUNCTION_ARGS)
 Datum
 jsonb_build_object(PG_FUNCTION_ARGS)
 {
-	int			nargs = PG_NARGS();
+	int			nargs;
 	int			i;
-	Datum		arg;
-	Oid			val_type;
 	JsonbInState result;
+	Datum	   *args;
+	bool	   *nulls;
+	Oid		   *types;
+
+	/* build argument values to build the object */
+	nargs = extract_variadic_args(fcinfo, 0, true, &args, &types, &nulls);
+
+	if (nargs < 0)
+		PG_RETURN_NULL();
 
 	if (nargs % 2 != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("invalid number of arguments: object must be matched key value pairs")));
+				 errmsg("argument list must have even number of elements"),
+				 errhint("The arguments of jsonb_build_object() must consist of alternating keys and values.")));
 
 	memset(&result, 0, sizeof(JsonbInState));
 
@@ -1189,54 +1198,15 @@ jsonb_build_object(PG_FUNCTION_ARGS)
 	for (i = 0; i < nargs; i += 2)
 	{
 		/* process key */
-
-		if (PG_ARGISNULL(i))
+		if (nulls[i])
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("argument %d: key must not be null", i + 1)));
-		val_type = get_fn_expr_argtype(fcinfo->flinfo, i);
 
-		/*
-		 * turn a constant (more or less literal) value that's of unknown type
-		 * into text. Unknowns come in as a cstring pointer.
-		 */
-		if (val_type == UNKNOWNOID && get_fn_expr_arg_stable(fcinfo->flinfo, i))
-		{
-			val_type = TEXTOID;
-			arg = CStringGetTextDatum(PG_GETARG_POINTER(i));
-		}
-		else
-		{
-			arg = PG_GETARG_DATUM(i);
-		}
-		if (val_type == InvalidOid || val_type == UNKNOWNOID)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("could not determine data type for argument %d", i + 1)));
-
-		add_jsonb(arg, false, &result, val_type, true);
+		add_jsonb(args[i], false, &result, types[i], true);
 
 		/* process value */
-
-		val_type = get_fn_expr_argtype(fcinfo->flinfo, i + 1);
-		/* see comments above */
-		if (val_type == UNKNOWNOID && get_fn_expr_arg_stable(fcinfo->flinfo, i + 1))
-		{
-			val_type = TEXTOID;
-			if (PG_ARGISNULL(i + 1))
-				arg = (Datum) 0;
-			else
-				arg = CStringGetTextDatum(PG_GETARG_POINTER(i + 1));
-		}
-		else
-		{
-			arg = PG_GETARG_DATUM(i + 1);
-		}
-		if (val_type == InvalidOid || val_type == UNKNOWNOID)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("could not determine data type for argument %d", i + 2)));
-		add_jsonb(arg, PG_ARGISNULL(i + 1), &result, val_type, false);
+		add_jsonb(args[i + 1], nulls[i + 1], &result, types[i + 1], false);
 	}
 
 	result.res = pushJsonbValue(&result.parseState, WJB_END_OBJECT, NULL);
@@ -1266,38 +1236,25 @@ jsonb_build_object_noargs(PG_FUNCTION_ARGS)
 Datum
 jsonb_build_array(PG_FUNCTION_ARGS)
 {
-	int			nargs = PG_NARGS();
+	int			nargs;
 	int			i;
-	Datum		arg;
-	Oid			val_type;
 	JsonbInState result;
+	Datum	   *args;
+	bool	   *nulls;
+	Oid		   *types;
+
+	/* build argument values to build the array */
+	nargs = extract_variadic_args(fcinfo, 0, true, &args, &types, &nulls);
+
+	if (nargs < 0)
+		PG_RETURN_NULL();
 
 	memset(&result, 0, sizeof(JsonbInState));
 
 	result.res = pushJsonbValue(&result.parseState, WJB_BEGIN_ARRAY, NULL);
 
 	for (i = 0; i < nargs; i++)
-	{
-		val_type = get_fn_expr_argtype(fcinfo->flinfo, i);
-		/* see comments in jsonb_build_object above */
-		if (val_type == UNKNOWNOID && get_fn_expr_arg_stable(fcinfo->flinfo, i))
-		{
-			val_type = TEXTOID;
-			if (PG_ARGISNULL(i))
-				arg = (Datum) 0;
-			else
-				arg = CStringGetTextDatum(PG_GETARG_POINTER(i));
-		}
-		else
-		{
-			arg = PG_GETARG_DATUM(i);
-		}
-		if (val_type == InvalidOid || val_type == UNKNOWNOID)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("could not determine data type for argument %d", i + 1)));
-		add_jsonb(arg, PG_ARGISNULL(i), &result, val_type, false);
-	}
+		add_jsonb(args[i], nulls[i], &result, types[i], false);
 
 	result.res = pushJsonbValue(&result.parseState, WJB_END_ARRAY, NULL);
 

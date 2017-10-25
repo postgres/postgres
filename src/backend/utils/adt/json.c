@@ -17,6 +17,7 @@
 #include "access/transam.h"
 #include "catalog/pg_type.h"
 #include "executor/spi.h"
+#include "funcapi.h"
 #include "lib/stringinfo.h"
 #include "libpq/pqformat.h"
 #include "mb/pg_wchar.h"
@@ -2111,10 +2112,17 @@ json_build_object(PG_FUNCTION_ARGS)
 {
 	int			nargs = PG_NARGS();
 	int			i;
-	Datum		arg;
 	const char *sep = "";
 	StringInfo	result;
-	Oid			val_type;
+	Datum	   *args;
+	bool	   *nulls;
+	Oid		   *types;
+
+	/* fetch argument values to build the object */
+	nargs = extract_variadic_args(fcinfo, 0, false, &args, &types, &nulls);
+
+	if (nargs < 0)
+		PG_RETURN_NULL();
 
 	if (nargs % 2 != 0)
 		ereport(ERROR,
@@ -2128,52 +2136,22 @@ json_build_object(PG_FUNCTION_ARGS)
 
 	for (i = 0; i < nargs; i += 2)
 	{
-		/*
-		 * Note: since json_build_object() is declared as taking type "any",
-		 * the parser will not do any type conversion on unknown-type literals
-		 * (that is, undecorated strings or NULLs).  Such values will arrive
-		 * here as type UNKNOWN, which fortunately does not matter to us,
-		 * since unknownout() works fine.
-		 */
 		appendStringInfoString(result, sep);
 		sep = ", ";
 
 		/* process key */
-		val_type = get_fn_expr_argtype(fcinfo->flinfo, i);
-
-		if (val_type == InvalidOid)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("could not determine data type for argument %d",
-							i + 1)));
-
-		if (PG_ARGISNULL(i))
+		if (nulls[i])
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("argument %d cannot be null", i + 1),
 					 errhint("Object keys should be text.")));
 
-		arg = PG_GETARG_DATUM(i);
-
-		add_json(arg, false, result, val_type, true);
+		add_json(args[i], false, result, types[i], true);
 
 		appendStringInfoString(result, " : ");
 
 		/* process value */
-		val_type = get_fn_expr_argtype(fcinfo->flinfo, i + 1);
-
-		if (val_type == InvalidOid)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("could not determine data type for argument %d",
-							i + 2)));
-
-		if (PG_ARGISNULL(i + 1))
-			arg = (Datum) 0;
-		else
-			arg = PG_GETARG_DATUM(i + 1);
-
-		add_json(arg, PG_ARGISNULL(i + 1), result, val_type, false);
+		add_json(args[i + 1], nulls[i + 1], result, types[i + 1], false);
 	}
 
 	appendStringInfoChar(result, '}');
@@ -2196,12 +2174,19 @@ json_build_object_noargs(PG_FUNCTION_ARGS)
 Datum
 json_build_array(PG_FUNCTION_ARGS)
 {
-	int			nargs = PG_NARGS();
+	int			nargs;
 	int			i;
-	Datum		arg;
 	const char *sep = "";
 	StringInfo	result;
-	Oid			val_type;
+	Datum	   *args;
+	bool	   *nulls;
+	Oid		   *types;
+
+	/* fetch argument values to build the array */
+	nargs = extract_variadic_args(fcinfo, 0, false, &args, &types, &nulls);
+
+	if (nargs < 0)
+		PG_RETURN_NULL();
 
 	result = makeStringInfo();
 
@@ -2209,30 +2194,9 @@ json_build_array(PG_FUNCTION_ARGS)
 
 	for (i = 0; i < nargs; i++)
 	{
-		/*
-		 * Note: since json_build_array() is declared as taking type "any",
-		 * the parser will not do any type conversion on unknown-type literals
-		 * (that is, undecorated strings or NULLs).  Such values will arrive
-		 * here as type UNKNOWN, which fortunately does not matter to us,
-		 * since unknownout() works fine.
-		 */
 		appendStringInfoString(result, sep);
 		sep = ", ";
-
-		val_type = get_fn_expr_argtype(fcinfo->flinfo, i);
-
-		if (val_type == InvalidOid)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("could not determine data type for argument %d",
-							i + 1)));
-
-		if (PG_ARGISNULL(i))
-			arg = (Datum) 0;
-		else
-			arg = PG_GETARG_DATUM(i);
-
-		add_json(arg, PG_ARGISNULL(i), result, val_type, false);
+		add_json(args[i], nulls[i], result, types[i], false);
 	}
 
 	appendStringInfoChar(result, ']');

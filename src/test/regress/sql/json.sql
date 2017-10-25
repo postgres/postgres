@@ -569,6 +569,14 @@ select value, json_typeof(value)
 -- json_build_array, json_build_object, json_object_agg
 
 SELECT json_build_array('a',1,'b',1.2,'c',true,'d',null,'e',json '{"x": 3, "y": [1,2,3]}');
+SELECT json_build_array('a', NULL); -- ok
+SELECT json_build_array(VARIADIC NULL::text[]); -- ok
+SELECT json_build_array(VARIADIC '{}'::text[]); -- ok
+SELECT json_build_array(VARIADIC '{a,b,c}'::text[]); -- ok
+SELECT json_build_array(VARIADIC ARRAY['a', NULL]::text[]); -- ok
+SELECT json_build_array(VARIADIC '{1,2,3,4}'::text[]); -- ok
+SELECT json_build_array(VARIADIC '{1,2,3,4}'::int[]); -- ok
+SELECT json_build_array(VARIADIC '{{1,4},{2,5},{3,6}}'::int[][]); -- ok
 
 SELECT json_build_object('a',1,'b',1.2,'c',true,'d',null,'e',json '{"x": 3, "y": [1,2,3]}');
 
@@ -576,6 +584,19 @@ SELECT json_build_object(
        'a', json_build_object('b',false,'c',99),
        'd', json_build_object('e',array[9,8,7]::int[],
            'f', (select row_to_json(r) from ( select relkind, oid::regclass as name from pg_class where relname = 'pg_class') r)));
+SELECT json_build_object('{a,b,c}'::text[]); -- error
+SELECT json_build_object('{a,b,c}'::text[], '{d,e,f}'::text[]); -- error, key cannot be array
+SELECT json_build_object('a', 'b', 'c'); -- error
+SELECT json_build_object(NULL, 'a'); -- error, key cannot be NULL
+SELECT json_build_object('a', NULL); -- ok
+SELECT json_build_object(VARIADIC NULL::text[]); -- ok
+SELECT json_build_object(VARIADIC '{}'::text[]); -- ok
+SELECT json_build_object(VARIADIC '{a,b,c}'::text[]); -- error
+SELECT json_build_object(VARIADIC ARRAY['a', NULL]::text[]); -- ok
+SELECT json_build_object(VARIADIC ARRAY[NULL, 'a']::text[]); -- error, key cannot be NULL
+SELECT json_build_object(VARIADIC '{1,2,3,4}'::text[]); -- ok
+SELECT json_build_object(VARIADIC '{1,2,3,4}'::int[]); -- ok
+SELECT json_build_object(VARIADIC '{{1,4},{2,5},{3,6}}'::int[][]); -- ok
 
 -- empty objects/arrays
 SELECT json_build_array();
