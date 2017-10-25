@@ -3906,6 +3906,16 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 
 #define MAXBUFSIZE 256
 
+/*
+ * parseServiceInfo: if a service name has been given, look it up and absorb
+ * connection options from it into *options.
+ *
+ * Returns 0 on success, nonzero on failure.  On failure, if errorMessage
+ * isn't null, also store an error message there.  (Note: the only reason
+ * this function and related ones don't dump core on errorMessage == NULL
+ * is the undocumented fact that printfPQExpBuffer does nothing when passed
+ * a null PQExpBuffer pointer.)
+ */
 static int
 parseServiceInfo(PQconninfoOption *options, PQExpBuffer errorMessage)
 {
@@ -3924,9 +3934,14 @@ parseServiceInfo(PQconninfoOption *options, PQExpBuffer errorMessage)
 	if (service == NULL)
 		service = getenv("PGSERVICE");
 
+	/* If no service name given, nothing to do */
 	if (service == NULL)
 		return 0;
 
+	/*
+	 * Try PGSERVICEFILE if specified, else try ~/.pg_service.conf (if that
+	 * exists).
+	 */
 	if ((env = getenv("PGSERVICEFILE")) != NULL)
 		strlcpy(serviceFile, env, sizeof(serviceFile));
 	else
@@ -3934,13 +3949,9 @@ parseServiceInfo(PQconninfoOption *options, PQExpBuffer errorMessage)
 		char		homedir[MAXPGPATH];
 
 		if (!pqGetHomeDirectory(homedir, sizeof(homedir)))
-		{
-			printfPQExpBuffer(errorMessage, libpq_gettext("could not get home directory to locate service definition file"));
-			return 1;
-		}
+			goto next_file;
 		snprintf(serviceFile, MAXPGPATH, "%s/%s", homedir, ".pg_service.conf");
-		errno = 0;
-		if (stat(serviceFile, &stat_buf) != 0 && errno == ENOENT)
+		if (stat(serviceFile, &stat_buf) != 0)
 			goto next_file;
 	}
 
@@ -3956,8 +3967,7 @@ next_file:
 	 */
 	snprintf(serviceFile, MAXPGPATH, "%s/pg_service.conf",
 			 getenv("PGSYSCONFDIR") ? getenv("PGSYSCONFDIR") : SYSCONFDIR);
-	errno = 0;
-	if (stat(serviceFile, &stat_buf) != 0 && errno == ENOENT)
+	if (stat(serviceFile, &stat_buf) != 0)
 		goto last_file;
 
 	status = parseServiceFile(serviceFile, service, options, errorMessage, &group_found);
@@ -5922,7 +5932,15 @@ dot_pg_pass_warning(PGconn *conn)
  *
  * This is essentially the same as get_home_path(), but we don't use that
  * because we don't want to pull path.c into libpq (it pollutes application
- * namespace)
+ * namespace).
+ *
+ * Returns true on success, false on failure to obtain the directory name.
+ *
+ * CAUTION: although in most situations failure is unexpected, there are users
+ * who like to run applications in a home-directory-less environment.  On
+ * failure, you almost certainly DO NOT want to report an error.  Just act as
+ * though whatever file you were hoping to find in the home directory isn't
+ * there (which it isn't).
  */
 bool
 pqGetHomeDirectory(char *buf, int bufsize)
