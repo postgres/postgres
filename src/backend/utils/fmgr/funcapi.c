@@ -2,7 +2,7 @@
  *
  * funcapi.c
  *	  Utility and convenience functions for fmgr functions that return
- *	  sets and/or composite types.
+ *	  sets and/or composite types, or deal with VARIADIC inputs.
  *
  * Copyright (c) 2002-2017, PostgreSQL Global Development Group
  *
@@ -1399,4 +1399,117 @@ TypeGetTupleDesc(Oid typeoid, List *colaliases)
 	}
 
 	return tupdesc;
+}
+
+/*
+ * extract_variadic_args
+ *
+ * Extract a set of argument values, types and NULL markers for a given
+ * input function which makes use of a VARIADIC input whose argument list
+ * depends on the caller context. When doing a VARIADIC call, the caller
+ * has provided one argument made of an array of values, so deconstruct the
+ * array data before using it for the next processing. If no VARIADIC call
+ * is used, just fill in the status data based on all the arguments given
+ * by the caller.
+ *
+ * This function returns the number of arguments generated, or -1 in the
+ * case of "VARIADIC NULL".
+ */
+int
+extract_variadic_args(FunctionCallInfo fcinfo, int variadic_start,
+					  bool convert_unknown, Datum **args, Oid **types,
+					  bool **nulls)
+{
+	bool		variadic = get_fn_expr_variadic(fcinfo->flinfo);
+	Datum	   *args_res;
+	bool	   *nulls_res;
+	Oid		   *types_res;
+	int			nargs, i;
+
+	*args = NULL;
+	*types = NULL;
+	*nulls = NULL;
+
+	if (variadic)
+	{
+		ArrayType  *array_in;
+		Oid			element_type;
+		bool		typbyval;
+		char		typalign;
+		int16		typlen;
+
+		Assert(PG_NARGS() == variadic_start + 1);
+
+		if (PG_ARGISNULL(variadic_start))
+			return -1;
+
+		array_in = PG_GETARG_ARRAYTYPE_P(variadic_start);
+		element_type = ARR_ELEMTYPE(array_in);
+
+		get_typlenbyvalalign(element_type,
+							 &typlen, &typbyval, &typalign);
+		deconstruct_array(array_in, element_type, typlen, typbyval,
+						  typalign, &args_res, &nulls_res,
+						  &nargs);
+
+		/* All the elements of the array have the same type */
+		types_res = (Oid *) palloc0(nargs * sizeof(Oid));
+		for (i = 0; i < nargs; i++)
+			types_res[i] = element_type;
+	}
+	else
+	{
+		nargs = PG_NARGS() - variadic_start;
+		Assert (nargs > 0);
+		nulls_res = (bool *) palloc0(nargs * sizeof(bool));
+		args_res = (Datum *) palloc0(nargs * sizeof(Datum));
+		types_res = (Oid *) palloc0(nargs * sizeof(Oid));
+
+		for (i = 0; i < nargs; i++)
+		{
+			nulls_res[i] = PG_ARGISNULL(i + variadic_start);
+			types_res[i] = get_fn_expr_argtype(fcinfo->flinfo,
+											   i + variadic_start);
+
+			/*
+			 * Turn a constant (more or less literal) value that's of unknown
+			 * type into text if required . Unknowns come in as a cstring
+			 * pointer.
+			 * Note: for functions declared as taking type "any", the parser
+			 * will not do any type conversion on unknown-type literals (that
+			 * is, undecorated strings or NULLs).
+			 */
+			if (convert_unknown &&
+				types_res[i] == UNKNOWNOID &&
+				get_fn_expr_arg_stable(fcinfo->flinfo, i + variadic_start))
+			{
+				types_res[i] = TEXTOID;
+
+				if (PG_ARGISNULL(i + variadic_start))
+					args_res[i] = (Datum) 0;
+				else
+					args_res[i] =
+						CStringGetTextDatum(PG_GETARG_POINTER(i + variadic_start));
+			}
+			else
+			{
+				/* no conversion needed, just take the datum as given */
+				args_res[i] = PG_GETARG_DATUM(i + variadic_start);
+			}
+
+			if (!OidIsValid(types_res[i]) ||
+				(convert_unknown && types_res[i] == UNKNOWNOID))
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("could not determine data type for argument %d",
+								i + 1)));
+		}
+	}
+
+	/* Fill in results */
+	*args = args_res;
+	*nulls = nulls_res;
+	*types = types_res;
+
+	return nargs;
 }
