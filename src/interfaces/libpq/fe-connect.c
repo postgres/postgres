@@ -1063,52 +1063,51 @@ connectOptions2(PGconn *conn)
 	 */
 	if (conn->pgpass == NULL || conn->pgpass[0] == '\0')
 	{
-		int			i;
-
+		/* If password file wasn't specified, use ~/PGPASSFILE */
 		if (conn->pgpassfile == NULL || conn->pgpassfile[0] == '\0')
 		{
-			/* Identify password file to use; fail if we can't */
 			char		homedir[MAXPGPATH];
 
-			if (!pqGetHomeDirectory(homedir, sizeof(homedir)))
+			if (pqGetHomeDirectory(homedir, sizeof(homedir)))
 			{
-				conn->status = CONNECTION_BAD;
-				printfPQExpBuffer(&conn->errorMessage,
-								  libpq_gettext("could not get home directory to locate password file\n"));
-				return false;
+				if (conn->pgpassfile)
+					free(conn->pgpassfile);
+				conn->pgpassfile = malloc(MAXPGPATH);
+				if (!conn->pgpassfile)
+					goto oom_error;
+				snprintf(conn->pgpassfile, MAXPGPATH, "%s/%s",
+						 homedir, PGPASSFILE);
 			}
-
-			if (conn->pgpassfile)
-				free(conn->pgpassfile);
-			conn->pgpassfile = malloc(MAXPGPATH);
-			if (!conn->pgpassfile)
-				goto oom_error;
-
-			snprintf(conn->pgpassfile, MAXPGPATH, "%s/%s", homedir, PGPASSFILE);
 		}
 
-		for (i = 0; i < conn->nconnhost; i++)
+		if (conn->pgpassfile != NULL && conn->pgpassfile[0] != '\0')
 		{
-			/*
-			 * Try to get a password for this host from pgpassfile. We use
-			 * host name rather than host address in the same manner to
-			 * PQhost().
-			 */
-			char	   *pwhost = conn->connhost[i].host;
+			int			i;
 
-			if (conn->connhost[i].type == CHT_HOST_ADDRESS &&
-				conn->connhost[i].host != NULL && conn->connhost[i].host[0] != '\0')
-				pwhost = conn->connhost[i].hostaddr;
+			for (i = 0; i < conn->nconnhost; i++)
+			{
+				/*
+				 * Try to get a password for this host from pgpassfile. We use
+				 * host name rather than host address in the same manner as
+				 * PQhost().
+				 */
+				char	   *pwhost = conn->connhost[i].host;
 
-			conn->connhost[i].password =
-				passwordFromFile(pwhost,
-								 conn->connhost[i].port,
-								 conn->dbName,
-								 conn->pguser,
-								 conn->pgpassfile);
-			/* If we got one, set pgpassfile_used */
-			if (conn->connhost[i].password != NULL)
-				conn->pgpassfile_used = true;
+				if (conn->connhost[i].type == CHT_HOST_ADDRESS &&
+					conn->connhost[i].host != NULL &&
+					conn->connhost[i].host[0] != '\0')
+					pwhost = conn->connhost[i].hostaddr;
+
+				conn->connhost[i].password =
+					passwordFromFile(pwhost,
+									 conn->connhost[i].port,
+									 conn->dbName,
+									 conn->pguser,
+									 conn->pgpassfile);
+				/* If we got one, set pgpassfile_used */
+				if (conn->connhost[i].password != NULL)
+					conn->pgpassfile_used = true;
+			}
 		}
 	}
 
@@ -4469,6 +4468,16 @@ ldapServiceLookup(const char *purl, PQconninfoOption *options,
 
 #define MAXBUFSIZE 256
 
+/*
+ * parseServiceInfo: if a service name has been given, look it up and absorb
+ * connection options from it into *options.
+ *
+ * Returns 0 on success, nonzero on failure.  On failure, if errorMessage
+ * isn't null, also store an error message there.  (Note: the only reason
+ * this function and related ones don't dump core on errorMessage == NULL
+ * is the undocumented fact that printfPQExpBuffer does nothing when passed
+ * a null PQExpBuffer pointer.)
+ */
 static int
 parseServiceInfo(PQconninfoOption *options, PQExpBuffer errorMessage)
 {
@@ -4487,9 +4496,14 @@ parseServiceInfo(PQconninfoOption *options, PQExpBuffer errorMessage)
 	if (service == NULL)
 		service = getenv("PGSERVICE");
 
+	/* If no service name given, nothing to do */
 	if (service == NULL)
 		return 0;
 
+	/*
+	 * Try PGSERVICEFILE if specified, else try ~/.pg_service.conf (if that
+	 * exists).
+	 */
 	if ((env = getenv("PGSERVICEFILE")) != NULL)
 		strlcpy(serviceFile, env, sizeof(serviceFile));
 	else
@@ -4497,13 +4511,9 @@ parseServiceInfo(PQconninfoOption *options, PQExpBuffer errorMessage)
 		char		homedir[MAXPGPATH];
 
 		if (!pqGetHomeDirectory(homedir, sizeof(homedir)))
-		{
-			printfPQExpBuffer(errorMessage, libpq_gettext("could not get home directory to locate service definition file"));
-			return 1;
-		}
+			goto next_file;
 		snprintf(serviceFile, MAXPGPATH, "%s/%s", homedir, ".pg_service.conf");
-		errno = 0;
-		if (stat(serviceFile, &stat_buf) != 0 && errno == ENOENT)
+		if (stat(serviceFile, &stat_buf) != 0)
 			goto next_file;
 	}
 
@@ -4519,8 +4529,7 @@ next_file:
 	 */
 	snprintf(serviceFile, MAXPGPATH, "%s/pg_service.conf",
 			 getenv("PGSYSCONFDIR") ? getenv("PGSYSCONFDIR") : SYSCONFDIR);
-	errno = 0;
-	if (stat(serviceFile, &stat_buf) != 0 && errno == ENOENT)
+	if (stat(serviceFile, &stat_buf) != 0)
 		goto last_file;
 
 	status = parseServiceFile(serviceFile, service, options, errorMessage, &group_found);
@@ -6510,7 +6519,15 @@ pgpassfileWarning(PGconn *conn)
  *
  * This is essentially the same as get_home_path(), but we don't use that
  * because we don't want to pull path.c into libpq (it pollutes application
- * namespace)
+ * namespace).
+ *
+ * Returns true on success, false on failure to obtain the directory name.
+ *
+ * CAUTION: although in most situations failure is unexpected, there are users
+ * who like to run applications in a home-directory-less environment.  On
+ * failure, you almost certainly DO NOT want to report an error.  Just act as
+ * though whatever file you were hoping to find in the home directory isn't
+ * there (which it isn't).
  */
 bool
 pqGetHomeDirectory(char *buf, int bufsize)
