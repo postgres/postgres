@@ -108,14 +108,14 @@ free_statement(struct statement *stmt)
 }
 
 static int
-next_insert(char *text, int pos, bool questionmarks)
+next_insert(char *text, int pos, bool questionmarks, bool std_strings)
 {
 	bool		string = false;
 	int			p = pos;
 
 	for (; text[p] != '\0'; p++)
 	{
-		if (text[p] == '\\')	/* escape character */
+		if (string && !std_strings && text[p] == '\\')	/* escape character */
 			p++;
 		else if (text[p] == '\'')
 			string = string ? false : true;
@@ -1109,6 +1109,13 @@ ecpg_build_params(struct statement *stmt)
 	struct variable *var;
 	int			desc_counter = 0;
 	int			position = 0;
+	const char	   *value;
+	bool		std_strings = false;
+
+	/* Get standard_conforming_strings setting. */
+	value = PQparameterStatus(stmt->connection->connection, "standard_conforming_strings");
+	if (value && strcmp(value, "on") == 0)
+		std_strings = true;
 
 	/*
 	 * If the type is one of the fill in types then we take the argument and
@@ -1299,7 +1306,7 @@ ecpg_build_params(struct statement *stmt)
 		 * now tobeinserted points to an area that contains the next
 		 * parameter; now find the position in the string where it belongs
 		 */
-		if ((position = next_insert(stmt->command, position, stmt->questionmarks) + 1) == 0)
+		if ((position = next_insert(stmt->command, position, stmt->questionmarks, std_strings) + 1) == 0)
 		{
 			/*
 			 * We have an argument but we dont have the matched up placeholder
@@ -1386,7 +1393,7 @@ ecpg_build_params(struct statement *stmt)
 	}
 
 	/* Check if there are unmatched things left. */
-	if (next_insert(stmt->command, position, stmt->questionmarks) >= 0)
+	if (next_insert(stmt->command, position, stmt->questionmarks, std_strings) >= 0)
 	{
 		ecpg_raise(stmt->lineno, ECPG_TOO_FEW_ARGUMENTS,
 				   ECPG_SQLSTATE_USING_CLAUSE_DOES_NOT_MATCH_PARAMETERS, NULL);
