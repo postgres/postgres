@@ -327,6 +327,46 @@ select tcl_composite_arg_ref2(row('tkey', 42, 'ref2'));
  ref2                
 (1 row)
 
+-- More tests for composite argument/result types
+create domain d_dta1 as T_dta1 check ((value).ref1 > 0);
+create function tcl_record_arg(record, fldname text) returns int as '
+    return $1($2)
+' language pltcl;
+select tcl_record_arg(row('tkey', 42, 'ref2')::T_dta1, 'ref1');
+ tcl_record_arg 
+----------------
+             42
+(1 row)
+
+select tcl_record_arg(row('tkey', 42, 'ref2')::d_dta1, 'ref1');
+ tcl_record_arg 
+----------------
+             42
+(1 row)
+
+select tcl_record_arg(row(2,4), 'f2');
+ tcl_record_arg 
+----------------
+              4
+(1 row)
+
+create function tcl_cdomain_arg(d_dta1) returns int as '
+    return $1(ref1)
+' language pltcl;
+select tcl_cdomain_arg(row('tkey', 42, 'ref2'));
+ tcl_cdomain_arg 
+-----------------
+              42
+(1 row)
+
+select tcl_cdomain_arg(row('tkey', 42, 'ref2')::T_dta1);
+ tcl_cdomain_arg 
+-----------------
+              42
+(1 row)
+
+select tcl_cdomain_arg(row('tkey', -1, 'ref2'));  -- fail
+ERROR:  value for domain d_dta1 violates check constraint "d_dta1_check"
 -- Test argisnull primitive
 select tcl_argisnull('foo');
  tcl_argisnull 
@@ -438,6 +478,60 @@ return_next [list a 1 b 2 cow 3]
 $$ language pltcl;
 select bad_field_srf();
 ERROR:  column name/value list contains nonexistent column name "cow"
+-- test composite and domain-over-composite results
+create function tcl_composite_result(int) returns T_dta1 as $$
+return [list tkey tkey1 ref1 $1 ref2 ref22]
+$$ language pltcl;
+select tcl_composite_result(1001);
+            tcl_composite_result            
+--------------------------------------------
+ ("tkey1     ",1001,"ref22               ")
+(1 row)
+
+select * from tcl_composite_result(1002);
+    tkey    | ref1 |         ref2         
+------------+------+----------------------
+ tkey1      | 1002 | ref22               
+(1 row)
+
+create function tcl_dcomposite_result(int) returns d_dta1 as $$
+return [list tkey tkey2 ref1 $1 ref2 ref42]
+$$ language pltcl;
+select tcl_dcomposite_result(1001);
+           tcl_dcomposite_result            
+--------------------------------------------
+ ("tkey2     ",1001,"ref42               ")
+(1 row)
+
+select * from tcl_dcomposite_result(1002);
+    tkey    | ref1 |         ref2         
+------------+------+----------------------
+ tkey2      | 1002 | ref42               
+(1 row)
+
+select * from tcl_dcomposite_result(-1);  -- fail
+ERROR:  value for domain d_dta1 violates check constraint "d_dta1_check"
+create function tcl_record_result(int) returns record as $$
+return [list q1 sometext q2 $1 q3 moretext]
+$$ language pltcl;
+select tcl_record_result(42);  -- fail
+ERROR:  function returning record called in context that cannot accept type record
+select * from tcl_record_result(42);  -- fail
+ERROR:  a column definition list is required for functions returning "record" at character 15
+select * from tcl_record_result(42) as (q1 text, q2 int, q3 text);
+    q1    | q2 |    q3    
+----------+----+----------
+ sometext | 42 | moretext
+(1 row)
+
+select * from tcl_record_result(42) as (q1 text, q2 int, q3 text, q4 int);
+    q1    | q2 |    q3    | q4 
+----------+----+----------+----
+ sometext | 42 | moretext |   
+(1 row)
+
+select * from tcl_record_result(42) as (q1 text, q2 int, q4 int);  -- fail
+ERROR:  column name/value list contains nonexistent column name "q3"
 -- test quote
 select tcl_eval('quote foo bar');
 ERROR:  wrong # args: should be "quote string"

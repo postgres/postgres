@@ -89,6 +89,26 @@ truncate trigger_test;
 select tcl_composite_arg_ref1(row('tkey', 42, 'ref2'));
 select tcl_composite_arg_ref2(row('tkey', 42, 'ref2'));
 
+-- More tests for composite argument/result types
+
+create domain d_dta1 as T_dta1 check ((value).ref1 > 0);
+
+create function tcl_record_arg(record, fldname text) returns int as '
+    return $1($2)
+' language pltcl;
+
+select tcl_record_arg(row('tkey', 42, 'ref2')::T_dta1, 'ref1');
+select tcl_record_arg(row('tkey', 42, 'ref2')::d_dta1, 'ref1');
+select tcl_record_arg(row(2,4), 'f2');
+
+create function tcl_cdomain_arg(d_dta1) returns int as '
+    return $1(ref1)
+' language pltcl;
+
+select tcl_cdomain_arg(row('tkey', 42, 'ref2'));
+select tcl_cdomain_arg(row('tkey', 42, 'ref2')::T_dta1);
+select tcl_cdomain_arg(row('tkey', -1, 'ref2'));  -- fail
+
 -- Test argisnull primitive
 select tcl_argisnull('foo');
 select tcl_argisnull('');
@@ -135,6 +155,29 @@ create function bad_field_srf(out a text, out b text) returns setof record as $$
 return_next [list a 1 b 2 cow 3]
 $$ language pltcl;
 select bad_field_srf();
+
+-- test composite and domain-over-composite results
+create function tcl_composite_result(int) returns T_dta1 as $$
+return [list tkey tkey1 ref1 $1 ref2 ref22]
+$$ language pltcl;
+select tcl_composite_result(1001);
+select * from tcl_composite_result(1002);
+
+create function tcl_dcomposite_result(int) returns d_dta1 as $$
+return [list tkey tkey2 ref1 $1 ref2 ref42]
+$$ language pltcl;
+select tcl_dcomposite_result(1001);
+select * from tcl_dcomposite_result(1002);
+select * from tcl_dcomposite_result(-1);  -- fail
+
+create function tcl_record_result(int) returns record as $$
+return [list q1 sometext q2 $1 q3 moretext]
+$$ language pltcl;
+select tcl_record_result(42);  -- fail
+select * from tcl_record_result(42);  -- fail
+select * from tcl_record_result(42) as (q1 text, q2 int, q3 text);
+select * from tcl_record_result(42) as (q1 text, q2 int, q3 text, q4 int);
+select * from tcl_record_result(42) as (q1 text, q2 int, q4 int);  -- fail
 
 -- test quote
 select tcl_eval('quote foo bar');
