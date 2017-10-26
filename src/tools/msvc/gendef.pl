@@ -29,7 +29,7 @@ sub dumpsyms
 sub extract_syms
 {
 	my ($symfile, $def) = @_;
-	open(F, "<$symfile") || die "Could not open $symfile for $_\n";
+	open(F, "<$symfile") || die "Could not open $symfile for $_: $!\n";
 	while (<F>)
 	{
 
