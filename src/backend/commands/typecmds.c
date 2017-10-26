@@ -798,13 +798,16 @@ DefineDomain(CreateDomainStmt *stmt)
 	basetypeoid = HeapTupleGetOid(typeTup);
 
 	/*
-	 * Base type must be a plain base type, another domain, an enum or a range
-	 * type. Domains over pseudotypes would create a security hole.  Domains
-	 * over composite types might be made to work in the future, but not
-	 * today.
+	 * Base type must be a plain base type, a composite type, another domain,
+	 * an enum or a range type.  Domains over pseudotypes would create a
+	 * security hole.  (It would be shorter to code this to just check for
+	 * pseudotypes; but it seems safer to call out the specific typtypes that
+	 * are supported, rather than assume that all future typtypes would be
+	 * automatically supported.)
 	 */
 	typtype = baseType->typtype;
 	if (typtype != TYPTYPE_BASE &&
+		typtype != TYPTYPE_COMPOSITE &&
 		typtype != TYPTYPE_DOMAIN &&
 		typtype != TYPTYPE_ENUM &&
 		typtype != TYPTYPE_RANGE)

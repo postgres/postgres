@@ -1316,6 +1316,8 @@ create type jpop as (a text, b int, c timestamp);
 CREATE DOMAIN js_int_not_null  AS int     NOT NULL;
 CREATE DOMAIN js_int_array_1d  AS int[]   CHECK(array_length(VALUE, 1) = 3);
 CREATE DOMAIN js_int_array_2d  AS int[][] CHECK(array_length(VALUE, 2) = 3);
+create type j_unordered_pair as (x int, y int);
+create domain j_ordered_pair as j_unordered_pair check((value).x <= (value).y);
 CREATE TYPE jsrec AS (
 	i	int,
 	ia	_int4,
@@ -1740,6 +1742,30 @@ SELECT rec FROM json_populate_record(
  (abc,3,"Thu Jan 02 00:00:00 2003")
 (1 row)
 
+-- anonymous record type
+SELECT json_populate_record(null::record, '{"x": 0, "y": 1}');
+ERROR:  record type has not been registered
+SELECT json_populate_record(row(1,2), '{"f1": 0, "f2": 1}');
+ json_populate_record 
+----------------------
+ (0,1)
+(1 row)
+
+-- composite domain
+SELECT json_populate_record(null::j_ordered_pair, '{"x": 0, "y": 1}');
+ json_populate_record 
+----------------------
+ (0,1)
+(1 row)
+
+SELECT json_populate_record(row(1,2)::j_ordered_pair, '{"x": 0}');
+ json_populate_record 
+----------------------
+ (0,2)
+(1 row)
+
+SELECT json_populate_record(row(1,2)::j_ordered_pair, '{"x": 1, "y": 0}');
+ERROR:  value for domain j_ordered_pair violates check constraint "j_ordered_pair_check"
 -- populate_recordset
 select * from json_populate_recordset(null::jpop,'[{"a":"blurfl","x":43.2},{"b":3,"c":"2012-01-20 10:42:53"}]') q;
    a    | b |            c             
@@ -1806,6 +1832,31 @@ select * from json_populate_recordset(row('def',99,null)::jpop,'[{"a":[100,200,3
  {"z":true}    |  3 | Fri Jan 20 10:42:53 2012
 (2 rows)
 
+-- anonymous record type
+SELECT json_populate_recordset(null::record, '[{"x": 0, "y": 1}]');
+ERROR:  record type has not been registered
+SELECT json_populate_recordset(row(1,2), '[{"f1": 0, "f2": 1}]');
+ json_populate_recordset 
+-------------------------
+ (0,1)
+(1 row)
+
+-- composite domain
+SELECT json_populate_recordset(null::j_ordered_pair, '[{"x": 0, "y": 1}]');
+ json_populate_recordset 
+-------------------------
+ (0,1)
+(1 row)
+
+SELECT json_populate_recordset(row(1,2)::j_ordered_pair, '[{"x": 0}, {"y": 3}]');
+ json_populate_recordset 
+-------------------------
+ (0,2)
+ (1,3)
+(2 rows)
+
+SELECT json_populate_recordset(row(1,2)::j_ordered_pair, '[{"x": 1, "y": 0}]');
+ERROR:  value for domain j_ordered_pair violates check constraint "j_ordered_pair_check"
 -- test type info caching in json_populate_record()
 CREATE TEMP TABLE jspoptest (js json);
 INSERT INTO jspoptest
@@ -1828,6 +1879,8 @@ DROP TYPE jsrec_i_not_null;
 DROP DOMAIN js_int_not_null;
 DROP DOMAIN js_int_array_1d;
 DROP DOMAIN js_int_array_2d;
+DROP DOMAIN j_ordered_pair;
+DROP TYPE j_unordered_pair;
 --json_typeof() function
 select value, json_typeof(value)
   from (values (json '123.4'),

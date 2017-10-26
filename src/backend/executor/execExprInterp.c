@@ -3469,8 +3469,12 @@ ExecEvalWholeRowVar(ExprState *state, ExprEvalStep *op, ExprContext *econtext)
 			 * generates an INT4 NULL regardless of the dropped column type).
 			 * If we find a dropped column and cannot verify that case (1)
 			 * holds, we have to use the slow path to check (2) for each row.
+			 *
+			 * If vartype is a domain over composite, just look through that
+			 * to the base composite type.
 			 */
-			var_tupdesc = lookup_rowtype_tupdesc(variable->vartype, -1);
+			var_tupdesc = lookup_rowtype_tupdesc_domain(variable->vartype,
+														-1, false);
 
 			slot_tupdesc = slot->tts_tupleDescriptor;
 

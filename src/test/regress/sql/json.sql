@@ -388,6 +388,9 @@ CREATE DOMAIN js_int_not_null  AS int     NOT NULL;
 CREATE DOMAIN js_int_array_1d  AS int[]   CHECK(array_length(VALUE, 1) = 3);
 CREATE DOMAIN js_int_array_2d  AS int[][] CHECK(array_length(VALUE, 2) = 3);
 
+create type j_unordered_pair as (x int, y int);
+create domain j_ordered_pair as j_unordered_pair check((value).x <= (value).y);
+
 CREATE TYPE jsrec AS (
 	i	int,
 	ia	_int4,
@@ -516,6 +519,15 @@ SELECT rec FROM json_populate_record(
 	'{"rec": {"a": "abc", "c": "01.02.2003", "x": 43.2}}'
 ) q;
 
+-- anonymous record type
+SELECT json_populate_record(null::record, '{"x": 0, "y": 1}');
+SELECT json_populate_record(row(1,2), '{"f1": 0, "f2": 1}');
+
+-- composite domain
+SELECT json_populate_record(null::j_ordered_pair, '{"x": 0, "y": 1}');
+SELECT json_populate_record(row(1,2)::j_ordered_pair, '{"x": 0}');
+SELECT json_populate_record(row(1,2)::j_ordered_pair, '{"x": 1, "y": 0}');
+
 -- populate_recordset
 
 select * from json_populate_recordset(null::jpop,'[{"a":"blurfl","x":43.2},{"b":3,"c":"2012-01-20 10:42:53"}]') q;
@@ -531,6 +543,15 @@ select * from json_populate_recordset(null::jpop2, '[{"a":2,"c":3,"b":{"z":4},"d
 select * from json_populate_recordset(null::jpop,'[{"a":"blurfl","x":43.2},{"b":3,"c":"2012-01-20 10:42:53"}]') q;
 select * from json_populate_recordset(row('def',99,null)::jpop,'[{"a":"blurfl","x":43.2},{"b":3,"c":"2012-01-20 10:42:53"}]') q;
 select * from json_populate_recordset(row('def',99,null)::jpop,'[{"a":[100,200,300],"x":43.2},{"a":{"z":true},"b":3,"c":"2012-01-20 10:42:53"}]') q;
+
+-- anonymous record type
+SELECT json_populate_recordset(null::record, '[{"x": 0, "y": 1}]');
+SELECT json_populate_recordset(row(1,2), '[{"f1": 0, "f2": 1}]');
+
+-- composite domain
+SELECT json_populate_recordset(null::j_ordered_pair, '[{"x": 0, "y": 1}]');
+SELECT json_populate_recordset(row(1,2)::j_ordered_pair, '[{"x": 0}, {"y": 3}]');
+SELECT json_populate_recordset(row(1,2)::j_ordered_pair, '[{"x": 1, "y": 0}]');
 
 -- test type info caching in json_populate_record()
 CREATE TEMP TABLE jspoptest (js json);
@@ -550,6 +571,8 @@ DROP TYPE jsrec_i_not_null;
 DROP DOMAIN js_int_not_null;
 DROP DOMAIN js_int_array_1d;
 DROP DOMAIN js_int_array_2d;
+DROP DOMAIN j_ordered_pair;
+DROP TYPE j_unordered_pair;
 
 --json_typeof() function
 select value, json_typeof(value)

@@ -1665,7 +1665,15 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 	}
 	else if (fn_typtype == TYPTYPE_COMPOSITE || rettype == RECORDOID)
 	{
-		/* Returns a rowtype */
+		/*
+		 * Returns a rowtype.
+		 *
+		 * Note that we will not consider a domain over composite to be a
+		 * "rowtype" return type; it goes through the scalar case above.  This
+		 * is because SQL functions don't provide any implicit casting to the
+		 * result type, so there is no way to produce a domain-over-composite
+		 * result except by computing it as an explicit single-column result.
+		 */
 		TupleDesc	tupdesc;
 		int			tupnatts;	/* physical number of columns in tuple */
 		int			tuplogcols; /* # of nondeleted columns in tuple */
@@ -1711,7 +1719,10 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 			}
 		}
 
-		/* Is the rowtype fixed, or determined only at runtime? */
+		/*
+		 * Is the rowtype fixed, or determined only at runtime?  (Note we
+		 * cannot see TYPEFUNC_COMPOSITE_DOMAIN here.)
+		 */
 		if (get_func_result_type(func_id, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
 		{
 			/*

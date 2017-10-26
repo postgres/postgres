@@ -6731,17 +6731,12 @@ get_name_for_var_field(Var *var, int fieldno,
 
 	/*
 	 * If it's a Var of type RECORD, we have to find what the Var refers to;
-	 * if not, we can use get_expr_result_type. If that fails, we try
-	 * lookup_rowtype_tupdesc, which will probably fail too, but will ereport
-	 * an acceptable message.
+	 * if not, we can use get_expr_result_tupdesc().
 	 */
 	if (!IsA(var, Var) ||
 		var->vartype != RECORDOID)
 	{
-		if (get_expr_result_type((Node *) var, NULL, &tupleDesc) != TYPEFUNC_COMPOSITE)
-			tupleDesc = lookup_rowtype_tupdesc_copy(exprType((Node *) var),
-													exprTypmod((Node *) var));
-		Assert(tupleDesc);
+		tupleDesc = get_expr_result_tupdesc((Node *) var, false);
 		/* Got the tupdesc, so we can extract the field name */
 		Assert(fieldno >= 1 && fieldno <= tupleDesc->natts);
 		return NameStr(TupleDescAttr(tupleDesc, fieldno - 1)->attname);
@@ -7044,14 +7039,9 @@ get_name_for_var_field(Var *var, int fieldno,
 
 	/*
 	 * We now have an expression we can't expand any more, so see if
-	 * get_expr_result_type() can do anything with it.  If not, pass to
-	 * lookup_rowtype_tupdesc() which will probably fail, but will give an
-	 * appropriate error message while failing.
+	 * get_expr_result_tupdesc() can do anything with it.
 	 */
-	if (get_expr_result_type(expr, NULL, &tupleDesc) != TYPEFUNC_COMPOSITE)
-		tupleDesc = lookup_rowtype_tupdesc_copy(exprType(expr),
-												exprTypmod(expr));
-	Assert(tupleDesc);
+	tupleDesc = get_expr_result_tupdesc(expr, false);
 	/* Got the tupdesc, so we can extract the field name */
 	Assert(fieldno >= 1 && fieldno <= tupleDesc->natts);
 	return NameStr(TupleDescAttr(tupleDesc, fieldno - 1)->attname);

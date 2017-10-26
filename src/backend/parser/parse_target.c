@@ -725,6 +725,8 @@ transformAssignmentIndirection(ParseState *pstate,
 		else
 		{
 			FieldStore *fstore;
+			Oid			baseTypeId;
+			int32		baseTypeMod;
 			Oid			typrelid;
 			AttrNumber	attnum;
 			Oid			fieldTypeId;
@@ -752,7 +754,14 @@ transformAssignmentIndirection(ParseState *pstate,
 
 			/* No subscripts, so can process field selection here */
 
-			typrelid = typeidTypeRelid(targetTypeId);
+			/*
+			 * Look up the composite type, accounting for possibility that
+			 * what we are given is a domain over composite.
+			 */
+			baseTypeMod = targetTypMod;
+			baseTypeId = getBaseTypeAndTypmod(targetTypeId, &baseTypeMod);
+
+			typrelid = typeidTypeRelid(baseTypeId);
 			if (!typrelid)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
@@ -796,7 +805,17 @@ transformAssignmentIndirection(ParseState *pstate,
 			fstore->arg = (Expr *) basenode;
 			fstore->newvals = list_make1(rhs);
 			fstore->fieldnums = list_make1_int(attnum);
-			fstore->resulttype = targetTypeId;
+			fstore->resulttype = baseTypeId;
+
+			/* If target is a domain, apply constraints */
+			if (baseTypeId != targetTypeId)
+				return coerce_to_domain((Node *) fstore,
+										baseTypeId, baseTypeMod,
+										targetTypeId,
+										COERCION_IMPLICIT,
+										COERCE_IMPLICIT_CAST,
+										location,
+										false);
 
 			return (Node *) fstore;
 		}
@@ -1164,7 +1183,7 @@ ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref,
 			Node	   *node;
 
 			node = pstate->p_post_columnref_hook(pstate, cref,
-													 (Node *) rte);
+												 (Node *) rte);
 			if (node != NULL)
 			{
 				if (rte != NULL)
@@ -1387,22 +1406,18 @@ ExpandRowReference(ParseState *pstate, Node *expr,
 	 * (This can be pretty inefficient if the expression involves nontrivial
 	 * computation :-(.)
 	 *
-	 * Verify it's a composite type, and get the tupdesc.  We use
-	 * get_expr_result_type() because that can handle references to functions
-	 * returning anonymous record types.  If that fails, use
-	 * lookup_rowtype_tupdesc(), which will almost certainly fail as well, but
-	 * it will give an appropriate error message.
+	 * Verify it's a composite type, and get the tupdesc.
+	 * get_expr_result_tupdesc() handles this conveniently.
 	 *
 	 * If it's a Var of type RECORD, we have to work even harder: we have to
-	 * find what the Var refers to, and pass that to get_expr_result_type.
+	 * find what the Var refers to, and pass that to get_expr_result_tupdesc.
 	 * That task is handled by expandRecordVariable().
 	 */
 	if (IsA(expr, Var) &&
 		((Var *) expr)->vartype == RECORDOID)
 		tupleDesc = expandRecordVariable(pstate, (Var *) expr, 0);
-	else if (get_expr_result_type(expr, NULL, &tupleDesc) != TYPEFUNC_COMPOSITE)
-		tupleDesc = lookup_rowtype_tupdesc_copy(exprType(expr),
-												exprTypmod(expr));
+	else
+		tupleDesc = get_expr_result_tupdesc(expr, false);
 	Assert(tupleDesc);
 
 	/* Generate a list of references to the individual fields */
@@ -1610,15 +1625,9 @@ expandRecordVariable(ParseState *pstate, Var *var, int levelsup)
 
 	/*
 	 * We now have an expression we can't expand any more, so see if
-	 * get_expr_result_type() can do anything with it.  If not, pass to
-	 * lookup_rowtype_tupdesc() which will probably fail, but will give an
-	 * appropriate error message while failing.
+	 * get_expr_result_tupdesc() can do anything with it.
 	 */
-	if (get_expr_result_type(expr, NULL, &tupleDesc) != TYPEFUNC_COMPOSITE)
-		tupleDesc = lookup_rowtype_tupdesc_copy(exprType(expr),
-												exprTypmod(expr));
-
-	return tupleDesc;
+	return get_expr_result_tupdesc(expr, false);
 }
 
 

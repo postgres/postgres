@@ -5091,6 +5091,8 @@ find_typed_table_dependencies(Oid typeOid, const char *typeName, DropBehavior be
  * isn't suitable, throw an error.  Currently, we require that the type
  * originated with CREATE TYPE AS.  We could support any row type, but doing so
  * would require handling a number of extra corner cases in the DDL commands.
+ * (Also, allowing domain-over-composite would open up a can of worms about
+ * whether and how the domain's constraints should apply to derived tables.)
  */
 void
 check_of_type(HeapTuple typetuple)
@@ -6190,8 +6192,8 @@ ATPrepSetStatistics(Relation rel, const char *colName, int16 colNum, Node *newVa
 						RelationGetRelationName(rel))));
 
 	/*
-	 * We allow referencing columns by numbers only for indexes, since
-	 * table column numbers could contain gaps if columns are later dropped.
+	 * We allow referencing columns by numbers only for indexes, since table
+	 * column numbers could contain gaps if columns are later dropped.
 	 */
 	if (rel->rd_rel->relkind != RELKIND_INDEX && !colName)
 		ereport(ERROR,

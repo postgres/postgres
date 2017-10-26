@@ -499,9 +499,26 @@ coerce_type(ParseState *pstate, Node *node,
 		 * Input class type is a subclass of target, so generate an
 		 * appropriate runtime conversion (removing unneeded columns and
 		 * possibly rearranging the ones that are wanted).
+		 *
+		 * We will also get here when the input is a domain over a subclass of
+		 * the target type.  To keep life simple for the executor, we define
+		 * ConvertRowtypeExpr as only working between regular composite types;
+		 * therefore, in such cases insert a RelabelType to smash the input
+		 * expression down to its base type.
 		 */
+		Oid			baseTypeId = getBaseType(inputTypeId);
 		ConvertRowtypeExpr *r = makeNode(ConvertRowtypeExpr);
 
+		if (baseTypeId != inputTypeId)
+		{
+			RelabelType *rt = makeRelabelType((Expr *) node,
+											  baseTypeId, -1,
+											  InvalidOid,
+											  COERCE_IMPLICIT_CAST);
+
+			rt->location = location;
+			node = (Node *) rt;
+		}
 		r->arg = (Expr *) node;
 		r->resulttype = targetTypeId;
 		r->convertformat = cformat;
@@ -966,6 +983,8 @@ coerce_record_to_complex(ParseState *pstate, Node *node,
 						 int location)
 {
 	RowExpr    *rowexpr;
+	Oid			baseTypeId;
+	int32		baseTypeMod = -1;
 	TupleDesc	tupdesc;
 	List	   *args = NIL;
 	List	   *newargs;
@@ -1001,7 +1020,14 @@ coerce_record_to_complex(ParseState *pstate, Node *node,
 						format_type_be(targetTypeId)),
 				 parser_coercion_errposition(pstate, location, node)));
 
-	tupdesc = lookup_rowtype_tupdesc(targetTypeId, -1);
+	/*
+	 * Look up the composite type, accounting for possibility that what we are
+	 * given is a domain over composite.
+	 */
+	baseTypeId = getBaseTypeAndTypmod(targetTypeId, &baseTypeMod);
+	tupdesc = lookup_rowtype_tupdesc(baseTypeId, baseTypeMod);
+
+	/* Process the fields */
 	newargs = NIL;
 	ucolno = 1;
 	arg = list_head(args);
@@ -1070,10 +1096,22 @@ coerce_record_to_complex(ParseState *pstate, Node *node,
 
 	rowexpr = makeNode(RowExpr);
 	rowexpr->args = newargs;
-	rowexpr->row_typeid = targetTypeId;
+	rowexpr->row_typeid = baseTypeId;
 	rowexpr->row_format = cformat;
 	rowexpr->colnames = NIL;	/* not needed for named target type */
 	rowexpr->location = location;
+
+	/* If target is a domain, apply constraints */
+	if (baseTypeId != targetTypeId)
+	{
+		rowexpr->row_format = COERCE_IMPLICIT_CAST;
+		return coerce_to_domain((Node *) rowexpr,
+								baseTypeId, baseTypeMod,
+								targetTypeId,
+								ccontext, cformat, location,
+								false);
+	}
+
 	return (Node *) rowexpr;
 }
 
@@ -2401,13 +2439,13 @@ is_complex_array(Oid typid)
 
 /*
  * Check whether reltypeId is the row type of a typed table of type
- * reloftypeId.  (This is conceptually similar to the subtype
- * relationship checked by typeInheritsFrom().)
+ * reloftypeId, or is a domain over such a row type.  (This is conceptually
+ * similar to the subtype relationship checked by typeInheritsFrom().)
  */
 static bool
 typeIsOfTypedTable(Oid reltypeId, Oid reloftypeId)
 {
-	Oid			relid = typeidTypeRelid(reltypeId);
+	Oid			relid = typeOrDomainTypeRelid(reltypeId);
 	bool		result = false;
 
 	if (relid)

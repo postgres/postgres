@@ -120,8 +120,10 @@ makeVarFromTargetEntry(Index varno,
  * table entry, and varattno == 0 to signal that it references the whole
  * tuple.  (Use of zero here is unclean, since it could easily be confused
  * with error cases, but it's not worth changing now.)  The vartype indicates
- * a rowtype; either a named composite type, or RECORD.  This function
- * encapsulates the logic for determining the correct rowtype OID to use.
+ * a rowtype; either a named composite type, or a domain over a named
+ * composite type (only possible if the RTE is a function returning that),
+ * or RECORD.  This function encapsulates the logic for determining the
+ * correct rowtype OID to use.
  *
  * If allowScalar is true, then for the case where the RTE is a single function
  * returning a non-composite result type, we produce a normal Var referencing

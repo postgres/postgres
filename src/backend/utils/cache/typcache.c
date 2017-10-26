@@ -96,6 +96,7 @@ static TypeCacheEntry *firstDomainTypeEntry = NULL;
 #define TCFLAGS_HAVE_FIELD_EQUALITY			0x004000
 #define TCFLAGS_HAVE_FIELD_COMPARE			0x008000
 #define TCFLAGS_CHECKED_DOMAIN_CONSTRAINTS	0x010000
+#define TCFLAGS_DOMAIN_BASE_IS_COMPOSITE	0x020000
 
 /*
  * Data stored about a domain type's constraints.  Note that we do not create
@@ -747,7 +748,15 @@ lookup_type_cache(Oid type_id, int flags)
 	/*
 	 * If requested, get information about a domain type
 	 */
-	if ((flags & TYPECACHE_DOMAIN_INFO) &&
+	if ((flags & TYPECACHE_DOMAIN_BASE_INFO) &&
+		typentry->domainBaseType == InvalidOid &&
+		typentry->typtype == TYPTYPE_DOMAIN)
+	{
+		typentry->domainBaseTypmod = -1;
+		typentry->domainBaseType =
+			getBaseTypeAndTypmod(type_id, &typentry->domainBaseTypmod);
+	}
+	if ((flags & TYPECACHE_DOMAIN_CONSTR_INFO) &&
 		(typentry->flags & TCFLAGS_CHECKED_DOMAIN_CONSTRAINTS) == 0 &&
 		typentry->typtype == TYPTYPE_DOMAIN)
 	{
@@ -1166,7 +1175,7 @@ InitDomainConstraintRef(Oid type_id, DomainConstraintRef *ref,
 						MemoryContext refctx, bool need_exprstate)
 {
 	/* Look up the typcache entry --- we assume it survives indefinitely */
-	ref->tcache = lookup_type_cache(type_id, TYPECACHE_DOMAIN_INFO);
+	ref->tcache = lookup_type_cache(type_id, TYPECACHE_DOMAIN_CONSTR_INFO);
 	ref->need_exprstate = need_exprstate;
 	/* For safety, establish the callback before acquiring a refcount */
 	ref->refctx = refctx;
@@ -1257,7 +1266,7 @@ DomainHasConstraints(Oid type_id)
 	 * Note: a side effect is to cause the typcache's domain data to become
 	 * valid.  This is fine since we'll likely need it soon if there is any.
 	 */
-	typentry = lookup_type_cache(type_id, TYPECACHE_DOMAIN_INFO);
+	typentry = lookup_type_cache(type_id, TYPECACHE_DOMAIN_CONSTR_INFO);
 
 	return (typentry->domainData != NULL);
 }
@@ -1404,6 +1413,29 @@ cache_record_field_properties(TypeCacheEntry *typentry)
 		typentry->flags |= newflags;
 
 		DecrTupleDescRefCount(tupdesc);
+	}
+	else if (typentry->typtype == TYPTYPE_DOMAIN)
+	{
+		/* If it's domain over composite, copy base type's properties */
+		TypeCacheEntry *baseentry;
+
+		/* load up basetype info if we didn't already */
+		if (typentry->domainBaseType == InvalidOid)
+		{
+			typentry->domainBaseTypmod = -1;
+			typentry->domainBaseType =
+				getBaseTypeAndTypmod(typentry->type_id,
+									 &typentry->domainBaseTypmod);
+		}
+		baseentry = lookup_type_cache(typentry->domainBaseType,
+									  TYPECACHE_EQ_OPR |
+									  TYPECACHE_CMP_PROC);
+		if (baseentry->typtype == TYPTYPE_COMPOSITE)
+		{
+			typentry->flags |= TCFLAGS_DOMAIN_BASE_IS_COMPOSITE;
+			typentry->flags |= baseentry->flags & (TCFLAGS_HAVE_FIELD_EQUALITY |
+												   TCFLAGS_HAVE_FIELD_COMPARE);
+		}
 	}
 	typentry->flags |= TCFLAGS_CHECKED_FIELD_PROPERTIES;
 }
@@ -1616,6 +1648,53 @@ lookup_rowtype_tupdesc_copy(Oid type_id, int32 typmod)
 
 	tmp = lookup_rowtype_tupdesc_internal(type_id, typmod, false);
 	return CreateTupleDescCopyConstr(tmp);
+}
+
+/*
+ * lookup_rowtype_tupdesc_domain
+ *
+ * Same as lookup_rowtype_tupdesc_noerror(), except that the type can also be
+ * a domain over a named composite type; so this is effectively equivalent to
+ * lookup_rowtype_tupdesc_noerror(getBaseType(type_id), typmod, noError)
+ * except for being a tad faster.
+ *
+ * Note: the reason we don't fold the look-through-domain behavior into plain
+ * lookup_rowtype_tupdesc() is that we want callers to know they might be
+ * dealing with a domain.  Otherwise they might construct a tuple that should
+ * be of the domain type, but not apply domain constraints.
+ */
+TupleDesc
+lookup_rowtype_tupdesc_domain(Oid type_id, int32 typmod, bool noError)
+{
+	TupleDesc	tupDesc;
+
+	if (type_id != RECORDOID)
+	{
+		/*
+		 * Check for domain or named composite type.  We might as well load
+		 * whichever data is needed.
+		 */
+		TypeCacheEntry *typentry;
+
+		typentry = lookup_type_cache(type_id,
+									 TYPECACHE_TUPDESC |
+									 TYPECACHE_DOMAIN_BASE_INFO);
+		if (typentry->typtype == TYPTYPE_DOMAIN)
+			return lookup_rowtype_tupdesc_noerror(typentry->domainBaseType,
+												  typentry->domainBaseTypmod,
+												  noError);
+		if (typentry->tupDesc == NULL && !noError)
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("type %s is not composite",
+							format_type_be(type_id))));
+		tupDesc = typentry->tupDesc;
+	}
+	else
+		tupDesc = lookup_rowtype_tupdesc_internal(type_id, typmod, noError);
+	if (tupDesc != NULL)
+		PinTupleDesc(tupDesc);
+	return tupDesc;
 }
 
 /*
@@ -1929,29 +2008,40 @@ TypeCacheRelCallback(Datum arg, Oid relid)
 	hash_seq_init(&status, TypeCacheHash);
 	while ((typentry = (TypeCacheEntry *) hash_seq_search(&status)) != NULL)
 	{
-		if (typentry->typtype != TYPTYPE_COMPOSITE)
-			continue;			/* skip non-composites */
+		if (typentry->typtype == TYPTYPE_COMPOSITE)
+		{
+			/* Skip if no match, unless we're zapping all composite types */
+			if (relid != typentry->typrelid && relid != InvalidOid)
+				continue;
 
-		/* Skip if no match, unless we're zapping all composite types */
-		if (relid != typentry->typrelid && relid != InvalidOid)
-			continue;
+			/* Delete tupdesc if we have it */
+			if (typentry->tupDesc != NULL)
+			{
+				/*
+				 * Release our refcount, and free the tupdesc if none remain.
+				 * (Can't use DecrTupleDescRefCount because this reference is
+				 * not logged in current resource owner.)
+				 */
+				Assert(typentry->tupDesc->tdrefcount > 0);
+				if (--typentry->tupDesc->tdrefcount == 0)
+					FreeTupleDesc(typentry->tupDesc);
+				typentry->tupDesc = NULL;
+			}
 
-		/* Delete tupdesc if we have it */
-		if (typentry->tupDesc != NULL)
+			/* Reset equality/comparison/hashing validity information */
+			typentry->flags = 0;
+		}
+		else if (typentry->typtype == TYPTYPE_DOMAIN)
 		{
 			/*
-			 * Release our refcount, and free the tupdesc if none remain.
-			 * (Can't use DecrTupleDescRefCount because this reference is not
-			 * logged in current resource owner.)
+			 * If it's domain over composite, reset flags.  (We don't bother
+			 * trying to determine whether the specific base type needs a
+			 * reset.)  Note that if we haven't determined whether the base
+			 * type is composite, we don't need to reset anything.
 			 */
-			Assert(typentry->tupDesc->tdrefcount > 0);
-			if (--typentry->tupDesc->tdrefcount == 0)
-				FreeTupleDesc(typentry->tupDesc);
-			typentry->tupDesc = NULL;
+			if (typentry->flags & TCFLAGS_DOMAIN_BASE_IS_COMPOSITE)
+				typentry->flags = 0;
 		}
-
-		/* Reset equality/comparison/hashing validity information */
-		typentry->flags = 0;
 	}
 }
 

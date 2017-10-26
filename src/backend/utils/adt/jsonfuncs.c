@@ -169,6 +169,11 @@ typedef struct CompositeIOData
 	 */
 	RecordIOData *record_io;	/* metadata cache for populate_record() */
 	TupleDesc	tupdesc;		/* cached tuple descriptor */
+	/* these fields differ from target type only if domain over composite: */
+	Oid			base_typid;		/* base type id */
+	int32		base_typmod;	/* base type modifier */
+	/* this field is used only if target type is domain over composite: */
+	void	   *domain_info;	/* opaque cache for domain checks */
 } CompositeIOData;
 
 /* structure to cache metadata needed for populate_domain() */
@@ -186,6 +191,7 @@ typedef enum TypeCat
 	TYPECAT_SCALAR = 's',
 	TYPECAT_ARRAY = 'a',
 	TYPECAT_COMPOSITE = 'c',
+	TYPECAT_COMPOSITE_DOMAIN = 'C',
 	TYPECAT_DOMAIN = 'd'
 } TypeCat;
 
@@ -217,7 +223,15 @@ struct RecordIOData
 	ColumnIOData columns[FLEXIBLE_ARRAY_MEMBER];
 };
 
-/* state for populate_recordset */
+/* per-query cache for populate_recordset */
+typedef struct PopulateRecordsetCache
+{
+	Oid			argtype;		/* declared type of the record argument */
+	ColumnIOData c;				/* metadata cache for populate_composite() */
+	MemoryContext fn_mcxt;		/* where this is stored */
+} PopulateRecordsetCache;
+
+/* per-call state for populate_recordset */
 typedef struct PopulateRecordsetState
 {
 	JsonLexContext *lex;
@@ -227,17 +241,15 @@ typedef struct PopulateRecordsetState
 	char	   *save_json_start;
 	JsonTokenType saved_token_type;
 	Tuplestorestate *tuple_store;
-	TupleDesc	ret_tdesc;
 	HeapTupleHeader rec;
-	RecordIOData **my_extra;
-	MemoryContext fn_mcxt;		/* used to stash IO funcs */
+	PopulateRecordsetCache *cache;
 } PopulateRecordsetState;
 
 /* structure to cache metadata needed for populate_record_worker() */
 typedef struct PopulateRecordCache
 {
-	Oid			argtype;		/* verified row type of the first argument */
-	CompositeIOData io;			/* metadata cache for populate_composite() */
+	Oid			argtype;		/* declared type of the record argument */
+	ColumnIOData c;				/* metadata cache for populate_composite() */
 } PopulateRecordCache;
 
 /* common data for populate_array_json() and populate_array_dim_jsonb() */
@@ -415,16 +427,13 @@ static Datum populate_record_worker(FunctionCallInfo fcinfo, const char *funcnam
 static HeapTupleHeader populate_record(TupleDesc tupdesc, RecordIOData **record_p,
 				HeapTupleHeader defaultval, MemoryContext mcxt,
 				JsObject *obj);
-static Datum populate_record_field(ColumnIOData *col, Oid typid, int32 typmod,
-					  const char *colname, MemoryContext mcxt,
-					  Datum defaultval, JsValue *jsv, bool *isnull);
 static void JsValueToJsObject(JsValue *jsv, JsObject *jso);
-static Datum populate_composite(CompositeIOData *io, Oid typid, int32 typmod,
+static Datum populate_composite(CompositeIOData *io, Oid typid,
 				   const char *colname, MemoryContext mcxt,
-				   HeapTupleHeader defaultval, JsValue *jsv);
+				   HeapTupleHeader defaultval, JsValue *jsv, bool isnull);
 static Datum populate_scalar(ScalarIOData *io, Oid typid, int32 typmod, JsValue *jsv);
 static void prepare_column_cache(ColumnIOData *column, Oid typid, int32 typmod,
-					 MemoryContext mcxt, bool json);
+					 MemoryContext mcxt, bool need_scalar);
 static Datum populate_record_field(ColumnIOData *col, Oid typid, int32 typmod,
 					  const char *colname, MemoryContext mcxt, Datum defaultval,
 					  JsValue *jsv, bool *isnull);
@@ -2704,25 +2713,16 @@ JsValueToJsObject(JsValue *jsv, JsObject *jso)
 	}
 }
 
-/* recursively populate a composite (row type) value from json/jsonb */
-static Datum
-populate_composite(CompositeIOData *io,
-				   Oid typid,
-				   int32 typmod,
-				   const char *colname,
-				   MemoryContext mcxt,
-				   HeapTupleHeader defaultval,
-				   JsValue *jsv)
+/* acquire or update cached tuple descriptor for a composite type */
+static void
+update_cached_tupdesc(CompositeIOData *io, MemoryContext mcxt)
 {
-	HeapTupleHeader tuple;
-	JsObject	jso;
-
-	/* acquire cached tuple descriptor */
 	if (!io->tupdesc ||
-		io->tupdesc->tdtypeid != typid ||
-		io->tupdesc->tdtypmod != typmod)
+		io->tupdesc->tdtypeid != io->base_typid ||
+		io->tupdesc->tdtypmod != io->base_typmod)
 	{
-		TupleDesc	tupdesc = lookup_rowtype_tupdesc(typid, typmod);
+		TupleDesc	tupdesc = lookup_rowtype_tupdesc(io->base_typid,
+													 io->base_typmod);
 		MemoryContext oldcxt;
 
 		if (io->tupdesc)
@@ -2735,17 +2735,50 @@ populate_composite(CompositeIOData *io,
 
 		ReleaseTupleDesc(tupdesc);
 	}
+}
 
-	/* prepare input value */
-	JsValueToJsObject(jsv, &jso);
+/* recursively populate a composite (row type) value from json/jsonb */
+static Datum
+populate_composite(CompositeIOData *io,
+				   Oid typid,
+				   const char *colname,
+				   MemoryContext mcxt,
+				   HeapTupleHeader defaultval,
+				   JsValue *jsv,
+				   bool isnull)
+{
+	Datum		result;
 
-	/* populate resulting record tuple */
-	tuple = populate_record(io->tupdesc, &io->record_io,
-							defaultval, mcxt, &jso);
+	/* acquire/update cached tuple descriptor */
+	update_cached_tupdesc(io, mcxt);
 
-	JsObjectFree(&jso);
+	if (isnull)
+		result = (Datum) 0;
+	else
+	{
+		HeapTupleHeader tuple;
+		JsObject	jso;
 
-	return HeapTupleHeaderGetDatum(tuple);
+		/* prepare input value */
+		JsValueToJsObject(jsv, &jso);
+
+		/* populate resulting record tuple */
+		tuple = populate_record(io->tupdesc, &io->record_io,
+								defaultval, mcxt, &jso);
+		result = HeapTupleHeaderGetDatum(tuple);
+
+		JsObjectFree(&jso);
+	}
+
+	/*
+	 * If it's domain over composite, check domain constraints.  (This should
+	 * probably get refactored so that we can see the TYPECAT value, but for
+	 * now, we can tell by comparing typid to base_typid.)
+	 */
+	if (typid != io->base_typid && typid != RECORDOID)
+		domain_check(result, isnull, typid, &io->domain_info, mcxt);
+
+	return result;
 }
 
 /* populate non-null scalar value from json/jsonb value */
@@ -2867,7 +2900,7 @@ prepare_column_cache(ColumnIOData *column,
 					 Oid typid,
 					 int32 typmod,
 					 MemoryContext mcxt,
-					 bool json)
+					 bool need_scalar)
 {
 	HeapTuple	tup;
 	Form_pg_type type;
@@ -2883,18 +2916,43 @@ prepare_column_cache(ColumnIOData *column,
 
 	if (type->typtype == TYPTYPE_DOMAIN)
 	{
-		column->typcat = TYPECAT_DOMAIN;
-		column->io.domain.base_typid = type->typbasetype;
-		column->io.domain.base_typmod = type->typtypmod;
-		column->io.domain.base_io = MemoryContextAllocZero(mcxt,
-														   sizeof(ColumnIOData));
-		column->io.domain.domain_info = NULL;
+		/*
+		 * We can move directly to the bottom base type; domain_check() will
+		 * take care of checking all constraints for a stack of domains.
+		 */
+		Oid			base_typid;
+		int32		base_typmod = typmod;
+
+		base_typid = getBaseTypeAndTypmod(typid, &base_typmod);
+		if (get_typtype(base_typid) == TYPTYPE_COMPOSITE)
+		{
+			/* domain over composite has its own code path */
+			column->typcat = TYPECAT_COMPOSITE_DOMAIN;
+			column->io.composite.record_io = NULL;
+			column->io.composite.tupdesc = NULL;
+			column->io.composite.base_typid = base_typid;
+			column->io.composite.base_typmod = base_typmod;
+			column->io.composite.domain_info = NULL;
+		}
+		else
+		{
+			/* domain over anything else */
+			column->typcat = TYPECAT_DOMAIN;
+			column->io.domain.base_typid = base_typid;
+			column->io.domain.base_typmod = base_typmod;
+			column->io.domain.base_io =
+				MemoryContextAllocZero(mcxt, sizeof(ColumnIOData));
+			column->io.domain.domain_info = NULL;
+		}
 	}
 	else if (type->typtype == TYPTYPE_COMPOSITE || typid == RECORDOID)
 	{
 		column->typcat = TYPECAT_COMPOSITE;
 		column->io.composite.record_io = NULL;
 		column->io.composite.tupdesc = NULL;
+		column->io.composite.base_typid = typid;
+		column->io.composite.base_typmod = typmod;
+		column->io.composite.domain_info = NULL;
 	}
 	else if (type->typlen == -1 && OidIsValid(type->typelem))
 	{
@@ -2906,10 +2964,13 @@ prepare_column_cache(ColumnIOData *column,
 		column->io.array.element_typmod = typmod;
 	}
 	else
+	{
 		column->typcat = TYPECAT_SCALAR;
+		need_scalar = true;
+	}
 
-	/* don't need input function when converting from jsonb to jsonb */
-	if (json || typid != JSONBOID)
+	/* caller can force us to look up scalar_io info even for non-scalars */
+	if (need_scalar)
 	{
 		Oid			typioproc;
 
@@ -2935,9 +2996,12 @@ populate_record_field(ColumnIOData *col,
 
 	check_stack_depth();
 
-	/* prepare column metadata cache for the given type */
+	/*
+	 * Prepare column metadata cache for the given type.  Force lookup of the
+	 * scalar_io data so that the json string hack below will work.
+	 */
 	if (col->typid != typid || col->typmod != typmod)
-		prepare_column_cache(col, typid, typmod, mcxt, jsv->is_json);
+		prepare_column_cache(col, typid, typmod, mcxt, true);
 
 	*isnull = JsValueIsNull(jsv);
 
@@ -2945,11 +3009,15 @@ populate_record_field(ColumnIOData *col,
 
 	/* try to convert json string to a non-scalar type through input function */
 	if (JsValueIsString(jsv) &&
-		(typcat == TYPECAT_ARRAY || typcat == TYPECAT_COMPOSITE))
+		(typcat == TYPECAT_ARRAY ||
+		 typcat == TYPECAT_COMPOSITE ||
+		 typcat == TYPECAT_COMPOSITE_DOMAIN))
 		typcat = TYPECAT_SCALAR;
 
-	/* we must perform domain checks for NULLs */
-	if (*isnull && typcat != TYPECAT_DOMAIN)
+	/* we must perform domain checks for NULLs, otherwise exit immediately */
+	if (*isnull &&
+		typcat != TYPECAT_DOMAIN &&
+		typcat != TYPECAT_COMPOSITE_DOMAIN)
 		return (Datum) 0;
 
 	switch (typcat)
@@ -2961,12 +3029,13 @@ populate_record_field(ColumnIOData *col,
 			return populate_array(&col->io.array, colname, mcxt, jsv);
 
 		case TYPECAT_COMPOSITE:
-			return populate_composite(&col->io.composite, typid, typmod,
+		case TYPECAT_COMPOSITE_DOMAIN:
+			return populate_composite(&col->io.composite, typid,
 									  colname, mcxt,
 									  DatumGetPointer(defaultval)
 									  ? DatumGetHeapTupleHeader(defaultval)
 									  : NULL,
-									  jsv);
+									  jsv, *isnull);
 
 		case TYPECAT_DOMAIN:
 			return populate_domain(&col->io.domain, typid, colname, mcxt,
@@ -3137,10 +3206,7 @@ populate_record_worker(FunctionCallInfo fcinfo, const char *funcname,
 	int			json_arg_num = have_record_arg ? 1 : 0;
 	Oid			jtype = get_fn_expr_argtype(fcinfo->flinfo, json_arg_num);
 	JsValue		jsv = {0};
-	HeapTupleHeader rec = NULL;
-	Oid			tupType;
-	int32		tupTypmod;
-	TupleDesc	tupdesc = NULL;
+	HeapTupleHeader rec;
 	Datum		rettuple;
 	JsonbValue	jbv;
 	MemoryContext fnmcxt = fcinfo->flinfo->fn_mcxt;
@@ -3149,77 +3215,88 @@ populate_record_worker(FunctionCallInfo fcinfo, const char *funcname,
 	Assert(jtype == JSONOID || jtype == JSONBOID);
 
 	/*
-	 * We arrange to look up the needed I/O info just once per series of
-	 * calls, assuming the record type doesn't change underneath us.
+	 * If first time through, identify input/result record type.  Note that
+	 * this stanza looks only at fcinfo context, which can't change during the
+	 * query; so we may not be able to fully resolve a RECORD input type yet.
 	 */
 	if (!cache)
+	{
 		fcinfo->flinfo->fn_extra = cache =
 			MemoryContextAllocZero(fnmcxt, sizeof(*cache));
 
-	if (have_record_arg)
-	{
-		Oid			argtype = get_fn_expr_argtype(fcinfo->flinfo, 0);
-
-		if (cache->argtype != argtype)
+		if (have_record_arg)
 		{
-			if (!type_is_rowtype(argtype))
+			/*
+			 * json{b}_populate_record case: result type will be same as first
+			 * argument's.
+			 */
+			cache->argtype = get_fn_expr_argtype(fcinfo->flinfo, 0);
+			prepare_column_cache(&cache->c,
+								 cache->argtype, -1,
+								 fnmcxt, false);
+			if (cache->c.typcat != TYPECAT_COMPOSITE &&
+				cache->c.typcat != TYPECAT_COMPOSITE_DOMAIN)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
 						 errmsg("first argument of %s must be a row type",
 								funcname)));
-
-			cache->argtype = argtype;
-		}
-
-		if (PG_ARGISNULL(0))
-		{
-			if (PG_ARGISNULL(1))
-				PG_RETURN_NULL();
-
-			/*
-			 * We have no tuple to look at, so the only source of type info is
-			 * the argtype. The lookup_rowtype_tupdesc call below will error
-			 * out if we don't have a known composite type oid here.
-			 */
-			tupType = argtype;
-			tupTypmod = -1;
 		}
 		else
 		{
-			rec = PG_GETARG_HEAPTUPLEHEADER(0);
+			/*
+			 * json{b}_to_record case: result type is specified by calling
+			 * query.  Here it is syntactically impossible to specify the
+			 * target type as domain-over-composite.
+			 */
+			TupleDesc	tupdesc;
+			MemoryContext old_cxt;
 
-			if (PG_ARGISNULL(1))
-				PG_RETURN_POINTER(rec);
+			if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("function returning record called in context "
+								"that cannot accept type record"),
+						 errhint("Try calling the function in the FROM clause "
+								 "using a column definition list.")));
 
-			/* Extract type info from the tuple itself */
-			tupType = HeapTupleHeaderGetTypeId(rec);
-			tupTypmod = HeapTupleHeaderGetTypMod(rec);
+			Assert(tupdesc);
+			cache->argtype = tupdesc->tdtypeid;
+
+			/* Save identified tupdesc */
+			old_cxt = MemoryContextSwitchTo(fnmcxt);
+			cache->c.io.composite.tupdesc = CreateTupleDescCopy(tupdesc);
+			cache->c.io.composite.base_typid = tupdesc->tdtypeid;
+			cache->c.io.composite.base_typmod = tupdesc->tdtypmod;
+			MemoryContextSwitchTo(old_cxt);
+		}
+	}
+
+	/* Collect record arg if we have one */
+	if (have_record_arg && !PG_ARGISNULL(0))
+	{
+		rec = PG_GETARG_HEAPTUPLEHEADER(0);
+
+		/*
+		 * When declared arg type is RECORD, identify actual record type from
+		 * the tuple itself.  Note the lookup_rowtype_tupdesc call in
+		 * update_cached_tupdesc will fail if we're unable to do this.
+		 */
+		if (cache->argtype == RECORDOID)
+		{
+			cache->c.io.composite.base_typid = HeapTupleHeaderGetTypeId(rec);
+			cache->c.io.composite.base_typmod = HeapTupleHeaderGetTypMod(rec);
 		}
 	}
 	else
+		rec = NULL;
+
+	/* If no JSON argument, just return the record (if any) unchanged */
+	if (PG_ARGISNULL(json_arg_num))
 	{
-		/* json{b}_to_record case */
-		if (PG_ARGISNULL(0))
+		if (rec)
+			PG_RETURN_POINTER(rec);
+		else
 			PG_RETURN_NULL();
-
-		if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("function returning record called in context "
-							"that cannot accept type record"),
-					 errhint("Try calling the function in the FROM clause "
-							 "using a column definition list.")));
-
-		Assert(tupdesc);
-
-		/*
-		 * Add tupdesc to the cache and set the appropriate values of
-		 * tupType/tupTypmod for proper cache usage in populate_composite().
-		 */
-		cache->io.tupdesc = tupdesc;
-
-		tupType = tupdesc->tdtypeid;
-		tupTypmod = tupdesc->tdtypmod;
 	}
 
 	jsv.is_json = jtype == JSONOID;
@@ -3245,14 +3322,8 @@ populate_record_worker(FunctionCallInfo fcinfo, const char *funcname,
 		jbv.val.binary.len = VARSIZE(jb) - VARHDRSZ;
 	}
 
-	rettuple = populate_composite(&cache->io, tupType, tupTypmod,
-								  NULL, fnmcxt, rec, &jsv);
-
-	if (tupdesc)
-	{
-		cache->io.tupdesc = NULL;
-		ReleaseTupleDesc(tupdesc);
-	}
+	rettuple = populate_composite(&cache->c.io.composite, cache->argtype,
+								  NULL, fnmcxt, rec, &jsv, false);
 
 	PG_RETURN_DATUM(rettuple);
 }
@@ -3438,13 +3509,28 @@ json_to_recordset(PG_FUNCTION_ARGS)
 static void
 populate_recordset_record(PopulateRecordsetState *state, JsObject *obj)
 {
+	PopulateRecordsetCache *cache = state->cache;
+	HeapTupleHeader tuphead;
 	HeapTupleData tuple;
-	HeapTupleHeader tuphead = populate_record(state->ret_tdesc,
-											  state->my_extra,
-											  state->rec,
-											  state->fn_mcxt,
-											  obj);
 
+	/* acquire/update cached tuple descriptor */
+	update_cached_tupdesc(&cache->c.io.composite, cache->fn_mcxt);
+
+	/* replace record fields from json */
+	tuphead = populate_record(cache->c.io.composite.tupdesc,
+							  &cache->c.io.composite.record_io,
+							  state->rec,
+							  cache->fn_mcxt,
+							  obj);
+
+	/* if it's domain over composite, check domain constraints */
+	if (cache->c.typcat == TYPECAT_COMPOSITE_DOMAIN)
+		domain_check(HeapTupleHeaderGetDatum(tuphead), false,
+					 cache->argtype,
+					 &cache->c.io.composite.domain_info,
+					 cache->fn_mcxt);
+
+	/* ok, save into tuplestore */
 	tuple.t_len = HeapTupleHeaderGetDatumLength(tuphead);
 	ItemPointerSetInvalid(&(tuple.t_self));
 	tuple.t_tableOid = InvalidOid;
@@ -3465,25 +3551,13 @@ populate_recordset_worker(FunctionCallInfo fcinfo, const char *funcname,
 	ReturnSetInfo *rsi;
 	MemoryContext old_cxt;
 	HeapTupleHeader rec;
-	TupleDesc	tupdesc;
+	PopulateRecordsetCache *cache = fcinfo->flinfo->fn_extra;
 	PopulateRecordsetState *state;
-
-	if (have_record_arg)
-	{
-		Oid			argtype = get_fn_expr_argtype(fcinfo->flinfo, 0);
-
-		if (!type_is_rowtype(argtype))
-			ereport(ERROR,
-					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("first argument of %s must be a row type",
-							funcname)));
-	}
 
 	rsi = (ReturnSetInfo *) fcinfo->resultinfo;
 
 	if (!rsi || !IsA(rsi, ReturnSetInfo) ||
-		(rsi->allowedModes & SFRM_Materialize) == 0 ||
-		rsi->expectedDesc == NULL)
+		(rsi->allowedModes & SFRM_Materialize) == 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("set-valued function called in context that "
@@ -3492,40 +3566,97 @@ populate_recordset_worker(FunctionCallInfo fcinfo, const char *funcname,
 	rsi->returnMode = SFRM_Materialize;
 
 	/*
-	 * get the tupdesc from the result set info - it must be a record type
-	 * because we already checked that arg1 is a record type, or we're in a
-	 * to_record function which returns a setof record.
+	 * If first time through, identify input/result record type.  Note that
+	 * this stanza looks only at fcinfo context, which can't change during the
+	 * query; so we may not be able to fully resolve a RECORD input type yet.
 	 */
-	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("function returning record called in context "
-						"that cannot accept type record")));
+	if (!cache)
+	{
+		fcinfo->flinfo->fn_extra = cache =
+			MemoryContextAllocZero(fcinfo->flinfo->fn_mcxt, sizeof(*cache));
+		cache->fn_mcxt = fcinfo->flinfo->fn_mcxt;
+
+		if (have_record_arg)
+		{
+			/*
+			 * json{b}_populate_recordset case: result type will be same as
+			 * first argument's.
+			 */
+			cache->argtype = get_fn_expr_argtype(fcinfo->flinfo, 0);
+			prepare_column_cache(&cache->c,
+								 cache->argtype, -1,
+								 cache->fn_mcxt, false);
+			if (cache->c.typcat != TYPECAT_COMPOSITE &&
+				cache->c.typcat != TYPECAT_COMPOSITE_DOMAIN)
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("first argument of %s must be a row type",
+								funcname)));
+		}
+		else
+		{
+			/*
+			 * json{b}_to_recordset case: result type is specified by calling
+			 * query.  Here it is syntactically impossible to specify the
+			 * target type as domain-over-composite.
+			 */
+			TupleDesc	tupdesc;
+
+			if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("function returning record called in context "
+								"that cannot accept type record"),
+						 errhint("Try calling the function in the FROM clause "
+								 "using a column definition list.")));
+
+			Assert(tupdesc);
+			cache->argtype = tupdesc->tdtypeid;
+
+			/* Save identified tupdesc */
+			old_cxt = MemoryContextSwitchTo(cache->fn_mcxt);
+			cache->c.io.composite.tupdesc = CreateTupleDescCopy(tupdesc);
+			cache->c.io.composite.base_typid = tupdesc->tdtypeid;
+			cache->c.io.composite.base_typmod = tupdesc->tdtypmod;
+			MemoryContextSwitchTo(old_cxt);
+		}
+	}
+
+	/* Collect record arg if we have one */
+	if (have_record_arg && !PG_ARGISNULL(0))
+	{
+		rec = PG_GETARG_HEAPTUPLEHEADER(0);
+
+		/*
+		 * When declared arg type is RECORD, identify actual record type from
+		 * the tuple itself.  Note the lookup_rowtype_tupdesc call in
+		 * update_cached_tupdesc will fail if we're unable to do this.
+		 */
+		if (cache->argtype == RECORDOID)
+		{
+			cache->c.io.composite.base_typid = HeapTupleHeaderGetTypeId(rec);
+			cache->c.io.composite.base_typmod = HeapTupleHeaderGetTypMod(rec);
+		}
+	}
+	else
+		rec = NULL;
 
 	/* if the json is null send back an empty set */
 	if (PG_ARGISNULL(json_arg_num))
 		PG_RETURN_NULL();
 
-	if (!have_record_arg || PG_ARGISNULL(0))
-		rec = NULL;
-	else
-		rec = PG_GETARG_HEAPTUPLEHEADER(0);
-
 	state = palloc0(sizeof(PopulateRecordsetState));
 
-	/* make these in a sufficiently long-lived memory context */
+	/* make tuplestore in a sufficiently long-lived memory context */
 	old_cxt = MemoryContextSwitchTo(rsi->econtext->ecxt_per_query_memory);
-	state->ret_tdesc = CreateTupleDescCopy(tupdesc);
-	BlessTupleDesc(state->ret_tdesc);
 	state->tuple_store = tuplestore_begin_heap(rsi->allowedModes &
 											   SFRM_Materialize_Random,
 											   false, work_mem);
 	MemoryContextSwitchTo(old_cxt);
 
 	state->function_name = funcname;
-	state->my_extra = (RecordIOData **) &fcinfo->flinfo->fn_extra;
+	state->cache = cache;
 	state->rec = rec;
-	state->fn_mcxt = fcinfo->flinfo->fn_mcxt;
 
 	if (jtype == JSONOID)
 	{
@@ -3592,7 +3723,7 @@ populate_recordset_worker(FunctionCallInfo fcinfo, const char *funcname,
 	}
 
 	rsi->setResult = state->tuple_store;
-	rsi->setDesc = state->ret_tdesc;
+	rsi->setDesc = cache->c.io.composite.tupdesc;
 
 	PG_RETURN_NULL();
 }

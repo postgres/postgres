@@ -39,7 +39,7 @@ static TypeFuncClass internal_get_result_type(Oid funcid,
 static bool resolve_polymorphic_tupdesc(TupleDesc tupdesc,
 							oidvector *declared_args,
 							Node *call_expr);
-static TypeFuncClass get_type_func_class(Oid typid);
+static TypeFuncClass get_type_func_class(Oid typid, Oid *base_typeid);
 
 
 /*
@@ -246,14 +246,17 @@ get_expr_result_type(Node *expr,
 	{
 		/* handle as a generic expression; no chance to resolve RECORD */
 		Oid			typid = exprType(expr);
+		Oid			base_typid;
 
 		if (resultTypeId)
 			*resultTypeId = typid;
 		if (resultTupleDesc)
 			*resultTupleDesc = NULL;
-		result = get_type_func_class(typid);
-		if (result == TYPEFUNC_COMPOSITE && resultTupleDesc)
-			*resultTupleDesc = lookup_rowtype_tupdesc_copy(typid, -1);
+		result = get_type_func_class(typid, &base_typid);
+		if ((result == TYPEFUNC_COMPOSITE ||
+			 result == TYPEFUNC_COMPOSITE_DOMAIN) &&
+			resultTupleDesc)
+			*resultTupleDesc = lookup_rowtype_tupdesc_copy(base_typid, -1);
 	}
 
 	return result;
@@ -296,6 +299,7 @@ internal_get_result_type(Oid funcid,
 	HeapTuple	tp;
 	Form_pg_proc procform;
 	Oid			rettype;
+	Oid			base_rettype;
 	TupleDesc	tupdesc;
 
 	/* First fetch the function's pg_proc row to inspect its rettype */
@@ -363,12 +367,13 @@ internal_get_result_type(Oid funcid,
 		*resultTupleDesc = NULL;	/* default result */
 
 	/* Classify the result type */
-	result = get_type_func_class(rettype);
+	result = get_type_func_class(rettype, &base_rettype);
 	switch (result)
 	{
 		case TYPEFUNC_COMPOSITE:
+		case TYPEFUNC_COMPOSITE_DOMAIN:
 			if (resultTupleDesc)
-				*resultTupleDesc = lookup_rowtype_tupdesc_copy(rettype, -1);
+				*resultTupleDesc = lookup_rowtype_tupdesc_copy(base_rettype, -1);
 			/* Named composite types can't have any polymorphic columns */
 			break;
 		case TYPEFUNC_SCALAR:
@@ -391,6 +396,46 @@ internal_get_result_type(Oid funcid,
 	ReleaseSysCache(tp);
 
 	return result;
+}
+
+/*
+ * get_expr_result_tupdesc
+ *		Get a tupdesc describing the result of a composite-valued expression
+ *
+ * If expression is not composite or rowtype can't be determined, returns NULL
+ * if noError is true, else throws error.
+ *
+ * This is a simpler version of get_expr_result_type() for use when the caller
+ * is only interested in determinate rowtype results.
+ */
+TupleDesc
+get_expr_result_tupdesc(Node *expr, bool noError)
+{
+	TupleDesc	tupleDesc;
+	TypeFuncClass functypclass;
+
+	functypclass = get_expr_result_type(expr, NULL, &tupleDesc);
+
+	if (functypclass == TYPEFUNC_COMPOSITE ||
+		functypclass == TYPEFUNC_COMPOSITE_DOMAIN)
+		return tupleDesc;
+
+	if (!noError)
+	{
+		Oid			exprTypeId = exprType(expr);
+
+		if (exprTypeId != RECORDOID)
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("type %s is not composite",
+							format_type_be(exprTypeId))));
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("record type has not been registered")));
+	}
+
+	return NULL;
 }
 
 /*
@@ -741,23 +786,31 @@ resolve_polymorphic_argtypes(int numargs, Oid *argtypes, char *argmodes,
 /*
  * get_type_func_class
  *		Given the type OID, obtain its TYPEFUNC classification.
+ *		Also, if it's a domain, return the base type OID.
  *
  * This is intended to centralize a bunch of formerly ad-hoc code for
  * classifying types.  The categories used here are useful for deciding
  * how to handle functions returning the datatype.
  */
 static TypeFuncClass
-get_type_func_class(Oid typid)
+get_type_func_class(Oid typid, Oid *base_typeid)
 {
+	*base_typeid = typid;
+
 	switch (get_typtype(typid))
 	{
 		case TYPTYPE_COMPOSITE:
 			return TYPEFUNC_COMPOSITE;
 		case TYPTYPE_BASE:
-		case TYPTYPE_DOMAIN:
 		case TYPTYPE_ENUM:
 		case TYPTYPE_RANGE:
 			return TYPEFUNC_SCALAR;
+		case TYPTYPE_DOMAIN:
+			*base_typeid = typid = getBaseType(typid);
+			if (get_typtype(typid) == TYPTYPE_COMPOSITE)
+				return TYPEFUNC_COMPOSITE_DOMAIN;
+			else				/* domain base type can't be a pseudotype */
+				return TYPEFUNC_SCALAR;
 		case TYPTYPE_PSEUDO:
 			if (typid == RECORDOID)
 				return TYPEFUNC_RECORD;
@@ -1320,16 +1373,20 @@ RelationNameGetTupleDesc(const char *relname)
 TupleDesc
 TypeGetTupleDesc(Oid typeoid, List *colaliases)
 {
-	TypeFuncClass functypclass = get_type_func_class(typeoid);
+	Oid			base_typeoid;
+	TypeFuncClass functypclass = get_type_func_class(typeoid, &base_typeoid);
 	TupleDesc	tupdesc = NULL;
 
 	/*
-	 * Build a suitable tupledesc representing the output rows
+	 * Build a suitable tupledesc representing the output rows.  We
+	 * intentionally do not support TYPEFUNC_COMPOSITE_DOMAIN here, as it's
+	 * unlikely that legacy callers of this obsolete function would be
+	 * prepared to apply domain constraints.
 	 */
 	if (functypclass == TYPEFUNC_COMPOSITE)
 	{
 		/* Composite data type, e.g. a table's row type */
-		tupdesc = lookup_rowtype_tupdesc_copy(typeoid, -1);
+		tupdesc = lookup_rowtype_tupdesc_copy(base_typeoid, -1);
 
 		if (colaliases != NIL)
 		{
@@ -1424,7 +1481,8 @@ extract_variadic_args(FunctionCallInfo fcinfo, int variadic_start,
 	Datum	   *args_res;
 	bool	   *nulls_res;
 	Oid		   *types_res;
-	int			nargs, i;
+	int			nargs,
+				i;
 
 	*args = NULL;
 	*types = NULL;
@@ -1460,7 +1518,7 @@ extract_variadic_args(FunctionCallInfo fcinfo, int variadic_start,
 	else
 	{
 		nargs = PG_NARGS() - variadic_start;
-		Assert (nargs > 0);
+		Assert(nargs > 0);
 		nulls_res = (bool *) palloc0(nargs * sizeof(bool));
 		args_res = (Datum *) palloc0(nargs * sizeof(Datum));
 		types_res = (Oid *) palloc0(nargs * sizeof(Oid));
@@ -1473,11 +1531,10 @@ extract_variadic_args(FunctionCallInfo fcinfo, int variadic_start,
 
 			/*
 			 * Turn a constant (more or less literal) value that's of unknown
-			 * type into text if required . Unknowns come in as a cstring
-			 * pointer.
-			 * Note: for functions declared as taking type "any", the parser
-			 * will not do any type conversion on unknown-type literals (that
-			 * is, undecorated strings or NULLs).
+			 * type into text if required. Unknowns come in as a cstring
+			 * pointer. Note: for functions declared as taking type "any", the
+			 * parser will not do any type conversion on unknown-type literals
+			 * (that is, undecorated strings or NULLs).
 			 */
 			if (convert_unknown &&
 				types_res[i] == UNKNOWNOID &&

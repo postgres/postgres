@@ -1496,7 +1496,8 @@ addRangeTableEntryForFunction(ParseState *pstate,
 						 parser_errposition(pstate, exprLocation(funcexpr))));
 		}
 
-		if (functypclass == TYPEFUNC_COMPOSITE)
+		if (functypclass == TYPEFUNC_COMPOSITE ||
+			functypclass == TYPEFUNC_COMPOSITE_DOMAIN)
 		{
 			/* Composite data type, e.g. a table's row type */
 			Assert(tupdesc);
@@ -2245,7 +2246,8 @@ expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 					functypclass = get_expr_result_type(rtfunc->funcexpr,
 														&funcrettype,
 														&tupdesc);
-					if (functypclass == TYPEFUNC_COMPOSITE)
+					if (functypclass == TYPEFUNC_COMPOSITE ||
+						functypclass == TYPEFUNC_COMPOSITE_DOMAIN)
 					{
 						/* Composite data type, e.g. a table's row type */
 						Assert(tupdesc);
@@ -2765,7 +2767,8 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 															&funcrettype,
 															&tupdesc);
 
-						if (functypclass == TYPEFUNC_COMPOSITE)
+						if (functypclass == TYPEFUNC_COMPOSITE ||
+							functypclass == TYPEFUNC_COMPOSITE_DOMAIN)
 						{
 							/* Composite data type, e.g. a table's row type */
 							Form_pg_attribute att_tup;
@@ -2966,14 +2969,11 @@ get_rte_attribute_is_dropped(RangeTblEntry *rte, AttrNumber attnum)
 					if (attnum > atts_done &&
 						attnum <= atts_done + rtfunc->funccolcount)
 					{
-						TypeFuncClass functypclass;
-						Oid			funcrettype;
 						TupleDesc	tupdesc;
 
-						functypclass = get_expr_result_type(rtfunc->funcexpr,
-															&funcrettype,
-															&tupdesc);
-						if (functypclass == TYPEFUNC_COMPOSITE)
+						tupdesc = get_expr_result_tupdesc(rtfunc->funcexpr,
+														  true);
+						if (tupdesc)
 						{
 							/* Composite data type, e.g. a table's row type */
 							Form_pg_attribute att_tup;

@@ -752,6 +752,8 @@ typedef struct RecordIOData
 {
 	Oid			record_type;
 	int32		record_typmod;
+	/* this field is used only if target type is domain over composite: */
+	void	   *domain_info;	/* opaque cache for domain checks */
 	int			ncolumns;
 	ColumnIOData columns[FLEXIBLE_ARRAY_MEMBER];
 } RecordIOData;
@@ -780,9 +782,11 @@ hstore_from_record(PG_FUNCTION_ARGS)
 		Oid			argtype = get_fn_expr_argtype(fcinfo->flinfo, 0);
 
 		/*
-		 * have no tuple to look at, so the only source of type info is the
-		 * argtype. The lookup_rowtype_tupdesc call below will error out if we
-		 * don't have a known composite type oid here.
+		 * We have no tuple to look at, so the only source of type info is the
+		 * argtype --- which might be domain over composite, but we don't care
+		 * here, since we have no need to be concerned about domain
+		 * constraints.  The lookup_rowtype_tupdesc_domain call below will
+		 * error out if we don't have a known composite type oid here.
 		 */
 		tupType = argtype;
 		tupTypmod = -1;
@@ -793,12 +797,15 @@ hstore_from_record(PG_FUNCTION_ARGS)
 	{
 		rec = PG_GETARG_HEAPTUPLEHEADER(0);
 
-		/* Extract type info from the tuple itself */
+		/*
+		 * Extract type info from the tuple itself -- this will work even for
+		 * anonymous record types.
+		 */
 		tupType = HeapTupleHeaderGetTypeId(rec);
 		tupTypmod = HeapTupleHeaderGetTypMod(rec);
 	}
 
-	tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
+	tupdesc = lookup_rowtype_tupdesc_domain(tupType, tupTypmod, false);
 	ncolumns = tupdesc->natts;
 
 	/*
@@ -943,9 +950,9 @@ hstore_populate_record(PG_FUNCTION_ARGS)
 		rec = NULL;
 
 		/*
-		 * have no tuple to look at, so the only source of type info is the
-		 * argtype. The lookup_rowtype_tupdesc call below will error out if we
-		 * don't have a known composite type oid here.
+		 * We have no tuple to look at, so the only source of type info is the
+		 * argtype.  The lookup_rowtype_tupdesc_domain call below will error
+		 * out if we don't have a known composite type oid here.
 		 */
 		tupType = argtype;
 		tupTypmod = -1;
@@ -957,7 +964,10 @@ hstore_populate_record(PG_FUNCTION_ARGS)
 		if (PG_ARGISNULL(1))
 			PG_RETURN_POINTER(rec);
 
-		/* Extract type info from the tuple itself */
+		/*
+		 * Extract type info from the tuple itself -- this will work even for
+		 * anonymous record types.
+		 */
 		tupType = HeapTupleHeaderGetTypeId(rec);
 		tupTypmod = HeapTupleHeaderGetTypMod(rec);
 	}
@@ -975,7 +985,11 @@ hstore_populate_record(PG_FUNCTION_ARGS)
 	if (HS_COUNT(hs) == 0 && rec)
 		PG_RETURN_POINTER(rec);
 
-	tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
+	/*
+	 * Lookup the input record's tupdesc.  For the moment, we don't worry
+	 * about whether it is a domain over composite.
+	 */
+	tupdesc = lookup_rowtype_tupdesc_domain(tupType, tupTypmod, false);
 	ncolumns = tupdesc->natts;
 
 	if (rec)
@@ -1002,6 +1016,7 @@ hstore_populate_record(PG_FUNCTION_ARGS)
 		my_extra = (RecordIOData *) fcinfo->flinfo->fn_extra;
 		my_extra->record_type = InvalidOid;
 		my_extra->record_typmod = 0;
+		my_extra->domain_info = NULL;
 	}
 
 	if (my_extra->record_type != tupType ||
@@ -1102,6 +1117,17 @@ hstore_populate_record(PG_FUNCTION_ARGS)
 	}
 
 	rettuple = heap_form_tuple(tupdesc, values, nulls);
+
+	/*
+	 * If the target type is domain over composite, all we know at this point
+	 * is that we've made a valid value of the base composite type.  Must
+	 * check domain constraints before deciding we're done.
+	 */
+	if (argtype != tupdesc->tdtypeid)
+		domain_check(HeapTupleGetDatum(rettuple), false,
+					 argtype,
+					 &my_extra->domain_info,
+					 fcinfo->flinfo->fn_mcxt);
 
 	ReleaseTupleDesc(tupdesc);
 

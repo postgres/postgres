@@ -262,7 +262,7 @@ ProcedureCreate(const char *procedureName,
 	 */
 	if (parameterCount == 1 &&
 		OidIsValid(parameterTypes->values[0]) &&
-		(relid = typeidTypeRelid(parameterTypes->values[0])) != InvalidOid &&
+		(relid = typeOrDomainTypeRelid(parameterTypes->values[0])) != InvalidOid &&
 		get_attnum(relid, procedureName) != InvalidAttrNumber)
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_COLUMN),

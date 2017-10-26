@@ -198,6 +198,94 @@ select pg_typeof('{1,2,3}'::dia || 42); -- should be int[] not dia
 (1 row)
 
 drop domain dia;
+-- Test domains over composites
+create type comptype as (r float8, i float8);
+create domain dcomptype as comptype;
+create table dcomptable (d1 dcomptype unique);
+insert into dcomptable values (row(1,2)::dcomptype);
+insert into dcomptable values (row(3,4)::comptype);
+insert into dcomptable values (row(1,2)::dcomptype);  -- fail on uniqueness
+ERROR:  duplicate key value violates unique constraint "dcomptable_d1_key"
+DETAIL:  Key (d1)=((1,2)) already exists.
+insert into dcomptable (d1.r) values(11);
+select * from dcomptable;
+  d1   
+-------
+ (1,2)
+ (3,4)
+ (11,)
+(3 rows)
+
+select (d1).r, (d1).i, (d1).* from dcomptable;
+ r  | i | r  | i 
+----+---+----+---
+  1 | 2 |  1 | 2
+  3 | 4 |  3 | 4
+ 11 |   | 11 |  
+(3 rows)
+
+update dcomptable set d1.r = (d1).r + 1 where (d1).i > 0;
+select * from dcomptable;
+  d1   
+-------
+ (11,)
+ (2,2)
+ (4,4)
+(3 rows)
+
+alter domain dcomptype add constraint c1 check ((value).r <= (value).i);
+alter domain dcomptype add constraint c2 check ((value).r > (value).i);  -- fail
+ERROR:  column "d1" of table "dcomptable" contains values that violate the new constraint
+select row(2,1)::dcomptype;  -- fail
+ERROR:  value for domain dcomptype violates check constraint "c1"
+insert into dcomptable values (row(1,2)::comptype);
+insert into dcomptable values (row(2,1)::comptype);  -- fail
+ERROR:  value for domain dcomptype violates check constraint "c1"
+insert into dcomptable (d1.r) values(99);
+insert into dcomptable (d1.r, d1.i) values(99, 100);
+insert into dcomptable (d1.r, d1.i) values(100, 99);  -- fail
+ERROR:  value for domain dcomptype violates check constraint "c1"
+update dcomptable set d1.r = (d1).r + 1 where (d1).i > 0;  -- fail
+ERROR:  value for domain dcomptype violates check constraint "c1"
+update dcomptable set d1.r = (d1).r - 1, d1.i = (d1).i + 1 where (d1).i > 0;
+select * from dcomptable;
+    d1    
+----------
+ (11,)
+ (99,)
+ (1,3)
+ (3,5)
+ (0,3)
+ (98,101)
+(6 rows)
+
+explain (verbose, costs off)
+  update dcomptable set d1.r = (d1).r - 1, d1.i = (d1).i + 1 where (d1).i > 0;
+                                          QUERY PLAN                                           
+-----------------------------------------------------------------------------------------------
+ Update on public.dcomptable
+   ->  Seq Scan on public.dcomptable
+         Output: ROW(((d1).r - '1'::double precision), ((d1).i + '1'::double precision)), ctid
+         Filter: ((dcomptable.d1).i > '0'::double precision)
+(4 rows)
+
+create rule silly as on delete to dcomptable do instead
+  update dcomptable set d1.r = (d1).r - 1, d1.i = (d1).i + 1 where (d1).i > 0;
+\d+ dcomptable
+                                  Table "public.dcomptable"
+ Column |   Type    | Collation | Nullable | Default | Storage  | Stats target | Description 
+--------+-----------+-----------+----------+---------+----------+--------------+-------------
+ d1     | dcomptype |           |          |         | extended |              | 
+Indexes:
+    "dcomptable_d1_key" UNIQUE CONSTRAINT, btree (d1)
+Rules:
+    silly AS
+    ON DELETE TO dcomptable DO INSTEAD  UPDATE dcomptable SET d1.r = (dcomptable.d1).r - 1::double precision, d1.i = (dcomptable.d1).i + 1::double precision
+  WHERE (dcomptable.d1).i > 0::double precision
+
+drop table dcomptable;
+drop type comptype cascade;
+NOTICE:  drop cascades to type dcomptype
 -- Test domains over arrays of composite
 create type comptype as (r float8, i float8);
 create domain dcomptypea as comptype[];
@@ -762,6 +850,14 @@ insert into ddtest2 values('{(-1)}');
 alter domain posint add constraint c1 check(value >= 0);
 ERROR:  cannot alter type "posint" because column "ddtest2.f1" uses it
 drop table ddtest2;
+-- Likewise for domains within domains over composite
+create domain ddtest1d as ddtest1;
+create table ddtest2(f1 ddtest1d);
+insert into ddtest2 values('(-1)');
+alter domain posint add constraint c1 check(value >= 0);
+ERROR:  cannot alter type "posint" because column "ddtest2.f1" uses it
+drop table ddtest2;
+drop domain ddtest1d;
 -- Likewise for domains within domains over array of composite
 create domain ddtest1d as ddtest1[];
 create table ddtest2(f1 ddtest1d);

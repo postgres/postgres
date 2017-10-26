@@ -2398,12 +2398,26 @@ get_typtype(Oid typid)
  * type_is_rowtype
  *
  *		Convenience function to determine whether a type OID represents
- *		a "rowtype" type --- either RECORD or a named composite type.
+ *		a "rowtype" type --- either RECORD or a named composite type
+ *		(including a domain over a named composite type).
  */
 bool
 type_is_rowtype(Oid typid)
 {
-	return (typid == RECORDOID || get_typtype(typid) == TYPTYPE_COMPOSITE);
+	if (typid == RECORDOID)
+		return true;			/* easy case */
+	switch (get_typtype(typid))
+	{
+		case TYPTYPE_COMPOSITE:
+			return true;
+		case TYPTYPE_DOMAIN:
+			if (get_typtype(getBaseType(typid)) == TYPTYPE_COMPOSITE)
+				return true;
+			break;
+		default:
+			break;
+	}
+	return false;
 }
 
 /*

@@ -134,6 +134,11 @@ typedef struct DatumTupleFields
 	Oid			datum_typeid;	/* composite type OID, or RECORDOID */
 
 	/*
+	 * datum_typeid cannot be a domain over composite, only plain composite,
+	 * even if the datum is meant as a value of a domain-over-composite type.
+	 * This is in line with the general principle that CoerceToDomain does not
+	 * change the physical representation of the base type value.
+	 *
 	 * Note: field ordering is chosen with thought that Oid might someday
 	 * widen to 64 bits.
 	 */

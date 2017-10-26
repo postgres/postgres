@@ -1819,18 +1819,19 @@ ParseComplexProjection(ParseState *pstate, char *funcname, Node *first_arg,
 	}
 
 	/*
-	 * Else do it the hard way with get_expr_result_type().
+	 * Else do it the hard way with get_expr_result_tupdesc().
 	 *
 	 * If it's a Var of type RECORD, we have to work even harder: we have to
-	 * find what the Var refers to, and pass that to get_expr_result_type.
+	 * find what the Var refers to, and pass that to get_expr_result_tupdesc.
 	 * That task is handled by expandRecordVariable().
 	 */
 	if (IsA(first_arg, Var) &&
 		((Var *) first_arg)->vartype == RECORDOID)
 		tupdesc = expandRecordVariable(pstate, (Var *) first_arg, 0);
-	else if (get_expr_result_type(first_arg, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+	else
+		tupdesc = get_expr_result_tupdesc(first_arg, true);
+	if (!tupdesc)
 		return NULL;			/* unresolvable RECORD type */
-	Assert(tupdesc);
 
 	for (i = 0; i < tupdesc->natts; i++)
 	{

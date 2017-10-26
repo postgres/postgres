@@ -166,7 +166,7 @@ typedef struct Var
 	Index		varno;			/* index of this var's relation in the range
 								 * table, or INNER_VAR/OUTER_VAR/INDEX_VAR */
 	AttrNumber	varattno;		/* attribute number of this var, or zero for
-								 * all */
+								 * all attrs ("whole-row Var") */
 	Oid			vartype;		/* pg_type OID for the type of this var */
 	int32		vartypmod;		/* pg_attribute typmod value */
 	Oid			varcollid;		/* OID of collation, or InvalidOid if none */
@@ -755,6 +755,9 @@ typedef struct FieldSelect
  * the assign case of ArrayRef, this is used to implement UPDATE of a
  * portion of a column.
  *
+ * resulttype is always a named composite type (not a domain).  To update
+ * a composite domain value, apply CoerceToDomain to the FieldStore.
+ *
  * A single FieldStore can actually represent updates of several different
  * fields.  The parser only generates FieldStores with single-element lists,
  * but the planner will collapse multiple updates of the same base column
@@ -849,7 +852,8 @@ typedef struct ArrayCoerceExpr
  * needed for the destination type plus possibly others; the columns need not
  * be in the same positions, but are matched up by name.  This is primarily
  * used to convert a whole-row value of an inheritance child table into a
- * valid whole-row value of its parent table's rowtype.
+ * valid whole-row value of its parent table's rowtype.  Both resulttype
+ * and the exposed type of "arg" must be named composite types (not domains).
  * ----------------
  */
 
@@ -987,6 +991,9 @@ typedef struct RowExpr
 	Oid			row_typeid;		/* RECORDOID or a composite type's ID */
 
 	/*
+	 * row_typeid cannot be a domain over composite, only plain composite.  To
+	 * create a composite domain value, apply CoerceToDomain to the RowExpr.
+	 *
 	 * Note: we deliberately do NOT store a typmod.  Although a typmod will be
 	 * associated with specific RECORD types at runtime, it will differ for
 	 * different backends, and so cannot safely be stored in stored

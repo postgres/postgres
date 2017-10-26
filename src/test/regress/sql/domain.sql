@@ -120,6 +120,45 @@ select pg_typeof('{1,2,3}'::dia || 42); -- should be int[] not dia
 drop domain dia;
 
 
+-- Test domains over composites
+
+create type comptype as (r float8, i float8);
+create domain dcomptype as comptype;
+create table dcomptable (d1 dcomptype unique);
+
+insert into dcomptable values (row(1,2)::dcomptype);
+insert into dcomptable values (row(3,4)::comptype);
+insert into dcomptable values (row(1,2)::dcomptype);  -- fail on uniqueness
+insert into dcomptable (d1.r) values(11);
+
+select * from dcomptable;
+select (d1).r, (d1).i, (d1).* from dcomptable;
+update dcomptable set d1.r = (d1).r + 1 where (d1).i > 0;
+select * from dcomptable;
+
+alter domain dcomptype add constraint c1 check ((value).r <= (value).i);
+alter domain dcomptype add constraint c2 check ((value).r > (value).i);  -- fail
+
+select row(2,1)::dcomptype;  -- fail
+insert into dcomptable values (row(1,2)::comptype);
+insert into dcomptable values (row(2,1)::comptype);  -- fail
+insert into dcomptable (d1.r) values(99);
+insert into dcomptable (d1.r, d1.i) values(99, 100);
+insert into dcomptable (d1.r, d1.i) values(100, 99);  -- fail
+update dcomptable set d1.r = (d1).r + 1 where (d1).i > 0;  -- fail
+update dcomptable set d1.r = (d1).r - 1, d1.i = (d1).i + 1 where (d1).i > 0;
+select * from dcomptable;
+
+explain (verbose, costs off)
+  update dcomptable set d1.r = (d1).r - 1, d1.i = (d1).i + 1 where (d1).i > 0;
+create rule silly as on delete to dcomptable do instead
+  update dcomptable set d1.r = (d1).r - 1, d1.i = (d1).i + 1 where (d1).i > 0;
+\d+ dcomptable
+
+drop table dcomptable;
+drop type comptype cascade;
+
+
 -- Test domains over arrays of composite
 
 create type comptype as (r float8, i float8);
@@ -499,6 +538,14 @@ create table ddtest2(f1 ddtest1[]);
 insert into ddtest2 values('{(-1)}');
 alter domain posint add constraint c1 check(value >= 0);
 drop table ddtest2;
+
+-- Likewise for domains within domains over composite
+create domain ddtest1d as ddtest1;
+create table ddtest2(f1 ddtest1d);
+insert into ddtest2 values('(-1)');
+alter domain posint add constraint c1 check(value >= 0);
+drop table ddtest2;
+drop domain ddtest1d;
 
 -- Likewise for domains within domains over array of composite
 create domain ddtest1d as ddtest1[];

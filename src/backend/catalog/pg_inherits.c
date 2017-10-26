@@ -301,6 +301,11 @@ has_superclass(Oid relationId)
 /*
  * Given two type OIDs, determine whether the first is a complex type
  * (class type) that inherits from the second.
+ *
+ * This essentially asks whether the first type is guaranteed to be coercible
+ * to the second.  Therefore, we allow the first type to be a domain over a
+ * complex type that inherits from the second; that creates no difficulties.
+ * But the second type cannot be a domain.
  */
 bool
 typeInheritsFrom(Oid subclassTypeId, Oid superclassTypeId)
@@ -314,9 +319,9 @@ typeInheritsFrom(Oid subclassTypeId, Oid superclassTypeId)
 	ListCell   *queue_item;
 
 	/* We need to work with the associated relation OIDs */
-	subclassRelid = typeidTypeRelid(subclassTypeId);
+	subclassRelid = typeOrDomainTypeRelid(subclassTypeId);
 	if (subclassRelid == InvalidOid)
-		return false;			/* not a complex type */
+		return false;			/* not a complex type or domain over one */
 	superclassRelid = typeidTypeRelid(superclassTypeId);
 	if (superclassRelid == InvalidOid)
 		return false;			/* not a complex type */

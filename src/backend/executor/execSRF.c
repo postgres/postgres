@@ -502,7 +502,7 @@ restart:
 	{
 		TupleTableSlot *slot = fcache->funcResultSlot;
 		MemoryContext oldContext;
-		bool foundTup;
+		bool		foundTup;
 
 		/*
 		 * Have to make sure tuple in slot lives long enough, otherwise
@@ -734,7 +734,8 @@ init_sexpr(Oid foid, Oid input_collation, Expr *node,
 		/* Must save tupdesc in sexpr's context */
 		oldcontext = MemoryContextSwitchTo(sexprCxt);
 
-		if (functypclass == TYPEFUNC_COMPOSITE)
+		if (functypclass == TYPEFUNC_COMPOSITE ||
+			functypclass == TYPEFUNC_COMPOSITE_DOMAIN)
 		{
 			/* Composite data type, e.g. a table's row type */
 			Assert(tupdesc);

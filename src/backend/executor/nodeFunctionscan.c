@@ -383,7 +383,8 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate, int eflags)
 											&funcrettype,
 											&tupdesc);
 
-		if (functypclass == TYPEFUNC_COMPOSITE)
+		if (functypclass == TYPEFUNC_COMPOSITE ||
+			functypclass == TYPEFUNC_COMPOSITE_DOMAIN)
 		{
 			/* Composite data type, e.g. a table's row type */
 			Assert(tupdesc);

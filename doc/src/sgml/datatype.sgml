@@ -4379,8 +4379,7 @@ SET xmloption TO { DOCUMENT | CONTENT };
     underlying type &mdash; for example, any operator or function that
     can be applied to the underlying type will work on the domain type.
     The underlying type can be any built-in or user-defined base type,
-    enum type, array or range type, or another domain.  (Currently, domains
-    over composite types are not implemented.)
+    enum type, array type, composite type, range type, or another domain.
    </para>
 
    <para>

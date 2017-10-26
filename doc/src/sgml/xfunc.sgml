@@ -353,6 +353,31 @@ CREATE FUNCTION tf1 (accountno integer, debit numeric) RETURNS numeric AS $$
 $$ LANGUAGE SQL;
 </programlisting>
     </para>
+
+    <para>
+     A <acronym>SQL</acronym> function must return exactly its declared
+     result type.  This may require inserting an explicit cast.
+     For example, suppose we wanted the
+     previous <function>add_em</function> function to return
+     type <type>float8</type> instead.  This won't work:
+
+<programlisting>
+CREATE FUNCTION add_em(integer, integer) RETURNS float8 AS $$
+    SELECT $1 + $2;
+$$ LANGUAGE SQL;
+</programlisting>
+
+     even though in other contexts <productname>PostgreSQL</productname>
+     would be willing to insert an implicit cast to
+     convert <type>integer</type> to <type>float8</type>.
+     We need to write it as
+
+<programlisting>
+CREATE FUNCTION add_em(integer, integer) RETURNS float8 AS $$
+    SELECT ($1 + $2)::float8;
+$$ LANGUAGE SQL;
+</programlisting>
+    </para>
    </sect2>
 
    <sect2 id="xfunc-sql-composite-functions">
@@ -452,13 +477,16 @@ $$ LANGUAGE SQL;
       </listitem>
       <listitem>
        <para>
-        You must typecast the expressions to match the
-        definition of the composite type, or you will get errors like this:
+        We must ensure each expression's type matches the corresponding
+        column of the composite type, inserting a cast if necessary.
+        Otherwise we'll get errors like this:
 <screen>
 <computeroutput>
 ERROR:  function declared to return emp returns varchar instead of text at column 1
 </computeroutput>
 </screen>
+        As with the base-type case, the function will not insert any casts
+        automatically.
        </para>
       </listitem>
      </itemizedlist>
@@ -478,6 +506,11 @@ $$ LANGUAGE SQL;
      in this situation, but it is a handy alternative in some cases
      &mdash; for example, if we need to compute the result by calling
      another function that returns the desired composite value.
+     Another example is that if we are trying to write a function that
+     returns a domain over composite, rather than a plain composite type,
+     it is always necessary to write it as returning a single column,
+     since there is no other way to produce a value that is exactly of
+     the domain type.
     </para>
 
     <para>
