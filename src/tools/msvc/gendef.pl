@@ -27,7 +27,7 @@ while (<$ARGV[0]/*.obj>)
 	print ".";
 	system("dumpbin /symbols /out:symbols.out $_ >NUL")
 	  && die "Could not call dumpbin";
-	open(F, "<symbols.out") || die "Could not open symbols.out for $_\n";
+	open(F, "<symbols.out") || die "Could not open symbols.out for $_: $!\n";
 	while (<F>)
 	{
 		s/\(\)//g;
