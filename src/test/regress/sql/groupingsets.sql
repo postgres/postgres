@@ -141,6 +141,17 @@ select a, d, grouping(a,b,c)
   from gstest3
  group by grouping sets ((a,b), (a,c));
 
+-- check that distinct grouping columns are kept separate
+-- even if they are equal()
+explain (costs off)
+select g as alias1, g as alias2
+  from generate_series(1,3) g
+ group by alias1, rollup(alias2);
+
+select g as alias1, g as alias2
+  from generate_series(1,3) g
+ group by alias1, rollup(alias2);
+
 -- simple rescan tests
 
 select a, b, sum(v.x)
