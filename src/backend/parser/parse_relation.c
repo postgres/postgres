@@ -2221,7 +2221,6 @@ expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 						char	   *label = strVal(lfirst(aliasp_item));
 
 						*colnames = lappend(*colnames, makeString(pstrdup(label)));
-						aliasp_item = lnext(aliasp_item);
 					}
 
 					if (colvars)
@@ -2237,6 +2236,8 @@ expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 
 						*colvars = lappend(*colvars, varnode);
 					}
+
+					aliasp_item = lnext(aliasp_item);
 				}
 			}
 			break;
