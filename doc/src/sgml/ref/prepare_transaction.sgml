@@ -100,7 +100,8 @@ PREPARE TRANSACTION <replaceable class="PARAMETER">transaction_id</replaceable>
    It is not currently allowed to <command>PREPARE</> a transaction that
    has executed any operations involving temporary tables,
    created any cursors <literal>WITH HOLD</>, or executed
-   <command>LISTEN</> or <command>UNLISTEN</>.
+   <command>LISTEN</>, <command>UNLISTEN</>, or
+   <command>NOTIFY</>.
    Those features are too tightly
    tied to the current session to be useful in a transaction to be prepared.
   </para>
