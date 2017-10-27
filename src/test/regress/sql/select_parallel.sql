@@ -39,6 +39,12 @@ explain (costs off)
 	select  sum(parallel_restricted(unique1)) from tenk1
 	group by(parallel_restricted(unique1));
 
+-- test prepared statement
+prepare tenk1_count(integer) As select  count((unique1)) from tenk1 where hundred > $1;
+explain (costs off) execute tenk1_count(1);
+execute tenk1_count(1);
+deallocate tenk1_count;
+
 -- test parallel plans for queries containing un-correlated subplans.
 alter table tenk2 set (parallel_workers = 0);
 explain (costs off)

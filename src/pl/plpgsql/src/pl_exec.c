@@ -6821,7 +6821,7 @@ exec_simple_recheck_plan(PLpgSQL_expr *expr, CachedPlan *cplan)
 {
 	PlannedStmt *stmt;
 	Plan	   *plan;
-	TargetEntry *tle;
+	Expr	   *tle_expr;
 
 	/*
 	 * Initialize to "not simple", and remember the plan generation number we
@@ -6836,18 +6836,51 @@ exec_simple_recheck_plan(PLpgSQL_expr *expr, CachedPlan *cplan)
 	if (list_length(cplan->stmt_list) != 1)
 		return;
 	stmt = linitial_node(PlannedStmt, cplan->stmt_list);
-
-	/*
-	 * 2. It must be a RESULT plan --> no scan's required
-	 */
 	if (stmt->commandType != CMD_SELECT)
 		return;
-	plan = stmt->planTree;
-	if (!IsA(plan, Result))
-		return;
 
 	/*
-	 * 3. Can't have any subplan or qual clause, either
+	 * 2. Ordinarily, the plan node should be a simple Result.  However, if
+	 * force_parallel_mode is on, the planner might've stuck a Gather node
+	 * atop that.  The simplest way to deal with this is to look through the
+	 * Gather node.  The Gather node's tlist would normally contain a Var
+	 * referencing the child node's output, but it could also be a Param, or
+	 * it could be a Const that setrefs.c copied as-is.
+	 */
+	plan = stmt->planTree;
+	for (;;)
+	{
+		/*
+		 * 3. The plan must have a single attribute as result
+		 */
+		if (list_length(plan->targetlist) != 1)
+			return;
+		tle_expr = castNode(TargetEntry, linitial(plan->targetlist))->expr;
+
+		if (IsA(plan, Gather))
+		{
+			if (plan->righttree != NULL ||
+				plan->initPlan != NULL ||
+				plan->qual != NULL)
+				return;
+			/* If setrefs.c copied up a Const, no need to look further */
+			if (IsA(tle_expr, Const))
+				break;
+			/* Otherwise, it had better be a Param or an outer Var */
+			if (!IsA(tle_expr, Param) && !(IsA(tle_expr, Var) &&
+					((Var *) tle_expr)->varno == OUTER_VAR))
+				return;
+			/* Descend to the child node */
+			plan = plan->lefttree;
+			continue;
+		}
+		else if (!IsA(plan, Result))
+			return;
+		break;
+	}
+
+	/*
+	 * 4. Can't have any subplan or qual clause, either
 	 */
 	if (plan->lefttree != NULL ||
 		plan->righttree != NULL ||
@@ -6857,30 +6890,22 @@ exec_simple_recheck_plan(PLpgSQL_expr *expr, CachedPlan *cplan)
 		return;
 
 	/*
-	 * 4. The plan must have a single attribute as result
-	 */
-	if (list_length(plan->targetlist) != 1)
-		return;
-
-	tle = (TargetEntry *) linitial(plan->targetlist);
-
-	/*
 	 * 5. Check that all the nodes in the expression are non-scary.
 	 */
-	if (!exec_simple_check_node((Node *) tle->expr))
+	if (!exec_simple_check_node((Node *) tle_expr))
 		return;
 
 	/*
 	 * Yes - this is a simple expression.  Mark it as such, and initialize
 	 * state to "not valid in current transaction".
 	 */
-	expr->expr_simple_expr = tle->expr;
+	expr->expr_simple_expr = tle_expr;
 	expr->expr_simple_state = NULL;
 	expr->expr_simple_in_use = false;
 	expr->expr_simple_lxid = InvalidLocalTransactionId;
 	/* Also stash away the expression result type */
-	expr->expr_simple_type = exprType((Node *) tle->expr);
-	expr->expr_simple_typmod = exprTypmod((Node *) tle->expr);
+	expr->expr_simple_type = exprType((Node *) tle_expr);
+	expr->expr_simple_typmod = exprTypmod((Node *) tle_expr);
 }
 
 /*
