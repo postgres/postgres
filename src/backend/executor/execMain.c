@@ -1548,10 +1548,7 @@ ExecutePlan(EState *estate,
 	if (numberTuples || dest->mydest == DestIntoRel)
 		use_parallel_mode = false;
 
-	/*
-	 * If a tuple count was supplied, we must force the plan to run without
-	 * parallelism, because we might exit early.
-	 */
+	estate->es_use_parallel_mode = use_parallel_mode;
 	if (use_parallel_mode)
 		EnterParallelMode();
 

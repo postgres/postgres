@@ -140,6 +140,8 @@ CreateExecutorState(void)
 	estate->es_epqTupleSet = NULL;
 	estate->es_epqScanDone = NULL;
 
+	estate->es_use_parallel_mode = false;
+
 	/*
 	 * Return the executor state structure
 	 */
