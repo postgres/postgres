@@ -6588,8 +6588,8 @@ exec_save_simple_expr(PLpgSQL_expr *expr, CachedPlan *cplan)
 	 * force_parallel_mode is on, the planner might've stuck a Gather node
 	 * atop that.  The simplest way to deal with this is to look through the
 	 * Gather node.  The Gather node's tlist would normally contain a Var
-	 * referencing the child node's output ... but setrefs.c might also have
-	 * copied a Const as-is.
+	 * referencing the child node's output, but it could also be a Param, or
+	 * it could be a Const that setrefs.c copied as-is.
 	 */
 	plan = stmt->planTree;
 	for (;;)
@@ -6616,9 +6616,9 @@ exec_save_simple_expr(PLpgSQL_expr *expr, CachedPlan *cplan)
 			/* If setrefs.c copied up a Const, no need to look further */
 			if (IsA(tle_expr, Const))
 				break;
-			/* Otherwise, it better be an outer Var */
-			Assert(IsA(tle_expr, Var));
-			Assert(((Var *) tle_expr)->varno == OUTER_VAR);
+			/* Otherwise, it had better be a Param or an outer Var */
+			Assert(IsA(tle_expr, Param) || (IsA(tle_expr, Var) &&
+					((Var *) tle_expr)->varno == OUTER_VAR));
 			/* Descend to the child node */
 			plan = plan->lefttree;
 		}

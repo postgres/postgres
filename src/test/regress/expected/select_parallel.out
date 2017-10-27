@@ -101,6 +101,26 @@ explain (costs off)
          ->  Parallel Index Only Scan using tenk1_unique1 on tenk1
 (5 rows)
 
+-- test prepared statement
+prepare tenk1_count(integer) As select  count((unique1)) from tenk1 where hundred > $1;
+explain (costs off) execute tenk1_count(1);
+                  QUERY PLAN                  
+----------------------------------------------
+ Finalize Aggregate
+   ->  Gather
+         Workers Planned: 4
+         ->  Partial Aggregate
+               ->  Parallel Seq Scan on tenk1
+                     Filter: (hundred > 1)
+(6 rows)
+
+execute tenk1_count(1);
+ count 
+-------
+  9800
+(1 row)
+
+deallocate tenk1_count;
 -- test parallel plans for queries containing un-correlated subplans.
 alter table tenk2 set (parallel_workers = 0);
 explain (costs off)
