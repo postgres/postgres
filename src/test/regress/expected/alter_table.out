@@ -2706,6 +2706,23 @@ Typed table of type: test_type2
 Inherits: test_tbl2
 
 DROP TABLE test_tbl2_subclass;
+CREATE TYPE test_typex AS (a int, b text);
+CREATE TABLE test_tblx (x int, y test_typex check ((y).a > 0));
+ALTER TYPE test_typex DROP ATTRIBUTE a; -- fails
+ERROR:  cannot drop composite type test_typex column a because other objects depend on it
+DETAIL:  constraint test_tblx_y_check on table test_tblx depends on composite type test_typex column a
+HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+ALTER TYPE test_typex DROP ATTRIBUTE a CASCADE;
+NOTICE:  drop cascades to constraint test_tblx_y_check on table test_tblx
+\d test_tblx
+               Table "public.test_tblx"
+ Column |    Type    | Collation | Nullable | Default 
+--------+------------+-----------+----------+---------
+ x      | integer    |           |          | 
+ y      | test_typex |           |          | 
+
+DROP TABLE test_tblx;
+DROP TYPE test_typex;
 -- This test isn't that interesting on its own, but the purpose is to leave
 -- behind a table to test pg_upgrade with. The table has a composite type
 -- column in it, and the composite type has a dropped attribute.

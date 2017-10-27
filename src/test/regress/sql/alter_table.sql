@@ -1714,6 +1714,14 @@ ALTER TYPE test_type2 RENAME ATTRIBUTE a TO aa CASCADE;
 
 DROP TABLE test_tbl2_subclass;
 
+CREATE TYPE test_typex AS (a int, b text);
+CREATE TABLE test_tblx (x int, y test_typex check ((y).a > 0));
+ALTER TYPE test_typex DROP ATTRIBUTE a; -- fails
+ALTER TYPE test_typex DROP ATTRIBUTE a CASCADE;
+\d test_tblx
+DROP TABLE test_tblx;
+DROP TYPE test_typex;
+
 -- This test isn't that interesting on its own, but the purpose is to leave
 -- behind a table to test pg_upgrade with. The table has a composite type
 -- column in it, and the composite type has a dropped attribute.
