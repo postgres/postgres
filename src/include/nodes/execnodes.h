@@ -507,10 +507,10 @@ typedef struct EState
 	bool	   *es_epqTupleSet; /* true if EPQ tuple is provided */
 	bool	   *es_epqScanDone; /* true if EPQ tuple has been fetched */
 
-	bool		es_use_parallel_mode; /* can we use parallel workers? */
-
 	/* The per-query shared memory area to use for parallel execution. */
 	struct dsa_area *es_query_dsa;
+
+	bool		es_use_parallel_mode; /* can we use parallel workers? */
 } EState;
 
 
