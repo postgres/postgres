@@ -2831,9 +2831,9 @@ get_default_partition_oid(Oid parentId)
 
 		part_table_form = (Form_pg_partitioned_table) GETSTRUCT(tuple);
 		defaultPartId = part_table_form->partdefid;
+		ReleaseSysCache(tuple);
 	}
 
-	ReleaseSysCache(tuple);
 	return defaultPartId;
 }
 
