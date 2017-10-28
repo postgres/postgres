@@ -1644,7 +1644,8 @@ ExecIndexBuildScanKeys(PlanState *planstate, Relation index,
 /* ----------------------------------------------------------------
  *		ExecIndexScanEstimate
  *
- *		estimates the space required to serialize indexscan node.
+ *		Compute the amount of space we'll need in the parallel
+ *		query DSM, and inform pcxt->estimator about our needs.
  * ----------------------------------------------------------------
  */
 void

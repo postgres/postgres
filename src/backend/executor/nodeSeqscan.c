@@ -289,7 +289,8 @@ ExecReScanSeqScan(SeqScanState *node)
 /* ----------------------------------------------------------------
  *		ExecSeqScanEstimate
  *
- *		estimates the space required to serialize seqscan node.
+ *		Compute the amount of space we'll need in the parallel
+ *		query DSM, and inform pcxt->estimator about our needs.
  * ----------------------------------------------------------------
  */
 void
