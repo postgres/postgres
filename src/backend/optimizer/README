@@ -1088,8 +1088,8 @@ broken into joins between the matching partitions. The resultant join is
 partitioned in the same way as the joining relations, thus allowing an N-way
 join between similarly partitioned tables having equi-join condition between
 their partition keys to be broken down into N-way joins between their matching
-partitions. This technique of breaking down a join between partition tables
-into join between their partitions is called partition-wise join. We will use
+partitions. This technique of breaking down a join between partitioned tables
+into joins between their partitions is called partition-wise join. We will use
 term "partitioned relation" for either a partitioned table or a join between
 compatibly partitioned tables.
 
