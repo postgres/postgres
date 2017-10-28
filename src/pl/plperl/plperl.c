@@ -179,8 +179,11 @@ typedef struct plperl_call_data
 {
 	plperl_proc_desc *prodesc;
 	FunctionCallInfo fcinfo;
+	/* remaining fields are used only in a function returning set: */
 	Tuplestorestate *tuple_store;
 	TupleDesc	ret_tdesc;
+	Oid			cdomain_oid;	/* 0 unless returning domain-over-composite */
+	void	   *cdomain_info;
 	MemoryContext tmp_cxt;
 } plperl_call_data;
 
@@ -1356,6 +1359,7 @@ plperl_sv_to_datum(SV *sv, Oid typid, int32 typmod,
 			/* handle a hashref */
 			Datum		ret;
 			TupleDesc	td;
+			bool		isdomain;
 
 			if (!type_is_rowtype(typid))
 				ereport(ERROR,
@@ -1363,19 +1367,35 @@ plperl_sv_to_datum(SV *sv, Oid typid, int32 typmod,
 						 errmsg("cannot convert Perl hash to non-composite type %s",
 								format_type_be(typid))));
 
-			td = lookup_rowtype_tupdesc_noerror(typid, typmod, true);
-			if (td == NULL)
+			td = lookup_rowtype_tupdesc_domain(typid, typmod, true);
+			if (td != NULL)
 			{
-				/* Try to look it up based on our result type */
-				if (fcinfo == NULL ||
-					get_call_result_type(fcinfo, NULL, &td) != TYPEFUNC_COMPOSITE)
+				/* Did we look through a domain? */
+				isdomain = (typid != td->tdtypeid);
+			}
+			else
+			{
+				/* Must be RECORD, try to resolve based on call info */
+				TypeFuncClass funcclass;
+
+				if (fcinfo)
+					funcclass = get_call_result_type(fcinfo, &typid, &td);
+				else
+					funcclass = TYPEFUNC_OTHER;
+				if (funcclass != TYPEFUNC_COMPOSITE &&
+					funcclass != TYPEFUNC_COMPOSITE_DOMAIN)
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("function returning record called in context "
 									"that cannot accept type record")));
+				Assert(td);
+				isdomain = (funcclass == TYPEFUNC_COMPOSITE_DOMAIN);
 			}
 
 			ret = plperl_hash_to_datum(sv, td);
+
+			if (isdomain)
+				domain_check(ret, false, typid, NULL, NULL);
 
 			/* Release on the result of get_call_result_type is harmless */
 			ReleaseTupleDesc(td);
@@ -2401,8 +2421,7 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 	{
 		/* Check context before allowing the call to go through */
 		if (!rsi || !IsA(rsi, ReturnSetInfo) ||
-			(rsi->allowedModes & SFRM_Materialize) == 0 ||
-			rsi->expectedDesc == NULL)
+			(rsi->allowedModes & SFRM_Materialize) == 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("set-valued function called in context that "
@@ -2809,22 +2828,21 @@ compile_plperl_function(Oid fn_oid, bool is_trigger, bool is_event_trigger)
 		 ************************************************************/
 		if (!is_trigger && !is_event_trigger)
 		{
-			typeTup =
-				SearchSysCache1(TYPEOID,
-								ObjectIdGetDatum(procStruct->prorettype));
+			Oid			rettype = procStruct->prorettype;
+
+			typeTup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(rettype));
 			if (!HeapTupleIsValid(typeTup))
-				elog(ERROR, "cache lookup failed for type %u",
-					 procStruct->prorettype);
+				elog(ERROR, "cache lookup failed for type %u", rettype);
 			typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
 
 			/* Disallow pseudotype result, except VOID or RECORD */
 			if (typeStruct->typtype == TYPTYPE_PSEUDO)
 			{
-				if (procStruct->prorettype == VOIDOID ||
-					procStruct->prorettype == RECORDOID)
+				if (rettype == VOIDOID ||
+					rettype == RECORDOID)
 					 /* okay */ ;
-				else if (procStruct->prorettype == TRIGGEROID ||
-						 procStruct->prorettype == EVTTRIGGEROID)
+				else if (rettype == TRIGGEROID ||
+						 rettype == EVTTRIGGEROID)
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("trigger functions can only be called "
@@ -2833,13 +2851,12 @@ compile_plperl_function(Oid fn_oid, bool is_trigger, bool is_event_trigger)
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("PL/Perl functions cannot return type %s",
-									format_type_be(procStruct->prorettype))));
+									format_type_be(rettype))));
 			}
 
-			prodesc->result_oid = procStruct->prorettype;
+			prodesc->result_oid = rettype;
 			prodesc->fn_retisset = procStruct->proretset;
-			prodesc->fn_retistuple = (procStruct->prorettype == RECORDOID ||
-									  typeStruct->typtype == TYPTYPE_COMPOSITE);
+			prodesc->fn_retistuple = type_is_rowtype(rettype);
 
 			prodesc->fn_retisarray =
 				(typeStruct->typlen == -1 && typeStruct->typelem);
@@ -2862,23 +2879,22 @@ compile_plperl_function(Oid fn_oid, bool is_trigger, bool is_event_trigger)
 
 			for (i = 0; i < prodesc->nargs; i++)
 			{
-				typeTup = SearchSysCache1(TYPEOID,
-										  ObjectIdGetDatum(procStruct->proargtypes.values[i]));
+				Oid			argtype = procStruct->proargtypes.values[i];
+
+				typeTup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(argtype));
 				if (!HeapTupleIsValid(typeTup))
-					elog(ERROR, "cache lookup failed for type %u",
-						 procStruct->proargtypes.values[i]);
+					elog(ERROR, "cache lookup failed for type %u", argtype);
 				typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
 
-				/* Disallow pseudotype argument */
+				/* Disallow pseudotype argument, except RECORD */
 				if (typeStruct->typtype == TYPTYPE_PSEUDO &&
-					procStruct->proargtypes.values[i] != RECORDOID)
+					argtype != RECORDOID)
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("PL/Perl functions cannot accept type %s",
-									format_type_be(procStruct->proargtypes.values[i]))));
+									format_type_be(argtype))));
 
-				if (typeStruct->typtype == TYPTYPE_COMPOSITE ||
-					procStruct->proargtypes.values[i] == RECORDOID)
+				if (type_is_rowtype(argtype))
 					prodesc->arg_is_rowtype[i] = true;
 				else
 				{
@@ -2888,9 +2904,9 @@ compile_plperl_function(Oid fn_oid, bool is_trigger, bool is_event_trigger)
 								  proc_cxt);
 				}
 
-				/* Identify array attributes */
+				/* Identify array-type arguments */
 				if (typeStruct->typelem != 0 && typeStruct->typlen == -1)
-					prodesc->arg_arraytype[i] = procStruct->proargtypes.values[i];
+					prodesc->arg_arraytype[i] = argtype;
 				else
 					prodesc->arg_arraytype[i] = InvalidOid;
 
@@ -3249,11 +3265,25 @@ plperl_return_next_internal(SV *sv)
 
 		/*
 		 * This is the first call to return_next in the current PL/Perl
-		 * function call, so identify the output tuple descriptor and create a
+		 * function call, so identify the output tuple type and create a
 		 * tuplestore to hold the result rows.
 		 */
 		if (prodesc->fn_retistuple)
-			(void) get_call_result_type(fcinfo, NULL, &tupdesc);
+		{
+			TypeFuncClass funcclass;
+			Oid			typid;
+
+			funcclass = get_call_result_type(fcinfo, &typid, &tupdesc);
+			if (funcclass != TYPEFUNC_COMPOSITE &&
+				funcclass != TYPEFUNC_COMPOSITE_DOMAIN)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("function returning record called in context "
+								"that cannot accept type record")));
+			/* if domain-over-composite, remember the domain's type OID */
+			if (funcclass == TYPEFUNC_COMPOSITE_DOMAIN)
+				current_call_data->cdomain_oid = typid;
+		}
 		else
 		{
 			tupdesc = rsi->expectedDesc;
@@ -3304,6 +3334,13 @@ plperl_return_next_internal(SV *sv)
 
 		tuple = plperl_build_tuple_result((HV *) SvRV(sv),
 										  current_call_data->ret_tdesc);
+
+		if (OidIsValid(current_call_data->cdomain_oid))
+			domain_check(HeapTupleGetDatum(tuple), false,
+						 current_call_data->cdomain_oid,
+						 &current_call_data->cdomain_info,
+						 rsi->econtext->ecxt_per_query_memory);
+
 		tuplestore_puttuple(current_call_data->tuple_store, tuple);
 	}
 	else

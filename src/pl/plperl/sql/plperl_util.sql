@@ -102,11 +102,20 @@ select perl_looks_like_number();
 -- test encode_typed_literal
 create type perl_foo as (a integer, b text[]);
 create type perl_bar as (c perl_foo[]);
+create domain perl_foo_pos as perl_foo check((value).a > 0);
+
 create or replace function perl_encode_typed_literal() returns setof text language plperl as $$
 	return_next encode_typed_literal(undef, 'text');
 	return_next encode_typed_literal([[1,2,3],[3,2,1],[1,3,2]], 'integer[]');
 	return_next encode_typed_literal({a => 1, b => ['PL','/','Perl']}, 'perl_foo');
 	return_next encode_typed_literal({c => [{a => 9, b => ['PostgreSQL']}, {b => ['Postgres'], a => 1}]}, 'perl_bar');
+	return_next encode_typed_literal({a => 1, b => ['PL','/','Perl']}, 'perl_foo_pos');
 $$;
 
 select perl_encode_typed_literal();
+
+create or replace function perl_encode_typed_literal() returns setof text language plperl as $$
+	return_next encode_typed_literal({a => 0, b => ['PL','/','Perl']}, 'perl_foo_pos');
+$$;
+
+select perl_encode_typed_literal();  -- fail
