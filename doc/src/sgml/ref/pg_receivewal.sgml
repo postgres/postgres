@@ -136,6 +136,23 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>--no-sync</option></term>
+      <listitem>
+       <para>
+        This option causes <command>pg_receivewal</command> to not force WAL
+        data to be flushed to disk.  This is faster, but means that a
+        subsequent operating system crash can leave the WAL segments corrupt.
+        Generally, this option is useful for testing but should not be used
+        when doing WAL archiving on a production deployment.
+       </para>
+
+       <para>
+        This option is incompatible with <literal>--synchronous</literal>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-s <replaceable class="parameter">interval</replaceable></option></term>
       <term><option>--status-interval=<replaceable class="parameter">interval</replaceable></option></term>
       <listitem>

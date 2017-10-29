@@ -40,6 +40,7 @@ static volatile bool time_to_stop = false;
 static bool do_create_slot = false;
 static bool slot_exists_ok = false;
 static bool do_drop_slot = false;
+static bool do_sync = true;
 static bool synchronous = false;
 static char *replication_slot = NULL;
 static XLogRecPtr endpos = InvalidXLogRecPtr;
@@ -81,6 +82,7 @@ usage(void)
 	printf(_("  -E, --endpos=LSN       exit after receiving the specified LSN\n"));
 	printf(_("      --if-not-exists    do not error if slot already exists when creating a slot\n"));
 	printf(_("  -n, --no-loop          do not loop on connection lost\n"));
+	printf(_("      --no-sync          do not wait for changes to be written safely to disk\n"));
 	printf(_("  -s, --status-interval=SECS\n"
 			 "                         time between status packets sent to server (default: %d)\n"), (standby_message_timeout / 1000));
 	printf(_("  -S, --slot=SLOTNAME    replication slot to use\n"));
@@ -425,7 +427,7 @@ StreamLog(void)
 	stream.stop_socket = PGINVALID_SOCKET;
 	stream.standby_message_timeout = standby_message_timeout;
 	stream.synchronous = synchronous;
-	stream.do_sync = true;
+	stream.do_sync = do_sync;
 	stream.mark_done = false;
 	stream.walmethod = CreateWalDirectoryMethod(basedir, compresslevel,
 												stream.do_sync);
@@ -487,6 +489,7 @@ main(int argc, char **argv)
 		{"drop-slot", no_argument, NULL, 2},
 		{"if-not-exists", no_argument, NULL, 3},
 		{"synchronous", no_argument, NULL, 4},
+		{"no-sync", no_argument, NULL, 5},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -595,6 +598,9 @@ main(int argc, char **argv)
 			case 4:
 				synchronous = true;
 				break;
+			case 5:
+				do_sync = false;
+				break;
 			default:
 
 				/*
@@ -632,6 +638,14 @@ main(int argc, char **argv)
 		/* translator: second %s is an option name */
 		fprintf(stderr, _("%s: %s needs a slot to be specified using --slot\n"), progname,
 				do_drop_slot ? "--drop-slot" : "--create-slot");
+		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
+				progname);
+		exit(1);
+	}
+
+	if (synchronous && !do_sync)
+	{
+		fprintf(stderr, _("%s: cannot use --synchronous together with --no-sync\n"), progname);
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
 				progname);
 		exit(1);

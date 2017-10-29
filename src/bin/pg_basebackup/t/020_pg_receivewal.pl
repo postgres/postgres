@@ -2,7 +2,7 @@ use strict;
 use warnings;
 use TestLib;
 use PostgresNode;
-use Test::More tests => 17;
+use Test::More tests => 18;
 
 program_help_ok('pg_receivewal');
 program_version_ok('pg_receivewal');
@@ -24,6 +24,9 @@ $primary->command_fails(
 $primary->command_fails(
 	[ 'pg_receivewal', '-D', $stream_dir, '--create-slot' ],
 	'failure if --create-slot specified without --slot');
+$primary->command_fails(
+	[ 'pg_receivewal', '-D', $stream_dir, '--synchronous', '--no-sync' ],
+	'failure if --synchronous specified with --no-sync');
 
 # Slot creation and drop
 my $slot_name = 'test';
