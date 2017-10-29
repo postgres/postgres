@@ -8,8 +8,8 @@
 #define HASHUTILS_H
 
 /*
- * Combine two hash values, resulting in another hash value, with decent bit
- * mixing.
+ * Combine two 32-bit hash values, resulting in another hash value, with
+ * decent bit mixing.
  *
  * Similar to boost's hash_combine().
  */
@@ -20,6 +20,18 @@ hash_combine(uint32 a, uint32 b)
 	return a;
 }
 
+/*
+ * Combine two 64-bit hash values, resulting in another hash value, using the
+ * same kind of technique as hash_combine().  Testing shows that this also
+ * produces good bit mixing.
+ */
+static inline uint64
+hash_combine64(uint64 a, uint64 b)
+{
+	/* 0x49a0f4dd15e5a8e3 is 64bit random data */
+	a ^= b + 0x49a0f4dd15e5a8e3 + (a << 54) + (a >> 7);
+	return a;
+}
 
 /*
  * Simple inline murmur hash implementation hashing a 32 bit integer, for
