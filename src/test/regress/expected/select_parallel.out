@@ -99,7 +99,21 @@ explain (costs off)
    ->  Index Only Scan using tenk1_unique1 on tenk1
 (3 rows)
 
+-- test the sanity of parallel query after the active role is dropped.
 set force_parallel_mode=1;
+drop role if exists regress_parallel_worker;
+NOTICE:  role "regress_parallel_worker" does not exist, skipping
+create role regress_parallel_worker;
+set role regress_parallel_worker;
+reset session authorization;
+drop role regress_parallel_worker;
+select count(*) from tenk1;
+ count 
+-------
+ 10000
+(1 row)
+
+reset role;
 explain (costs off)
   select stringu1::int2 from tenk1 where unique1 = 1;
                   QUERY PLAN                   

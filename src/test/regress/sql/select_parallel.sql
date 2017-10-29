@@ -39,7 +39,15 @@ explain (costs off)
 	select  sum(parallel_restricted(unique1)) from tenk1
 	group by(parallel_restricted(unique1));
 
+-- test the sanity of parallel query after the active role is dropped.
 set force_parallel_mode=1;
+drop role if exists regress_parallel_worker;
+create role regress_parallel_worker;
+set role regress_parallel_worker;
+reset session authorization;
+drop role regress_parallel_worker;
+select count(*) from tenk1;
+reset role;
 
 explain (costs off)
   select stringu1::int2 from tenk1 where unique1 = 1;
