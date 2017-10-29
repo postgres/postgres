@@ -446,6 +446,7 @@ char	   *event_source;
 bool		row_security;
 bool		check_function_bodies = true;
 bool		default_with_oids = false;
+bool		session_auth_is_superuser;
 
 int			log_min_error_statement = ERROR;
 int			log_min_messages = WARNING;
@@ -492,7 +493,6 @@ int			huge_pages;
  * and is kept in sync by assign_hooks.
  */
 static char *syslog_ident_str;
-static bool session_auth_is_superuser;
 static double phony_random_seed;
 static char *client_encoding_string;
 static char *datestyle_string;
@@ -8986,12 +8986,18 @@ read_nondefault_variables(void)
  * constants; a few, like server_encoding and lc_ctype, are handled specially
  * outside the serialize/restore procedure.  Therefore, SerializeGUCState()
  * never sends these, and RestoreGUCState() never changes them.
+ *
+ * Role is a special variable in the sense that its current value can be an
+ * invalid value and there are multiple ways by which that can happen (like
+ * after setting the role, someone drops it).  So we handle it outside of
+ * serialize/restore machinery.
  */
 static bool
 can_skip_gucvar(struct config_generic *gconf)
 {
 	return gconf->context == PGC_POSTMASTER ||
-		gconf->context == PGC_INTERNAL || gconf->source == PGC_S_DEFAULT;
+		gconf->context == PGC_INTERNAL || gconf->source == PGC_S_DEFAULT ||
+		strcmp(gconf->name, "role") == 0;
 }
 
 /*
@@ -9252,7 +9258,6 @@ SerializeGUCState(Size maxsize, char *start_address)
 	Size		actual_size;
 	Size		bytes_left;
 	int			i;
-	int			i_role = -1;
 
 	/* Reserve space for saving the actual size of the guc state */
 	Assert(maxsize > sizeof(actual_size));
@@ -9260,19 +9265,7 @@ SerializeGUCState(Size maxsize, char *start_address)
 	bytes_left = maxsize - sizeof(actual_size);
 
 	for (i = 0; i < num_guc_variables; i++)
-	{
-		/*
-		 * It's pretty ugly, but we've got to force "role" to be initialized
-		 * after "session_authorization"; otherwise, the latter will override
-		 * the former.
-		 */
-		if (strcmp(guc_variables[i]->name, "role") == 0)
-			i_role = i;
-		else
-			serialize_variable(&curptr, &bytes_left, guc_variables[i]);
-	}
-	if (i_role >= 0)
-		serialize_variable(&curptr, &bytes_left, guc_variables[i_role]);
+		serialize_variable(&curptr, &bytes_left, guc_variables[i]);
 
 	/* Store actual size without assuming alignment of start_address. */
 	actual_size = maxsize - bytes_left - sizeof(actual_size);
