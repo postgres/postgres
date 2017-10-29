@@ -162,6 +162,17 @@ select string4 from tenk1 order by string4 limit 5;
 reset max_parallel_workers;
 reset enable_hashagg;
 
+-- test the sanity of parallel query after the active role is dropped.
+drop role if exists regress_parallel_worker;
+create role regress_parallel_worker;
+set role regress_parallel_worker;
+reset session authorization;
+drop role regress_parallel_worker;
+set force_parallel_mode = 1;
+select count(*) from tenk1;
+reset force_parallel_mode;
+reset role;
+
 set force_parallel_mode=1;
 
 explain (costs off)
