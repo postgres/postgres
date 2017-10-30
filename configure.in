@@ -1770,6 +1770,10 @@ if test $pgac_need_repl_snprintf = yes; then
   AC_LIBOBJ(snprintf)
 fi
 
+# has to be down here, rather than with the other builtins, because
+# the test uses PG_INT64_TYPE.
+PGAC_C_BUILTIN_OP_OVERFLOW
+
 # Check size of void *, size_t (enables tweaks for > 32bit address space)
 AC_CHECK_SIZEOF([void *])
 AC_CHECK_SIZEOF([size_t])
