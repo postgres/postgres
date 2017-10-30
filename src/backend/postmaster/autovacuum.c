@@ -2531,6 +2531,8 @@ deleted:
 			continue;
 		if (workitem->avw_active)
 			continue;
+		if (workitem->avw_database != MyDatabaseId)
+			continue;
 
 		/* claim this one, and release lock while performing it */
 		workitem->avw_active = true;
@@ -2606,9 +2608,7 @@ perform_work_item(AutoVacuumWorkItem *workitem)
 	/*
 	 * Save the relation name for a possible error message, to avoid a catalog
 	 * lookup in case of an error.  If any of these return NULL, then the
-	 * relation has been dropped since last we checked; skip it. Note: they
-	 * must live in a long-lived memory context because we call vacuum and
-	 * analyze in different transactions.
+	 * relation has been dropped since last we checked; skip it.
 	 */
 	Assert(CurrentMemoryContext == AutovacMemCxt);
 
