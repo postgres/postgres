@@ -157,6 +157,32 @@
 
     <listitem>
 <!--
+2016-11-22 [906bfcad7] Improve handling of "UPDATE ... SET (column_list) = row_
+-->
+     <para>
+      Use standard row constructor syntax in <literal>UPDATE ... SET
+      (<replaceable>column_list</replaceable>) = <replaceable>row_constructor</replaceable></literal>
+      (Tom Lane)
+     </para>
+
+     <para>
+      The <replaceable>row_constructor</replaceable> can now begin with the
+      keyword <literal>ROW</literal>; previously that had to be omitted.
+      If just one column name appears in
+      the <replaceable>column_list</replaceable>, then
+      the <replaceable>row_constructor</replaceable> now must use
+      the <literal>ROW</literal> keyword, since otherwise it is not a valid
+      row constructor but just a parenthesized expression.
+      Also, an occurrence
+      of <literal><replaceable>table_name</replaceable>.*</literal> within
+      the <replaceable>row_constructor</replaceable> is now expanded into
+      multiple columns, as occurs in other uses
+      of <replaceable>row_constructor</replaceable>s.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
 2017-08-04 [c30f1770a] Apply ALTER ... SET NOT NULL recursively in ALTER ... AD
 -->
      <para>
@@ -1533,26 +1559,6 @@
        linkend="functions-xml-processing-xmltable"><function>XMLTABLE</function></link>
        function that converts <type>XML</type>-formatted data into a row set
        (Pavel Stehule, &Aacute;lvaro Herrera)
-      </para>
-     </listitem>
-
-     <listitem>
-<!--
-2016-11-22 [906bfcad7] Improve handling of "UPDATE ... SET (column_list) = row_
--->
-      <para>
-       Allow standard row constructor syntax in <literal>UPDATE ... SET
-       (<replaceable>column_list</replaceable>) = <replaceable>row_constructor</replaceable></literal>
-       (Tom Lane)
-      </para>
-
-      <para>
-       The <replaceable>row_constructor</replaceable> can now begin with the
-       keyword <literal>ROW</literal>; previously that had to be omitted.  Also,
-       an occurrence of <literal><replaceable>table_name</replaceable>.*</literal>
-       within the <replaceable>row_constructor</replaceable> is now expanded into
-       multiple columns, as in other uses
-       of <replaceable>row_constructor</replaceable>s.
       </para>
      </listitem>
 
