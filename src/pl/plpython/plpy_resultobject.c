@@ -112,6 +112,11 @@ PLy_result_new(void)
 	ob->nrows = PyInt_FromLong(-1);
 	ob->rows = PyList_New(0);
 	ob->tupdesc = NULL;
+	if (!ob->rows)
+	{
+		Py_DECREF(ob);
+		return NULL;
+	}
 
 	return (PyObject *) ob;
 }
@@ -147,6 +152,8 @@ PLy_result_colnames(PyObject *self, PyObject *unused)
 	}
 
 	list = PyList_New(ob->tupdesc->natts);
+	if (!list)
+		return NULL;
 	for (i = 0; i < ob->tupdesc->natts; i++)
 	{
 		Form_pg_attribute attr = TupleDescAttr(ob->tupdesc, i);
@@ -171,6 +178,8 @@ PLy_result_coltypes(PyObject *self, PyObject *unused)
 	}
 
 	list = PyList_New(ob->tupdesc->natts);
+	if (!list)
+		return NULL;
 	for (i = 0; i < ob->tupdesc->natts; i++)
 	{
 		Form_pg_attribute attr = TupleDescAttr(ob->tupdesc, i);
@@ -195,6 +204,8 @@ PLy_result_coltypmods(PyObject *self, PyObject *unused)
 	}
 
 	list = PyList_New(ob->tupdesc->natts);
+	if (!list)
+		return NULL;
 	for (i = 0; i < ob->tupdesc->natts; i++)
 	{
 		Form_pg_attribute attr = TupleDescAttr(ob->tupdesc, i);

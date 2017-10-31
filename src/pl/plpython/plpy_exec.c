@@ -420,6 +420,9 @@ PLy_function_build_args(FunctionCallInfo fcinfo, PLyProcedure *proc)
 	PG_TRY();
 	{
 		args = PyList_New(proc->nargs);
+		if (!args)
+			return NULL;
+
 		for (i = 0; i < proc->nargs; i++)
 		{
 			PLyDatumToOb *arginfo = &proc->args[i];
@@ -693,7 +696,7 @@ PLy_trigger_build_args(FunctionCallInfo fcinfo, PLyProcedure *proc, HeapTuple *r
 	{
 		pltdata = PyDict_New();
 		if (!pltdata)
-			PLy_elog(ERROR, "could not create new dictionary while building trigger arguments");
+			return NULL;
 
 		pltname = PyString_FromString(tdata->tg_trigger->tgname);
 		PyDict_SetItemString(pltdata, "name", pltname);
@@ -826,6 +829,11 @@ PLy_trigger_build_args(FunctionCallInfo fcinfo, PLyProcedure *proc, HeapTuple *r
 			PyObject   *pltarg;
 
 			pltargs = PyList_New(tdata->tg_trigger->tgnargs);
+			if (!pltargs)
+			{
+				Py_DECREF(pltdata);
+				return NULL;
+			}
 			for (i = 0; i < tdata->tg_trigger->tgnargs; i++)
 			{
 				pltarg = PyString_FromString(tdata->tg_trigger->tgargs[i]);

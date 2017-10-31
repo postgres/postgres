@@ -167,7 +167,7 @@ PLy_init_interp(void)
 	PLy_interp_globals = PyModule_GetDict(mainmod);
 	PLy_interp_safe_globals = PyDict_New();
 	if (PLy_interp_safe_globals == NULL)
-		PLy_elog(ERROR, "could not create globals");
+		PLy_elog(ERROR, NULL);
 	PyDict_SetItemString(PLy_interp_globals, "GD", PLy_interp_safe_globals);
 	Py_DECREF(mainmod);
 	if (PLy_interp_globals == NULL || PyErr_Occurred())

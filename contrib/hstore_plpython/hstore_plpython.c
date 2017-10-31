@@ -93,6 +93,10 @@ hstore_to_plpython(PG_FUNCTION_ARGS)
 	PyObject   *dict;
 
 	dict = PyDict_New();
+	if (!dict)
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
 
 	for (i = 0; i < count; i++)
 	{

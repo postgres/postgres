@@ -368,6 +368,8 @@ PLy_procedure_compile(PLyProcedure *proc, const char *src)
 	 * all functions
 	 */
 	proc->statics = PyDict_New();
+	if (!proc->statics)
+		PLy_elog(ERROR, NULL);
 	PyDict_SetItemString(proc->globals, "SD", proc->statics);
 
 	/*

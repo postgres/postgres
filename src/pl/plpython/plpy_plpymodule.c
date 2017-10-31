@@ -233,7 +233,7 @@ PLy_create_exception(char *name, PyObject *base, PyObject *dict,
 
 	exc = PyErr_NewException(name, base, dict);
 	if (exc == NULL)
-		PLy_elog(ERROR, "could not create exception \"%s\"", name);
+		PLy_elog(ERROR, NULL);
 
 	/*
 	 * PyModule_AddObject does not add a refcount to the object, for some odd
@@ -268,7 +268,7 @@ PLy_generate_spi_exceptions(PyObject *mod, PyObject *base)
 		PyObject   *dict = PyDict_New();
 
 		if (dict == NULL)
-			PLy_elog(ERROR, "could not generate SPI exceptions");
+			PLy_elog(ERROR, NULL);
 
 		sqlstate = PyString_FromString(unpack_sql_state(exception_map[i].sqlstate));
 		if (sqlstate == NULL)

@@ -718,6 +718,8 @@ PLyList_FromArray_recurse(PLyDatumToOb *elm, int *dims, int ndim, int dim,
 	PyObject   *list;
 
 	list = PyList_New(dims[dim]);
+	if (!list)
+		return NULL;
 
 	if (dim < ndim - 1)
 	{
@@ -826,7 +828,7 @@ PLyDict_FromTuple(PLyDatumToOb *arg, HeapTuple tuple, TupleDesc desc)
 
 	dict = PyDict_New();
 	if (dict == NULL)
-		PLy_elog(ERROR, "could not create new dictionary");
+		return NULL;
 
 	PG_TRY();
 	{
