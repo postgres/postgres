@@ -45,7 +45,7 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
   <para>
    To create a database, you must be a superuser or have the special
    <literal>CREATEDB</literal> privilege.
-   See <xref linkend="sql-createuser">.
+   See <xref linkend="sql-createrole">.
   </para>
 
   <para>

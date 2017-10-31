@@ -998,9 +998,9 @@ omicron         bryanh                  guest1
     separate from operating system user passwords. The password for
     each database user is stored in the <literal>pg_authid</literal> system
     catalog. Passwords can be managed with the SQL commands
-    <xref linkend="sql-createuser"> and
+    <xref linkend="sql-createrole"> and
     <xref linkend="sql-alterrole">,
-    e.g., <userinput>CREATE USER foo WITH PASSWORD 'secret'</userinput>,
+    e.g., <userinput>CREATE ROLE foo WITH LOGIN PASSWORD 'secret'</userinput>,
     or the <application>psql</application>
     command <literal>\password</literal>.
     If no password has been set up for a user, the stored password

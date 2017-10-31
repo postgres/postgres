@@ -158,7 +158,7 @@ CREATE ROLE <replaceable>name</replaceable> LOGIN;
 CREATE USER <replaceable>name</replaceable>;
 </programlisting>
         (<command>CREATE USER</command> is equivalent to <command>CREATE ROLE</command>
-        except that <command>CREATE USER</command> assumes <literal>LOGIN</literal> by
+        except that <command>CREATE USER</command> includes <literal>LOGIN</literal> by
         default, while <command>CREATE ROLE</command> does not.)
        </para>
       </listitem>
