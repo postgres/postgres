@@ -652,7 +652,7 @@ updateFuzzyAttrMatchState(int fuzzy_rte_penalty,
  * for an approximate match and update fuzzystate accordingly.
  */
 Node *
-scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte, char *colname,
+scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte, const char *colname,
 				 int location, int fuzzy_rte_penalty,
 				 FuzzyAttrMatchState *fuzzystate)
 {
@@ -754,7 +754,7 @@ scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte, char *colname,
  *	  If localonly is true, only names in the innermost query are considered.
  */
 Node *
-colNameToVar(ParseState *pstate, char *colname, bool localonly,
+colNameToVar(ParseState *pstate, const char *colname, bool localonly,
 			 int location)
 {
 	Node	   *result = NULL;
@@ -828,7 +828,7 @@ colNameToVar(ParseState *pstate, char *colname, bool localonly,
  * and 'second' will contain the attribute number for the second match.
  */
 static FuzzyAttrMatchState *
-searchRangeTableForCol(ParseState *pstate, const char *alias, char *colname,
+searchRangeTableForCol(ParseState *pstate, const char *alias, const char *colname,
 					   int location)
 {
 	ParseState *orig_pstate = pstate;
@@ -3248,7 +3248,7 @@ errorMissingRTE(ParseState *pstate, RangeVar *relation)
  */
 void
 errorMissingColumn(ParseState *pstate,
-				   char *relname, char *colname, int location)
+				   const char *relname, const char *colname, int location)
 {
 	FuzzyAttrMatchState *state;
 	char	   *closestfirst = NULL;

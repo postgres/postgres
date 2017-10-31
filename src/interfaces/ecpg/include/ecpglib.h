@@ -80,7 +80,7 @@ bool		ECPGset_desc_header(int, const char *, int);
 bool		ECPGset_desc(int, const char *, int,...);
 
 void		ECPGset_noind_null(enum ECPGttype, void *);
-bool		ECPGis_noind_null(enum ECPGttype, void *);
+bool		ECPGis_noind_null(enum ECPGttype, const void *);
 bool		ECPGdescribe(int, int, bool, const char *, const char *,...);
 
 void		ECPGset_var(int, void *, int);

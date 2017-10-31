@@ -52,9 +52,9 @@ typedef struct
 } basebackup_options;
 
 
-static int64 sendDir(char *path, int basepathlen, bool sizeonly,
+static int64 sendDir(const char *path, int basepathlen, bool sizeonly,
 		List *tablespaces, bool sendtblspclinks);
-static bool sendFile(char *readfilename, char *tarfilename,
+static bool sendFile(const char *readfilename, const char *tarfilename,
 		 struct stat *statbuf, bool missing_ok);
 static void sendFileWithContent(const char *filename, const char *content);
 static int64 _tarWriteHeader(const char *filename, const char *linktarget,
@@ -962,7 +962,7 @@ sendTablespace(char *path, bool sizeonly)
  * as it will be sent separately in the tablespace_map file.
  */
 static int64
-sendDir(char *path, int basepathlen, bool sizeonly, List *tablespaces,
+sendDir(const char *path, int basepathlen, bool sizeonly, List *tablespaces,
 		bool sendtblspclinks)
 {
 	DIR		   *dir;
@@ -1207,7 +1207,7 @@ sendDir(char *path, int basepathlen, bool sizeonly, List *tablespaces,
  * and the file did not exist.
  */
 static bool
-sendFile(char *readfilename, char *tarfilename, struct stat *statbuf,
+sendFile(const char *readfilename, const char *tarfilename, struct stat *statbuf,
 		 bool missing_ok)
 {
 	FILE	   *fp;

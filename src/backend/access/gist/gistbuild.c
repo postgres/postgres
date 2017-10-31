@@ -238,7 +238,7 @@ gistbuild(Relation heap, Relation index, IndexInfo *indexInfo)
  * and "auto" values.
  */
 void
-gistValidateBufferingOption(char *value)
+gistValidateBufferingOption(const char *value)
 {
 	if (value == NULL ||
 		(strcmp(value, "on") != 0 &&

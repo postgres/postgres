@@ -327,7 +327,7 @@ not_available:
  * This is currently used for recovery_end_command and archive_cleanup_command.
  */
 void
-ExecuteRecoveryCommand(char *command, char *commandName, bool failOnSignal)
+ExecuteRecoveryCommand(const char *command, const char *commandName, bool failOnSignal)
 {
 	char		xlogRecoveryCmd[MAXPGPATH];
 	char		lastRestartPointFname[MAXPGPATH];
@@ -425,7 +425,7 @@ ExecuteRecoveryCommand(char *command, char *commandName, bool failOnSignal)
  * in pg_wal (xlogfname), replacing any existing file with the same name.
  */
 void
-KeepFileRestoredFromArchive(char *path, char *xlogfname)
+KeepFileRestoredFromArchive(const char *path, const char *xlogfname)
 {
 	char		xlogfpath[MAXPGPATH];
 	bool		reload = false;

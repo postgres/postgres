@@ -175,7 +175,7 @@ open_file_in_directory(const char *directory, const char *fname)
  * wal segment size.
  */
 static bool
-search_directory(char *directory, char *fname)
+search_directory(const char *directory, const char *fname)
 {
 	int			fd = -1;
 	DIR		   *xldir;

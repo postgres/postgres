@@ -426,7 +426,7 @@ static void ATPostAlterTypeParse(Oid oldId, Oid oldRelId, Oid refRelId,
 					 bool rewrite);
 static void RebuildConstraintComment(AlteredTableInfo *tab, int pass,
 						 Oid objid, Relation rel, List *domname,
-						 char *conname);
+						 const char *conname);
 static void TryReuseIndex(Oid oldId, IndexStmt *stmt);
 static void TryReuseForeignKey(Oid oldId, Constraint *con);
 static void change_owner_fix_column_acls(Oid relationOid,
@@ -438,14 +438,14 @@ static ObjectAddress ATExecClusterOn(Relation rel, const char *indexName,
 static void ATExecDropCluster(Relation rel, LOCKMODE lockmode);
 static bool ATPrepChangePersistence(Relation rel, bool toLogged);
 static void ATPrepSetTableSpace(AlteredTableInfo *tab, Relation rel,
-					char *tablespacename, LOCKMODE lockmode);
+					const char *tablespacename, LOCKMODE lockmode);
 static void ATExecSetTableSpace(Oid tableOid, Oid newTableSpace, LOCKMODE lockmode);
 static void ATExecSetRelOptions(Relation rel, List *defList,
 					AlterTableType operation,
 					LOCKMODE lockmode);
-static void ATExecEnableDisableTrigger(Relation rel, char *trigname,
+static void ATExecEnableDisableTrigger(Relation rel, const char *trigname,
 						   char fires_when, bool skip_system, LOCKMODE lockmode);
-static void ATExecEnableDisableRule(Relation rel, char *rulename,
+static void ATExecEnableDisableRule(Relation rel, const char *rulename,
 						char fires_when, LOCKMODE lockmode);
 static void ATPrepAddInherit(Relation child_rel);
 static ObjectAddress ATExecAddInherit(Relation child_rel, RangeVar *parent, LOCKMODE lockmode);
@@ -9873,7 +9873,7 @@ ATPostAlterTypeParse(Oid oldId, Oid oldRelId, Oid refRelId, char *cmd,
 static void
 RebuildConstraintComment(AlteredTableInfo *tab, int pass, Oid objid,
 						 Relation rel, List *domname,
-						 char *conname)
+						 const char *conname)
 {
 	CommentStmt *cmd;
 	char	   *comment_str;
@@ -10393,7 +10393,7 @@ ATExecDropCluster(Relation rel, LOCKMODE lockmode)
  * ALTER TABLE SET TABLESPACE
  */
 static void
-ATPrepSetTableSpace(AlteredTableInfo *tab, Relation rel, char *tablespacename, LOCKMODE lockmode)
+ATPrepSetTableSpace(AlteredTableInfo *tab, Relation rel, const char *tablespacename, LOCKMODE lockmode)
 {
 	Oid			tablespaceId;
 
@@ -11060,7 +11060,7 @@ copy_relation_data(SMgrRelation src, SMgrRelation dst,
  * We just pass this off to trigger.c.
  */
 static void
-ATExecEnableDisableTrigger(Relation rel, char *trigname,
+ATExecEnableDisableTrigger(Relation rel, const char *trigname,
 						   char fires_when, bool skip_system, LOCKMODE lockmode)
 {
 	EnableDisableTrigger(rel, trigname, fires_when, skip_system);
@@ -11072,7 +11072,7 @@ ATExecEnableDisableTrigger(Relation rel, char *trigname,
  * We just pass this off to rewriteDefine.c.
  */
 static void
-ATExecEnableDisableRule(Relation rel, char *rulename,
+ATExecEnableDisableRule(Relation rel, const char *rulename,
 						char fires_when, LOCKMODE lockmode)
 {
 	EnableDisableRule(rel, rulename, fires_when);

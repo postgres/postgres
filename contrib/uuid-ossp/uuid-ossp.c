@@ -253,7 +253,7 @@ uuid_generate_v35_internal(int mode, pg_uuid_t *ns, text *name)
 #else							/* !HAVE_UUID_OSSP */
 
 static Datum
-uuid_generate_internal(int v, unsigned char *ns, char *ptr, int len)
+uuid_generate_internal(int v, unsigned char *ns, const char *ptr, int len)
 {
 	char		strbuf[40];
 

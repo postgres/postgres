@@ -293,7 +293,7 @@ static void plperl_return_next_internal(SV *sv);
 static char *hek2cstr(HE *he);
 static SV **hv_store_string(HV *hv, const char *key, SV *val);
 static SV **hv_fetch_string(HV *hv, const char *key);
-static void plperl_create_sub(plperl_proc_desc *desc, char *s, Oid fn_oid);
+static void plperl_create_sub(plperl_proc_desc *desc, const char *s, Oid fn_oid);
 static SV  *plperl_call_perl_func(plperl_proc_desc *desc,
 					  FunctionCallInfo fcinfo);
 static void plperl_compile_callback(void *arg);
@@ -2083,7 +2083,7 @@ plperlu_validator(PG_FUNCTION_ARGS)
  * supplied in s, and returns a reference to it
  */
 static void
-plperl_create_sub(plperl_proc_desc *prodesc, char *s, Oid fn_oid)
+plperl_create_sub(plperl_proc_desc *prodesc, const char *s, Oid fn_oid)
 {
 	dTHX;
 	dSP;

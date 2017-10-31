@@ -43,7 +43,7 @@
  * Global authentication functions
  *----------------------------------------------------------------
  */
-static void sendAuthRequest(Port *port, AuthRequest areq, char *extradata,
+static void sendAuthRequest(Port *port, AuthRequest areq, const char *extradata,
 				int extralen);
 static void auth_failed(Port *port, int status, char *logdetail);
 static char *recv_password_packet(Port *port);
@@ -91,7 +91,7 @@ static int	auth_peer(hbaPort *port);
 
 #define PGSQL_PAM_SERVICE "postgresql"	/* Service name passed to PAM */
 
-static int	CheckPAMAuth(Port *port, char *user, char *password);
+static int	CheckPAMAuth(Port *port, const char *user, const char *password);
 static int pam_passwd_conv_proc(int num_msg, const struct pam_message **msg,
 					 struct pam_response **resp, void *appdata_ptr);
 
@@ -100,7 +100,7 @@ static struct pam_conv pam_passw_conv = {
 	NULL
 };
 
-static char *pam_passwd = NULL; /* Workaround for Solaris 2.6 brokenness */
+static const char *pam_passwd = NULL; /* Workaround for Solaris 2.6 brokenness */
 static Port *pam_port_cludge;	/* Workaround for passing "Port *port" into
 								 * pam_passwd_conv_proc */
 #endif							/* USE_PAM */
@@ -202,7 +202,7 @@ static int pg_SSPI_make_upn(char *accountname,
  *----------------------------------------------------------------
  */
 static int	CheckRADIUSAuth(Port *port);
-static int	PerformRadiusTransaction(char *server, char *secret, char *portstr, char *identifier, char *user_name, char *passwd);
+static int	PerformRadiusTransaction(const char *server, const char *secret, const char *portstr, const char *identifier, const char *user_name, const char *passwd);
 
 
 /*
@@ -612,7 +612,7 @@ ClientAuthentication(Port *port)
  * Send an authentication request packet to the frontend.
  */
 static void
-sendAuthRequest(Port *port, AuthRequest areq, char *extradata, int extralen)
+sendAuthRequest(Port *port, AuthRequest areq, const char *extradata, int extralen)
 {
 	StringInfoData buf;
 
@@ -1040,7 +1040,7 @@ static GSS_DLLIMP gss_OID GSS_C_NT_USER_NAME = &GSS_C_NT_USER_NAME_desc;
 
 
 static void
-pg_GSS_error(int severity, char *errmsg, OM_uint32 maj_stat, OM_uint32 min_stat)
+pg_GSS_error(int severity, const char *errmsg, OM_uint32 maj_stat, OM_uint32 min_stat)
 {
 	gss_buffer_desc gmsg;
 	OM_uint32	lmin_s,
@@ -2051,7 +2051,7 @@ static int
 pam_passwd_conv_proc(int num_msg, const struct pam_message **msg,
 					 struct pam_response **resp, void *appdata_ptr)
 {
-	char	   *passwd;
+	const char *passwd;
 	struct pam_response *reply;
 	int			i;
 
@@ -2149,7 +2149,7 @@ fail:
  * Check authentication against PAM.
  */
 static int
-CheckPAMAuth(Port *port, char *user, char *password)
+CheckPAMAuth(Port *port, const char *user, const char *password)
 {
 	int			retval;
 	pam_handle_t *pamh = NULL;
@@ -2874,7 +2874,7 @@ CheckRADIUSAuth(Port *port)
 }
 
 static int
-PerformRadiusTransaction(char *server, char *secret, char *portstr, char *identifier, char *user_name, char *passwd)
+PerformRadiusTransaction(const char *server, const char *secret, const char *portstr, const char *identifier, const char *user_name, const char *passwd)
 {
 	radius_packet radius_send_pack;
 	radius_packet radius_recv_pack;
@@ -2941,9 +2941,9 @@ PerformRadiusTransaction(char *server, char *secret, char *portstr, char *identi
 		return STATUS_ERROR;
 	}
 	packet->id = packet->vector[0];
-	radius_add_attribute(packet, RADIUS_SERVICE_TYPE, (unsigned char *) &service, sizeof(service));
-	radius_add_attribute(packet, RADIUS_USER_NAME, (unsigned char *) user_name, strlen(user_name));
-	radius_add_attribute(packet, RADIUS_NAS_IDENTIFIER, (unsigned char *) identifier, strlen(identifier));
+	radius_add_attribute(packet, RADIUS_SERVICE_TYPE, (const unsigned char *) &service, sizeof(service));
+	radius_add_attribute(packet, RADIUS_USER_NAME, (const unsigned char *) user_name, strlen(user_name));
+	radius_add_attribute(packet, RADIUS_NAS_IDENTIFIER, (const unsigned char *) identifier, strlen(identifier));
 
 	/*
 	 * RADIUS password attributes are calculated as: e[0] = p[0] XOR

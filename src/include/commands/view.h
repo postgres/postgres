@@ -17,7 +17,7 @@
 #include "catalog/objectaddress.h"
 #include "nodes/parsenodes.h"
 
-extern void validateWithCheckOption(char *value);
+extern void validateWithCheckOption(const char *value);
 
 extern ObjectAddress DefineView(ViewStmt *stmt, const char *queryString,
 		   int stmt_location, int stmt_len);

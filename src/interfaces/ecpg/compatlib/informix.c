@@ -195,7 +195,7 @@ ecpg_strndup(const char *str, size_t len)
 }
 
 int
-deccvasc(char *cp, int len, decimal *np)
+deccvasc(const char *cp, int len, decimal *np)
 {
 	char	   *str;
 	int			ret = 0;
@@ -520,7 +520,7 @@ rdatestr(date d, char *str)
 *
 */
 int
-rstrdate(char *str, date * d)
+rstrdate(const char *str, date * d)
 {
 	return rdefmtdate(d, "mm/dd/yyyy", str);
 }
@@ -545,7 +545,7 @@ rjulmdy(date d, short mdy[3])
 }
 
 int
-rdefmtdate(date * d, char *fmt, char *str)
+rdefmtdate(date * d, const char *fmt, const char *str)
 {
 	/* TODO: take care of DBCENTURY environment variable */
 	/* PGSQL functions allow all centuries */
@@ -571,7 +571,7 @@ rdefmtdate(date * d, char *fmt, char *str)
 }
 
 int
-rfmtdate(date d, char *fmt, char *str)
+rfmtdate(date d, const char *fmt, char *str)
 {
 	errno = 0;
 	if (PGTYPESdate_fmt_asc(d, fmt, str) == 0)
@@ -747,7 +747,7 @@ initValue(long lng_val)
 
 /* return the position oft the right-most dot in some string */
 static int
-getRightMostDot(char *str)
+getRightMostDot(const char *str)
 {
 	size_t		len = strlen(str);
 	int			i,
@@ -765,7 +765,7 @@ getRightMostDot(char *str)
 
 /* And finally some misc functions */
 int
-rfmtlong(long lng_val, char *fmt, char *outbuf)
+rfmtlong(long lng_val, const char *fmt, char *outbuf)
 {
 	size_t		fmt_len = strlen(fmt);
 	size_t		temp_len;
@@ -1047,7 +1047,7 @@ rsetnull(int t, char *ptr)
 }
 
 int
-risnull(int t, char *ptr)
+risnull(int t, const char *ptr)
 {
 	return ECPGis_noind_null(t, ptr);
 }

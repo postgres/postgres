@@ -1870,7 +1870,7 @@ preparedStatementName(char *buffer, int file, int state)
 }
 
 static void
-commandFailed(CState *st, char *message)
+commandFailed(CState *st, const char *message)
 {
 	fprintf(stderr,
 			"client %d aborted in command %d of script %d; %s\n",
@@ -3538,7 +3538,7 @@ addScript(ParsedScript script)
 }
 
 static void
-printSimpleStats(char *prefix, SimpleStats *ss)
+printSimpleStats(const char *prefix, SimpleStats *ss)
 {
 	/* print NaN if no transactions where executed */
 	double		latency = ss->sum / ss->count;

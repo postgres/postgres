@@ -67,7 +67,7 @@ static void ComputeIndexAttrs(IndexInfo *indexInfo,
 				  List *attList,
 				  List *exclusionOpNames,
 				  Oid relId,
-				  char *accessMethodName, Oid accessMethodId,
+				  const char *accessMethodName, Oid accessMethodId,
 				  bool amcanorder,
 				  bool isconstraint);
 static char *ChooseIndexName(const char *tabname, Oid namespaceId,
@@ -115,7 +115,7 @@ static void RangeVarCallbackForReindexIndex(const RangeVar *relation,
  */
 bool
 CheckIndexCompatible(Oid oldId,
-					 char *accessMethodName,
+					 const char *accessMethodName,
 					 List *attributeList,
 					 List *exclusionOpNames)
 {
@@ -1011,7 +1011,7 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 				  List *attList,	/* list of IndexElem's */
 				  List *exclusionOpNames,
 				  Oid relId,
-				  char *accessMethodName,
+				  const char *accessMethodName,
 				  Oid accessMethodId,
 				  bool amcanorder,
 				  bool isconstraint)
@@ -1277,7 +1277,7 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
  */
 Oid
 ResolveOpClass(List *opclass, Oid attrType,
-			   char *accessMethodName, Oid accessMethodId)
+			   const char *accessMethodName, Oid accessMethodId)
 {
 	char	   *schemaname;
 	char	   *opcname;

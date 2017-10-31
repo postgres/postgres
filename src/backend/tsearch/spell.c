@@ -450,7 +450,7 @@ getNextFlagFromString(IspellDict *Conf, char **sflagset, char *sflag)
  * otherwise returns false.
  */
 static bool
-IsAffixFlagInUse(IspellDict *Conf, int affix, char *affixflag)
+IsAffixFlagInUse(IspellDict *Conf, int affix, const char *affixflag)
 {
 	char	   *flagcur;
 	char		flag[BUFSIZ];
@@ -596,7 +596,7 @@ NIImportDictionary(IspellDict *Conf, const char *filename)
  * Returns 1 if the word was found in the prefix tree, else returns 0.
  */
 static int
-FindWord(IspellDict *Conf, const char *word, char *affixflag, int flag)
+FindWord(IspellDict *Conf, const char *word, const char *affixflag, int flag)
 {
 	SPNode	   *node = Conf->Dictionary;
 	SPNodeData *StopLow,

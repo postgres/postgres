@@ -74,7 +74,7 @@ ECPGstruct_member_dup(struct ECPGstruct_member *rm)
 
 /* The NAME argument is copied. The type argument is preserved as a pointer. */
 void
-ECPGmake_struct_member(char *name, struct ECPGtype *type, struct ECPGstruct_member **start)
+ECPGmake_struct_member(const char *name, struct ECPGtype *type, struct ECPGstruct_member **start)
 {
 	struct ECPGstruct_member *ptr,
 			   *ne =

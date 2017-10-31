@@ -1052,9 +1052,9 @@ restore(char *result, float val, int n)
  * a floating point number
  */
 int
-significant_digits(char *s)
+significant_digits(const char *s)
 {
-	char	   *p = s;
+	const char *p = s;
 	int			n,
 				c,
 				zeroes;

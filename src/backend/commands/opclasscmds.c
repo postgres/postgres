@@ -239,7 +239,7 @@ get_opclass_oid(Oid amID, List *opclassname, bool missing_ok)
  * Caller must have done permissions checks etc. already.
  */
 static ObjectAddress
-CreateOpFamily(char *amname, char *opfname, Oid namespaceoid, Oid amoid)
+CreateOpFamily(const char *amname, const char *opfname, Oid namespaceoid, Oid amoid)
 {
 	Oid			opfamilyoid;
 	Relation	rel;

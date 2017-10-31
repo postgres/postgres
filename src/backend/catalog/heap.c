@@ -103,12 +103,12 @@ static ObjectAddress AddNewRelationType(const char *typeName,
 				   Oid new_row_type,
 				   Oid new_array_type);
 static void RelationRemoveInheritance(Oid relid);
-static Oid StoreRelCheck(Relation rel, char *ccname, Node *expr,
+static Oid StoreRelCheck(Relation rel, const char *ccname, Node *expr,
 			  bool is_validated, bool is_local, int inhcount,
 			  bool is_no_inherit, bool is_internal);
 static void StoreConstraints(Relation rel, List *cooked_constraints,
 				 bool is_internal);
-static bool MergeWithExistingConstraint(Relation rel, char *ccname, Node *expr,
+static bool MergeWithExistingConstraint(Relation rel, const char *ccname, Node *expr,
 							bool allow_merge, bool is_local,
 							bool is_initially_valid,
 							bool is_no_inherit);
@@ -2037,7 +2037,7 @@ StoreAttrDefault(Relation rel, AttrNumber attnum,
  * The OID of the new constraint is returned.
  */
 static Oid
-StoreRelCheck(Relation rel, char *ccname, Node *expr,
+StoreRelCheck(Relation rel, const char *ccname, Node *expr,
 			  bool is_validated, bool is_local, int inhcount,
 			  bool is_no_inherit, bool is_internal)
 {
@@ -2461,7 +2461,7 @@ AddRelationNewConstraints(Relation rel,
  * XXX See MergeConstraintsIntoExisting too if you change this code.
  */
 static bool
-MergeWithExistingConstraint(Relation rel, char *ccname, Node *expr,
+MergeWithExistingConstraint(Relation rel, const char *ccname, Node *expr,
 							bool allow_merge, bool is_local,
 							bool is_initially_valid,
 							bool is_no_inherit)
@@ -2658,7 +2658,7 @@ cookDefault(ParseState *pstate,
 			Node *raw_default,
 			Oid atttypid,
 			int32 atttypmod,
-			char *attname)
+			const char *attname)
 {
 	Node	   *expr;
 

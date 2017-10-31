@@ -386,7 +386,7 @@ transformExprRecurse(ParseState *pstate, Node *expr)
  * selection from an arbitrary node needs it.)
  */
 static void
-unknown_attribute(ParseState *pstate, Node *relref, char *attname,
+unknown_attribute(ParseState *pstate, Node *relref, const char *attname,
 				  int location)
 {
 	RangeTblEntry *rte;

@@ -184,7 +184,7 @@ extern LWLockPadded *GetNamedLWLockTranche(const char *tranche_name);
  * registration in the main shared memory segment wouldn't work for that case.
  */
 extern int	LWLockNewTrancheId(void);
-extern void LWLockRegisterTranche(int tranche_id, char *tranche_name);
+extern void LWLockRegisterTranche(int tranche_id, const char *tranche_name);
 extern void LWLockInitialize(LWLock *lock, int tranche_id);
 
 /*

@@ -90,7 +90,7 @@ placeChar(TrieChar *node, const unsigned char *str, int lenstr,
  * Function converts UTF8-encoded file into current encoding.
  */
 static TrieChar *
-initTrie(char *filename)
+initTrie(const char *filename)
 {
 	TrieChar   *volatile rootTrie = NULL;
 	MemoryContext ccxt = CurrentMemoryContext;

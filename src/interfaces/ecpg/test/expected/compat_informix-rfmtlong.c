@@ -24,7 +24,7 @@ static void
 check_return(int ret);
 
 static void
-fmtlong(long lng, char *fmt)
+fmtlong(long lng, const char *fmt)
 {
 	static int i;
 	int r;

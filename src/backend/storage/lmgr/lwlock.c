@@ -111,7 +111,7 @@ extern slock_t *ShmemLock;
  * This is indexed by tranche ID and stores the names of all tranches known
  * to the current backend.
  */
-static char **LWLockTrancheArray = NULL;
+static const char **LWLockTrancheArray = NULL;
 static int	LWLockTranchesAllocated = 0;
 
 #define T_NAME(lock) \
@@ -495,7 +495,7 @@ RegisterLWLockTranches(void)
 	if (LWLockTrancheArray == NULL)
 	{
 		LWLockTranchesAllocated = 128;
-		LWLockTrancheArray = (char **)
+		LWLockTrancheArray = (const char **)
 			MemoryContextAllocZero(TopMemoryContext,
 								   LWLockTranchesAllocated * sizeof(char *));
 		Assert(LWLockTranchesAllocated >= LWTRANCHE_FIRST_USER_DEFINED);
@@ -595,7 +595,7 @@ LWLockNewTrancheId(void)
  * (TopMemoryContext, static variable, or similar).
  */
 void
-LWLockRegisterTranche(int tranche_id, char *tranche_name)
+LWLockRegisterTranche(int tranche_id, const char *tranche_name)
 {
 	Assert(LWLockTrancheArray != NULL);
 
@@ -607,7 +607,7 @@ LWLockRegisterTranche(int tranche_id, char *tranche_name)
 		while (i <= tranche_id)
 			i *= 2;
 
-		LWLockTrancheArray = (char **)
+		LWLockTrancheArray = (const char **)
 			repalloc(LWLockTrancheArray, i * sizeof(char *));
 		LWLockTranchesAllocated = i;
 		while (j < LWLockTranchesAllocated)

@@ -20,7 +20,7 @@
 #ifdef HAVE_DLOPEN
 
 void *
-pg_dlopen(char *filename)
+pg_dlopen(const char *filename)
 {
 	return dlopen(filename, RTLD_NOW | RTLD_GLOBAL);
 }
@@ -32,7 +32,7 @@ pg_dlclose(void *handle)
 }
 
 PGFunction
-pg_dlsym(void *handle, char *funcname)
+pg_dlsym(void *handle, const char *funcname)
 {
 	/* Do not prepend an underscore: see dlopen(3) */
 	return dlsym(handle, funcname);
@@ -54,7 +54,7 @@ pg_dlerror(void)
 static NSObjectFileImageReturnCode cofiff_result = NSObjectFileImageFailure;
 
 void *
-pg_dlopen(char *filename)
+pg_dlopen(const char *filename)
 {
 	NSObjectFileImage image;
 
@@ -73,7 +73,7 @@ pg_dlclose(void *handle)
 }
 
 PGFunction
-pg_dlsym(void *handle, char *funcname)
+pg_dlsym(void *handle, const char *funcname)
 {
 	NSSymbol symbol;
 	char	   *symname = (char *) malloc(strlen(funcname) + 2);

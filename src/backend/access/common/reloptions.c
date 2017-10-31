@@ -582,7 +582,7 @@ add_reloption(relopt_gen *newoption)
  *		(for types other than string)
  */
 static relopt_gen *
-allocate_reloption(bits32 kinds, int type, char *name, char *desc)
+allocate_reloption(bits32 kinds, int type, const char *name, const char *desc)
 {
 	MemoryContext oldcxt;
 	size_t		size;
@@ -630,7 +630,7 @@ allocate_reloption(bits32 kinds, int type, char *name, char *desc)
  *		Add a new boolean reloption
  */
 void
-add_bool_reloption(bits32 kinds, char *name, char *desc, bool default_val)
+add_bool_reloption(bits32 kinds, const char *name, const char *desc, bool default_val)
 {
 	relopt_bool *newoption;
 
@@ -646,7 +646,7 @@ add_bool_reloption(bits32 kinds, char *name, char *desc, bool default_val)
  *		Add a new integer reloption
  */
 void
-add_int_reloption(bits32 kinds, char *name, char *desc, int default_val,
+add_int_reloption(bits32 kinds, const char *name, const char *desc, int default_val,
 				  int min_val, int max_val)
 {
 	relopt_int *newoption;
@@ -665,7 +665,7 @@ add_int_reloption(bits32 kinds, char *name, char *desc, int default_val,
  *		Add a new float reloption
  */
 void
-add_real_reloption(bits32 kinds, char *name, char *desc, double default_val,
+add_real_reloption(bits32 kinds, const char *name, const char *desc, double default_val,
 				   double min_val, double max_val)
 {
 	relopt_real *newoption;
@@ -689,7 +689,7 @@ add_real_reloption(bits32 kinds, char *name, char *desc, double default_val,
  * the validation.
  */
 void
-add_string_reloption(bits32 kinds, char *name, char *desc, char *default_val,
+add_string_reloption(bits32 kinds, const char *name, const char *desc, const char *default_val,
 					 validate_string_relopt validator)
 {
 	relopt_string *newoption;
@@ -742,7 +742,7 @@ add_string_reloption(bits32 kinds, char *name, char *desc, char *default_val,
  * but we declare them as Datums to avoid including array.h in reloptions.h.
  */
 Datum
-transformRelOptions(Datum oldOptions, List *defList, char *namspace,
+transformRelOptions(Datum oldOptions, List *defList, const char *namspace,
 					char *validnsps[], bool ignoreOids, bool isReset)
 {
 	Datum		result;

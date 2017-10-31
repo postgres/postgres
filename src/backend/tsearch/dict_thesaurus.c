@@ -165,7 +165,7 @@ addWrd(DictThesaurus *d, char *b, char *e, uint32 idsubst, uint16 nwrd, uint16 p
 #define TR_INSUBS	4
 
 static void
-thesaurusRead(char *filename, DictThesaurus *d)
+thesaurusRead(const char *filename, DictThesaurus *d)
 {
 	tsearch_readline_state trst;
 	uint32		idsubst = 0;

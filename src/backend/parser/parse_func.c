@@ -39,7 +39,7 @@ static void unify_hypothetical_args(ParseState *pstate,
 						List *fargs, int numAggregatedArgs,
 						Oid *actual_arg_types, Oid *declared_arg_types);
 static Oid	FuncNameAsType(List *funcname);
-static Node *ParseComplexProjection(ParseState *pstate, char *funcname,
+static Node *ParseComplexProjection(ParseState *pstate, const char *funcname,
 					   Node *first_arg, int location);
 
 
@@ -1790,7 +1790,7 @@ FuncNameAsType(List *funcname)
  *	  transformed expression tree.  If not, return NULL.
  */
 static Node *
-ParseComplexProjection(ParseState *pstate, char *funcname, Node *first_arg,
+ParseComplexProjection(ParseState *pstate, const char *funcname, Node *first_arg,
 					   int location)
 {
 	TupleDesc	tupdesc;

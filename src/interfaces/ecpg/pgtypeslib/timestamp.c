@@ -813,7 +813,7 @@ PGTYPEStimestamp_sub(timestamp * ts1, timestamp * ts2, interval * iv)
 }
 
 int
-PGTYPEStimestamp_defmt_asc(char *str, const char *fmt, timestamp * d)
+PGTYPEStimestamp_defmt_asc(const char *str, const char *fmt, timestamp * d)
 {
 	int			year,
 				month,

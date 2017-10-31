@@ -375,7 +375,7 @@ ECPGset_noind_null(enum ECPGttype type, void *ptr)
 }
 
 static bool
-_check(unsigned char *ptr, int length)
+_check(const unsigned char *ptr, int length)
 {
 	for (length--; length >= 0; length--)
 		if (ptr[length] != 0xff)
@@ -385,36 +385,36 @@ _check(unsigned char *ptr, int length)
 }
 
 bool
-ECPGis_noind_null(enum ECPGttype type, void *ptr)
+ECPGis_noind_null(enum ECPGttype type, const void *ptr)
 {
 	switch (type)
 	{
 		case ECPGt_char:
 		case ECPGt_unsigned_char:
 		case ECPGt_string:
-			if (*((char *) ptr) == '\0')
+			if (*((const char *) ptr) == '\0')
 				return true;
 			break;
 		case ECPGt_short:
 		case ECPGt_unsigned_short:
-			if (*((short int *) ptr) == SHRT_MIN)
+			if (*((const short int *) ptr) == SHRT_MIN)
 				return true;
 			break;
 		case ECPGt_int:
 		case ECPGt_unsigned_int:
-			if (*((int *) ptr) == INT_MIN)
+			if (*((const int *) ptr) == INT_MIN)
 				return true;
 			break;
 		case ECPGt_long:
 		case ECPGt_unsigned_long:
 		case ECPGt_date:
-			if (*((long *) ptr) == LONG_MIN)
+			if (*((const long *) ptr) == LONG_MIN)
 				return true;
 			break;
 #ifdef HAVE_LONG_LONG_INT
 		case ECPGt_long_long:
 		case ECPGt_unsigned_long_long:
-			if (*((long long *) ptr) == LONG_LONG_MIN)
+			if (*((const long long *) ptr) == LONG_LONG_MIN)
 				return true;
 			break;
 #endif							/* HAVE_LONG_LONG_INT */
@@ -425,15 +425,15 @@ ECPGis_noind_null(enum ECPGttype type, void *ptr)
 			return _check(ptr, sizeof(double));
 			break;
 		case ECPGt_varchar:
-			if (*(((struct ECPGgeneric_varchar *) ptr)->arr) == 0x00)
+			if (*(((const struct ECPGgeneric_varchar *) ptr)->arr) == 0x00)
 				return true;
 			break;
 		case ECPGt_decimal:
-			if (((decimal *) ptr)->sign == NUMERIC_NULL)
+			if (((const decimal *) ptr)->sign == NUMERIC_NULL)
 				return true;
 			break;
 		case ECPGt_numeric:
-			if (((numeric *) ptr)->sign == NUMERIC_NULL)
+			if (((const numeric *) ptr)->sign == NUMERIC_NULL)
 				return true;
 			break;
 		case ECPGt_interval:

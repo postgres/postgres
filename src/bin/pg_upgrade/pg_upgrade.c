@@ -363,7 +363,7 @@ create_new_objects(void)
  * Delete the given subdirectory contents from the new cluster
  */
 static void
-remove_new_subdir(char *subdir, bool rmtopdir)
+remove_new_subdir(const char *subdir, bool rmtopdir)
 {
 	char		new_path[MAXPGPATH];
 
@@ -380,7 +380,7 @@ remove_new_subdir(char *subdir, bool rmtopdir)
  * Copy the files from the old cluster into it
  */
 static void
-copy_subdir_files(char *old_subdir, char *new_subdir)
+copy_subdir_files(const char *old_subdir, const char *new_subdir)
 {
 	char		old_path[MAXPGPATH];
 	char		new_path[MAXPGPATH];

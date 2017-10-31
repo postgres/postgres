@@ -455,7 +455,7 @@ Expr *
 transformAssignedExpr(ParseState *pstate,
 					  Expr *expr,
 					  ParseExprKind exprKind,
-					  char *colname,
+					  const char *colname,
 					  int attrno,
 					  List *indirection,
 					  int location)

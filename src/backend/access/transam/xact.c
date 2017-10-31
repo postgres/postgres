@@ -3478,7 +3478,7 @@ BeginTransactionBlock(void)
  * resource owner, etc while executing inside a Portal.
  */
 bool
-PrepareTransactionBlock(char *gid)
+PrepareTransactionBlock(const char *gid)
 {
 	TransactionState s;
 	bool		result;
@@ -3823,7 +3823,7 @@ EndImplicitTransactionBlock(void)
  *		This executes a SAVEPOINT command.
  */
 void
-DefineSavepoint(char *name)
+DefineSavepoint(const char *name)
 {
 	TransactionState s = CurrentTransactionState;
 
@@ -4168,7 +4168,7 @@ RollbackToSavepoint(List *options)
  *		the caller to do it.
  */
 void
-BeginInternalSubTransaction(char *name)
+BeginInternalSubTransaction(const char *name)
 {
 	TransactionState s = CurrentTransactionState;
 

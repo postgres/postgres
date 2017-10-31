@@ -438,7 +438,7 @@ string_matches_pattern(const char *str, const char *pattern)
  * NOTE: Assumes there is enough room in the target buffer!
  */
 void
-replace_string(char *string, char *replace, char *replacement)
+replace_string(char *string, const char *replace, const char *replacement)
 {
 	char	   *ptr;
 
@@ -460,7 +460,7 @@ replace_string(char *string, char *replace, char *replacement)
  * the given suffix.
  */
 static void
-convert_sourcefiles_in(char *source_subdir, char *dest_dir, char *dest_subdir, char *suffix)
+convert_sourcefiles_in(const char *source_subdir, const char *dest_dir, const char *dest_subdir, const char *suffix)
 {
 	char		testtablespace[MAXPGPATH];
 	char		indir[MAXPGPATH];

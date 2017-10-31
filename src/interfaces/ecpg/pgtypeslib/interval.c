@@ -65,7 +65,7 @@ AdjustFractDays(double frac, struct /* pg_ */ tm *tm, fsec_t *fsec, int scale)
 
 /* copy&pasted from .../src/backend/utils/adt/datetime.c */
 static int
-ParseISO8601Number(char *str, char **endptr, int *ipart, double *fpart)
+ParseISO8601Number(const char *str, char **endptr, int *ipart, double *fpart)
 {
 	double		val;
 
@@ -90,7 +90,7 @@ ParseISO8601Number(char *str, char **endptr, int *ipart, double *fpart)
 
 /* copy&pasted from .../src/backend/utils/adt/datetime.c */
 static int
-ISO8601IntegerWidth(char *fieldstart)
+ISO8601IntegerWidth(const char *fieldstart)
 {
 	/* We might have had a leading '-' */
 	if (*fieldstart == '-')

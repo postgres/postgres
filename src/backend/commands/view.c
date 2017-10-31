@@ -43,7 +43,7 @@ static void checkViewTupleDesc(TupleDesc newdesc, TupleDesc olddesc);
  * are "local" and "cascaded".
  */
 void
-validateWithCheckOption(char *value)
+validateWithCheckOption(const char *value)
 {
 	if (value == NULL ||
 		(pg_strcasecmp(value, "local") != 0 &&

@@ -21,7 +21,7 @@
 #define YYMALLOC palloc
 #define YYFREE   pfree
 
-static float seg_atof(char *value);
+static float seg_atof(const char *value);
 
 static char strbuf[25] = {
 	'0', '0', '0', '0', '0',
@@ -151,7 +151,7 @@ deviation: SEGFLOAT
 
 
 static float
-seg_atof(char *value)
+seg_atof(const char *value)
 {
 	Datum datum;
 

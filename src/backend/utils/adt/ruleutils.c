@@ -343,7 +343,7 @@ static void set_relation_column_names(deparse_namespace *dpns,
 						  deparse_columns *colinfo);
 static void set_join_column_names(deparse_namespace *dpns, RangeTblEntry *rte,
 					  deparse_columns *colinfo);
-static bool colname_is_unique(char *colname, deparse_namespace *dpns,
+static bool colname_is_unique(const char *colname, deparse_namespace *dpns,
 				  deparse_columns *colinfo);
 static char *make_colname_unique(char *colname, deparse_namespace *dpns,
 					deparse_columns *colinfo);
@@ -4117,7 +4117,7 @@ set_join_column_names(deparse_namespace *dpns, RangeTblEntry *rte,
  * dpns is query-wide info, colinfo is for the column's RTE
  */
 static bool
-colname_is_unique(char *colname, deparse_namespace *dpns,
+colname_is_unique(const char *colname, deparse_namespace *dpns,
 				  deparse_columns *colinfo)
 {
 	int			i;

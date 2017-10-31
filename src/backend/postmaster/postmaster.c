@@ -5537,7 +5537,7 @@ MaxLivePostmasterChildren(void)
  * Connect background worker to a database.
  */
 void
-BackgroundWorkerInitializeConnection(char *dbname, char *username)
+BackgroundWorkerInitializeConnection(const char *dbname, const char *username)
 {
 	BackgroundWorker *worker = MyBgworkerEntry;
 

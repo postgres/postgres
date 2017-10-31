@@ -53,11 +53,11 @@ typedef struct TableFuncRoutine
 {
 	void		(*InitOpaque) (struct TableFuncScanState *state, int natts);
 	void		(*SetDocument) (struct TableFuncScanState *state, Datum value);
-	void		(*SetNamespace) (struct TableFuncScanState *state, char *name,
-								 char *uri);
-	void		(*SetRowFilter) (struct TableFuncScanState *state, char *path);
+	void		(*SetNamespace) (struct TableFuncScanState *state, const char *name,
+								 const char *uri);
+	void		(*SetRowFilter) (struct TableFuncScanState *state, const char *path);
 	void		(*SetColumnFilter) (struct TableFuncScanState *state,
-									char *path, int colnum);
+									const char *path, int colnum);
 	bool		(*FetchRow) (struct TableFuncScanState *state);
 	Datum		(*GetValue) (struct TableFuncScanState *state, int colnum,
 							 Oid typid, int32 typmod, bool *isnull);

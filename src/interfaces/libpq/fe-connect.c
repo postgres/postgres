@@ -398,9 +398,9 @@ static int parseServiceFile(const char *serviceFile,
 				 PQconninfoOption *options,
 				 PQExpBuffer errorMessage,
 				 bool *group_found);
-static char *pwdfMatchesString(char *buf, char *token);
-static char *passwordFromFile(char *hostname, char *port, char *dbname,
-				 char *username, char *pgpassfile);
+static char *pwdfMatchesString(char *buf, const char *token);
+static char *passwordFromFile(const char *hostname, const char *port, const char *dbname,
+				 const char *username, const char *pgpassfile);
 static void pgpassfileWarning(PGconn *conn);
 static void default_threadlock(int acquire);
 
@@ -6329,10 +6329,10 @@ defaultNoticeProcessor(void *arg, const char *message)
  * token doesn't match
  */
 static char *
-pwdfMatchesString(char *buf, char *token)
+pwdfMatchesString(char *buf, const char *token)
 {
-	char	   *tbuf,
-			   *ttok;
+	char	   *tbuf;
+	const char *ttok;
 	bool		bslash = false;
 
 	if (buf == NULL || token == NULL)
@@ -6366,8 +6366,8 @@ pwdfMatchesString(char *buf, char *token)
 
 /* Get a password from the password file. Return value is malloc'd. */
 static char *
-passwordFromFile(char *hostname, char *port, char *dbname,
-				 char *username, char *pgpassfile)
+passwordFromFile(const char *hostname, const char *port, const char *dbname,
+				 const char *username, const char *pgpassfile)
 {
 	FILE	   *fp;
 	struct stat stat_buf;

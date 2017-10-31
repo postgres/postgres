@@ -26,7 +26,7 @@
 #include "utils/dynamic_loader.h"
 
 void *
-pg_dlopen(char *filename)
+pg_dlopen(const char *filename)
 {
 	/*
 	 * Use BIND_IMMEDIATE so that undefined symbols cause a failure return
@@ -41,7 +41,7 @@ pg_dlopen(char *filename)
 }
 
 PGFunction
-pg_dlsym(void *handle, char *funcname)
+pg_dlsym(void *handle, const char *funcname)
 {
 	PGFunction	f;
 

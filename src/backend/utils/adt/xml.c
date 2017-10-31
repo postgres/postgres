@@ -146,7 +146,7 @@ static text *xml_xmlnodetoxmltype(xmlNodePtr cur, PgXmlErrorContext *xmlerrcxt);
 static int xml_xpathobjtoxmlarray(xmlXPathObjectPtr xpathobj,
 					   ArrayBuildState *astate,
 					   PgXmlErrorContext *xmlerrcxt);
-static xmlChar *pg_xmlCharStrndup(char *str, size_t len);
+static xmlChar *pg_xmlCharStrndup(const char *str, size_t len);
 #endif							/* USE_LIBXML */
 
 static void xmldata_root_element_start(StringInfo result, const char *eltname,
@@ -192,11 +192,11 @@ typedef struct XmlTableBuilderData
 
 static void XmlTableInitOpaque(struct TableFuncScanState *state, int natts);
 static void XmlTableSetDocument(struct TableFuncScanState *state, Datum value);
-static void XmlTableSetNamespace(struct TableFuncScanState *state, char *name,
-					 char *uri);
-static void XmlTableSetRowFilter(struct TableFuncScanState *state, char *path);
+static void XmlTableSetNamespace(struct TableFuncScanState *state, const char *name,
+					 const char *uri);
+static void XmlTableSetRowFilter(struct TableFuncScanState *state, const char *path);
 static void XmlTableSetColumnFilter(struct TableFuncScanState *state,
-						char *path, int colnum);
+						const char *path, int colnum);
 static bool XmlTableFetchRow(struct TableFuncScanState *state);
 static Datum XmlTableGetValue(struct TableFuncScanState *state, int colnum,
 				 Oid typid, int32 typmod, bool *isnull);
@@ -765,7 +765,7 @@ xmlparse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace)
 
 
 xmltype *
-xmlpi(char *target, text *arg, bool arg_is_null, bool *result_is_null)
+xmlpi(const char *target, text *arg, bool arg_is_null, bool *result_is_null)
 {
 #ifdef USE_LIBXML
 	xmltype    *result;
@@ -1164,7 +1164,7 @@ xml_pnstrdup(const xmlChar *str, size_t len)
 
 /* Ditto, except input is char* */
 static xmlChar *
-pg_xmlCharStrndup(char *str, size_t len)
+pg_xmlCharStrndup(const char *str, size_t len)
 {
 	xmlChar    *result;
 
@@ -1850,7 +1850,7 @@ appendStringInfoLineSeparator(StringInfo str)
  * Convert one char in the current server encoding to a Unicode codepoint.
  */
 static pg_wchar
-sqlchar_to_unicode(char *s)
+sqlchar_to_unicode(const char *s)
 {
 	char	   *utf8string;
 	pg_wchar	ret[2];			/* need space for trailing zero */
@@ -1894,12 +1894,12 @@ is_valid_xml_namechar(pg_wchar c)
  * Map SQL identifier to XML name; see SQL/XML:2008 section 9.1.
  */
 char *
-map_sql_identifier_to_xml_name(char *ident, bool fully_escaped,
+map_sql_identifier_to_xml_name(const char *ident, bool fully_escaped,
 							   bool escape_period)
 {
 #ifdef USE_LIBXML
 	StringInfoData buf;
-	char	   *p;
+	const char *p;
 
 	/*
 	 * SQL/XML doesn't make use of this case anywhere, so it's probably a
@@ -1970,10 +1970,10 @@ unicode_to_sqlchar(pg_wchar c)
  * Map XML name to SQL identifier; see SQL/XML:2008 section 9.3.
  */
 char *
-map_xml_name_to_sql_identifier(char *name)
+map_xml_name_to_sql_identifier(const char *name)
 {
 	StringInfoData buf;
-	char	   *p;
+	const char *p;
 
 	initStringInfo(&buf);
 
@@ -3009,7 +3009,7 @@ database_to_xml_and_xmlschema(PG_FUNCTION_ARGS)
  * 9.2.
  */
 static char *
-map_multipart_sql_identifier_to_xml_name(char *a, char *b, char *c, char *d)
+map_multipart_sql_identifier_to_xml_name(const char *a, const char *b, const char *c, const char *d)
 {
 	StringInfoData result;
 
@@ -4292,7 +4292,7 @@ XmlTableSetDocument(TableFuncScanState *state, Datum value)
  *		Add a namespace declaration
  */
 static void
-XmlTableSetNamespace(TableFuncScanState *state, char *name, char *uri)
+XmlTableSetNamespace(TableFuncScanState *state, const char *name, const char *uri)
 {
 #ifdef USE_LIBXML
 	XmlTableBuilderData *xtCxt;
@@ -4318,7 +4318,7 @@ XmlTableSetNamespace(TableFuncScanState *state, char *name, char *uri)
  *		Install the row-filter Xpath expression.
  */
 static void
-XmlTableSetRowFilter(TableFuncScanState *state, char *path)
+XmlTableSetRowFilter(TableFuncScanState *state, const char *path)
 {
 #ifdef USE_LIBXML
 	XmlTableBuilderData *xtCxt;
@@ -4347,7 +4347,7 @@ XmlTableSetRowFilter(TableFuncScanState *state, char *path)
  *		Install the column-filter Xpath expression, for the given column.
  */
 static void
-XmlTableSetColumnFilter(TableFuncScanState *state, char *path, int colnum)
+XmlTableSetColumnFilter(TableFuncScanState *state, const char *path, int colnum)
 {
 #ifdef USE_LIBXML
 	XmlTableBuilderData *xtCxt;

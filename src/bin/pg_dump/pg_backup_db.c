@@ -419,7 +419,7 @@ ExecuteSqlQuery(Archive *AHX, const char *query, ExecStatusType status)
  * Execute an SQL query and verify that we got exactly one row back.
  */
 PGresult *
-ExecuteSqlQueryForSingleRow(Archive *fout, char *query)
+ExecuteSqlQueryForSingleRow(Archive *fout, const char *query)
 {
 	PGresult   *res;
 	int			ntups;

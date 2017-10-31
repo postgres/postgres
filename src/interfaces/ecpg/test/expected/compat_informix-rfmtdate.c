@@ -24,7 +24,7 @@ static void
 check_return(int ret);
 
 static void
-date_test_strdate(char *input)
+date_test_strdate(const char *input)
 {
 	static int i;
 	date d;
@@ -49,7 +49,7 @@ date_test_strdate(char *input)
 }
 
 static void
-date_test_defmt(char *fmt, char *input)
+date_test_defmt(const char *fmt, const char *input)
 {
 	static int i;
 	char dbuf[11];
@@ -74,7 +74,7 @@ date_test_defmt(char *fmt, char *input)
 }
 
 static void
-date_test_fmt(date d, char *fmt)
+date_test_fmt(date d, const char *fmt)
 {
 	static int i;
 	char buf[200];

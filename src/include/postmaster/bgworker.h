@@ -140,7 +140,7 @@ extern PGDLLIMPORT BackgroundWorker *MyBgworkerEntry;
  * If dbname is NULL, connection is made to no specific database;
  * only shared catalogs can be accessed.
  */
-extern void BackgroundWorkerInitializeConnection(char *dbname, char *username);
+extern void BackgroundWorkerInitializeConnection(const char *dbname, const char *username);
 
 /* Just like the above, but specifying database and user by OID. */
 extern void BackgroundWorkerInitializeConnectionByOid(Oid dboid, Oid useroid);

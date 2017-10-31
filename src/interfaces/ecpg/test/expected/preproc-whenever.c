@@ -24,7 +24,7 @@
 #line 5 "whenever.pgc"
 
 
-static void print(char *msg)
+static void print(const char *msg)
 {
         fprintf(stderr, "Error in statement '%s':\n", msg);
         sqlprint();

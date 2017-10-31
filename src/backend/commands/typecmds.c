@@ -103,7 +103,7 @@ static void checkEnumOwner(HeapTuple tup);
 static char *domainAddConstraint(Oid domainOid, Oid domainNamespace,
 					Oid baseTypeOid,
 					int typMod, Constraint *constr,
-					char *domainName, ObjectAddress *constrAddr);
+					const char *domainName, ObjectAddress *constrAddr);
 static Node *replace_domain_constraint_value(ParseState *pstate,
 								ColumnRef *cref);
 
@@ -2649,7 +2649,7 @@ AlterDomainAddConstraint(List *names, Node *newConstraint,
  * Implements the ALTER DOMAIN .. VALIDATE CONSTRAINT statement.
  */
 ObjectAddress
-AlterDomainValidateConstraint(List *names, char *constrName)
+AlterDomainValidateConstraint(List *names, const char *constrName)
 {
 	TypeName   *typename;
 	Oid			domainoid;
@@ -3060,7 +3060,7 @@ checkDomainOwner(HeapTuple tup)
 static char *
 domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 					int typMod, Constraint *constr,
-					char *domainName, ObjectAddress *constrAddr)
+					const char *domainName, ObjectAddress *constrAddr)
 {
 	Node	   *expr;
 	char	   *ccsrc;

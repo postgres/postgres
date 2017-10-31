@@ -477,7 +477,7 @@ pg_ls_dir_1arg(PG_FUNCTION_ARGS)
 
 /* Generic function to return a directory listing of files */
 static Datum
-pg_ls_dir_files(FunctionCallInfo fcinfo, char *dir)
+pg_ls_dir_files(FunctionCallInfo fcinfo, const char *dir)
 {
 	FuncCallContext *funcctx;
 	struct dirent *de;
