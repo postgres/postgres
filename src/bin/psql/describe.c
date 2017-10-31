@@ -1596,7 +1596,7 @@ describeOneTableDetails(const char *schemaname,
 		else
 		{
 			printfPQExpBuffer(&buf,
-							  "SELECT pg_catalog.format_type('bigint'::regtype, NULL) AS \"%s\",\n"
+							  "SELECT 'bigint' AS \"%s\",\n"
 							  "       start_value AS \"%s\",\n"
 							  "       min_value AS \"%s\",\n"
 							  "       max_value AS \"%s\",\n"
@@ -2489,7 +2489,7 @@ describeOneTableDetails(const char *schemaname,
 			{
 				printfPQExpBuffer(&buf,
 								  "SELECT r.rulename, trim(trailing ';' from pg_catalog.pg_get_ruledef(r.oid, true)), "
-								  "'O'::char AS ev_enabled\n"
+								  "'O' AS ev_enabled\n"
 								  "FROM pg_catalog.pg_rewrite r\n"
 								  "WHERE r.ev_class = '%s' ORDER BY 1;",
 								  oid);
