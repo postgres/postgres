@@ -104,6 +104,22 @@ WHERE p1.typinput = p2.oid AND NOT
       p2.proargtypes[1] = 'oid'::regtype AND
       p2.proargtypes[2] = 'int4'::regtype));
 
+-- Check for type of the variadic array parameter's elements.
+-- provariadic should be ANYOID if the type of the last element is ANYOID,
+-- ANYELEMENTOID if the type of the last element is ANYARRAYOID, and otherwise
+-- the element type corresponding to the array type.
+
+SELECT oid::regprocedure, provariadic::regtype, proargtypes::regtype[]
+FROM pg_proc
+WHERE provariadic != 0
+AND case proargtypes[array_length(proargtypes, 1)-1]
+    WHEN 2276 THEN 2276 -- any -> any
+	WHEN 2277 THEN 2283 -- anyarray -> anyelement
+	ELSE (SELECT t.oid
+		  FROM pg_type t
+		  WHERE t.typarray = proargtypes[array_length(proargtypes, 1)-1])
+	END  != provariadic;
+
 -- As of 8.0, this check finds refcursor, which is borrowing
 -- other types' I/O routines
 SELECT p1.oid, p1.typname, p2.oid, p2.proname
