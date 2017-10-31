@@ -950,6 +950,18 @@ set_append_rel_size(PlannerInfo *root, RelOptInfo *rel,
 													attno - 1);
 					int			child_index;
 
+					/*
+					 * Ignore any column dropped from the parent.
+					 * Corresponding Var won't have any translation. It won't
+					 * have attr_needed information, since it can not be
+					 * referenced in the query.
+					 */
+					if (var == NULL)
+					{
+						Assert(attr_needed == NULL);
+						continue;
+					}
+
 					child_index = var->varattno - childrel->min_attr;
 					childrel->attr_needed[child_index] = attr_needed;
 				}

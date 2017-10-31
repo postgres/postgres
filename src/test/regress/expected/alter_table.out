@@ -3706,6 +3706,13 @@ ALTER TABLE list_parted2 DROP COLUMN b;
 ERROR:  cannot drop column named in partition key
 ALTER TABLE list_parted2 ALTER COLUMN b TYPE text;
 ERROR:  cannot alter type of column named in partition key
+-- dropping non-partition key columns should be allowed on the parent table.
+ALTER TABLE list_parted DROP COLUMN b;
+SELECT * FROM list_parted;
+ a 
+---
+(0 rows)
+
 -- cleanup
 DROP TABLE list_parted, list_parted2, range_parted;
 DROP TABLE fail_def_part;
