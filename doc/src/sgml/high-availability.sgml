@@ -2147,7 +2147,12 @@ LOG:  database system is ready to accept read only connections
     The setting of some parameters on the standby will need reconfiguration
     if they have been changed on the primary. For these parameters,
     the value on the standby must
-    be equal to or greater than the value on the primary. If these parameters
+    be equal to or greater than the value on the primary.
+    Therefore, if you want to increase these values, you should do so on all
+    standby servers first, before applying the changes to the primary server.
+    Conversely, if you want to decrease these values, you should do so on the
+    primary server first, before applying the changes to all standby servers.
+    If these parameters
     are not set high enough then the standby will refuse to start.
     Higher values can then be supplied and the server
     restarted to begin recovery again.  These parameters are:
