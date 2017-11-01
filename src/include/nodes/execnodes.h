@@ -507,7 +507,7 @@ typedef struct EState
 	bool	   *es_epqTupleSet; /* true if EPQ tuple is provided */
 	bool	   *es_epqScanDone; /* true if EPQ tuple has been fetched */
 
-	bool		es_use_parallel_mode; /* can we use parallel workers? */
+	bool		es_use_parallel_mode;	/* can we use parallel workers? */
 
 	/* The per-query shared memory area to use for parallel execution. */
 	struct dsa_area *es_query_dsa;
@@ -1331,6 +1331,10 @@ typedef struct ParallelBitmapHeapState
  *		tbm				   bitmap obtained from child index scan(s)
  *		tbmiterator		   iterator for scanning current pages
  *		tbmres			   current-page data
+ *		can_skip_fetch	   can we potentially skip tuple fetches in this scan?
+ *		skip_fetch		   are we skipping tuple fetches on this page?
+ *		vmbuffer		   buffer for visibility-map lookups
+ *		pvmbuffer		   ditto, for prefetched pages
  *		exact_pages		   total number of exact pages retrieved
  *		lossy_pages		   total number of lossy pages retrieved
  *		prefetch_iterator  iterator for prefetching ahead of current page
@@ -1351,6 +1355,10 @@ typedef struct BitmapHeapScanState
 	TIDBitmap  *tbm;
 	TBMIterator *tbmiterator;
 	TBMIterateResult *tbmres;
+	bool		can_skip_fetch;
+	bool		skip_fetch;
+	Buffer		vmbuffer;
+	Buffer		pvmbuffer;
 	long		exact_pages;
 	long		lossy_pages;
 	TBMIterator *prefetch_iterator;

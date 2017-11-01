@@ -808,6 +808,15 @@ use_physical_tlist(PlannerInfo *root, Path *path, int flags)
 		return false;
 
 	/*
+	 * If a bitmap scan's tlist is empty, keep it as-is.  This may allow the
+	 * executor to skip heap page fetches, and in any case, the benefit of
+	 * using a physical tlist instead would be minimal.
+	 */
+	if (IsA(path, BitmapHeapPath) &&
+		path->pathtarget->exprs == NIL)
+		return false;
+
+	/*
 	 * Can't do it if any system columns or whole-row Vars are requested.
 	 * (This could possibly be fixed but would take some fragile assumptions
 	 * in setrefs.c, I think.)
