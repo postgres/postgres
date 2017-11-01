@@ -890,13 +890,19 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
     </para>
     <para>
      You can retrieve a list of WAL sender processes via the
-     <link linkend="monitoring-stats-views-table">
-     <literal>pg_stat_replication</literal></link> view. Large differences between
+     <xref linkend="pg-stat-replication-view"> view. Large differences between
      <function>pg_current_wal_lsn</function> and the view's <literal>sent_lsn</literal> field
      might indicate that the master server is under heavy load, while
      differences between <literal>sent_lsn</literal> and
      <function>pg_last_wal_receive_lsn</function> on the standby might indicate
      network delay, or that the standby is under heavy load.
+    </para>
+    <para>
+     On a hot standby, the status of the WAL receiver process can be retrieved
+     via the <xref linkend="pg-stat-wal-receiver-view"> view.  A large
+     difference between <function>pg_last_wal_replay_lsn</function> and the
+     view's <literal>received_lsn</literal> indicates that WAL is being
+     received faster than it can be replayed.
     </para>
    </sect3>
   </sect2>
