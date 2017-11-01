@@ -159,6 +159,26 @@ drop table dcomptable;
 drop type comptype cascade;
 
 
+-- check altering and dropping columns used by domain constraints
+create type comptype as (r float8, i float8);
+create domain dcomptype as comptype;
+alter domain dcomptype add constraint c1 check ((value).r > 0);
+comment on constraint c1 on domain dcomptype is 'random commentary';
+
+select row(0,1)::dcomptype;  -- fail
+
+alter type comptype alter attribute r type varchar;  -- fail
+alter type comptype alter attribute r type bigint;
+
+alter type comptype drop attribute r;  -- fail
+alter type comptype drop attribute i;
+
+select conname, obj_description(oid, 'pg_constraint') from pg_constraint
+  where contypid = 'dcomptype'::regtype;  -- check comment is still there
+
+drop type comptype cascade;
+
+
 -- Test domains over arrays of composite
 
 create type comptype as (r float8, i float8);

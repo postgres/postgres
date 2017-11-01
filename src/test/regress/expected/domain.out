@@ -286,6 +286,31 @@ Rules:
 drop table dcomptable;
 drop type comptype cascade;
 NOTICE:  drop cascades to type dcomptype
+-- check altering and dropping columns used by domain constraints
+create type comptype as (r float8, i float8);
+create domain dcomptype as comptype;
+alter domain dcomptype add constraint c1 check ((value).r > 0);
+comment on constraint c1 on domain dcomptype is 'random commentary';
+select row(0,1)::dcomptype;  -- fail
+ERROR:  value for domain dcomptype violates check constraint "c1"
+alter type comptype alter attribute r type varchar;  -- fail
+ERROR:  operator does not exist: character varying > double precision
+HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
+alter type comptype alter attribute r type bigint;
+alter type comptype drop attribute r;  -- fail
+ERROR:  cannot drop composite type comptype column r because other objects depend on it
+DETAIL:  constraint c1 depends on composite type comptype column r
+HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+alter type comptype drop attribute i;
+select conname, obj_description(oid, 'pg_constraint') from pg_constraint
+  where contypid = 'dcomptype'::regtype;  -- check comment is still there
+ conname |  obj_description  
+---------+-------------------
+ c1      | random commentary
+(1 row)
+
+drop type comptype cascade;
+NOTICE:  drop cascades to type dcomptype
 -- Test domains over arrays of composite
 create type comptype as (r float8, i float8);
 create domain dcomptypea as comptype[];

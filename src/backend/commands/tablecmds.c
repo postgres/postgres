@@ -425,7 +425,8 @@ static void ATPostAlterTypeParse(Oid oldId, Oid oldRelId, Oid refRelId,
 					 char *cmd, List **wqueue, LOCKMODE lockmode,
 					 bool rewrite);
 static void RebuildConstraintComment(AlteredTableInfo *tab, int pass,
-						 Oid objid, Relation rel, char *conname);
+						 Oid objid, Relation rel, List *domname,
+						 char *conname);
 static void TryReuseIndex(Oid oldId, IndexStmt *stmt);
 static void TryReuseForeignKey(Oid oldId, Constraint *con);
 static void change_owner_fix_column_acls(Oid relationOid,
@@ -3319,6 +3320,7 @@ AlterTableGetLockLevel(List *cmds)
 			case AT_ProcessedConstraint:	/* becomes AT_AddConstraint */
 			case AT_AddConstraintRecurse:	/* becomes AT_AddConstraint */
 			case AT_ReAddConstraint:	/* becomes AT_AddConstraint */
+			case AT_ReAddDomainConstraint:	/* becomes AT_AddConstraint */
 				if (IsA(cmd->def, Constraint))
 				{
 					Constraint *con = (Constraint *) cmd->def;
@@ -3819,7 +3821,9 @@ ATRewriteCatalogs(List **wqueue, LOCKMODE lockmode)
 			rel = relation_open(tab->relid, NoLock);
 
 			foreach(lcmd, subcmds)
-				ATExecCmd(wqueue, tab, rel, (AlterTableCmd *) lfirst(lcmd), lockmode);
+				ATExecCmd(wqueue, tab, rel,
+						  castNode(AlterTableCmd, lfirst(lcmd)),
+						  lockmode);
 
 			/*
 			 * After the ALTER TYPE pass, do cleanup work (this is not done in
@@ -3935,6 +3939,13 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab, Relation rel,
 			address =
 				ATExecAddConstraint(wqueue, tab, rel, (Constraint *) cmd->def,
 									true, true, lockmode);
+			break;
+		case AT_ReAddDomainConstraint:	/* Re-add pre-existing domain check
+										 * constraint */
+			address =
+				AlterDomainAddConstraint(((AlterDomainStmt *) cmd->def)->typeName,
+										 ((AlterDomainStmt *) cmd->def)->def,
+										 NULL);
 			break;
 		case AT_ReAddComment:	/* Re-add existing comment */
 			address = CommentObject((CommentStmt *) cmd->def);
@@ -9616,7 +9627,15 @@ ATPostAlterTypeCleanup(List **wqueue, AlteredTableInfo *tab, LOCKMODE lockmode)
 		if (!HeapTupleIsValid(tup)) /* should not happen */
 			elog(ERROR, "cache lookup failed for constraint %u", oldId);
 		con = (Form_pg_constraint) GETSTRUCT(tup);
-		relid = con->conrelid;
+		if (OidIsValid(con->conrelid))
+			relid = con->conrelid;
+		else
+		{
+			/* must be a domain constraint */
+			relid = get_typ_typrelid(getBaseType(con->contypid));
+			if (!OidIsValid(relid))
+				elog(ERROR, "could not identify relation associated with constraint %u", oldId);
+		}
 		confrelid = con->confrelid;
 		conislocal = con->conislocal;
 		ReleaseSysCache(tup);
@@ -9753,7 +9772,7 @@ ATPostAlterTypeParse(Oid oldId, Oid oldRelId, Oid refRelId, char *cmd,
 
 			foreach(lcmd, stmt->cmds)
 			{
-				AlterTableCmd *cmd = (AlterTableCmd *) lfirst(lcmd);
+				AlterTableCmd *cmd = castNode(AlterTableCmd, lfirst(lcmd));
 
 				if (cmd->subtype == AT_AddIndex)
 				{
@@ -9777,13 +9796,14 @@ ATPostAlterTypeParse(Oid oldId, Oid oldRelId, Oid refRelId, char *cmd,
 					RebuildConstraintComment(tab,
 											 AT_PASS_OLD_INDEX,
 											 oldId,
-											 rel, indstmt->idxname);
+											 rel,
+											 NIL,
+											 indstmt->idxname);
 				}
 				else if (cmd->subtype == AT_AddConstraint)
 				{
-					Constraint *con;
+					Constraint *con = castNode(Constraint, cmd->def);
 
-					con = castNode(Constraint, cmd->def);
 					con->old_pktable_oid = refRelId;
 					/* rewriting neither side of a FK */
 					if (con->contype == CONSTR_FOREIGN &&
@@ -9797,12 +9817,40 @@ ATPostAlterTypeParse(Oid oldId, Oid oldRelId, Oid refRelId, char *cmd,
 					RebuildConstraintComment(tab,
 											 AT_PASS_OLD_CONSTR,
 											 oldId,
-											 rel, con->conname);
+											 rel,
+											 NIL,
+											 con->conname);
 				}
 				else
 					elog(ERROR, "unexpected statement subtype: %d",
 						 (int) cmd->subtype);
 			}
+		}
+		else if (IsA(stm, AlterDomainStmt))
+		{
+			AlterDomainStmt *stmt = (AlterDomainStmt *) stm;
+
+			if (stmt->subtype == 'C')	/* ADD CONSTRAINT */
+			{
+				Constraint *con = castNode(Constraint, stmt->def);
+				AlterTableCmd *cmd = makeNode(AlterTableCmd);
+
+				cmd->subtype = AT_ReAddDomainConstraint;
+				cmd->def = (Node *) stmt;
+				tab->subcmds[AT_PASS_OLD_CONSTR] =
+					lappend(tab->subcmds[AT_PASS_OLD_CONSTR], cmd);
+
+				/* recreate any comment on the constraint */
+				RebuildConstraintComment(tab,
+										 AT_PASS_OLD_CONSTR,
+										 oldId,
+										 NULL,
+										 stmt->typeName,
+										 con->conname);
+			}
+			else
+				elog(ERROR, "unexpected statement subtype: %d",
+					 (int) stmt->subtype);
 		}
 		else
 			elog(ERROR, "unexpected statement type: %d",
@@ -9813,12 +9861,19 @@ ATPostAlterTypeParse(Oid oldId, Oid oldRelId, Oid refRelId, char *cmd,
 }
 
 /*
- * Subroutine for ATPostAlterTypeParse() to recreate a comment entry for
- * a constraint that is being re-added.
+ * Subroutine for ATPostAlterTypeParse() to recreate any existing comment
+ * for a table or domain constraint that is being rebuilt.
+ *
+ * objid is the OID of the constraint.
+ * Pass "rel" for a table constraint, or "domname" (domain's qualified name
+ * as a string list) for a domain constraint.
+ * (We could dig that info, as well as the conname, out of the pg_constraint
+ * entry; but callers already have them so might as well pass them.)
  */
 static void
 RebuildConstraintComment(AlteredTableInfo *tab, int pass, Oid objid,
-						 Relation rel, char *conname)
+						 Relation rel, List *domname,
+						 char *conname)
 {
 	CommentStmt *cmd;
 	char	   *comment_str;
@@ -9829,12 +9884,23 @@ RebuildConstraintComment(AlteredTableInfo *tab, int pass, Oid objid,
 	if (comment_str == NULL)
 		return;
 
-	/* Build node CommentStmt */
+	/* Build CommentStmt node, copying all input data for safety */
 	cmd = makeNode(CommentStmt);
-	cmd->objtype = OBJECT_TABCONSTRAINT;
-	cmd->object = (Node *) list_make3(makeString(get_namespace_name(RelationGetNamespace(rel))),
-									  makeString(pstrdup(RelationGetRelationName(rel))),
-									  makeString(pstrdup(conname)));
+	if (rel)
+	{
+		cmd->objtype = OBJECT_TABCONSTRAINT;
+		cmd->object = (Node *)
+			list_make3(makeString(get_namespace_name(RelationGetNamespace(rel))),
+					   makeString(pstrdup(RelationGetRelationName(rel))),
+					   makeString(pstrdup(conname)));
+	}
+	else
+	{
+		cmd->objtype = OBJECT_DOMCONSTRAINT;
+		cmd->object = (Node *)
+			list_make2(makeTypeNameFromNameList(copyObject(domname)),
+					   makeString(pstrdup(conname)));
+	}
 	cmd->comment = comment_str;
 
 	/* Append it to list of commands */
