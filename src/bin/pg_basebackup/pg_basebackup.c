@@ -295,6 +295,11 @@ tablespace_list_append(const char *arg)
 		exit(1);
 	}
 
+	/*
+	 * Comparisons done with these values should involve similarly
+	 * canonicalized path values.  This is particularly sensitive on Windows
+	 * where path values may not necessarily use Unix slashes.
+	 */
 	canonicalize_path(cell->old_dir);
 	canonicalize_path(cell->new_dir);
 
@@ -1283,9 +1288,14 @@ static const char *
 get_tablespace_mapping(const char *dir)
 {
 	TablespaceListCell *cell;
+	char		canon_dir[MAXPGPATH];
+
+	/* Canonicalize path for comparison consistency */
+	strlcpy(canon_dir, dir, sizeof(canon_dir));
+	canonicalize_path(canon_dir);
 
 	for (cell = tablespace_dirs.head; cell; cell = cell->next)
-		if (strcmp(dir, cell->old_dir) == 0)
+		if (strcmp(canon_dir, cell->old_dir) == 0)
 			return cell->new_dir;
 
 	return dir;
