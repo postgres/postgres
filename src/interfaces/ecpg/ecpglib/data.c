@@ -57,7 +57,7 @@ garbage_left(enum ARRAY_TYPE isarray, char **scan_length, enum COMPAT_MODE compa
 			/* skip invalid characters */
 			do {
 				(*scan_length)++;
-			} while (**scan_length != ' ' && **scan_length != '\0' && isdigit(**scan_length));
+			} while (isdigit(**scan_length));
 			return false;
 		}
 
@@ -401,7 +401,8 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 					if (isarray && *scan_length == '"')
 						scan_length++;
 
-					if (garbage_left(isarray, &scan_length, compat))
+					/* no special INFORMIX treatment for floats */
+					if (garbage_left(isarray, &scan_length, ECPG_COMPAT_PGSQL))
 					{
 						ecpg_raise(lineno, ECPG_FLOAT_FORMAT,
 								   ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);
