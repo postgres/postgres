@@ -977,6 +977,7 @@ choose_hashed_setop(PlannerInfo *root, List *groupClauses,
 	 */
 	cost_agg(&hashed_p, root, AGG_HASHED, NULL,
 			 numGroupCols, dNumGroups,
+			 NIL,
 			 input_path->startup_cost, input_path->total_cost,
 			 input_path->rows);
 
@@ -991,6 +992,7 @@ choose_hashed_setop(PlannerInfo *root, List *groupClauses,
 			  input_path->rows, input_path->pathtarget->width,
 			  0.0, work_mem, -1.0);
 	cost_group(&sorted_p, root, numGroupCols, dNumGroups,
+			   NIL,
 			   sorted_p.startup_cost, sorted_p.total_cost,
 			   input_path->rows);
 

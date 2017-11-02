@@ -1374,6 +1374,11 @@ create_result_path(PlannerInfo *root, RelOptInfo *rel,
 	pathnode->path.startup_cost = target->cost.startup;
 	pathnode->path.total_cost = target->cost.startup +
 		cpu_tuple_cost + target->cost.per_tuple;
+
+	/*
+	 * Add cost of qual, if any --- but we ignore its selectivity, since our
+	 * rowcount estimate should be 1 no matter what the qual is.
+	 */
 	if (resconstantqual)
 	{
 		QualCost	qual_cost;
@@ -1596,6 +1601,7 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 			cost_agg(&agg_path, root,
 					 AGG_HASHED, NULL,
 					 numCols, pathnode->path.rows,
+					 NIL,
 					 subpath->startup_cost,
 					 subpath->total_cost,
 					 rel->rows);
@@ -2592,6 +2598,7 @@ create_group_path(PlannerInfo *root,
 	cost_group(&pathnode->path, root,
 			   list_length(groupClause),
 			   numGroups,
+			   qual,
 			   subpath->startup_cost, subpath->total_cost,
 			   subpath->rows);
 
@@ -2709,6 +2716,7 @@ create_agg_path(PlannerInfo *root,
 	cost_agg(&pathnode->path, root,
 			 aggstrategy, aggcosts,
 			 list_length(groupClause), numGroups,
+			 qual,
 			 subpath->startup_cost, subpath->total_cost,
 			 subpath->rows);
 
@@ -2817,6 +2825,7 @@ create_groupingsets_path(PlannerInfo *root,
 					 agg_costs,
 					 numGroupCols,
 					 rollup->numGroups,
+					 having_qual,
 					 subpath->startup_cost,
 					 subpath->total_cost,
 					 subpath->rows);
@@ -2840,6 +2849,7 @@ create_groupingsets_path(PlannerInfo *root,
 						 agg_costs,
 						 numGroupCols,
 						 rollup->numGroups,
+						 having_qual,
 						 0.0, 0.0,
 						 subpath->rows);
 				if (!rollup->is_hashed)
@@ -2863,6 +2873,7 @@ create_groupingsets_path(PlannerInfo *root,
 						 agg_costs,
 						 numGroupCols,
 						 rollup->numGroups,
+						 having_qual,
 						 sort_path.startup_cost,
 						 sort_path.total_cost,
 						 sort_path.rows);
@@ -2931,6 +2942,19 @@ create_minmaxagg_path(PlannerInfo *root,
 	pathnode->path.startup_cost = initplan_cost + target->cost.startup;
 	pathnode->path.total_cost = initplan_cost + target->cost.startup +
 		target->cost.per_tuple + cpu_tuple_cost;
+
+	/*
+	 * Add cost of qual, if any --- but we ignore its selectivity, since our
+	 * rowcount estimate should be 1 no matter what the qual is.
+	 */
+	if (quals)
+	{
+		QualCost	qual_cost;
+
+		cost_qual_eval(&qual_cost, quals, root);
+		pathnode->path.startup_cost += qual_cost.startup;
+		pathnode->path.total_cost += qual_cost.startup + qual_cost.per_tuple;
+	}
 
 	return pathnode;
 }
@@ -3781,6 +3805,7 @@ reparameterize_pathlist_by_child(PlannerInfo *root,
 	{
 		Path	   *path = reparameterize_path_by_child(root, lfirst(lc),
 														child_rel);
+
 		if (path == NULL)
 		{
 			list_free(result);

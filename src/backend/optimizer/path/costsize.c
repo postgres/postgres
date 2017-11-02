@@ -1874,6 +1874,7 @@ void
 cost_agg(Path *path, PlannerInfo *root,
 		 AggStrategy aggstrategy, const AggClauseCosts *aggcosts,
 		 int numGroupCols, double numGroups,
+		 List *quals,
 		 Cost input_startup_cost, Cost input_total_cost,
 		 double input_tuples)
 {
@@ -1953,6 +1954,26 @@ cost_agg(Path *path, PlannerInfo *root,
 		total_cost += aggcosts->finalCost * numGroups;
 		total_cost += cpu_tuple_cost * numGroups;
 		output_tuples = numGroups;
+	}
+
+	/*
+	 * If there are quals (HAVING quals), account for their cost and
+	 * selectivity.
+	 */
+	if (quals)
+	{
+		QualCost	qual_cost;
+
+		cost_qual_eval(&qual_cost, quals, root);
+		startup_cost += qual_cost.startup;
+		total_cost += qual_cost.startup + output_tuples * qual_cost.per_tuple;
+
+		output_tuples = clamp_row_est(output_tuples *
+									  clauselist_selectivity(root,
+															 quals,
+															 0,
+															 JOIN_INNER,
+															 NULL));
 	}
 
 	path->rows = output_tuples;
@@ -2040,12 +2061,15 @@ cost_windowagg(Path *path, PlannerInfo *root,
 void
 cost_group(Path *path, PlannerInfo *root,
 		   int numGroupCols, double numGroups,
+		   List *quals,
 		   Cost input_startup_cost, Cost input_total_cost,
 		   double input_tuples)
 {
+	double		output_tuples;
 	Cost		startup_cost;
 	Cost		total_cost;
 
+	output_tuples = numGroups;
 	startup_cost = input_startup_cost;
 	total_cost = input_total_cost;
 
@@ -2055,7 +2079,27 @@ cost_group(Path *path, PlannerInfo *root,
 	 */
 	total_cost += cpu_operator_cost * input_tuples * numGroupCols;
 
-	path->rows = numGroups;
+	/*
+	 * If there are quals (HAVING quals), account for their cost and
+	 * selectivity.
+	 */
+	if (quals)
+	{
+		QualCost	qual_cost;
+
+		cost_qual_eval(&qual_cost, quals, root);
+		startup_cost += qual_cost.startup;
+		total_cost += qual_cost.startup + output_tuples * qual_cost.per_tuple;
+
+		output_tuples = clamp_row_est(output_tuples *
+									  clauselist_selectivity(root,
+															 quals,
+															 0,
+															 JOIN_INNER,
+															 NULL));
+	}
+
+	path->rows = output_tuples;
 	path->startup_cost = startup_cost;
 	path->total_cost = total_cost;
 }
