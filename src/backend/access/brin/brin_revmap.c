@@ -615,7 +615,7 @@ revmap_physical_extend(BrinRevmap *revmap)
 
 	/*
 	 * Ok, we have now locked the metapage and the target block. Re-initialize
-	 * it as a revmap page.
+	 * the target block as a revmap page, and update the metapage.
 	 */
 	START_CRIT_SECTION();
 
@@ -624,6 +624,17 @@ revmap_physical_extend(BrinRevmap *revmap)
 	MarkBufferDirty(buf);
 
 	metadata->lastRevmapPage = mapBlk;
+
+	/*
+	 * Set pd_lower just past the end of the metadata.  This is essential,
+	 * because without doing so, metadata will be lost if xlog.c compresses
+	 * the page.  (We must do this here because pre-v11 versions of PG did not
+	 * set the metapage's pd_lower correctly, so a pg_upgraded index might
+	 * contain the wrong value.)
+	 */
+	((PageHeader) metapage)->pd_lower =
+		((char *) metadata + sizeof(BrinMetaPageData)) - (char *) metapage;
+
 	MarkBufferDirty(revmap->rm_metaBuf);
 
 	if (RelationNeedsWAL(revmap->rm_irel))
@@ -635,7 +646,7 @@ revmap_physical_extend(BrinRevmap *revmap)
 
 		XLogBeginInsert();
 		XLogRegisterData((char *) &xlrec, SizeOfBrinRevmapExtend);
-		XLogRegisterBuffer(0, revmap->rm_metaBuf, 0);
+		XLogRegisterBuffer(0, revmap->rm_metaBuf, REGBUF_STANDARD);
 
 		XLogRegisterBuffer(1, buf, REGBUF_WILL_INIT);
 

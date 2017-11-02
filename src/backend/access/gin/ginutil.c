@@ -374,6 +374,14 @@ GinInitMetabuffer(Buffer b)
 	metadata->nDataPages = 0;
 	metadata->nEntries = 0;
 	metadata->ginVersion = GIN_CURRENT_VERSION;
+
+	/*
+	 * Set pd_lower just past the end of the metadata.  This is essential,
+	 * because without doing so, metadata will be lost if xlog.c compresses
+	 * the page.
+	 */
+	((PageHeader) page)->pd_lower =
+		((char *) metadata + sizeof(GinMetaPageData)) - (char *) page;
 }
 
 /*
@@ -676,6 +684,16 @@ ginUpdateStats(Relation index, const GinStatsData *stats)
 	metadata->nDataPages = stats->nDataPages;
 	metadata->nEntries = stats->nEntries;
 
+	/*
+	 * Set pd_lower just past the end of the metadata.  This is essential,
+	 * because without doing so, metadata will be lost if xlog.c compresses
+	 * the page.  (We must do this here because pre-v11 versions of PG did not
+	 * set the metapage's pd_lower correctly, so a pg_upgraded index might
+	 * contain the wrong value.)
+	 */
+	((PageHeader) metapage)->pd_lower =
+		((char *) metadata + sizeof(GinMetaPageData)) - (char *) metapage;
+
 	MarkBufferDirty(metabuffer);
 
 	if (RelationNeedsWAL(index))
@@ -690,7 +708,7 @@ ginUpdateStats(Relation index, const GinStatsData *stats)
 
 		XLogBeginInsert();
 		XLogRegisterData((char *) &data, sizeof(ginxlogUpdateMeta));
-		XLogRegisterBuffer(0, metabuffer, REGBUF_WILL_INIT);
+		XLogRegisterBuffer(0, metabuffer, REGBUF_WILL_INIT | REGBUF_STANDARD);
 
 		recptr = XLogInsert(RM_GIN_ID, XLOG_GIN_UPDATE_META_PAGE);
 		PageSetLSN(metapage, recptr);

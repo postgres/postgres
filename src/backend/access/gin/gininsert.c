@@ -348,7 +348,7 @@ ginbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 		Page		page;
 
 		XLogBeginInsert();
-		XLogRegisterBuffer(0, MetaBuffer, REGBUF_WILL_INIT);
+		XLogRegisterBuffer(0, MetaBuffer, REGBUF_WILL_INIT | REGBUF_STANDARD);
 		XLogRegisterBuffer(1, RootBuffer, REGBUF_WILL_INIT);
 
 		recptr = XLogInsert(RM_GIN_ID, XLOG_GIN_CREATE_INDEX);
@@ -447,7 +447,7 @@ ginbuildempty(Relation index)
 	START_CRIT_SECTION();
 	GinInitMetabuffer(MetaBuffer);
 	MarkBufferDirty(MetaBuffer);
-	log_newpage_buffer(MetaBuffer, false);
+	log_newpage_buffer(MetaBuffer, true);
 	GinInitBuffer(RootBuffer, GIN_LEAF);
 	MarkBufferDirty(RootBuffer);
 	log_newpage_buffer(RootBuffer, false);

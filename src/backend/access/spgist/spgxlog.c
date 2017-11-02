@@ -1033,15 +1033,16 @@ void
 spg_mask(char *pagedata, BlockNumber blkno)
 {
 	Page		page = (Page) pagedata;
+	PageHeader	pagehdr = (PageHeader) page;
 
 	mask_page_lsn_and_checksum(page);
 
 	mask_page_hint_bits(page);
 
 	/*
-	 * Any SpGist page other than meta contains unused space which needs to be
-	 * masked.
+	 * Mask the unused space, but only if the page's pd_lower appears to have
+	 * been set correctly.
 	 */
-	if (!SpGistPageIsMeta(page))
+	if (pagehdr->pd_lower > SizeOfPageHeaderData)
 		mask_unused_space(page);
 }

@@ -256,14 +256,26 @@ SpGistUpdateMetaPage(Relation index)
 	if (cache != NULL)
 	{
 		Buffer		metabuffer;
-		SpGistMetaPageData *metadata;
 
 		metabuffer = ReadBuffer(index, SPGIST_METAPAGE_BLKNO);
 
 		if (ConditionalLockBuffer(metabuffer))
 		{
-			metadata = SpGistPageGetMeta(BufferGetPage(metabuffer));
+			Page		metapage = BufferGetPage(metabuffer);
+			SpGistMetaPageData *metadata = SpGistPageGetMeta(metapage);
+
 			metadata->lastUsedPages = cache->lastUsedPages;
+
+			/*
+			 * Set pd_lower just past the end of the metadata.  This is
+			 * essential, because without doing so, metadata will be lost if
+			 * xlog.c compresses the page.  (We must do this here because
+			 * pre-v11 versions of PG did not set the metapage's pd_lower
+			 * correctly, so a pg_upgraded index might contain the wrong
+			 * value.)
+			 */
+			((PageHeader) metapage)->pd_lower =
+				((char *) metadata + sizeof(SpGistMetaPageData)) - (char *) metapage;
 
 			MarkBufferDirty(metabuffer);
 			UnlockReleaseBuffer(metabuffer);
@@ -534,6 +546,14 @@ SpGistInitMetapage(Page page)
 	/* initialize last-used-page cache to empty */
 	for (i = 0; i < SPGIST_CACHED_PAGES; i++)
 		metadata->lastUsedPages.cachedPage[i].blkno = InvalidBlockNumber;
+
+	/*
+	 * Set pd_lower just past the end of the metadata.  This is essential,
+	 * because without doing so, metadata will be lost if xlog.c compresses
+	 * the page.
+	 */
+	((PageHeader) page)->pd_lower =
+		((char *) metadata + sizeof(SpGistMetaPageData)) - (char *) page;
 }
 
 /*

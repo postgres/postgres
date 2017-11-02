@@ -685,7 +685,7 @@ brinbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 
 		XLogBeginInsert();
 		XLogRegisterData((char *) &xlrec, SizeOfBrinCreateIdx);
-		XLogRegisterBuffer(0, meta, REGBUF_WILL_INIT);
+		XLogRegisterBuffer(0, meta, REGBUF_WILL_INIT | REGBUF_STANDARD);
 
 		recptr = XLogInsert(RM_BRIN_ID, XLOG_BRIN_CREATE_INDEX);
 
@@ -742,7 +742,7 @@ brinbuildempty(Relation index)
 	brin_metapage_init(BufferGetPage(metabuf), BrinGetPagesPerRange(index),
 					   BRIN_CURRENT_VERSION);
 	MarkBufferDirty(metabuf);
-	log_newpage_buffer(metabuf, false);
+	log_newpage_buffer(metabuf, true);
 	END_CRIT_SECTION();
 
 	UnlockReleaseBuffer(metabuf);

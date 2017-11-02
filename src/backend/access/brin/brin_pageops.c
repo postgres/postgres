@@ -476,7 +476,7 @@ brin_page_init(Page page, uint16 type)
 }
 
 /*
- * Initialize a new BRIN index' metapage.
+ * Initialize a new BRIN index's metapage.
  */
 void
 brin_metapage_init(Page page, BlockNumber pagesPerRange, uint16 version)
@@ -497,6 +497,14 @@ brin_metapage_init(Page page, BlockNumber pagesPerRange, uint16 version)
 	 * revmap page to be created when the index is.
 	 */
 	metadata->lastRevmapPage = 0;
+
+	/*
+	 * Set pd_lower just past the end of the metadata.  This is essential,
+	 * because without doing so, metadata will be lost if xlog.c compresses
+	 * the page.
+	 */
+	((PageHeader) page)->pd_lower =
+		((char *) metadata + sizeof(BrinMetaPageData)) - (char *) page;
 }
 
 /*
