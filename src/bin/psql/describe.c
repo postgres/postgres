@@ -5357,7 +5357,7 @@ describeSubscriptions(const char *pattern, bool verbose)
 						 "FROM pg_catalog.pg_subscription\n"
 						 "WHERE subdbid = (SELECT oid\n"
 						 "                 FROM pg_catalog.pg_database\n"
-						 "                 WHERE datname = current_database())");
+						 "                 WHERE datname = pg_catalog.current_database())");
 
 	processSQLNamePattern(pset.db, &buf, pattern, true, false,
 						  NULL, "subname", NULL,
