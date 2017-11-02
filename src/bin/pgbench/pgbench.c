@@ -362,6 +362,15 @@ typedef struct
 #define META_COMMAND	2
 #define MAX_ARGS		10
 
+typedef enum MetaCommand
+{
+	META_NONE,					/* not a known meta-command */
+	META_SET,					/* \set */
+	META_SETSHELL,				/* \setshell */
+	META_SHELL,					/* \shell */
+	META_SLEEP					/* \sleep */
+} MetaCommand;
+
 typedef enum QueryMode
 {
 	QUERY_SIMPLE,				/* simple query */
@@ -378,6 +387,7 @@ typedef struct
 	char	   *line;			/* text of command line */
 	int			command_num;	/* unique index of this Command struct */
 	int			type;			/* command type (SQL_COMMAND or META_COMMAND) */
+	MetaCommand meta;			/* meta command identifier, or META_NONE */
 	int			argc;			/* number of command words */
 	char	   *argv[MAX_ARGS]; /* command word list */
 	PgBenchExpr *expr;			/* parsed expression, if needed */
@@ -1722,6 +1732,29 @@ evaluateExpr(TState *thread, CState *st, PgBenchExpr *expr, PgBenchValue *retval
 }
 
 /*
+ * Convert command name to meta-command enum identifier
+ */
+static MetaCommand
+getMetaCommand(const char *cmd)
+{
+	MetaCommand mc;
+
+	if (cmd == NULL)
+		mc = META_NONE;
+	else if (pg_strcasecmp(cmd, "set") == 0)
+		mc = META_SET;
+	else if (pg_strcasecmp(cmd, "setshell") == 0)
+		mc = META_SETSHELL;
+	else if (pg_strcasecmp(cmd, "shell") == 0)
+		mc = META_SHELL;
+	else if (pg_strcasecmp(cmd, "sleep") == 0)
+		mc = META_SLEEP;
+	else
+		mc = META_NONE;
+	return mc;
+}
+
+/*
  * Run a shell command. The result is assigned to the variable if not NULL.
  * Return true if succeeded, or false on error.
  */
@@ -2214,7 +2247,7 @@ doCustom(TState *thread, CState *st, StatsData *agg)
 						fprintf(stderr, "\n");
 					}
 
-					if (pg_strcasecmp(argv[0], "sleep") == 0)
+					if (command->meta == META_SLEEP)
 					{
 						/*
 						 * A \sleep doesn't execute anything, we just get the
@@ -2240,7 +2273,7 @@ doCustom(TState *thread, CState *st, StatsData *agg)
 					}
 					else
 					{
-						if (pg_strcasecmp(argv[0], "set") == 0)
+						if (command->meta == META_SET)
 						{
 							PgBenchExpr *expr = command->expr;
 							PgBenchValue result;
@@ -2259,7 +2292,7 @@ doCustom(TState *thread, CState *st, StatsData *agg)
 								break;
 							}
 						}
-						else if (pg_strcasecmp(argv[0], "setshell") == 0)
+						else if (command->meta == META_SETSHELL)
 						{
 							bool		ret = runShellCommand(st, argv[1], argv + 2, argc - 2);
 
@@ -2279,7 +2312,7 @@ doCustom(TState *thread, CState *st, StatsData *agg)
 								/* succeeded */
 							}
 						}
-						else if (pg_strcasecmp(argv[0], "shell") == 0)
+						else if (command->meta == META_SHELL)
 						{
 							bool		ret = runShellCommand(st, NULL, argv + 1, argc - 1);
 
@@ -3023,6 +3056,7 @@ process_sql_command(PQExpBuffer buf, const char *source)
 	my_command = (Command *) pg_malloc0(sizeof(Command));
 	my_command->command_num = num_commands++;
 	my_command->type = SQL_COMMAND;
+	my_command->meta = META_NONE;
 	initSimpleStats(&my_command->stats);
 
 	/*
@@ -3091,7 +3125,10 @@ process_backslash_command(PsqlScanState sstate, const char *source)
 	my_command->argv[j++] = pg_strdup(word_buf.data);
 	my_command->argc++;
 
-	if (pg_strcasecmp(my_command->argv[0], "set") == 0)
+	/* ... and convert it to enum form */
+	my_command->meta = getMetaCommand(my_command->argv[0]);
+
+	if (my_command->meta == META_SET)
 	{
 		/* For \set, collect var name, then lex the expression. */
 		yyscan_t	yyscanner;
@@ -3146,7 +3183,7 @@ process_backslash_command(PsqlScanState sstate, const char *source)
 												  expr_scanner_offset(sstate),
 												  true);
 
-	if (pg_strcasecmp(my_command->argv[0], "sleep") == 0)
+	if (my_command->meta == META_SLEEP)
 	{
 		if (my_command->argc < 2)
 			syntax_error(source, lineno, my_command->line, my_command->argv[0],
@@ -3187,13 +3224,13 @@ process_backslash_command(PsqlScanState sstate, const char *source)
 							 my_command->argv[2], offsets[2] - start_offset);
 		}
 	}
-	else if (pg_strcasecmp(my_command->argv[0], "setshell") == 0)
+	else if (my_command->meta == META_SETSHELL)
 	{
 		if (my_command->argc < 3)
 			syntax_error(source, lineno, my_command->line, my_command->argv[0],
 						 "missing argument", NULL, -1);
 	}
-	else if (pg_strcasecmp(my_command->argv[0], "shell") == 0)
+	else if (my_command->meta == META_SHELL)
 	{
 		if (my_command->argc < 2)
 			syntax_error(source, lineno, my_command->line, my_command->argv[0],
@@ -3201,6 +3238,7 @@ process_backslash_command(PsqlScanState sstate, const char *source)
 	}
 	else
 	{
+		/* my_command->meta == META_NONE */
 		syntax_error(source, lineno, my_command->line, my_command->argv[0],
 					 "invalid command", NULL, -1);
 	}
@@ -4592,12 +4630,12 @@ threadRun(void *arg)
 					timeout.tv_usec = min_usec % 1000000;
 					nsocks = select(maxsock + 1, &input_mask, NULL, NULL, &timeout);
 				}
-				else /* nothing active, simple sleep */
+				else			/* nothing active, simple sleep */
 				{
 					pg_usleep(min_usec);
 				}
 			}
-			else /* no explicit delay, select without timeout */
+			else				/* no explicit delay, select without timeout */
 			{
 				nsocks = select(maxsock + 1, &input_mask, NULL, NULL, NULL);
 			}
@@ -4614,8 +4652,10 @@ threadRun(void *arg)
 				goto done;
 			}
 		}
-		else /* min_usec == 0, i.e. something needs to be executed */
+		else
 		{
+			/* min_usec == 0, i.e. something needs to be executed */
+
 			/* If we didn't call select(), don't try to read any data */
 			FD_ZERO(&input_mask);
 		}
