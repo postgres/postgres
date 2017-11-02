@@ -139,9 +139,6 @@ extern void heap_get_latest_tid(Relation relation, Snapshot snapshot,
 					ItemPointer tid);
 extern void setLastTid(const ItemPointer tid);
 
-extern bool HeapTupleUpdateXmaxMatchesXmin(TransactionId xmax,
-							   HeapTupleHeader htup);
-
 extern BulkInsertState GetBulkInsertState(void);
 extern void FreeBulkInsertState(BulkInsertState);
 

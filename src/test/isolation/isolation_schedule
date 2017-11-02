@@ -35,7 +35,6 @@ test: lock-committed-keyupdate
 test: update-locked-tuple
 test: propagate-lock-delete
 test: tuplelock-conflict
-test: freeze-the-dead
 test: nowait
 test: nowait-2
 test: nowait-3
