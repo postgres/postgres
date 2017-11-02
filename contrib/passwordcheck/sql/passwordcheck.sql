@@ -1,3 +1,5 @@
+LOAD 'passwordcheck';
+
 CREATE USER regress_user1;
 
 -- ok
