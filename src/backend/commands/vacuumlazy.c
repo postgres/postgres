@@ -2029,17 +2029,17 @@ lazy_record_dead_tuple(LVRelStats *vacrelstats,
 					   ItemPointer itemptr)
 {
 	/*
-	 * The array must never overflow, since we rely on all deletable tuples
-	 * being removed; inability to remove a tuple might cause an old XID to
-	 * persist beyond the freeze limit, which could be disastrous later on.
+	 * The array shouldn't overflow under normal behavior, but perhaps it
+	 * could if we are given a really small maintenance_work_mem. In that
+	 * case, just forget the last few tuples (we'll get 'em next time).
 	 */
-	if (vacrelstats->num_dead_tuples >= vacrelstats->max_dead_tuples)
-		elog(ERROR, "dead tuple array overflow");
-
-	vacrelstats->dead_tuples[vacrelstats->num_dead_tuples] = *itemptr;
-	vacrelstats->num_dead_tuples++;
-	pgstat_progress_update_param(PROGRESS_VACUUM_NUM_DEAD_TUPLES,
-								 vacrelstats->num_dead_tuples);
+	if (vacrelstats->num_dead_tuples < vacrelstats->max_dead_tuples)
+	{
+		vacrelstats->dead_tuples[vacrelstats->num_dead_tuples] = *itemptr;
+		vacrelstats->num_dead_tuples++;
+		pgstat_progress_update_param(PROGRESS_VACUUM_NUM_DEAD_TUPLES,
+									 vacrelstats->num_dead_tuples);
+	}
 }
 
 /*
