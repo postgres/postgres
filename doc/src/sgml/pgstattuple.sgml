@@ -13,12 +13,14 @@
  </para>
 
  <para>
-  As these functions return detailed page-level information, only the superuser
-  has EXECUTE privileges on them upon installation.  After the functions have
-  been installed, users may issue <command>GRANT</command> commands to change
-  the privileges on the functions to allow non-superusers to execute them. Members
-  of the <literal>pg_stat_scan_tables</literal> role are granted access by default. See
-  the description of the <xref linkend="sql-grant"> command for specifics.
+  Because these functions return detailed page-level information, access is
+  restricted by default.  By default, only the
+  role <literal>pg_stat_scan_tables</literal> has <literal>EXECUTE</literal>
+  privilege.  Superusers of course bypass this restriction.  After the
+  extension has been installed, users may issue <command>GRANT</command>
+  commands to change the privileges on the functions to allow others to
+  execute them.  However, it might be preferable to add those users to
+  the <literal>pg_stat_scan_tables</literal> role instead.
  </para>
 
  <sect2>
