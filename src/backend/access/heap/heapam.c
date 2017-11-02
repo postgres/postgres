@@ -2060,7 +2060,8 @@ heap_hot_search_buffer(ItemPointer tid, Relation relation, Buffer buffer,
 		 * broken.
 		 */
 		if (TransactionIdIsValid(prev_xmax) &&
-			!HeapTupleUpdateXmaxMatchesXmin(prev_xmax, heapTuple->t_data))
+			!TransactionIdEquals(prev_xmax,
+								 HeapTupleHeaderGetXmin(heapTuple->t_data)))
 			break;
 
 		/*
@@ -2243,7 +2244,7 @@ heap_get_latest_tid(Relation relation,
 		 * tuple.  Check for XMIN match.
 		 */
 		if (TransactionIdIsValid(priorXmax) &&
-			!HeapTupleUpdateXmaxMatchesXmin(priorXmax, tp.t_data))
+			!TransactionIdEquals(priorXmax, HeapTupleHeaderGetXmin(tp.t_data)))
 		{
 			UnlockReleaseBuffer(buffer);
 			break;
@@ -2275,50 +2276,6 @@ heap_get_latest_tid(Relation relation,
 	}							/* end of loop */
 }
 
-/*
- * HeapTupleUpdateXmaxMatchesXmin - verify update chain xmax/xmin lineage
- *
- * Given the new version of a tuple after some update, verify whether the
- * given Xmax (corresponding to the previous version) matches the tuple's
- * Xmin, taking into account that the Xmin might have been frozen after the
- * update.
- */
-bool
-HeapTupleUpdateXmaxMatchesXmin(TransactionId xmax, HeapTupleHeader htup)
-{
-	TransactionId	xmin = HeapTupleHeaderGetXmin(htup);
-
-	/*
-	 * If the xmax of the old tuple is identical to the xmin of the new one,
-	 * it's a match.
-	 */
-	if (TransactionIdEquals(xmax, xmin))
-		return true;
-
-	/*
-	 * If the Xmin that was in effect prior to a freeze matches the Xmax,
-	 * it's good too.
-	 */
-	if (HeapTupleHeaderXminFrozen(htup) &&
-		TransactionIdEquals(HeapTupleHeaderGetRawXmin(htup), xmax))
-		return true;
-
-	/*
-	 * When a tuple is frozen, the original Xmin is lost, but we know it's a
-	 * committed transaction.  So unless the Xmax is InvalidXid, we don't know
-	 * for certain that there is a match, but there may be one; and we must
-	 * return true so that a HOT chain that is half-frozen can be walked
-	 * correctly.
-	 *
-	 * We no longer freeze tuples this way, but we must keep this in order to
-	 * interpret pre-pg_upgrade pages correctly.
-	 */
-	if (TransactionIdEquals(xmin, FrozenTransactionId) &&
-		TransactionIdIsValid(xmax))
-		return true;
-
-	return false;
-}
 
 /*
  * UpdateXmaxHintBits - update tuple hint bits after xmax transaction ends
@@ -5736,7 +5693,8 @@ l4:
 		 * end of the chain, we're done, so return success.
 		 */
 		if (TransactionIdIsValid(priorXmax) &&
-			!HeapTupleUpdateXmaxMatchesXmin(priorXmax, mytup.t_data))
+			!TransactionIdEquals(HeapTupleHeaderGetXmin(mytup.t_data),
+								 priorXmax))
 		{
 			result = HeapTupleMayBeUpdated;
 			goto out_locked;
@@ -6430,23 +6388,14 @@ FreezeMultiXactId(MultiXactId multi, uint16 t_infomask,
 			Assert(TransactionIdIsValid(xid));
 
 			/*
-			 * The updating transaction cannot possibly be still running, but
-			 * verify whether it has committed, and request to set the
-			 * COMMITTED flag if so.  (We normally don't see any tuples in
-			 * this state, because they are removed by page pruning before we
-			 * try to freeze the page; but this can happen if the updating
-			 * transaction commits after the page is pruned but before
-			 * HeapTupleSatisfiesVacuum).
+			 * If the xid is older than the cutoff, it has to have aborted,
+			 * otherwise the tuple would have gotten pruned away.
 			 */
 			if (TransactionIdPrecedes(xid, cutoff_xid))
 			{
-				if (TransactionIdDidCommit(xid))
-					*flags = FRM_MARK_COMMITTED | FRM_RETURN_IS_XID;
-				else
-				{
-					*flags |= FRM_INVALIDATE_XMAX;
-					xid = InvalidTransactionId; /* not strictly necessary */
-				}
+				Assert(!TransactionIdDidCommit(xid));
+				*flags |= FRM_INVALIDATE_XMAX;
+				xid = InvalidTransactionId; /* not strictly necessary */
 			}
 			else
 			{
@@ -6519,16 +6468,13 @@ FreezeMultiXactId(MultiXactId multi, uint16 t_infomask,
 			/*
 			 * It's an update; should we keep it?  If the transaction is known
 			 * aborted or crashed then it's okay to ignore it, otherwise not.
+			 * Note that an updater older than cutoff_xid cannot possibly be
+			 * committed, because HeapTupleSatisfiesVacuum would have returned
+			 * HEAPTUPLE_DEAD and we would not be trying to freeze the tuple.
 			 *
 			 * As with all tuple visibility routines, it's critical to test
 			 * TransactionIdIsInProgress before TransactionIdDidCommit,
 			 * because of race conditions explained in detail in tqual.c.
-			 *
-			 * We normally don't see committed updating transactions earlier
-			 * than the cutoff xid, because they are removed by page pruning
-			 * before we try to freeze the page; but it can happen if the
-			 * updating transaction commits after the page is pruned but
-			 * before HeapTupleSatisfiesVacuum.
 			 */
 			if (TransactionIdIsCurrentTransactionId(xid) ||
 				TransactionIdIsInProgress(xid))
@@ -6552,6 +6498,13 @@ FreezeMultiXactId(MultiXactId multi, uint16 t_infomask,
 			 * Not in progress, not committed -- must be aborted or crashed;
 			 * we can ignore it.
 			 */
+
+			/*
+			 * Since the tuple wasn't marked HEAPTUPLE_DEAD by vacuum, the
+			 * update Xid cannot possibly be older than the xid cutoff.
+			 */
+			Assert(!TransactionIdIsValid(update_xid) ||
+				   !TransactionIdPrecedes(update_xid, cutoff_xid));
 
 			/*
 			 * If we determined that it's an Xid corresponding to an update
@@ -6631,10 +6584,7 @@ FreezeMultiXactId(MultiXactId multi, uint16 t_infomask,
  *
  * It is assumed that the caller has checked the tuple with
  * HeapTupleSatisfiesVacuum() and determined that it is not HEAPTUPLE_DEAD
- * (else we should be removing the tuple, not freezing it).  However, note
- * that we don't remove HOT tuples even if they are dead, and it'd be incorrect
- * to freeze them (because that would make them visible), so we mark them as
- * update-committed, and needing further freezing later on.
+ * (else we should be removing the tuple, not freezing it).
  *
  * NB: cutoff_xid *must* be <= the current global xmin, to ensure that any
  * XID older than it could neither be running nor seen as running by any
@@ -6745,22 +6695,7 @@ heap_prepare_freeze_tuple(HeapTupleHeader tuple, TransactionId cutoff_xid,
 	else if (TransactionIdIsNormal(xid))
 	{
 		if (TransactionIdPrecedes(xid, cutoff_xid))
-		{
-			/*
-			 * Must freeze regular XIDs older than the cutoff.  We must not
-			 * freeze a HOT-updated tuple, though; doing so would bring it
-			 * back to life.
-			 */
-			if (HeapTupleHeaderIsHotUpdated(tuple))
-			{
-				frz->t_infomask |= HEAP_XMAX_COMMITTED;
-				totally_frozen = false;
-				changed = true;
-				/* must not freeze */
-			}
-			else
-				freeze_xmax = true;
-		}
+			freeze_xmax = true;
 		else
 			totally_frozen = false;
 	}
