@@ -46,7 +46,7 @@
 
   <para>
    <ulink
-   url="http://bucardo.org/wiki/Check_postgres"><application>check_postgres</></ulink>
+   url="https://bucardo.org/check_postgres/"><application>check_postgres</></ulink>
    is available for monitoring database health and reporting unusual
    conditions.  <application>check_postgres</> integrates with
    Nagios and MRTG, but can be run standalone too.
@@ -981,7 +981,7 @@ pg_ctl start | rotatelogs /var/log/pgsql_log 86400
    <ulink url="http://dalibo.github.io/pgbadger/"><productname>pgBadger</productname></ulink>
    is an external project that does sophisticated log file analysis.
    <ulink
-   url="http://bucardo.org/wiki/Check_postgres"><productname>check_postgres</productname></ulink>
+   url="https://bucardo.org/check_postgres/"><productname>check_postgres</productname></ulink>
    provides Nagios alerts when important messages appear in the log
    files, as well as detection of many other extraordinary conditions.
   </para>
