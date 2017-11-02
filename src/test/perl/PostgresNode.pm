@@ -435,7 +435,6 @@ sub init
 		}
 		print $conf "max_wal_senders = 5\n";
 		print $conf "max_replication_slots = 5\n";
-		print $conf "wal_keep_segments = 20\n";
 		print $conf "max_wal_size = 128MB\n";
 		print $conf "shared_buffers = 1MB\n";
 		print $conf "wal_log_hints = on\n";

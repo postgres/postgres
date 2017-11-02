@@ -119,6 +119,11 @@ sub setup_cluster
 	# Initialize master, data checksums are mandatory
 	$node_master = get_new_node('master' . ($extra_name ? "_${extra_name}" : ''));
 	$node_master->init(allows_streaming => 1);
+	# Set wal_keep_segments to prevent WAL segment recycling after enforced
+	# checkpoints in the tests.
+	$node_master->append_conf('postgresql.conf', qq(
+wal_keep_segments = 20
+));
 }
 
 sub start_master
