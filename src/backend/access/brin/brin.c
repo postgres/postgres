@@ -1292,8 +1292,11 @@ brinsummarize(Relation index, Relation heapRel, BlockNumber pageRange,
 	if (pageRange == BRIN_ALL_BLOCKRANGES)
 		startBlk = 0;
 	else
+	{
 		startBlk = (pageRange / pagesPerRange) * pagesPerRange;
-	if (startBlk >= heapNumBlocks)
+		heapNumBlocks = Min(heapNumBlocks, startBlk + pagesPerRange);
+	}
+	if (startBlk > heapNumBlocks)
 	{
 		/* Nothing to do if start point is beyond end of table */
 		brinRevmapTerminate(revmap);
