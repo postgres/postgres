@@ -58,7 +58,6 @@ garbage_left(enum ARRAY_TYPE isarray, char **scan_length, enum COMPAT_MODE compa
 			do {
 				(*scan_length)++;
 			} while (isdigit(**scan_length));
-			return false;
 		}
 
 		if (**scan_length != ' ' && **scan_length != '\0')
