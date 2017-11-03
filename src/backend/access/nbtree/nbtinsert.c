@@ -898,7 +898,7 @@ _bt_insertonpg(Relation rel,
 				xlmeta.fastroot = metad->btm_fastroot;
 				xlmeta.fastlevel = metad->btm_fastlevel;
 
-				XLogRegisterBuffer(2, metabuf, REGBUF_WILL_INIT);
+				XLogRegisterBuffer(2, metabuf, REGBUF_WILL_INIT | REGBUF_STANDARD);
 				XLogRegisterBufData(2, (char *) &xlmeta, sizeof(xl_btree_metadata));
 
 				xlinfo = XLOG_BTREE_INSERT_META;
@@ -2032,7 +2032,7 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 
 		XLogRegisterBuffer(0, rootbuf, REGBUF_WILL_INIT);
 		XLogRegisterBuffer(1, lbuf, REGBUF_STANDARD);
-		XLogRegisterBuffer(2, metabuf, REGBUF_WILL_INIT);
+		XLogRegisterBuffer(2, metabuf, REGBUF_WILL_INIT | REGBUF_STANDARD);
 
 		md.root = rootblknum;
 		md.level = metad->btm_level;

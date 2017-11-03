@@ -298,7 +298,7 @@ btbuildempty(Relation index)
 	smgrwrite(index->rd_smgr, INIT_FORKNUM, BTREE_METAPAGE,
 			  (char *) metapage, true);
 	log_newpage(&index->rd_smgr->smgr_rnode.node, INIT_FORKNUM,
-				BTREE_METAPAGE, metapage, false);
+				BTREE_METAPAGE, metapage, true);
 
 	/*
 	 * An immediate sync is required even if we xlog'd the page, because the

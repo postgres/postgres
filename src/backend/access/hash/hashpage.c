@@ -403,7 +403,7 @@ _hash_init(Relation rel, double num_tuples, ForkNumber forkNum)
 
 		XLogBeginInsert();
 		XLogRegisterData((char *) &xlrec, SizeOfHashInitMetaPage);
-		XLogRegisterBuffer(0, metabuf, REGBUF_WILL_INIT);
+		XLogRegisterBuffer(0, metabuf, REGBUF_WILL_INIT | REGBUF_STANDARD);
 
 		recptr = XLogInsert(RM_HASH_ID, XLOG_HASH_INIT_META_PAGE);
 
@@ -592,8 +592,9 @@ _hash_init_metabuffer(Buffer buf, double num_tuples, RegProcedure procid,
 	metap->hashm_firstfree = 0;
 
 	/*
-	 * Set pd_lower just past the end of the metadata.  This is to log full
-	 * page image of metapage in xloginsert.c.
+	 * Set pd_lower just past the end of the metadata.  This is essential,
+	 * because without doing so, metadata will be lost if xlog.c compresses
+	 * the page.
 	 */
 	((PageHeader) page)->pd_lower =
 		((char *) metap + sizeof(HashMetaPageData)) - (char *) page;
