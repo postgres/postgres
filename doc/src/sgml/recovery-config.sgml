@@ -270,10 +270,11 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
         Specifies whether to stop just after the specified recovery target
         (<literal>true</literal>), or just before the recovery target
         (<literal>false</literal>).
-        Applies when either <xref linkend="recovery-target-time">
-        or <xref linkend="recovery-target-xid"> is specified.
+        Applies when <xref linkend="recovery-target-lsn">,
+        <xref linkend="recovery-target-time">, or
+        <xref linkend="recovery-target-xid"> is specified.
         This setting controls whether transactions
-        having exactly the target commit time or ID, respectively, will
+        having exactly the target WAL location (LSN), commit time, or transaction ID, respectively, will
         be included in the recovery.  Default is <literal>true</>.
        </para>
       </listitem>
