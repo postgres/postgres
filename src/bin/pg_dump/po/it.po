@@ -25,7 +25,7 @@ msgstr ""
 "Project-Id-Version: pg_dump (Postgresql) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2017-08-30 21:45+0000\n"
-"PO-Revision-Date: 2017-08-31 01:19+0100\n"
+"PO-Revision-Date: 2017-10-23 19:11+0100\n"
 "Last-Translator: Daniele Varrazzo <daniele.varrazzo@gmail.com>\n"
 "Language-Team: Gruppo traduzioni ITPUG <traduzioni@itpug.org>\n"
 "Language: it\n"
@@ -33,7 +33,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Poedit 1.5.4\n"
+"X-Generator: Poedit 1.8.7.1\n"
 
 #: ../../common/exec.c:127 ../../common/exec.c:241 ../../common/exec.c:284
 #, c-format
@@ -2665,7 +2665,7 @@ msgstr "  --no-publications            non ripristinare le pubblicazioni\n"
 #: pg_restore.c:486
 #, c-format
 msgid "  --no-security-labels         do not restore security labels\n"
-msgstr "  --no-security-labels         do ripristinare le etichette di sicurezza\n"
+msgstr "  --no-security-labels         non ripristinare le etichette di sicurezza\n"
 
 #: pg_restore.c:487
 #, c-format

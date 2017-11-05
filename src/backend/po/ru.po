@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgres (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-09-27 06:08+0000\n"
-"PO-Revision-Date: 2017-09-27 15:32+0300\n"
+"POT-Creation-Date: 2017-10-02 21:38+0000\n"
+"PO-Revision-Date: 2017-10-03 11:19+0300\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -1645,28 +1645,28 @@ msgstr ""
 "предел наложения ID транзакций равен %u, источник ограничения - база данных "
 "с OID %u"
 
-#: access/transam/xact.c:947
+#: access/transam/xact.c:946
 #, c-format
 msgid "cannot have more than 2^32-2 commands in a transaction"
 msgstr "в одной транзакции не может быть больше 2^32-2 команд"
 
-#: access/transam/xact.c:1472
+#: access/transam/xact.c:1471
 #, c-format
 msgid "maximum number of committed subtransactions (%d) exceeded"
 msgstr "превышен предел числа зафиксированных подтранзакций (%d)"
 
-#: access/transam/xact.c:2267
+#: access/transam/xact.c:2265
 #, c-format
 msgid "cannot PREPARE a transaction that has operated on temporary tables"
 msgstr ""
 "нельзя выполнить PREPARE для транзакции, оперирующей с временными таблицами"
 
-#: access/transam/xact.c:2277
+#: access/transam/xact.c:2275
 #, c-format
 msgid "cannot PREPARE a transaction that has exported snapshots"
 msgstr "нельзя выполнить PREPARE для транзакции, снимки которой экспортированы"
 
-#: access/transam/xact.c:2286
+#: access/transam/xact.c:2284
 #, c-format
 msgid ""
 "cannot PREPARE a transaction that has manipulated logical replication workers"
@@ -1675,19 +1675,19 @@ msgstr ""
 "репликации"
 
 #. translator: %s represents an SQL statement name
-#: access/transam/xact.c:3170
+#: access/transam/xact.c:3166
 #, c-format
 msgid "%s cannot run inside a transaction block"
 msgstr "%s не может выполняться внутри блока транзакции"
 
 #. translator: %s represents an SQL statement name
-#: access/transam/xact.c:3180
+#: access/transam/xact.c:3176
 #, c-format
 msgid "%s cannot run inside a subtransaction"
 msgstr "%s не может выполняться внутри подтранзакции"
 
 #. translator: %s represents an SQL statement name
-#: access/transam/xact.c:3190
+#: access/transam/xact.c:3186
 #, c-format
 msgid "%s cannot be executed from a function or multi-command string"
 msgstr ""
@@ -1695,64 +1695,64 @@ msgstr ""
 "команд"
 
 #. translator: %s represents an SQL statement name
-#: access/transam/xact.c:3261
+#: access/transam/xact.c:3257
 #, c-format
 msgid "%s can only be used in transaction blocks"
 msgstr "%s может выполняться только внутри блоков транзакций"
 
-#: access/transam/xact.c:3445
+#: access/transam/xact.c:3441
 #, c-format
 msgid "there is already a transaction in progress"
 msgstr "транзакция уже выполняется"
 
-#: access/transam/xact.c:3613 access/transam/xact.c:3716
+#: access/transam/xact.c:3609 access/transam/xact.c:3712
 #, c-format
 msgid "there is no transaction in progress"
 msgstr "нет незавершённой транзакции"
 
-#: access/transam/xact.c:3624
+#: access/transam/xact.c:3620
 #, c-format
 msgid "cannot commit during a parallel operation"
 msgstr "фиксировать транзакции во время параллельных операций нельзя"
 
-#: access/transam/xact.c:3727
+#: access/transam/xact.c:3723
 #, c-format
 msgid "cannot abort during a parallel operation"
 msgstr "прерывание во время параллельных операций невозможно"
 
-#: access/transam/xact.c:3769
+#: access/transam/xact.c:3765
 #, c-format
 msgid "cannot define savepoints during a parallel operation"
 msgstr "определять точки сохранения во время параллельных операций нельзя"
 
-#: access/transam/xact.c:3836
+#: access/transam/xact.c:3832
 #, c-format
 msgid "cannot release savepoints during a parallel operation"
 msgstr "высвобождать точки сохранения во время параллельных операций нельзя"
 
-#: access/transam/xact.c:3847 access/transam/xact.c:3899
-#: access/transam/xact.c:3905 access/transam/xact.c:3961
-#: access/transam/xact.c:4011 access/transam/xact.c:4017
+#: access/transam/xact.c:3843 access/transam/xact.c:3895
+#: access/transam/xact.c:3901 access/transam/xact.c:3957
+#: access/transam/xact.c:4007 access/transam/xact.c:4013
 #, c-format
 msgid "no such savepoint"
 msgstr "нет такой точки сохранения"
 
-#: access/transam/xact.c:3949
+#: access/transam/xact.c:3945
 #, c-format
 msgid "cannot rollback to savepoints during a parallel operation"
 msgstr "откатиться к точке сохранения во время параллельных операций нельзя"
 
-#: access/transam/xact.c:4077
+#: access/transam/xact.c:4073
 #, c-format
 msgid "cannot start subtransactions during a parallel operation"
 msgstr "запускать подтранзакции во время параллельных операций нельзя"
 
-#: access/transam/xact.c:4144
+#: access/transam/xact.c:4140
 #, c-format
 msgid "cannot commit subtransactions during a parallel operation"
 msgstr "фиксировать подтранзакции во время параллельных операций нельзя"
 
-#: access/transam/xact.c:4773
+#: access/transam/xact.c:4769
 #, c-format
 msgid "cannot have more than 2^32-1 subtransactions in a transaction"
 msgstr "в одной транзакции не может быть больше 2^32-1 подтранзакций"
@@ -3497,8 +3497,8 @@ msgstr "большой объект %u не существует"
 #: commands/subscriptioncmds.c:130 commands/subscriptioncmds.c:140
 #: commands/subscriptioncmds.c:154 commands/subscriptioncmds.c:165
 #: commands/subscriptioncmds.c:179 commands/tablecmds.c:5973
-#: commands/typecmds.c:298 commands/typecmds.c:1375 commands/typecmds.c:1384
-#: commands/typecmds.c:1392 commands/typecmds.c:1400 commands/typecmds.c:1408
+#: commands/typecmds.c:298 commands/typecmds.c:1396 commands/typecmds.c:1405
+#: commands/typecmds.c:1413 commands/typecmds.c:1421 commands/typecmds.c:1429
 #: commands/user.c:134 commands/user.c:148 commands/user.c:157
 #: commands/user.c:166 commands/user.c:175 commands/user.c:184
 #: commands/user.c:193 commands/user.c:202 commands/user.c:211
@@ -3524,7 +3524,7 @@ msgstr "права по умолчанию нельзя определить д�
 msgid "cannot use IN SCHEMA clause when using GRANT/REVOKE ON SCHEMAS"
 msgstr "предложение IN SCHEMA нельзя использовать в GRANT/REVOKE ON SCHEMAS"
 
-#: catalog/aclchk.c:1521 catalog/objectaddress.c:1389 commands/analyze.c:394
+#: catalog/aclchk.c:1521 catalog/objectaddress.c:1389 commands/analyze.c:399
 #: commands/copy.c:4762 commands/sequence.c:1700 commands/tablecmds.c:5621
 #: commands/tablecmds.c:5768 commands/tablecmds.c:5825
 #: commands/tablecmds.c:5898 commands/tablecmds.c:5992
@@ -4093,7 +4093,7 @@ msgstr "отношение \"%s\" уже существует"
 
 #: catalog/heap.c:1083 catalog/pg_type.c:410 catalog/pg_type.c:732
 #: commands/typecmds.c:239 commands/typecmds.c:788 commands/typecmds.c:1139
-#: commands/typecmds.c:1350 commands/typecmds.c:2106
+#: commands/typecmds.c:1371 commands/typecmds.c:2127
 #, c-format
 msgid "type \"%s\" already exists"
 msgstr "тип \"%s\" уже существует"
@@ -4452,7 +4452,7 @@ msgstr ""
 "значение по умолчанию для столбца \"%s\" отношения \"%s\" не существует"
 
 #: catalog/objectaddress.c:1508 commands/functioncmds.c:128
-#: commands/tablecmds.c:251 commands/typecmds.c:3248 parser/parse_type.c:226
+#: commands/tablecmds.c:251 commands/typecmds.c:3269 parser/parse_type.c:226
 #: parser/parse_type.c:255 parser/parse_type.c:794 utils/adt/acl.c:4357
 #, c-format
 msgid "type \"%s\" does not exist"
@@ -4865,7 +4865,7 @@ msgstr "Указанная нижняя граница %s больше или р
 msgid "partition \"%s\" would overlap partition \"%s\""
 msgstr "секция \"%s\" пересекается с секцией \"%s\""
 
-#: catalog/partition.c:927 catalog/partition.c:1110 commands/analyze.c:1457
+#: catalog/partition.c:927 catalog/partition.c:1110 commands/analyze.c:1462
 #: commands/copy.c:2498 commands/tablecmds.c:8885
 #: executor/execExprInterp.c:2853 executor/execMain.c:1906
 #: executor/execMain.c:1984 executor/execMain.c:2032 executor/execMain.c:2142
@@ -5010,10 +5010,10 @@ msgstr ""
 "оператор сортировки можно указать только для агрегатных функций с одним "
 "аргументом"
 
-#: catalog/pg_aggregate.c:810 commands/typecmds.c:1698 commands/typecmds.c:1749
-#: commands/typecmds.c:1780 commands/typecmds.c:1803 commands/typecmds.c:1824
-#: commands/typecmds.c:1851 commands/typecmds.c:1878 commands/typecmds.c:1955
-#: commands/typecmds.c:1997 parser/parse_func.c:369 parser/parse_func.c:398
+#: catalog/pg_aggregate.c:810 commands/typecmds.c:1719 commands/typecmds.c:1770
+#: commands/typecmds.c:1801 commands/typecmds.c:1824 commands/typecmds.c:1845
+#: commands/typecmds.c:1872 commands/typecmds.c:1899 commands/typecmds.c:1976
+#: commands/typecmds.c:2018 parser/parse_func.c:369 parser/parse_func.c:398
 #: parser/parse_func.c:423 parser/parse_func.c:437 parser/parse_func.c:512
 #: parser/parse_func.c:523 parser/parse_func.c:1977
 #, c-format
@@ -5104,37 +5104,37 @@ msgid "cannot remove dependency on %s because it is a system object"
 msgstr ""
 "ликвидировать зависимость от объекта %s нельзя, так как это системный объект"
 
-#: catalog/pg_enum.c:128 catalog/pg_enum.c:214 catalog/pg_enum.c:519
+#: catalog/pg_enum.c:115 catalog/pg_enum.c:201 catalog/pg_enum.c:488
 #, c-format
 msgid "invalid enum label \"%s\""
 msgstr "неверная метка в перечислении \"%s\""
 
-#: catalog/pg_enum.c:129 catalog/pg_enum.c:215 catalog/pg_enum.c:520
+#: catalog/pg_enum.c:116 catalog/pg_enum.c:202 catalog/pg_enum.c:489
 #, c-format
 msgid "Labels must be %d characters or less."
 msgstr "Длина метки не должна превышать %d байт."
 
-#: catalog/pg_enum.c:243
+#: catalog/pg_enum.c:230
 #, c-format
 msgid "enum label \"%s\" already exists, skipping"
 msgstr "метка перечисления \"%s\" уже существует, пропускается"
 
-#: catalog/pg_enum.c:250 catalog/pg_enum.c:563
+#: catalog/pg_enum.c:237 catalog/pg_enum.c:532
 #, c-format
 msgid "enum label \"%s\" already exists"
 msgstr "метка перечисления \"%s\" уже существует"
 
-#: catalog/pg_enum.c:305 catalog/pg_enum.c:558
+#: catalog/pg_enum.c:292 catalog/pg_enum.c:527
 #, c-format
 msgid "\"%s\" is not an existing enum label"
 msgstr "в перечислении нет метки\"%s\""
 
-#: catalog/pg_enum.c:363
+#: catalog/pg_enum.c:350
 #, c-format
 msgid "pg_enum OID value not set when in binary upgrade mode"
 msgstr "значение OID в pg_enum не задано в режиме двоичного обновления"
 
-#: catalog/pg_enum.c:373
+#: catalog/pg_enum.c:360
 #, c-format
 msgid "ALTER TYPE ADD BEFORE/AFTER is incompatible with binary upgrade"
 msgstr ""
@@ -5702,65 +5702,65 @@ msgstr "не указана функция-обработчик"
 msgid "function %s must return type %s"
 msgstr "функция %s должна возвращать тип %s"
 
-#: commands/analyze.c:151
+#: commands/analyze.c:156
 #, c-format
 msgid "skipping analyze of \"%s\" --- lock not available"
 msgstr "анализ \"%s\" пропускается --- блокировка недоступна"
 
-#: commands/analyze.c:168
+#: commands/analyze.c:173
 #, c-format
 msgid "skipping \"%s\" --- only superuser can analyze it"
 msgstr ""
 "\"%s\" пропускается --- только суперпользователь может анализировать этот "
 "объект"
 
-#: commands/analyze.c:172
+#: commands/analyze.c:177
 #, c-format
 msgid "skipping \"%s\" --- only superuser or database owner can analyze it"
 msgstr ""
 "\"%s\" пропускается --- только суперпользователь или владелец БД может "
 "анализировать этот объект"
 
-#: commands/analyze.c:176
+#: commands/analyze.c:181
 #, c-format
 msgid "skipping \"%s\" --- only table or database owner can analyze it"
 msgstr ""
 "\"%s\" пропускается --- только владелец таблицы или БД может анализировать "
 "этот объект"
 
-#: commands/analyze.c:236
+#: commands/analyze.c:241
 #, c-format
 msgid "skipping \"%s\" --- cannot analyze this foreign table"
 msgstr "\"%s\" пропускается --- анализировать эту стороннюю таблицу нельзя"
 
-#: commands/analyze.c:253
+#: commands/analyze.c:258
 #, c-format
 msgid "skipping \"%s\" --- cannot analyze non-tables or special system tables"
 msgstr ""
 "\"%s\" пропускается --- анализировать не таблицы или специальные системные "
 "таблицы нельзя"
 
-#: commands/analyze.c:334
+#: commands/analyze.c:339
 #, c-format
 msgid "analyzing \"%s.%s\" inheritance tree"
 msgstr "анализируется дерево наследования \"%s.%s\""
 
-#: commands/analyze.c:339
+#: commands/analyze.c:344
 #, c-format
 msgid "analyzing \"%s.%s\""
 msgstr "анализируется \"%s.%s\""
 
-#: commands/analyze.c:399
+#: commands/analyze.c:404
 #, c-format
 msgid "column \"%s\" of relation \"%s\" appears more than once"
 msgstr "столбец \"%s\" отношения \"%s\" указан неоднократно"
 
-#: commands/analyze.c:679
+#: commands/analyze.c:684
 #, c-format
 msgid "automatic analyze of table \"%s.%s.%s\" system usage: %s"
 msgstr "автоматический анализ таблицы \"%s.%s.%s\"; нагрузка системы: %s"
 
-#: commands/analyze.c:1231
+#: commands/analyze.c:1236
 #, c-format
 msgid ""
 "\"%s\": scanned %d of %u pages, containing %.0f live rows and %.0f dead "
@@ -5770,7 +5770,7 @@ msgstr ""
 "%.0f, \"мёртвых\" строк: %.0f; строк в выборке: %d, примерное общее число "
 "строк: %.0f"
 
-#: commands/analyze.c:1311
+#: commands/analyze.c:1316
 #, c-format
 msgid ""
 "skipping analyze of \"%s.%s\" inheritance tree --- this inheritance tree "
@@ -5779,7 +5779,7 @@ msgstr ""
 "пропускается анализ дерева наследования \"%s.%s\" --- это дерево "
 "наследования не содержит дочерних таблиц"
 
-#: commands/analyze.c:1409
+#: commands/analyze.c:1414
 #, c-format
 msgid ""
 "skipping analyze of \"%s.%s\" inheritance tree --- this inheritance tree "
@@ -7996,7 +7996,7 @@ msgstr "метод доступа \"%s\" не поддерживает сорт�
 msgid "access method \"%s\" does not support NULLS FIRST/LAST options"
 msgstr "метод доступа \"%s\" не поддерживает параметр NULLS FIRST/LAST"
 
-#: commands/indexcmds.c:1324 commands/typecmds.c:1928
+#: commands/indexcmds.c:1324 commands/typecmds.c:1949
 #, c-format
 msgid "data type %s has no default operator class for access method \"%s\""
 msgstr ""
@@ -8018,7 +8018,7 @@ msgstr ""
 msgid "operator class \"%s\" does not exist for access method \"%s\""
 msgstr "класс операторов \"%s\" для метода доступа \"%s\" не существует"
 
-#: commands/indexcmds.c:1376 commands/typecmds.c:1916
+#: commands/indexcmds.c:1376 commands/typecmds.c:1937
 #, c-format
 msgid "operator class \"%s\" does not accept data type %s"
 msgstr "класс операторов \"%s\" не принимает тип данных %s"
@@ -10763,7 +10763,7 @@ msgstr "неверный формат списка параметров: \"%s\""
 msgid "must be superuser to create a base type"
 msgstr "для создания базового типа нужно быть суперпользователем"
 
-#: commands/typecmds.c:290 commands/typecmds.c:1414
+#: commands/typecmds.c:290 commands/typecmds.c:1435
 #, c-format
 msgid "type attribute \"%s\" not recognized"
 msgstr "атрибут типа \"%s\" не распознан"
@@ -10878,80 +10878,80 @@ msgid "check constraints for domains cannot be marked NO INHERIT"
 msgstr ""
 "ограничения-проверки для доменов не могут иметь характеристики NO INHERIT"
 
-#: commands/typecmds.c:993 commands/typecmds.c:2512
+#: commands/typecmds.c:993 commands/typecmds.c:2533
 #, c-format
 msgid "unique constraints not possible for domains"
 msgstr "ограничения уникальности невозможны для доменов"
 
-#: commands/typecmds.c:999 commands/typecmds.c:2518
+#: commands/typecmds.c:999 commands/typecmds.c:2539
 #, c-format
 msgid "primary key constraints not possible for domains"
 msgstr "ограничения первичного ключа невозможны для доменов"
 
-#: commands/typecmds.c:1005 commands/typecmds.c:2524
+#: commands/typecmds.c:1005 commands/typecmds.c:2545
 #, c-format
 msgid "exclusion constraints not possible for domains"
 msgstr "ограничения-исключения невозможны для доменов"
 
-#: commands/typecmds.c:1011 commands/typecmds.c:2530
+#: commands/typecmds.c:1011 commands/typecmds.c:2551
 #, c-format
 msgid "foreign key constraints not possible for domains"
 msgstr "ограничения внешних ключей невозможны для доменов"
 
-#: commands/typecmds.c:1020 commands/typecmds.c:2539
+#: commands/typecmds.c:1020 commands/typecmds.c:2560
 #, c-format
 msgid "specifying constraint deferrability not supported for domains"
 msgstr ""
 "возможность определения отложенных ограничений для доменов не поддерживается"
 
-#: commands/typecmds.c:1284 utils/cache/typcache.c:1648
+#: commands/typecmds.c:1305 utils/cache/typcache.c:1648
 #, c-format
 msgid "%s is not an enum"
 msgstr "\"%s\" не является перечислением"
 
-#: commands/typecmds.c:1422
+#: commands/typecmds.c:1443
 #, c-format
 msgid "type attribute \"subtype\" is required"
 msgstr "требуется атрибут типа \"subtype\""
 
-#: commands/typecmds.c:1427
+#: commands/typecmds.c:1448
 #, c-format
 msgid "range subtype cannot be %s"
 msgstr "%s не может быть подтипом диапазона"
 
-#: commands/typecmds.c:1446
+#: commands/typecmds.c:1467
 #, c-format
 msgid "range collation specified but subtype does not support collation"
 msgstr ""
 "указано правило сортировки для диапазона, но подтип не поддерживает "
 "сортировку"
 
-#: commands/typecmds.c:1680
+#: commands/typecmds.c:1701
 #, c-format
 msgid "changing argument type of function %s from \"opaque\" to \"cstring\""
 msgstr "изменение типа аргумента функции %s с \"opaque\" на \"cstring\""
 
-#: commands/typecmds.c:1731
+#: commands/typecmds.c:1752
 #, c-format
 msgid "changing argument type of function %s from \"opaque\" to %s"
 msgstr "изменение типа аргумента функции %s с \"opaque\" на %s"
 
-#: commands/typecmds.c:1830
+#: commands/typecmds.c:1851
 #, c-format
 msgid "typmod_in function %s must return type %s"
 msgstr "функция TYPMOD_IN %s должна возвращать тип %s"
 
-#: commands/typecmds.c:1857
+#: commands/typecmds.c:1878
 #, c-format
 msgid "typmod_out function %s must return type %s"
 msgstr "функция TYPMOD_OUT %s должна возвращать тип %s"
 
-#: commands/typecmds.c:1884
+#: commands/typecmds.c:1905
 #, c-format
 msgid "type analyze function %s must return type %s"
 msgstr "функция анализа типа %s должна возвращать тип %s"
 
-#: commands/typecmds.c:1930
+#: commands/typecmds.c:1951
 #, c-format
 msgid ""
 "You must specify an operator class for the range type or define a default "
@@ -10960,101 +10960,101 @@ msgstr ""
 "Вы должны указать класс операторов для типа диапазона или определить класс "
 "операторов по умолчанию для этого подтипа."
 
-#: commands/typecmds.c:1961
+#: commands/typecmds.c:1982
 #, c-format
 msgid "range canonical function %s must return range type"
 msgstr ""
 "функция получения канонического диапазона %s должна возвращать диапазон"
 
-#: commands/typecmds.c:1967
+#: commands/typecmds.c:1988
 #, c-format
 msgid "range canonical function %s must be immutable"
 msgstr ""
 "функция получения канонического диапазона %s должна быть постоянной "
 "(IMMUTABLE)"
 
-#: commands/typecmds.c:2003
+#: commands/typecmds.c:2024
 #, c-format
 msgid "range subtype diff function %s must return type %s"
 msgstr "функция различий для подтипа диапазона (%s) должна возвращать тип %s"
 
-#: commands/typecmds.c:2010
+#: commands/typecmds.c:2031
 #, c-format
 msgid "range subtype diff function %s must be immutable"
 msgstr ""
 "функция различий для подтипа диапазона (%s) должна быть постоянной "
 "(IMMUTABLE)"
 
-#: commands/typecmds.c:2037
+#: commands/typecmds.c:2058
 #, c-format
 msgid "pg_type array OID value not set when in binary upgrade mode"
 msgstr "значение OID массива в pg_type не задано в режиме двоичного обновления"
 
-#: commands/typecmds.c:2340
+#: commands/typecmds.c:2361
 #, c-format
 msgid "column \"%s\" of table \"%s\" contains null values"
 msgstr "столбец \"%s\" таблицы \"%s\" содержит значения NULL"
 
-#: commands/typecmds.c:2453 commands/typecmds.c:2636
+#: commands/typecmds.c:2474 commands/typecmds.c:2657
 #, c-format
 msgid "constraint \"%s\" of domain \"%s\" does not exist"
 msgstr "ограничение \"%s\" для домена \"%s\" не существует"
 
-#: commands/typecmds.c:2457
+#: commands/typecmds.c:2478
 #, c-format
 msgid "constraint \"%s\" of domain \"%s\" does not exist, skipping"
 msgstr "ограничение \"%s\" для домена \"%s\" не существует, пропускается"
 
-#: commands/typecmds.c:2642
+#: commands/typecmds.c:2663
 #, c-format
 msgid "constraint \"%s\" of domain \"%s\" is not a check constraint"
 msgstr ""
 "ограничение \"%s\" для домена \"%s\" не является ограничением-проверкой"
 
-#: commands/typecmds.c:2747
+#: commands/typecmds.c:2768
 #, c-format
 msgid ""
 "column \"%s\" of table \"%s\" contains values that violate the new constraint"
 msgstr ""
 "столбец \"%s\" таблицы \"%s\" содержит значения, нарушающие новое ограничение"
 
-#: commands/typecmds.c:2975 commands/typecmds.c:3180 commands/typecmds.c:3262
-#: commands/typecmds.c:3449
+#: commands/typecmds.c:2996 commands/typecmds.c:3201 commands/typecmds.c:3283
+#: commands/typecmds.c:3470
 #, c-format
 msgid "%s is not a domain"
 msgstr "\"%s\" - это не домен"
 
-#: commands/typecmds.c:3009
+#: commands/typecmds.c:3030
 #, c-format
 msgid "constraint \"%s\" for domain \"%s\" already exists"
 msgstr "ограничение \"%s\" для домена \"%s\" уже существует"
 
-#: commands/typecmds.c:3060
+#: commands/typecmds.c:3081
 #, c-format
 msgid "cannot use table references in domain check constraint"
 msgstr "в ограничении-проверке для домена нельзя ссылаться на таблицы"
 
-#: commands/typecmds.c:3192 commands/typecmds.c:3274 commands/typecmds.c:3566
+#: commands/typecmds.c:3213 commands/typecmds.c:3295 commands/typecmds.c:3587
 #, c-format
 msgid "%s is a table's row type"
 msgstr "%s - это тип строк таблицы"
 
-#: commands/typecmds.c:3194 commands/typecmds.c:3276 commands/typecmds.c:3568
+#: commands/typecmds.c:3215 commands/typecmds.c:3297 commands/typecmds.c:3589
 #, c-format
 msgid "Use ALTER TABLE instead."
 msgstr "Изменить его можно с помощью ALTER TABLE."
 
-#: commands/typecmds.c:3201 commands/typecmds.c:3283 commands/typecmds.c:3481
+#: commands/typecmds.c:3222 commands/typecmds.c:3304 commands/typecmds.c:3502
 #, c-format
 msgid "cannot alter array type %s"
 msgstr "изменить тип массива \"%s\" нельзя"
 
-#: commands/typecmds.c:3203 commands/typecmds.c:3285 commands/typecmds.c:3483
+#: commands/typecmds.c:3224 commands/typecmds.c:3306 commands/typecmds.c:3504
 #, c-format
 msgid "You can alter type %s, which will alter the array type as well."
 msgstr "Однако можно изменить тип %s, что повлечёт изменение типа массива."
 
-#: commands/typecmds.c:3551
+#: commands/typecmds.c:3572
 #, c-format
 msgid "type \"%s\" already exists in schema \"%s\""
 msgstr "тип \"%s\" уже существует в схеме \"%s\""
@@ -11239,33 +11239,33 @@ msgstr "роль \"%s\" уже включена в роль \"%s\""
 msgid "role \"%s\" is not a member of role \"%s\""
 msgstr "роль \"%s\" не включена в роль \"%s\""
 
-#: commands/vacuum.c:186
+#: commands/vacuum.c:188
 #, c-format
 msgid "%s cannot be executed from VACUUM or ANALYZE"
 msgstr "%s нельзя выполнить в ходе VACUUM или ANALYZE"
 
-#: commands/vacuum.c:196
+#: commands/vacuum.c:198
 #, c-format
 msgid "VACUUM option DISABLE_PAGE_SKIPPING cannot be used with FULL"
 msgstr "Параметр VACUUM DISABLE_PAGE_SKIPPING нельзя использовать с FULL"
 
-#: commands/vacuum.c:565
+#: commands/vacuum.c:577
 #, c-format
 msgid "oldest xmin is far in the past"
 msgstr "самый старый xmin далеко в прошлом"
 
-#: commands/vacuum.c:566
+#: commands/vacuum.c:578
 #, c-format
 msgid "Close open transactions soon to avoid wraparound problems."
 msgstr ""
 "Скорее закройте открытые транзакции, чтобы избежать проблемы наложения."
 
-#: commands/vacuum.c:605
+#: commands/vacuum.c:617
 #, c-format
 msgid "oldest multixact is far in the past"
 msgstr "самый старый multixact далеко в прошлом"
 
-#: commands/vacuum.c:606
+#: commands/vacuum.c:618
 #, c-format
 msgid ""
 "Close open transactions with multixacts soon to avoid wraparound problems."
@@ -11273,44 +11273,44 @@ msgstr ""
 "Скорее закройте открытые транзакции в мультитранзакциях, чтобы избежать "
 "проблемы наложения."
 
-#: commands/vacuum.c:1176
+#: commands/vacuum.c:1188
 #, c-format
 msgid "some databases have not been vacuumed in over 2 billion transactions"
 msgstr ""
 "есть базы данных, которые не очищались на протяжении более чем 2 миллиардов "
 "транзакций"
 
-#: commands/vacuum.c:1177
+#: commands/vacuum.c:1189
 #, c-format
 msgid "You might have already suffered transaction-wraparound data loss."
 msgstr "Возможно, вы уже потеряли данные в результате наложения ID транзакций."
 
-#: commands/vacuum.c:1306
+#: commands/vacuum.c:1324
 #, c-format
 msgid "skipping vacuum of \"%s\" --- lock not available"
 msgstr "очистка \"%s\" пропускается --- блокировка недоступна"
 
-#: commands/vacuum.c:1332
+#: commands/vacuum.c:1350
 #, c-format
 msgid "skipping \"%s\" --- only superuser can vacuum it"
 msgstr ""
 "\"%s\" пропускается --- только суперпользователь может очистить эту таблицу"
 
-#: commands/vacuum.c:1336
+#: commands/vacuum.c:1354
 #, c-format
 msgid "skipping \"%s\" --- only superuser or database owner can vacuum it"
 msgstr ""
 "пропускается \"%s\" --- только суперпользователь или владелец БД может "
 "очистить эту таблицу"
 
-#: commands/vacuum.c:1340
+#: commands/vacuum.c:1358
 #, c-format
 msgid "skipping \"%s\" --- only table or database owner can vacuum it"
 msgstr ""
 "\"%s\" пропускается --- только владелец базы данных или этой таблицы может "
 "очистить её"
 
-#: commands/vacuum.c:1359
+#: commands/vacuum.c:1377
 #, c-format
 msgid "skipping \"%s\" --- cannot vacuum non-tables or special system tables"
 msgstr ""
@@ -21395,8 +21395,8 @@ msgstr "преобразование кодировки из %s в ASCII не п
 #: utils/adt/mac8.c:93 utils/adt/mac8.c:166 utils/adt/mac8.c:184
 #: utils/adt/mac8.c:202 utils/adt/mac8.c:221 utils/adt/nabstime.c:1539
 #: utils/adt/network.c:58 utils/adt/numeric.c:593 utils/adt/numeric.c:620
-#: utils/adt/numeric.c:5488 utils/adt/numeric.c:5512 utils/adt/numeric.c:5536
-#: utils/adt/numeric.c:6338 utils/adt/numeric.c:6364 utils/adt/oid.c:44
+#: utils/adt/numeric.c:5498 utils/adt/numeric.c:5522 utils/adt/numeric.c:5546
+#: utils/adt/numeric.c:6348 utils/adt/numeric.c:6374 utils/adt/oid.c:44
 #: utils/adt/oid.c:58 utils/adt/oid.c:64 utils/adt/oid.c:86
 #: utils/adt/pg_lsn.c:44 utils/adt/pg_lsn.c:50 utils/adt/tid.c:72
 #: utils/adt/tid.c:80 utils/adt/tid.c:88 utils/adt/txid.c:405
@@ -21419,8 +21419,8 @@ msgstr "значение \"%s\" вне диапазона для типа %s"
 #: utils/adt/int.c:846 utils/adt/int.c:954 utils/adt/int.c:1043
 #: utils/adt/int.c:1082 utils/adt/int.c:1110 utils/adt/int8.c:597
 #: utils/adt/int8.c:657 utils/adt/int8.c:897 utils/adt/int8.c:1005
-#: utils/adt/int8.c:1094 utils/adt/int8.c:1202 utils/adt/numeric.c:6902
-#: utils/adt/numeric.c:7191 utils/adt/numeric.c:8203 utils/adt/timestamp.c:3216
+#: utils/adt/int8.c:1094 utils/adt/int8.c:1202 utils/adt/numeric.c:6912
+#: utils/adt/numeric.c:7201 utils/adt/numeric.c:8213 utils/adt/timestamp.c:3216
 #, c-format
 msgid "division by zero"
 msgstr "деление на ноль"
@@ -21675,35 +21675,24 @@ msgstr ""
 msgid "invalid input syntax for type %s"
 msgstr "неверный синтаксис для типа %s"
 
-#: utils/adt/enum.c:101
-#, c-format
-msgid "unsafe use of new value \"%s\" of enum type %s"
-msgstr "небезопасное использование нового значения \"%s\" типа-перечисления %s"
-
-#: utils/adt/enum.c:104
-#, c-format
-msgid "New enum values must be committed before they can be used."
-msgstr ""
-"Новые значения перечисления должны быть зафиксированы перед использованием."
-
-#: utils/adt/enum.c:122 utils/adt/enum.c:132 utils/adt/enum.c:190
-#: utils/adt/enum.c:200
+#: utils/adt/enum.c:48 utils/adt/enum.c:58 utils/adt/enum.c:113
+#: utils/adt/enum.c:123
 #, c-format
 msgid "invalid input value for enum %s: \"%s\""
 msgstr "неверное значение для перечисления %s: \"%s\""
 
-#: utils/adt/enum.c:162 utils/adt/enum.c:228 utils/adt/enum.c:287
+#: utils/adt/enum.c:85 utils/adt/enum.c:148 utils/adt/enum.c:207
 #, c-format
 msgid "invalid internal value for enum: %u"
 msgstr "неверное внутреннее значение для перечисления: %u"
 
-#: utils/adt/enum.c:447 utils/adt/enum.c:476 utils/adt/enum.c:516
-#: utils/adt/enum.c:536
+#: utils/adt/enum.c:360 utils/adt/enum.c:389 utils/adt/enum.c:429
+#: utils/adt/enum.c:449
 #, c-format
 msgid "could not determine actual enum type"
 msgstr "не удалось определить фактический тип перечисления"
 
-#: utils/adt/enum.c:455 utils/adt/enum.c:484
+#: utils/adt/enum.c:368 utils/adt/enum.c:397
 #, c-format
 msgid "enum %s contains no values"
 msgstr "перечисление %s не содержит значений"
@@ -21736,7 +21725,7 @@ msgstr "\"%s\" вне диапазона для типа double precision"
 msgid "smallint out of range"
 msgstr "smallint вне диапазона"
 
-#: utils/adt/float.c:1430 utils/adt/numeric.c:7624
+#: utils/adt/float.c:1430 utils/adt/numeric.c:7634
 #, c-format
 msgid "cannot take square root of a negative number"
 msgstr "извлечь квадратный корень отрицательного числа нельзя"
@@ -21751,12 +21740,12 @@ msgstr "ноль в отрицательной степени даёт неоп�
 msgid "a negative number raised to a non-integer power yields a complex result"
 msgstr "отрицательное число в дробной степени даёт комплексный результат"
 
-#: utils/adt/float.c:1542 utils/adt/float.c:1572 utils/adt/numeric.c:7890
+#: utils/adt/float.c:1542 utils/adt/float.c:1572 utils/adt/numeric.c:7900
 #, c-format
 msgid "cannot take logarithm of zero"
 msgstr "вычислить логарифм нуля нельзя"
 
-#: utils/adt/float.c:1546 utils/adt/float.c:1576 utils/adt/numeric.c:7894
+#: utils/adt/float.c:1546 utils/adt/float.c:1576 utils/adt/numeric.c:7904
 #, c-format
 msgid "cannot take logarithm of a negative number"
 msgstr "вычислить логарифм отрицательного числа нельзя"
@@ -22850,9 +22839,9 @@ msgstr "конечное значение не может быть NaN"
 msgid "step size cannot be NaN"
 msgstr "размер шага не может быть NaN"
 
-#: utils/adt/numeric.c:2589 utils/adt/numeric.c:5551 utils/adt/numeric.c:5996
-#: utils/adt/numeric.c:7700 utils/adt/numeric.c:8125 utils/adt/numeric.c:8239
-#: utils/adt/numeric.c:8312
+#: utils/adt/numeric.c:2589 utils/adt/numeric.c:5561 utils/adt/numeric.c:6006
+#: utils/adt/numeric.c:7710 utils/adt/numeric.c:8135 utils/adt/numeric.c:8249
+#: utils/adt/numeric.c:8322
 #, c-format
 msgid "value overflows numeric format"
 msgstr "значение переполняет формат numeric"
@@ -22872,12 +22861,17 @@ msgstr "нельзя преобразовать NaN в bigint"
 msgid "cannot convert NaN to smallint"
 msgstr "нельзя преобразовать NaN в smallint"
 
-#: utils/adt/numeric.c:6066
+#: utils/adt/numeric.c:3079 utils/adt/numeric.c:3150
+#, c-format
+msgid "cannot convert infinity to numeric"
+msgstr "нельзя представить бесконечность в numeric"
+
+#: utils/adt/numeric.c:6076
 #, c-format
 msgid "numeric field overflow"
 msgstr "переполнение поля numeric"
 
-#: utils/adt/numeric.c:6067
+#: utils/adt/numeric.c:6077
 #, c-format
 msgid ""
 "A field with precision %d, scale %d must round to an absolute value less "
@@ -27821,6 +27815,15 @@ msgstr "нестандартное использование спецсимво
 #, c-format
 msgid "Use the escape string syntax for escapes, e.g., E'\\r\\n'."
 msgstr "Используйте для записи спецсимволов синтаксис спецстрок E'\\r\\n'."
+
+#~ msgid "unsafe use of new value \"%s\" of enum type %s"
+#~ msgstr ""
+#~ "небезопасное использование нового значения \"%s\" типа-перечисления %s"
+
+#~ msgid "New enum values must be committed before they can be used."
+#~ msgstr ""
+#~ "Новые значения перечисления должны быть зафиксированы перед "
+#~ "использованием."
 
 #~ msgid "invalid publish list"
 #~ msgstr "неверный список публикации"
