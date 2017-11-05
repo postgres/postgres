@@ -1,6 +1,512 @@
 <!-- doc/src/sgml/release-9.6.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-9-6-6">
+  <title>Release 9.6.6</title>
+
+  <formalpara>
+  <title>Release date:</title>
+  <para>2017-11-09</para>
+  </formalpara>
+
+  <para>
+   This release contains a variety of fixes from 9.6.5.
+   For information about new features in the 9.6 major release, see
+   <xref linkend="release-9-6">.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 9.6.6</title>
+
+   <para>
+    A dump/restore is not required for those running 9.6.X.
+   </para>
+
+   <para>
+    However, if you use BRIN indexes, see the first changelog entry below.
+   </para>
+
+   <para>
+    Also, if you are upgrading from a version earlier than 9.6.4,
+    see <xref linkend="release-9-6-4">.
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+     <para>
+      Fix BRIN index summarization to handle concurrent table extension
+      correctly (&Aacute;lvaro Herrera)
+     </para>
+
+     <para>
+      Previously, a race condition allowed some table rows to be omitted from
+      the index.  It may be necessary to reindex existing BRIN indexes to
+      recover from past occurrences of this problem.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix possible failures during concurrent updates of a BRIN index
+      (Tom Lane)
+     </para>
+
+     <para>
+      These race conditions could result in errors like <quote>invalid index
+      offnum</quote> or <quote>inconsistent range map</quote>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix crash when logical decoding is invoked from a SPI-using function,
+      in particular any function written in a PL language
+      (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix incorrect query results when multiple <literal>GROUPING
+      SETS</literal> columns contain the same simple variable (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix incorrect parallelization decisions for nested queries
+      (Amit Kapila, Kuntal Ghosh)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix parallel query handling to not fail when a recently-used role is
+      dropped (Amit Kapila)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <function>json_build_array()</function>,
+      <function>json_build_object()</function>, and their <type>jsonb</type>
+      equivalents to handle explicit <literal>VARIADIC</literal> arguments
+      correctly (Michael Paquier)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [7769fc000] 2017-09-27 17:05:53 -0400
+Branch: REL_10_STABLE Release: REL_10_0 [07ea925e2] 2017-09-27 17:05:53 -0400
+Branch: REL9_6_STABLE [def03e4bf] 2017-09-27 17:05:53 -0400
+Branch: REL9_5_STABLE [ad56dbd6c] 2017-09-27 17:05:53 -0400
+Branch: REL9_4_STABLE [c38575edc] 2017-09-27 17:05:53 -0400
+Branch: REL9_3_STABLE [2e82fba0e] 2017-09-27 17:05:54 -0400
+Branch: REL9_2_STABLE [72d4fd08e] 2017-09-27 17:05:54 -0400
+-->
+     <para>
+      Properly reject attempts to convert infinite float values to
+      type <type>numeric</type> (Tom Lane, KaiGai Kohei)
+     </para>
+
+     <para>
+      Previously the behavior was platform-dependent.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix corner-case crashes when columns have been added to the end of a
+      view (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Record proper dependencies when a view or rule
+      contains <structname>FieldSelect</structname>
+      or <structname>FieldStore</structname> expression nodes (Tom Lane)
+     </para>
+
+     <para>
+      Lack of these dependencies could allow a column or data
+      type <command>DROP</command> to go through when it ought to fail,
+      thereby causing later uses of the view or rule to get errors.
+      This patch does not do anything to protect existing views/rules,
+      only ones created in the future.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Correctly detect hashability of range data types (Tom Lane)
+     </para>
+
+     <para>
+      The planner mistakenly assumed that any range type could be hashed
+      for use in hash joins or hash aggregation, but actually it must check
+      whether the range's subtype has hash support.  This does not affect any
+      of the built-in range types, since they're all hashable anyway.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [6f44fe7f1] 2017-09-17 15:28:51 -0400
+Branch: REL_10_STABLE Release: REL_10_0 [244b4a37e] 2017-09-17 15:28:51 -0400
+Branch: REL9_6_STABLE [86e4ebb9a] 2017-09-17 15:28:51 -0400
+Branch: REL9_5_STABLE [eeff68396] 2017-09-17 15:28:51 -0400
+-->
+     <para>
+      Correctly ignore <structname>RelabelType</structname> expression nodes
+      when determining relation distinctness (David Rowley)
+     </para>
+
+     <para>
+      This allows the intended optimization to occur when a subquery has
+      a result column of type <type>varchar</type>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent sharing transition states between ordered-set aggregates
+      (David Rowley)
+     </para>
+
+     <para>
+      This causes a crash with the built-in ordered-set aggregates, and
+      probably with user-written ones as well.  v11 and later will include
+      provisions for dealing with such cases safely, but in released
+      branches, just disable the optimization.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Prevent <varname>idle_in_transaction_session_timeout</varname> from
+      being ignored when a <varname>statement_timeout</varname> occurred
+      earlier (Lukas Fittl)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix low-probability loss of <command>NOTIFY</command> messages due to
+      XID wraparound (Marko Tiikkaja, Tom Lane)
+     </para>
+
+     <para>
+      If a session executed no queries, but merely listened for
+      notifications, for more than 2 billion transactions, it started to miss
+      some notifications from concurrently-committing transactions.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [899bd785c] 2017-09-25 16:09:19 -0400
+Branch: REL_10_STABLE Release: REL_10_0 [4621c7f7a] 2017-09-25 16:09:19 -0400
+Branch: REL9_6_STABLE [175061222] 2017-09-25 16:09:20 -0400
+Branch: REL9_5_STABLE [05297416f] 2017-09-25 16:09:20 -0400
+Branch: REL9_4_STABLE [3a07a6f3e] 2017-09-25 16:09:20 -0400
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [5ea96efaa] 2017-09-26 13:42:53 -0400
+Branch: REL_10_STABLE Release: REL_10_0 [d29f30d8c] 2017-09-26 13:43:00 -0400
+Branch: REL9_6_STABLE [12ac252f9] 2017-09-26 13:43:07 -0400
+Branch: REL9_5_STABLE [06852f215] 2017-09-26 13:43:12 -0400
+Branch: REL9_4_STABLE [e5c058e2e] 2017-09-26 13:43:17 -0400
+-->
+     <para>
+      Avoid <systemitem>SIGBUS</systemitem> crash on Linux when a DSM memory
+      request exceeds the space available in <systemitem>tmpfs</systemitem>
+      (Thomas Munro)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Reduce the frequency of data flush requests during bulk file copies to
+      avoid performance problems on macOS, particularly with its new APFS
+      file system (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [27c6619e9] 2017-09-17 14:50:01 -0400
+Branch: REL_10_STABLE Release: REL_10_0 [66fe509be] 2017-09-17 14:50:01 -0400
+Branch: REL9_6_STABLE [c0d21bdb8] 2017-09-17 14:50:01 -0400
+Branch: REL9_5_STABLE [825fac5d3] 2017-09-17 14:50:01 -0400
+Branch: REL9_4_STABLE [bc0974703] 2017-09-17 14:50:01 -0400
+Branch: REL9_3_STABLE [b1be33593] 2017-09-17 14:50:01 -0400
+Branch: REL9_2_STABLE [4cd6cd21d] 2017-09-17 14:50:01 -0400
+-->
+     <para>
+      Prevent low-probability crash in processing of nested trigger firings
+      (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow <command>COPY</command>'s <literal>FREEZE</literal> option to
+      work when the transaction isolation level is <literal>REPEATABLE
+      READ</literal> or higher (Noah Misch)
+     </para>
+
+     <para>
+      This case was unintentionally broken by a previous bug fix.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Peter Eisentraut <peter_e@gmx.net>
+Branch: master [aa6b7b72d] 2017-09-22 17:10:36 -0400
+Branch: REL_10_STABLE Release: REL_10_0 [3d7f11a0f] 2017-09-23 10:03:05 -0400
+Branch: REL9_6_STABLE [a1f30ecc5] 2017-09-23 10:03:36 -0400
+Branch: REL9_5_STABLE [acae13faa] 2017-09-23 10:04:55 -0400
+Branch: REL9_4_STABLE [9bf049946] 2017-09-23 10:05:28 -0400
+Branch: REL9_3_STABLE [e0f5710c5] 2017-09-23 10:05:40 -0400
+Branch: REL9_2_STABLE [2eb84e54a] 2017-09-23 10:14:30 -0400
+-->
+     <para>
+      Correctly restore the umask setting when file creation fails
+      in <command>COPY</command> or <function>lo_export()</function>
+      (Peter Eisentraut)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [714805010] 2017-09-21 18:13:11 -0400
+Branch: REL_10_STABLE Release: REL_10_0 [a2b1eb234] 2017-09-21 18:13:11 -0400
+Branch: REL9_6_STABLE [ea31541f5] 2017-09-21 18:13:11 -0400
+Branch: REL9_5_STABLE [122289a66] 2017-09-21 18:13:11 -0400
+Branch: REL9_4_STABLE [b572b435c] 2017-09-21 18:13:11 -0400
+Branch: REL9_3_STABLE [a09d8be7d] 2017-09-21 18:13:11 -0400
+Branch: REL9_2_STABLE [e56facd8b] 2017-09-21 18:13:11 -0400
+-->
+     <para>
+      Give a better error message for duplicate column names
+      in <command>ANALYZE</command> (Nathan Bossart)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Robert Haas <rhaas@postgresql.org>
+Branch: master [81276fdd3] 2017-09-14 17:19:04 -0400
+Branch: REL_10_STABLE Release: REL_10_0 [a2a61f633] 2017-09-14 16:44:01 -0400
+Branch: REL9_6_STABLE [353328ad1] 2017-09-14 16:47:11 -0400
+-->
+     <para>
+      Add missing cases in <function>GetCommandLogLevel()</function>,
+      preventing errors when certain SQL commands are used while
+      <varname>log_statement</varname> is set to <literal>ddl</literal>
+      (Michael Paquier)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: REL9_6_STABLE [2ac598874] 2017-10-17 12:15:08 -0400
+Branch: REL9_5_STABLE [9e20276e1] 2017-10-17 12:15:08 -0400
+Branch: REL9_4_STABLE [38f17e8ee] 2017-10-17 12:15:08 -0400
+Branch: REL9_3_STABLE [06b2a73ed] 2017-10-17 12:15:08 -0400
+-->
+     <para>
+      Fix mis-parsing of the last line in a
+      non-newline-terminated <filename>pg_hba.conf</filename> file
+      (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <function>AggGetAggref()</function> to return the
+      correct <structname>Aggref</structname> nodes to aggregate final
+      functions whose transition calculations have been merged (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Stephen Frost <sfrost@snowman.net>
+Branch: master [d2e40b310] 2017-09-13 20:02:09 -0400
+Branch: REL_10_STABLE Release: REL_10_0 [68a7c24fd] 2017-09-13 20:04:43 -0400
+Branch: REL9_6_STABLE [caae416aa] 2017-09-13 20:02:27 -0400
+-->
+     <para>
+      Fix <application>pg_dump</application> to ensure that it
+      emits <command>GRANT</command> commands in a valid order
+      (Stephen Frost)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>pg_basebackup</application>'s matching of tablespace
+      paths to canonicalize both paths before comparing (Michael Paquier)
+     </para>
+
+     <para>
+      This is particularly helpful on Windows.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Fix <application>libpq</application> to not require user's home
+      directory to exist (Tom Lane)
+     </para>
+
+     <para>
+      In v10, failure to find the home directory while trying to
+      read <filename>~/.pgpass</filename> was treated as a hard error,
+      but it should just cause that file to not be found.  Both v10 and
+      previous release branches made the same mistake when
+      reading <filename>~/.pg_service.conf</filename>, though this was less
+      obvious since that file is not sought unless a service name is
+      specified.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [2e70d6b5e] 2017-08-29 15:18:01 -0400
+Branch: REL_10_STABLE Release: REL_10_0 [b481b39b8] 2017-08-29 15:18:01 -0400
+Branch: REL9_6_STABLE [bc95e5874] 2017-08-29 15:18:01 -0400
+Branch: REL9_5_STABLE [dfd1042c6] 2017-08-29 15:18:01 -0400
+Branch: REL9_4_STABLE [1c53722ff] 2017-08-29 15:18:01 -0400
+Branch: REL9_3_STABLE [d391fb6c3] 2017-08-29 15:18:01 -0400
+Branch: REL9_2_STABLE [a07058a6d] 2017-08-29 15:18:01 -0400
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [9d6b160d7] 2017-09-01 15:14:46 -0400
+Branch: REL_10_STABLE Release: REL_10_0 [f2fe1cbef] 2017-09-01 15:14:18 -0400
+Branch: REL9_6_STABLE [3a0f8e7d3] 2017-09-01 15:14:18 -0400
+Branch: REL9_5_STABLE [1305186de] 2017-09-01 15:14:18 -0400
+Branch: REL9_4_STABLE [53863ebeb] 2017-09-01 15:14:18 -0400
+Branch: REL9_3_STABLE [dd344de67] 2017-09-01 15:14:18 -0400
+Branch: REL9_2_STABLE [f60a236ba] 2017-09-01 15:14:18 -0400
+-->
+     <para>
+      Fix <application>libpq</application> to guard against integer
+      overflow in the row count of a <structname>PGresult</structname>
+      (Michael Paquier)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Michael Meskes <meskes@postgresql.org>
+Branch: master [35e156882] 2017-09-12 04:53:36 +0200
+Branch: REL_10_STABLE Release: REL_10_0 [75fbf8ad1] 2017-09-18 23:07:18 +0200
+Branch: REL9_6_STABLE [59b5a3e5c] 2017-09-18 23:07:34 +0200
+Branch: REL9_5_STABLE [3a5aa7de3] 2017-09-18 23:07:44 +0200
+Branch: REL9_4_STABLE [e5b8b771e] 2017-09-18 23:08:17 +0200
+Branch: REL9_3_STABLE [149cfdb3a] 2017-09-18 23:08:24 +0200
+-->
+     <para>
+      Fix <application>ecpg</application>'s handling of out-of-scope cursor
+      declarations with pointer or array variables (Michael Meskes)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      In ecpglib, correctly handle backslashes in string literals depending
+      on whether <varname>standard_conforming_strings</varname> is set
+      (Tsunakawa Takayuki)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make ecpglib's Informix-compatibility mode ignore fractional digits in
+      integer input strings, as expected (Gao Zengqi, Michael Meskes)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Michael Meskes <meskes@postgresql.org>
+Branch: master [a772624b1] 2017-08-26 12:57:21 +0200
+Branch: REL_10_STABLE Release: REL_10_0 [38d7cb67f] 2017-09-14 00:47:03 +0200
+Branch: REL9_6_STABLE [839ee1811] 2017-09-14 01:17:03 +0200
+Author: Michael Meskes <meskes@postgresql.org>
+Branch: master [04fbe0e45] 2017-08-26 19:11:58 +0200
+Branch: REL_10_STABLE Release: REL_10_0 [eaf7001eb] 2017-09-14 00:47:08 +0200
+Branch: REL9_6_STABLE [407e66078] 2017-09-14 01:17:15 +0200
+-->
+     <para>
+      Fix <application>ecpg</application>'s regression tests to work reliably
+      on Windows (Christian Ullrich, Michael Meskes)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [47f849a3c] 2017-09-22 00:04:29 -0400
+Branch: REL_10_STABLE Release: REL_10_0 [3876b16ce] 2017-09-22 00:04:21 -0400
+Branch: REL9_6_STABLE [e25f4401d] 2017-09-22 00:04:21 -0400
+Branch: REL9_5_STABLE [89f02e17a] 2017-09-22 00:04:21 -0400
+Branch: REL9_4_STABLE [dbd6099fb] 2017-09-22 00:04:21 -0400
+Branch: REL9_3_STABLE [2020f90bf] 2017-09-22 00:04:21 -0400
+Branch: REL9_2_STABLE [a07105afa] 2017-09-22 00:04:21 -0400
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [24a1897ab] 2017-10-23 17:54:09 -0400
+Branch: REL_10_STABLE [dffe7fbc2] 2017-10-23 17:54:09 -0400
+Branch: REL9_6_STABLE [173b7a4a7] 2017-10-23 17:54:09 -0400
+Branch: REL9_5_STABLE [4b433a8b0] 2017-10-23 17:54:09 -0400
+Branch: REL9_4_STABLE [876e076eb] 2017-10-23 17:54:09 -0400
+Branch: REL9_3_STABLE [9c74dd2d5] 2017-10-23 17:54:09 -0400
+Branch: REL9_2_STABLE [1317d1301] 2017-10-23 17:54:09 -0400
+-->
+     <para>
+      Sync our copy of the timezone library with IANA release tzcode2017c
+      (Tom Lane)
+     </para>
+
+     <para>
+      This fixes various issues; the only one likely to be user-visible
+      is that the default DST rules for a POSIX-style zone name, if
+      no <filename>posixrules</filename> file exists in the timezone data
+      directory, now match current US law rather than what it was a dozen
+      years ago.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Update time zone data files to <application>tzdata</application>
+      release 2017c for DST law changes in Fiji, Namibia, Northern Cyprus,
+      Sudan, Tonga, and Turks &amp; Caicos Islands, plus historical
+      corrections for Alaska, Apia, Burma, Calcutta, Detroit, Ireland,
+      Namibia, and Pago Pago.
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-9-6-5">
   <title>Release 9.6.5</title>
 
