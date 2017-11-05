@@ -1645,6 +1645,14 @@ DeleteAllExportedSnapshotFiles(void)
 	FreeDir(s_dir);
 }
 
+/*
+ * ThereAreNoPriorRegisteredSnapshots
+ *		Is the registered snapshot count less than or equal to one?
+ *
+ * Don't use this to settle important decisions.  While zero registrations and
+ * no ActiveSnapshot would confirm a certain idleness, the system makes no
+ * guarantees about the significance of one registered snapshot.
+ */
 bool
 ThereAreNoPriorRegisteredSnapshots(void)
 {
