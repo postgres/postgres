@@ -25,7 +25,7 @@ msgstr ""
 "Project-Id-Version: pg_dump (Postgresql) 9.2\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2017-02-07 20:17+0000\n"
-"PO-Revision-Date: 2017-04-23 02:51+0100\n"
+"PO-Revision-Date: 2017-10-23 19:11+0100\n"
 "Last-Translator: Daniele Varrazzo <daniele.varrazzo@gmail.com>\n"
 "Language-Team: Gruppo traduzioni ITPUG <traduzioni@itpug.org>\n"
 "Language: it\n"
@@ -2314,7 +2314,7 @@ msgstr ""
 #: pg_restore.c:450
 #, c-format
 msgid "  --no-security-labels         do not restore security labels\n"
-msgstr "  --no-security-labels         do ripristinare le etichette di sicurezza\n"
+msgstr "  --no-security-labels         non ripristinare le etichette di sicurezza\n"
 
 #: pg_restore.c:451
 #, c-format
