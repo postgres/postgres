@@ -2392,13 +2392,25 @@ CopyFrom(CopyState cstate)
 	/*
 	 * Optimize if new relfilenode was created in this subxact or one of its
 	 * committed children and we won't see those rows later as part of an
-	 * earlier scan or command. This ensures that if this subtransaction
-	 * aborts then the frozen rows won't be visible after xact cleanup. Note
+	 * earlier scan or command. The subxact test ensures that if this subxact
+	 * aborts then the frozen rows won't be visible after xact cleanup.  Note
 	 * that the stronger test of exactly which subtransaction created it is
-	 * crucial for correctness of this optimization.
+	 * crucial for correctness of this optimization. The test for an earlier
+	 * scan or command tolerates false negatives. FREEZE causes other sessions
+	 * to see rows they would not see under MVCC, and a false negative merely
+	 * spreads that anomaly to the current session.
 	 */
 	if (cstate->freeze)
 	{
+		/*
+		 * Tolerate one registration for the benefit of FirstXactSnapshot.
+		 * Scan-bearing queries generally create at least two registrations,
+		 * though relying on that is fragile, as is ignoring ActiveSnapshot.
+		 * Clear CatalogSnapshot to avoid counting its registration.  We'll
+		 * still detect ongoing catalog scans, each of which separately
+		 * registers the snapshot it uses.
+		 */
+		InvalidateCatalogSnapshot();
 		if (!ThereAreNoPriorRegisteredSnapshots() || !ThereAreNoReadyPortals())
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TRANSACTION_STATE),
