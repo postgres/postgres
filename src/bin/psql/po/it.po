@@ -25,7 +25,7 @@ msgstr ""
 "Project-Id-Version: psql (PostgreSQL) 9.6\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2017-05-22 15:43+0000\n"
-"PO-Revision-Date: 2017-05-29 22:06+0100\n"
+"PO-Revision-Date: 2017-09-10 18:05+0100\n"
 "Last-Translator: Daniele Varrazzo <daniele.varrazzo@gmail.com>\n"
 "Language-Team: Gruppo traduzioni ITPUG <traduzioni@itpug.org>\n"
 "Language: it\n"
@@ -34,7 +34,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Poedit-SourceCharset: utf-8\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Poedit 1.8.7.1\n"
+"X-Generator: Poedit 1.5.4\n"
 
 #: ../../common/exec.c:127 ../../common/exec.c:241 ../../common/exec.c:284
 #, c-format
@@ -234,8 +234,8 @@ msgid "%s: invalid encoding name or conversion procedure not found\n"
 msgstr "%s: nome codifica errato oppure non esiste una procedura di conversione\n"
 
 #: command.c:871 command.c:1962 command.c:3649 common.c:153 common.c:200
-#: common.c:497 common.c:1190 common.c:1218 common.c:1319 copy.c:489 copy.c:709
-#: large_obj.c:156 large_obj.c:191 large_obj.c:253
+#: common.c:497 common.c:1190 common.c:1218 common.c:1319 copy.c:489
+#: copy.c:709 large_obj.c:156 large_obj.c:191 large_obj.c:253
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -963,7 +963,8 @@ msgstr "Posizione"
 msgid "Options"
 msgstr "Opzioni"
 
-#: describe.c:252 describe.c:609 describe.c:806 describe.c:3061 describe.c:3065
+#: describe.c:252 describe.c:609 describe.c:806 describe.c:3061
+#: describe.c:3065
 msgid "Size"
 msgstr "Dimensione"
 
@@ -1186,12 +1187,12 @@ msgstr "Descrizioni oggetti"
 #: describe.c:1273
 #, c-format
 msgid "Did not find any relation named \"%s\".\n"
-msgstr "Non ho trovato alcuna relazione di nome \"%s\".\n"
+msgstr "Non è stata trovata nessuna relazione chiamata \"%s\".\n"
 
 #: describe.c:1483
 #, c-format
 msgid "Did not find any relation with OID %s.\n"
-msgstr "Non ho trovato nessuna relazione con OID %s.\n"
+msgstr "Non è stata trovata nessuna relazione con OID %s.\n"
 
 #: describe.c:1589
 #, c-format
@@ -1725,7 +1726,7 @@ msgstr "Lista degli analizzatori di ricerca resto"
 #: describe.c:3778
 #, c-format
 msgid "Did not find any text search parser named \"%s\".\n"
-msgstr "Non ho trovato alcun analizzatore di ricerca testo chiamato \"%s\".\n"
+msgstr "Non è stato trovato nessun analizzatore di ricerca testo chiamato \"%s\".\n"
 
 #: describe.c:3853
 msgid "Start parse"
@@ -1806,7 +1807,7 @@ msgstr "Lista delle configurazioni di ricerca testo"
 #: describe.c:4159
 #, c-format
 msgid "Did not find any text search configuration named \"%s\".\n"
-msgstr "Non trovata alcuna configurazione di ricerca testo chiamata \"%s\".\n"
+msgstr "Non è stata trovata nessuna configurazione di ricerca testo chiamata \"%s\".\n"
 
 #: describe.c:4225
 msgid "Token"
@@ -1908,12 +1909,12 @@ msgstr "Lista delle estensioni installate"
 #: describe.c:4670
 #, c-format
 msgid "Did not find any extension named \"%s\".\n"
-msgstr "Non ho trovato alcuna estensione nominata \"%s\".\n"
+msgstr "Non è stata trovata nessuna estensione chiamata \"%s\".\n"
 
 #: describe.c:4673
 #, c-format
 msgid "Did not find any extensions.\n"
-msgstr "Non ho trovato alcuna estensione.\n"
+msgstr "Non è stata trovata nessuna estensione.\n"
 
 #: describe.c:4717
 msgid "Object Description"
@@ -3363,16 +3364,17 @@ msgstr "nuovo_nome"
 #: sql_help.c:41 sql_help.c:67 sql_help.c:82 sql_help.c:118 sql_help.c:234
 #: sql_help.c:252 sql_help.c:373 sql_help.c:459 sql_help.c:505 sql_help.c:585
 #: sql_help.c:594 sql_help.c:652 sql_help.c:672 sql_help.c:701 sql_help.c:756
-#: sql_help.c:856 sql_help.c:882 sql_help.c:902 sql_help.c:1045 sql_help.c:1063
-#: sql_help.c:1106 sql_help.c:1127 sql_help.c:1189 sql_help.c:1291
-#: sql_help.c:2322
+#: sql_help.c:856 sql_help.c:882 sql_help.c:902 sql_help.c:1045
+#: sql_help.c:1063 sql_help.c:1106 sql_help.c:1127 sql_help.c:1189
+#: sql_help.c:1291 sql_help.c:2322
 msgid "new_owner"
 msgstr "nuovo_proprietario"
 
 #: sql_help.c:44 sql_help.c:69 sql_help.c:84 sql_help.c:238 sql_help.c:303
 #: sql_help.c:425 sql_help.c:510 sql_help.c:635 sql_help.c:676 sql_help.c:704
-#: sql_help.c:759 sql_help.c:886 sql_help.c:998 sql_help.c:1108 sql_help.c:1129
-#: sql_help.c:1141 sql_help.c:1153 sql_help.c:1196 sql_help.c:1295
+#: sql_help.c:759 sql_help.c:886 sql_help.c:998 sql_help.c:1108
+#: sql_help.c:1129 sql_help.c:1141 sql_help.c:1153 sql_help.c:1196
+#: sql_help.c:1295
 msgid "new_schema"
 msgstr "nuovo_schema"
 
@@ -3436,7 +3438,8 @@ msgstr "limite_conn"
 msgid "istemplate"
 msgstr "è_template"
 
-#: sql_help.c:120 sql_help.c:573 sql_help.c:638 sql_help.c:1001 sql_help.c:1038
+#: sql_help.c:120 sql_help.c:573 sql_help.c:638 sql_help.c:1001
+#: sql_help.c:1038
 msgid "new_tablespace"
 msgstr "nuovo_tablespace"
 
@@ -3449,13 +3452,13 @@ msgstr "parametro_config"
 
 #: sql_help.c:123 sql_help.c:371 sql_help.c:443 sql_help.c:449 sql_help.c:461
 #: sql_help.c:520 sql_help.c:568 sql_help.c:644 sql_help.c:650 sql_help.c:824
-#: sql_help.c:900 sql_help.c:916 sql_help.c:917 sql_help.c:1020 sql_help.c:1040
-#: sql_help.c:1066 sql_help.c:1123 sql_help.c:1251 sql_help.c:1271
-#: sql_help.c:1804 sql_help.c:1836 sql_help.c:1843 sql_help.c:1888
-#: sql_help.c:1889 sql_help.c:1947 sql_help.c:1979 sql_help.c:2172
-#: sql_help.c:2246 sql_help.c:2254 sql_help.c:2286 sql_help.c:2308
-#: sql_help.c:2325 sql_help.c:2352 sql_help.c:2553 sql_help.c:3157
-#: sql_help.c:3733 sql_help.c:3734
+#: sql_help.c:900 sql_help.c:916 sql_help.c:917 sql_help.c:1020
+#: sql_help.c:1040 sql_help.c:1066 sql_help.c:1123 sql_help.c:1251
+#: sql_help.c:1271 sql_help.c:1804 sql_help.c:1836 sql_help.c:1843
+#: sql_help.c:1888 sql_help.c:1889 sql_help.c:1947 sql_help.c:1979
+#: sql_help.c:2172 sql_help.c:2246 sql_help.c:2254 sql_help.c:2286
+#: sql_help.c:2308 sql_help.c:2325 sql_help.c:2352 sql_help.c:2553
+#: sql_help.c:3157 sql_help.c:3733 sql_help.c:3734
 msgid "value"
 msgstr "valore"
 
@@ -3479,16 +3482,16 @@ msgstr "dove grant_o_revoke_abbreviato è uno di:"
 
 #: sql_help.c:189 sql_help.c:190 sql_help.c:191 sql_help.c:192 sql_help.c:193
 #: sql_help.c:194 sql_help.c:195 sql_help.c:196 sql_help.c:544 sql_help.c:572
-#: sql_help.c:637 sql_help.c:777 sql_help.c:834 sql_help.c:1000 sql_help.c:1258
-#: sql_help.c:1922 sql_help.c:1923 sql_help.c:1924 sql_help.c:1925
-#: sql_help.c:1926 sql_help.c:2052 sql_help.c:2087 sql_help.c:2088
-#: sql_help.c:2089 sql_help.c:2090 sql_help.c:2091 sql_help.c:2535
-#: sql_help.c:2536 sql_help.c:2537 sql_help.c:2538 sql_help.c:2539
-#: sql_help.c:3138 sql_help.c:3139 sql_help.c:3140 sql_help.c:3437
-#: sql_help.c:3441 sql_help.c:3444 sql_help.c:3446 sql_help.c:3448
-#: sql_help.c:3450 sql_help.c:3452 sql_help.c:3458 sql_help.c:3460
-#: sql_help.c:3462 sql_help.c:3464 sql_help.c:3466 sql_help.c:3468
-#: sql_help.c:3469 sql_help.c:3470 sql_help.c:3753
+#: sql_help.c:637 sql_help.c:777 sql_help.c:834 sql_help.c:1000
+#: sql_help.c:1258 sql_help.c:1922 sql_help.c:1923 sql_help.c:1924
+#: sql_help.c:1925 sql_help.c:1926 sql_help.c:2052 sql_help.c:2087
+#: sql_help.c:2088 sql_help.c:2089 sql_help.c:2090 sql_help.c:2091
+#: sql_help.c:2535 sql_help.c:2536 sql_help.c:2537 sql_help.c:2538
+#: sql_help.c:2539 sql_help.c:3138 sql_help.c:3139 sql_help.c:3140
+#: sql_help.c:3437 sql_help.c:3441 sql_help.c:3444 sql_help.c:3446
+#: sql_help.c:3448 sql_help.c:3450 sql_help.c:3452 sql_help.c:3458
+#: sql_help.c:3460 sql_help.c:3462 sql_help.c:3464 sql_help.c:3466
+#: sql_help.c:3468 sql_help.c:3469 sql_help.c:3470 sql_help.c:3753
 msgid "role_name"
 msgstr "nome_ruolo"
 
@@ -3649,7 +3652,8 @@ msgstr "nome_colonna"
 msgid "new_column_name"
 msgstr "nuovo_nome_colonna"
 
-#: sql_help.c:426 sql_help.c:516 sql_help.c:639 sql_help.c:1002 sql_help.c:1200
+#: sql_help.c:426 sql_help.c:516 sql_help.c:639 sql_help.c:1002
+#: sql_help.c:1200
 msgid "where action is one of:"
 msgstr "dove azione è una di:"
 
@@ -3695,7 +3699,8 @@ msgstr "nome_trigger"
 msgid "parent_table"
 msgstr "tabella_padre"
 
-#: sql_help.c:515 sql_help.c:565 sql_help.c:628 sql_help.c:1167 sql_help.c:1786
+#: sql_help.c:515 sql_help.c:565 sql_help.c:628 sql_help.c:1167
+#: sql_help.c:1786
 msgid "extension_name"
 msgstr "nome_estensione"
 
@@ -3765,8 +3770,8 @@ msgid "strategy_number"
 msgstr "strategia_num"
 
 #: sql_help.c:735 sql_help.c:736 sql_help.c:739 sql_help.c:740 sql_help.c:746
-#: sql_help.c:747 sql_help.c:749 sql_help.c:750 sql_help.c:2021 sql_help.c:2022
-#: sql_help.c:2025 sql_help.c:2026
+#: sql_help.c:747 sql_help.c:749 sql_help.c:750 sql_help.c:2021
+#: sql_help.c:2022 sql_help.c:2025 sql_help.c:2026
 msgid "op_type"
 msgstr "tipo_op"
 
