@@ -25,7 +25,7 @@ msgstr ""
 "Project-Id-Version: psql (PostgreSQL) 9.5\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2017-05-22 15:50+0000\n"
-"PO-Revision-Date: 2017-05-29 22:06+0100\n"
+"PO-Revision-Date: 2017-09-10 18:05+0100\n"
 "Last-Translator: Daniele Varrazzo <daniele.varrazzo@gmail.com>\n"
 "Language-Team: Gruppo traduzioni ITPUG <traduzioni@itpug.org>\n"
 "Language: it\n"
@@ -34,7 +34,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Poedit-SourceCharset: utf-8\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Poedit 1.8.7.1\n"
+"X-Generator: Poedit 1.5.4\n"
 
 #: ../../common/exec.c:127 ../../common/exec.c:241 ../../common/exec.c:284
 #, c-format
@@ -819,7 +819,8 @@ msgstr "Posizione"
 msgid "Options"
 msgstr "Opzioni"
 
-#: describe.c:185 describe.c:514 describe.c:711 describe.c:2963 describe.c:2967
+#: describe.c:185 describe.c:514 describe.c:711 describe.c:2963
+#: describe.c:2967
 msgid "Size"
 msgstr "Dimensione"
 
@@ -1031,12 +1032,12 @@ msgstr "Descrizioni oggetti"
 #: describe.c:1178
 #, c-format
 msgid "Did not find any relation named \"%s\".\n"
-msgstr "Non ho trovato alcuna relazione di nome \"%s\".\n"
+msgstr "Non è stata trovata nessuna relazione chiamata \"%s\".\n"
 
 #: describe.c:1388
 #, c-format
 msgid "Did not find any relation with OID %s.\n"
-msgstr "Non ho trovato nessuna relazione con OID %s.\n"
+msgstr "Non è stata trovata nessuna relazione con OID %s.\n"
 
 #: describe.c:1494
 #, c-format
@@ -1570,7 +1571,7 @@ msgstr "Lista degli analizzatori di ricerca resto"
 #: describe.c:3680
 #, c-format
 msgid "Did not find any text search parser named \"%s\".\n"
-msgstr "Non ho trovato alcun analizzatore di ricerca testo chiamato \"%s\".\n"
+msgstr "Non è stato trovato nessun analizzatore di ricerca testo chiamato \"%s\".\n"
 
 #: describe.c:3755
 msgid "Start parse"
@@ -1651,7 +1652,7 @@ msgstr "Lista delle configurazioni di ricerca testo"
 #: describe.c:4061
 #, c-format
 msgid "Did not find any text search configuration named \"%s\".\n"
-msgstr "Non trovata alcuna configurazione di ricerca testo chiamata \"%s\".\n"
+msgstr "Non è stata trovata nessuna configurazione di ricerca testo chiamata \"%s\".\n"
 
 #: describe.c:4127
 msgid "Token"
@@ -1757,12 +1758,12 @@ msgstr "Lista delle estensioni installate"
 #: describe.c:4572
 #, c-format
 msgid "Did not find any extension named \"%s\".\n"
-msgstr "Non ho trovato alcuna estensione nominata \"%s\".\n"
+msgstr "Non è stata trovata nessuna estensione chiamata \"%s\".\n"
 
 #: describe.c:4575
 #, c-format
 msgid "Did not find any extensions.\n"
-msgstr "Non ho trovato alcuna estensione.\n"
+msgstr "Non è stata trovata nessuna estensione.\n"
 
 #: describe.c:4619
 msgid "Object Description"
@@ -3212,16 +3213,17 @@ msgstr "nuovo_nome"
 #: sql_help.c:38 sql_help.c:64 sql_help.c:79 sql_help.c:115 sql_help.c:231
 #: sql_help.c:249 sql_help.c:368 sql_help.c:454 sql_help.c:497 sql_help.c:569
 #: sql_help.c:578 sql_help.c:632 sql_help.c:647 sql_help.c:671 sql_help.c:726
-#: sql_help.c:827 sql_help.c:853 sql_help.c:873 sql_help.c:1016 sql_help.c:1034
-#: sql_help.c:1077 sql_help.c:1098 sql_help.c:1156 sql_help.c:1259
-#: sql_help.c:2262
+#: sql_help.c:827 sql_help.c:853 sql_help.c:873 sql_help.c:1016
+#: sql_help.c:1034 sql_help.c:1077 sql_help.c:1098 sql_help.c:1156
+#: sql_help.c:1259 sql_help.c:2262
 msgid "new_owner"
 msgstr "nuovo_proprietario"
 
 #: sql_help.c:41 sql_help.c:66 sql_help.c:81 sql_help.c:235 sql_help.c:299
 #: sql_help.c:420 sql_help.c:502 sql_help.c:615 sql_help.c:651 sql_help.c:674
-#: sql_help.c:729 sql_help.c:857 sql_help.c:969 sql_help.c:1079 sql_help.c:1100
-#: sql_help.c:1112 sql_help.c:1124 sql_help.c:1163 sql_help.c:1263
+#: sql_help.c:729 sql_help.c:857 sql_help.c:969 sql_help.c:1079
+#: sql_help.c:1100 sql_help.c:1112 sql_help.c:1124 sql_help.c:1163
+#: sql_help.c:1263
 msgid "new_schema"
 msgstr "nuovo_schema"
 
@@ -3428,13 +3430,13 @@ msgstr "nome_funzione"
 msgid "operator_name"
 msgstr "nome_operatore"
 
-#: sql_help.c:321 sql_help.c:645 sql_help.c:649 sql_help.c:1396 sql_help.c:1936
-#: sql_help.c:2713
+#: sql_help.c:321 sql_help.c:645 sql_help.c:649 sql_help.c:1396
+#: sql_help.c:1936 sql_help.c:2713
 msgid "left_type"
 msgstr "tipo_sx"
 
-#: sql_help.c:322 sql_help.c:646 sql_help.c:650 sql_help.c:1397 sql_help.c:1937
-#: sql_help.c:2714
+#: sql_help.c:322 sql_help.c:646 sql_help.c:650 sql_help.c:1397
+#: sql_help.c:1937 sql_help.c:2714
 msgid "right_type"
 msgstr "tipo_dx"
 
@@ -3599,8 +3601,8 @@ msgid "strategy_number"
 msgstr "strategia_num"
 
 #: sql_help.c:705 sql_help.c:706 sql_help.c:709 sql_help.c:710 sql_help.c:716
-#: sql_help.c:717 sql_help.c:719 sql_help.c:720 sql_help.c:1960 sql_help.c:1961
-#: sql_help.c:1964 sql_help.c:1965
+#: sql_help.c:717 sql_help.c:719 sql_help.c:720 sql_help.c:1960
+#: sql_help.c:1961 sql_help.c:1964 sql_help.c:1965
 msgid "op_type"
 msgstr "tipo_op"
 
