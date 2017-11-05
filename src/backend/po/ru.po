@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgres (PostgreSQL 9)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-08-17 18:02+0000\n"
-"PO-Revision-Date: 2017-08-18 16:32+0300\n"
+"POT-Creation-Date: 2017-09-28 15:33+0000\n"
+"PO-Revision-Date: 2017-10-03 11:19+0300\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -2875,8 +2875,8 @@ msgstr "конфликтующие или избыточные параметр�
 msgid "default privileges cannot be set for columns"
 msgstr "права по умолчанию нельзя определить для колонок"
 
-#: catalog/aclchk.c:1492 catalog/objectaddress.c:1042 commands/analyze.c:390
-#: commands/copy.c:4266 commands/sequence.c:1471 commands/tablecmds.c:4953
+#: catalog/aclchk.c:1492 catalog/objectaddress.c:1042 commands/analyze.c:394
+#: commands/copy.c:4275 commands/sequence.c:1471 commands/tablecmds.c:4953
 #: commands/tablecmds.c:5048 commands/tablecmds.c:5098
 #: commands/tablecmds.c:5202 commands/tablecmds.c:5249
 #: commands/tablecmds.c:5333 commands/tablecmds.c:5421
@@ -3554,7 +3554,7 @@ msgid "cannot reindex temporary tables of other sessions"
 msgstr "переиндексировать временные таблицы других сеансов нельзя"
 
 #: catalog/namespace.c:247 catalog/namespace.c:445 catalog/namespace.c:539
-#: commands/trigger.c:4492
+#: commands/trigger.c:4529
 #, c-format
 msgid "cross-database references are not implemented: \"%s.%s.%s\""
 msgstr "ссылки между базами не реализованы: \"%s.%s.%s\""
@@ -4725,12 +4725,17 @@ msgstr "анализируется дерево наследования \"%s.%s
 msgid "analyzing \"%s.%s\""
 msgstr "анализируется \"%s.%s\""
 
-#: commands/analyze.c:660
+#: commands/analyze.c:399
+#, c-format
+msgid "column \"%s\" of relation \"%s\" appears more than once"
+msgstr "столбец \"%s\" отношения \"%s\" указан неоднократно"
+
+#: commands/analyze.c:671
 #, c-format
 msgid "automatic analyze of table \"%s.%s.%s\" system usage: %s"
 msgstr "автоматический анализ таблицы \"%s.%s.%s\"; нагрузка системы: %s"
 
-#: commands/analyze.c:1305
+#: commands/analyze.c:1316
 #, c-format
 msgid ""
 "\"%s\": scanned %d of %u pages, containing %.0f live rows and %.0f dead "
@@ -4740,7 +4745,7 @@ msgstr ""
 "%.0f, \"мёртвых\" строк: %.0f; строк в выборке: %d, примерное общее число "
 "строк: %.0f"
 
-#: commands/analyze.c:1569 executor/execQual.c:2907
+#: commands/analyze.c:1580 executor/execQual.c:2907
 msgid "could not convert row type"
 msgstr "не удалось преобразовать тип строки"
 
@@ -5206,7 +5211,7 @@ msgstr "копировать из последовательности \"%s\" н
 msgid "cannot copy from non-table relation \"%s\""
 msgstr "копировать из отношения \"%s\", не являющегося таблицей, нельзя"
 
-#: commands/copy.c:1604 commands/copy.c:2635
+#: commands/copy.c:1604 commands/copy.c:2644
 #, c-format
 msgid "could not execute command \"%s\": %m"
 msgstr "не удалось выполнить команду \"%s\": %m"
@@ -5216,72 +5221,72 @@ msgstr "не удалось выполнить команду \"%s\": %m"
 msgid "relative path not allowed for COPY to file"
 msgstr "при выполнении COPY в файл нельзя указывать относительный путь"
 
-#: commands/copy.c:1627
+#: commands/copy.c:1636
 #, c-format
 msgid "could not open file \"%s\" for writing: %m"
 msgstr "не удалось открыть файл \"%s\" для записи: %m"
 
-#: commands/copy.c:1634 commands/copy.c:2653
+#: commands/copy.c:1643 commands/copy.c:2662
 #, c-format
 msgid "\"%s\" is a directory"
 msgstr "\"%s\" - это каталог"
 
-#: commands/copy.c:1959
+#: commands/copy.c:1968
 #, c-format
 msgid "COPY %s, line %d, column %s"
 msgstr "COPY %s, строка %d, колонка %s"
 
-#: commands/copy.c:1963 commands/copy.c:2010
+#: commands/copy.c:1972 commands/copy.c:2019
 #, c-format
 msgid "COPY %s, line %d"
 msgstr "COPY %s, строка %d"
 
-#: commands/copy.c:1974
+#: commands/copy.c:1983
 #, c-format
 msgid "COPY %s, line %d, column %s: \"%s\""
 msgstr "COPY %s, строка %d, колонка %s: \"%s\""
 
-#: commands/copy.c:1982
+#: commands/copy.c:1991
 #, c-format
 msgid "COPY %s, line %d, column %s: null input"
 msgstr "COPY %s, строка %d, колонка %s: значение NULL"
 
-#: commands/copy.c:2004
+#: commands/copy.c:2013
 #, c-format
 msgid "COPY %s, line %d: \"%s\""
 msgstr "COPY %s, строка %d: \"%s\""
 
-#: commands/copy.c:2088
+#: commands/copy.c:2097
 #, c-format
 msgid "cannot copy to view \"%s\""
 msgstr "копировать в представление \"%s\" нельзя"
 
-#: commands/copy.c:2093
+#: commands/copy.c:2102
 #, c-format
 msgid "cannot copy to materialized view \"%s\""
 msgstr "копировать в материализованное представление \"%s\" нельзя"
 
-#: commands/copy.c:2098
+#: commands/copy.c:2107
 #, c-format
 msgid "cannot copy to foreign table \"%s\""
 msgstr "копировать в стороннюю таблицу \"%s\" нельзя"
 
-#: commands/copy.c:2103
+#: commands/copy.c:2112
 #, c-format
 msgid "cannot copy to sequence \"%s\""
 msgstr "копировать в последовательность \"%s\" нельзя"
 
-#: commands/copy.c:2108
+#: commands/copy.c:2117
 #, c-format
 msgid "cannot copy to non-table relation \"%s\""
 msgstr "копировать в отношение \"%s\", не являющееся таблицей, нельзя"
 
-#: commands/copy.c:2171
+#: commands/copy.c:2180
 #, c-format
 msgid "cannot perform FREEZE because of prior transaction activity"
 msgstr "выполнить FREEZE нельзя из-за предыдущей активности в транзакции"
 
-#: commands/copy.c:2177
+#: commands/copy.c:2186
 #, c-format
 msgid ""
 "cannot perform FREEZE because the table was not created or truncated in the "
@@ -5290,149 +5295,149 @@ msgstr ""
 "выполнить FREEZE нельзя, так как таблица не была создана или усечена в "
 "текущей подтранзакции"
 
-#: commands/copy.c:2646 utils/adt/genfile.c:123
+#: commands/copy.c:2655 utils/adt/genfile.c:123
 #, c-format
 msgid "could not open file \"%s\" for reading: %m"
 msgstr "не удалось открыть файл \"%s\" для чтения: %m"
 
-#: commands/copy.c:2673
+#: commands/copy.c:2682
 #, c-format
 msgid "COPY file signature not recognized"
 msgstr "подпись COPY-файла не распознана"
 
-#: commands/copy.c:2678
+#: commands/copy.c:2687
 #, c-format
 msgid "invalid COPY file header (missing flags)"
 msgstr "неверный заголовок файла COPY (отсутствуют флаги)"
 
-#: commands/copy.c:2684
+#: commands/copy.c:2693
 #, c-format
 msgid "unrecognized critical flags in COPY file header"
 msgstr "не распознаны важные флаги в заголовке файла COPY"
 
-#: commands/copy.c:2690
+#: commands/copy.c:2699
 #, c-format
 msgid "invalid COPY file header (missing length)"
 msgstr "неверный заголовок файла COPY (отсутствует длина)"
 
-#: commands/copy.c:2697
+#: commands/copy.c:2706
 #, c-format
 msgid "invalid COPY file header (wrong length)"
 msgstr "неверный заголовок файла COPY (неправильная длина)"
 
-#: commands/copy.c:2830 commands/copy.c:3537 commands/copy.c:3767
+#: commands/copy.c:2839 commands/copy.c:3546 commands/copy.c:3776
 #, c-format
 msgid "extra data after last expected column"
 msgstr "лишние данные после содержимого последней колонки"
 
-#: commands/copy.c:2840
+#: commands/copy.c:2849
 #, c-format
 msgid "missing data for OID column"
 msgstr "нет данных для колонки OID"
 
-#: commands/copy.c:2846
+#: commands/copy.c:2855
 #, c-format
 msgid "null OID in COPY data"
 msgstr "неверное значение OID (NULL) в данных COPY"
 
-#: commands/copy.c:2856 commands/copy.c:2979
+#: commands/copy.c:2865 commands/copy.c:2988
 #, c-format
 msgid "invalid OID in COPY data"
 msgstr "неверный OID в данных COPY"
 
-#: commands/copy.c:2871
+#: commands/copy.c:2880
 #, c-format
 msgid "missing data for column \"%s\""
 msgstr "нет данных для колонки \"%s\""
 
-#: commands/copy.c:2954
+#: commands/copy.c:2963
 #, c-format
 msgid "received copy data after EOF marker"
 msgstr "после маркера конца файла продолжаются данные COPY"
 
-#: commands/copy.c:2961
+#: commands/copy.c:2970
 #, c-format
 msgid "row field count is %d, expected %d"
 msgstr "количество полей в строке: %d, ожидалось: %d"
 
-#: commands/copy.c:3301 commands/copy.c:3318
+#: commands/copy.c:3310 commands/copy.c:3327
 #, c-format
 msgid "literal carriage return found in data"
 msgstr "в данных обнаружен явный возврат каретки"
 
-#: commands/copy.c:3302 commands/copy.c:3319
+#: commands/copy.c:3311 commands/copy.c:3328
 #, c-format
 msgid "unquoted carriage return found in data"
 msgstr "в данных обнаружен возврат каретки не в кавычках"
 
-#: commands/copy.c:3304 commands/copy.c:3321
+#: commands/copy.c:3313 commands/copy.c:3330
 #, c-format
 msgid "Use \"\\r\" to represent carriage return."
 msgstr "Представьте возврат каретки как \"\\r\"."
 
-#: commands/copy.c:3305 commands/copy.c:3322
+#: commands/copy.c:3314 commands/copy.c:3331
 #, c-format
 msgid "Use quoted CSV field to represent carriage return."
 msgstr "Заключите возврат каретки в кавычки CSV."
 
-#: commands/copy.c:3334
+#: commands/copy.c:3343
 #, c-format
 msgid "literal newline found in data"
 msgstr "в данных обнаружен явный символ новой строки"
 
-#: commands/copy.c:3335
+#: commands/copy.c:3344
 #, c-format
 msgid "unquoted newline found in data"
 msgstr "в данных обнаружен явный символ новой строки не в кавычках"
 
-#: commands/copy.c:3337
+#: commands/copy.c:3346
 #, c-format
 msgid "Use \"\\n\" to represent newline."
 msgstr "Представьте символ новой строки как \"\\n\"."
 
-#: commands/copy.c:3338
+#: commands/copy.c:3347
 #, c-format
 msgid "Use quoted CSV field to represent newline."
 msgstr "Заключите символ новой строки в кавычки CSV."
 
-#: commands/copy.c:3384 commands/copy.c:3420
+#: commands/copy.c:3393 commands/copy.c:3429
 #, c-format
 msgid "end-of-copy marker does not match previous newline style"
 msgstr "маркер \"конец копии\" не соответствует предыдущему стилю новой строки"
 
-#: commands/copy.c:3393 commands/copy.c:3409
+#: commands/copy.c:3402 commands/copy.c:3418
 #, c-format
 msgid "end-of-copy marker corrupt"
 msgstr "маркер \"конец копии\" испорчен"
 
-#: commands/copy.c:3851
+#: commands/copy.c:3860
 #, c-format
 msgid "unterminated CSV quoted field"
 msgstr "незавершённое поле в кавычках CSV"
 
-#: commands/copy.c:3928 commands/copy.c:3947
+#: commands/copy.c:3937 commands/copy.c:3956
 #, c-format
 msgid "unexpected EOF in COPY data"
 msgstr "неожиданный конец данных COPY"
 
-#: commands/copy.c:3937
+#: commands/copy.c:3946
 #, c-format
 msgid "invalid field size"
 msgstr "неверный размер поля"
 
-#: commands/copy.c:3960
+#: commands/copy.c:3969
 #, c-format
 msgid "incorrect binary data format"
 msgstr "неверный двоичный формат данных"
 
-#: commands/copy.c:4271 commands/indexcmds.c:994 commands/tablecmds.c:1428
+#: commands/copy.c:4280 commands/indexcmds.c:994 commands/tablecmds.c:1428
 #: commands/tablecmds.c:2238 parser/parse_relation.c:2982
 #: utils/adt/tsvector_op.c:1418
 #, c-format
 msgid "column \"%s\" does not exist"
 msgstr "колонка \"%s\" не существует"
 
-#: commands/copy.c:4278 commands/tablecmds.c:1454 commands/trigger.c:650
+#: commands/copy.c:4287 commands/tablecmds.c:1454 commands/trigger.c:650
 #: parser/parse_target.c:947 parser/parse_target.c:958
 #, c-format
 msgid "column \"%s\" specified more than once"
@@ -5925,7 +5930,7 @@ msgstr "%s можно вызывать только в событийной тр
 #: executor/execQual.c:1742 executor/execQual.c:1767 executor/execQual.c:2142
 #: executor/execQual.c:5345 executor/functions.c:1027 foreign/foreign.c:421
 #: replication/logical/logicalfuncs.c:322 replication/slotfuncs.c:173
-#: replication/walsender.c:2880 utils/adt/jsonfuncs.c:1386
+#: replication/walsender.c:2881 utils/adt/jsonfuncs.c:1386
 #: utils/adt/jsonfuncs.c:1518 utils/adt/jsonfuncs.c:1708
 #: utils/adt/jsonfuncs.c:1837 utils/adt/jsonfuncs.c:2605
 #: utils/fmgr/funcapi.c:61 utils/mmgr/portalmem.c:1066
@@ -5937,7 +5942,7 @@ msgstr ""
 #: commands/event_trigger.c:1230 commands/extension.c:1653
 #: commands/extension.c:1762 commands/extension.c:1955 commands/prepare.c:706
 #: foreign/foreign.c:426 replication/logical/logicalfuncs.c:326
-#: replication/slotfuncs.c:177 replication/walsender.c:2884
+#: replication/slotfuncs.c:177 replication/walsender.c:2885
 #: utils/mmgr/portalmem.c:1070
 #, c-format
 msgid "materialize mode required, but it is not allowed in this context"
@@ -8538,12 +8543,12 @@ msgstr ""
 msgid "could not serialize access due to concurrent update"
 msgstr "не удалось сериализовать доступ из-за параллельного изменения"
 
-#: commands/trigger.c:4544
+#: commands/trigger.c:4581
 #, c-format
 msgid "constraint \"%s\" is not deferrable"
 msgstr "ограничение \"%s\" не является откладываемым"
 
-#: commands/trigger.c:4567
+#: commands/trigger.c:4604
 #, c-format
 msgid "constraint \"%s\" does not exist"
 msgstr "ограничение \"%s\" не существует"
@@ -9307,7 +9312,7 @@ msgid "SET TRANSACTION ISOLATION LEVEL must not be called in a subtransaction"
 msgstr ""
 "команда SET TRANSACTION ISOLATION LEVEL не должна вызываться в подтранзакции"
 
-#: commands/variable.c:570 storage/lmgr/predicate.c:1601
+#: commands/variable.c:570 storage/lmgr/predicate.c:1603
 #, c-format
 msgid "cannot use serializable mode in a hot standby"
 msgstr "использовать сериализуемый режим в горячем резерве нельзя"
@@ -10607,18 +10612,18 @@ msgstr "ответ RADIUS содержит неверный код (%d) для �
 
 #: libpq/be-fsstubs.c:134 libpq/be-fsstubs.c:165 libpq/be-fsstubs.c:199
 #: libpq/be-fsstubs.c:239 libpq/be-fsstubs.c:264 libpq/be-fsstubs.c:312
-#: libpq/be-fsstubs.c:335 libpq/be-fsstubs.c:583
+#: libpq/be-fsstubs.c:335 libpq/be-fsstubs.c:592
 #, c-format
 msgid "invalid large-object descriptor: %d"
 msgstr "неверный дескриптор большого объекта: %d"
 
-#: libpq/be-fsstubs.c:180 libpq/be-fsstubs.c:218 libpq/be-fsstubs.c:602
-#: libpq/be-fsstubs.c:790 libpq/be-fsstubs.c:910
+#: libpq/be-fsstubs.c:180 libpq/be-fsstubs.c:218 libpq/be-fsstubs.c:611
+#: libpq/be-fsstubs.c:799 libpq/be-fsstubs.c:919
 #, c-format
 msgid "permission denied for large object %u"
 msgstr "нет доступа к большому объекту %u"
 
-#: libpq/be-fsstubs.c:205 libpq/be-fsstubs.c:589
+#: libpq/be-fsstubs.c:205 libpq/be-fsstubs.c:598
 #, c-format
 msgid "large object descriptor %d was not opened for writing"
 msgstr "дескриптор большого объекта %d был открыт не для записи"
@@ -10667,22 +10672,22 @@ msgstr "для использования lo_export() на сервере нуж
 msgid "Anyone can use the client-side lo_export() provided by libpq."
 msgstr "Использовать lo_export() на стороне клиента через libpq могут все."
 
-#: libpq/be-fsstubs.c:549
+#: libpq/be-fsstubs.c:558
 #, c-format
 msgid "could not create server file \"%s\": %m"
 msgstr "не удалось создать файл сервера \"%s\": %m"
 
-#: libpq/be-fsstubs.c:561
+#: libpq/be-fsstubs.c:570
 #, c-format
 msgid "could not write server file \"%s\": %m"
 msgstr "не удалось записать файл сервера \"%s\": %m"
 
-#: libpq/be-fsstubs.c:815
+#: libpq/be-fsstubs.c:824
 #, c-format
 msgid "large object read request is too large"
 msgstr "при чтении большого объекта запрошен чрезмерный размер"
 
-#: libpq/be-fsstubs.c:857 utils/adt/genfile.c:187 utils/adt/genfile.c:232
+#: libpq/be-fsstubs.c:866 utils/adt/genfile.c:187 utils/adt/genfile.c:232
 #, c-format
 msgid "requested length cannot be negative"
 msgstr "запрошенная длина не может быть отрицательной"
@@ -15963,55 +15968,55 @@ msgstr "сегмент управления динамической разде�
 msgid "too many dynamic shared memory segments"
 msgstr "слишком много сегментов динамической разделяемой памяти"
 
-#: storage/ipc/dsm_impl.c:261 storage/ipc/dsm_impl.c:361
-#: storage/ipc/dsm_impl.c:533 storage/ipc/dsm_impl.c:648
-#: storage/ipc/dsm_impl.c:819 storage/ipc/dsm_impl.c:961
+#: storage/ipc/dsm_impl.c:262 storage/ipc/dsm_impl.c:363
+#: storage/ipc/dsm_impl.c:580 storage/ipc/dsm_impl.c:695
+#: storage/ipc/dsm_impl.c:866 storage/ipc/dsm_impl.c:1008
 #, c-format
 msgid "could not unmap shared memory segment \"%s\": %m"
 msgstr "не удалось освободить сегмент разделяемой памяти %s: %m"
 
-#: storage/ipc/dsm_impl.c:271 storage/ipc/dsm_impl.c:543
-#: storage/ipc/dsm_impl.c:658 storage/ipc/dsm_impl.c:829
+#: storage/ipc/dsm_impl.c:272 storage/ipc/dsm_impl.c:590
+#: storage/ipc/dsm_impl.c:705 storage/ipc/dsm_impl.c:876
 #, c-format
 msgid "could not remove shared memory segment \"%s\": %m"
 msgstr "ошибка при удалении сегмента разделяемой памяти \"%s\": %m"
 
-#: storage/ipc/dsm_impl.c:292 storage/ipc/dsm_impl.c:729
-#: storage/ipc/dsm_impl.c:843
+#: storage/ipc/dsm_impl.c:293 storage/ipc/dsm_impl.c:776
+#: storage/ipc/dsm_impl.c:890
 #, c-format
 msgid "could not open shared memory segment \"%s\": %m"
 msgstr "не удалось открыть сегмент разделяемой памяти \"%s\": %m"
 
-#: storage/ipc/dsm_impl.c:316 storage/ipc/dsm_impl.c:559
-#: storage/ipc/dsm_impl.c:774 storage/ipc/dsm_impl.c:867
+#: storage/ipc/dsm_impl.c:317 storage/ipc/dsm_impl.c:606
+#: storage/ipc/dsm_impl.c:821 storage/ipc/dsm_impl.c:914
 #, c-format
 msgid "could not stat shared memory segment \"%s\": %m"
 msgstr "не удалось обратиться к сегменту разделяемой памяти \"%s\": %m"
 
-#: storage/ipc/dsm_impl.c:335 storage/ipc/dsm_impl.c:886
-#: storage/ipc/dsm_impl.c:934
+#: storage/ipc/dsm_impl.c:337 storage/ipc/dsm_impl.c:933
+#: storage/ipc/dsm_impl.c:981
 #, c-format
 msgid "could not resize shared memory segment \"%s\" to %zu bytes: %m"
 msgstr ""
 "не удалось изменить размер сегмента разделяемой памяти \"%s\" до %zu байт: %m"
 
-#: storage/ipc/dsm_impl.c:385 storage/ipc/dsm_impl.c:580
-#: storage/ipc/dsm_impl.c:750 storage/ipc/dsm_impl.c:985
+#: storage/ipc/dsm_impl.c:387 storage/ipc/dsm_impl.c:627
+#: storage/ipc/dsm_impl.c:797 storage/ipc/dsm_impl.c:1032
 #, c-format
 msgid "could not map shared memory segment \"%s\": %m"
 msgstr "не удалось отобразить сегмент разделяемой памяти \"%s\": %m"
 
-#: storage/ipc/dsm_impl.c:515
+#: storage/ipc/dsm_impl.c:562
 #, c-format
 msgid "could not get shared memory segment: %m"
 msgstr "не удалось получить сегмент разделяемой памяти: %m"
 
-#: storage/ipc/dsm_impl.c:714
+#: storage/ipc/dsm_impl.c:761
 #, c-format
 msgid "could not create shared memory segment \"%s\": %m"
 msgstr "не удалось создать сегмент разделяемой памяти \"%s\": %m"
 
-#: storage/ipc/dsm_impl.c:1026
+#: storage/ipc/dsm_impl.c:1073
 #, c-format
 msgid "could not duplicate handle for \"%s\": %m"
 msgstr "не удалось продублировать указатель для \"%s\": %m"
@@ -16019,8 +16024,8 @@ msgstr "не удалось продублировать указатель дл
 #: storage/ipc/shm_toc.c:108 storage/ipc/shm_toc.c:189 storage/ipc/shmem.c:205
 #: storage/lmgr/lock.c:872 storage/lmgr/lock.c:906 storage/lmgr/lock.c:2603
 #: storage/lmgr/lock.c:3719 storage/lmgr/lock.c:3784 storage/lmgr/lock.c:4074
-#: storage/lmgr/predicate.c:2336 storage/lmgr/predicate.c:2351
-#: storage/lmgr/predicate.c:3743 storage/lmgr/predicate.c:4886
+#: storage/lmgr/predicate.c:2338 storage/lmgr/predicate.c:2353
+#: storage/lmgr/predicate.c:3745 storage/lmgr/predicate.c:4888
 #: storage/lmgr/proc.c:198 utils/hash/dynahash.c:966
 #, c-format
 msgid "out of shared memory"
@@ -16231,12 +16236,12 @@ msgstr ""
 "нельзя выполнить PREPARE, удерживая блокировки на уровне сеанса и на уровне "
 "транзакции для одного объекта"
 
-#: storage/lmgr/predicate.c:674
+#: storage/lmgr/predicate.c:676
 #, c-format
 msgid "not enough elements in RWConflictPool to record a read/write conflict"
 msgstr "в пуле недостаточно элементов для записи о конфликте чтения/записи"
 
-#: storage/lmgr/predicate.c:675 storage/lmgr/predicate.c:703
+#: storage/lmgr/predicate.c:677 storage/lmgr/predicate.c:705
 #, c-format
 msgid ""
 "You might need to run fewer transactions at a time or increase "
@@ -16245,7 +16250,7 @@ msgstr ""
 "Попробуйте уменьшить число транзакций в секунду или увеличить параметр "
 "max_connections."
 
-#: storage/lmgr/predicate.c:702
+#: storage/lmgr/predicate.c:704
 #, c-format
 msgid ""
 "not enough elements in RWConflictPool to record a potential read/write "
@@ -16254,12 +16259,12 @@ msgstr ""
 "в пуле недостаточно элементов для записи о потенциальном конфликте чтения/"
 "записи"
 
-#: storage/lmgr/predicate.c:908
+#: storage/lmgr/predicate.c:910
 #, c-format
 msgid "memory for serializable conflict tracking is nearly exhausted"
 msgstr "память для отслеживания конфликтов сериализации практически исчерпана"
 
-#: storage/lmgr/predicate.c:909
+#: storage/lmgr/predicate.c:911
 #, c-format
 msgid ""
 "There might be an idle transaction or a forgotten prepared transaction "
@@ -16268,7 +16273,7 @@ msgstr ""
 "Вероятно, эта ситуация вызвана забытой подготовленной транзакцией или "
 "транзакцией, простаивающей долгое время."
 
-#: storage/lmgr/predicate.c:1205 storage/lmgr/predicate.c:1278
+#: storage/lmgr/predicate.c:1207 storage/lmgr/predicate.c:1280
 #, c-format
 msgid ""
 "not enough shared memory for elements of data structure \"%s\" (%zu bytes "
@@ -16277,18 +16282,18 @@ msgstr ""
 "недостаточно разделяемой памяти для элементов структуры данных \"%s"
 "\" (запрошено байт: %zu)"
 
-#: storage/lmgr/predicate.c:1563
+#: storage/lmgr/predicate.c:1565
 #, c-format
 msgid "deferrable snapshot was unsafe; trying a new one"
 msgstr "откладываемый снимок был небезопасен; пробуем более новый"
 
-#: storage/lmgr/predicate.c:1602
+#: storage/lmgr/predicate.c:1604
 #, c-format
 msgid "\"default_transaction_isolation\" is set to \"serializable\"."
 msgstr ""
 "Параметр \"default_transaction_isolation\" имеет значение \"serializable\"."
 
-#: storage/lmgr/predicate.c:1603
+#: storage/lmgr/predicate.c:1605
 #, c-format
 msgid ""
 "You can use \"SET default_transaction_isolation = 'repeatable read'\" to "
@@ -16297,33 +16302,33 @@ msgstr ""
 "Чтобы изменить режим по умолчанию, выполните \"SET "
 "default_transaction_isolation = 'repeatable read'\"."
 
-#: storage/lmgr/predicate.c:1642
+#: storage/lmgr/predicate.c:1644
 #, c-format
 msgid "a snapshot-importing transaction must not be READ ONLY DEFERRABLE"
 msgstr "транзакция, импортирующая снимок, не должна быть READ ONLY DEFERRABLE"
 
-#: storage/lmgr/predicate.c:1712 utils/time/snapmgr.c:438
+#: storage/lmgr/predicate.c:1714 utils/time/snapmgr.c:438
 #, c-format
 msgid "could not import the requested snapshot"
 msgstr "не удалось импортировать запрошенный снимок"
 
-#: storage/lmgr/predicate.c:1713 utils/time/snapmgr.c:439
+#: storage/lmgr/predicate.c:1715 utils/time/snapmgr.c:439
 #, c-format
 msgid "The source transaction %u is not running anymore."
 msgstr "Исходная транзакция %u уже не выполняется."
 
-#: storage/lmgr/predicate.c:2337 storage/lmgr/predicate.c:2352
-#: storage/lmgr/predicate.c:3744
+#: storage/lmgr/predicate.c:2339 storage/lmgr/predicate.c:2354
+#: storage/lmgr/predicate.c:3746
 #, c-format
 msgid "You might need to increase max_pred_locks_per_transaction."
 msgstr ""
 "Возможно, следует увеличить значение параметра max_locks_per_transaction."
 
-#: storage/lmgr/predicate.c:3898 storage/lmgr/predicate.c:3987
-#: storage/lmgr/predicate.c:3995 storage/lmgr/predicate.c:4034
-#: storage/lmgr/predicate.c:4273 storage/lmgr/predicate.c:4610
-#: storage/lmgr/predicate.c:4622 storage/lmgr/predicate.c:4664
-#: storage/lmgr/predicate.c:4702
+#: storage/lmgr/predicate.c:3900 storage/lmgr/predicate.c:3989
+#: storage/lmgr/predicate.c:3997 storage/lmgr/predicate.c:4036
+#: storage/lmgr/predicate.c:4275 storage/lmgr/predicate.c:4612
+#: storage/lmgr/predicate.c:4624 storage/lmgr/predicate.c:4666
+#: storage/lmgr/predicate.c:4704
 #, c-format
 msgid ""
 "could not serialize access due to read/write dependencies among transactions"
@@ -16331,11 +16336,11 @@ msgstr ""
 "не удалось сериализовать доступ из-за зависимостей чтения/записи между "
 "транзакциями"
 
-#: storage/lmgr/predicate.c:3900 storage/lmgr/predicate.c:3989
-#: storage/lmgr/predicate.c:3997 storage/lmgr/predicate.c:4036
-#: storage/lmgr/predicate.c:4275 storage/lmgr/predicate.c:4612
-#: storage/lmgr/predicate.c:4624 storage/lmgr/predicate.c:4666
-#: storage/lmgr/predicate.c:4704
+#: storage/lmgr/predicate.c:3902 storage/lmgr/predicate.c:3991
+#: storage/lmgr/predicate.c:3999 storage/lmgr/predicate.c:4038
+#: storage/lmgr/predicate.c:4277 storage/lmgr/predicate.c:4614
+#: storage/lmgr/predicate.c:4626 storage/lmgr/predicate.c:4668
+#: storage/lmgr/predicate.c:4706
 #, c-format
 msgid "The transaction might succeed if retried."
 msgstr "Транзакция может завершиться успешно при следующей попытке."
@@ -17533,8 +17538,8 @@ msgstr "неверный синтаксис для типа money: \"%s\""
 #: utils/adt/int.c:861 utils/adt/int.c:969 utils/adt/int.c:1058
 #: utils/adt/int.c:1097 utils/adt/int.c:1125 utils/adt/int8.c:597
 #: utils/adt/int8.c:657 utils/adt/int8.c:897 utils/adt/int8.c:1005
-#: utils/adt/int8.c:1094 utils/adt/int8.c:1202 utils/adt/numeric.c:4971
-#: utils/adt/numeric.c:5254 utils/adt/timestamp.c:3455
+#: utils/adt/int8.c:1094 utils/adt/int8.c:1202 utils/adt/numeric.c:4981
+#: utils/adt/numeric.c:5264 utils/adt/timestamp.c:3455
 #, c-format
 msgid "division by zero"
 msgstr "деление на ноль"
@@ -17795,7 +17800,7 @@ msgid "\"%s\" is out of range for type real"
 msgstr "\"%s\" вне диапазона для типа real"
 
 #: utils/adt/float.c:414 utils/adt/float.c:488 utils/adt/float.c:512
-#: utils/adt/numeric.c:4427 utils/adt/numeric.c:4453
+#: utils/adt/numeric.c:4437 utils/adt/numeric.c:4463
 #, c-format
 msgid "invalid input syntax for type double precision: \"%s\""
 msgstr "неверный синтаксис для типа double precision: \"%s\""
@@ -17813,7 +17818,7 @@ msgstr "\"%s\" вне диапазона для типа double precision"
 msgid "smallint out of range"
 msgstr "smallint вне диапазона"
 
-#: utils/adt/float.c:1360 utils/adt/numeric.c:5653
+#: utils/adt/float.c:1360 utils/adt/numeric.c:5663
 #, c-format
 msgid "cannot take square root of a negative number"
 msgstr "извлечь квадратный корень отрицательного числа нельзя"
@@ -17828,12 +17833,12 @@ msgstr "ноль в отрицательной степени даёт неоп�
 msgid "a negative number raised to a non-integer power yields a complex result"
 msgstr "отрицательное число в дробной степени даёт комплексный результат"
 
-#: utils/adt/float.c:1472 utils/adt/float.c:1502 utils/adt/numeric.c:5871
+#: utils/adt/float.c:1472 utils/adt/float.c:1502 utils/adt/numeric.c:5881
 #, c-format
 msgid "cannot take logarithm of zero"
 msgstr "вычислить логарифм нуля нельзя"
 
-#: utils/adt/float.c:1476 utils/adt/float.c:1506 utils/adt/numeric.c:5875
+#: utils/adt/float.c:1476 utils/adt/float.c:1506 utils/adt/numeric.c:5885
 #, c-format
 msgid "cannot take logarithm of a negative number"
 msgstr "вычислить логарифм отрицательного числа нельзя"
@@ -18789,8 +18794,8 @@ msgstr "результат вне диапазона"
 msgid "cannot subtract inet values of different sizes"
 msgstr "нельзя вычитать значения inet разного размера"
 
-#: utils/adt/numeric.c:486 utils/adt/numeric.c:513 utils/adt/numeric.c:3701
-#: utils/adt/numeric.c:3724 utils/adt/numeric.c:3748
+#: utils/adt/numeric.c:486 utils/adt/numeric.c:513 utils/adt/numeric.c:3711
+#: utils/adt/numeric.c:3734 utils/adt/numeric.c:3758
 #, c-format
 msgid "invalid input syntax for type numeric: \"%s\""
 msgstr "неверный синтаксис для типа numeric: \"%s\""
@@ -18825,8 +18830,8 @@ msgstr "порядок NUMERIC %d должен быть между 0 и точн
 msgid "invalid NUMERIC type modifier"
 msgstr "неверный модификатор типа NUMERIC"
 
-#: utils/adt/numeric.c:1948 utils/adt/numeric.c:3763 utils/adt/numeric.c:4205
-#: utils/adt/numeric.c:6186
+#: utils/adt/numeric.c:1948 utils/adt/numeric.c:3773 utils/adt/numeric.c:4215
+#: utils/adt/numeric.c:6196
 #, c-format
 msgid "value overflows numeric format"
 msgstr "значение переполняет формат numeric"
@@ -18846,12 +18851,17 @@ msgstr "нельзя преобразовать NaN в bigint"
 msgid "cannot convert NaN to smallint"
 msgstr "нельзя преобразовать NaN в smallint"
 
-#: utils/adt/numeric.c:4275
+#: utils/adt/numeric.c:2427 utils/adt/numeric.c:2494
+#, c-format
+msgid "cannot convert infinity to numeric"
+msgstr "нельзя представить бесконечность в numeric"
+
+#: utils/adt/numeric.c:4285
 #, c-format
 msgid "numeric field overflow"
 msgstr "переполнение поля numeric"
 
-#: utils/adt/numeric.c:4276
+#: utils/adt/numeric.c:4286
 #, c-format
 msgid ""
 "A field with precision %d, scale %d must round to an absolute value less "
@@ -18860,7 +18870,7 @@ msgstr ""
 "Поле с точностью %d, порядком %d должно округляться до абсолютного значения "
 "меньше чем %s%d."
 
-#: utils/adt/numeric.c:5743
+#: utils/adt/numeric.c:5753
 #, c-format
 msgid "argument for function \"exp\" too big"
 msgstr "аргумент функции \"exp\" слишком велик"

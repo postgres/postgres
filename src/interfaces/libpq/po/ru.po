@@ -10,8 +10,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libpq (PostgreSQL 9)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-08-17 18:02+0000\n"
-"PO-Revision-Date: 2017-08-18 15:31+0300\n"
+"POT-Creation-Date: 2017-09-27 06:33+0000\n"
+"PO-Revision-Date: 2017-09-21 11:47+0300\n"
+"Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -19,7 +20,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
-"Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 
 #: fe-auth.c:148
 msgid "GSSAPI continuation error"
@@ -38,8 +38,8 @@ msgstr "повторный запрос аутентификации GSS\n"
 #: fe-connect.c:2141 fe-connect.c:3497 fe-connect.c:3749 fe-connect.c:3868
 #: fe-connect.c:4098 fe-connect.c:4178 fe-connect.c:4273 fe-connect.c:4529
 #: fe-connect.c:4557 fe-connect.c:4629 fe-connect.c:4653 fe-connect.c:4671
-#: fe-connect.c:4767 fe-connect.c:5118 fe-connect.c:5268 fe-exec.c:3354
-#: fe-exec.c:3519 fe-lobj.c:896 fe-protocol2.c:1206 fe-protocol3.c:1613
+#: fe-connect.c:4767 fe-connect.c:5118 fe-connect.c:5268 fe-exec.c:3405
+#: fe-exec.c:3570 fe-lobj.c:896 fe-protocol2.c:1206 fe-protocol3.c:1613
 #: fe-secure.c:779 fe-secure.c:1269
 msgid "out of memory\n"
 msgstr "нехватка памяти\n"
@@ -446,98 +446,117 @@ msgstr ""
 msgid "password retrieved from file \"%s\"\n"
 msgstr "пароль получен из файла \"%s\"\n"
 
-#: fe-exec.c:825
-msgid "NOTICE"
-msgstr "ЗАМЕЧАНИЕ"
-
-#: fe-exec.c:1138 fe-exec.c:1196 fe-exec.c:1242
-msgid "command string is a null pointer\n"
-msgstr "указатель на командную строку нулевой\n"
-
-#: fe-exec.c:1202 fe-exec.c:1248 fe-exec.c:1343
-msgid "number of parameters must be between 0 and 65535\n"
-msgstr "число параметров должно быть от 0 до 65535\n"
-
-#: fe-exec.c:1236 fe-exec.c:1337
-msgid "statement name is a null pointer\n"
-msgstr "указатель на имя оператора нулевой\n"
-
-#: fe-exec.c:1256 fe-exec.c:1419 fe-exec.c:2134 fe-exec.c:2333
-msgid "function requires at least protocol version 3.0\n"
-msgstr "функция требует протокол минимум версии 3.0\n"
-
-#: fe-exec.c:1374
-msgid "no connection to the server\n"
-msgstr "нет соединения с сервером\n"
-
-#: fe-exec.c:1381
-msgid "another command is already in progress\n"
-msgstr "уже выполняется другая команда\n"
-
-#: fe-exec.c:1495
-msgid "length must be given for binary parameter\n"
-msgstr "для двоичного параметра должна быть указана длина\n"
-
-#: fe-exec.c:1764
-#, c-format
-msgid "unexpected asyncStatus: %d\n"
-msgstr "неожиданный asyncStatus: %d\n"
-
-#: fe-exec.c:1784
-#, c-format
-msgid "PGEventProc \"%s\" failed during PGEVT_RESULTCREATE event\n"
-msgstr "ошибка в PGEventProc \"%s\" при обработке события PGEVT_RESULTCREATE\n"
-
-#: fe-exec.c:1944
-msgid "COPY terminated by new PQexec"
-msgstr "операция COPY прервана вызовом PQexec"
-
-#: fe-exec.c:1952
-msgid "COPY IN state must be terminated first\n"
-msgstr "сначала должно завершиться состояние COPY IN\n"
-
-#: fe-exec.c:1972
-msgid "COPY OUT state must be terminated first\n"
-msgstr "сначала должно завершиться состояние COPY OUT\n"
-
-#: fe-exec.c:1980
-msgid "PQexec not allowed during COPY BOTH\n"
-msgstr "вызов PQexec не допускается в процессе COPY BOTH\n"
-
-#: fe-exec.c:2223 fe-exec.c:2290 fe-exec.c:2380 fe-protocol2.c:1352
-#: fe-protocol3.c:1752
-msgid "no COPY in progress\n"
-msgstr "операция COPY не выполняется\n"
-
-#: fe-exec.c:2570
-msgid "connection in wrong state\n"
-msgstr "соединение в неправильном состоянии\n"
-
-#: fe-exec.c:2601
-msgid "invalid ExecStatusType code"
-msgstr "неверный код ExecStatusType"
-
-#: fe-exec.c:2665 fe-exec.c:2688
-#, c-format
-msgid "column number %d is out of range 0..%d"
-msgstr "номер колонки %d вне диапазона 0..%d"
-
-#: fe-exec.c:2681
+#: fe-exec.c:436 fe-exec.c:2732
 #, c-format
 msgid "row number %d is out of range 0..%d"
 msgstr "номер записи %d вне диапазона 0..%d"
 
-#: fe-exec.c:2703
+#: fe-exec.c:497 fe-protocol2.c:503 fe-protocol2.c:538 fe-protocol2.c:1049
+#: fe-protocol3.c:209 fe-protocol3.c:236 fe-protocol3.c:253 fe-protocol3.c:333
+#: fe-protocol3.c:720 fe-protocol3.c:1037
+msgid "out of memory"
+msgstr "нехватка памяти"
+
+#: fe-exec.c:498 fe-protocol2.c:1395 fe-protocol3.c:1821
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: fe-exec.c:846
+msgid "NOTICE"
+msgstr "ЗАМЕЧАНИЕ"
+
+#: fe-exec.c:903
+msgid "PGresult cannot support more than INT_MAX tuples"
+msgstr "PGresult не может вместить больше чем INT_MAX кортежей"
+
+#: fe-exec.c:915
+msgid "size_t overflow"
+msgstr "переполнение size_t"
+
+#: fe-exec.c:1189 fe-exec.c:1247 fe-exec.c:1293
+msgid "command string is a null pointer\n"
+msgstr "указатель на командную строку нулевой\n"
+
+#: fe-exec.c:1253 fe-exec.c:1299 fe-exec.c:1394
+msgid "number of parameters must be between 0 and 65535\n"
+msgstr "число параметров должно быть от 0 до 65535\n"
+
+#: fe-exec.c:1287 fe-exec.c:1388
+msgid "statement name is a null pointer\n"
+msgstr "указатель на имя оператора нулевой\n"
+
+#: fe-exec.c:1307 fe-exec.c:1470 fe-exec.c:2185 fe-exec.c:2384
+msgid "function requires at least protocol version 3.0\n"
+msgstr "функция требует протокол минимум версии 3.0\n"
+
+#: fe-exec.c:1425
+msgid "no connection to the server\n"
+msgstr "нет соединения с сервером\n"
+
+#: fe-exec.c:1432
+msgid "another command is already in progress\n"
+msgstr "уже выполняется другая команда\n"
+
+#: fe-exec.c:1546
+msgid "length must be given for binary parameter\n"
+msgstr "для двоичного параметра должна быть указана длина\n"
+
+#: fe-exec.c:1815
+#, c-format
+msgid "unexpected asyncStatus: %d\n"
+msgstr "неожиданный asyncStatus: %d\n"
+
+#: fe-exec.c:1835
+#, c-format
+msgid "PGEventProc \"%s\" failed during PGEVT_RESULTCREATE event\n"
+msgstr "ошибка в PGEventProc \"%s\" при обработке события PGEVT_RESULTCREATE\n"
+
+#: fe-exec.c:1995
+msgid "COPY terminated by new PQexec"
+msgstr "операция COPY прервана вызовом PQexec"
+
+#: fe-exec.c:2003
+msgid "COPY IN state must be terminated first\n"
+msgstr "сначала должно завершиться состояние COPY IN\n"
+
+#: fe-exec.c:2023
+msgid "COPY OUT state must be terminated first\n"
+msgstr "сначала должно завершиться состояние COPY OUT\n"
+
+#: fe-exec.c:2031
+msgid "PQexec not allowed during COPY BOTH\n"
+msgstr "вызов PQexec не допускается в процессе COPY BOTH\n"
+
+#: fe-exec.c:2274 fe-exec.c:2341 fe-exec.c:2431 fe-protocol2.c:1352
+#: fe-protocol3.c:1752
+msgid "no COPY in progress\n"
+msgstr "операция COPY не выполняется\n"
+
+#: fe-exec.c:2621
+msgid "connection in wrong state\n"
+msgstr "соединение в неправильном состоянии\n"
+
+#: fe-exec.c:2652
+msgid "invalid ExecStatusType code"
+msgstr "неверный код ExecStatusType"
+
+#: fe-exec.c:2716 fe-exec.c:2739
+#, c-format
+msgid "column number %d is out of range 0..%d"
+msgstr "номер колонки %d вне диапазона 0..%d"
+
+#: fe-exec.c:2754
 #, c-format
 msgid "parameter number %d is out of range 0..%d"
 msgstr "номер параметра %d вне диапазона 0..%d"
 
-#: fe-exec.c:3013
+#: fe-exec.c:3064
 #, c-format
 msgid "could not interpret result from server: %s"
 msgstr "не удалось интерпретировать ответ сервера: %s"
 
-#: fe-exec.c:3252 fe-exec.c:3336
+#: fe-exec.c:3303 fe-exec.c:3387
 msgid "incomplete multibyte character\n"
 msgstr "неполный многобайтный символ\n"
 
@@ -677,12 +696,6 @@ msgstr "неверное состояние %c - возможно разруше
 msgid "message type 0x%02x arrived from server while idle"
 msgstr "от сервера во время простоя получено сообщение типа 0x%02x"
 
-#: fe-protocol2.c:503 fe-protocol2.c:538 fe-protocol2.c:1049 fe-protocol3.c:209
-#: fe-protocol3.c:236 fe-protocol3.c:253 fe-protocol3.c:333 fe-protocol3.c:720
-#: fe-protocol3.c:1037
-msgid "out of memory"
-msgstr "нехватка памяти"
-
 #: fe-protocol2.c:529
 #, c-format
 msgid "unexpected character %c following empty query response (\"I\" message)"
@@ -714,11 +727,6 @@ msgstr "неожиданный ответ сервера; первый полу�
 #: fe-protocol2.c:762 fe-protocol2.c:937 fe-protocol3.c:627 fe-protocol3.c:841
 msgid "out of memory for query result"
 msgstr "недостаточно памяти для результата запроса"
-
-#: fe-protocol2.c:1395 fe-protocol3.c:1821
-#, c-format
-msgid "%s"
-msgstr "%s"
 
 #: fe-protocol2.c:1407
 #, c-format
