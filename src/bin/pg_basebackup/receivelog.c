@@ -747,7 +747,7 @@ ReadEndOfStreamingResult(PGresult *res, XLogRecPtr *startpos, uint32 *timeline)
 
 /*
  * The main loop of ReceiveXlogStream. Handles the COPY stream after
- * initiating streaming with the START_STREAMING command.
+ * initiating streaming with the START_REPLICATION command.
  *
  * If the COPY ends (not necessarily successfully) due a message from the
  * server, returns a PGresult and sets *stoppos to the last byte written.
