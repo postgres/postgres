@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgres (PostgreSQL 9)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-08-17 18:08+0000\n"
-"PO-Revision-Date: 2017-08-18 16:32+0300\n"
+"POT-Creation-Date: 2017-09-28 15:40+0000\n"
+"PO-Revision-Date: 2017-10-03 11:19+0300\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
@@ -2748,8 +2748,8 @@ msgstr "конфликтующие или избыточные параметр�
 msgid "default privileges cannot be set for columns"
 msgstr "права по умолчанию нельзя определить для колонок"
 
-#: catalog/aclchk.c:1492 catalog/objectaddress.c:1021 commands/analyze.c:389
-#: commands/copy.c:4182 commands/sequence.c:1489 commands/tablecmds.c:4838
+#: catalog/aclchk.c:1492 catalog/objectaddress.c:1021 commands/analyze.c:393
+#: commands/copy.c:4191 commands/sequence.c:1489 commands/tablecmds.c:4838
 #: commands/tablecmds.c:4933 commands/tablecmds.c:4983
 #: commands/tablecmds.c:5087 commands/tablecmds.c:5134
 #: commands/tablecmds.c:5218 commands/tablecmds.c:5306
@@ -3448,7 +3448,7 @@ msgid "cannot reindex temporary tables of other sessions"
 msgstr "переиндексировать временные таблицы других сеансов нельзя"
 
 #: catalog/namespace.c:247 catalog/namespace.c:445 catalog/namespace.c:539
-#: commands/trigger.c:4257
+#: commands/trigger.c:4298
 #, c-format
 msgid "cross-database references are not implemented: \"%s.%s.%s\""
 msgstr "ссылки между базами не реализованы: \"%s.%s.%s\""
@@ -4516,12 +4516,17 @@ msgstr "анализируется дерево наследования \"%s.%s
 msgid "analyzing \"%s.%s\""
 msgstr "анализируется \"%s.%s\""
 
-#: commands/analyze.c:659
+#: commands/analyze.c:398
+#, c-format
+msgid "column \"%s\" of relation \"%s\" appears more than once"
+msgstr "столбец \"%s\" отношения \"%s\" указан неоднократно"
+
+#: commands/analyze.c:670
 #, c-format
 msgid "automatic analyze of table \"%s.%s.%s\" system usage: %s"
 msgstr "автоматический анализ таблицы \"%s.%s.%s\"; нагрузка системы: %s"
 
-#: commands/analyze.c:1303
+#: commands/analyze.c:1314
 #, c-format
 msgid ""
 "\"%s\": scanned %d of %u pages, containing %.0f live rows and %.0f dead "
@@ -4531,7 +4536,7 @@ msgstr ""
 "%.0f, \"мёртвых\" строк: %.0f; строк в выборке: %d, примерное общее число "
 "строк: %.0f"
 
-#: commands/analyze.c:1567 executor/execQual.c:2902
+#: commands/analyze.c:1578 executor/execQual.c:2902
 msgid "could not convert row type"
 msgstr "не удалось преобразовать тип строки"
 
@@ -4981,7 +4986,7 @@ msgstr "копировать из последовательности \"%s\" н
 msgid "cannot copy from non-table relation \"%s\""
 msgstr "копировать из отношения \"%s\", не являющегося таблицей, нельзя"
 
-#: commands/copy.c:1555 commands/copy.c:2568
+#: commands/copy.c:1555 commands/copy.c:2577
 #, c-format
 msgid "could not execute command \"%s\": %m"
 msgstr "не удалось выполнить команду \"%s\": %m"
@@ -4991,72 +4996,72 @@ msgstr "не удалось выполнить команду \"%s\": %m"
 msgid "relative path not allowed for COPY to file"
 msgstr "при выполнении COPY в файл нельзя указывать относительный путь"
 
-#: commands/copy.c:1578
+#: commands/copy.c:1587
 #, c-format
 msgid "could not open file \"%s\" for writing: %m"
 msgstr "не удалось открыть файл \"%s\" для записи: %m"
 
-#: commands/copy.c:1585 commands/copy.c:2586
+#: commands/copy.c:1594 commands/copy.c:2595
 #, c-format
 msgid "\"%s\" is a directory"
 msgstr "\"%s\" - это каталог"
 
-#: commands/copy.c:1910
+#: commands/copy.c:1919
 #, c-format
 msgid "COPY %s, line %d, column %s"
 msgstr "COPY %s, строка %d, колонка %s"
 
-#: commands/copy.c:1914 commands/copy.c:1961
+#: commands/copy.c:1923 commands/copy.c:1970
 #, c-format
 msgid "COPY %s, line %d"
 msgstr "COPY %s, строка %d"
 
-#: commands/copy.c:1925
+#: commands/copy.c:1934
 #, c-format
 msgid "COPY %s, line %d, column %s: \"%s\""
 msgstr "COPY %s, строка %d, колонка %s: \"%s\""
 
-#: commands/copy.c:1933
+#: commands/copy.c:1942
 #, c-format
 msgid "COPY %s, line %d, column %s: null input"
 msgstr "COPY %s, строка %d, колонка %s: значение NULL"
 
-#: commands/copy.c:1955
+#: commands/copy.c:1964
 #, c-format
 msgid "COPY %s, line %d: \"%s\""
 msgstr "COPY %s, строка %d: \"%s\""
 
-#: commands/copy.c:2039
+#: commands/copy.c:2048
 #, c-format
 msgid "cannot copy to view \"%s\""
 msgstr "копировать в представление \"%s\" нельзя"
 
-#: commands/copy.c:2044
+#: commands/copy.c:2053
 #, c-format
 msgid "cannot copy to materialized view \"%s\""
 msgstr "копировать в материализованное представление \"%s\" нельзя"
 
-#: commands/copy.c:2049
+#: commands/copy.c:2058
 #, c-format
 msgid "cannot copy to foreign table \"%s\""
 msgstr "копировать в стороннюю таблицу \"%s\" нельзя"
 
-#: commands/copy.c:2054
+#: commands/copy.c:2063
 #, c-format
 msgid "cannot copy to sequence \"%s\""
 msgstr "копировать в последовательность \"%s\" нельзя"
 
-#: commands/copy.c:2059
+#: commands/copy.c:2068
 #, c-format
 msgid "cannot copy to non-table relation \"%s\""
 msgstr "копировать в отношение \"%s\", не являющееся таблицей, нельзя"
 
-#: commands/copy.c:2122
+#: commands/copy.c:2131
 #, c-format
 msgid "cannot perform FREEZE because of prior transaction activity"
 msgstr "выполнить FREEZE нельзя из-за предыдущей активности в транзакции"
 
-#: commands/copy.c:2128
+#: commands/copy.c:2137
 #, c-format
 msgid ""
 "cannot perform FREEZE because the table was not created or truncated in the "
@@ -5065,149 +5070,149 @@ msgstr ""
 "выполнить FREEZE нельзя, так как таблица не была создана или усечена в "
 "текущей подтранзакции"
 
-#: commands/copy.c:2579 utils/adt/genfile.c:123
+#: commands/copy.c:2588 utils/adt/genfile.c:123
 #, c-format
 msgid "could not open file \"%s\" for reading: %m"
 msgstr "не удалось открыть файл \"%s\" для чтения: %m"
 
-#: commands/copy.c:2606
+#: commands/copy.c:2615
 #, c-format
 msgid "COPY file signature not recognized"
 msgstr "подпись COPY-файла не распознана"
 
-#: commands/copy.c:2611
+#: commands/copy.c:2620
 #, c-format
 msgid "invalid COPY file header (missing flags)"
 msgstr "неверный заголовок файла COPY (отсутствуют флаги)"
 
-#: commands/copy.c:2617
+#: commands/copy.c:2626
 #, c-format
 msgid "unrecognized critical flags in COPY file header"
 msgstr "не распознаны важные флаги в заголовке файла COPY"
 
-#: commands/copy.c:2623
+#: commands/copy.c:2632
 #, c-format
 msgid "invalid COPY file header (missing length)"
 msgstr "неверный заголовок файла COPY (отсутствует длина)"
 
-#: commands/copy.c:2630
+#: commands/copy.c:2639
 #, c-format
 msgid "invalid COPY file header (wrong length)"
 msgstr "неверный заголовок файла COPY (неправильная длина)"
 
-#: commands/copy.c:2763 commands/copy.c:3453 commands/copy.c:3683
+#: commands/copy.c:2772 commands/copy.c:3462 commands/copy.c:3692
 #, c-format
 msgid "extra data after last expected column"
 msgstr "лишние данные после содержимого последней колонки"
 
-#: commands/copy.c:2773
+#: commands/copy.c:2782
 #, c-format
 msgid "missing data for OID column"
 msgstr "нет данных для колонки OID"
 
-#: commands/copy.c:2779
+#: commands/copy.c:2788
 #, c-format
 msgid "null OID in COPY data"
 msgstr "неверное значение OID (NULL) в данных COPY"
 
-#: commands/copy.c:2789 commands/copy.c:2895
+#: commands/copy.c:2798 commands/copy.c:2904
 #, c-format
 msgid "invalid OID in COPY data"
 msgstr "неверный OID в данных COPY"
 
-#: commands/copy.c:2804
+#: commands/copy.c:2813
 #, c-format
 msgid "missing data for column \"%s\""
 msgstr "нет данных для колонки \"%s\""
 
-#: commands/copy.c:2870
+#: commands/copy.c:2879
 #, c-format
 msgid "received copy data after EOF marker"
 msgstr "после маркера конца файла продолжаются данные COPY"
 
-#: commands/copy.c:2877
+#: commands/copy.c:2886
 #, c-format
 msgid "row field count is %d, expected %d"
 msgstr "количество полей в строке: %d, ожидалось: %d"
 
-#: commands/copy.c:3217 commands/copy.c:3234
+#: commands/copy.c:3226 commands/copy.c:3243
 #, c-format
 msgid "literal carriage return found in data"
 msgstr "в данных обнаружен явный возврат каретки"
 
-#: commands/copy.c:3218 commands/copy.c:3235
+#: commands/copy.c:3227 commands/copy.c:3244
 #, c-format
 msgid "unquoted carriage return found in data"
 msgstr "в данных обнаружен возврат каретки не в кавычках"
 
-#: commands/copy.c:3220 commands/copy.c:3237
+#: commands/copy.c:3229 commands/copy.c:3246
 #, c-format
 msgid "Use \"\\r\" to represent carriage return."
 msgstr "Представьте возврат каретки как \"\\r\"."
 
-#: commands/copy.c:3221 commands/copy.c:3238
+#: commands/copy.c:3230 commands/copy.c:3247
 #, c-format
 msgid "Use quoted CSV field to represent carriage return."
 msgstr "Заключите возврат каретки в кавычки CSV."
 
-#: commands/copy.c:3250
+#: commands/copy.c:3259
 #, c-format
 msgid "literal newline found in data"
 msgstr "в данных обнаружен явный символ новой строки"
 
-#: commands/copy.c:3251
+#: commands/copy.c:3260
 #, c-format
 msgid "unquoted newline found in data"
 msgstr "в данных обнаружен явный символ новой строки не в кавычках"
 
-#: commands/copy.c:3253
+#: commands/copy.c:3262
 #, c-format
 msgid "Use \"\\n\" to represent newline."
 msgstr "Представьте символ новой строки как \"\\n\"."
 
-#: commands/copy.c:3254
+#: commands/copy.c:3263
 #, c-format
 msgid "Use quoted CSV field to represent newline."
 msgstr "Заключите символ новой строки в кавычки CSV."
 
-#: commands/copy.c:3300 commands/copy.c:3336
+#: commands/copy.c:3309 commands/copy.c:3345
 #, c-format
 msgid "end-of-copy marker does not match previous newline style"
 msgstr "маркер \"конец копии\" не соответствует предыдущему стилю новой строки"
 
-#: commands/copy.c:3309 commands/copy.c:3325
+#: commands/copy.c:3318 commands/copy.c:3334
 #, c-format
 msgid "end-of-copy marker corrupt"
 msgstr "маркер \"конец копии\" испорчен"
 
-#: commands/copy.c:3767
+#: commands/copy.c:3776
 #, c-format
 msgid "unterminated CSV quoted field"
 msgstr "незавершённое поле в кавычках CSV"
 
-#: commands/copy.c:3844 commands/copy.c:3863
+#: commands/copy.c:3853 commands/copy.c:3872
 #, c-format
 msgid "unexpected EOF in COPY data"
 msgstr "неожиданный конец данных COPY"
 
-#: commands/copy.c:3853
+#: commands/copy.c:3862
 #, c-format
 msgid "invalid field size"
 msgstr "неверный размер поля"
 
-#: commands/copy.c:3876
+#: commands/copy.c:3885
 #, c-format
 msgid "incorrect binary data format"
 msgstr "неверный двоичный формат данных"
 
-#: commands/copy.c:4187 commands/indexcmds.c:1013 commands/tablecmds.c:1403
+#: commands/copy.c:4196 commands/indexcmds.c:1013 commands/tablecmds.c:1403
 #: commands/tablecmds.c:2212 parser/parse_relation.c:2745
 #: utils/adt/tsvector_op.c:1418
 #, c-format
 msgid "column \"%s\" does not exist"
 msgstr "колонка \"%s\" не существует"
 
-#: commands/copy.c:4194 commands/tablecmds.c:1429 commands/trigger.c:625
+#: commands/copy.c:4203 commands/tablecmds.c:1429 commands/trigger.c:625
 #: parser/parse_target.c:947 parser/parse_target.c:958
 #, c-format
 msgid "column \"%s\" specified more than once"
@@ -8136,12 +8141,12 @@ msgstr ""
 msgid "could not serialize access due to concurrent update"
 msgstr "не удалось сериализовать доступ из-за параллельного изменения"
 
-#: commands/trigger.c:4309
+#: commands/trigger.c:4350
 #, c-format
 msgid "constraint \"%s\" is not deferrable"
 msgstr "ограничение \"%s\" не является откладываемым"
 
-#: commands/trigger.c:4332
+#: commands/trigger.c:4373
 #, c-format
 msgid "constraint \"%s\" does not exist"
 msgstr "ограничение \"%s\" не существует"
@@ -10214,17 +10219,17 @@ msgstr "ответ RADIUS содержит неверный код (%d) для �
 
 #: libpq/be-fsstubs.c:134 libpq/be-fsstubs.c:165 libpq/be-fsstubs.c:199
 #: libpq/be-fsstubs.c:239 libpq/be-fsstubs.c:264 libpq/be-fsstubs.c:312
-#: libpq/be-fsstubs.c:335 libpq/be-fsstubs.c:583
+#: libpq/be-fsstubs.c:335 libpq/be-fsstubs.c:592
 #, c-format
 msgid "invalid large-object descriptor: %d"
 msgstr "неверный дескриптор большого объекта: %d"
 
-#: libpq/be-fsstubs.c:180 libpq/be-fsstubs.c:218 libpq/be-fsstubs.c:602
+#: libpq/be-fsstubs.c:180 libpq/be-fsstubs.c:218 libpq/be-fsstubs.c:611
 #, c-format
 msgid "permission denied for large object %u"
 msgstr "нет доступа к большому объекту %u"
 
-#: libpq/be-fsstubs.c:205 libpq/be-fsstubs.c:589
+#: libpq/be-fsstubs.c:205 libpq/be-fsstubs.c:598
 #, c-format
 msgid "large object descriptor %d was not opened for writing"
 msgstr "дескриптор большого объекта %d был открыт не для записи"
@@ -10273,12 +10278,12 @@ msgstr "для использования lo_export() на сервере нуж
 msgid "Anyone can use the client-side lo_export() provided by libpq."
 msgstr "Использовать lo_export() на стороне клиента через libpq могут все."
 
-#: libpq/be-fsstubs.c:549
+#: libpq/be-fsstubs.c:558
 #, c-format
 msgid "could not create server file \"%s\": %m"
 msgstr "не удалось создать файл сервера \"%s\": %m"
 
-#: libpq/be-fsstubs.c:561
+#: libpq/be-fsstubs.c:570
 #, c-format
 msgid "could not write server file \"%s\": %m"
 msgstr "не удалось записать файл сервера \"%s\": %m"
@@ -16424,8 +16429,8 @@ msgstr "неверный синтаксис для типа money: \"%s\""
 #: utils/adt/int.c:861 utils/adt/int.c:969 utils/adt/int.c:1058
 #: utils/adt/int.c:1097 utils/adt/int.c:1125 utils/adt/int8.c:597
 #: utils/adt/int8.c:657 utils/adt/int8.c:846 utils/adt/int8.c:954
-#: utils/adt/int8.c:1043 utils/adt/int8.c:1151 utils/adt/numeric.c:4535
-#: utils/adt/numeric.c:4818 utils/adt/timestamp.c:3074
+#: utils/adt/int8.c:1043 utils/adt/int8.c:1151 utils/adt/numeric.c:4545
+#: utils/adt/numeric.c:4828 utils/adt/timestamp.c:3074
 #, c-format
 msgid "division by zero"
 msgstr "деление на ноль"
@@ -16670,7 +16675,7 @@ msgid "\"%s\" is out of range for type real"
 msgstr "\"%s\" вне диапазона для типа real"
 
 #: utils/adt/float.c:446 utils/adt/float.c:520 utils/adt/float.c:576
-#: utils/adt/numeric.c:3991 utils/adt/numeric.c:4017
+#: utils/adt/numeric.c:4001 utils/adt/numeric.c:4027
 #, c-format
 msgid "invalid input syntax for type double precision: \"%s\""
 msgstr "неверный синтаксис для типа double precision: \"%s\""
@@ -16688,7 +16693,7 @@ msgstr "\"%s\" вне диапазона для типа double precision"
 msgid "smallint out of range"
 msgstr "smallint вне диапазона"
 
-#: utils/adt/float.c:1424 utils/adt/numeric.c:5217
+#: utils/adt/float.c:1424 utils/adt/numeric.c:5227
 #, c-format
 msgid "cannot take square root of a negative number"
 msgstr "извлечь квадратный корень отрицательного числа нельзя"
@@ -16703,12 +16708,12 @@ msgstr "ноль в отрицательной степени даёт неоп�
 msgid "a negative number raised to a non-integer power yields a complex result"
 msgstr "отрицательное число в дробной степени даёт комплексный результат"
 
-#: utils/adt/float.c:1536 utils/adt/float.c:1566 utils/adt/numeric.c:5435
+#: utils/adt/float.c:1536 utils/adt/float.c:1566 utils/adt/numeric.c:5445
 #, c-format
 msgid "cannot take logarithm of zero"
 msgstr "вычислить логарифм нуля нельзя"
 
-#: utils/adt/float.c:1540 utils/adt/float.c:1570 utils/adt/numeric.c:5439
+#: utils/adt/float.c:1540 utils/adt/float.c:1570 utils/adt/numeric.c:5449
 #, c-format
 msgid "cannot take logarithm of a negative number"
 msgstr "вычислить логарифм отрицательного числа нельзя"
@@ -17598,8 +17603,8 @@ msgstr "результат вне диапазона"
 msgid "cannot subtract inet values of different sizes"
 msgstr "нельзя вычитать значения inet разного размера"
 
-#: utils/adt/numeric.c:486 utils/adt/numeric.c:513 utils/adt/numeric.c:3265
-#: utils/adt/numeric.c:3288 utils/adt/numeric.c:3312
+#: utils/adt/numeric.c:486 utils/adt/numeric.c:513 utils/adt/numeric.c:3275
+#: utils/adt/numeric.c:3298 utils/adt/numeric.c:3322
 #, c-format
 msgid "invalid input syntax for type numeric: \"%s\""
 msgstr "неверный синтаксис для типа numeric: \"%s\""
@@ -17634,8 +17639,8 @@ msgstr "порядок NUMERIC %d должен быть между 0 и точн
 msgid "invalid NUMERIC type modifier"
 msgstr "неверный модификатор типа NUMERIC"
 
-#: utils/adt/numeric.c:1901 utils/adt/numeric.c:3327 utils/adt/numeric.c:3769
-#: utils/adt/numeric.c:5750
+#: utils/adt/numeric.c:1901 utils/adt/numeric.c:3337 utils/adt/numeric.c:3779
+#: utils/adt/numeric.c:5760
 #, c-format
 msgid "value overflows numeric format"
 msgstr "значение переполняет формат numeric"
@@ -17655,12 +17660,17 @@ msgstr "нельзя преобразовать NaN в bigint"
 msgid "cannot convert NaN to smallint"
 msgstr "нельзя преобразовать NaN в smallint"
 
-#: utils/adt/numeric.c:3839
+#: utils/adt/numeric.c:2380 utils/adt/numeric.c:2447
+#, c-format
+msgid "cannot convert infinity to numeric"
+msgstr "нельзя представить бесконечность в numeric"
+
+#: utils/adt/numeric.c:3849
 #, c-format
 msgid "numeric field overflow"
 msgstr "переполнение поля numeric"
 
-#: utils/adt/numeric.c:3840
+#: utils/adt/numeric.c:3850
 #, c-format
 msgid ""
 "A field with precision %d, scale %d must round to an absolute value less "
@@ -17669,7 +17679,7 @@ msgstr ""
 "Поле с точностью %d, порядком %d должно округляться до абсолютного значения "
 "меньше чем %s%d."
 
-#: utils/adt/numeric.c:5307
+#: utils/adt/numeric.c:5317
 #, c-format
 msgid "argument for function \"exp\" too big"
 msgstr "аргумент функции \"exp\" слишком велик"
