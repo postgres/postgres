@@ -1857,6 +1857,19 @@ SELECT json_populate_recordset(row(1,2)::j_ordered_pair, '[{"x": 0}, {"y": 3}]')
 
 SELECT json_populate_recordset(row(1,2)::j_ordered_pair, '[{"x": 1, "y": 0}]');
 ERROR:  value for domain j_ordered_pair violates check constraint "j_ordered_pair_check"
+-- negative cases where the wrong record type is supplied
+select * from json_populate_recordset(row(0::int),'[{"a":"1","b":"2"},{"a":"3"}]') q (a text, b text);
+ERROR:  function return row and query-specified return row do not match
+DETAIL:  Returned row contains 1 attribute, but query expects 2.
+select * from json_populate_recordset(row(0::int,0::int),'[{"a":"1","b":"2"},{"a":"3"}]') q (a text, b text);
+ERROR:  function return row and query-specified return row do not match
+DETAIL:  Returned type integer at ordinal position 1, but query expects text.
+select * from json_populate_recordset(row(0::int,0::int,0::int),'[{"a":"1","b":"2"},{"a":"3"}]') q (a text, b text);
+ERROR:  function return row and query-specified return row do not match
+DETAIL:  Returned row contains 3 attributes, but query expects 2.
+select * from json_populate_recordset(row(1000000000::int,50::int),'[{"b":"2"},{"a":"3"}]') q (a text, b text);
+ERROR:  function return row and query-specified return row do not match
+DETAIL:  Returned type integer at ordinal position 1, but query expects text.
 -- test type info caching in json_populate_record()
 CREATE TEMP TABLE jspoptest (js json);
 INSERT INTO jspoptest

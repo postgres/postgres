@@ -2539,6 +2539,19 @@ SELECT jsonb_populate_recordset(row(1,2)::jb_ordered_pair, '[{"x": 0}, {"y": 3}]
 
 SELECT jsonb_populate_recordset(row(1,2)::jb_ordered_pair, '[{"x": 1, "y": 0}]');
 ERROR:  value for domain jb_ordered_pair violates check constraint "jb_ordered_pair_check"
+-- negative cases where the wrong record type is supplied
+select * from jsonb_populate_recordset(row(0::int),'[{"a":"1","b":"2"},{"a":"3"}]') q (a text, b text);
+ERROR:  function return row and query-specified return row do not match
+DETAIL:  Returned row contains 1 attribute, but query expects 2.
+select * from jsonb_populate_recordset(row(0::int,0::int),'[{"a":"1","b":"2"},{"a":"3"}]') q (a text, b text);
+ERROR:  function return row and query-specified return row do not match
+DETAIL:  Returned type integer at ordinal position 1, but query expects text.
+select * from jsonb_populate_recordset(row(0::int,0::int,0::int),'[{"a":"1","b":"2"},{"a":"3"}]') q (a text, b text);
+ERROR:  function return row and query-specified return row do not match
+DETAIL:  Returned row contains 3 attributes, but query expects 2.
+select * from jsonb_populate_recordset(row(1000000000::int,50::int),'[{"b":"2"},{"a":"3"}]') q (a text, b text);
+ERROR:  function return row and query-specified return row do not match
+DETAIL:  Returned type integer at ordinal position 1, but query expects text.
 -- jsonb_to_record and jsonb_to_recordset
 select * from jsonb_to_record('{"a":1,"b":"foo","c":"bar"}')
     as x(a int, b text, d text);
