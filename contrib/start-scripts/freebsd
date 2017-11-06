@@ -44,7 +44,7 @@ test -x $DAEMON ||
 
 case $1 in
     start)
-	su -l $PGUSER -c "$DAEMON -D '$PGDATA' &" >>$PGLOG 2>&1
+	su -l $PGUSER -c "$DAEMON -D '$PGDATA' >>$PGLOG 2>&1 &"
 	echo -n ' postgresql'
 	;;
     stop)
@@ -52,7 +52,7 @@ case $1 in
 	;;
     restart)
 	su -l $PGUSER -c "$PGCTL stop -D '$PGDATA' -s -m fast -w"
-	su -l $PGUSER -c "$DAEMON -D '$PGDATA' &" >>$PGLOG 2>&1
+	su -l $PGUSER -c "$DAEMON -D '$PGDATA' >>$PGLOG 2>&1 &"
 	;;
     status)
 	su -l $PGUSER -c "$PGCTL status -D '$PGDATA'"
