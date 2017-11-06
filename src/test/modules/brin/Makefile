@@ -18,7 +18,7 @@ endif
 
 check: isolation-check
 
-isolation-check: | submake-isolation
+isolation-check: | submake-isolation temp-install
 	$(MKDIR_P) isolation_output
 	$(pg_isolation_regress_check) \
 	    --outputdir=./isolation_output \
