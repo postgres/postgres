@@ -21,13 +21,13 @@ endif
 
 check: isolation-check prove-check
 
-isolation-check: | submake-isolation
+isolation-check: | submake-isolation temp-install
 	$(MKDIR_P) isolation_output
 	$(pg_isolation_regress_check) \
 	    --outputdir=./isolation_output \
 	    $(ISOLATIONCHECKS)
 
-prove-check:
+prove-check: | temp-install
 	$(prove_check)
 
 .PHONY: check isolation-check prove-check
