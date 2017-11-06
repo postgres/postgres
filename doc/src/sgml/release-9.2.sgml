@@ -42,6 +42,31 @@
 
     <listitem>
      <para>
+      Fix sample server-start scripts to become <literal>$PGUSER</literal>
+      before opening <literal>$PGLOG</literal> (Noah Misch)
+     </para>
+
+     <para>
+      Previously, the postmaster log file was opened while still running as
+      root.  The database owner could therefore mount an attack against
+      another system user by making <literal>$PGLOG</literal> be a symbolic
+      link to some other file, which would then become corrupted by appending
+      log messages.
+     </para>
+
+     <para>
+      By default, these scripts are not installed anywhere.  Users who have
+      made use of them will need to manually recopy them, or apply the same
+      changes to their modified versions.  If the
+      existing <literal>$PGLOG</literal> file is root-owned, it will need to
+      be removed or renamed out of the way before restarting the server with
+      the corrected script.
+      (CVE-2017-12172)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
       Properly reject attempts to convert infinite float values to
       type <type>numeric</type> (Tom Lane, KaiGai Kohei)
      </para>
