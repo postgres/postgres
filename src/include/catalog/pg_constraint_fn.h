@@ -69,6 +69,8 @@ extern char *ChooseConstraintName(const char *name1, const char *name2,
 extern void AlterConstraintNamespaces(Oid ownerId, Oid oldNspId,
 						  Oid newNspId, bool isType, ObjectAddresses *objsMoved);
 extern Oid	get_relation_constraint_oid(Oid relid, const char *conname, bool missing_ok);
+extern Bitmapset *get_relation_constraint_attnos(Oid relid, const char *conname,
+							   bool missing_ok, Oid *constraintOid);
 extern Oid	get_domain_constraint_oid(Oid typid, const char *conname, bool missing_ok);
 
 extern Bitmapset *get_primary_key_attnos(Oid relid, bool deferrableOk,
