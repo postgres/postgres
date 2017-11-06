@@ -23,7 +23,7 @@
    </para>
 
    <para>
-    However, if you use BRIN indexes, see the first changelog entry below.
+    However, if you use BRIN indexes, see the fourth changelog entry below.
    </para>
   </sect2>
 
@@ -31,6 +31,92 @@
    <title>Changes</title>
 
    <itemizedlist>
+
+    <listitem>
+<!--
+Author: Dean Rasheed <dean.a.rasheed@gmail.com>
+Branch: master [87b2ebd35] 2017-11-06 09:19:22 +0000
+Branch: REL_10_STABLE [3f8089572] 2017-11-06 09:17:44 +0000
+Branch: REL9_6_STABLE [1f23d1cd2] 2017-11-06 09:16:24 +0000
+Branch: REL9_5_STABLE [045a18888] 2017-11-06 09:15:11 +0000
+-->
+     <para>
+      Ensure that <literal>INSERT ... ON CONFLICT DO UPDATE</literal> checks
+      table permissions and RLS policies in all cases (Dean Rasheed)
+     </para>
+
+     <para>
+      The update path of <literal>INSERT ... ON CONFLICT DO UPDATE</literal>
+      requires <literal>SELECT</literal> permission on the columns of the
+      arbiter index, but it failed to check for that in the case of an
+      arbiter specified by constraint name.
+      In addition, for a table with row level security enabled, it failed to
+      check updated rows against the table's <literal>SELECT</literal>
+      policies (regardless of how the arbiter index was specified).
+      (CVE-2017-15099)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [b57422871] 2017-11-06 10:29:37 -0500
+Branch: REL_10_STABLE [c30f082d2] 2017-11-06 10:29:38 -0500
+Branch: REL9_6_STABLE [38e825632] 2017-11-06 10:29:39 -0500
+Branch: REL9_5_STABLE [d5fe5fb23] 2017-11-06 10:29:40 -0500
+Branch: REL9_4_STABLE [70846ee05] 2017-11-06 10:29:41 -0500
+Branch: REL9_3_STABLE [c0c8807de] 2017-11-06 10:29:42 -0500
+-->
+     <para>
+      Fix crash due to rowtype mismatch
+      in <function>json{b}_populate_recordset()</function>
+      (Michael Paquier, Tom Lane)
+     </para>
+
+     <para>
+      These functions used the result rowtype specified in the <literal>FROM
+      ... AS</literal> clause without checking that it matched the actual
+      rowtype of the supplied tuple value.  If it didn't, that would usually
+      result in a crash, though disclosure of server memory contents seems
+      possible as well.
+      (CVE-2017-15098)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Noah Misch <noah@leadboat.com>
+Branch: master [dfc015dcf] 2017-11-06 07:11:10 -0800
+Branch: REL_10_STABLE [6b0b983f7] 2017-11-06 07:11:13 -0800
+Branch: REL9_6_STABLE [b7d6f7507] 2017-11-06 07:11:13 -0800
+Branch: REL9_5_STABLE [ed546dd06] 2017-11-06 07:11:13 -0800
+Branch: REL9_4_STABLE [29d067051] 2017-11-06 07:11:13 -0800
+Branch: REL9_3_STABLE [b50029768] 2017-11-06 07:11:13 -0800
+Branch: REL9_2_STABLE [eda780281] 2017-11-06 07:11:13 -0800
+-->
+     <para>
+      Fix sample server-start scripts to become <literal>$PGUSER</literal>
+      before opening <literal>$PGLOG</literal> (Noah Misch)
+     </para>
+
+     <para>
+      Previously, the postmaster log file was opened while still running as
+      root.  The database owner could therefore mount an attack against
+      another system user by making <literal>$PGLOG</literal> be a symbolic
+      link to some other file, which would then become corrupted by appending
+      log messages.
+     </para>
+
+     <para>
+      By default, these scripts are not installed anywhere.  Users who have
+      made use of them will need to manually recopy them, or apply the same
+      changes to their modified versions.  If the
+      existing <literal>$PGLOG</literal> file is root-owned, it will need to
+      be removed or renamed out of the way before restarting the server with
+      the corrected script.
+      (CVE-2017-12172)
+     </para>
+    </listitem>
 
     <listitem>
 <!--
@@ -590,6 +676,26 @@ Branch: REL9_3_STABLE [deb429b51] 2017-11-03 12:40:42 +0100
      <para>
       Make ecpglib's Informix-compatibility mode ignore fractional digits in
       integer input strings, as expected (Gao Zengqi, Michael Meskes)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Noah Misch <noah@leadboat.com>
+Branch: master [c66b438db] 2017-11-05 18:51:08 -0800
+Branch: REL_10_STABLE [937f67800] 2017-11-05 18:51:15 -0800
+Branch: REL9_6_STABLE [971983f42] 2017-11-05 18:52:38 -0800
+Branch: REL9_5_STABLE [014c5cd87] 2017-11-05 18:54:52 -0800
+-->
+     <para>
+      Fix missing temp-install prerequisites
+      for <literal>check</literal>-like Make targets (Noah Misch)
+     </para>
+
+     <para>
+      Some non-default test procedures that are meant to work
+      like <literal>make check</literal> failed to ensure that the temporary
+      installation was up to date.
      </para>
     </listitem>
 
