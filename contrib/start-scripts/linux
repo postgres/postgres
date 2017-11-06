@@ -84,7 +84,7 @@ case $1 in
 	echo -n "Starting PostgreSQL: "
 	test x"$OOM_SCORE_ADJ" != x && echo "$OOM_SCORE_ADJ" > /proc/self/oom_score_adj
 	test x"$OOM_ADJ" != x && echo "$OOM_ADJ" > /proc/self/oom_adj
-	su - $PGUSER -c "$DAEMON -D '$PGDATA' &" >>$PGLOG 2>&1
+	su - $PGUSER -c "$DAEMON -D '$PGDATA' >>$PGLOG 2>&1 &"
 	echo "ok"
 	;;
   stop)
@@ -97,7 +97,7 @@ case $1 in
 	su - $PGUSER -c "$PGCTL stop -D '$PGDATA' -s -m fast -w"
 	test x"$OOM_SCORE_ADJ" != x && echo "$OOM_SCORE_ADJ" > /proc/self/oom_score_adj
 	test x"$OOM_ADJ" != x && echo "$OOM_ADJ" > /proc/self/oom_adj
-	su - $PGUSER -c "$DAEMON -D '$PGDATA' &" >>$PGLOG 2>&1
+	su - $PGUSER -c "$DAEMON -D '$PGDATA' >>$PGLOG 2>&1 &"
 	echo "ok"
 	;;
   reload)
