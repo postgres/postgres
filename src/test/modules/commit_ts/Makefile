@@ -16,5 +16,5 @@ endif
 
 check: prove-check
 
-prove-check:
+prove-check: | temp-install
 	$(prove_check)
