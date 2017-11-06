@@ -81,7 +81,7 @@ check: all
 	$(with_temp_install) ./pg_regress $(REGRESS_OPTS) --temp-instance=./tmp_check --bindir= $(pg_regress_locale_flags) $(THREAD) --schedule=$(srcdir)/ecpg_schedule
 
 # the same options, but with --listen-on-tcp
-checktcp: all
+checktcp: all | temp-install
 	$(with_temp_install) ./pg_regress $(REGRESS_OPTS) --temp-instance=./tmp_check --bindir= $(pg_regress_locale_flags) $(THREAD) --schedule=$(srcdir)/ecpg_schedule_tcp --host=localhost
 
 installcheck: all
