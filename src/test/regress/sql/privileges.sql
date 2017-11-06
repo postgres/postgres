@@ -320,9 +320,24 @@ INSERT INTO atest5(two) VALUES (6) ON CONFLICT (two) DO UPDATE set three = EXCLU
 INSERT INTO atest5(two) VALUES (6) ON CONFLICT (two) DO UPDATE set three = EXCLUDED.three;
 INSERT INTO atest5(two) VALUES (6) ON CONFLICT (two) DO UPDATE set one = 8; -- fails (due to UPDATE)
 INSERT INTO atest5(three) VALUES (4) ON CONFLICT (two) DO UPDATE set three = 10; -- fails (due to INSERT)
+
 -- Check that the columns in the inference require select privileges
--- Error. No privs on four
-INSERT INTO atest5(three) VALUES (4) ON CONFLICT (four) DO UPDATE set three = 10;
+INSERT INTO atest5(four) VALUES (4); -- fail
+
+SET SESSION AUTHORIZATION regress_user1;
+GRANT INSERT (four) ON atest5 TO regress_user4;
+SET SESSION AUTHORIZATION regress_user4;
+
+INSERT INTO atest5(four) VALUES (4) ON CONFLICT (four) DO UPDATE set three = 3; -- fails (due to SELECT)
+INSERT INTO atest5(four) VALUES (4) ON CONFLICT ON CONSTRAINT atest5_four_key DO UPDATE set three = 3; -- fails (due to SELECT)
+INSERT INTO atest5(four) VALUES (4); -- ok
+
+SET SESSION AUTHORIZATION regress_user1;
+GRANT SELECT (four) ON atest5 TO regress_user4;
+SET SESSION AUTHORIZATION regress_user4;
+
+INSERT INTO atest5(four) VALUES (4) ON CONFLICT (four) DO UPDATE set three = 3; -- ok
+INSERT INTO atest5(four) VALUES (4) ON CONFLICT ON CONSTRAINT atest5_four_key DO UPDATE set three = 3; -- ok
 
 SET SESSION AUTHORIZATION regress_user1;
 REVOKE ALL (one) ON atest5 FROM regress_user4;
