@@ -1601,18 +1601,46 @@ json_populate_recordset(PG_FUNCTION_ARGS)
 				 errmsg("set-valued function called in context that "
 						"cannot accept a set")));
 
-
 	rsi->returnMode = SFRM_Materialize;
 
-	/*
-	 * get the tupdesc from the result set info - it must be a record type
-	 * because we already checked that arg1 is a record type.
-	 */
-	(void) get_call_result_type(fcinfo, NULL, &tupdesc);
+	/* if the json is null send back an empty set */
+	if (PG_ARGISNULL(1))
+		PG_RETURN_NULL();
+
+	json = PG_GETARG_TEXT_P(1);
+
+	if (PG_ARGISNULL(0))
+	{
+		rec = NULL;
+
+		/*
+		 * get the tupdesc from the result set info - it must be a record type
+		 * because we already checked that arg1 is a record type
+		 */
+		if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("function returning record called in context "
+							"that cannot accept type record")));
+	}
+	else
+	{
+		rec = PG_GETARG_HEAPTUPLEHEADER(0);
+
+		/*
+		 * use the input record's own type marking to find a tupdesc for it.
+		 */
+		tupType = HeapTupleHeaderGetTypeId(rec);
+		tupTypmod = HeapTupleHeaderGetTypMod(rec);
+		tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
+	}
+
+	tupType = tupdesc->tdtypeid;
+	tupTypmod = tupdesc->tdtypmod;
+	ncolumns = tupdesc->natts;
 
 	state = palloc0(sizeof(PopulateRecordsetState));
 	sem = palloc0(sizeof(JsonSemAction));
-
 
 	/* make these in a sufficiently long-lived memory context */
 	old_cxt = MemoryContextSwitchTo(rsi->econtext->ecxt_per_query_memory);
@@ -1625,20 +1653,8 @@ json_populate_recordset(PG_FUNCTION_ARGS)
 
 	MemoryContextSwitchTo(old_cxt);
 
-	/* if the json is null send back an empty set */
-	if (PG_ARGISNULL(1))
-		PG_RETURN_NULL();
-
-	json = PG_GETARG_TEXT_P(1);
-
-	if (PG_ARGISNULL(0))
-		rec = NULL;
-	else
-		rec = PG_GETARG_HEAPTUPLEHEADER(0);
-
-	tupType = tupdesc->tdtypeid;
-	tupTypmod = tupdesc->tdtypmod;
-	ncolumns = tupdesc->natts;
+	/* unnecessary, but harmless, if tupdesc came from get_call_result_type: */
+	ReleaseTupleDesc(tupdesc);
 
 	lex = makeJsonLexContext(json, true);
 
