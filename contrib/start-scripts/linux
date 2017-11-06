@@ -91,7 +91,7 @@ case $1 in
   start)
 	echo -n "Starting PostgreSQL: "
 	test -e "$PG_OOM_ADJUST_FILE" && echo "$PG_MASTER_OOM_SCORE_ADJ" > "$PG_OOM_ADJUST_FILE"
-	su - $PGUSER -c "$DAEMON_ENV $DAEMON -D '$PGDATA' &" >>$PGLOG 2>&1
+	su - $PGUSER -c "$DAEMON_ENV $DAEMON -D '$PGDATA' >>$PGLOG 2>&1 &"
 	echo "ok"
 	;;
   stop)
@@ -103,7 +103,7 @@ case $1 in
 	echo -n "Restarting PostgreSQL: "
 	su - $PGUSER -c "$PGCTL stop -D '$PGDATA' -s"
 	test -e "$PG_OOM_ADJUST_FILE" && echo "$PG_MASTER_OOM_SCORE_ADJ" > "$PG_OOM_ADJUST_FILE"
-	su - $PGUSER -c "$DAEMON_ENV $DAEMON -D '$PGDATA' &" >>$PGLOG 2>&1
+	su - $PGUSER -c "$DAEMON_ENV $DAEMON -D '$PGDATA' >>$PGLOG 2>&1 &"
 	echo "ok"
 	;;
   reload)
