@@ -3491,25 +3491,39 @@ populate_recordset_worker(FunctionCallInfo fcinfo, const char *funcname,
 
 	rsi->returnMode = SFRM_Materialize;
 
-	/*
-	 * get the tupdesc from the result set info - it must be a record type
-	 * because we already checked that arg1 is a record type, or we're in a
-	 * to_record function which returns a setof record.
-	 */
-	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("function returning record called in context "
-						"that cannot accept type record")));
-
 	/* if the json is null send back an empty set */
 	if (PG_ARGISNULL(json_arg_num))
 		PG_RETURN_NULL();
 
 	if (!have_record_arg || PG_ARGISNULL(0))
+	{
 		rec = NULL;
+
+		/*
+		 * get the tupdesc from the result set info - it must be a record type
+		 * because we already checked that arg1 is a record type, or we're in
+		 * a to_record function which returns a setof record.
+		 */
+		if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("function returning record called in context "
+							"that cannot accept type record")));
+	}
 	else
+	{
+		Oid			tupType;
+		int32		tupTypmod;
+
 		rec = PG_GETARG_HEAPTUPLEHEADER(0);
+
+		/*
+		 * use the input record's own type marking to find a tupdesc for it.
+		 */
+		tupType = HeapTupleHeaderGetTypeId(rec);
+		tupTypmod = HeapTupleHeaderGetTypMod(rec);
+		tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
+	}
 
 	state = palloc0(sizeof(PopulateRecordsetState));
 
@@ -3521,6 +3535,9 @@ populate_recordset_worker(FunctionCallInfo fcinfo, const char *funcname,
 											   SFRM_Materialize_Random,
 											   false, work_mem);
 	MemoryContextSwitchTo(old_cxt);
+
+	/* unnecessary, but harmless, if tupdesc came from get_call_result_type: */
+	ReleaseTupleDesc(tupdesc);
 
 	state->function_name = funcname;
 	state->my_extra = (RecordIOData **) &fcinfo->flinfo->fn_extra;

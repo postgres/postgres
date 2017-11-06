@@ -1806,6 +1806,19 @@ select * from json_populate_recordset(row('def',99,null)::jpop,'[{"a":[100,200,3
  {"z":true}    |  3 | Fri Jan 20 10:42:53 2012
 (2 rows)
 
+-- negative cases where the wrong record type is supplied
+select * from json_populate_recordset(row(0::int),'[{"a":"1","b":"2"},{"a":"3"}]') q (a text, b text);
+ERROR:  function return row and query-specified return row do not match
+DETAIL:  Returned row contains 1 attribute, but query expects 2.
+select * from json_populate_recordset(row(0::int,0::int),'[{"a":"1","b":"2"},{"a":"3"}]') q (a text, b text);
+ERROR:  function return row and query-specified return row do not match
+DETAIL:  Returned type integer at ordinal position 1, but query expects text.
+select * from json_populate_recordset(row(0::int,0::int,0::int),'[{"a":"1","b":"2"},{"a":"3"}]') q (a text, b text);
+ERROR:  function return row and query-specified return row do not match
+DETAIL:  Returned row contains 3 attributes, but query expects 2.
+select * from json_populate_recordset(row(1000000000::int,50::int),'[{"b":"2"},{"a":"3"}]') q (a text, b text);
+ERROR:  function return row and query-specified return row do not match
+DETAIL:  Returned type integer at ordinal position 1, but query expects text.
 -- test type info caching in json_populate_record()
 CREATE TEMP TABLE jspoptest (js json);
 INSERT INTO jspoptest
