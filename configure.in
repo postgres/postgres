@@ -2181,7 +2181,7 @@ AC_DEFINE_UNQUOTED(PG_VERSION_STR,
 # awk -F is a regex on some platforms, and not on others, so make "." a tab
 [PG_VERSION_NUM="`echo "$PACKAGE_VERSION" | sed 's/[A-Za-z].*$//' |
 tr '.' '	' |
-$AWK '{printf "%d%02d%02d", $1, $2, (NF >= 3) ? $3 : 0}'`"]
+$AWK '{printf "%d%04d", $1, $2}'`"]
 AC_DEFINE_UNQUOTED(PG_VERSION_NUM, $PG_VERSION_NUM, [PostgreSQL version as a number])
 AC_SUBST(PG_VERSION_NUM)
 

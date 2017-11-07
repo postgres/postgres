@@ -26,7 +26,7 @@ static int	win32_check_directory_write_permissions(void);
 /*
  * get_bin_version
  *
- *	Fetch versions of binaries for cluster.
+ *	Fetch major version of binaries for cluster.
  */
 static void
 get_bin_version(ClusterInfo *cluster)
@@ -34,8 +34,8 @@ get_bin_version(ClusterInfo *cluster)
 	char		cmd[MAXPGPATH],
 				cmd_output[MAX_STRING];
 	FILE	   *output;
-	int			pre_dot = 0,
-				post_dot = 0;
+	int			v1 = 0,
+				v2 = 0;
 
 	snprintf(cmd, sizeof(cmd), "\"%s/pg_ctl\" --version", cluster->bindir);
 
@@ -46,14 +46,19 @@ get_bin_version(ClusterInfo *cluster)
 
 	pclose(output);
 
-	/* Remove trailing newline */
-	if (strchr(cmd_output, '\n') != NULL)
-		*strchr(cmd_output, '\n') = '\0';
-
-	if (sscanf(cmd_output, "%*s %*s %d.%d", &pre_dot, &post_dot) < 1)
+	if (sscanf(cmd_output, "%*s %*s %d.%d", &v1, &v2) < 1)
 		pg_fatal("could not get pg_ctl version output from %s\n", cmd);
 
-	cluster->bin_version = (pre_dot * 100 + post_dot) * 100;
+	if (v1 < 10)
+	{
+		/* old style, e.g. 9.6.1 */
+		cluster->bin_version = v1 * 10000 + v2 * 100;
+	}
+	else
+	{
+		/* new style, e.g. 10.1 */
+		cluster->bin_version = v1 * 10000;
+	}
 }
 
 
