@@ -87,11 +87,6 @@
 #include "utils/tqual.h"
 
 
-/*
- *		name of relcache init file(s), used to speed up backend startup
- */
-#define RELCACHE_INIT_FILENAME	"pg_internal.init"
-
 #define RELCACHE_INIT_FILEMAGIC		0x573266	/* version ID value */
 
 /*

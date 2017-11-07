@@ -1130,6 +1130,12 @@ SELECT pg_stop_backup();
    </para>
 
    <para>
+    <filename>pg_internal.init</filename> files can be omitted from the
+    backup whenever a file of that name is found.  These files contain
+    relation cache data that is always rebuilt when recovering.
+   </para>
+
+   <para>
     The backup label
     file includes the label string you gave to <function>pg_start_backup</function>,
     as well as the time at which <function>pg_start_backup</function> was run, and

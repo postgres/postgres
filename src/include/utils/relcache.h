@@ -18,6 +18,11 @@
 #include "nodes/bitmapset.h"
 
 
+/*
+ * Name of relcache init file(s), used to speed up backend startup
+ */
+#define RELCACHE_INIT_FILENAME	"pg_internal.init"
+
 typedef struct RelationData *Relation;
 
 /* ----------------

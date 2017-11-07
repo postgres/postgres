@@ -36,6 +36,7 @@
 #include "utils/builtins.h"
 #include "utils/elog.h"
 #include "utils/ps_status.h"
+#include "utils/relcache.h"
 #include "utils/timestamp.h"
 
 
@@ -150,6 +151,9 @@ static const char *excludeFiles[] =
 
 	/* Skip current log file temporary file */
 	LOG_METAINFO_DATAFILE_TMP,
+
+	/* Skip relation cache because it is rebuilt on startup */
+	RELCACHE_INIT_FILENAME,
 
 	/*
 	 * If there's a backup_label or tablespace_map file, it belongs to a

@@ -2501,6 +2501,11 @@ The commands accepted in walsender mode are:
        </listitem>
        <listitem>
         <para>
+         <filename>pg_internal.init (found in multiple directories)</>
+        </para>
+       </listitem>
+       <listitem>
+        <para>
          Various temporary files and directories created during the operation
          of the PostgreSQL server, such as any file or directory beginning
          with <filename>pgsql_tmp</filename>.

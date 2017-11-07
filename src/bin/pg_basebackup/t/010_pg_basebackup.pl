@@ -4,7 +4,7 @@ use Cwd;
 use Config;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 78;
+use Test::More tests => 79;
 
 program_help_ok('pg_basebackup');
 program_version_ok('pg_basebackup');
@@ -61,6 +61,11 @@ foreach my $filename (
 	close $file;
 }
 
+# Connect to a database to create global/pg_internal.init.  If this is removed
+# the test to ensure global/pg_internal.init is not copied will return a false
+# positive.
+$node->safe_psql('postgres', 'SELECT 1;');
+
 $node->command_ok([ 'pg_basebackup', '-D', "$tempdir/backup", '-X', 'none' ],
 	'pg_basebackup runs');
 ok(-f "$tempdir/backup/PG_VERSION", 'backup was created');
@@ -84,7 +89,8 @@ foreach my $dirname (
 
 # These files should not be copied.
 foreach my $filename (
-	qw(postgresql.auto.conf.tmp postmaster.opts postmaster.pid tablespace_map current_logfiles.tmp)
+	qw(postgresql.auto.conf.tmp postmaster.opts postmaster.pid tablespace_map current_logfiles.tmp
+		global/pg_internal.init)
   )
 {
 	ok(!-f "$tempdir/backup/$filename", "$filename not copied");
