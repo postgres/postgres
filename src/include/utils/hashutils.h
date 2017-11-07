@@ -29,7 +29,7 @@ static inline uint64
 hash_combine64(uint64 a, uint64 b)
 {
 	/* 0x49a0f4dd15e5a8e3 is 64bit random data */
-	a ^= b + 0x49a0f4dd15e5a8e3 + (a << 54) + (a >> 7);
+	a ^= b + UINT64CONST(0x49a0f4dd15e5a8e3) + (a << 54) + (a >> 7);
 	return a;
 }
 
