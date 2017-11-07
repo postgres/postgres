@@ -682,7 +682,7 @@ dsm_impl_windows(dsm_op op, dsm_handle handle, Size request_size,
 
 	/*
 	 * Handle teardown cases.  Since Windows automatically destroys the object
-	 * when no references reamin, we can treat it the same as detach.
+	 * when no references remain, we can treat it the same as detach.
 	 */
 	if (op == DSM_OP_DETACH || op == DSM_OP_DESTROY)
 	{
