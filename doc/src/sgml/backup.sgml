@@ -568,7 +568,7 @@ tar -cf backup.tar /usr/local/pgsql/data
     normally creates just a few segment files and then
     <quote>recycles</quote> them by renaming no-longer-needed segment files
     to higher segment numbers.  It's assumed that segment files whose
-    contents precede the checkpoint-before-last are no longer of
+    contents precede the last checkpoint are no longer of
     interest and can be recycled.
    </para>
 

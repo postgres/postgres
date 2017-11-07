@@ -222,9 +222,6 @@ main(int argc, char *argv[])
 	printf(_("Latest checkpoint location:           %X/%X\n"),
 		   (uint32) (ControlFile->checkPoint >> 32),
 		   (uint32) ControlFile->checkPoint);
-	printf(_("Prior checkpoint location:            %X/%X\n"),
-		   (uint32) (ControlFile->prevCheckPoint >> 32),
-		   (uint32) ControlFile->prevCheckPoint);
 	printf(_("Latest checkpoint's REDO location:    %X/%X\n"),
 		   (uint32) (ControlFile->checkPointCopy.redo >> 32),
 		   (uint32) ControlFile->checkPointCopy.redo);

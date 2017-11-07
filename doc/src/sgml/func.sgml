@@ -17949,11 +17949,6 @@ SELECT collation for ('foo' COLLATE "de_DE");
       </row>
 
       <row>
-       <entry><literal>prior_lsn</literal></entry>
-       <entry><type>pg_lsn</type></entry>
-      </row>
-
-      <row>
        <entry><literal>redo_lsn</literal></entry>
        <entry><type>pg_lsn</type></entry>
       </row>
