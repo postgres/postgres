@@ -1373,6 +1373,13 @@ OpenTemporaryFile(bool interXact)
 	File		file = 0;
 
 	/*
+	 * Make sure the current resource owner has space for this File before we
+	 * open it, if we'll be registering it below.
+	 */
+	if (!interXact)
+		ResourceOwnerEnlargeFiles(CurrentResourceOwner);
+
+	/*
 	 * If some temp tablespace(s) have been given to us, try to use the next
 	 * one.  If a given tablespace can't be found, we silently fall back to
 	 * the database's default tablespace.
@@ -1408,9 +1415,8 @@ OpenTemporaryFile(bool interXact)
 	{
 		VfdCache[file].fdstate |= FD_XACT_TEMPORARY;
 
-		ResourceOwnerEnlargeFiles(CurrentResourceOwner);
-		ResourceOwnerRememberFile(CurrentResourceOwner, file);
 		VfdCache[file].resowner = CurrentResourceOwner;
+		ResourceOwnerRememberFile(CurrentResourceOwner, file);
 
 		/* ensure cleanup happens at eoxact */
 		have_xact_temporary_files = true;
