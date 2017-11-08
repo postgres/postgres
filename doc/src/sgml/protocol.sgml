@@ -2501,7 +2501,7 @@ The commands accepted in walsender mode are:
        </listitem>
        <listitem>
         <para>
-         <filename>pg_internal.init (found in multiple directories)</filename>
+         <filename>pg_internal.init</filename> (found in multiple directories)
         </para>
        </listitem>
        <listitem>
