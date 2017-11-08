@@ -2629,11 +2629,11 @@ IncrBufferRefCount(Buffer buffer)
 {
 	Assert(BufferIsPinned(buffer));
 	ResourceOwnerEnlargeBuffers(CurrentResourceOwner);
-	ResourceOwnerRememberBuffer(CurrentResourceOwner, buffer);
 	if (BufferIsLocal(buffer))
 		LocalRefCount[-buffer - 1]++;
 	else
 		PrivateRefCount[buffer - 1]++;
+	ResourceOwnerRememberBuffer(CurrentResourceOwner, buffer);
 }
 
 /*
