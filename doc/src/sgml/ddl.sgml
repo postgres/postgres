@@ -3095,8 +3095,8 @@ CREATE TABLE measurement_y2007m12 PARTITION OF measurement
 
 CREATE TABLE measurement_y2008m01 PARTITION OF measurement
     FOR VALUES FROM ('2008-01-01') TO ('2008-02-01')
-    TABLESPACE fasttablespace
-    WITH (parallel_workers = 4);
+    WITH (parallel_workers = 4)
+    TABLESPACE fasttablespace;
 </programlisting>
       </para>
 
