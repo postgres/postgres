@@ -51,11 +51,6 @@
 #include "utils/builtins.h"
 #include "utils/memutils.h"
 
-/*
- * compatibility flag for permission checks
- */
-bool		lo_compat_privileges;
-
 /* define this to enable debug logging */
 /* #define FSDB 1 */
 /* chunk size for lo_import/lo_export transfers */
@@ -108,14 +103,6 @@ be_lo_open(PG_FUNCTION_ARGS)
 
 	lobjDesc = inv_open(lobjId, mode, fscxt);
 
-	if (lobjDesc == NULL)
-	{							/* lookup failed */
-#if FSDB
-		elog(DEBUG4, "could not open large object %u", lobjId);
-#endif
-		PG_RETURN_INT32(-1);
-	}
-
 	fd = newLOfd(lobjDesc);
 
 	PG_RETURN_INT32(fd);
@@ -163,22 +150,16 @@ lo_read(int fd, char *buf, int len)
 				 errmsg("invalid large-object descriptor: %d", fd)));
 	lobj = cookies[fd];
 
-	/* We don't bother to check IFS_RDLOCK, since it's always set */
-
-	/* Permission checks --- first time through only */
-	if ((lobj->flags & IFS_RD_PERM_OK) == 0)
-	{
-		if (!lo_compat_privileges &&
-			pg_largeobject_aclcheck_snapshot(lobj->id,
-											 GetUserId(),
-											 ACL_SELECT,
-											 lobj->snapshot) != ACLCHECK_OK)
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("permission denied for large object %u",
-							lobj->id)));
-		lobj->flags |= IFS_RD_PERM_OK;
-	}
+	/*
+	 * Check state.  inv_read() would throw an error anyway, but we want the
+	 * error to be about the FD's state not the underlying privilege; it might
+	 * be that the privilege exists but user forgot to ask for read mode.
+	 */
+	if ((lobj->flags & IFS_RDLOCK) == 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("large object descriptor %d was not opened for reading",
+						fd)));
 
 	status = inv_read(lobj, buf, len);
 
@@ -197,26 +178,12 @@ lo_write(int fd, const char *buf, int len)
 				 errmsg("invalid large-object descriptor: %d", fd)));
 	lobj = cookies[fd];
 
+	/* see comment in lo_read() */
 	if ((lobj->flags & IFS_WRLOCK) == 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("large object descriptor %d was not opened for writing",
 						fd)));
-
-	/* Permission checks --- first time through only */
-	if ((lobj->flags & IFS_WR_PERM_OK) == 0)
-	{
-		if (!lo_compat_privileges &&
-			pg_largeobject_aclcheck_snapshot(lobj->id,
-											 GetUserId(),
-											 ACL_UPDATE,
-											 lobj->snapshot) != ACLCHECK_OK)
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("permission denied for large object %u",
-							lobj->id)));
-		lobj->flags |= IFS_WR_PERM_OK;
-	}
 
 	status = inv_write(lobj, buf, len);
 
@@ -342,7 +309,11 @@ be_lo_unlink(PG_FUNCTION_ARGS)
 {
 	Oid			lobjId = PG_GETARG_OID(0);
 
-	/* Must be owner of the largeobject */
+	/*
+	 * Must be owner of the large object.  It would be cleaner to check this
+	 * in inv_drop(), but we want to throw the error before not after closing
+	 * relevant FDs.
+	 */
 	if (!lo_compat_privileges &&
 		!pg_largeobject_ownercheck(lobjId, GetUserId()))
 		ereport(ERROR,
@@ -574,26 +545,12 @@ lo_truncate_internal(int32 fd, int64 len)
 				 errmsg("invalid large-object descriptor: %d", fd)));
 	lobj = cookies[fd];
 
+	/* see comment in lo_read() */
 	if ((lobj->flags & IFS_WRLOCK) == 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("large object descriptor %d was not opened for writing",
 						fd)));
-
-	/* Permission checks --- first time through only */
-	if ((lobj->flags & IFS_WR_PERM_OK) == 0)
-	{
-		if (!lo_compat_privileges &&
-			pg_largeobject_aclcheck_snapshot(lobj->id,
-											 GetUserId(),
-											 ACL_UPDATE,
-											 lobj->snapshot) != ACLCHECK_OK)
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("permission denied for large object %u",
-							lobj->id)));
-		lobj->flags |= IFS_WR_PERM_OK;
-	}
 
 	inv_truncate(lobj, len);
 }
@@ -769,17 +726,6 @@ lo_get_fragment_internal(Oid loOid, int64 offset, int32 nbytes)
 	CreateFSContext();
 
 	loDesc = inv_open(loOid, INV_READ, fscxt);
-
-	/* Permission check */
-	if (!lo_compat_privileges &&
-		pg_largeobject_aclcheck_snapshot(loDesc->id,
-										 GetUserId(),
-										 ACL_SELECT,
-										 loDesc->snapshot) != ACLCHECK_OK)
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("permission denied for large object %u",
-						loDesc->id)));
 
 	/*
 	 * Compute number of bytes we'll actually read, accommodating nbytes == -1

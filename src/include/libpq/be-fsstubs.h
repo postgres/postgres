@@ -15,11 +15,6 @@
 #define BE_FSSTUBS_H
 
 /*
- * compatibility option for access control
- */
-extern bool lo_compat_privileges;
-
-/*
  * These are not fmgr-callable, but are available to C code.
  * Probably these should have had the underscore-free names,
  * but too late now...

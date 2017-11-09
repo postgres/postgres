@@ -52,6 +52,11 @@
 
 
 /*
+ * GUC: backwards-compatibility flag to suppress LO permission checks
+ */
+bool		lo_compat_privileges;
+
+/*
  * All accesses to pg_largeobject and its index make use of a single Relation
  * reference, so that we only need to open pg_relation once per transaction.
  * To avoid problems when the first such reference occurs inside a
@@ -250,21 +255,27 @@ inv_open(Oid lobjId, int flags, MemoryContext mcxt)
 	Snapshot	snapshot = NULL;
 	int			descflags = 0;
 
+	/*
+	 * Historically, no difference is made between (INV_WRITE) and (INV_WRITE
+	 * | INV_READ), the caller being allowed to read the large object
+	 * descriptor in either case.
+	 */
 	if (flags & INV_WRITE)
-	{
-		snapshot = NULL;		/* instantaneous MVCC snapshot */
-		descflags = IFS_WRLOCK | IFS_RDLOCK;
-	}
-	else if (flags & INV_READ)
-	{
-		snapshot = GetActiveSnapshot();
-		descflags = IFS_RDLOCK;
-	}
-	else
+		descflags |= IFS_WRLOCK | IFS_RDLOCK;
+	if (flags & INV_READ)
+		descflags |= IFS_RDLOCK;
+
+	if (descflags == 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("invalid flags for opening a large object: %d",
 						flags)));
+
+	/* Get snapshot.  If write is requested, use an instantaneous snapshot. */
+	if (descflags & IFS_WRLOCK)
+		snapshot = NULL;
+	else
+		snapshot = GetActiveSnapshot();
 
 	/* Can't use LargeObjectExists here because we need to specify snapshot */
 	if (!myLargeObjectExists(lobjId, snapshot))
@@ -272,24 +283,50 @@ inv_open(Oid lobjId, int flags, MemoryContext mcxt)
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("large object %u does not exist", lobjId)));
 
-	/*
-	 * We must register the snapshot in TopTransaction's resowner, because it
-	 * must stay alive until the LO is closed rather than until the current
-	 * portal shuts down. Do this after checking that the LO exists, to avoid
-	 * leaking the snapshot if an error is thrown.
-	 */
-	if (snapshot)
-		snapshot = RegisterSnapshotOnOwner(snapshot,
-										   TopTransactionResourceOwner);
+	/* Apply permission checks, again specifying snapshot */
+	if ((descflags & IFS_RDLOCK) != 0)
+	{
+		if (!lo_compat_privileges &&
+			pg_largeobject_aclcheck_snapshot(lobjId,
+											 GetUserId(),
+											 ACL_SELECT,
+											 snapshot) != ACLCHECK_OK)
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("permission denied for large object %u",
+							lobjId)));
+	}
+	if ((descflags & IFS_WRLOCK) != 0)
+	{
+		if (!lo_compat_privileges &&
+			pg_largeobject_aclcheck_snapshot(lobjId,
+											 GetUserId(),
+											 ACL_UPDATE,
+											 snapshot) != ACLCHECK_OK)
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("permission denied for large object %u",
+							lobjId)));
+	}
 
-	/* All set, create a descriptor */
+	/* OK to create a descriptor */
 	retval = (LargeObjectDesc *) MemoryContextAlloc(mcxt,
 													sizeof(LargeObjectDesc));
 	retval->id = lobjId;
 	retval->subid = GetCurrentSubTransactionId();
 	retval->offset = 0;
-	retval->snapshot = snapshot;
 	retval->flags = descflags;
+
+	/*
+	 * We must register the snapshot in TopTransaction's resowner, because it
+	 * must stay alive until the LO is closed rather than until the current
+	 * portal shuts down.  Do this last to avoid uselessly leaking the
+	 * snapshot if an error is thrown above.
+	 */
+	if (snapshot)
+		snapshot = RegisterSnapshotOnOwner(snapshot,
+										   TopTransactionResourceOwner);
+	retval->snapshot = snapshot;
 
 	return retval;
 }
@@ -312,7 +349,7 @@ inv_close(LargeObjectDesc *obj_desc)
 /*
  * Destroys an existing large object (not to be confused with a descriptor!)
  *
- * returns -1 if failed
+ * Note we expect caller to have done any required permissions check.
  */
 int
 inv_drop(Oid lobjId)
@@ -333,6 +370,7 @@ inv_drop(Oid lobjId)
 	 */
 	CommandCounterIncrement();
 
+	/* For historical reasons, we always return 1 on success. */
 	return 1;
 }
 
@@ -398,6 +436,11 @@ inv_seek(LargeObjectDesc *obj_desc, int64 offset, int whence)
 	Assert(PointerIsValid(obj_desc));
 
 	/*
+	 * We allow seek/tell if you have either read or write permission, so no
+	 * need for a permission check here.
+	 */
+
+	/*
 	 * Note: overflow in the additions is possible, but since we will reject
 	 * negative results, we don't need any extra test for that.
 	 */
@@ -439,6 +482,11 @@ inv_tell(LargeObjectDesc *obj_desc)
 {
 	Assert(PointerIsValid(obj_desc));
 
+	/*
+	 * We allow seek/tell if you have either read or write permission, so no
+	 * need for a permission check here.
+	 */
+
 	return obj_desc->offset;
 }
 
@@ -457,6 +505,12 @@ inv_read(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 
 	Assert(PointerIsValid(obj_desc));
 	Assert(buf != NULL);
+
+	if ((obj_desc->flags & IFS_RDLOCK) == 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("permission denied for large object %u",
+						obj_desc->id)));
 
 	if (nbytes <= 0)
 		return 0;
@@ -563,7 +617,11 @@ inv_write(LargeObjectDesc *obj_desc, const char *buf, int nbytes)
 	Assert(buf != NULL);
 
 	/* enforce writability because snapshot is probably wrong otherwise */
-	Assert(obj_desc->flags & IFS_WRLOCK);
+	if ((obj_desc->flags & IFS_WRLOCK) == 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("permission denied for large object %u",
+						obj_desc->id)));
 
 	if (nbytes <= 0)
 		return 0;
@@ -749,7 +807,11 @@ inv_truncate(LargeObjectDesc *obj_desc, int64 len)
 	Assert(PointerIsValid(obj_desc));
 
 	/* enforce writability because snapshot is probably wrong otherwise */
-	Assert(obj_desc->flags & IFS_WRLOCK);
+	if ((obj_desc->flags & IFS_WRLOCK) == 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("permission denied for large object %u",
+						obj_desc->id)));
 
 	/*
 	 * use errmsg_internal here because we don't want to expose INT64_FORMAT
