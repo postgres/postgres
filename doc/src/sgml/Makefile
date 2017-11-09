@@ -66,10 +66,11 @@ ALLSGML := $(wildcard $(srcdir)/*.sgml $(srcdir)/ref/*.sgml) $(GENERATED_SGML)
 # Enable some extra warnings
 # -wfully-tagged needed to throw a warning on missing tags
 # for older tool chains, 2007-08-31
+# -wnet catches XML-style empty-element tags like <xref linkend="abc"/>.
 # Note: try "make SPFLAGS=-wxml" to catch a lot of other dubious constructs,
 # in particular < and & that haven't been made into entities.  It's far too
 # noisy to turn on by default, unfortunately.
-override SPFLAGS += -wall -wno-unused-param -wno-empty -wfully-tagged
+override SPFLAGS += -wall -wno-unused-param -wno-empty -wfully-tagged -wnet
 
 
 ##
