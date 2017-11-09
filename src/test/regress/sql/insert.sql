@@ -222,8 +222,41 @@ insert into list_parted select 'gg', s.a from generate_series(1, 9) s(a);
 insert into list_parted (b) values (1);
 select tableoid::regclass::text, a, min(b) as min_b, max(b) as max_b from list_parted group by 1, 2 order by 1;
 
+-- direct partition inserts should check hash partition bound constraint
+
+-- create custom operator class and hash function, for the same reason
+-- explained in alter_table.sql
+create or replace function dummy_hashint4(a int4, seed int8) returns int8 as
+$$ begin return (a + seed); end; $$ language 'plpgsql' immutable;
+create operator class custom_opclass for type int4 using hash as
+operator 1 = , function 2 dummy_hashint4(int4, int8);
+
+create table hash_parted (
+	a int
+) partition by hash (a custom_opclass);
+create table hpart0 partition of hash_parted for values with (modulus 4, remainder 0);
+create table hpart1 partition of hash_parted for values with (modulus 4, remainder 1);
+create table hpart2 partition of hash_parted for values with (modulus 4, remainder 2);
+create table hpart3 partition of hash_parted for values with (modulus 4, remainder 3);
+
+insert into hash_parted values(generate_series(1,10));
+
+-- direct insert of values divisible by 4 - ok;
+insert into hpart0 values(12),(16);
+-- fail;
+insert into hpart0 values(11);
+-- 11 % 4 -> 3 remainder i.e. valid data for hpart3 partition
+insert into hpart3 values(11);
+
+-- view data
+select tableoid::regclass as part, a, a%4 as "remainder = a % 4"
+from hash_parted order by part;
+
 -- cleanup
 drop table range_parted, list_parted;
+drop table hash_parted;
+drop operator class custom_opclass using hash;
+drop function dummy_hashint4(a int4, seed int8);
 
 -- test that a default partition added as the first partition accepts any value
 -- including null

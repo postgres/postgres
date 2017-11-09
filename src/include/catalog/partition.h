@@ -19,6 +19,9 @@
 #include "parser/parse_node.h"
 #include "utils/rel.h"
 
+/* Seed for the extended hash function */
+#define HASH_PARTITION_SEED UINT64CONST(0x7A5B22367996DCFD)
+
 /*
  * PartitionBoundInfo encapsulates a set of partition bounds.  It is usually
  * associated with partitioned tables as part of its partition descriptor.

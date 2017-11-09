@@ -2848,6 +2848,8 @@ _equalPartitionBoundSpec(const PartitionBoundSpec *a, const PartitionBoundSpec *
 {
 	COMPARE_SCALAR_FIELD(strategy);
 	COMPARE_SCALAR_FIELD(is_default);
+	COMPARE_SCALAR_FIELD(modulus);
+	COMPARE_SCALAR_FIELD(remainder);
 	COMPARE_NODE_FIELD(listdatums);
 	COMPARE_NODE_FIELD(lowerdatums);
 	COMPARE_NODE_FIELD(upperdatums);

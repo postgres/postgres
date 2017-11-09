@@ -1432,6 +1432,13 @@ ALTER TABLE cities
 </programlisting></para>
 
   <para>
+   Attach a partition to hash partitioned table:
+<programlisting>
+ALTER TABLE orders
+    ATTACH PARTITION orders_p4 FOR VALUES WITH (MODULUS 4, REMAINDER 3);
+</programlisting></para>
+
+  <para>
    Detach a partition from partitioned table:
 <programlisting>
 ALTER TABLE measurement

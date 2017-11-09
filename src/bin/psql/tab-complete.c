@@ -2055,7 +2055,7 @@ psql_completion(const char *text, int start, int end)
 	else if (TailMatches3("ATTACH", "PARTITION", MatchAny))
 		COMPLETE_WITH_LIST2("FOR VALUES", "DEFAULT");
 	else if (TailMatches2("FOR", "VALUES"))
-		COMPLETE_WITH_LIST2("FROM (", "IN (");
+		COMPLETE_WITH_LIST3("FROM (", "IN (", "WITH (");
 
 	/*
 	 * If we have ALTER TABLE <foo> DETACH PARTITION, provide a list of

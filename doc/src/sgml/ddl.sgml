@@ -2875,6 +2875,19 @@ VALUES ('Albany', NULL, NULL, 'NY');
         </para>
        </listitem>
       </varlistentry>
+
+      <varlistentry>
+       <term>Hash Partitioning</term>
+
+       <listitem>
+        <para>
+         The table is partitioned by specifying a modulus and a remainder for
+         each partition. Each partition will hold the rows for which the hash
+         value of the partition key divided by the specified modulus will
+         produce the specified remainder.
+        </para>
+       </listitem>
+      </varlistentry>
      </variablelist>
 
      If your application needs to use other forms of partitioning not listed
@@ -2901,9 +2914,8 @@ VALUES ('Albany', NULL, NULL, 'NY');
     All rows inserted into a partitioned table will be routed to one of the
     <firstterm>partitions</firstterm> based on the value of the partition
     key.  Each partition has a subset of the data defined by its
-    <firstterm>partition bounds</firstterm>.  Currently supported
-    partitioning methods include range and list, where each partition is
-    assigned a range of keys and a list of keys, respectively.
+    <firstterm>partition bounds</firstterm>.  The currently supported
+    partitioning methods are range, list, and hash.
    </para>
 
    <para>
@@ -3328,11 +3340,11 @@ ALTER TABLE measurement ATTACH PARTITION measurement_y2008m02
 
       <listitem>
        <para>
-        Declarative partitioning only supports list and range partitioning,
-        whereas table inheritance allows data to be divided in a manner of
-        the user's choosing.  (Note, however, that if constraint exclusion is
-        unable to prune partitions effectively, query performance will be very
-        poor.)
+        Declarative partitioning only supports range, list and hash
+        partitioning, whereas table inheritance allows data to be divided in a
+        manner of the user's choosing.  (Note, however, that if constraint
+        exclusion is unable to prune partitions effectively, query performance
+        will be very poor.)
        </para>
       </listitem>
 

@@ -1551,7 +1551,7 @@ pg_get_statisticsobj_worker(Oid statextid, bool missing_ok)
  *
  * Returns the partition key specification, ie, the following:
  *
- * PARTITION BY { RANGE | LIST } (column opt_collation opt_opclass [, ...])
+ * PARTITION BY { RANGE | LIST | HASH } (column opt_collation opt_opclass [, ...])
  */
 Datum
 pg_get_partkeydef(PG_FUNCTION_ARGS)
@@ -1655,6 +1655,10 @@ pg_get_partkeydef_worker(Oid relid, int prettyFlags,
 
 	switch (form->partstrat)
 	{
+		case PARTITION_STRATEGY_HASH:
+			if (!attrsOnly)
+				appendStringInfo(&buf, "HASH");
+			break;
 		case PARTITION_STRATEGY_LIST:
 			if (!attrsOnly)
 				appendStringInfoString(&buf, "LIST");
@@ -8711,6 +8715,15 @@ get_rule_expr(Node *node, deparse_context *context,
 
 				switch (spec->strategy)
 				{
+					case PARTITION_STRATEGY_HASH:
+						Assert(spec->modulus > 0 && spec->remainder >= 0);
+						Assert(spec->modulus > spec->remainder);
+
+						appendStringInfoString(buf, "FOR VALUES");
+						appendStringInfo(buf, " WITH (modulus %d, remainder %d)",
+										 spec->modulus, spec->remainder);
+						break;
+
 					case PARTITION_STRATEGY_LIST:
 						Assert(spec->listdatums != NIL);
 

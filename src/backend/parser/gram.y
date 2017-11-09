@@ -579,7 +579,8 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <list>		part_params
 %type <partboundspec> PartitionBoundSpec
 %type <node>		partbound_datum PartitionRangeDatum
-%type <list>		partbound_datum_list range_datum_list
+%type <list>		hash_partbound partbound_datum_list range_datum_list
+%type <defelt>		hash_partbound_elem
 
 /*
  * Non-keyword token types.  These are hard-wired into the "flex" lexer.
@@ -2638,8 +2639,61 @@ alter_identity_column_option:
 		;
 
 PartitionBoundSpec:
+			/* a HASH partition*/
+			FOR VALUES WITH '(' hash_partbound ')'
+				{
+					ListCell   *lc;
+					PartitionBoundSpec *n = makeNode(PartitionBoundSpec);
+
+					n->strategy = PARTITION_STRATEGY_HASH;
+					n->modulus = n->remainder = -1;
+
+					foreach (lc, $5)
+					{
+						DefElem    *opt = lfirst_node(DefElem, lc);
+
+						if (strcmp(opt->defname, "modulus") == 0)
+						{
+							if (n->modulus != -1)
+								ereport(ERROR,
+										(errcode(ERRCODE_DUPLICATE_OBJECT),
+										 errmsg("modulus for hash partition provided more than once"),
+										 parser_errposition(opt->location)));
+							n->modulus = defGetInt32(opt);
+						}
+						else if (strcmp(opt->defname, "remainder") == 0)
+						{
+							if (n->remainder != -1)
+								ereport(ERROR,
+										(errcode(ERRCODE_DUPLICATE_OBJECT),
+										 errmsg("remainder for hash partition provided more than once"),
+										 parser_errposition(opt->location)));
+							n->remainder = defGetInt32(opt);
+						}
+						else
+							ereport(ERROR,
+									(errcode(ERRCODE_SYNTAX_ERROR),
+									 errmsg("unrecognized hash partition bound specification \"%s\"",
+											opt->defname),
+									 parser_errposition(opt->location)));
+					}
+
+					if (n->modulus == -1)
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("modulus for hash partition must be specified")));
+					if (n->remainder == -1)
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("remainder for hash partition must be specified")));
+
+					n->location = @3;
+
+					$$ = n;
+				}
+
 			/* a LIST partition */
-			FOR VALUES IN_P '(' partbound_datum_list ')'
+			| FOR VALUES IN_P '(' partbound_datum_list ')'
 				{
 					PartitionBoundSpec *n = makeNode(PartitionBoundSpec);
 
@@ -2675,6 +2729,24 @@ PartitionBoundSpec:
 
 					$$ = n;
 				}
+		;
+
+hash_partbound_elem:
+		NonReservedWord Iconst
+			{
+				$$ = makeDefElem($1, (Node *)makeInteger($2), @1);
+			}
+		;
+
+hash_partbound:
+		hash_partbound_elem
+			{
+				$$ = list_make1($1);
+			}
+		| hash_partbound ',' hash_partbound_elem
+			{
+				$$ = lappend($1, $3);
+			}
 		;
 
 partbound_datum:

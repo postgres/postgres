@@ -1463,7 +1463,7 @@ have_partkey_equi_join(RelOptInfo *rel1, RelOptInfo *rel2, JoinType jointype,
 			continue;
 
 		/* Skip clauses which are not equality conditions. */
-		if (!rinfo->mergeopfamilies)
+		if (!rinfo->mergeopfamilies && !OidIsValid(rinfo->hashjoinoperator))
 			continue;
 
 		opexpr = (OpExpr *) rinfo->clause;
@@ -1515,8 +1515,14 @@ have_partkey_equi_join(RelOptInfo *rel1, RelOptInfo *rel2, JoinType jointype,
 		 * The clause allows partition-wise join if only it uses the same
 		 * operator family as that specified by the partition key.
 		 */
-		if (!list_member_oid(rinfo->mergeopfamilies,
-							 part_scheme->partopfamily[ipk1]))
+		if (rel1->part_scheme->strategy == PARTITION_STRATEGY_HASH)
+		{
+			if (!op_in_opfamily(rinfo->hashjoinoperator,
+								part_scheme->partopfamily[ipk1]))
+				continue;
+		}
+		else if (!list_member_oid(rinfo->mergeopfamilies,
+								  part_scheme->partopfamily[ipk1]))
 			continue;
 
 		/* Mark the partition key as having an equi-join clause. */
