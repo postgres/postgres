@@ -1262,8 +1262,12 @@ fi
 
 if test "$with_bonjour" = yes ; then
   AC_CHECK_HEADER(dns_sd.h, [], [AC_MSG_ERROR([header file <dns_sd.h> is required for Bonjour])])
-  AC_SEARCH_LIBS(DNSServiceRefSockFD, dns_sd, [],
-    [AC_MSG_ERROR([could not find function 'DNSServiceRefSockFD' required for Bonjour])])
+dnl At some point we might add something like
+dnl AC_SEARCH_LIBS(DNSServiceRegister, dns_sd)
+dnl but right now, what that would mainly accomplish is to encourage
+dnl people to try to use the avahi implementation, which does not work.
+dnl If you want to use Apple's own Bonjour code on another platform,
+dnl just add -ldns_sd to LIBS manually.
 fi
 
 # for contrib/uuid-ossp
