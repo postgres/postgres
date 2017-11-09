@@ -448,14 +448,6 @@ lo_import_internal(text *filename, Oid lobjOid)
 	LargeObjectDesc *lobj;
 	Oid			oid;
 
-#ifndef ALLOW_DANGEROUS_LO_FUNCTIONS
-	if (!superuser())
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("must be superuser to use server-side lo_import()"),
-				 errhint("Anyone can use the client-side lo_import() provided by libpq.")));
-#endif
-
 	CreateFSContext();
 
 	/*
@@ -513,14 +505,6 @@ be_lo_export(PG_FUNCTION_ARGS)
 	char		fnamebuf[MAXPGPATH];
 	LargeObjectDesc *lobj;
 	mode_t		oumask;
-
-#ifndef ALLOW_DANGEROUS_LO_FUNCTIONS
-	if (!superuser())
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("must be superuser to use server-side lo_export()"),
-				 errhint("Anyone can use the client-side lo_export() provided by libpq.")));
-#endif
 
 	CreateFSContext();
 

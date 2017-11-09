@@ -73,16 +73,6 @@
 #define NUM_ATOMICS_SEMAPHORES		64
 
 /*
- * Define this if you want to allow the lo_import and lo_export SQL
- * functions to be executed by ordinary users.  By default these
- * functions are only available to the Postgres superuser.  CAUTION:
- * These functions are SECURITY HOLES since they can read and write
- * any file that the PostgreSQL server has permission to access.  If
- * you turn this on, don't say we didn't warn you.
- */
-/* #define ALLOW_DANGEROUS_LO_FUNCTIONS */
-
-/*
  * MAXPGPATH: standard size of a pathname buffer in PostgreSQL (hence,
  * maximum usable pathname length is one less).
  *

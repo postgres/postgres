@@ -839,6 +839,8 @@ SELECT lo_truncate(lo_open(1002, x'20000'::int), 10);	-- to be denied
 SELECT lo_put(1002, 1, 'abcd');				-- to be denied
 SELECT lo_unlink(1002);					-- to be denied
 SELECT lo_export(1001, '/dev/null');			-- to be denied
+SELECT lo_import('/dev/null');				-- to be denied
+SELECT lo_import('/dev/null', 2003);			-- to be denied
 
 \c -
 SET lo_compat_privileges = true;	-- compatibility mode

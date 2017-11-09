@@ -1358,8 +1358,11 @@ ERROR:  permission denied for large object 1002
 SELECT lo_unlink(1002);					-- to be denied
 ERROR:  must be owner of large object 1002
 SELECT lo_export(1001, '/dev/null');			-- to be denied
-ERROR:  must be superuser to use server-side lo_export()
-HINT:  Anyone can use the client-side lo_export() provided by libpq.
+ERROR:  permission denied for function lo_export
+SELECT lo_import('/dev/null');				-- to be denied
+ERROR:  permission denied for function lo_import
+SELECT lo_import('/dev/null', 2003);			-- to be denied
+ERROR:  permission denied for function lo_import
 \c -
 SET lo_compat_privileges = true;	-- compatibility mode
 SET SESSION AUTHORIZATION regress_user4;
@@ -1388,8 +1391,7 @@ SELECT lo_unlink(1002);
 (1 row)
 
 SELECT lo_export(1001, '/dev/null');			-- to be denied
-ERROR:  must be superuser to use server-side lo_export()
-HINT:  Anyone can use the client-side lo_export() provided by libpq.
+ERROR:  permission denied for function lo_export
 -- don't allow unpriv users to access pg_largeobject contents
 \c -
 SELECT * FROM pg_largeobject LIMIT 0;
