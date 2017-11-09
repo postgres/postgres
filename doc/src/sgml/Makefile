@@ -66,7 +66,8 @@ ALLSGML := $(wildcard $(srcdir)/*.sgml $(srcdir)/ref/*.sgml) $(GENERATED_SGML)
 # Enable some extra warnings
 # -wfully-tagged needed to throw a warning on missing tags
 # for older tool chains, 2007-08-31
-override SPFLAGS += -wall -wno-unused-param -wfully-tagged
+# -wnet catches XML-style empty-element tags like <xref linkend="abc"/>.
+override SPFLAGS += -wall -wno-unused-param -wfully-tagged -wnet
 # Additional warnings for XML compatibility.  The conditional is meant
 # to detect whether we are using OpenSP rather than the ancient
 # original SP.
