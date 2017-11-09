@@ -382,12 +382,11 @@ check_bin_dir(ClusterInfo *cluster)
 	validate_exec(cluster->bindir, "pg_ctl");
 
 	/*
-	 * Fetch the binary versions after checking for the existence of pg_ctl,
-	 * this gives a correct error if the binary used itself for the version
-	 * fetching is broken.
+	 * Fetch the binary version after checking for the existence of pg_ctl.
+	 * This way we report a useful error if the pg_ctl binary used for version
+	 * fetching is missing/broken.
 	 */
-	get_bin_version(&old_cluster);
-	get_bin_version(&new_cluster);
+	get_bin_version(cluster);
 
 	/* pg_resetxlog has been renamed to pg_resetwal in version 10 */
 	if (GET_MAJOR_VERSION(cluster->bin_version) < 1000)
