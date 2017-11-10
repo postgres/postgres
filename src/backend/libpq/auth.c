@@ -2474,7 +2474,8 @@ CheckLDAPAuth(Port *port)
 		{
 			ereport(LOG,
 					(errmsg("could not perform initial LDAP bind for ldapbinddn \"%s\" on server \"%s\": %s",
-							port->hba->ldapbinddn, port->hba->ldapserver, ldap_err2string(r))));
+							port->hba->ldapbinddn ? port->hba->ldapbinddn : "",
+							port->hba->ldapserver, ldap_err2string(r))));
 			pfree(passwd);
 			return STATUS_ERROR;
 		}
