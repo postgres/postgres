@@ -676,8 +676,7 @@ build_join_rel(PlannerInfo *root,
  * 'sjinfo': child-join context info
  * 'restrictlist': list of RestrictInfo nodes that apply to this particular
  *		pair of joinable relations
- * 'join_appinfos': list of AppendRelInfo nodes for base child relations
- *		involved in this join
+ * 'jointype' is the join type (inner, left, full, etc)
  */
 RelOptInfo *
 build_child_join_rel(PlannerInfo *root, RelOptInfo *outer_rel,
