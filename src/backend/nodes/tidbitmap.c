@@ -265,7 +265,6 @@ TIDBitmap *
 tbm_create(long maxbytes, dsa_area *dsa)
 {
 	TIDBitmap  *tbm;
-	long		nbuckets;
 
 	/* Create the TIDBitmap struct and zero all its fields */
 	tbm = makeNode(TIDBitmap);
@@ -273,17 +272,7 @@ tbm_create(long maxbytes, dsa_area *dsa)
 	tbm->mcxt = CurrentMemoryContext;
 	tbm->status = TBM_EMPTY;
 
-	/*
-	 * Estimate number of hashtable entries we can have within maxbytes. This
-	 * estimates the hash cost as sizeof(PagetableEntry), which is good enough
-	 * for our purpose.  Also count an extra Pointer per entry for the arrays
-	 * created during iteration readout.
-	 */
-	nbuckets = maxbytes /
-		(sizeof(PagetableEntry) + sizeof(Pointer) + sizeof(Pointer));
-	nbuckets = Min(nbuckets, INT_MAX - 1);	/* safety limit */
-	nbuckets = Max(nbuckets, 16);	/* sanity limit */
-	tbm->maxentries = (int) nbuckets;
+	tbm->maxentries = (int) tbm_calculate_entries(maxbytes);
 	tbm->lossify_start = 0;
 	tbm->dsa = dsa;
 	tbm->dsapagetable = InvalidDsaPointer;
@@ -1545,4 +1534,28 @@ pagetable_free(pagetable_hash *pagetable, void *pointer)
 		dsa_free(tbm->dsa, tbm->dsapagetableold);
 		tbm->dsapagetableold = InvalidDsaPointer;
 	}
+}
+
+/*
+ * tbm_calculate_entries
+ *
+ * Estimate number of hashtable entries we can have within maxbytes.
+ */
+long
+tbm_calculate_entries(double maxbytes)
+{
+	long		nbuckets;
+
+	/*
+	 * Estimate number of hashtable entries we can have within maxbytes. This
+	 * estimates the hash cost as sizeof(PagetableEntry), which is good enough
+	 * for our purpose.  Also count an extra Pointer per entry for the arrays
+	 * created during iteration readout.
+	 */
+	nbuckets = maxbytes /
+		(sizeof(PagetableEntry) + sizeof(Pointer) + sizeof(Pointer));
+	nbuckets = Min(nbuckets, INT_MAX - 1);	/* safety limit */
+	nbuckets = Max(nbuckets, 16);	/* sanity limit */
+
+	return nbuckets;
 }
