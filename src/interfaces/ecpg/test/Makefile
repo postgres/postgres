@@ -81,9 +81,9 @@ REGRESS_OPTS = --dbname=regress1,connectdb --create-role=connectuser,connectdb $
 check: all
 	./pg_regress $(REGRESS_OPTS) --top-builddir=$(top_builddir) --temp-install=./tmp_check $(pg_regress_locale_flags) $(THREAD) --schedule=$(srcdir)/ecpg_schedule 
 
-# the same options, but with --listen-on-tcp
+# Connect to the server using TCP, and add a TCP-specific test.
 checktcp: all
-	./pg_regress $(REGRESS_OPTS) --top-builddir=$(top_builddir) --temp-install=./tmp_check $(pg_regress_locale_flags) $(THREAD) --schedule=$(srcdir)/ecpg_schedule_tcp --host=localhost
+	./pg_regress $(REGRESS_OPTS) --top-builddir=$(top_builddir) --temp-install=./tmp_check $(pg_regress_locale_flags) $(THREAD) --schedule=$(srcdir)/ecpg_schedule --host=localhost connect/test1
 
 installcheck: all
 	./pg_regress $(REGRESS_OPTS) --psqldir='$(PSQLDIR)' --top-builddir=$(top_builddir) $(pg_regress_locale_flags) $(THREAD) --schedule=$(srcdir)/ecpg_schedule
