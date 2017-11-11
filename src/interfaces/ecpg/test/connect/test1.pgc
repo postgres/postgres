@@ -54,7 +54,7 @@ exec sql end declare section;
 	exec sql disconnect;
 
 	/* wrong port */
-	exec sql connect to tcp:postgresql://localhost:20/ecpg2_regression user regress_ecpg_user1 identified by connectpw;
+	exec sql connect to tcp:postgresql://127.0.0.1:20/ecpg2_regression user regress_ecpg_user1 identified by connectpw;
 	/* no disconnect necessary */
 
 	/* wrong password */

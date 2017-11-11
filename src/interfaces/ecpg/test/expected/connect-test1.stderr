@@ -63,13 +63,10 @@
 [NO_PID]: sqlca: code: -402, state: 08001
 [NO_PID]: raising sqlcode -220 on line 54: connection "CURRENT" does not exist on line 54
 [NO_PID]: sqlca: code: -220, state: 08003
-[NO_PID]: ECPGconnect: opening database ecpg2_regression on localhost port <REGRESSION_PORT>  for user regress_ecpg_user1
+[NO_PID]: ECPGconnect: opening database ecpg2_regression on 127.0.0.1 port <REGRESSION_PORT>  for user regress_ecpg_user1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: could not open database: could not connect to server: Connection refused
-	Is the server running on host "localhost" (::1) and accepting
-	TCP/IP connections on port 20?
-could not connect to server: Connection refused
-	Is the server running on host "localhost" (127.0.0.1) and accepting
+	Is the server running on host "127.0.0.1" and accepting
 	TCP/IP connections on port 20?
 
 [NO_PID]: sqlca: code: 0, state: 00000
