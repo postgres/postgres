@@ -3778,6 +3778,7 @@ xpath_internal(text *xpath_expr_text, xmltype *data, ArrayType *namespaces,
 	int32		xpath_len;
 	xmlChar    *string;
 	xmlChar    *xpath_expr;
+	size_t		xmldecl_len = 0;
 	int			i;
 	int			ndim;
 	Datum	   *ns_names_uris;
@@ -3838,6 +3839,16 @@ xpath_internal(text *xpath_expr_text, xmltype *data, ArrayType *namespaces,
 	memcpy(xpath_expr, VARDATA(xpath_expr_text), xpath_len);
 	xpath_expr[xpath_len] = '\0';
 
+	/*
+	 * In a UTF8 database, skip any xml declaration, which might assert
+	 * another encoding.  Ignore parse_xml_decl() failure, letting
+	 * xmlCtxtReadMemory() report parse errors.  Documentation disclaims
+	 * xpath() support for non-ASCII data in non-UTF8 databases, so leave
+	 * those scenarios bug-compatible with historical behavior.
+	 */
+	if (GetDatabaseEncoding() == PG_UTF8)
+		parse_xml_decl(string, &xmldecl_len, NULL, NULL, NULL);
+
 	xmlerrcxt = pg_xml_init(PG_XML_STRICTNESS_ALL);
 
 	PG_TRY();
@@ -3852,7 +3863,8 @@ xpath_internal(text *xpath_expr_text, xmltype *data, ArrayType *namespaces,
 		if (ctxt == NULL || xmlerrcxt->err_occurred)
 			xml_ereport(xmlerrcxt, ERROR, ERRCODE_OUT_OF_MEMORY,
 						"could not allocate parser context");
-		doc = xmlCtxtReadMemory(ctxt, (char *) string, len, NULL, NULL, 0);
+		doc = xmlCtxtReadMemory(ctxt, (char *) string + xmldecl_len,
+								len - xmldecl_len, NULL, NULL, 0);
 		if (doc == NULL || xmlerrcxt->err_occurred)
 			xml_ereport(xmlerrcxt, ERROR, ERRCODE_INVALID_XML_DOCUMENT,
 						"could not parse XML document");
