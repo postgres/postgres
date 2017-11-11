@@ -196,11 +196,12 @@ DECLARE
   degree_symbol text;
   res xml[];
 BEGIN
-  -- Per the documentation, xpath() doesn't work on non-ASCII data when
-  -- the server encoding is not UTF8.  The EXCEPTION block below,
-  -- currently dead code, will be relevant if we remove this limitation.
+  -- Per the documentation, except when the server encoding is UTF8, xpath()
+  -- may not work on non-ASCII data.  The untranslatable_character and
+  -- undefined_function traps below, currently dead code, will become relevant
+  -- if we remove this limitation.
   IF current_setting('server_encoding') <> 'UTF8' THEN
-    RAISE LOG 'skip: encoding % unsupported for xml',
+    RAISE LOG 'skip: encoding % unsupported for xpath',
       current_setting('server_encoding');
     RETURN;
   END IF;
@@ -215,9 +216,12 @@ BEGIN
   END IF;
 EXCEPTION
   -- character with byte sequence 0xc2 0xb0 in encoding "UTF8" has no equivalent in encoding "LATIN8"
-  WHEN untranslatable_character THEN RAISE LOG 'skip: %', SQLERRM;
+  WHEN untranslatable_character
   -- default conversion function for encoding "UTF8" to "MULE_INTERNAL" does not exist
-  WHEN undefined_function THEN RAISE LOG 'skip: %', SQLERRM;
+  OR undefined_function
+  -- unsupported XML feature
+  OR feature_not_supported THEN
+    RAISE LOG 'skip: %', SQLERRM;
 END
 $$;
 
