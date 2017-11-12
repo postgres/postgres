@@ -69,6 +69,14 @@ main(int argc, char *argv[])
 {
 	bool		do_check_root = true;
 
+	/*
+	 * If supported on the current platform, set up a handler to be called if
+	 * the backend/postmaster crashes with a fatal signal or exception.
+	 */
+#if defined(WIN32) && defined(HAVE_MINIDUMP_TYPE)
+	pgwin32_install_crashdump_handler();
+#endif
+
 	progname = get_progname(argv[0]);
 
 	/*
@@ -88,14 +96,6 @@ main(int argc, char *argv[])
 	 * result pointer.
 	 */
 	argv = save_ps_display_args(argc, argv);
-
-	/*
-	 * If supported on the current platform, set up a handler to be called if
-	 * the backend/postmaster crashes with a fatal signal or exception.
-	 */
-#if defined(WIN32) && defined(HAVE_MINIDUMP_TYPE)
-	pgwin32_install_crashdump_handler();
-#endif
 
 	/*
 	 * Fire up essential subsystems: error and memory management
