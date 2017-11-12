@@ -1910,11 +1910,16 @@ write_eventlog(int level, const char *line, int len)
 	 * Convert message to UTF16 text and write it with ReportEventW, but
 	 * fall-back into ReportEventA if conversion failed.
 	 *
+	 * Since we palloc the structure required for conversion, also fall
+	 * through to writing unconverted if we have not yet set up
+	 * CurrentMemoryContext.
+	 *
 	 * Also verify that we are not on our way into error recursion trouble due
 	 * to error messages thrown deep inside pgwin32_toUTF16().
 	 */
 	if (GetDatabaseEncoding() != GetPlatformEncoding() &&
-		!in_error_recursion_trouble())
+		!in_error_recursion_trouble() &&
+		CurrentMemoryContext != NULL)
 	{
 		utf16 = pgwin32_toUTF16(line, len, NULL);
 		if (utf16)
