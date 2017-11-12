@@ -1049,8 +1049,10 @@ GetMessageEncoding(void)
 
 #ifdef WIN32
 /*
- * Result is palloc'ed null-terminated utf16 string. The character length
- * is also passed to utf16len if not null. Returns NULL iff failed.
+ * Convert from MessageEncoding to a palloc'ed, null-terminated utf16
+ * string. The character length is also passed to utf16len if not
+ * null. Returns NULL iff failed. Before MessageEncoding initialization, "str"
+ * should be ASCII-only; this will function as though MessageEncoding is UTF8.
  */
 WCHAR *
 pgwin32_message_to_UTF16(const char *str, int len, int *utf16len)
