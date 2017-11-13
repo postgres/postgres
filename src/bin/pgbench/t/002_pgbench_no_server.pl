@@ -73,6 +73,11 @@ my @options = (
 	[ 'ambiguous builtin', '-b s', [qr{ambiguous}] ],
 	[   '--progress-timestamp => --progress', '--progress-timestamp',
 		[qr{allowed only under}] ],
+	[ '-I without init option', '-I dtg',
+		[qr{cannot be used in benchmarking mode}] ],
+	[ 'invalid init step', '-i -I dta',
+		[qr{unrecognized initialization step},
+		 qr{allowed steps are} ] ],
 
 	# loging sub-options
 	[   'sampling => log', '--sampling-rate=0.01',

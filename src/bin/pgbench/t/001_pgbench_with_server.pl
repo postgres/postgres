@@ -76,20 +76,33 @@ pgbench(
 # Initialize pgbench tables scale 1
 pgbench(
 	'-i', 0, [qr{^$}],
-	[ qr{creating tables}, qr{vacuum}, qr{set primary keys}, qr{done\.} ],
+	[ qr{creating tables}, qr{vacuuming}, qr{creating primary keys}, qr{done\.} ],
 	'pgbench scale 1 initialization',);
 
 # Again, with all possible options
 pgbench(
-'--initialize --scale=1 --unlogged-tables --fillfactor=98 --foreign-keys --quiet --tablespace=pg_default --index-tablespace=pg_default',
+'--initialize --init-steps=dtpvg --scale=1 --unlogged-tables --fillfactor=98 --foreign-keys --quiet --tablespace=pg_default --index-tablespace=pg_default',
 	0,
 	[qr{^$}i],
-	[   qr{creating tables},
-		qr{vacuum},
-		qr{set primary keys},
-		qr{set foreign keys},
+	[   qr{dropping old tables},
+		qr{creating tables},
+		qr{vacuuming},
+		qr{creating primary keys},
+		qr{creating foreign keys},
 		qr{done\.} ],
 	'pgbench scale 1 initialization');
+
+# Test interaction of --init-steps with legacy step-selection options
+pgbench(
+	'--initialize --init-steps=dtpvgvv --no-vacuum --foreign-keys --unlogged-tables',
+	0, [qr{^$}],
+	[   qr{dropping old tables},
+		qr{creating tables},
+		qr{creating primary keys},
+		qr{.* of .* tuples \(.*\) done},
+		qr{creating foreign keys},
+		qr{done\.} ],
+	'pgbench --init-steps');
 
 # Run all builtin scripts, for a few transactions each
 pgbench(

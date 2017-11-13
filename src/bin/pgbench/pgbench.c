@@ -90,6 +90,8 @@ static int	pthread_join(pthread_t th, void **thread_return);
 #define MAXCLIENTS	1024
 #endif
 
+#define DEFAULT_INIT_STEPS "dtgvp"	/* default -I setting */
+
 #define LOG_STEP_SECONDS	5	/* seconds between log messages */
 #define DEFAULT_NXACTS	10		/* default nxacts */
 
@@ -112,14 +114,9 @@ int			scale = 1;
 int			fillfactor = 100;
 
 /*
- * create foreign key constraints on the tables?
- */
-int			foreign_keys = 0;
-
-/*
  * use unlogged tables?
  */
-int			unlogged_tables = 0;
+bool		unlogged_tables = false;
 
 /*
  * log sampling rate (1.0 = log everything, 0.0 = option not given)
@@ -485,8 +482,10 @@ usage(void)
 		   "  %s [OPTION]... [DBNAME]\n"
 		   "\nInitialization options:\n"
 		   "  -i, --initialize         invokes initialization mode\n"
+		   "  -I, --init-steps=[dtgvpf]+ (default \"dtgvp\")\n"
+		   "                           run selected initialization steps\n"
 		   "  -F, --fillfactor=NUM     set fill factor\n"
-		   "  -n, --no-vacuum          do not run VACUUM after initialization\n"
+		   "  -n, --no-vacuum          do not run VACUUM during initialization\n"
 		   "  -q, --quiet              quiet logging (one message each 5 seconds)\n"
 		   "  -s, --scale=NUM          scaling factor\n"
 		   "  --foreign-keys           create foreign key constraints between tables\n"
@@ -2634,17 +2633,39 @@ disconnect_all(CState *state, int length)
 	}
 }
 
-/* create tables and setup data */
-static void
-init(bool is_no_vacuum)
-{
 /*
- * The scale factor at/beyond which 32-bit integers are insufficient for
- * storing TPC-B account IDs.
- *
- * Although the actual threshold is 21474, we use 20000 because it is easier to
- * document and remember, and isn't that far away from the real threshold.
+ * Remove old pgbench tables, if any exist
  */
+static void
+initDropTables(PGconn *con)
+{
+	fprintf(stderr, "dropping old tables...\n");
+
+	/*
+	 * We drop all the tables in one command, so that whether there are
+	 * foreign key dependencies or not doesn't matter.
+	 */
+	executeStatement(con, "drop table if exists "
+					 "pgbench_accounts, "
+					 "pgbench_branches, "
+					 "pgbench_history, "
+					 "pgbench_tellers");
+}
+
+/*
+ * Create pgbench's standard tables
+ */
+static void
+initCreateTables(PGconn *con)
+{
+	/*
+	 * The scale factor at/beyond which 32-bit integers are insufficient for
+	 * storing TPC-B account IDs.
+	 *
+	 * Although the actual threshold is 21474, we use 20000 because it is
+	 * easier to document and remember, and isn't that far away from the real
+	 * threshold.
+	 */
 #define SCALE_32BIT_THRESHOLD 20000
 
 	/*
@@ -2691,34 +2712,9 @@ init(bool is_no_vacuum)
 			1
 		}
 	};
-	static const char *const DDLINDEXes[] = {
-		"alter table pgbench_branches add primary key (bid)",
-		"alter table pgbench_tellers add primary key (tid)",
-		"alter table pgbench_accounts add primary key (aid)"
-	};
-	static const char *const DDLKEYs[] = {
-		"alter table pgbench_tellers add foreign key (bid) references pgbench_branches",
-		"alter table pgbench_accounts add foreign key (bid) references pgbench_branches",
-		"alter table pgbench_history add foreign key (bid) references pgbench_branches",
-		"alter table pgbench_history add foreign key (tid) references pgbench_tellers",
-		"alter table pgbench_history add foreign key (aid) references pgbench_accounts"
-	};
-
-	PGconn	   *con;
-	PGresult   *res;
-	char		sql[256];
 	int			i;
-	int64		k;
 
-	/* used to track elapsed time and estimate of the remaining time */
-	instr_time	start,
-				diff;
-	double		elapsed_sec,
-				remaining_sec;
-	int			log_interval = 1;
-
-	if ((con = doConnect()) == NULL)
-		exit(1);
+	fprintf(stderr, "creating tables...\n");
 
 	for (i = 0; i < lengthof(DDLs); i++)
 	{
@@ -2726,10 +2722,6 @@ init(bool is_no_vacuum)
 		char		buffer[256];
 		const struct ddlinfo *ddl = &DDLs[i];
 		const char *cols;
-
-		/* Remove old table, if it exists. */
-		snprintf(buffer, sizeof(buffer), "drop table if exists %s", ddl->table);
-		executeStatement(con, buffer);
 
 		/* Construct new create table statement. */
 		opts[0] = '\0';
@@ -2755,9 +2747,48 @@ init(bool is_no_vacuum)
 
 		executeStatement(con, buffer);
 	}
+}
 
+/*
+ * Fill the standard tables with some data
+ */
+static void
+initGenerateData(PGconn *con)
+{
+	char		sql[256];
+	PGresult   *res;
+	int			i;
+	int64		k;
+
+	/* used to track elapsed time and estimate of the remaining time */
+	instr_time	start,
+				diff;
+	double		elapsed_sec,
+				remaining_sec;
+	int			log_interval = 1;
+
+	fprintf(stderr, "generating data...\n");
+
+	/*
+	 * we do all of this in one transaction to enable the backend's
+	 * data-loading optimizations
+	 */
 	executeStatement(con, "begin");
 
+	/*
+	 * truncate away any old data, in one command in case there are foreign
+	 * keys
+	 */
+	executeStatement(con, "truncate table "
+					 "pgbench_accounts, "
+					 "pgbench_branches, "
+					 "pgbench_history, "
+					 "pgbench_tellers");
+
+	/*
+	 * fill branches, tellers, accounts in that order in case foreign keys
+	 * already exist
+	 */
 	for (i = 0; i < nbranches * scale; i++)
 	{
 		/* "filler" column defaults to NULL */
@@ -2776,16 +2807,9 @@ init(bool is_no_vacuum)
 		executeStatement(con, sql);
 	}
 
-	executeStatement(con, "commit");
-
 	/*
-	 * fill the pgbench_accounts table with some data
+	 * accounts is big enough to be worth using COPY and tracking runtime
 	 */
-	fprintf(stderr, "creating tables...\n");
-
-	executeStatement(con, "begin");
-	executeStatement(con, "truncate pgbench_accounts");
-
 	res = PQexec(con, "copy pgbench_accounts from stdin");
 	if (PQresultStatus(res) != PGRES_COPY_IN)
 	{
@@ -2859,22 +2883,37 @@ init(bool is_no_vacuum)
 		fprintf(stderr, "PQendcopy failed\n");
 		exit(1);
 	}
+
 	executeStatement(con, "commit");
+}
 
-	/* vacuum */
-	if (!is_no_vacuum)
-	{
-		fprintf(stderr, "vacuum...\n");
-		executeStatement(con, "vacuum analyze pgbench_branches");
-		executeStatement(con, "vacuum analyze pgbench_tellers");
-		executeStatement(con, "vacuum analyze pgbench_accounts");
-		executeStatement(con, "vacuum analyze pgbench_history");
-	}
+/*
+ * Invoke vacuum on the standard tables
+ */
+static void
+initVacuum(PGconn *con)
+{
+	fprintf(stderr, "vacuuming...\n");
+	executeStatement(con, "vacuum analyze pgbench_branches");
+	executeStatement(con, "vacuum analyze pgbench_tellers");
+	executeStatement(con, "vacuum analyze pgbench_accounts");
+	executeStatement(con, "vacuum analyze pgbench_history");
+}
 
-	/*
-	 * create indexes
-	 */
-	fprintf(stderr, "set primary keys...\n");
+/*
+ * Create primary keys on the standard tables
+ */
+static void
+initCreatePKeys(PGconn *con)
+{
+	static const char *const DDLINDEXes[] = {
+		"alter table pgbench_branches add primary key (bid)",
+		"alter table pgbench_tellers add primary key (tid)",
+		"alter table pgbench_accounts add primary key (aid)"
+	};
+	int			i;
+
+	fprintf(stderr, "creating primary keys...\n");
 	for (i = 0; i < lengthof(DDLINDEXes); i++)
 	{
 		char		buffer[256];
@@ -2894,16 +2933,101 @@ init(bool is_no_vacuum)
 
 		executeStatement(con, buffer);
 	}
+}
 
-	/*
-	 * create foreign keys
-	 */
-	if (foreign_keys)
+/*
+ * Create foreign key constraints between the standard tables
+ */
+static void
+initCreateFKeys(PGconn *con)
+{
+	static const char *const DDLKEYs[] = {
+		"alter table pgbench_tellers add constraint pgbench_tellers_bid_fkey foreign key (bid) references pgbench_branches",
+		"alter table pgbench_accounts add constraint pgbench_accounts_bid_fkey foreign key (bid) references pgbench_branches",
+		"alter table pgbench_history add constraint pgbench_history_bid_fkey foreign key (bid) references pgbench_branches",
+		"alter table pgbench_history add constraint pgbench_history_tid_fkey foreign key (tid) references pgbench_tellers",
+		"alter table pgbench_history add constraint pgbench_history_aid_fkey foreign key (aid) references pgbench_accounts"
+	};
+	int			i;
+
+	fprintf(stderr, "creating foreign keys...\n");
+	for (i = 0; i < lengthof(DDLKEYs); i++)
 	{
-		fprintf(stderr, "set foreign keys...\n");
-		for (i = 0; i < lengthof(DDLKEYs); i++)
+		executeStatement(con, DDLKEYs[i]);
+	}
+}
+
+/*
+ * Validate an initialization-steps string
+ *
+ * (We could just leave it to runInitSteps() to fail if there are wrong
+ * characters, but since initialization can take awhile, it seems friendlier
+ * to check during option parsing.)
+ */
+static void
+checkInitSteps(const char *initialize_steps)
+{
+	const char *step;
+
+	if (initialize_steps[0] == '\0')
+	{
+		fprintf(stderr, "no initialization steps specified\n");
+		exit(1);
+	}
+
+	for (step = initialize_steps; *step != '\0'; step++)
+	{
+		if (strchr("dtgvpf ", *step) == NULL)
 		{
-			executeStatement(con, DDLKEYs[i]);
+			fprintf(stderr, "unrecognized initialization step \"%c\"\n",
+					*step);
+			fprintf(stderr, "allowed steps are: \"d\", \"t\", \"g\", \"v\", \"p\", \"f\"\n");
+			exit(1);
+		}
+	}
+}
+
+/*
+ * Invoke each initialization step in the given string
+ */
+static void
+runInitSteps(const char *initialize_steps)
+{
+	PGconn	   *con;
+	const char *step;
+
+	if ((con = doConnect()) == NULL)
+		exit(1);
+
+	for (step = initialize_steps; *step != '\0'; step++)
+	{
+		switch (*step)
+		{
+			case 'd':
+				initDropTables(con);
+				break;
+			case 't':
+				initCreateTables(con);
+				break;
+			case 'g':
+				initGenerateData(con);
+				break;
+			case 'v':
+				initVacuum(con);
+				break;
+			case 'p':
+				initCreatePKeys(con);
+				break;
+			case 'f':
+				initCreateFKeys(con);
+				break;
+			case ' ':
+				break;			/* ignore */
+			default:
+				fprintf(stderr, "unrecognized initialization step \"%c\"\n",
+						*step);
+				PQfinish(con);
+				exit(1);
 		}
 	}
 
@@ -3682,6 +3806,7 @@ main(int argc, char **argv)
 		{"fillfactor", required_argument, NULL, 'F'},
 		{"host", required_argument, NULL, 'h'},
 		{"initialize", no_argument, NULL, 'i'},
+		{"init-steps", required_argument, NULL, 'I'},
 		{"jobs", required_argument, NULL, 'j'},
 		{"log", no_argument, NULL, 'l'},
 		{"latency-limit", required_argument, NULL, 'L'},
@@ -3700,21 +3825,23 @@ main(int argc, char **argv)
 		{"username", required_argument, NULL, 'U'},
 		{"vacuum-all", no_argument, NULL, 'v'},
 		/* long-named only options */
-		{"foreign-keys", no_argument, &foreign_keys, 1},
-		{"index-tablespace", required_argument, NULL, 3},
+		{"unlogged-tables", no_argument, NULL, 1},
 		{"tablespace", required_argument, NULL, 2},
-		{"unlogged-tables", no_argument, &unlogged_tables, 1},
+		{"index-tablespace", required_argument, NULL, 3},
 		{"sampling-rate", required_argument, NULL, 4},
 		{"aggregate-interval", required_argument, NULL, 5},
 		{"progress-timestamp", no_argument, NULL, 6},
 		{"log-prefix", required_argument, NULL, 7},
+		{"foreign-keys", no_argument, NULL, 8},
 		{NULL, 0, NULL, 0}
 	};
 
 	int			c;
-	int			is_init_mode = 0;	/* initialize mode? */
-	int			is_no_vacuum = 0;	/* no vacuum at all before testing? */
-	int			do_vacuum_accounts = 0; /* do vacuum accounts before testing? */
+	bool		is_init_mode = false;	/* initialize mode? */
+	char	   *initialize_steps = NULL;
+	bool		foreign_keys = false;
+	bool		is_no_vacuum = false;
+	bool		do_vacuum_accounts = false; /* vacuum accounts table? */
 	int			optindex;
 	bool		scale_given = false;
 
@@ -3774,23 +3901,31 @@ main(int argc, char **argv)
 	state = (CState *) pg_malloc(sizeof(CState));
 	memset(state, 0, sizeof(CState));
 
-	while ((c = getopt_long(argc, argv, "ih:nvp:dqb:SNc:j:Crs:t:T:U:lf:D:F:M:P:R:L:", long_options, &optindex)) != -1)
+	while ((c = getopt_long(argc, argv, "iI:h:nvp:dqb:SNc:j:Crs:t:T:U:lf:D:F:M:P:R:L:", long_options, &optindex)) != -1)
 	{
 		char	   *script;
 
 		switch (c)
 		{
 			case 'i':
-				is_init_mode++;
+				is_init_mode = true;
+				break;
+			case 'I':
+				if (initialize_steps)
+					pg_free(initialize_steps);
+				initialize_steps = pg_strdup(optarg);
+				checkInitSteps(initialize_steps);
+				initialization_option_set = true;
 				break;
 			case 'h':
 				pghost = pg_strdup(optarg);
 				break;
 			case 'n':
-				is_no_vacuum++;
+				is_no_vacuum = true;
 				break;
 			case 'v':
-				do_vacuum_accounts++;
+				benchmarking_option_set = true;
+				do_vacuum_accounts = true;
 				break;
 			case 'p':
 				pgport = pg_strdup(optarg);
@@ -3863,11 +3998,6 @@ main(int argc, char **argv)
 				break;
 			case 't':
 				benchmarking_option_set = true;
-				if (duration > 0)
-				{
-					fprintf(stderr, "specify either a number of transactions (-t) or a duration (-T), not both\n");
-					exit(1);
-				}
 				nxacts = atoi(optarg);
 				if (nxacts <= 0)
 				{
@@ -3878,11 +4008,6 @@ main(int argc, char **argv)
 				break;
 			case 'T':
 				benchmarking_option_set = true;
-				if (nxacts > 0)
-				{
-					fprintf(stderr, "specify either a number of transactions (-t) or a duration (-T), not both\n");
-					exit(1);
-				}
 				duration = atoi(optarg);
 				if (duration <= 0)
 				{
@@ -3901,20 +4026,17 @@ main(int argc, char **argv)
 				initialization_option_set = true;
 				use_quiet = true;
 				break;
-
 			case 'b':
 				if (strcmp(optarg, "list") == 0)
 				{
 					listAvailableScripts();
 					exit(0);
 				}
-
 				weight = parseScriptWeight(optarg, &script);
 				process_builtin(findBuiltin(script), weight);
 				benchmarking_option_set = true;
 				internal_script_used = true;
 				break;
-
 			case 'S':
 				process_builtin(findBuiltin("select-only"), 1);
 				benchmarking_option_set = true;
@@ -4009,10 +4131,9 @@ main(int argc, char **argv)
 					latency_limit = (int64) (limit_ms * 1000);
 				}
 				break;
-			case 0:
-				/* This covers long options which take no argument. */
-				if (foreign_keys || unlogged_tables)
-					initialization_option_set = true;
+			case 1:				/* unlogged-tables */
+				initialization_option_set = true;
+				unlogged_tables = true;
 				break;
 			case 2:				/* tablespace */
 				initialization_option_set = true;
@@ -4022,7 +4143,7 @@ main(int argc, char **argv)
 				initialization_option_set = true;
 				index_tablespace = pg_strdup(optarg);
 				break;
-			case 4:
+			case 4:				/* sampling-rate */
 				benchmarking_option_set = true;
 				sample_rate = atof(optarg);
 				if (sample_rate <= 0.0 || sample_rate > 1.0)
@@ -4031,7 +4152,7 @@ main(int argc, char **argv)
 					exit(1);
 				}
 				break;
-			case 5:
+			case 5:				/* aggregate-interval */
 				benchmarking_option_set = true;
 				agg_interval = atoi(optarg);
 				if (agg_interval <= 0)
@@ -4041,13 +4162,17 @@ main(int argc, char **argv)
 					exit(1);
 				}
 				break;
-			case 6:
+			case 6:				/* progress-timestamp */
 				progress_timestamp = true;
 				benchmarking_option_set = true;
 				break;
-			case 7:
+			case 7:				/* log-prefix */
 				benchmarking_option_set = true;
 				logfile_prefix = pg_strdup(optarg);
+				break;
+			case 8:				/* foreign-keys */
+				initialization_option_set = true;
+				foreign_keys = true;
 				break;
 			default:
 				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
@@ -4128,7 +4253,31 @@ main(int argc, char **argv)
 			exit(1);
 		}
 
-		init(is_no_vacuum);
+		if (initialize_steps == NULL)
+			initialize_steps = pg_strdup(DEFAULT_INIT_STEPS);
+
+		if (is_no_vacuum)
+		{
+			/* Remove any vacuum step in initialize_steps */
+			char	   *p;
+
+			while ((p = strchr(initialize_steps, 'v')) != NULL)
+				*p = ' ';
+		}
+
+		if (foreign_keys)
+		{
+			/* Add 'f' to end of initialize_steps, if not already there */
+			if (strchr(initialize_steps, 'f') == NULL)
+			{
+				initialize_steps = (char *)
+					pg_realloc(initialize_steps,
+							   strlen(initialize_steps) + 2);
+				strcat(initialize_steps, "f");
+			}
+		}
+
+		runInitSteps(initialize_steps);
 		exit(0);
 	}
 	else
@@ -4138,6 +4287,12 @@ main(int argc, char **argv)
 			fprintf(stderr, "some of the specified options cannot be used in benchmarking mode\n");
 			exit(1);
 		}
+	}
+
+	if (nxacts > 0 && duration > 0)
+	{
+		fprintf(stderr, "specify either a number of transactions (-t) or a duration (-T), not both\n");
+		exit(1);
 	}
 
 	/* Use DEFAULT_NXACTS if neither nxacts nor duration is specified. */

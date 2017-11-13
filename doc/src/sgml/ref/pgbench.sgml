@@ -134,9 +134,9 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
   <title>Options</title>
 
   <para>
-   The following is divided into three subsections: Different options are used
-   during database initialization and while running benchmarks, some options
-   are useful in both cases.
+   The following is divided into three subsections.  Different options are
+   used during database initialization and while running benchmarks, but some
+   options are useful in both cases.
   </para>
 
  <refsect2 id="pgbench-init-options">
@@ -159,6 +159,79 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
      </varlistentry>
 
      <varlistentry>
+      <term><option>-I <replaceable>init_steps</replaceable></option></term>
+      <term><option>--init-steps=<replaceable>init_steps</replaceable></option></term>
+      <listitem>
+       <para>
+        Perform just a selected set of the normal initialization steps.
+        <replaceable>init_steps</replaceable> specifies the
+        initialization steps to be performed, using one character per step.
+        Each step is invoked in the specified order.
+        The default is <literal>dtgvp</literal>.
+        The available steps are:
+
+        <variablelist>
+         <varlistentry>
+          <term><literal>d</literal> (Drop)</term>
+          <listitem>
+           <para>
+            Drop any existing <application>pgbench</application> tables.
+           </para>
+          </listitem>
+         </varlistentry>
+         <varlistentry>
+          <term><literal>t</literal> (create Tables)</term>
+          <listitem>
+           <para>
+            Create the tables used by the
+            standard <application>pgbench</application> scenario, namely
+            <structname>pgbench_accounts</structname>,
+            <structname>pgbench_branches</structname>,
+            <structname>pgbench_history</structname>, and
+            <structname>pgbench_tellers</structname>.
+           </para>
+          </listitem>
+         </varlistentry>
+         <varlistentry>
+          <term><literal>g</literal> (Generate data)</term>
+          <listitem>
+           <para>
+            Generate data and load it into the standard tables,
+            replacing any data already present.
+           </para>
+          </listitem>
+         </varlistentry>
+         <varlistentry>
+          <term><literal>v</literal> (Vacuum)</term>
+          <listitem>
+           <para>
+            Invoke <command>VACUUM</command> on the standard tables.
+           </para>
+          </listitem>
+         </varlistentry>
+         <varlistentry>
+          <term><literal>p</literal> (create Primary keys)</term>
+          <listitem>
+           <para>
+            Create primary key indexes on the standard tables.
+           </para>
+          </listitem>
+         </varlistentry>
+         <varlistentry>
+         <term><literal>f</literal> (create Foreign keys)</term>
+          <listitem>
+           <para>
+            Create foreign key constraints between the standard tables.
+            (Note that this step is not performed by default.)
+           </para>
+          </listitem>
+         </varlistentry>
+        </variablelist>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-F</option> <replaceable>fillfactor</replaceable></term>
       <term><option>--fillfactor=</option><replaceable>fillfactor</replaceable></term>
       <listitem>
@@ -176,7 +249,9 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
       <term><option>--no-vacuum</option></term>
       <listitem>
        <para>
-        Perform no vacuuming after initialization.
+        Perform no vacuuming during initialization.
+        (This option suppresses the <literal>v</literal> initialization step,
+        even if it was specified in <option>-I</option>.)
        </para>
       </listitem>
      </varlistentry>
@@ -215,6 +290,8 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
       <listitem>
        <para>
         Create foreign key constraints between the standard tables.
+        (This option adds the <literal>f</literal> step to the initialization
+        step sequence, if it is not already present.)
        </para>
       </listitem>
      </varlistentry>
