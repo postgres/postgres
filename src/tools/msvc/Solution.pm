@@ -87,6 +87,7 @@ sub DeterminePlatform
 sub IsNewer
 {
 	my ($newfile, $oldfile) = @_;
+	-e $oldfile or warn "source file \"$oldfile\" does not exist";
 	if (   $oldfile ne 'src/tools/msvc/config.pl'
 		&& $oldfile ne 'src/tools/msvc/config_default.pl')
 	{
@@ -304,7 +305,7 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
 	if ($self->{options}->{python}
 		&& IsNewer(
 			'src/pl/plpython/spiexceptions.h',
-			'src/include/backend/errcodes.txt'))
+			'src/backend/utils/errcodes.txt'))
 	{
 		print "Generating spiexceptions.h...\n";
 		system(
