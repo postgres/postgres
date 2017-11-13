@@ -504,6 +504,14 @@
         <entry align="center"></entry>
        </row>
        <row>
+        <entry align="left"><literal>CREATE STATISTICS</literal></entry>
+        <entry align="center"><literal>X</literal></entry>
+        <entry align="center"><literal>X</literal></entry>
+        <entry align="center"><literal>-</literal></entry>
+        <entry align="center"><literal>-</literal></entry>
+        <entry align="center"></entry>
+       </row>
+       <row>
         <entry align="left"><literal>CREATE TABLE</literal></entry>
         <entry align="center"><literal>X</literal></entry>
         <entry align="center"><literal>X</literal></entry>
@@ -737,6 +745,14 @@
        </row>
        <row>
         <entry align="left"><literal>DROP SERVER</literal></entry>
+        <entry align="center"><literal>X</literal></entry>
+        <entry align="center"><literal>X</literal></entry>
+        <entry align="center"><literal>X</literal></entry>
+        <entry align="center"><literal>-</literal></entry>
+        <entry align="center"></entry>
+       </row>
+       <row>
+        <entry align="left"><literal>DROP STATISTICS</literal></entry>
         <entry align="center"><literal>X</literal></entry>
         <entry align="center"><literal>X</literal></entry>
         <entry align="center"><literal>X</literal></entry>
