@@ -1116,7 +1116,7 @@ build_server_final_message(scram_state *state)
 
 
 /*
- * Determinisitcally generate salt for mock authentication, using a SHA256
+ * Deterministically generate salt for mock authentication, using a SHA256
  * hash based on the username and a cluster-level secret key.  Returns a
  * pointer to a static buffer of size SCRAM_DEFAULT_SALT_LEN.
  */
