@@ -144,6 +144,19 @@ explain (costs off)
 
 select count(*) from tenk1 group by twenty;
 
+--test expressions in targetlist are pushed down for gather merge
+create or replace function simple_func(var1 integer) returns integer
+as $$
+begin
+        return var1 + 10;
+end;
+$$ language plpgsql PARALLEL SAFE;
+
+explain (costs off, verbose)
+    select ten, simple_func(ten) from tenk1 where ten < 100 order by ten;
+
+drop function simple_func(integer);
+
 --test rescan behavior of gather merge
 set enable_material = false;
 
