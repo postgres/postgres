@@ -195,9 +195,14 @@ standard_ExecutorStart(QueryDesc *queryDesc, int eflags)
 	 */
 	estate->es_param_list_info = queryDesc->params;
 
-	if (queryDesc->plannedstmt->nParamExec > 0)
+	if (queryDesc->plannedstmt->paramExecTypes != NIL)
+	{
+		int			nParamExec;
+
+		nParamExec = list_length(queryDesc->plannedstmt->paramExecTypes);
 		estate->es_param_exec_vals = (ParamExecData *)
-			palloc0(queryDesc->plannedstmt->nParamExec * sizeof(ParamExecData));
+			palloc0(nParamExec * sizeof(ParamExecData));
+	}
 
 	estate->es_sourceText = queryDesc->sourceText;
 
@@ -3032,9 +3037,11 @@ EvalPlanQualBegin(EPQState *epqstate, EState *parentestate)
 		MemSet(estate->es_epqScanDone, 0, rtsize * sizeof(bool));
 
 		/* Recopy current values of parent parameters */
-		if (parentestate->es_plannedstmt->nParamExec > 0)
+		if (parentestate->es_plannedstmt->paramExecTypes != NIL)
 		{
-			int			i = parentestate->es_plannedstmt->nParamExec;
+			int			i;
+
+			i = list_length(parentestate->es_plannedstmt->paramExecTypes);
 
 			while (--i >= 0)
 			{
@@ -3122,10 +3129,11 @@ EvalPlanQualStart(EPQState *epqstate, EState *parentestate, Plan *planTree)
 	 * already set from other parts of the parent's plan tree.
 	 */
 	estate->es_param_list_info = parentestate->es_param_list_info;
-	if (parentestate->es_plannedstmt->nParamExec > 0)
+	if (parentestate->es_plannedstmt->paramExecTypes != NIL)
 	{
-		int			i = parentestate->es_plannedstmt->nParamExec;
+		int			i;
 
+		i = list_length(parentestate->es_plannedstmt->paramExecTypes);
 		estate->es_param_exec_vals = (ParamExecData *)
 			palloc0(i * sizeof(ParamExecData));
 		while (--i >= 0)

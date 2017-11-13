@@ -131,7 +131,9 @@ assign_param_for_var(PlannerInfo *root, Var *var)
 
 	pitem = makeNode(PlannerParamItem);
 	pitem->item = (Node *) var;
-	pitem->paramId = root->glob->nParamExec++;
+	pitem->paramId = list_length(root->glob->paramExecTypes);
+	root->glob->paramExecTypes = lappend_oid(root->glob->paramExecTypes,
+											 var->vartype);
 
 	root->plan_params = lappend(root->plan_params, pitem);
 
@@ -234,7 +236,9 @@ assign_param_for_placeholdervar(PlannerInfo *root, PlaceHolderVar *phv)
 
 	pitem = makeNode(PlannerParamItem);
 	pitem->item = (Node *) phv;
-	pitem->paramId = root->glob->nParamExec++;
+	pitem->paramId = list_length(root->glob->paramExecTypes);
+	root->glob->paramExecTypes = lappend_oid(root->glob->paramExecTypes,
+											 exprType((Node *) phv->phexpr));
 
 	root->plan_params = lappend(root->plan_params, pitem);
 
@@ -323,7 +327,9 @@ replace_outer_agg(PlannerInfo *root, Aggref *agg)
 
 	pitem = makeNode(PlannerParamItem);
 	pitem->item = (Node *) agg;
-	pitem->paramId = root->glob->nParamExec++;
+	pitem->paramId = list_length(root->glob->paramExecTypes);
+	root->glob->paramExecTypes = lappend_oid(root->glob->paramExecTypes,
+											 agg->aggtype);
 
 	root->plan_params = lappend(root->plan_params, pitem);
 
@@ -348,6 +354,7 @@ replace_outer_grouping(PlannerInfo *root, GroupingFunc *grp)
 	Param	   *retval;
 	PlannerParamItem *pitem;
 	Index		levelsup;
+	Oid			ptype;
 
 	Assert(grp->agglevelsup > 0 && grp->agglevelsup < root->query_level);
 
@@ -362,17 +369,20 @@ replace_outer_grouping(PlannerInfo *root, GroupingFunc *grp)
 	grp = copyObject(grp);
 	IncrementVarSublevelsUp((Node *) grp, -((int) grp->agglevelsup), 0);
 	Assert(grp->agglevelsup == 0);
+	ptype = exprType((Node *) grp);
 
 	pitem = makeNode(PlannerParamItem);
 	pitem->item = (Node *) grp;
-	pitem->paramId = root->glob->nParamExec++;
+	pitem->paramId = list_length(root->glob->paramExecTypes);
+	root->glob->paramExecTypes = lappend_oid(root->glob->paramExecTypes,
+											 ptype);
 
 	root->plan_params = lappend(root->plan_params, pitem);
 
 	retval = makeNode(Param);
 	retval->paramkind = PARAM_EXEC;
 	retval->paramid = pitem->paramId;
-	retval->paramtype = exprType((Node *) grp);
+	retval->paramtype = ptype;
 	retval->paramtypmod = -1;
 	retval->paramcollid = InvalidOid;
 	retval->location = grp->location;
@@ -385,7 +395,8 @@ replace_outer_grouping(PlannerInfo *root, GroupingFunc *grp)
  *
  * This is used to create Params representing subplan outputs.
  * We don't need to build a PlannerParamItem for such a Param, but we do
- * need to record the PARAM_EXEC slot number as being allocated.
+ * need to make sure we record the type in paramExecTypes (otherwise,
+ * there won't be a slot allocated for it).
  */
 static Param *
 generate_new_param(PlannerInfo *root, Oid paramtype, int32 paramtypmod,
@@ -395,7 +406,9 @@ generate_new_param(PlannerInfo *root, Oid paramtype, int32 paramtypmod,
 
 	retval = makeNode(Param);
 	retval->paramkind = PARAM_EXEC;
-	retval->paramid = root->glob->nParamExec++;
+	retval->paramid = list_length(root->glob->paramExecTypes);
+	root->glob->paramExecTypes = lappend_oid(root->glob->paramExecTypes,
+											 paramtype);
 	retval->paramtype = paramtype;
 	retval->paramtypmod = paramtypmod;
 	retval->paramcollid = paramcollation;
@@ -415,7 +428,11 @@ generate_new_param(PlannerInfo *root, Oid paramtype, int32 paramtypmod,
 int
 SS_assign_special_param(PlannerInfo *root)
 {
-	return root->glob->nParamExec++;
+	int			paramId = list_length(root->glob->paramExecTypes);
+
+	root->glob->paramExecTypes = lappend_oid(root->glob->paramExecTypes,
+											 InvalidOid);
+	return paramId;
 }
 
 /*
@@ -2098,7 +2115,7 @@ SS_identify_outer_params(PlannerInfo *root)
 	 * If no parameters have been assigned anywhere in the tree, we certainly
 	 * don't need to do anything here.
 	 */
-	if (root->glob->nParamExec == 0)
+	if (root->glob->paramExecTypes == NIL)
 		return;
 
 	/*

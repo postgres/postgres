@@ -1095,7 +1095,7 @@ is_parallel_safe(PlannerInfo *root, Node *node)
 	 * in this expression.  But otherwise we don't need to look.
 	 */
 	if (root->glob->maxParallelHazard == PROPARALLEL_SAFE &&
-		root->glob->nParamExec == 0)
+		root->glob->paramExecTypes == NIL)
 		return true;
 	/* Else use max_parallel_hazard's search logic, but stop on RESTRICTED */
 	context.max_hazard = PROPARALLEL_SAFE;

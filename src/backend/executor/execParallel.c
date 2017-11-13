@@ -195,7 +195,7 @@ ExecSerializePlan(Plan *plan, EState *estate)
 	pstmt->rowMarks = NIL;
 	pstmt->relationOids = NIL;
 	pstmt->invalItems = NIL;	/* workers can't replan anyway... */
-	pstmt->nParamExec = estate->es_plannedstmt->nParamExec;
+	pstmt->paramExecTypes = estate->es_plannedstmt->paramExecTypes;
 	pstmt->utilityStmt = NULL;
 	pstmt->stmt_location = -1;
 	pstmt->stmt_len = -1;

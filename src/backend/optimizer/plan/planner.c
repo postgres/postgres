@@ -243,7 +243,7 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	glob->rootResultRelations = NIL;
 	glob->relationOids = NIL;
 	glob->invalItems = NIL;
-	glob->nParamExec = 0;
+	glob->paramExecTypes = NIL;
 	glob->lastPHId = 0;
 	glob->lastRowMarkId = 0;
 	glob->lastPlanNodeId = 0;
@@ -415,7 +415,7 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	 * set_plan_references' tree traversal, but for now it has to be separate
 	 * because we need to visit subplans before not after main plan.
 	 */
-	if (glob->nParamExec > 0)
+	if (glob->paramExecTypes != NIL)
 	{
 		Assert(list_length(glob->subplans) == list_length(glob->subroots));
 		forboth(lp, glob->subplans, lr, glob->subroots)
@@ -466,7 +466,7 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	result->rowMarks = glob->finalrowmarks;
 	result->relationOids = glob->relationOids;
 	result->invalItems = glob->invalItems;
-	result->nParamExec = glob->nParamExec;
+	result->paramExecTypes = glob->paramExecTypes;
 	/* utilityStmt should be null, but we might as well copy it */
 	result->utilityStmt = parse->utilityStmt;
 	result->stmt_location = parse->stmt_location;
