@@ -7540,9 +7540,6 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         Setting this variable does not disable all security checks related to
         large objects &mdash; only those for which the default behavior has
         changed in <productname>PostgreSQL</productname> 9.0.
-        For example, <literal>lo_import()</literal> and
-        <literal>lo_export()</literal> need superuser privileges regardless
-        of this setting.
        </para>
       </listitem>
      </varlistentry>

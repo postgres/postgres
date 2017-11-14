@@ -293,6 +293,18 @@ int lo_open(PGconn *conn, Oid lobjId, int mode);
     </para>
 
     <para>
+     <function>lo_open</function> will fail if <literal>SELECT</literal>
+     privilege is not available for the large object, or
+     if <symbol>INV_WRITE</symbol> is specified and <literal>UPDATE</literal>
+     privilege is not available.
+     (Prior to <productname>PostgreSQL</productname> 11, these privilege
+     checks were instead performed at the first actual read or write call
+     using the descriptor.)
+     These privilege checks can be disabled with the
+     <xref linkend="guc-lo-compat-privileges"> run-time parameter.
+    </para>
+
+    <para>
      An example:
 <programlisting>
 inv_fd = lo_open(conn, inv_oid, INV_READ|INV_WRITE);
@@ -634,11 +646,33 @@ SELECT lo_export(image.raster, '/tmp/motd') FROM image
     <function>lo_export</function> functions behave considerably differently
     from their client-side analogs.  These two functions read and write files
     in the server's file system, using the permissions of the database's
-    owning user.  Therefore, their use is restricted to superusers.  In
-    contrast, the client-side import and export functions read and write files
-    in the client's file system, using the permissions of the client program.
-    The client-side functions do not require superuser privilege.
+    owning user.  Therefore, by default their use is restricted to superusers.
+    In contrast, the client-side import and export functions read and write
+    files in the client's file system, using the permissions of the client
+    program.  The client-side functions do not require any database
+    privileges, except the privilege to read or write the large object in
+    question.
   </para>
+
+  <caution>
+   <para>
+    It is possible to <xref linkend="sql-grant"> use of the
+    server-side <function>lo_import</function>
+    and <function>lo_export</function> functions to non-superusers, but
+    careful consideration of the security implications is required.  A
+    malicious user of such privileges could easily parlay them into becoming
+    superuser (for example by rewriting server configuration files), or could
+    attack the rest of the server's file system without bothering to obtain
+    database superuser privileges as such.  <emphasis>Access to roles having
+    such privilege must therefore be guarded just as carefully as access to
+    superuser roles.</emphasis>  Nonetheless, if use of
+    server-side <function>lo_import</function>
+    or <function>lo_export</function> is needed for some routine task, it's
+    safer to use a role with such privileges than one with full superuser
+    privileges, as that helps to reduce the risk of damage from accidental
+    errors.
+   </para>
+  </caution>
 
   <para>
     The functionality of <function>lo_read</function> and
