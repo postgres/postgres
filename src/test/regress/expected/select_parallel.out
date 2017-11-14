@@ -444,6 +444,24 @@ select string4 from tenk1 order by string4 limit 5;
 
 reset max_parallel_workers;
 reset enable_hashagg;
+-- check parallelized int8 aggregate (bug #14897)
+explain (costs off)
+select avg(unique1::int8) from tenk1;
+                               QUERY PLAN                                
+-------------------------------------------------------------------------
+ Finalize Aggregate
+   ->  Gather
+         Workers Planned: 4
+         ->  Partial Aggregate
+               ->  Parallel Index Only Scan using tenk1_unique1 on tenk1
+(5 rows)
+
+select avg(unique1::int8) from tenk1;
+          avg          
+-----------------------
+ 4999.5000000000000000
+(1 row)
+
 -- test the sanity of parallel query after the active role is dropped.
 drop role if exists regress_parallel_worker;
 NOTICE:  role "regress_parallel_worker" does not exist, skipping

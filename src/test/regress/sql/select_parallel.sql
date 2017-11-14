@@ -168,6 +168,12 @@ select string4 from tenk1 order by string4 limit 5;
 reset max_parallel_workers;
 reset enable_hashagg;
 
+-- check parallelized int8 aggregate (bug #14897)
+explain (costs off)
+select avg(unique1::int8) from tenk1;
+
+select avg(unique1::int8) from tenk1;
+
 -- test the sanity of parallel query after the active role is dropped.
 drop role if exists regress_parallel_worker;
 create role regress_parallel_worker;

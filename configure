@@ -14806,7 +14806,10 @@ _ACEOF
 
 # Compute maximum alignment of any basic type.
 # We assume long's alignment is at least as strong as char, short, or int;
-# but we must check long long (if it exists) and double.
+# but we must check long long (if it is being used for int64) and double.
+# Note that we intentionally do not consider any types wider than 64 bits,
+# as allowing MAXIMUM_ALIGNOF to exceed 8 would be too much of a penalty
+# for disk and memory space.
 
 MAX_ALIGNOF=$ac_cv_alignof_long
 if test $MAX_ALIGNOF -lt $ac_cv_alignof_double ; then
@@ -14866,7 +14869,7 @@ _ACEOF
 fi
 
 
-# Check for extensions offering the integer scalar type __int128.
+# Some compilers offer a 128-bit integer scalar type.
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __int128" >&5
 $as_echo_n "checking for __int128... " >&6; }
 if ${pgac_cv__128bit_int+:} false; then :
@@ -14915,6 +14918,41 @@ $as_echo "$pgac_cv__128bit_int" >&6; }
 if test x"$pgac_cv__128bit_int" = xyes ; then
 
 $as_echo "#define PG_INT128_TYPE __int128" >>confdefs.h
+
+  # The cast to long int works around a bug in the HP C Compiler,
+# see AC_CHECK_SIZEOF for more information.
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking alignment of PG_INT128_TYPE" >&5
+$as_echo_n "checking alignment of PG_INT128_TYPE... " >&6; }
+if ${ac_cv_alignof_PG_INT128_TYPE+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if ac_fn_c_compute_int "$LINENO" "(long int) offsetof (ac__type_alignof_, y)" "ac_cv_alignof_PG_INT128_TYPE"        "$ac_includes_default
+#ifndef offsetof
+# define offsetof(type, member) ((char *) &((type *) 0)->member - (char *) 0)
+#endif
+typedef struct { char x; PG_INT128_TYPE y; } ac__type_alignof_;"; then :
+
+else
+  if test "$ac_cv_type_PG_INT128_TYPE" = yes; then
+     { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error 77 "cannot compute alignment of PG_INT128_TYPE
+See \`config.log' for more details" "$LINENO" 5; }
+   else
+     ac_cv_alignof_PG_INT128_TYPE=0
+   fi
+fi
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_alignof_PG_INT128_TYPE" >&5
+$as_echo "$ac_cv_alignof_PG_INT128_TYPE" >&6; }
+
+
+
+cat >>confdefs.h <<_ACEOF
+#define ALIGNOF_PG_INT128_TYPE $ac_cv_alignof_PG_INT128_TYPE
+_ACEOF
+
 
 fi
 
