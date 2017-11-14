@@ -99,6 +99,30 @@ explain (costs off)
    ->  Index Only Scan using tenk1_unique1 on tenk1
 (3 rows)
 
+-- check parallelized int8 aggregate (bug #14897)
+explain (costs off)
+select avg(aa::int8) from a_star;
+                     QUERY PLAN                      
+-----------------------------------------------------
+ Finalize Aggregate
+   ->  Gather
+         Workers Planned: 1
+         ->  Partial Aggregate
+               ->  Append
+                     ->  Parallel Seq Scan on a_star
+                     ->  Parallel Seq Scan on b_star
+                     ->  Parallel Seq Scan on c_star
+                     ->  Parallel Seq Scan on d_star
+                     ->  Parallel Seq Scan on e_star
+                     ->  Parallel Seq Scan on f_star
+(11 rows)
+
+select avg(aa::int8) from a_star;
+         avg         
+---------------------
+ 13.6538461538461538
+(1 row)
+
 -- test the sanity of parallel query after the active role is dropped.
 set force_parallel_mode=1;
 drop role if exists regress_parallel_worker;

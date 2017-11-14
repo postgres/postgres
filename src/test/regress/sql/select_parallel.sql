@@ -39,6 +39,12 @@ explain (costs off)
 	select  sum(parallel_restricted(unique1)) from tenk1
 	group by(parallel_restricted(unique1));
 
+-- check parallelized int8 aggregate (bug #14897)
+explain (costs off)
+select avg(aa::int8) from a_star;
+
+select avg(aa::int8) from a_star;
+
 -- test the sanity of parallel query after the active role is dropped.
 set force_parallel_mode=1;
 drop role if exists regress_parallel_worker;
