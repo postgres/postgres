@@ -333,6 +333,8 @@ DefineIndex(Oid relationId,
 	Datum		reloptions;
 	int16	   *coloptions;
 	IndexInfo  *indexInfo;
+	bits16		flags;
+	bits16		constr_flags;
 	int			numberOfAttributes;
 	TransactionId limitXmin;
 	VirtualTransactionId *old_snapshots;
@@ -661,20 +663,35 @@ DefineIndex(Oid relationId,
 	Assert(!OidIsValid(stmt->oldNode) || (skip_build && !stmt->concurrent));
 
 	/*
-	 * Make the catalog entries for the index, including constraints. Then, if
-	 * not skip_build || concurrent, actually build the index.
+	 * Make the catalog entries for the index, including constraints. This
+	 * step also actually builds the index, except if caller requested not to
+	 * or in concurrent mode, in which case it'll be done later.
 	 */
+	flags = constr_flags = 0;
+	if (stmt->isconstraint)
+		flags |= INDEX_CREATE_ADD_CONSTRAINT;
+	if (skip_build || stmt->concurrent)
+		flags |= INDEX_CREATE_SKIP_BUILD;
+	if (stmt->if_not_exists)
+		flags |= INDEX_CREATE_IF_NOT_EXISTS;
+	if (stmt->concurrent)
+		flags |= INDEX_CREATE_CONCURRENT;
+	if (stmt->primary)
+		flags |= INDEX_CREATE_IS_PRIMARY;
+
+	if (stmt->deferrable)
+		constr_flags |= INDEX_CONSTR_CREATE_DEFERRABLE;
+	if (stmt->initdeferred)
+		constr_flags |= INDEX_CONSTR_CREATE_INIT_DEFERRED;
+
 	indexRelationId =
 		index_create(rel, indexRelationName, indexRelationId, stmt->oldNode,
 					 indexInfo, indexColNames,
 					 accessMethodId, tablespaceId,
 					 collationObjectId, classObjectId,
-					 coloptions, reloptions, stmt->primary,
-					 stmt->isconstraint, stmt->deferrable, stmt->initdeferred,
-					 allowSystemTableMods,
-					 skip_build || stmt->concurrent,
-					 stmt->concurrent, !check_rights,
-					 stmt->if_not_exists);
+					 coloptions, reloptions,
+					 flags, constr_flags,
+					 allowSystemTableMods, !check_rights);
 
 	ObjectAddressSet(address, RelationRelationId, indexRelationId);
 

@@ -680,19 +680,25 @@ UpdateIndexRelation(Oid indexoid,
  * classObjectId: array of index opclass OIDs, one per index column
  * coloptions: array of per-index-column indoption settings
  * reloptions: AM-specific options
- * isprimary: index is a PRIMARY KEY
- * isconstraint: index is owned by PRIMARY KEY, UNIQUE, or EXCLUSION constraint
- * deferrable: constraint is DEFERRABLE
- * initdeferred: constraint is INITIALLY DEFERRED
+ * flags: bitmask that can include any combination of these bits:
+ *		INDEX_CREATE_IS_PRIMARY
+ *			the index is a primary key
+ *		INDEX_CREATE_ADD_CONSTRAINT:
+ *			invoke index_constraint_create also
+ *		INDEX_CREATE_SKIP_BUILD:
+ *			skip the index_build() step for the moment; caller must do it
+ *			later (typically via reindex_index())
+ *		INDEX_CREATE_CONCURRENT:
+ *			do not lock the table against writers.  The index will be
+ *			marked "invalid" and the caller must take additional steps
+ *			to fix it up.
+ *		INDEX_CREATE_IF_NOT_EXISTS:
+ *			do not throw an error if a relation with the same name
+ *			already exists.
+ * constr_flags: flags passed to index_constraint_create
+ *		(only if INDEX_CREATE_ADD_CONSTRAINT is set)
  * allow_system_table_mods: allow table to be a system catalog
- * skip_build: true to skip the index_build() step for the moment; caller
- *		must do it later (typically via reindex_index())
- * concurrent: if true, do not lock the table against writers.  The index
- *		will be marked "invalid" and the caller must take additional steps
- *		to fix it up.
  * is_internal: if true, post creation hook for new index
- * if_not_exists: if true, do not throw an error if a relation with
- *		the same name already exists.
  *
  * Returns the OID of the created index.
  */
@@ -709,15 +715,10 @@ index_create(Relation heapRelation,
 			 Oid *classObjectId,
 			 int16 *coloptions,
 			 Datum reloptions,
-			 bool isprimary,
-			 bool isconstraint,
-			 bool deferrable,
-			 bool initdeferred,
+			 bits16 flags,
+			 bits16 constr_flags,
 			 bool allow_system_table_mods,
-			 bool skip_build,
-			 bool concurrent,
-			 bool is_internal,
-			 bool if_not_exists)
+			 bool is_internal)
 {
 	Oid			heapRelationId = RelationGetRelid(heapRelation);
 	Relation	pg_class;
@@ -729,6 +730,12 @@ index_create(Relation heapRelation,
 	Oid			namespaceId;
 	int			i;
 	char		relpersistence;
+	bool		isprimary = (flags & INDEX_CREATE_IS_PRIMARY) != 0;
+	bool		concurrent = (flags & INDEX_CREATE_CONCURRENT) != 0;
+
+	/* constraint flags can only be set when a constraint is requested */
+	Assert((constr_flags == 0) ||
+		   ((flags & INDEX_CREATE_ADD_CONSTRAINT) != 0));
 
 	is_exclusion = (indexInfo->ii_ExclusionOps != NULL);
 
@@ -794,7 +801,7 @@ index_create(Relation heapRelation,
 
 	if (get_relname_relid(indexRelationName, namespaceId))
 	{
-		if (if_not_exists)
+		if ((flags & INDEX_CREATE_IF_NOT_EXISTS) != 0)
 		{
 			ereport(NOTICE,
 					(errcode(ERRCODE_DUPLICATE_TABLE),
@@ -917,7 +924,7 @@ index_create(Relation heapRelation,
 	UpdateIndexRelation(indexRelationId, heapRelationId, indexInfo,
 						collationObjectId, classObjectId, coloptions,
 						isprimary, is_exclusion,
-						!deferrable,
+						(constr_flags & INDEX_CONSTR_CREATE_DEFERRABLE) == 0,
 						!concurrent);
 
 	/*
@@ -943,7 +950,7 @@ index_create(Relation heapRelation,
 		myself.objectId = indexRelationId;
 		myself.objectSubId = 0;
 
-		if (isconstraint)
+		if ((flags & INDEX_CREATE_ADD_CONSTRAINT) != 0)
 		{
 			char		constraintType;
 
@@ -964,11 +971,7 @@ index_create(Relation heapRelation,
 									indexInfo,
 									indexRelationName,
 									constraintType,
-									deferrable,
-									initdeferred,
-									false,	/* already marked primary */
-									false,	/* pg_index entry is OK */
-									false,	/* no old dependencies */
+									constr_flags,
 									allow_system_table_mods,
 									is_internal);
 		}
@@ -1005,10 +1008,6 @@ index_create(Relation heapRelation,
 
 				recordDependencyOn(&myself, &referenced, DEPENDENCY_AUTO);
 			}
-
-			/* Non-constraint indexes can't be deferrable */
-			Assert(!deferrable);
-			Assert(!initdeferred);
 		}
 
 		/* Store dependency on collations */
@@ -1059,9 +1058,7 @@ index_create(Relation heapRelation,
 	else
 	{
 		/* Bootstrap mode - assert we weren't asked for constraint support */
-		Assert(!isconstraint);
-		Assert(!deferrable);
-		Assert(!initdeferred);
+		Assert((flags & INDEX_CREATE_ADD_CONSTRAINT) == 0);
 	}
 
 	/* Post creation hook for new index */
@@ -1089,15 +1086,16 @@ index_create(Relation heapRelation,
 	 * If this is bootstrap (initdb) time, then we don't actually fill in the
 	 * index yet.  We'll be creating more indexes and classes later, so we
 	 * delay filling them in until just before we're done with bootstrapping.
-	 * Similarly, if the caller specified skip_build then filling the index is
-	 * delayed till later (ALTER TABLE can save work in some cases with this).
-	 * Otherwise, we call the AM routine that constructs the index.
+	 * Similarly, if the caller specified to skip the build then filling the
+	 * index is delayed till later (ALTER TABLE can save work in some cases
+	 * with this).  Otherwise, we call the AM routine that constructs the
+	 * index.
 	 */
 	if (IsBootstrapProcessingMode())
 	{
 		index_register(heapRelationId, indexRelationId, indexInfo);
 	}
-	else if (skip_build)
+	else if ((flags & INDEX_CREATE_SKIP_BUILD) != 0)
 	{
 		/*
 		 * Caller is responsible for filling the index later on.  However,
@@ -1137,12 +1135,13 @@ index_create(Relation heapRelation,
  * constraintName: what it say (generally, should match name of index)
  * constraintType: one of CONSTRAINT_PRIMARY, CONSTRAINT_UNIQUE, or
  *		CONSTRAINT_EXCLUSION
- * deferrable: constraint is DEFERRABLE
- * initdeferred: constraint is INITIALLY DEFERRED
- * mark_as_primary: if true, set flags to mark index as primary key
- * update_pgindex: if true, update pg_index row (else caller's done that)
- * remove_old_dependencies: if true, remove existing dependencies of index
- *		on table's columns
+ * flags: bitmask that can include any combination of these bits:
+ *		INDEX_CONSTR_CREATE_MARK_AS_PRIMARY: index is a PRIMARY KEY
+ *		INDEX_CONSTR_CREATE_DEFERRABLE: constraint is DEFERRABLE
+ *		INDEX_CONSTR_CREATE_INIT_DEFERRED: constraint is INITIALLY DEFERRED
+ *		INDEX_CONSTR_CREATE_UPDATE_INDEX: update the pg_index row
+ *		INDEX_CONSTR_CREATE_REMOVE_OLD_DEPS: remove existing dependencies
+ *			of index on table's columns
  * allow_system_table_mods: allow table to be a system catalog
  * is_internal: index is constructed due to internal process
  */
@@ -1152,11 +1151,7 @@ index_constraint_create(Relation heapRelation,
 						IndexInfo *indexInfo,
 						const char *constraintName,
 						char constraintType,
-						bool deferrable,
-						bool initdeferred,
-						bool mark_as_primary,
-						bool update_pgindex,
-						bool remove_old_dependencies,
+						bits16 constr_flags,
 						bool allow_system_table_mods,
 						bool is_internal)
 {
@@ -1164,6 +1159,13 @@ index_constraint_create(Relation heapRelation,
 	ObjectAddress myself,
 				referenced;
 	Oid			conOid;
+	bool		deferrable;
+	bool		initdeferred;
+	bool		mark_as_primary;
+
+	deferrable = (constr_flags & INDEX_CONSTR_CREATE_DEFERRABLE) != 0;
+	initdeferred = (constr_flags & INDEX_CONSTR_CREATE_INIT_DEFERRED) != 0;
+	mark_as_primary = (constr_flags & INDEX_CONSTR_CREATE_MARK_AS_PRIMARY) != 0;
 
 	/* constraint creation support doesn't work while bootstrapping */
 	Assert(!IsBootstrapProcessingMode());
@@ -1190,7 +1192,7 @@ index_constraint_create(Relation heapRelation,
 	 * has any expressions or predicate, but we'd never be turning such an
 	 * index into a UNIQUE or PRIMARY KEY constraint.
 	 */
-	if (remove_old_dependencies)
+	if (constr_flags & INDEX_CONSTR_CREATE_REMOVE_OLD_DEPS)
 		deleteDependencyRecordsForClass(RelationRelationId, indexRelationId,
 										RelationRelationId, DEPENDENCY_AUTO);
 
@@ -1295,7 +1297,8 @@ index_constraint_create(Relation heapRelation,
 	 * is a risk that concurrent readers of the table will miss seeing this
 	 * index at all.
 	 */
-	if (update_pgindex && (mark_as_primary || deferrable))
+	if ((constr_flags & INDEX_CONSTR_CREATE_UPDATE_INDEX) &&
+		(mark_as_primary || deferrable))
 	{
 		Relation	pg_index;
 		HeapTuple	indexTuple;

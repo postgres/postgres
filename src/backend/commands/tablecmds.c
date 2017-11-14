@@ -6836,6 +6836,7 @@ ATExecAddIndexConstraint(AlteredTableInfo *tab, Relation rel,
 	char	   *constraintName;
 	char		constraintType;
 	ObjectAddress address;
+	bits16		flags;
 
 	Assert(IsA(stmt, IndexStmt));
 	Assert(OidIsValid(index_oid));
@@ -6880,16 +6881,18 @@ ATExecAddIndexConstraint(AlteredTableInfo *tab, Relation rel,
 		constraintType = CONSTRAINT_UNIQUE;
 
 	/* Create the catalog entries for the constraint */
+	flags = INDEX_CONSTR_CREATE_UPDATE_INDEX |
+		INDEX_CONSTR_CREATE_REMOVE_OLD_DEPS |
+		(stmt->initdeferred ? INDEX_CONSTR_CREATE_INIT_DEFERRED : 0) |
+		(stmt->deferrable ? INDEX_CONSTR_CREATE_DEFERRABLE : 0) |
+		(stmt->primary ? INDEX_CONSTR_CREATE_MARK_AS_PRIMARY : 0);
+
 	address = index_constraint_create(rel,
 									  index_oid,
 									  indexInfo,
 									  constraintName,
 									  constraintType,
-									  stmt->deferrable,
-									  stmt->initdeferred,
-									  stmt->primary,
-									  true, /* update pg_index */
-									  true, /* remove old dependencies */
+									  flags,
 									  allowSystemTableMods,
 									  false);	/* is_internal */
 
