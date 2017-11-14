@@ -444,6 +444,24 @@ select * from
 
 reset enable_material;
 reset enable_hashagg;
+-- check parallelized int8 aggregate (bug #14897)
+explain (costs off)
+select avg(unique1::int8) from tenk1;
+                               QUERY PLAN                                
+-------------------------------------------------------------------------
+ Finalize Aggregate
+   ->  Gather
+         Workers Planned: 4
+         ->  Partial Aggregate
+               ->  Parallel Index Only Scan using tenk1_unique1 on tenk1
+(5 rows)
+
+select avg(unique1::int8) from tenk1;
+          avg          
+-----------------------
+ 4999.5000000000000000
+(1 row)
+
 -- gather merge test with a LIMIT
 explain (costs off)
   select fivethous from tenk1 order by fivethous limit 4;

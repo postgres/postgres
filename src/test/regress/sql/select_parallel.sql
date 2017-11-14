@@ -175,6 +175,12 @@ reset enable_material;
 
 reset enable_hashagg;
 
+-- check parallelized int8 aggregate (bug #14897)
+explain (costs off)
+select avg(unique1::int8) from tenk1;
+
+select avg(unique1::int8) from tenk1;
+
 -- gather merge test with a LIMIT
 explain (costs off)
   select fivethous from tenk1 order by fivethous limit 4;

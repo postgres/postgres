@@ -1820,7 +1820,10 @@ AC_CHECK_ALIGNOF(double)
 
 # Compute maximum alignment of any basic type.
 # We assume long's alignment is at least as strong as char, short, or int;
-# but we must check long long (if it exists) and double.
+# but we must check long long (if it is being used for int64) and double.
+# Note that we intentionally do not consider any types wider than 64 bits,
+# as allowing MAXIMUM_ALIGNOF to exceed 8 would be too much of a penalty
+# for disk and memory space.
 
 MAX_ALIGNOF=$ac_cv_alignof_long
 if test $MAX_ALIGNOF -lt $ac_cv_alignof_double ; then
@@ -1837,7 +1840,7 @@ AC_DEFINE_UNQUOTED(MAXIMUM_ALIGNOF, $MAX_ALIGNOF, [Define as the maximum alignme
 AC_CHECK_TYPES([int8, uint8, int64, uint64], [], [],
 [#include <stdio.h>])
 
-# Check for extensions offering the integer scalar type __int128.
+# Some compilers offer a 128-bit integer scalar type.
 PGAC_TYPE_128BIT_INT
 
 # Check for various atomic operations now that we have checked how to declare

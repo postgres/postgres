@@ -376,13 +376,29 @@ typedef unsigned long long int uint64;
 
 /*
  * 128-bit signed and unsigned integers
- *		There currently is only a limited support for the type. E.g. 128bit
- *		literals and snprintf are not supported; but math is.
+ *		There currently is only limited support for such types.
+ *		E.g. 128bit literals and snprintf are not supported; but math is.
+ *		Also, because we exclude such types when choosing MAXIMUM_ALIGNOF,
+ *		it must be possible to coerce the compiler to allocate them on no
+ *		more than MAXALIGN boundaries.
  */
 #if defined(PG_INT128_TYPE)
-#define HAVE_INT128
-typedef PG_INT128_TYPE int128;
-typedef unsigned PG_INT128_TYPE uint128;
+#if defined(pg_attribute_aligned) || ALIGNOF_PG_INT128_TYPE <= MAXIMUM_ALIGNOF
+#define HAVE_INT128 1
+
+typedef PG_INT128_TYPE int128
+#if defined(pg_attribute_aligned)
+pg_attribute_aligned(MAXIMUM_ALIGNOF)
+#endif
+;
+
+typedef unsigned PG_INT128_TYPE uint128
+#if defined(pg_attribute_aligned)
+pg_attribute_aligned(MAXIMUM_ALIGNOF)
+#endif
+;
+
+#endif
 #endif
 
 /*
