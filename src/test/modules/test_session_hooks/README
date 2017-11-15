@@ -1,0 +1,2 @@
+test_session_hooks is an example of how to use session start and end
+hooks.
