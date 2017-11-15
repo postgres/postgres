@@ -40,6 +40,7 @@
 #include "access/htup_details.h"
 #include "access/xact.h"
 #include "commands/trigger.h"
+#include "executor/execPartition.h"
 #include "executor/executor.h"
 #include "executor/nodeModifyTable.h"
 #include "foreign/fdwapi.h"

@@ -170,8 +170,6 @@ static int32 partition_bound_cmp(PartitionKey key,
 static int partition_bound_bsearch(PartitionKey key,
 						PartitionBoundInfo boundinfo,
 						void *probe, bool probe_is_bound, bool *is_equal);
-static void get_partition_dispatch_recurse(Relation rel, Relation parent,
-							   List **pds, List **leaf_part_oids);
 static int	get_partition_bound_num_indexes(PartitionBoundInfo b);
 static int	get_greatest_modulus(PartitionBoundInfo b);
 static uint64 compute_hash_value(PartitionKey key, Datum *values, bool *isnull);
@@ -1530,148 +1528,6 @@ get_partition_qual_relid(Oid relid)
 	return result;
 }
 
-/*
- * RelationGetPartitionDispatchInfo
- *		Returns information necessary to route tuples down a partition tree
- *
- * The number of elements in the returned array (that is, the number of
- * PartitionDispatch objects for the partitioned tables in the partition tree)
- * is returned in *num_parted and a list of the OIDs of all the leaf
- * partitions of rel is returned in *leaf_part_oids.
- *
- * All the relations in the partition tree (including 'rel') must have been
- * locked (using at least the AccessShareLock) by the caller.
- */
-PartitionDispatch *
-RelationGetPartitionDispatchInfo(Relation rel,
-								 int *num_parted, List **leaf_part_oids)
-{
-	List	   *pdlist = NIL;
-	PartitionDispatchData **pd;
-	ListCell   *lc;
-	int			i;
-
-	Assert(rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE);
-
-	*num_parted = 0;
-	*leaf_part_oids = NIL;
-
-	get_partition_dispatch_recurse(rel, NULL, &pdlist, leaf_part_oids);
-	*num_parted = list_length(pdlist);
-	pd = (PartitionDispatchData **) palloc(*num_parted *
-										   sizeof(PartitionDispatchData *));
-	i = 0;
-	foreach(lc, pdlist)
-	{
-		pd[i++] = lfirst(lc);
-	}
-
-	return pd;
-}
-
-/*
- * get_partition_dispatch_recurse
- *		Recursively expand partition tree rooted at rel
- *
- * As the partition tree is expanded in a depth-first manner, we maintain two
- * global lists: of PartitionDispatch objects corresponding to partitioned
- * tables in *pds and of the leaf partition OIDs in *leaf_part_oids.
- *
- * Note that the order of OIDs of leaf partitions in leaf_part_oids matches
- * the order in which the planner's expand_partitioned_rtentry() processes
- * them.  It's not necessarily the case that the offsets match up exactly,
- * because constraint exclusion might prune away some partitions on the
- * planner side, whereas we'll always have the complete list; but unpruned
- * partitions will appear in the same order in the plan as they are returned
- * here.
- */
-static void
-get_partition_dispatch_recurse(Relation rel, Relation parent,
-							   List **pds, List **leaf_part_oids)
-{
-	TupleDesc	tupdesc = RelationGetDescr(rel);
-	PartitionDesc partdesc = RelationGetPartitionDesc(rel);
-	PartitionKey partkey = RelationGetPartitionKey(rel);
-	PartitionDispatch pd;
-	int			i;
-
-	check_stack_depth();
-
-	/* Build a PartitionDispatch for this table and add it to *pds. */
-	pd = (PartitionDispatch) palloc(sizeof(PartitionDispatchData));
-	*pds = lappend(*pds, pd);
-	pd->reldesc = rel;
-	pd->key = partkey;
-	pd->keystate = NIL;
-	pd->partdesc = partdesc;
-	if (parent != NULL)
-	{
-		/*
-		 * For every partitioned table other than the root, we must store a
-		 * tuple table slot initialized with its tuple descriptor and a tuple
-		 * conversion map to convert a tuple from its parent's rowtype to its
-		 * own. That is to make sure that we are looking at the correct row
-		 * using the correct tuple descriptor when computing its partition key
-		 * for tuple routing.
-		 */
-		pd->tupslot = MakeSingleTupleTableSlot(tupdesc);
-		pd->tupmap = convert_tuples_by_name(RelationGetDescr(parent),
-											tupdesc,
-											gettext_noop("could not convert row type"));
-	}
-	else
-	{
-		/* Not required for the root partitioned table */
-		pd->tupslot = NULL;
-		pd->tupmap = NULL;
-	}
-
-	/*
-	 * Go look at each partition of this table.  If it's a leaf partition,
-	 * simply add its OID to *leaf_part_oids.  If it's a partitioned table,
-	 * recursively call get_partition_dispatch_recurse(), so that its
-	 * partitions are processed as well and a corresponding PartitionDispatch
-	 * object gets added to *pds.
-	 *
-	 * About the values in pd->indexes: for a leaf partition, it contains the
-	 * leaf partition's position in the global list *leaf_part_oids minus 1,
-	 * whereas for a partitioned table partition, it contains the partition's
-	 * position in the global list *pds multiplied by -1.  The latter is
-	 * multiplied by -1 to distinguish partitioned tables from leaf partitions
-	 * when going through the values in pd->indexes.  So, for example, when
-	 * using it during tuple-routing, encountering a value >= 0 means we found
-	 * a leaf partition.  It is immediately returned as the index in the array
-	 * of ResultRelInfos of all the leaf partitions, using which we insert the
-	 * tuple into that leaf partition.  A negative value means we found a
-	 * partitioned table.  The value multiplied by -1 is returned as the index
-	 * in the array of PartitionDispatch objects of all partitioned tables in
-	 * the tree.  This value is used to continue the search in the next level
-	 * of the partition tree.
-	 */
-	pd->indexes = (int *) palloc(partdesc->nparts * sizeof(int));
-	for (i = 0; i < partdesc->nparts; i++)
-	{
-		Oid			partrelid = partdesc->oids[i];
-
-		if (get_rel_relkind(partrelid) != RELKIND_PARTITIONED_TABLE)
-		{
-			*leaf_part_oids = lappend_oid(*leaf_part_oids, partrelid);
-			pd->indexes[i] = list_length(*leaf_part_oids) - 1;
-		}
-		else
-		{
-			/*
-			 * We assume all tables in the partition tree were already locked
-			 * by the caller.
-			 */
-			Relation	partrel = heap_open(partrelid, NoLock);
-
-			pd->indexes[i] = -list_length(*pds);
-			get_partition_dispatch_recurse(partrel, rel, pds, leaf_part_oids);
-		}
-	}
-}
-
 /* Module-local functions */
 
 /*
@@ -2617,259 +2473,108 @@ generate_partition_qual(Relation rel)
 	return result;
 }
 
-/* ----------------
- *		FormPartitionKeyDatum
- *			Construct values[] and isnull[] arrays for the partition key
- *			of a tuple.
- *
- *	pd				Partition dispatch object of the partitioned table
- *	slot			Heap tuple from which to extract partition key
- *	estate			executor state for evaluating any partition key
- *					expressions (must be non-NULL)
- *	values			Array of partition key Datums (output area)
- *	isnull			Array of is-null indicators (output area)
- *
- * the ecxt_scantuple slot of estate's per-tuple expr context must point to
- * the heap tuple passed in.
- * ----------------
- */
-void
-FormPartitionKeyDatum(PartitionDispatch pd,
-					  TupleTableSlot *slot,
-					  EState *estate,
-					  Datum *values,
-					  bool *isnull)
-{
-	ListCell   *partexpr_item;
-	int			i;
-
-	if (pd->key->partexprs != NIL && pd->keystate == NIL)
-	{
-		/* Check caller has set up context correctly */
-		Assert(estate != NULL &&
-			   GetPerTupleExprContext(estate)->ecxt_scantuple == slot);
-
-		/* First time through, set up expression evaluation state */
-		pd->keystate = ExecPrepareExprList(pd->key->partexprs, estate);
-	}
-
-	partexpr_item = list_head(pd->keystate);
-	for (i = 0; i < pd->key->partnatts; i++)
-	{
-		AttrNumber	keycol = pd->key->partattrs[i];
-		Datum		datum;
-		bool		isNull;
-
-		if (keycol != 0)
-		{
-			/* Plain column; get the value directly from the heap tuple */
-			datum = slot_getattr(slot, keycol, &isNull);
-		}
-		else
-		{
-			/* Expression; need to evaluate it */
-			if (partexpr_item == NULL)
-				elog(ERROR, "wrong number of partition key expressions");
-			datum = ExecEvalExprSwitchContext((ExprState *) lfirst(partexpr_item),
-											  GetPerTupleExprContext(estate),
-											  &isNull);
-			partexpr_item = lnext(partexpr_item);
-		}
-		values[i] = datum;
-		isnull[i] = isNull;
-	}
-
-	if (partexpr_item != NULL)
-		elog(ERROR, "wrong number of partition key expressions");
-}
-
 /*
  * get_partition_for_tuple
- *		Finds a leaf partition for tuple contained in *slot
+ *		Finds partition of relation which accepts the partition key specified
+ *		in values and isnull
  *
- * Returned value is the sequence number of the leaf partition thus found,
- * or -1 if no leaf partition is found for the tuple.  *failed_at is set
- * to the OID of the partitioned table whose partition was not found in
- * the latter case.
+ * Return value is index of the partition (>= 0 and < partdesc->nparts) if one
+ * found or -1 if none found.
  */
 int
-get_partition_for_tuple(PartitionDispatch *pd,
-						TupleTableSlot *slot,
-						EState *estate,
-						PartitionDispatchData **failed_at,
-						TupleTableSlot **failed_slot)
+get_partition_for_tuple(Relation relation, Datum *values, bool *isnull)
 {
-	PartitionDispatch parent;
-	Datum		values[PARTITION_MAX_KEYS];
-	bool		isnull[PARTITION_MAX_KEYS];
-	int			result;
-	ExprContext *ecxt = GetPerTupleExprContext(estate);
-	TupleTableSlot *ecxt_scantuple_old = ecxt->ecxt_scantuple;
+	int		bound_offset;
+	int		part_index = -1;
+	PartitionKey  key = RelationGetPartitionKey(relation);
+	PartitionDesc partdesc = RelationGetPartitionDesc(relation);
 
-	/* start with the root partitioned table */
-	parent = pd[0];
-	while (true)
+	/* Route as appropriate based on partitioning strategy. */
+	switch (key->strategy)
 	{
-		PartitionKey key = parent->key;
-		PartitionDesc partdesc = parent->partdesc;
-		TupleTableSlot *myslot = parent->tupslot;
-		TupleConversionMap *map = parent->tupmap;
-		int			cur_index = -1;
+		case PARTITION_STRATEGY_HASH:
+			{
+				PartitionBoundInfo boundinfo = partdesc->boundinfo;
+				int		greatest_modulus = get_greatest_modulus(boundinfo);
+				uint64	rowHash = compute_hash_value(key, values, isnull);
 
-		if (myslot != NULL && map != NULL)
-		{
-			HeapTuple	tuple = ExecFetchSlotTuple(slot);
+				part_index = boundinfo->indexes[rowHash % greatest_modulus];
+			}
+			break;
 
-			ExecClearTuple(myslot);
-			tuple = do_convert_tuple(tuple, map);
-			ExecStoreTuple(tuple, myslot, InvalidBuffer, true);
-			slot = myslot;
-		}
+		case PARTITION_STRATEGY_LIST:
+			if (isnull[0])
+			{
+				if (partition_bound_accepts_nulls(partdesc->boundinfo))
+					part_index = partdesc->boundinfo->null_index;
+			}
+			else
+			{
+				bool		equal = false;
 
-		/* Quick exit */
-		if (partdesc->nparts == 0)
-		{
-			*failed_at = parent;
-			*failed_slot = slot;
-			result = -1;
-			goto error_exit;
-		}
+				bound_offset = partition_bound_bsearch(key,
+													   partdesc->boundinfo,
+													   values,
+													   false,
+													   &equal);
+				if (bound_offset >= 0 && equal)
+					part_index = partdesc->boundinfo->indexes[bound_offset];
+			}
+			break;
 
-		/*
-		 * Extract partition key from tuple. Expression evaluation machinery
-		 * that FormPartitionKeyDatum() invokes expects ecxt_scantuple to
-		 * point to the correct tuple slot.  The slot might have changed from
-		 * what was used for the parent table if the table of the current
-		 * partitioning level has different tuple descriptor from the parent.
-		 * So update ecxt_scantuple accordingly.
-		 */
-		ecxt->ecxt_scantuple = slot;
-		FormPartitionKeyDatum(parent, slot, estate, values, isnull);
+		case PARTITION_STRATEGY_RANGE:
+			{
+				bool		equal = false,
+							range_partkey_has_null = false;
+				int			i;
 
-		/* Route as appropriate based on partitioning strategy. */
-		switch (key->strategy)
-		{
-			case PARTITION_STRATEGY_HASH:
+				/*
+				 * No range includes NULL, so this will be accepted by the
+				 * default partition if there is one, and otherwise
+				 * rejected.
+				 */
+				for (i = 0; i < key->partnatts; i++)
 				{
-					PartitionBoundInfo boundinfo = partdesc->boundinfo;
-					int			greatest_modulus = get_greatest_modulus(boundinfo);
-					uint64		rowHash = compute_hash_value(key, values,
-															 isnull);
-
-					cur_index = boundinfo->indexes[rowHash % greatest_modulus];
-				}
-				break;
-
-			case PARTITION_STRATEGY_LIST:
-
-				if (isnull[0])
-				{
-					if (partition_bound_accepts_nulls(partdesc->boundinfo))
-						cur_index = partdesc->boundinfo->null_index;
-				}
-				else
-				{
-					bool		equal = false;
-					int			cur_offset;
-
-					cur_offset = partition_bound_bsearch(key,
-														 partdesc->boundinfo,
-														 values,
-														 false,
-														 &equal);
-					if (cur_offset >= 0 && equal)
-						cur_index = partdesc->boundinfo->indexes[cur_offset];
-				}
-				break;
-
-			case PARTITION_STRATEGY_RANGE:
-				{
-					bool		equal = false,
-								range_partkey_has_null = false;
-					int			cur_offset;
-					int			i;
-
-					/*
-					 * No range includes NULL, so this will be accepted by the
-					 * default partition if there is one, and otherwise
-					 * rejected.
-					 */
-					for (i = 0; i < key->partnatts; i++)
+					if (isnull[i] &&
+						partition_bound_has_default(partdesc->boundinfo))
 					{
-						if (isnull[i] &&
-							partition_bound_has_default(partdesc->boundinfo))
-						{
-							range_partkey_has_null = true;
-							break;
-						}
-						else if (isnull[i])
-						{
-							*failed_at = parent;
-							*failed_slot = slot;
-							result = -1;
-							goto error_exit;
-						}
+						range_partkey_has_null = true;
+						part_index = partdesc->boundinfo->default_index;
 					}
-
-					/*
-					 * No need to search for partition, as the null key will
-					 * be routed to the default partition.
-					 */
-					if (range_partkey_has_null)
-						break;
-
-					cur_offset = partition_bound_bsearch(key,
-														 partdesc->boundinfo,
-														 values,
-														 false,
-														 &equal);
-
-					/*
-					 * The offset returned is such that the bound at
-					 * cur_offset is less than or equal to the tuple value, so
-					 * the bound at offset+1 is the upper bound.
-					 */
-					cur_index = partdesc->boundinfo->indexes[cur_offset + 1];
 				}
-				break;
 
-			default:
-				elog(ERROR, "unexpected partition strategy: %d",
-					 (int) key->strategy);
-		}
+				if (!range_partkey_has_null)
+				{
+					bound_offset = partition_bound_bsearch(key,
+													   partdesc->boundinfo,
+														   values,
+														   false,
+														   &equal);
 
-		/*
-		 * cur_index < 0 means we failed to find a partition of this parent.
-		 * Use the default partition, if there is one.
-		 */
-		if (cur_index < 0)
-			cur_index = partdesc->boundinfo->default_index;
-
-		/*
-		 * If cur_index is still less than 0 at this point, there's no
-		 * partition for this tuple.  Otherwise, we either found the leaf
-		 * partition, or a child partitioned table through which we have to
-		 * route the tuple.
-		 */
-		if (cur_index < 0)
-		{
-			result = -1;
-			*failed_at = parent;
-			*failed_slot = slot;
+					/*
+					 * The bound at bound_offset is less than or equal to the
+					 * tuple value, so the bound at offset+1 is the upper
+					 * bound of the partition we're looking for, if there
+					 * actually exists one.
+					 */
+					part_index = partdesc->boundinfo->indexes[bound_offset + 1];
+				}
+			}
 			break;
-		}
-		else if (parent->indexes[cur_index] >= 0)
-		{
-			result = parent->indexes[cur_index];
-			break;
-		}
-		else
-			parent = pd[-parent->indexes[cur_index]];
+
+		default:
+			elog(ERROR, "unexpected partition strategy: %d",
+				 (int) key->strategy);
 	}
 
-error_exit:
-	ecxt->ecxt_scantuple = ecxt_scantuple_old;
-	return result;
+	/*
+	 * part_index < 0 means we failed to find a partition of this parent.
+	 * Use the default partition, if there is one.
+	 */
+	if (part_index < 0)
+		part_index = partdesc->boundinfo->default_index;
+
+	return part_index;
 }
 
 /*
