@@ -19,3 +19,7 @@ top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 include $(top_srcdir)/contrib/contrib-global.mk
 endif
+
+# override installcheck - this module requires preloading the test module
+installcheck:
+	@echo Cannot run $@ for test_session_hooks. Run "'make check'" instead.
