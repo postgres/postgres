@@ -4265,6 +4265,32 @@ SELECT * FROM parent WHERE key = 2400;
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-parallel-leader-participation" xreflabel="parallel_leader_participation">
+      <term>
+       <varname>parallel_leader_participation</varname> (<type>boolean</type>)
+       <indexterm>
+        <primary>
+         <varname>parallel_leader_participation</varname> configuration
+         parameter
+        </primary>
+       </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Allows the leader process to execute the query plan under
+        <literal>Gather</literal> and <literal>Gather Merge</literal> nodes
+        instead of waiting for worker processes.  The default is
+        <literal>on</literal>.  Setting this value to <literal>off</literal>
+        reduces the likelihood that workers will become blocked because the
+        leader is not reading tuples fast enough, but requires the leader
+        process to wait for worker processes to start up before the first
+        tuples can be produced.  The degree to which the leader can help or
+        hinder performance depends on the plan type, number of workers and
+        query duration.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-force-parallel-mode" xreflabel="force_parallel_mode">
       <term><varname>force_parallel_mode</varname> (<type>enum</type>)
       <indexterm>

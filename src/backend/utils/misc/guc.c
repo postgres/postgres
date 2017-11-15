@@ -1676,6 +1676,16 @@ static struct config_bool ConfigureNamesBool[] =
 		NULL, NULL, NULL
 	},
 
+	{
+		{"parallel_leader_participation", PGC_USERSET, RESOURCES_ASYNCHRONOUS,
+			gettext_noop("Controls whether Gather and Gather Merge also run subplans."),
+			gettext_noop("Should gather nodes also run subplans, or just gather tuples?")
+		},
+		&parallel_leader_participation,
+		true,
+		NULL, NULL, NULL
+	},
+
 	/* End-of-list marker */
 	{
 		{NULL, 0, 0, NULL, NULL}, NULL, false, NULL, NULL, NULL

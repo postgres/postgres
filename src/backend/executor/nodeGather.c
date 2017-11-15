@@ -38,6 +38,7 @@
 #include "executor/nodeSubplan.h"
 #include "executor/tqueue.h"
 #include "miscadmin.h"
+#include "optimizer/planmain.h"
 #include "pgstat.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
@@ -73,7 +74,8 @@ ExecInitGather(Gather *node, EState *estate, int eflags)
 	gatherstate->ps.ExecProcNode = ExecGather;
 
 	gatherstate->initialized = false;
-	gatherstate->need_to_scan_locally = !node->single_copy;
+	gatherstate->need_to_scan_locally =
+		!node->single_copy && parallel_leader_participation;
 	gatherstate->tuples_needed = -1;
 
 	/*
@@ -193,9 +195,9 @@ ExecGather(PlanState *pstate)
 			node->nextreader = 0;
 		}
 
-		/* Run plan locally if no workers or not single-copy. */
+		/* Run plan locally if no workers or enabled and not single-copy. */
 		node->need_to_scan_locally = (node->nreaders == 0)
-			|| !gather->single_copy;
+			|| (!gather->single_copy && parallel_leader_participation);
 		node->initialized = true;
 	}
 

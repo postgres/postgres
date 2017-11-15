@@ -19,6 +19,22 @@ explain (costs off)
   select count(*) from a_star;
 select count(*) from a_star;
 
+-- test with leader participation disabled
+set parallel_leader_participation = off;
+explain (costs off)
+  select count(*) from tenk1 where stringu1 = 'GRAAAA';
+select count(*) from tenk1 where stringu1 = 'GRAAAA';
+
+-- test with leader participation disabled, but no workers available (so
+-- the leader will have to run the plan despite the setting)
+set max_parallel_workers = 0;
+explain (costs off)
+  select count(*) from tenk1 where stringu1 = 'GRAAAA';
+select count(*) from tenk1 where stringu1 = 'GRAAAA';
+
+reset max_parallel_workers;
+reset parallel_leader_participation;
+
 -- test that parallel_restricted function doesn't run in worker
 alter table tenk1 set (parallel_workers = 4);
 explain (verbose, costs off)
@@ -157,6 +173,16 @@ explain (costs off, verbose)
 
 drop function simple_func(integer);
 
+-- test gather merge with parallel leader participation disabled
+set parallel_leader_participation = off;
+
+explain (costs off)
+   select count(*) from tenk1 group by twenty;
+
+select count(*) from tenk1 group by twenty;
+
+reset parallel_leader_participation;
+
 --test rescan behavior of gather merge
 set enable_material = false;
 
@@ -192,6 +218,16 @@ set max_parallel_workers = 0;
 explain (costs off)
    select string4 from tenk1 order by string4 limit 5;
 select string4 from tenk1 order by string4 limit 5;
+
+-- gather merge test with 0 workers, with parallel leader
+-- participation disabled (the leader will have to run the plan
+-- despite the setting)
+set parallel_leader_participation = off;
+explain (costs off)
+   select string4 from tenk1 order by string4 limit 5;
+select string4 from tenk1 order by string4 limit 5;
+
+reset parallel_leader_participation;
 reset max_parallel_workers;
 
 SAVEPOINT settings;
