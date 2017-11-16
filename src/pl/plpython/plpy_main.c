@@ -318,7 +318,12 @@ plpython_inline_handler(PG_FUNCTION_ARGS)
 									  ALLOCSET_DEFAULT_SIZES);
 	proc.pyname = MemoryContextStrdup(proc.mcxt, "__plpython_inline_block");
 	proc.langid = codeblock->langOid;
-	proc.result.out.d.typoid = VOIDOID;
+
+	/*
+	 * This is currently sufficient to get PLy_exec_function to work, but
+	 * someday we might need to be honest and use PLy_output_setup_func.
+	 */
+	proc.result.typoid = VOIDOID;
 
 	/*
 	 * Push execution context onto stack.  It is important that this get

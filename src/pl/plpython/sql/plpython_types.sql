@@ -387,6 +387,55 @@ $$ LANGUAGE plpythonu;
 SELECT * FROM test_type_conversion_array_domain_check_violation();
 
 
+--
+-- Arrays of domains
+--
+
+CREATE FUNCTION test_read_uint2_array(x uint2[]) RETURNS uint2 AS $$
+plpy.info(x, type(x))
+return x[0]
+$$ LANGUAGE plpythonu;
+
+select test_read_uint2_array(array[1::uint2]);
+
+CREATE FUNCTION test_build_uint2_array(x int2) RETURNS uint2[] AS $$
+return [x, x]
+$$ LANGUAGE plpythonu;
+
+select test_build_uint2_array(1::int2);
+select test_build_uint2_array(-1::int2);  -- fail
+
+--
+-- ideally this would work, but for now it doesn't, because the return value
+-- is [[2,4], [2,4]] which our conversion code thinks should become a 2-D
+-- integer array, not an array of arrays.
+--
+CREATE FUNCTION test_type_conversion_domain_array(x integer[])
+  RETURNS ordered_pair_domain[] AS $$
+return [x, x]
+$$ LANGUAGE plpythonu;
+
+select test_type_conversion_domain_array(array[2,4]);
+select test_type_conversion_domain_array(array[4,2]);  -- fail
+
+CREATE FUNCTION test_type_conversion_domain_array2(x ordered_pair_domain)
+  RETURNS integer AS $$
+plpy.info(x, type(x))
+return x[1]
+$$ LANGUAGE plpythonu;
+
+select test_type_conversion_domain_array2(array[2,4]);
+select test_type_conversion_domain_array2(array[4,2]);  -- fail
+
+CREATE FUNCTION test_type_conversion_array_domain_array(x ordered_pair_domain[])
+  RETURNS ordered_pair_domain AS $$
+plpy.info(x, type(x))
+return x[0]
+$$ LANGUAGE plpythonu;
+
+select test_type_conversion_array_domain_array(array[array[2,4]::ordered_pair_domain]);
+
+
 ---
 --- Composite types
 ---
@@ -428,6 +477,48 @@ SELECT test_composite_type_input(row(1, 2));
 ALTER TYPE named_pair RENAME TO named_pair_2;
 
 SELECT test_composite_type_input(row(1, 2));
+
+
+--
+-- Domains within composite
+--
+
+CREATE TYPE nnint_container AS (f1 int, f2 nnint);
+
+CREATE FUNCTION nnint_test(x int, y int) RETURNS nnint_container AS $$
+return {'f1': x, 'f2': y}
+$$ LANGUAGE plpythonu;
+
+SELECT nnint_test(null, 3);
+SELECT nnint_test(3, null);  -- fail
+
+
+--
+-- Domains of composite
+--
+
+CREATE DOMAIN ordered_named_pair AS named_pair_2 CHECK((VALUE).i <= (VALUE).j);
+
+CREATE FUNCTION read_ordered_named_pair(p ordered_named_pair) RETURNS integer AS $$
+return p['i'] + p['j']
+$$ LANGUAGE plpythonu;
+
+SELECT read_ordered_named_pair(row(1, 2));
+SELECT read_ordered_named_pair(row(2, 1));  -- fail
+
+CREATE FUNCTION build_ordered_named_pair(i int, j int) RETURNS ordered_named_pair AS $$
+return {'i': i, 'j': j}
+$$ LANGUAGE plpythonu;
+
+SELECT build_ordered_named_pair(1,2);
+SELECT build_ordered_named_pair(2,1);  -- fail
+
+CREATE FUNCTION build_ordered_named_pairs(i int, j int) RETURNS ordered_named_pair[] AS $$
+return [{'i': i, 'j': j}, {'i': i, 'j': j+1}]
+$$ LANGUAGE plpythonu;
+
+SELECT build_ordered_named_pairs(1,2);
+SELECT build_ordered_named_pairs(2,1);  -- fail
 
 
 --

@@ -46,6 +46,7 @@ PLy_spi_prepare(PyObject *self, PyObject *args)
 	PyObject   *list = NULL;
 	PyObject   *volatile optr = NULL;
 	char	   *query;
+	PLyExecutionContext *exec_ctx = PLy_current_execution_context();
 	volatile MemoryContext oldcontext;
 	volatile ResourceOwner oldowner;
 	volatile int nargs;
@@ -71,9 +72,9 @@ PLy_spi_prepare(PyObject *self, PyObject *args)
 	nargs = list ? PySequence_Length(list) : 0;
 
 	plan->nargs = nargs;
-	plan->types = nargs ? palloc(sizeof(Oid) * nargs) : NULL;
-	plan->values = nargs ? palloc(sizeof(Datum) * nargs) : NULL;
-	plan->args = nargs ? palloc(sizeof(PLyTypeInfo) * nargs) : NULL;
+	plan->types = nargs ? palloc0(sizeof(Oid) * nargs) : NULL;
+	plan->values = nargs ? palloc0(sizeof(Datum) * nargs) : NULL;
+	plan->args = nargs ? palloc0(sizeof(PLyObToDatum) * nargs) : NULL;
 
 	MemoryContextSwitchTo(oldcontext);
 
@@ -85,22 +86,10 @@ PLy_spi_prepare(PyObject *self, PyObject *args)
 	PG_TRY();
 	{
 		int			i;
-		PLyExecutionContext *exec_ctx = PLy_current_execution_context();
-
-		/*
-		 * the other loop might throw an exception, if PLyTypeInfo member
-		 * isn't properly initialized the Py_DECREF(plan) will go boom
-		 */
-		for (i = 0; i < nargs; i++)
-		{
-			PLy_typeinfo_init(&plan->args[i], plan->mcxt);
-			plan->values[i] = PointerGetDatum(NULL);
-		}
 
 		for (i = 0; i < nargs; i++)
 		{
 			char	   *sptr;
-			HeapTuple	typeTup;
 			Oid			typeId;
 			int32		typmod;
 
@@ -124,11 +113,6 @@ PLy_spi_prepare(PyObject *self, PyObject *args)
 
 			parseTypeString(sptr, &typeId, &typmod, false);
 
-			typeTup = SearchSysCache1(TYPEOID,
-									  ObjectIdGetDatum(typeId));
-			if (!HeapTupleIsValid(typeTup))
-				elog(ERROR, "cache lookup failed for type %u", typeId);
-
 			Py_DECREF(optr);
 
 			/*
@@ -138,8 +122,9 @@ PLy_spi_prepare(PyObject *self, PyObject *args)
 			optr = NULL;
 
 			plan->types[i] = typeId;
-			PLy_output_datum_func(&plan->args[i], typeTup, exec_ctx->curr_proc->langid, exec_ctx->curr_proc->trftypes);
-			ReleaseSysCache(typeTup);
+			PLy_output_setup_func(&plan->args[i], plan->mcxt,
+								  typeId, typmod,
+								  exec_ctx->curr_proc);
 		}
 
 		pg_verifymbstr(query, strlen(query), false);
@@ -253,39 +238,24 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit)
 
 		for (j = 0; j < nargs; j++)
 		{
+			PLyObToDatum *arg = &plan->args[j];
 			PyObject   *elem;
 
 			elem = PySequence_GetItem(list, j);
-			if (elem != Py_None)
+			PG_TRY();
 			{
-				PG_TRY();
-				{
-					plan->values[j] =
-						plan->args[j].out.d.func(&(plan->args[j].out.d),
-												 -1,
-												 elem,
-												 false);
-				}
-				PG_CATCH();
-				{
-					Py_DECREF(elem);
-					PG_RE_THROW();
-				}
-				PG_END_TRY();
+				bool		isnull;
 
-				Py_DECREF(elem);
-				nulls[j] = ' ';
+				plan->values[j] = PLy_output_convert(arg, elem, &isnull);
+				nulls[j] = isnull ? 'n' : ' ';
 			}
-			else
+			PG_CATCH();
 			{
 				Py_DECREF(elem);
-				plan->values[j] =
-					InputFunctionCall(&(plan->args[j].out.d.typfunc),
-									  NULL,
-									  plan->args[j].out.d.typioparam,
-									  -1);
-				nulls[j] = 'n';
+				PG_RE_THROW();
 			}
+			PG_END_TRY();
+			Py_DECREF(elem);
 		}
 
 		rv = SPI_execute_plan(plan->plan, plan->values, nulls,
@@ -306,7 +276,7 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit)
 		 */
 		for (k = 0; k < nargs; k++)
 		{
-			if (!plan->args[k].out.d.typbyval &&
+			if (!plan->args[k].typbyval &&
 				(plan->values[k] != PointerGetDatum(NULL)))
 			{
 				pfree(DatumGetPointer(plan->values[k]));
@@ -321,7 +291,7 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit)
 
 	for (i = 0; i < nargs; i++)
 	{
-		if (!plan->args[i].out.d.typbyval &&
+		if (!plan->args[i].typbyval &&
 			(plan->values[i] != PointerGetDatum(NULL)))
 		{
 			pfree(DatumGetPointer(plan->values[i]));
@@ -386,6 +356,7 @@ static PyObject *
 PLy_spi_execute_fetch_result(SPITupleTable *tuptable, uint64 rows, int status)
 {
 	PLyResultObject *result;
+	PLyExecutionContext *exec_ctx = PLy_current_execution_context();
 	volatile MemoryContext oldcontext;
 
 	result = (PLyResultObject *) PLy_result_new();
@@ -401,7 +372,7 @@ PLy_spi_execute_fetch_result(SPITupleTable *tuptable, uint64 rows, int status)
 	}
 	else if (status > 0 && tuptable != NULL)
 	{
-		PLyTypeInfo args;
+		PLyDatumToOb ininfo;
 		MemoryContext cxt;
 
 		Py_DECREF(result->nrows);
@@ -412,7 +383,10 @@ PLy_spi_execute_fetch_result(SPITupleTable *tuptable, uint64 rows, int status)
 		cxt = AllocSetContextCreate(CurrentMemoryContext,
 									"PL/Python temp context",
 									ALLOCSET_DEFAULT_SIZES);
-		PLy_typeinfo_init(&args, cxt);
+
+		/* Initialize for converting result tuples to Python */
+		PLy_input_setup_func(&ininfo, cxt, RECORDOID, -1,
+							 exec_ctx->curr_proc);
 
 		oldcontext = CurrentMemoryContext;
 		PG_TRY();
@@ -436,12 +410,14 @@ PLy_spi_execute_fetch_result(SPITupleTable *tuptable, uint64 rows, int status)
 				Py_DECREF(result->rows);
 				result->rows = PyList_New(rows);
 
-				PLy_input_tuple_funcs(&args, tuptable->tupdesc);
+				PLy_input_setup_tuple(&ininfo, tuptable->tupdesc,
+									  exec_ctx->curr_proc);
+
 				for (i = 0; i < rows; i++)
 				{
-					PyObject   *row = PLyDict_FromTuple(&args,
-														tuptable->vals[i],
-														tuptable->tupdesc);
+					PyObject   *row = PLy_input_from_tuple(&ininfo,
+														   tuptable->vals[i],
+														   tuptable->tupdesc);
 
 					PyList_SetItem(result->rows, i, row);
 				}

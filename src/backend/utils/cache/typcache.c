@@ -377,6 +377,7 @@ lookup_type_cache(Oid type_id, int flags)
 		typentry->typstorage = typtup->typstorage;
 		typentry->typtype = typtup->typtype;
 		typentry->typrelid = typtup->typrelid;
+		typentry->typelem = typtup->typelem;
 
 		/* If it's a domain, immediately thread it into the domain cache list */
 		if (typentry->typtype == TYPTYPE_DOMAIN)
@@ -790,6 +791,12 @@ load_typcache_tupdesc(TypeCacheEntry *typentry)
 
 	Assert(typentry->tupDesc->tdrefcount > 0);
 	typentry->tupDesc->tdrefcount++;
+
+	/*
+	 * In future, we could take some pains to not increment the seqno if the
+	 * tupdesc didn't really change; but for now it's not worth it.
+	 */
+	typentry->tupDescSeqNo++;
 
 	relation_close(rel, AccessShareLock);
 }

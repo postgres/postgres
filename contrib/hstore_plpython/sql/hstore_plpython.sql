@@ -60,7 +60,21 @@ val = [{'a': 1, 'b': 'boo', 'c': None}, {'d': 2}]
 return val
 $$;
 
- SELECT test2arr();
+SELECT test2arr();
+
+
+-- test python -> domain over hstore
+CREATE DOMAIN hstore_foo AS hstore CHECK(VALUE ? 'foo');
+
+CREATE FUNCTION test2dom(fn text) RETURNS hstore_foo
+LANGUAGE plpythonu
+TRANSFORM FOR TYPE hstore
+AS $$
+return {'a': 1, fn: 'boo', 'c': None}
+$$;
+
+SELECT test2dom('foo');
+SELECT test2dom('bar');  -- fail
 
 
 -- test as part of prepare/execute

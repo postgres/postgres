@@ -40,6 +40,7 @@ typedef struct TypeCacheEntry
 	char		typstorage;
 	char		typtype;
 	Oid			typrelid;
+	Oid			typelem;
 
 	/*
 	 * Information obtained from opfamily entries
@@ -75,9 +76,11 @@ typedef struct TypeCacheEntry
 	/*
 	 * Tuple descriptor if it's a composite type (row type).  NULL if not
 	 * composite or information hasn't yet been requested.  (NOTE: this is a
-	 * reference-counted tupledesc.)
+	 * reference-counted tupledesc.)  To simplify caching dependent info,
+	 * tupDescSeqNo is incremented each time tupDesc is rebuilt in a session.
 	 */
 	TupleDesc	tupDesc;
+	int64		tupDescSeqNo;
 
 	/*
 	 * Fields computed when TYPECACHE_RANGE_INFO is requested.  Zeroes if not

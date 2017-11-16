@@ -31,12 +31,12 @@ typedef struct PLyProcedure
 	ItemPointerData fn_tid;
 	bool		fn_readonly;
 	bool		is_setof;		/* true, if procedure returns result set */
-	PLyTypeInfo result;			/* also used to store info for trigger tuple
-								 * type */
+	PLyObToDatum result;		/* Function result output conversion info */
+	PLyDatumToOb result_in;		/* For converting input tuples in a trigger */
 	char	   *src;			/* textual procedure code, after mangling */
 	char	  **argnames;		/* Argument names */
-	PLyTypeInfo args[FUNC_MAX_ARGS];
-	int			nargs;
+	PLyDatumToOb *args;			/* Argument input conversion info */
+	int			nargs;			/* Number of elements in above arrays */
 	Oid			langid;			/* OID of plpython pg_language entry */
 	List	   *trftypes;		/* OID list of transform types */
 	PyObject   *code;			/* compiled procedure code */

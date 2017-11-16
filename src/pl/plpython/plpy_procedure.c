@@ -15,6 +15,7 @@
 #include "utils/builtins.h"
 #include "utils/hsearch.h"
 #include "utils/inval.h"
+#include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/syscache.h"
 
@@ -29,7 +30,6 @@
 static HTAB *PLy_procedure_cache = NULL;
 
 static PLyProcedure *PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger);
-static bool PLy_procedure_argument_valid(PLyTypeInfo *arg);
 static bool PLy_procedure_valid(PLyProcedure *proc, HeapTuple procTup);
 static char *PLy_procedure_munge_source(const char *name, const char *src);
 
@@ -165,6 +165,7 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 			*ptr = '_';
 	}
 
+	/* Create long-lived context that all procedure info will live in */
 	cxt = AllocSetContextCreate(TopMemoryContext,
 								procName,
 								ALLOCSET_DEFAULT_SIZES);
@@ -188,11 +189,9 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 		proc->fn_tid = procTup->t_self;
 		proc->fn_readonly = (procStruct->provolatile != PROVOLATILE_VOLATILE);
 		proc->is_setof = procStruct->proretset;
-		PLy_typeinfo_init(&proc->result, proc->mcxt);
 		proc->src = NULL;
 		proc->argnames = NULL;
-		for (i = 0; i < FUNC_MAX_ARGS; i++)
-			PLy_typeinfo_init(&proc->args[i], proc->mcxt);
+		proc->args = NULL;
 		proc->nargs = 0;
 		proc->langid = procStruct->prolang;
 		protrftypes_datum = SysCacheGetAttr(PROCOID, procTup,
@@ -211,49 +210,47 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 		 */
 		if (!is_trigger)
 		{
+			Oid			rettype = procStruct->prorettype;
 			HeapTuple	rvTypeTup;
 			Form_pg_type rvTypeStruct;
 
-			rvTypeTup = SearchSysCache1(TYPEOID,
-										ObjectIdGetDatum(procStruct->prorettype));
+			rvTypeTup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(rettype));
 			if (!HeapTupleIsValid(rvTypeTup))
-				elog(ERROR, "cache lookup failed for type %u",
-					 procStruct->prorettype);
+				elog(ERROR, "cache lookup failed for type %u", rettype);
 			rvTypeStruct = (Form_pg_type) GETSTRUCT(rvTypeTup);
 
 			/* Disallow pseudotype result, except for void or record */
 			if (rvTypeStruct->typtype == TYPTYPE_PSEUDO)
 			{
-				if (procStruct->prorettype == TRIGGEROID)
+				if (rettype == VOIDOID ||
+					rettype == RECORDOID)
+					 /* okay */ ;
+				else if (rettype == TRIGGEROID || rettype == EVTTRIGGEROID)
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("trigger functions can only be called as triggers")));
-				else if (procStruct->prorettype != VOIDOID &&
-						 procStruct->prorettype != RECORDOID)
+				else
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("PL/Python functions cannot return type %s",
-									format_type_be(procStruct->prorettype))));
+									format_type_be(rettype))));
 			}
 
-			if (rvTypeStruct->typtype == TYPTYPE_COMPOSITE ||
-				procStruct->prorettype == RECORDOID)
-			{
-				/*
-				 * Tuple: set up later, during first call to
-				 * PLy_function_handler
-				 */
-				proc->result.out.d.typoid = procStruct->prorettype;
-				proc->result.out.d.typmod = -1;
-				proc->result.is_rowtype = 2;
-			}
-			else
-			{
-				/* do the real work */
-				PLy_output_datum_func(&proc->result, rvTypeTup, proc->langid, proc->trftypes);
-			}
+			/* set up output function for procedure result */
+			PLy_output_setup_func(&proc->result, proc->mcxt,
+								  rettype, -1, proc);
 
 			ReleaseSysCache(rvTypeTup);
+		}
+		else
+		{
+			/*
+			 * In a trigger function, we use proc->result and proc->result_in
+			 * for converting tuples, but we don't yet have enough info to set
+			 * them up.  PLy_exec_trigger will deal with it.
+			 */
+			proc->result.typoid = InvalidOid;
+			proc->result_in.typoid = InvalidOid;
 		}
 
 		/*
@@ -287,7 +284,10 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 				}
 			}
 
+			/* Allocate arrays for per-input-argument data */
 			proc->argnames = (char **) palloc0(sizeof(char *) * proc->nargs);
+			proc->args = (PLyDatumToOb *) palloc0(sizeof(PLyDatumToOb) * proc->nargs);
+
 			for (i = pos = 0; i < total; i++)
 			{
 				HeapTuple	argTypeTup;
@@ -306,28 +306,17 @@ PLy_procedure_create(HeapTuple procTup, Oid fn_oid, bool is_trigger)
 					elog(ERROR, "cache lookup failed for type %u", types[i]);
 				argTypeStruct = (Form_pg_type) GETSTRUCT(argTypeTup);
 
-				/* check argument type is OK, set up I/O function info */
-				switch (argTypeStruct->typtype)
-				{
-					case TYPTYPE_PSEUDO:
-						/* Disallow pseudotype argument */
-						ereport(ERROR,
-								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								 errmsg("PL/Python functions cannot accept type %s",
-										format_type_be(types[i]))));
-						break;
-					case TYPTYPE_COMPOSITE:
-						/* we'll set IO funcs at first call */
-						proc->args[pos].is_rowtype = 2;
-						break;
-					default:
-						PLy_input_datum_func(&(proc->args[pos]),
-											 types[i],
-											 argTypeTup,
-											 proc->langid,
-											 proc->trftypes);
-						break;
-				}
+				/* disallow pseudotype arguments */
+				if (argTypeStruct->typtype == TYPTYPE_PSEUDO)
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("PL/Python functions cannot accept type %s",
+									format_type_be(types[i]))));
+
+				/* set up I/O function info */
+				PLy_input_setup_func(&proc->args[pos], proc->mcxt,
+									 types[i], -1,	/* typmod not known */
+									 proc);
 
 				/* get argument name */
 				proc->argnames[pos] = names ? pstrdup(names[i]) : NULL;
@@ -425,53 +414,11 @@ PLy_procedure_delete(PLyProcedure *proc)
 }
 
 /*
- * Check if our cached information about a datatype is still valid
- */
-static bool
-PLy_procedure_argument_valid(PLyTypeInfo *arg)
-{
-	HeapTuple	relTup;
-	bool		valid;
-
-	/* Nothing to cache unless type is composite */
-	if (arg->is_rowtype != 1)
-		return true;
-
-	/*
-	 * Zero typ_relid means that we got called on an output argument of a
-	 * function returning an unnamed record type; the info for it can't
-	 * change.
-	 */
-	if (!OidIsValid(arg->typ_relid))
-		return true;
-
-	/* Else we should have some cached data */
-	Assert(TransactionIdIsValid(arg->typrel_xmin));
-	Assert(ItemPointerIsValid(&arg->typrel_tid));
-
-	/* Get the pg_class tuple for the data type */
-	relTup = SearchSysCache1(RELOID, ObjectIdGetDatum(arg->typ_relid));
-	if (!HeapTupleIsValid(relTup))
-		elog(ERROR, "cache lookup failed for relation %u", arg->typ_relid);
-
-	/* If it has changed, the cached data is not valid */
-	valid = (arg->typrel_xmin == HeapTupleHeaderGetRawXmin(relTup->t_data) &&
-			 ItemPointerEquals(&arg->typrel_tid, &relTup->t_self));
-
-	ReleaseSysCache(relTup);
-
-	return valid;
-}
-
-/*
  * Decide whether a cached PLyProcedure struct is still valid
  */
 static bool
 PLy_procedure_valid(PLyProcedure *proc, HeapTuple procTup)
 {
-	int			i;
-	bool		valid;
-
 	if (proc == NULL)
 		return false;
 
@@ -480,22 +427,7 @@ PLy_procedure_valid(PLyProcedure *proc, HeapTuple procTup)
 		  ItemPointerEquals(&proc->fn_tid, &procTup->t_self)))
 		return false;
 
-	/* Else check the input argument datatypes */
-	valid = true;
-	for (i = 0; i < proc->nargs; i++)
-	{
-		valid = PLy_procedure_argument_valid(&proc->args[i]);
-
-		/* Short-circuit on first changed argument */
-		if (!valid)
-			break;
-	}
-
-	/* if the output type is composite, it might have changed */
-	if (valid)
-		valid = PLy_procedure_argument_valid(&proc->result);
-
-	return valid;
+	return true;
 }
 
 static char *

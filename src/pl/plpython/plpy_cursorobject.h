@@ -12,7 +12,7 @@ typedef struct PLyCursorObject
 {
 	PyObject_HEAD
 	char	   *portalname;
-	PLyTypeInfo result;
+	PLyDatumToOb result;
 	bool		closed;
 	MemoryContext mcxt;
 } PLyCursorObject;

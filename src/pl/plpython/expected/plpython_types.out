@@ -765,6 +765,76 @@ SELECT * FROM test_type_conversion_array_domain_check_violation();
 ERROR:  value for domain ordered_pair_domain violates check constraint "ordered_pair_domain_check"
 CONTEXT:  while creating return value
 PL/Python function "test_type_conversion_array_domain_check_violation"
+--
+-- Arrays of domains
+--
+CREATE FUNCTION test_read_uint2_array(x uint2[]) RETURNS uint2 AS $$
+plpy.info(x, type(x))
+return x[0]
+$$ LANGUAGE plpythonu;
+select test_read_uint2_array(array[1::uint2]);
+INFO:  ([1], <type 'list'>)
+ test_read_uint2_array 
+-----------------------
+                     1
+(1 row)
+
+CREATE FUNCTION test_build_uint2_array(x int2) RETURNS uint2[] AS $$
+return [x, x]
+$$ LANGUAGE plpythonu;
+select test_build_uint2_array(1::int2);
+ test_build_uint2_array 
+------------------------
+ {1,1}
+(1 row)
+
+select test_build_uint2_array(-1::int2);  -- fail
+ERROR:  value for domain uint2 violates check constraint "uint2_check"
+CONTEXT:  while creating return value
+PL/Python function "test_build_uint2_array"
+--
+-- ideally this would work, but for now it doesn't, because the return value
+-- is [[2,4], [2,4]] which our conversion code thinks should become a 2-D
+-- integer array, not an array of arrays.
+--
+CREATE FUNCTION test_type_conversion_domain_array(x integer[])
+  RETURNS ordered_pair_domain[] AS $$
+return [x, x]
+$$ LANGUAGE plpythonu;
+select test_type_conversion_domain_array(array[2,4]);
+ERROR:  return value of function with array return type is not a Python sequence
+CONTEXT:  while creating return value
+PL/Python function "test_type_conversion_domain_array"
+select test_type_conversion_domain_array(array[4,2]);  -- fail
+ERROR:  return value of function with array return type is not a Python sequence
+CONTEXT:  while creating return value
+PL/Python function "test_type_conversion_domain_array"
+CREATE FUNCTION test_type_conversion_domain_array2(x ordered_pair_domain)
+  RETURNS integer AS $$
+plpy.info(x, type(x))
+return x[1]
+$$ LANGUAGE plpythonu;
+select test_type_conversion_domain_array2(array[2,4]);
+INFO:  ([2, 4], <type 'list'>)
+ test_type_conversion_domain_array2 
+------------------------------------
+                                  4
+(1 row)
+
+select test_type_conversion_domain_array2(array[4,2]);  -- fail
+ERROR:  value for domain ordered_pair_domain violates check constraint "ordered_pair_domain_check"
+CREATE FUNCTION test_type_conversion_array_domain_array(x ordered_pair_domain[])
+  RETURNS ordered_pair_domain AS $$
+plpy.info(x, type(x))
+return x[0]
+$$ LANGUAGE plpythonu;
+select test_type_conversion_array_domain_array(array[array[2,4]::ordered_pair_domain]);
+INFO:  ([[2, 4]], <type 'list'>)
+ test_type_conversion_array_domain_array 
+-----------------------------------------
+ {2,4}
+(1 row)
+
 ---
 --- Composite types
 ---
@@ -820,6 +890,64 @@ SELECT test_composite_type_input(row(1, 2));
                          3
 (1 row)
 
+--
+-- Domains within composite
+--
+CREATE TYPE nnint_container AS (f1 int, f2 nnint);
+CREATE FUNCTION nnint_test(x int, y int) RETURNS nnint_container AS $$
+return {'f1': x, 'f2': y}
+$$ LANGUAGE plpythonu;
+SELECT nnint_test(null, 3);
+ nnint_test 
+------------
+ (,3)
+(1 row)
+
+SELECT nnint_test(3, null);  -- fail
+ERROR:  value for domain nnint violates check constraint "nnint_check"
+CONTEXT:  while creating return value
+PL/Python function "nnint_test"
+--
+-- Domains of composite
+--
+CREATE DOMAIN ordered_named_pair AS named_pair_2 CHECK((VALUE).i <= (VALUE).j);
+CREATE FUNCTION read_ordered_named_pair(p ordered_named_pair) RETURNS integer AS $$
+return p['i'] + p['j']
+$$ LANGUAGE plpythonu;
+SELECT read_ordered_named_pair(row(1, 2));
+ read_ordered_named_pair 
+-------------------------
+                       3
+(1 row)
+
+SELECT read_ordered_named_pair(row(2, 1));  -- fail
+ERROR:  value for domain ordered_named_pair violates check constraint "ordered_named_pair_check"
+CREATE FUNCTION build_ordered_named_pair(i int, j int) RETURNS ordered_named_pair AS $$
+return {'i': i, 'j': j}
+$$ LANGUAGE plpythonu;
+SELECT build_ordered_named_pair(1,2);
+ build_ordered_named_pair 
+--------------------------
+ (1,2)
+(1 row)
+
+SELECT build_ordered_named_pair(2,1);  -- fail
+ERROR:  value for domain ordered_named_pair violates check constraint "ordered_named_pair_check"
+CONTEXT:  while creating return value
+PL/Python function "build_ordered_named_pair"
+CREATE FUNCTION build_ordered_named_pairs(i int, j int) RETURNS ordered_named_pair[] AS $$
+return [{'i': i, 'j': j}, {'i': i, 'j': j+1}]
+$$ LANGUAGE plpythonu;
+SELECT build_ordered_named_pairs(1,2);
+ build_ordered_named_pairs 
+---------------------------
+ {"(1,2)","(1,3)"}
+(1 row)
+
+SELECT build_ordered_named_pairs(2,1);  -- fail
+ERROR:  value for domain ordered_named_pair violates check constraint "ordered_named_pair_check"
+CONTEXT:  while creating return value
+PL/Python function "build_ordered_named_pairs"
 --
 -- Prepared statements
 --
