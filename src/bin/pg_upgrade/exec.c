@@ -331,9 +331,8 @@ check_data_dir(ClusterInfo *cluster)
 {
 	const char *pg_data = cluster->pgdata;
 
-	/* get old and new cluster versions */
-	old_cluster.major_version = get_major_server_version(&old_cluster);
-	new_cluster.major_version = get_major_server_version(&new_cluster);
+	/* get the cluster version */
+	cluster->major_version = get_major_server_version(cluster);
 
 	check_single_dir(pg_data, "");
 	check_single_dir(pg_data, "base");
