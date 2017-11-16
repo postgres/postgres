@@ -377,6 +377,14 @@ standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	{
 		Gather	   *gather = makeNode(Gather);
 
+		/*
+		 * If there are any initPlans attached to the formerly-top plan node,
+		 * move them up to the Gather node; same as we do for Material node in
+		 * materialize_finished_plan.
+		 */
+		gather->plan.initPlan = top_plan->initPlan;
+		top_plan->initPlan = NIL;
+
 		gather->plan.targetlist = top_plan->targetlist;
 		gather->plan.qual = NIL;
 		gather->plan.lefttree = top_plan;

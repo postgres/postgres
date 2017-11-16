@@ -74,6 +74,23 @@ explain (costs off)
 	(select ten from tenk2);
 alter table tenk2 reset (parallel_workers);
 
+-- test parallel plan for a query containing initplan.
+set enable_indexscan = off;
+set enable_indexonlyscan = off;
+set enable_bitmapscan = off;
+alter table tenk2 set (parallel_workers = 2);
+
+explain (costs off)
+	select count(*) from tenk1
+        where tenk1.unique1 = (Select max(tenk2.unique1) from tenk2);
+select count(*) from tenk1
+    where tenk1.unique1 = (Select max(tenk2.unique1) from tenk2);
+
+reset enable_indexscan;
+reset enable_indexonlyscan;
+reset enable_bitmapscan;
+alter table tenk2 reset (parallel_workers);
+
 -- test parallel index scans.
 set enable_seqscan to off;
 set enable_bitmapscan to off;

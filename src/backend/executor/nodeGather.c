@@ -160,11 +160,13 @@ ExecGather(PlanState *pstate)
 			if (!node->pei)
 				node->pei = ExecInitParallelPlan(node->ps.lefttree,
 												 estate,
+												 gather->initParam,
 												 gather->num_workers,
 												 node->tuples_needed);
 			else
 				ExecParallelReinitialize(node->ps.lefttree,
-										 node->pei);
+										 node->pei,
+										 gather->initParam);
 
 			/*
 			 * Register backend workers. We might not get as many as we

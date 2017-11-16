@@ -1087,6 +1087,8 @@ bool
 is_parallel_safe(PlannerInfo *root, Node *node)
 {
 	max_parallel_hazard_context context;
+	PlannerInfo *proot;
+	ListCell   *l;
 
 	/*
 	 * Even if the original querytree contained nothing unsafe, we need to
@@ -1101,6 +1103,25 @@ is_parallel_safe(PlannerInfo *root, Node *node)
 	context.max_hazard = PROPARALLEL_SAFE;
 	context.max_interesting = PROPARALLEL_RESTRICTED;
 	context.safe_param_ids = NIL;
+
+	/*
+	 * The params that refer to the same or parent query level are considered
+	 * parallel-safe.  The idea is that we compute such params at Gather or
+	 * Gather Merge node and pass their value to workers.
+	 */
+	for (proot = root; proot != NULL; proot = proot->parent_root)
+	{
+		foreach(l, proot->init_plans)
+		{
+			SubPlan    *initsubplan = (SubPlan *) lfirst(l);
+			ListCell   *l2;
+
+			foreach(l2, initsubplan->setParam)
+				context.safe_param_ids = lcons_int(lfirst_int(l2),
+											context.safe_param_ids);
+		}
+	}
+
 	return !max_parallel_hazard_walker(node, &context);
 }
 
@@ -1225,7 +1246,8 @@ max_parallel_hazard_walker(Node *node, max_parallel_hazard_context *context)
 	 * We can't pass Params to workers at the moment either, so they are also
 	 * parallel-restricted, unless they are PARAM_EXTERN Params or are
 	 * PARAM_EXEC Params listed in safe_param_ids, meaning they could be
-	 * generated within the worker.
+	 * either generated within the worker or can be computed in master and
+	 * then their value can be passed to the worker.
 	 */
 	else if (IsA(node, Param))
 	{

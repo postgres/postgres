@@ -609,6 +609,7 @@ extern ExprEvalOp ExecEvalStepOp(ExprState *state, ExprEvalStep *op);
  */
 extern void ExecEvalParamExec(ExprState *state, ExprEvalStep *op,
 				  ExprContext *econtext);
+extern void ExecEvalParamExecParams(Bitmapset *params, EState *estate);
 extern void ExecEvalParamExtern(ExprState *state, ExprEvalStep *op,
 					ExprContext *econtext);
 extern void ExecEvalSQLValueFunction(ExprState *state, ExprEvalStep *op);

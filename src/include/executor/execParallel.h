@@ -28,6 +28,7 @@ typedef struct ParallelExecutorInfo
 	BufferUsage *buffer_usage;	/* points to bufusage area in DSM */
 	SharedExecutorInstrumentation *instrumentation; /* optional */
 	dsa_area   *area;			/* points to DSA area in DSM */
+	dsa_pointer	param_exec;		/* serialized PARAM_EXEC parameters */
 	bool		finished;		/* set true by ExecParallelFinish */
 	/* These two arrays have pcxt->nworkers_launched entries: */
 	shm_mq_handle **tqueue;		/* tuple queues for worker output */
@@ -35,12 +36,13 @@ typedef struct ParallelExecutorInfo
 } ParallelExecutorInfo;
 
 extern ParallelExecutorInfo *ExecInitParallelPlan(PlanState *planstate,
-					 EState *estate, int nworkers, int64 tuples_needed);
+					 EState *estate, Bitmapset *sendParam, int nworkers,
+					 int64 tuples_needed);
 extern void ExecParallelCreateReaders(ParallelExecutorInfo *pei);
 extern void ExecParallelFinish(ParallelExecutorInfo *pei);
 extern void ExecParallelCleanup(ParallelExecutorInfo *pei);
 extern void ExecParallelReinitialize(PlanState *planstate,
-						 ParallelExecutorInfo *pei);
+						 ParallelExecutorInfo *pei, Bitmapset *sendParam);
 
 extern void ParallelQueryMain(dsm_segment *seg, shm_toc *toc);
 

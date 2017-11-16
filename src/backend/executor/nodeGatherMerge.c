@@ -203,11 +203,13 @@ ExecGatherMerge(PlanState *pstate)
 			if (!node->pei)
 				node->pei = ExecInitParallelPlan(node->ps.lefttree,
 												 estate,
+												 gm->initParam,
 												 gm->num_workers,
 												 node->tuples_needed);
 			else
 				ExecParallelReinitialize(node->ps.lefttree,
-										 node->pei);
+										 node->pei,
+										 gm->initParam);
 
 			/* Try to launch workers. */
 			pcxt = node->pei->pcxt;

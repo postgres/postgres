@@ -364,6 +364,7 @@ _copyGather(const Gather *from)
 	COPY_SCALAR_FIELD(rescan_param);
 	COPY_SCALAR_FIELD(single_copy);
 	COPY_SCALAR_FIELD(invisible);
+	COPY_BITMAPSET_FIELD(initParam);
 
 	return newnode;
 }
@@ -391,6 +392,7 @@ _copyGatherMerge(const GatherMerge *from)
 	COPY_POINTER_FIELD(sortOperators, from->numCols * sizeof(Oid));
 	COPY_POINTER_FIELD(collations, from->numCols * sizeof(Oid));
 	COPY_POINTER_FIELD(nullsFirst, from->numCols * sizeof(bool));
+	COPY_BITMAPSET_FIELD(initParam);
 
 	return newnode;
 }
