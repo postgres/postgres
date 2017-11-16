@@ -26,8 +26,51 @@ use Test::More;
 
 use Exporter 'import';
 our @EXPORT = qw(
-  configure_test_server_for_ssl switch_server_cert
+  configure_test_server_for_ssl
+  run_test_psql
+  switch_server_cert
+  test_connect_fails
+  test_connect_ok
 );
+
+# Define a couple of helper functions to test connecting to the server.
+
+# Attempt connection to server with given connection string.
+sub run_test_psql
+{
+	my $connstr   = $_[0];
+	my $logstring = $_[1];
+
+	my $cmd = [
+		'psql', '-X', '-A', '-t', '-c', "SELECT 'connected with $connstr'",
+		'-d', "$connstr" ];
+
+	my $result = run_log($cmd);
+	return $result;
+}
+
+#
+# The first argument is a base connection string to use for connection.
+# The second argument is a complementary connection string, and it's also
+# printed out as the test case name.
+sub test_connect_ok
+{
+	my $common_connstr = $_[0];
+	my $connstr = $_[1];
+
+	my $result =
+	  run_test_psql("$common_connstr $connstr", "(should succeed)");
+	ok($result, $connstr);
+}
+
+sub test_connect_fails
+{
+	my $common_connstr = $_[0];
+	my $connstr = $_[1];
+
+	my $result = run_test_psql("$common_connstr $connstr", "(should fail)");
+	ok(!$result, "$connstr (should fail)");
+}
 
 # Copy a set of files, taking into account wildcards
 sub copy_files
