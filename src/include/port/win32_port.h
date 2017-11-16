@@ -52,6 +52,7 @@
 #include <direct.h>
 #include <sys/utime.h>			/* for non-unicode version */
 #undef near
+#include <sys/stat.h>			/* needed before sys/stat hacking below */
 
 /* Must be here to avoid conflicting with prototype in windows.h */
 #define mkdir(a,b)	mkdir(a)
@@ -248,6 +249,8 @@ typedef int pid_t;
 
 /*
  * Supplement to <sys/stat.h>.
+ *
+ * We must pull in sys/stat.h before this part, else our overrides lose.
  */
 #define lstat(path, sb) stat(path, sb)
 
@@ -255,17 +258,56 @@ typedef int pid_t;
  * stat() is not guaranteed to set the st_size field on win32, so we
  * redefine it to our own implementation that is.
  *
- * We must pull in sys/stat.h here so the system header definition
- * goes in first, and we redefine that, and not the other way around.
- *
  * Some frontends don't need the size from stat, so if UNSAFE_STAT_OK
  * is defined we don't bother with this.
  */
 #ifndef UNSAFE_STAT_OK
-#include <sys/stat.h>
 extern int	pgwin32_safestat(const char *path, struct stat *buf);
-
 #define stat(a,b) pgwin32_safestat(a,b)
+#endif
+
+/* These macros are not provided by older MinGW, nor by MSVC */
+#ifndef S_IRUSR
+#define S_IRUSR _S_IREAD
+#endif
+#ifndef S_IWUSR
+#define S_IWUSR _S_IWRITE
+#endif
+#ifndef S_IXUSR
+#define S_IXUSR _S_IEXEC
+#endif
+#ifndef S_IRWXU
+#define S_IRWXU (S_IRUSR | S_IWUSR | S_IXUSR)
+#endif
+#ifndef S_IRGRP
+#define S_IRGRP 0
+#endif
+#ifndef S_IWGRP
+#define S_IWGRP 0
+#endif
+#ifndef S_IXGRP
+#define S_IXGRP 0
+#endif
+#ifndef S_IRWXG
+#define S_IRWXG 0
+#endif
+#ifndef S_IROTH
+#define S_IROTH 0
+#endif
+#ifndef S_IWOTH
+#define S_IWOTH 0
+#endif
+#ifndef S_IXOTH
+#define S_IXOTH 0
+#endif
+#ifndef S_IRWXO
+#define S_IRWXO 0
+#endif
+#ifndef S_ISDIR
+#define S_ISDIR(m) (((m) & S_IFMT) == S_IFDIR)
+#endif
+#ifndef S_ISREG
+#define S_ISREG(m) (((m) & S_IFMT) == S_IFREG)
 #endif
 
 /*
@@ -456,14 +498,6 @@ typedef __int64 ssize_t;
 
 typedef unsigned short mode_t;
 
-#define S_IRUSR _S_IREAD
-#define S_IWUSR _S_IWRITE
-#define S_IXUSR _S_IEXEC
-#define S_IRWXU (S_IRUSR | S_IWUSR | S_IXUSR)
-/* see also S_IRGRP etc below */
-#define S_ISDIR(m) (((m) & S_IFMT) == S_IFDIR)
-#define S_ISREG(m) (((m) & S_IFMT) == S_IFREG)
-
 #define F_OK 0
 #define W_OK 2
 #define R_OK 4
@@ -477,15 +511,5 @@ typedef unsigned short mode_t;
 #define DLSUFFIX ".dll"
 
 #endif							/* _MSC_VER */
-
-/* These aren't provided by either MinGW or MSVC */
-#define S_IRGRP 0
-#define S_IWGRP 0
-#define S_IXGRP 0
-#define S_IRWXG 0
-#define S_IROTH 0
-#define S_IWOTH 0
-#define S_IXOTH 0
-#define S_IRWXO 0
 
 #endif							/* PG_WIN32_PORT_H */
