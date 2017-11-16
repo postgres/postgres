@@ -137,11 +137,10 @@
 #temp_file_limit = -1			# limits per-process temp file space
 					# in kB, or -1 for no limit
 
-# - Kernel Resource Usage -
+# - Kernel Resource -
 
 #max_files_per_process = 1000		# min 25
 					# (change requires restart)
-#shared_preload_libraries = ''		# (change requires restart)
 
 # - Cost-Based Vacuum Delay -
 
@@ -172,7 +171,7 @@
 
 
 #------------------------------------------------------------------------------
-# WRITE AHEAD LOG
+# WRITE-AHEAD LOG
 #------------------------------------------------------------------------------
 
 # - Settings -
@@ -228,7 +227,7 @@
 # REPLICATION
 #------------------------------------------------------------------------------
 
-# - Sending Server(s) -
+# - Sending Servers -
 
 # Set these on the master and on any standby that will send replication data.
 
@@ -337,7 +336,7 @@
 
 
 #------------------------------------------------------------------------------
-# ERROR REPORTING AND LOGGING
+# REPORTING AND LOGGING
 #------------------------------------------------------------------------------
 
 # - Where to Log -
@@ -472,8 +471,9 @@
 					# -1 disables, 0 logs all temp files
 #log_timezone = 'GMT'
 
-
-# - Process Title -
+#------------------------------------------------------------------------------
+# PROCESS TITLE
+#------------------------------------------------------------------------------
 
 #cluster_name = ''			# added to process titles if nonempty
 					# (change requires restart)
@@ -481,10 +481,10 @@
 
 
 #------------------------------------------------------------------------------
-# RUNTIME STATISTICS
+# STATISTICS
 #------------------------------------------------------------------------------
 
-# - Query/Index Statistics Collector -
+# - Query and Index Statistics Collector -
 
 #track_activities = on
 #track_counts = on
@@ -494,7 +494,7 @@
 #stats_temp_directory = 'pg_stat_tmp'
 
 
-# - Statistics Monitoring -
+# - Monitoring -
 
 #log_parser_stats = off
 #log_planner_stats = off
@@ -503,7 +503,7 @@
 
 
 #------------------------------------------------------------------------------
-# AUTOVACUUM PARAMETERS
+# AUTOVACUUM
 #------------------------------------------------------------------------------
 
 #autovacuum = on			# Enable autovacuum subprocess?  'on'
@@ -588,11 +588,15 @@
 # default configuration for text search
 #default_text_search_config = 'pg_catalog.simple'
 
+# - Shared Library Preloading -
+
+#shared_preload_libraries = ''	# (change requires restart)
+#local_preload_libraries = ''
+#session_preload_libraries = ''
+
 # - Other Defaults -
 
 #dynamic_library_path = '$libdir'
-#local_preload_libraries = ''
-#session_preload_libraries = ''
 
 
 #------------------------------------------------------------------------------
@@ -611,7 +615,7 @@
 
 
 #------------------------------------------------------------------------------
-# VERSION/PLATFORM COMPATIBILITY
+# VERSION AND PLATFORM COMPATIBILITY
 #------------------------------------------------------------------------------
 
 # - Previous PostgreSQL Versions -
