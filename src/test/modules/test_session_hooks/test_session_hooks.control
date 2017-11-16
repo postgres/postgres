@@ -1,3 +1,0 @@
-comment = 'Test start/end hook session with an extension'
-default_version = '1.0'
-relocatable = true

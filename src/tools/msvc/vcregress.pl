@@ -383,8 +383,6 @@ sub modulescheck
 	my $mstat = 0;
 	foreach my $module (glob("*"))
 	{
-		# test_session_hooks can't run installcheck, so skip it here
-		next if $module eq 'test_session_hooks';
 		subdircheck("$topdir/src/test/modules", $module);
 		my $status = $? >> 8;
 		$mstat ||= $status;

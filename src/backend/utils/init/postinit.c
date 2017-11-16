@@ -76,8 +76,6 @@ static bool ThereIsAtLeastOneRole(void);
 static void process_startup_options(Port *port, bool am_superuser);
 static void process_settings(Oid databaseid, Oid roleid);
 
-/* Hook for plugins to get control at end of session */
-session_end_hook_type session_end_hook = NULL;
 
 /*** InitPostgres support ***/
 
@@ -1156,10 +1154,6 @@ ShutdownPostgres(int code, Datum arg)
 	 * them explicitly.
 	 */
 	LockReleaseAll(USER_LOCKMETHOD, true);
-
-	/* Hook at session end */
-	if (session_end_hook)
-		(*session_end_hook) ();
 }
 
 
