@@ -52,32 +52,9 @@
 
 #include "pg_config.h"
 #include "pg_config_manual.h"	/* must be after pg_config.h */
-
-/*
- * We always rely on the WIN32 macro being set by our build system,
- * but _WIN32 is the compiler pre-defined macro. So make sure we define
- * WIN32 whenever _WIN32 is set, to facilitate standalone building.
- */
-#if defined(_WIN32) && !defined(WIN32)
-#define WIN32
-#endif
-
-#if !defined(WIN32) && !defined(__CYGWIN__) /* win32 includes further down */
 #include "pg_config_os.h"		/* must be before any system header files */
-#endif
 
-#if _MSC_VER >= 1400 || defined(HAVE_CRTDEFS_H)
-#define errcode __msvc_errcode
-#include <crtdefs.h>
-#undef errcode
-#endif
-
-/*
- * We have to include stdlib.h here because it defines many of these macros
- * on some platforms, and we only want our definitions used if stdlib.h doesn't
- * have its own.  The same goes for stddef and stdarg if present.
- */
-
+/* System header files that should be available everywhere in Postgres */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -97,11 +74,6 @@
 #include <locale.h>
 #ifdef ENABLE_NLS
 #include <libintl.h>
-#endif
-
-#if defined(WIN32) || defined(__CYGWIN__)
-/* We have to redefine some system functions after they are included above. */
-#include "pg_config_os.h"
 #endif
 
 

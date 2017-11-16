@@ -17,6 +17,15 @@
 #include <netdb.h>
 #include <pwd.h>
 
+/*
+ * Windows has enough specialized port stuff that we push most of it off
+ * into another file.
+ * Note: Some CYGWIN includes might #define WIN32.
+ */
+#if defined(WIN32) && !defined(__CYGWIN__)
+#include "port/win32_port.h"
+#endif
+
 /* socket has a different definition on WIN32 */
 #ifndef WIN32
 typedef int pgsocket;
@@ -101,11 +110,6 @@ extern int find_other_exec(const char *argv0, const char *target,
 /* Doesn't belong here, but this is used with find_other_exec(), so... */
 #define PG_BACKEND_VERSIONSTR "postgres (PostgreSQL) " PG_VERSION "\n"
 
-/* Windows security token manipulation (in exec.c) */
-#ifdef WIN32
-extern BOOL AddUserToTokenDacl(HANDLE hToken);
-#endif
-
 
 #if defined(WIN32) || defined(__CYGWIN__)
 #define EXE ".exe"
@@ -185,35 +189,9 @@ extern int	pg_printf(const char *fmt,...) pg_attribute_printf(1, 2);
 #endif
 #endif							/* USE_REPL_SNPRINTF */
 
-#if defined(WIN32)
-/*
- * Versions of libintl >= 0.18? try to replace setlocale() with a macro
- * to their own versions.  Remove the macro, if it exists, because it
- * ends up calling the wrong version when the backend and libintl use
- * different versions of msvcrt.
- */
-#if defined(setlocale)
-#undef setlocale
-#endif
-
-/*
- * Define our own wrapper macro around setlocale() to work around bugs in
- * Windows' native setlocale() function.
- */
-extern char *pgwin32_setlocale(int category, const char *locale);
-
-#define setlocale(a,b) pgwin32_setlocale(a,b)
-#endif							/* WIN32 */
-
 /* Portable prompt handling */
 extern void simple_prompt(const char *prompt, char *destination, size_t destlen,
 			  bool echo);
-
-#ifdef WIN32
-#define PG_SIGNAL_COUNT 32
-#define kill(pid,sig)	pgkill(pid,sig)
-extern int	pgkill(int pid, int sig);
-#endif
 
 extern int	pclose_check(FILE *stream);
 
@@ -261,23 +239,6 @@ extern bool pgwin32_is_junction(const char *path);
 #endif
 
 extern bool rmtree(const char *path, bool rmtopdir);
-
-/*
- * stat() is not guaranteed to set the st_size field on win32, so we
- * redefine it to our own implementation that is.
- *
- * We must pull in sys/stat.h here so the system header definition
- * goes in first, and we redefine that, and not the other way around.
- *
- * Some frontends don't need the size from stat, so if UNSAFE_STAT_OK
- * is defined we don't bother with this.
- */
-#if defined(WIN32) && !defined(__CYGWIN__) && !defined(UNSAFE_STAT_OK)
-#include <sys/stat.h>
-extern int	pgwin32_safestat(const char *path, struct stat *buf);
-
-#define stat(a,b) pgwin32_safestat(a,b)
-#endif
 
 #if defined(WIN32) && !defined(__CYGWIN__)
 
@@ -353,7 +314,7 @@ extern int	gettimeofday(struct timeval *tp, struct timezone *tzp);
 extern char *crypt(const char *key, const char *setting);
 #endif
 
-/* WIN32 handled in port/win32.h */
+/* WIN32 handled in port/win32_port.h */
 #ifndef WIN32
 #define pgoff_t off_t
 #ifdef __NetBSD__
