@@ -2686,7 +2686,7 @@ qsort_partition_rbound_cmp(const void *a, const void *b, void *arg)
 /*
  * partition_rbound_cmp
  *
- * Return for two range bounds whether the 1st one (specified in datum1,
+ * Return for two range bounds whether the 1st one (specified in datums1,
  * kind1, and lower1) is <, =, or > the bound specified in *b2.
  *
  * Note that if the values of the two range bounds compare equal, then we take
