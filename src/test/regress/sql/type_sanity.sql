@@ -120,6 +120,14 @@ AND case proargtypes[array_length(proargtypes, 1)-1]
 		  WHERE t.typarray = proargtypes[array_length(proargtypes, 1)-1])
 	END  != provariadic;
 
+-- Check that all and only those functions with a variadic type have
+-- a variadic argument.
+SELECT oid::regprocedure, proargmodes, provariadic
+FROM pg_proc
+WHERE (proargmodes IS NOT NULL AND 'v' = any(proargmodes))
+    IS DISTINCT FROM
+    (provariadic != 0);
+
 -- As of 8.0, this check finds refcursor, which is borrowing
 -- other types' I/O routines
 SELECT p1.oid, p1.typname, p2.oid, p2.proname
