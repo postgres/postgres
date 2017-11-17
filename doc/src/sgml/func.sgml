@@ -5850,7 +5850,10 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
     data based on the given value.  Any text that is not a template pattern is
     simply copied verbatim.  Similarly, in an input template string (for the
     other functions), template patterns identify the values to be supplied by
-    the input data string.
+    the input data string.  If there are characters in the template string
+    that are not template patterns, the corresponding characters in the input
+    data string are simply skipped over (whether or not they are equal to the
+    template string characters).
    </para>
 
   <para>
@@ -6176,13 +6179,15 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
        Ordinary text is allowed in <function>to_char</function>
        templates and will be output literally.  You can put a substring
        in double quotes to force it to be interpreted as literal text
-       even if it contains pattern key words.  For example, in
+       even if it contains template patterns.  For example, in
        <literal>'"Hello Year "YYYY'</literal>, the <literal>YYYY</literal>
        will be replaced by the year data, but the single <literal>Y</literal> in <literal>Year</literal>
-       will not be.  In <function>to_date</function>, <function>to_number</function>,
-       and <function>to_timestamp</function>, double-quoted strings skip the number of
-       input characters contained in the string, e.g. <literal>"XX"</literal>
-       skips two input characters.
+       will not be.
+       In <function>to_date</function>, <function>to_number</function>,
+       and <function>to_timestamp</function>, literal text and double-quoted
+       strings result in skipping the number of characters contained in the
+       string; for example <literal>"XX"</literal> skips two input characters
+       (whether or not they are <literal>XX</literal>).
       </para>
      </listitem>
 
@@ -6480,6 +6485,17 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
        <literal>PL</literal>, <literal>SG</literal>, and
        <literal>TH</literal> are <productname>PostgreSQL</productname>
        extensions.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       In <function>to_number</function>, if non-data template patterns such
+       as <literal>L</literal> or <literal>TH</literal> are used, the
+       corresponding number of input characters are skipped, whether or not
+       they match the template pattern, unless they are data characters
+       (that is, digits, sign, decimal point, or comma).  For
+       example, <literal>TH</literal> would skip two non-data characters.
       </para>
      </listitem>
 

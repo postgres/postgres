@@ -788,6 +788,7 @@ SELECT '' AS to_char_26, to_char('100'::numeric, 'FM999');
 
 -- TO_NUMBER()
 --
+SET lc_numeric = 'C';
 SELECT '' AS to_number_1,  to_number('-34,338,492', '99G999G999');
 SELECT '' AS to_number_2,  to_number('-34,338,492.654,878', '99G999G999D999G999');
 SELECT '' AS to_number_3,  to_number('<564646.654564>', '999999.999999PR');
@@ -801,6 +802,16 @@ SELECT '' AS to_number_10, to_number('0', '99.99');
 SELECT '' AS to_number_11, to_number('.-01', 'S99.99');
 SELECT '' AS to_number_12, to_number('.01-', '99.99S');
 SELECT '' AS to_number_13, to_number(' . 0 1-', ' 9 9 . 9 9 S');
+SELECT '' AS to_number_14, to_number('34,50','999,99');
+SELECT '' AS to_number_15, to_number('123,000','999G');
+SELECT '' AS to_number_16, to_number('123456','999G999');
+SELECT '' AS to_number_17, to_number('$1234.56','L9,999.99');
+SELECT '' AS to_number_18, to_number('$1234.56','L99,999.99');
+SELECT '' AS to_number_19, to_number('$1,234.56','L99,999.99');
+SELECT '' AS to_number_20, to_number('1234.56','L99,999.99');
+SELECT '' AS to_number_21, to_number('1,234.56','L99,999.99');
+SELECT '' AS to_number_22, to_number('42nd', '99th');
+RESET lc_numeric;
 
 --
 -- Input syntax

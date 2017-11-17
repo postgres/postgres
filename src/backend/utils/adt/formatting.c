@@ -988,7 +988,7 @@ static char *get_last_relevant_decnum(char *num);
 static void NUM_numpart_from_char(NUMProc *Np, int id, int input_len);
 static void NUM_numpart_to_char(NUMProc *Np, int id);
 static char *NUM_processor(FormatNode *node, NUMDesc *Num, char *inout,
-			  char *number, int from_char_input_len, int to_char_out_pre_spaces,
+			  char *number, int input_len, int to_char_out_pre_spaces,
 			  int sign, bool is_to_char, Oid collid);
 static DCHCacheEntry *DCH_cache_getnew(const char *str);
 static DCHCacheEntry *DCH_cache_search(const char *str);
@@ -4232,6 +4232,14 @@ get_last_relevant_decnum(char *num)
 	return result;
 }
 
+/*
+ * These macros are used in NUM_processor() and its subsidiary routines.
+ * OVERLOAD_TEST: true if we've reached end of input string
+ * AMOUNT_TEST(s): true if at least s characters remain in string
+ */
+#define OVERLOAD_TEST	(Np->inout_p >= Np->inout + input_len)
+#define AMOUNT_TEST(s)	(Np->inout_p <= Np->inout + (input_len - (s)))
+
 /* ----------
  * Number extraction for TO_NUMBER()
  * ----------
@@ -4245,9 +4253,6 @@ NUM_numpart_from_char(NUMProc *Np, int id, int input_len)
 	elog(DEBUG_elog_output, " --- scan start --- id=%s",
 		 (id == NUM_0 || id == NUM_9) ? "NUM_0/9" : id == NUM_DEC ? "NUM_DEC" : "???");
 #endif
-
-#define OVERLOAD_TEST	(Np->inout_p >= Np->inout + input_len)
-#define AMOUNT_TEST(_s) (input_len-(Np->inout_p-Np->inout) >= _s)
 
 	if (OVERLOAD_TEST)
 		return;
@@ -4641,14 +4646,32 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 	++Np->num_curr;
 }
 
+/*
+ * Skip over "n" input characters, but only if they aren't numeric data
+ */
+static void
+NUM_eat_non_data_chars(NUMProc *Np, int n, int input_len)
+{
+	while (n-- > 0)
+	{
+		if (OVERLOAD_TEST)
+			break;				/* end of input */
+		if (strchr("0123456789.,+-", *Np->inout_p) != NULL)
+			break;				/* it's a data character */
+		Np->inout_p += pg_mblen(Np->inout_p);
+	}
+}
+
 static char *
 NUM_processor(FormatNode *node, NUMDesc *Num, char *inout,
-			  char *number, int from_char_input_len, int to_char_out_pre_spaces,
+			  char *number, int input_len, int to_char_out_pre_spaces,
 			  int sign, bool is_to_char, Oid collid)
 {
 	FormatNode *n;
 	NUMProc		_Np,
 			   *Np = &_Np;
+	const char *pattern;
+	int			pattern_len;
 
 	MemSet(Np, 0, sizeof(NUMProc));
 
@@ -4816,9 +4839,11 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout,
 		if (!Np->is_to_char)
 		{
 			/*
-			 * Check non-string inout end
+			 * Check at least one character remains to be scanned.  (In
+			 * actions below, must use AMOUNT_TEST if we want to read more
+			 * characters than that.)
 			 */
-			if (Np->inout_p >= Np->inout + from_char_input_len)
+			if (OVERLOAD_TEST)
 				break;
 		}
 
@@ -4828,12 +4853,16 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout,
 		if (n->type == NODE_TYPE_ACTION)
 		{
 			/*
-			 * Create/reading digit/zero/blank/sing
+			 * Create/read digit/zero/blank/sign/special-case
 			 *
 			 * 'NUM_S' note: The locale sign is anchored to number and we
 			 * read/write it when we work with first or last number
-			 * (NUM_0/NUM_9). This is reason why NUM_S missing in follow
-			 * switch().
+			 * (NUM_0/NUM_9).  This is why NUM_S is missing in switch().
+			 *
+			 * Notice the "Np->inout_p++" at the bottom of the loop.  This is
+			 * why most of the actions advance inout_p one less than you might
+			 * expect.  In cases where we don't want that increment to happen,
+			 * a switch case ends with "continue" not "break".
 			 */
 			switch (n->key->id)
 			{
@@ -4848,7 +4877,7 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout,
 					}
 					else
 					{
-						NUM_numpart_from_char(Np, n->key->id, from_char_input_len);
+						NUM_numpart_from_char(Np, n->key->id, input_len);
 						break;	/* switch() case: */
 					}
 
@@ -4872,10 +4901,14 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout,
 							if (IS_FILLMODE(Np->Num))
 								continue;
 						}
+						if (*Np->inout_p != ',')
+							continue;
 					}
 					break;
 
 				case NUM_G:
+					pattern = Np->L_thousands_sep;
+					pattern_len = strlen(pattern);
 					if (Np->is_to_char)
 					{
 						if (!Np->num_in)
@@ -4884,16 +4917,16 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout,
 								continue;
 							else
 							{
-								int			x = strlen(Np->L_thousands_sep);
-
-								memset(Np->inout_p, ' ', x);
-								Np->inout_p += x - 1;
+								/* just in case there are MB chars */
+								pattern_len = pg_mbstrlen(pattern);
+								memset(Np->inout_p, ' ', pattern_len);
+								Np->inout_p += pattern_len - 1;
 							}
 						}
 						else
 						{
-							strcpy(Np->inout_p, Np->L_thousands_sep);
-							Np->inout_p += strlen(Np->inout_p) - 1;
+							strcpy(Np->inout_p, pattern);
+							Np->inout_p += pattern_len - 1;
 						}
 					}
 					else
@@ -4903,18 +4936,33 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout,
 							if (IS_FILLMODE(Np->Num))
 								continue;
 						}
-						Np->inout_p += strlen(Np->L_thousands_sep) - 1;
+
+						/*
+						 * Because L_thousands_sep typically contains data
+						 * characters (either '.' or ','), we can't use
+						 * NUM_eat_non_data_chars here.  Instead skip only if
+						 * the input matches L_thousands_sep.
+						 */
+						if (AMOUNT_TEST(pattern_len) &&
+							strncmp(Np->inout_p, pattern, pattern_len) == 0)
+							Np->inout_p += pattern_len - 1;
+						else
+							continue;
 					}
 					break;
 
 				case NUM_L:
+					pattern = Np->L_currency_symbol;
 					if (Np->is_to_char)
 					{
-						strcpy(Np->inout_p, Np->L_currency_symbol);
-						Np->inout_p += strlen(Np->inout_p) - 1;
+						strcpy(Np->inout_p, pattern);
+						Np->inout_p += strlen(pattern) - 1;
 					}
 					else
-						Np->inout_p += strlen(Np->L_currency_symbol) - 1;
+					{
+						NUM_eat_non_data_chars(Np, pg_mbstrlen(pattern), input_len);
+						continue;
+					}
 					break;
 
 				case NUM_RN:
@@ -4949,8 +4997,16 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout,
 						continue;
 
 					if (Np->is_to_char)
+					{
 						strcpy(Np->inout_p, get_th(Np->number, TH_LOWER));
-					Np->inout_p += 1;
+						Np->inout_p += 1;
+					}
+					else
+					{
+						/* All variants of 'th' occupy 2 characters */
+						NUM_eat_non_data_chars(Np, 2, input_len);
+						continue;
+					}
 					break;
 
 				case NUM_TH:
@@ -4959,8 +5015,16 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout,
 						continue;
 
 					if (Np->is_to_char)
+					{
 						strcpy(Np->inout_p, get_th(Np->number, TH_UPPER));
-					Np->inout_p += 1;
+						Np->inout_p += 1;
+					}
+					else
+					{
+						/* All variants of 'TH' occupy 2 characters */
+						NUM_eat_non_data_chars(Np, 2, input_len);
+						continue;
+					}
 					break;
 
 				case NUM_MI:
@@ -4977,6 +5041,11 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout,
 					{
 						if (*Np->inout_p == '-')
 							*Np->number = '-';
+						else
+						{
+							NUM_eat_non_data_chars(Np, 1, input_len);
+							continue;
+						}
 					}
 					break;
 
@@ -4994,22 +5063,30 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout,
 					{
 						if (*Np->inout_p == '+')
 							*Np->number = '+';
+						else
+						{
+							NUM_eat_non_data_chars(Np, 1, input_len);
+							continue;
+						}
 					}
 					break;
 
 				case NUM_SG:
 					if (Np->is_to_char)
 						*Np->inout_p = Np->sign;
-
 					else
 					{
 						if (*Np->inout_p == '-')
 							*Np->number = '-';
 						else if (*Np->inout_p == '+')
 							*Np->number = '+';
+						else
+						{
+							NUM_eat_non_data_chars(Np, 1, input_len);
+							continue;
+						}
 					}
 					break;
-
 
 				default:
 					continue;
@@ -5019,7 +5096,12 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout,
 		else
 		{
 			/*
-			 * Remove to output char from input in TO_CHAR
+			 * In TO_CHAR, non-pattern characters in the format are copied to
+			 * the output.  In TO_NUMBER, we skip one input character for each
+			 * non-pattern format character, whether or not it matches the
+			 * format character.  (Currently, that's actually implemented as
+			 * skipping one input byte per non-pattern format byte, which is
+			 * wrong...)
 			 */
 			if (Np->is_to_char)
 				*Np->inout_p = n->character;
