@@ -678,11 +678,12 @@ ExecIndexOnlyScanReInitializeDSM(IndexOnlyScanState *node,
  * ----------------------------------------------------------------
  */
 void
-ExecIndexOnlyScanInitializeWorker(IndexOnlyScanState *node, shm_toc *toc)
+ExecIndexOnlyScanInitializeWorker(IndexOnlyScanState *node,
+								  ParallelWorkerContext *pwcxt)
 {
 	ParallelIndexScanDesc piscan;
 
-	piscan = shm_toc_lookup(toc, node->ss.ps.plan->plan_node_id, false);
+	piscan = shm_toc_lookup(pwcxt->toc, node->ss.ps.plan->plan_node_id, false);
 	node->ioss_ScanDesc =
 		index_beginscan_parallel(node->ss.ss_currentRelation,
 								 node->ioss_RelationDesc,

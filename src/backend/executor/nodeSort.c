@@ -420,10 +420,10 @@ ExecSortReInitializeDSM(SortState *node, ParallelContext *pcxt)
  * ----------------------------------------------------------------
  */
 void
-ExecSortInitializeWorker(SortState *node, shm_toc *toc)
+ExecSortInitializeWorker(SortState *node, ParallelWorkerContext *pwcxt)
 {
 	node->shared_info =
-		shm_toc_lookup(toc, node->ss.ps.plan->plan_node_id, true);
+		shm_toc_lookup(pwcxt->toc, node->ss.ps.plan->plan_node_id, true);
 	node->am_worker = true;
 }
 

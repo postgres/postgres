@@ -1534,6 +1534,7 @@ ParallelHeapScanDesc
 ParallelIndexScanDesc
 ParallelSlot
 ParallelState
+ParallelWorkerContext
 ParallelWorkerInfo
 Param
 ParamExecData

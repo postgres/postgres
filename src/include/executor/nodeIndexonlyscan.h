@@ -31,6 +31,6 @@ extern void ExecIndexOnlyScanInitializeDSM(IndexOnlyScanState *node,
 extern void ExecIndexOnlyScanReInitializeDSM(IndexOnlyScanState *node,
 								 ParallelContext *pcxt);
 extern void ExecIndexOnlyScanInitializeWorker(IndexOnlyScanState *node,
-								  shm_toc *toc);
+								  ParallelWorkerContext *pwcxt);
 
 #endif							/* NODEINDEXONLYSCAN_H */

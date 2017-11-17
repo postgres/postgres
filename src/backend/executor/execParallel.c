@@ -1122,7 +1122,7 @@ ExecParallelReportInstrumentation(PlanState *planstate,
  * is allocated and initialized by executor; that is, after ExecutorStart().
  */
 static bool
-ExecParallelInitializeWorker(PlanState *planstate, shm_toc *toc)
+ExecParallelInitializeWorker(PlanState *planstate, ParallelWorkerContext *pwcxt)
 {
 	if (planstate == NULL)
 		return false;
@@ -1131,40 +1131,44 @@ ExecParallelInitializeWorker(PlanState *planstate, shm_toc *toc)
 	{
 		case T_SeqScanState:
 			if (planstate->plan->parallel_aware)
-				ExecSeqScanInitializeWorker((SeqScanState *) planstate, toc);
+				ExecSeqScanInitializeWorker((SeqScanState *) planstate, pwcxt);
 			break;
 		case T_IndexScanState:
 			if (planstate->plan->parallel_aware)
-				ExecIndexScanInitializeWorker((IndexScanState *) planstate, toc);
+				ExecIndexScanInitializeWorker((IndexScanState *) planstate,
+											  pwcxt);
 			break;
 		case T_IndexOnlyScanState:
 			if (planstate->plan->parallel_aware)
-				ExecIndexOnlyScanInitializeWorker((IndexOnlyScanState *) planstate, toc);
+				ExecIndexOnlyScanInitializeWorker((IndexOnlyScanState *) planstate,
+												  pwcxt);
 			break;
 		case T_ForeignScanState:
 			if (planstate->plan->parallel_aware)
 				ExecForeignScanInitializeWorker((ForeignScanState *) planstate,
-												toc);
+												pwcxt);
 			break;
 		case T_CustomScanState:
 			if (planstate->plan->parallel_aware)
 				ExecCustomScanInitializeWorker((CustomScanState *) planstate,
-											   toc);
+											   pwcxt);
 			break;
 		case T_BitmapHeapScanState:
 			if (planstate->plan->parallel_aware)
-				ExecBitmapHeapInitializeWorker((BitmapHeapScanState *) planstate, toc);
+				ExecBitmapHeapInitializeWorker((BitmapHeapScanState *) planstate,
+											   pwcxt);
 			break;
 		case T_SortState:
 			/* even when not parallel-aware */
-			ExecSortInitializeWorker((SortState *) planstate, toc);
+			ExecSortInitializeWorker((SortState *) planstate, pwcxt);
 			break;
 
 		default:
 			break;
 	}
 
-	return planstate_tree_walker(planstate, ExecParallelInitializeWorker, toc);
+	return planstate_tree_walker(planstate, ExecParallelInitializeWorker,
+								 pwcxt);
 }
 
 /*
@@ -1194,6 +1198,7 @@ ParallelQueryMain(dsm_segment *seg, shm_toc *toc)
 	int			instrument_options = 0;
 	void	   *area_space;
 	dsa_area   *area;
+	ParallelWorkerContext pwcxt;
 
 	/* Get fixed-size state. */
 	fpes = shm_toc_lookup(toc, PARALLEL_KEY_EXECUTOR_FIXED, false);
@@ -1231,7 +1236,9 @@ ParallelQueryMain(dsm_segment *seg, shm_toc *toc)
 		RestoreParamExecParams(paramexec_space, queryDesc->estate);
 
 	}
-	ExecParallelInitializeWorker(queryDesc->planstate, toc);
+	pwcxt.toc = toc;
+	pwcxt.seg = seg;
+	ExecParallelInitializeWorker(queryDesc->planstate, &pwcxt);
 
 	/* Pass down any tuple bound */
 	ExecSetTupleBound(fpes->tuples_needed, queryDesc->planstate);

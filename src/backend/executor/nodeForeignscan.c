@@ -359,7 +359,8 @@ ExecForeignScanReInitializeDSM(ForeignScanState *node, ParallelContext *pcxt)
  * ----------------------------------------------------------------
  */
 void
-ExecForeignScanInitializeWorker(ForeignScanState *node, shm_toc *toc)
+ExecForeignScanInitializeWorker(ForeignScanState *node,
+								ParallelWorkerContext *pwcxt)
 {
 	FdwRoutine *fdwroutine = node->fdwroutine;
 
@@ -368,8 +369,8 @@ ExecForeignScanInitializeWorker(ForeignScanState *node, shm_toc *toc)
 		int			plan_node_id = node->ss.ps.plan->plan_node_id;
 		void	   *coordinate;
 
-		coordinate = shm_toc_lookup(toc, plan_node_id, false);
-		fdwroutine->InitializeWorkerForeignScan(node, toc, coordinate);
+		coordinate = shm_toc_lookup(pwcxt->toc, plan_node_id, false);
+		fdwroutine->InitializeWorkerForeignScan(node, pwcxt->toc, coordinate);
 	}
 }
 

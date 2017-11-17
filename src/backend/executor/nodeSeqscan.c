@@ -348,11 +348,12 @@ ExecSeqScanReInitializeDSM(SeqScanState *node,
  * ----------------------------------------------------------------
  */
 void
-ExecSeqScanInitializeWorker(SeqScanState *node, shm_toc *toc)
+ExecSeqScanInitializeWorker(SeqScanState *node,
+							ParallelWorkerContext *pwcxt)
 {
 	ParallelHeapScanDesc pscan;
 
-	pscan = shm_toc_lookup(toc, node->ss.ps.plan->plan_node_id, false);
+	pscan = shm_toc_lookup(pwcxt->toc, node->ss.ps.plan->plan_node_id, false);
 	node->ss.ss_currentScanDesc =
 		heap_beginscan_parallel(node->ss.ss_currentRelation, pscan);
 }
