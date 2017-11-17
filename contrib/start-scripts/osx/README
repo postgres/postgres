@@ -1,8 +1,0 @@
-The scripts in this directory are for use with Apple's SystemStarter
-infrastructure, which is deprecated since macOS 10.4 and is gone entirely
-as of 10.10.  You should use the scripts in ../macos instead, unless
-you are using a macOS release too old to have launchd.
-
-To install execute the following:
-
-sudo /bin/sh ./install.sh
