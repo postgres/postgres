@@ -153,7 +153,7 @@
 # - Background Writer -
 
 #bgwriter_delay = 200ms			# 10-10000ms between rounds
-#bgwriter_lru_maxpages = 100		# 0-1000 max buffers written/round
+#bgwriter_lru_maxpages = 100		# max buffers written/round, 0 disables
 #bgwriter_lru_multiplier = 2.0		# 0-10.0 multiplier on buffers scanned/round
 #bgwriter_flush_after = 0		# measured in pages, 0 disables
 
