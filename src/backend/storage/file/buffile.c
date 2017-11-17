@@ -68,7 +68,6 @@ struct BufFile
 	 * avoid making redundant FileSeek calls.
 	 */
 
-	bool		isTemp;			/* can only add files if this is true */
 	bool		isInterXact;	/* keep open over transactions? */
 	bool		dirty;			/* does buffer need to be written? */
 
@@ -99,7 +98,7 @@ static int	BufFileFlush(BufFile *file);
 
 /*
  * Create a BufFile given the first underlying physical file.
- * NOTE: caller must set isTemp and isInterXact if appropriate.
+ * NOTE: caller must set isInterXact if appropriate.
  */
 static BufFile *
 makeBufFile(File firstfile)
@@ -111,7 +110,6 @@ makeBufFile(File firstfile)
 	file->files[0] = firstfile;
 	file->offsets = (off_t *) palloc(sizeof(off_t));
 	file->offsets[0] = 0L;
-	file->isTemp = false;
 	file->isInterXact = false;
 	file->dirty = false;
 	file->resowner = CurrentResourceOwner;
@@ -136,7 +134,6 @@ extendBufFile(BufFile *file)
 	oldowner = CurrentResourceOwner;
 	CurrentResourceOwner = file->resowner;
 
-	Assert(file->isTemp);
 	pfile = OpenTemporaryFile(file->isInterXact);
 	Assert(pfile >= 0);
 
@@ -173,7 +170,6 @@ BufFileCreateTemp(bool interXact)
 	Assert(pfile >= 0);
 
 	file = makeBufFile(pfile);
-	file->isTemp = true;
 	file->isInterXact = interXact;
 
 	return file;
@@ -288,10 +284,12 @@ BufFileDumpBuffer(BufFile *file)
 	 */
 	while (wpos < file->nbytes)
 	{
+		off_t		availbytes;
+
 		/*
 		 * Advance to next component file if necessary and possible.
 		 */
-		if (file->curOffset >= MAX_PHYSICAL_FILESIZE && file->isTemp)
+		if (file->curOffset >= MAX_PHYSICAL_FILESIZE)
 		{
 			while (file->curFile + 1 >= file->numFiles)
 				extendBufFile(file);
@@ -304,13 +302,10 @@ BufFileDumpBuffer(BufFile *file)
 		 * write as much as asked...
 		 */
 		bytestowrite = file->nbytes - wpos;
-		if (file->isTemp)
-		{
-			off_t		availbytes = MAX_PHYSICAL_FILESIZE - file->curOffset;
+		availbytes = MAX_PHYSICAL_FILESIZE - file->curOffset;
 
-			if ((off_t) bytestowrite > availbytes)
-				bytestowrite = (int) availbytes;
-		}
+		if ((off_t) bytestowrite > availbytes)
+			bytestowrite = (int) availbytes;
 
 		/*
 		 * May need to reposition physical file.
@@ -543,20 +538,18 @@ BufFileSeek(BufFile *file, int fileno, off_t offset, int whence)
 	 * above flush could have created a new segment, so checking sooner would
 	 * not work (at least not with this code).
 	 */
-	if (file->isTemp)
+
+	/* convert seek to "start of next seg" to "end of last seg" */
+	if (newFile == file->numFiles && newOffset == 0)
 	{
-		/* convert seek to "start of next seg" to "end of last seg" */
-		if (newFile == file->numFiles && newOffset == 0)
-		{
-			newFile--;
-			newOffset = MAX_PHYSICAL_FILESIZE;
-		}
-		while (newOffset > MAX_PHYSICAL_FILESIZE)
-		{
-			if (++newFile >= file->numFiles)
-				return EOF;
-			newOffset -= MAX_PHYSICAL_FILESIZE;
-		}
+		newFile--;
+		newOffset = MAX_PHYSICAL_FILESIZE;
+	}
+	while (newOffset > MAX_PHYSICAL_FILESIZE)
+	{
+		if (++newFile >= file->numFiles)
+			return EOF;
+		newOffset -= MAX_PHYSICAL_FILESIZE;
 	}
 	if (newFile >= file->numFiles)
 		return EOF;
