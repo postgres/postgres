@@ -151,8 +151,6 @@ typedef enum
 	FROM_CHAR_DATE_ISOWEEK		/* ISO 8601 week date */
 } FromCharDateMode;
 
-typedef struct FormatNode FormatNode;
-
 typedef struct
 {
 	const char *name;
@@ -162,13 +160,13 @@ typedef struct
 	FromCharDateMode date_mode;
 } KeyWord;
 
-struct FormatNode
+typedef struct
 {
-	int			type;			/* node type			*/
-	const KeyWord *key;			/* if node type is KEYWORD	*/
-	char		character;		/* if node type is CHAR		*/
-	int			suffix;			/* keyword suffix		*/
-};
+	int			type;			/* NODE_TYPE_XXX, see below */
+	const KeyWord *key;			/* if type is ACTION */
+	char		character[MAX_MULTIBYTE_CHAR_LEN + 1];	/* if type is CHAR */
+	int			suffix;			/* keyword prefix/suffix code, if any */
+} FormatNode;
 
 #define NODE_TYPE_END		1
 #define NODE_TYPE_ACTION	2
@@ -1282,12 +1280,15 @@ parse_format(FormatNode *node, const char *str, const KeyWord *kw,
 		}
 		else if (*str)
 		{
+			int			chlen;
+
 			/*
 			 * Process double-quoted literal string, if any
 			 */
 			if (*str == '"')
 			{
-				while (*(++str))
+				str++;
+				while (*str)
 				{
 					if (*str == '"')
 					{
@@ -1297,11 +1298,14 @@ parse_format(FormatNode *node, const char *str, const KeyWord *kw,
 					/* backslash quotes the next character, if any */
 					if (*str == '\\' && *(str + 1))
 						str++;
+					chlen = pg_mblen(str);
 					n->type = NODE_TYPE_CHAR;
-					n->character = *str;
+					memcpy(n->character, str, chlen);
+					n->character[chlen] = '\0';
 					n->key = NULL;
 					n->suffix = 0;
 					n++;
+					str += chlen;
 				}
 			}
 			else
@@ -1312,12 +1316,14 @@ parse_format(FormatNode *node, const char *str, const KeyWord *kw,
 				 */
 				if (*str == '\\' && *(str + 1) == '"')
 					str++;
+				chlen = pg_mblen(str);
 				n->type = NODE_TYPE_CHAR;
-				n->character = *str;
+				memcpy(n->character, str, chlen);
+				n->character[chlen] = '\0';
 				n->key = NULL;
 				n->suffix = 0;
 				n++;
-				str++;
+				str += chlen;
 			}
 		}
 	}
@@ -1349,7 +1355,8 @@ dump_node(FormatNode *node, int max)
 			elog(DEBUG_elog_output, "%d:\t NODE_TYPE_ACTION '%s'\t(%s,%s)",
 				 a, n->key->name, DUMP_THth(n->suffix), DUMP_FM(n->suffix));
 		else if (n->type == NODE_TYPE_CHAR)
-			elog(DEBUG_elog_output, "%d:\t NODE_TYPE_CHAR '%c'", a, n->character);
+			elog(DEBUG_elog_output, "%d:\t NODE_TYPE_CHAR '%s'",
+				 a, n->character);
 		else if (n->type == NODE_TYPE_END)
 		{
 			elog(DEBUG_elog_output, "%d:\t NODE_TYPE_END", a);
@@ -2008,8 +2015,8 @@ asc_toupper_z(const char *buff)
 	do { \
 		if (S_THth(_suf)) \
 		{ \
-			if (*(ptr)) (ptr)++; \
-			if (*(ptr)) (ptr)++; \
+			if (*(ptr)) (ptr) += pg_mblen(ptr); \
+			if (*(ptr)) (ptr) += pg_mblen(ptr); \
 		} \
 	} while (0)
 
@@ -2076,7 +2083,8 @@ is_next_separator(FormatNode *n)
 
 		return true;
 	}
-	else if (isdigit((unsigned char) n->character))
+	else if (n->character[1] == '\0' &&
+			 isdigit((unsigned char) n->character[0]))
 		return false;
 
 	return true;				/* some non-digit input (separator) */
@@ -2405,8 +2413,8 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 	{
 		if (n->type != NODE_TYPE_ACTION)
 		{
-			*s = n->character;
-			s++;
+			strcpy(s, n->character);
+			s += strlen(s);
 			continue;
 		}
 
@@ -2974,7 +2982,7 @@ DCH_from_char(FormatNode *node, char *in, TmFromChar *out)
 			 * we don't insist that the consumed character match the format's
 			 * character.
 			 */
-			s++;
+			s += pg_mblen(s);
 			continue;
 		}
 
@@ -4217,7 +4225,7 @@ get_last_relevant_decnum(char *num)
 /*
  * These macros are used in NUM_processor() and its subsidiary routines.
  * OVERLOAD_TEST: true if we've reached end of input string
- * AMOUNT_TEST(s): true if at least s characters remain in string
+ * AMOUNT_TEST(s): true if at least s bytes remain in string
  */
 #define OVERLOAD_TEST	(Np->inout_p >= Np->inout + input_len)
 #define AMOUNT_TEST(s)	(Np->inout_p <= Np->inout + (input_len - (s)))
@@ -4821,9 +4829,9 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout,
 		if (!Np->is_to_char)
 		{
 			/*
-			 * Check at least one character remains to be scanned.  (In
-			 * actions below, must use AMOUNT_TEST if we want to read more
-			 * characters than that.)
+			 * Check at least one byte remains to be scanned.  (In actions
+			 * below, must use AMOUNT_TEST if we want to read more bytes than
+			 * that.)
 			 */
 			if (OVERLOAD_TEST)
 				break;
@@ -5081,12 +5089,18 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout,
 			 * In TO_CHAR, non-pattern characters in the format are copied to
 			 * the output.  In TO_NUMBER, we skip one input character for each
 			 * non-pattern format character, whether or not it matches the
-			 * format character.  (Currently, that's actually implemented as
-			 * skipping one input byte per non-pattern format byte, which is
-			 * wrong...)
+			 * format character.
 			 */
 			if (Np->is_to_char)
-				*Np->inout_p = n->character;
+			{
+				strcpy(Np->inout_p, n->character);
+				Np->inout_p += strlen(Np->inout_p);
+			}
+			else
+			{
+				Np->inout_p += pg_mblen(Np->inout_p);
+			}
+			continue;
 		}
 		Np->inout_p++;
 	}
