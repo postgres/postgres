@@ -556,7 +556,7 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 					 * for lower or upper bounds to be adjacent. Deserialize
 					 * previous centroid range if present for checking this.
 					 */
-					if (in->traversalValue != (Datum) 0)
+					if (in->traversalValue)
 					{
 						prevCentroid = DatumGetRangeType(in->traversalValue);
 						range_deserialize(typcache, prevCentroid,
