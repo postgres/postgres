@@ -1227,11 +1227,7 @@ static void
 parse_format(FormatNode *node, const char *str, const KeyWord *kw,
 			 const KeySuffix *suf, const int *index, int ver, NUMDesc *Num)
 {
-	const KeySuffix *s;
 	FormatNode *n;
-	int			node_set = 0,
-				suffix,
-				last = 0;
 
 #ifdef DEBUG_TO_FROM_CHAR
 	elog(DEBUG_elog_output, "to_char/number(): run parser");
@@ -1241,12 +1237,14 @@ parse_format(FormatNode *node, const char *str, const KeyWord *kw,
 
 	while (*str)
 	{
-		suffix = 0;
+		int			suffix = 0;
+		const KeySuffix *s;
 
 		/*
 		 * Prefix
 		 */
-		if (ver == DCH_TYPE && (s = suff_search(str, suf, SUFFTYPE_PREFIX)) != NULL)
+		if (ver == DCH_TYPE &&
+			(s = suff_search(str, suf, SUFFTYPE_PREFIX)) != NULL)
 		{
 			suffix |= s->id;
 			if (s->len)
@@ -1259,8 +1257,7 @@ parse_format(FormatNode *node, const char *str, const KeyWord *kw,
 		if (*str && (n->key = index_seq_search(str, kw, index)) != NULL)
 		{
 			n->type = NODE_TYPE_ACTION;
-			n->suffix = 0;
-			node_set = 1;
+			n->suffix = suffix;
 			if (n->key->len)
 				str += n->key->len;
 
@@ -1273,70 +1270,55 @@ parse_format(FormatNode *node, const char *str, const KeyWord *kw,
 			/*
 			 * Postfix
 			 */
-			if (ver == DCH_TYPE && *str && (s = suff_search(str, suf, SUFFTYPE_POSTFIX)) != NULL)
+			if (ver == DCH_TYPE && *str &&
+				(s = suff_search(str, suf, SUFFTYPE_POSTFIX)) != NULL)
 			{
-				suffix |= s->id;
+				n->suffix |= s->id;
 				if (s->len)
 					str += s->len;
 			}
+
+			n++;
 		}
 		else if (*str)
 		{
 			/*
-			 * Special characters '\' and '"'
+			 * Process double-quoted literal string, if any
 			 */
-			if (*str == '"' && last != '\\')
+			if (*str == '"')
 			{
-				int			x = 0;
-
 				while (*(++str))
 				{
-					if (*str == '"' && x != '\\')
+					if (*str == '"')
 					{
 						str++;
 						break;
 					}
-					else if (*str == '\\' && x != '\\')
-					{
-						x = '\\';
-						continue;
-					}
+					/* backslash quotes the next character, if any */
+					if (*str == '\\' && *(str + 1))
+						str++;
 					n->type = NODE_TYPE_CHAR;
 					n->character = *str;
 					n->key = NULL;
 					n->suffix = 0;
-					++n;
-					x = *str;
+					n++;
 				}
-				node_set = 0;
-				suffix = 0;
-				last = 0;
 			}
-			else if (*str && *str == '\\' && last != '\\' && *(str + 1) == '"')
+			else
 			{
-				last = *str;
-				str++;
-			}
-			else if (*str)
-			{
+				/*
+				 * Outside double-quoted strings, backslash is only special if
+				 * it immediately precedes a double quote.
+				 */
+				if (*str == '\\' && *(str + 1) == '"')
+					str++;
 				n->type = NODE_TYPE_CHAR;
 				n->character = *str;
 				n->key = NULL;
-				node_set = 1;
-				last = 0;
+				n->suffix = 0;
+				n++;
 				str++;
 			}
-		}
-
-		/* end */
-		if (node_set)
-		{
-			if (n->type == NODE_TYPE_ACTION)
-				n->suffix = suffix;
-			++n;
-
-			n->suffix = 0;
-			node_set = 0;
 		}
 	}
 

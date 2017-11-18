@@ -6196,6 +6196,11 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
        If you want to have a double quote in the output you must
        precede it with a backslash, for example <literal>'\"YYYY
        Month\"'</literal>. <!-- "" font-lock sanity :-) -->
+       Backslashes are not otherwise special outside of double-quoted
+       strings.  Within a double-quoted string, a backslash causes the
+       next character to be taken literally, whatever it is (but this
+       has no special effect unless the next character is a double quote
+       or another backslash).
       </para>
      </listitem>
 

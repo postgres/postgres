@@ -1217,6 +1217,67 @@ SELECT '' AS to_char_26, to_char('100'::numeric, 'FM999');
             | 100
 (1 row)
 
+-- Check parsing of literal text in a format string
+SELECT '' AS to_char_27, to_char('100'::numeric, 'foo999');
+ to_char_27 | to_char 
+------------+---------
+            | foo 100
+(1 row)
+
+SELECT '' AS to_char_28, to_char('100'::numeric, 'f\oo999');
+ to_char_28 | to_char  
+------------+----------
+            | f\oo 100
+(1 row)
+
+SELECT '' AS to_char_29, to_char('100'::numeric, 'f\\oo999');
+ to_char_29 |  to_char  
+------------+-----------
+            | f\\oo 100
+(1 row)
+
+SELECT '' AS to_char_30, to_char('100'::numeric, 'f\"oo999');
+ to_char_30 | to_char  
+------------+----------
+            | f"oo 100
+(1 row)
+
+SELECT '' AS to_char_31, to_char('100'::numeric, 'f\\"oo999');
+ to_char_31 |  to_char  
+------------+-----------
+            | f\"oo 100
+(1 row)
+
+SELECT '' AS to_char_32, to_char('100'::numeric, 'f"ool"999');
+ to_char_32 | to_char  
+------------+----------
+            | fool 100
+(1 row)
+
+SELECT '' AS to_char_33, to_char('100'::numeric, 'f"\ool"999');
+ to_char_33 | to_char  
+------------+----------
+            | fool 100
+(1 row)
+
+SELECT '' AS to_char_34, to_char('100'::numeric, 'f"\\ool"999');
+ to_char_34 |  to_char  
+------------+-----------
+            | f\ool 100
+(1 row)
+
+SELECT '' AS to_char_35, to_char('100'::numeric, 'f"ool\"999');
+ to_char_35 | to_char  
+------------+----------
+            | fool"999
+(1 row)
+
+SELECT '' AS to_char_36, to_char('100'::numeric, 'f"ool\\"999');
+ to_char_36 |  to_char  
+------------+-----------
+            | fool\ 100
+(1 row)
+
 -- TO_NUMBER()
 --
 SET lc_numeric = 'C';
