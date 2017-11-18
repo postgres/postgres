@@ -13,8 +13,12 @@
 #ifndef PG_SCRAM_H
 #define PG_SCRAM_H
 
-/* Name of SCRAM-SHA-256 per IANA */
+/* Name of SCRAM mechanisms per IANA */
 #define SCRAM_SHA256_NAME "SCRAM-SHA-256"
+#define SCRAM_SHA256_PLUS_NAME "SCRAM-SHA-256-PLUS"	/* with channel binding */
+
+/* Channel binding types */
+#define SCRAM_CHANNEL_BINDING_TLS_UNIQUE	"tls-unique"
 
 /* Status codes for message exchange */
 #define SASL_EXCHANGE_CONTINUE		0
@@ -22,7 +26,9 @@
 #define SASL_EXCHANGE_FAILURE		2
 
 /* Routines dedicated to authentication */
-extern void *pg_be_scram_init(const char *username, const char *shadow_pass);
+extern void *pg_be_scram_init(const char *username, const char *shadow_pass,
+					 bool ssl_in_use, const char *tls_finished_message,
+					 size_t tls_finished_len);
 extern int pg_be_scram_exchange(void *opaq, char *input, int inputlen,
 					 char **output, int *outputlen, char **logdetail);
 

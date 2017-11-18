@@ -32,7 +32,7 @@ $node->init;
 $ENV{PGHOST} = $node->host;
 $ENV{PGPORT} = $node->port;
 $node->start;
-configure_test_server_for_ssl($node, $SERVERHOSTADDR);
+configure_test_server_for_ssl($node, $SERVERHOSTADDR, 'trust');
 switch_server_cert($node, 'server-cn-only');
 
 ### Part 1. Run client-side tests.

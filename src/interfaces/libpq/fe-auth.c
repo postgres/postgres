@@ -491,6 +491,9 @@ pg_SASL_init(PGconn *conn, int payloadlen)
 	bool		success;
 	const char *selected_mechanism;
 	PQExpBufferData mechanism_buf;
+	char	   *tls_finished = NULL;
+	size_t		tls_finished_len = 0;
+	char	   *password;
 
 	initPQExpBuffer(&mechanism_buf);
 
@@ -504,7 +507,8 @@ pg_SASL_init(PGconn *conn, int payloadlen)
 	/*
 	 * Parse the list of SASL authentication mechanisms in the
 	 * AuthenticationSASL message, and select the best mechanism that we
-	 * support.  (Only SCRAM-SHA-256 is supported at the moment.)
+	 * support.  SCRAM-SHA-256-PLUS and SCRAM-SHA-256 are the only ones
+	 * supported at the moment, listed by order of decreasing importance.
 	 */
 	selected_mechanism = NULL;
 	for (;;)
@@ -523,35 +527,17 @@ pg_SASL_init(PGconn *conn, int payloadlen)
 			break;
 
 		/*
-		 * If we have already selected a mechanism, just skip through the rest
-		 * of the list.
+		 * Select the mechanism to use.  Pick SCRAM-SHA-256-PLUS over anything
+		 * else.  Pick SCRAM-SHA-256 if nothing else has already been picked.
+		 * If we add more mechanisms, a more refined priority mechanism might
+		 * become necessary.
 		 */
-		if (selected_mechanism)
-			continue;
-
-		/*
-		 * Do we support this mechanism?
-		 */
-		if (strcmp(mechanism_buf.data, SCRAM_SHA256_NAME) == 0)
-		{
-			char	   *password;
-
-			conn->password_needed = true;
-			password = conn->connhost[conn->whichhost].password;
-			if (password == NULL)
-				password = conn->pgpass;
-			if (password == NULL || password[0] == '\0')
-			{
-				printfPQExpBuffer(&conn->errorMessage,
-								  PQnoPasswordSupplied);
-				goto error;
-			}
-
-			conn->sasl_state = pg_fe_scram_init(conn->pguser, password);
-			if (!conn->sasl_state)
-				goto oom_error;
+		if (conn->ssl_in_use &&
+			strcmp(mechanism_buf.data, SCRAM_SHA256_PLUS_NAME) == 0)
+				selected_mechanism = SCRAM_SHA256_PLUS_NAME;
+		else if (strcmp(mechanism_buf.data, SCRAM_SHA256_NAME) == 0 &&
+				 !selected_mechanism)
 			selected_mechanism = SCRAM_SHA256_NAME;
-		}
 	}
 
 	if (!selected_mechanism)
@@ -560,6 +546,54 @@ pg_SASL_init(PGconn *conn, int payloadlen)
 						  libpq_gettext("none of the server's SASL authentication mechanisms are supported\n"));
 		goto error;
 	}
+
+	/*
+	 * Now that the SASL mechanism has been chosen for the exchange,
+	 * initialize its state information.
+	 */
+
+	/*
+	 * First, select the password to use for the exchange, complaining if
+	 * there isn't one.  Currently, all supported SASL mechanisms require a
+	 * password, so we can just go ahead here without further distinction.
+	 */
+	conn->password_needed = true;
+	password = conn->connhost[conn->whichhost].password;
+	if (password == NULL)
+		password = conn->pgpass;
+	if (password == NULL || password[0] == '\0')
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+						  PQnoPasswordSupplied);
+		goto error;
+	}
+
+#ifdef USE_SSL
+	/*
+	 * Get data for channel binding.
+	 */
+	if (strcmp(selected_mechanism, SCRAM_SHA256_PLUS_NAME) == 0)
+	{
+		tls_finished = pgtls_get_finished(conn, &tls_finished_len);
+		if (tls_finished == NULL)
+			goto oom_error;
+	}
+#endif
+
+	/*
+	 * Initialize the SASL state information with all the information
+	 * gathered during the initial exchange.
+	 *
+	 * Note: Only tls-unique is supported for the moment.
+	 */
+	conn->sasl_state = pg_fe_scram_init(conn->pguser,
+										password,
+										conn->ssl_in_use,
+										selected_mechanism,
+										tls_finished,
+										tls_finished_len);
+	if (!conn->sasl_state)
+		goto oom_error;
 
 	/* Get the mechanism-specific Initial Client Response, if any */
 	pg_fe_scram_exchange(conn->sasl_state,
