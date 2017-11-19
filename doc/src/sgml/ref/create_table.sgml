@@ -1201,6 +1201,27 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
    </varlistentry>
 
    <varlistentry>
+    <term><literal>toast_tuple_target</> (<type>integer</>)</term>
+    <listitem>
+     <para>
+      The toast_tuple_target specifies the minimum tuple length required before
+      we try to move long column values into TOAST tables, and is also the
+      target length we try to reduce the length below once toasting begins.
+      This only affects columns marked as either External or Extended
+      and applies only to new tuples - there is no effect on existing rows.
+      By default this parameter is set to allow at least 4 tuples per block,
+      which with the default blocksize will be 2040 bytes. Valid values are
+      between 128 bytes and the (blocksize - header), by default 8160 bytes.
+      Changing this value may not be useful for very short or very long rows.
+      Note that the default setting is often close to optimal, and
+      it is possible that setting this parameter could have negative
+      effects in some cases.
+      This parameter cannot be set for TOAST tables.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><literal>parallel_workers</literal> (<type>integer</type>)</term>
     <listitem>
      <para>

@@ -23,6 +23,7 @@
 #include "access/nbtree.h"
 #include "access/reloptions.h"
 #include "access/spgist.h"
+#include "access/tuptoaster.h"
 #include "catalog/pg_type.h"
 #include "commands/defrem.h"
 #include "commands/tablespace.h"
@@ -289,6 +290,15 @@ static relopt_int intRelOpts[] =
 			ShareUpdateExclusiveLock
 		},
 		-1, -1, INT_MAX
+	},
+	{
+		{
+			"toast_tuple_target",
+			"Sets the target tuple length at which external columns will be toasted",
+			RELOPT_KIND_HEAP,
+			ShareUpdateExclusiveLock
+		},
+		TOAST_TUPLE_TARGET, 128, TOAST_TUPLE_TARGET_MAIN
 	},
 	{
 		{
@@ -1344,6 +1354,8 @@ default_reloptions(Datum reloptions, bool validate, relopt_kind kind)
 		offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, multixact_freeze_table_age)},
 		{"log_autovacuum_min_duration", RELOPT_TYPE_INT,
 		offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, log_min_duration)},
+		{"toast_tuple_target", RELOPT_TYPE_INT,
+		offsetof(StdRdOptions, toast_tuple_target)},
 		{"autovacuum_vacuum_scale_factor", RELOPT_TYPE_REAL,
 		offsetof(StdRdOptions, autovacuum) + offsetof(AutoVacOpts, vacuum_scale_factor)},
 		{"autovacuum_analyze_scale_factor", RELOPT_TYPE_REAL,
