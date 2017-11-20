@@ -155,7 +155,7 @@ ExecInitGatherMerge(GatherMerge *node, EState *estate, int eflags)
 	 * Store the tuple descriptor into gather merge state, so we can use it
 	 * while initializing the gather merge slots.
 	 */
-	if (!ExecContextForcesOids(&gm_state->ps, &hasoid))
+	if (!ExecContextForcesOids(outerPlanState(gm_state), &hasoid))
 		hasoid = false;
 	tupDesc = ExecTypeFromTL(outerNode->targetlist, hasoid);
 	gm_state->tupDesc = tupDesc;

@@ -112,7 +112,7 @@ ExecInitGather(Gather *node, EState *estate, int eflags)
 	/*
 	 * Initialize funnel slot to same tuple descriptor as outer plan.
 	 */
-	if (!ExecContextForcesOids(&gatherstate->ps, &hasoid))
+	if (!ExecContextForcesOids(outerPlanState(gatherstate), &hasoid))
 		hasoid = false;
 	tupDesc = ExecTypeFromTL(outerNode->targetlist, hasoid);
 	ExecSetSlotDescriptor(gatherstate->funnel_slot, tupDesc);
