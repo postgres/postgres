@@ -1167,50 +1167,28 @@ SELECT substr(f1, 99995, 10) from toasttest;
 (4 rows)
 
 TRUNCATE TABLE toasttest;
-INSERT INTO toasttest values (repeat('1234567890',400));
-INSERT INTO toasttest values (repeat('1234567890',400));
-INSERT INTO toasttest values (repeat('1234567890',400));
-INSERT INTO toasttest values (repeat('1234567890',400));
-SELECT pg_relation_size('toasttest')/current_setting('block_size')::integer as blocks;
+INSERT INTO toasttest values (repeat('1234567890',300));
+INSERT INTO toasttest values (repeat('1234567890',300));
+INSERT INTO toasttest values (repeat('1234567890',300));
+INSERT INTO toasttest values (repeat('1234567890',300));
+-- expect >0 blocks
+select 0 = pg_relation_size('pg_toast.pg_toast_'||(select oid from pg_class where relname = 'toasttest'))/current_setting('block_size')::integer as blocks;
  blocks 
 --------
-      1
-(1 row)
-
-select pg_relation_size('pg_toast.pg_toast_'||(select oid from pg_class where relname = 'toasttest'))/current_setting('block_size')::integer as blocks;
- blocks 
---------
-      3
-(1 row)
-
-SELECT pg_total_relation_size('toasttest')/current_setting('block_size')::integer as blocks;
- blocks 
---------
-      9
+ f
 (1 row)
 
 TRUNCATE TABLE toasttest;
 ALTER TABLE toasttest set (toast_tuple_target = 4080);
-INSERT INTO toasttest values (repeat('1234567890',400));
-INSERT INTO toasttest values (repeat('1234567890',400));
-INSERT INTO toasttest values (repeat('1234567890',400));
-INSERT INTO toasttest values (repeat('1234567890',400));
-SELECT pg_relation_size('toasttest')/current_setting('block_size')::integer as blocks;
+INSERT INTO toasttest values (repeat('1234567890',300));
+INSERT INTO toasttest values (repeat('1234567890',300));
+INSERT INTO toasttest values (repeat('1234567890',300));
+INSERT INTO toasttest values (repeat('1234567890',300));
+-- expect 0 blocks
+select 0 = pg_relation_size('pg_toast.pg_toast_'||(select oid from pg_class where relname = 'toasttest'))/current_setting('block_size')::integer as blocks;
  blocks 
 --------
-      2
-(1 row)
-
-select pg_relation_size('pg_toast.pg_toast_'||(select oid from pg_class where relname = 'toasttest'))/current_setting('block_size')::integer as blocks;
- blocks 
---------
-      0
-(1 row)
-
-SELECT pg_total_relation_size('toasttest')/current_setting('block_size')::integer as blocks;
- blocks 
---------
-      6
+ t
 (1 row)
 
 DROP TABLE toasttest;

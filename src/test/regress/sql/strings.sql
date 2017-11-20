@@ -367,23 +367,21 @@ SELECT substr(f1, 99995) from toasttest;
 SELECT substr(f1, 99995, 10) from toasttest;
 
 TRUNCATE TABLE toasttest;
-INSERT INTO toasttest values (repeat('1234567890',400));
-INSERT INTO toasttest values (repeat('1234567890',400));
-INSERT INTO toasttest values (repeat('1234567890',400));
-INSERT INTO toasttest values (repeat('1234567890',400));
-SELECT pg_relation_size('toasttest')/current_setting('block_size')::integer as blocks;
-select pg_relation_size('pg_toast.pg_toast_'||(select oid from pg_class where relname = 'toasttest'))/current_setting('block_size')::integer as blocks;
-SELECT pg_total_relation_size('toasttest')/current_setting('block_size')::integer as blocks;
+INSERT INTO toasttest values (repeat('1234567890',300));
+INSERT INTO toasttest values (repeat('1234567890',300));
+INSERT INTO toasttest values (repeat('1234567890',300));
+INSERT INTO toasttest values (repeat('1234567890',300));
+-- expect >0 blocks
+select 0 = pg_relation_size('pg_toast.pg_toast_'||(select oid from pg_class where relname = 'toasttest'))/current_setting('block_size')::integer as blocks;
 
 TRUNCATE TABLE toasttest;
 ALTER TABLE toasttest set (toast_tuple_target = 4080);
-INSERT INTO toasttest values (repeat('1234567890',400));
-INSERT INTO toasttest values (repeat('1234567890',400));
-INSERT INTO toasttest values (repeat('1234567890',400));
-INSERT INTO toasttest values (repeat('1234567890',400));
-SELECT pg_relation_size('toasttest')/current_setting('block_size')::integer as blocks;
-select pg_relation_size('pg_toast.pg_toast_'||(select oid from pg_class where relname = 'toasttest'))/current_setting('block_size')::integer as blocks;
-SELECT pg_total_relation_size('toasttest')/current_setting('block_size')::integer as blocks;
+INSERT INTO toasttest values (repeat('1234567890',300));
+INSERT INTO toasttest values (repeat('1234567890',300));
+INSERT INTO toasttest values (repeat('1234567890',300));
+INSERT INTO toasttest values (repeat('1234567890',300));
+-- expect 0 blocks
+select 0 = pg_relation_size('pg_toast.pg_toast_'||(select oid from pg_class where relname = 'toasttest'))/current_setting('block_size')::integer as blocks;
 
 DROP TABLE toasttest;
 
