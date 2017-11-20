@@ -69,6 +69,7 @@ typedef struct FixedParallelExecutorState
 {
 	int64		tuples_needed;	/* tuple bound, see ExecSetTupleBound */
 	dsa_pointer param_exec;
+	int			eflags;
 } FixedParallelExecutorState;
 
 /*
@@ -647,6 +648,7 @@ ExecInitParallelPlan(PlanState *planstate, EState *estate,
 	fpes = shm_toc_allocate(pcxt->toc, sizeof(FixedParallelExecutorState));
 	fpes->tuples_needed = tuples_needed;
 	fpes->param_exec = InvalidDsaPointer;
+	fpes->eflags = estate->es_top_eflags;
 	shm_toc_insert(pcxt->toc, PARALLEL_KEY_EXECUTOR_FIXED, fpes);
 
 	/* Store query string */
@@ -1224,7 +1226,7 @@ ParallelQueryMain(dsm_segment *seg, shm_toc *toc)
 	area = dsa_attach_in_place(area_space, seg);
 
 	/* Start up the executor */
-	ExecutorStart(queryDesc, 0);
+	ExecutorStart(queryDesc, fpes->eflags);
 
 	/* Special executor initialization steps for parallel workers */
 	queryDesc->planstate->state->es_query_dsa = area;
