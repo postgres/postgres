@@ -231,7 +231,7 @@ static void
 tas_dummy()
 {
 	__asm__		__volatile__(
-#if defined(__NetBSD__) && defined(__ELF__)
+#if (defined(__NetBSD__) || defined(__OpenBSD__)) && defined(__ELF__)
 /* no underscore for label and % for registers */
 										 "\
 .global		tas 				\n\
@@ -256,7 +256,7 @@ _tas:							\n\
 _success:						\n\
 			moveq 	#0,d0		\n\
 			rts					\n"
-#endif   /* __NetBSD__ && __ELF__ */
+#endif   /* (__NetBSD__ || __OpenBSD__) && __ELF__ */
 	);
 }
 #endif   /* __m68k__ && !__linux__ */
