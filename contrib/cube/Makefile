@@ -4,7 +4,7 @@ MODULE_big = cube
 OBJS= cube.o cubeparse.o $(WIN32RES)
 
 EXTENSION = cube
-DATA = cube--1.2.sql cube--1.2--1.3.sql \
+DATA = cube--1.2.sql cube--1.2--1.3.sql cube--1.3--1.4.sql \
 	cube--1.1--1.2.sql cube--1.0--1.1.sql \
 	cube--unpackaged--1.0.sql
 PGFILEDESC = "cube - multidimensional cube data type"
