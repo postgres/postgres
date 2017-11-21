@@ -427,7 +427,7 @@ pgbench(
 	0,
 	[   qr{processed: [01]/10},
 		qr{type: .*/001_pgbench_sleep},
-		qr{above the 1.0 ms latency limit: [01] } ],
+		qr{above the 1.0 ms latency limit: [01]/} ],
 	[qr{^$}i],
 	'pgbench late throttling',
 	{ '001_pgbench_sleep' => q{\sleep 2ms} });

@@ -1363,8 +1363,7 @@ latency average = 15.844 ms
 latency stddev = 2.715 ms
 tps = 618.764555 (including connections establishing)
 tps = 622.977698 (excluding connections establishing)
-script statistics:
- - statement latencies in milliseconds:
+statement latencies in milliseconds:
         0.002  \set aid random(1, 100000 * :scale)
         0.005  \set bid random(1, 1 * :scale)
         0.002  \set tid random(1, 10 * :scale)

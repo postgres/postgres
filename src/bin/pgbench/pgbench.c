@@ -3664,27 +3664,32 @@ addScript(ParsedScript script)
 static void
 printSimpleStats(const char *prefix, SimpleStats *ss)
 {
-	/* print NaN if no transactions where executed */
-	double		latency = ss->sum / ss->count;
-	double		stddev = sqrt(ss->sum2 / ss->count - latency * latency);
+	if (ss->count > 0)
+	{
+		double		latency = ss->sum / ss->count;
+		double		stddev = sqrt(ss->sum2 / ss->count - latency * latency);
 
-	printf("%s average = %.3f ms\n", prefix, 0.001 * latency);
-	printf("%s stddev = %.3f ms\n", prefix, 0.001 * stddev);
+		printf("%s average = %.3f ms\n", prefix, 0.001 * latency);
+		printf("%s stddev = %.3f ms\n", prefix, 0.001 * stddev);
+	}
 }
 
 /* print out results */
 static void
 printResults(TState *threads, StatsData *total, instr_time total_time,
-			 instr_time conn_total_time, int latency_late)
+			 instr_time conn_total_time, int64 latency_late)
 {
 	double		time_include,
 				tps_include,
 				tps_exclude;
+	int64		ntx = total->cnt - total->skipped;
 
 	time_include = INSTR_TIME_GET_DOUBLE(total_time);
-	tps_include = total->cnt / time_include;
-	tps_exclude = total->cnt / (time_include -
-								(INSTR_TIME_GET_DOUBLE(conn_total_time) / nclients));
+
+	/* tps is about actually executed transactions */
+	tps_include = ntx / time_include;
+	tps_exclude = ntx /
+		(time_include - (INSTR_TIME_GET_DOUBLE(conn_total_time) / nclients));
 
 	/* Report test parameters. */
 	printf("transaction type: %s\n",
@@ -3697,13 +3702,13 @@ printResults(TState *threads, StatsData *total, instr_time total_time,
 	{
 		printf("number of transactions per client: %d\n", nxacts);
 		printf("number of transactions actually processed: " INT64_FORMAT "/%d\n",
-			   total->cnt - total->skipped, nxacts * nclients);
+			   ntx, nxacts * nclients);
 	}
 	else
 	{
 		printf("duration: %d s\n", duration);
 		printf("number of transactions actually processed: " INT64_FORMAT "\n",
-			   total->cnt);
+			   ntx);
 	}
 
 	/* Remaining stats are nonsensical if we failed to execute any xacts */
@@ -3716,9 +3721,9 @@ printResults(TState *threads, StatsData *total, instr_time total_time,
 			   100.0 * total->skipped / total->cnt);
 
 	if (latency_limit)
-		printf("number of transactions above the %.1f ms latency limit: %d (%.3f %%)\n",
-			   latency_limit / 1000.0, latency_late,
-			   100.0 * latency_late / total->cnt);
+		printf("number of transactions above the %.1f ms latency limit: " INT64_FORMAT "/" INT64_FORMAT " (%.3f %%)\n",
+			   latency_limit / 1000.0, latency_late, ntx,
+			   (ntx > 0) ? 100.0 * latency_late / ntx : 0.0);
 
 	if (throttle_delay || progress || latency_limit)
 		printSimpleStats("latency", &total->latency);
@@ -3745,47 +3750,55 @@ printResults(TState *threads, StatsData *total, instr_time total_time,
 	printf("tps = %f (excluding connections establishing)\n", tps_exclude);
 
 	/* Report per-script/command statistics */
-	if (per_script_stats || latency_limit || is_latencies)
+	if (per_script_stats || is_latencies)
 	{
 		int			i;
 
 		for (i = 0; i < num_scripts; i++)
 		{
-			if (num_scripts > 1)
+			if (per_script_stats)
+			{
+				StatsData  *sstats = &sql_script[i].stats;
+
 				printf("SQL script %d: %s\n"
 					   " - weight: %d (targets %.1f%% of total)\n"
 					   " - " INT64_FORMAT " transactions (%.1f%% of total, tps = %f)\n",
 					   i + 1, sql_script[i].desc,
 					   sql_script[i].weight,
 					   100.0 * sql_script[i].weight / total_weight,
-					   sql_script[i].stats.cnt,
-					   100.0 * sql_script[i].stats.cnt / total->cnt,
-					   sql_script[i].stats.cnt / time_include);
-			else
-				printf("script statistics:\n");
+					   sstats->cnt,
+					   100.0 * sstats->cnt / total->cnt,
+					   (sstats->cnt - sstats->skipped) / time_include);
 
-			if (latency_limit)
-				printf(" - number of transactions skipped: " INT64_FORMAT " (%.3f%%)\n",
-					   sql_script[i].stats.skipped,
-					   100.0 * sql_script[i].stats.skipped / sql_script[i].stats.cnt);
+				if (throttle_delay && latency_limit && sstats->cnt > 0)
+					printf(" - number of transactions skipped: " INT64_FORMAT " (%.3f%%)\n",
+						   sstats->skipped,
+						   100.0 * sstats->skipped / sstats->cnt);
 
-			if (num_scripts > 1)
-				printSimpleStats(" - latency", &sql_script[i].stats.latency);
+				printSimpleStats(" - latency", &sstats->latency);
+			}
 
 			/* Report per-command latencies */
 			if (is_latencies)
 			{
 				Command   **commands;
 
-				printf(" - statement latencies in milliseconds:\n");
+				if (per_script_stats)
+					printf(" - statement latencies in milliseconds:\n");
+				else
+					printf("statement latencies in milliseconds:\n");
 
 				for (commands = sql_script[i].commands;
 					 *commands != NULL;
 					 commands++)
+				{
+					SimpleStats *cstats = &(*commands)->stats;
+
 					printf("   %11.3f  %s\n",
-						   1000.0 * (*commands)->stats.sum /
-						   (*commands)->stats.count,
+						   (cstats->count > 0) ?
+						   1000.0 * cstats->sum / cstats->count : 0.0,
 						   (*commands)->line);
+				}
 			}
 		}
 	}
@@ -3984,7 +3997,6 @@ main(int argc, char **argv)
 				break;
 			case 'r':
 				benchmarking_option_set = true;
-				per_script_stats = true;
 				is_latencies = true;
 				break;
 			case 's':
@@ -4861,7 +4873,8 @@ threadRun(void *arg)
 			{
 				/* generate and show report */
 				StatsData	cur;
-				int64		run = now - last_report;
+				int64		run = now - last_report,
+							ntx;
 				double		tps,
 							total_run,
 							latency,
@@ -4876,7 +4889,7 @@ threadRun(void *arg)
 				 * XXX: No locking. There is no guarantee that we get an
 				 * atomic snapshot of the transaction count and latencies, so
 				 * these figures can well be off by a small amount. The
-				 * progress is report's purpose is to give a quick overview of
+				 * progress report's purpose is to give a quick overview of
 				 * how the test is going, so that shouldn't matter too much.
 				 * (If a read from a 64-bit integer is not atomic, you might
 				 * get a "torn" read and completely bogus latencies though!)
@@ -4890,15 +4903,21 @@ threadRun(void *arg)
 					cur.skipped += thread[i].stats.skipped;
 				}
 
+				/* we count only actually executed transactions */
+				ntx = (cur.cnt - cur.skipped) - (last.cnt - last.skipped);
 				total_run = (now - thread_start) / 1000000.0;
-				tps = 1000000.0 * (cur.cnt - last.cnt) / run;
-				latency = 0.001 * (cur.latency.sum - last.latency.sum) /
-					(cur.cnt - last.cnt);
-				sqlat = 1.0 * (cur.latency.sum2 - last.latency.sum2)
-					/ (cur.cnt - last.cnt);
-				stdev = 0.001 * sqrt(sqlat - 1000000.0 * latency * latency);
-				lag = 0.001 * (cur.lag.sum - last.lag.sum) /
-					(cur.cnt - last.cnt);
+				tps = 1000000.0 * ntx / run;
+				if (ntx > 0)
+				{
+					latency = 0.001 * (cur.latency.sum - last.latency.sum) / ntx;
+					sqlat = 1.0 * (cur.latency.sum2 - last.latency.sum2) / ntx;
+					stdev = 0.001 * sqrt(sqlat - 1000000.0 * latency * latency);
+					lag = 0.001 * (cur.lag.sum - last.lag.sum) / ntx;
+				}
+				else
+				{
+					latency = sqlat = stdev = lag = 0;
+				}
 
 				if (progress_timestamp)
 				{
@@ -4915,7 +4934,10 @@ threadRun(void *arg)
 							 (long) tv.tv_sec, (long) (tv.tv_usec / 1000));
 				}
 				else
+				{
+					/* round seconds are expected, but the thread may be late */
 					snprintf(tbuf, sizeof(tbuf), "%.1f s", total_run);
+				}
 
 				fprintf(stderr,
 						"progress: %s, %.1f tps, lat %.3f ms stddev %.3f",
