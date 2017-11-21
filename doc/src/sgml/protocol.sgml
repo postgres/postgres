@@ -22,10 +22,18 @@
   <productname>PostgreSQL</productname> 7.4 and later.  For descriptions
   of the earlier protocol versions, see previous releases of the
   <productname>PostgreSQL</productname> documentation.  A single server
-  can support multiple protocol versions.  The initial
-  startup-request message tells the server which protocol version the
-  client is attempting to use, and then the server follows that protocol
-  if it is able.
+  can support multiple protocol versions.  The initial startup-request
+  message tells the server which protocol version the client is attempting to
+  use.  If the major version requested by the client is not supported by
+  the server, the connection will be rejected (for example, this would occur
+  if the client requested protocol version 4.0, which does not exist as of
+  this writing).  If the minor version requested by the client is not
+  supported by the server (e.g. the client requests version 3.1, but the
+  server supports only 3.0), the server may either reject the connection or
+  may respond with a NegotiateProtocolVersion message containing the highest
+  minor protocol version which it supports.  The client may then choose either
+  to continue with the connection using the specified protocol version or
+  to abort the connection.
  </para>
 
   <para>
@@ -406,6 +414,21 @@
       </listitem>
      </varlistentry>
 
+     <varlistentry>
+      <term>NegotiateProtocolVersion</term>
+      <listitem>
+       <para>
+        The server does not support the minor protocol version requested
+        by the client, but does support an earlier version of the protocol;
+        this message indicates the highest supported minor version.  This
+        message will also be sent if the client requested unsupported protocol
+        options (i.e. beginning with <literal>_pq_.</literal>) in the
+        startup packet.  This message will be followed by an ErrorResponse or
+        a message indicating the success or failure of authentication.
+       </para>
+      </listitem>
+     </varlistentry>
+
     </variablelist>
    </para>
 
@@ -420,8 +443,10 @@
     for further messages from the server.  In this phase a backend process
     is being started, and the frontend is just an interested bystander.
     It is still possible for the startup attempt
-    to fail (ErrorResponse), but in the normal case the backend will send
-    some ParameterStatus messages, BackendKeyData, and finally ReadyForQuery.
+    to fail (ErrorResponse) or the server to decline support for the requested
+    minor protocol version (NegotiateProtocolVersion), but in the normal case
+    the backend will send some ParameterStatus messages, BackendKeyData, and
+    finally ReadyForQuery.
    </para>
 
    <para>
@@ -4580,6 +4605,74 @@ GSSResponse (F)
 </listitem>
 </varlistentry>
 
+<varlistentry>
+<term>
+NegotiateProtocolVersion (B)
+</term>
+<listitem>
+<para>
+
+<variablelist>
+<varlistentry>
+<term>
+        Byte1('v')
+</term>
+<listitem>
+<para>
+                Identifies the message as a protocol version negotiation
+                message.
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+        Int32
+</term>
+<listitem>
+<para>
+                Length of message contents in bytes, including self.
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+        Int32
+</term>
+<listitem>
+<para>
+                Newest minor protocol version supported by the server
+                for the major protocol version requested by the client.
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+        Int32
+</term>
+<listitem>
+<para>
+                Number of protocol options not recognized by the server.
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
+        Then, for protocol option not recognized by the server, there
+        is the following:
+<variablelist>
+<varlistentry>
+<term>
+        String
+</term>
+<listitem>
+<para>
+                The option name.
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
+</para>
+</listitem>
+</varlistentry>
 
 <varlistentry>
 <term>
@@ -5535,11 +5628,13 @@ StartupMessage (F)
 </varlistentry>
 </variablelist>
 
-                In addition to the above, any run-time parameter that can be
-                set at backend start time might be listed.  Such settings
-                will be applied during backend start (after parsing the
-                command-line arguments if any).  The values will act as
-                session defaults.
+                In addition to the above, others parameter may be listed.
+                Parameter names beginning with <literal>_pq_.</literal> are
+                reserved for use as protocol extensions, while others are
+                treated as run-time parameters to be set at backend start
+                time.  Such settings will be applied during backend start
+                (after parsing the command-line arguments if any) and will
+                act as session defaults.
 </para>
 </listitem>
 </varlistentry>
