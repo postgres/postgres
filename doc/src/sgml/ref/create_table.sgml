@@ -1201,7 +1201,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
    </varlistentry>
 
    <varlistentry>
-    <term><literal>toast_tuple_target</> (<type>integer</>)</term>
+    <term><literal>toast_tuple_target</literal> (<type>integer</type>)</term>
     <listitem>
      <para>
       The toast_tuple_target specifies the minimum tuple length required before
