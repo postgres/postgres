@@ -101,6 +101,7 @@
 #include "lib/ilist.h"
 #include "libpq/auth.h"
 #include "libpq/libpq.h"
+#include "libpq/pqformat.h"
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
 #include "pg_getopt.h"
@@ -412,6 +413,7 @@ static void ExitPostmaster(int status) pg_attribute_noreturn();
 static int	ServerLoop(void);
 static int	BackendStartup(Port *port);
 static int	ProcessStartupPacket(Port *port, bool SSLdone);
+static void SendNegotiateProtocolVersion(List *unrecognized_protocol_options);
 static void processCancelRequest(Port *port, void *pkt);
 static int	initMasks(fd_set *rmask);
 static void report_fork_failure_to_client(Port *port, int errnum);
@@ -2052,12 +2054,9 @@ retry1:
 	 */
 	FrontendProtocol = proto;
 
-	/* Check we can handle the protocol the frontend is using. */
-
+	/* Check that the major protocol version is in range. */
 	if (PG_PROTOCOL_MAJOR(proto) < PG_PROTOCOL_MAJOR(PG_PROTOCOL_EARLIEST) ||
-		PG_PROTOCOL_MAJOR(proto) > PG_PROTOCOL_MAJOR(PG_PROTOCOL_LATEST) ||
-		(PG_PROTOCOL_MAJOR(proto) == PG_PROTOCOL_MAJOR(PG_PROTOCOL_LATEST) &&
-		 PG_PROTOCOL_MINOR(proto) > PG_PROTOCOL_MINOR(PG_PROTOCOL_LATEST)))
+		PG_PROTOCOL_MAJOR(proto) > PG_PROTOCOL_MAJOR(PG_PROTOCOL_LATEST))
 		ereport(FATAL,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("unsupported frontend protocol %u.%u: server supports %u.0 to %u.%u",
@@ -2079,6 +2078,7 @@ retry1:
 	if (PG_PROTOCOL_MAJOR(proto) >= 3)
 	{
 		int32		offset = sizeof(ProtocolVersion);
+		List	   *unrecognized_protocol_options = NIL;
 
 		/*
 		 * Scan packet body for name/option pairs.  We can assume any string
@@ -2128,6 +2128,16 @@ retry1:
 									valptr),
 							 errhint("Valid values are: \"false\", 0, \"true\", 1, \"database\".")));
 			}
+			else if (strncmp(nameptr, "_pq_.", 5) == 0)
+			{
+				/*
+				 * Any option beginning with _pq_. is reserved for use as a
+				 * protocol-level option, but at present no such options are
+				 * defined.
+				 */
+				unrecognized_protocol_options =
+					lappend(unrecognized_protocol_options, pstrdup(nameptr));
+			}
 			else
 			{
 				/* Assume it's a generic GUC option */
@@ -2147,6 +2157,16 @@ retry1:
 			ereport(FATAL,
 					(errcode(ERRCODE_PROTOCOL_VIOLATION),
 					 errmsg("invalid startup packet layout: expected terminator as last byte")));
+
+		/*
+		 * If the client requested a newer protocol version or if the client
+		 * requested any protocol options we didn't recognize, let them know
+		 * the newest minor protocol version we do support and the names of any
+		 * unrecognized options.
+		 */
+		if (PG_PROTOCOL_MINOR(proto) > PG_PROTOCOL_MINOR(PG_PROTOCOL_LATEST) ||
+			unrecognized_protocol_options != NIL)
+			SendNegotiateProtocolVersion(unrecognized_protocol_options);
 	}
 	else
 	{
@@ -2260,6 +2280,34 @@ retry1:
 	return STATUS_OK;
 }
 
+/*
+ * Send a NegotiateProtocolVersion to the client.  This lets the client know
+ * that they have requested a newer minor protocol version than we are able
+ * to speak.  We'll speak the highest version we know about; the client can,
+ * of course, abandon the connection if that's a problem.
+ *
+ * We also include in the response a list of protocol options we didn't
+ * understand.  This allows clients to include optional parameters that might
+ * be present either in newer protocol versions or third-party protocol
+ * extensions without fear of having to reconnect if those options are not
+ * understood, while at the same time making certain that the client is aware
+ * of which options were actually accepted.
+ */
+static void
+SendNegotiateProtocolVersion(List *unrecognized_protocol_options)
+{
+	StringInfoData buf;
+	ListCell   *lc;
+
+	pq_beginmessage(&buf, 'v'); /* NegotiateProtocolVersion */
+	pq_sendint32(&buf, PG_PROTOCOL_LATEST);
+	pq_sendint32(&buf, list_length(unrecognized_protocol_options));
+	foreach(lc, unrecognized_protocol_options)
+		pq_sendstring(&buf, lfirst(lc));
+	pq_endmessage(&buf);
+
+	/* no need to flush, some other message will follow */
+}
 
 /*
  * The client has sent a cancel request packet, not a normal
