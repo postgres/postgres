@@ -40,6 +40,7 @@
 #include "optimizer/planmain.h"
 #include "optimizer/prep.h"
 #include "optimizer/var.h"
+#include "parser/parse_coerce.h"
 #include "rewrite/rewriteManip.h"
 #include "storage/lmgr.h"
 #include "utils/array.h"
@@ -3085,9 +3086,11 @@ compute_hash_value(PartitionKey key, Datum *values, bool *isnull)
 /*
  * satisfies_hash_partition
  *
- * This is a SQL-callable function for use in hash partition constraints takes
- * an already computed hash values of each partition key attribute, and combine
- * them into a single hash value by calling hash_combine64.
+ * This is an SQL-callable function for use in hash partition constraints.
+ * The first three arguments are the parent table OID, modulus, and remainder.
+ * The remaining arguments are the value of the partitioning columns (or
+ * expressions); these are hashed and the results are combined into a single
+ * hash value by calling hash_combine64.
  *
  * Returns true if remainder produced when this computed single hash value is
  * divided by the given modulus is equal to given remainder, otherwise false.
@@ -3100,64 +3103,203 @@ satisfies_hash_partition(PG_FUNCTION_ARGS)
 	typedef struct ColumnsHashData
 	{
 		Oid			relid;
-		int16		nkeys;
+		int			nkeys;
+		Oid			variadic_type;
+		int16		variadic_typlen;
+		bool		variadic_typbyval;
+		char		variadic_typalign;
 		FmgrInfo	partsupfunc[PARTITION_MAX_KEYS];
 	}			ColumnsHashData;
-	Oid			parentId = PG_GETARG_OID(0);
-	int			modulus = PG_GETARG_INT32(1);
-	int			remainder = PG_GETARG_INT32(2);
-	short		nkeys = PG_NARGS() - 3;
-	int			i;
+	Oid			parentId;
+	int			modulus;
+	int			remainder;
 	Datum		seed = UInt64GetDatum(HASH_PARTITION_SEED);
 	ColumnsHashData *my_extra;
 	uint64		rowHash = 0;
+
+	/* Return null if the parent OID, modulus, or remainder is NULL. */
+	if (PG_ARGISNULL(0) || PG_ARGISNULL(1) || PG_ARGISNULL(2))
+		PG_RETURN_NULL();
+	parentId = PG_GETARG_OID(0);
+	modulus = PG_GETARG_INT32(1);
+	remainder = PG_GETARG_INT32(2);
+
+	/* Sanity check modulus and remainder. */
+	if (modulus <= 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("modulus for hash partition must be a positive integer")));
+	if (remainder < 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("remainder for hash partition must be a non-negative integer")));
+	if (remainder >= modulus)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("remainder for hash partition must be less than modulus")));
 
 	/*
 	 * Cache hash function information.
 	 */
 	my_extra = (ColumnsHashData *) fcinfo->flinfo->fn_extra;
-	if (my_extra == NULL || my_extra->nkeys != nkeys ||
-		my_extra->relid != parentId)
+	if (my_extra == NULL || my_extra->relid != parentId)
 	{
 		Relation	parent;
 		PartitionKey key;
-		int j;
-
-		fcinfo->flinfo->fn_extra =
-			MemoryContextAllocZero(fcinfo->flinfo->fn_mcxt,
-								   offsetof(ColumnsHashData, partsupfunc) +
-								   sizeof(FmgrInfo) * nkeys);
-		my_extra = (ColumnsHashData *) fcinfo->flinfo->fn_extra;
-		my_extra->nkeys = nkeys;
-		my_extra->relid = parentId;
+		int			j;
 
 		/* Open parent relation and fetch partition keyinfo */
-		parent = heap_open(parentId, AccessShareLock);
+		parent = try_relation_open(parentId, AccessShareLock);
+		if (parent == NULL)
+			PG_RETURN_NULL();
 		key = RelationGetPartitionKey(parent);
 
-		Assert(key->partnatts == nkeys);
-		for (j = 0; j < nkeys; ++j)
-			fmgr_info_copy(&my_extra->partsupfunc[j],
-						   key->partsupfunc,
+		/* Reject parent table that is not hash-partitioned. */
+		if (parent->rd_rel->relkind != RELKIND_PARTITIONED_TABLE ||
+			key->strategy != PARTITION_STRATEGY_HASH)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("\"%s\" is not a hash partitioned table",
+							get_rel_name(parentId))));
+
+		if (!get_fn_expr_variadic(fcinfo->flinfo))
+		{
+			int			nargs = PG_NARGS() - 3;
+
+			/* complain if wrong number of column values */
+			if (key->partnatts != nargs)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("number of partitioning columns (%d) does not match number of partition keys provided (%d)",
+								key->partnatts, nargs)));
+
+			/* allocate space for our cache */
+			fcinfo->flinfo->fn_extra =
+				MemoryContextAllocZero(fcinfo->flinfo->fn_mcxt,
+									   offsetof(ColumnsHashData, partsupfunc) +
+									   sizeof(FmgrInfo) * nargs);
+			my_extra = (ColumnsHashData *) fcinfo->flinfo->fn_extra;
+			my_extra->relid = parentId;
+			my_extra->nkeys = key->partnatts;
+
+			/* check argument types and save fmgr_infos */
+			for (j = 0; j < key->partnatts; ++j)
+			{
+				Oid			argtype = get_fn_expr_argtype(fcinfo->flinfo, j + 3);
+
+				if (argtype != key->parttypid[j] && !IsBinaryCoercible(argtype, key->parttypid[j]))
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+							 errmsg("column %d of the partition key has type \"%s\", but supplied value is of type \"%s\"",
+									j + 1, format_type_be(key->parttypid[j]), format_type_be(argtype))));
+
+				fmgr_info_copy(&my_extra->partsupfunc[j],
+							   &key->partsupfunc[j],
+							   fcinfo->flinfo->fn_mcxt);
+			}
+
+		}
+		else
+		{
+			ArrayType  *variadic_array = PG_GETARG_ARRAYTYPE_P(3);
+
+			/* allocate space for our cache -- just one FmgrInfo in this case */
+			fcinfo->flinfo->fn_extra =
+				MemoryContextAllocZero(fcinfo->flinfo->fn_mcxt,
+									   offsetof(ColumnsHashData, partsupfunc) +
+									   sizeof(FmgrInfo));
+			my_extra = (ColumnsHashData *) fcinfo->flinfo->fn_extra;
+			my_extra->relid = parentId;
+			my_extra->nkeys = key->partnatts;
+			my_extra->variadic_type = ARR_ELEMTYPE(variadic_array);
+			get_typlenbyvalalign(my_extra->variadic_type,
+								 &my_extra->variadic_typlen,
+								 &my_extra->variadic_typbyval,
+								 &my_extra->variadic_typalign);
+
+			/* check argument types */
+			for (j = 0; j < key->partnatts; ++j)
+				if (key->parttypid[j] != my_extra->variadic_type)
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+							 errmsg("column %d of the partition key has type \"%s\", but supplied value is of type \"%s\"",
+									j + 1,
+									format_type_be(key->parttypid[j]),
+									format_type_be(my_extra->variadic_type))));
+
+			fmgr_info_copy(&my_extra->partsupfunc[0],
+						   &key->partsupfunc[0],
 						   fcinfo->flinfo->fn_mcxt);
+		}
 
 		/* Hold lock until commit */
-		heap_close(parent, NoLock);
+		relation_close(parent, NoLock);
 	}
 
-	for (i = 0; i < nkeys; i++)
+	if (!OidIsValid(my_extra->variadic_type))
 	{
-		/* keys start from fourth argument of function. */
-		int			argno = i + 3;
+		int			nkeys = my_extra->nkeys;
+		int			i;
 
-		if (!PG_ARGISNULL(argno))
+		/*
+		 * For a non-variadic call, neither the number of arguments nor their
+		 * types can change across calls, so avoid the expense of rechecking
+		 * here.
+		 */
+
+		for (i = 0; i < nkeys; i++)
 		{
 			Datum		hash;
+
+			/* keys start from fourth argument of function. */
+			int			argno = i + 3;
+
+			if (PG_ARGISNULL(argno))
+				continue;
 
 			Assert(OidIsValid(my_extra->partsupfunc[i].fn_oid));
 
 			hash = FunctionCall2(&my_extra->partsupfunc[i],
 								 PG_GETARG_DATUM(argno),
+								 seed);
+
+			/* Form a single 64-bit hash value */
+			rowHash = hash_combine64(rowHash, DatumGetUInt64(hash));
+		}
+	}
+	else
+	{
+		ArrayType  *variadic_array = PG_GETARG_ARRAYTYPE_P(3);
+		int			i;
+		int			nelems;
+		Datum	   *datum;
+		bool	   *isnull;
+
+		deconstruct_array(variadic_array,
+						  my_extra->variadic_type,
+						  my_extra->variadic_typlen,
+						  my_extra->variadic_typbyval,
+						  my_extra->variadic_typalign,
+						  &datum, &isnull, &nelems);
+
+		/* complain if wrong number of column values */
+		if (nelems != my_extra->nkeys)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("number of partitioning columns (%d) does not match number of partition keys provided (%d)",
+							my_extra->nkeys, nelems)));
+
+		for (i = 0; i < nelems; i++)
+		{
+			Datum		hash;
+
+			if (isnull[i])
+				continue;
+
+			Assert(OidIsValid(my_extra->partsupfunc[0].fn_oid));
+
+			hash = FunctionCall2(&my_extra->partsupfunc[0],
+								 datum[i],
 								 seed);
 
 			/* Form a single 64-bit hash value */

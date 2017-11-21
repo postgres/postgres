@@ -181,5 +181,6 @@ test: xml
 test: identity
 test: partition_join
 test: reloptions
+test: hash_part
 test: event_trigger
 test: stats
