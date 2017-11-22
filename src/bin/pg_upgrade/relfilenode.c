@@ -194,7 +194,7 @@ transfer_relfile(FileNameMap *map, const char *type_suffix, bool vm_must_add_fro
 	/*
 	 * Now copy/link any related segments as well. Remember, PG breaks large
 	 * files into 1GB segments, the first segment has no extension, subsequent
-	 * segments are named relfilenode.1, relfilenode.2, relfilenode.3. copied.
+	 * segments are named relfilenode.1, relfilenode.2, relfilenode.3.
 	 */
 	for (segno = 0;; segno++)
 	{
