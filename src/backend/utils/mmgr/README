@@ -431,3 +431,26 @@ will not allocate very much space per tuple cycle.  To make this usage
 pattern cheap, the first block allocated in a context is not given
 back to malloc() during reset, but just cleared.  This avoids malloc
 thrashing.
+
+
+Alternative Memory Context Implementations
+------------------------------------------
+
+aset.c is our default general-purpose implementation, working fine
+in most situations. We also have two implementations optimized for
+special use cases, providing either better performance or lower memory
+usage compared to aset.c (or both).
+
+* slab.c (SlabContext) is designed for allocations of fixed-length
+  chunks, and does not allow allocations of chunks with different size.
+
+* generation.c (GenerationContext) is designed for cases when chunks
+  are allocated in groups with similar lifespan (generations), or
+  roughly in FIFO order.
+
+Both memory contexts aim to free memory back to the operating system
+(unlike aset.c, which keeps the freed chunks in a freelist, and only
+returns the memory when reset/deleted).
+
+These memory contexts were initially developed for ReorderBuffer, but
+may be useful elsewhere as long as the allocation patterns match.

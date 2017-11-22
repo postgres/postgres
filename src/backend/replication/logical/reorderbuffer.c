@@ -43,6 +43,12 @@
  *	  transaction there will be no other data carrying records between a row's
  *	  toast chunks and the row data itself. See ReorderBufferToast* for
  *	  details.
+ *
+ *	  ReorderBuffer uses two special memory context types - SlabContext for
+ *	  allocations of fixed-length structures (changes and transactions), and
+ *	  GenerationContext for the variable-length transaction data (allocated
+ *	  and freed in groups with similar lifespan).
+ *
  * -------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -150,15 +156,6 @@ typedef struct ReorderBufferDiskChange
  */
 static const Size max_changes_in_memory = 4096;
 
-/*
- * We use a very simple form of a slab allocator for frequently allocated
- * objects, simply keeping a fixed number in a linked list when unused,
- * instead pfree()ing them. Without that in many workloads aset.c becomes a
- * major bottleneck, especially when spilling to disk while decoding batch
- * workloads.
- */
-static const Size max_cached_tuplebufs = 4096 * 2;	/* ~8MB */
-
 /* ---------------------------------------
  * primary reorderbuffer support routines
  * ---------------------------------------
@@ -248,6 +245,10 @@ ReorderBufferAllocate(void)
 											SLAB_DEFAULT_BLOCK_SIZE,
 											sizeof(ReorderBufferTXN));
 
+	buffer->tup_context = GenerationContextCreate(new_ctx,
+										   "Tuples",
+										   SLAB_LARGE_BLOCK_SIZE);
+
 	hash_ctl.keysize = sizeof(TransactionId);
 	hash_ctl.entrysize = sizeof(ReorderBufferTXNByIdEnt);
 	hash_ctl.hcxt = buffer->context;
@@ -258,15 +259,12 @@ ReorderBufferAllocate(void)
 	buffer->by_txn_last_xid = InvalidTransactionId;
 	buffer->by_txn_last_txn = NULL;
 
-	buffer->nr_cached_tuplebufs = 0;
-
 	buffer->outbuf = NULL;
 	buffer->outbufsize = 0;
 
 	buffer->current_restart_decoding_lsn = InvalidXLogRecPtr;
 
 	dlist_init(&buffer->toplevel_by_lsn);
-	slist_init(&buffer->cached_tuplebufs);
 
 	return buffer;
 }
@@ -419,42 +417,12 @@ ReorderBufferGetTupleBuf(ReorderBuffer *rb, Size tuple_len)
 
 	alloc_len = tuple_len + SizeofHeapTupleHeader;
 
-	/*
-	 * Most tuples are below MaxHeapTupleSize, so we use a slab allocator for
-	 * those. Thus always allocate at least MaxHeapTupleSize. Note that tuples
-	 * generated for oldtuples can be bigger, as they don't have out-of-line
-	 * toast columns.
-	 */
-	if (alloc_len < MaxHeapTupleSize)
-		alloc_len = MaxHeapTupleSize;
-
-
-	/* if small enough, check the slab cache */
-	if (alloc_len <= MaxHeapTupleSize && rb->nr_cached_tuplebufs)
-	{
-		rb->nr_cached_tuplebufs--;
-		tuple = slist_container(ReorderBufferTupleBuf, node,
-								slist_pop_head_node(&rb->cached_tuplebufs));
-		Assert(tuple->alloc_tuple_size == MaxHeapTupleSize);
-#ifdef USE_ASSERT_CHECKING
-		memset(&tuple->tuple, 0xa9, sizeof(HeapTupleData));
-		VALGRIND_MAKE_MEM_UNDEFINED(&tuple->tuple, sizeof(HeapTupleData));
-#endif
-		tuple->tuple.t_data = ReorderBufferTupleBufData(tuple);
-#ifdef USE_ASSERT_CHECKING
-		memset(tuple->tuple.t_data, 0xa8, tuple->alloc_tuple_size);
-		VALGRIND_MAKE_MEM_UNDEFINED(tuple->tuple.t_data, tuple->alloc_tuple_size);
-#endif
-	}
-	else
-	{
-		tuple = (ReorderBufferTupleBuf *)
-			MemoryContextAlloc(rb->context,
-							   sizeof(ReorderBufferTupleBuf) +
-							   MAXIMUM_ALIGNOF + alloc_len);
-		tuple->alloc_tuple_size = alloc_len;
-		tuple->tuple.t_data = ReorderBufferTupleBufData(tuple);
-	}
+	tuple = (ReorderBufferTupleBuf *)
+		MemoryContextAlloc(rb->tup_context,
+						   sizeof(ReorderBufferTupleBuf) +
+						   MAXIMUM_ALIGNOF + alloc_len);
+	tuple->alloc_tuple_size = alloc_len;
+	tuple->tuple.t_data = ReorderBufferTupleBufData(tuple);
 
 	return tuple;
 }
@@ -468,21 +436,7 @@ ReorderBufferGetTupleBuf(ReorderBuffer *rb, Size tuple_len)
 void
 ReorderBufferReturnTupleBuf(ReorderBuffer *rb, ReorderBufferTupleBuf *tuple)
 {
-	/* check whether to put into the slab cache, oversized tuples never are */
-	if (tuple->alloc_tuple_size == MaxHeapTupleSize &&
-		rb->nr_cached_tuplebufs < max_cached_tuplebufs)
-	{
-		rb->nr_cached_tuplebufs++;
-		slist_push_head(&rb->cached_tuplebufs, &tuple->node);
-		VALGRIND_MAKE_MEM_UNDEFINED(tuple->tuple.t_data, tuple->alloc_tuple_size);
-		VALGRIND_MAKE_MEM_UNDEFINED(tuple, sizeof(ReorderBufferTupleBuf));
-		VALGRIND_MAKE_MEM_DEFINED(&tuple->node, sizeof(tuple->node));
-		VALGRIND_MAKE_MEM_DEFINED(&tuple->alloc_tuple_size, sizeof(tuple->alloc_tuple_size));
-	}
-	else
-	{
-		pfree(tuple);
-	}
+	pfree(tuple);
 }
 
 /*
