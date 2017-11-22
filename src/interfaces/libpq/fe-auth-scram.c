@@ -437,6 +437,10 @@ build_client_final_message(fe_scram_state *state, PQExpBuffer errormessage)
 	/*
 	 * Construct client-final-message-without-proof.  We need to remember it
 	 * for verifying the server proof in the final step of authentication.
+	 *
+	 * The channel binding flag handling (p/y/n) must be consistent with
+	 * build_client_first_message(), because the server will check that it's
+	 * the same flag both times.
 	 */
 	if (strcmp(state->sasl_mechanism, SCRAM_SHA256_PLUS_NAME) == 0)
 	{

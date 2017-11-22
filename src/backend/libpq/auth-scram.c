@@ -110,6 +110,7 @@ typedef struct
 
 	const char *username;		/* username from startup packet */
 
+	char		cbind_flag;
 	bool		ssl_in_use;
 	const char *tls_finished_message;
 	size_t		tls_finished_len;
@@ -788,6 +789,7 @@ read_client_first_message(scram_state *state, char *input)
 	 * Read gs2-cbind-flag.  (For details see also RFC 5802 Section 6 "Channel
 	 * Binding".)
 	 */
+	state->cbind_flag = *input;
 	switch (*input)
 	{
 		case 'n':
@@ -1111,6 +1113,8 @@ read_client_final_message(scram_state *state, char *input)
 		char	   *b64_message;
 		int			b64_message_len;
 
+		Assert(state->cbind_flag == 'p');
+
 		/*
 		 * Fetch data appropriate for channel binding type
 		 */
@@ -1155,10 +1159,11 @@ read_client_final_message(scram_state *state, char *input)
 		/*
 		 * If we are not using channel binding, the binding data is expected
 		 * to always be "biws", which is "n,," base64-encoded, or "eSws",
-		 * which is "y,,".
+		 * which is "y,,".  We also have to check whether the flag is the same
+		 * one that the client originally sent.
 		 */
-		if (strcmp(channel_binding, "biws") != 0 &&
-			strcmp(channel_binding, "eSws") != 0)
+		if (!(strcmp(channel_binding, "biws") == 0 && state->cbind_flag == 'n') &&
+			!(strcmp(channel_binding, "eSws") == 0 && state->cbind_flag == 'y'))
 			ereport(ERROR,
 					(errcode(ERRCODE_PROTOCOL_VIOLATION),
 					 (errmsg("unexpected SCRAM channel-binding attribute in client-final-message"))));
