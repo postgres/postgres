@@ -421,7 +421,7 @@ CREATE TABLE fail () INHERITS (partitioned2);
 
 -- Partition key in describe output
 \d partitioned
-\d partitioned2
+\d+ partitioned2
 
 DROP TABLE partitioned, partitioned2;
 

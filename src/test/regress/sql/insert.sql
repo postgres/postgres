@@ -252,6 +252,10 @@ insert into hpart3 values(11);
 select tableoid::regclass as part, a, a%4 as "remainder = a % 4"
 from hash_parted order by part;
 
+-- test \d+ output on a table which has both partitioned and unpartitioned
+-- partitions
+\d+ list_parted
+
 -- cleanup
 drop table range_parted, list_parted;
 drop table hash_parted;

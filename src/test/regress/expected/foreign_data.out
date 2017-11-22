@@ -1898,6 +1898,7 @@ DROP FOREIGN TABLE pt2_1;
  c2     | text    |           |          |         | extended |              | 
  c3     | date    |           |          |         | plain    |              | 
 Partition key: LIST (c1)
+Number of partitions: 0
 
 CREATE FOREIGN TABLE pt2_1 (
 	c1 integer NOT NULL,
@@ -1982,6 +1983,7 @@ ALTER TABLE pt2 ALTER c2 SET NOT NULL;
  c2     | text    |           | not null |         | extended |              | 
  c3     | date    |           |          |         | plain    |              | 
 Partition key: LIST (c1)
+Number of partitions: 0
 
 \d+ pt2_1
                                       Foreign table "public.pt2_1"
@@ -2011,6 +2013,7 @@ ALTER TABLE pt2 ADD CONSTRAINT pt2chk1 CHECK (c1 > 0);
 Partition key: LIST (c1)
 Check constraints:
     "pt2chk1" CHECK (c1 > 0)
+Number of partitions: 0
 
 \d+ pt2_1
                                       Foreign table "public.pt2_1"

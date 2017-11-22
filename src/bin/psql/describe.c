@@ -2870,7 +2870,9 @@ describeOneTableDetails(const char *schemaname,
 		/* print child tables (with additional info if partitions) */
 		if (pset.sversion >= 100000)
 			printfPQExpBuffer(&buf,
-							  "SELECT c.oid::pg_catalog.regclass, pg_catalog.pg_get_expr(c.relpartbound, c.oid)"
+							  "SELECT c.oid::pg_catalog.regclass,"
+							  "       pg_catalog.pg_get_expr(c.relpartbound, c.oid),"
+							  "       c.relkind"
 							  " FROM pg_catalog.pg_class c, pg_catalog.pg_inherits i"
 							  " WHERE c.oid=i.inhrelid AND i.inhparent = '%s'"
 							  " ORDER BY c.oid::pg_catalog.regclass::pg_catalog.text;", oid);
@@ -2893,7 +2895,18 @@ describeOneTableDetails(const char *schemaname,
 		else
 			tuples = PQntuples(result);
 
-		if (!verbose)
+		/*
+		 * For a partitioned table with no partitions, always print the number
+		 * of partitions as zero, even when verbose output is expected.
+		 * Otherwise, we will not print "Partitions" section for a partitioned
+		 * table without any partitions.
+		 */
+		if (tableinfo.relkind == RELKIND_PARTITIONED_TABLE && tuples == 0)
+		{
+			printfPQExpBuffer(&buf, _("Number of partitions: %d"), tuples);
+			printTableAddFooter(&cont, buf.data);
+		}
+		else if (!verbose)
 		{
 			/* print the number of child tables, if any */
 			if (tuples > 0)
@@ -2925,12 +2938,21 @@ describeOneTableDetails(const char *schemaname,
 				}
 				else
 				{
-					if (i == 0)
-						printfPQExpBuffer(&buf, "%s: %s %s",
-										  ct, PQgetvalue(result, i, 0), PQgetvalue(result, i, 1));
+					char *partitioned_note;
+
+					if (*PQgetvalue(result, i, 2) == RELKIND_PARTITIONED_TABLE)
+						partitioned_note = ", PARTITIONED";
 					else
-						printfPQExpBuffer(&buf, "%*s  %s %s",
-										  ctw, "", PQgetvalue(result, i, 0), PQgetvalue(result, i, 1));
+						partitioned_note = "";
+
+					if (i == 0)
+						printfPQExpBuffer(&buf, "%s: %s %s%s",
+										  ct, PQgetvalue(result, i, 0), PQgetvalue(result, i, 1),
+										  partitioned_note);
+					else
+						printfPQExpBuffer(&buf, "%*s  %s %s%s",
+										  ctw, "", PQgetvalue(result, i, 0), PQgetvalue(result, i, 1),
+										  partitioned_note);
 				}
 				if (i < tuples - 1)
 					appendPQExpBufferChar(&buf, ',');
