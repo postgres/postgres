@@ -92,20 +92,20 @@ typedef struct GenerationContext
  *		GenerationBloc is the header data for a block --- the usable space
  *		within the block begins at the next alignment boundary.
  */
-typedef struct GenerationBlock
+struct GenerationBlock
 {
 	dlist_node	node;			/* doubly-linked list */
 	int			nchunks;		/* number of chunks in the block */
 	int			nfree;			/* number of free chunks */
 	char	   *freeptr;		/* start of free space in this block */
 	char	   *endptr;			/* end of space in this block */
-}	GenerationBlock;
+};
 
 /*
  * GenerationChunk
  *		The prefix of each piece of memory in an GenerationBlock
  */
-typedef struct GenerationChunk
+struct GenerationChunk
 {
 	/* block owning this chunk */
 	void	   *block;
@@ -120,7 +120,7 @@ typedef struct GenerationChunk
 
 	GenerationContext *context;		/* owning context */
 	/* there must not be any padding to reach a MAXALIGN boundary here! */
-}	GenerationChunk;
+};
 
 
 /*
