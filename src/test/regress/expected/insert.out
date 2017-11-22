@@ -436,11 +436,11 @@ from hash_parted order by part;
 Partition key: LIST (lower(a))
 Partitions: part_aa_bb FOR VALUES IN ('aa', 'bb'),
             part_cc_dd FOR VALUES IN ('cc', 'dd'),
-            part_default DEFAULT, PARTITIONED,
             part_ee_ff FOR VALUES IN ('ee', 'ff'), PARTITIONED,
             part_gg FOR VALUES IN ('gg'), PARTITIONED,
             part_null FOR VALUES IN (NULL),
-            part_xx_yy FOR VALUES IN ('xx', 'yy'), PARTITIONED
+            part_xx_yy FOR VALUES IN ('xx', 'yy'), PARTITIONED,
+            part_default DEFAULT, PARTITIONED
 
 -- cleanup
 drop table range_parted, list_parted;

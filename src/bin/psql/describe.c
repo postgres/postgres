@@ -2875,7 +2875,8 @@ describeOneTableDetails(const char *schemaname,
 							  "       c.relkind"
 							  " FROM pg_catalog.pg_class c, pg_catalog.pg_inherits i"
 							  " WHERE c.oid=i.inhrelid AND i.inhparent = '%s'"
-							  " ORDER BY c.oid::pg_catalog.regclass::pg_catalog.text;", oid);
+							  " ORDER BY pg_catalog.pg_get_expr(c.relpartbound, c.oid) = 'DEFAULT',"
+							  "          c.oid::pg_catalog.regclass::pg_catalog.text;", oid);
 		else if (pset.sversion >= 80300)
 			printfPQExpBuffer(&buf,
 							  "SELECT c.oid::pg_catalog.regclass"
